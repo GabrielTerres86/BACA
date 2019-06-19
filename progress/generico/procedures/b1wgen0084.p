@@ -77,7 +77,7 @@
                              procedure de validacao de novo calculo
                              (valida_novo_calculo). (GATI - Diego B.)
 
-                22/09/2011 - Alteração da procedure verifica_alcada para
+                22/09/2011 - Alteraçao da procedure verifica_alcada para
                              verifica_alcada_estorno. (GATI - Vitor)
 
                 04/10/2011 - Foram retiradas as procedures
@@ -110,7 +110,7 @@
 
                 25/01/2012 - Código desnecessario busca dados efetivacao proposta (Oscar)
 
-                10/02/2012 - Correção na procedure 'valida_dados_efetivacao_proposta'
+                10/02/2012 - Correçao na procedure 'valida_dados_efetivacao_proposta'
                              para gerar crítica 36 como limitador de acesso. (Lucas)
 
                 23/02/2012 - Implementado novo parametro para a rotina
@@ -129,7 +129,7 @@
 
                 17/04/2012 - Retirada a procedure imprime extrato (Tiago).
 
-                11/05/2012 - Adicionar a função fnBuscaDataDoUltimoDiaUtilMes (Oscar).
+                11/05/2012 - Adicionar a funçao fnBuscaDataDoUltimoDiaUtilMes (Oscar).
 
                 29/11/2012 - Tratar campo vlsdvsji (Gabriel).
 
@@ -337,6 +337,7 @@
               08/05/2019 - P450 - Ajuste na qualificacao da operacao quando
                            se tratar de uma Cessao de Cartao (Guilherme/AMcom)
 
+              12/02/2019 - P442 - PreAprovado nova estrutura (Marcos-Envolti)     
 ............................................................................. */
 
 /*................................ DEFINICOES ............................... */
@@ -832,6 +833,12 @@ PROCEDURE calcula_emprestimo:
                              AND crapass.nrdconta = par_nrdconta
                              NO-LOCK NO-ERROR.
 
+            IF NOT AVAILABLE crapass THEN   
+              DO:
+                   ASSIGN aux_dscritic = "Associado nao cadastrado ".
+                   UNDO.
+              END.
+              
            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
            
            /* Efetuar a chamada a rotina Oracle  */
@@ -3528,6 +3535,17 @@ PROCEDURE grava_efetivacao_proposta:
        /* Verifica se o emprestimo eh pre-aprovado */
        IF AVAIL crappre THEN
           DO:
+          
+              FIND crapass WHERE crapass.cdcooper = par_cdcooper
+                   AND crapass.nrdconta = par_nrdconta
+                   NO-LOCK NO-ERROR.
+
+              IF NOT AVAILABLE crapass THEN   
+                DO:
+                   ASSIGN aux_dscritic = "Associado nao cadastrado ".
+                   UNDO EFETIVACAO, LEAVE EFETIVACAO.
+                END.
+          
               IF NOT VALID-HANDLE(h-b1wgen0188) THEN
                  RUN sistema/generico/procedures/b1wgen0188.p 
                      PERSISTENT SET h-b1wgen0188.
@@ -3539,12 +3557,21 @@ PROCEDURE grava_efetivacao_proposta:
         
               IF VALID-HANDLE(h-b1wgen0188) THEN
                  DELETE PROCEDURE(h-b1wgen0188).
+                 
+              /* Verificar se existe carga ativa para o cooperado */
+              IF aux_idcarga = 0 THEN
+                DO:
+                  ASSIGN aux_dscritic = "Associado sem pre-aprovado liberado".
+                  UNDO EFETIVACAO, LEAVE EFETIVACAO.
+                END.
 
               Contador: DO aux_contador = 1 TO 10:
 
-                 FIND crapcpa WHERE crapcpa.cdcooper = par_cdcooper AND
-                                    crapcpa.nrdconta = par_nrdconta AND
-                                    crapcpa.iddcarga = aux_idcarga
+                 FIND crapcpa WHERE crapcpa.cdcooper       = par_cdcooper AND
+                                    crapcpa.tppessoa       = crapass.inpessoa AND
+                                    crapcpa.nrcpfcnpj_base = 
+                                    crapass.nrcpfcnpj_base AND
+                                    crapcpa.iddcarga       = aux_idcarga
                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
                  IF NOT AVAILABLE crapcpa THEN
@@ -3573,18 +3600,19 @@ PROCEDURE grava_efetivacao_proposta:
                      PERSISTENT SET h-b1wgen0188.
 
               /* Valida os dados do credito pre-aprovado */
-              RUN valida_dados IN h-b1wgen0188 (INPUT par_cdcooper,
-                                                INPUT par_cdagenci,
-                                                INPUT par_nrdcaixa,
-                                                INPUT par_cdoperad,
-                                                INPUT par_nmdatela,
-                                                INPUT par_idorigem,
-                                                INPUT par_nrdconta,
-                                                INPUT par_idseqttl,
-                                                INPUT crawepr.vlemprst,
-                                                INPUT DAY(par_dtdpagto),
-                                                INPUT par_nrcpfope,
-                                                OUTPUT TABLE tt-erro).
+              RUN valida_dados_contrato IN h-b1wgen0188 (INPUT par_cdcooper,
+                                                         INPUT par_cdagenci,
+                                                         INPUT par_nrdcaixa,
+                                                         INPUT par_cdoperad,
+                                                         INPUT par_nmdatela,
+                                                         INPUT par_idorigem,
+                                                         INPUT par_nrdconta,
+                                                         INPUT par_idseqttl,
+                                                         INPUT crawepr.vlemprst,
+                                                         INPUT DAY(par_dtdpagto),
+                                                         INPUT par_nrcpfope,
+                                                         INPUT par_nrctremp,
+                                                         OUTPUT TABLE tt-erro).
 
               IF VALID-HANDLE(h-b1wgen0188) THEN
                  DELETE PROCEDURE(h-b1wgen0188).
@@ -3593,16 +3621,7 @@ PROCEDURE grava_efetivacao_proposta:
                  RETURN "NOK".
 
               /* Atualiza o valor contratado do credito pre-aprovado */
-              ASSIGN crapcpa.vlctrpre = crapcpa.vlctrpre + crawepr.vlemprst
-                     crapcpa.vllimdis = TRUNC(((crapcpa.vllimdis -
-                                                crawepr.vlemprst) /
-                                              crappre.vlmulpli),0)
-                     crapcpa.vllimdis = crapcpa.vllimdis * crappre.vlmulpli.
-
-              /* Caso o valor minimo ofertado for maior que o saldo disponivel
-                 vamos zerar o saldo disponivel */
-              IF crappre.vllimmin > crapcpa.vllimdis THEN
-                 ASSIGN crapcpa.vllimdis = 0.
+              ASSIGN crapcpa.vlctrpre = crapcpa.vlctrpre + crawepr.vlemprst.
 
           END. /* END IF AVAIL crappre AND par_cdfinemp = crappre.cdfinemp  */
 
@@ -4773,6 +4792,41 @@ PROCEDURE grava_efetivacao_proposta:
        IF RETURN-VALUE <> "OK"   THEN
           UNDO EFETIVACAO , LEAVE EFETIVACAO.
 
+       /* Para proposta PreAprovado */
+       IF AVAIL crappre AND AVAIL crapcpa THEN
+          DO:
+             /* Chamaremos a rotina que ira verificar se eh necessario atualizar  */
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+             RUN STORED-PROCEDURE pc_verifica_rating_sas
+                 aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT par_cdcooper, /* Cooperativa */
+                                   INPUT par_dtmvtolt, /* Data Movimento */
+                                   INPUT crapass.inpessoa, /* Indicativo de pessoa */
+                                   INPUT crapass.nrcpfcnpj_base, /* CPF/CNPJ raiz de pessoa */
+                                   INPUT crapepr.nrctremp, /* Contrato */
+                                   INPUT crapcpa.iddcarga, /* ID Carga CPA */
+                                  OUTPUT "").
+
+             CLOSE STORED-PROC pc_verifica_rating_sas 
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+             ASSIGN aux_dscritic = ""
+                    aux_dscritic = pc_verifica_rating_sas.pr_dscritic 
+                                   WHEN pc_verifica_rating_sas.pr_dscritic <> ?.
+                 
+             IF  aux_dscritic <> ""  THEN
+                 DO:                                    
+                     CREATE tt-erro.
+                     ASSIGN tt-erro.cdcritic = aux_cdcritic
+                            tt-erro.dscritic = aux_dscritic.
+
+                     UNDO EFETIVACAO, LEAVE EFETIVACAO.
+                 END.
+          END.
+       
        /* Acionar rotina de Gravacao do Calculo CET gerado */
        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -5342,6 +5396,11 @@ PROCEDURE desfaz_efetivacao_emprestimo.
         /* Verifica se o emprestimo eh pre-aprovado */
         IF AVAIL crappre THEN
            DO:
+           
+             FIND crapass WHERE crapass.cdcooper = par_cdcooper
+                              AND crapass.nrdconta = par_nrdconta
+                              NO-LOCK NO-ERROR.
+                              
                IF NOT VALID-HANDLE(h-b1wgen0188) THEN
                   RUN sistema/generico/procedures/b1wgen0188.p 
                       PERSISTENT SET h-b1wgen0188.
@@ -5354,11 +5413,13 @@ PROCEDURE desfaz_efetivacao_emprestimo.
                IF VALID-HANDLE(h-b1wgen0188) THEN
                   DELETE PROCEDURE(h-b1wgen0188).
 
+               /* Buscaremos o registro do Cooperado na Carga, para lockar o mesmo */
                Contador: DO aux_contador = 1 TO 10:
 
-                 FIND crapcpa WHERE crapcpa.cdcooper = par_cdcooper AND
-                                    crapcpa.nrdconta = par_nrdconta AND
-                                    crapcpa.iddcarga = aux_idcarga
+                 FIND crapcpa WHERE crapcpa.cdcooper       = par_cdcooper AND
+                                    crapcpa.tppessoa       = crapass.inpessoa AND
+                                    crapcpa.nrcpfcnpj_base = crapass.nrcpfcnpj_base AND
+                                    crapcpa.iddcarga       = aux_idcarga
                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
                  IF NOT AVAILABLE crapcpa THEN
@@ -5380,17 +5441,12 @@ PROCEDURE desfaz_efetivacao_emprestimo.
 
                END. /* END Contador: DO aux_contador = 1 TO 10: */
 
-               /* Somente vamos atualizar o saldo, caso o saldo disponivel
-                  for diferente que o saldo calculado na carga.           */
-               IF crapcpa.vllimdis <> crapcpa.vlcalpre THEN
+               /* Atualizar o valor Contratado caso o ID da Carga seja igual a carga corrente */
+               /*IF crapcpa.iddcarga = crapepr.idcarga THEN
                   DO:
                       /* Atualiza o valor contratado do credito pre-aprovado */
-                      ASSIGN crapcpa.vlctrpre = crapcpa.vlctrpre - crapepr.vlemprst
-                             crapcpa.vllimdis = TRUNC(((crapcpa.vllimdis +
-                                                        crapepr.vlemprst) /
-                                                      crappre.vlmulpli),0)
-                             crapcpa.vllimdis = crapcpa.vllimdis * crappre.vlmulpli.
-                  END.
+                      ASSIGN crapcpa.vlctrpre = crapcpa.vlctrpre - crapepr.vlemprst.
+                  END.*/
 
            END. /* END IF AVAIL crappre THEN */
 

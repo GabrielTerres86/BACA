@@ -20,13 +20,7 @@ CREATE OR REPLACE PACKAGE RISC0005 IS
 
   -- Busca do SKProcesso do Score Behaviour
   FUNCTION fn_get_skprocesso_behavi return VARCHAR2;
-  
-  -- Busca do Owner SAS conforme o ambiente conectado
-  FUNCTION fn_get_owner_sas return VARCHAR2;
 
-  -- Busca do DBLink conforme o ambiente conectado
-  FUNCTION fn_get_dblink_sas(pr_tpacesso IN VARCHAR2 DEFAULT 'R') return VARCHAR2;
-                             
   -- Procedimento para execução da carga do Behaviour enviada
   PROCEDURE pc_efetua_carga_score_behavi(pr_cdmodelo IN tbcrd_carga_score.cdmodelo%TYPE      -- Codigo do Modelo
                                         ,pr_dtbase   IN tbcrd_carga_score.dtbase%TYPE        -- Data base 
@@ -34,7 +28,7 @@ CREATE OR REPLACE PACKAGE RISC0005 IS
                                         ,pr_cdoperad IN tbcrd_carga_score.cdoperad%TYPE      -- Operador
                                         ,pr_dsrejeicao IN tbcrd_carga_score.dsrejeicao%TYPE  -- Descricão da Rejeição
                                         ,pr_dscritic OUT VARCHAR2);                          -- Critica de saida        
-                                        
+
   -- Procedimento para execução da carga do Behaviour enviada
   PROCEDURE pc_efetua_exclu_score_behavi(pr_cdmodelo IN tbcrd_carga_score.cdmodelo%TYPE      -- Codigo do Modelo
                                         ,pr_dtbase   IN tbcrd_carga_score.dtbase%TYPE        -- Data base 
@@ -139,40 +133,7 @@ CREATE OR REPLACE PACKAGE BODY RISC0005 AS
   BEGIN
     RETURN gene0001.fn_param_sistema('CRED',0,'SKPROC_SCORE_BEHAVIOUR'); 
   END;    
-  
-  -- Busca do Owner conforme o ambiente conectado
-  FUNCTION fn_get_owner_sas return VARCHAR2 IS
-  BEGIN
-    -- Somente buscar dblink de prod se estivermos em Prod
-    IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',0,'DB_NAME_PRODUC') THEN --> Produção
-      RETURN gene0001.fn_param_sistema('CRED',0,'OWNER_SAS_PROD'); 
-    ELSE
-      RETURN gene0001.fn_param_sistema('CRED',0,'OWNER_SAS_DESEN'); 
-    END IF;
-  END;  
-  
-  -- Busca do DBLink conforme o ambiente conectado
-  FUNCTION fn_get_dblink_sas(pr_tpacesso IN VARCHAR2 DEFAULT 'R') return VARCHAR2 IS
-    vr_cdacesso crapprm.cdacesso%TYPE;
-  BEGIN
-    -- Incluir sufixo do tipo de leitura
-    IF pr_tpacesso = 'R' THEN
-      -- Read-Only
-      vr_cdacesso := '_RO';
-    ELSE
-      -- Read Write
-      vr_cdacesso := '_RW';
-    END IF;
-    -- Somente buscar dblink de prod se estivermos em Prod
-    IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',0,'DB_NAME_PRODUC') THEN --> Produção
-      vr_cdacesso := gene0001.fn_param_sistema('CRED',0,'DBLINK_SAS_PROD'||vr_cdacesso); 
-    ELSE
-      vr_cdacesso := gene0001.fn_param_sistema('CRED',0,'DBLINK_SAS_DESEN'||vr_cdacesso); 
-    END IF;
-    -- Retornar valor montado
-    RETURN vr_cdacesso;
-  END;
-  
+
   -- Procedimento para execução da carga do Behaviour enviada
   PROCEDURE pc_efetua_carga_score_behavi(pr_cdmodelo IN tbcrd_carga_score.cdmodelo%TYPE      -- Codigo do Modelo
                                         ,pr_dtbase   IN tbcrd_carga_score.dtbase%TYPE        -- Data base 
@@ -200,7 +161,7 @@ CREATE OR REPLACE PACKAGE BODY RISC0005 AS
     vr_dscritic VARCHAR2(4000);
     vr_excsaida EXCEPTION;
     -- Variáveis para criação de cursor dinâmico
-    vr_nom_owner     VARCHAR2(100) := fn_get_owner_sas;
+    vr_nom_owner     VARCHAR2(100) := gene0005.fn_get_owner_sas;
     vr_nom_dblink_ro VARCHAR2(100);
     vr_nom_dblink_rw VARCHAR2(100);
     vr_skprocesso    VARCHAR2(100) := fn_get_skprocesso_behavi;
@@ -265,19 +226,19 @@ CREATE OR REPLACE PACKAGE BODY RISC0005 AS
     END IF;        
     
     -- Buscar dblink
-    vr_nom_dblink_ro := fn_get_dblink_sas('R');
+    vr_nom_dblink_ro := gene0005.fn_get_dblink_sas('R');
     IF vr_nom_dblink_ro IS NULL THEN
       vr_dscritic := 'Nao foi possivel retornar o DBLink(RO) do SAS, verifique!';
       RAISE vr_excsaida;
     END IF;
-    vr_nom_dblink_rw := fn_get_dblink_sas('W');
+    vr_nom_dblink_rw := gene0005.fn_get_dblink_sas('W');
     IF vr_nom_dblink_rw IS NULL THEN
       vr_dscritic := 'Nao foi possivel retornar o DBLink(RW) do SAS, verifique!';
       RAISE vr_excsaida;
     END IF;    
     
     
-    -- Buscar FatorControleCarga
+    -- Validar FatorControleCarga
     vr_sql_cursor := 'SELECT car.skcarga '
                   || '  FROM '||vr_nom_owner||'dw_fatocontrolecarga@'||vr_nom_dblink_ro||' car '
                   || ' WHERE car.skdtbase   = '||to_char(pr_dtbase, 'yyyymmdd')

@@ -3,7 +3,7 @@
 	 /************************************************************************
 	   Fonte: principal.php
 	   Autor: Guilherme
-	   Data : Fevereiro/2008                 Última Alteração: 26/06/2018
+	   Data : Fevereiro/2008                 Última Alteração: 06/02/2019
 
 	   Objetivo  : Mostrar opcao Principal da rotina de Dep. Vista
                    da tela ATENDA
@@ -16,9 +16,10 @@
 								Prj. 302 (Jean Michel).
 				   11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
                    12/03/2018 - Campos de data de inicio de atraso e data transf prejuizo (Marcel Kohls / AMCom)
-			 	 26/06/2018 - Campos do pagamento do prejuízo (Conta Transitória)
+				26/06/2018 - Campos do pagamento do prejuízo (Conta Transitória)
 				   			  P450 - Diego Simas - AMcom								 
-	
+					06/02/2019 - P442 - Remoção de informações de Pre-Aprovado da tela (Marcos-Envolti)
+
 	 ************************************************************************/
 	
 	session_start();
@@ -124,34 +125,10 @@
 
 	$camposPrejuizo = $xmlObjeto->roottag->tags[0]->tags;
 
-	// Montar o xml de Requisicao M441
-	$xml = "";
-	$xml .= "<Root>";
-	$xml .= " <Dados>";
-	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "		<idseqttl>1</idseqttl>";
-	$xml .= "		<nrcpfope>0</nrcpfope>";
-	$xml .= " </Dados>";
-	$xml .= "</Root>";	
-	
-	// Chamada mensageria
-    $xmlResult = mensageria($xml, "ATENDA", "CONSULTA_CARGA_CPA_VIGENTE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObjeto = getObjectXML($xmlResult);
-
-	//----------------------------------------------------------------------------------------------------------------------------------	
-	// Controle de Erros
-	//----------------------------------------------------------------------------------------------------------------------------------
-	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
-		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Aimaro',$retornoAposErro,false);
-	}
-	
 	$depvista  = $xmlGetDepVista->roottag->tags[0]->tags[0]->tags;
 	$liberaepr = $xmlGetDepVista->roottag->tags[1]->tags;
 	$qtLibEpr  = count($liberaepr);
-	
-	$camposLimData = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
-	
+
 	// Monta mensagem para aviso sobre liberação de empréstimos
 	$msgLibera = "";	
 	for ($i = 0; $i < $qtLibEpr; $i++) {
@@ -220,15 +197,9 @@
 
 		<label for="vlsdblfp"><? echo utf8ToHtml('Bloq. Fora Praça:') ?></label>
 		<input name="vlsdblfp" id="vlsdblfp" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlsdblfp")),2,",","."); ?>" />
-		
-		<label for="vllimdis"><? echo utf8ToHtml('Limite Pré-aprovado disponível:') ?></label>
-		<input name="vllimdis" id="vllimdis" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($camposLimData,"vllimdis")),2,",","."); ?>" />
-		
+
 		<label for="vlblqaco"><? echo utf8ToHtml('Bloqueado Acordo:') ?></label>
 		<input name="vlblqaco" id="vlblqaco" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlblqaco")),2,",","."); ?>" />
-
-		<label for="dtliberacao"><? echo utf8ToHtml('Última Atu. Lim. Pré-aprovado:') ?></label>
-		<input name="dtliberacao" id="dtliberacao" type="text" value="<?php echo getByTagName($camposLimData,"dtliberacao"); ?>" />
 
 		<label for="vlsdchsl"><? echo utf8ToHtml('Cheque Salário:') ?></label>
 		<input name="vlsdchsl" id="vlsdchsl" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlsdchsl")),2,",","."); ?>" />

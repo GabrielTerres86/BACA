@@ -261,6 +261,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
 			   nmsocial  crapttl.nmsocial%TYPE,
                cdscobeh  VARCHAR2(100),
 			   reciproc  INTEGER,			   
+               nrdgrupo  tbevento_grupos.nmdgrupo%TYPE
+			   nmsocial  crapttl.nmsocial%TYPE,
+               cdscobeh  VARCHAR2(100),
+			   reciproc  INTEGER,			   
                nrdgrupo  tbevento_grupos.nmdgrupo%TYPE);
   TYPE typ_tab_cabec IS TABLE OF typ_rec_cabec
     INDEX BY PLS_INTEGER;  
@@ -4474,11 +4478,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --              24/01/2019 - PJ298.2.2 - Ajustado mensagem de prejuizo de emprestimo (Rafael Faria - Supero)              
     --
-    -- 
     --              07/03/2019 - Correcao na mensagem de cadastro vencido (Cassia de Oliveira - GFT)
-    
-    --              09/04/2019 - Projeto Bacenjud fase 2 (Renato Cordeiro - AMcom)
-    --
+	--
+	--              25/02/2019 - P442 - Envio da Taxa na mensagem do PreAprovado (Marcos-Envolti)
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -6127,18 +6129,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     IF vr_tab_dados_cpa.exists(vr_idxcpa) AND 
        vr_tab_dados_cpa(vr_idxcpa).vldiscrd > 0 THEN
-      IF vr_tab_dados_cpa(vr_idxcpa).msgmanua IS NOT NULL THEN
         --> Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => vr_tab_dados_cpa(vr_idxcpa).msgmanua
                             ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
-    
-      ELSE
-          --> Incluir na temptable
-          pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
-                                                          'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
-                               pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
-        END IF;
-      END IF;
+    END IF;
     
     -- Verificar Cyber
     OPEN cr_crapcyc;

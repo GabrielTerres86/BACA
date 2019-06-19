@@ -1387,7 +1387,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0001 AS
           ELSE
             vr_vlresblq := 0;
           END IF;
-        
+
+          -- Bloqueio de pre-aprovado
+          empr0002.pc_proces_perca_pre_aprovad(pr_cdcooper => pr_cdcooper
+                                              ,pr_idcarga  => 0
+                                              ,pr_nrdconta => rw_crapass.nrdconta
+                                              ,pr_tppessoa => 0
+                                              ,pr_nrcpf_cnpj_base => 0
+                                              ,pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                              ,pr_idmotivo => 76
+                                              ,pr_qtdiaatr => 0
+                                              ,pr_valoratr => TO_NUMBER(vr_tbbloque(vr_indice))
+                                              ,pr_dscritic => vr_dscritic);
+                                              
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exp_erro;
+          END IF;
+		  
           -- Inserir o registro do bloqueio
           INSERT INTO crapblj(cdcooper
                              ,nrdconta

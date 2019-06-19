@@ -1,7 +1,7 @@
 /***********************************************************************
    Fonte: dep_vista.js
    Autor: Guilherme
-   Data : Fevereiro/2007                  Última Alteração: 24/01/2018
+   Data : Fevereiro/2007                  Última Alteração: 06/02/2019
 
    Objetivo  : Biblioteca de funções da rotina Dep. Vista da tela
                ATENDA
@@ -34,7 +34,7 @@
 				  		    PJ450 - Diego Simas - AMcom 
 			   04/09/2018 - Ajuste na mensagem de pagamento de prejuizo em conta sem saldo
 			   			    PJ450 - Diego Simas - AMcom
-
+               06/02/2019 - P442 - Remoção de informações de Pre-Aprovado da tela (Marcos-Envolti)
  ***********************************************************************/
 
 var contWin  = 0;  // Variável para contagem do número de janelas abertas para impressão de extratos
@@ -499,12 +499,6 @@ function controlaLayout( nomeForm ){
         var Ldtultlcr = $('label[for="dtultlcr"]', '#' + nomeForm);
         var Cdtultlcr = $('#dtultlcr', '#' + nomeForm);
 
-        var Lvllimdis = $('label[for="vllimdis"]', '#' + nomeForm);
-        var Cvllimdis = $('#vllimdis', '#' + nomeForm);
-
-        var Ldtliberacao = $('label[for="dtliberacao"]', '#' + nomeForm);
-        var Cdtliberacao = $('#dtliberacao', '#' + nomeForm);
-
 		var Ldttrapre = $('label[for="dttrapre"]', '#' + nomeForm);
         var Cdttrapre = $('#dttrapre', '#' + nomeForm);
 
@@ -526,8 +520,6 @@ function controlaLayout( nomeForm ){
         Lvllimcre.addClass('rotulo').css('width', '110px');
 		Lvlsldctr.addClass('rotulo').css('width', '110px');
         Ldtultlcr.css('width', '180px');
-        Lvllimdis.css('width', '180px');
-        Ldtliberacao.css('width', '180px');
 		Ldtiniatr.css('width', '180px');
 		Ldttrapre.css('width', '180px');
 
@@ -546,8 +538,6 @@ function controlaLayout( nomeForm ){
         Cvllimcre.css('width', '87px').addClass('monetario');
 		Cvlsldctr.css('width', '87px').addClass('monetario');
         Cdtultlcr.css('width', '93px').addClass('data');
-        Cvllimdis.css('width', '93px').addClass('monetario');
-        Cdtliberacao.css('width', '93px').addClass('data');
 		Cdtiniatr.css('width', '93px').addClass('data');
 		Cdttrapre.css('width', '93px').addClass('data');
 
@@ -754,7 +744,6 @@ function controlaLayout( nomeForm ){
         rVllimcre = $('label[for="vllimcre"]', '#' + nomeForm);
 		rVlsldctr = $('label[for="vlsldctr"]', '#' + nomeForm);
         rVlblqjud = $('label[for="vlblqjud"]', '#' + nomeForm);
-        rVllimcpa = $('label[for="vllimcpa"]', '#' + nomeForm);
         
 
         rDtrefere.addClass('rotulo').css({ 'width': '200px' });
@@ -768,7 +757,6 @@ function controlaLayout( nomeForm ){
         rVllimcre.addClass('rotulo').css({ 'width': '200px' });
 		rVlsldctr.addClass('rotulo').css({ 'width': '200px' });
         rVlblqjud.addClass('rotulo').css({ 'width': '200px' });
-        rVllimcpa.addClass('rotulo').css({ 'width': '200px' });
 	
         // campos
         cDtrefere = $('#dtrefere', '#' + nomeForm);
@@ -782,7 +770,6 @@ function controlaLayout( nomeForm ){
         cVllimcre = $('#vllimcre', '#' + nomeForm);
 		cVlsldctr = $('#vlsldctr', '#' + nomeForm);
         cVlblqjud = $('#vlblqjud', '#' + nomeForm);
-        cVllimcpa = $('#vllimcpa', '#' + nomeForm);
 
         cDtrefere.css({ 'width': '75px' });
         cVlsddisp.css({ 'width': '75px', 'text-align': 'right' });
@@ -795,7 +782,6 @@ function controlaLayout( nomeForm ){
         cVllimcre.css({ 'width': '75px', 'text-align': 'right' });
 		cVlsldctr.css({ 'width': '75px', 'text-align': 'right' });
         cVlblqjud.css({ 'width': '75px', 'text-align': 'right' });
-        cVllimcpa.css({ 'width': '75px', 'text-align': 'right' });
 		
 		$('input, select', '#'+nomeForm).desabilitaCampo();
 		cDtrefere.habilitaCampo();

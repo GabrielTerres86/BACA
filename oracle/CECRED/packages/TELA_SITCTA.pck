@@ -360,7 +360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SITCTA IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Lombardi
-        Data    : Dezembro/17.                    Ultima atualizacao: --/--/----
+        Data    : Dezembro/17.                    Ultima atualizacao: 11/02/2019
     
         Dados referentes ao programa:
     
@@ -370,7 +370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SITCTA IS
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 11/02/2019 - P442 - Observar novas estruturas do PreAprovado
     ..............................................................................*/
   BEGIN
     DECLARE
@@ -431,6 +431,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SITCTA IS
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.cdsitdct = pr_cdsitdct;
       rw_crapass cr_crapass%ROWTYPE;
+      
+      -- Buscar todas as contas com a situação e motivo específico
+      CURSOR cr_param_prod(pr_cdcooper         crapcop.cdcooper%type
+                          ,pr_cdproduto        tbcc_param_pessoa_produto.cdproduto%type       
+                          ,pr_cdoperac_produto tbcc_param_pessoa_produto.cdoperac_produto%type
+                          ,pr_flglibera        tbcc_param_pessoa_produto.flglibera%type    
+                          ,pr_idmotivo         tbcc_param_pessoa_produto.idmotivo%TYPE
+                          ,pr_cdsituacao       crapass.cdsitdct%TYPE) IS
+        SELECT par.tppessoa
+              ,par.nrcpfcnpj_base
+              ,par.nrdconta
+          FROM tbcc_param_pessoa_produto par
+         WHERE par.cdcooper         = pr_cdcooper
+           AND par.cdproduto        = pr_cdproduto
+           AND par.cdoperac_produto = pr_cdoperac_produto
+           AND par.flglibera        = pr_flglibera
+           AND nvl(par.idmotivo,0)  = decode(pr_idmotivo,0,nvl(par.idmotivo,0),pr_idmotivo)
+           AND EXISTS (SELECT 1
+                         FROM crapass ass
+                        WHERE ass.cdcooper = par.cdcooper
+                          AND ass.nrdconta = decode(par.nrdconta,0,ass.nrdconta,par.nrdconta)
+                          AND ass.inpessoa = decode(par.tppessoa,0,ass.inpessoa,par.tppessoa)
+                          AND ass.nrcpfcnpj_base = decode(par.nrcpfcnpj_base,0,ass.nrcpfcnpj_base,par.nrcpfcnpj_base)
+                          AND ass.cdsitdct = pr_cdsituacao);
       
     BEGIN
       
@@ -666,32 +690,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SITCTA IS
         -- Verifica se deve liberar ou desbloquear 
         -- pre aprovado para contas com essa situacao.
         IF pr_inimpede_credito = 1 OR pr_incontratacao_produto > 0 THEN
-          -- Desbloquear
-          UPDATE tbepr_param_conta param
-             SET param.flglibera_pre_aprv  = 0  -- liberado
-                ,param.idmotivo            = 66
-                ,param.dtatualiza_pre_aprv = TRUNC(SYSDATE)
-           WHERE param.cdcooper            = vr_cdcooper
-             AND param.flglibera_pre_aprv  = 1  -- Apenas os que estão liberados
-             AND EXISTS (SELECT 1
-                           FROM crapass ass
-                          WHERE ass.cdcooper = param.cdcooper
-                            AND ass.nrdconta = param.nrdconta
-                            AND ass.cdsitdct = pr_cdsituacao); 
+          -- Buscar todas as contas com liberação do pre-aprovado e que estão com a situação específica
+          FOR rw_par IN cr_param_prod(pr_cdcooper         => vr_cdcooper
+                                     ,pr_cdproduto        => 25 -- PreAprovado
+                                     ,pr_cdoperac_produto => 1 -- Contratação
+                                     ,pr_flglibera        => 1 -- Liberado atualmente
+                                     ,pr_idmotivo         => 0 -- Sem filtro
+                                     ,pr_cdsituacao       => pr_cdsituacao) LOOP
+            -- Para cada registro Bloquear
+            cada0006.pc_mantem_param_pessoa_prod(pr_cdcooper           => vr_cdcooper
+                                                ,pr_nrdconta           => rw_par.nrdconta      
+                                                ,pr_tppessoa           => rw_par.tppessoa      
+                                                ,pr_nrcpfcnpj_base     => rw_par.nrcpfcnpj_base
+                                                ,pr_cdproduto          => 25 -- PreAprovado
+                                                ,pr_cdoperac_produto   => 1 -- Contratação
+                                                ,pr_flglibera          => 0 -- Bloqueado
+                                                ,pr_dtvigencia_paramet => NULL -- Sem final vigencia
+                                                ,pr_idmotivo           => 66 -- Situação da conta com problema
+                                                ,pr_cdoperad           => vr_cdoperad
+                                                ,pr_idorigem           => vr_idorigem
+                                                ,pr_nmdatela           => vr_nmdatela
+                                                ,pr_dscritic           => vr_dscritic);
+            -- Em caso de erro
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+            END IF;
+          END LOOP; 
         ELSE
-          -- Liberar
-          UPDATE tbepr_param_conta param
-             SET param.flglibera_pre_aprv = 1  -- liberado
-                ,param.idmotivo           = NULL
-                ,param.dtatualiza_pre_aprv = TRUNC(SYSDATE)
-           WHERE param.cdcooper           = vr_cdcooper
-             AND param.flglibera_pre_aprv = 0  -- Apenas os que estão bloqueados
-             AND param.idmotivo           = 66 -- Pelo motivo 66
-             AND EXISTS (SELECT 1
-                           FROM crapass ass
-                          WHERE ass.cdcooper = param.cdcooper
-                            AND ass.nrdconta = param.nrdconta
-                            AND ass.cdsitdct = pr_cdsituacao); 
+          -- Buscar todas as contas com Bloqueio do pre-aprovado e que estão com a situação específica
+          FOR rw_par IN cr_param_prod(pr_cdcooper         => vr_cdcooper
+                                     ,pr_cdproduto        => 25 -- PreAprovado
+                                     ,pr_cdoperac_produto => 1 -- Contratação
+                                     ,pr_flglibera        => 1 -- Liberado atualmente
+                                     ,pr_idmotivo         => 66 -- Situação da conta com problema
+                                     ,pr_cdsituacao       => pr_cdsituacao) LOOP
+            -- Para cada registro Bloquear
+            cada0006.pc_mantem_param_pessoa_prod(pr_cdcooper           => vr_cdcooper
+                                                ,pr_nrdconta           => rw_par.nrdconta      
+                                                ,pr_tppessoa           => rw_par.tppessoa      
+                                                ,pr_nrcpfcnpj_base     => rw_par.nrcpfcnpj_base
+                                                ,pr_cdproduto          => 25 -- PreAprovado
+                                                ,pr_cdoperac_produto   => 1 -- Contratação
+                                                ,pr_flglibera          => 1 -- Liberado
+                                                ,pr_dtvigencia_paramet => NULL -- Sem final vigencia
+                                                ,pr_idmotivo           => 75 -- Situação da conta regularizada
+                                                ,pr_cdoperad           => vr_cdoperad
+                                                ,pr_idorigem           => vr_idorigem
+                                                ,pr_nmdatela           => vr_nmdatela
+                                                ,pr_dscritic           => vr_dscritic);
+            -- Em caso de erro
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+            END IF;
+          END LOOP;
         END IF;
       END IF;
       

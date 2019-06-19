@@ -26,7 +26,6 @@
 				<select id="cddopcao" name="cddopcao" style="width: 477px;">
                     <option value='C'>C - Consultar regra</option>
 					<option value='A'>A - Alterar regra</option>
-					<option value='G'>G - Gerenciar Carga</option>
 				</select>
 				<a href="#" class="botao" id="btnOK" name="btnOK" style = "text-align:right;">OK</a>
 			</td>

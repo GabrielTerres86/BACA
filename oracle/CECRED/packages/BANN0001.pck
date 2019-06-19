@@ -73,21 +73,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANN0001 IS
                      )
       AND    ordembanner.cdbanner = tban.cdbanner
       ORDER BY ordembanner.seqbanner;
-    
-    CURSOR cur_preaprovado IS
-    SELECT 1
-      FROM crapcpa              cpa
-          ,tbepr_carga_pre_aprv car
-          ,tbepr_param_conta    par
-     WHERE cpa.iddcarga = car.idcarga
-       AND cpa.cdcooper = par.cdcooper(+)
-       AND cpa.nrdconta = par.nrdconta(+)
-       AND car.indsituacao_carga = 1 -- Gerada
-       AND car.flgcarga_bloqueada = 0 -- Liberada
-       AND (car.dtfinal_vigencia IS NULL OR car.dtfinal_vigencia >= TRUNC(SYSDATE)) -- Vigente
-       AND NVL(par.flglibera_pre_aprv, 1) = 1 -- Valida se Pré-Aprovado está liberado para a conta específica
-       AND cpa.cdcooper = pr_cdcooper
-       AND cpa.nrdconta = pr_nrdconta;
+
     -- Variaveis de XML
     vr_xml_tmp VARCHAR2(32767);
     --
@@ -98,35 +84,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANN0001 IS
     vr_nrsegundos_transicao        tbgen_banner_param.nrsegundos_transicao%TYPE;
     --
     vr_tipo_pessoa                 CRAPASS.Inpessoa%TYPE;
+	
+    -- Buscar dados da pessoa
+    CURSOR cr_crapass IS
+      SELECT crap.nrcpfcnpj_base
+            ,crap.inpessoa
+        FROM crapass crap
+       WHERE crap.nrdconta = pr_nrdconta
+         AND crap.cdcooper = pr_cdcooper;
+    vr_nrcpfcnpj_base crapass.nrcpfcnpj_base%TYPE;
+    vr_tipo_pessoa                 CRAPASS.Inpessoa%TYPE;
+    
+    -- Tem PreAprovado?
     vr_pre_aprovado                NUMBER:=0;
   BEGIN
-    --
-    --Busca o código do tipo de pessoa
-    BEGIN
-      SELECT crap.INPESSOA
-      INTO   vr_tipo_pessoa
-      FROM   CRAPASS crap
-      WHERE  1=1
-        AND    crap.nrdconta = pr_nrdconta
-        AND    crap.cdcooper = pr_cdcooper;
-    EXCEPTION
-      WHEN no_data_found THEN
-        vr_tipo_pessoa := 0; 
-      WHEN OTHERS THEN
+	--
+    --Busca o código do tipo de pessoa e nrcpf_cnpjbase
+    OPEN cr_crapass;
+    FETCH cr_crapass
+     INTO vr_nrcpfcnpj_base
+         ,vr_tipo_pessoa;
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
         vr_dscritic := 'Não foi possivel localizar o tipo de pessoa. Erro: '||SQLERRM;
-        RAISE;                            
-    END;
+      RAISE vr_exc_erro; 
+    END IF;
+    CLOSE cr_crapass;
+	
     -- Verifica se o usuário tem crédito pre-aprovado
-    BEGIN
-       OPEN cur_preaprovado;
-       FETCH cur_preaprovado
-       INTO vr_pre_aprovado;
-       CLOSE cur_preaprovado;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possivel verificar se o cooperado tem crédito pré-aprovado. Erro: '||SQLERRM;
-        RAISE;  
-    END;
+    IF empr0002.fn_flg_preapv_liberado(pr_cdcooper       => pr_cdcooper
+                                      ,pr_tppessoa       => vr_tipo_pessoa
+                                      ,pr_nrcpfcnpj_base => vr_nrcpfcnpj_base) = 1 
+    AND empr0002.fn_idcarga_pre_aprovado(pr_cdcooper        => pr_cdcooper
+                                        ,pr_tppessoa        => vr_tipo_pessoa
+                                        ,pr_nrcpf_cnpj_base => vr_nrcpfcnpj_base) > 0 THEN
+      -- Há pre-aprovado
+      vr_pre_aprovado := 1;
+    END IF;   
     -- Criar documento XML
     dbms_lob.createtemporary(pr_xml_ret, TRUE);
     dbms_lob.open(pr_xml_ret, dbms_lob.lob_readwrite);
@@ -180,6 +174,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANN0001 IS
                            ,pr_fecha_xml      => TRUE);
       
   EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_dscritic IS NULL THEN
+        vr_dscritic := 'Ocorreu um erro ao buscar os banners.';
+      END IF;
+      pr_xml_ret := '<dsmsgerr>' || vr_dscritic || '</dsmsgerr>';
     WHEN OTHERS THEN
       IF vr_dscritic IS NULL THEN
         vr_dscritic := 'Ocorreu um erro ao buscar os banners.';

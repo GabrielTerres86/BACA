@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : James Prust Junior
-   Data    : Agosto/2014.                       Ultima atualizacao: 09/04/2018
+   Data    : Agosto/2014.                       Ultima atualizacao: 21/02/2019
    
    Dados referentes ao programa:
    
@@ -13,6 +13,9 @@
    
    Alteracoes: 09/04/2018 - Ajuste para que o caixa eletronico possa utilizar o mesmo
                             servico da conta online (PRJ 363 - Rafael Muniz Monteiro)
+							
+			   21/02/2019 - P442 - Passar vazio em campos da aprovacao 
+                            quando somente previa (Marcos-Envolti)
 
 ..............................................................................*/
 
@@ -69,7 +72,7 @@ IF VALID-HANDLE(h-b1wgen0188) THEN
                                                          INPUT par_nrdcaixa,
                                                          INPUT par_cdoperad,
                                                          INPUT par_nmdatela,
-                                                         INPUT par_cdorigem, /* Projeto 363 - Novo ATM -> estava fixo 3,*/ /* par_cdorigem */
+                                                         INPUT 3, /* par_cdorigem */
                                                          INPUT par_nrdconta,
                                                          INPUT par_idseqttl,
                                                          INPUT par_dtmvtolt,
@@ -83,6 +86,8 @@ IF VALID-HANDLE(h-b1wgen0188) THEN
                                                          INPUT par_dtdpagto,
                                                          INPUT par_vltaxiof,
                                                          INPUT par_vltariof,
+                                                         INPUT ?,
+                                                         INPUT 0,
                                                          OUTPUT par_nmarqimp,
                                                          OUTPUT TABLE tt-erro).
           END. /* END IF par_flgprevi THEN */

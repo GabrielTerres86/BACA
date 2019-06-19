@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0167.p
    Autor   : Andre Santos - SUPERO
-   Data    : Agosto/2013                     Ultima atualizacao: 04/08/2015
+   Data    : Agosto/2013                     Ultima atualizacao: 06/02/2019
 
    Dados referentes ao programa:
 
@@ -10,6 +10,8 @@
                Finalidade de  Emprestimos.
 
    Alteracoes: 04/08/2015 - Alterações e correções (Lunelli SD 102123)
+   
+               06/02/2019 - P510 - Remoção de proc convertida excluir-lcr-finali (Marcos-Envolti)
 
 ............................................................................ */
 
@@ -272,40 +274,6 @@ PROCEDURE excluir-finali:
         END.
     ELSE 
         DO:            
-            RUN piXmlNew.
-            RUN piXmlSave.
-        END.
-
-END PROCEDURE.
-
-PROCEDURE excluir-lcr-finali:
-
-    RUN excluir-lcr-finali IN hBO
-                      (INPUT aux_cdcooper,
-                       INPUT aux_cdagenci,
-                       INPUT aux_nrdcaixa,
-                       INPUT aux_cdoperad,
-                       INPUT aux_nmdatela,
-                       INPUT aux_idorigem,
-                       INPUT aux_dtmvtolt,
-                       INPUT aux_cddopcao,
-                       INPUT aux_cdfinemp,
-                       INPUT TABLE tt-craplch).
-
-    IF  RETURN-VALUE <> "OK" THEN 
-        DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-    
-            IF  NOT AVAILABLE tt-erro THEN 
-                DO:
-                    CREATE tt-erro.
-                    ASSIGN tt-erro.dscritic = "Operacao nao efetuada.".
-                END.
-    
-            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE, INPUT "Erro").
-        END.
-    ELSE 
-        DO:
             RUN piXmlNew.
             RUN piXmlSave.
         END.

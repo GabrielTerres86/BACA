@@ -6,7 +6,6 @@
  * OBJETIVO     : Mostrar tela IMPPRE
  * --------------
  * ALTERAÇÕES   : 
- *				  
  * --------------
  */
 ?>
@@ -59,7 +58,7 @@
 									<table width="100%"  border="0" cellspacing="0" cellpadding="0">
 										<tr>
 											<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('IMPPRE - Importação de Carga Manual de Pré-aprovado') ?></td>
+											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('IMPPRE - Importar Cargas de Pré-aprovado') ?></td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif" align="right"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold">F2 = AJUDA</a>&nbsp;&nbsp;</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold"><img src="<?php echo $UrlImagens; ?>geral/ico_help.jpg" width="15" height="15" border="0"></a></td>
 											<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
@@ -68,19 +67,20 @@
 								</td>
 							</tr>
 							<tr>
-								<td id="tdConteudoTela" class="tdConteudoTela" align="center">								
+								<td id="tdConteudoTela" class="tdConteudoTela" align="center">
 									<table width="100%" border="0" cellpadding="3" cellspacing="0">
 										<tr>
 											<td style="border: 1px solid #F4F3F0;">
 												<table width="100%" border="0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
 													<tr>
 														<td align="center">
-															<table width="590" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
+															<table width="820" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
 																<tr>
 																	<td>
+																		<div id="divRotina"></div>
+																		<div id="divUsoGenerico"></div>
 																		<div id="divTela">
 																			<? include('form_cabecalho.php'); ?>
-
 																			<div id="divDetalhes"></div>
 																		</div>
 																	</td>

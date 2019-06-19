@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 05/11/2018
+   Data    : Novembro/91.                    Ultima atualizacao: 06/02/2019
 
    Dados referentes ao programa:
 
@@ -201,8 +201,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
                           - Adicionar Round 2 para o valor vliofmes (Lucas Ranghetti M338.1)
 
-         26/04/2017 - Nao considerar mais valores bloqueados para composicao de saldo disponivel
-                      Heitor (Mouts) - Melhoria 440
+               26/04/2017 - Nao considerar mais valores bloqueados para composicao de saldo disponivel
+                            Heitor (Mouts) - Melhoria 440
 
                05/06/2017 - Ajustes para incrementar/zerar variaveis quando craplau também
                             (Lucas Ranghetti/Thiago Rodrigues)
@@ -243,18 +243,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                             valor final da diferença (Renato Darosci - Supero)
 
                26/07/2018 - P450 - Gravar saldo da conta transitória (Diego Simas/AMcom)
-							
+
 							 05/11/2018 - Correção na chamada da "PREJ0003.fn_verifica_preju_conta"
 							              (Reginaldo / AMcom / P450)
 
                12/02/2019 - Ajuste feito para melhorar o desempenho do programa. (Kelvin - PRB0040461)
-							
+
                12/02/2019 - Ajustes para melhorar desempenho do programa. (Jackson - PRB0041703)
 			                    - Removido HINT que forçava uso de índice no cursor cr_crapass.
 						              - Corrigida condição do cursor cr_crapfdc2, aplicando UPPER ao campo crapfdc.nrdctitg
                             para uso de acordo com o índice definido.
 
 			   17/05/2019 - Adicionada verificação para recálculo somente se houve resgate (Jefferson - MoutS)
+
+               06/02/2019 - P442 - Remoção da chamada a rotina que grava a posição do pre-aprovado para verificação na Atenda. (Marcos-Envolti)
 
      ............................................................................. */
 
@@ -778,7 +780,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
        vr_dtrisclq_aux DATE;
 	   vr_dtcorte_prm  DATE;
-       vr_dtrefere  DATE;
 
        vr_qtddsdev_aux  NUMBER:= 0;
 
@@ -809,7 +810,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_vldisvar  crapsld.vlsddisp%TYPE;
        vr_cdprogra  VARCHAR2(10);
        vr_dscritic  VARCHAR2(2000);
-       vr_dsreturn  VARCHAR2(3);
        vr_tab_erro  GENE0001.typ_tab_erro;
        vr_ingerneg  BOOLEAN := TRUE;
        vr_des_erro  VARCHAR2(100);
@@ -3466,18 +3466,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        --Fechar cursor
        CLOSE cr_craptab;
 
-       -- M441 - Melhorias Pré-aprovado (Roberto Holz   Mout´s)
-       -- chamada da procedure para calculo do campo crapsda.vllimcpa --
-       empr0002.pc_gerar_carga_vig_crapsda(pr_cdcooper => pr_cdcooper
-                                          ,pr_DTMVTOLT => vr_dtmvtolt
-                                          ,pr_dscritic => vr_dscritic);
-       --Se ocorreu erro
-       IF vr_dscritic IS NOT NULL THEN
-         --Levantar Exceção
-         RAISE vr_exc_saida;
-       END IF;   
-       --                                
-       
        /* Eliminação dos registros de restart */
        BTCH0001.pc_elimina_restart(pr_cdcooper => pr_cdcooper
                                   ,pr_cdprogra => vr_cdprogra

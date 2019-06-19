@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 23/05/2019
+      Data: Janeiro/2010                        Ultima alteracao: 08/05/2019
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -322,7 +322,7 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 			   
             18/06/2018 - Retornar o complemento na consulta de extrato
                          (Douglas - Prj 467)
-			      
+			            
             15/08/2018 - Inclusão da operação 200 - URA
                          (Everton - Mouts - Projeto 427)
 			            
@@ -335,10 +335,11 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
                          
             17/12/2018 - Ajuste no tratamento de erro na consulta de dados do ECO (Douglas - SCTASK0039027)
 
-            08/05/2019 - Ajustar parametros na chamada da rotina 
+		    08/05/2019 - Ajustar parametros na chamada da rotina 
                          pc_cadastrar_agendamento (Renato - Supero - P485)
-
-            23/05/2019 - Adicionado operacao 80 - verifica_conta_monitorada. (Reinert - P530)
+						 
+			24/02/2019 - P442 - Passar vazio em campos da aprovacao 
+                            quando somente previa (Marcos-Envolti)
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -7990,6 +7991,8 @@ PROCEDURE busca-extrato-pre-aprovado:
                         INPUT aux_dtdpagto,
                         INPUT aux_vltaxiof,
                         INPUT aux_vltariof,
+                        INPUT ?,
+                        INPUT 0,
                         OUTPUT aux_nmarqimp,
                         OUTPUT TABLE tt-erro).
     

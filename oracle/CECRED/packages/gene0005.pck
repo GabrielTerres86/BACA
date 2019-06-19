@@ -219,7 +219,13 @@ CREATE OR REPLACE PACKAGE CECRED.gene0005 IS
 																	
   /* Função recebe um string de 2 posições e retorna se é um código válido de UF (1 = válido, 0 = inválido) */
   function fn_valida_uf(pr_uf in tbcadast_uf.cduf%type) return integer;
-  
+
+  -- Busca do Owner SAS conforme o ambiente conectado
+  FUNCTION fn_get_owner_sas return VARCHAR2;
+
+  -- Busca do DBLink conforme o ambiente conectado
+  FUNCTION fn_get_dblink_sas(pr_tpacesso IN VARCHAR2 DEFAULT 'R') return VARCHAR2;
+
   END GENE0005;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
@@ -2949,6 +2955,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
     close cr_caduf;
     return(v_retorno);
   end;
-
+  
+  -- Busca do Owner conforme o ambiente conectado
+  FUNCTION fn_get_owner_sas return VARCHAR2 IS
+  BEGIN
+    -- Somente buscar dblink de prod se estivermos em Prod
+    IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',0,'DB_NAME_PRODUC') THEN --> Produção
+      RETURN gene0001.fn_param_sistema('CRED',0,'OWNER_SAS_PROD'); 
+    ELSE
+      RETURN gene0001.fn_param_sistema('CRED',0,'OWNER_SAS_DESEN'); 
+    END IF;
+  END;  
+  
+  -- Busca do DBLink conforme o ambiente conectado
+  FUNCTION fn_get_dblink_sas(pr_tpacesso IN VARCHAR2 DEFAULT 'R') return VARCHAR2 IS
+    vr_cdacesso crapprm.cdacesso%TYPE;
+  BEGIN
+    -- Incluir sufixo do tipo de leitura
+    IF pr_tpacesso = 'R' THEN
+      -- Read-Only
+      vr_cdacesso := '_RO';
+    ELSE
+      -- Read Write
+      vr_cdacesso := '_RW';
+    END IF;
+    -- Somente buscar dblink de prod se estivermos em Prod
+    IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',0,'DB_NAME_PRODUC') THEN --> Produção
+      vr_cdacesso := gene0001.fn_param_sistema('CRED',0,'DBLINK_SAS_PROD'||vr_cdacesso); 
+    ELSE
+      vr_cdacesso := gene0001.fn_param_sistema('CRED',0,'DBLINK_SAS_DESEN'||vr_cdacesso); 
+    END IF;
+    -- Retornar valor montado
+    RETURN vr_cdacesso;
+  END;
+  
 END GENE0005;
 /

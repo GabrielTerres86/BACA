@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : André Santos - SUPERO
-   Data    : Agosto/2013.                       Ultima atualizacao: 04/08/2015
+   Data    : Agosto/2013.                       Ultima atualizacao: 06/02/2019
 
    Dados referentes ao programa:
 
@@ -17,6 +17,7 @@
                             
                04/08/2015 - Alterações e correções (Lunelli SD 102123)             
                             
+               06/02/2019 - P510 - Remoção de proc convertida excluir-lcr-finali (Marcos-Envolti)
 ............................................................................. */
 
 DEF VAR aux_dsretorn AS CHAR                                  NO-UNDO.
@@ -521,56 +522,6 @@ PROCEDURE excluir-finali:
     RELEASE crapfin.
 
     RETURN aux_dsretorn.
-
-END PROCEDURE.
-
-/******************************************************************************/
-PROCEDURE excluir-lcr-finali:
-
-    DEF INPUT  PARAM par_cdcooper  AS INTE                             NO-UNDO.
-    DEF INPUT  PARAM par_cdagenci  AS INTE                             NO-UNDO.
-    DEF INPUT  PARAM par_nrdcaixa  AS INTE                             NO-UNDO.
-    DEF INPUT  PARAM par_cdoperad  AS CHAR                             NO-UNDO.
-    DEF INPUT  PARAM par_nmdatela  AS CHAR                             NO-UNDO.
-    DEF INPUT  PARAM par_idorigem  AS INTE                             NO-UNDO.
-    DEF INPUT  PARAM par_dtmvtolt  AS DATE                             NO-UNDO.
-    DEF INPUT  PARAM par_cddopcao  AS CHAR                             NO-UNDO.
-    DEF INPUT  PARAM par_cdfinemp  AS INTE                             NO-UNDO.
-
-    DEF INPUT PARAM TABLE FOR tt-craplch. /* Lcr a serem excluidas */
-
-    Grava: DO  TRANSACTION ON ERROR  UNDO Grava, LEAVE Grava
-                           ON QUIT   UNDO Grava, LEAVE Grava
-                           ON STOP   UNDO Grava, LEAVE Grava
-                           ON ENDKEY UNDO Grava, LEAVE Grava:
-
-        exclui-lcr:
-        FOR EACH tt-craplch NO-LOCK:
-
-            DO WHILE TRUE:
-
-                FIND craplch WHERE craplch.cdcooper = par_cdcooper
-                               AND craplch.cdfinemp = par_cdfinemp
-                               AND craplch.cdlcrhab = tt-craplch.cdlcrhab
-                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-
-                IF  NOT AVAILABLE craplch THEN
-                    IF  LOCKED craplch THEN 
-                        DO:
-                            PAUSE 1 NO-MESSAGE.
-                            NEXT.
-                        END.
-                    ELSE
-                        NEXT exclui-lcr.
-                   
-                DELETE craplch.
-                LEAVE.
-            END.
-        END.
-
-        LEAVE Grava.
-
-    END. /* FIM TRANSACTION GRAVA */
 
 END PROCEDURE.
 

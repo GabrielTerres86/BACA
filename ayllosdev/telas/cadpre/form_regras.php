@@ -9,6 +9,8 @@
      *
      *                27/04/2018 - Alteração  da situação de "1,2,3,4,5,6,8,9" para "1,2,3,4,5,7,8,9". 
      *                             Projeto 366. (Lombardi)
+     *
+     *                06/02/2019 - Petter - Envolti. Ajustar novos campos e refatorar funcionalidades para o projeto 442.
      * --------------
      */
 
@@ -68,11 +70,6 @@
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir0"></td>
 											<td width="1"></td>
 
-                                            <td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq1"></td>
-											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen1"><a href="#" id="linkAba1" class="txtNormalBold" onClick="acessaOpcaoAba(1);return false;">Risco</a></td>
-											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir1"></td>
-											<td width="1"></td>
-
                                             <td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq2"></td>
 											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen2"><a href="#" id="linkAba2" class="txtNormalBold" onClick="acessaOpcaoAba(2);return false;">Devolução de Cheque</a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir2"></td>
@@ -100,57 +97,6 @@
                                                         <input name="dsfinemp" id="dsfinemp" type="text" />
                                                     </td>
                                                 </tr>
-                                                <tr>		
-                                                    <td>
-                                                        <label for="nrmcotas">Multiplicar Cotas Capital:</label>	
-                                                        <input name="nrmcotas" type="text"  id="nrmcotas" /> <label>&nbsp;vezes</label>
-                                                    </td>
-                                                </tr>
-                                                <tr>		
-                                                    <td>
-                                                        <label for="dssitdop">Situa&ccedil;&atilde;o das Contas:</label>
-                                                        <?php
-                                                            $arrsitua = array('1','2','3','4','5','7','8','9');
-                                                            foreach ($arrsitua as $flgsitua) {
-                                                                echo '<label for="sit' . $flgsitua . '">' . $flgsitua . '</label>';
-                                                                echo '<input type="checkbox" name="dssitdop" id="sit' . $flgsitua . '" value="' . $flgsitua . '"/>';
-                                                            }
-                                                        ?>
-                                                    </td>
-                                                </tr>
-                                                <tr>		
-                                                    <td>
-                                                        <label for="qtmescta">Tempo de Conta:</label>	
-                                                        <input name="qtmescta" type="text"  id="qtmescta" /> <label>&nbsp;meses</label>
-                                                    </td>
-                                                </tr>
-                                                <?php
-                                                    if ($inpessoa == 1) { 
-                                                        ?>
-                                                        <tr>		
-                                                            <td>
-                                                                <label for="qtmesadm">Tempo Admissão Emprego Atual:</label>	
-                                                                <input name="qtmesadm" type="text"  id="qtmesadm" /> <label>&nbsp;meses</label>
-                                                            </td>
-                                                        </tr>
-                                                        <?php
-                                                    } else {
-                                                        ?>
-                                                        <tr>		
-                                                            <td>
-                                                                <label for="qtmesemp">Tempo Fundação Empresa:</label>	
-                                                                <input name="qtmesemp" type="text"  id="qtmesemp" /> <label>&nbsp;meses</label>
-                                                            </td>
-                                                        </tr>
-                                                        <?php
-                                                    }
-                                                ?>
-                                                <tr>
-                                                    <td>
-                                                        <label for="nrrevcad">Revis&atilde;o Cadastral:</label>	
-                                                        <input name="nrrevcad" type="text"  id="nrrevcad" /> <label>&nbsp;meses</label>
-                                                    </td>
-                                                </tr>
                                                 <tr>
                                                     <td>
                                                         <label for="vllimmin">Limite M&iacute;nimo Ofertado:</label>	
@@ -171,63 +117,23 @@
                                                 </tr>
                                                 <tr>
                                                     <td>
-                                                        <label for="vlpercom">Comprometimento de Renda:</label>	
-                                                        <input name="vlpercom" type="text"  id="vlpercom"/> <label>&nbsp;(%)</label>
-                                                        <label for="qtdiaver">Verificar operações inclusas há:</label>	
-                                                        <input name="qtdiaver" type="text"  id="qtdiaver"/> <label>&nbsp;dias</label>
+                                                        <label for="vllimman">Limite M&aacute;ximo para Cargas Manuais:</label>	
+                                                        <input name="vllimman" type="text"  id="vllimman"/> <label>&nbsp;(R$)</label>
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td>
-                                                        <label for="vlmaxleg">Multiplicar Valor M&aacute;x. Legal:</label>	
-                                                        <input name="vlmaxleg" type="text"  id="vlmaxleg"/> <label>&nbsp;(%)</label>
-                                                        <label for="qtmesblq">Período de Bloqueio de Limite por Refinanciamento:</label>	
-                                                        <input name="qtmesblq" type="text"  id="qtmesblq"/> <label>&nbsp;meses</label>
+                                                        <label for="vllimaut">Limite M&aacute;ximo para Cargas Autom&aacute;ticas:</label>	
+                                                        <input name="vllimaut" type="text"  id="vllimaut"/> <label>&nbsp;(R$)</label>
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td>
-                                                        <div id="divLimiteCoop"></div>
+                                                        <label for="qtdiavig">Qtde Dias Máximo de Vigência:</label>
+                                                        <input name="qtdiavig" type="text" id="qtdiavig" />
                                                     </td>
                                                 </tr>
                                             </table>
-                                        </div>
-
-                                        <div id="divAba1" class="clsAbas">
-											<div style="margin-top: 10px;" ></div>
-                                            <div id="divRiscos">
-												<div class="divRegistros">
-													<table>
-														<thead>
-															<tr>
-																<th>Risco</th>
-																<th>Valor Limite (R$)</th>
-																<th>Linha de Cr&eacute;dito</th>
-																<th>Taxa (%)</th>
-															</tr>
-														</thead>
-														<tbody>
-														<?
-															$letra = array('A','B','C','D','E','F','G','H');
-															
-															for ($i = 0; $i < 8; $i++) {?>
-																<tr style="cursor: pointer;">
-																	<td><b><p class="dsrisco" id="dsrisco_<?echo $letra[$i]?>"></p></b></td>
-																	<td><input class="vllimite" name="vllimite_<?echo $letra[$i]?>" type="text"  id="vllimite_<?echo $letra[$i]?>" /></td>
-																	<td>
-																		<input class="cdlcremp" type="text" name="cdlcremp_<?echo $letra[$i]?>" id="cdlcremp_<?echo $letra[$i]?>" />
-																		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-																		<input class="dslcremp" name="dslcremp_<?echo $letra[$i]?>" id="dslcremp_<?echo $letra[$i]?>" type="text" />
-																		<input type="hidden" name="txmensal_<?echo $letra[$i]?>" type="text" />
-																	</td>
-																	<td><b><p class="txmensal" id="txmensal_<?echo $letra[$i]?>"></p></b></td>
-																</tr>
-															<?}?>
-														</tbody>
-													</table>
-												</div>
-												<div style="margin-top: 10px;" ></div>
-											</div>
                                         </div>
 
                                         <div id="divAba2" class="clsAbas">
@@ -269,14 +175,20 @@
 											<table width="100%">
                                                 <tr>
                                                     <td>
-                                                        <label for="qtdevolu">Quantidade de devolu&ccedil;&otilde;es:</label>	
-                                                        <input name="qtdevolu" type="text"  id="qtdevolu" />
+                                                        <label for="qtdiadev">Qtd. dias em atraso:</label>	
+                                                        <input name="qtdiadev" type="text"  id="qtdiadev" /> <label>&nbsp;dias &uacute;teis</label>
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <td>
-                                                        <label for="qtdiadev">Per&iacute;odo de devolu&ccedil;&otilde;es:</label>	
-                                                        <input name="qtdiadev" type="text"  id="qtdiadev" /> <label>&nbsp;dias &uacute;teis</label>
+                                                        <label for="vldiadev">Valor em atraso:</label>
+                                                        <input name="vldiadev" type="text" id="vldiadev"/>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <label for="qtdevolu">Qtd. Opera&ccedil;&otilde;es em Atraso:</label>	
+                                                        <input name="qtdevolu" type="text" id="qtdevolu" />
                                                     </td>
                                                 </tr>
                                             </table>
@@ -289,13 +201,17 @@
                                                     <tr>
                                                         <td>
                                                             <label for="qtctaatr">Conta Corrente em Atraso:</label>	
-                                                            <input name="qtctaatr" type="text"  id="qtctaatr" /> <label>&nbsp;dias &uacute;teis</label>
+                                                            <input name="qtctaatr" type="text"  id="qtctaatr" /> <label>&nbsp;dias &uacute;teis &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                                                            <label for="vlctaatr">Valor Corrente em Atraso:</label>	
+                                                            <input name="vlctaatr" type="text"  id="vlctaatr" />
                                                         </td>
                                                     </tr>
                                                     <tr>
                                                         <td>
                                                             <label for="qtepratr">Empr&eacute;stimo em Atraso:</label>	
                                                             <input name="qtepratr" type="text"  id="qtepratr" /> <label>&nbsp;dias corridos</label>
+                                                            <label for="vlepratr">Valor Empr&eacute;stimo em Atraso:</label>
+                                                            <input name="vlepratr" type="text"  id="vlepratr" />
                                                         </td>
                                                     </tr>
                                                 </table>
@@ -312,7 +228,9 @@
                                                     <tr>
                                                         <td>
                                                             <label for="qtdiaest">Per&iacute;odo de Estouro:</label>	
-                                                            <input name="qtdiaest" type="text"  id="qtdiaest" /> <label>&nbsp;dias &uacute;teis</label>
+                                                            <input name="qtdiaest" type="text"  id="qtdiaest" /> <label>&nbsp;dias &uacute;teis&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                                                            <label for="vldiaest">Valor em Estouro:</label>
+                                                            <input name="vldiaest" type="text"  id="vldiaest" />
                                                         </td>
                                                     </tr>
                                                 </table>
@@ -322,20 +240,16 @@
                                                 <table width="100%">
                                                     <tr>
                                                         <td>
-                                                            <label for="qtavlatr">Qtd. dias em Atraso:</label>	
-                                                            <input name="qtavlatr" type="text"  id="qtavlatr" />
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
-                                                            <label for="vlavlatr">Valor em Atraso:</label>	
-                                                            <input name="vlavlatr" type="text"  id="vlavlatr" />
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td>
                                                             <label for="qtavlope">Qtd. Opera&ccedil;&otilde;es em Atraso:</label>	
                                                             <input name="qtavlope" type="text"  id="qtavlope" />
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <label for="qtavlatr">Qtd. dias em Atraso:</label>	
+                                                            <input name="qtavlatr" type="text"  id="qtavlatr" /><label>&nbsp;dias corridos</label>
+                                                            <label for="vlavlatr">Valor em Atraso:</label>	
+                                                            <input name="vlavlatr" type="text"  id="vlavlatr" />
                                                         </td>
                                                     </tr>
                                                 </table>
@@ -345,26 +259,55 @@
                                                 <table width="100%">
                                                     <tr>
                                                         <td>
-                                                            <label for="qtcjgatr">Qtd. dias em Atraso:</label>	
-                                                            <input name="qtcjgatr" type="text"  id="qtcjgatr" />
+                                                            <label for="qtcjgope">Qtd. Opera&ccedil;&otilde;es em Atraso:</label>	
+                                                            <input name="qtcjgope" type="text"  id="qtcjgope" />
                                                         </td>
                                                     </tr>
                                                     <tr>
                                                         <td>
+                                                            <label for="qtcjgatr">Qtd. dias em Atraso:</label>	
+                                                            <input name="qtcjgatr" type="text"  id="qtcjgatr" /><label>&nbsp;dias corridos</label>
                                                             <label for="vlcjgatr">Valor em Atraso:</label>	
                                                             <input name="vlcjgatr" type="text"  id="vlcjgatr" />
                                                         </td>
                                                     </tr>
+                                                </table>
+                                            </fieldset>
+                                            <fieldset>
+                                                <legend align="left">Cartão de Crédito</legend>
+                                                <table width="100%">
                                                     <tr>
                                                         <td>
-                                                            <label for="qtcjgope">Qtd. Opera&ccedil;&otilde;es em Atraso:</label>	
-                                                            <input name="qtcjgope" type="text"  id="qtcjgope" />
+                                                            <label for="qtcarcre">Dias em Atraso do Cartão:</label>
+                                                            <input name="qtcarcre" type="text" id="qtcarcre" /> <label>&nbsp;dias corridos</label>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <label for="vlcarcre">Valor em Atraso do Cartão:</label>
+                                                            <input name="vlcarcre" type="text" id="vlcarcre" />
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </fieldset>
+                                            <fieldset>
+                                                <legend align="left">Desconto de Títulos</legend>
+                                                <table width="100%">
+                                                    <tr>
+                                                        <td>
+                                                            <label for="qtdtitul">Dias em Atraso dos Títulos:</label>
+                                                            <input name="qtdtitul" type="text" id="qtdtitul" /> <label>&nbsp;dias corridos</label>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>
+                                                            <label for="vltitulo">Valor em Atraso dos Títulos:</label>
+                                                            <input name="vltitulo" type="text" id="vltitulo" />
                                                         </td>
                                                     </tr>
                                                 </table>
                                             </fieldset>
                                         </div>
-
                                     </form>
 								</td>
 							</tr>

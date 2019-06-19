@@ -21,7 +21,7 @@
 
    Programa: b1wgen0000.p                  
    Autor(a): David
-   Data    : 09/07/2007                        Ultima atualizacao: 23/08/2017
+   Data    : 09/07/2007                        Ultima atualizacao: 05/02/2019
 
    Dados referentes ao programa:
 
@@ -116,7 +116,9 @@
 
 			  24/10/2017 - Adicionado validacao para autenticacao pelo CRM. (PRJ339 - Reinert)
               
-        20/02/2019 - PJ434 - Alterado "efetua_login". Inclui verificação de login pelo CRM (Rubens Lima - Mout's) 
+			  20/02/2019 - PJ434 - Alterado "efetua_login". Inclui verificação de login pelo CRM (Rubens Lima - Mout's) 
+			  
+			  05/02/2019 - P442 - Inclusao da opcao D na chamada da trata_opcoes_limite (Marcos-Envolti)
 ..............................................................................*/
 
 
@@ -804,7 +806,7 @@ PROCEDURE obtem_permissao:
         /*Apenas se for tela de limite de crédito*/
         IF   par_nmdatela = "ATENDA" AND par_nmrotina = "LIMITE CRED" THEN 
              DO:
-                 RUN trata_opcoes_limite (INPUT "@,N,I,U,A,C,R,P",
+                 RUN trata_opcoes_limite (INPUT "@,N,I,U,A,C,R,P,D",
                                           INPUT-OUTPUT TABLE tt-opcoes).
              END.
 

@@ -18,7 +18,7 @@
               10/07/2018 - sctask0014375 uso da funcao removeCaracteresInvalidos (Carlos)
 
 			  06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
-
+              13/02/2019 - Inclusao do campo flprapol (Christian Grauppe - Envolti - P442 Pré-Aprovado)
 ************************************************************************/
 
 var RegLinha = new Object();
@@ -205,6 +205,7 @@ function formataFormularioConsulta() {
     $('label[for="flgcobmu"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "180px" });
     $('label[for="flgsegpr"]', "#frmConsulta").addClass("rotulo").css({ "width": "150px" });
     $('label[for="cdhistor"]', "#frmConsulta").addClass("rotulo-linha").css({ "width": "180px" });
+    $('label[for="flprapol"]', "#frmConsulta").addClass("rotulo").css({ "width": "406px" });
         
     $('label[for="cdfinemp"]', "#frmConsulta").addClass("rotulo").css({ width: '150px' });
     $('label[for="dsfinemp"]', "#frmConsulta").addClass("rotulo-linha").css({ width: '200px' });
@@ -260,6 +261,7 @@ function formataFormularioConsulta() {
     $('#flgcobmu', '#frmConsulta').css({ 'width': '70px', 'text-align': 'left' }).desabilitaCampo(); 
     $('#flgsegpr', '#frmConsulta').css({ 'width': '70px', 'text-align': 'left' }).desabilitaCampo(); 
     $('#cdhistor', '#frmConsulta').css('width', '50px').addClass('inteiro').attr('maxlength', '4');
+    $('#flprapol', '#frmConsulta').css({ 'width': '70px', 'text-align': 'left' }).desabilitaCampo();
 
     $('#cdfinemp', '#frmConsulta').css({ width: '70px' }).habilitaCampo().addClass('campo pesquisa').setMask('INTEGER', 'zzzzzzzzz9');
     $('#dsfinemp', '#frmConsulta').css({ width: '250px' }).desabilitaCampo().addClass('campo');
@@ -1063,6 +1065,25 @@ function formataFormularioConsulta() {
         // Se é a tecla ENTER, TAB
         if (e.keyCode == 13 || e.keyCode == 9) {
 
+			if ($("#flprapol", "#frmConsulta").is(":visible")) {
+				$(this).nextAll('.campo:first').focus();
+			} else {
+				$("#btConcluir", "#divBotoesConsulta").click();
+			}
+
+            return false;
+        }
+
+    });
+	
+	//Define ação para o campo flgcobmu
+    $("#flprapol", "#frmConsulta").unbind('keypress').bind('keypress', function (e) {
+
+        if (divError.css('display') == 'block') { return false; }
+
+        // Se é a tecla ENTER, TAB
+        if (e.keyCode == 13 || e.keyCode == 9) {
+
             $("#btConcluir", "#divBotoesConsulta").click();
 
             return false;
@@ -1465,6 +1486,7 @@ function alterarLinhaCredito() {
     var flgcobmu = $('#flgcobmu', '#frmConsulta').val();
     var flgsegpr = $('#flgsegpr', '#frmConsulta').val();
     var cdhistor = $('#cdhistor', '#frmConsulta').val();
+    var flprapol = $('#flprapol', '#frmConsulta').val();
     var tpprodut = $('#tpprodut', '#frmConsulta').val();
     var cddindex = (tpprodut == 1 ? 0 : $('#cddindex', '#frmConsulta').val());
 	var vlperidx = isNaN(parseFloat($('#vlperidx', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlperidx', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."));
@@ -1522,6 +1544,7 @@ function alterarLinhaCredito() {
             flgcobmu: flgcobmu,
             flgsegpr: flgsegpr,
             cdhistor: cdhistor,
+			flprapol: flprapol,
             tpprodut: tpprodut,
             cddindex: cddindex,
 			vlperidx: vlperidx,
@@ -1590,6 +1613,7 @@ function incluirLinhaCredito() {
     var flgcobmu = $('#flgcobmu', '#frmConsulta').val();
     var flgsegpr = $('#flgsegpr', '#frmConsulta').val();
     var cdhistor = $('#cdhistor', '#frmConsulta').val();
+    var flprapol = $('#flprapol', '#frmConsulta').val();
     var tpprodut = $('#tpprodut', '#frmConsulta').val();
     var cddindex = (tpprodut == 1 ? 0 : $('#cddindex', '#frmConsulta').val());
 	var vlperidx = isNaN(parseFloat($('#vlperidx', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlperidx', '#frmConsulta').val().replace(/\./g, "").replace(/\,/g, "."));
@@ -1647,6 +1671,7 @@ function incluirLinhaCredito() {
             flgcobmu: flgcobmu,
             flgsegpr: flgsegpr,
             cdhistor: cdhistor,
+			flprapol: flprapol,
             finalidades: RegLinha,
             tpprodut: tpprodut,
             cddindex: cddindex,

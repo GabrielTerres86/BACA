@@ -3,14 +3,15 @@
 	/************************************************************************
 	  Fonte: obtem_saldos.php
 	  Autor: Guilherme
-	  Data : Fevereiro/2008                    Última Alteração: 03/07/2013
+	  Data : Fevereiro/2008                    Última Alteração: 06/02/2019
 
 	  Objetivo  : Mostrar Saldos da rotina dep.vista tela ATENDA
 
 	  Alterações: 02/09/2010 - Ajustes para nova procedure (David).
 				  03/07/2013 - Incluir echo de vlblqjud (Lucas R.)
 				  11/07/2017 - Novo campo Limite Pre Aprovado Disponivel na tela Saldos Anteriores, Melhoria M441. ( Mateus Zimmermann/MoutS )
-				  
+				  06/02/2019 - P442 - Remoção de informações de Pre-Aprovado da tela (Marcos-Envolti)
+
 	 ************************************************************************/
 	
 	session_start();
@@ -93,8 +94,7 @@
 	echo '$("#vllimcre","#frmSaldoAnt").val("'.number_format(str_replace(",",".",getByTagName($depvista,'vllimcre')),2,",",".").'");';
 	echo '$("#vlstotal","#frmSaldoAnt").val("'.number_format(str_replace(",",".",getByTagName($depvista,'vlstotal')),2,",",".").'");';			
 	echo '$("#vlblqjud","#frmSaldoAnt").val("'.number_format(str_replace(",",".",getByTagName($depvista,'vlblqjud')),2,",",".").'");';
-	echo '$("#vllimcpa","#frmSaldoAnt").val("'.number_format(str_replace(",",".",getByTagName($depvista,'vllimcpa')),2,",",".").'");';
-	
+
   	// Esconde mensagem de aguardo
 	echo 'hideMsgAguardo();';
 	echo 'blockBackground(parseInt($("#divRotina").css("z-index")));';

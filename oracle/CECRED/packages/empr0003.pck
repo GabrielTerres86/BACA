@@ -3757,7 +3757,21 @@ BEGIN
         vr_dstexto711  VARCHAR2(32600); 
         
         vr_contador INTEGER;       
-    
+        vr_nmarqsmt VARCHAR2(400);
+        vr_nrctremp NUMBER;
+        vr_des_reto VARCHAR2(400);
+        vr_dscomand VARCHAR2(400);
+        vr_typsaida VARCHAR2(400);
+        
+        -- Buscar conta corrente do contrato
+        CURSOR cr_crawepr(pr_nrctremp crawepr.nrctremp%TYPE
+                         ,pr_cdcooper crawepr.cdcooper%TYPE) IS
+          SELECT epr.nrdconta
+          FROM crawepr epr
+          WHERE epr.nrctremp = pr_nrctremp
+            AND epr.cdcooper = pr_cdcooper;
+        rw_crawepr cr_crawepr%ROWTYPE;
+		
       BEGIN
         -- Busca do diretório base da cooperativa para a geração de relatórios
         vr_nmdireto:= gene0001.fn_diretorio(pr_tpdireto => 'C'         --> /usr/coop
@@ -3795,6 +3809,8 @@ BEGIN
         --Escrever no arquivo XML
         gene0002.pc_escreve_xml(vr_clobxml711,vr_dstexto711,'<?xml version="1.0" encoding="UTF-8"?><crrl711>');        
         
+        -- Inicializar número do contrato
+        vr_nrctremp := NULL;
         -- Se o arquivo estiver aberto
         IF  utl_file.IS_OPEN(vr_arquivo) THEN
            -- Percorrer as linhas do arquivo
@@ -3803,6 +3819,13 @@ BEGIN
             LOOP        
               gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_arquivo,pr_des_text => vr_des_linha);        
 
+			  -- Capturar o número do contrato a partir do arquivo texto
+              IF vr_nrctremp IS NULL THEN
+                vr_nrctremp := REPLACE(TRIM(SUBSTR(vr_des_linha
+                                                  ,INSTR(vr_des_linha, 'Nº') + 2
+                                                  ,LENGTH(vr_des_linha))), '.', '');
+              END IF;
+			  
               IF vr_contador = 0 AND vr_des_linha IS NOT NULL THEN
                  gene0002.pc_escreve_xml(vr_clobxml711,vr_dstexto711,'<cabecalho>');
                  --Escreve o cabecalho do arquivo no XML de dados do relatorio
@@ -3879,7 +3902,55 @@ BEGIN
           END IF; 
           --Sair 
           RAISE vr_exc_erro;
-        END IF; 
+        END IF;
+        
+        /* P442 - Envio ao smartshare */
+        -- Buscar conta corrente com base no contrato
+        OPEN cr_crawepr(pr_nrctremp => vr_nrctremp, pr_cdcooper => pr_cdcooper);
+        FETCH cr_crawepr INTO rw_crawepr;
+        CLOSE cr_crawepr;
+
+        -- Gerar o nome padrão para o arquivo
+        vr_nmarqsmt := '57'||'_'||trim(gene0002.fn_mask_contrato(vr_nrctremp))
+                       ||'_'||trim(replace(gene0002.fn_mask_conta(rw_crawepr.nrdconta),'-','.'))
+                       ||'_'||pr_cdcooper||'_'||pr_cdagenci||'_'||'1'||'.pdf';
+        
+        -- Gerar versão do relatório para envio
+        gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                   --> Cooperativa conectada
+                                   ,pr_cdprogra  => pr_cdprogra                   --> Programa chamador
+                                   ,pr_dtmvtolt  => pr_dtmvtolt                   --> Data do movimento atual
+                                   ,pr_dsxml     => vr_clobxml711                 --> Arquivo XML de dados
+                                   ,pr_dsxmlnode => '/crrl711'                    --> Nó base do XML para leitura dos dados
+                                   ,pr_dsjasper  => 'crrl711.jasper'              --> Arquivo de layout do iReport
+                                   ,pr_dsparams  => NULL                          --> Sem parâmetros
+                                   ,pr_cdrelato  => 711                           --> Código fixo para o relatório (nao busca pelo sqcabrel)                                       
+                                   ,pr_dsarqsaid => vr_nmdireto||'/'||vr_nmarqsmt --> Arquivo final com o path
+                                   ,pr_qtcoluna  => 80                            --> Colunas do relatorio
+                                   ,pr_flg_gerar => 'S'                           --> Geraçao na hora
+                                   ,pr_flg_impri => 'N'                           --> Chamar a impressão (Imprim.p)
+                                   ,pr_nmformul  => NULL                          --> Nome do formulário para impressão
+                                   ,pr_nrcopias  => 1                             --> Número de cópias
+                                   ,pr_sqcabrel  => 1                             --> Qual a seq do cabrel
+                                   ,pr_flappend  => 'N'                           --> Fazer append do relatorio se ja existir
+                                   ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
+
+        --Se ocorreu erro no relatorio
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+                  
+        -- Transferir arquivo para o smartshare
+        gene0002.pc_transf_arq_smartshare(pr_nmdiretorio => vr_nmdireto
+                                         ,pr_nmarquiv    => '/' || vr_nmarqsmt 
+                                         ,pr_cdcooper    => pr_cdcooper
+                                         ,pr_des_reto    => vr_des_reto
+                                         ,pr_dscritic    => vr_dscritic);
+        
+        -- Validar se ocorreram erros
+        IF NVL(vr_des_reto, 'OK') != 'OK' THEN
+          vr_dscritic := 'Erro ao enviar contrato pre-aprovado para o smartshare. ' || vr_dscritic;
+          RAISE vr_exc_saida;
+        END IF;
                   
         -- Arquivo final com o path    
         pr_nmarqpdf := vr_nmrquivo;

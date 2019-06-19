@@ -1410,6 +1410,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                   26/07/2018 - Correção para quando a quantidade de meses do histórico de empréstimo for nula receber zero 
 							   PJ 450 - Diego Simas (AMcom) (Fluxo Atraso)							   
 
+                  12/02/2019 - P442 - Nova estrutura do PreAprovado (Marcos-Envolti)
+
     ..........................................................................*/
     -----------> CURSORES <-----------
     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
@@ -1516,23 +1518,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                              AND w.nrctremp = p.nrctremp);
     
     rw_crawepr_pend cr_crawepr_pend%ROWTYPE;
-    
-    --> Selecionar o saldo disponivel do pre-aprovado da conta em questão  da carga ativa
-    CURSOR cr_crapcpa (pr_cdcooper crawepr.cdcooper%TYPE,
-                       pr_nrdconta crawepr.nrdconta%TYPE) IS
-      SELECT cpa.vllimdis
-            ,cpa.vlcalpre
-            ,cpa.vlctrpre
-        FROM crapcpa              cpa
-            ,tbepr_carga_pre_aprv carga
-       WHERE carga.cdcooper = pr_cdcooper
-         AND carga.indsituacao_carga = 1
-         AND carga.flgcarga_bloqueada = 0
-         AND cpa.cdcooper = carga.cdcooper
-         AND cpa.iddcarga = carga.idcarga
-         AND cpa.nrdconta = pr_nrdconta;
-    rw_crapcpa cr_crapcpa%ROWTYPE;            
-    
+
     --> Buscar operador
     CURSOR cr_crapope (pr_cdcooper  crapope.cdcooper%TYPE,
                        pr_cdoperad  crapope.cdoperad%TYPE) IS
@@ -1603,6 +1589,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_vlutiliz     NUMBER;
     vr_vlprapne     NUMBER;
     vr_vllimdis     NUMBER;
+    vr_vlparcel     NUMBER;
+    vr_vldispon     NUMBER;
     vr_nmarquiv     varchar2(1000);
     vr_dsiduser     varchar2(100);
         vr_dsprotoc  tbgen_webservice_aciona.dsprotocolo%TYPE;
@@ -1832,13 +1820,18 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
           
           --> Selecionar o saldo disponivel do pre-aprovado da conta em questão  da carga ativa
           IF rw_crapass_cpfcgc.flgcrdpa = 1 THEN
-          rw_crapcpa := NULL;
-          OPEN cr_crapcpa (pr_cdcooper => rw_crapass_cpfcgc.cdcooper,
-                           pr_nrdconta => rw_crapass_cpfcgc.nrdconta);
-          FETCH cr_crapcpa INTO rw_crapcpa;
-          CLOSE cr_crapcpa;                  
-          vr_vllimdis := nvl(rw_crapcpa.vllimdis, 0) + vr_vllimdis;
-	        END IF;
+            -- Calcular o pre-aprovado disponível
+            empr0002.pc_calc_pre_aprovad_sint_cta(pr_cdcooper => rw_crapass_cpfcgc.cdcooper
+                                                 ,pr_nrdconta => rw_crapass_cpfcgc.nrdconta
+                                                 ,pr_vlparcel => vr_vlparcel
+                                                 ,pr_vldispon => vr_vldispon
+                                                 ,pr_dscritic => vr_dscritic);
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+            -- Incrementar o disponível
+            vr_vllimdis := nvl(vr_vldispon, 0) + vr_vllimdis;
+	      END IF;
       END LOOP;
       
       vr_obj_proposta.put('endividamentoContaValor'     ,(vr_vlutiliz + vr_vltotccr));
