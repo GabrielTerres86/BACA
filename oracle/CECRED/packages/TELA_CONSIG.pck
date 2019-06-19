@@ -463,7 +463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
         pr_tab_dados_emp_consig(vr_idtab).inpossuiconsig       := rw_empr_consig.inpossuiconsig;
         pr_tab_dados_emp_consig(vr_idtab).indautrepassecc      := rw_empr_consig.indautrepassecc;
 
-        pr_qtregist := nvl(pr_qtregist,0) + 1;
+        pr_qtregist := rw_empr_consig.qtregist;
       END LOOP;
       CLOSE cr_empr_consig;
     EXCEPTION

@@ -326,12 +326,12 @@ function mostraPesquisaEmpresa(){
     var nomeProcedure = 'OBTEM_DADOS_EMP_CONSIGNADO';
     var titulo = 'Empresa';
     var qtReg = '30';
-    var filtros = 'Cod. Empresa;cdempres;60;S;;S;;|Nome Empresa;nmextemp;150;S;;S;;|;cddopcao;;N;' + cddopcao + ';N;|Empr�stimo Consigando;indconsignado;;N;;N;;|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
-    var colunas = 'Codigo;cdempres;50;right;;S;;|Empresa;nmextemp;230;left;;S;;|;cddopcao;;N;;N;|Empr�stimo Consigando;indconsignado;;N;;N;;|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
+    var filtros = 'Cod. Empresa;cdempres;60;S;;S;;|Nome Empresa;nmextemp;150;S;;S;;|;cddopcao;;N;' + cddopcao + ';N;|Habilitado;indconsignado;30;N;;N;;radio|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
+    var colunas = 'Codigo;cdempres;19%;right;;S;;|Empresa;nmextemp;60%;left;;S;;|;cddopcao;;N;;N;|Habilitado;hindconsignado;19%;right;;N;;|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
     var divBloqueia = '';
     var fncOnClose = 'fecharPesquisa();';
     var nomeRotina =  NomeFiltro;
-    mostraPesquisa(businessObject, nomeProcedure, titulo, qtReg, filtros, colunas, divBloqueia, fncOnClose, nomeRotina);//, cdCooper);
+    mostraPesquisa(businessObject, nomeProcedure, titulo, qtReg, filtros, colunas, divBloqueia, fncOnClose, nomeRotina);//, cdCooper);    
 	return false;
 }
 
@@ -345,11 +345,12 @@ function buscarDescricao(callback){
     Crowid_emp_consig = $('#rowid_emp_consig', Filtro);
     Cdtativconsignado = $('#dtativconsignado', Filtro);
 
-    var cdempres = Ccdempres.val();
+    var cdempres = Ccdempres.val();    
     var cddopcao = Ccddopcao.val();
     var indconsignado = '';
     var rowid_emp_consig = '';
     var dtativconsignado = '';
+    if (cdempres != '' || cdempres > 0){
      $.ajax({
             type: 'POST',
             url: UrlSite + 'telas/consig/manter_rotina.php',
@@ -389,6 +390,7 @@ function buscarDescricao(callback){
                 }//catch
             }//success
         });//ajax
+ }
     return false;
 }
 
