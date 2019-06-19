@@ -2455,6 +2455,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
         END IF; -- vr_tab_parcelas.COUNT() > 0
       END IF; -- TR/PP/POS
 
+     END IF; -- INPREJUIZ 0
+
       -- Se a conta está em prejuízo, lança débito referente ao valor pago na conta transitória - Reginaldo/AMcom
       IF vr_vldpagto > 0 AND vr_prejuzcc THEN
         PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
