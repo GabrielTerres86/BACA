@@ -1092,26 +1092,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          LOOP
                FETCH cr_baixados_sem_pagamento INTO rw_baixados_sem_pagamento;
                EXIT  WHEN cr_baixados_sem_pagamento%NOTFOUND;
-                 /* No caso de fim de semana e feriado, nao pega os titulos que ja foram pegos no dia anterior a ontem */
-                 IF (vr_dtrefere <> vr_dtmvtoan AND rw_baixados_sem_pagamento.dtvencto  = vr_dtrefere) THEN
-                   CONTINUE;
-                 END IF; 
-                 /* ELSE
-                   --Verifica se vencimento cai em dia nao util e considera o proximo caso ocorra
-                   tmp_dtvencto := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
-                                             ,pr_dtmvtolt => rw_baixados_sem_pagamento.dtvencto
-                                             ,pr_tipo     => 'A' );
-                   -- Nao contabilizar os titulos que vencem no final de semana ou feriado no primeiro dia util seguinte, por causa da postergacao de data
-                   IF (tmp_dtvencto<>rw_baixados_sem_pagamento.dtvencto AND  (pr_dtvencto - vr_dtrefere > 1  AND pr_dtvencto - vr_dtmvtoan > 1)    ) THEN
-                       CONTINUE;
-                   ELSE
+                 
                        vr_qtvencid := vr_qtvencid - 1;
                        vr_vlvencid := vr_vlvencid - rw_baixados_sem_pagamento.vltitulo;
-                   END IF;
-                 END IF;*/
-
-                 vr_qtvencid := vr_qtvencid - 1;
-                 vr_vlvencid := vr_vlvencid - rw_baixados_sem_pagamento.vltitulo;
+                 
          end loop;
 
          vr_dtrefere := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
@@ -1448,25 +1432,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                    DSCT0003.vr_cdhistordsct_est_juros      ||','|| --2813
                    DSCT0003.vr_cdhistordsct_est_pgto_ava   ||','|| --2814
                    DSCT0003.vr_cdhistordsct_est_multa_ava  ||','|| --2815
-                   DSCT0003.vr_cdhistordsct_est_juros_ava;         --2816
-
+                   DSCT0003.vr_cdhistordsct_est_juros_ava  ||','|| --2816
+                   DSCT0003.vr_cdhistordsct_est_apro_multa ||','|| --2880
+                   DSCT0003.vr_cdhistordsct_est_apro_juros;        --2881
+                   
     OPEN cr_estorno_no_dia;
     FETCH cr_estorno_no_dia INTO rw_estorno_no_dia;
     IF cr_estorno_no_dia%FOUND THEN
       vr_qtestorn := rw_estorno_no_dia.qtestorn;
       vr_vlestorn := rw_estorno_no_dia.vlestorn;
-    END IF;
-    CLOSE cr_estorno_no_dia;
-    
-    -- Estornado de apropriações no dia
-    vr_cdhisest := DSCT0003.vr_cdhistordsct_est_apro_multa ||','|| --2880
-                   DSCT0003.vr_cdhistordsct_est_apro_juros;        --2881
-
-    OPEN cr_estorno_no_dia;
-    FETCH cr_estorno_no_dia INTO rw_estorno_no_dia;
-    IF cr_estorno_no_dia%FOUND THEN
-      vr_qtestorn := vr_qtestorn - rw_estorno_no_dia.qtestorn;
-      vr_vlestorn := vr_vlestorn - rw_estorno_no_dia.vlestorn;
     END IF;
     CLOSE cr_estorno_no_dia;
     
