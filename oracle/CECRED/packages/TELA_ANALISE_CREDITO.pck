@@ -11025,6 +11025,7 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
     vr_exc_erro EXCEPTION;
     vr_dscritic VARCHAR2(4000);
     vr_cdcritic PLS_INTEGER;
+    
   BEGIN
     --Inicializar Variaveis
     vr_cdcritic := 0;
