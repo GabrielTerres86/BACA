@@ -671,6 +671,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                29/01/2019 - Ajuste no fonte que trata a geração dos históricos 2386 e 2387 que rodam na lcm, eles foram comentados/inutitlizados
                             pelo produto da conta corrente, então deixamos o trecho comentado na procedure pra facilitar o merge com o que também já
                             está comentado em produção. (Paulo Penteado GFT) 
+                            
+               06/06/2019 - Ajuste nos cursores cr_craptdb8 e cr_craptdb_age para subtrair do saldo devedor o valor pago de mora do titulo, para 
+                            abater no saldo das apropriações de mora pelo cursor cr_lancboracum (Paulo Penteado GFT) 
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -4120,7 +4123,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
       select /*+ index (craptdb craptdb##craptdb2)*/
              crapass.cdagenci,
              SUM(CASE WHEN crapbdt.flverbor = 1 THEN 
-                           craptdb.vlsldtit
+                           craptdb.vlsldtit - craptdb.vlpagmra
                       ELSE craptdb.vltitulo
                  END) vltitulo
         from crapbdt,
@@ -4150,7 +4153,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                           pr_flgregis in crapcob.flgregis%TYPE,
                           pr_flverbor IN crapbdt.flverbor%TYPE)IS
       SELECT SUM(CASE WHEN crapbdt.flverbor = 1 THEN 
-                           craptdb.vlsldtit
+                           craptdb.vlsldtit - craptdb.vlpagmra
                       ELSE craptdb.vltitulo
                  END) vltitulo
             ,crapass.cdagenci
