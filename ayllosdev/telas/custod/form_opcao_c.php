@@ -99,7 +99,7 @@
 						<th>PA</th>
 						<th>Lote</th>
 						<th>Data Cust&oacute;dia</th>
-						<th>Data Resgate</th>						
+						<th>Data Resgate/<br>Devolu&ccedil;&atilde;o</th>						
 						<th>Operador Resgate</th>
 					</tr>
 				</thead>
