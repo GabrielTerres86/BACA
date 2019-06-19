@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS582 (pr_cdcooper  IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Vitor/Magui
-   Data    : Outubro/2010                      Ultima atualizacao: 22/11/2013
+   Data    : Outubro/2010                      Ultima atualizacao: 05/06/2019
 
    Dados referentes ao programa:
 
@@ -35,6 +35,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS582 (pr_cdcooper  IN crapcop.cdcooper%
                             ser acionada em caso de saída para continuação da cadeia,
                             e não em caso de problemas na execução (Marcos-Supero)
 
+               05/06/2019 - Inserido novo Historico 2973 em retorno de cheques devovidos de deposito CECRED (Luis Fagundes/AMCOM)
 ............................................................................. */
 
   -- Variaveis de uso no programa
@@ -88,9 +89,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS582 (pr_cdcooper  IN crapcop.cdcooper%
         519 - CREDITO TEC          524 - CHEQUE COMP.           551 - TEC SALARIO
         572 - CHQ.TRF.COMP.        573 - CHQ.DEVOL.             575 - CREDITO DOC
         578 - CREDITO TED          651 - CREDITO TED            657 - CH.DEV.CUST.
-        799 - CREDITO TEC
+        799 - CREDITO TEC         2973 - DEV.CH.DEP.BLQ 
        */
-       AND lcm.cdhistor IN (24,27,47,50,56,59,78,97,156,191,266,313,314,319,338,339,340,345,351,399,445,519,524,551,572,573,575,578,651,657,799) ;
+       AND lcm.cdhistor IN (24,27,47,50,56,59,78,97,156,191,266,313,314,319,338,339,340,345,351,2973,399,445,519,524,551,572,573,575,578,651,657,799) ;
 
   -- Cursor para a Remessa - DOC/TED
   CURSOR cr_craptvl (pr_cdcooper craptvl.cdcooper%TYPE
@@ -426,7 +427,7 @@ BEGIN
         END IF;
 
         -- Devolucao recebida - CECRED(085)
-        IF  rw_craplcm.cdhistor IN (24,27,351,399,657)
+        IF  rw_craplcm.cdhistor IN (24,27,351,2973,399,657)
         AND rw_craplcm.dsidenti = 'CTL'  THEN
           pc_traz_chave(pr_cddbanco => 85
                        ,pr_dtmvtolt => vr_dtmvtolt

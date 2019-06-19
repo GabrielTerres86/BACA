@@ -812,7 +812,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         
         13/12/2018 - Inclusão da Function PREJ0003.fn_obtem_saldo_hist_preju_cc para buscar o saldo do prejuízo para 
                      mostrar no informe de rendimentos.
-                                         (Heckmann/AMcom/P450)
+                                         (Heckmann/AMcom/P450)	
+	   
+		03/06/2019 - Incluido o Historico 2973 na validação de cheques devolvidos de deposito (Luis Fagundes/AMCOM)  
+
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
 
@@ -6847,7 +6850,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         IF rw_craphis.cdhistor = 508 THEN                                                    --*Nao remover replace os traços sao diferentes
           pr_tab_lancamento_futuro(vr_index).dshistor:= substr(rw_craphis.dshistor ||' - '|| REPLACE(rw_craplcm2.dscedent,'–', '-'),1,50);
         ELSE
-          IF rw_craplcm2.cdhistor IN (24,27,47,78,156,191,338,351,399,573,657) THEN
+          IF rw_craplcm2.cdhistor IN (24,27,47,78,156,191,338,351,2973,399,573,657) THEN
             pr_tab_lancamento_futuro(vr_index).dshistor:= substr(rw_craphis.dshistor || rw_craplcm2.cdpesqbb,1,50);
           ELSE
             pr_tab_lancamento_futuro(vr_index).dshistor:= rw_craphis.dshistor;
