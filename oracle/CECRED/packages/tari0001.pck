@@ -640,7 +640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
   --  Sistema  : Procedimentos envolvendo tarifas bancarias
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 13/03/2019
+  --  Data     : Junho/2013.                   Ultima atualizacao: 12/06/2019
   --
   -- Dados referentes ao programa:
   --
@@ -731,6 +731,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                           demais lugares onde este valor é utilizado.                    
                           Jose Dill (Mouts)              
 
+                12/06/2019 - inc0017781 (PRB0041932) Na rotina pc_verifica_tarifa_operacao, feito o tratamento para identificar
+                             o erro na formatação da data e não abortar a rotina (Carlos)
   */
  
   ---------------------------------------------------------------------------------------------------------------
@@ -6886,14 +6888,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
   BEGIN
                                   
-    --  hora da operação será a data do movimento concatenato com a hora extraída do sysdate (adicionado por Valéria Supero out/2018)
-   select cecred.gene0002.fn_converte_time_data(pr_nrsegs => pr_hroperacao,
-                                                   pr_tipsaida => 'S')
-    into vr_hroperacao_aux
-    from dual;
+    BEGIN                               
+      -- hora da operação será a data do movimento concatenato com a hora extraída do sysdate (adicionado por Valéria Supero out/2018)
+      vr_hroperacao_aux := cecred.gene0002.fn_converte_time_data(pr_nrsegs => pr_hroperacao, pr_tipsaida => 'S');
 
     vr_hroperacao_aux := to_char(pr_dtmvtolt,'DD/MM/YYYY') || ' ' ||vr_hroperacao_aux;
     vr_hroperacao := to_date(vr_hroperacao_aux,'DD/MM/YYYY HH24:MI:SS');
+    EXCEPTION
+      WHEN OTHERS THEN
+        cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper,
+                                     pr_compleme => 'pr_hroperacao: '     || pr_hroperacao ||
+                                                    ' | vr_hroperacao_aux: ' || vr_hroperacao_aux || 
+                                                    ' | vr_hroperacao: ' || vr_hroperacao || 
+                                                    ' | pr_nrdconta: ' || pr_nrdconta);
+        vr_hroperacao := to_char(pr_dtmvtolt,'DD/MM/YYYY');
+    END;
 
     ---------------------------------------------------------------------------------------------------------------------------------
     -- Leitura do calendário da cooperativa
