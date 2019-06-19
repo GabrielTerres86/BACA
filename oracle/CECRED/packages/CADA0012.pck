@@ -961,7 +961,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
 
   PROCEDURE pc_insere_crapalt(pr_idpessoa IN NUMBER
                              ,pr_cdcooper IN NUMBER
-                             ,pr_dtmvtolt IN TIMESTAMP
+                             ,pr_dtmvtolt IN DATE
                              ,pr_dsaltera IN VARCHAR2
                              ,pr_dscritic OUT VARCHAR2) IS
 /* ..........................................................................
@@ -1000,25 +1000,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
     rw_craptps cr_craptps%ROWTYPE;
     
     CURSOR cr_crapalt (pr_nrdconta NUMBER) IS
-      SELECT (1) 
+      SELECT dsaltera 
         FROM crapalt 
        WHERE cdcooper = pr_cdcooper 
          AND nrdconta = pr_nrdconta 
          AND dtaltera = pr_dtmvtolt;
+    rw_crapalt cr_crapalt%ROWTYPE;
          
   BEGIN
     -- Busca o numero da conta e a matricula
-    OPEN  cr_craptps();
-    FETCH cr_craptps into rw_craptps;
-    IF (cr_craptps%NOTFOUND) THEN
-      CLOSE cr_craptps;
-      vr_dscritic := 'Erro ao buscar data na TBCADAST_PESSOA';
-      RAISE vr_exc_erro;
-    END IF;
-    CLOSE cr_craptps;
-    
+    FOR rw_craptps IN cr_craptps LOOP
     OPEN cr_crapalt(pr_nrdconta => rw_craptps.nrdconta);
-    
+      FETCH cr_crapalt INTO rw_crapalt;    
         
     IF (cr_crapalt%NOTFOUND) THEN
       -- Atualiza a Crapalt
@@ -1046,14 +1039,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
           RAISE vr_exc_erro;
       END;
     ELSE
-      SELECT dsaltera INTO vr_dsaltera 
-        FROM crapalt 
-       WHERE cdcooper = pr_cdcooper 
-         AND nrdconta = rw_craptps.nrdconta 
-         AND dtaltera = pr_dtmvtolt;
       BEGIN
         UPDATE crapalt 
-           SET dsaltera = vr_dsaltera || ' ' || pr_dsaltera
+             SET dsaltera = rw_crapalt.dsaltera || ' ' || pr_dsaltera
          WHERE cdcooper = pr_cdcooper 
            AND nrdconta = rw_craptps.nrdconta 
            AND dtaltera = pr_dtmvtolt;
@@ -1064,6 +1052,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
       END;
     END IF;
     CLOSE cr_crapalt;
+    END LOOP;
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
