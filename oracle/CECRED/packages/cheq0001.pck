@@ -3694,7 +3694,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
 	--               17/12/2018 - Ajuste para validar se uma conta pode ou não solicitar talão.
 	--							  (Andrey Formigari - Mouts) #SCTASK0039579
 	--               24/01/2019 - Adicionado campo para definir a quantidade de talões solicitados.
-	--							  Acelera - Entrega de Talonarios no Ayllos (Lombardi)
+	--							  Acelera - Entrega de Talonarios no Ayllos (Lombardi)	   
+	--               19/06/2019 - Ajustes para logar de solicitação de talonario (Lombardi)
+	--               
     -- .............................................................................
     -- Cursores 
         
@@ -4009,6 +4011,28 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         RAISE vr_exc_saida;
     END;
     
+    cada0004.pc_gera_log_ope_cartao(pr_cdcooper => vr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_indoperacao => 5 -- Solicitação Taloes
+                                   ,pr_cdorigem => 5
+                                   ,pr_indtipo_cartao => 9 --não tem aprovação
+                                   ,pr_nrdocmto => vr_nrdolote
+                                   ,pr_cdhistor => 0
+                                   ,pr_nrcartao => '0' --STRING(p-nrcartao)
+                                   ,pr_vllanmto => nvl(pr_qtreqtal,0)
+                                   ,pr_cdoperad => vr_cdoperad
+                                   ,pr_cdbccrcb => 0
+                                   ,pr_cdfinrcb => 0
+                                   ,pr_cdpatrab =>   vr_cdagenci
+                                   ,pr_nrseqems => 0
+                                   ,pr_nmreceptor => ''
+                                   ,pr_nrcpf_receptor => ''
+                                   ,pr_dscritic => vr_dscritic);
+        
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+        
     -- Finaliza com status de sucesso
     pr_des_erro := 'OK';
     
@@ -4261,7 +4285,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     --   Objetivo  : Rotina para entrega de talonario.
     --
     --   Alteracoes: 24/01/2019 - Adicionado campo para definir a quantidade de talões solicitados.
-	--							  Acelera - Entrega de Talonarios no Ayllos (Lombardi)
+	--							  Acelera - Entrega de Talonarios no Ayllos (Lombardi)	 
+    --
+    --               19/06/2019 - Ajustes nos logs de entrega de talonarios (Lombardi)
+    --
     -- .............................................................................
     -- Cursores 
         
@@ -4835,13 +4862,13 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         
         cada0004.pc_gera_log_ope_cartao(pr_cdcooper => vr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
-                                       ,pr_indoperacao => 5 -- Solicitaçao Taloes
+                                       ,pr_indoperacao => 7 -- Entrega Taloes
                                        ,pr_cdorigem => 5
-                                       ,pr_indtipo_cartao => 0 --idtipcar
+                                       ,pr_indtipo_cartao => 2 --idtipcar
                                        ,pr_nrdocmto => vr_nrdolote
                                        ,pr_cdhistor => 0
                                        ,pr_nrcartao => '0' --STRING(p-nrcartao)
-                                       ,pr_vllanmto => 0
+                                       ,pr_vllanmto => vr_qtreqtal
                                        ,pr_cdoperad => vr_cdoperad
                                        ,pr_cdbccrcb => 0
                                        ,pr_cdfinrcb => 0
@@ -5073,7 +5100,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       
       cada0004.pc_gera_log_ope_cartao(pr_cdcooper => vr_cdcooper
                                      ,pr_nrdconta => pr_nrdconta
-                                     ,pr_indoperacao => 5 -- Solicitaçao Taloes
+                                     ,pr_indoperacao => 7 -- Entrega Taloes
                                      ,pr_cdorigem => 5
                                      ,pr_indtipo_cartao => 2 --idtipcar
                                      ,pr_nrdocmto => vr_nrdolote
