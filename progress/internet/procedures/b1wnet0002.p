@@ -172,6 +172,8 @@
 
 			   28/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                
+			   03/06/2019 - Retirada validação de bloqueio de conta. (RITM0019350 - Lombardi).
+               
 ..............................................................................*/
 
 
@@ -1922,26 +1924,16 @@ PROCEDURE verifica-acesso.
                               ELSE
                                  crapopi.dtaltsnh.
         
-        IF ((aux_dtaltsnh + aux_qtdiauso + aux_qtdiaalt + aux_qtdiablq) - 
-             aux_datdodia) <= 0 THEN
-            DO:
-                aux_dscritic = "Acesso bloqueado! Va a um Posto de Atendimento " 
-                               + "para desbloquear sua conta.".
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-            END.
-        
         ASSIGN  tt-acesso.qtdiams1 = aux_datdodia - aux_dtaltsnh
                 tt-acesso.qtdiams2 = (aux_dtaltsnh + aux_qtdiauso + 
                                       aux_qtdiaalt) - aux_datdodia.
         
         IF  (aux_dtaltsnh + aux_qtdiauso + aux_qtdiaalt) <= aux_datdodia   THEN
-            ASSIGN tt-acesso.cdblqsnh = 2
-                   tt-acesso.qtdiams2 = (aux_dtaltsnh + aux_qtdiauso + 
+            ASSIGN tt-acesso.qtdiams2 = (aux_dtaltsnh + aux_qtdiauso + 
                                          aux_qtdiaalt + aux_qtdiablq) - 
                                          aux_datdodia. 
-        ELSE
-        IF  (aux_dtaltsnh + aux_qtdiauso) <= aux_datdodia   THEN
-            ASSIGN tt-acesso.cdblqsnh = 1.
+        
+        ASSIGN tt-acesso.cdblqsnh = 0.
 
         ASSIGN aux_flgtrans = TRUE.
         
