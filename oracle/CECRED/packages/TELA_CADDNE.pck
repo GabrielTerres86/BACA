@@ -6,6 +6,24 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADDNE IS
                                ,pr_nmestado  IN VARCHAR2 --> Nome do Estado que sera importado
                                ,pr_tab_erro OUT gene0001.typ_tab_erro); --> Tabela com erros
 
+  PROCEDURE pc_executa_carga(pr_proc_arq_unid_oper      IN NUMBER
+                            ,pr_proc_arq_grande_usuario IN NUMBER
+                            ,pr_proc_arq_cpc            IN NUMBER
+                            ,pr_proc_arq_sigla_estado   IN VARCHAR2
+                            ,pr_xmllog                  IN VARCHAR2 --> XML com informações de LOG
+                            ,pr_cdcritic               OUT PLS_INTEGER
+                            ,pr_dscritic               OUT VARCHAR2
+                            ,pr_retxml              IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                            ,pr_nmdcampo               OUT VARCHAR2 --> Nome do campo com erro
+                            ,pr_des_erro               OUT VARCHAR2);
+
+  PROCEDURE pc_busca_param(pr_xmllog   IN VARCHAR2, --> XML com informações de LOG
+                           pr_cdcritic OUT PLS_INTEGER, --> Código da crítica
+                           pr_dscritic OUT VARCHAR2, --> Descrição da crítica
+                           pr_retxml   IN OUT NOCOPY XMLType, --> Arquivo de retorno do XML
+                           pr_nmdcampo OUT VARCHAR2, --> Nome do campo com erro
+                           pr_des_erro OUT VARCHAR2);
+                           
 END TELA_CADDNE;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
@@ -14,13 +32,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
   --  Programa : TELA_CADDNE
   --  Sistema  : Ayllos Web
   --  Autor    : Douglas Quisinski
-  --  Data     : Setembro - 2016                  Ultima atualizacao:   /  /    
+  --  Data     : Setembro - 2016                  Ultima atualizacao: 16/03/2019
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela CADDNE
   --
   -- Alteracoes: 
+  --
+  -- 16/03/2019 - Importar cód.ibge e municípios com CEP único
+  --            - Processar localidades do tipo Distrito e Povoado (Cechet)
+  --
   ---------------------------------------------------------------------------
 
   -- Identificacao dos Enderecos
@@ -34,7 +56,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
     RECORD (codigo   INTEGER
            ,estado   crapdne.cduflogr%TYPE
            ,nome     crapdne.nmextcid%TYPE
-           ,resumido crapdne.nmrescid%TYPE);
+           ,resumido   crapdne.nmrescid%TYPE
+           ,cep        crapdne.nrceplog%TYPE
+           ,codibge    crapmun.cdcidbge%TYPE
+           ,tipo       VARCHAR2(10)
+           ,municipio  INTEGER        -- cod municipio de subordinação
+           ,localidade VARCHAR2(72)); -- localidade de subordinação
   -- O indice da tabela sera o codigo da cidade
   TYPE typ_tab_cidade IS
     TABLE OF typ_reg_cidade
@@ -62,7 +89,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
            ,bairro_nome  crapdne.nmextbai%TYPE
            ,bairro_res   crapdne.nmresbai%TYPE
            ,cidade_nome  crapdne.nmextcid%TYPE
-           ,cidade_res   crapdne.nmrescid%TYPE);
+           ,cidade_res   crapdne.nmrescid%TYPE
+           ,codibge      crapmun.cdcidbge%TYPE);
   -- O indice da tabela sera o codigo da logradouro
   TYPE typ_tab_logradouro IS
     TABLE OF typ_reg_logradouro
@@ -79,7 +107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
     Programa: pc_insere_localidade
     Sistema : Ayllos Web
     Autor   : Douglas Quisinski
-    Data    : Setembro/2016                 Ultima atualizacao: 04/11/2016 
+    Data    : Setembro/2016                 Ultima atualizacao: 18/03/2019
 
     Dados referentes ao programa:
 
@@ -94,6 +122,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                 16/03/2017 - Adicionar UPPER para os campos de texto no cadastro 
                              de endereço ao importar os arquivos do correio
                              (Douglas - Chamado 601436)
+
+                18/03/2019 - Gravar campo do cód. IBGE da Localidade (Cechet)
     ..............................................................................*/
     BEGIN
       --Inserir dados do endereco na tabela em um unico momento
@@ -110,7 +140,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                              ,nmrescid
                              ,cduflogr
                              ,idoricad
-                             ,idtipdne)
+                             ,idtipdne
+                             ,cdcidibge -- novo campo do código IBGE da localidade
+                             )
                        VALUES(pr_tab_logradouro(idx).cep
                              ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).nome_rua)),' ')
                              ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).nome_rua_res)),' ')
@@ -122,7 +154,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                              ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).cidade_res)),' ')
                              ,NVL(UPPER(TRIM(pr_tab_logradouro(idx).estado)),' ')
                              ,const_origem_cadastro   -- Origem do Cadastro (1 - CORREIOS)
-                             ,pr_idtipdne); -- Tipo de Enderecao
+                             ,pr_idtipdne -- Tipo de Enderecao
+                             ,pr_tab_logradouro(idx).codibge -- codigo IBGE da Localidade
+                             );
       EXCEPTION
         WHEN OTHERS THEN
           pr_dscritic:=  'Erro ao inserir na tabela crapdne. '||
@@ -169,12 +203,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                 1 - Codigo da Cidade
                 2 - Sigla do Estado
                 3 - Nome da Cidade
-                4 - DESCONHECIDO
-                5 - DESCONHECIDO
-                6 - DESCONHECIDO
-                7 - DESCONHECIDO
+                4 - CEP da localidade
+                5 - Situacao da localide (0=Nao tem CEP por logradouro, 1=Tem logradouro, 2=Distrito ou Povoado)
+                6 - Tipo (P=Povoado, D=Distrito, M=Municipio)
+                7 - Municipio
                 8 - Nome Resumido da Cidade
-                9 - DESCONHECIDO
+                9 - Cód IBGE
+                Fonte: Leiautes_delimitador.doc (eDNE_Basico.zip -> Delimitado)
 
     Alteracoes: 
     ..............................................................................*/
@@ -183,13 +218,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
 
       -- Diretorio onde estao os arquivos do correio que serao processados
       vr_dsdirarq CONSTANT crapprm.dsvlrprm%TYPE := gene0001.fn_param_sistema('CRED',0,'ROOT_ARQUIVO_CORREIOS');
-      vr_nmarqprc CONSTANT VARCHAR2(50) := 'LOG_LOCALIDADE.TXT';
+      vr_nmarqprc VARCHAR2(50) := 'LOG_LOCALIDADE.TXT';
 
       -- Campos do arquivo de cidade
       vr_codigo   INTEGER;
       vr_estado   VARCHAR(2);
       vr_nome     VARCHAR2(600);
       vr_resumido VARCHAR2(600);
+      vr_cep       crapdne.nrceplog%TYPE;
+      vr_codibge   crapmun.cdcidbge%TYPE;
+      vr_municipio INTEGER;
+      vr_tipo      VARCHAR2(10);
       
       -- Variavel de criticas
       vr_dscritic VARCHAR2(10000);
@@ -202,6 +241,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       vr_setlinha    VARCHAR2(32500);
 
     BEGIN
+      
+      -- verificar se o nome do arquivo está com a extensão minuscula
+      IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || 'LOG_LOCALIDADE.txt') THEN
+        vr_nmarqprc := 'LOG_LOCALIDADE.txt';
+      END IF;
+    
       -- Verificar se o arquivo LOG_LOCALIDADE.TXT existe
       IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || vr_nmarqprc) THEN 
         -- Se o arquivo nao existe levantamos o erro
@@ -220,12 +265,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
         RAISE vr_exc_saida;
       END IF;
 
+      -- primeiro deletar todos os municipios com CEP unico
+      DELETE FROM crapdne
+      WHERE idoricad = 1
+        AND idtipdne = 5;
+
       BEGIN
         -- Laco para leitura de linhas do arquivo
         LOOP
           -- Carrega handle do arquivo
+          BEGIN
           gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
                                       ,pr_des_text => vr_setlinha); --> Texto lido
+          EXCEPTION
+            WHEN no_data_found THEN
+              EXIT;
+          END;
 
           -- Retirar quebra de linha
           vr_setlinha := REPLACE(REPLACE(vr_setlinha,CHR(10)),CHR(13));
@@ -236,14 +291,96 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
           vr_estado   := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 2, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,2));
           vr_nome     := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 3, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,40));
           vr_resumido := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 8, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,25));
+          vr_cep      := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 4, pr_dstext => vr_setlinha, pr_delimitador => '@'));
+          vr_codibge  := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 9, pr_dstext => vr_setlinha, pr_delimitador => '@'));
+          vr_municipio:= gene0002.fn_char_para_number(gene0002.fn_busca_entrada(pr_postext => 7, pr_dstext => vr_setlinha, pr_delimitador => '@'));
+          vr_tipo     := gene0007.fn_caract_acento(SUBSTR(gene0002.fn_busca_entrada(pr_postext => 6, pr_dstext => vr_setlinha, pr_delimitador => '@'),1,1));
           
           -- Carregar os dados da Cidade para a PL_TABLE
           pr_tab_cidade(vr_codigo).codigo   := vr_codigo;
           pr_tab_cidade(vr_codigo).estado   := vr_estado;
           pr_tab_cidade(vr_codigo).nome     := vr_nome;
           pr_tab_cidade(vr_codigo).resumido := vr_resumido;
+          pr_tab_cidade(vr_codigo).cep       := vr_cep;
+          pr_tab_cidade(vr_codigo).codibge   := vr_codibge;
+          pr_tab_cidade(vr_codigo).municipio := vr_municipio;
+          pr_tab_cidade(vr_codigo).tipo      := vr_tipo;
           
         END LOOP; -- Loop Arquivo
+
+        -- separar as localidades que são distritos, povoados e municípios
+        vr_codigo := pr_tab_cidade.first;
+        WHILE vr_codigo IS NOT NULL LOOP
+
+          -- verificar localidades subordinadas a municípios
+          IF pr_tab_cidade(vr_codigo).municipio > 0 THEN
+
+            IF pr_tab_cidade(vr_codigo).tipo = 'D' THEN
+              pr_tab_cidade(vr_codigo).localidade := 'DISTRITO DE ' || pr_tab_cidade(vr_codigo).nome;
+            ELSIF pr_tab_cidade(vr_codigo).tipo = 'P' THEN
+              pr_tab_cidade(vr_codigo).localidade := 'POVOADO DE ' || pr_tab_cidade(vr_codigo).nome;
+            ELSE
+              pr_tab_cidade(vr_codigo).localidade := 'MUNICIPIO DE ' || pr_tab_cidade(vr_codigo).nome;
+            END IF;
+
+            -- trocar o nome da localidade pela subordinada
+            pr_tab_cidade(vr_codigo).nome     := pr_tab_cidade(pr_tab_cidade(vr_codigo).municipio).nome;
+            pr_tab_cidade(vr_codigo).resumido := pr_tab_cidade(pr_tab_cidade(vr_codigo).municipio).resumido;
+
+          ELSE
+            -- efeito apenas para municípios com CEP unico
+            pr_tab_cidade(vr_codigo).localidade := 'MUNICIPIO DE ' || pr_tab_cidade(vr_codigo).nome;
+          END IF;
+          
+          -- atribuir cod ibge quando localidade for distrito ou povoado
+          IF nvl(pr_tab_cidade(vr_codigo).codibge,0) = 0 THEN
+            pr_tab_cidade(vr_codigo).codibge := pr_tab_cidade(pr_tab_cidade(vr_codigo).municipio).codibge;
+          END IF;
+
+          vr_codigo := pr_tab_cidade.next(vr_codigo);
+        END LOOP;
+
+        -- processar municipios com CEP único, distritos e povoados;
+        BEGIN
+          FORALL idx IN INDICES OF pr_tab_cidade SAVE EXCEPTIONS
+            MERGE
+              INTO crapdne dne
+              USING (SELECT 1 FROM dual) s
+                 ON (pr_tab_cidade(idx).cep IS NULL)
+              WHEN NOT MATCHED THEN
+                INSERT (nrceplog
+                       ,nmextlog
+                       ,nmreslog
+                       ,dscmplog
+                       ,dstiplog
+                       ,nmextbai
+                       ,nmresbai
+                       ,nmextcid
+                       ,nmrescid
+                       ,cduflogr
+                       ,idoricad
+                       ,idtipdne
+                       ,cdcidibge -- Código IBGE do Municipio
+                       )
+                 VALUES(pr_tab_cidade(idx).cep
+                       ,substr(NVL(UPPER(TRIM(pr_tab_cidade(idx).localidade)),' '),1,80)
+                       ,substr(NVL(UPPER(TRIM(pr_tab_cidade(idx).localidade)),' '),1,72)
+                       ,(CASE WHEN (pr_tab_cidade(idx).codibge > 0) THEN 'COD.IBGE ' || pr_tab_cidade(idx).codibge ELSE '.' END)
+                       ,' '
+                       ,' '
+                       ,' '
+                       ,substr(NVL(UPPER(TRIM(pr_tab_cidade(idx).nome)),' '),1,40)
+                       ,substr(NVL(UPPER(TRIM(pr_tab_cidade(idx).nome)),' '),1,25)
+                       ,NVL(UPPER(TRIM(pr_tab_cidade(idx).estado)),' ')
+                       ,const_origem_cadastro   -- Origem do Cadastro (1 - CORREIOS)
+                       ,5 -- Tipo de Enderecao 5 = Municipios
+                       ,pr_tab_cidade(idx).codibge
+                       );
+        EXCEPTION
+            WHEN OTHERS THEN
+              dbms_output.put_line('Erro ao inserir na tabela crapdne. '||
+                             SQLERRM(-(SQL%BULK_EXCEPTIONS(1).ERROR_CODE)));
+        END;
 
       EXCEPTION 
         WHEN no_data_found THEN
@@ -305,7 +442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
 
       -- Diretorio onde estao os arquivos do correio que serao processados
       vr_dsdirarq CONSTANT crapprm.dsvlrprm%TYPE := gene0001.fn_param_sistema('CRED',0,'ROOT_ARQUIVO_CORREIOS');
-      vr_nmarqprc CONSTANT VARCHAR2(50) := 'LOG_BAIRRO.TXT';
+      vr_nmarqprc VARCHAR2(50) := 'LOG_BAIRRO.TXT';
 
       -- Campos do arquivo de cidade
       vr_codigo   INTEGER;
@@ -324,6 +461,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       vr_setlinha    VARCHAR2(32500);
 
     BEGIN
+      
+      -- verificar se o nome do arquivo está com a extensão minuscula
+      IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || 'LOG_BAIRRO.txt') THEN
+        vr_nmarqprc := 'LOG_BAIRRO.txt';
+      END IF;
+    
       -- Verificar se o arquivo LOG_LOCALIDADE.TXT existe
       IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || vr_nmarqprc) THEN 
         -- Se o arquivo nao existe levantamos o erro
@@ -434,7 +577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
 
       -- Diretorio onde estao os arquivos do correio que serao processados
       vr_dsdirarq CONSTANT crapprm.dsvlrprm%TYPE := gene0001.fn_param_sistema('CRED',0,'ROOT_ARQUIVO_CORREIOS');
-      vr_nmarqprc CONSTANT VARCHAR2(50) := 'LOG_UNID_OPER.TXT';
+      vr_nmarqprc VARCHAR2(50) := 'LOG_UNID_OPER.TXT';
 
       -- Identificacao dos Enderecos
       vr_idtipdne CONSTANT crapdne.idtipdne%TYPE := 3; -- Tipo de Endereco UNID. OPER
@@ -468,6 +611,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       vr_ind            INTEGER;
 
     BEGIN
+      
+      -- verificar se o nome do arquivo está com a extensão minuscula
+      IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || 'LOG_UNID_OPER.txt') THEN
+        vr_nmarqprc := 'LOG_UNID_OPER.txt';
+      END IF;
+    
       -- Verificar se o arquivo LOG_UNID_OPER.TXT existe
       IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || vr_nmarqprc) THEN 
         -- Se o arquivo nao existe levantamos o erro
@@ -556,9 +705,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
             IF pr_tab_cidade.EXISTS(vr_cidade_cod) THEN
               vr_tab_logradouro(vr_ind).cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
               vr_tab_logradouro(vr_ind).cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
+              
+              -- a unidade operacional pode pertencer a um distrito/povoado, que não tem código do ibge
+              IF nvl(pr_tab_cidade(vr_cidade_cod).codibge,0) = 0 THEN
+                vr_tab_logradouro(vr_ind).codibge := pr_tab_cidade(pr_tab_cidade(pr_tab_cidade(vr_cidade_cod).municipio).municipio).codibge;
             ELSE 
+                vr_tab_logradouro(vr_ind).codibge      := pr_tab_cidade(vr_cidade_cod).codibge;
+              END IF;
+            ELSE
               vr_tab_logradouro(vr_ind).cidade_nome  := ' ';
               vr_tab_logradouro(vr_ind).cidade_res   := ' ';
+              vr_tab_logradouro(vr_ind).codibge      := 0;
             END IF;
             
           EXCEPTION
@@ -695,7 +852,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
 
       -- Diretorio onde estao os arquivos do correio que serao processados
       vr_dsdirarq CONSTANT crapprm.dsvlrprm%TYPE := gene0001.fn_param_sistema('CRED',0,'ROOT_ARQUIVO_CORREIOS');
-      vr_nmarqprc CONSTANT VARCHAR2(50) := 'LOG_GRANDE_USUARIO.TXT';
+      vr_nmarqprc VARCHAR2(50) := 'LOG_GRANDE_USUARIO.TXT';
 
       -- Identificacao dos Enderecos
       vr_idtipdne CONSTANT crapdne.idtipdne%TYPE := 2; -- Tipo de Endereco GRANDE USUARIO
@@ -729,6 +886,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       vr_ind            INTEGER;
 
     BEGIN
+          
+      -- verificar se o nome do arquivo está com a extensão minuscula    
+      IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || 'LOG_GRANDE_USUARIO.txt') THEN
+        vr_nmarqprc := 'LOG_GRANDE_USUARIO.txt';
+      END IF;
+        
       -- Verificar se o arquivo LOG_GRANDE_USUARIO.TXT existe
       IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || vr_nmarqprc) THEN 
         -- Se o arquivo nao existe levantamos o erro
@@ -820,9 +983,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
             IF pr_tab_cidade.EXISTS(vr_cidade_cod) THEN
               vr_tab_logradouro(vr_ind).cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
               vr_tab_logradouro(vr_ind).cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
+              vr_tab_logradouro(vr_ind).codibge      := pr_tab_cidade(vr_cidade_cod).codibge;
             ELSE 
               vr_tab_logradouro(vr_ind).cidade_nome  := ' ';
               vr_tab_logradouro(vr_ind).cidade_res   := ' ';
+              vr_tab_logradouro(vr_ind).codibge      := 0;
             END IF;
           EXCEPTION
             WHEN OTHERS THEN
@@ -949,7 +1114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
 
       -- Diretorio onde estao os arquivos do correio que serao processados
       vr_dsdirarq CONSTANT crapprm.dsvlrprm%TYPE := gene0001.fn_param_sistema('CRED',0,'ROOT_ARQUIVO_CORREIOS');
-      vr_nmarqprc CONSTANT VARCHAR2(50) := 'LOG_CPC.TXT';
+      vr_nmarqprc VARCHAR2(50) := 'LOG_CPC.TXT';
 
       -- Identificacao dos Enderecos
       vr_idtipdne CONSTANT crapdne.idtipdne%TYPE := 4; -- Tipo de Endereco Caixa Postal Comunitaria - CPC
@@ -982,7 +1147,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       vr_ind            INTEGER;
 
     BEGIN
-      -- Verificar se o arquivo LOG_UNID_OPER.TXT existe
+
+      -- verificar se o nome do arquivo está com a extensão minuscula    
+      IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || 'LOG_CPC.txt') THEN
+        vr_nmarqprc := 'LOG_CPC.txt';
+      END IF;
+      
+      -- Verificar se o arquivo LOG_CPC.TXT existe
       IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || vr_nmarqprc) THEN 
         -- Se o arquivo nao existe levantamos o erro
         vr_dscritic := 'Arquivo ' || vr_nmarqprc || ' nao encontrado.';
@@ -1058,9 +1229,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
             IF pr_tab_cidade.EXISTS(vr_cidade_cod) THEN
               vr_tab_logradouro(vr_ind).cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
               vr_tab_logradouro(vr_ind).cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
+              vr_tab_logradouro(vr_ind).codibge      := pr_tab_cidade(vr_cidade_cod).codibge;
             ELSE 
               vr_tab_logradouro(vr_ind).cidade_nome  := ' ';
               vr_tab_logradouro(vr_ind).cidade_res   := ' ';
+              vr_tab_logradouro(vr_ind).codibge      := 0;
             END IF;
           EXCEPTION
             WHEN OTHERS THEN
@@ -1193,7 +1366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
 
       -- Diretorio onde estao os arquivos do correio que serao processados
       vr_dsdirarq CONSTANT crapprm.dsvlrprm%TYPE := gene0001.fn_param_sistema('CRED',0,'ROOT_ARQUIVO_CORREIOS');
-      vr_nmarqprc VARCHAR2(50) := 'LOG_LOGRADOURO_'|| pr_dssigla ||'.TXT';
+      vr_nmarqprc VARCHAR2(50) := 'LOG_LOGRADOURO_'|| pr_dssigla;
 
       -- Identificacao dos Enderecos
       vr_idtipdne CONSTANT crapdne.idtipdne%TYPE := 1; -- Cadastro de Enderecos
@@ -1228,9 +1401,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       
     BEGIN
       -- Verificar se o arquivo LOG_LOGRADOURO_*.TXT existe
-      IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || vr_nmarqprc) THEN 
+      IF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || vr_nmarqprc || '.TXT') THEN
+        vr_nmarqprc := vr_nmarqprc || '.TXT';
+      ELSIF gene0001.fn_exis_arquivo(pr_caminho => vr_dsdirarq || vr_nmarqprc || '.txt') THEN
+        vr_nmarqprc := vr_nmarqprc || '.txt';
+      ELSE
         -- Se o arquivo nao existe levantamos o erro
-        vr_dscritic := 'Arquivo ' || vr_nmarqprc || ' nao encontrado.';
+        vr_dscritic := 'Arquivo ' || vr_nmarqprc || '.TXT nao encontrado.';
         RAISE vr_exc_saida;
       END IF;
 
@@ -1315,9 +1492,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
             IF pr_tab_cidade.EXISTS(vr_cidade_cod) THEN
               vr_tab_logradouro(vr_ind).cidade_nome  := SUBSTR(pr_tab_cidade(vr_cidade_cod).nome,1,40);
               vr_tab_logradouro(vr_ind).cidade_res   := SUBSTR(pr_tab_cidade(vr_cidade_cod).resumido,1,25);
+              vr_tab_logradouro(vr_ind).codibge      := pr_tab_cidade(vr_cidade_cod).codibge;
             ELSE 
               vr_tab_logradouro(vr_ind).cidade_nome  := ' ';
               vr_tab_logradouro(vr_ind).cidade_res   := ' ';
+              vr_tab_logradouro(vr_ind).codibge      := 0;
             END IF;
           EXCEPTION
             WHEN OTHERS THEN
@@ -1412,6 +1591,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
     END;
   END pc_proc_arq_estado;
 
+  
   PROCEDURE pc_proc_arq_correio(pr_fluniope  IN INTEGER  --> Processar o arquivo UNID OPER (0-NAO/1-SIM)
                                ,pr_flgrausu  IN INTEGER  --> Processar o arquivo GRANDE USUARIO (0-NAO/1-SIM)
                                ,pr_flcpc     IN INTEGER  --> Processar o arquivo CAIXA POSTAL COMUNITARIA (0-NAO/1-SIM)
@@ -1609,6 +1789,272 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                               pr_tab_erro => pr_tab_erro);         
     END;
   END pc_proc_arq_correio;
+  --
+  PROCEDURE pc_executa_carga(pr_proc_arq_unid_oper      IN NUMBER
+                            ,pr_proc_arq_grande_usuario IN NUMBER
+                            ,pr_proc_arq_cpc            IN NUMBER
+                            ,pr_proc_arq_sigla_estado   IN VARCHAR2
+                            ,pr_xmllog                  IN VARCHAR2 --> XML com informações de LOG
+                            ,pr_cdcritic               OUT PLS_INTEGER
+                            ,pr_dscritic               OUT VARCHAR2
+                            ,pr_retxml              IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                            ,pr_nmdcampo               OUT VARCHAR2 --> Nome do campo com erro
+                            ,pr_des_erro               OUT VARCHAR2) IS
+    /* .............................................................................
+
+    Programa: pc_executa_carga
+    Sistema : Ayllos Web
+    Autor   : Yuri - Mouts
+    Data    : Abril/2019                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Será executado quando Correios disponibilizar novo cadastro de CEPs
+
+    Objetivo  : rotina chamada pela tela CADDNE que irá disparar um job, em horário 
+                previamente parametrizado, que irá atualizar a CRAPDNE com arquivo
+                recebido dos Correios
+
+    Alteracoes:
+    ..............................................................................*/
+
+    -- Variaveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    --
+    vr_cdprogra      VARCHAR2(100) := 'JBCADAST_CARGA_CEP';
+    vr_jobname       VARCHAR2(100);
+    vr_nmarqlog      VARCHAR2(100);
+    vr_idparale      INTEGER; 
+    vr_dsplsql       VARCHAR2(1000);
+    vr_dsplsql_2     VARCHAR2(1000);
+    vr_dsplsql_3     VARCHAR2(1000);
+    vr_dsplsql_4     VARCHAR2(1000);
+    vr_cdcritic      NUMBER;
+    vr_dscritic      VARCHAR2(1000);
+    vr_exc_erro      EXCEPTION;
+    vr_hora_exec     varchar2(10);
+    vr_cont          NUMBER(5);
+    vr_dest_email    VARCHAR2(100);
+    vr_dtjob         DATE;
+    
+  BEGIN
+
+    GENE0004.pc_extrai_dados(pr_xml => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    pr_des_erro := 'OK';
+
+    vr_jobname := vr_cdprogra ||'_$';
+    -- Busca e-mail do operador que receberá notificaçao da conclusão do JOB
+    begin
+    
+      select nvl(o.dsdemail,' ') 
+        into vr_dest_email
+        from crapope o
+       where o.cdoperad = vr_cdoperad
+         and o.cdcooper = vr_cdcooper;
+    exception
+      when NO_DATA_FOUND then
+        vr_cdcritic := 0;
+        vr_dscritic := 'Operador não cadastrado. Tente com outro operador.';
+        raise vr_exc_erro;
+      when OTHERS then
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro não previsto ao buscar e-amil do operador '||vr_cdoperad ||'. Erro = '||sqlerrm;
+        raise vr_exc_erro;
+    end;
+
+    vr_dsplsql := 'declare
+                     vr_cdcritic integer;
+                     vr_dscritic varchar2(4000);
+                     vr_tab_erro cecred.gene0001.typ_tab_erro;
+                     vr_ind      INTEGER;
+                     vr_assunto_email VARCHAR2(100);
+                     vr_processo_ok   VARCHAR2(100) := ''Carga do cadastro do CEP realizada com sucesso'';
+                     vr_processo_nok  VARCHAR2(100) := ''Ocorreram erros na Carga do cadastro do CEP. Consulte log do sistema'';
+                   begin
+                     ';
+    vr_dsplsql_2 := ' tela_caddne.pc_proc_arq_correio(pr_fluniope => '||pr_proc_arq_unid_oper||
+                                                    ',pr_flgrausu => '||pr_proc_arq_grande_usuario||
+                                                    ',pr_flcpc    => '||pr_proc_arq_cpc||
+                                                    ',pr_nmestado => '''||pr_proc_arq_sigla_estado||
+                                                    ''',pr_tab_erro => vr_tab_erro);
+                  
+                     -- verifica se ocorreu erro
+                     IF vr_tab_erro.COUNT() > 0 THEN
+                        -- Percorrer os erros e gerar log
+                        FOR vr_ind IN vr_tab_erro.FIRST..vr_tab_erro.LAST LOOP
+                          -- Envio centralizado de log de erro
+                          ';
+    vr_dsplsql_3 := ' btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+                                                ,pr_ind_tipo_log => 2 -- Erro nao tratato
+                                                ,pr_cdprograma   => '''||vr_cdprogra||
+                                             ''',pr_des_log      => vr_tab_erro(vr_ind).dscritic);
+                        END LOOP;
+                        vr_assunto_email := vr_processo_nok;
+                     ELSE
+                        vr_assunto_email := vr_processo_ok;
+                     END IF;
+                     -- Gerar email ao Solicitante da Carga
+                     ';
+    vr_dsplsql_4 :=  ' gene0003.pc_solicita_email(pr_cdcooper       => 3
+                                                 ,pr_cdprogra        => '''||vr_jobname||'''
+                                                 ,pr_des_destino     => '''||vr_dest_email||'''
+                                                 ,pr_des_assunto     => vr_assunto_email
+                                                 ,pr_des_corpo       => vr_assunto_email
+                                                 ,pr_des_anexo       => NULL
+                                                 ,pr_flg_remove_anex => ''N'' --> Remover os anexos passados
+                                                 ,pr_flg_remete_coop => ''S'' --> Se o envio sera do e-mail da Cooperativa
+                                                 ,pr_flg_enviar      => ''S'' --> Enviar o e-mail na hora
+                                                 ,pr_des_erro        => vr_dscritic);
+                     commit;
+                   end;';
+
+    -- Buscar a hora de agendamento da tabela de parãmetros
+    begin
+      select p.dsvlrprm
+        into vr_hora_exec
+        from CRAPPRM p
+       where p.nmsistem = 'CRED'
+         and p.cdcooper = 0
+         and p.cdacesso = 'CARGA_CEP';
+    exception
+      when NO_DATA_FOUND then
+        vr_cdcritic := 0;
+        vr_dscritic := 'Parametro Hora de Execução da Carga do CEP não cadastrado.';
+        raise vr_exc_erro;
+      when OTHERS then
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro não previsto ao buscar parametro. Erro = '||sqlerrm;
+        raise vr_exc_erro;
+    end;
+    -- Verificar se já há algum job agendado 
+    begin
+      SELECT count(*)
+        INTO vr_cont
+        FROM vw_consulta_execucao_jobs v 
+       WHERE UPPER(v.JOB_NAME) like 'JBCADAST_CARGA_CEP%'
+         AND STATUS = 'SUCCEEDED'
+         AND trunc(v.ACTUAL_START_DATE) = trunc(sysdate);
+    exception
+      WHEN NO_DATA_FOUND THEN
+        vr_cont := 0;
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro não previsto ao consultar JOBs agendados. Erro = '||sqlerrm;
+        raise vr_exc_erro;
+    end;
+    if NVL(vr_cont,0) > 1 then
+        vr_cdcritic := 0;
+        vr_dscritic := 'Solicitação recusada, pois já consta um job agendado para a data de hoje';
+        raise vr_exc_erro;
+    end if;
+    
+    -- verificar se o horario de execucao do JOB é inferior a solicitação
+    IF to_date(to_char(sysdate,'DD/MM/RRRR ') || vr_hora_exec,'DD/MM/RRRR HH24:MI') < SYSDATE THEN
+      vr_dtjob := to_date(to_char(sysdate+1,'DD/MM/RRRR ') || vr_hora_exec,'DD/MM/RRRR HH24:MI');
+    ELSE
+      vr_dtjob := to_date(to_char(SYSDATE,'DD/MM/RRRR ') || vr_hora_exec,'DD/MM/RRRR HH24:MI');
+    END IF;
+    
+    -- Faz a chamada ao programa paralelo atraves de JOB
+    gene0001.pc_submit_job(pr_cdcooper => 3            --> Código da cooperativa
+                          ,pr_cdprogra => vr_cdprogra  --> Código do programa
+                          ,pr_dsplsql  => vr_dsplsql||vr_dsplsql_2||vr_dsplsql_3||vr_dsplsql_4   --> Bloco PLSQL a executar
+                          ,pr_dthrexe  => vr_dtjob     --> Executar nesta hora
+                          ,pr_interva  => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                          ,pr_jobname  => vr_jobname   --> Nome randomico criado
+                          ,pr_des_erro => vr_dscritic);
+
+    -- Testar saida com erro
+    IF vr_dscritic is not null THEN 
+      -- Levantar exceçao
+      raise vr_exc_erro;
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+
+      pr_des_erro := 'NOK';
+      ROLLBACK;
+    WHEN OTHERS THEN
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela ' || vr_cdprogra || ': ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      ROLLBACK;
+  END pc_executa_carga;
+
+  PROCEDURE pc_busca_param(pr_xmllog   IN VARCHAR2, --> XML com informações de LOG
+                           pr_cdcritic OUT PLS_INTEGER, --> Código da crítica
+                           pr_dscritic OUT VARCHAR2, --> Descrição da crítica
+                           pr_retxml   IN OUT NOCOPY XMLType, --> Arquivo de retorno do XML
+                           pr_nmdcampo OUT VARCHAR2, --> Nome do campo com erro
+                           pr_des_erro OUT VARCHAR2) is
+                                       
+       /* .............................................................................
+      
+         Programa: pc_busca_param
+         Sistema : Cadastro - Cooperativa de Credito
+         Sigla   : CRED
+         Autor   : Yuri - Mouts
+         Data    : 07/05/2019                        Ultima atualizacao: 
+      
+         Dados referentes ao programa:
+      
+         Frequencia: Sempre que for chamada
+         Objetivo  : Rotina para retornar horário de execuçao jog carga de CEP
+         CADDNE
+      
+         Alteracoes:     
+      ............................................................................. */
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE := 0;
+    vr_dscritic VARCHAR2(4000);
+    vr_exc_saida exception;
+
+    -- Variaveis gerais
+    vr_contador PLS_INTEGER := 0;
+    vr_dsvlrprm    VARCHAR2(50);
+
+  begin
+
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dsvlrprm', pr_tag_cont => gene0001.fn_param_sistema('CRED',0,'CARGA_CEP'), pr_des_erro => vr_dscritic);
+    pr_des_erro := 'OK';
+
+  exception
+    when others then
+      cecred.pc_internal_exception(3);
+      pr_des_erro := 'NOK';
+    
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic ||
+                                     '</Erro></Root>');
+  end pc_busca_param;
 
 END TELA_CADDNE;
 /
