@@ -19,7 +19,7 @@ BEGIN
   -- Remover acessos de opções desativadas
   DELETE crapace ace
   WHERE upper(ace.nmdatela) = 'IMPPRE'
-    AND upper(ace.cddopcao) IN('B','L','A');
+    AND upper(ace.cddopcao) IN('B','L','A', 'M');
      
   WHILE idx <= 17 LOOP
     OPEN cr_busca_cad(pr_cdcooper => idx);
@@ -135,5 +135,45 @@ BEGIN
   DELETE FROM crapaca aca
   WHERE aca.nmdeacao IN('ALTERA_CARGA','CONSULTAR_CARGA','CADPRE','GERAR_CARGA','CONSULTA_CARGA_CPA_VIGENTE');
                  
+  /* Gerar permissões para os usuários */
+  FOR rw_ope IN (SELECT ope.cdcooper
+                       ,ope.cdoperad 
+                   FROM crapope ope 
+                 WHERE ope.cdsitope = 1) LOOP
+    BEGIN
+      IF rw_ope.cdcooper = 3 THEN
+        INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+        VALUES ('IMPPRE', 'I', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
+      END IF;
+    EXCEPTION
+      WHEN OTHERS THEN
+        NULL;
+    END;
+
+    BEGIN
+      INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+      VALUES ('IMPPRE', 'L', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
+    EXCEPTION
+      WHEN OTHERS THEN
+        NULL;
+    END;
+  
+    BEGIN
+      INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+      VALUES ('IMPPRE', 'D', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
+    EXCEPTION
+      WHEN OTHERS THEN
+        NULL;
+    END;
+  
+    BEGIN
+      INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+      VALUES ('IMPPRE', 'E', rw_ope.cdoperad, rw_ope.cdcooper, 1, 0, 2);
+    EXCEPTION
+      WHEN OTHERS THEN
+        NULL;
+    END;
+  END LOOP;
+  
   COMMIT;
 end;
