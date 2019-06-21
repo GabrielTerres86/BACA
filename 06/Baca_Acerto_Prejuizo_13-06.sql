@@ -587,7 +587,7 @@ BEGIN
 -- ================================================================================================= 13
   DECLARE
     pr_cdcooper   craplcm.cdcooper%TYPE := 1;
-    pr_nrdconta   craplcm.nrdconta%TYPE := 18399026;
+    pr_nrdconta   craplcm.nrdconta%TYPE := 8399026;
     pr_vllanmto   craplcm.vllanmto%TYPE := 2995;
     pr_dtmvtolt   craplcm.dtmvtolt%TYPE;
   --  pr_cdhistor IN  craplcm.cdhistor%TYPE
