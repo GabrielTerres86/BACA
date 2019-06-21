@@ -29,7 +29,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONTAS_DESAB AS
                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
                                  ,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK
 
-  -- Busca dados
+  -- Busca dados 
   PROCEDURE pc_grava_dados_conta (pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da conta
                                  ,pr_flgrenli  IN crapass.flgrenli%TYPE --> Renova Limite de Credito
                                  ,pr_flmajora  IN crapass.flmajora%TYPE --> Flag Majoracao
