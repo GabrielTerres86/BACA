@@ -50,5 +50,5 @@ CREATE OR REPLACE TRIGGER cecred.TRG_analise_cred_aces_ID BEFORE
     FOR EACH ROW
     WHEN ( new.idanalise_contrato_acesso IS NULL )
 BEGIN
-    :new.idanalise_contrato_acesso := tbgen_analise_credito_acessos_SEQ.nextval;
+    :new.idanalise_contrato_acesso := tbgen_analise_cred_aces_SEQ.nextval;
 END;
