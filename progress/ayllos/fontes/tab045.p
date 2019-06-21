@@ -110,6 +110,9 @@ DEF VAR tel_inpessoa AS LOGI FORMAT "Fisica/Juridica"                 NO-UNDO.
 DEF VAR tel_nrderros AS INTE FORMAT "z9"              EXTENT 2        NO-UNDO.
 DEF VAR tel_qtdiaace AS INTE FORMAT "zz9"             EXTENT 2        NO-UNDO.
 DEF VAR tel_qtmesagd AS INTE FORMAT "zz9"             EXTENT 2        NO-UNDO.
+DEF VAR tel_qtdiatro AS INTE FORMAT "zz9"             EXTENT 2        NO-UNDO.
+DEF VAR tel_qtdiaaso AS INTE FORMAT "zz9"             EXTENT 2        NO-UNDO.
+DEF VAR tel_qtdiablo AS INTE FORMAT "zz9"             EXTENT 2        NO-UNDO.
 
 DEF VAR tel_vlpconfe AS DECI FORMAT "z,zzz,zz9.99"    EXTENT 2        NO-UNDO.
 
@@ -408,6 +411,9 @@ DO WHILE TRUE:
              tel_qtmesagd[1] = INTE(ENTRY(05,aux_dstextab,";"))
              tel_vllimted[1] = DECI(ENTRY(13,aux_dstextab,";"))
              tel_vlvrbole[1] = DECI(ENTRY(15,aux_dstextab,";"))
+             tel_qtdiatro[1] = INTE(ENTRY(17,aux_dstextab,";"))
+             tel_qtdiaaso[1] = INTE(ENTRY(18,aux_dstextab,";"))
+             tel_qtdiablo[1] = INTE(ENTRY(19,aux_dstextab,";"))
              tel_vllimweb[2] = DECI(ENTRY(07,aux_dstextab,";"))
              tel_nrderros[2] = INTE(ENTRY(08,aux_dstextab,";"))
              tel_qtdiaace[2] = INTE(ENTRY(09,aux_dstextab,";"))
@@ -415,6 +421,9 @@ DO WHILE TRUE:
              tel_qtmesagd[2] = INTE(ENTRY(11,aux_dstextab,";"))
              tel_vllimted[2] = DECI(ENTRY(14,aux_dstextab,";"))
              tel_vlvrbole[2] = DECI(ENTRY(16,aux_dstextab,";"))
+             tel_qtdiatro[2] = INTE(ENTRY(20,aux_dstextab,";"))
+             tel_qtdiaaso[2] = INTE(ENTRY(21,aux_dstextab,";"))
+             tel_qtdiablo[2] = INTE(ENTRY(22,aux_dstextab,";"))
              tel_vlmaxapl[1] = DECI(ENTRY(23,aux_dstextab,";"))
              tel_vlminapl[1] = DECI(ENTRY(24,aux_dstextab,";"))
              tel_vlmaxres[1] = DECI(ENTRY(25,aux_dstextab,";"))
@@ -438,6 +447,9 @@ DO WHILE TRUE:
              tel_vllimpgo[1] = DECI(ENTRY(06,aux_dstextab,";"))
              tel_vllimted[1] = DECI(ENTRY(13,aux_dstextab,";"))
              tel_vlvrbole[1] = DECI(ENTRY(15,aux_dstextab,";"))
+             tel_qtdiatro[1] = INTE(ENTRY(17,aux_dstextab,";"))
+             tel_qtdiaaso[1] = INTE(ENTRY(18,aux_dstextab,";"))
+             tel_qtdiablo[1] = INTE(ENTRY(19,aux_dstextab,";"))
              tel_vllimtrf[2] = DECI(ENTRY(07,aux_dstextab,";"))
              tel_nrderros[2] = INTE(ENTRY(08,aux_dstextab,";"))
              tel_qtdiaace[2] = INTE(ENTRY(09,aux_dstextab,";"))
@@ -446,6 +458,9 @@ DO WHILE TRUE:
              tel_vllimpgo[2] = DECI(ENTRY(12,aux_dstextab,";"))  
              tel_vllimted[2] = DECI(ENTRY(14,aux_dstextab,";"))
              tel_vlvrbole[2] = DECI(ENTRY(16,aux_dstextab,";"))
+             tel_qtdiatro[2] = INTE(ENTRY(20,aux_dstextab,";"))
+             tel_qtdiaaso[2] = INTE(ENTRY(21,aux_dstextab,";"))
+             tel_qtdiablo[2] = INTE(ENTRY(22,aux_dstextab,";"))
              tel_vlmaxapl[1] = DECI(ENTRY(23,aux_dstextab,";"))
              tel_vlminapl[1] = DECI(ENTRY(24,aux_dstextab,";"))
              tel_vlmaxres[1] = DECI(ENTRY(25,aux_dstextab,";"))
@@ -1094,9 +1109,9 @@ DO WHILE TRUE:
                             INPUT tel_nrderros, 
                             INPUT tel_qtdiaace, 
                             INPUT tel_qtmesagd, 
-                            INPUT 998, 
-                            INPUT 998, 
-                            INPUT 998, 
+                            INPUT tel_qtdiatro, 
+                            INPUT tel_qtdiaaso, 
+                            INPUT tel_qtdiablo, 
                             INPUT tel_vlpconfe, 
                             INPUT tel_vllimweb, 
                             INPUT tel_vllimtrf, 
