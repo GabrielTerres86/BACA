@@ -40,7 +40,7 @@ BEGIN
                                                           vr_cdcritic crapcri.cdcritic%type;
                                                           vr_dscritic crapcri.dscritic%type;
                                                         begin
-                                                          pc_processa_lanc_slip;
+                                                          cont0002.pc_processa_lanc_slip;
                                                         end;',
                                 start_date          => to_date('26-10-2018 09:00:00', 'dd-mm-yyyy hh24:mi:ss'),
                                 repeat_interval     => 'Freq=DAILY;ByDay=MON, TUE, WED, THU, FRI;ByHour=8;ByMinute=0;BySecond=0',
