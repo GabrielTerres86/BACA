@@ -26,32 +26,37 @@ BEGIN
     FETCH cr_busca_cad INTO rw_busca_cad;
     
     IF cr_busca_cad%NOTFOUND THEN
-      INSERT INTO crapprg(nmsistem
-                ,cdprogra
-                ,dsprogra##1
-                ,nrsolici
-                ,nrordprg
-                ,inctrprg
-                ,cdrelato##1
-                ,cdrelato##2
-                ,cdrelato##3
-                ,cdrelato##4
-                ,cdrelato##5
-                ,inlibprg
-                ,cdcooper)
-        VALUES('CRED'
-          ,'IMPPRE'
-          ,'CRIACAO E IMPORTACAO DE CARGAS MANUAIS'
-          ,994
-          ,300
-          ,1
-          ,0
-          ,0
-          ,0
-          ,0
-          ,0
-          ,1
-          ,idx);
+      BEGIN
+        INSERT INTO crapprg(nmsistem
+                          ,cdprogra
+                          ,dsprogra##1
+                          ,nrsolici
+                          ,nrordprg
+                          ,inctrprg
+                          ,cdrelato##1
+                          ,cdrelato##2
+                          ,cdrelato##3
+                          ,cdrelato##4
+                          ,cdrelato##5
+                          ,inlibprg
+                          ,cdcooper)
+                  VALUES('CRED'
+                    ,'IMPPRE'
+                    ,'CRIACAO E IMPORTACAO DE CARGAS MANUAIS'
+                    ,994
+                    ,300
+                    ,1
+                    ,0
+                    ,0
+                    ,0
+                    ,0
+                    ,0
+                    ,1
+                    ,idx);
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+      END;
     END IF;
     
     CLOSE cr_busca_cad;
@@ -112,24 +117,29 @@ BEGIN
   DELETE crapaca r
   WHERE r.nrseqrdr = vr_nrseqrdr;
 
-  -- Criar novas ações --    
-  INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
-    VALUES(vr_nrseqrdr, 'LISTA_CARGAS_SAS','TELA_IMPPRE','pc_lista_cargas_sas','pr_nrregist,pr_nriniseq'); 
+  -- Criar novas ações -- 
+  BEGIN
+    INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
+      VALUES(vr_nrseqrdr, 'LISTA_CARGAS_SAS','TELA_IMPPRE','pc_lista_cargas_sas','pr_nrregist,pr_nriniseq'); 
+      
+    INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
+      VALUES(vr_nrseqrdr, 'EXEC_CARGA_SAS','TELA_IMPPRE','pc_proc_carga_sas','pr_skcarga,pr_cddopcao,pr_dsrejeicao');  
     
-  INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
-    VALUES(vr_nrseqrdr, 'EXEC_CARGA_SAS','TELA_IMPPRE','pc_proc_carga_sas','pr_skcarga,pr_cddopcao,pr_dsrejeicao');  
-  
-  INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
-    VALUES(vr_nrseqrdr, 'EXEC_CARGA_MANUAL','TELA_IMPPRE','pc_proc_carga_manual','pr_tpexecuc,pr_dsdiretor,pr_dsarquivo');               
-  
-  INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
-    VALUES(vr_nrseqrdr, 'LISTA_DETALHE_CARGAS','TELA_IMPPRE','pc_lista_hist_cargas','pr_cdcooper,pr_idcarga,pr_tpcarga,pr_indsitua,pr_dtlibera,pr_dtliberafim,pr_dtvigencia,pr_dtvigenciafim,pr_skcarga,pr_dscarga,pr_tpretorn,pr_nrregist,pr_nriniseq');  
-  
-  INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
-    VALUES(vr_nrseqrdr, 'EXEC_EXCLU_MANUAL','TELA_IMPPRE','pc_proc_exclu_manual','pr_tpexecuc,pr_dsdiretor,pr_dsarquivo');               
-  
-  INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
-    VALUES(vr_nrseqrdr, 'EXEC_BLOQ_CARGA','TELA_IMPPRE','pc_proc_bloq_carga','pr_idcarga');   
+    INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
+      VALUES(vr_nrseqrdr, 'EXEC_CARGA_MANUAL','TELA_IMPPRE','pc_proc_carga_manual','pr_tpexecuc,pr_dsdiretor,pr_dsarquivo');               
+    
+    INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
+      VALUES(vr_nrseqrdr, 'LISTA_DETALHE_CARGAS','TELA_IMPPRE','pc_lista_hist_cargas','pr_cdcooper,pr_idcarga,pr_tpcarga,pr_indsitua,pr_dtlibera,pr_dtliberafim,pr_dtvigencia,pr_dtvigenciafim,pr_skcarga,pr_dscarga,pr_tpretorn,pr_nrregist,pr_nriniseq');  
+    
+    INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
+      VALUES(vr_nrseqrdr, 'EXEC_EXCLU_MANUAL','TELA_IMPPRE','pc_proc_exclu_manual','pr_tpexecuc,pr_dsdiretor,pr_dsarquivo');               
+    
+    INSERT INTO CRAPACA(NRSEQRDR,NMDEACAO,NMPACKAG,NMPROCED,LSTPARAM)
+      VALUES(vr_nrseqrdr, 'EXEC_BLOQ_CARGA','TELA_IMPPRE','pc_proc_bloq_carga','pr_idcarga');   
+  EXCEPTION
+    WHEN OTHERS THEN
+      NULL;
+  END;
 
   /* Ações desativadas */               
   DELETE FROM crapaca aca
