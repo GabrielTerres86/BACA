@@ -9374,7 +9374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	  ELSIF pr_indoperacao = 6 THEN -- Se for solicitacao de taloes
       vr_dstransa := 'Pagamento';
     ELSIF pr_indoperacao = 7 THEN -- Se for entrega de taloes
-      vr_dstransa := 'Enttrega de Talões';
+      vr_dstransa := 'Entrega de Talões';
     END IF;
     
     -- Preenche a descricao da origem
