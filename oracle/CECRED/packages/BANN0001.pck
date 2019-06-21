@@ -93,7 +93,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANN0001 IS
        WHERE crap.nrdconta = pr_nrdconta
          AND crap.cdcooper = pr_cdcooper;
     vr_nrcpfcnpj_base crapass.nrcpfcnpj_base%TYPE;
-    vr_tipo_pessoa                 CRAPASS.Inpessoa%TYPE;
     
     -- Tem PreAprovado?
     vr_pre_aprovado                NUMBER:=0;

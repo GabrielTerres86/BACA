@@ -261,10 +261,6 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
 			   nmsocial  crapttl.nmsocial%TYPE,
                cdscobeh  VARCHAR2(100),
 			   reciproc  INTEGER,			   
-               nrdgrupo  tbevento_grupos.nmdgrupo%TYPE
-			   nmsocial  crapttl.nmsocial%TYPE,
-               cdscobeh  VARCHAR2(100),
-			   reciproc  INTEGER,			   
                nrdgrupo  tbevento_grupos.nmdgrupo%TYPE);
   TYPE typ_tab_cabec IS TABLE OF typ_rec_cabec
     INDEX BY PLS_INTEGER;  
