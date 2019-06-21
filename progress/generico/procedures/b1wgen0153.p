@@ -9647,21 +9647,8 @@ PROCEDURE cria_lan_auto_tarifa:
 
        ASSIGN b-inprejuz = IF (AVAIL crapass AND crapass.inprejuz = 1) THEN TRUE ELSE FALSE.
 
-       IF  (b-inprejuz)
-       AND (par_cdhistor = 1441 OR par_cdhistor = 1465) THEN DO: 
-           
-            ASSIGN aux_cdcritic = 0.
-				    /*aux_dscritic = "cobrança de tarifa ADP em c/c em prejuizo. Coop: " par_cdcooper " - Conta: " par_nrdconta ".".
-            RUN gera_erro (INPUT par_cdcooper,        
-                           INPUT par_cdagenci,
-                           INPUT 1, /* nrdcaixa  */
-                           INPUT 1, /* sequencia */
-                           INPUT aux_cdcritic,        
-                           INPUT-OUTPUT aux_dscritic).*/
-                           
-       END.
-       ELSE
-       DO:
+       IF  NOT((b-inprejuz)
+       AND (par_cdhistor = 1441 OR par_cdhistor = 1465)) THEN DO:
            CREATE craplat.
            ASSIGN craplat.cdcooper = par_cdcooper
                   craplat.nrdconta = par_nrdconta

@@ -2131,16 +2131,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       vr_prejuzcc := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
                                                     , pr_nrdconta => pr_nrdconta);
                                                     
-      IF ((vr_prejuzcc) AND (pr_cdhistor = 1441 OR pr_cdhistor = 1465)) THEN
-         -- Gera Log
-         BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                    pr_ind_tipo_log => 2, -- Erro Tratado
-                                    pr_des_log      => to_char(SYSDATE, 'hh24:mi:ss')  ||
-                                                    ' - ' || 'cobrança de tarifa ADP em c/c em prejuizo. Coop: '||pr_cdcooper||' - Conta: '||pr_nrdconta||'.');           
-      ELSE          
+                                                      
+                                                    
+      IF NOT ((vr_prejuzcc)   AND
+              (pr_cdhistor = 1441 OR pr_cdhistor = 1465)) THEN
         --Inserir lancamento automatico
         BEGIN
           INSERT INTO craplat
+            
             (craplat.cdcooper
             ,craplat.nrdconta
             ,craplat.dtmvtolt
