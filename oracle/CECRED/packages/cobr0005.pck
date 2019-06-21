@@ -267,34 +267,6 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
                                      ,pr_flglinha_digitavel OUT tbcobran_sms_param_coop.flglinha_digitavel%TYPE --> nome na emissao do boleto (1-nome razao/ 2-nome fantasia) 
                                      ,pr_dscritic            OUT VARCHAR2);           --> Retorno de critica                                    
                                      
-  --> Rotina responsavel por gerar o relatorio analitico de envio de SMS em csv
-	PROCEDURE pc_relat_anali_envio_csv(pr_cdcooper  IN  crapcop.cdcooper%TYPE          --> Codigo da cooperativa                                    
-                                    ,pr_nrdconta  IN  crapass.nrdconta%TYPE          --> Numer de conta do cooperado                                     
-                                    ,pr_dtiniper  IN  DATE                           --> Data inicio do periodo para relatorio
-                                    ,pr_dtfimper  IN  DATE                           --> Data fim do periodo para relatorio
-                                    ,pr_idorigem  IN INTEGER                         --> Codigo de origem do sistema
-                                    ,pr_dsiduser  IN VARCHAR2                        --> id do usuario
-                                    ,pr_instatus  IN INTEGER DEFAULT 0               --> Status do SMS (0 - para todos)
-                                    ,pr_tppacote  IN INTEGER DEFAULT 0               --> Tipo de pacote(1-pacote,2-individual,0-Todos)
-																		--
-																		,pr_nmarqcsv OUT VARCHAR2                        --> Retorna o nome do relatorio gerado
-																		,pr_cdcritic OUT PLS_INTEGER                     --> Codigo da critica
-                                    ,pr_dscritic OUT VARCHAR2                        --> Descricao da critica
-		                                );
-  --> Rotina responsavel por gerar o relatorio analitico de envio de SMS em csv - Chamada ayllos Web
-  PROCEDURE pc_relat_anali_envio_csv_web(pr_nrdconta   IN VARCHAR2               --> Numer de conta do cooperado                                     
-																				,pr_dtiniper   IN VARCHAR2               --> Data inicio do periodo para relatorio
-																				,pr_dtfimper   IN VARCHAR2               --> Data fim do periodo para relatorio
-																				,pr_dsiduser   IN VARCHAR2               --> id do usuario
-																				,pr_instatus   IN INTEGER DEFAULT 0      --> Status do SMS (0 - para todos)
-																				--
-                                        ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
-                                        ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
-                                        ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
-                                        ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
-                                        ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
-                                        ,pr_des_erro  OUT VARCHAR2               --> Erros do processo
-																				);
   --> Rotina responsavel por gerar o relatorio analitico de envio de SMS
   PROCEDURE pc_relat_anali_envio_sms (pr_cdcooper  IN  crapcop.cdcooper%TYPE          --> Codigo da cooperativa                                    
                                      ,pr_nrdconta  IN  crapass.nrdconta%TYPE          --> Numer de conta do cooperado
@@ -2974,608 +2946,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
   END pc_verif_permite_lindigi; 
   
-	--> Rotina responsavel por gerar o relatorio analitico de envio de SMS em csv
-	PROCEDURE pc_relat_anali_envio_csv(pr_cdcooper  IN  crapcop.cdcooper%TYPE          --> Codigo da cooperativa                                    
-                                    ,pr_nrdconta  IN  crapass.nrdconta%TYPE          --> Numer de conta do cooperado                                     
-                                    ,pr_dtiniper  IN  DATE                           --> Data inicio do periodo para relatorio
-                                    ,pr_dtfimper  IN  DATE                           --> Data fim do periodo para relatorio
-                                    ,pr_idorigem  IN INTEGER                         --> Codigo de origem do sistema
-                                    ,pr_dsiduser  IN VARCHAR2                        --> id do usuario
-                                    ,pr_instatus  IN INTEGER DEFAULT 0               --> Status do SMS (0 - para todos)
-                                    ,pr_tppacote  IN INTEGER DEFAULT 0               --> Tipo de pacote(1-pacote,2-individual,0-Todos)
-																		--
-																		,pr_nmarqcsv OUT VARCHAR2                        --> Retorna o nome do relatorio gerado
-																		,pr_cdcritic OUT PLS_INTEGER                     --> Codigo da critica
-                                    ,pr_dscritic OUT VARCHAR2                        --> Descricao da critica
-		                                ) IS
-    /* ............................................................................
-       Programa: pc_relat_anali_envio_csv
-       Sistema : Conta-Corrente - Cooperativa de Credito
-       Sigla   : CRED
-       Autor   : Adriano Nagasava - Supero
-       Data    : Setembro/2018                     Ultima atualizacao: 20/03/2019
-
-       Dados referentes ao programa:
-
-       Frequencia: Sempre que chamado
-       Objetivo  : Rotina responsavel por gerar o relatorio analitico de envio de SMS em CVS
-
-       Alteracoes: 20/03/2019 - Alterado para ter um cursor para os SMSs agendados e outro cursor para
-			                          os SMSs enviados e nao enviados (Nagasava - Supero - PRJ431)
-    ............................................................................ */
-		--> Buscar SMSs agendados
-		CURSOR cr_cobran_sms_a IS
-		  SELECT DISTINCT
-						 cob.nrdconta
-						,ass.nmprimtl 
-						,ass.cdagenci
-						,age.nmresage
-						,cob.nrnosnum
-						,sab.nmdsacad
-						,cob.dtvencto
-						,cob.vltitulo
-						,(SELECT DISTINCT ctl1.nrddd || ' ' || ctl1.nrtelefone
-								FROM tbcobran_sms sms1
-										,tbgen_sms_controle ctl1
-							 WHERE sms1.cdcooper    = ctl1.cdcooper
-								 AND sms1.nrdconta    = ctl1.nrdconta
-								 AND sms1.idlote_sms  = ctl1.idlote_sms
-								 AND sms1.idsms       = ctl1.idsms
-								 AND sms1.cdcooper    = cob.cdcooper
-								 AND sms1.nrdconta    = cob.nrdconta
-								 AND sms1.nrcnvcob    = cob.nrcnvcob
-								 AND sms1.nrdocmto    = cob.nrdocmto
-								 AND ROWNUM           = 1) nrdofone
-						,pct.dspacote
-						,decode(sms.instatus_sms, 1, 1, 2, 1, sms.instatus_sms) instatus_sms
-						,(SELECT DISTINCT ctl1.dhenvio_sms
-								FROM tbcobran_sms sms1
-										,tbgen_sms_controle ctl1
-							 WHERE sms1.cdcooper    = ctl1.cdcooper
-								 AND sms1.nrdconta    = ctl1.nrdconta
-								 AND sms1.idlote_sms  = ctl1.idlote_sms
-								 AND sms1.idsms       = ctl1.idsms
-								 AND sms1.cdcooper    = cob.cdcooper
-								 AND sms1.nrdconta    = cob.nrdconta
-								 AND sms1.nrcnvcob    = cob.nrcnvcob
-								 AND sms1.nrdocmto    = cob.nrdocmto
-								 AND ctl1.dhenvio_sms < cob.dtvencto
-								 AND ROWNUM           = 1) dt_envio_1
-						,(SELECT DISTINCT ctl1.dhenvio_sms
-								FROM tbcobran_sms sms1
-										,tbgen_sms_controle ctl1
-							 WHERE sms1.cdcooper    = ctl1.cdcooper
-								 AND sms1.nrdconta    = ctl1.nrdconta
-								 AND sms1.idlote_sms  = ctl1.idlote_sms
-								 AND sms1.idsms       = ctl1.idsms
-								 AND sms1.cdcooper    = cob.cdcooper
-								 AND sms1.nrdconta    = cob.nrdconta
-								 AND sms1.nrcnvcob    = cob.nrcnvcob
-								 AND sms1.nrdocmto    = cob.nrdocmto
-								 AND ctl1.dhenvio_sms = cob.dtvencto
-								 AND ROWNUM           = 1) dt_envio_2
-						,(SELECT DISTINCT ctl1.dhenvio_sms
-								FROM tbcobran_sms sms1
-										,tbgen_sms_controle ctl1
-							 WHERE sms1.cdcooper    = ctl1.cdcooper
-								 AND sms1.nrdconta    = ctl1.nrdconta
-								 AND sms1.idlote_sms  = ctl1.idlote_sms
-								 AND sms1.idsms       = ctl1.idsms
-								 AND sms1.cdcooper    = cob.cdcooper
-								 AND sms1.nrdconta    = cob.nrdconta
-								 AND sms1.nrcnvcob    = cob.nrcnvcob
-								 AND sms1.nrdocmto    = cob.nrdocmto
-								 AND ctl1.dhenvio_sms > cob.dtvencto
-								 AND ROWNUM           = 1) dt_envio_3
-				FROM tbgen_sms_controle ctl
-						,tbcobran_sms sms
-						,tbcobran_sms_contrato ctr
-						,tbcobran_sms_pacotes pct
-						,crapsab sab
-						,crapcob cob
-						,crapass ass
-						,crapage age
-			 WHERE ctl.cdcooper = pr_cdcooper
-				 AND ctl.nrdconta = decode(nvl(pr_nrdconta,0),0,ctl.nrdconta,pr_nrdconta)
-				 AND ctl.dhenvio_sms BETWEEN pr_dtiniper AND to_date(to_char(pr_dtfimper,'DDMMRRRR')||'235959','DDMMRRHH24MISS')
-				 AND ctl.idseqttl = cob.idseqttl
-				 AND sms.idlote_sms = ctl.idlote_sms
-				 AND sms.idsms    = ctl.idsms
-				 AND sms.instatus_sms IN(1, 2) -- Agendandos
-				 AND sms.instatus_sms = DECODE(pr_instatus,0,sms.instatus_sms,5,sms.instatus_sms,pr_instatus)
-				 AND ((sms.instatus_sms <> 4 AND
-							 pr_instatus = 5) OR (pr_instatus <> 5))
-				 AND sms.cdcooper = ctr.cdcooper
-				 AND sms.nrdconta = ctr.nrdconta
-				 AND sms.idcontrato = ctr.idcontrato
-				 AND ctr.cdcooper = pct.cdcooper
-				 AND ctr.idpacote = pct.idpacote
-				 AND cob.cdcooper = sms.cdcooper
-				 AND cob.nrdconta = sms.nrdconta
-				 AND cob.nrcnvcob = sms.nrcnvcob
-				 AND cob.nrdocmto = sms.nrdocmto
-				 AND cob.cdbandoc = sms.cdbandoc
-				 AND cob.nrdctabb = sms.nrdctabb
-				 AND sab.cdcooper = cob.cdcooper
-				 AND sab.nrdconta = cob.nrdconta
-				 AND sab.nrinssac = cob.nrinssac
-				 AND cob.cdcooper = ass.cdcooper
-				 AND cob.nrdconta = ass.nrdconta
-				 AND ass.cdcooper = age.cdcooper
-				 AND ass.cdagenci = age.cdagenci
-				 AND ( (pr_tppacote = 2 AND ctr.idpacote IN (1,2)) OR
-							 (pr_tppacote = 1 AND ctr.idpacote > 2) OR
-							 (pr_tppacote = 0)
-							)
-				ORDER BY instatus_sms;
-		
-		--> Buscar SMSs enviados 
-    CURSOR cr_cobran_sms_e IS
-      SELECT cob.nrdconta,
-             ass.nmprimtl, 
-             ass.cdagenci,
-             age.nmresage,
-             cob.nrnosnum,
-             sab.nmdsacad,
-             cob.dtvencto,
-             cob.vltitulo,
-             ctl.dhenvio_sms AS dhenvsms,
-             ctl.nrddd||' '||ctl.nrtelefone  AS nrdofone,
-             pct.dspacote
-						,decode(sms.instatus_sms, 1, 1, 2, 1, sms.instatus_sms) instatus_sms
-						,(CASE WHEN trunc(ctl.dhenvio_sms) < cob.dtvencto THEN ctl.dhenvio_sms ELSE NULL END) dt_envio_1
-						,(CASE WHEN trunc(ctl.dhenvio_sms) = cob.dtvencto THEN ctl.dhenvio_sms ELSE NULL END) dt_envio_2
-						,(CASE WHEN trunc(ctl.dhenvio_sms) > cob.dtvencto THEN ctl.dhenvio_sms ELSE NULL END) dt_envio_3
-        FROM tbgen_sms_controle ctl,             
-             tbcobran_sms sms,
-             tbcobran_sms_contrato ctr,
-             tbcobran_sms_pacotes pct,
-             crapsab sab,
-             crapcob cob,
-             crapass ass,
-             crapage age
-       WHERE ctl.cdcooper = pr_cdcooper
-         AND ctl.nrdconta = decode(nvl(pr_nrdconta,0),0,ctl.nrdconta,pr_nrdconta)
-         AND ctl.dhenvio_sms BETWEEN pr_dtiniper AND to_date(to_char(pr_dtfimper,'DDMMRRRR')||'235959','DDMMRRHH24MISS')
-         AND sms.idlote_sms = ctl.idlote_sms
-         AND sms.idsms    = ctl.idsms
-				 AND sms.instatus_sms NOT IN(1, 2) -- Eviados e não enviados
-         AND sms.instatus_sms = DECODE(pr_instatus,0,sms.instatus_sms,5,sms.instatus_sms,pr_instatus)   
-         AND ((sms.instatus_sms <> 4 AND
-               pr_instatus = 5) OR (pr_instatus <> 5))
-         AND sms.cdcooper = ctr.cdcooper
-         AND sms.nrdconta = ctr.nrdconta
-         AND sms.idcontrato = ctr.idcontrato
-         AND ctr.cdcooper = pct.cdcooper
-         AND ctr.idpacote = pct.idpacote
-         AND cob.cdcooper = sms.cdcooper
-         AND cob.nrdconta = sms.nrdconta
-         AND cob.nrcnvcob = sms.nrcnvcob
-         AND cob.nrdocmto = sms.nrdocmto
-         AND cob.cdbandoc = sms.cdbandoc
-         AND cob.nrdctabb = sms.nrdctabb
-         AND sab.cdcooper = cob.cdcooper
-         AND sab.nrdconta = cob.nrdconta
-         AND sab.nrinssac = cob.nrinssac
-         AND cob.cdcooper = ass.cdcooper
-         AND cob.nrdconta = ass.nrdconta
-         AND ass.cdcooper = age.cdcooper
-         AND ass.cdagenci = age.cdagenci
-         AND ( (pr_tppacote = 2 AND ctr.idpacote IN (1,2)) OR
-               (pr_tppacote = 1 AND ctr.idpacote > 2) OR
-               (pr_tppacote = 0)
-              )
-							ORDER BY sms.instatus_sms;
-    
-    -- Cursor genérico de calendário
-		vr_instatus_sms tbcobran_sms.instatus_sms%TYPE;
-		vr_tag_aberta   VARCHAR2(100);
-		vr_nmdiretorio  VARCHAR2(100);
-		vr_arquivo_txt  UTL_FILE.file_type;
-		vr_cdcritic     NUMBER;
-		vr_dscritic     VARCHAR2(4000);
-		vr_flexsreg     BOOLEAN;
-		vr_exc_erro     EXCEPTION;
-		vr_des_reto     VARCHAR2(100);
-    vr_tab_erro     GENE0001.typ_tab_erro;
-		vr_typsaida     VARCHAR2(100);
-		
-		--------------------------- SUBROTINAS INTERNAS --------------------------
-    -- Subrotina para escrever texto na variável CLOB do CSV
-    PROCEDURE pc_escreve_csv(pr_nmarquivo_txt IN OUT NOCOPY UTL_FILE.file_type --> Handle do arquivo aberto
-                            ,pr_des_text      IN VARCHAR2
-														) IS
-    BEGIN
-			--
-			gene0001.pc_escr_linha_arquivo(pr_nmarquivo_txt, pr_des_text);
-			--
-    END pc_escreve_csv;
-		--
-	BEGIN
-		-- Inclui nome do modulo logado
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_anali_envio_csv');
-		--Buscar diretorio da cooperativa
-		vr_nmdiretorio := gene0001.fn_diretorio(pr_tpdireto => 'C' --> cooper 
-																				   ,pr_cdcooper => pr_cdcooper
-																				   ,pr_nmsubdir => '/rl'
-																					 );
-		-- Abre arquivo CSV
-		pr_nmarqcsv := 'crrl728_' || pr_dsiduser || '.csv';
-		
-		gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdiretorio        --> Diretório do arquivo
-														,pr_nmarquiv => pr_nmarqcsv           --> Nome do arquivo
-														,pr_tipabert => 'W'                   --> Modo de abertura (R,W,A)
-														,pr_utlfileh => vr_arquivo_txt        --> Handle do arquivo aberto
-														,pr_des_erro => vr_dscritic           --> Retorno da critica
-														);
-		--
-		vr_instatus_sms := 0;
-		vr_tag_aberta   := NULL;
-		--> Buscar SMSs agendados
-    FOR rw_cobran_sms_a IN cr_cobran_sms_a LOOP
-			--
-			vr_flexsreg := TRUE;
-			-- Verifica se são os SMS Agendados
-			IF rw_cobran_sms_a.instatus_sms = 1 THEN
-				--
-				IF vr_instatus_sms <> rw_cobran_sms_a.instatus_sms THEN
-					--
-					vr_instatus_sms := rw_cobran_sms_a.instatus_sms;
-					vr_tag_aberta   := 'SMS Agendados';
-					--
-					pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-					              ,pr_des_text      => 'SMS Agendados'
-												);
-					--
-					pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-												,pr_des_text      => 'Agencia;Conta;nmresage;nmprimtl;Nosso Numero;Nome do Pagador;Vencimento;Valor Boleto;Velular;Data Envio 1;Data Envio 2;Data Envio 3'
-												);
-					--
-				END IF;
-				--
-				pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-											,pr_des_text      => rw_cobran_sms_a.cdagenci                                    || ';' ||
-                                           TRIM(gene0002.fn_mask_conta(rw_cobran_sms_a.nrdconta))      || ';' ||
-																					 rw_cobran_sms_a.nmresage                                    || ';' ||
-																					 rw_cobran_sms_a.nmprimtl                                    || ';' ||
-																					 rw_cobran_sms_a.nrnosnum                                    || ';' ||
-																					 rw_cobran_sms_a.nmdsacad                                    || ';' ||
-																					 to_char(rw_cobran_sms_a.dtvencto,'DD/MM/RRRR')              || ';' ||
-																					 rw_cobran_sms_a.vltitulo                                    || ';' ||
-																					 rw_cobran_sms_a.nrdofone                                    || ';' ||
-																					 to_char(rw_cobran_sms_a.dt_envio_1,'DD/MM/RRRR HH24:MI:SS') || ';' ||
-																					 to_char(rw_cobran_sms_a.dt_envio_2,'DD/MM/RRRR HH24:MI:SS') || ';' ||
-																					 to_char(rw_cobran_sms_a.dt_envio_3,'DD/MM/RRRR HH24:MI:SS')
-											);
-				--
-			END IF;
-			--   
-    END LOOP;
-    --> Buscar SMSs enviados e não enviados
-    FOR rw_cobran_sms_e IN cr_cobran_sms_e LOOP
-			--
-			vr_flexsreg := TRUE;
-			-- Verifica se são os SMS Não Enviados
-			IF rw_cobran_sms_e.instatus_sms = 3 THEN
-				--
-				IF vr_instatus_sms <> rw_cobran_sms_e.instatus_sms THEN
-					--
-					IF vr_tag_aberta IS NOT NULL THEN
-						--
-						pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-													,pr_des_text      => ''
-													);
-						--
-					END IF;
-					--
-					vr_instatus_sms := rw_cobran_sms_e.instatus_sms;
-					vr_tag_aberta   := 'SMS Não enviados';
-					--
-					pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-												,pr_des_text      => 'SMS Não enviados'
-												);
-					--
-					pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-												,pr_des_text      => 'Agencia;Conta;nmresage;nmprimtl;Nosso Numero;Nome do Pagador;Vencimento;Valor Boleto;Data/Hora Envio;Celular'
-												);
-					--
-				END IF;
-				--
-				pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-											,pr_des_text      => rw_cobran_sms_e.cdagenci                                  || ';' ||
-                                           TRIM(gene0002.fn_mask_conta(rw_cobran_sms_e.nrdconta))    || ';' ||
-											                     rw_cobran_sms_e.nmresage                                  || ';' ||
-											                     rw_cobran_sms_e.nmprimtl                                  || ';' ||
-																					 rw_cobran_sms_e.nrnosnum                                  || ';' ||
-																					 rw_cobran_sms_e.nmdsacad                                  || ';' ||
-																					 to_char(rw_cobran_sms_e.dtvencto,'DD/MM/RRRR')            || ';' ||
-																					 rw_cobran_sms_e.vltitulo                                  || ';' ||
-																					 to_char(rw_cobran_sms_e.dhenvsms,'DD/MM/RRRR HH24:MI:SS') || ';' ||
-																					 rw_cobran_sms_e.nrdofone
-											);
-				--
-			-- Verifica se são os SMS Enviados com Sucesso
-			ELSIF rw_cobran_sms_e.instatus_sms = 4 THEN
-				--
-				IF vr_instatus_sms <> rw_cobran_sms_e.instatus_sms THEN
-					--
-					IF vr_tag_aberta IS NOT NULL THEN
-						--
-					  pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-													,pr_des_text      => ''
-													);
-						--
-					END IF;
-					--
-					vr_instatus_sms := rw_cobran_sms_e.instatus_sms;
-					vr_tag_aberta   := 'SMS Enviados com sucesso';
-					--
-					pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-												,pr_des_text      => 'SMS Enviados com sucesso'
-												);
-					--
-					pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-												,pr_des_text      => 'Agencia;Conta;nmresage;nmprimtl;Nosso Numero;Nome do Pagador;Vencimento;Valor Boleto;Data/Hora Envio;Celular'
-												);
-					--
-				END IF;
-				--
-				pc_escreve_csv(pr_nmarquivo_txt => vr_arquivo_txt
-											,pr_des_text      => rw_cobran_sms_e.cdagenci                                  || ';' ||
-                                           TRIM(gene0002.fn_mask_conta(rw_cobran_sms_e.nrdconta))    || ';' ||
-											                     rw_cobran_sms_e.nmresage                                  || ';' ||
-											                     rw_cobran_sms_e.nmprimtl                                  || ';' ||
-																					 rw_cobran_sms_e.nrnosnum                                  || ';' ||
-																					 rw_cobran_sms_e.nmdsacad                                  || ';' ||
-																					 to_char(rw_cobran_sms_e.dtvencto,'DD/MM/RRRR')            || ';' ||
-																					 rw_cobran_sms_e.vltitulo                                  || ';' ||
-																					 to_char(rw_cobran_sms_e.dhenvsms,'DD/MM/RRRR HH24:MI:SS') || ';' ||
-																					 rw_cobran_sms_e.nrdofone
-											);
-				--
-			END IF;
-			--   
-    END LOOP;
-		-- Fechar o arquivo
-    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_arquivo_txt);
-		--
-    IF vr_flexsreg = FALSE THEN
-      vr_cdcritic := 1240;  --Nenhum registro encontrado para o periodo informado
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-      RAISE vr_exc_erro;
-    END IF;
-
-		--> AyllosWeb
-		IF pr_idorigem = 5 THEN
-			-- Copia contrato PDF do diretorio da cooperativa para servidor WEB
-			GENE0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
-																	,pr_cdagenci => NULL
-																	,pr_nrdcaixa => NULL
-																	,pr_nmarqpdf => vr_nmdiretorio || '/' || pr_nmarqcsv
-																	,pr_des_reto => vr_des_reto
-																	,pr_tab_erro => vr_tab_erro);
-			-- Se retornou erro
-			IF NVL(vr_des_reto,'OK') <> 'OK' THEN
-				IF vr_tab_erro.COUNT > 0 THEN -- verifica pl-table se existe erros
-					vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic; -- busca primeira critica
-					vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; -- busca primeira descricao da critica
-					RAISE vr_exc_erro; -- encerra programa
-				END IF;
-			END IF;
-			-- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
-			GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_anali_envio_sms');
-
-			-- Remover relatorio do diretorio padrao da cooperativa
-			gene0001.pc_OScommand(pr_typ_comando => 'S'
-													 ,pr_des_comando => 'rm '||vr_nmdiretorio || '/' || pr_nmarqcsv
-													 ,pr_typ_saida   => vr_typsaida
-													 ,pr_des_saida   => vr_dscritic);
-			-- Se retornou erro
-			IF vr_typsaida = 'ERR' OR vr_dscritic IS NOT NULL THEN
-				-- Concatena o erro que veio
-				vr_cdcritic := 1156;  --Erro ao remover arquivo
-				vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||
-											 vr_nmdiretorio || '/' || pr_nmarqcsv||'. Erro: '||vr_dscritic;
-				RAISE vr_exc_erro; -- encerra programa
-			END IF;
-		END IF;
-		--
-	EXCEPTION
-		WHEN vr_exc_erro THEN
-      vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
-
-      --Grava tabela de log - Ch REQ0011327
-      pc_gera_log(pr_cdcooper      => 3,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => vr_dscritic,
-                  pr_cdcriticidade => 1,
-                  pr_cdmensagem    => nvl(vr_cdcritic,0),
-                  pr_ind_tipo_log  => 1);
-
-      vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
-      pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
-
-    WHEN OTHERS THEN
-      -- Montar descrição de erro não tratado
-      pr_cdcritic := 9999;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_relat_anali_envio_csv. '||SQLERRM;
-
-      --Grava tabela de log - Ch REQ0011327
-      pc_gera_log(pr_cdcooper      => 3,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
-                  pr_cdcriticidade => 2,
-                  pr_cdmensagem    => nvl(pr_cdcritic,0),
-                  pr_ind_tipo_log  => 2);
-
-      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
-      CECRED.pc_internal_exception (pr_cdcooper => 3);
-
-      pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
-      pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
-      
-	END pc_relat_anali_envio_csv;
-	
-	--> Rotina responsavel por gerar o relatorio analitico de envio de SMS em csv - Chamada ayllos Web
-  PROCEDURE pc_relat_anali_envio_csv_web(pr_nrdconta   IN VARCHAR2               --> Numer de conta do cooperado                                     
-																				,pr_dtiniper   IN VARCHAR2               --> Data inicio do periodo para relatorio
-																				,pr_dtfimper   IN VARCHAR2               --> Data fim do periodo para relatorio
-																				,pr_dsiduser   IN VARCHAR2               --> id do usuario
-																				,pr_instatus   IN INTEGER DEFAULT 0      --> Status do SMS (0 - para todos)
-																				--
-                                        ,pr_xmllog     IN VARCHAR2               --> XML com informacoes de LOG
-                                        ,pr_cdcritic  OUT PLS_INTEGER            --> Codigo da critica
-                                        ,pr_dscritic  OUT VARCHAR2               --> Descricao da critica
-                                        ,pr_retxml IN OUT NOCOPY xmltype         --> Arquivo de retorno do XML
-                                        ,pr_nmdcampo  OUT VARCHAR2               --> Nome do campo com erro
-                                        ,pr_des_erro  OUT VARCHAR2               --> Erros do processo
-																				) IS
-
-  /* ............................................................................
-       Programa: pc_relat_anali_envio_csv_web
-       Sistema : Conta-Corrente - Cooperativa de Credito
-       Sigla   : CRED
-       Autor   : Adriano Nagasava - Supero
-       Data    : Setembro/2018                     Ultima atualizacao: 
-
-       Dados referentes ao programa:
-
-       Frequencia: Sempre que chamado
-       Objetivo  : Rotina responsavel por gerar o relatorio analitico de envio de SMS em CVS - Chamada ayllos Web
-
-       Alteracoes: 
-    ............................................................................ */  
-    
-    -------------->> VARIAVEIS <<----------------
-    -- Variavel de criticas
-    vr_cdcritic crapcri.cdcritic%TYPE;
-    vr_dscritic VARCHAR2(10000);
-
-    -- Tratamento de erros
-    vr_exc_erro EXCEPTION;
-
-    -- Variaveis de log
-    vr_cdcooper INTEGER;
-    vr_cdoperad VARCHAR2(100);
-    vr_nmdatela VARCHAR2(100);
-    vr_nmeacao  VARCHAR2(100);
-    vr_cdagenci VARCHAR2(100);
-    vr_nrdcaixa VARCHAR2(100);
-    vr_idorigem VARCHAR2(100);
-
-    vr_dtfimper DATE;
-    vr_dtiniper DATE; 
-
-    -- Variaveis gerais
-    vr_nmarqcsv VARCHAR2(1000);
-    vr_dsxmlrel CLOB;
-    
-  BEGIN
-    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_anali_envio_csv_web');
-  
-    -- Extrai os dados vindos do XML
-    GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic
-														);
-                               
-    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_anali_envio_csv_web');
-    
-    vr_dtiniper := to_date(pr_dtiniper,'DD/MM/RRRR');
-    vr_dtfimper := to_date(pr_dtfimper,'DD/MM/RRRR');
-    
-		pc_relat_anali_envio_csv(pr_cdcooper => vr_cdcooper -- IN  --> Codigo da cooperativa                                    
-														,pr_nrdconta => pr_nrdconta -- IN  --> Numer de conta do cooperado                                     
-														,pr_dtiniper => vr_dtiniper -- IN  --> Data inicio do periodo para relatorio
-														,pr_dtfimper => vr_dtfimper -- IN  --> Data fim do periodo para relatorio
-														,pr_idorigem => vr_idorigem -- IN  --> Codigo de origem do sistema
-														,pr_dsiduser => pr_dsiduser -- IN  --> id do usuario
-														,pr_instatus => pr_instatus -- IN  --> Status do SMS (0 - para todos)
-														,pr_tppacote => 0           -- IN  --> Tipo de pacote(1-pacote,2-individual,0-Todos)
-														,pr_nmarqcsv => vr_nmarqcsv -- OUT --> Nome do arquivo gerado
-														,pr_cdcritic => vr_cdcritic -- OUT --> Codigo da critica
-                            ,pr_dscritic => vr_dscritic -- OUT --> Descricao da critica
-														);
-
-		-- Se retornou erro
-    IF NVL(vr_cdcritic,0) > 0 OR 
-       TRIM(vr_dscritic) IS NOT NULL THEN
-			--
-      RAISE vr_exc_erro;
-			--
-    END IF;
-
-    -- Inclui nome do modulo logado - 08/05/2018 - Ch REQ0011327
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_anali_envio_csv_web');
-
-    -- Criar cabecalho do XML
-    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
-
-    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                          ,pr_tag_pai  => 'Root'
-                          ,pr_posicao  => 0
-                          ,pr_tag_nova => 'Dados'
-                          ,pr_tag_cont => NULL
-                          ,pr_des_erro => vr_dscritic);
-
-    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                          ,pr_tag_pai  => 'Dados'
-                          ,pr_posicao  => 0
-                          ,pr_tag_nova => 'nmarqcsv'
-                          ,pr_tag_cont => vr_nmarqcsv
-                          ,pr_des_erro => vr_dscritic);
-  
-    -- Retira nome do modulo logado - 08/05/2018 - Ch REQ0011327
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
-  EXCEPTION
-    WHEN vr_exc_erro THEN
-      vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
-
-      --Grava tabela de log - Ch REQ0011327
-      pc_gera_log(pr_cdcooper      => 3,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => vr_dscritic,
-                  pr_cdcriticidade => 1,
-                  pr_cdmensagem    => nvl(vr_cdcritic,0),
-                  pr_ind_tipo_log  => 1);
-
-      vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
-      pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
-
-      -- Carregar XML padrao para variavel de retorno
-      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-    WHEN OTHERS THEN
-      -- Montar descrição de erro não tratado
-      pr_cdcritic := 9999;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'COBR0005.pc_relat_anali_envio_sms_web. '||SQLERRM;
-
-      --Grava tabela de log - Ch REQ0011327
-      pc_gera_log(pr_cdcooper      => 3,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
-                  pr_cdcriticidade => 2,
-                  pr_cdmensagem    => nvl(pr_cdcritic,0),
-                  pr_ind_tipo_log  => 2);
-
-      --Gravar tabela especifica de log - 30/01/2018 - Ch REQ0011327
-      CECRED.pc_internal_exception (pr_cdcooper => 3);
-
-      pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
-      pr_dscritic := REPLACE(REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´'),'"');
-      
-      -- Carregar XML padrao para variavel de retorno
-      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');                                                   
-  END pc_relat_anali_envio_csv_web;
   --> Rotina responsavel por gerar o relatorio analitico de envio de SMS
   PROCEDURE pc_relat_anali_envio_sms (pr_cdcooper  IN  crapcop.cdcooper%TYPE          --> Codigo da cooperativa                                    
                                      ,pr_nrdconta  IN  crapass.nrdconta%TYPE          --> Numer de conta do cooperado                                     
@@ -3597,7 +2967,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busan - AMcom
-       Data    : Outubro/2016                     Ultima atualizacao: 20/03/2019
+       Data    : Outubro/2016                     Ultima atualizacao: 01/10/2018
 
        Dados referentes ao programa:
 
@@ -3615,120 +2985,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   
                    01/10/2018 - Substituir '.' por ',', pois estava afetando na geração do
                                 relatorio (Lucas Ranghetti)
-									
-			             20/03/2019 - Alterado para ter um cursor para os SMSs agendados e outro cursor para
-			                          os SMSs enviados e nao enviados (Nagasava - Supero - PRJ431)
     ............................................................................ */
     --------------->> CURSORES <<----------------
-		--> Buscar SMSs agendados
-		CURSOR cr_cobran_sms_a IS
-		  SELECT DISTINCT
-						 cob.nrdconta
-						,ass.nmprimtl 
-						,ass.cdagenci
-						,age.nmresage
-						,cob.nrnosnum
-						,sab.nmdsacad
-						,cob.dtvencto
-						,'R$ ' || TRIM(TO_CHAR(cob.vltitulo
-						                      ,'FM999G999G999G999G990D00'
-																	,'NLS_NUMERIC_CHARACTERS=,.')) vltitulo
-						,(SELECT DISTINCT ctl1.nrddd || ' ' || ctl1.nrtelefone
-								FROM tbcobran_sms sms1
-										,tbgen_sms_controle ctl1
-							 WHERE sms1.cdcooper    = ctl1.cdcooper
-								 AND sms1.nrdconta    = ctl1.nrdconta
-								 AND sms1.idlote_sms  = ctl1.idlote_sms
-								 AND sms1.idsms       = ctl1.idsms
-								 AND sms1.cdcooper    = cob.cdcooper
-								 AND sms1.nrdconta    = cob.nrdconta
-								 AND sms1.nrcnvcob    = cob.nrcnvcob
-								 AND sms1.nrdocmto    = cob.nrdocmto
-								 AND ROWNUM           = 1) nrdofone
-						,pct.dspacote
-						,decode(sms.instatus_sms, 1, 1, 2, 1, sms.instatus_sms) instatus_sms
-						,(SELECT DISTINCT ctl1.dhenvio_sms
-								FROM tbcobran_sms sms1
-										,tbgen_sms_controle ctl1
-							 WHERE sms1.cdcooper    = ctl1.cdcooper
-								 AND sms1.nrdconta    = ctl1.nrdconta
-								 AND sms1.idlote_sms  = ctl1.idlote_sms
-								 AND sms1.idsms       = ctl1.idsms
-								 AND sms1.cdcooper    = cob.cdcooper
-								 AND sms1.nrdconta    = cob.nrdconta
-								 AND sms1.nrcnvcob    = cob.nrcnvcob
-								 AND sms1.nrdocmto    = cob.nrdocmto
-								 AND ctl1.dhenvio_sms < cob.dtvencto
-								 AND ROWNUM           = 1) dt_envio_1
-						,(SELECT DISTINCT ctl1.dhenvio_sms
-								FROM tbcobran_sms sms1
-										,tbgen_sms_controle ctl1
-							 WHERE sms1.cdcooper    = ctl1.cdcooper
-								 AND sms1.nrdconta    = ctl1.nrdconta
-								 AND sms1.idlote_sms  = ctl1.idlote_sms
-								 AND sms1.idsms       = ctl1.idsms
-								 AND sms1.cdcooper    = cob.cdcooper
-								 AND sms1.nrdconta    = cob.nrdconta
-								 AND sms1.nrcnvcob    = cob.nrcnvcob
-								 AND sms1.nrdocmto    = cob.nrdocmto
-								 AND ctl1.dhenvio_sms = cob.dtvencto
-								 AND ROWNUM           = 1) dt_envio_2
-						,(SELECT DISTINCT ctl1.dhenvio_sms
-								FROM tbcobran_sms sms1
-										,tbgen_sms_controle ctl1
-							 WHERE sms1.cdcooper    = ctl1.cdcooper
-								 AND sms1.nrdconta    = ctl1.nrdconta
-								 AND sms1.idlote_sms  = ctl1.idlote_sms
-								 AND sms1.idsms       = ctl1.idsms
-								 AND sms1.cdcooper    = cob.cdcooper
-								 AND sms1.nrdconta    = cob.nrdconta
-								 AND sms1.nrcnvcob    = cob.nrcnvcob
-								 AND sms1.nrdocmto    = cob.nrdocmto
-								 AND ctl1.dhenvio_sms > cob.dtvencto
-								 AND ROWNUM           = 1) dt_envio_3
-				FROM tbgen_sms_controle ctl
-						,tbcobran_sms sms
-						,tbcobran_sms_contrato ctr
-						,tbcobran_sms_pacotes pct
-						,crapsab sab
-						,crapcob cob
-						,crapass ass
-						,crapage age
-			 WHERE ctl.cdcooper = pr_cdcooper
-				 AND ctl.nrdconta = decode(nvl(pr_nrdconta,0),0,ctl.nrdconta,pr_nrdconta)
-				 AND ctl.dhenvio_sms BETWEEN pr_dtiniper AND to_date(to_char(pr_dtfimper,'DDMMRRRR')||'235959','DDMMRRHH24MISS')
-				 AND ctl.idseqttl = cob.idseqttl
-				 AND sms.idlote_sms = ctl.idlote_sms
-				 AND sms.idsms    = ctl.idsms
-				 AND sms.instatus_sms IN(1, 2) -- Agendandos
-				 AND sms.instatus_sms = DECODE(pr_instatus,0,sms.instatus_sms,5,sms.instatus_sms,pr_instatus)
-				 AND ((sms.instatus_sms <> 4 AND
-							 pr_instatus = 5) OR (pr_instatus <> 5))
-				 AND sms.cdcooper = ctr.cdcooper
-				 AND sms.nrdconta = ctr.nrdconta
-				 AND sms.idcontrato = ctr.idcontrato
-				 AND ctr.cdcooper = pct.cdcooper
-				 AND ctr.idpacote = pct.idpacote
-				 AND cob.cdcooper = sms.cdcooper
-				 AND cob.nrdconta = sms.nrdconta
-				 AND cob.nrcnvcob = sms.nrcnvcob
-				 AND cob.nrdocmto = sms.nrdocmto
-				 AND cob.cdbandoc = sms.cdbandoc
-				 AND cob.nrdctabb = sms.nrdctabb
-				 AND sab.cdcooper = cob.cdcooper
-				 AND sab.nrdconta = cob.nrdconta
-				 AND sab.nrinssac = cob.nrinssac
-				 AND cob.cdcooper = ass.cdcooper
-				 AND cob.nrdconta = ass.nrdconta
-				 AND ass.cdcooper = age.cdcooper
-				 AND ass.cdagenci = age.cdagenci
-				 AND ( (pr_tppacote = 2 AND ctr.idpacote IN (1,2)) OR
-							 (pr_tppacote = 1 AND ctr.idpacote > 2) OR
-							 (pr_tppacote = 0)
-							)
-				ORDER BY instatus_sms;
-    --> Buscar SMSs enviados e não enviados
-    CURSOR cr_cobran_sms_e IS
+    --> Buscar SMSs enviados 
+    CURSOR cr_cobran_sms IS
       SELECT cob.nrdconta,
              ass.nmprimtl, 
              ass.cdagenci,
@@ -3736,16 +2996,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
              cob.nrnosnum,
              sab.nmdsacad,
              cob.dtvencto,
-             'R$ ' || TRIM(TO_CHAR(cob.vltitulo
-						                      ,'FM999G999G999G999G990D00'
-																	,'NLS_NUMERIC_CHARACTERS=,.')) vltitulo,
+             cob.vltitulo,
              ctl.dhenvio_sms AS dhenvsms,
              ctl.nrddd||' '||ctl.nrtelefone  AS nrdofone,
              pct.dspacote
-						,decode(sms.instatus_sms, 1, 1, 2, 1, sms.instatus_sms) instatus_sms
-						,(CASE WHEN trunc(ctl.dhenvio_sms) < cob.dtvencto THEN ctl.dhenvio_sms ELSE NULL END) dt_envio_1
-						,(CASE WHEN trunc(ctl.dhenvio_sms) = cob.dtvencto THEN ctl.dhenvio_sms ELSE NULL END) dt_envio_2
-						,(CASE WHEN trunc(ctl.dhenvio_sms) > cob.dtvencto THEN ctl.dhenvio_sms ELSE NULL END) dt_envio_3
         FROM tbgen_sms_controle ctl,             
              tbcobran_sms sms,
              tbcobran_sms_contrato ctr,
@@ -3759,10 +3013,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND ctl.dhenvio_sms BETWEEN pr_dtiniper AND to_date(to_char(pr_dtfimper,'DDMMRRRR')||'235959','DDMMRRHH24MISS')
          AND sms.idlote_sms = ctl.idlote_sms
          AND sms.idsms    = ctl.idsms
-				 AND sms.instatus_sms NOT IN(1, 2) -- Enviados e não enviados
-         AND sms.instatus_sms = DECODE(pr_instatus,0,sms.instatus_sms,5,sms.instatus_sms,pr_instatus)   
-         AND ((sms.instatus_sms <> 4 AND
-               pr_instatus = 5) OR (pr_instatus <> 5))
+         AND sms.instatus_sms = DECODE(pr_instatus,0,sms.instatus_sms,pr_instatus)     
          AND sms.cdcooper = ctr.cdcooper
          AND sms.nrdconta = ctr.nrdconta
          AND sms.idcontrato = ctr.idcontrato
@@ -3784,8 +3035,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
          AND ( (pr_tppacote = 2 AND ctr.idpacote IN (1,2)) OR
                (pr_tppacote = 1 AND ctr.idpacote > 2) OR
                (pr_tppacote = 0)
-              )
-							ORDER BY sms.instatus_sms;
+              );
     
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -3803,8 +3053,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_dscomand     VARCHAR2(4000);
     vr_typsaida     VARCHAR2(100); 
     
-		vr_instatus_sms tbcobran_sms.instatus_sms%TYPE;
-		vr_tag_aberta   VARCHAR2(100);
     -- Variáveis para armazenar as informações em XML
     vr_des_xml      CLOB;
     vr_txtcompl     VARCHAR2(32600);
@@ -3850,122 +3098,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     ELSE
       pc_escreve_xml('<crrl728>');
     END IF;
-    --
-		vr_instatus_sms := 0;
-		vr_tag_aberta   := NULL;
-		--> Buscar SMSs agendados 
-    FOR rw_cobran_sms_a IN cr_cobran_sms_a LOOP
-			--
-      vr_flexsreg := TRUE;
-			-- Verifica se são os SMS Agendados
-			IF rw_cobran_sms_a.instatus_sms = 1 THEN
-				--
-				IF vr_instatus_sms <> rw_cobran_sms_a.instatus_sms THEN
-					--
-					vr_instatus_sms := rw_cobran_sms_a.instatus_sms;
-					vr_tag_aberta   := '</smsagendados>';
-					--
-					pc_escreve_xml('<smsagendados>');
-					--
-				END IF;
-				--
-				pc_escreve_xml('<SMS>'||
-												 '<nrdconta>'||     TRIM(gene0002.fn_mask_conta(rw_cobran_sms_a.nrdconta))        ||'</nrdconta>'||
-												 '<nmprimtl>'||     rw_cobran_sms_a.nmprimtl                                      ||'</nmprimtl>'||
-												 '<cdagenci>'||     rw_cobran_sms_a.cdagenci                                      ||'</cdagenci>'||
-												 '<nmresage>'||     rw_cobran_sms_a.nmresage                                      ||'</nmresage>'||
-												 '<nrnosnum>'||     rw_cobran_sms_a.nrnosnum                                      ||'</nrnosnum>'||
-												 '<nmdsacad>'||     rw_cobran_sms_a.nmdsacad                                      ||'</nmdsacad>'||   
-												 '<dtvencto>'||     to_char(rw_cobran_sms_a.dtvencto,'DD/MM/RRRR')                ||'</dtvencto>'||   
-												 '<vltitulo>'||     rw_cobran_sms_a.vltitulo                                      ||'</vltitulo>'||   
-												 '<nrdofone>'||     rw_cobran_sms_a.nrdofone                                      ||'</nrdofone> '||
-													 '<dataenvio1>'||   to_char(rw_cobran_sms_a.dt_envio_1,'DD/MM/RRRR HH24:MI')    ||'</dataenvio1>'||
-													 '<dataenvio2>'||   to_char(rw_cobran_sms_a.dt_envio_2,'DD/MM/RRRR HH24:MI')    ||'</dataenvio2>'||
-													 '<dataenvio3>'||   to_char(rw_cobran_sms_a.dt_envio_3,'DD/MM/RRRR HH24:MI')    ||'</dataenvio3>'||
-												 '<dspacote>'||     rw_cobran_sms_a.dspacote                                      ||'</dspacote>
-											 </SMS>');      
-				--
-			END IF;
-			--   
-    END LOOP;
+    
     --> Buscar SMSs enviados 
-    FOR rw_cobran_sms_e IN cr_cobran_sms_e LOOP
-			--
+    FOR rw_cobran_sms IN cr_cobran_sms LOOP
       vr_flexsreg := TRUE;
-			-- Verifica se são os SMS Não Enviados
-			IF rw_cobran_sms_e.instatus_sms = 3 THEN
-				--
-				IF vr_instatus_sms <> rw_cobran_sms_e.instatus_sms THEN
-					--
-					IF vr_tag_aberta IS NOT NULL THEN
-						--
-					  pc_escreve_xml(vr_tag_aberta);
-						--
-					END IF;
-					--
-					vr_instatus_sms := rw_cobran_sms_e.instatus_sms;
-					vr_tag_aberta   := '</smsnaoenviados>';
-					--
-					pc_escreve_xml('<smsnaoenviados>');
-					--
-				END IF;
-				--
       pc_escreve_xml('<SMS>'||
-												 '<nrdconta>'||     TRIM(gene0002.fn_mask_conta(rw_cobran_sms_e.nrdconta))      ||'</nrdconta>'   ||
-												 '<nmprimtl>'||     rw_cobran_sms_e.nmprimtl                                    ||'</nmprimtl>'   ||
-												 '<cdagenci>'||     rw_cobran_sms_e.cdagenci                                    ||'</cdagenci>'   ||
-												 '<nmresage>'||     rw_cobran_sms_e.nmresage                                    ||'</nmresage>'   ||
-												 '<nrnosnum>'||     rw_cobran_sms_e.nrnosnum                                    ||'</nrnosnum>'   ||
-												 '<nmdsacad>'||     rw_cobran_sms_e.nmdsacad                                    ||'</nmdsacad>'   ||   
-												 '<dtvencto>'||     to_char(rw_cobran_sms_e.dtvencto,'DD/MM/RRRR')              ||'</dtvencto>'   ||   
-												 '<vltitulo>'||     rw_cobran_sms_e.vltitulo                               	    ||'</vltitulo>'   ||   
-												 '<dhenvio_sms>'||  to_char(rw_cobran_sms_e.dhenvsms,'DD/MM/RRRR HH24:MI:SS')   ||'</dhenvio_sms>'||
-												 '<nrdofone>'||     rw_cobran_sms_e.nrdofone                                    ||'</nrdofone> '  ||
-												 '<dspacote>'||     rw_cobran_sms_e.dspacote                                    ||'</dspacote>
+                       '<nrdconta>'||     TRIM(gene0002.fn_mask_conta(rw_cobran_sms.nrdconta)) ||'</nrdconta>'||
+                       '<nmprimtl>'||     rw_cobran_sms.nmprimtl                             ||'</nmprimtl>'||
+                       '<cdagenci>'||     rw_cobran_sms.cdagenci                             ||'</cdagenci>'||
+                       '<nmresage>'||     rw_cobran_sms.nmresage                             ||'</nmresage>'||
+                       '<nrnosnum>'||     rw_cobran_sms.nrnosnum                             ||'</nrnosnum>'||
+                       '<nmdsacad>'||     rw_cobran_sms.nmdsacad                             ||'</nmdsacad>'||   
+                       '<dtvencto>'||     to_char(rw_cobran_sms.dtvencto,'DD/MM/RRRR')       ||'</dtvencto>'||   
+                       '<vltitulo>'||     REPLACE(rw_cobran_sms.vltitulo,'.',',')            ||'</vltitulo>'||   
+                       '<dhenvio_sms>'||  to_char(rw_cobran_sms.dhenvsms,'DD/MM/RRRR HH24:MI:SS')   ||'</dhenvio_sms>'||
+                       '<nrdofone>'||     rw_cobran_sms.nrdofone                             ||'</nrdofone> '||
+                       '<dspacote>'||     rw_cobran_sms.dspacote                             ||'</dspacote>
                      </SMS>');      
-				--
-			-- Verifica se são os SMS Enviados com Sucesso
-			ELSIF rw_cobran_sms_e.instatus_sms = 4 THEN
-				--
-				IF vr_instatus_sms <> rw_cobran_sms_e.instatus_sms THEN
-					--
-					IF vr_tag_aberta IS NOT NULL THEN
-						--
-					  pc_escreve_xml(vr_tag_aberta);
-						--
-					END IF;
-					--
-					vr_instatus_sms := rw_cobran_sms_e.instatus_sms;
-					vr_tag_aberta   := '</smsenviadoscomsucesso>';
-					--
-					pc_escreve_xml('<smsenviadoscomsucesso>');
-					--
-				END IF;
-				--
-				pc_escreve_xml('<SMS>'||
-												 '<nrdconta>'||     TRIM(gene0002.fn_mask_conta(rw_cobran_sms_e.nrdconta)) ||'</nrdconta>'||
-												 '<nmprimtl>'||     rw_cobran_sms_e.nmprimtl                             ||'</nmprimtl>'||
-												 '<cdagenci>'||     rw_cobran_sms_e.cdagenci                             ||'</cdagenci>'||
-												 '<nmresage>'||     rw_cobran_sms_e.nmresage                             ||'</nmresage>'||
-												 '<nrnosnum>'||     rw_cobran_sms_e.nrnosnum                             ||'</nrnosnum>'||
-												 '<nmdsacad>'||     rw_cobran_sms_e.nmdsacad                             ||'</nmdsacad>'||   
-												 '<dtvencto>'||     to_char(rw_cobran_sms_e.dtvencto,'DD/MM/RRRR')       ||'</dtvencto>'||   
-												 '<vltitulo>'||     rw_cobran_sms_e.vltitulo                             ||'</vltitulo>'||   
-												 '<dhenvio_sms>'||  to_char(rw_cobran_sms_e.dhenvsms,'DD/MM/RRRR HH24:MI:SS')   ||'</dhenvio_sms>'||
-												 '<nrdofone>'||     rw_cobran_sms_e.nrdofone                             ||'</nrdofone> '||
-												 '<dspacote>'||     rw_cobran_sms_e.dspacote                             ||'</dspacote>
-											 </SMS>');
-				--
-			END IF;
-			--   
     END LOOP;
-		--
-		IF vr_tag_aberta IS NOT NULL THEN
-			--
-			pc_escreve_xml(vr_tag_aberta);
-			--
-		END IF;
-    --
+    
     pc_escreve_xml('</crrl728>',TRUE);    
     -- Retorna nome do modulo logado - 21/09/2018 - Ch INC0023245
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0005.pc_relat_anali_envio_sms'); 
@@ -3981,7 +3132,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     
     --Para origem InternetBank, já concluiu busca das informações, 
     --geração do relatorio ocorrerá no PHP    
-    IF pr_idorigem = 2 THEN      
+    IF pr_idorigem = 3 THEN      
       pr_dsxmlrel := vr_des_xml;
       
     ELSE
@@ -4017,7 +3168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                  , pr_cdprogra  => 'ATENDA'--pr_cdprogra
                                  , pr_dtmvtolt  => rw_crapdat.dtmvtolt
                                  , pr_dsxml     => vr_des_xml
-                                 , pr_dsxmlnode => '/crrl728'
+                                 , pr_dsxmlnode => '/crrl728/SMS'
                                  , pr_dsjasper  => 'crrl728.jasper'
                                  , pr_dsparams  => null
                                  , pr_dsarqsaid => vr_dsdireto ||'/'||pr_nmarqpdf
@@ -4030,7 +3181,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                  , pr_nrcopias  => 1
                                  , pr_nrvergrl  => 1
                                  , pr_des_erro  => vr_dscritic);
-                                pr_nmarqpdf := vr_dsdireto ||'/'||pr_nmarqpdf;
       
       IF vr_dscritic IS NOT NULL THEN -- verifica retorno se houve erro
         RAISE vr_exc_erro; -- encerra programa
