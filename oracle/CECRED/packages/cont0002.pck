@@ -10,21 +10,21 @@ CREATE OR REPLACE PACKAGE CECRED.cont0002 IS
                 Processamento dos ajustes solicitado no Projeto 421 - Melhorias nas
                 ferramentas contabeis e fiscais.
 
-	ALTERAÇÕES: 29/11/2018: Ajuste na conversão dos valores que são extraidos do arquivo da ABBC,
-	                        quando rodado pelo JOB, não se pode usar o "to_number".
-							Alcemir Mouts - INC0028004. 
+  ALTERAÇÕES: 29/11/2018: Ajuste na conversão dos valores que são extraidos do arquivo da ABBC,
+                          quando rodado pelo JOB, não se pode usar o "to_number".
+              Alcemir Mouts - INC0028004.
 
   ********************************************************************************/
-  
+
   -- Public type declarations
   TYPE typ_reg_arquiv IS
         RECORD(nrdconta crapass.nrdconta%TYPE
               ,cdtransa craplcm.cdhistor%TYPE
               ,vltransa craplcm.vllanmto%TYPE);
-              
+
   TYPE typ_tab_arquiv IS TABLE OF typ_reg_arquiv
-    INDEX BY VARCHAR(20);   
-    
+    INDEX BY VARCHAR(20);
+
   TYPE typ_critica IS
         RECORD(nrseqcri NUMBER(10)
               ,nrdconta crapass.nrdconta%TYPE
@@ -36,25 +36,25 @@ CREATE OR REPLACE PACKAGE CECRED.cont0002 IS
   TYPE typ_transa IS
         RECORD(criticas tab_critica);
 
-  type tab_transa is table of typ_transa index by VARCHAR(10);   
+  type tab_transa is table of typ_transa index by VARCHAR(10);
 
    -- Public type declarations
   TYPE typ_reg_arquiv_abbc IS
-        RECORD(nrcheque crapfdc.nrcheque%TYPE   -- numero do cheque 
+        RECORD(nrcheque crapfdc.nrcheque%TYPE   -- numero do cheque
               ,vlcheque crapfdc.vlcheque%TYPE   -- valor do cheque
-              ,cdageori crapfdc.cdagechq%TYPE   -- agencia de origem              
+              ,cdageori crapfdc.cdagechq%TYPE   -- agencia de origem
               ,nrctadep crapfdc.nrctadep%TYPE   -- numero da conta do depositante
               ,tpdearqv VARCHAR2(2));           -- tipo de arquivo SL OU SF
-              
+
   TYPE typ_tab_arquiv_abbc IS TABLE OF typ_reg_arquiv_abbc
-    INDEX BY VARCHAR(50);   
-  
+    INDEX BY VARCHAR(50);
+
   TYPE typ_tab_cdcooper IS TABLE OF crapcop.cdcooper%TYPE
-    INDEX BY PLS_INTEGER; 
+    INDEX BY PLS_INTEGER;
 
   TYPE typ_tab_coop IS TABLE OF crapcop.cdcooper%TYPE
     INDEX BY PLS_INTEGER;
-        
+
 
   PROCEDURE pc_processa_arquivo_bancoob(pr_cdcooper IN crapcop.cdcooper%TYPE
                                        ,pr_dtmvtolt IN  DATE    
@@ -73,7 +73,7 @@ CREATE OR REPLACE PACKAGE CECRED.cont0002 IS
 
   --Procedure para processamento dos ajustes/arquivos do projeto 421 - Melhorias nas ferramentas contabeis e fiscais
   PROCEDURE pc_processa_contabil;
-  
+
   PROCEDURE pc_processa_arquivo_abbc(pr_cdcooper IN crapcop.cdcooper%TYPE
                                     ,pr_cdcritic OUT NUMBER                --> Desc. da crítica
                                     ,pr_dscritic OUT VARCHAR2);
@@ -116,8 +116,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
        WHERE lcm.cdcooper = pr_cdcooper
         AND  lcm.nrdconta = pr_nrdconta
         AND  lcm.dtmvtolt = pr_dtmvtolt
-        AND  lcm.cdhistor IN (SELECT tcb.cdhistor FROM tbcontab_conc_bancoob tcb 
-                               WHERE tcb.cdtransa = pr_cdtransa GROUP BY tcb.cdhistor); 
+        AND  lcm.cdhistor IN (SELECT tcb.cdhistor FROM tbcontab_conc_bancoob tcb
+                               WHERE tcb.cdtransa = pr_cdtransa GROUP BY tcb.cdhistor);
      rw_craplcm cr_craplcm%ROWTYPE;
 
      -- lancamentos do cartao
@@ -130,37 +130,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
         AND  lcm.cdhistor IN (SELECT tcb.cdhistor FROM tbcontab_conc_bancoob tcb GROUP BY tcb.cdhistor)
       GROUP BY lcm.nrdconta,tcb.cdtransa;
      rw_craplcm_lanc cr_craplcm_lanc%ROWTYPE;
-     
+
      CURSOR cr_hist_ailos(pr_cdtransa IN tbcontab_conc_bancoob.cdtransa%TYPE) IS
-      SELECT cdhistor FROM tbcontab_conc_bancoob tcb 
+      SELECT cdhistor FROM tbcontab_conc_bancoob tcb
        WHERE tcb.cdtransa = pr_cdtransa
         AND  tcb.indebcre = 'C';
       rw_hist_ailos cr_hist_ailos%ROWTYPE;
-      
+
      -- fazer cursor para pegar historicos do bancoob
      CURSOR cr_transacao (pr_cdtransa IN tbcontab_transa_bancoob.cdtransa%TYPE) IS
       SELECT ttb.cdtransa,ttb.dstransa FROM tbcontab_transa_bancoob ttb
        WHERE ttb.cdtransa = pr_cdtransa;
      rw_transacao cr_transacao%ROWTYPE;
-     
+
      CURSOR cr_crapcop(pr_cdagebcb crapcop.cdagebcb%TYPE) IS
       SELECT cdcooper,nmrescop FROM crapcop
        WHERE cdagebcb = pr_cdagebcb;
      rw_crapcop cr_crapcop%ROWTYPE;
-     
+
      CURSOR cr_indebcre (pr_cdtransa IN tbcontab_transa_bancoob.cdtransa%TYPE) IS
       SELECT CAST(decode(ttb.indebcre,'D',-1,1) AS NUMBER) AS indebcre FROM tbcontab_transa_bancoob ttb
        WHERE ttb.cdtransa = pr_cdtransa;
      rw_indebcre cr_indebcre%ROWTYPE;
-     
+
      --
-     CURSOR cr_transacao1 (pr_cdtransa IN tbcontab_conc_bancoob.cdtransa%TYPE) IS 
+     CURSOR cr_transacao1 (pr_cdtransa IN tbcontab_conc_bancoob.cdtransa%TYPE) IS
       SELECT MAX(1) FROM tbcontab_transa_bancoob ttb
        WHERE  NOT EXISTS (SELECT 1 FROM tbcontab_conc_bancoob tcb WHERE tcb.cdtransa = pr_cdtransa);
 
      vr_nomedarq VARCHAR2(200) := NULL;
      vr_nmdircop VARCHAR(200) := NULL;
-     
+
      vr_dslisarq VARCHAR(4000);
      vr_setlinha VARCHAR(4000);
      vr_idx VARCHAR(20);
@@ -203,32 +203,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
      vr_exc_saida EXCEPTION;
      vr_exc_proxima_linha EXCEPTION;
      vr_tab_critica tab_critica;
-     vr_tab_transa tab_transa;   
-  
+     vr_tab_transa tab_transa;
+
 
   begin
     BEGIN
-      IF pr_dtmvtolt IS NULL THEN
-        vr_dtmvtolt := trunc(sysdate)-1;
-      ELSE
-        vr_dtmvtolt := pr_dtmvtolt;
-      END IF;
       --arquivos a serem listados
       --vr_nomedarq := '756-2011%TRANSACOES_CEXT'||to_char(SYSDATE,'RRRR-MM-DD')||'.CSV';
       -- RITM0011945
-      vr_nomedarq := '756-2011%TRANSACOES_CEXT'||to_char(vr_dtmvtolt + 1,'RRRR-MM-DD')||'.CSV';
-                      
+      vr_nomedarq := '756-2011%TRANSACOES_CEXT'||to_char(pr_dtmvtolt + 1,'RRRR-MM-DD')||'.CSV';
+
       vr_nmdircop := gene0001.fn_diretorio(pr_tpdireto => 'M'
                                           ,pr_cdcooper => pr_cdcooper
                                           ,pr_nmsubdir => 'cecred_cartoes');
-  
+
       gene0001.pc_lista_arquivos(pr_path     => vr_nmdircop
                                 ,pr_pesq     => vr_nomedarq
                                 ,pr_listarq  => vr_dslisarq
                                 ,pr_des_erro => vr_dscritic);
 
       vr_tab_nmarqtel := gene0002.fn_quebra_string(vr_dslisarq);
-
 
       -- interar arquivos
       FOR idx IN 1..vr_tab_nmarqtel.count() LOOP
@@ -238,7 +232,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                                   ,pr_tipabert => 'R'            --> Modo de abertura (R,W,A)
                                   ,pr_utlfileh => vr_farquivo  --> Handle do arquivo aberto
                                   ,pr_des_erro => vr_dscritic);  --> Erro
-          
+
           IF vr_dscritic IS NOT NULL THEN
              RAISE vr_exc_saida;
           END IF;
@@ -259,7 +253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                vr_dscritic:= 'Erro na leitura do arquivo. '||sqlerrm;
                RAISE vr_exc_saida;
            END;
-                                   
+
            -- obter cdagebcb que esta no nome do arquivo
            vr_cdagebcb := substr(vr_tab_nmarqtel(idx),10,4);
 
@@ -274,25 +268,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
 
            CLOSE cr_crapcop;
 
+           -- Se for nulo pega data do nome do arquivo.
+           -- Caso tela nao informe data ou for pelo job.
+           IF pr_dtmvtolt IS NULL THEN
            vr_dtmvtolt := to_date(REPLACE(SUBSTR(vr_tab_nmarqtel(idx),LENGTH(vr_tab_nmarqtel(idx))-13,10),'-',''),'yyyymmdd') - 1;
-                              
+           -- Caso tela informe a data ignoramos a data do nome do arq.
+           -- E utilizamos a data informada no label.
+           ELSE 
+             vr_dtmvtolt := pr_dtmvtolt;
+           END IF;                 
+
            vr_tot_neg := 0;
            vr_tot_pos := 0;
-           
-           vr_tab_critica.delete;          
+
+           vr_tab_critica.delete;
            vr_tab_regarqvo.delete;
            vr_tab_transa.delete;
 
            -- loop para ler a linha do arquivo
            LOOP
            BEGIN
-             
+
              BEGIN
 
                -- ler novamente
                gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_farquivo --> Handle do arquivo aberto
                                            ,pr_des_text => vr_setlinha); --> Texto lido
-               
+
 
              EXCEPTION
                WHEN NO_DATA_FOUND THEN
@@ -303,10 +305,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                  RAISE vr_exc_saida;
              END;
 
-             
+
              vr_tab_linhacsv := gene0002.fn_quebra_string(vr_setlinha,';');
-             
-             
+
+
              -- percorrer os campos do arquivo CSV
              FOR idx IN 1..vr_tab_linhacsv.count() LOOP
                -- verificar os campos e jogar na pltable
@@ -323,25 +325,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                AND to_char(SYSDATE,'IW') <> to_char(vr_dttransa,'IW') THEN
                  RAISE vr_exc_proxima_linha;
                END IF;
-               
+
                -- verificamos se a transação esta parametrizada (PARCBA - TELA PARA A PARAMETRIZAÇÃO)
-               rw_transacao := NULL;                              
+               rw_transacao := NULL;
 
                OPEN cr_transacao(vr_cdtransa);
                FETCH cr_transacao INTO rw_transacao;
                CLOSE cr_transacao;
-               
+
                IF rw_transacao.cdtransa IS NULL THEN
                   -- se não estiver parametrizada pular para a proxima linha
                   RAISE vr_exc_proxima_linha;
-               END IF;  
-                                             
-               -- busca operador - ou + para aplicar no valor da transação bancoob 
+               END IF;
+
+               -- busca operador - ou + para aplicar no valor da transação bancoob
                OPEN cr_indebcre(pr_cdtransa => vr_cdtransa);
                 FETCH cr_indebcre INTO rw_indebcre;
-               CLOSE cr_indebcre;               
-               
-               vr_vltransa := nvl(vr_vltransa*rw_indebcre.indebcre,1); -- caso a transacao sejá debito rw_indebcre.indebcre retorna -1                 
+               CLOSE cr_indebcre;
+
+               vr_vltransa := nvl(vr_vltransa*rw_indebcre.indebcre,1); -- caso a transacao sejá debito rw_indebcre.indebcre retorna -1
                -- montar indice para vr_tab_regarqvo
                vr_idx := vr_nrdconta || vr_cdtransa;
 
@@ -356,21 +358,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                END IF;
            EXCEPTION
              WHEN vr_exc_proxima_linha THEN
-               NULL;                                
-           END; 
-           
+               NULL;
+           END;
+
            END LOOP; -- fim loop linha arquivo
-           
-           
+
+
            -- verificar as diferenças
            vr_idx := vr_tab_regarqvo.first;
 
            WHILE vr_idx IS NOT NULL LOOP
-                 
+
 
                rw_craplcm := NULL;
                -- verificar se a transação esta cadastrada
-               --                                                                         
+               --
                OPEN cr_craplcm(pr_cdcooper => rw_crapcop.cdcooper
                               ,pr_nrdconta => vr_tab_regarqvo(vr_idx).nrdconta
                               ,pr_cdtransa => vr_tab_regarqvo(vr_idx).cdtransa
@@ -378,54 +380,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                FETCH cr_craplcm INTO rw_craplcm;
 
                CLOSE cr_craplcm;
-                             
+
                vr_vldiflan := rw_craplcm.vllanmto + vr_tab_regarqvo(vr_idx).vltransa;
-                      
+
                rw_hist_ailos := NULL;
-                
+
                OPEN cr_hist_ailos(pr_cdtransa => vr_tab_regarqvo(vr_idx).cdtransa);
                FETCH cr_hist_ailos INTO rw_hist_ailos;
                CLOSE cr_hist_ailos;
-               
+
                vr_idx_conta := vr_tab_regarqvo(vr_idx).nrdconta;
                vr_idx_transa := vr_tab_regarqvo(vr_idx).cdtransa;
-               
+
                OPEN cr_transacao1 (pr_cdtransa =>  vr_tab_regarqvo(vr_idx).cdtransa);
                FETCH cr_transacao1 INTO vr_transacao1;
                CLOSE cr_transacao1;
-               
+
                -- se encontrou a transacao sem historico ailos
                -- deve sair no relatorio, e gerado lançamento contabil
                IF vr_transacao1 = 1 THEN
                  vr_tab_critica(vr_idx_conta).nrdconta := vr_tab_regarqvo(vr_idx).nrdconta;
-                 vr_tab_critica(vr_idx_conta).vltransa := vr_vldiflan;   
+                 vr_tab_critica(vr_idx_conta).vltransa := vr_vldiflan;
                  vr_tab_critica(vr_idx_conta).dscritic := 'HISTORICO ' || vr_tab_regarqvo(vr_idx).cdtransa || ' SEM CONTRAPARTIDA';
-                 vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta) := vr_tab_critica(vr_idx_conta);                 
+                 vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta) := vr_tab_critica(vr_idx_conta);
                ELSE
-                 
-                 
+
+
                  IF vr_vldiflan > 0 THEN
                    -- popular critica
                    vr_tab_critica(vr_idx_conta).nrdconta := vr_tab_regarqvo(vr_idx).nrdconta;
-                   vr_tab_critica(vr_idx_conta).vltransa := vr_vldiflan;                 
+                   vr_tab_critica(vr_idx_conta).vltransa := vr_vldiflan;
                    vr_tab_critica(vr_idx_conta).dscritic := 'HISTORICO ' || rw_hist_ailos.cdhistor  || ' SEM HISTORICO '
                                                      || vr_tab_regarqvo(vr_idx).cdtransa;
-                                                     
-                   vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta) := vr_tab_critica(vr_idx_conta);                                                   
+
+                   vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta) := vr_tab_critica(vr_idx_conta);
 
                  END IF;
 
                  IF vr_vldiflan <  0 THEN
                    -- popular critica
                    vr_tab_critica(vr_idx_conta).nrdconta := vr_tab_regarqvo(vr_idx).nrdconta;
-                   vr_tab_critica(vr_idx_conta).vltransa := vr_vldiflan;         
+                   vr_tab_critica(vr_idx_conta).vltransa := vr_vldiflan;
                    vr_tab_critica(vr_idx_conta).dscritic := 'HISTORICO ' || vr_tab_regarqvo(vr_idx).cdtransa  || ' SEM HISTORICO '
                                                                    || rw_hist_ailos.cdhistor;
-                                                                   
-                   vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta) := vr_tab_critica(vr_idx_conta);                                                                 
+
+                   vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta) := vr_tab_critica(vr_idx_conta);
 
                  END IF;
-               END IF;                                             
+               END IF;
              vr_idx := vr_tab_regarqvo.next(vr_idx);
 
 
@@ -442,26 +444,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
              IF vr_idx IS NULL THEN
                continue;
              END IF;
-             
+
              vr_idx_conta := rw_craplcm_lanc.nrdconta;
              vr_idx_transa := rw_craplcm_lanc.cdtransa;
-             
+
              rw_hist_ailos := NULL;
-             
+
              OPEN cr_hist_ailos(pr_cdtransa => rw_craplcm_lanc.cdtransa);
              FETCH cr_hist_ailos INTO rw_hist_ailos;
              CLOSE cr_hist_ailos;
-             
+
              IF NOT vr_tab_regarqvo.exists(vr_idx) THEN
-               
+
                IF rw_craplcm_lanc.vllanmto > 0 THEN
                  -- popular citica
-                 vr_tab_critica(vr_idx_conta).nrdconta:= rw_craplcm_lanc.nrdconta;                
+                 vr_tab_critica(vr_idx_conta).nrdconta:= rw_craplcm_lanc.nrdconta;
                  vr_tab_critica(vr_idx_conta).vltransa := rw_craplcm_lanc.vllanmto;
                  vr_tot_pos := vr_tot_pos + rw_craplcm_lanc.vllanmto;
                  vr_tab_critica(vr_idx_conta).dscritic := 'HISTORICO ' || rw_hist_ailos.cdhistor  || ' SEM HISTORICO '
-                                                   || rw_craplcm_lanc.cdtransa;                                                   
-                 vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta) := vr_tab_critica(vr_idx_conta);                                                                                                       
+                                                   || rw_craplcm_lanc.cdtransa;
+                 vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta) := vr_tab_critica(vr_idx_conta);
 
                END IF;
 
@@ -471,16 +473,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                  vr_tab_critica(vr_idx_conta).vltransa := rw_craplcm_lanc.vllanmto;
                  vr_tot_neg := vr_tot_neg + rw_craplcm_lanc.vllanmto;
                  vr_tab_critica(vr_idx_conta).dscritic := 'HISTORICO ' || rw_craplcm_lanc.cdtransa  || ' SEM HISTORICO '
-                                                   || rw_hist_ailos.cdhistor;                                                   
+                                                   || rw_hist_ailos.cdhistor;
                  vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta) := vr_tab_critica(vr_idx_conta);
                END IF;
-                              
+
              END IF;
 
 
            END LOOP;
-                   
-     IF vr_tab_transa.count > 0 THEN 
+
+     IF vr_tab_transa.count > 0 THEN
 
         -- gerar arquivo contabil
         vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C',
@@ -494,7 +496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
        -- Nome do arquivo a ser gerado
        vr_dtmvtolt_yymmdd := to_char(vr_dtmvtolt, 'yyyymmdd');
        vr_nmarqdat        := vr_dtmvtolt_yymmdd||'_CONCILIA_CARTOES.txt';
-              
+
        -- gera xml para rel crrlxxx
        dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
        dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
@@ -502,7 +504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
        -- Escrever no arquivo XML
        GENE0002.pc_escreve_xml(vr_clobxml,vr_dstexto,
                               '<?xml version="1.0" encoding="UTF-8"?><crrl760><transacoes>');
-         
+
        -- Abre o arquivo para escrita
        gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio,    --> Diretório do arquivo
                                    pr_nmarquiv => vr_nmarqdat,         --> Nome do arquivo
@@ -514,44 +516,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
          vr_cdcritic := 0;
          RAISE vr_exc_saida;
        end if;
-                 
+
        -- ira interar as diferenças para gerar o arquivo contabil
        -- alem de relatório de critica Crrlxxx
-        
+
        vr_idx_transa := vr_tab_transa.first;
-            
-       --percorrer as transações   
+
+       --percorrer as transações
        WHILE vr_idx_transa IS NOT NULL LOOP
-            
+
           vr_idx_conta := vr_tab_transa(vr_idx_transa).criticas.first;
-            
+
           OPEN cr_transacao (vr_idx_transa);
           FETCH cr_transacao INTO rw_transacao;
           CLOSE cr_transacao;
-          
+
           vr_dstransa := rw_transacao.dstransa;
 
           vr_seq_critica := 0;
-          
+
           GENE0002.pc_escreve_xml(vr_clobxml,vr_dstexto,'<transacao cdtransa="'|| vr_idx_transa ||'" dstransa="'|| vr_dstransa ||'">');
-            
+
           WHILE vr_idx_conta IS NOT NULL LOOP
-              
+
             vr_seq_critica := vr_seq_critica + 1;
-            
-              
-              
+
+
+
             GENE0002.pc_escreve_xml(vr_clobxml,vr_dstexto,
-                '<critica>' || 
+                '<critica>' ||
                 '  <nrseqcri>'|| to_char(vr_seq_critica) ||'</nrseqcri>'||
                 '  <nrdconta>'|| gene0002.fn_mask_conta(vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta).nrdconta) ||'</nrdconta>'||
                 '  <vltransa>'|| TO_CHAR(vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta).vltransa,'FM999999999990D00') ||'</vltransa>'||
                 '  <dscritic>'|| TO_CHAR(vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta).dscritic) ||'</dscritic>'||
                '</critica>');
-                 
-                 
+
+
             IF vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta).vltransa < 0 THEN
-       
+
               /* Escrita arquivo */
               vr_linhadet := TRIM(vr_dtmvtolt_yymmdd)||','||
                              trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
@@ -569,7 +571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
             END IF;
 
             IF vr_tab_transa(vr_idx_transa).criticas(vr_idx_conta).vltransa > 0 THEN
-              
+
               /* Escrita arquivo */
               vr_linhadet := TRIM(vr_dtmvtolt_yymmdd)||','||
                              trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
@@ -583,18 +585,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
               gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
               /* Fim escrita arquivo */
             END IF;
-              
+
             vr_idx_conta := vr_tab_transa(vr_idx_transa).criticas.next(vr_idx_conta);
           END LOOP;
-            
+
           GENE0002.pc_escreve_xml(vr_clobxml,vr_dstexto,'</transacao>');
-            
+
           vr_idx_transa := vr_tab_transa.next(vr_idx_transa);
 
-        END LOOP; 
-          
+        END LOOP;
+
         gene0001.pc_fecha_arquivo(vr_arquivo_txt);
-                   
+
 
         GENE0002.pc_escreve_xml(vr_clobxml,vr_dstexto,'</transacoes></crrl760>',TRUE);
 
@@ -630,26 +632,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
         END IF;
 
         vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(rw_crapcop.cdcooper),2,0)||'_CONCILIA_CARTOES.txt';
-                                                   
-        
+
+
         -- Copia o arquivo gerado para o diretório final convertendo para DOS
         gene0001.pc_oscommand_shell(pr_des_comando =>  'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop||'/'||vr_nmarqnov||' 2>/dev/null',
                                     pr_typ_saida   => vr_typ_said,
                                     pr_des_saida   => vr_dscritic);
-                
+
         -- Testar erro
         if vr_typ_said = 'ERR' then
            vr_cdcritic := 1040;
            gene0001.pc_print(gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_nmarqdat||': '||vr_dscritic);
         end if;
-        
-     END IF;   
-                                 
+
+     END IF;
+
      COMMIT;
-                 
+
     END LOOP;
-    
-    
+
+
     EXCEPTION
 
       WHEN vr_exc_saida THEN
@@ -657,14 +659,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
            -- Buscar a descrição
            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-             -- Devolvemos código e critica encontradas 
+             -- Devolvemos código e critica encontradas
            pr_cdcritic := NVL(vr_cdcritic,0);
            pr_dscritic := vr_dscritic;
         ELSE
            pr_cdcritic := vr_cdcritic;
-           pr_dscritic := vr_dscritic; 
-        END IF;             
-        ROLLBACK;  
+           pr_dscritic := vr_dscritic;
+        END IF;
+        ROLLBACK;
       WHEN OTHERS THEN
         CECRED.pc_internal_exception(pr_cdcooper => 1);
         pr_cdcritic := 0;
@@ -739,7 +741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
        WHERE c.cdcooper = pr_cdcooper
          AND c.dtiniapu = pr_dtini
          AND c.tpimpost = 2;
-    
+
     --Tabela de feriados para calcula da data de recolhimento
     CURSOR cr_crapfer(pr_cdcooper IN crapfer.cdcooper%TYPE      --> Código da cooperativa
                      ,pr_dtrecolh IN crapfer.dtferiad%TYPE) IS  --> Data de recolhimento
@@ -755,10 +757,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
     vr_dtfim    DATE;
     vr_dtrecolh DATE;
     vr_contador NUMBER;
-    
+
     -- Data do movimento no formato yymmdd
     vr_dtmvtolt_yymmdd     varchar2(6);
-      
+
     -- Nome do diretório
     vr_nom_diretorio       varchar2(200);
     vr_dsdircop            varchar2(200);
@@ -821,13 +823,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
       vr_dtrecolh := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                                 ,pr_dtmvtolt => vr_dtrecolh
                                                 ,pr_tipo => 'P');
-      
+
       /* Prj421 - Geracao de arquivo contabil */
       -- Busca do diretório onde ficará o arquivo
       vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
                                                 pr_cdcooper => pr_cdcooper,
                                                 pr_nmsubdir => 'contab');
-                                                
+
       -- Busca o diretório final para copiar arquivos
       vr_dsdircop := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                               ,pr_cdcooper => 0
@@ -862,12 +864,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
           vr_linhadet := vr_linhadet || rpad(substr(rw_crapcop.nmcooper,1,20),20,' '); --Apelido Empresa
           vr_linhadet := vr_linhadet || rpad(lpad(rw_crapcop.nrdocnpj,14,'0'),15,' '); --CNPJ Empresa
           vr_linhadet := vr_linhadet || to_char(btch0001.rw_crapdat.dtmvtoan,'DDMMRRRR'); --Data Fato Gerador
-          vr_linhadet := vr_linhadet || rpad(' ',1,' '); --Ind Dec Terc        
+          vr_linhadet := vr_linhadet || rpad(' ',1,' '); --Ind Dec Terc
           vr_linhadet := vr_linhadet || to_char(btch0001.rw_crapdat.dtmvtoan,'DDMMRRRR'); --Data Apuracao
           vr_linhadet := vr_linhadet || rpad(' ',37,' '); --Filler
 
           gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-          
+
           vr_linhadet := '02'; --Tipo Registo
           vr_linhadet := vr_linhadet || rpad(' ',7,' '); --ID Filial
           vr_linhadet := vr_linhadet || rpad(substr(rw_crapcop.nmcooper,1,20),20,' '); --Apelido Filial
@@ -903,12 +905,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
           vr_linhadet := vr_linhadet || rpad(substr(rw_crapcop.nmcooper,1,20),20,' '); --Apelido Empresa
           vr_linhadet := vr_linhadet || rpad(lpad(rw_crapcop.nrdocnpj,14,'0'),15,' '); --CNPJ Empresa
           vr_linhadet := vr_linhadet || to_char(btch0001.rw_crapdat.dtmvtoan,'DDMMRRRR'); --Data Fato Gerador
-          vr_linhadet := vr_linhadet || rpad(' ',1,' '); --Ind Dec Terc        
+          vr_linhadet := vr_linhadet || rpad(' ',1,' '); --Ind Dec Terc
           vr_linhadet := vr_linhadet || to_char(btch0001.rw_crapdat.dtmvtoan,'DDMMRRRR'); --Data Apuracao
           vr_linhadet := vr_linhadet || rpad(' ',37,' '); --Filler
 
           gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-          
+
           vr_linhadet := '02'; --Tipo Registo
           vr_linhadet := vr_linhadet || rpad(' ',7,' '); --ID Filial
           vr_linhadet := vr_linhadet || rpad(substr(rw_crapcop.nmcooper,1,20),20,' '); --Apelido Filial
@@ -937,7 +939,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
 
       COMMIT;
 
-      vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_IRRF_IOF.txt';                        
+      vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_IRRF_IOF.txt';
 
       -- Copia o arquivo gerado para o diretório final convertendo para DOS
       gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop||'/'||vr_nmarqnov||' 2>/dev/null',
@@ -961,7 +963,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
 
   PROCEDURE pc_gera_segregacao_prejuizo(pr_cdcooper IN crapcop.cdcooper%TYPE
                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE
-                                       ,pr_dscritic OUT crapcri.dscritic%TYPE) IS 
+                                       ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
     CURSOR cr_crapcop IS
       SELECT c.cdcooper
         FROM crapcop c
@@ -983,7 +985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
 
     -- Data do movimento no formato yymmdd
     vr_dtmvtolt_yymmdd     varchar2(6);
-        
+
     -- Nome do diretório
     vr_nom_diretorio       varchar2(200);
     vr_dsdircop            varchar2(200);
@@ -1018,11 +1020,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
         vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
                                                   pr_cdcooper => rw_crapcop.cdcooper,
                                                   pr_nmsubdir => 'contab');
-                                                  
+
         -- Busca o diretório final para copiar arquivos
         vr_dsdircop := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                 ,pr_cdcooper => 0
-                                                ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');                                              
+                                                ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
         -- Nome do arquivo a ser gerado
         vr_dtmvtolt_yymmdd := to_char(btch0001.rw_crapdat.dtmvtoan, 'yymmdd');
         vr_nmarqdat        := vr_dtmvtolt_yymmdd||'_SEGREGACAO_PREJUIZO.txt';
@@ -1054,7 +1056,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                            '"VALOR REF. SALDO DE EMPRESTIMOS/FINANCIAMENTOS E SALDO DEVEDOR DE C/C LANCADOS PARA PREJUIZO A MAIS DE 12 MESES"';
 
             gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-            
+
             --Reversao ajuste contabil
             vr_linhadet := trim(to_char(btch0001.rw_crapdat.dtmvtolt,'yymmdd'))||','||
                            trim(to_char(btch0001.rw_crapdat.dtmvtolt,'ddmmyy'))||','||
@@ -1078,7 +1080,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                            '"VALOR REF. SALDO DE EMPRESTIMOS/FINANCIAMENTOS E SALDO DEVEDOR DE C/C LANCADOS PARA PREJUIZO A MAIS DE 48 MESES"';
 
             gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-            
+
             --Reversao ajuste contabil
             vr_linhadet := trim(to_char(btch0001.rw_crapdat.dtmvtolt,'yymmdd'))||','||
                            trim(to_char(btch0001.rw_crapdat.dtmvtolt,'ddmmyy'))||','||
@@ -1092,10 +1094,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
             /* Fim escrita arquivo */
           END IF;
         END LOOP;
-        
+
         gene0001.pc_fecha_arquivo(vr_arquivo_txt);
 
-        vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(rw_crapcop.cdcooper),2,0)||'_SEGREGACAO_PREJUIZO.txt';                        
+        vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(rw_crapcop.cdcooper),2,0)||'_SEGREGACAO_PREJUIZO.txt';
 
         -- Copia o arquivo gerado para o diretório final convertendo para DOS
         gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop||'/'||vr_nmarqnov||' 2>/dev/null',
@@ -1118,7 +1120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
      pr_cdcritic := 0;
      pr_dscritic := 'Erro na rotina CONV0001.pc_relat_repasse_dpvat. ' || SQLERRM;
   END;
-  
+
   --Procedure para processamento dos ajustes/arquivos do projeto 421 - Melhorias nas ferramentas contabeis e fiscais
   PROCEDURE pc_processa_contabil IS
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -1137,48 +1139,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
     vr_diautil  BOOLEAN;
 
     --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
-    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro
                                    ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
                                    ,pr_cdcricid IN NUMBER   DEFAULT 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
                                    ,pr_tpexecuc IN NUMBER   DEFAULT 2   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
                                    ,pr_dscritic IN VARCHAR2 DEFAULT NULL
                                    ,pr_cdcritic IN VARCHAR2 DEFAULT NULL
                                    ,pr_cdcooper IN VARCHAR2 DEFAULT 3
-                                   ,pr_flgsuces IN NUMBER   DEFAULT 1    -- Indicador de sucesso da execução  
+                                   ,pr_flgsuces IN NUMBER   DEFAULT 1    -- Indicador de sucesso da execução
                                    ,pr_flabrchd IN INTEGER  DEFAULT 0    -- Abre chamado 1 Sim/ 0 Não
                                    ,pr_textochd IN VARCHAR2 DEFAULT NULL -- Texto do chamado
                                    ,pr_desemail IN VARCHAR2 DEFAULT NULL -- Destinatario do email
                                    ,pr_flreinci IN INTEGER  DEFAULT 0    -- Erro pode reincidir no prog em dias diferentes, devendo abrir chamado
-    ) 
+    )
     IS
-      vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;        
-    BEGIN   
+      vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
+    BEGIN
       -- Controlar geração de log de execução dos jobs
-      CECRED.pc_log_programa(pr_dstiplog           => pr_dstiplog -- I-início/ F-fim/ O-ocorrência/ E-erro 
+      CECRED.pc_log_programa(pr_dstiplog           => pr_dstiplog -- I-início/ F-fim/ O-ocorrência/ E-erro
                             ,pr_tpocorrencia       => pr_tpocorre -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
                             ,pr_cdcriticidade      => pr_cdcricid -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
                             ,pr_tpexecucao         => pr_tpexecuc -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
                             ,pr_dsmensagem         => pr_dscritic
                             ,pr_cdmensagem         => pr_cdcritic
-                            ,pr_cdcooper           => pr_cdcooper 
+                            ,pr_cdcooper           => pr_cdcooper
                             ,pr_flgsucesso         => pr_flgsuces
                             ,pr_flabrechamado      => pr_flabrchd -- Abre chamado 1 Sim/ 0 Não
                             ,pr_texto_chamado      => pr_textochd
                             ,pr_destinatario_email => pr_desemail
                             ,pr_flreincidente      => pr_flreinci
                             ,pr_cdprograma         => vr_nomdojob
-                            ,pr_idprglog           => vr_idprglog);   
+                            ,pr_idprglog           => vr_idprglog);
     EXCEPTION
       WHEN OTHERS THEN
-        -- No caso de erro de programa gravar tabela especifica de log  
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+        -- No caso de erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
     END pc_controla_log_batch;
   BEGIN
     GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
-    
+
     -- Log de inicio de execucao
     pc_controla_log_batch(pr_dstiplog => 'I');
-    
+
     --Verifica se o JOB pode rodar
     --Sabado e Domingo nao deve validar o processo batch, pois o INPROCES da CECRED vai estar como 2 o final de semana inteiro
     IF to_char(SYSDATE,'D') NOT IN ('7','1') THEN
@@ -1194,7 +1196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
     END IF;
 
     -- se nao retornou critica chama rotina
-    IF trim(vr_dserro) IS NULL THEN 
+    IF trim(vr_dserro) IS NULL THEN
       IF trunc(SYSDATE) = gene0005.fn_valida_dia_util(pr_cdcooper => 3
                                                     , pr_dtmvtolt => TRUNC(SYSDATE)
                                                     , pr_tipo => 'P') THEN
@@ -1205,12 +1207,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
 
       -- Retorna nome do módulo logado
       GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
-        
+
       OPEN btch0001.cr_crapdat(vr_cdcooper);
       FETCH btch0001.cr_crapdat  INTO rw_crapdat;
       CLOSE btch0001.cr_crapdat;
-      
+
       pc_processa_arquivo_bancoob(pr_cdcooper => vr_cdcooper
+                                 ,pr_dtmvtolt => NULL      
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
 
@@ -1243,7 +1246,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                                ,pr_flgsuces => 0           -- Indicador de sucesso da execução
                                );
         END IF;
-        
+
         pc_processa_lanc_slip(pr_cdcooper => vr_cdcooper
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic);
@@ -1254,7 +1257,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                                ,pr_flgsuces => 0           -- Indicador de sucesso da execução
                                );
         END IF;
-        
+
         pc_gera_iof_irrf_decendial(pr_cdcooper => vr_cdcooper
                                   ,pr_cdcritic => vr_cdcritic
                                   ,pr_dscritic => vr_dscritic);
@@ -1268,7 +1271,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
       END IF;
 
       -- Retorna nome do módulo logado
-      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
+      GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
 
     ELSE
       -- Processo noturno nao finalizado para cooperativa - Não gera critica
@@ -1301,13 +1304,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
     -- Retorna nome do módulo logado
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   EXCEPTION
-    WHEN vr_exc_erro THEN  
+    WHEN vr_exc_erro THEN
       ROLLBACK;
     WHEN OTHERS THEN
-      cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper, 
+      cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper,
                                    pr_compleme => vr_dscritic);
       -- Monta mensagens
-      vr_cdcritic := 9999; -- 9999 -  Erro nao tratado: 
+      vr_cdcritic := 9999; -- 9999 -  Erro nao tratado:
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
                      vr_cdprogra ||
                      '. ' || SQLERRM;
@@ -1316,7 +1319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
       pc_controla_log_batch(pr_cdcritic => vr_cdcritic
                            ,pr_dscritic => vr_dscritic);
 
-      ROLLBACK;                             
+      ROLLBACK;
   END;
 
   PROCEDURE pc_processa_arquivo_abbc(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -1324,42 +1327,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                                     ,pr_dscritic OUT VARCHAR2) is
 
     -- cursor para pegar codigo da cooperativa
-    CURSOR cr_crapcop IS 
-     SELECT cdcooper,cdagectl  FROM crapcop;                                 
-   
+    CURSOR cr_crapcop IS
+     SELECT cdcooper,cdagectl  FROM crapcop;
+
     -- exceptions
     vr_exc_saida EXCEPTION;
-                                   
+
     vr_nom_diretorio       varchar2(200);
     vr_dsdircop            varchar2(200);
     -- Nome do arquivo que será gerado
     vr_nmarqnov            VARCHAR2(50); -- nome do arquivo por cooperativa
     vr_nmarqdat            varchar2(50);
     vr_nomedarq            VARCHAR2(50);
-    vr_nmdircop VARCHAR(200) := NULL; 
+    vr_nmdircop VARCHAR(200) := NULL;
     vr_dtmvtolt_yymmdd     VARCHAR2(8);
-    
+
     -- Arquivo texto
     vr_arquivo_txt         utl_file.file_type;
-    vr_farquivo         utl_file.file_type;  
+    vr_farquivo         utl_file.file_type;
 
     vr_lerlinha PLS_INTEGER;
-    
-    vr_dslisarq            VARCHAR2(4000); 
+
+    vr_dslisarq            VARCHAR2(4000);
     vr_linhadet            varchar2(200);
     vr_setlinha            VARCHAR2(300);
     vr_tab_nmarqtel gene0002.typ_split;  -- tabela com os arquivos listados
     vr_tab_coop typ_tab_coop;
-    vr_dscritic VARCHAR2(4000);  
-    vr_cdcritic NUMBER; 
+    vr_dscritic VARCHAR2(4000);
+    vr_cdcritic NUMBER;
     vr_typ_said VARCHAR2(4);
-    
+
     vr_tab_regarqvo typ_tab_arquiv_abbc; -- tabela com os dados retirados do arquivo
     vr_idx_regarqvo VARCHAR2(50);
-    
+
     vr_tab_cdcooper typ_tab_cdcooper;
     vr_idx_cdcooper PLS_INTEGER;
-    
+
     -- variaveis dos campos do arquivo
     vr_dtconcil DATE := NULL;
     vr_nrcheque crapfdc.nrcheque%TYPE;
@@ -1371,7 +1374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
   BEGIN
 
 
-    BEGIN 
+    BEGIN
       OPEN btch0001.cr_crapdat(pr_cdcooper);
       FETCH btch0001.cr_crapdat INTO btch0001.rw_crapdat;
       CLOSE btch0001.cr_crapdat;
@@ -1379,57 +1382,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
       --carregar as cooperativas
       vr_tab_cdcooper.DELETE;
       vr_tab_coop.delete;
-      
+
       FOR rw_crapcop IN cr_crapcop LOOP
         vr_tab_cdcooper(rw_crapcop.cdagectl) := rw_crapcop.cdcooper;
       END LOOP;
-                       
+
       vr_tab_regarqvo.delete;
-                       
+
       FOR i IN 1..2 LOOP -- loop para os dois tipos de arquivos SF e SL
-        
-        IF i = 1 THEN -- primeiro o SF      
+
+        IF i = 1 THEN -- primeiro o SF
           vr_nomedarq := 'DTSF'||to_char(btch0001.rw_crapdat.dtmvtoan,'dd') || to_char(btch0001.rw_crapdat.dtmvtoan,'mm')||'%.TXT';
         ELSE -- depois SL
           vr_nomedarq := 'DTSL'||to_char(btch0001.rw_crapdat.dtmvtoan,'dd') || to_char(btch0001.rw_crapdat.dtmvtoan,'mm')||'%.TXT';
-        END IF; 
-        
-        -- diretorio dos arquivos para serem listados                   
+        END IF;
+
+        -- diretorio dos arquivos para serem listados
          vr_nmdircop := gene0001.fn_diretorio(pr_tpdireto => 'M'
                                             ,pr_cdcooper => 3
-                                            ,pr_nmsubdir => 'contab'); 
-        
+                                            ,pr_nmsubdir => 'contab');
+
         gene0001.pc_lista_arquivos(pr_path     => vr_nmdircop
                                   ,pr_pesq     => vr_nomedarq
                                   ,pr_listarq  => vr_dslisarq
                                   ,pr_des_erro => vr_dscritic);
 
         vr_tab_nmarqtel := gene0002.fn_quebra_string(vr_dslisarq);
-        
+
         -- ler arquivos encontrados
         FOR idx IN 1..vr_tab_nmarqtel.count() LOOP
             vr_dtconcil := NULL;
-            
-            
+
+
             gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdircop  --> Diretorio do arquivo
                                     ,pr_nmarquiv => vr_tab_nmarqtel(idx) --> Nome do arquivo
                                     ,pr_tipabert => 'R'            --> Modo de abertura (R,W,A)
                                     ,pr_utlfileh => vr_farquivo  --> Handle do arquivo aberto
                                     ,pr_des_erro => vr_dscritic);  --> Erro
-                                    
-              
+
+
             IF vr_dscritic IS NOT NULL THEN
                vr_cdcritic := 0;
-               vr_dscritic := vr_dscritic; 
-               RAISE vr_exc_saida ;            
+               vr_dscritic := vr_dscritic;
+               RAISE vr_exc_saida ;
             END IF;
-            
+
             LOOP
-              
+
               BEGIN
                 gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_farquivo --> Handle do arquivo aberto
                                                ,pr_des_text => vr_setlinha); --> Texto lido
-                                               
+
               EXCEPTION
                 WHEN NO_DATA_FOUND THEN
                   --Chegou ao final arquivo, sair do loop
@@ -1439,74 +1442,74 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                   vr_dscritic:= 'Erro na leitura do arquivo.';
                   RAISE vr_exc_saida;
               END;
-              
-                             
+
+
               -- para pegar a data ignorar até encontrar a linha que começa com Conciliacao
-              IF upper(TRIM(substr(vr_setlinha,1,12))) = upper('Conciliacao') AND (vr_dtconcil IS NULL) THEN                                       
+              IF upper(TRIM(substr(vr_setlinha,1,12))) = upper('Conciliacao') AND (vr_dtconcil IS NULL) THEN
                 vr_dtconcil := to_date(TRIM(SUBSTR(vr_setlinha,30,10)),'DD/MM/YYYY');
               END IF;
-                                  
-              
+
+
               vr_lerlinha := 0;
-              
+
               FOR rw_crapcop IN cr_crapcop LOOP
                 IF lpad(rw_crapcop.cdagectl,4,0) = nvl(TRIM(SUBSTR(vr_setlinha,83,4)),' ') THEN
-                   vr_lerlinha := 1; 
-                   EXIT;                    
+                   vr_lerlinha := 1;
+                   EXIT;
                 END IF;
               END LOOP;
-              
+
               IF nvl(vr_lerlinha,0) = 0 THEN
                 continue;
-              END IF;          
-                
+              END IF;
+
                 vr_cdageori := GENE0002.fn_char_para_number(TRIM(SUBSTR(vr_setlinha,83,4)));
                 vr_nrcheque := GENE0002.fn_char_para_number(TRIM(SUBSTR(vr_setlinha,38,6)));
-                vr_vlcheque := GENE0002.fn_char_para_number(TRIM(REPLACE(SUBSTR(vr_setlinha,49,23),'.','') )); 
-                vr_nrctadep := GENE0002.fn_char_para_number(TRIM(SUBSTR(vr_setlinha,89,12))); 
-                
-                IF i = 1 THEN 
+                vr_vlcheque := GENE0002.fn_char_para_number(TRIM(REPLACE(SUBSTR(vr_setlinha,49,23),'.','') ));
+                vr_nrctadep := GENE0002.fn_char_para_number(TRIM(SUBSTR(vr_setlinha,89,12)));
+
+                IF i = 1 THEN
                   vr_tpdearqv := 'SF';
-                ELSE 
+                ELSE
                   vr_tpdearqv := 'SL';
                 END IF;
-              
-              
+
+
               -- montar indice para a tabela dos registros encontrados no arquivo
               vr_idx_regarqvo := lpad(to_char(vr_cdageori),4,0) ||
                                  lpad(to_char(vr_nrcheque),6,0) ||
                                  lpad(to_char(vr_nrctadep),12,0);
 
-              IF NOT vr_tab_regarqvo.exists(vr_idx_regarqvo) THEN                   
-                                 
-                 vr_tab_regarqvo(vr_idx_regarqvo).cdageori := vr_cdageori;               
+              IF NOT vr_tab_regarqvo.exists(vr_idx_regarqvo) THEN
+
+                 vr_tab_regarqvo(vr_idx_regarqvo).cdageori := vr_cdageori;
                  vr_tab_regarqvo(vr_idx_regarqvo).nrcheque := vr_nrcheque;
                  vr_tab_regarqvo(vr_idx_regarqvo).vlcheque := vr_vlcheque;
-                 vr_tab_regarqvo(vr_idx_regarqvo).nrctadep := vr_nrctadep;  
-                 vr_tab_regarqvo(vr_idx_regarqvo).tpdearqv := vr_tpdearqv;                               
+                 vr_tab_regarqvo(vr_idx_regarqvo).nrctadep := vr_nrctadep;
+                 vr_tab_regarqvo(vr_idx_regarqvo).tpdearqv := vr_tpdearqv;
               END IF;
-                                                              
+
               vr_idx_cdcooper := vr_tab_cdcooper(vr_cdageori);
-             
+
               -- seriva para gerar arquivo apenas para as cooperativas que tenham sido importadas nos arquivos SL e SF
-              IF NOT vr_tab_coop.exists(vr_idx_cdcooper) THEN 
+              IF NOT vr_tab_coop.exists(vr_idx_cdcooper) THEN
                   vr_tab_coop(vr_idx_cdcooper) := vr_idx_cdcooper;
                  END IF;
-           END LOOP;           
+           END LOOP;
         END LOOP; -- loop arquivo
       END LOOP; -- fim loop tipo arquivo
-                  
-                          
+
+
       -- gerar arquivo por cooperativa SL e SF
       vr_idx_cdcooper := vr_tab_coop.first;
-               
+
       WHILE vr_idx_cdcooper IS NOT NULL LOOP
 
                -- gerar arquivo contabil
                vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
                                                    pr_cdcooper => vr_tab_coop(vr_idx_cdcooper),
                                                          pr_nmsubdir => 'contab');
-              
+
                -- Busca o diretório final para copiar arquivos
                vr_dsdircop := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                        ,pr_cdcooper => 0
@@ -1514,27 +1517,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                -- Nome do arquivo a ser gerado
                vr_dtmvtolt_yymmdd := to_char(vr_dtconcil, 'yyyymmdd');
          vr_nmarqdat        := vr_dtmvtolt_yymmdd||'_'|| LPAD(TO_CHAR(vr_tab_coop(vr_idx_cdcooper)),2,0) || '_SF_SL.txt';
-                   
+
                -- Abre o arquivo para escrita
                gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio,    --> Diretório do arquivo
                                         pr_nmarquiv => vr_nmarqdat,         --> Nome do arquivo
                                         pr_tipabert => 'W',                 --> Modo de abertura (R,W,A)
                                         pr_utlfileh => vr_arquivo_txt,      --> Handle do arquivo aberto
-                                        pr_des_erro => vr_dscritic); 
-                                                     
-         
-         vr_idx_regarqvo := vr_tab_regarqvo.first;    
-         
-         WHILE vr_idx_regarqvo IS NOT NULL LOOP                        
-           vr_cdcooper := vr_tab_cdcooper(vr_tab_regarqvo(vr_idx_regarqvo).cdageori); 
-             
+                                        pr_des_erro => vr_dscritic);
+
+
+         vr_idx_regarqvo := vr_tab_regarqvo.first;
+
+         WHILE vr_idx_regarqvo IS NOT NULL LOOP
+           vr_cdcooper := vr_tab_cdcooper(vr_tab_regarqvo(vr_idx_regarqvo).cdageori);
+
            IF vr_cdcooper <> vr_tab_coop(vr_idx_cdcooper) THEN
               vr_idx_regarqvo := vr_tab_regarqvo.next(vr_idx_regarqvo);
               continue;
              END IF;
-                                         
+
              -- gerar lançamentos
-             IF vr_tab_regarqvo(vr_idx_regarqvo).tpdearqv = 'SL' THEN 
+             IF vr_tab_regarqvo(vr_idx_regarqvo).tpdearqv = 'SL' THEN
                IF vr_tab_regarqvo(vr_idx_regarqvo).vlcheque > 0 THEN
                  /* Escrita arquivo */
                  vr_linhadet := TRIM(vr_dtmvtolt_yymmdd)||','||
@@ -1544,12 +1547,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                              trim(to_char(vr_tab_regarqvo(vr_idx_regarqvo).vlcheque,'999999999999.00'))||','|| --valor deve ir positivo para o arquivo
                              '5210,'||
                              '"VLR. REF. NR CHEQUE Nº ' || LPAD(TO_CHAR(vr_tab_regarqvo(vr_idx_regarqvo).nrcheque),6,0) || ' DA C/C '
-                                                        || gene0002.fn_mask_conta(vr_tab_regarqvo(vr_idx_regarqvo).nrctadep) 
+                                                        || gene0002.fn_mask_conta(vr_tab_regarqvo(vr_idx_regarqvo).nrctadep)
                                                         || ' CRITICADO REL. SL ABBC - A REGULARIZAR"';
 
                  gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-                 /* Fim escrita arquivo */ 
-               END IF;  
+                 /* Fim escrita arquivo */
+               END IF;
              ELSE
                IF vr_tab_regarqvo(vr_idx_regarqvo).vlcheque > 0 THEN
                  /* Escrita arquivo */
@@ -1560,51 +1563,51 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                              trim(to_char(vr_tab_regarqvo(vr_idx_regarqvo).vlcheque,'999999999999.00'))||','|| --valor deve ir positivo para o arquivo
                              '5210,'||
                              '"VLR. REF. NR CHEQUE Nº ' || LPAD(TO_CHAR(vr_tab_regarqvo(vr_idx_regarqvo).nrcheque),6,0) || ' DA C/C '
-                                                        || gene0002.fn_mask_conta(vr_tab_regarqvo(vr_idx_regarqvo).nrctadep) 
+                                                        || gene0002.fn_mask_conta(vr_tab_regarqvo(vr_idx_regarqvo).nrctadep)
                                                         || ' CRITICADO REL. SF ABBC - REGULARIZADO NESTA DATA"';
 
                  gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-                 /* Fim escrita arquivo */ 
-               END IF; 
-             
-             END IF; 
-            
+                 /* Fim escrita arquivo */
+               END IF;
+
+             END IF;
+
             vr_idx_regarqvo := vr_tab_regarqvo.next(vr_idx_regarqvo);
-          
+
          END LOOP;
-         
-       
+
+
          -- fechar e mover depois aqui
          gene0001.pc_fecha_arquivo(vr_arquivo_txt);
-                                  
-         vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(vr_tab_coop(vr_idx_cdcooper)),2,0)||'_SF_SL.txt';                       
-          
+
+         vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(vr_tab_coop(vr_idx_cdcooper)),2,0)||'_SF_SL.txt';
+
          -- Copia o arquivo gerado para o diretório final convertendo para DOS
          gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop||'/'||vr_nmarqnov||' 2>/dev/null',
                                       pr_typ_saida   => vr_typ_said,
                                       pr_des_saida   => vr_dscritic);
-                  
+
          -- Testar erro
          if vr_typ_said = 'ERR' THEN
             vr_cdcritic := 1040;
             gene0001.pc_print(gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_nmarqdat||': '||vr_dscritic);
          END IF;
-         
+
          vr_idx_cdcooper :=  vr_tab_coop.next(vr_idx_cdcooper);
-         
+
          COMMIT;
-                                                                                      
-        
-       END LOOP;                                                                                                                     
-    EXCEPTION          
-      WHEN vr_exc_saida THEN 
+
+
+       END LOOP;
+    EXCEPTION
+      WHEN vr_exc_saida THEN
         pr_cdcritic := nvl(vr_cdcritic,0);
         pr_dscritic := vr_dscritic || Sqlerrm;
 
-      WHEN OTHERS THEN 
+      WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro geral na rotina.' || SQLERRM; 
-        
+        pr_dscritic := 'Erro geral na rotina.' || SQLERRM;
+
     END;
   END pc_processa_arquivo_abbc;
 
@@ -1614,50 +1617,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                                  ,pr_dscritic OUT VARCHAR2) is
 
     -- cursor para pegar codigo da cooperativa
-    CURSOR cr_crapcop IS 
-     SELECT cdcooper,cdagectl  FROM crapcop;                                 
-    
+    CURSOR cr_crapcop IS
+     SELECT cdcooper,cdagectl  FROM crapcop;
+
     CURSOR cr_lancamentos (pr_cdcooper IN crapcop.cdcooper%TYPE,
-                           pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS 
-     SELECT lan.cdcooper,
-        lan.dtmvtolt,
-        lan.nrsequencia_slip,
-        lan.nrctadeb,
-        lan.nrctacrd,
-        lan.vllanmto,
-        lan.cdhistor_padrao,
-        lan.dslancamento,
-        lan.cdoperad FROM tbcontab_slip_lancamento lan 
+                           pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+      SELECT lan.cdcooper
+           , lan.dtmvtolt
+           , lan.nrsequencia_slip
+           , lan.nrctadeb
+           , lan.nrctacrd
+           , lan.vllanmto
+           , lpad(lan.cdhistor_padrao,4,'0') cdhistor_padrao
+           , substr(lan.dslancamento,1,240) dslancamento
+           , lan.cdoperad
+        FROM tbcontab_slip_lancamento lan
      WHERE lan.cdcooper = pr_cdcooper
       AND  lan.dtmvtolt = pr_dtmvtolt;
-      
+
     CURSOR cr_rateio (pr_cdcooper IN crapcop.cdcooper%TYPE,
                       pr_nseqslip IN tbcontab_slip_rateio.nrsequencia_slip%TYPE,
-                      pr_dtmvtolt IN tbcontab_slip_rateio.dtmvtolt%TYPE) IS 
-     SELECT rat.cdgerencial,rat.vllanmto FROM tbcontab_slip_rateio rat
+                      pr_dtmvtolt IN tbcontab_slip_rateio.dtmvtolt%TYPE) IS
+      SELECT rat.cdgerencial
+           , rat.vllanmto
+        FROM tbcontab_slip_rateio rat
       WHERE rat.cdcooper = pr_cdcooper
        AND  rat.dtmvtolt = pr_dtmvtolt
        AND  rat.nrsequencia_slip = pr_nseqslip;
-       
+
     -- exceptions
     vr_exc_saida EXCEPTION;
-                                   
+
     vr_nom_diretorio       varchar2(200);
     vr_dsdircop            varchar2(200);
     -- Nome do arquivo que será gerado
     vr_nmarqnov            VARCHAR2(50); -- nome do arquivo por cooperativa
     vr_nmarqdat            varchar2(50);
     vr_dtmvtolt_yymmdd     VARCHAR2(8);
-    
+
     -- Arquivo texto
     vr_arquivo_txt         utl_file.file_type;
-    
-    vr_linhadet            varchar2(200);
+
+    vr_linhadet varchar2(500);
     vr_tab_coop typ_tab_coop;
-    vr_dscritic VARCHAR2(4000);  
-    vr_cdcritic NUMBER; 
+    vr_dscritic VARCHAR2(4000);
+    vr_cdcritic NUMBER;
     vr_typ_said VARCHAR2(4);
-    
+
     vr_tab_cdcooper typ_tab_cdcooper;
     vr_flgarq PLS_INTEGER;
     -- variaveis dos campos do arquivo
@@ -1665,31 +1671,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
     vr_dtmvtoan DATE;
   BEGIN
 
-    BEGIN 
+    BEGIN
       --carregar as cooperativas
       vr_tab_cdcooper.DELETE;
       vr_tab_coop.delete;
-      
+
       --Utilizar as datas da CENTRAL
       OPEN btch0001.cr_crapdat(pr_cdcooper);
       FETCH btch0001.cr_crapdat INTO btch0001.rw_crapdat;
       CLOSE btch0001.cr_crapdat;
-      
+
       vr_dtmvtoan := btch0001.rw_crapdat.dtmvtoan;
-      
+
       FOR rw_crapcop IN cr_crapcop LOOP
-        vr_flgarq := 1;  -- criar arquivo        
+        vr_flgarq := 1;  -- criar arquivo
         FOR rw_lancamentos IN cr_lancamentos(pr_cdcooper => rw_crapcop.cdcooper,
                                              pr_dtmvtolt => vr_dtmvtoan) LOOP
-          
+
            IF  vr_flgarq = 1 THEN
-               vr_flgarq:= 0;              
-         
+               vr_flgarq:= 0;
+
                     -- gerar arquivo contabil
                vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
                                                          pr_cdcooper => rw_lancamentos.cdcooper,
                                                          pr_nmsubdir => 'contab');
-                    
+
                -- Busca o diretório final para copiar arquivos
                vr_dsdircop := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                        ,pr_cdcooper => 0
@@ -1697,24 +1703,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                -- Nome do arquivo a ser gerado
                vr_dtmvtolt_yymmdd := to_char(rw_lancamentos.dtmvtolt, 'yyyymmdd');
                vr_nmarqdat        := vr_dtmvtolt_yymmdd||'_'|| LPAD(TO_CHAR(rw_lancamentos.cdcooper),2,0) || '_SLIP_CONTABIL.txt';
-                         
+
                -- Abre o arquivo para escrita
                gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio,    --> Diretório do arquivo
                                         pr_nmarquiv => vr_nmarqdat,         --> Nome do arquivo
                                         pr_tipabert => 'W',                 --> Modo de abertura (R,W,A)
                                         pr_utlfileh => vr_arquivo_txt,      --> Handle do arquivo aberto
-                                        pr_des_erro => vr_dscritic); 
-                                    
-              
+                                        pr_des_erro => vr_dscritic);
+
+
                IF vr_dscritic IS NOT NULL THEN
                   vr_cdcritic := 0;
-                  vr_dscritic := vr_dscritic; 
-                  RAISE vr_exc_saida ;            
-               END IF;       
-              
+                  vr_dscritic := vr_dscritic;
+                  RAISE vr_exc_saida ;
+               END IF;
+
            END IF;
-           
-           
+
            vr_linhadet :=  TRIM(vr_dtmvtolt_yymmdd)||','||
                            trim(to_char(rw_lancamentos.dtmvtolt,'ddmmyy'))||','||
                            rw_lancamentos.nrctadeb ||','||
@@ -1722,46 +1727,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
                            trim(to_char(rw_lancamentos.vllanmto,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','|| --valor deve ir positivo para o arquivo
                            rw_lancamentos.cdhistor_padrao||','||
                            '"'||rw_lancamentos.dslancamento||'"';
-                           
+
            gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-           
+
            --buscar rateios
            FOR rw_rateio IN cr_rateio(pr_cdcooper => rw_lancamentos.cdcooper
                                      ,pr_nseqslip => rw_lancamentos.nrsequencia_slip
                                      ,pr_dtmvtolt => rw_lancamentos.dtmvtolt) LOOP
               vr_linhadet := lpad(rw_rateio.cdgerencial,3,0)||','|| trim(to_char(rw_rateio.vllanmto,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'));
-              gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet); 
-           END LOOP;                                 
-                     
+              gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+           END LOOP;
+
         END LOOP;
 
-        IF vr_flgarq = 0 THEN 
+        IF vr_flgarq = 0 THEN
           -- fechar e mover depois aqui
           gene0001.pc_fecha_arquivo(vr_arquivo_txt);
-                                            
-          vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(rw_crapcop.cdcooper),2,0)||'_SLIP_CONTABIL.txt';                       
-                    
+
+          vr_nmarqnov := vr_dtmvtolt_yymmdd||'_'||LPAD(TO_CHAR(rw_crapcop.cdcooper),2,0)||'_SLIP_CONTABIL.txt';
+
           -- Copia o arquivo gerado para o diretório final convertendo para DOS
           gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqdat||' > '||vr_dsdircop||'/'||vr_nmarqnov||' 2>/dev/null',
                                         pr_typ_saida   => vr_typ_said,
                                         pr_des_saida   => vr_dscritic);
-                            
+
           -- Testar erro
           if vr_typ_said = 'ERR' THEN
               vr_cdcritic := 1040;
               gene0001.pc_print(gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_nmarqdat||': '||vr_dscritic);
-          END IF;                                                       
-                 
-          COMMIT; 
+          END IF;
+
+          COMMIT;
         END IF;
       END LOOP;
-    EXCEPTION          
-      WHEN vr_exc_saida THEN 
+    EXCEPTION
+      WHEN vr_exc_saida THEN
         pr_cdcritic := nvl(vr_cdcritic,0);
         pr_dscritic := vr_dscritic || Sqlerrm;
-      WHEN OTHERS THEN 
+      WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro geral na rotina.' || SQLERRM; 
+        pr_dscritic := 'Erro geral na rotina.' || SQLERRM;
     END;
   END pc_processa_lanc_slip;
 END cont0002;
