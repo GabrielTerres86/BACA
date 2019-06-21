@@ -148,7 +148,8 @@ FUNCTION fn_verifica_estorno_debito(pr_cdcooper IN craplcm.cdcooper%TYPE
 
    Observacao:
    
-   Alteracoes:
+   Alteracoes: 21/06/2019 - P450 - Correção para filtrar nro docto conforme regra estorno (crps444)
+                            somando + 1000000 (Marcelo/AMCom)
    ..............................................................................*/ 
   
   TYPE typ_tab_hisest IS TABLE OF VARCHAR(100) 
@@ -175,7 +176,7 @@ BEGIN
                 ' WHERE cdcooper = :pr_cdcooper ' ||
                 '   AND nrdconta = :pr_nrdconta ' ||
                 '   AND dtmvtolt = :pr_dtmvtolt ' ||
-                '   AND (nrdocmto = :pr_nrdocmto OR nrdocmto = ''1'' || :pr_nrdocmto) ' || -- em alguns casos, usa-se o "1" como prefixo do número do documento no histórico de estorno
+                '   AND (nrdocmto = :pr_nrdocmto OR nrdocmto = ''1'' || :pr_nrdocmto OR nrdocmto = :pr_nrdocmto + 1000000) ' || -- em alguns casos, usa-se o "1" como prefixo do número do documento no histórico de estorno
                 '   AND vllanmto = :pr_vllanmto ' ||
                 '   AND cdhistor in (:pr_lshistor) ';
                 
@@ -184,6 +185,7 @@ BEGIN
     USING pr_cdcooper
         , pr_nrdconta
         , pr_dtmvtolt
+        , pr_nrdocmto
         , pr_nrdocmto
         , pr_nrdocmto
         , pr_vllanmto
