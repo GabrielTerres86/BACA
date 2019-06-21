@@ -4339,7 +4339,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
          AND fdc.cdagechq = cop.cdagectl
          AND fdc.tpcheque = 1 --(NORMAL - 1 / TB - 2)
          AND fdc.dtretchq IS NULL
-         AND fdc.dtemschq IS NOT NULL
          AND fdc.incheque <> 8 -- CANCELADO
          AND (
                (
