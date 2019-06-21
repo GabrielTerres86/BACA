@@ -391,7 +391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_DESAB AS
         END;
         
         -- Bloqueia pre aprovado na conta do cooperado
-        EMPR0002.pc_mantem_param_conta (pr_cdcooper => vr_cdcooper
+        /*EMPR0002.pc_mantem_param_conta (pr_cdcooper => vr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_flgrenli => NULL
                                        ,pr_flglibera_pre_aprv =>  pr_flgcrdpa
@@ -407,7 +407,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_DESAB AS
         IF pr_des_erro = 'NOK' THEN
           RAISE vr_exc_erro;
         END IF;
-        
+        */
         COMMIT;
         
       EXCEPTION        
