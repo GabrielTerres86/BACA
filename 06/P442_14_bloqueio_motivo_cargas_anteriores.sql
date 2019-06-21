@@ -12,11 +12,14 @@ DECLARE
           ,ass.nrcpfcnpj_base
           ,apr.dtatualiza_pre_aprv
      FROM tbepr_param_conta apr
-         ,crapass ass
-     WHERE apr.idmotivo IS NULL
-       AND apr.flglibera_pre_aprv = 0
-       AND ass.cdcooper = apr.cdcooper
-       AND ass.nrdconta = apr.nrdconta;
+		 ,crapass ass
+		 ,crapcop cop
+	 WHERE apr.idmotivo IS NULL
+	   AND apr.flglibera_pre_aprv = 0
+	   AND cop.cdcooper = ass.cdcooper
+	   AND ass.cdcooper = apr.cdcooper
+	   AND ass.nrdconta = apr.nrdconta
+	   AND cop.flgativo = 1;
        
    CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
                     ,pr_nrdconta crapass.nrdconta%TYPE) IS
