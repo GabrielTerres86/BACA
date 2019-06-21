@@ -224,6 +224,8 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
+                          ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
+                          ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                           -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
@@ -292,6 +294,8 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
+                          ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
+                          ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                           -- saida
                           ,pr_nrdocmto OUT INTEGER --> Documento TED
                           ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL
@@ -1337,6 +1341,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
+                          ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
+                          ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                           -- saida
                           ,pr_nrdocmto OUT INTEGER --> Documento TED
                           ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL
@@ -1399,8 +1405,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   
                   28/08/2018 - Tratamento de exceção pra chamada AFRA0004.pc_monitora_operacao (Tiago - RITM0025395)
 
-				  08/05/2019 - Tratamento para travar envio de 2 TEDs simultaneamente, ocorre erro na validacao do saldo
-                               do deposito a vista - (Jose Gracik/Mouts - RITM0012961)
+                  08/02/2019 - Realizado a inclusão de parametro para indicar que está sendo realizada uma 
+                               transferencia de salário via portabilidade, de forma que o programa possa tratar
+                               a requisição como TEC de salário. Foram realizados os ajustes também para que 
+                               seja utilizado o histórico correto (Renato - Supero - Projeto 485)
+                               
+                  03/05/2019 - Alterado para que não seja gerada tarifa para transferencias de portabilidade de 
+                               salário. (Renato Darosci - Supero - Projeto 485)
 
                   05/06/2019 - Tratar INC0011406 relacionado ao horario de aprovacao da TED (Diego).
 
@@ -1463,18 +1474,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND craptvl.nrcctrcb = pr_nrctafav
          AND craptvl.vldocrcb = pr_vldocmto;
     rw_craptvl_max cr_craptvl_max%ROWTYPE;
-
-	/* Validar dep. a vista em transferencias sequencias */
-    CURSOR cr_craptvl2_max(pr_cdcooper craptvl.cdcooper%TYPE,
-                           pr_dtmvtocd craptvl.dtmvtolt%TYPE,
-                           pr_nrdconta craptvl.nrdconta%TYPE) IS
-      SELECT MAX(hrtransa) hrtransa
-        FROM craptvl
-       WHERE craptvl.cdcooper = pr_cdcooper
-         AND craptvl.dtmvtolt = pr_dtmvtocd
-         AND craptvl.tpdoctrf = 3
-         AND craptvl.nrdconta = pr_nrdconta;
-    rw_craptvl2_max cr_craptvl2_max%ROWTYPE;
 
     -- Buscar dados historico
     CURSOR cr_craphis (pr_cdcooper craphis.cdcooper%TYPE,
@@ -1591,7 +1590,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type := null;
     vr_flvldhor            NUMBER;
     vr_aux_exisdoc NUMBER;
-
+    -- Renato Supero - P485 - Indica se é uma TED ou TEC de salário
+    vr_flgctsal   BOOLEAN := FALSE; 
+    vr_idtected   NUMBER;  -- Indicador para formar o número de controle da IF
 
     --Rowid lancamento tarifa
     vr_rowid_craplat ROWID;
@@ -1849,8 +1850,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     END IF;    
     -- Fim INC0030535
 
+    -- Se for uma transação de portabilidade de salário (P485 - Renato Darosci - Supero)
+    IF NVL(pr_idportab,0) = 1 THEN
+      -- Indica como 2 por configurar uma TEC
+      vr_idtected := 2;
+    ELSE
+      -- Indicar como 1 por configurar como uma TED
+      vr_idtected := 1;
+    END IF;
+      
     /* Se alterar numero de controle, ajustar procedure atualiza-doc-ted */
-    vr_nrctrlif := '1'||to_char(rw_crapdat.dtmvtocd,'RRMMDD')
+    vr_nrctrlif := vr_idtected||to_char(rw_crapdat.dtmvtocd,'RRMMDD')
                       ||to_char(rw_crapcop.cdagectl,'fm0000')
                        -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
                        -- Buscar o NRDOCMTO para evitar duplicidadr de NumCtrlIF
@@ -1909,22 +1919,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         RAISE vr_exc_erro;
       END IF;
       CLOSE cr_craptvl_max;
-
-       /* Controle para envio de 2 TEDs da mesma conta ao mesmo tempo sem validar o saldo do dep. a vista */
-      OPEN cr_craptvl2_max( pr_cdcooper => rw_crapcop.cdcooper,
-                            pr_dtmvtocd => rw_crapdat.dtmvtocd,
-                            pr_nrdconta => pr_nrdconta);
-      FETCH cr_craptvl2_max INTO rw_craptvl2_max;
-
-      -- se ja existe um lançamento com os mesmos dados em menos de 30 segundos (30 seg) apresentar alerta
-      IF cr_craptvl2_max%FOUND AND
-        (to_char(SYSDATE,'SSSSS') - nvl(rw_craptvl2_max.hrtransa,0)) <= 30 THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Ja existe TED em processamento. ' ||
-                       'Consulte extrato ou tente novamente em 30 segundos.';
-        RAISE vr_exc_erro;
-      END IF;
-      CLOSE cr_craptvl2_max;	
     END IF;
 
 	--Bacenjud - SM 1
@@ -2151,6 +2145,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 ,craptvl.flgpescr
                 ,craptvl.idanafrd
                 ,craptvl.idmsgenv
+                ,craptvl.nrridlfp -- Id lançamento folha
                )
          VALUES (rw_crapcop.cdcooper     --> craptvl.cdcooper
                 ,3                       --> craptvl.tpdoctrf
@@ -2195,6 +2190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   END)
                 ,vr_idanalise_fraude     --> craptvl.idanafrd
                 ,vr_nrseq_mensagem10 --> craptvl.idmsgenv
+                ,pr_nrridlfp
                 )
         RETURNING craptvl.tpdctadb, craptvl.flgtitul
              INTO rw_craptvl.tpdctadb, rw_craptvl.flgtitul;
@@ -2204,6 +2200,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         RAISE vr_exc_erro;
     END;
 
+    -- Indicar que a transação não é uma transferencia de salário(TEC)   (Renato - Supero - P485)
+    vr_flgctsal := FALSE;
+    
 	--Bacenjud - SM 1
     IF vr_reenvio = 0 THEN
     ----------- LANÇAMENTO -----------
@@ -2228,6 +2227,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     -- inicializar valor
     vr_vllanto_aux := 1;
 
+    -- Se não for transferencia de portabilidade de salário (Renato - Supero - P485)
+    IF NVL(pr_idportab,0) = 0 THEN
+      
     -- Rotina para buscar valor tarifa TED/DOC
     CXON0020.pc_busca_tarifa_ted (pr_cdcooper => rw_crapcop.cdcooper --> Codigo Cooperativa
                                  ,pr_cdagenci => pr_cdageope         --> Codigo Agencia
@@ -2251,6 +2253,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     ELSE
     -- definir historico de ted
     vr_cdhisted := 555;
+    END IF;
+
+    ELSE
+      -- Portabilidade não deve cobrar tarifa
+      vr_vllantar := 0;    
+    
+      -- Histórico da TED/TEC de transferencia de salário de portabilidade
+      vr_cdhisted := 2944; -- NOSSA REMESSA TEC COMPE CECRED - CONTA SALARIO
+      
+      -- Indicar que está realizando uma TEC de Salário
+      vr_flgctsal := TRUE;
     END IF;
 
     /* Grava uma autenticacao */
@@ -2685,7 +2698,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_cpstlrcb =>  0                    --> CPF Para 2TTL
                           ,pr_tppesemi =>  pr_inpessoa          --> Tp. pessoa De
                           ,pr_tppesrec =>  pr_inpesfav          --> Tp. pessoa Para
-                          ,pr_flgctsal =>  FALSE                --> CC Sal
+                          ,pr_flgctsal =>  vr_flgctsal          --> CC Sal 
                           ,pr_cdidtran =>  pr_dstransf          --> tipo de transferencia
                           ,pr_cdorigem =>  pr_idorigem          --> Cod. Origem
                           ,pr_dtagendt =>  NULL                 --> data egendamento
@@ -2855,6 +2868,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_iptransa IN VARCHAR2 DEFAULT NULL  --> IP da transacao no IBank/mobile
                           ,pr_dstransa IN VARCHAR2 DEFAULT NULL  --> Descrição da transacao no IBank/mobile
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
+                          ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
+                          ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                           -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
@@ -3106,6 +3121,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     END IF;
     CLOSE cr_crapass;
 
+    -- Verifica senha, apenas se não for TEC de salário (Renato - Supero - P485)
+    IF NVL(pr_idportab,1) = 0 THEN
     -- Verificar cadastro de senha
     OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper,
                      pr_nrdconta => pr_nrdconta,
@@ -3117,6 +3134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     END IF;
     CLOSE cr_crapsnh;
+    END if;
 
     -- se for pessoa juridica
     IF rw_crapass.inpessoa = 1 THEN
@@ -3314,6 +3332,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   ,pr_iptransa => pr_iptransa --> IP da transacao no IBank/mobile
                   ,pr_dstransa => pr_dstransa --> Descrição da transacao no IBank/mobile
                   ,pr_iddispos => pr_iddispos --> ID Dispositivo mobile
+                  ,pr_idportab => pr_idportab --> Indicar transferencia de valor de portabilidade de salário
+                  ,pr_nrridlfp => pr_nrridlfp --> Indicador do registro do lançamento de folha de pagamento
                   -- saida
                   ,pr_nrdocmto => vr_nrdocmto --> Documento TED
                   ,pr_nrrectvl => vr_nrrectvl --> Autenticacao TVL
