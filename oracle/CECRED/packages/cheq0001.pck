@@ -4253,7 +4253,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     --  Sistema  : Rotina para entrega de talonario.
     --  Sigla    : CHEQUE
     --  Autor    : Lombardi
-    --  Data     : Ago/2018.                   Ultima atualizacao: 23/08/2018
+    --  Data     : Ago/2018.                   Ultima atualizacao: 18/06/2019
     --
     --  Dados referentes ao programa:
     --
@@ -4261,7 +4261,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     --   Objetivo  : Rotina para entrega de talonario.
     --
     --   Alteracoes: 24/01/2019 - Adicionado campo para definir a quantidade de talões solicitados.
-	--							  Acelera - Entrega de Talonarios no Ayllos (Lombardi)
+	  --							  Acelera - Entrega de Talonarios no Ayllos (Lombardi)
+    --               18/06/2019 - Ajustado regra que valida se a requisição de entrega já ocorreu
+	  --							  para cheques continuo. INC0014522 - Wagner - Sustentação.
     -- .............................................................................
     -- Cursores 
         
@@ -4946,7 +4948,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       -- Verifica se ja existe requisição
       OPEN cr_crapreq (pr_cdcooper => vr_cdcooper
                       ,pr_dtmvtocd => rw_crapdat.dtmvtocd
-                      ,pr_tprequis => pr_tprequis
+                      ,pr_tprequis => 1 -- deve ser fixo 1, pois não temos mais o tipo de cheque de transf. 
                       ,pr_nrdconta => pr_nrdconta
                       ,pr_nrinichq => pr_nrinichq
                       ,pr_cdagenci => vr_cdagenci);
