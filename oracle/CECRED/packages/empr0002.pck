@@ -5735,6 +5735,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
               ,NVL(crapass.nrcpfcgc, crapcje.nrcpfcjg) nrcpfcgc
         FROM crapcje, crapass
         WHERE crapcje.cdcooper = pr_cdcooper
+          AND crapcje.nrctacje > 0
+          AND crapcje.nrcpfcjg IS NOT NULL
           AND crapcje.nrdconta IN (SELECT ttl.nrdconta
                                    FROM crapttl ttl 
                                    WHERE ttl.nrdconta   = pr_nrdconta
