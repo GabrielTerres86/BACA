@@ -4012,8 +4012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         /*Historicos que nao vao compor o saldo, mas vao aparecer no relatorio*/
         IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711,2566,2567, /*2382,*/ /*2411,*/ 2415, 2423,2416,2390,2475,2394,2476,2735,
                                    --> Novos historicos de estorno de financiamento
-                                   2784,2785,2786,2787,2882,2883,2887,2884,2954,2953,2735
-                                   ,2359,2471,2358,2472) THEN 
+                                   2784,2785,2786,2787,2882,2883,2887,2884,2954,2953,2735) THEN 
           --marcar para nao mostrar saldo
           pr_extrato_epr(vr_index).flgsaldo:= FALSE;                           
         END IF;
