@@ -13885,7 +13885,7 @@ procedure pc_importa_arquivo_ted   (pr_cdcooper   in crapatr.cdcooper%type  --> 
   -- Objetivo  : Realizar a importação do arquivo de TED/Transferência
   --          
   --
-  -- Alteracoes:
+  -- Alteracoes: 24/06/2019 - Removido validação de permissão de ambiente - PRJ 500 (Mateus Z / Mouts)
   --
   ---------------------------------------------------------------------------
 
@@ -13976,19 +13976,6 @@ BEGIN
      vr_dscritic := 'Numero sequencial do arquivo inferior ao ultimo processado!';
      raise vr_exc_saida;
   END IF;  
-
-  /* Validar o tamanho do arquivo */ 
-  -- Se for superior a 10mb criticar
-  
-  /* Validar informações do HEADER e TRAILER */
-  -- Busca ambiente conectado
-  vr_database := GENE0001.fn_database_name;
-
-  -- Nao permitido em ambiente de producao
-  if instr(upper(vr_database),'P',1) > 0 then 
-    vr_dscritic := 'Ambiente não permite esta operação.';
-    raise vr_exc_saida;
-  end if;
     
   -- Busca o diretório do upload do arquivo
   vr_dsupload := GENE0001.fn_diretorio(pr_tpdireto => 'C'
