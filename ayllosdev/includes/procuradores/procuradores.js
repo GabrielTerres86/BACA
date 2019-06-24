@@ -1263,7 +1263,8 @@ function controlaSocioProprietario(){
 			
 		grupoParticipacao.habilitaCampo();
 		
-		if ((parseFloat(($('#persocio','#frmDadosProcuradores').val().replace(".","")).replace(",",".")) >= 
+		if ($('#persocio','#frmDadosProcuradores').val() !== undefined &&
+		    (parseFloat(($('#persocio','#frmDadosProcuradores').val().replace(".","")).replace(",",".")) >= 
 															parseFloat((vlpercsocio.replace(".","")).replace(",","."))) &&
 															(parseFloat((vlpercsocio.replace(".","")).replace(",",".")) > 0)){
 			if ($('#flgdepec > option:selected','#frmDadosProcuradores').val() != "yes"){
