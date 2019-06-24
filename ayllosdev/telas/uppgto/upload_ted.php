@@ -89,7 +89,7 @@ if( !ini_get('safe_mode') ){
 		$arrCrit[] = "ATENCAO: Erro ao validar arquivo. *VL1.";
 	}
 	if (!move_uploaded_file($file["tmp_name"], $nmupload)) {
-		$arrCrit[] = "ATENCAO: Erro ao validar arquivo. *VL2.";
+		$arrCrit[] = "ATENCAO: Erro ao validar arquivo. *VL2. - ".$_FILES["file"]["error"]." - TMP: ".$file["tmp_name"];
 	}
 	
 	// gerar erros criticos
