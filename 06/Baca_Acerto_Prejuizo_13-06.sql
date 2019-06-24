@@ -543,7 +543,7 @@ BEGIN
         , 650010 -- pr_nrdolote
         , pr_nrdconta
         , pr_nrdocmto
-        , 2720 -- pr_cdhistor
+        , 362 -- pr_cdhistor
         , vr_nrseqdig
         , pr_vllanmto
         , 0 -- pr_nrdctabb
