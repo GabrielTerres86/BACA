@@ -643,7 +643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --             25/08/2016 - #456682 Inclusao de ip na tentativa de pagamento de boleto incluido na crapcbf (Carlos)
   --
 	--             19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo
-	--						              InternetBanking (Projeto 338 - Lucas Lunelli)
+  --                          InternetBanking (Projeto 338 - Lucas Lunelli)
   --
   --             10/01/2017 - Ajustar a procedure pc_verifica_vencimento_titulo para verificar se a conta que
   --                          esta realizando o pagando/agendametno um titulo 085, e possuir privilegios de
@@ -691,10 +691,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
   --
   --              25/02/2019 - Inclusão de novas validações no código de barras para DARF/DAS
   --                           (sctask0046009 - Adriano).
-  --
-  --              08/05/2019 - Aplicar critica da quantidade de dias para "data vencimento" e "periodo de apuração" para DARF 64 e 153.
-  --                           Com isso, em caso de falhas na digitação pelo cooperado o sistema irá criticar.
-  --                           (INC0014834 - Wagner - Sustentação).  
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -5068,7 +5064,7 @@ END pc_gera_titulos_iptu_prog;
   --                            no caixa online conforme relatado no chamado SD 235679 (Odirlei/AMcom)
   --
   --               17/09/2015 - Ajuste melhoria de performace, incluido hinto no cursor cr_crapcob
-  --					        (Odirlei-AMcom)
+  --                  (Odirlei-AMcom)
   --
   --               26/10/2015 - Inclusao de verificacao indicador estado de crise. (Jaison/Andrino)
   --
@@ -5101,7 +5097,7 @@ END pc_gera_titulos_iptu_prog;
   --
   --               08/08/2018 - Adicionado teste para não permitir pagamentos vencidos de boletos da cobtit (Luis Fernando - GFT)
   --
-  --			   03/01/2019 - Nova regra para bloquear bancos. (Andrey Formigari - #SCTASK0035990)
+  --         03/01/2019 - Nova regra para bloquear bancos. (Andrey Formigari - #SCTASK0035990)
   --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
@@ -7384,7 +7380,7 @@ END pc_gera_titulos_iptu_prog;
   -- Frequencia: -----
   -- Objetivo  : Procedure para validação dos dias de tolerancia nos convênios Sicredi
   --
-  -- Alterações: 02/01/2018 - incluido validação de vencimento/validade bancoob. PRJ406 - FGTS(Odirlei-AMcom)  
+  -- Alterações: 02/01/2018 - incluido validação de vencimento/validade bancoob. PRJ406 - FGTS(Odirlei-AMcom)
   --
   --             08/05/2019 - Aplicar critica da quantidade de dias para "data vencimento" e "periodo de apuração" para DARF 64 e 153.
   --                          Com isso, em caso de falhas na digitação pelo cooperado o sistema irá criticar.
@@ -7591,6 +7587,31 @@ END pc_gera_titulos_iptu_prog;
         RAISE vr_exc_erro;
     END IF;
 
+    /* Criticar quantidade de dias inválidos no código de barras - INICIO */
+    /* INC0014834 */
+    /* DARF PRETO EUROPA */
+    IF pr_cdempcon IN (64,153) AND pr_cdsegmto = 5 THEN /* DARFC0064 ou DARFC0153 */
+      -- Para a Data de Vencimento
+      IF SUBSTR(pr_codigo_barras,21,3) IS NOT NULL AND 
+         (To_Number(SUBSTR(pr_codigo_barras,21,3)) < 1 OR
+          To_Number(SUBSTR(pr_codigo_barras,21,3)) > 366) THEN
+        --Mensagem erro
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Data do vecimento invalida.';
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Para o Período de Apuração
+      IF SUBSTR(pr_codigo_barras,42,3) IS NOT NULL AND 
+         (To_Number(SUBSTR(pr_codigo_barras,42,3)) < 1 OR
+          To_Number(SUBSTR(pr_codigo_barras,42,3)) > 366) THEN
+        --Mensagem erro
+        pr_cdcritic:= 0;
+        pr_dscritic:= 'Periodo de apuracao invalido.';
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;
+    /* Criticar quantidade de dias inválidos no código de barras - FIM */
 
    IF rw_crapscn.nrtolera <> 99 OR NOT pr_flnrtole THEN /* Se nao for tolerancia ilimitada */
     IF nvl(rw_crapstn.dstipdrf, ' ') <> ' '  OR
@@ -7612,7 +7633,7 @@ END pc_gera_titulos_iptu_prog;
           pr_cdcritic:= 0;
           pr_dscritic:= 'Data do vecimento invalida.';
           RAISE vr_exc_erro;
-        END IF;
+      END IF;
         
         -- Para o Período de Apuração
         IF SUBSTR(pr_codigo_barras,42,3) IS NOT NULL AND 
@@ -8134,8 +8155,8 @@ END pc_gera_titulos_iptu_prog;
           IF NOT vr_flagdvok THEN
                   
             vr_cdcritic:= 8;
-            vr_des_erro:= '';
-            
+            vr_des_erro:= '';         
+                  
             --Levantar Excecao
             RAISE vr_exc_erro;
                   
@@ -9834,8 +9855,8 @@ END pc_gera_titulos_iptu_prog;
               IF NOT vr_flagdvok THEN
                 
                 vr_cdcritic:= 8;
-                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-                          
+                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);          
+                
                 --Levantar Excecao
                 RAISE vr_exc_erro;
                 
