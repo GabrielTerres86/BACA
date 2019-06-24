@@ -58,7 +58,6 @@ DEF VAR h-b1wgen0016 AS HANDLE                                         NO-UNDO.
 
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_dstransa AS CHAR                                           NO-UNDO.
-DEF VAR aux_dslinxml AS CHAR                                           NO-UNDO.
 DEF VAR aux_contarok AS INTE                                           NO-UNDO.
 DEF VAR aux_contanok AS INTE                                           NO-UNDO.
 DEF VAR aux_dtcritic AS CHAR                                           NO-UNDO.
@@ -150,17 +149,19 @@ DO:
 END.
 ELSE /* Validacao */
 DO:
-        
-    ASSIGN aux_dslinxml = ""
-           aux_dtcritic = "".
+
+    EMPTY TEMP-TABLE xml_operacao.
+    
+    ASSIGN aux_dtcritic = "".
 
     FIND FIRST tt-criticas_transacoes_oper WHERE
                tt-criticas_transacoes_oper.flgtrans  = TRUE AND
-               tt-criticas_transacoes_oper.dscritic <> ""   NO-LOCK NO-ERROR.
-    
-    aux_dslinxml = aux_dslinxml + "<TRANSACOES flginfor='" + 
-                  (IF AVAILABLE tt-criticas_transacoes_oper THEN "yes" ELSE "no") +
-                   "'><APROVADAS>".
+               tt-criticas_transacoes_oper.dscritic <> ""   NO-LOCK NO-ERROR.    
+                      
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "<TRANSACOES flginfor='" + 
+                                  (IF AVAILABLE tt-criticas_transacoes_oper THEN "yes" ELSE "no") +
+                                   "'><APROVADAS>".                    
 
     FOR EACH tt-criticas_transacoes_oper WHERE 
              tt-criticas_transacoes_oper.flgtrans = TRUE NO-LOCK:
@@ -182,42 +183,52 @@ DO:
                 ASSIGN aux_dtcritic = " ".
             END.
 
-        ASSIGN aux_contarok = aux_contarok + 1.
-        
-        ASSIGN aux_dslinxml = aux_dslinxml + "<TRANSACAO><dtcritic>" +
-                              aux_dtcritic + "</dtcritic><vllantra>".
+        ASSIGN aux_contarok = aux_contarok + 1.        
+                              
+        CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<TRANSACAO><dtcritic>" +
+                                       aux_dtcritic + "</dtcritic><vllantra>".
 
         IF tt-criticas_transacoes_oper.vllantra <> ? THEN 
-           ASSIGN aux_dslinxml = aux_dslinxml +  TRIM(STRING(tt-criticas_transacoes_oper.vllantra,"zzz,zzz,zz9.99")).
+           DO: 
+               CREATE xml_operacao.
+               ASSIGN xml_operacao.dslinxml = TRIM(STRING(tt-criticas_transacoes_oper.vllantra,"zzz,zzz,zz9.99")).
+           END.           
         ELSE
-           ASSIGN aux_dslinxml = aux_dslinxml +  " ".
-                              
-        ASSIGN aux_dslinxml = aux_dslinxml + "</vllantra><dscedent>" +      
-                              tt-criticas_transacoes_oper.dscedent +
-                              "</dscedent><dstiptra>" +
-                              tt-criticas_transacoes_oper.dstiptra +
-                              "</dstiptra><dscritic>" +
-                              tt-criticas_transacoes_oper.dscritic +
-                              "</dscritic><cdtransa>"+
-                              STRING(tt-criticas_transacoes_oper.cdtransa) +
-                              "</cdtransa><dtdebito>" +
-                              (IF tt-criticas_transacoes_oper.dtcritic = "Nesta Data" OR 
-                                  tt-criticas_transacoes_oper.dtcritic = ""           THEN 
-                                  STRING(par_dtmvtolt,"99/99/9999")
-                               ELSE       
-                               IF tt-criticas_transacoes_oper.dtcritic = "Mes atual" THEN
-                                  STRING(DATE(MONTH(par_dtmvtolt),1,YEAR(par_dtmvtolt)),"99/99/9999")
-                               ELSE
-                                  STRING(DATE(tt-criticas_transacoes_oper.dtcritic),"99/99/9999")) +
-                              "</dtdebito><dtmvtolt>" +
-                              STRING(par_dtmvtolt,"99/99/9999") +
-                              "</dtmvtolt><cdtiptra>" +
-                              STRING(tt-criticas_transacoes_oper.cdtiptra) +
-                              "</cdtiptra></TRANSACAO>".
+           DO: 
+               CREATE xml_operacao.
+               ASSIGN xml_operacao.dslinxml = TRIM(STRING(tt-criticas_transacoes_oper.vllantra,"zzz,zzz,zz9.99")).
+           END.           
+                
+        CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "</vllantra><dscedent>" +      
+                                       tt-criticas_transacoes_oper.dscedent +
+                                       "</dscedent><dstiptra>" +
+                                       tt-criticas_transacoes_oper.dstiptra +
+                                       "</dstiptra><dscritic>" +
+                                       tt-criticas_transacoes_oper.dscritic +
+                                       "</dscritic><cdtransa>"+
+                                       STRING(tt-criticas_transacoes_oper.cdtransa) +
+                                       "</cdtransa><dtdebito>" +
+                                       (IF tt-criticas_transacoes_oper.dtcritic = "Nesta Data" OR 
+                                           tt-criticas_transacoes_oper.dtcritic = ""           THEN 
+                                           STRING(par_dtmvtolt,"99/99/9999")
+                                        ELSE       
+                                        IF tt-criticas_transacoes_oper.dtcritic = "Mes atual" THEN
+                                           STRING(DATE(MONTH(par_dtmvtolt),1,YEAR(par_dtmvtolt)),"99/99/9999")
+                                        ELSE
+                                           STRING(DATE(tt-criticas_transacoes_oper.dtcritic),"99/99/9999")) +
+                                       "</dtdebito><dtmvtolt>" +
+                                       STRING(par_dtmvtolt,"99/99/9999") +
+                                       "</dtmvtolt><cdtiptra>" +
+                                       STRING(tt-criticas_transacoes_oper.cdtiptra) +
+                                       "</cdtiptra></TRANSACAO>".
     END.
                               
-    ASSIGN aux_dslinxml = aux_dslinxml + "</APROVADAS><DESAPROVADAS>"
-           aux_dtcritic = "".
+    ASSIGN aux_dtcritic = "".
+        
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "</APROVADAS><DESAPROVADAS>".
     
     FOR EACH tt-criticas_transacoes_oper WHERE 
              tt-criticas_transacoes_oper.flgtrans = FALSE NO-LOCK:
@@ -241,37 +252,40 @@ DO:
                 ASSIGN aux_dtcritic = " ".
             END.
         
-        ASSIGN aux_contanok = aux_contanok + 1
-               aux_dslinxml = aux_dslinxml + "<TRANSACAO><dtcritic>" +
-                              aux_dtcritic + "</dtcritic><vllantra>" +
-                              TRIM(STRING(tt-criticas_transacoes_oper.vllantra,
-                                          "zzz,zzz,zz9.99")) +
-                              "</vllantra><dscedent>" +
-                              tt-criticas_transacoes_oper.dscedent +
-                              "</dscedent><dstiptra>" +
-                              tt-criticas_transacoes_oper.dstiptra +
-                              "</dstiptra><dscritic>" +
-                              tt-criticas_transacoes_oper.dscritic +
-                              "</dscritic><cdtransa>"+
-                              STRING(tt-criticas_transacoes_oper.cdtransa) +
-                              "</cdtransa><dtdebito>" +
-                              (IF tt-criticas_transacoes_oper.dtcritic = "Nesta Data" OR 
-                                  tt-criticas_transacoes_oper.dtcritic = ""           THEN 
-                                  STRING(par_dtmvtolt,"99/99/9999")
-                               ELSE       
-                               IF tt-criticas_transacoes_oper.dtcritic = "Mes atual" THEN
-                                  STRING(DATE(MONTH(par_dtmvtolt),1,YEAR(par_dtmvtolt)),"99/99/9999")
-                               ELSE
-                                  STRING(DATE(tt-criticas_transacoes_oper.dtcritic),"99/99/9999")) +
-                              "</dtdebito><dtmvtolt>" +
-                              STRING(par_dtmvtolt,"99/99/9999") +
-                              "</dtmvtolt><cdtiptra>" +
-                              STRING(tt-criticas_transacoes_oper.cdtiptra) +
-                              "</cdtiptra></TRANSACAO>".
+        ASSIGN aux_contanok = aux_contanok + 1.
+                              
+        CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<TRANSACAO><dtcritic>" +
+                                       aux_dtcritic + "</dtcritic><vllantra>" +
+                                       TRIM(STRING(tt-criticas_transacoes_oper.vllantra,
+                                                   "zzz,zzz,zz9.99")) +
+                                       "</vllantra><dscedent>" +
+                                       tt-criticas_transacoes_oper.dscedent +
+                                       "</dscedent><dstiptra>" +
+                                       tt-criticas_transacoes_oper.dstiptra +
+                                       "</dstiptra><dscritic>" +
+                                        tt-criticas_transacoes_oper.dscritic +
+                                       "</dscritic><cdtransa>"+
+                                       STRING(tt-criticas_transacoes_oper.cdtransa) +
+                                       "</cdtransa><dtdebito>" +
+                                       (IF tt-criticas_transacoes_oper.dtcritic = "Nesta Data" OR 
+                                            tt-criticas_transacoes_oper.dtcritic = ""           THEN 
+                                           STRING(par_dtmvtolt,"99/99/9999")
+                                        ELSE       
+                                        IF tt-criticas_transacoes_oper.dtcritic = "Mes atual" THEN
+                                            STRING(DATE(MONTH(par_dtmvtolt),1,YEAR(par_dtmvtolt)),"99/99/9999")
+                                        ELSE
+                                           STRING(DATE(tt-criticas_transacoes_oper.dtcritic),"99/99/9999")) +
+                                       "</dtdebito><dtmvtolt>" +
+                                       STRING(par_dtmvtolt,"99/99/9999") +
+                                       "</dtmvtolt><cdtiptra>" +
+                                       STRING(tt-criticas_transacoes_oper.cdtiptra) +
+                                       "</cdtiptra></TRANSACAO>".
     
-    END.
+    END.    
     
-    aux_dslinxml = aux_dslinxml + "</DESAPROVADAS></TRANSACOES>".
+    CREATE xml_operacao.
+    ASSIGN xml_operacao.dslinxml = "</DESAPROVADAS></TRANSACOES>".
     
     IF aux_contarok > 0 AND aux_contanok > 0 THEN
         ASSIGN aux_dscritic = "Existem transacoes que nao foram validadas " +
@@ -281,12 +295,11 @@ DO:
         ASSIGN aux_dscritic = "Nenhuma transacao foi validada com sucesso. " +
                               "Verifique as criticas na lista de reprovacoes.".
 
-    IF aux_dscritic <> "" THEN 
-        ASSIGN aux_dslinxml = aux_dslinxml + "<DSMSGAUX>" + aux_dscritic + 
-                                             "</DSMSGAUX>".
-
-    CREATE xml_operacao.
-    ASSIGN xml_operacao.dslinxml = aux_dslinxml.
+    IF  aux_dscritic <> "" THEN 
+        DO:
+            CREATE xml_operacao.
+            ASSIGN xml_operacao.dslinxml = "<DSMSGAUX>" + aux_dscritic + "</DSMSGAUX>".
+        END.
 
 END.
 
