@@ -5995,19 +5995,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       -- Busca contratos liberados com saldo em aberto para finalidade 68
       CURSOR cr_crapepr(pr_nrcpfcnpj_base  crapass.nrcpfcnpj_base%TYPE
                        ,pr_cdcooper        crapepr.cdcooper%TYPE) IS
-        SELECT CASE WHEN SUM(epr.vlsdevat) = 0 THEN
-                 SUM(epr.vlsdeved)
-               ELSE
-                 SUM(epr.vlsdevat)
-               END vlsdeved
-        FROM crapepr epr
-        WHERE epr.cdcooper = pr_cdcooper 
-          AND epr.inliquid = 0
-          AND epr.nrdconta IN (SELECT ass.nrdconta
-                               FROM crapass ass
-                               WHERE ass.cdcooper = epr.cdcooper
-                                 AND ass.nrcpfcnpj_base = pr_nrcpfcnpj_base)
-          AND epr.cdfinemp = 68;
+        SELECT SUM(vlsdeved) vlsdeved
+        FROM(SELECT CASE WHEN epr.vlsdevat = 0 THEN
+                       epr.vlsdeved
+                     ELSE
+                       epr.vlsdevat
+                     END vlsdeved
+              FROM crapepr epr
+              WHERE epr.cdcooper = pr_cdcooper
+                AND epr.inliquid = 0
+                AND epr.nrdconta IN (SELECT ass.nrdconta
+                                     FROM crapass ass
+                                     WHERE ass.cdcooper = epr.cdcooper
+                                       AND ass.nrcpfcnpj_base = pr_nrcpfcnpj_base)
+                AND epr.cdfinemp = 68);
       rw_crapepr cr_crapepr%ROWTYPE;
       
     BEGIN
