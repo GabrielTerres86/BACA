@@ -309,22 +309,32 @@ BEGIN
     CURSOR cr_cyber_tit(pr_cdcooper       IN crapcyb.cdcooper%TYPE
                        ,pr_nrcpfcnpj_base IN crapass.nrcpfcnpj_base%TYPE) IS
       SELECT SUM(cyb.vlpreapg) + SUM(cyb.vljura60) vlraberto
-            ,MAX(cyb.qtdiaatr) qtdiaatr
-      FROM crapcyb cyb
-      WHERE cyb.cdcooper = pr_cdcooper
-        AND cyb.nrdconta IN (SELECT CASE WHEN ass.inpessoa = 2 THEN
-                                     ass.nrdconta
-                                   ELSE
-                                     CASE WHEN NVL(ttl.idseqttl, 0) = 1 THEN
+            ,TRUNC(SYSDATE - MIN(tdb.dtvencto)) qtdiaatr
+        FROM craptdb tdb
+       INNER JOIN tbdsct_titulo_cyber tcy
+          ON tcy.cdcooper = tdb.cdcooper
+         AND tcy.nrdconta = tdb.nrdconta
+         AND tcy.nrborder = tdb.nrborder
+         AND tcy.nrtitulo = tdb.nrtitulo
+       INNER JOIN crapcyb cyb
+          ON cyb.cdcooper = tcy.cdcooper
+         AND cyb.nrdconta = tcy.nrdconta
+         AND cyb.nrctremp = tcy.nrctrdsc
+       WHERE tdb.insittit = 4 -- liberado
+         AND cyb.cdcooper = pr_cdcooper
+         AND cyb.nrdconta IN (SELECT CASE WHEN ass.inpessoa = 2 THEN
                                        ass.nrdconta
-                                     END
-                                   END conta
-                            FROM crapass ass
-                              LEFT JOIN crapttl ttl ON ttl.cdcooper = ass.cdcooper AND ttl.nrdconta = ass.nrdconta AND ROWNUM = 1
-                            WHERE ass.cdcooper = cyb.cdcooper
-                              AND ass.nrcpfcnpj_base = pr_nrcpfcnpj_base)
-        AND cyb.cdorigem = 4
-        AND cyb.dtdbaixa IS NULL;
+                                     ELSE
+                                       CASE WHEN NVL(ttl.idseqttl, 0) = 1 THEN
+                                         ass.nrdconta
+                                       END
+                                     END conta
+                              FROM crapass ass
+                                LEFT JOIN crapttl ttl ON ttl.cdcooper = ass.cdcooper AND ttl.nrdconta = ass.nrdconta AND ROWNUM = 1
+                              WHERE ass.cdcooper = cyb.cdcooper
+                                AND ass.nrcpfcnpj_base = pr_nrcpfcnpj_base)
+         AND cyb.cdorigem = 4
+         AND cyb.dtdbaixa IS NULL;
     rw_cyber_tit cr_cyber_tit%ROWTYPE;
 
     ------------------------------- VARIAVEIS -------------------------------
