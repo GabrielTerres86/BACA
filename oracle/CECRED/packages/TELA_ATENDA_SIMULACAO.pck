@@ -136,12 +136,12 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_SIMULACAO IS
 END TELA_ATENDA_SIMULACAO;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
-  ---------------------------------------------------------------------------
+  -----------------------------------------------------------------------------------
   --
   --  Programa : TELA_ATENDA_SIMULACAO
   --  Sistema  : Ayllos Web
   --  Autor    : Rafael faria - Supero
-  --  Data     : Marco - 2017                 Ultima atualizacao: 14/03/2019
+  --  Data     : Marco - 2017                 Ultima atualizacao: 24/06/2019
   --
   -- Dados referentes ao programa:
   --
@@ -150,7 +150,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
   -- Alteracoes: 14/03/2019 - Inclusão dos parametros pr_vlparepr e pr_vliofepr
   --             na rotina pc_grava_simulação ( Josiane Stiehler - AMcom)
   --
-  ---------------------------------------------------------------------------
+  --             24/06/2019 - Alterado a rotina pc_valida_simul_consig para 
+  --             inclusão da regra do dia 29/02 (Fernanda Kelli de Oliveria - AMcom)
+  --
+  ----------------------------------------------------------------------------------
   
   FUNCTION format_date(pr_dt IN DATE) RETURN VARCHAR2 IS
     
@@ -1366,12 +1369,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
                                  ,pr_des_erro OUT VARCHAR2) IS          --> Saida OK/NOK  --
 
-  /* .............................................................................
+  /* ......................................................................................
 
     Programa: pc_valida_simul_consig
     Sistema : Ayllos Web
     Autor   : Josiane Stiehler
-    Data    : 06/03/2019                       Ultima atualizacao: 
+    Data    : 06/03/2019                       Ultima atualizacao: 24/06/2019
 
     Dados referentes ao programa:
 
@@ -1379,8 +1382,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
 
     Objetivo  : Validações da simulação do consignado
 
-    Alteracoes: 
-    ..............................................................................*/ 
+    Alteracoes:  24/06/2019 - Alterado a regra para buscar o dia de vencimento da parcela 
+	                          quando for do dia 29/02(Fernanda Kelli de Oliveria - AMcom) 
+    .......................................................................................*/ 
          
   -- Variaveis de log
   vr_cdcooper crapcop.cdcooper%TYPE;
@@ -1399,6 +1403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
   vr_clob          CLOB;   
   vr_xml_temp      VARCHAR2(32726) := '';      
   vr_qtregist      INTEGER := 0; 
+  vr_dtmvtolt      crapdat.dtmvtolt%TYPE;
 
   --Controle de erro
   vr_exc_erro EXCEPTION;
@@ -1536,9 +1541,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
        RAISE vr_exc_erro;
     END IF;
     
+	-- O dia 29/02 não é aceito na FIS e nem no Grid de Vctos da tela CONSIG, deve utilizar o próximo dia de mvto da cooperativa.
+    IF to_char(rw_crapdat.dtmvtolt,'dd/mm') = '29/02' THEN
+      vr_dtmvtolt := rw_crapdat.dtmvtopr;
+    ELSE
+      vr_dtmvtolt := rw_crapdat.dtmvtolt;
+    END IF;
+	
     -- busca o 1º vencimento da parcela
     FOR rg_vecto in cr_vecto (pr_cdcooper => vr_cdcooper,
-                              pr_dtmvtolt => rw_crapdat.dtmvtolt)
+                              pr_dtmvtolt => vr_dtmvtolt)
     LOOP
       vr_dtvencimento:= rg_vecto.dtvencimento;
     END LOOP;
