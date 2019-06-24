@@ -1,5 +1,5 @@
 BEGIN
-  /* Carga de permissões para usuários selecionados na CADMOT */
+  /* Carga de permissões para usuários selecionados na CADMOT. */
   FOR rw_ope IN (SELECT ope.cdoperad
                 FROM crapope ope 
                 WHERE ope.cdsitope = 1
