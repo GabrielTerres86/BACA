@@ -644,6 +644,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --
   --              01/10/2018 - Substituir '.' por ',', pois estava afetando na geração do
   --                           relatorio (Lucas Ranghetti INC0023838)
+  --
+  --              06/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO"
+  --                           (P559 - André Clemer - Supero)
+  --
+  --              18/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO" - dslocpag
+  --                           (P559 - Darlei Zillmer - Supero)
   ---------------------------------------------------------------------------------------------------------------
     
   --Ch 839539
@@ -1713,7 +1719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Rafael Cechet
-     Data    : Agosto/2015                     Ultima atualizacao: 03/10/2018
+     Data    : Agosto/2015                     Ultima atualizacao: 18/06/2019
 
      Dados referentes ao programa:
 
@@ -1731,6 +1737,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (PRJ352 - Rafael).                              
 			   
 			   03/10/2018 - Ajuste no cursor para geração dos boletos para o Cyber. (PRB0040197 - Saquetta).
+         
+                 06/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO"
+                              (P559 - André Clemer - Supero)
+                              
+                 18/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO" - dslocpag
+                              (P559 - Darlei Zillmer - Supero)
   ............................................................................ */      
 
 	DECLARE
@@ -2506,9 +2518,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
              pr_tab_cob(vr_ind_cob).dsdinst1 := ' ';             
           END CASE;
           
-          IF nvl(rw_crapcob.nrctremp,0) > 0 THEN
-             pr_tab_cob(vr_ind_cob).dsdinst1 := '*** NAO ACEITAR PAGAMENTO APOS O VENCIMENTO ***';
-          END IF;                    
+          -- Removida instrução (PRJ 559 - Task 22167: Remover trava de instrução)
+          -- IF nvl(rw_crapcob.nrctremp,0) > 0 THEN
+          --    pr_tab_cob(vr_ind_cob).dsdinst1 := '*** NAO ACEITAR PAGAMENTO APOS O VENCIMENTO ***';
+          -- END IF;                    
           
           IF (rw_crapcob.tpjurmor <> 3) OR (rw_crapcob.tpdmulta <> 3) THEN
             
@@ -2548,12 +2561,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           END IF;
                     
           pr_tab_cob(vr_ind_cob).dsavis2v := ' ';
+          pr_tab_cob(vr_ind_cob).dslocpag := ' ';
           
+          -- Removida mensagem (PRJ 559 - Task 22167: Remover trava de instrução)
           IF nvl(rw_crapcob.nrctremp,0) = 0 THEN
-             pr_tab_cob(vr_ind_cob).dslocpag := 'APOS VENCIMENTO, PAGAR SOMENTE NA COOPERATIVA ' || rw_crapcob.nmrescop;
+             -- pr_tab_cob(vr_ind_cob).dslocpag := 'APOS VENCIMENTO, PAGAR SOMENTE NA COOPERATIVA ' || rw_crapcob.nmrescop;
              pr_tab_cob(vr_ind_cob).dsavis2v := 'Apos o vencimento, acesse http://' || rw_crapcob.dsendweb || '.';
-          ELSE
-             pr_tab_cob(vr_ind_cob).dslocpag := 'NAO ACEITAR PAGAMENTO APOS O VENCIMENTO';
           END IF;
           
           pc_calc_codigo_barras ( pr_dtvencto => rw_crapcob.dtvencto
