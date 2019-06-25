@@ -865,13 +865,9 @@ function onKey(e) {
    }
 }
 
-/*
 function callCalc(e, obj) {
-        if (e.keyCode == 120) {
-                window.open("calc.htm?elem=" + obj.name, "wincalc", "resizable=no, height=190, width=270, left=0, top=0");
-        }
+    return true;
 }
-*/
 
 function Setenter(e) {
     if (e.keyCode == 13) { //alert('teste');
