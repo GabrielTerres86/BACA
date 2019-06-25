@@ -20,21 +20,21 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONSIG IS
   --                            - pc_busca_param_consig_web
   --                          (P437 - Consignado - Fernanda Kelli - AMcom)
   --
-  --             29/03/2019 - Criação da rotina pc_busca_dados_emp_fis 
+  --             29/03/2019 - Criação da rotina pc_busca_dados_emp_fis
   --                          (P437 - Consignado - Josiane Stiehler - AMcom)
   --
-  --             04/04/2019 - Criação da rotina pc_validar_venctos_consig 
+  --             04/04/2019 - Criação da rotina pc_validar_venctos_consig
   --                          (P437 - Consignado - Fernanda Kelli - AMcom)
   --
   --             09/04/2019 - Alterção nas rotinas:
   --                            - pc_habilitar_empr_consig_web
-  --                            - pc_alterar_empr_consig_web 
+  --                            - pc_alterar_empr_consig_web
   --                            - pc_inc_param_consig
   --                            - pc_validar_venctos_consig
-  --                            - pc_excluir_param_consig                              
+  --                            - pc_excluir_param_consig
   --                          (P437 - Consignado - Fernanda Kelli - AMcom)
   --
-  --             26/04/2019 - Incluso a rotina pc_interromper_cobrança 
+  --             26/04/2019 - Incluso a rotina pc_interromper_cobrança
   --                          (P437 - Consignado - Fernanda Kelli - AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
@@ -168,15 +168,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONSIG IS
                                       ,pr_dscritic   OUT VARCHAR2           --> Descricao da critica
                                       ,pr_des_erro   OUT VARCHAR2           --> Erros do processo
                                       );
-                                      
+
   PROCEDURE pc_excluir_param_consig(pr_cdcooper           IN TBCADAST_EMPRESA_CONSIG.CDCOOPER%TYPE
                                    ,pr_cdempres           IN TBCADAST_EMPRESA_CONSIG.CDEMPRES%TYPE --> codigo da empresa
-                                   ,pr_cdoperad           IN VARCHAR2              --> Operador 
+                                   ,pr_cdoperad           IN VARCHAR2              --> Operador
                                     -- campos padrões
                                    ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
                                    ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
                                    ,pr_des_erro          OUT VARCHAR2              --> Erros do processo
-                                   );    
+                                   );
 
   PROCEDURE pc_inc_param_consig( pr_cdcooper              IN NUMBER
                                 ,pr_cdempres              IN NUMBER
@@ -189,13 +189,13 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONSIG IS
                                 ,pr_dsmensag             OUT VARCHAR2       --> Mensagem                                   --> Mensagem
                                 ,pr_cdcritic             OUT PLS_INTEGER    --> Codigo da critica                                    --> Codigo da critica
                                 ,pr_dscritic             OUT VARCHAR2       --> Descricao da critica                                      --> Descricao da critica
-                                );  
-                                
-  PROCEDURE pc_interromper_cobranca( pr_cdempres        IN tbcadast_empresa_consig.cdempres%TYPE 
+                                );
+
+  PROCEDURE pc_interromper_cobranca( pr_cdempres        IN tbcadast_empresa_consig.cdempres%TYPE
                                     ,pr_cdcooper        IN tbcadast_empresa_consig.cdcooper%TYPE
                                     ,pr_cdoperad        IN VARCHAR2
                                     ,pr_indinterromper  IN tbcadast_empresa_consig.indinterromper%TYPE
-                                    ,pr_cdorigem        IN crapcyc.cdorigem%TYPE 
+                                    ,pr_cdorigem        IN crapcyc.cdorigem%TYPE
                                     ,pr_cdmotcin        IN crapcyc.cdmotcin%TYPE
                                     -- campos padrões
                                     ,pr_cdcritic        OUT PLS_INTEGER  --> Codigo da critica
@@ -226,21 +226,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
   --                            - pc_busca_param_consig_web
   --                          (P437 - Consignado - Fernanda Kelli - AMcom)
   --
-  --             29/03/2019 - Criação da rotina pc_busca_dados_emp_fis 
+  --             29/03/2019 - Criação da rotina pc_busca_dados_emp_fis
   --                          (P437 - Consignado - Josiane Stiehler - AMcom)
   --
-  --             04/04/2019 - Criação da rotina pc_validar_venctos_consig 
+  --             04/04/2019 - Criação da rotina pc_validar_venctos_consig
   --                          (P437 - Consignado - Fernanda Kelli - AMcom)
   --
   --             09/04/2019 - Alterção nas rotinas:
   --                            - pc_habilitar_empr_consig_web
-  --                            - pc_alterar_empr_consig_web 
+  --                            - pc_alterar_empr_consig_web
   --                            - pc_inc_param_consig
   --                            - pc_validar_venctos_consig
-  --                            - pc_excluir_param_consig                              
+  --                            - pc_excluir_param_consig
   --                          (P437 - Consignado - Fernanda Kelli - AMcom)
   --
-  --             26/04/2019 - Incluso a rotina pc_interromper_cobrança 
+  --             26/04/2019 - Incluso a rotina pc_interromper_cobrança
   --                          (P437 - Consignado - Fernanda Kelli - AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -351,7 +351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
       CURSOR cr_empr_consig IS
       SELECT tmp.*
         FROM (
-        SELECT COUNT(1) OVER (PARTITION BY 1) qtregist  --Quantidade de registros 
+        SELECT COUNT(1) OVER (PARTITION BY 1) qtregist  --Quantidade de registros
               ,COUNT(1) OVER (PARTITION BY 1 ORDER BY nmextemp, tec.cdempres ) numero_linha
               ,p.cdcooper
               ,p.cdempres
@@ -380,7 +380,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
            AND CASE WHEN (pr_nmextemp IS NULL AND pr_nmresemp IS NULL) AND (pr_cdempres IS NULL OR pr_cdempres = 0) THEN
                       NVL(tec.indconsignado, 0)
                     ELSE
-                     DECODE(pr_cddopcao,'H',0,1) 
+                     DECODE(pr_cddopcao,'H',0,1)
                END = DECODE(pr_cddopcao,'H',0,1)
            AND CASE
                  WHEN pr_cdempres >= 0 AND p.cdempres = pr_cdempres THEN 1
@@ -395,7 +395,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
                END = 1
         ORDER BY nmextemp
            ) tmp
-      WHERE  numero_linha BETWEEN pr_nriniseq AND pr_nriniseq + pr_nrregist 
+      WHERE  numero_linha BETWEEN pr_nriniseq AND pr_nriniseq + pr_nrregist
          ;
 
       rw_empr_consig cr_empr_consig%ROWTYPE;
@@ -536,7 +536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
       vr_des_xml        clob;
       vr_texto_completo varchar2(32600);
       vr_index          varchar2(100);
-      
+
       procedure pc_escreve_xml( pr_des_dados in varchar2
                               , pr_fecha_xml in boolean default false
                               ) is
@@ -784,7 +784,7 @@ BEGIN
                                   ,pr_indalertaemailconsig IN tbcadast_empresa_consig.indalertaemailconsig%TYPE --> indicador se deve receber alerta no e-mail de contanto consignado da empresa (0 - nao receber / 1 - receber)
                                   ,pr_dtinterromper        IN tbcadast_empresa_consig.dtinterromper%TYPE        --> data de interrupcao de cobranca.
                                   ,pr_dtfchfol             IN crapemp.dtfchfol%TYPE                             --> Dia do Fechamento da Folha
-                                  ,pr_cdoperad             IN VARCHAR2                     
+                                  ,pr_cdoperad             IN VARCHAR2
                                   ,pr_idemprconsig         OUT tbcadast_empresa_consig.idemprconsig%TYPE        --> Sequencial da tabela
                                   ,pr_dsmensag             OUT VARCHAR2                                         --> Mensagem
                                   ,pr_cdcritic             OUT PLS_INTEGER                                      --> Codigo da critica
@@ -811,14 +811,14 @@ BEGIN
 
     -- Tratamento de erros
     vr_exc_erro EXCEPTION;
-    
+
     CURSOR cr_consig IS
       SELECT tec.idemprconsig
-        FROM tbcadast_empresa_consig tec      
+        FROM tbcadast_empresa_consig tec
        WHERE tec.cdempres = pr_cdempres
          AND tec.cdcooper = pr_cdcooper;
    rw_consig cr_consig      %ROWTYPE;
-   
+
   BEGIN
     pr_dsmensag := NULL;
 
@@ -835,22 +835,22 @@ BEGIN
     IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
-    
+
     /*P437 - Consignado*/
     OPEN cr_consig;
-    FETCH cr_consig 
+    FETCH cr_consig
     INTO rw_consig;
-        
+
     IF cr_consig%NOTFOUND THEN
        vr_cdcritic := 0;
        vr_dscritic := 'Erro na rotina tela_consig.pc_alterar_empr_consig.' || sqlerrm;
        CLOSE cr_consig;
-       RAISE vr_exc_erro;   
+       RAISE vr_exc_erro;
     ELSE
        pr_idemprconsig := rw_consig.idemprconsig;
-    END IF; 
+    END IF;
     CLOSE cr_consig;
-      
+
     UPDATE tbcadast_empresa_consig tec
        SET indconsignado        = pr_indconsignado
           ,dtativconsignado     = pr_dtativconsignado
@@ -871,11 +871,11 @@ BEGIN
           ,indescsg = decode(pr_indconsignado,'1','2','1') -- crapemp.indescsg = 2 = empresa consignado
      WHERE emp.cdempres = pr_cdempres
        AND emp.cdcooper = pr_cdcooper;
-       
+
     /* Interromper a Conbrança de todos os contratos da empresa na Cyber - P437*/
     BEGIN
-      
-      pc_interromper_cobranca( pr_cdempres       => pr_cdempres 
+
+      pc_interromper_cobranca( pr_cdempres       => pr_cdempres
                               ,pr_cdcooper       => pr_cdcooper
                               ,pr_cdoperad       => pr_cdoperad
                               ,pr_indinterromper => pr_indinterromper
@@ -889,8 +889,8 @@ BEGIN
       IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-    END;   
-       
+    END;
+
     --pr_dsmensag := 'Convênio de consignado atualizado com sucesso.';
 
   EXCEPTION
@@ -918,12 +918,12 @@ BEGIN
       Sistema  : AIMARO
       Sigla    : CONSIG
       Autor    : CIS Corporate
-      Data     : Agosto/2018 
+      Data     : Agosto/2018
 
       Objetivo  : Alterar as informações do convênio do Consignado
 
       Alteração : 11/09/2018 - Criação (CIS Corporate)
-                  09/04/2019 - Inserir o Range de vencimentos. 
+                  09/04/2019 - Inserir o Range de vencimentos.
                                Alteração na forma de leitura do XML
                                P437 - Consignado - Fernanda K. Oliveira - AMcom
 
@@ -949,25 +949,25 @@ BEGIN
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
-    
+
     --
     vr_qtdtotal             NUMBER;
     vr_nrvencto             NUMBER;
-    vr_idemprconsig         NUMBER;    
+    vr_idemprconsig         NUMBER;
     vr_diaMesDe             VARCHAR2(10);
     vr_diaMesAte            VARCHAR2(10);
     vr_diaMesEnvio          VARCHAR2(10);
     vr_diaMesVencto         VARCHAR2(10);
-    vr_cdempres             tbcadast_empresa_consig.cdempres%TYPE;  
-    vr_tpmodconvenio        tbcadast_empresa_consig.tpmodconvenio%TYPE;  
+    vr_cdempres             tbcadast_empresa_consig.cdempres%TYPE;
+    vr_tpmodconvenio        tbcadast_empresa_consig.tpmodconvenio%TYPE;
     vr_nrdialimiterepasse   tbcadast_empresa_consig.nrdialimiterepasse%TYPE;
-    vr_indautrepassecc      tbcadast_empresa_consig.indautrepassecc%TYPE;  
-    vr_indinterromper       tbcadast_empresa_consig.indinterromper%TYPE; 
-    vr_dsdemailconsig       tbcadast_empresa_consig.dsdemailconsig%TYPE;  
-    vr_indalertaemailemp    tbcadast_empresa_consig.indalertaemailemp%TYPE;  
+    vr_indautrepassecc      tbcadast_empresa_consig.indautrepassecc%TYPE;
+    vr_indinterromper       tbcadast_empresa_consig.indinterromper%TYPE;
+    vr_dsdemailconsig       tbcadast_empresa_consig.dsdemailconsig%TYPE;
+    vr_indalertaemailemp    tbcadast_empresa_consig.indalertaemailemp%TYPE;
     vr_indalertaemailconsig tbcadast_empresa_consig.indalertaemailconsig%TYPE;
     vr_dtfchfol             crapemp.dtfchfol%TYPE;
-    vr_indconsignado        tbcadast_empresa_consig.indconsignado%TYPE; 
+    vr_indconsignado        tbcadast_empresa_consig.indconsignado%TYPE;
 
   BEGIN
     pr_nmdcampo := NULL;
@@ -986,101 +986,101 @@ BEGIN
     IF  TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
     END IF;
-    
+
     --Ler o valor das tag's enviadas no XML
     vr_cdempres              := TRIM(pr_retxml.extract('/Root/dto/cdempres/text()').getstringval());
     vr_indconsignado         := to_number(TRIM(pr_retxml.extract('/Root/dto/indconsignado/text()').getstringval()));
-     
+
     BEGIN
-      vr_dtativconsignado    := to_date(TRIM(pr_retxml.extract('/Root/dto/dtativconsignado/text()').getstringval()),'DD/MM/RRRR');  
+      vr_dtativconsignado    := to_date(TRIM(pr_retxml.extract('/Root/dto/dtativconsignado/text()').getstringval()),'DD/MM/RRRR');
     EXCEPTION
       WHEN OTHERS THEN
         IF SQLCODE = '-30625' THEN
-           vr_dtativconsignado := NULL;   
+           vr_dtativconsignado := NULL;
         ELSE
           vr_dscritic := 'Data Convenio Consignado invalida.';
           RAISE vr_exc_erro;
-        END IF;  
+        END IF;
     END;
-    
+
     --Tipo de Modalidade de Convenio (1 - Privado, 2 . Publico e 3 - INSS).
     vr_tpmodconvenio         := to_number(TRIM(pr_retxml.extract('/Root/dto/tpmodconvenio/text()').getstringval()));
-    
+
     BEGIN
       vr_nrdialimiterepasse    := to_number(TRIM(pr_retxml.extract('/Root/dto/nrdialimiterepasse/text()').getstringval()));
     EXCEPTION
       WHEN OTHERS THEN
         IF SQLCODE = '-30625' THEN
-           vr_nrdialimiterepasse := NULL;   
+           vr_nrdialimiterepasse := NULL;
         ELSE
           vr_dscritic := 'Erro na leitura do campo nrdialimiterepasse.';
           RAISE vr_exc_erro;
-        END IF;           
+        END IF;
     END;
-     
-    vr_indautrepassecc       := to_number(TRIM(pr_retxml.extract('/Root/dto/indautrepassecc/text()').getstringval()));  
-    vr_indinterromper        := to_number(TRIM(pr_retxml.extract('/Root/dto/indinterromper/text()').getstringval())); 
-    
+
+    vr_indautrepassecc       := to_number(TRIM(pr_retxml.extract('/Root/dto/indautrepassecc/text()').getstringval()));
+    vr_indinterromper        := to_number(TRIM(pr_retxml.extract('/Root/dto/indinterromper/text()').getstringval()));
+
     BEGIN
-      vr_dsdemailconsig      := TRIM(pr_retxml.extract('/Root/dto/dsdemailconsig/text()').getstringval()); 
+      vr_dsdemailconsig      := TRIM(pr_retxml.extract('/Root/dto/dsdemailconsig/text()').getstringval());
     EXCEPTION
       WHEN OTHERS THEN
         IF SQLCODE = '-30625' THEN
-           vr_dsdemailconsig := NULL;   
+           vr_dsdemailconsig := NULL;
         ELSE
           vr_dscritic := 'Erro na leitura do campo vr_dsdemailconsig.';
           RAISE vr_exc_erro;
-        END IF;   
-    END;  
-     
+        END IF;
+    END;
+
     BEGIN
       vr_indalertaemailemp     := to_number(TRIM(pr_retxml.extract('/Root/dto/indalertaemailemp/text()').getstringval()));
     EXCEPTION
       WHEN OTHERS THEN
         IF SQLCODE = '-30625' THEN
-           vr_indalertaemailemp := NULL;   
+           vr_indalertaemailemp := NULL;
         ELSE
           vr_dscritic := 'Erro na leitura do campo vr_indalertaemailemp.';
           RAISE vr_exc_erro;
-        END IF;  
+        END IF;
     END;
-    
+
     BEGIN
-      vr_indalertaemailconsig  := to_number(TRIM(pr_retxml.extract('/Root/dto/indalertaemailconsig/text()').getstringval()));   
+      vr_indalertaemailconsig  := to_number(TRIM(pr_retxml.extract('/Root/dto/indalertaemailconsig/text()').getstringval()));
     EXCEPTION
       WHEN OTHERS THEN
         IF SQLCODE = '-30625' THEN
-           vr_indalertaemailconsig := NULL;   
+           vr_indalertaemailconsig := NULL;
         ELSE
           vr_dscritic := 'Erro na leitura do campo vr_indalertaemailconsig.';
           RAISE vr_exc_erro;
-        END IF;  
+        END IF;
     END;
-    
+
     BEGIN
-      vr_dtinterromper := to_date(TRIM(pr_retxml.extract('/Root/dto/dtinterromper/text()').getstringval()),'DD/MM/RRRR');  
+      vr_dtinterromper := to_date(TRIM(pr_retxml.extract('/Root/dto/dtinterromper/text()').getstringval()),'DD/MM/RRRR');
     EXCEPTION
       WHEN OTHERS THEN
         IF SQLCODE = '-30625' THEN
-          vr_dtinterromper := NULL;   
-        ELSE  
+          vr_dtinterromper := NULL;
+        ELSE
           vr_dscritic := 'Data Interrupcao Cobranca invalida. ';
           RAISE vr_exc_erro;
-        END IF;  
+        END IF;
     END;
-    
+
     BEGIN
       vr_dtfchfol              := TRIM(pr_retxml.extract('/Root/dto/dtfchfol/text()').getstringval());
     EXCEPTION
       WHEN OTHERS THEN
         IF SQLCODE = '-30625' THEN
-          vr_dtfchfol := NULL;   
-        ELSE  
+          vr_dtfchfol := NULL;
+        ELSE
           vr_dscritic := 'Erro na leitura do campo vr_dtfchfol. ';
           RAISE vr_exc_erro;
-        END IF;  
+        END IF;
     END;
-     
+
     pc_alterar_empr_consig(pr_cdcooper             => vr_cdcooper
                           ,pr_cdempres             => vr_cdempres
                           ,pr_indconsignado        => vr_indconsignado
@@ -1095,7 +1095,7 @@ BEGIN
                           ,pr_dtinterromper        => vr_dtinterromper
                           ,pr_dtfchfol             => vr_dtfchfol
                           ,pr_cdoperad             => vr_cdoperad
-                          ,pr_idemprconsig         => vr_idemprconsig       
+                          ,pr_idemprconsig         => vr_idemprconsig
                           ,pr_dsmensag             => vr_dsmensag
                           ,pr_cdcritic             => vr_cdcritic
                           ,pr_dscritic             => vr_dscritic );
@@ -1117,8 +1117,8 @@ BEGIN
           raise vr_exc_erro;
         END IF;
       END;
-    END IF;    
-    
+    END IF;
+
     /*Excluir todos os vencimentos - P437*/
     BEGIN
       pc_excluir_param_consig(pr_cdcooper          => vr_cdcooper
@@ -1129,23 +1129,23 @@ BEGIN
                              ,pr_dscritic          => vr_dscritic   --> OUT - Descricao da critica
                              ,pr_des_erro          => vr_des_erro   --> OUT - Erros do processo
                              );
-        
+
       IF vr_des_erro = 'NOK' THEN
         raise vr_exc_erro;
-      END IF;     
+      END IF;
     END;
-    
+
     --Inserir ou Alterar os Parâmetros para Emprestimos Consignado por Empresa
     BEGIN
-      
+
       -- Extraindo os dados do XML o valor da tag <total>
       vr_qtdtotal := TO_NUMBER(TRIM(pr_retxml.extract('/Root/dto/vencimentos/total/text()').getstringval()));
       vr_nrvencto  := 0;
       vr_dsmensag1 := NULL;
-      
+
       FOR x in 1 .. vr_qtdtotal LOOP
-        
-        vr_nrvencto:= vr_nrvencto + 1;        
+
+        vr_nrvencto:= vr_nrvencto + 1;
         BEGIN
           vr_diaMesDe     := TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto||'/'||'diaMesDe/text()').getstringval());
           vr_diaMesAte    := TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto||'/'||'diaMesAte/text()').getstringval());
@@ -1155,13 +1155,13 @@ BEGIN
           WHEN OTHERS THEN
             IF SQLCODE = '-30625' THEN
               vr_dscritic := 'Todos os campos do grid de vencimentos devem ser preenchidos. ';
-              RAISE vr_exc_erro;  
-            ELSE  
+              RAISE vr_exc_erro;
+            ELSE
               vr_dscritic := 'Erro na leitura dos campos do grid de vencimentos. ';
               RAISE vr_exc_erro;
-            END IF; 
+            END IF;
         END;
-        
+
         pc_inc_param_consig(pr_cdcooper           => vr_cdcooper
                            ,pr_cdempres           => vr_cdempres
                            ,pr_cdoperad           => vr_cdoperad
@@ -1173,24 +1173,24 @@ BEGIN
                            ,pr_dsmensag           => vr_dsmensag    --> Mensagem
                            ,pr_cdcritic           => vr_cdcritic    --> Codigo da critica
                            ,pr_dscritic           => vr_dscritic ); --> Descricao da critica
-        
+
         IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
         IF vr_dsmensag1 IS NULL THEN
-          vr_dsmensag1 := vr_dsmensag ; 
-        END IF;  
-                
+          vr_dsmensag1 := vr_dsmensag ;
+        END IF;
+
       END LOOP;
     END;
-    
+
     IF vr_dsmensag1 IS NOT NULL THEN
       vr_dsmensag := vr_dsmensag1;
     ELSE
       vr_dsmensag := 'Gravado com Sucesso!!!';
     END IF;
-     
+
     pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmensag>'||vr_dsmensag||'</dsmensag></Root>');
 
     COMMIT;
@@ -1245,7 +1245,7 @@ BEGIN
       Objetivo  : Habilitar o convênio de consignado para uma empresa
 
       Alteração : 11/09/2018 - Criação (CIS Corporate)
-                  09/04/2019 - P437 - Consignado - Fernanda K. Oliveira     
+                  09/04/2019 - P437 - Consignado - Fernanda K. Oliveira
 
     ----------------------------------------------------------------------------------------------------------*/
 
@@ -1259,7 +1259,7 @@ BEGIN
    CURSOR cr_consig IS
      SELECT tec.idemprconsig
        INTO pr_idemprconsig
-       FROM tbcadast_empresa_consig tec      
+       FROM tbcadast_empresa_consig tec
       WHERE tec.cdempres = pr_cdempres
         AND tec.cdcooper = pr_cdcooper;
    rw_consig cr_consig      %ROWTYPE;
@@ -1299,7 +1299,7 @@ BEGIN
                             ,pr_dtinterromper        => pr_dtinterromper
                             ,pr_dtfchfol             => pr_dtfchfol
                             ,pr_cdoperad             => pr_cdoperad
-                            ,pr_idemprconsig         => pr_idemprconsig 
+                            ,pr_idemprconsig         => pr_idemprconsig
                             ,pr_dsmensag             => pr_dsmensag
                             ,pr_cdcritic             => vr_cdcritic
                             ,pr_dscritic             => vr_dscritic );
@@ -1307,22 +1307,22 @@ BEGIN
       IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      
+
       /*P437 - Consignado*/
       OPEN cr_consig;
-      FETCH cr_consig 
+      FETCH cr_consig
       INTO rw_consig;
-          
+
       IF cr_consig%NOTFOUND THEN
          vr_cdcritic := 0;
          vr_dscritic := 'Erro na rotina tela_consig.pc_habilitar_empr_consig.' || sqlerrm;
          CLOSE cr_consig;
-         RAISE vr_exc_erro;   
+         RAISE vr_exc_erro;
       ELSE
          pr_idemprconsig := rw_consig.idemprconsig;
-      END IF; 
+      END IF;
       CLOSE cr_consig;
-      
+
       pr_dsmensag := 'Convênio de consignado habilitado com sucesso.';
 
     ELSE
@@ -1351,10 +1351,10 @@ BEGIN
              ,/*10*/ pr_indalertaemailconsig
              ,/*11*/ pr_indinterromper
              ,/*12*/ CASE WHEN pr_indinterromper = 1 THEN pr_dtinterromper ELSE NULL END)
-      
-       RETURNING idemprconsig 
+
+       RETURNING idemprconsig
             INTO pr_idemprconsig; /*P437*/
-            
+
       --pr_dsmensag := 'Convênio de consignado criado com sucesso.';
     END IF;
 
@@ -1364,7 +1364,7 @@ BEGIN
           ,indescsg = 2 -- empresa consignado  /*P437*/
      WHERE emp.cdempres = pr_cdempres
        AND emp.cdcooper = pr_cdcooper;
-    
+
   EXCEPTION
     WHEN vr_exc_erro then
          IF  vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
@@ -1395,7 +1395,7 @@ BEGIN
 
       Objetivo  : Habilitar o convênio de emprestimo de consignado.
 
-      Alteração : 09/04/2019 - Inserir o Range de vencimentos. 
+      Alteração : 09/04/2019 - Inserir o Range de vencimentos.
                                Alteração na forma de leitura do XML
                                P437 - Consignado - Fernanda K. Oliveira - AMcom
 
@@ -1421,26 +1421,26 @@ BEGIN
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
-    
+
     --
     vr_qtdtotal             NUMBER;
     vr_nrvencto             NUMBER;
-    vr_idemprconsig         NUMBER;    
+    vr_idemprconsig         NUMBER;
     vr_diaMesDe             VARCHAR2(10);
     vr_diaMesAte            VARCHAR2(10);
     vr_diaMesEnvio          VARCHAR2(10);
     vr_diaMesVencto         VARCHAR2(10);
-    vr_cdempres             tbcadast_empresa_consig.cdempres%TYPE;  
-    vr_tpmodconvenio        tbcadast_empresa_consig.tpmodconvenio%TYPE;  
+    vr_cdempres             tbcadast_empresa_consig.cdempres%TYPE;
+    vr_tpmodconvenio        tbcadast_empresa_consig.tpmodconvenio%TYPE;
     vr_nrdialimiterepasse   tbcadast_empresa_consig.nrdialimiterepasse%TYPE;
-    vr_indautrepassecc      tbcadast_empresa_consig.indautrepassecc%TYPE;  
-    vr_indinterromper       tbcadast_empresa_consig.indinterromper%TYPE; 
-    vr_dsdemailconsig       tbcadast_empresa_consig.dsdemailconsig%TYPE;  
-    vr_indalertaemailemp    tbcadast_empresa_consig.indalertaemailemp%TYPE;  
+    vr_indautrepassecc      tbcadast_empresa_consig.indautrepassecc%TYPE;
+    vr_indinterromper       tbcadast_empresa_consig.indinterromper%TYPE;
+    vr_dsdemailconsig       tbcadast_empresa_consig.dsdemailconsig%TYPE;
+    vr_indalertaemailemp    tbcadast_empresa_consig.indalertaemailemp%TYPE;
     vr_indalertaemailconsig tbcadast_empresa_consig.indalertaemailconsig%TYPE;
     vr_dtfchfol             crapemp.dtfchfol%TYPE;
-    vr_indconsignado        tbcadast_empresa_consig.indconsignado%TYPE; 
-    
+    vr_indconsignado        tbcadast_empresa_consig.indconsignado%TYPE;
+
   BEGIN
     pr_nmdcampo := NULL;
     pr_des_erro := 'OK';
@@ -1459,107 +1459,107 @@ BEGIN
      IF  TRIM(vr_dscritic) IS NOT NULL THEN
        RAISE vr_exc_erro;
      END IF;
-     
+
      --Ler o valor das tag's enviadas no XML
      vr_cdempres              := TRIM(pr_retxml.extract('/Root/dto/cdempres/text()').getstringval());
      vr_indconsignado         := to_number(TRIM(pr_retxml.extract('/Root/dto/indconsignado/text()').getstringval()));
-     
+
      BEGIN
-       vr_dtativconsignado    := to_date(TRIM(pr_retxml.extract('/Root/dto/dtativconsignado/text()').getstringval()),'DD/MM/RRRR');  
+       vr_dtativconsignado    := to_date(TRIM(pr_retxml.extract('/Root/dto/dtativconsignado/text()').getstringval()),'DD/MM/RRRR');
      EXCEPTION
        WHEN OTHERS THEN
          IF SQLCODE = '-30625' THEN
-            vr_dtativconsignado := NULL;   
+            vr_dtativconsignado := NULL;
          ELSE
            vr_dscritic := 'Data Convenio Consignado invalida.';
            RAISE vr_exc_erro;
-         END IF;  
+         END IF;
      END;
-     
+
      BEGIN
        --Tipo de Modalidade de Convenio (1 - Privado, 2 . Publico e 3 - INSS).
        vr_tpmodconvenio   := to_number(TRIM(pr_retxml.extract('/Root/dto/tpmodconvenio/text()').getstringval()));
      EXCEPTION
        WHEN OTHERS THEN
          vr_dscritic := 'Tipo de Convenio deve ser preenchido.';
-         RAISE vr_exc_erro;        
+         RAISE vr_exc_erro;
      END;
-     
+
      BEGIN
        vr_nrdialimiterepasse    := to_number(TRIM(pr_retxml.extract('/Root/dto/nrdialimiterepasse/text()').getstringval()));
      EXCEPTION
        WHEN OTHERS THEN
          IF SQLCODE = '-30625' THEN
-            vr_nrdialimiterepasse := NULL;   
+            vr_nrdialimiterepasse := NULL;
          ELSE
            vr_dscritic := 'Erro na leitura do campo nrdialimiterepasse.';
            RAISE vr_exc_erro;
-         END IF;           
+         END IF;
      END;
-     
-     vr_indautrepassecc       := to_number(TRIM(pr_retxml.extract('/Root/dto/indautrepassecc/text()').getstringval()));  
-     vr_indinterromper        := to_number(TRIM(pr_retxml.extract('/Root/dto/indinterromper/text()').getstringval())); 
-     
+
+     vr_indautrepassecc       := to_number(TRIM(pr_retxml.extract('/Root/dto/indautrepassecc/text()').getstringval()));
+     vr_indinterromper        := to_number(TRIM(pr_retxml.extract('/Root/dto/indinterromper/text()').getstringval()));
+
      BEGIN
-       vr_dsdemailconsig      := TRIM(pr_retxml.extract('/Root/dto/dsdemailconsig/text()').getstringval()); 
+       vr_dsdemailconsig      := TRIM(pr_retxml.extract('/Root/dto/dsdemailconsig/text()').getstringval());
      EXCEPTION
        WHEN OTHERS THEN
          IF SQLCODE = '-30625' THEN
-            vr_dsdemailconsig := NULL;   
+            vr_dsdemailconsig := NULL;
          ELSE
            vr_dscritic := 'Erro na leitura do campo vr_dsdemailconsig.';
            RAISE vr_exc_erro;
-         END IF;   
-     END;  
-     
+         END IF;
+     END;
+
      BEGIN
        vr_indalertaemailemp := to_number(TRIM(pr_retxml.extract('/Root/dto/indalertaemailemp/text()').getstringval()));
      EXCEPTION
        WHEN OTHERS THEN
          IF SQLCODE = '-30625' THEN
-            vr_indalertaemailemp := NULL;   
+            vr_indalertaemailemp := NULL;
          ELSE
            vr_dscritic := 'Erro na leitura do campo vr_indalertaemailemp.';
            RAISE vr_exc_erro;
-         END IF;   
+         END IF;
      END;
-     
+
      BEGIN
-       vr_indalertaemailconsig  := to_number(TRIM(pr_retxml.extract('/Root/dto/indalertaemailconsig/text()').getstringval()));   
+       vr_indalertaemailconsig  := to_number(TRIM(pr_retxml.extract('/Root/dto/indalertaemailconsig/text()').getstringval()));
      EXCEPTION
        WHEN OTHERS THEN
          IF SQLCODE = '-30625' THEN
-            vr_indalertaemailconsig := NULL;   
+            vr_indalertaemailconsig := NULL;
          ELSE
            vr_dscritic := 'Erro na leitura do campo vr_indalertaemailconsig.';
            RAISE vr_exc_erro;
-         END IF;   
+         END IF;
      END;
-     
+
      BEGIN
-       vr_dtinterromper := to_date(TRIM(pr_retxml.extract('/Root/dto/dtinterromper/text()').getstringval()),'DD/MM/RRRR');  
+       vr_dtinterromper := to_date(TRIM(pr_retxml.extract('/Root/dto/dtinterromper/text()').getstringval()),'DD/MM/RRRR');
      EXCEPTION
        WHEN OTHERS THEN
          IF SQLCODE = '-30625' THEN
-           vr_dtinterromper := NULL;   
-         ELSE  
+           vr_dtinterromper := NULL;
+         ELSE
            vr_dscritic := 'Data Interrupcao Cobranca invalida. ';
            RAISE vr_exc_erro;
-         END IF;  
+         END IF;
      END;
-     
+
      BEGIN
        vr_dtfchfol              := TRIM(pr_retxml.extract('/Root/dto/dtfchfol/text()').getstringval());
      EXCEPTION
        WHEN OTHERS THEN
          IF SQLCODE = '-30625' THEN
-           vr_dtfchfol := NULL;   
-         ELSE  
+           vr_dtfchfol := NULL;
+         ELSE
            vr_dscritic := 'Erro na leitura do campo vr_dtfchfol. ';
            RAISE vr_exc_erro;
-         END IF;  
+         END IF;
      END;
-       
+
      pc_habilitar_empr_consig(pr_cdcooper             => vr_cdcooper
                              ,pr_cdempres             => vr_cdempres
                              ,pr_indconsignado        => vr_indconsignado
@@ -1578,11 +1578,11 @@ BEGIN
                              ,pr_dsmensag             => vr_dsmensag
                              ,pr_cdcritic             => vr_cdcritic
                              ,pr_dscritic             => vr_dscritic );
-     
+
      IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
        RAISE vr_exc_erro;
      END IF;
-    
+
     /*Validação do Range dos Vencimentos se for 1 - Privado, 2 - Publico (P437) */
     IF vr_tpmodconvenio IN(1,2) THEN
       BEGIN
@@ -1595,9 +1595,9 @@ BEGIN
         IF vr_des_erro = 'NOK' THEN
           raise vr_exc_erro;
         END IF;
-      END;  
+      END;
     END IF;
-    
+
     /*Excluir todos os vencimentos - P437*/
     BEGIN
       pc_excluir_param_consig(pr_cdcooper          => vr_cdcooper
@@ -1608,22 +1608,22 @@ BEGIN
                              ,pr_dscritic          => vr_dscritic   --> OUT - Descricao da critica
                              ,pr_des_erro          => vr_des_erro   --> OUT - Erros do processo
                              );
-        
+
       IF vr_des_erro = 'NOK' THEN
         raise vr_exc_erro;
-      END IF;     
+      END IF;
     END;
-    
+
     --Inserir ou Alterar os Parâmetros para Emprestimos Consignado por Empresa
     BEGIN
-      
+
       -- Extraindo os dados do XML o valor da tag <total>
       vr_qtdtotal := TO_NUMBER(TRIM(pr_retxml.extract('/Root/dto/vencimentos/total/text()').getstringval()));
       vr_nrvencto := 0;
-    
+
       FOR x in 1 .. vr_qtdtotal LOOP
-        
-        vr_nrvencto:= vr_nrvencto + 1;        
+
+        vr_nrvencto:= vr_nrvencto + 1;
         BEGIN
           vr_diaMesDe     := TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto||'/'||'diaMesDe/text()').getstringval());
           vr_diaMesAte    := TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto||'/'||'diaMesAte/text()').getstringval());
@@ -1633,13 +1633,13 @@ BEGIN
           WHEN OTHERS THEN
             IF SQLCODE = '-30625' THEN
               vr_dscritic := 'Todos os campos do grid de vencimentos devem ser preenchidos. ';
-              RAISE vr_exc_erro;  
-            ELSE  
+              RAISE vr_exc_erro;
+            ELSE
               vr_dscritic := 'Erro na leitura dos campos do grid de vencimentos. ';
               RAISE vr_exc_erro;
-            END IF; 
+            END IF;
         END;
-        
+
         pc_inc_param_consig(pr_cdcooper           => vr_cdcooper
                            ,pr_cdempres           => vr_cdempres
                            ,pr_cdoperad           => vr_cdoperad
@@ -1651,24 +1651,24 @@ BEGIN
                            ,pr_dsmensag           => vr_dsmensag    --> Mensagem
                            ,pr_cdcritic           => vr_cdcritic    --> Codigo da critica
                            ,pr_dscritic           => vr_dscritic ); --> Descricao da critica
-        
+
         IF NVL(vr_cdcritic,0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        
+
         IF vr_dsmensag1 IS NULL THEN
-          vr_dsmensag1 := vr_dsmensag ; 
+          vr_dsmensag1 := vr_dsmensag ;
         END IF;
-        
+
       END LOOP;
     END;
-    
+
     IF vr_dsmensag1 IS NOT NULL THEN
       vr_dsmensag := vr_dsmensag1;
     ELSE
       vr_dsmensag := 'Gravado com Sucesso!!!';
     END IF;
-    
+
     pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmensag>'||vr_dsmensag||'</dsmensag></Root>');
 
     COMMIT;
@@ -1733,7 +1733,7 @@ BEGIN
        SET indescsg = 1 -- não é convênio de consignado  /*P437*/
      WHERE emp.cdempres = pr_cdempres
        AND emp.cdcooper = pr_cdcooper;
-    
+
     pr_dsmensag := 'Convênio de consignado desabilitado com sucesso.';
 
   EXCEPTION
@@ -1851,7 +1851,7 @@ BEGIN
                                 ,pr_cdcritic             OUT PLS_INTEGER    --> Codigo da critica                                    --> Codigo da critica
                                 ,pr_dscritic             OUT VARCHAR2       --> Descricao da critica                                      --> Descricao da critica
                                 ) IS
-    
+
     /*---------------------------------------------------------------------------------------------------------
       Programa : pc_inc_param_consig
       Sistema  : AIMARO
@@ -1910,19 +1910,19 @@ BEGIN
 
     --Buscar a Dia de Fechamento da Folha
     OPEN cr_crapemp;
-    FETCH cr_crapemp 
+    FETCH cr_crapemp
     INTO rw_crapemp;
-        
+
     IF cr_crapemp%NOTFOUND THEN
        vr_cdcritic := 0;
        vr_dscritic := 'Erro na rotina tela_consig.pc_inc_param_consig.' || sqlerrm;
        CLOSE cr_crapemp;
-       RAISE vr_exc_erro;   
+       RAISE vr_exc_erro;
     ELSE
        vr_dtfchfol := rw_crapemp.dtfchfol;
-    END IF; 
+    END IF;
     CLOSE cr_crapemp;
-    
+
     --Regra: O dia do envio do arquivo deverá ser igual ou menor que a da data cadastrada no campo “Dia fechamento folha”;
     IF vr_diaenvioarquivo > vr_dtfchfol THEN
       vr_dscritic := 'O dia do envio do arquivo deve ser igual ou menor que o dia de fechamento da folha.';
@@ -2068,6 +2068,8 @@ BEGIN
     DECLARE
       CURSOR cr_param_consig IS
         SELECT idemprconsigparam,
+               to_char(dtinclpropostade,'DD') dia_ini,
+               to_char(dtinclpropostade,'MM') mes_ini,
                to_char(dtinclpropostade,'DD/MM')  dtinclpropostade,
                to_char(dtinclpropostaate,'DD/MM') dtinclpropostaate,
                to_char(dtenvioarquivo,'DD/MM')    dtenvioarquivo,
@@ -2078,7 +2080,7 @@ BEGIN
                                  WHERE cdcooper = pr_cdcooper
                                    AND cdempres = pr_cdempres
                                 )
-         order by dtinclpropostade;
+         order by mes_ini,dia_ini;
 
       rw_param_consig cr_param_consig%ROWTYPE;
 
@@ -2320,8 +2322,8 @@ BEGIN
     vrdiaMesAte      varchar2(20);
     vrdiaMesEnvio    varchar2(20);
     vrdiaMesVencto   varchar2(20);
-                                 
-    
+
+
 
     -- variáveis para armazenar as informaçoes em xml
     vr_des_xml        clob;
@@ -2351,7 +2353,7 @@ BEGIN
            gene0007.fn_caract_acento (pr_texto    => e.nmcidade,
                                       pr_insubsti => 1) desccidadelogradouro,
            e.cdufdemp uflogradouro,
-           e.nrdddemp dddloja,  
+           e.nrdddemp dddloja,
            e.nrfonemp telloja,
            null descEmail,
            null descContatoLoja,
@@ -2406,7 +2408,7 @@ BEGIN
       vr_datainicio   := TO_CHAR(sysdate,'yyyy-mm-dd')||'T'||
                                        to_char(sysdate,'hh24:mi:ss');
       vr_indconsignado:= TRIM(pr_retxml.extract('/Root/dto/indconsignado/text()').getstringval());
-      
+
       BEGIN
         --Tipo de Modalidade de Convenio (1 - Privado, 2 . Publico e 3 - INSS).
         vr_tipoPadrao   := TRIM(pr_retxml.extract('/Root/dto/tipoPadrao/text()').getstringval());
@@ -2415,24 +2417,24 @@ BEGIN
         ELSIF vr_tipoPadrao = '2' THEN
            vr_tipoPadrao   := '162';
         ELSIF vr_tipoPadrao = '3' THEN
-           vr_tipoPadrao   := '163';  
+           vr_tipoPadrao   := '163';
         ELSE
            vr_tipoPadrao   := null;
-        END IF;           
+        END IF;
       EXCEPTION
         WHEN OTHERS THEN
           IF SQLCODE = '-30625' THEN
             vr_dscritic := 'Tipo de Convênio deve ser preenchido.';
-            RAISE vr_exc_erro;   
+            RAISE vr_exc_erro;
           ELSE
             vr_dscritic := 'Erro na leitura do campo vr_tipoPadrao.';
             RAISE vr_exc_erro;
-          END IF;           
+          END IF;
       END;
-      
+
       vr_idemprconsig := TO_NUMBER(TRIM(pr_retxml.extract('/Root/dto/idemprconsig/text()').getstringval()));
       vr_qtdtotal     := TO_NUMBER(TRIM(pr_retxml.extract('/Root/dto/vencimentos/total/text()').getstringval()));
-      
+
       /*Validação do Range dos Vencimentos se for 1 - Privado, 2 - Publico (P437) */
       IF vr_tipoPadrao IN(161,162) THEN
         pc_validar_venctos_consig( pr_retxml   => pr_retxml   --IN
@@ -2443,9 +2445,9 @@ BEGIN
 
         IF vr_des_erro = 'NOK' THEN
           raise vr_exc_erro;
-        END IF;        
+        END IF;
       END IF;
-      
+
       vr_nrvencto := 0;
       vr_xmlvencto:= null;
 
@@ -2515,11 +2517,11 @@ BEGIN
                                '<codigoContaSemDigito>'||rw_dados_consig.numconta||'</codigoContaSemDigito>'||
                              '</contaCorrente>'||
                            '</conveniado>'||
-                           '<cooperativa>'|| 
-                             '<codigo>'||rw_dados_consig.codpromotora||'</codigo>'|| 
+                           '<cooperativa>'||
+                             '<codigo>'||rw_dados_consig.codpromotora||'</codigo>'||
                            '</cooperativa>'||
                            '<dataContratacao>'||vr_datainicio||'</dataContratacao>');
-          IF rw_dados_consig.datafim IS NOT NULL THEN                 
+          IF rw_dados_consig.datafim IS NOT NULL THEN
              pc_escreve_xml('<dataExpiracao>'||rw_dados_consig.datafim||'</dataExpiracao>');
           END IF;
           pc_escreve_xml( '<numeroContrato>'||rw_dados_consig.codconvenio||'</numeroContrato>'|| -- codigo da empresa
@@ -2560,7 +2562,7 @@ BEGIN
                         '</interacaoGrafica>'||
                         '<listaVencimentos>'||
                         vr_xmlvencto);
- 
+
       END LOOP;
 
 
@@ -2651,9 +2653,9 @@ BEGIN
       --
       IF nvl(vr_qtdtotal,0) = 0 THEN
         vr_dscritic := 'Campo Datas de Corte Vcto Parcela deve ser preenchido.';
-        raise vr_exc_erro; 
+        raise vr_exc_erro;
       END IF;
-      
+
       vr_nrvencto := 0;
      -- vr_xmlvencto:= null;
       FOR x in 1 .. vr_qtdtotal LOOP
@@ -2664,7 +2666,7 @@ BEGIN
         vr_diaMesAte := TRIM(pr_retxml.extract('/Root/dto/vencimentos/vencimento'||vr_nrvencto||'/'||'diaMesAte/text()').getstringval());
         vr_dtinclpropostaate := TO_DATE(vr_diaMesAte,'DD/MM');
 
-        --primeira linha 
+        --primeira linha
         IF vr_nrvencto = 1 THEN
           vr_dtate_ant        := vr_dtinclpropostaate;
           vr_dtate_de_inicial := vr_dtinclpropostade;
@@ -2673,7 +2675,7 @@ BEGIN
             IF substr((vr_dtate_ant + 1),1,5) <> substr(vr_dtate_de_inicial,1,5)  THEN
               vr_dscritic := 'O Grid de Vencimentos deve ter intervalos com todos os dias do Ano.';
               raise vr_exc_erro;
-            END IF;  
+            END IF;
           END IF;
         ELSIF vr_nrvencto > 1 THEN
           IF substr((vr_dtate_ant + 1),1,5) <> substr(vr_dtinclpropostade,1,5)  THEN
@@ -2686,7 +2688,7 @@ BEGIN
             IF substr((vr_dtate_ant + 1),1,5) <> substr(vr_dtate_de_inicial,1,5)  THEN
               vr_dscritic := 'O Grid de Vencimentos deve ter intervalos com todos os dias do Ano.';
               raise vr_exc_erro;
-            END IF;  
+            END IF;
           END IF;
         END IF;
       END LOOP;
@@ -2714,18 +2716,18 @@ BEGIN
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
   END pc_validar_venctos_consig;
-  
-  PROCEDURE pc_interromper_cobranca( pr_cdempres        IN tbcadast_empresa_consig.cdempres%TYPE 
+
+  PROCEDURE pc_interromper_cobranca( pr_cdempres        IN tbcadast_empresa_consig.cdempres%TYPE
                                     ,pr_cdcooper        IN tbcadast_empresa_consig.cdcooper%TYPE
                                     ,pr_cdoperad        IN VARCHAR2
                                     ,pr_indinterromper  IN tbcadast_empresa_consig.indinterromper%TYPE
-                                    ,pr_cdorigem        IN crapcyc.cdorigem%TYPE 
+                                    ,pr_cdorigem        IN crapcyc.cdorigem%TYPE
                                     ,pr_cdmotcin        IN crapcyc.cdmotcin%TYPE
                                     --
                                     ,pr_cdcritic        OUT PLS_INTEGER    --> Codigo da critica
                                     ,pr_dscritic        OUT VARCHAR2       --> Descricao da critica
                                     ,pr_des_erro        OUT VARCHAR2       --> Erros do processo
-                                    )IS   
+                                    )IS
   /*---------------------------------------------------------------------------------------------------------
       Programa : pc_interromper_cobranca
       Sistema  : AIMARO
@@ -2748,82 +2750,82 @@ BEGIN
 
     -- Tratamento de erros
     vr_exc_erro EXCEPTION;
-    
+
     --Variáveis
     vr_existe_crapcyc NUMBER := 0;
-    
-    -- Variavel temporária para LOG 
+
+    -- Variavel temporária para LOG
     vr_dslogtel VARCHAR2(32767) := '';
-    
-    CURSOR cr_crapcyc (pr_nrdconta IN crapcyc.nrdconta%TYPE, 
+
+    CURSOR cr_crapcyc (pr_nrdconta IN crapcyc.nrdconta%TYPE,
                        pr_nrctremp in crapcyc.nrctremp%type)  IS
       SELECT count(*) vr_existe_crapcyc
-        FROM crapcyc c 
+        FROM crapcyc c
        WHERE c.cdcooper = pr_cdcooper
          AND c.cdorigem = pr_cdorigem
          AND c.nrdconta = pr_nrdconta
          AND c.nrctremp = pr_nrctremp;
     rw_crapcyc cr_crapcyc%ROWTYPE;
-    
+
     CURSOR cr_crapepr IS
-      SELECT DISTINCT 
+      SELECT DISTINCT
              c.nrdconta,
              c.nrctremp
         FROM crapepr c
        WHERE c.cdcooper = pr_cdcooper
          AND c.cdempres = pr_cdempres
          AND c.inliquid = 0;
-    
+
   BEGIN
     pr_des_erro := 'OK';
-    
-    FOR r1 IN cr_crapepr   
+
+    FOR r1 IN cr_crapepr
     LOOP
-      vr_existe_crapcyc := 0; 
+      vr_existe_crapcyc := 0;
       OPEN cr_crapcyc (pr_nrdconta => r1.nrdconta,
                        pr_nrctremp => r1.nrctremp);
-      FETCH cr_crapcyc 
+      FETCH cr_crapcyc
       INTO rw_crapcyc;
-          
+
       IF cr_crapcyc%NOTFOUND THEN
-         vr_existe_crapcyc := 0; 
+         vr_existe_crapcyc := 0;
       ELSE
          vr_existe_crapcyc := rw_crapcyc.vr_existe_crapcyc;
-      END IF; 
+      END IF;
       CLOSE cr_crapcyc;
-      
-      IF vr_existe_crapcyc = 0 AND pr_indinterromper = 1 THEN          
+
+      IF vr_existe_crapcyc = 0 AND pr_indinterromper = 1 THEN
         BEGIN
           INSERT INTO CRAPCYC
             (cdcooper,
              cdorigem,
              nrdconta,
-             nrctremp,             
-             flgehvip,    
-             cdmotcin,             
+             nrctremp,
+             flgehvip,
+             cdmotcin,
              dtinclus,
              cdopeinc,
-             dtaltera,             
+             dtaltera,
              cdoperad
              )
           VALUES
             (pr_cdcooper,
              pr_cdorigem,
              r1.nrdconta,
-             r1.nrctremp,            
+             r1.nrctremp,
              1,           --v_flgehvip - CIN
              pr_cdmotcin, -- 8 - Repasse Consignado
              sysdate,     --dtinclus
              pr_cdoperad, --cdopeinc
              null,        --dtaltera
-             pr_cdoperad  --cdoperad            
+             pr_cdoperad  --cdoperad
              );
         EXCEPTION
           WHEN OTHERS THEN
              vr_dscritic := 'Erro no INSERT da CRAPCYC: '|| sqlerrm;
              raise vr_exc_erro;
         END;
-        
+
         -- Gera LogTel
         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                   ,pr_ind_tipo_log => 2 --  erro nao tratado
@@ -2836,28 +2838,28 @@ BEGIN
                                                       ' Conta: '    || r1.nrdconta ||
                                                       ' Contrato: ' || r1.nrctremp ||
                                                       ' Motivo: '   || pr_cdmotcin ||'.');
-                                                  
+
       --Se já esta cadastrado
-      ELSIF vr_existe_crapcyc > 0  THEN  
+      ELSIF vr_existe_crapcyc > 0  THEN
         --Interromper a Cobrança
-        IF pr_indinterromper = 1 THEN 
+        IF pr_indinterromper = 1 THEN
           BEGIN
             UPDATE crapcyc c
                SET c.flgehvip = 1
-                  ,c.cdmotcin = pr_cdmotcin                  
+                  ,c.cdmotcin = pr_cdmotcin
                   ,c.dtaltera = sysdate
                   ,c.cdoperad = pr_cdoperad
              WHERE c.cdcooper = pr_cdcooper
                AND c.cdorigem = pr_cdorigem
                AND c.nrdconta = r1.nrdconta
                AND c.nrctremp = r1.nrctremp
-               AND (c.cdmotcin = 0 or c.cdmotcin is null);-- 8 - Repasse Consignado  
+               AND (c.cdmotcin = 0 or c.cdmotcin is null);-- 8 - Repasse Consignado
           EXCEPTION
             WHEN OTHERS THEN
                vr_dscritic := 'Erro no UPDATE da CRAPCYC: '|| sqlerrm;
-               raise vr_exc_erro; 
-          END; 
-          
+               raise vr_exc_erro;
+          END;
+
           -- Gera LogTel
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 --  erro nao tratado
@@ -2870,10 +2872,10 @@ BEGIN
                                                         ' Conta: '    || r1.nrdconta ||
                                                         ' Contrato: ' || r1.nrctremp ||
                                                         ' Motivo: '   || pr_cdmotcin ||'.');
-          
+
         -- Quando a cobrança for restabelecida
         ELSIF pr_indinterromper = 0 THEN
-        
+
           BEGIN
             UPDATE crapcyc c
                SET c.flgehvip = 0
@@ -2884,13 +2886,13 @@ BEGIN
                AND c.cdorigem = pr_cdorigem
                AND c.nrdconta = r1.nrdconta
                AND c.nrctremp = r1.nrctremp
-               AND c.cdmotcin = pr_cdmotcin;-- 8 - Repasse Consignado  
+               AND c.cdmotcin = pr_cdmotcin;-- 8 - Repasse Consignado
           EXCEPTION
             WHEN OTHERS THEN
                vr_dscritic := 'Erro no UPDATE da CRAPCYC: '|| sqlerrm;
-               raise vr_exc_erro; 
-          END; 
-          
+               raise vr_exc_erro;
+          END;
+
           -- Gera log
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 --  erro nao tratado
@@ -2901,10 +2903,10 @@ BEGIN
                                                         ' Empresa: '  || pr_cdempres ||
                                                         ' Origem: '   || pr_cdorigem ||
                                                         ' Conta: '    || r1.nrdconta ||
-                                                        ' Contrato: ' || r1.nrctremp ||'.');        
+                                                        ' Contrato: ' || r1.nrctremp ||'.');
         END IF;
-      END IF;  
-    END LOOP; 
+      END IF;
+    END LOOP;
   EXCEPTION
     WHEN vr_exc_erro THEN
       IF vr_cdcritic <> 0 THEN
@@ -2917,13 +2919,13 @@ BEGIN
     WHEN OTHERS THEN
       pr_des_erro := 'NOK';
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina tela_consig.pc_interromper_cobranca: '||SQLERRM;        
+      pr_dscritic := 'Erro geral na rotina tela_consig.pc_interromper_cobranca: '||SQLERRM;
       ROLLBACK;
   END;
-                              
+
   PROCEDURE pc_excluir_param_consig(pr_cdcooper           IN TBCADAST_EMPRESA_CONSIG.CDCOOPER%TYPE
                                    ,pr_cdempres           IN TBCADAST_EMPRESA_CONSIG.CDEMPRES%TYPE --> codigo da empresa
-                                   ,pr_cdoperad           IN VARCHAR2              --> Operador 
+                                   ,pr_cdoperad           IN VARCHAR2              --> Operador
                                     -- campos padrões
                                    ,pr_cdcritic          OUT PLS_INTEGER           --> Codigo da critica
                                    ,pr_dscritic          OUT VARCHAR2              --> Descricao da critica
@@ -2964,16 +2966,16 @@ BEGIN
    CURSOR cr_param IS
      SELECT t.idemprconsigparam
        FROM tbcadast_emp_consig_param  t
-      WHERE t.idemprconsig = (SELECT e.idemprconsig 
-                                FROM tbcadast_empresa_consig e 
+      WHERE t.idemprconsig = (SELECT e.idemprconsig
+                                FROM tbcadast_empresa_consig e
                                WHERE e.cdempres = pr_cdempres
                                  AND e.cdcooper = pr_cdcooper);
 
   BEGIN
-    
+
     FOR r1 IN cr_param
     LOOP
-  
+
       --recuperar os dados para fazer o log
       OPEN cr_param_consig(r1.idemprconsigparam);
       FETCH cr_param_consig INTO rw_param_consig;
@@ -3006,7 +3008,7 @@ BEGIN
         CLOSE cr_param_consig;
       END IF;
     END LOOP;
-    
+
     pr_des_erro := 'OK';
 
   EXCEPTION
@@ -3021,7 +3023,7 @@ BEGIN
     WHEN OTHERS THEN
          pr_des_erro := 'NOK';
          pr_cdcritic := vr_cdcritic;
-         pr_dscritic := 'Erro geral na rotina tela_consig.pc_excluir_param_consig_web: '||SQLERRM;        
+         pr_dscritic := 'Erro geral na rotina tela_consig.pc_excluir_param_consig_web: '||SQLERRM;
          ROLLBACK;
   END pc_excluir_param_consig;
 
