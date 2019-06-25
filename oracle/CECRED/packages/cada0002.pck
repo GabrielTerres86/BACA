@@ -2401,7 +2401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     --  Programa : pc_impressao_ficha_prop
     --  Sistema  : Rotinas para impressão de dados
     --  Autor    : Cássia de Oliveira - GFT
-    --  Data     : Janeiro/2019.                   Ultima atualizacao: --/--/----
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: 06/06/2019
     --
     --  Dados referentes ao programa:
     -- 	
@@ -2409,7 +2409,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     --   Objetivo  : Agrupa os dados e monta o layout para impressão de Ficha-Proposta
     --
     --   Alteracoes: 
-    --
+    --              06/06/2019 - RITM0015775 - Inclusão de matricula e mudança 
+    --                           nos telefones buscados para trazer preferencialmente
+    --                           o residencial (Mouts)
     -- .............................................................................
       DECLARE
       -- Variaveis padrao
@@ -2557,8 +2559,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
          WHERE tfc.nrdconta = pr_nrdconta
            AND tfc.cdcooper = vr_cdcooper
            AND tfc.idseqttl = pr_idseqttl
-           AND ROWNUM = 1
-      ORDER BY tfc.cdseqtfc;
+      ORDER BY tfc.tptelefo;
       rw_primtfc cr_craptfc%ROWTYPE; 
       rw_segutfc cr_craptfc%ROWTYPE;   
       
