@@ -3417,13 +3417,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         RAISE vr_exc_saida;
       END IF; 
     
-      -- Buscar dblink
-      vr_nom_dblink_ro := gene0005.fn_get_dblink_sas('R');
-      IF vr_nom_dblink_ro IS NULL THEN
-        vr_dscritic := 'Nao foi possivel retornar o DBLink(RO) do SAS, verifique!';
-        RAISE vr_exc_saida;
-      END IF;
-    
       vr_nom_dblink_rw := gene0005.fn_get_dblink_sas('W');
       IF vr_nom_dblink_rw IS NULL THEN
         vr_dscritic := 'Nao foi possivel retornar o DBLink(RW) do SAS, verifique!';
@@ -3442,8 +3435,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                     || '      ,car.dthorafimprocesso '
                     || '      ,nvl(carAim.indsituacao_carga,0) indsituac '
                     || '      ,carAim.idcarga '
-                    || '  FROM '||vr_nom_owner||'sas_preaprovado_carga@'||vr_nom_dblink_ro||' pot '
-                    || '      ,'||vr_nom_owner||'dw_fatocontrolecarga@'||vr_nom_dblink_ro||' car '
+                    || '  FROM '||vr_nom_owner||'sas_preaprovado_carga@'||vr_nom_dblink_rw||' pot '
+                    || '      ,'||vr_nom_owner||'dw_fatocontrolecarga@'||vr_nom_dblink_rw||' car '
                     || '      ,tbepr_carga_pre_aprv       carAim '
                     || ' WHERE car.skcarga = carAim.Skcarga_Sas(+) '
                     || '   AND pot.skcarga = car.skcarga '
@@ -3615,7 +3608,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                               || '                        ,lim.vlpotenparmax '
                               || '                        ,lim.vlpotenlimmax '
                               || '                        ,''A'''
-                              || '                    FROM '||vr_nom_owner||'sas_preaprovado_limite@'||vr_nom_dblink_ro||' lim '
+                              || '                    FROM '||vr_nom_owner||'sas_preaprovado_limite@'||vr_nom_dblink_rw||' lim '
                               || '                   WHERE lim.skcarga = '||vr_skcarga;
 
                 -- Processar cursor dinâmico
@@ -3668,7 +3661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                               || '                        ,NULL '
                               || '                        ,exc.cdexclusao '
                               || '                        ,exc.dsexclusao '
-                              || '                    FROM '||vr_nom_owner||'sas_preaprovado_exclusoes@'||vr_nom_dblink_ro||' exc '
+                              || '                    FROM '||vr_nom_owner||'sas_preaprovado_exclusoes@'||vr_nom_dblink_rw||' exc '
                               || '                   WHERE exc.skcarga = '||vr_skcarga;
 
                 vr_num_cursor_int := dbms_sql.open_cursor;
@@ -4648,6 +4641,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
           END IF;
           
           vr_tab_carga(vr_idx_carga).vlpotlimtot := vr_tab_carga(vr_idx_carga).vlpotlimtot + nvl(vr_vlpotlim,0);				
+		  
           IF vr_tab_carga(vr_idx_carga).vlpotlim < vr_vlpotlim THEN                             
              vr_tab_carga(vr_idx_carga).vlpotlim := vr_vlpotlim;
           END IF;
@@ -5834,10 +5828,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       
             -- Para PF
             IF pr_tppessoa = 1 THEN
-
               -- Buscar Conjuge desde que SegundoTitular
               for rw_crapcje in cr_crapcje (rw_ass.nrdconta) loop
-        
                 -- Se já não foi pesquisado o mesmo CPF/CNPJ
                 IF NOT vr_tab_cpf_cnpj_cje.exists(rw_crapcje.nrcpfcgc) THEN
                   -- Adicionar ao vetor
@@ -6395,7 +6387,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                 ,pr_action => 'pc_proc_job_imp_preapv_sas'); 
       
       -- Buscar DBLink
-      vr_nom_dblink := gene0005.fn_get_dblink_sas('R');
+      vr_nom_dblink := gene0005.fn_get_dblink_sas('W');
       IF vr_nom_dblink IS NULL THEN
         vr_dscritic := 'Nao foi possivel retornar o DBLink do SAS, verifique!';
         RAISE vr_exc_saida;

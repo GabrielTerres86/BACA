@@ -187,7 +187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
                                 ,pr_action => 'pc_lista_cargas_SAS'); 
       
       -- Buscar dblink
-      vr_nom_dblink := gene0005.fn_get_dblink_sas('R');
+      vr_nom_dblink := gene0005.fn_get_dblink_sas('W');
       IF vr_nom_dblink IS NULL THEN
         vr_dscritic := 'Nao foi possivel retornar o DBLink do SAS, verifique!';
         RAISE vr_exc_saida;
