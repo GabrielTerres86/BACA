@@ -358,6 +358,51 @@ begin
     RETURN;
   END IF;
   
+  -- ************
+  
+  -- Guarda o valor da ultima Mora
+  vr_vlultmora := vr_vlmratit;
+  -- Recalcula os juros para a Mora mensal
+  cecred.dsct0003.pc_calcula_atraso_tit(pr_cdcooper => rw_craptdb.cdcooper,
+                                        pr_nrdconta => rw_craptdb.nrdconta,
+                                        pr_nrborder => rw_craptdb.nrborder,
+                                        pr_cdbandoc => rw_craptdb.cdbandoc,
+                                        pr_nrdctabb => rw_craptdb.nrdctabb,
+                                        pr_nrcnvcob => rw_craptdb.nrcnvcob,
+                                        pr_nrdocmto => rw_craptdb.nrdocmto,
+                                        pr_dtmvtolt => to_date('31/05/2019', 'DD/MM/RRRR'),
+                                        pr_vlmtatit => vr_vlmtatit,
+                                        pr_vlmratit => vr_vlmratit,
+                                        pr_vlioftit => vr_vlioftit,
+                                        pr_cdcritic => vr_cdcritic,
+                                        pr_dscritic => vr_dscritic);
+  -- Verifica crítica               
+  IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+    dbms_output.put_line('erro: - '||vr_cdcritic||' - '||vr_dscritic);
+    RETURN;
+  END IF;  
+  
+  --Faz lançamento de PAGAMENTO DE TITULO no extrato
+  DSCT0003.pc_inserir_lancamento_bordero (pr_cdcooper => 2
+                                         ,pr_nrdconta => 573094
+                                         ,pr_nrborder => 47643
+                                         ,pr_dtmvtolt => to_date('31/05/2019','DD/MM/RRRR')
+                                         ,pr_cdbandoc => 85
+                                         ,pr_nrdctabb => 10210
+                                         ,pr_nrcnvcob => 10210
+                                         ,pr_nrdocmto => 3184
+                                         ,pr_nrtitulo => 3
+                                         ,pr_cdorigem => 7
+                                         ,pr_cdhistor => 2668 --APROPR. JUROS DE MORA DESCONTO DE TITULO
+                                         ,pr_vllanmto => vr_vlmratit - vr_vlultmora -- O valor calculado no mês, menos o valor já lançado.
+                                         ,pr_dscritic => vr_dscritic );
+
+  -- Condicao para verificar se houve critica                    
+  IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+    dbms_output.put_line('erro: - '||vr_cdcritic||' - '||vr_dscritic);
+    RETURN;
+  END IF;
+  
   -- Atualiza a TDB com o valor da Mora
   UPDATE craptdb
   SET vlmratit = vr_vlmratit, -- Valor da Mora atualizado
