@@ -1139,10 +1139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --	                               
   --             04/01/2019 - chamado INC0027294 (Fabio-Amcom)
   --		
-  --		
-  --             19/03/2019 - Alteração na "pc_efetua_liquidacao_empr" para incluir tratamento para conta corrente 
-  --                          em prejuízo (débito da conta transitória)
-  --                          (Reginaldo/AMcom - P450)  	                               
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -14020,10 +14017,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    27/09/2016 - Tornar o parametro PR_TAB_PGTO_PARCEL um parametro
                                 "IN OUT" (Renato/Supero - P.302 - Acordos)
 
-                   19/03/2019 - Tratamento para conta corrente em prejuízo (débito
-                                da conta transitória)
-                                (Reginaldo/AMcom - P450)
-
     ............................................................................. */
 
     DECLARE
@@ -14111,8 +14104,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Variaveis Excecao
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
-
-      vr_inprejuz BOOLEAN; -- Indica se a conta corrente está em prejuízo
 
     BEGIN
       --Inicializar variavel erro
@@ -14411,15 +14402,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           END IF;
         END LOOP;  --rw_crappep
 
-        -- Verifica se a conta está em prejuízo
-        vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
-                                                      , pr_nrdconta => pr_nrdconta);
-
         --Percorrer os Lancamentos
         vr_index_lanc:= vr_tab_lanc.FIRST;
         WHILE vr_index_lanc IS NOT NULL LOOP
 
-          IF NOT vr_inprejuz THEN
             /* Lanca em C/C e atualiza o lote */
             empr0001.pc_cria_lancamento_cc_chave (pr_cdcooper => vr_tab_lanc(vr_index_lanc).cdcooper --> Cooperativa conectada
                                                  ,pr_dtmvtolt => vr_tab_lanc(vr_index_lanc).dtmvtolt --> Movimento atual
@@ -14442,24 +14428,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               --Sair
               RAISE vr_exc_saida;
             END IF;
-          ELSE 
-            IF nvl(vr_tab_lanc(vr_index_lanc).vllanmto, 0) > 0 THEN
-              -- Lança débito na conta transitória (Bloqueado Prejuízo)
-              PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => vr_tab_lanc(vr_index_lanc).cdcooper
-                                          , pr_nrdconta => vr_tab_lanc(vr_index_lanc).nrdconta
-                                          , pr_vlrlanc => vr_tab_lanc(vr_index_lanc).vllanmto
-                                          , pr_dtmvtolt => vr_tab_lanc(vr_index_lanc).dtmvtolt
-                                          , pr_dsoperac => 'Liq. Emprestimo: ' || vr_tab_lanc(vr_index_lanc).nrctremp || 
-                                                           ' Hist. ' || vr_tab_lanc(vr_index_lanc).cdhistor
-                                          , pr_cdcritic => vr_cdcritic
-                                          , pr_dscritic => vr_dscritic);
-                                          
-              IF trim(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
-                --Sair
-                RAISE vr_exc_saida;
-              END IF;
-            END IF;
-          END IF;
 
           --Marcar que transacao ocorreu
           vr_flgtrans:= TRUE;

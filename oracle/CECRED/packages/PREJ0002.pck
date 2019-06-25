@@ -110,7 +110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 29/04/2019
+   Data    : Maio/2017                      Ultima atualizacao: 17/04/2019
 
    Dados referentes ao programa:
 
@@ -158,9 +158,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                    lançado na TBCC_PREJUIZO_DETALHE.
                    (Reginaldo/AMcom - P450)
 
-                   29/04/2019 - P450 - Correção na exclusão do histórico 2386 no estorno realizado no mesmo dia.
-                              (Reginaldo / AMcom)
-                      
 ..............................................................................*/
 
   vr_cdcritic             NUMBER(3);
@@ -197,7 +194,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
     Sistema : AyllosWeb
     Sigla   : PREJ
     Autor   : Jean Calão - Mout´S
-      Data    : Agosto/2017.                  Ultima atualizacao: 29/04/2019
+      Data    : Agosto/2017.                  Ultima atualizacao: 07/12/2018
 
     Dados referentes ao programa:
 
@@ -206,33 +203,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
     Objetivo  : Efetua o estorno de pagamento de prejuizos de contratos PP e TR
     Observacao: Rotina chamada pela tela ESTPRJ
 
-      Alteracoes: 24/04/2018 - Nova Regra para bloqueio de estorno realizado pela tela ESTPRJ
-                               (Rafael Monteiro - Mouts)
-                
-                  18/05/2018 - Adicionar o tratamento para histórico 2701 e 2702
-                               (Rafael - Mouts) 
+    Alteracoes: 24/04/2018 - Nova Regra para bloqueio de estorno realizado pela tela ESTPRJ
+                (Rafael Monteiro - Mouts)
+                18/05/2018 - Adicionar o tratamento para histórico 2701 e 2702
+                                 (Rafael - Mouts)
+      17/10/2018 - 11019:Avaliação necessidade tratamento no DELETE LCM programa prej0002.pck (Heckmann - AMcom)
+               - Substituição do Delete da CRAPLCM pela chamada da rotina LANC0001.pc_estorna_lancto_conta              
 
-                  17/10/2018 - 11019:Avaliação necessidade tratamento no DELETE LCM programa prej0002.pck (Heckmann - AMcom)
-                             - Substituição do Delete da CRAPLCM pela chamada da rotina LANC0001.pc_estorna_lancto_conta              
-
-                  06/12/2018 - Correção gera crédito para estorno em dia anterior, usa r_craplem.dtmvtolt ao inves
-                               data atual da cooperativa
-                               (Renato Cordeiro - AMcom)
-
-                  07/12/2018 - Refatoração dos lançamentos de estorno na LEM e inclusão da busca pelo valor do lançamento
-                               a estornar na TBCC_PREJUIZO_DETALHE com o histórico 2781.
-                               (Reginaldo/AMcom - P450)
+      06/12/2018 - Correção gera crédito para estorno em dia anterior, usa r_craplem.dtmvtolt ao inves
+                  data atual da cooperativa
+                  (Renato Cordeiro - AMcom)
+									
+			07/12/2018 - Refatoração dos lançamentos de estorno na LEM e inclusão da busca pelo valor do lançamento
+			             a estornar na TBCC_PREJUIZO_DETALHE com o histórico 2781.
+									 (Reginaldo/AMcom - P450)
                    
-                  11/02/2019 - Acerto lógica loop na craplem para estornos de dias anteriores
-                               (Renato Cordeiro - AMcom)
-
-                  15/04/2019 - P450 - Ajuste para exclusão de lançamento na TBCC_PREJUIZO_DETALHE 
-                               com histórico 2781, para evitar enviar ao CYBER informação equivocada
-                               de pagamento do contrato de empréstimo.
-                               (Reginaldo / AMcom)
-                  
-                  29/04/2019 - P450 - Correção na exclusão do histórico 2386 no estorno realizado no mesmo dia.
-                               (Reginaldo / AMcom)
+      11/02/2019 - Acerto lógica loop na craplem para estornos de dias anteriores
+                  (Renato Cordeiro - AMcom)
     ..............................................................................*/
 			TYPE typ_reg_historico IS RECORD (cdhistor craphis.cdhistor%TYPE
 			                                , dscritic VARCHAR2(100));
@@ -539,7 +526,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
             RAISE vr_erro;
         END;
 
-        IF r_craplem.cdhistor = 2701 THEN
         /* excluir lancamento LCM */
         BEGIN
               
@@ -617,7 +603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
             RAISE vr_erro ;
         END;
         --
-        END IF;
+
       ELSE
         -- Estorno de data anterior
             IF vr_obtem_valor_lancto = 1 then
@@ -664,7 +650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                                 pr_nrdconta => pr_nrdconta, 
                                                 pr_cdoperad => '1', 
                                                 pr_vlrlanc  => vr_vllanmto,
-                                                pr_dtmvtolt => rw_crapdat.dtmvtolt, 
+                                                pr_dtmvtolt => r_craplem.dtmvtolt, 
                                                 pr_nrdocmto => null, 
                                                 pr_cdcritic => vr_cdcritic, 
                                                 pr_dscritic => vr_dscritic);

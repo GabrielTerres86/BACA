@@ -15,7 +15,7 @@ BEGIN
   Sistema : Prejuizo - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean (Mout´S)
-  Data    : Junho/2017.                    Ultima atualizacao: 22/04/2019
+  Data    : Junho/2017.                    Ultima atualizacao: 09/11/2018
 
   Dados referentes ao programa:
 
@@ -34,9 +34,6 @@ BEGIN
                            PRJ450 - Regulatorio(Odirlei-AMcom)
               
 			  09/05/2019 - P298.2.2 Tratamento para juros +60 PosFixado (Rafael Faria - Supero)
-
-              22/04/2019 - P450 - Ajuste para lançar corretamente o IOF na tabela TBGEN_IOF_LANCAMENTO quando a conta
-                           corrente está em prejuízo. (Reginaldo/AMcom)
               
     ............................................................................. */
 
@@ -144,7 +141,6 @@ BEGIN
     vr_vldpagto      NUMBER(18,6);           --> Valor de desconto das parcelas
     vr_vlPrincAbono NUMBER(18,6);           --> Valor de desconto das parcelas
     vr_inusatab     BOOLEAN;                --> Indicador S/N de utilização de tabela de juros
-    vr_nrseqdig_IOF INTEGER;                --> Sequencial do lançamento do IOF na CC
     
     -- Erro em chamadas da pc_gera_erro
     vr_des_reto VARCHAR2(3);
@@ -158,7 +154,6 @@ BEGIN
     vr_juros_atualizado NUMBER;
     vr_tab_sald         extr0001.typ_tab_saldos;
     
-    vr_inprejuz BOOLEAN;  -- Indicador de prejuízo de conta corrente
   ---------------------------------------
   -- Inicio Bloco Principal PC_CRPS780_1
   ---------------------------------------
@@ -309,13 +304,13 @@ BEGIN
           
         END IF;
         --      
-        vr_qtdjuros60       := 0;
+        vr_qtdjuros60 := 0;
         vr_juros_atualizado := 0;
         -- Buscar o valor atualizado do juros+60 e juros atualizado na mensal
         FOR rw_craplem_juros in cr_craplem_juros(rw_crapepr.cdcooper
                                                 ,rw_crapepr.nrdconta
                                                 ,rw_crapepr.nrctremp) LOOP
-          vr_qtdjuros60       := nvl(rw_craplem_juros.sum_vllanmto_jr60,0);
+          vr_qtdjuros60 := nvl(rw_craplem_juros.sum_vllanmto_jr60,0);
           vr_juros_atualizado := nvl(rw_craplem_juros.sum_vllanmto_jratlz,0);
         END LOOP;
         --
@@ -480,12 +475,8 @@ BEGIN
           -- Se houver pagamento de IOF
           IF vr_vlpiofpr > 0 THEN
           
-            vr_nrseqdig_IOF := 0;
             -- Lança débito na conta corrente somente se não está em prejuízo
-
-            vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta);
-
-            IF  NOT vr_inprejuz THEN
+					  IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) = FALSE THEN
               -- Lançar em C/C o Pagamento
               empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper 
                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -532,30 +523,8 @@ BEGIN
                 RAISE vr_exc_erro;                
               END IF;         
             END IF;
-            
-            --Registra lançamento do IOF na tabela para o BI
-            tiof0001.pc_insere_iof(pr_cdcooper    => pr_cdcooper
-                                 ,pr_nrdconta     => rw_crapepr.nrdconta
-                                 ,pr_dtmvtolt     => rw_crapdat.dtmvtolt
-                                 ,pr_tpproduto    => 1 -- Emprestimo
-                                 ,pr_nrcontrato   => rw_crapepr.nrctremp
-                                 ,pr_idlautom     => null
-                                 ,pr_dtmvtolt_lcm => rw_crapdat.dtmvtolt
-                                 ,pr_cdagenci_lcm => CASE WHEN NOT vr_inprejuz THEN 1 ELSE NULL END
-                                 ,pr_cdbccxlt_lcm => CASE WHEN NOT vr_inprejuz THEN 100 ELSE NULL END
-                                 ,pr_nrdolote_lcm => CASE WHEN NOT vr_inprejuz THEN 8457 ELSE NULL END
-                                 ,pr_nrseqdig_lcm => CASE WHEN NOT vr_inprejuz THEN vr_nrseqdig_IOF ELSE NULL END
-                                 ,pr_vliofpri     => 0
-                                 ,pr_vliofadi     => 0
-                                 ,pr_vliofcpl     => vr_vlpiofpr
-                                 ,pr_flgimune     => 0
-                                 ,pr_cdcritic     => vr_cdcritic
-                                 ,pr_dscritic     => vr_dscritic);
-
-            if vr_dscritic is not null then
-              RAISE vr_exc_erro;
-            end if;
-          END IF; --vr_vlpiofpr > 0
+          END IF;
+                   
                                                                       
           -- Armazenar informações para aproveitamento posterior
           IF rw_crapepr.txjuremp <> rw_crapepr.vltaxa_juros THEN

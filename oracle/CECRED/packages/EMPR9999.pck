@@ -918,13 +918,10 @@ create or replace package body cecred.EMPR9999 as
       Alteração : 29/11/2018 - Ajustado para gerar lanc. hist 384 na tabela de prejuizo detalhe, 
                                para pagamentos com conta em prejuiz CC. PRJ450 - Regulatorio (Odirlei-AMcom)
 							    
-                  27/12/2018 - Alteração no tratamento para contas corrente em prejuízo (verificar através
-                               da função PREJ0003.fn_verifica_preju_conta ao invés de usar o "pr_nmdatela").
-                               P450 - Reginaldo/AMcom
+									27/12/2018 - Alteração no tratamento para contas corrente em prejuízo (verificar através
+									             da função PREJ0003.fn_verifica_preju_conta ao invés de usar o "pr_nmdatela").
+															 P450 - Reginaldo/AMcom
 
-                  17/04/2019 - Remoção de chamada equivocada da procedure "PREJ0003.pc_gera_debt_cta_prj" no
-                               bloco de processamento de IOF pago.
-                               P450 - Reginaldo/AMcom
     ..........................................................................*/
     
     -- Buscar o valor total de lançamentos referente ao pagamento do prejuízo original
@@ -2302,7 +2299,7 @@ create or replace package body cecred.EMPR9999 as
                                              ,pr_vlsprojt => pr_vlsprojt        --rw_crapepr.vlsprojt
                                              ,pr_qttolatr => pr_qttolar         --rw_crapepr.qttolatr
                                              ,pr_tab_parcelas => vr_tab_parcelas_pos
-                                             ,pr_tab_calculado => vr_tab_calculado
+																						 ,pr_tab_calculado => vr_tab_calculado
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);																				 
 																						 
