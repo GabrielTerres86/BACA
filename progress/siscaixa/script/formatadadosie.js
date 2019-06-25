@@ -49,7 +49,7 @@ Alteracoes: 15/12/2008 - Alteracoes para unificacao dos bancos de dados (Evandro
 			31/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
 
 		    23/08/2016  - Adicionado funções "setFocus()" e "callBlass()", para chamada do cartão assinatura (Evandro - RKAM).
-		    
+		   
 		    04/09/2017 - Removido rotinas 84, 85 pois nao serao mais usadas (Tiago/Elton #679866).
 		    
 		    16/11/2017 - Inclusao da rotina 97. (SD 788441 - Kelvin).
@@ -865,13 +865,9 @@ function onKey(e) {
    }
 }
 
-/*
 function callCalc(e, obj) {
-        if (e.keyCode == 120) {
-                window.open("calc.htm?elem=" + obj.name, "wincalc", "resizable=no, height=190, width=270, left=0, top=0");
-        }
+    return true;
 }
-*/
 
 function Setenter(e) {
     if (e.keyCode == 13) { //alert('teste');
