@@ -66,13 +66,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
   --  Programa : TELA_ATENDA_EMPRESTIMO
   --  Sistema  : Ayllos Web
   --  Autor    : Jaison Fernando
-  --  Data     : Marco - 2017                 Ultima atualizacao: 
+  --  Data     : Marco - 2017                 Ultima atualizacao: 25/06/2019
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela Emprestimos dentro da ATENDA
   --
-  -- Alteracoes: 
+  -- Alteracoes: 25/06/2019 - Alterado a rotina pc_valida_inf_proposta para inclusão da regra do dia 29/02 
+  --                          (Fernanda Kelli de Oliveria - AMcom)
   --
   ---------------------------------------------------------------------------
 
@@ -280,7 +281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
     Programa: pc_valida_inf_proposta
     Sistema : AIMARO
     Autor   : AMcom Sistemas de Informação - Projeto 437 - Consignado
-    Data    : 11/03/2019                       Ultima atualizacao: 
+    Data    : 11/03/2019                       Ultima atualizacao: 25/06/2019
 
     Dados referentes ao programa:
 
@@ -288,7 +289,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
 
     Objetivo  : Validações da inclusão da proposta do consignado
 
-    Alteracoes: 
+    Alteracoes:  25/06/2019 - Alterado a regra para buscar o dia de vencimento da parcela quando for do dia 29/02
+                              (Fernanda Kelli de Oliveria - AMcom) 
     ..............................................................................*/ 
          
   --Variaveis Locais   
@@ -299,6 +301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
   vr_clob          CLOB;   
   vr_xml_temp      VARCHAR2(32726) := '';      
   vr_qtregist      INTEGER := 0; 
+  vr_dtmvtolt      crapdat.dtmvtolt%TYPE;
 
   --Controle de erro
   vr_exc_erro EXCEPTION;
@@ -416,9 +419,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
       pr_qtregist := nvl(pr_qtregist,0) + 1;   
     END IF;
     
+	-- O dia 29/02 não é aceito na FIS e nem no Grid de Vctos da tela CONSIG, deve utilizar o próximo dia de mvto da cooperativa.
+    IF to_char(rw_crapdat.dtmvtolt,'dd/mm') = '29/02' THEN
+      vr_dtmvtolt := rw_crapdat.dtmvtopr;
+    ELSE
+      vr_dtmvtolt := rw_crapdat.dtmvtolt;
+    END IF;
+	
     -- busca o 1º vencimento da parcela
     FOR rg_vecto in cr_vecto (pr_cdcooper => pr_cdcooper,
-                              pr_dtmvtolt => rw_crapdat.dtmvtolt)
+                              pr_dtmvtolt => vr_dtmvtolt)
     LOOP
       vr_dtvencimento:= rg_vecto.dtvencimento;
     END LOOP;
