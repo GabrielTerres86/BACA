@@ -30,6 +30,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
   --                          recuperar o texto da crapprm.
   --                          (P559 - André Clemer - Supero)
   --
+  --             05/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO"
+  --                          (P559 - André Clemer - Supero)
+  --
   ---------------------------------------------------------------------------
 
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -8145,7 +8148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 		Sistema : CECRED
 		Sigla   : EMPR
 		Autor   : Lucas Reinert
-		Data    : Outubro/15.                    Ultima atualizacao: 27/09/2016
+		Data    : Outubro/15.                    Ultima atualizacao: 23/04/2019
 
 		Dados referentes ao programa:
 
@@ -8160,6 +8163,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
                     23/04/2019 - Alterada rotina para envio do boleto por e-mail para
                              recuperar o texto da crapprm.
+                             (P559 - André Clemer - Supero)
+
+                    05/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO"
                              (P559 - André Clemer - Supero)
 	..............................................................................*/
 		DECLARE
@@ -8286,6 +8292,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 				dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
 				--Escrever no arquivo XML
 				gene0002.pc_escreve_xml(vr_clobxml, vr_dstextorel,'<?xml version="1.0" encoding="UTF-8"?><Root><Dados>');
+
+				-- Removida instrução (PRJ 559 - Task 22167: Remover trava de instrução)
+				vr_tab_cob(vr_tab_cob.FIRST).dsdinst1 := ' ';
 
 				vr_dstexto :=               '<cdcooper>' || NVL(vr_tab_cob(vr_tab_cob.FIRST).cdcooper, '') || '</cdcooper>';
 				vr_dstexto := vr_dstexto || '<nrdconta>' || NVL(vr_tab_cob(vr_tab_cob.FIRST).nrdconta, '') || '</nrdconta>';
