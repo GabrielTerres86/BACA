@@ -1,5 +1,5 @@
 DECLARE
-  --
+  -- --
 BEGIN
 	--
 	INSERT INTO crapprm(nmsistem
