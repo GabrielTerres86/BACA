@@ -3693,7 +3693,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    26/07/2017 - Ajuste no insert da tabela crapsab, onde estava sendo inserido
                                 na coluna nrcelsac o valor do cep e tambem corrigido para inserir a 
                                 situacao como ativo, antes estava assumindo o valor 0 por default 
-                                (Rafael Monteiro - 720045)                                
+                                (Rafael Monteiro - 720045)    
+						 
+			       26/06/2019 - Ajuste para retirar acentos e caracteres especiais do sacado
+				                Alcemir Jr. (PRB0041807).                            
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -3717,6 +3720,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     ------------------------------- VARIAVEIS --------------------------------
     vr_nrendsac INTEGER;
 	vr_nmdsacad crapsab.nmdsacad%type;
+	vr_nmbaisac crapsab.nmbaisac%TYPE; 
+    vr_nmcidsac crapsab.nmcidsac%TYPE; 
+    vr_dsendsac crapsab.dsendsac%TYPE; 
 
   BEGIN
   
@@ -3727,6 +3733,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_nmdsacad := '';
       -- remover caracter especial vr_nmdsacad
       vr_nmdsacad := gene0007.fn_caract_acento(vr_sacado.nmdsacad, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
+	  vr_nmbaisac := gene0007.fn_caract_acento(vr_sacado.nmbaisac, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
+      vr_nmcidsac := gene0007.fn_caract_acento(vr_sacado.nmcidsac, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
+      vr_dsendsac := gene0007.fn_caract_acento(vr_sacado.dsendsac, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
       
       BEGIN
         -- Se nao existe o sacado, vamos cadastrar
@@ -3750,10 +3759,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                           ,vr_nmdsacad
                           ,vr_sacado.cdtpinsc
                           ,vr_sacado.nrinssac
-                          ,vr_sacado.dsendsac
+                          ,vr_dsendsac
                           ,0
-                          ,nvl(trim(vr_sacado.nmbaisac),' ')
-                          ,nvl(trim(vr_sacado.nmcidsac),' ')
+                          ,nvl(trim(vr_nmbaisac),' ')
+                          ,nvl(trim(vr_nmcidsac),' ')
                           ,nvl(trim(vr_sacado.cdufsaca),' ')
                           ,vr_sacado.nrcepsac
                           ,vr_sacado.cdoperad
