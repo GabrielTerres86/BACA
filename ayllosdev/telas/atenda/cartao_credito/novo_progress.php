@@ -29,6 +29,7 @@
  * 017: [18/03/2019] Anderson-Alan   (SUPERO) : Implementado tipo de envio do cartão - PJ429
  * 018: [24/05/2019] Alcemir Jr.     (Ailos)  : Ajuste ao sair do campo CPF. (PRB0041678)
  * 019: [13/06/2019] Alcemir Jr.     (Ailos)  : Setar campo dddebito conforme titular (INC0015816). 
+ * 020: [26/06/2019] Lucas Ranghetti (AILOS)  : Na funcao verificaEfetuaGravacao devemos passar o 'I' para poder zerar o nrctrcrd quando for inclusao - PRB0041966. 
  */
 
 	session_start();
@@ -419,7 +420,7 @@
 			<?php if ($coop_envia_cartao && !$pa_envia_cartao) { ?>
 			<input type="button" class="botao botaoDesativado" id="btnsaveRequest" onclick="return false;" value="Prosseguir" />
 			<?php } else { ?>
-			<input type="button" class="botao" id="btnsaveRequest" onclick="$('#nmtitcrd').click(); $('#nmextttl').click(); verificaEfetuaGravacao();return false;" value="Prosseguir" />
+			<input type="button" class="botao" id="btnsaveRequest" onclick="$('#nmtitcrd').click(); $('#nmextttl').click(); verificaEfetuaGravacao('I');return false;" value="Prosseguir" />
 			<?php } ?>
 			<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
 				cdagenci="<?php echo $glbvars['cdpactra']; ?>" 
@@ -454,7 +455,7 @@
 	function prosseguir(){
 		$('#nmtitcrd').click(); 
 		$('#nmextttl').click(); 
-		verificaEfetuaGravacao();
+		verificaEfetuaGravacao('I');
 		return false;
 
 	}
@@ -462,7 +463,7 @@
 		<?if($filter == "BB"){ ?>
 		$('#nmtitcrd').click(); 
 		$('#nmextttl').click(); 
-		verificaEfetuaGravacao();
+		verificaEfetuaGravacao('I');
 		return false;
 		<?
 			}else{ 

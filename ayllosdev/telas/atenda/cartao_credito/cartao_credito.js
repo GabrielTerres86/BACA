@@ -70,6 +70,7 @@
  * 049: [12/12/2018] Anderson-Alan (SUPERO) : Criado funções para controle do novo formulário de Assinatura Eletronica com Senha do TA ou Internet. (P432)
  * 050: [26/02/2019] Lucas Henrique (SUPERO): P429 - Inseridos campos de 'Detalhes de Cartões de Crédito Informações do endereço do cooperado'
  * 051: [09/05/2019] Alcemir (Mouts)        : Incluido var inupgrad para passar por requisição (PRB0041641).
+ * 052: [26/06/2019] Lucas Ranghetti (AILOS): Na fun validarNovoCartao devemos zerar o nrctrcrd quando for inclusao - PRB0041966. 
 */
 
 var idAnt = 999; // Variável para o controle de cartão selecionado
@@ -1865,6 +1866,13 @@ function atualizaEndereco(tipoAcao, cdagenci) {
 
 // Função para validar novo cartão de crédito
 function validarNovoCartao(cddopcao) {
+	
+	// Para novas inclusoes devemos zerar o contrato, feito desta forma pois se operador 
+	// utilizar a seta do mouse o contrato eh selecionado por baixo da tela
+	if (cddopcao == 'I'){	
+		nrctrcrd = 0;
+	}	
+	
     try {
 // Mostra mensagem de aguardo
         if (nrctrcrd == null || nrctrcrd == 0) {
