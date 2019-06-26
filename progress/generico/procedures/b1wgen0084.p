@@ -351,6 +351,7 @@
 { sistema/generico/includes/b1wgen0002tt.i }
 { sistema/generico/includes/b1wgen0027tt.i }
 { sistema/generico/includes/b1wgen0084att.i }
+{ sistema/generico/includes/b1wgen0188tt.i  }
 { sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_cdcritic AS INTE                                        NO-UNDO.
@@ -3388,6 +3389,8 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_qtdiaatr AS INTE                                      NO-UNDO.
     DEF VAR aux_idquapro AS INTE                                      NO-UNDO.
 	DEF VAR aux_flgcescr AS LOGI INIT FALSE                           NO-UNDO.
+    DEF VAR aux_vlemprstcalc AS DECI                                  NO-UNDO.
+    DEF VAR aux_vlpreempcalc AS DECI                                  NO-UNDO.
 
     DEF BUFFER b-crawepr FOR crawepr.
 
@@ -4879,7 +4882,66 @@ PROCEDURE grava_efetivacao_proposta:
 
                UNDO EFETIVACAO, LEAVE EFETIVACAO.
            END.
-         
+        
+        /* P442 - Validar valores de pre-aprovado no momento da liberacao do contrato
+           incluido aqui para reduzir problemas de contratacao simultanea entre canais*/
+        IF crawepr.cdfinemp = 68 THEN
+          DO:
+            /* Buscar valores atualizados no momento da confirmacao */
+            IF NOT VALID-HANDLE(h-b1wgen0188) THEN
+                  RUN sistema/generico/procedures/b1wgen0188.p 
+                      PERSISTENT SET h-b1wgen0188.
+
+               /* Verifica se existe limite disponível */
+               RUN busca_dados IN h-b1wgen0188
+                               (INPUT par_cdcooper,
+                                INPUT par_cdagenci,
+                                INPUT par_nrdcaixa,
+                                INPUT par_cdoperad,
+                                INPUT par_nmdatela,
+                                INPUT par_idorigem,
+                                INPUT par_nrdconta,
+                                INPUT par_idseqttl,
+                                INPUT 0,
+                                OUTPUT TABLE tt-dados-cpa,
+                                OUTPUT TABLE tt-erro).
+               
+               FIND tt-dados-cpa NO-LOCK NO-ERROR.
+               IF  AVAIL tt-dados-cpa THEN
+                 DO:
+                 
+                   aux_vlemprstcalc = tt-dados-cpa.vldiscrd + crawepr.vlemprst.
+                   aux_vlpreempcalc = tt-dados-cpa.vlcalpar + crawepr.vlpreemp.
+                 
+                    /* Verifica se retornou ID de carga */
+                    IF tt-dados-cpa.idcarga = 0 THEN
+                      DO:
+                        aux_dscritic = "Nao foi localizado pre-aprovado para o associado".
+                        UNDO EFETIVACAO , LEAVE EFETIVACAO.
+                      END.
+                      
+                    /* Verifica se o valor limite permite a liberacao*/
+                    IF crawepr.vlemprst > aux_vlemprstcalc THEN
+                      DO:
+                        aux_dscritic = "Valor total nao permitido para pre-aprovado".
+                        UNDO EFETIVACAO , LEAVE EFETIVACAO.
+                      END.
+                      
+                    /* Verifica se o valor da parcela permite a liberacao*/
+                    IF crawepr.vlpreemp > aux_vlpreempcalc THEN
+                      DO:
+                        aux_dscritic = "Valor da parcela nao permitido para pre-aprovado".
+                        UNDO EFETIVACAO , LEAVE EFETIVACAO.
+                      END.
+                 END.
+               ELSE
+                 DO:
+                   aux_dscritic = "Pre-aprovado nao disponivel para usuario".
+                   UNDO EFETIVACAO , LEAVE EFETIVACAO.
+                 END.
+          END.
+        /**/
+		
         /*Validaçao e efetivaçao do seguro prestamista -- PRJ438 - Paulo Martins (Mouts)*/     
         IF crapass.inpessoa = 1 THEN
         DO:
