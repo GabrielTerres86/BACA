@@ -13,7 +13,7 @@ BEGIN
    END;   
     insert into cecred.crapaca(nrseqaca,nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr)
     values (SEQACA_NRSEQACA.NEXTVAL,'GERA_PGTO_PARC_CONSIG', 'EMPR0020', 'PC_GERA_PGTO_PARC_CONSIG_WEB', 
-    'pr_nrdconta,pr_cdpactra,pr_idseqttl,pr_dtmvtolt,pr_flgerlog,pr_nrctremp,pr_dtmvtoan,pr_totatual,pr_totpagto,pr_nrseqava,pr_tab_pgto_parcel ',v_nrseqrdr);
+    NULL,v_nrseqrdr);
 commit;
 END; 
 /
