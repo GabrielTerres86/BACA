@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Agosto/2013                         Ultima atualizacao: 04/06/2018
+   Data    : Agosto/2013                         Ultima atualizacao: 18/05/2019
 
    Dados referentes ao programa:
 
@@ -381,6 +381,7 @@ PROCEDURE grava-dados-crapcyc:
     DEF VAR aux_cdassess AS INTE                                       NO-UNDO.
     DEF VAR aux_cdmotcin AS INTE                                       NO-UNDO.
     DEF VAR aux_nrctrdsc AS INTE                                       NO-UNDO.
+    DEF VAR aux_nrcpfcnpj_base AS DEC                                  NO-UNDO.
 
     DEF VAR aux_conta    AS  INTE                                      NO-UNDO.
     DEF VAR aux_contaok  AS  INTE                                      NO-UNDO.
@@ -665,7 +666,68 @@ PROCEDURE grava-dados-crapcyc:
 
             END. /* END ELSE */
             
+		/* Buscar CPF/CNPJ raiz do associado */
+        FIND FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND
+                                 crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
+        aux_nrcpfcnpj_base = crapass.nrcpfcnpj_base.
 
+        IF AVAIL crapass THEN
+          DO:
+
+            /*** Traz todos os registros de cada cooperativa ativa ***/
+            FOR EACH crapcop WHERE crapcop.flgativo = TRUE
+                     NO-LOCK:
+
+              /* Buscar CPF/CNPJ raiz do associado */
+              FIND FIRST crapass WHERE crapass.cdcooper = crapcop.cdcooper AND
+                                       crapass.nrcpfcnpj_base = aux_nrcpfcnpj_base NO-LOCK NO-ERROR.
+
+              IF AVAIL crapass THEN
+                DO:
+
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                /* Efetuar a chamada a rotina Oracle */
+                RUN STORED-PROCEDURE pc_proces_perca_pre_aprovad
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper
+                                                      ,INPUT 0
+                                                      ,INPUT crapass.nrdconta
+                                                      ,INPUT crapass.inpessoa
+                                                      ,INPUT crapass.nrcpfcnpj_base
+                                                      ,INPUT par_dtmvtolt
+                                                      ,INPUT 75
+                                                      ,INPUT 0
+                                                      ,INPUT 0
+                                                      ,OUTPUT "").
+
+                /* Fechar o procedimento para buscarmos o resultado */
+                CLOSE STORED-PROC pc_proces_perca_pre_aprovad
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_dscritic = ""
+                    aux_dscritic = pc_proces_perca_pre_aprovad.pr_dscritic WHEN pc_proces_perca_pre_aprovad.pr_dscritic <> ?.
+
+                IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                  DO:
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1, /*sequencia*/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+
+                      RETURN "NOK".
+
+                  END. /* IF critic */
+
+              END. /* IF avail */
+
+          END. /* FOR */
+
+      END. /* IF Avail */
+	  
     END. /* fim da entrada contrato */                   
    
     FIND FIRST tt-msg NO-LOCK NO-ERROR.
