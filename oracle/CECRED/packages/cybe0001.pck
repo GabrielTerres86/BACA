@@ -107,6 +107,7 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0001 AS
                                     --Campos atualizar prejuizo (Vitor - GFT)
                                     ,pr_dtprejuz IN DATE DEFAULT NULL --> Numero do titulo em atraso no cyber
                                     ,pr_vlsdprej IN crapcyb.vlsdprej%TYPE DEFAULT 0 --> Numero do titulo em atraso no cyber
+                                    ,pr_dtvencto IN crapcyb.dtvencto%TYPE DEFAULT NULL --> Data de vencimento do cartao
                                     ,pr_dscritic OUT VARCHAR2);
 
 
@@ -588,6 +589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
                                     --Campos atualizar prejuizo (Vitor - GFT)
                                     ,pr_dtprejuz IN DATE                  DEFAULT NULL --> Data do prejuizo
                                     ,pr_vlsdprej IN crapcyb.vlsdprej%TYPE DEFAULT 0    --> Valor do prejuizo
+                                    ,pr_dtvencto IN crapcyb.dtvencto%TYPE DEFAULT NULL --> Data de vencimento do cartao
                                     ,pr_dscritic OUT VARCHAR2) AS
 
     -- ........................................................................
@@ -745,6 +747,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               ,/*39*/ cyb.flgconsg --Indicador de valor consignado.
               ,/*40*/ cyb.dtprejuz --Data que entrou em prejuizo
               ,/*41*/ cyb.vlsdprej --Valor do prejuizo
+              ,/*42*/ cyb.dtvencto --Data vencimento do cartao
               )
             VALUES
               (/*01*/ pr_cdcooper
@@ -790,6 +793,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
               --Inserção das atualizações de Prejuzio (Vitor - GFT)
               ,/*40*/ pr_dtprejuz -- Data em que entrou em prejuizo
               ,/*41*/ pr_vlsdprej -- Valor do prejuizo
+              ,/*42*/ pr_dtvencto -- Data de vencimento do cartao
               );
 
           EXCEPTION

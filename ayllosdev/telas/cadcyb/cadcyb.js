@@ -927,6 +927,8 @@ function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, n
 		dsorigem = 'Conta';
 	} else if (cdorigem == "4") { 
 		dsorigem = 'Desconto de Titulo'; 
+	} else if (cdorigem == "5") {
+		dsorigem = 'Cartoes';
 	} else { 
 		dsorigem = 'Emprestimo'; 
 	}
@@ -937,7 +939,8 @@ function criaObjetoAssociado(cdorigem, nrdconta, nrctremp, nrborder, nrtitulo, n
 		// Verifica se conta já foi incluida, evitando assim duplicidade de registros.
 		if  ( ((dsorigem == "Conta") 	  	      && (arrAssociado[i].nrdconta == nrdconta)) || 
 			  ((dsorigem == "Emprestimo") 		  && (arrAssociado[i].nrdconta == nrdconta) && (arrAssociado[i].nrctremp == nrctremp)) || 
-			  ((dsorigem == "Desconto de Titulo") && (arrAssociado[i].nrdconta == nrdconta) && (arrAssociado[i].nrborder == nrborder) && (arrAssociado[i].nrtitulo == nrtitulo)) ) {
+			  ((dsorigem == "Desconto de Titulo") && (arrAssociado[i].nrdconta == nrdconta) && (arrAssociado[i].nrborder == nrborder) && (arrAssociado[i].nrtitulo == nrtitulo)) ||
+			  ((dsorigem == "Cartoes")            && (arrAssociado[i].nrdconta == nrdconta) && (arrAssociado[i].nrctremp == nrctremp)) ) {
 			flgCria = false;			
 			break;			
 		}

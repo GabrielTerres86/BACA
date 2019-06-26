@@ -7,7 +7,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : 
-  Data    : 2017.                                     Ultima atualizacao: 08/08/2018
+  Data    : 2017.                                     Ultima atualizacao: 29/05/2019
   Dados referentes ao programa:
     Frequencia: Diaria. Seg-sex, 08h
     Programa Chamador: JBCYB_GERA_DADOS_CYBER
@@ -47,6 +47,9 @@ BEGIN
                                será utilizada a vr_dscritic para o envio de emails (Alinhado com Carlos)
                           (Ana - Envolti - Chamado REQ0011757)
                            
+              29/05/2019 - Adicionada fn_verifica_job_ccrd0009, ela verifica se a CRRD0009.PC_IMPORT_ARQ_INADIM_JOB
+                           finalizou sua execução, para que a pc_crps652 execute as dependencias de dados gerados por ela.
+                           (Darlei - Supero)
   .............................................................................. */  
 
   DECLARE
@@ -74,11 +77,50 @@ BEGIN
     vr_titulo             VARCHAR2(1000);
     vr_destinatario_email VARCHAR2(500);
 
+    -- Reagendamento da proxima execucao 
+    vr_data_prox_exec TIMESTAMP := SYSDATE;
+    vr_dthrexec TIMESTAMP;
+    vr_jobnames VARCHAR2(50);
+    vr_dsdplsql VARCHAR2(4000);
+    
     -- Excluida variavel vr_idprglog pois não é utilizada - Chmd REQ0011757 - 13/04/2018  
          
     vr_intipmsg   INTEGER := 1; -- pr_intipmsg tipo de mensagem a ser tratada especificamente - Chmd REQ0011757 - 13/04/2018 
     vr_dscrioco VARCHAR2(4000);        -- Variavel para tratar ocorrencia - Chmd REQ0011757 - 13/04/2018 
 
+    CURSOR cr_crrd0009 IS 
+      SELECT j.job_name job_name_running,
+             To_Char(j.last_start_date, 'dd/mm/rrrr hh24:mi') start_date
+        FROM dba_scheduler_jobs j, dba_scheduler_running_jobs r
+       WHERE j.owner = 'CECRED' --Fixo
+         AND j.owner = r.owner
+         AND j.job_name = r.job_name
+         AND UPPER(j.job_action) LIKE '%CCRD0009.PC_IMPORT_ARQ_INADIM_JOB%';
+  rw_crrd0009 cr_crrd0009%rowtype;
+    
+  --Funcao para verificar se a ccrd0009 já terminou de rodar
+  FUNCTION fn_verifica_job_ccrd0009 RETURN VARCHAR2 IS
+  BEGIN
+    DECLARE
+      pr_job_name_running VARCHAR(40);
+    BEGIN
+      OPEN cr_crrd0009;
+        FETCH cr_crrd0009 INTO rw_crrd0009;
+        IF cr_crrd0009%FOUND THEN
+          pr_job_name_running := rw_crrd0009.job_name_running;
+        END IF;
+        IF cr_crrd0009%NOTFOUND THEN
+          pr_job_name_running := NULL;
+        END IF;
+        CLOSE cr_crrd0009;
+      --Retornar o status
+      RETURN(pr_job_name_running);
+    EXCEPTION
+      WHEN OTHERS THEN
+        RETURN NULL;
+    END;
+  END fn_verifica_job_ccrd0009;
+  
   --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
   PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro 
                                  ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
@@ -151,6 +193,9 @@ BEGIN
       -- Retorna nome do módulo logado
       GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
 
+      -- Verifico se a job ja finalizou
+      IF fn_verifica_job_ccrd0009 IS NOT NULL THEN 
+        
       -- Troca da pc_executa_job para pc_trata_exec_job agora trata tipo de critica - Chmd REQ0011757 - 13/04/2018
       -- Indicador se deve gerar log colocado como não gerar Log 0 pois esta prc vai gerar - Chmd REQ0011757 - 13/04/2018
       gene0004.pc_trata_exec_job(pr_cdcooper => vr_cdcooper   --> Codigo da cooperativa
@@ -256,7 +301,47 @@ BEGIN
                                ,pr_dscritic => vr_dscrioco);
         END IF;
       END IF;
+      ELSE
+        -- Reagendo a job para daqui alguns minutos
+        -- Em 10 minutos
+        vr_dthrexec := TO_TIMESTAMP_TZ(TO_CHAR((SYSDATE + (10/24/60) ),'DD/MM/RRRR HH24:MI:SS') || ' America/Sao_Paulo','DD/MM/RRRR HH24:MI:SS TZR');
+        -- Define o nome do JOB
+        vr_jobnames := 'JBCYB_GERA_DADOS_CYBER';
+        -- Define o bloco pl/sql
+        vr_dsdplsql := 'DECLARE vr_dscritic VARCHAR2(4000);
+                        BEGIN                                   
+                           CECRED.pc_gera_dados_cyber(pr_dscritic => vr_dscritic);
+                             IF vr_dscritic IS NOT NULL THEN
+                               raise_application_error(-20001,vr_dscritic);
+                             END IF;
+                        END;';
+        -- Agenda a execução
+        GENE0001.pc_submit_job(pr_cdcooper => 3
+                              ,pr_cdprogra => 'pc_gera_dados_cyber'
+                              ,pr_dsplsql  => vr_dsdplsql
+                              ,pr_dthrexe  => vr_dthrexec
+                              ,pr_interva  => NULL
+                              ,pr_jobname  => vr_jobnames
+                              ,pr_des_erro => vr_dscritic);
+        -- Se ocorreu erro
+        IF vr_dscritic IS NOT NULL THEN
+          dbms_output.put_line('ERRO:' || vr_dscritic);
+          vr_titulo := '<b>Abaixo os erros encontrados ao reagendar job ' || vr_nomdojob || '</b><br><br>';
 
+          -- Dispara rotina de Log - tabela: tbgen prglog ocorrencia
+          --substituída da variável vr_dstexto (que está fora dos padrões) pela dscritic
+          pc_controla_log_batch(pr_dscritic => vr_dscritic
+                              , pr_cdcritic => NVL(vr_cdcritic, 0)
+                              , pr_flgsuces => 0           -- Indicador de sucesso da execução
+                              , pr_flabrchd => 0           -- Abrir chamado (Sim=1/Nao=0)
+                              , pr_textochd => vr_titulo
+                              , pr_desemail => vr_destinatario_email
+                              , pr_flreinci => 1           -- Erro pode ocorrer em dias diferentes, devendo abrir chamado
+                              ); 
+           
+          RAISE vr_exc_erro; 
+        END IF;
+      END IF;
     END IF; 
 
     -- Log de fim de execucao

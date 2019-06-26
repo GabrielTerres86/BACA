@@ -487,7 +487,12 @@ PROCEDURE grava-dados-crapcyc:
             ASSIGN par_nrctremp = INT(pc_inserir_titulo_cyber.pr_nrctrdsc).
           END.
         ELSE
+          DO:
+            IF par_idorigem = 5 THEN
+              ASSIGN aux_cdorigem = 5.
+            ELSE
             ASSIGN aux_cdorigem = 3.
+          END.
 
         /* data de envio para cobrança */
         aux_dtenvcbr = DATE(ENTRY(aux_conta,par_lsdtenvc,';')).
@@ -1166,6 +1171,9 @@ PROCEDURE consulta-dados-crapcyc:
                         IF  crapcyc.cdorigem = 3 THEN
                             ASSIGN aux_dsorigem = "Emprestimo".
                         ELSE
+                          IF crapcyc.cdorigem = 5 THEN
+                            ASSIGN aux_dsorigem = "Cartoes".
+                          ELSE
                           DO:
                             ASSIGN aux_dsorigem = "Desconto de Titulo"
                                    aux_nrctrdsc = crapcyc.nrctremp.
@@ -1286,6 +1294,9 @@ PROCEDURE consulta-dados-crapcyc:
                         ELSE
                         IF  crapcyc.cdorigem = 3 THEN
                             ASSIGN aux_dsorigem = "Emprestimo".
+                        ELSE
+                          IF crapcyc.cdorigem = 5 THEN
+                            ASSIGN aux_dsorigem = "Cartoes".
                         ELSE
                           DO:
                             ASSIGN aux_dsorigem = "Desconto de Titulo".

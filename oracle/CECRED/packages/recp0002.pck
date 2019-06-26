@@ -264,6 +264,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 			 AND prj.dtliquidacao IS NULL;
 		rw_prejuizo cr_prejuizo%ROWTYPE;
 
+		-- Busca os dados de cartoes
+		CURSOR cr_cartoes(pr_cdcooper crapcyb.cdcooper%TYPE
+		                 ,pr_nrdconta crapcyb.nrdconta%TYPE
+										 ,pr_nrctremp crapcyb.nrctremp%TYPE
+		                 ) IS
+		  SELECT c.vlsdeved
+						,0 vlsdprej
+						,c.vlpreapg  vlatraso
+			  FROM crapcyb c 
+			 WHERE c.cdcooper = pr_cdcooper
+				 AND c.nrdconta = pr_nrdconta
+				 AND c.nrctremp = pr_nrctremp
+				 AND c.cdorigem = 5; -- Cartoes
+    --
+		rw_cartoes cr_cartoes%ROWTYPE;
+		--
   BEGIN
       
     ---> ESTOURO DE CONTA <---
@@ -450,6 +466,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                 pr_vlatraso := rw_titcyb.vlatraso;
           END   IF;
           CLOSE cr_titcyb;
+		-- CARTOES
+		ELSIF pr_cdorigem = 5 THEN
+			--
+			OPEN cr_cartoes(pr_cdcooper
+		                 ,pr_nrdconta
+										 ,pr_nrctremp
+		                 );
+			--
+			FETCH cr_cartoes INTO rw_cartoes;
+			--
+			IF cr_cartoes%NOTFOUND THEN
+				--
+				vr_cdcritic := 983;
+				RAISE vr_exc_erro;
+				--
+    END IF;
+			-- Saldo Devedor
+			pr_vlsdeved := rw_cartoes.vlsdeved;
+			-- Saldo Prejuizo
+			pr_vlsdprej := rw_cartoes.vlsdprej;
+			-- Valor em Atraso
+			pr_vlatraso := rw_cartoes.vlatraso;
+			--
+			CLOSE cr_cartoes;
+			--
     END IF;
   EXCEPTION
     WHEN vr_exc_erro THEN    
