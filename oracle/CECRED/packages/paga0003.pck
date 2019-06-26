@@ -439,6 +439,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                       indevidamente.
                       (f0032175 - Guilherme Kuhnen).
 			 
+		   05/06/2019 - Removido tratamento para arrecadar pagamentos de FGTS para apenas PAs com 2 digitos. (Reinert)
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Início -- PRJ406
@@ -8100,8 +8101,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         pr_detalhe := pr_detalhe || lpad(pr_nrseqreg, 8, '0');
         -- Código da agência arrecadadora
         pr_detalhe := pr_detalhe || to_char(pr_cdageaut, 'fm0000')
-				                         || to_char(pr_cdagenci, 'fm0000'); --> Enviaremos PA com 2 digitos momentâneamente. Será revisto após liberação 
-											                                              --  do projeto 406 para a Viacredi
+				                         || to_char(pr_cdagenci, 'fm0000'); 
 				
         -- Forma de arrecadação
         pr_detalhe := pr_detalhe || '2';
@@ -8593,11 +8593,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 								vr_cdagenci := fn_busca_agencia(pr_cdcooper => rw_cooper.cdcooper
                                                ,pr_nrdconta => rw_conven.nrdconta);
 											
-								-- Limitar PA em 2 digitos (Precisa ser revisto ao liberar projeto 406 para a cooperativa Viacredi)												 
-                IF length(vr_cdagenci) > 2 THEN
-									-- Se PA possuir mais de 2 digitos enviaremos registro zerado
-									vr_cdagenci := 0;
-								END IF;
                 -- Gera a linha de detalhe
                 pc_gera_detalhe(pr_dtvencto => rw_conven.dtvencto -- IN
                                ,pr_cdbarras => rw_conven.cdbarras -- IN
