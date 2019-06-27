@@ -95,6 +95,8 @@ CREATE OR REPLACE PACKAGE CECRED.CHEQ0003 IS
                             ,pr_dscritic out varchar2);
 
   PROCEDURE pc_gera_arq_grafica_cheque (pr_cdcooper in craptab.cdcooper%TYPE
+                     ,pr_nrpedido  IN crapreq.nrpedido%TYPE                     
+                     ,pr_tprequis  IN crapreq.tprequis%TYPE
                      ,pr_flgresta  IN PLS_INTEGER            --> Indicador para utilização de restart
                      ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                      ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -1545,7 +1547,7 @@ END;
   rw_craptab cr_craptab%ROWTYPE;
 
   -- Codigo do programa
-  vr_cdprogra      crapprg.cdprogra%type;
+  vr_cdprogra      crapprg.cdprogra%type:='CRPS408';
   
   -- Lista Endereco de Email RRD
   vr_email_dest    VARCHAR2(4000) := NULL;
@@ -1619,9 +1621,9 @@ END;
         FROM crapass,
              crapreq
        WHERE crapreq.cdcooper  = pr_cdcooper
-         AND (crapreq.tprequis  = 1
-          OR  (crapreq.tprequis = 3
-         AND   crapreq.tpformul = 999))         
+         AND ((crapreq.tprequis  = 1 and pr_tprequis=1)
+          OR  ( (crapreq.tprequis = 3 and pr_tprequis=3)
+          AND   crapreq.tpformul = 999))         
          AND (crapass.inpessoa, crapreq.cdtipcta) 
           IN (SELECT t.inpessoa
                    , t.tpconta
@@ -1636,7 +1638,6 @@ END;
          AND crapass.cdbcochq = pr_cdbanchq
 --         AND NVL(crapreq.qtreqtal, 0) >= 0 -- Somente quando tiver solicitacao de talao
          AND crapreq.qtreqtal > 0 -- Somente quando tiver solicitacao de talao
-         AND crapreq.tprequis = pr_tprequis
        ORDER BY crapreq.cdagenci,
                 crapreq.nrdconta;
 
@@ -1866,47 +1867,6 @@ END;
                                  pr_cdbanchq,
                                  pr_tprequis,
                                  vr_dtmvtolt) LOOP
-
-      -- Verifica se é o primeiro dia útil do mês ou primeiro dia útil a partir do dia 15, pois as
-      -- solicitações de formulário continuo só acontecerão de 15 em 15 dias, apenas para a empresa RR Donnelley
-      IF (rw_crapreq.tprequis = 3 AND 
-          rw_crapreq.tpformul = 999) THEN
-        
-        IF pr_cdempres <> 2 THEN
-          CONTINUE;
-        END IF;
-        
-        -- Definindo a data do calculo
-        -- se for primeira quinzena
-        IF vr_dtmvtolt < to_date('15/' || to_char(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR') THEN
-          -- primeiro dia útil do mes atual
-          vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper , 
-                                                     pr_dtmvtolt => trunc(vr_dtmvtolt,'MM')); 
-        ELSE
-          vr_dtcalcul := to_date('15/' || to_char(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR');
-          -- primeiro dia útil da segunda quinzena do mes atual
-          vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper , 
-                                                     pr_dtmvtolt => vr_dtcalcul);
-        END IF;
-
-        -- Incrementa a data do processamento enquanto a empresa for diferente de 2
-        vr_cdacesso := 'CRPS408_CHEQUE_' || to_char(vr_dtcalcul,'DY','NLS_DATE_LANGUAGE = PORTUGUESE');
-        vr_cdempres2 := NVL(gene0001.fn_param_sistema('CRED',0,vr_cdacesso),0);
-        WHILE vr_dtcalcul <= vr_dtmvtolt AND 
-              vr_cdempres2 <> 2 LOOP
-          vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper , 
-                                                     pr_dtmvtolt => vr_dtcalcul + 1);
-          vr_cdacesso := 'CRPS408_CHEQUE_' || to_char(vr_dtcalcul,'DY','NLS_DATE_LANGUAGE = PORTUGUESE');
-          vr_cdempres2 := NVL(gene0001.fn_param_sistema('CRED',0,vr_cdacesso),0);
-        END LOOP;        
-        
-        -- Se a data atual for diferente da data a ser processada é pq não é a primeira ter, qua ou sex da 
-        -- quinzena; vai para a próxima rw_crapreq
-        IF vr_dtmvtolt <> vr_dtcalcul THEN
-          continue; 
-        END IF;
-
-      END IF;
 
       -- Busca os dados do associado
       OPEN cr_crapass(pr_cdcooper,
@@ -2276,26 +2236,6 @@ END;
             vr_nrfolhas := rw_crapreq.qtreqtal;
             vr_numtalon := 0;
           END IF;
-          /*
-          -- Define a conta base
-          IF pr_cdtipcta_ini = 12 THEN --NORMAL ITG
-            IF rw_crapass.nrdctitg IS NULL THEN -- numero da conta de integracao
-              vr_nrdctitg_aux := 0;
-            ELSE
-              -- Se o digito não for numerico
-              IF SUBSTR(rw_crapass.nrdctitg,-1,1) IN ('1','2','3','4','5','6','7','8','9','0') THEN
-                vr_nrdctitg_aux := rw_crapass.nrdctitg;
-              ELSE
-                vr_nrdctitg_aux := substr(rw_crapass.nrdctitg,1,length(rw_crapass.nrdctitg)-1);
-              END IF;
-            END IF;
-            vr_nrdctitg := SUBSTR(rw_crapass.nrdctitg,1,7);
-            vr_nrdigctb := SUBSTR(rw_crapass.nrdctitg,8,1);
-          ELSE -- Igual para IF CECRED e Bancoob
-            vr_nrdctitg_aux := rw_crapass.nrdconta;
-            vr_nrdctitg := substr(to_char(rw_crapass.nrdconta,'fm00000000'),1,7);
-            vr_nrdigctb := substr(rw_crapass.nrdconta,-1,1);
-          END IF;*/
           
           vr_nrdctitg_aux := rw_crapass.nrdconta;
           vr_nrdctitg := substr(to_char(rw_crapass.nrdconta,'fm00000000'),1,7);
@@ -2324,19 +2264,6 @@ END;
             vr_nmorgexp := NULL;   
           END IF;
 
-          -- Busca os dados cadastrais do titular
-          /*IF rw_crapass.cdtipcta = 12   OR --NORMAL ITG
-             rw_crapass.cdtipcta = 13   THEN --ESPECIAL ITG
-            vr_literal2 := vr_dscpfcgc ||
-                           rpad(vr_nrcpfcgc,18,' ')||
-                           rpad(' ',7,' ') ||
-                           gene0002.fn_mask(rw_crapass.nrdconta,'zzzz.zzz.z');
-            vr_literal3 := rpad(vr_tpdocptl,3,' ') ||
-                           SUBSTR(TRIM(vr_nrdocptl),1,15) || ' '||
-                           TRIM(vr_cdorgexp)|| ' '||
-                           TRIM(vr_cdufdptl);
-            vr_literal4 := '';
-          ELSE*/
             vr_literal2 := vr_nmsegtal;
             vr_literal3 := vr_dscpfcgc ||
                            rpad(vr_nrcpfcgc,18,' ')||
@@ -2346,8 +2273,6 @@ END;
                            SUBSTR(TRIM(vr_nrdocptl),1,15) || ' '||
                            TRIM(vr_cdorgexp)|| ' '||
                            TRIM(vr_cdufdptl);
-          --END IF;
-
 
           OPEN cr_crapsfn(pr_cdcooper,
                           rw_crapass.nrcpfcgc);
@@ -2375,14 +2300,6 @@ END;
                                            ,pr_cdproduto => 13) = 'S'   THEN
             vr_literal6 := 'CHEQUE ESPECIAL';
           END IF;
-          /*  SUBSTITUÍDA A REGRA ANTIGA, PELA VERIFICAÇÃO DO PRODUTO 13 - LIMITE CHEQUE ESPECIAL
-          IF rw_crapass.cdtipcta IN (9,  --ESPEC. CONVENIO
-                                     11, --CONJ.ESP.CONV.
-                                     13, --ESPECIAL ITG
-                                     15) THEN --ESPEC.CJTA ITG
-            vr_literal6 := 'CHEQUE ESPECIAL';
-          END IF;
-          */
           IF nvl(rw_crapage.dsinform##1,' ') = ' ' AND
              nvl(rw_crapage.dsinform##2,' ') = ' ' AND
              nvl(rw_crapage.dsinform##3,' ') = ' ' THEN
@@ -2634,6 +2551,8 @@ EXCEPTION
   END pc_gera_crapfdc;
 
   PROCEDURE pc_gera_arq_grafica_cheque (pr_cdcooper in craptab.cdcooper%TYPE
+                     ,pr_nrpedido  IN crapreq.nrpedido%TYPE
+                     ,pr_tprequis  IN crapreq.tprequis%TYPE
                      ,pr_flgresta  IN PLS_INTEGER            --> Indicador para utilização de restart
                      ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                      ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -2677,18 +2596,6 @@ EXCEPTION
       AND  craptab.tpregist = 0;
   rw_craptab cr_craptab%ROWTYPE;
 
-  CURSOR cr_nrpedido(pr_tqrequis IN crapreq.nrpedido%TYPE) IS
-      select a.nrpedido
-         from crapfdc a, tbchq_seguranca_cheque b
-        where a.CDCOOPER = b.cdcooper
-          AND a.CDBANCHQ = b.cdbanchq
-          AND a.CDAGECHQ = b.cdagechq
-          AND a.NRCTACHQ = b.nrctachq
-          AND a.NRCHEQUE = b.nrcheque
-          AND b.tprequis = pr_tqrequis
-          AND b.idstatus_atualizacao_hsm = 2;
-  rw_nrpedido  cr_nrpedido%ROWTYPE;
-
       TYPE typ_reg_nrpedido IS
          RECORD (nrpedido crapfdc.nrpedido%type);
 
@@ -2699,7 +2606,7 @@ EXCEPTION
        vr_tab_nrpedido tab_reg_nrpedido;
 
   -- Codigo do programa
-  vr_cdprogra      crapprg.cdprogra%type;
+  vr_cdprogra      crapprg.cdprogra%type:='CRPS408';
   
   -- Lista Endereco de Email RRD
   vr_email_dest    VARCHAR2(4000) := NULL;
@@ -2901,20 +2808,6 @@ EXCEPTION
          AND crapreq.nrpedido = pr_nrpedido
        ORDER BY crapreq.nrpedido,crapreq.cdagenci,crapreq.nrdconta;
 
-    -- Cursor para obter o número do pedido   
-    CURSOR cr_pedido (pr_tqrequis IN crapreq.tprequis%TYPE) is 
-      (select a.nrpedido
-         from crapfdc a, tbchq_seguranca_cheque b
-        where a.CDCOOPER = b.cdcooper
-          AND a.CDBANCHQ = b.cdbanchq
-          AND a.CDAGECHQ = b.cdagechq
-          AND a.NRCTACHQ = b.nrctachq
-          AND a.NRCHEQUE = b.nrcheque
-          AND b.tprequis = pr_tprequis
-          AND b.idstatus_atualizacao_hsm = 2
-         );
-     rw_pedido   cr_pedido%ROWTYPE;
-
     -- Cursor para buscar os dados da agencia
     CURSOR cr_crapage(pr_cdcooper    IN crapage.cdcooper%TYPE,
                       pr_cdagenci    IN crapage.cdagenci%TYPE) IS
@@ -3110,18 +3003,7 @@ EXCEPTION
     -- variavel para verificacao do dia de processamento de envio da requisicao
     vr_dtcalcul        DATE;
     
-    -- Número do pedido
-    vr_nrpedido        NUMBER;
-    
   BEGIN        
-
-    open cr_crapfdc(null,null);
-    fetch cr_crapfdc into rw_crapfdc;
-    vr_nrpedido := nvl(rw_crapfdc.nrpedido,0);
-    close cr_crapfdc;
-
-    if vr_nrpedido <> 0 then
-      
 
     vr_nmempres    := 'RR DONNELLEY';
     vr_nmarqped    := 'RRD'   ||to_char(pr_cdcooper,'fm000')||'-ctr-';
@@ -3129,10 +3011,10 @@ EXCEPTION
     vr_nmarqctrped := 'ctRRD' ||to_char(pr_cdcooper,'fm000')||'-ctr-';
     vr_nmarqdadped := 'daRRD' ||to_char(pr_cdcooper,'fm000')||'-ctr-';
 
-    vr_nmarqped    := vr_nmarqped    || to_char(vr_nrpedido,'fm000000');
-    vr_nmarqtransm := vr_nmarqtransm || to_char(vr_nrpedido,'fm000000');
-    vr_nmarqctrped := vr_nmarqctrped || to_char(vr_nrpedido,'fm000000');
-    vr_nmarqdadped := vr_nmarqdadped || to_char(vr_nrpedido,'fm000000');
+    vr_nmarqped    := vr_nmarqped    || to_char(pr_nrpedido,'fm000000');
+    vr_nmarqtransm := vr_nmarqtransm || to_char(pr_nrpedido,'fm000000');
+    vr_nmarqctrped := vr_nmarqctrped || to_char(pr_nrpedido,'fm000000');
+    vr_nmarqdadped := vr_nmarqdadped || to_char(pr_nrpedido,'fm000000');
     vr_flggerou := FALSE;
 
     -- Tenta abrir o arquivo de detalhes em modo gravacao
@@ -3207,49 +3089,7 @@ EXCEPTION
                                  pr_cdbanchq,
                                  pr_tprequis,
                                  vr_dtmvtolt,
-                                 vr_nrpedido) LOOP
-
-      -- Verifica se é o primeiro dia útil do mês ou primeiro dia útil a partir do dia 15, pois as
-      -- solicitações de formulário continuo só acontecerão de 15 em 15 dias, apenas para a empresa RR Donnelley
-      IF (rw_crapreq.tprequis = 3 AND 
-          rw_crapreq.tpformul = 999) THEN
-        
-        IF pr_cdempres <> 2 THEN
-          CONTINUE;
-        END IF;
-        
-        -- Definindo a data do calculo
-        -- se for primeira quinzena
-        IF vr_dtmvtolt < to_date('15/' || to_char(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR') THEN
-          -- primeiro dia útil do mes atual
-          vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper , 
-                                                     pr_dtmvtolt => trunc(vr_dtmvtolt,'MM')); 
-        ELSE
-          vr_dtcalcul := to_date('15/' || to_char(vr_dtmvtolt,'MM/RRRR'),'DD/MM/RRRR');
-          -- primeiro dia útil da segunda quinzena do mes atual
-          vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper , 
-                                                     pr_dtmvtolt => vr_dtcalcul);
-        END IF;
-
-        -- Incrementa a data do processamento enquanto a empresa for diferente de 2
-        vr_cdacesso := 'CRPS408_CHEQUE_' || to_char(vr_dtcalcul,'DY','NLS_DATE_LANGUAGE = PORTUGUESE');
-        vr_cdempres2 := NVL(gene0001.fn_param_sistema('CRED',0,vr_cdacesso),0);
-        
-        WHILE vr_dtcalcul <= vr_dtmvtolt AND 
-              vr_cdempres2 <> 2 LOOP
-          vr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper , 
-                                                     pr_dtmvtolt => vr_dtcalcul + 1);
-          vr_cdacesso := 'CRPS408_CHEQUE_' || to_char(vr_dtcalcul,'DY','NLS_DATE_LANGUAGE = PORTUGUESE');
-          vr_cdempres2 := NVL(gene0001.fn_param_sistema('CRED',0,vr_cdacesso),0);
-        END LOOP;        
-        
-        -- Se a data atual for diferente da data a ser processada é pq não é a primeira ter, qua ou sex da 
-        -- quinzena; vai para a próxima rw_crapreq
-        IF vr_dtmvtolt <> vr_dtcalcul THEN
-          continue; 
-        END IF;
-
-      END IF;
+                                 pr_nrpedido) LOOP
 
       -- Busca os dados do associado
       OPEN cr_crapass(pr_cdcooper,
@@ -3341,7 +3181,7 @@ EXCEPTION
           pc_escreve_xml('<pac>'||
                            '<cdagenci>'||rw_crapreq.cdagenci||'</cdagenci>'||
                            '<nmresage>'||rw_crapage.nmresage||'</nmresage>'||
-                           '<vlsequtl>'|| vr_nrpedido       ||'</vlsequtl>',3);
+                           '<vlsequtl>'|| pr_nrpedido       ||'</vlsequtl>',3);
           vr_fechapac_req_fc := FALSE;
 
           -- Zera as variaveis de totais
@@ -3386,7 +3226,7 @@ EXCEPTION
           pc_escreve_xml('<pac>'||
                            '<cdagenci>'||rw_crapreq.cdagenci||'</cdagenci>'||
                            '<nmresage>'||rw_crapage.nmresage||'</nmresage>'||
-                           '<vlsequtl>'|| vr_nrpedido       ||'</vlsequtl>',1);
+                           '<vlsequtl>'|| pr_nrpedido       ||'</vlsequtl>',1);
           vr_fechapac_req_tl := FALSE;
 
           -- Zera as variaveis de totais
@@ -3568,26 +3408,6 @@ EXCEPTION
             vr_nrfolhas := rw_crapreq.qtreqtal;
             vr_numtalon := 0;
           END IF;
-          /*
-          -- Define a conta base
-          IF pr_cdtipcta_ini = 12 THEN --NORMAL ITG
-            IF rw_crapass.nrdctitg IS NULL THEN -- numero da conta de integracao
-              vr_nrdctitg_aux := 0;
-            ELSE
-              -- Se o digito não for numerico
-              IF SUBSTR(rw_crapass.nrdctitg,-1,1) IN ('1','2','3','4','5','6','7','8','9','0') THEN
-                vr_nrdctitg_aux := rw_crapass.nrdctitg;
-              ELSE
-                vr_nrdctitg_aux := substr(rw_crapass.nrdctitg,1,length(rw_crapass.nrdctitg)-1);
-              END IF;
-            END IF;
-            vr_nrdctitg := SUBSTR(rw_crapass.nrdctitg,1,7);
-            vr_nrdigctb := SUBSTR(rw_crapass.nrdctitg,8,1);
-          ELSE -- Igual para IF CECRED e Bancoob
-            vr_nrdctitg_aux := rw_crapass.nrdconta;
-            vr_nrdctitg := substr(to_char(rw_crapass.nrdconta,'fm00000000'),1,7);
-            vr_nrdigctb := substr(rw_crapass.nrdconta,-1,1);
-          END IF;*/
           
           vr_nrdctitg_aux := rw_crapass.nrdconta;
           vr_nrdctitg := substr(to_char(rw_crapass.nrdconta,'fm00000000'),1,7);
@@ -3616,19 +3436,6 @@ EXCEPTION
             vr_nmorgexp := NULL;   
           END IF;
 
-          -- Busca os dados cadastrais do titular
-          /*IF rw_crapass.cdtipcta = 12   OR --NORMAL ITG
-             rw_crapass.cdtipcta = 13   THEN --ESPECIAL ITG
-            vr_literal2 := vr_dscpfcgc ||
-                           rpad(vr_nrcpfcgc,18,' ')||
-                           rpad(' ',7,' ') ||
-                           gene0002.fn_mask(rw_crapass.nrdconta,'zzzz.zzz.z');
-            vr_literal3 := rpad(vr_tpdocptl,3,' ') ||
-                           SUBSTR(TRIM(vr_nrdocptl),1,15) || ' '||
-                           TRIM(vr_cdorgexp)|| ' '||
-                           TRIM(vr_cdufdptl);
-            vr_literal4 := '';
-          ELSE*/
             vr_literal2 := vr_nmsegtal;
             vr_literal3 := vr_dscpfcgc ||
                            rpad(vr_nrcpfcgc,18,' ')||
@@ -3638,8 +3445,6 @@ EXCEPTION
                            SUBSTR(TRIM(vr_nrdocptl),1,15) || ' '||
                            TRIM(vr_cdorgexp)|| ' '||
                            TRIM(vr_cdufdptl);
-          --END IF;
-
 
           OPEN cr_crapsfn(pr_cdcooper,
                           rw_crapass.nrcpfcgc);
@@ -3667,14 +3472,6 @@ EXCEPTION
                                            ,pr_cdproduto => 13) = 'S'   THEN
             vr_literal6 := 'CHEQUE ESPECIAL';
           END IF;
-          /*  SUBSTITUÍDA A REGRA ANTIGA, PELA VERIFICAÇÃO DO PRODUTO 13 - LIMITE CHEQUE ESPECIAL
-          IF rw_crapass.cdtipcta IN (9,  --ESPEC. CONVENIO
-                                     11, --CONJ.ESP.CONV.
-                                     13, --ESPECIAL ITG
-                                     15) THEN --ESPEC.CJTA ITG
-            vr_literal6 := 'CHEQUE ESPECIAL';
-          END IF;
-          */
           IF nvl(rw_crapage.dsinform##1,' ') = ' ' AND
              nvl(rw_crapage.dsinform##2,' ') = ' ' AND
              nvl(rw_crapage.dsinform##3,' ') = ' ' THEN
@@ -3777,7 +3574,7 @@ EXCEPTION
           pc_escreve_xml('<pac>'||
                            '<cdagenci>'||rw_crapreq.cdagenci||'</cdagenci>'||
                            '<nmresage>'||rw_crapage.nmresage||'</nmresage>'||
-                           '<vlsequtl>'|| vr_nrpedido       ||'</vlsequtl>',2);
+                           '<vlsequtl>'|| pr_nrpedido       ||'</vlsequtl>',2);
 
           -- Atualiza indicador informando que houve requisicoes rejeitadas para o PAC
           vr_idrejeit_tl := TRUE;
@@ -3788,7 +3585,7 @@ EXCEPTION
           pc_escreve_xml('<pac>'||
                            '<cdagenci>'||rw_crapreq.cdagenci||'</cdagenci>'||
                            '<nmresage>'||rw_crapage.nmresage||'</nmresage>'||
-                           '<vlsequtl>'|| vr_nrpedido       ||'</vlsequtl>',4);
+                           '<vlsequtl>'|| pr_nrpedido       ||'</vlsequtl>',4);
 
           -- Atualiza indicador informando que houve requisicoes rejeitadas para o PAC
           vr_idrejeit_fc := TRUE;
@@ -3849,15 +3646,6 @@ EXCEPTION
       END IF;
 
     END LOOP;
-    /*
-    -- Se nao teve requisicoes gera mensagem de alerta
-    IF nvl(vr_qttotreq,0) + nvl(vr_qttotrej_fc,0) + nvl(vr_qttotrej_tl,0) = 0 AND  pr_cdtipcta_ini = 12 THEN
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                          ,pr_ind_tipo_log => 2 -- Erro tratado
-                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                           || vr_cdprogra || ' --> NAO HA REQUISICOES PARA CHEQUES NORMAIS');
-    END IF;
-    */
     -- Verifica se a tag PAC das requisicoes de Talões esta fechada. Em caso negativo, fecha a tag.
     IF NOT vr_fechapac_req_tl THEN
       pc_escreve_xml(       '<qttotreq>'||vr_qttotreq_tl||'</qttotreq>'||
@@ -3991,7 +3779,7 @@ EXCEPTION
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file_ctr --> Handle do arquivo aberto
                                     ,pr_des_text => rpad(rw_crapcop.nmrescop,20,' ') ||       -- IDENTIFIC
                                                     to_char(vr_dtmvtolt,'DD/MM/YYYY')||       -- DATA PEDIDO
-                                                    to_char(vr_nrpedido,'fm000000')|| -- NR DO PEDIDO
+                                                    to_char(pr_nrpedido,'fm000000')|| -- NR DO PEDIDO
                                                     to_char(rw_crapcop.cdbcoctl,'fm000')||    -- CD BANCO
                                                     to_char(rw_crapcop.cdagectl,'fm0000')||   -- CD AGENCIA
                                                     vr_cddigage||                             -- DIG. AGE.
@@ -4060,7 +3848,7 @@ EXCEPTION
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?>'||
                    '<crps408>'||
                      '<pedido>'||
-                       '<vlsequtl>'||vr_nrpedido                      ||'</vlsequtl>'||
+                       '<vlsequtl>'||pr_nrpedido                      ||'</vlsequtl>'||
                        '<dtmvtolt>'||to_char(vr_dtmvtolt,'DD/MM/YYYY')||'</dtmvtolt>'||
                        '<nmbanco>' ||vr_nmbanco                       ||'</nmbanco>'||
                        '<qttotchq>'||vr_qttotchq_tl                   ||'</qttotchq>'||
@@ -4111,7 +3899,7 @@ EXCEPTION
       pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?>'||
                      '<crps408>'||
                        '<pedido>'||
-                         '<vlsequtl>'||vr_nrpedido                      ||'</vlsequtl>'||
+                         '<vlsequtl>'||pr_nrpedido                      ||'</vlsequtl>'||
                          '<dtmvtolt>'||to_char(vr_dtmvtolt,'DD/MM/YYYY')||'</dtmvtolt>'||
                          '<nmbanco>' ||vr_nmbanco                       ||'</nmbanco>'||
                          '<qttotchq>'||vr_qttottal_fc                   ||'</qttotchq>'||
@@ -4352,8 +4140,6 @@ EXCEPTION
     END LOOP;
     close cr_crapfdc;
  
-   END IF;
-
   END pc_gera_arquivo;
 
 
@@ -4393,7 +4179,8 @@ BEGIN
     vr_email_dest := gene0001.fn_param_sistema('CRED',0,'CRPS408_EMAIL_RRD');
 
   -- CECRED
-  pc_gera_arquivo(pr_cdcooper     => pr_cdcooper,
+  if pr_tprequis = 1 then
+    pc_gera_arquivo(pr_cdcooper     => pr_cdcooper,
                     pr_cdbanchq     => rw_crapcop.cdbcoctl,
                     pr_nrcontab     => 0,
                     pr_nrdserie     => 1,
@@ -4404,10 +4191,11 @@ BEGIN
                     pr_flg_impri    => 'S',
                     pr_cdempres     => vr_cdempres,
                     pr_tprequis     => 1);
-                    
+  end if;                  
   
   -- CECRED
-  pc_gera_arquivo(pr_cdcooper     => pr_cdcooper,
+  if pr_tprequis = 3 then
+    pc_gera_arquivo(pr_cdcooper     => pr_cdcooper,
                     pr_cdbanchq     => rw_crapcop.cdbcoctl,
                     pr_nrcontab     => 0,
                     pr_nrdserie     => 1,
@@ -4418,7 +4206,7 @@ BEGIN
                     pr_flg_impri    => 'S',
                     pr_cdempres     => vr_cdempres,
                     pr_tprequis     => 3);   
-
+  end if;
 
   -- Testar se houve erro
   IF pr_dscritic IS NOT NULL THEN
