@@ -810,7 +810,19 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
                               ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
                               ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                               ,pr_des_erro OUT VARCHAR2      --> Erros do processo
-                              );
+                              );	 
+
+ PROCEDURE pc_verifica_bordero_ib (pr_nrdconta  IN crapbdt.nrdconta%TYPE,
+                                    pr_nrborder  IN crapbdt.nrctrlim%TYPE
+                                    ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                    --------> OUT <--------
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                                    ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                                    );
+
 END  DSCT0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
@@ -11427,5 +11439,197 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
   END pc_verifica_contrato_bodero;
+  
+  PROCEDURE pc_verifica_bordero_ib (pr_nrdconta  IN crapbdt.nrdconta%TYPE,
+                                    pr_nrborder  IN crapbdt.nrctrlim%TYPE
+                                    ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                    --------> OUT <--------
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                                    ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                                    ) IS
+    /* .............................................................................
+      Programa: pc_verifica_impressao
+      Sistema : Ayllos Web
+      Sigla   : CRED
+      Autor   : Daniel Zimmermann
+      Data    : 27/06/2019                        Ultima atualizacao: --/--/----
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+      Objetivo  : Retorna se deve solicitar assinatura do cooperado na liberação do bordero de desconto.
+      Alterações:
+       
+
+    ............................................................................. */
+    -- Tratamento de erros
+    vr_exc_erro exception;
+    vr_cdcritic number;
+    vr_dscritic VARCHAR2(100);
+
+    -- variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
+    
+    vr_msgretorno VARCHAR2(100);
+    
+    vr_tab_dados_dsctit  dsct0002.typ_tab_dados_dsctit;
+    vr_tab_cecred_dsctit dsct0002.typ_tab_cecred_dsctit;
+    
+    CURSOR cr_crapbdt(pr_cdcooper IN crapbdt.cdcooper%TYPE
+                     ,pr_nrdconta IN crapbdt.nrdconta%TYPE
+                     ,pr_nrborder IN crapbdt.nrborder%TYPE) IS
+    SELECT ass.inpessoa,
+           bdt.cdoperad
+      FROM crapbdt bdt,
+           crapass ass
+     WHERE bdt.cdcooper = pr_cdcooper
+       AND bdt.nrdconta = pr_nrdconta
+       AND bdt.nrborder = pr_nrborder
+       AND ass.cdcooper = bdt.cdcooper
+       AND ass.nrdconta = bdt.nrdconta;
+    rw_crapbdt cr_crapbdt%ROWTYPE;
+    
+    CURSOR cr_craptdb(pr_cdcooper IN crapbdt.cdcooper%TYPE
+                     ,pr_nrdconta IN crapbdt.nrdconta%TYPE
+                     ,pr_nrborder IN crapbdt.nrborder%TYPE) IS
+    SELECT bdt.nrborder, SUM(tdb.vltitulo) vltitulo
+      FROM crapbdt bdt,
+           craptdb tdb
+     WHERE bdt.cdcooper = pr_cdcooper
+       AND bdt.nrdconta = pr_nrdconta
+       AND bdt.nrborder = pr_nrborder
+       AND tdb.cdcooper = bdt.cdcooper
+       AND tdb.nrdconta = bdt.nrdconta
+       AND tdb.nrborder = bdt.nrborder
+       AND tdb.insitapr = 1 -- Aprovado
+       GROUP BY bdt.nrborder;
+    rw_craptdb cr_craptdb%ROWTYPE;
+    
+    BEGIN
+      pr_nmdcampo := NULL;
+      pr_des_erro := 'OK';
+
+      -- Extrair dados do xml de entrada
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Incluir nome do modulo logado
+      GENE0001.pc_informa_acesso(pr_module => vr_nmdatela
+                                ,pr_action => vr_nmeacao);
+                                
+                                
+      OPEN cr_crapbdt(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrborder => pr_nrborder);  
+      FETCH cr_crapbdt INTO rw_crapbdt;     
+                      
+      IF cr_crapbdt%NOTFOUND THEN
+          -- Fechar o cursor
+        CLOSE cr_crapbdt; 
+          vr_dscritic := 'Não permitido liberação. Bordero não localizado.';
+          RAISE vr_exc_erro;
+        ELSE
+        CLOSE cr_crapbdt;   
+        END IF;
+        
+       OPEN cr_craptdb(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrborder => pr_nrborder);  
+      FETCH cr_craptdb INTO rw_craptdb;     
+                      
+      IF cr_craptdb%NOTFOUND THEN
+          -- Fechar o cursor
+        CLOSE cr_craptdb; 
+          vr_dscritic := 'Bordero não possui titulos aprovados. Liberação não permitida.';
+          RAISE vr_exc_erro;
+      ELSE
+        CLOSE cr_craptdb;   
+      END IF;
+        
+        
+        DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper    => vr_cdcooper
+                                     ,pr_cdagenci          => NULL -- sem utilidade
+                                     ,pr_nrdcaixa          => NULL -- sem utilidade
+                                     ,pr_cdoperad          => NULL -- sem utilidade
+                                     ,pr_dtmvtolt          => NULL -- sem utilidade
+                                     ,pr_idorigem          => NULL -- sem utilidade
+                                     ,pr_tpcobran          => 1                    --> Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                     ,pr_inpessoa          => rw_crapbdt.inpessoa  --> Indicador de tipo de pessoa
+                                     ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> tabela contendo os parametros da cooperativa
+                                     ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+                                     ,pr_cdcritic          => vr_cdcritic
+                                     ,pr_dscritic          => vr_dscritic);
+        
+
+    IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+      
+    vr_msgretorno := 'liberarBorderoDscTit(0);';     
+    
+    -- Se a soma do valor de todos os títulos do borderô for maior que o parametro VLMXASSI dos parãmetros da TAB052, 
+    -- emitir mensagem para realizar a assinatural manual.
+    IF ( rw_craptdb.vltitulo > vr_tab_dados_dsctit(1).vlmxassi ) AND rw_crapbdt.cdoperad = '996' THEN
+      vr_msgretorno := 'confirmaBorderoIB();'; 
+    END IF;  
+
+      -- inicializar o clob
+      vr_des_xml := NULL;
+      dbms_lob.createtemporary(vr_des_xml, TRUE);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := NULL;
+
+      -- Passou nas validações do bordero, do contrato e listou titulos. Começa a montar o xml
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                     '<root><dados>');
+
+      pc_escreve_xml('<msgretorno>'  || vr_msgretorno  || '</msgretorno>');
+
+      pc_escreve_xml ('</dados></root>',TRUE);
+      pr_retxml := xmltype.createxml(vr_des_xml);
+
+      -- liberando a memória alocada pro clob
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+
+    EXCEPTION
+      when vr_exc_erro then
+           --  se foi retornado apenas código
+           if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+               -- buscar a descriçao
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           end if;
+           -- variavel de erro recebe erro ocorrido
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
+
+           -- Carregar XML padrao para variavel de retorno
+            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      when others then
+           -- montar descriçao de erro não tratado
+           pr_dscritic := 'Erro não tratado na DSCT0003.pc_verifica_bordero_ib ' ||sqlerrm;
+           -- Carregar XML padrao para variavel de retorno
+            pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+  END pc_verifica_bordero_ib;
 END DSCT0003;
 /

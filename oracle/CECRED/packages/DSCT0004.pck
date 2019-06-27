@@ -650,7 +650,9 @@ PROCEDURE pc_obtem_titulos_bordero_ib(pr_cdcooper  IN crapcop.cdcooper%TYPE --> 
     Objetivo  : Listar os títulos da cooperativa aptos de inclusão em um borderô
     SOA       : Recebiveis.obterListaTitulosPorPagador
 
-    Alteração : 14/05/2018 - Criação (Paulo Penteado (GFT))
+    Alteração : 14/05/2018 - Criação (Paulo Penteado (GFT))	 
+
+                25/06/2019 - Incluso regra para não permitir seleção de titulos durante processo (Daniel - Ailos)
 
   ---------------------------------------------------------------------------------------------------------------------*/
   vr_tab_dados_titulos tela_atenda_dscto_tit.typ_tab_dados_titulos;
@@ -678,6 +680,11 @@ BEGIN
     RAISE vr_exc_saida;
   ELSE
     CLOSE BTCH0001.cr_crapdat;  
+  END IF;
+  
+  IF rw_crapdat.inproces <> 1 THEN
+    vr_dscritic := 'Horário não permitido para efetuar operações de desconto de título.';
+    RAISE vr_exc_saida;
   END IF;
   
   pc_calcula_limite_disponivel(pr_cdcooper => pr_cdcooper
