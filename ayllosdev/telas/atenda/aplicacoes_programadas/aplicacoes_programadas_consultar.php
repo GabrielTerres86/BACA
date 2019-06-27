@@ -111,7 +111,9 @@
 		}
 		$apl_prog = $xmlObjDet->roottag->tags[0]->tags[0]->tags;	
 
-		$poupanca[12]->cdata=$apl_prog[10]->cdata; // Saldo
+		//Vamos adequar o saldo da app progr para igual ao formato da poupanca. ex. 1564,49
+		$saldo = str_replace(".","",$apl_prog[10]->cdata);
+		$poupanca[12]->cdata=$saldo; // Saldo
 		$poupanca[13]->cdata=$apl_prog[11]->cdata; // Juros Acumulado
 	 	$poupanca[15]->cdata=$apl_prog[12]->cdata; // dtinirpp
 		$dsfinali = $apl_prog[18]->cdata; // Finalidade
