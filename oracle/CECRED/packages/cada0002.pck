@@ -2558,8 +2558,7 @@ END CADA0002;
          WHERE tfc.nrdconta = pr_nrdconta
            AND tfc.cdcooper = vr_cdcooper
            AND tfc.idseqttl = pr_idseqttl
-           AND ROWNUM = 1
-      ORDER BY tfc.cdseqtfc;
+      ORDER BY tfc.tptelefo;
       rw_primtfc cr_craptfc%ROWTYPE; 
       rw_segutfc cr_craptfc%ROWTYPE;   
       

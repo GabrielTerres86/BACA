@@ -255,7 +255,7 @@
 					<font size="10" isBold="true"/>
 					<paragraph lineSpacing="Proportional"/>
 				</textElement>
-				<text><![CDATA[Ficha-Matrícula de Abertura e Movimentação de Conta de Depósito,
+				<text><![CDATA[Ficha Matrícula de Abertura e Movimentação de Conta de Depósito,
 Adesão a Produtos e Serviços do Sistema Ailos - Pessoa Física]]></text>
 			</staticText>
 		</band>
@@ -1960,7 +1960,7 @@ $F{nrscpfcg}]]></textFieldExpression>
 				<textElement markup="styled">
 					<font size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Ao assinar essa Ficha-Proposta de Abertura de Movimentação de Conta de Depósito, Adesão a Produtos e Serviços do Sistema Ailos - Pessoa Física, " + "<style isBold='true'>" + "o Associado ou seu Representante Legal declara que recebeu, leu e concorda" + "</style>" + ", com todas as disposições  deste instrumento e das Condições Gerais Aplicáveis à Ficha-Proposta de Abertura e Movimentação de Conta de Depósito, Adesão a Produtos e Serviços do Sistema Ailos - Pessoa Física, registrada no Cartório de Títulos e Documentos." + "<style isBold='true'>" + "O Associado ou seu Representante Legal" + "</style>" + " manifesta expressamente a sua opção e concordância pela contratação dos produtos e serviços selecionados nessa proposta, declarando conhecer cada uma das disposições referentes a estes produtos e serviços. Declara, ainda, que as informações aqui prestadas são a expressão da verdade."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Ao assinar essa Ficha Matrícula de Abertura de Movimentação de Conta de Depósito, Adesão a Produtos e Serviços do Sistema Ailos - Pessoa Física, " + "<style isBold='true'>" + "o Associado ou seu Representante Legal declara que recebeu, leu e concorda" + "</style>" + ", com todas as disposições  deste instrumento e das Condições Gerais Aplicáveis à Ficha Matrícula de Abertura e Movimentação de Conta de Depósito, Adesão a Produtos e Serviços do Sistema Ailos - Pessoa Física, registrada no Cartório de Títulos e Documentos." + "<style isBold='true'>" + "O Associado ou seu Representante Legal" + "</style>" + " manifesta expressamente a sua opção e concordância pela contratação dos produtos e serviços selecionados nessa proposta, declarando conhecer cada uma das disposições referentes a estes produtos e serviços. Declara, ainda, que as informações aqui prestadas são a expressão da verdade."]]></textFieldExpression>
 			</textField>
 			<line>
 				<reportElement uuid="fa116846-316a-49ce-b54d-e1bd32f51036" x="0" y="26" width="1" height="11">
@@ -2042,7 +2042,7 @@ $F{nrscpfcg}]]></textFieldExpression>
 				<textElement>
 					<font size="8"/>
 				</textElement>
-				<text><![CDATA[Responsável pelo acolhimento da Ficha-Proposta
+				<text><![CDATA[Responsável pelo acolhimento da Ficha Matrícula
 Assinatura com carimbo]]></text>
 			</staticText>
 			<textField>

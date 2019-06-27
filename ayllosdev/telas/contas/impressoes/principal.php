@@ -104,7 +104,7 @@
 	<div id="declaracao_fatca_crs">Declara&ccedil;&atilde;o FATCA/CRS</div>
 	<!-- Inicio - Botão Ficha-Proposta - Cássia de Oliveira (GFT)!-->
 	<? if ($inpessoa == 1) { ?>
-			<div id="ficha_proposta">Ficha-Matr&iacute;cula</div>
+			<div id="ficha_proposta">Ficha Matr&iacute;cula</div>
 	<? } ?>
 	<!-- Fim - Botão Ficha-Proposta - Cássia de Oliveira (GFT)!-->
 	<div id="btVoltar" onClick="fechaRotina(divRotina);return false;">Cancelar</div>

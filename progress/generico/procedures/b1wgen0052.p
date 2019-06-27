@@ -1988,7 +1988,7 @@ PROCEDURE Grava_Dados:
                                                 1 - CPF - CADASTRO DE PESSOAS FISICAS 
                                                 3 - COMPROVANTE DE ENDEREÇO 
                                                 6 - CARTAO DE ASSINATURA */
-                                            INPUT "45;54;8;2;1;3;6", 
+                                            INPUT "8;2;1;3;6", 
                                             INPUT par_cdoperad,
                                            OUTPUT aux_cdcritic,
                                            OUTPUT aux_dscritic).
