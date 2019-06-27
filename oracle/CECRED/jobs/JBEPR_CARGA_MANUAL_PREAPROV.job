@@ -1,0 +1,37 @@
+BEGIN
+  EXECUTE IMMEDIATE 'ALTER SESSION SET
+                    nls_calendar = ''GREGORIAN''
+                    nls_comp = ''BINARY''
+                    nls_date_format = ''DD-MON-RR''
+                    nls_date_language = ''AMERICAN''
+                    nls_iso_currency = ''AMERICA''
+                    nls_language = ''AMERICAN''
+                    nls_length_semantics = ''BYTE''
+                    nls_nchar_conv_excp = ''FALSE''
+                    nls_numeric_characters = ''.,''
+                    nls_sort = ''BINARY''
+                    nls_territory = ''AMERICA''
+                    nls_time_format = ''HH.MI.SSXFF AM''
+                    nls_time_tz_format = ''HH.MI.SSXFF AM TZR'' nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM'' nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
+  
+  sys.dbms_scheduler.create_job(job_name           => 'CECRED.JBEPR_CARGA_MANUAL_PREAPROV'
+                               ,job_type           => 'PLSQL_BLOCK'
+                               ,job_action         => 'DECLARE
+                                                          vr_dscritic VARCHAR2(32700);
+                                                          
+                                                        BEGIN
+                                                          PC_JOB_LIBERA_PRE_MANUL(pr_dscritic => vr_dscritic);
+                                                          
+                                                          IF vr_dscritic IS NOT NULL THEN
+                                                             RAISE_application_error(-20500, ''Erro: '' || vr_dscritic); 
+                                                          END IF;
+                                                        END;'
+                               ,start_date         => to_date('26-06-2019 05:00:00', 'dd-mm-yyyy hh24:mi:ss')
+                               ,repeat_interval    => 'Freq=DAILY;ByDay=MON,TUE,WED,THU,FRI;ByHour=05,00;ByMinute=0;BySecond=0'
+                               ,end_date           => TO_DATE(NULL)
+                               ,job_class          => 'DEFAULT_JOB_CLASS'
+                               ,ENABLED            => TRUE
+                               ,auto_drop          => TRUE
+                               ,comments           => 'Desativar com a implementacao do projeto de RATING');
+END; 
+/
