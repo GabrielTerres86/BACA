@@ -80,9 +80,7 @@
 			                 
 			   09/05/2019 - Incluido campo inupgrad da tabela crawcrd na temp-table 
 				            Alcemir Mouts (PRB0041641).
-
-		       13/06/2019 - Inlcuido campo dddebito_tit na tabela nova_prospota.
-			                Alcemir Jr. (INC0015816). 
+		       
 ....................................................................................*/
 
 DEF TEMP-TABLE tt-lim_total NO-UNDO
@@ -222,8 +220,7 @@ DEF TEMP-TABLE tt-nova_proposta NO-UNDO
     FIELD dsrepinc AS CHAR
     FIELD nmbandei AS CHAR
     FIELD dslimite AS CHAR
-    FIELD dsoutros AS CHAR
-	FIELD dddebito_tit AS INT.
+    FIELD dsoutros AS CHAR.
     
 DEF TEMP-TABLE tt-ult_deb NO-UNDO
     FIELD dtdebito LIKE crapdcd.dtdebito
