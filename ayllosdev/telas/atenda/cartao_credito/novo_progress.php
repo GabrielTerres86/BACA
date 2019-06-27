@@ -26,6 +26,9 @@
  * 014: [26/08/2015] James					  : Remover o form da impressao.
  * 015: [09/10/2015] James					  : Desenvolvimento do projeto 126.
  * 016: [21/06/2016] Douglas         (CECRED) : Removido aspas simples dos parametros do campo Titularidade (Chamado 457339)
+ * 017: [18/03/2019] Anderson-Alan   (SUPERO) : Implementado tipo de envio do cartão - PJ429
+ * 018: [24/05/2019] Alcemir Jr.     (Ailos)  : Ajuste ao sair do campo CPF. (PRB0041678)
+ * 019: [13/06/2019] Alcemir Jr.     (Ailos)  : Setar campo dddebito conforme titular (INC0015816). 
  */
 
 	session_start();
@@ -124,6 +127,7 @@
 	$inpessoa = getByTagName($dados,"INPESSOA");
 	$cdtipcta = getByTagName($dados,"CDTIPCTA");
 	$nmbandei = getByTagName($dados,"NMBANDEI");
+	$dddebito_tit = getByTagName($dados,"DDDEBITO_TIT");
 	
 	// Primeiro Titular
     $nmtitcrd = getByTagName($dados,"NMTITCRD");
@@ -156,18 +160,53 @@
 	$aListaLimite	     = explode(";",$cdAdmLimite[0]);	
 	$cdLimite			 = explode("@",$aListaLimite[1]);
 
-	$xml .= "<Root>";
+	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
-	//$xmlResult = mensageria($xml, "ATENDA_CRD", "SUGESTAO_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, "ATENDA_CRD", "SUGESTAO_LIMITE_CRD", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);
 
 	echo "<!--  $xmlResult  -->";
 	$json_sugestoes = json_decode($xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[0]->cdata,true);
 
 	$idacionamento = $xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[1]->cdata;
+
+	// Validação para saber se houve ou não alteração no nome da empresa, se houver habilita edição do campo empresa do plástico
+	// Augusto - Supero
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml, "ATENDA_CRD", "VALIDA_ALT_EMPR_PLASTICO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);	
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata | $xmlObj->roottag->tags[0]->cdata;
+		exibirErro('error', $msgErro, 'Alerta - Ayllos', $funcaoAposErro);
+	}
+	$habilitarEdicaoEmpresaPlastico = (!empty($xmlObj->roottag->tags[0]->tags[0]->tags[0]->cdata) ? $xmlObj->roottag->tags[0]->tags[0]->tags[0]->cdata : "0");
+
+	// Montar o xml de Requisicao para buscar o tipo de conta do associado e termo para conta salario
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "ATENDA_CRD", "ENVIO_CARTAO_COOP_PA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	$coop_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"COOP_ENVIO_CARTAO");
+	$pa_envia_cartao = getByTagName($xmlObjeto->roottag->tags,"PA_ENVIO_CARTAO");
+
+	if ($coop_envia_cartao && !$pa_envia_cartao) {
+		echo "<script>showError('error', 'Nenhuma op&ccedil;&atilde;o de envio definida para o PA, por favor, entre em contato com a SEDE para que seja realizada a parametriza&ccedil;&atilde;o.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);') </script>";
+	} elseif ($coop_envia_cartao) {
+		echo '<script>novo_fluxo_envio = true;</script>';
+	}
 ?>
 
 <style>
@@ -286,6 +325,7 @@
 			<div id="empresa">
 				<label for="nmempres"><? echo utf8ToHtml('Empresa do Plástico:') ?></label>
 				<input type="text" name="nmempres" id="nmempres" class="campo" value="<?echo $nmtitcrd; ?>" />
+				<input type="hidden" name="flgEditEmpPlas" id ="flgEditEmpPlas" value="<?=$habilitarEdicaoEmpresaPlastico?>" />
 			</div>
 			
 			<hr style="background-color:#666; height:1px; width:480px;" id="hr2"/>
@@ -312,7 +352,7 @@
 			<select name="dddebito" id="dddebito" class="campo">
 			<?php
 			for ($i = 0; $i < count($eDDDEBITO); $i++){
-				?><option value="<?echo $eDDDEBITO[$i]; ?>"<?if ($i == 0) { echo " selected"; } ?>><?echo $eDDDEBITO[$i] ?></option><?php
+				?><option value="<?echo $eDDDEBITO[$i]; ?>"<?if ($$dddebito_tit == $eDDDEBITO[$i]) { echo " selected"; } ?>><?echo $eDDDEBITO[$i] ?></option><?php
 			}
 			?>
 			</select>
@@ -332,21 +372,19 @@
 			<input type="text" name="vlalugue" id="vlalugue" class="campo" value="0,00" />
 			<br />
 			
-			<label for="vllimpro"><? echo utf8ToHtml('Limite Proposto:') ?></label>
+			<label for="vllimpro"><? echo utf8ToHtml('Limite Proposto:'); ?></label>
 			<div id="limiteDiv">
-				<? if($adicional || $tipo == "dbt"){?>
+				<? if($tipo == "dbt"){?>
 				<select class='campo' id='vllimpro' name='vllimpro' disabled readonly>
-					<?php
-					//for ($i = 0; $i < count($cdLimite); $i++){
-						?><option value="0,00" ><?echo formataMoeda(0.00); ?></option><?php
-					//}
+					<option value="0,00" ><?echo formataMoeda(0.00); ?></option>
+				</select>
+				<?php
 				}else{
 					?>
 					<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;' value='<? echo number_format( 0,2,",",".");?>'>
 					<?
 				}
 					?>
-				</select>			
 			</div>
 			<label for="flgdebit"><? echo utf8ToHtml('Habilita função débito:') ?></label>
 			<input type="checkbox" name="flgdebit" id="flgdebit" class="campo" value="" onclick='confirmaPurocredito();'/>
@@ -369,16 +407,20 @@
 						<option value='3'>Boleto</option>
 					</select>
 			<label for="tpenvcrd"><? echo utf8ToHtml('Envio:') ?></label>
-			<select class='campo' id='tpenvcrd' name='tpenvcrd'>
-						<option value='1' selected>Cooperativa</option>
-						<!--option value='0'>Cooperado</option      OPÇÃO RETIRADO TEMPORÁRIAMENTE, PARA QUE SEJA ENVIADO SEMPRE PARA A COOPERATIVA (RENATO - SUPERO)-->
+			<select class="campo" id="tpenvcrd" name="tpenvcrd">
+				<option <?php if ($pa_envia_cartao) { echo "selected"; } ?> value="0">Cooperado</option>
+				<option <?php if (!$pa_envia_cartao) { echo "selected"; } ?> value="1">Cooperativa</option>
 					</select>				
 			<br />
 		</fieldset>
 		
 		<div id="divBotoes" >
-			<input class="btnVoltar" type="image" src="<?echo $UrlImagens; ?>botoes/voltar.gif" onClick="opcaoNovo(1);return false;" />
-			<input type="image" id="btnsaveRequest" src="<?echo $UrlImagens; ?>botoes/prosseguir.gif" onClick="$('#nmtitcrd').click(); $('#nmextttl').click(); verificaEfetuaGravacao();return false;" />
+			<input type="button" class="botao btnVoltar" onclick="opcaoNovo(1);return false;" value="Voltar" />
+			<?php if ($coop_envia_cartao && !$pa_envia_cartao) { ?>
+			<input type="button" class="botao botaoDesativado" id="btnsaveRequest" onclick="return false;" value="Prosseguir" />
+			<?php } else { ?>
+			<input type="button" class="botao" id="btnsaveRequest" onclick="$('#nmtitcrd').click(); $('#nmextttl').click(); verificaEfetuaGravacao();return false;" value="Prosseguir" />
+			<?php } ?>
 			<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
 				cdagenci="<?php echo $glbvars['cdpactra']; ?>" 
 				nrdcaixa="<?php echo $glbvars['nrdcaixa']; ?>" 
@@ -408,7 +450,6 @@
 
     </div>
 <script type="text/javascript">
-
 
 	function prosseguir(){
 		$('#nmtitcrd').click(); 
@@ -444,7 +485,7 @@
 		if ($inpessoa == "1") { // Pessoa Física 
 	?>
 		// Seta máscara aos campos
-		$("#nmtitcrd","#frmNovoCartao").setMask("STRING",40,charPermitido(),"");
+		$("#nmtitcrd","#frmNovoCartao").setMask("STRING",40,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ","");
 		$("#dtnasccr","#frmNovoCartao").setMask("DATE","","","divRotina");
 		$("#nrcpfcgc","#frmNovoCartao").setMask("INTEGER","999.999.999-99","","");
 		$("#vlsalari","#frmNovoCartao").setMask("DECIMAL","zzz.zzz.zz9,99","","");
@@ -465,7 +506,9 @@
 
 		// Seta máscara aos campos
 		$("#dtnasccr","#frmNovoCartao").setMask("DATE","","","divRotina");
-		$("#nmtitcrd","#frmNovoCartao").setMask("STRING",40,charPermitido(),"");		
+		$("#nmtitcrd","#frmNovoCartao").setMask("STRING",40,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ","");
+		$("#nmempres","#frmNovoCartao").setMask("STRING",40,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ","");
+
 		$("#vllimdeb","#frmNovoCartao").setMask("DECIMAL","zzz.zz9,99","","");
 		$("#nrcpfcgc","#frmNovoCartao").setMask("INTEGER","999.999.999-99","","");
 		
@@ -482,7 +525,11 @@
 				
 				carregarRepresentante("N",0,$(this).val());
 			} else {				
-				$("#dtnasccr","#frmNovoCartao").val("").prop("disabled",true).attr("class","campoTelaSemBorda");
+				if ($(this).val() == "") {
+				    $("#dtnasccr","#frmNovoCartao").val("").prop("disabled",false).attr("class","campo");
+				}else{
+					$("#dtnasccr","#frmNovoCartao").val("").prop("disabled",true).attr("class","campoTelaSemBorda");
+				}
 			}	
 			
 			return true;
@@ -536,6 +583,7 @@
 								
 								$('#dddebito').append($("<option></option>").attr("value",ddDebit).text(ddDebit)); 
 								$("#dddebito").attr("disabled",true);
+								$("#dddebito").val(<?php echo $dddebito_tit?>);
 								
 								$("#vllimpro").attr("disabled",true);
 								$("#vllimpro").val("<? echo number_format( $dadosTitular['vllimmul'],2,",",".");?>");
@@ -551,24 +599,15 @@
 							
 							$("#flgdebit").removeAttr("readonly");
 							$("#flgdebit").removeAttr("disabled");
-							$("#flgdebit").removeProp("disabled");
-							$("#flgdebit").removeProp("readonly");
-							setTimeout(function(){
-								$("#flgdebit").removeAttr("readonly");
-								$("#flgdebit").removeAttr("disabled");
-								$("#flgdebit").removeProp("disabled");
-								$("#flgdebit").removeProp("readonly");
-							}, 600);
-							
-							
 							$("#tpdpagto").removeAttr("disabled");
-							$("#limiteDiv").html("<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;' readonly>");
+							//$("#limiteDiv").html("<input class='campo' id='vllimpro' name='vllimpro' style='width: 110px; text-align: right;' readonly>");
 							
 							$("#dddebito").removeAttr("disabled");
 							var ddDebit = '<? echo strlen($dadosTitular['ddebiess']) > 0 ? $dadosTitular['ddebiess'] : '' ; ?>';
 							
 							$('#dddebito').append($("<option></option>").attr("value",ddDebit).text(ddDebit)); 
 							$("#dddebito").attr("disabled",true);
+							$("#dddebito").val(<?php echo $dddebito_tit?>);
 							
 							$("#vllimpro").attr("disabled",true);
 							desativa("vllimpro");

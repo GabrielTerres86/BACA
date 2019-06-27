@@ -8,7 +8,7 @@
 | retorna-situacao                       | CADA0004.fn_retorna_situacao_cartao |
 | f_verifica_adm                         | CADA0004.fn_verifica_adm            |
 +----------------------------------------+-------------------------------------+
- 
+
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
 
@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 11/02/2019
+    Data      : Marco/2008                    Ultima Atualizacao: 13/06/2019
     
     Dados referentes ao programa:
 
@@ -558,6 +558,15 @@
                11/02/2019 - Validacao para nao permitir exclusao de cartao quando o mesmo estiver em uso
                             (Lucas Ranghetti #PRB0040556)
                           - Validar titularidade na entrega da segunda via do cartao (Lucas Ranghetti #PRB0040597)
+                          
+               30/04/2019 - Na procedure exclui_cartao permitir exclusao apenas de cartoes bancoob
+                            com situacao em estudo (Lucas Ranghetti PRB0041657)
+            
+               09/05/2019 - Incluido campo inupgrad da tabela crawcrd na temp-table 
+				            Alcemir Mouts (PRB0041641).
+		       
+			   13/06/2019 - Popular novo campo da tabela nova_proposta.
+			                Alcemir Jr. (INC0015816). 
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -829,7 +838,7 @@ PROCEDURE lista_cartoes:
 
     DEF VAR aux_vltotccr AS DECI NO-UNDO.
     DEF VAR aux_dssitcrd AS CHAR NO-UNDO.
-
+        
     DEF VAR aux_flgprovi LIKE crapcrd.flgprovi NO-UNDO.
         
     EMPTY TEMP-TABLE tt-erro.
@@ -889,10 +898,10 @@ PROCEDURE lista_cartoes:
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Listar cartoes de credito.".    
            
-    FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd dtinsori
-                            dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
-                      WHERE crawcrd.cdcooper = par_cdcooper    AND
-                            crawcrd.nrdconta = par_nrdconta    NO-LOCK:
+    FOR EACH crawcrd FIELDS(cdadmcrd insitcrd tpcartao cdlimcrd dtinsori flgprcrd
+                               dtsol2vi nmtitcrd nrcrcard nrctrcrd nrcpftit vllimcrd)
+                         WHERE crawcrd.cdcooper = par_cdcooper    AND
+                           crawcrd.nrdconta = par_nrdconta    NO-LOCK:
                                                                       
         FIND crapadc WHERE crapadc.cdcooper = par_cdcooper      AND
                            crapadc.cdadmcrd = crawcrd.cdadmcrd  
@@ -992,7 +1001,8 @@ PROCEDURE lista_cartoes:
                tt-cartoes.cdadmcrd = crawcrd.cdadmcrd
                tt-cartoes.dtinsori = crawcrd.dtinsori
                tt-cartoes.flgcchip = crapadc.flgcchip
-               tt-cartoes.flgprovi = aux_flgprovi.
+               tt-cartoes.flgprovi = aux_flgprovi
+			   tt-cartoes.flgprcrd = crawcrd.flgprcrd.
 
         /* Mascara número de cartão de for Bancoob */
         IF  f_verifica_adm(crawcrd.cdadmcrd) = 2 THEN
@@ -1104,6 +1114,7 @@ PROCEDURE carrega_dados_inclusao:
     DEF VAR aux_dsmensag AS CHAR                                    NO-UNDO.
 
     DEF VAR aux_nmbandei AS CHAR                                    NO-UNDO.
+	DEF VAR aux_dddebito_tit AS INT                                 NO-UNDO.
 
     DEF BUFFER crabass FOR crapass.
     
@@ -1112,11 +1123,11 @@ PROCEDURE carrega_dados_inclusao:
     
     ASSIGN aux_dscartao = "NACIONAL,INTERNACIONAL,GOLD"
            aux_cdcartao = "1,2,3"
-           aux_dsgraupr = 
-                  "Conjuge,Filhos,Companheiro,Primeiro Titular,Segundo Titular,Terceiro Titular,Quarto Titular"
+           aux_dsgraupr = "Conjuge,Filhos,Companheiro,Primeiro Titular,Segundo Titular,Terceiro Titular,Quarto Titular"
            aux_cdgraupr = "1,3,4,5,6,7,8"       
            aux_flgfirst = TRUE
            aux_vlrftbru = 0.
+    
     
     FOR FIRST crapass FIELDS(nrdconta inpessoa nrcpfcgc cdtipcta cdsitdct cdsitdtl dtdemiss 
                              vledvmto cdcooper nmprimtl dtnasctl nrdocptl)
@@ -1856,6 +1867,19 @@ PROCEDURE carrega_dados_inclusao:
     IF AVAILABLE crapcje THEN
       ASSIGN aux_nmconjug = crapcje.nmconjug
              aux_dtnasccj = crapcje.dtnasccj.
+
+    ASSIGN aux_dddebito_tit = 0.
+    
+	/* buscar o cartão titular para pegar o dia do débito da fatura */
+	FIND crawcrd WHERE crawcrd.cdcooper = par_cdcooper AND
+                       crawcrd.nrdconta = par_nrdconta AND 
+					   crawcrd.flgprcrd = 1            AND
+					   crawcrd.insitcrd <> 5           AND 
+					   crawcrd.insitcrd <> 6
+                       NO-LOCK NO-ERROR.
+      
+	IF AVAILABLE crawcrd THEN
+	   ASSIGN aux_dddebito_tit = crawcrd.dddebito.
 
     CREATE tt-nova_proposta.
     ASSIGN tt-nova_proposta.dsgraupr = aux_dsgraupr 
@@ -5144,6 +5168,7 @@ PROCEDURE consulta_dados_cartao:
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Consultar dados cartao de credito.".
 
+
     FIND crawcrd WHERE crawcrd.cdcooper = par_cdcooper   AND
                        crawcrd.nrdconta = par_nrdconta   AND
                        crawcrd.nrctrcrd = par_nrctrcrd   NO-LOCK NO-ERROR.
@@ -5556,7 +5581,9 @@ PROCEDURE consulta_dados_cartao:
            tt-dados_cartao.nrcctitg = crawcrd.nrcctitg
            tt-dados_cartao.dsdpagto = aux_dsdpagto
            tt-dados_cartao.dsgraupr = aux_dstitula
-           tt-dados_cartao.flgprovi = aux_flgprovi.
+           tt-dados_cartao.flgprovi = aux_flgprovi
+           tt-dados_cartao.nmempcrd = crawcrd.nmempcrd
+           tt-dados_cartao.inupgrad = crawcrd.inupgrad.
            
     RUN proc_gerar_log (INPUT par_cdcooper,
                         INPUT par_cdoperad,
@@ -14594,6 +14621,14 @@ PROCEDURE exclui_cartao:
                   ASSIGN aux_dscritic = "Cartao ja solicitado.".
                   LEAVE.
               END.               
+          
+          /* Permitir exclusao apenas de cartoes com situacao em estudo */
+          IF f_verifica_adm(crawcrd.cdadmcrd) = 2  AND
+              crawcrd.insitcrd <> 0   THEN
+              DO:
+                  ASSIGN aux_dscritic = "Situacao do cartao nao permite exclusao.".
+                  LEAVE.
+              END.   
           
           IF  crawcrd.insitcrd = 4 THEN
               DO:
@@ -23934,6 +23969,7 @@ PROCEDURE altera_administradora:
    DEF  INPUT PARAM par_codnadmi AS INTE NO-UNDO.
                     
    DEF OUTPUT PARAM TABLE FOR tt-erro.      
+   DEF OUTPUT PARAM par_nrctrcrd AS DECI NO-UNDO.
    
    DEF VAR aux_flgexist AS INTE INIT 0 NO-UNDO.
    DEF VAR aux_contador AS INTE INIT 0 NO-UNDO.
@@ -24164,7 +24200,8 @@ PROCEDURE altera_administradora:
                  crabcrd.dtentreg = ?              /* Inclusao Renato - Supero - 07/11/2014 */
                  aux_flgexist = 1
                  crabcrd.inupgrad = 1              /* Flag indicativa de upgrade  */
-                 nrctrcrd = aux_nrctrcrd.
+                 nrctrcrd = aux_nrctrcrd
+                 par_nrctrcrd = aux_nrctrcrd.
                  
           /* Buscar o codigo do limite de credito da nova administradora */       
           IF AVAILABLE craptlc THEN

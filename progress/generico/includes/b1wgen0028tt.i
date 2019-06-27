@@ -2,7 +2,7 @@
 
    Programa: b1wgen0028tt.i                  
    Autor   : Guilherme
-   Data    : Marco/2008                        Ultima atualizacao: 28/04/2016
+   Data    : Marco/2008                        Ultima atualizacao: 09/05/2017
 
    Dados referentes ao programa:
 
@@ -68,6 +68,21 @@
                
                28/04/2016 - Adicionar o campo flgdebit na temp-table tt-dados-cartao
                             (Douglas - Chamado 415437)
+                            
+               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-motivos_2via (Oscar).
+                            Correçao nas TEMP-TABLES colocar NO-UNDO, tt_dados_promissoria_imp (Oscar).
+               
+			   20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+               
+			   12/12/2018 - Adicionado campo flgprovi (Anderson-Alan Supero P432)
+			                 
+			   09/05/2019 - Incluido campo inupgrad da tabela crawcrd na temp-table 
+				            Alcemir Mouts (PRB0041641).
+
+		       13/06/2019 - Inlcuido campo dddebito_tit na tabela nova_prospota.
+			                Alcemir Jr. (INC0015816). 
 ....................................................................................*/
 
 DEF TEMP-TABLE tt-lim_total NO-UNDO
@@ -83,12 +98,19 @@ DEF TEMP-TABLE tt-cartoes NO-UNDO
     FIELD insitcrd AS INTE
     FIELD nrctrcrd LIKE crawcrd.nrctrcrd
     FIELD cdadmcrd LIKE crawcrd.cdadmcrd
-    FIELD flgcchip LIKE crapadc.flgcchip.
+    FIELD dtinsori LIKE crawcrd.dtinsori
+    FIELD flgcchip LIKE crapadc.flgcchip
+    FIELD flgprovi AS INTE
+	FIELD flgprcrd LIKE crawcrd.flgprcrd.
     
 DEF TEMP-TABLE tt-dados_cartao NO-UNDO
     FIELD nrcrcard LIKE crawcrd.nrcrcard  
+    FIELD nrdoccrd LIKE crawcrd.nrdoccrd
     FIELD nrctrcrd LIKE crawcrd.nrctrcrd
+    FIELD nmresadm LIKE crapadc.nmresadm
     FIELD dscartao AS CHAR 
+    FIELD nmempttl LIKE crapass.nmprimtl
+    FIELD nrcnpjtl LIKE crapass.nrcpfcgc
     FIELD nmtitcrd LIKE crawcrd.nmtitcrd
     FIELD nmextttl LIKE crawcrd.nmextttl
     FIELD nrcpftit LIKE crawcrd.nrcpftit
@@ -129,7 +151,10 @@ DEF TEMP-TABLE tt-dados_cartao NO-UNDO
     FIELD dtrejeit LIKE crawcrd.dtrejeit
     FIELD nrcctitg LIKE crawcrd.nrcctitg
     FIELD dsdpagto AS CHAR
-    FIELD dsgraupr AS CHAR.
+    FIELD dsgraupr AS CHAR
+	FIELD flgprovi AS INTE
+    FIELD nmempcrd LIKE crawcrd.nmempcrd
+	FIELD inupgrad LIKE crawcrd.inupgrad.
     
 DEF TEMP-TABLE tt-hab_cartao NO-UNDO
     FIELD nrcpfcgc LIKE crapass.nrcpfcgc
@@ -178,10 +203,10 @@ DEF TEMP-TABLE tt-nova_proposta NO-UNDO
     FIELD vlsalari /* "Salario"            */ AS DECI
     FIELD dddebito /* "Dia debito"         */ AS CHAR
     FIELD cdtipcta LIKE crapass.cdtipcta
-    FIELD nrcpfstl LIKE crapass.nrcpfstl
+    FIELD nrcpfstl LIKE crapttl.nrcpfcgc
     FIELD inpessoa LIKE crapass.inpessoa
-    FIELD dtnasstl LIKE crapass.dtnasstl
-    FIELD nrdocstl LIKE crapass.nrdocstl
+    FIELD dtnasstl LIKE crapttl.dtnasttl
+    FIELD nrdocstl LIKE crapttl.nrdocttl
     FIELD nmconjug LIKE crapcje.nmconjug
     FIELD dtnasccj LIKE crapcje.dtnasccj
     FIELD nmtitcrd LIKE crapass.nmprimtl
@@ -197,7 +222,8 @@ DEF TEMP-TABLE tt-nova_proposta NO-UNDO
     FIELD dsrepinc AS CHAR
     FIELD nmbandei AS CHAR
     FIELD dslimite AS CHAR
-    FIELD dsoutros AS CHAR.
+    FIELD dsoutros AS CHAR
+	FIELD dddebito_tit AS INT.
     
 DEF TEMP-TABLE tt-ult_deb NO-UNDO
     FIELD dtdebito LIKE crapdcd.dtdebito
@@ -229,7 +255,7 @@ DEF TEMP-TABLE tt-dtvencimento_cartao NO-UNDO
     FIELD diasdadm AS CHAR
     FIELD dddebito AS INTE.
     
-DEF TEMP-TABLE tt-motivos_2via
+DEF TEMP-TABLE tt-motivos_2via NO-UNDO
     FIELD dsmotivo AS CHAR
     FIELD cdmotivo AS INTE.
 
@@ -534,7 +560,7 @@ DEF TEMP-TABLE tt_dados_promissoria NO-UNDO
    FIELD dsendav2 AS CHAR EXTENT 3
    FIELD dsmvtolt AS CHAR.
 
-DEF TEMP-TABLE tt_dados_promissoria_imp LIKE tt_dados_promissoria.
+DEF TEMP-TABLE tt_dados_promissoria_imp NO-UNDO LIKE tt_dados_promissoria.
 
 DEFINE TEMP-TABLE tt-termo-entreg-pj NO-UNDO
     FIELD nome     AS CHAR FORMAT "x(50)"
