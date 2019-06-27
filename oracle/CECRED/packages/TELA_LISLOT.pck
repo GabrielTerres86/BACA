@@ -317,8 +317,6 @@ BEGIN
       
     END LOOP;
 
-    dbms_output.put_line(vr_retxml.getclobval);
-    
     pr_retxml := vr_retxml.getclobval();
 
   EXCEPTION
@@ -333,7 +331,7 @@ BEGIN
 
     WHEN OTHERS THEN
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'Erro geral na rotina da tela TELA_LISLOT(pc_lista_det_prej_lislot): ' || SQLERRM;
+      pr_dscritic := 'Erro geral na rotina da tela TELA_LISLOT(pc_lista_lislot_periodo): ' || SQLERRM;
 
   END;
   
