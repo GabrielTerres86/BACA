@@ -134,6 +134,13 @@ function manterRotinaContatos( operacao ) {
 	dsdemail = $('#dsdemail','#frmContatos').val();
 	
 	nrdctato = normalizaNumero(nrdctato);
+	if (dsdemail != '') {
+        if (!validaEmail(dsdemail)) {
+            showError('error', 'E-mail inv&aacute;lido.', 'Alerta - Aimaro', 'hideMsgAguardo();focaCampoErro(\'dsdemail\',\'frmContatos\');');
+            return false;
+        }
+        dsdemail = removeCaracteresInvalidosEmail(dsdemail);
+    }
 	
 	// Executa script de confirmação através de ajax
 	$.ajax({		

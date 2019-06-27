@@ -782,7 +782,11 @@ function manterRotina() {
         }
 
         if (dsdemail != '') {
-            dsdemail = removeAcentos(removeCaracteresInvalidosEmail(dsdemail));
+            if (!validaEmail(dsdemail)) {
+                showError('error', 'E-mail inv&aacute;lido.', 'Alerta - Aimaro', 'hideMsgAguardo();focaCampoErro(\'dsdemail\',\'frmFisico\');');
+                return false;
+            }
+            dsdemail = removeCaracteresInvalidosEmail(dsdemail);
         }
 
         if (nmprimtl != '') {
@@ -909,7 +913,11 @@ function manterRotina() {
         }
 
         if (dsdemail != '') {
-            dsdemail = removeAcentos(removeCaracteresInvalidosEmail(dsdemail));
+            if (!validaEmail(dsdemail)) {
+                showError('error', 'E-mail inv&aacute;lido.', 'Alerta - Aimaro', 'hideMsgAguardo();focaCampoErro(\'dsdemail\',\'frmJuridico\');');
+                return false;
+            }
+            dsdemail = removeCaracteresInvalidosEmail(dsdemail);
         }
 
         if (nmprimtl != '') {
@@ -970,11 +978,6 @@ function removeAcentos(str){
 function removeCaracteresInvalidos(str){
 	return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\(\)\-\_\=\+\[\]\{\}\?\;\:\.\,\/\>\<]/g,"");
 }
-
-function removeCaracteresInvalidosEmail(str) {
-    return str.replace(/[^A-z0-9\sÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\(\)\-\_\=\@\+\[\]\{\}\?\;\:\.\,\/\>\<]/g, "");
-}
-
 function verificaCpfCgcRespSocial(inpessoa, nrcpfcgc) {
     
     $.ajax({
