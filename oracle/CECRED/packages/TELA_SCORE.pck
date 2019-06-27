@@ -112,7 +112,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_score AS
       vr_idorigem VARCHAR2(100);    
     
       -- Variáveis para criação de cursor dinâmico
-      vr_nom_owner     VARCHAR2(100) := risc0005.fn_get_owner_sas;
+      vr_nom_owner     VARCHAR2(100) := gene0005.fn_get_owner_sas;
       vr_nom_dblink    VARCHAR2(100);
       vr_num_cursor    number;
       vr_num_retor     number;
@@ -158,7 +158,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_score AS
       END IF;       
       
       -- Buscar dblink
-      vr_nom_dblink := risc0005.fn_get_dblink_sas('R');
+      vr_nom_dblink := gene0005.fn_get_dblink_sas('R');
       IF vr_nom_dblink IS NULL THEN
         vr_dscritic := 'Nao foi possivel retornar o DBLink do SAS, verifique!';
         RAISE vr_exc_saida;

@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 20/05/2019
+    Data    : Marco/07.                       Ultima atualizacao: 04/06/2019 
     
     Dados referentes ao programa:
 
@@ -275,6 +275,8 @@
 						   de compensacao (Com copia para a  sustentacao) informando
 						   qual o cheque com problema e que a devolucao deve ser feita por carta
 						   (Adriano - PRB0041791).
+			        04/06/2019 - P565.1-RF20 - Inclusao do histórico 2973-DEV.CH.DEP na proc gera_lancamento.
+                           (Fernanda Kelli de Oliveira - AMCom)
 
 						   
 ..............................................................................*/
@@ -386,6 +388,10 @@ DEF        VAR aux_des_erro AS CHAR                                  NO-UNDO.
 DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
 
 DEF        VAR aux_flgreapr AS INT                                   NO-UNDO.
+
+/*P565.1-RF20*/
+DEF        VAR aux2_cdhistor AS INTE                                 NO-UNDO.
+DEF        BUFFER craplcm1 FOR craplcm.
 
 DEF BUFFER crabcop FOR crapcop.
 DEF BUFFER crabtco FOR craptco.
@@ -624,7 +630,7 @@ PROCEDURE gera_lancamento:
 
 								IF NOT VALID-HANDLE(h-b1wgen0011) THEN
 									RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
-										
+
 								RUN enviar_email_completo IN h-b1wgen0011 (INPUT glb_cdcooper,
 																		   INPUT glb_cdprogra,
 																		   INPUT "cpd@ailos.coop.br",
@@ -1547,6 +1553,20 @@ PROCEDURE gera_lancamento:
                                                 UNDO, RETURN "NOK".
                                        END.
                                       
+									                     /*P565.1-RF20 Se encontrar um lançamento anterior com o histórico 2662, 
+                                         faz um lançamento pelo histórico 2973, senao faz pelo histórico 351 */
+                                       FIND FIRST craplcm1 
+                                            WHERE craplcm1.cdcooper = aux_cdcooper     AND
+                                                  craplcm1.nrdconta = crapcst.nrdconta AND
+                                                  craplcm1.nrdocmto = crapcst.nrdocmto AND
+                                                  craplcm1.cdhistor = 2662   /*DEPOSITO DE CHEQUES EM CUSTODIA*/                                                         
+                                                  NO-LOCK NO-ERROR.
+
+                                           IF AVAILABLE craplcm1 THEN
+                                             ASSIGN  aux2_cdhistor = 2973. /*DEVOLUCAO DE CHEQUE ACOLHIDO EM DEPOSITO - SALDO BLOQUEADO*/
+                                           ELSE
+                                             ASSIGN  aux2_cdhistor = 351.  /*DEVOLUCAO DE CHEQUE ACOLHIDO EM DEPOSITO - SALDO LIBERADO*/
+                                      
                                       CREATE craplcm.
                                       ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
                                              craplcm.cdagenci = craplot.cdagenci
@@ -1555,7 +1575,7 @@ PROCEDURE gera_lancamento:
                                              craplcm.nrdconta = crapcst.nrdconta
                                              craplcm.nrdctabb = aux_nrctalcm
                                              craplcm.nrdocmto = crapcst.nrcheque
-                                             craplcm.cdhistor = 351  
+                                             craplcm.cdhistor = aux2_cdhistor  /*P565.1-RF20*/
                                              craplcm.nrseqdig = craplot.nrseqdig + 1
                                              craplcm.vllanmto = crapdev.vllanmto
                                              craplcm.cdoperad = crapdev.cdoperad

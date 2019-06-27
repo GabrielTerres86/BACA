@@ -12720,12 +12720,11 @@ PROCEDURE pc_val_segment_a_cnab240_ted (pr_linha_arquivo in varchar2
   and   agb.cdageban = pr_cdagenci;
   rr_crapagb cr_crapagb%ROWTYPE;  
   
-  CURSOR cr_crapcop (pr_cdcooper in number
-                    ,pr_cdagenci in number) IS    
+  CURSOR cr_crapcop (pr_cdagenci in number) IS    
   SELECT cop.cdagectl
+        ,cop.cdcooper
   FROM crapcop cop
-  WHERE cop.cdcooper = pr_cdcooper
-    and cop.cdagectl = pr_cdagenci;
+  WHERE cop.cdagectl = pr_cdagenci;
   rr_crapcop cr_crapcop%ROWTYPE; 
 
  --> Buscar dados do associado
@@ -12774,6 +12773,7 @@ PROCEDURE pc_val_segment_a_cnab240_ted (pr_linha_arquivo in varchar2
   vr_histra    varchar2(20);
   vr_stsnrcal  boolean;
   vr_inpessoa  integer:= null;
+  vr_cdcooper_int crapcop.cdcooper%type;
 
     
 BEGIN
@@ -12875,27 +12875,31 @@ BEGIN
   --
   /*Agência Mantedora da conta*/
   IF vr_bcofavo = '085' THEN
-    /* Se o banco for da cooperatia e o tipo de conta for conta corrente ou poupança, valida agência*/
+    /* Se o banco for da cooperativa e o tipo de conta for conta corrente ou poupança, valida agência*/
     IF vr_tpmovime in ('1','2') THEN
-      OPEN cr_crapcop (pr_cdcooper, TO_NUMBER(vr_agefav));  
+      OPEN cr_crapcop (TO_NUMBER(vr_agefav));  
       FETCH cr_crapcop into rr_crapcop;
       IF cr_crapcop%NOTFOUND THEN
          CLOSE cr_crapcop;
          pr_tab_dados_segmento_a(vr_index).tperrocnab := 'A2';
          raise vr_erro_segmento_a; 
-      END IF;     
+      END IF;    
+      vr_cdcooper_int := rr_crapcop.cdcooper; 
       CLOSE cr_crapcop;
     END IF;
   ELSE
-    /* Valida agência de outros bancos */
-    OPEN cr_crapagb (TO_NUMBER(vr_bcofavo), TO_NUMBER(vr_agefav));  
-    FETCH cr_crapagb into rr_crapagb;
-    IF cr_crapagb%NOTFOUND THEN
-       CLOSE cr_crapagb;
-       pr_tab_dados_segmento_a(vr_index).tperrocnab := 'A2';
-       raise vr_erro_segmento_a; 
-    END IF;     
-    CLOSE cr_crapagb;    
+    /* Não será validada a agência para o tipo de conta Pagamento */
+    IF vr_tpmovime in ('1','2') THEN
+      /* Valida agência de outros bancos */
+      OPEN cr_crapagb (TO_NUMBER(vr_bcofavo), TO_NUMBER(vr_agefav));  
+      FETCH cr_crapagb into rr_crapagb;
+      IF cr_crapagb%NOTFOUND THEN
+         CLOSE cr_crapagb;
+         pr_tab_dados_segmento_a(vr_index).tperrocnab := 'A2';
+         raise vr_erro_segmento_a; 
+      END IF;     
+      CLOSE cr_crapagb; 
+    END IF;   
   END IF;
   /*Digito da conta*/
   IF ltrim(vr_nrddgcta) is null THEN
@@ -12909,7 +12913,7 @@ BEGIN
   ELSE
     IF  vr_bcofavo = '085' THEN         
       --> Buscar dados do associado
-      OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
+      OPEN cr_crapass (pr_cdcooper => vr_cdcooper_int,
                        pr_nrdconta => TO_NUMBER(vr_nrdconta||vr_nrddgcta));
       FETCH cr_crapass INTO rw_crapass;
       IF cr_crapass%NOTFOUND THEN        
@@ -13048,9 +13052,16 @@ procedure pc_verifica_layout_ted (pr_cdcooper   in craphis.cdcooper%type
   AND   tat.nrdconta = pr_nrdconta
   AND   tat.cdcooper = pr_cdcooper
   AND   tat.nrseq_arquivo = pr_nrseqarq
-  AND   ltrim(tatl.cdbco_comp) IS NOT NULL  /*TEMPORARIO - PENDENCIA*/
+  AND   ltrim(tatl.cdbco_comp) IS NOT NULL  
   ORDER BY tatl.nrseq_arq_ted_linha ASC;
   rr_arqrem  cr_arqrem%rowtype; 
+  
+  -- Seleciona os dados da Cooperativa
+  CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+  SELECT crapcop.cdagectl
+  FROM crapcop crapcop
+  WHERE crapcop.cdcooper = pr_cdcooper;
+  rw_crapcop cr_crapcop%ROWTYPE;
   
   -- Declaracao de variaveis
   vr_contador  number := 0;
@@ -13630,7 +13641,12 @@ BEGIN
        END LOOP;  
        
     END IF;
-    --   
+    --  
+    /* Selecionar agência da cooperativa de origem */
+    OPEN cr_crapcop (pr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+    CLOSE cr_crapcop;
+    --            
     IF vr_tab_dados_segmento_a.COUNT() > 0 AND  vr_tab_err_headtrailer.COUNT() = 0 THEN
        --Processa o Segmento A, caso nao haja criticas no HEADER/TRAILERs
        FOR vr_idx IN vr_tab_dados_segmento_a.FIRST..vr_tab_dados_segmento_a.LAST LOOP
@@ -13639,8 +13655,15 @@ BEGIN
             -- BD - Registro do arquivo integro
             IF vr_tab_dados_segmento_a(vr_idx).cdbco_fav = '085'  THEN
                -- Agendamento de transferência
-               vr_cdtiptra:= 5;
-               vr_cdhisdeb:= 1009;
+               IF TO_NUMBER(vr_tab_dados_segmento_a(vr_idx).cdage_conta) <> rw_crapcop.cdagectl                  THEN
+                  -- Transferencia intercooperativa
+                  vr_cdhisdeb:= 1009;
+                  vr_cdtiptra:= 5;
+               ELSE
+                  -- Transferencia intracooperativa
+                  vr_cdhisdeb:= 537;
+                  vr_cdtiptra:= 1;
+               END IF; 
             ELSE
               -- Agendamento de Ted
               vr_cdtiptra:= 4;
@@ -13885,7 +13908,7 @@ procedure pc_importa_arquivo_ted   (pr_cdcooper   in crapatr.cdcooper%type  --> 
   -- Objetivo  : Realizar a importação do arquivo de TED/Transferência
   --          
   --
-  -- Alteracoes: 24/06/2019 - Removido validação de permissão de ambiente - PRJ 500 (Mateus Z / Mouts)
+  -- Alteracoes:
   --
   ---------------------------------------------------------------------------
 
@@ -13896,7 +13919,6 @@ procedure pc_importa_arquivo_ted   (pr_cdcooper   in crapatr.cdcooper%type  --> 
    
   -- Declaracao padrao de variaveis
   vr_dscritic  varchar2(1000);
-  vr_database  varchar2(100);
   vr_exc_saida exception;
   vr_exc_layout exception;
   vr_cdcritic  pls_integer;
@@ -13976,7 +13998,7 @@ BEGIN
      vr_dscritic := 'Numero sequencial do arquivo inferior ao ultimo processado!';
      raise vr_exc_saida;
   END IF;  
-    
+  
   -- Busca o diretório do upload do arquivo
   vr_dsupload := GENE0001.fn_diretorio(pr_tpdireto => 'C'
                                       ,pr_cdcooper => pr_cdcooper

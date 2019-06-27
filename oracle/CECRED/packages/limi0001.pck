@@ -5126,14 +5126,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         Sistema : Cadastro - Cooperativa de Credito
         Sigla   : CRED
         Autor   : Leonardo Zippert - Mouts
-        Data    : 27/11/2018                        Ultima atualizacao: 
+        Data    : 27/11/2018                        Ultima atualizacao: 24/06/2019
      
         Dados referentes ao programa:
      
         Frequencia: Diaria - Sempre que for chamada
         Objetivo  : Rotina para retornar uma lista de limites do cooperado (Somente Ativos e Pendente de Analise).
      
-        Alteracoes:     
+        Alteracoes: 24/06/2019 - Remover o caracter especial '' da coluna observação. PRJ 438 (Mateus Z / Mouts)    
      ............................................................................. */
    
      -- Buscar os limites ativos e pendentes de aprovacao
@@ -5166,7 +5166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
               CRAPLIM.nrperger,
               'A' nivrisco,
               CRAPLIM.idcobope,
-              crapprp.dsobserv##1 dsobserv
+              gene0007.fn_caract_acento(crapprp.dsobserv##1, 1, '') dsobserv
          from craplim,
               CRAPLRT,
               crapass,

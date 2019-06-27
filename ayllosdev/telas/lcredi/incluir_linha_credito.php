@@ -5,28 +5,23 @@
  * DATA CRIAÇÃO : Julho/2016 
  * OBJETIVO     : Rotina para incluir uma linha de crédito
  * --------------
- * ALTERAÇÕES   :  10/08/2016 - Ajuste referente a homologação da área de negócio
-                                (Andrei - RKAM)
-
-			       09/09/2016 - Ajuste para pegar corretamente o valor do parametro consaut
-								(Adriano)
-
-                   27/03/2017 - Inclusao dos campos Produto e Indexador. (Jaison/James - PRJ298)
-
-                   10/10/2017 - Inclusao do campo % Mínimo Garantia e opção 4 no campo Modelo. (Lombardi - PRJ404)
-				   
-				   06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
+ * ALTERAÇÕES   :  10/08/2016 - Ajuste referente a homologação da área de negócio (Andrei - RKAM)
+ *			       09/09/2016 - Ajuste para pegar corretamente o valor do parametro consaut (Adriano)
+ *                 27/03/2017 - Inclusao dos campos Produto e Indexador. (Jaison/James - PRJ298)
+ *                 10/10/2017 - Inclusao do campo % Mínimo Garantia e opção 4 no campo Modelo. (Lombardi - PRJ404)
+ *				   06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
+ *                 13/02/2019 - Inclusao do campo flprapol (Christian Grauppe - Envolti - P442 Pré-Aprovado)
  */
 ?>
 
-<?php	
- 
+<?php
+
     session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
-	isPostMethod();		
+	isPostMethod();
 	
 	// Carrega permissões do operador
 	require_once('../../includes/carrega_permissoes.php');		
@@ -79,6 +74,7 @@
   $flgcobmu = (isset($_POST["flgcobmu"])) ? $_POST["flgcobmu"] : 0;
   $flgsegpr = (isset($_POST["flgsegpr"])) ? $_POST["flgsegpr"] : 0;
   $cdhistor = (isset($_POST["cdhistor"])) ? $_POST["cdhistor"] : 0;
+  $flprapol = (isset($_POST["flprapol"])) ? $_POST["flprapol"] : 0;
   $finalidades = (isset($_POST["finalidades"])) ? $_POST["finalidades"] : '';
   $tpprodut = (isset($_POST["tpprodut"])) ? $_POST["tpprodut"] : 0;
   $cddindex = (isset($_POST["cddindex"])) ? $_POST["cddindex"] : 0;
@@ -93,29 +89,18 @@
 		$valores = '';
 
 		foreach($dados as $valor){
-
 			if($valores == ''){
-
 				$valores = $valor;
-				
 			}else{
-				
 				$valores = $valores.'|'.$valor;
-				
 			}
-		
 		}
 
 		if($cdfinali == ''){
-
 			$cdfinali = $valores;
-
 		}else{
-
 			$cdfinali = $cdfinali.'#'.$valores;
-
 		}
-
 	}
   
   // Monta o xml de requisição		
@@ -124,49 +109,50 @@
 	$xml 	   .= "  <Dados>";
 	$xml 	   .= "     <cdlcremp>".$cdlcremp."</cdlcremp>";
 	$xml 	   .= "     <dslcremp>".$dslcremp."</dslcremp>";
-  $xml 	   .= "     <dsoperac>".$dsoperac."</dsoperac>";
-  $xml 	   .= "     <tplcremp>".$tplcremp."</tplcremp>";
-  $xml 	   .= "     <tpdescto>".$tpdescto."</tpdescto>";
-  $xml 	   .= "     <tpctrato>".$tpctrato."</tpctrato>";
-  $xml 	   .= "     <nrdevias>".$nrdevias."</nrdevias>";
-  $xml 	   .= "     <flgrefin>".$flgrefin."</flgrefin>";
-  $xml 	   .= "     <flgreneg>".$flgreneg."</flgreneg>";
-  $xml 	   .= "     <cdusolcr>".$cdusolcr."</cdusolcr>";
-  $xml 	   .= "     <flgtarif>".$flgtarif."</flgtarif>";
-  $xml 	   .= "     <flgtaiof>".$flgtaiof."</flgtaiof>";
-  $xml 	   .= "     <vltrfesp>".$vltrfesp."</vltrfesp>";
-  $xml 	   .= "     <flgcrcta>".$flgcrcta."</flgcrcta>";
-  $xml 	   .= "     <manterpo>".$manterpo."</manterpo>";
-  $xml 	   .= "     <flgimpde>".$flgimpde."</flgimpde>";
-  $xml 	   .= "     <dsorgrec>".$dsorgrec."</dsorgrec>";
-  $xml 	   .= "     <flglispr>".$flglispr."</flglispr>";
-  $xml 	   .= "     <cdmodali>".$cdmodali."</cdmodali>";
-  $xml 	   .= "     <cdsubmod>".$cdsubmod."</cdsubmod>";
-  $xml 	   .= "     <txjurfix>".$txjurfix."</txjurfix>";
-  $xml 	   .= "     <txjurvar>".$txjurvar."</txjurvar>";
-  $xml 	   .= "     <txpresta>".$txpresta."</txpresta>";
-  $xml 	   .= "     <txminima>".$txminima."</txminima>";
-  $xml 	   .= "     <txmaxima>".$txmaxima."</txmaxima>";
-  $xml 	   .= "     <txbaspre>".$txbaspre."</txbaspre>";
-  $xml 	   .= "     <nrgrplcr>".$nrgrplcr."</nrgrplcr>";
-  $xml 	   .= "     <qtcarenc>".$qtcarenc."</qtcarenc>";
-  $xml 	   .= "     <perjurmo>".$perjurmo."</perjurmo>";
-  $xml 	   .= "     <vlmaxass>".$vlmaxass."</vlmaxass>";
-  $xml 	   .= "     <consaut>".$consaut ."</consaut>";
-  $xml 	   .= "     <vlmaxasj>".$vlmaxasj."</vlmaxasj>";
-  $xml 	   .= "     <nrinipre>".$nrinipre."</nrinipre>";
-  $xml 	   .= "     <nrfimpre>".$nrfimpre."</nrfimpre>";
-  $xml 	   .= "     <qtdcasas>".$qtdcasas."</qtdcasas>";
-  $xml 	   .= "     <qtrecpro>".$qtrecpro."</qtrecpro>";
-  $xml 	   .= "     <flgdisap>".$flgdisap."</flgdisap>";
-  $xml 	   .= "     <flgcobmu>".$flgcobmu."</flgcobmu>";
-  $xml 	   .= "     <flgsegpr>".$flgsegpr."</flgsegpr>";
-  $xml 	   .= "     <cdhistor>".$cdhistor."</cdhistor>";
-  $xml 	   .= "     <cdfinali>".$cdfinali."</cdfinali>";
-  $xml 	   .= "     <tpprodut>".$tpprodut."</tpprodut>";
-  $xml 	   .= "     <cddindex>".$cddindex."</cddindex>";
-  $xml 	   .= "     <permingr>".$permingr."</permingr>";
-  $xml 	   .= "     <vlperidx>".$vlperidx."</vlperidx>";
+	$xml 	   .= "     <dsoperac>".$dsoperac."</dsoperac>";
+	$xml 	   .= "     <tplcremp>".$tplcremp."</tplcremp>";
+	$xml 	   .= "     <tpdescto>".$tpdescto."</tpdescto>";
+	$xml 	   .= "     <tpctrato>".$tpctrato."</tpctrato>";
+	$xml 	   .= "     <nrdevias>".$nrdevias."</nrdevias>";
+	$xml 	   .= "     <flgrefin>".$flgrefin."</flgrefin>";
+	$xml 	   .= "     <flgreneg>".$flgreneg."</flgreneg>";
+	$xml 	   .= "     <cdusolcr>".$cdusolcr."</cdusolcr>";
+	$xml 	   .= "     <flgtarif>".$flgtarif."</flgtarif>";
+	$xml 	   .= "     <flgtaiof>".$flgtaiof."</flgtaiof>";
+	$xml 	   .= "     <vltrfesp>".$vltrfesp."</vltrfesp>";
+	$xml 	   .= "     <flgcrcta>".$flgcrcta."</flgcrcta>";
+	$xml 	   .= "     <manterpo>".$manterpo."</manterpo>";
+	$xml 	   .= "     <flgimpde>".$flgimpde."</flgimpde>";
+	$xml 	   .= "     <dsorgrec>".$dsorgrec."</dsorgrec>";
+	$xml 	   .= "     <flglispr>".$flglispr."</flglispr>";
+	$xml 	   .= "     <cdmodali>".$cdmodali."</cdmodali>";
+	$xml 	   .= "     <cdsubmod>".$cdsubmod."</cdsubmod>";
+	$xml 	   .= "     <txjurfix>".$txjurfix."</txjurfix>";
+	$xml 	   .= "     <txjurvar>".$txjurvar."</txjurvar>";
+	$xml 	   .= "     <txpresta>".$txpresta."</txpresta>";
+	$xml 	   .= "     <txminima>".$txminima."</txminima>";
+	$xml 	   .= "     <txmaxima>".$txmaxima."</txmaxima>";
+	$xml 	   .= "     <txbaspre>".$txbaspre."</txbaspre>";
+	$xml 	   .= "     <nrgrplcr>".$nrgrplcr."</nrgrplcr>";
+	$xml 	   .= "     <qtcarenc>".$qtcarenc."</qtcarenc>";
+	$xml 	   .= "     <perjurmo>".$perjurmo."</perjurmo>";
+	$xml 	   .= "     <vlmaxass>".$vlmaxass."</vlmaxass>";
+	$xml 	   .= "     <consaut>".$consaut ."</consaut>";
+	$xml 	   .= "     <vlmaxasj>".$vlmaxasj."</vlmaxasj>";
+	$xml 	   .= "     <nrinipre>".$nrinipre."</nrinipre>";
+	$xml 	   .= "     <nrfimpre>".$nrfimpre."</nrfimpre>";
+	$xml 	   .= "     <qtdcasas>".$qtdcasas."</qtdcasas>";
+	$xml 	   .= "     <qtrecpro>".$qtrecpro."</qtrecpro>";
+	$xml 	   .= "     <flgdisap>".$flgdisap."</flgdisap>";
+	$xml 	   .= "     <flgcobmu>".$flgcobmu."</flgcobmu>";
+	$xml 	   .= "     <flgsegpr>".$flgsegpr."</flgsegpr>";
+	$xml 	   .= "     <cdhistor>".$cdhistor."</cdhistor>";
+	$xml 	   .= "     <flprapol>".$flprapol."</flprapol>";
+	$xml 	   .= "     <cdfinali>".$cdfinali."</cdfinali>";
+	$xml 	   .= "     <tpprodut>".$tpprodut."</tpprodut>";
+	$xml 	   .= "     <cddindex>".$cddindex."</cddindex>";
+	$xml 	   .= "     <permingr>".$permingr."</permingr>";
+	$xml 	   .= "     <vlperidx>".$vlperidx."</vlperidx>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	

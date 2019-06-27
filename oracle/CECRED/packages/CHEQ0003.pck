@@ -73,7 +73,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0003 AS
   --  Sistema  : Rotinas focadas no sistema de Cheques - Devolução automática de cheques
   --  Sigla    : CHEQ
   --  Autor    : Andre (Mouts)
-  --  Data     : Outubro/2018.                   Ultima atualizacao:
+  --  Data     : Outubro/2018.                   Ultima atualizacao: Maio/2019
   --
   -- Dados referentes ao programa:
   --
@@ -84,6 +84,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0003 AS
   --                            Problema PRB0040612 (Andre - MoutS)
   --               16/04/2019 - Remover verificação de Dev. Aut. Cheques para cheques com Contra-Ordem
   --                            RITM0011849 (Jefferson - MoutS)
+  --               29/05/2019 - Projeto 565 - RF20 - Alteração histórico 351 para hstórico 2973 no tratamento de devolução
+  --                            (Fernanda Kelli - AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -559,7 +561,16 @@ PROCEDURE pc_trata_devolucao_cheque(pr_cdcoopch IN crapchd.cdcooper%TYPE  --> Co
                                    ,pr_cdalinea OUT pls_integer           -- Código da alínea retornada
                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
                                    ,pr_dscritic OUT VARCHAR2) IS
-
+                                  
+   -- Verificar se devolucao é automatica
+   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
+                              ,pr_nrdconta crapass.nrdconta%TYPE) IS
+    SELECT tbchq.flgdevolu_autom
+      FROM tbchq_param_conta tbchq
+     WHERE tbchq.cdcooper = pr_cdcooper
+       AND tbchq.nrdconta = pr_nrdconta;
+    rw_tbchq_param_conta cr_tbchq_param_conta%ROWTYPE;
+    
     --Cursor para encontrar as folhas de cheques
       CURSOR cr_crapfdc(pr_cdcooper crapfdc.cdcooper%TYPE,
                         pr_cdbanchq crapfdc.cdbanchq%TYPE,
@@ -630,168 +641,182 @@ BEGIN
   pr_cdalinea := 0;
   
   BEGIN
-
-    OPEN cr_crapfdc (pr_cdcooper => pr_cdcoopch
-                                   ,pr_cdbanchq => pr_cdbanchq
-                                   ,pr_cdagechq => pr_cdagechq
-                                   ,pr_nrctachq => pr_nrctachq
-                                   ,pr_nrcheque => pr_nrcheque);
-    --Posicionar no primeiro registro
-    FETCH cr_crapfdc INTO rw_crapfdc;
-    IF cr_crapfdc%FOUND THEN
-      CLOSE cr_crapfdc;
-      vr_cdalinea := 0;
-      if nvl(rw_crapfdc.incheque,0) in (1,2) then
-        -- Verifica alinea de contra-ordem
-        pc_valida_alinea_contra_ordem(pr_cdcooper => pr_cdcoopch
-                                     ,pr_cdbanchq => pr_cdbanchq      
-                                     ,pr_cdagechq => pr_cdagechq    
-                                     ,pr_nrctachq => pr_nrctachq
-                                     ,pr_nrcheque => TO_NUMBER(TO_CHAR(pr_nrcheque,'FM999999')||To_Char(rw_crapfdc.nrdigchq,'FM9')) 
-                                     ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
-                                     ,pr_cdalinea => vr_cdalinea
-                                     ,pr_cdcritic => vr_cdcritic
-                                     ,pr_dscritic => vr_dscritic);
-                                     
-        -- Retornando nome do módulo logado
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_trata_devolucao_cheque');                                         
-      end if;
-                                   
-      /* Não verificar saldo por solicitação da área de negócio 17/01/2019
-      IF nvl(vr_cdalinea,0) = 0 THEN
-        OPEN cr_crapass(pr_cdcooper => pr_cdcoopch
-                       ,pr_nrdconta => pr_nrctachq);
-        FETCH cr_crapass INTO rw_crapass;
-                
-        --Se encontrou 
-        IF cr_crapass%FOUND THEN
-          CLOSE cr_crapass;
-          -- Verifica alinea de cheque sem fundos
-          pc_valida_alinea_sem_fundo(pr_cdcooper => pr_cdcoopch
-                                    ,pr_cdbanchq => pr_cdbanchq    
-                                    ,pr_cdageass => rw_crapass.cdagenci    
-                                    ,pr_nrctachq => pr_nrctachq
-                                    ,pr_nrcheque => TO_NUMBER(TO_CHAR(pr_nrcheque,'FM999999')||To_Char(rw_crapfdc.nrdigchq,'FM9'))
-                                    ,pr_vlcheque => rw_crapfdc.vlcheque
-                                    ,pr_vllimcre => rw_crapass.vllimcre
-                                    ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
-                                    ,pr_cdcmpchq => pr_cdcmpchq
-                                    ,pr_cdalinea => vr_cdalinea
-                                    ,pr_rw_crapdat => pr_rw_crapdat
-                                    ,pr_cdcritic => vr_cdcritic
-                                    ,pr_dscritic => vr_dscritic);
-                                      
-          -- Retornando nome do módulo logado
-          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_trata_devolucao_cheque'); 
-        ELSE   
-          CLOSE cr_crapass;                            
-        END IF;                              
-      END IF; */
-      
-      IF nvl(vr_cdalinea,0) > 0 THEN
-        -- Lança movimento Devolução na conta do emitente
-        vr_nrdocmto := fn_gera_nr_docto(pr_cdcooper => pr_cdcoopch
-                                       ,pr_dtmvtolt => pr_rw_crapdat.dtmvtopr
-                                       ,pr_cdagenci => 1
-                                       ,pr_cdbccxlt => 100
-                                       ,pr_nrdolote => 7600
-                                       ,pr_nrdctabb => pr_nrctachq
-                                       ,pr_nrdocmto => pr_nrcheque
-                                       ,pr_nrdigchq => rw_crapfdc.nrdigchq
-                                       ,pr_cdcritic => vr_cdcritic
-                                       ,pr_dscritic => vr_dscritic);
-        
-        Lanc0001.pc_gerar_lancamento_conta( pr_dtmvtolt => pr_rw_crapdat.dtmvtopr, 
-                                            pr_dtrefere => pr_rw_crapdat.dtmvtopr, 
-                                            pr_cdagenci => 1,
-                                            pr_cdbccxlt => 100, 
-                                            pr_nrdolote => 7600,
-                                            pr_nrdconta => pr_nrctachq, 
-                                            pr_nrdctabb => pr_nrctachq,
-                                            pr_nrdocmto => nvl(vr_nrdocmto, 0),
-                                            pr_cdhistor => 47, --(CASE rw_crapfdc.tpcheque WHEN 1 THEN 573 ELSE 78 END), 
-                                            pr_vllanmto => rw_crapfdc.vlcheque, 
-                                            pr_cdcooper => pr_cdcoopch, 
-                                            pr_cdbanchq => rw_crapfdc.cdbanchq, 
-                                            pr_cdagechq => rw_crapfdc.cdagechq, 
-                                            pr_nrctachq => rw_crapfdc.nrctachq,
-                                            pr_cdpesqbb => vr_cdalinea, 
-                                            pr_cdcoptfn => 0,
-                                            pr_dsidenti => 2,
-                                            pr_tab_retorno => vr_tab_retorno,
-                                            pr_inprolot => 1,
-                                            pr_incrineg => vr_incrineg,
-                                            pr_cdcritic => vr_cdcritic,
-                                            pr_dscritic => vr_dscritic);
-           
-        -- Retornando nome do módulo logado
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_trata_devolucao_cheque'); 
-        
-        -- Indica a alínea que o cheque foi devolvido
-        pr_cdalinea := vr_cdalinea;
-                                          
-        -- Lança movimento Devolução na conta do depositante                                 
-        IF nvl(pr_nrdconta,0) > 0 THEN
-          vr_nrdocmto := fn_gera_nr_docto(pr_cdcooper => pr_cdcoopdp
-                                         ,pr_dtmvtolt => pr_rw_crapdat.dtmvtopr
-                                         ,pr_cdagenci => pr_cdagenci
-                                         ,pr_cdbccxlt => pr_cdbccxlt
-                                         ,pr_nrdolote => pr_nrdolote
-                                         ,pr_nrdctabb => pr_nrdconta
-                                         ,pr_nrdocmto => pr_nrcheque
-                                         ,pr_nrdigchq => rw_crapfdc.nrdigchq
+    IF cr_tbchq_param_conta%ISOPEN THEN
+      CLOSE cr_tbchq_param_conta;  
+    END IF;                         
+                          
+    OPEN cr_tbchq_param_conta(pr_cdcooper => pr_cdcoopch
+                             ,pr_nrdconta => pr_nrctachq);
+    FETCH cr_tbchq_param_conta INTO rw_tbchq_param_conta;                                      
+    CLOSE cr_tbchq_param_conta; 
+                                 
+    -- Caso encontre registro de devolucao automatica  
+    IF rw_tbchq_param_conta.flgdevolu_autom is not null THEN
+      -- se for devolucao automatica
+      IF rw_tbchq_param_conta.flgdevolu_autom = 1 THEN 
+        OPEN cr_crapfdc (pr_cdcooper => pr_cdcoopch
+                                       ,pr_cdbanchq => pr_cdbanchq
+                                       ,pr_cdagechq => pr_cdagechq
+                                       ,pr_nrctachq => pr_nrctachq
+                                       ,pr_nrcheque => pr_nrcheque);
+        --Posicionar no primeiro registro
+        FETCH cr_crapfdc INTO rw_crapfdc;
+        IF cr_crapfdc%FOUND THEN
+          CLOSE cr_crapfdc;
+          vr_cdalinea := 0;
+          if nvl(rw_crapfdc.incheque,0) in (1,2) then
+            -- Verifica alinea de contra-ordem
+            pc_valida_alinea_contra_ordem(pr_cdcooper => pr_cdcoopch
+                                         ,pr_cdbanchq => pr_cdbanchq      
+                                         ,pr_cdagechq => pr_cdagechq    
+                                         ,pr_nrctachq => pr_nrctachq
+                                         ,pr_nrcheque => TO_NUMBER(TO_CHAR(pr_nrcheque,'FM999999')||To_Char(rw_crapfdc.nrdigchq,'FM9')) 
+                                         ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
+                                         ,pr_cdalinea => vr_cdalinea
                                          ,pr_cdcritic => vr_cdcritic
                                          ,pr_dscritic => vr_dscritic);
-          
-          Lanc0001.pc_gerar_lancamento_conta( pr_dtmvtolt => pr_rw_crapdat.dtmvtopr, 
-                                              pr_dtrefere => pr_rw_crapdat.dtmvtopr, 
-                                              pr_cdagenci => pr_cdagenci,
-                                              pr_cdbccxlt => pr_cdbccxlt, 
-                                              pr_nrdolote => pr_nrdolote,
-                                              pr_nrdconta => pr_nrdconta, 
-                                              pr_nrdctabb => pr_nrdconta,
-                                              pr_nrdocmto => nvl(vr_nrdocmto, 0),
-                                              pr_cdhistor => (CASE pr_tpopechq WHEN 1 THEN 351 ELSE 399 END), 
-                                              pr_vllanmto => rw_crapfdc.vlcheque, 
-                                              pr_cdcooper => pr_cdcoopdp, 
-                                              pr_cdbanchq => rw_crapfdc.cdbanchq, 
-                                              pr_cdagechq => rw_crapfdc.cdagechq, 
-                                              pr_nrctachq => rw_crapfdc.nrctachq,
-                                              pr_cdpesqbb => vr_cdalinea, 
-                                              pr_cdcoptfn => 0,
-                                              pr_dsidenti => 2,
-                                              pr_tab_retorno => vr_tab_retorno,
-                                              pr_inprolot => 1,
-                                              pr_incrineg => vr_incrineg,
-                                              pr_cdcritic => pr_cdcritic,
-                                              pr_dscritic => pr_dscritic); 
-                                                  
-          -- Retornando nome do módulo logado
-          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_trata_devolucao_cheque');                                                               
-           
-        END IF; -- Conta do depositante informada      
-              
-        -- Seta nome do módulo logado
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_gera_pesq_deposito_cheque');
-           
-        pc_gera_pesq_deposito_cheque(pr_cdcooper => pr_cdcoopch
-                                    ,pr_cdcmpchq => pr_cdcmpchq  
-                                    ,pr_cdbanchq => pr_cdbanchq      
-                                    ,pr_cdagechq => pr_cdagechq    
-                                    ,pr_nrctachq => pr_nrctachq
-                                    ,pr_nrcheque => pr_nrcheque 
-                                    ,pr_dtmvtopr => pr_rw_crapdat.dtmvtopr
-                                    ,pr_cdcritic => pr_cdcritic
-                                    ,pr_dscritic => pr_dscritic);        
+                                         
+            -- Retornando nome do módulo logado
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_trata_devolucao_cheque');                                         
+          end if;
+                                       
+         /* Não verificar saldo por solicitação da área de negócio 17/01/2019
+           IF nvl(vr_cdalinea,0) = 0 THEN
+            OPEN cr_crapass(pr_cdcooper => pr_cdcoopch
+                           ,pr_nrdconta => pr_nrctachq);
+            FETCH cr_crapass INTO rw_crapass;
+                    
+            --Se encontrou 
+            IF cr_crapass%FOUND THEN
+              CLOSE cr_crapass;
+              -- Verifica alinea de cheque sem fundos
+              pc_valida_alinea_sem_fundo(pr_cdcooper => pr_cdcoopch
+                                           ,pr_cdbanchq => pr_cdbanchq    
+                                           ,pr_cdageass => rw_crapass.cdagenci    
+                                           ,pr_nrctachq => pr_nrctachq
+                                           ,pr_nrcheque => TO_NUMBER(TO_CHAR(pr_nrcheque,'FM999999')||To_Char(rw_crapfdc.nrdigchq,'FM9'))
+                                           ,pr_vlcheque => rw_crapfdc.vlcheque
+                                           ,pr_vllimcre => rw_crapass.vllimcre
+                                           ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
+                                           ,pr_cdcmpchq => pr_cdcmpchq
+                                           ,pr_cdalinea => vr_cdalinea
+                                           ,pr_rw_crapdat => pr_rw_crapdat
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+                                           
+              -- Retornando nome do módulo logado
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_trata_devolucao_cheque'); 
+            ELSE   
+               CLOSE cr_crapass;                            
+            END IF;                              
+          END IF; */
+        
+          IF nvl(vr_cdalinea,0) > 0 THEN
+            -- Lança movimento Devolução na conta do emitente
+            vr_nrdocmto := fn_gera_nr_docto(pr_cdcooper => pr_cdcoopch
+                                           ,pr_dtmvtolt => pr_rw_crapdat.dtmvtopr
+                                           ,pr_cdagenci => 1
+                                           ,pr_cdbccxlt => 100
+                                           ,pr_nrdolote => 7600
+                                           ,pr_nrdctabb => pr_nrctachq
+                                           ,pr_nrdocmto => pr_nrcheque
+                                           ,pr_nrdigchq => rw_crapfdc.nrdigchq
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+  
+            Lanc0001.pc_gerar_lancamento_conta( pr_dtmvtolt => pr_rw_crapdat.dtmvtopr, 
+                                                pr_dtrefere => pr_rw_crapdat.dtmvtopr, 
+                                                pr_cdagenci => 1,
+                                                pr_cdbccxlt => 100, 
+                                                pr_nrdolote => 7600,
+                                                pr_nrdconta => pr_nrctachq, 
+                                                pr_nrdctabb => pr_nrctachq,
+                                                pr_nrdocmto => nvl(vr_nrdocmto, 0),
+                                                pr_cdhistor => 47, --(CASE rw_crapfdc.tpcheque WHEN 1 THEN 573 ELSE 78 END), 
+                                                pr_vllanmto => rw_crapfdc.vlcheque, 
+                                                pr_cdcooper => pr_cdcoopch, 
+                                                pr_cdbanchq => rw_crapfdc.cdbanchq, 
+                                                pr_cdagechq => rw_crapfdc.cdagechq, 
+                                                pr_nrctachq => rw_crapfdc.nrctachq,
+                                                pr_cdpesqbb => vr_cdalinea, 
+                                                pr_cdcoptfn => 0,
+                                                pr_dsidenti => 2,
+                                                pr_tab_retorno => vr_tab_retorno,
+                                                pr_inprolot => 1,
+                                                pr_incrineg => vr_incrineg,
+                                                pr_cdcritic => vr_cdcritic,
+                                                pr_dscritic => vr_dscritic);
+               
+               -- Retornando nome do módulo logado
+               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_trata_devolucao_cheque'); 
             
-        -- Retornando nome do módulo logado
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_trata_devolucao_cheque');                   
-      END IF; -- Alinea <> 0  
-    ELSE
-      IF cr_crapfdc%ISOPEN THEN
-        CLOSE cr_crapfdc;   
-      END IF;                           
-    END IF; -- Achou registro do cheque
+               -- Indica a alínea que o cheque foi devolvido
+               pr_cdalinea := vr_cdalinea;
+                                                
+               -- Lança movimento Devolução na conta do depositante                                 
+               IF nvl(pr_nrdconta,0) > 0 THEN
+                  vr_nrdocmto := fn_gera_nr_docto(pr_cdcooper => pr_cdcoopdp
+                                           ,pr_dtmvtolt => pr_rw_crapdat.dtmvtopr
+                                           ,pr_cdagenci => pr_cdagenci
+                                           ,pr_cdbccxlt => pr_cdbccxlt
+                                           ,pr_nrdolote => pr_nrdolote
+                                           ,pr_nrdctabb => pr_nrdconta
+                                           ,pr_nrdocmto => pr_nrcheque
+                                           ,pr_nrdigchq => rw_crapfdc.nrdigchq
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+  
+                  Lanc0001.pc_gerar_lancamento_conta( pr_dtmvtolt => pr_rw_crapdat.dtmvtopr, 
+                                                      pr_dtrefere => pr_rw_crapdat.dtmvtopr, 
+                                                      pr_cdagenci => pr_cdagenci,
+                                                      pr_cdbccxlt => pr_cdbccxlt, 
+                                                      pr_nrdolote => pr_nrdolote,
+                                                      pr_nrdconta => pr_nrdconta, 
+                                                      pr_nrdctabb => pr_nrdconta,
+                                                      pr_nrdocmto => nvl(vr_nrdocmto, 0),
+                                                      pr_cdhistor => (CASE pr_tpopechq WHEN 1 THEN 2973 ELSE 399 END), 
+                                                      pr_vllanmto => rw_crapfdc.vlcheque, 
+                                                      pr_cdcooper => pr_cdcoopdp, 
+                                                      pr_cdbanchq => rw_crapfdc.cdbanchq, 
+                                                      pr_cdagechq => rw_crapfdc.cdagechq, 
+                                                      pr_nrctachq => rw_crapfdc.nrctachq,
+                                                      pr_cdpesqbb => vr_cdalinea, 
+                                                      pr_cdcoptfn => 0,
+                                                      pr_dsidenti => 2,
+                                                      pr_tab_retorno => vr_tab_retorno,
+                                                      pr_inprolot => 1,
+                                                      pr_incrineg => vr_incrineg,
+                                                      pr_cdcritic => pr_cdcritic,
+                                                      pr_dscritic => pr_dscritic); 
+                                                      
+                 -- Retornando nome do módulo logado
+                 GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_trata_devolucao_cheque');                                                               
+               
+               END IF; -- Conta do depositante informada      
+               
+               -- Seta nome do módulo logado
+               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_gera_pesq_deposito_cheque');
+               
+               pc_gera_pesq_deposito_cheque(pr_cdcooper => pr_cdcoopch
+                                           ,pr_cdcmpchq => pr_cdcmpchq  
+                                           ,pr_cdbanchq => pr_cdbanchq      
+                                           ,pr_cdagechq => pr_cdagechq    
+                                           ,pr_nrctachq => pr_nrctachq
+                                           ,pr_nrcheque => pr_nrcheque 
+                                           ,pr_dtmvtopr => pr_rw_crapdat.dtmvtopr
+                                           ,pr_cdcritic => pr_cdcritic
+                                           ,pr_dscritic => pr_dscritic);        
+               
+               -- Retornando nome do módulo logado
+               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_trata_devolucao_cheque');                   
+          END IF; -- Alinea <> 0  
+        ELSE
+          IF cr_crapfdc%ISOPEN THEN
+            CLOSE cr_crapfdc;   
+          END IF;                           
+        END IF; -- Achou registro do cheque
+      END IF; -- Cooperado está configurado para devolução automática 
+    END IF; -- Encontrou registro parametro de devoluçao automática
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
@@ -823,6 +848,15 @@ PROCEDURE pc_efetiva_devchq_depositante(pr_cdcoopch IN crapchd.cdcooper%TYPE  --
                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
                                        ,pr_dscritic OUT VARCHAR2) IS
                                   
+   -- Verificar se devolucao é automatica
+   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
+                              ,pr_nrdconta crapass.nrdconta%TYPE) IS
+    SELECT tbchq.flgdevolu_autom
+      FROM tbchq_param_conta tbchq
+     WHERE tbchq.cdcooper = pr_cdcooper
+       AND tbchq.nrdconta = pr_nrdconta;
+    rw_tbchq_param_conta cr_tbchq_param_conta%ROWTYPE;
+    
     --Cursor para encontrar as folhas de cheques
       CURSOR cr_crapfdc(pr_cdcooper crapfdc.cdcooper%TYPE,
                         pr_cdbanchq crapfdc.cdbanchq%TYPE,
@@ -884,57 +918,71 @@ BEGIN
   
  
   BEGIN
-    OPEN cr_crapfdc (pr_cdcooper => pr_cdcoopch
-                    ,pr_cdbanchq => pr_cdbanchq
-                    ,pr_cdagechq => pr_cdagechq
-                    ,pr_nrctachq => pr_nrctachq
-                    ,pr_nrcheque => pr_nrcheque);
-    --Posicionar no primeiro registro
-    FETCH cr_crapfdc INTO rw_crapfdc;
-    IF cr_crapfdc%FOUND THEN
-      CLOSE cr_crapfdc;
-      -- Lança movimento Devolução na conta do depositante                                 
-      vr_nrdocmto := fn_gera_nr_docto(pr_cdcooper => pr_cdcoopdp
-                                     ,pr_dtmvtolt => pr_dtmvtolt
-                                     ,pr_cdagenci => pr_cdagenci
-                                     ,pr_cdbccxlt => pr_cdbccxlt
-                                     ,pr_nrdolote => pr_nrdolote
-                                     ,pr_nrdctabb => pr_nrdconta
-                                     ,pr_nrdocmto => pr_nrcheque
-                                     ,pr_nrdigchq => rw_crapfdc.nrdigchq
-                                     ,pr_cdcritic => vr_cdcritic
-                                     ,pr_dscritic => vr_dscritic);
+    IF cr_tbchq_param_conta%ISOPEN THEN
+      CLOSE cr_tbchq_param_conta;  
+    END IF;                         
+                          
+    OPEN cr_tbchq_param_conta(pr_cdcooper => pr_cdcoopch
+                             ,pr_nrdconta => pr_nrctachq);
+    FETCH cr_tbchq_param_conta INTO rw_tbchq_param_conta;                                      
+    CLOSE cr_tbchq_param_conta;                        
+    -- Caso encontre registro de devolucao automatica  
+    IF rw_tbchq_param_conta.flgdevolu_autom is not null THEN
+      -- se for devolucao automatica
+      IF rw_tbchq_param_conta.flgdevolu_autom = 1 THEN 
+        OPEN cr_crapfdc (pr_cdcooper => pr_cdcoopch
+                                       ,pr_cdbanchq => pr_cdbanchq
+                                       ,pr_cdagechq => pr_cdagechq
+                                       ,pr_nrctachq => pr_nrctachq
+                                       ,pr_nrcheque => pr_nrcheque);
+        --Posicionar no primeiro registro
+        FETCH cr_crapfdc INTO rw_crapfdc;
+        IF cr_crapfdc%FOUND THEN
+          CLOSE cr_crapfdc;
+          -- Lança movimento Devolução na conta do depositante                                 
+          vr_nrdocmto := fn_gera_nr_docto(pr_cdcooper => pr_cdcoopdp
+                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                   ,pr_cdagenci => pr_cdagenci
+                                   ,pr_cdbccxlt => pr_cdbccxlt
+                                   ,pr_nrdolote => pr_nrdolote
+                                   ,pr_nrdctabb => pr_nrdconta
+                                   ,pr_nrdocmto => pr_nrcheque
+                                   ,pr_nrdigchq => rw_crapfdc.nrdigchq
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic);
   
-      Lanc0001.pc_gerar_lancamento_conta( pr_dtmvtolt => pr_dtmvtolt, 
-                                          pr_dtrefere => pr_dtmvtolt, 
-                                          pr_cdagenci => pr_cdagenci,
-                                          pr_cdbccxlt => pr_cdbccxlt, 
-                                          pr_nrdolote => pr_nrdolote,
-                                          pr_nrdconta => pr_nrdconta, 
-                                          pr_nrdctabb => pr_nrdconta,
-                                          pr_nrdocmto => nvl(vr_nrdocmto, 0),
-                                          pr_cdhistor => (CASE pr_tpopechq WHEN 1 THEN 351 ELSE 399 END), 
-                                          pr_vllanmto => rw_crapfdc.vlcheque, 
-                                          pr_cdcooper => pr_cdcoopdp, 
-                                          pr_cdbanchq => rw_crapfdc.cdbanchq, 
-                                          pr_cdagechq => rw_crapfdc.cdagechq, 
-                                          pr_nrctachq => rw_crapfdc.nrctachq,
-                                          pr_cdpesqbb => vr_cdalinea, 
-                                          pr_cdcoptfn => 0,
-                                          pr_dsidenti => 2,
-                                          pr_tab_retorno => vr_tab_retorno,
-                                          pr_inprolot => 1,
-                                          pr_incrineg => vr_incrineg,
-                                          pr_cdcritic => pr_cdcritic,
-                                          pr_dscritic => pr_dscritic); 
-                                                    
-      -- Retornando nome do módulo logado
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_efetiva_devchq_depositante'); 
-    ELSE
-      IF cr_crapfdc%ISOPEN THEN
-        CLOSE cr_crapfdc;   
-      END IF;                                                                           
-    END IF; -- Achou registro do cheque
+          Lanc0001.pc_gerar_lancamento_conta( pr_dtmvtolt => pr_dtmvtolt, 
+                                              pr_dtrefere => pr_dtmvtolt, 
+                                              pr_cdagenci => pr_cdagenci,
+                                              pr_cdbccxlt => pr_cdbccxlt, 
+                                              pr_nrdolote => pr_nrdolote,
+                                              pr_nrdconta => pr_nrdconta, 
+                                              pr_nrdctabb => pr_nrdconta,
+                                              pr_nrdocmto => nvl(vr_nrdocmto, 0),
+                                              pr_cdhistor => (CASE pr_tpopechq WHEN 1 THEN 2973 ELSE 399 END), -- Quando devolução contra ordem tambem por Historico 2973
+                                              pr_vllanmto => rw_crapfdc.vlcheque, 
+                                              pr_cdcooper => pr_cdcoopdp, 
+                                              pr_cdbanchq => rw_crapfdc.cdbanchq, 
+                                              pr_cdagechq => rw_crapfdc.cdagechq, 
+                                              pr_nrctachq => rw_crapfdc.nrctachq,
+                                              pr_cdpesqbb => vr_cdalinea, 
+                                              pr_cdcoptfn => 0,
+                                              pr_dsidenti => 2,
+                                              pr_tab_retorno => vr_tab_retorno,
+                                              pr_inprolot => 1,
+                                              pr_incrineg => vr_incrineg,
+                                              pr_cdcritic => pr_cdcritic,
+                                              pr_dscritic => pr_dscritic); 
+                                                      
+           -- Retornando nome do módulo logado
+           GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CHEQ0003.pc_efetiva_devchq_depositante'); 
+        ELSE
+          IF cr_crapfdc%ISOPEN THEN
+            CLOSE cr_crapfdc;   
+          END IF;                                                                           
+        END IF; -- Achou registro do cheque
+      END IF; -- Cooperado está configurado para devolução automática 
+    END IF; -- Encontrou registro parametro de devoluçao automática
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;

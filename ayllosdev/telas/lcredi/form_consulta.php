@@ -20,6 +20,8 @@
 						   opção 4 no campo Modelo. (Lombardi - PRJ404)
 
 			  06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
+			  
+			  13/02/2019 - Inclusao do campo flprapol (Christian Grauppe - Envolti)
 
  * ********************************************************************* */
 
@@ -318,7 +320,16 @@
 		<a style="padding: 3px 0 0 3px;" href="#" onClick="controlaPesquisa('4'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>	
 		
 		<br style="clear:both" />
-							
+		<?php
+		$flprapol = getByTagName($linha->tags,'flprapol');
+		if ( $flprapol != "" ) {
+		?>
+		<label for="flprapol">Pr&eacute;-Aprovado somente On-line:</label>
+		<select id="flprapol" name="flprapol">
+			<option value="0" <?php if ($flprapol == 0) { ?> selected <?php } ?> >N&atilde;o</option>
+			<option value="1" <?php if ($flprapol == 1) { ?> selected <?php } ?> >Sim</option>
+		</select>
+		<?php } ?>
 		
 	</fieldset>
 
@@ -346,7 +357,6 @@
 								<td><span><? echo getByTagName($result->tags,'dsfinemp'); ?></span> <? echo getByTagName($result->tags,'dsfinemp'); ?> </td>
 								<input type="hidden" id="cdfinemp" name="cdfinemp" value="<? echo getByTagName($result->tags,'cdfinemp'); ?>" />
 								<input type="hidden" id="dsfinemp" name="dsfinemp" value="<? echo getByTagName($result->tags,'dsfinemp'); ?>" />
-						
 							</tr>	
 						<? } ?>
 					</tbody>	

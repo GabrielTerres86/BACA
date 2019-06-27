@@ -40,8 +40,8 @@
 				<textElement textAlignment="Center"/>
 				<textFieldExpression><![CDATA[$F{cabecalho}]]></textFieldExpression>
 			</textField>
-			<textField>
-				<reportElement uuid="659cf73b-140f-40ae-a4bd-31e1ef51a206" x="70" y="18" width="449" height="654"/>
+			<textField isStretchWithOverflow="true">
+				<reportElement uuid="659cf73b-140f-40ae-a4bd-31e1ef51a206" stretchType="RelativeToBandHeight" x="70" y="18" width="449" height="654"/>
 				<textElement textAlignment="Justified" markup="none">
 					<paragraph lineSpacing="1_1_2"/>
 				</textElement>

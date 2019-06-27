@@ -21,6 +21,7 @@
  * 012: [21/05/2018] Inserção do campo idquapro. PRJ366 (Lombardi)
  * 013: [20/12/2018] P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
  * 014: [09/04/2019] P298.2.2 - Permitir a alteração da proposta para o POS (Nagasava - Supero)
+ * 015: [20/05/2019] P442 - Pré-Aprovado - Inclusão do valor da prestação do Pré-Aprovado (Christian - Envolti)
  */
 ?>
 <?
@@ -219,7 +220,40 @@
 	$vlprecar = trim($xmlObj->roottag->tags[0]->attributes['VLPRECAR']);
 	$dsmensag = trim( getByTagName($mensagem,'dsmensag') );
 	$inconfir = trim( getByTagName($mensagem,'inconfir') );
-	
+
+	/* Verificar valor da prestação do Pré-Aprovado - P442 */
+	if ($cdfinemp == 68) {
+		$aux_vlpreemp = str_replace(",", ".", $vlpreemp);
+
+		// Monta o xml de requisição
+		$xml = "<Root>";
+		$xml .= "	<Dados>";
+		$xml .= "       <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";	
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
+		$xml .= "	</Dados>";
+		$xml .= "</Root>";
+
+		// Executa script para envio do XML
+		$xmlResult = mensageria($xml, "ATENDA", "BUSCA_PARCELA_PREAPROV", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
+		// Cria objeto para classe de tratamento de XML
+		$xmlObj = getObjectXML($xmlResult);
+		
+		if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
+			$msgErro  = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			exibirErro('error',$msgErro,'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+		} else {
+			$vlcalpar = $xmlObj->roottag->tags[0]->tags[0]->cdata;
+			
+			if ((float)$aux_vlpreemp > 0 && $aux_vlpreemp != "" && (float)$aux_vlpreemp > (float)$vlcalpar) {
+				echo 'inconfir = 1;';
+				echo 'inconfi2 = 30;';
+				exibirErro('error',"Valor da parcela do pr&eacute;-aprovado deve ser menor ou igual a R$".number_format($vlcalpar, 2, ',', '.').".<br/>Aumente a quantidade das parcelas ou diminua o valor do empr&eacute;stimo.",'Alerta - Aimaro','bloqueiaFundo(divRotina)',false);
+			}
+		}
+	}
+
 	if($inconfir == 31){ 
 		echo "inconfi2 = '".$inconfir."';"; 
 	}else{

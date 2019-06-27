@@ -403,6 +403,25 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_CARTAOCREDITO IS
 															,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
 															,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
 															,pr_des_erro OUT VARCHAR2);           --> Erros do processo																		 
+	-- Busca parametros de majoracao do cooperado
+	PROCEDURE pc_busca_param_majora(pr_nrdconta              IN crapass.nrdconta%TYPE
+									-- Mensageria
+									,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+									,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+									,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+									,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+									,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
+									,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK 
+
+	-- Mantem párametros de majoracao do cooperado
+	PROCEDURE pc_mantem_param_majora(pr_nrdconta              IN crapass.nrdconta%TYPE
+									-- Mensageria
+									,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+									,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+									,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+									,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+									,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
+									,pr_des_erro OUT VARCHAR2);            --> Saida OK/NOK
 
 END tela_atenda_cartaocredito;
 /
@@ -6840,6 +6859,257 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 			
 		
 	 END pc_busca_dados_crd;	
+
+-- Busca parametros de majoracao do cooperado
+  PROCEDURE pc_busca_param_majora(pr_nrdconta              IN crapass.nrdconta%TYPE
+                                  -- Mensageria
+                                 ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                 ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
+                                 ,pr_des_erro OUT VARCHAR2) IS          --> Saida OK/NOK
+
+  BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_busca_param_majora 
+    --  Sistema  : Emprestimo Pre-Aprovado - Cooperativa de Credito
+    --  Sigla    : EMPR
+    --  Autor    : Marcos (Envolti)
+    --  Data     : Fevereiro/2019                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Busca status da Majoracao Automatica de Credito
+    -- Alteracoes:
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    DECLARE
+
+      -- Variaveis de locais
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);        
+    
+      --Variaveis Auxiliares
+      vr_nrdrowid    ROWID;
+      
+      vr_flgdesativa NUMBER;
+      vr_dtatualiza  DATE;
+      vr_idmotivo    NUMBER;
+      
+      -- Variaveis de Erro
+      vr_dscritic  VARCHAR2(1000);
+      vr_exc_saida EXCEPTION;
+      
+    BEGIN
+      pr_des_erro := 'OK';
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'ATENDA_CREDITO'
+                                ,pr_action => 'pc_mantem_param_majora');
+ 
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;      
+      
+      -- Direcionar para a rotina genérica
+      cada0006.pc_busca_param_pessoa_prod(pr_cdcooper           => vr_cdcooper
+                                         ,pr_nrdconta           => pr_nrdconta
+                                         ,pr_cdproduto          => 4 -- Cartão
+                                         ,pr_cdoperac_produto   => 2 -- Majoração
+                                         ,pr_flglibera          => vr_flgdesativa
+                                         ,pr_dtvigencia_paramet => vr_dtatualiza
+                                         ,pr_idmotivo           => vr_idmotivo
+                                         ,pr_dscritic           => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;   
+      
+      -- Criar cabecalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados/></Root>');
+
+      -- Pre aprovado liberado para o cooperado
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'flgativa'
+                            ,pr_tag_cont => vr_flgdesativa
+                            ,pr_des_erro => vr_dscritic);
+      
+      COMMIT;
+        
+    EXCEPTION        
+      WHEN vr_exc_saida THEN
+      -- Retorno não OK          
+      pr_des_erro := 'NOK';
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := vr_dscritic;
+      
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral em CARTAO_CRED: ' || SQLERRM;
+          
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    END;
+  END pc_busca_param_majora;
   
+  
+  -- Mantem párametros de majoracao do cooperado
+  PROCEDURE pc_mantem_param_majora(pr_nrdconta              IN crapass.nrdconta%TYPE
+                                  -- Mensageria
+                                  ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                  ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
+                                  ,pr_des_erro OUT VARCHAR2) IS          --> Saida OK/NOK
+
+  BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_mantem_param_majora 
+    --  Sistema  : Emprestimo Pre-Aprovado - Cooperativa de Credito
+    --  Sigla    : EMPR
+    --  Autor    : Marcos (Envolti)
+    --  Data     : Fevereiro/2019                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Mantem status da Majoracao Automatica de Credito
+    -- Alteracoes:
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    DECLARE
+
+      -- Variaveis de locais
+      vr_cdcooper crapcop.cdcooper%TYPE;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);        
+    
+      --Variaveis Auxiliares
+      vr_flgativa NUMBER;
+      vr_dtatualiza  DATE;
+      vr_idmotivo    NUMBER;
+      
+      -- Variaveis de Erro
+      vr_dscritic  VARCHAR2(1000);
+      vr_exc_saida EXCEPTION;
+      
+    BEGIN
+      pr_des_erro := 'OK';
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'ATENDA_CARTAO'
+                                ,pr_action => 'pc_mantem_param_majora');
+
+      -- Recupera dados de log para consulta posterior
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF; 
+      
+      -- Direcionar para a rotina genérica para buscar o valor atual
+      cada0006.pc_busca_param_pessoa_prod(pr_cdcooper           => vr_cdcooper
+                                         ,pr_nrdconta           => pr_nrdconta
+                                         ,pr_cdproduto          => 4 -- Cartão
+                                         ,pr_cdoperac_produto   => 2 -- Majoração
+                                         ,pr_flglibera          => vr_flgativa
+                                         ,pr_dtvigencia_paramet => vr_dtatualiza
+                                         ,pr_idmotivo           => vr_idmotivo
+                                         ,pr_dscritic           => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;        
+      
+      -- Inverter 
+      IF vr_flgativa = 0 THEN
+        vr_flgativa := 1;
+      ELSE
+        vr_flgativa := 0;
+      END IF;
+      
+      -- Direcionar para rotina genérica
+      cada0006.pc_mantem_param_pessoa_prod(pr_cdcooper           => vr_cdcooper
+                                          ,pr_nrdconta           => pr_nrdconta
+                                          ,pr_cdproduto          => 4 -- Cartão de Crédito
+                                          ,pr_cdoperac_produto   => 2 -- Sem Majoração
+                                          ,pr_flglibera          => vr_flgativa
+                                          ,pr_dtvigencia_paramet => NULL
+                                          ,pr_idmotivo           => 72
+                                          ,pr_cdoperad           => vr_cdoperad
+                                          ,pr_idorigem           => vr_idorigem
+                                          ,pr_nmdatela           => vr_nmdatela
+                                          ,pr_dscritic           => vr_dscritic);
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF; 
+      
+      COMMIT;
+        
+    EXCEPTION        
+      WHEN vr_exc_saida THEN
+      -- Retorno não OK          
+      pr_des_erro := 'NOK';
+      -- Erro
+      pr_cdcritic := 0;
+      pr_dscritic := vr_dscritic;
+      
+      -- Existe para satisfazer exigência da interface. 
+      pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral em CARTAO_CRED: ' || SQLERRM;
+          
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      ROLLBACK;
+    END;
+  END pc_mantem_param_majora;
+
 END TELA_ATENDA_CARTAOCREDITO;
 /

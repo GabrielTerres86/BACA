@@ -8762,7 +8762,7 @@ PROCEDURE pc_consulta_proposta_limite(pr_cdcooper IN crapass.cdcooper%TYPE      
                   CASE WHEN NVL(vr_vlstotal,0) < 0 THEN vr_vlstotal ELSE 0 END +
                   NVL(vr_vllimcred,0); --Cartão de Crédito
                            
-   vr_string_contrato_epr := vr_string_contrato_epr||fn_tag('Endividamento Total do Fluxo',to_char(vr_vlendtot,'999g999g990d00'));       
+   --vr_string_contrato_epr := vr_string_contrato_epr||fn_tag('Endividamento Total do Fluxo',to_char(vr_vlendtot,'999g999g990d00'));       
     
    vr_string_contrato_epr := vr_string_contrato_epr||'</campos></subcategoria>';     
    vr_string_aux := null;
@@ -11025,6 +11025,7 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
     vr_exc_erro EXCEPTION;
     vr_dscritic VARCHAR2(4000);
     vr_cdcritic PLS_INTEGER;
+    
   BEGIN
     --Inicializar Variaveis
     vr_cdcritic := 0;

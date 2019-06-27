@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Agosto/2011
  * OBJETIVO     : Cabeçalho para a tela CADDNE
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 07/05/2019 - Alterado o texto das opções (Mateus Z - Mouts)
  * --------------
  */ 
 ?>
@@ -13,9 +13,9 @@
 	
 	<label for="cddopcao">Op&ccedil;&atilde;o:</label>
 	<select id="cddopcao" name="cddopcao" alt="Informe a op&ccedil;&atilde;o desejada (A, E ou T)." onchange="altera_opcao()">
-		<option value="A"> A </option> 
-		<option value="E"> E </option>
-		<option value="T"> T </option>
+		<option value="A"> A - Alterar </option> 
+		<option value="E"> E - Excluir </option>
+		<option value="T"> T - Importar Arquivos de CEP dos Correios </option>
 	</select>
 	<label for="nrcepend">CEP:</label>
 	<input id="nrcepend" name="nrcepend" alt="Informe o CEP desejado.">

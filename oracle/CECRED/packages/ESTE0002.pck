@@ -1135,9 +1135,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                    11/10/2018 - P450 - Correção no cursor que identifica se o contrato de empréstimo está/esteve em prejuízo
                                 (Reginaldo/AMcom)
 
-                   01/11/2018 - P442 - Envio dos Scores Behaviour do Cooperado (MArcos Envolti)
-
+                   01/11/2018 - P442 - Envio dos Scores Behaviour do Cooperado (MArcos Envolti)  
+				   
 				   19/12/2018 - P442 - Envio de quantidade dias em Estouro (Marcos Envolti)
+
+                    06/02/2019 - P442 - Envio do Potencial Limite e Valor Utilizado (Marcos-Envolti)             
+
+                    11/02/2019 - P442 - Mudança no teste de bloqueio ou não do PreAprovado (Marcos-Envolti)
 
                     05/03/2019 - P637 - Motor de Crédito - Adequação dos campos conforme ESTE0005
                                 (Luciano Kienolt - Supero)
@@ -1244,6 +1248,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_qtdiaat2 INTEGER := 0;
       vr_idcarga  tbepr_carga_pre_aprv.idcarga%TYPE;
       vr_vllimdis crapcpa.vllimdis%TYPE := 0;
+      vr_vlctrpre crapcpa.vlctrpre%TYPE := 0;
+      vr_vlpotlim crapcpa.vlpot_lim_max%TYPE := 0;
+      vr_vlpotpar crapcpa.vlpot_parc_maximo%TYPE := 0;
+      vr_skcarga  tbepr_carga_pre_aprv.skcarga_sas%TYPE := 0;
+      vr_nrfimpre          craplcr.nrfimpre%TYPE;
+      vr_vlpot_parc_max    crapcpa.vlpot_parc_maximo%TYPE;
+      vr_vlpot_lim_max     crapcpa.vlpot_lim_max%TYPE;
+      vr_vl_scr_61_90      crapvop.vlvencto%TYPE;         
+      vr_vl_scr_61_90_cje  crapvop.vlvencto%TYPE;         
+      vr_vlope_pos_scr     crapepr.vlsdeved%TYPE;         
+      vr_vlope_pos_scr_cje crapepr.vlsdeved%TYPE;         
+      vr_vlprop_andamt     crapepr.vlsdeved%TYPE;              
+      vr_vlprop_andamt_cje crapepr.vlsdeved%TYPE;
+      vr_vlparcel          NUMBER(25,2) := 0;
+      vr_vldispon          NUMBER(25,2) := 0;
+      vr_cdfinpre crapfin.cdfinemp%TYPE;
+      vr_vlsldpre NUMBER(25,2) := 0;
+
       vr_maior_nratrmai NUMBER(25,10);
       vr_vltprava crapepr.vlpreemp%TYPE;
       vr_qtconava INTEGER := 0;
@@ -1463,25 +1485,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
       -- Verifica se esta na tabela do pre-aprovado
       CURSOR cr_crapcpa (pr_cdcooper IN crapcpa.cdcooper%TYPE,
-                         pr_nrdconta IN crapcpa.nrdconta%TYPE,
+                         pr_tppessoa IN crapcpa.tppessoa%TYPE,
+                         pr_nrcpfcnpj_base IN crapcpa.nrcpfcnpj_base%TYPE,
                          pr_idcarga  IN crapcpa.iddcarga%TYPE) IS
         SELECT cpa.vllimdis
               ,cpa.vlcalpre
               ,cpa.vlctrpre
               ,cpa.cdlcremp
+              ,cpa.vlpot_lim_max
+              ,cpa.vlpot_parc_maximo
+              ,car.skcarga_sas
+			  ,case car.skcarga_sas when 0 -- se tiver carga manual, utiliza o valor da carga
+                    then cpa.iddcarga 
+               else car.skcarga_sas end idCarga -- senão é automatica, usa carga sas
           FROM crapcpa cpa
-         WHERE cpa.cdcooper = pr_cdcooper
-           AND cpa.nrdconta = pr_nrdconta
+			  ,tbepr_carga_pre_aprv car
+         WHERE car.cdcooper = cpa.cdcooper
+           AND car.idcarga  = cpa.iddcarga
+           AND cpa.cdcooper = pr_cdcooper
+           AND cpa.tppessoa = pr_tppessoa
+           AND cpa.nrcpfcnpj_base = pr_nrcpfcnpj_base
            AND cpa.iddcarga = pr_idcarga;
       rw_crapcpa cr_crapcpa%rowtype;    
     
       -- Pré Aprovado Nao Liberado
-      CURSOR cr_preapv IS
-        SELECT flglibera_pre_aprv
-          FROM tbepr_param_conta
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta;
-      vr_flglibera_pre_aprv tbepr_param_conta.flglibera_pre_aprv%TYPE := 0;
+      vr_flglibera_pre_aprv NUMBER := 0;
     
       -- Data Ultima Revisão Cadastral
       CURSOR cr_revisa IS
@@ -2461,30 +2489,52 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_flglibera_pre_aprv := 0;
       
       -- Busca a carga ativa
-      EMPR0002.pc_busca_carga_ativa(pr_cdcooper => pr_cdcooper
-                                   ,pr_nrdconta => pr_nrdconta
-                                   ,pr_idcarga  => vr_idcarga);
+      vr_idcarga := empr0002.fn_idcarga_pre_aprovado_cta(pr_cdcooper => pr_cdcooper
+                                                        ,pr_nrdconta => pr_nrdconta);
       --  Caso nao possua carga ativa
       IF vr_idcarga > 0 THEN
+          -- Verifica se existe Bloqueio em Conta
+        vr_flglibera_pre_aprv := empr0002.fn_flg_preapv_liberado(pr_cdcooper,pr_nrdconta);
+        -- Efetuar o calculo do PreAprovado disponivel
+        vr_vlparcel := 0;
+        vr_vldispon := 0;
+        -- Chamar o calculo e desprezar os retornos não necessários para esta   
+        empr0002.pc_calc_pre_aprovado_analitico(pr_cdcooper => pr_cdcooper                      -- Cooperatia
+                                               ,pr_tppessoa => rw_crapass.inpessoa              -- TpPessoa
+                                               ,pr_nrcpf_cnpj_base => rw_crapass.nrcpfcnpj_base -- CPF/CNPJ Base
+                                               ,pr_idcarga  => vr_idcarga                    -- ID da Carga                                     
+                                               -- Saida
+                                               ,pr_nrfimpre          => vr_nrfimpre          -- Quantidade de parcelas
+                                               ,pr_vlpot_parc_max    => vr_vlpot_parc_max    -- Potencial parcela Maximo
+                                               ,pr_vlpot_lim_max     => vr_vlpot_lim_max     -- Potencial Limite Maximo
+                                               ,pr_vl_scr_61_90      => vr_vl_scr_61_90      -- SCR de 61 a 90
+                                               ,pr_vl_scr_61_90_cje  => vr_vl_scr_61_90_cje  -- SCR de 61 a 90 Conjuge
+                                               ,pr_vlope_pos_scr     => vr_vlope_pos_scr     -- Saldo Devedor Pos Scr
+                                               ,pr_vlope_pos_scr_cje => vr_vlope_pos_scr_cje -- Saldo Devedor Pos Scr Conjuge
+                                               ,pr_vlprop_andamt     => vr_vlprop_andamt     -- Proposta em Andamento
+                                               ,pr_vlprop_andamt_cje => vr_vlprop_andamt_cje -- Proposta em Andamento Conjuge
+                                               -- Calculo que será devolvido  
+                                               ,pr_vlparcel          => vr_vlparcel          -- Valor Parcela
+                                               ,pr_vldispon          => vr_vldispon          -- Valor Disponível
+                                               ,pr_dscritic => vr_dscritic);                 -- Saida de Critica
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+
         --> Verifica se esta na tabela do pre-aprovado
         OPEN cr_crapcpa(pr_cdcooper => pr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_tppessoa => rw_crapass.inpessoa
+                       ,pr_nrcpfcnpj_base => rw_crapass.nrcpfcnpj_base
                        ,pr_idcarga  => vr_idcarga);
         FETCH cr_crapcpa INTO rw_crapcpa;
         -- Somente casa Haja
         IF cr_crapcpa%FOUND THEN
           CLOSE cr_crapcpa;
-          -- Verifica se existe Bloqueio em Conta
-          OPEN cr_preapv;
-          FETCH cr_preapv
-            INTO vr_flglibera_pre_aprv;
-          -- Se nao encontrou
-          IF cr_preapv%NOTFOUND THEN
-            -- Tratar como liberado
-            vr_flglibera_pre_aprv := 1;
-          END IF;
-          CLOSE cr_preapv;
-          vr_vllimdis := rw_crapcpa.vllimdis;
+          -- Copiar limite disponivel, potencial SAS e valor contratado da Carga
+          vr_skcarga  := rw_crapcpa.skcarga_sas;          
+          vr_vlctrpre := rw_crapcpa.vlctrpre;
+          vr_vlpotlim := rw_crapcpa.vlpot_lim_max;
+          vr_vlpotpar := rw_crapcpa.vlpot_parc_maximo;          
         ELSE
           CLOSE cr_crapcpa;
         END IF; 
@@ -2492,7 +2542,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     
       -- Enviar os campos do PreAprovado
       vr_obj_generic2.put('liberaPreAprovad', (nvl(vr_flglibera_pre_aprv,0)=1));
-      vr_obj_generic2.put('limitePreAprovado', este0001.fn_decimal_ibra(nvl(vr_vllimdis,0)));
+      vr_obj_generic2.put('idCargaPreAprovado', este0001.fn_decimal_ibra(vr_skcarga));            
+      vr_obj_generic2.put('limitePreAprovado', este0001.fn_decimal_ibra(nvl(vr_vldispon,0)));
+      vr_obj_generic2.put('limiteParcelaPreAprovado', este0001.fn_decimal_ibra(nvl(vr_vlparcel,0)));
+      --vr_obj_generic2.put('utilizPreAprovado', este0001.fn_decimal_ibra(nvl(vr_vlctrpre,0)));
+      --vr_obj_generic2.put('utilizParcelaPreAprovado', este0001.fn_decimal_ibra(nvl(vr_vl_scr_61_90 + vr_vlope_pos_scr + vr_vlope_pos_scr_cje + vr_vlprop_andamt + vr_vlprop_andamt_cje,0)));
+      vr_obj_generic2.put('potLimMaxPreAprovado', este0001.fn_decimal_ibra(nvl(vr_vlpotlim,0)));
+      vr_obj_generic2.put('potParMaxPreAprovado', este0001.fn_decimal_ibra(nvl(vr_vlpotpar,0)));
     
       -- Data Ultima Revisão Cadastral      
       OPEN cr_revisa;
@@ -3587,7 +3643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- PJ637
       vr_lst_generic3 := json_list();
 	  
-	  -- varrer temptable de emprestimos
+      -- varrer temptable de emprestimos
       vr_idxempr := vr_tab_dados_epr.first;
       WHILE vr_idxempr IS NOT NULL LOOP
 
@@ -3796,7 +3852,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_tot_qtpclatr := 0;
       vr_tot_qtpclpag := 0;
       vr_maior_nratrmai := 0;
-    
+
+      -- Buscar a finalidade de PreAprovado
+      vr_cdfinpre := empr0002.fn_finali_pre_aprovado(pr_cdcooper => pr_cdcooper, pr_inpessoa => rw_crapass.inpessoa);
+
       -- varrer temptable de emprestimos
       vr_idxempr := vr_tab_dados_epr.first;
       WHILE vr_idxempr IS NOT NULL LOOP
@@ -3845,6 +3904,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
             vr_qtpclven := vr_qtpclven + CEIL(vr_dias/30);                          
           END IF;
           
+		  -- Caso o empréstimo seja de PreAprovado
+          IF vr_tab_dados_epr(vr_idxempr).cdfinemp = vr_cdfinpre THEN
+            vr_vlsldpre := vr_vlsldpre + vr_tab_dados_epr(vr_idxempr).vlsdeved;
+          END IF;
+
         END IF;
       
         -- Calculo de Parcelas conforme tipo de empréstimo 
@@ -3901,6 +3965,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         -- Buscar o próximo
         vr_idxempr := vr_tab_dados_epr.next(vr_idxempr);
       END LOOP;
+
+      -- Envio do total de saldo devedor de PreAprovado
+      vr_obj_generic2.put('saldoDevedorPreAprovado', este0001.fn_decimal_ibra(nvl(vr_vlsldpre,0)));
       
       -- Busca maior atraso dentre os emprestimos do cooperado        
       OPEN cr_crapris(null, add_months(rw_crapdat.dtmvtolt,-vr_qthisemp));

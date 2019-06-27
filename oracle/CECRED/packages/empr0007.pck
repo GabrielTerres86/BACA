@@ -30,6 +30,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
   --                          recuperar o texto da crapprm.
   --                          (P559 - André Clemer - Supero)
   --
+  --             05/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO"
+  --                          (P559 - André Clemer - Supero)
+  --
   ---------------------------------------------------------------------------
 
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -75,9 +78,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
 		,dsdtelef       VARCHAR(20)
 		,nmpescto       tbrecup_cobranca.nmcontato%TYPE
 		,nrctacob       tbrecup_cobranca.nrdconta_cob%TYPE
-    ,lindigit       VARCHAR(60)
-    ,dsparcel       tbrecup_cobranca.dsparcelas%TYPE
-    ,incobran       crapcob.incobran%TYPE);
+        ,lindigit       VARCHAR(60)
+        ,dsparcel       tbrecup_cobranca.dsparcelas%TYPE
+        ,incobran       crapcob.incobran%TYPE);
 
   /* Definicao de tabela que compreende os registros acima declarados */
   TYPE typ_tab_cde IS TABLE OF typ_reg_cde INDEX BY BINARY_INTEGER;
@@ -105,7 +108,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0007 IS
                            ,pr_prazobxa IN crapprm.dsvlrprm%TYPE --> Prazo de baixa para o boleto após vencimento: xx dias út(il/eis)
                            ,pr_vlrminpp IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – PP
                            ,pr_vlrmintr IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – TR
-													  ,pr_vlminpos IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – POS                                                       
+                           ,pr_vlminpos IN crapprm.dsvlrprm%TYPE --> Valor mínimo do boleto – POS                                                       
                            ,pr_dslinha1 IN crapprm.dsvlrprm%TYPE --> Instruções: Linha 1
                            ,pr_dslinha2 IN crapprm.dsvlrprm%TYPE --> Instruções: Linha 2
                            ,pr_dslinha3 IN crapprm.dsvlrprm%TYPE --> Instruções: Linha 3
@@ -1121,12 +1124,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                   24/04/2017 - Ajustado para efetuar abono para contratos de boletagem massiva 
                                e liquidação de prejuízo quando necessário. Projeto 210_2 (Lombardi)
 															 
-									27/12/2018 - Inclusão de tratamento para contas corrente em prejuízo (debitar da
-									             conta transitória e não da conta corrente).
-															 P450 - Reginaldo/AMcom
+                  27/12/2018 - Inclusão de tratamento para contas corrente em prejuízo (debitar da
+                               conta transitória e não da conta corrente).
+                               P450 - Reginaldo/AMcom
 
                   06/02/2019 - Ajustar para efetuar pagamento de emprestimo POS  
-                               P298.2.2 - Pos Fixado (Luciano - Supero)                             
+                               P298.2.2 - Pos Fixado (Luciano - Supero)
 
     ..............................................................................*/
 
@@ -1159,17 +1162,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
     vr_vlparcel craplcm.vllanmto%TYPE; 
     vr_cdprogra VARCHAR2(10) := 'COBEMP';
     
-		vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
+	vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
     
     -------------------------- TABELAS TEMPORARIAS --------------------------
 
-    vr_tab_pgto_parcel empr0001.typ_tab_pgto_parcel;
-		vr_tab_calculado   empr0001.typ_tab_calculado;
-    vr_tab_price       EMPR0011.typ_tab_price;
-    vr_tab_parcelas    EMPR0011.typ_tab_parcelas;    
+    vr_tab_pgto_parcel     empr0001.typ_tab_pgto_parcel;
+	vr_tab_calculado       empr0001.typ_tab_calculado;
+    vr_tab_price           EMPR0011.typ_tab_price;
+    vr_tab_parcelas        EMPR0011.typ_tab_parcelas;    
     vr_tab_calculado_pos   EMPR0011.typ_tab_calculado;
     
-    vr_index_pos PLS_INTEGER;
+    vr_index_pos           PLS_INTEGER;
 
     ------------------------------- CURSORES --------------------------------
 		
@@ -1604,12 +1607,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 											-- Lança histórico 2279 no extrato do prejuízo de C/C apenas em caráter informativo - Reginaldo/AMcom
 											PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
 											                                , pr_nrdconta => pr_nrdconta
-																											, pr_dtmvtolt => pr_dtmvtolt
-																											, pr_cdhistor => 2279
-																											, pr_vllanmto => vr_vlabono
-																											, pr_nrctremp => pr_nrctremp
-																											, pr_cdcritic => vr_cdcritic
-																											, pr_dscritic => vr_dscritic); 
+											                                , pr_dtmvtolt => pr_dtmvtolt
+											                                , pr_cdhistor => 2279
+											                                , pr_vllanmto => vr_vlabono
+											                                , pr_nrctremp => pr_nrctremp
+											                                , pr_cdcritic => vr_cdcritic
+											                                , pr_dscritic => vr_dscritic); 
 																											
 											IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 											  vr_cdcritic := 0;
@@ -1678,13 +1681,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 												
 												-- Lança histórico 2279 no extrato do prejuízo de C/C apenas em caráter informativo - Reginaldo/AMcom
 												PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
-																												, pr_nrdconta => pr_nrdconta
-																												, pr_dtmvtolt => pr_dtmvtolt
-																												, pr_cdhistor => 2012
-																												, pr_vllanmto => vr_vlajuste
-																												, pr_nrctremp => pr_nrctremp
-																												, pr_cdcritic => vr_cdcritic
-																												, pr_dscritic => vr_dscritic); 
+											                                                   , pr_nrdconta => pr_nrdconta
+											                                                   , pr_dtmvtolt => pr_dtmvtolt
+											                                                   , pr_cdhistor => 2012
+											                                                   , pr_vllanmto => vr_vlajuste
+											                                                   , pr_nrctremp => pr_nrctremp
+											                                                   , pr_cdcritic => vr_cdcritic
+											                                                   , pr_dscritic => vr_dscritic); 
 																												
 												IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
 													vr_cdcritic := 0;
@@ -2452,7 +2455,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                     , pr_dscritic => vr_dscritic);
 
         IF nvl(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          vr_dscritic := 'Erro ao debitar pagamento das parcelas do Bloqueado Prejuizo (' || vr_dscritic || ')';	
+          vr_dscritic := 'Erro ao debitar pagamento das parcelas do Bloqueado Prejuizo (' || vr_dscritic || ')';
           RAISE vr_exc_saida;
         END IF;
       END IF;
@@ -8145,6 +8148,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                     23/04/2019 - Alterada rotina para envio do boleto por e-mail para
                              recuperar o texto da crapprm.
                              (P559 - André Clemer - Supero)
+
+                    05/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO"
+                             (P559 - André Clemer - Supero)
 	..............................................................................*/
 		DECLARE
 			----------------------------- VARIAVEIS ---------------------------------
@@ -8270,6 +8276,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 				dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
 				--Escrever no arquivo XML
 				gene0002.pc_escreve_xml(vr_clobxml, vr_dstextorel,'<?xml version="1.0" encoding="UTF-8"?><Root><Dados>');
+
+				-- Removida instrução (PRJ 559 - Task 22167: Remover trava de instrução)
+				vr_tab_cob(vr_tab_cob.FIRST).dsdinst1 := ' ';
 
 				vr_dstexto :=               '<cdcooper>' || NVL(vr_tab_cob(vr_tab_cob.FIRST).cdcooper, '') || '</cdcooper>';
 				vr_dstexto := vr_dstexto || '<nrdconta>' || NVL(vr_tab_cob(vr_tab_cob.FIRST).nrdconta, '') || '</nrdconta>';

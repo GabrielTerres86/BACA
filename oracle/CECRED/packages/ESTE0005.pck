@@ -5,14 +5,13 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0005 is
       Sistema  : Rotinas de Cartões de Crédito/Débito que utilizam comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Paulo Roberto da Silva - Supero
-      Data     : Fevereiro/2018.                   Ultima atualizacao: 19/02/2018
+      Data     : Fevereiro/2018.                   Ultima atualizacao: 11/02/2019
 
       Dados referentes ao programa:
 
       Objetivo  : Para solicitações e alterações de limites de credito de cartões utilizar a comunicação com O Motor e a Esteira de Crédito da IBRATAN.
-	  
 
-      Alteracoes:
+      Alteracoes: 11/02/2019 - P442 - Mudança no teste de bloqueio ou não do PreAprovado (Marcos-Envolti)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -1011,27 +1010,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
            AND jur.nrdconta = pr_nrdconta;
       rw_crapjur cr_crapjur%ROWTYPE;
 
-      -- Verifica se esta na tabela do pre-aprovado
-      CURSOR cr_crapcpa (pr_cdcooper IN crapcpa.cdcooper%TYPE,
-                         pr_nrdconta IN crapcpa.nrdconta%TYPE,
-                         pr_idcarga  IN crapcpa.iddcarga%TYPE) IS
-        SELECT cpa.vllimdis
-              ,cpa.vlcalpre
-              ,cpa.vlctrpre
-              ,cpa.cdlcremp
-          FROM crapcpa cpa
-         WHERE cpa.cdcooper = pr_cdcooper
-           AND cpa.nrdconta = pr_nrdconta
-           AND cpa.iddcarga = pr_idcarga;
-      rw_crapcpa cr_crapcpa%rowtype;
-
       -- Pré Aprovado Nao Liberado
-      CURSOR cr_preapv IS
-        SELECT flglibera_pre_aprv
-          FROM tbepr_param_conta
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta;
-      vr_flglibera_pre_aprv tbepr_param_conta.flglibera_pre_aprv%TYPE := 0;
+      vr_flglibera_pre_aprv NUMBER := 0;
 
       -- Data Ultima Revisão Cadastral
       CURSOR cr_revisa IS
@@ -1866,33 +1846,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_flglibera_pre_aprv := 0;
 
       -- Busca a carga ativa
-      empr0002.pc_busca_carga_ativa(pr_cdcooper => pr_cdcooper
-                                   ,pr_nrdconta => pr_nrdconta
-                                   ,pr_idcarga  => vr_idcarga);
-
+      vr_idcarga := empr0002.fn_idcarga_pre_aprovado_cta(pr_cdcooper => pr_cdcooper
+                                                        ,pr_nrdconta => pr_nrdconta);
       --  Caso nao possua carga ativa
       IF vr_idcarga > 0 THEN
-        --> Verifica se esta na tabela do pre-aprovado
-        OPEN cr_crapcpa(pr_cdcooper => pr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta
-                       ,pr_idcarga  => vr_idcarga);
-        FETCH cr_crapcpa INTO rw_crapcpa;
-        -- Somente casa Haja
-        IF cr_crapcpa%FOUND THEN
-          CLOSE cr_crapcpa;
           -- Verifica se existe Bloqueio em Conta
-          OPEN cr_preapv;
-          FETCH cr_preapv
-            INTO vr_flglibera_pre_aprv;
-          -- Se nao encontrou
-          IF cr_preapv%NOTFOUND THEN
-            -- Tratar como liberado
-            vr_flglibera_pre_aprv := 1;
-          END IF;
-          CLOSE cr_preapv;
-        ELSE
-          CLOSE cr_crapcpa;
-        END IF;
+          vr_flglibera_pre_aprv := empr0002.fn_flg_preapv_liberado(pr_cdcooper,pr_nrdconta);
       END IF;
 
       vr_obj_generic2.put('liberaPreAprovad', (nvl(vr_flglibera_pre_aprv,0)=1));
@@ -5890,22 +5849,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
     rw_crawepr_pend cr_crawepr_pend%ROWTYPE;
 
-    --> Selecionar o saldo disponivel do pre-aprovado da conta em questão  da carga ativa
-    CURSOR cr_crapcpa (pr_cdcooper crawcrd.cdcooper%TYPE,
-                       pr_nrdconta crawcrd.nrdconta%TYPE) IS
-      SELECT cpa.vllimdis
-            ,cpa.vlcalpre
-            ,cpa.vlctrpre
-        FROM crapcpa              cpa
-            ,tbepr_carga_pre_aprv carga
-       WHERE carga.cdcooper = pr_cdcooper
-         AND carga.indsituacao_carga = 1
-         AND carga.flgcarga_bloqueada = 0
-         AND cpa.cdcooper = carga.cdcooper
-         AND cpa.iddcarga = carga.idcarga
-         AND cpa.nrdconta = pr_nrdconta;
-    rw_crapcpa cr_crapcpa%ROWTYPE;
-
     --> Buscar operador
     CURSOR cr_crapope (pr_cdcooper  crapope.cdcooper%TYPE,
                        pr_cdoperad  crapope.cdoperad%TYPE) IS
@@ -6033,6 +5976,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_vlutiliz     NUMBER;
     vr_vlprapne     NUMBER;
     vr_vllimdis     NUMBER;
+    vr_vlparcel     NUMBER;
+    vr_vldispon     NUMBER;
     vr_nmarquiv     VARCHAR2(1000);
     vr_imptermo     VARCHAR2(1000);
     vr_dsiduser     VARCHAR2(100);
@@ -6263,14 +6208,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
       --> Selecionar o saldo disponivel do pre-aprovado da conta em questão  da carga ativa
       IF rw_crapass_cpfcgc.flgcrdpa = 1 THEN
-        rw_crapcpa := NULL;
-
-        OPEN cr_crapcpa (pr_cdcooper => rw_crapass_cpfcgc.cdcooper,
-                         pr_nrdconta => rw_crapass_cpfcgc.nrdconta);
-        FETCH cr_crapcpa INTO rw_crapcpa;
-        CLOSE cr_crapcpa;
-
-        vr_vllimdis := nvl(rw_crapcpa.vllimdis, 0) + vr_vllimdis;
+		-- Calcular o pre-aprovado disponível
+        empr0002.pc_calc_pre_aprovad_sint_cta(pr_cdcooper => rw_crapass_cpfcgc.cdcooper
+                                             ,pr_nrdconta => rw_crapass_cpfcgc.nrdconta
+                                             ,pr_vlparcel => vr_vlparcel
+                                             ,pr_vldispon => vr_vldispon
+                                             ,pr_dscritic => vr_dscritic);
+        IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+        END IF;
+        -- Incrementar o disponível
+        vr_vllimdis := nvl(vr_vldispon, 0) + vr_vllimdis;
       END IF;
     END LOOP;
 

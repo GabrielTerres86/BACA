@@ -2281,6 +2281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     vr_cdcritic   PLS_INTEGER; --> codigo retorno de erro
     vr_dscritic   VARCHAR2(4000); --> descricao do erro
     vr_exc_saida  EXCEPTION; --> Excecao prevista
+		vr_exc_null   EXCEPTION; --> Finaliza execução com commit
     
     rw_crapdat              btch0001.cr_crapdat%ROWTYPE;
     vr_progress_recid       tbblqj_monitora_ordem_bloq.idprogres_recid%type;
@@ -2307,6 +2308,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     
     -- Efetua as validacoes para as operacoes especificas  
     IF rw_solicitacao.tpordem = 2 THEN -- Se for um bloqueio
+			-- Se solicitação de bloqueio for para uma conta em prejuízo
+		  IF prej0003.fn_verifica_preju_conta(pr_cdcooper => rw_solicitacao.cdcooper
+				                                 ,pr_nrdconta => rw_solicitacao.nrdconta) THEN
+				-- Atualizar o valor bloqueado para 0
+				BEGIN
+					UPDATE tbblqj_ordem_bloq_desbloq
+						 SET vloperacao = 0
+					 WHERE idordem = pr_idordem;
+				EXCEPTION
+					WHEN OTHERS THEN
+						vr_dscritic := 'Erro ao atualizar na tbblqj_ordem_bloq_desbloq: '||SQLERRM;
+						RAISE vr_exc_saida;
+				END;
+				-- Coloca o registro de solicitacao como processado com sucesso
+				pc_atualiza_situacao(pr_idordem => pr_idordem,
+														 pr_instatus => 2);
+				-- Encerra execução da ordem
+				RAISE vr_exc_null;
+		  END IF;
       -- Se a modalidade for conta corrente verifica se já existe um monitoramento 
       -- para o mesmo cpf e ofício (cooperado com mais de uma conta)      
       IF rw_solicitacao.cdmodali = 1 THEN 
@@ -2668,6 +2688,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     COMMIT;
 
   EXCEPTION
+		WHEN vr_exc_null THEN
+			-- Efetuar commit
+			COMMIT;
     WHEN vr_exc_saida THEN
       -- Se foi retornado apenas código
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN

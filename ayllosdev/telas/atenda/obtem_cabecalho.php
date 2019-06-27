@@ -720,6 +720,13 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 
                 break;
             }
+       case "PRE APROVADO": {
+				$nomeRotina = "Pr&eacute;-aprovado";
+                $urlRotina = "pre_aprovado";
+                $strValue = "";	
+				$telaPermitadaAcessoBacen = 0;
+				break;
+			}
 			case "DESABILITAR OPERACOES": {
 				$nomeRotina = "Desabilitar Operacoes";
                 $urlRotina = "liberar_bloquear";

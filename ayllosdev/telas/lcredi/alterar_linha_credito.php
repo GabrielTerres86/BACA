@@ -5,17 +5,12 @@
  * DATA CRIAÇÃO : Julho/2016 
  * OBJETIVO     : Rotina para alterar uma linha de crédito
  * --------------
- * ALTERAÇÕES   :  10/08/2016 - Ajuste referente a homologação da área de negócio
-                                (Andrei - RKAM)
-
-                   09/09/2016 - Ajuste para pegar corretamente o valor do parametro consaut
-								(Adriano)
-
-                   27/03/2017 - Inclusao dos campos Produto e Indexador. (Jaison/James - PRJ298)
-
-                   10/10/2017 - Inclusao do campo % Mínimo Garantia. (Lombardi - PRJ404)
-				   
-				   06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
+ * ALTERAÇÕES   :  10/08/2016 - Ajuste referente a homologação da área de negócio (Andrei - RKAM)
+ *                 09/09/2016 - Ajuste para pegar corretamente o valor do parametro consaut (Adriano)
+ *                 27/03/2017 - Inclusao dos campos Produto e Indexador. (Jaison/James - PRJ298)
+ *                 10/10/2017 - Inclusao do campo % Mínimo Garantia. (Lombardi - PRJ404)
+ *                 06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
+ *                 13/02/2019 - Inclusao do campo flprapol (Christian Grauppe - Envolti)
  */
 ?>
 
@@ -69,7 +64,7 @@
   $qtcarenc = (isset($_POST["qtcarenc"])) ? $_POST["qtcarenc"] : 0;
   $perjurmo = (isset($_POST["perjurmo"])) ? $_POST["perjurmo"] : 0;
   $vlmaxass = (isset($_POST["vlmaxass"])) ? $_POST["vlmaxass"] : 0;
-  $consaut  = (isset($_POST["consaut"])) ? $_POST["consaut"] : 0;
+  $consaut  = (isset($_POST["consaut"]))  ? $_POST["consaut"]  : 0;
   $vlmaxasj = (isset($_POST["vlmaxasj"])) ? $_POST["vlmaxasj"] : 0;
   $nrinipre = (isset($_POST["nrinipre"])) ? $_POST["nrinipre"] : 0;
   $nrfimpre = (isset($_POST["nrfimpre"])) ? $_POST["nrfimpre"] : 0;
@@ -79,6 +74,7 @@
   $flgcobmu = (isset($_POST["flgcobmu"])) ? $_POST["flgcobmu"] : 0;
   $flgsegpr = (isset($_POST["flgsegpr"])) ? $_POST["flgsegpr"] : 0;
   $cdhistor = (isset($_POST["cdhistor"])) ? $_POST["cdhistor"] : 0;
+  $flprapol = (isset($_POST["flprapol"])) ? $_POST["flprapol"] : 0;
   $tpprodut = (isset($_POST["tpprodut"])) ? $_POST["tpprodut"] : 0;
   $cddindex = (isset($_POST["cddindex"])) ? $_POST["cddindex"] : 0;
   $vlperidx = (isset($_POST["vlperidx"])) ? $_POST["vlperidx"] : 0;
@@ -129,6 +125,7 @@
   $xml 	   .= "     <flgcobmu>".$flgcobmu."</flgcobmu>";
   $xml 	   .= "     <flgsegpr>".$flgsegpr."</flgsegpr>";
   $xml 	   .= "     <cdhistor>".$cdhistor."</cdhistor>";
+  $xml 	   .= "     <flprapol>".$flprapol."</flprapol>";
   $xml 	   .= "     <tpprodut>".$tpprodut."</tpprodut>";
   $xml 	   .= "     <cddindex>".$cddindex."</cddindex>";
   $xml 	   .= "     <permingr>".$permingr."</permingr>";
@@ -144,7 +141,7 @@
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 	
 		$msgErro = $xmlObjMotivos->roottag->tags[0]->tags[0]->tags[4]->cdata;
-    $nmdcampo = $xmlObj->roottag->tags[0]->attributes["NMDCAMPO"];	
+		$nmdcampo = $xmlObj->roottag->tags[0]->attributes["NMDCAMPO"];	
 		
 		if(empty ($nmdcampo)){ 
 			$nmdcampo = "dslcremp";
@@ -154,14 +151,12 @@
 			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		}  
             
-    exibirErro('error',$msgErro,'Alerta - Ayllos','formataFormularioConsulta(); focaCampoErro(\''.$nmdcampo.'\',\'frmConsulta\');',false);		
+		exibirErro('error',$msgErro,'Alerta - Ayllos','formataFormularioConsulta(); focaCampoErro(\''.$nmdcampo.'\',\'frmConsulta\');',false);		
 		 
-	}else {
-     
-     exibirErro('inform','Linha de cr&eacute;dito alterada com sucesso.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesConsulta\').click();', false);      
-  }
-		
-		
+	} else {
+		exibirErro('inform','Linha de cr&eacute;dito alterada com sucesso.','Alerta - Ayllos','$(\'#btVoltar\',\'#divBotoesConsulta\').click();', false);      
+	}
+
 	function validaDados(){
 			
 		IF($GLOBALS["cdlcremp"] == 0 ){ 
@@ -172,64 +167,63 @@
 			exibirErro('error','Descri&ccedil;&atilde;o da linha de cr&eacute;dito inv&aacute;lida.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'dslcremp\',\'frmConsulta\');',false);
 		}
     
-    IF($GLOBALS["tplcremp"] != 1 && $GLOBALS["tplcremp"] != 2){ 
+		IF($GLOBALS["tplcremp"] != 1 && $GLOBALS["tplcremp"] != 2){ 
 			exibirErro('error','Tipo inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'tplcremp\',\'frmConsulta\');',false);
 		}
     
-    IF($GLOBALS["tpdescto"] != 1 && $GLOBALS["tpdescto"] != 2){ 
+		IF($GLOBALS["tpdescto"] != 1 && $GLOBALS["tpdescto"] != 2){ 
 			exibirErro('error','Tipo inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'tpdescto\',\'frmConsulta\');',false);
 		}
    
-    IF($GLOBALS["tpctrato"] != 1 && $GLOBALS["tpctrato"] != 2 && $GLOBALS["tpctrato"] != 3 && $GLOBALS["tpctrato"] != 4){ 
+		IF($GLOBALS["tpctrato"] != 1 && $GLOBALS["tpctrato"] != 2 && $GLOBALS["tpctrato"] != 3 && $GLOBALS["tpctrato"] != 4){ 
 			exibirErro('error','Modelo de contrato inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'tpctrato\',\'frmConsulta\');',false);
 		}
     
-    IF($GLOBALS["nrdevias"] == 0){ 
+		IF($GLOBALS["nrdevias"] == 0){ 
 			exibirErro('error','N&uacute;mero de vias inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'nrdevias\',\'frmConsulta\');',false);
 		}
     
-	IF(($GLOBALS["permingr"] < 0.01 && $GLOBALS["tpctrato"] == 4) || $GLOBALS["permingr"] > 300){ 
+		IF(($GLOBALS["permingr"] < 0.01 && $GLOBALS["tpctrato"] == 4) || $GLOBALS["permingr"] > 300){ 
 			exibirErro('error','Percentual minimo da cobertura da garantia de aplicacao inválido. Deve ser entre \"0.01\" e \"300\".','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'permingr\',\'frmConsulta\');',false);
 		}
     
-    IF($GLOBALS["cdusolcr"] != 0 && $GLOBALS["cdusolcr"] != 1 && $GLOBALS["cdusolcr"] != 2){ 
+		IF($GLOBALS["cdusolcr"] != 0 && $GLOBALS["cdusolcr"] != 1 && $GLOBALS["cdusolcr"] != 2){ 
 			exibirErro('error','C&oacute;digo inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'cdusolcr\',\'frmConsulta\');',false);
 		}
     
-    IF($GLOBALS["cdmodali"] == ''){ 
+		IF($GLOBALS["cdmodali"] == ''){ 
 			exibirErro('error','C&oacute;digo da modalidade inv&aacute;lida.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'cdmodali\',\'frmConsulta\');',false);
 		}
     
-    IF($GLOBALS["cdsubmod"] == ''){ 
+		IF($GLOBALS["cdsubmod"] == ''){ 
 			exibirErro('error','C&oacute;digo da submodalidade inv&aacute;lida.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'cdsubmod\',\'frmConsulta\');',false);
 		}
 
-    // Se for Pos-Fixado e Taxa Variavel nao for maior que zero
-    IF($GLOBALS["tpprodut"] == 2 && $GLOBALS["vlperidx"] <= 0) {
-        exibirErro('error','Taxa inv&aacute;lida.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'vlperidx\',\'frmConsulta\');',false);
-    }
+		// Se for Pos-Fixado e Taxa Variavel nao for maior que zero
+		IF($GLOBALS["tpprodut"] == 2 && $GLOBALS["vlperidx"] <= 0) {
+			exibirErro('error','Taxa inv&aacute;lida.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'vlperidx\',\'frmConsulta\');',false);
+		}
 
-    IF($GLOBALS["nrinipre"] == 0){ 
+		IF($GLOBALS["nrinipre"] == 0){ 
 			exibirErro('error','Valor inv&acute;lido','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'nrinipre\',\'frmConsulta\');',false);
 		}
     
-    IF($GLOBALS["nrfimpre"] == 0 || $GLOBALS["nrfimpre"] > 240){ 
+		IF($GLOBALS["nrfimpre"] == 0 || $GLOBALS["nrfimpre"] > 240){ 
 			exibirErro('error','Valor inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'nrfimpre\',\'frmConsulta\');',false);
 		}
     
-    IF($GLOBALS["qtdcasas"] == 0 || $GLOBALS["qtdcasas"] > 6){ 
+		IF($GLOBALS["qtdcasas"] == 0 || $GLOBALS["qtdcasas"] > 6){ 
 			exibirErro('error','Quantidade de casas decimais inv&aacute;lida.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'qtdcasas\',\'frmConsulta\');',false);
 		}
     
-    IF($GLOBALS["nrinipre"] > $GLOBALS["nrfimpre"]){ 
+		IF($GLOBALS["nrinipre"] > $GLOBALS["nrfimpre"]){ 
 			exibirErro('error','Valor inicial da presta&ccedil;&atilde;o deve menor que o final.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'nrinipre\',\'frmConsulta\');',false);
 		}
     
-    IF($GLOBALS["tpdescto"] == 2 && $GLOBALS["nrfimpre"] > 99){ 
+		IF($GLOBALS["tpdescto"] == 2 && $GLOBALS["nrfimpre"] > 99){ 
 			exibirErro('error','Permitido informar no maximo 99 parcelas para Linhas com Desconto em Folha.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'nrfimpre\',\'frmConsulta\');',false);
 		}
-    
-    
+
 	}	
-  
+
  ?>

@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos-Envolti
-       Data    : Julho/2018                       Ultima atualizacao: 15/01/2019
+       Data    : Julho/2018                       Ultima atualizacao: 08/04/2019
 
        Dados referentes ao programa:
 
@@ -69,6 +69,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                      05/12/2018 - P438 - Sprint 7 - Paulo Martins
                                    Incluído Galpão, MAQUINA E EQUIPAMENTO                     
                      15/01/2019 - P450 - Ajuste BNDES / Taxa Mensal (Guilherme/AMcom)
+                     
+					 08/04/2019 - P450 - Ajuste BNDES / Codigo Indexador (Guilherme/AMcom)
                      
     .............................................................................................................................*/
 
@@ -394,6 +396,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                ebn.dtvctpro,
                ebn.vlparepr,
                ebn.qtparctr
+              ,NVL(ebn.cdindxdr,11) cdindxdr -- Se, por acaso nao atualizou o indexador, assume 11, conforme antes
           FROM crapebn ebn;
       
       -- Busca taxa de Juros Cartao BB e Bancoob
@@ -5280,6 +5283,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
           vr_tab_crapebn(vr_ind_ebn).dtvctpro := rw_crapebn.dtvctpro;
           vr_tab_crapebn(vr_ind_ebn).vlparepr := rw_crapebn.vlparepr;
           vr_tab_crapebn(vr_ind_ebn).qtparctr := rw_crapebn.qtparctr;
+          vr_tab_crapebn(vr_ind_ebn).cdindxdr := rw_crapebn.cdindxdr;
         END LOOP;
       END IF;
       

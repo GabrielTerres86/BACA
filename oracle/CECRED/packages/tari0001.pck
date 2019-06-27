@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.TARI0001 AS
   --
   --  Programa: TARI0001                         Antiga: generico/procedures/b1wgen0153.p
   --  Autor   : Tiago Machado/Daniel Zimmermann
-  --  Data    : Fevereiro/2013                  Ultima Atualizacao: 23/10/2018
+  --  Data    : Fevereiro/2013                  Ultima Atualizacao: 03/04/2019
   --
   --  Dados referentes ao programa:
   --
@@ -640,7 +640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
   --  Sistema  : Procedimentos envolvendo tarifas bancarias
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 13/03/2019
+  --  Data     : Junho/2013.                   Ultima atualizacao: 03/04/2019
   --
   -- Dados referentes ao programa:
   --
@@ -731,6 +731,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                           demais lugares onde este valor é utilizado.                    
                           Jose Dill (Mouts)              
 
+                12/06/2019 - inc0017781 (PRB0041932) Na rotina pc_verifica_tarifa_operacao, feito o tratamento para identificar
+                             o erro na formatação da data e não abortar a rotina (Carlos)
   */
  
   ---------------------------------------------------------------------------------------------------------------
@@ -2088,6 +2090,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     --
     --   11/07/2018 - Inclusão de pc_internal_exception nas exceptions others INC0018458 (AJFink)
     --
+    --   03/04/2019 - PRJ450 - Inibir lancamento de tarifas de ADP na LAUTOM para contas 
+    --                em prejuizo (Fabio Adriano - AMcom). 
   BEGIN
     DECLARE
       --Cursores Locais
@@ -2099,6 +2103,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       --Variaveis de Excecao
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
+      --Variaveis locais
+      vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
     BEGIN
       --Inicializar retorno erro
       pr_cdcritic:= NULL;
@@ -2120,62 +2126,72 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       ELSE
         vr_flgaviso:= 0;
       END IF;
-      --Inserir lancamento automatico
-      BEGIN
-        INSERT INTO craplat
-          (craplat.cdcooper
-          ,craplat.nrdconta
-          ,craplat.dtmvtolt
-          ,craplat.cdlantar
-          ,craplat.dttransa
-          ,craplat.hrtransa
-          ,craplat.insitlat
-          ,craplat.cdhistor
-          ,craplat.vltarifa
-          ,craplat.cdoperad
-          ,craplat.cdagenci
-          ,craplat.cdbccxlt
-          ,craplat.nrdolote
-          ,craplat.tpdolote
-          ,craplat.nrdocmto
-          ,craplat.nrdctabb
-          ,craplat.nrdctitg
-          ,craplat.cdpesqbb
-          ,craplat.cdbanchq
-          ,craplat.cdagechq
-          ,craplat.nrctachq
-          ,craplat.flgaviso
-          ,craplat.tpdaviso
-          ,craplat.cdfvlcop
-          ,craplat.idseqlat)
-        VALUES
-          (pr_cdcooper
-          ,pr_nrdconta
-          ,pr_dtmvtolt
-          ,seqlat_cdlantar.NEXTVAL
-          ,vr_datdodia
-          ,GENE0002.fn_busca_time
-          ,1 /** PENDENTE **/
-          ,pr_cdhistor
-          ,pr_vllanaut
-          ,pr_cdoperad
-          ,pr_cdagenci
-          ,pr_cdbccxlt
-          ,pr_nrdolote
-          ,pr_tpdolote
-          ,pr_nrdocmto
-          ,pr_nrdctabb
-          ,pr_nrdctitg
-          ,pr_cdpesqbb
-          ,pr_cdbanchq
-          ,pr_cdagechq
-          ,pr_nrctachq
-          ,vr_flgaviso
-          ,pr_tpdaviso
-          ,pr_cdfvlcop
-          ,fn_sequence('CRAPLAT','IDSEQLAT',pr_cdcooper||';'||pr_nrdconta ||';'||to_char(pr_dtmvtolt,'dd/mm/yyyy')))
-          RETURNING rowid INTO pr_rowid_craplat;
-      EXCEPTION
+      
+      -- Verifica se a conta corrente está em prejuízo 
+      vr_prejuzcc := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper
+                                                    , pr_nrdconta => pr_nrdconta);
+                                                    
+                                                      
+                                                    
+      IF NOT ((vr_prejuzcc)   AND
+              (pr_cdhistor = 1441 OR pr_cdhistor = 1465)) THEN
+        --Inserir lancamento automatico
+        BEGIN
+          INSERT INTO craplat
+            
+            (craplat.cdcooper
+            ,craplat.nrdconta
+            ,craplat.dtmvtolt
+            ,craplat.cdlantar
+            ,craplat.dttransa
+            ,craplat.hrtransa
+            ,craplat.insitlat
+            ,craplat.cdhistor
+            ,craplat.vltarifa
+            ,craplat.cdoperad
+            ,craplat.cdagenci
+            ,craplat.cdbccxlt
+            ,craplat.nrdolote
+            ,craplat.tpdolote
+            ,craplat.nrdocmto
+            ,craplat.nrdctabb
+            ,craplat.nrdctitg
+            ,craplat.cdpesqbb
+            ,craplat.cdbanchq
+            ,craplat.cdagechq
+            ,craplat.nrctachq
+            ,craplat.flgaviso
+            ,craplat.tpdaviso
+            ,craplat.cdfvlcop
+            ,craplat.idseqlat)
+          VALUES
+            (pr_cdcooper
+            ,pr_nrdconta
+            ,pr_dtmvtolt
+            ,seqlat_cdlantar.NEXTVAL
+            ,vr_datdodia
+            ,GENE0002.fn_busca_time
+            ,1 /** PENDENTE **/
+            ,pr_cdhistor
+            ,pr_vllanaut
+            ,pr_cdoperad
+            ,pr_cdagenci
+            ,pr_cdbccxlt
+            ,pr_nrdolote
+            ,pr_tpdolote
+            ,pr_nrdocmto
+            ,pr_nrdctabb
+            ,pr_nrdctitg
+            ,pr_cdpesqbb
+            ,pr_cdbanchq
+            ,pr_cdagechq
+            ,pr_nrctachq
+            ,vr_flgaviso
+            ,pr_tpdaviso
+            ,pr_cdfvlcop
+            ,fn_sequence('CRAPLAT','IDSEQLAT',pr_cdcooper||';'||pr_nrdconta ||';'||to_char(pr_dtmvtolt,'dd/mm/yyyy')))
+           RETURNING rowid INTO pr_rowid_craplat;
+          EXCEPTION
         WHEN Others THEN
           cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper); --INC0018458
           vr_cdcritic:= 0;
@@ -2190,7 +2206,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                ,pr_tab_erro => pr_tab_erro);
           --Levantar Excecao para retornar NOK
           RAISE vr_exc_erro;
-      END;
+        END;
+      END IF;   
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_cdcritic:= NULL;
@@ -6886,14 +6903,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
   BEGIN
                                   
-    --  hora da operação será a data do movimento concatenato com a hora extraída do sysdate (adicionado por Valéria Supero out/2018)
-   select cecred.gene0002.fn_converte_time_data(pr_nrsegs => pr_hroperacao,
-                                                   pr_tipsaida => 'S')
-    into vr_hroperacao_aux
-    from dual;
+    BEGIN                               
+      -- hora da operação será a data do movimento concatenato com a hora extraída do sysdate (adicionado por Valéria Supero out/2018)
+      vr_hroperacao_aux := cecred.gene0002.fn_converte_time_data(pr_nrsegs => pr_hroperacao, pr_tipsaida => 'S');
 
     vr_hroperacao_aux := to_char(pr_dtmvtolt,'DD/MM/YYYY') || ' ' ||vr_hroperacao_aux;
     vr_hroperacao := to_date(vr_hroperacao_aux,'DD/MM/YYYY HH24:MI:SS');
+    EXCEPTION
+      WHEN OTHERS THEN
+        cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper,
+                                     pr_compleme => 'pr_hroperacao: '     || pr_hroperacao ||
+                                                    ' | vr_hroperacao_aux: ' || vr_hroperacao_aux || 
+                                                    ' | vr_hroperacao: ' || vr_hroperacao || 
+                                                    ' | pr_nrdconta: ' || pr_nrdconta);
+        vr_hroperacao := to_char(pr_dtmvtolt,'DD/MM/YYYY');
+    END;
 
     ---------------------------------------------------------------------------------------------------------------------------------
     -- Leitura do calendário da cooperativa

@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0004 is
       Sistema  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : ESTE
       Autor    : Paulo Penteado (GFT) 
-      Data     : Fevereio/2018.                   Ultima atualizacao: 16/02/2018
+      Data     : Fevereio/2018.                   Ultima atualizacao: 30/04/2019
 
       Dados referentes ao programa:
 
@@ -17,6 +17,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0004 is
                   23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
                   Referentes a proposta. (Lindon Carlos Pecile - GFT)
 
+				  30/04/2019 - Chamada JSON variáveis internas (Mario - AMcom)
   ---------------------------------------------------------------------------------------------------------------*/
   --> Rotina responsavel por montar o objeto json para analise de limite de desconto de títulos
   PROCEDURE pc_gera_json_analise_lim(pr_cdcooper   in crapass.cdcooper%type
@@ -450,6 +451,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     vr_obj_procurad  json      := json();
     vr_obj_generico  json      := json();
     vr_obj_generic2  json      := json();
+    vr_obj_generic4  json      := json(); -- Variáveis internas
     vr_lst_generico  json_list := json_list();
     vr_lst_generic2  json_list := json_list();
     
@@ -748,6 +750,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
        
     -- Adicionar o JSON montado do Proponente no objeto principal
     vr_obj_analise.put('proponente',vr_obj_generico);
+    
+    -- Chamada das Novas variaveis internas para o Json
+    rati0003.pc_json_variaveis_rating(pr_cdcooper => pr_cdcooper --> Código da cooperativa
+                                     ,pr_nrdconta => pr_nrdconta --> Numero da conta do emprestimo
+                                     ,pr_nrctremp => pr_nrctrlim --> Numero do contrato de desconto de tidulo
+                                     ,pr_flprepon => true    --> Flag Repon
+                                     ,pr_vlsalari => 0       --> Valor do Salario Associado
+                                     ,pr_persocio => 0       --> Percential do sócio
+                                     ,pr_dtadmsoc => NULL    --> Data Admissãio do Sócio
+                                     ,pr_dtvigpro => NULL    --> Data Vigência do Produto
+                                     ,pr_tpprodut => 0       --> Tipo de Produto
+                                     ,pr_dsjsonvar => vr_obj_generic4 --> Retorno Variáveis Json
+                                     ,pr_cdcritic => vr_cdcritic  --> Código de critica encontrada
+                                     ,pr_dscritic => vr_dscritic);
+    
+    -- Verifica inconsistencias
+    if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then  
+      RAISE vr_exc_erro;
+    end if;
+                  
+    -- Enviar informações das variáveis internas ao JSON
+    vr_obj_analise.put('variaveisInternas', vr_obj_generic4);   
     
     --> Para Pessoa Fisica iremos buscar seu Conjuge
     IF rw_crapass.inpessoa = 1 THEN 
@@ -1507,21 +1531,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
                     and    w.nrctremp = p.nrctremp);
   rw_crawepr_pend cr_crawepr_pend%rowtype;
 
-  -->    Selecionar o saldo disponivel do pre-aprovado da conta em questao  da carga ativa
-  cursor cr_crapcpa is
-  select cpa.vllimdis
-        ,cpa.vlcalpre
-        ,cpa.vlctrpre
-  from   crapcpa              cpa
-        ,tbepr_carga_pre_aprv carga
-  where  carga.cdcooper = pr_cdcooper
-  and    carga.indsituacao_carga = 1
-  and    carga.flgcarga_bloqueada = 0
-  and    cpa.cdcooper = carga.cdcooper
-  and    cpa.iddcarga = carga.idcarga
-  and    cpa.nrdconta = pr_nrdconta;
-  rw_crapcpa cr_crapcpa%rowtype;
-
   -->    Buscar operador
   cursor cr_crapope is
   select ope.nmoperad
@@ -1574,6 +1583,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
   vr_vlutiliz     number;
   vr_vlprapne     number;
   vr_vllimdis     number;
+  vr_vlparcel     number;
+  vr_vldispon     number;
+
   vr_nmarquiv     varchar2(1000);
   vr_dsiduser     varchar2(100);
   vr_dsprotoc  tbgen_webservice_aciona.dsprotocolo%type;
@@ -1765,12 +1777,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
              vr_vlprapne := nvl(rw_crawepr_pend.vlemprst, 0) + vr_vlprapne;
 
              --> Selecionar o saldo disponivel do pre-aprovado da conta em questao  da carga ativa
-             if  rw_crapass_cpfcgc.flgcrdpa = 1 then
-                 rw_crapcpa := null;
-                 open  cr_crapcpa;
-                 fetch cr_crapcpa into rw_crapcpa;
-                 close cr_crapcpa;
-                 vr_vllimdis := nvl(rw_crapcpa.vllimdis, 0) + vr_vllimdis;
+             if  rw_crapass_cpfcgc.flgcrdpa = 1 then                 -- Calcular o pre-aprovado disponível
+                 empr0002.pc_calc_pre_aprovad_sint_cta(pr_cdcooper => pr_cdcooper
+                                                      ,pr_nrdconta => pr_nrdconta
+                                                      ,pr_vlparcel => vr_vlparcel
+                                                      ,pr_vldispon => vr_vldispon
+                                                      ,pr_dscritic => vr_dscritic);
+                 IF vr_dscritic IS NOT NULL THEN
+                     RAISE vr_exc_erro;
+                 END IF;
+                 -- Incrementar o disponível
+                 vr_vllimdis := nvl(vr_vldispon, 0) + vr_vllimdis;
              end if;
          end loop;
 

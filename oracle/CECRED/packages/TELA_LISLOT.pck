@@ -1,4 +1,4 @@
-create or replace package cecred.TELA_LISLOT is
+CREATE OR REPLACE PACKAGE CECRED.TELA_LISLOT IS
 
   /*Programa: visualização de detalhes da contab. do prejuízo na Lislot
     Sistema : contab. do prejuízo na Lislot
@@ -28,20 +28,23 @@ create or replace package cecred.TELA_LISLOT is
                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                    ,pr_des_erro OUT VARCHAR2);
                                                                         
-end TELA_LISLOT;
+END TELA_LISLOT;
 /
-create or replace package body cecred.TELA_LISLOT is
+CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LISLOT IS
 
   /*..............................................................................
 
      Sistema : contab. do prejuízo na Lislot
      Sigla   : CRED
      Autor   : Fabio Adriano
-     Data    : Agosto/2018                       Ultima atualizacao: 
+     Data    : Agosto/2018                       Ultima atualizacao: 07/06/2019
 
      Frequencia: Sempre que for chamado
 
-     Alteracoes: */
+     Alteracoes:  07/06/2019 - P450 - Tratamento historicos 2970 e 2971 e Prejuizo 
+                                      (Guilherme/AMcom)
+     
+     */
      
 
 /*Procedure para visualização de detalhes da contab. do prejuízo na Lislot*/
@@ -116,7 +119,7 @@ BEGIN
       and  v.nrdconta = pr_nrdconta
       and  v.cdhistor = pr_cdhistor
       AND  v.cdhistor <> 2323 
-      and  v.cdhistor in (2408,2412,2716,2717,2718,2719,2720,2738,2739,2721,2723,2733,2725,2727,2729,2722,2732,2724,2726,2728,2730)
+      AND  v.cdhistor in (2408,2412,2716,2717,2718,2719,2720,2738,2739,2721,2723,2733,2725,2727,2729,2722,2732,2724,2726,2728,2730,2970,2971)
     ORDER BY v.dtmvtolt desc;       
     rw_det_prej_lislot cr_det_prej_lislot%ROWTYPE;
     
@@ -273,14 +276,18 @@ BEGIN
            v.cdoperad   ,
            v.cdcooper   
            --v.idprejuizo  
-    FROM TBCC_PREJUIZO_DETALHE v             
+    FROM TBCC_PREJUIZO_DETALHE v,
+         craphis h              
      WHERE v.cdcooper = pr_cdcooper
       and  v.nrdconta = decode(pr_nrdconta,0,v.nrdconta,pr_nrdconta) --decode(0/*pr*/,0,v.nrdconta,/*pr*/0) --pr_nrdconta
       and  v.cdhistor = pr_cdhistor
       and  v.dtmvtolt >= TO_DATE(par_dtinicio, 'DD/MM/YYYY')
       and  v.dtmvtolt <= TO_DATE(par_dttermin, 'DD/MM/YYYY')
+      AND  v.cdcooper = h.cdcooper
+      AND  v.cdhistor = h.cdhistor
+      AND  h.nmestrut =  'TBCC_PREJUIZO_DETALHE'
       AND  v.cdhistor <> 2323 
-      and  v.cdhistor in (2408,2412,2716,2717,2718,2719,2720,2738,2739,2721,2723,2733,2725,2727,2729,2722,2732,2724,2726,2728,2730)
+--      and  v.cdhistor in (2408,2412,2716,2717,2718,2719,2720,2738,2739,2721,2723,2733,2725,2727,2729,2722,2732,2724,2726,2728,2730,2970,2971)
     ORDER BY v.dtmvtolt desc;       
     rw_det_prej_lislot cr_det_prej_lislot%ROWTYPE;
     

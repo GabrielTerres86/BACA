@@ -2,7 +2,7 @@
     
     Programa: b1wgen0095.p
     Autor   : André - DB1
-    Data    : Junho/2011                         Ultima Atualizacao: 26/10/2018
+    Data    : Junho/2011                         Ultima Atualizacao: 18/05/2019
 
     Dados referentes ao programa:
 
@@ -80,10 +80,12 @@
                09/10/2017 - Alterar a ordem da gravacao da variavel aux_flagprov dentro 
                             procedure inclui-contra (Lucas Ranghetti #744217)
 							
-				26/10/2018 - Correcao para permitir incluir uma contra ordem apenas para cheques
-				             com data de compensacao maior ou igual ao ultima dia util em relacao
-							 a data atual de movimento (d - 1)
-							 (Jonata - Mouts SCTASK0014736).
+                26/10/2018 - Correcao para permitir incluir uma contra ordem apenas para cheques
+                             com data de compensacao maior ou igual ao ultima dia util em relacao
+                       a data atual de movimento (d - 1)
+                       (Jonata - Mouts SCTASK0014736).
+                       
+               18/05/2019 - Perca de aprovacao do pré-aprovado na conta (Christian - Envolti).
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -93,6 +95,7 @@
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/b1wgenvlog.i 
               &TELA-CONTAS=NAO &TELA-MATRIC=SIM &VAR-GERAL=SIM &SESSAO-BO=SIM }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
@@ -2748,6 +2751,8 @@ PROCEDURE grava-dados:
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-criticas.
     EMPTY TEMP-TABLE tt-contra.
+    
+    DEF VAR aux_nrcpfcnpj_base AS DEC                                  NO-UNDO.
 
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0.
@@ -2911,6 +2916,72 @@ PROCEDURE grava-dados:
                         IF  RETURN-VALUE <> "OK" THEN
                             RETURN RETURN-VALUE.
                     END.
+			   
+               /* P442 - Bloquear pre-aprovado no caso de inclusao nas condicoes abaixo */
+               IF CAN-DO("2,4,6,8", STRING(par_cdsitdtl)) AND  par_cddopcao = "I" THEN
+                DO:
+                  /* Buscar CPF/CNPJ raiz do associado */
+                  FIND FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND
+                                           crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
+                  IF AVAIL crapass THEN
+                    DO:
+                      aux_nrcpfcnpj_base = crapass.nrcpfcnpj_base.
+                      
+                      /*** Traz todos os registros de cada cooperativa ativa ***/
+                      FOR EACH crapcop WHERE crapcop.flgativo = TRUE
+                               NO-LOCK:
+
+                        /* Buscar CPF/CNPJ raiz do associado */
+                        FIND FIRST crapass WHERE crapass.cdcooper = crapcop.cdcooper AND
+                                                 crapass.nrcpfcnpj_base = aux_nrcpfcnpj_base NO-LOCK NO-ERROR.
+
+                        IF AVAIL crapass THEN
+                          DO:
+
+                          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                          /* Efetuar a chamada a rotina Oracle */
+                          RUN STORED-PROCEDURE pc_proces_perca_pre_aprovad
+                            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper
+                                                                ,INPUT 0
+                                                                ,INPUT crapass.nrdconta
+                                                                ,INPUT crapass.inpessoa
+                                                                ,INPUT crapass.nrcpfcnpj_base
+                                                                ,INPUT par_dtmvtolt
+                                                                ,INPUT 37
+                                                                ,INPUT 0
+                                                                ,INPUT 0
+                                                                ,OUTPUT "").
+
+                          /* Fechar o procedimento para buscarmos o resultado */
+                          CLOSE STORED-PROC pc_proces_perca_pre_aprovad
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                          ASSIGN aux_dscritic = ""
+                              aux_dscritic = pc_proces_perca_pre_aprovad.pr_dscritic WHEN pc_proces_perca_pre_aprovad.pr_dscritic <> ?.
+
+                          IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                            DO:
+                              RUN gera_erro (INPUT par_cdcooper,
+                                             INPUT par_cdagenci,
+                                             INPUT par_nrdcaixa,
+                                             INPUT 1, /*sequencia*/
+                                             INPUT aux_cdcritic,
+                                             INPUT-OUTPUT aux_dscritic).
+
+                                RETURN "NOK".
+
+                            END. /* IF critic */
+
+                          END. /* IF avail */
+
+                      END. /* FOR */
+
+                    END. /* IF Avail */
+
+                END. /* IF par_cddopcao */
             END.
     END.
 

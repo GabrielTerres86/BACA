@@ -4474,11 +4474,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --              24/01/2019 - PJ298.2.2 - Ajustado mensagem de prejuizo de emprestimo (Rafael Faria - Supero)              
     --
-    -- 
     --              07/03/2019 - Correcao na mensagem de cadastro vencido (Cassia de Oliveira - GFT)
-    
-    --              09/04/2019 - Projeto Bacenjud fase 2 (Renato Cordeiro - AMcom)
-    --
+	--
+	--              25/02/2019 - P442 - Envio da Taxa na mensagem do PreAprovado (Marcos-Envolti)
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -6127,18 +6125,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     IF vr_tab_dados_cpa.exists(vr_idxcpa) AND 
        vr_tab_dados_cpa(vr_idxcpa).vldiscrd > 0 THEN
-      IF vr_tab_dados_cpa(vr_idxcpa).msgmanua IS NOT NULL THEN
         --> Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => vr_tab_dados_cpa(vr_idxcpa).msgmanua
                             ,pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
-    
-      ELSE
-          --> Incluir na temptable
-          pc_cria_registro_msg(pr_dsmensag             => 'Atencao: Cooperado possui Credito Pre-Aprovado, limite '||
-                                                          'maximo de R$ '||to_char(vr_tab_dados_cpa(vr_idxcpa).vldiscrd,'FM999G999G990D00MI'),
-                               pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
-        END IF;
-      END IF;
+    END IF;
     
     -- Verificar Cyber
     OPEN cr_crapcyc;
@@ -9334,7 +9324,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           (Lucas Ranghetti #810576)
 	--							 
 	--  Alteração : 03/04/2018 - Alterar para o "Tipo de aprovacao" para "Saque com cartao CECRED"
-    --                           (Andrey Formigari - Mouts #845782)
+    --                           (Andrey Formigari - Mouts #845782)	  
+	--							 
+	--  Alteração : 19/06/2019 - Ajuste para logar entrega de talonario.
+    --                           (Lucas Lombardi)
      ............................................................................*/
 
     -- Cursor para retornar o nome do banco
@@ -9380,6 +9373,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       vr_dstransa := 'Solicitação de Talões';
 	  ELSIF pr_indoperacao = 6 THEN -- Se for solicitacao de taloes
       vr_dstransa := 'Pagamento';
+    ELSIF pr_indoperacao = 7 THEN -- Se for entrega de taloes
+      vr_dstransa := 'Entrega de Talões';
     END IF;
     
     -- Preenche a descricao da origem
@@ -9427,7 +9422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                  ,pr_nmdcampo => 'Tipo de aprovacao'
                                  ,pr_dsdadant => ' '
                                  ,pr_dsdadatu => 'Magnetico');
-      ELSE -- Se for via cartao Cecred
+      ELSIF pr_indtipo_cartao = 2 THEN -- Se for por senha
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
                                  ,pr_nmdcampo => 'Tipo de aprovacao'
                                  ,pr_dsdadant => ' '
@@ -9444,7 +9439,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       
       -- Gera o log dos itens para numero do documento
       IF pr_nrdocmto > 0 AND -- Se possuir codigo do documento
-         pr_indoperacao <> 5 THEN -- Se for diferente de solicitacao de taloes
+         pr_indoperacao <> 5 AND
+         pr_indoperacao <> 7 THEN -- Se for diferente de solicitacao de taloes
 
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
                                  ,pr_nmdcampo => 'Numero do documento'
@@ -9454,11 +9450,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 
       -- Gera o log dos itens para valor do saque
       IF pr_vllanmto > 0 THEN -- Se possuir valor de saque
-        IF pr_indoperacao = 5 THEN -- Se for solicitacao de taloes
+        IF pr_indoperacao = 5 OR
+           pr_indoperacao = 7 THEN -- Se for solicitacao de taloes
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
                                    ,pr_nmdcampo => 'Qtde taloes solicitados'
                                    ,pr_dsdadant => ' '
-                                   ,pr_dsdadatu => to_char(pr_vllanmto,'fm999g999g990d00'));
+                                   ,pr_dsdadatu => pr_vllanmto);
         ELSE          
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
                                  ,pr_nmdcampo => 'Valor do lancamento'

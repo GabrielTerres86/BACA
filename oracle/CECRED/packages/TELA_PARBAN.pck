@@ -84,6 +84,20 @@ PROCEDURE pc_dados_acesso_server_imagem(pr_cdcanal  tbgen_banner_param.cdcanal%T
 
 END TELA_PARBAN;
 /
+  --  Programa : TELA_PARBAN
+  --  Sistema  : Ayllos Web
+  --  Autor    : -
+  --  Data     : -                          Ultima atualizacao: 17/06/2019
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Objetivo  : Centralizar rotinas relacionadas a tela PARBAN
+
+  /*
+      17/06/2019 - PRB0041586 na rotina pc_consultar_banner, filtro para trazer apenas os
+                   últimos 3 meses, melhoria na montagem do xml e melhoria do cursor cur_banner;
+                   criação de novo índice para a tabela tbgen_banner_filtro_especifico (Carlos)
+  */
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARBAN
 IS
 
@@ -265,13 +279,12 @@ IS
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
     
-    vr_contador NUMBER(10);
+    -- Variaveis de XML
+    vr_retxml CLOB;
+    vr_xml_temp VARCHAR2(32000);
     
-    vr_titulo_formatado    VARCHAR2(200);
-
     -- Seleciona o Banner
-    CURSOR cur_banner(pcur_cdbanner IN TBGEN_BANNER.CDBANNER%TYPE
-                    ,pcur_cdcanal   IN TBGEN_BANNER.CDCANAL%TYPE) IS
+    CURSOR cur_banner IS
       SELECT tban.cdbanner
             ,tban.cdcanal
             ,tban.dstitulo_banner
@@ -311,7 +324,7 @@ IS
       FROM   TBGEN_BANNER tban
             ,TBGEN_BANNER_PARAM tbpa
             ,TBGEN_BANNER_FILTRO_GENERICO tbfg
-            ,(SELECT COUNT(*) AS TOTAL
+            ,(SELECT COUNT(1) AS TOTAL
                     ,tbfe.cdbanner
                     ,tbfe.cdcanal
               FROM   TBGEN_BANNER_FILTRO_ESPECIFICO tbfe
@@ -325,6 +338,8 @@ IS
       WHERE 1=1
       AND    tban.CDBANNER = decode(pr_cdbanner,0,tban.CDBANNER,pr_cdbanner)
       AND    tban.cdcanal  = pr_cdcanal
+      
+      AND    tban.dtexibir_ate >= trunc(SYSDATE - 90)
       AND    tbpa.cdcanal  = tban.cdcanal
       AND    tbfg.cdbanner (+)= tban.cdbanner
       AND    tbfg.cdcanal  (+)= tban.cdcanal
@@ -346,48 +361,64 @@ IS
                             ,pr_cdoperad => vr_cdoperad
                             ,pr_dscritic => vr_dscritic);
       
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'banners', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-    
+
+    -- Criar documento XML
+    dbms_lob.createtemporary(vr_retxml, TRUE);
+    dbms_lob.open(vr_retxml, dbms_lob.lob_readwrite);
+
+    -- Insere o cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1" ?><root><Dados><BANNERS>');
+
     -- Obtém os dados dos Banners
-    vr_contador := 0;
-    FOR rw_banner IN cur_banner(pr_cdbanner,pr_cdcanal) LOOP
-      
-      -- Gera o XML do BANNER
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banners', pr_posicao => 0, pr_tag_nova => 'banner', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'cdbanner', pr_tag_cont => rw_banner.cdbanner, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'cdcanal', pr_tag_cont => rw_banner.cdcanal, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'dstitulo_banner', pr_tag_cont => rw_banner.dstitulo_banner, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'dstitulo_banner_formatado', pr_tag_cont => rw_banner.dstitulo_banner_formatado, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'insituacao_banner', pr_tag_cont => rw_banner.insituacao_banner, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'nmimagem_banner', pr_tag_cont => rw_banner.nmimagem_banner, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'inacao_banner', pr_tag_cont => rw_banner.inacao_banner, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'idacao_banner', pr_tag_cont => rw_banner.idacao_banner, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'cdmenu_acao_mobile', pr_tag_cont => rw_banner.cdmenu_acao_mobile, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'dslink_acao_banner', pr_tag_cont => rw_banner.dslink_acao_banner, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'inexibe_msg_confirmacao', pr_tag_cont => rw_banner.inexibe_msg_confirmacao, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'dsmensagem_acao_banner', pr_tag_cont => rw_banner.dsmensagem_acao_banner, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'tpfiltro', pr_tag_cont => rw_banner.tpfiltro, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'inexibir_quando', pr_tag_cont => rw_banner.inexibir_quando, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'dtexibir_de', pr_tag_cont => rw_banner.dtexibir_de, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'dtexibir_ate', pr_tag_cont => rw_banner.dtexibir_ate, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'nmarquivo_upload', pr_tag_cont => rw_banner.nmarquivo_upload, pr_des_erro => vr_dscritic);
-      --
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'dsurlserver', pr_tag_cont => rw_banner.dsurlserver, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'dsbannerorder', pr_tag_cont => rw_banner.dsbannerorder, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'intransicao', pr_tag_cont => rw_banner.intransicao, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'nrsegundos_transicao', pr_tag_cont => rw_banner.nrsegundos_transicao, pr_des_erro => vr_dscritic);
-      --
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'dsfiltro_cooperativas', pr_tag_cont => rw_banner.dsfiltro_cooperativas, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'dsfiltro_tipos_conta', pr_tag_cont => rw_banner.dsfiltro_tipos_conta, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'inoutros_filtros', pr_tag_cont => rw_banner.inoutros_filtros, pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'dsfiltro_produto', pr_tag_cont => rw_banner.dsfiltro_produto, pr_des_erro => vr_dscritic);
-      --
-      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'banner', pr_posicao => vr_contador, pr_tag_nova => 'total_cooperados_importado', pr_tag_cont => rw_banner.TOTAL, pr_des_erro => vr_dscritic);
-      vr_contador := vr_contador+1;
+    -- Gera o XML do BANNER
+    FOR rw_banner IN cur_banner LOOP
+
+      gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<BANNER>
+                             <CDBANNER>' || rw_banner.cdbanner || '</CDBANNER>
+                             <CDCANAL>' || rw_banner.cdcanal || '</CDCANAL>
+                             <DSTITULO_BANNER>' || gene0007.fn_caract_acento(pr_texto => rw_banner.dstitulo_banner) || '</DSTITULO_BANNER>
+                             <DSTITULO_BANNER_FORMATADO>' || gene0007.fn_caract_acento(pr_texto => rw_banner.dstitulo_banner_formatado) || '</DSTITULO_BANNER_FORMATADO>
+                             <INSITUACAO_BANNER>' || rw_banner.insituacao_banner || '</INSITUACAO_BANNER>
+                             <NMIMAGEM_BANNER>' || rw_banner.nmimagem_banner || '</NMIMAGEM_BANNER>
+                             <INACAO_BANNER>' || rw_banner.inacao_banner || '</INACAO_BANNER>
+                             <IDACAO_BANNER>' || rw_banner.idacao_banner || '</IDACAO_BANNER>
+                             <CDMENU_ACAO_MOBILE>' || rw_banner.cdmenu_acao_mobile || '</CDMENU_ACAO_MOBILE>
+                             <DSLINK_ACAO_BANNER>' || gene0007.fn_caract_acento(pr_texto => rw_banner.dslink_acao_banner) || '</DSLINK_ACAO_BANNER>
+                             <INEXIBE_MSG_CONFIRMACAO>' || rw_banner.inexibe_msg_confirmacao || '</INEXIBE_MSG_CONFIRMACAO>
+                             <DSMENSAGEM_ACAO_BANNER>' || gene0007.fn_caract_acento(pr_texto => rw_banner.dsmensagem_acao_banner) || '</DSMENSAGEM_ACAO_BANNER>
+                             <TPFILTRO>' || rw_banner.tpfiltro || '</TPFILTRO>
+                             <INEXIBIR_QUANDO>' || rw_banner.inexibir_quando || '</INEXIBIR_QUANDO>
+                             <DTEXIBIR_DE>' || rw_banner.dtexibir_de || '</DTEXIBIR_DE>
+                             <DTEXIBIR_ATE>' || rw_banner.dtexibir_ate || '</DTEXIBIR_ATE>
+                             <NMARQUIVO_UPLOAD>' || rw_banner.nmarquivo_upload || '</NMARQUIVO_UPLOAD>
+                             <DSURLSERVER>' || rw_banner.dsurlserver || '</DSURLSERVER>
+                             <DSBANNERORDER>' || rw_banner.dsbannerorder || '</DSBANNERORDER>
+                             <INTRANSICAO>' || rw_banner.intransicao || '</INTRANSICAO>
+                             <NRSEGUNDOS_TRANSICAO>' || rw_banner.nrsegundos_transicao || '</NRSEGUNDOS_TRANSICAO>
+                             <DSFILTRO_COOPERATIVAS>' || rw_banner.dsfiltro_cooperativas || '</DSFILTRO_COOPERATIVAS>
+                             <DSFILTRO_TIPOS_CONTA>' || rw_banner.dsfiltro_tipos_conta || '</DSFILTRO_TIPOS_CONTA>
+                             <INOUTROS_FILTROS>' || rw_banner.inoutros_filtros || '</INOUTROS_FILTROS>
+                             <DSFILTRO_PRODUTO>' || rw_banner.dsfiltro_produto || '</DSFILTRO_PRODUTO>
+                             <TOTAL_COOPERADOS_IMPORTADO>' || rw_banner.TOTAL || '</TOTAL_COOPERADOS_IMPORTADO>
+                             </BANNER>'
+                             ,pr_fecha_xml => TRUE);
     END LOOP;
+
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => vr_retxml
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</BANNERS></Dados></root>'
+                           ,pr_fecha_xml      => TRUE);
+
+    pr_retxml := xmltype.createXML(xmlData => vr_retxml);
 
   EXCEPTION
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       IF vr_cdcritic <> 0 THEN -- Tenta pegar a exception pelo CDCRITIC
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);

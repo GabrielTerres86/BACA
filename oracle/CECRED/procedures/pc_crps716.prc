@@ -20,6 +20,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
                  02/04/2018 - INC0011837 Inclusão do parâmetro cdcooper na chamada da rotina 
                               pc_controla_log_batch da exception vr_exc_saida (Carlos)
 
+				13/02/2019 - Ajustar para gravar regras do Pré-Aprovado do projeto 442. (Petter Rafael - Envolti).
   ............................................................................ */
 
   ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -42,6 +43,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
   vr_dsdirarq   VARCHAR2(500);
   vr_dscomand   VARCHAR2(2000);
   vr_typ_saida  VARCHAR2(4000); 
+  
+  vr_idcarga         NUMBER;                  --> Identificar se existe carga automatica de pre-aprovado
+  vr_vlcarcre_pre    crappre.vlcarcre%TYPE;   --> Quantidade de dias de atraso para cartão de crédito CADPRE
+  vr_qtcarcre_pre    crappre.qtcarcre%TYPE;   --> Valor de atraso para cartão de crédito CADPRE
+  vr_idmotivo        PLS_INTEGER := 3;        --> ID do motivo para bloqueio/liberação
   ------------------------------- CURSORES ---------------------------------
 
   -- Busca dos dados da cooperativa
@@ -76,9 +82,70 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
   -- Cursor genérico de calendário
   rw_crapdat btch0001.cr_crapdat%ROWTYPE; 
   
+  -- Cursor para buscar dados do cooperado da conta do cartão
+  CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
+                   ,pr_nrdconta crapass.nrdconta%TYPE) IS
+    SELECT ass.inpessoa
+          ,ass.nrcpfcnpj_base
+    FROM crapass ass
+    WHERE ass.cdcooper = pr_cdcooper
+      AND ass.nrdconta = pr_nrdconta;
+  rw_crapass cr_crapass%ROWTYPE;
+  
+  -- Buscar regras de Pre-Aprovado CADPRE
+  CURSOR cr_crappre(pr_cdcooper IN crappre.cdcooper%TYPE) IS
+       SELECT pre.nrmcotas
+              ,pre.vllimmin
+              ,pre.vllimcra
+              ,pre.vllimcrb
+              ,pre.vllimcrc
+              ,pre.vllimcrd
+              ,pre.vllimcre
+              ,pre.vllimcrf
+              ,pre.vllimcrg
+              ,pre.vllimcrh
+              ,pre.vlmaxleg
+              ,pre.vllimctr
+              ,pre.vlmulpli
+              ,pre.vlpercom
+              ,pre.vlavlatr
+              ,pre.vltitulo
+              ,pre.vlcjgatr
+              ,pre.vlcarcre
+              ,pre.vlctaatr
+              ,pre.vldiaest
+              ,pre.vllimman
+              ,pre.vlepratr
+              ,pre.vllimaut
+              ,pre.vldiadev
+              ,pre.qtmescta
+              ,pre.qtmesemp
+              ,pre.qtmesadm
+              ,pre.qtdevolu
+              ,pre.qtdiadev
+              ,pre.qtctaatr
+              ,pre.qtepratr
+              ,pre.qtestour
+              ,pre.qtdiaest
+              ,pre.qtavlatr
+              ,pre.qtavlope
+              ,pre.qtcjgatr
+              ,pre.qtcjgope
+              ,pre.qtdiaver
+              ,pre.qtmesblq
+              ,pre.qtdtitul
+              ,pre.qtcarcre
+              ,pre.qtdiavig
+        FROM crappre pre
+        WHERE pre.cdcooper = pr_cdcooper
+           AND pre.inpessoa = 1;
+  rw_crappre cr_crappre%ROWTYPE;
+  
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
   vr_tab_linhas   gene0009.typ_tab_linhas;
   vr_tab_arquivo  gene0002.typ_split;
+  tab_tbepr_motivo_nao_aprv EMPR0002.typ_tab_tbepr_motivo_nao_aprv;
+  tab_arquivo               EMPR0002.typ_tab_arquivo;
   ------------------------------- VARIAVEIS -------------------------------
   
   -- Nome do diretorio da cooperativa
@@ -332,6 +399,59 @@ BEGIN
                 END IF;
                 
                 CLOSE cr_crapcrd;
+                
+                /*
+                 * Gravar restrição para o Pré-aprovado
+                 */
+                -- Cursor para buscar dados do cooperado da conta do cartão
+                OPEN cr_crapass(pr_cdcooper => pr_cdcooper, pr_nrdconta => rw_crapcrd.nrdconta);
+                FETCH cr_crapass INTO rw_crapass;
+                CLOSE cr_crapass;
+                
+                -- Buscar carga do cooperado
+                vr_idcarga := empr0002.fn_carga_pre_sem_vig_status(pr_cdcooper        => pr_cdcooper
+                                                                  ,pr_tppessoa        => rw_crapass.inpessoa
+                                                                  ,pr_nrcpf_cnpj_base => rw_crapass.nrcpfcnpj_base);
+                
+                -- Verificar se existe a necessidade de Pré-Aprovado
+                IF vr_idcarga > 0 THEN
+                   FOR rw_crappre IN cr_crappre(pr_cdcooper => pr_cdcooper) LOOP
+                     -- Cartão de crédito
+                     vr_vlcarcre_pre := rw_crappre.vlcarcre;
+                     vr_qtcarcre_pre := rw_crappre.qtcarcre;
+                   END LOOP;
+
+                   -- Validar se o atraso de cartão de crédito atingiu o limite da CADPRE
+                   IF vr_vlsldfat > vr_vlcarcre_pre OR vr_qtdiaatr > vr_qtcarcre_pre THEN
+                     empr0002.pc_proces_perca_pre_aprovad(pr_cdcooper    => pr_cdcooper
+                                                         ,pr_idcarga     => vr_idcarga
+                                                         ,pr_nrdconta    => rw_crapcrd.nrdconta
+                                                         ,pr_dtmvtolt    => rw_crapdat.dtmvtopr
+                                                         ,pr_idmotivo    => vr_idmotivo
+                                                         ,pr_qtdiaatr    => vr_qtdiaatr
+                                                         ,pr_valoratr    => vr_vlsldfat
+                                                         ,pr_dscritic    => vr_dscritic);
+                      
+                      IF vr_dscritic IS NOT NULL THEN
+                        RAISE vr_exc_erro;
+                      END IF;
+                      
+                      -- Capturar contas processadas no arquivo
+                      tab_arquivo(vr_idcarga || vr_idmotivo || rw_crapcrd.nrdconta).nrdconta := rw_crapcrd.nrdconta;
+                      tab_arquivo(vr_idcarga || vr_idmotivo || rw_crapcrd.nrdconta).idcarga := vr_idcarga;
+                   ELSIF vr_vlsldfat <= vr_vlcarcre_pre AND vr_qtdiaatr <= vr_qtcarcre_pre THEN
+                     empr0002.pc_regularz_perca_pre_aprovad(pr_cdcooper   => pr_cdcooper
+                                                           ,pr_idcarga    => vr_idcarga
+                                                           ,pr_nrdconta   => rw_crapcrd.nrdconta
+                                                           ,pr_idmotivo   => vr_idmotivo
+                                                           ,pr_dtmvtolt   => rw_crapdat.dtmvtopr
+                                                           ,pr_dscritic   => vr_dscritic);
+                   
+                      IF vr_dscritic IS NOT NULL THEN
+                        RAISE vr_exc_erro;
+                      END IF;
+                  END IF;
+                END IF;
                                 
                 --> Gravar informações na tabela
                 BEGIN
@@ -365,6 +485,24 @@ BEGIN
               END;
             END LOOP; --> Fim loop linhas
             
+            /*
+             * Realizar check para verificar se existe registro de bloqueio em contas não mais citadas - Pré-aprovado.
+             * Somente para o motivo 3 envolvido neste processo.
+             */
+            -- Carregar Temporary Table de bloqueios em aberto
+            tab_tbepr_motivo_nao_aprv := EMPR0002.fn_cursor_registros_bloq_orfao(pr_cdcooper => pr_cdcooper, pr_motivos => vr_idmotivo);
+            
+            -- Executar a interpolação das duas Temporary Table para detectar casos de liberação não resolvidos.
+            EMPR0002.pc_libera_bloqueio_orfao(pr_cdcooper                  => pr_cdcooper
+                                             ,pr_tab_tbepr_motivo_nao_aprv => tab_tbepr_motivo_nao_aprv
+                                             ,pr_tab_arquivo               => tab_arquivo
+                                             ,pr_des_erro                  => vr_dscritic);
+                                                    
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_erro;
+            END IF;
+            --
+			
             /* Caso não conseguiu contar a qtd. de registros total, vamos enviar um e-mail */
             IF vr_qttotal = 0 THEN
               vr_dscritic := 'ATENÇÃO: Não foi possível realizar a conferência da quantidade de registros importados!';

@@ -7,7 +7,8 @@
  * --------------
  * ALTERA��ES   :
  * --------------
- * 000:
+ *       12/06/2019 : Ajuste na função que valida se é titular, para mostrar erro caso ocorra.
+                      Alcemir Jr. (PRB0041916).
  */
 
 	session_start();
@@ -88,14 +89,19 @@
 		$admresult = mensageria($logXML, "ATENDA_CRD", "VALIDAR_EH_TITULAR", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		
 		$procXML = simplexml_load_string($admresult);
-		
-		$titular = $procXML->Dados->contas->conta->titular;
-		//echo "/* \n � titular: $titular \n */ ";
-		if($titular == 'S')
-			return true;
-		else
-			return false;
-
+	  
+    // Se ocorrer um erro, mostra critica
+	  if ($procXML->Erro->Registro->dscritic != '') {
+		  exibirErro('error',$procXML->Erro->Registro->dscritic,'Alerta - Aimaro',$funcaoAposErro);	
+	  }else{
+  
+		  $titular = $procXML->Dados->contas->conta->titular;
+		  //echo "/* \n É titular: $titular \n */ ";
+		  if($titular == 'S')
+			  return true;
+		  else
+			  return false;
+    }
 }
 	
 	

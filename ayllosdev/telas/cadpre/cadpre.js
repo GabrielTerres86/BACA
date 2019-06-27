@@ -12,7 +12,8 @@
  *                27/04/2018 - Alteração  da situação de "1,2,3,4,5,6,8,9" para "1,2,3,4,5,7,8,9". 
  *                             Projeto 366. (Lombardi)
  *				  
- *				  
+ *				  06/02/2019 - Petter - Envolti. Ajustar novos campos e refatorar funcionalidades para o projeto 442.
+
  * --------------
  */
  
@@ -149,133 +150,134 @@ function formataRegra() {
 		// Rotulo
 		var rCdfinemp = $('label[for="cdfinemp"]');
 		var rCdlcremp = $('label[for="cdlcremp"]');
-		var rNrmcotas = $('label[for="nrmcotas"]');
-		var rDssitdop = $('label[for="dssitdop"]');
 		var rDssitopt = $('label[for="sit1"], label[for="sit2"], label[for="sit3"], label[for="sit4"], label[for="sit5"], label[for="sit7"], label[for="sit8"], label[for="sit9"]');
-        var rQtmescta = $('label[for="qtmescta"]');
-        var rQtmesadm = $('label[for="qtmesadm"]');
-        var rQtmesemp = $('label[for="qtmesemp"]');
-		var rNrrevcad = $('label[for="nrrevcad"]');
 		var rVllimmin = $('label[for="vllimmin"]');
 		var rVllimctr = $('label[for="vllimctr"]');
 		var rVlmulpli = $('label[for="vlmulpli"]');
-		var rVlpercom = $('label[for="vlpercom"]');
-		var rQtdiaver = $('label[for="qtdiaver"]');
-		var rVlmaxleg = $('label[for="vlmaxleg"]');
-		var rQtmesblq = $('label[for="qtmesblq"]');
+		var rVllimman = $('label[for="vllimman"]');
+		var rVllimaut = $('label[for="vllimaut"]');
+		var rQtdiavig = $('label[for="qtdiavig"]');
 
 		var rQtdevolu = $('label[for="qtdevolu"]');
 		var rQtdiadev = $('label[for="qtdiadev"]');
-
+		var rVldiadev = $('label[for="vldiadev"]');
 		var rQtctaatr = $('label[for="qtctaatr"]');
+		var rVlctaatr = $('label[for="vlctaatr"]');
 		var rQtepratr = $('label[for="qtepratr"]');
+		var rVlepratr = $('label[for="vlepratr"]');
         var rQtestour = $('label[for="qtestour"]');
 		var rQtdiaest = $('label[for="qtdiaest"]');
+		var rVldiaest = $('label[for="vldiaest"]');
 		var rQtavlatr = $('label[for="qtavlatr"]');
 		var rVlavlatr = $('label[for="vlavlatr"]');
 		var rQtavlope = $('label[for="qtavlope"]');
 		var rQtcjgatr = $('label[for="qtcjgatr"]');
 		var rVlcjgatr = $('label[for="vlcjgatr"]');
 		var rQtcjgope = $('label[for="qtcjgope"]');
+		var rQtcarcre = $('label[for="qtcarcre"]');
+		var rVlcarcre = $('label[for="vlcarcre"]');
+		var rQtdtitul = $('label[for="qtdtitul"]');
+		var rVltitulo = $('label[for="vltitulo"]');
 
-		rCdfinemp.css({width:'200px'});
-		rCdlcremp.css({width:'200px'});
-		rNrmcotas.css({width:'200px'});
-		rDssitdop.css({width:'200px'});
+		rCdfinemp.css({width:'250px'});
+		rCdlcremp.css({width:'250px'});
 		rDssitopt.css({width:'20px'});
-        rQtmescta.css({width:'200px'});
-        rQtmesadm.css({width:'200px'});
-        rQtmesemp.css({width:'200px'});
-		rNrrevcad.css({width:'200px'});
-		rVllimmin.css({width:'200px'});
-		rVllimctr.css({width:'200px'});
-		rVlmulpli.css({width:'200px'});
-		rVlpercom.css({width:'200px'});
-		rQtdiaver.css({width:'330px'});
-		rVlmaxleg.css({width:'200px'});
-		rQtmesblq.css({width:'330px'});
-
+		rVllimmin.css({width:'250px'});
+		rVllimctr.css({width:'250px'});
+		rVlmulpli.css({width:'250px'});
+		rVllimman.css({width:'250px'});
+		rVllimaut.css({width:'250px'});
+		rQtdiavig.css({width:'250px'});
 		rQtdevolu.css({width:'200px'});
 		rQtdiadev.css({width:'200px'});
-
+		rVldiadev.css({width:'200px'});
 		rQtctaatr.css({width:'200px'});
+		rVlctaatr.css({width:'200px'});
 		rQtepratr.css({width:'200px'});
+		rVlepratr.css({width:'200px'});
 		rQtestour.css({width:'200px'});
 		rQtdiaest.css({width:'200px'});
+		rVldiaest.css({width:'200px'});
 		rQtavlatr.css({width:'200px'});
 		rVlavlatr.css({width:'200px'});
 		rQtavlope.css({width:'200px'});
 		rQtcjgatr.css({width:'200px'});
 		rVlcjgatr.css({width:'200px'});
 		rQtcjgope.css({width:'200px'});
+		rQtcarcre.css({width:'200px'});
+		rVlcarcre.css({width:'200px'});
+		rQtdtitul.css({width:'200px'});
+		rVltitulo.css({width:'200px'});
 
 		// Campos
 		var cCdfinemp = $('#cdfinemp');
 		var cDsfinemp = $('#dsfinemp');
 		var cCdlcremp = $('#cdlcremp');
 		var cDslcremp = $('#dslcremp');
-		var cNrmcotas = $('#nrmcotas');
 		var cDssitopt = $('#sit1, #sit2, #sit3, #sit4, #sit5, #sit7, #sit8');
-        var cQtmescta = $('#qtmescta');
-        var cQtmesadm = $('#qtmesadm');
-        var cQtmesemp = $('#qtmesemp');
-		var cNrrevcad = $('#nrrevcad');
 		var cVllimmin = $('#vllimmin');
 		var cVllimctr = $('#vllimctr');
 		var cVlmulpli = $('#vlmulpli');
-		var cVlpercom = $('#vlpercom');
-		var cQtdiaver = $('#qtdiaver');
-		var cVlmaxleg = $('#vlmaxleg');
-		var cQtmesblq = $('#qtmesblq');
-
+		var cVllimman = $('#vllimman');
+		var cVllimaut = $('#vllimaut');
+		var cQtdiavig = $('#qtdiavig');
 		var cQtdevolu = $('#qtdevolu');
 		var cQtdiadev = $('#qtdiadev');
-
+		var cVldiadev = $('#vldiadev');
 		var cQtctaatr = $('#qtctaatr');
+		var cVlctaatr = $('#vlctaatr');
 		var cQtepratr = $('#qtepratr');
+		var cVlepratr = $('#vlepratr');
 		var cQtestour = $('#qtestour');
 		var cQtdiaest = $('#qtdiaest');
+		var cVldiaest = $('#vldiaest');
 		var cQtavlatr = $('#qtavlatr');
 		var cVlavlatr = $('#vlavlatr');
 		var cQtavlope = $('#qtavlope');
 		var cQtcjgatr = $('#qtcjgatr');
 		var cVlcjgatr = $('#vlcjgatr');
 		var cQtcjgope = $('#qtcjgope');
+		var cQtcarcre = $('#qtcarcre');
+		var cVlcarcre = $('#vlcarcre');
+		var cQtdtitul = $('#qtdtitul');
+		var cVltitulo = $('#vltitulo');
 
 		cCdfinemp.css({width:'70px'}).addClass('campo pesquisa').setMask('INTEGER','zzzzzzzzz9');
 		cDsfinemp.css({width:'250px'}).addClass('campo');
 		cCdlcremp.css({width:'70px'}).addClass('campo pesquisa').setMask('INTEGER','zzzzzzzzz9');
 		cDslcremp.css({width:'250px'}).addClass('campo');
-		cNrmcotas.css({width:'70px'}).addClass('campo').setMask('INTEGER','z9');
 		cDssitopt.css({border:'0px'});
-		cQtmescta.css({width:'70px'}).addClass('campo').setMask('INTEGER','z9');
-        cQtmesadm.css({width:'70px'}).addClass('campo').setMask('INTEGER','z9');
-        cQtmesemp.css({width:'70px'}).addClass('campo').setMask('INTEGER','z9');
-        cNrrevcad.css({width:'70px'}).addClass('campo').setMask('INTEGER','z9');
 		cVllimmin.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
 		cVllimctr.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
 		cVlmulpli.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
-		cVlpercom.css({width:'70px'}).addClass('campo').setMask('INTEGER','z9');
-		cQtdiaver.css({width:'25px'}).addClass('campo').setMask('INTEGER','z9');
-		cVlmaxleg.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
-		cQtmesblq.css({width:'25px'}).addClass('campo').setMask('INTEGER','zz9');
-		
+		cVllimman.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
+		cVllimaut.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
+		cQtdiavig.css({width:'50px'}).addClass('campo').setMask('INTEGER','z9999');
+
 		controlaLayoutTabelaRisco();
 		
 		cQtdevolu.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
         cQtdiadev.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
+		cVldiadev.css({width:'130px'}).addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
 
 		cQtctaatr.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
+		cVlctaatr.css({width:'115px'}).addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
         cQtepratr.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
+		cVlepratr.css({width:'115px'}).addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
         cQtestour.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
         cQtdiaest.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
+		cVldiaest.css({width:'115px'}).addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
         cQtavlatr.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
         cVlavlatr.css({width:'70px'}).addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
         cQtavlope.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
         cQtcjgatr.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
         cVlcjgatr.css({width:'70px'}).addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
         cQtcjgope.css({width:'70px'}).addClass('campo').setMask('INTEGER','zz9');
-		
+		cQtcarcre.css({width:'100px'}).addClass('campo').setMask('INTEGER','zz9');
+		cVlcarcre.css({width:'100px'}).addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
+		cQtdtitul.css({width:'100px'}).addClass('campo').setMask('INTEGER','zz9');
+		cVltitulo.css({width:'100px'}).addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
+
 		// DIV com o Valor Maximo Legal e Sugestao de Cotas
 		$('#divLimiteCoop').css({'clear':'left','margin-left':'205px','font-size':'11px'});
 
@@ -286,22 +288,6 @@ function formataRegra() {
 
 		$('#inpessoa','#frmCab').desabilitaCampo();
 		$('#cddopcao','#frmCab').desabilitaCampo();
-
-		$('#cdfinemp','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#nrmcotas','#frmRegra').focus();
-				return false;
-			}
-		});
-
-		$('#nrmcotas','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#sit1','#frmRegra').focus();
-				return false;
-			}
-		});
 
 		$('#sit1','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
@@ -359,54 +345,26 @@ function formataRegra() {
 			}
 		});
 
-		$('#sit9','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#qtmescta','#frmRegra').focus();
-				return false;
-			}
-		});
-
-		$('#qtmescta','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                if (inpessoa == 1) {
-                    $('#qtmesadm','#frmRegra').focus();
-                } else {
-                    $('#qtmesemp','#frmRegra').focus();
-                }
-				return false;
-			}
-		});
-
-		$('#qtmesadm','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#nrrevcad','#frmRegra').focus();
-				return false;
-			}
-		});
-
-		$('#qtmesemp','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#nrrevcad','#frmRegra').focus();
-				return false;
-			}
-		});
-
-		$('#nrrevcad','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#vllimmin','#frmRegra').focus();
-				return false;
-			}
-		});
-
 		$('#vllimmin','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
 				$('#vllimctr','#frmRegra').focus();
+				return false;
+			}
+		});
+
+		$('#vlctaatr','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#vlctaatr','#frmRegra').focus();
+				return false;
+			}
+		});
+
+		$('#vlepratr','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#vlepratr','#frmRegra').focus();
 				return false;
 			}
 		});
@@ -422,168 +380,22 @@ function formataRegra() {
 		$('#vlmulpli','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#vlpercom','#frmRegra').focus();
+				$('#vllimman','#frmRegra').focus();
 				return false;
 			}
 		});
 
-		$('#vlpercom','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+		$('#vllimman','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#qtdiaver','#frmRegra').focus();
+				$('#vllimaut','#frmRegra').focus();
 				return false;
 			}
 		});
 		
-		$('#qtdiaver','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+		$('#vllimaut','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#vlmaxleg','#frmRegra').focus();
-				return false;
-			}
-		});
-
-		$('#vlmaxleg','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#qtmesblq','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#qtmesblq','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                acessaOpcaoAba(1);
-				$('#vllimite_A','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#vllimite_A','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#cdlcremp_A','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#cdlcremp_A','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#vllimite_B','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#vllimite_B','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#cdlcremp_B','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#cdlcremp_B','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#vllimite_C','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#vllimite_C','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#cdlcremp_C','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#cdlcremp_C','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#vllimite_D','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#vllimite_D','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#cdlcremp_D','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#cdlcremp_D','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#vllimite_E','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#vllimite_E','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#cdlcremp_E','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#cdlcremp_E','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#vllimite_F','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#vllimite_F','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#cdlcremp_F','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#cdlcremp_F','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#vllimite_G','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#vllimite_G','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#cdlcremp_G','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#cdlcremp_G','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#vllimite_H','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#vllimite_H','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                $('#cdlcremp_H','#frmRegra').focus();
-				return false;
-			}
-		});
-		
-		$('#cdlcremp_H','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-                acessaOpcaoAba(2);
 				$('#' + $("input[type=checkbox][name=dslstali]").attr('id'),'#frmRegra').focus();
 				return false;
 			}
@@ -680,6 +492,13 @@ function formataRegra() {
 			}
 		});
 
+		$('#vlcjgatr','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#qtcjgope','#frmRegra').focus();
+				return false;
+			}
+		});
+
 		$('#qtcjgope','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
 				confirmaAlteracao();
@@ -687,6 +506,40 @@ function formataRegra() {
 			}
 		});
 
+		$('#qtcarcre','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#qtcarcre','#frmRegra').focus();
+				return false;
+			}
+		});
+
+		$('#vlcarcre','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#vlcarcre','#frmRegra').focus();
+				return false;
+			}
+		});
+
+		$('#qtdtitul','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#qtdtitul','#frmRegra').focus();
+				return false;
+			}
+		});
+
+		$('#vltitulo','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#vltitulo','#frmRegra').focus();
+				return false;
+			}
+		});
+
+		$('#vldiaest','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#vldiaest','#frmRegra').focus();
+				return false;
+			}
+		});
 	} else if (cddopcao == 'G') {
 
 		// Rotulo
@@ -760,43 +613,39 @@ function controlaCampos(op) {
 			$('#cdlcremp','#frmRegra').habilitaCampo().addClass('pesquisa');
 			$('#nrmcotas','#frmRegra').habilitaCampo();
 			$('#sit1, #sit2, #sit3, #sit4, #sit5, #sit7, #sit8, #sit9','#frmRegra').habilitaCampo();
-            $('#qtmescta','#frmRegra').habilitaCampo();
-            $('#qtmesadm','#frmRegra').habilitaCampo();
-            $('#qtmesemp','#frmRegra').habilitaCampo();
-			$('#nrrevcad','#frmRegra').habilitaCampo();
 			$('#vllimmin','#frmRegra').habilitaCampo();
 			$('#vllimctr','#frmRegra').habilitaCampo();
 			$('#vlmulpli','#frmRegra').habilitaCampo();
-			$('#vlpercom','#frmRegra').habilitaCampo();
-			$('#qtdiaver','#frmRegra').habilitaCampo();
-			$('#vlmaxleg','#frmRegra').habilitaCampo();
-			$('#qtmesblq','#frmRegra').habilitaCampo();
-
+			$('#vllimman','#frmRegra').habilitaCampo();
+			$('#vllimaut','#frmRegra').habilitaCampo();
+			$('#qtdiavig','#frmRegra').habilitaCampo();
             $('.clsAlinea','#frmRegra').habilitaCampo();
             $('#qtdevolu','#frmRegra').habilitaCampo();
+			$('#vldiadev','#frmRegra').habilitaCampo();
 			$('#qtdiadev','#frmRegra').habilitaCampo();
-
             $('#qtctaatr','#frmRegra').habilitaCampo();
+			$('#vlctaatr','#frmRegra').habilitaCampo();
 			$('#qtepratr','#frmRegra').habilitaCampo();
+			$('#vlepratr','#frmRegra').habilitaCampo();
             $('#qtestour','#frmRegra').habilitaCampo();
 			$('#qtdiaest','#frmRegra').habilitaCampo();
+			$('#vldiaest','#frmRegra').habilitaCampo();
 			$('#qtavlatr','#frmRegra').habilitaCampo();
 			$('#vlavlatr','#frmRegra').habilitaCampo();
 			$('#qtavlope','#frmRegra').habilitaCampo();
 			$('#qtcjgatr','#frmRegra').habilitaCampo();
 			$('#vlcjgatr','#frmRegra').habilitaCampo();
 			$('#qtcjgope','#frmRegra').habilitaCampo();
-
-			
+			$('#qtcarcre','#frmRegra').habilitaCampo();
+			$('#vlcarcre','#frmRegra').habilitaCampo();
+			$('#qtdtitul','#frmRegra').habilitaCampo();
+			$('#vltitulo','#frmRegra').habilitaCampo();
 			$('.cdlcremp').habilitaCampo().addClass('pesquisa');
 			$('.vllimite').habilitaCampo();
 			
             controlaPesquisas();
-            
             $('#cdfinemp','#frmRegra').focus();
-
 			trocaBotao('btnContinuar()','btnVoltar()');
-						
 		break;
 		
 		default:
@@ -804,11 +653,9 @@ function controlaCampos(op) {
 			$('#btSalvar','#divBotoes').css('display','none');
 			
 		break;
-		
 	}
 	
 	return false;
-	
 }
 
 function btnVoltar(){
@@ -900,36 +747,17 @@ function confirmaAlteracao() {
 
 function alteraRegra() {
 
-	$("input, select","#frmRegra").removeClass("campoErro");
-
 	showMsgAguardo("Aguarde, alterando dados...");
 
 	var cddopcao = $('#cddopcao','#frmCab').val();
     var inpessoa = $('#inpessoa','#frmCab').val();
-
 	var cdfinemp = $('#cdfinemp','#frmRegra').val();
-	var cdlcremp = $('#cdlcremp','#frmRegra').val();
-	var nrmcotas = $('#nrmcotas','#frmRegra').val();
-
-    var dssitdop = $("input[type=checkbox][name='dssitdop']:checked");
-    var vlsitdop = '';
-    dssitdop.each(function(){
-        vlsitdop = vlsitdop + 
-                  (vlsitdop == '' ? '' : ';') + 
-                   $(this).val();
-    });
-
-	var qtmescta = $('#qtmescta','#frmRegra').val();
-	var qtmesadm = normalizaNumero($('#qtmesadm','#frmRegra').val());
-	var qtmesemp = normalizaNumero($('#qtmesemp','#frmRegra').val());
-	var nrrevcad = $('#nrrevcad','#frmRegra').val();
 	var vllimmin = $('#vllimmin','#frmRegra').val();
 	var vllimctr = $('#vllimctr','#frmRegra').val();
 	var vlmulpli = $('#vlmulpli','#frmRegra').val();
-	var vlpercom = $('#vlpercom','#frmRegra').val();
-	var qtdiaver = $('#qtdiaver','#frmRegra').val();
-	var vlmaxleg = $('#vlmaxleg','#frmRegra').val();
-	var qtmesblq = $('#qtmesblq','#frmRegra').val();
+	var vllimman = $('#vllimman','#frmRegra').val();
+	var vllimaut = $('#vllimaut','#frmRegra').val();
+	var qtdiavig = $('#qtdiavig','#frmRegra').val();
 
     var dslstali = $("input[type=checkbox][name='dslstali']:checked");
     var vllstali = '';
@@ -941,56 +769,24 @@ function alteraRegra() {
 
 	var qtdevolu = $('#qtdevolu','#frmRegra').val();
 	var qtdiadev = $('#qtdiadev','#frmRegra').val();
-	
-	var vllimite_A = $('#vllimite_A','#frmRegra').val();
-	var vllimite_B = $('#vllimite_B','#frmRegra').val();
-	var vllimite_C = $('#vllimite_C','#frmRegra').val();
-	var vllimite_D = $('#vllimite_D','#frmRegra').val();
-	var vllimite_E = $('#vllimite_E','#frmRegra').val();
-	var vllimite_F = $('#vllimite_F','#frmRegra').val();
-	var vllimite_G = $('#vllimite_G','#frmRegra').val();
-	var vllimite_H = $('#vllimite_H','#frmRegra').val();
-	
-	var cdlcremp_A = $('#cdlcremp_A','#frmRegra').val();
-	var cdlcremp_B = $('#cdlcremp_B','#frmRegra').val();
-	var cdlcremp_C = $('#cdlcremp_C','#frmRegra').val();
-	var cdlcremp_D = $('#cdlcremp_D','#frmRegra').val();
-	var cdlcremp_E = $('#cdlcremp_E','#frmRegra').val();
-	var cdlcremp_F = $('#cdlcremp_F','#frmRegra').val();
-	var cdlcremp_G = $('#cdlcremp_G','#frmRegra').val();
-	var cdlcremp_H = $('#cdlcremp_H','#frmRegra').val();
-	
+	var vldiadev = $('#vldiadev','#frmRegra').val();
 	var qtctaatr = $('#qtctaatr','#frmRegra').val();
+	var vlctaatr = $('#vlctaatr','#frmRegra').val();
 	var qtepratr = $('#qtepratr','#frmRegra').val();
+	var vlepratr = $('#vlepratr','#frmRegra').val();
 	var qtestour = $('#qtestour','#frmRegra').val();
 	var qtdiaest = $('#qtdiaest','#frmRegra').val();
+	var vldiaest = $('#vldiaest','#frmRegra').val();
 	var qtavlatr = $('#qtavlatr','#frmRegra').val();
 	var vlavlatr = $('#vlavlatr','#frmRegra').val();
 	var qtavlope = $('#qtavlope','#frmRegra').val();
 	var qtcjgatr = $('#qtcjgatr','#frmRegra').val();
 	var vlcjgatr = $('#vlcjgatr','#frmRegra').val();
 	var qtcjgope = $('#qtcjgope','#frmRegra').val();
-	
-	if ((((vllimite_A != '' && vllimite_A != '0,00') && (cdlcremp_A == '' || cdlcremp_A == '0'))     ||
-	    ((cdlcremp_A  != '' && cdlcremp_A != '0')    && (vllimite_A == '' || vllimite_A == '0,00'))) ||
-		(((vllimite_B != '' && vllimite_B != '0,00') && (cdlcremp_B == '' || cdlcremp_B == '0'))     ||
-	    ((cdlcremp_B  != '' && cdlcremp_B != '0')    && (vllimite_B == '' || vllimite_B == '0,00'))) ||
-		(((vllimite_C != '' && vllimite_C != '0,00') && (cdlcremp_C == '' || cdlcremp_C == '0'))     ||
-	    ((cdlcremp_C  != '' && cdlcremp_C != '0')    && (vllimite_C == '' || vllimite_C == '0,00'))) ||
-		(((vllimite_D != '' && vllimite_D != '0,00') && (cdlcremp_D == '' || cdlcremp_D == '0'))     ||
-	    ((cdlcremp_D  != '' && cdlcremp_D != '0')    && (vllimite_D == '' || vllimite_D == '0,00'))) ||
-		(((vllimite_E != '' && vllimite_E != '0,00') && (cdlcremp_E == '' || cdlcremp_E == '0'))     ||
-	    ((cdlcremp_E  != '' && cdlcremp_E != '0')    && (vllimite_E == '' || vllimite_E == '0,00'))) ||
-		(((vllimite_F != '' && vllimite_F != '0,00') && (cdlcremp_F == '' || cdlcremp_F == '0'))     ||
-	    ((cdlcremp_F  != '' && cdlcremp_F != '0')    && (vllimite_F == '' || vllimite_F == '0,00'))) ||
-		(((vllimite_G != '' && vllimite_G != '0,00') && (cdlcremp_G == '' || cdlcremp_G == '0'))     ||
-	    ((cdlcremp_G  != '' && cdlcremp_G != '0')    && (vllimite_G == '' || vllimite_G == '0,00'))) ||
-		(((vllimite_H != '' && vllimite_H != '0,00') && (cdlcremp_H == '' || cdlcremp_H == '0'))     ||
-	    ((cdlcremp_H  != '' && cdlcremp_H != '0')    && (vllimite_H == '' || vllimite_H == '0,00')))){
-		hideMsgAguardo();
-		showError('error','Valor limite e Linha de Cr&eacute;dito devem ser preenchidos!',"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	}
+	var qtcarcre = $('#qtcarcre','#frmRegra').val();
+	var vlcarcre = $('#vlcarcre','#frmRegra').val();
+	var qtdtitul = $('#qtdtitul','#frmRegra').val();
+	var vltitulo = $('#vltitulo','#frmRegra').val();
 	
 	// Executa script de bloqueio através de ajax
 	$.ajax({		
@@ -1000,49 +796,33 @@ function alteraRegra() {
 		    cddopcao: cddopcao,
 			inpessoa: inpessoa,
 			cdfinemp: cdfinemp,
-			cdlcremp: cdlcremp,
-			nrmcotas: nrmcotas,
-            dssitdop: vlsitdop,
-            qtmescta: qtmescta,
-            qtmesadm: qtmesadm,
-            qtmesemp: qtmesemp,
-			nrrevcad: nrrevcad,
 			vllimmin: vllimmin,
 			vllimctr: vllimctr,
 			vlmulpli: vlmulpli,
-			vlpercom: vlpercom,
-			qtdiaver: qtdiaver,
-			vlmaxleg: vlmaxleg,
-			qtmesblq: qtmesblq,
-			vllimite_A: vllimite_A,
-			vllimite_B: vllimite_B,
-			vllimite_C: vllimite_C,
-			vllimite_D: vllimite_D,
-			vllimite_E: vllimite_E,
-			vllimite_F: vllimite_F,
-			vllimite_G: vllimite_G,
-			vllimite_H: vllimite_H,
-			cdlcremp_A: cdlcremp_A,
-			cdlcremp_B: cdlcremp_B,
-			cdlcremp_C: cdlcremp_C,
-			cdlcremp_D: cdlcremp_D,
-			cdlcremp_E: cdlcremp_E,
-			cdlcremp_F: cdlcremp_F,
-			cdlcremp_G: cdlcremp_G,
-			cdlcremp_H: cdlcremp_H,
+			vllimman: vllimman,
+			vllimaut: vllimaut,
+			qtdiavig: qtdiavig,
 			dslstali: vllstali,
             qtdevolu: qtdevolu,
+			vldiadev: vldiadev,
             qtdiadev: qtdiadev,
             qtctaatr: qtctaatr,
+			vlctaatr: vlctaatr,
             qtepratr: qtepratr,
+			vlepratr: vlepratr,
             qtestour: qtestour,
             qtdiaest: qtdiaest,
+			vldiaest: vldiaest,
             qtavlatr: qtavlatr,
             vlavlatr: vlavlatr,
             qtavlope: qtavlope,
             qtcjgatr: qtcjgatr,
             vlcjgatr: vlcjgatr,
             qtcjgope: qtcjgope,
+			qtcarcre: qtcarcre,
+			vlcarcre: vlcarcre,
+			qtdtitul: qtdtitul,
+			vltitulo: vltitulo,
 			redirect: "script_ajax"
 		}, 
 		error: function(objAjax,responseError,objExcept) {
@@ -1241,7 +1021,6 @@ function confirmarAcaoCarga(acao) {
 }
 
 function executarAcaoCarga(cddopcao,acao,idcarga) {
-
     showMsgAguardo("Aguarde, carregando...");
     
     // Executa script de bloqueio através de ajax

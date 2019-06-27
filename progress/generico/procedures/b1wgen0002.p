@@ -249,7 +249,7 @@
                30/01/2013 - Incluir condicao para validar historicos que deverao
                             aparecer na listagem (Lucas R.).
 
-               31/01/2013 - Quando for emprestimo do tipo 1 colocar (*) no
+               31/01/2013 - Quando for emprestimo do tipo 1 colocar no
                             campo tt-dados-epr.dsidenti, tipo 0 fica em branco
                             (Lucas R.).
 
@@ -834,7 +834,9 @@
 
           11/05/2019 - P298.2.2 - Ajuste de valores de prejuizo (Rafael Faria - Supero)
 		
-
+          21/02/2019 - P442 - PreAprovado nova estrutura 
+                            + Gravar aceite Online quando operacao nao for AimaroWEB          
+                            (Marcos-Envolti)
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -4335,6 +4337,20 @@ PROCEDURE valida-dados-gerais:
         IF  aux_flgpagto  THEN
             ASSIGN aux_dtdpagto = par_dtdpagt2.
 
+		/* verificacao de linha de credito somente online P442 - Pré-Aprovado 
+		   Leva em consideraçao a finalidade do financiamento */
+		IF par_cdfinemp = 68 THEN
+		  DO:
+			IF (par_idorigem = 5 AND CAN-FIND(craplcr WHERE
+											  craplcr.cdcooper = par_cdcooper AND
+											  craplcr.cdlcremp = par_cdlcremp AND
+											  craplcr.flprapol = 1 NO-LOCK)) THEN
+			  DO:
+				  ASSIGN aux_dscritic = "Linha de Credito exclusiva para contratacao Online".
+				  LEAVE.
+			  END.
+		  END.
+			
 		/* Verificacao de linha de credito e finalidade somente OnLine - PRJ438*/		
 		IF (par_idorigem = 5) THEN
 			DO:
@@ -4960,42 +4976,6 @@ PROCEDURE valida-dados-gerais:
 
              END.
         
-        /* InternetBank e TAA nao pode validar a linha de credito */ 
-        IF par_idorigem <> 3 AND par_idorigem <> 4 THEN
-           DO:
-               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-               
-               /* Efetuar a chamada a rotina Oracle  */
-               RUN STORED-PROCEDURE pc_busca_linha_credito_prog
-                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, 
-                                                        INPUT ?,
-                                                        INPUT ?,
-                                                       OUTPUT "",  /* Cdigos dos riscos */
-                                                       OUTPUT ""). /* Descrição da crítica */  
-
-               /* Fechar o procedimento para buscarmos o resultado */ 
-               CLOSE STORED-PROC pc_busca_linha_credito_prog
-                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-               
-               /* Busca resultado e possiveis erros */ 
-               ASSIGN aux_cdcritic = 0
-                      aux_lslcremp = ""
-                      aux_dscritic = ""
-                      aux_lslcremp = pc_busca_linha_credito_prog.pr_lslcremp
-                                     WHEN pc_busca_linha_credito_prog.pr_lslcremp <> ?
-                      aux_dscritic = pc_busca_linha_credito_prog.pr_dscritic
-                                     WHEN pc_busca_linha_credito_prog.pr_dscritic <> ?.
-                                     
-               IF INDEX (aux_lslcremp, ";" + STRING(par_cdlcremp) + ";") > 0 THEN
-                 DO:
-                     ASSIGN aux_dscritic = "Linha de credito nao permitida".
-                     LEAVE.
-                 END.
-
-           END. /* END IF par_idorigem <> 3 AND par_idorigem <> 4 */
-        
         FOR EACH crappre WHERE crappre.cdcooper = par_cdcooper NO-LOCK:
         
             IF par_cdfinemp     = crappre.cdfinemp AND 
@@ -5013,18 +4993,19 @@ PROCEDURE valida-dados-gerais:
                           PERSISTENT SET h-b1wgen0188.
 
                    /* Valida os dados do credito pre-aprovado */
-                   RUN valida_dados IN h-b1wgen0188 (INPUT par_cdcooper,
-                                                     INPUT par_cdagenci,
-                                                     INPUT par_nrdcaixa,
-                                                     INPUT par_cdoperad,
-                                                     INPUT par_nmdatela,
-                                                     INPUT par_idorigem,
-                                                     INPUT par_nrdconta,
-                                                     INPUT par_idseqttl,
-                                                     INPUT par_vlemprst,
-                                                     INPUT DAY(par_dtdpagto),
-                                                     INPUT par_nrcpfope,
-                                                     OUTPUT TABLE tt-erro).
+                   RUN valida_dados_contrato IN h-b1wgen0188 (INPUT par_cdcooper,
+                                                               INPUT par_cdagenci,
+                                                               INPUT par_nrdcaixa,
+                                                               INPUT par_cdoperad,
+                                                               INPUT par_nmdatela,
+                                                               INPUT par_idorigem,
+                                                               INPUT par_nrdconta,
+                                                               INPUT par_idseqttl,
+                                                               INPUT par_vlemprst,
+                                                               INPUT DAY(par_dtdpagto),
+                                                               INPUT par_nrcpfope,
+                                                               INPUT par_nrctremp,
+                                                               OUTPUT TABLE tt-erro).
                    
                    IF VALID-HANDLE(h-b1wgen0188) THEN
                       DELETE PROCEDURE(h-b1wgen0188).
@@ -6677,6 +6658,7 @@ PROCEDURE grava-proposta-completa:
     DEF  VAR         h-b1wgen0043 AS HANDLE                         NO-UNDO.
     DEF  VAR         h-b1wgen0191 AS HANDLE                         NO-UNDO.
     DEF  VAR         h-b1wgen0110 AS HANDLE                         NO-UNDO.
+    DEF   VAR        h-b1wgen0188 AS HANDLE                         NO-UNDO.
     DEF  VAR         aux_cdcritic AS INTE                           NO-UNDO.
     DEF  VAR         aux_dscritic AS CHAR                           NO-UNDO.
     DEF  VAR         aux_dstransa AS CHAR                           NO-UNDO.
@@ -6701,6 +6683,8 @@ PROCEDURE grava-proposta-completa:
     DEF VAR          aux_contigen AS LOGI                           NO-UNDO.
     DEF VAR          aux_interrup AS LOGI                           NO-UNDO.
     DEF VAR          aux_vloutras AS DECI                           NO-UNDO.
+	DEF VAR          aux_vlemprstcalc AS DECI                       NO-UNDO.
+    DEF VAR          aux_vlpreempcalc AS DECI                       NO-UNDO.
 
     DEF  BUFFER      crabavt FOR  crapavt.
 
@@ -7441,7 +7425,43 @@ PROCEDURE grava-proposta-completa:
                /*
                IF crawepr.idfiniof = 1 THEN               
                   ASSIGN crawepr.vlpreemp = par_vlpreemp.
-               */              
+               */ 
+
+        /* Para PreAprovado */       
+        FOR crappre FIELDS(cdfinemp) 
+              WHERE crappre.cdcooper = par_cdcooper          AND
+                    crappre.inpessoa = crapass.inpessoa      AND
+                    crappre.cdfinemp = par_cdfinemp
+                    NO-LOCK: END.
+
+        IF AVAIL crappre THEN
+            DO:
+                
+                 /* Gravar aceite Online quando operacao nao for AimaroWEB */                   
+                 ASSIGN crawepr.dtpreapv = IF (par_idorigem = 5) THEN
+                                               ?
+                                           ELSE TODAY
+                        crawepr.hrpreapv = IF (par_idorigem = 5) THEN
+                                               0
+                                           ELSE TIME.
+                 
+                 /* Enviar ao LOG somente quando nao for AimaroWeb*/  
+                 IF (par_idorigem <> 5) THEN
+                 DO:
+                     RUN proc_gerar_log (INPUT par_cdcooper,
+                                         INPUT par_cdoperad,
+                                         INPUT "",
+                                         INPUT aux_dsorigem,
+                                         INPUT "PreAprovado assinado digitalmente em " 
+                                               + STRING(crawepr.dtpreapv,"99/99/99") + " as " 
+                                               + STRING(crawepr.hrpreapv,"HH:MM:SS") ,
+                                         INPUT TRUE,
+                                         INPUT par_idseqttl,
+                                         INPUT par_nmdatela,
+                                         INPUT par_nrdconta,
+                                        OUTPUT aux_nrdrowid).
+                 END.
+            END.			   
 
         /* Se for Pos-Fixado */
         IF  par_tpemprst = 2  THEN
@@ -7978,6 +7998,58 @@ PROCEDURE grava-proposta-completa:
         /* Atualiza a data de liberacao */
         ASSIGN crawepr.dtlibera = par_dtlibera.
         
+        /* P442 - Validar valores de pre-aprovado no momento da liberacao do contrato
+           incluido aqui para reduzir problemas de contratacao simultanea entre canais*/
+        IF par_cdfinemp = 68 THEN
+          DO:
+            /* Buscar valores atualizados no momento da confirmacao */
+            IF NOT VALID-HANDLE(h-b1wgen0188) THEN
+                  RUN sistema/generico/procedures/b1wgen0188.p 
+                      PERSISTENT SET h-b1wgen0188.
+
+               /* Verifica se existe limite disponível */
+               RUN busca_dados IN h-b1wgen0188
+                               (INPUT par_cdcooper,
+                                INPUT par_cdagenci,
+                                INPUT par_nrdcaixa,
+                                INPUT par_cdoperad,
+                                INPUT par_nmdatela,
+                                INPUT par_idorigem,
+                                INPUT par_nrdconta,
+                                INPUT par_idseqttl,
+                                INPUT 0,
+                                OUTPUT TABLE tt-dados-cpa,
+                                OUTPUT TABLE tt-erro).
+
+               FIND tt-dados-cpa NO-LOCK NO-ERROR.
+               IF  AVAIL tt-dados-cpa THEN
+                 DO:
+                    aux_vlemprstcalc = tt-dados-cpa.vldiscrd + crawepr.vlemprst.
+                   aux_vlpreempcalc = tt-dados-cpa.vlcalpar + crawepr.vlpreemp.
+                 
+                    /* Verifica se retornou ID de carga */
+                    IF tt-dados-cpa.idcarga = 0 THEN
+                      DO:
+                        aux_dscritic = "Nao foi localizado pre-aprovado para o associado".
+                        UNDO Gravar, LEAVE Gravar.
+                      END.
+                      
+                    /* Verfica se o valor limite permite a liberacao*/
+                    IF crawepr.vlemprst > aux_vlemprstcalc THEN
+                      DO:
+                        aux_dscritic = "Valor total nao permitido para pre-aprovado".
+                        UNDO Gravar, LEAVE Gravar.
+                      END.
+                      
+                    /* Verfica se o valor da parcela permite a liberacao*/
+                    IF crawepr.vlpreemp > aux_vlpreempcalc THEN
+                      DO:
+                        aux_dscritic = "Valor da parcela nao permitido para pre-aprovado".
+                        UNDO Gravar, LEAVE Gravar.
+                      END.
+                 END.
+          END.
+        /**/
         RUN sistema/generico/procedures/b1wgen0024.p
                              PERSISTENT SET h-b1wgen0024.
 
@@ -8558,21 +8630,27 @@ PROCEDURE altera-valor-proposta:
                   RUN sistema/generico/procedures/b1wgen0188.p 
                       PERSISTENT SET h-b1wgen0188.
 
-               /* Busca a carga ativa */
-               RUN busca_carga_ativa IN h-b1wgen0188(INPUT par_cdcooper,
-                                                     INPUT par_nrdconta,
-                                                    OUTPUT aux_idcarga).
-    
-               IF VALID-HANDLE(h-b1wgen0188) THEN
-                  DELETE PROCEDURE(h-b1wgen0188).
+               /* Verifica se existe limite disponível */
+               RUN busca_dados IN h-b1wgen0188
+                               (INPUT par_cdcooper,
+                                INPUT par_cdagenci,
+                                INPUT par_nrdcaixa,
+                                INPUT par_cdoperad,
+                                INPUT par_nmdatela,
+                                INPUT par_idorigem,
+                                INPUT par_nrdconta,
+                                INPUT par_idseqttl,
+                                INPUT 0,
+                                OUTPUT TABLE tt-dados-cpa,
+                                OUTPUT TABLE tt-erro).
 
-               FOR crapcpa FIELDS(vlcalpre)
-                           WHERE crapcpa.cdcooper = par_cdcooper AND
-                                 crapcpa.nrdconta = par_nrdconta AND
-                                 crapcpa.iddcarga = aux_idcarga
-                                 NO-LOCK: END.
-    
-               IF AVAIL crapcpa THEN
+               FIND tt-dados-cpa NO-LOCK NO-ERROR.
+               IF  AVAIL tt-dados-cpa THEN
+                   DO:
+                       ASSIGN aux_idcarga  = tt-dados-cpa.idcarga.
+                   END.
+               
+               IF aux_idcarga > 0 THEN
                   DO:
           RUN proc_gerar_log (INPUT par_cdcooper,
                               INPUT par_cdoperad,
@@ -8602,7 +8680,7 @@ PROCEDURE altera-valor-proposta:
                             tt-msg-confirma.dsmensag = "Essa proposta foi aprovada automaticamente."
 							aux_msg_log = "Emprestimo Aprovado Pois é Pré Aprovado".
     
-                  END. /* END  IF AVAIL crapcpa THEN */
+                  END. /* END  IF aux_idcarga > 0 THEN */
     
            END. /* END IF par_cdfinemp = crappre.cdfinemp */
         ELSE
@@ -15388,21 +15466,27 @@ PROCEDURE atualiza_dados_avalista_proposta:
                              RUN sistema/generico/procedures/b1wgen0188.p 
                                  PERSISTENT SET h-b1wgen0188.
 
-                          /* Busca a carga ativa */
-                          RUN busca_carga_ativa IN h-b1wgen0188(INPUT par_cdcooper,
-                                                                INPUT par_nrdconta,
-                                                               OUTPUT aux_idcarga).
-                
-                          IF VALID-HANDLE(h-b1wgen0188) THEN
-                             DELETE PROCEDURE(h-b1wgen0188).
+                          /* Verifica se existe limite disponível */
+                          RUN busca_dados IN h-b1wgen0188
+                                          (INPUT par_cdcooper,
+                                           INPUT par_cdagenci,
+                                           INPUT par_nrdcaixa,
+                                           INPUT par_cdoperad,
+                                           INPUT par_nmdatela,
+                                           INPUT par_idorigem,
+                                           INPUT par_nrdconta,
+                                           INPUT par_idseqttl,
+                                           INPUT 0,
+                                           OUTPUT TABLE tt-dados-cpa,
+                                           OUTPUT TABLE tt-erro).
 
-                          FOR crapcpa FIELDS(vlcalpre)
-                                      WHERE crapcpa.cdcooper = par_cdcooper AND
-                                            crapcpa.nrdconta = par_nrdconta AND
-                                            crapcpa.iddcarga = aux_idcarga
-                                            NO-LOCK: END.
-                
-                          IF AVAIL crapcpa THEN
+                          FIND tt-dados-cpa NO-LOCK NO-ERROR.
+                          IF  AVAIL tt-dados-cpa THEN
+                              DO:
+                                  ASSIGN aux_idcarga  = tt-dados-cpa.idcarga.
+                              END.
+                          
+                          IF aux_idcarga > 0 THEN
                              DO:
                  RUN proc_gerar_log (INPUT par_cdcooper,
                                      INPUT par_cdoperad,
@@ -15436,7 +15520,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                 ASSIGN tt-msg-confirma.inconfir = 1
                                        tt-msg-confirma.dsmensag = "Essa proposta foi aprovada automaticamente.".
                
-                             END. /* END  IF AVAIL crapcpa THEN */
+                             END. /* END  IF aux_idcarga > 0 THEN */
                 
                       END. /* END IF par_cdfinemp = crappre.cdfinemp */
                    ELSE

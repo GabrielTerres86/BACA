@@ -671,6 +671,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                29/01/2019 - Ajuste no fonte que trata a geração dos históricos 2386 e 2387 que rodam na lcm, eles foram comentados/inutitlizados
                             pelo produto da conta corrente, então deixamos o trecho comentado na procedure pra facilitar o merge com o que também já
                             está comentado em produção. (Paulo Penteado GFT) 
+                            
+               06/06/2019 - Ajuste nos cursores cr_craptdb8 e cr_craptdb_age para subtrair do saldo devedor o valor pago de mora do titulo, para 
+                            abater no saldo das apropriações de mora pelo cursor cr_lancboracum (Paulo Penteado GFT) 
+
+               14/06/2019 - P450 - Remocao tratamento historicos 2726, 2728 e 2730 (Guilherme/AMcom)
+
 ............................................................................ */
 
   --Melhorias performance - Chamado 734422
@@ -4120,7 +4126,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
       select /*+ index (craptdb craptdb##craptdb2)*/
              crapass.cdagenci,
              SUM(CASE WHEN crapbdt.flverbor = 1 THEN 
-                           craptdb.vlsldtit
+                           craptdb.vlsldtit - craptdb.vlpagmra
                       ELSE craptdb.vltitulo
                  END) vltitulo
         from crapbdt,
@@ -4150,7 +4156,7 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
                           pr_flgregis in crapcob.flgregis%TYPE,
                           pr_flverbor IN crapbdt.flverbor%TYPE)IS
       SELECT SUM(CASE WHEN crapbdt.flverbor = 1 THEN 
-                           craptdb.vlsldtit
+                           craptdb.vlsldtit - craptdb.vlpagmra
                       ELSE craptdb.vltitulo
                  END) vltitulo
             ,crapass.cdagenci
@@ -14882,106 +14888,6 @@ BEGIN
 
    end if;
 
- /* Historicos serao gerados pelo programa de forma dinamica */
-
- vr_cdhistor := 2726;
- vr_vllanmto :=0;
-
- open cr_compensa (pr_cdcooper,
-                  vr_dtmvtolt,
-                  vr_cdhistor);
-
-    fetch cr_compensa into rw_compensa;
-    -- Se não encontrar
-    if cr_compensa%notfound then
-      close cr_compensa;
-      RETURN; -- Retorna
-    else
-     vr_vllanmto := vr_vllanmto + rw_compensa.vllanmto;
-    end if;
-    close cr_compensa;
-
-
-   if nvl(vr_vllanmto,0) > 0  then
-      vr_cdestrut := '50';
-      vr_linhadet := TRIM(vr_cdestrut)||
-                   TRIM(vr_dtmvtolt_yymmdd)||','||
-                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-                   '3865,'||
-                   '9261,'||
-                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
-                   '5210,'||
-                   '"(crps249) ESTORNO BAIXA DE PREJUIZO C/C VALOR PRINCIPAL"';
-      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-
-   end if;
-
-
- vr_cdhistor := 2728;
- vr_vllanmto :=0;
-
- open cr_compensa (pr_cdcooper,
-                  vr_dtmvtolt,
-                  vr_cdhistor);
-
-    fetch cr_compensa into rw_compensa;
-    -- Se não encontrar
-    if cr_compensa%notfound then
-      close cr_compensa;
-      RETURN; -- Retorna
-    else
-     vr_vllanmto := vr_vllanmto + rw_compensa.vllanmto;
-    end if;
-    close cr_compensa;
-
-
-   if nvl(vr_vllanmto,0) > 0  then
-      vr_cdestrut := '50';
-      vr_linhadet := TRIM(vr_cdestrut)||
-                   TRIM(vr_dtmvtolt_yymmdd)||','||
-                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-                   '3865,'||
-                   '3866,'||
-                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
-                   '5210,'||
-                   '"(crps249) ESTORNO BAIXA DE PREJUIZO C/C JUROS +60"';
-      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-
-   end if;
-
-
-  vr_cdhistor := 2730;
-  vr_vllanmto :=0;
-
- open cr_compensa (pr_cdcooper,
-                  vr_dtmvtolt,
-                  vr_cdhistor);
-
-    fetch cr_compensa into rw_compensa;
-    -- Se não encontrar
-    if cr_compensa%notfound then
-      close cr_compensa;
-      RETURN; -- Retorna
-    else
-     vr_vllanmto := vr_vllanmto + rw_compensa.vllanmto;
-    end if;
-    close cr_compensa;
-
-
-   if nvl(vr_vllanmto,0) > 0  then
-      vr_cdestrut := '50';
-      vr_linhadet := TRIM(vr_cdestrut)||
-                   TRIM(vr_dtmvtolt_yymmdd)||','||
-                   TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
-                   '3865,'||
-                   '3963,'||
-                   TRIM(to_char(vr_vllanmto, '999999990.00'))||','||
-                   '5210,'||
-                   '"(crps249)ESTORNO BAIXA DE PREJUIZO JUROS ATUALIZACAO"';
-      gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
-
-   end if;
-
   
    -- Transferencia para prejuizo Financiamento PP
   vr_cdhistor := 2396;
@@ -15827,7 +15733,7 @@ BEGIN
   -- Gera o arquivo AAMMDD_OPCRED.txt - Dados para contabilidade
   --Nao gerar OPCRED para central
   IF pr_cdcooper <> 3 THEN
-  pc_gera_arq_op_cred (vr_dscritic);
+    pc_gera_arq_op_cred (vr_dscritic);
   END IF;
   -- Incluir nome do módulo logado
   gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);

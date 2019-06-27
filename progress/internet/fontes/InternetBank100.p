@@ -73,7 +73,7 @@ DEF VAR aux_qtminast AS INTE INIT 0                                    NO-UNDO.
 
 ASSIGN aux_dstransa = "Gravar os dados do credito pre-aprovado".
 
-{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
 
 RUN STORED-PROCEDURE pc_valid_repre_legal_trans
     aux_handproc = PROC-HANDLE NO-ERROR
@@ -87,7 +87,7 @@ RUN STORED-PROCEDURE pc_valid_repre_legal_trans
 CLOSE STORED-PROC pc_valid_repre_legal_trans 
       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
 ASSIGN aux_cdcritic = 0
        aux_dscritic = ""
@@ -119,7 +119,7 @@ IF aux_cdcritic <> 0   OR
    END.
 
 
-{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
 
 RUN STORED-PROCEDURE pc_verifica_rep_assinatura
     aux_handproc = PROC-HANDLE NO-ERROR
@@ -138,7 +138,7 @@ RUN STORED-PROCEDURE pc_verifica_rep_assinatura
 CLOSE STORED-PROC pc_verifica_rep_assinatura 
       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
 ASSIGN aux_idastcjt = 0
        aux_nrcpfcgc = 0
@@ -184,7 +184,7 @@ IF aux_cdcritic <> 0   OR
 /* Se a conta for exgir assinatura multipla */
 IF aux_idastcjt = 1 THEN 
 DO:
-   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+   { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
 
     RUN STORED-PROCEDURE pc_cria_trans_pend_credito
         aux_handproc = PROC-HANDLE NO-ERROR
@@ -218,7 +218,7 @@ DO:
     CLOSE STORED-PROC pc_cria_trans_pend_credito 
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
     
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
     
     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""

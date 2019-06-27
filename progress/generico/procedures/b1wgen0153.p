@@ -36,7 +36,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0153.p
     Autor   : Tiago Machado/Daniel Zimmermann
-    Data    : Fevereiro/2013                Ultima Atualizacao: 13/12/2018
+    Data    : Fevereiro/2013                Ultima Atualizacao: 03/04/2019
     Dados referentes ao programa:
    
     Objetivo  : BO referente ao projeto tarifas
@@ -165,8 +165,11 @@
 
 				14/11/2018  Correcao da implementacao anterior do projeto PRJ450.
                             Wagner. Sustentacao. INC0027169.
-                            
+
         13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
+
+                03/04/2019 - PRJ450 - Inibir lancamento de tarifas de ADP na LAUTOM para contas 
+                             em prejuizo (Fabio Adriano - AMcom).
 
 ............................................................................*/
 
@@ -5456,7 +5459,7 @@ PROCEDURE geralog_cadpar:
                                   INPUT par_cdoperad,
                                  OUTPUT aux_nmoperad,
                                  OUTPUT aux_dscritic).
-                                 
+    
     IF VALID-HANDLE(h-b1wgen0060) THEN
        DELETE PROCEDURE h-b1wgen0060. 
                              
@@ -9611,6 +9614,8 @@ PROCEDURE cria_lan_auto_tarifa:
     DEF VAR aux_idseqlat AS INTE                                       NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI INIT FALSE                            NO-UNDO.
 
+    DEF VAR b-inprejuz AS LOGICAL.
+
     DEF BUFFER crablat FOR craplat.
 
     EMPTY TEMP-TABLE tt-erro.
@@ -9635,37 +9640,47 @@ PROCEDURE cria_lan_auto_tarifa:
     	ASSIGN aux_idseqlat = INTE(pc_sequence_progress.pr_sequence)
     						  WHEN pc_sequence_progress.pr_sequence <> ?.
 
-       CREATE craplat.
-       ASSIGN craplat.cdcooper = par_cdcooper
-              craplat.nrdconta = par_nrdconta
-              craplat.dtmvtolt = par_dtmvtolt
-              craplat.cdlantar = NEXT-VALUE(seqlat_cdlantar)
-              craplat.dttransa = aux_datdodia 
-              craplat.hrtransa = TIME                 
-              craplat.insitlat = 1 /** PENDENTE **/
-              craplat.cdhistor = par_cdhistor
-              craplat.vltarifa = par_vllanaut
-              craplat.cdoperad = par_cdoperad
-              craplat.cdagenci = par_cdagenci
-              craplat.cdbccxlt = par_cdbccxlt
-              craplat.nrdolote = par_nrdolote
-              craplat.tpdolote = par_tpdolote
-              craplat.nrdocmto = par_nrdocmto 
-              craplat.nrdctabb = par_nrdctabb
-              craplat.nrdctitg = par_nrdctitg
-              craplat.cdpesqbb = par_cdpesqbb
-              craplat.cdbanchq = par_cdbanchq
-              craplat.cdagechq = par_cdagechq
-              craplat.nrctachq = par_nrctachq
-              craplat.flgaviso = par_flgaviso
-              craplat.tpdaviso = par_tpdaviso
-              craplat.idseqlat = aux_idseqlat
-              craplat.cdfvlcop = par_cdfvlcop.
+       FIND FIRST crapass
+            WHERE crapass.cdcooper = par_cdcooper
+              AND crapass.nrdconta = INTEGER(par_nrdconta)
+          NO-LOCK NO-ERROR.
 
-       VALIDATE craplat.
+       ASSIGN b-inprejuz = IF (AVAIL crapass AND crapass.inprejuz = 1) THEN TRUE ELSE FALSE.
 
-       ASSIGN aux_nrdrowid = ROWID(craplat)
-	          aux_flgtrans = TRUE.
+       IF  NOT((b-inprejuz)
+       AND (par_cdhistor = 1441 OR par_cdhistor = 1465)) THEN DO:
+           CREATE craplat.
+           ASSIGN craplat.cdcooper = par_cdcooper
+                  craplat.nrdconta = par_nrdconta
+                  craplat.dtmvtolt = par_dtmvtolt
+                  craplat.cdlantar = NEXT-VALUE(seqlat_cdlantar)
+                  craplat.dttransa = aux_datdodia 
+                  craplat.hrtransa = TIME                 
+                  craplat.insitlat = 1 /** PENDENTE **/
+                  craplat.cdhistor = par_cdhistor
+                  craplat.vltarifa = par_vllanaut
+                  craplat.cdoperad = par_cdoperad
+                  craplat.cdagenci = par_cdagenci
+                  craplat.cdbccxlt = par_cdbccxlt
+                  craplat.nrdolote = par_nrdolote
+                  craplat.tpdolote = par_tpdolote
+                  craplat.nrdocmto = par_nrdocmto 
+                  craplat.nrdctabb = par_nrdctabb
+                  craplat.nrdctitg = par_nrdctitg
+                  craplat.cdpesqbb = par_cdpesqbb
+                  craplat.cdbanchq = par_cdbanchq
+                  craplat.cdagechq = par_cdagechq
+                  craplat.nrctachq = par_nrctachq
+                  craplat.flgaviso = par_flgaviso
+                  craplat.tpdaviso = par_tpdaviso
+                  craplat.idseqlat = aux_idseqlat
+                  craplat.cdfvlcop = par_cdfvlcop.
+
+           VALIDATE craplat.
+
+           ASSIGN aux_nrdrowid = ROWID(craplat)
+                aux_flgtrans = TRUE.
+       END.         
 
     END. /** Fim do DO TRANSACTION **/
 

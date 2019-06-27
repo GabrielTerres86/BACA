@@ -6,6 +6,9 @@
  * 
  * Alterações: 30/05/2019 - Ajuste para pegar o número do contrato formatado, para serer usado
  *                          no link do DigiDoc - PRJ 438 (Mateus Z / Mouts)
+ *
+ *             14/06/2019 - Ajuste para tratar o campo observações(dsobserv), quando tinha múltiplas 
+ *                          linhas estava dando erro de javascript - PRJ 438 (Mateus Z / Mouts)
  */
 ?>
 <div class="divRegistros">	
@@ -88,7 +91,8 @@
 			aux_limites.ativo.nrperger = "<?php echo $limite->{'nrperger'}; ?>";
 
 			aux_limites.ativo.idcobope = "<?php echo $limite->{'idcobope'}; ?>";
-			aux_limites.ativo.dsobserv = "<?php echo $limite->{'dsobserv'}; ?>";
+			// PRJ 438 - Tratar múltiplas linhas
+			aux_limites.ativo.dsobserv = "<?php echo preg_replace("/\n/m", '\n', $limite->{'dsobserv'}); ?>";
 			aux_limites.ativo.nrctrlimFormatado = "<?php echo formataNumericos("z.zzz.zz9",$limite->{'nrctrlim'},"."); ?>";
 			<?php
 		}else if($limite->{"lfgsitua"} == "1"){
@@ -118,7 +122,8 @@
 			aux_limites.pausado.nrperger = "<?php echo $limite->{'nrperger'}; ?>";
 
 			aux_limites.pausado.idcobope = "<?php echo $limite->{'idcobope'}; ?>";
-			aux_limites.pausado.dsobserv = "<?php echo $limite->{'dsobserv'}; ?>";
+			// PRJ 438 - Tratar múltiplas linhas
+			aux_limites.pausado.dsobserv = "<?php echo preg_replace("/\n/m", '\n', $limite->{'dsobserv'}); ?>";
 			<?php
 		}
 	}

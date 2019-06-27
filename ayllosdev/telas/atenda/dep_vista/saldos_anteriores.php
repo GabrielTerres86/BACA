@@ -3,7 +3,7 @@
 	 /************************************************************************
 	  Fonte: saldos_anteriores.php
 	  Autor: Guilherme
-	  Data : Fevereiro/2008                 Última Alteração: 03/07/2013
+	  Data : Fevereiro/2008                 Última Alteração:  06/02/2019
 
 	  Objetivo  : Mostrar opcao Saldos Anteriores da rotina de Dep. Vista
                   da tela ATENDA
@@ -12,7 +12,8 @@
 				  29/06/2011 - Alterado para layout padrão (Rogerius - DB1).
 				  03/07/2013 - Incluir valor vlblqjud Bloqueio Judicial (Lucas R.)
 				  11/07/2017 - Novo campo Limite Pre Aprovado Disponivel na tela Saldos Anteriores, Melhoria M441. ( Mateus Zimmermann/MoutS )
-	  
+				  06/02/2019 - P442 - Remoção de informações de Pre-Aprovado da tela (Marcos-Envolti)
+
 	 ************************************************************************/
 	
 	session_start();
@@ -106,12 +107,7 @@
 
 	<label for="vllimcre">Limite Cr&eacute;dito:</label>
 	<input type="text" name="vllimcre" id="vllimcre" />
-	
-	<br />
 
-	<label for="vllimcpa">Limite Pr&eacute;-aprovado dispon&iacute;vel</label>
-	<input type="text" name="vllimcpa" id="vllimcpa" />
-	
 </form>
 
 <script type="text/javascript">

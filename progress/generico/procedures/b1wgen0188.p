@@ -107,7 +107,7 @@
 									   
                 21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                              grava-proposta-completa. PRJ402 - Integracao CDC
-                             (Reinert)						                  
+                             (Reinert)                                                                  
                 
                 12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
                 
@@ -116,15 +116,19 @@
                              faixa de valor (rotina grava_dados_conta) (Carlos)
 
 				28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
-        
-        13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
                 
+                13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
+
                 20/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
                 
                 08/01/2019 - Ajuste da taxa mensal na impressao do contrato 
                              INC0028548 (Douglas Pagel / AMcom).
-                
+
 				22/02/2019 - P485. Validaçao de conta salário na exibiçao do banner Pré Aprovado no TAA. (Augusto/Supero)
+				
+                07/02/2019 - P442 - Direcionar para a chamada da rotina convertida 
+                             na valida_dados e troca da pc_busca_carga_ativa para
+                             pc_idcarga_pre_aprovado_cta (Marcos-Envolti)
                 
 ..............................................................................*/
 
@@ -192,9 +196,15 @@ PROCEDURE busca_dados:
     DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrdconta AS INTE                                    NO-UNDO.
     DEF VAR aux_inpessoa AS INTE                                    NO-UNDO.
+	DEF VAR aux_nrcpfcgc AS DECI                                    NO-UNDO.
+    DEF VAR aux_idcarga  AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdlcremp AS INTE                                    NO-UNDO.
     DEF VAR aux_vldiscrd AS DECI FORMAT "zzz,zzz,zz9.99-"           NO-UNDO.
     DEF VAR aux_txmensal AS DECI FORMAT "zzz,zzz,zz9.99-"           NO-UNDO.
     DEF VAR aux_vllimctr AS DECI FORMAT "zzz,zzz,zz9.99-"           NO-UNDO.
+	DEF VAR aux_vlcalpar AS DECI FORMAT "zzz,zzz,zz9.99-"           NO-UNDO.
+    DEF VAR aux_flprapol AS INTE                                    NO-UNDO.
+    DEF VAR aux_msgmanua AS CHAR FORMAT "x(1000)"                   NO-UNDO.
 
     /* Variaveis para o XML */ 
     DEF VAR xDoc          AS HANDLE   NO-UNDO.
@@ -334,9 +344,14 @@ PROCEDURE busca_dados:
                       ASSIGN aux_cdcooper = 0
                              aux_nrdconta = 0
                              aux_inpessoa = 0
+                             aux_nrcpfcgc = 0
+                             aux_idcarga  = 0
                              aux_vldiscrd = 0
                              aux_txmensal = 0
-                             aux_vllimctr = 0.
+                             aux_vllimctr = 0
+                             aux_vlcalpar = 0 
+                             aux_flprapol = 0
+                             aux_msgmanua = "".
         
                       DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
         
@@ -355,9 +370,15 @@ PROCEDURE busca_dados:
                         ASSIGN aux_cdcooper = INTE(xText:NODE-VALUE)  WHEN xField:NAME = "cdcooper"
                                aux_nrdconta = INTE(xText:NODE-VALUE)  WHEN xField:NAME = "nrdconta"
                                aux_inpessoa = INTE(xText:NODE-VALUE)  WHEN xField:NAME = "inpessoa"
+                               aux_nrcpfcgc = DECI(xText:NODE-VALUE)  WHEN xField:NAME = "nrcpfcgc"
+                               aux_idcarga  = INTE(xText:NODE-VALUE)  WHEN xField:NAME = "idcarga"
                                aux_vldiscrd = DECI(xText:NODE-VALUE)  WHEN xField:NAME = "vldiscrd"
                                aux_txmensal = DECI(xText:NODE-VALUE)  WHEN xField:NAME = "txmensal"
-                               aux_vllimctr = DECI(xText:NODE-VALUE)  WHEN xField:NAME = "vllimctr".
+                               aux_vllimctr = DECI(xText:NODE-VALUE)  WHEN xField:NAME = "vllimctr"
+                               aux_vlcalpar = DECI(xText:NODE-VALUE)  WHEN xField:NAME = "vlcalpar"
+                               aux_flprapol = INTE(xText:NODE-VALUE)  WHEN xField:NAME = "flprapol"
+                               aux_cdlcremp = INTE(xText:NODE-VALUE)  WHEN xField:NAME = "cdlcremp"
+                               aux_msgmanua = xText:NODE-VALUE WHEN xField:NAME = "msgmanua" .
         
                       END. /* Fim loop elemento */
 
@@ -365,9 +386,15 @@ PROCEDURE busca_dados:
                       ASSIGN tt-dados-cpa.cdcooper = aux_cdcooper
                              tt-dados-cpa.nrdconta = aux_nrdconta
                              tt-dados-cpa.inpessoa = aux_inpessoa
+                             tt-dados-cpa.nrcpfcgc = aux_nrcpfcgc
+                             tt-dados-cpa.idcarga  = aux_idcarga 
                              tt-dados-cpa.vldiscrd = aux_vldiscrd
                              tt-dados-cpa.txmensal = aux_txmensal
-                             tt-dados-cpa.vllimctr = aux_vllimctr.
+                             tt-dados-cpa.vllimctr = aux_vllimctr
+                             tt-dados-cpa.vlcalpar = aux_vlcalpar
+                             tt-dados-cpa.cdlcremp = aux_cdlcremp
+                             tt-dados-cpa.flprapol = aux_flprapol
+                             tt-dados-cpa.msgmanua = aux_msgmanua .
     VALIDATE tt-dados-cpa.
 
                     END. /* Fim loop raiz */
@@ -396,215 +423,118 @@ PROCEDURE valida_dados:
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-    DEF VAR aux_hhsicini AS INTE                                    NO-UNDO.
-    DEF VAR aux_hhsicfim AS INTE                                    NO-UNDO.
-
-    EMPTY TEMP-TABLE tt-dados-cpa.
     EMPTY TEMP-TABLE tt-erro.
 
-    IF par_vlemprst = 0 THEN
-       DO:
-           ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Valor da contratacao nao informado".
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1, 
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_valida_dados_cpa
+     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                         ,INPUT par_cdagenci
+                                         ,INPUT par_nrdcaixa
+                                         ,INPUT par_cdoperad
+                                         ,INPUT par_nmdatela
+                                         ,INPUT par_idorigem
+                                         ,INPUT par_nrdconta                                                 
+                                         ,INPUT par_idseqttl
+                                         ,INPUT par_vlemprst
+                                         ,INPUT par_diapagto
+                                         ,INPUT par_nrcpfope
+                                         ,INPUT 0
+                                         ,OUTPUT 0
+                                         ,OUTPUT "").
+    
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_valida_dados_cpa
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
-           RETURN "NOK".
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-       END. /* END IF par_vlemprst = 0 */
-
-    IF par_diapagto <= 0 OR par_diapagto >= 28 THEN
-       DO:
-           ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Dia do vencimento nao permitido".
-               
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1, 
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-           RETURN "NOK".
-       END.
-
-    /* Somente o primeiro titular irar poder contratar */
-    IF par_idseqttl > 1 THEN
-       DO:
-           ASSIGN aux_cdcritic = 79
-                  aux_dscritic = "".
-               
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1, 
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-           RETURN "NOK".
-       END.
-
-    /* Busca os valores disponivel para o credito pre-aprovado */
-    RUN busca_dados (INPUT par_cdcooper,
-                     INPUT par_cdagenci,
-                     INPUT par_nrdcaixa,
-                     INPUT par_cdoperad,
-                     INPUT par_nmdatela,
-                     INPUT par_idorigem,
-                     INPUT par_nrdconta,
-                     INPUT par_idseqttl,
-                     INPUT par_nrcpfope,
-                     OUTPUT TABLE tt-dados-cpa,
-                     OUTPUT TABLE tt-erro).
-
-    IF RETURN-VALUE <> "OK" THEN
-       RETURN "NOK".
-
-    FIND tt-dados-cpa NO-LOCK NO-ERROR.
-    IF NOT AVAIL tt-dados-cpa THEN
-       DO:
-           ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Associado nao possui credito pre-aprovado.".
-               
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1, 
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-           RETURN "NOK".
-       END.
-
-    /* Valor a ser contratado nao pode ser maior que o limite disponivel */
-    IF par_vlemprst > tt-dados-cpa.vldiscrd THEN
-       DO:
-           ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Valor informado para contratacao maior " +
-                                 "que o valor do limite pre-aprovado "     +
-                                 "disponivel. Valor disponivel: "          + 
-                                 STRING(tt-dados-cpa.vldiscrd,"zzz,zzz,zz9.99").
-
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1, 
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-
-           RETURN "NOK".
-       END.
-       
-    FOR crappre FIELDS(vllimctr) 
-                WHERE crappre.cdcooper = tt-dados-cpa.cdcooper AND
-                      crappre.inpessoa = tt-dados-cpa.inpessoa
-                      NO-LOCK: END.
-
-    IF NOT AVAIL crappre THEN
-       DO:
-           ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Parametros pre-aprovado nao cadastrado".
-        
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1,
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-           RETURN "NOK".
-       END.
-
-    /* Caso a origem for Internet Banking ou TAA */
-    IF par_idorigem = 3 OR par_idorigem = 4 THEN
-       DO:
-           /* Valor a ser contratado nao pode ser menor que limite contratado */
-           IF par_vlemprst < crappre.vllimctr THEN
-              DO:
-                  ASSIGN aux_cdcritic = 0
-                         aux_dscritic = "Valor informado para contratacao nao pode " +
-                                        "ser menor que R$ " + 
-                                        STRING(crappre.vllimctr,"zzz,zzz,zz9.99").
-        
-                  RUN gera_erro (INPUT par_cdcooper,
-                                 INPUT par_cdagenci,
-                                 INPUT par_nrdcaixa,
-                                 INPUT 1, 
-                                 INPUT aux_cdcritic,
-                                 INPUT-OUTPUT aux_dscritic).
-        
-                  RETURN "NOK".
-              END.
-
-           FOR craptab FIELDS(dstextab)
-                       WHERE craptab.cdcooper = par_cdcooper    AND
-                             craptab.nmsistem = "CRED"          AND
-                             craptab.tptabela = "GENERI"        AND
-                             craptab.cdempres = 00              AND
-                             craptab.cdacesso = "HRCTRPREAPROV" AND
-                             craptab.tpregist = par_cdagenci
-                             NO-LOCK: END.
-           IF NOT AVAIL craptab THEN
-              DO:
-                  ASSIGN aux_cdcritic = 0
-                         aux_dscritic = "Parametros de Horario nao cadastrado".
-        
-                  RUN gera_erro (INPUT par_cdcooper,
-                                 INPUT par_cdagenci,
-                                 INPUT par_nrdcaixa,
-                                 INPUT 1, 
-                                 INPUT aux_cdcritic,
-                                 INPUT-OUTPUT aux_dscritic).
-        
-                  RETURN "NOK".
-              END.
-
-           ASSIGN aux_hhsicini = INT(ENTRY(1,craptab.dstextab," "))
-                  aux_hhsicfim = INT(ENTRY(2,craptab.dstextab," ")).
-        
-           IF TIME < aux_hhsicini OR TIME > aux_hhsicfim THEN
-              DO:
-                  ASSIGN aux_cdcritic = 0
-                         aux_dscritic = "Horario nao permitido para efetuar o " +
-                                        "pre-aprovado".
-        
-                  RUN gera_erro (INPUT par_cdcooper,
-                                 INPUT par_cdagenci,
-                                 INPUT par_nrdcaixa,
-                                 INPUT 1, 
-                                 INPUT aux_cdcritic,
-                                 INPUT-OUTPUT aux_dscritic).
-        
-                  RETURN "NOK".
-              END.
-
-           FOR FIRST crapdat FIELDS(inproces)
-                             WHERE crapdat.cdcooper = par_cdcooper
-                                   NO-LOCK: END.
-
-           IF crapdat.inproces >= 3 THEN
-              DO:
-                  ASSIGN aux_cdcritic = 0
-                         aux_dscritic = "Horario nao permitido para efetuar o " +
-                                        "pre-aprovado".
-        
-                  RUN gera_erro (INPUT par_cdcooper,
-                                 INPUT par_cdagenci,
-                                 INPUT par_nrdcaixa,
-                                 INPUT 1, 
-                                 INPUT aux_cdcritic,
-                                 INPUT-OUTPUT aux_dscritic).
-        
-                  RETURN "NOK".
-
-              END. /* END IF crapdat.inproces >= 3 THEN */
-           
-       END. /* END IF par_idorigem = 3 OR par_idorigem = 4 THEN */
-
+    ASSIGN aux_cdcritic = pc_valida_dados_cpa.pr_cdcritic
+                             WHEN pc_valida_dados_cpa.pr_cdcritic <> ?           
+           aux_dscritic = pc_valida_dados_cpa.pr_dscritic
+                             WHEN pc_valida_dados_cpa.pr_dscritic <> ?.
+                      
+    IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> "" THEN
+    DO:
+         RUN gera_erro (INPUT par_cdcooper,
+                        INPUT par_cdagenci,
+                        INPUT par_nrdcaixa,
+                        INPUT 1, 
+                        INPUT aux_cdcritic,
+                        INPUT-OUTPUT aux_dscritic).
+         RETURN "NOK".
+    END.
+      
     RETURN "OK".
     
 END PROCEDURE. /* END PROCEDURE valida_dados */
+
+PROCEDURE valida_dados_contrato:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlemprst AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_diapagto AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcpfope AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctremp AS DECI                           NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    EMPTY TEMP-TABLE tt-erro.
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+
+    /* Efetuar a chamada a rotina Oracle */ 
+    RUN STORED-PROCEDURE pc_valida_dados_cpa
+     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                         ,INPUT par_cdagenci
+                                         ,INPUT par_nrdcaixa
+                                         ,INPUT par_cdoperad
+                                         ,INPUT par_nmdatela
+                                         ,INPUT par_idorigem
+                                         ,INPUT par_nrdconta                                                 
+                                         ,INPUT par_idseqttl
+                                         ,INPUT par_vlemprst
+                                         ,INPUT par_diapagto
+                                         ,INPUT par_nrcpfope
+                                         ,INPUT par_nrctremp
+                                         ,OUTPUT 0
+                                         ,OUTPUT "").
+    
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_valida_dados_cpa
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_cdcritic = pc_valida_dados_cpa.pr_cdcritic
+                             WHEN pc_valida_dados_cpa.pr_cdcritic <> ?           
+           aux_dscritic = pc_valida_dados_cpa.pr_dscritic
+                             WHEN pc_valida_dados_cpa.pr_dscritic <> ?.
+                      
+    IF aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> "" THEN
+       DO:
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT 1, 
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+  
+           RETURN "NOK".
+       END.
+
+    RETURN "OK".
+    
+END PROCEDURE. /* END PROCEDURE valida_dados_contrato */
 
 PROCEDURE grava_dados:
 
@@ -674,6 +604,7 @@ PROCEDURE grava_dados:
     DEF VAR aux_nivrisco AS CHAR                                    NO-UNDO.
     DEF VAR aux_vlprecar AS CHAR                                    NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                    NO-UNDO.
+	DEF VAR aux_cdlcremp AS INTE                                    NO-UNDO.
 
     DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0084 AS HANDLE                                  NO-UNDO.
@@ -808,33 +739,31 @@ PROCEDURE grava_dados:
                  END.
           END.
 
-        /* Busca a carga ativa */
-        RUN busca_carga_ativa(INPUT par_cdcooper,
-                              INPUT par_nrdconta,
-                             OUTPUT aux_idcarga).
+          /* Verifica se existe limite disponível */
+          RUN busca_dados (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT par_cdoperad,
+                           INPUT par_nmdatela,
+                           INPUT par_idorigem,
+                           INPUT par_nrdconta,
+                           INPUT par_idseqttl,
+                           INPUT par_nrcpfope,
+                           OUTPUT TABLE tt-dados-cpa,
+                           OUTPUT TABLE tt-erro).
+                           
+          FIND tt-dados-cpa NO-LOCK NO-ERROR.
+              IF  AVAIL tt-dados-cpa THEN
+                  DO:
+                      ASSIGN aux_idcarga  = tt-dados-cpa.idcarga
+                             aux_cdlcremp = tt-dados-cpa.cdlcremp.
+                  END.
+        
         /*  Caso nao possua carga ativa */
-        IF  aux_idcarga = 0 THEN
-            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Nenhuma carga ativa.".
-
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-                UNDO GRAVA, LEAVE GRAVA.
-            END.
-
-        FOR crapcpa FIELDS(cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
-                                           crapcpa.nrdconta = par_nrdconta AND
-                                           crapcpa.iddcarga = aux_idcarga
-                                           NO-LOCK: END.
-        IF NOT AVAIL crapcpa THEN
+        IF  aux_idcarga = 0 OR aux_cdlcremp = 0 THEN
            DO:
                ASSIGN aux_cdcritic = 0
-                      aux_dscritic = "Associado nao cadastrado no pre-aprovado".
+                      aux_dscritic = "Associado nao relacionado a nenhuma carga ativa.".
 
                RUN gera_erro (INPUT par_cdcooper,
                               INPUT par_cdagenci,
@@ -915,7 +844,7 @@ PROCEDURE grava_dados:
                                                INPUT 0,    /* par_inproces */
                                                INPUT tt-dados-assoc.cdagenci,
                                                INPUT 0,    /* par_nrctremp */
-                                               INPUT crapcpa.cdlcremp,
+                                               INPUT aux_cdlcremp,
                                                INPUT par_qtpreemp,
                                                INPUT "",   /* par_dsctrliq */
                                                INPUT tt-dados-coope.vlmaxutl,
@@ -1041,7 +970,7 @@ PROCEDURE grava_dados:
                                                    INPUT par_vlpreemp,
                                                    INPUT par_qtpreemp,
                                                    INPUT tt-proposta-epr.nivrisco,
-                                                   INPUT crapcpa.cdlcremp,
+                                                   INPUT aux_cdlcremp,
                                                    INPUT crappre.cdfinemp,
                                                    INPUT 0, /* par_qtdialib */
                                                    INPUT FALSE, /* par_flgimppr */
@@ -1174,7 +1103,7 @@ PROCEDURE grava_dados:
                               INPUT tt-dados-assoc.inpessoa,
                               INPUT par_dtmvtolt,
                               INPUT nov_nrctremp,
-                              INPUT crapcpa.cdlcremp,
+                              INPUT aux_cdlcremp,
                               INPUT par_vlemprst,
                               INPUT par_dtdpagto,
                               INPUT par_cdcoptfn,
@@ -1189,7 +1118,7 @@ PROCEDURE grava_dados:
 
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.
-      
+
        RUN grava_efetivacao_proposta IN h-b1wgen0084(INPUT par_cdcooper,
                                                      INPUT par_cdagenci,
                                                      INPUT par_nrdcaixa,
@@ -1217,14 +1146,14 @@ PROCEDURE grava_dados:
                                                      OUTPUT aux_dsmesage,
                                                      OUTPUT TABLE tt-ratings,
                                                      OUTPUT TABLE tt-erro).
-       
+
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.
-       
+
        ASSIGN aux_flgtrans = TRUE.
-       
+
     END. /* END GRAVA: DO TRANSACTION */
-  
+
     IF NOT TEMP-TABLE tt-erro:HAS-RECORDS AND
        (aux_cdcritic > 0 OR aux_dscritic <> "") THEN
        DO:
@@ -1675,7 +1604,7 @@ PROCEDURE grava_dados_conta PRIVATE:
                                                 ,INPUT par_nrdconta
                                                 ,INPUT par_nrctremp
                                                 ,INPUT par_dtmvtolt
-                                                ,INPUT crapass.inpessoa
+                                                ,INPUT crapass.inpessoa                                                
                                                 ,INPUT par_cdlcremp
                                                 ,INPUT crawepr.cdfinemp
                                                 ,INPUT crawepr.qtpreemp
@@ -2104,21 +2033,41 @@ PROCEDURE calcula_parcelas_emprestimo:
     DEF VAR aux_txdiaria AS DECI                                    NO-UNDO.
     DEF VAR aux_txmensal AS DECI                                    NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                    NO-UNDO.
+	DEF VAR aux_cdlcremp AS INTE                                    NO-UNDO.
+    DEF VAR aux_vlcalpar AS DECI                                    NO-UNDO.
+	
     DEF VAR h-b1wgen0084 AS HANDLE                                  NO-UNDO.
     
     IF NOT VALID-HANDLE(h-b1wgen0084) THEN
        RUN sistema/generico/procedures/b1wgen0084.p 
            PERSISTENT SET h-b1wgen0084.
 
-    /* Busca a carga ativa */
-    RUN busca_carga_ativa(INPUT par_cdcooper,
-                          INPUT par_nrdconta,
-                         OUTPUT aux_idcarga).
+    /* Buscar carga ativa */
+    RUN busca_dados (INPUT par_cdcooper,
+                     INPUT par_cdagenci,
+                     INPUT par_nrdcaixa,
+                     INPUT par_cdoperad,
+                     INPUT par_nmdatela,
+                     INPUT par_idorigem,
+                     INPUT par_nrdconta,
+                     INPUT par_idseqttl,
+                     INPUT 0,
+                     OUTPUT TABLE tt-dados-cpa,
+                     OUTPUT TABLE tt-erro).
+
+    FIND tt-dados-cpa NO-LOCK NO-ERROR.
+    IF  AVAIL tt-dados-cpa THEN
+        DO:
+            ASSIGN aux_idcarga  = tt-dados-cpa.idcarga
+                   aux_cdlcremp = tt-dados-cpa.cdlcremp
+                   aux_vlcalpar = tt-dados-cpa.vlcalpar.
+        END.
+		
     /*  Caso nao possua carga ativa */
     IF  aux_idcarga = 0 THEN
         DO:
             ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Nenhuma carga ativa.".
+                   aux_dscritic = "Associado nao vinculado a nenhuma carga ativa.".
             
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -2145,25 +2094,6 @@ PROCEDURE calcula_parcelas_emprestimo:
            ASSIGN aux_cdcritic = 0
                   aux_dscritic = "Parametros pre-aprovado nao cadastrado".
         
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-            RETURN "NOK".
-        END.
-
-    /* Buscar pre-aprovado da conta */
-    FOR crapcpa FIELDS(vlcalpar cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
-                                       crapcpa.nrdconta = par_nrdconta AND
-                                       crapcpa.iddcarga = aux_idcarga
-                                       NO-LOCK: END.
-    IF NOT AVAIL crapcpa THEN
-       DO:
-           ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Associado nao cadastrado no pre-aprovado".
-        
            RUN gera_erro (INPUT par_cdcooper,
                           INPUT par_cdagenci,
                           INPUT par_nrdcaixa,
@@ -2176,7 +2106,7 @@ PROCEDURE calcula_parcelas_emprestimo:
     /* Buscar linha de credito */
     FOR craplcr FIELDS(cdlcremp nrinipre nrfimpre)
                 WHERE craplcr.cdcooper = par_cdcooper     AND
-                      craplcr.cdlcremp = crapcpa.cdlcremp
+                      craplcr.cdlcremp = aux_cdlcremp
                       NO-LOCK: END.
 
     IF NOT AVAIL craplcr THEN
@@ -2212,7 +2142,7 @@ PROCEDURE calcula_parcelas_emprestimo:
                                               INPUT par_idseqttl,
                                               INPUT FALSE, /* par_flgerlog */
                                               INPUT 0,     /* par_nrctremp */
-                                              INPUT crapcpa.cdlcremp,
+                                              INPUT aux_cdlcremp,
                                               INPUT crappre.cdfinemp,
                                               INPUT par_vlemprst,
                                               INPUT aux_qtpreemp,
@@ -2241,7 +2171,7 @@ PROCEDURE calcula_parcelas_emprestimo:
 
               /* Valor calculado da parcela nao pode ser maior que o valor 
                  maximo configurado */
-              IF tt-parcelas-cpa.vlparepr > crapcpa.vlcalpar THEN
+              IF tt-parcelas-cpa.vlparepr > aux_vlcalpar THEN
               DO:
                  ASSIGN tt-parcelas-cpa.flgdispo = FALSE.
 
@@ -2295,6 +2225,8 @@ PROCEDURE calcula_taxa_emprestimo:
     DEF VAR aux_dtvigenc AS DATE                                    NO-UNDO.
     DEF VAR aux_cdfvlcop AS INTE                                    NO-UNDO.
     DEF VAR aux_idcarga  AS inte                                    NO-UNDO.
+	DEF VAR aux_cdlcremp AS INTE                                    NO-UNDO.
+	
     DEF VAR h-b1wgen0084 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0153 AS HANDLE                                  NO-UNDO.
 
@@ -2307,15 +2239,31 @@ PROCEDURE calcula_taxa_emprestimo:
        RUN sistema/generico/procedures/b1wgen0153.p 
            PERSISTENT SET h-b1wgen0153.
 
-    /* Busca a carga ativa */
-    RUN busca_carga_ativa(INPUT par_cdcooper,
-                          INPUT par_nrdconta,
-                         OUTPUT aux_idcarga).
+    /* Verifica se existe limite disponível */
+    RUN busca_dados (INPUT par_cdcooper,
+                     INPUT par_cdagenci,
+                     INPUT par_nrdcaixa,
+                     INPUT par_cdoperad,
+                     INPUT par_nmdatela,
+                     INPUT par_idorigem,
+                     INPUT par_nrdconta,
+                     INPUT 1,
+                     INPUT 0,
+                     OUTPUT TABLE tt-dados-cpa,
+                     OUTPUT TABLE tt-erro).
+
+    FIND tt-dados-cpa NO-LOCK NO-ERROR.
+    IF  AVAIL tt-dados-cpa THEN
+        DO:
+            ASSIGN aux_idcarga  = tt-dados-cpa.idcarga
+                   aux_cdlcremp = tt-dados-cpa.cdlcremp.
+        END.
+		
     /*  Caso nao possua carga ativa */
     IF  aux_idcarga = 0 THEN
         DO:
             ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Nenhuma carga ativa.".
+                   aux_dscritic = "Associado nao vinculado a nenhuma carga ativa.".
             
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -2337,34 +2285,10 @@ PROCEDURE calcula_taxa_emprestimo:
                                        crapass.nrdconta = par_nrdconta
                                        NO-LOCK: END.
 
-    FOR crapcpa FIELDS(cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
-                                       crapcpa.nrdconta = par_nrdconta AND
-                                       crapcpa.iddcarga = aux_idcarga
-                                       NO-LOCK: END.
-    IF NOT AVAIL crapcpa THEN
-       DO:
-           ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Associado nao cadastrado no pre-aprovado".
-
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT 1,
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-                          
-           IF VALID-HANDLE(h-b1wgen0002) THEN
-              DELETE PROCEDURE h-b1wgen0002.
-
-           IF VALID-HANDLE(h-b1wgen0153) THEN
-              DELETE PROCEDURE h-b1wgen0153.
-                          
-           RETURN "NOK".
-       END.
     /* Busca a tarifa do emprestimo */
     RUN carrega_dados_tarifa_emprestimo IN h-b1wgen0153
                                      (INPUT  par_cdcooper,
-                                      INPUT  crapcpa.cdlcremp,
+                                      INPUT  aux_cdlcremp,
                                       INPUT  "EM",
                                       INPUT  crapass.inpessoa,
                                       INPUT  par_vlemprst,
@@ -2376,7 +2300,7 @@ PROCEDURE calcula_taxa_emprestimo:
                                       OUTPUT aux_dtvigenc,
                                       OUTPUT aux_cdfvlcop,
                                       OUTPUT TABLE tt-erro).
-                                      
+
     
     IF RETURN-VALUE <> "OK"  THEN
        DO:
@@ -2387,14 +2311,14 @@ PROCEDURE calcula_taxa_emprestimo:
          IF VALID-HANDLE(h-b1wgen0153) THEN
             DELETE PROCEDURE h-b1wgen0153.
         
-         RETURN "NOK".
-       
+       RETURN "NOK".
+    
        END.
     
     /* Busca a tarifa especial */
     RUN carrega_dados_tarifa_emprestimo IN h-b1wgen0153
                                      (INPUT  par_cdcooper,
-                                      INPUT  crapcpa.cdlcremp,
+                                      INPUT  aux_cdlcremp,
                                       INPUT  "ES",
                                       INPUT  crapass.inpessoa,
                                       INPUT  par_vlemprst,
@@ -2416,73 +2340,31 @@ PROCEDURE calcula_taxa_emprestimo:
          IF VALID-HANDLE(h-b1wgen0153) THEN
             DELETE PROCEDURE h-b1wgen0153.
         
-         RETURN "NOK".
-       
+       RETURN "NOK".
+    
        END.
     
     /* Valor da tarifa */
     ASSIGN par_vlrtarif = aux_vlrtarif + aux_vltrfesp.
-
-    /* Calcula o custo efetivo total */
-    RUN calcula_cet_novo IN h-b1wgen0002 (INPUT par_cdcooper,
-                                          INPUT par_cdagenci,
-                                          INPUT par_nrdcaixa,
-                                          INPUT par_cdoperad,
-                                          INPUT par_nmdatela,
-                                          INPUT par_idorigem,
-                                          INPUT par_dtmvtolt,
-                                          INPUT par_nrdconta,
-                                          INPUT crapass.inpessoa,
-                                          INPUT 2, /* cdusolcr */
-                                          INPUT crapcpa.cdlcremp,
-                                          INPUT 1, /* tpemprst */
-                                          INPUT 0, /* nrctremp */
-                                          INPUT par_dtmvtolt,
-                                          INPUT par_vlemprst,
-                                          INPUT par_vlparepr,
-                                          INPUT par_nrparepr,
-                                          INPUT par_dtvencto,
-                                          INPUT 0, /* cdfinemp */
-                                          INPUT "", /* dscatbem */
-                                          INPUT 1, /* idfiniof */
-                                          INPUT "", /* dsctrliq */
-                                          INPUT "N",
-                                          INPUT ?, /* dtcarenc */
-                                          OUTPUT par_percetop,
-                                          OUTPUT aux_txcetmes,
-                                          OUTPUT TABLE tt-erro).
-                                          
-    IF RETURN-VALUE <> "OK"  THEN
-       DO:
-     
-         IF VALID-HANDLE(h-b1wgen0002) THEN
-            DELETE PROCEDURE h-b1wgen0002.
-
-         IF VALID-HANDLE(h-b1wgen0153) THEN
-            DELETE PROCEDURE h-b1wgen0153.
-        
-         RETURN "NOK".
-       
-       END.
-
-    /* Calcula o IOF */
+	
+	/* Calcula o IOF */
     RUN calcula_iof (INPUT par_cdcooper,
                      INPUT par_cdagenci,
                      INPUT par_nrdcaixa,
                      INPUT par_cdoperad,
                      INPUT par_nmdatela,
-                     INPUT par_idorigem,
+                     INPUT par_idorigem,									 
                      INPUT par_nrdconta,
                      INPUT 0, /* par_nrctremp */
                      INPUT 0, /* cdfinemp */
-                     INPUT crapcpa.cdlcremp,
+                     INPUT aux_cdlcremp,									 
                      INPUT par_vlemprst,
                      INPUT par_dtmvtolt,
                      INPUT par_nrparepr,
                      INPUT par_dtvencto,
                      INPUT par_vlparepr,
                      OUTPUT par_vltaxiof,
-                     OUTPUT par_vltariof,
+                     OUTPUT par_vltariof,									  
                      OUTPUT TABLE tt-erro).
                      
     IF RETURN-VALUE <> "OK"  THEN
@@ -2496,6 +2378,50 @@ PROCEDURE calcula_taxa_emprestimo:
         
          RETURN "NOK".
        
+       END.
+
+    ASSIGN par_vlliquid = par_vlemprst - ROUND(par_vlrtarif,2) - ROUND(par_vltariof,2).
+
+    /* Calcula o custo efetivo total */
+    RUN calcula_cet_novo IN h-b1wgen0002 (INPUT par_cdcooper,
+                                          INPUT par_cdagenci,
+                                          INPUT par_nrdcaixa,
+                                          INPUT par_cdoperad,
+                                          INPUT par_nmdatela,
+                                          INPUT par_idorigem,
+                                          INPUT par_dtmvtolt,
+                                          INPUT par_nrdconta,
+                                          INPUT crapass.inpessoa,
+                                          INPUT 2, /* cdusolcr */
+                                          INPUT aux_cdlcremp,
+                                          INPUT 1, /* tpemprst */
+                                          INPUT 0, /* nrctremp */
+                                          INPUT par_dtmvtolt,
+                                          INPUT par_vlliquid,
+                                          INPUT par_vlparepr,
+                                          INPUT par_nrparepr,
+                                          INPUT par_dtvencto,
+                                          INPUT 0, /* cdfinemp */
+                                          INPUT "", /* dscatbem */
+                                          INPUT 1, /* idfiniof */
+                                          INPUT "", /* dsctrliq */
+                                          INPUT "N",
+                                          INPUT ?, /*par_dtcarenc*/
+                                          OUTPUT par_percetop,
+                                          OUTPUT aux_txcetmes,
+                                          OUTPUT TABLE tt-erro).
+
+    IF RETURN-VALUE <> "OK"  THEN
+       DO:
+     
+         IF VALID-HANDLE(h-b1wgen0002) THEN
+            DELETE PROCEDURE h-b1wgen0002.
+
+         IF VALID-HANDLE(h-b1wgen0153) THEN
+            DELETE PROCEDURE h-b1wgen0153.
+        
+       RETURN "NOK".
+
        END.
 
     ASSIGN par_vlliquid = par_vlemprst - par_vlrtarif - par_vltariof.
@@ -2522,11 +2448,16 @@ PROCEDURE imprime_demonstrativo:
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
+	DEF VAR aux_nmdireto AS CHAR                                    NO-UNDO.
+    DEF VAR aux_nmarquiv AS CHAR                                    NO-UNDO.
+    DEF VAR aux_des_reto AS CHAR                                    NO-UNDO.
 
     DEF OUTPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-    FOR crawepr FIELDS(vlemprst txmensal qtpreemp vlpreemp percetop dtdpagto)
+																	
+
+    FOR crawepr FIELDS(vlemprst txmensal qtpreemp vlpreemp percetop dtdpagto dtpreapv hrpreapv)
                 WHERE crawepr.cdcooper = par_cdcooper AND
                       crawepr.nrdconta = par_nrdconta AND
                       crawepr.nrctremp = par_nrctremp
@@ -2562,6 +2493,8 @@ PROCEDURE imprime_demonstrativo:
            RETURN "NOK".
        END.
 
+																	 
+	
     RUN imprime_previa_demonstrativo (INPUT par_cdcooper,
                                       INPUT par_cdagenci,
                                       INPUT par_nrdcaixa,
@@ -2581,6 +2514,8 @@ PROCEDURE imprime_demonstrativo:
                                       INPUT crawepr.dtdpagto,
                                       INPUT crapepr.vltaxiof,
                                       INPUT crapepr.vltariof,
+                                      INPUT crawepr.dtpreapv,
+                                      INPUT crawepr.hrpreapv,
                                       OUTPUT par_nmarqimp,
                                       OUTPUT TABLE tt-erro).
     
@@ -2612,6 +2547,8 @@ PROCEDURE imprime_previa_demonstrativo:
     DEF  INPUT PARAM par_dtdpagto AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_vltaxiof AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_vltariof AS DECI                           NO-UNDO.
+	DEF  INPUT PARAM par_dtpreapv AS DATE                           NO-UNDO. 
+    DEF  INPUT PARAM par_hrpreapv AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_nmarqimp AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -2640,6 +2577,8 @@ PROCEDURE imprime_previa_demonstrativo:
     DEF VAR aux_dsvlriof2 AS CHAR                                   NO-UNDO.
     DEF VAR aux_dsvlrtar1 AS CHAR                                   NO-UNDO.
     DEF VAR aux_dsvlrtar2 AS CHAR                                   NO-UNDO.
+	DEF VAR aux_dsassdig  AS CHAR                                   NO-UNDO.
+	DEF VAR aux_des_reto  AS CHAR                                   NO-UNDO.		
     DEF VAR h-b1wgen0060  AS HANDLE                                 NO-UNDO.
     DEF VAR h-b1wgen0038  AS HANDLE                                 NO-UNDO.
     DEF VAR h-b1wgen9999  AS HANDLE                                 NO-UNDO.
@@ -2684,33 +2623,31 @@ PROCEDURE imprime_previa_demonstrativo:
         
         IF par_nrctremp = 0 THEN
           DO:
-        /* Busca a carga ativa */
-        RUN busca_carga_ativa(INPUT par_cdcooper,
-                              INPUT par_nrdconta,
-                             OUTPUT aux_idcarga).
-        /*  Caso nao possua carga ativa */
+        /* Verifica se existe limite disponível */
+            RUN busca_dados (INPUT par_cdcooper,
+                             INPUT par_cdagenci,
+                             INPUT par_nrdcaixa,
+                             INPUT par_cdoperad,
+                             INPUT par_nmdatela,
+                             INPUT par_idorigem,
+                             INPUT par_nrdconta,
+                             INPUT par_idseqttl,
+                             INPUT 0,
+                             OUTPUT TABLE tt-dados-cpa,
+                             OUTPUT TABLE tt-erro).
+
+            FIND tt-dados-cpa NO-LOCK NO-ERROR.
+            IF  AVAIL tt-dados-cpa THEN
+                DO:
+                    ASSIGN aux_idcarga  = tt-dados-cpa.idcarga
+                           aux_cdlcremp = tt-dados-cpa.cdlcremp.
+                END.
+            
+            /*  Caso nao possua carga ativa */
         IF  aux_idcarga = 0 THEN
-            DO:
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Nenhuma carga ativa.".
-                
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-                RETURN "NOK".
-            END.
-        
-        FOR crapcpa FIELDS(cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
-                                           crapcpa.nrdconta = par_nrdconta AND
-                                           crapcpa.iddcarga = aux_idcarga
-                          NO-LOCK: END.
-        IF NOT AVAIL crapcpa THEN
            DO:
                ASSIGN aux_cdcritic = 0
-                      aux_dscritic = "Associado nao cadastrado no pre-aprovado".
+                      aux_dscritic = "Nenhuma carga ativa para o Associado.".
     
                RUN gera_erro (INPUT par_cdcooper,
                               INPUT par_cdagenci,
@@ -2720,8 +2657,7 @@ PROCEDURE imprime_previa_demonstrativo:
                               INPUT-OUTPUT aux_dscritic).
                RETURN "NOK".
                END.
-               
-            ASSIGN aux_cdlcremp = crapcpa.cdlcremp.
+
           END. /*IF par_nrctremp = 0 THEN*/
         ELSE 
           DO:
@@ -2896,9 +2832,48 @@ PROCEDURE imprime_previa_demonstrativo:
                                                   OUTPUT aux_dsvlrtar1,
                                                   OUTPUT aux_dsvlrtar2).
 
+               /* P442 - Validar assinado Digitalmente */
+               /* Buscar dados do contrato de emprestimo */
+               FIND FIRST crawepr WHERE crawepr.cdcooper = par_cdcooper AND
+                                        crawepr.nrdconta = par_nrdconta AND
+                                        crawepr.nrctremp = par_nrctremp
+                                        NO-LOCK NO-ERROR.
+
+               IF AVAIL crawepr THEN
+                DO:
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                  
+                  /* Criar registros na tabela de assinaturas */
+                  /* Efetuar a chamada a rotina Oracle */ 
+                  RUN STORED-PROCEDURE pc_assinatura_contrato_pre
+                        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.cdcooper
+                                                            ,INPUT crawepr.cdagenci
+                                                            ,INPUT crawepr.nrdconta
+                                                            ,INPUT 1                                               
+                                                            ,INPUT par_dtmvtolt
+                                                            ,INPUT crawepr.cdorigem
+                                                            ,INPUT crawepr.nrctremp
+                                                            ,INPUT 1
+                                                            ,OUTPUT ""
+                                                            ,OUTPUT ""
+                                                            ,OUTPUT 0
+                                                            ,OUTPUT "").
+                  
+                  /* Fechar o procedimento para buscarmos o resultado */ 
+                  CLOSE STORED-PROC pc_assinatura_contrato_pre
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                  ASSIGN aux_dsassdig = pc_assinatura_contrato_pre.pr_assinatu
+                         aux_des_reto = pc_assinatura_contrato_pre.pr_des_reto
+                         aux_cdcritic = pc_assinatura_contrato_pre.pr_cdcritic WHEN pc_assinatura_contrato_pre.pr_cdcritic <> ?
+                         aux_dscritic = pc_assinatura_contrato_pre.pr_dscritic WHEN pc_assinatura_contrato_pre.pr_dscritic <> ?.
+
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                END. 
+			  
                PUT STREAM str_1
                    "Eu (" rPadTexto(INPUT crapass.nmprimtl, INPUT 47) FORMAT "x(47)" 
-                   "), inscrito no CPF nº " aux_nrcpfcgc " e "
+                   "), inscrito no CPF n " aux_nrcpfcgc " e "				  
                    SKIP
                    "portador do RG nº "
                    rPadTexto(INPUT crapass.nrdocptl, INPUT 40) FORMAT "x(40)" 
@@ -2908,7 +2883,7 @@ PROCEDURE imprime_previa_demonstrativo:
                    SKIP
                    "residente e domiciliado na "
                    rPadTexto(INPUT aux_dsendere, INPUT 42) FORMAT "x(42)"
-                   ", nº "
+                   ", ns "
                    rPadTexto(INPUT STRING(aux_nrendere), INPUT 7) FORMAT "x(7)"
                    ", bairro "
                    SKIP
@@ -2927,7 +2902,7 @@ PROCEDURE imprime_previa_demonstrativo:
                    SKIP
                    aux_dsvlempr2 FORMAT "x(10)"
                    "), acrescido de juros  remuneratorios  capitalizados  "
-                   "mensalmente,  a  taxa  de "
+                   "mensalmente,  a  taxa  de "				  
                    SKIP
                    IF par_txmensal > 0 THEN par_txmensal ELSE craplcr.txmensal FORMAT "zz9.99"
                    "% a.m.  estipulada  na  quantidade  de  "
@@ -2950,7 +2925,7 @@ PROCEDURE imprime_previa_demonstrativo:
                    SKIP
                    aux_dsvlrtar2 FORMAT "x(34)"
                    " ) com data do primeiro vencimento em "
-                   par_dtdpagto FORMAT "99/99/9999" ".".
+                   par_dtdpagto FORMAT "99/99/9999" ". ".
 
            END. /* END IF crapass.inpessoa = 1 THEN */
         ELSE
@@ -3081,10 +3056,52 @@ PROCEDURE imprime_previa_demonstrativo:
             "das regras do produto."
             SKIP(1)
             "A senha eletronica digitada, necessaria para esta  contratacao, "
-            " substitui  a  assinatura "
-            SKIP
-            "fisica."
-            SKIP.
+            " substitui  a  assinatura fisica."
+                      SKIP.
+
+              /* P442 - Validar assinado Digitalmente */
+               /* Buscar dados do contrato de emprestimo */
+               FIND FIRST crawepr WHERE crawepr.cdcooper = par_cdcooper AND
+                                        crawepr.nrdconta = par_nrdconta AND
+                                        crawepr.nrctremp = par_nrctremp
+                                        NO-LOCK NO-ERROR.
+
+               IF AVAIL crawepr THEN
+                DO:
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                  
+                  /* Criar registros na tabela de assinaturas */
+                  /* Efetuar a chamada a rotina Oracle */ 
+                  RUN STORED-PROCEDURE pc_assinatura_contrato_pre
+                        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.cdcooper
+                                                            ,INPUT crawepr.cdagenci
+                                                            ,INPUT crawepr.nrdconta
+                                                            ,INPUT 1                                               
+                                                            ,INPUT par_dtmvtolt
+                                                            ,INPUT crawepr.cdorigem
+                                                            ,INPUT crawepr.nrctremp
+                                                            ,INPUT 1
+                                                            ,OUTPUT ""
+                                                            ,OUTPUT ""
+                                                            ,OUTPUT 0
+                                                            ,OUTPUT "").
+                  
+                  /* Fechar o procedimento para buscarmos o resultado */ 
+                  CLOSE STORED-PROC pc_assinatura_contrato_pre
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                  
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                  
+                  ASSIGN aux_dsassdig = pc_assinatura_contrato_pre.pr_assinatu
+                         aux_des_reto = pc_assinatura_contrato_pre.pr_des_reto
+                         aux_cdcritic = pc_assinatura_contrato_pre.pr_cdcritic WHEN pc_assinatura_contrato_pre.pr_cdcritic <> ?
+                         aux_dscritic = pc_assinatura_contrato_pre.pr_dscritic WHEN pc_assinatura_contrato_pre.pr_dscritic <> ?.
+
+                  PUT STREAM str_1
+                      SKIP(1)
+                      aux_dsassdig FORMAT "x(" + STRING(LENGTH(aux_dsassdig, "CHARACTER")) + ")"
+                      SKIP.
+                END.
 
         OUTPUT STREAM str_1 CLOSE.
 
@@ -3202,20 +3219,20 @@ PROCEDURE busca_carga_ativa:
 
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-    RUN STORED-PROCEDURE pc_busca_carga_ativa
+    RUN STORED-PROCEDURE pc_idcarga_pre_aprovado_cta
          aux_handproc = PROC-HANDLE NO-ERROR
                        (INPUT par_cdcooper,
                         INPUT par_nrdconta,
                        OUTPUT 0). /* idcarga */
 
-    CLOSE STORED-PROC pc_busca_carga_ativa 
+    CLOSE STORED-PROC pc_idcarga_pre_aprovado_cta 
        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
     ASSIGN par_idcarga = 0
-           par_idcarga = pc_busca_carga_ativa.pr_idcarga 
-                         WHEN pc_busca_carga_ativa.pr_idcarga <> ?.
+           par_idcarga = pc_idcarga_pre_aprovado_cta.pr_idcarga 
+                         WHEN pc_idcarga_pre_aprovado_cta.pr_idcarga <> ?.
 
 END PROCEDURE.
 
@@ -3322,33 +3339,17 @@ PROCEDURE verifica_mostra_banner_taa:
     IF  AVAIL tt-dados-cpa THEN
         DO:
             IF  tt-dados-cpa.vldiscrd <= 0 THEN
+            DO:
                 ASSIGN par_flgdobnr = FALSE.
+                RETURN "OK".
+            END.    
         END.
     ELSE
-        ASSIGN par_flgdobnr = FALSE.
-
-   
-    /* Busca a carga ativa */
-    RUN busca_carga_ativa(INPUT par_cdcooper,
-                          INPUT par_nrdconta,
-                         OUTPUT aux_idcarga).
-    /*  Caso nao possua carga ativa */
-    IF  aux_idcarga = 0 THEN
         DO:
             ASSIGN par_flgdobnr = FALSE.
-			RETURN "OK".
-        END.
-
-    FOR crapcpa FIELDS(cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
-                                       crapcpa.nrdconta = par_nrdconta AND
-                                       crapcpa.iddcarga = aux_idcarga
-                                       NO-LOCK: END.
-    IF NOT AVAIL crapcpa THEN
-       DO:
-           ASSIGN par_flgdobnr = FALSE.
-		   RETURN "OK".
-       END.
-   
+            RETURN "OK".
+        END. 
+		
     /* Dados de parametrizacao do credito pre-aprovado */
     FOR crappre FIELDS(cdfinemp)
                 WHERE crappre.cdcooper = par_cdcooper            AND
@@ -3365,7 +3366,6 @@ PROCEDURE verifica_mostra_banner_taa:
    FOR EACH crapepr WHERE crapepr.cdcooper = par_cdcooper        AND
                           crapepr.nrdconta = par_nrdconta        AND
                           crapepr.cdfinemp = crappre.cdfinemp    AND
-                          crapepr.cdlcremp = crapcpa.cdlcremp    AND
                           crapepr.inliquid = 0 /* ATIVO*/
                           NO-LOCK:
 
@@ -3383,4 +3383,3 @@ END PROCEDURE.
 
 
 /* ......................................................................... */
-

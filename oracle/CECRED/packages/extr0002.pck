@@ -796,9 +796,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                      na procedure pc_gera_tarifa_extrato (Lucas Ranghetti #787894)
         
         21/05/2018 - Alterações relacionadas a SM4 - PRJ364 - Paulo Martins - Mout´s
-
+        
         30/05/2018 - Adicionado dscomple xml na pc_gera_impextdpv (Alcemir Mout's - Prj. 467).                     
-
+        
         03/08/2018 - Inclusao de aplicacoes programadas - PRJ 411.2 - CIS Corporate
 
         17/08/2018 - sctask0012764 Inclusão de module e action nas subrotinas da rotina
@@ -812,7 +812,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         
         13/12/2018 - Inclusão da Function PREJ0003.fn_obtem_saldo_hist_preju_cc para buscar o saldo do prejuízo para 
                      mostrar no informe de rendimentos.
-                                         (Heckmann/AMcom/P450)
+                                         (Heckmann/AMcom/P450)	
+	   
+		03/06/2019 - Incluido o Historico 2973 na validação de cheques devolvidos de deposito (Luis Fagundes/AMCOM)  
+
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
 
@@ -2086,9 +2089,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         SELECT lac.cdhistor
               ,cpc.cdhsprap
               ,cpc.cdhsrgap
-			  ,cpc.cdhsrvap
-		      ,cpc.cdhsrdap
-			  ,cpc.cdhsirap
+			        ,cpc.cdhsrvap
+		          ,cpc.cdhsrdap
+			        ,cpc.cdhsirap
               ,lac.vllanmto
               ,lac.dtmvtolt
               ,NULL dtrefere
@@ -2292,49 +2295,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           vr_listahis:= '150,151,158,496,863,870,925,1115';
         END IF;        
       END IF;  
-        -- RPP 
-        OPEN cr_craplpp (pr_cdcooper => pr_cdcooper
+          -- RPP 
+          OPEN cr_craplpp (pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
                                    ,pr_nrctrrpp => pr_nrctrrpp
                                    ,pr_dtiniper => vr_dtiniper
                                    ,pr_dtfimper => pr_dtfimper
-                        ,pr_listahis => vr_listahis); 
+                          ,pr_listahis => vr_listahis); 
       ELSE
           -- Aplicacao Programada
-        OPEN cr_crapcpc (pr_cdprodut => rw_craprpp.cdprodut);
-        FETCH cr_crapcpc INTO rw_crapcpc;
-        CLOSE cr_crapcpc;  -- Se não existisse o produto, um erro já teria estourado antes. 
+          OPEN cr_crapcpc (pr_cdprodut => rw_craprpp.cdprodut);
+          FETCH cr_crapcpc INTO rw_crapcpc;
+          CLOSE cr_crapcpc;  -- Se não existisse o produto, um erro já teria estourado antes. 
           -- Verifica finalidade
         IF (rw_craprpp.dsfinali IS NULL) OR (TRIM(rw_craprpp.dsfinali) IS NULL) THEN
              vr_dsfinali := rw_crapcpc.nmprodut;
           ELSE
              vr_dsfinali := rw_craprpp.dsfinali;
           END IF;
-        IF pr_nmdatela = 'ATENDA' THEN
-          --Usuario TI
-          IF rw_crapope.cddepart = 20  THEN  /** SUPER-USUARIO **/
-            vr_listahis:= '150,151,152,154,155,158,496,863,925,1115';
-          ELSE
+          IF pr_nmdatela = 'ATENDA' THEN
+            --Usuario TI
+            IF rw_crapope.cddepart = 20  THEN  /** SUPER-USUARIO **/
+              vr_listahis:= '150,151,152,154,155,158,496,863,925,1115';
+            ELSE
               vr_listahis:= '150,151,158,496,863,925,1115'; 
-          END IF; 
-        ELSE
-          --Usuario TI
-          IF rw_crapope.cddepart = 20  THEN  /** SUPER-USUARIO **/
-            vr_listahis:= '150,151,152,154,155,158,496,863,869,870,925,1115';
+            END IF; 
           ELSE
-            vr_listahis:= '150,151,158,496,863,870,925,1115'; 
-          END IF;        
-        END IF;
-        vr_listahis:= vr_listahis || ','|| rw_crapcpc.cdhsnrap || ','|| rw_crapcpc.cdhsrgap || ','|| rw_crapcpc.cdhsirap;      
+            --Usuario TI
+            IF rw_crapope.cddepart = 20  THEN  /** SUPER-USUARIO **/
+              vr_listahis:= '150,151,152,154,155,158,496,863,869,870,925,1115';
+            ELSE
+              vr_listahis:= '150,151,158,496,863,870,925,1115'; 
+            END IF;        
+          END IF;
+          vr_listahis:= vr_listahis || ',' || rw_crapcpc.cdhsnrap || ',' || rw_crapcpc.cdhsrgap || ','|| rw_crapcpc.cdhsirap;  
           vr_listahis:= vr_listahis || ',' || rw_crapcpc.cdhsprap || ',' || rw_crapcpc.cdhsrvap || ','|| rw_crapcpc.cdhsrdap;  
 											     
-        vr_dtiniper := pr_dtiniper;
-        OPEN cr_craplac (pr_cdcooper => pr_cdcooper
-                        ,pr_nrdconta => pr_nrdconta
-                        ,pr_nrctrrpp => pr_nrctrrpp
-                        ,pr_dtiniper => vr_dtiniper
-                        ,pr_dtfimper => pr_dtfimper
-                        ,pr_listahis => vr_listahis); 
+          vr_dtiniper := pr_dtiniper;
+          OPEN cr_craplac (pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrctrrpp => pr_nrctrrpp
+                          ,pr_dtiniper => vr_dtiniper
+                          ,pr_dtfimper => pr_dtfimper
+                          ,pr_listahis => vr_listahis); 
                         
       END IF;                                     
       LOOP
@@ -2346,7 +2349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               AND rw_lancam.cdhistor IN (150,151,152,154,155,863,869,870) THEN  
           --Pular Registro
           CONTINUE; 
-           END IF;   
+        END IF;   
         ELSE -- APL. PROGR
             FETCH cr_craplac INTO rw_lancam;
             EXIT WHEN cr_craplac%NOTFOUND;
@@ -2441,11 +2444,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         vr_tab_extrato_rpp(vr_index).dsfinali:= vr_dsfinali;
         -- Agrupar no extrato (apenas novas)
         IF rw_craphis.cdhistor IN 
-                (rw_lancam.cdhsprap,rw_lancam.cdhsrgap
-                ,rw_lancam.cdhsrvap,rw_lancam.cdhsrdap
+          (rw_lancam.cdhsprap,rw_lancam.cdhsrgap
+          ,rw_lancam.cdhsrvap,rw_lancam.cdhsrdap
           ,rw_lancam.cdhsirap) 
           AND vr_apl_prog = 1 THEN
-           vr_tab_extrato_rpp(vr_index).aghistor := 1; -- Acumula
+              vr_tab_extrato_rpp(vr_index).aghistor := 1; -- Acumula
         ELSE
            vr_tab_extrato_rpp(vr_index).aghistor := 0; -- Nao Acumula
         END IF;
@@ -2488,8 +2491,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                 pr_tab_extrato_rpp(vr_index).nrdocmto := null;
                 pr_tab_extrato_rpp(vr_index).vllanmto := pr_tab_extrato_rpp(vr_index).vllanmto + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
                 IF vr_tab_extrato_rpp(vr_index_temp).indebcre = 'C' THEN
-                pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
-            ELSE
+                   pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
+                ELSE
                    pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr - vr_tab_extrato_rpp(vr_index_temp).vllanmto;
                 END IF;
             ELSE
@@ -2620,7 +2623,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                                          ,pr_tab_erro     OUT gene0001.typ_tab_erro) IS --Tabela de Erros
   BEGIN
   /*---------------------------------------------------------------------------------------------------------------
-  
+
      Programa : pc_consulta_extrato_ap_tit
      Sistema : Novos Produtos de Captação
      Sigla   : APLI
@@ -2941,7 +2944,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             vr_listahis:= '150,151,158,496,863,870,925,1115'; 
           END IF;        
         END IF;
-        vr_listahis:= vr_listahis || ','|| rw_crapcpc.cdhsnrap || ','|| rw_crapcpc.cdhsrgap || ','|| rw_crapcpc.cdhsirap;      
+        vr_listahis:= vr_listahis || ',' || rw_crapcpc.cdhsnrap || ',' || rw_crapcpc.cdhsrgap || ','|| rw_crapcpc.cdhsirap;  
         vr_listahis:= vr_listahis || ',' || rw_crapcpc.cdhsprap || ',' || rw_crapcpc.cdhsrvap || ','|| rw_crapcpc.cdhsrdap;  
         vr_dtiniper := pr_dtiniper;
         OPEN cr_craplac (pr_cdcooper => pr_cdcooper
@@ -3097,8 +3100,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                 pr_tab_extrato_rpp(vr_index).nrdocmto := null;
                 pr_tab_extrato_rpp(vr_index).vllanmto := pr_tab_extrato_rpp(vr_index).vllanmto + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
                 IF vr_tab_extrato_rpp(vr_index_temp).indebcre = 'C' THEN
-                pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
-            ELSE
+                   pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr + vr_tab_extrato_rpp(vr_index_temp).vllanmto;
+                ELSE
                    pr_tab_extrato_rpp(vr_index).vlsldppr := pr_tab_extrato_rpp(vr_index).vlsldppr - vr_tab_extrato_rpp(vr_index_temp).vllanmto;
                 END IF;
             ELSE
@@ -6846,7 +6849,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         IF rw_craphis.cdhistor = 508 THEN                                                    --*Nao remover replace os traços sao diferentes
           pr_tab_lancamento_futuro(vr_index).dshistor:= substr(rw_craphis.dshistor ||' - '|| REPLACE(rw_craplcm2.dscedent,'–', '-'),1,50);
         ELSE
-          IF rw_craplcm2.cdhistor IN (24,27,47,78,156,191,338,351,399,573,657) THEN
+          IF rw_craplcm2.cdhistor IN (24,27,47,78,156,191,338,351,2973,399,573,657) THEN
             pr_tab_lancamento_futuro(vr_index).dshistor:= substr(rw_craphis.dshistor || rw_craplcm2.cdpesqbb,1,50);
           ELSE
             pr_tab_lancamento_futuro(vr_index).dshistor:= rw_craphis.dshistor;
@@ -7374,7 +7377,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                               ,pr_nrdrowid => vr_nrdrowid);
         END IF;  
       WHEN OTHERS THEN
-
+         
         -- Retorno não OK
         pr_des_reto:= 'NOK';
         -- Chamar rotina de gravação de erro
@@ -7401,7 +7404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                               ,pr_nmdatela => pr_nmdatela
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
-        END IF;  
+        END IF; 
       END;
     END pc_consulta_lancamento; 
 
@@ -13391,8 +13394,8 @@ END pc_consulta_ir_pj_trim;
   --                           PRJ-343 - Cessao de Credito(Odirlei-AMcom)                   
   --
   --              26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-  -- 		                   crapass, crapttl, crapjur 
-  -- 						  (Adriano - P339).
+  --                           crapass, crapttl, crapjur 
+  --                          (Adriano - P339).
   --              25/05/2017 - Passagem do tpemprst. (Jaison/James - PRJ298)
   --
   --              11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).             
@@ -13566,7 +13569,7 @@ END pc_consulta_ir_pj_trim;
         vr_vlsaldo1 NUMBER;
         vr_vlsaldo2 NUMBER;
         vr_flginfor BOOLEAN:= FALSE;
-				vr_flginfor2 BOOLEAN:= FALSE;
+        vr_flginfor2 BOOLEAN:= FALSE;
         vr_flginfor3 BOOLEAN:= FALSE;
         vr_diapagto INTEGER;
         vr_mespagto INTEGER;
@@ -13874,7 +13877,7 @@ END pc_consulta_ir_pj_trim;
           --Escrever no XML interno
           gene0002.pc_escreve_xml(pr_clobxml73,pr_dstexto73,vr_dstexto);
 
-          TIOF0001.pc_busca_taxa_iof(pr_cdcooper	=> pr_cdcooper     --> Codigo da Cooperativa 
+          TIOF0001.pc_busca_taxa_iof(pr_cdcooper    => pr_cdcooper     --> Codigo da Cooperativa 
                                     ,pr_nrdconta  => pr_nrdconta     --> Numero da Conta Corrente
                                     ,pr_nrctremp  => rw_crapepr.nrctremp   --> Numero do Contrato
                                     ,pr_dtmvtolt  => pr_dtmvtolt     --> Data do movimento para busca na tabela de IOF
@@ -14698,7 +14701,7 @@ END pc_consulta_ir_pj_trim;
           --Escrever no XML interno
           gene0002.pc_escreve_xml(pr_clobxml73,pr_dstexto73,vr_dstexto);
 
-          TIOF0001.pc_busca_taxa_iof(pr_cdcooper	=> pr_cdcooper     --> Codigo da Cooperativa 
+          TIOF0001.pc_busca_taxa_iof(pr_cdcooper    => pr_cdcooper     --> Codigo da Cooperativa 
                                     ,pr_nrdconta  => pr_nrdconta     --> Numero da Conta Corrente
                                     ,pr_nrctremp  => rw_crapepr.nrctremp   --> Numero do Contrato
                                     ,pr_dtmvtolt  => pr_dtmvtolt     --> Data do movimento para busca na tabela de IOF
@@ -15180,8 +15183,8 @@ END pc_consulta_ir_pj_trim;
   --                           (Lucas Ranghetti/Rodrigo #399412)
   --
   --              26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-  --			               crapass, crapttl, crapjur 
-  --				  		  (Adriano - P339).
+  --                           crapass, crapttl, crapjur 
+  --                          (Adriano - P339).
   --
   --              25/05/2017 - Passagem do tpemprst. Permitir gerar extrato de Pos-Fixado. (Jaison/James - PRJ298)
   --
@@ -17945,7 +17948,7 @@ END pc_consulta_ir_pj_trim;
         --CLOB de Dados
         vr_clobxml209  CLOB;
         vr_dstexto    VARCHAR2(32600);
-        vr_dstexto209  VARCHAR2(32600);
+        vr_dstexto209 VARCHAR2(32600);
         vr_dstexto_ap VARCHAR2(5000); -- Apl. programada - Campos extras
         --Variaveis Erro
         vr_cdcritic INTEGER;
@@ -18104,7 +18107,7 @@ END pc_consulta_ir_pj_trim;
           END IF;  
           -- Fechar o cursor
           CLOSE cr_crapage;
-
+          
           gene0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
 
           -- Selecionar informacoes % IR para o calculo da APLI0001.pc_calc_saldo_rpp
@@ -21324,21 +21327,21 @@ END pc_consulta_ir_pj_trim;
                                   ,pr_dsiduser => pr_dsiduser      --Identificador Usuario
                                   ,pr_nrdconta => pr_nrdconta      --Numero da Conta do Associado
                                   ,pr_nrctrrpp => vr_nraplica      --Numero Contrato
-                                  ,pr_dtiniper => pr_dtrefere      --Data Inicio Periodo
-                                  ,pr_dtfimper => pr_dtreffim      --Data Final Periodo
-                                  ,pr_idseqttl => pr_idseqttl      --Sequencial do Titular
-                                  ,pr_flgrodar => pr_flgrodar      --Flag Executar                                
-                                  ,pr_flgerlog => pr_flgerlog      --Escreve erro Log                                
-                                  ,pr_clobxml  => pr_clobxml5      --Clob arquivo de dados
-                                  ,pr_dstexto  => pr_dstexto5      --Texto Clob 5 
-                                  ,pr_tab_craptab => pr_tab_craptab --Tipo de tabela de Conta Bloqueada
-                                  ,pr_tab_craplpp => pr_tab_craplpp --Tipo de tabela com lancamento poupanca
-                                  ,pr_tab_craplrg => pr_tab_craplpp --Tipo de tabela com resgates
-                                  ,pr_tab_resgate => pr_tab_resgate --Tabela com valores dos resgates das contas por aplicacao
-                                  ,pr_nmarqimp => pr_nmarqimp       --Nome Arquivo Impressao
-                                  ,pr_nmarqpdf => pr_nmarqpdf       --Nome Arquivo PDF
-                                  ,pr_tab_erro => pr_tab_erro       --Tabela de Erros
-                                  ,pr_des_reto => vr_des_reto);     --Descricao Erro
+                                ,pr_dtiniper => pr_dtrefere      --Data Inicio Periodo
+                                ,pr_dtfimper => pr_dtreffim      --Data Final Periodo
+                                ,pr_idseqttl => pr_idseqttl      --Sequencial do Titular
+                                ,pr_flgrodar => pr_flgrodar      --Flag Executar                                
+                                ,pr_flgerlog => pr_flgerlog      --Escreve erro Log                                
+                                ,pr_clobxml  => pr_clobxml5      --Clob arquivo de dados
+                                ,pr_dstexto  => pr_dstexto5      --Texto Clob 5 
+                                ,pr_tab_craptab => pr_tab_craptab --Tipo de tabela de Conta Bloqueada
+                                ,pr_tab_craplpp => pr_tab_craplpp --Tipo de tabela com lancamento poupanca
+                                ,pr_tab_craplrg => pr_tab_craplpp --Tipo de tabela com resgates
+                                ,pr_tab_resgate => pr_tab_resgate --Tabela com valores dos resgates das contas por aplicacao
+                                ,pr_nmarqimp => pr_nmarqimp       --Nome Arquivo Impressao
+                                ,pr_nmarqpdf => pr_nmarqpdf       --Nome Arquivo PDF
+                                ,pr_tab_erro => pr_tab_erro       --Tabela de Erros
+                                ,pr_des_reto => vr_des_reto);     --Descricao Erro
           END IF;              
         ELSIF pr_tpextrat = 8 THEN /* Capital */
           --Extrato Capital
@@ -21632,7 +21635,7 @@ END pc_consulta_ir_pj_trim;
         
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;        
-    
+        
     vr_dsparame VARCHAR2(4000);
         
     -- Selecionar quantidade de saques em poupanca nos ultimos 6 meses

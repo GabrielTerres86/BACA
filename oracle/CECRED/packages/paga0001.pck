@@ -13632,6 +13632,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
          ELSIF vr_tab_agendto(vr_index_agendto).dsorigem = 'PORTABILIDAD' THEN -- P485
            vr_cdagenci:= 0;
            vr_idorigem:= 4;  /*Seguir o mesmo fluxo do TAA, para que não sejam validados limites de internet*/
+         ELSIF vr_tab_agendto(vr_index_agendto).dsorigem = 'AIMARO' THEN
+           vr_cdagenci:= 90;
+           vr_idorigem:= 3;  /*P500 - Seguir o mesmo fluxo da Internet*/         
          ELSE
            vr_cdagenci:= vr_tab_agendto(vr_index_agendto).cdagenci;
            vr_idorigem:= 2;  /*CAIXA*/
@@ -14214,7 +14217,12 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         pr_tab_agendto(vr_index_agendto).dscooper:= rw_crapcop.nmrescop;
         pr_tab_agendto(vr_index_agendto).nrdconta:= rw_craplau.nrdconta;
         pr_tab_agendto(vr_index_agendto).nmprimtl:= rw_craplau.nmprimtl;
-        pr_tab_agendto(vr_index_agendto).cdagenci:= rw_craplau.cdagenci;
+        -- Tratamento para efetivar os agendamentos realizados pelo AIMARO (P500)
+        IF rw_craplau.dsorigem = 'AIMARO' AND rw_craplau.cdtiptra in (1,5) THEN
+          pr_tab_agendto(vr_index_agendto).cdagenci:= 90;
+        ELSE
+          pr_tab_agendto(vr_index_agendto).cdagenci:= rw_craplau.cdagenci;
+        END IF;  
         pr_tab_agendto(vr_index_agendto).cdtiptra:= rw_craplau.cdtiptra;
         pr_tab_agendto(vr_index_agendto).fltiptra:= vr_fltiptra;
         pr_tab_agendto(vr_index_agendto).dstiptra:= vr_dstiptra;

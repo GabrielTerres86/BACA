@@ -2,7 +2,7 @@
 
    Programa: sistema/generico/procedures/b1wgen0117.p
    Autor  : Adriano
-   Data   : Setembro/2011                         Ultima alteracao: 20/08/2015
+   Data   : Setembro/2011                         Ultima alteracao: 18/05/2019
 
    Dados referentes ao programa:
 
@@ -19,12 +19,15 @@
                
                20/08/2015 - Removido a validacao de conta igual a zero pois
                             existe a possibilidade do procurado de uma conta
-                            PJ nao tenha conta na coopertativa. SD 319604 (Kelvin).             
+                            PJ nao tenha conta na coopertativa. SD 319604 (Kelvin).  
+                            
+               18/05/2019 - Perca de aprovacao do pré-aprovado na conta (Christian - Envolti).
 ..............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/b1wgen0117tt.i }
+{ sistema/generico/includes/var_oracle.i }	
 
 DEF VAR aux_nrregist AS INT                                        NO-UNDO.
 DEF VAR aux_contador AS INT                                        NO-UNDO.
@@ -99,7 +102,7 @@ PROCEDURE consultar_cad_restritivo:
 
              ASSIGN par_qtregist = par_qtregist + 1.
 
-             /* controles da paginação */
+             /* controles da paginaçao */
              IF  par_flgpagin                                   AND
                 (par_qtregist < par_nriniseq                    OR
                  par_qtregist > (par_nriniseq + par_nrregist))  THEN
@@ -209,7 +212,7 @@ PROCEDURE consultar_cad_restritivo:
 
              ASSIGN par_qtregist = par_qtregist + 1.
 
-             /* controles da paginação */
+             /* controles da paginaçao */
              IF  par_flgpagin                                  AND
                 (par_qtregist < par_nriniseq                   OR
                  par_qtregist > (par_nriniseq + par_nrregist)) THEN
@@ -637,7 +640,56 @@ PROCEDURE incluir_cad_restritivo:
               par_msgretor     = aux_msgretor
               aux_sittrans     = "OK".
        VALIDATE crapcrt.
-              
+       
+       /*** Traz todos os registros de cada cooperativa ativa ***/
+      FOR EACH crapcop WHERE crapcop.flgativo = TRUE
+						 NO-LOCK:
+
+      /* Buscar CPF/CNPJ raiz do associado, nr da conta e tipo pessoa */
+			FIND FIRST crapass WHERE crapass.cdcooper = crapcop.cdcooper AND
+                               crapass.nrcpfcgc = par_nrcpfcgc NO-LOCK NO-ERROR.
+
+        IF AVAIL crapass THEN
+        DO:
+
+	        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+          /* Efetuar a chamada a rotina Oracle */
+          RUN STORED-PROCEDURE pc_proces_perca_pre_aprovad
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper
+                                                ,INPUT 0
+                                                ,INPUT crapass.nrdconta
+                                                ,INPUT crapass.inpessoa
+                                                ,INPUT crapass.nrcpfcnpj_base
+                                                ,INPUT par_dtmvtolt
+                                                ,INPUT 36
+                                                ,INPUT 0
+                                                ,INPUT 0
+                                                ,OUTPUT "").
+
+          /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_proces_perca_pre_aprovad
+             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          ASSIGN aux_dscritic = ""
+              aux_dscritic = pc_proces_perca_pre_aprovad.pr_dscritic WHEN pc_proces_perca_pre_aprovad.pr_dscritic <> ?.   
+
+          IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+          DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                   INPUT par_cdagenci,
+                   INPUT par_nrdcaixa,
+                   INPUT 1, /*sequencia*/
+                   INPUT aux_cdcritic,
+                   INPUT-OUTPUT aux_dscritic).
+
+            RETURN "NOK".
+
+          END.
+        END.
+      END. /* FIM crapcop */
 
     END. /*Fim do transaction Inclui*/
 

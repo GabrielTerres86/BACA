@@ -6476,6 +6476,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     vr_vldjuros   NUMBER;
     vr_vltitulo   NUMBER;
     vr_vltotjur   NUMBER;
+    vr_cdpesqbb   craplcm.cdpesqbb%TYPE;
     
     rw_craplcm craplcm%ROWTYPE;
 
@@ -6804,6 +6805,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         vr_cdhistor   := 597;
         vr_nrdolote   := 10300;
         vr_nrdocmtolt := NULL;
+        vr_cdpesqbb   := rw_craptdb.nrdocmto;
       ELSE -- operação de crédito
         vr_cdhistor := dsct0003.vr_cdhistordsct_rendapgtoant;
         vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
@@ -6813,6 +6815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                   || TO_CHAR(pr_cdagenci)|| ';'
                                                   || '100');
         vr_nrdocmtolt := rw_craptdb.nrdocmto;
+        vr_cdpesqbb   := 'Desconto de Título do Borderô ' || rw_craptdb.nrborder;
       END IF;
             
       /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
@@ -6945,7 +6948,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             ,rw_craptdb.nrdconta
             ,0
             ,pr_cdcooper
-            ,rw_craptdb.nrdocmto)
+            ,vr_cdpesqbb)
         RETURNING craplcm.nrseqdig
                  ,craplcm.vllanmto
         INTO rw_craplcm.nrseqdig

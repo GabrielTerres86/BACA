@@ -62,10 +62,10 @@
 											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" onClick="acessaOpcaoAba(2,0,0)" class="txtNormalBold">Conta Corrente</a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="8" height="21" id="imgAbaDir0"></td>
 											<td width="1"></td>
-											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="8" height="21" id="imgAbaEsq1"></td>
+											<!-- <td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="8" height="21" id="imgAbaEsq1"></td>
 											<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen1"><a href="#" id="linkAba0" onClick="acessaOpcaoAba(2,1,1)" class="txtNormalBold">Pr&eacute;-Aprovado</a></td>
 											<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="8" height="21" id="imgAbaDir1"></td>
-											<td width="1"></td>
+											<td width="1"></td> -->
 										</tr>
 									</table>
 								</td>

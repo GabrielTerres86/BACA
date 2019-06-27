@@ -20,6 +20,9 @@
 				  01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
 
                   18/06/2018 - P450 - Inclusão do Motivo do Cancelamento/dsmotcan (Marcel/AMcom)
+				  
+				  14/06/2019 - Ajustar botao Dossiê para buscar a imagem correta pois estava buscando do 
+				               ambiente de homologação (Lucas Ranghetti INC0016209)
  */
 ?>
 <div id="divSeguro" class="divRegistros">
@@ -117,7 +120,7 @@
 		<input type="image" id="btAlterar"   src="<?php echo $UrlImagens; ?>botoes/alterar.gif"   <?php if (!in_array("A",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'ALTERAR\');"'; } ?>  />
 		<input type="image" id="btConsultar" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'CONSULTAR\');"'; } ?>   />
 		<input type="image" id="btCancelar"  src="<?php echo $UrlImagens; ?>botoes/cancelar.gif"  <?php if (!in_array("X",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'C\');"'; } ?>   />
-		<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(7);return false;" type="image" src="http://aylloshomol2.cecred.coop.br/imagens/botoes/dossie.gif">
+		<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(7);return false;" type="image"  src="<?php echo $UrlImagens; ?>botoes/dossie.gif">
 		<input type="image" id="btImprimir"  src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if (!in_array("M",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'IMP\');"'; } ?>  />
 	
 
@@ -125,7 +128,7 @@
 		
 		<input type="image" id="btConsultar" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'CONSULTAR\');"'; } ?>   />
 		<input type="image" id="btCancelar"  src="<?php echo $UrlImagens; ?>botoes/cancelar.gif"  <?php if (!in_array("X",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="controlaOperacao(\'C\');"'; } ?>   />
-		<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(7);return false;" type="image" src="http://aylloshomol2.cecred.coop.br/imagens/botoes/dossie.gif">
+		<input class="FluxoNavega" id="btndossie" onclick="dossieDigdoc(7);return false;" type="image"  src="<?php echo $UrlImagens; ?>botoes/dossie.gif">
 		
 	<?}?>
 </div>

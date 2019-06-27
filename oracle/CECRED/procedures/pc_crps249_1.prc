@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                         Ultima atualizacao: 01/09/2017
+   Data    : Novembro/98                         Ultima atualizacao: 03/06/2019
 
    Dados referentes ao programa:
 
@@ -83,6 +83,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
 												  
                30/08/2018 - Correção bug não contabiliza histórico 2408
                              (Renato Cordeiro - AMCom)
+                             
+               03/06/2019 - Inclusão do histórico 2973 na regra de inclusão na 
+                            CRAPREJ - Cadastro de rejeitados na integracao - D23.
+                             (Fernanda Kelli de Oliveira - AMCom)
 ............................................................................. */
   -- Cursor para verificar se tem empréstimo
   cursor cr_crapepr (pr_cdcooper in crapepr.cdcooper%type,
@@ -1451,7 +1455,9 @@ BEGIN
     -- 463 - ESTORNO DA PROVISAO RDC PRE
     -- 475 - RENDIMENTO RDCPRE
     -- 532 - RENDIMENTO RDCPOS
-    if pr_cdhistor not in (340, 313, 345, 445, 97, 319, 339, 351, 24, 27, 342, 463, 475, 532) THEN
+    -- 2973 - DEVOLUCAO DE CHEQUE ACOLHIDO EM DEPOSITO
+
+    if pr_cdhistor not in (340, 313, 345, 445, 97, 319, 339, 351, 24, 27, 342, 463, 475, 532, 2973) THEN
 
       pc_cria_craprej(pr_cdhistor => vr_cdhistor,
                       pr_dtrefere => pr_nmestrut);
