@@ -208,10 +208,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
 
   begin
     BEGIN
+      IF pr_dtmvtolt IS NULL THEN
+        vr_dtmvtolt := trunc(sysdate)-1;
+      ELSE
+        vr_dtmvtolt := pr_dtmvtolt;
+      END IF;
       --arquivos a serem listados
       --vr_nomedarq := '756-2011%TRANSACOES_CEXT'||to_char(SYSDATE,'RRRR-MM-DD')||'.CSV';
-      -- RITM0011945
-      vr_nomedarq := '756-2011%TRANSACOES_CEXT'||to_char(pr_dtmvtolt + 1,'RRRR-MM-DD')||'.CSV';
+      vr_nomedarq := '756-2011%TRANSACOES_CEXT'||to_char(vr_dtmvtolt + 1,'RRRR-MM-DD')||'.CSV';
 
       vr_nmdircop := gene0001.fn_diretorio(pr_tpdireto => 'M'
                                           ,pr_cdcooper => pr_cdcooper
