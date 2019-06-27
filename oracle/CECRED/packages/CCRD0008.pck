@@ -94,15 +94,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
   --  Sistema  : Impressão de Termos de Adesão
   --  Sigla    : CCRD
   --  Autor    : Paulo Roberto da Silva (Supero)
-  --  Data     : março/2018.                   Ultima atualizacao: 09/03/2018
+  --  Data     : março/2018.                   Ultima atualizacao: 27/06/2019
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Agrupar rotinas para impressão de termos de adesão
   --
-  -- Alteracoes:
-  --
+  -- Alteracoes: 27/06/2019 - Ajustar para passar o false na fn_data_extenso, assim garantimos
+  --                          que iremos usar o ano correto na data por extenso (Lucas Ranghetti INC0017300)
   ---------------------------------------------------------------------------------------------------------------
 
   --> Armazenar dados do contrato
@@ -214,7 +214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
      Sistema : Rotinas referentes ao Termo Adesão Cartão de Crédito
      Sigla   : CRED
      Autor   : Paulo Silva - Supero
-     Data    : Março/2018.                    Ultima atualizacao: 28/09/2018
+     Data    : Março/2018.                    Ultima atualizacao: 27/06/2019
 
      Dados referentes ao programa:
 
@@ -223,8 +223,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
      
      Alteracoes: 28/09/2018 - Ajuste para pegar valor numerico do limite de esteira 
                               no json. INC0023773 (Lombardi)
-				 20/02/2019 - Implementação de nova versão do Termo de Adesão do Cartão
-							  de crédito. (PJ429 - Lucas - Supero)
+        				 20/02/2019 - Implementação de nova versão do Termo de Adesão do Cartão
+				              			  de crédito. (PJ429 - Lucas - Supero)
+                 27/06/2019 - Ajustar para passar o false na fn_data_extenso, assim garantimos
+                              que iremos usar o ano correto na data por extenso (Lucas Ranghetti INC0017300)
     ..............................................................................*/
 
     ---------->> CURSORES <<--------
@@ -925,7 +927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
                                  ,pr_flsituac => vr_flsituac); 
     
     -- Monta o Local e Data
-    vr_localedata := SUBSTR(rw_crapage.nmcidade,1,15) ||', ' || gene0005.fn_data_extenso(nvl(rw_crawcrd.dtinsori,rw_crawcrd.dtpropos));
+    vr_localedata := SUBSTR(rw_crapage.nmcidade,1,15) ||', ' || gene0005.fn_data_extenso(nvl(rw_crawcrd.dtinsori,rw_crawcrd.dtpropos),FALSE);
     
     IF rw_crapass.inpessoa = 1 THEN
       
