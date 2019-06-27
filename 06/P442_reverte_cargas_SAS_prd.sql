@@ -10,7 +10,10 @@ DECLARE
        AND pot.skcarga = car.skcarga 
        AND car.qtregistroprocessado > 0 
        AND car.dthorafiminclusao IS NOT NULL 
-       AND dthorainicioprocesso IS NOT NULL;
+       AND dthorainicioprocesso IS NOT NULL
+	   AND car.dthorainicioprocesso IS NOT NULL
+	   AND car.dthorafimprocesso IS NULL
+	   AND pot.skcarga = 64902;
   
 BEGIN
   FOR rw_busca_cargas IN cr_busca_cargas LOOP
