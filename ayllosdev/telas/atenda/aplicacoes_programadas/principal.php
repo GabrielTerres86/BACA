@@ -237,7 +237,8 @@
 					<th>Contrato</th>
 					<th>Dia</th>
 					<th>Presta&ccedil;&atilde;o</th>
-					<th>Saldo</th>	
+					<th>Saldo L&iacute;quido</th>	
+					<th>Saldo Bruto</th>	
 					<th>Situa&ccedil;&atilde;o</th>
 					<th>Blq</th>
 					<th>CI</th>						
@@ -263,6 +264,8 @@
 						<td align="right"><?php echo number_format(str_replace(",",".",$poupancas[$i]->tags[8]->cdata),2,",","."); ?></td>
 						
 						<td align="right"><?php if ($poupancas[$i]->tags[24]->cdata == 0) { echo number_format(str_replace(",",".",$poupancas[$i]->tags[11]->cdata),2,",","."); } else { echo ""; } ?></td>
+						
+						<td align="right"><?php if ($poupancas[$i]->tags[24]->cdata == 0) { echo number_format(str_replace(",",".",$poupancas[$i]->tags[29]->cdata),2,",","."); } else { echo ""; } ?></td>
 						
 						<td><?php echo $poupancas[$i]->tags[19]->cdata; ?></td>
 						

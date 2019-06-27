@@ -94,6 +94,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS155(pr_cdcooper in craptab.cdcooper%ty
 
 			   19/03/2019- Alteração para tratamento do relatorio unificado por cooperativa (411.2 - CIS Corporate)
 							
+			   21/05/2019- Alteração para retorno de valor de saldor bruto (411.2 - CIS Corporate)
+
 ............................................................................. */
 /****** Decisoes sobre o VAR ************************************************
 Poupanca programada sera mensal com taxa provisoria senao houver mensal
@@ -165,6 +167,7 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
            craprpp.vlprerpp,
            craprpp.qtprepag,
            craprpp.dtfimper,
+           craprpp.cdprodut,
            crapage.cdagenci,
            decode(crapass.nrramemp,0,null,crapass.nrramemp) nrramemp,
            crapass.nmprimtl,
@@ -214,6 +217,7 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
                                 vlprerpp craprpp.vlprerpp%type,
                                 qtprepag craprpp.qtprepag%type,
                                 vlsldapl craprpp.vlsdrdpp%type,
+                                vlsdtoap craprpp.vlsdrdpp%type,
                                 nmprimtl crapass.nmprimtl%type,
                                 dsdacstp varchar2(3),
                                 dssituac varchar2(10));
@@ -226,7 +230,8 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
                               tab_aplicacao  typ_tab_aplicacao, /* Instância da tabela de aplicações */
                               qtaplica       number(7),
                               vlprerpp       craprpp.vlprerpp%type,
-                              vlsldapl       craprpp.vlsdrdpp%type);
+                              vlsldapl       craprpp.vlsdrdpp%type,
+                              vlsdtoap       craprpp.vlsdrdpp%type);
   /* Tabela onde serão armazenados os registros da agência */
   /* O índice da tabela será o código da agência */
   type typ_tab_agencia is table of typ_agencia index by binary_integer;
@@ -248,6 +253,10 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
   vr_dscritic   VARCHAR2(4000);
   -- Variáveis utilizadas para auxiliar o processamento das informações
   vr_vlsdrdpp      NUMBER; -- craprpp.vlsdrdpp%type;
+  vr_vlsdtoap      NUMBER;
+  vr_vlbascal      NUMBER;
+  vr_vlrebtap      NUMBER;
+  vr_vlrdirrf      NUMBER;
   vr_txaplica      NUMBER; --craptrd.txofidia%type;
   vr_dtcalcul      craprpp.dtiniper%type;
   vr_vltotren      NUMBER; -- craprpp.vlsdrdpp%type;
@@ -288,6 +297,7 @@ Poupanca programada sera mensal com taxa provisoria senao houver mensal
   qtaplica_total NUMBER := 0;
   vlprerpp_total NUMBER := 0; --craprpp.vlprerpp%type;
   vlsldapl_total NUMBER := 0; --craprpp.vlsdrdpp%type;
+  vlsdtoap_total NUMBER := 0;
   
   -- Função que define se o relatório deve ser impresso ou somente deve gerar o arquivo LST
   function fn_imprime(pr_cdagenci in number) return varchar2 is
@@ -547,20 +557,40 @@ begin
     
     -- Leitura das poupanças programadas
     for rw_craprpp in cr_craprpp(pr_cdcooper) loop
+		vr_vlsdtoap := 0;
+        vr_vlsdrdpp := 0;
+        If rw_craprpp.cdprodut < 1 Then 
+			--Executar rotina para calcular saldo poupanca programada
+			apli0001.pc_calc_poupanca (pr_cdcooper => pr_cdcooper,
+									 pr_dstextab => rw_craptab.dstextab,
+									 pr_cdprogra => vr_cdprogra,
+									 pr_inproces => vr_inproces,
+									 pr_dtmvtolt => vr_dtmvtolt,
+									 pr_dtmvtopr => vr_dtmvtopr,
+									 pr_rpp_rowid => rw_craprpp.rowid,
+									 pr_vlsdrdpp => vr_vlsdrdpp,
+									 pr_cdcritic => vr_cdcritic,
+									 pr_des_erro => vr_dscritic);
+			vr_vlsdtoap := vr_vlsdrdpp;                         
+        Else -- Aplicacao Programada
+             apli0008.pc_posicao_saldo_apl_prog(pr_cdcooper => pr_cdcooper
+                               ,pr_cdprogra => vr_cdprogra
+                               ,pr_cdoperad => '1'
+                               ,pr_nrdconta => rw_craprpp.nrdconta
+                               ,pr_idseqttl => 1
+                               ,pr_idorigem => 1
+                               ,pr_nrctrrpp => rw_craprpp.nrctrrpp
+                               ,pr_dtmvtolt => vr_dtmvtolt
+                               ,pr_inrendim => 0             -- Nao precisa carregar rendimento
+                               ,pr_vlbascal => vr_vlbascal
+                               ,pr_vlsdtoap => vr_vlsdtoap
+                               ,pr_vlsdrgap => vr_vlsdrdpp
+                               ,pr_vlrebtap => vr_vlrebtap
+                               ,pr_vlrdirrf => vr_vlrdirrf
+                               ,pr_des_erro => vr_dscritic);
+        End If; -- Aplicacao Programada
 
-      -- Executa cálculo de poupança (antigo poupanca.i)
-      apli0001.pc_calc_poupanca (pr_cdcooper => pr_cdcooper,
-                                 pr_dstextab => rw_craptab.dstextab,
-                                 pr_cdprogra => vr_cdprogra,
-                                 pr_inproces => vr_inproces,
-                                 pr_dtmvtolt => vr_dtmvtolt,
-                                 pr_dtmvtopr => vr_dtmvtopr,
-                                 pr_rpp_rowid => rw_craprpp.rowid,
-                                 pr_vlsdrdpp => vr_vlsdrdpp,
-                                 pr_cdcritic => vr_cdcritic,
-                                 pr_des_erro => vr_dscritic);
-                                 
-      if vr_dscritic is not null or vr_cdcritic is not null then
+	  if vr_dscritic is not null or vr_cdcritic is not null then
         raise vr_exc_saida;
       end if;
       
@@ -583,6 +613,7 @@ begin
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).vlprerpp := rw_craprpp.vlprerpp;
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).qtprepag := rw_craprpp.qtprepag;
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).vlsldapl := vr_vlsdrdpp;
+      vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).vlsdtoap := vr_vlsdtoap;
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).nmprimtl := rw_craprpp.nmprimtl;
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).dsdacstp := to_char(rw_craprpp.cdsitdct)||lpad(to_char(rw_craprpp.cdtipcta), 2, '0');
       vr_tab_agencia(rw_craprpp.cdagenci).tab_aplicacao(vr_indice_aplicacao).dssituac := rw_craprpp.dssituac;
@@ -597,7 +628,9 @@ begin
         vlprerpp_total := vlprerpp_total + rw_craprpp.vlprerpp;
       end if;
       vr_tab_agencia(rw_craprpp.cdagenci).vlsldapl := nvl(vr_tab_agencia(rw_craprpp.cdagenci).vlsldapl, 0) + vr_vlsdrdpp;
+      vr_tab_agencia(rw_craprpp.cdagenci).vlsdtoap := nvl(vr_tab_agencia(rw_craprpp.cdagenci).vlsdtoap, 0) + vr_vlsdtoap;
       vlsldapl_total := vlsldapl_total + vr_vlsdrdpp;
+      vlsdtoap_total := vlsdtoap_total + vr_vlsdtoap;
 
       -- Criando base para calculo do VAR
       if vr_vlsdrdpp <= 0 then
@@ -704,7 +737,8 @@ begin
                          '<nmresage>Resumo Cooperativa</nmresage>'||
                          '<qtaplica>'||to_char(qtaplica_total, '9G999G990')||'</qtaplica>'||
                          '<vlprerpp>'||to_char(vlprerpp_total, '999G999G999G990D00')||'</vlprerpp>'||
-                         '<vlsldapl>'||to_char(vlsldapl_total, '999G999G999G990D00')||'</vlsldapl>');
+                         '<vlsldapl>'||to_char(vlsldapl_total, '999G999G999G990D00')||'</vlsldapl>'||
+                         '<vlsdtoap>'||to_char(vlsdtoap_total, '999G999G999G990D00')||'</vlsdtoap>');
 	
       while vr_indice_agencia is not null loop
         
@@ -732,7 +766,8 @@ begin
                          '<nmresage>'||vr_tab_agencia(vr_indice_agencia).nmresage||'</nmresage>'||
                          '<qtaplica>'||to_char(vr_tab_agencia(vr_indice_agencia).qtaplica, '9G999G990')||'</qtaplica>'||
                          '<vlprerpp>'||to_char(vr_tab_agencia(vr_indice_agencia).vlprerpp, '999G999G999G990D00')||'</vlprerpp>'||
-                         '<vlsldapl>'||to_char(vr_tab_agencia(vr_indice_agencia).vlsldapl, '999G999G999G990D00')||'</vlsldapl>');
+                         '<vlsldapl>'||to_char(vr_tab_agencia(vr_indice_agencia).vlsldapl, '999G999G999G990D00')||'</vlsldapl>'||
+                         '<vlsdtoap>'||to_char(vr_tab_agencia(vr_indice_agencia).vlsdtoap, '999G999G999G990D00')||'</vlsdtoap>');
         -- Inclui os dados das contas (tab_aplicacao)
         vr_indice_aplicacao := vr_tab_agencia(vr_indice_agencia).tab_aplicacao.first;
         while vr_indice_aplicacao is not null loop
@@ -747,6 +782,7 @@ begin
                            '<qtprepag>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).qtprepag, '990')||'</qtprepag>'||
                            '<dssituac>'||vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).dssituac||'</dssituac>'||
                            '<vlsldapl>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).vlsldapl, '9G999G990D00')||'</vlsldapl>'||
+                           '<vlsdtoap>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).vlsdtoap, '9G999G990D00')||'</vlsdtoap>'||
                         '</conta>');
 
 			gene0002.pc_escreve_xml(vr_des_xml_total,vr_dstexto_total,
@@ -760,6 +796,7 @@ begin
                            '<qtprepag>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).qtprepag, '990')||'</qtprepag>'||
                            '<dssituac>'||vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).dssituac||'</dssituac>'||
                            '<vlsldapl>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).vlsldapl, '9G999G990D00')||'</vlsldapl>'||
+                           '<vlsdtoap>'||to_char(vr_tab_agencia(vr_indice_agencia).tab_aplicacao(vr_indice_aplicacao).vlsdtoap, '9G999G990D00')||'</vlsdtoap>'||
                         '</conta>');
 
           vr_indice_aplicacao := vr_tab_agencia(vr_indice_agencia).tab_aplicacao.next(vr_indice_aplicacao);
