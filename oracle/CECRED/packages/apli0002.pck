@@ -4005,11 +4005,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           
         ELSE
          /*-----------------------------------------------------------------*/
-          if upper(pr_nmdatela) ='CRPS688' then
-             if APLI0009.UsarLimCredParaDebAplicAgend(pr_cdcooper) then        
+          if upper(pr_nmdatela) ='CRPS688' then -- Agendamento
+             if APLI0009.UsarLimCredParaDebAplicAgend(pr_cdcooper=>pr_cdcooper) then        
              vr_limitecr := rw_crapass.vllimcre;  
              end if;      
-          else  
+          else  -- Manual
           if APLI0009.UsarLimCredParaDebAplicManual(pr_cdcooper=>pr_cdcooper) then
              vr_limitecr := rw_crapass.vllimcre;
              end if;
@@ -4156,7 +4156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             AND pr_cdcooper <> 3 THEN
                  
               -- RDCPOS
-              IF pr_tpaplica = 8 THEN
+              IF pr_tpaplica in (7,8) THEN
                 -- Monta critica
                 vr_cdcritic := 1283;
                 vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -4165,12 +4165,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 RAISE vr_exc_erro;    
               
               ELSE
-              /*passado a critica como acima, não devera efetuar a aplicação*/
-                vr_cdcritic := 1283;
-                vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
-                RAISE vr_exc_erro;
-               
-                
+                -- Gera mensagem de confirmação
+                vr_ind := pr_tab_msg_confirma.COUNT;
+                pr_tab_msg_confirma(vr_ind).inconfir := 3;
+                pr_tab_msg_confirma(vr_ind).dsmensag := 'Saldo CC insuficiente para operacao.'; 
                 
               END IF;
                             
