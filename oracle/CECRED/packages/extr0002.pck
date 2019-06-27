@@ -6010,7 +6010,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         --Criar Lancamento Futuro na tabela
         pr_tab_lancamento_futuro(vr_index).dtmvtolt:= rw_craprpp.dtdebito;
         pr_tab_lancamento_futuro(vr_index).dsmvtolt:= to_char(rw_craprpp.dtdebito,'DD/MM/YYYY');
-        pr_tab_lancamento_futuro(vr_index).dshistor:= 'DB.POUP.PROGR';
+        pr_tab_lancamento_futuro(vr_index).dshistor:= 'DB.APL.PROGR.';
         pr_tab_lancamento_futuro(vr_index).nrdocmto:= to_char(rw_craprpp.nrctrrpp,'fm999g999g990');
         pr_tab_lancamento_futuro(vr_index).indebcre:= 'D';
         pr_tab_lancamento_futuro(vr_index).vllanmto:= vr_vlprerpp;
