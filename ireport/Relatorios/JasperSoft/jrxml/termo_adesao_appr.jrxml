@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2019-05-23T17:58:01 -->
+<!-- 2019-06-21T16:28:46 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_adesao_appr" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="32817cf7-217d-4d56-9fe9-f759e1107bf2">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<queryString language="xPath">
@@ -98,7 +98,7 @@
 				<textElement textAlignment="Justified" verticalAlignment="Top">
 					<font fontName="SansSerif" size="10" isBold="false"/>
 				</textElement>
-				<text><![CDATA[2.   O(A) COOPERADO(A) autoriza a COOPERATIVA realizar o débito mensal da quantia indicada no item 1.5 diretamente em sua conta corrente, especificada no item 1.3 acima, para inclusão de nova Poupança Programada.  O débito em conta corrente somente será realizado mediante a existência de saldo disponível, desconsiderando, para tanto, saldos oriundos de depósitos bloqueados e/ou futuros que aguardam sua compensação (ex. cheques bloqueados) ou limites de créditos contratados. ]]></text>
+				<text><![CDATA[2.   O(A) COOPERADO(A) autoriza a COOPERATIVA realizar o débito mensal da quantia indicada no item 1.5 diretamente em sua conta corrente, especificada no item 1.3 acima, para inclusão de nova Aplicação Programada.  O débito em conta corrente somente será realizado mediante a existência de saldo disponível, desconsiderando, para tanto, saldos oriundos de depósitos bloqueados e/ou futuros que aguardam sua compensação (ex. cheques bloqueados) ou limites de créditos contratados. ]]></text>
 			</staticText>
 			<staticText>
 				<reportElement x="-4" y="242" width="560" height="68" uuid="cc548078-5a1c-44d6-8fb7-f73abf889ba9">
@@ -273,17 +273,7 @@
 				<text><![CDATA[6.   Passado o prazo de carência indicada no item 1.7 acima para cada aplicação programada, o(a) COOPERADO(A) fara jus à remuneração diária, de acordo com a porcentagem indicada na respectiva faixa da Tabela de Rentabilidade vigente na COOPERATIVA.]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="-4" y="431" width="561" height="28" uuid="a26dd2c5-f08b-44a4-88e7-c729d17af190">
-					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-				</reportElement>
-				<textElement textAlignment="Justified">
-					<font fontName="SansSerif" size="10" isBold="false"/>
-				</textElement>
-				<text><![CDATA[7.   No momento do resgate, sobre a rentabilidade das aplicações programadas, incidirá IRRF (Imposto de Renda Retido na Fonte), conforme Tabela Regressiva de Renda Fixa vigente, disponível no site da Receita Federal do Brasil.]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="-4" y="459" width="561" height="28" uuid="27e7de0a-056c-4070-9078-942c1074ab4a">
+				<reportElement x="-4" y="461" width="561" height="28" uuid="27e7de0a-056c-4070-9078-942c1074ab4a">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
@@ -293,14 +283,14 @@
 				<text><![CDATA[8.   Esta operação é celebrada nos moldes do art. 79, da Lei 5.764/71 e, portanto, classificada como um ATO COOPERATIVO.]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="-4" y="487" width="561" height="28" uuid="5f3109bd-46bb-4cb7-ae58-fc4f31e3d2c2">
+				<reportElement x="-4" y="489" width="561" height="28" uuid="5f3109bd-46bb-4cb7-ae58-fc4f31e3d2c2">
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Justified">
 					<font fontName="SansSerif" size="10" isBold="false"/>
 				</textElement>
-				<text><![CDATA[9.   O(A) COOPERADO(A) ao assinar o Termo de Contratação de Poupança Programada, declara que o leu previamente e que não possui nenhuma dúvida com relação a quaisquer de suas cláusulas.]]></text>
+				<text><![CDATA[9.   O(A) COOPERADO(A) ao assinar o Termo de Contratação da Aplicação Programada, declara que o leu previamente e que não possui nenhuma dúvida com relação a quaisquer de suas cláusulas.]]></text>
 			</staticText>
 			<textField>
 				<reportElement x="-6" y="131" width="563" height="17" uuid="a3948f26-62e3-4a29-88fb-0cb8fb35b635">
@@ -423,6 +413,13 @@
 					<font fontName="SansSerif" size="9" isBold="false"/>
 				</textElement>
 				<textFieldExpression><![CDATA["1.7. Carência: "+$F{carencia}+" dias"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement x="-3" y="432" width="561" height="28" uuid="b373a20e-065a-4493-b5fa-68ce47ee034b">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				</reportElement>
+				<textFieldExpression><![CDATA["7.   No momento do resgate, sobre a rentabilidade das aplicações programadas, incidirá IRRF (Imposto de Renda Retido na Fonte), conforme Tabela Regressiva de Renda Fixa vigente, disponível no site da Receita Federal do Brasil."]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>
