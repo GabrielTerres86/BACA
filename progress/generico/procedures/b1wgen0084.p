@@ -4885,7 +4885,7 @@ PROCEDURE grava_efetivacao_proposta:
         
         /* P442 - Validar valores de pre-aprovado no momento da liberacao do contrato
            incluido aqui para reduzir problemas de contratacao simultanea entre canais*/
-        IF crawepr.cdfinemp = 68 THEN
+        /*IF crawepr.cdfinemp = 68 THEN
           DO:
             /* Buscar valores atualizados no momento da confirmacao */
             IF NOT VALID-HANDLE(h-b1wgen0188) THEN
@@ -4939,7 +4939,7 @@ PROCEDURE grava_efetivacao_proposta:
                    aux_dscritic = "Pre-aprovado nao disponivel para usuario".
                    UNDO EFETIVACAO , LEAVE EFETIVACAO.
                  END.
-          END.
+          END.*/
         /**/
 		
         /*Validaçao e efetivaçao do seguro prestamista -- PRJ438 - Paulo Martins (Mouts)*/     
