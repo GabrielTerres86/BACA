@@ -26,6 +26,9 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
   --
   --             18/09/2018 - Incluso novo parametro na pc_retorno_analise_aut e ajustado para ela gerenciar
   --  						  as chamadas das procedures de atualização de limite de desc titulo e emprestimo (Daniel)
+  --     
+  --             18/04/2019 - Incluido novo campo segueFluxoAtacado no retorno do motor de credito
+  --                          P637 - Luciano Kienolt - Supero)
   ---------------------------------------------------------------------------
   PROCEDURE pc_atuaretorn_proposta_esteira(pr_usuario  IN VARCHAR2              --> Usuario
                                           ,pr_senha    IN VARCHAR2              --> Senha
@@ -71,6 +74,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
 																			 ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
 																			 ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
 																			 ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                                       ,pr_idfluata IN BOOLEAN DEFAULT FALSE  --> Indicador Segue Fluxo Atacado -- P637
 																			 ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
 																			 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
 																			 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -93,6 +97,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
                                        ,pr_datscore in varchar2           --> Data do Score Boa Vista
                                        ,pr_dsrequis in varchar2           --> Conteúdo da requisição oriunda da Análise Automática na Esteira
                                        ,pr_namehost in varchar2           --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                                       ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado --P637                                                           
                                        ,pr_xmllog   in varchar2           --> XML com informações de LOG
                                        ,pr_cdcritic out pls_integer       --> Código da crítica
                                        ,pr_dscritic out varchar2          --> Descrição da crítica
@@ -117,6 +122,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
                                   ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
                                   ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
                                   ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                                  ,pr_idfluata IN BOOLEAN DEFAULT FALSE              --> Indicador Segue Fluxo Atacado --P637                                                                                                         
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -153,6 +159,7 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
 										                      ,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
                      										  ,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
                                           ,pr_flgpreap    IN NUMBER   DEFAULT 0        --> Indicador de Pré-Aprovado
+                                          ,pr_idfluata    IN BOOLEAN  DEFAULT FALSE    --> Indicador Segue Fluxo Atacado --P637
                                           ,pr_status      OUT PLS_INTEGER              --> Status
                                           ,pr_cdcritic    OUT PLS_INTEGER              --> Codigo da critica
                                           ,pr_dscritic    OUT VARCHAR2                 --> Descricao da critica
@@ -208,7 +215,75 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
   --	 	     01/08/2018 - Incluir novo campo liquidOpCredAtraso no retorno do 
   --                          motor de credito e enviar para esteira - Diego Simas (AMcom)				
   --
+  --         14/05/2019 - Adicionado a pc_notifica_ib e suas chamadas ( AmCom - p438 )
   ---------------------------------------------------------------------------  
+  --
+  -- 
+  PROCEDURE pc_notifica_ib(pr_cdcooper IN crawepr.cdcooper%TYPE,
+                           pr_nrdconta IN crawepr.nrdconta%TYPE,
+                           pr_nrctremp IN crawepr.nrctremp%TYPE) IS
+    /* .............................................................................
+     Programa: pc_notifica_ib
+     Sistema : Rotinas referentes ao Internet Bank
+     Sigla   : CRED
+     Autor   : 
+     Data    : Maio/19.                    Ultima atualizacao:
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Cria notificações na conta do cooperado sobre o retorno do motor 
+     --
+     Observacao: -----
+     Alteracoes:
+     ..............................................................................*/
+     --/
+     CURSOR cr_wpr IS
+       SELECT wpr.cdcooper,
+              wpr.nrdconta,
+              wpr.nrctremp,
+              wpr.insitapr
+         FROM crawepr wpr, crapsim sim
+        WHERE wpr.cdcooper = pr_cdcooper
+          AND wpr.nrdconta = pr_nrdconta
+          AND wpr.nrctremp = pr_nrctremp
+          AND wpr.cdcooper = sim.cdcooper
+          AND wpr.nrdconta = sim.nrdconta
+          AND wpr.nrsimula = sim.nrsimula
+          AND wpr.cdorigem = 3
+          AND wpr.nrsimula IS NOT NULL;
+     --/
+     rw_wpr cr_wpr%ROWTYPE;
+     vr_des_reto_not VARCHAR2(10);
+     --/            
+		BEGIN
+       --/        
+       OPEN cr_wpr;
+       FETCH cr_wpr INTO rw_wpr;
+       IF cr_wpr%FOUND THEN
+        CLOSE cr_wpr;
+         --/
+         IF NVL(rw_wpr.insitapr,0) IN (1,2,3,4,6)
+           THEN
+             empr0017.pc_cria_notificacao(pr_cdcooper => rw_wpr.cdcooper,
+                                          pr_nrdconta => rw_wpr.nrdconta,
+                                          pr_nrctremp => rw_wpr.nrctremp,
+                                          pr_tporigem => 0, -- motor
+                                          pr_des_reto => vr_des_reto_not);
+           --/ erro envia email tambem
+           IF rw_wpr.insitapr = 6
+              THEN
+                empr0017.pc_email_esteira(pr_cdcooper => rw_wpr.cdcooper, 
+                                          pr_nrdconta => rw_wpr.nrdconta, 
+                                          pr_nrctremp => rw_wpr.nrctremp);
+           END IF;
+         END IF;                            
+        ELSE
+         CLOSE cr_wpr;
+        END IF;       
+  END pc_notifica_ib;
+
   PROCEDURE pc_gera_retor_proposta_esteira(pr_status       IN PLS_INTEGER,           --> Status
                                            pr_nrtransacao  IN NUMBER,                --> Numero da transacao
                                            pr_cdcritic     IN PLS_INTEGER,           --> Codigo da critica
@@ -332,7 +407,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                crawepr.txdiaria,
                crawepr.percetop,
                crawepr.vlpreemp,
-               crawepr.qtpreemp
+               crawepr.qtpreemp,
+               crawepr.tpemprst,
+               crawepr.cddindex
           FROM crawepr
          WHERE crawepr.cdcooper = pr_cdcooper
            AND crawepr.nrdconta = pr_nrdconta
@@ -405,6 +482,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_dtprvcto               crappep.dtvencto%TYPE;
       vr_dtulvcto               crappep.dtvencto%TYPE;
       vr_txjuranu               crawepr.txmensal%TYPE;
+      vr_indRemun               VARCHAR2(2); -- IndRemun (06 - TR, 08 -	CDI)
       vr_txjurnom               VARCHAR2(100);
       vr_txjurefp               VARCHAR2(100);
       vr_vlrtxcet               VARCHAR2(100);
@@ -417,6 +495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_nrtelefo               VARCHAR2(15);
       vr_des_erro               VARCHAR2(3);
       vr_cdmodali_portabilidade VARCHAR2(50);
+      vr_tpdetaxa               VARCHAR2(2) := 01; --(01 -- PRICE FIX, 02 -- POS FIX)
     BEGIN
       vr_nrtelefo := ' ';      
     
@@ -621,11 +700,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
                                  
+      
+      IF rw_crawepr.tpemprst = 2 THEN
+        -- POS já grava o valor correto, por isso nao precisa dividir /100
+        vr_txjuranu := TRUNC((POWER(1 + (rw_crawepr.txdiaria), 360) - 1) * 100, 5);
+        vr_indRemun := (CASE WHEN rw_crawepr.cddindex = 1 THEN '08' ELSE '06' END); -- IndRemun (06 - TR, 08 -	CDI)
+      ELSE
       vr_txjuranu := TRUNC((POWER(1 + (rw_crawepr.txdiaria / 100), 360) - 1) * 100, 5);
+      END IF;
+
       vr_txjurnom := REPLACE(TO_CHAR(TRUNC(((POWER(1 + (vr_txjuranu / 100), 1/12) - 1) * 12) * 100, 5)),',','.');
+      
       vr_txjurefp := REPLACE(TRIM(TO_CHAR(vr_txjureft,'99999999990D00')),',','.');
       vr_vlrtxcet := REPLACE(TRIM(TO_CHAR(rw_crawepr.percetop,'99999999990D00000')),',','.');
       vr_vlpreemp := REPLACE(TRIM(TO_CHAR(rw_crawepr.vlpreemp,'9999999999990D00')),',','.');
+      vr_tpdetaxa := (CASE WHEN rw_crawepr.tpemprst = 2 THEN '02' ELSE '01' END);
       
       /* IncluirVeicular */
       IF (rw_craplcr.cdmodali || rw_craplcr.cdsubmod) = '0401' AND pr_insitapr IN (1,3) AND rw_tbepr_portabilidade.dtaprov_portabilidade IS NULL  THEN
@@ -643,7 +732,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                      pr_cnpjcpfc => TO_CHAR(rw_crapass.nrcpfcgc),
                                      pr_nmclient => rw_crapass.nmprimtl,
                                      pr_nrtelcli => vr_nrtelefo,
-                                     pr_tpdetaxa => '01',
+                                     pr_tpdetaxa => vr_tpdetaxa,
                                      pr_txjurnom => vr_txjurnom,
                                      pr_txjureft => vr_txjurefp,
                                      pr_txcet    => vr_vlrtxcet,
@@ -661,6 +750,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                      pr_ufendere => rw_crapcop.cdufdcop,
                                      pr_cepender => TO_CHAR(rw_crapcop.nrcepend), 
                                      pr_idsolici => vr_idsolici,
+                                     pr_indRemun => vr_indRemun,
                                      pr_des_erro => vr_des_erro, 
                                      pr_dscritic => vr_dscritic);
                                      
@@ -700,7 +790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                     pr_cnpjcpfc => TO_CHAR(rw_crapass.nrcpfcgc),
                                     pr_nmclient => rw_crapass.nmprimtl, 
                                     pr_nrtelcli => vr_nrtelefo,
-                                    pr_tpdetaxa => '01',
+                                    pr_tpdetaxa => vr_tpdetaxa,
                                     pr_txjurnom => vr_txjurnom,
                                     pr_txjureft => vr_txjurefp,
                                     pr_txcet    => vr_vlrtxcet,
@@ -719,6 +809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                     pr_ufendere => rw_crapcop.cdufdcop, 
                                     pr_cepender => TO_CHAR(rw_crapcop.nrcepend), 
                                     pr_idsolici => vr_idsolici, 
+                                    pr_indRemun => vr_indRemun,
                                     pr_des_erro => vr_des_erro,
                                     pr_dscritic => vr_dscritic);
                             
@@ -782,6 +873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																					,pr_nrparlvr    IN NUMBER   DEFAULT NULL     --> Valor do Patrimônio Pessoal Livre calculado no Rating
 																					,pr_nrperger    IN NUMBER   DEFAULT NULL     --> Valor da Percepção Geral da Empresa calculada no Rating
                                           ,pr_flgpreap    IN NUMBER   DEFAULT 0        --> Indicador de Pré-Aprovado
+                                          ,pr_idfluata    IN BOOLEAN  DEFAULT FALSE    --> Indicador Segue Fluxo Atacado --P637
                                           ,pr_status      OUT PLS_INTEGER              --> Status
                                           ,pr_cdcritic    OUT PLS_INTEGER              --> Codigo da critica
                                           ,pr_dscritic    OUT VARCHAR2                 --> Descricao da critica
@@ -823,6 +915,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 				 
 				 26/09/2018 - Incluso coalesce ao atualizar crawpepr campo  dsratori  
 				              Alcemir Mout's - INC0023901.
+                 08/03/2019 - P637 – Motor de Crédito - Criar um atributo de retorno após 
+                              a execução do motor que irá identificar que essa proposta 
+                              pertence ao “seguefluxoatacado”, quando essa proposta for 
+                              enviada para a esteira de crédito, esse atributo deverá ser 
+                              enviado para que a Ibratan identifique que essa proposta 
+                              seguirá para um fluxo especifico. (Luciano Kienolt - Supero)
+
+         07/05/2019 - Incluso chamadas rotina empr0017.pc_cria_notificacao (AmCom)
      ..............................................................................*/
     DECLARE
       CURSOR cr_crawepr(pr_cdcooper IN crawepr.cdcooper%TYPE
@@ -839,6 +939,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
               ,crawepr.cdfinemp
               ,crawepr.dtenvest
 							,crawepr.dsnivris
+							,crawepr.idfluata
+              ,crawepr.cdorigem
           FROM crawepr
          WHERE crawepr.cdcooper = pr_cdcooper
            AND crawepr.nrdconta = pr_nrdconta
@@ -883,6 +985,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_cdcritic crapcri.cdcritic%type;
       vr_dscritic crapcri.dscritic%type;
       vr_insitpro NUMBER(2);
+      vr_idfluata NUMBER(1);
 
       /*M438*/
             --PL tables
@@ -1153,6 +1256,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           
         END IF;        
         
+        vr_idfluata := 0;
+        IF pr_idfluata THEN
+           vr_idfluata := 1;              
+        END IF;
+        
         -- Atualiza os dados da proposta de emprestimo
         BEGIN
           UPDATE crawepr
@@ -1175,6 +1283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                 ,crawepr.vlpreori = crawepr.vlpreemp /*M438*/
                 ,crawepr.dsratori = coalesce(vr_rating,crawepr.dsratori,' ') /* M438 */
                 ,crawepr.flgpreap = NVL(pr_flgpreap,crawepr.flgpreap)
+                ,crawepr.idfluata = vr_idfluata -- P637
            WHERE crawepr.cdcooper = pr_cdcooper
              AND crawepr.nrdconta = pr_nrdconta
              AND crawepr.nrctremp = pr_nrctremp
@@ -1282,6 +1391,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                  ,pr_dsdadatu => rw_crawepr.insitest);
       END IF;
       
+      IF nvl(rw_crawepr_log.idfluata,0) <> nvl(rw_crawepr.idfluata,0) THEN -- P637
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'idfluata'
+                                 ,pr_dsdadant => rw_crawepr_log.idfluata
+                                 ,pr_dsdadatu => rw_crawepr.idfluata);
+      END IF;     
+      
       IF nvl(rw_crapass_log.dtdscore,to_date('01/01/1900','DD/MM/RRRR')) <> nvl(rw_crapass.dtdscore,to_date('01/01/1900','DD/MM/RRRR')) THEN
         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                  ,pr_nmdcampo => 'dtdscore'
@@ -1322,6 +1438,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                                ,pr_dscritic => vr_dscritic); --> Descricao da critica
       END IF;
       
+      --/ P438 
+      IF rw_crawepr.cdorigem = 3
+        THEN
+           pc_notifica_ib(pr_cdcooper,pr_nrdconta,pr_nrctremp);
+      END IF;
+      
       -- Caso nao ocorreu nenhum erro, vamos retorna como status de OK
       pr_status      := 202;      
       pr_msg_detalhe := 'Parecer da proposta atualizado com sucesso.';
@@ -1338,6 +1460,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         pr_status      := 500;
         pr_cdcritic    := 978;
         pr_msg_detalhe := 'Parecer nao foi atualizado, ocorreu uma erro interno no sistema.(1) ';          
+        --/ P438 
+        IF rw_crawepr.cdorigem = 3
+          THEN
+             pc_notifica_ib(pr_cdcooper,pr_nrdconta,pr_nrctremp);
+        END IF;
         
       WHEN OTHERS THEN
         ROLLBACK;
@@ -1345,6 +1472,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         pr_status      := 500;
         pr_cdcritic    := 978;
         pr_msg_detalhe := 'Parecer nao foi atualizado, ocorreu uma erro interno no sistema.(2):';
+
+        IF rw_crawepr.cdorigem = 3
+          THEN
+             pc_notifica_ib(pr_cdcooper,pr_nrdconta,pr_nrctremp);
+        END IF;
         
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                    pr_ind_tipo_log => 3, 
@@ -1417,6 +1549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 				,pr_nrgarope    in number   default null     --> Valor das Garantias calculada no Rating
 				,pr_nrparlvr    in number   default null     --> Valor do Patrimônio Pessoal Livre calculado no Rating
                 ,pr_nrperger    in number   default null     --> Valor da Percepção Geral da Empresa calculada no Rating
+                ,pr_idfluata    in BOOLEAN  default FALSE    --> Indicador Segue Fluxo Atacado --P637                 
                 ,pr_status      out pls_integer              --> Status
                 ,pr_cdcritic    out pls_integer              --> Codigo da critica
                 ,pr_dscritic    out varchar2                 --> Descricao da critica
@@ -1452,6 +1585,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           ,lim.dtenvest
 							   ,lim.dsnivris
           ,lim.insitlim
+          ,lim.idfluata
     from   crawlim lim
     where  lim.cdcooper = pr_cdcooper
     and    lim.nrdconta = pr_nrdconta
@@ -1475,6 +1609,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
     vr_nrdrowid      rowid;
     vr_exc_saida     exception;
     vr_exc_erro_500  exception;
+    vr_idfluata      NUMBER(1);
   
   begin
       
@@ -1588,6 +1723,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         end if;
     end if;			
       
+    vr_idfluata := 0;
+    IF pr_idfluata THEN
+       vr_idfluata := 1;              
+    END IF;    		
+      
     /*  Verificar se a analise da proposta expirou na esteira*/      
     if  pr_insitapr = 99 then
         begin
@@ -1658,6 +1798,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                  ,nrliquid = decode(pr_tpretest, 'M', nvl(pr_nrliquid, lim.nrinfcad), lim.nrliquid)
                  ,nrpatlvr = decode(pr_tpretest, 'M', nvl(pr_nrparlvr, lim.nrinfcad), lim.nrpatlvr)
                  ,nrperger = decode(pr_tpretest, 'M', nvl(pr_nrperger, lim.nrinfcad), lim.nrperger)
+                 ,idfluata = vr_idfluata -- P637
+
            where  lim.cdcooper = pr_cdcooper
            and    lim.nrdconta = pr_nrdconta
            and    lim.nrctrlim = pr_nrctrlim
@@ -1759,6 +1901,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                  ,pr_dsdadatu => rw_crawlim.insitest);
     end if;
       
+    if  nvl(rw_crawlim_log.idfluata,0) <> nvl(rw_crawlim.idfluata,0) then --P637
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'idfluata'
+                                 ,pr_dsdadant => rw_crawlim_log.idfluata
+                                 ,pr_dsdadatu => rw_crawlim.idfluata);
+    end if; 
+        
     if  nvl(rw_crapass_log.dtdscore,to_date('01/01/1900','DD/MM/RRRR')) <> nvl(rw_crapass.dtdscore,to_date('01/01/1900','DD/MM/RRRR')) then
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                  ,pr_nmdcampo => 'dtdscore'
@@ -2244,6 +2393,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 
      Observacao: -----
      Alteracoes: 09/07/2018 - Alterada chamada da procedure ccrd0007.pc_alterar_cartao_bancoob passando o parâmetro pr_idseqttl fixo 1. Paulo Silva (Supero).
+
+                 05/06/2019 - Implementado LOG caso não encontra o registro de alteração de limite de cartão
+                              e ajustado cursor cr_limatu. 
+                              Alcemir Jr. (INC0012482).
      ..............................................................................*/
     DECLARE
       --Busca dados da Proposta
@@ -2321,11 +2474,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                  where a.cdcooper = x.cdcooper
                                    AND a.nrdconta = x.nrdconta
                                    AND a.nrctrcrd = x.nrctrcrd 
-                                   AND a.nrproposta_est = x.nrproposta_est); 
+                                   AND a.nrproposta_est = x.nrproposta_est
+                                   AND x.tpsituacao = 6 --Em Análise
+                                   AND x.insitdec   = 1 --Sem aprovacao
+                                   ); 
       rw_limatu cr_limatu%ROWTYPE;
+      
+      CURSOR cr_limatu_log IS
+        SELECT a.idatualizacao,
+               a.cdcooper,
+               a.nrdconta,
+               a.nrconta_cartao,
+               a.dtalteracao,
+               a.tpsituacao,
+               a.vllimite_anterior,
+               a.vllimite_alterado,
+               a.cdcanal,
+               a.cdoperad,
+               a.insitdec,
+               a.nrctrcrd,
+               a.nrproposta_est                    
+          FROM tbcrd_limite_atualiza a
+          JOIN crawcrd crd
+            ON crd.cdcooper = a.cdcooper
+           AND crd.nrdconta = a.nrdconta
+           AND crd.nrctrcrd = a.nrctrcrd
+           AND crd.nrcctitg > 0 /* Se a proposta nao tem conta cartao 
+                                   ela nao foi pro bancoob, logo nao
+                                   pode ter uma alteracao de limite */
+         WHERE a.cdcooper = pr_cdcooper
+           AND a.nrdconta = pr_nrdconta
+           AND a.nrctrcrd = pr_nrctrcrd 
+           AND a.nrproposta_est = pr_nrctrest;
+       rw_limatu_log cr_limatu_log%ROWTYPE;
       
       ----- VARIÁVEIS -----
       vr_vllimite     crawcrd.vllimcrd%TYPE;
+      vr_idprglog     NUMBER;
     
     BEGIN
 
@@ -2351,6 +2536,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         FETCH cr_limatu INTO rw_limatu;
         IF cr_limatu%FOUND THEN
           vr_vllimite := rw_limatu.vllimite_alterado;
+        ELSE
+          
+          FOR rw_limatu_log  IN cr_limatu_log LOOP
+                                          
+            cecred.pc_log_programa(PR_DSTIPLOG   => 'E'
+                                  ,PR_CDPROGRAMA => 'WEBS0001_log_crd' 
+                                  ,pr_cdcooper   => pr_cdcooper
+                                  ,pr_dsmensagem => 'cdcooper: ' || rw_limatu_log.cdcooper || 
+                                                    ' nrdconta: ' || rw_limatu_log.nrdconta ||
+                                                    ' nrconta_cartao: ' || rw_limatu_log.nrconta_cartao || 
+                                                    ' dtalteracao: ' || to_char(rw_limatu_log.dtalteracao) || 
+                                                    ' tpsituacao: ' || rw_limatu_log.tpsituacao || 
+                                                    ' vllimite_anterior: ' || rw_limatu_log.vllimite_anterior || 
+                                                    ' vllimite_alterado: ' || rw_limatu_log.vllimite_alterado || 
+                                                    ' cdcanal: ' || rw_limatu_log.cdcanal || 
+                                                    ' cdoperad: ' || rw_limatu_log.cdoperad || 
+                                                    ' insitdec: ' || rw_limatu_log.insitdec || 
+                                                    ' nrctrcrd: ' || rw_limatu_log.nrctrcrd || 
+                                                    ' nrproposta_est: ' || rw_limatu_log.nrproposta_est                                                                                                                                                                    
+                                  ,PR_IDPRGLOG   => vr_idprglog);
+
+            
+          END LOOP;
+          
       END IF;
         CLOSE cr_limatu;
        
@@ -3251,6 +3460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																			 ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
 																			 ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
 																			 ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                                       ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado --P637                                                                              
 																			 ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
 																			 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
 																			 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -3280,6 +3490,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                motor de credito - Diego Simas (AMcom)              
         
                   21/11/2017 - Alterações referente ao Prj. 402 (Jean Michel).           
+                  
+                  12/03/2019 - P438 (AMcom) Add sub-rotina pc_notifica_ib
+
+				  29/04/2019 - P438 Tratativa para agencia quando for origem 3. (Douglas Pagel / AMcom)
 	 ..............................................................................*/	
 		DECLARE
 		  -- Tratamento de críticas
@@ -3314,16 +3528,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 			  SELECT wpr.cdcooper
               ,wpr.nrdconta
               ,wpr.nrctremp
-              ,wpr.cdagenci
+              ,DECODE(wpr.cdorigem, 3, ass.cdagenci, wpr.cdagenci) cdagenci
               ,wpr.cdopeste
               ,wpr.insitest
               ,decode(wpr.insitapr, 0, 'EM ESTUDO', 1, 'APROVADO', 2, 'NAO APROVADO', 3, 'RESTRICAO', 4, 'REFAZER', 'SITUACAO DESCONHECIDA') dssitapr
               ,wpr.rowid
+              ,wpr.cdorigem
           FROM crawepr wpr
+              ,crapass ass
          WHERE wpr.cdcooper = pr_cdcooper
            AND wpr.nrdconta = pr_nrdconta
            AND wpr.nrctremp = pr_nrctremp
-           AND wpr.dsprotoc = pr_dsprotoc/*
+           AND wpr.dsprotoc = pr_dsprotoc
+           AND ass.cdcooper = wpr.cdcooper
+           AND ass.nrdconta = wpr.nrdconta/*
            FOR UPDATE*/;  
 		  rw_crawepr cr_crawepr%ROWTYPE;
 			
@@ -3348,6 +3566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 			vr_nrperger VARCHAR2(100); --> Valor da Percepção Geral da Empresa calculada no Rating
       vr_desscore VARCHAR2(100); --> Descricao do Score Boa Vista
       vr_datscore VARCHAR2(100); --> Data do Score Boa Vista
+      vr_idfluata BOOLEAN;       --> Segue Fluxo Atacado --P637
       
       -- Bloco PLSQL para chamar a execução paralela do pc_crps414
       vr_dsplsql VARCHAR2(4000);
@@ -3702,6 +3921,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 																		,pr_dsdscore    => vr_desscore    --> Descrição Score Boa Vista
 																		,pr_dtdscore    => to_date(vr_datscore,'RRRRMMDD')    --> Data Score Boa Vista
                                     ,pr_flgpreap    => 0                                  --> Indicador de Pré Aprovado
+                                    ,pr_idfluata    => vr_idfluata    --> Indicador Segue Fluxo Atacado --P637                                    
 																		,pr_status      => vr_status      --> Status
 																		,pr_cdcritic    => vr_cdcritic    --> Codigo da critica
 																		,pr_dscritic    => vr_dscritic    --> Descricao da critica
@@ -4012,6 +4232,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 					,pr_datscore in varchar2           --> Data do Score Boa Vista
                     ,pr_dsrequis in varchar2           --> Conteúdo da requisição oriunda da Análise Automática na Esteira
                     ,pr_namehost in varchar2           --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                    ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado --P637                    
                     ,pr_xmllog   in varchar2           --> XML com informações de LOG
 					,pr_cdcritic out pls_integer       --> Código da crítica
                     ,pr_dscritic out varchar2          --> Descrição da crítica
@@ -4111,6 +4332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      vr_nrperger varchar2(100); --> Valor da Percepção Geral da Empresa calculada no Rating
      vr_desscore varchar2(100); --> Descricao do Score Boa Vista
      vr_datscore varchar2(100); --> Data do Score Boa Vista
+     vr_idfluata BOOLEAN;       --> Segue Fluxo Atacado
 
      -- Bloco PLSQL para chamar a execução paralela do pc_crps414
      vr_dsplsql varchar2(4000);
@@ -4703,6 +4925,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                   ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
                                   ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
                                   ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                                  ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado   --P637                                                                       
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -4756,6 +4979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                     ,pr_datscore => pr_datscore
                     ,pr_dsrequis => pr_dsrequis
                     ,pr_namehost => pr_namehost
+                    ,pr_idfluata => pr_idfluata --P637
                     ,pr_xmllog   => pr_xmllog  
                     ,pr_cdcritic => pr_cdcritic
                     ,pr_dscritic => pr_dscritic
@@ -4781,6 +5005,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                     ,pr_datscore => pr_datscore
                     ,pr_dsrequis => pr_dsrequis
                     ,pr_namehost => pr_namehost
+                    ,pr_idfluata => pr_idfluata --P637
                     ,pr_xmllog   => pr_xmllog  
                     ,pr_cdcritic => pr_cdcritic
                     ,pr_dscritic => pr_dscritic
