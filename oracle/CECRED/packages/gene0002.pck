@@ -350,6 +350,13 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0002 AS
                                      ,pr_des_reto OUT VARCHAR2                    --> Descrição OK/NOK
                                      ,pr_dscritic OUT VARCHAR2);                  --> Descricao Erro
 
+  PROCEDURE pc_transf_arq_smartshare(pr_nmdiretorio IN VARCHAR2  --> diretorio local, onde esta o arquivo a ser copiado
+                                    ,pr_nmarquiv IN VARCHAR2     --> nome do arquivo a ser copiado                                   
+                                    ,pr_cdcooper IN crapcop.cdcooper%TYPE --> cooperativa
+                                    ,pr_des_reto OUT VARCHAR2 --> Descrição OK/NOK
+                                    ,pr_dscritic OUT VARCHAR2 --> Descricao Erro
+                                    );
+
 END GENE0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
@@ -412,6 +419,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             19/04/2018 - #812349 Na rotina pc_gera_relato, utilizada a rotina pc_mv_arquivo para ganho de
   --                          perfomance no comando (Carlos)
+  --
+  --             12/12/2018 - Alterado padrão da mascara de contrato
+  --                          (Andre Clemer - Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Lista de variáveis para armazenar as mascaras parametrizadas */
@@ -421,7 +431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   vr_des_mask_cnpj     VARCHAR2(20);
   vr_des_mask_cep      VARCHAR2(10);
   vr_des_mask_matric   VARCHAR2(7);
-  vr_des_mask_contrato VARCHAR2(9);
+  vr_des_mask_contrato VARCHAR2(13);
 
   /* Saída com erro */
   vr_des_erro VARCHAR2(4000);
@@ -664,13 +674,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --                            (Ana - Envolti - Chamado 776896)
     --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
+    --               12/12/2018 - Alterado padrão da mascara de contrato
+    --                            (Andre Clemer - Supero)
     -- ..........................................................................
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
 		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_mask_contrato'); 
    -- Se ainda não foi buscado
     IF vr_des_mask_contrato IS NULL THEN
-      vr_des_mask_contrato := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CONTRATO'), 'zz.zzz.zz9');
+      vr_des_mask_contrato := nvl(gene0001.fn_param_sistema('CRED',0,'MASK_CONTRATO'), 'z.zzz.zzz.zz9');
     END IF;
     -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
     GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
@@ -1080,7 +1092,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
 
        Programa: fn_arq_para_blob
        Autor   : Dionathan
-       Data    : Maio/2015                      Ultima atualizacao: 06/12/2018
+       Data    : Maio/2015                      Ultima atualizacao: 18/10/2017
 
        Dados referentes ao programa:
 
@@ -6678,5 +6690,250 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       END LOOP;
     END;
   END pc_arquivo_para_table_of;
+
+  PROCEDURE pc_transf_arq_smartshare(pr_nmdiretorio IN VARCHAR2  --> diretorio local, onde esta o arquivo a ser copiado
+                                    ,pr_nmarquiv IN VARCHAR2     --> nome do arquivo a ser copiado                                   
+                                    ,pr_cdcooper IN crapcop.cdcooper%TYPE --> codigo da cooperativa
+                                    ,pr_des_reto OUT VARCHAR2 --> Descrição OK/NOK
+                                    ,pr_dscritic OUT VARCHAR2 --> Descricao Erro
+                                    ) IS
+   /* ----------------------------------------------------------------------------------------
+
+    Programa: EMPR0019 
+    Autor   : Rafael R. Santos / AMcom 
+    Data    : 18/04/2019    ultima Atualizacao: -- 
+     
+    Dados referentes ao programa:
+   
+    Objetivo  : mover arquivo para o ftp do smartshare
+   
+    Alteracoes: 30/04/2019 - PRJ438 Removido controles de transação. (Douglas Pagel / AMcom).
+				
+
+    ..........................................................................................*/
+    --/
+  BEGIN
+    
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(1000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      vr_serv_ftp    VARCHAR2(100);
+      vr_user_ftp    VARCHAR2(100);
+      vr_pass_ftp    VARCHAR2(100);
+      
+      vr_nmarquiv      VARCHAR2(100);
+      vr_diames        VARCHAR2(100);
+      vr_dir_local     VARCHAR2(100);
+      vr_dir_remoto    VARCHAR2(100);
+
+      vr_script_ftp    VARCHAR2(600);
+
+      -- Cursor genérico de calendário
+      rw_crapdat BTCH0001.CR_CRAPDAT%ROWTYPE;
+      
+      vr_idprglog PLS_INTEGER  := 0;
+    
+      PROCEDURE pc_processa_arquivo(pr_nmarquiv IN VARCHAR2              --> Nome arquivo a enviar/ String de busca do arquivo a receber
+                                   ,pr_idoperac IN VARCHAR2              --> E - Envio de Arquivo, R - Retorno de arquivo
+                                   ,pr_nmdireto IN VARCHAR2              --> Diretório do arquivo a enviar
+                                   ,pr_idenvseg IN crapcrb.idtpreme%TYPE --> Indicador de utilizacao de protocolo seguro (SFTP)
+                                   ,pr_ftp_site IN VARCHAR2              --> Site de acesso ao FTP
+                                   ,pr_ftp_user IN VARCHAR2              --> Usuário para acesso ao FTP
+                                   ,pr_ftp_pass IN VARCHAR2              --> Senha para acesso ao FTP
+                                   ,pr_ftp_path IN VARCHAR2              --> Pasta no FTP para envio do arquivo
+                                   ,pr_dscritic OUT VARCHAR2) IS         --> Retorno de crítica
+
+        -- Variável de críticas
+        vr_cdcritic      crapcri.cdcritic%type := 0;
+        vr_dscritic VARCHAR2(1000);
+
+        -- Tratamento de erros
+        vr_exc_saida EXCEPTION;
+          
+        vr_serv_ftp    VARCHAR2(100);
+        vr_user_ftp    VARCHAR2(100);
+        vr_pass_ftp    VARCHAR2(100);
+          
+        vr_nmarquiv      VARCHAR2(100);
+        vr_diames        VARCHAR2(100);
+        vr_dir_local     VARCHAR2(100);
+        vr_dir_remoto    VARCHAR2(100);
+
+        vr_script_ftp    VARCHAR2(600);
+
+        -- Cursor genérico de calendário
+        rw_crapdat BTCH0001.CR_CRAPDAT%ROWTYPE;
+
+        vr_jobname  VARCHAR2(40) := 'jbepr_transf_smartshare';
+        vr_idprglog PLS_INTEGER  := 0;
+      --/
+      BEGIN
+        DECLARE
+        
+          vr_arquivo_log VARCHAR2(1000); --> Diretório do log do FTP
+          vr_script_ftp  VARCHAR2(1000); --> Script FTP
+          vr_comand_ftp  VARCHAR2(4000); --> Comando montado do envio ao FTP
+          vr_typ_saida   VARCHAR2(3);    --> Saída de erro
+          vr_dsparame    VARCHAR2(2000);
+          --/
+        BEGIN
+          --
+          -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0019.pc_processa_arquivo_ftp');
+          --/
+          vr_dsparame := ' - pr_nmarquiv:'||pr_nmarquiv||
+                         ', pr_idoperac:'||pr_idoperac||
+                         ', pr_nmdireto:'||pr_nmdireto||
+                         ', pr_idenvseg:'||pr_idenvseg||
+                         ', pr_ftp_site:'||pr_ftp_site||
+                         ', pr_ftp_user:'||pr_ftp_user||
+                         ', pr_ftp_pass:'||pr_ftp_pass||
+                         ', pr_ftp_path:'||pr_ftp_path;
+
+          --Chama script específico para conexão de ftp segura
+          IF pr_idenvseg = 'S' THEN
+            vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_SFTP');
+          ELSE
+            -- Buscar script para conexão FTP
+            vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
+          END IF;
+          
+          -- Gera o diretório do arquivo de log
+          vr_arquivo_log :=  gene0001.fn_diretorio(pr_tpdireto => 'C'
+                                                  ,pr_cdcooper => pr_cdcooper
+                                                  ,pr_nmsubdir => '/log') || '/proc_autbur.log'; 
+
+          -- Preparar o comando de conexão e envio ao FTP
+          vr_comand_ftp := vr_script_ftp
+                        || CASE pr_idoperac WHEN 'E' THEN ' -envia' ELSE ' -recebe' END
+                        || ' -srv '          || pr_ftp_site
+                        || ' -usr '          || pr_ftp_user
+                        || ' -pass '         || pr_ftp_pass
+                        || ' -arq '          || CHR(39) || pr_nmarquiv || CHR(39)
+                        || ' -dir_local '    || CHR(39) || pr_nmdireto || CHR(39)
+                        || ' -dir_remoto '   || CHR(39) || pr_ftp_path || CHR(39)
+                        || ' -log ' || vr_arquivo_log;
+
+          -- Chama procedure de envio e recebimento via ftp
+          GENE0001.pc_OScommand_Shell(pr_des_comando => vr_comand_ftp
+                                     ,pr_typ_saida   => vr_typ_saida
+                                     ,pr_des_saida   => pr_dscritic);
+
+          -- Se ocorreu erro dar RAISE
+          IF vr_typ_saida = 'ERR' THEN
+            RETURN;
+          END IF;
+
+          -- Limpa nome do modulo logado - 29/11/2017 - Ch 788828    
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
+            CECRED.pc_internal_exception;
+
+            -- Retorna o erro para a procedure chamadora
+            vr_cdcritic := 9999;
+            pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'empr0019.pc_processa_arquivo_ftp. '||SQLERRM||'. '||vr_dsparame;
+        END;
+
+      END pc_processa_arquivo;
+      
+
+    BEGIN
+    
+      -- Buscar a data do movimento
+      OPEN btch0001.cr_crapdat(pr_cdcooper);
+      FETCH btch0001.cr_crapdat
+        INTO rw_crapdat;
+
+      -- Verificar se existe informação, e gerar erro caso não exista
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+
+        -- Fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+
+        -- Gerar exceção
+        vr_cdcritic := 1;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE btch0001.cr_crapdat;
+
+      -- Busca nome do servidor
+      vr_serv_ftp := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => '0'
+                                              ,pr_cdacesso => 'TRAN_CCB_SERV_FTP');
+      -- Busca nome de usuario
+      vr_user_ftp := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => '0'
+                                              ,pr_cdacesso => 'TRAN_CCB_USR_FTP');
+      -- Busca senha do usuario
+      vr_pass_ftp := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => '0'
+                                              ,pr_cdacesso => 'TRAN_CCB_PASS_FTP');
+      -- Busca diretório remoto
+      vr_dir_remoto := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                ,pr_cdcooper => '0'
+                                                ,pr_cdacesso => 'TRAN_CCB_DIR_FTP');
+      -- Busca diretotio local da cooperativa
+      vr_dir_local := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                           ,pr_cdcooper => pr_cdcooper   --> Cooperativa
+                                           ,pr_nmsubdir => '/rl');
+      -- Busca script FTP                                 
+      vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
+
+      -- Seta o nome do arquivo
+      vr_nmarquiv := pr_nmarquiv;
+
+      --/ Inicia processamento do arquivo
+      pc_processa_arquivo(pr_nmarquiv => vr_nmarquiv        --> Nome arquivo a enviar
+                         ,pr_idoperac => 'E'                --> Envio de arquivo
+                         ,pr_nmdireto => vr_dir_local       --> Diretório do arquivo a enviar
+                         ,pr_idenvseg => 'N'                --> Indicador de utilizacao de protocolo seguro (SFTP)
+                         ,pr_ftp_site => vr_serv_ftp        --> Site de acesso ao FTP
+                         ,pr_ftp_user => vr_user_ftp        --> Usuário para acesso ao FTP
+                         ,pr_ftp_pass => vr_pass_ftp        --> Senha para acesso ao FTP
+                         ,pr_ftp_path => vr_dir_remoto      --> Pasta no FTP para envio do arquivo
+                         ,pr_dscritic => vr_dscritic);      --> Retorno de crítica
+
+        -- Se ocorrer algum erro
+        IF vr_dscritic IS NOT NULL THEN
+           RAISE vr_exc_saida;
+        END IF;
+
+      pr_des_reto := 'OK';
+        
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_des_reto := 'NOK';
+        pr_dscritic := vr_dscritic;
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3 --> Sempre na Cecred
+                                  ,pr_ind_tipo_log => 1
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'HH24:MI:SS') || 
+                                                      ' - empr0019.pc_transf_ccb_smartshare Erro ao efetuar transf de arquivo: ' || vr_dscritic
+                                  ,pr_dstiplog   => 'E'
+                                  ,pr_cdprograma => NULL);
+      WHEN OTHERS THEN
+        pr_des_reto := 'NOK';        
+        pr_dscritic := vr_dscritic;        
+        cecred.pc_internal_exception;
+      
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3 --> Sempre na Cecred
+                                  ,pr_ind_tipo_log => 1
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'HH24:MI:SS') || 
+                                                      ' - CONV0001.pc_transf_ccb_smartshare Erro ao efetuar download de arquivo: ' || SQLERRM
+                                  ,pr_dstiplog   => 'E'
+                                  ,pr_cdprograma => NULL);
+    END ;
+
+  END pc_transf_arq_smartshare;
+
+
 END GENE0002;
 /
