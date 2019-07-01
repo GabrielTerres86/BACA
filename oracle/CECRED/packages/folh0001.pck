@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015                      Ultima atualizacao: 05/07/2018
+   Data    : Maio/2015                      Ultima atualizacao: 28/05/2019
 
    Dados referentes ao programa:
 
@@ -18,6 +18,8 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
                05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída
                             da procedure: pc_consulta_arq_folha_ib e da função: fn_cdtarifa_cdfaixav,
                             Prj.363 (Jean Michel).           
+  
+			   28/05/2019 - Projeto XSLProcessor - Yuri Mouts
   
 ..............................................................................*/
 
@@ -10073,7 +10075,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       IF pr_idorigem = 3 THEN
 
         -- Montar o nome do arquivo do XML
-        vr_nmarquiv := to_char(pr_cdcooper,'FM000')||'.'||pr_nrdconta||'.'||pr_dssessao||'.XMLDADOSFOLHA.txt';
+        -- Projeto XSLProcessor, prever vir conteudo nulo na sessão
+        vr_nmarquiv := to_char(pr_cdcooper,'FM000')||'.'||pr_nrdconta||'.'||nvl(trim(pr_dssessao),to_char(localtimestamp,'hhmissff'))||'.XMLDADOSFOLHA.txt';
 
         -- Inicializar XML de retorno
         dbms_lob.createtemporary(pr_retxml, TRUE);
@@ -11673,6 +11676,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     vr_dsrowpfp    ROWID;
     vr_dsdireto    VARCHAR2(200);
     vr_qtddados    NUMBER;
+    vr_nmarquiv    varchar2(500);
 
     -- Variáveis para tratamento do XML
     vr_xmldados    CLOB;
@@ -11690,7 +11694,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     vr_excerror    EXCEPTION;
 
   BEGIN
-
     -- Buscar dados da empresa
     OPEN  cr_crapemp;
     FETCH cr_crapemp INTO rw_crapemp;
@@ -11728,10 +11731,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     -- Inicializa
     vr_qtddados := 0;
 
+    select replace(pr_nmarquiv,' ','')
+      into vr_nmarquiv
+      from dual;
+
     -- Se o arquivo foi informado
     IF TRIM(pr_nmarquiv) IS NOT NULL THEN
       -- Ler o arquivo e gravar o mesmo no CLOB
-      vr_xmldados := GENE0002.fn_arq_para_clob(pr_caminho => vr_dsdireto, pr_arquivo => pr_nmarquiv);
+      vr_xmldados := GENE0002.fn_arq_para_clob(pr_caminho => vr_dsdireto, pr_arquivo => vr_nmarquiv);
       vr_qtddados := LENGTH(vr_xmldados);
     END IF;
 

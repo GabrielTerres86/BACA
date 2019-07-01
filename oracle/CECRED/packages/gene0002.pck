@@ -350,6 +350,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0002 AS
                                      ,pr_des_reto OUT VARCHAR2                    --> Descrição OK/NOK
                                      ,pr_dscritic OUT VARCHAR2);                  --> Descricao Erro
 
+  --Envia arquivos para smartshare                                  
   PROCEDURE pc_transf_arq_smartshare(pr_nmdiretorio IN VARCHAR2  --> diretorio local, onde esta o arquivo a ser copiado
                                     ,pr_nmarquiv IN VARCHAR2     --> nome do arquivo a ser copiado                                   
                                     ,pr_cdcooper IN crapcop.cdcooper%TYPE --> cooperativa
@@ -2785,6 +2786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_path       VARCHAR2(4000);
       vr_nrarquivo  NUMBER(10);
       vr_des_saida  VARCHAR2(4000);
+	  vr_caminho    VARCHAR2(4000);
 
     BEGIN
 	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
@@ -2814,10 +2816,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_nrarquivo := fn_sequence('XSLPROCESSOR','XSLPROCESSOR', 0);
       --
 	  if vr_directory is not null then
+		BEGIN
+		  -- se o último caracter do diretorio for uma barra, esta será retirada
+		  select decode(substr(pr_caminho,length(pr_caminho)),'/',
+				  substr(pr_caminho,1,length(pr_caminho)-1),
+						 pr_caminho)
+			into vr_caminho
+				  from dual;
+		END;
 		  -- Gerar no diretório solicitado
 		  DBMS_XSLPROCESSOR.CLOB2FILE(vr_xML.getclobval(), vr_directory, vr_nrarquivo, NLS_CHARSET_ID('UTF8'));
 		  -- Mover o arquivo do diretorio temp para diretório de destino
-		  GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv ' ||vr_path||'/'||vr_nrarquivo||' "' || pr_caminho||'/'||pr_arquivo||'"');
+		  GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv ' ||vr_path||'/'||vr_nrarquivo||' "' || vr_caminho||'/'||pr_arquivo||'"');
 	  else
       DBMS_XSLPROCESSOR.CLOB2FILE(vr_xML.getclobval(), pr_caminho, pr_arquivo, NLS_CHARSET_ID('UTF8'));
 	  end if;
