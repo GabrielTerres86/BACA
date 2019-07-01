@@ -280,33 +280,47 @@ function main(campofoco) {
 ///fungco para mudar o foco de um campo para outro///
 function mudaFoco(){
 
-   var i_campo = 0;
+  var i_campo = 0;
+  
+  try {
 
    if (document.forms[0].vh_foco.value == "")
       document.forms[0].vh_foco.value = 0;
 
    i_campo = document.forms[0].vh_foco.value;
 
-   while ((document.forms[0].elements[i_campo].disabled ||
-           document.forms[0].elements[i_campo].type == "hidden")
+   while ((typeof(document.forms[0].elements[i_campo]) != 'undefined' &&
+           (document.forms[0].elements[i_campo].disabled ||
+            document.forms[0].elements[i_campo].type == "hidden"))
        && i_campo < document.forms[0].length) {
-
          i_campo++;
    }
 
-   if (document.forms[0].elements[i_campo].disabled ||
-       document.forms[0].elements[i_campo].type == "hidden") {
+   if (typeof(document.forms[0].elements[i_campo]) != 'undefined' &&
+       (document.forms[0].elements[i_campo].disabled ||
+        document.forms[0].elements[i_campo].type == "hidden")) {
       i_campo = 0;
-      while ((document.forms[0].elements[i_campo].disabled ||
-              document.forms[0].elements[i_campo].type == "Hidden")
+	  
+      while ((typeof(document.forms[0].elements[i_campo]) != 'undefined' &&
+	         (document.forms[0].elements[i_campo].disabled ||
+              document.forms[0].elements[i_campo].type == "hidden"))
           && i_campo < document.forms[0].vh_foco.value) {
          i_campo++;
       }
    }
 
-   if (document.forms[0].elements[i_campo].disabled == false &&
-       document.forms[0].elements[i_campo].type != "hidden")
+   if (typeof(document.forms[0].elements[i_campo]) != 'undefined' &&
+       (document.forms[0].elements[i_campo].disabled == false &&
+        document.forms[0].elements[i_campo].type != "hidden"))
       document.forms[0].elements[i_campo].focus();
+	  
+  }
+  catch  (e){
+	  
+	return true;
+	
+  }
+  
 }
 
 ///fungco para validar campos com valores inteiros///
@@ -886,10 +900,21 @@ function SetFocus(e) {
     return false;
 }
 
+// evitar erros em muitos locais do caixa online que chamam esta funcao com o L maiusculo.
+function callBLass(e) {
+	callBlass(e);
+}
+	
 function callBlass(e) {
-    if (e.keyCode == 120) {
-        window.open('blass.p', 'wbl', 'width=500,height=150,scrollbars=auto,resizable=no,alwaysRaised=true, left=0, top=0');
-        }
+    try {
+		if (e.keyCode == 120) {
+			window.open('blass.p', 'wbl', 'width=500,height=150,scrollbars=auto,resizable=no,alwaysRaised=true, left=0, top=0');
+		}
+	}
+	catch (erro){
+	  return true;	
+	}
+	
 }
 
 function callBLini(e) {
