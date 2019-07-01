@@ -11083,7 +11083,7 @@ END pc_calc_app_programada;
                        'Numero do Resgate: ' || TO_CHAR(pr_nrctrrpp,'9G999G990')    || '#' ||
                'IRRF (Imposto de Renda Retido na Fonte): ' || TO_CHAR(vr_valortir,'999G999G990D00') || '#' ||
                        'Aliquota IRRF: '       || vr_dsperirapl  || '#' ||
-                       'Valor Bruto: '         || TO_CHAR(pr_vlresgat  + vr_valortir,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') || '#'  ||                                 
+                       'Valor Bruto: '         || TO_CHAR(vr_vlresgat_acu  + vr_valortir,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') || '#'  ||                                 
                        'Cooperativa: '         || UPPER(rw_crapcop.nmextcop) || '#' || 
                        'CNPJ: '                || TO_CHAR(gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)) || '#' ||
                        UPPER(TRIM(vr_nmcidade)) || ', ' || TO_CHAR(pr_dtmvtolt,'dd') || ' DE ' || GENE0001.vr_vet_nmmesano(TO_CHAR(pr_dtmvtolt,'mm')) || ' DE ' || TO_CHAR(pr_dtmvtolt,'RRRR') || '.';                             
@@ -11095,7 +11095,7 @@ END pc_calc_app_programada;
                                    ,pr_nrdconta => pr_nrdconta                         --> Número da conta
                                    ,pr_nrdocmto => pr_nrctrrpp                         --> Número do documento
                                    ,pr_nrseqaut => 0                                   --> Número da sequencia
-                                   ,pr_vllanmto => pr_vlresgat                         --> Valor lançamento
+                                   ,pr_vllanmto => vr_vlresgat_acu                     --> Valor lançamento
                                    ,pr_nrdcaixa => pr_nrdcaixa                         --> Número do caixa NOK
                                    ,pr_gravapro => TRUE                                --> Controle de gravação
                                    ,pr_cdtippro => 12                                  --> Código de operação
@@ -11143,7 +11143,7 @@ END pc_calc_app_programada;
             gene0001.pc_gera_log_item (pr_nrdrowid => vr_nrdrowid
                                       ,pr_nmdcampo => 'VLRESGAT'
                                       ,pr_dsdadant => ''
-                                      ,pr_dsdadatu => to_char(pr_vlresgat,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS=,.'));
+                                      ,pr_dsdadatu => to_char(vr_vlresgat_acu,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS=,.'));
 
             gene0001.pc_gera_log_item (pr_nrdrowid => vr_nrdrowid
                                       ,pr_nmdcampo => 'DTRESGAT'
@@ -12873,6 +12873,7 @@ END pc_ObterListaPlanoAplProg;
             END IF;
           END IF;
 
+           pr_vlsldttr := pr_vlsldrgt;
            -- Verifica saldo
            IF pr_vlsldrgt >= pr_vlresgat THEN
 
@@ -12888,7 +12889,6 @@ END pc_ObterListaPlanoAplProg;
                vr_vllanmto := pr_vlsldrgt;
                vr_vlbasren := rw_craprac.vlbasapl;
            END IF;
-      pr_vlsldttr := pr_vlsldrgt;
 
         ELSE -- Resgate após primeiro mês da carência
 
@@ -12962,6 +12962,7 @@ END pc_ObterListaPlanoAplProg;
 
            END IF; -- Fim verificacao tipo de aplicacao
 
+           pr_vlsldttr := pr_vlsldrgt;
            -- Verifica se saldo é suficiente
            IF pr_vlsldrgt >= pr_vlresgat THEN
 
@@ -13044,7 +13045,6 @@ END pc_ObterListaPlanoAplProg;
            ELSE  -- Total
                vr_vlbasren := rw_craprac.vlbasapl;
            END IF;
-      pr_vlsldttr := pr_vlsldrgt;
 
         END IF; -- Fim mes de carencia
 
