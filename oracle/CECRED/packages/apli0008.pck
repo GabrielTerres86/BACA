@@ -6139,7 +6139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                               '<nrdrowid>'||vr_tab_dados_rpp(i1).nrdrowid||'</nrdrowid>'||
                               '<cdprodut>'||vr_tab_dados_rpp(i1).cdprodut||'</cdprodut>'||
                               '<dsfinali>'||vr_tab_dados_rpp(i1).dsfinali||'</dsfinali>'||
-                              '<vlsdtoap>'||vr_tab_dados_rpp(i1).vlsdtoap||'</vlsdtoap>'||
+							  '<vlsdtoap>'||vr_tab_dados_rpp(i1).vlsdtoap||'</vlsdtoap>'||
                               '</Registro>';
 
              gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc
@@ -10012,7 +10012,7 @@ END pc_calc_app_programada;
                  vr_vlsdappr := 0;
          vr_vlsldttr := 0;
          
-                 vr_tpresgate_apl := pr_tpresgat;
+              vr_tpresgate_apl := 1;
               vr_nrseqrgt := vr_nrseqrgt + 1;
 
                  pc_calc_saldo_resgate (pr_cdcooper => pr_cdcooper
@@ -10048,18 +10048,14 @@ END pc_calc_app_programada;
                        
                  vr_valortir := vr_valortir + vr_vlrdirrf;
 
-                 vr_vlrtotresgate_apl := vr_vlrtotresgate_apl + vr_vlrgappr;
-                 vr_vlresgat_apl := vr_vlrgappr;
+                 vr_vlrtotresgate_apl := vr_vlrtotresgate_apl + vr_vlsldttr;
+                 vr_vlresgat_apl := vr_vlsldttr;
                  vr_tpresgate_apl := 1;
                  IF (pr_tpresgat = 1) THEN
                     IF (vr_vlresgat > vr_vlrtotresgate_apl) THEN
                         vr_tpresgate_apl := 2;
                     ELSIF (vr_vlresgat = vr_vlrtotresgate_apl) THEN
-                        IF (vr_vlrgappr = vr_vlsldttr) THEN
                            vr_tpresgate_apl := 2;
-                        ELSE
-                           vr_tpresgate_apl := 1;
-                        END IF;
                            vr_flgfimresga := TRUE;
                     ELSE
                         vr_vlresgat_apl := vr_vlresgat - vr_vlresgat_acu;    
@@ -12644,7 +12640,6 @@ END pc_ObterListaPlanoAplProg;
       -- Variaveis de carencia
       vr_flgaplca BOOLEAN := FALSE; -- Flag aplicacao esta dentro da carencia
       vr_flgprmap BOOLEAN := FALSE; -- Flag aplicacao esta dentro do primeiro mes
-      vr_flgrgttt BOOLEAN := FALSE; -- Flag Resgate Total
 
       vr_nrdocmto craplci.nrdocmto%TYPE; -- Numero de documento do lancamento
 
@@ -13126,7 +13121,6 @@ END pc_ObterListaPlanoAplProg;
               vr_vlresgat := pr_vlsldrgt;
                 -- Valor de base de calculo
           	vr_vlbascal := 0;
-                vr_flgrgttt := TRUE; -- Flag resgate total
           	GOTO resgate_total;
           END IF;
           -- Verifica se saldo é suficiente
@@ -13244,7 +13238,6 @@ END pc_ObterListaPlanoAplProg;
 
           -- Valor de base de calculo
           vr_vlbascal := 0;
-          vr_flgrgttt := TRUE; -- Flag resgate total
           GOTO resgate_total;
 
 
@@ -13257,7 +13250,6 @@ END pc_ObterListaPlanoAplProg;
       END IF; -- Fim verificacao periodo de carencia
 
       <<resgate_total>>
-      IF (vr_flgrgttt) THEN
           -- Verifica o tipo de aplicacao PRE ou POS
           IF rw_craprac.idtippro = 1  THEN -- Pré-Fixada
             apli0006.pc_posicao_saldo_aplicacao_pre(pr_cdcooper => rw_craprac.cdcooper
@@ -13322,7 +13314,6 @@ END pc_ObterListaPlanoAplProg;
           END IF; -- Fim verificacao tipo de aplicacao
 	  pr_vlsldttr := pr_vlsldrgt;
           vr_vlbasren := rw_craprac.vlbasapl;
-      END IF; -- Fim Resgate Total
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -13473,7 +13464,7 @@ END pc_ObterListaPlanoAplProg;
                  vr_vlsldrgt := 0;
                  vr_vlsldtot := 0;
                  vr_vlsldttr := 0;
-                 vr_tpresgate_apl := pr_idtiprgt;
+         vr_tpresgate_apl := 1;
          vr_nrseqrgt := vr_nrseqrgt + 1;
 
                  pc_calc_saldo_resgate (pr_cdcooper => pr_cdcooper
@@ -13504,24 +13495,20 @@ END pc_ObterListaPlanoAplProg;
                  vr_vlrtotresgate_apl := vr_vlrtotresgate_apl + vr_vlsldrgt;
                  
                  IF (pr_idtiprgt = 1) THEN
-                    vr_vlresgat_acu := vr_vlresgat_acu + vr_vlsldrgt;
                     IF (pr_vlresgat > vr_vlrtotresgate_apl) THEN
                         vr_tpresgate_apl := 2;
                     ELSIF (pr_vlresgat = vr_vlrtotresgate_apl) THEN
-                           IF (vr_vlsldttr = vr_vlsldrgt) THEN
                            vr_tpresgate_apl := 2;
-                           ELSE
-                               vr_tpresgate_apl := 1;
-                        END IF;
                            vr_flgfimresga := TRUE;
                     ELSE
+                        vr_vlresgat_apl := pr_vlresgat - vr_vlresgat_acu;    
                         vr_flgfimresga := TRUE;
                     END IF;
                   ELSE
                     vr_tpresgate_apl := 2;
                   END IF;
-                  vr_vlresgat_apl := pr_vlresgat - vr_vlresgat_acu;    
 
+                  vr_vlresgat_acu := vr_vlresgat_acu + vr_vlresgat_apl;
 
                     --Encontrar o proximo indice para a tabela
                     vr_index_tab:= pr_tab_saldo_rpp.Count+1;
