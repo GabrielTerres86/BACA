@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE PC_JOB_LIBERA_PRE_MANUL(pr_dscritic OUT VARCHAR2) IS
+CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_LIBERA_PRE_MANUL(pr_dscritic OUT VARCHAR2) IS
 /* .............................................................................
 
    Programa: PC_JOB_LIBERA_PRE_MANUL
