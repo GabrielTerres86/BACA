@@ -782,7 +782,7 @@ create or replace package body cecred.TELA_CADEMP is
                                '</configuracaoCredito>'||
                                '<consulta>'||
                                 '<tipoContagemDias>'||
-                                 '<codigo>'||'3'||'</codigo>'|| --  F - Fixa
+                                 '<codigo>'||'2'||'</codigo>'|| --  dia do mes
                                 '</tipoContagemDias>'||
                                '</consulta>'||
                                '<parametroConsignado>'||
