@@ -2470,7 +2470,7 @@ BEGIN
                            '</convenioCredito>'||
                            '<configuracaoCredito>'||
                             '<tratamendoDiaNaoUtil>'||
-                             '<codigo>'||'2'||'</codigo>'|| -- DC - Dia Corrido
+                             '<codigo>'||'3'||'</codigo>'|| -- Dia fixo
                             '</tratamendoDiaNaoUtil>'||
                            '</configuracaoCredito>'||
                            '<consulta>'||
