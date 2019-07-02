@@ -182,6 +182,8 @@
                 08/11/2018 - Ajuste para arredondar par_vlmrapar em duas casas, devido a diferenca entre LCM e LEM
                              PRJ450 - Regulatorio(Odirlei-AMcom)
 
+                02/07/2019 - P437 - Consignado - Ajuste na rotina gera_pagamentos_parcelas, para não permitir efetuar pagamento de emprestimo do consignado
+				             Josiane Stiehler - AMcom
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
@@ -1310,6 +1312,22 @@ PROCEDURE gera_pagamentos_parcelas:
              RETURN "NOK".
          END.
 
+    /* PJ437 - Consignado */
+    FOR FIRST crapepr 
+    	WHERE  crapepr.cdcooper = par_cdcooper AND
+               crapepr.nrdconta = par_nrdconta AND
+               crapepr.nrctremp = par_nrctremp 
+	     NO-LOCK:
+				   
+		/* Não permitir efetuar pagamento para emprestimo de consignado */
+		IF crapepr.tpemprst = 1 AND
+		   crapepr.tpdescto = 2 THEN
+		   DO:
+			 ASSIGN  aux_cdcritic = 0
+					 aux_dscritic = "Pagamento de consignado nao pode ser efetuado por este programa." .
+			 LEAVE.  
+		   END.
+	End.
 
     FOR FIRST crapprm
     WHERE crapprm.cdcooper = par_cdcooper AND
