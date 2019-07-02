@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
+CREATE OR REPLACE PACKAGE CECRED.empr0001_josi AS
 
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -47,6 +47,10 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --                          Heitor (Mouts) - Prj 324
 
   --             23/06/2018 - Rename da tabela tbepr_cobranca para tbrecup_cobranca e filtro tpproduto = 0 (Paulo Penteado GFT)
+  -- 
+  --             14/06/2019 - PJ437 - Consignado - Incluido as rotinas pc_valida_pagto_normal_parcela, pc_valida_pagto_antec_parc
+  --                          na specification, para ser chamado por outras rotinas. Josiane Stiehler - AMcom
+  --
   ---------------------------------------------------------------------------------------------------------------
   -- CURSOR para buscar o saldo que será no Extrato PP.
   -- Usado também an rotina PREJ0001
@@ -1029,10 +1033,43 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                     ,pr_retxml    IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
                                     ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
                                     ,pr_des_erro  OUT VARCHAR2); --> Erros do processo
+                                    
+  PROCEDURE pc_valida_pagto_normal_parcela(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                                          ,pr_cdagenci IN crapass.cdagenci%TYPE --> Código da agência
+                                          ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE --> Número do caixa
+                                          ,pr_cdoperad IN crapdev.cdoperad%TYPE --> Código do Operador
+                                          ,pr_nmdatela IN VARCHAR2 --> Nome da tela
+                                          ,pr_idorigem IN INTEGER --> Id do módulo de sistema
+                                          ,pr_nrdconta IN crapepr.nrdconta%TYPE --> Número da conta
+                                          ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Seq titula
+                                          ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Movimento atual
+                                          ,pr_flgerlog IN VARCHAR2 --> Indicador S/N para geração de log
+                                          ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
+                                          ,pr_nrparepr IN INTEGER --> Número parcelas empréstimo
+                                          ,pr_vlpagpar IN NUMBER --> Valor a pagar da parcela
+                                          ,pr_tab_erro OUT gene0001.typ_tab_erro --> Tabela com possíves erros
+                                          ,pr_des_reto OUT VARCHAR); 
 
-END empr0001;
+   PROCEDURE pc_valida_pagto_antec_parc(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                                      ,pr_cdagenci IN crapass.cdagenci%TYPE --> Código da agência
+                                      ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE --> Número do caixa
+                                      ,pr_cdoperad IN crapdev.cdoperad%TYPE --> Código do Operador
+                                      ,pr_nmdatela IN VARCHAR2 --> Nome da tela
+                                      ,pr_idorigem IN INTEGER --> Id do módulo de sistema
+                                      ,pr_nrdconta IN crapepr.nrdconta%TYPE --> Número da conta
+                                      ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Seq titula
+                                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Movimento atual
+                                      ,pr_flgerlog IN VARCHAR2 --> Indicador S/N para geração de log
+                                      ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
+                                      ,pr_nrparepr IN INTEGER --> Número parcelas empréstimo
+                                      ,pr_vlpagpar IN NUMBER --> Valor a pagar parcela
+                                      ,pr_vlatupar OUT NUMBER --> Valor Atual Parcela
+                                      ,pr_vldespar OUT NUMBER --> Valor Desconto Parcela
+                                      ,pr_des_reto OUT VARCHAR --> Retorno OK / NOK
+                                      ,pr_tab_erro OUT gene0001.typ_tab_erro);
+END empr0001_josi;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
+CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
 
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -15126,6 +15163,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     regras da b1wgen0084a.p->gera_pagamentos_parcelas, conforme
                     projeto 302 - Sistema de acordos ( Renato Darosci - Supero )
 
+       25/06/2019 - P437 - consignado - Incluido validação para não realizar pagamento 
+                    quando for consignado - Josiane Stiehler
+                    
     ............................................................................. */
     DECLARE
 
@@ -15247,6 +15287,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              AND ret.flcredit = 0;
 
       rw_ret cr_ret%ROWTYPE;
+      -- P437 - Consignado
+      CURSOR cr_crapepr (pr_cdcooper crapepr.cdcooper%TYPE,
+                       pr_nrdconta crapepr.nrdconta%TYPE,
+                       pr_nrctremp crapepr.nrctremp%TYPE) IS
+      SELECT epr.tpdescto,
+             epr.tpemprst
+        FROM crapepr epr
+       WHERE epr.cdcooper = pr_cdcooper
+         AND epr.nrdconta = pr_nrdconta
+         AND epr.nrctremp = pr_nrctremp;
+    rw_crapepr cr_crapepr%rowtype;
 
     BEGIN
 
@@ -15263,6 +15314,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 				 RAISE vr_exc_erro;
 			 END IF;
 
+       -- P437 - Consignado - Verifica se é consignado
+       OPEN cr_crapepr (pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => pr_nrdconta,
+                        pr_nrctremp => pr_nrctremp);
+       FETCH cr_crapepr INTO rw_crapepr;
+       CLOSE cr_crapepr;
+
+       -- Se o tpdescto = 2 -- consignado
+       IF rw_crapepr.tpemprst = 1 AND
+          rw_crapepr.tpdescto = 2 THEN
+          vr_cdcritic := 0;
+				  vr_dscritic := 'Pagamento de consignado nao pode ser efetuado por este programa.';
+				  -- Gera exceção
+				  RAISE vr_exc_erro;
+       END IF;
        -- Parametro de bloqueio de resgate de valores em c/c
        -- ref ao pagto de contrato com boleto (Projeto 210)
        vr_blqresg_cc := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
@@ -17261,5 +17327,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
   END pc_grava_motivo_anulacao; 
 
-END empr0001;
+
+
+END empr0001_josi;
 /
