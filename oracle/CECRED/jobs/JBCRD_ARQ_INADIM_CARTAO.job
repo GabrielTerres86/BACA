@@ -1,0 +1,38 @@
+/*   Criação do Job para processar os arquivo de atraso cartão de credito (CB093).
+     - PRJ572 - Cobrança de cartão de crédito
+*/
+BEGIN
+  --
+	EXECUTE IMMEDIATE 'ALTER SESSION SET
+	  nls_calendar = ''GREGORIAN''
+		nls_comp = ''BINARY''
+		nls_date_format = ''DD-MON-RR''
+		nls_date_language = ''AMERICAN''
+		nls_iso_currency = ''AMERICA''
+		nls_language = ''AMERICAN''
+		nls_length_semantics = ''BYTE''
+		nls_nchar_conv_excp = ''FALSE''
+		nls_numeric_characters = ''.,''
+		nls_sort = ''BINARY''
+		nls_territory = ''AMERICA''
+		nls_time_format = ''HH.MI.SSXFF AM''
+		nls_time_tz_format = ''HH.MI.SSXFF AM TZR''
+		nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
+		nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
+	--
+	--SYS.DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'CECRED.JBCRD_ARQ_INADIM_CARTAO');
+	--
+	SYS.DBMS_SCHEDULER.CREATE_JOB(JOB_NAME        => 'CECRED.JBCRD_ARQ_INADIM_CARTAO'
+                               ,JOB_TYPE        => 'PLSQL_BLOCK'
+                               ,JOB_ACTION      => 'begin cecred.ccrd0009.pc_import_arq_inadim_job; end;'
+                               ,START_DATE      => TO_DATE('02-07-2019 07:00:00', 'dd-mm-yyyy hh24:mi:ss')
+                               ,REPEAT_INTERVAL => 'Freq=DAILY;ByDay=MON,TUE,WED,THU,FRI;ByHour=07;ByMinute=0;BySecond=0'
+                               ,END_DATE        => TO_DATE(NULL)
+                               ,JOB_CLASS       => 'DEFAULT_JOB_CLASS'
+                               ,ENABLED         => TRUE
+                               ,AUTO_DROP       => TRUE
+                               ,COMMENTS        => 'Rodar programa ccrd0009.pc_import_arq_inadim_job - Responsavel em processar arq. de atraso de cartão de crédito. Roda toda os dias as 07h.'
+															 );
+  --
+END;
+/

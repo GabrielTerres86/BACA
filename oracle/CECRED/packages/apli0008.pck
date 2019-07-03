@@ -2719,7 +2719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
       
         vr_cdcritic crapcri.cdcritic%TYPE;       -- Cód. Erro
         vr_dscritic VARCHAR2(1000);              -- Desc. Erro
-
+      
         --Registro do tipo calendario
         rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
       
@@ -2805,7 +2805,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
         ELSE
           vr_dtmvtolt := rw_crapdat.dtmvtolt;
           CLOSE btch0001.cr_crapdat;
-        END IF;
+          END IF;
 
         /* Calcular a proxima data de debito */
         vr_dtdebito := rw_craprpp.dtdebito;
@@ -6139,6 +6139,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0008 AS
                               '<nrdrowid>'||vr_tab_dados_rpp(i1).nrdrowid||'</nrdrowid>'||
                               '<cdprodut>'||vr_tab_dados_rpp(i1).cdprodut||'</cdprodut>'||
                               '<dsfinali>'||vr_tab_dados_rpp(i1).dsfinali||'</dsfinali>'||
+							  '<vlsdtoap>'||vr_tab_dados_rpp(i1).vlsdtoap||'</vlsdtoap>'||
                               '</Registro>';
 
              gene0002.pc_escreve_xml(pr_xml            => vr_clobxmlc

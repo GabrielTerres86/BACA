@@ -644,6 +644,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --
   --              01/10/2018 - Substituir '.' por ',', pois estava afetando na geração do
   --                           relatorio (Lucas Ranghetti INC0023838)
+  --
+  --              06/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO"
+  --                           (P559 - André Clemer - Supero)
+  --
+  --              18/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO" - dslocpag
+  --                           (P559 - Darlei Zillmer - Supero)
   ---------------------------------------------------------------------------------------------------------------
     
   --Ch 839539
@@ -1713,7 +1719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Rafael Cechet
-     Data    : Agosto/2015                     Ultima atualizacao: 03/10/2018
+     Data    : Agosto/2015                     Ultima atualizacao: 18/06/2019
 
      Dados referentes ao programa:
 
@@ -1731,6 +1737,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                16/08/2018 - Retirado mensagem de serviço de protesto pelo BB (PRJ352 - Rafael).                              
 			   
 			   03/10/2018 - Ajuste no cursor para geração dos boletos para o Cyber. (PRB0040197 - Saquetta).
+         
+                 06/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO"
+                              (P559 - André Clemer - Supero)
+                              
+                 18/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO" - dslocpag
+                              (P559 - Darlei Zillmer - Supero)
   ............................................................................ */      
 
 	DECLARE
@@ -2506,9 +2518,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
              pr_tab_cob(vr_ind_cob).dsdinst1 := ' ';             
           END CASE;
           
-          IF nvl(rw_crapcob.nrctremp,0) > 0 THEN
-             pr_tab_cob(vr_ind_cob).dsdinst1 := '*** NAO ACEITAR PAGAMENTO APOS O VENCIMENTO ***';
-          END IF;                    
+          -- Removida instrução (PRJ 559 - Task 22167: Remover trava de instrução)
+          -- IF nvl(rw_crapcob.nrctremp,0) > 0 THEN
+          --    pr_tab_cob(vr_ind_cob).dsdinst1 := '*** NAO ACEITAR PAGAMENTO APOS O VENCIMENTO ***';
+          -- END IF;                    
           
           IF (rw_crapcob.tpjurmor <> 3) OR (rw_crapcob.tpdmulta <> 3) THEN
             
@@ -2548,12 +2561,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           END IF;
                     
           pr_tab_cob(vr_ind_cob).dsavis2v := ' ';
+          pr_tab_cob(vr_ind_cob).dslocpag := ' ';
           
+          -- Removida mensagem (PRJ 559 - Task 22167: Remover trava de instrução)
           IF nvl(rw_crapcob.nrctremp,0) = 0 THEN
-             pr_tab_cob(vr_ind_cob).dslocpag := 'APOS VENCIMENTO, PAGAR SOMENTE NA COOPERATIVA ' || rw_crapcob.nmrescop;
+             -- pr_tab_cob(vr_ind_cob).dslocpag := 'APOS VENCIMENTO, PAGAR SOMENTE NA COOPERATIVA ' || rw_crapcob.nmrescop;
              pr_tab_cob(vr_ind_cob).dsavis2v := 'Apos o vencimento, acesse http://' || rw_crapcob.dsendweb || '.';
-          ELSE
-             pr_tab_cob(vr_ind_cob).dslocpag := 'NAO ACEITAR PAGAMENTO APOS O VENCIMENTO';
           END IF;
           
           pc_calc_codigo_barras ( pr_dtvencto => rw_crapcob.dtvencto
@@ -9586,6 +9599,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                 foi criada a pc_gera_log externa que utiliza a pc_log_programa.
                                 Eliminada a rotina interna pc_controla_log_batch que chama pc_log_exec_job
                                 (Ana - Envolti - Ch REQ0011327)
+   
+                   25/06/2019 - Ajuste para efetuar lançamento de tarifa 
+                                Alcemir Jr. (INC0011840)
     ............................................................................ */
     
     --------------->> CURSORES <<----------------
@@ -9606,17 +9622,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       SELECT ctl.cdcooper, 
              ctl.nrdconta,
              ctl.cdtarifa, 
+             sms.nrcnvcob,
+             ass.inpessoa,
              COUNT(ctl.idsms) qtdsms
         FROM tbgen_sms_controle ctl,
-             tbgen_sms_lote lot
+             tbgen_sms_lote lot,
+             tbcobran_sms sms,
+             crapass ass
        WHERE ctl.cdcooper   = pr_cdcooper
          AND lot.idlote_sms = ctl.idlote_sms
+         AND sms.idsms = ctl.idsms
+         AND sms.idlote_sms = ctl.idlote_sms
+         AND ass.cdcooper = sms.cdcooper
+         AND ass.nrdconta = sms.nrdconta
          AND lot.cdproduto  = 19
          AND lot.idtpreme   = 'SMSCOBRAN'
          AND cdretorno      = 00
-         AND trunc(dhenvio_sms)  = trunc(SYSDATE)         
-       GROUP BY ctl.cdcooper, ctl.nrdconta,ctl.cdtarifa;
+         AND trunc(dhenvio_sms)  = trunc(SYSDATE)
+       GROUP BY ctl.cdcooper, ctl.nrdconta,ctl.cdtarifa, sms.nrcnvcob, ass.inpessoa;
 
+--JOAO
+-- Busca as tarifas
+    CURSOR cr_tar_inc(pr_cdcatego IN craptar.cdcatego%TYPE
+                     ,pr_inpessoa IN craptar.inpessoa%TYPE) IS
+        SELECT tar.cdtarifa
+              ,tar.dstarifa
+              ,inc.dsinctar
+              ,tar.cdocorre
+              ,tar.cdmotivo
+          FROM craptar tar
+              ,crapint inc
+         WHERE tar.cdinctar = inc.cdinctar
+           AND tar.cdcatego = pr_cdcatego
+           AND tar.inpessoa = pr_inpessoa;
+    rw_tar_inc cr_tar_inc%ROWTYPE;
+    
     -->  Buscar contrato ativo
     CURSOR cr_smsctr (pr_cdcooper crapass.cdcooper%TYPE,
                       pr_nrdconta crapass.nrdconta%TYPE) IS
@@ -9665,6 +9705,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     vr_qtsmsdis     INTEGER;
     vr_qtdsms       INTEGER;
     vr_dsparame     VARCHAR2(2000);
+    --JOAO
+    vr_cdocorre     crapoco.cdocorre%TYPE; -- Ocorrencia de retorno
+    vr_cdmotivo     crapmot.cdmotivo%TYPE; -- Motivo de retorno
+    vr_dsinctar     varchar2(20);
     
     -- Objetos para armazenar as variáveis da notificação
     vr_variaveis_notif NOTI0001.typ_variaveis_notif;
@@ -9912,8 +9956,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           IF NOT vr_tab_tarifa.exists(vr_idxtar) THEN
             vr_cdcritic := NULL;
             vr_dscritic := NULL;
-            --> Carregar Tarifas de pessoa fisica e juridica      
-            TARI0001.pc_carrega_dados_tar_vigente ( pr_cdcooper  => rw_sms_cobran.cdcooper   -- Codigo Cooperativa
+            
+            --JOAO
+            vr_cdocorre := 36;  -- Confirmacao de envio de SMS
+            vr_cdmotivo := 87;  -- Enviado com sucesso
+
+            open cr_tar_inc (pr_cdcatego => 28 -- SMS Cobranca
+                           ,pr_inpessoa => rw_sms_cobran.inpessoa);
+            FETCH cr_tar_inc INTO rw_tar_inc;   
+           
+            IF cr_tar_inc%found then
+              vr_dsinctar:= rw_tar_inc.dsinctar;
+ 			       CLOSE cr_tar_inc;   
+            else
+              vr_dsinctar:= 'RETORNO';
+ 			       CLOSE cr_tar_inc;   
+            end if;
+            --> Carregar Tarifas de pessoa fisica e juridica
+            /*TARI0001.pc_carrega_dados_tar_vigente ( pr_cdcooper  => rw_sms_cobran.cdcooper   -- Codigo Cooperativa
                                                    ,pr_cdtarifa  => rw_sms_cobran.cdtarifa  --Codigo da Tarifa (CRAPTAR) - Ao popular este parâmetro o pr_cdbattar não é necessário
                                                    ,pr_vllanmto  => 0             -- Valor Lancamento
                                                    ,pr_cdprogra  => 'COBR0005'    -- Codigo Programa
@@ -9925,7 +9985,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                                                    ,pr_cdfvlcop  => vr_tab_tarifa(vr_idxtar).cdfvlcop   -- Codigo faixa valor cooperativa
                                                    ,pr_cdcritic  => vr_cdcritic   -- Codigo Critica
                                                    ,pr_dscritic  => vr_dscritic   -- Descricao Critica
-                                                   ,pr_tab_erro  => vr_tab_erro); -- Tabela erros
+                                                   ,pr_tab_erro  => vr_tab_erro); -- Tabela erros*/
+            tari0001.pc_carrega_dados_tarifa_cobr(pr_cdcooper => rw_sms_cobran.cdcooper
+                                                ,pr_nrdconta => rw_sms_cobran.nrdconta
+                                                ,pr_nrconven => rw_sms_cobran.nrcnvcob
+                                                ,pr_dsincide => vr_dsinctar
+                                                ,pr_cdocorre => vr_cdocorre
+                                                ,pr_cdmotivo => vr_cdmotivo
+                                                ,pr_inpessoa => rw_sms_cobran.inpessoa
+                                                ,pr_vllanmto => 0.01 -- Usaremos o valor ficticio minimo
+                                                ,pr_cdprogra => 'COBR0005'
+                                                ,pr_flaputar => 0 -- Nao apurar
+                                                ,pr_cdhistor => vr_tab_tarifa(vr_idxtar).cdhistor
+                                                ,pr_cdhisest => vr_tab_tarifa(vr_idxtar).cdhisest
+                                                ,pr_vltarifa => vr_tab_tarifa(vr_idxtar).vltarifa
+                                                ,pr_dtdivulg => vr_tab_tarifa(vr_idxtar).dtdivulg
+                                                ,pr_dtvigenc => vr_tab_tarifa(vr_idxtar).dtvigenc
+                                                ,pr_cdfvlcop => vr_tab_tarifa(vr_idxtar).cdfvlcop
+                                                ,pr_cdcritic => vr_cdcritic
+                                                ,pr_dscritic => vr_dscritic);
             -- Se ocorreu erro
             IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
               -- Se possui erro no vetor
@@ -9950,6 +10028,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           vr_cdcritic := NULL;
           vr_dscritic := NULL;
           
+          --JOAO
+          if (vr_vltarsms = 0) THEN
+            continue;
+          END IF;
+
           -- Criar Lancamento automatico tarifa
           TARI0001.pc_cria_lan_auto_tarifa(pr_cdcooper      => rw_sms_cobran.cdcooper
                                           ,pr_nrdconta      => rw_sms_cobran.nrdconta

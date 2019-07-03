@@ -65,6 +65,10 @@
 			  22/11/2017 - Inclusao de informacoes na geracao do log codigo 77
 						   data proc. atualiza_data_manutencao_cadastro. 
 						   (SD 773399) - Carlos Rafael Tanholi.	
+
+			  24/04/2019 - Ajuste na procedure atualiza_data_manutencao_cadastro 
+			               para considerar o CDORIGEM 5. (Anderson - Supero)
+
 .............................................................................*/
 { sistema/generico/includes/b1wgen0168tt.i }
 
@@ -203,7 +207,10 @@ PROCEDURE atualiza_data_manutencao_cadastro:
                                  crapcyb.cdorigem = 3 )                 OR
                                 (crapcyb.cdcooper = tt-crapcyb.cdcooper AND
                                  crapcyb.nrdconta = tt-crapcyb.nrdconta AND
-                                 crapcyb.cdorigem = 4))
+                                 crapcyb.cdorigem = 4)                  OR
+								(crapcyb.cdcooper = tt-crapcyb.cdcooper AND
+                                 crapcyb.nrdconta = tt-crapcyb.nrdconta AND
+                                 crapcyb.cdorigem = 5))
                                NO-LOCK:
 
             Contador: DO aux_contador = 1 TO 10:

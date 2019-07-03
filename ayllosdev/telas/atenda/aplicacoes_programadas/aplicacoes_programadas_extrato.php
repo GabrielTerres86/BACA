@@ -149,7 +149,15 @@
 						</tr>			
 					</thead>
 					<tbody>
-						<?  for ($i = 0; $i < $qtLancto; $i++) { ?>
+						<?  for ($i = 0; $i < $qtLancto; $i++) {
+						       if ($cdprodut  <1){
+								   $vllanmto       = number_format(str_replace(",",".",$extrato[$i]->tags[4]->cdata),2,",",".");
+								   $vllanmto_total = number_format(str_replace(",",".",$extrato[$i]->tags[5]->cdata),2,",",".");
+							   }else{
+								   $vllanmto       = $extrato[$i]->tags[4]->cdata;
+								   $vllanmto_total = $extrato[$i]->tags[5]->cdata;
+							   }
+						?>
 							<tr>
 								<td><?php if ($i > 0) { echo $extrato[$i]->tags[0]->cdata; } else { echo "&nbsp;"; } ?></td>
 								
@@ -161,10 +169,10 @@
 								<td><?php if ($i > 0) { echo $extrato[$i]->tags[3]->cdata; } else { echo "&nbsp;"; } ?></td>
 								
 								<td><span><?php if ($i > 0) { echo $extrato[$i]->tags[4]->cdata; } else { echo "&nbsp;"; } ?></span>
-									<?php if ($i > 0) { echo number_format(str_replace(",",".",$extrato[$i]->tags[4]->cdata),2,",","."); } else { echo "&nbsp;"; } ?></td>
+									<?php if ($i > 0) { echo $vllanmto; } else { echo "&nbsp;"; } ?></td>
 								
 								<td><span><? echo $extrato[$i]->tags[5]->cdata; ?></span>
-									<?php echo number_format(str_replace(",",".",$extrato[$i]->tags[5]->cdata),2,",","."); ?></td>
+									<?php echo $vllanmto_total; ?></td>
 							</tr>	
 						<?} // Fim do for ?>			
 					</tbody>

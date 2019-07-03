@@ -179,6 +179,8 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
                05/06/2019 - Remoção de caracteres especiais e alteração de layout do arquivo RM.
                             Alcemir Jr. (INC0016878).
 
+		       21/06/2019 - Remoção de caracteres especiais adicionais.
+                            Alcemir Jr. (RITM0023381).
                ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -1245,15 +1247,15 @@ begin
     vr_cratseg(vr_ind_cratseg).cdageseg := rw_crapseg2.cdagenci;
     vr_cratseg(vr_ind_cratseg).cdmotcan := rw_crapseg2.cdmotcan;
     vr_cratseg(vr_ind_cratseg).flgclabe := rw_crapseg2.flgclabe;
-    vr_cratseg(vr_ind_cratseg).nmbenvid := rw_crapseg2.nmbenvid##1;
+    vr_cratseg(vr_ind_cratseg).nmbenvid := gene0007.fn_caract_acento(rw_crapseg2.nmbenvid##1,1);
     vr_cratseg(vr_ind_cratseg).tpendcor := rw_crapseg2.tpendcor;
     vr_cratseg(vr_ind_cratseg).tpregist := vr_tpregist;
-    vr_cratseg(vr_ind_cratseg).dsendres := gene0007.fn_caract_acento(vr_dsendres);
+    vr_cratseg(vr_ind_cratseg).dsendres := gene0007.fn_caract_acento(vr_dsendres,1);
     vr_cratseg(vr_ind_cratseg).nmbairro := gene0007.fn_caract_acento(vr_nmbairro);
     vr_cratseg(vr_ind_cratseg).nmcidade := gene0007.fn_caract_acento(vr_dscidduf);
     vr_cratseg(vr_ind_cratseg).nrcepend := gene0007.fn_caract_acento(vr_nrcepend);
-    vr_cratseg(vr_ind_cratseg).complend := gene0007.fn_caract_acento(vr_complend);
-    vr_cratseg(vr_ind_cratseg).nrendres := gene0007.fn_caract_acento(vr_nrendres);
+    vr_cratseg(vr_ind_cratseg).complend := gene0007.fn_caract_acento(vr_complend,1);
+    vr_cratseg(vr_ind_cratseg).nrendres := gene0007.fn_caract_acento(vr_nrendres,1);
     vr_cratseg(vr_ind_cratseg).inpessoa := rw_crapass.inpessoa;
     vr_cratseg(vr_ind_cratseg).dtprideb := rw_crapseg2.dtprideb;
     vr_cratseg(vr_ind_cratseg).dtdebito := rw_crapseg2.dtdebito;
@@ -1534,7 +1536,7 @@ begin
                                              vr_sigestad||                 -- uf
                                              rpad(vr_nrtelefo, 10, ' ')||
                                              gene0002.fn_mask(vr_nrcepend,'99999999')||
-                                             rpad(gene0007.fn_caract_acento(vr_dsendres), 50, ' ')||
+                                             rpad(gene0007.fn_caract_acento(vr_dsendres,1), 50, ' ')||
                                              rpad(gene0007.fn_caract_acento(vr_nrendres), 10, ' ')||
                                              rpad(gene0007.fn_caract_acento(nvl(vr_nmbairro,' ')), 60, ' ')||
                                              rpad(gene0007.fn_caract_acento(nvl(vr_nmcidade,' ')), 20, ' ')||   -- cidade
@@ -1547,7 +1549,7 @@ begin
                                              rpad(vr_cratseg(vr_ind_cratseg).nmbenvid, 200, ' ')||
                                              gene0002.fn_mask(vr_cratseg(vr_ind_cratseg).tpplaseg,'999')||
                                              rpad(vr_cratseg(vr_ind_cratseg).complend, 40, ' ')||
-                                             rpad(gene0007.fn_caract_acento(vr_complend), 38,' ');
+                                             rpad(gene0007.fn_caract_acento(vr_complend,1), 38,' ');
       -- Ajuste layout --SD243733
       -- se for cancelamento não deve enviar as datas de vencimento das parcelas
       IF trim(vr_dtcancel) IS NOT NULL THEN

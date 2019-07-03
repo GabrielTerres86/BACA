@@ -12,6 +12,7 @@
  *
  *                31/08/2015 - Adicionado os campos de Assessoria e Motivo CIN (Douglas - Melhoria 12) 
  *				  21/06/2018 - Inserção de bordero e titulo [Vitor Shimada Assanuma (GFT)]
+ *				  04/04/2019 - Incluir a origem cartoes (P572 - Nagasava - Supero)
  * --------------
  */
 ?>
@@ -37,6 +38,7 @@
 			<option value="1"> <? echo utf8ToHtml("1 - Conta") ?> </option>
 			<option value="3"> <? echo utf8ToHtml("3 - Empr&eacute;stimos") ?> </option>
 			<option value="4"> <? echo utf8ToHtml("4 - Desconto de T&iacute;tulos") ?> </option>
+			<option value="5"> <? echo utf8ToHtml("5 - Cart&otilde;es") ?> </option>
 		</select>
 
 		<label for="nrdconta">Conta:</label>

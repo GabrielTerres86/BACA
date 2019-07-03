@@ -4629,7 +4629,8 @@ create or replace package body cecred.TELA_COBTIT is
 		Frequencia: Sempre que for chamado
 		Objetivo  : Rotina para gerar a impressao do boleto em pdf
 		Observacao: -----
-
+		Alteracoes: 05/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO"
+                             (P559 - André Clemer - Supero)
 	..............................................................................*/
 		DECLARE
 			----------------------------- VARIAVEIS ---------------------------------
@@ -4755,6 +4756,9 @@ create or replace package body cecred.TELA_COBTIT is
 				dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
 				--Escrever no arquivo XML
 				gene0002.pc_escreve_xml(vr_clobxml, vr_dstextorel,'<?xml version="1.0" encoding="UTF-8"?><Root><Dados>');
+
+				-- Removida instrução (PRJ 559 - Task 22167: Remover trava de instrução)
+				vr_tab_cob(vr_tab_cob.FIRST).dsdinst1 := ' ';
 
 				vr_dstexto :=               '<cdcooper>' || NVL(vr_tab_cob(vr_tab_cob.FIRST).cdcooper, '') || '</cdcooper>';
 				vr_dstexto := vr_dstexto || '<nrdconta>' || NVL(vr_tab_cob(vr_tab_cob.FIRST).nrdconta, '') || '</nrdconta>';

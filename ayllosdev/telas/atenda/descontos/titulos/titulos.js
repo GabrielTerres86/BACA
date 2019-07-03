@@ -3458,6 +3458,43 @@ function liberarBorderoDscTit(confirma) {
     return false;
 }
 
+function confirmaBorderoIB() {
+    showConfirmacao("Bordero incluso pelo Internet Banking e com obrigação de assinatura. Confirma assinatura do cooperado ?","Confirma&ccedil;&atilde;o - Aimaro","liberarBorderoDscTit(0);","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+    return false;
+}
+
+// Verifica Bordero incluso IB
+function verificaBorderoIB() {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, verificando o border&ocirc; ...");
+    
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/verifica_bordero_ib.php",
+        data: {
+            nrdconta: nrdconta,
+            nrborder: nrbordero,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            try {
+                hideMsgAguardo();
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }
+    });
+    return false;
+}
+
+
 
 
 
@@ -3504,7 +3541,7 @@ function mostrarBorderoAnalisar() {
 }
 
 function mostrarBorderoLiberar() {
-    showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Aimaro","liberarBorderoDscTit(0);","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+    showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Aimaro","verificaBorderoIB();","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
     return false;
 }
 

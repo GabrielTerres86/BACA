@@ -1225,7 +1225,7 @@ function controlaLayout( nomeForm ){
 						
 		divRegistro.css('height','145px');
 		
-		$('#'+nomeForm).css('width','695px');
+		$('#'+nomeForm).css('width','815px');
 		
 		var ordemInicial = new Array();
 				
@@ -1234,11 +1234,12 @@ function controlaLayout( nomeForm ){
 		arrayLargura[1] = '148px';
 		arrayLargura[2] = '60px';
 		arrayLargura[3] = '30px';
-		arrayLargura[4] = '65px';
-		arrayLargura[5] = '65px';
-		arrayLargura[6] = '55px';
-		arrayLargura[7] = '25px';
+		arrayLargura[4] = '80px';
+		arrayLargura[5] = '80px';
+		arrayLargura[6] = '80px';
+		arrayLargura[7] = '55px';
 		arrayLargura[8] = '25px';
+		arrayLargura[9] = '25px';
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'left';
@@ -1247,10 +1248,11 @@ function controlaLayout( nomeForm ){
 		arrayAlinha[3] = 'center';
 		arrayAlinha[4] = 'right';
 		arrayAlinha[5] = 'right';
-		arrayAlinha[6] = 'left';
-		arrayAlinha[7] = 'center';
+		arrayAlinha[6] = 'right';
+		arrayAlinha[7] = 'left';
 		arrayAlinha[8] = 'center';
 		arrayAlinha[9] = 'center';
+		arrayAlinha[10] = 'center';
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		

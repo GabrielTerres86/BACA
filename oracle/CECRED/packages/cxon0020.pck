@@ -1357,7 +1357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 05/06/2019
+      Data     : Junho/2015.                   Ultima atualizacao: 21/06/2019
 
       Dados referentes ao programa:
 
@@ -1414,6 +1414,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                salário. (Renato Darosci - Supero - Projeto 485)
 
                   05/06/2019 - Tratar INC0011406 relacionado ao horario de aprovacao da TED (Diego).
+
+                  21/06/2019 - Tratar INC0015554 - solucao de contorno (Diego).
 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
@@ -1474,6 +1476,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND craptvl.nrcctrcb = pr_nrctafav
          AND craptvl.vldocrcb = pr_vldocmto;
     rw_craptvl_max cr_craptvl_max%ROWTYPE;
+
 
     -- Buscar dados historico
     CURSOR cr_craphis (pr_cdcooper craphis.cdcooper%TYPE,
@@ -1919,6 +1922,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         RAISE vr_exc_erro;
       END IF;
       CLOSE cr_craptvl_max;
+
     END IF;
 
 	--Bacenjud - SM 1
@@ -2098,7 +2102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     END IF;
 	--Fim Bacenjud - SM 1
 
-    BEGIN
+    
       vr_nrseqdig := fn_sequence('CRAPLOT'
 						                    ,'NRSEQDIG'
 						                    ,''||rw_crapcop.cdcooper||';'
@@ -2107,6 +2111,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 							                     ||rw_craplot_tvl.cdbccxlt||';'
 							                     ||rw_craplot_tvl.nrdolote);
 
+    FOR vr_contador IN 1..10 LOOP
+       BEGIN
+  
       INSERT INTO craptvl
                 (craptvl.cdcooper
                 ,craptvl.tpdoctrf
@@ -2194,11 +2201,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 )
         RETURNING craptvl.tpdctadb, craptvl.flgtitul
              INTO rw_craptvl.tpdctadb, rw_craptvl.flgtitul;
+                
+           EXIT; -- sair do loop, inseriu com sucesso     
+                
     EXCEPTION
+               
+         WHEN dup_val_on_index THEN 
+           
+           -- se for o ultima tentativa, aborta a transacao
+           IF vr_contador = 10 THEN
+              IF  pr_idagenda <> 2 THEN --TED Online
+                  vr_dscritic := 'Não foi possível efetuar a operação. Tente novamente.'; 
+                  RAISE vr_exc_erro;
+              ELSE  
+                  vr_dscritic := 'Não foi possivel inserir transferencia: '||SQLERRM;
+                  RAISE vr_exc_erro;
+              END IF;    
+           ELSE 
+              -- Busca novo numero de documento
+              SELECT MAX(tvl.nrdocmto) + 1 INTO pr_nrdocmto 
+              FROM craptvl tvl
+              WHERE tvl.cdcooper = rw_crapcop.cdcooper
+                AND tvl.tpdoctrf = 3;
+          
+              CONTINUE; -- Tenta inserir novamente
+           END IF;
+         
       WHEN OTHERS THEN
         vr_dscritic := 'Não foi possivel inserir transferencia: '||SQLERRM;
         RAISE vr_exc_erro;
     END;
+
+    END LOOP;
 
     -- Indicar que a transação não é uma transferencia de salário(TEC)   (Renato - Supero - P485)
     vr_flgctsal := FALSE;

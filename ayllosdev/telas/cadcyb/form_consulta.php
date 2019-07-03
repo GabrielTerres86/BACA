@@ -32,7 +32,7 @@
 				<tr>
 				<th>Origem</th>
 				<th>Conta</th>
-				<?=(in_array($cdorigem, array(1,3)) ? '<th>Contrato</th>' : '');?>
+				<?=(in_array($cdorigem, array(1,3,5)) ? '<th>Contrato</th>' : '');?>
 				<?=(in_array($cdorigem, array(4))   ? '<th>Borderô</th>' : '');?>
 				<?=(in_array($cdorigem, array(4))   ? '<th>Titulo</th>' : '');?>
 				<th>Judicial</th>
@@ -72,7 +72,7 @@
 						<?php echo $nrdconta; ?>
 					</td>
 
-					<?=(in_array($cdorigem, array(1,3)) ? '<td><span>'.$nrctremp.'</span>'.$nrctremp.'</td>' : '');?>
+					<?=(in_array($cdorigem, array(1,3,5)) ? '<td><span>'.$nrctremp.'</span>'.$nrctremp.'</td>' : '');?>
 					<?=(in_array($cdorigem, array(4))   ? '<td><span>'.$nrborder.'</span>'.$nrborder.'</td>' : '');?>
 					<?=(in_array($cdorigem, array(4))   ? '<td><span>'.$nrdocmto.'</span>'.$nrdocmto.'</td>' : '');?>
 					

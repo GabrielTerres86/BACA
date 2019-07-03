@@ -20,6 +20,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   --                (Gustavo Sene - GFT)    
   --    24/05/2019 - Configurado campo que enviava null na pc_inst_protestar. 
   --                 (Daniel Lombardi - Mout'S)
+  --    25/06/2019 - Ajuste para não permitir baixar titulos em borderos que tenham saldo (Daniel - Ailos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Validar se o título está no serasa
@@ -952,6 +953,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                         ,pr_nrdocmto IN craptdb.nrdocmto%type) IS
         SELECT tdb.dtvencto
               ,tdb.insittit
+              ,bdt.flverbor
+              ,tdb.vlsldtit
           FROM craptdb tdb
           INNER JOIN crapbdt bdt ON tdb.cdcooper = bdt.cdcooper AND tdb.nrborder = bdt.nrborder
          WHERE tdb.cdcooper = pr_cdcooper
@@ -1316,7 +1319,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
             -- e a situação é em estudo e não esta vencido
             IF ((rw_craptdb.insittit = 0 AND vr_dtcalcul >= pr_dtmvtolt) OR
-              (rw_craptdb.insittit = 4 AND vr_dtcalcul >= pr_dtmvtolt) )  THEN -- LIBERADO
+              (rw_craptdb.insittit = 4 AND vr_dtcalcul >= pr_dtmvtolt AND rw_craptdb.flverbor = 0) OR
+              (rw_craptdb.insittit = 4 AND rw_craptdb.vlsldtit > 0 AND rw_craptdb.flverbor = 1) )  THEN -- LIBERADO
 
               --Fechar Cursor
               CLOSE cr_craptdb;
