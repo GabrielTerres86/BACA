@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 02/02/2019
+   Data    : Marco/2001                      Ultima atualizacao: 03/07/2019
 
    Dados referentes ao programa:
 
@@ -112,6 +112,9 @@
 				02/02/2019 - Correção para o tipo de documento "TED C":
 							-> Ao optar por "Espécie" deve ser permitir apenas para não cooperados
 						   (Jonata - Mouts PRB0040337).
+												   
+		 03/07/2019 - Tratamento para nao permitir o historico 416, exceto ACENTRA
+		              RITM0015559 (Jose Gracik/Mouts). 
 ............................................................................ */
 /*----------------------------------------------------------------------*/
 /*  b1crap56.p - Outros                                                */
@@ -269,6 +272,20 @@ PROCEDURE valida-outros-conta:
    ASSIGN aux_dshistor = "1,386,3,4,403,404,21,26,22,372,1030".
 
    IF  CAN-DO(aux_dshistor,STRING(p-cdhistor))   THEN
+       DO:
+           ASSIGN i-cod-erro  = 93  /* Historico Errado */
+                  c-desc-erro = " ".           
+           RUN cria-erro (INPUT p-cooper,
+                          INPUT p-cod-agencia,
+                          INPUT p-nro-caixa,
+                          INPUT i-cod-erro,
+                          INPUT c-desc-erro,
+                          INPUT YES).
+           RETURN "NOK".
+       END.
+
+   IF  p-cdhistor        = 416  AND    /* Pagto Salario */
+       crapcop.cdcooper <> 5    THEN   /* Exceto Cooperativa ACENTRA */
        DO:
            ASSIGN i-cod-erro  = 93  /* Historico Errado */
                   c-desc-erro = " ".           
