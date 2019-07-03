@@ -1314,9 +1314,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
     -- Estorno no dia
     CURSOR cr_estorno_no_dia IS
     SELECT COUNT(1) qtestorn
-          ,nvl(SUM(vllanmto),0) vlestorn
-      FROM tbdsct_lancamento_bordero lcb 
-     WHERE lcb.cdhistor IN (SELECT to_number(regexp_substr(vr_cdhisest,'[^,]+', 1, LEVEL)) FROM dual
+          ,nvl(SUM(CASE WHEN his.indebcre = 'D' THEN vllanmto ELSE 0 END) -
+               SUM(CASE WHEN his.indebcre = 'C' THEN vllanmto ELSE 0 END),0) vlestorn
+      FROM craphis his
+          ,tbdsct_lancamento_bordero lcb 
+     WHERE his.cdcooper = lcb.cdcooper
+       AND his.cdhistor = lcb.cdhistor
+       AND lcb.cdhistor IN (SELECT to_number(regexp_substr(vr_cdhisest,'[^,]+', 1, LEVEL)) FROM dual
                             CONNECT BY regexp_substr(vr_cdhisest, '[^,]+', 1, LEVEL) IS NOT NULL)
        AND lcb.dtmvtolt = pr_dtvencto
        AND lcb.cdcooper = pr_cdcooper;
@@ -1438,25 +1442,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
                    DSCT0003.vr_cdhistordsct_est_juros      ||','|| --2813
                    DSCT0003.vr_cdhistordsct_est_pgto_ava   ||','|| --2814
                    DSCT0003.vr_cdhistordsct_est_multa_ava  ||','|| --2815
-                   DSCT0003.vr_cdhistordsct_est_juros_ava;         --2816
+                   DSCT0003.vr_cdhistordsct_est_juros_ava  ||','|| --2816
+                   DSCT0003.vr_cdhistordsct_est_apro_multa ||','|| --2880
+                   DSCT0003.vr_cdhistordsct_est_apro_juros;        --2881
 
     OPEN cr_estorno_no_dia;
     FETCH cr_estorno_no_dia INTO rw_estorno_no_dia;
     IF cr_estorno_no_dia%FOUND THEN
       vr_qtestorn := rw_estorno_no_dia.qtestorn;
       vr_vlestorn := rw_estorno_no_dia.vlestorn;
-    END IF;
-    CLOSE cr_estorno_no_dia;
-    
-    -- Estornado de apropriações no dia
-    vr_cdhisest := DSCT0003.vr_cdhistordsct_est_apro_multa ||','|| --2880
-                   DSCT0003.vr_cdhistordsct_est_apro_juros;        --2881
-
-    OPEN cr_estorno_no_dia;
-    FETCH cr_estorno_no_dia INTO rw_estorno_no_dia;
-    IF cr_estorno_no_dia%FOUND THEN
-      vr_qtestorn := vr_qtestorn - rw_estorno_no_dia.qtestorn;
-      vr_vlestorn := vr_vlestorn - rw_estorno_no_dia.vlestorn;
     END IF;
     CLOSE cr_estorno_no_dia;
     
