@@ -665,16 +665,22 @@ create or replace package body cecred.TELA_CADEMP is
 
       -- retirar acentuação e caracteres especiasi
       vr_descNomeLoja        := gene0007.fn_caract_acento (pr_texto   => vr_descNomeLoja,
+                                                           pr_dssubsin=> '@#$&%¹²³ªº°*!?<>/\|-().,=_',
                                                            pr_insubsti=> 1) ;
       vr_descRazaoLoja       := gene0007.fn_caract_acento (pr_texto   => vr_descRazaoLoja,
+                                                           pr_dssubsin=> '@#$&%¹²³ªº°*!?<>/\|-().,=_',
                                                            pr_insubsti=> 1) ;
       vr_descLogradouro      := gene0007.fn_caract_acento (pr_texto   => vr_descLogradouro,
+                                                           pr_dssubsin=> '@#$&%¹²³ªº°*!?<>/\|-().,=_',
                                                            pr_insubsti=> 1) ;
       vr_desccompllogradouro := gene0007.fn_caract_acento (pr_texto   => vr_desccompllogradouro,
+                                                           pr_dssubsin=> '@#$&%¹²³ªº°*!?<>/\|-().,=_',
                                                            pr_insubsti=> 1) ;
       vr_descBairroLogradouro:= gene0007.fn_caract_acento (pr_texto   => vr_descBairroLogradouro,
+                                                           pr_dssubsin=> '@#$&%¹²³ªº°*!?<>/\|-().,=_',
                                                            pr_insubsti=> 1) ;
       vr_descCidadeLogradouro:= gene0007.fn_caract_acento (pr_texto   => vr_descCidadeLogradouro,
+                                                           pr_dssubsin=> '@#$&%¹²³ªº°*!?<>/\|-().,=_',
                                                            pr_insubsti=> 1) ;                    
       vr_telLoja             := gene0007.fn_caract_acento (pr_texto   => vr_telLoja,
                                                            pr_dssubsin=> '@#$&%¹²³ªº°*!?<>/\|-().,=_',
