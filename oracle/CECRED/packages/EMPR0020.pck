@@ -351,8 +351,17 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
                                       ,pr_cdcritic              OUT crapcri.cdcritic%TYPE   
                                       ,pr_dscritic              OUT VARCHAR2
                                       );
+  PROCEDURE pc_gera_log(pr_cdcooper  NUMBER DEFAULT 3 --Cooperativa
+                        ,pr_des_log  VARCHAR2 --Descrição do log
+                        ,pr_tipo     PLS_INTEGER DEFAULT 2 -- Tipo de Log 1 OK, 2 Erro tratado, 3 Erro Não tratado
+                        ,pr_cdprogra VARCHAR2 DEFAULT NULL -- Nome do programa 
+                        );
      
-  
+  PROCEDURE pc_envia_arquivo_conveniada(pr_cdcooper   IN crapcop.cdcooper%TYPE        --> codigo da cooperativa
+                                        ,pr_cdcritic   OUT PLS_INTEGER                 --> Código da critica
+  				    				        	        ,pr_dscritic   OUT VARCHAR2);                --> Descricao da critica
+                                        
+  PROCEDURE pc_env_arq_conveniada_job;
   END EMPR0020;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS
@@ -6016,6 +6025,360 @@ dbms_output.put_line('xml :'||vr_clobxml);
 
   END pc_efetiva_estorn_pag_parc;  
                                       
+  PROCEDURE pc_gera_log(pr_cdcooper  NUMBER DEFAULT 3
+                        ,pr_des_log  VARCHAR2
+                        ,pr_tipo     PLS_INTEGER DEFAULT 2
+                        ,pr_cdprogra VARCHAR2 DEFAULT NULL
+                        ) IS
+   ---------------------------------------------------------------------------------------------------------------
+    --  Programa : pc_gera_log
+    --  Sistema  : Ayllos
+    --  Sigla    : CRED
+    --  Autor    : Jackson Barcellos
+    --  Data     : Julho/2019.                   Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Gravar log em arquivo
+    --
+    ---------------------------------------------------------------------------------------------------------------                       
+     vr_nmarqlog VARCHAR2(20) DEFAULT 'CONSIGNADO.log';         
+  BEGIN
+     btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                                ,pr_ind_tipo_log => pr_tipo
+                                ,pr_tpexecucao   => 2
+                                ,pr_nmarqlog     => vr_nmarqlog
+                                ,pr_des_log      => TO_CHAR(SYSDATE,'YYYYMMDD HH24:MI:SS') || ' - ' || pr_cdprogra || ' --> ' ||pr_des_log);         
+  END pc_gera_log;
+  
+  PROCEDURE pc_envia_arquivo_conveniada(pr_cdcooper   IN crapcop.cdcooper%TYPE        --> codigo da cooperativa
+                                        ,pr_cdcritic   OUT PLS_INTEGER                 --> Código da critica
+  				    				        	        ,pr_dscritic   OUT VARCHAR2) IS                --> Descricao da critica
+  BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --  Programa : pc_envia_arquivo_conveniada
+    --  Sistema  : Ayllos
+    --  Sigla    : CRED
+    --  Autor    : Jackson Barcellos
+    --  Data     : Julho/2019.                   Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Enviar arquivo para conveniada
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    DECLARE
+      
+      -- Cursor generico de calendario
+      rw_crapdat     BTCH0001.CR_CRAPDAT%ROWTYPE;
+          
+      -- Busca as cooperativas
+      CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+        SELECT crapcop.nmrescop
+          FROM crapcop
+         WHERE cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
+         
+      -- Busca empresas consignado
+      CURSOR cr_consig(pr_cdcooper  IN crapass.cdcooper%TYPE
+                       ,pr_cdempres IN tbcadast_empresa_consig.cdempres%TYPE
+                      ) IS
+        SELECT c.dsdemailconsig
+               ,c.indalertaemailemp
+               ,c.indalertaemailconsig
+               ,e.dsdemail
+               ,e.nmextemp
+               ,e.nrdconta                      
+          FROM tbcadast_empresa_consig c
+         INNER 
+          JOIN crapemp e ON e.cdcooper = c.cdcooper AND e.cdempres = c.cdempres              
+         WHERE c.cdcooper = pr_cdcooper
+               and c.cdempres = pr_cdempres; 
+      rw_consig cr_consig%ROWTYPE;
+         
+      -- Variaveis     
+      vr_vet_arquivos         gene0002.typ_split;               -- Array de arquivos
+      vr_ind_linha_arquivo    VARCHAR2(50);
+      vr_listadir             VARCHAR2(4000);
+      vr_typ_saida            VARCHAR2(4000);
+      vr_des_saida            VARCHAR2(4000);
+      vr_email                VARCHAR2(4000);
+      vr_desemail             CLOB;
+      vr_path                 VARCHAR2(4000) DEFAULT '/usr/sistemas/Consignado/';
+      vr_cdempres             NUMBER;
+      vr_nmarquivo            VARCHAR2(4000);
+      
+      -- Variaveis de Erro
+      vr_cdcritic             crapcri.cdcritic%TYPE;
+      vr_dscritic             VARCHAR2(4000);
+
+      -- Variaveis Excecao
+      vr_exc_erro             EXCEPTION;
+      vr_cdprogra             VARCHAR2(40) DEFAULT 'CONSIG_ENV_ARQ_CONV';
+      
+    BEGIN
+      
+      -- Buscar a data do movimento
+      OPEN btch0001.cr_crapdat(pr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      -- Verificar se existe informacao, e gerar erro caso nao exista
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+         -- Fechar o cursor
+         CLOSE btch0001.cr_crapdat;     
+         vr_cdcritic := 1;
+          RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+      
+      -- Condicao para verificar se o processo estah rodando
+      IF NVL(rw_crapdat.inproces,0) >= 2 THEN
+        -- Sai da procedure
+        RETURN;
+      END IF;
+    
+      -- Verifica se a cooperativa esta cadastrada
+      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      -- Se nao encontrar
+      IF cr_crapcop%NOTFOUND THEN
+        -- Fechar o cursor pois havera raise
+        CLOSE cr_crapcop;
+        -- Montar mensagem de critica
+        vr_cdcritic := 651;
+        RAISE vr_exc_erro;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE cr_crapcop;
+      END IF;
+      
+      -- Busca Arquivos
+      vr_path := vr_path||'ailos'||LPAD(pr_cdcooper,3,0)||'/envia';
+      --vr_path := vr_path||'ailos/envia';
+      gene0001.pc_lista_arquivos(pr_path     => vr_path ,
+                                 pr_pesq     => LPAD(pr_cdcooper,4,0) || '%',
+                                 pr_listarq  => vr_listadir,
+                                 pr_des_erro => vr_dscritic);
+                                     
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF; 
+            
+      -- Separar os arquivos de retorno em um Array
+      vr_vet_arquivos := gene0002.fn_quebra_string(pr_string => vr_listadir);
+      -- Vamos verificar se possui algum arquivo na pasta para importar
+      IF vr_vet_arquivos.COUNT <= 0 THEN
+        -- Sai da procedure
+        RETURN;
+      END IF;
+      
+      -- Leitura da PL/Table e processamento dos arquivos     
+	    FOR vr_ind_linha_arquivo in 1 .. vr_vet_arquivos.COUNT LOOP 
+        vr_cdcritic  := 0;
+        vr_dscritic  := '';    
+        
+        vr_nmarquivo := vr_vet_arquivos(vr_ind_linha_arquivo);   
+               
+          -- Valida layout do nome do arquivo e busca dados da empresa
+          IF(to_number(substr(vr_nmarquivo,1,4)) = pr_cdcooper) THEN
+            vr_cdempres := to_number(substr(vr_nmarquivo,5,5));            
+          ELSE
+            vr_dscritic := 'Arquivo inválido.('||vr_nmarquivo||')';
+            -- Grava LOG
+            pc_gera_log(pr_cdcooper  => pr_cdcooper
+                        ,pr_cdprogra => vr_cdprogra
+                        ,pr_des_log  => vr_dscritic
+                        ,pr_tipo     => 2);
+            CONTINUE;
+          END IF;
+          
+           -- Verifica se a empresa consignado esta cadastrada
+          OPEN cr_consig(pr_cdcooper  => pr_cdcooper
+                         ,pr_cdempres => vr_cdempres
+                        );
+          FETCH cr_consig INTO rw_consig;
+          -- Se nao encontrar
+          IF cr_consig%NOTFOUND THEN
+            -- Fechar o cursor pois havera raise
+            CLOSE cr_consig;
+            -- Montar mensagem de critica
+            vr_dscritic := 'Empresa não encontrada.('||vr_nmarquivo||')';
+            -- Grava LOG
+            pc_gera_log(pr_cdcooper  => pr_cdcooper
+                        ,pr_cdprogra => vr_cdprogra
+                        ,pr_des_log  => vr_dscritic
+                        ,pr_tipo     => 2);
+            CONTINUE;
+          ELSE
+            -- Apenas fechar o cursor
+            CLOSE cr_consig;
+          END IF;
+          
+          -- Monta destinatario email
+          IF (rw_consig.indalertaemailemp = 1 AND rw_consig.dsdemail IS NOT NULL) THEN
+             vr_email:= rw_consig.dsdemail;
+          END IF;
+          IF (rw_consig.indalertaemailconsig = 1 AND rw_consig.dsdemailconsig IS NOT NULL) THEN
+             IF vr_email IS NOT NULL THEN
+               vr_email := vr_email||','|| rw_consig.dsdemailconsig;
+             ELSE
+               vr_email := rw_consig.dsdemailconsig;                          
+             END IF;
+          END IF;
+          IF vr_email IS NULL THEN
+            -- Montar mensagem de critica
+            vr_dscritic := 'Email não encontrado.('||vr_nmarquivo||')';
+            -- Grava LOG
+            pc_gera_log(pr_cdcooper  => pr_cdcooper
+                        ,pr_cdprogra => vr_cdprogra
+                        ,pr_des_log  => vr_dscritic
+                        ,pr_tipo     => 2);
+            CONTINUE;
+          END IF;
+
+          -- Monta corpo email 
+          vr_desemail := 'Olá Prezada Conveniada '||rw_consig.nmextemp||'.<br><br>';
+          vr_desemail := vr_desemail||'Antes de tudo, gostaria de dizer que essa mensagem é automática, com isso, sua resposta deve ser encaminhada a outro endereço de e-mail, ok? <br><br>';
+          vr_desemail := vr_desemail||'Estamos enviando arquivo com parcelas do mês de fechamento da última folha, provenientes de operações de crédito Consignado realizadas pelos seus colaboradores com a Cooperativa '||rw_crapcop.nmrescop||'.<br><br>';
+          vr_desemail := vr_desemail||'Você pode nos retornar até 1 dia útil antes da data de vencimento das parcelas.<br><br>';
+          vr_desemail := vr_desemail||'Caso a Conveniada possua conta na cooperativa, então o valor do repasse será debitado da conta '||rw_consig.nrdconta||' no dia do vencimento das parcelas.<br>';
+          vr_desemail := vr_desemail||'Caso a Conveniada não possua conta na cooperativa, então deverá fazer uma TED na conta indicada, até 1 dia útil antes do vencimento das parcelas.<br><br>';
+          vr_desemail := vr_desemail||'Após tratar o arquivo de repasse de parcelas, a Conveniada poderá enviá-lo (como anexo) para o e-mail já indicado na formalização do Convênio.<br><br>';
+          vr_desemail := vr_desemail||'Por favor, preencha as informações das colunas Status e Valor Pago, conforme situação de cada colaborador, conforme legenda abaixo:<br><br>';
+          vr_desemail := vr_desemail||'1. Baixa com Sucesso - para aquelas parcelas que serão pagas/descontadas de forma integral;<br>';
+          vr_desemail := vr_desemail||'2. Óbito - neste caso, a parcela não será mais enviada à Conveniada nos próximos meses;<br>';
+          vr_desemail := vr_desemail||'3. Desligado - para informar quando colaborador for desligado/exonerado da conveniada. Importante: na coluna "Valor Pago" é necessário enviar a parcela do mês + 30% do valor da rescisão (conforme Lei 10.820/2003), estes valores devem ser somados e enviados como valor único, não é preciso separar. Neste caso, a parcela não será mais enviada à Conveniada nos próximos meses;<br>';
+          vr_desemail := vr_desemail||'4. Afastado - quando colaborador está afastado de suas atividades na Conveniada e, por este motivo, a Conveniada não irá fazer desconto na folha e repassar o valor à cooperativa. A parcela será enviada à Conveniada nos meses seguintes, sendo necessário informar nos status quando colaborador retornar às suas atividades;<br>';
+          vr_desemail := vr_desemail||'5. Outros - outros motivos que implicam em não descontar o valor integral da parcela do colaborador. Neste caso, a parcela continuará sendo enviada à Conveniada nos meses seguintes.<br><br>';
+          vr_desemail := vr_desemail||'<u>Importante:</u> caso não possa responder no prazo indicado, entre em contato com a cooperativa. Caso não o faça, será considerado o pagamento integral de todas as parcelas enviadas.<br><br>';
+          vr_desemail := vr_desemail||'Atenciosamente,<br>';
+          vr_desemail := vr_desemail||'Sistema Ailos.<br>';
+          vr_desemail := vr_desemail||'<br>';
+          
+          -- Envia email
+          gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                    ,pr_cdprogra        => 'EMPR0020'
+                                    ,pr_des_destino     => vr_email
+                                    ,pr_des_assunto     => 'Consignado - Repasse de parcelas.' 
+                                    ,pr_des_corpo       => vr_desemail
+                                    ,pr_des_anexo       => vr_path||'/'||vr_nmarquivo --> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
+                                    ,pr_flg_remove_anex => 'N'  --> Remover os anexos passados
+                                    ,pr_flg_remete_coop => 'S'  --> Se o envio sera do e-mail da Cooperativa
+                                    ,pr_flg_enviar      => 'S'  --> Enviar o e-mail na hora
+                                    ,pr_des_erro        => vr_dscritic);
+
+           -- Se houver erros
+           IF vr_dscritic IS NOT NULL THEN
+             -- Grava LOG
+             pc_gera_log(pr_cdcooper  => pr_cdcooper
+                        ,pr_cdprogra => vr_cdprogra
+                        ,pr_des_log  => 'Erro ao enviar email:('||vr_nmarquivo||') '||vr_dscritic
+                        ,pr_tipo     => 2);
+             CONTINUE;
+           ELSE
+             -- Grava LOG
+             pc_gera_log(pr_cdcooper  => pr_cdcooper
+                        ,pr_cdprogra => vr_cdprogra
+                        ,pr_des_log  => 'Email enviado com sucesso('||vr_nmarquivo||').'
+                        ,pr_tipo     => 1);
+           END IF; 
+                      
+           -- Move arquivo
+           gene0001.pc_mv_arquivo(pr_dsarqori     => vr_path||'/'||vr_nmarquivo
+                                  ,pr_dsarqdes    => vr_path||'/enviados/'||vr_nmarquivo
+                                  ,pr_typ_saida   => vr_typ_saida
+                                  ,pr_des_saida   => vr_des_saida);
+           -- Se houver erros                                  
+           IF vr_typ_saida = 'ERR' THEN
+             vr_dscritic:= vr_des_saida;
+             -- Grava LOG
+             pc_gera_log(pr_cdcooper  => pr_cdcooper
+                        ,pr_cdprogra => vr_cdprogra
+                        ,pr_des_log  => 'Erro ao mover arquivo:('||vr_nmarquivo||') '||vr_dscritic
+                        ,pr_tipo     => 2);
+             CONTINUE;
+           END IF;
+      END LOOP;
+      COMMIT;         
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        ROLLBACK;
+        -- Variavel de erro recebe erro ocorrido
+        IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+          -- Buscar a descrição
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        -- Grava LOG
+        pc_gera_log(pr_cdcooper  => pr_cdcooper
+                        ,pr_cdprogra => vr_cdprogra
+                        ,pr_des_log  => pr_dscritic
+                        ,pr_tipo     => 2);
+      WHEN OTHERS THEN
+        ROLLBACK;
+        -- Descricao do erro
+        pr_dscritic := 'Erro nao tratado na EMPR0020.pc_envia_arq_conveniada ' || SQLERRM;
+        -- Grava LOG
+        pc_gera_log(pr_cdcooper  => pr_cdcooper
+                        ,pr_cdprogra => vr_cdprogra
+                        ,pr_des_log  => pr_dscritic
+                        ,pr_tipo     => 3);
+    END;
+                           
+  END pc_envia_arquivo_conveniada;     
+  
+  PROCEDURE pc_env_arq_conveniada_job IS
+    
+  BEGIN
+    
+     DECLARE
+        -- Busca as cooperativas
+        CURSOR cr_crapcop IS
+          SELECT cdcooper
+                ,nmrescop
+                ,cdagebcb
+            FROM crapcop
+           WHERE flgativo = 1
+             AND cdcooper <> 3
+        ORDER BY cdcooper;
+     
+     vr_cdcritic   PLS_INTEGER; 
+  	 vr_dscritic   VARCHAR2(4000);
+     
+     BEGIN       
+     
+      FOR rw_crapcop IN cr_crapcop LOOP
+           -- Grava LOG
+           pc_gera_log(pr_cdcooper  => rw_crapcop.cdcooper
+           	           ,pr_cdprogra => 'PC_ENV_ARQ_CONVENIADA_JOB'
+                       ,pr_des_log  => 'Inicio do envio de arquivos para conveinadas da cooperativa ('||rw_crapcop.cdcooper||') '||rw_crapcop.nmrescop
+                       ,pr_tipo     => 1);
+                       
+           pc_envia_arquivo_conveniada(pr_cdcooper  => rw_crapcop.cdcooper
+                                       ,pr_cdcritic => vr_cdcritic
+  				    				        	       ,pr_dscritic => vr_dscritic);
+           -- Grava LOG                            
+           pc_gera_log(pr_cdcooper  => rw_crapcop.cdcooper
+           	           ,pr_cdprogra => 'PC_ENV_ARQ_CONVENIADA_JOB'
+                       ,pr_des_log  => 'Fim do envio de arquivos para conveinadas da cooperativa ('||rw_crapcop.cdcooper||') '||rw_crapcop.nmrescop||' '||vr_dscritic
+                       ,pr_tipo     => 1);
+      END LOOP;
+      COMMIT;
+     EXCEPTION WHEN OTHERS THEN
+            ROLLBACK;
+            -- Grava LOG
+            pc_gera_log(pr_cdcooper => 3
+                       ,pr_cdprogra => 'PC_ENV_ARQ_CONVENIADA_JOB'
+                       ,pr_tipo     => 3
+                       ,pr_des_log  => SQLERRM); 
+     END;
+     
+  END pc_env_arq_conveniada_job;
+         
                                                
 END EMPR0020;
 /
