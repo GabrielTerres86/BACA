@@ -3,7 +3,7 @@ CREATE OR REPLACE PACKAGE cecred.lote0001 IS
  /*..............................................................................
    Programa: LOTE0001
    Autor   : Odirlei
-   Data    : 28/07/2015                        Ultima atualizacao: 24/06/2019
+   Data    : 28/07/2015                        Ultima atualizacao: 03/07/2019
   
    Dados referentes ao programa: 
   
@@ -17,7 +17,7 @@ CREATE OR REPLACE PACKAGE cecred.lote0001 IS
 			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
 
-  24/06/2019 - PRB0041947 Na rotina lote0001.pc_insere_lote, ignorada a exception DUP_VAL_ON_INDEX, pois os 
+  03/07/2019 - PRB0041947 Na rotina lote0001.pc_insere_lote_rvt, ignorada a exception DUP_VAL_ON_INDEX, pois os 
                programas paralelos, ao concorrerem na inserção do lote, não devem abortar a execução (Carlos)
   ..............................................................................*/
 
@@ -242,8 +242,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.lote0001 IS
                  ,rw_craplot_ctl.vlinfocr
                  ,rw_craplot_ctl.cdcooper;
       EXCEPTION
-        WHEN DUP_VAL_ON_INDEX THEN
-          NULL;
+        WHEN OTHERS THEN
+          cecred.pc_internal_exception;
       END;
     
     ELSE
@@ -316,59 +316,65 @@ CREATE OR REPLACE PACKAGE BODY cecred.lote0001 IS
     INTO rw_craplot_ctl;
     
     IF cr_craplot_sem_lock%NOTFOUND THEN
-      -- criar registros de lote na tabela
-      INSERT INTO craplot
-        (craplot.cdcooper
-        ,craplot.dtmvtolt
-        ,craplot.cdagenci
-        ,craplot.cdbccxlt
-        ,craplot.nrdolote
-        ,craplot.nrseqdig
-        ,craplot.tplotmov
-        ,craplot.cdoperad
-        ,craplot.cdhistor
-        ,craplot.nrdcaixa
-        ,craplot.cdopecxa)
-      VALUES
-        (pr_cdcooper
-        ,pr_dtmvtolt
-        ,pr_cdagenci
-        ,pr_cdbccxlt
-        ,pr_nrdolote
-        ,0 -- craplot.nrseqdig
-        ,pr_tplotmov
-        ,pr_cdoperad
-        ,pr_cdhistor
-        ,pr_nrdcaixa
-        ,pr_cdoperad)
-      RETURNING craplot.rowid
-               ,craplot.nrdolote
-               ,craplot.nrseqdig
-               ,craplot.cdbccxlt
-               ,craplot.tplotmov
-               ,craplot.dtmvtolt
-               ,craplot.cdagenci
-               ,craplot.cdhistor
-               ,craplot.cdoperad
-               ,craplot.qtcompln
-               ,craplot.qtinfoln
-               ,craplot.vlcompcr
-               ,craplot.vlinfocr
-               ,craplot.cdcooper
-           INTO rw_craplot_ctl.rowid
-               ,rw_craplot_ctl.nrdolote
-               ,rw_craplot_ctl.nrseqdig
-               ,rw_craplot_ctl.cdbccxlt
-               ,rw_craplot_ctl.tplotmov
-               ,rw_craplot_ctl.dtmvtolt
-               ,rw_craplot_ctl.cdagenci
-               ,rw_craplot_ctl.cdhistor
-               ,rw_craplot_ctl.cdoperad
-               ,rw_craplot_ctl.qtcompln
-               ,rw_craplot_ctl.qtinfoln
-               ,rw_craplot_ctl.vlcompcr
-               ,rw_craplot_ctl.vlinfocr
-               ,rw_craplot_ctl.cdcooper;
+      
+      BEGIN
+        -- criar registros de lote na tabela
+        INSERT INTO craplot
+          (craplot.cdcooper
+          ,craplot.dtmvtolt
+          ,craplot.cdagenci
+          ,craplot.cdbccxlt
+          ,craplot.nrdolote
+          ,craplot.nrseqdig
+          ,craplot.tplotmov
+          ,craplot.cdoperad
+          ,craplot.cdhistor
+          ,craplot.nrdcaixa
+          ,craplot.cdopecxa)
+        VALUES
+          (pr_cdcooper
+          ,pr_dtmvtolt
+          ,pr_cdagenci
+          ,pr_cdbccxlt
+          ,pr_nrdolote
+          ,0 -- craplot.nrseqdig
+          ,pr_tplotmov
+          ,pr_cdoperad
+          ,pr_cdhistor
+          ,pr_nrdcaixa
+          ,pr_cdoperad)
+        RETURNING craplot.rowid
+                 ,craplot.nrdolote
+                 ,craplot.nrseqdig
+                 ,craplot.cdbccxlt
+                 ,craplot.tplotmov
+                 ,craplot.dtmvtolt
+                 ,craplot.cdagenci
+                 ,craplot.cdhistor
+                 ,craplot.cdoperad
+                 ,craplot.qtcompln
+                 ,craplot.qtinfoln
+                 ,craplot.vlcompcr
+                 ,craplot.vlinfocr
+                 ,craplot.cdcooper
+             INTO rw_craplot_ctl.rowid
+                 ,rw_craplot_ctl.nrdolote
+                 ,rw_craplot_ctl.nrseqdig
+                 ,rw_craplot_ctl.cdbccxlt
+                 ,rw_craplot_ctl.tplotmov
+                 ,rw_craplot_ctl.dtmvtolt
+                 ,rw_craplot_ctl.cdagenci
+                 ,rw_craplot_ctl.cdhistor
+                 ,rw_craplot_ctl.cdoperad
+                 ,rw_craplot_ctl.qtcompln
+                 ,rw_craplot_ctl.qtinfoln
+                 ,rw_craplot_ctl.vlcompcr
+                 ,rw_craplot_ctl.vlinfocr
+                 ,rw_craplot_ctl.cdcooper;
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          NULL;
+      END;
     END IF;
   
     CLOSE cr_craplot_sem_lock;
