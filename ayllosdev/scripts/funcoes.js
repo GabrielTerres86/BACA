@@ -1168,7 +1168,10 @@ function confirmaSenhaCoordenador(nmfuncao) {
     var nvopelib = $("#nvopelib", "#frmSenhaCoordenador").val();
     var cdopelib = $("#cdopelib", "#frmSenhaCoordenador").val();
     var cddsenha = $("#cddsenha", "#frmSenhaCoordenador").val();
-
+	
+    cddsenha = encodeURIComponent(cddsenha, "UTF-8");
+	
+	
 	// Valida operador
 	if ($.trim(cdopelib) == "") {
 		hideMsgAguardo();

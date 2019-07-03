@@ -41,6 +41,9 @@
 	$cddsenha = $_POST["cddsenha"];
 	$nmfuncao = $_POST["nmfuncao"];
 	
+	$cddsenha = mb_convert_encoding(urldecode($cddsenha), "Windows-1252", "UTF-8");
+	
+	/*
 	// Monta o xml de requisição
 	$xmlSenha  = "";
 	$xmlSenha .= "<Root>";
@@ -69,10 +72,28 @@
 	
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjSenha = getObjectXML($xmlResult);
+	*/
+	
+	// Monta o xml de requisição
+	$xml  = '';
+	$xml .= '<Root>';
+	$xml .= '	<Dados>';
+	$xml .= '       <nrdconta>'.$nrdconta.'</nrdconta>';
+	$xml .= '       <idseqttl>1</idseqttl>';
+	$xml .= '       <nvoperad>'.$nvopelib.'</nvoperad>';
+	$xml .= '		<operador>'.$cdopelib.'</operador>';	
+	$xml .= '		<nrdsenha><![CDATA['.$cddsenha.']]></nrdsenha>';
+	$xml .= '		<flgerlog>1</flgerlog>';
+	$xml .= '	</Dados>';
+	$xml .= '</Root>';
+	
+	// Executa script para envio do XML e cria objeto para classe de tratamento de XML
+	$xmlResult = mensageria($xml, "CADSCR", "VALIDASENHACOORD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjSenha->roottag->tags[0]->name) == "ERRO") {
-		exibeErro($xmlObjSenha->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		exibeErro($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}else{
 		$_SESSION['cdopelib'] = $cdopelib;
 	} 	

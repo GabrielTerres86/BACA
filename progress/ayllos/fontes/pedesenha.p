@@ -53,7 +53,7 @@ DEFINE    VAR tel_nvoperad AS CHAR EXTENT 3 INITIAL ["   Operador",
 
 DEF        VAR h_b1wgen0000 AS HANDLE                                 NO-UNDO.
     
-DEFINE FRAME f_moldura WITH ROW 8 SIZE 30 BY 6 
+DEFINE FRAME f_moldura WITH ROW 8 SIZE 40 BY 6 
                        OVERLAY CENTERED TITLE " Digite a Senha ".
 
 FORM  SKIP(1)
@@ -62,10 +62,10 @@ FORM  SKIP(1)
       HELP "Informe o codigo do operador - <F4> ou <END> para sair." 
       SKIP
       "Senha :"    AT 10 
-      tel_nrdsenha FORMAT "x(10)" BLANK NO-LABEL 
+      tel_nrdsenha FORMAT "x(20)" BLANK NO-LABEL 
       HELP "Informe a senha do operador - <F4> ou <END> para sair."
       SKIP(1)
-      WITH NO-BOX ROW 9 SIZE 28 BY 3 CENTERED OVERLAY FRAME f_senha.
+      WITH NO-BOX ROW 9 SIZE 38 BY 3 CENTERED OVERLAY FRAME f_senha.
                            
 VIEW FRAME f_moldura.
 

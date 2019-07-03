@@ -519,7 +519,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LOGI0001 AS
                                      ,pr_idseqttl => pr_idseqttl   --Sequencial do titular
                                      ,pr_nvoperad => pr_nvoperad   --Nivel do operador  
                                      ,pr_operador => pr_operador   --Codigo do operador informado
-                                     ,pr_nrdsenha => pr_nrdsenha   --Numero da senha
+                                     ,pr_nrdsenha => GENE0007.fn_remove_cdata(pr_nrdsenha) --Numero da senha
                                      ,pr_flgerlog => pr_flgerlog   --Gerar log?
                                      ,pr_tab_erro => vr_tab_erro   --Tabela Erros
                                      ,pr_des_erro => vr_des_reto); --Saida OK/NOK

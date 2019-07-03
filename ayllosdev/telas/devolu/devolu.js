@@ -923,7 +923,9 @@ function validarSenha() {
 	// Situacao
 	var operauto 	= $('#operauto','#frmSenhaCoord').val();
 	var codsenha 	= $('#codsenha','#frmSenhaCoord').val();
-
+	
+	codsenha = encodeURIComponent(codsenha, "UTF-8");
+	
     showMsgAguardo( 'Aguarde, validando dados...' );
 
 	$.ajax({

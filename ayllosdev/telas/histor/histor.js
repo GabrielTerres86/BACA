@@ -1832,7 +1832,7 @@ function formataSenha() {
     cSenha = $('#codsenha', '#frmSenha');
 	
     cOperador.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '10');
-    cSenha.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '10');
+    cSenha.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '30');
 	
     $('#divConteudoRotina').css({ 'width': '400px', 'height': '120px' });
 
@@ -1856,6 +1856,8 @@ function validarSenha() {
 	// Situacao
     operauto = $('#operauto', '#frmSenha').val();
     var codsenha = $('#codsenha', '#frmSenha').val();
+	
+	codsenha = encodeURIComponent(codsenha, "UTF-8");
 	
     showMsgAguardo('Aguarde, validando dados ...');
 

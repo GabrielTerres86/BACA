@@ -4721,6 +4721,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
 		vr_dscomando VARCHAR2(1000);
     vr_dsparame  VARCHAR2(2000);
 
+    vr_nrdsenha VARCHAR2(200);
+
 	  BEGIN
       -- Inclui nome do modulo logado - 06/12/2018 - REQ0011019
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'GENE0001.pc_valida_senha_AD');
@@ -4729,8 +4731,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                      ', pr_cdoperad:'||pr_cdoperad||
                      ', pr_nrdsenha:'||pr_nrdsenha;
 
+      
+      vr_nrdsenha := REPLACE(pr_nrdsenha, ' ', '');
+      vr_nrdsenha := REGEXP_REPLACE(vr_nrdsenha, '([&\/§;$"`><]|)', '\\\1');
+      vr_nrdsenha := REGEXP_REPLACE(vr_nrdsenha, '([][)(}{!@#$%¨&*().+=§?,|^`\/;">< ])', '\\\1');
+      
 			-- Montar comando UNIX
-			vr_dscomando := '/usr/local/bin/exec_comando_oracle.sh shell_remoto /usr/local/bin/autentica_ayllos_ad.sh '||pr_cdoperad||' '||pr_nrdsenha;
+			vr_dscomando := '/usr/local/bin/exec_comando_oracle.sh shell_remoto /usr/local/bin/autentica_ayllos_ad.sh '||pr_cdoperad||' '||vr_nrdsenha;
 
 			-- Executar o comando UNIX
 			GENE0001.pc_Oscommand_Shell(pr_des_comando => vr_dscomando

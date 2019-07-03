@@ -21,7 +21,9 @@
 	// Varivel de controle do caracter
 	$operauto	= (isset($_POST['operauto'])) ? $_POST['operauto'] : '' ;
 	$codsenha 	= (isset($_POST['codsenha'])) ? $_POST['codsenha'] : '' ;
-
+	
+	$codsenha = mb_convert_encoding(urldecode($codsenha), "Windows-1252", "UTF-8");
+	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'])) <> '') {		
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
@@ -47,7 +49,7 @@
 		exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));',false);
 		exit();
 	}else{
-
+		/*
 		// Monta o xml dinâmico de acordo com a operação 
 		$xml  = '';
 		$xml .= '<Root>';
@@ -73,7 +75,25 @@
 		
 		$xmlResult = getDataXML($xml);
 		$xmlObjeto = getObjectXML($xmlResult);
-
+		*/
+		
+		// Monta o xml de requisição
+		$xml  = '';
+		$xml .= '<Root>';
+		$xml .= '	<Dados>';
+		$xml .= '       <nrdconta>0</nrdconta>';
+		$xml .= '       <idseqttl>0</idseqttl>';
+		$xml .= '       <nvoperad>2</nvoperad>';
+		$xml .= '		<operador>'.$operauto.'</operador>';	
+		$xml .= '		<nrdsenha><![CDATA['.$codsenha.']]></nrdsenha>';
+		$xml .= '		<flgerlog>0</flgerlog>';
+		$xml .= '	</Dados>';
+		$xml .= '</Root>';
+		
+		// Executa script para envio do XML e cria objeto para classe de tratamento de XML
+		$xmlResult = mensageria($xml, "CADSCR", "VALIDASENHACOORD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjeto = getObjectXML($xmlResult);
+		
 		//----------------------------------------------------------------------------------------------------------------------------------	
 		// Controle de Erros
 		//----------------------------------------------------------------------------------------------------------------------------------

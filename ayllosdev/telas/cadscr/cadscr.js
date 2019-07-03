@@ -887,6 +887,8 @@ function validaSenha() {
 	
 	carregaDados();
 
+	nrdsenha = encodeURIComponent(nrdsenha, "UTF-8");
+	
 	showMsgAguardo( "Aguarde, validando senha..." );
 	
 	$.ajax({

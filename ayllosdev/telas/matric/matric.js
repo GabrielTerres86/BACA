@@ -3067,6 +3067,8 @@ function validarSenha(operacao) {
     operauto = $('#operauto', '#frmSenha').val();
     var codsenha = $('#codsenha', '#frmSenha').val();
 	
+	codsenha = encodeURIComponent(codsenha, "UTF-8");
+	
     if(operacao == 'LCD' || operacao == 'LCC'){
 
         var cddopcao =  'I';

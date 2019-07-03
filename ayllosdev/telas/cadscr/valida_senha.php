@@ -24,6 +24,8 @@
 	$nrdsenha = (isset($_POST["nrdsenha"])) ? $_POST["nrdsenha"] : '';
 	$cddopcao = (isset($_POST["cddopcao"])) ? $_POST["cddopcao"] : '';
 	
+	$nrdsenha = mb_convert_encoding(urldecode($nrdsenha), "Windows-1252", "UTF-8");
+	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
@@ -34,7 +36,7 @@
 	$xml .= '	<Dados>';
 	$xml .= '       <nvoperad>2</nvoperad>';
 	$xml .= '		<operador>'.$operador.'</operador>';	
-	$xml .= '		<nrdsenha>'.$nrdsenha.'</nrdsenha>';
+	$xml .= '		<nrdsenha><![CDATA['.$nrdsenha.']]></nrdsenha>';
 	$xml .= '		<flgerlog>1</flgerlog>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
