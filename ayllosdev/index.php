@@ -31,6 +31,7 @@
  * 017: [23/02/2018] - Reinert (Cecred)         : Ajuste de segurança para validar operador informado.
  * 018: [06/03/2018] - Carlos Weinhold (Cecred) : #856961 Alterados os nomes das cooperativas que trocaram de nome e retiradas as cooperativas inativas.
  * 019: [29/05/2018] - Jonata (Mouts)           : Ajustes referente alteracao da nova marca (P413 ).
+ * 020: [04/07/2019] - Andre Bohn (MoutS)       : Ajustes referente alteracao da marca CREDIFIESC para UNILOS (Andre Bohn Mouts).	
  */
 ?> 
 <?php	

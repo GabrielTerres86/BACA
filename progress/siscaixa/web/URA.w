@@ -85,6 +85,8 @@
                30/05/2018 - valida dscomple e concatena com tt-extrato_conta.dsextrat 
 			               (Alcemir Mout's - Prj. 467).							  
                             
+               04/07/2019 - Ajustes referente alteracao da marca CREDIFIESC para UNILOS (Andre Bohn Mouts). 
+                            
 ------------------------------------------------------------------------*/
 /*           This .W file was created with AppBuilder.                  */
 /*----------------------------------------------------------------------*/
@@ -429,14 +431,14 @@ PROCEDURE p_imprime_cabec:
    IF   aux_cdcooper = 1   THEN
         aux_dsdlinha = "@@imagem /dg/som/viacredi.bmp,16,0".
    ELSE
-   IF   aux_cdcooper = 2   THEN                             
+   IF   aux_cdcooper = 2   THEN 
 	    aux_dsdlinha = "@@imagem /dg/som/acredicoop.bmp,16,0".
-   ELSE
+   ELSE                       
    IF   aux_cdcooper = 5   THEN 
         aux_dsdlinha = "@@imagem /dg/som/acentra.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 6   THEN
-        aux_dsdlinha = "@@imagem /dg/som/credifiesc.bmp,16,0".
+        aux_dsdlinha = "@@imagem /dg/som/unilos.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 7   THEN
         aux_dsdlinha = "@@imagem /dg/som/credcrea.bmp,16,0".
@@ -464,7 +466,7 @@ PROCEDURE p_imprime_cabec:
    ELSE
    IF   aux_cdcooper = 16  THEN
         aux_dsdlinha = "@@imagem /dg/som/altovale.bmp,16,0".
-  
+     
    /* Configura 66 linhas por página */
    {&OUT} CHR(27) + CHR(67) + CHR(66) '"' aux_dsdlinha '"\n'.
                               
@@ -658,7 +660,7 @@ PROCEDURE p_validasenha:
   Purpose:     Runs procedure to associate each HTML field with its
                corresponding widget name and handle.
   Parameters:  
-  Notes:       
+  Notes: 
 ------------------------------------------------------------------------------*/
    FIND FIRST crapass WHERE crapass.cdcooper = aux_cdcooper
                         AND crapass.nrdconta = aux_nrdconta
@@ -672,7 +674,7 @@ PROCEDURE p_validasenha:
      ELSE
        ASSIGN aux_cdcritic = 0
               aux_dscritic =  "Conta invalida".
-
+              
        ASSIGN aux_dsmsgerr = "<CECRED><pr_dscritic>" + TRIM(aux_dscritic) + 
                              "</pr_dscritic>"+
                              "<pr_cdmsgerr>" + STRING(aux_cdcritic) + 
@@ -682,13 +684,13 @@ PROCEDURE p_validasenha:
    END.
    ELSE
    DO: 
-   FIND FIRST crapsnh WHERE crapsnh.cdcooper = aux_cdcooper  AND
-                            crapsnh.nrdconta = aux_nrdconta  AND
-                            crapsnh.tpdsenha = 2
-                            USE-INDEX crapsnh1 NO-LOCK NO-ERROR.
-
+     FIND FIRST crapsnh WHERE crapsnh.cdcooper = aux_cdcooper  AND
+                              crapsnh.nrdconta = aux_nrdconta  AND
+                              crapsnh.tpdsenha = 2
+                              USE-INDEX crapsnh1 NO-LOCK NO-ERROR.
+     
      IF NOT AVAILABLE crapsnh THEN
-        DO: 
+     DO:
        FIND crapcri WHERE crapcri.cdcritic = 1125 NO-LOCK NO-ERROR.
          IF AVAILABLE crapcri THEN
            ASSIGN aux_cdcritic = 1125
@@ -696,7 +698,7 @@ PROCEDURE p_validasenha:
          ELSE
            ASSIGN aux_cdcritic = 0
                   aux_dscritic =  "Falha ao buscar senha".
-
+                  
          ASSIGN aux_dsmsgerr = "<CECRED><pr_dscritic>" + TRIM(aux_dscritic) + 
                                "</pr_dscritic>"+
                                "<pr_cdmsgerr>" + STRING(aux_cdcritic) + 
@@ -704,17 +706,17 @@ PROCEDURE p_validasenha:
           
          {&OUT} aux_dsmsgerr.
      END.
-			   ELSE
+     ELSE
      DO:
        /*Verificar a senha*/
        IF INTEGER(crapsnh.cddsenha) = INTEGER(aux_dsdsenha) THEN 
        DO: /*Se a senha informada existir*/
          {&OUT} "<CECRED><pr_dscritic></pr_dscritic><pr_cdmsgerr></pr_cdmsgerr></CECRED>". 
-			END.
-            ELSE
+       END.
+       ELSE
        DO: /*Caso a senha seja diferente*/
-            /* Conta Teste */
-            IF   aux_nmprimtl = "CONTA  TESTE"   THEN
+         /* Conta Teste */
+         IF   aux_nmprimtl = "CONTA  TESTE"   THEN
          DO:
            {&OUT} "<CECRED><pr_dscritic></pr_dscritic><pr_cdmsgerr></pr_cdmsgerr></CECRED>". 
          END.
@@ -736,7 +738,7 @@ PROCEDURE p_validasenha:
          END.       
        END.
      END.
-        END.
+   END.
 
 END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
@@ -1594,7 +1596,7 @@ PROCEDURE p_extrato_apl:
 
             {&OUT} aux_dsdlinha '\n'.
         END.
-   
+
     IF aux_vlblqapl_gar > 0 THEN 
         DO: 
             aux_dsdlinha = "Valor Bloqueado Cobertura de Garantia e de: " + 
