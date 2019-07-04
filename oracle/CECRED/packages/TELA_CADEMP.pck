@@ -682,9 +682,9 @@ create or replace package body cecred.TELA_CADEMP is
       vr_descCidadeLogradouro:= gene0007.fn_caract_acento (pr_texto   => vr_descCidadeLogradouro,
                                                            pr_dssubsin=> '@#$&%¹²³ªº°*!?<>/\|-().,=_',
                                                            pr_insubsti=> 1) ;                    
-      vr_telLoja             := gene0007.fn_caract_acento (pr_texto   => vr_telLoja,
+      vr_telLoja             := trim(gene0007.fn_caract_acento (pr_texto   => vr_telLoja,
                                                            pr_dssubsin=> '@#$&%¹²³ªº°*!?<>/\|-().,=_',
-                                                           pr_insubsti=> 1);                                                                            
+                                                           pr_insubsti=> 1));                                                                            
 
       
       -- inicializar o clob
