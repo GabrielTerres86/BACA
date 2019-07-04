@@ -4793,14 +4793,14 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
     --                                  de conta salário.
     --  Sigla    : PCPS
     --  Autor    : Gilberto - Supero
-    --  Data     : Fevereiro/2019.                   Ultima atualizacao: --/--/----
+    --  Data     : Fevereiro/2019.                   Ultima atualizacao: 03/07/2019
     --
     -- Dados referentes ao programa:
     --
     -- Frequencia: -----
-    -- Objetivo  : Realizar a leitura dos retornos pendentes e enviar via arquivo
+    -- Objetivo  : Gerar arquivo APCS301.
     --
-    -- Alteracoes: 
+    -- Alteracoes: 03/07/2019 - Tratar INC0013340 (Diego).
     --             
     ---------------------------------------------------------------------------------------------------------------
     
@@ -5088,6 +5088,21 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
                      ,pr_tag_cont => rg_dados.cdtipo_cta_destinataria 
                      ,pr_posicao  => vr_nrposapr);
         
+         -- Verifica o tipo de conta
+        -- INC0013340 - Na documentacao que recebemos da CIP nao tinha regra
+        --              para o arquivo APCS301. Buscamos essa orientacao do layout APCS101:
+        --              1. Os campos ‘Agência Destino’ e ‘Conta Corrente Destino’ devem ser obrigatorieamente preenchidos quando
+        --              os campos ‘Tipo de Conta’ = ‘CC’, ‘CD’ ou ‘PP’ forem informados .
+        --              2. O campo ‘Conta Pagamento Destino’ somente deve ser obrigatoriamente preenchido quando o campo ‘Tipo
+        --              de Conta’ = ‘PG’ for informado.   
+        IF  rg_dados.cdtipo_cta_destinataria = 'PG' THEN
+            -- Conta Pagamento Destino
+            pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Dest'
+                         ,pr_tag_nova => 'CtPagtoDest'
+                         ,pr_tag_cont => rg_dados.nrdconta_destinataria
+                         ,pr_posicao  => vr_nrposapr);
+        ELSE             
+        
         -- Agência Destino
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_Dest'
                      ,pr_tag_nova => 'AgCliDest'
@@ -5099,6 +5114,8 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
                      ,pr_tag_nova => 'CtCliDest'
                      ,pr_tag_cont => rg_dados.nrdconta_destinataria
                      ,pr_posicao  => vr_nrposapr);
+                     
+         END IF;            
         
         /******************* FIM - Grupo Destino *******************/
         /******************* FIM - Grupo Aprova Portabilidade Conta Salário  *******************/
