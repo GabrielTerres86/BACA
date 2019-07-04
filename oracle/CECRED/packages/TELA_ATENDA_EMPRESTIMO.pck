@@ -66,13 +66,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
   --  Programa : TELA_ATENDA_EMPRESTIMO
   --  Sistema  : Ayllos Web
   --  Autor    : Jaison Fernando
-  --  Data     : Marco - 2017                 Ultima atualizacao: 25/06/2019
+  --  Data     : Marco - 2017                 Ultima atualizacao: 04/07/2019
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela Emprestimos dentro da ATENDA
   --
   -- Alteracoes: 25/06/2019 - Alterado a rotina pc_valida_inf_proposta para inclusão da regra do dia 29/02 
+  --                          (Fernanda Kelli de Oliveria - AMcom)
+  --
+  --             04/07/2019 - Alterado a rotina pc_valida_inf_proposta.
   --                          (Fernanda Kelli de Oliveria - AMcom)
   --
   ---------------------------------------------------------------------------
@@ -281,7 +284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
     Programa: pc_valida_inf_proposta
     Sistema : AIMARO
     Autor   : AMcom Sistemas de Informação - Projeto 437 - Consignado
-    Data    : 11/03/2019                       Ultima atualizacao: 25/06/2019
+    Data    : 11/03/2019                       Ultima atualizacao: 04/07/2019
 
     Dados referentes ao programa:
 
@@ -291,6 +294,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
 
     Alteracoes:  25/06/2019 - Alterado a regra para buscar o dia de vencimento da parcela quando for do dia 29/02
                               (Fernanda Kelli de Oliveria - AMcom) 
+                              
+                 04/07/2019 - Inclusão da crítica "Empregador nao possui convenio de Consignado"  
+                              (Fernanda Kelli de Oliveria - AMcom)                               
     ..............................................................................*/ 
          
   --Variaveis Locais   
@@ -403,11 +409,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
       END IF;
     END LOOP;
     
+    vr_tpmodcon_emp:= -1;
     -- verifica a modalidade do consignado cadastrado para a empresa do cooperado
     FOR rg_tpmodcon IN cr_tpmodcon (pr_cdcooper => pr_cdcooper)
     LOOP
        vr_tpmodcon_emp := rg_tpmodcon.tpmodconvenio;
     END LOOP;
+    
+    IF vr_tpmodcon_emp = -1 THEN
+       vr_cdcritic:= 0;
+       vr_dscritic:= 'Empregador nao possui convenio de Consignado, consulte a tela Consig';
+       RAISE vr_exc_erro;
+    END IF;
     
     -- Caso as modalidades sejam diferentes, o sistema não permite a continuação da simulação 
     -- e apresentar mensagem ao operador
