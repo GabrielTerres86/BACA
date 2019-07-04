@@ -194,7 +194,7 @@ BEGIN
       GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
 
       -- Verifico se a job ja finalizou
-      IF fn_verifica_job_ccrd0009 IS NOT NULL THEN 
+      IF fn_verifica_job_ccrd0009 IS NULL THEN 
         
       -- Troca da pc_executa_job para pc_trata_exec_job agora trata tipo de critica - Chmd REQ0011757 - 13/04/2018
       -- Indicador se deve gerar log colocado como não gerar Log 0 pois esta prc vai gerar - Chmd REQ0011757 - 13/04/2018
