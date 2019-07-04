@@ -141,7 +141,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
   --  Programa : TELA_ATENDA_SIMULACAO
   --  Sistema  : Ayllos Web
   --  Autor    : Rafael faria - Supero
-  --  Data     : Marco - 2017                 Ultima atualizacao: 24/06/2019
+  --  Data     : Marco - 2017                 Ultima atualizacao: 04/07/2019
   --
   -- Dados referentes ao programa:
   --
@@ -153,6 +153,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
   --             24/06/2019 - Alterado a rotina pc_valida_simul_consig para 
   --             inclusão da regra do dia 29/02 (Fernanda Kelli de Oliveria - AMcom)
   --
+  --             04/07/2019 - Alterado a rotina pc_valida_simul_consig.
+  --                          (Fernanda Kelli de Oliveria - AMcom)
+  -- 
   ----------------------------------------------------------------------------------
   
   FUNCTION format_date(pr_dt IN DATE) RETURN VARCHAR2 IS
@@ -1369,12 +1372,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do Campo
                                  ,pr_des_erro OUT VARCHAR2) IS          --> Saida OK/NOK  --
 
-  /* ......................................................................................
+  /* ...............................................................................................
 
     Programa: pc_valida_simul_consig
     Sistema : Ayllos Web
     Autor   : Josiane Stiehler
-    Data    : 06/03/2019                       Ultima atualizacao: 24/06/2019
+    Data    : 06/03/2019                       Ultima atualizacao: 04/07/2019
 
     Dados referentes ao programa:
 
@@ -1383,8 +1386,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
     Objetivo  : Validações da simulação do consignado
 
     Alteracoes:  24/06/2019 - Alterado a regra para buscar o dia de vencimento da parcela 
-	                          quando for do dia 29/02(Fernanda Kelli de Oliveria - AMcom) 
-    .......................................................................................*/ 
+	                            quando for do dia 29/02. (Fernanda Kelli de Oliveria - AMcom) 
+                              
+                 04/07/2019 - Inclusão da crítica "Empregador nao possui convenio de Consignado"  
+                              (Fernanda Kelli de Oliveria - AMcom)            
+    ...............................................................................................*/ 
          
   -- Variaveis de log
   vr_cdcooper crapcop.cdcooper%TYPE;
@@ -1533,6 +1539,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
        vr_tpmodcon_emp := rg_tpmodcon.tpmodconvenio;
     END LOOP;
     
+    IF vr_tpmodcon_emp = -1 THEN
+       vr_cdcritic:= 0;
+       vr_dscritic:= 'Empregador nao possui convenio de Consignado, consulte a tela Consig';
+       RAISE vr_exc_erro;
+    END IF;
+    
     -- Caso as modalidades sejam diferentes, o sistema não permite a continuação da simulação 
     -- e apresentar mensagem ao operador
     IF vr_tpmodcon_lcr <> vr_tpmodcon_emp THEN
@@ -1642,10 +1654,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SIMULACAO IS
                                      '<Root><Erro>' || pr_cdcritic || '-' ||
                                      pr_dscritic || '</Erro></Root>');  
  END pc_valida_simul_consig;    
- 
- 
-  
-
                                     
  
 END TELA_ATENDA_SIMULACAO;
