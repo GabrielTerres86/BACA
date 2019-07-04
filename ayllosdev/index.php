@@ -391,7 +391,7 @@ $(document).ready(function () {
 																<option value="2"<?php if ($cdcooper == "2") { echo " selected"; } ?>>Acredicoop</option>
 																<option value="3"<?php if ($cdcooper == "3") { echo " selected"; } ?>>Ailos</option>
 																<option value="5"<?php if ($cdcooper == "5") { echo " selected"; } ?>>Acentra</option>
-																<option value="6"<?php if ($cdcooper == "6") { echo " selected"; } ?>>Credifiesc</option>
+																<option value="6"<?php if ($cdcooper == "6") { echo " selected"; } ?>>Únilos</option>
 																<option value="7"<?php if ($cdcooper == "7") { echo " selected"; } ?>>Credcrea</option>
 																<option value="8"<?php if ($cdcooper == "8") { echo " selected"; } ?>>Credelesc</option>
 																<option value="9"<?php if ($cdcooper == "9") { echo " selected"; } ?>>Transpocred</option>
