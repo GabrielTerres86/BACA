@@ -9,6 +9,7 @@
 
 	 Alterações: 04/04/2018 - Ajuste nas tabelas de críticas e restrições (Leonardo Oliveira - GFT).
 	 			 30/04/2018 - Retirado a multiplicacao por 100 das porcentagens da critica (Vitor Shimada Assanuma - GFT)
+				 25/04/2019 - Adicionar label 'Data de Reaproveitamento' - Bruno L. Katzjarowski - Mout's
 	
 	************************************************************************/
 	
@@ -88,6 +89,13 @@
 				
 			    <label for="nmdsacad">Nome Pagador</label>
 			    <input type="text" id="nmdsacad" name="nmdsacad" value="<?php echo getByTagName($pagador->tags,'nmdsacad'); ?>" />
+
+				<?php if( getByTagName($detalhe->tags,'dtreapro') <> ''){ ?>
+
+					<label for='dtreapro' style="width:200px;" class='rotulo-linha'>Data de Reaproveitamento:</label>
+					<input type="text" id="dtreapro" name="dtreapro" style="width:80px;" value="<?php echo getByTagName($detalhe->tags,'dtreapro'); ?>" />
+				
+			    <?php } ?>
 
 			    <div class="divRestricoes divRegistros">
 				    <table id="tblDetalhe1" class="tituloRegistros">
