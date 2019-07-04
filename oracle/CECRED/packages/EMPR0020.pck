@@ -324,33 +324,33 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
   PROCEDURE pc_estorn_pag_parc_ret(pr_cdcooper    IN CRAPEPR.CDCOOPER%TYPE
                                   ,pr_nrdconta    IN CRAPEPR.NRDCONTA%TYPE
                                   ,pr_nrctremp    IN CRAPEPR.NRCTREMP%TYPE
-                                  ,pr_situacao    IN VARCHAR2
-                                  ,pr_msg_erro    IN VARCHAR2 DEFAULT ''
-                                  ,pr_numseqfluxo IN NUMBER 
-                                  ,pr_saldopmt    IN NUMBER
-                                  ,pr_vlmora      IN NUMBER
-                                  ,pr_vlmulta     IN NUMBER
-                                  ,pr_vliofatraso IN NUMBER 
-                                  ,pr_vldesconto  IN NUMBER 
-                                  ,pr_inparcela   IN NUMBER --1 Aberto, 2 Liquidada
-                                  ,pr_vlsaldodev  IN NUMBER 
-                                  ,pr_dsorigem    IN VARCHAR2 DEFAULT 'AIMARO'
+                                  ,pr_situacao    IN VARCHAR2                -->Código do Retorno 
+                                  ,pr_msg_erro    IN VARCHAR2 DEFAULT ''     -->Mensagem enviada quando for erro
+                                  ,pr_numseqfluxo IN NUMBER                  -->Código interno que identifica o pagamento
+                                  ,pr_idsequencia IN TBEPR_CONSIGNADO_PAGAMENTO.IDSEQUENCIA%TYPE DEFAULT 0
+                                  ,pr_saldopmt    IN NUMBER                  -->Valor a receber da PMT após o Pagamento
+                                  ,pr_vlmora      IN NUMBER                  -->Valor da Mora, caso existe saldo a pagar, somente quando esta em atraso
+                                  ,pr_vlmulta     IN NUMBER                  -->Valor da Multa, caso existe saldo a pagar, somente quando esta em atraso 
+                                  ,pr_vliofatraso IN NUMBER                  -->Valor do IOF, caso existe saldo a pagar, somente quando esta em atraso
+                                  ,pr_vldesconto  IN NUMBER                  -->Valor do desconto, caso existe saldo a pagar, somente quando pagamento for de parcela a vencer
+                                  ,pr_vlsaldodev  IN NUMBER                  -->Valor do Saldo devedor do contrato Atualizado D0 
+                                  ,pr_cdorigem    IN PLS_INTEGER DEFAULT 1   --'AIMARO'
+                                  ,pr_cdcritic    OUT PLS_INTEGER
                                   ,pr_dscritic    OUT VARCHAR2
-                                  ,pr_retxml      OUT XMLTYPE);
+                                  ,pr_retxml      OUT XMLTYPE) ;
                                 
   PROCEDURE pc_efetiva_estorn_pag_parc(pr_rw_cr_tbepr_consig_pag IN tbepr_consignado_pagamento%ROWTYPE
-                                      ,pr_numseqfluxo            IN NUMBER
                                       ,pr_saldopmt               IN NUMBER
                                       ,pr_vlmora                 IN NUMBER
                                       ,pr_vlmulta                IN NUMBER
                                       ,pr_vliofatraso            IN NUMBER 
                                       ,pr_vldesconto             IN NUMBER 
-                                      ,pr_inparcela              IN NUMBER 
                                       ,pr_vlsaldodev             IN NUMBER 
                                       ,pr_rw_crapdat             IN btch0001.cr_crapdat%ROWTYPE                                          
                                       ,pr_cdcritic              OUT crapcri.cdcritic%TYPE   
                                       ,pr_dscritic              OUT VARCHAR2
                                       );
+     
   PROCEDURE pc_gera_log(pr_cdcooper  NUMBER DEFAULT 3 --Cooperativa
                         ,pr_des_log  VARCHAR2 --Descrição do log
                         ,pr_tipo     PLS_INTEGER DEFAULT 2 -- Tipo de Log 1 OK, 2 Erro tratado, 3 Erro Não tratado
@@ -5588,6 +5588,8 @@ dbms_output.put_line('xml :'||vr_clobxml);
                               , pr_cdoperad => vr_cdoperad
                               , pr_dscritic => vr_dscritic);                               
       
+      pr_cdcritic := 0;
+      pr_dscritic := 'OK';
       
     EXCEPTION
       WHEN vr_exc_erro THEN
@@ -5613,14 +5615,15 @@ dbms_output.put_line('xml :'||vr_clobxml);
                                   ,pr_situacao    IN VARCHAR2                -->Código do Retorno 
                                   ,pr_msg_erro    IN VARCHAR2 DEFAULT ''     -->Mensagem enviada quando for erro
                                   ,pr_numseqfluxo IN NUMBER                  -->Código interno que identifica o pagamento
+                                  ,pr_idsequencia IN TBEPR_CONSIGNADO_PAGAMENTO.IDSEQUENCIA%TYPE DEFAULT 0
                                   ,pr_saldopmt    IN NUMBER                  -->Valor a receber da PMT após o Pagamento
                                   ,pr_vlmora      IN NUMBER                  -->Valor da Mora, caso existe saldo a pagar, somente quando esta em atraso
                                   ,pr_vlmulta     IN NUMBER                  -->Valor da Multa, caso existe saldo a pagar, somente quando esta em atraso 
                                   ,pr_vliofatraso IN NUMBER                  -->Valor do IOF, caso existe saldo a pagar, somente quando esta em atraso
                                   ,pr_vldesconto  IN NUMBER                  -->Valor do desconto, caso existe saldo a pagar, somente quando pagamento for de parcela a vencer
-                                  ,pr_inparcela   IN NUMBER                  -->Status da parcela (1 Aberto, 2 Liquidada)
                                   ,pr_vlsaldodev  IN NUMBER                  -->Valor do Saldo devedor do contrato Atualizado D0 
-                                  ,pr_dsorigem    IN VARCHAR2 DEFAULT 'AIMARO'
+                                  ,pr_cdorigem    IN PLS_INTEGER DEFAULT 1   --'AIMARO'
+                                  ,pr_cdcritic    OUT PLS_INTEGER
                                   ,pr_dscritic    OUT VARCHAR2
                                   ,pr_retxml      OUT XMLTYPE) IS
   
@@ -5644,13 +5647,14 @@ dbms_output.put_line('xml :'||vr_clobxml);
       rw_crapdat   btch0001.cr_crapdat%ROWTYPE;    
       vr_dtmvtolt  DATE;
       vr_nrdrowid  ROWID;
+      vr_dsorigem   VARCHAR2(21);
       
       -- Variaveis de Erro
       vr_cdcritic   crapcri.cdcritic%TYPE;
       vr_dscritic   VARCHAR2(4000);
       -- Variaveis Excecao
       vr_exc_erro   EXCEPTION;
-    
+      
       CURSOR cr_tbepr_consignado_pagamento IS
         SELECT idsequencia
                ,cdcooper
@@ -5668,7 +5672,7 @@ dbms_output.put_line('xml :'||vr_clobxml);
                ,cdbccxlt
                ,cdoperad                
           FROM tbepr_consignado_pagamento 
-         WHERE idsequencia = pr_numseqfluxo;--???? SERÁ CRIADO UM NOVO CAMPO PARA O ID DO AIMARO PORQUE pr_numseqfluxo É O id DE CONTROLE DA FIS 
+         WHERE idsequencia = pr_idsequencia;
 
       rw_cr_tbepr_consig_pag cr_tbepr_consignado_pagamento%ROWTYPE; 
       
@@ -5680,7 +5684,7 @@ dbms_output.put_line('xml :'||vr_clobxml);
        INTO rw_cr_tbepr_consig_pag;
               
       IF cr_tbepr_consignado_pagamento%NOTFOUND THEN
-         vr_dscritic:= 'Registro nao encontrado(tbepr_consignado_pagamento.idsequencia = '||pr_numseqfluxo ||')';
+         vr_dscritic:= 'Registro nao encontrado(tbepr_consignado_pagamento.idsequencia = '||pr_idsequencia ||')';
          CLOSE cr_tbepr_consignado_pagamento;  
          RAISE vr_exc_erro;         
       ELSE
@@ -5691,17 +5695,19 @@ dbms_output.put_line('xml :'||vr_clobxml);
         CLOSE btch0001.cr_crapdat;
         vr_dtmvtolt:= rw_crapdat.dtmvtolt;
       
+        vr_dsorigem := gene0001.vr_vet_des_origens(pr_cdorigem);
+        
         IF (pr_situacao = 'ERRO') THEN
              -- Atualizar tabela de controle
              UPDATE tbepr_consignado_pagamento 
                 SET dtupdreg = sysdate
                     ,instatus = 3
-              WHERE idsequencia = pr_numseqfluxo;
+              WHERE idsequencia = pr_idsequencia;
              -- Gravar verlog
              GENE0001.pc_gera_log(pr_cdcooper  => rw_cr_tbepr_consig_pag.cdcooper
                                   ,pr_cdoperad => rw_cr_tbepr_consig_pag.cdoperad
                                   ,pr_dscritic => pr_msg_erro
-                                  ,pr_dsorigem => pr_dsorigem
+                                  ,pr_dsorigem => vr_dsorigem
                                   ,pr_dstransa => 'Erro no estorno do pagamento da parcela :'||rw_cr_tbepr_consig_pag.nrparepr||' do contrato: '||
                                                   rw_cr_tbepr_consig_pag.nrctremp||' - '||pr_msg_erro
                                   ,pr_dttransa => TRUNC(SYSDATE)
@@ -5715,13 +5721,11 @@ dbms_output.put_line('xml :'||vr_clobxml);
          ELSE
           
              pc_efetiva_estorn_pag_parc(pr_rw_cr_tbepr_consig_pag => rw_cr_tbepr_consig_pag
-                                       ,pr_numseqfluxo            => pr_numseqfluxo
                                        ,pr_saldopmt               => pr_saldopmt
                                        ,pr_vlmora                 => pr_vlmora
                                        ,pr_vlmulta                => pr_vlmulta
                                        ,pr_vliofatraso            => pr_vliofatraso
                                        ,pr_vldesconto             => pr_vldesconto
-                                       ,pr_inparcela              => pr_inparcela
                                        ,pr_vlsaldodev             => pr_vlsaldodev
                                        ,pr_rw_crapdat             => rw_crapdat                                           
                                        ,pr_cdcritic               => vr_cdcritic
@@ -5735,13 +5739,13 @@ dbms_output.put_line('xml :'||vr_clobxml);
             -- Atualizar tabela de controle
             UPDATE tbepr_consignado_pagamento 
                SET dtupdreg = sysdate
-                   ,instatus = 2   ----??????Criar um novo status para o estorno
-             WHERE idsequencia = pr_numseqfluxo;
+                   ,instatus = 2   
+             WHERE idsequencia = pr_idsequencia;
             -- Gravar verlog
              GENE0001.pc_gera_log(pr_cdcooper  => rw_cr_tbepr_consig_pag.cdcooper
                                   ,pr_cdoperad => rw_cr_tbepr_consig_pag.cdoperad
                                   ,pr_dscritic => ''
-                                  ,pr_dsorigem => pr_dsorigem
+                                  ,pr_dsorigem => vr_dsorigem
                                   ,pr_dstransa => 'Parcela :'||rw_cr_tbepr_consig_pag.nrparepr||' do contrato: '||
                                                   rw_cr_tbepr_consig_pag.nrctremp||' estornada com sucesso.'
                                   ,pr_dttransa => TRUNC(SYSDATE)
@@ -5756,7 +5760,7 @@ dbms_output.put_line('xml :'||vr_clobxml);
                  
          CLOSE cr_tbepr_consignado_pagamento;
          COMMIT;
-         
+         pr_cdcritic := nvl(vr_cdcritic,0);
          pr_dscritic := 'OK'; 
          -- Existe para satisfazer exigência da interface. 
          pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -5771,7 +5775,7 @@ dbms_output.put_line('xml :'||vr_clobxml);
          GENE0001.pc_gera_log( pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => 1
                               ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => pr_dsorigem
+                              ,pr_dsorigem => vr_dsorigem
                               ,pr_dstransa => 'Erro no estorno do pagamento da parcela :'||nvl(rw_cr_tbepr_consig_pag.nrparepr,0)||' do contrato: '||
                                               nvl(rw_cr_tbepr_consig_pag.nrctremp,0)||' - '||vr_dscritic
                               ,pr_dttransa => TRUNC(SYSDATE)
@@ -5782,17 +5786,19 @@ dbms_output.put_line('xml :'||vr_clobxml);
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
          commit;
+         pr_cdcritic := nvl(vr_cdcritic,0);
          pr_dscritic := 'NOK';
          pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                         '<Root><erro>' || vr_dscritic || '</erro></Root>');
       WHEN OTHERS THEN
         vr_dscritic := 'Erro nao tratado na empr0020.pc_estorn_pag_parc_ret ' ||SQLERRM;
+        pr_cdcritic := nvl(vr_cdcritic,0);
         pr_dscritic := 'NOK';
         -- Gravar verlog
          GENE0001.pc_gera_log(pr_cdcooper  => pr_cdcooper
                               ,pr_cdoperad => 1
                               ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => pr_dsorigem
+                              ,pr_dsorigem => vr_dsorigem
                               ,pr_dstransa => 'Erro no estorno do pagamento da parcela :'||nvl(rw_cr_tbepr_consig_pag.nrparepr,0)||' do contrato: '||
                                               nvl(rw_cr_tbepr_consig_pag.nrctremp,0)||' - '||vr_dscritic
                               ,pr_dttransa => TRUNC(SYSDATE)
@@ -5810,13 +5816,11 @@ dbms_output.put_line('xml :'||vr_clobxml);
   END pc_estorn_pag_parc_ret;                                 
                                 
   PROCEDURE pc_efetiva_estorn_pag_parc(pr_rw_cr_tbepr_consig_pag IN tbepr_consignado_pagamento%ROWTYPE
-                                      ,pr_numseqfluxo            IN NUMBER
                                       ,pr_saldopmt               IN NUMBER
                                       ,pr_vlmora                 IN NUMBER
                                       ,pr_vlmulta                IN NUMBER
                                       ,pr_vliofatraso            IN NUMBER 
                                       ,pr_vldesconto             IN NUMBER 
-                                      ,pr_inparcela              IN NUMBER   -->Status da parcela (1 Aberto, 2 Liquidada)    
                                       ,pr_vlsaldodev             IN NUMBER 
                                       ,pr_rw_crapdat             IN btch0001.cr_crapdat%ROWTYPE                                          
                                       ,pr_cdcritic              OUT crapcri.cdcritic%TYPE   
@@ -5839,7 +5843,6 @@ dbms_output.put_line('xml :'||vr_clobxml);
       -- Variaveis de Erro
       vr_cdcritic   crapcri.cdcritic%TYPE;
       vr_dscritic   VARCHAR2(4000);
-      --vr_taberro    gene0001.typ_tab_erro;
       
       -- Variaveis Excecao
       vr_exc_erro   EXCEPTION;  
@@ -5958,7 +5961,7 @@ dbms_output.put_line('xml :'||vr_clobxml);
            SET crappep.vlpagpar = nvl(crappep.vlparepr,0) - nvl(pr_saldopmt,0)   --> Valor pago da parcela = Valor da parcela - saldo dev da parcela
               ,crappep.vlsdvpar = pr_saldopmt                                    --> Contem o valor do saldo devedor da parcela.
               ,crappep.vldespar = nvl(crappep.vldespar,0) - nvl(pr_vldesconto,0) --> Contem o valor do desconto da parcela.
-              ,crappep.inliquid = decode(pr_inparcela,2,1,0)                     --> inliquid = 0-pendente/1-liquidada E pr_inparcela = 1 Aberto/2 Liquidada
+              ,crappep.inliquid = 0                                              --> inliquid = 0-pendente/1-liquidada
               ,crappep.vlpagmra = nvl(crappep.vlpagmra,0) - nvl(pr_vlmora,0)     --> Valor pago da mora.
               ,crappep.vlpagmta = nvl(crappep.vlpagmta,0) - nvl(pr_vlmulta,0)    --> Valor pago da multa.
               ,crappep.vldespar = pr_vldesconto                                  --> Contem o valor do desconto da parcela.                      
