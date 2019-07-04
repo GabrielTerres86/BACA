@@ -1,7 +1,7 @@
 begin
 -- Mudanças de Marcas
 -- CREDIFIESC para UNILOS
--- Alteração marcas 
+-- Alteração marcas
   begin
 	/* Logo */   
 	update crapprm p
