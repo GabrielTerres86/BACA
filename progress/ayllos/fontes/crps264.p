@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 06/09/2018 
+    Data    : Marco/07.                       Ultima atualizacao: 04/07/2019 
     
     Dados referentes ao programa:
 
@@ -253,13 +253,26 @@
                            CRITICASDEVOLU.txt (Reinert).
 
               14/08/2018 - Tratamento de devolucoes automaticas, insitdev = 2, setando seus 
-                           valores para insitdev = 1, desta forma registros irao constar no 
-                           Relatorio 219. Chamado PRB0040059 - Gabriel (Mouts).
+			               valores para insitdev = 1, desta forma registros irao constar no 
+						   Relatorio 219. Chamado PRB0040059 - Gabriel (Mouts).
 
               06/09/2018 - Cheques com devolucao de historico 573 nao estavam sendo
                            processados com sucesso. Feito tratamento para receber
                            devolucoes automaticas, feitas pelo pc_crps533, corretamente.
                            Chamado SCTASK0027900 - Gabriel (Mouts).
+
+              13/11/2018 - Chamada da rotina para gerar o estorno da tarifa de ADP
+                           quando ocorre a devolucao de cheque, deixando a conta com
+                           a situacao regularizada - Adriano (Supero) - PRJ435.
+
+              07/12/2018 - Melhoria no processo de devoluções de cheques.
+                           Alcemir Mout's (INC0022559).
+						   
+			        04/06/2019 - P565.1-RF20 - Inclusao do histórico 2973-DEV.CH.DEP na proc gera_lancamento.
+                           (Fernanda Kelli de Oliveira - AMCom)
+						   
+			        04/07/2019 - P565.1-RF20 - Retirar o cheque da tabela de bloqueados - CRAPDPB na proc gera_lancamento.
+                           (Fernanda Kelli de Oliveira - AMCom)                           
 
 ..............................................................................*/
 
@@ -410,10 +423,12 @@ END. /* FUNCTION */
 ASSIGN glb_cdprogra = "crps264"
        glb_flgbatch = false.
 
+
 RUN fontes/iniprg.p.
 
 IF   glb_cdcritic > 0 THEN
     RETURN.
+
 
 /*Devido a mudancas na tela PRCCTL que podera ser acessada
  por outras coops alem da CECRED é necessario que este
@@ -1431,6 +1446,38 @@ PROCEDURE gera_lancamento:
                                                 glb_cdcritic = 0.
                                                 UNDO, RETURN "NOK".
                                        END.
+                                      
+									                     /*P565.1-RF20 Se encontrar um lançamento anterior com o histórico 2662, 
+                                         faz um lançamento pelo histórico 2973, senao faz pelo histórico 351 */
+                                       FIND FIRST craplcm1 
+                                            WHERE craplcm1.cdcooper = aux_cdcooper     AND
+                                                  craplcm1.nrdconta = crapcst.nrdconta AND
+                                                  craplcm1.nrdocmto = crapcst.nrdocmto AND
+                                                  craplcm1.cdhistor = 2662   /*DEPOSITO DE CHEQUES EM CUSTODIA*/                                                         
+                                                  NO-LOCK NO-ERROR.
+
+                                           IF AVAILABLE craplcm1 THEN
+                                           DO:
+                                             ASSIGN  aux2_cdhistor = 2973. /*DEVOLUCAO DE CHEQUE ACOLHIDO EM DEPOSITO - SALDO BLOQUEADO*/
+                                             
+                                             /*Retirar o cheque da tabela de bloqueados*/
+                                             FIND FIRST crapdpb  WHERE crapdpb.cdcooper = aux_cdcooper
+                                                                   AND crapdpb.dtmvtolt = craplcm1.dtmvtolt
+                                                                   AND crapdpb.cdagenci = craplcm1.cdagenci    
+                                                                   AND crapdpb.cdbccxlt = craplcm1.cdbccxlt 
+                                                                   AND crapdpb.nrdolote = craplcm1.nrdolote  
+                                                                   AND crapdpb.nrdconta = craplcm1.nrdconta
+                                                                   AND crapdpb.nrdocmto = craplcm1.nrdocmto
+                                                                   EXCLUSIVE-LOCK  NO-ERROR.
+                                                                   
+                                             IF AVAILABLE crapdpb THEN
+                                             DO:  
+                                               ASSIGN crapdpb.inlibera = 2.
+                                               VALIDATE crapdpb.
+                                             END.
+                                           END.  
+                                           ELSE
+                                             ASSIGN  aux2_cdhistor = 351.  /*DEVOLUCAO DE CHEQUE ACOLHIDO EM DEPOSITO - SALDO LIBERADO*/
                                       
                                       CREATE craplcm.
                                       ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
@@ -3147,7 +3194,7 @@ PROCEDURE gera_arquivo_cecred:
                      ASSIGN aux_cdcooper = p-cdcooper
                             aux_nrdconta = crapdev.nrdconta.
 
-                   
+
                 /* CRIACAO da GNCPCHQ */
                 CREATE gncpdev.
                 ASSIGN gncpdev.cdcooper = aux_cdcooper
