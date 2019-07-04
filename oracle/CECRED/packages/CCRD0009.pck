@@ -436,27 +436,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0009 IS
 						INTO vr_nrctremp
 						FROM dual;
 					-- Converte os valores para number
-					vr_vlsdeved := to_number(substr(rg_conta.valor_fatura
+					vr_vlsdeved := TRIM(to_number(rg_conta.valor_fatura));
+					--
+					IF vr_vlsdeved <> 0 THEN
+						--
+						vr_vlsdeved := vr_vlsdeved/100;
+						--
+					ELSE
+						--
+						pr_dscritic := 'O campo valor_fatura com valor R$0,00.';
+						RAISE vr_exc_erro;
+						--
+					END IF;
+					/*vr_vlsdeved := to_number(substr(rg_conta.valor_fatura
 																				 ,0
 																				 ,LENGTH(rg_conta.valor_fatura) -2) 
 																	 || ',' ||
 																	 substr(rg_conta.valor_fatura
 																				 ,LENGTH(rg_conta.valor_fatura) -1
-																				 ,2));
-					vr_vlpreapg := to_number(substr(rg_conta.valor_pg_min
+																				 ,2));*/
+					vr_vlpreapg := TRIM(to_number(rg_conta.valor_pg_min));
+					--
+					IF vr_vlpreapg <> 0 THEN
+						--
+						vr_vlpreapg := vr_vlpreapg/100;
+						--
+					ELSE
+						--
+						pr_dscritic := 'O campo valor_pg_min com valor R$0,00.';
+						RAISE vr_exc_erro;
+						--
+					END IF;
+					/*vr_vlpreapg := to_number(substr(rg_conta.valor_pg_min
 																				 ,0
 																				 ,LENGTH(rg_conta.valor_pg_min) -2) 
 																	 || ',' ||
 																	 substr(rg_conta.valor_pg_min
 																				 ,LENGTH(rg_conta.valor_pg_min) -1
-																				 ,2));
-          vr_vlemprst := to_number(substr(rg_conta.limite_total
+																				 ,2));*/
+          vr_vlemprst := TRIM(to_number(rg_conta.limite_total));
+					--
+					IF vr_vlemprst <> 0 THEN
+						--
+						vr_vlemprst := vr_vlemprst/100;
+						--
+					ELSE
+						--
+						vr_vlemprst := 0;
+						--
+					END IF;
+					/*vr_vlemprst := to_number(substr(rg_conta.limite_total
 																				 ,0
 																				 ,LENGTH(rg_conta.limite_total) -2) 
 																	 || ',' ||
 																	 substr(rg_conta.limite_total
 																				 ,LENGTH(rg_conta.limite_total) -1
-																				 ,2));
+																				 ,2));*/
 					-- Calculo de dias de atraso
 					vr_qtdiaatr := pr_dtmvtolt - to_date(rg_conta.dt_inadimp,'yyyymmdd');
 					-- Calculo de meses ade atraso
@@ -946,6 +981,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0009 IS
 		vr_dscritic    VARCHAR2(4000);
 
 		-- Variaveis Excecao
+		vr_exc_erro    EXCEPTION;
 		vr_exc_proximo EXCEPTION;
       
 		-- Tabela para armazenar os registros do arquivo
@@ -1129,7 +1165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0009 IS
 															 );
 		-- Condicao para verificar se houve erro
 		IF vr_dscritic IS NOT NULL THEN
-			RAISE vr_exc_proximo;
+			RAISE vr_exc_erro;
 		END IF;
       
 		-- Inicio da geracao de LOG no arquivo
@@ -1141,6 +1177,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0009 IS
   	COMMIT;
 
 	EXCEPTION
+		WHEN vr_exc_erro THEN
+			-- Desfazer a operacao
+			ROLLBACK;
+			-- Gera log
+			pc_gera_log(pr_cdcooper => 3
+								 ,pr_cdprogra => 'IMPORTACAO_CB093'
+								 ,pr_cdorigem => vr_cdorigem
+								 ,pr_cdcritic => 0
+								 ,pr_dscritic => vr_dscritic);
 		WHEN OTHERS THEN
 			-- Desfazer a operacao
 			ROLLBACK;
