@@ -96,6 +96,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
     TABLE OF typ_reg_logradouro
     INDEX BY PLS_INTEGER;
 
+  -- Atualizar nome de alguns municipios da tabela de CEP, igualando com os registros da tabela CRAPMUN;
+  PROCEDURE pc_atualiza_nome_municipios;    
+
   PROCEDURE pc_insere_endereco(pr_tab_logradouro IN OUT typ_tab_logradouro --> Tabela de Ruas
                               ,pr_idtipdne       IN INTEGER
                               ,pr_dscritic      OUT VARCHAR2) IS   --> Descricao da critica
@@ -167,7 +170,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       pr_tab_logradouro.DELETE;
       
       -- Comitar os registros
-      COMMIT;
+      -- COMMIT;
       
     EXCEPTION
       
@@ -641,8 +644,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       DELETE FROM crapdne
             WHERE crapdne.idoricad = const_origem_cadastro  -- Origem do Cadastro
               AND crapdne.idtipdne = vr_idtipdne; -- Cadastro de Enderecos
+              
       -- Realizamos o commit 
-      COMMIT;
+      --COMMIT;
 
       -- Limpar a tabela
       vr_tab_logradouro.DELETE;
@@ -795,7 +799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       END IF;
       
       -- Se chegou aqui, commitar os registros
-      COMMIT;
+      -- COMMIT;
       
       -- Remover o arquivo depois de processar
       gene0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_dsdirarq || vr_nmarqprc);
@@ -916,8 +920,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       DELETE FROM crapdne
             WHERE crapdne.idoricad = const_origem_cadastro  -- Origem do Cadastro
               AND crapdne.idtipdne = vr_idtipdne; -- Cadastro de Enderecos
+
       -- Realizamos o commit 
-      COMMIT;
+      --COMMIT;
 
       -- Limpar a tabela
       vr_tab_logradouro.DELETE;
@@ -1063,7 +1068,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       END IF;
       
       -- Se chegou aqui, commitar os registros
-      COMMIT;
+      -- COMMIT;
       
       -- Remover o arquivo depois de processar
       gene0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_dsdirarq || vr_nmarqprc);
@@ -1177,8 +1182,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       DELETE FROM crapdne
             WHERE crapdne.idoricad = const_origem_cadastro  -- Origem do Cadastro
               AND crapdne.idtipdne = vr_idtipdne; -- Cadastro de Enderecos
+              
       -- Realizamos o commit 
-      COMMIT;
+      --COMMIT;
 
       -- Limpar a tabela
       vr_tab_logradouro.DELETE;
@@ -1308,7 +1314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       END IF;
       
       -- Se chegou aqui, commitar os registros
-      COMMIT;
+      -- COMMIT;
        
       -- Remover o arquivo depois de processar
       gene0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_dsdirarq || vr_nmarqprc);
@@ -1429,8 +1435,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
             WHERE UPPER(crapdne.cduflogr) = pr_dssigla
               AND crapdne.idoricad = const_origem_cadastro  -- Origem do Cadastro
               AND crapdne.idtipdne = vr_idtipdne; -- Cadastro de Enderecos
+              
       -- Realizamos o commit 
-      COMMIT;
+      -- COMMIT;
 
       -- Limpar a tabela
       vr_tab_logradouro.DELETE;
@@ -1573,7 +1580,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
       END IF;
       
       -- Se chegou aqui, commitar os registros
-      COMMIT;
+      -- COMMIT;
       
       -- Remover o arquivo depois de processar
       gene0001.pc_OScommand_Shell(pr_des_comando => 'rm '||vr_dsdirarq || vr_nmarqprc);
@@ -1759,11 +1766,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
         END LOOP;
       END IF;
       
+      -- Atualizar nome de alguns municipios da tabela de CEP, igualando com os registros da tabela CRAPMUN;
+      pc_atualiza_nome_municipios;
+      
       -- Finalizou o processo todo
       COMMIT;
 
     EXCEPTION
       WHEN vr_exc_saida THEN
+        ROLLBACK;
         -- Adicionar a critica no retorno de erros
         gene0001.pc_gera_erro(pr_cdcooper => 3, -- CECRED
                               pr_cdagenci => 0,
@@ -1774,6 +1785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                               pr_tab_erro => pr_tab_erro);         
         
       WHEN OTHERS THEN
+        ROLLBACK;
         -- Critica de erro
         vr_dscritic := 'Erro geral na rotina da tela CADDNE: ' || 
                         REPLACE(REPLACE(SQLERRM || ' -> ' ||
@@ -2055,6 +2067,91 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADDNE IS
                                      '<Root><Erro>' || pr_dscritic ||
                                      '</Erro></Root>');
   end pc_busca_param;
+
+  PROCEDURE pc_atualiza_nome_municipios IS
+  BEGIN  
+      -- Atualizar nome de alguns municipios da tabela de CEP, igualando com os registros da tabela CRAPMUN;
+      update crapdne set nmextcid = 'ALVORADA D_OESTE' where nmextcid = 'ALVORADA D OESTE' and cduflogr = 'RO' and idoricad = 1;
+      update crapdne set nmextcid = 'CONQUISTA D_OESTE' where nmextcid = 'CONQUISTA D OESTE' and cduflogr = 'MT' and idoricad = 1;
+      update crapdne set nmextcid = 'OLHO D_AGUA DO BORGES' where nmextcid = 'OLHO-D AGUA DO BORGES' and cduflogr = 'RN' and idoricad = 1;
+      update crapdne set nmextcid = 'SANTA ROSA' where nmextcid = 'SANTA ROSA DO PURUS' and cduflogr = 'AC' and idoricad = 1;
+      update crapdne set nmextcid = 'SAO TOME DAS LETRAS' where nmextcid = 'SAO THOME DAS LETRAS' and cduflogr = 'MG' and idoricad = 1;
+      update crapdne set nmextcid = 'DIAMANTE D_OESTE' where nmextcid = 'DIAMANTE D OESTE' and cduflogr = 'PR' and idoricad = 1;
+      update crapdne set nmextcid = 'ITAPORANGA D_AJUDA' where nmextcid = 'ITAPORANGA D AJUDA' and cduflogr = 'SE' and idoricad = 1;
+      update crapdne set nmextcid = 'GUARANI D_OESTE' where nmextcid = 'GUARANI D OESTE' and cduflogr = 'SP' and idoricad = 1;
+      update crapdne set nmextcid = 'OLHO D_AGUA GRANDE' where nmextcid = 'OLHO D AGUA GRANDE' and cduflogr = 'AL' and idoricad = 1;
+      update crapdne set nmextcid = 'VILA BELA DA SANTISSIMA TRINDAD' where nmextcid = 'VILA BELA DA SANTISSIMA TRINDADE' and cduflogr = 'MT' and idoricad = 1;
+      update crapdne set nmextcid = 'SAO JOAO DO PAU D_ALHO' where nmextcid = 'SAO JOAO DO PAU D ALHO' and cduflogr = 'SP' and idoricad = 1;
+      update crapdne set nmextcid = 'OLHO D_AGUA' where nmextcid = 'OLHO D AGUA' and cduflogr = 'PB' and idoricad = 1;
+      update crapdne set nmextcid = 'ALTA FLORESTA D_OESTE' where nmextcid = 'ALTA FLORESTA D OESTE' and cduflogr = 'RO' and idoricad = 1;
+      update crapdne set nmextcid = 'MAE D_AGUA' where nmextcid = 'MAE D AGUA' and cduflogr = 'PB' and idoricad = 1;
+      update crapdne set nmextcid = 'PINGO D_AGUA' where nmextcid = 'PINGO-D AGUA' and cduflogr = 'MG' and idoricad = 1;
+      update crapdne set nmextcid = 'ITABIRINHA DE MANTENA' where nmextcid = 'BOA UNIAO DE ITABIRINHA' and cduflogr = 'MG' and idoricad = 1;
+      update crapdne set nmextcid = 'ESPIRITO SANTO DO OESTE' where nmextcid = 'ESPIRITO SANTO' and cduflogr = 'RN' and idoricad = 1;
+      update crapdne set nmextcid = 'ARES' where nmextcid = 'AREZ' and cduflogr = 'RN' and idoricad = 1;
+      update crapdne set nmextcid = 'SANTA BARBARA D_OESTE' where nmextcid = 'SANTA BARBARA D OESTE' and cduflogr = 'SP' and idoricad = 1;
+      update crapdne set nmextcid = 'SANTA RITA D_OESTE' where nmextcid = 'SANTA RITA D OESTE' and cduflogr = 'SP' and idoricad = 1;
+      update crapdne set nmextcid = 'HERVAL DO OESTE' where nmextcid = 'HERVAL DO OESTE' and cduflogr = 'SC' and idoricad = 1;
+      update crapdne set nmextcid = 'EMBU' where nmextcid = 'EMBU DAS ARTES' and cduflogr = 'SP' and idoricad = 1;
+      update crapdne set nmextcid = 'PINHAL DO SAO BENTO' where nmextcid = 'PINHAL DE SAO BENTO' and cduflogr = 'PR' and idoricad = 1;
+      update crapdne set nmextcid = 'APARECIDA D_OESTE' where nmextcid = 'APARECIDA D OESTE' and cduflogr = 'SP' and idoricad = 1;
+      update crapdne set nmextcid = 'BRODOSQUI' where nmextcid = 'BRODOWSKI' and cduflogr = 'SP' and idoricad = 1;
+      update crapdne set nmextcid = 'GOUVEA' where nmextcid = 'GOUVEIA' and cduflogr = 'MG' and idoricad = 1;
+      update crapdne set nmextcid = 'MOGI-GUACU' where nmextcid = 'MOGI GUACU' and cduflogr = 'SP' and idoricad = 1;
+      update crapdne set nmextcid = 'MUNHOZ DE MELLO' where nmextcid = 'MUNHOZ DE MELO' and cduflogr = 'PR' and idoricad = 1;
+      update crapdne set nmextcid = 'MALHADA DAS PEDRAS' where nmextcid = 'MALHADA DE PEDRAS' and cduflogr = 'BA' and idoricad = 1;
+      update crapdne set nmextcid = 'SEM-PEIXE' where nmextcid = 'SEM PEIXE' and cduflogr = 'MG' and idoricad = 1;
+      update crapdne set nmextcid = 'ENTRE IJUIS' where nmextcid = 'ENTRE-IJUIS' and cduflogr = 'RS' and idoricad = 1;
+      update crapdne set nmextcid = 'CERRO-CORA' where nmextcid = 'CERRO CORA' and cduflogr = 'RN' and idoricad = 1;
+      update crapdne set nmextcid = 'ARMACAO DE BUZIOS' where nmextcid = 'ARMACAO DOS BUZIOS' and cduflogr = 'RJ' and idoricad = 1;
+      update crapdne set nmextcid = 'SAO JOAO D_ALIANCA' where nmextcid = 'SAO JOAO D ALIANCA' and cduflogr = 'GO' and idoricad = 1;
+      update crapdne set nmextcid = 'MACHADINHO D_OESTE' where nmextcid = 'MACHADINHO D OESTE' and cduflogr = 'RO' and idoricad = 1;
+      update crapdne set nmextcid = 'LAGOA DANTA' where nmextcid = 'LAGOA D ANTA' and cduflogr = 'RN' and idoricad = 1;
+      update crapdne set nmextcid = 'POTIRIGUA' where nmextcid = 'POTIRAGUA' and cduflogr = 'BA' and idoricad = 1;
+      update crapdne set nmextcid = 'NOVA BRASILANDIA D_OESTE' where nmextcid = 'NOVA BRASILANDIA D OESTE' and cduflogr = 'RO' and idoricad = 1;
+      update crapdne set nmextcid = 'ITAPAGE' where nmextcid = 'ITAPAJE' and cduflogr = 'CE' and idoricad = 1;
+      update crapdne set nmextcid = 'MOGI-MIRIM' where nmextcid = 'MOGI MIRIM' and cduflogr = 'SP' and idoricad = 1;
+      update crapdne set nmextcid = 'MIRASSOL D_OESTE' where nmextcid = 'MIRASSOL D OESTE' and cduflogr = 'MT' and idoricad = 1;
+      update crapdne set nmextcid = 'PAU D_ARCO' where nmextcid = 'PAU D ARCO' and cduflogr = 'PA' and idoricad = 1;
+      update crapdne set nmextcid = 'SANTA CRUZ DO MONTE CASTELO' where nmextcid = 'SANTA CRUZ DE MONTE CASTELO' and cduflogr = 'PR' and idoricad = 1;
+      update crapdne set nmextcid = 'ASSU' where nmextcid = 'ACU' and cduflogr = 'RN' and idoricad = 1;
+      update crapdne set nmextcid = 'BOM JESUS DE GOIAS' where nmextcid = 'BOM JESUS' and cduflogr = 'GO' and idoricad = 1;
+      update crapdne set nmextcid = 'SANTA CARMEN' where nmextcid = 'SANTA CARMEM' and cduflogr = 'MT' and idoricad = 1;
+      update crapdne set nmextcid = 'QUELUZITA' where nmextcid = 'QUELUZITO' and cduflogr = 'MG' and idoricad = 1;
+      update crapdne set nmextcid = 'PAU D_ARCO' where nmextcid = 'PAU D ARCO' and cduflogr = 'TO' and idoricad = 1;
+      update crapdne set nmextcid = 'OLHO D_AGUA DAS FLORES' where nmextcid = 'OLHO D AGUA DAS FLORES' and cduflogr = 'AL' and idoricad = 1;
+      update crapdne set nmextcid = 'TANQUE D_ARCA' where nmextcid = 'TANQUE D ARCA' and cduflogr = 'AL' and idoricad = 1;
+      update crapdne set nmextcid = 'SAO LUIS GONZAGA DO MARAN' where nmextcid = 'SAO LUIS GONZAGA DO MARANHAO' and cduflogr = 'MA' and idoricad = 1;
+      update crapdne set nmextcid = 'BELEM DE SAO FRANCISCO' where nmextcid = 'BELEM DO SAO FRANCISCO' and cduflogr = 'PE' and idoricad = 1;
+      update crapdne set nmextcid = 'LAMBARI D_OESTE' where nmextcid = 'LAMBARI D OESTE' and cduflogr = 'MT' and idoricad = 1;
+      update crapdne set nmextcid = 'BELA VISTA DO CAROBA' where nmextcid = 'BELA VISTA DA CAROBA' and cduflogr = 'PR' and idoricad = 1;
+      update crapdne set nmextcid = 'ITAPEJARA DO OESTE' where nmextcid = 'ITAPEJARA DO OESTE' and cduflogr = 'PR' and idoricad = 1;
+      update crapdne set nmextcid = 'SAO VALERIO' where nmextcid = 'SAO VALERIO DA NATIVIDADE' and cduflogr = 'TO' and idoricad = 1;
+      update crapdne set nmextcid = 'PAU D_ARCO DO PIAUI' where nmextcid = 'PAU D ARCO DO PIAUI' and cduflogr = 'PI' and idoricad = 1;
+      update crapdne set nmextcid = 'PEROLA D_OESTE' where nmextcid = 'PEROLA D OESTE' and cduflogr = 'PR' and idoricad = 1;
+      update crapdne set nmextcid = 'SUD MENUCCI' where nmextcid = 'SUD MENNUCCI' and cduflogr = 'SP' and idoricad = 1;
+      update crapdne set nmextcid = 'OLHO D_AGUA DO PIAUI' where nmextcid = 'OLHO D AGUA DO PIAUI' and cduflogr = 'PI' and idoricad = 1;
+      update crapdne set nmextcid = 'BARRA D_ALCANTARA' where nmextcid = 'BARRA D ALCANTARA' and cduflogr = 'PI' and idoricad = 1;
+      update crapdne set nmextcid = 'ESTRELA D_OESTE' where nmextcid = 'ESTRELA D OESTE' and cduflogr = 'SP' and idoricad = 1;
+      update crapdne set nmextcid = 'SAO FELIPE D_OESTE' where nmextcid = 'SAO FELIPE D OESTE' and cduflogr = 'RO' and idoricad = 1;
+      update crapdne set nmextcid = 'LUIZ EDUARDO MAGALHAES' where nmextcid = 'LUIS EDUARDO MAGALHAES' and cduflogr = 'BA' and idoricad = 1;
+      update crapdne set nmextcid = 'RANCHO ALEGRE D_OESTE' where nmextcid = 'RANCHO ALEGRE D OESTE' and cduflogr = 'PR' and idoricad = 1;
+      update crapdne set nmextcid = 'SANTA LUZIA D_OESTE' where nmextcid = 'SANTA LUZIA D OESTE' and cduflogr = 'RO' and idoricad = 1;
+      update crapdne set nmextcid = 'SANTA CLARA D_OESTE' where nmextcid = 'SANTA CLARA D OESTE' and cduflogr = 'SP' and idoricad = 1;
+      update crapdne set nmextcid = 'POXOREO' where nmextcid = 'POXOREU' and cduflogr = 'MT' and idoricad = 1;
+      update crapdne set nmextcid = 'FIGUEIROPOLIS D_OESTE' where nmextcid = 'FIGUEIROPOLIS D OESTE' and cduflogr = 'MT' and idoricad = 1;
+      update crapdne set nmextcid = 'LAGEDO DO TABOCAL' where nmextcid = 'LAJEDO DO TABOCAL' and cduflogr = 'BA' and idoricad = 1;
+      update crapdne set nmextcid = 'OLHOS-D_AGUA' where nmextcid = 'OLHOS D AGUA' and cduflogr = 'MG' and idoricad = 1;
+      update crapdne set nmextcid = 'PALMEIRA D_OESTE' where nmextcid = 'PALMEIRA D OESTE' and cduflogr = 'SP' and idoricad = 1;
+      update crapdne set nmextcid = 'SITIO D_ABADIA' where nmextcid = 'SITIO D ABADIA' and cduflogr = 'GO' and idoricad = 1;
+      update crapdne set nmextcid = 'DIAS D_AVILA' where nmextcid = 'DIAS D AVILA' and cduflogr = 'BA' and idoricad = 1;
+      update crapdne set nmextcid = 'ESPIGAO D_OESTE' where nmextcid = 'ESPIGAO DO OESTE' and cduflogr = 'RO' and idoricad = 1;
+      update crapdne set nmextcid = 'GLORIA D_OESTE' where nmextcid = 'GLORIA D OESTE' and cduflogr = 'MT' and idoricad = 1;
+      update crapdne set nmextcid = 'SAO BENTO DE POMBAL' where nmextcid = 'SAO DOMINGOS DE POMBAL' and cduflogr = 'PB' and idoricad = 1;
+      update crapdne set nmextcid = 'OLHO D_AGUA DO CASADO' where nmextcid = 'OLHO D AGUA DO CASADO' and cduflogr = 'AL' and idoricad = 1;
+      update crapdne set nmextcid = 'MUQUEM DO SAO FRANCISCO' where nmextcid = 'MUQUEM DE SAO FRANCISCO' and cduflogr = 'BA' and idoricad = 1;
+      update crapdne set nmextcid = 'OLHO D_AGUA DAS CUNHAS' where nmextcid = 'OLHO D AGUA DAS CUNHAS' and cduflogr = 'MA' and idoricad = 1; 
+  END pc_atualiza_nome_municipios;
 
 END TELA_CADDNE;
 /
