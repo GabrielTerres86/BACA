@@ -83,7 +83,9 @@
 		       29/05/2018 - Ajustes referente alteracao da nova marca (Jonata Mouts - P413 ).					  
                             
                30/05/2018 - valida dscomple e concatena com tt-extrato_conta.dsextrat 
-			               (Alcemir Mout's - Prj. 467).							  
+			               (Alcemir Mout's - Prj. 467).			
+ 
+               04/07/2019 - Ajustes referente alteracao da marca CREDIFIESC para UNILOS (Andre Bohn Mouts). 
                             
 ------------------------------------------------------------------------*/
 /*           This .W file was created with AppBuilder.                  */
@@ -436,7 +438,7 @@ PROCEDURE p_imprime_cabec:
         aux_dsdlinha = "@@imagem /dg/som/acentra.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 6   THEN
-        aux_dsdlinha = "@@imagem /dg/som/credifiesc.bmp,16,0".
+        aux_dsdlinha = "@@imagem /dg/som/unilos.bmp,16,0".
    ELSE
    IF   aux_cdcooper = 7   THEN
         aux_dsdlinha = "@@imagem /dg/som/credcrea.bmp,16,0".
