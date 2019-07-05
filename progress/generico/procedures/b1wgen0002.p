@@ -6683,13 +6683,13 @@ PROCEDURE grava-proposta-completa:
     DEF VAR          aux_contigen AS LOGI                           NO-UNDO.
     DEF VAR          aux_interrup AS LOGI                           NO-UNDO.
     DEF VAR          aux_vloutras AS DECI                           NO-UNDO.
-	DEF VAR          aux_vlemprstcalc AS DECI                       NO-UNDO.
-    DEF VAR          aux_vlpreempcalc AS DECI                       NO-UNDO.
+
+    DEF VAR          aux_dsassdig  AS CHAR                          NO-UNDO.
+    DEF VAR          aux_des_reto  AS CHAR                          NO-UNDO.
 
     DEF  BUFFER      crabavt FOR  crapavt.
 
     EMPTY TEMP-TABLE tt-erro.
-
     /*
       P438 nova regra perda de aprovacao 
       aux_idpeapro: 0 = Nao Perde Aprovacao 
@@ -7998,58 +7998,6 @@ PROCEDURE grava-proposta-completa:
         /* Atualiza a data de liberacao */
         ASSIGN crawepr.dtlibera = par_dtlibera.
         
-        /* P442 - Validar valores de pre-aprovado no momento da liberacao do contrato
-           incluido aqui para reduzir problemas de contratacao simultanea entre canais*/
-        IF par_cdfinemp = 68 THEN
-          DO:
-            /* Buscar valores atualizados no momento da confirmacao */
-            IF NOT VALID-HANDLE(h-b1wgen0188) THEN
-                  RUN sistema/generico/procedures/b1wgen0188.p 
-                      PERSISTENT SET h-b1wgen0188.
-
-               /* Verifica se existe limite disponível */
-               RUN busca_dados IN h-b1wgen0188
-                               (INPUT par_cdcooper,
-                                INPUT par_cdagenci,
-                                INPUT par_nrdcaixa,
-                                INPUT par_cdoperad,
-                                INPUT par_nmdatela,
-                                INPUT par_idorigem,
-                                INPUT par_nrdconta,
-                                INPUT par_idseqttl,
-                                INPUT 0,
-                                OUTPUT TABLE tt-dados-cpa,
-                                OUTPUT TABLE tt-erro).
-
-               FIND tt-dados-cpa NO-LOCK NO-ERROR.
-               IF  AVAIL tt-dados-cpa THEN
-                 DO:
-                    aux_vlemprstcalc = tt-dados-cpa.vldiscrd + crawepr.vlemprst.
-                   aux_vlpreempcalc = tt-dados-cpa.vlcalpar + crawepr.vlpreemp.
-                 
-                    /* Verifica se retornou ID de carga */
-                    IF tt-dados-cpa.idcarga = 0 THEN
-                      DO:
-                        aux_dscritic = "Nao foi localizado pre-aprovado para o associado".
-                        UNDO Gravar, LEAVE Gravar.
-                      END.
-                      
-                    /* Verfica se o valor limite permite a liberacao*/
-                    IF crawepr.vlemprst > aux_vlemprstcalc THEN
-                      DO:
-                        aux_dscritic = "Valor total nao permitido para pre-aprovado".
-                        UNDO Gravar, LEAVE Gravar.
-                      END.
-                      
-                    /* Verfica se o valor da parcela permite a liberacao*/
-                    IF crawepr.vlpreemp > aux_vlpreempcalc THEN
-                      DO:
-                        aux_dscritic = "Valor da parcela nao permitido para pre-aprovado".
-                        UNDO Gravar, LEAVE Gravar.
-                      END.
-                 END.
-          END.
-        /**/
         RUN sistema/generico/procedures/b1wgen0024.p
                              PERSISTENT SET h-b1wgen0024.
 
@@ -8218,6 +8166,43 @@ PROCEDURE grava-proposta-completa:
             UNDO Gravar, LEAVE Gravar.
           END.
        END.
+
+	   /* P442 - Criar assinaturas para o contrato recem criado (aprovado) */
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+      /* Criar registros na tabela de assinaturas */
+      /* Efetuar a chamada a rotina Oracle */ 
+      RUN STORED-PROCEDURE pc_assinatura_contrato_pre
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.cdcooper
+                                                ,INPUT crawepr.cdagenci
+                                                ,INPUT crawepr.nrdconta
+                                                ,INPUT 1                                               
+                                                ,INPUT par_dtmvtolt
+                                                ,INPUT crawepr.cdorigem
+                                                ,INPUT crawepr.nrctremp
+                                                ,INPUT 1
+                                                ,OUTPUT ""
+                                                ,OUTPUT ""
+                                                ,OUTPUT 0
+                                                ,OUTPUT "").
+      
+      /* Fechar o procedimento para buscarmos o resultado */ 
+      CLOSE STORED-PROC pc_assinatura_contrato_pre
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+      
+      ASSIGN aux_dsassdig = pc_assinatura_contrato_pre.pr_assinatu
+             aux_des_reto = pc_assinatura_contrato_pre.pr_des_reto
+             aux_cdcritic = pc_assinatura_contrato_pre.pr_cdcritic WHEN pc_assinatura_contrato_pre.pr_cdcritic <> ?
+             aux_dscritic = pc_assinatura_contrato_pre.pr_dscritic WHEN pc_assinatura_contrato_pre.pr_dscritic <> ?.
+      
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+      
+      IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+          DO:
+            CREATE tt-erro.
+            ASSIGN tt-erro.cdcritic = aux_cdcritic
+                   tt-erro.dscritic = aux_dscritic.
+             UNDO Gravar, LEAVE Gravar.
+         END.
     END. /* Fim Grava- Fim TRANSACTION */
      
     IF   aux_dscritic <> ""  OR
