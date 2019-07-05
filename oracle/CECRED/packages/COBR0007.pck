@@ -318,7 +318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --  Sistema  : Procedimentos gerais para execucao de instrucoes de baixa
   --  Sigla    : CRED
   --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao: 20/05/2019
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 26/06/2019
   --
   -- Dados referentes ao programa:
   --
@@ -3946,6 +3946,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            (Ana - Envolti - Ch. REQ0011728)
     --
     --   14/01/2019 - Enviar registro de desbloqueio do boleto para a CIP. (Cechet)
+    --
+    --   26/06/2019 - Parametros na chamada da procedure pc_inst_pedido_baixa_titulo estão com
+    --                cdocorre e cdoperad com informações erradas. (INC0017772 - AJFink)
+    --
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -4369,9 +4373,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 					IF pr_idgerbai = 1 THEN
 						--
 						cobr0007.pc_inst_pedido_baixa_titulo(pr_idregcob            => rw_crapcob.rowid
-																								,pr_cdocorre            => pr_cdocorre
+                                                ,pr_cdocorre            => 2 -- Baixa  --INC0017772
 																								,pr_dtmvtolt            => pr_dtmvtolt
-																								,pr_cdoperad            => 2 -- Baixa
+                                                ,pr_cdoperad            => pr_cdoperad --INC0017772
 																								,pr_nrremass            => pr_nrremass
 																								,pr_tab_lat_consolidada => pr_tab_lat_consolidada
 																								,pr_cdcritic            => vr_cdcritic
@@ -4454,9 +4458,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 					IF pr_idgerbai = 1 THEN
 						--
 						cobr0007.pc_inst_pedido_baixa_titulo(pr_idregcob            => rw_crapcob.rowid
-																								,pr_cdocorre            => pr_cdocorre
+                                                ,pr_cdocorre            => 2 -- Baixa  --INC0017772
 																								,pr_dtmvtolt            => pr_dtmvtolt
-																								,pr_cdoperad            => 2 -- Baixa
+                                                ,pr_cdoperad            => pr_cdoperad --INC0017772
 																								,pr_nrremass            => pr_nrremass
 																								,pr_tab_lat_consolidada => pr_tab_lat_consolidada
 																								,pr_cdcritic            => vr_cdcritic
@@ -4815,9 +4819,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 					IF pr_idgerbai = 1 THEN
 						--
 						cobr0007.pc_inst_pedido_baixa_titulo(pr_idregcob            => rw_crapcob.rowid
-																								,pr_cdocorre            => pr_cdocorre
+                                                ,pr_cdocorre            => 2 -- Baixa  --INC0017772
 																								,pr_dtmvtolt            => pr_dtmvtolt
-																								,pr_cdoperad            => 2 -- Baixa
+                                                ,pr_cdoperad            => pr_cdoperad --INC0017772
 																								,pr_nrremass            => pr_nrremass
 																								,pr_tab_lat_consolidada => pr_tab_lat_consolidada
 																								,pr_cdcritic            => vr_cdcritic
