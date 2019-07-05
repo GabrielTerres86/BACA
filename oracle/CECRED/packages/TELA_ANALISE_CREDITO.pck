@@ -1432,7 +1432,20 @@ FUNCTION fn_le_json_motor_auto_aprov(p_cdcooper IN NUMBER
                                ,pr_nrdcontaavt1 crawepr.nrctaav1%TYPE
                                ,pr_nrdcontaavt2 crawepr.nrctaav2%TYPE
                                ,pr_chamador in varchar2
-                               ,pr_tpproduto in number) return varchar is
+                               ,pr_tpproduto in number
+							   ,pr_quebralinha  IN BOOLEAN) return varchar is
+
+/* .............................................................................
+      Programa: fn_garantia_proposta
+      Sistema : Aimaro/Ibratan
+      Autor   : Paulo Martins - Mout's 
+      Data    : Março/2019                 Ultima atualizacao: 30/05/2019
+      
+      Alteracoes: 13/06/2019 - Adicionado '##br##' para quebra de linha entre as
+                               garantias e adicionado o número da conta na 
+                               garantia de aplicação Story 22202. Mateus Z (Mouts)                             
+                               
+    ..............................................................................*/
                                
   cursor c_alienacao is
     select case
@@ -1462,12 +1475,19 @@ FUNCTION fn_le_json_motor_auto_aprov(p_cdcooper IN NUMBER
   vr_terceiro    varchar2(250);
   vr_alienacao   varchar2(250);
   vr_avalista    varchar2(250);
+    vr_separador VARCHAR2(10);
   
   vr_retorno number(1);
   vr_tpcontrato number(1);
                                  
   BEGIN
 
+    IF pr_quebralinha THEN
+      vr_separador := '##br##';
+    ELSE
+      vr_separador := ' - ';
+    END IF;
+  
     pc_consulta_garantia_operacao(pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => pr_nrdconta
                                  ,pr_nrctremp => pr_nrctremp
@@ -1501,6 +1521,7 @@ FUNCTION fn_le_json_motor_auto_aprov(p_cdcooper IN NUMBER
       vr_inresaut := vr_retxml.extract('//Dados/inresaut/node()').getstringval();--Resgate Automatico
       vr_inaplter := vr_retxml.extract('//Dados/inaplter/node()').getstringval();
       vr_inpouter := vr_retxml.extract('//Dados/inpouter/node()').getstringval();
+      vr_nrctater := vr_retxml.extract('//Dados/nrctater/node()').getstringval();
         /*Verificação*/
         if vr_inaplpro = 1 then
           vr_garantia := 'Aplicação Própria';
@@ -1509,9 +1530,9 @@ FUNCTION fn_le_json_motor_auto_aprov(p_cdcooper IN NUMBER
         elsif vr_inresaut = 1 then
           vr_garantia := 'Resgate Automática';
         elsif vr_inaplter = 1 then
-          vr_garantia := 'Aplicação Terceiro';
+        vr_garantia := 'Aplicação Terceiro: ' || gene0002.fn_mask_conta(vr_nrctater);
         elsif vr_inpouter = 1 then
-          vr_garantia := 'Poupança Terceiro';
+        vr_garantia := 'Poupança Terceiro: ' || gene0002.fn_mask_conta(vr_nrctater);
         end if;        
       end if;                              
 
@@ -1521,7 +1542,8 @@ FUNCTION fn_le_json_motor_auto_aprov(p_cdcooper IN NUMBER
       ELSIF pr_nrdcontaavt1 = 0 and pr_nrdcontaavt2 > 0 THEN
       vr_avalista := 'Avalista ' || fn_nao_cooperado(pr_nrdcontaavt2);
       ELSIF pr_nrdcontaavt1 > 0 and pr_nrdcontaavt2 > 0 THEN 
-       vr_avalista := 'Primeiro Avalista ' ||fn_nao_cooperado(pr_nrdcontaavt1) ||' e Segundo Avalista '||fn_nao_cooperado(pr_nrdcontaavt2); 
+      vr_avalista := 'Primeiro Avalista: ' || fn_nao_cooperado(pr_nrdcontaavt1) || vr_separador ||
+                     ' Segundo Avalista: ' || fn_nao_cooperado(pr_nrdcontaavt2);
       END IF;
       
       -- Verifica Avalistas Não cooperados
@@ -1535,20 +1557,32 @@ FUNCTION fn_le_json_motor_auto_aprov(p_cdcooper IN NUMBER
         close c_avalista_terceiro;
       END IF;
       
+    -- Garantia de Aplicação
+    IF nvl(vr_garantia, 'NULO') != 'Sem Garantia' THEN
+      vr_retorno_xml := vr_garantia;
+    END IF;
       -- Alienações
-      open c_alienacao;
-       fetch c_alienacao into vr_alienacao;
-      close c_alienacao;   
+    for r_alienacao in c_alienacao loop
+       if vr_alienacao is null then
+         vr_alienacao := r_alienacao.garantia;
+       else
+         vr_alienacao := vr_alienacao||vr_separador||r_alienacao.garantia;
+       end if;    
+    end loop;
 
-      if vr_alienacao is not null then
+    IF vr_alienacao IS NOT NULL THEN
+      IF vr_retorno_xml IS NULL THEN
         vr_retorno_xml := vr_alienacao;
-      end if;             
+      ELSE
+        vr_retorno_xml := vr_retorno_xml || vr_separador || vr_alienacao;
+      END IF;
+    END IF;
       --
       if vr_avalista is not null then
         if vr_retorno_xml is null then
           vr_retorno_xml := vr_avalista;
         else  
-          vr_retorno_xml := vr_retorno_xml||' - '||vr_avalista;
+        vr_retorno_xml := vr_retorno_xml || vr_separador || vr_avalista;
         end if;
       end if;   
       --
@@ -1556,19 +1590,13 @@ FUNCTION fn_le_json_motor_auto_aprov(p_cdcooper IN NUMBER
         if vr_retorno_xml is null then
           vr_retorno_xml := vr_terceiro;
         else
-          vr_retorno_xml := vr_retorno_xml||' - '||vr_terceiro;
+        vr_retorno_xml := vr_retorno_xml || vr_separador || vr_terceiro;
         end if;  
       end if;        
       --
-      if nvl(vr_garantia,'NULO') != 'Sem Garantia' then
-        if vr_retorno_xml is null then
+    IF vr_garantia = 'Sem Garantia' AND vr_terceiro IS NULL AND vr_alienacao IS NULL AND vr_avalista IS NULL THEN
           vr_retorno_xml := vr_garantia;
-        else
-          vr_retorno_xml := vr_retorno_xml||' - '||vr_garantia;
-        end if;  
-      elsif vr_garantia = 'Sem Garantia' and vr_terceiro is null and vr_alienacao is null and vr_avalista is null then 
-        vr_retorno_xml := vr_garantia;
-      end if;
+    END IF;
       --
       return vr_retorno_xml;
         
@@ -6027,7 +6055,7 @@ PROCEDURE pc_consulta_operacoes(pr_cdcooper  IN crawepr.cdcooper%TYPE       --> 
                                    
                   vr_garantia := '-';   
                   IF vr_tab_dados_avais.exists(1)  THEN                    
-                    vr_garantia := fn_garantia_proposta(pr_cdcooper,pr_nrdconta,vr_tab_dados_epr(i).nrctremp,vr_nrctaava1_aux,vr_nrctaava2_aux,'P',c_emprestimo);   
+                    vr_garantia := fn_garantia_proposta(pr_cdcooper,pr_nrdconta,vr_tab_dados_epr(i).nrctremp,vr_nrctaava1_aux,vr_nrctaava2_aux,'P',c_emprestimo, FALSE);   
                   END IF;
                   -- Liquidar  
                   vr_liquidar := INSTR(vr_lista_contratos_liquidados, to_char(vr_tab_dados_epr(i).nrctremp));
@@ -6058,7 +6086,7 @@ PROCEDURE pc_consulta_operacoes(pr_cdcooper  IN crawepr.cdcooper%TYPE       --> 
                   CLOSE cr_tbrisco_central;
               
                   vr_tab_tabela(vr_index).coluna1 := gene0002.fn_mask_contrato(vr_tab_dados_epr(i).nrctremp); -- Contrato
-                  vr_tab_tabela(vr_index).coluna2 := vr_risco_inclusao; -- Risco Inclusão
+                  vr_tab_tabela(vr_index).coluna2 := CASE WHEN vr_risco_inclusao IS NULL THEN '-' ELSE vr_risco_inclusao END; -- Risco Inclusão
                   vr_tab_tabela(vr_index).coluna3 := trim(to_char(vr_vlsdeved,'999g999g990d00')); -- Saldo Devedor
                   vr_tab_tabela(vr_index).coluna4 := substr(trim(vr_tab_dados_epr(i).dspreapg), 1, 11); -- Prestações
                   vr_tab_tabela(vr_index).coluna5 := to_char(vr_tab_dados_epr(i).vlpreemp,'999g999g990d00'); -- Valor Prestações
@@ -8080,7 +8108,7 @@ PROCEDURE pc_consulta_proposta_limite(pr_cdcooper IN crapass.cdcooper%TYPE      
    fetch c_limites_desconto_titulos into r_limites_desconto_titulos;
     if c_limites_desconto_titulos%found then
       vr_garantia := '-';
-      vr_garantia := fn_garantia_proposta(pr_cdcooper,pr_nrdconta,r_limites_desconto_titulos.nrctrlim,r_limites_desconto_titulos.nrctaav1,r_limites_desconto_titulos.nrctaav2,'P',c_limite_desc_titulo);
+      vr_garantia := fn_garantia_proposta(pr_cdcooper,pr_nrdconta,r_limites_desconto_titulos.nrctrlim,r_limites_desconto_titulos.nrctaav1,r_limites_desconto_titulos.nrctaav2,'P',c_limite_desc_titulo, TRUE);
       
       vr_string := vr_string||
                   '<campos>'||
@@ -8313,7 +8341,8 @@ PROCEDURE pc_consulta_proposta_limite(pr_cdcooper IN crapass.cdcooper%TYPE      
     
     /*Garantia da proposta*/
     vr_garantia := '-';
-    vr_garantia := fn_garantia_proposta(pr_cdcooper,pr_nrdconta,pr_nrctrato,vr_avalista1_aux,vr_avalista2_aux,'P',c_emprestimo);    
+    vr_garantia := fn_garantia_proposta(pr_cdcooper, pr_nrdconta, pr_nrctrato, vr_avalista1_aux, vr_avalista2_aux, 'P',
+                                        c_emprestimo, TRUE);
     -- Fim Garantia
 
   
@@ -9514,7 +9543,9 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
       
       -- Resetar a variavel
       vr_garantia := '-';
-      vr_garantia := fn_garantia_proposta(pr_cdcooper,pr_nrdconta,r_proposta_out_epr.nrctremp,r_proposta_out_epr.nrctaav1,r_proposta_out_epr.nrctaav2,'P',c_emprestimo); 
+        vr_garantia := fn_garantia_proposta(pr_cdcooper, pr_nrdconta, r_proposta_out_epr.nrctremp,
+                                            r_proposta_out_epr.nrctaav1, r_proposta_out_epr.nrctaav2, 'P', c_emprestimo,
+                                            FALSE);
       
       vr_tab_tabela(vr_index).coluna1  := to_char(r_proposta_out_epr.dtproposta,'DD/MM/YYYY');
       vr_tab_tabela(vr_index).coluna2  := gene0002.fn_mask_contrato(r_proposta_out_epr.contrato);
@@ -9619,6 +9650,9 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
                              Controle Societário.
                              Story 22208 - Sprint 11 - Gabriel Marcos (Mouts).
                              
+                13/06/2019 - Alterado cálculo do Adiantamento a Depositantes
+                               para considerar os valores da Atenda
+                               Story 22232 - Sprint 12 - Mateus Z (Mouts).
   ..............................................................................*/                               
 
    /* Verifica se a conta já teve prejuizo */
@@ -9679,16 +9713,6 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
           c.cdoperad = a.cdoperad;
    rw_dtultimadevolu cr_dtultimadevolu%rowtype;
    
-   --Recuperar ultimo estouro
-   cursor cr_ultimoEstouro is
-          select * from crapneg a
-          WHERE a.cdcooper = pr_cdcooper
-            and a.nrdconta = pr_nrdconta
-            and a.dtiniest = (select max(b.dtiniest) from crapneg b where a.nrdconta = b.nrdconta and a.cdcooper = b.cdcooper) 
-            and a.cdhisest = 5  -- estouro
-          order by a.dtiniest DESC;
-   rw_ultimoEstouro cr_ultimoEstouro%rowtype;
-   
    -- Recuperar todos os estouros dos ultimos 6 meses
    cursor cr_estouros6Meses is
           select * from crapneg a where
@@ -9730,19 +9754,6 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
        AND ris.dtrefere = pr_dtmvtoan;
     --    
    r_risco_final c_risco_final%rowtype;
-    
-  /*Adiantamento de depositante*/
-  cursor c_ad(pr_cdcooper number,
-              pr_dtmvtolt date,
-              pr_nrdconta number) is
-    SELECT abs(sda.vlsddisp) - abs(sda.vllimcre) adiantamento_depositante,
-           sda.vllimcre,
-           sda.vlsddisp
-      FROM crapsda sda
-     WHERE sda.cdcooper = pr_cdcooper
-     AND   sda.dtmvtolt = pr_dtmvtolt
-     AND   sda.nrdconta = pr_nrdconta;
-     r_ad c_ad%rowtype;             
     
     /*Escore BVS*/ 
     cursor c_crapesc(pr_nrconbir in number
@@ -10059,6 +10070,7 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
    vr_dsrestricao      VARCHAR2(30);
    vr_inicio           NUMBER; --temp
    vr_temrestri         NUMBER:=0;
+   vr_adiantamento_depositante NUMBER;
   
   /*Busca o score da crapass quando não for proponente*/
   FUNCTION fn_busca_score(pr_cdcooper crapcop.cdcooper%TYPE
@@ -10600,22 +10612,24 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
                            '<tituloFiltro>ocorrencias</tituloFiltro>'|| -- ID da subcategoria
                            '<campos>'; 
                             
-  --Montar Valores Somente com conta estourada na data                          
-  open c_ad(pr_cdcooper,rw_crapdat.dtmvtoan,pr_nrdconta);
-   fetch c_ad into r_ad;
-    if r_ad.adiantamento_depositante > 0 then
-  --Qtd de Adiantamento a Depositantes:
-  open cr_ultimoEstouro;
-     fetch cr_ultimoEstouro into rw_ultimoEstouro;
-     --vr_string_operacoes := vr_string_operacoes||tela_analise_credito.fn_tag('Quantidade de Adiantamento a Depositantes',rw_ultimoEstouro.Qtdiaest);
-  close cr_ultimoEstouro;     
+    -- Buscar dados da atenda 
+    pc_busca_dados_atenda(pr_cdcooper => vr_cdcooper_principal,
+                          -- bug 19891 
+                          --pr_nrdconta => vr_nrdconta_principal);            
+                          pr_nrdconta => pr_nrdconta);
+    --                               
+    vr_adiantamento_depositante := abs(vr_tab_valores_conta(1).vlstotal) - abs(vr_tab_valores_conta(1).vllimite);
  
-   --Valor do Estouro:
-   vr_string_operacoes := vr_string_operacoes
-                       ||tela_analise_credito.fn_tag('Valor de Adiantamento à Depositantes',TO_CHAR(rw_ultimoEstouro.Vlestour,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.'''));  
-    else                           
-       vr_string_operacoes := vr_string_operacoes||tela_analise_credito.fn_tag('Valor de Adiantamento','-');   
-    end if;
+    --Montar Valores Somente com conta estourada
+    IF vr_adiantamento_depositante > 0 AND vr_tab_valores_conta(1).vlstotal < 0 THEN
+      vr_string_operacoes := vr_string_operacoes ||
+                             fn_tag('Valor de Adiantamento à Depositantes',
+                                    TO_CHAR(vr_adiantamento_depositante, 'fm9g999g999g999g999g990d00',
+                                             'NLS_NUMERIC_CHARACTERS='',.'''));
+    ELSE
+      vr_string_operacoes := vr_string_operacoes ||
+                             tela_analise_credito.fn_tag('Valor de Adiantamento à Depositantes', '-');
+    END IF;
   --CL:
   open c_dias_estouros;
    fetch c_dias_estouros into r_dias_estouros;  
@@ -10626,10 +10640,6 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
     vr_string_operacoes := vr_string_operacoes||tela_analise_credito.fn_tag('Quantidade de Estouros',nvl(r_dias_estouros.qtddtdev,0));
   close c_dias_estouros; 
 
-
-  close c_ad; 
-                            
-                         
   --Mostrar a Média de Estouros dos Últimos 6 meses
    v_somaValores := 0;       
    v_count := 0;               
@@ -10992,7 +11002,6 @@ PROCEDURE pc_consulta_outras_pro_epr(pr_cdcooper  IN crawepr.cdcooper%TYPE      
     vr_exc_erro EXCEPTION;
     vr_dscritic VARCHAR2(4000);
     vr_cdcritic PLS_INTEGER;
-    
   BEGIN
     --Inicializar Variaveis
     vr_cdcritic := 0;
@@ -11560,7 +11569,7 @@ PROCEDURE pc_busca_rendas_aut(pr_cdcooper IN crapass.cdcooper%TYPE
                  case when vr_vldscchq >0 then to_char(vr_vldscchq,'999g999g990d00') else '-' end);
     
     vr_garantia := '-';
-    vr_garantia := fn_garantia_proposta(pr_cdcooper,pr_nrdconta,r_limite_desc_chq.nrctrlim,r_limite_desc_chq.nrctaav1,r_limite_desc_chq.nrctaav2,'O',c_desconto_cheque); --Desconto de Cheque
+    vr_garantia := fn_garantia_proposta(pr_cdcooper,pr_nrdconta,r_limite_desc_chq.nrctrlim,r_limite_desc_chq.nrctaav1,r_limite_desc_chq.nrctaav2,'O',c_desconto_cheque, FALSE); --Desconto de Cheque
     
     vr_string := vr_string||fn_tag('Garantia',vr_garantia);
     
@@ -12225,7 +12234,7 @@ PROCEDURE pc_consulta_bordero_chq(pr_cdcooper IN crapass.cdcooper%TYPE       -->
            -- dbms_output.put_line(TRIM(TO_CHAR(r_busca_limites.inbaslim)));
            -- dbms_output.put_line(TRIM(TO_CHAR(r_busca_limites.vlsmnesp)));
            vr_garantia := '-';
-           vr_garantia := fn_garantia_proposta(pr_cdcooper,pr_nrdconta,r_busca_limites.nrctrlim,r_busca_limites.nrctaav1,r_busca_limites.nrctaav2,'O',c_limite_desc_titulo); 
+           vr_garantia := fn_garantia_proposta(pr_cdcooper, pr_nrdconta, r_busca_limites.nrctrlim, r_busca_limites.nrctaav1, r_busca_limites.nrctaav2, 'O', c_limite_desc_titulo, FALSE);
 
           end if;
         close c_busca_data;
@@ -12870,7 +12879,7 @@ procedure pc_busca_media_titulo(pr_cdcooper IN crapass.cdcooper%TYPE
       fetch c_avalistas into r_avalistas;
      close c_avalistas;
      vr_garantia := '-';
-     vr_garantia := fn_garantia_proposta(pr_cdcooper,pr_nrdconta,wrk_tab_dados_limite(0).nrctrlim,r_avalistas.nrctaav1,r_avalistas.nrctaav2,'O',c_desconto_titulo); 
+      vr_garantia := fn_garantia_proposta(pr_cdcooper, pr_nrdconta, wrk_tab_dados_limite(0).nrctrlim, r_avalistas.nrctaav1, r_avalistas.nrctaav2, 'O', c_desconto_titulo, FALSE);
       
      vr_string := vr_string || fn_tag('Limite',to_char(wrk_tab_dados_limite(0).vllimite,'999g999g990d00'));
      vr_string := vr_string || fn_tag('Saldo Utilizado',to_char(wrk_tab_dados_limite(0).vlutiliz,'999g999g990d00'));
