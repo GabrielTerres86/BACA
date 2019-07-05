@@ -422,6 +422,10 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
                                 ,pr_nmdcampo OUT VARCHAR2                    -- Nome do campo com erro
                                 ,pr_des_erro OUT VARCHAR2);
   
+  FUNCTION fn_consulta_parcelas_migrado(pr_cdcooper  IN crapepr.cdcooper%type
+                                       ,pr_nrdconta  IN crapepr.nrdconta%type
+                                       ,pr_nrctrnov  IN tbepr_migracao_empr.nrctrnov%type) RETURN INTEGER;
+  
   --Subrotina para consultar lancamentos futuros 
   PROCEDURE pc_consulta_lancamento (pr_cdcooper IN crapcop.cdcooper%TYPE              --Codigo Cooperativa
                                    ,pr_cdagenci IN crapass.cdagenci%TYPE              --Codigo Agencia
@@ -4540,6 +4544,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           RETURN null;
       END;
     END fn_dia_util_anterior;
+    
+    FUNCTION fn_consulta_parcelas_migrado(pr_cdcooper  IN crapepr.cdcooper%type
+                                         ,pr_nrdconta  IN crapepr.nrdconta%type
+                                         ,pr_nrctrnov  IN tbepr_migracao_empr.nrctrnov%type) RETURN INTEGER IS
+    BEGIN
+      -- ..........................................................................
+      --
+      --  Programa : fn_consulta_parcelas_migrado
+      --   Sistema : Conta-Corrente - Cooperativa de Credito
+      --   Sigla   : CRED
+      --   Autor   : Darlei Zillmer (Supero)
+      --   Data    : Junho/2019                          Ultima Atualizacao: 12/06/2019
+      --
+      --   Dados referentes ao programa:
+      --   Frequencia: Sempre que chamado por outros programas.
+      --
+      --   Objetivo  : Verificar total de parcelas de contratos migrados
+      --
+      --
+      --   Alteracoes: 
+      -- .............................................................................
+      DECLARE
+          -- busca quantidade de parcelas do contrato migrado
+          CURSOR cr_crapepr_mig (pr_cdcooper  IN crapepr.cdcooper%type
+                                ,pr_nrdconta  IN crapepr.nrdconta%type
+                                ,pr_nrctrnov  IN tbepr_migracao_empr.nrctrnov%type) IS
+            SELECT crapepr.tpemprst
+                  ,crapepr.nrctremp
+                  ,crapepr.qtpreemp qtpreemp
+              FROM crapepr, tbepr_migracao_empr m
+             WHERE crapepr.cdcooper = pr_cdcooper
+               AND crapepr.nrdconta = pr_nrdconta
+               AND m.nrctrnov = pr_nrctrnov
+               AND m.cdcooper = crapepr.cdcooper
+               AND m.nrdconta = crapepr.nrdconta
+               AND m.nrctremp = crapepr.nrctremp;
+        rw_crapfer_mig cr_crapepr_mig%ROWTYPE; 
+                     
+        BEGIN
+          OPEN cr_crapepr_mig(pr_cdcooper  => pr_cdcooper
+                             ,pr_nrdconta  => pr_nrdconta
+                             ,pr_nrctrnov  => pr_nrctrnov);
+          FETCH cr_crapepr_mig INTO rw_crapfer_mig;
+            IF cr_crapepr_mig%NOTFOUND THEN
+              -- contrato nao foi migrado
+              RETURN NULL;
+            ELSE
+              -- retorno a quantia de parcelas
+              RETURN rw_crapfer_mig.qtpreemp;
+            END IF;
+            --Fechar Cursor
+          CLOSE cr_crapepr_mig;  
+        END;
+    END fn_consulta_parcelas_migrado;
     
     --Subrotina para consultar lancamentos futuros 
     PROCEDURE pc_consulta_lancamento (pr_cdcooper IN crapcop.cdcooper%TYPE              --Codigo Cooperativa
@@ -14318,7 +14376,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Jaison Fernando
-  --  Data     : Maio/2017                           Ultima atualizacao: 18/01/2019
+  --  Data     : Maio/2017                           Ultima atualizacao: 12/06/2019
   --
   -- Dados referentes ao programa:
   --
@@ -14331,6 +14389,9 @@ END pc_consulta_ir_pj_trim;
 	--
 	--              18/01/2019 - P298.2.2 - Ajuste do "Extrato da operacao de prejuizo" - Nagasava (Supero)
 	--
+  --              12/06/2019 - SM 298.3 - Ajustar a apresentação de parcelas pagas no extrato da operação 
+  --                           e da conta corrente para os contratos migrados - Darlei (Supero)
+  --
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -14514,6 +14575,7 @@ END pc_consulta_ir_pj_trim;
         vr_nmdindex crapind.nmdindex%TYPE := '';
 				vr_vlsdprej crapepr.vlsdprej%TYPE;
         vr_vlajuste NUMBER;
+        vr_qtpreemp INTEGER;
 
         --Variaveis de Erro
         vr_cdcritic INTEGER;
@@ -14718,6 +14780,15 @@ END pc_consulta_ir_pj_trim;
             RETURN;
           END IF;
           
+          -- Verifico se o contrato foi migrado para contar as parcelas
+          vr_qtpreemp := fn_consulta_parcelas_migrado(pr_cdcooper  => pr_cdcooper         --> Codigo da Cooperativa 
+                                                     ,pr_nrdconta  => pr_nrdconta         --> Numero da Conta Corrente
+                                                     ,pr_nrctrnov  => rw_crapepr.nrctremp --> Numero do Contrato
+                                                     );
+          IF vr_qtpreemp IS NULL THEN
+            vr_qtpreemp := rw_crapepr.qtpreemp;
+          END IF;
+          
           --Montar Texto
           vr_dstexto:= '<parcelas' ||
                           '  p_dslcremp="'||rw_craplcr.dslcremp||
@@ -14727,7 +14798,7 @@ END pc_consulta_ir_pj_trim;
                           '" p_txinmens="'||vr_txinmens        ||
                           '" p_multatra="'||vr_multatra        ||
                           '" p_vlparepr="'||vr_vlparepr        || 
-                          '" p_qtpreemp="'||rw_crapepr.qtpreemp||
+                          '" p_qtpreemp="'||vr_qtpreemp||
                           '" p_carencia="'||vr_carencia||
 						  '" p_vltxiofadc="'||to_char((nvl(vr_vltxiofadc, 0) * 100), 'fm9999g999g990d00000')||'%'    ||
                           '" p_vltxiofpri="'||to_char((nvl(vr_vltxiofpri, 0) * 100), 'fm9999g999g990d00000')||'%'    ||

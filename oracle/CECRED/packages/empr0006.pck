@@ -4102,7 +4102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
   Sistema  : Portabilidade de Emprestimos
   Sigla    : CRED
   Autor    : Jaison
-  Data     : Junho/2015                           Ultima atualizacao: 05/04/2016
+  Data     : Junho/2015                           Ultima atualizacao: 10/06/2019
   
   Dados referentes ao programa:
   
@@ -4111,6 +4111,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
   
   Alterações : 05/04/2016 - Ajuste para retirar o "*" ao remover o arquivo
                             (Adriano).
+               10/06/2019 - Envio do Índice Remuneração para o relatório
+                            (Darlei - Supero)
                
   -------------------------------------------------------------------------------------------------------------*/
 
@@ -4155,6 +4157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
               ,crawepr.txdiaria
               ,crawepr.cdlcremp
               ,crawepr.tpemprst
+              ,crawepr.cddindex
               ,(SELECT COUNT(1)
                   FROM crappep
                  WHERE crappep.cdcooper = crawepr.cdcooper
@@ -4250,6 +4253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
     vr_nmarqimp       VARCHAR2(1000);
     vr_nmarquiv       VARCHAR2(1000);
     vr_comando        VARCHAR2(1000);
+    vr_indRemun       VARCHAR2(1000);
     vr_des_reto       VARCHAR2(3);
        
     --Variaveis de Erro
@@ -4449,6 +4453,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
                     ELSE vr_tpcontra := 'Outros Créditos';
       END CASE;
 
+      -- Índice Remuneração do termo de portabilidade
+      vr_indRemun := (CASE WHEN rw_crawepr.cddindex = 1 THEN '08 - CDI' ELSE '06 - TR' END); -- IndRemun (06 - TR, 08 -	CDI) 
+      
       -- Diretorio para salvar
       vr_nmdireto := GENE0001.fn_diretorio (pr_tpdireto => 'C' --> usr/coop
                                            ,pr_cdcooper => vr_cdcooper
@@ -4500,6 +4507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
         '  <dtdpagto>'|| TO_CHAR(rw_crawepr.dtdpagto,'DD/MM/YYYY') ||'</dtdpagto>'||
         '  <dtultpgt>'|| TO_CHAR(ADD_MONTHS(rw_crawepr.dtdpagto, rw_crawepr.qtpreemp - 1),'DD/MM/YYYY') ||'</dtultpgt>'||
         '  <dsdadata>'|| vr_dsdadata ||'</dsdadata>'||
+        '  <indremun>'|| vr_indRemun || '</indremun>'||
 		'  <tpemprst>'|| rw_crawepr.tpemprst ||'</tpemprst>');
 
       -- Projeto 470 - SM 1
@@ -4535,7 +4543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0006 IS
                                  ,pr_dtmvtolt  => NULL                          --> Data do movimento atual
                                  ,pr_dsxml     => vr_clobxml                    --> Arquivo XML de dados
                                  ,pr_dsxmlnode => '/raiz/dados'                 --> Nó base do XML para leitura dos dados
-                                 ,pr_dsjasper  => (CASE WHEN rw_crawepr.tpemprst = 2 THEN 'crrl073_termo.jasper' ELSE 'crrl073_termo_novo.jasper' END)   --> Arquivo de layout do iReport
+                                 ,pr_dsjasper  => 'crrl073_termo_novo.jasper'   --> Arquivo de layout do iReport
                                  ,pr_dsparams  => NULL                          --> Sem parâmetros                                         
                                  ,pr_dsarqsaid => vr_nmdireto||'/'||vr_nmarqimp --> Arquivo final com o path
                                  ,pr_qtcoluna  => 132                           --> Colunas do relatorio

@@ -110,7 +110,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 17/04/2019
+   Data    : Maio/2017                      Ultima atualizacao: 25/06/2019
 
    Dados referentes ao programa:
 
@@ -158,6 +158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                    lançado na TBCC_PREJUIZO_DETALHE.
                    (Reginaldo/AMcom - P450)
 
+      25/06/2019 - PRJ298.3 - Não permitir abono de IOF (Nagasava - Supero)
 ..............................................................................*/
 
   vr_cdcritic             NUMBER(3);
@@ -1111,7 +1112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
     Sistema : AyllosWeb
     Sigla   : PREJ
     Autor   : Jean Calão - Mout´S
-  Data    : Agosto/2017.                  Ultima atualizacao: 01/08/2018
+  Data    : Agosto/2017.                  Ultima atualizacao: 25/06/2019
 
     Dados referentes ao programa:
 
@@ -1125,6 +1126,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
 
               01/08/2018 - Ajuste para bloquear pagamento quando a conta está em prejuízo
                            PJ 450 - Diego Simas - AMcom
+                25/06/2019 - PRJ298.3 - Não permitir abono de IOF (Nagasava - Supero)
 
     ..............................................................................*/
     -- Variáveis
@@ -1188,6 +1190,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
        WHERE ass.cdcooper = pr_cdcooper
              AND ass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
+
+		-- INICIO -- PRJ 298.3
+		vr_vltiofpr crapepr.vliofepr%TYPE;
+		-- FIM -- PRJ 298.3
 
   BEGIN
 
@@ -1282,7 +1288,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       pr_des_erro := 'Pagamento nao permitido, emprestimo em acordo';
       RAISE vr_exc_erro;
     END IF;
+    
+		-- INICIO -- PRJ298.3
+		OPEN cr_crapepr(vr_cdcooper
+									 ,pr_nrdconta
+									 ,nvl(pr_nrctremp, 0)
+									 );
     --
+		FETCH cr_crapepr INTO rw_crapepr;
+		--
+		IF cr_crapepr%FOUND THEN
+			--
+			CLOSE cr_crapepr;
+			vr_vltiofpr := nvl(rw_crapepr.vltiofpr, 0) - nvl(rw_crapepr.vlpiofpr,0);
+      --
+		ELSE
+			--
+			CLOSE cr_crapepr;
+			vr_cdcritic := 0;
+			vr_dscritic := 'O Contrato informado não existe!';
+			RAISE vr_exc_erro;
+			--
+		END IF;
+		--
+		IF vr_vltiofpr > 0 AND
+			 vr_vltiofpr > nvl(to_number(pr_vlpagmto), 0) AND
+			 nvl(to_number(pr_vldabono), 0) > 0 THEN
+			--
+			pr_des_erro := 'IOF não pode ser abonado, necessário realizar pagamento no mínimo de ' ||
+											to_char(vr_vltiofpr, '9G999G990D00', 'nls_numeric_characters='',.''');
+			--
+			RAISE vr_exc_erro;
+			--
+		END IF;
+		-- FIM -- PRJ298.3
+		
     --Limpar tabela saldos
     vr_tab_saldos.DELETE;
     --Obter Saldo do Dia
