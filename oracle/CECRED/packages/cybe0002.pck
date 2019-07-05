@@ -33,9 +33,6 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0002 IS
   --              10/10/2017 - M434 - Adicionar dois novos parâmetros para atender o SPC/Brasil que usa chave 
   --                           de criptografia para o acesso ao SFTP. (Oscar)
   -- 
-  --			  11/03/2019 - XSLProcessor - Nao passar o diretório junto no nome do arquivo para chamados GENE0002
-  --						   Yuri - Mouts
-  --						   
   ---------------------------------------------------------------------------------------------------------------
 
   -- Funcao generica para buscar o nome resumido da cooperativa --
@@ -2095,7 +2092,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   -- Busca os contratos cadastrados no sistema CYBER
   CURSOR cr_cyber(p_cdcooper IN crapcop.cdcooper%TYPE
                  ,p_nrdconta IN crapass.nrdconta%TYPE) IS
-     SELECT DECODE(cyb.cdorigem,1,'C',2,'D',3,'E','') ||' - '||
+     SELECT DECODE(cyb.cdorigem,1,'C',2,'D',3,'E',4,'F',5,'T','') ||' - '||
             TRIM(GENE0002.fn_mask_contrato(cyb.nrctremp)) nrctremp
        FROM crapcyb cyb
       WHERE cyb.cdcooper = p_cdcooper
@@ -2404,7 +2401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                  ,vr_dtmvtolt
                  ,TO_NUMBER(REPLACE(REPLACE(REPLACE(pr_nrcpfcgc,'.',''),'-',''),'/',''))
                  ,DECODE(pr_nrdconta,'0',0,pr_nrdconta)
-                 ,DECODE(pr_nrctremp,'0',0,DECODE(SUBSTR(pr_nrctremp,1,1),'C',1,'D',2,'E',3,0))
+                 ,DECODE(pr_nrctremp,'0',0,DECODE(SUBSTR(pr_nrctremp,1,1),'C',1,'D',2,'E',3,'F',4,'T',5,0))
                  ,DECODE(pr_nrctremp,'0',0,TO_NUMBER(SUBSTR(pr_nrctremp,2,LENGTH(pr_nrctremp))))
                  ,pr_cdoperad
                  ,0);
@@ -2638,7 +2635,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            ,gene0002.fn_mask_cpf_cnpj(rea.nrcpfcgc,ass.inpessoa) nrcpfcgc
            ,DECODE(rea.nrdconta,0,'TODAS',gene0002.fn_mask_conta(DECODE(rea.nrdconta,0,rea.nrdconta,ass.nrdconta))) nrdconta
            ,UPPER(ass.nmprimtl) nmprimtl
-           ,DECODE(rea.cdorigem,0,DECODE(rea.nrctremp,0,'TODOS',gene0002.fn_mask_contrato(rea.nrctremp)),TRIM(DECODE(rea.cdorigem,1,'C',2,'D',3,'E',''))||' - '||DECODE(rea.nrctremp,0,'TODOS',TRIM(gene0002.fn_mask_contrato(rea.nrctremp))))nrctremp
+           ,DECODE(rea.cdorigem,0,DECODE(rea.nrctremp,0,'TODOS',gene0002.fn_mask_contrato(rea.nrctremp)),TRIM(DECODE(rea.cdorigem,1,'C',2,'D',3,'E',4,'F',5,'T',''))||' - '||DECODE(rea.nrctremp,0,'TODOS',TRIM(gene0002.fn_mask_contrato(rea.nrctremp))))nrctremp
            ,rea.ROWID
        FROM crapass ass
            ,crapope ope
@@ -2823,7 +2820,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            ,ass.inpessoa
            ,DECODE(rea.nrdconta,0,'TODAS',gene0002.fn_mask_conta(DECODE(rea.nrdconta,0,rea.nrdconta,ass.nrdconta))) nrdconta
            ,UPPER(ass.nmprimtl) nmprimtl
-           ,DECODE(rea.cdorigem,0,DECODE(rea.nrctremp,0,'TODOS',gene0002.fn_mask_contrato(rea.nrctremp)),TRIM(DECODE(rea.cdorigem,1,'C',2,'D',3,'E',''))||' - '||DECODE(rea.nrctremp,0,'TODOS',TRIM(gene0002.fn_mask_contrato(rea.nrctremp))))nrctremp
+           ,DECODE(rea.cdorigem,0,DECODE(rea.nrctremp,0,'TODOS',gene0002.fn_mask_contrato(rea.nrctremp)),TRIM(DECODE(rea.cdorigem,1,'C',2,'D',3,'E',4,'F',5,'T',''))||' - '||DECODE(rea.nrctremp,0,'TODOS',TRIM(gene0002.fn_mask_contrato(rea.nrctremp))))nrctremp
            ,rea.ROWID
        FROM crapass ass
            ,crapope ope
@@ -2876,7 +2873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   CURSOR cr_contrato(p_cdcooper IN crapcop.cdcooper%TYPE
                     ,p_nrcpfcgc IN crapass.nrcpfcgc%TYPE
                     ,p_nrdconta IN NUMBER) IS
-     SELECT DECODE(cyb.cdorigem,1,'C',2,'D',3,'E','') ||' - '||
+     SELECT DECODE(cyb.cdorigem,1,'C',2,'D',3,'E',4,'F',5,'T','') ||' - '||
             TRIM(GENE0002.fn_mask_contrato(cyb.nrctremp)) nrctremp
             ,ass.nrdconta
         FROM crapass ass
@@ -8665,9 +8662,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
      pc_inicializa_clob;
 
      --Montar nome do arquivo
-     vr_setlinha := '';--vr_caminho; -- Inicializa a variavel -- Yuri Mouts
-     vr_setlinha := 'CY_REAF_'||TO_CHAR(rw_crapdat.dtmvtoan,'DDMMYYYY')||'.txt'; /* Reabilitacao */
---   vr_setlinha := vr_setlinha ||'CY_REAF_'||TO_CHAR(rw_crapdat.dtmvtoan,'DDMMYYYY')||'.txt'; /* Reabilitacao */
+     vr_setlinha := vr_caminho; -- Inicializa a variavel
+     vr_setlinha := vr_setlinha ||'CY_REAF_'||TO_CHAR(rw_crapdat.dtmvtoan,'DDMMYYYY')||'.txt'; /* Reabilitacao */
 
      -- Monta o cabecalho do arquivo de reabilitação forcada de credito
      -- Verifica se existe registro para iniciar o processo

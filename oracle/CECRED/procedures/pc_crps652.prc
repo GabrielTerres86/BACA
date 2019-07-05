@@ -260,8 +260,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                             e IOF para ser enviado no arquivo de carga_mf ao Cyber - INC0030650. (Fabricio)
  
                12/03/2019 - Inclusão dos arquivos de 9-Telefones e 10-E-mail.
-                            (P573 - Luciano Kienolt - Supero)                                                                
-                               
+                            (P573 - Luciano Kienolt - Supero)
+
                21/03/2019 - PRJ572 - Ajuste para incluir a origem 5 - Cartoes (Nagasava - Supero)                                                                
                                
      ............................................................................. */
@@ -931,7 +931,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
        vr_comando         VARCHAR2(1000);
        vr_typ_saida       VARCHAR2(1000);
        vr_setlinha        VARCHAR2(5000);
-	   vr_nmarquivo		  VARCHAR2(5000); -- Yuri Mouts 11/03
        vr_nrdrowid        ROWID;
        vr_menorida        BOOLEAN;
        vr_tem_craplcr     BOOLEAN;
@@ -2856,7 +2855,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
 					   --
            pc_monta_linha(to_char((pr_rw_crapcyb.vlsdeved + nvl(pr_rw_crapcyb.vlmrapar, 0) + nvl(pr_rw_crapcyb.vlmtapar, 0) + nvl(pr_rw_crapcyb.vliofcpl, 0))*100,'00000000000000'),139,pr_idarquivo);
 						 --
-           END IF;
+					 END IF;
            END IF;
            pc_monta_linha(to_char(pr_rw_crapcyb.vljura60*100,'00000000000000'),154,pr_idarquivo);
            pc_monta_linha(to_char(pr_rw_crapcyb.vlpreemp*100,'00000000000000'),169,pr_idarquivo);
@@ -7012,55 +7011,42 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
        FOR idx IN 1..10 LOOP
          -- Montar nome do arquivo de cada clob
          vr_setlinha:= vr_caminho|| vr_dtmvtolt || '_' ||vr_tempoatu;
-		 vr_nmarquivo := vr_dtmvtolt || '_' ||vr_tempoatu;  -- Yuri Mouts 11/03
          -- Complementar a string
          CASE idx
            WHEN 1 THEN
-			 vr_nmarquivo:= vr_nmarquivo ||'_carga_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_carga_in.txt';      /* Carga */
              vr_tparquiv:= 'completa';
            WHEN 2 THEN
-			 vr_nmarquivo:= vr_nmarquivo ||'_cadastral_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_cadastral_in.txt';  /* Carga MC */
              vr_tparquiv:= 'cadastral';
            WHEN 3 THEN
-			 vr_nmarquivo:= vr_nmarquivo ||'_financeira_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_financeira_in.txt'; /* Carga MF */
              vr_tparquiv:= 'financeira';
            WHEN 4 THEN
-			 vr_nmarquivo:= vr_nmarquivo ||'_gar_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_gar_in.txt';        /* Carga Garantia */
              vr_tparquiv:= 'garantia';
            WHEN 5 THEN
-			 vr_nmarquivo:= vr_nmarquivo ||'_rel_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_rel_in.txt';        /* Carga Relations */
              vr_tparquiv:= 'relation';
            WHEN 6 THEN
-			 vr_nmarquivo:= vr_nmarquivo ||'_pagamentos_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_pagamentos_in.txt'; /* Pagamentos */
              vr_tparquiv:= 'pagamentos';
            WHEN 7 THEN
-			 vr_nmarquivo:= vr_nmarquivo ||'_baixa_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_baixa_in.txt';      /* Baixas */
              vr_tparquiv:= 'baixa';
            WHEN 8 THEN
-			 vr_nmarquivo:= vr_nmarquivo ||'_pagboleto_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_pagboleto_in.txt';   /* Pagamentos Acordo */
              vr_tparquiv:= 'acordo';  
            WHEN 9 THEN
-			 vr_nmarquivo:= vr_nmarquivo ||'_telefone_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_telefone_in.txt';    /* Telefones Adicionais */
              vr_tparquiv:= 'telefone';  
            WHEN 10 THEN
-			 vr_nmarquivo:= vr_nmarquivo ||'_endereco_in.txt'; -- Yuri Mouts 11/03
              vr_setlinha:= vr_setlinha ||'_endereco_in.txt';    /* Endereços Adicionais */
              vr_tparquiv:= 'endereco';             
 
          END CASE;
          -- Salvar o nome de cada CLOB no vetor
-		 vr_tab_nmclob(idx):= vr_nmarquivo; -- Yuri Mouts 11/03
-       --vr_tab_nmclob(idx):= vr_setlinha;
-	     --
+         vr_tab_nmclob(idx):= vr_setlinha;
          -- Montar linha que sera gravada no arquivo
          IF idx = 9 THEN
            vr_setlinha:= rpad('H',1,' ')||RPAD('ASCOB',8,' ')||rpad('TELEFONE',30,' ')||
