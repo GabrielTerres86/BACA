@@ -811,12 +811,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                       
 		 14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
 				      (Reinert)
-         
-     03/07/2019 - P565.1-RF20 - Não colocar a descrição (Estorno) para a cdhistor=2662 na proc. pc_gera_registro_extrato.
-                  (Fernanda Kelli de Oliveira - AMCom)      
-              
+
          22/05/2019 - Cursor para considerar também o horário da operação ao buscar o nome do 
                       estabelecimento. (Edmar - INC0014177)     
+
+     03/07/2019 - P565.1-RF20 - Não colocar a descrição (Estorno) para a cdhistor=2662 na proc. pc_gera_registro_extrato.
+                  (Fernanda Kelli de Oliveira - AMCom)      
 ..............................................................................*/
 
   -- Tratamento de erros
@@ -2009,7 +2009,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --
     --               03/06/2019 - Adicionado tratamento para os historicos de credito de resgate de aplic. pcapta
     --                          - para resgates que ocorrem em dias não úteis. Projeto 411.2 (Anderson).
-
+    
     
     DECLARE
       -- Descrição e código da critica
@@ -3155,11 +3155,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                     13/07/2018 - Ajustar SQL que busca o nome do estabelecimento para retirar os caracteres
                                  que "quebram" o XML (PRJ 467 - Douglas Quisinski)
                     
+                     22/05/2019 - Cursor para considerar também o horário da operação ao buscar o nome do 
+                                 estabelecimento. (Edmar - INC0014177)
+
                     03/07/2019 - P565.1-RF20 - Não colocar a descrição (Estorno) para a cdhistor=2662 na proc. pc_gera_registro_extrato.
                            (Fernanda Kelli de Oliveira - AMCom)
-                                 
-                    22/05/2019 - Cursor para considerar também o horário da operação ao buscar o nome do 
-                                 estabelecimento. (Edmar - INC0014177)            
     */
     DECLARE
       -- Varíaveis para montagem do novo registro
