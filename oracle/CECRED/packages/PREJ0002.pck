@@ -154,11 +154,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
 	               a estornar na TBCC_PREJUIZO_DETALHE com o histórico 2781 (pc_estorno_pagamento).
 	  			   (Reginaldo/AMcom - P450)			
 
-      17/04/2019 - Ajuste na rotina de estorno de pagamento de empréstimo em prejuízo para excluir o histórico 2781
-                   lançado na TBCC_PREJUIZO_DETALHE.
-                   (Reginaldo/AMcom - P450)
+                   17/04/2019 - Ajuste na rotina de estorno de pagamento de empréstimo em prejuízo para excluir o histórico 2781
+                                lançado na TBCC_PREJUIZO_DETALHE.
+                                (Reginaldo/AMcom - P450)
 
-      25/06/2019 - PRJ298.3 - Não permitir abono de IOF (Nagasava - Supero)
+                  29/04/2019 - P450 - Correção na exclusão do histórico 2386 no estorno realizado no mesmo dia.
+                              (Reginaldo / AMcom)
+                      
+                  25/06/2019 - PRJ298.3 - Não permitir abono de IOF (Nagasava - Supero)
 ..............................................................................*/
 
   vr_cdcritic             NUMBER(3);
@@ -195,7 +198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
     Sistema : AyllosWeb
     Sigla   : PREJ
     Autor   : Jean Calão - Mout´S
-      Data    : Agosto/2017.                  Ultima atualizacao: 07/12/2018
+      Data    : Agosto/2017.                  Ultima atualizacao: 29/04/2019
 
     Dados referentes ao programa:
 
@@ -206,6 +209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
 
     Alteracoes: 24/04/2018 - Nova Regra para bloqueio de estorno realizado pela tela ESTPRJ
                 (Rafael Monteiro - Mouts)
+                
                 18/05/2018 - Adicionar o tratamento para histórico 2701 e 2702
                                  (Rafael - Mouts)
       17/10/2018 - 11019:Avaliação necessidade tratamento no DELETE LCM programa prej0002.pck (Heckmann - AMcom)
@@ -221,6 +225,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                    
       11/02/2019 - Acerto lógica loop na craplem para estornos de dias anteriores
                   (Renato Cordeiro - AMcom)
+                  
+                29/04/2019 - P450 - Correção na exclusão do histórico 2386 no estorno realizado no mesmo dia.
+                             (Reginaldo / AMcom)
+                             
+                17/06/2019 - P450 - Correção das chaves do estorno realizado no dia posterior.
+                             (Heckmann / AMcom)
+                             
+                27/06/2019 - P450 - Correção do estorno do pagamento de empréstimo (quando o pagamento foi
+                             realizado no dia anterior - rodado diária). 
+                             (Heckmann / AMcom)
     ..............................................................................*/
 			TYPE typ_reg_historico IS RECORD (cdhistor craphis.cdhistor%TYPE
 			                                , dscritic VARCHAR2(100));
@@ -242,7 +256,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                 lem.vllanmto,
                 lem.cdagenci,
                 lem.nrdocmto,
-                lem.rowid
+                lem.rowid,
+                lem.nrdolote
            from craplem lem
           where lem.cdcooper = prc_cdcooper
             and lem.nrdconta = prc_nrdconta
@@ -269,7 +284,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
     CURSOR c_craplcm (prc_cdcooper craplcm.cdcooper%TYPE,
                       prc_nrdconta craplcm.nrdconta%TYPE,
                       prc_dtmvtolt craplcm.dtmvtolt%TYPE,
-                      prc_nrctremp craplem.nrctremp%type) IS
+                      prc_nrctremp craplem.nrctremp%TYPE,
+                      prc_vllanmto craplem.vllanmto%TYPE) IS
       SELECT t.vllanmto
         FROM craplcm t
        WHERE t.cdcooper = prc_cdcooper
@@ -277,25 +293,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
          AND t.cdhistor = 2386 -- Pagamento na conta
          AND t.cdbccxlt = 100
          AND TO_NUMBER(trim(replace(t.cdpesqbb,'.',''))) = prc_nrctremp
-         AND t.dtmvtolt = prc_dtmvtolt;
+         AND t.dtmvtolt = prc_dtmvtolt
+         AND t.vllanmto = prc_vllanmto;
 
 			CURSOR c_prejuizo(pr_cdcooper craplcm.cdcooper%TYPE,
                         pr_nrdconta craplcm.nrdconta%TYPE,
                         pr_dtmvtolt craplcm.dtmvtolt%TYPE,
-                        pr_nrctremp craplem.nrctremp%type) IS
+                      pr_nrctremp craplem.nrctremp%TYPE,
+                      pr_vllanmto craplem.vllanmto%TYPE) IS
         SELECT t.vllanmto
           FROM tbcc_prejuizo_detalhe t
          WHERE t.cdcooper = pr_cdcooper
            AND t.nrdconta = pr_nrdconta
            AND t.cdhistor = 2781 -- Pagamento via conta transitória
            AND t.nrctremp = pr_nrctremp
-           AND t.dtmvtolt = pr_dtmvtolt;
+           AND t.dtmvtolt = pr_dtmvtolt
+           AND t.vllanmto = pr_vllanmto;
 
       -- Cursor para buscar o ROWID da CRAPLCM para exclusão do registro pela centralizadora     
       CURSOR cr_craplcm (pr_cdcooper IN craplcm.cdcooper%TYPE,
 												 pr_nrdconta IN craplcm.nrdconta%TYPE,
                          pr_nrctremp IN craplem.nrctremp%TYPE,
-                         pr_dtmvtolt IN craplcm.dtmvtolt%TYPE) IS
+                       pr_dtmvtolt IN craplcm.dtmvtolt%TYPE,
+                       pr_vllanmto IN craplem.vllanmto%TYPE) IS
       SELECT craplcm.rowid
         FROM craplcm
        WHERE craplcm.cdcooper = pr_cdcooper
@@ -303,7 +323,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
          AND craplcm.dtmvtolt = pr_dtmvtolt
          AND craplcm.cdhistor = 2386 -- Pagamento na conta 
          AND craplcm.cdbccxlt = 100         
-         AND TO_NUMBER(TRIM(REPLACE(craplcm.cdpesqbb,'.',''))) = pr_nrctremp;
+         AND TO_NUMBER(TRIM(REPLACE(craplcm.cdpesqbb,'.',''))) = pr_nrctremp
+         AND craplcm.vllanmto = pr_vllanmto;
       rw_craplcm cr_craplcm%ROWTYPE;
       
       --
@@ -396,7 +417,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
 		vr_tab_historicos(2390).dscritic := 'multa atraso';
 		vr_tab_historicos(2475).cdhistor := 2476;
 		vr_tab_historicos(2475).dscritic := 'juros mora';
-		vr_tab_historicos(2391).cdhistor := 2394;
+        vr_tab_historicos(2391).cdhistor := 2395;
 		vr_tab_historicos(2391).dscritic := 'abono';
 		vr_tab_historicos(2701).cdhistor := 2702;
 		vr_tab_historicos(2701).dscritic := 'pagamento parcela';
@@ -515,11 +536,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
         /* 1) Excluir Lancamento LEM */
         BEGIN
           DELETE FROM craplem t
-           WHERE t.cdcooper = pr_cdcooper
-             AND t.nrdconta = pr_nrdconta
-             AND t.nrctremp = pr_nrctremp
-             AND t.cdhistor = r_craplem.cdhistor--decode(pr_idtipo, 'PP',2388,'TR',2388,'CC',2388,2391) --Recuperacao de prejuizo
-             AND t.dtmvtolt = pr_dtmvtolt;
+              WHERE t.rowid = r_craplem.rowid;
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Falha na exclusao CRAPLEM, cooper: ' || pr_cdcooper ||
@@ -527,13 +544,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
             RAISE vr_erro;
         END;
 
+      IF r_craplem.cdhistor = 2701 THEN
         /* excluir lancamento LCM */
         BEGIN
               
                 OPEN cr_craplcm( pr_cdcooper => pr_cdcooper,
                                  pr_nrdconta => pr_nrdconta,
                                  pr_nrctremp => pr_nrctremp,
-                                 pr_dtmvtolt => r_craplem.dtmvtolt);
+                                 pr_dtmvtolt => r_craplem.dtmvtolt,
+                                 pr_vllanmto => r_craplem.vllanmto);
                 FETCH cr_craplcm INTO rw_craplcm;
         
                 IF cr_craplcm%NOTFOUND THEN
@@ -604,7 +623,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
             RAISE vr_erro ;
         END;
         --
-
+      END IF;
       ELSE
         -- Estorno de data anterior
             IF vr_obtem_valor_lancto = 1 then
@@ -627,7 +646,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
 							OPEN c_craplcm (r_craplem.cdcooper,
                                       r_craplem.nrdconta,
                                       r_craplem.dtmvtolt,
-                              r_craplem.nrctremp);
+                          r_craplem.nrctremp,
+                          r_craplem.vllanmto);
 							FETCH c_craplcm INTO vr_vllanmto;
 							
 							IF c_craplcm%NOTFOUND THEN
@@ -635,7 +655,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                 OPEN c_prejuizo(r_craplem.cdcooper,
                                 r_craplem.nrdconta,
                                 r_craplem.dtmvtolt,
-                                r_craplem.nrctremp);
+                            r_craplem.nrctremp,
+                            r_craplem.vllanmto);
 							  FETCH c_prejuizo INTO vr_vllanmto;
 								CLOSE c_prejuizo;
 							END IF;
@@ -651,7 +672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                                 pr_nrdconta => pr_nrdconta, 
                                                 pr_cdoperad => '1', 
                                                 pr_vlrlanc  => vr_vllanmto,
-                                                pr_dtmvtolt => r_craplem.dtmvtolt, 
+                                                pr_dtmvtolt => rw_crapdat.dtmvtolt, 
                                                 pr_nrdocmto => null, 
                                                 pr_cdcritic => vr_cdcritic, 
                                                 pr_dscritic => vr_dscritic);
@@ -1309,8 +1330,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
 			vr_dscritic := 'O Contrato informado não existe!';
 			RAISE vr_exc_erro;
 			--
-		END IF;
-		--
+    END IF;
+    --
 		IF vr_vltiofpr > 0 AND
 			 vr_vltiofpr > nvl(to_number(pr_vlpagmto), 0) AND
 			 nvl(to_number(pr_vldabono), 0) > 0 THEN

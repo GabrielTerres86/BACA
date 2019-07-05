@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0004 is
       Sistema  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : ESTE
       Autor    : Paulo Penteado (GFT) 
-      Data     : Fevereio/2018.                   Ultima atualizacao: 30/04/2019
+      Data     : Fevereio/2018.                   Ultima atualizacao: 28/06/2019
 
       Dados referentes ao programa:
 
@@ -18,6 +18,9 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0004 is
                   Referentes a proposta. (Lindon Carlos Pecile - GFT)
 
 				  30/04/2019 - Chamada JSON variáveis internas (Mario - AMcom)
+
+                  28/06/2019 - P450 - Reposicionado VariaveisInterna abaixo de VariaveisAdicionais no Proponente (Mario - AMcom)   
+
   ---------------------------------------------------------------------------------------------------------------*/
   --> Rotina responsavel por montar o objeto json para analise de limite de desconto de títulos
   PROCEDURE pc_gera_json_analise_lim(pr_cdcooper   in crapass.cdcooper%type
@@ -738,6 +741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
                                     ,pr_nrctremp => 0
                                     ,pr_flprepon => FALSE
                                     ,pr_tpprodut => 1
+                                    ,pr_inPropon => True
                                     ,pr_dsjsonan => vr_obj_generico
                                     ,pr_cdcritic => vr_cdcritic 
                                     ,pr_dscritic => vr_dscritic);
@@ -751,27 +755,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     -- Adicionar o JSON montado do Proponente no objeto principal
     vr_obj_analise.put('proponente',vr_obj_generico);
     
-    -- Chamada das Novas variaveis internas para o Json
-    rati0003.pc_json_variaveis_rating(pr_cdcooper => pr_cdcooper --> Código da cooperativa
-                                     ,pr_nrdconta => pr_nrdconta --> Numero da conta do emprestimo
-                                     ,pr_nrctremp => pr_nrctrlim --> Numero do contrato de desconto de tidulo
-                                     ,pr_flprepon => true    --> Flag Repon
-                                     ,pr_vlsalari => 0       --> Valor do Salario Associado
-                                     ,pr_persocio => 0       --> Percential do sócio
-                                     ,pr_dtadmsoc => NULL    --> Data Admissãio do Sócio
-                                     ,pr_dtvigpro => NULL    --> Data Vigência do Produto
-                                     ,pr_tpprodut => 0       --> Tipo de Produto
-                                     ,pr_dsjsonvar => vr_obj_generic4 --> Retorno Variáveis Json
-                                     ,pr_cdcritic => vr_cdcritic  --> Código de critica encontrada
-                                     ,pr_dscritic => vr_dscritic);
-    
-    -- Verifica inconsistencias
-    if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then  
-      RAISE vr_exc_erro;
-    end if;
-                  
-    -- Enviar informações das variáveis internas ao JSON
-    vr_obj_analise.put('variaveisInternas', vr_obj_generic4);   
     
     --> Para Pessoa Fisica iremos buscar seu Conjuge
     IF rw_crapass.inpessoa = 1 THEN 
@@ -799,6 +782,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
                                           ,pr_flprepon => false
                                           ,pr_vlsalari => rw_crapcje.vlsalari
                                           ,pr_tpprodut => 1
+                                          ,pr_inPropon => false
                                           ,pr_dsjsonan => vr_obj_conjuge
                                           ,pr_cdcritic => vr_cdcritic 
                                           ,pr_dscritic => vr_dscritic);
@@ -947,6 +931,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
                                       ,pr_nrctremp => 0
                                       ,pr_flprepon => FALSE
                                       ,pr_tpprodut => 1
+                                      ,pr_inPropon => false
                                       ,pr_dsjsonan => vr_obj_avalista
                                       ,pr_cdcritic => vr_cdcritic 
                                       ,pr_dscritic => vr_dscritic);
