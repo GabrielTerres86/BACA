@@ -3435,7 +3435,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      Sistema : Rotinas referentes ao WebService
      Sigla   : WEBS
      Autor   : James Prust Junior
-     Data    : Abril/16.                    Ultima atualizacao:
+     Data    : Abril/16.                    Ultima atualizacao: 26/06/2019
 
      Dados referentes ao programa:
 
@@ -3443,9 +3443,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 
      Objetivo  : Gravar mensagem de erro no LOG
 
-     Observacao: -----
+     Observacao: 
      
-     Alteracoes:      
+     Alteracoes: 26/06/2019 - Restringir o tamanho da mensagem de log em 3850 caracteres,
+                              isso porque dentro do btch0001.pc_gera_log_batch são concatenados
+                              mais alguns caracteres (PRB0041610 - AJFink)     
+
      ..............................................................................*/
     DECLARE
       vr_des_log        VARCHAR2(4000);      
@@ -3456,11 +3459,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                           ,pr_cdcooper => 3
                                           ,pr_nmsubdir => 'log/webservices');      
       -- Mensagem de LOG
-      vr_des_log  := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
+      vr_des_log  := trim(substr(trim(TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
                      ' - ' || 
                      'Requisicao: ' || pr_dsrequis  || 
                      ' - ' || 
-                     'Resposta: ' || pr_dsmessag;
+                                      'Resposta: ' || pr_dsmessag),1,3850)); --PRB0041610
                      
       -- Criacao do arquivo
       btch0001.pc_gera_log_batch(pr_cdcooper     => 3
