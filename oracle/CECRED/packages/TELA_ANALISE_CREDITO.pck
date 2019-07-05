@@ -2,7 +2,7 @@ create or replace package cecred.TELA_ANALISE_CREDITO is
 
   pr_nmdatela constant varchar(40) := 'TELA_ANALISE_CREDITO';
 
-/* Tabelas para armazenar os retornos dos birôs, titulos e detalhes*/
+/* Tabelas para armazenar os retornos dos birôs, titulos e detalhes */
 
   --TempTable para retornar valores para tela Atenda (Antigo b1wgen0001tt.i/tt-valores_conta)
   TYPE typ_rec_valores_conta
