@@ -979,6 +979,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
            AND crapepr.nrctremp = pr_nrctremp;
       vr_flgexepr PLS_INTEGER := 0;
       
+      CURSOR cr_empr_cdc (pr_cdcooper IN tbepr_cdc_emprestimo.cdcooper%TYPE
+                         ,pr_nrdconta IN tbepr_cdc_emprestimo.nrdconta%TYPE
+                         ,pr_nrctremp IN tbepr_cdc_emprestimo.nrctremp%TYPE) IS
+        SELECT rowid
+          FROM tbepr_cdc_emprestimo e
+         WHERE e.cdcooper = pr_cdcooper
+           AND e.nrdconta = pr_nrdconta
+           AND e.nrctremp = pr_nrctremp;
+      rw_empr_cdc cr_empr_cdc%rowtype;
+      
       vr_nrdrowid      ROWID;
       vr_exc_saida     EXCEPTION;
       vr_exc_erro_500  EXCEPTION;
@@ -1043,21 +1053,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       
       --> Tratar para nao validar criticas qnt for 99-expirado
       IF pr_insitapr <> 99 THEN
-        -- Proposta Finalizada
-        IF rw_crawepr.insitest = 3 THEN
-          pr_status      := 202;
-          pr_cdcritic    := 974;
-          pr_msg_detalhe := 'Parecer nao foi atualizado, a analise da proposta ja foi finalizada.';
-          RAISE vr_exc_saida;
-        END IF;
-        
-        -- 1 – Enviada para Analise, 2 – Reenviado para Analise
-        IF rw_crawepr.insitest NOT IN (1,2) THEN
-          pr_status      := 202;
-          pr_cdcritic    := 971;
-          pr_msg_detalhe := 'Parecer nao foi atualizado, proposta em situacao que nao permite esta operacao.';
-          RAISE vr_exc_saida;
-        END IF;
+
+        OPEN cr_empr_cdc(pr_cdcooper => pr_cdcooper
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrctremp => pr_nrctremp);
+        FETCH cr_empr_cdc INTO rw_empr_cdc;
+          
+        -- se for CDC novo deve ser verificado tbm a aprovacao da esteira
+        IF cr_empr_cdc%FOUND THEN
+          CLOSE cr_empr_cdc;
+          -- se tiver sido finalizada a analise e nao for aprovacao deve recusar
+          IF rw_crawepr.insitest = 3 and pr_insitapr != 1 THEN
+            -- Montar mensagem de critica
+            pr_status      := 202;
+            pr_cdcritic    := 974;
+            pr_msg_detalhe := 'Parecer nao foi atualizado, a analise da proposta ja foi finalizada.';
+            RAISE vr_exc_saida;        
+          END IF;		
+        ELSE
+          CLOSE cr_empr_cdc;
+          -- Proposta Finalizada
+          IF rw_crawepr.insitest = 3 THEN
+            pr_status      := 202;
+            pr_cdcritic    := 974;
+            pr_msg_detalhe := 'Parecer nao foi atualizado, a analise da proposta ja foi finalizada.';
+            RAISE vr_exc_saida;
+          END IF;
+          
+          -- 1 – Enviada para Analise, 2 – Reenviado para Analise
+          IF rw_crawepr.insitest NOT IN (1,2) THEN
+            pr_status      := 202;
+            pr_cdcritic    := 971;
+            pr_msg_detalhe := 'Parecer nao foi atualizado, proposta em situacao que nao permite esta operacao.';
+            RAISE vr_exc_saida;
+          END IF;
+        END IF;        
       END IF; --> Fim IF pr_insitapr <> 99 THEN
       
       -- Proposta Expirado

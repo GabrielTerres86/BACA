@@ -80,6 +80,8 @@ PROCEDURE integra_proposta:
     DEF  INPUT PARAM par_flgdocje AS LOGI                           NO-UNDO.
     
     DEF INPUT-OUTPUT PARAM par_nrctremp AS DECI                     NO-UNDO.
+    DEF OUTPUT PARAM par_nrctaav1 AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_nrctaav2 AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dsjsonan AS LONGCHAR                       NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -732,50 +734,9 @@ PROCEDURE integra_proposta:
          UNDO GRAVAINTCDC, LEAVE GRAVAINTCDC.           
        END.
 
-       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-       /* Montar retorno da proposta em formato JSON */ 
-       RUN STORED-PROCEDURE pc_monta_ret_proposta_json
-        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
-                                             INPUT par_cdagenci,
-                                             INPUT par_nrdconta,
-                                             INPUT par_nrctremp,
-                                             INPUT aux_nrctaava,  /* par_nrctaava */
-                                             INPUT aux_nrctaav2,  /* par_nrctaav2 */
-											 INPUT par_inresapr,
-                                             OUTPUT "",          /* pr_retjson */
-                                             OUTPUT 0 ,          /* pr_cdcritic */
-                                             OUTPUT "").         /* pr_dscritic */
-       
-       /* Fechar o procedimento para buscarmos o resultado */ 
-       CLOSE STORED-PROC pc_monta_ret_proposta_json
-           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-       ASSIGN aux_cdcritic = 0
-              aux_dscritic = "" 
-              aux_dsjsonan = ""
-              aux_cdcritic = pc_monta_ret_proposta_json.pr_cdcritic
-                                WHEN pc_monta_ret_proposta_json.pr_cdcritic <> ?       
-              aux_dscritic = pc_monta_ret_proposta_json.pr_dscritic
-                                WHEN pc_monta_ret_proposta_json.pr_dscritic <> ?
-              aux_dsjsonan  = pc_monta_ret_proposta_json.pr_retjson
-                                WHEN pc_monta_ret_proposta_json.pr_retjson <> ?.           
-
-       IF aux_dscritic <> "" OR 
-          aux_cdcritic <> 0 THEN 
-         DO:
-          RUN gera_erro (INPUT par_cdcooper,
-                        INPUT par_cdagenci,
-                        INPUT par_nrdcaixa,
-                        INPUT 1,
-                        INPUT aux_cdcritic,
-                        INPUT-OUTPUT aux_dscritic). 
-         UNDO GRAVAINTCDC, LEAVE GRAVAINTCDC.           
-       END.
-       
-       ASSIGN par_dsjsonan = aux_dsjsonan.
+       ASSIGN par_dsjsonan = aux_dsjsonan
+              par_nrctaav1 = aux_nrctaava
+              par_nrctaav2 = aux_nrctaav2.
        
        ASSIGN aux_flgtrans = TRUE.
 
@@ -820,6 +781,8 @@ PROCEDURE integra_dados_avalista:
 
     DEF  INPUT PARAM TABLE FOR tt-avalista.
 
+    DEF OUTPUT PARAM par_nrctaav1  AS INTE                 NO-UNDO.
+    DEF OUTPUT PARAM par_nrctaav2  AS INTE                 NO-UNDO.
     DEF OUTPUT PARAM par_dsjsonan AS LONGCHAR              NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -1051,50 +1014,9 @@ PROCEDURE integra_dados_avalista:
     IF RETURN-VALUE <> "OK"   THEN
       UNDO GRAVAINTCDC, LEAVE GRAVAINTCDC.
 
-     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-     /* Montar retorno da proposta em formato JSON */ 
-     RUN STORED-PROCEDURE pc_monta_ret_proposta_json
-      aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
-                                           INPUT par_cdagenci,
-                                           INPUT par_nrdconta,
-                                           INPUT par_nrctremp,
-                                           INPUT aux_nrctaava,  /* par_nrctaava */
-                                           INPUT aux_nrctaav2,  /* par_nrctaav2 */
-                                           INPUT par_inresapr,  /* par_inresapr*/
-                                           OUTPUT "",          /* pr_retjson */
-                                           OUTPUT 0 ,          /* pr_cdcritic */
-                                           OUTPUT "").         /* pr_dscritic */
-     
-     /* Fechar o procedimento para buscarmos o resultado */ 
-     CLOSE STORED-PROC pc_monta_ret_proposta_json
-         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-     ASSIGN aux_cdcritic = 0
-            aux_dscritic = "" 
-            aux_dsjsonan = ""
-            aux_cdcritic = pc_monta_ret_proposta_json.pr_cdcritic
-                              WHEN pc_monta_ret_proposta_json.pr_cdcritic <> ?       
-            aux_dscritic = pc_monta_ret_proposta_json.pr_dscritic
-                              WHEN pc_monta_ret_proposta_json.pr_dscritic <> ?
-            aux_dsjsonan  = pc_monta_ret_proposta_json.pr_retjson
-                              WHEN pc_monta_ret_proposta_json.pr_retjson <> ?.           
-
-     IF aux_dscritic <> "" OR 
-        aux_cdcritic <> 0 THEN 
-       DO:
-        RUN gera_erro (INPUT par_cdcooper,
-                      INPUT par_cdagenci,
-                      INPUT par_nrdcaixa,
-                      INPUT 1,
-                      INPUT aux_cdcritic,
-                      INPUT-OUTPUT aux_dscritic). 
-       UNDO GRAVAINTCDC, LEAVE GRAVAINTCDC.
-     END.
-
-     ASSIGN par_dsjsonan = aux_dsjsonan.
+     ASSIGN par_dsjsonan = aux_dsjsonan
+            par_nrctaav1 = aux_nrctaava
+            par_nrctaav2 = aux_nrctaav2.
      
      ASSIGN aux_flgtrans = TRUE.
     

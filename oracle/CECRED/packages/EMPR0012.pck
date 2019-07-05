@@ -29,6 +29,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                      ,pr_nrctaav1 IN crawepr.nrctaav1%TYPE  --> Codigo do avalista 1
                                      ,pr_nrctaav2 IN crawepr.nrctaav2%TYPE  --> Codigo do avalista 2
                                      ,pr_inresapr IN numeric default 1      --> reinicia fluxo
+                                     ,pr_idacionamento IN tbgen_webservice_aciona.idacionamento%type
                                      ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -43,6 +44,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                        ,pr_nrctaav1 IN crawepr.nrctaav1%TYPE  --> Codigo do avalista 1
                                        ,pr_nrctaav2 IN crawepr.nrctaav2%TYPE  --> Codigo do avalista 2
                                        ,pr_inresapr IN numeric default 1      --> reinicia fluxo
+                                       ,pr_idacionamento IN tbgen_webservice_aciona.idacionamento%type
                                        ,pr_retjson  OUT CLOB                  --> Retorno json proposta
                                        ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                        ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
@@ -754,6 +756,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                       ,pr_nrctaav1 IN crawepr.nrctaav1%TYPE  --> Codigo do avalista 1
                                       ,pr_nrctaav2 IN crawepr.nrctaav2%TYPE  --> Codigo do avalista 2
                                       ,pr_inresapr IN numeric default 1      --> reinicia fluxo
+                                      ,pr_idacionamento IN tbgen_webservice_aciona.idacionamento%type
                                       ,pr_retjson  OUT CLOB                  --> Retorno json proposta
                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
@@ -781,6 +784,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
     vr_dsjsonan json;
     vr_dsjsonan_clob CLOB;
+
+    vr_cdstatus_http tbgen_webservice_aciona.cdstatus_http%type := 200; -- sucesso
+    vr_flgreenvia    tbgen_webservice_aciona.flgreenvia%type := 0; -- nao
 
     BEGIN
       -- Enviar proposta para análise no motor
@@ -818,10 +824,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
         END;
       END IF;
       
+     
+
       -- Criar o CLOB para converter JSON para CLOB
       dbms_lob.createtemporary(vr_dsjsonan_clob, TRUE, dbms_lob.CALL);
       dbms_lob.open(vr_dsjsonan_clob, dbms_lob.lob_readwrite);
       json.to_clob(vr_dsjsonan,vr_dsjsonan_clob);
+
+       -- atualiza acionamento com sucesso
+      webs0003.pc_atualiza_acionamento(pr_cdstatus_http => vr_cdstatus_http
+                                      ,pr_nrctrprp => pr_nrctremp
+                                      ,pr_flgreenvia => vr_flgreenvia
+                                      ,pr_idacionamento => pr_idacionamento
+                                      ,pr_dsresposta_requisicao => vr_dsjsonan_clob
+                                      ,pr_dscritic => vr_dscritic);
+      
+      IF vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_erro;
+      END IF;
 
       --> Atribuir JSON para o parametro
       pr_retjson := vr_dsjsonan_clob;
@@ -857,6 +877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                      ,pr_nrctaav1 IN crawepr.nrctaav1%TYPE  --> Codigo do avalista 1
                                      ,pr_nrctaav2 IN crawepr.nrctaav2%TYPE  --> Codigo do avalista 2
                                      ,pr_inresapr IN numeric default 1      --> reinicia fluxo
+                                     ,pr_idacionamento IN tbgen_webservice_aciona.idacionamento%type
                                      ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -896,6 +917,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                  ,pr_nrctaav1 => pr_nrctaav1      --> Avalista 1
                                  ,pr_nrctaav2 => pr_nrctaav2      --> Avalista 2
                                  ,pr_inresapr => pr_inresapr      --> reinicia fluxo
+                                 ,pr_idacionamento => pr_idacionamento --> acionamento
                                  ,pr_retjson  => vr_dsjsonan_clob --> Retorno json proposta
                                  ,pr_cdcritic => vr_cdcritic      --> Código da crítica
                                  ,pr_dscritic => vr_dscritic);   --> Descrição da crítica
@@ -1241,14 +1263,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       RAISE vr_exc_saida;
     END IF;  
       
-    -- Somente se a proposta não foi atualizada ainda
-    IF rw_crawepr.insitest <> 1 THEN
-      -- Montar mensagem de critica
-      vr_status      := 400;
-      vr_cdcritic    := 978;
-      vr_msg_detalhe := 'Situacao da Proposta ja foi alterada - analise nao sera recebida.';
-      RAISE vr_exc_saida;        
-    END IF;    
       
     -- Se algum dos parâmetros abaixo não foram informados
 			IF nvl(pr_cdorigem, 0) = 0 OR
