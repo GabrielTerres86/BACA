@@ -18,7 +18,7 @@
 ini_set('session.cookie_domain', '.cecred.coop.br' );
 
 // novo limite de memoria
-ini_set('memory_limit','500M');
+ini_set('memory_limit','1000M');
 
 // Increase max_execution_time. If a large pdf fails, increase it even more.
 ini_set('max_execution_time', 180);
@@ -922,7 +922,7 @@ function verificaTexto($string = '-'){
 
         // verifica se é um campo que veio do fn_tag
         if ((isset($string['campo']['nome'])) && (isset($string['campo']['tipo']))  && (isset($string['campo']['valor']))) {
-            return '<b>' . trim($string['campo']['nome']) . ':</b> <span class="upper">' . trim($string['campo']['valor']) . '</span>';
+            return '<b>' . trim($string['campo']['nome']) . ':</b> <span class="upper">' . verificaBr($string['campo']['valor']) . '</span>';
         } else {
             return '-';
         }
@@ -937,7 +937,8 @@ function verificaTexto($string = '-'){
                 // verifica se existe
                 if(isset($string)) {
 
-                    return trim($string);
+                    return verificaBr(trim($string));
+                    //return trim(strtoupper($string));
 
                 } else {
 
@@ -956,11 +957,36 @@ function verificaTexto($string = '-'){
         } else {
 
             // zero
-            return trim($string);
+            return verificaBr($string);
+//            return trim(strtoupper($string));
         }
     }
 
 }
+
+/*
+* verifica se existe quebra de linha
+*/
+
+function verificaBr($string) {
+
+    if (strpos($string, '##br##') !== false) {
+
+        $string = str_ireplace('##br##', '<br>', $string);
+
+        $string = '<p class="upper" style="padding-left:15px;">'.$string.'</p>';
+
+        return $string;
+
+    } else {
+
+        return $string;
+
+    }
+
+    // return trim(strtoupper($string));
+}
+
 
 /*
 * gera Título da filtro
