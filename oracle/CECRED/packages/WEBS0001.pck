@@ -190,7 +190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
   --  Sistema  : Rotinas referentes ao WebService de propostas
   --  Sigla    : EMPR
   --  Autor    : James Prust Junior
-  --  Data     : Janeiro - 2016.                   Ultima atualizacao: 01/08/2018
+  --  Data     : Janeiro - 2016.                   Ultima atualizacao: 28/06/2019
   --
   -- Dados referentes ao programa:
   --
@@ -212,10 +212,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
   --                          desconto de títulos (Andrew Albuquerque (GFT))
   --             05/05/2018 - pc_retorno_analise_cartao (Paulo Silva (Supero))
   --
-  --	 	     01/08/2018 - Incluir novo campo liquidOpCredAtraso no retorno do 
+  --	 	         01/08/2018 - Incluir novo campo liquidOpCredAtraso no retorno do 
   --                          motor de credito e enviar para esteira - Diego Simas (AMcom)				
   --
-  --         14/05/2019 - Adicionado a pc_notifica_ib e suas chamadas ( AmCom - p438 )
+  --             14/05/2019 - Adicionado a pc_notifica_ib e suas chamadas ( AmCom - p438 )
+  --
+  --             28/06/2019 - Incluir dtcancel e retirar a titularidade quando proposta
+  --                          rejeitada na esteira (Lucas Ranghetti PRB0041968)
   ---------------------------------------------------------------------------  
   --
   -- 
@@ -2413,7 +2416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      Sistema : Rotinas referentes ao WebService
      Sigla   : WEBS
      Autor   : Paulo Silva (Supero)
-     Data    : Maio/2018.                    Ultima atualizacao: //
+     Data    : Maio/2018.                    Ultima atualizacao: 28/06/2019
 
      Dados referentes ao programa:
 
@@ -2427,6 +2430,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                  05/06/2019 - Implementado LOG caso não encontra o registro de alteração de limite de cartão
                               e ajustado cursor cr_limatu. 
                               Alcemir Jr. (INC0012482).
+                              
+                 28/06/2019 - Incluir dtcancel e retirar a titularidade quando proposta
+                              rejeitada na esteira (Lucas Ranghetti PRB0041968)
      ..............................................................................*/
     DECLARE
       --Busca dados da Proposta
@@ -2901,6 +2907,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                  SET crawcrd.dtaprova = pr_rw_crapdat.dtmvtolt
                     ,crawcrd.insitdec = 5 -- Rejeitada
                     ,crawcrd.insitcrd = 6 -- Cancelada
+                    ,crawcrd.dtcancel = pr_rw_crapdat.dtmvtolt
+                    ,crawcrd.flgprcrd = 0
                WHERE crawcrd.cdcooper = pr_cdcooper
                  AND crawcrd.nrdconta = pr_nrdconta
                  AND crawcrd.nrctrcrd = pr_nrctrcrd;
