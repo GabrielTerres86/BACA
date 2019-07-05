@@ -1468,7 +1468,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
              END tpproduto,
              -- Indica que am linha de credito eh CDC ou C DC
              DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => epr.cdcooper
-                                               ,pr_cdfinemp => epr.cdfinemp),3,1,0) AS inlcrcdc
+                                               ,pr_cdfinemp => epr.cdfinemp),3,1,0) AS inlcrcdc,
+             epr.idfluata
         FROM crawepr epr,
              craplcr lcr,
              crapfin fin,
@@ -1723,6 +1724,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                                pr_tpregist => rw_crawepr.tpctrato);    
     vr_obj_proposta.put('tipoGarantiaDescricao'    ,TRIM(vr_dstpgara) );
     
+    vr_obj_proposta.put('segueFluxoAtacado'    ,(CASE WHEN rw_crawepr.idfluata=1 THEN TRUE ELSE FALSE END)); 
+
     -- Buscar dados do operador
     OPEN cr_crapope (pr_cdcooper  => pr_cdcooper,
                      pr_cdoperad  => pr_cdoperad);
@@ -5098,6 +5101,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
 		vr_nrperger VARCHAR2(100);
     vr_datscore VARCHAR2(100);
     vr_desscore VARCHAR2(100);
+    vr_idfluata BOOLEAN;
     vr_xmllog   VARCHAR2(4000);
 		vr_retxml   xmltype;
     vr_nmdcampo VARCHAR2(100);
@@ -5438,7 +5442,13 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                 vr_datscore := ltrim(rtrim(vr_obj_indicadores.get('dataScoreBVS').to_char(),'"'),'"');
               END IF;
               
+              -- PJ637
+              IF vr_obj_indicadores.exist('segueFluxoAtacado') THEN
+                vr_idfluata := (CASE WHEN upper(ltrim(rtrim(vr_obj_indicadores.get('segueFluxoAtacado').to_char(),'"'),'"')) = 'TRUE' THEN TRUE ELSE FALSE END);
             END IF;  
+              
+
+            END IF;
             
             -- Se o DEBUG estiver habilitado
             IF vr_flgdebug = 'S' THEN
@@ -5487,6 +5497,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                                 ,pr_datscore => vr_datscore
                                                 ,pr_dsrequis => vr_obj_proposta.to_char
                                                 ,pr_namehost => vr_host_esteira||'/'||vr_recurso_este
+                                                ,pr_idfluata => vr_idfluata -- PJ637
                                                 -- OUT (Não trataremos retorno de erro pois é tudo efetuado na rotina chamada)
                                                 ,pr_xmllog   => vr_xmllog 
                                                 ,pr_cdcritic => vr_cdcritic 

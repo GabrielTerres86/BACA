@@ -3859,6 +3859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_nrperger := fn_converte_null(pr_nrperger);
       vr_desscore := fn_converte_null(pr_desscore);
       vr_datscore := fn_converte_null(pr_datscore);
+      vr_idfluata := pr_idfluata; --PJ637
       
 			-- Buscar o tipo de pessoa
 			OPEN cr_crapass(pr_cdcooper => rw_crawepr.cdcooper
@@ -4586,6 +4587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      vr_nrperger := fn_converte_null(pr_nrperger);
      vr_desscore := fn_converte_null(pr_desscore);
      vr_datscore := fn_converte_null(pr_datscore);
+     vr_idfluata := pr_idfluata; -- PJ637
         
      -- Buscar o tipo de pessoa
      open cr_crapass(pr_cdcooper => rw_crawlim.cdcooper
@@ -4661,6 +4663,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                   ,pr_nrgarope    => gene0002.fn_char_para_number(vr_nrgarope)    --> Garantia da Analise 
                   ,pr_nrparlvr    => gene0002.fn_char_para_number(vr_nrparlvr)    --> Patrimônio Pessoal Livre da Analise 
                   ,pr_nrperger    => gene0002.fn_char_para_number(vr_nrperger)    --> Percepção Geral Empresa na Analise 
+                  ,pr_idfluata    => vr_idfluata -- PJ637
                   ,pr_status      => vr_status
                   ,pr_cdcritic    => vr_cdcritic
                   ,pr_dscritic    => vr_dscritic
