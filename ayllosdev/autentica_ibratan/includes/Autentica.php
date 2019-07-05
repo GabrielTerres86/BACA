@@ -44,14 +44,14 @@ class Autentica extends Dados{
             "2" => "Acredicoop",
             "3" => "Ailos",
             "5" => "Acentra",
-            "6" => "Credifiesc",
+            "6" => "Únilos",
             "7" => "Credcrea",
             "8" => "Credelesc",
             "9" => "Transpocred",
             "10" => "Credicomin",
             "11" => "Credifoz",
             "12" => "Crevisc",
-            "13" => "ScrCred",
+            "13" => "Civia",
             "14" => "Evolua",
             "16" => "Viacredi Alto Vale"
         );
