@@ -407,8 +407,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                          ,pr_des_erro   OUT VARCHAR2) ;                       --> Saida OK/NOK
   
   PROCEDURE pc_registra_push_sit_prop_cdc (pr_cdcooper   IN tbgen_evento_soa.cdcooper%TYPE      --> Coodigo Cooperativa
-                                          ,pr_nrdconta   IN tbgen_evento_soa.nrdconta%TYPE      --> Numero da Conta do Associado
-                                          ,pr_nrctremp   IN tbgen_evento_soa.nrctrprp%TYPE      --> Numero do contrato
+                                          ,pr_nrdconta   IN VARCHAR2                            --> Numero da Conta do Associado
+                                          ,pr_nrctremp   IN VARCHAR2                            --> Numero do contrato
                                           ,pr_insitpro   IN NUMBER                              --> Situação da proposta
                                           -->> SAIDA
                                           ,pr_cdcritic OUT PLS_INTEGER                --> Código da crítica
@@ -4336,6 +4336,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
        RAISE vr_exc_erro;
     END;
 
+    vr_nrdconta := to_number(REPLACE(vr_nrdconta,'.',''));
+    vr_nrctremp := to_number(REPLACE(vr_nrctremp,'.',''));
+
     IF nvl(vr_cdcooper, 0) = 0 or nvl(vr_nrdconta, 0) = 0 or nvl(vr_nrctremp, 0) = 0 THEN
       vr_dscritic := 'Dados de entrada invalidos.';
       RAISE vr_exc_erro;
@@ -7430,8 +7433,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
   END pc_reg_push_sit_prop_cdc_web;      
 
   PROCEDURE pc_registra_push_sit_prop_cdc (pr_cdcooper   IN tbgen_evento_soa.cdcooper%TYPE      --> Coodigo Cooperativa
-                                          ,pr_nrdconta   IN tbgen_evento_soa.nrdconta%TYPE      --> Numero da Conta do Associado
-                                          ,pr_nrctremp   IN tbgen_evento_soa.nrctrprp%TYPE      --> Numero do contrato
+                                          ,pr_nrdconta   IN VARCHAR2                            --> Numero da Conta do Associado
+                                          ,pr_nrctremp   IN VARCHAR2                            --> Numero do contrato
                                           ,pr_insitpro   IN NUMBER                              --> Situação da proposta
                                           -->> SAIDA
                                           ,pr_cdcritic OUT PLS_INTEGER                --> Código da crítica
@@ -7464,6 +7467,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     vr_dsprodut   VARCHAR2(20);
     vr_idevento   tbgen_evento_soa.idevento%type;
     
+    vr_nrdconta   NUMBER;
+    vr_nrctremp   NUMBER;
+    
     vr_tpevento tbgen_evento_soa.tpevento%type := 'COMUNICACAO';
     vr_tproduto_evento tbgen_evento_soa.tproduto_evento%type := 'CDC';
     vr_tpoperacao tbgen_evento_soa.tpoperacao%type := 'NOTIFICAR';
@@ -7481,6 +7487,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     
   BEGIN
 
+    vr_nrdconta := to_number(REPLACE(pr_nrdconta,'.',''));
+    vr_nrctremp := to_number(REPLACE(pr_nrctremp,'.',''));
+
     -- Inicializar o CLOB
     vr_des_xml := NULL;
     dbms_lob.createtemporary(vr_des_xml, TRUE);
@@ -7495,8 +7504,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       -- tag emitente
       pc_escreve_xml ('<emitente>');
         pc_escreve_xml ('<contaCorrente>'); 
-        pc_escreve_xml ('<codigoContaSemDigito>'||substr(pr_nrdconta,1,length(pr_nrdconta)-1)||'</codigoContaSemDigito>');
-        pc_escreve_xml ('<digitoVerificadorConta>'||substr(pr_nrdconta,-1)||'</digitoVerificadorConta>');
+        pc_escreve_xml ('<codigoContaSemDigito>'||substr(vr_nrdconta,1,length(vr_nrdconta)-1)||'</codigoContaSemDigito>');
+        pc_escreve_xml ('<digitoVerificadorConta>'||substr(vr_nrdconta,-1)||'</digitoVerificadorConta>');
         pc_escreve_xml ('<cooperativa><codigo>'||pr_cdcooper||'</codigo></cooperativa>');
         pc_escreve_xml ('</contaCorrente>'); 
       pc_escreve_xml ('</emitente>');
@@ -7517,8 +7526,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     pc_escreve_xml ('</dados>',TRUE);
 
     soap0003.pc_gerar_evento_soa(pr_cdcooper               => pr_cdcooper
-                                ,pr_nrdconta               => pr_nrdconta
-                                ,pr_nrctrprp               => pr_nrctremp
+                                ,pr_nrdconta               => vr_nrdconta
+                                ,pr_nrctrprp               => vr_nrctremp
                                 ,pr_tpevento               => vr_tpevento
                                 ,pr_tproduto_evento        => vr_tproduto_evento
                                 ,pr_tpoperacao             => vr_tpoperacao
