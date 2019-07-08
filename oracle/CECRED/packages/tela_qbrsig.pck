@@ -92,6 +92,15 @@ CREATE OR REPLACE PACKAGE CECRED.tela_qbrsig IS
                                 ,pr_cdoperad IN VARCHAR2);             --> Codigo do operador
 END tela_qbrsig;
 /
+/*
+Alterações:
+
+02/07/2019 RITM0024195 Na rotina pc_carrega_arq_origem_destino, estrutura 29, incluídas as informações de
+           banco, agência e conta do cooperado (Carlos)
+           
+03/07/2019 RITM0024196 Na rotina pc_carrega_arq_origem_destino, estrutura 18, verificado o tipo de pessoa
+           através do tamanho do documento (Carlos)
+*/
 CREATE OR REPLACE PACKAGE BODY CECRED.tela_qbrsig IS
   vr_idreprocessar NUMBER(1) := 0;
 
@@ -4649,11 +4658,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_qbrsig IS
               FETCH cr_transf_valor INTO rw_transf_valor;
               -- Verificar se encontrou o registro
               IF cr_transf_valor%FOUND THEN
-                -- Se for igual a 1 é pessoa física
-                IF rw_transf_valor.flgpescr = 1 THEN
-                  vr_inpessoa := '1';
-                ELSE 
+                
+                -- Se o tamanho do documento for maior que 11 é pessoa jurídica
+                IF length(rw_transf_valor.cpfcgrcb) > 11 THEN
                   vr_inpessoa := '2';
+                ELSE
+                  vr_inpessoa := '1';
                 END IF;
                   
                 -- Atualizar os sequenciais 
@@ -5374,9 +5384,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_qbrsig IS
               vr_nmprimtl := rw_conta.nmextcop;
 
               vrins_nrdocmto := rw_lancamento.nrdocmto;
-              vrins_cdbandep := '';
-              vrins_cdagedep := '';
-              vrins_nrctadep := '';
+              vrins_cdbandep := '085';
+              vrins_cdagedep := rw_conta.cdagenci;
+              vrins_nrctadep := rw_conta.nrdconta;
               vrins_tpdconta := '';
               vrins_inpessoa := vr_inpessoa;
               vrins_nrcpfcgc := vr_nrcpfcgc;
