@@ -21,6 +21,7 @@ declare
   vr_sucursal      VARCHAR2(3);  
   vr_cdcooper      crapcop.cdcooper%TYPE := 8;
   vr_empresa       VARCHAR2(2) := '03'; -- AILOS
+  vr_seqailos      NUMBER(10) := 0;
   
   TYPE typ_plano IS RECORD ( cdplano PLS_INTEGER,
                              vl_incendio NUMBER(15,2),
@@ -441,8 +442,8 @@ BEGIN
            ' '  ||                                -- Espaço Disponível
            to_char(SYSDATE,'DDMMYY')     ||       -- Data de geração do movimento
            to_char(SYSDATE,'HH24MISS')   ||       -- Hora de geração do movimento (HHMMSS)
-           vr_empresa                    ||       -- Código da Empresa da Seguradora ( Tabela a Enviar )
-           vr_sucursal                   ||       -- Código da Sucursal da Seguradora ( Tabela a Enviar )
+           '01'                          ||       -- Código da Empresa da Seguradora ( Tabela a Enviar )
+           '003'                         ||       -- Código da Sucursal da Seguradora ( Tabela a Enviar )
            LPAD(' ', 471, ' ')
   );    
   
@@ -470,6 +471,7 @@ BEGIN
     vr_nrseq    := vr_nrseq + 1;
     vr_nrseq04  := 0;
     vr_qtdreg01 := vr_qtdreg01 + 1;
+    vr_seqailos := vr_seqailos + 1;
     
     -- Calcula primeiro digito de controle
     vr_nrcalcul := to_number(to_char(rw.cdagectl,'fm0000') || '0');           
@@ -481,9 +483,9 @@ BEGIN
     vr_conta   := to_char(rw.nrdconta);
     vr_dvconta := SUBSTR(vr_conta,LENGTH(vr_conta),1);
     
-    vr_nrdocmto := lpad(vr_empresa  || 
-                        vr_sucursal ||
-                        to_char(vr_qtdreg01,'fm000000'), 11, '0');
+    vr_nrdocmto := lpad('01'  || 
+                        '003' ||
+                        to_char(vr_seqailos,'fm000000'), 11, '0');
     
     pc_print('01' ||                              -- Tipo de Registro (Constante ‘01’)
            lpad(to_char(vr_nrseq),9,'0') ||       -- Número Sequencial do Registro

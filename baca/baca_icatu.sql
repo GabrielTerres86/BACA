@@ -401,29 +401,55 @@ BEGIN
     WHEN 14 THEN vr_sub := '5';
     WHEN 16 THEN vr_sub := '7';                    
   END CASE;            
+  
+  pc_print('MATRICULA OU Nº CERTIFICADO ANTERIOR;' || 
+           'NOME;' || 
+           'DATA DE NASC;' || 
+           'CPF;' || 
+           'Estado Civil;' || 
+           'SEXO;' || 
+           'NOME CONJUGE;' || 
+           'DT NASC CONJUGE;' || 
+           'CPF CONJUGE;' || 
+           'TIPO DE LOGRADOURO;' || 
+           'ENDERECO;' || 
+           'Nº ENDERECO;' || 
+           'COMPLEMENTO;' || 
+           'BAIRRO;' || 
+           'CIDADE;' || 
+           'UF;' || 
+           'CEP;' || 
+           'DDD;' || 
+           'TELEFONE;' || 
+           'DDD CELULAR;' || 
+           'TELEFONE CELULAR;' || 
+           'EMAIL;' || 
+           'CAPITAL TITULAR VG;' || 
+           'CAPITAL CONJUGE VG;' || 
+  
     
-  pc_print( vr_nrdapoli                         || ';' || 
-           substr(rw.nmdsegur,1,60)             || ';' ||  
-           to_char(rw.dtnascimento,'DDMMRRRR')  || ';' || 
-           to_char(rw.nrcpfcgc)                 || ';' || 
-           rw.estcivil                          || ';' || 
-           rw.sexo                              || ';' || 
-           rw.nome_conjuge                      || ';' || 
-           rw.dtnasc_conjuge                    || ';' || 
-           rw.cpf_conjuge                       || ';' || 
+  pc_print( vr_nrdapoli                         || ';' || -- MATRICULA OU Nº CERTIFICADO ANTERIOR;
+           substr(rw.nmdsegur,1,60)             || ';' || -- NOME
+           to_char(rw.dtnascimento,'DDMMRRRR')  || ';' || -- DATA DE NASC
+           to_char(rw.nrcpfcgc)                 || ';' || -- CPF
+           rw.estcivil                          || ';' || -- Estado Civil
+           rw.sexo                              || ';' || -- SEXO
+           rw.nome_conjuge                      || ';' || -- NOME CONJUGE
+           rw.dtnasc_conjuge                    || ';' || -- DT NASC CONJUGE
+           rw.cpf_conjuge                       || ';' || -- CPF CONJUGE
            ' '                                  || ';' || -- tipo de logradouro
-           substr(rw.endereco,1,40)             || ';' ||
-           to_char(rw.nrendres)                 || ';' ||            
-           rw.complend                          || ';' || 
-           rw.nmbairro                          || ';' || 
-           rw.nmcidade                          || ';' ||
-           rw.cdufresd                          || ';' ||
-           to_char(rw.nrcepend,'fm00000000')    || ';' ||
-           rw.ddd_fone                          || ';' || 
-           rw.num_fone                          || ';' || 
-           rw.ddd_celular                       || ';' || 
-           rw.num_celular                       || ';' || 
-           rw.email                             || ';' || 
+           substr(rw.endereco,1,40)             || ';' || -- ENDERECO
+           to_char(rw.nrendres)                 || ';' || -- Nº ENDERECO           
+           rw.complend                          || ';' || -- COMPLEMENTO
+           rw.nmbairro                          || ';' || -- BAIRRO
+           rw.nmcidade                          || ';' || -- CIDADE
+           rw.cdufresd                          || ';' || -- UF
+           to_char(rw.nrcepend,'fm00000000')    || ';' || -- CEP
+           rw.ddd_fone                          || ';' || -- DDD
+           rw.num_fone                          || ';' || -- TELEFONE
+           rw.ddd_celular                       || ';' || -- DD CELULAR
+           rw.num_celular                       || ';' || -- TELEFONE CELULAR
+           rw.email                             || ';' || -- EMAIL
            to_char(rw.vlseguro)                 || ';' || -- 'CAPITAL TITULAR VG;' || 
            to_char(rw.vlbenefi)                 || ';' || -- 'CAPITAL CONJUGE VG;' || 
            to_char(rw.vlpreseg)                 || ';' || -- 'PREMIO TOTAL VG;' || 
