@@ -1,4 +1,4 @@
---P438_INC0019262_script_update_cancelar_contrato_limite_credito
+-- P438_INC0019262_script_update_cancelar_contrato_limite_credito
 
 update craplim
    set insitlim = 3
