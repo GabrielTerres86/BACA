@@ -435,6 +435,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                              para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
                              P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom.                             
 
+                25/06/2019 - Tratamento para não estourar o limite de crédito quando houver mais de um TED de uma mesma
+                             conta encaminhada no mesmo momento.
+                             (Jose Dill - Mout PRB0041934)
+         
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -2242,7 +2246,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         vr_dscritic := 'Não foi possivel inserir transferencia: '||SQLERRM;
         RAISE vr_exc_erro;
     END;
-
+       
     END LOOP;
 
     -- Indicar que a transação não é uma transferencia de salário(TEC)   (Renato - Supero - P485)
@@ -2377,6 +2381,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
     END IF;
     CLOSE cr_craplcm;
+
+    /*PRB0041934 - Incluída a chamada da rotina que verifica saldo antes da inclusao do lançamento, devido
+      ao problema do sistema permitir a inclusão de dois TEDs de uma mesma conta ao mesmo tempo, sendo que a 
+      soma dos valores de TEDs deveria estourar o saldo, o que nao estava ocorrendo em algumas situações.  */
+    --Limpar tabela saldo e erro
+    vr_tab_saldo.DELETE;
+    vr_tab_erro.DELETE;
+    /** Verifica se possui saldo para fazer a operacao **/
+    EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => rw_crapcop.cdcooper
+                                ,pr_rw_crapdat => rw_crapdat
+                                ,pr_cdagenci   => pr_cdageope
+                                ,pr_nrdcaixa   => pr_nrcxaope
+                                ,pr_cdoperad   => pr_cdoperad
+                                ,pr_nrdconta   => pr_nrdconta
+                                ,pr_vllimcre   => rw_crapass.vllimcre
+                                ,pr_tipo_busca => 'A' --> tipo de busca(A-dtmvtoan)
+                                ,pr_dtrefere   => rw_crapdat.dtmvtolt
+                                ,pr_flgcrass   => FALSE
+                                ,pr_des_reto   => vr_dscritic
+                                ,pr_tab_sald   => vr_tab_saldo
+                                ,pr_tab_erro   => vr_tab_erro);
+
+    --Se ocorreu erro
+    IF vr_dscritic = 'NOK' THEN
+      -- Tenta buscar o erro no vetor de erro
+      IF vr_tab_erro.COUNT > 0 THEN
+        vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||pr_nrdconta;
+      ELSE
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informacao na pr_tab_erro, Conta: '||pr_nrdconta;
+      END IF;
+
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+
+    --Verificar o saldo retornado
+    IF vr_tab_saldo.Count = 0 THEN
+      --Montar mensagem erro
+      vr_cdcritic:= 0;
+      vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    ELSE
+      --Total disponivel recebe valor disponivel + limite credito
+      vr_vlsldisp:= nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) + nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
+      -- log item
+      /*Neste momento considera o valor do TED mais o valor da Tarifa em relação ao saldo
+        disponível (antecipa uma validação), pois o lançamento ainda nao foi realizado na craplcm */      
+      IF (pr_vldocmto + nvl(vr_vllantar,0)) > vr_vlsldisp THEN
+        --Montar mensagem erro
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Nao ha saldo suficiente para a operacao.';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;         
+    /*FIM PRB0041934*/
 
     vr_hrtransa := gene0002.fn_busca_time;
     BEGIN
