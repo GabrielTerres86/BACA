@@ -33,6 +33,8 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --						   (Felipe - Mouts).
   --
   --              08/10/2018 - Incluido validação de UF para pretesto codigos 9 e 80 (SM_P352, Anderson-Alan, Supero)
+  --    
+  --              18/06/2018 - Alteração de código de motivo. Alcemir Jr./Roberto Holz  -  Mout´s(PRB0041653).
   ---------------------------------------------------------------------------------------------------------------
     
   --> type para armazenar arquivos a serem processados b1wgen0010tt.i/crawaux
@@ -2698,7 +2700,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                             ,pr_dtmvtolt      => pr_dtmvtolt            --> Data de Movimento
                             ,pr_cdoperad      => pr_cdoperad            --> Operador
                             ,pr_cdocorre      => 26                     --> Codigo da Ocorrencia
-                            ,pr_cdmotivo      => '99'                   --> Motivo da Rejeicao
+                            ,pr_cdmotivo      => 'A8'                   --> Motivo da Rejeicao
                             ,pr_tab_rejeitado => pr_tab_rejeitado);     --> Tabela de Rejeitados
                                       
           IF pr_rec_header.nrremass = 0 THEN
@@ -2727,7 +2729,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                             ,pr_dtmvtolt      => pr_dtmvtolt            --> Data de Movimento
                             ,pr_cdoperad      => pr_cdoperad            --> Operador
                             ,pr_cdocorre      => 26                     --> Codigo da Ocorrencia
-                            ,pr_cdmotivo      => '99'                   --> Motivo da Rejeicao
+                            ,pr_cdmotivo      => 'A9'                   --> Motivo da Rejeicao
                             ,pr_tab_rejeitado => pr_tab_rejeitado);     --> Tabela de Rejeitados
                                       
           IF pr_rec_header.nrremass = 0 THEN
@@ -3691,7 +3693,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    26/07/2017 - Ajuste no insert da tabela crapsab, onde estava sendo inserido
                                 na coluna nrcelsac o valor do cep e tambem corrigido para inserir a 
                                 situacao como ativo, antes estava assumindo o valor 0 por default 
-                                (Rafael Monteiro - 720045)                                
+                                (Rafael Monteiro - 720045)    
+						 
+			       26/06/2019 - Ajuste para retirar acentos e caracteres especiais do sacado
+				                Alcemir Jr. (PRB0041807).                            
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -3715,6 +3720,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     ------------------------------- VARIAVEIS --------------------------------
     vr_nrendsac INTEGER;
 	vr_nmdsacad crapsab.nmdsacad%type;
+	vr_nmbaisac crapsab.nmbaisac%TYPE; 
+    vr_nmcidsac crapsab.nmcidsac%TYPE; 
+    vr_dsendsac crapsab.dsendsac%TYPE; 
 
   BEGIN
   
@@ -3725,6 +3733,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_nmdsacad := '';
       -- remover caracter especial vr_nmdsacad
       vr_nmdsacad := gene0007.fn_caract_acento(vr_sacado.nmdsacad, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
+	  vr_nmbaisac := gene0007.fn_caract_acento(vr_sacado.nmbaisac, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
+      vr_nmcidsac := gene0007.fn_caract_acento(vr_sacado.nmcidsac, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
+      vr_dsendsac := gene0007.fn_caract_acento(vr_sacado.dsendsac, 1, '@#$&%¹²³ªº°*!?<>/\|€', '                    ');
       
       BEGIN
         -- Se nao existe o sacado, vamos cadastrar
@@ -3748,10 +3759,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                           ,vr_nmdsacad
                           ,vr_sacado.cdtpinsc
                           ,vr_sacado.nrinssac
-                          ,vr_sacado.dsendsac
+                          ,vr_dsendsac
                           ,0
-                          ,nvl(trim(vr_sacado.nmbaisac),' ')
-                          ,nvl(trim(vr_sacado.nmcidsac),' ')
+                          ,nvl(trim(vr_nmbaisac),' ')
+                          ,nvl(trim(vr_nmcidsac),' ')
                           ,nvl(trim(vr_sacado.cdufsaca),' ')
                           ,vr_sacado.nrcepsac
                           ,vr_sacado.cdoperad
