@@ -368,6 +368,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
   20/05/2019 - inc0011296 Na rotina pc_inst_protestar, corrigida a validação de existência de negativação e 
                centralizada a regra na function fn_flserasa (Carlos)
+  
+  
+  24/06/2019 - INC0013457 Na rotina pc_inst_cancel_protesto_85, feito o controle de envio de registro de 
+               desbloqueio do boleto para a CIP, para que não seja enviada mais de uma instrução por vez (Carlos)
   -------------------------------------------------------------------------------------------------------------*/
   --Ch 839539
   vr_cdprogra      tbgen_prglog.cdprograma%type := 'COBR0007';
@@ -3962,6 +3966,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --Ch REQ0011728
     vr_dsparame      VARCHAR2(4000);
 
+    --Controle de envio de registro de desbloqueio do boleto para a CIP
+    vr_flgdesbl   BOOLEAN := FALSE;
+
     ------------------------------- CURSORES ---------------------------------    
     --Selecionar remessas
     CURSOR cr_craprem2 (pr_cdcooper IN craprem.cdcooper%type
@@ -4918,6 +4925,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+        
+        -- Marcar como enviado o registro de desbloqueio do boleto para a CIP
+        vr_flgdesbl := TRUE;
+        
         -- Inclui nome do modulo logado - 30/08/2018 - REQ0011728
         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0007.pc_inst_cancel_prote_85');
       END IF;
@@ -5056,6 +5067,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             RAISE vr_exc_erro;
         END;
         
+        -- Se ainda não enviou registro de desbloqueio do boleto para a CIP
+        IF vr_flgdesbl = FALSE THEN
+        
         -- enviar registro de desbloqueio do boleto para a CIP            
         DDDA0001.pc_procedimentos_dda_jd (pr_rowid_cob => rw_crapcob.rowid      --ROWID da Cobranca
                                          ,pr_tpoperad => 'A'                        --Tipo Operacao
@@ -5072,6 +5086,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
           --Levantar Excecao
           RAISE vr_exc_erro;
+        END IF;
+        
         END IF;
         
         -- LOG de processo
