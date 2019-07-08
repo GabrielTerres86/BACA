@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0125.p
     Autor   : Rogerius Militao (DB1)
-    Data    : Novembro/2011                     Ultima atualizacao: 15/04/2014
+    Data    : Novembro/2011                     Ultima atualizacao: 03/07/2019
 
     Objetivo  : Tranformacao BO tela CONSCR
 
@@ -28,6 +28,12 @@
                             data server (Daniel). 
                             
                15/04/2014 - Correcao leitura crapopf. (Daniel)             
+
+               02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
+                            (Jaison/Anderson)
+               03/07/2019 - Feito a chamada da procedure pc_descricao_tipo_conta, INC0018707
+                            Bruno-Mout`S.
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -36,6 +42,7 @@
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF STREAM str_1.
 DEF VAR h-b1wgen0024 AS HANDLE                                      NO-UNDO.
@@ -171,18 +178,25 @@ PROCEDURE Busca_Dados:
 
                     IF  AVAIL crapass THEN
                         DO:                
-                            FIND craptip WHERE  
-                                 craptip.cdcooper = par_cdcooper AND
-                                 craptip.cdtipcta = crapass.cdtipcta
-                                                NO-LOCK NO-ERROR.
+   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_descricao_tipo_conta
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa,    /* tipo de pessoa */
+                                         INPUT crapass.cdtipcta,    /* tipo de conta */
+                                        OUTPUT "",   /* Descricao do tipo de conta */
+                                        OUTPUT "",   /* Flag Erro */
+                                        OUTPUT "").  /* Descriçao da crítica */
+    
+      CLOSE STORED-PROC pc_descricao_tipo_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-                            IF   AVAIL craptip THEN     
+                            IF  pc_descricao_tipo_conta.pr_dstipo_conta <> ? THEN     
                                 DO:                    
                                     CREATE  tt-contas.
                                     ASSIGN  tt-contas.nrdconta = crapttl.nrdconta
                                             tt-contas.cdagenci = crapass.cdagenci
                                             tt-contas.nmprimtl = crapttl.nmextttl
-                                            tt-contas.tpdconta = craptip.dstipcta
+                                            tt-contas.tpdconta = pc_descricao_tipo_conta.pr_dstipo_conta
                                             tt-contas.idseqttl = crapttl.idseqttl
                                             tt-contas.nrcpfcgc = crapttl.nrcpfcgc
                                             aux_regexist       = TRUE
@@ -203,17 +217,25 @@ PROCEDURE Busca_Dados:
                                         crapass.inpessoa = 2                AND
                                         crapass.dtdemiss = ? NO-LOCK: 
 
-                    FIND craptip WHERE  craptip.cdcooper = par_cdcooper     AND
-                                        craptip.cdtipcta = crapass.cdtipcta
-                                        NO-LOCK NO-ERROR.
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_descricao_tipo_conta
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa,    /* tipo de pessoa */
+                                         INPUT crapass.cdtipcta,    /* tipo de conta */
+                                        OUTPUT "",   /* Descricao do tipo de conta */
+                                        OUTPUT "",   /* Flag Erro */
+                                        OUTPUT "").  /* Descriçao da crítica */
+    
+      CLOSE STORED-PROC pc_descricao_tipo_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-                    IF  AVAIL craptip THEN
+                            IF  pc_descricao_tipo_conta.pr_dstipo_conta <> ? THEN
                         DO:                    
                               CREATE  tt-contas.
                               ASSIGN  tt-contas.nrdconta = crapass.nrdconta
                                       tt-contas.cdagenci = crapass.cdagenci
                                       tt-contas.nmprimtl = crapass.nmprimtl
-                                      tt-contas.tpdconta = craptip.dstipcta
+                                      tt-contas.tpdconta = pc_descricao_tipo_conta.pr_dstipo_conta
                                       tt-contas.nrcpfcgc = crapass.nrcpfcgc
                                       tt-contas.idseqttl = 1 
                                       aux_regexist       = TRUE
@@ -240,17 +262,26 @@ PROCEDURE Busca_Dados:
                     FOR EACH crapttl WHERE  crapttl.cdcooper = par_cdcooper  AND 
                                             crapttl.nrdconta = par_nrdconta:
 
-                         FIND craptip WHERE  craptip.cdcooper = par_cdcooper AND
-                                             craptip.cdtipcta = crapass.cdtipcta
-                                             NO-LOCK NO-ERROR.
 
-                         IF  AVAIL craptip THEN
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_descricao_tipo_conta
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa,    /* tipo de pessoa */
+                                         INPUT crapass.cdtipcta,    /* tipo de conta */
+                                        OUTPUT "",   /* Descricao do tipo de conta */
+                                        OUTPUT "",   /* Flag Erro */
+                                        OUTPUT "").  /* Descriçao da crítica */
+    
+      CLOSE STORED-PROC pc_descricao_tipo_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+                            IF  pc_descricao_tipo_conta.pr_dstipo_conta <> ? THEN 
                              DO:                    
                                  CREATE tt-contas.
                                  ASSIGN tt-contas.nrdconta = crapttl.nrdconta
                                         tt-contas.cdagenci = crapass.cdagenci
                                         tt-contas.nmprimtl = crapttl.nmextttl
-                                        tt-contas.tpdconta = craptip.dstipcta
+                                        tt-contas.tpdconta = pc_descricao_tipo_conta.pr_dstipo_conta
                                         tt-contas.idseqttl = crapttl.idseqttl
                                         tt-contas.nrcpfcgc = crapttl.nrcpfcgc
                                         par_contador       = par_contador + 1. 
@@ -269,17 +300,26 @@ PROCEDURE Busca_Dados:
                              crapass.inpessoa = 2                AND
                              crapass.dtdemiss = ?            NO-LOCK:
 
-                        FIND craptip WHERE  craptip.cdcooper = par_cdcooper AND
-                                            craptip.cdtipcta = crapass.cdtipcta
-                                            NO-LOCK NO-ERROR.
 
-                        IF  AVAIL craptip THEN
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_descricao_tipo_conta
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa,    /* tipo de pessoa */
+                                         INPUT crapass.cdtipcta,    /* tipo de conta */
+                                        OUTPUT "",   /* Descricao do tipo de conta */
+                                        OUTPUT "",   /* Flag Erro */
+                                        OUTPUT "").  /* Descriçao da crítica */
+    
+      CLOSE STORED-PROC pc_descricao_tipo_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+                            IF  pc_descricao_tipo_conta.pr_dstipo_conta <> ? THEN 
                             DO:                    
                                   CREATE  tt-contas.
                                   ASSIGN  tt-contas.nrdconta = crapass.nrdconta
                                           tt-contas.cdagenci = crapass.cdagenci
                                           tt-contas.nmprimtl = crapass.nmprimtl
-                                          tt-contas.tpdconta = craptip.dstipcta
+                                          tt-contas.tpdconta = pc_descricao_tipo_conta.pr_dstipo_conta
                                           tt-contas.nrcpfcgc = crapass.nrcpfcgc
                                           tt-contas.idseqttl = 1. 
 
@@ -893,7 +933,8 @@ PROCEDURE Imprimir_Risco:
                  
                  FIND crapage WHERE    crapage.cdcooper = par_cdcooper AND
                                        crapage.cdagenci = par_cdagenci AND
-                                       crapage.insitage = 1 /* Ativo */
+                                      (crapage.insitage = 1 OR /* Ativo */
+                                       crapage.insitage = 3)   /* Temporariamente Indisponivel */
                                        NO-LOCK NO-ERROR.
         
                  IF  NOT AVAIL crapage THEN
