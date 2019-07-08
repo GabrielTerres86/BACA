@@ -617,6 +617,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
          AND lcm.nrdctabb = pr_nrdctabb;
       vr_hrtransa_dup craplcm.hrtransa%TYPE;
 
+     CURSOR cr_craplcm_dup2(pr_cdcooper IN craplcm.cdcooper%TYPE
+                          ,pr_nrdconta IN craplcm.nrdconta%TYPE
+                          ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
+                          ,pr_vllanmto IN craplcm.vllanmto%TYPE
+                          ,pr_nrdctabb IN craplcm.nrdctabb%TYPE) IS
+      SELECT MAX(lcm.hrtransa)
+        FROM craplcm lcm
+       WHERE lcm.cdcooper = pr_cdcooper
+         AND lcm.nrdconta = pr_nrdconta
+         AND lcm.dtmvtolt = pr_dtmvtolt
+         AND lcm.cdhistor = 1014            
+         AND lcm.vllanmto = pr_vllanmto
+         AND lcm.nrdctabb = pr_nrdctabb;
+
       --Selecionar informacoes dos bancos
       CURSOR cr_crapban (pr_cdbccxlt IN crapban.cdbccxlt%type) IS
         SELECT crapban.nmresbcc
@@ -1059,6 +1073,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
         END IF;
         --Fechar Cursor
         CLOSE cr_craplcm;
+
+        IF (pr_idagenda = 1) THEN
+            OPEN cr_craplcm_dup2(pr_cdcooper => rw_crapcop.cdcooper
+                               ,pr_nrdconta => pr_nrdcontade
+                               ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                               ,pr_vllanmto => pr_valor
+                               ,pr_nrdctabb => pr_nrdcontapara);
+            --Posicionar no proximo registro
+            FETCH cr_craplcm_dup2 INTO vr_hrtransa_dup;
+              --Se encontrar
+              IF cr_craplcm_dup2%FOUND THEN
+                --Compara os segundos do último lançamento para não haver duplicidade
+                IF (((SYSDATE-TRUNC(SYSDATE))*(24*60*60)) - vr_hrtransa_dup) <= 600 THEN
+                
+                  --Fechar Cursor
+                  CLOSE cr_craplcm_dup2;  
+                
+                  vr_cdcritic := 0;
+                  vr_dscritic := 'Ja existe transferencia de mesmo valor e favorecido. Consulte seu extrato.';
+                  
+                  -- Desfaz as alterações
+                  ROLLBACK TO real_trans;
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                    
+                END IF;
+              END IF;  
+            --Fechar Cursor
+            CLOSE cr_craplcm_dup2;
+        END IF;
 
         /* Cria o lancamento do DEBITO */
         BEGIN
