@@ -3917,7 +3917,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
                                                   ' nrdolote: ' || rw_crapcob.nrdolote ||
                                                   ' nrcnvcob: ' || rw_crapcob.nrcnvcob || 
                                                   ' nrdocmto: ' || rw_crapcob.nrdocmto ||
-                                                  ' nrdconta: ' || rw_crapcob.nrdconta);
+                                                  ' nrdconta: ' || rw_crapcob.nrdconta || 
+                                                  ' vltarifa: ' || to_char(vr_vlcuscar + vr_vlcusdis + vr_vldemdes));
               
               RAISE vr_exc_erro;
             END IF;
