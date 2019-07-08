@@ -478,7 +478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     Sistema  : Rotinas genéricas para formulários postmix
     Sigla    : GENE
     Autor    : Mirtes.
-    Data     : Dezembro/2012.                   Ultima atualizacao: 14/08/2018
+    Data     : Dezembro/2012.                   Ultima atualizacao: 03/07/2019
 
    Dados referentes ao programa:
 
@@ -811,9 +811,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                       
 		 14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
 				      (Reinert)
-              
+
          22/05/2019 - Cursor para considerar também o horário da operação ao buscar o nome do 
                       estabelecimento. (Edmar - INC0014177)     
+
+     03/07/2019 - P565.1-RF20 - Não colocar a descrição (Estorno) para a cdhistor=2662 na proc. pc_gera_registro_extrato.
+                  (Fernanda Kelli de Oliveira - AMCom)      
 ..............................................................................*/
 
   -- Tratamento de erros
@@ -3109,7 +3112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         Sistema : Conta-Corrente - Cooperativa de Credito
         Sigla   : CRED
         Autor   : Marcos (Supero)
-        Data    : Dez/2012                         Ultima atualizacao: 30/05/2018
+        Data    : Dez/2012                         Ultima atualizacao: 03/07/2019
 
         Dados referetes ao programa:
         Frequencia: Sempre que chamado pelos programas de extrato da conta
@@ -3151,9 +3154,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 
                     13/07/2018 - Ajustar SQL que busca o nome do estabelecimento para retirar os caracteres
                                  que "quebram" o XML (PRJ 467 - Douglas Quisinski)
-                                 
-                    22/05/2019 - Cursor para considerar também o horário da operação ao buscar o nome do 
-                                 estabelecimento. (Edmar - INC0014177)            
+                    
+                     22/05/2019 - Cursor para considerar também o horário da operação ao buscar o nome do 
+                                 estabelecimento. (Edmar - INC0014177)
+
+                    03/07/2019 - P565.1-RF20 - Não colocar a descrição (Estorno) para a cdhistor=2662 na proc. pc_gera_registro_extrato.
+                           (Fernanda Kelli de Oliveira - AMCom)
     */
     DECLARE
       -- Varíaveis para montagem do novo registro
@@ -3511,7 +3517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
             END IF;
           ELSE
             -- INdicar que há estorno
-            IF pr_idorigem NOT IN (3,4) THEN -- IB, Mobile e ATM
+            IF pr_idorigem NOT IN (3,4) and rw_craplcm.cdhistor <> 2662 THEN -- IB, Mobile e ATM
             vr_dslibera := '(Estorno)';
           END IF;
           END IF;
