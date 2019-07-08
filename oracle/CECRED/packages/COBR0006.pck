@@ -32,9 +32,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --			  20/08/2018 - Foi incluido a validação do segmento Q
   --						   (Felipe - Mouts).
   --
-  --              08/10/2018 - Incluido validação de UF para pretesto codigos 9 e 80 (SM_P352, Anderson-Alan, Supero)
-  --    
-  --              18/06/2018 - Alteração de código de motivo. Alcemir Jr./Roberto Holz  -  Mout´s(PRB0041653).
+  --              08/10/2018 - Incluido validação de UF para pretesto codigos 9 e 80 (SM_P352, Anderson-Alan, Supero)     
   ---------------------------------------------------------------------------------------------------------------
     
   --> type para armazenar arquivos a serem processados b1wgen0010tt.i/crawaux
@@ -2700,7 +2698,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                             ,pr_dtmvtolt      => pr_dtmvtolt            --> Data de Movimento
                             ,pr_cdoperad      => pr_cdoperad            --> Operador
                             ,pr_cdocorre      => 26                     --> Codigo da Ocorrencia
-                            ,pr_cdmotivo      => 'A8'                   --> Motivo da Rejeicao
+                            ,pr_cdmotivo      => '99'                   --> Motivo da Rejeicao
                             ,pr_tab_rejeitado => pr_tab_rejeitado);     --> Tabela de Rejeitados
                                       
           IF pr_rec_header.nrremass = 0 THEN
@@ -2729,7 +2727,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                             ,pr_dtmvtolt      => pr_dtmvtolt            --> Data de Movimento
                             ,pr_cdoperad      => pr_cdoperad            --> Operador
                             ,pr_cdocorre      => 26                     --> Codigo da Ocorrencia
-                            ,pr_cdmotivo      => 'A9'                   --> Motivo da Rejeicao
+                            ,pr_cdmotivo      => '99'                   --> Motivo da Rejeicao
                             ,pr_tab_rejeitado => pr_tab_rejeitado);     --> Tabela de Rejeitados
                                       
           IF pr_rec_header.nrremass = 0 THEN
