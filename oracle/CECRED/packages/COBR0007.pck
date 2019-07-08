@@ -317,7 +317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --  Sistema  : Procedimentos gerais para execucao de instrucoes de baixa
   --  Sigla    : CRED
   --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao: 20/05/2019
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 24/06/2019
   --
   -- Dados referentes ao programa:
   --
@@ -374,6 +374,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                     pc_inst_aut_protesto 
 
   18/06/2019 - Alteração de código de motivo. Alcemir Jr./Roberto Holz  -  Mout´s(PRB0041653).                 
+  
+  24/06/2019 - INC0013457 Na rotina pc_inst_cancel_protesto_85, feito o controle de envio de registro de 
+               desbloqueio do boleto para a CIP, para que não seja enviada mais de uma instrução por vez (Carlos)
   -------------------------------------------------------------------------------------------------------------*/
   --Ch 839539
   vr_cdprogra      tbgen_prglog.cdprograma%type := 'COBR0007';
@@ -3960,6 +3963,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     vr_des_erro   VARCHAR2(3);
     --Ch REQ0011728
     vr_dsparame      VARCHAR2(4000);
+    
+    --Controle de envio de registro de desbloqueio do boleto para a CIP
+    vr_flgdesbl   BOOLEAN := FALSE;
 
     ------------------------------- CURSORES ---------------------------------    
     --Selecionar remessas
@@ -4926,6 +4932,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+        
+        -- Marcar como enviado o registro de desbloqueio do boleto para a CIP
+        vr_flgdesbl := TRUE;
+        
         -- Inclui nome do modulo logado - 30/08/2018 - REQ0011728
         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0007.pc_inst_cancel_prote_85');
       END IF;
@@ -5064,22 +5074,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             RAISE vr_exc_erro;
         END;
         
-        -- enviar registro de desbloqueio do boleto para a CIP            
-        DDDA0001.pc_procedimentos_dda_jd (pr_rowid_cob => rw_crapcob.rowid      --ROWID da Cobranca
-                                         ,pr_tpoperad => 'A'                        --Tipo Operacao
-                                         ,pr_tpdbaixa => ' '                        --Tipo de Baixa
-                                         ,pr_dtvencto => rw_crapcob.dtvencto    --Data Vencimento
-                                         ,pr_vldescto => rw_crapcob.vldescto    --Valor Desconto
-                                         ,pr_vlabatim => rw_crapcob.vlabatim    --Valor Abatimento
-                                         ,pr_flgdprot => rw_crapcob.flgdprot    --Flag Protesto
-                                         ,pr_tab_remessa_dda => vr_tab_remessa_dda  --tabela remessa
-                                         ,pr_tab_retorno_dda => vr_tab_retorno_dda  --Tabela memoria retorno DDA
-                                         ,pr_cdcritic        => vr_cdcritic           --Codigo Critica
-                                         ,pr_dscritic        => vr_dscritic);         --Descricao Critica
-        --Se ocorreu erro
-        IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          --Levantar Excecao
-          RAISE vr_exc_erro;
+        -- Se ainda não enviou registro de desbloqueio do boleto para a CIP
+        IF vr_flgdesbl = FALSE THEN
+        
+          -- enviar registro de desbloqueio do boleto para a CIP            
+          DDDA0001.pc_procedimentos_dda_jd (pr_rowid_cob => rw_crapcob.rowid      --ROWID da Cobranca
+                                           ,pr_tpoperad => 'A'                        --Tipo Operacao
+                                           ,pr_tpdbaixa => ' '                        --Tipo de Baixa
+                                           ,pr_dtvencto => rw_crapcob.dtvencto    --Data Vencimento
+                                           ,pr_vldescto => rw_crapcob.vldescto    --Valor Desconto
+                                           ,pr_vlabatim => rw_crapcob.vlabatim    --Valor Abatimento
+                                           ,pr_flgdprot => rw_crapcob.flgdprot    --Flag Protesto
+                                           ,pr_tab_remessa_dda => vr_tab_remessa_dda  --tabela remessa
+                                           ,pr_tab_retorno_dda => vr_tab_retorno_dda  --Tabela memoria retorno DDA
+                                           ,pr_cdcritic        => vr_cdcritic           --Codigo Critica
+                                           ,pr_dscritic        => vr_dscritic);         --Descricao Critica
+          --Se ocorreu erro
+          IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          END IF;
+        
         END IF;
         
         -- LOG de processo
