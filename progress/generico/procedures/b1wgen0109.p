@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0109.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 26/05/2018
+    Data    : Agosto/2011                        Ultima atualizacao: 21/03/2019
 
     Objetivo  : Tranformacao BO tela IMPREL
 
@@ -75,9 +75,14 @@
                              ocorrencias TIC) (Carlos)
 
 				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
-        
-                13/06/2019 - RITM0021049 Inclusao relatorios 392 e 572 (Yuri Mouts)
 
+              15/03/2019 - Adicionados relatorios em tela: 529, 530, 219 
+                          (Lucas H. - Supero)
+
+                21/03/2019 - Adicionado do campo periodo na tabela tt-nmrelato para utilizar no 
+                             relatorio 219. Acelera - Reapresentacao automática de cheques (Lombardi).
+
+                13/06/2019 - RITM0021049 Inclusao relatorios 392 e 572 (Yuri Mouts)
 
 ............................................................................*/
 
@@ -96,16 +101,17 @@ DEF VAR aux_returnvl AS CHAR                                        NO-UNDO.
 
 DEF VAR aux_lsrelato AS CHAR                                        NO-UNDO.
 DEF VAR aux_qtrelato AS INT                                         NO-UNDO.
-DEF VAR cmd          AS CHAR    FORMAT "x(37)" EXTENT 42            NO-UNDO.
-DEF VAR proglist     AS CHAR                   EXTENT 42            NO-UNDO.
-DEF VAR pac          AS LOGICAL                EXTENT 42 INIT TRUE  NO-UNDO.
+DEF VAR cmd          AS CHAR    FORMAT "x(37)" EXTENT 46            NO-UNDO.
+DEF VAR pac          AS LOGICAL                EXTENT 46 INIT TRUE  NO-UNDO.
+DEF VAR proglist     AS CHAR                   EXTENT 46            NO-UNDO.
+DEF VAR periodo      AS LOGICAL                EXTENT 46 INIT FALSE NO-UNDO.
 
 /* relatorios que aparecem na opcao D */
 ASSIGN aux_lsrelato = "crrl007,crrl011,crrl033,crrl055,crrl135,crrl145," +
-                      "crrl156,crrl211,crrl229,crrl266,crrl272," +
+                      "crrl156,crrl211,crrl219,crrl229,crrl266,crrl272," +
                       "crrl280,crrl294,crrl309,crrl345,crrl352,crrl353," +
                       "crrl362,crrl372,crrl426,crrl456,crrl458,crrl481," +
-                      "crrl529,crrl597,crrl598,crrl599,crrl626,crrl668,crrl620," +
+                      "crrl529,crrl530,crrl597,crrl598,crrl599,crrl626,crrl668,crrl620," +
                       "crrl276,crrl593"
        
        proglist[01] = "crrl007"
@@ -120,38 +126,42 @@ ASSIGN aux_lsrelato = "crrl007,crrl011,crrl033,crrl055,crrl135,crrl145," +
        proglist[10] = "crrl145"
        proglist[11] = "crrl156"
        proglist[12] = "crrl211"
-       proglist[13] = "crrl229"
-       proglist[14] = "crrl266"
-       proglist[15] = "crrl272"
-       proglist[16] = "crrl278"
-       proglist[17] = "crrl280"
-       proglist[18] = "crrl294"
-       proglist[19] = "crrl309"
-       proglist[20] = "crrl345"
-       proglist[21] = "crrl352"
-       proglist[22] = "crrl353"
-       proglist[23] = "crrl362"
-       proglist[24] = "crrl372"
-       proglist[25] = "crrl386"
-       proglist[26] = "crrl392"
-       proglist[27] = "crrl395"
-       proglist[28] = "crrl396"
-       proglist[29] = "crrl426"
-       proglist[30] = "crrl456"
-       proglist[31] = "crrl481"
-       proglist[32] = "crrl497"
-       proglist[33] = "crrl529"
-       proglist[34] = "crrl572"
-       proglist[35] = "crrl593"
-       proglist[36] = "crrl597"
-       proglist[37] = "crrl598"
-       proglist[38] = "crrl599"
-       proglist[39] = "crrl626"
-       proglist[40] = "crrl668"
-       proglist[41] = "crrl620_credito"
-       proglist[42] = "crrl620_matric"
-       proglist[43] = "crrl620_cadastro"
-       proglist[44] = "crrl692"
+       
+       proglist[13] = "crrl219"
+       
+       proglist[14] = "crrl229"       
+       proglist[15] = "crrl266"
+       proglist[16] = "crrl272"
+       proglist[17] = "crrl278"
+       proglist[18] = "crrl280"
+       proglist[19] = "crrl294"
+       proglist[20] = "crrl309"
+       proglist[21] = "crrl345"
+       proglist[22] = "crrl352"
+       proglist[23] = "crrl353"
+       proglist[24] = "crrl362"
+       proglist[25] = "crrl372"
+       proglist[26] = "crrl386"
+       proglist[27] = "crrl392"
+       proglist[28] = "crrl395"
+       proglist[29] = "crrl396"
+       proglist[30] = "crrl426"
+       proglist[31] = "crrl456"
+       proglist[32] = "crrl481"
+       proglist[33] = "crrl497"
+       proglist[34] = "crrl529"
+       proglist[35] = "crrl530"       
+       proglist[36] = "crrl572"
+       proglist[37] = "crrl593"
+       proglist[38] = "crrl597"
+       proglist[39] = "crrl598"
+       proglist[40] = "crrl599"
+       proglist[41] = "crrl626"
+       proglist[42] = "crrl668"
+       proglist[43] = "crrl620_credito"
+       proglist[44] = "crrl620_matric"
+       proglist[45] = "crrl620_cadastro"
+       proglist[46] = "crrl692"
       
        aux_qtrelato = EXTENT(proglist)
        
@@ -167,40 +177,48 @@ ASSIGN aux_lsrelato = "crrl007,crrl011,crrl033,crrl055,crrl135,crrl145," +
        cmd[10] = "145-Comprovantes pendentes           "
        cmd[11] = "156-Deb. nao efetuados emprest/cotas "
        cmd[12] = "211-Debitos p/ Banco por PA          "
-       cmd[13] = "229-Controle Cartoes Magne. Entregues"
-       cmd[14] = "266-Relacao Contratos Emprest./Descto" 
-       cmd[15] = "272-Abertura/Recadastramento de c/c  "
-       cmd[16] = "278-Negativos Qdo Integ. Apos Proces "
-       cmd[17] = "280-Novas matriculas                 "
-       cmd[18] = "294-Resumo diario Aplicacao/Resgate  "
-       cmd[19] = "309-Resumo das Devol. Bco do Brasil  " 
-       cmd[20] = "345-Subscricao de Capital nao Debitad"
-       cmd[21] = "352-CPF Sem Consulta.                "
-       cmd[22] = "353-Relacao Cheques Compe por PA     "
-       cmd[23] = "362-Cartas a serem Solicitadas p/PA  "
-       cmd[24] = "372-Saldo Conta Investimento(CI)     "
-       cmd[25] = "386-Diferencas de Caixas (Mensal)    "
-       cmd[26] = "392-Pedido de Talonarios             "
-       cmd[27] = "395-Cadastros de Conta Integracao    "
-       cmd[28] = "396-Criticas dos retornos C/C Integr."
-       cmd[29] = "426-Ctas Duplicadas (maiores 16 anos)"
-       cmd[30] = "456-Credito aplicacoes RDC           "
-       cmd[31] = "481-Poupanca a vencer em 5 dias uteis"
-       cmd[32] = "497-Tit. Dscto Debitados Beneficiario"
-       cmd[33] = "529-Cheque Devolvido (AILOS)         "
-       cmd[34] = "572-Pedido Formulario Continuo       "
-       cmd[35] = "593-Cheques nao digitalizados        "
-       cmd[36] = "597-Contratacao Seguro Prestamista   "
-       cmd[37] = "598-Emprestimos Sem Seg.Prestamista  "
-       cmd[38] = "599-Relac. Chq Compe p/PA apos proc  "
-       cmd[39] = "626-Relac. de ocorrencias TIC "
-       cmd[40] = "668-Emprestimos prefixados em atraso "
-       cmd[41] = "620-Docs nao Digitalizados_Credito   "
-       cmd[42] = "620-Docs nao Digitalizados_Matricula "
-       cmd[43] = "620-Docs nao Digitalizados_Cadastro  "
-       cmd[44] = "692-Limites de Credito Vencidos".
+       
+       cmd[13] = "219-Devolucoes do Dia                " 
+       
+       cmd[14] = "229-Controle Cartoes Magne. Entregues"        
+       cmd[15] = "266-Relacao Contratos Emprest./Descto" 
+       cmd[16] = "272-Abertura/Recadastramento de c/c  "
+       cmd[17] = "278-Negativos Qdo Integ. Apos Proces "
+       cmd[18] = "280-Novas matriculas                 "
+       cmd[19] = "294-Resumo diario Aplicacao/Resgate  "
+       cmd[20] = "309-Resumo das Devol. Bco do Brasil  " 
+       cmd[21] = "345-Subscricao de Capital nao Debitad"
+       cmd[22] = "352-CPF Sem Consulta.                "
+       cmd[23] = "353-Relacao Cheques Compe por PA     "
+       cmd[24] = "362-Cartas a serem Solicitadas p/PA  "
+       cmd[25] = "372-Saldo Conta Investimento(CI)     "
+       cmd[26] = "386-Diferencas de Caixas (Mensal)    "
+       cmd[27] = "392-Pedido de Talonarios             "
+       cmd[28] = "395-Cadastros de Conta Integracao    "
+       cmd[29] = "396-Criticas dos retornos C/C Integr."
+       cmd[30] = "426-Ctas Duplicadas (maiores 16 anos)"
+       cmd[31] = "456-Credito aplicacoes RDC"
+       cmd[32] = "481-Poupanca a vencer em 5 dias uteis"
+       cmd[33] = "497-Tit. Dscto Debitados Beneficiario"
+       cmd[34] = "529-Cheque Devolvido (AILOS)         "
+       cmd[35] = "530-Relaçao de Cheque Devolvidos     "
+       cmd[36] = "572-Pedido Formulario Continuo       "
+       cmd[37] = "593-Cheques nao digitalizados        "
+       cmd[38] = "597-Contratacao Seguro Prestamista   "
+       cmd[39] = "598-Emprestimos Sem Seg.Prestamista  "
+       cmd[40] = "599-Relac. Chq Compe p/PA apos proc  "
+       cmd[41] = "626-Relac. de ocorrencias TIC "
+       cmd[42] = "668-Emprestimos prefixados em atraso "
+       cmd[43] = "620-Docs nao Digitalizados_Credito   "
+       cmd[44] = "620-Docs nao Digitalizados_Matricula "
+       cmd[45] = "620-Docs nao Digitalizados_Cadastro  "
+       cmd[46] = "692-Limites de Credito Vencidos".
 
        pac[08] = FALSE.
+       pac[13] = FALSE.
+       
+       periodo[13] = TRUE.
+       
 
 FUNCTION CriticaArquivo RETURNS CHARACTER PRIVATE 
     ( INPUT par_nmarqimp AS CHAR ) FORWARD.
@@ -227,7 +245,8 @@ PROCEDURE Lista_Relatorios:
                tt-nmrelato.flgrelat = 
                           CAN-DO(aux_lsrelato, STRING(proglist[aux_contador]))
                tt-nmrelato.flgvepac = pac[aux_contador]
-               tt-nmrelato.nmdprogm = proglist[aux_contador].
+               tt-nmrelato.nmdprogm = proglist[aux_contador]
+               tt-nmrelato.periodo  = periodo[aux_contador].
     
     END.
 
@@ -245,6 +264,7 @@ PROCEDURE Gera_Impressao:
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrdrelat AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagenca AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdperiod AS INTE                           NO-UNDO.
 
     DEF  OUTPUT PARAM par_nmarqimp AS CHAR                          NO-UNDO.
     DEF  OUTPUT PARAM par_nmarqpdf AS CHAR                          NO-UNDO.
@@ -324,7 +344,29 @@ PROCEDURE Gera_Impressao:
                                       crabcop.dsdircop + "/rl 2> /dev/null").*/
                 END.
             
-            IF tt-nmrelato.flgvepac THEN
+            IF  SUBSTR(tt-nmrelato.nmdprogm,1,7) = "crrl219" THEN
+                DO:
+                  ASSIGN aux_nmarqimp = "/usr/coop/" + crabcop.dsdircop +
+                                        "/rl/" +  tt-nmrelato.nmdprogm  +
+                                        "_" + STRING(par_cdperiod) +
+                                        ".lst" NO-ERROR.
+                  
+                  IF SEARCH(aux_nmarqimp) = ? THEN
+                     DO:
+                        IF par_cddopcao = "C" THEN
+                           DO:
+                              ASSIGN aux_dscritic = CriticaArquivo
+                                                   (INPUT aux_nmarqimp).
+                              LEAVE Imprime. 
+
+                           END.
+                        ELSE
+                           NEXT.
+                        
+                     END.
+
+               END. 
+            ELSE IF tt-nmrelato.flgvepac THEN
                DO:
                   ASSIGN aux_nmarqimp = "/usr/coop/" + crabcop.dsdircop +
                                         "/rl/" +  tt-nmrelato.nmdprogm  +
