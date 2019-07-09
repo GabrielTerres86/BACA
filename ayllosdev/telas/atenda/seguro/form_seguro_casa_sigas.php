@@ -91,8 +91,8 @@
 	</div>
 </form>
 <div id="divBotoes">
-	<input type="image" class="rotulo" id="btVoltar" 			src="<?php echo $UrlImagens; ?>botoes/voltar.gif"/>
-    <input type="image" class="rotulo" id="btCancelarSeguroSigas" 	src="<?php echo $UrlImagens; ?>botoes/cancelar.gif" onClick="cancelarSeguroSigas(); return false;" />
+	<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>
+    <a href="#" class="botao" onclick="cancelarSeguroSigas(); return false;" ><? echo utf8ToHtml('Alterar status para cancelado'); ?></a>
 </div>
 <script type="text/javascript">
 	hideMsgAguardo();
