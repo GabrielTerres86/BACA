@@ -376,12 +376,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
                                     ,pr_tab_tbepr_motivo_nao_aprv IN  typ_tab_tbepr_motivo_nao_aprv --> Temporary table dos motivos com bloqueio
                                     ,pr_tab_arquivo               IN  typ_tab_arquivo               --> Temporary table com os registros processados
                                     ,pr_des_erro                  OUT VARCHAR2);                    --> Retorno da crítica (erro)
-
-  -- Procedure para aprovar liberação de carga manual após rating
-  PROCEDURE pc_libera_manual_rating(pr_cdcooper        IN crapass.cdcooper%TYPE         --> Código da cooperativa
-                                   ,pr_idcarga         IN crapcpa.iddcarga%TYPE         --> Código do carga manual
-                                   ,pr_des_erro        OUT VARCHAR2); 
-  
+									  
   -- Procedure para aprovar liberação de carga manual após rating
   PROCEDURE pc_libera_manual_rating(pr_cdcooper        IN crapass.cdcooper%TYPE         --> Código da cooperativa
                                    ,pr_idcarga         IN crapcpa.iddcarga%TYPE         --> Código do carga manual
