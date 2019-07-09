@@ -25,9 +25,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_gera_msg_preposto(pr_cdcooper  IN crapopi.
         FROM crapsnh c
         WHERE c.cdcooper = pr_cdcooper AND
               c.nrdconta = pr_nrdconta AND
-              c.tpdsenha = 1 AND
-              c.cdsitsnh = 1;
-        rw_crapsnh cr_crapsnh%ROWTYPE;
+              c.tpdsenha = 1           AND
+              -- So retorna os CPF/CNPJ dos procuradores setados como assinatura conjunta
+              exists (
+                      SELECT 
+                             1
+                        FROM 
+                             CRAPPOD
+                       WHERE 
+                             CRAPPOD.CDDPODER = 10 -- Poder de assinatura conjunta          
+                         AND CRAPPOD.FLGCONJU = 1
+                         AND CRAPPOD.Cdcooper = c.cdcooper
+                         AND CRAPPOD.Nrdconta = c.nrdconta
+                         AND CRAPPOD.Nrcpfpro = c.nrcpfcgc);
+                        rw_crapsnh cr_crapsnh%ROWTYPE;
         
     CURSOR cr_check_msg (pr_cdcooper crapopi.cdcooper%TYPE,
                          pr_nrdconta crapopi.nrdconta%TYPE,
@@ -200,6 +211,22 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_gera_msg_preposto(pr_cdcooper  IN crapopi.
                                 pr_vllimflp); /* se for o mesmo cpf, já aprova a data */
                                 
                         EXCEPTION
+                          WHEN DUP_VAL_ON_INDEX THEN
+                            BEGIN
+                            UPDATE CECRED.TBCC_OPERAD_APROV t
+                            SET t.flgaprovado      = vr_aprovado,
+                                t.dhaprovacao      = vr_dataapro
+                            WHERE t.cdcooper       = pr_cdcooper
+                              AND t.nrdconta       = pr_nrdconta
+                              AND t.nrcpf_preposto = vr_nrcpfpre -- Somente atualiza o preposto que está chamando a rotina
+                              AND t.nrcpf_operador = pr_nrcpfope
+                              AND t.dhaprovacao    is null;-- Só vai atualizar se não foi atualizado ainda
+                            EXCEPTION
+                              WHEN OTHERS THEN                              
+                                vr_dscritic := 'SQLCODE: ' || SQLCODE || ' ,ERROR: ' || SQLERRM;
+                                ROLLBACK;
+                                RAISE vr_exc_erro;
+                            END;
                           WHEN OTHERS THEN
                             vr_dscritic := 'SQLCODE: ' || SQLCODE || ' ,ERROR: ' || SQLERRM;
                             ROLLBACK;
