@@ -1448,7 +1448,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_caddes IS
         vr_nmrescop    crapcop.nmrescop%TYPE; -- Razao Social da cooperativa
         vr_nmextcop    crapcop.nmextcop%TYPE; -- Nome da cooperativa
         vr_nrdocnpj    crapcop.nrdocnpj%TYPE; -- CNPJ da cooperativa
-        vr_dsmanual    VARCHAR2(400);
+        vr_dsmanual    VARCHAR2(4000);
+        vr_dsdirmnl    VARCHAR2(100);
     
         CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
             SELECT nmrescop
@@ -1467,6 +1468,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_caddes IS
              WHERE cddesenvolvedor = pr_cddesenvolvedor;
         rw_checkdesen cr_checkdesen%ROWTYPE;
     
+        -- Buscar os manuais a serem enviados 
+        CURSOR cr_craptab IS 
+          SELECT tab.dstextab
+            FROM craptab tab
+           WHERE tab.nmsistem = 'CRED'
+             AND tab.tptabela = 'GENERI'
+             AND tab.cdempres = 0
+             AND tab.cdacesso = 'MANUAL_UTILIZA_API';
+             
     BEGIN
         pr_des_erro := 'OK';
         -- Extrai dados do xml
@@ -1518,18 +1528,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_caddes IS
             RAISE vr_exc_saida;
         END IF;
     
-        vr_dsmanual := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                                ,pr_cdcooper => 0
-                                                ,pr_cdacesso => 'MANUAL_UTILIZACAO_API');
+        -- Busca o diretório onde estão diponibilizados os manuais
+        vr_dsdirmnl := gene0001.fn_diretorio(pr_tpdireto => 'M'
+                                            ,pr_cdcooper => 3); -- Os manuais ficam no micros da central
+                                            
+        -- Adicionar o subdiretório
+        vr_dsdirmnl := vr_dsdirmnl || '/API/manualAPI/';
+        
+        -- Limpar
+        vr_dsmanual := NULL;
+        
+        -- Percorrer os manuais cadastrados 
+        FOR rg_craptab IN cr_craptab LOOP
+          -- Adicionar os manuais separados por ";"
+          IF vr_dsmanual IS NULL THEN
+            vr_dsmanual := vr_dsdirmnl||rg_craptab.dstextab;
+          ELSE
+            vr_dsmanual := vr_dsmanual||';'||vr_dsdirmnl||rg_craptab.dstextab;
+          END IF;
+        END LOOP;
     
         vr_texto_email := '<html style="font-size: 10pt; font-family: Tahoma,Verdana,Arial;">' ||
-                          'Caro desenvolvedor!' || '<br />' || '<br />' ||
-                          'Conforme solicitado, estamos disponibilizando o Manual T&eacute;cnico para configura&ccedil;&atilde;o de seu sistema com a API do Sistema Ailos.<br />' ||
-                          'Neste manual encontram-se as informa&ccedil;&otilde;es t&eacute;cnicas e descri&ccedil;&atilde;o das responsabilidades das partes, sobre a confidencialidade das informa&ccedil;&otilde;es.' ||
-                          '<br />' || '<br />' ||
-                          'Gentileza contatar o n&uacute;cleo de Cobran&ccedil;a Banc&aacute;ria da Central Ailos e informar a frase abaixo para realizar a valida&ccedil;&atilde;o cadastral e liberar a <u>Chave de acesso UUID</u>.' ||
+                          'Caro desenvolvedor,' || '<br />' || '<br />' ||
+                          'Um de seus clientes solicitou a integra&ccedil;&atilde;o do seu sistema com a API do Sistema Ailos.<br />' ||
+                          'Estamos disponibilizando em anexo os Manuais T&eacute;cnicos para que voc&ecirc; possa realizar as configura&ccedil;&otilde;es necess&aacute;rias para utiliza&ccedil;&atilde;o das APIs.<br />' ||
+                          '<br />' || 
+                          'Em breve voc&ecirc; estar&aacute; recebendo um e-mail da <u>Equipe de Homologa&ccedil;&atilde;o</u> com os acessos necess&aacute;rios para implementa&ccedil;&atilde;o da API no ambiente <strong>Sandbox</strong> junto a seu protocolo de atendimento.' ||
                           '<br /><br />' ||
-                          'Frase do Desenvolvedor: <strong style="font-size: 16pt; font-family: Sans-serif,Arial,Tahoma,Arial;">' ||
+                          'Ap&oacute;s a implementa&ccedil;&atilde;o da API em seu sistema, entre em contato com a <u>Equipe de Homologa&ccedil;&atilde;o</u> da Ailos e informe o c&oacute;digo abaixo junto ao protocolo de atendimento, para realizarmos a valida&ccedil;&atilde;o cadastral e disponibilizarmos os acessos de Produ&ccedil;&atilde;o.' ||
+                          '<br /><br />' ||
+                          'C&oacute;digo do Desenvolvedor: <strong style="font-size: 16pt; font-family: Sans-serif,Arial,Tahoma,Arial;">' ||
                           rw_checkdesen.dsfrase_desenvolvedor || '</strong>' || '<br />' || '<br />' ||
                           'Atenciosamente,' || '<br />____________________________<br />' ||
                           '<strong style="font-size: 10pt; font-family: Verdana,Tahoma,Arial; color: darkblue;">Cobran&ccedil;a Banc&aacute;ria</strong>' ||
