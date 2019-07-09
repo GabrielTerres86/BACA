@@ -9,7 +9,10 @@ declare
   vr_qtdreg01      NUMBER(10) := 0;
   vr_qtdreg04      NUMBER(10) := 0;  
   vr_qtdreg05      NUMBER(10) := 0;    
-  vr_nrseq04       NUMBER(10) := 0;    
+  vr_qtdreg09      NUMBER(10) := 0;      
+  vr_qtdreg12      NUMBER(10) := 0;      
+  vr_qtdreg13      NUMBER(10) := 0;
+  vr_qtdreg41      NUMBER(10) := 0;        
   vr_flgdigok1     BOOLEAN;
   vr_nrcalcul      NUMBER;
   vr_conta         VARCHAR2(10);
@@ -19,7 +22,7 @@ declare
   vr_nrapolice     NUMBER(10);
   vr_nrdocmto      VARCHAR2(11);
   vr_sucursal      VARCHAR2(3);  
-  vr_cdcooper      crapcop.cdcooper%TYPE := 8;
+  vr_cdcooper      crapcop.cdcooper%TYPE := 13;
   vr_empresa       VARCHAR2(2) := '03'; -- AILOS
   vr_seqailos      NUMBER(10) := 0;
   
@@ -469,7 +472,6 @@ BEGIN
     END CASE;           
 
     vr_nrseq    := vr_nrseq + 1;
-    vr_nrseq04  := 0;
     vr_qtdreg01 := vr_qtdreg01 + 1;
     vr_seqailos := vr_seqailos + 1;
     
@@ -486,7 +488,8 @@ BEGIN
     vr_nrdocmto := lpad('01'  || 
                         '003' ||
                         to_char(vr_seqailos,'fm000000'), 11, '0');
-    
+                        
+    -- Registro Contrato
     pc_print('01' ||                              -- Tipo de Registro (Constante ‘01’)
            lpad(to_char(vr_nrseq),9,'0') ||       -- Número Sequencial do Registro
            --lpad(to_char(rw.nrctrseg), 11, '0') || -- "Número do Documento - (EESSSPPPPPP)
@@ -516,12 +519,12 @@ BEGIN
            LPAD(to_char(round(rw.vlpreseg - (rw.vlpreseg*0.0738),2),'fm999999999999.90'), 15, '0') ||      -- Valor de Prêmio Líquido Total
            LPAD(to_char(rw.vlpreseg * 12,'fm999999999999.90'), 15, '0') || -- Valor de Prêmio Anual Total
            RPAD('0.00', 15, '0')               || -- Valor do Custo de Apólice
-           RPAD('0', 15, '0')                  || -- Valor do IOF
+           LPAD(to_char(round(rw.vlpreseg*0.0738,2),'fm999999999999.90'), 15, '0') ||      -- Valor do IOF
            'N'                                 || -- Cód. Modo de Pagamento (‘N’ormal, ‘P’ré-fixado)
            '7'                                 || -- Cód. do Tipo de Pagto ( 1 = Sem antecipação , 2 = Antecipado )
                                                   -- *	Sem Estipulante: ( 5 = Sem antecipação , 6 = Antecipado )
                                                   -- *	Com Estipulante ( 7 = Sem antecipação , 8 = Antecipado )
-           rpad(nvl(rw.fone, ' '), 12, ' ')              || -- Telefone do Segurado
+           rpad(nvl(rw.fone, ' '), 12, ' ')    || -- Telefone do Segurado
            '000000'                            || -- Data de Ativação Vencimento (somente para CNH)
            LPAD(' ', 12, ' ')                  || -- Espaço Disponível
            RPAD(substr(rw.endereco,1,40),40,' ') || -- Endereço do Segurado ( Incluindo o número )
@@ -622,7 +625,7 @@ BEGIN
     ); 
 
 
-    vr_nrseq := vr_nrseq + 1;
+--    vr_nrseq := vr_nrseq + 1;
 --    vr_qtdreg05 := vr_qtdreg05 + 1;    
 --    vr_nrseq05  := vr_nrseq05 + 1;
     
@@ -647,9 +650,10 @@ BEGIN
            'N'                                           || --Flag Divergência de cálculo (S/N)  Texto[001]
            LPAD(' ', 304, ' ') --Espaço Disponível  Texto[306]
     ); */
-    
+
+    -- Registro Local ( Ramos diferentes de Casco/Carroceria - RCF - APP - Outros ramos de Automóvel )
+    vr_nrseq    := vr_nrseq + 1;    
     vr_qtdreg04 := vr_qtdreg04 + 1;    
-    vr_nrseq04  := vr_nrseq04 + 1;    
     
     pc_print(    
            '04'                                || -- Tipo de Registro (Constante ‘04’) 	 Inteiro[002]
@@ -693,7 +697,144 @@ BEGIN
            lpad(' ', 15, ' ')                    -- telefone contato para Inspeção	Texto[015]           
     ); 
     
+    -- Registro Cláusulas (Cobertura)    
+    vr_nrseq    := vr_nrseq + 1;    
+    vr_qtdreg09 := vr_qtdreg09 + 1;    
     
+    pc_print(    
+           '09'                                || -- Tipo de Registro (Constante ‘09’)	 Inteiro[2]
+           lpad(to_char(vr_nrseq),9,'0') ||       -- Número Sequencial do Registro	Inteiro[009]
+           vr_nrdocmto                         || -- "Número do Documento - (EESSSPPPPPP)
+                                                  -- EE => Empresa     SSS => Sucursal     PPPPPP => Num. Proposta"	Texto[011]
+           rpad(' ', 14, ' ')                  || -- Espaço Disponível   Texto[014]
+           '14'                                || -- Código do Ramo (  Tabela a Enviar )  Inteiro[002] -- 14 (Compreensivo Residencial)
+           '12'                                || -- Código da Modalidade ( Tabela a Enviar )  Inteiro[002] 
+           lpad('1', 6, '0')                   || -- Número do Local  Inteiro[006] ?????
+    
+           lpad('0', 6, '0')                   || -- Número do Item	Inteiro[6]
+           lpad(to_char(rw.tpplaseg) , 4, '0') || -- Código da Cláusula/Cobertura ( Tabela a Enviar )	Texto[4]
+           LPAD(to_char(0,'fm999999999999.90'), 15, '0') ||      -- Valor do Risco	Valor
+           LPAD(to_char(0,'fm999999999999.90'), 15, '0') ||      -- Valor da Importância Segurada	Valor
+           LPAD(to_char(0,'fm999999999999.90'), 15, '0') ||      -- Valor da Franquia	Valor
+           LPAD(to_char(0,'fm999999999999.90'), 15, '0') ||      -- Valor do Prêmio da Cláusula	Valor
+           LPAD(to_char(0,'fm999999999.99990'), 12, '0') ||      -- Taxa da Cláusula	Percentual
+           LPAD(to_char(0,'fm999999999999.90'), 15, '0') ||      -- Valor do Desconto / Agravamento	Valor
+           '00'                                || -- "Código de Franquia (Somente para proposta de produto, conforme a respectiva tabela)"	Inteiro[2]
+           '00'                                || -- "Código do Período Indenitário (Opcional, conforme a respectiva tabela )"	Inteiro[2]
+           '  '                                || -- "Código de Bônus (Somente para proposta de produto, conforme a respectiva tabela)"	Texto[2]
+           LPAD(to_char(0,'fm999999999.99990'), 12, '0') ||      -- Taxa de Desc./Agrav. (Somente desconto de Shopping  Center)	Percentual
+           LPAD(to_char(0,'fm999999999.99990'), 12, '0') ||      -- Taxa de Desc./Agrav. (Somente desconto Regional)	Percentual
+           'N'                                 || -- Flag Divergência de cálculo (S/N)	Texto[1]
+           LPAD(to_char(0,'fm999999999999.90'), 15, '0') ||      -- Valor do Prêmio Anual 	Valor
+           LPAD(to_char(0,'fm999999999999.90'), 15, '0') ||      -- Valor do Custo Assistência	Valor
+           LPAD(to_char(0,'fm999999999999.90'), 15, '0') ||      -- Valor do Custo Recuperacao Assistência	Valor
+           LPAD(to_char(0,'fm999999999999.90'), 15, '0') ||      -- Valor do Ajuste Franquia em Função do Pacote Assistência	Valor
+           lpad(' ', 266, ' ')                  -- Espaço Disponível	Texto[327]
+    );
+    
+    
+    -- Registro Comissionamento
+    vr_nrseq    := vr_nrseq + 1;        
+    vr_qtdreg12 := vr_qtdreg12 + 1;
+    pc_print(    
+           '12'                                || -- Tipo de Registro (Constante ‘04’) 	 Inteiro[002]
+           lpad(to_char(vr_nrseq),9,'0') ||       -- Número Sequencial do Registro	Inteiro[009]
+           vr_nrdocmto                         || -- "Número do Documento - (EESSSPPPPPP)
+                                                  -- EE => Empresa     SSS => Sucursal     PPPPPP => Num. Proposta"	Texto[011]
+           rpad(' ', 14, ' ')                  || -- Espaço Disponível   Texto[014]
+           '14'                                || -- Código do Ramo (  Tabela a Enviar )  Inteiro[002] -- 14 (Compreensivo Residencial)
+    
+           'C'                                 || -- Tipo do Primeiro Corretor   ( “C” ou “F”)	Texto[001]
+           ' '                                 || -- Tipo do Segundo Corretor  ( “C” ou “F”)	Texto[001]
+           ' '                                 || -- Tipo do Terceiro Corretor   ( “C” ou “F”)	Texto[001]
+           ' '                                 || -- Tipo do Quarto Corretor     ( “C” ou “F”)	Texto[001]
+           ' '                                 || -- Tipo do Quinto Corretor     ( “C” ou “F”)	Texto[001]
+           lpad('500070599',9,'0')             || -- Código do Primeiro Corretor	Inteiro[009]
+           lpad('0',9,'0')                     || -- Código do Segundo Corretor ( se 0 = não tem )	Inteiro[009]
+           lpad('0',9,'0')                     || -- Código do Terceiro Corretor ( se 0 = não tem )	Inteiro[009]
+           lpad('0',9,'0')                     || -- Código do Quarto Corretor ( se 0 = não tem )	Inteiro[009]
+           lpad('0',9,'0')                     || -- Código do Quinto Corretor ( se 0 = não tem )	Inteiro[009]
+           ' '                                 || -- Tipo do Primeiro Inspetor   ( se existir, fixo “I”)	Texto[001]
+           ' '                                 || -- Tipo do Segundo Inspetor   ( se existir, fixo “I”)	Texto[001]
+           ' '                                 || -- Tipo do Terceiro Inspetor    ( se existir, fixo “I”)	Texto[001]
+           ' '                                 || -- Tipo do Quarto Inspetor      ( se existir, fixo “I”)	Texto[001]
+           ' '                                 || -- Tipo do Quinto Inspetor     ( se existir, fixo “I”)	Texto[001]
+           lpad('0',9,'0')                     || -- Código do Primeiro Inspetor ( se 0 = não tem )	Inteiro[009]
+           lpad('0',9,'0')                     || -- Código do Segundo Inspetor ( se 0 = não tem )	Inteiro[009]
+           lpad('0',9,'0')                     || -- Código do Terceiro Inspetor  ( se 0 = não tem )	Inteiro[009]
+           lpad('0',9,'0')                     || -- Código do Quarto Inspetor    ( se 0 = não tem )	Inteiro[009]
+           lpad('0',9,'0')                     || -- Código do Quinto Inspetor    ( se 0 = não tem )	Inteiro[009]
+           ' '                                 || -- Tipo do Primeiro Interno ( se existir, fixo “P”)	Texto[001]
+           ' '                                 || -- Tipo do Segundo Interno ( se existir, fixo “P”)	Texto[001]
+           ' '                                 || -- Tipo do Terceiro Interno  ( se existir, fixo “P”)	Texto[001]
+           ' '                                 || -- Tipo do Quarto Interno    ( se existir, fixo “P”)	Texto[001]
+           ' '                                 || -- Tipo do Quinto Interno    ( se existir, fixo “P”)	Texto[001]
+           lpad('0', 9, '0')                   || -- Código do Primeiro Interno ( se 0 = não tem )	Inteiro[009]
+           lpad('0', 9, '0')                   || -- Código do Segundo Interno ( se 0 = não tem )	Inteiro[009]
+           lpad('0', 9, '0')                   || -- Código do Terceiro Interno ( se 0 = não tem )	Inteiro[009]
+           lpad('0', 9, '0')                   || -- Código do Quarto Interno   ( se 0 = não tem )	Inteiro[009]
+           lpad('0', 9, '0')                   || -- Código do Quinto Interno   ( se 0 = não tem )	Inteiro[009]
+           LPAD(to_char(25,'fm999999.99990'), 12, '0') || -- Percentual de Comissão do Primeiro Corretor	Percentual
+           LPAD('0', 12, '0')                  || -- Percentual de Comissão do Segundo Corretor	Percentual
+           LPAD('0', 12, '0')                  || -- Percentual de Comissão do Terceiro Corretor	Percentual
+           LPAD('0', 12, '0')                  || -- Percentual de Comissão do Quarto Corretor	Percentual
+           LPAD('0', 12, '0')                  || -- Percentual de Comissão do Quinto Corretor	Percentual
+           'S'                                 || -- Identificar Imprime Primeiro Corretor na Apólice ( S/N )	Texto[001]
+           ' '                                 || -- Identificar Imprime Segundo Corretor na Apólice ( S/N )	Texto[001]
+           ' '                                 || -- Identificar Imprime Terceiro Corretor na Apólice ( S/N )	Texto[001]
+           ' '                                 || -- Identificar Imprime Quarto  Corretor na Apólice ( S/N )	Texto[001]
+           ' '                                 || -- Identificar Imprime Quinto Corretor na Apólice ( S/N )	Texto[001]
+           lpad('1020527411', 14, '0')         || -- Código SUSEP do Primeiro Corretor	Inteiro[014]
+           lpad(' ', 14, ' ')                  || -- Código SUSEP do Segundo Corretor ( se 0 = não tem )	Inteiro[014]
+           lpad(' ', 14, ' ')                  || -- Código SUSEP do Terceiro Corretor ( se 0 = não tem )	Inteiro[014]
+           lpad(' ', 14, ' ')                  || -- Código SUSEP do Quarto Corretor ( se 0 = não tem )	Inteiro[014]
+           lpad(' ', 14, ' ')                  || -- Código SUSEP do Quinto Corretor ( se 0 = não tem )	Inteiro[014]
+           ' '                                 || -- Tipo Pessoa do Primeiro Corretor (*)	Texto[001]
+           ' '                                 || -- Tipo Pessoa do Segundo Corretor (branco se não tem) (*)	Texto[001]
+           ' '                                 || -- Tipo Pessoa do Terceiro Corretor (branco se não tem) (*)	Texto[001]
+           ' '                                 || -- Tipo Pessoa do Quarto Corretor (branco se não tem) (*)	Texto[001]
+           ' '                                 || -- Tipo Pessoa do Quinto Corretor (branco se não tem) (*)	Texto[001]
+           lpad(' ', 172, ' ')                 -- Espaço Disponível	Texto[172]
+    );
+    
+
+    -- Registro Comissionamento
+    vr_nrseq    := vr_nrseq + 1;        
+    vr_qtdreg13 := vr_qtdreg13 + 1;
+    pc_print(    
+           '13'                                || -- Tipo de Registro (Constante ‘13’)	 Inteiro[002]
+           lpad(to_char(vr_nrseq),9,'0') ||       -- Número Sequencial do Registro	Inteiro[009]
+           vr_nrdocmto                         || -- "Número do Documento - (EESSSPPPPPP)
+                                                  -- EE => Empresa     SSS => Sucursal     PPPPPP => Num. Proposta"	Texto[011]
+           rpad(' ', 14, ' ')                  || -- Espaço Disponível   Texto[014]
+
+           RPAD(substr(rw.endereco || ' ' || rw.nrendres,1,40),40,' ') || -- Endereço de Cobrança do Segurado ( Incluindo o número )	Texto[040]
+           RPAD(SUBSTR(rw.nmcidade,1,20),20,' ') || -- Cidade de Cobrança do Segurado	Texto[020]
+           to_char(rw.nrcepend,'fm00000000')   || -- CEP de Cobrança do Segurado	Texto[008]
+           rpad(SUBSTR(rw.cdufresd,1,2),2,' ') || -- UF de Cobrança do Segurado	Texto[002]         
+           rpad(nvl(rw.fone, ' '), 12, ' ')    || --"Telefone de Cobrança do Segurado (No formato 
+                                                  --‘(XXXX)XXXX-XXXX’ sem parênteses e hífem)"	Texto[012]
+           rpad(' ', 4, ' ')                   || -- Ramal de Cobrança do Segurado	Texto[004]
+           rpad(' ', 378, ' ')                    -- Espaço Disponível	Texto[378]
+    );
+
+    -- "Registro Dados Complementares Pessoa Física - Circular 380. (Enviar,  logo após o Registro ‘01’)"
+    vr_nrseq    := vr_nrseq + 1;        
+    vr_qtdreg41 := vr_qtdreg41 + 1;
+    pc_print(    
+           '41'                                || -- Tipo de Registro (Constante ‘04’) 	 Inteiro[002]
+           lpad(to_char(vr_nrseq),9,'0') ||       -- Número Sequencial do Registro	Inteiro[009]
+           vr_nrdocmto                         || -- "Número do Documento - (EESSSPPPPPP)
+                                                  -- EE => Empresa     SSS => Sucursal     PPPPPP => Num. Proposta"	Texto[011]
+    
+           lpad('0', 6, '0')                   || -- Cod. CBO Interno	Inteiro[006]
+           lpad('0', 2, '0')                   || -- Cod.Grupo Faixa Salarial 	Inteiro[002]
+           lpad('0', 2, '0')                   || -- Cod.Faixa Salarial 	Inteiro[002]
+           'MR'                                || -- Código Sistema (constante = ‘MR’)	Texto[002]
+           LPAD(to_char(rw.nrcpfcgc),14,'0')   || -- CPF ou CNPF Segurado	Texto[014]
+           RPAD(substr(rw.nmprimtl,1,40), 40, ' ') || -- Nome ou Razão Social Segurado	Texto[040]
+           lpad(' ', 412, ' ')                 -- Espaço Disponível	Texto[362]
+    );       
                        
   END LOOP;
 
@@ -711,11 +852,11 @@ BEGIN
            LPAD('0',  10, '0')           ||       -- Quantidade de Registros do Tipo 06
            LPAD('0',  10, '0')           ||       -- Quantidade de Registros do Tipo 07
            LPAD('0',  10, '0')           ||       -- Quantidade de Registros do Tipo 08
-           LPAD('0',  10, '0')           ||       -- Quantidade de Registros do Tipo 09
+           LPAD(vr_qtdreg09, 10, '0')           ||       -- Quantidade de Registros do Tipo 09
            LPAD('0',  10, '0')           ||       -- Quantidade de Registros do Tipo 10
            LPAD('0',  10, '0')           ||       -- Quantidade de Registros do Tipo 11           
-           LPAD('0',  10, '0')           ||       -- Quantidade de Registros do Tipo 12
-           LPAD('0',  10, '0')           ||       -- Quantidade de Registros do Tipo 13
+           LPAD(vr_qtdreg12, 10, '0')           ||       -- Quantidade de Registros do Tipo 12
+           LPAD(vr_qtdreg13, 10, '0')           ||       -- Quantidade de Registros do Tipo 13
            LPAD('0',  10, '0')           ||       -- Quantidade de Registros do Tipo 14
            LPAD('0',  10, '0')           ||       -- Quantidade de Registros do Tipo 15
            LPAD('0',  10, '0')           ||       -- Quantidade de Registros do Tipo 16
@@ -728,7 +869,7 @@ BEGIN
 
   pc_print('',TRUE);
   
-  DBMS_XSLPROCESSOR.CLOB2FILE(vr_dslobdev, '/micros/cecred/rafael/', 'teste_hdi.txt', NLS_CHARSET_ID('UTF8'));    
+  DBMS_XSLPROCESSOR.CLOB2FILE(vr_dslobdev, '/micros/cecred/rafael/', 'hdi_coop_' || to_char(vr_cdcooper) || '.txt', NLS_CHARSET_ID('UTF8'));    
   
   -- Liberando a memória alocada pro CLOB
   dbms_lob.close(vr_dslobdev);

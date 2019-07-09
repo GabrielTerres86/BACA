@@ -15,7 +15,8 @@ declare
   vr_dvagencia     VARCHAR2(1);
   vr_nrdapoli      VARCHAR(7);
   vr_modulo        VARCHAR2(1);
-  vr_sub           VARCHAR2(2);
+  vr_sub           VARCHAR2(3);
+  vr_cdcooper      crapcop.cdcooper%TYPE := 8;
 
   CURSOR cr_crapseg (pr_cdcooper IN crapseg.cdcooper%TYPE) IS  
     SELECT seg.rowid    crapseg_rowid
@@ -25,7 +26,7 @@ declare
          , seg.tpseguro
          , seg.cdsegura
          , SEG.cdsitseg
-         , seg.cdagenci
+         , ass.cdagenci
          , seg.nrdconta
          , seg.nrctrseg
          , seg.dtinivig
@@ -34,7 +35,7 @@ declare
          , seg.vlpreseg * 100 vlpreseg
          , seg.dtmvtolt
          , seg.qtprepag
-         , seg.dtprideb
+         , wseg.dtprideb
          , seg.qtparcel
          , seg.tpplaseg
          , seg.progress_recid
@@ -94,7 +95,7 @@ declare
          , wseg.cdufresd
          , wseg.complend
          , wseg.nmbairro
-         , wseg.nrendres
+         , decode(wseg.nrendres,0,NULL,wseg.nrendres) nrendres
          , cop.cdagectl
          , v.nrdocumento
          , v.dtemissao_documento
@@ -344,10 +345,10 @@ BEGIN
            'CÓDIGO PDV (PA);' || 
            'NOME CORRENTISTA;' || 
            'CPF CORRENTISTA;' || 
-           'DATA VENCIMENTO'  ||
+           'DATA VENCIMENTO;'  ||
            'DATA INICIO VIGENCIA');
   
-  FOR rw IN cr_crapseg (pr_cdcooper => 8) LOOP
+  FOR rw IN cr_crapseg (pr_cdcooper => vr_cdcooper) LOOP
 
     vr_nrseq := vr_nrseq + 1;
     vr_qtdreg01 := vr_qtdreg01 + 1;
@@ -387,46 +388,21 @@ BEGIN
     END CASE;
     
   CASE rw.cdcooper 
-    WHEN  1 THEN vr_sub := '13';
-    WHEN  2 THEN vr_sub := '8';
-    WHEN  5 THEN vr_sub := '1';
-    WHEN  6 THEN vr_sub := '10';
-    WHEN  7 THEN vr_sub := '2';
-    WHEN  8 THEN vr_sub := '9';
-    WHEN  9 THEN vr_sub := '6';
-    WHEN 10 THEN vr_sub := '3';
-    WHEN 11 THEN vr_sub := '4';
-    WHEN 12 THEN vr_sub := '11';
-    WHEN 13 THEN vr_sub := '12';
-    WHEN 14 THEN vr_sub := '5';
-    WHEN 16 THEN vr_sub := '7';                    
+    WHEN  1 THEN vr_sub := '013';
+    WHEN  2 THEN vr_sub := '008';
+    WHEN  5 THEN vr_sub := '001';
+    WHEN  6 THEN vr_sub := '010';
+    WHEN  7 THEN vr_sub := '002';
+    WHEN  8 THEN vr_sub := '009';
+    WHEN  9 THEN vr_sub := '006';
+    WHEN 10 THEN vr_sub := '003';
+    WHEN 11 THEN vr_sub := '004';
+    WHEN 12 THEN vr_sub := '011';
+    WHEN 13 THEN vr_sub := '012';
+    WHEN 14 THEN vr_sub := '005';
+    WHEN 16 THEN vr_sub := '007';                    
   END CASE;            
-  
-  pc_print('MATRICULA OU Nº CERTIFICADO ANTERIOR;' || 
-           'NOME;' || 
-           'DATA DE NASC;' || 
-           'CPF;' || 
-           'Estado Civil;' || 
-           'SEXO;' || 
-           'NOME CONJUGE;' || 
-           'DT NASC CONJUGE;' || 
-           'CPF CONJUGE;' || 
-           'TIPO DE LOGRADOURO;' || 
-           'ENDERECO;' || 
-           'Nº ENDERECO;' || 
-           'COMPLEMENTO;' || 
-           'BAIRRO;' || 
-           'CIDADE;' || 
-           'UF;' || 
-           'CEP;' || 
-           'DDD;' || 
-           'TELEFONE;' || 
-           'DDD CELULAR;' || 
-           'TELEFONE CELULAR;' || 
-           'EMAIL;' || 
-           'CAPITAL TITULAR VG;' || 
-           'CAPITAL CONJUGE VG;' || 
-  
+    
     
   pc_print( vr_nrdapoli                         || ';' || -- MATRICULA OU Nº CERTIFICADO ANTERIOR;
            substr(rw.nmdsegur,1,60)             || ';' || -- NOME
@@ -440,9 +416,9 @@ BEGIN
            ' '                                  || ';' || -- tipo de logradouro
            substr(rw.endereco,1,40)             || ';' || -- ENDERECO
            to_char(rw.nrendres)                 || ';' || -- Nº ENDERECO           
-           rw.complend                          || ';' || -- COMPLEMENTO
+           substr(rw.complend,1,20)              || ';' || -- COMPLEMENTO
            rw.nmbairro                          || ';' || -- BAIRRO
-           rw.nmcidade                          || ';' || -- CIDADE
+           substr(rw.nmcidade,1,20)              || ';' || -- CIDADE
            rw.cdufresd                          || ';' || -- UF
            to_char(rw.nrcepend,'fm00000000')    || ';' || -- CEP
            rw.ddd_fone                          || ';' || -- DDD
@@ -460,12 +436,13 @@ BEGIN
            vr_dvconta                           || ';' || -- 'DV CONTA CORRENTE;' || 
            vr_modulo                            || ';' || -- 'CÓDIGO MÓDULO;' || 
            vr_sub                               || ';' || -- 'CÓDIGO SUB;' || 
-           vr_sub || '-' || to_char(rw.cdagenci) || ';' || -- 'CÓDIGO PDV (PA);' || 
+           vr_sub || to_char(rw.cdagenci,'fm000') || ';' || -- 'CÓDIGO PDV (PA);' || 
            SUBSTR(rw.nmprimtl,1,40)             || ';' || -- 'NOME CORRENTISTA;' || 
            LPAD(to_char(rw.cpf_correntista),11,'0')    || ';' || -- CPF CORRENTISTA;' || 
-           to_char(rw.dtprideb,'DD') || '0919'  || ';' || -- 'DATA VENCIMENTO';
-           '010919'                                       -- 'DATA INICIO VIGENCIA'
+           to_char(rw.dtprideb,'DD') || '092019'  || ';' || -- 'DATA VENCIMENTO';
+           '01092019'                                     -- 'DATA INICIO VIGENCIA'
     );
+    
     /*
     
     
@@ -606,7 +583,7 @@ BEGIN
 
   pc_print('',TRUE);
   
-  DBMS_XSLPROCESSOR.CLOB2FILE(vr_dslobdev, '/micros/cecred/rafael/', 'teste_icatu.txt', NLS_CHARSET_ID('UTF8'));    
+  DBMS_XSLPROCESSOR.CLOB2FILE(vr_dslobdev, '/micros/cecred/rafael/', 'icatu_sub_' || vr_sub || '.txt', NLS_CHARSET_ID('UTF8'));    
   
   -- Liberando a memória alocada pro CLOB
   dbms_lob.close(vr_dslobdev);
