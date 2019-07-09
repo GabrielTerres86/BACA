@@ -20,6 +20,8 @@
 				  01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
 
                   18/06/2018 - P450 - Inclusão do Motivo do Cancelamento/dsmotcan (Marcel/AMcom)
+                  
+                  09/07/2019 - P519 - Inclusão do Canal de venda AIMARO/SIGAS (Darlei / Supero)
  */
 ?>
 <div id="divSeguro" class="divRegistros">
@@ -32,6 +34,7 @@
                 <th><?php echo utf8ToHtml('Final Vig&ecirc;ncia');?></th>
 				<th><?php echo utf8ToHtml('Seguradora');?></th>
 				<th><?php echo utf8ToHtml('Situação');?></th>
+				<th><?php echo utf8ToHtml('Canal');?></th>
 			</tr>
 		</thead>		
 		<tbody>
@@ -47,8 +50,9 @@
                         <input type="hidden" id="nrctrseg"   name="nrctrseg"   value="<?php echo getByTagName($seguro->tags,'nrApolice2'); ?>" />
                         <input type="hidden" id="cdsegura"   name="cdsegura"   value="<?php echo getByTagName($seguro->tags,'cdsegura');   ?>" />
                         <input type="hidden" id="idproposta" name="idproposta" value="<?php echo getByTagName($seguro->tags,'nrApolice2'); ?>" />
-                        <input type="hidden" id="dsstatus"   name="dsstatus"   value="<?php echo getByTagName($seguro->tags,'dsSituac'); ?>" />
+                        <input type="hidden" id="dsstatus"   name="dsstatus"   value="<?php echo getByTagName($seguro->tags,'dsSituac');   ?>" />
                         <input type="hidden" id="nmsispar"   name="nmsispar"   value="<?php echo getByTagName($seguro->tags,'nmParceiro'); ?>" />
+                        <input type="hidden" id="dscanal"    name="dscanal"    value="<?php echo getByTagName($seguro->tags,'dscanal');    ?>" />
 
                         <input type="hidden" id="dsseguro" name="dsseguro" value="<?php echo getByTagName($seguro->tags,'dsTipo'); ?>" />
 						<input type="hidden" id="nmdsegur" name="nmdsegur" value="<?php echo getByTagName($seguro->tags,'nmdsegur'); ?>" />
@@ -96,6 +100,7 @@
 					<td><?php echo getByTagName($seguro->tags,'dtFimVigen'); ?></td>
 					<td><?php echo getByTagName($seguro->tags,'dsSeguradora'); ?></td>
 					<td><?php echo getByTagName($seguro->tags,'dsSituac'); ?></td>
+					<td><?php echo getByTagName($seguro->tags,'dscanal'); ?></td>
 				</tr>
 			<?php } ?>
 		</tbody>

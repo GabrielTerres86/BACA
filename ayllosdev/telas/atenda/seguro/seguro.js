@@ -62,6 +62,8 @@
 				  04/09/2018 - Alterado a impressão da proposta seguro prestamista PRJ 438 e incluído campo contrato 
 				  			   para o tipo seguro prestamista. PRJ 438 (Mateus Z - MoutS).
                   04/12/2018 - Retornar saldo devedor para valor do seguro prestamista - Paulo Martins - 438 Sprint 7
+                  
+                  09/07/2019 - P519 - Inclusão do Canal de venda AIMARO/SIGAS e tela de detalhes SIGAS (Darlei / Supero)
  * */
  
 //**************************************************
@@ -195,6 +197,7 @@ function controlaOperacao(operacao) {
 			if ($(this).hasClass('corSelecao') ) {
                 dsStatus   = $('#dsstatus', $(this) ).val();
                 dsSeguro   = $('#dsseguro', $(this) ).val();
+                dscanal    = $('#dscanal',  $(this) ).val();
                 tpseguro   = $('#tpseguro', $(this) ).val();
                 nrctrseg   = $('#nrctrseg', $(this) ).val();
                 vlpreseg   = $('#vlpreseg', $(this) ).val();
@@ -392,9 +395,14 @@ function controlaOperacao(operacao) {
                         operacao = 'C_AUTO_N';
                     }
 					cddopcao = 'C_AUTO';
-				}else if(tpseguro == 11){
-					operacao = 'C_CASA';
-					cddopcao = 'C_CASA';
+				}else if((tpseguro == 11)||(tpseguro == 125)){
+                    if(dscanal == 'SIGAS'){
+                        operacao = 'C_CASA_SIGAS';
+                        cddopcao = 'C_CASA_SIGAS';
+                    }else{
+                        operacao = 'C_CASA';
+                        cddopcao = 'C_CASA';
+                    }
 				}else if(tpseguro == 3 && idorigem == 'N'){
 					operacao = 'CONSULTAR_NOVO';
 					cddopcao = 'CONSULTAR_NOVO';
@@ -1248,7 +1256,7 @@ function controlaLayout(operacao) {
 				cNmcidade2 = $('#nmcidade2', frmSeguroCasa);  
 				cCdufresd2 = $('#cdufresd2', frmSeguroCasa);
 				
-				cNmresseg.val(arraySeguroCasa['nmresseg']);
+                cNmresseg.val(arraySeguroCasa['nmresseg']);
 				cNrctrseg.val(arraySeguroCasa['nrctrseg']);
 				cTpplaseg.val(arraySeguroCasa['tpplaseg']);
 				cDdpripag.val(arraySeguroCasa['ddpripag']);
@@ -1422,6 +1430,209 @@ function controlaLayout(operacao) {
 				
 				$('#btContinuar', '#divBotoes').focus();				
 			break;
+        case 'C_CASA_SIGAS':
+				// inclusão do seguro do tipo casa
+				$('#divConteudoOpcao,#tableJanela').css({'height':'450px','width':'600px'});
+				
+				var frmSeguroCasa = $('#frmSeguroCasaSigas');
+				var divPart2 = $('#part_2');
+				var divPart3 = $('#part_3');
+				var divPart4 = $('#part_4');
+				var divBotoes = $('#divBotoes');
+				var cTodos = $('#segurado, #ddsseguro, #dstipseg, #nmressegSIGAS, #dtinivig, #dtfimvig, #nrpropostaSIGAS, #nrapoliceSIGAS, #nrendossoSIGAS, #dsplanoSIGAS, #dsmoradiaSIGAS, #dsendres, #nrendere, #complend, #nmbairro, #nmcidade, #cdufresd, #nrpreliq, #nrpretot, #nrqtparce, #nrvalparc, #nrmdiaven, #nrpercomi' ,frmSeguroCasa);
+				var cTodosPart2 = $('input',divPart2);
+				var cTodosPart3 = $('input',divPart3);
+				var cTodosPart4 = $('input',divPart4);
+				var btContinuarSalvar = $('#btContinuarSalvar', divBotoes);
+				btContinuarSalvar.css({'display':'none'});
+
+				var btVoltar = $('#btVoltar', divBotoes);
+				btVoltar.click(function(){
+					controlaOperacao('');
+					return false;
+				});
+				
+				/* INICIO ROTULOS -> Labels */
+				rSegurado   = $('label[for="segurado"]',        frmSeguroCasa);
+				rDdsseguro  = $('label[for="ddsseguro"]',       frmSeguroCasa);
+				rDstipseg   = $('label[for="dstipseg"]',        frmSeguroCasa);
+				rNmresseg   = $('label[for="nmressegSIGAS"]',   frmSeguroCasa);
+				rDtinivig   = $('label[for="dtinivig"]',        frmSeguroCasa); 
+				rDtfimvig   = $('label[for="dtfimvig"]',        frmSeguroCasa); 
+				rNrproposta = $('label[for="nrpropostaSIGAS"]', frmSeguroCasa);
+				rNrapolice  = $('label[for="nrapoliceSIGAS"]',  frmSeguroCasa);
+				rNrendosso  = $('label[for="nrendossoSIGAS"]',  frmSeguroCasa);
+				rDsplano    = $('label[for="dsplanoSIGAS"]',    frmSeguroCasa);
+				rDsmoradia  = $('label[for="dsmoradiaSIGAS"]',  frmSeguroCasa);
+                // local
+				rLocrisco   = $('label[for="locrisco"]', frmSeguroCasa); 
+				rDsendres   = $('label[for="dsendres"]', frmSeguroCasa); 
+				rNrendere   = $('label[for="nrendere"]', frmSeguroCasa); 
+				rComplend   = $('label[for="complend"]', frmSeguroCasa); 
+				rNmbairro   = $('label[for="nmbairro"]', frmSeguroCasa); 
+				rNmcidade   = $('label[for="nmcidade"]', frmSeguroCasa); 
+				rCdufresd   = $('label[for="cdufresd"]', frmSeguroCasa);
+                // complementares
+                rDdcomplem  = $('label[for="ddcomplem"]', frmSeguroCasa);
+                rNrpreliq   = $('label[for="nrpreliq"]',  frmSeguroCasa);
+                rNrpretot   = $('label[for="nrpretot"]',  frmSeguroCasa);
+                rNrqtparce  = $('label[for="nrqtparce"]', frmSeguroCasa);
+                rNrvalparc  = $('label[for="nrvalparc"]', frmSeguroCasa);
+                rNrmdiaven  = $('label[for="nrmdiaven"]', frmSeguroCasa);
+                rNrpercomi  = $('label[for="nrpercomi"]', frmSeguroCasa);
+                /* FIM ROTULOS -> Labels */
+                
+                /* INICIO CAMPOS */
+				cSegurado   = $('#segurado',        frmSeguroCasa);
+				cDstipseg   = $('#dstipseg',        frmSeguroCasa);
+				cNmresseg   = $('#nmressegSIGAS',   frmSeguroCasa); 
+				cDtinivig   = $('#dtinivig',        frmSeguroCasa); 
+				cDtfimvig   = $('#dtfimvig',        frmSeguroCasa);  
+				cNrproposta = $('#nrpropostaSIGAS', frmSeguroCasa);  
+				cNrapolice  = $('#nrapoliceSIGAS',  frmSeguroCasa);  
+				cNrendosso  = $('#nrendossoSIGAS',  frmSeguroCasa);  
+				cDsplano    = $('#dsplanoSIGAS',    frmSeguroCasa);  
+				cDsmoradia  = $('#dsmoradiaSIGAS',  frmSeguroCasa);  
+                // local risco
+                cDsendres   = $('#dsendres', frmSeguroCasa);  
+				cNrendere   = $('#nrendere', frmSeguroCasa);  
+				cComplend   = $('#complend', frmSeguroCasa);  
+				cNmbairro   = $('#nmbairro', frmSeguroCasa);  
+				cNmcidade   = $('#nmcidade', frmSeguroCasa);  
+				cCdufresd   = $('#cdufresd', frmSeguroCasa);
+				// dados complementares
+                cNrpreliq   = $('#nrpreliq',  frmSeguroCasa);
+                cNrpretot   = $('#nrpretot',  frmSeguroCasa);
+                cNrqtparce  = $('#nrqtparce', frmSeguroCasa);
+                cNrvalparc  = $('#nrvalparc', frmSeguroCasa);
+                cNrmdiaven  = $('#nrmdiaven', frmSeguroCasa);
+                cNrpercomi  = $('#nrpercomi', frmSeguroCasa);
+                /* FIM CAMPOS */
+				
+                /* INICIO SET VALORES NOS CAMPOS */
+				cSegurado.val(arraySeguroCasaSigas['segurado']);
+				cDstipseg.val(arraySeguroCasaSigas['tpseguro']);
+				cNmresseg.val(arraySeguroCasaSigas['nmresseg']);
+				cDtinivig.val(arraySeguroCasaSigas['dtinivig']);
+				cDtfimvig.val(arraySeguroCasaSigas['dtfimvig']);
+				cNrproposta.val(arraySeguroCasaSigas['nrproposta']);
+				cNrapolice.val(arraySeguroCasaSigas['nrapolice']);
+				cNrendosso.val(arraySeguroCasaSigas['nrendosso']);
+				cDsplano.val(arraySeguroCasaSigas['dsplano']);
+				cDsmoradia.val(arraySeguroCasaSigas['dsmoradia']);
+                // local risco
+				cDsendres.val(arraySeguroCasaSigas['dsendres']);
+				cNrendere.val(arraySeguroCasaSigas['nrendere']);
+				cComplend.val(arraySeguroCasaSigas['complend']);
+				cNmbairro.val(arraySeguroCasaSigas['nmbairro']);
+				cNmcidade.val(arraySeguroCasaSigas['nmcidade']);
+				cCdufresd.val(arraySeguroCasaSigas['cdufresd']);
+				// complementares
+                cNrpreliq.val(arraySeguroCasaSigas['nrpreliq']);
+                cNrpretot.val(arraySeguroCasaSigas['nrpretot']);
+                cNrqtparce.val(arraySeguroCasaSigas['nrqtparce']);
+                cNrvalparc.val(arraySeguroCasaSigas['nrvalparc']);
+                cNrmdiaven.val(arraySeguroCasaSigas['nrmdiaven']);
+                cNrpercomi.val(arraySeguroCasaSigas['nrpercomi']);
+                /* FIM SET VALORES NOS CAMPOS */
+                
+             	cTodos.addClass('campo');
+				
+				divPart2.css({'margin':'15px 5px 5px 5px','float':'left','width':'590px'});
+				divPart3.css({'margin':'5px 5px 5px 5px','float':'left','width':'590px'});
+				divPart4.css({'margin':'5px 5px 5px 5px','float':'left','width':'590px'});
+				
+				// 1ª linha
+				rSegurado.addClass('rotulo').css({'width':'70px','text-align':'left','margin-left':'5px'});
+				cSegurado.css({'width':'485px'});
+				
+                // 2ª linha
+                rDdsseguro.addClass('rotulo').css({'width':'500px','text-align':'center', 'margin':'10px 0'});
+                
+                // 3ª linha
+				rDstipseg.addClass('rotulo').css({'width':'90px','text-align':'right'});
+                cDstipseg.css({'width':'80px','text-align':'left', 'float':'left'});
+                rNmresseg.css({'width':'78px','text-align':'right','margin-left':'5px'});
+				cNmresseg.css({'width':'305px','text-align':'left'});
+                cNmresseg.attr({'alt': cNmresseg.val(), 'title': cNmresseg.val()});
+
+                // 4ª linha
+				rDtinivig.addClass('rotulo').css({'width':'90px','text-align':'right'});
+				cDtinivig.addClass('data').css({'width':'65px','text-align':'left', 'float':'left'});
+				rDtfimvig.css({'text-align':'right','margin-left':'20px'});
+				cDtfimvig.addClass('data').css({'width':'65px','text-align':'left'});
+                
+                // 5ª linha
+                rNrproposta.addClass('rotulo').css({'width':'90px','text-align':'right'});
+                cNrproposta.css({'width':'100px','text-align':'left'});
+                rNrapolice.css({'width':'75px','text-align':'right', 'margin':'0 3px 0 5px'});
+                cNrapolice.css({'width':'100px','text-align':'left'});
+                rNrendosso.css({'width':'75px','text-align':'right', 'margin':'0 3px 0 5px'});
+                cNrendosso.css({'width':'100px','text-align':'left'});
+                
+                // 6ª linha 
+                rDsplano.addClass('rotulo').css({'width':'90px','text-align':'right'});
+                cDsplano.css({'width':'100px','text-align':'left', 'float':'left'});
+                rDsmoradia.css({'text-align':'right','margin-left':'21px'});
+                cDsmoradia.css({'width':'286px','text-align':'left'});
+                
+                // 7ª linha
+				rLocrisco.addClass('rotulo').css({'width':'500px','text-align':'center', 'margin':'10px 0'});
+
+				// 8ª linha
+				rDsendres.css({'width':'25px','margin-left':'17px','text-align':'right'});
+				cDsendres.css({'width':'444px','text-align':'left'});
+				rNrendere.css({'width':'20px','margin-left':'10px','text-align':'right'});
+				cNrendere.addClass('inteiro').css({'width':'40px','text-align':'left'});
+                
+                // 9ª linha
+				rComplend.addClass('rotulo').css({'width':'42px','text-align':'right'});
+				cComplend.css({'width':'518px','text-align':'left'});
+                
+                // 10ª linha
+                rNmbairro.addClass('rotulo').css({'width':'42px','text-align':'right'});
+                cNmbairro.css({'width':'200px','text-align':'left'});
+                rNmcidade.css({'width':'50px','text-align':'right'});
+				cNmcidade.css({'width':'201px'});
+                rCdufresd.css({'margin-left':'10px'});
+				cCdufresd.css({'width':'30px','text-align':'right'});
+                
+                // 11ª linha
+                rDdcomplem.addClass('rotulo').css({'width':'500px','text-align':'center', 'margin':'10px 0'});
+                
+                // 12ª linha
+                rNrpreliq.addClass('rotulo').css({'width':'90px','text-align':'right'});
+                cNrpreliq.css({'width':'144px','text-align':'left', 'float':'left'});
+                rNrpretot.css({'width':'115px','text-align':'right','margin':'0 0 0 65px'});
+				cNrpretot.css({'width':'144px','text-align':'left'});
+                
+                // 13ª linha
+                rNrqtparce.addClass('rotulo').css({'width':'90px','text-align':'right'});
+                cNrqtparce.css({'width':'144px','text-align':'left', 'float':'left'});
+                rNrvalparc.css({'width':'115px','text-align':'right','margin':'0 0 0 65px'});
+				cNrvalparc.css({'width':'144px','text-align':'left'});
+                
+                // 14ª linha 
+                rNrmdiaven.addClass('rotulo').css({'width':'90px','text-align':'right'});
+                cNrmdiaven.css({'width':'144px','text-align':'left', 'float':'left'});
+                rNrpercomi.css({'width':'115px','text-align':'right','margin':'0 0 0 65px'});
+				cNrpercomi.css({'width':'144px','text-align':'left'});
+                
+                // desabilito os campos que fazem parte da tela
+				cTodos.desabilitaCampo();
+				cTodosPart2.desabilitaCampo();
+				cTodosPart3.desabilitaCampo();
+				
+				if ( $.browser.msie ) {
+					cNmbenvid.css({'width':'157px'});
+					cDsmotcan.css({'width':'222px'});
+					
+					cDsendres.css({'width':'248px'});
+					rNrendere.css({'margin-left':'7px'});
+					rCdufresd.css({'margin-left':'4px'});
+					cNmcidade.css({'width':'190px'});
+				}
+			break;
 		case 'C':	
 				var frmMotivo = $('#frmMotivo');
 				frmMotivo.css({'width':'354px'});
@@ -1437,7 +1648,7 @@ function controlaLayout(operacao) {
 				cCdMotcan.focus();
 			break;
 		default:
-                $('#divConteudoOpcao,#tableJanela').css({'height':'210px','width':'560px'});
+                $('#divConteudoOpcao,#tableJanela').css({'height':'210px','width':'700px'});
 				var divRegistro = $('#divSeguro');		
 				var tabela      = $('table', divRegistro );
 				
@@ -1451,7 +1662,8 @@ function controlaLayout(operacao) {
                 arrayLargura[1] = '96px';   // Coluna Apolice
                 arrayLargura[2] = '85px';   // Coluna Ini Vigencia
                 arrayLargura[3] = '85px';   // Coluna Fim Vigencia
-                arrayLargura[4] = '110px';  // Coluna Seguradora
+                arrayLargura[4] = '185px';  // Coluna Seguradora
+                arrayLargura[5] = '65px';   // Coluna Situação
 				
 				var arrayAlinha = new Array();
 				arrayAlinha[0] = 'right';
@@ -1854,7 +2066,7 @@ function carregaPropriedadesFormPrestVidaNovo(){
 	$(label).addClass('rotulo').css({'width':'100px','text-align':'right'});
 
 	$('label[for="nrEndosso"]').css({ 'width': '130px', 'text-align': 'right' });
-    $('label[for="nmSeguradora"]').css({'width':'110px','text-align':'right'});
+    $('label[for="nmSeguradora"]').css({'width':'185px','text-align':'right'});
 	$('label[for="nrApolice"]').css({'width':'210px','text-align':'right'});
 	$('label[for="dtFimVigen"]').css({ 'width': '190px', 'text-align': 'right' });
 	$('label[for="vlCapital"]').css({ 'width': '110px', 'text-align': 'right' });
@@ -3001,4 +3213,8 @@ function validaContrato(){
 }
 		}
 	});
+}
+
+function cancelarSeguroSigas(){
+    showError("error", "Favor providenciar o cancelamento do seguro junto a seguradora. Este processo no sistema Aimaro não possui integração com a seguradora.","Alerta - Aimaro");
 }
