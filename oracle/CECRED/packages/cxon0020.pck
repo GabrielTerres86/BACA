@@ -430,7 +430,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 01/03/2019 - Se o banco ainda não estiver operante no SPB (Data de inicio da operação), 
                              deve bloquear o envio da TED.
                              (Jonata - Mouts INC0031899).
-         
+                             
                 19/06/2019 - Alteração na "pc_enviar_ted": Inclusão de tratamento para transferir da conta Transitória 
                              para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
                              P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom.                             
@@ -1365,7 +1365,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 21/06/2019
+      Data     : Junho/2015.                   Ultima atualizacao: 10/07/2019
 
       Dados referentes ao programa:
 
@@ -1428,6 +1428,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom.
 
                   21/06/2019 - Tratar INC0015554 - solucao de contorno (Diego).
+
+                  10/07/2019 - Tratar INC0019779 relacionado a duplicidade do número de controle IF (Diego).
 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
@@ -1833,10 +1835,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     --
     IF  vr_aux_exisdoc > 0 THEN
         For vr_cont IN 1..5 Loop
-          Select Max(tvl.nrdocmto) + 1 into pr_nrdocmto 
-          From Craptvl tvl
-          Where tvl.cdcooper = rw_crapcop.cdcooper
-          and   tvl.tpdoctrf = 3;
+          
+        
+          pr_nrdocmto := SSPB0001.fn_nrdocmto_nrctrlif;
+          
           -- Validar se existe
           vr_aux_exisdoc := 0;
           Select count(*) into vr_aux_exisdoc 
@@ -2234,10 +2236,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
               END IF;    
            ELSE 
               -- Busca novo numero de documento
-              SELECT MAX(tvl.nrdocmto) + 1 INTO pr_nrdocmto 
-              FROM craptvl tvl
-              WHERE tvl.cdcooper = rw_crapcop.cdcooper
-                AND tvl.tpdoctrf = 3;
+               pr_nrdocmto := SSPB0001.fn_nrdocmto_nrctrlif;
           
               CONTINUE; -- Tenta inserir novamente
            END IF;
