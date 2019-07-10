@@ -128,7 +128,7 @@ begin
       UPDATE craprda
          SET vlsltxmx = vlsltxmx + rw_aplicacoes.vlaplica
             ,vlsltxmm = vlsltxmm + rw_aplicacoes.vlaplica
-       WHERE progress_recid = rw_aplicacoes.progress_recid;
+       WHERE progress_recid = rw_craprda.progress_recid;
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Erro alterando craprda! '|| SQLERRM ||
