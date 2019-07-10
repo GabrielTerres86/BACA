@@ -28,6 +28,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
    17/05/2019 - Ajuste para evitar criar agendamentos já expirados na execução desta rotina.
                 Evitando com isso, que o processo de efetivação dos agendamentos rode em duplicidade 
                 durante o dia, igual ao erro que tivemos em 15/05/2019. (Wagner  - PRB004791).
+		
+   10/07/2019 - Ajuste para não executar o job se processo noturno estiver executando. (Andre MoutS - INC0013286)		
    
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -52,7 +54,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
     vr_conteudo    VARCHAR2(4000);
     
     -- Variáveis de controle de calendário
-    rw_crapdat     BTCH0001.cr_crapdat%ROWTYPE;    
+    rw_crapdat     BTCH0001.cr_crapdat%ROWTYPE;
+    vr_intipmsg    PLS_INTEGER; 
     
     -- Selecionar os dados da Cooperativa
     CURSOR cr_crapcop IS
@@ -211,6 +214,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
       END LOOP;  
     ELSE
       
+      -- Valida se executa o job( testar de esta rodando o batch)
+      gene0004.pc_trata_exec_job(pr_cdcooper => pr_cdcooper   --> Codigo da cooperativa
+                                ,pr_fldiautl => 0             --> Flag se deve validar dia util
+                                ,pr_flproces => 1             --> Flag se deve validar se esta no processo (true = não roda no processo)
+                                ,pr_flrepjob => 1             --> Flag para reprogramar o job
+                                ,pr_flgerlog => 1             --> indicador se deve gerar log
+                                ,pr_nmprogra => pr_dsjobnam   --> Nome do programa que esta sendo executado no job
+                                ,pr_intipmsg => vr_intipmsg
+                                ,pr_cdcritic => vr_cdcritic
+                                ,pr_dscritic => vr_dscritic);
+      
+      -- se nao retornou critica  chama rotina
+      IF TRIM(vr_dscritic) IS NULL THEN
+        
         -- Verificação do calendário
         OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
         
@@ -255,6 +272,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEBTED(pr_cdcooper in crapcop.cdco
         --> Log de fim de execucao
         pc_controla_log_batch(pr_dstiplog => 'F');
         
+      ELSE 
+        RAISE vr_exc_email;
+      END IF;
       
     END IF; -- fim IF coop = 3
     
