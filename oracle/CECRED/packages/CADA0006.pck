@@ -316,13 +316,47 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                 ,pr_des_erro         OUT VARCHAR2 --> Código da crítica
                                 ,pr_dscritic         OUT VARCHAR2); --> Descrição da crítica
   
-  PROCEDURE pc_verifica_lib_blq_pre_aprov(pr_cdcooper  IN tbcc_situacao_conta_coop.cdcooper%TYPE --> codigo da cooperativa
-                                         ,pr_nrdconta  IN tbepr_param_conta.nrdconta%TYPE --> Numero da conta
-                                         ,pr_cdsitdct  IN tbcc_situacao_conta_coop.cdsituacao%TYPE --> codigo da situacao
-                                         ,pr_des_erro OUT VARCHAR2 --> Código da crítica
+  -- Busca parametros de conta X produto X operacao
+  PROCEDURE pc_busca_param_pessoa_prod(pr_cdcooper         IN crapcop.cdcooper%TYPE                                --> Coop
+                                      ,pr_nrdconta         IN crapass.nrdconta%TYPE DEFAULT 0                      --> Conta
+                                      ,pr_tppessoa         IN crapass.inpessoa%TYPE DEFAULT 0                      --> Tipo pessoa
+                                      ,pr_nrcpfcnpj_base   IN crapass.nrcpfcnpj_base%TYPE DEFAULT 0                --> CPF/CNPJ Base
+                                      ,pr_cdproduto        IN tbcc_param_pessoa_produto.cdproduto%TYPE             --> Produto
+                                      ,pr_cdoperac_produto IN tbcc_param_pessoa_produto.cdoperac_produto%TYPE      --> Operação no produto
+                                      -- Saida
+                                      ,pr_flglibera          OUT tbcc_param_pessoa_produto.flglibera%TYPE          --> Flg liberado ou não
+                                      ,pr_dtvigencia_paramet OUT tbcc_param_pessoa_produto.dtvigencia_paramet%TYPE --> Data vigência final
+                                      ,pr_idmotivo           OUT tbcc_param_pessoa_produto.idmotivo%TYPE           --> Motivo
+                                      ,pr_dscritic           OUT VARCHAR2                                          --> Descrição da crítica
+                                      );
+  
+  -- Mantem párametros de relacionamento Pessoa X Produto X Operação
+  PROCEDURE pc_mantem_param_pessoa_prod(pr_cdcooper           IN crapcop.cdcooper%TYPE                             --> Coop
+                                       ,pr_nrdconta           IN crapass.nrdconta%TYPE DEFAULT 0                   --> Conta
+                                       ,pr_tppessoa           IN crapass.inpessoa%TYPE DEFAULT 0                   --> Tipo pessoa
+                                       ,pr_nrcpfcnpj_base     IN crapass.nrcpfcnpj_base%TYPE DEFAULT 0             --> CPF/CNPJ Base
+                                       ,pr_cdproduto          IN tbcc_param_pessoa_produto.cdproduto%TYPE          --> Produto
+                                       ,pr_cdoperac_produto   IN tbcc_param_pessoa_produto.cdoperac_produto%TYPE   --> Operação no produto
+                                       ,pr_flglibera          IN tbcc_param_pessoa_produto.flglibera%TYPE DEFAULT NULL --> Flg liberado ou não
+                                       ,pr_dtvigencia_paramet IN tbcc_param_pessoa_produto.dtvigencia_paramet%TYPE --> Data vigência final
+                                       ,pr_idmotivo           IN tbgen_motivo.idmotivo%TYPE                        --> Motivo
+                                       ,pr_cdoperad           IN crapope.cdoperad%TYPE                             --> Operador
+                                       ,pr_idorigem           IN NUMBER                                            --> Origem
+                                       ,pr_nmdatela           IN craptel.nmdatela%TYPE                             --> Tela
+                                       -- Saida
                                          ,pr_dscritic OUT VARCHAR2); --> Descrição da crítica
                                          
-                                       
+  -- Habilitar as contas bloqueadas após expiração do prazo de bloqueio
+  PROCEDURE pc_habilita_contas_suspensas(pr_cdcooper         IN crapcop.cdcooper%TYPE --> Conta do cooperado
+                                        ,pr_dtmvtolt         IN crapdat.dtmvtolt%TYPE --> Data do movimento
+                                        ,pr_inpessoa         IN crappre.inpessoa%TYPE                           DEFAULT 0 --> Tipo de pessoa
+                                        ,pr_cdproduto        IN tbcc_param_pessoa_produto.cdproduto%TYPE        DEFAULT 0 --> Produto
+                                        ,pr_cdoperac_produto IN tbcc_param_pessoa_produto.cdoperac_produto%TYPE DEFAULT 0 --> Operação dentro do Produto
+                                        ,pr_idmotivo         IN tbgen_motivo.idmotivo%TYPE                                --> Motivo para gravação da regularização
+                                        ,pr_cdoperad         IN crapope.cdoperad%TYPE                                     --> Operador
+                                        ,pr_idorigem         IN NUMBER                                                    --> Origem
+                                        ,pr_nmdatela         IN craptel.nmdatela%TYPE                                     --> Tela
+                                        ,pr_dscritic OUT VARCHAR2);          
 END CADA0006;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
@@ -5045,140 +5079,623 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
     END;
   END pc_valor_min_capital;
   
-  PROCEDURE pc_verifica_lib_blq_pre_aprov(pr_cdcooper  IN tbcc_situacao_conta_coop.cdcooper%TYPE --> codigo da cooperativa
-                                         ,pr_nrdconta  IN tbepr_param_conta.nrdconta%TYPE --> Numero da conta
-                                         ,pr_cdsitdct  IN tbcc_situacao_conta_coop.cdsituacao%TYPE --> codigo da situacao
-                                         ,pr_des_erro OUT VARCHAR2 --> Código da crítica
-                                         ,pr_dscritic OUT VARCHAR2) IS --> Descrição da crítica
-    /* .............................................................................
-    
-        Programa: pc_verifica_lib_blq_pre_aprov
-        Sistema : CECRED
-        Sigla   : EMPR
-        Autor   : Lombardi
-        Data    : Dezembro/17.                    Ultima atualizacao: --/--/----
-    
-        Dados referentes ao programa:
-    
-        Frequencia: Sempre que for chamado
-    
-        Objetivo  : Rotina para buscar descricao do tipo de conta.
-    
-        Observacao: -----
-    
-        Alteracoes: 01/06/2018 - Ajustar regra de bloqueio do pré-aprovado e ajustar
-                                 tratamentos de erro. (Renato - Supero)
-    ..............................................................................*/
+  -- Busca parametros de conta X produto X operacao
+  PROCEDURE pc_busca_param_pessoa_prod(pr_cdcooper         IN crapcop.cdcooper%TYPE                                --> Coop
+                                      ,pr_nrdconta         IN crapass.nrdconta%TYPE DEFAULT 0                      --> Conta
+                                      ,pr_tppessoa         IN crapass.inpessoa%TYPE DEFAULT 0                      --> Tipo pessoa
+                                      ,pr_nrcpfcnpj_base   IN crapass.nrcpfcnpj_base%TYPE DEFAULT 0                --> CPF/CNPJ Base
+                                      ,pr_cdproduto        IN tbcc_param_pessoa_produto.cdproduto%TYPE             --> Produto
+                                      ,pr_cdoperac_produto IN tbcc_param_pessoa_produto.cdoperac_produto%TYPE      --> Operação no produto
+                                      -- Saida
+                                      ,pr_flglibera          OUT tbcc_param_pessoa_produto.flglibera%TYPE          --> Flg liberado ou não
+                                      ,pr_dtvigencia_paramet OUT tbcc_param_pessoa_produto.dtvigencia_paramet%TYPE --> Data vigência final
+                                      ,pr_idmotivo           OUT tbcc_param_pessoa_produto.idmotivo%TYPE           --> Motivo
+                                      ,pr_dscritic           OUT VARCHAR2                                          --> Descrição da crítica
+                                      ) IS          
   BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_busca_param_pessoa_prod 
+    --  Sistema  : Produtos
+    --  Sigla    : CADA
+    --  Autor    : Marcos (Envolti)
+    --  Data     : Fevereiro/2019                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Busca status da operação em produto repassado
+    -- Alteracoes:
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    DECLARE
+      
+      -- Buscar o cadastro da operação X Produto
+      CURSOR cr_opera IS
+        SELECT pr.dsproduto
+              ,op.dsoperac_produto
+              ,op.tpcontrole
+          FROM tbcc_operacoes_produto op
+              ,tbcc_produto           pr
+         WHERE op.cdproduto = pr.cdproduto
+           AND op.cdproduto        = pr_cdproduto
+           AND op.cdoperac_produto = pr_cdoperac_produto;
+      rw_opera cr_opera%ROWTYPE;
+      
+      -- Controle da pessoa conforme tipo de controle
+      vr_nrdconta         crapass.nrdconta%TYPE;
+      vr_tppessoa         crapass.inpessoa%TYPE;
+      vr_nrcpfcnpj_base   crapass.nrcpfcnpj_base%TYPE;
+      
+      -- Checagem de existencia da pessoa
+      CURSOR cr_crapass IS
+        SELECT ass.nrdconta
+              ,ass.inpessoa
+              ,ass.nrcpfcnpj_base
+          FROM crapass ass
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = decode(pr_nrdconta,0,ass.nrdconta,pr_nrdconta)
+           AND ass.inpessoa = decode(pr_tppessoa,0,ass.inpessoa,pr_tppessoa)
+           AND ass.nrcpfcnpj_base = decode(pr_nrcpfcnpj_base,0,ass.Nrcpfcnpj_Base,pr_nrcpfcnpj_base);
+      rw_crapass cr_crapass%ROWTYPE;
+    
+      -- Buscar parametros de emprestimo da conta ou CPF/CNPJ base
+      CURSOR cr_param_conta (pr_cdcooper crapcop.cdcooper%TYPE
+                            ,pr_nrdconta crapass.nrdconta%TYPE
+                            ,pr_inpessoa crapass.inpessoa%TYPE
+                            ,pr_nrcpfcnpj_base crapass.nrcpfcnpj_base%TYPE) IS
+        SELECT par.flglibera
+              ,par.dtvigencia_paramet
+              ,par.idmotivo
+          FROM tbcc_param_pessoa_produto par
+         WHERE par.cdcooper         = pr_cdcooper
+           AND par.tppessoa         = pr_inpessoa
+           AND par.nrdconta         = pr_nrdconta
+           AND par.nrcpfcnpj_base   = pr_nrcpfcnpj_base
+           AND par.cdproduto        = pr_cdproduto
+           AND par.cdoperac_produto = pr_cdoperac_produto;
+      rw_param_conta cr_param_conta%ROWTYPE;
+      
+      -- Erros
+      vr_dscritic  VARCHAR2(4000);
+      vr_exc_saida EXCEPTION;
+      rw_crapdat   BTCH0001.cr_crapdat%ROWTYPE;
+    BEGIN
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                                ,pr_action => 'pc_busca_param_pessoa_prod');
+    
+      -- Leitura do calendario da CECRED
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+	  
+	  -- Buscar o produto e operação
+      OPEN cr_opera;
+      FETCH cr_opera
+       INTO rw_opera;
+      -- Se não encontrar
+      IF cr_opera%NOTFOUND THEN
+        CLOSE cr_opera;
+        vr_dscritic := 'Operacao '||pr_cdoperac_produto||' no produto '||pr_cdproduto||' nao cadastrada!';
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_opera;
+      
+      -- Somente quando operação por Conta, obrigamos o envio da Conta
+      -- Quando o controle é por CPF/CNPJ, mesmo enviando apenas conta, conseguimos continuar
+      IF pr_nrdconta = 0 AND pr_tppessoa = 0 AND pr_nrcpfcnpj_base = 0 THEN
+        vr_dscritic := 'É obrigatorio enviar Conta ou Tp.Pessoa e CPF/CNPJ raiz!'; 
+        RAISE vr_exc_saida;
+      ELSIF pr_nrdconta = 0 AND rw_opera.tpcontrole = 'C' THEN
+        vr_dscritic := 'Operação com controle por conta, favor enviar a Conta do Cooperado!';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Testar se existe cooperado
+      OPEN cr_crapass;
+      FETCH cr_crapass
+       INTO rw_crapass;
+      -- Se não encontrar
+      IF cr_crapass%NOTFOUND THEN
+        CLOSE cr_crapass;
+        vr_dscritic := gene0001.fn_busca_critica(9);  
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_crapass;
+    
+      -- Buscar os parâmetros conforme o tipo de controle
+      IF rw_opera.tpcontrole = 'C' THEN
+        -- Conta
+        vr_nrdconta       := rw_crapass.nrdconta;
+        vr_tppessoa       := 0;
+        vr_nrcpfcnpj_base := 0;
+      ELSE
+        -- Documento   
+        vr_nrdconta       := 0;
+        vr_tppessoa       := rw_crapass.inpessoa;
+        vr_nrcpfcnpj_base := rw_crapass.nrcpfcnpj_base;    
+      END IF;
+      
+      -- Buscar se já existem
+      OPEN cr_param_conta (pr_cdcooper,vr_nrdconta,vr_tppessoa,vr_nrcpfcnpj_base);
+      FETCH cr_param_conta INTO rw_param_conta;
+      CLOSE cr_param_conta;      
+      
+      -- Validar condição de liberação por data
+      IF trunc(rw_param_conta.dtvigencia_paramet) <= trunc(rw_crapdat.dtmvtolt) AND rw_param_conta.flglibera = 0 THEN
+        pr_flglibera := 1;
+        
+        UPDATE tbcc_param_pessoa_produto par
+        SET  par.flglibera = pr_flglibera
+        WHERE par.cdcooper         = pr_cdcooper
+          AND par.tppessoa         = vr_tppessoa
+          AND par.nrdconta         = vr_nrdconta
+          AND par.nrcpfcnpj_base   = vr_nrcpfcnpj_base
+          AND par.cdproduto        = pr_cdproduto
+          AND par.cdoperac_produto = pr_cdoperac_produto;
+           
+        COMMIT;
+      ELSE
+        pr_flglibera := nvl(rw_param_conta.flglibera, 1); 
+      END IF;
+ 
+      -- Devolver as informações encontradas
+      pr_dtvigencia_paramet := rw_param_conta.dtvigencia_paramet;
+      pr_idmotivo           := rw_param_conta.idmotivo;
+    EXCEPTION        
+      WHEN vr_exc_saida THEN
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro geral em pc_busca_param_pessoa_prod: ' || SQLERRM;
+        ROLLBACK;
+    END;
+  END pc_busca_param_pessoa_prod;
+    
+  -- Mantem párametros de relacionamento Pessoa X Produto X Operação
+  PROCEDURE pc_mantem_param_pessoa_prod(pr_cdcooper           IN crapcop.cdcooper%TYPE                             --> Coop
+                                       ,pr_nrdconta           IN crapass.nrdconta%TYPE DEFAULT 0                   --> Conta
+                                       ,pr_tppessoa           IN crapass.inpessoa%TYPE DEFAULT 0                   --> Tipo pessoa
+                                       ,pr_nrcpfcnpj_base     IN crapass.nrcpfcnpj_base%TYPE DEFAULT 0             --> CPF/CNPJ Base
+                                       ,pr_cdproduto          IN tbcc_param_pessoa_produto.cdproduto%TYPE          --> Produto
+                                       ,pr_cdoperac_produto   IN tbcc_param_pessoa_produto.cdoperac_produto%TYPE   --> Operação no produto
+                                       ,pr_flglibera          IN tbcc_param_pessoa_produto.flglibera%TYPE DEFAULT NULL --> Flg liberado ou não
+                                       ,pr_dtvigencia_paramet IN tbcc_param_pessoa_produto.dtvigencia_paramet%TYPE --> Data vigência final
+                                       ,pr_idmotivo           IN tbgen_motivo.idmotivo%TYPE                        --> Motivo
+                                       ,pr_cdoperad           IN crapope.cdoperad%TYPE                             --> Operador
+                                       ,pr_idorigem           IN NUMBER                                            --> Origem
+                                       ,pr_nmdatela           IN craptel.nmdatela%TYPE                             --> Tela
+                                       -- Saida
+                                       ,pr_dscritic           OUT VARCHAR2) IS                                     --> Descrição da crítica
+    
+    
+  BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_mantem_param_pessoa_prod 
+    --  Sistema  : Produtos
+    --  Sigla    : CADA
+    --  Autor    : Marcos (Envolti)
+    --  Data     : Fevereiro/2019                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Mantem status da Majoracao Automatica de Credito
+    -- Alteracoes:
+    --
+    ---------------------------------------------------------------------------------------------------------------
     DECLARE
     
-      -- Variável de críticas
-      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
-      vr_dscritic VARCHAR2(1000); --> Desc. Erro
-    
-      -- Tratamento de erros
-      vr_exc_saida EXCEPTION;
+      -- Buscar o cadastro da operação X Produto
+      CURSOR cr_opera IS
+        SELECT pr.dsproduto
+              ,op.dsoperac_produto
+              ,op.tpcontrole
+          FROM tbcc_operacoes_produto op
+              ,tbcc_produto           pr
+         WHERE op.cdproduto = pr.cdproduto
+           AND op.cdproduto        = pr_cdproduto
+           AND op.cdoperac_produto = pr_cdoperac_produto;
+      rw_opera cr_opera%ROWTYPE;
       
-      -- Variáveis auxiliares
-      vr_possuipr VARCHAR2(1);
+      -- Controle da pessoa conforme tipo de controle
+      vr_nrdconta         crapass.nrdconta%TYPE;
+      vr_tppessoa         crapass.inpessoa%TYPE;
+      vr_nrcpfcnpj_base   crapass.nrcpfcnpj_base%TYPE;
+      
+      -- Checagem de existencia da conta
+      CURSOR cr_crapass IS
+        SELECT ass.nrdconta
+              ,ass.inpessoa
+              ,ass.nrcpfcnpj_base
+          FROM crapass ass
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = decode(pr_nrdconta,0,ass.nrdconta,pr_nrdconta)
+           AND ass.inpessoa = decode(pr_tppessoa,0,ass.inpessoa,pr_tppessoa)
+           AND ass.nrcpfcnpj_base = decode(pr_nrcpfcnpj_base,0,ass.Nrcpfcnpj_Base,pr_nrcpfcnpj_base);
+      rw_crapass cr_crapass%ROWTYPE;
+    
+      -- Ver se motivo está cadastrado
+      CURSOR cr_motivo IS
+        SELECT mot.dsmotivo
+          FROM tbgen_motivo mot
+         WHERE mot.idmotivo = pr_idmotivo
+           AND mot.cdproduto = pr_cdproduto;
+      vr_dsmotivo tbgen_motivo.dsmotivo%TYPE;
+      
+      -- Buscar parametros já cadastrados
+      CURSOR cr_param_conta (pr_cdcooper crapcop.cdcooper%TYPE
+                            ,pr_nrdconta crapass.nrdconta%TYPE
+                            ,pr_tppessoa crapass.indnivel%TYPE
+                            ,pr_nrcpfcnpj_base crapass.nrcpfcnpj_base%TYPE) IS
+        SELECT par.flglibera
+              ,par.dtvigencia_paramet
+          FROM tbcc_param_pessoa_produto par
+         WHERE par.cdcooper       = pr_cdcooper
+           AND par.nrdconta       = pr_nrdconta
+           AND par.tppessoa       = pr_tppessoa
+           AND par.nrcpfcnpj_base = pr_nrcpfcnpj_base
+           AND par.cdproduto        = pr_cdproduto
+           AND par.cdoperac_produto = pr_cdoperac_produto;
+      rw_param_conta cr_param_conta%ROWTYPE;
+      vr_tem_param   BOOLEAN;      
+      
+      -- Loop das contas do cooperado
+      CURSOR cr_crapass_loop(pr_cdcooper crapcop.cdcooper%TYPE
+                            ,pr_nrdconta       crapass.nrdconta%TYPE
+                            ,pr_tppessoa       crapass.inpessoa%TYPE
+                            ,pr_nrcpfcnpj_base crapass.nrcpfcnpj_base%TYPE) IS
+        SELECT ass.nrdconta
+              ,ass.inpessoa
+          FROM crapass ass
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta       = pr_nrdconta
+           AND ass.inpessoa       = pr_tppessoa
+           AND ass.nrcpfcnpj_base = pr_nrcpfcnpj_base
+           AND ass.dtdemiss IS NULL;
+      
+      -- Variaveis Auxiliares
+      vr_nrdrowid   ROWID;
+      vr_vigencia   DATE;
+      vr_flglibera  NUMBER;
+      
+      -- Variaveis de Erro
+      vr_dscritic  VARCHAR2(1000);
+      vr_exc_saida EXCEPTION;
       
     BEGIN
       
       -- Incluir nome do módulo logado
       GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
-                                ,pr_action => null);
+                                ,pr_action => 'pc_mantem_param_pessoa_prod');
       
-      pr_des_erro := 'NOK';
+      -- Buscar o produto e operação
+      OPEN cr_opera;
+      FETCH cr_opera
+       INTO rw_opera;
+      -- Se não encontrar
+      IF cr_opera%NOTFOUND THEN
+        CLOSE cr_opera;
+        vr_dscritic := 'Operacao '||pr_cdoperac_produto||' no produto '||pr_cdproduto||' nao cadastrada!';
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_opera;
       
-      -- Verifica se a situação permite pre aprovado
-      pc_permite_produto_situacao(pr_cdprodut => 25
-                                 ,pr_cdcooper => pr_cdcooper
-                                 ,pr_cdsitdct => pr_cdsitdct
-                                 ,pr_possuipr => vr_possuipr
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic);
-      
-      -- Se ocorrer erro diferente de produto nao permitido
-      IF vr_possuipr <> 'N' AND vr_dscritic IS NOT NULL THEN
-         RAISE vr_exc_saida;
+      -- Somente quando operação por Conta, obrigamos o envio da Conta
+      -- Quando o controle é por CPF/CNPJ, mesmo enviando apenas conta, conseguimos continuar
+      IF pr_nrdconta = 0 AND pr_tppessoa = 0 AND pr_nrcpfcnpj_base = 0 THEN
+        vr_dscritic := 'É obrigatorio enviar Conta ou Tp.Pessoa E CPF/CNPJ raiz!';
+        RAISE vr_exc_saida;
+      ELSIF pr_nrdconta = 0 AND rw_opera.tpcontrole = 'C' THEN
+        vr_dscritic := 'Operação com controle por conta, favor enviar a Conta do Cooperado!';
+        RAISE vr_exc_saida;
       END IF;
       
-      -- Se permitir
-      IF vr_possuipr = 'S' THEN
+      -- Testar se existe cooperado
+      OPEN cr_crapass;
+      FETCH cr_crapass
+       INTO rw_crapass;
+      -- Se não encontrar
+      IF cr_crapass%NOTFOUND THEN
+        CLOSE cr_crapass;
+        vr_dscritic := gene0001.fn_busca_critica(9);  
+         RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_crapass;
+
+      -- Buscar os parâmetros conforme o tipo de controle
+      IF rw_opera.tpcontrole = 'C' THEN
+        -- Conta
+        vr_nrdconta       := rw_crapass.nrdconta;
+        vr_tppessoa       := 0;
+        vr_nrcpfcnpj_base := 0;
+      ELSE
+        -- Documento   
+        vr_nrdconta       := 0;
+        vr_tppessoa       := rw_crapass.inpessoa;
+        vr_nrcpfcnpj_base := rw_crapass.nrcpfcnpj_base;    
+      END IF;
+      
+      -- Ver se motivo está cadastrado
+      vr_dsmotivo := 'Nao informado.';
+      IF nvl(pr_idmotivo,0) <> 0 THEN
+        OPEN cr_motivo;
+        FETCH cr_motivo
+         INTO vr_dsmotivo;
+        CLOSE cr_motivo;
+      END IF;  
+
+      -- Buscar se já existem
+      OPEN cr_param_conta (pr_cdcooper,vr_nrdconta,vr_tppessoa,vr_nrcpfcnpj_base);
+      FETCH cr_param_conta INTO rw_param_conta;
+      vr_tem_param := cr_param_conta%FOUND;
+      CLOSE cr_param_conta;      
+      
+      -- Manter o valor do parametro
+      vr_vigencia := pr_dtvigencia_paramet;
+      
+      -- Se foi passado o valor a gravar
+      IF pr_flglibera IS NOT NULL THEN
+        -- Usamos o mesmo
+        vr_flglibera := pr_flglibera;
+      ELSE    
+        -- Invertemos
+      IF nvl(rw_param_conta.flglibera,0) = 0 THEN
+        vr_flglibera := 1;  
+      ELSE
+        vr_flglibera := 0;
+      END IF;
+      END IF;  
+      
+      -- Cria registro pois não existe ainda
+      IF NOT vr_tem_param THEN
         BEGIN
-          -- Libera pre aprovado
-          UPDATE tbepr_param_conta param
-             SET param.flglibera_pre_aprv = 1
-                ,param.idmotivo = NULL
-                ,param.dtatualiza_pre_aprv = TRUNC(SYSDATE)
-           WHERE param.cdcooper = pr_cdcooper
-             AND param.nrdconta = pr_nrdconta
-             AND param.flglibera_pre_aprv = 0 -- Não liberado...
-             AND param.idmotivo = 67;         -- ... e com motivo 67 (bloqueio por situação de conta)
+          -- Criar o registro
+          INSERT INTO TBCC_PARAM_PESSOA_PRODUTO(cdcooper             
+                                               ,nrdconta
+                                               ,tppessoa             
+                                               ,nrcpfcnpj_base       
+                                               ,cdproduto            
+                                               ,cdoperac_produto     
+                                               ,flglibera            
+                                               ,dtvigencia_paramet)
+                                         VALUES(pr_cdcooper             
+                                               ,vr_nrdconta
+                                               ,vr_tppessoa             
+                                               ,vr_nrcpfcnpj_base       
+                                               ,pr_cdproduto            
+                                               ,pr_cdoperac_produto     
+                                               ,vr_flglibera            
+                                               ,vr_vigencia);
+
+          -- Buscar todas as contas do CPF/CNPJ
+          FOR rw_ass IN cr_crapass_loop(pr_cdcooper,vr_nrdconta,vr_tppessoa,vr_nrcpfcnpj_base) LOOP
+
+            /* Inclusão de log com retorno do rowid */
+            gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                                ,pr_cdoperad => pr_cdoperad
+                                ,pr_dscritic => ''
+                                ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem) --> Origem enviada
+                                ,pr_dstransa => 'Criacao dos parametros de '||rw_opera.dsoperac_produto
+                                ,pr_dttransa => TRUNC(SYSDATE)
+                                ,pr_flgtrans => 1 --> TRUE
+                                ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                                ,pr_idseqttl => 0
+                                ,pr_nmdatela => pr_nmdatela
+                                ,pr_nrdconta => rw_ass.nrdconta
+                                ,pr_nrdrowid => vr_nrdrowid);
+            
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Liberado/Desativado'
+                                     ,pr_dsdadant => NULL
+                                     ,pr_dsdadatu => CASE vr_flglibera
+                                                       WHEN 1 THEN 'Ativado'
+                                                       ELSE 'Desativado'
+                                                     END);
+                                      
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Vigencia final'
+                                     ,pr_dsdadant => NULL
+                                     ,pr_dsdadatu => to_char(vr_vigencia,'DD/MM/RRRR'));
+                                     
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Motivo'
+                                     ,pr_dsdadant => NULL
+                                     ,pr_dsdadatu => vr_dsmotivo);                                     
+                                     
+          END LOOP;                           
+      
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao liberar pre-aprovado: '||SQLERRM;
+            vr_dscritic := 'Erro ao inserir parametrização produto conta: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
       ELSE
+        -- Se já existir registro, faz update 
         BEGIN
-          -- Bloqueado pre aprovado
-          UPDATE tbepr_param_conta param
-             SET param.flglibera_pre_aprv = 0
-                ,param.idmotivo = 67
-                ,param.dtatualiza_pre_aprv = TRUNC(SYSDATE)
-           WHERE param.cdcooper = pr_cdcooper
-             AND param.nrdconta = pr_nrdconta
-             AND param.flglibera_pre_aprv = 1;  -- Liberado
+          UPDATE tbcc_param_pessoa_produto par
+             SET par.flglibera  = vr_flglibera
+                ,par.dtvigencia_paramet = vr_vigencia
+           WHERE par.cdcooper         = pr_cdcooper
+             AND par.nrdconta         = vr_nrdconta
+             AND par.tppessoa         = vr_tppessoa
+             AND par.nrcpfcnpj_base   = vr_nrcpfcnpj_base
+             AND par.cdproduto        = pr_cdproduto       
+             AND par.cdoperac_produto = pr_cdoperac_produto;
              
-          -- Se nenhum registro foi alterado, deve ser incluso o bloqueio
-          IF SQL%ROWCOUNT = 0 THEN
-            BEGIN
-              INSERT INTO tbepr_param_conta(cdcooper
-                                           ,nrdconta
-                                           ,flglibera_pre_aprv
-                                           ,dtatualiza_pre_aprv
-                                           ,idmotivo)
-                                     VALUES(pr_cdcooper    -- cdcooper
-                                           ,pr_nrdconta    -- nrdconta
-                                           ,0              -- flglibera_pre_aprv
-                                           ,TRUNC(SYSDATE) -- dtatualiza_pre_aprv
-                                           ,67 );          -- idmotivo
-            EXCEPTION
-              WHEN dup_val_on_index THEN
-                -- Caso aconteça estouro de chave é devido ao fato de já existir registro
-                -- de parametro e o mesmo já está indicando bloqueio.
-                NULL;
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro incluir bloqueio pre-aprovado: '||SQLERRM;
-                RAISE vr_exc_saida;
-            END;
-          END IF;
+          -- Buscar todas as contas do CPF/CNPJ
+          FOR rw_ass IN cr_crapass_loop(pr_cdcooper,vr_nrdconta,vr_tppessoa,vr_nrcpfcnpj_base) LOOP
+              
+            /* Inclusão de log com retorno do rowid */
+            gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                                ,pr_cdoperad => pr_cdoperad
+                                ,pr_dscritic => ''
+                                ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem) --> Origem enviada
+                                ,pr_dstransa => 'Alteracao dos parametros de '||rw_opera.dsoperac_produto
+                                ,pr_dttransa => TRUNC(SYSDATE)
+                                ,pr_flgtrans => 1 --> TRUE
+                                ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                                ,pr_idseqttl => 0
+                                ,pr_nmdatela => pr_nmdatela
+                                ,pr_nrdconta => rw_ass.nrdconta
+                                ,pr_nrdrowid => vr_nrdrowid);
+              
+            -- Somente se mudou Liberado/Desativado
+            IF vr_flglibera <> rw_param_conta.flglibera THEN
+	            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+	                                     ,pr_nmdcampo => 'Liberado/Desativado'
+	                                     ,pr_dsdadant => CASE rw_param_conta.flglibera
+	                                                       WHEN 1 THEN 'Ativado'
+	                                                       ELSE 'Desativado'
+	                                                     END
+	                                     ,pr_dsdadatu => CASE vr_flglibera
+	                                                       WHEN 1 THEN 'Ativado'
+	                                                       ELSE 'Desativado'
+	                                                     END);
+            END IF;
         
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Vigencia final'
+                                     ,pr_dsdadant => to_char(rw_param_conta.dtvigencia_paramet,'DD/MM/RRRR')
+                                     ,pr_dsdadatu => to_char(vr_vigencia,'DD/MM/RRRR'));
+
+            gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                     ,pr_nmdcampo => 'Motivo'
+                                     ,pr_dsdadant => NULL
+                                     ,pr_dsdadatu => vr_dsmotivo);                                                                          
+                                     
+          END LOOP;
         EXCEPTION
-          WHEN vr_exc_saida THEN
-            RAISE vr_exc_saida;
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao bloquear pre-aprovado: '||SQLERRM;
+            vr_dscritic := 'Erro ao atualizar parametrização produto conta: '||SQLERRM;
             RAISE vr_exc_saida;
         END;
       END IF;
       
-      pr_des_erro := 'OK';
+      BEGIN
+        -- Inserir histórico
+        INSERT INTO TBCC_HIST_PARAM_PESSOA_PROD(cdcooper          
+                                               ,nrdconta
+                                               ,tppessoa          
+                                               ,nrcpfcnpj_base    
+                                               ,dtoperac          
+                                               ,dtvigencia_paramet
+                                               ,cdproduto         
+                                               ,cdoperac_produto  
+                                               ,flglibera         
+                                               ,idmotivo          
+                                               ,cdoperad)
+                                         VALUES(pr_cdcooper          
+                                               ,vr_nrdconta
+                                               ,vr_tppessoa
+                                               ,vr_nrcpfcnpj_base
+                                               ,SYSDATE          
+                                               ,vr_vigencia
+                                               ,pr_cdproduto         
+                                               ,pr_cdoperac_produto  
+                                               ,vr_flglibera         
+                                               ,pr_idmotivo          
+                                               ,pr_cdoperad);
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao gravar historico: '||SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+      COMMIT;
       
     EXCEPTION
       WHEN vr_exc_saida THEN
-        IF vr_cdcritic <> 0 THEN
-          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        ELSE
           pr_dscritic := vr_dscritic;
-        END IF;
         ROLLBACK;
       WHEN OTHERS THEN
-        pr_dscritic := 'Erro geral na rotina pc_verifica_lib_blq_pre_aprov: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em pc_mantem_param_pessoa_prod: ' || SQLERRM;
         ROLLBACK;
     END;
-  END pc_verifica_lib_blq_pre_aprov;
+  END pc_mantem_param_pessoa_prod;
+  
+  -- Habilitar as contas bloqueadas após expiração do prazo de bloqueio
+  PROCEDURE pc_habilita_contas_suspensas(pr_cdcooper         IN crapcop.cdcooper%TYPE --> Conta do cooperado
+                                        ,pr_dtmvtolt         IN crapdat.dtmvtolt%TYPE --> Data do movimento
+                                        ,pr_inpessoa         IN crappre.inpessoa%TYPE                           DEFAULT 0 --> Tipo de pessoa
+                                        ,pr_cdproduto        IN tbcc_param_pessoa_produto.cdproduto%TYPE        DEFAULT 0 --> Produto
+                                        ,pr_cdoperac_produto IN tbcc_param_pessoa_produto.cdoperac_produto%TYPE DEFAULT 0 --> Operação dentro do Produto
+                                        ,pr_idmotivo         IN tbgen_motivo.idmotivo%TYPE                                --> Motivo para gravação da regularização
+                                        ,pr_cdoperad         IN crapope.cdoperad%TYPE                                     --> Operador
+                                        ,pr_idorigem         IN NUMBER                                                    --> Origem
+                                        ,pr_nmdatela         IN craptel.nmdatela%TYPE                                     --> Tela
+                                        ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
 
+  BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_habilita_contas_suspensas 
+    --  Sistema  : Emprestimo Pre-Aprovado - Cooperativa de Credito
+    --  Sigla    : EMPR
+    --  Autor    : Lombardi
+    --  Data     : Julho/2016                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Habilitar as contas bloqueadas por refinanciamento, quando o
+    --             tempo configurado para bloqueio acabar.
+    -- Alteracoes:
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    DECLARE
+      
+      -- Variaveis de Erro
+      vr_dscritic  VARCHAR2(1000);
+      vr_exc_saida EXCEPTION;
+      
+      -- Buscar todas as contas onde o prazo de bloqueio expirou 
+      CURSOR cr_param_expire IS
+        SELECT par.tppessoa
+              ,par.nrcpfcnpj_base
+              ,par.nrdconta
+              ,par.cdproduto
+              ,par.cdoperac_produto
+          FROM tbcc_param_pessoa_produto par
+         WHERE par.cdcooper  = pr_cdcooper
+           AND par.tppessoa  = decode(pr_inpessoa,0,par.tppessoa,pr_inpessoa)
+           AND par.cdproduto = decode(pr_cdproduto,0,par.cdproduto,pr_cdproduto)
+           AND par.cdoperac_produto = decode(pr_cdoperac_produto,0,par.cdoperac_produto,pr_cdoperac_produto)
+           AND par.flglibera = 0 -- Não liberados
+           AND par.dtvigencia_paramet IS NOT NULL 
+           AND par.dtvigencia_paramet < pr_dtmvtolt;
+    BEGIN
+      -- Habilita as contas onde 
+      FOR rw_exp IN cr_param_expire LOOP
+        -- Chamar a liberação
+        cada0006.pc_mantem_param_pessoa_prod(pr_cdcooper           => pr_cdcooper
+                                            ,pr_nrdconta           => rw_exp.nrdconta
+                                            ,pr_tppessoa           => rw_exp.tppessoa
+                                            ,pr_nrcpfcnpj_base     => rw_exp.nrcpfcnpj_base
+                                            ,pr_cdproduto          => rw_exp.cdproduto
+                                            ,pr_cdoperac_produto   => rw_exp.cdoperac_produto
+                                            ,pr_flglibera          => 1  -- Liberado
+                                            ,pr_dtvigencia_paramet => NULL
+                                            ,pr_idmotivo           => pr_idmotivo
+                                            ,pr_cdoperad           => pr_cdoperad
+                                            ,pr_idorigem           => pr_idorigem
+                                            ,pr_nmdatela           => pr_nmdatela
+                                            ,pr_dscritic           => vr_dscritic);
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+      END LOOP;
+      COMMIT;
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_dscritic := vr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro --> na rotina EMPR0002.pc_habilita_contas_suspensas -->  '||SQLERRM;
+        ROLLBACK;
+    END;
+  END pc_habilita_contas_suspensas;
 END CADA0006;
 /
