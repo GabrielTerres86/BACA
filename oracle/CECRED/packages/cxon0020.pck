@@ -1361,7 +1361,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 21/06/2019
+      Data     : Junho/2015.                   Ultima atualizacao: 10/07/2019
 
       Dados referentes ao programa:
 
@@ -1420,6 +1420,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   05/06/2019 - Tratar INC0011406 relacionado ao horario de aprovacao da TED (Diego).
 
                   21/06/2019 - Tratar INC0015554 - solucao de contorno (Diego).
+                  
+                  10/07/2019 - Tratar INC0019779 relacionado a duplicidade do número de controle IF (Diego).
 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
@@ -1821,10 +1823,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     --
     IF  vr_aux_exisdoc > 0 THEN
         For vr_cont IN 1..5 Loop
-          Select Max(tvl.nrdocmto) + 1 into pr_nrdocmto 
-          From Craptvl tvl
-          Where tvl.cdcooper = rw_crapcop.cdcooper
-          and   tvl.tpdoctrf = 3;
+          
+        
+          pr_nrdocmto := SSPB0001.fn_nrdocmto_nrctrlif;
+          
           -- Validar se existe
           vr_aux_exisdoc := 0;
           Select count(*) into vr_aux_exisdoc 
@@ -2221,10 +2223,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
               END IF;    
            ELSE 
               -- Busca novo numero de documento
-              SELECT MAX(tvl.nrdocmto) + 1 INTO pr_nrdocmto 
-              FROM craptvl tvl
-              WHERE tvl.cdcooper = rw_crapcop.cdcooper
-                AND tvl.tpdoctrf = 3;
+               pr_nrdocmto := SSPB0001.fn_nrdocmto_nrctrlif;
           
               CONTINUE; -- Tenta inserir novamente
            END IF;
