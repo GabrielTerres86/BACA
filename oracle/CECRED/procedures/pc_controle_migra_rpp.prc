@@ -26,6 +26,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
     vr_exc_email   EXCEPTION;
     vr_cdcritic    PLS_INTEGER;
     vr_dscritic    VARCHAR2(4000);
+    vr_success     PLS_INTEGER := 1; /* Sucesso */
 
     vr_dsplsql     VARCHAR2(2000);
     vr_jobname     VARCHAR2(30);
@@ -267,11 +268,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
              IF vr_cdcritic = 0 THEN
                 vr_cdcritic := 9999; -- Erro nao tratado: 
              END IF;
-             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                            vr_cdprogra || 
-                            '. ' || SQLERRM || 
-                            '. pr_cdcooper:' || pr_cdcooper ||
-                            ', pr_dsjobnam:' || pr_dsjobnam;
+             IF TRIM(vr_dscritic) IS NULL THEN
+               vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                              vr_cdprogra || 
+                              '. ' || SQLERRM || 
+                              '. pr_cdcooper:' || pr_cdcooper ||
+                              ', pr_dsjobnam:' || pr_dsjobnam;
+             ELSE
+               vr_dscritic := vr_cdcritic || ' - ' || vr_dscritic || ' - ' ||
+                              vr_cdprogra || 
+                              '. ' || SQLERRM || 
+                              '. pr_cdcooper:' || pr_cdcooper ||
+                              ', pr_dsjobnam:' || pr_dsjobnam;
+               
+             END IF;
              -- Caso ocorra algum erro, apenas apresenta critica, e executará proxima rotina
              pc_controla_log_batch (pr_cdcooper => pr_cdcooper
                                    ,pr_cdcritic => vr_cdcritic
@@ -284,8 +294,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_controle_migra_rpp (pr_cdcooper IN crapcop
     END IF; -- fim IF coop = 0
 
     COMMIT;   
+    /* Se aconteceu erro, gravar no log que deu erro */
+    IF vr_cdcritic <> 0 THEN
+      vr_success := 0;
+    END IF;
     -- Log de fim de execucao
     pc_controla_log_batch(pr_dstiplog => 'F'
+                         ,pr_flgsuces => vr_success
                          ,pr_cdcooper => vr_cdcooper);
     
     -- Retorna nome do módulo logado

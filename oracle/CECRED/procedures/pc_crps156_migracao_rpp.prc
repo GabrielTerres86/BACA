@@ -125,6 +125,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156_migracao_rpp (pr_cdcooper IN crapc
 
     rw_craplot_rvt lote0001.cr_craplot_sem_lock%rowtype;
     vr_nrseqdig    craplot.nrseqdig%type;
+    vr_dsorigem    VARCHAR2(500) := 'AIMARO,CAIXA,INTERNET,TAA,AIMARO WEB,URA';
+    vr_nrdrowid    ROWID;
 
     ------------------------------- CURSORES ---------------------------------
 
@@ -919,6 +921,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156_migracao_rpp (pr_cdcooper IN crapc
       END IF;
       
       -- Se não há critica ainda 
+      /* Nao vamos verificar bloqueio para migrar, nao faz sentido
+         o saldo continuara disponivel para o bloqueio
       IF nvl(vr_cdcritic,0) NOT IN(484,828,640,494)  THEN
         -- Validar resgate
         Apli0002.pc_ver_val_bloqueio_poup(pr_cdcooper => pr_cdcooper,
@@ -945,13 +949,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156_migracao_rpp (pr_cdcooper IN crapc
              vr_cdcritic := 828;
              vr_dscritic := '';
           ELSE
-             /* caso contrario critica, esta bloqueada e nao venceu */
+             /* caso contrario critica, esta bloqueada e nao venceu
              vr_cdcritic := 640;
              vr_dscritic := '';
           END IF;
         END IF;
-
       END IF;
+	  */
+
       /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */
       IF  (nvl(vr_cdcritic,0) = 0 OR vr_cdcritic = 828 OR vr_cdcritic = 429) THEN
       
@@ -972,7 +977,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156_migracao_rpp (pr_cdcooper IN crapc
                                      pr_cdcritic  => vr_cdcritic,          --> Código da critica de erro
                                      pr_dscritic  => vr_dscritic);         --> Descrição do erro encontrado
                IF vr_dscritic is not null THEN
-                       raise vr_exc_saida;
+                  /* rollbackar o registro */
+                  ROLLBACK;
+                  IF vr_cdcritic = 0 THEN
+                     vr_cdcritic := 999;
+                  END IF;
+                  /* Logar */
+                  GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                                      ,pr_cdoperad => '1'
+                                      ,pr_dscritic => vr_dscritic
+                                      ,pr_dsorigem => GENE0002.fn_busca_entrada(pr_postext => 5,pr_dstext => vr_dsorigem,pr_delimitador => ',')
+                                      ,pr_dstransa => 'MIGRACAO POUPANCA PROGRAMADA'
+                                      ,pr_dttransa => TRUNC(SYSDATE)
+                                      ,pr_flgtrans => 1 --> TRUE
+                                      ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                                      ,pr_idseqttl => 1
+                                      ,pr_nmdatela => 'CRPS145'
+                                      ,pr_nrdconta => rw_craprpp.nrdconta
+                                      ,pr_nrdrowid => vr_nrdrowid);
                END IF;
 
            END IF;
@@ -1066,6 +1088,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156_migracao_rpp (pr_cdcooper IN crapc
           vr_dscritic := 'Não foi possivel atualizar craplrg (nrdconta:'||rw_craprpp.nrdconta||'): '||SQLERRM;
           RAISE vr_exc_saida; 
       END; 
+
+      -- A cada registro migrado vamos comitar para nao lockar o plano
+      COMMIT;
                      
     END LOOP;  -- Fim Loop craplrg  -- --  Leitura dos resgates programados                   
     
