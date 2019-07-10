@@ -51,6 +51,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS575 (pr_cdcooper IN crapcop.cdcooper%T
                             caracters (Kelvin - 233714)
 
                02/02/2016 - Incluso novo parametro cdorigem. (Daniel)
+               
+               10/07/2019 - P437 - Consignado - Não considerar os contratos de emprestimos do consignado,
+                            Josiane Stiehler (AMcom).
      ............................................................................. */
 
      DECLARE
@@ -127,6 +130,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS575 (pr_cdcooper IN crapcop.cdcooper%T
           AND   crapepr.tpemprst  = pr_tpemprst
           AND   crapepr.inprejuz  = 0
           AND  (crapepr.vlsdeved  <> 0 OR crapepr.inliquid = 0)
+          AND ((crapepr.tpemprst  = 1 AND -- P437-Consignado - não considerar emprestimo consignado
+                  crapepr.tpdescto <> 2)
+             OR (crapepr.tpemprst  <> 1))
           ORDER BY cdcooper,nrdconta,nrctremp;
 
        -- Cursor para buscar os Emprestimos que estao liquidados dentro do mes
@@ -143,8 +149,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS575 (pr_cdcooper IN crapcop.cdcooper%T
             AND crapepr.dtultpag <= pr_dtamvfin
             AND crapepr.vlsdeved  = 0
             AND crapepr.inliquid  = 1
-            AND crapepr.inprejuz  = 0;
-
+            AND crapepr.inprejuz  = 0
+            AND ((crapepr.tpemprst  = 1 AND -- P437-Consignado - não considerar emprestimo consignado
+                  crapepr.tpdescto <> 2)
+             OR (crapepr.tpemprst  <> 1)); 
+            
        --Selecionar Parcelas emprestimo
        CURSOR cr_crappep (pr_cdcooper  IN crappep.cdcooper%TYPE
                          ,pr_nrdconta  IN crappep.nrdconta%TYPE
@@ -773,4 +782,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS575 (pr_cdcooper IN crapcop.cdcooper%T
      END;
    END PC_CRPS575;
 /
-
