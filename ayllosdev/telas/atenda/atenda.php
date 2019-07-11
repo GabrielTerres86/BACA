@@ -74,6 +74,8 @@
 
 			 23/11/2018 - P442 - Inclusao de Score (Thaise-Envolti)
 
+             11/01/2019 - Adicionada modal para selecionar impressão de Documentos quando for pessoa física (Luis Fernando - GFT)
+
 //**************************************************************************/
 session_start();
 // Includes para controle da session, variáveis globais de controle, e biblioteca de funções
@@ -108,7 +110,7 @@ setVarSession("rotinasTela", $rotinasTela);
         <script type="text/javascript" src="../../scripts/funcoes.js?keyrand=<?php echo mt_rand(); ?>"></script>
         <script type="text/javascript" src="../../scripts/mascara.js"></script>
         <script type="text/javascript" src="../../scripts/menu.js?keyrand=<?php echo mt_rand(); ?>"></script>
-        <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
+        <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js?keyrand=<?php echo mt_rand(); ?>"></script> <!-- prj 438 - bruno - BUG 17929 -->
         <script type="text/javascript" src="../../scripts/ui/jquery.ui.core.js"></script>
         <script type="text/javascript" src="../../scripts/ui/jquery.ui.datepicker.js"></script>
         <script type="text/javascript" src="../../scripts/ui/i18n/jquery.ui.datepicker-pt-BR.js"></script>
@@ -453,6 +455,19 @@ setVarSession("rotinasTela", $rotinasTela);
 																							</div>
 																						  </div>
 																						  																
+																						  <div class="bloco_full">
+
+																						    <div class="bloco_line" onMouseOver="focoRotina(36, true);" onMouseOut="focoRotina(36, false);">
+																						     <a tabindex="43" name="43" class="txtNormalBold SetFocus" id="labelRot36">&nbsp;</a>
+																						     <p id="valueRot36" class="txtNormal">&nbsp;</p>
+																							</div>
+																							
+																							<div class="bloco_line" onMouseOver="focoRotina(37, true);" onMouseOut="focoRotina(37, false);">
+																						     <a tabindex="44" name="44" class="txtNormalBold SetFocus" id="labelRot37">&nbsp;</a>
+																						     <p id="valueRot37" class="txtNormal">&nbsp;</p>
+																							</div>
+																						  </div>
+																						  																
 																						</td>
 																					</tr>																			
 																				</table>									
@@ -474,6 +489,49 @@ setVarSession("rotinasTela", $rotinasTela);
 				</td>
 			</tr>
 		</table>
+        <div id="rotinaDocumentos" style="display:none">
+            <input type="hidden" value="<?=$GEDServidor?>"/>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" id="">
+                <tr>
+                    <td align="center">     
+                        <table border="0" cellpadding="0" cellspacing="0" width="350">
+                            <tr>
+                                <td>
+                                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                        <tr>
+                                            <td width="11"><img src="<?echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
+                                            <td id="<?php echo $labelRot; ?>" id="tdTitRotina" class="txtBrancoBold ponteiroDrag SetWindow SetFoco" background="<?echo $UrlImagens; ?>background/tit_tela_fundo.gif">DOCUMENTOS</td>
+                                            <td width="12" id="tdTitTela" background="<?echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a id="btSair" href="#" onClick="encerraRotina(false);return false;"><img src="<?echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
+                                            <td width="8"><img src="<?echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
+                                        </tr>
+                                    </table>     
+                                </td> 
+                            </tr>    
+                            <tr>
+                                <td class="tdConteudoTela" align="center" id="tdConteudoOpcoes">    
+                                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                        <tr>
+                                            <td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
+                                                <div id="divConteudoOpcao" style="height: 80px;">
+                                                    <!-- Botoes Titulos e Cheque -->
+                                                    
+                                                    <div id="divBotoes" style="height:80px;width:435px;">
+                                                        <input class="botao"  type="button" style="margin: 20px 10px 0 0;" onClick="dossieDigdoc(9); return false;" value="Cart&atilde;o de Assinatura"/>
+                                                        <input class="botao"  type="button" style="margin: 20px 10px 0 0;" onClick="dadosCadastraisDigdoc();return false;" value="Documento de Identifica&ccedil;&atilde;o - PF"/>
+                                                    </div>
+                                                    
+                                                    <!--Botoes Titulos e Cheques -->
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>                
+                                </td> 
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>
 	</body>
 </html>
 
