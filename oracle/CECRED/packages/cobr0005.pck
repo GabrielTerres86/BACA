@@ -15,6 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0005 IS
   --  Alteracoes: 13/03/2016 - Ajustes decorrente a mudança de algumas rotinas da PAGA0001 
 	--             					 	   para a COBR0006 em virtude da conversão das rotinas de arquivos CNAB
 	--            					 	  (Andrei - RKAM).
+
   ---------------------------------------------------------------------------------------------------------------
   
   -- Definição de PL Table para armazenar os nomes das TAG´s do XML para iteração
