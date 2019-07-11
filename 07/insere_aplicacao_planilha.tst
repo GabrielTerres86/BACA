@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-229
+237
 -- Created on 28/06/2019 by F0030367 
 declare 
   vr_contador number;
@@ -31,8 +31,13 @@ declare
     select  1  cdcooper,  6003850  nrdconta,  49   nraplica,  94   txaplica,  0.12   vlaplica from dual union all
     select  1  cdcooper,  7636610  nrdconta,  52   nraplica,  94   txaplica,  0.13   vlaplica from dual union all
     select  1  cdcooper,  9498877  nrdconta,  2  nraplica,  94   txaplica,  0.08   vlaplica from dual union all
-    select  1  cdcooper,  9170472  nrdconta,  20   nraplica,  94   txaplica,  0.08   vlaplica from dual union all
-    select  1  cdcooper,  80578055   nrdconta,  37   nraplica,  94   txaplica,  0.03   vlaplica from dual;
+    select  1  cdcooper,  9170472  nrdconta,  20   nraplica,  94   txaplica,  0.08   vlaplica from dual union all    
+    select  1  cdcooper,  80578055   nrdconta,  37   nraplica,  94   txaplica,  0.03   vlaplica from dual union all
+    select  16 cdcooper,  410357  nrdconta,   2   nraplica,  94   txaplica,  0.00   vlaplica from dual union all
+    select  1  cdcooper,  6059325 nrdconta,   10  nraplica,  95   txaplica,  0.00   vlaplica from dual union all
+    select  1  cdcooper,  2975971 nrdconta,   14  nraplica,  95   txaplica,  0.00   vlaplica from dual union all
+    select  1  cdcooper,  8479917 nrdconta,   28  nraplica,  94   txaplica,  0.00   vlaplica from dual union all
+    select  1  cdcooper,  2762277 nrdconta,   68  nraplica,  94   txaplica,  0.00   vlaplica from dual;
   rw_aplicacoes cr_aplicacoes%rowtype;
   
   cursor cr_craprda (pr_cdcooper  IN crapcop.cdcooper%TYPE
@@ -92,118 +97,121 @@ begin
       CLOSE cr_craprda;
     END IF;
     
-    vr_nrseqdig := nvl(vr_nrseqdig,0) + 1;
-    vr_nrdocmto := 655000 + vr_nrseqdig;    
+    if rw_aplicacoes.vlaplica > 0 then
     
-     BEGIN
-      insert into craplap (cdagenci, cdbccxlt, dtmvtolt, nrdolote, nrdconta, cdhistor, nraplica, nrdocmto, nrseqdig, vllanmto, txaplica, dtrefere, txaplmes, cdcooper, vlrendmm)
-         values
-        (1   --cdagenci
-        ,100 --cdbccxlt
-        ,trunc(sysdate)
-        ,8480 --nrdolote 
-        ,rw_aplicacoes.nrdconta
-        ,529 -- RDC POS
-        ,rw_aplicacoes.nraplica
-        ,vr_nrdocmto
-        ,vr_nrseqdig
-        ,rw_aplicacoes.vlaplica
-        ,rw_aplicacoes.txaplica
-        ,rw_craprda.dtvencto -- dtrefere
-        ,rw_aplicacoes.txaplica
-        ,rw_aplicacoes.cdcooper
-        ,rw_aplicacoes.vlaplica) returning rowid into vr_laprowid;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Erro inserindo craplap! '|| SQLERRM ||
-                       ' - Cooper: '|| rw_aplicacoes.cdcooper || 
-                       ' Conta: ' ||rw_aplicacoes.nrdconta || 
-                       ' Aplica: '|| rw_aplicacoes.nraplica;
-       RAISE vr_excsaida;
-    END;
-    
-    dbms_output.put_line('delete from craplap where rowid = '''|| vr_laprowid ||''';');
-    
-    BEGIN
-      UPDATE craprda
-         SET vlsltxmx = vlsltxmx + rw_aplicacoes.vlaplica
-            ,vlsltxmm = vlsltxmm + rw_aplicacoes.vlaplica
-       WHERE progress_recid = rw_craprda.progress_recid;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Erro alterando craprda! '|| SQLERRM ||
-                       ' - Cooper: '|| rw_aplicacoes.cdcooper || 
-                       ' Conta: ' ||rw_aplicacoes.nrdconta || 
-                       ' Aplica: '|| rw_aplicacoes.nraplica;
-        RAISE vr_excsaida;
-    END;
-    
-    OPEN cr_craplot(pr_cdcooper => rw_aplicacoes.cdcooper
-                   ,pr_dtmvtolt => trunc(sysdate));
-    FETCH cr_craplot INTO rw_craplot;
-    IF cr_craplot%NOTFOUND THEN
-      CLOSE cr_craplot;
-      
-      BEGIN
-        INSERT INTO craplot(cdcooper
-                           ,dtmvtolt
-                           ,cdagenci
-                           ,cdbccxlt
-                           ,nrdolote
-                           ,tplotmov
-                           ,vlinfodb
-                           ,vlcompdb
-                           ,qtinfoln
-                           ,qtcompln
-                           ,vlinfocr
-                           ,vlcompcr)
-                     VALUES(rw_aplicacoes.cdcooper
-                           ,trunc(sysdate)
-                           ,1
-                           ,100
-                           ,8480
-                           ,9
-                           ,0
-                           ,0
-                           ,0
-                           ,0
-                           ,0
-                           ,0)
-                   RETURNING cdagenci
-                            ,cdbccxlt
-                            ,nrdolote
-                            ,tplotmov
-                            ,nrseqdig
-                            ,rowid
-                        INTO rw_craplot.cdagenci
-                            ,rw_craplot.cdbccxlt
-                            ,rw_craplot.nrdolote
-                            ,rw_craplot.tplotmov
-                            ,rw_craplot.nrseqdig
-                            ,rw_craplot.rowid;
-      EXCEPTION
-        WHEN OTHERS THEN
-          -- Gerar erro e fazer rollback
-          vr_dscritic := 'Erro inserindo craplot! '|| SQLERRM;
-          RAISE vr_excsaida;
-      END;
-    ELSE
-      CLOSE cr_craplot;
-    END IF;  
-    
-    BEGIN          
-      UPDATE craplot ct
-        SET ct.vlinfocr = NVL(ct.vlinfocr,0) + rw_aplicacoes.vlaplica
-           ,ct.vlcompcr = NVL(ct.vlcompcr,0) + rw_aplicacoes.vlaplica
-           ,ct.qtinfoln = NVL(ct.qtinfoln,0) + (vr_nrseqdig -  NVL(ct.nrseqdig,0))
-           ,ct.qtcompln = NVL(ct.qtcompln,0) + (vr_nrseqdig -  NVL(ct.nrseqdig,0))
-           ,ct.nrseqdig = NVL(ct.nrseqdig,0) + vr_nrseqdig
-        WHERE ct.ROWID = rw_craplot.rowid;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Erro alterando craplot! '|| SQLERRM;
-        RAISE vr_excsaida;
-    END;
+        vr_nrseqdig := nvl(vr_nrseqdig,0) + 1;
+        vr_nrdocmto := 655000 + vr_nrseqdig;    
+        
+         BEGIN
+          insert into craplap (cdagenci, cdbccxlt, dtmvtolt, nrdolote, nrdconta, cdhistor, nraplica, nrdocmto, nrseqdig, vllanmto, txaplica, dtrefere, txaplmes, cdcooper, vlrendmm)
+             values
+            (1   --cdagenci
+            ,100 --cdbccxlt
+            ,trunc(sysdate)
+            ,8480 --nrdolote 
+            ,rw_aplicacoes.nrdconta
+            ,529 -- RDC POS
+            ,rw_aplicacoes.nraplica
+            ,vr_nrdocmto
+            ,vr_nrseqdig
+            ,rw_aplicacoes.vlaplica
+            ,rw_aplicacoes.txaplica
+            ,rw_craprda.dtvencto -- dtrefere
+            ,rw_aplicacoes.txaplica
+            ,rw_aplicacoes.cdcooper
+            ,rw_aplicacoes.vlaplica) returning rowid into vr_laprowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro inserindo craplap! '|| SQLERRM ||
+                           ' - Cooper: '|| rw_aplicacoes.cdcooper || 
+                           ' Conta: ' ||rw_aplicacoes.nrdconta || 
+                           ' Aplica: '|| rw_aplicacoes.nraplica;
+           RAISE vr_excsaida;
+        END;
+        
+        dbms_output.put_line('delete from craplap where rowid = '''|| vr_laprowid ||''';');
+        
+        BEGIN
+          UPDATE craprda
+             SET vlsltxmx = vlsltxmx + rw_aplicacoes.vlaplica
+                ,vlsltxmm = vlsltxmm + rw_aplicacoes.vlaplica
+           WHERE progress_recid = rw_craprda.progress_recid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro alterando craprda! '|| SQLERRM ||
+                           ' - Cooper: '|| rw_aplicacoes.cdcooper || 
+                           ' Conta: ' ||rw_aplicacoes.nrdconta || 
+                           ' Aplica: '|| rw_aplicacoes.nraplica;
+            RAISE vr_excsaida;
+        END;
+        
+        OPEN cr_craplot(pr_cdcooper => rw_aplicacoes.cdcooper
+                       ,pr_dtmvtolt => trunc(sysdate));
+        FETCH cr_craplot INTO rw_craplot;
+        IF cr_craplot%NOTFOUND THEN
+          CLOSE cr_craplot;
+          
+          BEGIN
+            INSERT INTO craplot(cdcooper
+                               ,dtmvtolt
+                               ,cdagenci
+                               ,cdbccxlt
+                               ,nrdolote
+                               ,tplotmov
+                               ,vlinfodb
+                               ,vlcompdb
+                               ,qtinfoln
+                               ,qtcompln
+                               ,vlinfocr
+                               ,vlcompcr)
+                         VALUES(rw_aplicacoes.cdcooper
+                               ,trunc(sysdate)
+                               ,1
+                               ,100
+                               ,8480
+                               ,9
+                               ,0
+                               ,0
+                               ,0
+                               ,0
+                               ,0
+                               ,0)
+                       RETURNING cdagenci
+                                ,cdbccxlt
+                                ,nrdolote
+                                ,tplotmov
+                                ,nrseqdig
+                                ,rowid
+                            INTO rw_craplot.cdagenci
+                                ,rw_craplot.cdbccxlt
+                                ,rw_craplot.nrdolote
+                                ,rw_craplot.tplotmov
+                                ,rw_craplot.nrseqdig
+                                ,rw_craplot.rowid;
+          EXCEPTION
+            WHEN OTHERS THEN
+              -- Gerar erro e fazer rollback
+              vr_dscritic := 'Erro inserindo craplot! '|| SQLERRM;
+              RAISE vr_excsaida;
+          END;
+        ELSE
+          CLOSE cr_craplot;
+        END IF;  
+        
+        BEGIN          
+          UPDATE craplot ct
+            SET ct.vlinfocr = NVL(ct.vlinfocr,0) + rw_aplicacoes.vlaplica
+               ,ct.vlcompcr = NVL(ct.vlcompcr,0) + rw_aplicacoes.vlaplica
+               ,ct.qtinfoln = NVL(ct.qtinfoln,0) + (vr_nrseqdig -  NVL(ct.nrseqdig,0))
+               ,ct.qtcompln = NVL(ct.qtcompln,0) + (vr_nrseqdig -  NVL(ct.nrseqdig,0))
+               ,ct.nrseqdig = NVL(ct.nrseqdig,0) + vr_nrseqdig
+            WHERE ct.ROWID = rw_craplot.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro alterando craplot! '|| SQLERRM;
+            RAISE vr_excsaida;
+        END;
+    end if;
     
     -- Atualizar taxas das aplicacoes
     BEGIN
@@ -232,6 +240,6 @@ end;
 1
 vr_dscritic
 1
-SUCESSO -> Registros atualizados: 22
+SUCESSO -> Registros atualizados: 5
 5
 0
