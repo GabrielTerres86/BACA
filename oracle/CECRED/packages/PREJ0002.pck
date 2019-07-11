@@ -396,7 +396,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
     vr_flgativo    integer;
     vr_nrdolote    number;
     vr_nrdrowid    rowid;
-      vr_obtem_valor_lancto    number(1) := 1; -- controle para executar uma unica vez dentro do loop
     vr_dsctajud    crapprm.dsvlrprm%TYPE;         --> Parametro de contas que nao podem debitar os emprestimos
     vr_dsctactrjud crapprm.dsvlrprm%TYPE := null; --> Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
 
@@ -495,7 +494,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
     END IF;
 
     -- Buscar todos os lançamentos efetuados
-        vr_obtem_valor_lancto := 1;
     FOR r_craplem in c_craplem(prc_cdcooper => pr_cdcooper
                               ,prc_nrdconta => pr_nrdconta
                               ,prc_nrctremp => pr_nrctremp
@@ -626,8 +624,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       END IF;
       ELSE
         -- Estorno de data anterior
-            IF vr_obtem_valor_lancto = 1 then
-
           -- cria lancamento LCM
           IF gl_nrdolote IS NULL THEN
             OPEN c_busca_prx_lote(pr_dtmvtolt => RW_CRAPDAT.DTMVTOLT
@@ -662,8 +658,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
 							END IF;
 							
 							CLOSE c_craplcm;			
-              vr_obtem_valor_lancto := 0;
-            END IF;
 						  
             IF r_craplem.cdhistor = 2701 THEN
               IF prej0003.fn_verifica_preju_conta(pr_cdcooper => r_craplem.cdcooper,
