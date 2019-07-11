@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.empr0001_josi AS
+CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
 
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001_josi AS
   --  Sistema  : Rotinas gen¿ricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 23/08/2018
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 14/06/2019
   --
   -- Dados referentes ao programa:
   --
@@ -1067,9 +1067,9 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001_josi AS
                                       ,pr_vldespar OUT NUMBER --> Valor Desconto Parcela
                                       ,pr_des_reto OUT VARCHAR --> Retorno OK / NOK
                                       ,pr_tab_erro OUT gene0001.typ_tab_erro);
-END empr0001_josi;
+END empr0001;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
+CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -1077,7 +1077,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 31/10/2017
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 05/07/2019
   --
   -- Dados referentes ao programa:
   --
@@ -1144,13 +1144,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
   --                          cdcritic 1033 para o job crps750 não logar a mensagem. (Carlos)
   --             19/10/2017 - adicionado campo vliofcpl no xml de retorno da pc_obtem_dados_empresti
   --                          (Diogo - MoutS - Proj 410 - RF 41 / 42)
-  --             23/08/2018 - PRJ 438 - Gravação e Alteração de motivos de anulação de emprestimos e limite de credito
   --
+  --             23/08/2018 - PRJ 438 - Gravação e Alteração de motivos de anulação de emprestimos e limite de credito
   --
   --             05/06/2018 - P450 - Alteração INSERT na craplcm pela chamada da rotina lanc0001.pc_gerar_lancamento_conta
   --                          Josiane Stiehler- AMcom
   --
   --             04/01/2019 - chamado INC0027294 (Fabio-Amcom)
+  --
+  --             05/07/2019 - PJ437 - Consignado - Alteradas as rotinas abaixo para retornar os valores calculados pela FIS se Consignado
+  --                           - pc_calc_atraso_parcela;
+  --                           - pc_busca_pgto_parcelas;
+  --                           - pc_valida_pagto_antec_parc.
+  --                          (Fernanda Kelli - AMcom)   
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -2550,7 +2557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Fevereiro/2013.                         Ultima atualizacao: 07/08/2018
+       Data    : Fevereiro/2013.                         Ultima atualizacao: 05/07/2019
 
        Dados referentes ao programa:
 
@@ -2578,6 +2585,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
                    10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)
 
                    07/08/2018 - P410 - IOF Prejuizo - Diminuir valores já pagos (Marcos-Envolti)
+                   
+                   05/07/2019 - P437 - Consignado - Se consignado retornar valores da FIS 
+                                gravados na crapepr e crappep (Fernanda Kelli - AMcom)
+                                
     ............................................................................. */
     DECLARE
       -- Saida com erro opção 2
@@ -2593,6 +2604,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
               ,epr.qtpreemp
               ,epr.vlemprst
               ,epr.cdfinemp
+              --P437
+              ,epr.tpdescto
+              ,epr.tpemprst
+              --
           FROM crapepr epr
          WHERE epr.cdcooper = pr_cdcooper
                AND epr.nrdconta = pr_nrdconta
@@ -2609,6 +2624,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
               ,pep.vlsdvsji
               ,pep.vlpagmra
               ,pep.vlpagiof
+              --P437
+              ,pep.vlsdvatu
+              ,pep.vlmtapar
+              ,pep.vljinpar
+              ,pep.vlmrapar
+              ,pep.vliofcpl
+              ,pep.vljura60
+              --               
           FROM crappep pep
          WHERE pep.cdcooper = pr_cdcooper
                AND pep.nrdconta = pr_nrdconta
@@ -2735,6 +2758,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
           -- Apenas fechar o cursor e continuar
           CLOSE cr_crappep;
         END IF;
+        
+        --P437-Consignado. Se Consignado, retornar os valores calculados pela FIS
+        IF rw_crapepr.tpemprst = 1 AND 
+           rw_crapepr.tpdescto = 2 THEN
+           
+          pr_vlpagsld := rw_crappep.vlsdvpar;
+          pr_vlatupar := rw_crappep.vlsdvatu;
+          pr_vlmtapar := rw_crappep.vlmtapar;
+          pr_vljinpar := rw_crappep.vljinpar;
+          pr_vlmrapar := rw_crappep.vlmrapar;
+          pr_vliofcpl := rw_crappep.vliofcpl;
+          --pr_vljinp59 := rw_crappep.vlj
+          pr_vljinp60 := rw_crappep.vljura60;          
+        ELSE          
         -- Se ainda nao pagou nada da parcela
         IF rw_crappep.dtultpag IS NULL
            OR rw_crappep.dtultpag < rw_crappep.dtvencto THEN
@@ -2883,6 +2920,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
           -- Utilizar o valor já calculado anteriormente
           pr_vlpagsld := pr_vlatupar;
         END IF;
+        
+        END IF; --P437
+        
         -- Chegou ao final sem problemas, retorna OK
         pr_des_reto := 'OK';
       EXCEPTION
@@ -3484,7 +3524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Edson
-       Data    : Junho/2004.                         Ultima atualizacao: 08/10/2015
+       Data    : Junho/2004.                         Ultima atualizacao: 05/07/2019
 
        Dados referentes ao programa:
 
@@ -3506,6 +3546,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
                     08/04/2015 - Ajuste para verificar os historicos de emprestimo e financiamento.(James)
 
                     08/10/2015 - Diminuir o valor estorno no mes do valor pago no mes. (Oscar)
+                    
+                    05/07/2019 - Para Consignado retornar os valores da FIS 
+                                 gravados na CRAPPEP (Fernanda Kelli - AMcom)
     ............................................................................. */
     DECLARE
       -- Saida com erro opção 2
@@ -3525,6 +3568,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
               ,epr.vliofepr
               ,epr.vltarifa
               ,epr.vlsdeved
+              --P437
+              ,epr.tpemprst
+              ,epr.tpdescto
+              --
           FROM crapepr epr
          WHERE epr.cdcooper = pr_cdcooper
                AND epr.nrdconta = pr_nrdconta
@@ -3567,6 +3614,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
               ,pep.vldespar
               ,pep.vlsdvpar
               ,pep.inliquid
+              --P437
+              ,pep.vlsdvatu
           FROM crappep pep
          WHERE pep.cdcooper = pr_cdcooper
                AND pep.nrdconta = pr_nrdconta
@@ -3739,26 +3788,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
 
             -- Antecipação de parcela
           ELSIF rw_crappep.dtvencto > pr_dtmvtolt THEN
-            -- Procedure para calcular valor antecipado de parcelas de empréstimo
-            empr0001.pc_calc_antecipa_parcela(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
-                                             ,pr_cdagenci => pr_cdagenci --> Código da agência
-                                             ,pr_nrdcaixa => pr_nrdcaixa --> Número do caixa
-                                             ,pr_dtvencto => rw_crappep.dtvencto --> Data do vencimento
-                                             ,pr_vlsdvpar => rw_crappep.vlsdvpar --> Valor devido parcela
-                                             ,pr_txmensal => rw_crapepr.txmensal --> Taxa aplicada ao empréstimo
-                                             ,pr_dtmvtolt => pr_dtmvtolt --> Data do movimento atual
-                                             ,pr_dtdpagto => rw_crapepr.dtdpagto --> Data de pagamento
-                                             ,pr_vlatupar => pr_tab_pgto_parcel(vr_ind_pag)
-                                                             .vlatupar --> Valor atualizado da parcela
-                                             ,pr_vldespar => pr_tab_pgto_parcel(vr_ind_pag)
-                                                             .vldespar --> Valor desconto da parcela
-                                             ,pr_des_reto => vr_des_reto --> Retorno OK / NOK
-                                             ,pr_tab_erro => vr_tab_erro); --> Tabela com possíves erros
-            -- Testar erro
-            IF vr_des_reto = 'NOK' THEN
-              -- Levantar exceção 2, onde já temos o erro na vr_tab_erro
-              RAISE vr_exc_erro_2;
-            END IF;
+            --P437-Consignado. Se Consignado, retornar os valores calculados pela FIS
+            IF rw_crapepr.tpemprst = 1 AND rw_crapepr.tpdescto = 2 THEN               
+              pr_tab_pgto_parcel(vr_ind_pag).vlatupar := rw_crappep.vlsdvatu;
+              pr_tab_pgto_parcel(vr_ind_pag).vldespar := rw_crappep.vldespar;               
+            --
+            ELSE
+              -- Procedure para calcular valor antecipado de parcelas de empréstimo
+              empr0001.pc_calc_antecipa_parcela(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+                                               ,pr_cdagenci => pr_cdagenci --> Código da agência
+                                               ,pr_nrdcaixa => pr_nrdcaixa --> Número do caixa
+                                               ,pr_dtvencto => rw_crappep.dtvencto --> Data do vencimento
+                                               ,pr_vlsdvpar => rw_crappep.vlsdvpar --> Valor devido parcela
+                                               ,pr_txmensal => rw_crapepr.txmensal --> Taxa aplicada ao empréstimo
+                                               ,pr_dtmvtolt => pr_dtmvtolt --> Data do movimento atual
+                                               ,pr_dtdpagto => rw_crapepr.dtdpagto --> Data de pagamento
+                                               ,pr_vlatupar => pr_tab_pgto_parcel(vr_ind_pag)
+                                                               .vlatupar --> Valor atualizado da parcela
+                                               ,pr_vldespar => pr_tab_pgto_parcel(vr_ind_pag)
+                                                               .vldespar --> Valor desconto da parcela
+                                               ,pr_des_reto => vr_des_reto --> Retorno OK / NOK
+                                               ,pr_tab_erro => vr_tab_erro); --> Tabela com possíves erros
+              -- Testar erro
+              IF vr_des_reto = 'NOK' THEN
+                -- Levantar exceção 2, onde já temos o erro na vr_tab_erro
+                RAISE vr_exc_erro_2;
+              END IF;
+            END IF; --P437
             -- Iniciar valor da flag
             pr_tab_pgto_parcel(vr_ind_pag).flgantec := TRUE;
             -- Guardar quantidades calculadas
@@ -9788,7 +9844,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Marco/2015                        Ultima atualizacao: 25/03/2015
+       Data    : Marco/2015                        Ultima atualizacao: 05/07/2019
 
        Dados referentes ao programa:
 
@@ -9796,6 +9852,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
        Objetivo  : Rotina para validar pagamento antecipado da parcela do emprestimo
 
        Alteracoes: 25/03/2015 - Conversão Progress para Oracle (Alisson - AMcom)
+
+                   05/07/2019 - Para Consignado retornar os valores da FIS 
+                                gravados na CRAPPEP (Fernanda Kelli - AMcom)
 
     ............................................................................. */
 
@@ -9873,23 +9932,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
         CLOSE cr_crapepr;
       END IF;
 
-      -- Procedure para calcular valor antecipado de parcelas de empréstimo
-      empr0001.pc_calc_antecipa_parcela(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
-                                       ,pr_cdagenci => pr_cdagenci         --> Código da agência
-                                       ,pr_nrdcaixa => pr_nrdcaixa         --> Número do caixa
-                                       ,pr_dtvencto => rw_crappep.dtvencto --> Data do vencimento
-                                       ,pr_vlsdvpar => rw_crappep.vlsdvpar --> Valor devido parcela
-                                       ,pr_txmensal => rw_crapepr.txmensal --> Taxa aplicada ao empréstimo
-                                       ,pr_dtmvtolt => pr_dtmvtolt         --> Data do movimento atual
-                                       ,pr_dtdpagto => rw_crapepr.dtdpagto --> Data de pagamento
-                                       ,pr_vlatupar => pr_vlatupar         --> Valor atualizado da parcela
-                                       ,pr_vldespar => pr_vldespar         --> Valor desconto da parcela
-                                       ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
-                                       ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
-      -- Testar erro
-      IF vr_des_reto = 'NOK' THEN
-        -- Levantar exceção
-        RAISE vr_exc_erro;
+      --P437.Consignado. Para Consignado retornar os valores da FIS gravados na CRAPPEP  
+      IF rw_crapepr.tpemprst = 1 AND rw_crapepr.tpdescto = 2 THEN
+        pr_vlatupar := rw_crappep.vlsdvatu;
+        pr_vldespar := rw_crappep.vldespar;   
+      ELSE
+        -- Procedure para calcular valor antecipado de parcelas de empréstimo
+        empr0001.pc_calc_antecipa_parcela(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
+                                         ,pr_cdagenci => pr_cdagenci         --> Código da agência
+                                         ,pr_nrdcaixa => pr_nrdcaixa         --> Número do caixa
+                                         ,pr_dtvencto => rw_crappep.dtvencto --> Data do vencimento
+                                         ,pr_vlsdvpar => rw_crappep.vlsdvpar --> Valor devido parcela
+                                         ,pr_txmensal => rw_crapepr.txmensal --> Taxa aplicada ao empréstimo
+                                         ,pr_dtmvtolt => pr_dtmvtolt         --> Data do movimento atual
+                                         ,pr_dtdpagto => rw_crapepr.dtdpagto --> Data de pagamento
+                                         ,pr_vlatupar => pr_vlatupar         --> Valor atualizado da parcela
+                                         ,pr_vldespar => pr_vldespar         --> Valor desconto da parcela
+                                         ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
+                                         ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
+        -- Testar erro
+        IF vr_des_reto = 'NOK' THEN
+          -- Levantar exceção
+          RAISE vr_exc_erro;
+        END IF;
       END IF;
 
       --Verificar Valor Informado e Valor da Parcela
@@ -17329,5 +17394,5 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_josi AS
 
 
 
-END empr0001_josi;
+END empr0001;
 /
