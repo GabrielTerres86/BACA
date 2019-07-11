@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-237
+239
 -- Created on 28/06/2019 by F0030367 
 declare 
   vr_contador number;
@@ -63,7 +63,9 @@ declare
   rw_craplot cr_craplot%rowtype;   
   
 begin
+  
   vr_contador:=0;
+  :vr_dscritic := '';
   
   FOR rw_aplicacoes IN cr_aplicacoes LOOP
     
