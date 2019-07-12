@@ -31,7 +31,17 @@ BEGIN
      SELECT epr.cdcooper,
             epr.nrdconta,
             epr.nrctremp,
-            epr.qtmesdec
+            epr.qtmesdec,
+            epr.cdlcremp,
+            epr.dtmvtolt,
+            epr.cdagenci,
+            epr.cdbccxlt,
+            epr.nrdolote,
+            epr.vlemprst,
+            epr.qtpreemp,
+            epr.nrctaav1,
+            epr.nrctaav2,
+            epr.cdfinemp
        FROM crapepr epr
       WHERE epr.tpemprst = 1 -- Price Pre Fixado
         AND epr.tpdescto = 2        
@@ -175,7 +185,7 @@ BEGIN
          AND epr.nrctremp    = pep.nrctremp
          AND tcm.dtmovimento = pr_dtmovimento;
     
-    CURSOR cr_craplcr (pr_cdcooper IN crapepr.cdcooper%TYPE,
+    CURSOR cr_craplcrepr (pr_cdcooper IN crapepr.cdcooper%TYPE,
                        pr_nrdconta IN crapepr.nrdconta%TYPE,
                        pr_nrctremp IN crapepr.nrctremp%TYPE) IS
     SELECT lcr.dsoperac
@@ -187,7 +197,7 @@ BEGIN
        AND epr.nrdconta = pr_nrdconta
        AND epr.nrctremp = pr_nrctremp;
     
-    rw_craplcr cr_craplcr%ROWTYPE;
+    rw_craplcrepr cr_craplcrepr%ROWTYPE;
 
     CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE,
                        pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -239,6 +249,55 @@ BEGIN
        AND pep.nrctremp = pr_nrctremp
        AND pep.inliquid = 1;-- liquidado     
     
+    --Selecionar Linhas de Credito
+    CURSOR cr_craplcr (pr_cdcooper IN craplcr.cdcooper%TYPE) IS
+     SELECT craplcr.cdlcremp
+       FROM craplcr
+      WHERE craplcr.cdcooper = pr_cdcooper;
+    
+    --Selecionar Cotas
+    CURSOR cr_crapcot (pr_cdcooper IN crapcop.cdcooper%TYPE
+                       ,pr_nrdconta IN crapepr.nrdconta%TYPE) IS
+     SELECT crapcot.ROWID
+       FROM crapcot
+      WHERE crapcot.cdcooper = pr_cdcooper
+        AND crapcot.nrdconta = pr_nrdconta;
+       rw_crapcot cr_crapcot%ROWTYPE;
+    
+    --Selecionar Moedas
+    CURSOR cr_crapmfx (pr_cdcooper IN crapmfx.cdcooper%TYPE
+                      ,pr_dtmvtolt IN crapmfx.dtmvtolt%TYPE
+                      ,pr_tpmoefix IN crapmfx.tpmoefix%TYPE) IS
+     SELECT mfx.cdcooper,
+            mfx.vlmoefix
+       FROM crapmfx mfx
+      WHERE mfx.cdcooper = pr_cdcooper
+        AND mfx.dtmvtolt = pr_dtmvtolt
+        AND mfx.tpmoefix = pr_tpmoefix;
+     rw_crapmfx cr_crapmfx%ROWTYPE;
+
+
+     --Selecionar Registro de Microfilmagem
+     CURSOR cr_crapmcr (pr_cdcooper IN crapmcr.cdcooper%TYPE
+                       ,pr_dtmvtolt IN crapmcr.dtmvtolt%TYPE
+                       ,pr_cdagenci IN crapmcr.cdagenci%TYPE
+                       ,pr_cdbccxlt IN crapmcr.cdbccxlt%TYPE
+                       ,pr_nrdolote IN crapmcr.nrdolote%TYPE
+                       ,pr_nrdconta IN crapmcr.nrdconta%TYPE
+                       ,pr_nrcontra IN crapmcr.nrcontra%TYPE
+                       ,pr_tpctrmif IN crapmcr.tpctrmif%TYPE) IS
+     SELECT mcr.cdcooper
+       FROM crapmcr mcr
+      WHERE mcr.cdcooper = pr_cdcooper
+        AND mcr.dtmvtolt = pr_dtmvtolt
+        AND mcr.cdagenci = pr_cdagenci
+        AND mcr.cdbccxlt = pr_cdbccxlt
+        AND mcr.nrdolote = pr_nrdolote
+        AND mcr.nrdconta = pr_nrdconta
+        AND mcr.nrcontra = pr_nrcontra
+        AND mcr.tpctrmif = pr_tpctrmif;
+      rw_crapmcr cr_crapmcr%ROWTYPE;
+       
     --Registro do tipo calendario
     rw_crapdat         BTCH0001.cr_crapdat%ROWTYPE;
 
@@ -280,7 +339,9 @@ BEGIN
     TYPE typ_tab_craplem IS TABLE OF NUMBER INDEX BY VARCHAR2(20);
     vr_tab_craplem        typ_tab_craplem;
     vr_index_craplem      VARCHAR2(20);
-     
+    
+    vr_tab_craplcr CADA0001.typ_tab_number;
+    
     vr_dtmvtctr           tbepr_consig_contrato_tmp.dtmovimento%TYPE;
     vr_dtmvtpar           tbepr_consig_contrato_tmp.dtmovimento%TYPE;
     vr_vlsdvctr           crapepr.vlsdvctr%TYPE;
@@ -430,23 +491,23 @@ BEGIN
     LOOP
       BEGIN
         -- seleciona a linha de credito
-        OPEN cr_craplcr(pr_cdcooper => rw_consig_movimento.cdcooper,
-                        pr_nrdconta => rw_consig_movimento.nrdconta,
-                        pr_nrctremp => rw_consig_movimento.nrctremp);
-        FETCH cr_craplcr
-        INTO rw_craplcr;
+        OPEN cr_craplcrepr(pr_cdcooper => rw_consig_movimento.cdcooper,
+                           pr_nrdconta => rw_consig_movimento.nrdconta,
+                           pr_nrctremp => rw_consig_movimento.nrctremp);
+        FETCH cr_craplcrepr
+        INTO rw_craplcrepr;
         -- Se não encontrar
-        IF cr_craplcr%NOTFOUND THEN
+        IF cr_craplcrepr%NOTFOUND THEN
            -- Fechar o cursor
-           CLOSE cr_craplcr;
+           CLOSE cr_craplcrepr;
            -- Gerar erro
            vr_cdcritic := 1178;-- linha de credito não encontrada
            RAISE vr_gera_log;
         ELSE
            -- Fechar o cursor
-           CLOSE cr_craplcr;
+           CLOSE cr_craplcrepr;
         END IF;
-        vr_floperac := rw_craplcr.dsoperac = 'FINANCIAMENTO';
+        vr_floperac := rw_craplcrepr.dsoperac = 'FINANCIAMENTO';
         
         -- seleciona agencia do cooperado
         OPEN cr_crapass(pr_cdcooper => rw_consig_movimento.cdcooper,
@@ -483,6 +544,21 @@ BEGIN
            vr_cdorigem:= 5; --Aimaro web
            CLOSE cr_craplcm;
         END IF;
+        
+        --Selecionar Valor Moeda
+        OPEN cr_crapmfx (pr_cdcooper => rw_consig_movimento.cdcooper
+                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                        ,pr_tpmoefix => 2);
+       FETCH cr_crapmfx INTO rw_crapmfx;
+       --Se nao encontrou
+       IF cr_crapmfx%NOTFOUND THEN
+         -- Montar mensagem de critica
+         vr_cdcritic:= 140;
+         vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         --Complementar mensagem
+         vr_dscritic:= vr_dscritic ||' da UFIR.';
+         RAISE vr_gera_log;
+       END IF;
         
         -- os lançamentos 1,8 e 9 já são criados na efetivação da proposta (b1wgen0084.grava_efetivacao_proposta)
         -- 1 - Valor liberado para o cliente (Debito) 
@@ -598,6 +674,39 @@ BEGIN
                     vr_dscritic:= 'Erro ao atualizar tabela CRAPEPR - '||SQLERRM;
                     RAISE vr_gera_log;
                 END;
+                
+                --  Atualiza valor dos juros pagos em moeda fixa no crapcot 
+                OPEN cr_crapcot (pr_cdcooper => rw_consig_movimento.cdcooper
+                                ,pr_nrdconta => rw_consig_movimento.nrdconta);
+                 --Proximo Registro
+                 FETCH cr_crapcot INTO rw_crapcot;
+                 --Se nao encontrou
+                 IF cr_crapcot%NOTFOUND THEN
+                   --Fechar Cursor
+                   CLOSE cr_crapcot;
+                   vr_cdcritic:= 169;
+                   vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+                   --Complementar Mensagem
+                   vr_dscritic:= vr_dscritic||' - CONTA = '||gene0002.fn_mask(rw_crapepr.nrdconta,'zzzz.zz9.9');
+                   RAISE vr_gera_log;
+                 ELSE
+                   --Fechar Cursor
+                   CLOSE cr_crapcot;
+                   --Atualizar tabela cotas
+                   BEGIN
+                     UPDATE crapcot cot
+                        SET cot.qtjurmfx = nvl(cot.qtjurmfx,0) +
+                                           ROUND(vr_jurosrem / rw_crapmfx.vlmoefix,4)
+                      WHERE cot.rowid = rw_crapcot.rowid;
+                   EXCEPTION
+                     WHEN OTHERS THEN
+                     vr_cdcritic:= 0;
+                     vr_dscritic:= 'Erro ao atualizar tabela crapcot. '||SQLERRM;
+                     --Levantar Excecao
+                     RAISE vr_gera_log;
+                   END;
+                 END IF;
+                
              END IF;         
         END IF; 
       
@@ -760,7 +869,12 @@ BEGIN
       vr_tab_parcelas(vr_index_parcela).instatusproces:= rw_consig_parcela.instatusproces;
       vr_tab_parcelas(vr_index_parcela).dserroproces  := rw_consig_parcela.dserroproces;
 	  END LOOP;
-
+   
+    --Carregar tabela linhas credito
+    FOR rw_craplcr IN cr_craplcr (pr_cdcooper => pr_cdcooper) LOOP
+        vr_tab_craplcr(rw_craplcr.cdlcremp):= 0;
+    END LOOP;
+    
     --- gera log para futuros rastreios
     pc_log_programa(PR_DSTIPLOG           => 'O',
                     PR_CDPROGRAMA         => 'CRPS782',
@@ -879,8 +993,8 @@ BEGIN
                    epr.inliquid = decode(vr_tab_contrato(vr_index_crapepr).instatuscontr,2,1,0), -- indicador da liquidação (0 - não liquidado, 1- liquidado)
                    epr.dtliquid = vr_dtmvtctr,         -- data da liquidação
                    epr.dtultpag = vr_dtultpag,         -- data do último pagamento
-                   epr.vlsdeved = vr_vlsdvctr
-                   epr.vljuracu = vr_tab_contrato(vr_index_crapepr).vljuramesant
+                   epr.vlsdeved = vr_vlsdvctr,
+                   epr.vljuracu = vr_tab_contrato(vr_index_crapepr).vljuramesant,
                    epr.vljurmes = vr_tab_contrato(vr_index_crapepr).vljuramesatu
              WHERE epr.cdcooper = rw_crapepr.cdcooper
                AND epr.nrdconta = rw_crapepr.nrdconta
@@ -893,7 +1007,7 @@ BEGIN
           END;
            
           --verifica se a linha de credito ja foi atualizada
-         IF vr_tab_craplcr(rw_crapepr.cdlcremp) = 0 AND nvl(rw_crapepr.vlsdeved,0) > 0 THEN
+         IF vr_tab_craplcr(rw_crapepr.cdlcremp) = 0 AND nvl(vr_vlsdvctr,0) > 0 THEN
             --  Atualizacao do indicador de saldo devedor  */
             BEGIN
                UPDATE craplcr SET craplcr.flgsaldo = 1
@@ -910,26 +1024,90 @@ BEGIN
             vr_tab_craplcr(rw_crapepr.cdlcremp):= 1;
           END IF;
           
-          -- rw_crawepr.dtlibera := vr_tab_contrato(vr_index_crapepr).dtlibera;
-          END IF;
-          COMMIT;
-       EXCEPTION
-         WHEN vr_gera_log_saldo THEN
-           ROLLBACK;
-           IF vr_cdcritic is NOT NULL AND 
-              vr_cdcritic <> 0 THEN
-              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          --  Inicializa os meses decorridos para os contratos do mes
+          IF to_char(rw_crapepr.dtmvtolt,'YYYYMM') = to_char(vr_dtmvtctr,'YYYYMM') THEN
+
+           --  Criacao do registro para Microfilmagem dos Contratos 
+           OPEN cr_crapmcr (pr_cdcooper => pr_cdcooper
+                           ,pr_dtmvtolt => rw_crapepr.dtmvtolt
+                           ,pr_cdagenci => rw_crapepr.cdagenci
+                           ,pr_cdbccxlt => rw_crapepr.cdbccxlt
+                           ,pr_nrdolote => rw_crapepr.nrdolote
+                           ,pr_nrdconta => rw_crapepr.nrdconta
+                           ,pr_nrcontra => rw_crapepr.nrctremp
+                           ,pr_tpctrmif => 1); /*emprestimo*/
+           FETCH cr_crapmcr INTO rw_crapmcr;
+           --Se Encontrou
+           IF cr_crapmcr%FOUND THEN
+             --Fechar Cursor
+             CLOSE cr_crapmcr;
+             --Complementar Mensagem
+             vr_dscritic:= 'ATENCAO: Contrato ja microfilmado. Conta: '||
+                           gene0002.fn_mask(rw_crapepr.nrdconta,'zzzz.zzz9.9')||'  Contrato: '||
+                           gene0002.fn_mask(rw_crapepr.nrctremp,'zz.zzz.zz9');
+             RAISE vr_gera_log_saldo;  
+           ELSE
+             --Fechar Cursor
+             CLOSE cr_crapmcr;
+             --Inserir registro microfilmagem
+             BEGIN
+               INSERT INTO crapmcr mcr
+                 (mcr.dtmvtolt
+                 ,mcr.cdagenci
+                 ,mcr.cdbccxlt
+                 ,mcr.nrdolote
+                 ,mcr.nrdconta
+                 ,mcr.nrcontra
+                 ,mcr.tpctrmif
+                 ,mcr.vlcontra
+                 ,mcr.qtpreemp
+                 ,mcr.nrctaav1
+                 ,mcr.nrctaav2
+                 ,mcr.cdlcremp
+                 ,mcr.cdfinemp
+                 ,mcr.cdcooper)
+               VALUES
+                 (rw_crapepr.dtmvtolt
+                 ,rw_crapepr.cdagenci
+                 ,rw_crapepr.cdbccxlt
+                 ,rw_crapepr.nrdolote
+                 ,rw_crapepr.nrdconta
+                 ,rw_crapepr.nrctremp
+                 ,1
+                 ,rw_crapepr.vlemprst
+                 ,rw_crapepr.qtpreemp
+                 ,nvl(rw_crapepr.nrctaav1,0)
+                 ,nvl(rw_crapepr.nrctaav2,0)
+                 ,rw_crapepr.cdlcremp
+                 ,rw_crapepr.cdfinemp
+                 ,pr_cdcooper);
+             EXCEPTION
+               WHEN OTHERS THEN
+                 vr_cdcritic:= 0;
+                 vr_dscritic:= 'Erro ao inserir CRAPMCR: '||rw_crapepr.nrdconta||'-'||rw_crapepr.nrctremp||'. '||SQLERRM;
+                 RAISE vr_gera_log_saldo;
+             END;
            END IF;
-           vr_dscritic:= vr_dscritic||' ('||rw_crapepr.nrdconta||'/'||
+         END IF;
+        END IF;
+        COMMIT;
+     EXCEPTION
+       WHEN vr_gera_log_saldo THEN
+         ROLLBACK;
+         IF vr_cdcritic is NOT NULL AND 
+            vr_cdcritic <> 0 THEN
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+         END IF;
+            vr_dscritic:= vr_dscritic||' ('||rw_crapepr.nrdconta||'/'||
                                             rw_crapepr.nrctremp||
                                             vr_nrparepr||')';
-           -- Envio centralizado de log de erro
-           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                     ,pr_ind_tipo_log => 2 -- Erro tratato
-                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+         -- Envio centralizado de log de erro
+         btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                   ,pr_ind_tipo_log => 2 -- Erro tratato
+                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                        || vr_cdprogra || ' --> '
                                                        || vr_dscritic );
-      END;
+     END;
             
     END LOOP; -- fim do loop do contrato
     
