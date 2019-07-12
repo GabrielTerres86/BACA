@@ -491,7 +491,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
                                          ''SIGAS'' dscanal
                                     FROM tbseg_producao_sigas segpro, crapass ass
                                    WHERE segpro.cden2 = '||vr_cdcooper||'
-                                   AND segpro.nrcpf_cnpj = ass.nrcpfcgc
+                                   AND REGEXP_REPLACE(segpro.nrcpf_cnpj, ''[^0-9]'', '''') = ass.nrcpfcgc
                                    AND ass.nrdconta = '||pr_nrdconta||'
 
                                   -- Apolices sigas
@@ -976,7 +976,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
                                            ,segpro.nrcpf_cnpj                   dscdsegu
                                       FROM tbseg_producao_sigas segpro, crapass ass
                                      WHERE segpro.cden2 = '||pr_cdcooper||'
-                                       AND segpro.nrcpf_cnpj = ass.nrcpfcgc
+                                       AND REGEXP_REPLACE(segpro.nrcpf_cnpj, ''[^0-9]'', '''') = ass.nrcpfcgc
                                        AND ass.nrdconta = '||pr_nrdconta||'
                                        AND segpro.nrapolice_certificado = '||pr_nrapolic||'
                                 ');
