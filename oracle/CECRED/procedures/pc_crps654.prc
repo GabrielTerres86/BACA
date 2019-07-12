@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Fabricio
-       Data    : Agosto/2013                     Ultima atualizacao: 13/12/2018
+       Data    : Agosto/2013                     Ultima atualizacao: 12/07/2019
 
        Dados referentes ao programa:
 
@@ -52,7 +52,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                    
                     13/12/2018 - Remoção da atualização da Capa de Lote
                                  Yuri - Mouts
-    ............................................................................ */
+             
+                    12/07/2019 - RITM0011923 - Criado uma condição onde, dependendo a cooperativa em questão
+                                 será considerado ou desconsiderado o valor do limite de crédito. (Daniel Lombardi - Mout's)
+/   ................/............................................................ */
 
     DECLARE
 
@@ -281,8 +284,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
 
         vr_ind_sald := vr_tab_sald.last;
 
+        --> Daniel Mout's - Se o crapprm.dsvlrprm da coperativa considera o limite de crédito.
+        IF (APLI0009.UsarLimCredParaDebPlanoCotas(pr_cdcooper => pr_cdcooper)) then  
+          -- Faz a somatória normal levando em conta o valor do limite de crédtido
         vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vlsdchsl 
                        + vr_tab_sald(vr_ind_sald).vllimcre;
+                    
+        ELSE -- Se a coperativa desconsidera [cdcooper:(6, 7, 9, 10, 12, 13, 16)]         
+          -- Faz o somatório sem o valor do limite de créditido.
+          vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vlsdchsl 
+        END IF;
+                    
         vr_vldebito := 0;
 
 

@@ -113,7 +113,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
 
                    12/10/2018 - Tratamento de Flag de Teimosinha e Debito Parcial - Proj. 411.2 (CIS Corporate)    
 
-                   17/04/2019 - Ajuste para carregar nos planos a flag indebito corretamente (Anderson)
+                   17/04/2019 - Ajuste para carregar nos planos a flag indebito corretamente (Anderson)	 
+
                    13/06/2019 - A cooperativa viacred passa a considerar o limite de credito para a plicação programada
                                 RITM011923
     ............................................................................. */
@@ -652,7 +653,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps145 (pr_cdcooper IN crapcop.cdcooper%T
                          vr_tab_crapsld(rw_craprpp.nrdconta).vlipmfap - 
                          vr_tab_crapsld(rw_craprpp.nrdconta).vlipmfpg;
                          
-                         if gene0011.UsarLimCredParaDebAplicProgram(pr_cdcooper) then --> se for viacred iremos considerar o limite de crédito
+                         if APLI0009.UsarLimCredParaDebAplicProgram(pr_cdcooper) then --> se for viacred iremos considerar o limite de crédito
                           vr_vlsldtot := vr_vlsldtot + vr_tab_crapass(rw_craprpp.nrdconta).vllimcre;
 
                          end if;
