@@ -1276,7 +1276,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                      ,pr_cdprograma     IN VARCHAR2 DEFAULT 'PAGA0001'
                                      ,pr_tpexecucao     IN NUMBER DEFAULT 0 -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
                                      ,pr_cdcriticidade  IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 2 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)                                      
-                                      ); 
+                                      );                                  
                                        
   /* Procedure para cancelar agendamentos pendentes apos termino do ciclo de pagamento dos agentamentos */
   PROCEDURE pc_PAGA0001_cancela_debitos (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -13632,6 +13632,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
          ELSIF vr_tab_agendto(vr_index_agendto).dsorigem = 'PORTABILIDAD' THEN -- P485
            vr_cdagenci:= 0;
            vr_idorigem:= 4;  /*Seguir o mesmo fluxo do TAA, para que não sejam validados limites de internet*/
+         ELSIF vr_tab_agendto(vr_index_agendto).dsorigem = 'AIMARO' THEN
+           vr_cdagenci:= 90;
+           vr_idorigem:= 3;  /*P500 - Seguir o mesmo fluxo da Internet*/         
          ELSE
            vr_cdagenci:= vr_tab_agendto(vr_index_agendto).cdagenci;
            vr_idorigem:= 2;  /*CAIXA*/
@@ -13835,6 +13838,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                    12/04/2019 - Considerar os lançamentos de origem da portabilidade para 
                                 realizar a transferencias de valores, relacionados à 
                                 portabilidade de Salário ( Renato Darosci - Supero - P485)
+                   
+                   11/06/2019 - Inclusao da origem AIMARO para tratar o envio de TED/Transferência em lote.
+                                Jose Dill - Mouts (P500 - Upload TED)             
     -----------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -13914,7 +13920,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           AND ((    craplau.cdcooper = pr_cdcooper
               AND   craplau.dtmvtopg = pr_dtmvtopg
               AND   craplau.insitlau = 1
-              AND   craplau.dsorigem IN ('INTERNET','TAA', 'PORTABILIDAD')  -- P485 - Considerar também Portabilidade
+              AND   craplau.dsorigem IN ('INTERNET','TAA', 'PORTABILIDAD','AIMARO')  -- P485 - Considerar também Portabilidade --P500 Upload de Arquivo
               AND    craplau.tpdvalor = 0)
               OR
              (    craplau.cdcooper  = pr_cdcooper
@@ -14211,7 +14217,12 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         pr_tab_agendto(vr_index_agendto).dscooper:= rw_crapcop.nmrescop;
         pr_tab_agendto(vr_index_agendto).nrdconta:= rw_craplau.nrdconta;
         pr_tab_agendto(vr_index_agendto).nmprimtl:= rw_craplau.nmprimtl;
-        pr_tab_agendto(vr_index_agendto).cdagenci:= rw_craplau.cdagenci;
+        -- Tratamento para efetivar os agendamentos realizados pelo AIMARO (P500)
+        IF rw_craplau.dsorigem = 'AIMARO' AND rw_craplau.cdtiptra in (1,5) THEN
+          pr_tab_agendto(vr_index_agendto).cdagenci:= 90;
+        ELSE
+          pr_tab_agendto(vr_index_agendto).cdagenci:= rw_craplau.cdagenci;
+        END IF;  
         pr_tab_agendto(vr_index_agendto).cdtiptra:= rw_craplau.cdtiptra;
         pr_tab_agendto(vr_index_agendto).fltiptra:= vr_fltiptra;
         pr_tab_agendto(vr_index_agendto).dstiptra:= vr_dstiptra;
@@ -14322,6 +14333,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --               24/01/2019 - Aumentar o período para a expiração das transações pendentes para 15 dias
     --                            Tipo da transacao 20 - Autorizacao de contratos por senha
     --                            Projeto 470 -- Marcelo Telles Coelho - Mouts
+    --
+    --               12/03/2018 - (AMCOM - P438) add tptransa = 21 e fn_proposta_n_aprovada 
+    --
     -----------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -14509,6 +14523,28 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 6;
       vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 3; 
       vr_notif_dsdmensg VARCHAR2(32000) := ' '; 
+      --
+      --/
+      FUNCTION fn_proposta_n_aprovada(pr_cdtransacao_pendente IN tbgen_trans_pend.cdtransacao_pendente%TYPE)
+        RETURN BOOLEAN IS
+       --/
+       vr_n_aprovada NUMBER;
+       --/
+      BEGIN
+       SELECT COUNT(*)
+         INTO vr_n_aprovada
+         FROM tbepr_trans_pend_efet_proposta p,
+              crawepr wpr
+        WHERE wpr.nrdconta = p.nrdconta
+          AND wpr.nrctremp = p.nrctremp
+          AND wpr.cdcooper = p.cdcooper
+          AND wpr.insitapr <> 1
+          AND p.cdtransacao_pendente = pr_cdtransacao_pendente;
+         --/  
+         RETURN ( vr_n_aprovada > 0 );  
+         --/
+      END fn_proposta_n_aprovada;
+            
             
     BEGIN
 	    -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
@@ -14797,7 +14833,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
            vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(11).hrfimpag,'hh24:mi'),'sssss');
         ELSIF vr_tptransa = 7 THEN -- Aplicações
            vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(8).hrfimpag,'hh24:mi'),'sssss');
-        ELSIF vr_tptransa = 6 THEN -- Crédito Pré-Aprovado
+        ELSIF vr_tptransa IN (6,21) THEN -- Crédito Pré-Aprovado / emprestimos/financiamentos
            vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(7).hrfimpag,'hh24:mi'),'sssss');
         ELSIF vr_tptransa = 4 THEN -- TED
            vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(4).hrfimpag,'hh24:mi'),'sssss');
@@ -14938,6 +14974,17 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 						  pr_flgalter := TRUE;
             END IF;
 					-- Fim Projeto 470
+										 
+
+            ELSIF  vr_tptransa IN (21) THEN --> Emprestimos/financiamentos
+              --> Verificar se ja se passou 7 dias desde a criação da pendencia
+              IF rw_tbgen_trans_pend.dtmvtolt + 7 < pr_dtmvtolt THEN
+              --Atualizar flag para true
+						  vr_flgalter := TRUE;
+						  pr_flgalter := TRUE;
+
+              END IF;           
+
 					ELSE
 						--Debito por agendamento
 						vr_dtauxili := GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
@@ -14954,7 +15001,14 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 					END IF;
         END IF;
         END IF;
-
+        --
+        -- EMPRESITMOS/FINANCIAMENTOS (AMCOM - P438)
+        IF vr_tptransa = 21 AND fn_proposta_n_aprovada(rw_tbgen_trans_pend.cdtransacao_pendente)
+          THEN
+						vr_flgalter := TRUE;
+ 					  pr_flgalter := TRUE;
+        END IF;           
+        --/
         vr_dsparlp3 := ', vr_dtmvtopg:' || vr_dtmvtopg  ||
                        ', pr_dtmvtolt:' || pr_dtmvtolt  ||
                        ', SYSDATE:'     || SYSDATE      ||
@@ -17526,7 +17580,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --  Sistema  : Cred
     --  Sigla    : PAGA0001
     --  Autor    : Alisson C. Berrido - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 15/12/2017
+    --  Data     : Julho/2013.                   Ultima atualizacao: 15/05/2019
     --
     --  Dados referentes ao programa:
     --
@@ -17547,7 +17601,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --                            Ajuste mensagem de erro 
     --                           (Belli - Envolti - Chamado 779415)    
     --
-    --
+    --				 15/05/2019 - Merge branch P433 - API de Cobrança (Cechet)
+    --                          - Tratamento de exceção caso o rowid do cursor cr_crapcob seja inválido.
   BEGIN
     DECLARE
       --Selecionar retorno titulo cooperado
@@ -17594,10 +17649,23 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                       ', pr_dsmotivo:' || pr_dsmotivo || 
                       ', pr_dtmvtolt:' || pr_dtmvtolt || 
                       ', pr_cdoperad:' || pr_cdoperad; 
+      
+	  BEGIN
       --Selecionar registro cobranca
       OPEN cr_crapcob (pr_rowid => pr_idregcob);
       --Posicionar no proximo registro
-      FETCH cr_crapcob INTO rw_crapcob;
+          FETCH cr_crapcob
+              INTO rw_crapcob;
+      EXCEPTION
+          WHEN OTHERS THEN
+              vr_dscritic := SQLERRM;
+              IF cr_crapcob%ISOPEN THEN
+                  CLOSE cr_crapcob;
+              END IF;
+          
+              RAISE vr_exc_erro;
+      END;
+
       --Se nao encontrar
       IF cr_crapcob%NOTFOUND THEN
         --Fechar Cursor
@@ -20472,7 +20540,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --               29/08/2018 - Revitalização Sistemas - Ajuste para update unico (Andreatta-Mouts)
 
 	--               09/05/2019 - Incluído tratamento dentro da pc_gera_arq_coop_cnab240  excluido o antigo tratamento. 
-	                              (Daniel Lombardi - Mouts'S)
+	--                            (Daniel Lombardi - Mouts'S)
     -- .........................................................................
 
   BEGIN
@@ -26673,6 +26741,9 @@ end;';
                    12/04/2019 - Incluir validação para setar parametros no processamento
                                 de transferencias de valores, relacionados à portabilidade
                                 de Salário ( Renato Darosci - Supero - P485)
+                                
+                   05/06/2019 - Ajuste para impedir que seja repassado o valor nulo como
+                                id da folha de pagamento (Renato Darosci - Supero)
                     
                    10/07/2019 - Ajuste para deixar pendente o TED com analise de fraude pendente. (Andre MoutS - INC0013286)                                                   
                                 
@@ -26811,7 +26882,7 @@ end;';
       vr_flultexe  INTEGER;
       vr_qtdexec   INTEGER;
       vr_cdispbif  INTEGER;
-            
+      
       vr_idportab     NUMBER;
       vr_nrridlfp     tbted_det_agendamento.nrridlfp%TYPE;
       
@@ -27253,11 +27324,11 @@ end;';
           END IF;
           --Fechar Cursor
           CLOSE cr_crapban;        
-         
+          
           -- Verificar se é um agendamento de portabilidade
           IF rw_craplau.dsorigem = 'PORTABILIDAD' THEN
             vr_idportab := 1;
-            vr_nrridlfp := rw_craplau.nrridlfp;
+            vr_nrridlfp := NVL(rw_craplau.nrridlfp,0);
             
             -- Buscar os dados no registro da portabilidade
             OPEN  cr_portab(pr_cdcooper
@@ -27324,7 +27395,7 @@ end;';
                                        ,pr_cdispbif => vr_cdispbif  --> ISPB Banco Favorecido=
 					                             ,pr_idagenda => 2
                                        ,pr_idportab => vr_idportab
-                                       ,pr_nrridlfp => vr_nrridlfp
+                                       ,pr_nrridlfp => NVL(vr_nrridlfp,0)
                                        -- saida        
                                        ,pr_dsprotoc => vr_dsprotoc  --> Retorna protocolo    
                                        ,pr_tab_protocolo_ted => vr_tab_protocolo_ted --> dados do protocolo
@@ -27657,7 +27728,7 @@ end;';
       -- Variaveis para verificao termino ciclo de pagamentos
       vr_flultexe INTEGER;
       vr_qtdexec  INTEGER;
-      
+    
       -- Envio de email
       vr_texto_email     varchar2(4000); 
       vr_endereco_email  crapprm.dsvlrprm%TYPE;
@@ -27968,6 +28039,7 @@ end;';
                                 ,pr_dsmensagem    => pr_dscritic                                                                                            
                                  );                      
     END;
-  END pc_PAGA0001_cancela_debitos;          
+  END pc_PAGA0001_cancela_debitos;     
+
 END PAGA0001;
 /
