@@ -5,7 +5,10 @@
 	 Autor: GFT - André Ávila                                                 
 	 Data : Abril/2008                Última Alteração: 14/04/2018
 	                                                                  
-	 Objetivo  : Analisar um bordero de desconto de títulos            
+	 Objetivo  : Analisar um bordero de desconto de títulos  
+	 
+	 
+	 Alterações: Alterado a utilização de cdagenci para cdpactra (Daniel - Ailos)          
 	                                                                  
 							  
 	************************************************************************/
@@ -58,7 +61,7 @@
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 
-	$xmlResult = mensageria($xml, 'TELA_ATENDA_DESCTO', 'EFETUA_ANALISE_BORDERO',  $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlResult = mensageria($xml, 'TELA_ATENDA_DESCTO', 'EFETUA_ANALISE_BORDERO',  $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	
 	$xmlObj = getClassXML($xmlResult);
     $root = $xmlObj->roottag;

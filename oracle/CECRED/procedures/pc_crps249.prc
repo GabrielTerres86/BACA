@@ -678,6 +678,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                14/06/2019 - P450 - Remocao tratamento historicos 2726, 2728 e 2730 (Guilherme/AMcom)   
 
                05/07/2019 - Ajuste conta SUA REMESSA covenio Desconto de Titulo (Daniel)
+			   
+			   09/07/2019 - Retirado geracao pc_proc_lcm_tdb (Daniel)
 
 ............................................................................ */
 
@@ -4655,7 +4657,6 @@ CURSOR cr_craprej_pa (pr_cdcooper in craprej.cdcooper%TYPE,
     -- lançamentos de bordero desconto de titulos
     pc_proc_lancbor(vr_dtmvtolt);
     
-    pc_proc_lcm_tdb(vr_dtmvtolt, 'M');
 
     -- Contabilizacao do saldo de limite de descontos de titulos ...........
     vr_tab_agencia(1).vr_vlaprjur := 0;
@@ -14390,7 +14391,6 @@ BEGIN
     END LOOP;
   END IF;
   
-  pc_proc_lcm_tdb(vr_dtrefere, 'D');
   
   -- Melhoria 324 - Contas de Compensação - Transferencia para prejuizo - Jean (Mout´S) 10/08/2017
    -- Transferencia para prejuizo Emprestimos PP

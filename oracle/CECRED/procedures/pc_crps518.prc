@@ -227,89 +227,90 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
        --Selecionar informacoes da agencia
        CURSOR cr_crapage (pr_cdcooper IN crapage.cdcooper%TYPE
                          ,pr_cdagenci IN crapage.cdagenci%TYPE) IS
-         SELECT  crapage.cdagenci
-                ,crapage.nmresage
-         FROM crapage crapage
-         WHERE crapage.cdcooper = pr_cdcooper
-         AND   crapage.cdagenci = pr_cdagenci;
+         SELECT crapage.cdagenci,
+                crapage.nmresage
+           FROM crapage crapage
+          WHERE crapage.cdcooper = pr_cdcooper
+            AND crapage.cdagenci = pr_cdagenci;
        rw_crapage cr_crapage%ROWTYPE;
 
        --Selecionar os borderos de titulos
        CURSOR cr_crapbdt (pr_cdcooper IN crapbdt.cdcooper%TYPE
                          ,pr_dtlibbdt IN crapbdt.dtlibbdt%TYPE) IS
-         SELECT crapbdt.nrdconta
-               ,crapbdt.nrborder
-               ,crapbdt.cdagenci
-               ,crapbdt.nrctrlim
-               ,crapass.nmprimtl
-         FROM  crapass,
-               crapbdt crapbdt
-         WHERE crapbdt.cdcooper = pr_cdcooper
-         AND   crapbdt.dtlibbdt = pr_dtlibbdt
-         AND   crapass.cdcooper = crapbdt.cdcooper
-         AND   crapass.nrdconta = crapbdt.nrdconta;
+         SELECT crapbdt.nrdconta,
+                crapbdt.nrborder,
+                crapbdt.cdagenci,
+                crapbdt.nrctrlim,
+                crapass.nmprimtl
+           FROM crapass,
+                crapbdt crapbdt
+          WHERE crapbdt.cdcooper = pr_cdcooper
+            AND crapbdt.dtlibbdt = pr_dtlibbdt
+            AND crapass.cdcooper = crapbdt.cdcooper
+            AND crapass.nrdconta = crapbdt.nrdconta;
 
        --Selecionar os borderos de titulos para relatorio crrl494
        CURSOR cr_crapbdt_494 (pr_cdcooper IN crapbdt.cdcooper%TYPE) IS
-         SELECT crapbdt.nrdconta
-               ,crapbdt.nrborder
-               ,crapbdt.cdagenci
-               ,crapbdt.nrctrlim
-               ,crapbdt.flverbor
-         FROM crapbdt crapbdt
-         WHERE crapbdt.cdcooper = pr_cdcooper
-         AND   crapbdt.insitbdt IN (3,4); /* Liberado Ou Liquidado */
+         SELECT crapbdt.nrdconta,
+                crapbdt.nrborder,
+                crapbdt.cdagenci,
+                crapbdt.nrctrlim,
+                crapbdt.flverbor
+           FROM crapbdt crapbdt
+          WHERE crapbdt.cdcooper = pr_cdcooper
+            AND crapbdt.insitbdt IN (3, 4); -- Liberado Ou Liquidado
 
        --Selecionar os titulos do bordero
        CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%TYPE
                          ,pr_nrdconta IN craptdb.nrdconta%TYPE
                          ,pr_nrborder IN craptdb.nrborder%TYPE) IS
-         SELECT craptdb.vltitulo
-               ,craptdb.vlliquid
-               ,craptdb.rowid
-         FROM craptdb craptdb
-         WHERE craptdb.cdcooper = pr_cdcooper
-         AND   craptdb.nrdconta = pr_nrdconta
-         AND   craptdb.nrborder = pr_nrborder
-         AND   craptdb.dtlibbdt is not null;
+         SELECT craptdb.vltitulo,
+                craptdb.vlliquid,
+                craptdb.rowid
+           FROM craptdb craptdb
+          WHERE craptdb.cdcooper = pr_cdcooper
+            AND craptdb.nrdconta = pr_nrdconta
+            AND craptdb.nrborder = pr_nrborder
+            AND craptdb.dtlibbdt IS NOT NULL;
 
        --Selecionar os titulos do bordero para relatorio crrl494
        CURSOR cr_craptdb_494 (pr_cdcooper IN craptdb.cdcooper%TYPE
                              ,pr_nrdconta IN craptdb.nrdconta%TYPE
                              ,pr_nrborder IN craptdb.nrborder%TYPE
                              ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
-         SELECT craptdb.vltitulo
-               ,craptdb.vlsldtit
-               ,craptdb.vlpagmra
-               ,craptdb.vlliquid
-               ,craptdb.cdbandoc
-               ,craptdb.nrdctabb
-               ,craptdb.nrcnvcob
-               ,craptdb.nrdconta
-               ,craptdb.nrdocmto
-               ,craptdb.insittit
-               ,craptdb.nrinssac
-               ,craptdb.dtvencto
-               ,craptdb.dtlibbdt
-               ,craptdb.nrborder
-               ,crapass.cdagenci
-               ,crapass.nmprimtl
-               ,crapass.inpessoa
-               ,craptdb.rowid
-         FROM   crapass
-               ,craptdb craptdb
-         WHERE ((craptdb.cdcooper = pr_cdcooper
-         AND   craptdb.nrdconta = pr_nrdconta
-         AND   craptdb.nrborder = pr_nrborder
-         AND   craptdb.insittit = 4)
-         OR
-               (craptdb.cdcooper = pr_cdcooper
-         AND   craptdb.nrdconta = pr_nrdconta
-         AND   craptdb.nrborder = pr_nrborder
-         AND   craptdb.insittit = 2
-         AND   craptdb.dtdpagto = pr_dtmvtolt))
-         AND   crapass.cdcooper = craptdb.cdcooper
-         AND   crapass.nrdconta = craptdb.nrdconta;
+         SELECT craptdb.vltitulo,
+                craptdb.vlsldtit,
+                craptdb.vlpagmra,
+                craptdb.vlliquid,
+                craptdb.cdbandoc,
+                craptdb.nrdctabb,
+                craptdb.nrcnvcob,
+                craptdb.nrdconta,
+                craptdb.nrdocmto,
+                craptdb.insittit,
+                craptdb.dtvencto,
+                craptdb.dtlibbdt,
+                craptdb.nrborder,
+                crapass.cdagenci,
+                crapass.nmprimtl,
+                crapass.inpessoa,
+                craptdb.rowid,
+                crapsab.nrinssac,
+                crapsab.nmdsacad
+           FROM crapass,
+                craptdb craptdb,
+                crapsab
+          WHERE craptdb.cdcooper = pr_cdcooper
+            AND craptdb.nrdconta = pr_nrdconta
+            AND craptdb.nrborder = pr_nrborder
+               
+            AND (craptdb.insittit = 4 OR (craptdb.insittit = 2 AND craptdb.dtdpagto = pr_dtmvtolt))
+               
+            AND crapass.cdcooper = craptdb.cdcooper
+            AND crapass.nrdconta = craptdb.nrdconta
+            AND crapsab.cdcooper(+) = craptdb.cdcooper
+            AND crapsab.nrdconta(+) = craptdb.nrdconta
+            AND crapsab.nrinssac(+) = craptdb.nrinssac;
 
        --Selecionar informacoes de cobranca
        CURSOR cr_crapcob (pr_cdcooper IN crapcob.cdcooper%TYPE
@@ -318,37 +319,28 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                          ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE
                          ,pr_nrdconta IN crapcob.nrdconta%TYPE
                          ,pr_nrdocmto IN crapcob.nrdocmto%TYPE) IS
-         SELECT crapcob.indpagto
-               ,crapcob.dsdoccop
-               ,crapcob.nrdocmto
-               ,crapcob.flgregis
-               ,crapcob.cdbandoc
-         FROM crapcob crapcob
-         WHERE crapcob.cdcooper = pr_cdcooper
-         AND   crapcob.cdbandoc = pr_cdbandoc
-         AND   crapcob.nrdctabb = pr_nrdctabb
-         AND   crapcob.nrcnvcob = pr_nrcnvcob
-         AND   crapcob.nrdconta = pr_nrdconta
-         AND   crapcob.nrdocmto = pr_nrdocmto;
+         SELECT crapcob.indpagto,
+                crapcob.dsdoccop,
+                crapcob.nrdocmto,
+                crapcob.flgregis,
+                crapcob.cdbandoc
+           FROM crapcob crapcob
+          WHERE crapcob.cdcooper = pr_cdcooper
+            AND crapcob.cdbandoc = pr_cdbandoc
+            AND crapcob.nrdctabb = pr_nrdctabb
+            AND crapcob.nrcnvcob = pr_nrcnvcob
+            AND crapcob.nrdconta = pr_nrdconta
+            AND crapcob.nrdocmto = pr_nrdocmto;
        rw_crapcob cr_crapcob%ROWTYPE;
-
-
-       --Selecionar informacoes dos sacados
-       CURSOR cr_crapsab (pr_cdcooper IN crapsab.cdcooper%TYPE) IS
-         SELECT crapsab.nrdconta
-               ,crapsab.nrinssac
-               ,crapsab.nmdsacad
-         FROM crapsab crapsab
-         WHERE crapsab.cdcooper = pr_cdcooper;
 
        --Selecionar informacoes dos limites da conta
        CURSOR cr_craplim (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-         SELECT  craplim.nrdconta
-                ,craplim.vllimite
-         FROM craplim craplim
-         WHERE craplim.cdcooper = pr_cdcooper
-         AND   craplim.tpctrlim = 3
-         AND   craplim.insitlim = 2;
+         SELECT craplim.nrdconta,
+                craplim.vllimite
+           FROM craplim craplim
+          WHERE craplim.cdcooper = pr_cdcooper
+            AND craplim.tpctrlim = 3
+            AND craplim.insitlim = 2;
 
        --Variaveis Locais
 
@@ -376,10 +368,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
        vr_vlmtatit     NUMBER;                 --> Valor da multa
        vr_vlioftit     NUMBER;                 --> Valor do IOF
 
-       --Variaveis para saldo
-       vr_nmdsacad crapsab.nmdsacad%TYPE;
-       vr_nrinssac crapsab.nrinssac%TYPE;
-
        -- Variável para armazenar as informações em XML
        vr_des_xml     CLOB;
 
@@ -397,7 +385,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
        BEGIN
          vr_tab_crrl493.DELETE;
          vr_tab_saldo.DELETE;
-         vr_tab_crapsab.DELETE;
          vr_tab_craplim.DELETE;
          vr_tab_vencto.DELETE;
        EXCEPTION
@@ -519,30 +506,31 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
 
          --Selecionar todas as agencias
          CURSOR cr_crapage_2 (pr_cdcooper IN crapage.cdcooper%TYPE) IS
-           SELECT  crapage.cdagenci
-                  ,crapage.nmresage
-           FROM crapage crapage
-           WHERE crapage.cdcooper = pr_cdcooper;
+           SELECT crapage.cdagenci,
+                  crapage.nmresage
+             FROM crapage crapage
+            WHERE crapage.cdcooper = pr_cdcooper;
 
          --Selecionar todos os associados da agencia
          CURSOR cr_crapass_2 (pr_cdcooper IN crapass.cdcooper%TYPE
                              ,pr_cdagenci IN crapass.cdagenci%TYPE) IS
-           SELECT crapass.nrdconta
-                 ,crapass.inpessoa
-           FROM crapass crapass
-           WHERE crapass.cdcooper = pr_cdcooper
-           AND   crapass.cdagenci = pr_cdagenci;
+           SELECT crapass.nrdconta,
+                  crapass.inpessoa
+             FROM crapass crapass
+            WHERE crapass.cdcooper = pr_cdcooper
+              AND crapass.cdagenci = pr_cdagenci;
 
          --Selecionar informacoes do primeiro limite
          CURSOR cr_craplim_2 (pr_cdcooper IN craplim.cdcooper%TYPE
                              ,pr_nrdconta IN craplim.nrdconta%TYPE) IS
-           SELECT /*+ index (craplim CRAPLIM##CRAPLIM1) */ craplim.vllimite
-           FROM craplim craplim
-           WHERE craplim.cdcooper = pr_cdcooper
-           AND   craplim.nrdconta = pr_nrdconta
-           AND   craplim.tpctrlim = 3
-           AND   craplim.insitlim = 2
-           ORDER BY craplim.progress_recid ASC;
+           SELECT /*+ index (craplim CRAPLIM##CRAPLIM1) */
+            craplim.vllimite
+             FROM craplim craplim
+            WHERE craplim.cdcooper = pr_cdcooper
+              AND craplim.nrdconta = pr_nrdconta
+              AND craplim.tpctrlim = 3
+              AND craplim.insitlim = 2
+            ORDER BY craplim.progress_recid ASC;
          rw_craplim_2 cr_craplim_2%ROWTYPE;
 
          --Selecionar informacoes dos titulos do bordero
@@ -565,17 +553,17 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                            ,pr_nrdctabb IN crapljt.nrdctabb%TYPE
                            ,pr_nrcnvcob IN crapljt.nrcnvcob%TYPE
                            ,pr_nrdocmto IN crapljt.nrdocmto%TYPE) IS
-           SELECT  crapljt.vldjuros
-                  ,crapljt.vlrestit
-           FROM crapljt crapljt
-           WHERE crapljt.cdcooper = pr_cdcooper
-           AND   crapljt.nrdconta = pr_nrdconta
-           AND   crapljt.nrborder = pr_nrborder
-           AND   crapljt.dtrefere > pr_dtrefere
-           AND   crapljt.cdbandoc = pr_cdbandoc
-           AND   crapljt.nrdctabb = pr_nrdctabb
-           AND   crapljt.nrcnvcob = pr_nrcnvcob
-           AND   crapljt.nrdocmto = pr_nrdocmto;
+           SELECT crapljt.vldjuros,
+                  crapljt.vlrestit
+             FROM crapljt crapljt
+            WHERE crapljt.cdcooper = pr_cdcooper
+              AND crapljt.nrdconta = pr_nrdconta
+              AND crapljt.nrborder = pr_nrborder
+              AND crapljt.dtrefere > pr_dtrefere
+              AND crapljt.cdbandoc = pr_cdbandoc
+              AND crapljt.nrdctabb = pr_nrdctabb
+              AND crapljt.nrcnvcob = pr_nrcnvcob
+              AND crapljt.nrdocmto = pr_nrdocmto;
 
 
          --Variaveis Locais
@@ -1160,41 +1148,48 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                              ,pr_insittit IN craptdb.insittit%TYPE
                              ,pr_dtrefere IN craptdb.dtvencto%TYPE
                              ,pr_dtmvtolt IN craptdb.dtvencto%TYPE) IS
-           SELECT craptdb.vltitulo
-                 ,craptdb.dtvencto
-           FROM craptdb
-           WHERE craptdb.cdcooper = pr_cdcooper
-           AND   craptdb.dtvencto >= pr_dtrefere
-           AND   craptdb.dtvencto < pr_dtmvtolt
-           AND   craptdb.insittit = pr_insittit;
+           SELECT craptdb.vltitulo,
+                  craptdb.dtvencto
+             FROM craptdb
+            WHERE craptdb.cdcooper = pr_cdcooper
+              AND craptdb.dtvencto >= pr_dtrefere
+              AND craptdb.dtvencto < pr_dtmvtolt
+              AND craptdb.insittit = pr_insittit;
 
          --Selecionar informacoes dos titulos descontados
          CURSOR cr_craptdb_5 (pr_cdcooper IN craptdb.cdcooper%TYPE
                              ,pr_insittit IN craptdb.insittit%TYPE
                              ,pr_dtpagini IN craptdb.dtdpagto%TYPE
                              ,pr_dtpagfim IN craptdb.dtdpagto%TYPE) IS
-           SELECT craptdb.vltitulo
-                 ,craptdb.dtvencto
-                 ,craptdb.cdcooper
-                 ,craptdb.cdbandoc
-                 ,craptdb.nrdctabb
-                 ,craptdb.nrcnvcob
-                 ,craptdb.nrdconta
-                 ,craptdb.nrdocmto
-                 ,craptdb.rowid
-           FROM craptdb
-           WHERE craptdb.cdcooper = pr_cdcooper
-           AND   craptdb.dtdpagto >  pr_dtpagini
-           AND   craptdb.dtdpagto <= pr_dtpagfim
-           AND   craptdb.insittit = pr_insittit;
+           SELECT craptdb.vltitulo,
+                  craptdb.dtvencto,
+                  craptdb.cdcooper,
+                  craptdb.cdbandoc,
+                  craptdb.nrdctabb,
+                  craptdb.nrcnvcob,
+                  craptdb.nrdconta,
+                  craptdb.nrdocmto,
+                  craptdb.rowid
+             FROM craptdb
+            WHERE craptdb.cdcooper = pr_cdcooper
+              AND craptdb.dtdpagto > pr_dtpagini
+              AND craptdb.dtdpagto <= pr_dtpagfim
+              AND craptdb.insittit = pr_insittit;
 
          --Selecionar informacoes dos titulos descontados
          CURSOR cr_craptdb_6 (pr_cdcooper IN craptdb.cdcooper%TYPE
                              ,pr_dtlibbdt IN craptdb.dtlibbdt%TYPE) IS
-           SELECT Nvl(craptdb.vltitulo,0) vltitulo
-           FROM craptdb
-           WHERE craptdb.cdcooper = pr_cdcooper
-           AND   craptdb.dtlibbdt = pr_dtlibbdt;
+           SELECT NVL(SUM(NVL(tdb.vltitulo, 0)),0) vltitulo,
+                  COUNT(*) qtdtitulo
+             FROM craptdb tdb,
+                  crapbdt bdt
+            WHERE bdt.cdcooper = pr_cdcooper
+              AND bdt.dtlibbdt = pr_dtlibbdt
+              AND tdb.cdcooper = bdt.cdcooper
+              AND tdb.nrdconta = bdt.nrdconta
+              AND tdb.nrborder = bdt.nrborder
+              AND tdb.dtlibbdt = bdt.dtlibbdt;
+         rw_craptdb_6 cr_craptdb_6%ROWTYPE;
 
          --Selecionar informacoes dos titulos descontados
          CURSOR cr_craptdb_7 (pr_cdcooper IN craptdb.cdcooper%TYPE) IS
@@ -1443,6 +1438,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                                         ,pr_insittit => 2
                                         ,pr_dtpagini => vr_dtrefere
                                         ,pr_dtpagfim => vr_dtmvtoan) LOOP
+                                        
+           IF rw_craptdb.cdbandoc <> 1 THEN
+             CONTINUE;
+           END IF;                                
+                                        
            --marcar flag para processar registro
            vr_flgproces:= TRUE;
            --Selecionar informacoes de cobranca
@@ -1529,13 +1529,16 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
 
          /* Recebidos no dia */
          --Selecionar informacoes dos titulos
-         FOR rw_craptdb IN cr_craptdb_6 (pr_cdcooper => pr_cdcooper
-                                        ,pr_dtlibbdt => rw_crapdat.dtmvtolt) LOOP
-           --Aumentar a quantidade de titulos
-           vr_res_qttitulo:= vr_res_qttitulo + 1;
-           --Aumentar o valor dos titulos
-           vr_res_vltitulo:= vr_res_vltitulo + rw_craptdb.vltitulo;
-         END LOOP;
+         OPEN cr_craptdb_6 (pr_cdcooper => pr_cdcooper
+                           ,pr_dtlibbdt => rw_crapdat.dtmvtolt);
+         --Posicionar no primeiro registro
+         FETCH cr_craptdb_6 INTO rw_craptdb_6;                               
+                                                                   
+         --Aumentar a quantidade de titulos
+         vr_res_qttitulo:= rw_craptdb_6.qtdtitulo;
+         
+         --Aumentar o valor dos titulos
+         vr_res_vltitulo:= rw_craptdb_6.vltitulo;
 
          /* Saldo Anterior */
 
@@ -1566,34 +1569,39 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                vr_qtd_saldo:= vr_qtd_saldo + 1;
                vr_vlr_saldo:= vr_vlr_saldo + rw_craptdb.vltitulo;
              END IF;
-             --Selecionar informacoes de cobranca
-             OPEN cr_crapcob_2 (pr_cdcooper => rw_craptdb.cdcooper
-                               ,pr_cdbandoc => rw_craptdb.cdbandoc
-                               ,pr_nrdctabb => rw_craptdb.nrdctabb
-                               ,pr_nrcnvcob => rw_craptdb.nrcnvcob
-                               ,pr_nrdconta => rw_craptdb.nrdconta
-                               ,pr_nrdocmto => rw_craptdb.nrdocmto);
-             --Posicionar no primeiro registro
-             FETCH cr_crapcob_2 INTO rw_crapcob_2;
-             --Se nao encontrou
-             IF cr_crapcob_2%NOTFOUND THEN
+             
+             IF rw_craptdb.cdbandoc = 1 THEN
+             
+               --Selecionar informacoes de cobranca
+               OPEN cr_crapcob_2 (pr_cdcooper => rw_craptdb.cdcooper
+                                 ,pr_cdbandoc => rw_craptdb.cdbandoc
+                                 ,pr_nrdctabb => rw_craptdb.nrdctabb
+                                 ,pr_nrcnvcob => rw_craptdb.nrcnvcob
+                                 ,pr_nrdconta => rw_craptdb.nrdconta
+                                 ,pr_nrdocmto => rw_craptdb.nrdocmto);
+               --Posicionar no primeiro registro
+               FETCH cr_crapcob_2 INTO rw_crapcob_2;
+               --Se nao encontrou
+               IF cr_crapcob_2%NOTFOUND THEN
+                 --Fechar Cursor
+                 CLOSE cr_crapcob_2;
+                 vr_des_erro:= 'Titulo em desconto nao encontrado na crapcob = '||rw_craptdb.rowid;
+                 --Escrever mensagem no log
+                 btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                       ,pr_ind_tipo_log => 2 -- Erro tratato
+                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                           || vr_cdprogra || ' --> '
+                                                           || vr_des_erro );
+                 --Não processar registro
+                 RAISE vr_exc_pula;
+               END IF;
                --Fechar Cursor
                CLOSE cr_crapcob_2;
-               vr_des_erro:= 'Titulo em desconto nao encontrado na crapcob = '||rw_craptdb.rowid;
-               --Escrever mensagem no log
-               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                     ,pr_ind_tipo_log => 2 -- Erro tratato
-                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                         || vr_cdprogra || ' --> '
-                                                         || vr_des_erro );
-               --Não processar registro
-               RAISE vr_exc_pula;
+               
              END IF;
-             --Fechar Cursor
-             CLOSE cr_crapcob_2;
 
              /* D + 1 para titulos pagos via COMPE apenas para titulos BB */
-             IF rw_crapcob_2.indpagto = 0 AND rw_crapcob_2.cdbandoc = 1 THEN
+             IF NVL(rw_crapcob_2.indpagto,0) = 0 AND rw_craptdb.cdbandoc = 1 THEN
                --Se data pagamento > data util anterior
                IF rw_craptdb.dtdpagto >= vr_dtmvtoan THEN
                  --Incrementar quantidade e valor pago depois
@@ -1781,14 +1789,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
        --Zerar tabelas de memoria auxiliar
        pc_limpa_tabela;
 
-       --Carregar tabela de memoria de Sacados Cobranca
-       FOR rw_crapsab IN cr_crapsab (pr_cdcooper => pr_cdcooper) LOOP
-         --Montar indice para a tabela temporaria
-         vr_index_crapsab:= LPad(rw_crapsab.nrdconta,10,'0')||LPad(rw_crapsab.nrinssac,25,'0');
-         vr_tab_crapsab(vr_index_crapsab).nmdsacad:= rw_crapsab.nmdsacad;
-         vr_tab_crapsab(vr_index_crapsab).nrinssac:= rw_crapsab.nrinssac;
-       END LOOP;
-
        --Carregar tabela memoria de Limites das Contas
        FOR rw_craplim IN cr_craplim (pr_cdcooper => pr_cdcooper) LOOP
          vr_tab_craplim(rw_craplim.nrdconta):= rw_craplim.vllimite;
@@ -1906,16 +1906,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
            --Se deve processar registro
            IF vr_flgproces THEN
 
-             --Se existir sacado
-             vr_index_crapsab:= LPad(rw_craptdb.nrdconta,10,'0')||LPad(rw_craptdb.nrinssac,25,'0');
-             IF vr_tab_crapsab.EXISTS(vr_index_crapsab) THEN
-               vr_nmdsacad:= vr_tab_crapsab(vr_index_crapsab).nmdsacad;
-               vr_nrinssac:= vr_tab_crapsab(vr_index_crapsab).nrinssac;
-             ELSE
-               vr_nmdsacad:= NULL;
-               vr_nrinssac:= NULL;
-             END IF;
-             
              IF rw_crapbdt.flverbor = 0 THEN
                vr_vltitulo := rw_craptdb.vltitulo;
              ELSE
@@ -1947,7 +1937,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
                               LPad(rw_craptdb.nrdconta,10,'0')||
                               LPad(rw_craptdb.nrborder,10,'0')||
                               LPad(rw_craptdb.nrdocmto,10,'0')||
-                              LPad(vr_nrinssac,25,'0')||
+                              LPad(rw_craptdb.nrinssac,25,'0')||
                               LPAD(vr_tab_saldo.COUNT(),10,0);
 
              --Inserir tabela memoria de saldo
@@ -1962,8 +1952,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS518" (pr_cdcooper IN crapcop.cdcooper
              vr_tab_saldo(vr_index_saldo).vldjuros:= 0;
              vr_tab_saldo(vr_index_saldo).dsdoccop:= rw_crapcob.dsdoccop;
              vr_tab_saldo(vr_index_saldo).nrboleto:= rw_crapcob.nrdocmto;
-             vr_tab_saldo(vr_index_saldo).nmdsacad:= vr_nmdsacad;
-             vr_tab_saldo(vr_index_saldo).nrinssac:= vr_nrinssac;
+             vr_tab_saldo(vr_index_saldo).nmdsacad:= rw_craptdb.nmdsacad;
+             vr_tab_saldo(vr_index_saldo).nrinssac:= rw_craptdb.nrinssac;
              vr_tab_saldo(vr_index_saldo).cdagenci:= rw_craptdb.cdagenci;
              vr_tab_saldo(vr_index_saldo).cdcooper:= pr_cdcooper;
              vr_tab_saldo(vr_index_saldo).insittit:= rw_craptdb.insittit;
