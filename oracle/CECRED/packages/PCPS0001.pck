@@ -2567,8 +2567,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
 				
     vr_dsmsglog  VARCHAR2(1000);
     vr_dssqlerr  VARCHAR2(1000);
+    vr_cdmodali  NUMBER;
+    vr_des_erro  VARCHAR2(1000);
+    vr_dscritic  VARCHAR2(1000);
+    vr_exc_erro  EXCEPTION;
+    
 	BEGIN
 		
+    -- Buscar a modalidade da conta
+    CADA0006.pc_busca_modalidade_conta(pr_cdcooper          => pr_cdcooper
+                                      ,pr_nrdconta          => pr_nrdconta
+                                      ,pr_cdmodalidade_tipo => vr_cdmodali
+                                      ,pr_des_erro          => vr_des_erro
+                                      ,pr_dscritic          => vr_dscritic);
+   
+    -- Verificar erros na rotina
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Se não for da modalidade conta salário 
+    IF NVL(vr_cdmodali,0) <> 2 THEN
+      -- Retorna false indicando que não irá realizar transferencia de valores
+      RETURN FALSE;
+    END IF;
+    
     -- Buscar as portabilidades
 		OPEN  cr_portabi;
 		FETCH cr_portabi INTO rw_portabi;
@@ -2588,6 +2611,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
 		RETURN TRUE;
 				
 	EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Exception para tratamento pela rotina chamadora
+			RAISE_APPLICATION_ERROR(-20001, 'Erro na rotin FN_VERIFICA_PORTABILIDADE: ' || vr_dscritic);
 	  WHEN OTHERS THEN
       -- Guardar o erro
       vr_dssqlerr := SQLERRM;

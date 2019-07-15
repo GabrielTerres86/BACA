@@ -4682,7 +4682,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
        SELECT ass.nrcpfcgc      -- CPF
             , SUBSTR(ass.nmprimtl,0,40)  nmprimtl    -- Nome
             , ass.nrdconta      -- Conta
-            , 'CONTA' dsmodali  -- Modalidade -> Se é um associado ou é uma conta salario / CONTA/CTASAL
+            , decode(tip.cdmodalidade_tipo, 2, 'SALARIO'
+                                             , 'CONTA') dsmodali  -- Modalidade -> Se é um associado (ou se é nova conta salário) ou é uma conta salario / CONTA/CTASAL
             , lfp.nrseqlfp      -- Nr Sequencia Pagamento
             , lfp.vllancto      -- Valor do Lançamento / Valor pago
             , lfp.idsitlct      -- Situação Lançamento (‘L’-Lançado / ‘C’-Creditado / ‘T’-Transmitido / 'D'-Devolvido / ‘E’-Erro)
@@ -4692,10 +4693,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                  ,'D','Devolvido'
                                  ,'E','Erro') dssitlct
             , lfp.dsobslct      -- Observação do Lançamento -> Se há alguma mensagem sobre o lançamento
-         FROM crapass ass
-            , crappfp pfp
-            , craplfp lfp
-        WHERE pfp.cdcooper = lfp.cdcooper
+         FROM tbcc_tipo_conta tip
+            , crapass         ass
+            , crappfp         pfp
+            , craplfp         lfp
+        WHERE tip.inpessoa     = ass.inpessoa
+          AND tip.cdtipo_conta = ass.cdtipcta
+          AND pfp.cdcooper = lfp.cdcooper
           AND pfp.cdempres = lfp.cdempres
           AND pfp.nrseqpag = lfp.nrseqpag
           AND ass.cdcooper = pfp.cdcooper
