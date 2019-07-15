@@ -86,6 +86,13 @@
 			    <label for="nmdsacad">Nome Pagador</label>
 			    <input type="text" id="nmdsacad" name="nmdsacad" value="<?php echo getByTagName($pagador->tags,'nmdsacad'); ?>" />
 
+				<?php if( getByTagName($detalhe->tags,'dtreapro') <> ''){ ?>
+				
+					<label for='dtreapro' style="width:200px;"  class='rotulo-linha'>Data de Reaproveitamento:</label>
+					<input type="text" style="width:80px;" id="dtreapro" name="dtreapro" value="<?php echo getByTagName($detalhe->tags,'dtreapro'); ?>" />
+			
+				<?php } ?>
+
 			    <div class="divRestricoes divRegistros">
 				    <table id="tblDetalhe1" class="tituloRegistros">
 						<thead>

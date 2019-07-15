@@ -113,6 +113,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
                                    ,pr_dtadmsoc IN DATE    DEFAULT NULL --> Data Admissãio do Sócio
                                    ,pr_dtvigpro IN DATE    DEFAULT NULL --> Data Vigência do Produto
                                    ,pr_tpprodut IN NUMBER  DEFAULT 0 --> Tipo de Produto
+                                   ,pr_inPropon IN BOOLEAN DEFAULT FALSE --> Flag Proponente
                                    ,pr_dsjsonan OUT json --> Retorno Variáveis Json
                                    ,pr_cdcritic OUT NUMBER --> Código de critica encontrada
                                    ,pr_dscritic OUT VARCHAR2);
@@ -154,7 +155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Maio/2017.                   Ultima atualizacao: 16/04/2019
+      Data     : Maio/2017.                   Ultima atualizacao: 28/06/2019
 
       Dados referentes ao programa:
 
@@ -193,6 +194,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
                   23/01/2019 - P450 - Novas variaveis internas para o Json - Ailos X Ibratan
                                relacionado ao empréstimo e desconto de título - (Fabio Adriano - AMcom)
+
+                  28/06/2019 - P450 - Reposicionado VariaveisInterna abaixo de VariaveisAdicionais no Proponente (Mario - AMcom)   
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1094,6 +1097,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                    ,pr_dtadmsoc IN DATE    DEFAULT NULL
                                    ,pr_dtvigpro IN DATE    DEFAULT NULL
                                    ,pr_tpprodut IN NUMBER  DEFAULT 0
+                                   ,pr_inPropon IN BOOLEAN DEFAULT FALSE
                                    ,pr_dsjsonan OUT json
                                    ,pr_cdcritic OUT NUMBER
                                    ,pr_dscritic OUT VARCHAR2) IS
@@ -4472,9 +4476,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 						
 			END IF;
 			
+      --so quando for proponente
+      IF pr_inPropon THEN
+        vr_obj_generic3 := json();
+        -- Chamada das Novas variaveis internas para o Json
+        rati0003.pc_json_variaveis_rating(pr_cdcooper => pr_cdcooper --> Código da cooperativa
+                                         ,pr_nrdconta => pr_nrdconta --> Numero da conta do emprestimo
+                                         ,pr_nrctremp => pr_nrctremp --> Numero do contrato de desconto de tidulo
+                                         ,pr_flprepon => false   --> Flag Repon
+                                         ,pr_vlsalari => 0       --> Valor do Salario Associado
+                                         ,pr_persocio => 0       --> Percential do sócio
+                                         ,pr_dtadmsoc => NULL    --> Data Admissãio do Sócio
+                                         ,pr_dtvigpro => NULL    --> Data Vigência do Produto
+                                         ,pr_tpprodut => 0       --> Tipo de Produto
+                                         ,pr_dsjsonvar => vr_obj_generic3 --> Retorno Variáveis Json
+                                         ,pr_cdcritic => vr_cdcritic  --> Código de critica encontrada
+                                         ,pr_dscritic => vr_dscritic);
+
+        -- Verifica inconsistencias
+        if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
+          RAISE vr_exc_erro;
+        end if;
+
+        -- Enviar informações das variáveis internas ao JSON
+        vr_obj_generic2.put('variaveisInternas', vr_obj_generic3);
+			END IF;
+			
       -- Enviar informações adicionais ao JSON 
       vr_obj_generico.put('informacoesAdicionais', vr_obj_generic2);
-
 
       -- Ao final copiamos o json montado ao retornado
       pr_dsjsonan := vr_obj_generico;
@@ -5515,6 +5544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                            ,pr_nrdconta => pr_nrdconta
                            ,pr_nrctremp => pr_nrctremp
                            ,pr_flprepon => true
+                           ,pr_inPropon => true  --Gerar VariaveisInternas para proponente
                            ,pr_dsjsonan => vr_obj_generico
                            ,pr_cdcritic => vr_cdcritic 
                            ,pr_dscritic => vr_dscritic);
@@ -5528,31 +5558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     -- Adicionar o JSON montado do Proponente no objeto principal
     vr_obj_analise.put('proponente',vr_obj_generico);
     
-    -- Nao faz Variaveis Internas se for CDC
-    IF rw_crawepr.inlcrcdc <> 1 THEN
-      -- Chamada das Novas variaveis internas para o Json
-      rati0003.pc_json_variaveis_rating(pr_cdcooper => pr_cdcooper --> Código da cooperativa
-                                       ,pr_nrdconta => pr_nrdconta --> Numero da conta do emprestimo
-                                       ,pr_nrctremp => pr_nrctremp --> Numero do contrato de emprestimo
-                                       ,pr_flprepon => true    --> Flag Repon
-                                       ,pr_vlsalari => 0       --> Valor do Salario Associado
-                                       ,pr_persocio => 0       --> Percential do sócio
-                                       ,pr_dtadmsoc => NULL    --> Data Admissãio do Sócio
-                                       ,pr_dtvigpro => NULL    --> Data Vigência do Produto
-                                       ,pr_tpprodut => 0       --> Tipo de Produto
-                                       ,pr_dsjsonvar => vr_obj_generic4 --> Retorno Variáveis Json
-                                       ,pr_cdcritic => vr_cdcritic  --> Código de critica encontrada
-                                       ,pr_dscritic => vr_dscritic);
-
-      -- Verifica inconsistencias
-      if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then  
-         RAISE vr_exc_erro;
-      end if;
                   
-      -- Enviar informações das variáveis internas ao JSON
-      vr_obj_analise.put('variaveisInternas', vr_obj_generic4);	
-    END IF;
-
     rw_crapass := NULL;
     --> Buscar dados do associado
     OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
@@ -6723,28 +6729,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     -- Adicionar o JSON montado do Proponente no objeto principal
     vr_obj_analise.put('proponente',vr_obj_generico);
 
-    -- Chamada das Novas variaveis internas para o Json
-    rati0003.pc_json_variaveis_rating(pr_cdcooper => pr_cdcooper --> Código da cooperativa
-                                     ,pr_nrdconta => pr_nrdconta --> Numero da conta do emprestimo
-                                     ,pr_nrctremp => pr_nrctrlim --> Numero do contrato de emprestimo
-                                     ,pr_flprepon => true    --> Flag Repon
-                                     ,pr_vlsalari => 0       --> Valor do Salario Associado
-                                     ,pr_persocio => 0       --> Percential do sócio
-                                     ,pr_dtadmsoc => NULL    --> Data Admissãio do Sócio
-                                     ,pr_dtvigpro => NULL    --> Data Vigência do Produto
-                                     ,pr_tpprodut => 0       --> Tipo de Produto
-                                     ,pr_dsjsonvar => vr_obj_generic4 --> Retorno Variáveis Json
-                                     ,pr_cdcritic => vr_cdcritic  --> Código de critica encontrada
-                                     ,pr_dscritic => vr_dscritic);
-
-    -- Verifica inconsistencias
-    if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then  
-       RAISE vr_exc_erro;
-    end if;
-                  
-    -- Enviar informações das variáveis internas ao JSON
-    vr_obj_analise.put('variaveisInternas', vr_obj_generic4);
-    
     rw_crapass := NULL;
     --> Buscar dados do associado
     OPEN cr_crapass(pr_cdcooper => pr_cdcooper,

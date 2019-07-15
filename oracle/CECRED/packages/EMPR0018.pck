@@ -2420,9 +2420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
           vr_vllibera := pr_vlemprst;
           
           IF pr_idfiniof = 0 THEN
-             vr_vllibera := nvl(vr_vllibera,0) - nvl(vr_vlrtarif,0);
-					ELSE
-						 vr_vlemprst := nvl(vr_vlemprst,0) + nvl(vr_vlrtarif,0);
+             vr_vlemprst := nvl(vr_vlemprst,0) - nvl(vr_vlrtarif,0);
            END IF;
            
           -- Calcular o IOF da operação
@@ -2458,9 +2456,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
           END IF;                                                       
         
           IF pr_idfiniof = 0 THEN
-             vr_vllibera := nvl(vr_vllibera,0) - nvl(vr_valoriof,0);
-					ELSE
-						 vr_vlemprst := nvl(vr_vlemprst,0) + nvl(vr_valoriof,0);
+             vr_vlemprst := nvl(vr_vlemprst,0) - nvl(vr_valoriof,0);
+             vr_vllibera := vr_vlemprst;
            END IF; 
            
            --Parcelas
@@ -3440,14 +3437,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
 
     Programa: pc_imprime_simulacao      Antigo: b1wgen0097.p(imprime_simulacao)
     Autor   : Douglas Pagel / AMcom 
-    Data    : 18/12/2018               ultima Atualizacao: -- 
+    Data    : 18/12/2018               ultima Atualizacao: 13/06/2019
      
     Dados referentes ao programa:
    
     Objetivo  : Rotina para gerar a impressão da simulação
    
-    Alteracoes: 
-
+    Alteracoes: 13/06/2019 - Adicionada a informação do CDI junto a taxa mensal quando for Pós Fixado
+  -                          SM P298.3 (Darlei / Supero)
+  -
   ..............................................................................*/  
                                      
     --
@@ -3499,7 +3497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
     aux_data_parc VARCHAR2(20);
       
     aux_vlrsolic  VARCHAR2(18);
-    aux_txmensal  VARCHAR2(10);
+    aux_txmensal  VARCHAR2(30);
     aux_vlparepr  VARCHAR2(18);
     aux_tributos  VARCHAR2(18);
     -- aux_vlajuepr VARCHAR2; varivel sem uso -- AS CHAR        NO-UNDO.
@@ -3514,6 +3512,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
     aux_dscarenc VARCHAR2(100);
     aux_vlprecar VARCHAR2(18);     
     aux_dtcarenc VARCHAR2(20);
+    aux_vlperidx VARCHAR2(20);
     --
     --/ variaveis para montagem do layout das parcelas no jasper
     --
@@ -3723,6 +3722,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
           FETCH cr_crapfin INTO rw_crapfin;
          CLOSE cr_crapfin;
 
+         -- adicionada a informação do CDI junto a taxa mensal quando for Pós
+         aux_vlperidx := '';
+         IF pr_tpemprst = 2 THEN
+           aux_vlperidx := empr0018.fn_formata_valor(' + ',
+                                                rw_craplcr.vlperidx,
+                                                'fm990',
+                                                '% CDI');
+         END IF;
+
          /* Ajuste de formatos s serem exibidos */
          aux_vlrsolic := empr0018.fn_formata_valor('R$ ',
                                                   vr_tcrapsim(idx).vlemprst,
@@ -3733,6 +3741,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                                 vr_tcrapsim(idx).txmensal,
                                                 'fm999g999g990d00',
                                                 ' %');
+
+         -- concateno a taxa mensal com o cdi para a mesma linha
+         aux_txmensal := aux_txmensal || ' ' || aux_vlperidx;
               
          aux_vlparepr := empr0018.fn_formata_valor('R$ ',
                                                 vr_tcrapsim(idx).vlparepr,

@@ -396,11 +396,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0009 IS
 		--
 		CURSOR cr_cartao(pr_nrcctig  crawcrd.nrcctitg%TYPE
 										,pr_cdcooper crawcrd.cdcooper%TYPE
+                    ,pr_nrcpftit crawcrd.nrcpftit%TYPE
 		                ) IS
 			SELECT tcc.nrdconta
+
 				FROM tbcrd_conta_cartao tcc
+        
+        JOIN crapass ass on ass.cdcooper = tcc.cdcooper
+                        and ass.nrdconta = tcc.nrdconta
+        
 			 WHERE tcc.cdcooper       = pr_cdcooper
-				 AND tcc.nrconta_cartao = pr_nrcctig;
+         AND tcc.nrconta_cartao = pr_nrcctig
+         AND ass.nrcpfcgc       = pr_nrcpftit;
 		--
 		vr_nrctremp crapcyb.nrctremp%TYPE;
 		vr_vlsdeved crapcyb.vlsdeved%TYPE;
@@ -419,6 +426,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0009 IS
 				--
 				FOR rg_cartao IN cr_cartao(rg_conta.ctanum
 																	,rg_conta.cdcooper
+                                  ,rg_conta.cpf_cnpj
 																	 ) LOOP
 					-- Inicializa as variaveis
 					vr_nrctremp := NULL;

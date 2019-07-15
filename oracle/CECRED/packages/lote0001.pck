@@ -3,7 +3,7 @@ CREATE OR REPLACE PACKAGE cecred.lote0001 IS
  /*..............................................................................
    Programa: LOTE0001
    Autor   : Odirlei
-   Data    : 28/07/2015                        Ultima atualizacao: 24/06/2019
+   Data    : 28/07/2015                        Ultima atualizacao: 03/07/2019
   
    Dados referentes ao programa: 
   
@@ -17,7 +17,7 @@ CREATE OR REPLACE PACKAGE cecred.lote0001 IS
 			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
 
-  24/06/2019 - PRB0041947 Na rotina lote0001.pc_insere_lote, ignorada a exception DUP_VAL_ON_INDEX, pois os 
+  03/07/2019 - PRB0041947 Na rotina lote0001.pc_insere_lote_rvt, ignorada a exception DUP_VAL_ON_INDEX, pois os 
                programas paralelos, ao concorrerem na inserção do lote, não devem abortar a execução (Carlos)
   ..............................................................................*/
 
@@ -186,7 +186,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.lote0001 IS
     END IF;
   
     IF cr_craplot%NOTFOUND THEN
-    
+      
       BEGIN
         -- criar registros de lote na tabela
         INSERT INTO craplot
@@ -242,8 +242,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.lote0001 IS
                  ,rw_craplot_ctl.vlinfocr
                  ,rw_craplot_ctl.cdcooper;
       EXCEPTION
-        WHEN DUP_VAL_ON_INDEX THEN
-          NULL;
+        WHEN OTHERS THEN
+          cecred.pc_internal_exception;
       END;
     
     ELSE
@@ -316,6 +316,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.lote0001 IS
     INTO rw_craplot_ctl;
     
     IF cr_craplot_sem_lock%NOTFOUND THEN
+      
+      BEGIN
       -- criar registros de lote na tabela
       INSERT INTO craplot
         (craplot.cdcooper
@@ -369,6 +371,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.lote0001 IS
                ,rw_craplot_ctl.vlcompcr
                ,rw_craplot_ctl.vlinfocr
                ,rw_craplot_ctl.cdcooper;
+      EXCEPTION
+        WHEN DUP_VAL_ON_INDEX THEN
+          NULL;
+      END;
     END IF;
   
     CLOSE cr_craplot_sem_lock;

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : Maio/2017.                       Ultima atualizacao: 21/11/2017
+   Data    : Maio/2017.                       Ultima atualizacao: 05/07/2019
 
    Dados referentes ao programa:
 
@@ -16,6 +16,10 @@
                22/11/2017 - Corrigido consulta de seguros para encontrar somente os ativos (Jonata - RKAM p364).
 			   
                30/11/2018 - Corrigido o cancelamento de PLano de Cotas (Andrey Formigari - Mouts).
+   
+               05/07/2019 - Corrigido cursor que retorna os cartoes magneticos ativos por cooperado. 
+			                Realizada inclusao da condicao 'tpcarcta  <> 9', para que nao sejam considerados
+							os cartoes magneticos de operadores na validacao (INC0016814 - Jackson).
    
 ............................................................................ */
 
@@ -561,6 +565,7 @@ PROCEDURE busca_inf_produtos:
 	IF CAN-FIND(FIRST crapcrm WHERE crapcrm.cdcooper  = par_cdcooper AND
 									crapcrm.nrdconta  = par_nrdconta AND
 									crapcrm.cdsitcar  = 2            AND
+									crapcrm.tpcarcta  <> 9           AND
 									crapcrm.dtvalcar  >= par_dtmvtolt 
 									NO-LOCK)
 	THEN DO:

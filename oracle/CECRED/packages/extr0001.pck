@@ -811,12 +811,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                       
 		 14/08/2018 - Alterado procedure pc_gera_registro_extrato para tratar comprovantes de DOCs.
 				      (Reinert)
-
-         22/05/2019 - Cursor para considerar também o horário da operação ao buscar o nome do 
-                      estabelecimento. (Edmar - INC0014177)     
-
+         
      03/07/2019 - P565.1-RF20 - Não colocar a descrição (Estorno) para a cdhistor=2662 na proc. pc_gera_registro_extrato.
                   (Fernanda Kelli de Oliveira - AMCom)      
+              
+         22/05/2019 - Cursor para considerar também o horário da operação ao buscar o nome do 
+                      estabelecimento. (Edmar - INC0014177)     
 ..............................................................................*/
 
   -- Tratamento de erros
@@ -3155,11 +3155,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                     13/07/2018 - Ajustar SQL que busca o nome do estabelecimento para retirar os caracteres
                                  que "quebram" o XML (PRJ 467 - Douglas Quisinski)
                     
-                     22/05/2019 - Cursor para considerar também o horário da operação ao buscar o nome do 
-                                 estabelecimento. (Edmar - INC0014177)
-
                     03/07/2019 - P565.1-RF20 - Não colocar a descrição (Estorno) para a cdhistor=2662 na proc. pc_gera_registro_extrato.
                            (Fernanda Kelli de Oliveira - AMCom)
+                                 
+                    22/05/2019 - Cursor para considerar também o horário da operação ao buscar o nome do 
+                                 estabelecimento. (Edmar - INC0014177)            
+
+                    12/06/2019 - SM 298.3 - Ajustar a apresentação de parcelas pagas no extrato da operação 
+                                 e da conta corrente para os contratos migrados - Darlei (Supero)                                 
     */
     DECLARE
       -- Varíaveis para montagem do novo registro
@@ -3182,6 +3185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_dslibera VARCHAR2(10);
       vr_nmconven VARCHAR2(4000) := '';
       vr_nrsequen INTEGER;
+      vr_qtpreemp INTEGER;
       -- Buscar informações de depósitos bloqueados
       CURSOR cr_crapdpb (pr_cdcooper IN craplcm.cdcooper%TYPE
                         ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
@@ -3660,8 +3664,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         CLOSE cr_crapepr;
         -- Se tiver encontrado
         IF nvl(rw_crapepr.qtpreemp,0) <> 0  THEN
+          
+          -- verifico se o contrato foi migrado, se sim retorno as parcelas do contrato original
+          vr_qtpreemp := extr0002.fn_consulta_parcelas_migrado(pr_cdcooper  => pr_cdcooper                               --> Codigo da Cooperativa 
+                                                              ,pr_nrdconta  => rw_craplcm.nrdconta                       --> Numero da Conta Corrente
+                                                              ,pr_nrctrnov  => TRIM(REPLACE(rw_craplcm.cdpesqbb,'.','')) --> Numero do Contrato
+                                                              );
+          IF vr_qtpreemp IS NULL THEN
+            vr_qtpreemp := rw_crapepr.qtpreemp;
+          END IF;
+        
           -- Adicionar na descrição a parcela
-          vr_dsextrat := substr(vr_dsextrat,1,13)||' '||to_char(rw_craplcm.nrparepr,'fm000')||'/'||to_char(rw_crapepr.qtpreemp,'fm000');
+          vr_dsextrat := substr(vr_dsextrat,1,13)||' '||to_char(rw_craplcm.nrparepr,'fm000')||'/'||to_char(vr_qtpreemp,'fm000');
         END IF;
       END IF;
       -- Processar o retorno conforme o tipo solicitado

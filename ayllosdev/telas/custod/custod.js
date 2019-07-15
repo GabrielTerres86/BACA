@@ -14,6 +14,7 @@
  * [20/06/2017] Lucas Lombardi(CECRED)   : Retiradas as linhas Menor e Maior. PRJ367 - Compe Sessao Unica
  * [16/01/2018] Lucas Reinert (CECRED)	 : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
  * [06/02/2018] Mateus Zimmermann (Mouts): Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia. ()
+ * [19/06/2019] Daniel Lombardi (Mout'S) : Alterações referentes a RITM0022866 validação de data na opção C.
  */
 
 //Formulários e Tabela
@@ -87,7 +88,9 @@ function controlaOperacao(operacao, nriniseq, nrregist) {
     var vlcheque = $('#vlrchequ', '#' + frmOpcao).val();
     var dsdopcao = normalizaNumero($('#dsdopcao', '#' + frmOpcao).val());
 	var cdagenci = normalizaNumero($('#cdagenci', '#' + frmOpcao).val());
-	
+    if (dtcusini == '' && dtlibini == '') {
+        showError('error', 'Data de início de custodia ou de liberação não informada!!', 'Alerta - Aimaro', 'unblockBackground()');
+        return true;} 	
 	if (dsdocmc7 !== undefined)
 		dsdocmc7 = $('#dsdocmc7', '#' + frmOpcao).val().toString().replace(/[^0-9]/g, "").substr(0,30);
 
@@ -825,6 +828,10 @@ function formataOpcaoC() {
 
         // Se é a tecla TAB ou ENTER, 
         if ((e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') && (auxconta === 0 || validaCampo('nrdconta', auxconta))) {
+            if (auxconta == 0) {
+                showError('error', 'Número de conta não informada!!', 'Alerta - Aimaro');
+                return true;
+            }   
             manterRotina('BIA');
             return false;
         } else if (e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') {
@@ -2125,7 +2132,9 @@ function validarSenha() {
     // Situacao
     operauto = $('#operauto', '#frmSenha').val();
     var codsenha = $('#codsenha', '#frmSenha').val();
-
+	
+	codsenha = encodeURIComponent(codsenha, "UTF-8");
+	
     showMsgAguardo('Aguarde, validando ...');
 
     $.ajax({

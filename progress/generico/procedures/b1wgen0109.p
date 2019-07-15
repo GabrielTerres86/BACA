@@ -75,13 +75,14 @@
                              ocorrencias TIC) (Carlos)
 
 				26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
-
+        
               15/03/2019 - Adicionados relatorios em tela: 529, 530, 219 
                           (Lucas H. - Supero)
 
                 21/03/2019 - Adicionado do campo periodo na tabela tt-nmrelato para utilizar no 
                              relatorio 219. Acelera - Reapresentacao automática de cheques (Lombardi).
 
+                13/06/2019 - RITM0021049 Inclusao relatorios 392 e 572 (Yuri Mouts)
 
 ............................................................................*/
 
@@ -100,10 +101,10 @@ DEF VAR aux_returnvl AS CHAR                                        NO-UNDO.
 
 DEF VAR aux_lsrelato AS CHAR                                        NO-UNDO.
 DEF VAR aux_qtrelato AS INT                                         NO-UNDO.
-DEF VAR cmd          AS CHAR    FORMAT "x(37)" EXTENT 44            NO-UNDO.
-DEF VAR pac          AS LOGICAL                EXTENT 44 INIT TRUE  NO-UNDO.
-DEF VAR proglist     AS CHAR                   EXTENT 44            NO-UNDO.
-DEF VAR periodo      AS LOGICAL                EXTENT 44 INIT FALSE NO-UNDO.
+DEF VAR cmd          AS CHAR    FORMAT "x(37)" EXTENT 46            NO-UNDO.
+DEF VAR pac          AS LOGICAL                EXTENT 46 INIT TRUE  NO-UNDO.
+DEF VAR proglist     AS CHAR                   EXTENT 46            NO-UNDO.
+DEF VAR periodo      AS LOGICAL                EXTENT 46 INIT FALSE NO-UNDO.
 
 /* relatorios que aparecem na opcao D */
 ASSIGN aux_lsrelato = "crrl007,crrl011,crrl033,crrl055,crrl135,crrl145," +
@@ -125,7 +126,7 @@ ASSIGN aux_lsrelato = "crrl007,crrl011,crrl033,crrl055,crrl135,crrl145," +
        proglist[10] = "crrl145"
        proglist[11] = "crrl156"
        proglist[12] = "crrl211"
-       
+      
        proglist[13] = "crrl219"
        
        proglist[14] = "crrl229"       
@@ -141,24 +142,26 @@ ASSIGN aux_lsrelato = "crrl007,crrl011,crrl033,crrl055,crrl135,crrl145," +
        proglist[24] = "crrl362"
        proglist[25] = "crrl372"
        proglist[26] = "crrl386"
-       proglist[27] = "crrl395"
-       proglist[28] = "crrl396"
-       proglist[29] = "crrl426"
-       proglist[30] = "crrl456"
-       proglist[31] = "crrl481"
-       proglist[32] = "crrl497"
-       proglist[33] = "crrl529"
-       proglist[34] = "crrl530"       
-       proglist[35] = "crrl593"
-       proglist[36] = "crrl597"
-       proglist[37] = "crrl598"
-       proglist[38] = "crrl599"
-       proglist[39] = "crrl626"
-       proglist[40] = "crrl668"
-       proglist[41] = "crrl620_credito"
-       proglist[42] = "crrl620_matric"
-       proglist[43] = "crrl620_cadastro"
-       proglist[44] = "crrl692"
+       proglist[27] = "crrl392"
+       proglist[28] = "crrl395"
+       proglist[29] = "crrl396"
+       proglist[30] = "crrl426"
+       proglist[31] = "crrl456"
+       proglist[32] = "crrl481"
+       proglist[33] = "crrl497"
+       proglist[34] = "crrl529"
+       proglist[35] = "crrl530"       
+       proglist[36] = "crrl572"
+       proglist[37] = "crrl593"
+       proglist[38] = "crrl597"
+       proglist[39] = "crrl598"
+       proglist[40] = "crrl599"
+       proglist[41] = "crrl626"
+       proglist[42] = "crrl668"
+       proglist[43] = "crrl620_credito"
+       proglist[44] = "crrl620_matric"
+       proglist[45] = "crrl620_cadastro"
+       proglist[46] = "crrl692"
       
        aux_qtrelato = EXTENT(proglist)
        
@@ -190,24 +193,26 @@ ASSIGN aux_lsrelato = "crrl007,crrl011,crrl033,crrl055,crrl135,crrl145," +
        cmd[24] = "362-Cartas a serem Solicitadas p/PA  "
        cmd[25] = "372-Saldo Conta Investimento(CI)     "
        cmd[26] = "386-Diferencas de Caixas (Mensal)    "
-       cmd[27] = "395-Cadastros de Conta Integracao    "
-       cmd[28] = "396-Criticas dos retornos C/C Integr."
-       cmd[29] = "426-Ctas Duplicadas (maiores 16 anos)"
-       cmd[30] = "456-Credito aplicacoes RDC"
-       cmd[31] = "481-Poupanca a vencer em 5 dias uteis"
-       cmd[32] = "497-Tit. Dscto Debitados Beneficiario"
-       cmd[33] = "529-Cheque Devolvido (AILOS)         "
-       cmd[34] = "530-Relaçao de Cheque Devolvidos     "
-       cmd[35] = "593-Cheques nao digitalizados        "
-       cmd[36] = "597-Contratacao Seguro Prestamista   "
-       cmd[37] = "598-Emprestimos Sem Seg.Prestamista  "
-       cmd[38] = "599-Relac. Chq Compe p/PA apos proc  "
-       cmd[39] = "626-Relac. de ocorrencias TIC "
-       cmd[40] = "668-Emprestimos prefixados em atraso "
-       cmd[41] = "620-Docs nao Digitalizados_Credito   "
-       cmd[42] = "620-Docs nao Digitalizados_Matricula "
-       cmd[43] = "620-Docs nao Digitalizados_Cadastro  "
-       cmd[44] = "692-Limites de Credito Vencidos".
+       cmd[27] = "392-Pedido de Talonarios             "
+       cmd[28] = "395-Cadastros de Conta Integracao    "
+       cmd[29] = "396-Criticas dos retornos C/C Integr."
+       cmd[30] = "426-Ctas Duplicadas (maiores 16 anos)"
+       cmd[31] = "456-Credito aplicacoes RDC"
+       cmd[32] = "481-Poupanca a vencer em 5 dias uteis"
+       cmd[33] = "497-Tit. Dscto Debitados Beneficiario"
+       cmd[34] = "529-Cheque Devolvido (AILOS)         "
+       cmd[35] = "530-Relaçao de Cheque Devolvidos     "
+       cmd[36] = "572-Pedido Formulario Continuo       "
+       cmd[37] = "593-Cheques nao digitalizados        "
+       cmd[38] = "597-Contratacao Seguro Prestamista   "
+       cmd[39] = "598-Emprestimos Sem Seg.Prestamista  "
+       cmd[40] = "599-Relac. Chq Compe p/PA apos proc  "
+       cmd[41] = "626-Relac. de ocorrencias TIC "
+       cmd[42] = "668-Emprestimos prefixados em atraso "
+       cmd[43] = "620-Docs nao Digitalizados_Credito   "
+       cmd[44] = "620-Docs nao Digitalizados_Matricula "
+       cmd[45] = "620-Docs nao Digitalizados_Cadastro  "
+       cmd[46] = "692-Limites de Credito Vencidos".
 
        pac[08] = FALSE.
        pac[13] = FALSE.

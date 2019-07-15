@@ -871,8 +871,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
 
   -- Busca dos dados do associado
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
-                   ,pr_nrdconta IN crapass.nrdconta%TYPE DEFAULT 0
-                   ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE DEFAULT 0) IS
+                   ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
    SELECT crapass.cdcooper
          ,crapass.nrdconta
          ,crapass.inpessoa
@@ -883,10 +882,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
          ,crapass.inadimpl
      FROM crapass
     WHERE crapass.cdcooper = pr_cdcooper
-      AND crapass.nrdconta = DECODE(pr_nrdconta,0,crapass.nrdconta,pr_nrdconta)
-      AND crapass.nrcpfcgc = DECODE(pr_nrcpfcgc,0,crapass.nrcpfcgc,pr_nrcpfcgc);
+      AND crapass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%ROWTYPE;
-
 
   -- Cursor sobre a tabela de limite de credito
   CURSOR cr_craplim (pr_cdcooper IN craplim.cdcooper%TYPE,
@@ -6339,6 +6336,24 @@ END pc_inserir_lancamento_bordero;
      vr_nrdconta crapass.nrdconta%TYPE;
      vr_nrcpfcgc crapass.nrcpfcgc%TYPE;
      
+     -- Busca dos dados do associado
+  CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
+                   ,pr_nrdconta IN crapass.nrdconta%TYPE DEFAULT 0
+                   ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE DEFAULT 0) IS
+   SELECT crapass.cdcooper
+         ,crapass.nrdconta
+         ,crapass.inpessoa
+         ,crapass.vllimcre
+         ,crapass.nmprimtl
+         ,crapass.nrcpfcgc
+         ,crapass.dtdemiss
+         ,crapass.inadimpl
+     FROM crapass
+    WHERE crapass.cdcooper = pr_cdcooper
+      AND crapass.nrdconta = DECODE(pr_nrdconta,0,crapass.nrdconta,pr_nrdconta)
+      AND crapass.nrcpfcgc = DECODE(pr_nrcpfcgc,0,crapass.nrcpfcgc,pr_nrcpfcgc);
+  rw_crapass cr_crapass%ROWTYPE;
+
      BEGIN
        pr_nmdcampo := NULL;
        pr_des_erro := 'OK';

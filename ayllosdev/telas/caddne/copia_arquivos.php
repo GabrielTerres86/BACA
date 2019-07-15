@@ -38,7 +38,8 @@
 	}
 	
 	// Apaga os arquivos que estao na pasta
-	array_map("unlink",glob("/var/www/ayllos/telas/caddne/arquivos/*"));
+	//array_map("unlink",glob("/var/www/ayllos/telas/caddne/arquivos/*"));
+	array_map("unlink",glob(dirname(__FILE__) ."/arquivos/*"));
 		
 	$xmlCarregaDados  = "";
 	$xmlCarregaDados .= "<Root>";
@@ -79,10 +80,16 @@
 		if($arquivos->tags[0]->cdata == "LOG_UNID_OPER.TXT"){
 			echo '$("#UNID_OPER","#frmImportacao").prop("checked",true);';
 			echo '$("#UNID_OPER","#frmImportacao").prop("disabled",false);';
+		} elseif ($arquivos->tags[0]->cdata == "LOG_UNID_OPER.txt"){
+			echo '$("#UNID_OPER","#frmImportacao").prop("checked",true);';
+			echo '$("#UNID_OPER","#frmImportacao").prop("disabled",false);';
 		} elseif ($arquivos->tags[0]->cdata == "LOG_CPC.TXT"){
 			echo '$("#CPC","#frmImportacao").prop("checked",true);';
 			echo '$("#CPC","#frmImportacao").prop("disabled",false);';
 		} elseif ($arquivos->tags[0]->cdata == "LOG_GRANDE_USUARIO.TXT"){
+			echo '$("#GRANDE_USUARIO","#frmImportacao").prop("checked",true);';
+			echo '$("#GRANDE_USUARIO","#frmImportacao").prop("disabled",false);';
+		} elseif ($arquivos->tags[0]->cdata == "LOG_GRANDE_USUARIO.txt"){
 			echo '$("#GRANDE_USUARIO","#frmImportacao").prop("checked",true);';
 			echo '$("#GRANDE_USUARIO","#frmImportacao").prop("disabled",false);';
 		} else {

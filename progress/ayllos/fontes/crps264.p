@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 04/06/2019 
+    Data    : Marco/07.                       Ultima atualizacao: 09/07/2019 
     
     Dados referentes ao programa:
 
@@ -277,6 +277,9 @@
 						   (Adriano - PRB0041791).
 			        04/06/2019 - P565.1-RF20 - Inclusao do histórico 2973-DEV.CH.DEP na proc gera_lancamento.
                            (Fernanda Kelli de Oliveira - AMCom)
+						   
+			        09/07/2019 - P565.1-RF20 - Retirar o valor do cheque devolvido da tabela de bloqueados - CRAPDPB na proc gera_lancamento.
+                           (Fernanda Kelli de Oliveira - AMCom)                           
 
 						   
 ..............................................................................*/
@@ -435,10 +438,12 @@ END. /* FUNCTION */
 ASSIGN glb_cdprogra = "crps264"
        glb_flgbatch = false.
 
+
 RUN fontes/iniprg.p.
 
 IF   glb_cdcritic > 0 THEN
     RETURN.
+
 
 /*Devido a mudancas na tela PRCCTL que podera ser acessada
  por outras coops alem da CECRED é necessario que este
@@ -1563,7 +1568,25 @@ PROCEDURE gera_lancamento:
                                                   NO-LOCK NO-ERROR.
 
                                            IF AVAILABLE craplcm1 THEN
+                                           DO:
                                              ASSIGN  aux2_cdhistor = 2973. /*DEVOLUCAO DE CHEQUE ACOLHIDO EM DEPOSITO - SALDO BLOQUEADO*/
+                                             
+                                             /*Buscar o registro bloqueado*/
+                                             FIND FIRST crapdpb  WHERE crapdpb.cdcooper = aux_cdcooper
+                                                                   AND crapdpb.dtmvtolt = craplcm1.dtmvtolt
+                                                                   AND crapdpb.cdagenci = craplcm1.cdagenci    
+                                                                   AND crapdpb.cdbccxlt = craplcm1.cdbccxlt 
+                                                                   AND crapdpb.nrdolote = craplcm1.nrdolote  
+                                                                   AND crapdpb.nrdconta = craplcm1.nrdconta
+                                                                   AND crapdpb.nrdocmto = craplcm1.nrdocmto
+                                                                   EXCLUSIVE-LOCK  NO-ERROR.
+                                                                   
+                                             IF AVAILABLE crapdpb THEN
+                                             DO:  
+                                               ASSIGN crapdpb.vllanmto = crapdpb.vllanmto - crapdev.vllanmto.
+                                               VALIDATE crapdpb.
+                                             END.
+                                           END.  
                                            ELSE
                                              ASSIGN  aux2_cdhistor = 351.  /*DEVOLUCAO DE CHEQUE ACOLHIDO EM DEPOSITO - SALDO LIBERADO*/
                                       

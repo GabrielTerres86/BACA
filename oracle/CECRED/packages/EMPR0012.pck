@@ -29,6 +29,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                      ,pr_nrctaav1 IN crawepr.nrctaav1%TYPE  --> Codigo do avalista 1
                                      ,pr_nrctaav2 IN crawepr.nrctaav2%TYPE  --> Codigo do avalista 2
                                      ,pr_inresapr IN numeric default 1      --> reinicia fluxo
+                                     ,pr_idacionamento IN tbgen_webservice_aciona.idacionamento%type
                                      ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -43,6 +44,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                        ,pr_nrctaav1 IN crawepr.nrctaav1%TYPE  --> Codigo do avalista 1
                                        ,pr_nrctaav2 IN crawepr.nrctaav2%TYPE  --> Codigo do avalista 2
                                        ,pr_inresapr IN numeric default 1      --> reinicia fluxo
+                                       ,pr_idacionamento IN tbgen_webservice_aciona.idacionamento%type
                                        ,pr_retjson  OUT CLOB                  --> Retorno json proposta
                                        ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                        ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica
@@ -405,8 +407,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                          ,pr_des_erro   OUT VARCHAR2) ;                       --> Saida OK/NOK
   
   PROCEDURE pc_registra_push_sit_prop_cdc (pr_cdcooper   IN tbgen_evento_soa.cdcooper%TYPE      --> Coodigo Cooperativa
-                                          ,pr_nrdconta   IN tbgen_evento_soa.nrdconta%TYPE      --> Numero da Conta do Associado
-                                          ,pr_nrctremp   IN tbgen_evento_soa.nrctrprp%TYPE      --> Numero do contrato
+                                          ,pr_nrdconta   IN VARCHAR2                            --> Numero da Conta do Associado
+                                          ,pr_nrctremp   IN VARCHAR2                            --> Numero do contrato
                                           ,pr_insitpro   IN NUMBER                              --> Situação da proposta
                                           -->> SAIDA
                                           ,pr_cdcritic OUT PLS_INTEGER                --> Código da crítica
@@ -754,6 +756,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                       ,pr_nrctaav1 IN crawepr.nrctaav1%TYPE  --> Codigo do avalista 1
                                       ,pr_nrctaav2 IN crawepr.nrctaav2%TYPE  --> Codigo do avalista 2
                                       ,pr_inresapr IN numeric default 1      --> reinicia fluxo
+                                      ,pr_idacionamento IN tbgen_webservice_aciona.idacionamento%type
                                       ,pr_retjson  OUT CLOB                  --> Retorno json proposta
                                       ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
@@ -781,6 +784,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
     vr_dsjsonan json;
     vr_dsjsonan_clob CLOB;
+
+    vr_cdstatus_http tbgen_webservice_aciona.cdstatus_http%type := 200; -- sucesso
+    vr_flgreenvia    tbgen_webservice_aciona.flgreenvia%type := 0; -- nao
 
     BEGIN
       -- Enviar proposta para análise no motor
@@ -818,10 +824,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
         END;
       END IF;
       
+     
+
       -- Criar o CLOB para converter JSON para CLOB
       dbms_lob.createtemporary(vr_dsjsonan_clob, TRUE, dbms_lob.CALL);
       dbms_lob.open(vr_dsjsonan_clob, dbms_lob.lob_readwrite);
       json.to_clob(vr_dsjsonan,vr_dsjsonan_clob);
+
+       -- atualiza acionamento com sucesso
+      webs0003.pc_atualiza_acionamento(pr_cdstatus_http => vr_cdstatus_http
+                                      ,pr_nrctrprp => pr_nrctremp
+                                      ,pr_flgreenvia => vr_flgreenvia
+                                      ,pr_idacionamento => pr_idacionamento
+                                      ,pr_dsresposta_requisicao => vr_dsjsonan_clob
+                                      ,pr_dscritic => vr_dscritic);
+      
+      IF vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_erro;
+      END IF;
 
       --> Atribuir JSON para o parametro
       pr_retjson := vr_dsjsonan_clob;
@@ -857,6 +877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                      ,pr_nrctaav1 IN crawepr.nrctaav1%TYPE  --> Codigo do avalista 1
                                      ,pr_nrctaav2 IN crawepr.nrctaav2%TYPE  --> Codigo do avalista 2
                                      ,pr_inresapr IN numeric default 1      --> reinicia fluxo
+                                     ,pr_idacionamento IN tbgen_webservice_aciona.idacionamento%type
                                      ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -896,6 +917,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                  ,pr_nrctaav1 => pr_nrctaav1      --> Avalista 1
                                  ,pr_nrctaav2 => pr_nrctaav2      --> Avalista 2
                                  ,pr_inresapr => pr_inresapr      --> reinicia fluxo
+                                 ,pr_idacionamento => pr_idacionamento --> acionamento
                                  ,pr_retjson  => vr_dsjsonan_clob --> Retorno json proposta
                                  ,pr_cdcritic => vr_cdcritic      --> Código da crítica
                                  ,pr_dscritic => vr_dscritic);   --> Descrição da crítica
@@ -1241,14 +1263,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       RAISE vr_exc_saida;
     END IF;  
       
-    -- Somente se a proposta não foi atualizada ainda
-    IF rw_crawepr.insitest <> 1 THEN
-      -- Montar mensagem de critica
-      vr_status      := 400;
-      vr_cdcritic    := 978;
-      vr_msg_detalhe := 'Situacao da Proposta ja foi alterada - analise nao sera recebida.';
-      RAISE vr_exc_saida;        
-    END IF;    
       
     -- Se algum dos parâmetros abaixo não foram informados
 			IF nvl(pr_cdorigem, 0) = 0 OR
@@ -4321,6 +4335,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
        vr_dscritic := 'XML invalido'||SQLERRM;
        RAISE vr_exc_erro;
     END;
+
+    vr_nrdconta := to_number(REPLACE(vr_nrdconta,'.',''));
+    vr_nrctremp := to_number(REPLACE(vr_nrctremp,'.',''));
 
     IF nvl(vr_cdcooper, 0) = 0 or nvl(vr_nrdconta, 0) = 0 or nvl(vr_nrctremp, 0) = 0 THEN
       vr_dscritic := 'Dados de entrada invalidos.';
@@ -7416,8 +7433,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
   END pc_reg_push_sit_prop_cdc_web;      
 
   PROCEDURE pc_registra_push_sit_prop_cdc (pr_cdcooper   IN tbgen_evento_soa.cdcooper%TYPE      --> Coodigo Cooperativa
-                                          ,pr_nrdconta   IN tbgen_evento_soa.nrdconta%TYPE      --> Numero da Conta do Associado
-                                          ,pr_nrctremp   IN tbgen_evento_soa.nrctrprp%TYPE      --> Numero do contrato
+                                          ,pr_nrdconta   IN VARCHAR2                            --> Numero da Conta do Associado
+                                          ,pr_nrctremp   IN VARCHAR2                            --> Numero do contrato
                                           ,pr_insitpro   IN NUMBER                              --> Situação da proposta
                                           -->> SAIDA
                                           ,pr_cdcritic OUT PLS_INTEGER                --> Código da crítica
@@ -7450,6 +7467,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     vr_dsprodut   VARCHAR2(20);
     vr_idevento   tbgen_evento_soa.idevento%type;
     
+    vr_nrdconta   NUMBER;
+    vr_nrctremp   NUMBER;
+    
     vr_tpevento tbgen_evento_soa.tpevento%type := 'COMUNICACAO';
     vr_tproduto_evento tbgen_evento_soa.tproduto_evento%type := 'CDC';
     vr_tpoperacao tbgen_evento_soa.tpoperacao%type := 'NOTIFICAR';
@@ -7467,6 +7487,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     
   BEGIN
 
+    vr_nrdconta := to_number(REPLACE(pr_nrdconta,'.',''));
+    vr_nrctremp := to_number(REPLACE(pr_nrctremp,'.',''));
+
     -- Inicializar o CLOB
     vr_des_xml := NULL;
     dbms_lob.createtemporary(vr_des_xml, TRUE);
@@ -7481,8 +7504,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
       -- tag emitente
       pc_escreve_xml ('<emitente>');
         pc_escreve_xml ('<contaCorrente>'); 
-        pc_escreve_xml ('<codigoContaSemDigito>'||substr(pr_nrdconta,1,length(pr_nrdconta)-1)||'</codigoContaSemDigito>');
-        pc_escreve_xml ('<digitoVerificadorConta>'||substr(pr_nrdconta,-1)||'</digitoVerificadorConta>');
+        pc_escreve_xml ('<codigoContaSemDigito>'||substr(vr_nrdconta,1,length(vr_nrdconta)-1)||'</codigoContaSemDigito>');
+        pc_escreve_xml ('<digitoVerificadorConta>'||substr(vr_nrdconta,-1)||'</digitoVerificadorConta>');
         pc_escreve_xml ('<cooperativa><codigo>'||pr_cdcooper||'</codigo></cooperativa>');
         pc_escreve_xml ('</contaCorrente>'); 
       pc_escreve_xml ('</emitente>');
@@ -7503,8 +7526,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     pc_escreve_xml ('</dados>',TRUE);
 
     soap0003.pc_gerar_evento_soa(pr_cdcooper               => pr_cdcooper
-                                ,pr_nrdconta               => pr_nrdconta
-                                ,pr_nrctrprp               => pr_nrctremp
+                                ,pr_nrdconta               => vr_nrdconta
+                                ,pr_nrctrprp               => vr_nrctremp
                                 ,pr_tpevento               => vr_tpevento
                                 ,pr_tproduto_evento        => vr_tproduto_evento
                                 ,pr_tpoperacao             => vr_tpoperacao

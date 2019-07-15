@@ -54,6 +54,23 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
      nrdconta    NUMBER
     ,idcarga     NUMBER);
      
+  -- Cursor para buscar registros de pre-aprovado com importação manual em bloqueio por rating   
+  CURSOR cr_busca_bloqueados_manual(pr_cdcooper IN crapcpa.cdcooper%TYPE) IS
+    SELECT cpa.cdcooper
+          ,cpa.iddcarga
+          ,cpa.tppessoa
+          ,cpa.nrcpfcnpj_base
+          ,cpa.cdsituacao
+    FROM crapcpa cpa
+        ,tbepr_carga_pre_aprv pre
+    WHERE cpa.cdcooper = NVL(pr_cdcooper, cpa.cdcooper)
+      AND cpa.cdcooper = pre.cdcooper
+      AND cpa.iddcarga = pre.idcarga
+      AND pre.tpcarga = 1
+      AND (cpa.cdsituacao = 'B'
+           AND cpa.dtbloqueio IS NULL)
+    ORDER BY cpa.iddcarga;
+  
   -- Definição do índice e tabela para contas em arquivo
   TYPE typ_tab_arquivo IS TABLE OF typ_reg_arquivo INDEX BY VARCHAR2(400);
   
@@ -62,6 +79,17 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
                                  ,pr_nrdconta       crapass.nrdconta%TYPE DEFAULT 0
                                  ,pr_tppessoa       crapass.inpessoa%TYPE DEFAULT 0
                                  ,pr_nrcpfcnpj_base crapass.nrcpfcnpj_base%TYPE DEFAULT 0) RETURN NUMBER;
+                                 
+   /* Verifica se o cooperado possui saldo de Pre Aprovado */
+  FUNCTION fn_preapv_com_saldo(pr_cdcooper IN INTEGER,               --> Codigo da Cooperativa
+                               pr_nrdconta IN INTEGER DEFAULT 0,     --> Numero da Conta
+                               pr_idseqttl IN crapttl.idseqttl%TYPE, --> Sequencial do titular
+                               pr_nrcpfope IN crapopi.nrcpfope%TYPE, --> CPF do operador juridico
+                               pr_idorigem IN INTEGER,               --> ID origem da requisição
+                               pr_cdagenci IN crapage.cdagenci%TYPE, --> Código da agencia
+                               pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE, --> Numero do caixa
+                               pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da tela
+                               )  RETURN NUMBER;
   
   /* Mostrar o texto dos motivos na tela de acordo com o ocorrido. */
   FUNCTION fn_busca_motivo(pr_idmotivo IN tbgen_motivo.idmotivo%TYPE) RETURN VARCHAR2;
@@ -348,7 +376,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
                                     ,pr_tab_tbepr_motivo_nao_aprv IN  typ_tab_tbepr_motivo_nao_aprv --> Temporary table dos motivos com bloqueio
                                     ,pr_tab_arquivo               IN  typ_tab_arquivo               --> Temporary table com os registros processados
                                     ,pr_des_erro                  OUT VARCHAR2);                    --> Retorno da crítica (erro)
-
+									  
   -- Procedure para aprovar liberação de carga manual após rating
   PROCEDURE pc_libera_manual_rating(pr_cdcooper        IN crapass.cdcooper%TYPE         --> Código da cooperativa
                                    ,pr_idcarga         IN crapcpa.iddcarga%TYPE         --> Código do carga manual
@@ -474,6 +502,76 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         RETURN 0;
     END;
   END fn_flg_preapv_liberado;
+  
+   /* Verifica se o cooperado possui saldo de Pre Aprovado */
+  FUNCTION fn_preapv_com_saldo(pr_cdcooper IN INTEGER,               --> Codigo da Cooperativa
+                               pr_nrdconta IN INTEGER DEFAULT 0,     --> Numero da Conta
+                               pr_idseqttl IN crapttl.idseqttl%TYPE, --> Sequencial do titular
+                               pr_nrcpfope IN crapopi.nrcpfope%TYPE, --> CPF do operador juridico
+                               pr_idorigem IN INTEGER,               --> ID origem da requisição
+                               pr_cdagenci IN crapage.cdagenci%TYPE, --> Código da agencia
+                               pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE, --> Numero do caixa
+                               pr_nmdatela IN craptel.nmdatela%TYPE --> Nome da tela
+                               )  RETURN NUMBER IS
+  BEGIN
+    -- ..........................................................................
+    --
+    --  Programa : fn_preapv_com_saldo
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Werinton
+    --  Data     : Julho/2019.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que chamado por outros programas.
+    --   Objetivo  : Verificar se o cooperado possui saldo para constratacao de pre aprovado.
+    --
+    --   Alteracoes: 
+    -- .............................................................................
+    DECLARE
+      -- Retornos da chamada
+      vr_flglibera  tbcc_param_pessoa_produto.flglibera%TYPE;
+      -- Retorna dados do credito pre aprovado      
+      vr_tab_dados_cpa EMPR0002.typ_tab_dados_cpa;
+      -- Variáveis de ERRO
+      vr_des_reto VARCHAR2(5);
+      vr_tab_erro gene0001.typ_tab_erro;
+    BEGIN
+      vr_flglibera := 0;
+      
+     -- Verificar se o cooperado possui pré-aprovado
+        EMPR0002.pc_busca_dados_cpa(pr_cdcooper => pr_cdcooper
+                                   ,pr_cdagenci => pr_cdagenci
+                                   ,pr_nrdcaixa => pr_nrdcaixa
+                                   ,pr_cdoperad => '1' -- InternetBank.w e TAA_autorizador enviam fixo '1'
+                                   ,pr_nmdatela => pr_nmdatela
+                                   ,pr_idorigem => pr_idorigem
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_idseqttl => pr_idseqttl
+                                   ,pr_nrcpfope => pr_nrcpfope
+                                   ,pr_tab_dados_cpa => vr_tab_dados_cpa
+                                   ,pr_des_reto => vr_des_reto
+                                   ,pr_tab_erro => vr_tab_erro);
+        -- Verificar se não ocorreu erro
+        IF NVL(vr_des_reto,'OK') != 'NOK' THEN
+          -- Verificar se existe informação de contratação do pré-aprovado
+          IF vr_tab_dados_cpa.COUNT > 0 THEN
+            -- Verificar se o valor para contratação do pré-aprovado é maior que zero
+            IF vr_tab_dados_cpa(vr_tab_dados_cpa.FIRST).vldiscrd > 0 THEN
+              vr_flglibera := 1;
+            END IF;
+          END IF;
+        END IF;  
+
+        RETURN vr_flglibera;   
+
+    EXCEPTION
+      -- Em caso de erro, conta como não liberado
+      WHEN OTHERS THEN
+        RETURN 0;
+    END;
+  END fn_preapv_com_saldo;
   
   /* Mostrar o texto dos motivos na tela de acordo com o ocorrido. */
   FUNCTION fn_busca_motivo(pr_idmotivo IN tbgen_motivo.idmotivo%TYPE) RETURN VARCHAR2 IS
@@ -3953,10 +4051,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                     
                 BEGIN
                   -- Buscar informações do pre-aprovado conforme tipo de pessoa
-                  IF NOT cr_crappre%ISOPEN THEN
-                    OPEN cr_crappre(rw_cpa.cdcooper ,rw_cpa.tppessoa);
-                    FETCH cr_crappre INTO rw_crappre;
-                  END IF;
+                  OPEN cr_crappre(rw_cpa.cdcooper ,rw_cpa.tppessoa);
+                  FETCH cr_crappre INTO rw_crappre;
+                  CLOSE cr_crappre;
           
                   -- Calcular o pre-aprovado no momento da liberação
                   pc_calc_pre_aprovado_sintetico(pr_cdcooper        => rw_cpa.cdcooper
@@ -4030,8 +4127,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                     RAISE vr_exc_saida;
                 END;
               END LOOP;
-
-              CLOSE cr_crappre;
   
               -- Atualizar a carga para liberada
               BEGIN
@@ -4757,7 +4852,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                         ,vr_tab_carga(vr_idx1).tabcooper(vr_idx2).vlpotlim
                                         ,vr_tab_carga(vr_idx1).tabcooper(vr_idx2).cdrating
                                         ,vr_tab_carga(vr_idx1).tabcooper(vr_idx2).dtrating
-                                        ,'A'
+                                        ,'B'
                                         ,0
                                         ,0);
     
@@ -6581,6 +6676,115 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         pr_des_erro := 'Erronao tratado em PC_LIBERA_BLOQUEIO_ORFAO. ' || SQLERRM;
     END;
   END pc_libera_bloqueio_orfao;
+  
+  -- Procedure para aprovar liberação de carga manual por CPF/CNPJ após rating
+  PROCEDURE pc_libera_doc_manual_rating(pr_cdcooper        IN crapass.cdcooper%TYPE         --> Código da cooperativa
+                                       ,pr_nrcpfcnpj_base  IN crapcpa.nrcpfcnpj_base%TYPE   --> CPF/CNPJ do cooperado
+                                       ,pr_rating          IN VARCHAR2                      --> Rating calculado
+                                       ,pr_des_erro        OUT VARCHAR2) IS                 --> Retorno da crítica (erro)
+  BEGIN
+    DECLARE
+      -- Cursor generico de calendario
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+      
+      -- Checagem de existencia de cooperativa
+      CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
+        SELECT cop.nmrescop
+              ,dat.dtmvtolt
+              ,dat.dtmvtoan
+          FROM crapcop cop
+              ,crapdat dat
+         WHERE cop.cdcooper = dat.cdcooper
+           AND cop.cdcooper = pr_cdcooper
+           AND cop.flgativo = 1;
+      rw_crapcop cr_crapcop%ROWTYPE;
+      
+      -- Buscar ultima carga com bloqueio de rating
+      CURSOR cr_busca_idcarga(pr_cdcooper       crapcop.cdcooper%TYPE
+                             ,pr_nrcpfcnpj_base crapcpa.nrcpfcnpj_base%TYPE) IS
+        SELECT MAX(cpa.iddcarga) idcarga
+        FROM crapcpa cpa
+            ,tbepr_carga_pre_aprv pre
+        WHERE cpa.cdcooper = NVL(pr_cdcooper, cpa.cdcooper)
+          AND cpa.cdcooper = pre.cdcooper
+          AND cpa.iddcarga = pre.idcarga
+          AND cpa.nrcpfcnpj_base = pr_nrcpfcnpj_base
+          AND pre.tpcarga = 1
+          AND (cpa.cdsituacao = 'B'
+               AND cpa.dtbloqueio IS NULL);
+      rw_busca_idcarga cr_busca_idcarga%ROWTYPE;
+      
+      vr_exc_saida EXCEPTION;
+    BEGIN
+      -- Validar se cooperativa existe
+      OPEN cr_crapcop(pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+     
+      -- Leitura do calendario da CECRED
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;    
+   
+      IF cr_crapcop%NOTFOUND THEN
+        CLOSE cr_crapcop;
+        pr_des_erro := ' não encontrada ou inativa!';
+        RAISE vr_exc_saida;
+      ELSE
+        CLOSE cr_crapcop;
+      END IF;
+    
+      -- Validar Modelo
+      IF pr_cdcooper IS NULL THEN
+        pr_des_erro := 'Cooperativa deve ser informado!';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Buscar ultima carga com bloqueio de rating
+      OPEN cr_busca_idcarga(pr_cdcooper       => pr_cdcooper
+                           ,pr_nrcpfcnpj_base => pr_nrcpfcnpj_base);
+      FETCH cr_busca_idcarga INTO rw_busca_idcarga;
+      
+      IF cr_busca_idcarga%NOTFOUND THEN
+        CLOSE cr_busca_idcarga;
+        pr_des_erro := 'Sem carga localizada.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      CLOSE cr_busca_idcarga;
+      
+      -- Liberar carga para uso na primeira liberação de registro
+      UPDATE tbepr_carga_pre_aprv car
+      SET car.indsituacao_carga  = 2
+         ,car.flgcarga_bloqueada = 0
+         ,car.dtliberacao = rw_crapdat.dtmvtolt   
+      WHERE car.idcarga = rw_busca_idcarga.idcarga
+        AND car.indsituacao_carga = 1;
+      
+      -- Substituir cargas anteriores para o CPF/CNPJ
+      UPDATE crapcpa cpa
+        SET cpa.cdsituacao = 'S'
+      WHERE cpa.cdcooper = pr_cdcooper
+        AND cpa.nrcpfcnpj_base = pr_nrcpfcnpj_base
+        AND cpa.iddcarga < rw_busca_idcarga.idcarga;
+      
+      -- Liberar a carga atual do CPF/CNPJ
+      UPDATE crapcpa cpa
+      SET cpa.cdsituacao = 'A'
+         ,cpa.cdrating = pr_rating
+      WHERE cpa.iddcarga = rw_busca_idcarga.idcarga
+        AND cpa.nrcpfcnpj_base = pr_nrcpfcnpj_base
+        AND cpa.cdcooper = pr_cdcooper;
+        
+      COMMIT;
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        ROLLBACK;
+        pr_des_erro := 'Erro tratado. Rotina pc_libera_manual_rating. Detalhes: ' || pr_des_erro;
+      WHEN OTHERS THEN
+        ROLLBACK;
+        pr_des_erro := 'Erro nao tratado. Rotina pc_libera_manual_rating. Detalhes: ' || SQLERRM;
+    END;
+  END pc_libera_doc_manual_rating;
                                   
   -- Procedure para aprovar liberação de carga manual após rating
   PROCEDURE pc_libera_manual_rating(pr_cdcooper        IN crapass.cdcooper%TYPE         --> Código da cooperativa
@@ -6660,7 +6864,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       WHERE car.idcarga = pr_idcarga
         AND car.indsituacao_carga = 1;
 
-      -- Susbituir registros do mesmo documento anteriores, deixando vigente somente o mais atual
+      -- Liberar situação dos cooperados
+      UPDATE crapcpa cpa
+      SET cpa.cdsituacao = 'A'
+      WHERE cpa.iddcarga = pr_idcarga
+        AND cpa.cdcooper = pr_cdcooper;
+	  
+	  -- Susbituir registros do mesmo documento anteriores, deixando vigente somente o mais atual
       FOR rw_substitui_cpa IN cr_substitui_cpa(pr_cdcooper => pr_cdcooper, pr_idcarga => pr_idcarga) LOOP         
         UPDATE crapcpa cpa
            SET cpa.cdsituacao = 'S'

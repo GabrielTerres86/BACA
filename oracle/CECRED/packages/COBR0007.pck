@@ -318,7 +318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --  Sistema  : Procedimentos gerais para execucao de instrucoes de baixa
   --  Sigla    : CRED
   --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao: 20/05/2019
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 26/06/2019
   --
   -- Dados referentes ao programa:
   --
@@ -368,6 +368,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
   20/05/2019 - inc0011296 Na rotina pc_inst_protestar, corrigida a validação de existência de negativação e 
                centralizada a regra na function fn_flserasa (Carlos)
+  
+  
+  24/06/2019 - INC0013457 Na rotina pc_inst_cancel_protesto_85, feito o controle de envio de registro de 
+               desbloqueio do boleto para a CIP, para que não seja enviada mais de uma instrução por vez (Carlos)
   -------------------------------------------------------------------------------------------------------------*/
   --Ch 839539
   vr_cdprogra      tbgen_prglog.cdprograma%type := 'COBR0007';
@@ -3946,6 +3950,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --                            (Ana - Envolti - Ch. REQ0011728)
     --
     --   14/01/2019 - Enviar registro de desbloqueio do boleto para a CIP. (Cechet)
+    --
+    --   26/06/2019 - Parametros na chamada da procedure pc_inst_pedido_baixa_titulo estão com
+    --                cdocorre e cdoperad com informações erradas. (INC0017772 - AJFink)
+    --
     -- ...........................................................................................
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
     -- Tratamento de erros
@@ -3957,6 +3965,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     vr_des_erro   VARCHAR2(3);
     --Ch REQ0011728
     vr_dsparame      VARCHAR2(4000);
+
+    --Controle de envio de registro de desbloqueio do boleto para a CIP
+    vr_flgdesbl   BOOLEAN := FALSE;
 
     ------------------------------- CURSORES ---------------------------------    
     --Selecionar remessas
@@ -4369,9 +4380,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 					IF pr_idgerbai = 1 THEN
 						--
 						cobr0007.pc_inst_pedido_baixa_titulo(pr_idregcob            => rw_crapcob.rowid
-																								,pr_cdocorre            => pr_cdocorre
+                                                ,pr_cdocorre            => 2 -- Baixa  --INC0017772
 																								,pr_dtmvtolt            => pr_dtmvtolt
-																								,pr_cdoperad            => 2 -- Baixa
+                                                ,pr_cdoperad            => pr_cdoperad --INC0017772
 																								,pr_nrremass            => pr_nrremass
 																								,pr_tab_lat_consolidada => pr_tab_lat_consolidada
 																								,pr_cdcritic            => vr_cdcritic
@@ -4454,9 +4465,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 					IF pr_idgerbai = 1 THEN
 						--
 						cobr0007.pc_inst_pedido_baixa_titulo(pr_idregcob            => rw_crapcob.rowid
-																								,pr_cdocorre            => pr_cdocorre
+                                                ,pr_cdocorre            => 2 -- Baixa  --INC0017772
 																								,pr_dtmvtolt            => pr_dtmvtolt
-																								,pr_cdoperad            => 2 -- Baixa
+                                                ,pr_cdoperad            => pr_cdoperad --INC0017772
 																								,pr_nrremass            => pr_nrremass
 																								,pr_tab_lat_consolidada => pr_tab_lat_consolidada
 																								,pr_cdcritic            => vr_cdcritic
@@ -4815,9 +4826,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 					IF pr_idgerbai = 1 THEN
 						--
 						cobr0007.pc_inst_pedido_baixa_titulo(pr_idregcob            => rw_crapcob.rowid
-																								,pr_cdocorre            => pr_cdocorre
+                                                ,pr_cdocorre            => 2 -- Baixa  --INC0017772
 																								,pr_dtmvtolt            => pr_dtmvtolt
-																								,pr_cdoperad            => 2 -- Baixa
+                                                ,pr_cdoperad            => pr_cdoperad --INC0017772
 																								,pr_nrremass            => pr_nrremass
 																								,pr_tab_lat_consolidada => pr_tab_lat_consolidada
 																								,pr_cdcritic            => vr_cdcritic
@@ -4914,6 +4925,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
+        
+        -- Marcar como enviado o registro de desbloqueio do boleto para a CIP
+        vr_flgdesbl := TRUE;
+        
         -- Inclui nome do modulo logado - 30/08/2018 - REQ0011728
         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0007.pc_inst_cancel_prote_85');
       END IF;
@@ -5052,6 +5067,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             RAISE vr_exc_erro;
         END;
         
+        -- Se ainda não enviou registro de desbloqueio do boleto para a CIP
+        IF vr_flgdesbl = FALSE THEN
+        
         -- enviar registro de desbloqueio do boleto para a CIP            
         DDDA0001.pc_procedimentos_dda_jd (pr_rowid_cob => rw_crapcob.rowid      --ROWID da Cobranca
                                          ,pr_tpoperad => 'A'                        --Tipo Operacao
@@ -5068,6 +5086,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
           --Levantar Excecao
           RAISE vr_exc_erro;
+        END IF;
+        
         END IF;
         
         -- LOG de processo

@@ -250,6 +250,7 @@ TYPE typ_reg_dados_detalhe IS RECORD(
      concpaga        VARCHAR2(20),
      liqpagcd        VARCHAR2(20),
      liqgeral        VARCHAR2(20)
+    ,dtreapro        VARCHAR2(20) -- Marcelo Telles Coelho - Mouts - 25/04/2019 - RITM0050653
 );
 TYPE typ_tab_dados_detalhe IS TABLE OF typ_reg_dados_detalhe INDEX BY BINARY_INTEGER;
   
@@ -6175,7 +6176,8 @@ EXCEPTION
 
       CURSOR cr_crapcbd IS
         SELECT crapcbd.nrconbir,
-               crapcbd.nrseqdet
+               crapcbd.nrseqdet,
+               TO_CHAR(crapcbd.dtreapro,'dd/mm/yyyy') dtreapro  -- Marcelo Telles Coelho - Mouts - 25/04/2019 - RITM0050653
           FROM crapcbd
          WHERE crapcbd.cdcooper = pr_cdcooper
            AND crapcbd.nrdconta = pr_nrdconta 
@@ -6543,6 +6545,8 @@ EXCEPTION
           END LOOP;
         END IF;
     END IF;
+    --
+    pr_tab_dados_detalhe(0).dtreapro := rw_crapcbd.dtreapro; -- Marcelo Telles Coelho - Mouts - 25/04/2019 - RITM0050653
     EXCEPTION
       WHEN vr_exc_erro THEN
            IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
@@ -6667,6 +6671,7 @@ EXCEPTION
                         '<concpaga>'  || vr_tab_dados_detalhe(0).concpaga || '</concpaga>' ||
                         '<liqpagcd>'  || vr_tab_dados_detalhe(0).liqpagcd || '</liqpagcd>'  ||
                         '<liqgeral>'  || vr_tab_dados_detalhe(0).liqgeral || '</liqgeral>' ||
+                        '<dtreapro>'  || vr_tab_dados_detalhe(0).dtreapro || '</dtreapro>' || -- Marcelo Telles Coelho - Mouts - 25/04/2019 - RITM0050653
                      '</detalhe>'
       );
           

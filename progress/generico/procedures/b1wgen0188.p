@@ -3026,7 +3026,7 @@ PROCEDURE imprime_previa_demonstrativo:
             "% a.m. e multa moratoria " 
             SKIP
             "de " aux_percmult FORMAT "zz9.99" "% sobre o valor de atraso."
-            SKIP(1)
+            SKIP
             "*Liquidacao antecipada: Poderei solicitar, em qualquer  Posto  de "
             " Atendimento  de  minha "
             SKIP
@@ -3057,7 +3057,7 @@ PROCEDURE imprime_previa_demonstrativo:
             SKIP(1)
             "A senha eletronica digitada, necessaria para esta  contratacao, "
             " substitui  a  assinatura fisica."
-                      SKIP.
+            SKIP.
 
               /* P442 - Validar assinado Digitalmente */
                /* Buscar dados do contrato de emprestimo */

@@ -190,7 +190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
   --  Sistema  : Rotinas referentes ao WebService de propostas
   --  Sigla    : EMPR
   --  Autor    : James Prust Junior
-  --  Data     : Janeiro - 2016.                   Ultima atualizacao: 01/08/2018
+  --  Data     : Janeiro - 2016.                   Ultima atualizacao: 28/06/2019
   --
   -- Dados referentes ao programa:
   --
@@ -212,10 +212,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
   --                          desconto de títulos (Andrew Albuquerque (GFT))
   --             05/05/2018 - pc_retorno_analise_cartao (Paulo Silva (Supero))
   --
-  --	 	     01/08/2018 - Incluir novo campo liquidOpCredAtraso no retorno do 
+  --	 	         01/08/2018 - Incluir novo campo liquidOpCredAtraso no retorno do 
   --                          motor de credito e enviar para esteira - Diego Simas (AMcom)				
   --
-  --         14/05/2019 - Adicionado a pc_notifica_ib e suas chamadas ( AmCom - p438 )
+  --             14/05/2019 - Adicionado a pc_notifica_ib e suas chamadas ( AmCom - p438 )
+  --
+  --             28/06/2019 - Incluir dtcancel e retirar a titularidade quando proposta
+  --                          rejeitada na esteira (Lucas Ranghetti PRB0041968)
   ---------------------------------------------------------------------------  
   --
   -- 
@@ -979,6 +982,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
            AND crapepr.nrctremp = pr_nrctremp;
       vr_flgexepr PLS_INTEGER := 0;
       
+      CURSOR cr_empr_cdc (pr_cdcooper IN tbepr_cdc_emprestimo.cdcooper%TYPE
+                         ,pr_nrdconta IN tbepr_cdc_emprestimo.nrdconta%TYPE
+                         ,pr_nrctremp IN tbepr_cdc_emprestimo.nrctremp%TYPE) IS
+        SELECT rowid
+          FROM tbepr_cdc_emprestimo e
+         WHERE e.cdcooper = pr_cdcooper
+           AND e.nrdconta = pr_nrdconta
+           AND e.nrctremp = pr_nrctremp;
+      rw_empr_cdc cr_empr_cdc%rowtype;
+      
       vr_nrdrowid      ROWID;
       vr_exc_saida     EXCEPTION;
       vr_exc_erro_500  EXCEPTION;
@@ -1043,21 +1056,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       
       --> Tratar para nao validar criticas qnt for 99-expirado
       IF pr_insitapr <> 99 THEN
-        -- Proposta Finalizada
-        IF rw_crawepr.insitest = 3 THEN
-          pr_status      := 202;
-          pr_cdcritic    := 974;
-          pr_msg_detalhe := 'Parecer nao foi atualizado, a analise da proposta ja foi finalizada.';
-          RAISE vr_exc_saida;
-        END IF;
-        
-        -- 1 – Enviada para Analise, 2 – Reenviado para Analise
-        IF rw_crawepr.insitest NOT IN (1,2) THEN
-          pr_status      := 202;
-          pr_cdcritic    := 971;
-          pr_msg_detalhe := 'Parecer nao foi atualizado, proposta em situacao que nao permite esta operacao.';
-          RAISE vr_exc_saida;
-        END IF;
+
+        OPEN cr_empr_cdc(pr_cdcooper => pr_cdcooper
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrctremp => pr_nrctremp);
+        FETCH cr_empr_cdc INTO rw_empr_cdc;
+          
+        -- se for CDC novo deve ser verificado tbm a aprovacao da esteira
+        IF cr_empr_cdc%FOUND THEN
+          CLOSE cr_empr_cdc;
+          -- se tiver sido finalizada a analise e nao for aprovacao deve recusar
+          IF rw_crawepr.insitest = 3 and pr_insitapr != 1 THEN
+            -- Montar mensagem de critica
+            pr_status      := 202;
+            pr_cdcritic    := 974;
+            pr_msg_detalhe := 'Parecer nao foi atualizado, a analise da proposta ja foi finalizada.';
+            RAISE vr_exc_saida;        
+          END IF;		
+        ELSE
+          CLOSE cr_empr_cdc;
+          -- Proposta Finalizada
+          IF rw_crawepr.insitest = 3 THEN
+            pr_status      := 202;
+            pr_cdcritic    := 974;
+            pr_msg_detalhe := 'Parecer nao foi atualizado, a analise da proposta ja foi finalizada.';
+            RAISE vr_exc_saida;
+          END IF;
+          
+          -- 1 – Enviada para Analise, 2 – Reenviado para Analise
+          IF rw_crawepr.insitest NOT IN (1,2) THEN
+            pr_status      := 202;
+            pr_cdcritic    := 971;
+            pr_msg_detalhe := 'Parecer nao foi atualizado, proposta em situacao que nao permite esta operacao.';
+            RAISE vr_exc_saida;
+          END IF;
+        END IF;        
       END IF; --> Fim IF pr_insitapr <> 99 THEN
       
       -- Proposta Expirado
@@ -2383,7 +2416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      Sistema : Rotinas referentes ao WebService
      Sigla   : WEBS
      Autor   : Paulo Silva (Supero)
-     Data    : Maio/2018.                    Ultima atualizacao: //
+     Data    : Maio/2018.                    Ultima atualizacao: 28/06/2019
 
      Dados referentes ao programa:
 
@@ -2397,6 +2430,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                  05/06/2019 - Implementado LOG caso não encontra o registro de alteração de limite de cartão
                               e ajustado cursor cr_limatu. 
                               Alcemir Jr. (INC0012482).
+                              
+                 28/06/2019 - Incluir dtcancel e retirar a titularidade quando proposta
+                              rejeitada na esteira (Lucas Ranghetti PRB0041968)
      ..............................................................................*/
     DECLARE
       --Busca dados da Proposta
@@ -2871,6 +2907,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                  SET crawcrd.dtaprova = pr_rw_crapdat.dtmvtolt
                     ,crawcrd.insitdec = 5 -- Rejeitada
                     ,crawcrd.insitcrd = 6 -- Cancelada
+                    ,crawcrd.dtcancel = pr_rw_crapdat.dtmvtolt
+                    ,crawcrd.flgprcrd = 0
                WHERE crawcrd.cdcooper = pr_cdcooper
                  AND crawcrd.nrdconta = pr_nrdconta
                  AND crawcrd.nrctrcrd = pr_nrctrcrd;
@@ -3405,7 +3443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      Sistema : Rotinas referentes ao WebService
      Sigla   : WEBS
      Autor   : James Prust Junior
-     Data    : Abril/16.                    Ultima atualizacao:
+     Data    : Abril/16.                    Ultima atualizacao: 26/06/2019
 
      Dados referentes ao programa:
 
@@ -3413,9 +3451,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 
      Objetivo  : Gravar mensagem de erro no LOG
 
-     Observacao: -----
+     Observacao: 
      
-     Alteracoes:      
+     Alteracoes: 26/06/2019 - Restringir o tamanho da mensagem de log em 3850 caracteres,
+                              isso porque dentro do btch0001.pc_gera_log_batch são concatenados
+                              mais alguns caracteres (PRB0041610 - AJFink)     
+
      ..............................................................................*/
     DECLARE
       vr_des_log        VARCHAR2(4000);      
@@ -3426,11 +3467,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                           ,pr_cdcooper => 3
                                           ,pr_nmsubdir => 'log/webservices');      
       -- Mensagem de LOG
-      vr_des_log  := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
+      vr_des_log  := trim(substr(trim(TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
                      ' - ' || 
                      'Requisicao: ' || pr_dsrequis  || 
                      ' - ' || 
-                     'Resposta: ' || pr_dsmessag;
+                                      'Resposta: ' || pr_dsmessag),1,3850)); --PRB0041610
                      
       -- Criacao do arquivo
       btch0001.pc_gera_log_batch(pr_cdcooper     => 3
@@ -3829,6 +3870,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       vr_nrperger := fn_converte_null(pr_nrperger);
       vr_desscore := fn_converte_null(pr_desscore);
       vr_datscore := fn_converte_null(pr_datscore);
+      vr_idfluata := pr_idfluata; --PJ637
       
 			-- Buscar o tipo de pessoa
 			OPEN cr_crapass(pr_cdcooper => rw_crawepr.cdcooper
@@ -4556,6 +4598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      vr_nrperger := fn_converte_null(pr_nrperger);
      vr_desscore := fn_converte_null(pr_desscore);
      vr_datscore := fn_converte_null(pr_datscore);
+     vr_idfluata := pr_idfluata; -- PJ637
         
      -- Buscar o tipo de pessoa
      open cr_crapass(pr_cdcooper => rw_crawlim.cdcooper
@@ -4631,6 +4674,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                   ,pr_nrgarope    => gene0002.fn_char_para_number(vr_nrgarope)    --> Garantia da Analise 
                   ,pr_nrparlvr    => gene0002.fn_char_para_number(vr_nrparlvr)    --> Patrimônio Pessoal Livre da Analise 
                   ,pr_nrperger    => gene0002.fn_char_para_number(vr_nrperger)    --> Percepção Geral Empresa na Analise 
+                  ,pr_idfluata    => vr_idfluata -- PJ637
                   ,pr_status      => vr_status
                   ,pr_cdcritic    => vr_cdcritic
                   ,pr_dscritic    => vr_dscritic

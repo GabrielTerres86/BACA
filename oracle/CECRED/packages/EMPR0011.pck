@@ -4196,7 +4196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Jaison Fernando
-       Data    : Abril/2017                         Ultima atualizacao: 08/01/2019
+       Data    : Abril/2017                         Ultima atualizacao: 25/06/2019
 
        Dados referentes ao programa:
 
@@ -4206,6 +4206,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
        Alteracoes: 27/12/2018 - PJ298.2 Criado campo vlprecar e alterando gravacao do campo vlpreemp (Rafael Faria - Supero)
 			             08/01/2018 - PRJ298.2.2 - Ajustar e validar rotinas respeitando aplicação da varição do indexador - Nagasava (Supero)
+                   25/06/2019 - PRJ298.3 - Incluir trava para o produto Pós-Fixado no botão atualizar data como ocorre atualmente para o Pré-Fixado (Nagasava - Supero)
     ............................................................................. */
 
     DECLARE
@@ -4286,7 +4287,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       rw_crapass cr_crapass%ROWTYPE;
 	        
     BEGIN
-
+			-- Pos-Fixado 2.3
+			pc_valida_dados_pos_fixado(pr_cdcooper => pr_cdcooper -- IN
+																,pr_dtmvtolt => pr_dtcalcul -- IN
+																,pr_cdlcremp => pr_cdlcremp -- IN
+																,pr_vlemprst => pr_vlemprst -- IN
+																,pr_qtparepr => pr_qtparepr -- IN
+																,pr_dtlibera => rw_crawepr.dtlibera -- IN
+																,pr_dtdpagto => pr_dtdpagto -- IN
+																,pr_dtcarenc => pr_dtcarenc -- IN
+																,pr_flgpagto => 0 -- IN
+																,pr_cdcritic => vr_cdcritic -- OUT
+																,pr_dscritic => vr_dscritic -- OUT
+																);
+			-- Se retornou erro
+      IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+			--
       BEGIN
         DELETE
           FROM crappep
@@ -7440,7 +7458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Jaison Fernando
-       Data    : Julho/2017                         Ultima atualizacao: 
+       Data    : Julho/2017                         Ultima atualizacao: 11/06/2019
 
        Dados referentes ao programa:
 
@@ -7448,7 +7466,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
        Objetivo  : Procedure para efetuar a validacao dos pagamentos.
 
-       Alteracoes: 
+       Alteracoes: 11/06/2019 - Não permitir liquidar contrato Pós-Fixado no mesmo dia em que foi feita a liberação
+                                Retirada condição de verificação de refinanciamento P_298.3 (Darlei / Supero)
+    
     ............................................................................. */
 
     DECLARE
@@ -7479,18 +7499,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       END IF;
 
       -- Se data atual for a mesma da liberacao
-      -- E se for Refinanciamento
-      IF pr_rw_crapdat.dtmvtolt = pr_dtlibera  AND
-        (NVL(pr_nrctrliq_1, 0) > 0  OR
-         NVL(pr_nrctrliq_2, 0) > 0  OR
-         NVL(pr_nrctrliq_3, 0) > 0  OR
-         NVL(pr_nrctrliq_4, 0) > 0  OR
-         NVL(pr_nrctrliq_5, 0) > 0  OR
-         NVL(pr_nrctrliq_6, 0) > 0  OR
-         NVL(pr_nrctrliq_7, 0) > 0  OR
-         NVL(pr_nrctrliq_8, 0) > 0  OR
-         NVL(pr_nrctrliq_9, 0) > 0  OR
-         NVL(pr_nrctrliq_10,0) > 0) THEN
+      -- E se for Refinanciamento -- Retirada esta condição (Darlei / Supero)
+      -- Não permitir liquidar contrato Pós-Fixado no mesmo dia em que foi feita a liberação
+      IF pr_rw_crapdat.dtmvtolt = pr_dtlibera THEN
          vr_dscritic := 'Atencao! contrato liberado nesta data. '
                      || 'Liquidacao/antecipacao permitida a partir de '
                      ||  TO_CHAR(pr_dtlibera + 1,'dd/mm/YYYY') || '.';

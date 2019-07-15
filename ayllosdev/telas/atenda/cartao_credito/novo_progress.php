@@ -27,7 +27,9 @@
  * 015: [09/10/2015] James					  : Desenvolvimento do projeto 126.
  * 016: [21/06/2016] Douglas         (CECRED) : Removido aspas simples dos parametros do campo Titularidade (Chamado 457339)
  * 017: [18/03/2019] Anderson-Alan   (SUPERO) : Implementado tipo de envio do cartão - PJ429
- * 018: [24/05/2019] Alcemir Jr.     (Ailos)  : Ajuste ao sair do campo CPF. (PRB0041678) 
+ * 018: [24/05/2019] Alcemir Jr.     (Ailos)  : Ajuste ao sair do campo CPF. (PRB0041678)
+
+ * 019: [26/06/2019] Lucas Ranghetti (AILOS)  : Na funcao verificaEfetuaGravacao devemos passar o 'I' para poder zerar o nrctrcrd quando for inclusao - PRB0041966. 
  */
 
 	session_start();
@@ -417,7 +419,7 @@
 			<?php if ($coop_envia_cartao && !$pa_envia_cartao) { ?>
 			<input type="button" class="botao botaoDesativado" id="btnsaveRequest" onclick="return false;" value="Prosseguir" />
 			<?php } else { ?>
-			<input type="button" class="botao" id="btnsaveRequest" onclick="$('#nmtitcrd').click(); $('#nmextttl').click(); verificaEfetuaGravacao();return false;" value="Prosseguir" />
+			<input type="button" class="botao" id="btnsaveRequest" onclick="$('#nmtitcrd').click(); $('#nmextttl').click(); verificaEfetuaGravacao('I');return false;" value="Prosseguir" />
 			<?php } ?>
 			<a style="display:none"  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
 				cdagenci="<?php echo $glbvars['cdpactra']; ?>" 
@@ -452,7 +454,7 @@
 	function prosseguir(){
 		$('#nmtitcrd').click(); 
 		$('#nmextttl').click(); 
-		verificaEfetuaGravacao();
+		verificaEfetuaGravacao('I');
 		return false;
 
 	}
@@ -460,7 +462,7 @@
 		<?if($filter == "BB"){ ?>
 		$('#nmtitcrd').click(); 
 		$('#nmextttl').click(); 
-		verificaEfetuaGravacao();
+		verificaEfetuaGravacao('I');
 		return false;
 		<?
 			}else{ 
@@ -580,7 +582,7 @@
 								var ddDebit = '<? echo strlen($dadosTitular['ddebimul']) > 0 ? $dadosTitular['ddebimul'] : '' ; ?>';
 								
 								$('#dddebito').append($("<option></option>").attr("value",ddDebit).text(ddDebit)); 
-								$("#dddebito").attr("disabled",true);								
+								$("#dddebito").attr("disabled",true);
 								
 								$("#vllimpro").attr("disabled",true);
 								$("#vllimpro").val("<? echo number_format( $dadosTitular['vllimmul'],2,",",".");?>");
@@ -603,7 +605,7 @@
 							var ddDebit = '<? echo strlen($dadosTitular['ddebiess']) > 0 ? $dadosTitular['ddebiess'] : '' ; ?>';
 							
 							$('#dddebito').append($("<option></option>").attr("value",ddDebit).text(ddDebit)); 
-							$("#dddebito").attr("disabled",true);							
+							$("#dddebito").attr("disabled",true);
 							
 							$("#vllimpro").attr("disabled",true);
 							desativa("vllimpro");

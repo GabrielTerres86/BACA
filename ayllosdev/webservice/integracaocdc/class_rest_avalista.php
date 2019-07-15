@@ -53,16 +53,17 @@ class RestCDC extends RestServerJson{
         $aRetorno['msg_detalhe'] = $mensagemDetalhe;
 		
 		// Atualizar acionamento do serviço
-		$xml  = "<Root>";
-		$xml .= " <Dados>";
-		$xml .= "	<cdstatus_http>".$status."</cdstatus_http>";
-		$xml .= "	<flgreenvia>0</flgreenvia>";
-		$xml .= "	<idacionamento>".$numeroTransacao."</idacionamento>";
-		$xml .= "	<dsresposta_requisicao>".json_encode($aRetorno)."</dsresposta_requisicao>";
-		$xml .= " </Dados>";
-		$xml .= "</Root>";
-		$sXmlResult = mensageria($xml, "WEBS0003", "ATUALIZA_ACIONAMENTO", 0, 0, 0, 5, 0, "</Root>");		
-		
+		IF ($status != '200') {
+			$xml  = "<Root>";
+			$xml .= " <Dados>";
+			$xml .= "	<cdstatus_http>".$status."</cdstatus_http>";
+			$xml .= "	<flgreenvia>0</flgreenvia>";
+			$xml .= "	<idacionamento>".$numeroTransacao."</idacionamento>";
+			$xml .= "	<dsresposta_requisicao>".json_encode($aRetorno)."</dsresposta_requisicao>";
+			$xml .= " </Dados>";
+			$xml .= "</Root>";
+			$sXmlResult = mensageria($xml, "WEBS0003", "ATUALIZA_ACIONAMENTO", 0, 0, 0, 5, 0, "</Root>");		
+		}
         // Setando o codigo do status no Header da resposta
         header("Cache-Control: no-cache, must-revalidate");
 		header("Expires: 0");
@@ -325,11 +326,37 @@ class RestCDC extends RestServerJson{
 				}
 			}
 			
-			// Buscar retorno do JSON
-            $dsjsonan_xml  = $xmlObjeto->roottag->tags[0]->attributes['DSJSONAN'];
+			$nrctaav1 = $xmlObjeto->roottag->tags[0]->attributes['NRCTAAV1'];
+			$nrctaav2 = $xmlObjeto->roottag->tags[0]->attributes['NRCTAAV2'];
+
+			// Monta retorno da proposta a partir do motor de crédito
+			$xml  = "<Root>";
+			$xml .= " <Dados>";
+			$xml .= "	<cdcooper>".$oDados->proponente->cooperativaAssociadoCodigo."</cdcooper>";
+			$xml .= "	<cdagenci>1</cdagenci>";
+			$xml .= "	<nrdconta>".$oDados->proponente->contaAssociadoNumero.$oDados->proponente->contaAssociadoDV."</nrdconta>";
+			$xml .= "	<nrctremp>".$nrctremp."</nrctremp>";
+			$xml .= "   <nrctaav1>".$nrctaav1."</nrctaav1>";
+			$xml .= "   <nrctaav2>".$nrctaav2."</nrctaav2>";
+			$xml .= "   <inresapr>".$reiniciaFluxo."</inresapr>";
+			$xml .= "	<idacionamento>".$idacionamento."</idacionamento>";
+			$xml .= " </Dados>";
+			$xml .= "</Root>";
+			$sXmlResult = mensageria($xml, "EMPR0012", "RETORNA_PROPOSTA", 0, 0, 0, 5, 0, "</Root>");
+			$oRetorno  = simplexml_load_string($sXmlResult);
 			
+			// Vamos verificar se veio retorno de erro
+			if (isset($oRetorno->Erro->Registro->dscritic)){
+				$dscritic = $oRetorno->Erro->Registro->dscritic;
+				if (strpos($dscritic, 'Erro geral') !== false){
+					$this->processaRetornoErro(500,'Ocorreu um erro interno no sistema.',$dscritic,$idacionamento);
+				}else{
+					$this->processaRetornoErro(400,$dscritic,'',$idacionamento);
+				}
+				return false;
+			}
 			// Repassar retorno do motor para variável
-			$dsjsonan = json_decode($dsjsonan_xml, TRUE);
+			$dsjsonan = json_decode($oRetorno->Dados->dsjsonan, TRUE);
 			
             //Retorna a resposta para o servico
             $this->processaRetornoSucesso(200,

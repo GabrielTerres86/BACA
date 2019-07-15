@@ -52,6 +52,8 @@ DEF VAR aux_dsvended AS CHAR                                           NO-UNDO.
 DEF VAR aux_inresapr AS INTE                                           NO-UNDO.
 DEF VAR aux_dsjsonan AS LONGCHAR                                       NO-UNDO.
 DEF VAR aux_flgdocje AS LOGI                                           NO-UNDO.
+DEF VAR aux_nrctaav1 AS INTE                                           NO-UNDO.
+DEF VAR aux_nrctaav2 AS INTE                                           NO-UNDO.
     
 
 
@@ -228,6 +230,8 @@ PROCEDURE integra_proposta:
                                   INPUT aux_flgdocje,
                                   
                                  INPUT-OUTPUT aux_nrctremp,
+                                 OUTPUT aux_nrctaav1,
+                                 OUTPUT aux_nrctaav2,
                                  OUTPUT aux_dsjsonan,
                                  OUTPUT TABLE tt-erro) NO-ERROR.
        
@@ -256,6 +260,8 @@ PROCEDURE integra_proposta:
         
             RUN piXmlNew.
             RUN piXmlAtributo (INPUT "nrctremp", INPUT aux_nrctremp).
+            RUN piXmlAtributo (INPUT "nrctaav1", INPUT aux_nrctaav1).
+            RUN piXmlAtributo (INPUT "nrctaav2", INPUT aux_nrctaav2).
             RUN piXmlAtributo (INPUT "dsjsonan", INPUT aux_dsjsonan).
             RUN piXmlSave.
         END.    
@@ -277,6 +283,8 @@ PROCEDURE integra_dados_avalista:
                                      INPUT aux_dsdopcao,
                                      INPUT aux_inresapr,
                                      INPUT TABLE tt-avalista,
+                                    OUTPUT aux_nrctaav1,
+                                    OUTPUT aux_nrctaav2,
                                     OUTPUT aux_dsjsonan, 
                                     OUTPUT TABLE tt-erro) NO-ERROR.
 
@@ -302,6 +310,8 @@ PROCEDURE integra_dados_avalista:
     ELSE
         DO:
             RUN piXmlNew.
+            RUN piXmlAtributo (INPUT "nrctaav1", INPUT aux_nrctaav1).
+            RUN piXmlAtributo (INPUT "nrctaav2", INPUT aux_nrctaav2).
             RUN piXmlAtributo (INPUT "dsjsonan", INPUT aux_dsjsonan).
             RUN piXmlSave.
         END.    

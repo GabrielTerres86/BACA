@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Maio/2000.                      Ultima atualizacao: 07/11/2018
+   Data    : Maio/2000.                      Ultima atualizacao: 10/07/2019
 
    Dados referentes ao programa:
 
@@ -128,6 +128,10 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                07/11/2018 - Caso o cheque for da cooperativa, efetua a devolução de cheque automática, na conta do
                             depositante, conforme alineas - Projeto Correcao Desconto do Cheque
                             (Andre - Mouts)                                                          
+                            
+               10/07/2019 - P565.1-RF20 - Diminuir o valor do cheque devolvido por contra ordem 
+                            do total bloqueado(CRAPDPB)para que não processar em duplicidade na crps002
+                            (Fernanda Kelli de Oliveira - AMCom)                                                                      
      ............................................................................. */
 
      DECLARE
@@ -416,6 +420,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
        vr_tot_vlchqfpr NUMBER:= 0;
        vr_tot_vlchcomp NUMBER:= 0;
        vr_tot_vlcontra NUMBER:= 0;
+       vr_tot_vlcontra_cop NUMBER:= 0;
        vr_tot_vldescon NUMBER:= 0;
        vr_cop_vlchqcop NUMBER:= 0;
        vr_cop_vlchqban NUMBER:= 0;
@@ -979,6 +984,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
              vr_tot_vlresgat:= 0;
              vr_tot_qtcontra:= 0;
              vr_tot_vlcontra:= 0;
+             vr_tot_vlcontra_cop:= 0;
              vr_tot_qtchqcrh:= 0;
              vr_tot_vlchqcrh:= 0;
              vr_tot_qtchqmai:= 0;
@@ -1202,6 +1208,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
              IF rw_crapcst.inchqcop = 1 THEN
                --Incrementa Valor Cheque
                 vr_tot_vlchqcrh:= Nvl(vr_tot_vlchqcrh,0) + rw_crapcst.vlcheque;
+                vr_tot_vlcontra_cop:= Nvl(vr_tot_vlcontra_cop,0) + rw_crapcst.vlcheque; --P565.1-RF20
                 
                 pc_tabela_cheqdev(pr_cdcooper, 
                                   rw_crapcst.cdbanchq, 
@@ -1512,7 +1519,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                    ,rw_craplcm.cdagenci
                    ,rw_craplcm.cdbccxlt
                    ,rw_craplcm.nrdolote
-                   ,rw_craplcm.vllanmto
+                   ,rw_craplcm.vllanmto - vr_tot_vlcontra_cop --RF20 Retirar do crapdpb porque com o lcm hist. 2973 na crps290 já retira o vlr do bloqueado
                    ,1
                    ,pr_cdcooper);
                  EXCEPTION

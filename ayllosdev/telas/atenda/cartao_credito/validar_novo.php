@@ -18,6 +18,7 @@
  * 008: [29/06/2016] Kelvin      (CECRED) : Ajuste para que o campo "Plastico da Empresa" seja obrigatório. SD 476461
  * 009: [09/12/2016] Kelvin		 (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. 										  
  * 010: [29/03/2018] Lombardi	 (CECRED) : Ajuste para chamar a rotina de senha do coordenador. PRJ366.
+ * 011: [06/05/2019] Yuri		 (Mouts)  : Retirar consistencia limite categoria quando cartao adicional RITM0011921
  */
 ?>
 
@@ -130,10 +131,10 @@
 			    $vllimmin = number_format(getByTagName($xmlDadosLimite->tags, "VR_VLLIMITE_MINIMO"), 2, '.', '');
 				$vllimmax = number_format(getByTagName($xmlDadosLimite->tags, "VR_VLLIMITE_MAXIMO"), 2, '.', '');
 			}
-			
-			if(str_replace(',','.',$vllimpro) > $vllimmax){
+			// RITM0011921
+			/*if(str_replace(',','.',$vllimpro) > $vllimmax){
 					exibirErro('error',utf8ToHtml('Não é possível solicitar um valor de limite acima do limite da categoria.'),'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
-			}
+			}*/
 			if(str_replace(',','.',$vllimpro) < $vllimmin){
 					exibirErro('error',utf8ToHtml('Valor do limite solicitado abaixo do limite mínimo.'),'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
 		

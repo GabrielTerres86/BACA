@@ -430,6 +430,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 01/03/2019 - Se o banco ainda não estiver operante no SPB (Data de inicio da operação), 
                              deve bloquear o envio da TED.
                              (Jonata - Mouts INC0031899).
+                             
+                19/06/2019 - Alteração na "pc_enviar_ted": Inclusão de tratamento para transferir da conta Transitória 
+                             para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
+                             P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom.                             
+
+                25/06/2019 - Tratamento para não estourar o limite de crédito quando houver mais de um TED de uma mesma
+                             conta encaminhada no mesmo momento.
+                             (Jose Dill - Mout PRB0041934)
          
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -1357,7 +1365,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 21/06/2019
+      Data     : Junho/2015.                   Ultima atualizacao: 10/07/2019
 
       Dados referentes ao programa:
 
@@ -1415,7 +1423,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
                   05/06/2019 - Tratar INC0011406 relacionado ao horario de aprovacao da TED (Diego).
 
+                  19/06/2019 - Alteração na "pc_enviar_ted": Inclusão de tratamento para transferir da conta Transitória 
+                               para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
+                               P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom.
+
                   21/06/2019 - Tratar INC0015554 - solucao de contorno (Diego).
+
+                  10/07/2019 - Tratar INC0019779 relacionado a duplicidade do número de controle IF (Diego).
 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
@@ -1604,6 +1618,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 	vr_fliseope   INTEGER;
 
     vr_idanalise_fraude tbgen_analise_fraude.idanalise_fraude%TYPE;
+
+    vr_incrineg INTEGER;
+    vr_tab_retorno LANC0001.typ_reg_retorno;
 
     ---------------- SUB-ROTINAS ------------------
     -- Procedimento para inserir o lote e não deixar tabela lockada
@@ -1818,10 +1835,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     --
     IF  vr_aux_exisdoc > 0 THEN
         For vr_cont IN 1..5 Loop
-          Select Max(tvl.nrdocmto) + 1 into pr_nrdocmto 
-          From Craptvl tvl
-          Where tvl.cdcooper = rw_crapcop.cdcooper
-          and   tvl.tpdoctrf = 3;
+          
+        
+          pr_nrdocmto := SSPB0001.fn_nrdocmto_nrctrlif;
+          
           -- Validar se existe
           vr_aux_exisdoc := 0;
           Select count(*) into vr_aux_exisdoc 
@@ -2219,10 +2236,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
               END IF;    
            ELSE 
               -- Busca novo numero de documento
-              SELECT MAX(tvl.nrdocmto) + 1 INTO pr_nrdocmto 
-              FROM craptvl tvl
-              WHERE tvl.cdcooper = rw_crapcop.cdcooper
-                AND tvl.tpdoctrf = 3;
+               pr_nrdocmto := SSPB0001.fn_nrdocmto_nrctrlif;
           
               CONTINUE; -- Tenta inserir novamente
            END IF;
@@ -2231,7 +2245,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         vr_dscritic := 'Não foi possivel inserir transferencia: '||SQLERRM;
         RAISE vr_exc_erro;
     END;
-
+       
     END LOOP;
 
     -- Indicar que a transação não é uma transferencia de salário(TEC)   (Renato - Supero - P485)
@@ -2367,6 +2381,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     END IF;
     CLOSE cr_craplcm;
 
+    /*PRB0041934 - Incluída a chamada da rotina que verifica saldo antes da inclusao do lançamento, devido
+      ao problema do sistema permitir a inclusão de dois TEDs de uma mesma conta ao mesmo tempo, sendo que a 
+      soma dos valores de TEDs deveria estourar o saldo, o que nao estava ocorrendo em algumas situações.  */
+    --Limpar tabela saldo e erro
+    vr_tab_saldo.DELETE;
+    vr_tab_erro.DELETE;
+    /** Verifica se possui saldo para fazer a operacao **/
+    EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => rw_crapcop.cdcooper
+                                ,pr_rw_crapdat => rw_crapdat
+                                ,pr_cdagenci   => pr_cdageope
+                                ,pr_nrdcaixa   => pr_nrcxaope
+                                ,pr_cdoperad   => pr_cdoperad
+                                ,pr_nrdconta   => pr_nrdconta
+                                ,pr_vllimcre   => rw_crapass.vllimcre
+                                ,pr_tipo_busca => 'A' --> tipo de busca(A-dtmvtoan)
+                                ,pr_dtrefere   => rw_crapdat.dtmvtolt
+                                ,pr_flgcrass   => FALSE
+                                ,pr_des_reto   => vr_dscritic
+                                ,pr_tab_sald   => vr_tab_saldo
+                                ,pr_tab_erro   => vr_tab_erro);
+
+    --Se ocorreu erro
+    IF vr_dscritic = 'NOK' THEN
+      -- Tenta buscar o erro no vetor de erro
+      IF vr_tab_erro.COUNT > 0 THEN
+        vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||pr_nrdconta;
+      ELSE
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informacao na pr_tab_erro, Conta: '||pr_nrdconta;
+      END IF;
+
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+
+    --Verificar o saldo retornado
+    IF vr_tab_saldo.Count = 0 THEN
+      --Montar mensagem erro
+      vr_cdcritic:= 0;
+      vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    ELSE
+      --Total disponivel recebe valor disponivel + limite credito
+      vr_vlsldisp:= nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) + nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
+      -- log item
+      /*Neste momento considera o valor do TED mais o valor da Tarifa em relação ao saldo
+        disponível (antecipa uma validação), pois o lançamento ainda nao foi realizado na craplcm */      
+      IF (pr_vldocmto + nvl(vr_vllantar,0)) > vr_vlsldisp THEN
+        --Montar mensagem erro
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Nao ha saldo suficiente para a operacao.';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      END IF;
+    END IF;         
+    /*FIM PRB0041934*/
+
     vr_hrtransa := gene0002.fn_busca_time;
     BEGIN
       vr_nrseqdig := fn_sequence('CRAPLOT'
@@ -2419,6 +2492,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         vr_dscritic := 'Não foi possivel gerar lcm:'||SQLERRM;
         RAISE vr_exc_erro;
     END;
+    --TRANSFERENCIA BLOQUEIO JUDICIAL
+    IF rw_craphis.cdhistor = 1406 THEN
+      -- Se não há saldo suficiente na conta transitória
+      IF PREJ0003.fn_sld_cta_prj(pr_cdcooper => rw_crapcop.cdcooper, pr_nrdconta => pr_nrdconta) < pr_vldocmto THEN 
+         vr_dscritic:= 'Não foi possível gerar lcm: conta corrente em prejuízo sem saldo suficiente no Bloqueados Prejuízo.';
+         RAISE vr_exc_erro;
+      -- Se há saldo suficiente na conta transitória   
+      ELSE
+        vr_dscritic:= NULL;
+        vr_cdcritic:= NULL;
+        --
+        --Efetua a Transferência da Transitória para a Conta Corrente    
+        PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => rw_crapcop.cdcooper   
+                                      , pr_nrdconta => pr_nrdconta                                    
+                                      , pr_vllanmto => pr_vldocmto
+                                      , pr_dtmvtolt => rw_crapdat.dtmvtocd                                                                                                          
+                                      , pr_cdcritic => vr_cdcritic
+                                      , pr_dscritic => vr_dscritic);                                                       
+        --
+        IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+           vr_dscritic:= 'Não foi possível gerar lcm: erro ao transferir o valor do Bloqueados Prejuízo para a Conta Corrente.';
+           RAISE vr_exc_erro;
+        END IF;
+      END IF;   
+    END IF; 
 
     IF vr_vllantar <> 0 THEN
 		  /* Verificar isenção ou não de tarifa */

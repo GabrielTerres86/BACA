@@ -110,16 +110,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANN0001 IS
     END IF;
     CLOSE cr_crapass;
 	
-    -- Verifica se o usuário tem crédito pre-aprovado
-    IF empr0002.fn_flg_preapv_liberado(pr_cdcooper       => pr_cdcooper
-                                      ,pr_tppessoa       => vr_tipo_pessoa
-                                      ,pr_nrcpfcnpj_base => vr_nrcpfcnpj_base) = 1 
-    AND empr0002.fn_idcarga_pre_aprovado(pr_cdcooper        => pr_cdcooper
-                                        ,pr_tppessoa        => vr_tipo_pessoa
-                                        ,pr_nrcpf_cnpj_base => vr_nrcpfcnpj_base) > 0 THEN
+    -- P442 Verifica se o usuário tem crédito pre-aprovado
+     IF empr0002.fn_preapv_com_saldo(pr_cdcooper => pr_cdcooper
+                               , pr_nrdconta => pr_nrdconta
+                               , pr_idseqttl => pr_idseqttl
+                               , pr_nrcpfope => NULL
+                               , pr_idorigem => NULL
+                               , pr_cdagenci => NULL
+                               , pr_nrdcaixa => NULL
+                               , pr_nmdatela => NULL) = 1 THEN
       -- Há pre-aprovado
       vr_pre_aprovado := 1;
-    END IF;   
+    END IF;
+    
     -- Criar documento XML
     dbms_lob.createtemporary(pr_xml_ret, TRUE);
     dbms_lob.open(pr_xml_ret, dbms_lob.lob_readwrite);

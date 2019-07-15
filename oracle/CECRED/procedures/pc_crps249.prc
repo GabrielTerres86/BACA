@@ -675,7 +675,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                06/06/2019 - Ajuste nos cursores cr_craptdb8 e cr_craptdb_age para subtrair do saldo devedor o valor pago de mora do titulo, para 
                             abater no saldo das apropriações de mora pelo cursor cr_lancboracum (Paulo Penteado GFT) 
 
-               14/06/2019 - P450 - Remocao tratamento historicos 2726, 2728 e 2730 (Guilherme/AMcom)
+               14/06/2019 - P450 - Remocao tratamento historicos 2726, 2728 e 2730 (Guilherme/AMcom)   
+
+               05/07/2019 - Ajuste conta SUA REMESSA covenio Desconto de Titulo (Daniel)
 
 ............................................................................ */
 
@@ -11097,7 +11099,7 @@ BEGIN
                      TRIM(vr_dtmvtolt_yymmdd)||','||
                      TRIM(to_char(vr_dtmvtolt,'ddmmyy'))||','||
                      TRIM(to_char(vr_tab_agencia2(rw_craptit4.cdagenci).vr_cdcxaage, 'fm0000'))||','||
-                     '4954,'|| -- Conta pendência da singular
+                     '4957,'|| -- Conta pendência da singular
                      TRIM(to_char(vr_vltitulo, '99999999999990.00'))||','||
                      '5210,'||
                      '"(crps249) SUA REMESSA - CONVENIO DESCONTO DE TITULO ' || rw_craptit4.nrconven || '"';
@@ -12465,7 +12467,7 @@ BEGIN
                      trim(vr_dtmvtolt_yymmdd)||','||
                      trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
                      '1455,'|| -- Cecred COMPE (D)
-                     '4954,'|| -- Conta pendência da singular (C)
+                     '4957,'|| -- Conta pendência da singular (C)
                      trim(to_char(rw_crapret3.vlrpagto, '99999999999990.00'))||','||
                      '5210,'||
                      '"(crps249) SUA REMESSA – CONVENIO DESCONTO DE TITULO ' || to_char(rw_crapret3.nrcnvcob) || '"';
