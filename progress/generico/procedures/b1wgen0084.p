@@ -77,7 +77,7 @@
                              procedure de validacao de novo calculo
                              (valida_novo_calculo). (GATI - Diego B.)
 
-                22/09/2011 - Alteração da procedure verifica_alcada para
+                22/09/2011 - Alteraçao da procedure verifica_alcada para
                              verifica_alcada_estorno. (GATI - Vitor)
 
                 04/10/2011 - Foram retiradas as procedures
@@ -110,7 +110,7 @@
 
                 25/01/2012 - Código desnecessario busca dados efetivacao proposta (Oscar)
 
-                10/02/2012 - Correção na procedure 'valida_dados_efetivacao_proposta'
+                10/02/2012 - Correçao na procedure 'valida_dados_efetivacao_proposta'
                              para gerar crítica 36 como limitador de acesso. (Lucas)
 
                 23/02/2012 - Implementado novo parametro para a rotina
@@ -129,7 +129,7 @@
 
                 17/04/2012 - Retirada a procedure imprime extrato (Tiago).
 
-                11/05/2012 - Adicionar a função fnBuscaDataDoUltimoDiaUtilMes (Oscar).
+                11/05/2012 - Adicionar a funçao fnBuscaDataDoUltimoDiaUtilMes (Oscar).
 
                 29/11/2012 - Tratar campo vlsdvsji (Gabriel).
 
@@ -318,8 +318,8 @@
               27/06/2018 - P450 - Calculo e gravacao Risco Refin no emprestimo
                            (Guilherme/AMcom)
                            
-              16/08/2018 - Qualificar a Operacao no ato da efetivacao da proposta
-                           PJ 450 - Diego Simas (AMcom)
+              16/08/2018 - Qualificar a Operacao no ato da efetivacao da
+                           proposta PJ 450 - Diego Simas (AMcom)
                            
               31/08/2018 - P438 - Efetivaçao seguro prestamista -- Paulo Martins -- Mouts         
 
@@ -329,6 +329,13 @@
                            
 			  03/01/2019 - Ajuste na gravação do IOF do emprestimo (INC0029419) Daniel
 			  
+              19/12/2018 - P298.2 - Inclusão dos campos tpemprst e vlprecar no retorno da procedure busca_dados_efetivacao_proposta
+                           (Andre Clemer - Supero)
+
+              27/12/2018 - PJ298.2 - Alterado gravacao do campo vlpreemp para o POS (Rafael Faria - Supero)
+			  
+              12/02/2019 - P442 - PreAprovado nova estrutura (Marcos-Envolti)     
+
               18/03/2019 - P437 - Consignado - incluido parametro valor IOF na chamada da rotina 
                                   pc_calculo_cet_emprestimos - Josiane Stiehler AMcom
 								  
@@ -337,6 +344,10 @@
           
               19/03/2019 - P437 - Consignado - incluido parametro valor parcela (par_vlpreemp) na rotina  
 			                      grava_parcelas_proposta - Fernanda Kelli de oliveira (AMcom)		  
+              
+              08/05/2019 - P450 - Ajuste na qualificacao da operacao quando
+                           se tratar de uma Cessao de Cartao (Guilherme/AMcom)
+
               03/06/2019 - P437 - Consignado - Na grava_efetivacao_proposta, para o consignado enviar o contrato para FIS Brasil,
                                   ou seja gravar o evento SOA chamando a rotina pc_grava_evento_prop_consig. (Josiane Stiehler -AMcom)
                                   
@@ -353,6 +364,7 @@
 { sistema/generico/includes/b1wgen0002tt.i }
 { sistema/generico/includes/b1wgen0027tt.i }
 { sistema/generico/includes/b1wgen0084att.i }
+{ sistema/generico/includes/b1wgen0188tt.i  }
 { sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_cdcritic AS INTE                                        NO-UNDO.
@@ -489,12 +501,12 @@ FUNCTION fnBuscaDataDoUltimoDiaUtilMes RETURN DATE
 
     DEF VAR aux_dtcalcul AS DATE   NO-UNDO.
 
-    /* Calcular o ultimo dia do mês */
+    /* Calcular o ultimo dia do mes */
     ASSIGN aux_dtcalcul =
           ((DATE(MONTH(par_dtrefmes),28,YEAR(par_dtrefmes)) + 4) -
             DAY(DATE(MONTH(par_dtrefmes),28,YEAR(par_dtrefmes)) + 4)).
 
-    /* Calcular o ultimo dia util do mês */
+    /* Calcular o ultimo dia util do mes */
     DO WHILE TRUE:
        IF   CAN-DO("1,7",STRING(WEEKDAY(aux_dtcalcul)))    OR
             CAN-FIND(crapfer WHERE crapfer.cdcooper = par_cdcooper    AND
@@ -569,7 +581,7 @@ END FUNCTION.
 
 END FUNCTION.*/
 
-/* Retorna o ultimo dia do mês */
+/* Retorna o ultimo dia do mes */
 FUNCTION fnBuscaDataDoUltimoDiaMes RETURN DATE (par_dtrefmes AS DATE):
 
     DEF VAR aux_dtcalcul AS DATE   NO-UNDO.
@@ -837,6 +849,12 @@ PROCEDURE calcula_emprestimo:
                              AND crapass.nrdconta = par_nrdconta
                              NO-LOCK NO-ERROR.
 
+            IF NOT AVAILABLE crapass THEN   
+              DO:
+                   ASSIGN aux_dscritic = "Associado nao cadastrado ".
+                   UNDO.
+              END.
+              
            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
            
            /* Efetuar a chamada a rotina Oracle  */
@@ -1885,7 +1903,7 @@ PROCEDURE valida_novo_calculo:
 
            END.
 
-           IF craplcr.tpdescto = 2  AND craplcr.tpmodcon = ?  THEN
+           IF craplcr.tpdescto = 2  AND craplcr.tpmodcon = ?  THEN	/*P437*/
            DO:
                ASSIGN aux_dscritic = "Linha nao permitida para esse produto."
                       aux_cdcritic = 0.
@@ -2153,14 +2171,23 @@ PROCEDURE busca_dados_efetivacao_proposta:
            tt-efetiv-epr.avalist2 = " "
            tt-efetiv-epr.dtdpagto = crawepr.dtdpagto
            tt-efetiv-epr.idcobope = crawepr.idcobope
-		   tt-efetiv-epr.tpemprst = crawepr.tpemprst /*P437*/
-           tt-efetiv-epr.idfiniof = crawepr.idfiniof.
+           tt-efetiv-epr.idfiniof = crawepr.idfiniof
+           tt-efetiv-epr.tpemprst = crawepr.tpemprst
+           tt-efetiv-epr.vlprecar = crawepr.vlprecar.
 
-    /* Se tiver contrato em liquidacao, envia para efetivacao da proposta para refinanciamento */	
-    IF (crawepr.nrctrliq[1] > 0 OR crawepr.nrctrliq[2] > 0 OR crawepr.nrctrliq[3] > 0
-	   OR crawepr.nrctrliq[4] > 0 OR crawepr.nrctrliq[5] > 0 OR crawepr.nrctrliq[6] > 0 
-       OR crawepr.nrctrliq[7] > 0 OR crawepr.nrctrliq[8] > 0 OR crawepr.nrctrliq[9] > 0 
-	   OR crawepr.nrctrliq[10] > 0 OR crawepr.nrliquid > 0) THEN		
+    /* Se tiver contrato em liquidacao, envia para efetivacao da proposta 
+       para refinanciamento */	
+    IF (crawepr.nrctrliq[1] > 0 OR 
+        crawepr.nrctrliq[2] > 0 OR 
+        crawepr.nrctrliq[3] > 0 OR 
+        crawepr.nrctrliq[4] > 0 OR 
+        crawepr.nrctrliq[5] > 0 OR 
+        crawepr.nrctrliq[6] > 0 OR 
+        crawepr.nrctrliq[7] > 0 OR 
+        crawepr.nrctrliq[8] > 0 OR 
+        crawepr.nrctrliq[9] > 0 OR 
+        crawepr.nrctrliq[10] > 0 
+        OR crawepr.nrliquid > 0) THEN		
 		ASSIGN tt-efetiv-epr.flliquid = 1.
     ELSE
 	    ASSIGN tt-efetiv-epr.flliquid = 0.	   
@@ -2413,6 +2440,7 @@ PROCEDURE busca_dados_efetivacao_proposta:
 
 
         END.
+
     RETURN "OK".
 
 END PROCEDURE. /* busca dados efetivacao proposta */
@@ -3393,6 +3421,11 @@ PROCEDURE grava_efetivacao_proposta:
     DEF VAR aux_dtrisref AS DATE /* DATA RISCO REFIN */               NO-UNDO.
     DEF VAR aux_qtdiaatr AS INTE                                      NO-UNDO.
     DEF VAR aux_idquapro AS INTE                                      NO-UNDO.
+	DEF VAR aux_flgcescr AS LOGI INIT FALSE                           NO-UNDO.
+    DEF VAR aux_vlemprstcalc AS DECI                                  NO-UNDO.
+    DEF VAR aux_vlpreempcalc AS DECI                                  NO-UNDO.
+    DEF VAR aux_dsassdig AS CHAR                                      NO-UNDO.
+    DEF VAR aux_des_reto AS CHAR                                      NO-UNDO.
 
     DEF BUFFER b-crawepr FOR crawepr.
 
@@ -3540,6 +3573,17 @@ PROCEDURE grava_efetivacao_proposta:
        /* Verifica se o emprestimo eh pre-aprovado */
        IF AVAIL crappre THEN
           DO:
+          
+              FIND crapass WHERE crapass.cdcooper = par_cdcooper
+                   AND crapass.nrdconta = par_nrdconta
+                   NO-LOCK NO-ERROR.
+
+              IF NOT AVAILABLE crapass THEN   
+                DO:
+                   ASSIGN aux_dscritic = "Associado nao cadastrado ".
+                   UNDO EFETIVACAO, LEAVE EFETIVACAO.
+                END.
+          
               IF NOT VALID-HANDLE(h-b1wgen0188) THEN
                  RUN sistema/generico/procedures/b1wgen0188.p 
                      PERSISTENT SET h-b1wgen0188.
@@ -3552,10 +3596,19 @@ PROCEDURE grava_efetivacao_proposta:
               IF VALID-HANDLE(h-b1wgen0188) THEN
                  DELETE PROCEDURE(h-b1wgen0188).
 
+              /* Verificar se existe carga ativa para o cooperado */
+              IF aux_idcarga = 0 THEN
+                DO:
+                  ASSIGN aux_dscritic = "Associado sem pre-aprovado liberado".
+                  UNDO EFETIVACAO, LEAVE EFETIVACAO.
+                END.
+
               Contador: DO aux_contador = 1 TO 10:
 
                  FIND crapcpa WHERE crapcpa.cdcooper = par_cdcooper AND
-                                    crapcpa.nrdconta = par_nrdconta AND
+                                    crapcpa.tppessoa       = crapass.inpessoa AND
+                                    crapcpa.nrcpfcnpj_base = 
+                                    crapass.nrcpfcnpj_base AND
                                     crapcpa.iddcarga = aux_idcarga
                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
@@ -3585,18 +3638,19 @@ PROCEDURE grava_efetivacao_proposta:
                      PERSISTENT SET h-b1wgen0188.
 
               /* Valida os dados do credito pre-aprovado */
-              RUN valida_dados IN h-b1wgen0188 (INPUT par_cdcooper,
-                                                INPUT par_cdagenci,
-                                                INPUT par_nrdcaixa,
-                                                INPUT par_cdoperad,
-                                                INPUT par_nmdatela,
-                                                INPUT par_idorigem,
-                                                INPUT par_nrdconta,
-                                                INPUT par_idseqttl,
-                                                INPUT crawepr.vlemprst,
-                                                INPUT DAY(par_dtdpagto),
-                                                INPUT par_nrcpfope,
-                                                OUTPUT TABLE tt-erro).
+              RUN valida_dados_contrato IN h-b1wgen0188 (INPUT par_cdcooper,
+                                                         INPUT par_cdagenci,
+                                                         INPUT par_nrdcaixa,
+                                                         INPUT par_cdoperad,
+                                                         INPUT par_nmdatela,
+                                                         INPUT par_idorigem,
+                                                         INPUT par_nrdconta,
+                                                         INPUT par_idseqttl,
+                                                         INPUT crawepr.vlemprst,
+                                                         INPUT DAY(par_dtdpagto),
+                                                         INPUT par_nrcpfope,
+                                                         INPUT par_nrctremp,
+                                                         OUTPUT TABLE tt-erro).
 
               IF VALID-HANDLE(h-b1wgen0188) THEN
                  DELETE PROCEDURE(h-b1wgen0188).
@@ -3605,16 +3659,7 @@ PROCEDURE grava_efetivacao_proposta:
                  RETURN "NOK".
 
               /* Atualiza o valor contratado do credito pre-aprovado */
-              ASSIGN crapcpa.vlctrpre = crapcpa.vlctrpre + crawepr.vlemprst
-                     crapcpa.vllimdis = TRUNC(((crapcpa.vllimdis -
-                                                crawepr.vlemprst) /
-                                              crappre.vlmulpli),0)
-                     crapcpa.vllimdis = crapcpa.vllimdis * crappre.vlmulpli.
-
-              /* Caso o valor minimo ofertado for maior que o saldo disponivel
-                 vamos zerar o saldo disponivel */
-              IF crappre.vllimmin > crapcpa.vllimdis THEN
-                 ASSIGN crapcpa.vllimdis = 0.
+              ASSIGN crapcpa.vlctrpre = crapcpa.vlctrpre + crawepr.vlemprst.
 
           END. /* END IF AVAIL crappre AND par_cdfinemp = crappre.cdfinemp  */
 
@@ -4260,6 +4305,24 @@ PROCEDURE grava_efetivacao_proposta:
                  END.
 
                  END.
+
+       /* Diego Simas (AMcom) - PJ 450                       */
+       /* Início                                             */
+       
+       /* Verifica se existe algum contrato limite/adp       */
+       /* e adiciona a lista de contratos para qualificar    */ 
+       IF aux_dsctrliq <> "" THEN DO:
+            IF crawepr.nrliquid <> 0 THEN
+               aux_dsctrliq = aux_dsctrliq + 
+                 ", " + TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).                           
+                 END.
+       ELSE DO:
+            IF crawepr.nrliquid <> 0 THEN
+               aux_dsctrliq = aux_dsctrliq + 
+                 TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).               
+            END.
+
+
        /***********************
           CALCULO DATA RISCO REFIN
           Se houve alguma liquidacao de contrato
@@ -4306,23 +4369,7 @@ PROCEDURE grava_efetivacao_proposta:
            ASSIGN aux_dtrisref = ?.
        /***********************/
           
-       /* Diego Simas (AMcom) - PJ 450                       */
-       /* Início                                             */
        
-       /* Verifica se existe algum contrato limite/adp       */
-       /* e adiciona a lista de contratos para qualificar    */ 
-       IF aux_dsctrliq <> "" THEN
-          DO:
-            IF crawepr.nrliquid <> 0 THEN
-               aux_dsctrliq = aux_dsctrliq + 
-                 ", " + TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).                           
-                 END.
-       ELSE
-          DO:
-            IF crawepr.nrliquid <> 0 THEN
-               aux_dsctrliq = aux_dsctrliq + 
-                 TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).               
-            END.                      
 
        /* Acionar rotina que gera a qualificacao da operacao */
        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -4369,6 +4416,18 @@ PROCEDURE grava_efetivacao_proposta:
                UNDO EFETIVACAO, LEAVE EFETIVACAO.
           END.
 
+       FOR FIRST crapfin FIELDS(tpfinali)
+          WHERE crapfin.cdcooper = par_cdcooper
+		    AND crapfin.cdfinemp = crawepr.cdfinemp
+        NO-LOCK: END.    
+    
+       IF AVAIL crapfin AND crapfin.tpfinali = 1 THEN
+         ASSIGN aux_flgcescr = TRUE.
+
+       /* CESSAO DE CARTAO - sempre sera 5-Cessao Cartao */
+       IF  aux_flgcescr THEN
+           ASSIGN aux_idquapro = 5.
+           
        /* Requalifica a operacao na proposta                 */
        /* INICIO                                             */       
        FIND FIRST b-crawepr
@@ -4404,7 +4463,9 @@ PROCEDURE grava_efetivacao_proposta:
               crapepr.cdfinemp = crawepr.cdfinemp
               crapepr.cdlcremp = crawepr.cdlcremp
               crapepr.vlemprst = crawepr.vlemprst
-              crapepr.vlpreemp = crawepr.vlpreemp
+              crapepr.vlpreemp = IF (crawepr.idcarenc > 1) THEN
+                                      crawepr.vlprecar
+                                 ELSE crawepr.vlpreemp
               crapepr.qtpreemp = crawepr.qtpreemp
               crapepr.nrctaav1 = crawepr.nrctaav1
               crapepr.nrctaav2 = crawepr.nrctaav2
@@ -4769,6 +4830,41 @@ PROCEDURE grava_efetivacao_proposta:
        IF RETURN-VALUE <> "OK"   THEN
           UNDO EFETIVACAO , LEAVE EFETIVACAO.
 
+       /* Para proposta PreAprovado */
+       IF AVAIL crappre AND AVAIL crapcpa THEN
+          DO:
+             /* Chamaremos a rotina que ira verificar se eh necessario atualizar  */
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+             RUN STORED-PROCEDURE pc_verifica_rating_sas
+                 aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT par_cdcooper, /* Cooperativa */
+                                   INPUT par_dtmvtolt, /* Data Movimento */
+                                   INPUT crapass.inpessoa, /* Indicativo de pessoa */
+                                   INPUT crapass.nrcpfcnpj_base, /* CPF/CNPJ raiz de pessoa */
+                                   INPUT crapepr.nrctremp, /* Contrato */
+                                   INPUT crapcpa.iddcarga, /* ID Carga CPA */
+                                  OUTPUT "").
+
+             CLOSE STORED-PROC pc_verifica_rating_sas 
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+             ASSIGN aux_dscritic = ""
+                    aux_dscritic = pc_verifica_rating_sas.pr_dscritic 
+                                   WHEN pc_verifica_rating_sas.pr_dscritic <> ?.
+                 
+             IF  aux_dscritic <> ""  THEN
+                 DO:                                    
+                     CREATE tt-erro.
+                     ASSIGN tt-erro.cdcritic = aux_cdcritic
+                            tt-erro.dscritic = aux_dscritic.
+
+                     UNDO EFETIVACAO, LEAVE EFETIVACAO.
+                 END.
+          END.
+       
        /* Acionar rotina de Gravacao do Calculo CET gerado */
        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -4793,7 +4889,8 @@ PROCEDURE grava_efetivacao_proposta:
                              INPUT aux_dscatbem, /* Categoria Bem */
                              INPUT crawepr.idfiniof, /* */
                              INPUT aux_dsctrliq, /* Contratos Liquidados */
-                             INPUT "S", /* Gravar */
+                             INPUT "S", /* Gravar */ 
+                             INPUT crawepr.dtcarenc, /* Data de carencia*/
                              INPUT -1, /*valor IOF */
                             OUTPUT 0,
                             OUTPUT 0,
@@ -4822,6 +4919,65 @@ PROCEDURE grava_efetivacao_proposta:
                UNDO EFETIVACAO, LEAVE EFETIVACAO.
            END.
          
+        /* P442 - Validar valores de pre-aprovado no momento da liberacao do contrato
+           incluido aqui para reduzir problemas de contratacao simultanea entre canais*/
+        /*IF crawepr.cdfinemp = 68 THEN
+          DO:
+            /* Buscar valores atualizados no momento da confirmacao */
+            IF NOT VALID-HANDLE(h-b1wgen0188) THEN
+                  RUN sistema/generico/procedures/b1wgen0188.p 
+                      PERSISTENT SET h-b1wgen0188.
+
+               /* Verifica se existe limite disponível */
+               RUN busca_dados IN h-b1wgen0188
+                               (INPUT par_cdcooper,
+                                INPUT par_cdagenci,
+                                INPUT par_nrdcaixa,
+                                INPUT par_cdoperad,
+                                INPUT par_nmdatela,
+                                INPUT par_idorigem,
+                                INPUT par_nrdconta,
+                                INPUT par_idseqttl,
+                                INPUT 0,
+                                OUTPUT TABLE tt-dados-cpa,
+                                OUTPUT TABLE tt-erro).
+               
+               FIND tt-dados-cpa NO-LOCK NO-ERROR.
+               IF  AVAIL tt-dados-cpa THEN
+                 DO:
+                 
+                   aux_vlemprstcalc = tt-dados-cpa.vldiscrd + crawepr.vlemprst.
+                   aux_vlpreempcalc = tt-dados-cpa.vlcalpar + crawepr.vlpreemp.
+                 
+                    /* Verifica se retornou ID de carga */
+                    IF tt-dados-cpa.idcarga = 0 THEN
+                      DO:
+                        aux_dscritic = "Nao foi localizado pre-aprovado para o associado".
+                        UNDO EFETIVACAO , LEAVE EFETIVACAO.
+                      END.
+                      
+                    /* Verifica se o valor limite permite a liberacao*/
+                    IF crawepr.vlemprst > aux_vlemprstcalc THEN
+                      DO:
+                        aux_dscritic = "Valor total nao permitido para pre-aprovado".
+                        UNDO EFETIVACAO , LEAVE EFETIVACAO.
+                      END.
+                      
+                    /* Verifica se o valor da parcela permite a liberacao*/
+                    IF crawepr.vlpreemp > aux_vlpreempcalc THEN
+                      DO:
+                        aux_dscritic = "Valor da parcela nao permitido para pre-aprovado".
+                        UNDO EFETIVACAO , LEAVE EFETIVACAO.
+                      END.
+                 END.
+               ELSE
+                 DO:
+                   aux_dscritic = "Pre-aprovado nao disponivel para usuario".
+                   UNDO EFETIVACAO , LEAVE EFETIVACAO.
+                 END.
+          END.*/
+        /**/
+		
         /*Validaçao e efetivaçao do seguro prestamista -- PRJ438 - Paulo Martins (Mouts)*/     
         IF crapass.inpessoa = 1 THEN
         DO:
@@ -4855,6 +5011,43 @@ PROCEDURE grava_efetivacao_proposta:
                UNDO EFETIVACAO, LEAVE EFETIVACAO.
            END.
         END.
+       	
+        /* P442 - Criar assinaturas para o contrato recem criado (aprovado) */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        /* Criar registros na tabela de assinaturas */
+        /* Efetuar a chamada a rotina Oracle */ 
+        RUN STORED-PROCEDURE pc_assinatura_contrato_pre
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.cdcooper
+                                                  ,INPUT crawepr.cdagenci
+                                                  ,INPUT crawepr.nrdconta
+                                                  ,INPUT 1                                               
+                                                  ,INPUT par_dtmvtolt
+                                                  ,INPUT crawepr.cdorigem
+                                                  ,INPUT crawepr.nrctremp
+                                                  ,INPUT 1
+                                                  ,OUTPUT ""
+                                                  ,OUTPUT ""
+                                                  ,OUTPUT 0
+                                                  ,OUTPUT "").
+
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_assinatura_contrato_pre
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        
+        ASSIGN aux_dsassdig = pc_assinatura_contrato_pre.pr_assinatu
+               aux_des_reto = pc_assinatura_contrato_pre.pr_des_reto
+               aux_cdcritic = pc_assinatura_contrato_pre.pr_cdcritic WHEN pc_assinatura_contrato_pre.pr_cdcritic <> ?
+               aux_dscritic = pc_assinatura_contrato_pre.pr_dscritic WHEN pc_assinatura_contrato_pre.pr_dscritic <> ?.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+          DO:
+            CREATE tt-erro.
+            ASSIGN tt-erro.cdcritic = aux_cdcritic
+                   tt-erro.dscritic = aux_dscritic.
+             UNDO EFETIVACAO, LEAVE EFETIVACAO.
+          END.
        
         /* P437 - Consignado - Grava Evento SOA */
         IF  crawepr.tpemprst = 1 AND 
@@ -5362,6 +5555,11 @@ PROCEDURE desfaz_efetivacao_emprestimo.
         /* Verifica se o emprestimo eh pre-aprovado */
         IF AVAIL crappre THEN
            DO:
+           
+             FIND crapass WHERE crapass.cdcooper = par_cdcooper
+                              AND crapass.nrdconta = par_nrdconta
+                              NO-LOCK NO-ERROR.
+                              
                IF NOT VALID-HANDLE(h-b1wgen0188) THEN
                   RUN sistema/generico/procedures/b1wgen0188.p 
                       PERSISTENT SET h-b1wgen0188.
@@ -5374,10 +5572,12 @@ PROCEDURE desfaz_efetivacao_emprestimo.
                IF VALID-HANDLE(h-b1wgen0188) THEN
                   DELETE PROCEDURE(h-b1wgen0188).
 
+               /* Buscaremos o registro do Cooperado na Carga, para lockar o mesmo */
                Contador: DO aux_contador = 1 TO 10:
 
-                 FIND crapcpa WHERE crapcpa.cdcooper = par_cdcooper AND
-                                    crapcpa.nrdconta = par_nrdconta AND
+                 FIND crapcpa WHERE crapcpa.cdcooper       = par_cdcooper AND
+                                    crapcpa.tppessoa       = crapass.inpessoa AND
+								    crapcpa.nrcpfcnpj_base = crapass.nrcpfcnpj_base AND
                                     crapcpa.iddcarga = aux_idcarga
                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
@@ -5400,17 +5600,12 @@ PROCEDURE desfaz_efetivacao_emprestimo.
 
                END. /* END Contador: DO aux_contador = 1 TO 10: */
 
-               /* Somente vamos atualizar o saldo, caso o saldo disponivel
-                  for diferente que o saldo calculado na carga.           */
-               IF crapcpa.vllimdis <> crapcpa.vlcalpre THEN
+               /* Atualizar o valor Contratado caso o ID da Carga seja igual a carga corrente */
+               /*IF crapcpa.iddcarga = crapepr.idcarga THEN
                   DO:
                       /* Atualiza o valor contratado do credito pre-aprovado */
-                      ASSIGN crapcpa.vlctrpre = crapcpa.vlctrpre - crapepr.vlemprst
-                             crapcpa.vllimdis = TRUNC(((crapcpa.vllimdis +
-                                                        crapepr.vlemprst) /
-                                                      crappre.vlmulpli),0)
-                             crapcpa.vllimdis = crapcpa.vllimdis * crappre.vlmulpli.
-                  END.
+                      ASSIGN crapcpa.vlctrpre = crapcpa.vlctrpre - crapepr.vlemprst.
+                  END.*/
 
            END. /* END IF AVAIL crappre THEN */
 
