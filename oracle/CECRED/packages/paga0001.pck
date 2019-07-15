@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --  Programa: PAGA0001                       Antiga: b1wgen0016.p
   --  Autor   : Evandro/David
-  --  Data    : Abril/2006                     Ultima Atualizacao: 11/03/2019
+  --  Data    : Abril/2006                     Ultima Atualizacao: 15/07/2019
   --
   --  Dados referentes ao programa:
   --
@@ -1293,7 +1293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 11/03/2019
+  --  Data     : Junho/2013.                   Ultima atualizacao: 15/07/2019
   --
   -- Dados referentes ao programa:
   --
@@ -1705,6 +1705,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
      11/03/2019 - Quando der erro na rotina pc atualiza trans nao efetiv, 
                   gerar Log pois as rotinas chamadoras iram ignorar o erro.
                   (Belli - Envolti - INC0034476)
+
+     11/07/2019 - Correção em mensagem de erro exibida ao cooperado.
+                  Se for retornada uma critica no momento de cria o lancamento do DEBITO, 
+                  passa a não mais emitir o alerta ao cooperado com informacoes de LOG.
+                  Implementacao para atender o INC0015955 - Jackson 
                   
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -4975,6 +4980,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --                            Mensagens fixas trocar por codigo, e cadastrar caso seja codigo novo
     --                            (Belli - Envolti - Chamado 779415) 
     --                 
+    --               11/07/2019 - Correção em mensagem de erro exibida ao cooperado.
+    --                            Se for retornada uma critica no momento de cria o lancamento do DEBITO, 
+    --                            passa a não mais emitir o alerta ao cooperado com informacoes de LOG.
+    --                            Implementacao para atender o INC0015955 - Jackson 
+    --                            
     -- ..........................................................................
 
   BEGIN
@@ -5560,8 +5570,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
           CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
           -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415          
-          vr_dscritic := vr_dscritic ||
-                         'CRAPLCM(7):' ||
+          -- Manter geração de LOG sem exibir tais valores em mensagem ao cooperado - INC0015955        
+          vr_dsparame := 'CRAPLCM(7):' ||
                          ' cdcooper:'  || pr_cdcooper || 
                          ', dtmvtolt:' || pr_dtmvtocd || 
                          ', cdagenci:' || pr_cdagenci || 
@@ -5581,7 +5591,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                          ', cdagetfn:' || pr_cdagetfn || 
                          ', nrterfin:' || pr_nrterfin || 
                          ', cdpesqbb:' || vr_cdpesqbb || 
-                         '. ';
+                         '. ' || vr_dsparame;
           --Levantar Excecao
           RAISE vr_exc_erro;
       END IF;   
