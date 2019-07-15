@@ -3864,16 +3864,6 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
         AND lcm.cdhistor = 1017
         AND lcm.dtmvtolt = pr_dtmvtolt;
 
-     CURSOR cr_hist2733(pr_cdcooper craplcm.cdcooper%TYPE
-                      , pr_nrdconta craplcm.nrdconta%TYPE
-                      , pr_dtmvtolt craplcm.dtmvtolt%TYPE) IS
-     SELECT nvl(SUM(prj.vllanmto), 0) vltotlan
-       FROM tbcc_prejuizo_detalhe prj
-      WHERE prj.cdcooper = pr_cdcooper
-        AND prj.nrdconta = pr_nrdconta
-        AND prj.dtmvtolt = pr_dtmvtolt
-        AND prj.cdhistor = 2733;
-
      vr_cdcritic  NUMBER(3);
      vr_dscritic  VARCHAR2(1000);
      vr_des_erro  VARCHAR2(1000);
