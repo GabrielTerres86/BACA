@@ -445,7 +445,7 @@ PROCEDURE grava-dados-crapcyc:
         ELSE
             ASSIGN aux_flgehvip = TRUE.
         
-         /* 1 - Conta, 3 - Contrato, 4 - Desconto de Titulos */
+         /* 1 - Conta, 3 - Contrato, 4 - Desconto de Titulos, 5 - Cartao de credito*/
         IF  par_cdorigem MATCHES "*Conta*" THEN
           DO:
             ASSIGN par_nrctremp = INTE(par_nrdconta)
@@ -488,10 +488,10 @@ PROCEDURE grava-dados-crapcyc:
           END.
         ELSE
           DO:
-            IF par_idorigem = 5 THEN
+            IF par_cdorigem MATCHES "*Cartoes*" THEN
               ASSIGN aux_cdorigem = 5.
             ELSE
-            ASSIGN aux_cdorigem = 3.
+              ASSIGN aux_cdorigem = 3.
           END.
 
         /* data de envio para cobrança */
