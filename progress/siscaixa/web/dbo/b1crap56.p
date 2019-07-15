@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 04/07/2019
+   Data    : Marco/2001                      Ultima atualizacao: 15/07/2019
 
    Dados referentes ao programa:
 
@@ -113,8 +113,8 @@
 							-> Ao optar por "Espécie" deve ser permitir apenas para não cooperados
 						   (Jonata - Mouts PRB0040337).
 												   
-                 04/07/2019 - Tratamento para nao permitir o historico 416 e 561, exceto 
-                              ACENTRA - RITM0015559 (Jose Gracik/Mouts). 
+                 15/07/2019 - Tratamento para nao permitir o historico 561, 
+				              exceto ACENTRA - RITM0015559 (Jose Gracik/Mouts). 
 ............................................................................ */
 /*----------------------------------------------------------------------*/
 /*  b1crap56.p - Outros                                                */
@@ -284,9 +284,8 @@ PROCEDURE valida-outros-conta:
            RETURN "NOK".
        END.
 
-   IF  (p-cdhistor        = 416  OR    /* Pagto Salario */
-        p-cdhistor        = 561) AND   /* Salario Liquido */
-       crapcop.cdcooper <> 5    THEN   /* Exceto Cooperativa ACENTRA */
+   IF  p-cdhistor        = 561 AND   /* Salario Liquido */
+       crapcop.cdcooper <> 5   THEN  /* Exceto Cooperativa ACENTRA */
        DO:
            ASSIGN i-cod-erro  = 93  /* Historico Errado */
                   c-desc-erro = " ".           
