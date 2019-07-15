@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Maio/2015                      Ultima atualizacao: 18/12/2015
+   Data    : Maio/2015                      Ultima atualizacao: 05/07/2018
 
    Dados referentes ao programa:
 
@@ -16,6 +16,10 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0002 AS
 
    Alteracoes: 18/12/2015 - Criado proc. pc_hrlimite, para listar horario limite de
                             Folha Pagamento. (Jorge/David) Proj. 131 Asinatura Multipla.
+
+               05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída
+                            das procedures: pc_valida_pagto_ib, pc_busca_opcao_deb_ib
+                            e pc_lista_pgto_pend_ib, Prj.363 (Jean Michel).
 
 ..............................................................................*/
 
@@ -483,7 +487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Maio/2015                      Ultima atualizacao: 21/06/2017
+   Data    : Maio/2015                      Ultima atualizacao: 15/02/2019
 
    Dados referentes ao programa:
 
@@ -505,6 +509,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
                
                21/06/2017 - Incluido razao social da empresa nos relatórios (Kelvin #682260)
+
+               05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída
+                            das procedures: pc_valida_pagto_ib, pc_busca_opcao_deb_ib
+                            e pc_lista_pgto_pend_ib, Prj.363 (Jean Michel).
+
+               15/02/2019 - Na procedure pc_envia_pagto_apr_ib após o 
+                            processamento do arquivo incluir o rm (Lucas Ranghetti #PRB0040468)
 ..............................................................................*/
    -- Arrays
    -- Campos da tela
@@ -6603,7 +6614,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --  Sistema  : Internet Banking
    --  Sigla    : CRED
    --  Autor    : Jaison
-   --  Data     : Julho/2015.                   Ultima atualizacao: 07/07/2016
+   --  Data     : Julho/2015.                   Ultima atualizacao: 05/07/2018
    --
    -- Dados referentes ao programa:
    --
@@ -6626,6 +6637,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --                          no chamado 499370. (Kelvin)
    --                     
    --             16/01/2017 - Adicionado validacao de horario para agendamentos d-2. (M342 - Kelvin)
+   --                     
+   --             05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída, Prj.363 (Jean Michel)
+   --
    ---------------------------------------------------------------------------------------------------------------
 
       -- Cursor genérico de calendário
@@ -6786,6 +6800,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      -- Variaveis Excecao
      vr_exc_erro EXCEPTION;
 
+     vr_cdtarifa VARCHAR2(10);
+     vr_cdfaixav VARCHAR2(10);
+     vr_dstarfai VARCHAR2(20);
+
     BEGIN
        -- Inicializa as variaveis
        pr_des_reto := 'OK';
@@ -6829,6 +6847,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
            vr_nrseqpag := vr_nrseqpag || ',' || rw_crappfp.nrseqpag;  
          END IF;
           
+         -- Novas TAGS
+         vr_dstarfai := FOLH0001.fn_cdtarifa_cdfaixav(pr_cdocorre => rw_crappfp.idopdebi);
+         vr_cdtarifa := gene0002.fn_busca_entrada(1,vr_dstarfai,',');
+         vr_cdfaixav := gene0002.fn_busca_entrada(2,vr_dstarfai,',');
+
+         
          -- Caso NAO esteja como Pendente(1), Reprovado(3)
          -- Se for Solicitacao De Estouro(2), devemos deixar processeguir
          -- pois usuario pode ter ajustado o saldo da conta e desaja tentar
@@ -7168,7 +7192,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                 ,pr_texto_novo     => '<dtdebpag>'|| TO_CHAR(vr_dtdebpfp,'DD/MM/RRRR') ||'</dtdebpag>'
                                                    || '<vltotpag>'|| TO_CHAR(vr_vltotsel,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||'</vltotpag>'
                                                    || '<vltottar>'|| TO_CHAR(vr_vltottar,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||'</vltottar>'
-                                                   || '<vlsomado>'|| TO_CHAR((vr_vltotsel + vr_vltottar),'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||'</vlsomado>');
+                                                   || '<vlsomado>'|| TO_CHAR((vr_vltotsel + vr_vltottar),'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||'</vlsomado>'
+                                                   || '<cdtarifa>'|| TO_CHAR(vr_cdtarifa) ||'</cdtarifa>'
+                                                   || '<cdfaixav>'|| TO_CHAR(vr_cdfaixav) ||'</cdfaixav>');
        
          --Caso tenha mensagem retorna
          IF vr_dsmsgret IS NOT NULL AND pr_dscritic IS NULL THEN
@@ -7521,7 +7547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --  Sistema  : Internet Banking
    --  Sigla    : CRED
    --  Autor    : Andre Santos - SUPERO
-   --  Data     : Julho/2015.                   Ultima atualizacao: 16/02/2016
+   --  Data     : Julho/2015.                   Ultima atualizacao: 05/07/2018
    --
    -- Dados referentes ao programa:
    --
@@ -7533,6 +7559,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --             16/02/2016 - Inclusao do parametro conta na chamada da
    --                          FOLH0001.fn_valor_tarifa_folha. (Jaison/Marcos)
    -- 
+   --             05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída, Prj.363 (Jean Michel)
    ---------------------------------------------------------------------------------------------------------------
 
       -- Verificamos se a data de credito esta correta
@@ -7699,6 +7726,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                                    || '<dtmvtolt2>'||TO_CHAR(vr_dtmvtolt2,'DD/MM/YYYY') ||'</dtmvtolt2>'
                                                    || '<fldatad1>'||vr_fldatad1||'</fldatad1>'
                                                    || '<fldatad2>'||vr_fldatad2||'</fldatad2>'
+                                                   || '<cdtarifa0>' || gene0002.fn_busca_entrada(1,FOLH0001.fn_cdtarifa_cdfaixav(pr_cdocorre => 0),',') || '</cdtarifa0>'
+                                                   || '<cdfaixav0>' || gene0002.fn_busca_entrada(2,FOLH0001.fn_cdtarifa_cdfaixav(pr_cdocorre => 0),',') || '</cdfaixav0>'
+                                                   || '<cdtarifa1>' || gene0002.fn_busca_entrada(1,FOLH0001.fn_cdtarifa_cdfaixav(pr_cdocorre => 1),',') || '</cdtarifa1>'
+                                                   || '<cdfaixav1>' || gene0002.fn_busca_entrada(2,FOLH0001.fn_cdtarifa_cdfaixav(pr_cdocorre => 1),',') || '</cdfaixav1>'
+                                                   || '<cdtarifa2>' || gene0002.fn_busca_entrada(1,FOLH0001.fn_cdtarifa_cdfaixav(pr_cdocorre => 2),',') || '</cdtarifa2>'
+                                                   || '<cdfaixav2>' || gene0002.fn_busca_entrada(2,FOLH0001.fn_cdtarifa_cdfaixav(pr_cdocorre => 2),',') || '</cdfaixav2>'
                                                    || '</opcao>');
       -- Encerrar a tag raiz
       gene0002.pc_escreve_xml(pr_xml            => pr_data_xml
@@ -7728,7 +7761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --  Sistema  : Internet Banking
    --  Sigla    : CRED
    --  Autor    : Andre Santos - SUPERO
-   --  Data     : Julho/2015.                   Ultima atualizacao: 27/01/2016
+   --  Data     : Julho/2015.                   Ultima atualizacao: 05/07/2018
    --
    -- Dados referentes ao programa:
    --
@@ -7740,6 +7773,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --             11/08/2016 - Retirada a chamada da rotina pc_valida_lancto_folha, devido a mesma
    --                          não estar sendo necessária e ajuste no controle de erro de forma que 
    --                          as datas sejam retornadas mesmo no caso de erros
+   --
+   --             05/07/2018 - Inclusao das tags de cdtarifa e cdfaixav no XML de saída, Prj.363 (Jean Michel)
+   --
    ---------------------------------------------------------------------------------------------------------------
       -- Busca todos os dados ja cadastrados
       CURSOR cr_crappfp(p_dsrowpfp IN VARCHAR2) IS
@@ -7786,6 +7822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                           WHERE ccs.cdcooper = efp.cdcooper
                                             AND ccs.nrdconta = efp.nrdconta)) nmprimtl
                ,lfp.rowid
+               ,lfp.nrseqpag
            FROM craplfp lfp
                ,crapefp efp
           WHERE lfp.cdcooper = p_cdcooper
@@ -7819,6 +7856,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_xml_orig_temp VARCHAR2(32767);
       --vr_erro EXCEPTION;
 
+      vr_cdtarifa VARCHAR2(10);     
+      vr_cdfaixav VARCHAR2(10);
+      vr_dstarfai VARCHAR2(20);
    BEGIN
       -- Inicializa variavel
       pr_cdcritic := NULL;
@@ -7829,13 +7869,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       FETCH cr_crappfp INTO rw_crappfp;
       CLOSE cr_crappfp;
 
+      vr_dstarfai := FOLH0001.fn_cdtarifa_cdfaixav(pr_cdocorre => rw_crappfp.idopdebi);
+      vr_cdtarifa := gene0002.fn_busca_entrada(1,vr_dstarfai,',');
+      vr_cdfaixav := gene0002.fn_busca_entrada(2,vr_dstarfai,',');
+
       -- Monta documento XML
       dbms_lob.createtemporary(pr_xmlpagto, TRUE);
       dbms_lob.open(pr_xmlpagto, dbms_lob.lob_readwrite);
       -- Insere o cabeçalho do XML
       gene0002.pc_escreve_xml(pr_xml            => pr_xmlpagto
                              ,pr_texto_completo => vr_xml_orig_temp
-                             ,pr_texto_novo     => '<dados dtcredit="'||TO_CHAR(rw_crappfp.dtcredit,'DD/MM/RRRR')||'" dtdebito="'||TO_CHAR(rw_crappfp.dtdebito,'DD/MM/RRRR')||'" idopdebi="'||rw_crappfp.idopdebi||'" qtregpag="'||rw_crappfp.qtregpag||'" vllctpag="'||TO_CHAR(rw_crappfp.vllctpag,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')||'" flgrvsal="'||rw_crappfp.flgrvsal||'" vltarapr="'||rw_crappfp.vltarapr||'"  >');
+                             ,pr_texto_novo     => '<dados dtcredit="'||TO_CHAR(rw_crappfp.dtcredit,'DD/MM/RRRR')||'" dtdebito="'||TO_CHAR(rw_crappfp.dtdebito,'DD/MM/RRRR')||'" idopdebi="'||rw_crappfp.idopdebi||'" qtregpag="'||rw_crappfp.qtregpag||'" vllctpag="'||TO_CHAR(rw_crappfp.vllctpag,'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.')||'" flgrvsal="'||rw_crappfp.flgrvsal||'" vltarapr="'||rw_crappfp.vltarapr||'" cdtarifa="'||TO_CHAR(vr_cdtarifa)||'" cdfaixav="'||TO_CHAR(vr_cdfaixav)||'" >');
 
       FOR rw_craplfp IN cr_craplfp(rw_crappfp.cdcooper
                                     ,rw_crappfp.cdempres
@@ -8140,7 +8184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --  Sistema  : Internet Banking
    --  Sigla    : CRED
    --  Autor    : Andre Santos - SUPERO
-   --  Data     : Julho/2015.                   Ultima atualizacao: 27/01/2016
+   --  Data     : Julho/2015.                   Ultima atualizacao: 15/02/2019
    --
    -- Dados referentes ao programa:
    --
@@ -8152,6 +8196,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --             26/01/2016 - Inclusão de log sob as operacções efetuadas (Marcos-Supero)
    --
    --             27/01/2016 - Incluir controle de lançamentos sem crédito (Marcos-Supero)
+   --
+   --             15/02/2019 - Incluir rm após o processamento do arquivo (Lucas Ranghetti #PRB0040468)
    ---------------------------------------------------------------------------------------------------------------
 
       CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
@@ -8257,6 +8303,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                 p_rowid IS NULL);
       rw_valida_ori cr_valida_ori%ROWTYPE;
 
+    -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    -- Buscar Banco da transferência da conta
+    CURSOR cr_craplcs(pr_cdcooper craplcs.cdcooper%TYPE
+                     ,pr_nrdconta craplcs.nrdconta%TYPE
+                     ,pr_cdempres crapccs.cdempres%TYPE) IS
+      SELECT b.cdbantrf
+        FROM craplcs a
+            ,crapccs b
+       WHERE b.cdcooper  = a.cdcooper
+         AND b.nrdconta  = a.nrdconta
+         AND b.cdempres  = pr_cdempres
+         AND a.cdcooper  = pr_cdcooper
+         AND a.nrdconta  = pr_nrdconta
+         AND a.dtmvtolt  = TRUNC(SYSDATE)
+         AND a.cdhistor IN(560,561,gene0001.fn_param_sistema('CRED',pr_cdcooper,'FOLHAIB_HIS_CRE_TECSAL'))
+         AND a.flgenvio  = 0;
+    rw_craplcs cr_craplcs%ROWTYPE;
+  
       -- Variaveis
       vr_tab_origem typ_tab_origem;
       vr_idx        VARCHAR2(20);
@@ -8271,6 +8335,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_dsdireto   VARCHAR(32767);
       vr_idtpcont   VARCHAR2(1);
       vr_indvalid   VARCHAR2(1);
+    vr_inestcri   NUMBER;         -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    vr_idsitlct   VARCHAR2(1);    -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    vr_dsobslct   VARCHAR2(1000); -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    vr_clobxmlc   CLOB;           -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
 
       -- Variáveis para tratamento do XML
       vr_lenght      NUMBER;
@@ -8303,6 +8371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_erro EXCEPTION;
       vr_dsalert     VARCHAR2(500); -- Critica
       vr_des_erro     VARCHAR2(500); -- Critica
+      vr_des_reto VARCHAR2(3);
 
    BEGIN
       -- Inicializa Variaveis
@@ -8370,6 +8439,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           pr_dscritic := 'Problema com o envio das informacoes (XML invalido). Favor, entre em contato com seu PA!';
           RAISE vr_erro;
       END;
+
+      -- Excluir o arquivo, pois desse ponto em diante irá trabalhar com o registro
+      -- de memória. Em caso de erros o programa abortará e o usuário irá realizar
+      -- novamente o envio do arquivo
+      GENE0001.pc_OScommand_Shell('rm ' || vr_dsdireto || '/' || pr_dsarquiv);
 
       -- Se não vieram dados no XML
       IF LENGTH(vr_xmlpagto) <= 0 THEN
@@ -8751,10 +8825,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       OPEN  cr_nrseqlfp(pr_cdcooper,rw_crapemp.cdempres,vr_nrseqpag);
       FETCH cr_nrseqlfp INTO vr_nrseqlfp;
       CLOSE cr_nrseqlfp;
-
+    --
+    -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    -- Busca o indicador estado de crise
+    sspb0001.pc_estado_crise (pr_inestcri => vr_inestcri
+                             ,pr_clobxmlc => vr_clobxmlc);
+    -- Fim Pj 475
       FOR vr_idx_pgto IN vr_tab_pgto.first..vr_tab_pgto.last LOOP
 
          IF vr_tab_pgto(vr_idx_pgto).rowidlfp IS NULL THEN
+        -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+        -- Definir a situação como Erro quando for Intercompany e estado de crise ligado
+        vr_idsitlct := 'L';
+        vr_dsobslct := NULL;
+        --
+        IF vr_inestcri > 0 THEN
+          OPEN cr_craplcs(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => vr_tab_pgto(vr_idx_pgto).nrdconta
+                         ,pr_cdempres => rw_crapemp.cdempres);
+          FETCH cr_craplcs INTO rw_craplcs.cdbantrf;
+          IF cr_craplcs%NOTFOUND THEN
+            rw_craplcs.cdbantrf := 85;
+          END IF;
+          IF rw_craplcs.cdbantrf <> 85 THEN
+            vr_idsitlct := 'E';
+            vr_dsobslct := 'Erro encontrado - Estado de Crise Ativo';
+          END IF;
+          CLOSE cr_craplcs;
+        END IF;
+        -- Fim Pj 475
 
             -- Ira um insert para cada conjunto de informações, dessa forma
             -- deve ser realizada a limpeza do registro e a carga para garantir
@@ -8763,7 +8862,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             rw_craplfp.cdcooper := pr_cdcooper;
             rw_craplfp.cdempres := rw_crapemp.cdempres;
             rw_craplfp.nrseqpag := vr_nrseqpag;
-            rw_craplfp.idsitlct := 'L'; -- Lançado
+        rw_craplfp.idsitlct := vr_idsitlct; -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+        rw_craplfp.dsobslct := vr_dsobslct; -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
             rw_craplfp.nrseqlfp := vr_nrseqlfp;
             rw_craplfp.nrdconta := vr_tab_pgto(vr_idx_pgto).nrdconta;
             rw_craplfp.idtpcont := vr_tab_pgto(vr_idx_pgto).idtpcont;
@@ -8859,7 +8959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       -- Limpa tabela de memoria
       vr_tab_pgto.DELETE;
       vr_tab_origem.DELETE;
-
+      
       -- Efetua commit
       COMMIT;
 
