@@ -426,12 +426,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                02/05/2019 - Inclusão do parâmetro opcional para a descrição da operação nas procedures "pc_gera_cred_cta_prj",
                             "pc_gera_debt_cta_prj" e "pc_gera_transf_cta_prj".
                             (Reginaldo/AMcom)  
-                            
-               14/06/2019 - Inclusão de tratamento específico para o histórico 2425-TRANSFERENCIA BLOQUEIO JUDICIAL.
-                            Se houver lançamentos do histórico 2425 cuja soma coincida com o valor liberado da conta 
-                            transitória (Bloqueado Prejuizo), não efetua o pagamento e deixa o crédito na conta corrente.
-                            P450.2 - BUG 22068 (Transferência manual bacenjud) - Marcelo Elias Gonçalves/AMcom.            
-                      
+
 ..............................................................................*/
 
   -- clob para conter o dados do excel/csv
@@ -3833,12 +3828,7 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
 
             11/02/2019 - Ajuste para correção de pagamento de valor maior que o saldo devedor do prejuízo.
                          P450 - Reginaldo/AMcom
-                         
-            14/06/2019 - Inclusão de tratamento específico para o histórico 2425-TRANSFERENCIA BLOQUEIO JUDICIAL.
-                         Se houver lançamentos do histórico 2425 cuja soma coincida com o valor liberado da conta 
-                         transitória (Liberado Saque), não efetua o pagamento prejuízo e deixa o crédito na conta 
-                         corrente.
-                         P450.2 - BUG 22068 (Transferência manual bacenjud) - Marcelo Elias Gonçalves/AMcom.                          
+
  ..............................................................................*/
 --
 
@@ -3874,17 +3864,6 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
         AND lcm.cdhistor = 1017
         AND lcm.dtmvtolt = pr_dtmvtolt;
 
-     -- Busca soma dos lançamentos/débitos do histórico 2425-TRANSFERENCIA BLOQUEIO JUDICIAL
-     CURSOR cr_hist2425(pr_cdcooper IN craplcm.cdcooper%TYPE
-                      , pr_nrdconta IN craplcm.nrdconta%TYPE
-                      , pr_dtmvtolt IN craplcm.dtmvtolt%TYPE) IS 
-       SELECT nvl(SUM(lcm.vllanmto),0) vltotlan
-       FROM   craplcm lcm
-       WHERE  lcm.cdcooper = pr_cdcooper
-       AND    lcm.nrdconta = pr_nrdconta
-       AND    lcm.cdhistor = 2425 --TRANSFERENCIA BLOQUEIO JUDICIAL
-       AND    lcm.dtmvtolt = pr_dtmvtolt;   
-
      CURSOR cr_hist2733(pr_cdcooper craplcm.cdcooper%TYPE
                       , pr_nrdconta craplcm.nrdconta%TYPE
                       , pr_dtmvtolt craplcm.dtmvtolt%TYPE) IS
@@ -3905,7 +3884,6 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
      vr_vlsldprj NUMBER;
 
      vr_vldeb1017 NUMBER := 0; -- Valor dos débitos do histórico 1017 (Aplicável somente para a Transpocred)
-     vr_vldeb2425 NUMBER := 0; -- Valor dos lançamentos/débitos do histórico 2425-TRANSFERENCIA BLOQUEIO JUDICIAL
 
      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
   BEGIN
@@ -3935,23 +3913,7 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
 		     CONTINUE; -- Avança para a próxima conta, pois não deve efetuar nenhum pagamento
            END IF;
          END IF;
-         
-         --Verifica/Busca Soma de Lançamentos/Débitos com Histórico 2425-TRANSFERENCIA BLOQUEIO JUDICIAL.
-         vr_vldeb2425 := 0;
-         OPEN cr_hist2425(pr_cdcooper => pr_cdcooper
-                         ,pr_nrdconta => rw_contaprej.nrdconta
-                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
-         FETCH cr_hist2425 INTO vr_vldeb2425;
-         CLOSE cr_hist2425;     
-         
-         -- Se o valor dos lançamentos em CC é o mesmo que o valor dos lanclamento histórico 2425-TRANSFERENCIA BLOQUEIO JUDICIAL. 
-         IF Nvl(vr_vlsddisp,0) = Nvl(vr_vldeb2425,0) THEN
-           -- Zera o valor do saldo liberado para operações na conta transitória
-           PREJ0006.pc_zera_saldo_liberado_CT(pr_cdcooper => pr_cdcooper
-                                            , pr_nrdconta => rw_contaprej.nrdconta);           
-           CONTINUE; -- Avança para a próxima conta, pois não deve efetuar nenhum pagamento de prejuizo
-         END IF;            
-         
+
          -- Verificar se ainda possui saldo de prejuízo a pagar
          vr_vlsldprj := fn_obtem_saldo_prejuizo_cc(pr_cdcooper => pr_cdcooper, 
                                                    pr_nrdconta => rw_contaprej.nrdconta);
