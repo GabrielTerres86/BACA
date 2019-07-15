@@ -4012,7 +4012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       -- Verificar se alteraram a data débito 
       IF pr_indebito <> rw_craprpp.diadebit THEN
          -- Foi alterada
-         IF pr_indebito > rw_craprpp.diadebit THEN -- Debitar novamente neste mês
+         IF pr_indebito > extract(day from vr_dtmvtolt) THEN -- Debitar novamente neste mês
              BEGIN
                   vr_dtproxdeb := TO_DATE(TO_CHAR(pr_indebito,'00')||TO_CHAR(vr_dtmvtolt,'/MM/YYYY'),'DD/MM/YYYY');
              EXCEPTION -- Colocar para o dia primeiro do próximo mês

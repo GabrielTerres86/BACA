@@ -142,10 +142,10 @@
                 18/05/2018 - Validar bloqueio de poupança programada (SM404);
 
                 19/07/2018 - Proj. 411.2 - Poupança Programada -> Aplicação Programada
-				
+
                 16/04/2019 - Ajustado para nao validar a qtd de meses para suspensao com o vencimento do plano,
                              pois a informacao do plano nao eh mais utilizada (Anderson)
-
+				
 ..............................................................................*/
 
 
@@ -864,7 +864,7 @@ PROCEDURE consulta-extrato-poupanca:
 					 IF xField:SUBTYPE <> "ELEMENT" THEN 
 						 NEXT. 
 
-					 xField:GET-CHILD(xText,1).                   
+					 xField:GET-CHILD(xText,1) NO-ERROR.
 
 					ASSIGN aux_txaplmes = DECI(xText:NODE-VALUE) WHEN xField:NAME = "txaplmes"
 						    aux_txaplica = DECI(xText:NODE-VALUE) WHEN xField:NAME = "txaplica"
@@ -886,11 +886,17 @@ PROCEDURE consulta-extrato-poupanca:
 													  aux_nrdocmto 
 												  ELSE 
 													  0
-							tt-extr-rpp.indebcre = xText:NODE-VALUE WHEN xField:NAME = "indebcre"
+              
 							tt-extr-rpp.vllanmto = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vllanmto"
 							tt-extr-rpp.vlsldppr = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsldppr"
 							tt-extr-rpp.nrdolote = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrdolote"
 							tt-extr-rpp.dsextrat = xText:NODE-VALUE WHEN xField:NAME = "dsextrat".
+
+              
+							ASSIGN tt-extr-rpp.indebcre = IF tt-extr-rpp.dshistor = "SALDO ANTERIOR" THEN
+							     " "
+							ELSE 
+							     xText:NODE-VALUE WHEN xField:NAME = "indebcre".
 
 				END.            
 			END.
@@ -1556,8 +1562,8 @@ PROCEDURE validar-dados-suspensao:
             DO:
                 ASSIGN aux_cdcritic = 26.
                 LEAVE.
-            END.
-        
+            END.  
+            
         Comentado pois nao faz mais sentido, nao tem mais campo de vencimento **/
         
         ASSIGN aux_flgerror = FALSE.
