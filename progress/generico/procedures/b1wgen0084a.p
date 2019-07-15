@@ -46,7 +46,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0084a.p
     Autor   : Gabriel
-    Data    : Setembro/2011               ultima Atualizacao: 08/07/2018
+    Data    : Setembro/2011               ultima Atualizacao: 11/07/2019
      
     Dados referentes ao programa:
    
@@ -183,7 +183,10 @@
                              PRJ450 - Regulatorio(Odirlei-AMcom)
 
                 02/07/2019 - P437 - Consignado - Ajuste na rotina gera_pagamentos_parcelas, para não permitir efetuar pagamento de emprestimo do consignado
-				             Josiane Stiehler - AMcom
+				                     (Josiane Stiehler - AMcom)
+                     
+                11/07/2019 - P437 - Consignado - Ajuste na rotina calcula_atraso_parcela, para emprestimos do consignado retornar valores da FIS gravados na crapepr e crappep 
+                             (Fernanda Kelli - AMcom)     
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
@@ -783,7 +786,7 @@ PROCEDURE calcula_atraso_parcela:
           END.
        ELSE
           ASSIGN aux_percmult = 0.
-
+       
        /* Parcela */
        FIND crabpep WHERE crabpep.cdcooper = par_cdcooper   AND
                           crabpep.nrdconta = par_nrdconta   AND
@@ -797,242 +800,260 @@ PROCEDURE calcula_atraso_parcela:
                 UNDO Calcula, LEAVE Calcula.
             END.
 
-              /* Prazo para tolerancia da multa */
-       ASSIGN aux_nrdiamta = crabepr.qttolatr
-              /* Prazo de tolerancia para incidencia de juros de mora */    
-              aux_prtljuro = aux_nrdiamta.
-                       
-       /* Se ainda nao pagou nada da parcela, pegar a data de vencimento dela */  
-       IF   crabpep.dtultpag = ?                  OR 
-            crabpep.dtultpag < crabpep.dtvencto   THEN
-            ASSIGN aux_dtmvtolt = crabpep.dtvencto.
-       ELSE
-            DO: /* Senao pegar a ultima data que pagou a parcela  */                
-                  ASSIGN aux_dtmvtolt = crabpep.dtultpag. 
-            END.
-              
-       ASSIGN aux_diavtolt = DAY(par_dtmvtolt)     
-              aux_mesvtolt = MONTH(par_dtmvtolt)   
-              aux_anovtolt = YEAR(par_dtmvtolt)
-              aux_qtdiaiof = par_dtmvtolt - aux_dtmvtolt.    
-
-       /* Calcular quantidade de dias para o saldo devedor */
-       RUN sistema/generico/procedures/b1wgen0084.p PERSISTENT SET h-b1wgen0084.
-
-       /* Calcular quantidade de dias para o saldo devedor */
-       RUN Dias360 IN h-b1wgen0084 
-                   (INPUT FALSE,
-                    INPUT DAY(crabepr.dtdpagto),
-                    INPUT DAY(aux_dtmvtolt),  
-                    INPUT MONTH(aux_dtmvtolt),
-                    INPUT YEAR(aux_dtmvtolt), 
-                    INPUT-OUTPUT aux_diavtolt,
-                    INPUT-OUTPUT aux_mesvtolt,
-                    INPUT-OUTPUT aux_anovtolt,
-                    OUTPUT aux_qtdiasld).
-
-       DELETE PROCEDURE h-b1wgen0084.
-
-       /* Calcula quantos dias passaram do vencimento até o parametro par_dtmvtolt 
-          será usado para comparar se a quantidade de dias que passou está dentro
-          da tolerância */
-       aux_qtdianor = par_dtmvtolt - crabpep.dtvencto.
-
-       /* Se ainda nao pagou nada da parcela, pegar a data de vencimento dela */  
-       IF   crabpep.dtultpag <> ? OR crabpep.vlpagmra > 0  THEN
-            DO: 
-                       /* Financiamento */
-                ASSIGN aux_cdhistor[1] = 1078
-                       aux_cdhistor[2] = 1620
-                
-                       /* Emprestimo */ 
-                       aux_cdhistor[3] = 1077
-                       aux_cdhistor[4] = 1619.
-                   
-                DO aux_conthist = 1 TO 4:
-                   
-                   /* Obter ultimo lancamento de juro do contrato */
-                   FOR EACH craplem FIELDS(dtmvtolt)
-                      WHERE craplem.cdcooper = par_cdcooper               AND
-                            craplem.nrdconta = par_nrdconta               AND
-                            craplem.nrctremp = par_nrctremp               AND
-                            craplem.nrparepr = par_nrparepr               AND
-                            craplem.cdhistor = aux_cdhistor[aux_conthist]
-                            NO-LOCK:
-                   
-                       IF craplem.dtmvtolt > aux_dtmvtolt OR   
-                          aux_dtmvtolt = ?                THEN
-                          ASSIGN aux_dtmvtolt = craplem.dtmvtolt.  
-                   
-                   END. /* END FOR EACH craplem */
-
-                END. /* END DO aux_conthist */
-
-            END. /* END IF crabpep.dtultpag <> ? */
-              
-       /* Calcular quantidade de dias para o juros de mora desde 
-        o ultima ocorrência de juros de mora/vencimento até o par_dtmvtolt */
-       aux_qtdiamor = par_dtmvtolt - aux_dtmvtolt.
-
-       /* Calculo do valor da multa */
-       /* Verifica se esta na tolerancia da multa, 
-          aux_qtdianor é quantidade de dias que passaram 
-          aux_nrdiamta é quantidade de dias de tolerância parametrizada */
-       ASSIGN aux_percmult = IF aux_qtdianor <= aux_nrdiamta THEN 
-                                0
-                             ELSE 
-                                aux_percmult 
-
-              par_vlmtapar = ROUND(crabpep.vlparepr * aux_percmult / 100,2) - 
-                             crabpep.vlpagmta.
+       /*P437-Consignado. Se Consignado, retornar os valores calculados pela FIS*/
+       IF crapepr.tpemprst = 1 AND 
+          crapepr.tpdescto = 2 THEN
+         DO:
+           ASSIGN par_vlpagsld = crappep.vlsdvpar
+                  par_vlatupar = crappep.vlsdvatu
+                  par_vlmtapar = crappep.vlmtapar
+                  par_vljinpar = crappep.vljinpar
+                  par_vlmrapar = crappep.vlmrapar
+                  par_vliofcpl = crappep.vliofcpl
+                  par_vljinp60 = crappep.vljura60.
            
-       /* Valor saldo devedor da parcela  */
-       ASSIGN aux_vlsldpar = crabpep.vlsdvpar.
-
-       /* Considerando valor da parcela */
-       RUN calcula_juros_normais_total (INPUT aux_vlsldpar,
-                                        INPUT crabepr.txmensal,
-                                        INPUT aux_qtdiasld,
-                                        OUTPUT par_vljinpar).
-       
-       /* calculado na include crps310.i */
-       /*
-       IF   aux_qtdiasld > 59   THEN
-            DO:
-                /* Considerando valor da parcela ate 59 dias */
-                RUN calcula_juros_normais_total (INPUT aux_vlsldpar,
-                                                 INPUT crabepr.txmensal,
-                                                 INPUT 59,
-                                                 OUTPUT par_vljinp59).
-                
-                /* Comentado por Irlan. Nao eh necessario calcular, basta subtrair
-                   par_vljinpar - par_vljinpar */
-                
-                /* Considerando valor da parcela retirando os 59 dias */
-
-                /*
-                RUN calcula_juros_normais_total (INPUT aux_vlsldpar + par_vljinp59,
-                                                 INPUT crabepr.txmensal,
-                                                 INPUT aux_qtdiasld - 59,
-                                                 OUTPUT par_vljinp60).
-                */
-
-                par_vljinp60 = par_vljinpar - par_vljinp59.
-
-            END.
-       
+          ASSIGN aux_flgtrans = TRUE.
+           
+         END.
        ELSE
-            DO:
-                /* Considerando valor da parcela ate 59 dias */
-                RUN calcula_juros_normais_total (INPUT aux_vlsldpar,
-                                                 INPUT crabepr.txmensal,
-                                                 INPUT aux_qtdiasld,
-                                                 OUTPUT par_vljinp59).
-            END.
-       */
-       /* Valor atual parcela */
-       ASSIGN par_vlatupar = crabpep.vlsdvpar + par_vljinpar.
+       DO:
+                /* Prazo para tolerancia da multa */
+         ASSIGN aux_nrdiamta = crabepr.qttolatr
+                /* Prazo de tolerancia para incidencia de juros de mora */    
+                aux_prtljuro = aux_nrdiamta.
+                         
+         /* Se ainda nao pagou nada da parcela, pegar a data de vencimento dela */  
+         IF   crabpep.dtultpag = ?                  OR 
+              crabpep.dtultpag < crabpep.dtvencto   THEN
+              ASSIGN aux_dtmvtolt = crabpep.dtvencto.
+         ELSE
+              DO: /* Senao pegar a ultima data que pagou a parcela  */                
+                    ASSIGN aux_dtmvtolt = crabpep.dtultpag. 
+              END.
+                
+         ASSIGN aux_diavtolt = DAY(par_dtmvtolt)     
+                aux_mesvtolt = MONTH(par_dtmvtolt)   
+                aux_anovtolt = YEAR(par_dtmvtolt)
+                aux_qtdiaiof = par_dtmvtolt - aux_dtmvtolt.    
 
-       /* Calcular o valor dos juros de mora */
-       
-       /* Verifica se esta na tolerancia dos juros de mora, 
-          aux_qtdianor é quantidade de dias que passaram 
-          aux_prtljuro é quantidade de dias de tolerância parametrizada */
-       IF   aux_qtdianor <= aux_prtljuro   THEN
-            ASSIGN par_vlmrapar = 0.
-       ELSE 
-            ASSIGN aux_txdiaria = 
-       
-                     ROUND( (100 * (EXP ((craplcr.perjurmo  / 100) + 1 , (1 / 30)) - 1)), 10)
+         /* Calcular quantidade de dias para o saldo devedor */
+         RUN sistema/generico/procedures/b1wgen0084.p PERSISTENT SET h-b1wgen0084.
 
-                   aux_txdiaria =   aux_txdiaria / 100
-                   
-                   par_vlmrapar = crabpep.vlsdvsji * aux_txdiaria * aux_qtdiamor.
-                                   
-                   /** Necessario arredondar devido a diferencas entre LCM e LEM **/
-                   par_vlmrapar = ROUND(par_vlmrapar,2).
-                                   
-                    /* Calcular IOF por atraso */	   
-                    /* Projeto 410 - Novo IOF */
+         /* Calcular quantidade de dias para o saldo devedor */
+         RUN Dias360 IN h-b1wgen0084 
+                     (INPUT FALSE,
+                      INPUT DAY(crabepr.dtdpagto),
+                      INPUT DAY(aux_dtmvtolt),  
+                      INPUT MONTH(aux_dtmvtolt),
+                      INPUT YEAR(aux_dtmvtolt), 
+                      INPUT-OUTPUT aux_diavtolt,
+                      INPUT-OUTPUT aux_mesvtolt,
+                      INPUT-OUTPUT aux_anovtolt,
+                      OUTPUT aux_qtdiasld).
 
-                   /* calcula valor base do IOF de acordo com valor principal (parcela - juros) */
-                   ASSIGN aux_vlbasiof = crabpep.vlparepr / (EXP((1 + crabepr.txmensal / 100 ), 
-                                                                    ( crabepr.qtpreemp -  crabpep.nrparepr + 1))).                   
-                   
+         DELETE PROCEDURE h-b1wgen0084.
 
-                   /* BAse do IOF Complementar é o menor valor entre o Principal ou o Saldo Devedor */           
-                   IF aux_vlbasiof > crabpep.vlsdvsji THEN
-                   DO:
-                       ASSIGN aux_vlbasiof = crabpep.vlsdvsji.
-                   END.  
-                   
-                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-                   RUN STORED-PROCEDURE pc_calcula_valor_iof_epr
-                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2                /* Somente IOF Complementar do Atraso */
-                                                       ,INPUT par_cdcooper     /* Código da cooperativa referente ao contrato de empréstimos */
-                                                       ,INPUT par_nrdconta     /* Número da conta referente ao empréstimo */
-                                                       ,INPUT par_nrctremp     /* Número do contrato de empréstimo */
-                                                       ,INPUT aux_vlbasiof     /*crapepr.vlsdeved*/     /* Valor do empréstimo para efeito de cálculo */
-                                                       ,INPUT crabepr.vlemprst /* vltotope */
-                                                       ,INPUT ""               /* Descrição da categoria do bem, valor default NULO  */
-                                                       ,INPUT crabepr.cdlcremp     /* Linha de crédito do empréstimo */
-                                                       ,INPUT crabepr.cdfinemp     /* Finalidade do crédito do empréstimo */
-                                                       ,INPUT par_dtmvtolt     /* Data do movimento */
-                                                       ,INPUT aux_qtdiaiof     /* Quantidade de dias em atraso */
-                                                       ,OUTPUT 0               /* Valor do IOF principal */
-                                                       ,OUTPUT 0               /* Valor do IOF adicional */
-                                                       ,OUTPUT 0               /* Valor do IOF complementar */
-                                                       ,OUTPUT 0               /* Valor da Taxa do IOF Principal */
-                                                       ,OUTPUT 0               /* Possui imunidade tributária */
-                                                       ,OUTPUT "").            /* Critica */
+         /* Calcula quantos dias passaram do vencimento até o parametro par_dtmvtolt 
+            será usado para comparar se a quantidade de dias que passou está dentro
+            da tolerância */
+         aux_qtdianor = par_dtmvtolt - crabpep.dtvencto.
+
+         /* Se ainda nao pagou nada da parcela, pegar a data de vencimento dela */  
+         IF   crabpep.dtultpag <> ? OR crabpep.vlpagmra > 0  THEN
+              DO: 
+                         /* Financiamento */
+                  ASSIGN aux_cdhistor[1] = 1078
+                         aux_cdhistor[2] = 1620
+                  
+                         /* Emprestimo */ 
+                         aux_cdhistor[3] = 1077
+                         aux_cdhistor[4] = 1619.
+                     
+                  DO aux_conthist = 1 TO 4:
+                     
+                     /* Obter ultimo lancamento de juro do contrato */
+                     FOR EACH craplem FIELDS(dtmvtolt)
+                        WHERE craplem.cdcooper = par_cdcooper               AND
+                              craplem.nrdconta = par_nrdconta               AND
+                              craplem.nrctremp = par_nrctremp               AND
+                              craplem.nrparepr = par_nrparepr               AND
+                              craplem.cdhistor = aux_cdhistor[aux_conthist]
+                              NO-LOCK:
+                     
+                         IF craplem.dtmvtolt > aux_dtmvtolt OR   
+                            aux_dtmvtolt = ?                THEN
+                            ASSIGN aux_dtmvtolt = craplem.dtmvtolt.  
+                     
+                     END. /* END FOR EACH craplem */
+
+                  END. /* END DO aux_conthist */
+
+              END. /* END IF crabpep.dtultpag <> ? */
+                
+         /* Calcular quantidade de dias para o juros de mora desde 
+          o ultima ocorrência de juros de mora/vencimento até o par_dtmvtolt */
+         aux_qtdiamor = par_dtmvtolt - aux_dtmvtolt.
+
+         /* Calculo do valor da multa */
+         /* Verifica se esta na tolerancia da multa, 
+            aux_qtdianor é quantidade de dias que passaram 
+            aux_nrdiamta é quantidade de dias de tolerância parametrizada */
+         ASSIGN aux_percmult = IF aux_qtdianor <= aux_nrdiamta THEN 
+                                  0
+                               ELSE 
+                                  aux_percmult 
+
+                par_vlmtapar = ROUND(crabpep.vlparepr * aux_percmult / 100,2) - 
+                               crabpep.vlpagmta.
              
-                   /* Fechar o procedimento para buscarmos o resultado */ 
-                   CLOSE STORED-PROC pc_calcula_valor_iof_epr
+         /* Valor saldo devedor da parcela  */
+         ASSIGN aux_vlsldpar = crabpep.vlsdvpar.
 
-                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-        
-                   /* Se retornou erro */
-                   ASSIGN aux_dscritic = ""
-                          aux_dscritic = pc_calcula_valor_iof_epr.pr_dscritic WHEN pc_calcula_valor_iof_epr.pr_dscritic <> ?.
-                          
+         /* Considerando valor da parcela */
+         RUN calcula_juros_normais_total (INPUT aux_vlsldpar,
+                                          INPUT crabepr.txmensal,
+                                          INPUT aux_qtdiasld,
+                                          OUTPUT par_vljinpar).
+         
+         /* calculado na include crps310.i */
+         /*
+         IF   aux_qtdiasld > 59   THEN
+              DO:
+                  /* Considerando valor da parcela ate 59 dias */
+                  RUN calcula_juros_normais_total (INPUT aux_vlsldpar,
+                                                   INPUT crabepr.txmensal,
+                                                   INPUT 59,
+                                                   OUTPUT par_vljinp59).
+                  
+                  /* Comentado por Irlan. Nao eh necessario calcular, basta subtrair
+                     par_vljinpar - par_vljinpar */
+                  
+                  /* Considerando valor da parcela retirando os 59 dias */
 
-                   IF aux_dscritic <> "" THEN
-                     UNDO Calcula , LEAVE Calcula.            
-/*                     RETURN "NOK".*/
+                  /*
+                  RUN calcula_juros_normais_total (INPUT aux_vlsldpar + par_vljinp59,
+                                                   INPUT crabepr.txmensal,
+                                                   INPUT aux_qtdiasld - 59,
+                                                   OUTPUT par_vljinp60).
+                  */
+
+                  par_vljinp60 = par_vljinpar - par_vljinp59.
+
+              END.
+         
+         ELSE
+              DO:
+                  /* Considerando valor da parcela ate 59 dias */
+                  RUN calcula_juros_normais_total (INPUT aux_vlsldpar,
+                                                   INPUT crabepr.txmensal,
+                                                   INPUT aux_qtdiasld,
+                                                   OUTPUT par_vljinp59).
+              END.
+         */
+         /* Valor atual parcela */
+         ASSIGN par_vlatupar = crabpep.vlsdvpar + par_vljinpar.
+
+         /* Calcular o valor dos juros de mora */
+         
+         /* Verifica se esta na tolerancia dos juros de mora, 
+            aux_qtdianor é quantidade de dias que passaram 
+            aux_prtljuro é quantidade de dias de tolerância parametrizada */
+         IF   aux_qtdianor <= aux_prtljuro   THEN
+              ASSIGN par_vlmrapar = 0.
+         ELSE 
+              ASSIGN aux_txdiaria = 
+         
+                       ROUND( (100 * (EXP ((craplcr.perjurmo  / 100) + 1 , (1 / 30)) - 1)), 10)
+
+                     aux_txdiaria =   aux_txdiaria / 100
                      
+                     par_vlmrapar = crabpep.vlsdvsji * aux_txdiaria * aux_qtdiamor.
+                                     
+                     /** Necessario arredondar devido a diferencas entre LCM e LEM **/
+                     par_vlmrapar = ROUND(par_vlmrapar,2).
+                                     
+                      /* Calcular IOF por atraso */	   
+                      /* Projeto 410 - Novo IOF */
+
+                     /* calcula valor base do IOF de acordo com valor principal (parcela - juros) */
+                     ASSIGN aux_vlbasiof = crabpep.vlparepr / (EXP((1 + crabepr.txmensal / 100 ), 
+                                                                      ( crabepr.qtpreemp -  crabpep.nrparepr + 1))).                   
                      
-                   /* Soma IOF complementar ao saldo, se tiver IOF complementar e não for imune */
-                   ASSIGN par_vliofcpl = 0.
-                   IF pc_calcula_valor_iof_epr.pr_vliofcpl <> ? 
-				           AND pc_calcula_valor_iof_epr.pr_flgimune <> ? 
-				           AND pc_calcula_valor_iof_epr.pr_flgimune <= 0 THEN
+
+                     /* BAse do IOF Complementar é o menor valor entre o Principal ou o Saldo Devedor */           
+                     IF aux_vlbasiof > crabpep.vlsdvsji THEN
                      DO:
-                       ASSIGN par_vliofcpl = ROUND(DECI(pc_calcula_valor_iof_epr.pr_vliofcpl),2).
-                     END.
-                     
-                   IF par_vliofcpl <> ? AND crabpep.vlpagiof > 0 THEN
-                     DO:
-                       ASSIGN par_vliofcpl = par_vliofcpl - crabpep.vlpagiof.
-                       IF par_vliofcpl < 0 THEN
-                         DO:
-                           ASSIGN par_vliofcpl = 0.
-                         END.
+                         ASSIGN aux_vlbasiof = crabpep.vlsdvsji.
                      END.  
                      
-                     
-                     
-       /* Valor a pagar - multa e juros de mora  */
-       ASSIGN  par_vlpagsld = IF   par_vlpagpar <> 0   THEN
-                                   par_vlpagpar - (ROUND(par_vlmtapar,2) + 
-                                                                 ROUND(par_vlmrapar,2) +
-                                                                 ROUND(par_vliofcpl,2))
-                              ELSE 
-                                   par_vlatupar .
-                  
-       ASSIGN aux_flgtrans = TRUE.
+                     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                     RUN STORED-PROCEDURE pc_calcula_valor_iof_epr
+                     aux_handproc = PROC-HANDLE NO-ERROR (INPUT 2                /* Somente IOF Complementar do Atraso */
+                                                         ,INPUT par_cdcooper     /* Código da cooperativa referente ao contrato de empréstimos */
+                                                         ,INPUT par_nrdconta     /* Número da conta referente ao empréstimo */
+                                                         ,INPUT par_nrctremp     /* Número do contrato de empréstimo */
+                                                         ,INPUT aux_vlbasiof     /*crapepr.vlsdeved*/     /* Valor do empréstimo para efeito de cálculo */
+                                                         ,INPUT crabepr.vlemprst /* vltotope */
+                                                         ,INPUT ""               /* Descrição da categoria do bem, valor default NULO  */
+                                                         ,INPUT crabepr.cdlcremp     /* Linha de crédito do empréstimo */
+                                                         ,INPUT crabepr.cdfinemp     /* Finalidade do crédito do empréstimo */
+                                                         ,INPUT par_dtmvtolt     /* Data do movimento */
+                                                         ,INPUT aux_qtdiaiof     /* Quantidade de dias em atraso */
+                                                         ,OUTPUT 0               /* Valor do IOF principal */
+                                                         ,OUTPUT 0               /* Valor do IOF adicional */
+                                                         ,OUTPUT 0               /* Valor do IOF complementar */
+                                                         ,OUTPUT 0               /* Valor da Taxa do IOF Principal */
+                                                         ,OUTPUT 0               /* Possui imunidade tributária */
+                                                         ,OUTPUT "").            /* Critica */
+               
+                     /* Fechar o procedimento para buscarmos o resultado */ 
+                     CLOSE STORED-PROC pc_calcula_valor_iof_epr
 
-    END. /* Calcula */
+                     aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+          
+                     /* Se retornou erro */
+                     ASSIGN aux_dscritic = ""
+                            aux_dscritic = pc_calcula_valor_iof_epr.pr_dscritic WHEN pc_calcula_valor_iof_epr.pr_dscritic <> ?.
+                            
+
+                     IF aux_dscritic <> "" THEN
+                       UNDO Calcula , LEAVE Calcula.            
+  /*                     RETURN "NOK".*/
+                       
+                       
+                     /* Soma IOF complementar ao saldo, se tiver IOF complementar e não for imune */
+                     ASSIGN par_vliofcpl = 0.
+                     IF pc_calcula_valor_iof_epr.pr_vliofcpl <> ? 
+                     AND pc_calcula_valor_iof_epr.pr_flgimune <> ? 
+                     AND pc_calcula_valor_iof_epr.pr_flgimune <= 0 THEN
+                       DO:
+                         ASSIGN par_vliofcpl = ROUND(DECI(pc_calcula_valor_iof_epr.pr_vliofcpl),2).
+                       END.
+                       
+                     IF par_vliofcpl <> ? AND crabpep.vlpagiof > 0 THEN
+                       DO:
+                         ASSIGN par_vliofcpl = par_vliofcpl - crabpep.vlpagiof.
+                         IF par_vliofcpl < 0 THEN
+                           DO:
+                             ASSIGN par_vliofcpl = 0.
+                           END.
+                       END.  
+                       
+                       
+                       
+         /* Valor a pagar - multa e juros de mora  */
+         ASSIGN  par_vlpagsld = IF   par_vlpagpar <> 0   THEN
+                                     par_vlpagpar - (ROUND(par_vlmtapar,2) + 
+                                                                   ROUND(par_vlmrapar,2) +
+                                                                   ROUND(par_vliofcpl,2))
+                                ELSE 
+                                     par_vlatupar .
+                    
+         ASSIGN aux_flgtrans = TRUE.
+
+      END. /* Calcula */
+    END.
 
     IF   NOT aux_flgtrans  THEN
          DO:
@@ -2653,6 +2674,7 @@ PROCEDURE efetiva_pagamento_atrasado_parcela_craplem:
                                                      ,INPUT 0                /* iof adicional */
                                                      ,INPUT aux_vliofcpl     /* iof complementar */
                                                      ,INPUT 0                 /* flag IMUNE - fixo 0 pois se entrar aqui nao é imune */
+                                                     ,INPUT ?                 /* Chave: Id Lancamento IOF*/
                                                      ,OUTPUT 0               /* codigo da critica */
                                                      ,OUTPUT "").            /* Critica */
            
