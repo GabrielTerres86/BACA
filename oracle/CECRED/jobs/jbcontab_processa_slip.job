@@ -41,6 +41,9 @@ BEGIN
                                                           vr_dscritic crapcri.dscritic%type;
                                                         begin
                                                           cont0002.pc_processa_lanc_slip;
+                                                        exception
+                                                          when others then
+                                                            raise_application_error(-20001, sqlerrm);
                                                         end;',
                                 start_date          => to_date('26-10-2018 09:00:00', 'dd-mm-yyyy hh24:mi:ss'),
                                 repeat_interval     => 'Freq=DAILY;ByDay=MON, TUE, WED, THU, FRI;ByHour=8;ByMinute=0;BySecond=0',
