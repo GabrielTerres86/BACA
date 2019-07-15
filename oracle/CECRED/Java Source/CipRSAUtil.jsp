@@ -5,9 +5,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -205,8 +205,9 @@ public class CipRSAUtil {
     try {
       // Criar o arquivo
       File arquivo = new File(inputFile);
-      FileReader readerArquivo = new FileReader(arquivo);
-      BufferedReader leitorArquivo = new BufferedReader(readerArquivo);
+      
+      BufferedReader leitorArquivo = new BufferedReader(new InputStreamReader(new FileInputStream(arquivo), "UTF-8"));
+
 
       // Ler a linha do arquivo
       String linha = leitorArquivo.readLine();
@@ -222,7 +223,7 @@ public class CipRSAUtil {
       }
 
       // Fechar o arquivo
-      readerArquivo.close();
+      leitorArquivo.close();
 
     } catch (IOException e) {
       return "Erro na abertura do arquivo(" + inputFile + "): " + e.getMessage();
@@ -324,7 +325,7 @@ public class CipRSAUtil {
 
       // Gravar os bytes no arquivo
       outputStream.write(finalFile);
-
+      
       // Fechar o Stream salvando o arquivo
       outputStream.close();
 
@@ -529,8 +530,8 @@ public class CipRSAUtil {
     MessageDigest md = MessageDigest.getInstance("SHA-256");
     md.update(byteXml);
 
-		return DatatypeConverter.printHexBinary(md.digest());
-	}
+    return DatatypeConverter.printHexBinary(md.digest());
+  }
 
 }
 /
