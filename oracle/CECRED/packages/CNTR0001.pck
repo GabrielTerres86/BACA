@@ -27,7 +27,9 @@ PROCEDURE pc_gera_protocolo_ctd(pr_cdcooper IN NUMBER
                                ,pr_cdcritic OUT VARCHAR2 -- Codigo da critica
                                ,pr_dscritic OUT VARCHAR2
                                ,pr_des_erro OUT VARCHAR2
-                               ,pr_retxml   IN OUT NOCOPY XMLType);                               
+                               ,pr_retxml   IN OUT NOCOPY XMLType
+                               ,pr_flgfinal IN VARCHAR2 DEFAULT 'S' -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+                               );                               
 
 PROCEDURE pc_gera_protocolo_ctd_pj(pr_nrdconta in number
                                   ,pr_cdtippro in number
@@ -100,6 +102,28 @@ PROCEDURE pc_inativa_protocolo(pr_cdcooper  IN crapcop.cdcooper%TYPE
                               ,pr_cdtippro  IN crappro.cdtippro%TYPE
                               ,pr_nrdocmto  IN crappro.nrdocmto%TYPE
                               ,pr_dscritic OUT VARCHAR2);
+
+PROCEDURE pc_atualiza_protocolo_ctd(pr_cdtransacao_pendente     IN tbgen_aprova_trans_pend.cdtransacao_pendente%TYPE
+                                   ,pr_nrcpf_responsavel_aprov  IN tbgen_aprova_trans_pend.nrcpf_responsavel_aprov%TYPE
+                                   ,pr_flgfinal                 IN VARCHAR2
+                                   ,pr_dscritic OUT VARCHAR2);
+
+PROCEDURE pc_gera_log_ctd(pr_cdcooper     IN NUMBER
+                         ,pr_nrdconta     IN NUMBER
+                         ,pr_tpcontrato   IN NUMBER
+                         ,pr_nrcontrato   IN NUMBER
+                         ,pr_cdoperad     IN VARCHAR2
+                         ,pr_idorigem     IN NUMBER
+                         ,pr_tpsenha      IN VARCHAR2
+                         ,pr_dsaprovador  IN VARCHAR2
+                         ,pr_dscritic    OUT VARCHAR2);
+                          
+PROCEDURE pc_busca_cet_limite(pr_cdcooper     IN NUMBER
+                             ,pr_nrdconta     IN NUMBER
+                             ,pr_nrctrlim     IN NUMBER
+                             ,pr_dsfrase     OUT VARCHAR2
+                             ,pr_cdcritic    OUT NUMBER
+                             ,pr_dscritic    OUT VARCHAR2);
 END CNTR0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CNTR0001 AS
@@ -376,27 +400,76 @@ BEGIN
       vr_dscritic:='Erro ao tratar os registros das contas recebidas --> '||pr_contas_digitadas;
       raise vr_exec_erro;
     END;
-     
-    vr_dstransa := 'Aprovação de transação de propostos pendentes';
-    GENE0001.pc_gera_log( pr_cdcooper => vr_cdcooper
-                         ,pr_cdoperad => vr_cdoperad 
-                         ,pr_dscritic => ''         
-                         ,pr_dsorigem => vr_dsorigem
-                         ,pr_dstransa => vr_dstransa
-                         ,pr_dttransa => trunc(sysdate)
-                         ,pr_flgtrans => 1
-                         ,pr_hrtransa => gene0002.fn_busca_time
-                         ,pr_idseqttl => 1
-                         ,pr_nmdatela => vr_nmdatela
-                         ,pr_nrdconta => pr_nrdconta
-                         ,pr_nrdrowid => vr_nrdrowid);
+    -- Buscar os aprovadores para incluir no protocolo
+    -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+    FOR r1 IN (SELECT gene0002.fn_mask_cpf_cnpj(nrcpf_responsavel_aprov
+                     ,(CASE 
+                       WHEN LENGTH(nrcpf_responsavel_aprov)<=11 THEN 
+                         1 
+                       ELSE 
+                         2 
+                       END))
+                       ||' - '|| o.nmprimtl as nmpessoa
+                      ,p.cdoperad
+                      ,TO_CHAR(m.dtalteracao_situacao,'dd/mm/yyyy') || ' às ' ||
+                       TO_CHAR(TO_DATE(m.hralteracao_situacao,'sssss'),'hh24:mi:ss') dhaprovacao
+                 FROM tbgen_trans_pend l
+                     ,tbgen_aprova_trans_pend m
+                     ,crapavt n
+                     ,crapass o
+                     ,tbctd_trans_pend p
+                WHERE l.cdtransacao_pendente = vr_cdtranpe
+                  AND m.cdtransacao_pendente = l.cdtransacao_pendente
+                  AND m.nrdconta = l.nrdconta
+                  AND n.cdcooper (+) = m.cdcooper
+                  AND n.nrdconta (+) = m.nrdconta
+                  AND n.nrcpfcgc (+) = m.nrcpf_responsavel_aprov
+                  AND o.cdcooper = n.cdcooper
+                  AND o.nrdconta = n.nrdctato
+                  AND p.cdtransacao_pendente = l.cdtransacao_pendente
+                  AND m.idsituacao_aprov = 2 --Aprovado
+               )
+    LOOP
+      vr_dsaprovador := vr_dsaprovador || r1.nmpessoa || ' - ' || r1.dhaprovacao || CHR(10);
+      vr_cdoperad    := r1.cdoperad;
+    END LOOP;
+    vr_dsaprovador := SUBSTR(vr_dsaprovador,1,LENGTH(vr_dsaprovador)-1); -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
 
-    --Gera log da transação que foi aprovada                           
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                              pr_nmdcampo => 'Codigo da Transacao Pendente Aprovada', 
-                              pr_dsdadant => '',
-                              pr_dsdadatu => vr_cdtranpe);
-                              
+    -- Passar a gerar o protocolo na geração da pendência no IB
+    pc_gera_protocolo_ctd(pr_cdcooper      => vr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_cdtippro      => pr_tpcontrato
+                         ,pr_dhcontrato    => SYSDATE
+                         ,pr_nrcontrato    => pr_nrcontrato
+                         ,pr_vlcontrato    => pr_vlcontrato
+                         ,pr_dsaprovador   => vr_dsaprovador
+                         ,pr_flgfinal      => 'N'
+                         ,pr_nrdcaixa      => vr_nrdcaixa
+                         ,pr_cdoperad      => vr_cdoperad
+                         ,pr_idorigem      => vr_idorigem
+                         ,pr_cdcritic      => vr_cdcritic
+                         ,pr_dscritic      => vr_dscritic
+                         ,pr_des_erro      => vr_des_erro
+                         ,pr_retxml        => pr_retxml);
+   --Se ocorreu erro
+   IF vr_des_erro = 'NOK' THEN
+      RAISE vr_exec_erro;
+   END IF; 
+   -- Gerar log ao cooperado - VERLOG
+   pc_gera_log_ctd(pr_cdcooper    => vr_cdcooper
+                  ,pr_nrdconta    => pr_nrdconta
+                  ,pr_tpcontrato  => pr_tpcontrato
+                  ,pr_nrcontrato  => pr_nrcontrato
+                  ,pr_cdoperad    => vr_cdoperad
+                  ,pr_idorigem    => vr_idorigem
+                  ,pr_tpsenha     => 'PRESENCIAL'
+                  ,pr_dsaprovador => vr_dsaprovador
+                  ,pr_dscritic    => vr_dscritic);
+   --Se ocorreu erro
+   IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exec_erro;
+   END IF; 
+   -- Fim Pj470 - SM2    
    EXCEPTION
      WHEN vr_exec_erro THEN
 
@@ -433,7 +506,9 @@ PROCEDURE pc_gera_protocolo_ctd(pr_cdcooper IN NUMBER
                                ,pr_cdcritic OUT VARCHAR2 -- Codigo da critica
                                ,pr_dscritic OUT VARCHAR2 -- Descrição da critica
                                ,pr_des_erro OUT VARCHAR2 -- Descrião do erro
-                               ,pr_retxml   IN OUT NOCOPY XMLType) is --Descricao da critica
+                               ,pr_retxml   IN OUT NOCOPY XMLType
+                               ,pr_flgfinal IN VARCHAR2 DEFAULT 'S' -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+                               ) is --Descricao da critica
 /*
     Programa : PC_GERA_PROTOCOLO_CTD
     Sistema  : CECRED
@@ -449,7 +524,7 @@ PROCEDURE pc_gera_protocolo_ctd(pr_cdcooper IN NUMBER
 */
  --Variáveis
    vr_nmprintl crapass.nmprimtl%TYPE;  
-   vr_nrdrowid ROWID;
+   vr_dtmvtolt DATE; -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
 
  --Variáveis para descrição do protocolo
    vr_dsinfor1   varchar2(100);
@@ -508,7 +583,15 @@ BEGIN
     vr_dsinfor2 := vr_dsinfor2 ||'#'||pr_dscomplemento;
   END IF;
 
-  vr_dsinfor3 := 'Documento autorizado mediante digitação de senha por:' || pr_dsaprovador;
+  -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+  IF pr_flgfinal = 'N' THEN
+    vr_dsinfor3 := '*******     DOCUMENTO EM APROVAÇÃO     *******' || CHR(10);
+  END IF;
+  -- Fim Pj470 - SM2
+  
+  vr_dsinfor3 := vr_dsinfor3 
+              || 'Documento autorizado mediante digitação de senha por:' ||CHR(10)
+              || pr_dsaprovador;
     --
   -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
   pc_inativa_protocolo(pr_cdcooper  => pr_cdcooper
@@ -544,32 +627,38 @@ BEGIN
    IF vr_des_erro = 'NOK' THEN
       RAISE vr_exc_erro;
    END IF;
-   -- Gerar log ao cooperado - VERLOG
-   GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                       ,pr_cdoperad => NVL(pr_cdoperad,1)
-                       ,pr_dscritic => NULL
-                       ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem)
-                       ,pr_dstransa => 'Documento autorizado mediante digitação de senha!'
-                       ,pr_dttransa => TRUNC(SYSDATE)
-                       ,pr_flgtrans => 1 -- Transação OK
-                       ,pr_hrtransa => gene0002.fn_busca_time
-                       ,pr_idseqttl => 1
-                       ,pr_nmdatela => 'AUTCTD'
-                       ,pr_nrdconta => pr_nrdconta
-                       ,pr_nrdrowid => vr_nrdrowid);
-   GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                            ,pr_nmdcampo => 'Aprovador'
-                            ,pr_dsdadant => NULL
-                            ,pr_dsdadatu => SUBSTR(pr_dsaprovador,2,LENGTH(pr_dsaprovador)));
-   GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                            ,pr_nmdcampo => 'Tipo de Documento'
-                            ,pr_dsdadant => NULL
-                            ,pr_dsdadatu => vr_dsinfor1);
-   GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                            ,pr_nmdcampo => 'Nr.Documento'
-                            ,pr_dsdadant => NULL
-                            ,pr_dsdadatu => pr_nrcontrato);
-                            
+   --
+   -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+   -- Para Limite de crédito deve ser feito a baixa manual da pendencia do DIGIDOC
+   IF pr_cdtippro = 29 THEN -- Limite de Crédito (Contrato)
+     BEGIN
+       SELECT dtmvtolt
+         INTO vr_dtmvtolt
+         FROM crapdat
+        WHERE cdcooper = pr_cdcooper;
+     EXCEPTION
+     WHEN OTHERS THEN
+       pr_dscritic := 'Erro ao buscar DTMVTOLT = '||SQLERRM;
+     END;
+     --
+     BEGIN
+       UPDATE crapdoc a
+          SET dtbxapen = SYSDATE
+             ,cdopebxa = '1'
+             ,tpbxapen = 3
+        WHERE cdcooper = pr_cdcooper
+          AND nrdconta = pr_nrdconta
+          AND dtmvtolt = vr_dtmvtolt
+          AND tpbxapen = 0
+          AND tpdocmto = 19 -- CRAPTAB.CDACESSO = 'DIGITALIZA'
+          AND flgdigit = 0;
+     EXCEPTION
+     WHEN OTHERS THEN
+       vr_dscritic := 'Erro Update CRAPDOC = '||SQLERRM;
+       RAISE vr_exc_erro;
+     END;
+   END IF;
+   -- Fim Pj470 - SM2
    EXCEPTION
      WHEN vr_exc_sair THEN
        NULL;
@@ -627,7 +716,7 @@ PROCEDURE pc_gera_protocolo_ctd_pj(pr_nrdconta in number
 */
 
    --Variáveis
-   vr_dsaprovador VARCHAR2(200);
+   vr_dsaprovador VARCHAR2(1000);
    
    -- Variável de críticas
    vr_cdcritic crapcri.cdcritic%TYPE := 0;
@@ -673,8 +762,6 @@ BEGIN
    END IF;
    
    vr_dsorigem := gene0001.vr_vet_des_origens(vr_idorigem);    
-
-   vr_dsaprovador := CHR(10);
    --
    IF pr_cdtransacao_pendente IS NOT NULL THEN
      FOR r1 IN (SELECT gene0002.fn_mask_cpf_cnpj(nrcpf_responsavel_aprov
@@ -686,6 +773,8 @@ BEGIN
                         END))
                         ||' - '|| o.nmprimtl as nmpessoa
                        ,p.cdoperad
+                       ,TO_CHAR(m.dtalteracao_situacao,'dd/mm/yyyy') || ' às ' ||
+                        TO_CHAR(TO_DATE(m.hralteracao_situacao,'sssss'),'hh24:mi:ss') dhaprovacao
                   FROM tbgen_trans_pend l
                       ,tbgen_aprova_trans_pend m
                       ,crapavt n
@@ -702,19 +791,22 @@ BEGIN
                    AND p.cdtransacao_pendente = l.cdtransacao_pendente
                 )
      LOOP
-       vr_dsaprovador := vr_dsaprovador || r1.nmpessoa || CHR(10);
+       vr_dsaprovador := vr_dsaprovador || r1.nmpessoa || ' - ' || r1.dhaprovacao || CHR(10);
        vr_cdoperad    := r1.cdoperad;
      END LOOP;
+     vr_dsaprovador := SUBSTR(vr_dsaprovador,1,LENGTH(vr_dsaprovador)-1); -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
    ELSE
      FOR r2 IN (SELECT regexp_substr(pr_contas_digitadas,'[^;]+', 1, LEVEL) AS nrdconta
                   FROM dual CONNECT BY regexp_substr(pr_contas_digitadas, '[^;]+', 1, LEVEL) IS NOT NULL)
      LOOP
        FOR r3 IN (SELECT gene0002.fn_mask_cpf_cnpj(a.nrcpfcgc,a.inpessoa)||' - '|| a.nmprimtl nmpessoa
+                        ,TO_CHAR(SYSDATE,'dd/mm/yyyy') || ' às ' ||
+                         TO_CHAR(SYSDATE,'hh24:mi:ss') dhaprovacao
                     FROM crapass a
                    WHERE a.cdcooper = vr_cdcooper
                      AND a.nrdconta = r2.nrdconta)
        LOOP
-         vr_dsaprovador := vr_dsaprovador || r3.nmpessoa || CHR(10);
+         vr_dsaprovador := vr_dsaprovador || r3.nmpessoa || ' - ' || r3.dhaprovacao  || CHR(10);
        END LOOP;
      END LOOP;
    END IF;
@@ -740,6 +832,22 @@ BEGIN
       RAISE vr_exc_erro;
    END IF; 
 
+   -- Gerar log ao cooperado - VERLOG
+   -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+   pc_gera_log_ctd(pr_cdcooper    => vr_cdcooper
+                  ,pr_nrdconta    => pr_nrdconta
+                  ,pr_tpcontrato  => pr_cdtippro
+                  ,pr_nrcontrato  => pr_nrcontrato
+                  ,pr_cdoperad    => vr_cdoperad
+                  ,pr_idorigem    => vr_idorigem
+                  ,pr_tpsenha     => 'PRESENCIAL'
+                  ,pr_dsaprovador => vr_dsaprovador
+                  ,pr_dscritic    => vr_dscritic);
+   --Se ocorreu erro
+   IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+   END IF; 
+   -- Fim Pj470 - SM2
    EXCEPTION
      WHEN vr_exc_erro THEN
 
@@ -823,7 +931,7 @@ PROCEDURE pc_gera_protocolo_ctd_pf(pr_nrdconta in number
   /* Aprovador do associado da conta */
   CURSOR cr_aprovador (pr_cdcooper IN crapass.cdcooper%TYPE
                       ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-    SELECT CHR(10) || gene0002.fn_mask_cpf_cnpj(a.nrcpfcgc,1)||' - '|| a.nmextttl nmpessoa
+    SELECT gene0002.fn_mask_cpf_cnpj(a.nrcpfcgc,1)||' - '|| a.nmextttl nmpessoa
     FROM crapttl a
     WHERE a.cdcooper = pr_cdcooper
     AND a.nrdconta = pr_nrdconta
@@ -879,6 +987,9 @@ BEGIN
    OPEN cr_aprovador(pr_cdcooper => vr_cdcooper,
                      pr_nrdconta => pr_nrdconta);
    FETCH cr_aprovador INTO vr_dsaprovador;
+   --
+   vr_dsaprovador := vr_dsaprovador ||' - ' -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+                  || TO_CHAR(SYSDATE,'dd/mm/yyyy') || ' às ' || TO_CHAR(SYSDATE,'hh24:mi:ss');
 
    --Se nao encontrou 
    IF cr_aprovador%NOTFOUND THEN 
@@ -915,6 +1026,22 @@ BEGIN
       RAISE vr_exc_erro;
    END IF; 
 
+   -- Gerar log ao cooperado - VERLOG
+   -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+   pc_gera_log_ctd(pr_cdcooper    => vr_cdcooper
+                  ,pr_nrdconta    => pr_nrdconta
+                  ,pr_tpcontrato  => pr_cdtippro
+                  ,pr_nrcontrato  => pr_nrcontrato
+                  ,pr_cdoperad    => vr_cdoperad
+                  ,pr_idorigem    => vr_idorigem
+                  ,pr_tpsenha     => 'PRESENCIAL'
+                  ,pr_dsaprovador => vr_dsaprovador
+                  ,pr_dscritic    => vr_dscritic);
+   --Se ocorreu erro
+   IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+   END IF; 
+   -- Fim Pj470 - SM2
    EXCEPTION
      WHEN vr_exc_erro THEN
 
@@ -958,11 +1085,12 @@ BEGIN
       WHERE a.cdcooper = pr_cdcooper
         AND a.nrdconta = pr_nrdconta
         AND a.cdtippro = pr_tpcontrato
-        AND a.dtmvtolt = pr_dtmvtolt
+--        AND a.dtmvtolt = pr_dtmvtolt -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
         AND a.nrdocmto = pr_nrdocmto
         AND ((pr_cdrecid_crapcdc IS NULL)
           OR (pr_cdrecid_crapcdc IS NOT NULL AND a.dsinform##3 LIKE '%'||pr_cdrecid_crapcdc||'%'))
-        AND a.flgativo = 1;
+        AND a.flgativo = 1 -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+        ;
    EXCEPTION
    WHEN OTHERS THEN
      NULL;
@@ -979,9 +1107,11 @@ BEGIN
       WHERE a.cdcooper               = pr_cdcooper
         AND a.nrdconta               = pr_nrdconta
         AND a.tpcontrato             = pr_tpcontrato
-        AND TRUNC(a.dhcontrato)      = pr_dtmvtolt
+--        AND TRUNC(a.dhcontrato)      = pr_dtmvtolt -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
         AND a.nrcontrato             = pr_nrdocmto
-        AND NVL(a.cdrecid_crapcdc,0) = NVL(pr_cdrecid_crapcdc,nvl(a.cdrecid_crapcdc,0));
+        AND NVL(a.cdrecid_crapcdc,0) = NVL(pr_cdrecid_crapcdc,nvl(a.cdrecid_crapcdc,0))
+        AND NVL(a.flgativo,1)        = 1 -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+        ;
    EXCEPTION
    WHEN OTHERS THEN
      NULL;
@@ -1006,15 +1136,19 @@ PROCEDURE pc_ver_protocolo (pr_cdcooper   IN NUMBER
                        ,pr_tpcontrato IN NUMBER) IS
      SELECT TRIM(gene0002.fn_busca_entrada(2,dsinform##2, '#')) dtprotocolo
            ,TRIM(gene0002.fn_busca_entrada(3,dsinform##2, '#')) hrprotocolo
-           ,REPLACE(
-            SUBSTR(dsinform##3,LENGTH('Documento autorizado mediante digitação de senha por:')+2,length(dsinform##3)-2
-                             - LENGTH('Documento autorizado mediante digitação de senha por:')),CHR(10),', ') dscontratante
+           -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+           ,CHR(10) ||
+            SUBSTR(dsinform##3,INSTR(dsinform##3,'Documento autorizado mediante digitação de senha por:') +
+                                          LENGTH('Documento autorizado mediante digitação de senha por:')+1,length(dsinform##3)-2
+                  ) || CHR(10) dscontratante
+           -- Fim Pj470 - SM2
        FROM crappro
       WHERE cdcooper = pr_cdcooper
         AND nrdconta = pr_nrdconta
         AND cdtippro = pr_tpcontrato
         AND nrdocmto = pr_nrcontrato
-        AND flgativo = 1;
+        AND flgativo = 1 -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+        ;
 
    -- Cursor para buscar o nome da cooperativa
    CURSOR cr_crapcop (pr_cdcooper IN NUMBER) IS
@@ -1071,13 +1205,12 @@ BEGIN
   CLOSE cr_protocolo;
   --
   IF vr_dtprotocolo IS NOT NULL THEN
-    pr_dsfrase_cooperado := 'Assinado eletronicamente pelo CONTRATANTE '
-                         || vr_dscontratante
-                         || ', no dia '
-                         || vr_dtprotocolo
-                         || CASE WHEN pr_tpcontrato = 25 THEN ', as ' ELSE ', às ' END -- Relatório em progress não pode ter acentuação
-                         || vr_hrprotocolo
-                         || CASE WHEN pr_tpcontrato = 25 THEN ', mediante aposicao de senha numerica.' ELSE ', mediante aposição de senha numérica.' END; -- Relatório em progress não pode ter acentuação
+    pr_dsfrase_cooperado := CASE 
+                            WHEN pr_tpcontrato = 25 -- Relatório em progress não pode ter acentuação
+                            THEN 'Assinado eletronicamente pelo(s) CONTRATANTE(S) abaixo, mediante aposicao de senha numerica.'
+                            ELSE 'Assinado eletronicamente pelo(s) CONTRATANTE(S) abaixo, mediante aposição de senha numérica.'
+                            END
+                         || vr_dscontratante;
     OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);
     FETCH cr_crapcop
      INTO vr_nmextcop;
@@ -1098,6 +1231,7 @@ BEGIN
                              || ', no dia '
                              || vr_dtvigencia
                              || CASE WHEN vr_hrvigencia IS NOT NULL THEN CASE WHEN pr_tpcontrato = 25 THEN ', as ' ELSE ', às ' END || vr_hrvigencia END
+                             || CASE WHEN pr_tpcontrato IN (27, 28, 29) THEN ', mediante liberação do limite na conta do CONTRATANTE' END -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
                              || '.';
     ELSE
       pr_dsfrase_cooperativa := 'Contrato ainda não efetivado pela COOPERATIVA '||vr_nmextcop||'.';
@@ -1194,13 +1328,24 @@ PROCEDURE pc_inativa_protocolo(pr_cdcooper  IN crapcop.cdcooper%TYPE
                      pr_nrdconta in crapass.nrdconta%TYPE,
                      pr_nrdocmto in crappro.nrdocmto%TYPE,
                      pr_cdtippro IN NUMBER) IS
-  SELECT rowid dsrosid_crappro
+  SELECT rowid dsrowid_crappro
     FROM crappro
    WHERE cdcooper = pr_cdcooper
      AND nrdconta = pr_nrdconta
      AND cdtippro = pr_cdtippro
      AND nrdocmto = pr_nrdocmto
      AND flgativo = 1;
+  CURSOR cr_tbctd (pr_cdcooper in crapcop.cdcooper%TYPE,
+                   pr_nrdconta in crapass.nrdconta%TYPE,
+                   pr_nrdocmto in crappro.nrdocmto%TYPE,
+                   pr_cdtippro IN NUMBER) IS
+  SELECT rowid dsrowid_tbctd
+    FROM tbctd_trans_pend
+   WHERE cdcooper   = pr_cdcooper
+     AND nrdconta   = pr_nrdconta
+     AND tpcontrato = pr_cdtippro
+     AND nrcontrato = pr_nrdocmto
+     AND flgativo   = 1;
 BEGIN
   pr_dscritic := null;
   --
@@ -1212,13 +1357,344 @@ BEGIN
   LOOP
     UPDATE crappro a
        SET a.flgativo = 0
-     WHERE ROWID = rv_crappro.dsrosid_crappro;
+     WHERE ROWID = rv_crappro.dsrowid_crappro;
+  END LOOP;
+  --
+  FOR rv_tbctd in cr_tbctd (pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_cdtippro => pr_cdtippro
+                           ,pr_nrdocmto => pr_nrdocmto)
+  LOOP
+    UPDATE tbctd_trans_pend a
+       SET a.flgativo = 0
+     WHERE ROWID = rv_tbctd.dsrowid_tbctd;
   END LOOP;
   --
 EXCEPTION
 WHEN OTHERS THEN
   pr_dscritic := 'Erro alteração CRAPPRO - '||sqlerrm;
 END pc_inativa_protocolo;
+
+PROCEDURE pc_atualiza_protocolo_ctd(pr_cdtransacao_pendente     IN tbgen_aprova_trans_pend.cdtransacao_pendente%TYPE
+                                   ,pr_nrcpf_responsavel_aprov  IN tbgen_aprova_trans_pend.nrcpf_responsavel_aprov%TYPE
+                                   ,pr_flgfinal                 IN VARCHAR2
+                                   ,pr_dscritic                OUT VARCHAR2) IS
+ -- Atualizar a frase do protocolo com o aprovador
+ -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+  vr_exc_erro EXCEPTION;
+BEGIN
+  pr_dscritic := null;
+  FOR r1 IN (SELECT gene0002.fn_mask_cpf_cnpj(nrcpf_responsavel_aprov
+                  ,(CASE 
+                    WHEN LENGTH(nrcpf_responsavel_aprov)<=11 THEN 
+                      1 
+                    ELSE 
+                      2 
+                    END))
+                    ||' - '|| o.nmprimtl as nmpessoa
+                   ,TO_CHAR(m.dtalteracao_situacao,'dd/mm/yyyy') || ' às ' ||
+                    TO_CHAR(TO_DATE(m.hralteracao_situacao,'sssss'),'hh24:mi:ss') dhaprovacao
+                   ,l.cdcooper
+                   ,l.nrdconta
+                   ,l.idorigem_transacao
+                   ,p.cdoperad
+                   ,p.nrcontrato
+                   ,p.tpcontrato
+              FROM tbgen_trans_pend l
+                  ,tbgen_aprova_trans_pend m
+                  ,crapavt n
+                  ,crapass o
+                  ,tbctd_trans_pend p
+             WHERE l.cdtransacao_pendente    = pr_cdtransacao_pendente
+               AND m.cdtransacao_pendente    = l.cdtransacao_pendente
+               AND m.nrcpf_responsavel_aprov = pr_nrcpf_responsavel_aprov
+               AND m.nrdconta                = l.nrdconta
+               AND n.cdcooper (+)            = m.cdcooper
+               AND n.nrdconta (+)            = m.nrdconta
+               AND n.nrcpfcgc (+)            = m.nrcpf_responsavel_aprov
+               AND o.cdcooper                = n.cdcooper
+               AND o.nrdconta                = n.nrdctato
+               AND p.cdtransacao_pendente    = l.cdtransacao_pendente)
+  LOOP
+    FOR r2 IN (SELECT rowid dsrosid_crappro
+                     ,dsinform##3
+                 FROM crappro
+                WHERE cdcooper = r1.cdcooper
+                  AND nrdconta = r1.nrdconta
+                  AND nrdocmto = r1.nrcontrato
+                  AND flgativo = 1)
+    LOOP
+      IF pr_flgfinal = 'S' THEN
+        r2.dsinform##3 := SUBSTR(r2.dsinform##3,INSTR(r2.dsinform##3,'Documento autorizado mediante digitação de senha por:'),LENGTH(r2.dsinform##3));
+      END IF;
+      --
+      r2.dsinform##3 := r2.dsinform##3 || CHR(10)
+                     || r1.nmpessoa || ' - '
+                     || r1.dhaprovacao;
+      UPDATE crappro
+         SET dsinform##3 = r2.dsinform##3
+       WHERE rowid = r2.dsrosid_crappro;
+       -- Gerar log ao cooperado - VERLOG
+       pc_gera_log_ctd(pr_cdcooper    => r1.cdcooper
+                      ,pr_nrdconta    => r1.nrdconta
+                      ,pr_tpcontrato  => r1.tpcontrato
+                      ,pr_nrcontrato  => r1.nrcontrato
+                      ,pr_cdoperad    => r1.cdoperad
+                      ,pr_idorigem    => r1.idorigem_transacao
+                      ,pr_tpsenha     => 'ON-LINE'
+                      ,pr_dsaprovador => r1.nmpessoa
+                      ,pr_dscritic    => pr_dscritic);
+       --Se ocorreu erro
+       IF pr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+       END IF; 
+    END LOOP;
+  END LOOP;
+  --
+EXCEPTION
+WHEN vr_exc_erro THEN
+  NULL;
+WHEN OTHERS THEN
+  pr_dscritic := 'Erro alteração CRAPPRO - '||sqlerrm;
+END pc_atualiza_protocolo_ctd;
+
+PROCEDURE pc_gera_log_ctd(pr_cdcooper     IN NUMBER
+                         ,pr_nrdconta     IN NUMBER
+                         ,pr_tpcontrato   IN NUMBER
+                         ,pr_nrcontrato   IN NUMBER
+                         ,pr_cdoperad     IN VARCHAR2
+                         ,pr_idorigem     IN NUMBER
+                         ,pr_tpsenha      IN VARCHAR2
+                         ,pr_dsaprovador  IN VARCHAR2
+                         ,pr_dscritic    OUT VARCHAR2) IS
+ -- Gravar o LOG da autorização
+ -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+  vr_nrdrowid    ROWID;
+  vr_contador    NUMBER;
+  vr_dsaprovador VARCHAR2(1000);
+  vr_nrcpfcgc    VARCHAR2(100);
+  vr_nmaprova    VARCHAR2(100);
+  vr_dscontrato  VARCHAR2(100);
+  vr_dscritic    VARCHAR2(1000);
+  vr_exc_erro    EXCEPTION;
+BEGIN
+  --Monta a descrição de acordo com o tipo
+  IF pr_tpcontrato = 25 THEN
+    vr_dscontrato := 'Rescisão de Lim. Créd. (Termo)';
+  ELSIF pr_tpcontrato = 26 THEN
+    vr_dscontrato := 'Solicitação de Portab. Créd. (Termo)';
+  ELSIF pr_tpcontrato = 27 THEN
+    vr_dscontrato := 'Limite de Desc. Chq. (Contrato)';
+  ELSIF pr_tpcontrato = 28 THEN
+    vr_dscontrato := 'Limite de Desc. Tit. (Contrato)';
+  ELSIF pr_tpcontrato = 29 THEN
+    vr_dscontrato := 'Limite de Crédito (Contrato)';
+  ELSIF pr_tpcontrato = 30 THEN
+    vr_dscontrato := 'Solicitação de Sustação de Chq.';
+  ELSIF pr_tpcontrato = 31 THEN
+    vr_dscontrato := 'Sol.Canc.de Folha/Tal.de Chq. (Termo)';
+  ELSE
+    vr_dscritic := 'Tipo de contrato não conhecido - '||pr_tpcontrato||'.';
+    RAISE vr_exc_erro;
+  END IF;
+  --
+    vr_dsaprovador := REPLACE(pr_dsaprovador,' - ',';');
+    vr_dsaprovador := REPLACE(vr_dsaprovador,CHR(10),';');
+    vr_contador    := 0;
+    --
+    FOR r1 IN (SELECT regexp_substr(vr_dsaprovador,'[^;]+', 1, LEVEL) AS texto FROM dual
+           CONNECT BY regexp_substr(vr_dsaprovador,'[^;]+', 1, LEVEL) IS NOT NULL) LOOP
+      vr_contador := vr_contador + 1;
+      --
+      IF vr_contador = 1 THEN
+        vr_nrcpfcgc := r1.texto;
+      ELSIF vr_contador = 3 THEN
+        vr_contador := 0;
+      ELSE
+        vr_nmaprova := r1.texto;
+        --
+        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                            ,pr_cdoperad => NVL(pr_cdoperad,1)
+                            ,pr_dscritic => NULL
+                            ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem)
+                            ,pr_dstransa => 'Documento autorizado mediante digitação de senha!'
+                            ,pr_dttransa => TRUNC(SYSDATE)
+                            ,pr_flgtrans => 1 -- Transação OK
+                            ,pr_hrtransa => gene0002.fn_busca_time
+                            ,pr_idseqttl => 1
+                            ,pr_nmdatela => 'AUTCTD'
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Tipo de Assinatura'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => pr_tpsenha);
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Data/Hora'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => TO_CHAR(SYSDATE,'dd/mm/yyyy hh24:mi:ss'));
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Nome'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => vr_nmaprova);
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'CPF/CNPJ'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => vr_nrcpfcgc);
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Proposta'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => pr_nrcontrato);
+        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Tipo de Documento'
+                                 ,pr_dsdadant => NULL
+                                 ,pr_dsdadatu => vr_dscontrato);
+      END IF;
+      --
+  END LOOP;
+EXCEPTION
+WHEN vr_exc_erro THEN
+  pr_dscritic := vr_dscritic;
+WHEN OTHERS THEN
+  pr_dscritic := 'Erro geral em CNTR0001.PC_GERA_LOG_CTD '||sqlerrm;
+END pc_gera_log_ctd;
+
+PROCEDURE pc_busca_cet_limite(pr_cdcooper     IN NUMBER
+                             ,pr_nrdconta     IN NUMBER
+                             ,pr_nrctrlim     IN NUMBER
+                             ,pr_dsfrase     OUT VARCHAR2
+                             ,pr_cdcritic    OUT NUMBER
+                             ,pr_dscritic    OUT VARCHAR2) IS
+ -- Buscar o CET e montar e devolver a frase para o chamador
+ -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+  --> Buscar dados associado
+  CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
+                     pr_nrdconta crapass.nrdconta%TYPE )IS
+    SELECT *
+      FROM crapass ass
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta;
+  rw_crapass cr_crapass%ROWTYPE;
+
+  --> Buscar Contrato de limite
+  CURSOR cr_craplim IS
+    SELECT nrctrlim
+          ,cddlinha
+          ,dtrenova
+          ,dtinivig
+          ,qtdiavig                                     
+          ,vllimite
+          ,tpctrlim
+      FROM craplim a
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta
+       AND nrctrlim = pr_nrctrlim
+    UNION ALL
+    SELECT nrctrlim
+          ,cddlinha
+          ,dtrenova
+          ,dtinivig
+          ,qtdiavig                                     
+          ,vllimite
+          ,tpctrlim
+      FROM crawlim b
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta
+       AND nrctrlim = pr_nrctrlim
+       ;
+  rw_craplim cr_craplim%ROWTYPE;
+
+  --> Buscar Linhas de Credito Rotativo
+  CURSOR cr_craplrt (pr_cdcooper craplrt.cdcooper%TYPE,
+                     pr_cddlinha craplrt.cddlinha%TYPE) IS
+    SELECT lrt.cdcooper,
+           lrt.txmensal
+      FROM craplrt lrt
+     WHERE lrt.cdcooper = pr_cdcooper
+       AND lrt.cddlinha = pr_cddlinha;
+  rw_craplrt cr_craplrt%ROWTYPE;
+
+  rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+  vr_txcetmes NUMBER;
+  vr_txcetano NUMBER;
+  vr_cdcritic NUMBER;
+  vr_dscritic VARCHAR2(1000);
+  vr_exc_erro EXCEPTION;
+BEGIN
+  -- Busca a data do sistema
+  OPEN  BTCH0001.cr_crapdat(pr_cdcooper);
+  FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+  CLOSE BTCH0001.cr_crapdat;
+  -- Buscar cooperado
+  OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                  pr_nrdconta => pr_nrdconta);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%NOTFOUND THEN 
+    CLOSE cr_crapass;
+    vr_cdcritic := 9; -- 009 - Associado nao cadastrado.
+    RAISE vr_exc_erro;
+  ELSE
+    CLOSE cr_crapass;
+  END IF;  
+  -- Buscar Contrato de limite
+  OPEN cr_craplim;
+  FETCH cr_craplim INTO rw_craplim;
+  IF cr_craplim%NOTFOUND THEN
+    CLOSE cr_craplim;
+    vr_cdcritic := 105; -- 105 - Associado nao tem limite de credito.
+    RAISE vr_exc_erro;
+  ELSE
+    CLOSE cr_craplim;
+  END IF;
+  -- Buscar Linhas de Credito Rotativo
+  OPEN cr_craplrt (pr_cdcooper => pr_cdcooper,
+                   pr_cddlinha => rw_craplim.cddlinha);
+  FETCH cr_craplrt INTO rw_craplrt;
+  IF cr_craplrt%NOTFOUND THEN
+    CLOSE cr_craplrt;
+    vr_dscritic := 'Linhas de Credito Rotativo nao encotrada.'; 
+    RAISE vr_exc_erro;
+  ELSE
+    CLOSE cr_craplrt;
+  END IF;
+  -- Calcular cet
+  ccet0001.pc_calculo_cet_limites (pr_cdcooper  => pr_cdcooper         -- Cooperativa
+                                  ,pr_dtmvtolt  => rw_crapdat.dtmvtolt -- Data Movimento
+                                  ,pr_cdprogra  => 'atenda'            -- Programa chamador
+                                  ,pr_nrdconta  => pr_nrdconta         -- Conta/dv
+                                  ,pr_inpessoa  => rw_crapass.inpessoa -- Indicativo de pessoa
+                                  ,pr_cdusolcr  => 1                   -- Codigo de uso da linha de credito
+                                  ,pr_cdlcremp  => rw_craplim.cddlinha -- Linha de credio
+                                  ,pr_tpctrlim  => rw_craplim.tpctrlim -- Tipo de contrato de limite
+                                  ,pr_nrctrlim  => rw_craplim.nrctrlim -- Contrato 
+                                  ,pr_dtinivig  => coalesce(rw_craplim.dtrenova,rw_craplim.dtinivig,rw_crapdat.dtmvtolt) -- Data liberacao
+                                  ,pr_qtdiavig  => rw_craplim.qtdiavig -- Dias de vigencia                                      
+                                  ,pr_vlemprst  => rw_craplim.vllimite -- Valor emprestado
+                                  ,pr_txmensal  => rw_craplrt.txmensal -- Taxa mensal                                                               
+                                  ,pr_txcetano  => vr_txcetano         -- Taxa cet ano
+                                  ,pr_txcetmes  => vr_txcetmes         -- Taxa cet mes 
+                                  ,pr_cdcritic  => vr_cdcritic         --> Código da crítica
+                                  ,pr_dscritic  => vr_dscritic);       --> Descrição da crítica
+      
+      
+  IF nvl(vr_cdcritic,0) > 0 
+  OR TRIM(vr_dscritic) IS NOT NULL 
+  THEN
+    RAISE vr_exc_erro;
+  END IF; 
+  -- Montar frase para o retorno
+  pr_dsfrase := TO_CHAR(vr_txcetano,'fm990D00')||'% ao ano (' || TO_CHAR(vr_txcetmes,'fm90D00') ||'% ao mes)';
+  --
+EXCEPTION
+WHEN vr_exc_erro THEN
+  IF TRIM(vr_dscritic) IS NULL THEN
+    vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+  END IF;
+  pr_cdcritic := vr_cdcritic;
+  pr_dscritic := vr_dscritic;
+WHEN OTHERS THEN
+  pr_dscritic := 'Erro geral em CNTR0001.pc_busca_cet_limite '||sqlerrm;
+END pc_busca_cet_limite;
 
 END CNTR0001;
 /

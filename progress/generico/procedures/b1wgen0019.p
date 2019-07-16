@@ -3679,6 +3679,7 @@ PROCEDURE cadastrar-novo-limite:
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
     DEF VAR aux_flmudfai AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgrestrito AS INTE                                 NO-UNDO.
+    DEF VAR aux_dsfrase  AS CHAR                                    NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
     
     DEF VAR aux_mensagens    AS CHAR                                NO-UNDO.
     
@@ -4325,22 +4326,81 @@ PROCEDURE cadastrar-novo-limite:
         
         /** Numero de Contrato do Limite **/
         RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                 INPUT "nrctrlim",
+                                 INPUT "Contrato", /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
                                  INPUT "",
                                  INPUT TRIM(STRING(craplim.nrctrlim, "zzz,zzz,zz9"))).
          
+        /** Valor do Limite **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Vl.Limite de Crédito", /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+                                 INPUT "",
+                                 INPUT TRIM(STRING(craplim.vllimite, "zzz,zzz,zz9.99"))).
+        
+        /** Data Alteracao do Limite **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Data de Conatrataçao",  /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+                                 INPUT "",
+                                 INPUT STRING(par_dtmvtolt, "99/99/9999")).
+        
+        /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+        /** Prazo de Vigencia **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Prazo de Vigencia (dias)",
+                                 INPUT "",
+                                 INPUT STRING(craplim.qtdiavig)).
+        /* Fim Pj470 - SM2 */
+        
+        /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+        /** Encargos Financeiros **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Encargos Financeiros",
+                                 INPUT "",
+                                 INPUT STRING(craplim.dsencfin[1])).
+        /* Fim Pj470 - SM2 */
+        
+        /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+        /** Periodicidade da Capitalizaçao **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Periodic.da Capitalizaçao",
+                                 INPUT "",
+                                 INPUT STRING(craplim.dsencfin[3])).
+        /* Fim Pj470 - SM2 */
+        
+        /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+        /** Custo Efetivo Total (CET) **/
+        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+        RUN STORED-PROCEDURE pc_busca_cet_limite
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                             INPUT par_nrdconta,
+                                             INPUT par_nrctrlim,
+                                            OUTPUT "",  /* DSFRASE */
+                                            OUTPUT 0,   /* Codigo da crítica */
+                                            OUTPUT ""). /* Descriçao da crítica */
+        CLOSE STORED-PROC pc_busca_cet_limite
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+        ASSIGN aux_dsfrase  = ""
+               aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_dsfrase  = pc_busca_cet_limite.pr_dsfrase 
+                              WHEN pc_busca_cet_limite.pr_dsfrase <> ?
+               aux_cdcritic = pc_busca_cet_limite.pr_cdcritic 
+                              WHEN pc_busca_cet_limite.pr_cdcritic <> ?
+               aux_dscritic = pc_busca_cet_limite.pr_dscritic
+                              WHEN pc_busca_cet_limite.pr_dscritic <> ?.
+        IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
+           aux_dsfrase  = "Erro ao buscar o CET".
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Custo Efetivo Total (CET)",
+                                 INPUT "",
+                                 INPUT STRING(aux_dsfrase)).
+        /* Fim Pj470 - SM2 */
+        
         /** Linha de Credito do Limite **/
         RUN proc_gerar_log_item (INPUT aux_nrdrowid,
                                  INPUT "cddlinha",
                                  INPUT "",
                                  INPUT TRIM(STRING(craplim.cddlinha, "zz9"))).
-                                                
-        /** Valor do Limite **/
-        
-        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                 INPUT "vllimite",
-                                 INPUT "",
-                                 INPUT TRIM(STRING(craplim.vllimite, "zzz,zzz,zz9.99"))).
         
         /** Tipo da Conta **/
         
@@ -4356,12 +4416,6 @@ PROCEDURE cadastrar-novo-limite:
                                  INPUT "",
                                  INPUT TRIM(STRING(craplim.inbaslim, "9"))).
                      
-        /** Data Alteracao do Limite **/
-        
-        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                 INPUT "dtultlcr",
-                                 INPUT "",
-                                 INPUT STRING(par_dtmvtolt, "99/99/9999")).
         
          /** Situacao do Limite **/
          RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -9860,6 +9914,7 @@ PROCEDURE alterar-novo-limite:
     DEF VAR aux_vlsldcap AS DECI                                    NO-UNDO.
     
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
+    DEF VAR aux_dsfrase  AS CHAR                                    NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-craplim.
@@ -10454,9 +10509,75 @@ PROCEDURE alterar-novo-limite:
             
             /** Numero de Contrato do Limite **/
             RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                     INPUT "nrctrlim",
+                                     INPUT "Contrato", /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
                                      INPUT tt-craplim.nrctrlim,
                                      INPUT TRIM(STRING(craplim.nrctrlim, "zzz,zzz,zz9"))).
+             
+            /** Valor do Limite **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "Vl.Limite de Crédito", /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+                                     INPUT TRIM(STRING(tt-craplim.vllimite, "zzz,zzz,zz9.99")),
+                                     INPUT TRIM(STRING(craplim.vllimite, "zzz,zzz,zz9.99"))).
+        
+            /** Data Alteracao do Limite **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "Data de Alteraçao",  /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+                                     INPUT "",
+                                     INPUT STRING(par_dtmvtolt, "99/99/9999")).
+        
+            /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+            /** Prazo de Vigencia **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "Prazo de Vigencia (dias)",
+                                     INPUT STRING(tt-craplim.qtdiavig),
+                                     INPUT STRING(craplim.qtdiavig)).
+            /* Fim Pj470 - SM2 */
+        
+            /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+            /** Encargos Financeiros **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "Encargos Financeiros",
+                                     INPUT STRING(tt-craplim.dsencfin[1]),
+                                     INPUT STRING(craplim.dsencfin[1])).
+            /* Fim Pj470 - SM2 */
+        
+            /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+            /** Periodicidade da Capitalizaçao **/
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "Periodic.da Capitalizaçao",
+                                     INPUT STRING(tt-craplim.dsencfin[3]),
+                                     INPUT STRING(craplim.dsencfin[3])).
+            /* Fim Pj470 - SM2 */
+        
+            /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+            /** Custo Efetivo Total (CET) **/
+            { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+            RUN STORED-PROCEDURE pc_busca_cet_limite
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                                 INPUT par_nrdconta,
+                                                 INPUT par_nrctrlim,
+                                                OUTPUT "",  /* DSFRASE */
+                                                OUTPUT 0,   /* Codigo da crítica */
+                                                OUTPUT ""). /* Descriçao da crítica */
+            CLOSE STORED-PROC pc_busca_cet_limite
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+            { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+            ASSIGN aux_dsfrase  = ""
+                   aux_cdcritic = 0
+                   aux_dscritic = ""
+                   aux_dsfrase  = pc_busca_cet_limite.pr_dsfrase 
+                                  WHEN pc_busca_cet_limite.pr_dsfrase <> ?
+                   aux_cdcritic = pc_busca_cet_limite.pr_cdcritic 
+                                  WHEN pc_busca_cet_limite.pr_cdcritic <> ?
+                   aux_dscritic = pc_busca_cet_limite.pr_dscritic
+                                  WHEN pc_busca_cet_limite.pr_dscritic <> ?.
+            IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
+               aux_dsfrase  = "Erro ao buscar o CET".
+            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                     INPUT "Custo Efetivo Total (CET)",
+                                     INPUT "",
+                                     INPUT STRING(aux_dsfrase)).
+            /* Fim Pj470 - SM2 */
              
             /** Linha de Credito do Limite **/
             RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -10464,12 +10585,6 @@ PROCEDURE alterar-novo-limite:
                                      INPUT tt-craplim.cddlinha,
                                      INPUT TRIM(STRING(craplim.cddlinha, "zz9"))).
                                                     
-            /** Valor do Limite **/
-            
-            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                     INPUT "vllimite",
-                                     INPUT TRIM(STRING(tt-craplim.vllimite, "zzz,zzz,zz9.99")),
-                                     INPUT TRIM(STRING(craplim.vllimite, "zzz,zzz,zz9.99"))).
           
             /** Tipo do Limite **/
             
@@ -10478,13 +10593,6 @@ PROCEDURE alterar-novo-limite:
                                      INPUT tt-craplim.inbaslim,
                                      INPUT TRIM(STRING(craplim.inbaslim, "9"))).
                          
-            /** Data Alteracao do Limite **/
-            
-            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                     INPUT "dtultlcr",
-                                     INPUT "",
-                                     INPUT STRING(par_dtmvtolt, "99/99/9999")).  
-
         END.
         
 

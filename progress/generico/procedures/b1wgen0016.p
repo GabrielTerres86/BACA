@@ -4695,6 +4695,7 @@ PROCEDURE aprova_trans_pend:
     
     DEF VAR aux_flagctd  AS LOGICAL                                 NO-UNDO. /* Projeto 470 */
     DEF VAR aux_tranctd  AS CHAR                                    NO-UNDO. /* Projeto 470 */
+    DEF VAR aux_flgfinal_ctd AS CHAR                                NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
 
     
     DEF VAR aux_vldocmto AS DECIMAL                                 NO-UNDO.
@@ -11900,70 +11901,9 @@ PROCEDURE aprova_trans_pend:
                         FOR FIRST tt-tbctd_trans_pend 
                             WHERE tt-tbctd_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK.
                         END.
-                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-                        RUN STORED-PROCEDURE pc_gera_prot_ctd_pj_prgs aux_handproc = PROC-HANDLE NO-ERROR
-                                                     (INPUT par_cdcooper
-                                                     ,INPUT par_nrdconta
-                                                     ,INPUT tt-tbctd_trans_pend.tpcontrato
-                                                     ,INPUT tt-tbctd_trans_pend.dhcontrato
-                                                     ,INPUT tt-tbctd_trans_pend.nrcontrato
-                                                     ,INPUT tt-tbctd_trans_pend.vlcontrato
-                                                     ,INPUT tt-tbctd_trans_pend.cdtransacao_pendente
-                                                     ,INPUT ""
-                                                     ,OUTPUT 0
-                                                     ,OUTPUT ""
-                                                     ,OUTPUT ""
-                                                     ,OUTPUT "").
-                        CLOSE STORED-PROC pc_gera_prot_ctd_pj_prgs 
-                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
-                     
-                        ASSIGN aux_cdcritic = 0
-                               aux_dscritic = ""
-                               aux_cdcritic = pc_gera_prot_ctd_pj_prgs.pr_cdcritic
-                        WHEN pc_gera_prot_ctd_pj_prgs.pr_cdcritic <> ?
-                             aux_dscritic = pc_gera_prot_ctd_pj_prgs.pr_dscritic
-                        WHEN pc_gera_prot_ctd_pj_prgs.pr_dscritic <> ?.
-                                       
-                                
-                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-                             
-                        IF  aux_cdcritic <> 0   OR
-                            aux_dscritic <> ""  THEN
-                            DO: 
-                                IF  aux_dscritic = "" THEN 
-                                    DO:
-                                        FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                                        NO-LOCK NO-ERROR.
-                                
-                                        IF  AVAIL crapcri THEN
-                                            ASSIGN aux_dscritic = crapcri.dscritic.
-                                        ELSE
-                                            ASSIGN aux_dscritic =  "Nao foi possivel incluir o servico".
-                                    END.
-                     
-                                    RUN gera_erro_transacao(INPUT par_cdcooper,
-                                                            INPUT par_cdoperad,
-                                                            INPUT aux_dscritic,
-                                                            INPUT aux_dsorigem,
-                                                            INPUT aux_dstransa,
-                                                            INPUT FALSE,
-                                                            INPUT par_nmdatela,
-                                                            INPUT par_nrdconta,
-                                                            INPUT STRING(ROWID(tbgen_trans_pend)),
-                                                            INPUT FALSE,
-                                                            INPUT par_indvalid,
-                                                            INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
-                                                            INPUT 0, /*tt-tbtarif_pacote_trans_pend.vlpacote,*/
-                                                            INPUT aux_conttran).
-                
-                                    IF par_indvalid = 1 THEN
-                                        ASSIGN par_flgaviso = TRUE.
-                
-                                    UNDO TRANSACAO, LEAVE TRANSACAO.
-
-                            END.
-
+                        /* Identificar se é a aprovaçao final*/
+                        /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+                        ASSIGN aux_flgfinal_ctd = "S".
                       END. /* IF par_indvalid = 1 AND aux_conttran = 1 THEN */
                       RUN gera_erro_transacao(INPUT par_cdcooper,
                                               INPUT par_cdoperad,
@@ -12255,6 +12195,67 @@ PROCEDURE aprova_trans_pend:
 
 
                         VALIDATE tbgen_trans_pend.
+                        
+                        /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+                           Atualizar o protocolo gerado para o tptransacao = 20 -- Contrato */
+                        IF tt-tbgen_trans_pend.tptransacao = 20 /* Contrato */
+                        THEN
+                          DO:
+                            { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+                            RUN STORED-PROCEDURE pc_atualiza_protocolo_ctd aux_handproc = PROC-HANDLE NO-ERROR
+                                                         (INPUT tt-tbctd_trans_pend.cdtransacao_pendente
+                                                         ,INPUT aux_nrcpfrep
+                                                         ,INPUT aux_flgfinal_ctd
+                                                         ,OUTPUT "").
+                            CLOSE STORED-PROC pc_atualiza_protocolo_ctd 
+                            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+                     
+                            ASSIGN aux_cdcritic = 0
+                                   aux_dscritic = ""
+                                 aux_dscritic = pc_atualiza_protocolo_ctd.pr_dscritic
+                            WHEN pc_atualiza_protocolo_ctd.pr_dscritic <> ?.
+                                       
+                                
+                            { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+                             
+                            IF  aux_cdcritic <> 0   OR
+                                aux_dscritic <> ""  THEN
+                                DO: 
+                                    IF  aux_dscritic = "" THEN 
+                                        DO:
+                                            FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
+                                            NO-LOCK NO-ERROR.
+                                    
+                                            IF  AVAIL crapcri THEN
+                                                ASSIGN aux_dscritic = crapcri.dscritic.
+                                            ELSE
+                                                ASSIGN aux_dscritic =  "Nao foi possivel incluir o servico".
+                    END.
+                     
+                                        RUN gera_erro_transacao(INPUT par_cdcooper,
+                                                                INPUT par_cdoperad,
+                                                                INPUT aux_dscritic,
+                                                                INPUT aux_dsorigem,
+                                                                INPUT aux_dstransa,
+                                                                INPUT FALSE,
+                                                                INPUT par_nmdatela,
+                                                                INPUT par_nrdconta,
+                                                                INPUT STRING(ROWID(tbgen_trans_pend)),
+                                                                INPUT FALSE,
+                                                                INPUT par_indvalid,
+                                                                INPUT DATE(1, MONTH(TODAY), YEAR(TODAY)),
+                                                                INPUT 0, /*tt-tbtarif_pacote_trans_pend.vlpacote,*/
+                                                                INPUT aux_conttran).
+                
+                                        IF par_indvalid = 1 THEN
+                                            ASSIGN par_flgaviso = TRUE.
+                
+                                        UNDO TRANSACAO, LEAVE TRANSACAO.
+
+                                END.
+                          END. /* IF tt-tbgen_trans_pend.tptransacao = 20 */
+                        /* Fim Pj470 - SM2 */
                     END.
         
         END. /* FIM TRANSACAO */

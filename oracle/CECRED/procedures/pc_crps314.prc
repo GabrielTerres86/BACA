@@ -229,7 +229,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                               vr_nrdolote  crapcdb.nrdolote%type,
                               vr_dtlibbdc  crapcdb.dtlibbdc%type,
                               vr_cdoperad  crapcdb.cdoperad%type,
-                              vr_nmprimtl  crapass.nmprimtl%type);
+                              vr_nmprimtl  crapass.nmprimtl%type,
+                              vr_formalizacao VARCHAR2(100) -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+                              );
   -- Definição da tabela para armazenar os registros dos borderôs
   type typ_tab_bordero is table of typ_bordero index by varchar2(23);
   -- Instância da tabela. O índice será o código da agência || número do borderô || número do contrato.
@@ -249,7 +251,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                                 vr_dtlibbdc  crapcdb.dtlibbdc%type,
                                 vr_cdagenci  crapage.cdagenci%type,
                                 vr_nmresage  crapage.nmresage%type,
-                                vr_cdbccxlt  crapcdb.cdbccxlt%type);
+                                vr_cdbccxlt  crapcdb.cdbccxlt%type,
+                                vr_formalizacao VARCHAR2(100) -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+                                );
   -- Definição da tabela para armazenar os registros dos borderôs separados
   type typ_tab_separados is table of typ_separados index by varchar2(66);
   -- Instância da tabela. O índice será dtlibbdc || cdagenci || cdbccxlt || nrdolote || nrctrlim || nrborder || nrdconta
@@ -291,7 +295,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                             vr_cdbccxlt  crapepr.cdbccxlt%type,
                             vr_cdpesqbb  varchar2(26),
                             vr_tpemprst  crapepr.tpemprst%type,
-                            vr_dsemprst  varchar2(100));
+                            vr_dsemprst  varchar2(100),
+                            vr_formalizacao VARCHAR2(100) -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+                            );
   -- Definição da tabela para armazenar os registros das agências
   type typ_tab_geral is table of typ_geral index by varchar2(42);
   -- Instância da tabela. O índice será o código da agência || tipo contrato || tipo valor || número conta || número contrato || numero bordero (0s quando nao existir).
@@ -330,6 +336,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
   -- Variáveis globais, utilizadas pelas procedures internas
   vr_dsrelato            varchar2(40);
   vr_desvalor            varchar2(100);
+  vr_idexiste            NUMBER; -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+  vr_des_reto            VARCHAR2(1); -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+  vr_err_efet            INTEGER; -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
   -- Variáveis utilizadas para controlas as quebras na leitura das pl/tables
   vr_flgcontr            number(1);
   vr_flgvalor            number(1);
@@ -416,6 +425,22 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
       vr_tab_bordero(vr_indice_bordero).vr_dtlibbdc := rw_crapbdc.dtlibbdc;
       vr_tab_bordero(vr_indice_bordero).vr_cdoperad := greatest(rw_crapbdc.cdoperad, nvl(vr_tab_bordero(vr_indice_bordero).vr_cdoperad, ' '));
       vr_tab_bordero(vr_indice_bordero).vr_nmprimtl := rw_crapbdc.nmprimtl;
+      -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+      -- Verificar o tipo de autorização feita para a contrato
+      cntr0001.pc_ver_protocolo_ctd(pr_cdcooper        => pr_cdcooper
+                                   ,pr_nrdconta        => rw_crapbdc.nrdconta
+                                   ,pr_tpcontrato      => 27 -- Limite de Desc. Chq. (Contrato)
+                                   ,pr_dtmvtolt        => rw_crapbdc.dtmvtolt
+                                   ,pr_cdrecid_crapcdc => NULL
+                                   ,pr_nrdocmto        => rw_crapbdc.nrctrlim
+                                   ,pr_idexiste        => vr_idexiste
+                                   ,pr_dscritic        => vr_dscritic);
+      IF vr_idexiste = 1 THEN
+	      vr_tab_bordero(vr_indice_bordero).vr_formalizacao := 'DIGITAL';
+      ELSE
+	      vr_tab_bordero(vr_indice_bordero).vr_formalizacao := 'FISICO';
+      END IF;
+      -- Fim Pj470 - SM2
     end loop;
     -- Descontos de titulos
     for rw_crapbdt in cr_crapbdt loop
@@ -432,6 +457,22 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
       vr_tab_bordero(vr_indice_bordero).vr_dtlibbdc := rw_crapbdt.dtlibbdt;
       vr_tab_bordero(vr_indice_bordero).vr_cdoperad := greatest(rw_crapbdt.cdoperad, nvl(vr_tab_bordero(vr_indice_bordero).vr_cdoperad, ' '));
       vr_tab_bordero(vr_indice_bordero).vr_nmprimtl := rw_crapbdt.nmprimtl;
+      -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+      -- Verificar o tipo de autorização feita para a contrato
+      cntr0001.pc_ver_protocolo_ctd(pr_cdcooper        => pr_cdcooper
+                                   ,pr_nrdconta        => rw_crapbdt.nrdconta
+                                   ,pr_tpcontrato      => 28 -- Limite de Desc. Tit. (Contrato)
+                                   ,pr_dtmvtolt        => rw_crapbdt.dtmvtolt
+                                   ,pr_cdrecid_crapcdc => NULL
+                                   ,pr_nrdocmto        => rw_crapbdt.nrctrlim
+                                   ,pr_idexiste        => vr_idexiste
+                                   ,pr_dscritic        => vr_dscritic);
+      IF vr_idexiste = 1 THEN
+	      vr_tab_bordero(vr_indice_bordero).vr_formalizacao := 'DIGITAL';        
+      ELSE
+	      vr_tab_bordero(vr_indice_bordero).vr_formalizacao := 'FISICO';
+      END IF;
+      -- Fim Pj470 - SM2
     end loop;
   END pc_grava_borderos;
 
@@ -526,6 +567,24 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
       vr_tab_geral2(vr_indice_geral2).vr_vlrgeral := vr_desvalor;
       vr_tab_geral2(vr_indice_geral2).vr_cdpesqbb := to_char(rw_craplim.dtinivig, 'dd/mm/yy')||'-'||
                                                      to_char(vr_cdagenci);
+      -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+      -- Verificar o tipo de autorização feita para a contrato
+      cntr0001.pc_ver_protocolo_ctd(pr_cdcooper        => pr_cdcooper
+                                   ,pr_nrdconta        => rw_craplim.nrdconta
+                                   ,pr_tpcontrato      => 29 -- Limite de Crédito (Contrato)
+                                   ,pr_dtmvtolt        => rw_craplim.dtinivig
+                                   ,pr_cdrecid_crapcdc => NULL
+                                   ,pr_nrdocmto        => rw_craplim.nrctrlim
+                                   ,pr_idexiste        => vr_idexiste
+                                   ,pr_dscritic        => vr_dscritic);
+      IF vr_idexiste = 1 THEN
+	      vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'DIGITAL';        
+	      vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'DIGITAL';        
+      ELSE
+	      vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'FISICO';
+	      vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'FISICO';
+      END IF;
+      -- Fim Pj470 - SM2
     end loop;
     
     -- valores maiores que a tabela
@@ -577,6 +636,24 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
       vr_tab_geral2(vr_indice_geral2).vr_vlrgeral := vr_desvalor;
       vr_tab_geral2(vr_indice_geral2).vr_cdpesqbb := to_char(rw_craplim.dtinivig, 'dd/mm/yy')||'-'||
                                                      to_char(vr_cdagenci);
+      -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+      -- Verificar o tipo de autorização feita para a contrato
+      cntr0001.pc_ver_protocolo_ctd(pr_cdcooper        => pr_cdcooper
+                                   ,pr_nrdconta        => rw_craplim.nrdconta
+                                   ,pr_tpcontrato      => 29 -- Limite de Crédito (Contrato)
+                                   ,pr_dtmvtolt        => rw_craplim.dtinivig
+                                   ,pr_cdrecid_crapcdc => NULL
+                                   ,pr_nrdocmto        => rw_craplim.nrctrlim
+                                   ,pr_idexiste        => vr_idexiste
+                                   ,pr_dscritic        => vr_dscritic);
+      IF vr_idexiste = 1 THEN
+	      vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'DIGITAL';        
+	      vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'DIGITAL';        
+      ELSE
+	      vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'FISICO';
+	      vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'FISICO';
+      END IF;
+      -- Fim Pj470 - SM2
     end loop;
   END pc_limite_credito;
 
@@ -642,6 +719,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
       vr_tab_geral2(vr_indice_geral2).vr_cdoperad := rw_crawcrd.cdoperad;
       vr_tab_geral2(vr_indice_geral2).vr_dsrlgera := vr_dsrelato;
       vr_tab_geral2(vr_indice_geral2).vr_vlrgeral := vr_desvalor;
+      -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+      -- Verificar o tipo de autorização feita para a contrato
+      vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'FISICO';
+      vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'FISICO';
+      -- Fim Pj470 - SM2
     end loop;
     -- valores maiores que a tabela
     vr_dsrelato := 'LIMITES DE CARTAO DE CREDITO';
@@ -673,6 +755,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
       vr_tab_geral2(vr_indice_geral2).vr_cdoperad := rw_crawcrd.cdoperad;
       vr_tab_geral2(vr_indice_geral2).vr_dsrlgera := vr_dsrelato;
       vr_tab_geral2(vr_indice_geral2).vr_vlrgeral := vr_desvalor;
+      -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+      -- Verificar o tipo de autorização feita para a contrato
+      vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'FISICO';
+      vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'FISICO';
+      -- Fim Pj470 - SM2
     end loop;
   END pc_limite_cartao_cred;
 
@@ -825,6 +912,37 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
           close cr_crapass2;
+          -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+          -- Verificar se o emprestimo é de portabilidade
+          EMPR0006.pc_possui_portabilidade(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => rw_crapepr.nrdconta
+                                          ,pr_nrctremp => rw_crapepr.nrctremp
+                                          ,pr_err_efet => vr_err_efet
+                                          ,pr_des_reto => vr_des_reto
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+          IF vr_des_reto = 'S' THEN
+            -- Verificar o tipo de autorização feita para a contrato
+            cntr0001.pc_ver_protocolo_ctd(pr_cdcooper        => pr_cdcooper
+                                         ,pr_nrdconta        => rw_crapepr.nrdconta
+                                         ,pr_tpcontrato      => 26 -- Solicitação de Portab. Créd. (Termo)
+                                         ,pr_dtmvtolt        => rw_crapepr.dtmvtolt
+                                         ,pr_cdrecid_crapcdc => NULL
+                                         ,pr_nrdocmto        => rw_crapepr.nrctremp
+                                         ,pr_idexiste        => vr_idexiste
+                                         ,pr_dscritic        => vr_dscritic);
+          ELSE
+            vr_idexiste := 0;
+          END IF;
+          --
+          IF vr_idexiste = 1 THEN
+            vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'DIGITAL';        
+            vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'DIGITAL';        
+          ELSE
+            vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'FISICO';
+            vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'FISICO';
+          END IF;
+          -- Fim Pj470 - SM2
         end if;
       close cr_craplot;
     end loop;
@@ -952,6 +1070,34 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
           close cr_crapass2;
+          -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+          -- Verificar se o emprestimo é de portabilidade
+          EMPR0006.pc_possui_portabilidade(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => rw_crapepr.nrdconta
+                                          ,pr_nrctremp => rw_crapepr.nrctremp
+                                          ,pr_err_efet => vr_err_efet
+                                          ,pr_des_reto => vr_des_reto
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+          IF vr_des_reto = 'S' THEN
+            -- Verificar o tipo de autorização feita para a contrato
+            cntr0001.pc_ver_protocolo_ctd(pr_cdcooper        => pr_cdcooper
+                                         ,pr_nrdconta        => rw_crapepr.nrdconta
+                                         ,pr_tpcontrato      => 26 -- Solicitação de Portab. Créd. (Termo)
+                                         ,pr_dtmvtolt        => rw_crapepr.dtmvtolt
+                                         ,pr_cdrecid_crapcdc => NULL
+                                         ,pr_nrdocmto        => rw_crapepr.nrctremp
+                                         ,pr_idexiste        => vr_idexiste
+                                         ,pr_dscritic        => vr_dscritic);
+            IF vr_idexiste = 1 THEN
+              vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'DIGITAL';        
+              vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'DIGITAL';        
+            ELSE
+              vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'FISICO';
+              vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'FISICO';
+            END IF;
+          END IF;
+          -- Fim Pj470 - SM2
         end if;
       close cr_craplot;
     end loop;
@@ -1068,6 +1214,34 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
           close cr_crapass2;
+          -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+          -- Verificar se o emprestimo é de portabilidade
+          EMPR0006.pc_possui_portabilidade(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => rw_crapepr.nrdconta
+                                          ,pr_nrctremp => rw_crapepr.nrctremp
+                                          ,pr_err_efet => vr_err_efet
+                                          ,pr_des_reto => vr_des_reto
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+          IF vr_des_reto = 'S' THEN
+            -- Verificar o tipo de autorização feita para a contrato
+            cntr0001.pc_ver_protocolo_ctd(pr_cdcooper        => pr_cdcooper
+                                         ,pr_nrdconta        => rw_crapepr.nrdconta
+                                         ,pr_tpcontrato      => 26 -- Solicitação de Portab. Créd. (Termo)
+                                         ,pr_dtmvtolt        => rw_crapepr.dtmvtolt
+                                         ,pr_cdrecid_crapcdc => NULL
+                                         ,pr_nrdocmto        => rw_crapepr.nrctremp
+                                         ,pr_idexiste        => vr_idexiste
+                                         ,pr_dscritic        => vr_dscritic);
+            IF vr_idexiste = 1 THEN
+              vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'DIGITAL';        
+              vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'DIGITAL';        
+            ELSE
+              vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'FISICO';
+              vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'FISICO';
+            END IF;
+          END IF;
+          -- Fim Pj470 - SM2
         end if;
       close cr_craplot;
     end loop;
@@ -1292,6 +1466,28 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                                                            to_char(rw_crapcdc.cdagenci)||'-'||
                                                            to_char(rw_crapcdc.cdbccxlt)||'-'||
                                                            to_char(rw_crapcdc.nrdolote);
+            -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+            -- Verificar o tipo de autorização feita para a contrato
+            cntr0001.pc_ver_protocolo_ctd(pr_cdcooper        => pr_cdcooper
+                                         ,pr_nrdconta        => rw_crapcdc.nrdconta
+                                         ,pr_tpcontrato      => CASE
+                                                                WHEN rw_craplot.tplotmov = 27 THEN 27 -- Limite de Desc. Chq. (Contrato)
+                                                                ELSE                               28 -- Limite de Desc. Tit. (Contrato)
+                                                                END
+                                         ,pr_dtmvtolt        => rw_crapcdc.dtmvtolt
+                                         ,pr_cdrecid_crapcdc => NULL
+                                         ,pr_nrdocmto        => rw_crapcdc.nrctrlim
+                                         ,pr_idexiste        => vr_idexiste
+                                         ,pr_dscritic        => vr_dscritic);
+            IF vr_idexiste = 1 THEN
+              vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'DIGITAL';        
+              vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'DIGITAL';        
+            ELSE
+              vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'FISICO';
+              vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'FISICO';
+            END IF;
+            -- Fim Pj470 - SM2
+
           close cr_crapass2;
         end if;
       close cr_craplot;
@@ -1381,6 +1577,27 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                                                            to_char(rw_crapcdc.cdagenci)||'-'||
                                                            to_char(rw_crapcdc.cdbccxlt)||'-'||
                                                            to_char(rw_crapcdc.nrdolote);
+            -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+            -- Verificar o tipo de autorização feita para a contrato
+            cntr0001.pc_ver_protocolo_ctd(pr_cdcooper        => pr_cdcooper
+                                         ,pr_nrdconta        => rw_crapcdc.nrdconta
+                                         ,pr_tpcontrato      => CASE
+                                                                WHEN rw_craplot.tplotmov = 27 THEN 27 -- Limite de Desc. Chq. (Contrato)
+                                                                ELSE                               28 -- Limite de Desc. Tit. (Contrato)
+                                                                END
+                                         ,pr_dtmvtolt        => rw_crapcdc.dtmvtolt
+                                         ,pr_cdrecid_crapcdc => NULL
+                                         ,pr_nrdocmto        => rw_crapcdc.nrctrlim
+                                         ,pr_idexiste        => vr_idexiste
+                                         ,pr_dscritic        => vr_dscritic);
+            IF vr_idexiste = 1 THEN
+              vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'DIGITAL';        
+              vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'DIGITAL';        
+            ELSE
+              vr_tab_geral(vr_indice_geral).vr_formalizacao   := 'FISICO';
+              vr_tab_geral2(vr_indice_geral2).vr_formalizacao := 'FISICO';
+            END IF;
+            -- Fim Pj470 - SM2
           close cr_crapass2;
         end if;
       close cr_craplot;
@@ -1438,6 +1655,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                                '<nrctrlim></nrctrlim>'||
                                '<nrborder></nrborder>'||
                                '<dtmvtolt></dtmvtolt>'||
+                               '<formalizacao>'||'FISICO'||'</formalizacao>'|| -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
                                '<nraditiv>'||vr_tab_aditivo(vr_indice_aditivo).vr_nraditiv||'</nraditiv>'||
                                '<tpaditiv>'||vr_tab_aditivo(vr_indice_aditivo).vr_cdaditiv||'</tpaditiv>'||
                                '<dsaditiv>'||vr_tab_aditivo(vr_indice_aditivo).vr_dsaditiv||'</dsaditiv>'||
@@ -1671,6 +1889,7 @@ begin
                            '<nrctrlim></nrctrlim>'||
                            '<nrborder></nrborder>'||
                            '<dtmvtolt></dtmvtolt>'||
+                           '<formalizacao>'||NVL(vr_tab_geral(vr_indice_geral).vr_formalizacao,'FISICO')||'</formalizacao>'|| -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
                            '<nraditiv></nraditiv>'||
                            '<tpaditiv></tpaditiv>'||
                            '<dsaditiv></dsaditiv>'||
@@ -1739,6 +1958,7 @@ begin
           vr_tab_separados(vr_indice_separados).vr_cdagenci := rw_crapage.cdagenci;
           vr_tab_separados(vr_indice_separados).vr_nmresage := rw_crapage.nmresage;
           vr_tab_separados(vr_indice_separados).vr_cdbccxlt := vr_tab_bordero(vr_indice_bordero).vr_cdbccxlt;
+          vr_tab_separados(vr_indice_separados).vr_formalizacao := vr_tab_bordero(vr_indice_bordero).vr_formalizacao; -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
         end if;
         vr_tab_separados(vr_indice_separados).vr_vlemprst := vr_vllanbdc;
         -- Define o título da seção do relatório
@@ -1799,6 +2019,7 @@ begin
         vr_tab_geral(vr_indice_geral).vr_dsrlgera := vr_dsrelato;
         vr_tab_geral(vr_indice_geral).vr_vlrgeral := vr_desvalor;
         vr_tab_geral(vr_indice_geral).vr_flgvalor := vr_flgvalor;
+        vr_tab_geral(vr_indice_geral).vr_formalizacao :=vr_tab_separados(vr_indice_separados).vr_formalizacao; -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
         -- Inclui na segunda tabela, ordenada pelos indicadores e depois por agencia e conta
         vr_tab_geral2(vr_indice_geral2).vr_cdagenci := vr_tab_separados(vr_indice_separados).vr_cdagenci;
         vr_tab_geral2(vr_indice_geral2).vr_nrdconta := vr_tab_separados(vr_indice_separados).vr_nrdconta;
@@ -1815,6 +2036,7 @@ begin
         vr_tab_geral2(vr_indice_geral2).vr_dsrlgera := vr_dsrelato;
         vr_tab_geral2(vr_indice_geral2).vr_vlrgeral := vr_desvalor;
         vr_tab_geral2(vr_indice_geral2).vr_flgvalor := vr_flgvalor;
+        vr_tab_geral2(vr_indice_geral2).vr_formalizacao := vr_tab_separados(vr_indice_separados).vr_formalizacao; -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
       end if;
       vr_indice_bordero := vr_tab_bordero.next(vr_indice_bordero);
     end loop;
@@ -1856,6 +2078,7 @@ begin
                          '<nrctrlim>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrctrlim, 'fm99G999G999')||'</nrctrlim>'||
                          '<nrborder>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrborder, 'fm99G999G999')||'</nrborder>'||
                          '<dtmvtolt>'||to_char(vr_tab_separados(vr_indice_separados).vr_dtmvtolt, 'dd/mm/yyyy')||'</dtmvtolt>'||
+                         '<formalizacao>'||NVL(vr_tab_separados(vr_indice_separados).vr_formalizacao,'FISICO')||'</formalizacao>'|| -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
                          '<nraditiv></nraditiv>'||
                          '<tpaditiv></tpaditiv>'||
                          '<dsaditiv></dsaditiv>'||
@@ -1902,6 +2125,7 @@ begin
                          '<nrctrlim>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrctrlim, 'fm99G999G999')||'</nrctrlim>'||
                          '<nrborder>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrborder, 'fm99G999G999')||'</nrborder>'||
                          '<dtmvtolt>'||to_char(vr_tab_separados(vr_indice_separados).vr_dtmvtolt, 'dd/mm/yyyy')||'</dtmvtolt>'||
+                         '<formalizacao>'||NVL(vr_tab_separados(vr_indice_separados).vr_formalizacao,'FISICO')||'</formalizacao>'|| -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
                          '<nraditiv></nraditiv>'||
                          '<tpaditiv></tpaditiv>'||
                          '<dsaditiv></dsaditiv>'||
@@ -1954,6 +2178,7 @@ begin
                          '<nrctrlim>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrctrlim, 'fm99G999G999')||'</nrctrlim>'||
                          '<nrborder>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrborder, 'fm99G999G999')||'</nrborder>'||
                          '<dtmvtolt>'||to_char(vr_tab_separados(vr_indice_separados).vr_dtmvtolt, 'dd/mm/yyyy')||'</dtmvtolt>'||
+                         '<formalizacao>'||NVL(vr_tab_separados(vr_indice_separados).vr_formalizacao,'FISICO')||'</formalizacao>'|| -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
                          '<nraditiv></nraditiv>'||
                          '<tpaditiv></tpaditiv>'||
                          '<dsaditiv></dsaditiv>'||
@@ -2000,6 +2225,7 @@ begin
                          '<nrctrlim>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrctrlim, 'fm99G999G999')||'</nrctrlim>'||
                          '<nrborder>'||to_char(vr_tab_separados(vr_indice_separados).vr_nrborder, 'fm99G999G999')||'</nrborder>'||
                          '<dtmvtolt>'||to_char(vr_tab_separados(vr_indice_separados).vr_dtmvtolt, 'dd/mm/yyyy')||'</dtmvtolt>'||
+                         '<formalizacao>'||NVL(vr_tab_separados(vr_indice_separados).vr_formalizacao,'FISICO')||'</formalizacao>'|| -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
                          '<nraditiv></nraditiv>'||
                          '<tpaditiv></tpaditiv>'||
                          '<dsaditiv></dsaditiv>'||
@@ -2055,6 +2281,7 @@ begin
                                 pr_nmformul  => null,                --> Nome do formulário para impressão
                                 pr_nrcopias  => vr_nrcopias,
                                 pr_qtcoluna  => 132,
+                                pr_nrvergrl  => 1,                   --> TIBCO -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
                                 pr_des_erro  => vr_dscritic);        --> Saída com erro
     -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_des_xml);
@@ -2123,6 +2350,7 @@ begin
                      '<cdpesqbb>'||vr_tab_geral2(vr_indice_geral2).vr_cdpesqbb||'</cdpesqbb>'||
                      '<cdoperad>'||vr_tab_geral2(vr_indice_geral2).vr_cdoperad||'</cdoperad>'||
                      '<nrborder>'||to_char(vr_tab_geral2(vr_indice_geral2).vr_nrborder, 'fm99G999G999')||'</nrborder>'||
+                     '<formalizacao>'||NVL(vr_tab_geral2(vr_indice_geral2).vr_formalizacao,'FISICO')||'</formalizacao>'|| -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
                      '<nraditiv></nraditiv>'||
                      '<tpaditiv></tpaditiv>'||
                      '<dsaditiv></dsaditiv>'||
@@ -2162,6 +2390,7 @@ begin
                               pr_nmformul  => '234dh',       --> Nome do formulário para impressão
                               pr_nrcopias  => 1,             --> Número de cópias para impressão
                               pr_qtcoluna  => 234,
+                              pr_nrvergrl  => 1,                   --> TIBCO -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
                               pr_des_erro  => vr_dscritic);       --> Saída com erro
   -- Verifica se ocorreu erro na geração do arquivo ou na solicitação do relatório
   if pr_dscritic is not null then

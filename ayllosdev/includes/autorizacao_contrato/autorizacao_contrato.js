@@ -228,12 +228,23 @@ function validaSenhas(countSenhaDigitada){
 		var nrconta_senha = $(divSenha).data('nrcontausuario');
 	var senhaCampo = $('.dssencar', divSenha).val();
 
-	if(senhaCampo == ""){
-		__flgSenhasValidas = false;
+	if(senhaCampo == "" || (senhaCampo != "" && senhaCampo.length != 6 && senhaCampo.length != 8)){
+
+		// Se ele digitou a senha, mas digitou uma quantidade diferente de 6 ou 8 digitos, mostrar Senha Incorreta
+		if(senhaCampo != ""){
+			$('.lblErro', divSenha).text('Senha Incorreta');
+			__senhasValidas.push({
+				senha: 'INVALIDA',
+				digitada: true
+			});
+		}else{
 		__senhasValidas.push({
 			senha: 'INVALIDA',
 			digitada: false
 		});
+		}
+
+		__flgSenhasValidas = false;
 
 		if(countSenhaDigitada+1 < lstSenhas.length){
 			countSenhaDigitada++;
@@ -244,9 +255,17 @@ function validaSenhas(countSenhaDigitada){
 		return false;
 	}
 
+	var fonteValidaSenha = '';
+
+	if (senhaCampo.length == 8) { // Se digitou 8 digitos, validar com a senha da internet
+		fonteValidaSenha = 'valida_senha_internet.php';
+	} else { // Se digitou 6, validar com senha dos cartões
+		fonteValidaSenha = 'valida_senha.php';
+	}
+
 			$.ajax({
 				type: "POST",
-				url: UrlSite + "includes/autorizacao_contrato/valida_senha.php", 
+		url: UrlSite + "includes/autorizacao_contrato/" + fonteValidaSenha, 
 				data: {
 					nrdconta: nrconta_senha,
 					inpessoa: inpessoa,
@@ -299,7 +318,6 @@ function validaSenhas(countSenhaDigitada){
 					}
 				}				
 			});
-
 		}
 
 /**
@@ -499,7 +517,7 @@ function criaTransPend(lstContasDigitadas,funcaoImpressao, codTela){
 function formataCamposSenha(){
 	var lengthSenhas = $('.senhas input', '#fsSenhasAutorizacaoContrato').length;
 
-	$('.senhas input', '#fsSenhasAutorizacaoContrato').attr('maxlength','6');
+	$('.senhas input', '#fsSenhasAutorizacaoContrato').attr('maxlength','8');
 
 	$('.senhas input', '#fsSenhasAutorizacaoContrato').each(function(index,elem){
 		var tbSenha = elem;

@@ -1987,6 +1987,8 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE VARIABLE aux_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE VARIABLE aux_nrseqcar AS INTEGER     NO-UNDO.
     DEF VAR aux_mensagens    AS CHAR                    NO-UNDO.    
+    DEF VAR aux_dsfrase      AS CHAR                    NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+    DEF VAR aux_dsdlinha     AS CHAR                    NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -2561,11 +2563,75 @@ PROCEDURE efetua_inclusao_limite:
                             INPUT par_nmdatela,
                             INPUT par_nrdconta,
                            OUTPUT aux_nrdrowid).
+      /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+        /** Numero de Contrato do Limite **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Contrato",
+                                 INPUT "",
+                                 INPUT TRIM(STRING(par_nrctrlim, "zzz,zzz,zz9"))).
+        /** Valor do Limite **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Vl.Limite de Crédito", /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+                                 INPUT "",
+                                 INPUT TRIM(STRING(craplim.vllimite, "zzz,zzz,zz9.99"))).
+        /** Data Alteracao do Limite **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Data de Contrataçao",  /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+                                 INPUT "",
+                                 INPUT STRING(par_dtmvtolt, "99/99/9999")).
+        /** Linha de crédito **/
+        FIND crapldc WHERE crapldc.cdcooper = par_cdcooper     AND
+                           crapldc.cddlinha = par_cddlinha AND
+                           crapldc.tpdescto = 2
+                           NO-LOCK NO-ERROR.
                            
+        IF   NOT AVAILABLE crapldc   THEN
+             aux_dsdlinha = STRING(par_cddlinha) + " - " + "NAO CADASTRADA".
+        ELSE
+             aux_dsdlinha = STRING(par_cddlinha) + " - " + crapldc.dsdlinha.
+        //
         RUN proc_gerar_log_item(INPUT aux_nrdrowid,
-                                INPUT "nrctrlim",
+                                 INPUT "Linha de Crédito",  /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
                                 INPUT "",
-                                INPUT par_nrctrlim).    
+                                 INPUT STRING(aux_dsdlinha)).
+        /** Prazo de Vigencia **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Prazo de Vigencia (dias)",
+                                 INPUT "",
+                                 INPUT STRING(craplim.qtdiavig)).
+        /** Periodicidade da Capitalizaçao **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Periodic.da Capitalizaçao",
+                                 INPUT "",
+                                 INPUT STRING("MENSAL")).
+        /** Custo Efetivo Total (CET) **/
+        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+        RUN STORED-PROCEDURE pc_busca_cet_limite
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                             INPUT par_nrdconta,
+                                             INPUT par_nrctrlim,
+                                            OUTPUT "",  /* DSFRASE */
+                                            OUTPUT 0,   /* Codigo da crítica */
+                                            OUTPUT ""). /* Descriçao da crítica */
+        CLOSE STORED-PROC pc_busca_cet_limite
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+        ASSIGN aux_dsfrase  = ""
+               aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_dsfrase  = pc_busca_cet_limite.pr_dsfrase 
+                              WHEN pc_busca_cet_limite.pr_dsfrase <> ?
+               aux_cdcritic = pc_busca_cet_limite.pr_cdcritic 
+                              WHEN pc_busca_cet_limite.pr_cdcritic <> ?
+               aux_dscritic = pc_busca_cet_limite.pr_dscritic
+                              WHEN pc_busca_cet_limite.pr_dscritic <> ?.
+        IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
+           aux_dsfrase  = "Erro ao buscar o CET".
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Custo Efetivo Total (CET)",
+                                 INPUT "",
+                                 INPUT STRING(aux_dsfrase)).
+      /* Fim Pj470 - SM2 */
         
     END.    
     
@@ -4296,6 +4362,9 @@ PROCEDURE efetua_alteracao_limite:
     DEFINE VARIABLE h-b1wgen9999 AS HANDLE  NO-UNDO.
     DEFINE VARIABLE aux_contador AS INTEGER    NO-UNDO.
     DEFINE VARIABLE aux_flgderro AS LOGICAL    NO-UNDO.
+    DEFINE VARIABLE aux_dsdlinha_old AS CHARACTER NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+    DEFINE VARIABLE aux_dsdlinha     AS CHARACTER NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+    DEFINE VARIABLE aux_dsfrase      AS CHARACTER NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
     
     DEFINE VARIABLE var_vllimite AS DECIMAL      NO-UNDO.
     DEFINE VARIABLE var_dsramati AS CHARACTER    NO-UNDO.
@@ -4848,7 +4917,7 @@ PROCEDURE efetua_alteracao_limite:
                            OUTPUT aux_nrdrowid).
                            
         RUN proc_gerar_log_item(INPUT aux_nrdrowid,
-                                INPUT "nrctrlim",
+                                INPUT "Contrato", /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
                                 INPUT "",
                                 INPUT par_nrctrlim).    
         
@@ -4856,9 +4925,9 @@ PROCEDURE efetua_alteracao_limite:
         IF  var_vllimite <> par_vllimite  THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
-                                    INPUT "vllimite",
-                                    INPUT var_vllimite,
-                                    INPUT par_vllimite).    
+                                    INPUT "Vl.Limite de Crédito", /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+                                    INPUT TRIM(STRING(var_vllimite, "zzz,zzz,zz9.99")),
+                                    INPUT TRIM(STRING(par_vllimite, "zzz,zzz,zz9.99"))).    
         END.
         
         IF  var_dsramati <> par_dsramati  THEN
@@ -4873,8 +4942,8 @@ PROCEDURE efetua_alteracao_limite:
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "vlmedchq",
-                                    INPUT var_vlmedchq,
-                                    INPUT par_vlmedchq).    
+                                    INPUT TRIM(STRING(var_vlmedchq, "zzz,zzz,zz9.99")),
+                                    INPUT TRIM(STRING(par_vlmedchq, "zzz,zzz,zz9.99"))).    
         END.
 
 
@@ -4882,32 +4951,32 @@ PROCEDURE efetua_alteracao_limite:
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "vlfatura",
-                                    INPUT var_vlfatura,
-                                    INPUT par_vlfatura).    
+                                    INPUT TRIM(STRING(var_vlfatura, "zzz,zzz,zz9.99")),
+                                    INPUT TRIM(STRING(par_vlfatura, "zzz,zzz,zz9.99"))).    
         END.
         
         IF  var_vloutras <> par_vloutras  THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "vloutras",
-                                    INPUT var_vloutras,
-                                    INPUT par_vloutras).    
+                                    INPUT TRIM(STRING(var_vloutras, "zzz,zzz,zz9.99")),
+                                    INPUT TRIM(STRING(par_vloutras, "zzz,zzz,zz9.99"))).    
         END.
 
         IF  var_vlsalari <> par_vlsalari  THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "vlsalari",
-                                    INPUT var_vlsalari,
-                                    INPUT par_vlsalari).    
+                                    INPUT TRIM(STRING(var_vlsalari, "zzz,zzz,zz9.99")),
+                                    INPUT TRIM(STRING(par_vlsalari, "zzz,zzz,zz9.99"))).    
         END.
         
         IF  var_vlsalcon <> par_vlsalcon  THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "vlsalcon",
-                                    INPUT var_vlsalcon,
-                                    INPUT par_vlsalcon).    
+                                    INPUT TRIM(STRING(var_vlsalcon, "zzz,zzz,zz9.99")),
+                                    INPUT TRIM(STRING(par_vlsalcon, "zzz,zzz,zz9.99"))).    
         END.
         
         IF  var_dsdbens1 <> par_dsdbens1  THEN
@@ -4929,17 +4998,38 @@ PROCEDURE efetua_alteracao_limite:
         IF  var_nrctrlim <> par_nrctrlim  THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
-                                    INPUT "nrctrlim",
+                                    INPUT "Contrato", /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
                                     INPUT var_nrctrlim,
                                     INPUT par_nrctrlim).    
         END.
         
         IF  var_cddlinha <> par_cddlinha  THEN
         DO:
+          /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+          FIND crapldc WHERE crapldc.cdcooper = par_cdcooper     AND
+                             crapldc.cddlinha = var_cddlinha AND
+                             crapldc.tpdescto = 2
+                             NO-LOCK NO-ERROR.
+
+          IF   NOT AVAILABLE crapldc   THEN
+               aux_dsdlinha_old = STRING(var_cddlinha) + " - " + "NAO CADASTRADA".
+          ELSE
+               aux_dsdlinha_old = STRING(var_cddlinha) + " - " + crapldc.dsdlinha.
+          //
+          FIND crapldc WHERE crapldc.cdcooper = par_cdcooper     AND
+                             crapldc.cddlinha = par_cddlinha AND
+                             crapldc.tpdescto = 2
+                             NO-LOCK NO-ERROR.
+
+          IF   NOT AVAILABLE crapldc   THEN
+               aux_dsdlinha = STRING(par_cddlinha) + " - " + "NAO CADASTRADA".
+          ELSE
+               aux_dsdlinha = STRING(par_cddlinha) + " - " + crapldc.dsdlinha.
+          /* Fim Pj470 - SM2 */
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
-                                    INPUT "cddlinha",
-                                    INPUT var_cddlinha,
-                                    INPUT par_cddlinha).    
+                                    INPUT "Linha de Crédito",
+                                    INPUT aux_dsdlinha_old,
+                                    INPUT aux_dsdlinha).    
         END.
         
         IF  var_dsobserv <> par_dsobserv  THEN
@@ -4990,7 +5080,9 @@ PROCEDURE efetua_alteracao_limite:
                                     INPUT par_doccjav1).    
         END.
         
-        IF  var_ende1av1 <> par_ende1av1  THEN
+        IF  var_ende1av1 <> par_ende1av1
+        AND (var_ende1av1 <> " 0" OR par_ende1av1 <> " ") /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+        THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "ende1av1",
@@ -4998,7 +5090,9 @@ PROCEDURE efetua_alteracao_limite:
                                     INPUT par_ende1av1).    
         END.
         
-        IF  var_ende2av1 <> par_ende2av1  THEN
+        IF  var_ende2av1 <> par_ende2av1
+        AND (var_ende2av1 <> " -  - 00000.000 - " OR par_ende2av1 <> " ") /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+        THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "ende2av1",
@@ -5046,7 +5140,9 @@ PROCEDURE efetua_alteracao_limite:
                                     INPUT par_doccjav2).    
         END.
         
-        IF  var_ende1av2 <> par_ende1av2  THEN
+        IF  var_ende1av2 <> par_ende1av2
+        AND (var_ende1av2 <> " 0" OR par_ende1av2 <> " ") /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+        THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "ende1av2",
@@ -5054,7 +5150,9 @@ PROCEDURE efetua_alteracao_limite:
                                     INPUT par_ende1av2).    
         END.
         
-        IF  var_ende2av2 <> par_ende2av2  THEN
+        IF  var_ende2av2 <> par_ende2av2
+        AND (var_ende2av2 <> " -  - 00000.000 - " OR par_ende2av2 <> " ") /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+        THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "ende2av2",
