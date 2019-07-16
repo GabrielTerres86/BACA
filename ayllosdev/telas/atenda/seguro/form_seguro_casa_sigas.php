@@ -87,11 +87,12 @@
             <input name="nrmdiaven" id="nrmdiaven" type="text" alt=""/>
             <label for="nrpercomi">Perc. Comissão:</label>
             <input name="nrpercomi" id="nrpercomi" type="text" alt=""/>
+            <input name="cdidsegp" id="cdidsegp" type="hidden" alt=""/>
         </fieldset>
 	</div>
 </form>
 <div id="divBotoes">
-	<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>
+    <a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>
     <a href="#" class="botao" onclick="cancelarSeguroSigas(); return false;" ><? echo utf8ToHtml('Alterar status para cancelado'); ?></a>
 </div>
 <script type="text/javascript">

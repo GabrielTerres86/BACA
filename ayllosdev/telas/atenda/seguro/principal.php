@@ -151,6 +151,7 @@ if ($flgNovo == false) {    // FAZ O QUE SEMPRE FEZ
                 arraySeguroCasaSigas['nrvalparc'] = '<?php echo getByTagName($seguro_casa_sigas,'nrvalparc'); ?>';
                 arraySeguroCasaSigas['nrmdiaven'] = '<?php echo getByTagName($seguro_casa_sigas,'nrmdiaven'); ?>';
                 arraySeguroCasaSigas['nrpercomi'] = '<?php echo getByTagName($seguro_casa_sigas,'nrpercomi'); ?>';
+                arraySeguroCasaSigas['cdidsegp'] = '<?php echo getByTagName($seguro_casa_sigas,'cdidsegp'); ?>';
 
             </script>
         <?

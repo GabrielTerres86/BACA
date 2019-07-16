@@ -1439,7 +1439,7 @@ function controlaLayout(operacao) {
 				var divPart3 = $('#part_3');
 				var divPart4 = $('#part_4');
 				var divBotoes = $('#divBotoes');
-				var cTodos = $('#segurado, #ddsseguro, #dstipseg, #nmressegSIGAS, #dtinivig, #dtfimvig, #nrpropostaSIGAS, #nrapoliceSIGAS, #nrendossoSIGAS, #dsplanoSIGAS, #dsmoradiaSIGAS, #dsendres, #nrendere, #complend, #nmbairro, #nmcidade, #cdufresd, #nrpreliq, #nrpretot, #nrqtparce, #nrvalparc, #nrmdiaven, #nrpercomi' ,frmSeguroCasa);
+				var cTodos = $('#segurado, #ddsseguro, #dstipseg, #nmressegSIGAS, #dtinivig, #dtfimvig, #nrpropostaSIGAS, #nrapoliceSIGAS, #nrendossoSIGAS, #dsplanoSIGAS, #dsmoradiaSIGAS, #dsendres, #nrendere, #complend, #nmbairro, #nmcidade, #cdufresd, #nrpreliq, #nrpretot, #nrqtparce, #nrvalparc, #nrmdiaven, #nrpercomi, #cdidsegp' ,frmSeguroCasa);
 				var cTodosPart2 = $('input',divPart2);
 				var cTodosPart3 = $('input',divPart3);
 				var cTodosPart4 = $('input',divPart4);
@@ -1507,6 +1507,7 @@ function controlaLayout(operacao) {
                 cNrvalparc  = $('#nrvalparc', frmSeguroCasa);
                 cNrmdiaven  = $('#nrmdiaven', frmSeguroCasa);
                 cNrpercomi  = $('#nrpercomi', frmSeguroCasa);
+                cIdseg  = $('#cdidsegp', frmSeguroCasa);
                 /* FIM CAMPOS */
 				
                 /* INICIO SET VALORES NOS CAMPOS */
@@ -1534,6 +1535,7 @@ function controlaLayout(operacao) {
                 cNrvalparc.val(arraySeguroCasaSigas['nrvalparc']);
                 cNrmdiaven.val(arraySeguroCasaSigas['nrmdiaven']);
                 cNrpercomi.val(arraySeguroCasaSigas['nrpercomi']);
+                cIdseg.val(arraySeguroCasaSigas['cdidsegp']);
                 /* FIM SET VALORES NOS CAMPOS */
                 
              	cTodos.addClass('campo');
@@ -3215,6 +3217,23 @@ function validaContrato(){
 	});
 }
 
-function cancelarSeguroSigas(){
-    showError("error", "Favor providenciar o cancelamento do seguro junto a seguradora. Este processo no sistema Aimaro não possui integração com a seguradora.","Alerta - Aimaro");
+function cancelarSeguroSigas(tpseguro)
+{
+	$.ajax({		
+		type: 'POST',
+		url: UrlSite + 'telas/atenda/seguro/cancela_seguro_sigas.php',
+		data: {
+			nrdconta: nrdconta, cdidsegp: cdidsegp.val(),
+			redirect: 'script_ajax'
+		}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
+			return false;
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			showError("error", "Favor providenciar o cancelamento do seguro junto a seguradora. Este processo no sistema Aimaro não possui integração com a seguradora.","Alerta - Aimaro");
+		}
+	});
 }

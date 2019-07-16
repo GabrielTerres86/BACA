@@ -59,6 +59,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_SEGURO IS
                                         ,pr_nmdcampo  OUT VARCHAR2              --Nome do Campo
                                         ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo                                      
 
+  /* Detalhamento das informações de seguro CASA contratado via SIGAS */
+  PROCEDURE pc_cancela_seguro_casa_sigas(pr_cdidsegp   IN VARCHAR2              --> Apolice
+                                        ,pr_nrdconta   IN crapass.nrdconta%TYPE --> Número da conta solicitada;
+                                        ,pr_xmllog     IN VARCHAR2              --XML com informações de LOG
+                                        ,pr_cdcritic  OUT PLS_INTEGER           --Código da crítica
+                                        ,pr_dscritic  OUT VARCHAR2              --Descrição da crítica
+                                        ,pr_xmlseguro IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
+                                        ,pr_nmdcampo  OUT VARCHAR2              --Nome do Campo
+                                        ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo                                      
 
 END TELA_ATENDA_SEGURO;
 /
@@ -999,6 +1008,74 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
   END pc_detalha_seguro_casa_sigas;  
+
+  PROCEDURE pc_cancela_seguro_casa_sigas(pr_cdidsegp   IN VARCHAR2              --> Apolice
+                                        ,pr_nrdconta   IN crapass.nrdconta%TYPE --> Número da conta solicitada;
+                                        ,pr_xmllog     IN VARCHAR2              --XML com informações de LOG
+                                        ,pr_cdcritic  OUT PLS_INTEGER           --Código da crítica
+                                        ,pr_dscritic  OUT VARCHAR2              --Descrição da crítica
+                                        ,pr_xmlseguro IN OUT NOCOPY XMLType     --Arquivo de retorno do XML
+                                        ,pr_nmdcampo  OUT VARCHAR2              --Nome do Campo
+                                        ,pr_des_erro  OUT VARCHAR2) IS          --Saida OK/NOK                           
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_cancela_seguro_casa_sigas
+    Sistema : Ayllos Web
+    Autor   : Darlei Fernando Zillmer (Supero)
+    Data    : Julho/2019                 Ultima atualizacao: 15/07/2019
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Altera status do contrato sigas
+
+    Alteracoes: 
+    ..............................................................................*/
+
+    DECLARE
+
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      -- Handle para a consulta dinâmica
+      vr_ctx DBMS_XMLGEN.ctxHandle;
+      
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+
+    BEGIN
+      UPDATE tbseg_producao_sigas 
+         SET tpproposta = 'CANCELAMENTO' 
+       WHERE id = pr_cdidsegp;
+      commit;
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_dscritic := 'Erro geral na rotina da tela TELA_ATENDA_SEGURO - pc_detalha_seguro_casa_sigas: ' ||vr_dscritic;
+        -- Carregar XML padrao para variavel de retorno
+        pr_xmlseguro := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                          '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        rollback;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro não tratado na rotina da tela TELA_ATENDA_SEGURO - pc_detalha_seguro_casa_sigas: ' || SQLERRM;
+        -- Carregar XML padrão para variavel de retorno
+        pr_xmlseguro := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                          '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        rollback;
+    END;
+  END pc_cancela_seguro_casa_sigas;
 
 END TELA_ATENDA_SEGURO;
 /
