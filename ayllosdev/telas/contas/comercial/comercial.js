@@ -357,7 +357,7 @@ function controlaLayout(operacao) {
     cTurno.css('width', '125px');
     cDtAdm.css('width', '67px').addClass('data');
     cRend.css('width', '68px').attr('alt', 'p6p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');;
-    cCadEmp.css('width', '58px').addClass('inteiro cadempresa');
+    cCadEmp.css('width', '58px').addClass('inteiro');
     cOtrsrend.css('width', '68px').attr('alt', 'p6p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');;
     cPolitica.css('width', '70px');
 

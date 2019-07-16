@@ -1554,7 +1554,7 @@ function formataPessoaFisica() {
     cDesEstCivil.css('width', '200px');
     cNmConjuge.addClass('alphanum').css('width', '265px').attr('maxlength', '50');
     cDesEmpresa.css('width', '340px');
-    cCadEmpresa.addClass('cadempresa').css('width', '92px');
+    cCadEmpresa.addClass('inteiro').css('width', '92px');
     cDesOcupacao.css('width', '200px');
     cEmail.css('width', '268px');
     cDDDs.addClass('inteiro').css('width', '40px');
