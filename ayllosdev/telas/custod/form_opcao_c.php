@@ -6,7 +6,9 @@
  * OBJETIVO     : Formulario que apresenta a opcao C da tela CUSTOD
  * --------------
  * ALTERAÇÕES   : 01/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
- *				  16/12/2016 - Alterações referentes ao projeto 300. (Reinert)
+ *				  16/12/2016 - Alterações referentes ao projeto 300. (Reinert) 
+ *
+ *				  16/07/2019 - Alterações referentes a RITM0021707.	(Daniel Lombardi Mout'S)
  * --------------
  */
  
@@ -99,7 +101,7 @@
 						<th>PA</th>
 						<th>Lote</th>
 						<th>Data Cust&oacute;dia</th>
-						<th>Data Resgate</th>						
+						<th>Data Resgate/<br>Devolu&ccedil;&atilde;o</th>						
 						<th>Operador Resgate</th>
 					</tr>
 				</thead>
