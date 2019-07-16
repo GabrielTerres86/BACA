@@ -143,6 +143,9 @@
 
                 19/07/2018 - Proj. 411.2 - Poupança Programada -> Aplicação Programada
 				
+                16/04/2019 - Ajustado para nao validar a qtd de meses para suspensao com o vencimento do plano,
+                             pois a informacao do plano nao eh mais utilizada (Anderson)
+
 ..............................................................................*/
 
 
@@ -246,7 +249,7 @@ PROCEDURE consulta-poupanca:
 
     IF  par_flgerlog  THEN
         ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-               aux_dstransa = "Consulta de poupanca programada".
+               aux_dstransa = "Consulta de aplicacao programada".
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""
@@ -446,7 +449,7 @@ PROCEDURE consulta-poupanca:
         DO:
             IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
                 ASSIGN aux_dscritic = "Nao foi possivel consultar as " +
-                                      "poupancas programadas.".
+                                      "aplicacoes programadas.".
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -514,7 +517,7 @@ PROCEDURE atualizar-dados-poupanca:
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Atualizar dados da poupanca programada"
+           aux_dstransa = "Atualizar dados da aplicacao programada"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgtrans = FALSE.
@@ -577,7 +580,7 @@ PROCEDURE atualizar-dados-poupanca:
         DO:
             IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
                 ASSIGN aux_dscritic = "Nao foi possivel atualizar a " +
-                                      "poupanca programada.".
+                                      "aplicacao programada.".
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -687,7 +690,7 @@ PROCEDURE consulta-extrato-poupanca:
     EMPTY TEMP-TABLE tt-extr-rpp.
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Carregar extrato da poupanca programada"
+           aux_dstransa = "Carregar extrato da aplicacao programada"
            aux_cdcritic = 0
            aux_dscritic = "".
         
@@ -1146,7 +1149,7 @@ PROCEDURE cancelar-poupanca:
     EMPTY TEMP-TABLE tt-erro.    
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Cancelar poupanca programada"
+           aux_dstransa = "Cancelar aplicacao programada"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgtrans = FALSE.
@@ -1273,7 +1276,7 @@ PROCEDURE cancelar-poupanca:
         DO: 
             
             IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
-                ASSIGN aux_dscritic = "Nao foi possivel cancelar a poupanca " +
+                ASSIGN aux_dscritic = "Nao foi possivel cancelar a aplicacao " +
                                       "programada.".
 
             RUN gera_erro (INPUT par_cdcooper,
@@ -1392,7 +1395,7 @@ PROCEDURE obtem-dados-suspensao:
     EMPTY TEMP-TABLE tt-dados-rpp.
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Obtem dados da poupanca para suspensao"
+           aux_dstransa = "Obtem dados da aplicacao para suspensao"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgerror = TRUE.
@@ -1514,7 +1517,7 @@ PROCEDURE validar-dados-suspensao:
     EMPTY TEMP-TABLE tt-erro.    
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Valida dados para suspensao da poupanca"
+           aux_dstransa = "Valida dados para suspensao da aplicacao"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgerror = TRUE.
@@ -1548,12 +1551,14 @@ PROCEDURE validar-dados-suspensao:
 
         ASSIGN aux_dtreinic = DATE(aux_nrmesini,aux_nrdiaini,aux_nranoini).
 
-        /** Data de reinicio da poupanca nao pode ser maior que o vencimento **/
+        /** Data de reinicio da poupanca nao pode ser maior que o vencimento 
         IF  aux_dtreinic > craprpp.dtvctopp  THEN
             DO:
                 ASSIGN aux_cdcritic = 26.
                 LEAVE.
             END.
+        
+        Comentado pois nao faz mais sentido, nao tem mais campo de vencimento **/
         
         ASSIGN aux_flgerror = FALSE.
 
@@ -1634,7 +1639,7 @@ PROCEDURE suspender-poupanca:
     EMPTY TEMP-TABLE tt-erro.    
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Suspender poupanca programada"
+           aux_dstransa = "Suspender aplicacao programada"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgtrans = FALSE.
@@ -1711,7 +1716,7 @@ PROCEDURE suspender-poupanca:
     IF  NOT aux_flgtrans  THEN
         DO: 
             IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
-                ASSIGN aux_dscritic = "Nao foi possivel suspender a poupanca " +
+                ASSIGN aux_dscritic = "Nao foi possivel suspender a aplicacao " +
                                       "programada.".
 
             RUN gera_erro (INPUT par_cdcooper,
@@ -1832,7 +1837,7 @@ PROCEDURE reativar-poupanca:
     EMPTY TEMP-TABLE tt-erro.    
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Reativar poupanca programada"
+           aux_dstransa = "Reativar aplicacao programada"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgtrans = FALSE.
@@ -1901,7 +1906,7 @@ PROCEDURE reativar-poupanca:
         IF  NOT craprpp.flgctain  THEN
             DO:
                 ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "Poupanca nao pode ser reativada.".
+                       aux_dscritic = "Aplicacao nao pode ser reativada.".
 
                 UNDO TRANS_POUP, LEAVE TRANS_POUP.
             END.
@@ -1966,7 +1971,7 @@ PROCEDURE reativar-poupanca:
     IF  NOT aux_flgtrans  THEN
         DO: 
             IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
-                ASSIGN aux_dscritic = "Nao foi possivel reativar a poupanca " +
+                ASSIGN aux_dscritic = "Nao foi possivel reativar a aplicacao " +
                                       "programada.".
 
             RUN gera_erro (INPUT par_cdcooper,
@@ -2727,7 +2732,7 @@ PROCEDURE efetuar-resgate:
     EMPTY TEMP-TABLE tt-erro.    
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Efetuar resgate para poupanca programada"
+           aux_dstransa = "Efetuar resgate para aplicacao programada"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgtrans = FALSE.
@@ -2994,7 +2999,7 @@ PROCEDURE consultar-resgates:
     EMPTY TEMP-TABLE tt-resgates-rpp.    
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Consultar resgates da poupanca programada".
+           aux_dstransa = "Consultar resgates da aplicacao programada".
            
     FOR EACH craplrg WHERE craplrg.cdcooper = par_cdcooper AND 
                            craplrg.nrdconta = par_nrdconta AND
@@ -3072,7 +3077,7 @@ PROCEDURE cancelar-resgate:
     EMPTY TEMP-TABLE tt-erro.    
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Cancelar resgate da poupanca programada"
+           aux_dstransa = "Cancelar resgate da aplicacao programada"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgtrans = FALSE.
@@ -3292,7 +3297,7 @@ PROCEDURE obtem-dados-alteracao:
     EMPTY TEMP-TABLE tt-dados-rpp.
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Obtem dados da poupanca para alteracao"
+           aux_dstransa = "Obtem dados da aplicacao para alteracao"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgerror = TRUE.
@@ -3414,7 +3419,7 @@ PROCEDURE validar-dados-alteracao:
     EMPTY TEMP-TABLE tt-erro.    
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Valida dados para alteracao da poupanca"
+           aux_dstransa = "Valida dados para alteracao da aplicacao"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgerror = TRUE.
@@ -3512,7 +3517,7 @@ PROCEDURE alterar-poupanca-programada:
     EMPTY TEMP-TABLE tt-erro.    
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Alterar poupanca programada"
+           aux_dstransa = "Alterar aplicacao programada"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgtrans = FALSE.
@@ -3618,7 +3623,7 @@ PROCEDURE alterar-poupanca-programada:
         DO: 
 
             IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
-                ASSIGN aux_dscritic = "Nao foi possivel alterar a poupanca.".
+                ASSIGN aux_dscritic = "Nao foi possivel alterar a aplicacao.".
                     
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -3719,7 +3724,7 @@ PROCEDURE obtem-dados-inclusao:
         ASSIGN par_dtinirpp = par_dtmvtolt.
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Obtem dados de poupanca para inclusao"
+           aux_dstransa = "Obtem dados de aplicacao para inclusao"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgerror = TRUE
@@ -3863,7 +3868,7 @@ PROCEDURE validar-dados-inclusao:
     EMPTY TEMP-TABLE tt-erro.    
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Valida dados para inclusao de poupanca"
+           aux_dstransa = "Valida dados para inclusao de aplicacao"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgerror = TRUE.
@@ -4004,6 +4009,7 @@ PROCEDURE incluir-poupanca-programada:
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
 
     DEF OUTPUT PARAM par_nrdrowid AS ROWID                           NO-UNDO.
+	DEF OUTPUT PARAM par_nrrdcapp AS INTE                            NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -4017,7 +4023,7 @@ PROCEDURE incluir-poupanca-programada:
            /* Caso seja efetuada alguma alteracao na descricao deste log,
               devera ser tratado o relatorio de "demonstrativo produtos por
               colaborador" da tela CONGPR. (Fabricio - 04/05/2012) */
-           aux_dstransa = "Incluir poupanca programada"
+           aux_dstransa = "Incluir aplicacao programada"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgtrans = FALSE.
@@ -4210,6 +4216,7 @@ PROCEDURE incluir-poupanca-programada:
         FIND CURRENT crapspp NO-LOCK NO-ERROR.
 
         ASSIGN par_nrdrowid = ROWID(craprpp)
+			   par_nrrdcapp = aux_nrrdcapp
                aux_flgtrans = TRUE.
 
     END. /** Fim do DO TRANSACTION - TRANS_POUP **/
@@ -4217,7 +4224,7 @@ PROCEDURE incluir-poupanca-programada:
     IF  NOT aux_flgtrans  THEN
         DO: 
             IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
-                ASSIGN aux_dscritic = "Nao foi possivel incluir a poupanca.".
+                ASSIGN aux_dscritic = "Nao foi possivel incluir a aplicacao.".
                     
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -4313,6 +4320,7 @@ PROCEDURE incluir-aplicacao-programada:
     DEF  INPUT PARAM par_flgdbpar AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM par_nrdrowid AS ROWID                           NO-UNDO.
+	DEF OUTPUT PARAM par_nrrdcapp AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -4326,7 +4334,7 @@ PROCEDURE incluir-aplicacao-programada:
            /* Caso seja efetuada alguma alteracao na descricao deste log,
               devera ser tratado o relatorio de "demonstrativo produtos por
               colaborador" da tela CONGPR. (Fabricio - 04/05/2012) */
-           aux_dstransa = "Incluir poupanca programada"
+           aux_dstransa = "Incluir aplicacao programada"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgtrans = FALSE.
@@ -4524,6 +4532,7 @@ PROCEDURE incluir-aplicacao-programada:
         FIND CURRENT crapspp NO-LOCK NO-ERROR.
 
         ASSIGN par_nrdrowid = ROWID(craprpp)
+		       par_nrrdcapp = aux_nrrdcapp
                aux_flgtrans = TRUE.
 
     END. /** Fim do DO TRANSACTION - TRANS_POUP **/
@@ -4531,7 +4540,7 @@ PROCEDURE incluir-aplicacao-programada:
     IF  NOT aux_flgtrans  THEN
         DO: 
             IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
-                ASSIGN aux_dscritic = "Nao foi possivel incluir a poupanca.".
+                ASSIGN aux_dscritic = "Nao foi possivel incluir a aplicacao.".
                     
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -4725,7 +4734,7 @@ PROCEDURE obtem-dados-autorizacao:
     EMPTY TEMP-TABLE tt-autoriza-rpp.
     
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Imprimir autorizacao da poupanca programada"
+           aux_dstransa = "Imprimir autorizacao da aplicacao programada"
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_flgtrans = FALSE.
