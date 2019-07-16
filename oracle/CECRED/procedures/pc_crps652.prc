@@ -495,9 +495,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
               on x.cdcooper = crapcyb.cdcooper
              and x.nrdconta = crapcyb.nrdconta
              and x.nrctremp = crapcyb.nrctremp
-           where ((crapcyb.cdorigem = 1
-					   AND crapcyb.cdlcremp = 0) 
-						  OR crapcyb.cdorigem IN (2,3))
+       
+           where crapcyb.cdorigem IN (2,3)
              and x.inliquid = 0
              and x.cdcooper = pr_cdcooper
            group by x.cdcooper
@@ -509,6 +508,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                 ,cyb.nrdconta
                 ,tdb.nrborder
                 ,tdb.nrdocmto
+                ,cyb.cdorigem
                 ,cyb.nrctremp
                 ,tdb.nrctrlim
                 ,tdb.vlmratit - tdb.vlpagmra as vlmratit -- juros por atraso de pagamento
@@ -617,12 +617,36 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
               ,tdt.nrdocmto -- Desconto de Titulo
 							,crapcyb.dtvencto
        FROM crapcyb
-        INNER JOIN crapass ON crapass.cdcooper = crapcyb.cdcooper AND crapass.nrdconta = crapcyb.nrdconta
-         LEFT JOIN t_soma_crappep tpep ON tpep.cdcooper = crapcyb.cdcooper AND tpep.nrdconta = crapcyb.nrdconta AND tpep.nrctremp = crapcyb.nrctremp
-         LEFT JOIN t_soma_desc_tit tdt ON tdt.cdcooper = crapcyb.cdcooper  AND tdt.nrdconta = crapcyb.nrdconta  AND tdt.nrctremp = crapcyb.nrctremp
-         LEFT JOIN crapepr epr         ON epr.cdcooper = crapcyb.cdcooper  AND epr.nrdconta = crapcyb.nrdconta  AND epr.nrctremp = crapcyb.nrctremp
-         LEFT JOIN craplim lim         ON lim.cdcooper = crapcyb.cdcooper  AND lim.nrdconta = crapcyb.nrdconta  AND lim.nrctrlim = tdt.nrctrlim AND
-                                          lim.tpctrlim IN (2,3)            AND lim.insitlim = 2         
+    
+       INNER JOIN crapass
+          ON crapass.cdcooper = crapcyb.cdcooper
+         AND crapass.nrdconta = crapcyb.nrdconta
+
+        LEFT JOIN t_soma_desc_tit tdt
+          ON tdt.cdcooper = crapcyb.cdcooper
+         AND tdt.nrdconta = crapcyb.nrdconta
+         AND tdt.nrctremp = crapcyb.nrctremp
+         AND tdt.cdorigem = crapcyb.cdorigem
+
+        LEFT JOIN crapepr epr
+          ON epr.cdcooper = crapcyb.cdcooper
+         AND epr.nrdconta = crapcyb.nrdconta
+         AND epr.nrctremp = crapcyb.nrctremp
+         AND crapcyb.cdorigem IN (2, 3)
+
+        LEFT JOIN t_soma_crappep tpep
+          ON tpep.cdcooper = epr.cdcooper
+         AND tpep.nrdconta = epr.nrdconta
+         AND tpep.nrctremp = epr.nrctremp
+
+        LEFT JOIN craplim lim
+          ON lim.cdcooper = tdt.cdcooper
+         AND lim.nrdconta = tdt.nrdconta
+         AND lim.nrctrlim = tdt.nrctrlim
+         AND lim.tpctrlim IN (2, 3)
+         AND lim.insitlim = 2
+         AND tdt.cdorigem = 4
+
         WHERE crapcyb.cdcooper = pr_cdcooper
           AND crapass.cdagenci = decode(pr_cdagenci,0,crapass.cdagenci,pr_cdagenci)
        AND   crapcyb.dtdbaixa IS NULL
@@ -2682,7 +2706,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
            -- nao possuir o dia da data de vencimento
            LOOP
              BEGIN
-               vr_dtcalcul := to_date(lpad(vr_diavenci,2,'0')||to_char(vr_dtcalcul,'mmyyyy'),'ddmmyyyy');
+               vr_dtcalcul := to_date(lpad(nvl(vr_diavenci,01),2,'0')||to_char(vr_dtcalcul,'mmyyyy'),'ddmmyyyy');
                EXIT;
              EXCEPTION
                WHEN OTHERS THEN
@@ -2911,8 +2935,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
            pc_monta_linha(to_char(pr_rw_crapcyb.vlprepag*100,'00000000000000'),278,pr_idarquivo);
            pc_monta_linha(to_char(pr_rw_crapcyb.vlpreapg*100,'00000000000000'),293,pr_idarquivo);
 
-           -- Se for do tipo CONTA CORRENTE ou PREJUIZO, faz o calculo antigo
-           IF pr_cdorigem = 1 OR (pr_rw_crapcyb.flgpreju = 1 AND pr_cdorigem <> 4) THEN
+           -- Se for do tipo CONTA CORRENTE/CARTAO ou PREJUIZO, faz o calculo antigo
+           IF pr_cdorigem IN (1,5) OR (pr_rw_crapcyb.flgpreju = 1 AND pr_cdorigem <> 4) THEN
              --Data Pagamento preenchida e Data de Baixa nula
              IF pr_rw_crapcyb.dtdpagto IS NOT NULL AND pr_rw_crapcyb.dtdbaixa IS NULL THEN
                IF pr_rw_crapcyb.cdlcremp = 100 AND pr_rw_crapcyb.flgpreju = 1 THEN
@@ -2940,13 +2964,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
                 vr_dtdpagto:= NULL;
              END IF;
            END IF;
-
-					 -- Se a origem for cartoes
-					 IF pr_cdorigem = 5 THEN
-						 --
-						 vr_dtdpagto := to_char(pr_rw_crapcyb.dtdpagto,'MMDDYYYY');
-						 --
-					 END IF;
 
            -- [Projeto 403] Ajuste no código e na descrição da finalidade
            IF pr_cdorigem = 4 THEN
