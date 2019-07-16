@@ -46,7 +46,8 @@
 
 	//$xmlResult 	= getDataXML($xml);
 	$xmlResult = mensageria($xml, "CHEQUE", "VERIFCONTA",
-		$cdcooper,
+		//$cdcooper,
+		$glbvars["cdcooper"],
 		$glbvars["cdagenci"],
 		$glbvars["nrdcaixa"],
 		$glbvars["idorigem"],

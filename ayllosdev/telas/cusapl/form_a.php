@@ -10,25 +10,36 @@
 //*********************************************************************************************//
 ?>
 
+<script>
+$(document).ready(function() {
+  $('#datade', '#frmPesquisa').setMask("INTEGER", "99/99/9999", "");
+  $('#datate', '#frmPesquisa').setMask("INTEGER", "99/99/9999", "");
+  return false;
+});
+</script>
 <style>
 	.selecionada{background-color: #ffbaad !important;}
+	#frmPesquisa td label {
+		width:100%;
+		text-align:right;
+	}
 </style>
 <form id="frmPesquisa" name="frmPesquisa" class="formulario cabecalho">
 	<div id="divConsulta" >
 		<fieldset>
-		<hr width="250px"><br>
+            <hr width="250px" /><br />
 		<legend>Par&acirc;metros de Pesquisa</legend>
       <table border="1">
 				<tr>
-					<td style="float: right;">
+                    <td>
 						<label for="cdcooper">Coop:</label>
 					</td>
 					<td>
-						<select tabindex="1" id="cdcooper" name="cdcooper" class="filtrocooperativa" style="width:100px;" onchange="atualizaCooperativaSelecionada($(this));">
+                        <select tabindex="1" id="cdcooper" name="cdcooper" class="filtrocooperativa campo" style="width:100px;" onchange="atualizaCooperativaSelecionada($(this));">
 							<option value="0">Todos</option>
 						</select>
 					</td>
-					<td style="float: right;">
+                    <td>
 						<label for="nrdconta">Conta:</label>
 					</td>
 					<td>
@@ -41,7 +52,7 @@
 					<td>
 						<input name="dtmvtolt" id="dtmvtolt" type="text" value="" autocomplete="off" class='campo' readonly="readonly" />
 					</td>
-					<td style="float: right;">
+                    <td>
 						<label for="cdaplicacao"><? echo utf8ToHtml('Aplicação:') ?></label>
 					</td>
 					<td>
@@ -54,25 +65,25 @@
 					</td>
 				</tr>
 				<tr>
-					<td style="float: right;">
+                    <td>
 						<label for="datade"><? echo utf8ToHtml('Data de:') ?></label>
 					</td>
 					<td>
-							<input name="datade" id="datade" type="date" value="" autocomplete="off" class='campo' />
+                        <input name="datade" id="datade" type="text" value="" class='campo' size="10" maxlength = "10" />
 					</td>
-					<td style="float: right;">
+                    <td>
 						<label for="datate"><? echo utf8ToHtml('Data até:') ?></label>
 					</td>
 					<td>
-						<input name="datate" id="datate" type="date" value="" autocomplete="off" class='campo' />
+                        <input name="datate" id="datate" type="text" value="" class='campo' size="10" maxlength = "10" />
 					</td>
-					<td style="float: right;">
-						<label for="nmarquiv"><? echo utf8ToHtml('Arquivo:') ?></label>
+                    <td>
+                        <label for="nmarquiv"><? echo utf8ToHtml('Arquivo:'); ?></label>
 					</td>
 					<td>
 						<input name="nmarquiv" id="nmarquiv" type="text" value="" autocomplete="off" class='campo' />
 					</td>
-					<td style="float: right;">
+                    <td>
 						<label for="dscodib3"><? echo utf8ToHtml('Codigo IF:') ?></label>
 					</td>
 					<td>
@@ -87,15 +98,12 @@
       </div>
   <br style="clear:both" />
 </form>
-<div id="divLogsDeArquivo">
-
-</div>
-<div id="divRegistrosArquivo">
-
-</div>
+<div id="divLogsDeArquivo"> </div>
+<div id="divRegistrosArquivo"> </div>
 <div id="divBotoes">
 	<a href="#" class="botao" id="btVoltar" name="btVoltar" onClick="estadoInicial();return false;">Voltar</a>
 	<a href="#" class="botao" id="btVoltarSegGridTelaA" name="btVoltarSegGridTelaA"style="display:none;" onClick="estadoInicialTelaA();return false;">Voltar</a>
+    <a href="#" class="botao" id="btExportar" name="btExportar"style="display:none;" onClick="exportarRegistrosArquivos();return false;">Exportar</a>
 </div>
 
 <script>atualizaCooperativas(1);</script>

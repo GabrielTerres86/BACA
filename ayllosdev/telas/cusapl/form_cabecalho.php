@@ -12,13 +12,14 @@
 
 <form id="frmCab" name="frmCab" class="formulario cabecalho">
 	<label for="cddopcao">Op&ccedil;&atilde;o:</label>
-	<select id="cddopcao" name="cddopcao" autofocus onchange="mostracooperativa($(this));">
+	<select id="cddopcao" name="cddopcao" class="campo" autofocus onchange="mostracooperativa($(this));">
 		<option value="A"><? echo utf8ToHtml('A - Log dos Arquivos de Custódia') ?></option>
 		<option value="O"><? echo utf8ToHtml('O - Log das Operações de Custódia Pendentes') ?></option>
 		<option value="E"><? echo utf8ToHtml('E - Solicitar Envio dos Arquivos Pendentes') ?></option>
 		<option value="R"><? echo utf8ToHtml('R - Solicitar Retorno dos Arquivos Pendentes') ?></option>
 		<option value="C"><? echo utf8ToHtml('C – Configuração por Cooperativa da Custódia de Aplicações') ?></option>
 		<option value="G"><? echo utf8ToHtml('G – Configuração Geral da Custódia de Aplicações') ?></option>
+		<option value="V"><? echo utf8ToHtml('V – Valor Devido B3') ?></option>
 	</select>
 
 	<div id="divcdcooper" style="display: none;">
