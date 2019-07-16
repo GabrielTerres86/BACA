@@ -1,7 +1,7 @@
 PL/SQL Developer Test script 3.0
 270
 declare 
-  vr_contador number;
+  vr_contador number; -- Contador
   vr_dscritic varchar2(500);
   vr_cdcooper pls_integer;
   vr_nrseqdig pls_integer;
