@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 30/05/2019
+ * FONTE        : emprestimos.js                            Última alteração: 03/06/2019
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -159,6 +159,7 @@
 * 127: [06/02/2019] Inclusao de controle para botoes quando for origem 3. P438. (Douglas Pagel / AMcom)
 * 128: [08/05/2019] Incluido tratamentos para autorizacao de contratos. (P470 - Bruno Luiz Katzjarowski / Mouts)
 * 129: [27/05/2019] Ajuste do Erro 269 apresentado na tela atenda/emprestimos - Gabriel Marcos (Mouts).   
+* 132: [03/06/2019] Empréstimo - verificação de "CPF/CNPJ interveniente" em veículo da proposta - verificaCadastroInterveniente() - Renato/Darlei (Supero)
 
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
@@ -6220,12 +6221,47 @@ function deletaHipoteca(operacao) {
     return false;
 }
 
+/**
+ * No preenchimento da proposta de empréstimo, quando o operador preencher o campo "CPF/CNPJ interveniente"
+ * em algum veículo da proposta, o sistema deve exibir uma mensagem de alerta caso ele não preencha também
+ * a tela de Interveniente Anuente da proposta.
+ */
+function verificaCadastroInterveniente() {
+    
+	if (typeof arrayAlienacoes != typeof undefined){    
+		for (i in arrayAlienacoes) {
+			if (arrayAlienacoes[i]['nrcpfcgc'] != "" && arrayAlienacoes[i]['nrcpfcgc'] != "0") {
+				a = false;
+				for(l in arrayIntervs){
+					if(normalizaNumero(arrayAlienacoes[i]['nrcpfcgc']) == normalizaNumero(arrayIntervs[l]['nrcpfcgc'])) {
+						a = true;
+						continue;
+					}
+				}
+				if(!a)
+					return false;
+			} else { 
+				continue;
+			}
+		}
+    }	
+	return true;
+}
+
 function insereIntervente(operacao, opContinua) {
 
     var conta = normalizaNumero($('#nrctaava', '#frmIntevAnuente').val());
     var cpf = normalizaNumero($('#nrcpfcgc', '#frmIntevAnuente').val());
 
     if (conta == 0 && cpf == 0) {
+        // ----------------------------------------
+		if(!verificaCadastroInterveniente()){
+			hideMsgAguardo();
+			showError('error', 'Campo "CPF/CNPJ interveniente" do ve&iacute;culo foi preenchido e n&atilde;o foi cadastrado na tela Interveniente Anuente da proposta, verifique!', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
+			return false;
+		}
+		// ----------------------------------------
+		
         controlaOperacao(opContinua);
         return false;
     }

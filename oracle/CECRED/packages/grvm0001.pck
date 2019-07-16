@@ -296,6 +296,8 @@ CREATE OR REPLACE PACKAGE CECRED.GRVM0001 AS
                                    ,pr_dserrcom IN crapgrv.dscritic%TYPE  -- Descricao de critica encontrada durante processo de comunicacao.
                                    ,pr_flsituac IN varchar2               -- Indica se deve atualizar situação (S ou N)
                                    ,pr_dsretreq IN CLOB DEFAULT NULL -- CLOB que contem o retorno da requisição no SOA
+                                   ,pr_cdoperad IN VARCHAR2 DEFAULT NULL  -- Usuário para registro de LOG
+                                   ,pr_idorigem IN NUMBER   DEFAULT NULL  -- Origem para o log
                                    
                                    ,pr_dscritic OUT VARCHAR2);           -- Critica encontrada durante execução desta rotina
   
@@ -2374,7 +2376,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                                    ,pr_dtregist IN crapgrv.dtregist%TYPE  -- Data do GRAVAME/Registro gerado
                                    ,pr_dserrcom IN crapgrv.dscritic%TYPE  -- Descricao de critica encontrada durante processo de comunicacao.
                                    ,pr_flsituac IN varchar2               -- Indica se deve atualizar situação (S ou N)
-                                   ,pr_dsretreq IN CLOB DEFAULT NULL -- CLOB que contem o retorno da requisição no SOA
+                                   ,pr_dsretreq IN CLOB DEFAULT NULL      -- CLOB que contem o retorno da requisição no SOA
+                                   ,pr_cdoperad IN VARCHAR2 DEFAULT NULL  -- Usuário para registro de LOG
+                                   ,pr_idorigem IN NUMBER   DEFAULT NULL  -- Origem para o log
                                    
                                    ,pr_dscritic OUT VARCHAR2) IS         -- Critica encontrada durante execução desta rotina
                                    
@@ -2393,7 +2397,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
     --  Objetivo  : Gravação das informações de comunicação e atualização da situação do Gravames
     --
     --  Alteracoes: 
-    -- 
+    --         18/06/2019 - Inclusão dos logs para inclusão automatica no gravames (Renato - Supero - P422.1)
+    --   
 
     -- Tratamento de saida
     vr_dscritic VARCHAR2(4000);
@@ -2429,6 +2434,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
             ,ufdplaca
             ,nrdplaca
             ,nrrenava
+			,bpr.cdsitgrv
+            ,bpr.nrgravam
+            ,bpr.dtatugrv
         FROM crapbpr bpr
        WHERE bpr.cdcooper = pr_cdcooper
          AND bpr.nrdconta = pr_nrdconta
@@ -2436,7 +2444,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
          AND bpr.tpctrpro = pr_tpctrato
          AND bpr.idseqbem = pr_idseqbem;
     rw_crapbpr cr_crapbpr%ROWTYPE;
-
+    
+    vr_nrdrowid   VARCHAR2(50);
+    
   begin
 	  --Incluir nome do módulo logado - Chamado 660394
     GENE0001.pc_set_modulo(pr_module => 'GRVM0001', pr_action => 'GRVM0001.pc_grava_aciona_gravame');
@@ -2470,6 +2480,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           ELSE
             vr_dtatugrv := pr_dtregist;
           END IF;  
+          
+          -- Buscar dados atuais antes da atualização para log
+          OPEN  cr_crapbpr;
+          FETCH cr_crapbpr INTO rw_crapbpr;
+          CLOSE cr_crapbpr;
+          
+          -- Buscar a data do sistema
+          OPEN  btch0001.cr_crapdat(pr_cdcooper);
+          FETCH btch0001.cr_crapdat INTO btch0001.rw_crapdat;
+          CLOSE btch0001.cr_crapdat;
+          
           -- Atualizar situação
           BEGIN
             UPDATE crapbpr bpr
@@ -2510,7 +2531,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
               vr_dscritic:= 'Nao foi possivel alterar a proposta[crawepr] para Gravame OK:'||SQLERRM;
               -- Levantar Excecao  
               RAISE vr_excsaida; 
-          END;          
+          END;  
+          
+          -- Geração de LOG
+          gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => pr_cdoperad 
+                              ,pr_dscritic => ''         
+                              ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem)
+                              ,pr_dstransa => 'Inclusao automatica do bem no gravames'
+                              ,pr_dttransa => TRUNC(btch0001.rw_crapdat.dtmvtolt)
+                              ,pr_flgtrans => 1
+                              ,pr_hrtransa => gene0002.fn_busca_time
+                              ,pr_idseqttl => 1
+                              ,pr_nmdatela => 'GRVM0001'
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);
+          
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                    pr_nmdcampo => 'Situacao', 
+                                    pr_dsdadant => to_char(rw_crapbpr.cdsitgrv), 
+                                    pr_dsdadatu => '2');
+
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                    pr_nmdcampo => 'Nr.Gravam', 
+                                    pr_dsdadant => to_char(rw_crapbpr.nrgravam), 
+                                    pr_dsdadatu => to_char(pr_nrgravam));
+                   
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
+                                    pr_nmdcampo => 'Data Atualização', 
+                                    pr_dsdadant => to_char(rw_crapbpr.dtatugrv), 
+                                    pr_dsdadatu => to_char(vr_dtatugrv));
+                          
         -- Baixa   
         ELSIF pr_cdoperac = 3 THEN
           BEGIN
@@ -2897,6 +2948,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
                            ,pr_dtregist => TO_DATE(pr_dtregist,'DD/MM/RRRR HH24:MI:SS') -- Data do GRAVAME/Registro gerado   
                            ,pr_dserrcom => vr_dserrcom -- Descricao de critica encontrada durante processo de comunicacao.
                            ,pr_flsituac => pr_flsituac -- Indica se deve atualizar situação (S ou N)
+                           ,pr_cdoperad => vr_cdoperad -- Operador
+                           ,pr_idorigem => vr_idorigem -- Origem
                            
                            ,pr_dscritic => vr_dscritic);          -- Critica encontrada durante execução desta rotina);
     IF vr_dscritic IS NOT NULL THEN
