@@ -1102,17 +1102,80 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                 (Ana - Envolti - Chamado 776896)
                    18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
+                   06/12/2018 - SCTASK0038225 (Yuri - Mouts)
+                                Utilização do Directory do Oracle
     ..............................................................................*/
 
     -- CLOB para saida
     vr_clob CLOB;
+    --
+    vr_directory  VARCHAR2(4000);
+    vr_path       VARCHAR2(4000);
+    vr_exc_erro   EXCEPTION;
+    vr_typ_saida  VARCHAR2(10);
+    vr_des_saida  VARCHAR2(4000);
+    vr_caminho    VARCHAR2(4000);
+    --
   BEGIN
 	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
 		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.fn_arq_para_clob'); 
-    vr_clob := DBMS_XSLPROCESSOR.read2clob(pr_caminho, pr_arquivo, 1);
+    -- SCTASK0038225 - Yuri (Mouts)
+    -- Buscar o diretório padrão do Oracle
+    BEGIN
+      SELECT prm.dsvlrprm, dir.DIRECTORY_PATH
+        INTO vr_directory, vr_path
+        FROM crapprm prm,
+             all_directories dir
+       WHERE prm.nmsistem = 'CRED'
+         AND prm.cdcooper = 0
+         AND prm.cdacesso = 'XSLPROCESSOR'
+         AND dir.DIRECTORY_NAME = prm.dsvlrprm;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        vr_directory := NULL;
+        vr_path := NULL;
+      WHEN OTHERS THEN
+        vr_des_saida := 'Erro não previsto ao buscar Directory padrão: '||sqlerrm;
+        RAISE vr_exc_erro;
+    END;
+  --
+  IF vr_directory IS NOT NULL THEN
+    -- Mover o arquivo do diretorio para directory do Oracle
+    BEGIN
+      -- se o último caracter do diretorio for uma barra, esta será retirada
+      select decode(substr(pr_caminho,length(pr_caminho)),'/',
+              substr(pr_caminho,1,length(pr_caminho)-1),
+                     pr_caminho)
+        into vr_caminho
+              from dual;
+    END;
+    GENE0001.pc_OScommand_Shell(pr_des_comando => 'cp "' ||vr_caminho||'/'||pr_arquivo||'" "' || vr_path||'/'||pr_arquivo||'"'
+                   ,pr_typ_saida   => vr_typ_saida
+                   ,pr_des_saida   => vr_des_saida);
+    -- Gerar o CLOB a partir do arquivo no directory do Oracle
+    vr_clob := DBMS_XSLPROCESSOR.read2clob(vr_directory, pr_arquivo, 1);
+    -- Remover o arquivo do diretório Temp
+    GENE0001.pc_OScommand_Shell(pr_des_comando => 'rm "' ||vr_path||'/'||pr_arquivo||'"'
+                   ,pr_typ_saida   => vr_typ_saida
+                   ,pr_des_saida   => vr_des_saida);
+
+  /*  vr_clob := DBMS_XSLPROCESSOR.read2clob(pr_caminho, pr_arquivo, 1);*/
+    -- Fim SCTASK0038225
     -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
+  ELSE
+    -- Se não tiver parâmetro mantem execucao da forma antiga
+    vr_clob := DBMS_XSLPROCESSOR.read2clob(pr_caminho, pr_arquivo, 1);
+  END IF;
     GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     RETURN vr_clob;
+      --
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      CECRED.pc_internal_exception(pr_compleme => 'GENE0002.fn_arq_para_clob --> ' || vr_des_saida);
+      RETURN NULL;
+    WHEN OTHERS THEN
+      CECRED.pc_internal_exception(pr_compleme => 'GENE0002.fn_arq_para_clob');
+      RETURN NULL;
   END fn_arq_para_clob;
 
   /* Procedure para gravar os dados de um BLOB para um arquivo */
@@ -1215,6 +1278,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                 (Ana - Envolti - Chamado 776896)
                    18/10/2017 - Incluído pc_set_modulo com novo padrão
                                 (Ana - Envolti - Chamado 776896)
+                   04/12/2018 - Utilização do Directory do Oracle (SCTASK0038225)
+                                (Yuri - Mouts)
     ..............................................................................*/
     DECLARE
     	vr_nom_arquiv VARCHAR2(2000);
@@ -1222,6 +1287,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
       vr_typ_saida  VARCHAR2(10);
       vr_des_saida  VARCHAR2(4000);
       vr_comando    VARCHAR2(32767);
+      vr_directory  VARCHAR2(4000);
+      vr_path       VARCHAR2(4000);
+      vr_nrarquivo  NUMBER(10);
+      vr_caminho    VARCHAR2(4000);
 
     BEGIN
 	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
@@ -1239,7 +1308,77 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         vr_nom_arquiv := vr_nom_arquiv||'-append'||to_char(SYSTIMESTAMP,'SSSSSFF5')||
                          '.'||vr_ext_arqsai;
       END IF;
+      -- SCTASK0038225 - Yuri (Mouts)
+      -- Buscar o diretório padrão do Oracle
+      BEGIN
+        SELECT prm.dsvlrprm, dir.DIRECTORY_PATH
+          INTO vr_directory, vr_path
+          FROM crapprm prm,
+               all_directories dir
+         WHERE prm.nmsistem = 'CRED'
+           AND prm.cdcooper = 0
+           AND prm.cdacesso = 'XSLPROCESSOR'
+           AND dir.DIRECTORY_NAME = prm.dsvlrprm;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          vr_directory := NULL;
+          vr_path := NULL;
+        WHEN OTHERS THEN
+          vr_des_saida := 'Erro não previsto ao buscar Directory padrão: '||sqlerrm;
+          RAISE vr_exc_erro;
+      END;
 
+    IF vr_directory IS NOT NULL THEN
+      vr_nrarquivo := fn_sequence('XSLPROCESSOR','XSLPROCESSOR', 0);
+      BEGIN
+      -- se o último caracter do diretorio for uma barra, esta será retirada
+      select decode(substr(pr_caminho,length(pr_caminho)),'/',
+        substr(pr_caminho,1,length(pr_caminho)-1),
+           pr_caminho)
+        into vr_caminho
+        from dual;
+      END;
+      --
+      -- Gerar no diretório solicitado
+      DBMS_XSLPROCESSOR.CLOB2FILE(pr_clob, vr_directory , vr_nrarquivo, NLS_CHARSET_ID('UTF8'));
+      -- Mover o arquivo do diretorio temp para diretório de destino
+      GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv ' ||vr_path||'/'||vr_nrarquivo||' "' || vr_caminho||'/'||vr_nom_arquiv||'"');
+
+  /*      -- Gerar no diretório solicitado
+      DBMS_XSLPROCESSOR.CLOB2FILE(pr_clob, pr_caminho, vr_nom_arquiv, NLS_CHARSET_ID('UTF8'));*/
+      -- Fim SCTASK0038225
+
+      -- Setar privilégio para evitar falta de permissão a outros usuários
+      gene0001.pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||vr_caminho||'/'||vr_nom_arquiv);
+
+      -- Se foi solicitado o arquivo com Append
+      IF pr_flappend = 'S' THEN
+      -- Comando para concatenar o conteudo
+      vr_comando := 'cat '||vr_caminho||'/'||vr_nom_arquiv||' >> '||vr_caminho||'/'||pr_arquivo;
+      --Executar Comando Unix
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                 ,pr_des_comando => vr_comando
+                 ,pr_typ_saida   => vr_typ_saida
+                 ,pr_des_saida   => vr_des_saida);
+      -- Testa se a saída da execução acusou erro
+      IF vr_typ_saida = 'ERR' THEN
+        vr_des_saida := 'Erro ao efetuar concatenacao do relatório: '||vr_des_saida;
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Remover o arquivo do Append
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                 ,pr_des_comando => 'rm '||vr_caminho||'/'||vr_nom_arquiv
+                 ,pr_typ_saida   => vr_typ_saida
+                 ,pr_des_saida   => vr_des_saida);
+      -- Testa se a saída da execução acusou erro
+      IF vr_typ_saida = 'ERR' THEN
+        vr_des_saida := 'Erro ao eliminar o relatorio de append: '||vr_des_saida;
+        RAISE vr_exc_erro;
+      END IF;
+      END IF; -- pr_flappend = 'S'
+    ELSE
+      -- Se directory nao existir executa da forma antiga
       -- Gerar no diretório solicitado
       DBMS_XSLPROCESSOR.CLOB2FILE(pr_clob, pr_caminho, vr_nom_arquiv, NLS_CHARSET_ID('UTF8'));
       -- Setar privilégio para evitar falta de permissão a outros usuários
@@ -1271,15 +1410,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           RAISE vr_exc_erro;
         END IF;
       END IF; -- pr_flappend = 'S'
+    END IF;
       -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
       GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
 
     EXCEPTION
       WHEN vr_exc_erro THEN
+        CECRED.pc_internal_exception(pr_compleme => 'GENE0002.pc_clob_para_arquivo --> ' || vr_des_saida);
         pr_des_erro := 'GENE0002.pc_clob_para_arquivo --> ' || vr_des_saida;
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
-        CECRED.pc_internal_exception;
+        CECRED.pc_internal_exception(pr_compleme => 'Caminho e arq:' || pr_caminho || '-' || vr_nom_arquiv);
         pr_des_erro := 'GENE0002.pc_clob_para_arquivo --> || Erro ao gravar o conteúdo do Blob para arquivo: '||sqlerrm;
     END;
   END pc_clob_para_arquivo;
@@ -2640,16 +2781,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     DECLARE
       -- Variáveis para tratamento do arquivo
       vr_xML    XMLType;
+      vr_directory  VARCHAR2(4000);
+      vr_path       VARCHAR2(4000);
+      vr_nrarquivo  NUMBER(10);
+      vr_des_saida  VARCHAR2(4000);
+	  vr_caminho    VARCHAR2(4000);
+
     BEGIN
 	    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
   	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0002.pc_XML_para_arquivo');
       -- Efetuar parser para gerar mensagens de erro e validar XML
       vr_xML := XMLType.createXML(pr_XML);
 
+      -- SCTASK0038225 - Yuri (Mouts)
+      -- Buscar o diretório padrão do Oracle
+      BEGIN
+        SELECT prm.dsvlrprm, dir.DIRECTORY_PATH
+          INTO vr_directory, vr_path
+          FROM crapprm prm,
+               all_directories dir
+         WHERE prm.nmsistem = 'CRED'
+           AND prm.cdcooper = 0
+           AND prm.cdacesso = 'XSLPROCESSOR'
+           AND dir.DIRECTORY_NAME = prm.dsvlrprm;
+      EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+          vr_directory := NULL;
+          vr_path := NULL;
+        WHEN OTHERS THEN
+          vr_des_saida := 'GENE0002.pc_XML_para_arquivo --> '||sqlerrm;
+          RAISE vr_exc_erro;
+      END;
+      vr_nrarquivo := fn_sequence('XSLPROCESSOR','XSLPROCESSOR', 0);
+      --
+	  if vr_directory is not null then
+		BEGIN
+		  -- se o último caracter do diretorio for uma barra, esta será retirada
+		  select decode(substr(pr_caminho,length(pr_caminho)),'/',
+				  substr(pr_caminho,1,length(pr_caminho)-1),
+						 pr_caminho)
+			into vr_caminho
+				  from dual;
+		END;
+		  -- Gerar no diretório solicitado
+		  DBMS_XSLPROCESSOR.CLOB2FILE(vr_xML.getclobval(), vr_directory, vr_nrarquivo, NLS_CHARSET_ID('UTF8'));
+		  -- Mover o arquivo do diretorio temp para diretório de destino
+		  GENE0001.pc_OScommand_Shell(pr_des_comando => 'mv ' ||vr_path||'/'||vr_nrarquivo||' "' || vr_caminho||'/'||pr_arquivo||'"');
+	  else
       DBMS_XSLPROCESSOR.CLOB2FILE(vr_xML.getclobval(), pr_caminho, pr_arquivo, NLS_CHARSET_ID('UTF8'));
+	  end if;
+      -- Fim SCTASK0038225
+
       -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
       GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => NULL);
     EXCEPTION
+      WHEN vr_exc_erro THEN
+        CECRED.pc_internal_exception(pr_compleme => 'GENE0002.pc_XML_para_arquivo --> ' || vr_des_saida);
+        pr_des_erro := 'GENE0002.pc_XML_para_arquivo --> || Erro ao gravar o conteúdo do XML para arquivo: '||vr_des_saida;
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 18/07/2018 - Chamado 660322
         CECRED.pc_internal_exception;
