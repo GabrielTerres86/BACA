@@ -154,7 +154,7 @@
 ?>
 <form action="" method="post" name="frmDadosPoupanca" id="frmDadosPoupanca">
 	<fieldset>
-		<legend>Poupan&ccedil;a Programada - Incluir</legend>
+		<legend>Aplica&ccedil;&atilde;o Programada - Incluir</legend>
 		
 		<label for="dtinirpp">Dia/M&ecirc;s/Ano do In&iacute;cio:</label>
 		

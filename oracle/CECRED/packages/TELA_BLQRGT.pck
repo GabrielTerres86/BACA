@@ -354,11 +354,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
           
 		  IF (rw_cobertura.inaplicacao_propria = 1 OR rw_cobertura.inaplicacao_terceiro = 1) AND
 			 (rw_cobertura.inpoupanca_propria  = 1 OR rw_cobertura.inpoupanca_terceiro  = 1) THEN
-			 vr_dstipapl := 'Aplicação/Poupança';
+			 vr_dstipapl := 'Aplicação/Apl. Prg';
 		  ELSIF (rw_cobertura.inaplicacao_propria = 1 OR rw_cobertura.inaplicacao_terceiro = 1) THEN
 			 vr_dstipapl := 'Aplicação';
 		  ELSIF (rw_cobertura.inpoupanca_propria  = 1 OR rw_cobertura.inpoupanca_terceiro  = 1) THEN
-			 vr_dstipapl := 'Poupança';
+			 vr_dstipapl := 'Aplicação Progr.';
 		  ELSE
 		   	 vr_dstipapl := 'Não encontrado';
 		  END IF;

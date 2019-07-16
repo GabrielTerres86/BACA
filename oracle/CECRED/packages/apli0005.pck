@@ -2693,6 +2693,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       rw_crapmpc cr_crapmpc%ROWTYPE;
 
+      CURSOR cr_crapmpc_cont(pr_qtdiacar IN crapmpc.qtdiacar%TYPE --> Dias de Carencia
+                            ,pr_qtdiaprz IN crapmpc.qtdiaprz%TYPE --> Dias de Prazo
+                            ,pr_cdprodut IN crapcpc.cdprodut%TYPE --> Codigo do Produto
+                            ) IS
+        SELECT COUNT(1) cont
+          FROM crapmpc mpc
+              ,crapdpc dpc
+        WHERE mpc.cdprodut  = pr_cdprodut -- Codigo do produto
+          AND mpc.qtdiacar  = pr_qtdiacar -- Quantidade de dias de carencia
+          AND mpc.qtdiaprz  = pr_qtdiaprz -- Quantidade de dias de prazo
+          AND dpc.cdmodali  = mpc.cdmodali -- Codigo da Modalidade
+          AND dpc.cdcooper  = pr_cdcooper  -- Codigo da Cooperatica
+          AND dpc.idsitmod  = 1;
+      
+      rw_crapmpc_cont cr_crapmpc_cont%ROWTYPE;
+
       -- Consulta saldo de conta investimento
       CURSOR cr_crapsli(pr_cdcooper crapcop.cdcooper%TYPE
                        ,pr_nrdconta crapsli.nrdconta%TYPE
@@ -2918,6 +2934,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       IF rw_crapcpc.idtippro = 2 AND pr_qtdiacar = 0 THEN
         vr_dscritic := 'Nao e permitido carencia igual a zero para produtos pos-fixado.';
         RAISE vr_exc_saida;
+      END IF;
+
+      /* Vamos verificar se existe mais opcoes de modalidades disponiveis,
+         caso soh tenha 1, nao precisamos buscar os valores acumulados
+         pois nao mudara a modalidade vinculada na aplicacao */
+      IF rw_crapcpc.idacumul = 1 THEN
+        OPEN cr_crapmpc_cont(pr_cdprodut => pr_cdprodut
+                            ,pr_qtdiacar => pr_qtdiacar
+                            ,pr_qtdiaprz => pr_qtdiaprz);
+        FETCH cr_crapmpc_cont INTO rw_crapmpc_cont;
+        IF cr_crapmpc_cont%NOTFOUND THEN
+          CLOSE cr_crapmpc_cont;
+          -- Caso nao encontre, gera critica
+          vr_dscritic := 'Nao foram encontradas modalidades disponiveis para o produto selecionado.';
+          RAISE vr_exc_saida;
+        ELSE
+          CLOSE cr_crapmpc_cont;
+        END IF;
+        IF rw_crapmpc_cont.cont = 1 then
+          rw_crapcpc.idacumul := 0;
+        END IF;
       END IF;
 
       IF rw_crapcpc.idacumul = 1 THEN
@@ -3850,6 +3887,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       rw_crapmpc cr_crapmpc%ROWTYPE;
 
+      CURSOR cr_crapmpc_cont(pr_qtdiacar IN crapmpc.qtdiacar%TYPE --> Dias de Carencia
+                            ,pr_qtdiaprz IN crapmpc.qtdiaprz%TYPE --> Dias de Prazo
+                            ,pr_cdprodut IN crapcpc.cdprodut%TYPE --> Codigo do Produto
+                            ) IS
+        SELECT COUNT(1) cont
+          FROM crapmpc mpc
+              ,crapdpc dpc
+        WHERE mpc.cdprodut  = pr_cdprodut -- Codigo do produto
+          AND mpc.qtdiacar  = pr_qtdiacar -- Quantidade de dias de carencia
+          AND mpc.qtdiaprz  = pr_qtdiaprz -- Quantidade de dias de prazo
+          AND dpc.cdmodali  = mpc.cdmodali -- Codigo da Modalidade
+          AND dpc.cdcooper  = pr_cdcooper  -- Codigo da Cooperatica
+          AND dpc.idsitmod  = 1;
+      
+      rw_crapmpc_cont cr_crapmpc_cont%ROWTYPE;
+
       --Selecionar informacoes dos associados
       CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
                         ,pr_nrdconta IN crapres.nrdconta%TYPE) IS
@@ -4041,6 +4094,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         RAISE vr_exc_saida;
       ELSE
         CLOSE cr_crapcpc;
+      END IF;
+
+      /* Vamos verificar se existe mais opcoes de modalidades disponiveis,
+         caso soh tenha 1, nao precisamos buscar os valores acumulados
+         pois nao mudara a modalidade vinculada na aplicacao */
+      IF rw_crapcpc.idacumul = 1 THEN
+        OPEN cr_crapmpc_cont(pr_cdprodut => pr_cdprodut
+                            ,pr_qtdiacar => pr_qtdiacar
+                            ,pr_qtdiaprz => pr_qtdiaprz);
+        FETCH cr_crapmpc_cont INTO rw_crapmpc_cont;
+        IF cr_crapmpc_cont%NOTFOUND THEN
+          CLOSE cr_crapmpc_cont;
+          -- Caso nao encontre, gera critica
+          vr_dscritic := 'Nao foi encontrada modalidades disponiveis na política de captacao para o produto selecionado.';
+          RAISE vr_exc_saida;
+        ELSE
+          CLOSE cr_crapmpc_cont;
+        END IF;
+        IF rw_crapmpc_cont.cont = 1 then
+          rw_crapcpc.idacumul := 0;
+        END IF;
       END IF;
 
       -- Verifica cumulatividade do produto para obter o saldo
