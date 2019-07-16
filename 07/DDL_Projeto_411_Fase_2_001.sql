@@ -9,14 +9,14 @@ INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1466, '1466
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1467, '1467 - Saldo zerado ou negativo.', 4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1468, '1468 - Recebido arquivo de conciliação com data antiga e será processado apenas o arquivo com a data parametrizada', 4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1469, '1469 - Conciliação não confere com o Layout definido, pois existe menos de 27 caracteres em linha detalhe! O mesmo não será processado', 4, 0);
-INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1470, '1470 - Valor da Aplic. B3 ("VR_VLAPLB3") diferente do valor da aplicação no Aimaro ("VR_APLAIMARO") e com tolerancia de ("VR_PRTOLERANCIA")', 4, 0);
+INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1470, '1470 - Valor da Aplic. B3 (VR_VLAPLB3) diferente do valor da aplicação no Aimaro (VR_APLAIMARO) e com tolerancia de (VR_PRTOLERANCIA)', 4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1472, '1472 - Tipo de Posição em Custódia diferente de (1)',      4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1473, '1473 - Aplicação não encontrada para Conciliação',         4, 0);
-INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1474, '1474 - Aplicação com quantidade de cotas Aimaro igual a zero e Quantidade B3 = ("QT_COTA_B3")', 4, 0);
+INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1474, '1474 - Aplicação com quantidade de cotas Aimaro igual a zero e Quantidade B3 = (QT_COTA_B3)', 4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1475, '1475 - Aplicação (RDA ou RAC) não encontrada para Conciliação',4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1476, '1476 - Data de Emissão diferente da Data Emissão Aplicação',4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1477, '1477 - Data de Vencimento diferente da Data Vencimento Aplicação',4, 0);
-INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1478, '1478 - Quantidade de cotas Aimaro ("QT_COTA_AIMARO") diferente da Quantidade de Cotas B3 ("QT_COTA_B3")', 4, 0);
+INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1478, '1478 - Quantidade de cotas Aimaro (QT_COTA_AIMARO) diferente da Quantidade de Cotas B3 (QT_COTA_B3)', 4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1479, '1479 - Valor Nominal diferente do Registrado da Aplicação, com tolerancia',4, 0);
 INSERT INTO crapcri (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1480, '1480 - Nenhuma Conciliação será efetuada pois a opção está Desativada ou já foi efetuada no dia',4, 0);
 INSERT INTO crapcri (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1481, '1481 - Linha Original retornada não encontrada no arquivo de envio',4, 0);
@@ -34,7 +34,11 @@ INSERT INTO crapcri (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1492, '1492
 INSERT INTO crapcri (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1493, '1493 - Resgate com cotas zerada!',4, 0);
 INSERT INTO crapcri (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1494, '1494 - Não foi possível carregar o extrato!',4, 0);                   
        -- 1495                         
-
+INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1496, '1496 - Processo de PR_DSTIPPRO da B3 não PR_DSFASPRO e já ultrapassou o limite das PR_HRTOLMAX horas!', 4, 0);
+INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1497, '1497 - Processo de PR_DSTIPPRO da B3 não PR_DSFASPRO e está em atraso!', 4, 0);
+INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1498, '1498 - Critica origem B3: ', 4, 0);
+                        
+						
 insert into crapprm ( NMSISTEM, CDCOOPER, CDACESSO , DSTEXPRM , DSVLRPRM ) values (  'CRED',0,'CUSTO_FIXO_CCL_DSP_FRN',
  'Custo fixo do valor devido ao fornecedor referente a transferencia de aplicação da custódia - Fornecedor(FRN) => B3','250,00');
 insert into crapprm ( NMSISTEM, CDCOOPER, CDACESSO , DSTEXPRM , DSVLRPRM ) values (  'CRED',0,'PERC_VLR_REG_CCL_DSP_FRN',
@@ -52,12 +56,14 @@ insert into crapprm ( NMSISTEM, CDCOOPER, CDACESSO , DSTEXPRM , DSVLRPRM ) value
 insert into crapprm ( NMSISTEM, CDCOOPER, CDACESSO , DSTEXPRM , DSVLRPRM ) values (  'CRED',0,'LIMERRO_PROC_CONCILIA_B3',
  'Limite de erros no processo de conciliação com o fornecedor => B3',10);
 insert into crapprm ( NMSISTEM, CDCOOPER, CDACESSO , DSTEXPRM , DSVLRPRM ) values (  'CRED',0,'HOR_TOL_CTD_B3',
- 'Busca tolerancia de tempo do retorno de arquivo do fornecedor => B3','02:30'); 
+ 'Tolerancia de tempo do retorno de arquivo do fornecedor e limite maximo de retorno => B3','02:00;14:00'); 
 insert into crapprm ( NMSISTEM, CDCOOPER, CDACESSO , DSTEXPRM , DSVLRPRM ) values (  'CRED',0,'DAT_ENVIA_1_CUSTODIA_B3',
  'Data do processo envio de arquivo ao fornecedor => B3','01/06/2019'); 
 insert into crapprm ( NMSISTEM, CDCOOPER, CDACESSO , DSTEXPRM , DSVLRPRM ) values (  'CRED',0,'CTR_CLC_AVISO_EXE_B3',
  'Registro de execução e Horario de inicio do alerta de necessidade de e-mail do atraso da conciliação','00;01;1000;06:00');
- 
+--
+insert into crapprm ( NMSISTEM, CDCOOPER, CDACESSO , DSTEXPRM , DSVLRPRM ) values (  'CRED',0,'CTL_PRC_CSC_CUSTDIA_B3',
+'Controle processo conciliacao => B3, contem data e quantidade execuções e hora da ultima execução','01/06/2019;00;05:00;02:00');
 ----
 
 insert into TBCAPT_CUSTODIA_FRN_INVESTIDOR (idfrninv, vlfaixade, vlfaixaate, petaxa_mensal, vladicional, dtinclusao, flgativo ,dsusuario, dhatual)  
@@ -92,15 +98,14 @@ WHERE upper(nmdeacao)  = 'CUSAPL_LISTA_OPERAC'   AND  upper(NMPACKAG)  = 'TELA_C
 update CRAPACA set lstparam = 'pr_cdcooper,pr_nrdconta,pr_nraplica,pr_flgcritic,pr_datade,pr_datate,pr_nmarquiv,pr_dscodib3,pr_inacao,pr_nrregist,pr_nriniseq, pr_idarquivo'
 WHERE upper(nmdeacao)  = 'CUSAPL_LISTA_CONT_ARQ' AND  upper(NMPACKAG)  = 'TELA_CUSAPL';
 
-INSERT INTO CRAPRDR T2 VALUES ( NULL, 'APLI0007', SYSDATE );   
-SELECT T2.NRSEQRDR INTO VR_NRSEQRDR FROM CRAPRDR T2 WHERE T2.NMPROGRA = 'APLI0007';
+SELECT T2.NRSEQRDR INTO VR_NRSEQRDR FROM CRAPRDR T2 WHERE T2.NMPROGRA = 'TELA_CUSAPL';
 
 INSERT INTO  CRAPACA T ( T.NRSEQACA, T.NMDEACAO, T.NMPACKAG, T.NMPROCED, T.LSTPARAM, T.NRSEQRDR ) VALUES (
-   NULL, 'CUSAPL_APLI0007_TRT_CST_FRN_APL', 'APLI0007', 'pc_trt_cst_frn_aplica' ,'pr_cdmodulo,pr_cdcooper,pr_nrdconta,pr_dtde,pr_dtate,pr_tpproces', VR_NRSEQRDR );  
+   NULL, 'TELA_CUSAPL_TRT_CST_FRN_APL', 'TELA_CUSAPL', 'pc_trt_cst_frn_aplica' ,'pr_cdmodulo,pr_cdcooper,pr_nrdconta,pr_dtde,pr_dtate,pr_tpproces', VR_NRSEQRDR );  
 INSERT INTO  CRAPACA T ( T.NRSEQACA, T.NMDEACAO, T.NMPACKAG, T.NMPROCED, T.LSTPARAM, T.NRSEQRDR ) VALUES (
-    NULL, 'CUSAPL_APLI0007_LIS_FRN_TAB_INV', 'APLI0007', 'pc_concil_tab_investidor' ,'pr_cdmodulo,pr_cdcooper', VR_NRSEQRDR );
+    NULL, 'TELA_CUSAPL_LIS_FRN_TAB_INV', 'TELA_CUSAPL', 'pc_concil_tab_investidor' ,'pr_cdmodulo,pr_cdcooper', VR_NRSEQRDR );
 INSERT INTO  CRAPACA T ( T.NRSEQACA, T.NMDEACAO, T.NMPACKAG, T.NMPROCED, T.LSTPARAM, T.NRSEQRDR ) VALUES (
-    NULL, 'CUSAPL_APLI0007_ATZ_FRN_TAB_INV', 'APLI0007', 'pc_atz_faixa_tab_investidor',NULL, VR_NRSEQRDR );
+    NULL, 'TELA_CUSAPL_ATZ_FRN_TAB_INV', 'TELA_CUSAPL', 'pc_atz_faixa_tab_investidor',NULL, VR_NRSEQRDR );
    
 COMMIT;
 
