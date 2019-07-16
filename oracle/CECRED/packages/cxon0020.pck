@@ -431,10 +431,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                              deve bloquear o envio da TED.
                              (Jonata - Mouts INC0031899).
                              
-                19/06/2019 - Alteração na "pc_enviar_ted": Inclusão de tratamento para transferir da conta Transitória 
-                             para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
-                             P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom.                             
-
                 25/06/2019 - Tratamento para não estourar o limite de crédito quando houver mais de um TED de uma mesma
                              conta encaminhada no mesmo momento.
                              (Jose Dill - Mout PRB0041934)
@@ -1423,10 +1419,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
                   05/06/2019 - Tratar INC0011406 relacionado ao horario de aprovacao da TED (Diego).
 
-                  19/06/2019 - Alteração na "pc_enviar_ted": Inclusão de tratamento para transferir da conta Transitória 
-                               para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
-                               P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom.
-
                   21/06/2019 - Tratar INC0015554 - solucao de contorno (Diego).
 
                   10/07/2019 - Tratar INC0019779 relacionado a duplicidade do número de controle IF (Diego).
@@ -1618,9 +1610,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 	vr_fliseope   INTEGER;
 
     vr_idanalise_fraude tbgen_analise_fraude.idanalise_fraude%TYPE;
-
-    vr_incrineg INTEGER;
-    vr_tab_retorno LANC0001.typ_reg_retorno;
 
     ---------------- SUB-ROTINAS ------------------
     -- Procedimento para inserir o lote e não deixar tabela lockada
@@ -2492,31 +2481,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         vr_dscritic := 'Não foi possivel gerar lcm:'||SQLERRM;
         RAISE vr_exc_erro;
     END;
-    --TRANSFERENCIA BLOQUEIO JUDICIAL
-    IF rw_craphis.cdhistor = 1406 THEN
-      -- Se não há saldo suficiente na conta transitória
-      IF PREJ0003.fn_sld_cta_prj(pr_cdcooper => rw_crapcop.cdcooper, pr_nrdconta => pr_nrdconta) < pr_vldocmto THEN 
-         vr_dscritic:= 'Não foi possível gerar lcm: conta corrente em prejuízo sem saldo suficiente no Bloqueados Prejuízo.';
-         RAISE vr_exc_erro;
-      -- Se há saldo suficiente na conta transitória   
-      ELSE
-        vr_dscritic:= NULL;
-        vr_cdcritic:= NULL;
-        --
-        --Efetua a Transferência da Transitória para a Conta Corrente    
-        PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => rw_crapcop.cdcooper   
-                                      , pr_nrdconta => pr_nrdconta                                    
-                                      , pr_vllanmto => pr_vldocmto
-                                      , pr_dtmvtolt => rw_crapdat.dtmvtocd                                                                                                          
-                                      , pr_cdcritic => vr_cdcritic
-                                      , pr_dscritic => vr_dscritic);                                                       
-        --
-        IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
-           vr_dscritic:= 'Não foi possível gerar lcm: erro ao transferir o valor do Bloqueados Prejuízo para a Conta Corrente.';
-           RAISE vr_exc_erro;
-        END IF;
-      END IF;   
-    END IF; 
 
     IF vr_vllantar <> 0 THEN
 		  /* Verificar isenção ou não de tarifa */
