@@ -8,4 +8,8 @@ BEGIN
   --
 	COMMIT;
 	--
+EXCEPTION
+	WHEN OTHERS THEN
+		ROLLBACK;
+		dbms_output.put_line('Erro: ' || SQLERRM);
 END;
