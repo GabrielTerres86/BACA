@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 22/03/2019
+    Data      : Julho/2014                Ultima Atualizacao: 09/05/2019
     
     Dados referentes ao programa:
 
