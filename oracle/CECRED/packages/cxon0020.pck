@@ -2367,6 +2367,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                  ,'N');
       -- retornar numero do documento
       pr_nrdocmto := vr_nrseqted;
+
+    END IF;
+    CLOSE cr_craplcm;
  
     -- Se for BacenJud nao deve validar saldo INC0020549  
     IF NVL(pr_tpctafav,0) <> 9 THEN 
