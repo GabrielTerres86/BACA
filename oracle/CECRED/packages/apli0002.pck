@@ -1242,7 +1242,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 26/10/2018
+   Data    : 29/11/2010                        Ultima atualizacao: 11/07/2019
 
    Dados referentes ao programa:
 
@@ -1504,10 +1504,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                              
 				23/04/2019 - INC0011348 - Ajuste no controle de resgate duplo de aplicação para que não considere data 
                              e hora superior que atual inserida na CRAPLRG.
-				 
+                             (Guilherme Kuhnen)
+
 				12/07/2019 - RITM0011923 - Alterações para tornar Plano de Cotas, Aplicações Manuais e Aplicações Agendadas 
                              (Daniel Lombardi Mout'S)
 
+                11/07/2019 - Validar se codigo do periodo bate com a quantidade de dias de 
+                             carencia, incluso para validar casos em que estamos gravando com 
+                             o CDI errado atraves do Aimaro (Lucas Ranghetti PRB0042001)
   ............................................................................*/
   
   --Cursor para buscar os lancamentos de aplicacoes RDCA
@@ -3298,7 +3302,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
    Programa: APLI0002                Antigo: sistema/generico/procedures/b1wgen0081.p
    Sigla   : APLI
    Autor   : Adriano.
-   Data    : Maio/2014                          Ultima atualizacao: 15/08/2018
+   Data    : Maio/2014                          Ultima atualizacao: 11/07/2019
 
    Dados referentes ao programa:
 
@@ -3317,6 +3321,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                             (Adriano).             
                   
                 15/05/2018 - Inclusão do código de crítica 1283, Prj. 427 - URA (Jean Michel)
+                
+                11/07/2019 - Validar se codigo do periodo bate com a quantidade de dias de 
+                             carencia, incluso para validar casos em que estamos gravando com 
+                             o CDI errado atraves do Aimaro (Lucas Ranghetti PRB0042001)
   .......................................................................................*/
   PROCEDURE pc_validar_nova_aplicacao(pr_cdcooper IN crapcop.cdcooper%TYPE
                                      ,pr_cdagenci IN crapage.cdagenci%TYPE
@@ -3466,6 +3474,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
          AND snh.idseqttl = pr_idseqttl
          AND snh.tpdsenha = 1;
       rw_crapsnh cr_crapsnh%ROWTYPE;
+                     
+    -- Validar se taxa da aplicacao esta correta
+    cursor cr_crapttx_valida(pr_cdcooper in crapcop.cdcooper%type
+                            ,pr_qtdiacar in number
+                            ,pr_cdperapl in number) is
+     select 1 
+       from crapttx ttx
+      where ttx.cdcooper = pr_cdcooper
+        AND ttx.tptaxrdc = 8
+        and ttx.qtdiacar = pr_qtdiacar
+        and ttx.cdperapl = pr_cdperapl;
+    rw_crapttx_valida cr_crapttx_valida%rowtype;     
                      
       -- Tabela para armazenar os erro
       vr_tab_erro GENE0001.typ_tab_erro;
@@ -3871,6 +3891,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           -- Gera exceção
           RAISE vr_exc_erro;
           
+        END IF;
+        
+        -- RDPOS
+        IF pr_tpaplica = 8 THEN
+          -- Validar se codigo do periodo bate com a quantidade de dias de carencia
+          -- Incluso para validar casos em que estamos gravando com o CDI errado
+          -- Através do Aimaro
+          OPEN cr_crapttx_valida(pr_cdcooper => pr_cdcooper
+                                ,pr_qtdiacar => pr_qtdiacar
+                                ,pr_cdperapl => pr_cdperapl);
+          FETCH cr_crapttx_valida INTO rw_crapttx_valida;
+          
+          if cr_crapttx_valida%notfound then
+            close cr_crapttx_valida;
+            vr_cdcritic := NULL;
+            vr_dscritic:= 'Selecione a carencia da aplicacao.';
+            --'Erro inesperado ao incluir aplicacao. Favor selecione a carencia novamente.';
+            -- Retorna o nome do campo
+            pr_nmdcampo := 'qtdiacar';
+            --Levantar Excecao
+            RAISE vr_exc_erro;
+          else
+            close cr_crapttx_valida;
+          end if;
         END IF;
         
         EXIT;      
@@ -23186,3 +23230,4 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
   END pr_trata_erro;
   
 END APLI0002;
+/
