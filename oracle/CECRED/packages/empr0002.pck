@@ -915,7 +915,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     pr_tab_dados_cpa(vr_idx).vllimctr := rw_crapcpa.vlctrpre;
     pr_tab_dados_cpa(vr_idx).flprapol := rw_craplcr.flprapol;   
   
-       
      -- Se tiver valor disponível de pré aprovado    
     IF NVL(vr_vldispon, 0) > 0 THEN
         
@@ -2221,6 +2220,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                  )) tab
       order by 1, 2, 3, 4;
 
+      -- Cursor para buscar o valor oriundo do SAS na CPA
+      CURSOR cr_cpa_sas(pr_cdcooper       IN crapcpa.cdcooper%TYPE
+                       ,pr_tppessoa       IN crapcpa.tppessoa%TYPE
+                       ,pr_nrcpfcnpj_base IN crapcpa.nrcpfcnpj_base%TYPE
+                       ,pr_idcarga        IN crapcpa.iddcarga%TYPE) IS
+        SELECT cpa.vlpot_lim_max
+        FROM crapcpa cpa
+        WHERE cpa.cdcooper = pr_cdcooper
+          AND cpa.tppessoa = pr_tppessoa
+          AND cpa.nrcpfcnpj_base = pr_nrcpfcnpj_base
+          AND cpa.iddcarga = pr_idcarga;
+      rw_cpa_sas cr_cpa_sas%ROWTYPE;							
+
       -- Cursor generico de calendario
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 
@@ -2343,7 +2355,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         vr_vig_flglibera_pre_aprv  := NULL;
         vr_vig_dtatualiza_pre_aprv := NULL;
         vr_vig_vl_limite           := NULL;
-        vr_vig_vl_disponivel       := NULL;
         
         -- Buscar os registros
         FOR rw_pos_diaria IN cr_pos_diaria ( pr_cdcooper => rw_crapcop.cdcooper
@@ -2376,8 +2387,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                 ,vr_salvo_nrcpfcnpj
                 ,vr_vig_iddcarga
                 --  quando o associado está bloqueado não grava os limites, só a carga ativa (M441)
+				,DECODE(vr_vig_flglibera_pre_aprv,0,NULL,rw_cpa_sas.vlpot_lim_max)
                 ,DECODE(vr_vig_flglibera_pre_aprv,0,NULL,vr_vig_vl_limite)
-                ,DECODE(vr_vig_flglibera_pre_aprv,0,NULL,vr_vig_vl_disponivel)
                 ,vr_salvo_qtcontratos
                 ,vr_salvo_vlemprst
                 ,vr_salvo_vlsdevat
@@ -2398,7 +2409,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
             vr_vig_flglibera_pre_aprv := NULL;
             vr_vig_dtatualiza_pre_aprv := NULL;
             vr_vig_vl_limite := NULL;
-            vr_vig_vl_disponivel := NULL;
           END IF;
 
           vr_salvo_cdcooper := rw_pos_diaria.cdcooper;
@@ -2425,8 +2435,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                IF vr_dscritic IS NOT NULL THEN
                  RAISE vr_exc_erro_diaria;
                END IF;
-               -- Calcular disponível com base no calculado e o jah contratado
-               vr_vig_vl_disponivel := vr_vig_vl_limite - rw_pos_diaria.vl_contratad;
+			   
+               --- Buscar o valor oriundo do SAS para o limite maximo
+               OPEN cr_cpa_sas(pr_cdcooper       => vr_salvo_cdcooper
+                              ,pr_tppessoa       => vr_salvo_tppessoa
+                              ,pr_nrcpfcnpj_base => vr_salvo_nrcpfcnpj
+                              ,pr_idcarga        => vr_vig_iddcarga);
+               FETCH cr_cpa_sas INTO rw_cpa_sas;
+               CLOSE cr_cpa_sas;			
+			   
                -- Atualizar a posição (CRAPCPA
                BEGIN
                  UPDATE crapcpa cpa
@@ -2446,13 +2463,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
             END IF;
           END IF;
             
-          -- salva valores do tipo de registro 9 que somente
-          -- existe um por conta;
+          -- salva valores do tipo de registro que somente existe um por conta;
           vr_salvo_qtcontratos := rw_pos_diaria.qt_contratos;
           vr_salvo_vlemprst := rw_pos_diaria.vlemprst;
           vr_salvo_vlsdevat := rw_pos_diaria.vlsdevat;
           vr_salvo_vlpreemp := rw_pos_diaria.vlpreemp;
-
         END LOOP; -- busca posição diária
         
         -- Gravar o ultimo registro da cooperativa
@@ -2483,8 +2498,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
               ,vr_salvo_nrcpfcnpj
               ,vr_vig_iddcarga
               --  quando o associado está bloqueado não grava os limites, só a carga ativa (M441)
+              ,DECODE(vr_vig_flglibera_pre_aprv,0,NULL,rw_cpa_sas.vlpot_lim_max)
               ,DECODE(vr_vig_flglibera_pre_aprv,0,NULL,vr_vig_vl_limite)
-              ,DECODE(vr_vig_flglibera_pre_aprv,0,NULL,vr_vig_vl_disponivel)
               ,vr_salvo_qtcontratos
               ,vr_salvo_vlemprst
               ,vr_salvo_vlsdevat
@@ -6030,6 +6045,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       vr_taxa            NUMBER;
       vr_cf              NUMBER;
       vr_emprestimos     NUMBER := 0;
+      -- Potencial maximo. E o Potencial do sas - o valor ja tomado em emprestimos.
+      vr_potencial_max   NUMBER := 0;
 
       -- Busca da configuração
       CURSOR cr_crappre IS
@@ -6195,11 +6212,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         
         CLOSE cr_crapepr;
 
-        -- Descontar do valor mínimo
-        pr_vldispon := pr_vldispon - vr_emprestimos;
-
+        -- Descontar do valor de emprestimos tomados
+        vr_potencial_max := nvl(pr_vlpot_lim_max,0) - vr_emprestimos;
+        
         -- Controlar para valor negativo
-        pr_vldispon := owa_util.ite(pr_vldispon > 0, pr_vldispon, 0);
+        vr_potencial_max := owa_util.ite(vr_potencial_max > 0, vr_potencial_max, 0);
+        
+        pr_vldispon := LEAST(vr_potencial_max, pr_vldispon); 
 
         -- Tratar limite mínimo
         IF rw_crappre.vllimmin > pr_vldispon THEN
