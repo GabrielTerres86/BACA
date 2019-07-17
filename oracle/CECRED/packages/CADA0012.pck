@@ -681,17 +681,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                     ,alt.nrdconta
                     ,ttl.idseqttl
                     ,null dsvariaveis
-                FROM tbcadast_pessoa tps
-          INNER JOIN crapass ass ON  ass.nrcpfcgc = tps.nrcpfcgc
+                FROM crapass ass
           INNER JOIN crapalt alt ON ass.cdcooper = alt.cdcooper AND ass.nrdconta = alt.nrdconta
           INNER JOIN crapttl ttl ON ass.cdcooper = ttl.cdcooper AND ass.nrdconta = ttl.nrdconta
-               WHERE alt.dtaltera = (SELECT MAX(dtaltera) FROM crapalt WHERE  nrdconta = ass.nrdconta AND cdcooper = ass.cdcooper AND tpaltera = 1)
-                 AND TO_CHAR(alt.dtaltera, ''MM'') = TO_CHAR((SELECT dtmvtolt FROM crapdat WHERE cdcooper = alt.cdcooper), ''MM'')
-                 AND (alt.dtaltera + NVL((SELECT dsconteu
-                                            FROM   crappat pat
-                                      INNER JOIN crappco pco ON pat.cdpartar = pco.cdpartar
-                                           WHERE pco.cdcooper = alt.cdcooper
-                                             AND pat.cdpartar = 66),0)*30) <= (SELECT dtmvtolt FROM crapdat WHERE cdcooper = alt.cdcooper)';
+         WHERE ASS.TPVINCUL IN (''FC'',''FU'',''FO'')
+				 AND CDSITDCT = 1 
+                 AND alt.dtaltera = (SELECT MAX(dtaltera) FROM crapalt WHERE  nrdconta = ass.nrdconta AND cdcooper = ass.cdcooper AND tpaltera = 1)';
   END fn_busca_contas_atualizar; 
 
   -- Rotina para escrever texto na variável CLOB do XML
