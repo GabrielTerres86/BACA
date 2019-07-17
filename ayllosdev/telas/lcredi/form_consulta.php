@@ -3,7 +3,7 @@
 
   Fonte: form_consulta.php
   Autor: Andrei - RKAM
-  Data : Julho/2016                       Última Alteração: 03/2019
+  Data : Julho/2016                       Última Alteração: 17/03/2019
 
   Objetivo  : Mostrar o form com as informaões da linha de crédito.
 

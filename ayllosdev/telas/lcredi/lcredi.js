@@ -1,7 +1,7 @@
 /***********************************************************************
  Fonte: lcredi.js                                                  
  Autor: Andrei - RKAM
- Data : JULHO/2016                Última Alteração: 03/2019
+ Data : JULHO/2016                Última Alteração: 17/03/2019
                                                                    
  Objetivo  : Cadastro de servicos ofertados na tela LCREDI
                                                                    	 

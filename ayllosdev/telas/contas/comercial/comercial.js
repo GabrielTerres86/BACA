@@ -29,6 +29,7 @@
  *                01/03/2019 - Tratamento de caracteres invalidos no campo complemento de endereco (PRB0040642 - Gabriel Mouts).
  *                07/03/2019 - Ajuste no blur, para retornar razao social do cnpj digitado, ao inves de manter nome anterior.
  *                             Gabriel Marcos (Mouts) - Chamado PRB0040571.
+ *                16/07/2019 - P437 - Remoção da validação do DV matricula - Jackson Barcellos AMcom
  *
  * --------------
  */

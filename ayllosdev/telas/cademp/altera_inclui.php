@@ -227,7 +227,7 @@
 
     /*VALIDA SE OS DADOS DA EMPRESA ESTAO CORRETOS*/
 	//P437 s2
-	if ($opcao == 'A') {
+	if ($opcao == 'A' && $glbvars['VAL_COOPER_CONSIGNADO'] == 'S') {
         if ($dscomple == '' || $dscomple == ' ') {
             $dscomple = '-';
         }

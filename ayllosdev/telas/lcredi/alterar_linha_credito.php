@@ -1,6 +1,6 @@
 <?php
 /*!
- * FONTE        : alterar_linha_credito.php                    Última alteração: 03/2019
+ * FONTE        : alterar_linha_credito.php                    Última alteração: 17/03/2019
  * CRIAÇÃO      : Andrei (RKAM)
  * DATA CRIAÇÃO : Julho/2016 
  * OBJETIVO     : Rotina para alterar uma linha de crédito

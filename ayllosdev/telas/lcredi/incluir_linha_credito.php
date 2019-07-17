@@ -1,6 +1,6 @@
 <?php
 /*!
- * FONTE        : incluir_linha_credito.php                    Última alteração: 03/2019
+ * FONTE        : incluir_linha_credito.php                    Última alteração: 17/03/2019
  * CRIAÇÃO      : Andrei (RKAM)
  * DATA CRIAÇÃO : Julho/2016 
  * OBJETIVO     : Rotina para incluir uma linha de crédito

@@ -67,6 +67,7 @@
  * 041: [09/03/2019] Rubens Lima (Mouts)     : PJ339 - Bloqueio CRM
  * 049: [29/01/2019] Márcio           (Mouts): Validar se CNAE informado é válido (PRB0040478) 
  * 050: [07/05/2019] Daniel Lombardi  (Mouts): Nova function excluisva para validação de e-mails. (PRB0041686) 
+ * 051: [16/07/2019] Jackson Barcellos(AMcom): Projeto 437 Ajuste remover validação dv da matricula
  */
 
 // Definição de algumas variáveis globais 
