@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-288
+293
 -- Created on 09/07/2019 by F0030794 
 declare 
   vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
@@ -167,7 +167,12 @@ begin
   
   loga('Importado '|| vr_idx || ' registros - com '|| vr_tab_lanctos.count() || ' lancamentos');
   loga('Fim Processo - importacao CSV');
-    
+  
+  IF vr_tab_lanctos.count() > 18179 THEN
+    vr_dscritic := 'Estouro validacao de seguranca 1 - '||formata(vr_tab_lanctos.count());
+    RAISE vr_excsaida;
+  END IF;
+  
   loga('Inicio Processo - efetua lancamento');
    
   vr_vltotal  := 0;
@@ -250,7 +255,7 @@ begin
   END LOOP;  
   
   IF vr_vltotal > 32000 THEN
-    vr_dscritic := 'Estouro validacao de seguranca - '||formata(vr_vltotal);
+    vr_dscritic := 'Estouro validacao de seguranca 2 - '||formata(vr_vltotal);
     RAISE vr_excsaida;
   END IF;
   
