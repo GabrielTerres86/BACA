@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 23/01/2019
+   Data    : AGOSTO/2013                      Ultima atualizacao: 03/07/2019
 
    Dados referentes ao programa:
 
@@ -264,6 +264,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
 
                21/03/2019 - PRJ572 - Ajuste para incluir a origem 5 - Cartoes (Nagasava - Supero)                                                                
                                
+               03/07/2018 - PJ 450.2 - Prejuizo Conta Corrente
+                            Bug 23109 - inc0018704 - Cyber - Informação de pagamento indevido
+                            O sistema Aimaro está enviando o mesmo valor de pagamento ao cyber diversas vezes
+                            Corrigido o cursor cr_valor_pago_emprestimo, no select da leitura para tratar pagto 
+                            de prejuízo de empréstimo via conta transitória (histórico 2781), não estava 
+                            filtrando a data de movto como as demais leituras do mesmo cursor.     
+                            Marcelo Elias Gonçalves (AMcom).
      ............................................................................. */
 
      DECLARE
@@ -822,17 +829,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652(pr_cdcooper IN crapcop.cdcooper%TY
 		 UNION
 		     /* P450 - Reginaldo/AMcom - Ajuste para processar corretamente 
 				           os prejuízos de empréstimo pagos via Conta Transitória */
-			   SELECT prj.vllanmto
-				      , prj.cdhistor 
-							, his.dshistor
-					 FROM tbcc_prejuizo_detalhe prj
-					    , craphis his
-					WHERE prj.cdcooper = pr_cdcooper
-					  AND prj.nrdconta = pr_nrdconta
-						AND prj.nrctremp = pr_nrctremp
-						AND prj.cdhistor = 2781 -- Recuperação de prejuízo
-						AND his.cdcooper = prj.cdcooper
-						AND his.cdhistor = prj.cdhistor;
+                   SELECT prj.vllanmto
+                         , prj.cdhistor 
+                         , his.dshistor
+                     FROM tbcc_prejuizo_detalhe prj
+                        , craphis his
+                      WHERE prj.cdcooper = pr_cdcooper
+                        AND prj.nrdconta = pr_nrdconta
+                        AND prj.nrctremp = pr_nrctremp
+                        AND prj.dtmvtolt = pr_dtmvtolt --Bug 23109 - inc0018704 (Marcelo Elias Gonçalves/AMcom). Incluso o filtro de data de movto do lancto na tbcc_prejuizo_detalhe.
+                        AND prj.cdhistor = 2781 -- Recuperação de prejuízo
+                        AND his.cdcooper = prj.cdcooper
+                        AND his.cdhistor = prj.cdhistor;
          
        -- [Projeto 403] Busca o valor pago para desconto de títulos  
        CURSOR cr_valor_pago_dsct_tit (pr_cdcooper  IN crapcyb.cdcooper%type

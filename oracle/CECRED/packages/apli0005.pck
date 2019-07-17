@@ -4990,13 +4990,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         END;
 
         -- Fim CRÉDITO
-        BEGIN
            LANC0001.pc_gerar_lancamento_conta(
                           pr_cdcooper => pr_cdcooper
                          ,pr_dtmvtolt => pr_dtmvtolt
-                         ,pr_cdagenci => 1
-                         ,pr_cdbccxlt => 100
-                         ,pr_nrdolote => 8501
+                       ,pr_cdagenci => rw_craplot.cdagenci
+                       ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                       ,pr_nrdolote => rw_craplot.nrdolote
                          ,pr_nrdconta => pr_nrdconta
                          ,pr_nrdctabb => pr_nrdconta
                          ,pr_nrdocmto => vr_nraplica
@@ -5005,8 +5004,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                          ,pr_vllanmto => pr_vlaplica
                          ,pr_cdhistor => rw_crapcpc.cdhscacc
                          ,pr_nraplica => vr_nraplica
-                         ,pr_inprolot => 1
-                         ,pr_tplotmov => 1
                          -- OUTPUT --
                          ,pr_tab_retorno => vr_tab_retorno
                          ,pr_incrineg => vr_incrineg
@@ -5014,16 +5011,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                          ,pr_dscritic => vr_dscritic);
 
             IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+             vr_dscritic := 'Erro ao inserir registro de lancamento de debito.';
                RAISE vr_exc_saida;
             END IF;
-
-        EXCEPTION
-          WHEN OTHERS THEN
-            IF trim(vr_dscritic) IS NULL THEN
-              vr_dscritic := 'Erro ao inserir registro de lancamento de debito.' || SQLERRM;
-            END IF;
-            RAISE vr_exc_saida;
-        END;
       END IF; -- Fim ELSE recurso nao proveniente de conta investimento
 
       -- Geracao de comprovante
@@ -9237,6 +9227,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_valresta NUMBER(20,8) := 0;       -- Valor de atualizacao de aplicacao
       vr_datresga DATE         := SYSDATE; -- Data de atualizacao de aplicacao
 
+      vr_incrineg      INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+      vr_tab_retorno   LANC0001.typ_reg_retorno;
+
       -- Cursores
 
       -- Selecionar dados de carencia de aplicacao
@@ -11300,43 +11293,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
         -- Insere registro de lancamento
         IF vr_vlsldrgt > 0 THEN
-          BEGIN
-            INSERT INTO
-              craplcm(
-                cdcooper
-               ,dtmvtolt
-               ,cdagenci
-               ,cdbccxlt
-               ,nrdolote
-               ,nrdconta
-               ,nrdctabb
-               ,nrdocmto
-               ,nrseqdig
-               ,dtrefere
-               ,vllanmto
-               ,cdhistor
-               ,nraplica
-              )VALUES(
-                 rw_craplot.cdcooper
-                ,rw_craplot.dtmvtolt
-                ,rw_craplot.cdagenci
-                ,rw_craplot.cdbccxlt
-                ,rw_craplot.nrdolote
-                ,rw_craprac.nrdconta
-                ,rw_craprac.nrdconta
-                ,vr_nrdocmto
-                ,rw_craplot.nrseqdig
-                ,rw_craplot.dtmvtolt
-                ,vr_vlsldrgt         -- Valor do resgate
-                ,rw_craprac.cdhsvrcc
-                ,pr_nraplica);
-          EXCEPTION
-            WHEN OTHERS THEN
+           LANC0001.pc_gerar_lancamento_conta(
+                          pr_cdcooper => rw_craplot.cdcooper
+                         ,pr_dtmvtolt => rw_craplot.dtmvtolt                         
+                         ,pr_cdagenci => rw_craplot.cdagenci
+                         ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                         ,pr_nrdolote => rw_craplot.nrdolote
+                         ,pr_nrdconta => rw_craprac.nrdconta
+                         ,pr_nrdctabb => rw_craprac.nrdconta
+                         ,pr_nrdocmto => vr_nrdocmto
+                         ,pr_nrseqdig => rw_craplot.nrseqdig
+                         ,pr_dtrefere => rw_craplot.dtmvtolt
+                         ,pr_vllanmto => vr_vlsldrgt         -- Valor do resgate
+                         ,pr_cdhistor => rw_craprac.cdhsvrcc
+                         ,pr_nraplica => pr_nraplica                        
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN                
               pr_tpcritic := 1;
               vr_cdcritic := 0;
               vr_dscritic := 'Erro ao inserir registro de lancamento de credito. Erro: ' || SQLERRM;
               RAISE vr_exc_saida;
-          END;
+            END IF;                                             
         END IF;
         -- Fim credito em conta corrente
 
