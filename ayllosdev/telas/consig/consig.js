@@ -368,6 +368,7 @@ function buscarDescricao(callback){
                     try {
                         eval(response);
                         if (rowid_emp_consig == "") {
+                            Ccdempres.val('');
 							return false;
 						}
                         Ccdempres.val(cdempres);
