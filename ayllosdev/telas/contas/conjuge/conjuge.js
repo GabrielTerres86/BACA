@@ -402,7 +402,7 @@ function controlaLayout(operacao) {
 		});
 
 	    // Para evitar a digitação de caracteres especiais que ocasiona erro na recuperação através de XML
-		$('#nmextemp,#nrdocnpj,#dsproftl,#nrfonemp,#nrramemp,#dtadmemp,#vlsalari,#tpcttrab,#cdturnos,#cdnvlcgo').bind("keyup", function () {
+		$('#nmextemp,#nrdocnpj,#dsproftl,#nrfonemp,#nrramemp,#dtadmemp,#tpcttrab,#cdturnos,#cdnvlcgo').bind("keyup", function () {	
 		    this.value = removeTodosCaracteresInvalidos(this.value, 1);
 		});
 
