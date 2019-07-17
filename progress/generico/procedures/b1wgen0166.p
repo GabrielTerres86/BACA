@@ -87,11 +87,15 @@
                 04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
                              tipo de conta permite a contrataçao do produto. PRJ366 (Lombardi).
 							 
+                05/10/2018 - Adicionada validacao de CNPJ nao existente na procedure Altera_inclui. PRJ437 (CIS).							 
+
 				18/10/2018 - Ajuste na gravacao dos campos indicadores de aviso de debito na
 				             procedure Altera_inclui para considerar o valor ja gravado na tabela
 							 caso exista. Necessario para evitar duplicidade de geracao de registro
 							 na crapavs - INC0025297. (Fabricio)
 
+                12/04/2016 - Ajuste nas rotinas Altera_inclui, Gera_arquivo_log e Imprime_relacao para gravar/alterar, gerar log
+				             e imprimir o campo nrdddemp  da tabela crapemp - P437 - Consignado Josiane stiehler - AMcom.
 
 .............................................................................*/
 
@@ -447,6 +451,7 @@ PROCEDURE Altera_inclui:
     DEFINE INPUT  PARAMETER par_vllimfol LIKE crapemp.vllimfol NO-UNDO.
     DEFINE INPUT  PARAMETER par_flgdgfib LIKE crapemp.flgdgfib NO-UNDO.
     DEFINE INPUT  PARAMETER par_dtlimdeb LIKE crapemp.dtlimdeb NO-UNDO.
+    DEFINE INPUT  PARAMETER par_nrdddemp LIKE crapemp.nrdddemp NO-UNDO.
                                                 
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
 
@@ -510,6 +515,29 @@ PROCEDURE Altera_inclui:
         
             RETURN "NOK".
         END.
+
+		IF par_tiptrans = "I" THEN DO:
+			/* Buscando o cnpj */
+			FIND crapemp WHERE crapemp.cdcooper = par_cdcooper
+								AND crapemp.nrdocnpj = par_nrdocnpj
+								 NO-LOCK NO-ERROR.
+
+			
+			
+			IF  AVAIL crapemp THEN DO:
+				ASSIGN aux_cdcritic = 0
+					   aux_dscritic = "CNPJ já vinculado a empresa " + STRING(crapemp.cdempres) + "! Não é possivel cadastrar".
+				
+				RUN gera_erro (INPUT par_cdcooper,
+							   INPUT par_cdagenci,
+							   INPUT par_nrdcaixa,
+							   INPUT 1,            /** Sequencia **/
+							   INPUT aux_cdcritic,
+							   INPUT-OUTPUT aux_dscritic).
+			
+				RETURN "NOK".
+    END.
+		END.
     END.
 
     Grava: 
@@ -623,8 +651,8 @@ PROCEDURE Altera_inclui:
                        /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                        crapemp.flgdgfib = IF par_flgdgfib THEN FALSE ELSE crapemp.flgdgfib
                        crapemp.dtlimdeb = par_dtlimdeb
-                       crapemp.cdoperad = par_cdoperad.
-                       
+                       crapemp.cdoperad = par_cdoperad
+                       crapemp.nrdddemp = par_nrdddemp.
                        
                 VALIDATE crapemp.
             END.
@@ -834,6 +862,7 @@ PROCEDURE Valida_empresa:
 
     /* DEF VAR aux_cdcritic AS INT NO-UNDO. */
 
+	/* P437 Validacao na tela
     IF  par_indescsg = FALSE AND
         par_dtfchfol > 0     THEN DO:
 
@@ -848,6 +877,7 @@ PROCEDURE Valida_empresa:
 
         RETURN "NOK".
     END.
+	*/
 
     /* Para emprestimo consignado em folha */
     IF  par_indescsg = TRUE THEN DO:
@@ -1133,6 +1163,8 @@ PROCEDURE Gera_arquivo_log:
     DEF INPUT PARAM par_nrfonemp  LIKE crapemp.nrfonemp NO-UNDO.
     DEF INPUT PARAM old_dtlimdeb  LIKE crapemp.dtlimdeb NO-UNDO.
     DEF INPUT PARAM par_dtlimdeb  LIKE crapemp.dtlimdeb NO-UNDO.
+	DEF INPUT PARAM old_nrdddemp  LIKE crapemp.nrdddemp NO-UNDO.
+	DEF INPUT PARAM par_nrdddemp  LIKE crapemp.nrdddemp NO-UNDO.
 
     DEFINE VARIABLE aux_verifi01 AS CHARACTER NO-UNDO.
     DEFINE VARIABLE aux_verifi02 AS CHARACTER NO-UNDO.
@@ -1425,6 +1457,18 @@ PROCEDURE Gera_arquivo_log:
                                    INPUT aux_verifi02, INPUT aux_verifi03).
         END.
 
+    IF  old_nrdddemp <> par_nrdddemp   THEN
+        DO:
+            ASSIGN  aux_verifi01 = STRING(par_nrdddemp)
+                    aux_verifi02 = STRING(old_nrdddemp)
+                    aux_verifi03 = "DDD".
+            RUN Gera_arquivo_log_2(INPUT par_cdcooper, INPUT par_cdopcao,
+                                   INPUT par_dtmvtolt, INPUT par_cdoperad,
+                                   INPUT par_cdempres, INPUT aux_verifi01,
+                                   INPUT aux_verifi02, INPUT aux_verifi03).
+        END.
+
+		
     IF  old_nrfonemp <> par_nrfonemp   THEN
         DO:
             ASSIGN  aux_verifi01 = STRING(par_nrfonemp)
@@ -1587,6 +1631,7 @@ PROCEDURE Imprime_relacao:
             DISPLAY STREAM str_1 
                     crapemp.cdempres "   "
                     crapemp.nmextemp "   "
+					crapemp.nrdddemp COLUMN-LABEL "DDD"
                     crapemp.nrfonemp
                     WITH CENTERED TITLE "RELACAO DE EMPRESAS CONVENIADAS\n\n"
                          FRAME f_numerica DOWN.
@@ -1601,6 +1646,7 @@ PROCEDURE Imprime_relacao:
             DISPLAY STREAM str_1 
                     crapemp.cdempres "   "
                     crapemp.nmextemp "   "
+					crapemp.nrdddemp COLUMN-LABEL "DDD"
                     crapemp.nrfonemp
                     WITH CENTERED TITLE "RELACAO DE EMPRESAS CONVENIADAS\n\n"
                     FRAME f_alfabetica DOWN.
