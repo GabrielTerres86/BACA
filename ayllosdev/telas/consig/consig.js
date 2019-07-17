@@ -367,6 +367,9 @@ function buscarDescricao(callback){
                 success: function (response) {
                     try {
                         eval(response);
+                        if (rowid_emp_consig == "") {
+							return false;
+						}
                         Ccdempres.val(cdempres);
                         Cindconsignado.val(indconsignado);
                         Crowid_emp_consig.val(rowid_emp_consig);
