@@ -3530,7 +3530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_vllimtot => vr_vltotccr);
 
-      vr_obj_generic2.put('limiteCartaoCredit'
+      vr_obj_generic2.put('limiteCartaoCredito'
                          ,este0001.fn_decimal_ibra(vr_vltotccr));
     
       -- Buscar contrato de desconto cheques     
