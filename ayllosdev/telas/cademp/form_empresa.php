@@ -16,6 +16,7 @@
  *				  28/07/2016 - Removi o comando session_start e a função utf8tohtml desnecessarios. SD 491925. (Carlos R.)
  *
  *          06/08/2018 - Ajuste na formatação do campo e-mail (Andrey Formigari - Mouts)
+ *			28/02/2019 - Projeto 437 Consignado AMcom - JDB (ID 20190208_437) - Ajutes conforme changeset feito por outra empresa	 (14/09/2018 - Tratamento para o projeto 437 Consignado (incluir  flnecont e tpmodcon))
  *
  * --------------
  */
@@ -107,6 +108,9 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 			<input name="nrcepend" type="text"  id="nrcepend" class='campo' />
 
 			<br style="clear:both" />
+			<!--P437-->
+			<label for="nrdddemp">DDD:</label>
+			<input name="nrdddemp" type="text"  id="nrdddemp" class='campo' />
 
 			<label for="nrfonemp">Telefone:</label>
 			<input name="nrfonemp" type="text"  id="nrfonemp" class='campo' />
@@ -135,6 +139,8 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 			<input type='hidden' name='old_nrcepend' id='old_nrcepend'>
 			<input type='hidden' name='old_nrdocnpj' id='old_nrdocnpj'>
 			<input type='hidden' name='old_nrfonemp' id='old_nrfonemp'>
+			<!-- P437 -->
+			<input type='hidden' name='old_nrdddemp' id='old_nrdddemp'>
 			<input type='hidden' name='old_nrfaxemp' id='old_nrfaxemp'>
 			<input type='hidden' name='old_dsdemail' id='old_dsdemail'>
 			<!-- CAMPOS PARA LOG -->
@@ -220,28 +226,33 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 
 		<fieldset>
 			<legend>Informacoes Complementares</legend>
+				<!-- P437 -->
+				<?php 
+					if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
+						echo '<label for="indescsg">Empr&eacute;stimo Consignado:</label>';
+						echo '<input type="checkbox" id = "indescsg" name="indescsg" style="margin-right:10px;"/>';
+					}
+				?>
+				<label for="flgarqrt">Gera arq. retorno:</label>
+				<input type="checkbox" id = "flgarqrt" name="flgarqrt"/>
 
-				<label for="indescsg">Empr&eacute;stimo Consignado:</label>
-				<input type="checkbox" id = "indescsg" name="indescsg" style="margin-right:10px;"/>
-
+				<br style="clear:both" />
+				<!-- <- -->
 				<label for="dtfchfol">Dia Fechamento Folha:</label>
 				<input name="dtfchfol" type="text"  id="dtfchfol" class='campo' />
 
 				<br style="clear:both" />
 				
-				<label for="flgarqrt">Gera arq. retorno:</label>
-				<input type="checkbox" id = "flgarqrt" name="flgarqrt"/>
-
-				<br style="clear:both" />
-				
 				<label for="flgvlddv">Valida DV Cad.Emp:</label>
 				<input type="checkbox" id = "flgvlddv"  name="flgvlddv"/>
-				
-				<br style="clear:both" />
-				<br style="clear:both" />
-				
-				<label for="ddmesnov">Dia M&ecirc;s Novo para Empr&eacute;stimo:</label>
-				<input name="ddmesnov" type="text"  id="ddmesnov" class='campo' />
+				<?php 
+					if ($glbvars['VAL_COOPER_CONSIGNADO'] != 'S'){
+						echo '<br style="clear:both" />';
+						echo '<br style="clear:both" />';				
+						echo '<label for="ddmesnov">Dia M&ecirc;s Novo para Empr&eacute;stimo:</label>';
+						echo '<input name="ddmesnov" type="text"  id="ddmesnov" class="campo" />';
+					}
+				?>
 
 				<label for="dtlimdeb">Dia Limite D&eacute;bitos Vinculados:</label>
 				<input name="dtlimdeb" type="text"  id="dtlimdeb" class='campo' />
@@ -288,6 +299,25 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 				</select>
 				<label for="dtavscot">Data Gera&ccedil;&atilde;o:</label>
 				<input name="dtavscot" type="text"  id="dtavscot" class='campo' />
+			<!-- P437 -->
+			<?php
+				if ($glbvars['VAL_COOPER_CONSIGNADO'] == 'S'){
+					echo '</fieldset> <fieldset>';        
+					echo '<legend>Informa&ccedil;&otilde;es consignado</legend>';
+					echo '<label for="flnecont">Conv&ecirc;nio Consignado:</label>';
+					echo '<input type="checkbox" id = "flnecont" name="flnecont" style="margin-right:10px;"/>';
+					echo '<label for="tpmodcon">Modalidade de Conv&ecirc;nio:</label>';
+					echo '<select name="tpmodcon" id="tpmodcon" class="campo">';
+					echo '	<option value=""></option>';
+					echo '	<option value="1">Privado</option>';
+					echo '	<option value="2">P&uacute;blico</option>';
+					echo '	<option value="3">INSS</option>';
+					echo '</select>';
+					echo '<input name="ddmesnov" type="hidden"  id="ddmesnov" class="campo" />';
+					echo '<input type="checkbox" id = "indescsg" name="indescsg" style="margin-right:10px; display:none;"/>';
+				}
+			?>
+			
 
 				<!-- CAMPOS LOG -->
 				<?php
@@ -331,6 +361,10 @@ glb_dtmvtolt = '<?php echo $glbvars['dtmvtolt']; ?>';
 				<input type='hidden' name='old_tpdebemp' id='old_tpdebemp'>
 				<input type='hidden' name='old_dtavsemp' id='old_dtavsemp'>				
 				<input type='hidden' name='old_tpdebcot' id='old_tpdebcot'>
+				<!-- -> ID 20190208_437 -->
+				<input type='hidden' name='old_dtavscot' id='old_dtavscot'>
+				<input type='hidden' name='old_tpmodcon' id='old_tpmodcon'>
+				<!-- <- -->
 				<input type='hidden' name='old_dtavscot' id='old_dtavscot'>
 				<input type='hidden'  id='data-2' value='<?php echo trim(valida_feriado($glbvars['dtmvtolt'],5, $arrayParam)); ?>'>
 				<input type='hidden'  id='data-3' value='<?php echo trim(valida_feriado($glbvars['dtmvtolt'],3, $arrayParam)); ?>'>
