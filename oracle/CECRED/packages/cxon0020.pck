@@ -1420,8 +1420,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   05/06/2019 - Tratar INC0011406 relacionado ao horario de aprovacao da TED (Diego).
 
                   21/06/2019 - Tratar INC0015554 - solucao de contorno (Diego).
-
+                  
                   10/07/2019 - Tratar INC0019779 relacionado a duplicidade do número de controle IF (Diego).
+
+                  16/07/2019 - Tratar para que deposito bacenjud não execute rotina de saldo.
+                               Jose Dill (Mouts). INC0020549 
 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
@@ -2366,68 +2369,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                  ,'N');
       -- retornar numero do documento
       pr_nrdocmto := vr_nrseqted;
-
+ 
     END IF;
     CLOSE cr_craplcm;
+ 
+    -- Se for BacenJud nao deve validar saldo INC0020549  
+    IF NVL(pr_tpctafav,0) <> 9 THEN 
+      /*PRB0041934 - Incluída a chamada da rotina que verifica saldo antes da inclusao do lançamento, devido
+        ao problema do sistema permitir a inclusão de dois TEDs de uma mesma conta ao mesmo tempo, sendo que a 
+        soma dos valores de TEDs deveria estourar o saldo, o que nao estava ocorrendo em algumas situações.  */
+      --Limpar tabela saldo e erro
+      vr_tab_saldo.DELETE;
+      vr_tab_erro.DELETE;
+      /** Verifica se possui saldo para fazer a operacao **/
+      EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => rw_crapcop.cdcooper
+                                  ,pr_rw_crapdat => rw_crapdat
+                                  ,pr_cdagenci   => pr_cdageope
+                                  ,pr_nrdcaixa   => pr_nrcxaope
+                                  ,pr_cdoperad   => pr_cdoperad
+                                  ,pr_nrdconta   => pr_nrdconta
+                                  ,pr_vllimcre   => rw_crapass.vllimcre
+                                  ,pr_tipo_busca => 'A' --> tipo de busca(A-dtmvtoan)
+                                  ,pr_dtrefere   => rw_crapdat.dtmvtolt
+                                  ,pr_flgcrass   => FALSE
+                                  ,pr_des_reto   => vr_dscritic
+                                  ,pr_tab_sald   => vr_tab_saldo
+                                  ,pr_tab_erro   => vr_tab_erro);
 
-    /*PRB0041934 - Incluída a chamada da rotina que verifica saldo antes da inclusao do lançamento, devido
-      ao problema do sistema permitir a inclusão de dois TEDs de uma mesma conta ao mesmo tempo, sendo que a 
-      soma dos valores de TEDs deveria estourar o saldo, o que nao estava ocorrendo em algumas situações.  */
-    --Limpar tabela saldo e erro
-    vr_tab_saldo.DELETE;
-    vr_tab_erro.DELETE;
-    /** Verifica se possui saldo para fazer a operacao **/
-    EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => rw_crapcop.cdcooper
-                                ,pr_rw_crapdat => rw_crapdat
-                                ,pr_cdagenci   => pr_cdageope
-                                ,pr_nrdcaixa   => pr_nrcxaope
-                                ,pr_cdoperad   => pr_cdoperad
-                                ,pr_nrdconta   => pr_nrdconta
-                                ,pr_vllimcre   => rw_crapass.vllimcre
-                                ,pr_tipo_busca => 'A' --> tipo de busca(A-dtmvtoan)
-                                ,pr_dtrefere   => rw_crapdat.dtmvtolt
-                                ,pr_flgcrass   => FALSE
-                                ,pr_des_reto   => vr_dscritic
-                                ,pr_tab_sald   => vr_tab_saldo
-                                ,pr_tab_erro   => vr_tab_erro);
+      --Se ocorreu erro
+      IF vr_dscritic = 'NOK' THEN
+        -- Tenta buscar o erro no vetor de erro
+        IF vr_tab_erro.COUNT > 0 THEN
+          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||pr_nrdconta;
+        ELSE
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informacao na pr_tab_erro, Conta: '||pr_nrdconta;
+        END IF;
 
-    --Se ocorreu erro
-    IF vr_dscritic = 'NOK' THEN
-      -- Tenta buscar o erro no vetor de erro
-      IF vr_tab_erro.COUNT > 0 THEN
-        vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-        vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||pr_nrdconta;
-      ELSE
-        vr_cdcritic:= 0;
-        vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informacao na pr_tab_erro, Conta: '||pr_nrdconta;
-      END IF;
-
-      --Levantar Excecao
-      RAISE vr_exc_erro;
-    END IF;
-
-    --Verificar o saldo retornado
-    IF vr_tab_saldo.Count = 0 THEN
-      --Montar mensagem erro
-      vr_cdcritic:= 0;
-      vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';
-      --Levantar Excecao
-      RAISE vr_exc_erro;
-    ELSE
-      --Total disponivel recebe valor disponivel + limite credito
-      vr_vlsldisp:= nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) + nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
-      -- log item
-      /*Neste momento considera o valor do TED mais o valor da Tarifa em relação ao saldo
-        disponível (antecipa uma validação), pois o lançamento ainda nao foi realizado na craplcm */      
-      IF (pr_vldocmto + nvl(vr_vllantar,0)) > vr_vlsldisp THEN
-        --Montar mensagem erro
-        vr_cdcritic:= 0;
-        vr_dscritic:= 'Nao ha saldo suficiente para a operacao.';
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
-    END IF;         
-    /*FIM PRB0041934*/
+
+      --Verificar o saldo retornado
+      IF vr_tab_saldo.Count = 0 THEN
+        --Montar mensagem erro
+        vr_cdcritic:= 0;
+        vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+      ELSE
+        --Total disponivel recebe valor disponivel + limite credito
+        vr_vlsldisp:= nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) + nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
+        -- log item
+        /*Neste momento considera o valor do TED mais o valor da Tarifa em relação ao saldo
+          disponível (antecipa uma validação), pois o lançamento ainda nao foi realizado na craplcm */      
+        IF (pr_vldocmto + nvl(vr_vllantar,0)) > vr_vlsldisp THEN
+          --Montar mensagem erro
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Nao ha saldo suficiente para a operacao.';
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;         
+      /*FIM PRB0041934*/
+    END IF;   
+    
+    
 
     vr_hrtransa := gene0002.fn_busca_time;
     BEGIN
