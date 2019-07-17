@@ -131,15 +131,23 @@
 			//cham SOA x FIS
 			$xml = simplexml_load_string($xmlResult);
 			$json = json_encode($xml);	
-			//print_r($json);
+			//print_r($json); die();
 			$retSOAxFIS = chamaServico($json,$Url_SOA, $Auth_SOA);
 			
 		}		
 		
-		if($retSOAxFIS == "ERRO"){
+		if($retSOAxFIS != "OK"){			
+		//if(1 == 2){
+			$auxErro = '';
+			if ($retSOAxFIS->fault->Body->gravaDadosConvenioResponse->return->codigoRetorno->codRetorno){
+				$auxErro = ' ('.$retSOAxFIS->fault->Body->gravaDadosConvenioResponse->return->codigoRetorno->codRetorno. '-'.
+                           $retSOAxFIS->fault->Body->gravaDadosConvenioResponse->return->codigoRetorno->mensagem.')';
+            }else{
+            	$auxErro = ' ('.$retSOAxFIS->msg.')';
+            }
 			exibirErro(
 				"error",
-				"Erro ao enviar empresa para FIS",
+				"Erro ao enviar empresa para FIS".$auxErro ,
 				"Alerta - Ayllos",
 				"",
 				false);
@@ -241,15 +249,26 @@
 			exit();
 		}else{
 			//cham SOA x FIS
-			
+			$xml = simplexml_load_string($xmlResult);
+			$json = json_encode($xml);	
+			//print_r($json);
+			$retSOAxFIS = chamaServico($json,$Url_SOA, $Auth_SOA);
 		}		
 		
-		if($retSOAxFIS == "ERRO"){
+		if($retSOAxFIS != "OK"){			
+		//if(1 == 2){
+			$auxErro = '';
+			if ($retSOAxFIS->fault->Body->gravaDadosConvenioResponse->return->codigoRetorno->codRetorno){
+				$auxErro = ' ('.$retSOAxFIS->fault->Body->gravaDadosConvenioResponse->return->codigoRetorno->codRetorno. '-'.
+                           $retSOAxFIS->fault->Body->gravaDadosConvenioResponse->return->codigoRetorno->mensagem.')';
+            }else{
+            	$auxErro = ' ('.$retSOAxFIS->msg.')';
+            }
 			exibirErro(
 				"error",
-				$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,
+				"Erro ao enviar empresa para FIS".$auxErro ,
 				"Alerta - Ayllos",
-				"estadoInicial();",
+				"",
 				false);
 			
 			exit();

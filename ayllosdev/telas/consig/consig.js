@@ -259,11 +259,7 @@ function formataFiltro(){
     //Ao clicar no botao OK
     BtProsseguir.unbind('click').bind('click', function () {
         if(!existeEmpresa()){
-            buscarDescricao(function(){
-                consultaParametros();
-                return false;
-            });
-            return false;
+            buscarDescricao();
         }
         consultaParametros();
         return false;
@@ -329,7 +325,7 @@ function mostraPesquisaEmpresa(){
     var filtros = 'Cod. Empresa;cdempres;60;S;;S;;|Nome Empresa;nmextemp;150;S;;S;;|;cddopcao;;N;' + cddopcao + ';N;|Habilitado;indconsignado;30;N;;N;;radio|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
     var colunas = 'Codigo;cdempres;19%;right;;S;;|Empresa;nmextemp;60%;left;;S;;|;cddopcao;;N;;N;|Habilitado;hindconsignado;19%;right;;N;;|Data;dtativconsignado;;N;;N;;|rowid;rowid_emp_consig;;N;;N;;';
     var divBloqueia = '';
-    var fncOnClose = 'fecharPesquisa();';
+    var fncOnClose = 'buscarDescricao();';
     var nomeRotina =  NomeFiltro;
     mostraPesquisa(businessObject, nomeProcedure, titulo, qtReg, filtros, colunas, divBloqueia, fncOnClose, nomeRotina);//, cdCooper);    
 	return false;
@@ -350,49 +346,50 @@ function buscarDescricao(callback){
     var indconsignado = '';
     var rowid_emp_consig = '';
     var dtativconsignado = '';
-    if (cdempres != '' || cdempres > 0){
-     $.ajax({
-            type: 'POST',
-            url: UrlSite + 'telas/consig/manter_rotina.php',
-            data: {
-                cddopcao: 'B',
-                cdempres: cdempres,
-                consulta_cddopcao: cddopcao,
-                redirect: 'script_ajax'
-            },
-            error: function (objAjax, responseError, objExcept) {
-                hideMsgAguardo();
-                showError(
-                    'error',
-                    'Nao foi possivel concluir a operacao.',
-                    'Alerta - Ayllos',
-                    '$("#nrconven", "#frmFiltro").focus();');
-            },
-            success: function (response) {
-                try {
-                    eval(response);
-                    Ccdempres.val(cdempres);
-                    Cindconsignado.val(indconsignado);
-                    Crowid_emp_consig.val(rowid_emp_consig);
-                    Cdtativconsignado.val(dtativconsignado);
-                    fecharPesquisa();
-                    if(callback){
-                        callback();
-                    }
-                    return false;
-                } catch (error) {
+    if (cdempres != '' && cdempres > 0){
+         $.ajax({
+                type: 'POST',
+                url: UrlSite + 'telas/consig/manter_rotina.php',
+                data: {
+                    cddopcao: 'B',
+                    cdempres: cdempres,
+                    consulta_cddopcao: cddopcao,
+                    redirect: 'script_ajax'
+                },
+                error: function (objAjax, responseError, objExcept) {
+                    hideMsgAguardo();
                     showError(
                         'error',
-                        'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. ' + error.message,
+                        'Nao foi possivel concluir a operacao.',
                         'Alerta - Ayllos',
-                        '$("#nrconven",'+NomeFiltro+').focus();');
-                    return false;
-                }//catch
-            }//success
-        });//ajax
- }
+                        '$("#nrconven", "#frmFiltro").focus();');
+                },
+                success: function (response) {
+                    try {
+                        eval(response);
+                        Ccdempres.val(cdempres);
+                        Cindconsignado.val(indconsignado);
+                        Crowid_emp_consig.val(rowid_emp_consig);
+                        Cdtativconsignado.val(dtativconsignado);
+                        fecharPesquisa();
+                        if(callback){
+                            callback();
+                        }
+                        return false;
+                    } catch (error) {
+                        showError(
+                            'error',
+                            'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. ' + error.message,
+                            'Alerta - Ayllos',
+                            '$("#nrconven",'+NomeFiltro+').focus();');
+                        return false;
+                    }//catch
+                }//success
+            });//ajax
+        }
     return false;
 }
+
 
 function callbackBuscarDescricao(){
     return false;
@@ -429,58 +426,57 @@ function consultaParametros(){
     var cdempres = Ccdempres.val(); // * Filtro // Cï¿½digo Empresa
     var indconsignado = Cindconsignado.val(); // 'Convï¿½nio Consignado'
     var dtativconsignado = Cdtativconsignado.val(); // 'Data'
-
-    if(!existeEmpresa()){
-            hideMsgAguardo();
-            showError(
-                'error',
-                'Nao ha codigo de empresa cadastrado.',
-                'Alerta - Ayllos',
-                '');
-            return false;
-    }
-     
-     $.ajax({
-        type: 'POST',
-        url: UrlSite + 'telas/consig/manter_rotina.php',
-        data: {
-            cddopcao: '',
-            consulta_cddopcao : cddopcao,
-            cdempres: cdempres,
-            redirect: 'script_ajax'
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError(
-                'error',
-                'Nao foi possivel concluir a operacao.',
-                'Alerta - Ayllos',
-                '$("#nrconven", "#frmFiltro").focus();');
-        },
-        success: function (response) {
-            hideMsgAguardo();
-            desabilitaFiltro();
-            try {
-
-                try { // Javascript
-                    eval(response);
-                    return false;
-                } catch (error) { // Html
-                    DivConsig.html(response);
-                    formataTelaConsig();
-                    return false;
-                }//catch
-                
-            } catch (error) {
-
+        if(!existeEmpresa()){
+                hideMsgAguardo();
                 showError(
                     'error',
-                    'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. ' + error.message,
+                    'N&atilde;o ha codigo de empresa cadastrado.',
                     'Alerta - Ayllos',
-                    '$("#nrconven",'+NomeFiltro+').focus();');
-            }//catch
-        }//success
-    });//ajax
+                    '');
+                return false;
+        }
+         
+         $.ajax({
+            type: 'POST',
+            url: UrlSite + 'telas/consig/manter_rotina.php',
+            data: {
+                cddopcao: '',
+                consulta_cddopcao : cddopcao,
+                cdempres: cdempres,
+                redirect: 'script_ajax'
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError(
+                    'error',
+                    'N&atilde;o foi possivel concluir a operacao.',
+                    'Alerta - Ayllos',
+                    '$("#nrconven", "#frmFiltro").focus();');
+            },
+            success: function (response) {
+                hideMsgAguardo();
+                desabilitaFiltro();
+                try {
+
+                    try { // Javascript
+                        eval(response);
+                        return false;
+                    } catch (error) { // Html
+                        DivConsig.html(response);
+                        formataTelaConsig();
+                        return false;
+                    }//catch
+                    
+                } catch (error) {
+
+                    showError(
+                        'error',
+                        'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. ' + error.message,
+                        'Alerta - Ayllos',
+                        '$("#nrconven",'+NomeFiltro+').focus();');
+                }//catch
+            }//success
+        });//ajax
     return false;
 }
 
@@ -491,12 +487,7 @@ function existeEmpresa(){
 
     cdempres = Cdempres.val();
     rowid = Crowid.val();
-
-    // console.log(rowid);
-
-    if(!rowid || trim(rowid) == '' || rowid == 0){
-        return false;
-    }
+    
     if(!cdempres || trim(cdempres) == '' || cdempres == 0){
         return false;
     }
@@ -986,9 +977,9 @@ function controlaOperacao(){
     Hindinterromper = $('#indinterromper', FrmConsig); // HIDDEN Interrompe Cobranï¿½a
     Cdtinterromper = $('#dtinterromper', FrmConsig); // Data Interrupï¿½ï¿½o Cobranï¿½a
     Cdsdemail = $('#dsdemail', FrmConsig); // E-mail
-    Cindalertaemailemp = $('#indalertaemailemp', FrmConsig); // Alertas (check box)
+    Cindalertaemailemp = $('#checkbox_indalertaemailemp', FrmConsig); // Alertas (check box)
     Cdsdemailconsig = $('#dsdemailconsig', FrmConsig); // E-mail Consignado
-    Cindalertaemailconsig = $('#indalertaemailconsig', FrmConsig);// Alertas Consig(check box)
+    Cindalertaemailconsig = $('#checkbox_indalertaemailconsig', FrmConsig);// Alertas Consig(check box)
 
     nmextemp = Cnmextemp.val(); // * Form Consignado // Razï¿½o Social
     tpmodconvenio = Ctpmodconvenio.val(); // Tipo de Convenio INSS/ Publico / Privado
@@ -998,12 +989,9 @@ function controlaOperacao(){
     indinterromper = Hindinterromper.val(); // Interrompe Cobranï¿½a
     dtinterromper = Cdtinterromper.val(); // Data Interrupï¿½ï¿½o Cobranï¿½a
     dsdemail = Cdsdemail.val(); // E-mail
-    indalertaemailemp = Cindalertaemailemp.val(); // Alertas (check box)
+    indalertaemailemp = Cindalertaemailemp.is(':checked') ? 1 : 0;
     dsdemailconsig = Cdsdemailconsig.val(); // E-mail Consignado
-    indalertaemailconsig = Cindalertaemailconsig.val();// Alertas Consig(check box)
-
-    
-
+    indalertaemailconsig = Cindalertaemailconsig.is(':checked') ? 1 : 0;
 
     // Calidações de campos obrigatórios no front
     if(tpmodconvenio == 0){
@@ -1015,6 +1003,25 @@ function controlaOperacao(){
                  "$('#dtfchfol','#"+FrmConsig.attr('id')+"').focus()");
             return false;
     }
+
+    //Validação email
+    if (indalertaemailconsig == 1 && dsdemailconsig == ''){
+        if (!validaEmailCademp(dsdemailconsig)) {
+            showError('error', 'E-mail Consig. deve ser informado!',
+                    'Campo Obrigat&oacute;rio!',
+                    '$(Cdsdemailconsig).focus();');
+            return false;
+        }
+    }
+    if (dsdemailconsig != '') {
+        if (!validaEmailCademp(dsdemailconsig)) {
+            showError('error', 'E-mail Consig. inv&aacute;lido!',
+                    'Valida&ccedil;&atilde;o e-mail',
+                    '$(Cdsdemailconsig).focus();');
+            return false;
+        }
+    }
+
     // Publico
     if(tpmodconvenio == 2 && (cddopcao == 'A' || cddopcao == 'H')){
         // Dia fechamento folha
@@ -1287,7 +1294,7 @@ function Replicar()
 		if((typeof dtinclpropostade != 'undefined')&&(typeof dtinclpropostaate != 'undefined')&&(typeof dtenvioarquivo != 'undefined')&&(typeof dtvencimento != 'undefined')){
 			if ((dtinclpropostade != "") && (dtinclpropostaate != "") && (dtenvioarquivo != "") && (dtvencimento != "")){
 				for(var x=0; x<11; x++){
-					console.log
+					//console.log
 					proxIndice = document.getElementById('tblVencParc').rows.length-1;
 					var novaLinha = document.getElementById('tblVencParc').insertRow(proxIndice);
 					novaLinha.className = 'even corImpar';	
@@ -1378,4 +1385,10 @@ function Replicar()
 	}else{
 		showError("info","Voc&ecirc; precisa estar na Op&ccedil;&atilde;o H - (Habilitar) ou A - (Alterar)! ","Alerta - Ayllos","");			
 	}
+}
+
+function validaEmailCademp(emailAddress) {
+    var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))|(\",;+\")$/;
+    var registro = new RegExp(re);
+    return registro.test(emailAddress);
 }

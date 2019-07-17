@@ -139,10 +139,11 @@ function envServico($url, $method, $arrayHeader, $data) {
 	$result = json_decode($result);
 	if (isset($result->sistemaTransacao->dataHoraRetorno)){
 		if($result->sistemaTransacao->dataHoraRetorno != ""){
-			return $result->sistemaTransacao->dataHoraRetorno;
+			return "OK";
 		}
 	}
 	
-	return "ERRO";
+	//return "ERRO";
+	return $result;
 
 }
