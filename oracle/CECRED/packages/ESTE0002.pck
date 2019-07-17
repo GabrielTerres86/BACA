@@ -4793,6 +4793,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                PRJ439 - CDC(Odirlei-AMcom)
         
                   14/12/2018 - Adicionado o valor da parcela carencia (Rafael Faria - Supero)
+                  10/07/2019 - P438 - Inclusão do atributo canalOrigem no Json para identificar 
+                                a origem da operação de crédito no Motor. (Douglas Pagel / AMcom).
+
         
         
     ..........................................................................*/
@@ -4870,7 +4873,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
              ,wpr.hrinclus
              ,lcr.perjurmo
              ,lcr.txmensal
-             ,wpr.vlprecar
+             ,wpr.vlprecar	 
+             ,wpr.cdorigem
         FROM crawepr wpr
             ,craplcr lcr
             ,crapfin fin      
@@ -5524,7 +5528,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     END IF;    
     vr_dstextab := null;
     
-    vr_obj_generico.put('toleranciaJurosMoraMulta', ESTE0001.fn_decimal_ibra(vr_prtlmult)); 
+    vr_obj_generico.put('toleranciaJurosMoraMulta', ESTE0001.fn_decimal_ibra(vr_prtlmult));
+
+    vr_obj_generico.put('canalOrigem',rw_crawepr.cdorigem);        
         
     -- Buscar Patrimonio referencial da cooperativa 
     OPEN cr_tbcadast_cooperativa(pr_cdcooper);

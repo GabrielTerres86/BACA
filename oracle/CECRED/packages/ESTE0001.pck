@@ -1375,7 +1375,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(Amcom)
-      Data     : Março/2016.                   Ultima atualizacao: 26/07/2018
+      Data     : Março/2016.                   Ultima atualizacao: 10/07/2019
     
       Dados referentes ao programa:
     
@@ -1411,7 +1411,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
 							   PJ 450 - Diego Simas (AMcom) (Fluxo Atraso)							   
 
                   12/02/2019 - P442 - Nova estrutura do PreAprovado (Marcos-Envolti)
-
+                 10/07/2019 - P438 - Inclusão dos atributos canalCodigo e canalDescricao no Json para identificar 
+                                a origem da operação de crédito na Esteira. (Douglas Pagel / AMcom).
     ..........................................................................*/
     -----------> CURSORES <-----------
     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
@@ -1469,7 +1470,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
              -- Indica que am linha de credito eh CDC ou C DC
              DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => epr.cdcooper
                                                ,pr_cdfinemp => epr.cdfinemp),3,1,0) AS inlcrcdc,
-             epr.idfluata
+             epr.idfluata,	 
+             epr.cdorigem
         FROM crawepr epr,
              craplcr lcr,
              crapfin fin,
@@ -2044,6 +2046,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       vr_obj_proposta.put('faturamentoAnual',fn_decimal_ibra(rw_crapjfn.vltotfat));
     END IF;
 
+    vr_obj_proposta.put('canalCodigo',rw_crawepr.cdorigem);
+    vr_obj_proposta.put('canalDescricao',gene0001.vr_vet_des_origens(rw_crawepr.cdorigem));
+    
     -- Devolver o objeto criado
     pr_proposta := vr_obj_proposta;
   
