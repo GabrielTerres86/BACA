@@ -456,7 +456,7 @@ a:link.btn-side-by-side, a:hover.btn-side-by-side, .btn-side-by-side,  .btn-side
     /*border-bottom: 2px solid #fff;*/
   }
 
-  .table-dark tr:first-child td{
+  .table-dark thead > tr:first-child td{
     background-color: rgba(255, 255, 255, 0.85);
     line-height: 16px !important;
     padding-top: 16px;
@@ -642,7 +642,7 @@ a:link.btn-side-by-side, a:hover.btn-side-by-side, .btn-side-by-side,  .btn-side
 
 @media only screen and (max-width: 600px) {
   .table td, .table th {
-    /*word-break: break-all;*/
+    word-break: break-all;
     word-wrap: break-word !important;
     font-size: 10px;
     padding: 2px;
@@ -705,7 +705,58 @@ a:link.btn-side-by-side, a:hover.btn-side-by-side, .btn-side-by-side,  .btn-side
   font-size: 16px;
   text-shadow: 0 1px #fff;
 }
+
 .alertText i{
   color: #22789c;
 
+}
+.dataTables_wrapper .dataTables_filter input {
+    margin-left: 0.5em;
+    border: 1px solid #dfdfdf;
+    border-radius: 2px;
+    padding: 5px; 
+    background-color: #fff;
+}
+
+table.dataTable thead th, table.dataTable thead td {
+  padding-left: 10px !important;
+  border-bottom: 0;
+  /*font-weight: normal;*/
+  background-color: #fff;
+  padding-top: 15px;
+  padding-bottom: 15px;
+  font-family: arial;
+}
+
+tr:nth-child(even) {background: #fff !important}
+tr:nth-child(odd) {background: #f5f5f5 !important}
+
+table.dataTable tfoot th, table.dataTable tfoot td {
+  padding-left: 10px !important;
+  border-top: 0;
+  background: #eee;
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
+
+table.dataTable tbody th, table.dataTable tbody td {
+    line-height: 1.8Rem;
+    padding-top: 0px;
+    padding-bottom: 0px;
+}
+
+table.dataTable {
+  border: 1px solid #f5f5f5 !important;
+}
+@media print {
+
+    .navbar {
+      display: none !important;
+    }
+    .sidebar{
+      display: none !important;
+    }
+    nav {
+      display: none !important;
+    }
 }

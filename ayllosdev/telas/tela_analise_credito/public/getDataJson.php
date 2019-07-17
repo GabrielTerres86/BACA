@@ -9,6 +9,7 @@
 */
 
     header("Content-type: text/html; charset=utf-8");
+
     ini_set('session.cookie_domain', '.cecred.coop.br' );
     session_start();
 

@@ -685,6 +685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                     31/07/2018 - Inclusão do campo Prazo p/ transferência de valor da conta transitória para a CC	
                                  PRJ 450 - Diego Simas (AMcom)               
 					          14/09/2018 - Adicionado parametro valor max de estorno para desconto de titulo - Cássia de Oliveira (GFT)
+                    02/07/2019 - Inclusão da validação do parâmetro QTD_DIAS_EXIBE_PROP_IB (P438 - Douglas Pagel / AMcom)
         
     ..............................................................................*/
 
@@ -736,6 +737,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
     vr_vlmaxdst NUMBER  :=0;  
     vr_inpreapv VARCHAR2(1); -- PJ470 - Rubens Lima (Mouts)
     vr_vlmincnt NUMBER  :=0; -- PJ470 - Rubens Lima (Mouts)      
+
+    --P438
+    vr_prmdiasp INTEGER :=0;
+    vr_dsprmdiasp VARCHAR(4000);
 
     -- Cursor generico de calendario
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -824,6 +829,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                   
       vr_avtperda := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,132,1)),0); -- PJ438 - Paulo (Mouts) Sprint 5
       vr_vlperavt := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,134,12)),0); -- PJ438 - Paulo (Mouts) Sprint 5          
+    END IF;
+
+    --Buscar quantidade de dias máximo para expiração da proposta
+    BEGIN
+      vr_dsprmdiasp := GENE0001.fn_param_sistema('CRED',vr_cdcooper,'QTD_DIAS_EXIBE_PROP_IB');
+      vr_prmdiasp := gene0002.fn_char_para_number(vr_dsprmdiasp);
+    EXCEPTION
+      WHEN OTHERS THEN
+      vr_cdcritic := 0;
+      vr_dscritic:= 'Erro ao ler o parametro QTD_DIAS_EXIBE_PROP_IB.';
+      --Levantar Excecao
+      RAISE vr_exc_saida;  
+    END;
+       
+    IF vr_dsprmdiasp IS NOT NULL THEN
+      -- Valida Operação com garantia de Automóvel
+      IF pr_qtdibaut > 0 
+        AND pr_qtdibaut > vr_prmdiasp THEN
+        pr_nmdcampo := 'qtdibaut';
+        vr_cdcritic := 0;
+        vr_dscritic:= 'Prazo de validade da análise para efetivação de Operação com garantia de Automóvel '||
+                      'deve ser menor que '|| vr_prmdiasp || ' dias.';
+        --Levantar Excecao
+        RAISE vr_exc_saida; 
+      END IF;
+        
+      -- Valida Operação com garantia de Aplicação
+      IF pr_qtdibapl > 0 
+        AND pr_qtdibapl > vr_prmdiasp THEN
+        pr_nmdcampo := 'qtdibapl';
+        vr_cdcritic := 0;
+        vr_dscritic:= 'Prazo de validade da análise para efetivação de Operação com garantia de Aplicação '||
+                      'deve ser menor que '|| vr_prmdiasp || ' dias.';
+        --Levantar Excecao
+        RAISE vr_exc_saida; 
+      END IF;
+        
+      -- Valida Operação sem garantia
+      IF pr_qtdibsem > 0 
+        AND pr_qtdibsem > vr_prmdiasp THEN
+        pr_nmdcampo := 'qtdibsem';
+        vr_cdcritic := 0;
+        vr_dscritic:= 'Prazo de validade da análise para efetivação de Operação sem garantia '||
+                      'deve ser menor que '|| vr_prmdiasp || ' dias.';
+        --Levantar Excecao
+        RAISE vr_exc_saida; 
+      END IF;
+        
+    ELSE
+    --Montar mensagem de erro
+      vr_cdcritic := 0;
+      vr_dscritic:= 'Parâmetro QTD_DIAS_EXIBE_PROP_IB não cadastrado.';
+      --Levantar Excecao
+      RAISE vr_exc_saida;
     END IF;
     
     -- Buscar valor max para desc de titulo

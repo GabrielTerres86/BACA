@@ -172,12 +172,12 @@
 		sbsBottomContent += '  </div>';
 		sbsBottomContent += '</div>';
 		sbsBottomContent += '<div class="row">';
-		sbsBottomContent += '  <div class="col-md-5 align-self-center text-center side-by-side-left"><i class="text-gray"><small>Selecione mais um bloco</small></i>';
+		sbsBottomContent += '  <div class="col-md-5 align-self-center text-center side-by-side-left"><i class="text-gray"><small>Selecione mais uma categoria</small></i>';
 		sbsBottomContent += '  </div>';
 		sbsBottomContent += '  <div class="col-md-2 align-self-center text-center">';
 		sbsBottomContent += '	<button class="btn btn-sbs-show" choice="a">Exibir &nbsp; <i class="fas fa-angle-up"></i></button>';
 		sbsBottomContent += '  </div>';
-		sbsBottomContent += '  <div class="col-md-5 align-self-center text-center side-by-side-right"><i class="text-gray"><small>Selecione mais um bloco</small></i>';
+		sbsBottomContent += '  <div class="col-md-5 align-self-center text-center side-by-side-right"><i class="text-gray"><small>Selecione mais uma categoria</small></i>';
 		sbsBottomContent += '  </div>';
 		sbsBottomContent += '</div>';
 		sbsBottomContent += '</div>';

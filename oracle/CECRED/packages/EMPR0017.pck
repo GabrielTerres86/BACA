@@ -356,7 +356,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   vg_xml_retorno xmltype;
   vtexto VARCHAR2(32000);
   vr_exc_erro EXCEPTION;
-
+  vr_rowid  ROWID;
+  --
   --> Funcao para formatar o numero em decimal conforme padrao da SOA
   FUNCTION fn_decimal_soa (pr_numero IN number) RETURN VARCHAR2 is
   BEGIN
@@ -369,6 +370,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     RETURN to_char(pr_data,'DD/MM/RRRR');
   END fn_Data_soa;
   --
+  -- Verifica se a linha de crédito está vinculada a um subsegmento com garantia
+  FUNCTION fn_tem_garantia(pr_cdcooper crapcop.cdcooper%TYPE, pr_cdlcremp craplcr.cdlcremp%TYPE) RETURN BOOLEAN IS
+    vr_count NUMBER;
+  BEGIN
+    SELECT COUNT(*)
+      INTO vr_count
+      FROM tbepr_subsegmento sub
+     WHERE sub.cdcooper = pr_cdcooper
+       AND sub.cdlinha_credito = pr_cdlcremp
+       AND sub.flggarantia = 1;
+    RETURN ( vr_count > 0 );
+  END fn_tem_garantia;
   --/   
   PROCEDURE pc_valida_horario_ib(pr_cdcooper IN crapcop.cdcooper%TYPE,
                                  pr_des_reto OUT VARCHAR,
@@ -1541,7 +1554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      -- Se não tem simulação vinculada a proposta ou nao é origem 3 (IB), não permite gerar o CCB
      IF NOT fn_simulacao_vinculada(rw_crawepr.cdcooper,rw_crawepr.nrdconta,nvl(rw_crawepr.nrsimula,0))
        OR rw_crawepr.cdorigem <> 3 THEN
-        vr_dscritic := 'Via do contrato disponível apenas para empréstimo contratado pela conta online!';
+        vr_dscritic := 'Impressão não disponível para este tipo de contrato!';
        RAISE vr_exc_erro;
      END IF;
 
@@ -3157,10 +3170,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   --
   --
   BEGIN
+    
+  OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+  FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+  -- Se não encontrar
+  IF BTCH0001.cr_crapdat%NOTFOUND THEN
+    -- Montar mensagem de critica
+    vr_cdcritic:= 1;
+    CLOSE BTCH0001.cr_crapdat;
+    RAISE vr_exc_erro;
+  ELSE
+    -- Apenas fechar o cursor
+    CLOSE BTCH0001.cr_crapdat;
+  END IF;
   --
+  --/ aqui setamos as variaveis globais para filtro de data dentro da empr0018   
+  vr_dtmvtolt_ini := rw_crapdat.dtmvtolt - nvl(GENE0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_DIAS_EXIBE_PROP_IB'), 0);
+  vr_dtmvtolt_fim := rw_crapdat.dtmvtolt;
+  --/ Pegando a data inicial para filtro, limitando pelos dias parametrizados
+  vr_dtmvtolt_ini := GREATEST(vr_dtmvtolt_ini,pr_dtmvtolt_ini);
+  --/ Pegando a data final para filtro, limitando pelos dias parametrizados
+  vr_dtmvtolt_fim := GREATEST(vr_dtmvtolt_ini,pr_dtmvtolt_fim);   
+  --/
+  empr0018.pc_set_parametros(vr_dtmvtolt_ini,vr_dtmvtolt_fim);
   --
-  empr0018.pc_set_parametros(pr_dtmvtolt_ini,pr_dtmvtolt_fim);
-  --
+  --/
+  gene0001.pc_informa_acesso(pr_module => 'EMPR0017'
+                            ,pr_action => 'empr0018.pc_busca_simulacoes');
+  --/
   empr0018.pc_busca_simulacoes(pr_cdcooper => pr_cdcooper,
                                pr_cdagenci => pr_cdagenci,
                                pr_nrdcaixa => pr_nrdcaixa,
@@ -3679,7 +3716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
           nrctrliq##8,
           nrctrliq##9,
           nrctrliq##10,
-          dtmvtolt,
+          wepr.dtmvtolt,
           flgimppr,
           txminima,
           txbaspre,
@@ -3709,7 +3746,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
           dsnivris,
           dsnivcal,
           tpdescto,
-          cdcooper,
+          wepr.cdcooper,
           dtaprova,
           insitapr,
           cdopeapr,
@@ -3724,7 +3761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
           txmensal,
           dtlibera,
           flgokgrv,
-          progress_recid,
+          wepr.progress_recid,
           qttolatr,
           cdorigem,
           nrconbir,
@@ -3766,6 +3803,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
           dtanulac,
           dtulteml
      FROM crawepr wepr
+         ,crapdat dat
     WHERE wepr.cdcooper = pr_cdcooper
       AND wepr.nrdconta = pr_nrdconta
       AND wepr.dtmvtolt BETWEEN pr_dtmvtolt_ini AND pr_dtmvtolt_fim
@@ -3785,12 +3823,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
             ( pr_situacao IS NULL )
           )
       AND nvl(wepr.nrsimula,0) > 0
-      AND wepr.cdorigem = pr_cdorigem
+      AND wepr.cdorigem = pr_cdorigem 
+      AND wepr.dtrefatu >= ( dat.dtmvtolt - nvl(gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_DIAS_EXIBE_PROP_IB'), 0) )
       AND NOT EXISTS ( SELECT 1
                          FROM crapepr epr
                         WHERE epr.cdcooper = wepr.cdcooper
                           AND epr.nrdconta = wepr.nrdconta
                           AND epr.nrctremp = wepr.nrctremp )
+      AND wepr.cdcooper = dat.cdcooper
       ORDER BY wepr.nrctremp;
   rw_crawepr  cr_crawepr%ROWTYPE;
   --
@@ -4029,7 +4069,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   --
   ---------------------------------------------------------------------------------------------------------------
   --
-  --  Programa : pc_gera_demonst_contrato
+  --  Programa : pc_consulta_proposta
   --  Sistema  : CREDITO
   --  Sigla    : EMPR
   --  Autor    : Rafael R. Santos (AmCom) Projeto P438 - Simulação e Contratação
@@ -4039,6 +4079,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   --
   -- Frequencia: Sempre que for chamada
   -- Objetivo  : Rotina focando na busca dos dados da proposta realizada
+  --
+  -- Alterações: 26/06/2019 - ( Rafael Rocha Santos - p438 - Task 23000) AmCom 
+  --
+  -- Alterações: 05/07/2019 - Ajuste no retorno do valor do IOF da proposta.
+  --                          (P438 - Douglas Pagel / AMcom).
+  --
+  --             10/07/2019 - Ajuste na composição da data de validade da proposta
+  --                          (P438 - Douglas Pagel / AMcom)
+  --
   --
   ---------------------------------------------------------------------------------------------------------------
   --
@@ -4050,6 +4099,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     vr_retorno  xmltype;
     vidx        PLS_INTEGER;
     vr_dscritic VARCHAR2(1000);
+    vr_bloq     NUMBER(1);
+    --/ 
     vr_qtdibaut    INTEGER :=0;
     vr_qtdibapl    INTEGER :=0;
     vr_qtdibsem    INTEGER :=0; 
@@ -4058,102 +4109,107 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     vr_prazo_efetiva NUMBER(10);
     vr_vlemprestado NUMBER;
     vr_vlsolicitado NUMBER;
+    vr_vliofepr     NUMBER;
+    vr_vliofpri     NUMBER;
+    vr_vliofadi     NUMBER;
+     vr_vlpreclc    NUMBER;
+    vr_flgimune     pls_integer;
     --
     --
     CURSOR cr_crawepr(pr_cdcooper IN crapcop.cdcooper%TYPE -- Código da Cooperativa
                      ,pr_nrdconta IN crawepr.nrdconta%TYPE
                      ,pr_nrctremp IN crawepr.nrctremp%TYPE) IS
-     SELECT nrdconta,
-            nrctremp,
-            vlemprst,
-            qtpreemp,
-            vlpreemp,
-            cdlcremp,
-            cdfinemp,
-            qtdialib,
-            dsobserv,
-            dtmvtolt,
-            flgimppr,
-            txminima,
-            txbaspre,
-            txdiaria,
-            flgimpnp,
-            cdcomite,
-            nmchefia,
-            nrctaav1,
-            nrctaav2,
-            nmdaval1,
-            nmdaval2,
-            dscpfav1,
-            dscpfav2,
-            dtvencto,
-            cdoperad,
-            flgpagto,
-            dtdpagto,
-            qtpromis,
-            dscfcav1,
-            dscfcav2,
-            nmcjgav1,
-            nmcjgav2,
-            dsnivris,
-            dsnivcal,
-            tpdescto,
-            cdcooper,
-            dtaprova,
-            insitapr,
-            cdopeapr,
-            hraprova,
-            percetop,
-            dsoperac,
-            dtaltniv,
-            idquapro,
-            dsobscmt,
-            dtaltpro,
-            tpemprst,
-            txmensal,
-            dtlibera,
-            flgokgrv,
-            progress_recid,
-            qttolatr,
-            cdorigem,
-            nrconbir,
-            inconcje,
-            nrseqrrq,
-            nrseqpac,
-            insitest,
-            dtenvest,
-            hrenvest,
-            cdagenci,
-            hrinclus,
-            dtdscore,
-            dsdscore,
-            cdopeste,
-            flgaprvc,
-            dtenefes,
-            dtrefatu,
-            dsprotoc,
-            dtenvmot,
-            hrenvmot,
-            idcarenc,
-            dtcarenc,
-            tpatuidx,
-            cddindex,
-            txjurvar,
-            nrliquid,
-            dsnivori,
-            idfiniof,
-            idcobope,
-            idcobefe,
-            inliquid_operac_atraso,
-            vlempori,
-            vlpreori,
-            dsratori,
-            cdopealt,
-            dtexpira,
-            flgpreap,
-            flgdocdg,
-            dtanulac,
-            dtulteml,
+     SELECT epr.nrdconta,
+            epr.nrctremp,
+            epr.vlemprst,
+            epr.qtpreemp,
+            epr.vlpreemp,
+            epr.cdlcremp,
+            epr.cdfinemp,
+            epr.qtdialib,
+            epr.dsobserv,
+            epr.dtmvtolt,
+            epr.flgimppr,
+            epr.txminima,
+            epr.txbaspre,
+            epr.txdiaria,
+            epr.flgimpnp,
+            epr.cdcomite,
+            epr.nmchefia,
+            epr.nrctaav1,
+            epr.nrctaav2,
+            epr.nmdaval1,
+            epr.nmdaval2,
+            epr.dscpfav1,
+            epr.dscpfav2,
+            epr.dtvencto,
+            epr.cdoperad,
+            epr.flgpagto,
+            epr.dtdpagto,
+            epr.qtpromis,
+            epr.dscfcav1,
+            epr.dscfcav2,
+            epr.nmcjgav1,
+            epr.nmcjgav2,
+            epr.dsnivris,
+            epr.dsnivcal,
+            epr.tpdescto,
+            epr.cdcooper,
+            epr.dtaprova,
+            epr.insitapr,
+            epr.cdopeapr,
+            epr.hraprova,
+            epr.percetop,
+            epr.dsoperac,
+            epr.dtaltniv,
+            epr.idquapro,
+            epr.dsobscmt,
+            epr.dtaltpro,
+            epr.tpemprst,
+            epr.txmensal,
+            epr.dtlibera,
+            epr.flgokgrv,
+            epr.progress_recid,
+            epr.qttolatr,
+            epr.cdorigem,
+            epr.nrconbir,
+            epr.inconcje,
+            epr.nrseqrrq,
+            epr.nrseqpac,
+            epr.insitest,
+            epr.dtenvest,
+            epr.hrenvest,
+            epr.cdagenci,
+            epr.hrinclus,
+            epr.dtdscore,
+            epr.dsdscore,
+            epr.cdopeste,
+            epr.flgaprvc,
+            epr.dtenefes,
+            epr.dtrefatu,
+            epr.dsprotoc,
+            epr.dtenvmot,
+            epr.hrenvmot,
+            epr.idcarenc,
+            epr.dtcarenc,
+            epr.tpatuidx,
+            epr.cddindex,
+            epr.txjurvar,
+            epr.nrliquid,
+            epr.dsnivori,
+            epr.idfiniof,
+            epr.idcobope,
+            epr.idcobefe,
+            epr.inliquid_operac_atraso,
+            epr.vlempori,
+            epr.vlpreori,
+            epr.dsratori,
+            epr.cdopealt,
+            epr.dtexpira,
+            epr.flgpreap,
+            epr.flgdocdg,
+            epr.dtanulac,
+            epr.dtulteml,
             CASE
               WHEN epr.insitest IN (4,5)  THEN
 
@@ -4199,8 +4255,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                   'Cancelado'
 
             END situacao,
-            nrsimula
+            nrsimula,
+            ass.inpessoa
        FROM crawepr epr
+           ,crapass ass
       WHERE epr.cdcooper = pr_cdcooper
         AND epr.nrdconta = pr_nrdconta
         AND epr.nrctremp = pr_nrctremp
@@ -4209,6 +4267,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                           WHERE con.cdcooper = epr.cdcooper
                             AND con.nrdconta = epr.nrdconta
                             AND con.nrctremp = epr.nrctremp )
+        AND ass.cdcooper = epr.cdcooper
+        AND ass.nrdconta = epr.nrdconta
         ORDER BY epr.nrctremp;
     --
     rw_crawepr  cr_crawepr%ROWTYPE;
@@ -4316,11 +4376,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      vr_qtdibapl := NVL(TRIM(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,97,3))),0);  -- aplicação oriunda conta online
      vr_qtdibsem := NVL(TRIM(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,101,3))),0); -- sem garantia oriunda conta online
      --
-     -- baseando-se no maior maior prazo, conforme definição
-     vr_prazo_efetiva := GREATEST(COALESCE(vr_qtdibaut,vr_qtdibapl,vr_qtdibsem,0));
+
+     IF fn_tem_garantia(rw_crawepr.cdcooper, rw_crawepr.cdlcremp) THEN
+       vr_prazo_efetiva := vr_qtdibaut;
+     ELSE
+       vr_prazo_efetiva := vr_qtdibsem;
+     END IF;  
      
-     IF rw_crawepr.insitapr = 3 THEN
-       vr_dtvalidade := rw_crawepr.dtlibera + vr_prazo_efetiva;
+     IF rw_crawepr.insitapr = 1 THEN
+       vr_dtvalidade := rw_crawepr.dtaprova + vr_prazo_efetiva;
      ELSE
        vr_dtvalidade := NULL;
      END IF; 
@@ -4331,8 +4395,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      vr_vlsolicitado := rw_crawepr.vlemprst;
      vr_vlemprestado := rw_crawepr.vlemprst;
      
+     vr_vliofepr := 0;
+     
+     tiof0001.pc_calcula_iof_epr(pr_cdcooper => rw_crawepr.cdcooper,
+                                 pr_nrdconta => rw_crawepr.nrdconta,
+                                 pr_nrctremp => rw_crawepr.nrctremp,
+                                 pr_dtmvtolt => rw_crawepr.dtmvtolt,
+                                 pr_inpessoa => rw_crawepr.inpessoa,
+                                 pr_cdlcremp => rw_crawepr.cdlcremp,
+                                 pr_cdfinemp => rw_crawepr.cdfinemp,
+                                 pr_qtpreemp => rw_crawepr.qtpreemp,
+                                 pr_vlpreemp => rw_crawepr.vlpreemp,
+                                 pr_vlemprst => rw_crawepr.vlemprst,
+                                 pr_dtdpagto => rw_crawepr.dtdpagto,
+                                 pr_dtlibera => rw_crawepr.dtlibera,
+                                 pr_tpemprst => rw_crawepr.tpemprst,
+                                 pr_dtcarenc => rw_crawepr.dtcarenc,
+                                 pr_qtdias_carencia => 0,
+                                 pr_dscatbem => '',
+                                 pr_idfiniof => rw_crawepr.idfiniof,
+                                 pr_dsctrliq => '',
+                                 pr_vlpreclc => vr_vlpreclc,
+                                 pr_valoriof => vr_vliofepr,
+                                 pr_vliofpri => vr_vliofpri,
+                                 pr_vliofadi => vr_vliofadi,
+                                 pr_flgimune => vr_flgimune,
+                                 pr_dscritic => vr_dscritic);
+                                 
+     IF vr_dscritic IS NOT NULL THEN
+       RAISE vr_exc_erro;  
+     END IF;
+     
      IF NVL(rw_crawepr.idfiniof,0) = 1 THEN
-       vr_vlemprestado := vr_vlsolicitado + nvl(rw_crapsim.vliofepr,0) + nvl(rw_crapsim.vlrtarif,0);
+       vr_vlemprestado := vr_vlsolicitado + nvl(vr_vliofepr,0) + nvl(rw_crapsim.vlrtarif,0);
      END IF;
      
      --/
@@ -4436,7 +4531,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                   ,pr_tag_pai  => 'Proposta'
                   ,pr_posicao  => vr_contador
                   ,pr_tag_nova => 'IOF'        -- IOF (R$)
-                  ,pr_tag_cont => fn_decimal_soa(rw_crapsim.vliofepr) ---  verificar
+                  ,pr_tag_cont => fn_decimal_soa(vr_vliofepr) ---  verificar
                   ,pr_des_erro => vr_dscritic);
 
         insere_tag(pr_xml      => vr_retorno
@@ -4529,11 +4624,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     END fn_existe_proposta;
     --
     --
+    PROCEDURE pc_atualiza_proposta(pr_rw_crawepr IN cr_crawepr%ROWTYPE) IS      
+    --
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    vr_rowid ROWID;
+    vr_idprglog   tbgen_prglog.idprglog%TYPE := 0;
+    --/
+    BEGIN
+      --/  
+      rw_crapdat := fn_get_cr_crapdat(pr_cdcooper);
+      --/
+      -- ajustar a data do emprestimo para efetivar
+      empr0012.pc_crps751 (pr_cdcooper => pr_rw_crawepr.cdcooper
+                          ,pr_nrdconta => pr_rw_crawepr.nrdconta
+                          ,pr_nrctremp => pr_rw_crawepr.nrctremp
+                          ,pr_cdagenci => pr_rw_crawepr.cdagenci
+                          ,pr_cdoperad => pr_rw_crawepr.cdoperad
+                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                          ,pr_dtmvtopr => rw_crapdat.dtmvtopr
+                          ,pr_cdcritic => vr_cdcritic
+                          ,pr_dscritic => vr_dscritic);
+        -- Tratamento de erro de retorno
+        IF vr_dscritic IS NOT NULL THEN
+          -- Gera Log
+          cecred.pc_log_programa(pr_dstiplog      => 'E', 
+                                 pr_cdprograma    => 'PC_CONSULTA_PROPOSTA',
+                                 pr_cdcooper      => pr_cdcooper, 
+                                 pr_tpexecucao    => 0, -- Outros
+                                 pr_tpocorrencia  => 1, -- erro tratado
+                                 pr_cdcriticidade => 1, -- media
+                                 pr_cdmensagem    => nvl(vr_cdcritic,0),
+                                 pr_dsmensagem    => vr_dscritic,
+                                 pr_flgsucesso    => 0,
+                                 pr_idprglog      => vr_idprglog);
+        END IF;
+
+       COMMIT; 
+       
+    END pc_atualiza_proposta;
+    --/    
     BEGIN
 
     --/ busca dados da proposta
     pc_busca_proposta();
-
+    --
     --/ critica caso nao encontre dados da proposta
     IF NOT( fn_existe_proposta ) THEN
 
@@ -4541,7 +4675,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        RAISE vr_exc_erro;
 
     END IF;
-
+    --
+    --/
+    IF fn_get_cr_crapdat(pr_cdcooper).dtmvtolt > rw_crawepr.dtlibera
+      AND rw_crawepr.insitapr = 1 AND rw_crawepr.insitest = 3 THEN
+      --/ p438 - Task 23000
+      pc_atualiza_proposta(rw_crawepr);
+      pc_busca_proposta();      
+    END IF;
+    --
     --/ busca dados da simulacao
     pc_busca_simulacao(rw_crawepr.nrsimula);
 
@@ -4561,10 +4703,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                                       '<Root><Erro>' ||vr_dscritic||
                                       '</Erro></Root>');
    WHEN OTHERS THEN
-     --
+     --/
+     CECRED.PC_INTERNAL_EXCEPTION(pr_cdcooper => pr_cdcooper);
+     vr_cdcritic := 9999;-- Erro nao tratado
+     vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'pc_consulta_proposta'||'.'||sqlerrm||'.';
+     --/ Log de erro de execucao
+     GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                         ,pr_cdoperad => pr_cdoperad
+                         ,pr_dscritic => vr_dscritic
+                         ,pr_dsorigem => gene0001.vr_vet_des_origens(nvl(rw_crawepr.cdorigem,3))
+                         ,pr_dstransa => 'PC_CONSULTA_PROPOSTA'
+                         ,pr_dttransa => TRUNC(SYSDATE)
+                         ,pr_flgtrans => 1
+                         ,pr_hrtransa => GENE0002.fn_busca_time
+                         ,pr_idseqttl => 0
+                         ,pr_nmdatela => 'AUTOEMP'
+                         ,pr_nrdconta => rw_crawepr.nrdconta
+                         ,pr_nrdrowid => vr_rowid);
+     --/
      pr_des_reto := 'NOK';
      pr_retorno := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                      '<Root><Erro>' ||'ERRO NAO TRATADO NA pc_consulta_proposta: '||SQLERRM||
+                                      '<Root><Erro>' ||GENE0001.fn_busca_critica(1224)||
                                       '</Erro></Root>');
   END pc_consulta_proposta;
 
@@ -5942,7 +6101,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
             epr.dtlibera,
             epr.dtdpagto,
             epr.insitapr,
-            epr.insitest
+            epr.insitest,
+            epr.insitdig,
+            epr.dtaprova,
+            epr.cdlcremp
        FROM crawepr epr
       WHERE cdcooper = pr_cdcooper
         AND nrdconta = pr_nrdconta
@@ -6018,22 +6180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
       -- Apenas fechar o cursor
       CLOSE btch0001.cr_crapdat;
     END IF;
-    --
-    --/
-    --/
-    vr_qtdibaut := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,93,3)),0);  -- automóvel
-    vr_qtdibapl := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,97,3)),0);  -- aplicação oriunda conta online
-    vr_qtdibsem := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,101,3)),0); -- sem garantia oriunda conta online
-    --
-    --
-    vr_prazo_efetiva := GREATEST(vr_qtdibaut,vr_qtdibapl,vr_qtdibsem);
-    --
-    vr_data_inicial := rw_crapdat.dtmvtolt - vr_prazo_efetiva;
-    --
-    vr_data_fim     := rw_crapdat.dtmvtolt;
-    --
-    --
-    --/
+    
     OPEN cr_crawepr(pr_cdcooper
                    ,pr_nrdconta
                    ,pr_nrctremp);
@@ -6043,13 +6190,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
         RAISE vr_exc_saida;
       END IF;
     CLOSE cr_crawepr;
-    --/
+
     IF ( rw_crawepr.insitapr <> 1 OR rw_crawepr.insitest <> 3 ) THEN
        vr_dscritic := 'Situação da proposta não permite efetivação!';
        RAISE vr_exc_saida;
     END IF;    
-    --
-    --
+
     IF trunc(rw_crawepr.dtdpagto) <= trunc(rw_crapdat.dtmvtolt)
       THEN
         vr_dscritic := 'Sua proposta está com data de primeiro pagamento para '||fn_Data_soa(rw_crawepr.dtdpagto)||', por este motivo você deve realizar uma nova simulação.';
@@ -7498,8 +7644,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     BEGIN
       --
       --/ aqui ele busca o e-mail do PA, caso nao encontre no cadastro, busca o que estiver parametrizado
-      vr_email_dest := nvl(fn_get_email_pa(pr_cdcooper,pr_nrdconta),
-                           gene0001.fn_param_sistema('CRED',pr_cdcooper,'ERRO_EMAIL_ESTEIRA'));
+      vr_email_dest := nvl(gene0001.fn_param_sistema('CRED',pr_cdcooper,'ERRO_EMAIL_ESTEIRA')
+                          ,fn_get_email_pa(pr_cdcooper,pr_nrdconta));
       --
       -- Gravar conteudo do email, controle com substr para não estourar campo texto
       vr_conteudo := substr('Ocorreu erro no envio da proposta'||chr(32)||trim(gene0002.fn_mask_contrato(pr_nrcontrato => pr_nrctremp))||' da conta'||chr(32)||trim(gene0002.fn_mask_conta(pr_nrdconta => pr_nrdconta))||', originada na conta online.'

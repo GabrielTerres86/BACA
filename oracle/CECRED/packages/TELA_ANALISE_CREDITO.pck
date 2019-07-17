@@ -393,6 +393,20 @@ PROCEDURE pc_consulta_bordero_chq(pr_cdcooper IN crapass.cdcooper%TYPE       -->
                                 ,pr_dscritic OUT VARCHAR2                     --> Descricao da critica                                
                                 ,pr_dsxmlret IN OUT CLOB);
 
+  PROCEDURE pc_insere_analise_cred_acessos(pr_cdcooper        IN NUMBER,
+                                           pr_nrdconta        IN NUMBER,
+                                           pr_cdoperador      IN varchar2,
+                                           pr_nrcontrato      IN NUMBER,
+                                           pr_tpproduto       IN NUMBER,
+                                           pr_dhinicio_acesso IN VARCHAR2,
+                                           pr_dhfim_acesso    IN VARCHAR2,
+                                           pr_idanalise_contrato_acesso IN NUMBER,
+                                           pr_xmllog    IN VARCHAR2,           
+                                           pr_cdcritic OUT PLS_INTEGER,        
+                                           pr_dscritic OUT VARCHAR2,           
+                                           pr_retxml    IN OUT NOCOPY xmltype, 
+                                           pr_nmdcampo OUT VARCHAR2,           
+                                           pr_des_erro OUT VARCHAR2);
 end TELA_ANALISE_CREDITO;
 /
 create or replace package body cecred.TELA_ANALISE_CREDITO is
@@ -6127,6 +6141,12 @@ PROCEDURE pc_consulta_operacoes(pr_cdcooper  IN crawepr.cdcooper%TYPE       --> 
                                                     to_char(tot_vlpreemp,'999g999g990d00') else '-' end; -- Valor Prestações
               vr_tab_tabela(vr_index).coluna6 := case when tot_qtprecal > 0 then
                                                     to_char(tot_qtprecal,'fm990d0000') else '-' end; -- Atraso/Parcelas
+              vr_tab_tabela(vr_index).coluna7 := '-';
+              vr_tab_tabela(vr_index).coluna8 := '-';
+              vr_tab_tabela(vr_index).coluna9 := '-';
+              vr_tab_tabela(vr_index).coluna10 := '-';
+              vr_tab_tabela(vr_index).coluna11 := '-';
+              vr_tab_tabela(vr_index).coluna12 := '-';
               
           END IF;
           
@@ -13131,6 +13151,115 @@ procedure pc_busca_media_titulo(pr_cdcooper IN crapass.cdcooper%TYPE
     pr_cdcritic := 0;
     pr_dscritic := substr('Erro pc_consulta_lanc_futuro: '||sqlerrm,1,250);      
    end pc_consulta_lanc_futuro;    
+   
+  PROCEDURE pc_insere_analise_cred_acessos(pr_cdcooper        IN NUMBER,
+                                           pr_nrdconta        IN NUMBER,
+                                           pr_cdoperador      IN varchar2,
+                                           pr_nrcontrato      IN NUMBER,
+                                           pr_tpproduto       IN NUMBER,
+                                           pr_dhinicio_acesso IN VARCHAR2,
+                                           pr_dhfim_acesso    IN VARCHAR2,
+                                           pr_idanalise_contrato_acesso IN NUMBER,
+                                           pr_xmllog    IN VARCHAR2,           
+                                           pr_cdcritic OUT PLS_INTEGER,        
+                                           pr_dscritic OUT VARCHAR2,           
+                                           pr_retxml    IN OUT NOCOPY xmltype, 
+                                           pr_nmdcampo OUT VARCHAR2,           
+                                           pr_des_erro OUT VARCHAR2) IS       
+    /* ..........................................................................
+    
+     Autor   : Rafael Ferreira
+     Data    : 14/06/2019
+    
+     Dados referentes ao programa:
+    
+     Objetivo  : Inserir registros na tabela de Controle de acessos da Tela Única. Pj 438.
+                 Se o PHP não passar o parametro pr_idanalise_contrato_acesso entende-se que é 
+                 um registro novo, nesse caso faz insert e retorna neste mesmo parametro o id de 
+                 acesso gerado.
+                 Se o parametro pr_idanalise_contrato_acesso tiver valor na chamada da procedure,
+                 entende-se que é um registro existente, então só é feito update na hora final de acesso.
+    
+     Alteracoes: 
+           
+    ..........................................................................*/
+
+    v_idanalise_contrato cecred.tbgen_analise_credito.idanalise_contrato%TYPE;
+    v_idanalise_contrato_acesso cecred.tbgen_analise_credito.idanalise_contrato%TYPE;
+
+    exp_contrato_nao_encontrado EXCEPTION;
+  BEGIN
+
+    -- Busca o idanalise_contrato
+    BEGIN
+      SELECT MAX(cred.idanalise_contrato)
+        INTO v_idanalise_contrato
+        FROM cecred.tbgen_analise_credito cred
+       WHERE cred.cdcooper = pr_cdcooper
+         AND cred.nrdconta = pr_nrdconta
+         AND cred.nrcontrato = pr_nrcontrato
+         AND cred.tpproduto = pr_tpproduto;
+    EXCEPTION
+      WHEN others THEN
+        dbms_output.put_line(SQLERRM);
+        RAISE exp_contrato_nao_encontrado;
+    END;
+
+    IF pr_idanalise_contrato_acesso IS NOT NULL THEN
+    
+      BEGIN
+        UPDATE CECRED.tbgen_analise_credito_acessos
+           SET DHFIM_ACESSO = to_date(pr_dhfim_acesso, 'DD/MM/YYYY HH24:mi:ss')
+         WHERE idanalise_contrato_acesso = pr_idanalise_contrato_acesso;
+         
+         v_idanalise_contrato_acesso := pr_idanalise_contrato_acesso;
+      EXCEPTION
+        WHEN OTHERS THEN
+          dbms_output.put_line(SQLERRM);
+      END;
+    
+    ELSE
+    
+      BEGIN
+        INSERT INTO CECRED.tbgen_analise_credito_acessos
+          (IDANALISE_CONTRATO, CDCOOPER, CDOPERAD, DHINICIO_ACESSO, DHFIM_ACESSO)
+        VALUES
+          (v_idanalise_contrato, pr_cdcooper, pr_cdoperador, to_date(pr_dhinicio_acesso,'DD/MM/YYYY HH24:mi:ss'), to_date(pr_dhfim_acesso, 'DD/MM/YYYY HH24:mi:ss'))
+        RETURNING idanalise_contrato_acesso INTO v_idanalise_contrato_acesso;
+      
+      EXCEPTION
+        WHEN OTHERS THEN
+          dbms_output.put_line(SQLERRM);
+          RAISE exp_contrato_nao_encontrado;
+      END;
+    
+    END IF;
+    
+    commit;
+    
+    
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'idanalise_contrato_acesso',pr_tag_cont => v_idanalise_contrato_acesso,pr_des_erro => vr_dscritic); 
+    
+    /*Exception Geral*/
+  EXCEPTION
+    WHEN exp_contrato_nao_encontrado THEN
+      pr_dscritic := 'Erro Contrato Não encontrado na TELA_ANALISE_CREDITO.pc_insere_analise_cred_acessos : ' || SQLERRM;
+      
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      --cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper_principal, pr_compleme => vr_parametros_principal);
+      WHEN OTHERS THEN
+
+        --pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na TELA_ANALISE_CREDITO.pc_insere_analise_cred_acessos : ' || SQLERRM;
+
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    
+  END pc_insere_analise_cred_acessos;
    
     
 PROCEDURE pc_listar_titulos_resumo(pr_cdcooper          in crapcop.cdcooper%type   --> Cooperativa conectada

@@ -611,7 +611,7 @@ function generateBloco($vetor = array(), $modo = 'screen') {
                 // caixa azul para informações
                 $bloco .= '<p class="title-string">';
                 $bloco .= ' <div class="tag-personalizada tag-informacao">';
-                $bloco .= '     <p><i class="fas fa-info-circle"></i> &nbsp;' . verificaTexto($nome)  . ' <span class="upper">' . strtoupper(verificaTexto($valor))  . '</span> </p>';
+                $bloco .= '     <p><i class="fas fa-info-circle"></i> &nbsp;' . verificaTexto($nome)  . ' <span class="upper">' . verificaTexto($valor) . '</span> </p>';
                 $bloco .= ' </div>';
                 $bloco .= '</p>';
 
@@ -621,7 +621,7 @@ function generateBloco($vetor = array(), $modo = 'screen') {
                 // caixa amarela para avisos
                 $bloco .= '<p class="title-string">';
                 $bloco .= ' <div class="tag-personalizada tag-atencao">';
-                $bloco .= '     <p><i class="fas fa-exclamation-circle"></i> &nbsp;' . verificaTexto($nome)  . ' <span class="upper">' . strtoupper(verificaTexto($valor))  . '</span> </p>';
+                $bloco .= '     <p><i class="fas fa-exclamation-circle"></i> &nbsp;' . verificaTexto($nome)  . ' <span class="upper">' . verificaTexto($valor) . '</span> </p>';
                 $bloco .= ' </div>';
                 $bloco .= '</p>';
 
@@ -737,12 +737,12 @@ function generateTabela($vetor = array(), $modo = 'screen') {
                 // quando gera HTML para PDF
                 if ($modo == 'pdf') {
 
-                    $table .= '<table class="tabela-pdf" cellspacing="0" cellpadding="3">';
+                    $table .= '<table class="tabela-pdf display" cellspacing="0" cellpadding="3">';
                     
                 // quando gera HTML para tela
                 } else {
 
-                    $table .= '<table class="table table-striped table-dark table-sm table-bordered table-hover table-responsive-sm">';
+                    $table .= '<table class="table table-striped table-dark table-sm table-bordered table-hover table-responsive-sm example">';
 
                 }
                 
@@ -752,7 +752,8 @@ function generateTabela($vetor = array(), $modo = 'screen') {
                     // cores alternadas da tabela
                     $cont = 1;
                     $zebra = 1;
-                    
+                    $ativaTfoot = 0;
+                    $ativaThead = 0;
 
                         // percorre vetor
                         foreach ($linhas as $linha) {
@@ -774,9 +775,6 @@ function generateTabela($vetor = array(), $modo = 'screen') {
                                     $zebra = 1;
                                 }
 
-                            // quando gera HTML para PDF
-                            } else {
-                                $table .= '<tr '. ($cont == 1 ? "class=\"primeira-linha\"" : "class=\"outras-linhas\""). '>';
                             }
 
                             // percorre vetor de dados e escreve na tela
@@ -794,19 +792,59 @@ function generateTabela($vetor = array(), $modo = 'screen') {
                                             // if verifica array coluna
                                             if (is_array($coluna)) {
 
+                                            // abre coluna
+                                            if ($modo != 'pdf') {
+
+                                                if ($cont === 1) {
+                                                    $table .= '<thead>';
+                                                    $table .= '<tr '. ($cont == 1 ? "class=\"primeira-linha\"" : "class=\"outras-linhas\""). '>';
+                                                    $ativaThead = 1;
+                                                } else {
+
+                                                    if ($coluna[0] === '<b>TOTAL</b>') {
+                                                        $table .= '<tfoot>';
+                                                        $ativaTfoot = 1;
+                                                    } else {
+                                                        $ativaTfoot = 0;
+                                                    }
+
+                                                    $table .= '<tr '. ($cont == 1 ? "class=\"primeira-linha\"" : "class=\"outras-linhas\""). '>';
+                                                    $ativaThead = 0;
+                                                }
+                                            }
+
+
+                                            // percorre celulas (td)
                                                 foreach ($coluna as $conteudo) {
 
-                                                    // conferir se existe dado
-                                                    $table .= '<td>';
-                                                    $table .= verificaTexto($conteudo);
-                                                    $table .= '</td>';
-
+                                                if (($ativaTfoot === 1) || ($ativaThead === 1)) {
+                                                    $table .= '<th>' . verificaTexto($conteudo) . '</th>';
+                                                } else {
+                                                    $table .= '<td>' . verificaTexto($conteudo) . '</td>';
                                                 }
+
+                                                    // conferir se existe dado
+                                                // $table .= '<td>' . verificaTexto($conteudo) . '</td>';
+
+                                            }
+
+
+                                            // fecha coluna
+                                            if ($cont === 1) {
+                                                $table .= '</tr>';
+                                                $table .= '</thead>';
+                                            } else {
+                                                $table .= '</tr>';
+                                                if ($coluna[0] === '<b>TOTAL</b>') {
+                                                    $table .= '</tfoot>';
+                                                }
+                                            }
+
 
                                             // else verifica array coluna
                                             } else {
 
-                                                $table .='<tr><td>'.verificaTexto($coluna).'</td></tr>';
+                                                // $table .='<tr><td>'.verificaTexto($coluna).'</td></tr>';
 
                                             // fim verifica array coluna
                                             }
@@ -816,7 +854,7 @@ function generateTabela($vetor = array(), $modo = 'screen') {
                                     // else verifica array colunas
                                     } else {
 
-                                        $table .='<tr><td>'.verificaTexto($colunas).'</td></tr>';
+                                    // $table .='<tr><td>'.verificaTexto($colunas).'</td></tr>';
 
                                     // fim verifica array colunas
                                     }
@@ -825,17 +863,15 @@ function generateTabela($vetor = array(), $modo = 'screen') {
                             // else verifica array linha
                             } else {
 
-                                $table .='<tr><td>'.verificaTexto($linha).'</td></tr>';
+                            // $table .='<tr><td>'.verificaTexto($linha).'</td></tr>';
 
                             }// fim verifica array linha
 
                             
-                            $table .= '</tr>';
 
                             $cont++;
                         }
                 }
-
 
                 $table .= '</table>';
             }

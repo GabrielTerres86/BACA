@@ -199,18 +199,24 @@ $(document).ready(function(){
 			$('[tipo="proponente"]').attr("ativo", "sim");
 			$('[tipo="proposta"]').attr("ativo", "sim");
 			
-			// bloco para gerar PDF
-			// $('#clone-gerar-pdf').html(gera_pdf);
-			// $('div','#clone-gerar-pdf').show();
-
-			for (var i = persona.length - 1; i >= 0; i--) {
-				console.log('.persona_'+persona[i]);
-				//$('.persona_'+persona[i],'#clone-gerar-pdf').show();
-			}
-
 			/* 
 			*  BACKDROP
 			*/
+			
+			$("table").DataTable({
+						        	"paging":   false,
+						        	"info":     false,
+						        	"order": [],
+						        	language: {
+								        search: "Filtrar: ",
+								        "sZeroRecords": "Nenhum registro encontrado"
+								    },
+									fixedHeader: { 
+								      header: true, 
+								      footer: true 
+								    }								    
+
+						        }) ;
 			
 			loading(false);
 	    },
