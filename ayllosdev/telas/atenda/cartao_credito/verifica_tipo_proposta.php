@@ -45,8 +45,8 @@ $xmlObject = getObjectXML($xmlResult);
 
 $xmlDados = $xmlObject->roottag->tags[0];
 
-if (strtoupper($xmlDados->tags[0]->name) == 'ERRO') {
-    $msgErro = $xmlDados->tags[0]->tags[0]->tags[4]->cdata;
+if (strtoupper($xmlDados->name) == 'ERRO') {
+    $msgErro = $xmlDados->tags[0]->tags[4]->cdata;
     if ($msgErro == "") {
         $msgErro = $xmlDados->tags[0]->cdata;
     }
@@ -55,5 +55,11 @@ if (strtoupper($xmlDados->tags[0]->name) == 'ERRO') {
     
 }else{
     $tipoProposta = getByTagName($xmlDados, "TipoProposta");
-    echo json_encode(array('tipoProposta' => $tipoProposta));
+    if ($tipoProposta == 1) {
+        echo "globalesteira = true; alterarCartaoProposta();";
+    } else if ($tipoProposta == 2) {
+        echo "alterarLimiteProposta();";
+    } else {
+        showError("error", "Edicao de proposta nao permitida.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
+    }
 }

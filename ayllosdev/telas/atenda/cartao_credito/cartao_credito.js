@@ -7034,7 +7034,7 @@ function opcaoAlterarProposta() {
         return false;
     }
     $.ajax({
-            dataType: "json",
+            dataType: "html",
             type: "POST",
             url: UrlSite + "telas/atenda/cartao_credito/verifica_tipo_proposta.php",
             data: {
@@ -7050,14 +7050,7 @@ function opcaoAlterarProposta() {
             success: function (response) {
                 hideMsgAguardo();                
                 blockBackground(parseInt($("#divRotina").css("z-index")));
-                if (response.tipoProposta == 0) {
-                    showError("error", "Edi&ccedil;&atilde;o de proposta n&atilde;o permitida, somente para situa&ccedil;&atilde;o em estudo.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
-                } else if (response.tipoProposta == 1) {
-                    globalesteira = true; // tratar acionamento esteira
-                    alterarCartaoProposta(); // CARTAO
-                } else if (response.tipoProposta == 2) {
-                    alterarLimiteProposta();
-                }
+                eval(response);
             }
     });
 }
