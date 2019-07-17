@@ -1423,6 +1423,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
                   10/07/2019 - Tratar INC0019779 relacionado a duplicidade do número de controle IF (Diego).
 
+                  16/07/2019 - Tratar para que deposito bacenjud não execute rotina de saldo.
+                               Jose Dill (Mouts). INC0020549 
+
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
@@ -2370,6 +2373,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     END IF;
     CLOSE cr_craplcm;
 
+    -- Se for BacenJud nao deve validar saldo INC0020549  
+    IF NVL(pr_tpctafav,0) <> 9 THEN 
     /*PRB0041934 - Incluída a chamada da rotina que verifica saldo antes da inclusao do lançamento, devido
       ao problema do sistema permitir a inclusão de dois TEDs de uma mesma conta ao mesmo tempo, sendo que a 
       soma dos valores de TEDs deveria estourar o saldo, o que nao estava ocorrendo em algumas situações.  */
@@ -2428,6 +2433,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       END IF;
     END IF;         
     /*FIM PRB0041934*/
+    END IF;   
+    
+    
 
     vr_hrtransa := gene0002.fn_busca_time;
     BEGIN
