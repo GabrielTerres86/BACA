@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --  Sistema  : Rotinas genericas referente a consultas de saldos em geral de aplicacoes
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Julho - 2014.                   Ultima atualizacao: 04/12/2018
+  --  Data     : Julho - 2014.                   Ultima atualizacao: 03/07/2019
   --
   -- Dados referentes ao programa:
   --
@@ -63,6 +63,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --
   --             16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
   --                   Heitor (Mouts)
+  --
+  --             03/07/2019 - P450 - Adequacao rotina Centralizadora LANC0001 (Marcelo/AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos
