@@ -72,7 +72,9 @@
  *                    Avalistas, Interveniente e Dados da Alienação(frmHipoteca) - PRJ 438. (Mateus Z / Mouts)
  * 050: [10/05/2019] P438 Bloqueio da impressao do contrato para linhas 7080 e 7081. (Douglas Pagel / AMcom)
  * 051: [25/05/2019] - PRJ298.2.2 - Pagamento do prejuízo de forma manual - Nagasava (Supero)
-
+ * 052: [02/07/2019] Incluida mensagem na tela de consulta do prejuízo quando o contrato Pós-Fixado for transferido para prejuízo
+ *                   P298.3 Pos Fixado (Darlei Zillmer / Supero)
+ *
 */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -752,7 +754,11 @@ function controlaLayout(operacao) {
 	} else if ( in_array(operacao,['C_PREJU']) ) {
 
 		nomeForm = 'frmPreju';
-		altura   = '270px';
+		if($('label[for="dsmorapos"]').css('display') == 'block'){
+            altura   = '310px';
+        }else{
+            altura   = '270px';
+        }
 		largura  = '485px';
 		
 		
@@ -2332,6 +2338,11 @@ function atualizaTela(){
 		
         $('#nrdiaatr','#frmPreju').val( utf8_decode(arrayRegistros['nrdiaatr']) );
 		
+        // Incluida mensagem na tela de consulta do prejuízo quando o contrato Pós-Fixado for transferido para prejuízo
+        if(parseInt(arrayRegistros['tpemprst']) == 2 && parseFloat(arrayRegistros['vlttjmpr']) > 0){
+            $('label[for="dsmorapos"]').css('display', 'block');
+            $('label[for="vlttjmpr"]').html('* Juros de Mora:');
+        }
 		
 	}else if (in_array(operacao,['C_NOVA_PROP','C_NOVA_PROP_V'])){
 
