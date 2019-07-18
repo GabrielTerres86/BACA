@@ -183,7 +183,7 @@
 	$pecet_anual = -1;
 	$pejuro_anual = -1;
 	
-	if($gConsig == 1){
+	if($gConsig == 1 && $operacao != 'ENV_ESTEIRA'){
 		$vliofepr = (isset($_POST['vliofepr'])) ? $_POST['vliofepr'] : -1 ;
 		/*
 		$raw_data = file_get_contents($UrlSite.'includes/wsconsig.php?format=json&action=simula_fis&vlparepr=97,62&vliofepr=4');	
