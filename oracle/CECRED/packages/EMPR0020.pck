@@ -3953,8 +3953,8 @@ dbms_output.put_line('xml :'||vr_clobxml);
                         <taxaJurosRemuneratorios>'||rw_crapepr.txmensal||'</taxaJurosRemuneratorios>
                         <taxaJurosRemuneratoriosAnual>'||rw_tbepr_consig.pejuro_anual||'</taxaJurosRemuneratoriosAnual>
                         <tipoLiberacao>
-                          <codigo>1</codigo>
-                        </tipoLiberacao>
+                           <codigo>6</codigo>'|| --6 - Liberação do Legado
+                        '</tipoLiberacao>
                         <tipoLiquidacao>
                           <codigo>4</codigo>
                         </tipoLiquidacao> 
