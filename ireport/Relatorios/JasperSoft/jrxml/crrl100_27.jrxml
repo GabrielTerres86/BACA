@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2019-04-17T12:27:45 -->
+<!-- 2019-07-18T11:31:25 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.3636363636363635"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="3968"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="New Data Adapter "/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="contrato"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
 	</parameter>
@@ -304,7 +304,7 @@
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					</reportElement>
 					<textElement>
-						<font fontName="Serif" size="8" pdfFontName="Courier"/>
+						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$F{cooperativa_consig}]]></textFieldExpression>
 				</textField>
@@ -337,7 +337,7 @@
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					</reportElement>
 					<textElement>
-						<font fontName="Serif" size="8" pdfFontName="Courier"/>
+						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$F{emitente_consig}]]></textFieldExpression>
 				</textField>
@@ -371,7 +371,7 @@
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					</reportElement>
 					<textElement>
-						<font fontName="Serif" size="8" pdfFontName="Courier"/>
+						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$F{empregador_consig}]]></textFieldExpression>
 				</textField>
@@ -936,16 +936,16 @@
 				<text><![CDATA[CONDIÇÕES GERAIS DESTA CÉDULA DE CRÉDITO BANCÁRIO]]></text>
 			</staticText>
 		</band>
-		<band height="66">
+		<band height="55" splitType="Immediate">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField isStretchWithOverflow="true">
-				<reportElement positionType="Float" x="6" y="0" width="466" height="66" uuid="cef477d3-8579-4800-87f6-5fbbffc83a1e">
+				<reportElement positionType="Float" stretchType="RelativeToTallestObject" x="6" y="0" width="466" height="50" isPrintWhenDetailOverflows="true" uuid="cef477d3-8579-4800-87f6-5fbbffc83a1e">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="styled">
-					<font fontName="Serif" size="8" pdfFontName="Courier"/>
+					<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 				</textElement>
 				<textFieldExpression><![CDATA["<b><u>5. Promessa de Pagamento</u></b> - Por meio desta Cédula de Crédito Bancário - CCB, a <b>Cooperativa</b> concede o presente Empréstimo, solicitado e contratado pelo(a) <b>Emitente</b>, nas condições estabelecidas no item 4 e os respectivos subitens das Condições Específicas acima. O(a) <b>Emitente</b> ao final assinado, promete pagar em moeda corrente nacional, à <b>Cooperativa</b> ou à sua ordem, a dívida em dinheiro, certa, líquida e exigível correspondente ao valor total emprestado, indicado no subitem 4.3. das Condições Específicas, acrescido de todos os encargos pactuados nesta Cédula."+
 "<br /><b><u>6. Crédito Consignado</u></b> - O crédito ora solicitado e aceito pelo <b>Emitente</b> é um empréstimo em dinheiro, e sem necessidade de comprovação do direcionamento dos recursos, com pagamento em parcelas, na quantidade e valor contratados pelo <b>Emitente</b>."+
@@ -958,8 +958,7 @@
 "<br />a) O <b>Emitente</b> autoriza o débito na mesma conta corrente, para liquidação de eventuais saldos devedores de outros empréstimos de sua responsabilidade."+ 
 "<br />b) O cancelamento do desconto das parcelas na folha de pagamento ou no benefício do <b>Emitente</b> é condicionado à autorização expressa por parte da <b>Cooperativa</b>."+
 "<br /><b>7.1.</b> O crédito do empréstimo na conta corrente do <b>Emitente</b> somente será realizado após a confirmação de margem consignável e respectivo registro da averbação dos descontos junto ao <b>Empregador/Empresa ou Órgão Conveniado/Fonte Pagadora</b>."+
-"<br /><b><u>8. Pagamento</u></b> - O <b>Emitente</b> deverá pagar à <b>Cooperativa</b> o valor contratado, acrescido de juros remuneratórios, capitalizados mensalmente, à taxa, quantidade de parcelas, valores e data de vencimento estipulados nesta cédula, mediante o desconto da parcela diretamente em sua folha de pagamento salário, benefício mensal, soldo, ou qualquer outra forma de remuneração recebida,"+
-"<br />o qual será de responsabilidade do <b>Empregador/Empresa ou Órgão Conveniado/Fonte Pagadora</b>. Além dos encargos previstos serão devidas eventuais taxas de serviços inerentes ao contrato, na forma do estabelecido nas normas regulamentares da Cooperativa."+
+"<br /><b><u>8. Pagamento</u></b> - O <b>Emitente</b> deverá pagar à <b>Cooperativa</b> o valor contratado, acrescido de juros remuneratórios, capitalizados mensalmente, à taxa, quantidade de parcelas, valores e data de vencimento estipulados nesta cédula, mediante o desconto da parcela diretamente em sua folha de pagamento salário, benefício mensal, soldo, ou qualquer outra forma de remuneração recebida, o qual será de responsabilidade do <b>Empregador/Empresa ou Órgão Conveniado/Fonte Pagadora</b>. Além dos encargos previstos serão devidas eventuais taxas de serviços inerentes ao contrato, na forma do estabelecido nas normas regulamentares da Cooperativa."+
 "<br /><b>8.1.</b> O valor de cada parcela foi calculado com base na Tabela Price, sistema de amortização de dívida, em que o percentual de principal e o percentual de juros de cada parcela variam no decorrer do tempo, de modo a manter-se constante o valor de cada parcela."+
 "<br /><b>8.2.</b> O desconto em sua folha de pagamento salário, benefício mensal, soldo, ou qualquer outra forma de remuneração recebida não exime o <b>Emitente</b> de liquidar as parcelas e demais obrigações decorrentes desta cédula, nas respectivas datas de vencimento, nas hipóteses de:"+ 
 "<br />a) atraso ou falta de pagamento por parte do empregador ou fonte pagadora do benefício;"+ 
@@ -1009,10 +1008,10 @@
 "<br /><b><u>22. Declaração de Leitura</u></b> - O <b>Emitente</b> ao assinar as Condições Específicas desta Cédula, declara que a leu previamente e que não possui nenhuma dúvida com relação a quaisquer de suas cláusulas."]]></textFieldExpression>
 			</textField>
 		</band>
-		<band height="5">
+		<band height="10">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<line>
-				<reportElement x="5" y="2" width="470" height="1" uuid="2b678b36-fff6-4814-b355-2dafa81aafa5">
+				<reportElement x="4" y="5" width="470" height="1" uuid="2b678b36-fff6-4814-b355-2dafa81aafa5">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
