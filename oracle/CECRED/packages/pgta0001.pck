@@ -726,6 +726,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --                          PRJ366 (Lombardi).
 --
 --             03/09/2018 - Correção para remover lote (Jonata - Mouts).
+--
+--             04/07/2019 - Ajuste de validações no segmento a.
+--                          Jose Dill - Mouts (P500 - SM01)
+--
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -12088,6 +12092,19 @@ EXCEPTION
     RETURN FALSE;
 END fn_valida_caracteres;
 
+-- Funcao true or false para tratar conversao para numero sem gerar exceção
+FUNCTION fn_numerico(pr_dsdtext IN VARCHAR2) RETURN BOOLEAN IS
+  vr_nrdtext NUMBER;
+BEGIN
+  vr_nrdtext := to_number(pr_dsdtext);
+  IF vr_nrdtext IS NOT NULL THEN
+    RETURN TRUE;
+  END IF;
+  RETURN TRUE;
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN FALSE;
+END;
 
 PROCEDURE pc_val_headerarq_cnab240_ted (pr_linha_arquivo in varchar2
                              ,pr_nrdconta in integer
@@ -12774,8 +12791,9 @@ PROCEDURE pc_val_segment_a_cnab240_ted (pr_linha_arquivo in varchar2
   vr_stsnrcal  boolean;
   vr_inpessoa  integer:= null;
   vr_cdcooper_int crapcop.cdcooper%type;
+  vr_flgnumer BOOLEAN;
 
-    
+
 BEGIN
   /* Seleciona todas as informacoes do arquivo para gravar na tabela temp e depois faz as validações*/
   vr_bco_comp := substr(pr_linha_arquivo,1,3);
@@ -12787,7 +12805,7 @@ BEGIN
   vr_nmfavor := substr(pr_linha_arquivo,44,30);
   vr_nmfavor := replace(vr_nmfavor,'&','e');
   -- Validar os caracteres especiais do favorecido
-  IF fn_valida_caracteres(pr_flgnumer => FALSE,   -- Validar Numeros
+  IF fn_valida_caracteres(pr_flgnumer => TRUE,   -- Validar Numeros
                         pr_flgletra => TRUE,   -- Validar Letras
                         pr_listaesp => '',     -- Lista Caracteres Validos (incluir caracteres que sao validos apenas para este campo)
                         pr_dsvalida => vr_nmfavor ) THEN 
@@ -12806,7 +12824,7 @@ BEGIN
   vr_histra := substr(pr_linha_arquivo,178,20);
   vr_histra := replace(vr_histra,'&','e');
   -- Validar os caracteres especiais do histrocio
-  IF fn_valida_caracteres(pr_flgnumer => FALSE,   -- Validar Numeros
+  IF fn_valida_caracteres(pr_flgnumer => TRUE,   -- Validar Numeros
                         pr_flgletra => TRUE,   -- Validar Letras
                         pr_listaesp => '',     -- Lista Caracteres Validos (incluir caracteres que sao validos apenas para este campo)
                         pr_dsvalida => vr_histra ) THEN 
@@ -12842,6 +12860,20 @@ BEGIN
   /* Somatoria total de registros no arquivo */
   vr_qtreg_arq_total := vr_qtreg_arq_total + 1;
   --
+  --SM01 Verificar se o numero da conta possui alfanumerico.  
+  vr_flgnumer := fn_numerico(vr_nrddgcta);
+  IF not vr_flgnumer THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'C1'; 
+     raise vr_erro_segmento_a;
+  END IF;
+  --
+  vr_flgnumer := fn_numerico(vr_nrdconta);
+  IF not vr_flgnumer THEN
+     pr_tab_dados_segmento_a(vr_index).tperrocnab := 'C1'; 
+     raise vr_erro_segmento_a;
+  END IF;
+  -- 
+  
   /*Código do Banco na Compensação */ 
   IF vr_bco_comp <> '085' THEN
      pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AZ';
@@ -12922,6 +12954,13 @@ BEGIN
          raise vr_erro_segmento_a; 
       END IF; 
       CLOSE cr_crapass;  
+      --
+      --SM01 Verificar se o cpf do favorecido é igual ao do seu cadastro
+      IF rw_crapass.Nrcpfcgc <> TO_NUMBER(vr_nrcpfcgc) THEN
+         pr_tab_dados_segmento_a(vr_index).tperrocnab := 'AE';
+         raise vr_erro_segmento_a;
+      END IF;
+      --
     END IF;
   END IF; 
   
