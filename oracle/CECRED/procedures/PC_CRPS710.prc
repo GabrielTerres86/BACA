@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS710(pr_cdcooper IN crapcop.cdcooper%TY
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Odirlei
-    Data    : Abril/2017                      Ultima Atualizacao: 13/04/2018
+    Data    : Abril/2017                      Ultima Atualizacao: 08/07/2019
     Dados referente ao programa:
 
     Frequencia: Diario.
@@ -28,6 +28,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS710(pr_cdcooper IN crapcop.cdcooper%TY
                                  3 - Grupo de mensagens para não parar o programa: 
                                      Procedures pc_job_contab_cessao, PC_CRPS710 e pc_gera_dados_cyber não gera critica.    
                           (Envolti - Belli - Chamado REQ0011757 - 13/04/2018)
+
+              08/07/2019 - PRB0041950 na rotina pc_submit_job, ajustado o parâmetro pr_dthrexe para enviar a data formatada
+                           em timestamp com timezone (Carlos)
 
   ..........................................................................*/
   ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -170,10 +173,10 @@ BEGIN                                                           --- --- --- INIC
       gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper       --> Código da cooperativa
                             ,pr_cdprogra  => vr_cdprogra       --> Código do programa
                             ,pr_dsplsql   => vr_dsplsql        --> Bloco PLSQL a executar
-                            ,pr_dthrexe   => TO_TIMESTAMP(TO_CHAR(SYSDATE + (NVL(rw_crapcop.cdcooper,0) / 24 / 60 / 60)
-                                                         ,'DD/MM/RRRR HH24:MI:SS')) --> Incrementar mais 1 segundo
-                            ,pr_interva   => NULL                     --> apenas uma vez
-                            ,pr_jobname   => vr_jobname               --> Nome randomico criado
+                            ,pr_dthrexe   => to_timestamp_tz(to_char(CAST(current_timestamp AT TIME ZONE 'AMERICA/SAO_PAULO' AS timestamp)+(NVL(rw_crapcop.cdcooper,0)/86400)
+                                                                    ,'ddmmyyyyhh24miss')||' AMERICA/SAO_PAULO','ddmmyyyyhh24miss TZR') --> Incrementar cdcooper segundos
+                            ,pr_interva   => NULL              --> apenas uma vez
+                            ,pr_jobname   => vr_jobname        --> Nome randomico criado
                             ,pr_des_erro  => vr_dscritic);
 
       IF TRIM(vr_dscritic) is not null THEN
