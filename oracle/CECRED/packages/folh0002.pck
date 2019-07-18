@@ -4670,6 +4670,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      -- Alteracoes: 20/11/2015 - Gerando Log de Comsulta da tela PAGFOL - Melhoria
      --                         (Andre Santos - SUPERO)
      --
+     --             15/07/2019 - Apresentar contas da modalidade salário com indicação "SALARIO"
+     --                          na tela PAGFOL. (Renato Darosci - Supero)
      ---------------------------------------------------------------------------------------------------------------
 
      -- CURSORES

@@ -1632,7 +1632,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         
           Observacao: -----
         
-          Alteracoes: 					
+          Alteracoes: 
+                      15/07/2019 - Adicionar regra para impedir que contas que não são
+                                   da modalidade salário, tenham portabilidades de 
+                                   salário aprovadas (Renato Darosci - Supero)	
           ..............................................................................*/
     
         -- Tratamento de erros

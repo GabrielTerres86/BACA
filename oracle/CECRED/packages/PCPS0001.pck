@@ -2553,6 +2553,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
     Observacao: -----
     
     Alteracoes:
+                15/07/2019 - Considerar também a modalidade do tipo de conta e não
+                             somente a situação da solicitação de portabilidade, 
+                             para realizar o envio de valores para outras IFs. 
+                             (Renato Darosci - Supero)
   ..............................................................................*/
 				
 	  -- Buscar portabilidade aprovadas para o cooperado
