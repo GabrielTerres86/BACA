@@ -416,7 +416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
                                            ,pr_cdempres      => pr_cdempres
                                            ,pr_indconsignado => 1)) THEN
             vr_cdcritic := 0;
-            vr_dscritic := 'Empresa não habilitada para Consignado. Para habilitar utilize a opção H';
+            vr_dscritic := 'Empresa nao habilitada para Consignado. Para habilitar utilize a opção H';
             RAISE vr_exc_erro;
           END IF;
         ELSIF pr_cddopcao = 'H' THEN
@@ -424,7 +424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
                                        ,pr_cdempres      => pr_cdempres
                                        ,pr_indconsignado => 1) THEN
             vr_cdcritic := 0;
-            vr_dscritic := 'Empresa já habilitada para Consignado. Para alterações, utilize a opção A';
+            vr_dscritic := 'Empresa ja habilitada para Consignado. Para alteracoes, utilize a opcao A';
             RAISE vr_exc_erro;
           END IF;
         ELSIF pr_cddopcao = 'D' THEN
@@ -432,7 +432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
                                            ,pr_cdempres      => pr_cdempres
                                            ,pr_indconsignado => 1)) THEN
             vr_cdcritic := 0;
-            vr_dscritic := 'Empresa não habilitada para Consignado, não é necessario desabilitar';
+            vr_dscritic := 'Empresa nao habilitada para Consignado, nao e necessario desabilitar';
             RAISE vr_exc_erro;
           END IF;
         END IF;
@@ -479,7 +479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-        pr_dscritic := 'Erro não tratado na tela_consig.pc_busca_empr_consig '||sqlerrm;
+        pr_dscritic := 'Erro nao tratado na tela_consig.pc_busca_empr_consig '||sqlerrm;
         pr_cdcritic := 0;
     END;
   END pc_busca_empr_consig;
@@ -638,7 +638,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONSIG IS
       WHEN OTHERS THEN
              pr_des_erro := 'NOK';
            /* montar descriçao de erro nao tratado */
-             pr_dscritic := 'erro não tratado na empr0013.pc_obtem_dados_consignado_web ' ||SQLERRM;
+             pr_dscritic := 'erro nao tratado na empr0013.pc_obtem_dados_consignado_web ' ||SQLERRM;
              -- Carregar XML padrao para variavel de retorno
               pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                              '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
@@ -764,7 +764,7 @@ BEGIN
       pr_dscritic := vr_dscritic;
 
     When others Then
-      pr_cdcritic := null; -- não será utilizado
+      pr_cdcritic := null; -- nao sera utilizado
       pr_dscritic := 'Erro geral em pc_busca_dados_empr_consig_car: '||SQLERRM;
 
   END;
@@ -1323,7 +1323,7 @@ BEGIN
       END IF;
       CLOSE cr_consig;
 
-      pr_dsmensag := 'Convênio de consignado habilitado com sucesso.';
+      pr_dsmensag := 'Convenio de consignado habilitado com sucesso.';
 
     ELSE
       INSERT INTO tbcadast_empresa_consig
@@ -1734,7 +1734,7 @@ BEGIN
      WHERE emp.cdempres = pr_cdempres
        AND emp.cdcooper = pr_cdcooper;
 
-    pr_dsmensag := 'Convênio de consignado desabilitado com sucesso.';
+    pr_dsmensag := 'Convenio de consignado desabilitado com sucesso.';
 
   EXCEPTION
     WHEN vr_exc_erro then
@@ -2121,7 +2121,7 @@ BEGIN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-        pr_dscritic := 'Erro não tratado na tela_consig.pc_busca_param_consig '||sqlerrm;
+        pr_dscritic := 'Erro nao tratado na tela_consig.pc_busca_param_consig '||sqlerrm;
         pr_cdcritic := 0;
     END;
   END pc_busca_param_consig;
@@ -2256,7 +2256,7 @@ BEGIN
       WHEN OTHERS THEN
              pr_des_erro := 'NOK';
            /* montar descriçao de erro nao tratado */
-             pr_dscritic := 'erro não tratado na tela_consig.pc_busca_param_consig_web ' ||SQLERRM;
+             pr_dscritic := 'Erro nao tratado na tela_consig.pc_busca_param_consig_web ' ||SQLERRM;
              -- Carregar XML padrao para variavel de retorno
               pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                              '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
@@ -2432,7 +2432,7 @@ BEGIN
       EXCEPTION
         WHEN OTHERS THEN
           IF SQLCODE = '-30625' THEN
-            vr_dscritic := 'Tipo de Convênio deve ser preenchido.';
+            vr_dscritic := 'Tipo de Convenio deve ser preenchido.';
             RAISE vr_exc_erro;
           ELSE
             vr_dscritic := 'Erro na leitura do campo vr_tipoPadrao.';
@@ -2599,7 +2599,7 @@ BEGIN
       WHEN OTHERS THEN
            pr_des_erro := 'NOK';
          /* montar descriçao de erro nao tratado */
-           pr_dscritic := 'erro não tratado na tela_consig.pc_busca_param_consig_web ' ||SQLERRM;
+           pr_dscritic := 'Erro nao tratado na tela_consig.pc_busca_param_consig_web ' ||SQLERRM;
            -- Carregar XML padrao para variavel de retorno
             pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
@@ -2718,7 +2718,7 @@ BEGIN
       WHEN OTHERS THEN
            pr_des_erro := 'NOK';
          /* montar descriçao de erro nao tratado */
-           pr_dscritic := 'erro não tratado na tela_consig.pc_validar_venctos_consig ' ||SQLERRM;
+           pr_dscritic := 'Erro nao tratado na tela_consig.pc_validar_venctos_consig ' ||SQLERRM;
            -- Carregar XML padrao para variavel de retorno
             pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
