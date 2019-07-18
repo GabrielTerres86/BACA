@@ -174,6 +174,10 @@ BEGIN
       
       06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
           
+      25/06/2019 - Remover lancamentos de segregacao/reversao para contas PF/PJ.
+                   Apos atualizacao do plano de contas, nao e mais necessaria realizar essa segregacao.
+                   Solicitacao Contabilidade - Heitor (Mouts)
+
    ............................................................................. */
    DECLARE
      
@@ -5457,12 +5461,18 @@ BEGIN
         END IF;
 
         -- Gera Arq AAMMDD_CAPITAL.txt - Dados para Contabilidade
+        /*
+        Remover lancamentos de segregacao/reversao para contas PF/PJ.
+        Apos atualizacao do plano de contas, nao e mais necessaria realizar essa segregacao.
+        Solicitacao Contabilidade - Heitor (Mouts)
+
         pc_gera_arq_capital(pr_des_erro => vr_dscritic);
         --Se retornou erro
         IF vr_dscritic IS NOT NULL THEN
           --Levantar Exceção
           RAISE vr_exc_saida;
         END IF;
+        */
            
         -- Grava LOG de ocorrência inicial de atualização da tabela craptrd
         pc_log_programa(PR_DSTIPLOG           => 'O'

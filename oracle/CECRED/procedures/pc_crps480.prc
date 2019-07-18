@@ -159,6 +159,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
                               vr_exc_erro, porém, esta exception só trata o parâmetro pr_dscritic -> Ajuste
                               (Ana - Envolti - Chamado 822997)
 
+                 25/06/2019 - Remover lancamentos de segregacao/reversao para contas PF/PJ.
+                              Apos atualizacao do plano de contas, nao e mais necessaria realizar essa segregacao.
+                              Solicitacao Contabilidade - Heitor (Mouts)
+
   ..............................................................................*/
 
     DECLARE
@@ -2459,6 +2463,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
         --------------------------------------------
         
         -- Para cada tipo de aplicação 
+        /*
+        Remover lancamentos de segregacao/reversao para contas PF/PJ.
+        Apos atualizacao do plano de contas, nao e mais necessaria realizar essa segregacao.
+        Solicitacao Contabilidade - Heitor (Mouts)
+
         FOR indapl IN vr_tab_totpes.FIRST..vr_tab_totpes.LAST LOOP
         
           -- Para cada tipo de pessoa que constara no arquivo
@@ -2526,7 +2535,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
               -- Se o valor for maior que zero
               IF vr_vllinarq > 0 THEN
               
-                /* Imprimir dados de pessoa FISICA */
+                \* Imprimir dados de pessoa FISICA *\
                 vr_dslinarq := '70'||to_char(vr_dtmvtolt,'YYMMDD')
                             || ',' ||to_char(vr_dtmvtolt,'DDMMYY') || ','||vr_nrctaori||','||vr_nrctades||',' 
                             || to_char(vr_vllinarq,'FM99999999999990D00','NLS_NUMERIC_CHARACTERS=.,') 
@@ -2568,7 +2577,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS480(pr_cdcooper IN crapcop.cdcooper%TY
             END LOOP; -- Normal e reversão
           END LOOP; -- Pessoas 1 e 2
         END LOOP; -- Tipo de aplicação
-     
+        */
     
         --------------------------------------------
         /***** VALOR TOTAL DA PROVISAO DO MES *****/

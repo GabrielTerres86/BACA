@@ -125,7 +125,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps103(pr_cdcooper  in craptab.cdcooper%t
               15/03/2017 - Remover lançamentos de reversão das contas de resultado
                            para envio ao Radar ou Matera P307. (Jonatas - Supero) 
                                                      
-                           
+              25/06/2019 - Remover lancamentos de segregacao/reversao para contas PF/PJ.
+                           Apos atualizacao do plano de contas, nao e mais necessaria realizar essa segregacao.
+                           Solicitacao Contabilidade - Heitor (Mouts)
                            
 ............................................................................. */
 
@@ -1229,9 +1231,14 @@ BEGIN
      END IF;
      
      -- Se o valor total é maior que zero
+     /* 
+     Remover lancamentos de segregacao/reversao para contas PF/PJ.
+     Apos atualizacao do plano de contas, nao e mais necessaria realizar essa segregacao.
+     Solicitacao Contabilidade - Heitor (Mouts)
+     
      IF NVL(vr_tot_rdcagefis,0) > 0 THEN
      
-       /*** Montando as informacoes de PESSOA FISICA ***/     
+       \*** Montando as informacoes de PESSOA FISICA ***\     
        -- Montando o cabecalho das contas do dia atual
        vr_setlinha := '70'||                                                                                      --> Informacao inicial
                       TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
@@ -1308,7 +1315,7 @@ BEGIN
      
      -- Se o valor total é maior que zero
      IF NVL(vr_tot_rdcagejur,0) > 0 THEN
-       /*** Montando as informacoes de PESSOA JURIDICA ***/
+       \*** Montando as informacoes de PESSOA JURIDICA ***\
        -- Montando o cabecalho das contas do dia atual
        vr_setlinha := '70'||                                                                                      --> Informacao inicial
                       TO_CHAR(rw_crapdat.dtmvtolt,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
@@ -1381,7 +1388,8 @@ BEGIN
            END LOOP;
          END LOOP; -- fim repete
        END IF;
-     END IF; -- Se maior que zero
+     END IF;
+     */ -- Se maior que zero
      
      -- Se o valor total é maior que zero
      IF NVL(vr_tot_prvmesfis,0) > 0 THEN

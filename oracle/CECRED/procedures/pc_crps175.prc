@@ -138,6 +138,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
                            
              05/09/2018 - Correção do cursor cr_craplpp - UNION ALL (Proj. 411.2 - CIS Corporate).             
              
+             25/06/2019 - Remover lancamentos de segregacao/reversao para contas PF/PJ.
+                          Apos atualizacao do plano de contas, nao e mais necessaria realizar essa segregacao.
+                          Solicitacao Contabilidade - Heitor (Mouts)
+
      ............................................................................. */
 
      DECLARE
@@ -1780,6 +1784,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
           /*** Montando as informacoes de PESSOA FISICA ***/
 
           -- Se valor total maior que zero
+          /*
+          Remover lancamentos de segregacao/reversao para contas PF/PJ.
+          Apos atualizacao do plano de contas, nao e mais necessaria realizar essa segregacao.
+          Solicitacao Contabilidade - Heitor (Mouts)
+
           IF NVL(vr_tot_rdcagefis,0) > 0 THEN
 
             -- Montando o cabecalho das contas do dia atual
@@ -1856,7 +1865,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
             END IF;
           END IF; -- Se valor maior que zero
           
-          /*** Montando as informacoes de PESSOA JURIDICA ***/
+          \*** Montando as informacoes de PESSOA JURIDICA ***\
 
           -- Se valor total maior que zero
           IF NVL(vr_tot_rdcagejur,0) > 0 THEN
@@ -1933,7 +1942,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS175(pr_cdcooper IN crapcop.cdcooper%TY
               END LOOP; -- fim repete
             END IF;
           END IF; -- Se valor maior que zero
-          
+          */
           /*** Montando as informacoes de PESSOA FISICA ***/
           
           -- Se valor total maior que zero
