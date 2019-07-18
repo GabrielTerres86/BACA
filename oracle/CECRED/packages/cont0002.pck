@@ -78,9 +78,8 @@ CREATE OR REPLACE PACKAGE CECRED.cont0002 IS
                                     ,pr_cdcritic OUT NUMBER                --> Desc. da crítica
                                     ,pr_dscritic OUT VARCHAR2);
 
-  PROCEDURE pc_processa_lanc_slip(pr_cdcooper IN crapcop.cdcooper%TYPE
-                                 ,pr_cdcritic OUT NUMBER                --> Desc. da crítica
-                                    ,pr_dscritic OUT VARCHAR2);
+  --Procedure de processamento dos lancamentos de slip
+  PROCEDURE pc_processa_lanc_slip;
 
 END cont0002;
 /
@@ -99,6 +98,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
     Alteracoes:  RITM0011945 - Gabriel (Mouts) 15/04/2019 - Adicionado campo dtmvtolt
 
   ********************************************************************************/
+  vr_nomdojob VARCHAR2(40);
+
+  --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
+  PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro
+                                 ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                                 ,pr_cdcricid IN NUMBER   DEFAULT 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                                 ,pr_tpexecuc IN NUMBER   DEFAULT 2   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                                 ,pr_dscritic IN VARCHAR2 DEFAULT NULL
+                                 ,pr_cdcritic IN VARCHAR2 DEFAULT NULL
+                                 ,pr_cdcooper IN VARCHAR2 DEFAULT 3
+                                 ,pr_flgsuces IN NUMBER   DEFAULT 1    -- Indicador de sucesso da execução
+                                 ,pr_flabrchd IN INTEGER  DEFAULT 0    -- Abre chamado 1 Sim/ 0 Não
+                                 ,pr_textochd IN VARCHAR2 DEFAULT NULL -- Texto do chamado
+                                 ,pr_desemail IN VARCHAR2 DEFAULT NULL -- Destinatario do email
+                                 ,pr_flreinci IN INTEGER  DEFAULT 0    -- Erro pode reincidir no prog em dias diferentes, devendo abrir chamado
+  )
+  IS
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
+  BEGIN
+    -- Controlar geração de log de execução dos jobs
+    CECRED.pc_log_programa(pr_dstiplog           => pr_dstiplog -- I-início/ F-fim/ O-ocorrência/ E-erro
+                          ,pr_tpocorrencia       => pr_tpocorre -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                          ,pr_cdcriticidade      => pr_cdcricid -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                          ,pr_tpexecucao         => pr_tpexecuc -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                          ,pr_dsmensagem         => pr_dscritic
+                          ,pr_cdmensagem         => pr_cdcritic
+                          ,pr_cdcooper           => pr_cdcooper
+                          ,pr_flgsucesso         => pr_flgsuces
+                          ,pr_flabrechamado      => pr_flabrchd -- Abre chamado 1 Sim/ 0 Não
+                          ,pr_texto_chamado      => pr_textochd
+                          ,pr_destinatario_email => pr_desemail
+                          ,pr_flreincidente      => pr_flreinci
+                          ,pr_cdprograma         => vr_nomdojob
+                          ,pr_idprglog           => vr_idprglog);
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+  END pc_controla_log_batch;
 
   PROCEDURE pc_processa_arquivo_bancoob(pr_cdcooper IN crapcop.cdcooper%TYPE
                                        ,pr_dtmvtolt IN  DATE                           
@@ -1136,50 +1174,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
     vr_exc_erro EXCEPTION;
 
     vr_cdprogra    VARCHAR2(40) := 'CONT0002.PC_PROCESSA_CONTABIL';
-    vr_nomdojob    VARCHAR2(40) := 'JBCONTAB_PROCESSA_CONTABIL';
 
     vr_intipmsg INTEGER := 1;
     vr_dscrioco VARCHAR2(4000);
     vr_diautil  BOOLEAN;
-
-    --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
-    PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2 DEFAULT 'E' -- I-início/ F-fim/ O-ocorrência/ E-erro
-                                   ,pr_tpocorre IN NUMBER   DEFAULT 2   -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
-                                   ,pr_cdcricid IN NUMBER   DEFAULT 2   -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
-                                   ,pr_tpexecuc IN NUMBER   DEFAULT 2   -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
-                                   ,pr_dscritic IN VARCHAR2 DEFAULT NULL
-                                   ,pr_cdcritic IN VARCHAR2 DEFAULT NULL
-                                   ,pr_cdcooper IN VARCHAR2 DEFAULT 3
-                                   ,pr_flgsuces IN NUMBER   DEFAULT 1    -- Indicador de sucesso da execução
-                                   ,pr_flabrchd IN INTEGER  DEFAULT 0    -- Abre chamado 1 Sim/ 0 Não
-                                   ,pr_textochd IN VARCHAR2 DEFAULT NULL -- Texto do chamado
-                                   ,pr_desemail IN VARCHAR2 DEFAULT NULL -- Destinatario do email
-                                   ,pr_flreinci IN INTEGER  DEFAULT 0    -- Erro pode reincidir no prog em dias diferentes, devendo abrir chamado
-    )
-    IS
-      vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
     BEGIN
-      -- Controlar geração de log de execução dos jobs
-      CECRED.pc_log_programa(pr_dstiplog           => pr_dstiplog -- I-início/ F-fim/ O-ocorrência/ E-erro
-                            ,pr_tpocorrencia       => pr_tpocorre -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
-                            ,pr_cdcriticidade      => pr_cdcricid -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
-                            ,pr_tpexecucao         => pr_tpexecuc -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
-                            ,pr_dsmensagem         => pr_dscritic
-                            ,pr_cdmensagem         => pr_cdcritic
-                            ,pr_cdcooper           => pr_cdcooper
-                            ,pr_flgsucesso         => pr_flgsuces
-                            ,pr_flabrechamado      => pr_flabrchd -- Abre chamado 1 Sim/ 0 Não
-                            ,pr_texto_chamado      => pr_textochd
-                            ,pr_destinatario_email => pr_desemail
-                            ,pr_flreincidente      => pr_flreinci
-                            ,pr_cdprograma         => vr_nomdojob
-                            ,pr_idprglog           => vr_idprglog);
-    EXCEPTION
-      WHEN OTHERS THEN
-        -- No caso de erro de programa gravar tabela especifica de log
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-    END pc_controla_log_batch;
-  BEGIN
+    vr_nomdojob := 'JBCONTAB_PROCESSA_CONTABIL';
+
     GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
 
     -- Log de inicio de execucao
@@ -1243,17 +1244,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
         pc_processa_arquivo_abbc(pr_cdcooper => vr_cdcooper
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);
-
-        IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
-          pc_controla_log_batch(pr_dscritic => vr_dscritic
-                               ,pr_cdcritic => vr_cdcritic
-                               ,pr_flgsuces => 0           -- Indicador de sucesso da execução
-                               );
-        END IF;
-
-        pc_processa_lanc_slip(pr_cdcooper => vr_cdcooper
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic);
 
         IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
           pc_controla_log_batch(pr_dscritic => vr_dscritic
@@ -1616,16 +1606,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
   END pc_processa_arquivo_abbc;
 
 
-  PROCEDURE pc_processa_lanc_slip(pr_cdcooper IN crapcop.cdcooper%TYPE
-                                 ,pr_cdcritic OUT NUMBER                --> Desc. da crítica
-                                 ,pr_dscritic OUT VARCHAR2) is
+  PROCEDURE pc_processa_lanc_slip IS
+    --Utilizar a data da central
+    vr_cdcooper NUMBER(1) := 3;
+    vr_dtmvtoan DATE;
 
     -- cursor para pegar codigo da cooperativa
     CURSOR cr_crapcop IS
      SELECT cdcooper,cdagectl  FROM crapcop;
 
-    CURSOR cr_lancamentos (pr_cdcooper IN crapcop.cdcooper%TYPE,
-                           pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+    CURSOR cr_lancamentos(pr_cdcooper IN crapcop.cdcooper%TYPE
+                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
       SELECT lan.cdcooper
            , lan.dtmvtolt
            , lan.nrsequencia_slip
@@ -1639,9 +1630,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
      WHERE lan.cdcooper = pr_cdcooper
       AND  lan.dtmvtolt = pr_dtmvtolt;
 
-    CURSOR cr_rateio (pr_cdcooper IN crapcop.cdcooper%TYPE,
-                      pr_nseqslip IN tbcontab_slip_rateio.nrsequencia_slip%TYPE,
-                      pr_dtmvtolt IN tbcontab_slip_rateio.dtmvtolt%TYPE) IS
+    CURSOR cr_rateio (pr_cdcooper IN crapcop.cdcooper%TYPE
+                     ,pr_nseqslip IN tbcontab_slip_rateio.nrsequencia_slip%TYPE
+                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
       SELECT rat.cdgerencial
            , rat.vllanmto
         FROM tbcontab_slip_rateio rat
@@ -1671,9 +1662,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
     vr_tab_cdcooper typ_tab_cdcooper;
     vr_flgarq PLS_INTEGER;
     -- variaveis dos campos do arquivo
-
-    vr_dtmvtoan DATE;
   BEGIN
+    vr_nomdojob := 'JBCONTAB_PROCESSA_SLIP';
 
     BEGIN
       --carregar as cooperativas
@@ -1681,16 +1671,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
       vr_tab_coop.delete;
 
       --Utilizar as datas da CENTRAL
-      OPEN btch0001.cr_crapdat(pr_cdcooper);
+      OPEN btch0001.cr_crapdat(vr_cdcooper);
       FETCH btch0001.cr_crapdat INTO btch0001.rw_crapdat;
       CLOSE btch0001.cr_crapdat;
 
+      --Se ja finalizou o processo batch, dtmvtoan
+      --Senao, utilizar dtmvtolt
+      IF btch0001.rw_crapdat.inproces = 1 THEN
       vr_dtmvtoan := btch0001.rw_crapdat.dtmvtoan;
+      ELSE
+        vr_dtmvtoan := btch0001.rw_crapdat.dtmvtolt;
+      END IF;
 
       FOR rw_crapcop IN cr_crapcop LOOP
         vr_flgarq := 1;  -- criar arquivo
-        FOR rw_lancamentos IN cr_lancamentos(pr_cdcooper => rw_crapcop.cdcooper,
-                                             pr_dtmvtolt => vr_dtmvtoan) LOOP
+        FOR rw_lancamentos IN cr_lancamentos(pr_cdcooper => rw_crapcop.cdcooper
+                                            ,pr_dtmvtolt => vr_dtmvtoan) LOOP
 
            IF  vr_flgarq = 1 THEN
                vr_flgarq:= 0;
@@ -1766,11 +1762,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cont0002 IS
       END LOOP;
     EXCEPTION
       WHEN vr_exc_saida THEN
-        pr_cdcritic := nvl(vr_cdcritic,0);
-        pr_dscritic := vr_dscritic || Sqlerrm;
+        pc_controla_log_batch(pr_dscritic => vr_dscritic || SQLERRM
+                             ,pr_cdcritic => nvl(vr_cdcritic,0)
+                             ,pr_flgsuces => 0);
       WHEN OTHERS THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro geral na rotina.' || SQLERRM;
+        pc_controla_log_batch(pr_dscritic => 'Erro geral na rotina.' || SQLERRM
+                             ,pr_cdcritic => 0
+                             ,pr_flgsuces => 0);
     END;
   END pc_processa_lanc_slip;
 END cont0002;
