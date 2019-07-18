@@ -788,7 +788,7 @@ function atualizaConvenio(){
         // Limpa data de interrup��o para INSS
 		DivVencParc.css('display', 'none');
         Cdtfchfol.val('');
-        Cdsdemail.val('');
+        //Cdsdemail.val('');
         Cdsdemailconsig.val('');
         $('input[name=radio_indautrepassecc]').prop('checked', false);
         $('input[name=radio_indinterromper]').prop('checked', false);
