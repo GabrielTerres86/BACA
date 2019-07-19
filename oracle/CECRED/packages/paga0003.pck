@@ -1623,6 +1623,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       
                19/02/2018 - Tratamento para validacao do pagamento de darf/das em caso que 
                             for através do processo JOB(Lucas Ranghetti #843167)
+                              
+               16/07/2019 - Remoção de validação que não permitia agendar DARF com data de apuração
+                            anterior a 1 mês (João Mannes - RITM0023757)
     ..............................................................................*/
     
     --Selecionar contas migradas
@@ -2274,15 +2277,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         --Se a encontrou agendamento com o mesmo sequencial aborta
         IF cr_craplau_pend2_found THEN
           vr_dscritic:= 'O pagamento desta guia já está agendando.';
-          RAISE vr_exc_erro;
-        END IF;        
-        
-        -- Obtém a data de apuração mínima para agendamento        
-        vr_dtminage := ADD_MONTHS(TRUNC(rw_crapdat.dtmvtocd,'MM'),-1);        
-        
-        IF pr_dtapurac < vr_dtminage THEN
-          vr_dscritic := 'DARF com data de apuração inferior a #dtminage# não pode ser agendada.';
-		  vr_dscritic := REPLACE(vr_dscritic, '#dtminage#', TO_CHAR(vr_dtminage,'fmMonth/YYYY','nls_date_language =''brazilian portuguese'''));					
           RAISE vr_exc_erro;
         END IF;        
         
