@@ -6127,7 +6127,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
             epr.dtdpagto,
             epr.insitapr,
             epr.insitest,
-            epr.insitdig,
+            --epr.insitdig,
             epr.dtaprova,
             epr.cdlcremp
        FROM crawepr epr
