@@ -541,7 +541,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 08/01/2019
+  --  Data     : Junho/2013.                   Ultima atualizacao: 12/04/2019
   --
   -- Dados referentes ao programa:
   --
@@ -655,6 +655,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
 				 08/01/2019 - Ajuste para desconsiderar contas favorecidas que pertecem a uma cooperativa inativa
 			                 (Adriano - INC0029631).
+
+	            12/04/2019 - Ajuste para remover a condição colocada no fim de ano para atender o ticket INC0030017
+                            (Adriano -INC0012268 ).
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -772,7 +775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 26/12/2017
+  --  Data     : Junho/2013.                   Ultima atualizacao: 12/04/2019
   --
   -- Dados referentes ao programa:
   --
@@ -792,6 +795,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --             25/10/2016 - Novo ajuste na validacao do horario, solicitado pelo financeiro (Diego).         
   --
   --             26/12/2017 - Incluido validacao de horario FGTS/DAE. PRJ406 - FGTS (Odirlei-AMcom)   
+  --
+  --             12/04/2019 - Ajuste para remover a condição colocada no fim de ano para atender o ticket INC0030017
+  --                         (Adriano -INC0012268 ).
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -1049,7 +1055,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           /** Horario diferenciado para finais de semana e feriados **/
           vr_datdodia:= GENE0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
                                                    ,pr_dtmvtolt => SYSDATE
-                                                   ,pr_tipo     => 'P');
+                                                   ,pr_tipo     => 'P'
+                                                   ,pr_feriado => true -- Não executa no feriado
+                                                   ,pr_excultdia => true); -- Executa no último dia do ano
           --Se for feriado
           IF Trunc(vr_datdodia) <> Trunc(SYSDATE) THEN
             --Hora de inicio
@@ -1218,14 +1226,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           ELSE
             vr_iddiauti:= 1;
           END IF;
-
-          ---Ajuste para atender o INC0030017 
-          IF vr_iddiauti = 2                      AND 
-             pr_tpoperac = 4                      AND 
-             trunc(SYSDATE) = to_date('31/12/2018','DD/MM/RRRR') THEN
-            vr_iddiauti:= 1;
-          END IF; 
-
           
           --Determinar a hora atual
           vr_hratual:= GENE0002.fn_busca_time;
