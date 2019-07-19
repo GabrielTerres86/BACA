@@ -472,7 +472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 12/03/2019
+    Data     : Novembro/2015.                   Ultima atualizacao: 18/07/2019
   
    Dados referentes ao programa:
   
@@ -578,6 +578,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                          
                  12/03/2019 - Validar numero do boleto zero no arquivo de remessa
                               (Lucas Ranghetti INC0031367)
+                              
+            18/07/2019 - inc0020612 Na rotina pc_trata_segmento_p_240_85, verificado a nulidade do valor de
+                         desconto quando o mesmo for obrigatório (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -5453,7 +5456,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.vltitulo:= pr_tab_linhas('VLTITULO').numero;
     pr_rec_cobranca.dtvencto:= pr_tab_linhas('DTVENCTO').data;
     pr_rec_cobranca.dtemscob:= pr_tab_linhas('DTEMSCOB').data;
-	pr_rec_cobranca.vlabatim:= pr_tab_linhas('VLABATIM').numero;	
+    pr_rec_cobranca.vlabatim:= pr_tab_linhas('VLABATIM').numero;	
 
     --> Validacao de Comandos de Instrucao
     IF pr_rec_cobranca.cdocorre <> 1 THEN -- 01 - Remessa
@@ -5655,7 +5658,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     IF pr_rec_cobranca.tpdescto = 1 THEN 
       -- Valor Fixo ate a Data Informada
       pr_rec_cobranca.vldescto := pr_tab_linhas('VLDESCTO').numero;
-      IF pr_rec_cobranca.vldescto = 0 THEN
+      IF nvl(pr_rec_cobranca.vldescto,0) = 0 THEN
         -- Desconto a Conceder Nao Confere
         vr_rej_cdmotivo := '30';
         RAISE vr_exc_reje;
@@ -10849,6 +10852,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                ,pr_tab_rejeitado => vr_tab_rejeitado);       --> Tabela de Rejeitados
           END IF;
 
+          
 
           -------------------  Header do Arquivo --------------------
           IF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'HA' THEN 
@@ -10936,7 +10940,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           ---------------  Detalhe ---------------
           ELSIF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'P' THEN    
           
-		    vr_flgseqq := FALSE;
+		        vr_flgseqq := FALSE;
             -- Processar o Segmento "P"            
             pc_trata_segmento_p_240_85(pr_cdcooper      => pr_cdcooper,               --> Codigo da cooperativa
                                        pr_nrdconta      => pr_nrdconta,               --> Numero da conta do cooperado
@@ -10960,7 +10964,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           ---------------  Detalhe ---------------
           ELSIF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'Q' THEN
              
-			 vr_flgseqq := TRUE;
+			      vr_flgseqq := TRUE;
             -- Verificar se a cobranca foi rejeitada
             IF NOT vr_rec_cobranca.flgrejei THEN
               -- Processar apenas se não foi rejeitado a cobranca
