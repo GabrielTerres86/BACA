@@ -38,6 +38,7 @@ BEGIN
     vr_tmp_craplot lote0001.cr_craplot_sem_lock%ROWTYPE;
     vr_nrseqted    crapmat.nrseqted%type; -- Recuperar a sequence da conta "poupanca"
     vr_codproduto        PLS_INTEGER := 0; -- Código da aplicação programada default
+	vr_tentativa         PLS_INTEGER := 0;
     vr_cdbccxlt    craprpp.cdbccxlt%type;
     
     vr_total_procs   PLS_INTEGER := 0;
