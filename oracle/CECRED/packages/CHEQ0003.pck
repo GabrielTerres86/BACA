@@ -132,6 +132,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0003 AS
   --                            (Renato Cordeiro - AMcom)
   --               17/07/2019 - Tratamento para multiplas solicitações de talões - PJ505 código de segurança cheque
   --                            (Renato Cordeiro - AMcom)
+  --               19/07/2019 - Gera numeração de cheques com digito no relatório 392 - PJ505 código de segurança cheque
+  --                            (Renato Cordeiro - AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -2941,8 +2943,10 @@ EXCEPTION
     -- Variaveis auxiliares
     vr_nrctaitg        crapass.nrdctitg%TYPE;
     vr_nrinichq        crapass.nrflcheq%TYPE;
+    vr_nrinichq_dig    crapass.nrflcheq%TYPE;
     vr_nrinichq_fc     crapass.nrflcheq%TYPE;
     vr_nrultchq        crapass.nrflcheq%TYPE;
+    vr_nrultchq_dig    crapass.nrflcheq%TYPE;
     vr_nrflcheq        crapass.nrflcheq%TYPE;
     vr_nrflcheq_aux    crapass.nrflcheq%TYPE;
     vr_nrdigchq        crapfdc.nrdigchq%TYPE;
@@ -3575,13 +3579,18 @@ EXCEPTION
 
         -- renato incluido aqui
         IF NOT (rw_crapreq.tprequis = 3 AND rw_crapreq.tpformul = 999) THEN -- Se nao for FC
+          vr_nrinichq_dig := vr_nrinichq*10;
+          vr_retorno  := gene0005.fn_calc_digito(pr_nrcalcul => vr_nrinichq_dig); -- O retorno é ignorado, pois a variável vr_nrinichq é atualiza pelo programa
+          vr_nrultchq_dig := vr_nrultchq*10;
+          vr_retorno  := gene0005.fn_calc_digito(pr_nrcalcul => vr_nrultchq_dig); -- O retorno é ignorado, pois a variável vr_nrinichq é atualiza pelo programa
+
           -- Insere as informações de detalhes do pedido da requisicao no XML
           pc_escreve_xml('<requisicao>'||
                            '<nrdconta>'||gene0002.fn_mask(rw_crapass.nrdconta,'zzzz.zzz.z')||'</nrdconta>'||
                            '<nrctaitg>'||gene0002.fn_mask(vr_nrctaitg,'9.999.999-9')       ||'</nrctaitg>'||
                            '<flchqitg>'||gene0002.fn_mask(rw_crapass.flchqitg,'zz.zzz')    ||'</flchqitg>'||
-                           '<nrinichq>'||gene0002.fn_mask(vr_nrinichq,'zzz.zzz.z')         ||'</nrinichq>'||
-                           '<nrultchq>'||gene0002.fn_mask(vr_nrultchq,'zzz.zzz.z')         ||'</nrultchq>'||
+                           '<nrinichq>'||gene0002.fn_mask(vr_nrinichq_dig,'zzz.zzz.z')         ||'</nrinichq>'||
+                           '<nrultchq>'||gene0002.fn_mask(vr_nrultchq_dig,'zzz.zzz.z')         ||'</nrultchq>'||
                            '<qtfoltal>'||to_char(rw_crapass.qtfoltal)  ||'</qtfoltal>'||
                            '<nmprimtl>'||substr(rw_crapass.nmprimtl,1,40)  ||'</nmprimtl>'||
                            '<nmsegntl>'||substr(vr_nmsegtal,1,38)  ||'</nmsegntl>'|| -- Colocado tamanho maximo de 38, pois se for maior vai distorcer o relatorio
