@@ -32,8 +32,8 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --			  20/08/2018 - Foi incluido a validação do segmento Q
   --						   (Felipe - Mouts).
   --
-  --              08/10/2018 - Incluido validação de UF para pretesto codigos 9 e 80 (SM_P352, Anderson-Alan, Supero)     
-  --
+  --              08/10/2018 - Incluido validação de UF para pretesto codigos 9 e 80 (SM_P352, Anderson-Alan, Supero)
+  --    
   --              18/06/2018 - Alteração de código de motivo. Alcemir Jr./Roberto Holz  -  Mout´s(PRB0041653).
 
   ---------------------------------------------------------------------------------------------------------------
@@ -473,7 +473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 12/03/2019
+    Data     : Novembro/2015.                   Ultima atualizacao: 18/07/2019
   
    Dados referentes ao programa:
   
@@ -579,6 +579,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                          
                  12/03/2019 - Validar numero do boleto zero no arquivo de remessa
                               (Lucas Ranghetti INC0031367)
+                              
+            18/07/2019 - inc0020612 Na rotina pc_trata_segmento_p_240_85, verificado a nulidade do valor de
+                         desconto quando o mesmo for obrigatório (Carlos)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -5656,7 +5659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     IF pr_rec_cobranca.tpdescto = 1 THEN 
       -- Valor Fixo ate a Data Informada
       pr_rec_cobranca.vldescto := pr_tab_linhas('VLDESCTO').numero;
-      IF pr_rec_cobranca.vldescto = 0 THEN
+      IF nvl(pr_rec_cobranca.vldescto,0) = 0 THEN
         -- Desconto a Conceder Nao Confere
         vr_rej_cdmotivo := '30';
         RAISE vr_exc_reje;
@@ -10849,6 +10852,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                ,pr_cdmotivo      => vr_rej_cdmotivo          --> Motivo da Rejeicao
                                ,pr_tab_rejeitado => vr_tab_rejeitado);       --> Tabela de Rejeitados
           END IF;
+
 
 
           -------------------  Header do Arquivo --------------------
