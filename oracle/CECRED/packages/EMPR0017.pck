@@ -28,6 +28,11 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0017 AS
           nrcpfcgc NUMBER(15) -- cpf/cnpj contratante
           );
 
+  --/
+  FUNCTION fn_get_cr_crapdat(pr_cdcooper IN crapcop.cdcooper%TYPE) 
+    RETURN BTCH0001.cr_crapdat%ROWTYPE;
+  --
+  --/
   PROCEDURE pc_valida_horario_ib(pr_cdcooper IN crapcop.cdcooper%TYPE,
                                  pr_des_reto OUT VARCHAR,
                                  pr_dscritic OUT VARCHAR2);
@@ -358,6 +363,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   vr_exc_erro EXCEPTION;
   vr_rowid  ROWID;
   --
+  FUNCTION fn_get_cr_crapdat(pr_cdcooper IN crapcop.cdcooper%TYPE) 
+    RETURN BTCH0001.cr_crapdat%ROWTYPE IS
+  --/
+  rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+  
+  BEGIN
+    --/
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;
+    --/
+    RETURN rw_crapdat;
+    
+  EXCEPTION WHEN OTHERS
+    THEN
+      RETURN rw_crapdat;
+  END fn_get_cr_crapdat;
   --> Funcao para formatar o numero em decimal conforme padrao da SOA
   FUNCTION fn_decimal_soa (pr_numero IN number) RETURN VARCHAR2 is
   BEGIN
@@ -3048,6 +3070,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   vidx PLS_INTEGER;
   vr_dscritic VARCHAR2(1000);
   vr_des_erro VARCHAR2(4000);
+  vr_dtmvtolt_ini DATE;
+  vr_dtmvtolt_fim DATE;
+  rw_crapdat BTCH0001.rw_crapdat%TYPE;
   --
   --
   PROCEDURE monta_xml_retorno IS
