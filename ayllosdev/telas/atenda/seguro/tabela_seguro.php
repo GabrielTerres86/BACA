@@ -40,7 +40,7 @@
 		<tbody>
             <?php foreach( $seguros as $seguro ) {
 				?>
-				<tr>
+				<tr onclick="alteraAcoes('<?php echo getByTagName($seguro->tags,'dscanal'); ?>'); return false;">
 					<td>
                         <?php echo getByTagName($seguro->tags,'dsTipo'); ?>
                         <input type="hidden" id="dsmotcan"   name="dsmotcan"   value="<?php echo getByTagName($seguro->tags,'dsmotcan');   ?>" />

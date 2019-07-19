@@ -189,6 +189,18 @@ function resetaVars(){
      vlmorada    = null;
 }
 
+function alteraAcoes(canal){
+	if(canal == 'SIGAS'){
+		$("#btAlterar").attr("disabled",true);
+		$("#btImprimir").attr("disabled",true);
+		$("#btCancelar").attr("disabled",true);
+	}else{
+		$("#btAlterar").attr("disabled",false);
+		$("#btImprimir").attr("disabled",false);
+		$("#btCancelar").attr("disabled",false);
+	}
+}
+
 //Controla as operações da descrição de seguros
 function controlaOperacao(operacao) {
 		
