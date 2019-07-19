@@ -38,6 +38,7 @@ BEGIN
     vr_tmp_craplot lote0001.cr_craplot_sem_lock%ROWTYPE;
     vr_nrseqted    crapmat.nrseqted%type; -- Recuperar a sequence da conta "poupanca"
     vr_codproduto        PLS_INTEGER := 0; -- Código da aplicação programada default
+	vr_tentativa         PLS_INTEGER := 0;
     vr_cdbccxlt    craprpp.cdbccxlt%type;
     
     vr_total_procs   PLS_INTEGER := 0;
@@ -178,85 +179,85 @@ BEGIN
               vr_cdbccxlt := 200;
               
               LOOP 
-      -- Cursor Implicito
-      Select max(nrseqdig) + 1
-        into vr_nrseqdig
-        from craprpp
-       where cdcooper = pr_cdcooper
-         and dtmvtolt = pr_dtmvtolt
-         and cdagenci = rw_craprpp.cdagenci
-         and cdbccxlt = 200 -- fixo
-         and nrdolote = 1537; -- fixo
-    
-      If vr_nrseqdig is null Then
-        vr_nrseqdig := 1;
-      End If;
-
+                -- Cursor Implicito
+                Select max(nrseqdig) + 1
+                  into vr_nrseqdig
+                  from craprpp
+                 where cdcooper = pr_cdcooper
+                   and dtmvtolt = pr_dtmvtolt
+                   and cdagenci = rw_craprpp.cdagenci
+                   and cdbccxlt = 200 -- fixo
+                   and nrdolote = 1537; -- fixo
+              
+                If vr_nrseqdig is null Then
+                  vr_nrseqdig := 1;
+                End If;  
+                           
                 BEGIN
-                Insert into craprpp
-                  (nrctrrpp,
-                   cdsitrpp,
-                   cdcooper,
-                   cdageass,
-                   cdagenci,
-                   tpemiext,
-                   dtcalcul,
-                   dtvctopp,
-                   cdopeori,
-                   cdageori,
-                   dtinsori,
-                   dtrnirpp,
-                   dtiniper,
-                   dtfimper,
-                   dtinirpp,
-                   dtdebito,
-                   flgctain,
-                   nrdolote,
-                   cdbccxlt,
-                   cdsecext,
-                   nrdconta,
-                   vlprerpp,
-                   dtimpcrt,
-                   indebito,
-                   nrseqdig,
-                   dtmvtolt,
-                   dtaltrpp,
-                   vlabcpmf,
-                   vlabdiof,
-                   cdprodut,
-                   dsfinali)
+                  Insert into craprpp
+                    (nrctrrpp,
+                     cdsitrpp,
+                     cdcooper,
+                     cdageass,
+                     cdagenci,
+                     tpemiext,
+                     dtcalcul,
+                     dtvctopp,
+                     cdopeori,
+                     cdageori,
+                     dtinsori,
+                     dtrnirpp,
+                     dtiniper,
+                     dtfimper,
+                     dtinirpp,
+                     dtdebito,
+                     flgctain,
+                     nrdolote,
+                     cdbccxlt,
+                     cdsecext,
+                     nrdconta,
+                     vlprerpp,
+                     dtimpcrt,
+                     indebito,
+                     nrseqdig,
+                     dtmvtolt,
+                     dtaltrpp,
+                     vlabcpmf,
+                     vlabdiof,
+                     cdprodut,
+                     dsfinali)
                   VALUES
-                  (vr_nrseqted,
-                   rw_craprpp.cdsitrpp,
-                   rw_craprpp.cdcooper,
-                   rw_craprpp.cdagenci,
-                   rw_craprpp.cdagenci,
-                   rw_craprpp.tpemiext,
-                   rw_craprpp.dtcalcul,
-                   rw_craprpp.dtvctopp,
-                   rw_craprpp.cdopeori,
-                   rw_craprpp.cdageori,
-                   rw_craprpp.dtinsori, -- Mantendo a data original da RPP nao do novo produto
-                   rw_craprpp.dtrnirpp,
-                   rw_craprpp.dtiniper,
-                   rw_craprpp.dtfimper,
-                   pr_dtmvtolt,
-                   rw_craprpp.dtdebito,
-                   1,
-                   1537,
-                   vr_cdbccxlt,
-                   rw_craprpp.cdsecext,
-                   rw_craprpp.nrdconta,
-                   rw_craprpp.vlprerpp,
-                   null, -- Contrato não foi impresso da Apl. Prog.
-                   0,
-                   vr_nrseqdig,
-                   pr_dtmvtolt,
-                   pr_dtmvtolt, -- Alteracao do Plano
-                   rw_craprpp.vlabcpmf,
-                   rw_craprpp.vlabdiof,
-                   vr_codproduto, -- Produto AP Default
-                   ' ');
+                    (vr_nrseqted,
+                     rw_craprpp.cdsitrpp,
+                     rw_craprpp.cdcooper,
+                     rw_craprpp.cdagenci,
+                     rw_craprpp.cdagenci,
+                     rw_craprpp.tpemiext,
+                     rw_craprpp.dtcalcul,
+                     rw_craprpp.dtvctopp,
+                     rw_craprpp.cdopeori,
+                     rw_craprpp.cdageori,
+                     rw_craprpp.dtinsori, -- Mantendo a data original da RPP nao do novo produto
+                     rw_craprpp.dtrnirpp,
+                     rw_craprpp.dtiniper,
+                     rw_craprpp.dtfimper,
+                     pr_dtmvtolt,
+                     rw_craprpp.dtdebito,
+                     1,
+                     1537,
+                     vr_cdbccxlt,
+                     rw_craprpp.cdsecext,
+                     rw_craprpp.nrdconta,
+                     rw_craprpp.vlprerpp,
+                     null, -- Contrato não foi impresso da Apl. Prog.
+                     0,
+                     vr_nrseqdig,
+                     pr_dtmvtolt,
+                     pr_dtmvtolt, -- Alteracao do Plano
+                     rw_craprpp.vlabcpmf,
+                     rw_craprpp.vlabdiof,
+                     vr_codproduto, -- Produto AP Default
+                     ' ');
                 EXCEPTION
                       When DUP_VAL_ON_INDEX then
                          vr_tentativa := vr_tentativa + 1;
@@ -267,9 +268,9 @@ BEGIN
                          -- aguardar 1 seg. antes de tentar novamente
                          sys.dbms_lock.sleep(1); 
                          continue;
-                    When Others Then
+                      When Others Then
                             vr_dscritic := 'Erro na insercao RPP: '||pr_cdcooper||' '||rw_craprpp.nrdconta||' '||vr_codproduto||' '||rw_craprpp.dtvctopp||' '||rw_craprpp.vlprerpp||' '||sqlerrm;
-                          raise vr_exc_erro;
+                            raise vr_exc_erro;
                 END;
                 EXIT;
              END LOOP;
@@ -316,9 +317,9 @@ BEGIN
                raise vr_exc_erro;
            END IF;
     ELSE
-       
+             
       IF ((pr_cdprogra = 'CRPS148') AND  (pr_vlsdrdpp > 0)) THEN 
-    
+
          vr_nrseqlrg := fn_sequence('CRAPLOT'
                                    ,'NRSEQDIG'
                                    ,  pr_cdcooper||';'
@@ -326,7 +327,7 @@ BEGIN
                                    ||'999;'  --cdagenci
                                    ||'400;'  --cdbccxlt
                                    ||'999'); --nrdolote
-             Begin
+         Begin
            INSERT INTO
            craplrg
            (
