@@ -23,7 +23,7 @@
 
     Programa  : b1wgen0028.p
     Autor     : Guilherme
-    Data      : Marco/2008                    Ultima Atualizacao: 13/06/2019
+    Data      : Marco/2008                    Ultima Atualizacao: 22/07/2019
     
     Dados referentes ao programa:
 
@@ -565,6 +565,9 @@
                09/05/2019 - Incluido campo inupgrad da tabela crawcrd na temp-table 
 				            Alcemir Mouts (PRB0041641).
 		       
+               22/07/2019 - Apenas permitir incluir proposta de cartao se nao tiver conta cartao gerada 
+                            para aquela administradora (Lucas Ranghetti INC0019771)
+                            
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -2694,19 +2697,27 @@ PROCEDURE valida_nova_proposta:
                      crawcrd.cdadmcrd >= 10          AND
                      /*validado o numero do contrato para tratar o modo de edicao da proposta*/
                      crawcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
-
-                IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ THEN
+                
+                /* Se proposta estiver cancelada e conta cartao ainda nao foi gerada */
+                IF   crawcrd.insitcrd = 6 AND crawcrd.nrcctitg = 0 THEN
                      NEXT.
                    
                 IF   crawcrd.cdadmcrd = crapadc.cdadmcrd  THEN
-                     DO:
-                        
-                         ASSIGN aux_cdcritic = 0
-                                aux_dscritic =
-                                      "Ja existe cartao Bancoob desta " +
-                                      "modalidade para este CPF na " +
-                                      crapcop.nmrescop + ". " +
-                                      "Operacao nao permitida.".
+                     DO:                        
+                         IF  crawcrd.insitcrd = 6 AND crawcrd.nrcctitg > 0 THEN
+                             ASSIGN aux_cdcritic = 0
+                                    aux_dscritic =
+                                        "Ja existe cartao Bancoob desta " +
+                                        "modalidade para este CPF na " +
+                                        crapcop.nmrescop + ". " +
+                                        "Para reativar o cartao acesse o SipagNet.".
+                         ELSE  
+                             ASSIGN aux_cdcritic = 0
+                                    aux_dscritic =
+                                          "Ja existe cartao Bancoob desta " +
+                                          "modalidade para este CPF na " +
+                                          crapcop.nmrescop + ". " +
+                                          "Operacao nao permitida.".
             
                          RUN gera_erro (INPUT par_cdcooper,
                                         INPUT par_cdagenci,
@@ -2734,7 +2745,8 @@ PROCEDURE valida_nova_proposta:
                                                /*validado o numero do contrato para tratar o modo de edicao da proposta*/
                                                cratcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
 
-	                        IF   cratcrd.insitcrd = 6 /* Proposta cancelada */ THEN
+                            /* Se proposta estiver cancelada e conta cartao ainda nao foi gerada */
+                            IF   cratcrd.insitcrd = 6 AND cratcrd.nrcctitg = 0 THEN
                                  NEXT.
 
                             FIND cratadc WHERE cratadc.cdcooper = par_cdcooper and
@@ -2742,11 +2754,20 @@ PROCEDURE valida_nova_proposta:
 
                             IF UPPER(aux_nmbandei) = UPPER(cratadc.nmbandei) THEN
                                 DO:
-                                     ASSIGN aux_cdcritic = 0
-                                            aux_dscritic =
-                                                  "Ja existe cartao Bancoob " +
-                                                  "solicitado para este CPF. " +
-                                                  "Operacao nao permitida.".
+                                
+                                    /* Se proposta estiver cancelada e conta cartao ainda nao foi gerada */
+                                    IF  cratcrd.insitcrd = 6 AND cratcrd.nrcctitg > 0 THEN                                         
+                                        ASSIGN aux_cdcritic = 0
+                                               aux_dscritic =
+                                                      "Ja existe cartao Bancoob " +
+                                                      "solicitado para este CPF. " +
+                                                      "Para reativar o cartao acesse o SipagNet.".
+                                    ELSE
+                                        ASSIGN aux_cdcritic = 0
+                                               aux_dscritic =
+                                                      "Ja existe cartao Bancoob " +
+                                                      "solicitado para este CPF. " +
+                                                      "Operacao nao permitida.".
                 
                                      RUN gera_erro (INPUT par_cdcooper,
                                                     INPUT par_cdagenci,
