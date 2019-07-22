@@ -619,7 +619,7 @@ BEGIN
            '1'                                 || -- "Tipo do Envio do Kit Boas Vindas - (1-Cliente / 2-Corretor) Projeto MR0925 - ST-163"  Inteiro[001]
            nvl(trim(rw.flg_email),'N')         || -- "Flg Cliente Possuí E-mail (S/N)  Projeto MR0925 - ST-668"  Texto[001]
            rw.flg_fone                         || -- "Flg Cliente Possuí Celular (S/N) Projeto MR0925 - ST-668"  Texto[001]
-           'S'                                 || -- "Flg Melhor Data (S/N) ST-1302"  Texto[001]
+           'N'                                 || -- "Flg Melhor Data (S/N) ST-1302"  Texto[001]
            RPAD('0', 5, '0')                   || -- "Taxa Melhor Data (99999) ST-1302"  Valor[005]
            RPAD('0', 8, '0')                      -- "Dat-pgtoprim   (DDMMAAAA) ST-1303"  Data[008]           
     ); 
