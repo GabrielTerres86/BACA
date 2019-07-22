@@ -3,10 +3,10 @@
 DECLARE
  VR_NRSEQRDR CRAPRDR.NRSEQRDR%TYPE;
 BEGIN
-INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1495, '1495 - Nao foi possivel efetuar o procedimento. Tente novamente ou contacte o atendimento.', 4, 0);
-INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1465, '1465 - Faixa com valor invalido.', 4, 0);
-INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1466, '1466 - Informacoes passadas iguais as informacoes da base de dadaos.', 4, 0);
-INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1467, '1467 - Saldo zerado ou negativo.', 4, 0);
+
+--INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1465, '1465 - Faixa com valor invalido.', 4, 0);
+--INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1466, '1466 - Informacoes passadas iguais as informacoes da base de dadaos.', 4, 0);
+--INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1467, '1467 - Saldo zerado ou negativo.', 4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1468, '1468 - Recebido arquivo de conciliação com data antiga e será processado apenas o arquivo com a data parametrizada', 4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1469, '1469 - Conciliação não confere com o Layout definido, pois existe menos de 27 caracteres em linha detalhe! O mesmo não será processado', 4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1470, '1470 - Valor da Aplic. B3 (VR_VLAPLB3) diferente do valor da aplicação no Aimaro (VR_APLAIMARO) e com tolerancia de (VR_PRTOLERANCIA)', 4, 0);
@@ -33,7 +33,7 @@ INSERT INTO crapcri (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1491, '1491
 INSERT INTO crapcri (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1492, '1492 - Não será possível enviar! A conciliação do dia anterior ainda não foi efetuada!',4, 0);
 INSERT INTO crapcri (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1493, '1493 - Resgate com cotas zerada!',4, 0);
 INSERT INTO crapcri (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1494, '1494 - Não foi possível carregar o extrato!',4, 0);                   
-       -- 1495                         
+--INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1495, '1495 - Nao foi possivel efetuar o procedimento. Tente novamente ou contacte o atendimento.', 4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1496, '1496 - Processo de PR_DSTIPPRO da B3 não PR_DSFASPRO e já ultrapassou o limite das PR_HRTOLMAX horas!', 4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1497, '1497 - Processo de PR_DSTIPPRO da B3 não PR_DSFASPRO e está em atraso!', 4, 0);
 INSERT INTO CRAPCRI (CDCRITIC, DSCRITIC, TPCRITIC, FLGCHAMA) VALUES (1498, '1498 - Critica origem B3: ', 4, 0);
@@ -113,5 +113,6 @@ EXCEPTION
   WHEN OTHERS THEN
     DBMS_APPLICATION_INFO.SET_MODULE(module_name => 'PJ411_F2_P2', action_name => 'Carga Parametros');
     CECRED.pc_internal_exception (pr_cdcooper => 0); 
+	RAISE_APPLICATION_ERROR(-20510,'ERRO NAO TRATADO - '||SQLERRM);
 END;
 /
