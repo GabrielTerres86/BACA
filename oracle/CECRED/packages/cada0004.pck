@@ -4477,6 +4477,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              07/03/2019 - Correcao na mensagem de cadastro vencido (Cassia de Oliveira - GFT)
 	--
 	--              25/02/2019 - P442 - Envio da Taxa na mensagem do PreAprovado (Marcos-Envolti)
+  
+                  22/07/2019 - Alteração de mensagens de bloqueio judicial para contas monitoradas (RITM0022588 - Joao Mannes (Mouts))
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -5000,6 +5002,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
              AND tdb.dtvencto <= pr_dtmvtoan; -- desconsidera borderôs com títulos que venceram em dias não úteis e que podem ser pagos na data atual
       rw_craptdb_atrasados cr_craptdb_atrasados%ROWTYPE;
     
+    
+    --Busca os processos de contas monitoradas 
+    CURSOR cr_processos_monitorados(pr_cdcooper crapbdt.cdcooper%TYPE
+											     	   	   ,pr_nrdconta crapbdt.nrdconta%TYPE) IS
+      SELECT DISTINCT b.dsprocesso, b.nmjuiz, a.vlsaldo
+        FROM TBBLQJ_MONITORA_ORDEM_BLOQ a
+       INNER JOIN TBBLQJ_ORDEM_BLOQ_DESBLOQ b on (b.idordem = a.idordem)
+       WHERE a.cdcooper = pr_cdcooper
+         AND a.nrdconta = pr_nrdconta;
+    rw_processos_monitorados cr_processos_monitorados%rowtype;
+
     --------------> VARIAVEIS <----------------
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
@@ -5065,6 +5078,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_dssituacao tbcc_situacao_conta.dssituacao%TYPE;
     
     vr_id_conta_monitorada    NUMBER(1);
+
+    vr_processos_monitorados varchar(2000);
 
   BEGIN
   
@@ -6102,7 +6117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 
     -- Busca os processos judiciais
     FOR rw_crapblj IN cr_crapblj LOOP
-      pc_cria_registro_msg(pr_dsmensag             => 'Bloqueio judicial. Processo '||rw_crapblj.nrproces||'. '||rw_crapblj.dsjuizem||'.',
+      pc_cria_registro_msg(pr_dsmensag             => 'Realizado bloqueio judicial. Processo '||rw_crapblj.nrproces||'. '||rw_crapblj.dsjuizem||'.',
                            pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);    
     END LOOP;
 	
@@ -6344,8 +6359,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         RAISE vr_exc_erro;
       END IF;
       
+      FOR rw_processos_monitorados IN cr_processos_monitorados(pr_cdcooper => pr_cdcooper,
+                                                               pr_nrdconta => pr_nrdconta) LOOP
+        vr_processos_monitorados := vr_processos_monitorados || ' Processo: '||rw_processos_monitorados.dsprocesso||'. '||rw_processos_monitorados.nmjuiz||'. Saldo a bloquear: '|| rw_processos_monitorados.vlsaldo||'. ';
+      END LOOP;
       IF vr_id_conta_monitorada = 1 THEN
-        pc_cria_registro_msg(pr_dsmensag             => 'Cooperado possui bloqueio judicial. Conforme normativa do BACEN, débitos não serão habilitados.',
+        pc_cria_registro_msg(pr_dsmensag             => 'Cooperado possui bloqueio judicial. '|| vr_processos_monitorados||'Conforme normativa do BACEN, débitos não serão autorizados.',
                              pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
       END IF;
     END;
