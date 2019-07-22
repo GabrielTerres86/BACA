@@ -6,17 +6,17 @@
 //***                                                                  						          ***//
 //*** Objetivo  : Grava os dados da tela de custodia.                                       ***//
 //***                                                                  						          ***//
-//*** Alterações: 																			                                    ***//
+//*** Alterações: 		21/03/2019 - Adição de tolerânica para conciliação - projeto 411.3 (Petter Rafael - Envolti)
 //*********************************************************************************************//
 
 	session_start();
 
-	// Includes para controle da session, vari�veis globais de controle, e biblioteca de fun��es
+	// Includes para controle da session, varíaveis globais de controle, e biblioteca de funções
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");
 	require_once("../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo m�todo POST
+	// Verifica se tela foi chamada pelo método POST
 	isPostMethod();
 
 	// Classe para leitura do xml de retorno
@@ -44,6 +44,7 @@
 	$reghab = (isset($_POST['reghab']))  ? $_POST['reghab']  : '' ;
 	$rgthab = (isset($_POST['rgthab']))  ? $_POST['rgthab']  : '' ;
 	$cnchab = (isset($_POST['cnchab']))  ? $_POST['cnchab']  : '' ;
+	$perctolval = (isset($_POST['perctolval']))  ? $_POST['perctolval']  : '' ;
 
 	/*$dataB3 = date("d/m/Y", strtotime($originalDate));*/
  
@@ -59,19 +60,11 @@
 	$xmlCarregaDados .= " 		<reghab>".$reghab."</reghab>";
 	$xmlCarregaDados .= " 		<rgthab>".$rgthab."</rgthab>";
 	$xmlCarregaDados .= " 		<cnchab>".$cnchab."</cnchab>";
+	$xmlCarregaDados .= " 		<perctolval>".$perctolval."</perctolval>";
 	$xmlCarregaDados .= " 	</Dados>";
 	$xmlCarregaDados .= "</Root>";
 
-	$xmlResult = mensageria($xmlCarregaDados
-		,"TELA_CUSAPL"
-		,"CUSAPL_GRAVAC_PARAMS"
-		,$glbvars["cdcooper"]
-		,$glbvars["cdagenci"]
-		,$glbvars["nrdcaixa"]
-		,$glbvars["idorigem"]
-		,$glbvars["cdoperad"]
-		,"</Root>");
-
+	$xmlResult = mensageria($xmlCarregaDados, "TELA_CUSAPL", "CUSAPL_GRAVAC_PARAMS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObject = getObjectXML($xmlResult);
 
 	echo 'hideMsgAguardo();';
