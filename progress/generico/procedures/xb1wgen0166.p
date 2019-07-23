@@ -311,6 +311,9 @@ PROCEDURE valores_entrada:
             WHEN "new_dtlimdeb" THEN new_dtlimdeb = INTEGER(tt-param.valorCampo).
             WHEN "old_dtlimdeb" THEN old_dtlimdeb = INTEGER(tt-param.valorCampo).
             WHEN "dtferiad"     THEN aux_dtferiad = DATE(tt-param.valorCampo).
+			WHEN "nrdddemp"     THEN aux_nrdddemp = INTEGER(tt-param.valorCampo).
+            WHEN "old_nrdddemp" THEN old_nrdddemp = INTEGER(tt-param.valorCampo).
+            WHEN "new_nrdddemp" THEN new_nrdddemp = INTEGER(tt-param.valorCampo).
            
             WHEN "idtpempr"     THEN aux_idtpempr = STRING(tt-param.valorCampo).
             WHEN "nrdconta"     THEN aux_nrdconta = INTE(tt-param.valorCampo).
