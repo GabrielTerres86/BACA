@@ -1380,7 +1380,7 @@ begin
                               pr_dtmvtolt => to_date('19/07/2019', 'dd/mm/yyyy'),
                               pr_dtmvtopr => to_date('22/07/2019', 'dd/mm/yyyy'),
                               pr_nrctremp => 658073,
-                              pr_dsjustificativa => 'Ajuste realizado através de BACA',
+                              pr_dsjustificativa => 'Ajuste realizado atraves de BACA',
                               pr_cdcritic => :pr_cdcritic,
                               pr_dscritic => :pr_dscritic);
 end;
