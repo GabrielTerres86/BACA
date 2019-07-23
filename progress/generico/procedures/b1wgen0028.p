@@ -2698,13 +2698,21 @@ PROCEDURE valida_nova_proposta:
                      /*validado o numero do contrato para tratar o modo de edicao da proposta*/
                      crawcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
                 
-                /* Se proposta estiver cancelada e conta cartao ainda nao foi gerada */
-                IF   crawcrd.insitcrd = 6 AND crawcrd.nrcctitg = 0 THEN
-                     NEXT.
-                   
+                IF crapass.inpessoa = 1 THEN
+                   DO:
+                      /* Se proposta estiver cancelada e conta cartao ainda nao foi gerada */
+                      IF  crawcrd.insitcrd = 6 AND crawcrd.nrcctitg = 0 THEN
+                          NEXT.
+                   END.
+                ELSE
+                IF  crawcrd.insitcrd = 6 THEN
+                    NEXT.
+                
                 IF   crawcrd.cdadmcrd = crapadc.cdadmcrd  THEN
-                     DO:                        
-                         IF  crawcrd.insitcrd = 6 AND crawcrd.nrcctitg > 0 THEN
+                     DO:               
+                         IF  crawcrd.insitcrd = 6 AND 
+                             crawcrd.nrcctitg > 0 AND 
+                             crapass.inpessoa = 1 THEN
                              ASSIGN aux_cdcritic = 0
                                     aux_dscritic =
                                         "Ja existe cartao Bancoob desta " +
@@ -2745,18 +2753,25 @@ PROCEDURE valida_nova_proposta:
                                                /*validado o numero do contrato para tratar o modo de edicao da proposta*/
                                                cratcrd.nrctrcrd <> par_nrctrcrd NO-LOCK:
 
-                            /* Se proposta estiver cancelada e conta cartao ainda nao foi gerada */
-                            IF   cratcrd.insitcrd = 6 AND cratcrd.nrcctitg = 0 THEN
-                                 NEXT.
-
+                            IF crapass.inpessoa = 1 THEN
+                               DO:  
+                                   /* Se proposta estiver cancelada e conta cartao ainda nao foi gerada */
+                                  IF  cratcrd.insitcrd = 6 AND cratcrd.nrcctitg = 0 THEN
+                                      NEXT.
+                               END.
+                            ELSE
+                            IF  cratcrd.insitcrd = 6 THEN
+                                NEXT.                           
+                           
                             FIND cratadc WHERE cratadc.cdcooper = par_cdcooper and
                                                cratadc.cdadmcrd = cratcrd.cdadmcrd NO-LOCK NO-ERROR NO-WAIT.
 
                             IF UPPER(aux_nmbandei) = UPPER(cratadc.nmbandei) THEN
                                 DO:
-                                
                                     /* Se proposta estiver cancelada e conta cartao ainda nao foi gerada */
-                                    IF  cratcrd.insitcrd = 6 AND cratcrd.nrcctitg > 0 THEN                                         
+                                    IF  cratcrd.insitcrd = 6 AND 
+                                        cratcrd.nrcctitg > 0 AND 
+                                        crapass.inpessoa = 1 THEN
                                         ASSIGN aux_cdcritic = 0
                                                aux_dscritic =
                                                       "Ja existe cartao Bancoob " +
