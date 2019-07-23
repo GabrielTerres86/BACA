@@ -1,5 +1,4 @@
 CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
-
 /*..............................................................................
 
    Programa: PREJ0003                        Antigo: Nao ha
@@ -28,6 +27,7 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0003 AS
                             ou de desconto de título em prejuízo (Fabio - AMcom). 
                18/12/2018 - Correção na pc_debita_juros60_prj para zerar os campos de juros+60 na CRAPSLD.
                             P450 - Reginaldo/AMcom
+
 
 ..............................................................................*/
 

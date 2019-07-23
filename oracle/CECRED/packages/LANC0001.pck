@@ -258,24 +258,9 @@ PROCEDURE pc_estorna_saque_conta_prej(pr_cdcooper IN  craplcm.cdcooper%TYPE
                                 , pr_cdcritic OUT crapcri.cdcritic%TYPE
                                 , pr_dscritic OUT crapcri.dscritic%TYPE);
 
-
-PROCEDURE pc_debito_prejuizo  ( pr_cdcooper IN  craplcm.cdcooper%TYPE
-                              , pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE
-                              , pr_cdagenci IN  craplcm.cdagenci%TYPE
-                              , pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
-                              , pr_nrdolote IN  craplcm.nrdolote%TYPE
-                              , pr_nrdconta IN  craplcm.nrdconta%TYPE
-                              , pr_nrdocmto IN  craplcm.nrdocmto%TYPE
-                              , pr_cdhistor IN  craplcm.cdhistor%TYPE
-                              , pr_vllanmto IN  craplcm.vllanmto%TYPE
-                              , pr_cdoperad IN  craplcm.cdoperad%TYPE
-                              , pr_cdorigem IN  craplcm.cdorigem%TYPE
-                              , pr_rowidlcm IN  ROWID
-                              ----> OUT <----
-                              , pr_cdcritic  OUT PLS_INTEGER
-                              , pr_dscritic  OUT VARCHAR2);
-
 END LANC0001;
+
+
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
   ---------------------------------------------------------------------------------------------------------------
@@ -302,6 +287,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
   --
   -- Alterado  : 04/12/2018 - Atendimento estória 12541 - Tratamento saldo deposito em cheque em conta em prejuizo
   --                          (Renato - AMcom - PRJ 450)
+  --
+  --             25/04/2019 - Remoção da procedure "pc_debito_prejuizo" e retirada do tratamento para incremento
+  --                          do saldo do prejuízo em tempo real, quando é lançado um débito (o incremento do saldo
+  --                          do prejuízo passará a ser realizado no processo noturno, através de procedure específica
+  --                          criada na PREJ0006, que será chamada pela PC_CRPS752.
+  --                          (P450 - Reginaldo/AMcom)
   --
   --             03/06/2019 - Incluida validacao para nao atualizar/inserir CRAPLOT dos lotes removidos na primeira fase
   --                          do projeto de remocao de lotes (Pagamentos, Transferencias, Poupanca Programada)
