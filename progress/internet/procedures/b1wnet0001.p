@@ -297,6 +297,9 @@
                17/10/2018 - Impedir criacao de boleto com instrucao de protesto automatico para boletos
                             do tipo Duplicata de Servico (PRJ352 - Andre Clemer - Supero )
       
+	           04/04/2019 - Ajuste na rotina cria_tt-consulta-blt para não incluir informação
+			                de titulos descontados liquidados (Daniel - Ailos)
+      
 .............................................................................*/
 
 
@@ -4580,7 +4583,7 @@ DO TRANSACTION:
                         craptdb.nrcnvcob = crapcob.nrcnvcob   AND
                         craptdb.nrdocmto = crapcob.nrdocmto   NO-LOCK NO-ERROR.
                        
-     IF   AVAILABLE craptdb THEN
+	 IF   AVAILABLE craptdb AND craptdb.insitapr <> 2 AND craptdb.vlsldtit > 0 THEN
           DO:
               CASE craptdb.insittit:
                    WHEN 0 THEN ASSIGN tt-consulta-blt.dssituac =
