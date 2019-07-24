@@ -3658,8 +3658,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
           vr_obj_generic3 := json();
           vr_obj_generic3.put('numContrato', vr_tab_dados_epr(vr_idxempr).nrctremp);
           vr_obj_generic3.put('dataContratacao', este0002.fn_data_ibra_motor(vr_tab_dados_epr(vr_idxempr).dtmvtolt));
-          vr_obj_generic3.put('valorAberto', este0001.fn_decimal_ibra(vr_tab_dados_epr(vr_idxempr).vlsdeved)); --P637
-          vr_obj_generic3.put('valorPrestacao', este0001.fn_decimal_ibra(vr_tab_dados_epr(vr_idxempr).vlpreemp)); --P637
+          vr_obj_generic3.put('valorAberto'
+                             ,este0001.fn_decimal_ibra(vr_tab_dados_epr(vr_idxempr).vlsdeved)); --P637
       
           -- Adicionar Operação na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
