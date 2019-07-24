@@ -5,7 +5,7 @@ Foram ajustadas as contas em 2018, porém faltaram algumas
 Ana - 24/07/2019
 
 --validando uma das contas após atualização -> dtdpagto deve ter informação
-select cdcooper, a.nrdconta, a.nrctremp, dtmvtolt, dtdpagto, a.dtdbaixa, dtatufin, 
+select cdcooper, a.nrdconta, a.nrctremp, dtmvtolt, dtdpagto, a.dtdbaixa, dtatufin
 from crapcyb a where dtdbaixa IS NULL and cdorigem = 1 and dtprejuz is null and nrdconta = 141488 and cdcooper = 5
 
 */
@@ -14,6 +14,7 @@ DECLARE
   vr_cdcritic   NUMBER;
   vr_dscritic   VARCHAR2(2000);
   vr_idprglog   tbgen_prglog.idprglog%TYPE := 0;
+  rw_crapdat    btch0001.cr_crapdat%rowtype;
 
   CURSOR cr_contas IS
     select (select min(z.dtmvtolt)
@@ -43,7 +44,7 @@ DECLARE
      and (s.cdcooper, s.nrdconta) in
          (select d.cdcooper, d.nrdconta
             from crapcyb d
-           where d.dtatufin = trunc(sysdate) - 1
+           where d.dtatufin = rw_crapdat.dtmvtoan --trunc(sysdate) - 1
              and d.dtdbaixa is null
              and d.dtdpagto is null
              and d.cdorigem = 1)
@@ -53,13 +54,20 @@ DECLARE
            where (x.vlsddisp < 0)
              and (x.cdcooper = s.cdcooper)
              and (x.nrdconta = s.nrdconta)
-             and (x.dtmvtolt = trunc(sysdate)-1)
+             and (x.dtmvtolt = rw_crapdat.dtmvtoan) --trunc(sysdate)-1)
              and (((nvl(x.vlsddisp, 0) * -1) > nvl(x.vllimcre, 0)) and
                  (nvl(x.vllimutl, 0) >= nvl(x.vllimcre, 0))))
                  order by cdcooper, nrdconta; 
    rw_contas cr_contas%ROWTYPE;
   
 BEGIN
+
+  OPEN btch0001.cr_crapdat(pr_cdcooper => 3);
+  FETCH btch0001.cr_crapdat INTO rw_crapdat;
+  CLOSE btch0001.cr_crapdat;
+
+--  dbms_output.put_line('Data para leitura das contas:'||rw_crapdat.dtmvtoan);
+
   --Busca as contas a atualizar
   FOR rw_contas IN cr_contas LOOP
     BEGIN
@@ -93,7 +101,7 @@ BEGIN
     END;
   END LOOP;
 
-  COMMIT;
+--  COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
