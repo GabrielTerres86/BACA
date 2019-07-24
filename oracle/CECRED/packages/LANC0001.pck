@@ -747,10 +747,12 @@ BEGIN
     -- Se é um lançamento de crédito e se as regras de negócio do prejuízo já estão ativas
     IF vr_reg_historico.indebcre = 'C' THEN
       -- Identifica se a conta está em prejuízo
-      vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta);
+      vr_inprejuz := prej0003.fn_verifica_preju_conta(pr_cdcooper,
+                                                      pr_nrdconta);
 
-      IF vr_inprejuz AND vr_reg_historico.intransf_cred_prejuizo = 1
-      AND PREJ0003.fn_verifica_flg_ativa_prju(pr_cdcooper) THEN
+      IF  vr_inprejuz
+      AND vr_reg_historico.intransf_cred_prejuizo = 1
+      AND prej0003.fn_verifica_flg_ativa_prju(pr_cdcooper) THEN
         pr_tab_retorno.nmtabela := 'TBCC_PREJUIZO_LANCAMENTO';
 
         vr_vltransf := pr_vllanmto;
@@ -782,8 +784,11 @@ BEGIN
         IF vr_vltransf > 0 THEN
           -- Calcula o "nrseqdig"
 
-          IF fn_verifica_cred_bloq_futuro (pr_cdcooper, pr_nrdconta, pr_dtmvtolt
-                                     , pr_cdhistor, pr_nrdocmto) = 0 then
+          IF fn_verifica_cred_bloq_futuro(pr_cdcooper,
+                                          pr_nrdconta,
+                                          pr_dtmvtolt,
+                                          pr_cdhistor,
+                                          pr_nrdocmto) = 0 THEN
 
           vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
                                     ,pr_nmdcampo => 'NRSEQDIG'
@@ -792,8 +797,8 @@ BEGIN
                                     '1;100;650009');
 
           -- Efetua débito do valor que será transferido para a Conta Transitória (créditos bloqueados por prejuízo em conta)
-          INSERT INTO craplcm (
-              dtmvtolt
+          INSERT INTO craplcm
+			 (dtmvtolt
             , cdagenci
             , cdbccxlt
             , nrdolote
@@ -808,10 +813,9 @@ BEGIN
             , hrtransa
             , cdoperad
             , cdcooper
-            , cdorigem
-          )
-          VALUES (
-              pr_dtmvtolt
+            ,cdorigem)
+        VALUES
+             (pr_dtmvtolt
             , pr_cdagenci
             , pr_cdbccxlt
             , 650009
@@ -826,12 +830,11 @@ BEGIN
             , gene0002.fn_busca_time
             , 1
             , pr_cdcooper
-            , 5
-          );
+            ,5);
 
           -- Insere lançamento do crédito transferido para a Conta Transitória
-          INSERT INTO TBCC_PREJUIZO_LANCAMENTO (
-                 dtmvtolt
+          INSERT INTO TBCC_PREJUIZO_LANCAMENTO 
+                (dtmvtolt
                , cdagenci
                , nrdconta
                , nrdocmto
@@ -841,9 +844,9 @@ BEGIN
                , cdoperad
                , cdcooper
                , cdorigem
-          )
-          VALUES (
-                 pr_dtmvtolt
+            )
+          VALUES
+               ( pr_dtmvtolt
                , pr_cdagenci
                , pr_nrdconta
                , pr_nrdocmto
@@ -853,34 +856,10 @@ BEGIN
                , 1
                , pr_cdcooper
                , 5
-          );
+               );
         END IF;
       END IF;
      END IF;
-    ELSIF vr_reg_historico.indebcre = 'D' THEN
-
-      -- Realizar processo caso ocorra debito em conta em prejuizo
-      pc_debito_prejuizo  ( pr_cdcooper => pr_cdcooper
-                          , pr_dtmvtolt => pr_dtmvtolt
-                          , pr_cdagenci => pr_cdagenci
-                          , pr_cdbccxlt => pr_cdbccxlt
-                          , pr_nrdolote => pr_nrdolote
-                          , pr_nrdconta => pr_nrdconta
-                          , pr_nrdocmto => pr_nrdocmto
-                          , pr_cdhistor => pr_cdhistor
-                          , pr_vllanmto => pr_vllanmto
-                          , pr_cdoperad => pr_cdoperad
-                          , pr_cdorigem => pr_cdorigem
-                          , pr_rowidlcm => pr_tab_retorno.rowidlct
-                          ----> OUT <----
-                          , pr_cdcritic => pr_cdcritic
-                          , pr_dscritic => pr_dscritic );
-
-      IF pr_cdcritic > 0 OR
-         pr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-    END IF;
-
     END IF;
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -1820,126 +1799,6 @@ EXCEPTION
     pr_dscritic := 'Erro nao tratado na rotina "LANC0001.pc_estorna_saque_conta_prej": ' || SQLERRM;
 
 END pc_estorna_saque_conta_prej;
-
--- Realizar processo caso ocorra debito em conta em prejuizo
-PROCEDURE pc_debito_prejuizo  ( pr_cdcooper IN  craplcm.cdcooper%TYPE
-                              , pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE
-                              , pr_cdagenci IN  craplcm.cdagenci%TYPE
-                              , pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE
-                              , pr_nrdolote IN  craplcm.nrdolote%TYPE
-                              , pr_nrdconta IN  craplcm.nrdconta%TYPE
-                              , pr_nrdocmto IN  craplcm.nrdocmto%TYPE
-                              , pr_cdhistor IN  craplcm.cdhistor%TYPE
-                              , pr_vllanmto IN  craplcm.vllanmto%TYPE
-                              , pr_cdoperad IN  craplcm.cdoperad%TYPE
-                              , pr_cdorigem IN  craplcm.cdorigem%TYPE
-                              , pr_rowidlcm IN  ROWID
-                              ----> OUT <----
-                              , pr_cdcritic  OUT PLS_INTEGER
-                              , pr_dscritic  OUT VARCHAR2) IS
-
-   /* ............................................................................
-        Programa: pc_debito_prejuizo
-        Sistema : Ayllos
-        Sigla   : CRED
-        Autor   : Odirlei/AMcom
-        Data    : Dezembro/2018                 Ultima atualizacao:
-
-        Dados referentes ao programa:
-        Frequencia: Sempre que for chamado
-        Objetivo  : Realizar processo caso ocorra debito em conta em prejuizo
-
-        Observacao: -----
-        Alteracoes:
-    ..............................................................................*/
-  --------------> VARIAVEIS <-----------------
-  vr_cdcritic PLS_INTEGER;
-  vr_dscritic VARCHAR2(1000);
-  vr_exc_erro EXCEPTION;
-
-  vr_rec_retorno  typ_reg_retorno; -- Registro com os dados retornados pela procedure "pc_gerar_lancamento_conta"
-  vr_dstexto      VARCHAR2(32767);
-  vr_string       VARCHAR2(32767);
-  vr_typ_lsthis   gene0002.typ_split;
-  vr_dslsthis     VARCHAR2(4000);
-  vr_inprejuz     BOOLEAN;
-
-BEGIN
-
-  --> Carregar historicos que não irão aumentar o saldo de prejuizo
-  IF vr_tab_histDeb_prej_nao_saldo.count = 0 THEN
-    vr_dslsthis := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                             pr_cdcooper => pr_cdcooper,
-                                             pr_cdacesso => 'HISTOR_PREJ_N_SALDO');
-
-    vr_typ_lsthis := gene0002.fn_quebra_string(pr_string  => vr_dslsthis,
-                                               pr_delimit => ';');
-
-    IF vr_typ_lsthis.count > 0 THEN
-      FOR i IN vr_typ_lsthis.first..vr_typ_lsthis.last LOOP
-
-        vr_tab_histDeb_prej_nao_saldo(vr_typ_lsthis(i)) := vr_typ_lsthis(i);
-
-      END LOOP;
-    END IF;
-  END IF;
-
-  -- Identifica se a conta está em prejuízo
-  vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper,
-                                                  pr_nrdconta => pr_nrdconta);
-  --> Verificar se esta em prejuizo
-  IF vr_inprejuz AND
-     --> e se historico deve aumentar o prejuizo
-     (NOT vr_tab_histDeb_prej_nao_saldo.exists(pr_cdhistor)) THEN
-
-    --> lancar hist no extrato detalhado - contabil
-    PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
-                                    , pr_nrdconta => pr_nrdconta
-                                    , pr_dtmvtolt => pr_dtmvtolt
-                                    , pr_cdhistor => 2408
-                                    , pr_vllanmto => pr_vllanmto
-                                    , pr_cdcritic => vr_cdcritic
-                                    , pr_dscritic => vr_dscritic);
-    IF nvl(vr_cdcritic,0) > 0 OR
-       TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
-
-    --> Aumentar saldo prejuizo
-    BEGIN
-
-      UPDATE tbcc_prejuizo prj
-         SET prj.vlsdprej = nvl(prj.vlsdprej,0) + nvl(pr_vllanmto,0)
-       WHERE prj.cdcooper = pr_cdcooper
-         AND prj.nrdconta = pr_nrdconta
-         AND prj.dtliquidacao IS NULL;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Nao foi possivel atualizar saldo prejuizo: '||SQLERRM;
-        RAISE vr_exc_erro;
-    END;
-
-  END IF;
-
-EXCEPTION
-  WHEN vr_exc_erro THEN
-    -- Se foi retornado apenas código
-    IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
-      -- Buscar a descrição
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    END IF;
-    --Variavel de erro recebe erro ocorrido
-    pr_cdcritic := nvl(vr_cdcritic,0);
-    pr_dscritic := vr_dscritic;
-
-  WHEN OTHERS THEN
-
-    -- Montar descrição de erro não tratado
-    pr_dscritic := 'Erro não tratado na pc_debito_prejuizo ' ||
-                   SQLERRM;
-END pc_debito_prejuizo;
-
-
 
 END LANC0001;
 /
