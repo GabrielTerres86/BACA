@@ -64,6 +64,8 @@
                   04/12/2018 - Retornar saldo devedor para valor do seguro prestamista - Paulo Martins - 438 Sprint 7
                   
                   09/07/2019 - P519 - Inclusão do Canal de venda AIMARO/SIGAS e tela de detalhes SIGAS (Darlei / Supero)
+				  
+				  24/07/2019 - P519 - Bloqueio de contratacao e cancelamento de seguros CASA/VIDA para coop CIVIA (Darlei / Supero)
  * */
  
 //**************************************************
@@ -236,7 +238,8 @@ function controlaOperacao(operacao) {
                 idorigem   = $('#idorigem', $(this) ).val();
                 nmsispar   = $('#nmsispar', $(this)).val();
                 idcontrato = $('#idcontrato', $(this)).val();
-								dsMotcan   = $('#dsmotcan', $(this) ).val();
+				dsMotcan   = $('#dsmotcan', $(this) ).val();
+				cdcooper   = parseInt($('#cdcooper').val());
 				
 				// for para pegar os valores dos parentes caso seja vida
 				if(tpseguro == 3){
@@ -254,6 +257,11 @@ function controlaOperacao(operacao) {
 		
 		switch (operacao) {
 			case 'C' : 
+				if ((tpseguro == 11 || tpseguro == 3)&&(cdcooper == 13)) {   // se for casa ou vida e cooperativa civia
+					showError('error','Plano de seguro bloqueado para cancelamento, devido processo de migração para Nova Seguradora. Cancelamento deverá ser realizado via Sistema de Gestão de Seguros – SIGAS.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
+					return false;
+					break;
+				}
 				// Se for tipo novo, não é alteráveil pelo Ayllos e nem pode ser impresso
 			    if (idorigem == 'N') {
 			        showError('error', 'Esta ap&oacute;lice n&atilde;o permite esta opera&ccedil;&atildeo! Utilizar o sistema "' + nmsispar + '".', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
@@ -340,6 +348,7 @@ function controlaOperacao(operacao) {
 				break;
 			case 'TF'://tela formulario
 				tpseguro = parseInt($('#tpemprst').val());
+				cdcooper = parseInt($('#cdcooper').val());
 				var cdprodut = 0;
 				var executa_depois = '';
 				switch (tpseguro) {
@@ -353,10 +362,15 @@ function controlaOperacao(operacao) {
 						cdprodut = 19;
 						break;
 				}
-            if (tpseguro == 11 || tpseguro == 4) {   // se for casa            
+				if ((tpseguro == 11 || tpseguro == 3)&&(cdcooper == 13)) {   // se for casa ou vida e cooperativa civia
+					showError('error','Plano de seguro bloqueado para contratação, devido processo de migração para Nova Seguradora. Adesão deverá ser realizada via Sistema de Gestão de Seguros – SIGAS.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
+					return false;
+					break;
+				}
+				if (tpseguro == 11 || tpseguro == 4) {   // se for casa            
 					executa_depois = 'valida_inclusao(' + tpseguro + ');';
 				}
-            else { // se não for casa
+				else { // se não for casa
 					executa_depois = 'validaAssociados();';
 				}
 				validaAdesaoProduto(nrdconta, cdprodut, executa_depois);
