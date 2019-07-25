@@ -5225,7 +5225,7 @@ END CADA0002;
      Programa: pc_bloqueia_operadores
      Sistema : Rotina acessada através de job
      Autor   : Kelvin Ott       
-     Data    : Novembro/2017.                  Ultima atualizacao: 19/11/2018
+     Data    : Novembro/2017.                  Ultima atualizacao: 25/07/2019
 
      Dados referentes ao programa:
 
@@ -5235,6 +5235,9 @@ END CADA0002;
                  constam na tabela tbcadast_colaborador
 
      Alteracoes: 19/11/2018 - Alterando o local onde era gerado log de inativação. (SCTASK0034898 - Kelvin)                
+	 
+	             25/07/2019 - Incluido tratamento no cursor cr_valida_cecred para considerar
+				              operadores da Corretora Ailos (PRJ519 - Diego).            
     ..............................................................................*/ 
     CURSOR cr_crapope IS        
       SELECT cdoperad
@@ -5258,7 +5261,7 @@ END CADA0002;
       SELECT 1 retorno
         FROM tbcadast_colaborador col
        WHERE upper(col.cdusured) = upper(pr_cdoperad)
-         AND col.cdcooper = 3
+         AND (col.cdcooper = 3  OR col.cdcooper = 901)
          AND col.flgativo = 'A';
     
     rw_valida_cecred cr_valida_cecred%ROWTYPE;
