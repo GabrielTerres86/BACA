@@ -423,11 +423,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                11/02/2019 - Ajuste na "pc_pagar_prejuizo_cc_autom" para correção de pagamento de valor maior que o saldo devedor do prejuízo.
                             P450 - Reginaldo/AMcom 
                             
-               24/04/2019 - Refatoração da procedure pc_pagar_prejuizo_cc e inclusão de SAVEPOINT para garantir que paga tudo, ou não paga nada.
-                            Alteração na procedure pc_pagar_prejuizo_cc_autom para obtem saldo disponível (créditos) da conta e não considerar mais
-                            o campo VLSLDLIB.
-                            P450 - Reginaldo/AMcom
-                            
                02/05/2019 - Inclusão do parâmetro opcional para a descrição da operação nas procedures "pc_gera_cred_cta_prj",
                             "pc_gera_debt_cta_prj" e "pc_gera_transf_cta_prj".
                             (Reginaldo/AMcom)  
@@ -3834,8 +3829,6 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
             11/02/2019 - Ajuste para correção de pagamento de valor maior que o saldo devedor do prejuízo.
                          P450 - Reginaldo/AMcom
                          
-            24/04/2019 - Alteração para considerar saldo disponível (créditos) na conta corrente ao invés do campo VLSLDLIB
-                         P450 - Reginaldo/AMcom
  ..............................................................................*/
 --
 
@@ -3859,7 +3852,7 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
         FROM tbcc_prejuizo tbprj
        WHERE tbprj.cdcooper = pr_cdcooper
          AND tbprj.dtliquidacao IS NULL;
-     rw_contaprej cr_contaprej%ROWTYPE;
+     rw_prej cr_contaprej%ROWTYPE;
 
      -- Busca lançamentos do histórico 1017 (somente para coop. Transpocred)
      CURSOR cr_hist1017(pr_nrdconta craplcm.nrdconta%TYPE
@@ -3888,30 +3881,24 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
        FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
        CLOSE BTCH0001.cr_crapdat;
 
-       -- Percorre a lista de contas em prejuízo
+       --Lista as contas em prejuizo
        FOR  rw_contaprej in cr_contaprej(pr_cdooper => pr_cdcooper) LOOP
-         -- Obtém saldo disponível na conta corrente para pagamento do prejuízo
-         vr_vlsddisp:= PREJ0006.fn_obtem_saldo_lcm_dia(pr_cdcooper => pr_cdcooper
-                                                     , pr_nrdconta => rw_contaprej.nrdconta
-                                                     , pr_dtmvtolt => rw_crapdat.dtmvtolt);
-                       
-         -- Se não há valor disponível na conta corrente, não há como efetuar o pagamento                              
-         IF vr_vlsddisp <= 0 THEN
-           PREJ0006.pc_zera_saldo_liberado_CT(pr_cdcooper => pr_cdcooper
-                                              , pr_nrdconta => rw_contaprej.nrdconta);
-                                              
-           CONTINUE;
-         END IF;
-         
-         IF pr_cdcooper = 9 THEN -- Tratamento exclusivo para a cooperativa Transpocred do histórico 1017 (BNDES)            
+         -- Obtém saldo disponível para pagamento
+         vr_vlsddisp:=  fn_cred_disp_prj(pr_nrdconta => rw_contaprej.nrdconta,
+                                         pr_cdcooper => rw_contaprej.cdcooper);
+
+         IF pr_cdcooper = 9 THEN -- Tratamento exclusivo para a cooperativa Transpocred do histórico 1017
            OPEN cr_hist1017(rw_contaprej.nrdconta, rw_crapdat.dtmvtolt);
            FETCH cr_hist1017 INTO vr_vldeb1017;
            CLOSE cr_hist1017;
            
            IF vr_vlsddisp = vr_vldeb1017 THEN
              -- Zera o valor do saldo liberado para operações na conta transitória
-             PREJ0006.pc_zera_saldo_liberado_CT(pr_cdcooper => pr_cdcooper
-                                              , pr_nrdconta => rw_contaprej.nrdconta);
+             UPDATE tbcc_prejuizo prj
+                SET prj.vlsldlib = 0
+              WHERE prj.cdcooper = pr_cdcooper
+                AND prj.nrdconta = rw_contaprej.nrdconta
+                AND dtliquidacao IS NULL;
 				
 		     CONTINUE; -- Avança para a próxima conta, pois não deve efetuar nenhum pagamento
            END IF;
@@ -3921,31 +3908,28 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
          vr_vlsldprj := fn_obtem_saldo_prejuizo_cc(pr_cdcooper => pr_cdcooper, 
                                                    pr_nrdconta => rw_contaprej.nrdconta);
                                   
-         IF nvl(vr_vlsldprj,0) > 0 THEN
+         IF vr_vlsddisp > 0 AND nvl(vr_vlsldprj,0) > 0 THEN
            pc_pagar_prejuizo_cc(pr_cdcooper => pr_cdcooper
                            , pr_nrdconta => rw_contaprej.nrdconta
                            , pr_vlrpagto => least(vr_vlsddisp, vr_vlsldprj) -- Se o valor liberado é maior que o saldo a pagar, paga somente o saldo do prejuízo
                            , pr_cdcritic => vr_cdcritic
                            , pr_dscritic => vr_dscritic);
 
-           -- Se não foi possível pagar o prejuízo
-           IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-             -- Bloqueia valor da CRAPLCM para a conta Transitória
-             PREJ0006.pc_bloqueia_valor_para_CT(pr_cdcooper => pr_cdcooper
-                                              , pr_nrdconta => rw_contaprej.nrdconta
-                                              , pr_vllanmto => vr_vlsddisp
-                                              , pr_cdcritic => vr_cdcritic
-                                              , pr_dscritic => vr_dscritic);
-                                              
-             IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-               NULL; -- Incluir geração de LOG
+           IF NOT (nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL) THEN
+             -- Se o pagamento foi bem sucedido, zera o saldo liberado para operações na conta transitória
+             UPDATE tbcc_prejuizo
+                SET vlsldlib = 0
+              WHERE cdcooper = pr_cdcooper
+                AND nrdconta = rw_contaprej.nrdconta
+                AND dtliquidacao IS NULL;               
              END IF;               
+         ELSIF vr_vlsddisp > 0 THEN
+            UPDATE tbcc_prejuizo
+               SET vlsldlib = 0
+             WHERE cdcooper = pr_cdcooper
+               AND nrdconta = rw_contaprej.nrdconta
+               AND dtliquidacao IS NULL;               
            END IF;
-         END IF;
-         
-         -- Sera saldo liberado eventualmente da conta transitória ao longo do dia e não utilizado
-         PREJ0006.pc_zera_saldo_liberado_CT(pr_cdcooper => pr_cdcooper
-                                          , pr_nrdconta => rw_contaprej.nrdconta);
        END LOOP;
 
       COMMIT;
