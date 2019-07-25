@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Renato Darosci - Supero
-  --  Data     : Julho/2014.                   Ultima atualizacao: 19/09/2016
+  --  Data     : Julho/2014.                    Ultima atualizacao: 19/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -211,14 +211,14 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
 
 END CADA0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
+ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   /*---------------------------------------------------------------------------------------------------------------
-
+  
     Programa : CADA0002
     Sistema  : Rotinas acessadas pelas telas de cadastros Web
     Sigla    : CADA
     Autor    : Renato Darosci - Supero
-    Data     : Julho/2014.                   Ultima atualizacao: 09/08/2018
+    Data     : Julho/2014.                   Ultima atualizacao: 21/08/2018
   
    Dados referentes ao programa:
   
@@ -269,11 +269,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                            (Adriano - SD 620221).
                            
                08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
-               
-               09/08/2018 - sctask0012741 Gerar log de operadores apenas quando inativados, pelo job 
-                            JBOPE_BLOQUEIA_OPERADORES, podendo ser consultado na tela LOGTEL (Carlos)
 
-			   11/01/2019 - Criada rotina que gera Ficha-Proposta (Cássia de Oliveira - GFT)
+               21/08/2018 - Criar rotina para impressão de comprovante de GPS 
+                            pc_impressao_gps (André Bohn Mout's) - INC0021250
+                            
+               11/01/2019 - Criada rotina que gera Ficha-Proposta (Cássia de Oliveira - GFT)
   ---------------------------------------------------------------------------------------------------------------------------*/
 
   /****************** OBJETOS COMUNS A SEREM UTILIZADOS PELAS ROTINAS DA PACKAGE *******************/
@@ -306,6 +306,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                             ,label      VARCHAR2(100)
                             ,label2     VARCHAR2(100)
                             ,valor      NUMBER
+                            ,dsinform##2 crappro.dsinform##2%TYPE --pj470
+                            ,dtinclusao DATE --pj470
+                            ,hrinclusao DATE --pj470
+                            ,dsoperacao VARCHAR2(100) --pj470
+                            ,cdbanco    VARCHAR2(100) --pj470
+                            ,cdagencia  VARCHAR2(100) --pj470
+                            ,cdconta    VARCHAR2(100) --pj470
+                            ,nrcheque_i VARCHAR2(100) --pj470
+                            ,nrcheque_f VARCHAR2(100) --pj470
+                            ,dsativo    VARCHAR2(100) --pj470 - SM2
                             ,auxiliar   VARCHAR2(100)
                             ,auxiliar2  VARCHAR2(100)
                             ,auxiliar3  VARCHAR2(100)
@@ -361,7 +371,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                             ,nrdocpes     VARCHAR2(100)
                             ,cdidenti     VARCHAR2(100)
                             ,nrdocmto_dae VARCHAR2(100)
-                            );
+                            ,dslinha3     VARCHAR2(4000)
+                            ,qttitbor VARCHAR(500));
     
   
   -- REGISTROS
@@ -1056,6 +1067,108 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     END IF;
 
   END pc_impressao_ted;
+        
+  -- PJ470 - Rubens Lima (Mouts) - Rotina para impressão de CTDs
+  PROCEDURE pc_impressao_ctd(pr_xmldata  IN typ_xmldata
+                            ,pr_nmrescop IN VARCHAR2) IS
+    -- ..........................................................................
+    --
+    --  Programa :  
+    --  Sistema  : Rotinas para impressão de dados
+    --  Autor    : Rubens Lima  - Mouts
+    --  Data     : Dezembro/2018.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Agrupa os dados e monta o layout para impressão de dados de CTDs
+    --
+    --   Alteracoes: 
+    --
+    -- .............................................................................
+    
+    -- Variáveis
+    vr_nrdlinha     NUMBER := 0;  
+                          
+  BEGIN
+
+    -- IMPRIMIR O CABEÇALHO
+    pc_escreve_xml('--------------------------------------------------------------------------------'    ,1);
+    pc_escreve_xml(' '||pr_nmrescop||' - '|| pr_xmldata.tpdocmto ||' - '||       'Emissao: '||to_char(SYSDATE,'DD/MM/YY')||' as '||to_char(SYSDATE,'HH24:MI:SS')||' Hr',2); 
+    pc_escreve_xml('           Conta/DV: '||pr_xmldata.nrdconta||' - '||pr_xmldata.nmprimtl,4);
+    pc_escreve_xml('--------------------------------------------------------------------------------'    ,5);
+    -- IMPRIMIR O CONTEÚDO
+    -- Contador de linha - Iniciando na sexta linha do XML
+    vr_nrdlinha := 6;
+
+      -- Imprimir conta e nome
+    pc_escreve_xml('               Conta/dv: '||TRIM(GENE0002.fn_mask_conta(pr_xmldata.nrdconta))||' - '||pr_xmldata.nmprimtl,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+      -- Imprimir Data
+    pc_escreve_xml('                   Data: '||to_char(pr_xmldata.dtinclusao,'DD/MM/YY'),vr_nrdlinha);
+    
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+      -- Imprimir Hora
+    pc_escreve_xml('                   Hora: '||to_char(pr_xmldata.hrinclusao,'HH24:MI:SS'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+      -- Imprimir Data Movimento
+    pc_escreve_xml('         Data Movimento: '||to_char(pr_xmldata.dttransa,'DD/MM/YY'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    IF pr_xmldata.dsoperacao <> '-' THEN
+      pc_escreve_xml('               Operação: '||pr_xmldata.dsoperacao,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    IF pr_xmldata.cdbanco <> '-' THEN
+      pc_escreve_xml('                  Banco: '||pr_xmldata.cdbanco,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    IF pr_xmldata.cdagencia <> '-' THEN
+      pc_escreve_xml('                Agência: '||pr_xmldata.cdagencia,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    IF pr_xmldata.cdconta <> '-' THEN
+      pc_escreve_xml('                  Conta: '||pr_xmldata.cdconta,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    IF pr_xmldata.nrcheque_i <> '-' THEN
+      pc_escreve_xml('         Cheque Inicial: '||pr_xmldata.nrcheque_i,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    IF pr_xmldata.nrcheque_f <> '-' THEN
+      pc_escreve_xml('           Cheque Final: '||pr_xmldata.nrcheque_f,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    IF pr_xmldata.cdbanco = '-' THEN -- Se cdbanco está preenchido o tipo é 30 ou 31 e não deve listar valor
+      pc_escreve_xml('               Contrato: '||pr_xmldata.nrdocmto,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+      -- Imprimir o Valor
+      pc_escreve_xml('                  Valor: '||to_char(pr_xmldata.valor,'FM9999999999D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+      -- Imprimir o Protocolo
+    pc_escreve_xml('              Protocolo: '||pr_xmldata.dsprotoc,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+       
+    -- Se vai escrever a linha 13... ou mais
+    IF vr_nrdlinha >= 13 THEN
+      pc_escreve_xml('--------------------------------------------------------------------------------',vr_nrdlinha);
+    ELSE 
+      pc_escreve_xml('--------------------------------------------------------------------------------',13);
+    END IF;
+
+  END pc_impressao_ctd;
+
         
   -- Imprimir comprovante de Aplicação
   PROCEDURE pc_impressao_aplica(pr_xmldata  IN typ_xmldata
@@ -1944,6 +2057,112 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 
   END pc_impressao_fgts_dae;
   
+  /* Emissao de comprovante de GPS */
+  PROCEDURE pc_impressao_gps(pr_xmldata  IN typ_xmldata
+                            ,pr_nmrescop IN VARCHAR2
+                            ,pr_cdbcoctl IN NUMBER
+                            ,pr_cdagectl IN NUMBER) IS
+    -- ..........................................................................
+    --
+    --  Programa : 
+    --  Sistema  : Rotinas para impressão de dados
+    --  Sigla    : VERPRO
+    --  Autor    : 
+    --  Data     : Agosto/2018.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Agrupa os dados e monta o layout para impressão de dados de pagamentos de GPS
+    --
+    --   Alteracoes:
+    --
+    -- .............................................................................
+    
+    -- Variáveis
+    vr_nrdlinha       NUMBER := 0;  
+    rw_dadosgps       GENE0002.typ_split;
+    vr_nrddadogps     NUMBER := 0;  
+    vr_nrdcollabel    NUMBER := 31; -- Para manter os títulos alinhados no centro    
+    rw_campogps       GENE0002.typ_split;
+    
+  BEGIN
+    -- Imprime o cabeçalho
+    pc_escreve_xml(LPAD('',80, '-'), 1);
+    pc_escreve_xml('     '||pr_nmrescop||' - Comprovante de Pagamento GPS '||' - '||
+                   'Emissao: '||to_char(SYSDATE,'DD/MM/YY')||' as '||to_char(SYSDATE,'HH24:MI:SS')||' Hr',2); 
+    pc_escreve_xml(LPAD('Banco: ',vr_nrdcollabel)||to_char(pr_cdbcoctl) ,4);
+    pc_escreve_xml(LPAD('Agencia: ',vr_nrdcollabel)||to_char(pr_cdagectl) ,5);
+    pc_escreve_xml(LPAD('Conta/DV: ',vr_nrdcollabel)||to_char(pr_xmldata.nrdconta)||' - '||pr_xmldata.nmprimtl,6);
+    vr_nrdlinha := 7;
+    
+    -- Imprime o preposto se estiver informado
+    IF TRIM(pr_xmldata.nmprepos) IS NOT NULL THEN
+      pc_escreve_xml(LPAD('Preposto: ',vr_nrdcollabel)||pr_xmldata.nmprepos,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+    
+    -- Imprime a data do movimento
+    pc_escreve_xml(LPAD('Data Movimento: ',vr_nrdcollabel)||to_char(pr_xmldata.dtmvtolx,'dd/mm/yy'), vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime o valor do pagamento
+    pc_escreve_xml(LPAD('Valor: ',vr_nrdcollabel)||to_char(pr_xmldata.valor,'FM9G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    pc_escreve_xml(LPAD('',80, '-'), vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+ 
+    -- Imprime os dados da GPS
+    rw_dadosgps := GENE0002.fn_quebra_string(pr_string => pr_xmldata.dslinha3, pr_delimit => '#');
+    
+    IF rw_dadosgps.COUNT > 0 THEN
+      FOR vr_nrddadogps IN 1..rw_dadosgps.COUNT LOOP
+        -- Verifica se linha de campos está formatada com "campo : valor"
+        IF INSTR(rw_dadosgps(vr_nrddadogps),':') > 0 THEN 
+          -- Separa campo do valor
+          rw_campogps := GENE0002.fn_quebra_string(pr_string => rw_dadosgps(vr_nrddadogps),pr_delimit => ':');
+          IF rw_campogps.COUNT > 1 THEN
+            -- Apresenta o campo somente se valor não for vazio
+            IF LENGTH(TRIM(rw_campogps(2))) > 0 THEN
+              pc_escreve_xml(LPAD(rw_campogps(1),vr_nrdcollabel-2)||': '||rw_campogps(2),vr_nrdlinha);
+              vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+            END IF;
+          END IF;
+        ELSE  
+          -- Se não for "campo : valor" apresenta linha toda
+          pc_escreve_xml(rw_dadosgps(vr_nrddadogps), vr_nrdlinha);
+          vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+        END IF;
+      END LOOP; 
+    END IF;
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    -- Imprime a data de transação
+    pc_escreve_xml(LPAD('Data Transacao: ',vr_nrdcollabel)||to_char(pr_xmldata.dttransa,'dd/mm/yy'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime a hora da transação
+    pc_escreve_xml(LPAD('Hora: ',vr_nrdcollabel)||to_char(to_date(pr_xmldata.hrautent,'SSSSS'),'hh24:mi:ss'),vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprimir o número do Documento
+    pc_escreve_xml(LPAD('Nr. Documento: ',vr_nrdcollabel)||pr_xmldata.nrdocmto,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime a sequencia de autenticação
+    pc_escreve_xml(LPAD('Seq. Autenticacao: ',vr_nrdcollabel)||pr_xmldata.nrseqaut,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Imprime o protocolo
+    pc_escreve_xml(LPAD('Protocolo: ',vr_nrdcollabel)||pr_xmldata.dsprotoc,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+		
+		-- Imprime linha de rodapé
+    pc_escreve_xml(LPAD('',80, '-'), vr_nrdlinha);
+    
+  END pc_impressao_gps;
+  
   -- Rotina para impressão de comprovante de pagamento do deb automatico
   PROCEDURE pc_impressao_debaut(pr_xmldata  IN typ_xmldata
                                ,pr_nmrescop IN VARCHAR2) IS
@@ -2092,6 +2311,82 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     pc_escreve_xml('--------------------------------------------------------------------------------'        ,vr_nrdlinha);
 
   END pc_impressao_rec_cel;
+  
+  PROCEDURE pc_impressao_bordero(pr_xmldata  IN typ_xmldata
+                                 ,pr_nmrescop IN VARCHAR2
+                                 ,pr_cdbcoctl IN NUMBER
+                                 ,pr_cdagectl IN NUMBER) IS
+    -- ..........................................................................
+    --
+    --  Programa : 
+    --  Sistema  : Rotinas para impressão de dados
+    --  Sigla    : VERPRO
+    --  Autor    : 
+    --  Data     : Outubro/2018.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Agrupa os dados e monta o layout para impressão de dados de pagamentos de Bordero
+    --
+    --   Alteracoes:
+    --
+    -- .............................................................................
+    
+    -- Variáveis
+    vr_nrdlinha     NUMBER := 0;  
+    vr_dsbanco      VARCHAR2(50);
+		vr_dsdcabec     VARCHAR2(50);
+		                          
+  BEGIN
+    vr_dsdcabec := 'Bordero';
+    -- IMPRIMIR O CABEÇALHO
+    pc_escreve_xml('--------------------------------------------------------------------------------'    ,1);
+    pc_escreve_xml('     '||pr_nmrescop||' - Comprovante '|| vr_dsdcabec || ' - '||
+                   'Emissao: '||to_char(SYSDATE,'DD/MM/YY')||' as '||to_char(SYSDATE,'HH24:MI:SS')||' Hr',2); 
+    pc_escreve_xml('               Banco: '||to_char(pr_cdbcoctl) ,4);
+    pc_escreve_xml('             Agencia: '||to_char(pr_cdagectl) ,5);
+    pc_escreve_xml('            Conta/DV: '||to_char(pr_xmldata.nrdconta)||' - '||pr_xmldata.nmprimtl,6);
+    pc_escreve_xml('--------------------------------------------------------------------------------'    ,7);
+    -- IMPRIMIR O CONTEÚDO
+    -- Contador de linha - Iniciando na sexta linha do XML
+    vr_nrdlinha := 8;
+		
+    
+    -- Imprime a data de transação
+    pc_escreve_xml('     Data Transacao: '||to_char(pr_xmldata.dttransa,'dd/mm/yy') || ' as ' || to_char(to_date(pr_xmldata.hrautent,'SSSSS'),'hh24:mi:ss') ,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+
+    -- Se tem informação de valor total
+    IF TRIM(pr_xmldata.valor) IS NOT NULL THEN
+      pc_escreve_xml('         Valor Total: '||to_char(pr_xmldata.valor,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha    
+    END IF;
+		   
+    -- Imprimir documento e sequencia de autenticação
+    pc_escreve_xml('       Nr. Borderô: '||pr_xmldata.nrdocmto,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    pc_escreve_xml('       Qtd. Título: '||pr_xmldata.qttitbor,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+        
+    pc_escreve_xml('   Seq. Autenticacao: '||pr_xmldata.nrseqaut,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+		
+		-- Protocolo
+		pc_escreve_xml('           Protocolo: '||pr_xmldata.dsprotoc,vr_nrdlinha);
+		vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    -- Se vai escrever a linha 20... ou mais
+    IF vr_nrdlinha >= 20 THEN
+      pc_escreve_xml('--------------------------------------------------------------------------------',vr_nrdlinha);
+    ELSE 
+      pc_escreve_xml('--------------------------------------------------------------------------------',20);
+    END IF;
+
+  END pc_impressao_bordero;
+  
   -- Inicio (Cássia de Oliveira - GFT)
   -- Imprimir ficha-proposta
   PROCEDURE pc_impressao_ficha_prop(pr_nrdconta IN crapass.nrdconta%TYPE        --> Numero da Conta
@@ -2107,7 +2402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     --  Programa : pc_impressao_ficha_prop
     --  Sistema  : Rotinas para impressão de dados
     --  Autor    : Cássia de Oliveira - GFT
-    --  Data     : Janeiro/2019.                   Ultima atualizacao: --/--/----
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: 18/06/2019
     --
     --  Dados referentes ao programa:
     -- 	
@@ -2115,7 +2410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     --   Objetivo  : Agrupa os dados e monta o layout para impressão de Ficha-Proposta
     --
     --   Alteracoes: 
-    --
+    --               18/06/2019 - RITM0015775 - Mudança de nome de Ficha Proposta para Fica Matricula + Inclusao campo matricula
     -- .............................................................................
       DECLARE
       -- Variaveis padrao
@@ -2163,6 +2458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       CURSOR cr_crapass IS 
         SELECT ass.dtadmiss
               ,ass.cdcatego
+              ,ass.nrmatric
               ,CASE ass.cdtipcta
                   WHEN 1  THEN 'NORMAL' 
                   WHEN 2  THEN 'ESPECIAL'
@@ -2262,8 +2558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
          WHERE tfc.nrdconta = pr_nrdconta
            AND tfc.cdcooper = vr_cdcooper
            AND tfc.idseqttl = pr_idseqttl
-           AND ROWNUM = 1
-      ORDER BY tfc.cdseqtfc;
+      ORDER BY tfc.tptelefo;
       rw_primtfc cr_craptfc%ROWTYPE; 
       rw_segutfc cr_craptfc%ROWTYPE;   
       
@@ -2307,7 +2602,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         SELECT CASE crd.tpcartao  
                   WHEN 1 THEN 'NACIONAL' 
                   WHEN 2 THEN 'INTERNACIONAL'
-                  WHEN 3 THEN 'GOLD' 
+                  WHEN 3 THEN 'GOLD'  
                END AS tpcartao
               ,crd.tpdpagto
               ,crd.nmtitcrd
@@ -2323,7 +2618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
            AND adc.cdcooper = crd.cdcooper
          WHERE crd.cdcooper = vr_cdcooper
            AND crd.nrdconta = pr_nrdconta
-           AND crd.insitcrd IN (1,2,3,4)
+           AND crd.insitcrd IN (1,3,4)
            AND ROWNUM = 1;     
       rw_crawcrd cr_crawcrd%ROWTYPE;
       
@@ -2524,6 +2819,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                              ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Relatorio>"
                                                       <Dados>
                                                         <nrdconta>'||pr_nrdconta        ||'</nrdconta>
+                                                        <nrmatric>'||rw_crapass.nrmatric||'</nrmatric>
                                                         <dtabtcct>'||TO_CHAR(rw_crapass.dtadmiss,'DD/MM/YYYY')||'</dtabtcct>
                                                         <cdcatego>'||rw_crapass.cdcatego||'</cdcatego>
                                                         <dstipcta>'||rw_crapass.dstipcta||'</dstipcta>
@@ -3003,6 +3299,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           vr_nrregist := vr_nrregist - 1;
         END IF;
 
+       --PJ 470 - Rubens Lima (Mouts)
+       IF vr_cratpro(vr_ind).cdtippro IN (25 -- Rescisão de Lim. Créd. (Termo)
+                                            ,26 -- Solicitação de Portab. Créd. (Termo)
+                                            ,27 -- Limite de Desc. Chq. (Contrato)
+                                            ,28 -- Limite de Desc. Tit. (Contrato)
+                                            ,29 -- Limite de Crédito (Contrato)
+                                            ,30 -- Solicitação de Sustação de Chq.
+                                            ,31 -- Sol.Canc.de Folha/Tal.de Chq. (Termo)
+                                            )
+       THEN
+            vr_tab_dados(vr_index)('dtinclusao') := vr_cratpro(vr_ind).dtinclusao;
+            vr_tab_dados(vr_index)('hrinclusao') := vr_cratpro(vr_ind).hrinclusao;
+            vr_tab_dados(vr_index)('dsfrase') := vr_cratpro(vr_ind).dsfrase;
+            vr_tab_dados(vr_index)('dsativo') := vr_cratpro(vr_ind).dsativo; -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+         IF vr_cratpro(vr_ind).cdtippro IN (30,31)
+         THEN
+              vr_tab_dados(vr_index)('dsoperacao') := vr_cratpro(vr_ind).dsoperacao;
+              vr_tab_dados(vr_index)('cdbanco')    := vr_cratpro(vr_ind).cdbanco;
+              vr_tab_dados(vr_index)('cdagencia')  := vr_cratpro(vr_ind).cdagencia;
+              vr_tab_dados(vr_index)('cdconta')    := vr_cratpro(vr_ind).cdconta;
+              vr_tab_dados(vr_index)('nrcheque_i') := vr_cratpro(vr_ind).nrcheque_i;
+              vr_tab_dados(vr_index)('nrcheque_f') := vr_cratpro(vr_ind).nrcheque_f;
+         END IF;
+        END IF;
+	
       END LOOP;
 
       -- Define retorno
@@ -3039,7 +3360,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       gene0007.pc_gera_tag(pr_nome_tag  => 'nrcpffav', pr_tab_tag   => vr_tab_tags);
       gene0007.pc_gera_tag(pr_nome_tag  => 'dsfinali', pr_tab_tag   => vr_tab_tags);
       gene0007.pc_gera_tag(pr_nome_tag  => 'dstransf', pr_tab_tag   => vr_tab_tags);
-
+      --PJ470 
+      gene0007.pc_gera_tag(pr_nome_tag  => 'dtinclusao', pr_tab_tag   => vr_tab_tags);
+      gene0007.pc_gera_tag(pr_nome_tag  => 'hrinclusao', pr_tab_tag   => vr_tab_tags);
+      gene0007.pc_gera_tag(pr_nome_tag  => 'dsfrase', pr_tab_tag   => vr_tab_tags);
+      gene0007.pc_gera_tag(pr_nome_tag  => 'dsoperacao', pr_tab_tag   => vr_tab_tags);
+      gene0007.pc_gera_tag(pr_nome_tag  => 'cdbanco'   , pr_tab_tag   => vr_tab_tags);
+      gene0007.pc_gera_tag(pr_nome_tag  => 'cdagencia' , pr_tab_tag   => vr_tab_tags);
+      gene0007.pc_gera_tag(pr_nome_tag  => 'cdconta'   , pr_tab_tag   => vr_tab_tags);
+      gene0007.pc_gera_tag(pr_nome_tag  => 'nrcheque_i', pr_tab_tag   => vr_tab_tags);
+      gene0007.pc_gera_tag(pr_nome_tag  => 'nrcheque_f', pr_tab_tag   => vr_tab_tags);
+      gene0007.pc_gera_tag(pr_nome_tag  => 'dsativo', pr_tab_tag   => vr_tab_tags); -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+      -- Fim PJ470
       -- Carrega as TAG´s do XML referente a descrição (novo nodo)
       gene0007.pc_gera_tag(pr_nome_tag  => 'dsinform.1', pr_tab_tag   => vr_tab_tagd);
       gene0007.pc_gera_tag(pr_nome_tag  => 'dsinform.2', pr_tab_tag   => vr_tab_tagd);
@@ -3307,6 +3639,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                               de pagamento em debito automatico (Aline).                      
 							                      
                  09/01/2018 - Incluido tratamento para FGTS e DAE - PRJ406.
+                 
+                 04/10/2018 - Impressão do Borderô (Vitor S Assanuma - GFT)
+
+                 12/12/2018 - Incluido tratamento para novas linhas de credito - Rubens Lima (Mouts) - PRJ470
+
+                 19/03/2019 - Alterado o id do protocolo de desconto de titulo do 22 para o 32 (Paulo Penteado GFT)
     ..............................................................................*/ 
     -- CURSORES
     -- Buscar as informações da cooperativa
@@ -3434,7 +3772,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     rw_xmldata.dsageban := fn_extract('/Root/Dados/dsageban/text()');
     rw_xmldata.nrctafav := fn_extract('/Root/Dados/nrctafav/text()');
     rw_xmldata.nmfavore := fn_extract('/Root/Dados/nmfavore/text()');
-	  rw_xmldata.nmconven := fn_extract('/Root/Dados/nmconven/text()');
+	  rw_xmldata.nmconven := SUBSTR(fn_extract('/Root/Dados/nmconven/text()'),1,100);
     rw_xmldata.nrcpffav := fn_extract('/Root/Dados/nrcpffav/text()');
     rw_xmldata.dsfinali := fn_extract('/Root/Dados/dsfinali/text()');
     rw_xmldata.dstransf := fn_extract('/Root/Dados/dstransf/text()');
@@ -3480,6 +3818,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     rw_xmldata.nrdocpes := fn_extract('/Root/Dados/nrdocpes/text()');
     rw_xmldata.cdidenti := fn_extract('/Root/Dados/cdidenti/text()');
     rw_xmldata.nrdocmto_dae := fn_extract('/Root/Dados/nrdocmto_dae/text()');
+    rw_xmldata.dslinha3 := gene0007.fn_caract_acento(gene0007.fn_convert_web_db(fn_extract('/Root/Dados/Inform/Linhas/dslinha3/text()')));
+    rw_xmldata.qttitbor := fn_extract('/Root/Dados/qttitbor/text()');
+    --pj470
+    rw_xmldata.dtinclusao := to_date(fn_extract('/Root/Dados/dtinclusao/text()'),'dd/mm/rrrr');
+    rw_xmldata.hrinclusao := to_date(fn_extract('/Root/Dados/hrinclusao/text()'),'hh24:mi:ss');
+    rw_xmldata.dsoperacao := NVL(fn_extract('/Root/Dados/dsoperacao/text()'),'-');
+    rw_xmldata.cdbanco    := NVL(fn_extract('/Root/Dados/cdbanco/text()'),'-');
+    rw_xmldata.cdagencia  := NVL(fn_extract('/Root/Dados/cdagencia/text()'),'-');
+    rw_xmldata.cdconta    := NVL(fn_extract('/Root/Dados/cdconta/text()'),'-');
+    rw_xmldata.nrcheque_i := NVL(fn_extract('/Root/Dados/nrcheque_i/text()'),'-');
+    rw_xmldata.nrcheque_f := NVL(fn_extract('/Root/Dados/nrcheque_f/text()'),'-');
+    rw_xmldata.dsativo    := NVL(fn_extract('/Root/Dados/nrcheque_f/text()'),'-'); -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
+    -- Fim pj470
+
     
     -- Inicializar o CLOB do XML
     vr_dsxmlrel := null;
@@ -3584,6 +3936,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                               ,pr_cdcooper => pr_cdcooper
                               ,pr_nmrescop => rw_crapcop.nmrescop);  
       
+    ELSIF rw_xmldata.cdtippro = 13 THEN --GPS
+      -- Guardar o nome da rotina chamada para exibir em caso de erro
+      vr_nmrotina := 'PC_IMPRESSAO_GPS';
+    
+      -- Imprimir comprovante de pagamento de GPS
+      pc_impressao_gps(pr_xmldata  => rw_xmldata
+                      ,pr_nmrescop => rw_crapcop.nmrescop
+                      ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                      ,pr_cdagectl => rw_crapcop.cdagectl);      
+													 
     ELSIF rw_xmldata.cdtippro = 14 THEN
       
       -- Guardar o nome da rotina chamada para exibir em caso de erro
@@ -3611,7 +3973,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                            ,pr_nmrescop => rw_crapcop.nmrescop
                            ,pr_cdbcoctl => rw_crapcop.cdbcoctl
                            ,pr_cdagectl => rw_crapcop.cdagectl);      
+    ELSIF rw_xmldata.cdtippro IN (32) THEN --BORDERO
+      -- Guardar o nome da rotina chamada para exibir em caso de erro
+      vr_nmrotina := 'PC_IMPRESSAO_BORDERO';
 													 
+      -- Imprimir pagamento
+      pc_impressao_bordero(pr_xmldata  => rw_xmldata
+                           ,pr_nmrescop => rw_crapcop.nmrescop
+                           ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                           ,pr_cdagectl => rw_crapcop.cdagectl);
     ELSIF rw_xmldata.cdtippro IN (24,23) THEN --FGTS/DAE
       -- Guardar o nome da rotina chamada para exibir em caso de erro
       vr_nmrotina := 'PC_IMPRESSAO_FGTSDAE';
@@ -3631,6 +4001,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       pc_impressao_rec_cel(pr_xmldata  => rw_xmldata
                           ,pr_nmrescop => rw_crapcop.nmrescop);  
 													 
+    -- PJ470
+    ELSIF rw_xmldata.cdtippro IN (25 -- Rescisão de Lim. Créd. (Termo)
+                                 ,26 -- Solicitação de Portab. Créd. (Termo)
+                                 ,27 -- Limite de Desc. Chq. (Contrato)
+                                 ,28 -- Limite de Desc. Tit. (Contrato)
+                                 ,29 -- Limite de Crédito (Contrato)
+                                 ,30 -- Solicitação de Sustação de Chq.
+                                 ,31 -- Sol.Canc.de Folha/Tal.de Chq. (Termo)
+                                 ) THEN
+        -- Guardar o nome da rotina chamada para exibir em caso de erro
+        vr_nmrotina := 'PC_IMPRESSAO_CTD';
+        -- Imprimir pagamento
+        pc_impressao_ctd(pr_xmldata => rw_xmldata
+                          ,pr_nmrescop => rw_crapcop.nmrescop);  
+    -- Fim PJ470
     END IF;
     
     -- Tag de finalização do XML
@@ -3701,6 +4086,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     
   EXCEPTION
     WHEN vr_exc_erro THEN
+      IF pr_dscritic IS NOT NULL THEN
+        pr_des_erro := pr_dscritic;
+      END IF;
       -- Carregar XML padrão para variável de retorno não utilizada.
       -- Existe para satisfazer exigência da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -4716,9 +5104,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
            LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) > 20 THEN
           vr_cdcritic := 1217;
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        pr_nmdcampo := 'nrctatrf';
-        RAISE vr_exc_saida;
-      END IF;
+          pr_nmdcampo := 'nrctatrf';
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
 
       -- Verifica o tipo de pessoa
@@ -4768,9 +5156,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         IF pr_intipcta = 3 THEN -- Conta de Pagamento
           vr_cdcritic := 1219;
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' '|| vr_dstextab;
-        pr_nmdcampo := 'intipcta';
-        RAISE vr_exc_saida;
-      END IF;
+          pr_nmdcampo := 'intipcta';
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
 
       IF pr_inpessoa = 1 THEN 
@@ -4793,8 +5181,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           vr_cdcritic := 1221;
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           pr_nmdcampo := 'nrcpfcgc';
-        RAISE vr_exc_saida;
-      END IF;
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
       END IF;
 
@@ -4804,7 +5192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       pr_nmdcampo := 'nrctatrf';
       RAISE vr_exc_saida;
-      END IF;
+    END IF;
         
     EXCEPTION
 			WHEN vr_exc_saida THEN
@@ -4837,7 +5225,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
      Programa: pc_bloqueia_operadores
      Sistema : Rotina acessada através de job
      Autor   : Kelvin Ott       
-     Data    : Novembro/2017.                  Ultima atualizacao: 
+     Data    : Novembro/2017.                  Ultima atualizacao: 19/11/2018
 
      Dados referentes ao programa:
 
@@ -4846,7 +5234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
      Objetivo  : Rotina chamada por job para bloquiar os operadores na tabela crapope que nao 
                  constam na tabela tbcadast_colaborador
 
-     Alteracoes:                 
+     Alteracoes: 19/11/2018 - Alterando o local onde era gerado log de inativação. (SCTASK0034898 - Kelvin)                
     ..............................................................................*/ 
     CURSOR cr_crapope IS        
       SELECT cdoperad
@@ -4896,56 +5284,71 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         FETCH cr_tbcadast_colaborador
           INTO rw_tbcadast_colaborador;
 
-        --Caso esse operador nao esteja na tabela TBCADAST_COLABORADOR devera ser inativado
-        IF cr_tbcadast_colaborador%NOTFOUND THEN 
-          CLOSE cr_tbcadast_colaborador;         
+      --Caso esse operador nao esteja na tabela TBCADAST_COLABORADOR devera ser inativado
+      IF cr_tbcadast_colaborador%NOTFOUND THEN 
+        CLOSE cr_tbcadast_colaborador;         
 
-          /*Valida se o operador é da cecred pois caso for deverá manter o operador ativo
-          em outras cooperativas*/          
-          OPEN cr_valida_cecred(pr_cdoperad => rw_crapope.cdoperad);
-            FETCH cr_valida_cecred
-              INTO rw_valida_cecred;
+        /*Valida se o operador é da cecred pois caso for deverá manter o operador ativo
+        em outras cooperativas*/          
+        OPEN cr_valida_cecred(pr_cdoperad => rw_crapope.cdoperad);
+          FETCH cr_valida_cecred
+            INTO rw_valida_cecred;
 
-          --Nao e CECRED ou está inativo
-          IF cr_valida_cecred%NOTFOUND THEN
-            CLOSE cr_valida_cecred;                       
-            --Inativa operador
-            BEGIN 
-              UPDATE crapope ope
-                 SET ope.cdsitope = 2
-               WHERE ope.cdcooper = rw_crapope.cdcooper
-                 AND UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
+        --Nao e CECRED ou está inativo
+        IF cr_valida_cecred%NOTFOUND THEN
+          CLOSE cr_valida_cecred;                       
+          --Inativa operador
+          BEGIN 
+            UPDATE crapope ope
+               SET ope.cdsitope = 2
+             WHERE ope.cdcooper = rw_crapope.cdcooper
+               AND UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
 
-            -- Log de sucesso. Poderá ser consultado na tela LOGTEL
-            btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapope.cdcooper,
-                                       pr_ind_tipo_log => 1, --> mensagem
-                                       pr_des_log      => to_char(SYSDATE,'dd/mm/rrrr hh24:mi:ss') ||
-                                                          ' --> Vetor inativou o operador ' || rw_crapope.cdoperad,
-                                       pr_nmarqlog     => 'operad.log',
-                                       pr_dstiplog     => 'O',
-                                       pr_flfinmsg     => 'N',
-                                       pr_cdprograma   => 'JBOPE_BLOQUEIA_OPERADORES');
-            EXCEPTION
-              WHEN OTHERS THEN
-                RAISE vr_exc_error;
-            END;
-          --E CECRED
-          ELSE
-            CLOSE cr_valida_cecred;  
-          --Ativa operador
+          -- Log de sucesso.
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
+                               , pr_cdcooper => rw_crapope.cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 4 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
+                                                  ' - CADA0002 --> Operador inativado com sucesso na rotina pc_bloqueia_operadores. Detalhes: Operador - ' ||
+                                                  rw_crapope.cdoperad || ' Cooperativa - ' || rw_crapope.cdcooper
+                               , pr_idprglog => vr_idprglog);                      
+          EXCEPTION
+            WHEN OTHERS THEN
+              RAISE vr_exc_error;
+          END;
+        --E CECRED
+        ELSE
+          CLOSE cr_valida_cecred;  
+            --Ativa operador
             BEGIN 
               UPDATE crapope ope
                  SET ope.cdsitope = 1
-               WHERE UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
+               WHERE UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad)
+                 AND ope.cdcooper = rw_crapope.cdcooper;
+
             EXCEPTION
               WHEN OTHERS THEN
                 RAISE vr_exc_error;
             END;
-    END IF;
+        END IF;
 
-        ELSE
-          CLOSE cr_tbcadast_colaborador;
-    END IF;
+          -- Log de sucesso.
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
+                               , pr_cdcooper => rw_crapope.cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 4 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
+                                                  ' - CADA0002 --> Operador inativado com sucesso na rotina pc_bloqueia_operadores. Detalhes: Operador - ' ||
+                                                  rw_crapope.cdoperad || ' Cooperativa - ' || rw_crapope.cdcooper
+                               , pr_idprglog => vr_idprglog);                      
+
+
+      ELSE
+        CLOSE cr_tbcadast_colaborador;
+      END IF;
         
                 
 				
@@ -4955,13 +5358,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                          , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES'                                
                          , pr_idprglog => vr_idprglog);
         
-        COMMIT;
+    COMMIT;
 
   EXCEPTION
     WHEN vr_exc_error THEN
 
       pr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - CADA0002 --> Erro ao atualzar a tabela crapope na rotina pc_bloqueia_operadores. Detalhes: ' || SQLERRM;
-
+        
       CECRED.pc_log_programa(pr_dstiplog => 'O'
                            , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
                            , pr_cdcooper => 0
