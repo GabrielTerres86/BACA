@@ -281,7 +281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
   --  Programa : TELA_MANPRT
   --  Sistema  : Ayllos Web
   --  Autor    : Helinton Steffens (Supero)
-  --  Data     : Janeiro - 2018                 Ultima atualizacao: 27/03/2019
+  --  Data     : Janeiro - 2018                 Ultima atualizacao: 25/07/2019
   --
   -- Dados referentes ao programa:
   --
@@ -308,6 +308,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                 
      27/03/2019 - Colocar o tpocorre como texto pois pode haver casos em 
                   que vem campo texto (Lucas Ranghetti INC0036169)
+                  
+     25/07/2019 - inc0021120 Na rotina pc_consulta_nao_conciliados, incluído o tipo de ocorrência 7
+                  (liquidacao em condicional) no cursor cr_titulos para que os mesmos apareçam na tela 
+                  para serem conciliados (Carlos)
    ---------------------------------------------------------------------------*/
     
     
@@ -1651,7 +1655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
            LEFT JOIN crapmun mun ON mun.cdufibge || LPAD(mun.cdcidbge,5,'0') = ret.cdcomarc
            INNER JOIN crapcop cop ON cop.cdcooper = ret.cdcooper
      WHERE ret.dtconciliacao IS NULL
-       AND ret.tpocorre = '1' -- titulo pago em cartorio
+       AND (ret.tpocorre = '1' OR ret.tpocorre = '7') -- titulo pago em cartorio ou liquidacao em condicional
        AND (
                (pr_dtinicial IS NOT NULL AND ret.dtocorre >= to_date(pr_dtinicial,'DD/MM/RRRR'))
            OR
