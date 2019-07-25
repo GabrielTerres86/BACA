@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Renato Darosci - Supero
-  --  Data     : Julho/2014.                   Ultima atualizacao: 19/09/2016
+  --  Data     : Julho/2014.                    Ultima atualizacao: 19/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -211,7 +211,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
 
 END CADA0002;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
+ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   /*---------------------------------------------------------------------------------------------------------------
   
     Programa : CADA0002
@@ -315,6 +315,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                             ,cdconta    VARCHAR2(100) --pj470
                             ,nrcheque_i VARCHAR2(100) --pj470
                             ,nrcheque_f VARCHAR2(100) --pj470
+                            ,dsativo    VARCHAR2(100) --pj470 - SM2
                             ,auxiliar   VARCHAR2(100)
                             ,auxiliar2  VARCHAR2(100)
                             ,auxiliar3  VARCHAR2(100)
@@ -2401,7 +2402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     --  Programa : pc_impressao_ficha_prop
     --  Sistema  : Rotinas para impressão de dados
     --  Autor    : Cássia de Oliveira - GFT
-    --  Data     : Janeiro/2019.                   Ultima atualizacao: 06/06/2019
+    --  Data     : Janeiro/2019.                   Ultima atualizacao: 18/06/2019
     --
     --  Dados referentes ao programa:
     -- 	
@@ -2409,9 +2410,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     --   Objetivo  : Agrupa os dados e monta o layout para impressão de Ficha-Proposta
     --
     --   Alteracoes: 
-    --              06/06/2019 - RITM0015775 - Inclusão de matricula e mudança 
-    --                           nos telefones buscados para trazer preferencialmente
-    --                           o residencial (Mouts)
+    --               18/06/2019 - RITM0015775 - Mudança de nome de Ficha Proposta para Fica Matricula + Inclusao campo matricula
     -- .............................................................................
       DECLARE
       -- Variaveis padrao
@@ -3313,6 +3312,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
             vr_tab_dados(vr_index)('dtinclusao') := vr_cratpro(vr_ind).dtinclusao;
             vr_tab_dados(vr_index)('hrinclusao') := vr_cratpro(vr_ind).hrinclusao;
             vr_tab_dados(vr_index)('dsfrase') := vr_cratpro(vr_ind).dsfrase;
+            vr_tab_dados(vr_index)('dsativo') := vr_cratpro(vr_ind).dsativo; -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
          IF vr_cratpro(vr_ind).cdtippro IN (30,31)
          THEN
               vr_tab_dados(vr_index)('dsoperacao') := vr_cratpro(vr_ind).dsoperacao;
@@ -3370,6 +3370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       gene0007.pc_gera_tag(pr_nome_tag  => 'cdconta'   , pr_tab_tag   => vr_tab_tags);
       gene0007.pc_gera_tag(pr_nome_tag  => 'nrcheque_i', pr_tab_tag   => vr_tab_tags);
       gene0007.pc_gera_tag(pr_nome_tag  => 'nrcheque_f', pr_tab_tag   => vr_tab_tags);
+      gene0007.pc_gera_tag(pr_nome_tag  => 'dsativo', pr_tab_tag   => vr_tab_tags); -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
       -- Fim PJ470
       -- Carrega as TAG´s do XML referente a descrição (novo nodo)
       gene0007.pc_gera_tag(pr_nome_tag  => 'dsinform.1', pr_tab_tag   => vr_tab_tagd);
@@ -3828,6 +3829,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     rw_xmldata.cdconta    := NVL(fn_extract('/Root/Dados/cdconta/text()'),'-');
     rw_xmldata.nrcheque_i := NVL(fn_extract('/Root/Dados/nrcheque_i/text()'),'-');
     rw_xmldata.nrcheque_f := NVL(fn_extract('/Root/Dados/nrcheque_f/text()'),'-');
+    rw_xmldata.dsativo    := NVL(fn_extract('/Root/Dados/nrcheque_f/text()'),'-'); -- Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts
     -- Fim pj470
 
     
