@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 24/03/2017
  * OBJETIVO     : Rotina responsável por chamar view externa do digidoc com a 
  *				  respectiva chave de acesso.
-
+   ALTERAÇÕES   : 25/07/2019 - Alteração para novo viewer do Smartshare (PRB0041878 - Joao Mannes - Mouts) 
  */  
 ?>
  
@@ -42,5 +42,11 @@
 		exit();
 	}
 	$key = $xmlObj->roottag->tags[0]->tags[0]->cdata;
+	$inpessoa = $xmlObj->roottag->tags[0]->tags[1]->cdata;
+	$nrcpfcgc = $xmlObj->roottag->tags[0]->tags[2]->cdata;
+	if ($inpessoa == 1 && $cdproduto == 8) {
+		echo 'window.open("http://'.$GEDServidor.'/smartshare/Clientes/ViewerExterno.aspx?pkey='.$key.'&CPF='.$nrcpfcgc.'","_blank");';
+	} else {
 	echo 'window.open("http://'.$GEDServidor.'/smartshare/Clientes/ViewerExterno.aspx?pkey='.$key.'&conta='.formataNumericos("zzzz.zzz.9",$nrdconta,".-").'&cooperativa='.$glbvars["cdcooper"].'","_blank");';
+	}
 ?>
