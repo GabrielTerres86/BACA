@@ -281,7 +281,7 @@ create or replace package body cecred.cobr0011 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Supero
-  --  Data     : Março/2018.                   Ultima atualização: 01/03/2019
+  --  Data     : Março/2018.                   Ultima atualização: 25/07/2019
   --
   -- Dados referentes ao programa:
   --
@@ -305,6 +305,10 @@ create or replace package body cecred.cobr0011 IS
   --             18/02/2019 - Passar motivo '00' como parâmetro para cobrança de tarifa de remessa a cartório (P352 - Cechet).
   --
   --             01/03/2019 - Ajuste na funcao que retorna o dia util para envio de informações ao IEPTB (P352 - Cechet)
+
+                 25/07/2019 - inc0021120 Na rotina pc_gera_movimento_pagamento, incluído o tipo de ocorrencia 7 
+                              (liquidacao em condicional) no cursor cr_conciliados para que haja o repasse do 
+                              valor para o cooperado (Carlos)
 ---------------------------------------------------------------------------------------------------------------*/
 
   -- Private type declarations
@@ -3317,7 +3321,7 @@ create or replace package body cecred.cobr0011 IS
 				 AND tci.dtconcilicao    IS NOT NULL
 				 AND tri.dtconciliacao   IS NOT NULL
 				 AND tci.flgproc         = 0
-				 AND tri.tpocorre        = 1;
+				 AND tri.tpocorre        IN (1,7);
 		--
 		rw_conciliados cr_conciliados%ROWTYPE;
 		--
