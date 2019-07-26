@@ -7,12 +7,14 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Ze Eduardo
-   Data    : Maio/2012.                      Ultima atualizacao: 27/03/2015
+   Data    : Maio/2012.                      Ultima atualizacao: 12/07/2019
       
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
    Objetivo  : Programa que gera os dados para a CQL (Cheque Legal).
+   
+   Ambiente de testes: http://dwebayllos.cecred.coop.br/telas/imgchq/cheque_legal.php (rodando em dev1)
    
    Alteracoes: 18/06/2013 - Alteracao no codigo da situacao e ocorrencia (Ze).
                
@@ -20,6 +22,11 @@
                             (Carlos)
                             
                27/03/2015 - Removido a criacao do arquivo a.txt. (James)
+
+               06/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+			   
+			   12/07/2019 - 2|8 retornar somente em cdsitdct = 4 (RITM0022371)
+
 ------------------------------------------------------------------------*/
 /*           This .W file was created with AppBuilder.                  */
 /*----------------------------------------------------------------------*/
@@ -360,6 +367,9 @@ PROCEDURE process-web-request :
                      IF crapcop.cdcooper = 15 THEN /** Credimilsul **/
                         aux_cdcooper = 13.
                      ELSE
+                     IF crapcop.cdcooper = 17 THEN /** Transulcred **/
+                        aux_cdcooper = 9. /* Transpocred */
+                     ELSE
                         aux_cdcooper = crapcop.cdcooper.
 
                      FIND FIRST crapdat WHERE 
@@ -411,7 +421,7 @@ PROCEDURE process-web-request :
                                                      /* Cheque nao pertencente
                                                         ao emitente - Ant. 4 */
                                                ELSE
-                                               IF   CAN-DO("2,3,4",
+                                               IF   CAN-DO("4",
                                                     STRING(crapass.cdsitdct))
                                                     THEN
                                                     ASSIGN aux_dssitcon = "2"
