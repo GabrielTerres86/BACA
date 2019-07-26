@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --  Sistema  : Rotinas genericas referente a consultas de saldos em geral de aplicacoes
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Julho - 2014.                   Ultima atualizacao: 04/12/2018
+  --  Data     : Julho - 2014.                   Ultima atualizacao: 03/07/2019
   --
   -- Dados referentes ao programa:
   --
@@ -63,6 +63,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
   --
   --             16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
   --                   Heitor (Mouts)
+  --
+  --             03/07/2019 - P450 - Adequacao rotina Centralizadora LANC0001 (Marcelo/AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Definição de tabela de memória que compreende as informacoes de carencias dos novos produtos
@@ -2693,6 +2695,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       rw_crapmpc cr_crapmpc%ROWTYPE;
 
+      CURSOR cr_crapmpc_cont(pr_qtdiacar IN crapmpc.qtdiacar%TYPE --> Dias de Carencia
+                            ,pr_qtdiaprz IN crapmpc.qtdiaprz%TYPE --> Dias de Prazo
+                            ,pr_cdprodut IN crapcpc.cdprodut%TYPE --> Codigo do Produto
+                            ) IS
+        SELECT COUNT(1) cont
+          FROM crapmpc mpc
+              ,crapdpc dpc
+        WHERE mpc.cdprodut  = pr_cdprodut -- Codigo do produto
+          AND mpc.qtdiacar  = pr_qtdiacar -- Quantidade de dias de carencia
+          AND mpc.qtdiaprz  = pr_qtdiaprz -- Quantidade de dias de prazo
+          AND dpc.cdmodali  = mpc.cdmodali -- Codigo da Modalidade
+          AND dpc.cdcooper  = pr_cdcooper  -- Codigo da Cooperatica
+          AND dpc.idsitmod  = 1;
+      
+      rw_crapmpc_cont cr_crapmpc_cont%ROWTYPE;
+
       -- Consulta saldo de conta investimento
       CURSOR cr_crapsli(pr_cdcooper crapcop.cdcooper%TYPE
                        ,pr_nrdconta crapsli.nrdconta%TYPE
@@ -2918,6 +2936,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       IF rw_crapcpc.idtippro = 2 AND pr_qtdiacar = 0 THEN
         vr_dscritic := 'Nao e permitido carencia igual a zero para produtos pos-fixado.';
         RAISE vr_exc_saida;
+      END IF;
+
+      /* Vamos verificar se existe mais opcoes de modalidades disponiveis,
+         caso soh tenha 1, nao precisamos buscar os valores acumulados
+         pois nao mudara a modalidade vinculada na aplicacao */
+      IF rw_crapcpc.idacumul = 1 THEN
+        OPEN cr_crapmpc_cont(pr_cdprodut => pr_cdprodut
+                            ,pr_qtdiacar => pr_qtdiacar
+                            ,pr_qtdiaprz => pr_qtdiaprz);
+        FETCH cr_crapmpc_cont INTO rw_crapmpc_cont;
+        IF cr_crapmpc_cont%NOTFOUND THEN
+          CLOSE cr_crapmpc_cont;
+          -- Caso nao encontre, gera critica
+          vr_dscritic := 'Nao foram encontradas modalidades disponiveis para o produto selecionado.';
+          RAISE vr_exc_saida;
+        ELSE
+          CLOSE cr_crapmpc_cont;
+        END IF;
+        IF rw_crapmpc_cont.cont = 1 then
+          rw_crapcpc.idacumul := 0;
+        END IF;
       END IF;
 
       IF rw_crapcpc.idacumul = 1 THEN
@@ -3850,6 +3889,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       rw_crapmpc cr_crapmpc%ROWTYPE;
 
+      CURSOR cr_crapmpc_cont(pr_qtdiacar IN crapmpc.qtdiacar%TYPE --> Dias de Carencia
+                            ,pr_qtdiaprz IN crapmpc.qtdiaprz%TYPE --> Dias de Prazo
+                            ,pr_cdprodut IN crapcpc.cdprodut%TYPE --> Codigo do Produto
+                            ) IS
+        SELECT COUNT(1) cont
+          FROM crapmpc mpc
+              ,crapdpc dpc
+        WHERE mpc.cdprodut  = pr_cdprodut -- Codigo do produto
+          AND mpc.qtdiacar  = pr_qtdiacar -- Quantidade de dias de carencia
+          AND mpc.qtdiaprz  = pr_qtdiaprz -- Quantidade de dias de prazo
+          AND dpc.cdmodali  = mpc.cdmodali -- Codigo da Modalidade
+          AND dpc.cdcooper  = pr_cdcooper  -- Codigo da Cooperatica
+          AND dpc.idsitmod  = 1;
+      
+      rw_crapmpc_cont cr_crapmpc_cont%ROWTYPE;
+
       --Selecionar informacoes dos associados
       CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
                         ,pr_nrdconta IN crapres.nrdconta%TYPE) IS
@@ -4041,6 +4096,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         RAISE vr_exc_saida;
       ELSE
         CLOSE cr_crapcpc;
+      END IF;
+
+      /* Vamos verificar se existe mais opcoes de modalidades disponiveis,
+         caso soh tenha 1, nao precisamos buscar os valores acumulados
+         pois nao mudara a modalidade vinculada na aplicacao */
+      IF rw_crapcpc.idacumul = 1 THEN
+        OPEN cr_crapmpc_cont(pr_cdprodut => pr_cdprodut
+                            ,pr_qtdiacar => pr_qtdiacar
+                            ,pr_qtdiaprz => pr_qtdiaprz);
+        FETCH cr_crapmpc_cont INTO rw_crapmpc_cont;
+        IF cr_crapmpc_cont%NOTFOUND THEN
+          CLOSE cr_crapmpc_cont;
+          -- Caso nao encontre, gera critica
+          vr_dscritic := 'Nao foi encontrada modalidades disponiveis na política de captacao para o produto selecionado.';
+          RAISE vr_exc_saida;
+        ELSE
+          CLOSE cr_crapmpc_cont;
+        END IF;
+        IF rw_crapmpc_cont.cont = 1 then
+          rw_crapcpc.idacumul := 0;
+        END IF;
       END IF;
 
       -- Verifica cumulatividade do produto para obter o saldo
@@ -4916,7 +4992,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
         END;
 
         -- Fim CRÉDITO
-        BEGIN
            LANC0001.pc_gerar_lancamento_conta(
                           pr_cdcooper => pr_cdcooper
                          ,pr_dtmvtolt => pr_dtmvtolt
@@ -4940,16 +5015,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
                          ,pr_dscritic => vr_dscritic);
 
             IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+             vr_dscritic := 'Erro ao inserir registro de lancamento de debito.';
                RAISE vr_exc_saida;
             END IF;
-
-        EXCEPTION
-          WHEN OTHERS THEN
-            IF trim(vr_dscritic) IS NULL THEN
-              vr_dscritic := 'Erro ao inserir registro de lancamento de debito.' || SQLERRM;
-            END IF;
-            RAISE vr_exc_saida;
-        END;
       END IF; -- Fim ELSE recurso nao proveniente de conta investimento
 
       -- Geracao de comprovante
@@ -9163,6 +9231,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       vr_valresta NUMBER(20,8) := 0;       -- Valor de atualizacao de aplicacao
       vr_datresga DATE         := SYSDATE; -- Data de atualizacao de aplicacao
 
+      vr_incrineg      INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+      vr_tab_retorno   LANC0001.typ_reg_retorno;
+
       -- Cursores
 
       -- Selecionar dados de carencia de aplicacao
@@ -11226,43 +11297,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
         -- Insere registro de lancamento
         IF vr_vlsldrgt > 0 THEN
-          BEGIN
-            INSERT INTO
-              craplcm(
-                cdcooper
-               ,dtmvtolt
-               ,cdagenci
-               ,cdbccxlt
-               ,nrdolote
-               ,nrdconta
-               ,nrdctabb
-               ,nrdocmto
-               ,nrseqdig
-               ,dtrefere
-               ,vllanmto
-               ,cdhistor
-               ,nraplica
-              )VALUES(
-                 rw_craplot.cdcooper
-                ,rw_craplot.dtmvtolt
-                ,rw_craplot.cdagenci
-                ,rw_craplot.cdbccxlt
-                ,rw_craplot.nrdolote
-                ,rw_craprac.nrdconta
-                ,rw_craprac.nrdconta
-                ,vr_nrdocmto
-                ,rw_craplot.nrseqdig
-                ,rw_craplot.dtmvtolt
-                ,vr_vlsldrgt         -- Valor do resgate
-                ,rw_craprac.cdhsvrcc
-                ,pr_nraplica);
-          EXCEPTION
-            WHEN OTHERS THEN
+           LANC0001.pc_gerar_lancamento_conta(
+                          pr_cdcooper => rw_craplot.cdcooper
+                         ,pr_dtmvtolt => rw_craplot.dtmvtolt                         
+                         ,pr_cdagenci => rw_craplot.cdagenci
+                         ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                         ,pr_nrdolote => rw_craplot.nrdolote
+                         ,pr_nrdconta => rw_craprac.nrdconta
+                         ,pr_nrdctabb => rw_craprac.nrdconta
+                         ,pr_nrdocmto => vr_nrdocmto
+                         ,pr_nrseqdig => rw_craplot.nrseqdig
+                         ,pr_dtrefere => rw_craplot.dtmvtolt
+                         ,pr_vllanmto => vr_vlsldrgt         -- Valor do resgate
+                         ,pr_cdhistor => rw_craprac.cdhsvrcc
+                         ,pr_nraplica => pr_nraplica                        
+                         -- OUTPUT --
+                         ,pr_tab_retorno => vr_tab_retorno
+                         ,pr_incrineg => vr_incrineg
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
+
+            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN                
               pr_tpcritic := 1;
               vr_cdcritic := 0;
               vr_dscritic := 'Erro ao inserir registro de lancamento de credito. Erro: ' || SQLERRM;
               RAISE vr_exc_saida;
-          END;
+            END IF;                                             
         END IF;
         -- Fim credito em conta corrente
 

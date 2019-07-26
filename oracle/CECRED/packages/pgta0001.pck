@@ -12805,7 +12805,7 @@ BEGIN
   vr_nmfavor := substr(pr_linha_arquivo,44,30);
   vr_nmfavor := replace(vr_nmfavor,'&','e');
   -- Validar os caracteres especiais do favorecido
-  IF fn_valida_caracteres(pr_flgnumer => FALSE,   -- Validar Numeros
+  IF fn_valida_caracteres(pr_flgnumer => TRUE,   -- Validar Numeros
                         pr_flgletra => TRUE,   -- Validar Letras
                         pr_listaesp => '',     -- Lista Caracteres Validos (incluir caracteres que sao validos apenas para este campo)
                         pr_dsvalida => vr_nmfavor ) THEN 
@@ -12824,7 +12824,7 @@ BEGIN
   vr_histra := substr(pr_linha_arquivo,178,20);
   vr_histra := replace(vr_histra,'&','e');
   -- Validar os caracteres especiais do histrocio
-  IF fn_valida_caracteres(pr_flgnumer => FALSE,   -- Validar Numeros
+  IF fn_valida_caracteres(pr_flgnumer => TRUE,   -- Validar Numeros
                         pr_flgletra => TRUE,   -- Validar Letras
                         pr_listaesp => '',     -- Lista Caracteres Validos (incluir caracteres que sao validos apenas para este campo)
                         pr_dsvalida => vr_histra ) THEN 
@@ -13947,6 +13947,7 @@ procedure pc_importa_arquivo_ted   (pr_cdcooper   in crapatr.cdcooper%type  --> 
   -- Objetivo  : Realizar a importação do arquivo de TED/Transferência
   --          
   --
+  -- Alteracoes:
   --
   ---------------------------------------------------------------------------
 

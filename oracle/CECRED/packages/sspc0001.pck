@@ -4062,6 +4062,12 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/CONSULTA/TIPO',         'S',vr_nmtagger, vr_dscritic);
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/CONSULTA/DOCUMENTO',    'S',vr_crapcbd.nrcpfcgc, vr_dscritic);
         pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/CONSULTA/DATA_BASE',    'S',vr_database, vr_dscritic);
+        BEGIN
+          vr_crapcbd.dtbaseba := to_date(vr_database,'YYYY/MM');
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_crapcbd.dtbaseba := NULL;
+        END;
         -- Somente para Motor
         IF pr_tpconaut = 'M' THEN 
           pc_busca_conteudo_campo(pr_retxml, '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/CONSULTA/CLASSE',       'S',vr_dsclasse, vr_dscritic);        
@@ -4257,7 +4263,8 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
                vlprejui = vr_crapcbd.vlprejui,
                nrprotoc = pr_nrprotoc,
                inreapro = nvl(vr_crapcbd.inreapro,0),
-               dtreapro = vr_crapcbd.dtreapro
+               dtreapro = vr_crapcbd.dtreapro,
+               dtbaseba = vr_crapcbd.dtbaseba
          WHERE nrconbir = pr_nrconbir
            AND nrcpfcgc = vr_crapcbd.nrcpfcgc
            AND cdbircon = rw_crapbir.cdbircon

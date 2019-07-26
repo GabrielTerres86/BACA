@@ -126,7 +126,8 @@
 						   Alcemir Mouts (INC0011837).
             
 			  17/05/2019 - Correcao INC00015454 na chamada da procedure pc_valida_emp_conta_salari (Augusto - SUPERO). 
-							
+
+              16/07/2019 - Valida_dados P437 Nao validar o campo matricula (par_nrcadast) Jackson Barcellos - AMcom							
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -810,27 +811,7 @@ PROCEDURE Valida_Dados:
                LEAVE Valida.
             END.
 
-        /* CECRISACRED nao valida o digito */
-        IF  par_cdcooper <> 5 THEN
-        DO:
-            /* verifica se a empresa correspondente verifica o D.V. */
-            IF CAN-FIND ( crapemp WHERE crapemp.cdcooper = par_cdcooper
-                                  AND   crapemp.cdempres = par_cdempres
-                                  AND   crapemp.flgvlddv = TRUE) THEN
-            DO:
-               IF  NOT ValidaDigFun(INPUT par_cdcooper,
-                                    INPUT par_cdagenci,
-                                    INPUT par_nrdcaixa,
-                                    INPUT par_nrcadast) 
-				   AND par_nrcadast <> 0   THEN
-                   DO:
-                      ASSIGN 
-                          par_nmdcampo = "nrcadast"
-                          aux_cdcritic = 41.
-                      LEAVE Valida.
-                   END.
-            END.
-        END.
+		/*P437 Nao validar o campo matricula (par_nrcadast) removida validaçao DV*/
 
         /* validar a UF - pode ser vazio, nao eh obrigatorio */
         IF  NOT CAN-DO("AC,AL,AP,AM,BA,CE,DF,ES,GO,MA," +

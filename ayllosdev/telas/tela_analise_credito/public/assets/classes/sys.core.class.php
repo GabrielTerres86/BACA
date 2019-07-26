@@ -141,6 +141,7 @@ class Core {
 
 			    <!-- Bootstrap CSS -->
 			    <link rel="stylesheet"  href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
+                <link rel="stylesheet"  href="../public/assets/3rdparty/DataTables/jquery.dataTables.min.css">
 			    <link rel="stylesheet"  href="../node_modules/@fortawesome/fontawesome-free/css/all.min.css">
 				<link rel="stylesheet"  href="../public/assets/css/style.css">
 				<link rel="stylesheet"  href="../public/assets/css/custom.css?v=<?=$v?>">
@@ -265,12 +266,20 @@ class Core {
 
 				        <div class="content-wrapper">
 
-<!-- 							<div class="row">
-								<div class="col-12 text-right">
-									<small>Data em que a proposta foi gerada: <?=$_SESSION['data']?></small>
+							<div class="row">
+								<div class="col-12">
+										<?php
+
+											// echo '<br> globalCDCOOPER :'.$_SESSION['globalCDCOOPER'];
+								   //          echo '<br> globalNRDCONTA :'.$_SESSION['globalNRDCONTA'];
+								   //          echo '<br> globalCDOPERAD :'.$_SESSION['globalCDOPERAD'];
+								   //          echo '<br> globalNRPROPOSTA :'.$_SESSION['globalNRPROPOSTA'];
+								   //          echo '<br> globalTPPRODUTO :'.$_SESSION['globalTPPRODUTO'];
+								   //          echo '<br> globalDHINICIO :'.$_SESSION['globalDHINICIO'];
+            										?>
 								</div>
 							</div>
- -->
+
  							<div class="row">
 								<div class="col-12" id="html_blocos">
 							          
@@ -349,6 +358,7 @@ class Core {
 			    <script src="../public/assets/js/popper.min.js"></script>
 				<script src="../public/assets/js/off-canvas.js"></script>
 				<script src="../public/assets/js/misc.js"></script>
+                <script src="../public/assets/3rdparty/DataTables/jquery.dataTables.min.js"></script>
 
 				<script src="../public/assets/js/functions.js?v=<?=$v?>"></script>
 				<script src="../public/assets/js/SideBySide.js?v=<?=$v?>"></script>

@@ -11,6 +11,7 @@
  *                 10/10/2017 - Inclusao do campo % Mínimo Garantia e opção 4 no campo Modelo. (Lombardi - PRJ404)
  *				   06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
  *                 13/02/2019 - Inclusao do campo flprapol (Christian Grauppe - Envolti - P442 Pré-Aprovado)
+ *                 17/03/2019 - P437 Inclusão do tipo de modalidade Jackson Barcellos - AMcom
  */
 ?>
 
@@ -79,6 +80,7 @@
   $tpprodut = (isset($_POST["tpprodut"])) ? $_POST["tpprodut"] : 0;
   $cddindex = (isset($_POST["cddindex"])) ? $_POST["cddindex"] : 0;
   $vlperidx	= (isset($_POST["vlperidx"])) ? $_POST["vlperidx"] : 0;
+  $tpmodcon = (isset($_POST["tpmodcon"])) ? $_POST["tpmodcon"] : 0;
     
   validaDados();
   
@@ -153,6 +155,7 @@
 	$xml 	   .= "     <cddindex>".$cddindex."</cddindex>";
 	$xml 	   .= "     <permingr>".$permingr."</permingr>";
 	$xml 	   .= "     <vlperidx>".$vlperidx."</vlperidx>";
+    $xml 	   .= "     <tpmodcon>".$tpmodcon."</tpmodcon>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	

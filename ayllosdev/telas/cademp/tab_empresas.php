@@ -10,6 +10,7 @@
  *                17/05/2016 - Correcao para exibicao do campo dtfchfol. Remocao do campo tpdebppr e dtavsppr.
  *                             Inclusao do campo dtlimdeb. (Jaison/Marcos)
  *
+ *      		  14/09/2018 - Tratamento para o projeto 437 Consignado (incluir  flnecont e tpmodcon)
  */	
 // Includes para controle da session, variáveis globais de controle, e biblioteca de funções
 session_start();
@@ -70,6 +71,8 @@ isPostMethod();
 						<input type="hidden" id="hnrendemp" name="nrendemp" value="<?php echo mascara(getByTagName($r->tags,'nrendemp'), "###.###");?>" />
 						<input type="hidden" id="hnrfaxemp" name="nrfaxemp" value="<?php echo getByTagName($r->tags,'nrfaxemp');?>" />
 						<input type="hidden" id="hnrfonemp" name="nrfonemp" value="<?php echo getByTagName($r->tags,'nrfonemp');?>" />
+						<!-- P437 -->
+						<input type="hidden" id="hnrdddemp" name="nrdddemp" value="<?php echo getByTagName($r->tags,'nrdddemp');?>" />
 						<input type="hidden" id="hflgarqrt" name="flgarqrt" value="<?php echo getByTagName($r->tags,'flgarqrt');?>" />
 						<input type="hidden" id="hflgvlddv" name="flgvlddv" value="<?php echo getByTagName($r->tags,'flgvlddv');?>" />
 						<input type="hidden" id="hflgpgtib" name="flgpgtib" value="<?php echo getByTagName($r->tags,'flgpgtib');?>" />
@@ -78,6 +81,8 @@ isPostMethod();
 						<input type="hidden" id="hvllimfol" name="vllimfol" value="<?php echo formataMoeda(getByTagName($r->tags,'vllimfol')); ?>" />
 						<input type="hidden" id="hdtultufp" name="dtultufp" value="<?php echo getByTagName($r->tags,'dtultufp');?>" />
                         <input type="hidden" id="hdtlimdeb" name="dtlimdeb" value="<?php echo getByTagName($r->tags,'dtlimdeb');?>" />
+						<input type="hidden" id="htpmodcon" name="tpmodcon" value="<?php echo getByTagName($r->tags,'tpmodcon');?>" />
+						<input type="hidden" id="hflnecont" name="flnecont" value="<?php echo getByTagName($r->tags,'flnecont');?>" />
 						<!-- CAMPOS COM OS DADOS PARA POPULAR OS FORMULARIOS CONFORME A EMPRESA ESCOLHIDA -->
 					</td>
 					<td>

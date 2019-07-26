@@ -339,6 +339,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   --             28/05/2019 - Alterado pc_carrega_dados_avais para trazer s/n no numero de endereço do avalista terceiro quando 
   --                          não estiver preenchido e trazer dsendres##2 caso o nmbairro estiver vazio. PRJ 438 (Mateus Z - Mouts)
   --
+  --             28/06/2019 - Alterado pc_ultimas_alteracoes para trazer o motivo 'Cancelado automaticamente por inadimplência'. 
+  --                          PRJ 438 - (Mateus Z / Mouts)
+  --
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_tela_cadlim_consultar(pr_inpessoa IN craprli.inpessoa%TYPE --> Codigo do tipo de pessoa
                                     ,pr_flgdepop IN INTEGER               --> Flag para verificar o departamento do operador
@@ -4302,11 +4305,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
              , c.dtfimvig
              , c.vllimite
              , 'CANCELADO' dssitlli
-             , case c.cdmotcan when 1 then 'ALT. DE LIMITE'
-                               when 2 then 'PELO ASSOCIADO'
-                               when 3 then 'PELA COOPERATIVA'
-                               when 4 then 'TRANSFERENCIA C/C'
-                               else 'DIFERENTE' end dsmotivo
+             -- PRJ 438 - Sprint 13 - Ajustado para trazer o motivo 'Cancelado automaticamente por inadimplência' (Mateus Z / Mouts)
+             , case when c.cdmotcan = 1 then 'ALT. DE LIMITE'
+                    when c.cdmotcan = 2 then 'PELO ASSOCIADO'
+                    when c.cdmotcan = 3 then 'PELA COOPERATIVA'
+                    when c.cdmotcan = 4 then 'TRANSFERENCIA C/C'
+                    when c.cdmotcan = 0 and c.ininadim = 1 then 'Cancelado automaticamente por inadimplência'
+                    else 'DIFERENTE'
+               end dsmotivo
              , null dhalteracao
 			 , o.nmoperad
           from craplim c

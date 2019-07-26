@@ -25,6 +25,8 @@
 
                 18/05/2016 - Inclusao do campo dtlimdeb. (Jaison/Marcos)
 
+				12/04/2018 - P437 - Consignado - inclusão do campo nrdddemp - Josiane Stiehler AMcom
+				
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -154,6 +156,11 @@ DEF VAR aux_dtavs001  AS DATE               NO-UNDO.
 DEF VAR aux_dtlimdeb  LIKE crapemp.dtlimdeb NO-UNDO.
 DEF VAR new_dtlimdeb  LIKE crapemp.dtlimdeb NO-UNDO.
 DEF VAR old_dtlimdeb  LIKE crapemp.dtlimdeb NO-UNDO.
+
+DEF VAR aux_nrdddemp  LIKE crapemp.nrdddemp NO-UNDO.
+DEF VAR old_nrdddemp  LIKE crapemp.nrdddemp NO-UNDO.
+DEF VAR new_nrdddemp  LIKE crapemp.nrdddemp NO-UNDO.
+
 
 DEF VAR aux_indtermo AS INTE                NO-UNDO.
 DEF VAR aux_lisconta AS CHAR                NO-UNDO.
@@ -304,6 +311,9 @@ PROCEDURE valores_entrada:
             WHEN "new_dtlimdeb" THEN new_dtlimdeb = INTEGER(tt-param.valorCampo).
             WHEN "old_dtlimdeb" THEN old_dtlimdeb = INTEGER(tt-param.valorCampo).
             WHEN "dtferiad"     THEN aux_dtferiad = DATE(tt-param.valorCampo).
+			WHEN "nrdddemp"     THEN aux_nrdddemp = INTEGER(tt-param.valorCampo).
+            WHEN "old_nrdddemp" THEN old_nrdddemp = INTEGER(tt-param.valorCampo).
+            WHEN "new_nrdddemp" THEN new_nrdddemp = INTEGER(tt-param.valorCampo).
            
             WHEN "idtpempr"     THEN aux_idtpempr = STRING(tt-param.valorCampo).
             WHEN "nrdconta"     THEN aux_nrdconta = INTE(tt-param.valorCampo).
@@ -552,6 +562,7 @@ PROCEDURE Altera_inclui:
                            INPUT aux_vllimfol, /* aqui */
                            INPUT aux_flgdgfib,
                            INPUT aux_dtlimdeb,
+						   INPUT aux_nrdddemp,
                            OUTPUT TABLE tt-erro).
     IF  RETURN-VALUE <> "OK"  THEN
         DO:
@@ -805,7 +816,9 @@ PROCEDURE Gera_arquivo_log:
                                 INPUT old_nrfonemp,
                                 INPUT new_nrfonemp,
                                 INPUT old_dtlimdeb,
-                                INPUT new_dtlimdeb).    
+                                INPUT new_dtlimdeb,
+								INPUT old_nrdddemp,
+								INPUT new_nrdddemp).    
 
 
     RUN piXmlNew.

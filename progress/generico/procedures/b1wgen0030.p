@@ -5002,6 +5002,8 @@ PROCEDURE efetua_inclusao_limite:
     DEF VAR aux_nrctrlim AS INTE    NO-UNDO.
     DEF VAR aux_nrseqcar AS INTE	NO-UNDO.
     DEF VAR aux_mensagens AS CHAR    NO-UNDO.    
+    DEF VAR aux_dsfrase  AS CHAR    NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+    DEF VAR aux_dsdlinha AS CHAR    NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -5624,6 +5626,7 @@ PROCEDURE efetua_inclusao_limite:
         END.
     
     IF  par_flgerlog  THEN
+    DO:
         RUN proc_gerar_log (INPUT par_cdcooper,
                             INPUT par_cdoperad,
                             INPUT "",
@@ -5634,6 +5637,76 @@ PROCEDURE efetua_inclusao_limite:
                             INPUT par_nmdatela,
                             INPUT par_nrdconta,
                            OUTPUT aux_nrdrowid).
+      /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+        /** Numero de Contrato do Limite **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Contrato",
+                                 INPUT "",
+                                 INPUT TRIM(STRING(par_nrctrlim, "zzz,zzz,zz9"))).
+        /** Valor do Limite **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Vl.Limite de Crédito",
+                                 INPUT "",
+                                 INPUT TRIM(STRING(par_vllimite, "zzz,zzz,zz9.99"))).
+        /** Data Alteracao do Limite **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Data de Contrataçao",
+                                 INPUT "",
+                                 INPUT STRING(par_dtmvtolt, "99/99/9999")).
+        /** Linha de crédito **/
+        FIND crapldc WHERE crapldc.cdcooper = par_cdcooper     AND
+                           crapldc.cddlinha = par_cddlinha AND
+                           crapldc.tpdescto = 2
+                           NO-LOCK NO-ERROR.
+
+        IF   NOT AVAILABLE crapldc   THEN
+             aux_dsdlinha = STRING(par_cddlinha) + " - " + "NAO CADASTRADA".
+        ELSE
+             aux_dsdlinha = STRING(par_cddlinha) + " - " + crapldc.dsdlinha.
+        //
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Linha de Crédito",
+                                 INPUT "",
+                                 INPUT STRING(aux_dsdlinha)).
+        /** Prazo de Vigencia **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Prazo de Vigencia (dias)",
+                                 INPUT "",
+                                 INPUT STRING(par_qtdiavig)).
+        /** Periodicidade da Capitalizaçao **/
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Tx.Juros Remuneratórios",
+                                 INPUT "",
+                                 INPUT STRING("Aplicável em cada borderô")).
+        /** Custo Efetivo Total (CET) **/
+        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+        RUN STORED-PROCEDURE pc_busca_cet_limite
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                             INPUT par_nrdconta,
+                                             INPUT par_nrctrlim,
+                                            OUTPUT "",  /* DSFRASE */
+                                            OUTPUT 0,   /* Codigo da crítica */
+                                            OUTPUT ""). /* Descriçao da crítica */
+        CLOSE STORED-PROC pc_busca_cet_limite
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+        ASSIGN aux_dsfrase  = ""
+               aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_dsfrase  = pc_busca_cet_limite.pr_dsfrase 
+                              WHEN pc_busca_cet_limite.pr_dsfrase <> ?
+               aux_cdcritic = pc_busca_cet_limite.pr_cdcritic 
+                              WHEN pc_busca_cet_limite.pr_cdcritic <> ?
+               aux_dscritic = pc_busca_cet_limite.pr_dscritic
+                              WHEN pc_busca_cet_limite.pr_dscritic <> ?.
+        IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
+           aux_dsfrase  = "Erro ao buscar o CET " + aux_dscritic.
+        RUN proc_gerar_log_item (INPUT aux_nrdrowid,
+                                 INPUT "Custo Efetivo Total (CET)",
+                                 INPUT "",
+                                 INPUT STRING(aux_dsfrase)).
+    END.
+    /* Fim Pj470 - SM2 */
     
     RETURN "OK".
         

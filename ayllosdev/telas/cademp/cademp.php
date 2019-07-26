@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 27/01/2014 - Retirado include de pesquisa de associado, nao utilizado (Carlos)
 				  05/08/2014 - Inclusão da opção de Pesquisa (Vanessa)	
 				  15/10/2015 - Reformulacao cadastral (Gabriel-RKAM).
+				  03/2019 - Projeto 437 consignado AMcom - JDB.
  * --------------
  */
 	session_start();	
@@ -18,6 +19,8 @@
 	isPostMethod();
 	
 	require_once("../../includes/carrega_permissoes.php");	
+	//P437 s2
+	include("../../includes/param_session.php");	
 ?>
 
 <html>
@@ -90,6 +93,8 @@
 																				<a href="#" class="botao" id="btSalvar"  onClick="controlaOperacao(); return false;">Prosseguir</a>
 																			</div>																			
 																			<div id="divUsoGenerico"></div>
+																			<!-- P437 -->
+																			<input type="hidden" id="glb_val_cooper_consignado" name="glb_val_cooper_consignado" value="<?php echo $glbvars['VAL_COOPER_CONSIGNADO'] ?>" />
 																		</div>
 																	</td>
 																</tr>

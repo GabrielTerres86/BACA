@@ -49,6 +49,8 @@
  * 032: [25/08/2018] Cassia de Oliveira (GFT): Criacao da funcao visualizarDetalhesPrejuizo()
  * 033: [05/09/2018] Luis Fernando (GFT): Ajustada rotina de selecao de bordero para incluir prejuizo 
  * 034: [04/06/2019] Mateus Z  (Mouts) : Alteração para chamar tela de autorização quando alterar valor. PRJ 470 - SM2
+ * 035: [04/07/2019] Mateus Zimmermann (Mouts): Adicionado validação para não permitir anular propostas com situação 'Ativa' PRJ 438 - Sprint 14
+ 
  */
 
  // variaveis propostas
@@ -3806,6 +3808,16 @@ function calculaSaldoPrejuizo(){
 
 // PRJ 438 - Inicio
 function carregaDadosConsultaMotivos() {
+
+    // PRJ 438 - Sprint 14 - Adicionado validação para não permitir anular propostas com situação 'Ativa' (Mateus Z)
+    if(insitlim == 2){
+        showError("error",
+                "A situação da proposta não pode estar 'Ativa'.",
+                "Alerta - Aimaro",
+                "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        return false;
+    }
+
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando motivos ...");
 

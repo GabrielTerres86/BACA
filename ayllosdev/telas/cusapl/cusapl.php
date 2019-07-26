@@ -38,6 +38,7 @@
    <script type="text/javascript" src="../../scripts/menu.js"></script>
 	 <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
    <script type="text/javascript" src="cusapl.js<?php echo '?'.date("YmdHis"); ?>"></script>
+   <script type="text/javascript" src="cusapl_o.js"></script>
   </head>
 
   <body><?
@@ -65,7 +66,7 @@
 	$scriptCoops =  '<script>var arrayCoops=\'';
 	foreach ($registros as $r) {
 
-		if ( getByTagName($r->tags, 'cdcooper') <> '' ) {
+		if ( getByTagName($r->tags, 'cdcooper') <> '' && getByTagName($r->tags, 'cdcooper') <> 3 ) {
 			$coopLabel=getByTagName($r->tags, 'nmrescop');
 			$coopVal=getByTagName($r->tags, 'cdcooper');
 		  $scriptCoops.= '<option value="'.$coopVal.'">'.$coopLabel.'</option>';
@@ -126,7 +127,7 @@
 																			<!-- INCLUDE DA TELA DE PESQUISA ASSOCIADO -->
 																			<? require_once("../../includes/pesquisa/pesquisa_associados.php"); ?>
 
-																			<div id="divTela">
+																			<div id="divTela" style="margin: 10px 0;">
 
 																				<? include('form_cabecalho.php'); ?>
 
@@ -135,7 +136,7 @@
 																				</div>
 
 
-																				<div id="divBotoes" style="margin-top:5px; margin-bottom :10px;display:none"></div>
+																				<?php //div id="divBotoes" style="margin-top:5px; margin-bottom :10px;display:none"></div ?>
 
                                         <div id="divRotina"></div>
 

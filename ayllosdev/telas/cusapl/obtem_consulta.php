@@ -43,12 +43,43 @@
 				$xmlObject = getObjectXML($xmlResult);
 
 				if ( strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO' ) {
-						exibirErro('error',$xmlObject->roottag->tags[0]->cdata,'Alerta - Ayllos','',false);
+        exibirErro('error', $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Ayllos', '', false);
 				}
 
         $xmlRegist = $xmlObject->roottag->tags[0];
 
         include('form_g.php');
+
+} else if ($cddopcao == 'V') { // Tela Valor Devido B3 David Valente
+    //Chama tela de filtro referente a tela de busca dos valores devido com a  B3
+    // Montar o xml de Requisicao
+    $xml = "";
+    $xml .= "<Root>";
+    $xml .= "	<Dados>";
+    $xml .= "		<tlcdcooper>" . $cdcooper . "</tlcdcooper>";
+    $xml .= "	</Dados>";
+    $xml .= "</Root>";
+
+    // Requisicao dos dados de parametrizacao da conta sysphera
+    $xmlResult = mensageria($xml
+            , "TELA_CUSAPL"
+            , "CUSAPL_BUSCA_PARAMS_COOP"
+            , $glbvars["cdcooper"]
+            , $glbvars["cdagenci"]
+            , $glbvars["nrdcaixa"]
+            , $glbvars["idorigem"]
+            , $glbvars["cdoperad"]
+            , "</Root>");
+
+    $xmlObject = getObjectXML($xmlResult);
+
+    if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {
+        exibirErro('error', $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Ayllos', '', false);
+    }
+
+    $xmlRegist = $xmlObject->roottag->tags[0];
+
+    include('form_v.php');
 
     } else if ($cddopcao == 'E') {
 				//E - Solicitar Envio dos Arquivos Pendentes
@@ -80,6 +111,7 @@
 						$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
 					}
 					exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+		
 				} else {
 						// Se houver aviso
 					if (strtoupper($xmlObject->roottag->tags[0]->name) == "AVISO") {
@@ -165,6 +197,7 @@
 		} else if ($cddopcao == 'O') {
 			//O - Log das Operações de Custódia Pendentes
 			include('form_o.php');
+	
 		}  else if ($cddopcao == 'C') {
 			// Montar o xml de Requisicao
 			$xml  = "";
@@ -187,14 +220,13 @@
 
 			$xmlObject = getObjectXML($xmlResult);
 
-			$xmlRegist = $xmlObject->roottag->tags[0];
-
 			if ( strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO' ) {
-					exibirErro('error',$xmlObject->roottag->tags[0]->cdata,'Alerta - Ayllos','',false);
+        exibirErro('error', $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata, 'Alerta - Ayllos', '', false);
 			}
 
 			$xmlRegist = $xmlObject->roottag->tags[0];
 
 			include('form_c.php');
+	
 		}
 ?>

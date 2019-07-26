@@ -68,7 +68,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LCREDI is
                                     ,pr_tpprodut IN craplcr.tpprodut%TYPE --> Tipo do Produto
                                     ,pr_cddindex IN craplcr.cddindex%TYPE --> Codigo do Indexador
                                     ,pr_permingr IN craplcr.permingr%TYPE --> % Mínimo Garantia
-																		,pr_vlperidx IN craplcr.vlperidx%TYPE --> Valor percentual do indexador
+									,pr_vlperidx IN craplcr.vlperidx%TYPE --> Valor percentual do indexador
+                                    ,pr_tpmodcon IN craplcr.tpmodcon%TYPE --> Tipo modalidade do Consignado
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica   
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica  
@@ -139,7 +140,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LCREDI is
                                     ,pr_tpprodut IN craplcr.tpprodut%TYPE --> Tipo do Produto
                                     ,pr_cddindex IN craplcr.cddindex%TYPE --> Codigo do Indexador
                                     ,pr_permingr IN craplcr.permingr%TYPE --> % Mínimo Garantia
-																		,pr_vlperidx IN craplcr.vlperidx%TYPE --> Valor Percentual do Indexador
+									,pr_vlperidx IN craplcr.vlperidx%TYPE --> Valor Percentual do Indexador
+                                    ,pr_tpmodcon IN craplcr.tpmodcon%TYPE --> Tipo modalidade do Consignado
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -234,7 +236,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
         Sistema : CECRED
         Sigla   : LCREDI
         Autor   : Andrei - RKAM
-        Data    : Julho - 2016.                    Ultima atualizacao: 13/02/2019
+        Data    : Julho - 2016.                    Ultima atualizacao: 04/03/2019
     
         Dados referentes ao programa:
     
@@ -251,6 +253,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
 					06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
 
                     13/02/2019 - Inclusao do campo flprapol (Christian Grauppe - Envolti)
+
+                    04/03/2019 - Inclusão do campo tpmodcon (Josiane Stiehler - AMcom)
     ..............................................................................*/
 
     CURSOR cr_craplcr(p_cdcooper IN crapcop.cdcooper%type
@@ -302,7 +306,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
            , c.cdsubmod
            , c.tpprodut
            , c.cddindex
-					 , c.vlperidx
+		   , c.vlperidx
+		   , c.tpmodcon
         FROM craplcr c
        WHERE c.cdcooper = p_cdcooper
          AND c.cdlcremp = p_cdlcremp;    
@@ -523,7 +528,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'craplcr', pr_posicao => 0, pr_tag_nova => 'dsusolcr', pr_tag_cont => vr_dsusolcr, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'craplcr', pr_posicao => 0, pr_tag_nova => 'tpprodut', pr_tag_cont => rw_craplcr.tpprodut, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'craplcr', pr_posicao => 0, pr_tag_nova => 'cddindex', pr_tag_cont => rw_craplcr.cddindex, pr_des_erro => vr_dscritic);
-		gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'craplcr', pr_posicao => 0, pr_tag_nova => 'vlperidx', pr_tag_cont => rw_craplcr.vlperidx, pr_des_erro => vr_dscritic);
+	gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'craplcr', pr_posicao => 0, pr_tag_nova => 'vlperidx', pr_tag_cont => rw_craplcr.vlperidx, pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'craplcr', pr_posicao => 0, pr_tag_nova => 'tpmodcon', pr_tag_cont => rw_craplcr.tpmodcon, pr_des_erro => vr_dscritic);
 
     IF pr_cddopcao = 'F' THEN
       
@@ -1039,7 +1045,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                     ,pr_tpprodut IN craplcr.tpprodut%TYPE --> Tipo do Produto
                                     ,pr_cddindex IN craplcr.cddindex%TYPE --> Codigo do Indexador
                                     ,pr_permingr IN craplcr.permingr%TYPE --> % Mínimo Garantia
-																		,pr_vlperidx IN craplcr.vlperidx%TYPE --> Valor percentual do indexador
+									,pr_vlperidx IN craplcr.vlperidx%TYPE --> Valor percentual do indexador
+                                    ,pr_tpmodcon IN craplcr.tpmodcon%TYPE --> Tipo modalidade do Consignado
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG  
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica    
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica    
@@ -1053,7 +1060,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
         Sistema : CECRED
         Sigla   : LCREDI
         Autor   : Andrei - RKAM
-        Data    : Julho - 2016.                    Ultima atualizacao: 13/02/2019
+        Data    : Julho - 2016.                    Ultima atualizacao: 04/03/2019
     
         Dados referentes ao programa:
     
@@ -1074,6 +1081,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                     06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
 
                     13/02/2019 - Inclusao do campo flprapol (Christian Grauppe - Envolti)
+
+                    04/03/2019 - Inclusão do campo tpmodcon (Josiane Stiehler - AMcom)
     ..............................................................................*/
 	CURSOR cr_craplcr(pr_cdcooper in crapcop.cdcooper%type
                      ,pr_cdlcremp in craplcr.cdlcremp%type) is
@@ -1119,8 +1128,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
            , c.cddindex
            , c.cdmodali -- modalidade
            , c.cdsubmod -- sub-modalidade
-					 , c.vlperidx
-           
+		   , c.vlperidx
+           , c.tpmodcon -- modalidade do consignado
         FROM craplcr c
        WHERE c.cdcooper = pr_cdcooper
          AND c.cdlcremp = pr_cdlcremp
@@ -1353,6 +1362,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
       RAISE  vr_exc_saida;
     END IF;
     
+    -- se modalidade = 02-empréstimo e submodalidade = 02-Crédito pessoal Consignado em Folha
+    -- e modalidade do consignado for nulo, apresentar critica que campo deve ser preenchido
+    IF pr_cdmodali ='02' AND
+       pr_cdsubmod = '02' AND
+       pr_tpmodcon IS NULL THEN
+       vr_cdcritic := 375;
+       pr_nmdcampo := 'tpmodcon';
+       RAISE  vr_exc_saida;
+    END IF;
+
     IF pr_tpdescto <> rw_craplcr.tpdescto THEN
       
       OPEN cr_crapepr(vr_cdcooper,pr_cdlcremp);
@@ -1676,7 +1695,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
            , c.flprapol = pr_flprapol
            , c.tpprodut = pr_tpprodut
            , c.cddindex = pr_cddindex
-					 , c.vlperidx = pr_vlperidx
+		   , c.vlperidx = pr_vlperidx
+		   , c.tpmodcon = pr_tpmodcon
        WHERE c.cdcooper = vr_cdcooper
          AND c.cdlcremp = pr_cdlcremp;
     EXCEPTION
@@ -2215,7 +2235,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
           
     END IF;
       
-		IF pr_vlperidx <> rw_craplcr.vlperidx THEN    
+	IF pr_vlperidx <> rw_craplcr.vlperidx THEN    
       -- Gera log
       btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                 ,pr_ind_tipo_log => 2 -- Erro tratato
@@ -2226,6 +2246,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                                     'da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
                                                     ' - ' || rw_craplcr.dslcremp || ' de ' || rw_craplcr.vlperidx || 
                                                     ' para ' || pr_vlperidx || '.');
+          
+    END IF;
+    
+    IF pr_tpmodcon <> rw_craplcr.tpmodcon THEN    
+      -- Gera log
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_nmarqlog     => 'lcredi.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' -->  Operador '|| vr_cdoperad || ' - ' || 
+                                                    'Alterou o Valor Modalidade do Consignado ' ||
+                                                    'da Linha de Credito ' ||  trim(to_char(rw_craplcr.cdlcremp,'99990')) ||
+                                                    ' - ' || rw_craplcr.dslcremp || ' de ' || rw_craplcr.tpmodcon || 
+                                                    ' para ' || pr_tpmodcon || '.');
           
     END IF;
       
@@ -2310,7 +2344,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                                     ,pr_tpprodut IN craplcr.tpprodut%TYPE --> Tipo do Produto
                                     ,pr_cddindex IN craplcr.cddindex%TYPE --> Codigo do Indexador
                                     ,pr_permingr IN craplcr.permingr%TYPE --> % Mínimo Garantia
-																		,pr_vlperidx IN craplcr.vlperidx%TYPE --> Valor Percentual do Indexador
+									,pr_vlperidx IN craplcr.vlperidx%TYPE --> Valor Percentual do Indexador
+                                    ,pr_tpmodcon IN craplcr.tpmodcon%TYPE --> Tipo modalidade do Consignado
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -2324,7 +2359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
         Sistema : CECRED
         Sigla   : LCREDI
         Autor   : Andrei - RKAM
-        Data    : Julho - 2016.                    Ultima atualizacao: 13/03/2019
+        Data    : Julho - 2016.                    Ultima atualizacao: 04/03/2019
     
         Dados referentes ao programa:
     
@@ -2344,7 +2379,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                     
                     06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
                     
-                    13/02/2019 - Inclusao do campo flprapol (Christian Grauppe - Envolti)
+                    13/02/2019 - Inclusao do campo flprapol (Christian Grauppe - Envolti)  
+
+                    04/03/2019 - Inclusao do campo tpmodcon (Josiane Stiehler - AMcom) 
     ..............................................................................*/
     CURSOR cr_craplcr(pr_cdcooper in crapcop.cdcooper%type
                      ,pr_cdlcremp in craplcr.cdlcremp%type) is
@@ -2562,6 +2599,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
       RAISE  vr_exc_saida;
     END IF;
 
+    -- se modalidade = 02-empréstimo e submodalidade = 02-Crédito pessoal Consignado em Folha
+    -- e modalidade do consignado for nulo, apresentar critica que campo deve ser preenchido
+    IF pr_cdmodali ='02' AND
+       pr_cdsubmod = '02' AND
+       pr_tpmodcon IS NULL THEN
+       vr_cdcritic := 375;
+       pr_nmdcampo := 'tpmodcon';
+       RAISE  vr_exc_saida;
+    END IF;
+    
     IF vr_cdcooper <> 9       AND
        NVL(pr_txminima,0) = 0 AND
        pr_tpprodut != 2 THEN
@@ -2837,7 +2884,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                          ,craplcr.flprapol
                          ,craplcr.tpprodut
                          ,craplcr.cddindex
-												 ,craplcr.vlperidx)
+						 ,craplcr.vlperidx
+                         ,craplcr.tpmodcon)
                    VALUES(pr_cdlcremp
                          ,pr_tpctrato
                          ,vr_permingr
@@ -2887,7 +2935,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LCREDI IS
                          ,pr_flprapol
                          ,pr_tpprodut
                          ,pr_cddindex
-												 ,pr_vlperidx);
+						 ,pr_vlperidx
+                         ,pr_tpmodcon);
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;

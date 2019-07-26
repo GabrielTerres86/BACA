@@ -3,13 +3,15 @@
  * FONTE        : form_prejuizo.php
  * CRIAÇÃO      : André Socoloski (DB1)
  * DATA CRIAÇÃO : Março/2011 
- * OBJETIVO     : Forumlário de dados de Prestações
+ * OBJETIVO     : Formulário de dados de Prestações
  *
  * ALTERACOES:
  *
  *		  001: [03/11/2014] Daniel (CECRED): Incluso novos campos no form frmPreju
  *      002: [04/01/2016] Heitor (RKAM): Inclusao de novo campo para indicar o Tipo de Risco
  *      003: [03/07/2018] Marcos (Envolti): Inclusão de campos de IOF do Prejuízo
+ *      004: [02/07/2019] Darlei Zillmer (Supero): Incluida mensagem na tela de consulta do prejuízo quando o contrato Pós-Fixado for transferido para prejuízo
+ *                        P298.3 Pos Fixado 
  */	
 ?>	
 
@@ -79,6 +81,9 @@
 		<label for="tpdrisco"><? echo utf8ToHtml('Classif. Risco:') ?></label>
 		<input name="tpdrisco" id="tpdrisco" type="text" value=""/>
 		
+        <label for="dsmorapos" style="font-weight: inherit;text-align: left;line-height: 1;margin-top: 10px;display:none">
+            <? echo utf8ToHtml('* Campo Juros de Mora está contemplando Juros remuneratórios e Juros correção acima de 60 dias'); ?>
+        </label>
 	</fieldset>
 	
 </form>	

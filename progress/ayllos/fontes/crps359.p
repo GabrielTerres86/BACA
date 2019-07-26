@@ -34,7 +34,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Mirtes
-   Data    : Outubro/2003                      Ultima atualizacao: 24/05/2018
+   Data    : Outubro/2003                      Ultima atualizacao: 11/07/2019
 
    Dados referentes ao programa:
 
@@ -182,6 +182,9 @@
                24/05/2018 - feito tratamento no lote emprestimo condiginado, para 
 			                quando tiver 7 e 4 digitos, atualizar corretamente o lote. Alcemir (Mout's) (SCTASK0015071).
 							             
+               11/07/2019 - Alterado a posiçao do log do inicio do processo batch noturno
+                            e criado mais alguns logs para feedback do processo do 359
+                            (Tiago - PRB0041925)
 ............................................................................. */
 
 DEF STREAM str_mp.      /*  Stream para monitoramento do programas paralelos  */
@@ -328,14 +331,32 @@ DO TRANSACTION ON ERROR UNDO, RETURN.
 
    END.
 
+   /*  Inicia log do processo .................................................. */
+   
+   UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                     (IF aux_flgrepro
+                         THEN " Reinicio do processo batch NOTURNO referente "
+                         ELSE " Inicio do processo batch NOTURNO referente ") +
+                     (IF glb_dtmvtolt <> ?
+                         THEN STRING(glb_dtmvtolt,"99/99/9999")
+                         ELSE "'*** Sistema sem data! ***'") +
+                     " em " + STRING(TODAY,"99/99/9999") + 
+                     " da " + STRING(crapcop.nmrescop,"x(20)") +
+                     " >> log/proc_batch.log").
+
+
    /* Testa se o viracash rodou */
    IF   crapdat.dtmvtopr <> crapdat.dtmvtocd THEN
         glb_cdcritic = 747. 
 
    /*  Inicializa os numeros de lotes para integracao de folha de pagto  */
-
    IF   NOT aux_flgrepro       AND
         glb_cdcritic     = 0   THEN
+   DO:     
+        
+        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                          glb_cdprogra + "' --> '" + "Inicializa numeros de lotes para integracao folha de pagto >> log/proc_batch.log").
+        
         FOR EACH craptab WHERE craptab.cdcooper = glb_cdcooper   AND
                                craptab.nmsistem = "CRED"         AND
                                craptab.tptabela = "GENERI"       AND
@@ -374,6 +395,15 @@ DO TRANSACTION ON ERROR UNDO, RETURN.
 
         END.
         
+        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+               glb_cdprogra + "' --> '" + "Fim inicializa numeros de lotes para integracao folha de pagto >> log/proc_batch.log").                 
+   
+   END.
+   
+   UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                  glb_cdprogra + "' --> '" + "Inicio limpeza da sequencia dos arquivos enviados ao BANCOOB INSS >> log/proc_batch.log").
+   
+   
    /* Limpa a sequencia dos arquivos enviados ao BANCOOB-INSS */
    FIND craptab WHERE craptab.cdcooper = glb_cdcooper   AND
                       craptab.nmsistem = "CRED"         AND
@@ -386,6 +416,15 @@ DO TRANSACTION ON ERROR UNDO, RETURN.
    IF  AVAILABLE craptab  THEN
        ASSIGN craptab.dstextab = "".
        
+   
+   UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                  glb_cdprogra + "' --> '" + "Fim limpeza da sequencia dos arquivos enviados ao BANCOOB INSS >> log/proc_batch.log").
+   
+   
+   
+   UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                  glb_cdprogra + "' --> '" + "Inicio limpeza da sequencia dos arquivos das guias GPS enviados ao BANCOOB INSS >> log/proc_batch.log").
+   
    /* Limpa a sequencia dos arquivos das guias GPS enviados ao BANCOOB-INSS */
    FIND craptab WHERE craptab.cdcooper = glb_cdcooper   AND
                       craptab.nmsistem = "CRED"         AND
@@ -399,6 +438,14 @@ DO TRANSACTION ON ERROR UNDO, RETURN.
        ASSIGN craptab.dstextab = "1".
        
 
+   UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                  glb_cdprogra + "' --> '" + "Fim limpeza da sequencia dos arquivos das guias GPS enviados ao BANCOOB INSS >> log/proc_batch.log").
+   
+
+
+   UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                  glb_cdprogra + "' --> '" + "Inicio limpeza do controle de pagamentos agendados de guis GPS BANCOOB >> log/proc_batch.log").
+   
    /* Limpeza do controle de pagamentos agendados de guias GPS-BANCOOB */
    IF   MONTH(glb_dtmvtolt) <> MONTH(glb_dtmvtopr)   THEN
         FOR EACH craptab WHERE craptab.cdcooper = glb_cdcooper   AND
@@ -411,6 +458,10 @@ DO TRANSACTION ON ERROR UNDO, RETURN.
             /* craptab.tpregist = 1-Fisico, 2-Juridico */
             ASSIGN SUBSTRING(craptab.dstextab,4,10) = "".               
         END.
+
+   UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
+                  glb_cdprogra + "' --> '" + "Fim limpeza do controle de pagamentos agendados de guis GPS BANCOOB >> log/proc_batch.log").
+        
 
 END.  /* Fim da transacao */
 
@@ -457,19 +508,6 @@ IF   glb_cdcooper = 3 THEN
          END.
      END.
 ----------------------------------------------------------------------------*/ 
-
-/*  Inicia log do processo .................................................. */
-
-UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
-                  (IF aux_flgrepro
-                      THEN " Reinicio do processo batch NOTURNO referente "
-                      ELSE " Inicio do processo batch NOTURNO referente ") +
-                  (IF glb_dtmvtolt <> ?
-                      THEN STRING(glb_dtmvtolt,"99/99/9999")
-                      ELSE "'*** Sistema sem data! ***'") +
-                  " em " + STRING(TODAY,"99/99/9999") + 
-                  " da " + STRING(crapcop.nmrescop,"x(20)") +
-                  " >> log/proc_batch.log").
 
 IF   NOT aux_flgrepro THEN
      RUN proc_remove_arquivos.

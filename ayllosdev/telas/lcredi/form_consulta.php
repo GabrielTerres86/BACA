@@ -3,7 +3,7 @@
 
   Fonte: form_consulta.php
   Autor: Andrei - RKAM
-  Data : Julho/2016                       Última Alteração: 06/01/2019
+  Data : Julho/2016                       Última Alteração: 17/03/2019
 
   Objetivo  : Mostrar o form com as informaões da linha de crédito.
 
@@ -22,6 +22,8 @@
 			  06/01/2019 - Inclusao do campo vlperidx (Nagasava - Supero - PRJ298.2.2)
 			  
 			  13/02/2019 - Inclusao do campo flprapol (Christian Grauppe - Envolti)
+
+              17/03/2019 - P437 Inclusão do tipo de modalidade Jackson Barcellos - AMcom
 
  * ********************************************************************* */
 
@@ -186,6 +188,33 @@
 		<a style="padding: 3px 0 0 3px;" href="#" onClick="controlaPesquisa('3'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>	
 		<input  type="text" id="dssubmod" name="dssubmod"value="<?echo getByTagName($linha->tags,'dssubmod'); ?>" >
 				
+		<br />
+		
+		<!-- tpmodcon -->
+		<label for="tpmodcon"><? echo utf8ToHtml('Modalidade Consignado') ?>:</label>
+		<select id="tpmodcon" name="tpmodcon"	>
+			<option
+				<?php echo (getByTagName($linha->tags,'tpmodcon') == '' ? "selected" : "");?>
+				value="">
+			<? echo utf8ToHtml('Selecione') ?>				
+			</option>
+			<option
+				<?php echo (getByTagName($linha->tags,'tpmodcon') == 1 ? "selected" : "");?>
+				value="1">
+			<? echo utf8ToHtml('Privado') ?>				
+			</option>
+			<option
+				<?php echo (getByTagName($linha->tags,'tpmodcon') == 2 ? "selected" : "");?>
+				value="2">
+			<? echo utf8ToHtml('P&uacute;blico') ?>				
+			</option> 
+			<option
+				<?php echo (getByTagName($linha->tags,'tpmodcon') == 3 ? "selected" : "");?>
+				value="3">
+				<? echo utf8ToHtml('INSS') ?> 
+			</option> 
+		</select>
+
 		<br style="clear:both" />
 							
 		

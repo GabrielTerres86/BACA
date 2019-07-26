@@ -106,6 +106,10 @@ BEGIN
 			   16/01/2019 - Revitalizacao (Remocao de lotes) - Pagamentos, Transferencias, Poupanca
                      Heitor (Mouts)
 
+         25/06/2019 - Remover lancamentos de segregacao/reversao para contas PF/PJ.
+                      Apos atualizacao do plano de contas, nao e mais necessaria realizar essa segregacao.
+                      Solicitacao Contabilidade - Heitor (Mouts)
+
 ............................................................................. */
   DECLARE
   
@@ -2080,9 +2084,14 @@ BEGIN
          dbms_lob.open(vr_clob_arq, dbms_lob.lob_readwrite);
          
          -- Se o valro total é maior que zero
+         /*
+         Remover lancamentos de segregacao/reversao para contas PF/PJ.
+         Apos atualizacao do plano de contas, nao e mais necessaria realizar essa segregacao.
+         Solicitacao Contabilidade - Heitor (Mouts)
+
          IF nvl(vr_tot_rppagefis,0) > 0 THEN
          
-           /*** Montando as informacoes de PESSOA FISICA ***/
+           \*** Montando as informacoes de PESSOA FISICA ***\
            -- Montando o cabecalho das contas do dia atual
            vr_setlinha := '70'||                                                                                      --> Informacao inicial
                           TO_CHAR(rw_dat.dtmvtolt,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
@@ -2170,7 +2179,7 @@ BEGIN
          -- Se o valro total é maior que zero
          IF nvl(vr_tot_rppagejur,0) > 0 THEN
          
-           /*** Montando as informacoes de PESSOA JURIDICA ***/       
+           \*** Montando as informacoes de PESSOA JURIDICA ***\       
            -- Montando o cabecalho das contas do dia atual
            vr_setlinha := '70'||                                                                                      --> Informacao inicial
                           TO_CHAR(rw_dat.dtmvtolt,'YYMMDD')||','||                                                --> Data AAMMDD do Arquivo
@@ -2249,7 +2258,7 @@ BEGIN
              END LOOP; -- fim repete
            END IF;
          END IF; -- Se total maior que zero
-         
+         */
          -- Se o valro total é maior que zero
          IF nvl(vr_tot_vlrprvfis,0) > 0 THEN
            

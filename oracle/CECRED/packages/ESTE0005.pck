@@ -710,8 +710,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       tela_analise_credito.pc_job_dados_analise_credito(pr_cdcooper  => pr_cdcooper
                                                        ,pr_nrdconta  => pr_nrdconta
                                                        ,pr_tpproduto => 7 -- Cartão de Crédito
-                                                       --,pr_nrctremp  => vr_nrctrcrd_aux --pr_nrctrcrd
-													   ,pr_nrctremp  => pr_nrctrcrd
+                                                       ,pr_nrctremp  => vr_nrctrcrd_aux --pr_nrctrcrd
                                                        ,pr_dscritic  => vr_dscritic);
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;

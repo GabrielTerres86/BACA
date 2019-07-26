@@ -51,7 +51,8 @@
  * 032: [15/05/2019] Anderson Schloegel (Mout's): PJ470 - Mout's - Desabilitar campo de contrato para aba Novo Limite
  * 033: [04/06/2019] Mateus Z  (Mouts) : Alteração para chamar tela de autorização quando alterar valor. PRJ 470 - SM2
  * 034: [30/05/2019] Mateus Zimmermann (Mout's): PRJ 438 - Criadada váriaveis para armazenar conta e contrato formatados. 
-
+ * 035: [29/06/2019] Mateus Z (Mouts): PRJ 438 - Sprint 13 - Alterado largura da coluna Motivo da tela Últimas alterações para 
+ *                   suportar o motivo 'Cancelado automaticamente por inadimplência' (Mateus Z / Mouts) 
 */
  
 var callafterLimiteCred = '';
@@ -1183,8 +1184,9 @@ function formataUltimasAlteracoes() {
 	arrayLargura[1] = '60px';
 	arrayLargura[2] = '60px';
     arrayLargura[3] = '75px';
-	arrayLargura[4] = '75px';
-	arrayLargura[5] = '75px';
+	arrayLargura[4] = '75px';	
+    // PRJ 438 - Sprint 13 - Alterado largura da coluna Motivo para suportar o motivo 'Cancelado automaticamente por inadimplência' (Mateus Z / Mouts)
+	arrayLargura[5] = '240px';
 	
 		
 	var arrayAlinha = new Array();

@@ -3530,7 +3530,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_vllimtot => vr_vltotccr);
 
-      vr_obj_generic2.put('limiteCartaoCredit'
+      vr_obj_generic2.put('limiteCartaoCredito'
                          ,este0001.fn_decimal_ibra(vr_vltotccr));
     
       -- Buscar contrato de desconto cheques     
@@ -3658,8 +3658,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
           vr_obj_generic3 := json();
           vr_obj_generic3.put('numContrato', vr_tab_dados_epr(vr_idxempr).nrctremp);
           vr_obj_generic3.put('dataContratacao', este0002.fn_data_ibra_motor(vr_tab_dados_epr(vr_idxempr).dtmvtolt));
-          vr_obj_generic3.put('valorAberto'
-                             ,este0001.fn_decimal_ibra(vr_tab_dados_epr(vr_idxempr).vlsdeved)); --P637
+          vr_obj_generic3.put('valorAberto', este0001.fn_decimal_ibra(vr_tab_dados_epr(vr_idxempr).vlsdeved)); --P637
+          vr_obj_generic3.put('valorPrestacao', este0001.fn_decimal_ibra(vr_tab_dados_epr(vr_idxempr).vlpreemp)); --P637
       
           -- Adicionar Operação na lista
           vr_lst_generic3.append(vr_obj_generic3.to_json_value());
@@ -4793,6 +4793,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                PRJ439 - CDC(Odirlei-AMcom)
         
                   14/12/2018 - Adicionado o valor da parcela carencia (Rafael Faria - Supero)
+                  10/07/2019 - P438 - Inclusão do atributo canalOrigem no Json para identificar 
+                                a origem da operação de crédito no Motor. (Douglas Pagel / AMcom).
+
         
         
     ..........................................................................*/
@@ -4870,7 +4873,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
              ,wpr.hrinclus
              ,lcr.perjurmo
              ,lcr.txmensal
-             ,wpr.vlprecar
+             ,wpr.vlprecar	 
+             ,wpr.cdorigem
         FROM crawepr wpr
             ,craplcr lcr
             ,crapfin fin      
@@ -5524,7 +5528,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     END IF;    
     vr_dstextab := null;
     
-    vr_obj_generico.put('toleranciaJurosMoraMulta', ESTE0001.fn_decimal_ibra(vr_prtlmult)); 
+    vr_obj_generico.put('toleranciaJurosMoraMulta', ESTE0001.fn_decimal_ibra(vr_prtlmult));
+
+    vr_obj_generico.put('canalOrigem',rw_crawepr.cdorigem);        
         
     -- Buscar Patrimonio referencial da cooperativa 
     OPEN cr_tbcadast_cooperativa(pr_cdcooper);

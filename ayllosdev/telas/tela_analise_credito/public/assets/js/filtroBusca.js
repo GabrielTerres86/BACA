@@ -34,12 +34,13 @@ function getFiltro() {
 
             var listaFiltros = Array();
 
-            teste = response.data.personas;
+            verify = response.data.personas;
 
-            if(teste) {
-                console.log('ok');
+            if(verify) {
             if(response.ok){
+                    // console.log(response);
                 listaFiltros = montaListaFiltro(response.data.personas);
+                    //console.log('listaFiltros: ', listaFiltros);
                 montaFiltroBusca(listaFiltros);
             }
             } else {
@@ -235,7 +236,10 @@ function selecionaBusca(value, elem){
  * @returns {object}
  */
 function montaListaFiltro(personas){
-    var personas = makeArray(personas.persona, 'busca');
+
+    var personas = makeArray(personas.persona);
+
+    //console.log('personas: ',personas);
     var filtros = Array();
     //Foreach PERSONAS
     personas.forEach(function(persona){
@@ -306,6 +310,7 @@ function montaListaFiltro(personas){
 
         });
     });
+
     //console.log('Filtro: ',filtros);
     return filtros;
 }

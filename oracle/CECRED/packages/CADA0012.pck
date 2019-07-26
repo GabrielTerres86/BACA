@@ -681,17 +681,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                     ,alt.nrdconta
                     ,ttl.idseqttl
                     ,null dsvariaveis
-                FROM tbcadast_pessoa tps
-          INNER JOIN crapass ass ON  ass.nrcpfcgc = tps.nrcpfcgc
+                FROM crapass ass
           INNER JOIN crapalt alt ON ass.cdcooper = alt.cdcooper AND ass.nrdconta = alt.nrdconta
           INNER JOIN crapttl ttl ON ass.cdcooper = ttl.cdcooper AND ass.nrdconta = ttl.nrdconta
-               WHERE alt.dtaltera = (SELECT MAX(dtaltera) FROM crapalt WHERE  nrdconta = ass.nrdconta AND cdcooper = ass.cdcooper AND tpaltera = 1)
-                 AND TO_CHAR(alt.dtaltera, ''MM'') = TO_CHAR((SELECT dtmvtolt FROM crapdat WHERE cdcooper = alt.cdcooper), ''MM'')
-                 AND (alt.dtaltera + NVL((SELECT dsconteu
-                                            FROM   crappat pat
-                                      INNER JOIN crappco pco ON pat.cdpartar = pco.cdpartar
-                                           WHERE pco.cdcooper = alt.cdcooper
-                                             AND pat.cdpartar = 66),0)*30) <= (SELECT dtmvtolt FROM crapdat WHERE cdcooper = alt.cdcooper)';
+         WHERE ASS.TPVINCUL IN (''FC'',''FU'',''FO'')
+				 AND CDSITDCT = 1 
+                 AND alt.dtaltera = (SELECT MAX(dtaltera) FROM crapalt WHERE  nrdconta = ass.nrdconta AND cdcooper = ass.cdcooper AND tpaltera = 1)';
   END fn_busca_contas_atualizar; 
 
   -- Rotina para escrever texto na variável CLOB do XML
@@ -1010,48 +1005,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
   BEGIN
     -- Busca o numero da conta e a matricula
     FOR rw_craptps IN cr_craptps LOOP
-      OPEN cr_crapalt(pr_nrdconta => rw_craptps.nrdconta);
+    OPEN cr_crapalt(pr_nrdconta => rw_craptps.nrdconta);
       FETCH cr_crapalt INTO rw_crapalt;    
-      
-      IF (cr_crapalt%NOTFOUND) THEN
-        -- Atualiza a Crapalt
-        BEGIN
-          INSERT INTO crapalt (
-             crapalt.nrdconta
-            ,crapalt.dtaltera
-            ,crapalt.tpaltera
-            ,crapalt.dsaltera
-            ,crapalt.cdcooper
-            ,crapalt.flgctitg
-            ,crapalt.cdoperad)
-          VALUES(
-            rw_craptps.nrdconta,
-            pr_dtmvtolt,
-            1,
-            pr_dsaltera,
-            pr_cdcooper,
-            1,
-            rw_craptps.nrmatric
-          );
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir na crapalt: '||SQLERRM;
-            RAISE vr_exc_erro;
-        END;
-      ELSE
-        BEGIN
-          UPDATE crapalt 
+        
+    IF (cr_crapalt%NOTFOUND) THEN
+      -- Atualiza a Crapalt
+      BEGIN
+        INSERT INTO crapalt (
+           crapalt.nrdconta
+          ,crapalt.dtaltera
+          ,crapalt.tpaltera
+          ,crapalt.dsaltera
+          ,crapalt.cdcooper
+          ,crapalt.flgctitg
+          ,crapalt.cdoperad)
+        VALUES(
+          rw_craptps.nrdconta,
+          pr_dtmvtolt,
+          1,
+          pr_dsaltera,
+          pr_cdcooper,
+          1,
+          rw_craptps.nrmatric
+        );
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir na crapalt: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+    ELSE
+      BEGIN
+        UPDATE crapalt 
              SET dsaltera = rw_crapalt.dsaltera || ' ' || pr_dsaltera
-           WHERE cdcooper = pr_cdcooper 
-             AND nrdconta = rw_craptps.nrdconta 
-             AND dtaltera = pr_dtmvtolt;
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar crapalt: '||SQLERRM;
-            RAISE vr_exc_erro;
-        END;
-      END IF;
-      CLOSE cr_crapalt;
+         WHERE cdcooper = pr_cdcooper 
+           AND nrdconta = rw_craptps.nrdconta 
+           AND dtaltera = pr_dtmvtolt;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar crapalt: '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
+    END IF;
+    CLOSE cr_crapalt;
     END LOOP;
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -2499,8 +2494,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                          ,pr_nmtabela => 'TBCADAST_PESSOA_TELEFONE'     --> Nome da tabela
                          ,pr_dsnoprin => 'telefones'                    --> Nó principal do xml
                          ,pr_dsnofilh => 'telefone'                     --> Nós filhos
+						 ,pr_clausula => '(INSITUACAO = 1)'             --> Cláusula Where
                          ,pr_retorno  => pr_retorno                     --> XML de retorno
-                         ,pr_dscritic => pr_dscritic);
+                         ,pr_dscritic => pr_dscritic);				 
 
   EXCEPTION
     WHEN OTHERS THEN

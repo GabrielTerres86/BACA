@@ -7,6 +7,8 @@
 	                                                                  
 	 Objetivo  : Agrupa as rotinas de analise dos pagadores e dos titulos
 
+	 Alterações: Alterado a utilização de cdagenci para cdpactra (Daniel - Ailos)
+
 	************************************************************************/
 	
 	session_start();
@@ -68,7 +70,7 @@
 		    $xml .= "</Root>";
 		    
 		 	// CONSULTA DA IBRATAN	
-		    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","SOLICITA_BIRO_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","SOLICITA_BIRO_BORDERO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		    $xmlObj = getClassXML($xmlResult);
 		    $root = $xmlObj->roottag;
 			if ($root->erro){
@@ -85,7 +87,7 @@
 		    $xml .= "</Root>";
 		    
 		 	// CONSULTA DA IBRATAN	
-		    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","SOLICITA_ANALISE_PAGADOR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","SOLICITA_ANALISE_PAGADOR", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		    $xmlObj = getClassXML($xmlResult);
 		    $root = $xmlObj->roottag;
 			if ($root->erro){
@@ -102,7 +104,7 @@
 		    $xml .= " </Dados>";
 		    $xml .= "</Root>";
 
-		    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VALIDAR_TITULOS_ALTERACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VALIDAR_TITULOS_ALTERACAO", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		    $xmlObj = getClassXML($xmlResult);
 		    $root = $xmlObj->roottag;
 			if ($root->erro){

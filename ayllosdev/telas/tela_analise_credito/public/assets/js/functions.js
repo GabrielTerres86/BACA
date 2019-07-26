@@ -82,9 +82,10 @@ function arrayRemove(arr, value) {
 */
 
 function makeArray(index){
+
     var arrayReturn = Array();
 
-    if(typeof index === 'undefined'){
+    if(typeof index.length === 'undefined'){
         arrayReturn.push(index);
         return arrayReturn;
     }
@@ -94,7 +95,6 @@ function makeArray(index){
     }
     return arrayReturn;
 }
-
 /* 
 *  transforma uma string em um texto plano
 */
