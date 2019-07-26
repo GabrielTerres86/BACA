@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --
   --  Programa: PAGA0001                       Antiga: b1wgen0016.p
   --  Autor   : Evandro/David
-  --  Data    : Abril/2006                     Ultima Atualizacao: 11/03/2019
+  --  Data    : Abril/2006                     Ultima Atualizacao: 15/07/2019
   --
   --  Dados referentes ao programa:
   --
@@ -1293,7 +1293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 11/03/2019
+  --  Data     : Junho/2013.                   Ultima atualizacao: 15/07/2019
   --
   -- Dados referentes ao programa:
   --
@@ -1705,6 +1705,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
      11/03/2019 - Quando der erro na rotina pc atualiza trans nao efetiv, 
                   gerar Log pois as rotinas chamadoras iram ignorar o erro.
                   (Belli - Envolti - INC0034476)
+
+     11/07/2019 - Correção em mensagem de erro exibida ao cooperado.
+                  Se for retornada uma critica no momento de cria o lancamento do DEBITO, 
+                  passa a não mais emitir o alerta ao cooperado com informacoes de LOG.
+                  Implementacao para atender o INC0015955 - Jackson 
                   
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -4975,6 +4980,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --                            Mensagens fixas trocar por codigo, e cadastrar caso seja codigo novo
     --                            (Belli - Envolti - Chamado 779415) 
     --                 
+    --               11/07/2019 - Correção em mensagem de erro exibida ao cooperado.
+    --                            Se for retornada uma critica no momento de cria o lancamento do DEBITO, 
+    --                            passa a não mais emitir o alerta ao cooperado com informacoes de LOG.
+    --                            Implementacao para atender o INC0015955 - Jackson 
+    --                            
     -- ..........................................................................
 
   BEGIN
@@ -5560,8 +5570,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
           CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
           -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415          
-          vr_dscritic := vr_dscritic ||
-                         'CRAPLCM(7):' ||
+          -- Manter geração de LOG sem exibir tais valores em mensagem ao cooperado - INC0015955        
+          vr_dsparame := 'CRAPLCM(7):' ||
                          ' cdcooper:'  || pr_cdcooper || 
                          ', dtmvtolt:' || pr_dtmvtocd || 
                          ', cdagenci:' || pr_cdagenci || 
@@ -5581,7 +5591,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                          ', cdagetfn:' || pr_cdagetfn || 
                          ', nrterfin:' || pr_nrterfin || 
                          ', cdpesqbb:' || vr_cdpesqbb || 
-                         '. ';
+                         '. ' || vr_dsparame;
           --Levantar Excecao
           RAISE vr_exc_erro;
       END IF;   
@@ -14221,7 +14231,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         IF rw_craplau.dsorigem = 'AIMARO' AND rw_craplau.cdtiptra in (1,5) THEN
           pr_tab_agendto(vr_index_agendto).cdagenci:= 90;
         ELSE
-          pr_tab_agendto(vr_index_agendto).cdagenci:= rw_craplau.cdagenci;
+        pr_tab_agendto(vr_index_agendto).cdagenci:= rw_craplau.cdagenci;
         END IF;  
         pr_tab_agendto(vr_index_agendto).cdtiptra:= rw_craplau.cdtiptra;
         pr_tab_agendto(vr_index_agendto).fltiptra:= vr_fltiptra;
@@ -18261,7 +18271,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --              15/12/2017 - Incluido nome do módulo logado
     --                           No caso de erro de programa gravar tabela especifica de log                     
     --                           Ajuste mensagem de erro 
-    --                          (Belli - Envolti - Chamado 779415)   
+    --                          (Belli - Envolti - Chamado 779415)    
     --
     --              13/11/2018 - Caso o sistema identifique o pagamento de um título descontado após o vencimento e o mesmo estiver dentro de 
     --                           um acordo, deverá ser realizado o crédito do valor pago direto na conta corrente do cooperado. (Paulo Penteado GFT) 
@@ -18324,7 +18334,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
            AND cde.nrboleto     = pr_nrdocmto
            AND cde.tpproduto    = 0;
       rw_cde cr_cde%ROWTYPE;
-      
+
       CURSOR cr_acordoctr(pr_cdcooper IN tbdsct_titulo_cyber.cdcooper%TYPE
                          ,pr_nrdconta IN tbdsct_titulo_cyber.nrdconta%TYPE
                          ,pr_nrborder IN tbdsct_titulo_cyber.nrborder%TYPE
@@ -18623,8 +18633,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                            ,pr_nrtitulo => rw_craptdb.nrtitulo);
           FETCH cr_acordoctr INTO rw_acordoctr;
           IF cr_acordoctr%NOTFOUND THEN
-            vr_flgdesct := TRUE;
-          END IF;
+          vr_flgdesct := TRUE;
+        END IF;
           CLOSE cr_acordoctr;
         END IF;
         --Se tiver descontado
@@ -26875,7 +26885,7 @@ end;';
       vr_flultexe  INTEGER;
       vr_qtdexec   INTEGER;
       vr_cdispbif  INTEGER;
-      
+            
       vr_idportab     NUMBER;
       vr_nrridlfp     tbted_det_agendamento.nrridlfp%TYPE;
       
@@ -27292,7 +27302,7 @@ end;';
           END IF;
           --Fechar Cursor
           CLOSE cr_crapban;        
-          
+         
           -- Verificar se é um agendamento de portabilidade
           IF rw_craplau.dsorigem = 'PORTABILIDAD' THEN
             vr_idportab := 1;
@@ -27757,7 +27767,7 @@ end;';
           rw_craplau cr_craplau%ROWTYPE;
       
       vr_index_agendto VARCHAR2(300);
-
+    
       CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
         SELECT crapcop.cdcooper
               ,crapcop.nmrescop
