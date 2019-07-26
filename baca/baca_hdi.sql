@@ -60,6 +60,7 @@ declare
          , seg.vlpreseg
          , seg.dtmvtolt
          , seg.qtprepag
+ 		 ,seg.dtdebito
          , seg.dtprideb
          , seg.qtparcel
          , seg.tpplaseg
@@ -512,7 +513,7 @@ BEGIN
            LPAD(' ', 5, ' ')                   || -- Espaço Disponível
            RPAD('R$', 4, ' ')                  || -- Código da Moeda Original (SIGLA)
            '085'                               || -- Código do Banco - Carga Inicial
-           '01'                                || -- Quantidade de Parcelas
+           LPAD(to_char(rw.qtparcel), 2, '0')           || -- Quantidade de Parcelas
            LPAD('100.00', 12, '0')                || -- Percentual de Cosseguro nossa parte (se 100 = não tem cosseguro)   
            LPAD('0', 15, '0')                  || -- Valor do Adicional de Fracionamento
            LPAD('0', 12, '0')                  || -- Percentual de Agravamento/Desconto
@@ -545,13 +546,24 @@ BEGIN
            rpad(' ', 21, ' ')                  || -- Espaço Disponível  Texto[021]
            rpad('0', 7, '0')                   || -- Código Matricula 2  Inteiro[007]
            'N'                                 || -- Flag Indicador de PRO-RATA (s/n)  Texto[001]
-           'N'                                 || -- Flag Indicador de Data Fixa (s/n)  Texto[001]
-           to_char(rw.dtprideb,'DD') || '0819' || -- Data de Vencimento da 1ª  parcela  Data
-           rpad(' ', 19, ' ')                  || -- No. do Cartão (sem espaços e caracteres separadores)  Texto[019]
+           'S'                                 || -- Flag Indicador de Data Fixa (s/n)  Texto[001]
+          
+		  /* De: Renato - REFERE
+		  Boa tarde. Realizamos testes e identificamos que para podermos atender à solicitação do dia de vencimento, ao invés de nos enviar as informações de data da parcela do registro “01”, 
+		  nos campos referentes à MELHOR DATA, como havíamos combinado, por favor, enviá-los nos campos referentes à DATA FIXA, de acordo com o Layout abaixo.
+		  A data de vencimento da parcela deve ser montada com o dia desejado para o vencimento, e ser posterior ao início de vigência.
+		  */
+		  lpad(to_char(rw.dtdebito,'DDMMYY'),6,' ')  || -- Data de Vencimento da 1ª  parcela  Data 
+		  /*
+		   to_char(rw.dtprideb,'DD') || '0819' || -- Data de Vencimento da 1ª  parcela  Data
+          */ 
+		   rpad(' ', 19, ' ')                  || -- No. do Cartão (sem espaços e caracteres separadores)  Texto[019]
            lpad(SUBSTR(vr_conta,1,LENGTH(vr_conta)-1),11,'0')   || -- Número da Conta p/ Débito  Texto[011]
---           lpad(to_char(rw.cdagectl),4,'0')    || -- Número da Agência p/ Débito  Texto[004]
-           lpad(' ',4,' ')                     || -- Número da Agência p/ Débito  Texto[004] *** Enviar branco apos email do Renato ***
-           lpad(vr_dvconta,1,'0')              || -- Dígito Verificador da Conta p/ Débito  Texto[001]
+           lpad(to_char(rw.cdagectl),4,'0')    || -- Número da Agência p/ Débito  Texto[004]
+           /** 
+		   lpad(' ',4,' ')                     || -- Número da Agência p/ Débito  Texto[004] *** Enviar branco apos email do Renato ***
+           **/
+		   lpad(vr_dvconta,1,'0')              || -- Dígito Verificador da Conta p/ Débito  Texto[001]
            lpad(vr_dvagencia,1,'0')            || -- Dígito Verificador da Agência p/ Débito  Texto[001]
            '1'                                 || -- "Tipo de Operação (1-Apólice, 2-Renovação, 3-Endosso, 4-Canc. Endosso, 5-Canc. Apólice, 6-Endosso s/ Mov)"  Texto[001]
            ' '                                 || -- Flag Prêmio Mínimo  Texto[001]
@@ -749,8 +761,15 @@ BEGIN
            ' '                                 || -- Tipo do Terceiro Corretor   ( “C” ou “F”)	Texto[001]
            ' '                                 || -- Tipo do Quarto Corretor     ( “C” ou “F”)	Texto[001]
            ' '                                 || -- Tipo do Quinto Corretor     ( “C” ou “F”)	Texto[001]
-           lpad('500070599',9,'0')             || -- Código do Primeiro Corretor	Inteiro[009]
-           lpad('0',9,'0')                     || -- Código do Segundo Corretor ( se 0 = não tem )	Inteiro[009]
+           /** De: Renato - REFERE
+		    Se for possível, informar no código do corretor no registro “12”, o código “100318167”, pois ainda não temos sua corretora cadastrada
+			em nosso ambiente de homologação no momento.
+		   **/
+		   lpad('100318167',9,'0')             || -- Código do Primeiro Corretor	Inteiro[009]
+		   /**
+		   lpad('500070599',9,'0')             || -- Código do Primeiro Corretor	Inteiro[009]
+           ***/
+		   lpad('0',9,'0')                     || -- Código do Segundo Corretor ( se 0 = não tem )	Inteiro[009]
            lpad('0',9,'0')                     || -- Código do Terceiro Corretor ( se 0 = não tem )	Inteiro[009]
            lpad('0',9,'0')                     || -- Código do Quarto Corretor ( se 0 = não tem )	Inteiro[009]
            lpad('0',9,'0')                     || -- Código do Quinto Corretor ( se 0 = não tem )	Inteiro[009]
