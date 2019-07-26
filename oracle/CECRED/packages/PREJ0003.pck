@@ -3836,6 +3836,9 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
                          
             24/04/2019 - Alteração para considerar saldo disponível (créditos) na conta corrente ao invés do campo VLSLDLIB
                          P450 - Reginaldo/AMcom
+
+            15/05/2019 - P450 - Tratamento historico 2733 (Reginaldo/AMcom)
+
  ..............................................................................*/
 --
 
@@ -3871,6 +3874,17 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
         AND lcm.cdhistor = 1017
         AND lcm.dtmvtolt = pr_dtmvtolt;
 
+
+     CURSOR cr_hist2733(pr_cdcooper craplcm.cdcooper%TYPE
+                      , pr_nrdconta craplcm.nrdconta%TYPE
+                      , pr_dtmvtolt craplcm.dtmvtolt%TYPE) IS
+     SELECT nvl(SUM(prj.vllanmto), 0) vltotlan
+       FROM tbcc_prejuizo_detalhe prj
+      WHERE prj.cdcooper = pr_cdcooper
+        AND prj.nrdconta = pr_nrdconta
+        AND prj.dtmvtolt = pr_dtmvtolt
+        AND prj.cdhistor = 2733;
+
      vr_cdcritic  NUMBER(3);
      vr_dscritic  VARCHAR2(1000);
      vr_des_erro  VARCHAR2(1000);
@@ -3881,6 +3895,7 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
      vr_vlsldprj NUMBER;
 
      vr_vldeb1017 NUMBER := 0; -- Valor dos débitos do histórico 1017 (Aplicável somente para a Transpocred)
+     vr_vllan2733 NUMBER := 0; -- Valor da soma dos lançamentos com histórico 2733 ocorridos no dia
 
      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
   BEGIN
@@ -3903,6 +3918,18 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
            CONTINUE;
          END IF;
          
+         OPEN cr_hist2733(pr_cdcooper => pr_cdcooper
+                        , pr_nrdconta => rw_contaprej.nrdconta
+                        , pr_dtmvtolt => rw_crapdat.dtmvtolt);
+         FETCH cr_hist2733 INTO vr_vllan2733;
+         CLOSE cr_hist2733;
+         
+         vr_vlsddisp:= vr_vlsddisp - vr_vllan2733;
+         
+         IF vr_vlsddisp <= 0 THEN
+           CONTINUE;
+         END IF;
+
          IF pr_cdcooper = 9 THEN -- Tratamento exclusivo para a cooperativa Transpocred do histórico 1017 (BNDES)            
            OPEN cr_hist1017(rw_contaprej.nrdconta, rw_crapdat.dtmvtolt);
            FETCH cr_hist1017 INTO vr_vldeb1017;

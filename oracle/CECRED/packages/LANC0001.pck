@@ -259,8 +259,6 @@ PROCEDURE pc_estorna_saque_conta_prej(pr_cdcooper IN  craplcm.cdcooper%TYPE
                                 , pr_dscritic OUT crapcri.dscritic%TYPE);
 
 END LANC0001;
-
-
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
   ---------------------------------------------------------------------------------------------------------------

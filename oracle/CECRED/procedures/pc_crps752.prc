@@ -19,9 +19,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps752(pr_cdcooper IN crapcop.cdcooper%TY
      Objetivo  : Solicitação 001
                  Processamento dos prejuizos de conta corrente, como pagamento e liquidação.
 
-     Alteracoes: 25/04/2019 - Inclusão de chamdaa da "PREJ0006.pc_processa_debt_inc_prj" para processar os débitos 
-                 ocorridos no dia e incrementar o saldo do prejuízo (quando aplicável).
-                 P450 - Reginaldo/AMcom
+     Alteracoes: 25/04/2019 - P450 - Inclusão de chamdaa da "PREJ0006.pc_processa_debt_inc_prj" para processar os débitos 
+                              ocorridos no dia e incrementar o saldo do prejuízo (quando aplicável).
+                              Reginaldo/AMcom
          
   ............................................................................ */
 

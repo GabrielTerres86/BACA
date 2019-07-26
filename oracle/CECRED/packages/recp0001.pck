@@ -238,6 +238,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     --                          Ajuste na procedure "pc_pagar_IOF_contrato_conta" para evitar lançamento com valor "zero".
     --                          (Reginaldo/AMcom - P450)
   --
+  --             19/03/2019 - Ajuste na rotina "pc_pagar_contrato_emprestimo" para debitar corretamente da conta transitória
+  --                          o valor pago no contrato de empréstimo, caso a conta esteja em prejuízo.
+  --                          (Reginaldo/AMcom - P450)
+  --
+  --              25/04/2019 - Ajuste na "pc_pagar_contrato_acordo" para inclusão de lançamentos com os históricos 2970 e 2971
+  --                           em substituição aos históricos 2193  e 2194 (bloqueio/desbloqueio de acordo) quando a conta estiver
+  --                           em prejuízo. Os novos históricos são lançados na tabela TBCC_PREJUIZO_DETALHE, diferente dos
+  --                           históricos originais que são lançados na CRAPLCM.
+  --                           (Reginaldo/AMcom - P450)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -1979,8 +1988,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                     --
           RAISE vr_exp_erro;
                     --
+        END IF;
       END IF;
-    END IF;
     
     END IF;   
   
@@ -2451,6 +2460,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           RAISE vr_exc_erro;
         END IF;
 
+        PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => rw_acordo.cdcooper
+                                          , pr_nrdconta => rw_acordo.nrdconta
+                                          , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                          , pr_cdhistor => 2971 -- Equivalente ao histórico 2194 que é lançado na CRAPLCM
+                                          , pr_vllanmto => rw_acordo.vlbloqueado
+                                          , pr_dthrtran => SYSDATE
+                                          , pr_cdcritic => vr_cdcritic
+                                          , pr_dscritic => vr_dscritic);
+
+          IF nvl(vr_cdcritic, 0) > 0 AND vr_dscritic IS NOT NULL THEN
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := vr_dscritic;
+            RAISE vr_exc_erro;
+          END IF;
       END IF;
       
       -- ZERAR O VALOR BLOQUEADO NA TABELA DE ACORDO
@@ -3031,6 +3054,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
           RAISE vr_exc_erro;
         END IF;
 
+        PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => rw_acordo.cdcooper
+                                        , pr_nrdconta => rw_acordo.nrdconta
+                                        , pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt
+                                        , pr_cdhistor => 2970 -- Equivalente ao histórico 2193 que é lançado na CRAPLCM
+                                        , pr_vllanmto => vr_vlparcel
+                                        , pr_dthrtran => SYSDATE
+                                        , pr_cdcritic => vr_cdcritic
+                                        , pr_dscritic => vr_dscritic);
+
+        IF nvl(vr_cdcritic, 0) > 0 AND vr_dscritic IS NOT NULL THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+
+          RAISE vr_exc_erro;
+        END IF;
       END IF;
       
         -- Alterar o valor bloqueado no acordo, com o valor lançado

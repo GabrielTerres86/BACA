@@ -608,6 +608,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --                            Projeto Contrataçao de Credito (Rangel Decker) AMCom
   --
   --               26/06/2018 - P450 - Ajuste calculo Juros60 (Rangel/AMcom)
+  --
+  --               25/07/2019 - P450 - Ajuste para buscar a data que é passada no parâmetro (Heckmann - AMcom)
   -- ......................................................................................................
 
 
@@ -999,15 +1001,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF par_cdmodali = 999 THEN
         FOR  rw_conta_negativa in cr_conta_negativa(pr_cdcooper =>par_cdcooper) LOOP
           -- Chama procedure de cálculo dos juros +60
-					TELA_ATENDA_DEPOSVIS.pc_busca_saldos_juros60_det(pr_cdcooper => par_cdcooper
-					                                                   , pr_nrdconta => rw_conta_negativa.nrdconta
-																														 , pr_dtlimite => par_dtrefere
-																														 , pr_vlsld59d => vr_vlsld59d
-																														 , pr_vlju6037 => vr_vlju6037
-																														 , pr_vlju6038 => vr_vlju6038
-																														 , pr_vlju6057 => vr_vlju6057
-																														 , pr_cdcritic => vr_cdcritic
-																														 , pr_dscritic => vr_dscritic);
+          TELA_ATENDA_DEPOSVIS.pc_busca_saldos_juros60_det(pr_cdcooper => par_cdcooper
+                                                         , pr_nrdconta => rw_conta_negativa.nrdconta
+                                                         , pr_dtlimite => par_dtrefere 
+                                                         , pr_tppesqui => 2 -- P450 - Pegar a data que é passada no parâmetro (Heckmann - AMcom)
+                                                         , pr_vlsld59d => vr_vlsld59d
+                                                         , pr_vlju6037 => vr_vlju6037
+                                                         , pr_vlju6038 => vr_vlju6038
+                                                         , pr_vlju6057 => vr_vlju6057
+                                                         , pr_cdcritic => vr_cdcritic
+                                                         , pr_dscritic => vr_dscritic);
 
            IF rw_conta_negativa.vljuresp > 0 THEN  -- 38 DF
              IF rw_conta_negativa.inpessoa = 1 THEN
