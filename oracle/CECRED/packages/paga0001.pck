@@ -1705,7 +1705,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
      11/03/2019 - Quando der erro na rotina pc atualiza trans nao efetiv, 
                   gerar Log pois as rotinas chamadoras iram ignorar o erro.
                   (Belli - Envolti - INC0034476)
-
+                  
      11/07/2019 - Correção em mensagem de erro exibida ao cooperado.
                   Se for retornada uma critica no momento de cria o lancamento do DEBITO, 
                   passa a não mais emitir o alerta ao cooperado com informacoes de LOG.
@@ -14231,7 +14231,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         IF rw_craplau.dsorigem = 'AIMARO' AND rw_craplau.cdtiptra in (1,5) THEN
           pr_tab_agendto(vr_index_agendto).cdagenci:= 90;
         ELSE
-        pr_tab_agendto(vr_index_agendto).cdagenci:= rw_craplau.cdagenci;
+          pr_tab_agendto(vr_index_agendto).cdagenci:= rw_craplau.cdagenci;
         END IF;  
         pr_tab_agendto(vr_index_agendto).cdtiptra:= rw_craplau.cdtiptra;
         pr_tab_agendto(vr_index_agendto).fltiptra:= vr_fltiptra;
@@ -18271,7 +18271,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --              15/12/2017 - Incluido nome do módulo logado
     --                           No caso de erro de programa gravar tabela especifica de log                     
     --                           Ajuste mensagem de erro 
-    --                          (Belli - Envolti - Chamado 779415)    
+    --                          (Belli - Envolti - Chamado 779415)   
     --
     --              13/11/2018 - Caso o sistema identifique o pagamento de um título descontado após o vencimento e o mesmo estiver dentro de 
     --                           um acordo, deverá ser realizado o crédito do valor pago direto na conta corrente do cooperado. (Paulo Penteado GFT) 
@@ -18334,7 +18334,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
            AND cde.nrboleto     = pr_nrdocmto
            AND cde.tpproduto    = 0;
       rw_cde cr_cde%ROWTYPE;
-
+      
       CURSOR cr_acordoctr(pr_cdcooper IN tbdsct_titulo_cyber.cdcooper%TYPE
                          ,pr_nrdconta IN tbdsct_titulo_cyber.nrdconta%TYPE
                          ,pr_nrborder IN tbdsct_titulo_cyber.nrborder%TYPE
@@ -18633,8 +18633,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                            ,pr_nrtitulo => rw_craptdb.nrtitulo);
           FETCH cr_acordoctr INTO rw_acordoctr;
           IF cr_acordoctr%NOTFOUND THEN
-          vr_flgdesct := TRUE;
-        END IF;
+            vr_flgdesct := TRUE;
+          END IF;
           CLOSE cr_acordoctr;
         END IF;
         --Se tiver descontado
@@ -26754,6 +26754,9 @@ end;';
                                 
                    05/06/2019 - Ajuste para impedir que seja repassado o valor nulo como
                                 id da folha de pagamento (Renato Darosci - Supero)
+                    
+                   10/07/2019 - Ajuste para deixar pendente o TED com analise de fraude pendente. (Andre MoutS - INC0013286)                                                   
+                                
      ..........................................................................*/
 
 
@@ -26832,10 +26835,14 @@ end;';
               ,t.dshistorico
               ,t.dsidentific
               ,t.nrridlfp
+              ,s.cdparecer_analise
+              ,s.flganalise_manual
           FROM craplau
               ,tbted_det_agendamento t
+              ,tbgen_analise_fraude s
          WHERE craplau.progress_recid = pr_progress_recid
-           AND craplau.idlancto = t.idlancto;
+           AND craplau.idlancto = t.idlancto
+           AND craplau.idanafrd = s.idanalise_fraude (+);
       rw_craplau cr_craplau%ROWTYPE;
       
       -- Buscar dados da portabilidade
@@ -26885,7 +26892,7 @@ end;';
       vr_flultexe  INTEGER;
       vr_qtdexec   INTEGER;
       vr_cdispbif  INTEGER;
-            
+      
       vr_idportab     NUMBER;
       vr_nrridlfp     tbted_det_agendamento.nrridlfp%TYPE;
       
@@ -27031,6 +27038,30 @@ end;';
        --Determinar situacao lancamento
        vr_insitlau:= rw_craplau.insitlau;
        
+       -- INC0013286 - Se analise de fraude pendente, gerar critica e deixar TED pendente
+       IF nvl(rw_craplau.cdparecer_analise,0) in (0, 2) AND nvl(rw_craplau.flganalise_manual,0) = 0 THEN
+         vr_cdcritic := 9999;
+         vr_dscritic := 'Aguardando analise do sistema antifraude.';
+         -- Chamar geracao de LOG
+         gene0001.pc_gera_log_auto(pr_cdcooper => pr_cdcooper
+                                  ,pr_cdoperad => pr_cdoperad
+                                  ,pr_dscritic => vr_dscritic
+                                  ,pr_dsorigem => vr_dsorigem
+                                  ,pr_dstransa => vr_dstransa
+                                  ,pr_dttransa => TRUNC(SYSDATE)
+                                  ,pr_flgtrans => 0
+                                  ,pr_hrtransa => GENE0002.fn_busca_time
+                                  ,pr_idseqttl => rw_craplau.idseqttl
+                                  ,pr_nmdatela => pr_nmdatela
+                                  ,pr_nrdconta => rw_craplau.nrdconta
+                                  ,pr_nrdrowid => vr_nrdrowid);
+
+         --Levantar Excecao           
+         RAISE vr_exc_erro;                             
+
+       END IF;
+       
+       IF vr_dscritic IS NULL THEN
        --Se a origem for TAA
        IF pr_idorigem = 4 THEN /* TAA */
          
@@ -27262,6 +27293,7 @@ end;';
          END IF;
           
        END IF;
+       END IF;
        
        --Se origem nao for TAA e nao tem erro ou for TAA e nao deu erro
        IF  (pr_idorigem <> 4 AND vr_dscritic IS NULL)   OR
@@ -27302,7 +27334,7 @@ end;';
           END IF;
           --Fechar Cursor
           CLOSE cr_crapban;        
-         
+          
           -- Verificar se é um agendamento de portabilidade
           IF rw_craplau.dsorigem = 'PORTABILIDAD' THEN
             vr_idportab := 1;
@@ -27767,7 +27799,7 @@ end;';
           rw_craplau cr_craplau%ROWTYPE;
       
       vr_index_agendto VARCHAR2(300);
-    
+
       CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
         SELECT crapcop.cdcooper
               ,crapcop.nmrescop

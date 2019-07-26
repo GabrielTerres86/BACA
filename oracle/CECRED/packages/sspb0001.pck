@@ -463,7 +463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 04/03/2019
+  --  Data     : Julho/2013.                   Ultima atualizacao: 12/07/2019
   --
   -- Dados referentes ao programa:
   --
@@ -512,6 +512,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --        
   --              04/03/2019 - Quando data de inicio não for enviada deve manter a data já cadastrada
   --                           (Jonata - Mouts INC0031899).
+  --
+  --              12/07/2019 - Ajuste na geracao do numero de documento utilizado no envio de TED para evitar
+  --                           problema com duplicidade na tabela craptvl, devido inexistencia do campo data
+  --                           em chave unica - fn_nrdocmto_nrctrlif (Diego).  
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -6968,9 +6972,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   FUNCTION fn_nrdocmto_nrctrlif RETURN VARCHAR2 IS
     nrdocmto VARCHAR2(08);
   BEGIN
-    nrdocmto := LPAD(to_char(SYSDATE,'sssss')
-             /* para evitar duplicidade devido paralelismo */
-              || to_char(SEQ_TEDENVIO.nextval,'fm000'),8,'0');
+    nrdocmto := LPAD(to_char(SEQ_TEDENVIO.nextval,'fm00000000'),8,'0');
     RETURN(nrdocmto);
   END fn_nrdocmto_nrctrlif;
   
