@@ -18,6 +18,8 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
 
 				  28/03/2019 - P450 - inclusão da chamada da pc_json_variaveis_rating 
 				               responsável pela variaveis internas JSON. (Mário - AMcom)
+
+                  29/07/2019 - Ajuste geração tag 'documento' incluso NVL (Daniel - Ailos)
   
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -2252,7 +2254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       END IF;
       
       -- Enviaremos os dados básicos encontrados na tabela 
-      vr_obj_generico.put('documento', fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,rw_crapass.inpessoa));
+      vr_obj_generico.put('documento', fn_mask_cpf_cnpj(NVL(rw_crapass.nrcpfcgc,0),rw_crapass.inpessoa));
     
       -- Para Pessoas Fisicas 
       IF rw_crapass.inpessoa = 1 THEN
@@ -4587,7 +4589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                ,pr_inpessoa => vr_inpessoa);
 
     -- Enviaremos os dados básicos encontrados na tabela 
-    vr_obj_generico.put('documento'      ,fn_mask_cpf_cnpj(pr_rw_crapavt.nrcpfcgc,vr_inpessoa));    
+    vr_obj_generico.put('documento'      ,fn_mask_cpf_cnpj(NVL(pr_rw_crapavt.nrcpfcgc,0),vr_inpessoa));    
     
     -- Para Pessoas Fisicas 
     IF vr_inpessoa = 1 THEN 
@@ -5617,7 +5619,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
         ELSE
           -- Enviaremos os dados básicos encontrados na tabela de conjugue
-          vr_obj_conjuge.put('documento'      ,fn_mask_cpf_cnpj(rw_crapcje.nrcpfcjg,1));
+          vr_obj_conjuge.put('documento'      ,fn_mask_cpf_cnpj(NVL(rw_crapcje.nrcpfcjg,0),1));
           vr_obj_conjuge.put('tipoPessoa'     ,'FISICA');
           vr_obj_conjuge.put('nome'           ,rw_crapcje.nmconjug);
           
@@ -5857,7 +5859,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
          ELSE
            -- Enviaremos os dados básicos encontrados na tabela de responsável legal
-           vr_obj_responsav.put('documento'      , fn_mask_cpf_cnpj(rw_crapcrl.nrcpfcgc,1));
+           vr_obj_responsav.put('documento'      , fn_mask_cpf_cnpj(NVL(rw_crapcrl.nrcpfcgc,0),1));
            vr_obj_responsav.put('tipoPessoa'     ,'FISICA');
            vr_obj_responsav.put('nome'           ,rw_crapcrl.nmrespon);
            IF rw_crapcrl.cddosexo = 1 THEN
@@ -6025,7 +6027,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
         ELSE
           -- Enviaremos os dados básicos encontrados na tabela de Participações    
-          vr_obj_particip.put('documento'      ,fn_mask_cpf_cnpj(rw_crapepa.nrdocsoc,2));
+          vr_obj_particip.put('documento'      ,fn_mask_cpf_cnpj(NVL(rw_crapepa.nrdocsoc,0),2));
           vr_obj_particip.put('tipoPessoa'     ,'JURIDICA');
           vr_obj_particip.put('razaoSocial'    ,rw_crapepa.nmprimtl);
           
@@ -6787,7 +6789,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
         ELSE
           -- Enviaremos os dados básicos encontrados na tabela de conjugue
-          vr_obj_conjuge.put('documento'      ,fn_mask_cpf_cnpj(rw_crapcje.nrcpfcjg,1));
+          vr_obj_conjuge.put('documento'      ,fn_mask_cpf_cnpj(NVL(rw_crapcje.nrcpfcjg,0),1));
           vr_obj_conjuge.put('tipoPessoa'     ,'FISICA');
           vr_obj_conjuge.put('nome'           ,rw_crapcje.nmconjug);
           
@@ -7025,7 +7027,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
          ELSE
            -- Enviaremos os dados básicos encontrados na tabela de responsável legal
-           vr_obj_responsav.put('documento'      , fn_mask_cpf_cnpj(rw_crapcrl.nrcpfcgc,1));
+           vr_obj_responsav.put('documento'      , fn_mask_cpf_cnpj(NVL(rw_crapcrl.nrcpfcgc,0),1));
            vr_obj_responsav.put('tipoPessoa'     ,'FISICA');
            vr_obj_responsav.put('nome'           ,rw_crapcrl.nmrespon);
            IF rw_crapcrl.cddosexo = 1 THEN
@@ -7193,7 +7195,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
         ELSE
           -- Enviaremos os dados básicos encontrados na tabela de Participações    
-          vr_obj_particip.put('documento'      ,fn_mask_cpf_cnpj(rw_crapepa.nrdocsoc,2));
+          vr_obj_particip.put('documento'      ,fn_mask_cpf_cnpj(NVL(rw_crapepa.nrdocsoc,0),2));
           vr_obj_particip.put('tipoPessoa'     ,'JURIDICA');
           vr_obj_particip.put('razaoSocial'    ,rw_crapepa.nmprimtl);
           
