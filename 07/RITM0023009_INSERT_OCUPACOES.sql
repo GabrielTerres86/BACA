@@ -48,7 +48,7 @@ BEGIN
 
 
 	INSERT INTO gncdocp (cdocupa, dsdocupa, cdnatocp, rsdocupa)
-	SELECT MAX(cdocupa) + 1 cdocupa, 'PROJETISTA', 1, 'AUXILIAR DE PRODUÇÃO' FROM gncdocp;
+	SELECT MAX(cdocupa) + 1 cdocupa, 'PROJETISTA', 1, 'PROJETISTA' FROM gncdocp;
 
 
 	INSERT INTO gncdocp (cdocupa, dsdocupa, cdnatocp, rsdocupa)
