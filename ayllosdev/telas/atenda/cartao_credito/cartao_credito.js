@@ -7185,3 +7185,21 @@ function validaLimite() {
         showError("error", "Limite maior que o sugerido pelo motor, a proposta sera enviada para a esteira.</br>Limite sugerido pelo motor: R$ " + vllimmot + ".", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
     }
 }
+
+function removeAcentoJustificativaEsteira(){
+
+	var _str = function ()
+	{       
+		var text = $("#justificativa").val();
+		text = text.toLowerCase();                                                         
+		text = text.replace(new RegExp('[ÁÀÂÃ]','gi'), 'a');
+		text = text.replace(new RegExp('[ÉÈÊ]','gi'), 'e');
+		text = text.replace(new RegExp('[ÍÌÎ]','gi'), 'i');
+		text = text.replace(new RegExp('[ÓÒÔÕ]','gi'), 'o');
+		text = text.replace(new RegExp('[ÚÙÛ]','gi'), 'u');
+		text = text.replace(new RegExp('[Ç]','gi'), 'c');
+		text = text.replace(new RegExp('[~^´`\'\"!@#$%¨]','gi'), '');
+		return text;                 
+	}
+	$("#justificativa").val(_str);
+}

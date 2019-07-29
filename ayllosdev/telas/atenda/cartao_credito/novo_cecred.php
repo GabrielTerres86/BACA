@@ -555,7 +555,7 @@ if ($coop_envia_cartao && !$pa_envia_cartao) {
                     ."<select  class='campo fieldclickable' id='listType' disabled style='margin-left: 00px;'> "
                     .$optionList."</select>"
                     ." </p><br><br>"
-                    ."<p><label for='justificativa' style='width: 70px;margin-right: 5px;'>Justificativa:</label><textarea maxlength='235' class='' placeholder='' id=\"justificativa\" rows=\"5\" cols=\"50\" style=\"resize: none; border: 1px solid #777;\" disabled></textarea>"
+                    ."<p><label for='justificativa' style='width: 70px;margin-right: 5px;'>Justificativa:</label><textarea maxlength='235' onKeyUp='removeAcentoJustificativaEsteira()' class='' placeholder='' id=\"justificativa\" rows=\"5\" cols=\"50\" style=\"resize: none; border: 1px solid #777;\" disabled></textarea>"
                     ." </p><p><label for='valorLimite'style='width: 70px;margin-right: 5px;'>Limite:</label><input id='valorLimite' name='valorLimite' class='campo' disabled style='    margin-left: 0px;'>"
                     ."</fieldset></div></div></div></td> </tr>";
 
