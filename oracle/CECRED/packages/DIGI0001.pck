@@ -72,7 +72,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DIGI0001 AS
 
     Objetivo  : Rotina para retornar a key da URL para acesso ao digidoc
 
-    Alteracoes: -----
+    Alteracoes: 
+                25/07/2019 - Alteração para novo viewer do Smartshare (PRB0041878 - Joao Mannes - Mouts)
     ..............................................................................*/
     DECLARE
 
@@ -102,7 +103,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DIGI0001 AS
 			-- Buscar indicador de pessoa
 			CURSOR cr_crapass (pr_cdcooper crapcop.cdcooper%TYPE
 			                  ,pr_nrdconta crapass.nrdconta%TYPE) IS
-				SELECT ass.inpessoa
+				SELECT ass.inpessoa, ass.nrcpfcgc
 				  FROM crapass ass
 				 WHERE ass.cdcooper = pr_cdcooper
 				   AND ass.nrdconta = pr_nrdconta;
@@ -170,10 +171,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DIGI0001 AS
 					-- Se for PF
 					IF rw_crapass.inpessoa = 1 THEN
 						vr_dstransa := 'Consulta Dossie DigiDoc Dados Pessoais.';						
+   					vr_chave    := 'mwRrO';
 					ELSE -- Se for PJ
 						vr_dstransa := 'Consulta Dossie DigiDoc Identificacao.';
-					END IF;
 					vr_chave    := 'iSQlN';
+					END IF;
+
 				WHEN 9 THEN
 					vr_dstransa := 'Consulta Cartao Assinatura.';
 					vr_chave    := '8O3ky';
@@ -201,6 +204,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DIGI0001 AS
       pr_retxml := XMLTYPE.CREATEXML(
 			              '<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Dados>'
 								 || '<chave>' || vr_chave || '</chave>'
+                 || '<inpessoa>' || rw_crapass.inpessoa || '</inpessoa>'
+                 || '<nrcpfcgc>' || gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc, rw_crapass.inpessoa) || '</nrcpfcgc>'
 								 || '</Dados></Root>');
 			
     EXCEPTION
