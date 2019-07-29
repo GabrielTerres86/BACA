@@ -605,6 +605,8 @@ PROCEDURE grava_dados:
     DEF VAR aux_vlprecar AS CHAR                                    NO-UNDO.
     DEF VAR aux_idcarga  AS INTE                                    NO-UNDO.
 	DEF VAR aux_cdlcremp AS INTE                                    NO-UNDO.
+  DEF VAR          aux_dsassdig  AS CHAR                          NO-UNDO.
+  DEF VAR          aux_des_reto  AS CHAR                          NO-UNDO.
 
     DEF VAR h-b1wgen0043 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0084 AS HANDLE                                  NO-UNDO.
@@ -1149,6 +1151,45 @@ PROCEDURE grava_dados:
 
        IF RETURN-VALUE <> "OK" THEN
           UNDO GRAVA, LEAVE GRAVA.
+          
+       IF par_idorigem = 3 OR par_idorigem = 4 THEN
+        DO:
+          /* P442 - Criar assinaturas para o contrato recem criado (aprovado) */
+          /* Criar registros na tabela de assinaturas */
+          /* Efetuar a chamada a rotina Oracle */ 
+          RUN STORED-PROCEDURE pc_assinatura_contrato_pre
+                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                    ,INPUT par_cdagenci
+                                                    ,INPUT par_nrdconta
+                                                    ,INPUT 1                                               
+                                                    ,INPUT par_dtmvtolt
+                                                    ,INPUT par_idorigem
+                                                    ,INPUT nov_nrctremp
+                                                    ,INPUT 1
+                                                    ,OUTPUT ""
+                                                    ,OUTPUT ""
+                                                    ,OUTPUT 0
+                                                    ,OUTPUT "").
+          
+          /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_assinatura_contrato_pre
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+          
+          ASSIGN aux_dsassdig = pc_assinatura_contrato_pre.pr_assinatu
+                 aux_des_reto = pc_assinatura_contrato_pre.pr_des_reto
+                 aux_cdcritic = pc_assinatura_contrato_pre.pr_cdcritic WHEN pc_assinatura_contrato_pre.pr_cdcritic <> ?
+                 aux_dscritic = pc_assinatura_contrato_pre.pr_dscritic WHEN pc_assinatura_contrato_pre.pr_dscritic <> ?.
+            
+          
+          IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
+            DO:
+              CREATE tt-erro.
+              ASSIGN tt-erro.cdcritic = aux_cdcritic
+                     tt-erro.dscritic = aux_dscritic.
+               UNDO GRAVA, LEAVE GRAVA.
+           END.
+        END. /* END par_idorigem = 3 TH */
+       
 
        ASSIGN aux_flgtrans = TRUE.
 
@@ -2830,47 +2871,8 @@ PROCEDURE imprime_previa_demonstrativo:
                                                   INPUT 34,
                                                   INPUT "M",
                                                   OUTPUT aux_dsvlrtar1,
-                                                  OUTPUT aux_dsvlrtar2).
-
-               /* P442 - Validar assinado Digitalmente */
-               /* Buscar dados do contrato de emprestimo */
-               FIND FIRST crawepr WHERE crawepr.cdcooper = par_cdcooper AND
-                                        crawepr.nrdconta = par_nrdconta AND
-                                        crawepr.nrctremp = par_nrctremp
-                                        NO-LOCK NO-ERROR.
-
-               IF AVAIL crawepr THEN
-                DO:
-                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-                  
-                  /* Criar registros na tabela de assinaturas */
-                  /* Efetuar a chamada a rotina Oracle */ 
-                  RUN STORED-PROCEDURE pc_assinatura_contrato_pre
-                        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.cdcooper
-                                                            ,INPUT crawepr.cdagenci
-                                                            ,INPUT crawepr.nrdconta
-                                                            ,INPUT 1                                               
-                                                            ,INPUT par_dtmvtolt
-                                                            ,INPUT crawepr.cdorigem
-                                                            ,INPUT crawepr.nrctremp
-                                                            ,INPUT 1
-                                                            ,OUTPUT ""
-                                                            ,OUTPUT ""
-                                                            ,OUTPUT 0
-                                                            ,OUTPUT "").
-                  
-                  /* Fechar o procedimento para buscarmos o resultado */ 
-                  CLOSE STORED-PROC pc_assinatura_contrato_pre
-                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-                  ASSIGN aux_dsassdig = pc_assinatura_contrato_pre.pr_assinatu
-                         aux_des_reto = pc_assinatura_contrato_pre.pr_des_reto
-                         aux_cdcritic = pc_assinatura_contrato_pre.pr_cdcritic WHEN pc_assinatura_contrato_pre.pr_cdcritic <> ?
-                         aux_dscritic = pc_assinatura_contrato_pre.pr_dscritic WHEN pc_assinatura_contrato_pre.pr_dscritic <> ?.
-
-                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-                END. 
-			  
+                                                  OUTPUT aux_dsvlrtar2).             
+												  
                PUT STREAM str_1
                    "Eu (" rPadTexto(INPUT crapass.nmprimtl, INPUT 47) FORMAT "x(47)" 
                    "), inscrito no CPF n " aux_nrcpfcgc " e "				  
