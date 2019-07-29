@@ -2,7 +2,7 @@
 
 /*************************************************************************
 	Fonte: realiza_habilitacao.php
-	Autor: Gabriel						Ultima atualizacao: 13/12/2016
+	Autor: Gabriel						Ultima atualizacao: 20/02/2019
 	Data : Dezembro/2010
 	
 	Objetivo: Efetuar a habilitacao do convenio CEB.
@@ -38,6 +38,8 @@
 
 				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
 
+				20/02/2019 - Novo campo Homologado API (Andrey Formigari - Supero)
+						     
 *************************************************************************/
 
 	session_start();
@@ -95,6 +97,7 @@
     $idreciprold = (int) $_POST["idreciprold"];
     $perdesconto = $_POST["perdesconto"];
 	$executandoProdutos = $_POST['executandoProdutos'];
+	$flgapihm = trim($_POST["flgapihm"]);
 
 	foreach($convenios as $convenio) {
 		$xmlHabilitaConvenio  = "";
@@ -125,6 +128,7 @@
 		$xmlHabilitaConvenio .= "   <idreciprold>".$idreciprold."</idreciprold>";
 		$xmlHabilitaConvenio .= "   <perdesconto>".$perdesconto."</perdesconto>";
 		$xmlHabilitaConvenio .= "   <inenvcob>".$inenvcob."</inenvcob>";	
+		$xmlHabilitaConvenio .= "   <flgapihm>".($flgapihm == "yes" ? 1 : 0)."</flgapihm>";
 		$xmlHabilitaConvenio .= " </Dados>";
 		$xmlHabilitaConvenio .= "</Root>";
 
