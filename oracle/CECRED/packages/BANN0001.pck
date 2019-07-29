@@ -110,8 +110,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANN0001 IS
     END IF;
     CLOSE cr_crapass;
 	
-    -- P442 Verifica se o usuário tem crédito pre-aprovado
-     IF empr0002.fn_preapv_com_saldo(pr_cdcooper => pr_cdcooper
+  
+    -- Verifica se o usuário tem crédito pre-aprovado
+     IF empr0002.fn_preapv_perm_cont_online(pr_cdcooper => pr_cdcooper
                                , pr_nrdconta => pr_nrdconta
                                , pr_idseqttl => pr_idseqttl
                                , pr_nrcpfope => NULL

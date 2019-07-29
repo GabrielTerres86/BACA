@@ -3184,7 +3184,7 @@ PROCEDURE permissoes-menu-mobile:
                EMPTY TEMP-TABLE tt-erro.
 
             FIND FIRST tt-dados-cpa NO-LOCK NO-ERROR.
-            IF AVAIL tt-dados-cpa AND tt-dados-cpa.vldiscrd > 0 THEN DO:
+            IF AVAIL tt-dados-cpa AND tt-dados-cpa.vldiscrd > 0 AND crapass.idastcjt = 0 THEN DO:
               ASSIGN aux_flgaprov = TRUE.
             END.
         END.
