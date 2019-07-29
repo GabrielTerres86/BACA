@@ -18,6 +18,7 @@
 
     DEF TEMP-TABLE tt-crapavt NO-UNDO LIKE crapavt
         FIELD dsendres1 AS CHAR
-        FIELD dsendres2 AS CHAR.
+        FIELD dsendres2 AS CHAR
+        FIELD dsnacion  AS CHAR.
 
     DEF TEMP-TABLE tt-crapavt-aux NO-UNDO LIKE tt-crapavt.

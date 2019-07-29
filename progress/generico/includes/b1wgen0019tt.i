@@ -71,6 +71,11 @@
                             (PRJ404 Reinert)
                21/03/2019 - Ajuste no Termo de Recisao para assinatura eletronica
                             Pj470 SM 1 - Ze Gracik - Mouts
+
+			   09/07/2019 - Adicionado outras rendas do conjuge.
+			                Rubens Lima - Mouts
+
+
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-limite-credito NO-UNDO
@@ -209,6 +214,7 @@ DEF TEMP-TABLE tt-dados-prp NO-UNDO
     FIELD vlsalari AS DECI
     FIELD vlsalcon AS DECI
     FIELD vloutras AS DECI
+    FIELD vlrencjg AS DECI
     FIELD vlalugue AS DECI
     FIELD dsobser1 AS CHAR
     FIELD dsobser2 AS CHAR

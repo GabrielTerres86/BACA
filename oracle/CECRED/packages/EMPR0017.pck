@@ -338,7 +338,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0017 AS
                              pr_nrctremp IN NUMBER);
 
        
-END empr0017;
+END EMPR0017;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   --
@@ -1284,6 +1284,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   -- Frequencia: Sempre que for chamada
   -- Objetivo  : Gerar o arquivo PDF do contrato CCB
   --
+  -- Alterações: 23/07/2019 - Ajuste na composição do valor do IOF e do valor emprestado. (Douglas Pagel / AMcom) 
+  --
   ---------------------------------------------------------------------------------------------------------------
   --
   --
@@ -1332,6 +1334,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   vr_exc_erro EXCEPTION;
   vr_contador NUMBER := 0;
   vr_vlpreemp NUMBER := 0;
+  vr_vliofepr NUMBER;
+  vr_vliofpri NUMBER;
+  vr_vliofadi NUMBER;
+  vr_vlpreclc NUMBER;
+  vr_flgimune pls_integer;
+  vr_vlemprestado NUMBER;
   --
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
     SELECT cop.nmextcop
@@ -1431,11 +1439,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
           con.txmensal,
           round((con.txmensal * 12),2) txanual,
           con.vlpreemp vlr_prestacao,
-          con.cdlcremp,
-          con.cdagenci,
           con.cdcooper,
+          con.nrctremp,
+          con.dtmvtolt,
+          con.cdlcremp,
+          con.cdfinemp,
+          con.qtpreemp,
+          con.vlpreemp,
+          con.dtlibera,
+          con.tpemprst,
+          con.dtcarenc,
+          con.dtdpagto,
+          con.idfiniof,
+          con.nrsimula,
           con.cdorigem,
-          con.nrsimula
+          con.cdagenci
      FROM crawepr con
     WHERE con.nrctremp = pr_nrctremp
       AND con.cdcooper = pr_cdcooper
@@ -1588,6 +1606,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      FETCH cr_crapass INTO rw_crapass;
      CLOSE cr_crapass;
      
+     vr_vlemprestado := rw_crawepr.vlr_emprest;
+     
+     vr_vliofepr := 0;
+     
+     tiof0001.pc_calcula_iof_epr(pr_cdcooper => rw_crawepr.cdcooper,
+                                 pr_nrdconta => rw_crawepr.nrdconta,
+                                 pr_nrctremp => rw_crawepr.nrctremp,
+                                 pr_dtmvtolt => rw_crawepr.dtmvtolt,
+                                 pr_inpessoa => rw_crapass.inpessoa,
+                                 pr_cdlcremp => rw_crawepr.cdlcremp,
+                                 pr_cdfinemp => rw_crawepr.cdfinemp,
+                                 pr_qtpreemp => rw_crawepr.qtpreemp,
+                                 pr_vlpreemp => rw_crawepr.vlpreemp,
+                                 pr_vlemprst => rw_crawepr.vlr_emprest,
+                                 pr_dtdpagto => rw_crawepr.dtdpagto,
+                                 pr_dtlibera => rw_crawepr.dtlibera,
+                                 pr_tpemprst => rw_crawepr.tpemprst,
+                                 pr_dtcarenc => rw_crawepr.dtcarenc,
+                                 pr_qtdias_carencia => 0,
+                                 pr_dscatbem => '',
+                                 pr_idfiniof => rw_crawepr.idfiniof,
+                                 pr_dsctrliq => '',
+                                 pr_vlpreclc => vr_vlpreclc,
+                                 pr_valoriof => vr_vliofepr,
+                                 pr_vliofpri => vr_vliofpri,
+                                 pr_vliofadi => vr_vliofadi,
+                                 pr_flgimune => vr_flgimune,
+                                 pr_dscritic => vr_dscritic);
+                                 
+     IF vr_dscritic IS NOT NULL THEN
+       RAISE vr_exc_erro;  
+     END IF;
+     
+     IF NVL(rw_crawepr.idfiniof,0) = 1 THEN
+       vr_vlemprestado := nvl(rw_crawepr.vlr_emprest,0) + nvl(vr_vliofepr,0) + nvl(rw_crapsim.vlrtarif,0);
+     END IF;
+     
+     --
      OPEN cr_crapass1(pr_cdcooper,pr_nrdconta);
      FETCH cr_crapass1 INTO rw_crapass1;
      CLOSE cr_crapass1;     
@@ -1801,7 +1857,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                 ,pr_tag_pai  => 'dados'
                 ,pr_posicao  => vr_contador
                 ,pr_tag_nova => 'valor_emprestado'
-                ,pr_tag_cont => fn_decimal_soa(rw_crawepr.vlr_emprest + nvl(rw_crapsim.vlrtarif,0) + nvl(rw_crapsim.vliofepr,0)) 
+                ,pr_tag_cont => fn_decimal_soa(nvl(vr_vlemprestado,0))
                 ,pr_des_erro => pr_dscritic);
 
       insere_tag(pr_xml      => pr_retorno
@@ -3020,7 +3076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      WHEN OTHERS
        THEN
         pr_des_reto := 'NOK';
-        vr_dscritic := 'Erro na rotina empr0017.pc_calcula_simulacao ' ||sqlerrm;
+        vr_dscritic := 'Erro na rotina EMPR0017.pc_calcula_simulacao ' ||sqlerrm;
         pr_retorno  := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                          '<Root><Erro>' ||'Nao foi possível calcular simulacao! '||vr_dscritic||
                                          '</Erro></Root>');
@@ -5665,6 +5721,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
          frequencia: sempre que for chamado.
          objetivo  : procedure para gravar propostas de emprestimo
 
+         Alterações: 28/05/2019 - P438 Incluída busca da dados adicionais para grabar na crapprp. (Douglas Pagel / AMcom)
+
       ............................................................................. */
 
     CURSOR cr_contrato(pr_cdcooper IN crawepr.cdcooper%TYPE
@@ -5678,6 +5736,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        AND t.nrctremp = pr_nrctremp;
     rw_contrato cr_contrato%ROWTYPE;
 
+    CURSOR cr_crapttl IS
+    SELECT * 
+      FROM crapttl 
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta
+       AND idseqttl = 1;
+    rw_crapttl cr_crapttl%ROWTYPE;
+
      -- Monta o registro de data
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -5689,6 +5755,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
     vr_dsnivris VARCHAR(4000);
+
+    vr_tab_central_risco RISC0001.typ_reg_central_risco;
+    vr_tab_erro gene0001.typ_tab_erro;
 
    BEGIN
     vr_hash_novo := null;
@@ -5722,6 +5791,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
       raise vr_exc_erro;
     end if;
 
+    --Busca dados do titular
+    OPEN cr_crapttl;
+    FETCH cr_crapttl INTO rw_crapttl;
+    CLOSE cr_crapttl;
+    
+    --Busca dados de risco da conta
+    RISC0001.pc_obtem_valores_central_risco(pr_cdcooper           => pr_cdcooper          --> Codigo Cooperativa
+                                           ,pr_cdagenci           => 90                   --> Codigo Agencia
+                                           ,pr_nrdcaixa           => 996                  --> Numero Caixa
+                                           ,pr_nrdconta           => pr_nrdconta          --> Numero da Conta
+                                           ,pr_nrcpfcgc           => '0'                  --> CPF/CGC do associado
+                                           ,pr_tab_central_risco  => vr_tab_central_risco --> Informações da Central de Risco
+                                           ,pr_tab_erro           => vr_tab_erro          --> Tabela Erro
+                                           ,pr_des_reto           => vr_dscritic);        --> Retorno OK/NOK
+
+    
     -- Verificar se o Contrato que está sendo passado existe ou se é um contrato novo.
     OPEN cr_contrato(pr_cdcooper => pr_cdcooper
                     ,pr_nrdconta => pr_nrdconta
@@ -5811,13 +5896,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
         ,nrdconta
         ,nrctrato
         ,tpctrato
-        ,dtmvtolt)
+        ,dtmvtolt
+        ,vlsalari
+        ,dtdrisco
+        ,qtifoper
+        ,qtopescr
+        ,vlrpreju
+        ,vlopescr
+        ,vltotsfn)
       VALUES
         (pr_cdcooper
         ,pr_nrdconta
         ,pr_nrctremp
         ,90
-        ,rw_crapdat.dtmvtolt);
+        ,rw_crapdat.dtmvtolt
+        ,nvl(rw_crapttl.vlsalari,0)
+        ,vr_tab_central_risco.dtdrisco
+        ,nvl(vr_tab_central_risco.qtifoper, 0)
+        ,nvl(vr_tab_central_risco.qtopescr,0)
+        ,nvl(vr_tab_central_risco.vlrpreju,0) 
+        ,nvl(vr_tab_central_risco.vlopescr,0)
+        ,nvl(vr_tab_central_risco.vltotsfn,0) );
 
        /* -- Obtem a chave Hash do Registro que acabou de ser inserido.
         pc_obtem_chave_hash(pr_rowid_tabela => vr_rowid

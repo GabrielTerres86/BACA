@@ -2405,12 +2405,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                           ,p_index    => vr_indx
                           ,p_sn_perde => vr_perde); 
 
+      if r_crapprp.flgdocje = 1 and pr_flgdocje = 0 then
       prc_valida_alteracao(p_motivo   => 'Alterada conjuge co-responsavel.'
                           ,p_nmcampo  => 'Conjuge co-responsavel'
                           ,p_dsdadant => r_crapprp.flgdocje
                           ,p_dsdadatu => pr_flgdocje
                           ,p_index    => vr_indx
                           ,p_sn_perde => vr_perde);                           
+      end if;
 
 /*      prc_valida_alteracao(p_motivo   => 'Alterado codigo da finalidade do emprestimo. '
                           ,p_nmcampo  => 'Finalidade'

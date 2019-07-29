@@ -35,12 +35,8 @@
 	$nrindice		= (isset($_POST['nrindice']))   ? $_POST['nrindice']   : 0  ;
 	$nrctaava       = (isset($_POST['nrctaava']))   ? $_POST['nrctaava']   : 0  ;
 	$nmdavali       = (isset($_POST['nmdavali']))   ? $_POST['nmdavali']   : '' ;
-	$dscpfcgc		= (isset($_POST['dscpfcgc']))   ? $_POST['dscpfcgc']   : '' ;
 	$nrcpfcgc       = (isset($_POST['nrcpfcgc']))   ? $_POST['nrcpfcgc']   : 0  ;
-	$tpdocava       = (isset($_POST['tpdocava']))   ? $_POST['tpdocava']   : '' ;
 	$nmconjug		= (isset($_POST['nmconjug']))   ? $_POST['nmconjug']   : '' ;
-	$tpdoccjg       = (isset($_POST['tpdoccjg']))   ? $_POST['tpdoccjg']   : '' ;
-	$dscpfcjg       = (isset($_POST['dscpfcjg']))   ? $_POST['dscpfcjg']   : '' ;
 	$nrcpfcjg		= (isset($_POST['nrcpfcjg']))   ? $_POST['nrcpfcjg']   : 0  ;
 	$nrcepend       = (isset($_POST['nrcepend']))   ? $_POST['nrcepend']   : 0  ;
 	$dsendre1       = (isset($_POST['dsendre1']))   ? $_POST['dsendre1']   : '' ;
@@ -54,6 +50,11 @@
 	$nrfonres       = (isset($_POST['nrfonres']))   ? $_POST['nrfonres']   : '' ;
 	
 	$inpessoa       = (isset($_POST['inpessoa']))   ? $_POST['inpessoa']   : 0  ;
+	$cdnacion       = (isset($_POST['cdnacion']))   ? $_POST['cdnacion']   : '' ;	
+	$dsnacion       = (isset($_POST['dsnacion']))   ? $_POST['dsnacion']   : '' ;	
+	$nrctacjg       = (isset($_POST['nrctacjg']))   ? $_POST['nrctacjg']   : '' ;	
+	$vlrencjg       = (isset($_POST['vlrencjg']))   ? $_POST['vlrencjg']   : '' ;	
+	$vlrenmes       = (isset($_POST['vlrenmes']))   ? $_POST['vlrenmes']   : '' ;
 	$dtnascto       = (isset($_POST['dtnascto']))   ? $_POST['dtnascto']   : '' ;
 	
 	$avalista		= (!empty($_POST['avalista'])) ? unserialize($_POST['avalista']) : array()  ;
@@ -124,10 +125,6 @@
 	$xml .= "		<nmdaval1>".$avalista[1]['nmdavali']."</nmdaval1>"; // 	
 	$xml .= "		<cpfccg1>".$avalista[1]['nrcpfcjg']."</cpfccg1>"; // 	
 	$xml .= "		<nmcjgav1>".$avalista[1]['nmconjug']."</nmcjgav1>"; // 	
-	$xml .= "		<tpdoccj1>".$avalista[1]['tpdoccjg']."</tpdoccj1>"; // 	
-	$xml .= "		<dscfcav1>".$avalista[1]['dscpfcjg']."</dscfcav1>"; // 	
-	$xml .= "		<tpdocav1>".$avalista[1]['tpdocava']."</tpdocav1>"; // 	
-	$xml .= "		<dscpfav1>".$avalista[1]['dscpfcgc']."</dscpfav1>"; // 	
 	$xml .= "		<dsenda11>".$avalista[1]['dsendre1']."</dsenda11>"; // 	
 	$xml .= "		<dsenda12>".$avalista[1]['dsendre2']."</dsenda12>"; // 	
 	$xml .= "		<nrfonres1>".$avalista[1]['nrfonres']."</nrfonres1>"; // 	
@@ -139,6 +136,9 @@
 	$xml .= "		<complend1>".$avalista[1]['complend']."</complend1>"; // 	
 	$xml .= "		<nrcxapst1>".$avalista[1]['nrcxapst']."</nrcxapst1>"; //
     $xml .= "		<inpessoa1>".$avalista[1]['inpessoa']."</inpessoa1>"; // 
+    $xml .= "		<cdnacion1>".$avalista[1]['cdnacion']."</cdnacion1>"; //  	
+    $xml .= "		<vlrencjg1>".$avalista[1]['vlrencjg']."</vlrencjg1>"; //  	
+    $xml .= "		<vlrenmes1>".$avalista[1]['vlrenmes']."</vlrenmes1>"; //  	
     $xml .= "		<dtnascto1>".$avalista[1]['dtnascto']."</dtnascto1>"; //  	
 	
 	/* Avalista 2 */
@@ -147,10 +147,6 @@
 	$xml .= "		<nmdaval2>".$avalista[2]['nmdavali']."</nmdaval2>"; // 	
 	$xml .= "		<cpfccg2>".$avalista[2]['nrcpfcjg']."</cpfccg2>"; // 	
 	$xml .= "		<nmcjgav2>".$avalista[2]['nmconjug']."</nmcjgav2>"; // 	
-	$xml .= "		<tpdoccj2>".$avalista[2]['tpdoccjg']."</tpdoccj2>"; // 	
-	$xml .= "		<dscfcav2>".$avalista[2]['dscpfcjg']."</dscfcav2>"; // 	
-	$xml .= "		<tpdocav2>".$avalista[2]['tpdocava']."</tpdocav2>"; // 	
-	$xml .= "		<dscpfav2>".$avalista[2]['dscpfcgc']."</dscpfav2>"; // 	
 	$xml .= "		<dsenda21>".$avalista[2]['dsendre1']."</dsenda21>"; // 	
 	$xml .= "		<dsenda22>".$avalista[2]['dsendre2']."</dsenda22>"; // 	
 	$xml .= "		<nrfonres2>".$avalista[2]['nrfonres']."</nrfonres2>"; // 	
@@ -162,6 +158,9 @@
 	$xml .= "		<complend2>".$avalista[2]['complend']."</complend2>"; // 	
 	$xml .= "		<nrcxapst2>".$avalista[2]['nrcxapst']."</nrcxapst2>"; // 	
 	$xml .= "		<inpessoa2>".$avalista[2]['inpessoa']."</inpessoa2>"; // 
+    $xml .= "		<cdnacion2>".$avalista[2]['cdnacion']."</cdnacion2>"; //  
+    $xml .= "		<vlrencjg2>".$avalista[2]['vlrencjg']."</vlrencjg2>"; //  
+    $xml .= "		<vlrenmes2>".$avalista[2]['vlrenmes']."</vlrenmes2>"; //  
     $xml .= "		<dtnascto2>".$avalista[2]['dtnascto']."</dtnascto2>"; //  
 	
 	$xml .= "  </Dados>";
@@ -207,12 +206,8 @@
 		$avalista[$nrindice]['nrindice'] = $nrindice;
 		$avalista[$nrindice]['nrctaava'] = $nrctaava;
 		$avalista[$nrindice]['nmdavali'] = $nmdavali;
-		$avalista[$nrindice]['dscpfcgc'] = $dscpfcgc;
 		$avalista[$nrindice]['nrcpfcgc'] = $nrcpfcgc;
-		$avalista[$nrindice]['tpdocava'] = $tpdocava;
 		$avalista[$nrindice]['nmconjug'] = $nmconjug;
-		$avalista[$nrindice]['tpdoccjg'] = $tpdoccjg;
-		$avalista[$nrindice]['dscpfcjg'] = $dscpfcjg;
 		$avalista[$nrindice]['nrcpfcjg'] = $nrcpfcjg;
 		$avalista[$nrindice]['nrcepend'] = $nrcepend;
 		$avalista[$nrindice]['dsendre1'] = $dsendre1;
@@ -226,6 +221,11 @@
 		$avalista[$nrindice]['nrfonres'] = $nrfonres;
 		
 		$avalista[$nrindice]['inpessoa'] = $inpessoa;	
+		$avalista[$nrindice]['cdnacion'] = $cdnacion;
+		$avalista[$nrindice]['dsnacion'] = $dsnacion;
+		$avalista[$nrindice]['nrctacjg'] = $nrctacjg;
+		$avalista[$nrindice]['vlrencjg'] = $vlrencjg;
+		$avalista[$nrindice]['vlrenmes'] = $vlrenmes;
 		$avalista[$nrindice]['dtnascto'] = $dtnascto;
 		
 		echo "avalista = '".serialize($avalista)."';";
@@ -245,12 +245,8 @@
 		
 			$avalista[$nrindice]['nrctaava'] = getByTagName($fiadores,'nrctaava');
 			$avalista[$nrindice]['nmdavali'] = getByTagName($fiadores,'nmdavali');
-			$avalista[$nrindice]['dscpfcgc'] = getByTagName($fiadores,'dscpfava');
 			$avalista[$nrindice]['nrcpfcgc'] = getByTagName($fiadores,'nrcpfcgc');
-			$avalista[$nrindice]['tpdocava'] = getByTagName($fiadores,'tpdocava');
 			$avalista[$nrindice]['nmconjug'] = getByTagName($fiadores,'nmcjgava');
-			$avalista[$nrindice]['tpdoccjg'] = getByTagName($fiadores,'tpdoccjg');
-			$avalista[$nrindice]['dscpfcjg'] = getByTagName($fiadores,'dscfcava');
 			$avalista[$nrindice]['nrcpfcjg'] = getByTagName($fiadores,'nrcpfcjg');
 			$avalista[$nrindice]['nrcepend'] = getByTagName($fiadores,'nrcepend');
 			$avalista[$nrindice]['dsendre1'] = getByTagName($fiadores[5]->tags,'dsendava.1'); // endereco
@@ -264,19 +260,24 @@
 			$avalista[$nrindice]['nrfonres'] = getByTagName($fiadores,'nrfonres');
 
 			$avalista[$nrindice]['inpessoa'] = getByTagName($fiadores,'inpessoa');
+			$avalista[$nrindice]['cdnacion'] = getByTagName($fiadores,'cdnacion');			
+			$avalista[$nrindice]['dsnacion'] = getByTagName($fiadores,'dsnacion');			
+			$avalista[$nrindice]['nrctacjg'] = getByTagName($fiadores,'nrctacjg');			
+			$avalista[$nrindice]['vlrencjg'] = getByTagName($fiadores,'vlrencjg');			
+			$avalista[$nrindice]['vlrenmes'] = getByTagName($fiadores,'vlrenmes');			
 			$avalista[$nrindice]['dtnascto'] = getByTagName($fiadores,'dtnascto');			
 		
 			echo "avalista = '".serialize($avalista)."';";
 
 			echo "cNrctaava.val('".formataContaDV($avalista[$nrindice]['nrctaava'])."');";
 			echo "cNmdavali.val('".$avalista[$nrindice]['nmdavali']."');";		
-			echo "cNrcpfcgc.val('".$avalista[$nrindice]['nrcpfcgc']."');";		
-			echo "cTpdocava.val('".$avalista[$nrindice]['tpdocava']."');";		
-			echo "cNrdocava.val('".$avalista[$nrindice]['dscpfcgc']."');";		
+			if ($avalista[$nrindice]['inpessoa'] == 1) {
+    			echo "cNrcpfcgc.val('".mascaraCpf($avalista[$nrindice]['nrcpfcgc'])."');";
+			} else {
+    			echo "cNrcpfcgc.val('".mascaraCnpj($avalista[$nrindice]['nrcpfcgc'])."');";
+			}
 			echo "cNmconjug.val('".$avalista[$nrindice]['nmconjug']."');";
-			echo "cNrcpfcjg.val('".$avalista[$nrindice]['nrcpfcjg']."');";
-			echo "cTpdoccjg.val('".$avalista[$nrindice]['tpdoccjg']."');";
-			echo "cNrdoccjg.val('".$avalista[$nrindice]['dscpfcjg']."');";
+			if ($avalista[$nrindice]['nrcpfcjg'] > 0) { echo "cNrcpfcjg.val('".mascaraCpf($avalista[$nrindice]['nrcpfcjg'])."');"; }
 			echo "cNrcepend.val('".formataCep($avalista[$nrindice]['nrcepend'])."');";
 			echo "cDsendre1.val('".$avalista[$nrindice]['dsendre1']."');";
 			echo "cNrendere.val('".$avalista[$nrindice]['nrendere']."');";
@@ -287,10 +288,16 @@
 			echo "cNmcidade.val('".$avalista[$nrindice]['nmcidade']."');";
 			echo "cDsdemail.val('".$avalista[$nrindice]['dsdemail']."');";
 			echo "cNrfonres.val('".$avalista[$nrindice]['nrfonres']."');";
-			
 			echo "cInpessoa.val('".$avalista[$nrindice]['inpessoa']."');";
+			echo "cCdnacion.val('".$avalista[$nrindice]['cdnacion']."');";
+			echo "cDsnacion.val('".$avalista[$nrindice]['dsnacion']."');";
+			echo "cNrctacjg.val('".formataContaDV($avalista[$nrindice]['nrctacjg'])."');";
+			echo "cVlrencjg.val('".formataMoeda($avalista[$nrindice]['vlrencjg'])."');";
+			echo "cVlrenmes.val('".formataMoeda($avalista[$nrindice]['vlrenmes'])."');";
 			echo "cDtnascto.val('".$avalista[$nrindice]['dtnascto']."');";
 	
+			echo "cInpessoa.trigger('change');";
+
 		} 
 	
 		echo "hideMsgAguardo();";
@@ -342,12 +349,8 @@
 			$aux[$i]['nrindice'] = getByTagName($a->tags,'nrindice');
 			$aux[$i]['nrctaava'] = getByTagName($a->tags,'nrctaava');
 			$aux[$i]['nmdavali'] = getByTagName($a->tags,'nmdavali');
-			$aux[$i]['dscpfcgc'] = getByTagName($a->tags,'dscpfava');
 			$aux[$i]['nrcpfcgc'] = getByTagName($a->tags,'nrcpfcgc');
-			$aux[$i]['tpdocava'] = getByTagName($a->tags,'tpdocava');
 			$aux[$i]['nmconjug'] = getByTagName($a->tags,'nmcjgava');
-			$aux[$i]['tpdoccjg'] = getByTagName($a->tags,'tpdoccjg');
-			$aux[$i]['dscpfcjg'] = getByTagName($a->tags,'dscfcava');
 			$aux[$i]['nrcpfcjg'] = getByTagName($a->tags,'nrcpfcjg');
 			$aux[$i]['nrcepend'] = getByTagName($a->tags,'nrcepend');
 			$aux[$i]['dsendav1'] = getByTagName($a->tags[5]->tags,'dsendava.1'); // endereco
@@ -359,8 +362,12 @@
 			$aux[$i]['nmcidade'] = getByTagName($a->tags,'nmcidade');
 			$aux[$i]['dsdemail'] = getByTagName($a->tags,'dsdemail');
 			$aux[$i]['nrfonres'] = getByTagName($a->tags,'nrfonres');
-			
 			$aux[$i]['inpessoa'] = getByTagName($a->tags,'inpessoa');
+			$aux[$i]['cdnacion'] = getByTagName($a->tags,'cdnacion');
+			$aux[$i]['dsnacion'] = getByTagName($a->tags,'dsnacion');
+			$aux[$i]['nrctacjg'] = getByTagName($a->tags,'nrctacjg');
+			$aux[$i]['vlrencjg'] = getByTagName($a->tags,'vlrencjg');
+			$aux[$i]['vlrenmes'] = getByTagName($a->tags,'vlrenmes');
 			$aux[$i]['dtnascto'] = getByTagName($a->tags,'dtnascto');
 			
 		}

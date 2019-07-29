@@ -63,6 +63,9 @@
  DEF VAR aux_complend1 AS CHAR                                           NO-UNDO. 
  DEF VAR aux_nrcxapst1 AS INTE                                           NO-UNDO. 
  DEF VAR aux_inpessoa1 AS INTE                                           NO-UNDO.
+ DEF VAR aux_cdnacion1 AS INTE                                           NO-UNDO.
+ DEF VAR aux_vlrencjg1 AS DECI                                           NO-UNDO. 
+ DEF VAR aux_vlrenmes1 AS DECI                                           NO-UNDO. 
  DEF VAR aux_dtnascto1 AS DATE                                           NO-UNDO.
 
  /* Avalista 2 */
@@ -86,6 +89,9 @@
  DEF VAR aux_complend2 AS CHAR                                           NO-UNDO.
  DEF VAR aux_nrcxapst2 AS INTE                                           NO-UNDO.
  DEF VAR aux_inpessoa2 AS INTE                                           NO-UNDO.
+ DEF VAR aux_cdnacion2 AS INTE                                           NO-UNDO.
+ DEF VAR aux_vlrencjg2 AS DECI                                           NO-UNDO. 
+ DEF VAR aux_vlrenmes2 AS DECI                                           NO-UNDO.  
  DEF VAR aux_dtnascto2 AS DATE                                           NO-UNDO.
  
  /* Imprimir */
@@ -156,6 +162,9 @@
               WHEN "complend1" THEN aux_complend1 = tt-param.valorCampo.       
               WHEN "nrcxapst1" THEN aux_nrcxapst1 = INTE(tt-param.valorCampo).  
               WHEN "inpessoa1" THEN aux_inpessoa1 = INTE(tt-param.valorCampo).  
+              WHEN "cdnacion1" THEN aux_cdnacion1 = INTE(tt-param.valorCampo).  
+              WHEN "vlrencjg1" THEN aux_vlrencjg1 = DECI(tt-param.valorCampo). 
+              WHEN "vlrenmes1" THEN aux_vlrenmes1 = DECI(tt-param.valorCampo). 
               WHEN "dtnascto1" THEN aux_dtnascto1 = DATE(tt-param.valorCampo). 
 
               WHEN "nrctaav2"  THEN aux_nrctaav2  = INTE(tt-param.valorCampo). 
@@ -178,6 +187,9 @@
               WHEN "complend2" THEN aux_complend2 = tt-param.valorCampo.       
               WHEN "nrcxapst2" THEN aux_nrcxapst2 = INTE(tt-param.valorCampo).  
               WHEN "inpessoa2" THEN aux_inpessoa2 = INTE(tt-param.valorCampo).  
+              WHEN "cdnacion2" THEN aux_cdnacion2 = INTE(tt-param.valorCampo).  
+              WHEN "vlrencjg2" THEN aux_vlrencjg2 = DECI(tt-param.valorCampo). 
+              WHEN "vlrenmes2" THEN aux_vlrenmes2 = DECI(tt-param.valorCampo). 
               WHEN "dtnascto2" THEN aux_dtnascto2 = DATE(tt-param.valorCampo). 
 
               WHEN "uladitiv"  THEN aux_uladitiv  = INTE(tt-param.valorCampo). 
@@ -464,6 +476,9 @@
                      INPUT aux_nrcxapst1,
 
                      INPUT aux_inpessoa1,
+                     INPUT aux_cdnacion1,
+                     INPUT aux_vlrencjg1,
+                     INPUT aux_vlrenmes1,                     
                      INPUT aux_dtnascto1,
 
                      INPUT aux_nrctaav2, 
@@ -487,6 +502,9 @@
                      INPUT aux_nrcxapst2,
 
                      INPUT aux_inpessoa2,
+                     INPUT aux_cdnacion2,
+                     INPUT aux_vlrencjg2,
+                     INPUT aux_vlrenmes2,
                      INPUT aux_dtnascto2,
 
                      INPUT TRUE, /* flgerlog */

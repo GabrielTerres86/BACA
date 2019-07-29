@@ -42,9 +42,11 @@ var rNrdconta, rNmprimtl,
 var rNrctremp, rDslcremp, rDsfinemp, rVlemprst, rVlpreemp, rQtpreemp,
 	cNrctremp, cDslcremp, cDsfinemp, cVlemprst, cVlpreemp, cQtpreemp, cTodosDados, btnOK2;
 
-var cNrctaava, cNmdavali, cNrcpfcgc, cTpdocava, cNrdocava, cNmconjug, cNrcpfcjg, cTpdoccjg, cNrdoccjg, cNrcepend, 
+var gInpessoa = 1;
+
+var cNrctaava, cNmdavali, cNrcpfcgc, cNmconjug, cNrctacjg, cNrcpfcjg, cNrdoccjg, cVlrencjg, cNrcepend, 
 	cDsendre1, cNrendere, cComplend, cNrcxapst, cDsendre2, cCdufresd, cNmcidade, cDsdemail, cNrfonres, btnOK3,
-	cInpessoa, cDtnascto;
+	cInpessoa, cDtnascto, cCdnacion, cDsnacion, cVlrenmes;
 
 
 $(document).ready(function() {
@@ -67,6 +69,7 @@ function estadoInicial() {
 	formataCabecalho();
 	formataDados();
 	formataMsgAjuda('divTela');
+	controlaCamposTela();
 	
 	// remove o campo prosseguir
 	trocaBotao('');	
@@ -93,6 +96,31 @@ function estadoInicial() {
 	
 }
 
+function controlaCamposTela() {
+
+    if(gInpessoa == 1){
+		$('label[for="nrctaava"]', '#frmAvalista').css('width', '90px');
+		$('label[for="inpessoa"]', '#frmAvalista').css('width', '90px');
+		$('label[for="nrcpfcgc"]', '#frmAvalista').css('width', '90px').text('CPF:');
+		$('label[for="nmdavali"]', '#frmAvalista').css('width', '90px').text('Nome:');
+		$('#nmdavali', '#frmAvalista').css('width', '390px');
+		$('label[for="dtnascto"]', '#frmAvalista').css('width', '90px').text('Data Nasc.:');
+		$('#divNacionalidade','#frmAvalista').show();
+		$('#divConjuge','#frmAvalista').show();
+		$('label[for="vlrenmes"]', '#frmAvalista').css('width', '118px').text('Rendimento Mensal:');
+	}else{
+		$('label[for="nrctaava"]', '#frmAvalista').css('width', '102px');
+		$('label[for="inpessoa"]', '#frmAvalista').css('width', '102px');
+		$('label[for="nrcpfcgc"]', '#frmAvalista').css('width', '102px').text('CNPJ:');
+		$('label[for="nmdavali"]', '#frmAvalista').css('width', '102px').text('Raz\u00e3o Social:');
+		$('#nmdavali', '#frmAvalista').css('width', '378px');
+		$('label[for="dtnascto"]', '#frmAvalista').css('width', '102px').text('Data da Abertura:');
+		$('#divNacionalidade','#frmAvalista').hide();
+		$('#divConjuge','#frmAvalista').hide();
+		$('label[for="vlrenmes"]', '#frmAvalista').css('width', '160px').text('Faturamento M\u00e9dio Mensal:');
+	}
+
+}
 
 // controle
 function controlaOperacao() {
@@ -139,12 +167,10 @@ function manterRotina( operacao ) {
 	
 	var nrctaava = normalizaNumero( $('#nrctaava', '#frmAvalista').val() );	
 	var nmdavali = $('#nmdavali', '#frmAvalista').val();	
-	var dscpfcgc = $('#nrdocava', '#frmAvalista').val();	
 	var nrcpfcgc = normalizaNumero( $('#nrcpfcgc', '#frmAvalista').val() );	
-	var tpdocava = $('#tpdocava', '#frmAvalista').val();	
 	var nmconjug = $('#nmconjug', '#frmAvalista').val();	
-	var tpdoccjg = $('#tpdoccjg', '#frmAvalista').val();	
-	var dscpfcjg = $('#nrdoccjg', '#frmAvalista').val();	
+	var vlrencjg = $('#vlrencjg', '#frmAvalista').val();
+	var nrctacjg = $('#nrcpfcjg', '#frmAvalista').val();
 	var nrcpfcjg = normalizaNumero( $('#nrcpfcjg', '#frmAvalista').val() );	
 	var nrcepend = normalizaNumero( $('#nrcepend', '#frmAvalista').val() );	
 	var dsendre1 = $('#dsendre1', '#frmAvalista').val();	
@@ -159,6 +185,9 @@ function manterRotina( operacao ) {
 	
 	var inpessoa = $('#inpessoa', '#frmAvalista').val();
 	var dtnascto = $('#dtnascto', '#frmAvalista').val();
+	var cdnacion = $('#cdnacion', '#frmAvalista').val();
+	var dsnacion = $('#dsnacion', '#frmAvalista').val();
+	var vlrenmes = $('#vlrenmes', '#frmAvalista').val();
 	
 	switch ( operacao ) {
 		case 'BC'	: mensagem = 'Aguarde, buscando dados ...'; 	break;
@@ -181,12 +210,9 @@ function manterRotina( operacao ) {
 				nrindice	: nrindice,
 				nrctaava	: nrctaava,	
 				nmdavali    : nmdavali,
-				dscpfcgc    : dscpfcgc,
 				nrcpfcgc    : nrcpfcgc,
-				tpdocava    : tpdocava,
 				nmconjug    : nmconjug,
-				tpdoccjg    : tpdoccjg,
-				dscpfcjg    : dscpfcjg,
+				nrctacjg    : nrctacjg,
 				nrcpfcjg    : nrcpfcjg,
 				nrcepend    : nrcepend,
 				dsendre1    : dsendre1,
@@ -201,6 +227,10 @@ function manterRotina( operacao ) {
 				avalista	: avalista,
 				inpessoa    : inpessoa,
 				dtnascto    : dtnascto,
+				cdnacion    : cdnacion,
+				dsnacion    : dsnacion,
+				vlrencjg    : vlrencjg,
+				vlrenmes    : vlrenmes,
 				redirect	: 'script_ajax'
 			}, 
 			error: function(objAjax,responseError,objExcept) {
@@ -250,6 +280,35 @@ function controlaPesquisas() {
 			mostraPesquisaAssociado('nrdconta', frmCab );
 		});
 	}
+
+	/*--------------------------*/
+	/*  CONTROLE NACIONALIDADE  */
+	/*--------------------------*/
+
+	var linkNacion = $('#cdnacion','#'+ nomeForm ).next();
+
+	if ( linkNacion.prev().hasClass('campoTelaSemBorda') ) {		
+		linkNacion.addClass('lupa').css('cursor','auto').unbind('click').bind('click', function() { return false; });
+	} else {
+		linkNacion.css('cursor','pointer').unbind('click').bind('click', function() {			
+			console.log('nacionalidade');
+            var bo, procedure, titulo, qtReg, filtros, colunas;
+			bo = 'b1wgen0059.p';
+			procedure = 'busca_nacionalidade';
+			titulo = 'Nacionalidade';
+			qtReg = '50';
+			filtros = 'Codigo;cdnacion;30px;N;|Nacionalidade;dsnacion;200px;S;';
+			colunas = 'Codigo;cdnacion;15%;left|Descrição;dsnacion;85%;left';
+			mostraPesquisa(bo, procedure, titulo, qtReg, filtros, colunas, divRotina);
+		});
+	}
+
+    $('#cdnacion','#'+nomeForm).unbind('change').bind('change',function(){
+        procedure	= 'BUSCANACIONALIDADES';
+		titulo      = ' Nacionalidade';
+		filtrosDesc = '';
+		buscaDescricao('ZOOM0001',procedure,titulo,$(this).attr('name'),'dsnacion',$(this).val(),'dsnacion',filtrosDesc,nomeForm); 
+    });
 
 	/*--------------------*/
 	/*  CONTROLE CONTRATO */
@@ -379,6 +438,7 @@ function formataCabecalho() {
 		
 		// Se chegou até aqui, a conta é diferente do vazio e é válida, então realizar a operação desejada
 		manterRotina('BC');
+		controlaCamposTela();
 		return false;
 			
 	});	
@@ -459,56 +519,65 @@ function formataAvalista() {
 	rNrctaava = $('label[for="nrctaava"]', '#frmAvalista');
 	rNmdavali = $('label[for="nmdavali"]', '#frmAvalista');
 	rNrcpfcgc = $('label[for="nrcpfcgc"]', '#frmAvalista');
-	rTpdocava = $('label[for="tpdocava"]', '#frmAvalista');
 	rInpessoa = $('label[for="inpessoa"]', '#frmAvalista');
 	rDtnascto = $('label[for="dtnascto"]', '#frmAvalista'); 
+	rCdnacion = $('label[for="cdnacion"]', '#frmAvalista');
 
-	rNrctaava.addClass('rotulo').css({'width':'50px'});
-	rNmdavali.addClass('rotulo').css({'width':'50px'});
-	rNrcpfcgc.addClass('rotulo').css({'width':'50px'});
-	rTpdocava.addClass('rotulo-linha').css({'width':'35px'});
+	rNrctaava.addClass('rotulo').css({'width':'90px'});
+	rNmdavali.addClass('rotulo').css({'width':'90px'});
+	rNrcpfcgc.addClass('rotulo').css({'width':'90px'});
 	
-	rInpessoa.addClass('rotulo').css({'width':'50px'});
-	rDtnascto.addClass('rotulo-linha').css({'width':'90px'});
+	rInpessoa.addClass('rotulo').css({'width':'90px'});
+	rDtnascto.css({'width':'90px'});
+	rCdnacion.addClass('rotulo').css({'width':'90px'});
 	
 	// input
 	cNrctaava = $('#nrctaava', '#frmAvalista');
 	cNmdavali = $('#nmdavali', '#frmAvalista');
 	cNrcpfcgc = $('#nrcpfcgc', '#frmAvalista');
-	cTpdocava = $('#tpdocava', '#frmAvalista');
-	cNrdocava = $('#nrdocava', '#frmAvalista');
 	
 	cInpessoa = $('#inpessoa', '#frmAvalista');
 	cDtnascto = $('#dtnascto', '#frmAvalista');
+	cCdnacion = $('#cdnacion', '#frmAvalista');
+	cDsnacion = $('#dsnacion', '#frmAvalista');
 
 	cNrctaava.addClass('conta pesquisa').css({'width':'120px'});
-	cNmdavali.addClass('alphanum').css({'width':'427px'}).attr('maxlength','40');
+	cNmdavali.addClass('alphanum').css({'width':'390px'}).attr('maxlength','40');
 	cNrcpfcgc.addClass('inteiro').css({'width':'120px'}).attr('maxlength','14');
-	cTpdocava.css({'width':'42px'});
-	cNrdocava.addClass('alphanum').css({'width':'221px'}).attr('maxlength','40');
 	
-	cInpessoa.css({'width':'100px'});
-	cDtnascto.addClass('data').css({'width':'80px'});
+	cInpessoa.css({'width':'120px'});
+	cDtnascto.addClass('data').css({'width':'120px'});
+	cCdnacion.addClass('codigo pesquisa').css({'width':'30px'});
+	cDsnacion.desabilitaCampo();
+
+	cInpessoa.unbind('change').bind('change', function(e) {
+		gInpessoa = cInpessoa.val() != '' ? cInpessoa.val() : gInpessoa;
+		controlaCamposTela();
+	});
 	
 	/* CONJUGE */
 	// label
 	rNmconjug = $('label[for="nmconjug"]', '#frmAvalista');	
+	rNrctacjg = $('label[for="nrctacjg"]', '#frmAvalista');
+	rVlrencjg = $('label[for="vlrencjg"]', '#frmAvalista');
 	rNrcpfcjg = $('label[for="nrcpfcjg"]', '#frmAvalista');
-	rTpdoccjg = $('label[for="tpdoccjg"]', '#frmAvalista');
 
 	rNmconjug.addClass('rotulo').css({'width':'50px'});
-	rNrcpfcjg.addClass('rotulo').css({'width':'50px'});
-	rTpdoccjg.addClass('rotulo-linha').css({'width':'35px'});
+	rNrctacjg.css({'width':'50px'});
+	rVlrencjg.css({'width':'108px'});
+	rNrcpfcjg.css({'width':'188px'});
 	
 	// input
 	cNmconjug = $('#nmconjug', '#frmAvalista');	
+	cNrctacjg = $('#nrctacjg', '#frmAvalista');
 	cNrcpfcjg = $('#nrcpfcjg', '#frmAvalista');
-	cTpdoccjg = $('#tpdoccjg', '#frmAvalista');
+	cVlrencjg = $('#vlrencjg', '#frmAvalista');
 	cNrdoccjg = $('#nrdoccjg', '#frmAvalista');
 
-	cNmconjug.addClass('alphanum').css({'width':'427px'}).attr('maxlength','40');
+	cNmconjug.addClass('alphanum').css({'width':'200px'}).attr('maxlength','40');
+	cNrctacjg.css({'width':'120px'});
 	cNrcpfcjg.addClass('inteiro').css({'width':'120px'}).attr('maxlength','14');
-	cTpdoccjg.css({'width':'42px'});
+	cVlrencjg.addClass('moeda').css({'width':'120px'});
 	cNrdoccjg.addClass('alphanum').css({'width':'221px'}).attr('maxlength','40');
 	
 	
@@ -523,13 +592,13 @@ function formataAvalista() {
 	rCdufresd = $('label[for="cdufresd"]', '#frmAvalista');
 	rNmcidade = $('label[for="nmcidade"]', '#frmAvalista');
 
-	rNrcepend.addClass('rotulo').css({'width':'50px'});
+	rNrcepend.addClass('rotulo').css({'width':'60px'});
 	rDsendre1.addClass('rotulo-linha').css({'width':'38px'});
-	rNrendere.addClass('rotulo').css({'width':'50px'});
+	rNrendere.addClass('rotulo').css({'width':'60px'});
 	rComplend.addClass('rotulo-linha').css({'width':'55px'});
-	rNrcxapst.addClass('rotulo').css({'width':'50px'});
+	rNrcxapst.addClass('rotulo').css({'width':'60px'});
 	rDsendre2.addClass('rotulo-linha').css({'width':'55px'});
-	rCdufresd.addClass('rotulo').css({'width':'50px'});
+	rCdufresd.addClass('rotulo').css({'width':'60px'});
 	rNmcidade.addClass('rotulo-linha').css({'width':'55px'});
 	
 	// input
@@ -543,13 +612,13 @@ function formataAvalista() {
 	cNmcidade = $('#nmcidade', '#frmAvalista');
 
 	cNrcepend.addClass('cep pesquisa').css({'width':'75px'}).attr('maxlength','9');
-	cDsendre1.addClass('alphanum').css({'width':'291px'}).attr('maxlength','40');
+	cDsendre1.addClass('alphanum').css({'width':'284px'}).attr('maxlength','40');
 	cNrendere.addClass('numerocasa').css({'width':'75px'}).attr('maxlength','7');
-	cComplend.addClass('alphanum').css({'width':'291px'}).attr('maxlength','40');
+	cComplend.addClass('alphanum').css({'width':'284px'}).attr('maxlength','40');
 	cNrcxapst.addClass('caixapostal').css({'width':'75px'}).attr('maxlength','6');
-	cDsendre2.addClass('alphanum').css({'width':'291px'}).attr('maxlength','40');	
+	cDsendre2.addClass('alphanum').css({'width':'284px'}).attr('maxlength','40');	
 	cCdufresd.css({'width':'75px'});
-	cNmcidade.addClass('alphanum').css({'width':'291px'}).attr('maxlength','25');
+	cNmcidade.addClass('alphanum').css({'width':'284px'}).attr('maxlength','25');
 	
 	
 	/* CONTATO */
@@ -557,7 +626,7 @@ function formataAvalista() {
 	rDsdemail = $('label[for="dsdemail"]', '#frmAvalista');
 	rNrfonres = $('label[for="nrfonres"]', '#frmAvalista');
 
-	rDsdemail.addClass('rotulo').css({'width':'50px'});
+	rDsdemail.css({'width':'50px'});
 	rNrfonres.addClass('rotulo-linha').css({'width':'39px'});
 
 	
@@ -565,9 +634,16 @@ function formataAvalista() {
 	cDsdemail = $('#dsdemail', '#frmAvalista');
 	cNrfonres = $('#nrfonres', '#frmAvalista');
 	
-	cDsdemail.addClass('alphanum').css({'width':'240px'}).attr('maxlength','32');
+	cVlrenmes = $('#vlrenmes', '#frmAvalista');
+	
+	cDsdemail.addClass('email').css({'width':'242px'}).attr('maxlength','32');	
 	cNrfonres.addClass('alphanum').css({'width':'143px'}).attr('maxlength','20');
 
+	cNrfonres.unbind('keyup').bind('keyup', function(e) {
+		maskTelefone(this);
+	});
+
+	cVlrenmes.addClass('moeda').css('width', '118px');
 	
 	/* OUTROS */	
 	cTodosAvalista 	= $('input, select', '#frmAvalista');
@@ -616,7 +692,9 @@ function formataAvalista() {
             cDsendre2.desabilitaCampo();
             cCdufresd.desabilitaCampo();
 	        cNmcidade.desabilitaCampo();
-			cNmdavali.focus();
+	        cDsnacion.desabilitaCampo();
+	        cNrctacjg.desabilitaCampo();
+			cInpessoa.focus();
 		}
 
 		controlaPesquisas();		
@@ -666,6 +744,21 @@ function formataAvalista() {
 	return false;
 }
 
+function maskTelefone(nrfonemp){
+	fone = nrfonemp.value.replace(/[^0-9]/g,'');	
+	
+	fone = fone.replace(/\D/g,"");                 //Remove tudo o que não é dígito
+	fone = fone.replace(/^(\d\d)(\d)/g,"($1) $2"); //Coloca parênteses em volta dos dois primeiros dígitos
+	
+	if (fone.length < 14)
+		fone = fone.replace(/(\d{4})(\d)/,"$1-$2");    //Coloca hífen entre o quarto e o quinto dígito
+	else
+		fone = fone.replace(/(\d{5})(\d)/,"$1-$2");    //Coloca hífen entre o quinto e o sexto dígito
+	
+	nrfonemp.value = fone.substring(0, 15);
+	
+	return true;
+}
 
 function controlaLayout() {
 
@@ -752,6 +845,8 @@ function mostraAvalista() {
 			exibeRotina( $('#divRotina') );
 
 			formataAvalista();
+            cInpessoa.trigger("change");
+
 			return false;
 		}				
 	});
@@ -1055,35 +1150,44 @@ function ControlaFocusAvalista() {
 
 	highlightObjFocus( $('#frmAvalista') );
 
-	$('#nmdavali', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
+	$('#inpessoa', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
 			$('#nrcpfcgc', '#frmAvalista').focus();
 			return false;
 		}	
 	});
 	
-	$('#nrcpfcgc', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
+	var cNrcpfcgc = $('#nrcpfcgc', '#frmAvalista');
+
+	cNrcpfcgc.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-			$('#tpdocava', '#frmAvalista').focus();
+			$('#nmdavali', '#frmAvalista').focus();
 			return false;
 		}	
 	});
 	
-	$('#tpdocava', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
-		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-			$('#nrdocava', '#frmAvalista').focus();
+	cNrcpfcgc.unbind('blur').bind('blur', function(e) {
+		// Seta máscara ao campo CPF/CNPJ
+		var nrcpfcgctmp = cNrcpfcgc.val();
+		if (nrcpfcgctmp > 0) {
+			if (nrcpfcgctmp.length < 12) { //CPF
+				nrcpfcgctmp = ("00000000000" + nrcpfcgctmp).slice(-11);
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{3})(\d)/,"$1.$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{3})(\d)/,"$1.$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+			} else { //CNPJ
+				nrcpfcgctmp = ("00000000000000" + nrcpfcgctmp).slice(-14);
+				nrcpfcgctmp=nrcpfcgctmp.replace(/^(\d{2})(\d)/,"$1.$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/\.(\d{3})(\d)/,".$1/$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{4})(\d)/,"$1-$2");
+			}
+		}
+		cNrcpfcgc.val(nrcpfcgctmp);
 			return false;
-		}	
 	});
 	
-	$('#nrdocava', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
-		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-			$('#inpessoa', '#frmAvalista').focus();
-			return false;
-		}	
-	});
-	
-	$('#inpessoa', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
+	$('#nmdavali', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
 			$('#dtnascto', '#frmAvalista').focus();
 			return false;
@@ -1092,35 +1196,75 @@ function ControlaFocusAvalista() {
 	
 	$('#dtnascto', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-			$('#nmconjug', '#frmAvalista').focus();
+			if (gInpessoa == 1) {
+				$('#cdnacion', '#frmAvalista').focus();
+			} else {
+				$('#nrcepend', '#frmAvalista').focus();				
+			}
 			return false;
 		}	
 	});
 	
-	$('#nmconjug', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
+	$('#cdnacion', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
 			$('#nrcpfcjg', '#frmAvalista').focus();
 			return false;
 		}	
 	});
 	
-	$('#nrcpfcjg', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
+	$('#nrctacjg', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-			$('#tpdoccjg', '#frmAvalista').focus();
 			return false;
 		}	
 	});
 	
-	$('#tpdoccjg', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
+    var cNrcpfcjg = $('#nrcpfcjg', '#frmAvalista');
+	cNrcpfcjg.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-			$('#nrdoccjg', '#frmAvalista').focus();
+			$('#nmconjug', '#frmAvalista').focus();
 			return false;
 		}	
 	});
 	
-	$('#nrdoccjg', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
+	cNrcpfcjg.unbind('blur').bind('blur', function(e) {
+		// Seta máscara ao campo CPF/CNPJ
+		var nrcpfcgctmp = cNrcpfcjg.val();
+		if (nrcpfcgctmp > 0) {
+			if (nrcpfcgctmp.length < 12) { //CPF
+				nrcpfcgctmp = ("00000000000" + nrcpfcgctmp).slice(-11);
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{3})(\d)/,"$1.$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{3})(\d)/,"$1.$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{3})(\d{1,2})$/,"$1-$2");
+			} else { //CNPJ
+				nrcpfcgctmp = ("00000000000000" + nrcpfcgctmp).slice(-14);
+				nrcpfcgctmp=nrcpfcgctmp.replace(/^(\d{2})(\d)/,"$1.$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/\.(\d{3})(\d)/,".$1/$2");
+				nrcpfcgctmp=nrcpfcgctmp.replace(/(\d{4})(\d)/,"$1-$2");
+			}
+		}
+		cNrcpfcjg.val(nrcpfcgctmp);
+		return false;
+	});
+	
+	$('#nmconjug', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
+		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
+			$('#vlrencjg', '#frmAvalista').focus();
+			return false;
+		}	
+	});
+
+    var cVlrencjg = $('#vlrencjg', '#frmAvalista');
+	cVlrencjg.unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
 			$('#nrcepend', '#frmAvalista').focus();
+			return false;
+		}	
+	});
+
+	$('#nrcepend', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
+		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
+			$('#nrendere', '#frmAvalista').focus();
 			return false;
 		}	
 	});
@@ -1141,19 +1285,26 @@ function ControlaFocusAvalista() {
 	
 	$('#nrcxapst', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
-			$('#dsdemail', '#frmAvalista').focus();
-			return false;
-		}	
-	});
-	
-	$('#dsdemail', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
-		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
 			$('#nrfonres', '#frmAvalista').focus();
 			return false;
 		}	
 	});
 	
 	$('#nrfonres', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
+		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
+			$('#dsdemail', '#frmAvalista').focus();
+			return false;
+		}	
+	});
+
+	$('#dsdemail', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
+		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
+			$('#vlrenmes', '#frmAvalista').focus();
+			return false;
+		}	
+	});
+
+	$('#vlrenmes', '#frmAvalista').unbind('keypress').bind('keypress', function(e) {
 		if ( e.keyCode == 9 || e.keyCode == 13 ) {	
 			btnContinuar();
 			return false;

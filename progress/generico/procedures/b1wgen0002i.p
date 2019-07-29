@@ -1834,8 +1834,10 @@ PROCEDURE trata-impressao-modelo1:
            rel_txbaspre = crawepr.txbaspre
            rel_dtdpagto = crawepr.dtdpagto
            rel_dddpagto = DAY(crawepr.dtdpagto)
-           rel_ddmvtolt = DAY(crawepr.dtmvtolt)
-           rel_dsmesref = ENTRY(MONTH(crawepr.dtmvtolt),aux_dsmesref)
+           /*rel_ddmvtolt = DAY(crawepr.dtmvtolt)*/
+           rel_ddmvtolt = DAY(crawepr.dtaltpro) /*Rafael Ferreira (Mouts) - Story 19674*/
+           /*rel_dsmesref = ENTRY(MONTH(crawepr.dtmvtolt),aux_dsmesref)*/
+           rel_dsmesref = ENTRY(MONTH(crawepr.dtaltpro),aux_dsmesref) /*Rafael Ferreira (Mouts) - Story 19674*/
            rel_aamvtolt = YEAR(crawepr.dtmvtolt)
            aux_dsliquid = ""
     
@@ -2415,8 +2417,10 @@ PROCEDURE trata-impressao-modelo2:
    
    ASSIGN rel_nmempres = crapemp.nmextemp
           rel_nrctremp = crawepr.nrctremp
-          rel_ddmvtolt = DAY(crawepr.dtmvtolt)
-          rel_dsmesref = ENTRY(MONTH(crawepr.dtmvtolt),aux_dsmesref)
+          /*rel_ddmvtolt = DAY(crawepr.dtmvtolt)*/
+          rel_ddmvtolt = DAY(crawepr.dtaltpro) /*Rafael Ferreira (Mouts) - Story 19674*/
+          /*rel_dsmesref = ENTRY(MONTH(crawepr.dtmvtolt),aux_dsmesref)*/
+          rel_dsmesref = ENTRY(MONTH(crawepr.dtaltpro),aux_dsmesref) /*Rafael Ferreira (Mouts) - Story 19674*/
           rel_aamvtolt = YEAR(crawepr.dtmvtolt)
    
           rel_dsdtraco = FILL("_",125).
@@ -3090,8 +3094,10 @@ PROCEDURE trata-impressao-modelo3:
    ASSIGN rel_nmempres = crapemp.nmextemp
    
           rel_nrctremp = crawepr.nrctremp
-          rel_ddmvtolt = DAY(crawepr.dtmvtolt)
-          rel_dsmesref = ENTRY(MONTH(crawepr.dtmvtolt),aux_dsmesref)
+          /*rel_ddmvtolt = DAY(crawepr.dtmvtolt)*/
+          rel_ddmvtolt = DAY(crawepr.dtaltpro) /*Rafael Ferreira (Mouts) - Story 19674*/
+          /*rel_dsmesref = ENTRY(MONTH(crawepr.dtmvtolt),aux_dsmesref)*/
+          rel_dsmesref = ENTRY(MONTH(crawepr.dtaltpro),aux_dsmesref) /*Rafael Ferreira (Mouts) - Story 19674*/
           rel_aamvtolt = YEAR(crawepr.dtmvtolt)
    
           rel_dsdtraco = FILL("_",125).
@@ -6803,7 +6809,8 @@ PROCEDURE impressao-prnf:
                         WITH FRAME f_cabecalho.
             END.
            
-
+            /*Rafael Ferreira (Mouts) - Story 19674
+              Alterado para exibir data de alteraçao da proposta no relatório*/
             DISPLAY  STREAM str_1
                      aux_nmcidpac     rel_ddmvtolt     rel_dsmesref
                      rel_aamvtolt     rel_nmprimtl[1]  

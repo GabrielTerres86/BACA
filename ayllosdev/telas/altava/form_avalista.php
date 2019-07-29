@@ -73,68 +73,69 @@
 												<a href="#" class="botao" id="btnOK3" >OK</a>
 												
 												<br />	
-														
-												<label for="nmdavali">Nome:</label>
-												<input name="nmdavali" id="nmdavali" type="text" value="<?php echo $avalista[$i]['nmdavali'] ?>" alt="Entre com o nome do <?php echo $posicao ?> avalista/fiador." />
-												<br />			
-												
-												<label for="nrcpfcgc">C.P.F.:</label>
-												<input name="nrcpfant" id="nrcpfant" type="hidden" value="<?php echo $avalista[$i]['nrcpfcgc'] ?>" />
-												<input name="nrcpfcgc" id="nrcpfcgc" type="text" value="<?php echo $avalista[$i]['nrcpfcgc'] ?>" alt="Entre com o CPF do <?php echo $posicao ?>  avalista." />
-														
-												<label for="tpdocava">Doc.:</label>
-												<select name="tpdocava" id="tpdocava" alt="Entre com CI, CN, CH, RE, PP, CT.">
-													<option value=""  > - </option> 
-													<option value="CI" <?php echo $avalista[$i]['tpdocava'] == 'CI' ? 'selected' : '' ?>>CI</option>
-													<option value="CN" <?php echo $avalista[$i]['tpdocava'] == 'CN' ? 'selected' : '' ?>>CN</option>
-													<option value="CH" <?php echo $avalista[$i]['tpdocava'] == 'CH' ? 'selected' : '' ?>>CH</option>
-													<option value="RE" <?php echo $avalista[$i]['tpdocava'] == 'RE' ? 'selected' : '' ?>>RE</option>
-													<option value="PP" <?php echo $avalista[$i]['tpdocava'] == 'PP' ? 'selected' : '' ?>>PP</option>
-													<option value="CT" <?php echo $avalista[$i]['tpdocava'] == 'CT' ? 'selected' : '' ?>>CT</option>
-												</select>
-												<input name="nrdocava" id="nrdocava" type="text" value="<?php echo $avalista[$i]['dscpfcgc'] ?>" alt="Entre com o Docto do <?php echo $posicao ?> avalista/fiador." />
-												
-												<br />	
-												<label for="inpessoa">Tp Nat.:</label>
+												<label for="inpessoa">Tipo Natureza:</label>
 												<select name="inpessoa" id="inpessoa" alt="Entre com 1-Fisica 2-Juridica.">
 													<option value=""  > - </option> 
 													<option value="1" <?php echo $avalista[$i]['inpessoa'] == '1' ? 'selected' : '' ?> >1 - Fisica</option>
 													<option value="2" <?php echo $avalista[$i]['inpessoa'] == '2' ? 'selected' : '' ?> >2 - Juridica</option>
 												</select>	
+												<br />	
+
+												<label for="nrcpfcgc">CPF:</label>
+												<input name="nrcpfant" id="nrcpfant" type="hidden" value="<?php echo $avalista[$i]['nrcpfcgc'] ?>" />
+												<input name="nrcpfcgc" id="nrcpfcgc" type="text" value="<?php if ($avalista[$i]['nrcpfcgc'] > 0) {
+												                                                                if ($avalista[$i]['inpessoa'] == 1) {
+																													echo mascaraCpf($avalista[$i]['nrcpfcgc']);
+																												} else {
+																													echo mascaraCnpj($avalista[$i]['nrcpfcgc']);
+																												}
+																											  } ?>" alt="Entre com o CPF do <?php echo $posicao ?>  avalista." />
+												<br />	
+														
+												<label for="nmdavali">Nome:</label>
+												<input name="nmdavali" id="nmdavali" type="text" value="<?php echo $avalista[$i]['nmdavali'] ?>" alt="Entre com o nome do <?php echo $posicao ?> avalista/fiador." />
+												<br />			
+																																						
 												<label for="dtnascto">Data Nasc.:</label>
 												<input name="dtnascto" id="dtnascto" type="text" value="<?php echo $avalista[$i]['dtnascto'] ?>" alt="Entre com data nascimento do <?php echo $posicao ?> avalista/fiador." />
 												<br />
-											</fieldset>
-											
-											<fieldset>
-												<legend><? echo utf8ToHtml('Dados Conjugê') ?></legend>
-																
-												<label for="nmconjug"><?php echo utf8ToHtml('Conjugê:') ?></label>
-												<input name="nmconjug" id="nmconjug" type="text" value="<?php echo $avalista[$i]['nmconjug'] ?>" alt="Entre com o nome do conjuge do <?php echo $posicao ?> avalista/fiador." />
-																
-												<label for="nrcpfcjg">C.P.F.:</label>
-												<input name="nrcpfcjg" id="nrcpfcjg" type="text" value="<?php echo $avalista[$i]['nrcpfcjg'] ?>" alt="Entre com o CPF do conjuge do <?php echo $posicao ?>  avalista/fiador." />
-													
-												<label for="tpdoccjg">Doc.:</label>
-												<select name="tpdoccjg" id="tpdoccjg" alt="Entre com CI, CN, CH, RE, PP, CT.">
-													<option value=""  > - </option> 
-													<option value="CI" <?php echo $avalista[$i]['tpdoccjg'] == 'CI' ? 'selected' : '' ?>>CI</option>
-													<option value="CN" <?php echo $avalista[$i]['tpdoccjg'] == 'CN' ? 'selected' : '' ?>>CN</option>
-													<option value="CH" <?php echo $avalista[$i]['tpdoccjg'] == 'CH' ? 'selected' : '' ?>>CH</option>
-													<option value="RE" <?php echo $avalista[$i]['tpdoccjg'] == 'RE' ? 'selected' : '' ?>>RE</option>
-													<option value="PP" <?php echo $avalista[$i]['tpdoccjg'] == 'PP' ? 'selected' : '' ?>>PP</option>
-													<option value="CT" <?php echo $avalista[$i]['tpdoccjg'] == 'CT' ? 'selected' : '' ?>>CT</option>
-												</select>
-												<input name="nrdoccjg" id="nrdoccjg" type="text" value="<?php echo $avalista[$i]['dscpfcjg'] ?>" alt="Entre com o Docto do conjuge do <?php echo $posicao ?> avalista/fiador." />
+
+												<div id="divNacionalidade"> 		
+													<label for="cdnacion">Nacionalidade:</label>
+													<div id="divCdnacion">
+														<input name="cdnacion" id="cdnacion" type="text" value="<?php echo $avalista[$i]['cdnacion'] ?>" />
+														<a style='padding: 3px 0 0 3px;'><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a> 
+													</div>
+													<input name="dsnacion" id="dsnacion" type="text" value="<?php echo $avalista[$i]['dsnacion'] ?>" />
+												</div>
 												<br />
 												
 											</fieldset>
+											
+											<div id="divConjuge"> 		
+											<fieldset>
+													<legend><? echo utf8ToHtml('Informações do Cônjuge') ?></legend>
+
+													<label for="nrctacjg">Conta:</label>
+													<input name="nrctacjg" id="nrctacjg" type="text" value="<?php echo formataContaDV($avalista[$i]['nrctacjg']) ?>" />
+
+													<label for="nrcpfcjg">CPF:</label>
+													<input name="nrcpfcjg" id="nrcpfcjg" type="text" value="<?php if ($avalista[$i]['nrcpfcjg'] > 0) { echo mascaraCpf($avalista[$i]['nrcpfcjg']); } ?>" alt="Entre com o CPF do conjuge do <?php echo $posicao ?>  avalista/fiador." />
+
+													<label for="nmconjug"><?php echo utf8ToHtml('Cônjuge:') ?></label>
+												<input name="nmconjug" id="nmconjug" type="text" value="<?php echo $avalista[$i]['nmconjug'] ?>" alt="Entre com o nome do conjuge do <?php echo $posicao ?> avalista/fiador." />
+																
+													<label for="vlrencjg">Rendimento:</label>
+													<input name="vlrencjg" id="vlrencjg" type="text" value="<?php echo formataMoeda($avalista[$i]['vlrencjg']); ?>" />
+												
+											</fieldset>
+											</div>
 											
 											<fieldset>
 												<legend><?php echo utf8ToHtml('Endereço') ?></legend>
 												
 												<label for="nrcepend">CEP:</label>
-												<input name="nrcepend" id="nrcepend" type="text" value="<?php echo formataCep($avalista[$i]['nrcepend']) ?>" alt="Entre com o CEP ou pressione F7 para pesquisar." />
+												<input name="nrcepend" id="nrcepend" type="text" value="<?php if ($avalista[$i]['nrcepend'] > 0) { echo formataCep($avalista[$i]['nrcepend']); } ?>" alt="Entre com o CEP ou pressione F7 para pesquisar." />
 												<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 												
 												<label for="dsendre1"><? echo utf8ToHtml('End.:') ?></label>
@@ -148,7 +149,7 @@
 												<input name="complend" id="complend" type="text" value="<?php echo $avalista[$i]['complend'] ?>" alt="Informe o complemento do endereco." />
 												<br />
 												
-												<label for="nrcxapst"><? echo utf8ToHtml('C.Postal:') ?></label>
+												<label for="nrcxapst"><? echo utf8ToHtml('Cx.Postal:') ?></label>
 												<input name="nrcxapst" id="nrcxapst" type="text" value="<?php echo $avalista[$i]['nrcxapst'] ?>" alt="Informe o numero da caixa postal." />		
 												
 												<label for="dsendre2">Bairro:</label>
@@ -167,11 +168,20 @@
 											<fieldset>
 												<legend><?php echo utf8ToHtml('Contato') ?></legend>
 												
+												<label for="nrfonres">Fone:</label>
+												<input name="nrfonres" id="nrfonres" type="text" value="<?php echo $avalista[$i]['nrfonres'] ?>" alt="Entre com o telefone do <?php echo $posicao ?> avalista/fiador." />
+
 												<label for="dsdemail">E-mail:</label>
 												<input name="dsdemail" id="dsdemail" type="text" value="<?php echo $avalista[$i]['dsdemail'] ?>" alt="Entre com o email do <?php echo $posicao ?> avalista/fiador." />
 												
-												<label for="nrfonres">Fone:</label>
-												<input name="nrfonres" id="nrfonres" type="text" value="<?php echo $avalista[$i]['nrfonres'] ?>" alt="Entre com o telefone do <?php echo $posicao ?> avalista/fiador." />
+												<br />
+													
+											</fieldset>
+
+											<fieldset>
+												<legend><?php echo utf8ToHtml('Rendimentos') ?></legend>
+												<label for="vlrenmes">Rendimento Mensal:</label>
+												<input name="vlrenmes" id="vlrenmes" type="text" value="<?php echo formataMoeda($avalista[$i]['vlrenmes']) ?>" />
 												<br />
 													
 											</fieldset>

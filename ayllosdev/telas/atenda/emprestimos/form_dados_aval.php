@@ -12,6 +12,7 @@
  *                004: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  *                005: [24/10/2017] Ajustes ao carregar dados do avalista e controle de alteração. PRJ339 CRM (Odirlei-AMcom)                      
  *                006: [18/10/2018] Alterado layout da tela Avalista. PRJ438 (Mateus Z / Mouts)
+ *                007: [24/06/2019] Criado divNacionalidade para ocultar campo na tela. Story 13447 (Rafael Ferreira / Mouts)
  */	
  ?>
 
@@ -26,7 +27,7 @@
 				
 		<label for="nrctaava">Conta:</label>
 		<input name="nrctaava" id="nrctaava" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<a style='padding: 3px 0 0 3px;'><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a> <!-- Rafael Ferreira (Mouts) Story 13447 -->
 		<br />
 				
 		<label for="inpessoa">Tipo Natureza:</label>
@@ -37,7 +38,7 @@
 		</select>	
 		<br />	
 		
-		<label for="nrcpfcgc">C.P.F.:</label>
+		<label for="nrcpfcgc">CPF:</label>
 		<input name="nrcpfcgc" id="nrcpfcgc" type="text" value="" />
 		<br />
                 
@@ -45,17 +46,20 @@
 		<input name="nmdavali" id="nmdavali" type="text" value="" />
 		<br />			
 				
-		<label for="cdnacion">Nacionalidade:</label>
-		<div id="divCdnacion">
-			<input name="cdnacion" id="cdnacion" type="text" />
-			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		</div>
-		<input name="dsnacion" id="dsnacion" type="text" value="" />
 
 		<label for="dtnascto">Data Nasc.:</label>
 		<input name="dtnascto" id="dtnascto" type="text" value="" />
 		<br />
 				
+		<!-- Rafael Ferreira (Mouts) - Story 13447 -->
+		<div id="divNacionalidade"> 		
+			<label for="cdnacion">Nacionalidade:</label>
+			<div id="divCdnacion">
+				<input name="cdnacion" id="cdnacion" type="text" />
+				<a style='padding: 3px 0 0 3px;'><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a> 
+			</div>
+			<input name="dsnacion" id="dsnacion" type="text" value="" />
+		</div>
 		<select name="tpdocava" id="tpdocava">
 			<option value=""  > - </option> 
 			<option value="CH">CH</option>
@@ -74,7 +78,7 @@
 		<label for="nrctacjg">Conta:</label>
 		<input name="nrctacjg" id="nrctacjg" type="text" value="" />
 						
-		<label for="nrcpfcjg">C.P.F.:</label>
+		<label for="nrcpfcjg">CPF:</label>
 		<input name="nrcpfcjg" id="nrcpfcjg" type="text" value="" />
 		<br />
 			
@@ -103,7 +107,7 @@
 		
 		<label for="nrcepend">CEP:</label>
 		<input name="nrcepend" id="nrcepend" type="text" value="" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		<a style='padding: 3px 0 0 3px;'><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a> <!-- Rafael Ferreira (Mouts) Story 13447 -->
 		
 		<label for="dsendre1"><? echo utf8ToHtml('End.:') ?></label>
 		<input name="dsendre1" id="dsendre1" type="text" value="" />

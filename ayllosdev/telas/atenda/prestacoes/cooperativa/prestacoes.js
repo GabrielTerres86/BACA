@@ -74,7 +74,7 @@
  * 051: [25/05/2019] - PRJ298.2.2 - Pagamento do prejuízo de forma manual - Nagasava (Supero)
  * 052: [02/07/2019] Incluida mensagem na tela de consulta do prejuízo quando o contrato Pós-Fixado for transferido para prejuízo
  *                   P298.3 Pos Fixado (Darlei Zillmer / Supero)
- *
+ * 053: [28/06/2019] Ajuste para que ao final do fluxo de consulta volte para a tabela de prestações PRJ 438 (Mateus Z / Mouts)
 */
 
 // Carrega biblioteca javascript referente ao RATING e CONSULTAS AUTOMATIZADAS
@@ -635,7 +635,8 @@ function controlaOperacao(operacao) {
 						//aux_fluxo.pop(); //bruno - prj - 438 - sprint 6 - voltar
 						return false;
 					}else if(operacao == 'C_PROT_CRED'){
-						controlaOperacao('TC'); //bruno - prj 438 - 14652
+						// PRJ 438 - Sprint 13 - Ajuste para que ao final do fluxo volte para a tabela de prestações (Mateus Z / Mouts)
+						controlaOperacao('');
 						return false;
 					}
 

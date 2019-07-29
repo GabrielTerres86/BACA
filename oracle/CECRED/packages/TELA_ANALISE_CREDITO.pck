@@ -414,7 +414,7 @@ create or replace package body cecred.TELA_ANALISE_CREDITO is
   --  Programa : TELA_ANALISE_CREDITO
   --  Sistema  : Aimaro/Ibratan
   --  Autor    : Equipe Mouts
-  --  Data     : Março/2019                 Ultima atualizacao: 05/07/2019
+  --  Data     : Março/2019                 Ultima atualizacao: 25/07/2019
   --
   -- Dados referentes ao programa:
   --
@@ -1998,11 +1998,14 @@ PROCEDURE pc_gera_dados_analise_credito(pr_cdcooper  IN crawepr.cdcooper%TYPE   
   /*Busca o ID do Grupo Economico*/
   CURSOR c_grupo_economico(pr_cdcooper in tbcc_grupo_economico.cdcooper%type,
                            pr_nrdconta in tbcc_grupo_economico.nrdconta%type) is
-    SELECT idgrupo
-    FROM tbcc_grupo_economico_integ
-    WHERE cdcooper = pr_cdcooper
-    AND   nrdconta = pr_nrdconta
-    AND dtexclusao IS NULL;
+ SELECT g.idgrupo
+   FROM tbcc_grupo_economico g,
+        tbcc_grupo_economico_integ i
+  WHERE ( g.cdcooper = pr_cdcooper or i.cdcooper = pr_cdcooper)
+    AND ( g.nrdconta = pr_nrdconta or i.nrdconta = pr_nrdconta )
+    AND g.cdcooper = i.cdcooper
+    AND g.idgrupo  = i.idgrupo
+    AND i.dtexclusao is null;  
   r_grupo_economico c_grupo_economico%rowtype;
     
 /*  select g.cdcooper,
@@ -9806,7 +9809,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
     Programa: pc_consulta_proposta_bordero
     Sistema : Aimaro/Ibratan
     Autor   : Rubens Lima
-    Data    : 05/04/2019                 Ultima atualizacao: 14/06/2019
+    Data    : 05/04/2019                 Ultima atualizacao: 25/07/2019
 
     Dados referentes ao programa:
 
@@ -10351,8 +10354,10 @@ BEGIN
     vr_tab_tabela(vr_index).coluna2 := r_busca_criticas_cedente.dsdetres;
    
   END LOOP;
+  IF (vr_index > 0) THEN
   vr_string := vr_string||fn_tag_table('Crítica;Valor',vr_tab_tabela);
   vr_string := vr_string||'</linhas></valor></campo>';    
+  END IF;
 
   CLOSE c_busca_criticas_cedente;
   
@@ -11981,7 +11986,7 @@ PROCEDURE pc_consulta_consultas_ncoop(pr_cdcooper   IN crapass.cdcooper%TYPE, --
       SELECT SUM(a.vlestour) vltotalestouro
         FROM crapneg a, crapope c
        WHERE a.cdcooper = pr_cdcooper
-         AND a.cdobserv IN (12, 13)
+         AND a.cdobserv IN (11, 12, 13)
          AND a.nrdconta = pr_nrdconta
          AND c.cdcooper = a.cdcooper
          AND c.cdoperad = a.cdoperad
@@ -11993,7 +11998,7 @@ PROCEDURE pc_consulta_consultas_ncoop(pr_cdcooper   IN crapass.cdcooper%TYPE, --
       SELECT COUNT(1) totalrows
         FROM crapneg a, crapope c
        WHERE a.cdcooper = pr_cdcooper
-         AND a.cdobserv IN (12, 13)
+         AND a.cdobserv IN (11, 12, 13)
          AND a.nrdconta = pr_nrdconta
          AND c.cdcooper = a.cdcooper
          AND c.cdoperad = a.cdoperad
@@ -12011,12 +12016,12 @@ PROCEDURE pc_consulta_consultas_ncoop(pr_cdcooper   IN crapass.cdcooper%TYPE, --
        GROUP BY a.nrdconta;
     rw_chequesDevolvidos111213 cr_chequesDevolvidos111213%ROWTYPE;
   
-    /* Ultima data de cheque devolvido linhas 12 e 13 (CCF) */
+    /* Ultima data de cheque devolvido linhas 11, 12 e 13 (CCF) */
     CURSOR cr_dtultimadevolu(pr_cdcooper tbcc_prejuizo.cdcooper%TYPE, pr_nrdconta tbcc_prejuizo.nrdconta%TYPE) IS
       SELECT to_char(MAX(a.dtiniest), 'dd/mm/rrrr') dtultimadevolu
         FROM crapneg a, crapope c
        WHERE a.cdcooper = pr_cdcooper
-         AND a.cdobserv IN (12, 13)
+         AND a.cdobserv IN (11, 12, 13)
          AND a.nrdconta = pr_nrdconta
          AND c.cdcooper = a.cdcooper
          AND c.cdoperad = a.cdoperad;

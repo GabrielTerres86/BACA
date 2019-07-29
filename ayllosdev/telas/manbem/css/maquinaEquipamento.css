@@ -6,7 +6,7 @@ Alterações:
 001
 */
 #dsmarceq{
-	width: 459px !important;
+	width: 457px !important; /* Anderson Schloegel PJ438 Mout's Task 19673 */
 }
 
 #nrmodbemE{
@@ -14,7 +14,7 @@ Alterações:
 }
 
 #nrcpfcgcE{
-	width: 180px !important;
+	/*width: 180px !important;*/ /* Anderson Schloegel PJ438 Mout's Task 19673 */
 }
 
 .fieldMaquinaEquipamento label[for='dschassi']{

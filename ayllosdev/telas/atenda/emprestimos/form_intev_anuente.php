@@ -32,7 +32,7 @@
 		</select>	
 		<br />
 		
-		<label for="nrcpfcgc">C.P.F.:</label>
+		<label for="nrcpfcgc">CPF.:</label>
 		<input name="nrcpfcgc" id="nrcpfcgc" type="text" value="" />
 		<br />			
 				
@@ -40,6 +40,8 @@
 		<input name="nmdavali" id="nmdavali" type="text" value="" />
 		<br />
 
+		<!-- Rafael Ferreira (Mouts) Story 13447-->
+		<div id="divNacionalidade">
 		<label for="cdnacion">Nacionalidade:</label>
 		<div id="divCdnacion">
 	        <input name="cdnacion" id="cdnacion" type="text" />
@@ -47,6 +49,7 @@
 		</div>
 		<input name="dsnacion" id="dsnacion" type="text" value="" />
 		<br />		
+		</div>		
 				
 		<!-- bruno - prj 438 - bug 14585 -->
 		<label for="dtnascto">Data Nasc.:</label>
@@ -71,7 +74,7 @@
 		<label for="nrctacjg">Conta:</label>
 		<input name="nrctacjg" id="nrctacjg" type="text" value="" />
 						
-		<label for="nrcpfcjg">C.P.F.:</label>
+		<label for="nrcpfcjg">CPF:</label>
 		<input name="nrcpfcjg" id="nrcpfcjg" type="text" value="" />
 		<br />
 			

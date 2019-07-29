@@ -2476,6 +2476,8 @@ create or replace package body cecred.tela_manbem is
         Observacao: -----
     
         Alteracoes: 19/10/2018 - P442 - Troca de checagem fixa por funcão para garantir se bem é alienável (Marcos-Envolti)
+                    28/06/2019 - PRJ 438 - Sprint 13 - Comentado trechos responsáveis por causar a perda de aprovação nas 
+                                 alterações de Descrição, Nr Serie e CPF/CNPJ da categoria Maquina e Equipamento (Mateus Z / Mouts)
   
     ..............................................................................*/                                 
     -- Verificar se o bem jah não existe
@@ -2761,7 +2763,8 @@ create or replace package body cecred.tela_manbem is
        Sprint 8
        Inicio*/
       IF par_dscatbem = 'MAQUINA E EQUIPAMENTO' THEN
-       IF nvl(upper(par_dsmarceq),' ') != nvl(upper(rw_crapbpr.dsmarceq),' ') THEN-- descricao
+       -- PRJ 438 - Sprint 13 - Trecho comentado pois não deve perder aprovação com a alteração da descrição (Mateus Z)
+       /*IF nvl(upper(par_dsmarceq),' ') != nvl(upper(rw_crapbpr.dsmarceq),' ') THEN-- descricao
          par_flperapr := 'S';
          gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
                                pr_cdoperad => par_cdoperad,
@@ -2779,9 +2782,9 @@ create or replace package body cecred.tela_manbem is
           gene0001.pc_gera_log_item(v_rowid,
                                     'Descricao',
                                     rw_crapbpr.dsmarceq,
-                                    par_dsmarceq);
+                                    par_dsmarceq);*/
 
-       ELSIF nvl(par_vlmerbem,0) != nvl(rw_crapbpr.vlmerbem,0) THEN-- Valor de Mercado
+       IF nvl(par_vlmerbem,0) != nvl(rw_crapbpr.vlmerbem,0) THEN-- Valor de Mercado
          par_flperapr := 'S';
          gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
                                pr_cdoperad => par_cdoperad,
@@ -2821,7 +2824,8 @@ create or replace package body cecred.tela_manbem is
                                     rw_crapbpr.dsbemfin,
                                     par_dsbemfin);
 
-       ELSIF nvl(upper(par_dschassi),' ') != nvl(upper(rw_crapbpr.dschassi),' ') THEN-- numero serie
+       -- PRJ 438 - Sprint 13 - Trecho comentado pois não deve perder aprovação com a alteração do número de série (Mateus Z)
+       /*ELSIF nvl(upper(par_dschassi),' ') != nvl(upper(rw_crapbpr.dschassi),' ') THEN-- numero serie
          par_flperapr := 'S';
          gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
                                pr_cdoperad => par_cdoperad,
@@ -2839,7 +2843,7 @@ create or replace package body cecred.tela_manbem is
           gene0001.pc_gera_log_item(v_rowid,
                                     'Numero Serie',
                                     rw_crapbpr.dschassi,
-                                    par_dschassi);
+                                    par_dschassi);*/
 
        ELSIF nvl(par_nrmodbem,0) != nvl(rw_crapbpr.nrmodbem,0) THEN-- Ano fabricacao
          par_flperapr := 'S';
@@ -2860,7 +2864,9 @@ create or replace package body cecred.tela_manbem is
                                     'Ano Fabricacao',
                                     rw_crapbpr.nrmodbem,
                                     par_nrmodbem);
-       ELSIF nvl(par_nrcpfbem,0) != nvl(rw_crapbpr.nrcpfbem,0) THEN-- CPF CNPJ
+                                    
+       -- PRJ 438 - Sprint 13 - Trecho comentado pois não deve perder aprovação com a alteração do CPF/CNPJ (Mateus Z)
+       /*ELSIF nvl(par_nrcpfbem,0) != nvl(rw_crapbpr.nrcpfbem,0) THEN-- CPF CNPJ
          par_flperapr := 'S';
          gene0001.pc_gera_log(pr_cdcooper => par_cdcooper,
                                pr_cdoperad => par_cdoperad,
@@ -2878,7 +2884,7 @@ create or replace package body cecred.tela_manbem is
           gene0001.pc_gera_log_item(v_rowid,
                                     'CPF',
                                     rw_crapbpr.nrcpfbem,
-                                    par_nrcpfbem);
+                                    par_nrcpfbem);*/
        END IF;
 
       END IF;
@@ -4638,7 +4644,7 @@ create or replace package body cecred.tela_manbem is
   
         Observacao: -----
     
-        Alteracoes: 
+        Alteracoes: 26/06/2019 - PRJ 438 - Removido validações específicas de PJ e que não aparecem mais em tela (Mateus Z / Mouts)
 
     ..............................................................................*/     
     
@@ -4717,45 +4723,9 @@ create or replace package body cecred.tela_manbem is
       return;
     end if;
     
-    -- Para PJ
-    if vr_inpessoa = 2 then
-      -- PJ
-      IF trim(par_tpdocava) is not null then
-        par_dscritic := 'Para pessoa juridica, nao e permitido informar o tipo de documento do interveniente.';
-        par_nmdcampo := 'tpdocava';
-        return;
-      end if;
-      --
-      if trim(par_nrdocava) is not null then
-        par_dscritic := 'Para pessoa juridica, nao e permitido informar o numero do documento do interveniente.';
-        par_nmdcampo := 'nrdocava';
-        return;
-      end if;
-      --
-      if trim(par_nmconjug) is not null then
-        par_dscritic := 'Para pessoa juridica, nao e permitido informar o nome do conjuge.';
-        par_nmdcampo := 'nmconjug';
-        return;
-      end if;
-      --
-      if nvl(trim(par_nrcpfcjg),0) <> 0 then
-        par_dscritic := 'Para pessoa juridica, nao e permitido informar o CPF do conjuge.';
-        par_nmdcampo := 'nrcpfcjg';
-        return;
-      end if;
-      --
-      if trim(par_tpdoccjg) is not null then
-        par_dscritic := 'Para pessoa juridica, nao e permitido informar o tipo de documento do conjuge.';
-        par_nmdcampo := 'tpdoccjg';
-        return;
-      end if;
-      --
-      if trim(par_nrdoccjg) is not null then
-        par_dscritic := 'Para pessoa juridica, nao e permitido informar o nimero do documento do conjuge.';
-        par_nmdcampo := 'nrdoccjg';
-        return;
-      end if;
-    else
+    -- PRJ 438 - Removido validações específicas de PJ e que não aparecem mais em tela (Mateus Z / Mouts)
+    -- Para PF
+    if vr_inpessoa = 1 then
       -- PF
       -- Nacionalidade obrigatoria
       if nvl(trim(par_cdnacion),0) = 0 then
@@ -4763,41 +4733,6 @@ create or replace package body cecred.tela_manbem is
         par_nmdcampo := 'cdnacion';
         return;
       end if;
-      /*if trim(par_tpdocava) is null then
-        par_dscritic := 'Tipo de documento do interveniente é obrigatorio.';
-        par_nmdcampo := 'tpdocava';
-        return;
-      end if;
-      --
-      if trim(par_nrdocava) is null then
-        par_dscritic := 'Número do documento do interveniente é obrigatorio.';
-        par_nmdcampo := 'nrdocava';
-        return;
-      end if;*/ -- BUG14246
-      -- Comentadas as validações dos campos de Conjuge conforme solicitação do Télvio
-      /*if trim(par_nmconjug) is not null or
-         nvl(trim(par_nrcpfcjg),0) <> 0 or
-         trim(par_tpdoccjg) is not null or
-         nvl(trim(par_nrdoccjg),0) <> 0  then
-        -- Se algum dos campos estiver preenchido, todos são obrigatórios
-        if trim(par_nmconjug) is null or
-           nvl(trim(par_nrcpfcjg),0) = 0 or
-           trim(par_tpdoccjg) is null or
-           nvl(trim(par_nrdoccjg),0) = 0  then
-          par_dscritic := 'Todos os dados do conjuge devem ser informados.';
-          par_nmdcampo := 'nrcpfcjg';
-          return;
-        end if;
-        -- validar CPF do conjuge
-        gene0005.pc_valida_cpf_cnpj(par_nrcpfcjg,
-                                    vr_stsnrcal,
-                                    vr_inpessoa);
-        if not vr_stsnrcal then
-          par_cdcritic := 27;
-          par_nmdcampo := 'nrcpfcjg';
-          return;
-        end if;
-      end if;*/
     end if;
   exception
     when others then

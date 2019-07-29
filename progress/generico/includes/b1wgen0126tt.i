@@ -56,6 +56,11 @@ DEF TEMP-TABLE tt-contrato-avalista NO-UNDO
     FIELD dsdemail LIKE crapavt.dsdemail
     FIELD cdufresd LIKE crapavt.cdufresd
     FIELD inpessoa LIKE crapavt.inpessoa
+    FIELD cdnacion LIKE crapass.cdnacion
+    FIELD dsnacion LIKE crapnac.dsnacion
+    FIELD nrctacjg LIKE crapcje.nrctacje
+    FIELD vlrencjg AS DECI
+    FIELD vlrenmes LIKE crapavt.vlrenmes
     FIELD dtnascto LIKE crapavt.dtnascto.
 
 DEF TEMP-TABLE tt-avalista NO-UNDO LIKE tt-contrato-avalista.

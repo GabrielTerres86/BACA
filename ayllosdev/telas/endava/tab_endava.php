@@ -44,7 +44,7 @@
 					}else if($tpctrato == 3){
 						$dsctrato = "LM - Limite";
 					}else if($tpctrato == 4){
-						$dsctrato = "CR - Cart�o";
+						$dsctrato = "CR - Cartão";
 					}
 																				
 				?>			
@@ -52,19 +52,29 @@
 						<td><span><? echo $nrctremp ?></span>
 							<? echo mascara(getByTagName($i->tags,'nrctremp'),'#.###.###') ?>
 						
-							<input type="hidden" id="pro_cpfcgc" name="pro_cpfcgc" value="<? echo getByTagName($i->tags,'pro_cpfcgc'); ?>" />
-							<input type="hidden" id="nrctremp"   name="nrctremp"   value="<? echo mascara(getByTagName($i->tags,'nrctremp'),'#.###.###') ?>" />
-							<input type="hidden" id="nrdconta"   name="nrdconta"   value="<? echo mascara(getByTagName($i->tags,'nrdconta'),'####.###.#') ?>" />
+							<input type="hidden" id="pro_cpfcgc" name="pro_cpfcgc" value="<?
+							if (getByTagName($i->tags,'inpessoa') == 1) {
+								echo mascaraCpf(getByTagName($i->tags,'pro_cpfcgc'));
+							} else {
+								echo mascaraCnpj(getByTagName($i->tags,'pro_cpfcgc'));
+							} ?>" />
+							<input type="hidden" id="inpessoa"   name="inpessoa"   value="<? echo getByTagName($i->tags,'inpessoa'); ?>" />
+							<input type="hidden" id="nrctremp"   name="nrctremp"   value="<? echo mascara(getByTagName($i->tags,'nrctremp'),'#.###.###'); ?>" />
+							<input type="hidden" id="nrdconta"   name="nrdconta"   value="<? echo formataContaDVsimples(getByTagName($i->tags,'nrdconta')); ?>" />
 							<input type="hidden" id="tpctrato"   name="tpctrato"   value="<? echo $tpctrato ?>" />
 							<input type="hidden" id="nmdaval"    name="nmdaval"    value="<? echo getByTagName($i->tags,'nmdavali'); ?>" />
-							<input type="hidden" id="tpdocav"    name="tpdocav"    value="<? echo getByTagName($i->tags,'tpdocava'); ?>" />
-							<input type="hidden" id="dscpfav"    name="dscpfav"    value="<? echo getByTagName($i->tags,'nrdocava'); ?>" />
+							<input type="hidden" id="cpfaval"    name="cpfaval"    value="<?
+							if (getByTagName($i->tags,'inpessoa') == 1) {
+								echo mascaraCpf(getByTagName($i->tags,'nrcpfcgc'));
+							} else {
+								echo mascaraCnpj(getByTagName($i->tags,'nrcpfcgc'));
+							} ?>" />
+							<input type="hidden" id="dtnascto"   name="dtnascto"   value="<? echo getByTagName($i->tags,'dtnascto'); ?>" />
+							<input type="hidden" id="dsnacion"   name="dsnacion"   value="<? echo getByTagName($i->tags,'dsnacion'); ?>" />
 							<input type="hidden" id="nmcjgav"    name="nmcjgav"    value="<? echo getByTagName($i->tags,'nmconjug'); ?>" />
-							<input type="hidden" id="cpfccg"     name="cpfccg"     value="<? echo getByTagName($i->tags,'nrcpfcjg'); ?>" />
-							<input type="hidden" id="tpdoccj"    name="tpdoccj"    value="<? echo getByTagName($i->tags,'tpdoccjg'); ?>" />
-							<input type="hidden" id="dscfcav"    name="dscfcav"    value="<? echo getByTagName($i->tags,'nrdoccjg'); ?>" />
+							<input type="hidden" id="cpfcjg"     name="cpfcjg"     value="<? echo mascaraCpf(getByTagName($i->tags,'nrcpfcjg')); ?>" />
 							<input type="hidden" id="nrfonres"   name="nrfonres"   value="<? echo getByTagName($i->tags,'nrfonres'); ?>" />
-							<input type="hidden" id="nrcepend"   name="nrcepend"   value="<? echo getByTagName($i->tags,'nrcepend'); ?>" />
+							<input type="hidden" id="nrcepend"   name="nrcepend"   value="<? echo formataCep(getByTagName($i->tags,'nrcepend')); ?>" />
 							<input type="hidden" id="dsendav1"   name="dsendav1"   value="<? echo getByTagName($i->tags,'dsendres1'); ?>" />
 							<input type="hidden" id="nrendere"   name="nrendere"   value="<? echo getByTagName($i->tags,'nrendere'); ?>" />
 							<input type="hidden" id="complend"   name="complend"   value="<? echo getByTagName($i->tags,'complend'); ?>" />
