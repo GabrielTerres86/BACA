@@ -36,6 +36,10 @@ begin
     --
     --             24/03/2017 - Inclui validacao para tirar espacos sobre o campo rw_crapsqt.dstxterr
     --                          e melhorei a descricao do log gerado. SD 637585.
+	--
+	--             29/07/2019 - Criacao de sequencial diferenciado para lotes removidos no Projeto de Revitalizacao
+	--                          Evitando erros de chave duplicada ate a revisao de todos os fontes
+	--                          Heitor (Mouts) - Projeto Revitalizacao (Sustentacao)
     -- .............................................................................
   declare
     -- Busca dos dados da configuração
@@ -126,6 +130,22 @@ begin
         --
         close cr_crapsqu;
         -- Criar o registro inicial
+
+		--Criar sequencial diferenciado para os lotes removidos no projeto de revitalizacao
+		if upper(pr_nmtabela) = 'CRAPLOT' and
+           upper(pr_nmdcampo) = 'NRSEQDIG' and
+           substr(pr_dsdchave,instr(pr_dsdchave,';',-1)+1) in ('7050'
+                                                              ,'8383'
+                                                              ,'8473'
+                                                              ,'10104'
+                                                              ,'10105'
+                                                              ,'10115'
+                                                              ,'11900'
+                                                              ,'15900'
+                                                              ,'23900') then
+          rw_crapsqt.qtincrem := rw_crapsqt.qtincrem + 10000000;
+        end if;
+
         begin
           insert into crapsqu (nmtabela
                               ,nmdcampo
