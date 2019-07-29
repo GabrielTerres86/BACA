@@ -44,8 +44,7 @@ DECLARE
      and (s.cdcooper, s.nrdconta) in
          (select d.cdcooper, d.nrdconta
             from crapcyb d
-           where d.dtatufin = rw_crapdat.dtmvtoan --trunc(sysdate) - 1
-             and d.dtdbaixa is null
+           where d.dtdbaixa is null
              and d.dtdpagto is null
              and d.cdorigem = 1)
      and exists
@@ -54,20 +53,15 @@ DECLARE
            where (x.vlsddisp < 0)
              and (x.cdcooper = s.cdcooper)
              and (x.nrdconta = s.nrdconta)
-             and (x.dtmvtolt = rw_crapdat.dtmvtoan) --trunc(sysdate)-1)
+             and (x.dtmvtolt = (select crapdat.dtmvtoan
+                                  from crapdat
+                                 where crapdat.cdcooper = s.cdcooper))
              and (((nvl(x.vlsddisp, 0) * -1) > nvl(x.vllimcre, 0)) and
                  (nvl(x.vllimutl, 0) >= nvl(x.vllimcre, 0))))
                  order by cdcooper, nrdconta; 
    rw_contas cr_contas%ROWTYPE;
   
 BEGIN
-
-  OPEN btch0001.cr_crapdat(pr_cdcooper => 3);
-  FETCH btch0001.cr_crapdat INTO rw_crapdat;
-  CLOSE btch0001.cr_crapdat;
-
---  dbms_output.put_line('Data para leitura das contas:'||rw_crapdat.dtmvtoan);
-
   --Busca as contas a atualizar
   FOR rw_contas IN cr_contas LOOP
     BEGIN
@@ -75,10 +69,10 @@ BEGIN
       SET    dtdpagto = rw_contas.dtdpagto_calculado
       WHERE  progress_recid = rw_contas.progress_recid;
 
-/*      dbms_output.put_line('Conta atualizada :'||rw_contas.nrdconta||', Coop:'||rw_contas.cdcooper
+      dbms_output.put_line('Conta atualizada :'||rw_contas.nrdconta||', Coop:'||rw_contas.cdcooper
                  ||', Contrato:'||rw_contas.nrctremp||', Origem:'||rw_contas.cdorigem
                  ||', Dtdpagto:'||rw_contas.dtdpagto_calculado);
-*/
+
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 1035;
