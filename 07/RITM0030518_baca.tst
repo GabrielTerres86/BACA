@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-109
+116
 -- Created on 24/07/2019 by F0030344 
 DECLARE  
 
@@ -7,7 +7,7 @@ DECLARE
     SELECT *
       FROM crapcop c
      WHERE c.flgativo = 1
-      AND cdcooper = 1;
+    ORDER BY c.cdcooper;
 
 
   CURSOR cr_crapcob(pr_cdcooper crapcop.cdcooper%TYPE
@@ -26,6 +26,7 @@ DECLARE
   vr_vlrmulta crapcob.vltitulo%TYPE;
   vr_vljurdia crapcob.vltitulo%TYPE;
   vr_vldifere crapcob.vltitulo%TYPE;
+  vr_dsstatus VARCHAR2(25);
   
   vr_arq_path        VARCHAR2(1000);        --> Diretorio que sera criado o relatorio
   vr_des_xml         CLOB;
@@ -46,7 +47,7 @@ BEGIN
   dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
   vr_texto_completo := NULL;
 
-  pc_escreve_xml( 'COOOPERATIVA;CONTA;DOCUMENTO;CONVENIO;VALOR TITULO;VALOR PAGO;VALOR ESPERADO MULTA JUROS;VALOR PAGO JUROS MULTA;DIFERENCA JUROS MULTA COBRADO REAIS;'||chr(10));
+  pc_escreve_xml( 'COOOPERATIVA;CONTA;DOCUMENTO;CONVENIO;VALOR TITULO;VALOR PAGO;VALOR ESPERADO MULTA JUROS;VALOR PAGO JUROS MULTA;DIFERENCA JUROS MULTA COBRADO REAIS;STATUS'||chr(10));
   
   FOR rw_crapcop IN cr_crapcop LOOP
     
@@ -90,10 +91,16 @@ BEGIN
        --verificar diferenca entre os pagamentos e os juros esperados
        IF vr_vldifere <> (vr_vljurdia + vr_vlrmulta)  THEN
        
+          vr_dsstatus := 'LIQUIDADO';
+  
+          IF rw_crapcob.insitcrt = 3 THEN
+             vr_dsstatus := 'LIQUIDADO EM CARTORIO';
+          END IF;
+       
           pc_escreve_xml( rw_crapcob.cdcooper ||';'|| rw_crapcob.nrdconta ||';'|| rw_crapcob.nrdocmto || ';' || rw_crapcob.nrcnvcob || ';' ||
                           rw_crapcob.vltitulo ||';'|| rw_crapcob.vldpagto ||';'||
                           (vr_vljurdia + vr_vlrmulta) ||';'|| vr_vldifere ||';'|| TO_CHAR((vr_vljurdia + vr_vlrmulta) - vr_vldifere) ||';'||
-                          chr(10) );
+                          vr_dsstatus ||';'|| chr(10) );
        END IF;         
      
      END LOOP;
