@@ -1,29 +1,5 @@
+
 BEGIN
-  BEGIN
-    UPDATE crappro
-       SET nrdocmto = 422693
-         , vldocmto = 1000
-     WHERE cdcooper = 7
-       AND nrdconta = 254045
-       AND dtmvtolt = '17/05/2019';
-    UPDATE crappro
-       SET nrdocmto = 51427
-         , vldocmto = 600
-     WHERE cdcooper = 16
-       AND nrdconta = 500690
-       AND dtmvtolt = '14/05/2019';
-    UPDATE crappro
-       SET flgativo = 0
-     WHERE cdcooper = 13
-       AND nrdconta = 281387
-       AND dtmvtolt = '13/05/2019';
-    UPDATE crappro
-       SET flgativo = 0
-     WHERE cdcooper = 7
-       AND nrdconta = 127078
-       AND dtmvtolt = '20/05/2019';
-  END;
-  --
   BEGIN
     FOR r1 in (SELECT DISTINCT
                       b.dtmvtolt
@@ -42,7 +18,7 @@ BEGIN
                                  AND b.nrdconta = a.nrdconta
                                  AND b.dtmvtolt = a.dtmvtolt
                                  AND a.cdtippro = 29
-                                 AND a.flgativo = 1
+                                 AND a.flgativo = 0
                                  AND EXISTS (SELECT *
                                                FROM craplim c
                                               WHERE c.cdcooper = a.cdcooper
@@ -64,6 +40,5 @@ BEGIN
     END LOOP;
   END;
   --
-  
   COMMIT;
 END;
