@@ -2535,9 +2535,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GRVM0001 AS
           
           -- Geração de LOG
           gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad 
+                              ,pr_cdoperad => NVL(pr_cdoperad, 1)
                               ,pr_dscritic => ''         
-                              ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem)
+                              ,pr_dsorigem => gene0001.vr_vet_des_origens(NVL(pr_idorigem, 21))
                               ,pr_dstransa => 'Inclusao automatica do bem no gravames'
                               ,pr_dttransa => TRUNC(btch0001.rw_crapdat.dtmvtolt)
                               ,pr_flgtrans => 1
