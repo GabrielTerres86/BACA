@@ -48,13 +48,13 @@ PROCEDURE busca_crapavt:
 
     IF AVAIL crapass THEN
     DO:
-            aux_cdcritic = 1468.
+            aux_cdcritic = 1499.
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
                            INPUT 0,          /* nrdcaixa*/
                            INPUT 1,          /* Sequencia */
-                           INPUT 1468,          /* cdcritic */
+                           INPUT 1499,          /* cdcritic */
                            INPUT-OUTPUT aux_dscritic).
             RETURN "NOK".
     END.
