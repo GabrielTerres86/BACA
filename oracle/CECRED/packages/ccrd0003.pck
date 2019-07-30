@@ -2592,6 +2592,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
     Alteracoes: 14/12/2018 - Adicionar dup_val_on_index ao inserir registro na crapdcb, caso 
                              utilize o dup_val será adicionado + 1 segundo na hrgmt para evitar
                              problemas referente uk de tarifas (Lucas Ranghetti PRB0040489)
+
+                30/07/2019 - Ajuste para que não tenha chave duplicada ao niserir na tabela
+                             crapdcb. Alcemir Jr. (PRB0042044)
             	 
     ....................................................................................................*/
     DECLARE
@@ -2778,6 +2781,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           AND(dcb.nrseqarq = 1 OR ( dcb.nrseqarq < pr_nrseqarq AND dcb.dtdtrgmt = pr_dtdtrgmt )) -- considerar caso venha mais de uma vez a conciliacao
           ORDER BY dcb.tpmensag ASC;
       rw_crapdcb cr_crapdcb%ROWTYPE;
+      
+      CURSOR cr_crapdcb_hr (pr_cdcooper crapdcb.cdcooper%TYPE
+                           ,pr_nrdconta crapdcb.nrdconta%TYPE
+                           ,pr_nrnsucap crapdcb.nrnsucap%TYPE
+                           ,pr_dtdtrgmt crapdcb.dtdtrgmt%TYPE
+                           ,pr_tpmansag crapdcb.tpmensag%TYPE) IS
+        SELECT MAX(dcb.hrdtrgmt) + 1 AS HRDTRGMT FROM crapdcb dcb
+         WHERE dcb.cdcooper = pr_cdcooper
+           AND dcb.nrdconta = pr_nrdconta
+           AND dcb.nrnsucap = pr_nrnsucap
+           AND dcb.dtdtrgmt = pr_dtdtrgmt
+           AND upper(tpmensag) = upper(pr_tpmansag);
+      rw_crapdcb_hr cr_crapdcb_hr%ROWTYPE;           
 
       -- Cursor para retornar cooperativa com base agencia bancoob
       CURSOR cr_crapcop_cdagebcb (pr_cdagebcb IN crapcop.cdagebcb%TYPE) IS
@@ -4300,6 +4316,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     WHEN dup_val_on_index THEN
                        -- tentar inserir novamente porém com hrgmt + 1 segundo
                        BEGIN
+                        rw_crapdcb_hr.hrdtrgmt := 1;
+                        
+                        OPEN cr_crapdcb_hr(vr_tab_crapdcb(vr_idxdcb).det.cdcooper,
+                                           vr_tab_crapdcb(vr_idxdcb).det.nrdconta,
+                                           vr_tab_crapdcb(vr_idxdcb).det.nrnsucap,
+                                           vr_tab_crapdcb(vr_idxdcb).det.dtdtrgmt,
+                                           vr_tab_crapdcb(vr_idxdcb).det.tpmensag);
+                         FETCH cr_crapdcb_hr INTO rw_crapdcb_hr;
+                        CLOSE cr_crapdcb_hr;                                                 
+                                                 
                         INSERT INTO crapdcb
                            (tpmensag
                            ,nrnsucap
@@ -4342,7 +4368,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                           (vr_tab_crapdcb(vr_idxdcb).det.tpmensag
                           ,vr_tab_crapdcb(vr_idxdcb).det.nrnsucap
                           ,vr_tab_crapdcb(vr_idxdcb).det.dtdtrgmt
-                          ,to_number(to_char(to_date(trim(to_char(vr_tab_crapdcb(vr_idxdcb).det.dtdtrgmt,'000000')),'hh24miss')+(1/86400),'hh24miss'))
+                          ,rw_crapdcb_hr.hrdtrgmt
                           ,vr_tab_crapdcb(vr_idxdcb).det.cdcooper
                           ,vr_tab_crapdcb(vr_idxdcb).det.nrdconta
                           ,vr_tab_crapdcb(vr_idxdcb).det.nrseqarq
