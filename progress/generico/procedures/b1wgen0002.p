@@ -8167,42 +8167,6 @@ PROCEDURE grava-proposta-completa:
           END.
        END.
 
-	   /* P442 - Criar assinaturas para o contrato recem criado (aprovado) */
-      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-      /* Criar registros na tabela de assinaturas */
-      /* Efetuar a chamada a rotina Oracle */ 
-      RUN STORED-PROCEDURE pc_assinatura_contrato_pre
-            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.cdcooper
-                                                ,INPUT crawepr.cdagenci
-                                                ,INPUT crawepr.nrdconta
-                                                ,INPUT 1                                               
-                                                ,INPUT par_dtmvtolt
-                                                ,INPUT crawepr.cdorigem
-                                                ,INPUT crawepr.nrctremp
-                                                ,INPUT 1
-                                                ,OUTPUT ""
-                                                ,OUTPUT ""
-                                                ,OUTPUT 0
-                                                ,OUTPUT "").
-      
-      /* Fechar o procedimento para buscarmos o resultado */ 
-      CLOSE STORED-PROC pc_assinatura_contrato_pre
-      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-      
-      ASSIGN aux_dsassdig = pc_assinatura_contrato_pre.pr_assinatu
-             aux_des_reto = pc_assinatura_contrato_pre.pr_des_reto
-             aux_cdcritic = pc_assinatura_contrato_pre.pr_cdcritic WHEN pc_assinatura_contrato_pre.pr_cdcritic <> ?
-             aux_dscritic = pc_assinatura_contrato_pre.pr_dscritic WHEN pc_assinatura_contrato_pre.pr_dscritic <> ?.
-      
-      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-      
-      IF aux_cdcritic > 0 OR aux_dscritic <> '' THEN
-          DO:
-            CREATE tt-erro.
-            ASSIGN tt-erro.cdcritic = aux_cdcritic
-                   tt-erro.dscritic = aux_dscritic.
-             UNDO Gravar, LEAVE Gravar.
-         END.
     END. /* Fim Grava- Fim TRANSACTION */
      
     IF   aux_dscritic <> ""  OR
