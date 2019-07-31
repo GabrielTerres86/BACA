@@ -310,7 +310,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspc0002 AS
     ELSIF rw_crapcob.inserasa = 7 THEN
       -- Acao Judicial
       vr_dsincons := 'Boleto ja negativado na Serasa (Acao Judicial).';
-    ELSIF rw_crapcob.flgdprot = 1 OR rw_crapcob.insitcrt = 1 THEN
+    ELSIF rw_crapcob.flgdprot = 1 AND rw_crapcob.insitcrt IN (1,2,3,5) THEN
       -- Titulo está em PROTESTO
       vr_dsincons := 'Boleto esta em processo de Protesto' || 
                      ' - Solicitacao de negativacao nao pode ser executada.';
