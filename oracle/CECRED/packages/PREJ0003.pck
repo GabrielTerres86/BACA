@@ -3918,6 +3918,9 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
            CONTINUE;
          END IF;
          
+
+         -- Verificar se já houve lancamento para 2733 durante o dia (Online)
+         -- Se já houve, desconta do valor disponivel na Conta.
          OPEN cr_hist2733(pr_cdcooper => pr_cdcooper
                         , pr_nrdconta => rw_contaprej.nrdconta
                         , pr_dtmvtolt => rw_crapdat.dtmvtolt);
