@@ -690,8 +690,11 @@ BEGIN
         RECORD(idgrumic INTEGER   -- Id do grupo para separação das informações - 1 - CECRED / 2 - BNDES
               ,vlpesfis NUMBER    -- Valor acumulado das operações no MicroCrédito para Pessoas Físicas
               ,vlpesjur NUMBER    -- Valor acumulado das operações no MicroCrédito para Pessoas Jurídicas
-              ,vlate59d NUMBER    -- Valor acumulado das operações no MicroCrédito com prazo até 59 dias
-              ,vlaci59d NUMBER);  -- Valor acumulado das operações no MicroCrédito com prazo acima de 59 dias
+							-- PRJ Microcredito
+              ,vlate90d NUMBER    -- Valor acumulado das operações no MicroCrédito com prazo até 90 dias
+              ,vlaci90d NUMBER    -- Valor acumulado das operações no MicroCrédito com prazo acima de 90 dias
+							,vljur60d NUMBER    -- Valor acumulado dos juros +60
+							);
 
     -- Definicao do tipo de tabela totalização por origem de microcrédito
       TYPE typ_tab_microcredito IS
@@ -1265,6 +1268,8 @@ BEGIN
 
     vr_dtmesant DATE;
     vr_dt6meses DATE;
+		-- PRJ Microcredito
+		vr_vljur60       NUMBER(15,2) := 0;--> Totalizador juros 60
     -- Variáveis genéricas para vários relatórios
       vr_vldivida       NUMBER(15,2);--> Totalizador de dívida
       vr_vldivjur       NUMBER(15,2);--> Totalizador de dívida quando PJ
@@ -1392,8 +1397,9 @@ BEGIN
     -- P307 Calculo de Compensação de Microcrédito
     vr_tot_vltttlcr_dim        NUMBER := 0;
     vr_tot_vltttlcr_dim_outros NUMBER := 0;
-    vr_totatraso59_dim         NUMBER := 0;
-    vr_totatraso59_dim_outros  NUMBER := 0;
+		-- PRJ Microcredito
+    vr_totatraso90_dim         NUMBER := 0;
+    vr_totatraso90_dim_outros  NUMBER := 0;
 
 
     -- Retorna linha cabeçalho arquivo Radar ou Matera
@@ -1459,8 +1465,11 @@ BEGIN
                                    ,pr_vlempatr         IN NUMBER
                                    ,pr_vlreprec_pf      IN NUMBER
                                    ,pr_vlreprec_pj      IN NUMBER
-                                   ,pr_vlate59d         IN NUMBER
-                                   ,pr_vlaci59d         IN NUMBER) IS
+																	 -- PRJ Microcredito
+                                   ,pr_vlate90d         IN NUMBER
+                                   ,pr_vlaci90d         IN NUMBER
+																	 ,pr_vljur60d         IN NUMBER
+																	 ) IS
     BEGIN
       -- Escreve no XML abrindo e fechando a tag de microcredito
          pr_des_xml := pr_des_xml
@@ -1471,8 +1480,10 @@ BEGIN
                       ||'  <vlempatr>'||to_char(pr_vlempatr,'fm999g999g999g990d00')||'</vlempatr>'                       
                       ||'  <vlrepfis>'||to_char(pr_vlreprec_pf,'fm999g999g999g990d00')||'</vlrepfis>'
                       ||'  <vlrepjur>'||to_char(pr_vlreprec_pj,'fm999g999g999g990d00')||'</vlrepjur>'
-                      ||'  <vlaci59d>'||to_char(pr_vlaci59d,'fm999g999g999g990d00')||'</vlaci59d>'                      
-                      ||'  <vlate59d>'||to_char(pr_vlate59d,'fm999g999g999g990d00')||'</vlate59d>'
+											-- PRJ Microcredito
+                      ||'  <vlaci90d>'||to_char(pr_vlaci90d,'fm999g999g999g990d00')||'</vlaci90d>'                      
+                      ||'  <vlate90d>'||to_char(pr_vlate90d,'fm999g999g999g990d00')||'</vlate90d>'
+											||'  <vljur60d>'||to_char(pr_vljur60d,'fm999g999g999g990d00')||'</vljur60d>'
                       ||'</microcredito>';
 
     END pc_cria_node_miccre;
@@ -1519,11 +1530,11 @@ BEGIN
          vr_typ_said         VARCHAR2(4);
 
     BEGIN
-
+        -- PRJ Microcredito
         IF  (nvl(vr_tot_vltttlcr_dim,0) + 
                    nvl(vr_tot_vltttlcr_dim_outros,0) +       
-                   nvl(vr_totatraso59_dim,0) + 
-                   nvl(vr_totatraso59_dim_outros,0)) > 0 THEN
+                   nvl(vr_totatraso90_dim,0) + 
+                   nvl(vr_totatraso90_dim_outros,0)) > 0 THEN
 
         -- Nome do arquivo a ser gerado
           vr_nmarquiv := vr_dtmvtolt_yymmdd||'_'||lpad(pr_cdcooper,2,0)||'_MICROCREDITO_COMPENSACAO.txt';
@@ -1540,102 +1551,110 @@ BEGIN
         END IF;
 
         -- 1ª linha
+				-- PRJ Microcredito
           vr_txt_compmicro := fn_set_cabecalho('50'
                                               ,pr_rw_crapdat.dtmvtolt
                                               ,pr_rw_crapdat.dtmvtolt
                                               ,'3967'
                                               ,'9264'
                                               ,vr_tot_vltttlcr_dim
-                                              ,'"TOTAL DIM SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS ATE 59 DIAS"');
+                                              ,'"TOTAL DIM SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS ATE 90 DIAS"');
 
           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
                                         ,pr_des_text => vr_txt_compmicro);
 
                               
         -- 2ª linha
+				-- PRJ Microcredito
           vr_txt_compmicro := fn_set_cabecalho('50'
                                               ,pr_rw_crapdat.dtmvtolt
                                               ,pr_rw_crapdat.dtmvtolt
                                               ,'3972'
                                               ,'9264'
-                                              ,vr_totatraso59_dim
-                                              ,'"TOTAL DIM SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS A MAIS DE 59 DIAS"');
+                                              ,vr_totatraso90_dim
+                                              ,'"TOTAL DIM SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS A MAIS DE 90 DIAS"');
 
           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
                                         ,pr_des_text => vr_txt_compmicro);
 
         -- 3ª linha
+				-- PRJ Microcredito
           vr_txt_compmicro := fn_set_cabecalho('50'
                                               ,pr_rw_crapdat.dtmvtopr
                                               ,pr_rw_crapdat.dtmvtopr
                                               ,'9264'
                                               ,'3967'
                                               ,vr_tot_vltttlcr_dim
-                                              ,'"REVERSAO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS ATE 59 DIAS"');
+                                              ,'"REVERSAO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS ATE 90 DIAS"');
 
           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
                                         ,pr_des_text => vr_txt_compmicro);
 
         -- 4ª linha
+				-- PRJ Microcredito
           vr_txt_compmicro := fn_set_cabecalho('50'
                                               ,pr_rw_crapdat.dtmvtopr
                                               ,pr_rw_crapdat.dtmvtopr
                                               ,'9264'
                                               ,'3972'
-                                              ,vr_totatraso59_dim
-                                              ,'"REVERSAO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS A MAIS DE 59 DIAS"');
+                                              ,vr_totatraso90_dim
+                                              ,'"REVERSAO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM - VENCIDOS A MAIS DE 90 DIAS"');
 
           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
                                         ,pr_des_text => vr_txt_compmicro);
 
         --Linhas PNMPO DIM E CAIXA
         -- 1ª linha
+				-- PRJ Microcredito
           vr_txt_compmicro := fn_set_cabecalho('50'
                                               ,pr_rw_crapdat.dtmvtolt
                                               ,pr_rw_crapdat.dtmvtolt
                                               ,'3965'
                                               ,'9264'
                                               ,vr_tot_vltttlcr_dim_outros
-                                              ,'"SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS ATE 59 DIAS"');
+                                              ,'"SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS ATE 90 DIAS"');
 
           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
                                         ,pr_des_text => vr_txt_compmicro);
 
                             
         -- 2ª linha
+				-- PRJ Microcredito
           vr_txt_compmicro := fn_set_cabecalho('50'
                                               ,pr_rw_crapdat.dtmvtolt
                                               ,pr_rw_crapdat.dtmvtolt
                                               ,'3968'
                                               ,'9264'
-                                              ,vr_totatraso59_dim_outros
-                                              ,'"SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS A MAIS DE 59 DIAS"');
+                                              ,vr_totatraso90_dim_outros
+                                              ,'"SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS A MAIS DE 90 DIAS"');
 
           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
                                         ,pr_des_text => vr_txt_compmicro);
 
                                          
         -- 3ª linha
+				-- PRJ Microcredito
           vr_txt_compmicro := fn_set_cabecalho('50'
                                               ,pr_rw_crapdat.dtmvtopr
                                               ,pr_rw_crapdat.dtmvtopr
                                               ,'9264'
                                               ,'3965'
                                               ,vr_tot_vltttlcr_dim_outros
-                                              ,'"REVERSAO DO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS ATE 59 DIAS"');
+                                              ,'"REVERSAO DO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS ATE 90 DIAS"');
 
           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
                                         ,pr_des_text => vr_txt_compmicro);
 
                             
         -- 4ª linha
+				-- PRJ Microcredito
           vr_txt_compmicro := fn_set_cabecalho('50'
                                               ,pr_rw_crapdat.dtmvtopr
                                               ,pr_rw_crapdat.dtmvtopr
                                               ,'9264'
                                               ,'3968'
-                                              ,vr_totatraso59_dim_outros
-                                              ,'"REVERSAO DO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS A MAIS DE 59 DIAS"');
+                                              ,vr_totatraso90_dim_outros
+                                              ,'"REVERSAO DO SALDO DAS OPERACOES DE MICROCREDITO APLICADOS AOS COOPERADOS COM RECURSOS ORIUNDOS DE DIM PNMPO E DIM PNMPO CAIXA – VENCIDOS A MAIS DE 90 DIAS"');
 
           GENE0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file
                                         ,pr_des_text => vr_txt_compmicro);
@@ -3981,6 +4000,7 @@ BEGIN
         vr_vlprejuz_conta := 0;
         vr_qtpreatr       := 0;
         vr_vltotatr       := 0;
+				vr_vljur60        := 0; -- PRJ Microcredito
 
         -- Se mudou o PAC ou é o primeiro registro
          IF vr_des_chave_crapris = vr_tab_crapris.FIRST OR vr_tab_crapris(vr_tab_crapris.PRIOR(vr_des_chave_crapris)).cdagenci <> vr_tab_crapris(vr_des_chave_crapris).cdagenci THEN
@@ -4109,6 +4129,9 @@ BEGIN
 														   THEN vr_tab_crapris(vr_des_chave_crapris).vljura60
 															 ELSE 0
 													END);
+					-- PRJ Microcredito
+					vr_vljur60 := vr_vljur60 + nvl(vr_tab_crapris(vr_des_chave_crapris).vljura60,0);
+					
           vr_qtpreatr := vr_tab_crapvri_index(vr_chave_index).qtpreatr;
           vr_vltotatr := vr_vltotatr + 
 					               (vr_tab_crapvri_index(vr_chave_index).vltotatr +
@@ -4198,8 +4221,10 @@ BEGIN
                   -- Criar o registro:
                   vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesfis := 0;
                   vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesjur := 0;
-                  vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate59d := 0;
-                  vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci59d := 0;
+									-- PRJ Microcredito
+                  vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate90d := 0;
+                  vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci90d := 0;
+									vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vljur60d := 0;
 
                   -- Verificar o grupo conforme os tipos de MicroCrédito
                         IF vr_tab_dados_epr(vr_indice).dsorgrec LIKE '%BRDE%' 
@@ -4221,11 +4246,17 @@ BEGIN
                            := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlpesjur + vr_vldivida;
                 END IF;
 
-                -- Se o atraso for até 59 dias
-                IF vr_tab_crapris(vr_des_chave_crapris).qtdiaatr <= 59 THEN
-                  -- Acumular no período até 59
-                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate59d 
-                           := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate59d + vr_vldivida;
+								-- PRJ Microcredito
+                -- Se o atraso for até 90 dias
+                IF vr_tab_crapris(vr_des_chave_crapris).qtdiaatr <= 90 THEN
+                  -- Acumular no período até 90
+									
+									-- PRJ Microcredito
+									vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vljur60d 
+														 := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vljur60d + vr_vljur60;
+									
+                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate90d 
+                           := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlate90d + vr_vldivida;
 
                   IF vr_tab_dados_epr(vr_indice).dsorgrec = 'MICROCREDITO DIM' THEN
                     vr_tot_vltttlcr_dim := vr_tot_vltttlcr_dim + vr_vldivida; -- Acumulo total da linha
@@ -4234,14 +4265,15 @@ BEGIN
                   END IF;
 
                 ELSE
+									-- PRJ Microcredito
                   -- Acumular no restante
-                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci59d 
-                           := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci59d + vr_vldivida;
+                        vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci90d 
+                           := vr_tab_microcredito(vr_tab_dados_epr(vr_indice).dsorgrec).vlaci90d + vr_vldivida;
 
                   IF vr_tab_dados_epr(vr_indice).dsorgrec = 'MICROCREDITO DIM' THEN
-                    vr_totatraso59_dim := vr_totatraso59_dim + vr_vldivida;
+                    vr_totatraso90_dim := vr_totatraso90_dim + vr_vldivida;
                         ELSIF vr_tab_dados_epr(vr_indice).dsorgrec IN ('MICROCREDITO PNMPO CAIXA','MICROCREDITO PNMPO DIM') THEN
-                    vr_totatraso59_dim_outros := vr_totatraso59_dim_outros + vr_vldivida;
+                    vr_totatraso90_dim_outros := vr_totatraso90_dim_outros + vr_vldivida;
                   END IF;
 
                 END IF;
@@ -5460,12 +5492,17 @@ BEGIN
                                 ,pr_ds_microcredito  => vr_chave_microcredito
                                 ,pr_vlreprec         => vr_tab_microcredito(vr_chave_microcredito).vlpesfis +
                                                         vr_tab_microcredito(vr_chave_microcredito).vlpesjur
-                                ,pr_vlempatr         => vr_tab_microcredito(vr_chave_microcredito).vlate59d +
-                                                        vr_tab_microcredito(vr_chave_microcredito).vlaci59d
+                                ,pr_vlempatr         => vr_tab_microcredito(vr_chave_microcredito).vlate90d +
+                                                        vr_tab_microcredito(vr_chave_microcredito).vlaci90d -
+																												vr_tab_microcredito(vr_chave_microcredito).vljur60d
                                 ,pr_vlreprec_pf      => vr_tab_microcredito(vr_chave_microcredito).vlpesfis
                                 ,pr_vlreprec_pj      => vr_tab_microcredito(vr_chave_microcredito).vlpesjur
-                                ,pr_vlate59d         => vr_tab_microcredito(vr_chave_microcredito).vlate59d
-                                ,pr_vlaci59d      	  => vr_tab_microcredito(vr_chave_microcredito).vlaci59d);     
+																-- PRJ Microcredito
+                                ,pr_vlate90d         => vr_tab_microcredito(vr_chave_microcredito).vlate90d
+                                ,pr_vlaci90d      	  => vr_tab_microcredito(vr_chave_microcredito).vlaci90d
+																-- PRJ Microcredito
+																,pr_vljur60d         => vr_tab_microcredito(vr_chave_microcredito).vljur60d
+																);     
 
           END IF;
           vr_chave_microcredito := vr_tab_microcredito.next(vr_chave_microcredito);
