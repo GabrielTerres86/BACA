@@ -4,15 +4,16 @@ CREATE OR REPLACE PACKAGE cecred.sspc0002 AS
   --
   --  Programa: SSPC0002
   --  Autor   : Andrino Carlos de Souza Junior
-  --  Data    : Novembro/2015                     Ultima Atualizacao: 
+  --  Data    : Novembro/2015                     Ultima Atualizacao: 14/05/2019
   --
   --  Dados referentes ao programa:
   --
   --  Objetivo  : Package referente ao processo de envio de boletos de cobranca ao Serasa
   -- 
   --  Alteracoes: 
-  --              
-  ---------------------------------------------------------------------------------------------------------------
+  /*
+  14/05/2019 - inc0011296 Na rotina pc_negativa_serasa, corrigida a validação de cobrança em protesto (Carlos)
+  ---------------------------------------------------------------------------------------------------------------*/
 
   -- Rotina para alterar o indicador do Serasa para envio do boleto
   -- ao Serasa no proximo processo
@@ -166,6 +167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspc0002 AS
                   ,crapcob.vltitulo
                   ,crapcob.dtvencto
                   ,crapcob.nrinssac
+                  ,crapcob.insitcrt
                   ,crapcco.cdagenci
                   ,crapcco.cdbccxlt
                   ,crapcco.nrdolote
@@ -294,29 +296,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspc0002 AS
     ELSIF rw_crapcob.dtvencto >= rw_crapdat.dtmvtolt THEN
       vr_dsincons := 'Boleto ainda nao venceu. Solicitacao nao permitida!';
     ELSIF rw_crapcob.dtvencto + rw_parneg.qtminimo_negativacao > rw_crapdat.dtmvtolt THEN
-            vr_dsincons := 'Vencimento deve ser superior a ' || rw_parneg.qtminimo_negativacao ||
-                           ' dias corridos!';
-        ELSIF rw_crapcob.inserasa IN (1, 2) THEN
-            -- 1-Pendente de envio, 2-Solicitacao Enviada
+      vr_dsincons := 'Vencimento deve ser superior a ' || rw_parneg.qtminimo_negativacao ||
+                     ' dias corridos!';
+    ELSIF rw_crapcob.inserasa IN (1, 2) THEN
+      -- 1-Pendente de envio, 2-Solicitacao Enviada
       vr_dsincons := 'Solicitacao de inclusao ja foi enviada a Serasa.';
-        ELSIF rw_crapcob.inserasa IN (3, 4) THEN
-            -- 3-Pendente de envio Cancel, 2-Solicitacao Cancel Enviada
+    ELSIF rw_crapcob.inserasa IN (3, 4) THEN
+      -- 3-Pendente de envio Cancel, 2-Solicitacao Cancel Enviada
       vr_dsincons := 'Solicitacao de cancelamento ja foi enviada a Serasa.';      
-        ELSIF rw_crapcob.inserasa = 5 THEN
-            -- Negativado
+    ELSIF rw_crapcob.inserasa = 5 THEN
+      -- Negativado
       vr_dsincons := 'Boleto ja negativado na Serasa.';
-        ELSIF rw_crapcob.inserasa = 7 THEN
-            -- Acao Judicial
+    ELSIF rw_crapcob.inserasa = 7 THEN
+      -- Acao Judicial
       vr_dsincons := 'Boleto ja negativado na Serasa (Acao Judicial).';
-    END IF;
-    
-    -- Verificar se já foi identificada alguma inconsistencia
-    IF TRIM(vr_dsincons) IS NULL THEN
-      -- Verificar se o titulo está em PROTESTO
-            IF rw_crapcob.flgdprot = 1 AND rw_crapcob.qtdiaprt > 0 THEN
-        vr_dsincons := 'Boleto esta em processo de Protesto' || 
-                       ' - Solicitacao de negativacao nao pode ser executada.';
-      END IF;
+    ELSIF rw_crapcob.flgdprot = 1 OR rw_crapcob.insitcrt = 1 THEN
+      -- Titulo está em PROTESTO
+      vr_dsincons := 'Boleto esta em processo de Protesto' || 
+                     ' - Solicitacao de negativacao nao pode ser executada.';
     END IF;
     
     -- Se possuir mensagem de erro, gera inconsistencia
