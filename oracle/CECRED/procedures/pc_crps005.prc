@@ -6685,7 +6685,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
            vr_flgimp59:= 'S';
 
            --Atribuir valor para o titulo
-           vr_titcabec:= 'EMPRESTIMOS ATRASADOS MAIOR QUE 59 DIAS';
+           vr_titcabec:= 'EMPRESTIMOS ATRASADOS MAIOR QUE 90 DIAS'; -- PRJ Microcredito
 
            --Busca o caminho padrao do arquivo no unix /micros/financeiro/
            vr_nom_direto_cop:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'DIR_COPIA_CRRL006');
@@ -9734,7 +9734,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                         END IF;
 
                         --Se a quantidade de dias maior 59
-                        IF vr_dias > 59 THEN
+                        IF vr_dias > 90 THEN -- PRJ Microcredito
                           --Encontrar o proximo registro da tabela de memoria
                           --linha credito: 99999 + agencia: 99999 + conta: 9999999999
                           vr_index_atrasados:= LPad(rw_crapepr.cdlcremp,5,'0')||
