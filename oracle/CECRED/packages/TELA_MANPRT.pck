@@ -308,6 +308,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                 
      27/03/2019 - Colocar o tpocorre como texto pois pode haver casos em 
                   que vem campo texto (Lucas Ranghetti INC0036169)
+
+     16/04/2019 - INC0011935 - Melhorias diversas nos layouts de teds e conciliação:
+                - modal de conciliação arrastável e correção das colunas para não obstruir as caixas de seleção;
+                - aumentadas as alturas das listas de teds e modal de conciliação, reajustes das colunas (Carlos)
                   
      25/07/2019 - inc0021120 Na rotina pc_consulta_nao_conciliados, incluído o tipo de ocorrência 7
                   (liquidacao em condicional) no cursor cr_titulos para que os mesmos apareçam na tela 
@@ -702,15 +706,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       --Incrementar Quantidade Registros do Parametro
       vr_qtregist:= nvl(vr_qtregist,0) + 1;
 
-      /* controles da paginacao */
-      IF (vr_qtregist < pr_nriniseq) OR
-         (vr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
-         --Proxima TED
-        CONTINUE;
-      END IF;
-
-      --Numero Registros
-      IF vr_nrregist > 0 THEN
         
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'idlancto', pr_tag_cont => rw_tbfin_recursos_movimento.idlancto, pr_des_erro => vr_dscritic);
@@ -732,11 +727,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
 
         vr_contador := vr_contador + 1;
         vr_flgfirst := FALSE;
-
-      END IF;
-
-      --Diminuir registros
-      vr_nrregist:= nvl(vr_nrregist,0) - 1;
 
     END LOOP;
                                             
