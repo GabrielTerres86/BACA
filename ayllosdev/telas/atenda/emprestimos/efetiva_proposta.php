@@ -238,6 +238,8 @@
 							if ($cdoperac == 3) { $countErroBaixa++; }
 						}
 
+						parametrosParaAudit($glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"]); 
+
 						gravarAuditoria($GLOBALS["postDate"], $GLOBALS["getDate"], $errorMessage, $dataInteracao, $idRegistro, 'S', $cdoperac, $identificador, $idseqbem, $nrctremp, $nrdconta);
 
 						if ($exibeErro == "abortar") {
