@@ -104,10 +104,11 @@
  function validaAnalistaPJ(){
     var aux_nomeForm = "#frmDadosAval";
     //Nacionalidade: cdnacion
-    if($('#cdnacion',aux_nomeForm).val() == ""){
-        exibirErroAvalista('Favor inserir uma Nacionalidade.');
-        return false;
-    }
+    // Rafael Ferreira (Mouts) - Story 13447
+    //if($('#cdnacion',aux_nomeForm).val() == ""){
+    //    exibirErroAvalista('Favor inserir uma Nacionalidade.');
+    //    return false;
+    //}
 
     //Data de Abertura: dtnascto
     if($('#dtnascto',aux_nomeForm).val() == ""){

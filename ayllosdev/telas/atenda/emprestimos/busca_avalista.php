@@ -8,6 +8,7 @@
  * 000: [15/07/2014] Incluso novos campos( inpessoa e dtnascto ) na carga array (Daniel).
  * 001: [08/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
  * 002: [22/10/2018] Adicionado campo Conta Conjuge e Renda Conjuge. (Mateus Z / Mouts) 
+ 
  */	
 ?>
  

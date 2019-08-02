@@ -381,8 +381,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
   --
   --             27/12/2018 - Inclusão de tratamento na "pc_pagar_epr_cobranca" para contas corrente em 
   --                          prejuízo (debitar da conta transitória e não da conta corrente).
-  --  												P450 - Reginaldo/AMcom
+  --                          P450 - Reginaldo/AMcom
   --
+  --             29/04/2019 - Ajuste na procedure "pg_pagar_epr_cobranca" para correção no tratamento de contas em prejuízo
+  --                          para debitar corretamente o valor pago da Conta Transitória (Bloqueados Prejuízo).
+  --                          450 - Reginaldo/AMcom
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_busca_convenios(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
@@ -1128,6 +1131,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                conta transitória e não da conta corrente).
                                P450 - Reginaldo/AMcom
 
+                  29/04/2019 - Correção no tratamento de contas em prejuízo para debitar corretamente o valor
+                               pago da Conta Transitória (Bloqueados Prejuízo).
+                               P450 - Reginaldo/AMcom
+
                   06/02/2019 - Ajustar para efetuar pagamento de emprestimo POS  
                                P298.2.2 - Pos Fixado (Luciano - Supero)
 
@@ -1154,6 +1161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 		-- Variaveis locais
     vr_dsparcel gene0002.typ_split;
 	vr_vldpagto crapepr.vlsdeved%TYPE;    
+    vr_vldpagto_aux crapepr.vlsdeved%TYPE;
     vr_vltotpag craplcm.vllanmto%TYPE;
     vr_flgdel   BOOLEAN;
     vr_flgativo PLS_INTEGER;
@@ -1383,6 +1391,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
               RAISE vr_exc_saida;
             END IF;
 
+            vr_vldpagto_aux := vr_vldpagto;
+
             OPEN cr_crapepr;
             FETCH cr_crapepr INTO rw_crapepr;
       			
@@ -1432,6 +1442,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
               RAISE vr_exc_saida;
             END IF;
             
+            vr_vldpagto := vr_vldpagto + vr_vldpagto_aux;
+
             END IF; 
             
             /*
@@ -1713,7 +1725,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                    , pr_cdoperad => pr_cdoperad
                                    , pr_idorigem => pr_idorigem
                                    , pr_nmtelant => pr_nmtelant
-                                   , pr_vltotpag => vr_vltotpag --> Retorno do valor total pago
+                                   , pr_vltotpag => vr_vldpagto --> Retorno do valor total pago
                                    , pr_cdcritic => vr_cdcritic
                                    , pr_dscritic => vr_dscritic);                                 
 
@@ -2446,7 +2458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       END IF; -- TR/PP/POS
 
       -- Se a conta está em prejuízo, lança débito referente ao valor pago na conta transitória - Reginaldo/AMcom
-      IF vr_prejuzcc THEN
+      IF vr_vldpagto > 0 AND vr_prejuzcc THEN
         PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => pr_cdcooper
                                     , pr_nrdconta => pr_nrdconta
                                     , pr_dtmvtolt => pr_dtmvtolt

@@ -134,6 +134,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0003 AS
   --                            (Renato Cordeiro - AMcom)
   --               17/07/2019 - Tratamento para multiplas solicitações de talões - PJ505 código de segurança cheque
   --                            (Renato Cordeiro - AMcom)
+  --               19/07/2019 - Gera numeração de cheques com digito no relatório 392 - PJ505 código de segurança cheque
+  --                            (Renato Cordeiro - AMcom)
+  --               24/07/2019 - Acerto relatório 392 mostrar todos os taloes solicitados - PJ505 código de segurança cheque
+  --                            (Renato Cordeiro - AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1816,7 +1820,7 @@ END;
     
     -- Número do pedido
     vr_nrpedido        NUMBER;
-    
+
     TYPE typ_reg_pedido_conta IS
     RECORD (nrpedido_nrdconta    NUMBER);
 
@@ -2943,8 +2947,10 @@ EXCEPTION
     -- Variaveis auxiliares
     vr_nrctaitg        crapass.nrdctitg%TYPE;
     vr_nrinichq        crapass.nrflcheq%TYPE;
+    vr_nrinichq_dig    crapass.nrflcheq%TYPE;
     vr_nrinichq_fc     crapass.nrflcheq%TYPE;
     vr_nrultchq        crapass.nrflcheq%TYPE;
+    vr_nrultchq_dig    crapass.nrflcheq%TYPE;
     vr_nrflcheq        crapass.nrflcheq%TYPE;
     vr_nrflcheq_aux    crapass.nrflcheq%TYPE;
     vr_nrdigchq        crapfdc.nrdigchq%TYPE;
@@ -3035,6 +3041,7 @@ EXCEPTION
     wr_qtfolha_gerada   crapass.qtfoltal%TYPE;
     vr_qttalao          crapreq.qtreqtal%TYPE;
     vr_qtfoltal         crapreq.qtreqtal%TYPE;
+    vr_nrseqems_ant     rw_crapfdc.nrseqems%TYPE;
   BEGIN        
 
     vr_nmempres    := 'RR DONNELLEY';
@@ -3122,7 +3129,7 @@ EXCEPTION
                                  pr_tprequis,
                                  vr_dtmvtolt,
                                  pr_nrpedido) LOOP
-
+        
      vr_indice := rw_crapreq.nrpedido||rw_crapreq.nrdconta;
      if not (vr_tab_pedido_conta.exists(vr_indice)) then
 
@@ -3292,7 +3299,6 @@ EXCEPTION
         ELSE  -- Se for taloes
           vr_qttottal_tl := vr_qttottal_tl + rw_crapreq.qtreqtal;
         END IF;
-        -- renato incluido aqui
         IF NOT (rw_crapreq.tprequis = 3 AND rw_crapreq.tpformul = 999) THEN -- Se nao for FC
           -- Atualiza o contador de REQUISICOES ou TRANSF/ABT
           IF rw_crapreq.insitreq IN (4,5) THEN
@@ -3300,7 +3306,7 @@ EXCEPTION
           ELSE
             vr_qttotreq_tl := vr_qttotreq_tl + 1;
           END IF;
-
+              
           IF rw_crapass.qtfoltal = 10 THEN
             vr_qtfoltal_10 := vr_qtfoltal_10 + (rw_crapreq.qtreqtal);
           ELSE
@@ -3321,10 +3327,12 @@ EXCEPTION
           vr_qtfoltal := rw_crapreq.qtreqtal;
         END IF;
         for rw_talao in 1 .. vr_qttalao loop
-        vr_primeira_vez := 1;
+           vr_primeira_vez := 1;
            wr_qtfolha_gerada := 1;
         WHILE cr_crapfdc%FOUND and wr_qtfolha_gerada <= vr_qtfoltal LOOP
-          
+
+            vr_nrseqems_ant := rw_crapfdc.nrseqems;
+            
             if vr_primeira_vez = 1 then
               vr_nrinichq := rw_crapfdc.nrcheque;
               vr_nrultchq := rw_crapfdc.nrcheque;
@@ -3418,9 +3426,7 @@ EXCEPTION
 
             vr_nmsegtal := ' ';
 
-            END IF;
-
-          -- renato retirado daqui
+          END IF;
 
           -- Indica que foi gerado arquivo de requisicao de talao/formulario de cheque
           vr_flggerou := true;
@@ -3564,32 +3570,38 @@ EXCEPTION
                                         ,pr_des_text => vr_dsarqdad);
           -- Quantidade de Linhas do Arquivo
           vr_qtlinhas := vr_qtlinhas + 1;
-
+          
           vr_primeira_vez := 0;
           vr_nrultchq := rw_crapfdc.nrcheque;
-        
+
           FETCH cr_crapfdc INTO rw_crapfdc;
           wr_qtfolha_gerada := wr_qtfolha_gerada + 1;
         END LOOP;
-        end loop;
-        
-        close cr_crapfdc;
 
-        -- renato incluido aqui
-        IF NOT (rw_crapreq.tprequis = 3 AND rw_crapreq.tpformul = 999) THEN -- Se nao for FC
+          IF NOT (rw_crapreq.tprequis = 3 AND rw_crapreq.tpformul = 999) THEN -- Se nao for FC
+            vr_nrinichq_dig := vr_nrinichq*10;
+            vr_retorno  := gene0005.fn_calc_digito(pr_nrcalcul => vr_nrinichq_dig); -- O retorno é ignorado, pois a variável vr_nrinichq é atualiza pelo programa
+            vr_nrultchq_dig := vr_nrultchq*10;
+            vr_retorno  := gene0005.fn_calc_digito(pr_nrcalcul => vr_nrultchq_dig); -- O retorno é ignorado, pois a variável vr_nrinichq é atualiza pelo programa
+
           -- Insere as informações de detalhes do pedido da requisicao no XML
           pc_escreve_xml('<requisicao>'||
                            '<nrdconta>'||gene0002.fn_mask(rw_crapass.nrdconta,'zzzz.zzz.z')||'</nrdconta>'||
                            '<nrctaitg>'||gene0002.fn_mask(vr_nrctaitg,'9.999.999-9')       ||'</nrctaitg>'||
-                           '<flchqitg>'||gene0002.fn_mask(rw_crapass.flchqitg,'zz.zzz')    ||'</flchqitg>'||
-                           '<nrinichq>'||gene0002.fn_mask(vr_nrinichq,'zzz.zzz.z')         ||'</nrinichq>'||
-                           '<nrultchq>'||gene0002.fn_mask(vr_nrultchq,'zzz.zzz.z')         ||'</nrultchq>'||
+                             '<flchqitg>'||gene0002.fn_mask(vr_nrseqems_ant,'zz.zzz')    ||'</flchqitg>'||
+                             '<nrinichq>'||gene0002.fn_mask(vr_nrinichq_dig,'zzz.zzz.z')         ||'</nrinichq>'||
+                             '<nrultchq>'||gene0002.fn_mask(vr_nrultchq_dig,'zzz.zzz.z')         ||'</nrultchq>'||
                            '<qtfoltal>'||to_char(rw_crapass.qtfoltal)  ||'</qtfoltal>'||
                            '<nmprimtl>'||substr(rw_crapass.nmprimtl,1,40)  ||'</nmprimtl>'||
                            '<nmsegntl>'||substr(vr_nmsegtal,1,38)  ||'</nmsegntl>'|| -- Colocado tamanho maximo de 38, pois se for maior vai distorcer o relatorio
                            '<dstipreq>'||vr_dstipreq||        '</dstipreq>'||
                          '</requisicao>',1);
         END IF;
+
+        
+        end loop;
+
+        close cr_crapfdc;
 
         -- Atualiza o contados de requisicoes de talões
         vr_qtreqtal := vr_qtreqtal + 1;

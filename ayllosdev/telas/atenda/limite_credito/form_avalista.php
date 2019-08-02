@@ -19,7 +19,7 @@
 	
 	<label for="nrctaava">Conta:</label>
 	<input name="nrctaava" id="nrctaava" type="text" value="" />
-	<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>		
+	<a style='padding: 3px 0 0 3px;'><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>		
 	<br />
 		
 	<label for="inpessoa">Tipo Natureza:</label>
@@ -30,7 +30,7 @@
 	</select>	
 	<br />
 
-	<label for="nrcpfcgc">C.P.F.:</label>
+	<label for="nrcpfcgc">CPF.:</label>
 	<input name="nrcpfcgc" id="nrcpfcgc" type="text" value="" />
 	<br />
             
@@ -38,17 +38,20 @@
 	<input name="nmdavali" id="nmdavali" type="text" value="" />
 	<br />
 
-	<label for="cdnacion">Nacionalidade:</label>
-	<div id="divCdnacion">
-		<input name="cdnacion" id="cdnacion" type="text" />
-		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-	</div>
-	<input name="dsnacion" id="dsnacion" type="text" value="" />
 
 	<label for="dtnascto">Data Nasc.:</label>
 	<input name="dtnascto" id="dtnascto" type="text" value="" />
 	<br />
 			
+    <!-- Rafael Ferreira (Mouts) - Story 13447-->
+	<div id="divNacionalidade">
+		<label for="cdnacion">Nacionalidade:</label>
+		<div id="divCdnacion">
+			<input name="cdnacion" id="cdnacion" type="text" />
+			<a style='padding: 3px 0 0 3px;'><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+		</div>
+		<input name="dsnacion" id="dsnacion" type="text" value="" />
+	</div>
 	<select name="tpdocava" id="tpdocava">
 		<option value=""  > - </option> 
 		<option value="CH">CH</option>
@@ -67,7 +70,7 @@
 	<label for="nrctacjg">Conta:</label>
 	<input name="nrctacjg" id="nrctacjg" type="text" value="" />
 
-	<label for="nrcpfcjg">C.P.F.:</label>
+	<label for="nrcpfcjg">CPF:</label>
 	<input name="nrcpfcjg" id="nrcpfcjg" type="text" value="" />
 	<br />
 					

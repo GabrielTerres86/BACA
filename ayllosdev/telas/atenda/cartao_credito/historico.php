@@ -171,7 +171,7 @@ function getDecisao($nrdconta, $nrctrcrd, $glbvars){
 									<a 	href="#" 
 										onclick="showConfirmacao('Deseja reenviar a proposta?', 'Confirma&ccedil;&atilde;o - Aimaro', 'reenviarBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   																			
 										class="botao" 
-										id="btRenviar">Reenviar Proposta</a>
+										id="btRenviar">Reenviar Esteira</a>
 									<?}?>
 									
 									<?if((($sitcrd==strtolower("Enviado Bancoob") && $sitest==strtolower("Analise Finalizada") && $sitdec==strtolower("Aprovada Auto") ) ||
@@ -185,7 +185,7 @@ function getDecisao($nrdconta, $nrctrcrd, $glbvars){
 									<a href="#" 
 										onclick="showConfirmacao('Deseja solicitar o retorno do Bancoob?', 'Confirma&ccedil;&atilde;o - Aimaro', 'verificaRetornoBancoob(<?php echo $nrctrcrd; ?>);', '', 'sim.gif', 'nao.gif');"									   
 									   class="botao" 
-									   id="btRenviar">Solicitar Retorno</a>
+									   id="btRenviar">Solicitar Retorno Bancoob</a>
 									<?}
 
 									?>

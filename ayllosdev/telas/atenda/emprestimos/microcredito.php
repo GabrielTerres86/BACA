@@ -8,6 +8,8 @@
  *
  * ALTERACOES   : 18/03/2015 - Mostrar a tela do questionario quando alterada a linha de credito
 		                       para microcredito (Jonata-RKAM).
+ *                28/06/2019 - Alterado o fluxo de consulta para ao final mostrar a tela de demonstração 
+ *                             do empréstimo PRJ 438 - Sprint 13 (Mateus Z / Mouts)		                       
  */
 ?>
  
@@ -52,7 +54,8 @@
 	if ($inlcrmcr == 'N' || ($nrseqrrq == 0 && $cddopcao == 'C') ) {	
 		// Se nao eh microcredito, vai para a tela de observacoes
 		if ($cddopcao == 'C') {
-			echo 'controlaOperacao("");';
+			// PRJ 438 - Sprint 13 - Na consulta também deverá exibir a tela de demostração de empréstimo (Mateus Z)
+			echo 'controlaOperacao("C_DEMONSTRATIVO_EMPRESTIMO");';
 		} else {
 			echo 'resposta = ""; controlaOperacao("' . $cddopcao . '_ALIENACAO");';
 		}

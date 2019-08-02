@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS569(pr_cdcooper in crapcop.cdcooper%ty
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Irlan
-     Data    : Maio/2010                    Ultima atualizacao: 06/10/2017
+     Data    : Maio/2010                    Ultima atualizacao: 02/07/2019
 
      Dados referentes ao programa:
 
@@ -54,6 +54,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS569(pr_cdcooper in crapcop.cdcooper%ty
                   06/10/2017 - Alterado para gerar com data Base da consulta 
                                sempre 1 mes antes. (Jaison/James - M446)
 
+                  02/07/2019 - Adicionar todos os CPF e CNPJ de cooperados que possuem 
+                               contratos na central de risco na mensal do arquivo 
+                               (independente do cooperado estar demitido ou não). 
+                               (Heckmann/AMcom - P450)
   ............................................................................*/
   BEGIN
     DECLARE
@@ -98,9 +102,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS569(pr_cdcooper in crapcop.cdcooper%ty
               ,crapass.inpessoa
               ,crapass.nrcpfcgc
           FROM crapass
-              ,crapcop
-         WHERE crapass.cdcooper = crapcop.cdcooper
-           AND crapass.dtdemiss IS NULL;
+         WHERE crapass.dtdemiss IS NULL
+        -- P450 CPF e CNPJ de cooperados que possuem 
+        -- contratos na central de risco na mensal do arquivo   
+         UNION
+        SELECT crapass.cdcooper
+              ,crapass.nrdconta
+              ,crapass.inpessoa
+              ,crapass.nrcpfcgc
+          FROM crapass
+              ,crapris
+         WHERE crapass.cdcooper = crapris.cdcooper
+           AND crapass.nrdconta = crapris.nrdconta
+           AND crapris.inddocto = 1
+           AND crapris.dtrefere = vr_dtmvtolt;
 
       -- Cursor contento os titulares
       CURSOR cr_crapttl IS

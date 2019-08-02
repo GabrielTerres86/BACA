@@ -21,7 +21,8 @@ function formataAvalista(){
 	var nomeForm = 'divDadosAvalistas';
 
 	var cTodos = $('select,input', '#' + nomeForm + ' fieldset:eq(0)');
-    var rRotulo = $('label[for="qtpromis"],label[for="nrcpfcgc"],label[for="tpdocava"],label[for="nmdavali"],label[for="nrctaava"],label[for="inpessoa"],label[for="cdnacion"]', '#' + nomeForm);
+    //var rRotulo = $('label[for="qtpromis"],label[for="nrcpfcgc"],label[for="tpdocava"],label[for="nmdavali"],label[for="nrctaava"],label[for="inpessoa"],label[for="cdnacion"]', '#' + nomeForm);
+    var rRotulo = $('label[for="qtpromis"],label[for="nrcpfcgc"],label[for="tpdocava"],label[for="nmdavali"],label[for="nrctaava"],label[for="inpessoa"], label[for="dtnascto"], label[for="cdnacion"]', '#' + nomeForm); // Rafael Ferreira (Mouts) - Story 13447
 
     var rConta = $('label[for="nrctaava"]', '#' + nomeForm);
     var rNmdavali = $('label[for="nmdavali"]', '#' + nomeForm);
@@ -43,7 +44,8 @@ function formataAvalista(){
     rConta.css('width', '80px');
     rInpessoa.css('width', '80px');
     rNmdavali.css('width', '80px');
-    rDtnascto.addClass('rotulo-linha').css('width', '95px');
+    //rDtnascto.addClass('rotulo-linha').css('width', '95px');
+    rDtnascto.addClass('rotulo').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
 
     cQntd.css('width', '60px').setMask('INTEGER', 'zz9', '', '');
     cConta.addClass('conta pesquisa').css('width', '115px');
@@ -435,11 +437,30 @@ function controlaCamposTelaAvalista(cooperado){
 		}
 	}
 
+	// Rafael Ferreira (Mouts) - Story 13447
+    if (inpessoa == 1) {
+        $('label[for="nrctaava"]', '#divDadosAvalistas').css('width', '95px');
+        $('label[for="inpessoa"]', '#divDadosAvalistas').css('width', '95px');
+        $('label[for=nrcpfcgc]', '#divDadosAvalistas').css('width', '95px');
+        $('label[for=nmdavali]', '#divDadosAvalistas').css('width', '95px');
+        $('label[for=dtnascto]', '#divDadosAvalistas').css('width', '95px');
+        //$('label[for=divCdnacion]', '#divDadosAvalistas').css('width', '95px');
+        $('label[for=cdnacion]', '#divDadosAvalistas').css('width', '95px');
+        $('label[for="dtnascto"], #dtnascto', '#divDadosAvalistas').text('Data Nasc.:');
+    } else{
+        $('label[for="nrctaava"]', '#divDadosAvalistas').css('width', '100px');
+        $('label[for="inpessoa"]', '#divDadosAvalistas').css('width', '100px');
+        $('label[for=nrcpfcgc]', '#divDadosAvalistas').css('width', '100px');
+        $('label[for=nmdavali]', '#divDadosAvalistas').css('width', '100px');
+        $('label[for=dtnascto]', '#divDadosAvalistas').css('width', '100px');
+        $('label[for="dtnascto"], #dtnascto', '#divDadosAvalistas').text('Data da Abertura:');
+    }
 	if (inpessoa == 1 && cooperado == true) {
 
-		$('label[for="nrcpfcgc"]', '#divDadosAvalistas').text('C.P.F:');
+		$('label[for="nrcpfcgc"]', '#divDadosAvalistas').text('CPF:');
 		$('label[for="nmdavali"]', '#divDadosAvalistas').text('Nome:');
 		$('#divCdnacion', '#divDadosAvalistas').hide();
+        $('#dsnacion', '#divDadosAvalistas').show();
 		$('label[for="dtnascto"], #dtnascto', '#divDadosAvalistas').hide();
 		$('label[for="dsdemail"], #dsdemail', '#divDadosAvalistas').hide();
 		$('label[for="vlrenmes"]', '#divDadosAvalistas').css('width', '120px').text('Rendimento Mensal:');
@@ -447,9 +468,11 @@ function controlaCamposTelaAvalista(cooperado){
 
 	} else if (inpessoa == 1 && cooperado == false) {
 
-		$('label[for="nrcpfcgc"]', '#divDadosAvalistas').text('C.P.F:');
+		$('label[for="nrcpfcgc"]', '#divDadosAvalistas').text('CPF:');
 		$('label[for="nmdavali"]', '#divDadosAvalistas').text('Nome:');
-		$('#divCdnacion', '#divDadosAvalistas').show();
+        $('#divNacionalidade', '#divDadosAvalistas').removeClass('rotulo-linha').addClass('rotulo').show(); // Rafael Ferreira (Mouts) - Story 13447
+		$('#divCdnacion', '#divDadosAvalistas').removeClass('rotulo-linha').addClass('rotulo').show(); // Rafael Ferreira (Mouts) - Story 13447
+        $('#dsnacion', '#divDadosAvalistas').removeClass('rotulo-linha').addClass('rotulo').show(); // Rafael Ferreira (Mouts) - Story 13447
 		$('label[for="dtnascto"], #dtnascto', '#divDadosAvalistas').show();
 		$('label[for="dsdemail"], #dsdemail', '#divDadosAvalistas').show();
 		$('label[for="vlrenmes"]', '#divDadosAvalistas').css('width', '120px').text('Rendimento Mensal:');
@@ -457,9 +480,10 @@ function controlaCamposTelaAvalista(cooperado){
 
 	} else if (inpessoa == 2 && cooperado == true) {
 
-		$('label[for="nrcpfcgc"]', '#divDadosAvalistas').text('C.N.P.J:');
+		$('label[for="nrcpfcgc"]', '#divDadosAvalistas').text('CNPJ:');
 		$('label[for="nmdavali"]', '#divDadosAvalistas').text('Razão Social:');
-		$('#divCdnacion', '#divDadosAvalistas').hide();
+		//$('#divCdnacion', '#divDadosAvalistas').hide();
+        $('#divNacionalidade', '#divDadosAvalistas').hide(); // Rafael Ferreira (Mouts) - Story 13447
 		$('label[for="dtnascto"], #dtnascto', '#divDadosAvalistas').hide();
 		$('label[for="dsdemail"], #dsdemail', '#divDadosAvalistas').hide();
 		$('label[for="vlrenmes"]', '#divDadosAvalistas').css('width', '150px').text('Faturamente Médio Mensal:');
@@ -467,8 +491,9 @@ function controlaCamposTelaAvalista(cooperado){
 
 	} else if (inpessoa == 2 && cooperado == false) {
 
-		$('label[for="nrcpfcgc"]', '#divDadosAvalistas').text('C.N.P.J:');
+		$('label[for="nrcpfcgc"]', '#divDadosAvalistas').text('CNPJ:');
 		$('label[for="nmdavali"]', '#divDadosAvalistas').text('Razão Social:');
+        $('#divNacionalidade', '#divDadosAvalistas').hide(); // Rafael Ferreira (Mouts) - Story 13447
 		$('label[for="dtnascto"], #dtnascto', '#divDadosAvalistas').show();
 		$('label[for="dtnascto"]', '#divDadosAvalistas').text('Data da Abertura:');
 		$('label[for="dsdemail"], #dsdemail', '#divDadosAvalistas').show();

@@ -25,6 +25,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
              ,nrdconta crapepr.nrdconta%TYPE
              ,inpessoa crapass.inpessoa%TYPE
              ,nrcpfcgc crapass.nrcpfcgc%TYPE
+             ,idastcjt crapass.idastcjt%TYPE
              ,idcarga  crapcpa.iddcarga%TYPE
              ,cdlcremp crapcpa.cdlcremp%TYPE
              ,vldiscrd crapcpa.vllimdis%TYPE
@@ -80,8 +81,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
                                  ,pr_tppessoa       crapass.inpessoa%TYPE DEFAULT 0
                                  ,pr_nrcpfcnpj_base crapass.nrcpfcnpj_base%TYPE DEFAULT 0) RETURN NUMBER;
                                  
-   /* Verifica se o cooperado possui saldo de Pre Aprovado */
-  FUNCTION fn_preapv_com_saldo(pr_cdcooper IN INTEGER,               --> Codigo da Cooperativa
+   /* Verifica se o cooperado pode efetuar a contratacao de pre aprovado de forma online */
+  FUNCTION fn_preapv_perm_cont_online(pr_cdcooper IN INTEGER,               --> Codigo da Cooperativa
                                pr_nrdconta IN INTEGER DEFAULT 0,     --> Numero da Conta
                                pr_idseqttl IN crapttl.idseqttl%TYPE, --> Sequencial do titular
                                pr_nrcpfope IN crapopi.nrcpfope%TYPE, --> CPF do operador juridico
@@ -503,8 +504,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     END;
   END fn_flg_preapv_liberado;
   
-   /* Verifica se o cooperado possui saldo de Pre Aprovado */
-  FUNCTION fn_preapv_com_saldo(pr_cdcooper IN INTEGER,               --> Codigo da Cooperativa
+   /* Verifica se o cooperado pode efetuar a contratacao de pre aprovado de forma online */
+  FUNCTION fn_preapv_perm_cont_online(pr_cdcooper IN INTEGER,               --> Codigo da Cooperativa
                                pr_nrdconta IN INTEGER DEFAULT 0,     --> Numero da Conta
                                pr_idseqttl IN crapttl.idseqttl%TYPE, --> Sequencial do titular
                                pr_nrcpfope IN crapopi.nrcpfope%TYPE, --> CPF do operador juridico
@@ -516,7 +517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
   BEGIN
     -- ..........................................................................
     --
-    --  Programa : fn_preapv_com_saldo
+    --  Programa : fn_preapv_perm_cont_online
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Werinton
@@ -525,7 +526,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que chamado por outros programas.
-    --   Objetivo  : Verificar se o cooperado possui saldo para constratacao de pre aprovado.
+    --   Objetivo  : Verificar se o cooperado possui saldo para constratacao de pre aprovado e se nao exige 
+    --   assinatura conjunta no auto atendimento.
     --
     --   Alteracoes: 
     -- .............................................................................
@@ -558,7 +560,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
           -- Verificar se existe informação de contratação do pré-aprovado
           IF vr_tab_dados_cpa.COUNT > 0 THEN
             -- Verificar se o valor para contratação do pré-aprovado é maior que zero
-            IF vr_tab_dados_cpa(vr_tab_dados_cpa.FIRST).vldiscrd > 0 THEN
+            -- E que não seja necessario a assinatura conjunta no auto atendimento.
+            IF vr_tab_dados_cpa(vr_tab_dados_cpa.FIRST).vldiscrd > 0
+              AND vr_tab_dados_cpa(vr_tab_dados_cpa.FIRST).idastcjt = 0  THEN
               vr_flglibera := 1;
             END IF;
           END IF;
@@ -571,7 +575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       WHEN OTHERS THEN
         RETURN 0;
     END;
-  END fn_preapv_com_saldo;
+  END fn_preapv_perm_cont_online;
   
   /* Mostrar o texto dos motivos na tela de acordo com o ocorrido. */
   FUNCTION fn_busca_motivo(pr_idmotivo IN tbgen_motivo.idmotivo%TYPE) RETURN VARCHAR2 IS
@@ -739,6 +743,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
             ,ass.nrdconta
             ,ass.inpessoa
             ,ass.nrcpfcnpj_base
+            ,idastcjt
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
@@ -907,6 +912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     pr_tab_dados_cpa(vr_idx).nrdconta := rw_crapass.nrdconta;
     pr_tab_dados_cpa(vr_idx).inpessoa := rw_crapass.inpessoa;
     pr_tab_dados_cpa(vr_idx).nrcpfcgc := rw_crapass.nrcpfcnpj_base;
+    pr_tab_dados_cpa(vr_idx).idastcjt := rw_crapass.idastcjt;
     pr_tab_dados_cpa(vr_idx).idcarga  := vr_idcarga;
     pr_tab_dados_cpa(vr_idx).cdlcremp := rw_crapcpa.cdlcremp;
     pr_tab_dados_cpa(vr_idx).vldiscrd := vr_vldispon;

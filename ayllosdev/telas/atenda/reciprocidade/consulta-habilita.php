@@ -48,6 +48,8 @@
 				09/04/2018 - Chamada da rotina para verificar se o tipo de conta permite produto 
 				             6 - Cobrança Bancária. PRJ366 (Lombardi).
 
+				20/02/2019 - Nova campo Homologado API (Andrey Formigari - Supero)
+
 *************************************************************************/
 
 session_start();
@@ -107,6 +109,7 @@ $flceeexp    = retornaFlag($_POST["flceeexp"]);
 $flserasa    = retornaFlag($_POST["flserasa"]);
 $cddbanco	 = trim($_POST["cddbanco"]);
 $flgcebhm    = retornaFlag(isset($_POST["flgcebhm"]) ? trim($_POST["flgcebhm"]) : 0);
+$flgapihm    = trim($_POST["flgapihm"]);
 $cddopcao    = trim($_POST["cddopcao"]);
 $dsdmesag    = $_POST["dsdmesag"];
 $titulares   = $_POST["titulares"];
@@ -359,6 +362,12 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                         <select name="flgcebhm" id="flgcebhm" class="<?php echo $campo; ?>">
                             <option value="yes" <? if ($flgcebhm == "SIM") { ?> selected <? } ?> >   SIM </option>
                             <option value="no"  <? if ($flgcebhm == "NAO") { ?> selected <? } ?> >  N&Atilde;O </option>
+                        </select>
+						<br style="clear: both;" />
+                        <label for="flgapihm" style="width: 210px;"><? echo utf8ToHtml('Homologado API:') ?></label>
+                        <select name="flgapihm" id="flgapihm" class="<?php echo $campo; ?>">
+                            <option value="yes" <? if ($flgapihm == "SIM") { ?> selected <? } ?> >   SIM </option>
+                            <option value="no"  <? if ($flgapihm == "NAO") { ?> selected <? } ?> >  N&Atilde;O </option>
                         </select>
                     </div>
                 </div>

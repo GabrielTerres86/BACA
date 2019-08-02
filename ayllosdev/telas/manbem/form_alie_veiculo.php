@@ -13,7 +13,7 @@
  	<script src="../../scripts/jquery.mask.min.js" type="text/javascript"></script>
  	<script src="../../scripts/jquery.maskMoney.js" type="text/javascript"></script>
 
-    <link href="../manbem/css/alie_veiculo.css" rel="stylesheet" type="text/css">
+    <link href="../manbem/css/alie_veiculo.css?x=<?php echo rand(1,123123);  ?>" rel="stylesheet" type="text/css"> <!-- Anderson Schloegel PJ438 Mout's Task 19673 -->
 	<link href="../manbem/css/maquinaEquipamento.css?x=<?php echo rand(1,123123);  ?>" rel="stylesheet" type="text/css"/> <!-- PRJ - 438 - Bruno -->
 
 	<script type="text/javascript" src="../manbem/scripts/utils.js"></script>
@@ -83,15 +83,18 @@
 					<div>
 						<label for="nrnotanf"> Nota Fiscal:</label>
 						<input name="nrnotanf" id="nrnotanf" type="text" value="<? echo getByTagName($dados,'nrnotanf')?>" />
+
+	                    <!-- CPF/CNPJ do INTERVENIENTE -->
+	                    <label for="nrcpfcgcE"> CPF/CNPJ Interveniente:</label>
+						<input name="nrcpfcgcE" id="nrcpfcgcE" class="mascara-cpfcnpj" type="text" value="<? echo getCpfCnpj($dados,'nrcpfcgc')?>" maxlength="18" />
+						<!-- Anderson Schloegel PJ438 Mout's Task 19673 -->
+
 					</div>
 					<!-- ANO FABRICACAO -->
 					<div>
 	                    <label for="nrmodbemE" >Ano Fabricação:</label>
 	                    <input name="nrmodbemE" id="nrmodbemE" type="text" class='inteiro' value="<? echo getByTagName($dados,'nrmodbem')?>"/>
 
-	                    <!-- CPF/CNPJ do INTERVENIENTE -->
-	                    <label for="nrcpfcgcE"> CPF/CNPJ do Interveniente:</label>
-						<input name="nrcpfcgcE" id="nrcpfcgcE" class="mascara-cpfcnpj" type="text" value="<? echo getCpfCnpj($dados,'nrcpfcgc')?>" maxlength="18" />
 	                </div>
 				</div>
 

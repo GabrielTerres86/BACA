@@ -105,6 +105,11 @@ DEF VAR h-b1wgen0024 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen0060 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen9999 AS HANDLE                                      NO-UNDO.
 DEF VAR aux_nmconjug LIKE crapcje.nmconjug                          NO-UNDO.
+DEF VAR aux_nrcpfcjg LIKE crapcje.nrcpfcjg                          NO-UNDO.
+DEF VAR aux_vlrencjg AS DECI                                        NO-UNDO.
+DEF VAR aux_nrctacjg AS INTE                                        NO-UNDO.
+DEF VAR aux_vlrenmes AS DECI                                        NO-UNDO.
+DEF VAR aux_vlmedfat AS DECI                                        NO-UNDO.
         
 FUNCTION ValidaDigFun RETURNS LOGICAL PRIVATE
     ( INPUT par_cdcooper AS INTEGER,
@@ -531,8 +536,19 @@ PROCEDURE Busca_Contrato:
                                    tt-contrato-avalista.nrcxapst    = crapavt.nrcxapst
                                    tt-contrato-avalista.complend    = crapavt.complend
                                    tt-contrato-avalista.inpessoa    = crapavt.inpessoa
+                                   tt-contrato-avalista.cdnacion    = crapavt.cdnacion
+                                   tt-contrato-avalista.vlrencjg    = crapavt.vlrencjg
+                                   tt-contrato-avalista.vlrenmes    = crapavt.vlrenmes
                                    tt-contrato-avalista.dtnascto    = crapavt.dtnascto
                                    aux_nmdaval1                     = crapavt.nmdavali.
+
+                            /* Buscar a Nacionalidade */
+                            FOR FIRST crapnac FIELDS(dsnacion)
+                                              WHERE crapnac.cdnacion = crapavt.cdnacion
+                                                    NO-LOCK:
+                                ASSIGN tt-contrato-avalista.dsnacion = crapnac.dsnacion.
+                        END.
+
                         END.
                     ELSE   
                     IF  crapepr.nrctaav2 = 0 AND
@@ -559,8 +575,18 @@ PROCEDURE Busca_Contrato:
                                    tt-contrato-avalista.nrcxapst    = crapavt.nrcxapst
                                    tt-contrato-avalista.complend    = crapavt.complend
                                    tt-contrato-avalista.inpessoa    = crapavt.inpessoa
+                                   tt-contrato-avalista.cdnacion    = crapavt.cdnacion
+                                   tt-contrato-avalista.vlrencjg    = crapavt.vlrencjg
+                                   tt-contrato-avalista.vlrenmes    = crapavt.vlrenmes
                                    tt-contrato-avalista.dtnascto    = crapavt.dtnascto
                                    aux_nmdaval2                     = crapavt.nmdavali.
+
+                            /* Buscar a Nacionalidade */
+                            FOR FIRST crapnac FIELDS(dsnacion)
+                                              WHERE crapnac.cdnacion = crapavt.cdnacion
+                                                    NO-LOCK:
+                                ASSIGN tt-contrato-avalista.dsnacion = crapnac.dsnacion.
+                        END.
                         END.
 
                 END. /* FOR EACH crapavt WHERE */
@@ -591,12 +617,20 @@ PROCEDURE Busca_Contrato:
                                tt-contrato-avalista.dsendava[2] = tt-avalista.dsendava[2]
                                tt-contrato-avalista.dscfcava = tt-avalista.dscfcava
                                tt-contrato-avalista.nmcidade = tt-avalista.nmcidade
+                               tt-contrato-avalista.nrfonres = tt-avalista.nrfonres
+                               tt-contrato-avalista.dsdemail = tt-avalista.dsdemail
                                tt-contrato-avalista.cdufende = tt-avalista.cdufende
                                tt-contrato-avalista.nrcepend = tt-avalista.nrcepend 
                                tt-contrato-avalista.nrendere = tt-avalista.nrendere
                                tt-contrato-avalista.nrcxapst = tt-avalista.nrcxapst
                                tt-contrato-avalista.complend = tt-avalista.complend
                                tt-contrato-avalista.inpessoa = tt-avalista.inpessoa
+                               tt-contrato-avalista.cdnacion = tt-avalista.cdnacion
+                               tt-contrato-avalista.dsnacion = tt-avalista.dsnacion
+                               tt-contrato-avalista.nrctacjg = tt-avalista.nrctacjg
+                               tt-contrato-avalista.nrcpfcjg = tt-avalista.nrcpfcjg
+                               tt-contrato-avalista.vlrencjg = tt-avalista.vlrencjg
+                               tt-contrato-avalista.vlrenmes = tt-avalista.vlrenmes
                                tt-contrato-avalista.dtnascto = tt-avalista.dtnascto.
                     END.
             END.
@@ -626,12 +660,20 @@ PROCEDURE Busca_Contrato:
                                tt-contrato-avalista.dsendava[2] = tt-avalista.dsendava[2]
                                tt-contrato-avalista.dscfcava = tt-avalista.dscfcava
                                tt-contrato-avalista.nmcidade = tt-avalista.nmcidade
+                               tt-contrato-avalista.nrfonres = tt-avalista.nrfonres
+                               tt-contrato-avalista.dsdemail = tt-avalista.dsdemail
                                tt-contrato-avalista.cdufende = tt-avalista.cdufende
                                tt-contrato-avalista.nrcepend = tt-avalista.nrcepend 
                                tt-contrato-avalista.nrendere = tt-avalista.nrendere
                                tt-contrato-avalista.nrcxapst = tt-avalista.nrcxapst
                                tt-contrato-avalista.complend = tt-avalista.complend
                                tt-contrato-avalista.inpessoa = tt-avalista.inpessoa
+                               tt-contrato-avalista.cdnacion = tt-avalista.cdnacion
+                               tt-contrato-avalista.dsnacion = tt-avalista.dsnacion
+                               tt-contrato-avalista.nrctacjg = tt-avalista.nrctacjg
+                               tt-contrato-avalista.nrcpfcjg = tt-avalista.nrcpfcjg
+                               tt-contrato-avalista.vlrencjg = tt-avalista.vlrencjg
+                               tt-contrato-avalista.vlrenmes = tt-avalista.vlrenmes
                                tt-contrato-avalista.dtnascto = tt-avalista.dtnascto.
                     END.                                                            
             END.
@@ -881,20 +923,57 @@ PROCEDURE Busca_Avalista:
 
                IF   AVAIL crapass THEN
                     DO:
-                       ASSIGN aux_cdgraupr = 0.
+                       ASSIGN aux_cdgraupr = 0
+                              aux_vlrenmes = 0.
+                       
                        IF crapass.inpessoa = 1 THEN
                        DO:
                            FOR FIRST crapttl FIELDS(cdgraupr nrcpfcgc)
 										      WHERE crapttl.cdcooper = par_cdcooper AND
                                               crapttl.nrdconta = crapass.nrdconta AND
-                                                    crapttl.idseqttl = 2 
-													NO-LOCK:
+                                    crapttl.idseqttl = 2 NO-LOCK:
 
 						     ASSIGN aux_cdgraupr = crapttl.cdgraupr
 							        aux_nrcpfcgc = crapttl.nrcpfcgc.
-
 						   END.
                                
+
+                          FIND crapttl WHERE crapttl.cdcooper = par_cdcooper     AND
+                                             crapttl.nrdconta = crapass.nrdconta AND
+                                             crapttl.idseqttl = 1 
+                                             NO-LOCK NO-ERROR.
+
+                          IF   AVAIL crapttl THEN
+                               aux_vlrenmes = crapttl.vlsalari     + 
+                                              crapttl.vldrendi[1]  + 
+                                              crapttl.vldrendi[2]  +
+                                              crapttl.vldrendi[3]  +
+                                              crapttl.vldrendi[4]  +
+                                              crapttl.vldrendi[5]  +
+                                              crapttl.vldrendi[6]. 
+                               
+                       END.
+
+                       IF   crapass.inpessoa = 2 THEN /*Faturamento Avalista PJ*/
+                       DO:
+
+                           IF  NOT VALID-HANDLE(h-b1wgen9999) THEN
+                               RUN sistema/generico/procedures/b1wgen9999.p
+                                   PERSISTENT SET h-b1wgen9999.
+
+                           RUN calcula-faturamento IN h-b1wgen9999
+                                       (INPUT  par_cdcooper,
+                                        INPUT  crapass.cdagenci,
+                                        INPUT  0,
+                                        INPUT  0,
+                                        INPUT  crapass.nrdconta, /*Conta avalista*/
+                                        INPUT  "",
+                                        OUTPUT aux_vlmedfat).
+                   
+                           IF  VALID-HANDLE(h-b1wgen9999)  THEN
+                               DELETE PROCEDURE h-b1wgen9999.
+
+                           ASSIGN aux_vlrenmes = aux_vlmedfat.
                        END.
 
                        FIND crapenc WHERE 
@@ -903,11 +982,57 @@ PROCEDURE Busca_Avalista:
                             crapenc.idseqttl = 1                 AND
                             crapenc.cdseqinc = 1 NO-LOCK NO-ERROR.
                             
+                       FIND FIRST crapcem WHERE crapcem.cdcooper = par_cdcooper     AND
+                                                crapcem.nrdconta = crapass.nrdconta AND
+                                                crapcem.idseqttl = 1 
+                                                NO-LOCK NO-ERROR.
+
+                       FIND FIRST craptfc /* FIELDS(nrdddtfc nrtelefo) */
+                                         WHERE craptfc.cdcooper = par_cdcooper     AND
+                                               craptfc.nrdconta = crapass.nrdconta AND
+                                               craptfc.idseqttl = 1 
+                                         NO-LOCK NO-ERROR.
+                            
+                       /* Limpar o nome do conjuge */
+                       ASSIGN aux_nmconjug = ""
+                              aux_nrcpfcjg = 0
+                              aux_nrctacjg = 0
+                              aux_vlrencjg = 0.
                        FIND  crapcje WHERE crapcje.cdcooper = par_cdcooper AND 
                                            crapcje.nrdconta = crapass.nrdconta AND 
                                            crapcje.idseqttl = 1 USE-INDEX crapcje1 NO-ERROR.
-                       IF AVAILABLE crapcje THEN
-                          ASSIGN aux_nmconjug = crapcje.nmconjug.
+                        
+                       IF AVAIL crapcje THEN
+                       DO:
+                           /* Validar se o numero da conta do conjuge é maior que zero
+                              busca as informações do nome do primeiro titular da conta de conjuge*/
+                           IF crapcje.nrctacje > 0 THEN
+                           DO:
+                              FIND crapttl WHERE crapttl.cdcooper = crapcje.cdcooper
+                                             AND crapttl.nrdconta = crapcje.nrctacje
+                                             AND crapttl.idseqttl = 1
+                                           NO-LOCK NO-ERROR.
+                              /* Se possuir titular carrega o nome */
+                              IF AVAIL crapttl THEN
+                                  ASSIGN aux_nmconjug = crapttl.nmextttl
+                                         aux_nrcpfcjg = crapttl.nrcpfcgc
+                                         aux_nrctacjg = crapttl.nrdconta
+                                         aux_vlrencjg = crapttl.vlsalari     + 
+                                                        crapttl.vldrendi[1]  + 
+                                                        crapttl.vldrendi[2]  +
+                                                        crapttl.vldrendi[3]  +
+                                                        crapttl.vldrendi[4]  +
+                                                        crapttl.vldrendi[5]  +
+                                                        crapttl.vldrendi[6].
+                           END.
+                           ELSE
+                               /* Se o numero da conta não é maior que zero carrega o nome da crapcje */
+                               ASSIGN aux_nmconjug = crapcje.nmconjug
+                                      aux_nrcpfcjg = crapcje.nrcpfcjg
+                                      aux_nrctacjg = crapcje.nrctacje
+                                      aux_vlrencjg = crapcje.vlsalari.
+                       END.
+                       
 
                        ASSIGN tt-avalista.nmdavali    = crapass.nmprimtl
                               tt-avalista.nrcpfcgc    = crapass.nrcpfcgc
@@ -927,12 +1052,22 @@ PROCEDURE Busca_Avalista:
                                                   ""                  
                               tt-avalista.dsendava[2] = TRIM(crapenc.nmbairro)
                               tt-avalista.nmcidade    = TRIM(crapenc.nmcidade)
+                              tt-avalista.nrfonres    = STRING(craptfc.nrdddtfc) +
+                                                        STRING(craptfc.nrtelefo)
+                                                        WHEN AVAIL craptfc
+                              tt-avalista.dsdemail    = crapcem.dsdemail
+                                                        WHEN AVAIL crapcem
                               tt-avalista.cdufende    = crapenc.cdufende
                               tt-avalista.nrcepend    = crapenc.nrcepend
                               tt-avalista.nrendere    = crapenc.nrendere
                               tt-avalista.nrcxapst    = crapenc.nrcxapst
                               tt-avalista.complend    = crapenc.complend
                               tt-avalista.inpessoa    = crapass.inpessoa
+                              tt-avalista.cdnacion    = crapass.cdnacion
+                              tt-avalista.nrctacjg    = aux_nrctacjg
+                              tt-avalista.nrcpfcjg    = aux_nrcpfcjg
+                              tt-avalista.vlrencjg    = aux_vlrencjg
+                              tt-avalista.vlrenmes    = aux_vlrenmes                              
                               tt-avalista.dtnascto    = crapass.dtnasctl.
 
                        IF   crapass.inpessoa = 1 THEN
@@ -995,10 +1130,21 @@ PROCEDURE Busca_Avalista:
                                    tt-avalista.nrcxapst    = crapavt.nrcxapst
                                    tt-avalista.complend    = crapavt.complend
                                    tt-avalista.inpessoa    = crapavt.inpessoa
+                                   tt-avalista.cdnacion    = crapavt.cdnacion
+                                   tt-avalista.nrctacjg    = 0
+                                   tt-avalista.vlrencjg    = crapavt.vlrencjg
+                                   tt-avalista.vlrenmes    = crapavt.vlrenmes
                                    tt-avalista.dtnascto    = crapavt.dtnascto.
 
                         END. /* IF   AVAIL crapavt THEN  */
                 END. /* IF  par_nrcpfcgc > 0 THEN */
+
+        /* Buscar a Nacionalidade */
+        FOR FIRST crapnac FIELDS(dsnacion)
+                          WHERE crapnac.cdnacion = tt-avalista.cdnacion
+                                NO-LOCK:
+            ASSIGN tt-avalista.dsnacion = crapnac.dsnacion.
+        END.
 
         LEAVE Busca.
         
@@ -1045,6 +1191,9 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_complend1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxapst1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inpessoa1 AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion1 AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlrencjg1 AS DECI                           NO-UNDO. 
+    DEF  INPUT PARAM par_vlrenmes1 AS DECI                           NO-UNDO. 
     DEF  INPUT PARAM par_dtnascto1 AS DATE                           NO-UNDO.
 
     /* 2 Avalista */
@@ -1068,6 +1217,9 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_complend2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxapst2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inpessoa2 AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdnacion2 AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlrencjg2 AS DECI                           NO-UNDO. 
+    DEF  INPUT PARAM par_vlrenmes2 AS DECI                           NO-UNDO. 
     DEF  INPUT PARAM par_dtnascto2 AS DATE                           NO-UNDO.
 
     DEF  INPUT PARAM par_flgerlog  AS LOGICAL                        NO-UNDO.
@@ -1393,6 +1545,9 @@ PROCEDURE Grava_Dados:
                      crapavt.nrcxapst    = par_nrcxapst1
                      crapavt.cdcooper    = par_cdcooper
                      crapavt.inpessoa    = par_inpessoa1
+                     crapavt.cdnacion    = par_cdnacion1
+                     crapavt.vlrencjg    = par_vlrencjg1
+                     crapavt.vlrenmes    = par_vlrenmes1
                      crapavt.dtnascto    = par_dtnascto1. 
               VALIDATE crapavt.
            END.
@@ -1425,6 +1580,9 @@ PROCEDURE Grava_Dados:
                      crapavt.nrcxapst    = par_nrcxapst2
                      crapavt.cdcooper    = par_cdcooper
                      crapavt.inpessoa    = par_inpessoa2
+                     crapavt.cdnacion    = par_cdnacion2
+                     crapavt.vlrencjg    = par_vlrencjg2
+                     crapavt.vlrenmes    = par_vlrenmes2
                      crapavt.dtnascto    = par_dtnascto2.
               VALIDATE crapavt.
            END.

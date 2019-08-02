@@ -259,8 +259,6 @@ PROCEDURE pc_estorna_saque_conta_prej(pr_cdcooper IN  craplcm.cdcooper%TYPE
                                 , pr_dscritic OUT crapcri.dscritic%TYPE);
 
 END LANC0001;
-
-
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LANC0001 IS
   ---------------------------------------------------------------------------------------------------------------
@@ -752,7 +750,7 @@ BEGIN
 
       IF  vr_inprejuz
       AND vr_reg_historico.intransf_cred_prejuizo = 1
-      AND prej0003.fn_verifica_flg_ativa_prju(pr_cdcooper) THEN
+      AND PREJ0003.fn_verifica_flg_ativa_prju(pr_cdcooper) THEN
         pr_tab_retorno.nmtabela := 'TBCC_PREJUIZO_LANCAMENTO';
 
         vr_vltransf := pr_vllanmto;
@@ -844,7 +842,7 @@ BEGIN
                , cdoperad
                , cdcooper
                , cdorigem
-          )
+            )
           VALUES
                ( pr_dtmvtolt
                , pr_cdagenci
@@ -856,7 +854,7 @@ BEGIN
                , 1
                , pr_cdcooper
                , 5
-          );
+               );
         END IF;
       END IF;
      END IF;

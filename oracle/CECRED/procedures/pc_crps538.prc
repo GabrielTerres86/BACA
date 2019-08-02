@@ -452,8 +452,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                            
                07/01/2019 - Alterações nas regras de devolucao da ABBC, alterado conforme 
                             instrucoes da requisicao. Chamado SCTASK0023401 - Gabriel (Mouts).			   
-               
+                             		     
 			   31/01/2019 - Adicionado parametro para indicar finalizacao do job (Luis Fernando - GFT)	              		     
+
+               21/03/2019 - A diaria chega um espaço e se executar por fora com nulo  
+                            fixar uma descrição para evitar subrotina mudem a logica	
+                            (Belli - Envolti - Chamado REQ0037942)
 
 			   03/06/2019 - Corrigido problema com devolução de titulo que tinha como critica 966, 965
 			                cdcritic sendo apagado quando não deveria (Tiago)
@@ -604,6 +608,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        -- Variaveis TBGEN - 15/03/2018 - Chamado 801483       
        vr_tpocorre  tbgen_prglog_ocorrencia.tpocorrencia%TYPE;
        vr_cdcricid  tbgen_prglog_ocorrencia.cdcriticidade%TYPE;
+       
+       -- Variavel para modificar o parametro quando chegar nulo - 21/03/2019 - REQ0037942
+       vr_nmtelant  varchar2(30);		
        
        /* Cursores da rotina CRPS538 */
 
@@ -1403,6 +1410,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        IS
          vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
        BEGIN   
+         -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942
          --> Controlar geração de log de execução dos jobs                                
          CECRED.pc_log_programa(pr_dstiplog      => pr_dstiplog 
                                ,pr_tpocorrencia  => pr_tpocorre
@@ -1413,7 +1421,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                                     ', pr_cdagenci:' || pr_cdagenci ||
                                                     ', pr_idparale:' || pr_idparale ||
                                                     ', pr_flgresta:' || pr_flgresta ||
-                                                    ', pr_nmtelant:' || pr_nmtelant
+                                                    ', pr_nmtelant:' || vr_nmtelant
                                ,pr_cdmensagem    => pr_cdcritic
                                ,pr_cdprograma    => ( CASE pr_cdagenci
                                                       WHEN 0 THEN
@@ -2400,7 +2408,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            pr_cdcritic:= NULL;
            pr_dscritic:= NULL;
 
-           IF pr_nmtelant = 'COMPEFORA' THEN
+           -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942
+           IF vr_nmtelant = 'COMPEFORA' THEN
               vr_dtmvtaux:= rw_crapdat.dtmvtoan;
            ELSE
               vr_dtmvtaux:= rw_crapdat.dtmvtolt;
@@ -2485,7 +2494,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          pr_cdcritic:= NULL;
          pr_dscritic:= NULL;
 
-         IF pr_nmtelant = 'COMPEFORA' THEN
+         -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942
+         IF vr_nmtelant = 'COMPEFORA' THEN
             vr_dtmvtaux:= rw_crapdat.dtmvtoan;
          ELSE
             vr_dtmvtaux:= rw_crapdat.dtmvtolt;
@@ -2590,8 +2600,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            /**************************************************************/
            /*************TRATAMENTO P/ COBRANCA REGISTRADA****************/
 
+           -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942
            --Verificar nome da tela
-           IF pr_nmtelant = 'COMPEFORA' THEN
+           IF vr_nmtelant = 'COMPEFORA' THEN
              vr_dtmvtaux:= rw_crapdat.dtmvtoan;
              --Data Pagamento
              vr_dtdpagto:= rw_crapdat.dtmvtoan;
@@ -2609,8 +2620,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              /************************************************************
               Realizar lançamentos dos creditos do movimento D-0
              *************************************************************/
+
+             -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942             
              -- Determinar a data do pagamento
-             IF pr_nmtelant = 'COMPEFORA' THEN
+             IF vr_nmtelant = 'COMPEFORA' THEN
                --Dia Anterior
                vr_dtcredit:= rw_crapdat.dtmvtoan;
              ELSE
@@ -2654,12 +2667,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              END IF;
              /*************************************/
            
+             -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942           
              PAGA0001.pc_valores_a_creditar( pr_cdcooper => rw_crapcco.cdcooper
                                             ,pr_nrcnvcob => rw_crapcco.nrconven
                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                             ,pr_dtcredit => vr_dtcredit
                                             ,pr_idtabcob => NULL
-                                            ,pr_nmtelant => pr_nmtelant
+                                            ,pr_nmtelant => vr_nmtelant
                                             ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada --Tabela lancamentos consolidada
                                             ,pr_cdprogra => vr_cdprogra           --Nome Programa
                                             ,pr_cdcritic => vr_cdcritic           --Codigo da Critica
@@ -2672,9 +2686,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              -- Retorna nome do modulo logado - 15/03/2018 - Chamado 801483
              GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra, pr_action => NULL);
 
+             -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942
              -- Altera tabela craprtc 
              --Determinar a data do protesto
-             IF pr_nmtelant = 'COMPEFORA' THEN
+             IF vr_nmtelant = 'COMPEFORA' THEN
                --Dia Anterior
                vr_dtmvtaux:= rw_crapdat.dtmvtoan;
              ELSE
@@ -2747,8 +2762,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              -- Retirada a rotina COBR0007.pc_inst_pedido_baixa_decurso e criado um novo programa para contempla-lá
              -- Chamado 714566 - 11/08/2017          
                         
+             -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942                        
              --Determinar a data para arquivo de retorno
-             IF pr_nmtelant = 'COMPEFORA' THEN
+             IF vr_nmtelant = 'COMPEFORA' THEN
                --Data Atual
                vr_dtmvtaux:= rw_crapdat.dtmvtoan;
              ELSE
@@ -2770,8 +2786,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                /************************************************************
                 Realizar lançamentos dos creditos do movimento D+1
                *************************************************************/
+
+               -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942               
                -- Determinar a data do pagamento
-               IF pr_nmtelant = 'COMPEFORA' THEN
+               IF vr_nmtelant = 'COMPEFORA' THEN
                  --Dia Atual
                  vr_dtcredit:= rw_crapdat.dtmvtolt;
                ELSE
@@ -2779,13 +2797,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  vr_dtcredit:= rw_crapdat.dtmvtopr;
                END IF;
 
+               -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942
                PAGA0001.pc_valores_a_creditar( pr_cdcooper => rw_crapcco.cdcooper
                                               ,pr_nrcnvcob => rw_crapcco.nrconven
                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                               ,pr_dtcredit => vr_dtcredit
                                               ,pr_idtabcob => NULL
                                               ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada --Tabela lancamentos consolidada
-                                              ,pr_nmtelant => pr_nmtelant
+                                              ,pr_nmtelant => vr_nmtelant
                                               ,pr_cdprogra => vr_cdprogra           --Nome Programa
                                               ,pr_cdcritic => vr_cdcritic           --Codigo da Critica
                                               ,pr_dscritic => vr_dscritic);         --Descricao da critica
@@ -2865,8 +2884,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              /************************************************************
               Realizar lançamentos dos creditos do movimento D-0
              *************************************************************/
+
+             -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942             
              -- Determinar a data do pagamento
-             IF pr_nmtelant = 'COMPEFORA' THEN
+             IF vr_nmtelant = 'COMPEFORA' THEN
                --Dia Anterior
                vr_dtcredit:= rw_crapdat.dtmvtoan;
              ELSE
@@ -2909,9 +2930,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                END;
              END IF;
            
+             -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942           
              -- Altera tabela craprtc 
              --Determinar a data do protesto
-             IF pr_nmtelant = 'COMPEFORA' THEN
+             IF vr_nmtelant = 'COMPEFORA' THEN
                --Dia Anterior
                vr_dtmvtaux:= rw_crapdat.dtmvtoan;
              ELSE
@@ -2928,7 +2950,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_dtocorre => vr_dtcredit
                                     ,pr_cdagenci => pr_cdagenci ) 
                LOOP                
-                 IF pr_nmtelant = 'COMPEFORA' AND NOT vr_email_compefora THEN
+                 -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942           
+                 IF vr_nmtelant = 'COMPEFORA' AND NOT vr_email_compefora THEN
                   
                    vr_email_proc_cred := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                                    pr_cdcooper => pr_cdcooper,
@@ -2969,6 +2992,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  -- se o pagto do boleto foi creditado, entao pagar o contrato                     
                  IF rw_cde.flcredit = 1 THEN    
                    -- Excluido BEGIN e EXCEPTION exclusivo da PCK - 15/03/2018 - Chamado 801483 
+                   -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942
 					  	     EMPR0007.pc_pagar_epr_cobranca  ( pr_cdcooper => rw_cde.cdcooper
                                                     ,pr_nrdconta => rw_cde.nrdconta
                                                     ,pr_nrctremp => rw_cde.nrctremp
@@ -2976,7 +3000,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                                     ,pr_nrdocmto => rw_cde.nrboleto
                                                     ,pr_vldpagto => rw_cde.vlrpagto
                                                     ,pr_idorigem => 7 -- 7) Batch
-                                                    ,pr_nmtelant => pr_nmtelant                       
+                                                    ,pr_nmtelant => vr_nmtelant                       
                                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                     ,pr_cdoperad => '1'
                                                     ,pr_cdcritic => vr_cdcritic
@@ -3006,11 +3030,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                                 ,pr_des_erro => vr_des_erro                    --Indicador erro
                                                 ,pr_dscritic => vr_dscritic2);                  --Descricao erro
                  ELSE
+                   -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942
                    PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_cde.cob_rowid               --ROWID da Cobranca
                                                 ,pr_cdoperad => vr_cdoperad                    --Operador
                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt            --Data movimento
                                                 ,pr_dsmensag => 'Pagto realizado ref ao contrato ' ||
-                                                                to_char(rw_cde.nrctremp) || (CASE WHEN TRIM(pr_nmtelant) IS NULL THEN ' ' ELSE ' - COMPEFORA' END) --Descricao Mensagem
+                                                                to_char(rw_cde.nrctremp) || 
+                                                                (CASE 
+                                                                   WHEN TRIM(vr_nmtelant) IS NULL 
+                                                                   THEN ' ' 
+                                                                   ELSE ' - ' || vr_nmtelant || ' ' 
+                                                                 END) --Descricao Mensagem
                                                 ,pr_des_erro => vr_des_erro                    --Indicador erro
                                                 ,pr_dscritic => vr_dscritic2);                  --Descricao erro                                                  
                  END IF;
@@ -3068,13 +3098,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                  -- Excluido BEGIN e EXCEPTION - 15/03/2018 - Chamado 801483
                  -- O Log especifico da PAGA só comporta 350 posições e a descrição do erro pode ir até 4000                                        					                  
+                 -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942                                                       					                  
                  -- Efetuar o pagamento do acordo
                  RECP0001.pc_pagar_contrato_acordo  (pr_nracordo => rw_boletos_pagos_acordos.nracordo
                                                     ,pr_nrparcel => rw_boletos_pagos_acordos.nrparcela
                                                     ,pr_vlparcel => rw_boletos_pagos_acordos.vlrpagto
                                                     ,pr_cdoperad => 1 -- usuário master
                                                     ,pr_idorigem => 1 -- Ayllos
-                                                    ,pr_nmtelant => pr_nmtelant
+                                                    ,pr_nmtelant => vr_nmtelant
                                                     ,pr_vltotpag => vr_vltotpag
                                                     ,pr_cdcritic => vr_cdcritic
                                                     ,pr_dscritic => vr_dscritic);
@@ -3087,12 +3118,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra, pr_action => NULL); 		
                  
                  -- Excluida chamada de Log especifico para erro - 15/03/2018 - Chamado 801483
+                 -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942                 
                  -- Agora vai cair na TBGEN geral
                  PAGA0001.pc_cria_log_cobranca  (pr_idtabcob => rw_boletos_pagos_acordos.cob_rowid    --ROWID da Cobranca
                                                 ,pr_cdoperad => vr_cdoperad                    		  --Operador
                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt           	 	  --Data movimento
                                                 ,pr_dsmensag => 'Pagto realizado ref ao acordo ' || to_char(rw_boletos_pagos_acordos.nracordo) ||
-                                                                (CASE WHEN TRIM(pr_nmtelant) IS NULL THEN ' ' ELSE ' - COMPEFORA' END) --Descricao Mensagem
+                                                                (CASE 
+                                                                   WHEN TRIM(vr_nmtelant) IS NULL THEN ' ' 
+                                                                   ELSE ' - ' || vr_nmtelant || ' ' 
+                                                                 END) --Descricao Mensagem
                                                 ,pr_des_erro => vr_des_erro                    		  --Indicador erro
                                                 ,pr_dscritic => vr_dscritic2);                 		  --Descricao erro
                  -- Retorna nome do modulo logado - 15/03/2018 - Chamado 801483
@@ -3108,7 +3143,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_dtocorre => vr_dtcredit
                                     ,pr_cdagenci => pr_cdagenci ) 
                LOOP      
-                 IF pr_nmtelant = 'COMPEFORA' AND NOT vr_email_compefora THEN
+                 -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942    
+                 IF vr_nmtelant = 'COMPEFORA' AND NOT vr_email_compefora THEN
                   
                    vr_email_proc_cred := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                                    pr_cdcooper => pr_cdcooper,
@@ -3179,11 +3215,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                                 ,pr_des_erro => vr_des_erro                    --Indicador erro
                                                 ,pr_dscritic => vr_dscritic2);                  --Descricao erro
                  ELSE
+                   -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942  
                    paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_tit.cob_rowid               --ROWID da Cobranca
                                                 ,pr_cdoperad => vr_cdoperad                    --Operador
                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt            --Data movimento
                                                 ,pr_dsmensag => 'Pagto realizado ref ao contrato ' ||
-                                                                to_char(rw_tit.nrboleto) || (CASE WHEN TRIM(pr_nmtelant) IS NULL THEN ' ' ELSE ' - COMPEFORA' END) --Descricao Mensagem
+                                                                to_char(rw_tit.nrboleto) || 
+                                                                (CASE 
+                                                                   WHEN TRIM(vr_nmtelant) IS NULL THEN ' ' 
+                                                                   ELSE ' - ' || vr_nmtelant || ' ' 
+                                                                 END) --Descricao Mensagem
                                                 ,pr_des_erro => vr_des_erro                    --Indicador erro
                                                 ,pr_dscritic => vr_dscritic2);                  --Descricao erro                                                  
                  END IF;
@@ -3557,8 +3598,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
          -- Se for execução pela COMPEFORA, deve criticar caso seja encontrado 
          -- mais de um arquivo para processamento, de forma a evitar que um arquivo 
+         -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942  
          -- normal e um REPROC sejam reprocessados juntos  ( Renato Darosci - Supero)
-         IF pr_nmtelant = 'COMPEFORA' THEN
+         IF vr_nmtelant = 'COMPEFORA' THEN
            -- Se encontrou mais de um arquivos
            IF vr_tab_nmarqtel.COUNT > 1 THEN
              -- Montar mensagem de critica
@@ -3910,9 +3952,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                           ,pr_nrispbds => vr_nrispbif_rec
                                           ,pr_cdcriret => vr_cdcrignc
                                           ,pr_dscritic => vr_dscritic );
-                                    
+                         
                          IF NVL(vr_cdcrignc,0) > 0 THEN
-                         vr_cdcritic := vr_cdcrignc;
+                           vr_cdcritic := vr_cdcrignc;
                            RAISE vr_exc_sair;
                          END IF;  
                       
@@ -4103,7 +4145,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_dscritic => vr_dscritic ); 
                    
                    IF NVL(vr_cdcrignc,0) > 0 THEN
-                   vr_cdcritic := vr_cdcrignc;
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF; 
                    
@@ -4141,7 +4183,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_dscritic => vr_dscritic );  
                    
                    IF NVL(vr_cdcrignc,0) > 0 THEN
-                   vr_cdcritic := vr_cdcrignc;
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF; 
                                         
@@ -4239,7 +4281,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                       ,pr_dscritic => vr_dscritic ); 
                      
                      IF NVL(vr_cdcrignc,0) > 0 THEN
-                     vr_cdcritic := vr_cdcrignc;
+                       vr_cdcritic := vr_cdcrignc;
                        RAISE vr_exc_sair;
                      END IF;  
                      
@@ -4425,7 +4467,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_dscritic => vr_dscritic );
                    
                    IF NVL(vr_cdcrignc,0) > 0 THEN
-                   vr_cdcritic := vr_cdcrignc;
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF;  
                    
@@ -4584,7 +4626,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_dscritic => vr_dscritic ); 
                    
                    IF NVL(vr_cdcrignc,0) > 0 THEN
-                   vr_cdcritic := vr_cdcrignc;
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF; 
                    
@@ -4745,7 +4787,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_dscritic => vr_dscritic );  
                    
                    IF NVL(vr_cdcrignc,0) > 0 THEN
-                   vr_cdcritic := vr_cdcrignc;
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF; 
                    
@@ -4971,7 +5013,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_dscritic => vr_dscritic );
                    
                    IF NVL(vr_cdcrignc,0) > 0 THEN
-                   vr_cdcritic := vr_cdcrignc;
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF;                                
                  
@@ -5024,7 +5066,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_dscritic => vr_dscritic ); 
                    
                    IF NVL(vr_cdcrignc,0) > 0 THEN
-                   vr_cdcritic := vr_cdcrignc;
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF;  
                    
@@ -5192,8 +5234,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                          IF cr_crapcob%FOUND THEN
                            --Fechar Cursor
                            CLOSE cr_crapcob;
+                           -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942  
                            --Determinar a data para sustar
-                           IF pr_nmtelant = 'COMPEFORA' THEN
+                           IF vr_nmtelant = 'COMPEFORA' THEN
                              vr_dtmvtaux:= rw_crapdat.dtmvtolt;
                            ELSE
                              vr_dtmvtaux:= rw_crapdat.dtmvtopr;
@@ -5430,7 +5473,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  
                  -- Excluido pc_verifica_vencto_titulo - 15/03/2018 - Chamado 801483 
                  
-                 IF pr_nmtelant = 'COMPEFORA' THEN
+                 -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942                   
+                 IF vr_nmtelant = 'COMPEFORA' THEN
                     vr_dtrefere:= rw_crapdat.dtmvtoan;
                  ELSE
                     vr_dtrefere:= rw_crapdat.dtmvtolt;
@@ -5520,7 +5564,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_dscritic => vr_dscritic ); 
                    
                    IF NVL(vr_cdcrignc,0) > 0 THEN
-                   vr_cdcritic := vr_cdcrignc;
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF;  
                    
@@ -5571,7 +5615,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_dscritic => vr_dscritic ); 
                    
                    IF NVL(vr_cdcrignc,0) > 0 THEN
-                   vr_cdcritic := vr_cdcrignc;
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF;  
                    
@@ -5772,8 +5816,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      vr_cdbanpag:= rw_crapcop.cdbcoctl;
                      vr_cdagepag:= rw_crapcop.cdagectl;
                  END;
+                 -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942  
                  --Verificar nome da tela
-                 IF pr_nmtelant = 'COMPEFORA' THEN
+                 IF vr_nmtelant = 'COMPEFORA' THEN
                    vr_dtmvtaux:= rw_crapdat.dtmvtoan;
                  ELSE
                    vr_dtmvtaux:= rw_crapdat.dtmvtolt;
@@ -5791,6 +5836,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      vr_aux_cdocorre := 6;
                    END IF;
                  
+                   -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942                   
                    --Processar liquidacao
                    PAGA0001.pc_processa_liquidacao (pr_idtabcob     => rw_crapcob.rowid       --Rowid da Cobranca
                                                    ,pr_nrnosnum     => 0                      --Nosso Numero
@@ -5813,7 +5859,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                                    ,pr_cdoperad     => '1'                    --Codigo Operador
                                                    ,pr_indpagto     => rw_crapcob.indpagto    --Indicador pagamento -- 0-COMPE 1-Caixa On-Line 3-Internet 4-TAA 
                                                    ,pr_ret_nrremret => vr_nrretcoo            --Numero remetente
-                                                   ,pr_nmtelant     => pr_nmtelant            --Verificar COMPEFORA                                                   
+                                                   ,pr_nmtelant     => vr_nmtelant            --Verificar COMPEFORA                                                   
                                                    ,pr_cdcritic     => vr_cdcritic            --Codigo Critica
                                                    ,pr_dscritic     => vr_dscritic            --Descricao Critica
                                                    ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada --Tabela lancamentos consolidada
@@ -5897,7 +5943,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                     ,pr_dscritic => vr_dscritic ); 
                    
                    IF NVL(vr_cdcrignc,0) > 0 THEN
-                   vr_cdcritic := vr_cdcrignc;
+                     vr_cdcritic := vr_cdcrignc;
                      RAISE vr_exc_sair;
                    END IF;  
                    
@@ -5953,7 +5999,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                   ,pr_dscritic => vr_dscritic );
                  
                  IF NVL(vr_cdcrignc,0) > 0 THEN
-                 vr_cdcritic := vr_cdcrignc;
+                   vr_cdcritic := vr_cdcrignc;
                    RAISE vr_exc_sair;
                  END IF;  
 
@@ -6001,8 +6047,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                 vr_tab_descontar(vr_tab_descontar.NEXT(vr_index_desc)).nrdconta) THEN
                --Limpar tabela erro
                vr_tab_erro2.DELETE;
+               -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942  
                --Verificar nome da tela
-               IF pr_nmtelant = 'COMPEFORA' THEN
+               IF vr_nmtelant = 'COMPEFORA' THEN
                  vr_dtmvtaux:= rw_crapdat.dtmvtoan;
                ELSE
                  vr_dtmvtaux:= rw_crapdat.dtmvtolt;
@@ -6476,7 +6523,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                   ,pr_dscritic => vr_dscritic ); 
                  
                  IF NVL(vr_cdcrignc,0) > 0 THEN
-                 vr_cdcritic := vr_cdcrignc;
+                   vr_cdcritic := vr_cdcrignc;
                    RAISE vr_exc_sair;
                  END IF;  
                  
@@ -6756,8 +6803,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            -- Finalizar tag XML
            gene0002.pc_escreve_xml(vr_des_xml,vr_dstexto,'</crrl523>',true);
 
+           -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942  
            /*  Salvar copia relatorio para "/rlnsv"  */
-           IF pr_nmtelant = 'COMPEFORA' THEN
+           IF vr_nmtelant = 'COMPEFORA' THEN
              vr_flpdfcopi:= 'S';
            ELSE
              vr_flpdfcopi:= 'N';
@@ -6874,9 +6922,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                             ,argument_value    => anydata.ConvertNumber(pr_cdcooper_prog)
                                             );        
         vr_qtparametros := 2;
+        -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942  
         dbms_scheduler.set_job_anydata_value(job_name          => vr_jobname
                                             ,argument_position => vr_qtparametros
-                                            ,argument_value    => anydata.ConvertVarchar2(pr_nmtelant)
+                                            ,argument_value    => anydata.ConvertVarchar2(vr_nmtelant)
                                             );                                                
         IF vr_inreproc THEN 
            vr_dsreproc := 'true';
@@ -6989,6 +7038,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                              ,pr_cdcritic => NULL
                              ,pr_cdcricid => NULL
                             ); 
+                            
+       -- Caso chegar nulo fixar uma descrição para evitar subrotina mudem a logica - 21/03/2019 - REQ0037942
+       IF pr_nmtelant IS NULL THEN
+         vr_nmtelant := 'CRPS538';
+       ELSE  
+         vr_nmtelant := pr_nmtelant;
+       END IF;                           
                             
        -- Verifica se a cooperativa esta cadastrada
        OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
@@ -7131,7 +7187,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        -- Buscar o diretorio padrao da cooperativa conectada
        vr_caminho_rl:= vr_caminho_puro||'/rl';
 
-       IF pr_nmtelant = 'COMPEFORA' THEN
+       -- Ajusta o parametro com a regra de evitar o nulo - 21/03/2019 - REQ0037942  
+       IF vr_nmtelant = 'COMPEFORA' THEN
          --Data leitura arquivo
          vr_dtleiarq:= to_char(rw_crapdat.dtmvtoan,'YYYYMMDD');
        ELSE
@@ -8098,7 +8155,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
            --Finaliza sessão aberta com SQL SERVER
            npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS538_5');
          END IF;
-         
+
        WHEN OTHERS THEN
          -- No caso de erro de programa gravar tabela especifica de log - Chamado 714566 - 11/08/2017 
          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);         

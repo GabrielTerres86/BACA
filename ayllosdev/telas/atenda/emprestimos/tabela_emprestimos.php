@@ -25,7 +25,8 @@
  * 014: [14/12/2017] Incluido campos hidden flintcdc e inintegra_cont, Prj. 402 (Jean Michel)
  * 014: [14/08/2018] Incluido botão Anular e input hidden com o valor da situação insitest (Mateus Z - Mouts - P438)
  * 015: [08/11/2018] Criação do botão de Altera Somente Bens - PRJ438 - Sprint 5 (Mateus Z / Mouts)
-*  016: [05/02/2019] Inclusao da coluna origem. P438. (Douglas Pagel / AMcom)
+ * 016: [05/02/2019] Inclusao da coluna origem. P438. (Douglas Pagel / AMcom)	
+ * 017: [28/06/2019] Incluido campo hidden tpemprst PRJ 438 - Sprint 13 - (Mateus Z / Mouts)
  */
 ?>
 
@@ -113,6 +114,8 @@
 						<input type="hidden" id="inintegra_cont" name="inintegra_cont" value="<? echo getByTagName($registro->tags,'inintegra_cont') ?>" />
 						<input type="hidden" id="tpfinali" name="tpfinali" value="<? echo getByTagName($registro->tags,'tpfinali') ?>" />
 						<input type="hidden" id="cdoperad" name="cdoperad" value="<? echo getByTagName($registro->tags,'cdoperad') ?>" />
+						<!-- PRJ 438 - Sprint 13 - (Mateus Z) -->
+						<input type="hidden" id="tpemprst" name="tpemprst" value="<? echo getByTagName($registro->tags,'tpemprst') ?>" />
                     </td>
 
 					<td> <? echo stringTabela($tipo,40,'maiuscula'); ?>  </td>

@@ -51,6 +51,7 @@
  * 040: [24/10/2018] Remover tela de rendimentos e bens - Bruno Luiz Katzjarowski - Mout's - PRJ 438
  * 041: [18/10/2018] Adicionado novos campos nas telas Avalista e Interveniente - PRJ 438. (Mateus Z / Mouts)
  * 042: [07/11/2018] Esconder tela de Dados da Proposta - Bruno luiz K. - Mout's
+ * 043: [28/06/2019] Alterado o fluxo de consulta para ao final mostrar a tela de demonstração do empréstimo PRJ 438 - Sprint 13 (Mateus Z / Mouts)
  */
 
 	session_start();
@@ -1243,7 +1244,8 @@
         	include('portabilidade/portabilidade.php');
 	} else if (in_array($operacao,array('ACIONAMENTOS'))) {
         	include('form_acionamentos.php');
-	} else if (in_array($operacao,array('A_DEMONSTRATIVO_EMPRESTIMO','I_DEMONSTRATIVO_EMPRESTIMO'))) {
+    // PRJ 438 - Sprint 13 - Na consulta também deverá exibir a tela de demostração de empréstimo (Mateus Z)    	
+	} else if (in_array($operacao,array('A_DEMONSTRATIVO_EMPRESTIMO','I_DEMONSTRATIVO_EMPRESTIMO','C_DEMONSTRATIVO_EMPRESTIMO'))) {
         	include('form_demonstracao_emprestimo.php');
 	}
 

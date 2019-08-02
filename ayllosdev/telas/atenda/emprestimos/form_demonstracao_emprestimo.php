@@ -5,7 +5,8 @@
 * DATA CRIAÇÃO : 26/06/2011 
 * OBJETIVO     : Formulário de demonstração do IOF
 
-ALTERACOES     : 
+ALTERACOES     : 28/06/2019 - Ajustado botão continuar para a nova operação "C_DEMONSTRATIVO_EMPRESTIMO" 
+                              PRJ 438 - Sprint 13 (Mateus Z / Mouts)
 
 */	
 
@@ -46,11 +47,14 @@ ALTERACOES     :
     </form>
     <div id="divBotoesFormSimulacao" style="margin-top:5px; margin-bottom:5px;">
         <? if ( $operacao == 'A_DEMONSTRATIVO_EMPRESTIMO' ) { ?>
-            <a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('I_INICIO'); return false;">Voltar</a>
+            <a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('A_INICIO'); return false;">Voltar</a>
             <a href="#" class="botao" id="btSalvar"  onClick="controlaOperacao('A_FINALIZA'); return false;">Continuar</a>
-        <? } else {?>
+        <? } else if ( $operacao == 'I_DEMONSTRATIVO_EMPRESTIMO' ) {?>
             <a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('I_INICIO'); return false;">Voltar</a>
             <a href="#" class="botao" id="btSalvar"  onClick="controlaOperacao('I_FINALIZA'); return false;">Continuar</a>
+        <? } else { // PRJ 438 - Sprint 13 - Se for C_DEMONSTRATIVO_EMPRESTIMO (Mateus Z)?> 
+            <a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('C_INICIO'); return false;">Voltar</a>
+            <a href="#" class="botao" id="btSalvar"  onClick="controlaOperacao(''); return false;">Continuar</a>
         <? } ?>
     </div>
 </div>

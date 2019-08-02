@@ -4609,6 +4609,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         vr_cdcritic NUMBER := 0;
         vr_dscritic VARCHAR2(4000);
         vr_exc_saida EXCEPTION;
+			vr_exc_erro EXCEPTION;
     
         -- Variaveis retornadas da gene0004.pc_extrai_dados
         vr_cdcooper INTEGER;
@@ -4647,11 +4648,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                           ,pr_nrdconta crawcrd.nrdconta%TYPE
                           ,pr_nrctrcrd crawcrd.nrctrcrd%TYPE) IS
             SELECT w.nrctrcrd
+								,w.flgprcrd
+								,w.insitdec
               FROM crawcrd w
              WHERE w.nrdconta = pr_nrdconta
                AND w.cdcooper = pr_cdcooper
                AND w.nrctrcrd = pr_nrctrcrd
-               AND w.insitcrd = 0;
+						 AND w.insitcrd = 0; -- Em Estudo
         rw_proposta cr_proposta%ROWTYPE;
     
     BEGIN
@@ -4673,7 +4676,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         -- Se retornou alguma crítica
         IF TRIM(vr_dscritic) IS NOT NULL THEN
             -- Levanta exceção
-            RAISE vr_exc_saida;
+					RAISE vr_exc_erro;
         END IF;
     
         OPEN cr_limite(vr_cdcooper, pr_nrdconta, pr_nrctrcrd);
@@ -4684,28 +4687,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         IF cr_limite%FOUND THEN
             -- (1 - Sem aprovação / 6 - Refazer) // -- (6 - Em análise)
             IF rw_limite.insitdec = 6 AND rw_limite.tpsituacao = 6 THEN
+					CLOSE cr_limite;
                 vr_tipo := 2; -- Limite 
+					RAISE vr_exc_saida;
             END IF;
-        ELSE
+			END IF;
+			CLOSE cr_limite;
+				
             OPEN cr_proposta(vr_cdcooper, pr_nrdconta, pr_nrctrcrd);
             FETCH cr_proposta
                 INTO rw_proposta;
         
             IF cr_proposta%FOUND THEN
+				IF rw_proposta.flgprcrd <> 1 THEN -- Titular
+					vr_cdcritic := 0;
+					vr_dscritic := 'Edicao de proposta nao permitida, somente para cartao titular.';
+					CLOSE cr_proposta;
+					RAISE vr_exc_erro;
+				END IF;
+				--
+				IF rw_proposta.insitdec NOT IN (4,5,6) THEN -- 4 - Erro / 5 - Rejeitada / 6 - Refazer
+					vr_cdcritic := 0;
+					vr_dscritic := 'Edicao de proposta nao permitida, somente para propostas com retorno da esteira.';
+					CLOSE cr_proposta;
+					RAISE vr_exc_erro;
+				END IF;
+
                 vr_tipo := 1; -- Cartão
-            END IF;
+				RAISE vr_exc_saida;
         
+			ELSE
+				vr_cdcritic := 0;
+				vr_dscritic := 'Edicao de proposta nao permitida, somente para situacao em estudo.';
             CLOSE cr_proposta;
+				RAISE vr_exc_erro;
         END IF;
-    
-        CLOSE cr_limite;
-    
+			--
+	EXCEPTION
+			WHEN vr_exc_saida THEN
+				pr_cdcritic := 0;
+				pr_dscritic := '';
         pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Dados><TipoProposta>' || vr_tipo ||
                                        '</TipoProposta></Dados></Root>');
-    
-    EXCEPTION
-        WHEN vr_exc_saida THEN
+			WHEN vr_exc_erro THEN
         
             IF vr_cdcritic <> 0 THEN
                 pr_cdcritic := vr_cdcritic;
@@ -4720,7 +4745,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
             -- Existe para satisfazer exigência da interface.
             pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
                                            pr_dscritic || '</Erro></Root>');
-            ROLLBACK;
         WHEN OTHERS THEN
         
             pr_cdcritic := vr_cdcritic;
@@ -4731,7 +4755,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
             -- Existe para satisfazer exigência da interface.
             pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' || '<Root><Erro>' ||
                                            pr_dscritic || '</Erro></Root>');
-            ROLLBACK;
         
     END pc_verifica_tipo_proposta;
 

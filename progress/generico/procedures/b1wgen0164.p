@@ -41,16 +41,42 @@ PROCEDURE busca_crapavt:
     EMPTY TEMP-TABLE tt-crapavt.
     EMPTY TEMP-TABLE tt-erro.
     
+    FIND FIRST crapass WHERE 
+        crapass.cdcooper = par_cdcooper  AND
+        crapass.nrcpfcgc = par_pro_cpfcgc  
+        NO-LOCK NO-ERROR.
+
+    IF AVAIL crapass THEN
+    DO:
+            aux_cdcritic = 1499.
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT 0,          /* nrdcaixa*/
+                           INPUT 1,          /* Sequencia */
+                           INPUT 1499,          /* cdcritic */
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+    END.
+    
     FOR EACH crapavt WHERE crapavt.cdcooper  = par_cdcooper   AND
                            crapavt.nrcpfcgc  = par_pro_cpfcgc AND
                            crapavt.tpctrato <= par_tpctrato
                            NO-LOCK:
         CREATE tt-crapavt.
-        BUFFER-COPY crapavt TO tt-crapavt
+        BUFFER-COPY crapavt TO tt-crapavt.
+        
+        IF crapavt.cdnacion > 0 THEN
+        DO:
+          /* Buscar nacionalidade */
+          FIND FIRST crapnac
+             WHERE crapnac.cdnacion = crapavt.cdnacion
+             NO-LOCK NO-ERROR.
+        END.
         
         ASSIGN tt-crapavt.dsendres1 = crapavt.dsendres[1]
-               tt-crapavt.dsendres2 = crapavt.dsendres[2].
-
+               tt-crapavt.dsendres2 = crapavt.dsendres[2]
+      		   tt-crapavt.dsnacion  = crapnac.dsnacion WHEN AVAIL crapnac.
 
     END.
 

@@ -327,7 +327,8 @@
                               Pj470 SM 1 - Ze Gracik - Mouts
                  05/05/2019 - PRJ 438 - Sprint 7 - Alterado rotinas de gravar/alterar limite com os novos campos da tela avalista,
                                 alterado impressao de proposta PJ - (Mateus Z - Mouts).
-
+               26/06/2019 - Incluído o valor de "outras rendas" do cônjuge para a proposta.
+                            PRJ 438 - Sprint 13 - Rubens Lima (Mout's).
 
 ..............................................................................*/
 
@@ -5036,10 +5037,13 @@ PROCEDURE gera-impressao-limite:
          SKIP 
          "Salario:"                   
          tt-dados-prp.vlsalari FORMAT "zzz,zzz,zz9.99"
-         "Sal. conjuge:"       AT 26  
-         tt-dados-prp.vlsalcon FORMAT "zzz,zzz,zz9.99"
-         "Outras rendas:"      AT 55  
+         "Outras rendas:"      AT 26  
          tt-dados-prp.vloutras FORMAT "zzz,zzz,zz9.99"
+         SKIP
+         "Salario Conjuge:"                   
+         tt-dados-prp.vlsalcon FORMAT "zzz,zzz,zz9.99"
+         "Outras rendas Conjuge:"      AT 33  
+         tt-dados-prp.vlrencjg FORMAT "zzz,zzz,zz9.99"
          SKIP(1)
          "Limite de credito atual:"   
          tt-dados-prp.vllimcre FORMAT "zzz,zzz,zz9.99"
@@ -5855,6 +5859,7 @@ PROCEDURE gera-impressao-limite:
                        tt-dados-prp.vlalugue  tt-dados-prp.vltotccr
                        tt-dados-prp.vltotemp  tt-dados-prp.vltotpre
                        tt-dados-prp.vlutiliz  tt-dados-prp.vllimite
+                       tt-dados-prp.vlrencjg
                                rel_cabobser WITH FRAME f_dados_fisica.                   
                    END.
                     
@@ -8004,6 +8009,9 @@ PROCEDURE obtem-dados-proposta:
     DEF VAR aux_dtassele AS DATE                                    NO-UNDO. /* Data assinatura eletronica */
     DEF VAR aux_dsvlrprm AS CHAR                                    NO-UNDO. /* Data de corte */
     
+    /* PRJ 438 - Sprint 13*/
+    DEF VAR aux_vlrencjg AS DECI                                    NO-UNDO.
+    
     EMPTY TEMP-TABLE tt-dados-prp.
     EMPTY TEMP-TABLE tt-erro.
 
@@ -8584,6 +8592,19 @@ PROCEDURE obtem-dados-proposta:
                                   "99999999999999"),"xx.xxx.xxx/xxxx-xx").
         END.
         
+
+    /*PRJ 438 - Sprint 13 */
+    ASSIGN aux_vlrencjg = 0 .    
+    FIND FIRST crapttl WHERE crapttl.cdcooper = par_cdcooper  AND
+                             crapttl.nrdconta = crapcje.nrctacje
+                       NO-LOCK NO-ERROR.
+                               
+    IF   AVAIL crapttl  THEN
+            ASSIGN aux_vlrencjg = crapttl.vldrendi[1] + crapttl.vldrendi[2] + crapttl.vldrendi[3] + crapttl.vldrendi[4] + crapttl.vldrendi[5] + crapttl.vldrendi[6] .
+            
+    /*PRJ 438 - Sprint 13 */
+    
+    
     FIND crapemp WHERE crapemp.cdcooper = par_cdcooper     AND
                        crapemp.cdempres = aux_cdempres NO-LOCK NO-ERROR.
 
@@ -8679,7 +8700,9 @@ PROCEDURE obtem-dados-proposta:
            tt-dados-prp.dtiniatv = aux_dtiniatv
            tt-dados-prp.dsrmativ = aux_dsrmativ
            tt-dados-prp.vlfatmes = aux_vlfatmes
-           tt-dados-prp.perfatcl = aux_perfatcl.
+           tt-dados-prp.perfatcl = aux_perfatcl
+           /* PRJ 438 - Sprint 13*/
+           tt-dados-prp.vlrencjg = aux_vlrencjg.
 
     /* Salvar os CPF/CNPJ dos avais e o tipo de pessoa */
     FOR EACH tt-dados-avais NO-LOCK.

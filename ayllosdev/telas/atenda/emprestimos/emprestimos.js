@@ -161,6 +161,9 @@
 * 129: [27/05/2019] Ajuste do Erro 269 apresentado na tela atenda/emprestimos - Gabriel Marcos (Mouts).   
 * 132: [03/06/2019] Empréstimo - verificação de "CPF/CNPJ interveniente" em veículo da proposta - verificaCadastroInterveniente() - Renato/Darlei (Supero)
 
+* 133: [28/06/2019] Adicionado validações no clique do botão Efetivar PRJ 438 - Sprint 13 (Mateus Z / Mouts)
+* 134: [27/06/2019] Não permitir financiamento de IOF na simulação de empréstimo quando a finalidade for "74 - Portabilidade de crédito" - PRJ438 - Rubens Lima (Mouts).
+* 135: [28/06/2019] Alterado o fluxo de consulta para ao final mostrar a tela de demonstração do empréstimo PRJ 438 - Sprint 13 (Mateus Z / Mouts)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -1407,9 +1410,23 @@ function controlaOperacao(operacao) {
                 if ($(this).hasClass('corSelecao')) {
                     portabil = $('#portabil', $(this)).val();
                     err_efet = $('#err_efet', $(this)).val();
-					cdorigem = $('#cdorigem', $(this)).val();
+                    // PRJ 438 - Sprint 13 - Pegar insitapr e tpemprst para validar seus valores (Mateus Z)
+                    insitapr = $('#insitapr', $(this)).val();
+                    tpemprst = $('#tpemprst', $(this)).val();
                 }
             });
+
+            // PRJ 438 - Sprint 13 - Adicionado controle para verificar se a proposta está aprovada (Mateus Z)
+        	if (insitapr != 1) {
+        	    showError('error', 'A proposta deve estar aprovada.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);');
+        		return false;
+        	}
+
+        	// PRJ 438 - Sprint 13 - Adicionado controle para verificar se é produto PRICE TR (Mateus Z)
+        	if (tpemprst == 0) {
+        	    showError('error', 'Efetive o contrato na tela Lote.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina);');
+        		return false;
+        	}
 
             // Nao sera permitido efetivar uma proposta de portabilidade manualmente quando o campo flgerro_efetivacao = FALSE
             if (portabil == 'S' && err_efet == 0) {
@@ -1517,6 +1534,8 @@ function controlaOperacao(operacao) {
 				arrayInfoParcelas['cdlcremp'] = cdlcremp;
 			}
 			break;
+		// PRJ 438 - Sprint 13 - Na consulta também deverá exibir a tela de demostração de empréstimo (Mateus Z)
+        case 'C_DEMONSTRATIVO_EMPRESTIMO':
         case 'A_DEMONSTRATIVO_EMPRESTIMO':
         case 'I_DEMONSTRATIVO_EMPRESTIMO':
             tpemprst = arrayProposta['tpemprst'];
@@ -3025,7 +3044,8 @@ function controlaLayout(operacao) {
 
         var cTodos = $('select,input', '#' + nomeForm + ' fieldset:eq(0)');
         //odirlei PRJ339
-        var rRotulo = $('label[for="qtpromis"],label[for="nrcpfcgc"],label[for="tpdocava"],label[for="nmdavali"],label[for="nrctaava"],label[for="inpessoa"],label[for="cdnacion"]', '#' + nomeForm);
+        //var rRotulo = $('label[for="qtpromis"],label[for="nrcpfcgc"],label[for="tpdocava"],label[for="nmdavali"],label[for="nrctaava"],label[for="inpessoa"],label[for="cdnacion"]', '#' + nomeForm);
+        var rRotulo = $('label[for="qtpromis"],label[for="nrcpfcgc"],label[for="tpdocava"],label[for="nmdavali"],label[for="nrctaava"],label[for="inpessoa"]', '#' + nomeForm); // Rafael Ferreira (Mouts) - Story 13447
 
         var rConta = $('label[for="nrctaava"]', '#' + nomeForm);
         //odirlei PRJ339
@@ -3051,7 +3071,10 @@ function controlaLayout(operacao) {
         rConta.css('width', '80px');
         rInpessoa.css('width', '80px');
         rNmdavali.css('width', '80px');
-        rDtnascto.addClass('rotulo-linha').css('width', '95px');
+        //rNacio.addClass('rotulo-linha').css('width', '95px');
+        rNacio.addClass('rotulo').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
+     	//rDtnascto.addClass('rotulo-linha').css('width', '95px');
+        rDtnascto.addClass('rotulo').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
 
         cQntd.css('width', '60px').setMask('INTEGER', 'zz9', '', '');
         cConta.addClass('conta pesquisa').css('width', '115px');
@@ -4881,7 +4904,8 @@ function controlaLayout(operacao) {
             $(this).val(removeCaracteresInvalidos($(this).val()));
         });
         // Fim SD 779305
-	} else if (in_array(operacao, ['I_DEMONSTRATIVO_EMPRESTIMO', 'A_DEMONSTRATIVO_EMPRESTIMO'])) {
+    // PRJ 438 - Sprint 13 - Na consulta também deverá exibir a tela de demostração de empréstimo (Mateus Z)    
+	} else if (in_array(operacao, ['I_DEMONSTRATIVO_EMPRESTIMO', 'A_DEMONSTRATIVO_EMPRESTIMO', 'C_DEMONSTRATIVO_EMPRESTIMO'])) {
         nomeForm = 'frmDemonstracaoEmprestimo';
         largura = '345px';
         if (tpemprst == 2) {
@@ -5933,7 +5957,8 @@ function atualizaTela() {
 
         contHipotecas++;
 
-    } else if (in_array(operacao, ['I_DEMONSTRATIVO_EMPRESTIMO', 'A_DEMONSTRATIVO_EMPRESTIMO'])) {
+    // PRJ 438 - Sprint 13 - Na consulta também deverá exibir a tela de demostração de empréstimo (Mateus Z)    
+    } else if (in_array(operacao, ['I_DEMONSTRATIVO_EMPRESTIMO', 'A_DEMONSTRATIVO_EMPRESTIMO', 'C_DEMONSTRATIVO_EMPRESTIMO'])) {
         $('#vliofepr', '#frmDemonstracaoEmprestimo').val(arrayProposta['vliofepr']);
         $('#vlrtarif', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlrtarif']);
         $('#vlrtotal', '#frmDemonstracaoEmprestimo').val(arrayProposta['vlrtotal']);
@@ -10191,6 +10216,17 @@ function controlaPesquisas() {
 
             carregaDadosPropostaFinalidade();
         }
+
+        if (nomeForm == 'frmSimulacao') {
+            if ($(this).val() == 74) {
+                $('#idfiniof', '#frmSimulacao').desabilitaCampo();
+                $('#idfiniof', '#frmSimulacao').val(0);
+            } else {
+                $('#idfiniof', '#frmSimulacao').habilitaCampo();
+                $('#idfiniof', '#frmSimulacao').val(1);
+            }
+        }
+
     });
 
     // Linha de Credito
@@ -12270,10 +12306,18 @@ function controlaCamposTelaAvalista(cooperado){
 
     //bruno - prj 438 - BUG 14123
     if(inpessoa == 1){
+        $('label[for="nrctaava"]', '#frmDadosAval').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
+        $('label[for="inpessoa"]', '#frmDadosAval').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
+        $('label[for="nrcpfcgc"]', '#frmDadosAval').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
+        $('label[for="nmdavali"]', '#frmDadosAval').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
         $('label[for="vlrenmes"]', '#frmDadosAval').css('width', '120px').text('Rendimento Mensal:');
-		$('label[for="dtnascto"]', '#frmDadosAval').css('width', '70px').text('Data Nasc.:');
+		$('label[for="dtnascto"]', '#frmDadosAval').css('width', '80px').text('Data Nasc.:'); // Rafael Ferreira (Mouts) - Story 13447
         $('#fsetConjugeAval', '#frmDadosAval').show();
     }else{
+    	$('label[for="nrctaava"]', '#frmDadosAval').css('width', '100px'); // Rafael Ferreira (Mouts) - Story 13447
+        $('label[for="inpessoa"]', '#frmDadosAval').css('width', '100px'); // Rafael Ferreira (Mouts) - Story 13447
+        $('label[for="nrcpfcgc"]', '#frmDadosAval').css('width', '100px'); // Rafael Ferreira (Mouts) - Story 13447
+        $('label[for="nmdavali"]', '#frmDadosAval').css('width', '100px'); // Rafael Ferreira (Mouts) - Story 13447
 		$('label[for="vlrenmes"]', '#frmDadosAval').css('width', '150px').text('Faturamente Médio Mensal:');
 		$('label[for="dtnascto"]', '#frmDadosAval').css('width', '100px').text('Data da Abertura:');
         $('#fsetConjugeAval', '#frmDadosAval').hide();
@@ -12281,9 +12325,12 @@ function controlaCamposTelaAvalista(cooperado){
 
 	if (inpessoa == 1 && cooperado == true) {
 
-		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('C.P.F:');
+		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('CPF:');
 		$('label[for="nmdavali"]', '#frmDadosAval').text('Nome:');
+		$('#divNacionalidade', '#frmDadosAval').removeClass('rotulo-linha').addClass('rotulo').show(); // Rafael Ferreira (Mouts) - Story 13447
+		//$('#divCdnacion', '#frmDadosAval').removeClass('rotulo-linha'); // Rafael Ferreira (Mouts) - Story 13447
 		$('#divCdnacion', '#frmDadosAval').hide();
+		$('#dsnacion', '#frmDadosAval').show(); // Rafael Ferreira (Mouts) - Story 13447
 		$('label[for="dtnascto"], #dtnascto', '#frmDadosAval').hide();
 		$('label[for="dsdemail"], #dsdemail', '#frmDadosAval').hide();
 		$('label[for="vlrenmes"]', '#frmDadosAval').css('width', '120px').text('Rendimento Mensal:');
@@ -12291,9 +12338,10 @@ function controlaCamposTelaAvalista(cooperado){
 
 	} else if (inpessoa == 1 && cooperado == false) {
 
-		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('C.P.F:');
+		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('CPF:');
 		$('label[for="nmdavali"]', '#frmDadosAval').text('Nome:');
-		$('#divCdnacion', '#frmDadosAval').show();
+		$('#divNacionalidade', '#frmDadosAval').removeClass('rotulo').addClass('rotulo-linha').show(); // Rafael Ferreira (Mouts) - Story 13447
+		$('#divCdnacion', '#frmDadosAval').removeClass('rotulo').addClass('rotulo-linha').show(); // Rafael Ferreira (Mouts) - Story 13447
 		$('label[for="dtnascto"], #dtnascto', '#frmDadosAval').show();
 		$('label[for="dsdemail"], #dsdemail', '#frmDadosAval').show();
 		$('label[for="vlrenmes"]', '#frmDadosAval').css('width', '120px').text('Rendimento Mensal:');
@@ -12301,9 +12349,11 @@ function controlaCamposTelaAvalista(cooperado){
 
 	} else if (inpessoa == 2 && cooperado == true) {
 
-		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('C.N.P.J:');
+		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('CNPJ:');
 		$('label[for="nmdavali"]', '#frmDadosAval').text('Razão Social:');
-		$('#divCdnacion', '#frmDadosAval').hide();
+		//$('#divCdnacion', '#frmDadosAval').hide(); // Rafael Ferreira (Mouts) - Story 13447
+		//$('#dsnacion', '#frmDadosAval').hide(); // Rafael Ferreira (Mouts) - Story 13447
+		$('#divNacionalidade', '#frmDadosAval').hide(); // Rafael Ferreira (Mouts) - Story 13447
 		$('label[for="dtnascto"], #dtnascto', '#frmDadosAval').hide();
 		$('label[for="dsdemail"], #dsdemail', '#frmDadosAval').hide();
 		$('label[for="vlrenmes"]', '#frmDadosAval').css('width', '150px').text('Faturamente Médio Mensal:');
@@ -12311,10 +12361,12 @@ function controlaCamposTelaAvalista(cooperado){
 
 	} else if (inpessoa == 2 && cooperado == false) {
 
-		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('C.N.P.J:');
+		$('label[for="nrcpfcgc"]', '#frmDadosAval').text('CNPJ:');
 		$('label[for="nmdavali"]', '#frmDadosAval').text('Razão Social:');
-		$('#divCdnacion', '#frmDadosAval').show(); //prj 438 - BUG 14149
-		$('label[for="dtnascto"], #dtnascto', '#frmDadosAval').show();
+		//$('#divCdnacion', '#frmDadosAval').hide(); // Rafael Ferreira (Mouts) - Story 13447
+		//$('#dsnacion', '#frmDadosAval').hide(); // Rafael Ferreira (Mouts) - Story 13447
+		$('#divNacionalidade', '#frmDadosAval').hide(); // Rafael Ferreira (Mouts) - Story 13447
+		$('label[for="dtnascto"], #dtnascto', '#frmDadosAval').show(); // Rafael Ferreira
 		$('label[for="dtnascto"]', '#frmDadosAval').text('Data da Abertura:');
 		$('label[for="dsdemail"], #dsdemail', '#frmDadosAval').show();
 		$('label[for="vlrenmes"]', '#frmDadosAval').css('width', '150px').text('Faturamente Médio Mensal:');
@@ -12343,8 +12395,8 @@ function controlaEventoCamposTelaAvalista(){
 	var arrCampos = [
 		"nrcpfcgc", //0
 		"nmdavali", //1
-		"cdnacion", //2
-		"dtnascto", //3
+		"dtnascto", //2
+		"cdnacion", //3
 		"nrctacjg", //4
 		"nrcpfcjg", //5
 		"nmconjug", //6

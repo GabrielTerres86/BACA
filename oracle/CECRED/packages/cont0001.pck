@@ -236,6 +236,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
   -- 06/08/2018 - Adicionado historico 2736 e 2737 (Rafael Faria - Supero PJ439)
   --
   --07/12/2018 - Alteração de conta no lançamento no arquivo, com histórico 1090. Alterado para conta 4453. SCTASK0029392 (Douglas - Mouts)
+  --
+  -- 08/07/2019 - Adicionado os históricos 2330, 2331, 2326 e 2327, para CCB MAIS IMOBILIZADO 
+  --              e CCB MAIS CREDITO. SM Pós-Fixado. (Renato Darosci - Supero)
+  --              
   ---------------------------------------------------------------------------------------------------------------
     
     -- Buscar informações de lançamentos das filiadas na central
@@ -285,29 +289,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
              
   --Busca lançamentos de pagamentos de emprestimos para geração de lançamentos             
   CURSOR cr_craplem IS     
-    SELECT lem.dtmvtolt,
-           lem.nrdconta,
-           lem.nrdocmto,
-           SUBSTR(lem.nrdconta,1,LENGTH(lem.nrdconta) -1)||'-'||SUBSTR(lem.nrdconta,-1,1) nrctafmt,
-           epr.cdfinemp,
-           SUM(lem.vllanmto) vllanmto
-      FROM craplem lem,
-           crapepr epr,
-           crapcop cop
+    SELECT lem.dtmvtolt
+         , lem.nrdconta
+         -- Para o pós-fixado, deve retornar o contrato
+         , CASE WHEN lem.cdhistor IN (91,95)     THEN lem.nrdocmto -- Pagamento emprestimo
+                WHEN lem.cdhistor IN (2330,2331) THEN lem.nrctremp -- Pagamento emprestimo POS-FIXADO
+                WHEN lem.cdhistor IN (2326,2327) THEN lem.nrctremp -- Liberacao de credito POS-FIXADO
+                ELSE 0 END     nrdocmto
+         , SUBSTR(lem.nrdconta,1,LENGTH(lem.nrdconta) -1)||'-'||SUBSTR(lem.nrdconta,-1,1) nrctafmt
+         , epr.cdfinemp
+         , SUM(lem.vllanmto) vllanmto
+         , CASE WHEN lem.cdhistor IN (91,95)     THEN 1 -- Pagamento emprestimo
+                WHEN lem.cdhistor IN (2330,2331) THEN 2 -- Pagamento emprestimo POS-FIXADO
+                WHEN lem.cdhistor IN (2326,2327) THEN 3 -- Liberacao de credito POS-FIXADO
+                ELSE 0 END      intiphis
+      FROM craplem lem
+         , crapepr epr
+         , crapcop cop
      WHERE epr.cdcooper = lem.cdcooper
        AND epr.nrdconta = lem.nrdconta
        AND epr.nrctremp = lem.nrctremp
        AND lem.nrdconta = cop.nrctactl
        AND lem.cdcooper = 3           ---Apenas lançamento da central para as filiadas 
        AND epr.cdfinemp IN (1,2,3,4)
-       AND lem.cdhistor IN (91,95)  
+       AND lem.cdhistor IN (91,95  
+                           ,2330,2331   -- Pagamentos POS-FIXADO
+                           ,2326,2327)  -- Liberação de crédito POS-FIXADO
        AND lem.dtmvtolt = pr_dtmvtolt
        AND cop.cdcooper = pr_cdcooper
-    GROUP BY lem.dtmvtolt,
-             lem.nrdconta,
-             lem.nrdocmto,
-             SUBSTR(lem.nrdconta,1,LENGTH(lem.nrdconta) -1)||'-'||SUBSTR(lem.nrdconta,-1,1),
-             epr.cdfinemp;                                                                                       
+     GROUP BY lem.dtmvtolt
+            , lem.nrdconta
+            , CASE WHEN lem.cdhistor IN (91,95)     THEN lem.nrdocmto -- Pagamento emprestimo
+                   WHEN lem.cdhistor IN (2330,2331) THEN lem.nrctremp -- Pagamento emprestimo POS-FIXADO
+                   WHEN lem.cdhistor IN (2326,2327) THEN lem.nrctremp -- Liberacao de credito POS-FIXADO
+                   ELSE 0 END
+            , SUBSTR(lem.nrdconta,1,LENGTH(lem.nrdconta) -1)||'-'||SUBSTR(lem.nrdconta,-1,1)
+            , epr.cdfinemp
+            , CASE WHEN lem.cdhistor IN (91,95)     THEN 1 -- Pagamento emprestimo
+                   WHEN lem.cdhistor IN (2330,2331) THEN 2 -- Pagamento emprestimo POS-FIXADO
+                   WHEN lem.cdhistor IN (2326,2327) THEN 3 -- Liberacao de credito POS-FIXADO
+                   ELSE 0 END;
     
     /*****************************  VARIAVEIS  ****************************/
     vr_exc_erro          EXCEPTION;
@@ -321,6 +342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
     vr_tppessoa          VARCHAR2(2);
     vr_descricao         VARCHAR2(500);
     vr_nrctaori          NUMBER;
+    vr_nrctades          NUMBER;
 
 
      -- Inicializa tabela de Historicos
@@ -942,24 +964,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CONT0001 IS
 
       END IF;    
     
-      IF rw_craplem.cdfinemp = 1 THEN
-        vr_nrctaori := 4226;
-        vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' AILOS REF. PAGAMENTO PRESTACAO REPASSE DE RECURSOS P/ MICROCREDITO - CEF - CONTRATO '||rw_craplem.nrdocmto ||'"';
-      ELSIF rw_craplem.cdfinemp = 2 THEN
-        vr_nrctaori := 4623;
-        vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' AILOS REF. PAGAMENTO PRESTACAO EMPRESTIMO LONGO PRAZO - CCB IMOBILIZADO - CONTRATO '||rw_craplem.nrdocmto ||'"';
-      ELSIF rw_craplem.cdfinemp = 3 THEN
-        vr_nrctaori := 4624;
-        vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' AILOS REF. PAGAMENTO PRESTACAO EMPRESTIMO LONGO PRAZO - CCB MAIS CREDITO - CONTRATO '||rw_craplem.nrdocmto ||'"';        
-      ELSIF rw_craplem.cdfinemp = 4 THEN
-        vr_nrctaori := 4227;
-        vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' AILOS REF. PAGAMENTO PRESTACAO REPASSE DE RECURSOS P/ MICROCREDITO - BNDES - CONTRATO '||rw_craplem.nrdocmto ||'"';
-      END IF; 
+      -- Se for registro de Liberação de Crédito
+      IF rw_craplem.intiphis = 3 THEN
+        
+        -- Número conta
+        vr_nrctaori := 1452;
+      
+        -- Financiamento
+        IF rw_craplem.cdfinemp = 2 THEN
+          vr_nrctades  := 4623;
+          vr_descricao := '"CREDITO C/C '||rw_craplem.nrctafmt||' AILOS REF. LIBERACAO DE FINANCIAMENTO LONGO PRAZO - CCB MAIS IMOBILIZADO - CONTRATO '||rw_craplem.nrdocmto ||'"';
+        -- Emprestimo
+        ELSIF rw_craplem.cdfinemp = 3 THEN
+          vr_nrctades  := 4624;
+          vr_descricao := '"CREDITO C/C '||rw_craplem.nrctafmt||' AILOS REF. LIBERACAO DE EMPRESTIMO LONGO PRAZO - CCB MAIS CREDITO - CONTRATO '||rw_craplem.nrdocmto ||'"';        
+        END IF; 
+        
+      ELSE
+        
+        -- Número conta
+        vr_nrctades := 1452;
+      
+        IF rw_craplem.cdfinemp = 1 THEN
+          vr_nrctaori  := 4226;
+          vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' AILOS REF. PAGAMENTO PRESTACAO REPASSE DE RECURSOS P/ MICROCREDITO - CEF - CONTRATO '||rw_craplem.nrdocmto ||'"';
+        ELSIF rw_craplem.cdfinemp = 2 THEN
+          vr_nrctaori  := 4623;
+          vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' AILOS REF. PAGAMENTO PRESTACAO FINANCIAMENTO LONGO PRAZO - CCB IMOBILIZADO - CONTRATO '||rw_craplem.nrdocmto ||'"';
+        ELSIF rw_craplem.cdfinemp = 3 THEN
+          vr_nrctaori  := 4624;
+          vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' AILOS REF. PAGAMENTO PRESTACAO EMPRESTIMO LONGO PRAZO - CCB MAIS CREDITO - CONTRATO '||rw_craplem.nrdocmto ||'"';        
+        ELSIF rw_craplem.cdfinemp = 4 THEN
+          vr_nrctaori  := 4227;
+          vr_descricao := '"DEBITO C/C '||rw_craplem.nrctafmt||' AILOS REF. PAGAMENTO PRESTACAO REPASSE DE RECURSOS P/ MICROCREDITO - BNDES - CONTRATO '||rw_craplem.nrdocmto ||'"';
+        END IF; 
+
+      END IF;
       
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                      TRIM(to_char(pr_dtmvtolt, 'ddmmyy')) || ','|| 
                      vr_nrctaori||','||
-                     '1452,'||                         
+                     vr_nrctades||','||                         
                      TRIM(to_char(rw_craplem.vllanmto, '99999999999990.00')) ||
                      ',5210,' ||
                      vr_descricao;

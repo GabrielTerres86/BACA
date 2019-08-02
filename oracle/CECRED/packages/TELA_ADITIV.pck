@@ -3399,6 +3399,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                                , pr_dsxml     => vr_des_xml
                                , pr_dsxmlnode => '/raiz/termo'
                                , pr_dsjasper  => vr_dsjasper
+                               , pr_cdrelato  => 724
                                , pr_dsparams  => null
                                , pr_dsarqsaid => vr_dsdireto ||'/rl/'||pr_nmarqpdf
                                , pr_flg_gerar => 'S'

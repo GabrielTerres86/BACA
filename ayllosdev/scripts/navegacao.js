@@ -9,8 +9,12 @@
 //*** [19/07/2016] Evandro (RKAM)   :  adicionado condição se não carregar conteudo atribui tabindex -1 ao campo;
 //***                                  adicionado encerraAnotacoes na condição ESC;
 //***                    
-//*** [21/07/2016] Evandro (RKAM)   :  adicionado condição de navegação para janelas modals;             
+//*** [21/07/2016] Evandro (RKAM)   :  adicionado condição de navegação para janelas modals;
+//***
+//*** [17/04/2018] Marcos (MOUTS)   :  Removido chamada .click do UnblockBackground. (CRM)
 //*** [27/06/2018] Christian (CECRED): Ajustes JS para execução do Ayllos em modo embarcado no CRM.
+//*** [27/06/2018] Mateus Z (Mouts): PRJ 438 - Sprint 13 - Comentado tratamento do ESC para usar 
+//***                                apenas o tratamento usado dentro do funcoes.js
 //************************************************************************//
 
 /** Navegação com o teclado nos campos **/
@@ -108,7 +112,8 @@ onload = function () {
                 };
             break;
 
-            case 27://ESC			    				
+            // PRJ 438 - Sprint 13 - Comentado tratamento do ESC para usar apenas o tratamento usado dentro do funcoes.js (Mateus Z / Mouts)
+            /*case 27://ESC			    				
                 $(".FirstInput:first").focus();
 
                 //Condição para voltar foco na opção selecionada
@@ -135,7 +140,7 @@ onload = function () {
                 else {
                     encerraAnotacoes();
                 };
-                break;
+                break;*/
 
             case 39://RIGHT 
                 var bctrl = '';

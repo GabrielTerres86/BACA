@@ -7034,7 +7034,7 @@ function opcaoAlterarProposta() {
         return false;
     }
     $.ajax({
-            dataType: "json",
+            dataType: "html",
             type: "POST",
             url: UrlSite + "telas/atenda/cartao_credito/verifica_tipo_proposta.php",
             data: {
@@ -7050,14 +7050,7 @@ function opcaoAlterarProposta() {
             success: function (response) {
                 hideMsgAguardo();                
                 blockBackground(parseInt($("#divRotina").css("z-index")));
-                if (response.tipoProposta == 0) {
-                    showError("error", "Edi&ccedil;&atilde;o de proposta n&atilde;o permitida, somente para situa&ccedil;&atilde;o em estudo.", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')) )");
-                } else if (response.tipoProposta == 1) {
-                    globalesteira = true; // tratar acionamento esteira
-                    alterarCartaoProposta(); // CARTAO
-                } else if (response.tipoProposta == 2) {
-                    alterarLimiteProposta();
-                }
+                eval(response);
             }
     });
 }
@@ -7191,4 +7184,22 @@ function validaLimite() {
         globalesteira = true;
         showError("error", "Limite maior que o sugerido pelo motor, a proposta sera enviada para a esteira.</br>Limite sugerido pelo motor: R$ " + vllimmot + ".", "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
     }
+}
+
+function removeAcentoJustificativaEsteira(){
+
+	var _str = function ()
+	{       
+		var text = $("#justificativa").val();
+		text = text.toLowerCase();                                                         
+		text = text.replace(new RegExp('[ÁÀÂÃ]','gi'), 'a');
+		text = text.replace(new RegExp('[ÉÈÊ]','gi'), 'e');
+		text = text.replace(new RegExp('[ÍÌÎ]','gi'), 'i');
+		text = text.replace(new RegExp('[ÓÒÔÕ]','gi'), 'o');
+		text = text.replace(new RegExp('[ÚÙÛ]','gi'), 'u');
+		text = text.replace(new RegExp('[Ç]','gi'), 'c');
+		text = text.replace(new RegExp('[~^´`\'\"!@#$%¨]','gi'), '');
+		return text;                 
+	}
+	$("#justificativa").val(_str);
 }

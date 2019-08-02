@@ -47,6 +47,9 @@
                05/12/2017 - Adicionado campo aux_idcobope nas procedures cadastrar-novo-limite e 
                             alterar-novo-limite. Projeto 404 (Lombardi)
                             
+			   09/07/2019 - Adicionado outras rendas do conjuge.
+			                Rubens Lima - Mouts
+                            
 ..............................................................................*/
 
 
@@ -143,6 +146,9 @@ DEF VAR aux_dtnasct1 AS DATE                                           NO-UNDO.
 DEF VAR aux_dtnasct2 AS DATE                                           NO-UNDO.
 
 DEF VAR aux_rowidsin AS ROWID                                          NO-UNDO.
+/* PRJ 438 - Sprint 13*/
+DEF VAR aux_vlrencjg AS DECI                                           NO-UNDO.
+
 
 { sistema/generico/includes/b1wgen0019tt.i }
 { sistema/generico/includes/b1wgen0138tt.i }
@@ -181,6 +187,7 @@ PROCEDURE valores_entrada:
             WHEN "vloutras" THEN aux_vloutras = DECI(tt-param.valorCampo).
             WHEN "vlsalari" THEN aux_vlsalari = DECI(tt-param.valorCampo).
             WHEN "vlsalcon" THEN aux_vlsalcon = DECI(tt-param.valorCampo).
+            WHEN "vlrencjg" THEN aux_vlrencjg = DECI(tt-param.valorCampo).
             WHEN "dsobserv" THEN aux_dsobserv = tt-param.valorCampo.
             WHEN "nrctaav1" THEN aux_nrctaav1 = INTE(tt-param.valorCampo).
             WHEN "nrcepav1" THEN aux_nrcepav1 = INTE(tt-param.valorCampo).

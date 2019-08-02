@@ -1,7 +1,7 @@
 /***********************************************************************
       Fonte: cobranca.js
       Autor: Gabriel
-      Data : Dezembro/2010             Ultima atualizacao : 19/04/2017
+      Data : Dezembro/2010             Ultima atualizacao : 20/02/2019
 
       Objetivo  : Biblioteca de funcoes da rotina CONBRANCA tela ATENDA.
 
@@ -9,7 +9,7 @@
 
 				  14/07/2011 - Alterado para layout padrão
 							   (Gabriel Capoia - DB1)
-
+                                   
 				  26/07/2011 - Incluir opcao de impressao (Gabriel)
 
 				  08/09/2011 - Ajuste para chamada da Lista Negra
@@ -61,6 +61,8 @@
 
 				  13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
 
+                  20/02/2019 - Novo campo Homologado API (Andrey Formigari - Supero)
+
  ***********************************************************************/
 
 var dsdregis = "";  // Variavel para armazenar os valores dos titulares
@@ -83,7 +85,7 @@ var atualizacaoDesconto = false;
 
 var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcebhm, qtTitulares,
     vtitulares, dsdmesag, flgregon, flgpgdiv, flcooexp, flceeexp, flserasa, qtdfloat,
-    flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails, qtbolcob;
+    flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails, qtbolcob, flgapihm;
 
 var cee = false;
 var coo = false;
@@ -546,6 +548,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, id
         qtdfloat = "";
         qtdecprz = "";
         idrecipr = 0;
+        flgapihm = "NAO";
     }
 
     if (cddbanco == "") {
@@ -578,6 +581,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, id
         qtlimaxp = item.qtlimaxp;
         qtlimmip = item.qtlimmip;
         qtbolcob = item.qtbolcob;
+        flgapihm = item.flgapihm;
     }
 
     // Carrega conte&uacute;do da op&ccedil;&atilde;o atrav&eacute;s de ajax
@@ -602,6 +606,7 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, id
             flcooexp: flcooexp,
             flceeexp: flceeexp,
             flserasa: flserasa,
+            flgapihm: flgapihm,
             cddbanco: cddbanco,
             qtTitulares: qtTitulares,
             titulares: vtitulares,
@@ -1008,6 +1013,7 @@ function realizaHabilitacao(idrecipr, cddopcao) {
     var qtlimaxp = $("#qtlimaxp", "#divOpcaoConsulta").val();
     var inenvcob = $("#inenvcob", "#divOpcaoConsulta").val();
     var idreciprold = $("#idreciprold", "#divOpcaoConsulta").val();
+	var flgapihm = $("#flgapihm", "#divOpcaoConsulta").val();
 
     nrconven = normalizaNumero(nrconven);
     qtdfloat = normalizaNumero(qtdfloat);
@@ -1076,6 +1082,7 @@ function realizaHabilitacao(idrecipr, cddopcao) {
             flgpgdiv: flgpgdiv,
             flcooexp: flcooexp,
             flceeexp: flceeexp,
+			flgapihm: flgapihm,
             flserasa: flserasa,
             flseralt: flseralt,
             flposbol: flposbol,

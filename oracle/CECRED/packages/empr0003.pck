@@ -280,6 +280,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0003 AS
   --                           (André Mout's) - (INC0019097).
   --
   --			  26/07/2018 - Ajuste no xml co-responsabilidade (Andrey Formigari - Mouts)
+  --			  15/07/2019 - Ajuste apresentação Maquinas e Equipamentos (Paulo Martins - Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
 
@@ -959,7 +960,7 @@ BEGIN
               case when nvl(crapbpr.ufplnovo, ' ') <> ' ' then crapbpr.ufplnovo else crapbpr.ufdplaca end ufdplaca,
               'Placa: '|| case when nvl(crapbpr.nrplnovo, ' ') <> ' ' then crapbpr.nrplnovo else crapbpr.nrdplaca end nrdplaca,
               crapbpr.uflicenc,
-              'Ano: '||crapbpr.nranobem||' Modelo: '||crapbpr.nrmodbem dsanomod,
+              decode(crapbpr.dscatbem,'MAQUINA E EQUIPAMENTO','Ano: '||nvl(crapbpr.nranobem,crapbpr.nrmodbem),'Ano: '||crapbpr.nranobem||' Modelo: '||crapbpr.nrmodbem) dsanomod, -- Incluído decode - Paulo Mouts - 25/06/19
               'Cor: '||crapbpr.dscorbem dscorbem,
               progress_recid
       FROM    crapbpr
@@ -1113,7 +1114,8 @@ BEGIN
                 crawepr.nrctrliq##7 || ',' ||
                 crawepr.nrctrliq##8 || ',' ||
                 crawepr.nrctrliq##9 || ',' ||
-                crawepr.nrctrliq##10 dsctrliq
+                crawepr.nrctrliq##10 dsctrliq,
+                crawepr.dtaltpro -- Rafael Ferreira (Mouts) - Story 19674
           FROM crapage,
                crapass,
                crawepr
@@ -1897,6 +1899,7 @@ BEGIN
             gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, '<bens>');
             WHILE vr_des_chave IS NOT NULL LOOP  -- varre temp table de bens
               -- gera xml para cada bem encontrado
+              if vr_tab_bens(vr_des_chave).dscatbem != 'MAQUINA E EQUIPAMENTO' then -- Paulo Martins - Alteração devido Maquinas e Equipamentos - 25/06/19
               gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
                                       '<bem>'||
                                       '  <veiculos>'      ||vr_bens                                 ||'</veiculos>'||
@@ -1913,6 +1916,21 @@ BEGIN
                                       '  <conjuge>'       ||vr_tab_bens(vr_des_chave).conjuge                      ||'</conjuge>'||
                                       '  <avaliacao>'     ||'Avaliação: R$ '||to_char(vr_tab_bens(vr_des_chave).avaliacao,'FM999G999G999G990D00')||'</avaliacao>'||
                                       '</bem>');
+              else
+                gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
+                                        '<bem>'||
+                                        '  <veiculos>'      ||vr_bens                                 ||'</veiculos>'||
+                                        '  <chassi>'        ||vr_tab_bens(vr_des_chave).dschassi      ||' '||            
+                                                              vr_tab_bens(vr_des_chave).dsanomod      ||'</chassi>'||                                              
+                                        '  <dsbem>'         ||'Descrição do bem: '||vr_tab_bens(vr_des_chave).dscatbem || ' ' ||
+                                                               vr_tab_bens(vr_des_chave).dsbem||'</dsbem>'||
+                                        '  <proprietario>'  ||vr_tab_bens(vr_des_chave).proprietario                 ||'</proprietario>'||
+                                        '  <dados_pessoais>'||vr_tab_bens(vr_des_chave).dados_pessoais               ||'</dados_pessoais>'||
+                                        '  <endereco>'      ||vr_tab_bens(vr_des_chave).endereco                     ||'</endereco>'||
+                                        '  <conjuge>'       ||vr_tab_bens(vr_des_chave).conjuge                      ||'</conjuge>'||
+                                        '  <avaliacao>'     ||'Avaliação: R$ '||to_char(vr_tab_bens(vr_des_chave).avaliacao,'FM999G999G999G990D00')||'</avaliacao>'||
+                                        '</bem>');                
+              end if;
               -- Buscar o proximo
               vr_des_chave := vr_tab_bens.NEXT(vr_des_chave);
               IF vr_des_chave IS NULL THEN
@@ -2042,7 +2060,8 @@ BEGIN
                                  '<nrctrprt>'      ||nrcontrato_if_origem                                           ||'</nrctrprt>'||
                                  '<nmcredora>'     ||nomcredora_if_origem                    ||'</nmcredora>'||
                                  '<cnpjdacop>'     ||GENE0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj, 2)              ||'</cnpjdacop>'||
-                                 '<dtmvtolt>'||to_char(rw_crawepr.dtmvtolt,'dd/mm/yyyy')     ||'</dtmvtolt>'||
+                                 --'<dtmvtolt>'||to_char(rw_crawepr.dtmvtolt,'dd/mm/yyyy')     ||'</dtmvtolt>'||
+                                 '<dtmvtolt>'||to_char(rw_crawepr.dtaltpro,'dd/mm/yyyy')     ||'</dtmvtolt>'|| -- Rafael Ferreira (Mouts) - Story 19674
                                  '<vlemprst>'||'R$ '||to_char(vr_vlemprst,'FM99G999G990D00')||'</vlemprst>'||
                                  '<txminima>'||to_char(rw_crawepr.txminima,'FM990D00')||' %' ||'</txminima>'||  --% juros remuneratorios ao mes
                                  '<prjurano>'||to_char(rw_crawepr.prjurano ,'FM990D00')||' %'||'</prjurano>'|| --% juros remuneratorios ao ano
@@ -2230,7 +2249,8 @@ BEGIN
                 crawepr.nrctrliq##7 || ',' ||
                 crawepr.nrctrliq##8 || ',' ||
                 crawepr.nrctrliq##9 || ',' ||
-                crawepr.nrctrliq##10 dsctrliq
+                crawepr.nrctrliq##10 dsctrliq,
+                crawepr.dtaltpro -- Rafael Ferreira (Mouts) - Story 19674
           FROM crawepr
      LEFT JOIN crapepr
             ON crapepr.cdcooper = crapepr.cdcooper
@@ -2933,7 +2953,8 @@ BEGIN
                              '<dslcremp>'     || rw_craplcr.dslcremp || ' ('|| rw_crawepr.cdlcremp ||')' || '</dslcremp>' || -- Linha de credito
                              '<origem>'       || rw_crawepr.nmcidade || '- '|| rw_crawepr.cdufdcop       || '</origem>'   || -- Local Origem
                              '<destino>'      || rw_crawepr.nmcidade || '-' || rw_crawepr.cdufdcop       || '</destino>'  || -- Local destino
-                             '<dtmvtolt>'     || to_char(rw_crawepr.dtmvtolt,'dd/mm/yyyy')               || '</dtmvtolt>' ||
+                             --'<dtmvtolt>'     || to_char(rw_crawepr.dtmvtolt,'dd/mm/yyyy')               || '</dtmvtolt>' ||
+                             '<dtmvtolt>'||to_char(rw_crawepr.dtaltpro,'dd/mm/yyyy')     ||'</dtmvtolt>'|| -- Rafael Ferreira (Mouts) - Story 19674
                              '<txminima>'     || to_char(rw_crawepr.txminima,'FM990D00') || ' %'         || '</txminima>' || -- % juros remuneratorios ao mes
                              '<prjurano>'     || to_char(rw_crawepr.prjurano,'FM990D00') || ' %'         || '</prjurano>' || -- % juros remuneratorios ao ano
                              '<percetop>'     || to_char(vr_txanocet,'fm990d00') || ' %'         || '</percetop>' || -- Custo efetivo total ao ano

@@ -10,7 +10,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Adriano
-     Data    : Outubro/9999                     Ultima atualizacao: 12/06/2019
+     Data    : Outubro/9999                     Ultima atualizacao: 19/07/2019
 
      Dados referentes ao programa:
 
@@ -87,6 +87,8 @@ BEGIN
 
                  12/06/2019 - P450 - Correcao do comparativo de divida e juros60 (Guilherme/AMcom)
 
+                 19/07/2019 - P450 - Ajuste verificação juros60 para BNDES (Guilherme/AMcom)
+  
   ............................................................................ */
 
   DECLARE
@@ -249,6 +251,7 @@ BEGIN
         AND ci.dtrefere = pr_dtrefere
         AND ci.inddocto IN(1,3,4,5)
       ORDER BY decode(ci.inpessoa,2,SUBSTR(lpad(ci.nrcpfcgc,14,'0'), 1, 8),ci.nrcpfcgc);
+
     vr_vldivida crapris.vldivida%TYPE;
     vr_vldivida_contrato crapris.vldivida%TYPE;
     
@@ -305,6 +308,7 @@ BEGIN
                                                and prd.tparquivo     = 'Cartao_BNDES_BRDE'))
            )
       ORDER BY decode(ris.inpessoa,2,SUBSTR(lpad(ris.nrcpfcgc,14,'0'), 1, 8),ris.nrcpfcgc);
+
 
     /* Buscar dados do cadastro de empréstimos */
     CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE) IS
@@ -1266,7 +1270,8 @@ BEGIN
       -- ***
       -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)
       -- estejam em Prejuízo (innivris = 10)
-      IF rw_crapris.cdorigem = 3 AND rw_crapris.innivris = 10 THEN
+      IF rw_crapris.cdorigem = 3
+      AND rw_crapris.innivris = 10 THEN
 
         vr_vljuro60 := PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
                                                                 ,pr_nrdconta => rw_crapris.nrdconta
@@ -1316,7 +1321,8 @@ BEGIN
     
 ----======================================= BNDES ==============================================--
     -- Para execução Trimestral na Central 
-    IF pr_cdcooper = 3 AND to_char(vr_dtrefere,'mm') IN ('03','06','09','12') THEN
+    IF pr_cdcooper = 3
+    AND to_char(vr_dtrefere, 'mm') IN ('03', '06', '09', '12') THEN
       -- Vamos buscar toda a central de risco de todas as Cooperativas com origem BNDES para individualizar as mesmas
       -- NEste cursor já estamos trazendo as saídas de operações, criadas na pc_cria_saida_operacao acima executada
       FOR rw_crapris IN cr_crapris_BNDES(vr_dtrefere) LOOP
@@ -1346,10 +1352,11 @@ BEGIN
 
         -- Subtrair os Juros + 60 do valor total da dívida nos casos de empréstimos/ financiamentos (cdorigem = 3)
         -- estejam em Prejuízo (innivris = 10)
-        IF rw_crapris.cdorigem = 3 AND rw_crapris.innivris = 10 THEN
-          vr_vljuro60 := PREJ0001.fn_juros60_emprej(pr_cdcooper => pr_cdcooper
-                                                                  ,pr_nrdconta => rw_crapris.nrdconta
-                                                   ,pr_nrctremp => rw_crapris.nrctremp);
+        IF rw_crapris.cdorigem = 3
+        AND rw_crapris.innivris = 10 THEN
+          vr_vljuro60 := PREJ0001.fn_juros60_emprej(pr_cdcooper => rw_crapris.cdcooper,
+                                                    pr_nrdconta => rw_crapris.nrdconta,
+                                                    pr_nrctremp => rw_crapris.nrctremp);
           -- Se o valor da divida for maior que juros60
            IF vr_vldivida_contrato > vr_vljuro60 THEN
               vr_vldivida_contrato := vr_vldivida_contrato - vr_vljuro60;

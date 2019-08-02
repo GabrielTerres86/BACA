@@ -431,7 +431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
                02/05/2019 - Inclusão do parâmetro opcional para a descrição da operação nas procedures "pc_gera_cred_cta_prj",
                             "pc_gera_debt_cta_prj" e "pc_gera_transf_cta_prj".
                             (Reginaldo/AMcom)  
-
+                            
 ..............................................................................*/
 
   -- clob para conter o dados do excel/csv
@@ -3833,7 +3833,7 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
 
             11/02/2019 - Ajuste para correção de pagamento de valor maior que o saldo devedor do prejuízo.
                          P450 - Reginaldo/AMcom
-
+                         
             24/04/2019 - Alteração para considerar saldo disponível (créditos) na conta corrente ao invés do campo VLSLDLIB
                          P450 - Reginaldo/AMcom
 
@@ -3917,7 +3917,7 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
                                               
            CONTINUE;
          END IF;
-
+         
 
          -- Verificar se já houve lancamento para 2733 durante o dia (Online)
          -- Se já houve, desconta do valor disponivel na Conta.
@@ -3932,7 +3932,7 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
          IF vr_vlsddisp <= 0 THEN
            CONTINUE;
          END IF;
-         
+
          IF pr_cdcooper = 9 THEN -- Tratamento exclusivo para a cooperativa Transpocred do histórico 1017 (BNDES)            
            OPEN cr_hist1017(rw_contaprej.nrdconta, rw_crapdat.dtmvtolt);
            FETCH cr_hist1017 INTO vr_vldeb1017;
@@ -3945,8 +3945,8 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
 				
 		     CONTINUE; -- Avança para a próxima conta, pois não deve efetuar nenhum pagamento
            END IF;
-         END IF;
-
+         END IF;            
+         
          -- Verificar se ainda possui saldo de prejuízo a pagar
          vr_vlsldprj := fn_obtem_saldo_prejuizo_cc(pr_cdcooper => pr_cdcooper, 
                                                    pr_nrdconta => rw_contaprej.nrdconta);
@@ -3969,8 +3969,8 @@ Alteracoes: 29/11/2018 - Ajustado rotina para realizar pagamento apenas se ainda
                                               
              IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                NULL; -- Incluir geração de LOG
-           END IF;               
-         END IF;
+             END IF;               
+           END IF;
          END IF;
          
          -- Sera saldo liberado eventualmente da conta transitória ao longo do dia e não utilizado

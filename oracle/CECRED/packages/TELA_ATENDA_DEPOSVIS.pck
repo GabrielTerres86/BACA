@@ -4,8 +4,8 @@ FUNCTION fn_soma_dias_uteis_data(pr_cdcooper NUMBER, pr_dtmvtolt DATE, pr_qtddia
     RETURN DATE;
 
 FUNCTION fn_calc_data_59dias_atraso(pr_cdcooper crapass.cdcooper%TYPE
-                                  , pr_nrdconta crapass.nrdconta%TYPE
-                                  , pr_fldtcort INTEGER DEFAULT 1)
+	                                , pr_nrdconta crapass.nrdconta%TYPE
+																	, pr_fldtcort INTEGER DEFAULT 1)
   RETURN DATE;
 
 
@@ -154,7 +154,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DEPOSVIS IS
   --
   --             21/12/2018 - Inclusão de regra para impedir o abono de IOF na "pc_paga_prejuz_cc".
   --                          P450 - Reginaldo/AMcom
-  --				 
+  --
+  --             25/07/2019 - P450 - Ajuste para buscar a data que é passada no parâmetro (Heckmann - AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
 FUNCTION fn_soma_dias_uteis_data(pr_cdcooper NUMBER, pr_dtmvtolt DATE, pr_qtddias INTEGER)
@@ -251,8 +252,8 @@ BEGIN
 END fn_valida_dia_util;
 
 FUNCTION fn_calc_data_59dias_atraso(pr_cdcooper crapass.cdcooper%TYPE
-                                  , pr_nrdconta crapass.nrdconta%TYPE
-                                  , pr_fldtcort INTEGER DEFAULT 1) RETURN DATE IS
+	                                , pr_nrdconta crapass.nrdconta%TYPE
+																	, pr_fldtcort INTEGER DEFAULT 1) RETURN DATE IS
   vr_data_corte_dias_uteis DATE;
 	vr_dtcorte_rendaprop     DATE;
 	vr_data_59dias_atraso    DATE;
@@ -1934,6 +1935,8 @@ DECLARE
 
 	vr_saldo_dia   NUMBER;
 	vr_est_jur60   NUMBER;
+
+    vr_dtrefere    DATE;
 BEGIN
     -- Busca data de corte para contagem de dias de atraso em dias corridos
     vr_data_corte_dias_uteis := to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
@@ -2061,118 +2064,125 @@ BEGIN
             -- Desconta o limite de crédito ativo do saldo devedor total
 				pr_vlsld59d := pr_vlsld59d - rw_crapass.vllimcre;
 
-            -- Percorre os lançamentos ocorridos após 60 dias de atraso que não sejam juros +60
-				FOR rw_craplcm IN cr_craplcm(vr_data_59dias_atraso, vr_dtprejuz, rw_crapdat.dtmvtolt) LOOP
-					-- Descarta o primeiro registro, usado apenas para popular o saldo do dia anterior para a data que completa 60 dias de atraso
-					IF rw_craplcm.dtmvtolt = vr_data_59dias_atraso THEN
-						continue;
-					END IF;
+        --P450 - Ajuste para buscar a data que é passada no parâmetro (Heckmann - AMcom)
+        IF pr_tppesqui = 2 THEN
+          vr_dtrefere := pr_dtlimite;  
+        ELSE
+          vr_dtrefere := rw_crapdat.dtmvtolt;  
+        END IF;
 
-              pr_vlju6037 := pr_vlju6037 + nvl(rw_craplcm.jur60_37,0);
-							pr_vlju6037 := pr_vlju6037 + nvl(rw_craplcm.jur60_2718,0); -- AJUSTAR *********
-							pr_vlju6038 := pr_vlju6038 + nvl(rw_craplcm.jur60_38,0);
-							pr_vlju6057 := pr_vlju6057 + nvl(rw_craplcm.jur60_57,0);
-							vr_vliofprj := vr_vliofprj + nvl(rw_craplcm.iof_prej,0);
+        -- Percorre os lançamentos ocorridos após 60 dias de atraso que não sejam juros +60
+        FOR rw_craplcm IN cr_craplcm(vr_data_59dias_atraso, vr_dtprejuz, vr_dtrefere) LOOP
+          -- Descarta o primeiro registro, usado apenas para popular o saldo do dia anterior para a data que completa 60 dias de atraso
+          IF rw_craplcm.dtmvtolt = vr_data_59dias_atraso THEN
+            continue;
+          END IF;
 
-					vr_saldo_dia := rw_craplcm.vldifsld;
+          pr_vlju6037 := pr_vlju6037 + nvl(rw_craplcm.jur60_37,0);
+                         pr_vlju6037 := pr_vlju6037 + nvl(rw_craplcm.jur60_2718,0); -- AJUSTAR *********
+                         pr_vlju6038 := pr_vlju6038 + nvl(rw_craplcm.jur60_38,0);
+                         pr_vlju6057 := pr_vlju6057 + nvl(rw_craplcm.jur60_57,0);
+                         vr_vliofprj := vr_vliofprj + nvl(rw_craplcm.iof_prej,0);
 
-					IF vr_saldo_dia > 0 THEN -- Se fechou o dia com saldo positivo (crédito)
-						vr_saldo_dia := vr_saldo_dia + (nvl(rw_craplcm.jur60_37, 0) +
-							                              nvl(rw_craplcm.jur60_38, 0) +
-																						nvl(rw_craplcm.jur60_57, 0) +
-																						nvl(rw_craplcm.jur60_2718, 0) +
-																						nvl(rw_craplcm.iof_prej,0));
+          vr_saldo_dia := rw_craplcm.vldifsld;
 
-                -- Paga IOF debitado após transferência para prejuízo (se houver)
-                IF vr_vliofprj > 0 THEN
-							IF vr_saldo_dia >= vr_vliofprj THEN
-								vr_saldo_dia := vr_saldo_dia - vr_vliofprj;
-                    vr_vliofprj := 0;
-                  ELSE
-								vr_vliofprj := vr_vliofprj - vr_saldo_dia;
-								vr_saldo_dia := 0;
-                  END IF;
-                END IF;
+          IF vr_saldo_dia > 0 THEN -- Se fechou o dia com saldo positivo (crédito)
+            vr_saldo_dia := vr_saldo_dia + (nvl(rw_craplcm.jur60_37, 0) +
+                              nvl(rw_craplcm.jur60_38, 0) +
+                              nvl(rw_craplcm.jur60_57, 0) +
+                              nvl(rw_craplcm.jur60_2718, 0) +
+                              nvl(rw_craplcm.iof_prej,0));
 
-						IF vr_saldo_dia > 0 AND pr_vlju6037 > 0 THEN
-                  -- Amortiza os juros + 60 (Hist. 37 + Hist. 2718)
-							IF vr_saldo_dia >= pr_vlju6037 THEN
-								vr_saldo_dia := vr_saldo_dia - pr_vlju6037;
-                    pr_vlju6037 := 0;
-                  ELSE
-								pr_vlju6037 := pr_vlju6037 - vr_saldo_dia;
-								vr_saldo_dia := 0;
-                  END IF;
-                END IF;
+            -- Paga IOF debitado após transferência para prejuízo (se houver)
+            IF vr_vliofprj > 0 THEN
+						IF vr_saldo_dia >= vr_vliofprj THEN
+							vr_saldo_dia := vr_saldo_dia - vr_vliofprj;
+                vr_vliofprj := 0;
+            ELSE
+							vr_vliofprj := vr_vliofprj - vr_saldo_dia;
+							vr_saldo_dia := 0;
+            END IF;
+          END IF;
 
-						IF vr_saldo_dia > 0 AND pr_vlju6038 > 0 THEN
-                    -- Amortiza os juros + 60 (Hist. 38)
-							IF vr_saldo_dia >= pr_vlju6038 THEN
-								vr_saldo_dia := vr_saldo_dia - pr_vlju6038;
-                      pr_vlju6038 := 0;
-                    ELSE
-								pr_vlju6038 := pr_vlju6038 - vr_saldo_dia;
-								vr_saldo_dia := 0;
-                  END IF;
-                END IF;
-
-						IF vr_saldo_dia > 0 AND pr_vlju6057 > 0 THEN
-                    -- Amortiza os juros + 60 (Hist. 57)
-							IF vr_saldo_dia >= pr_vlju6057 THEN
-								vr_saldo_dia := vr_saldo_dia - pr_vlju6057;
-                      pr_vlju6057 := 0;
-                    ELSE
-								pr_vlju6057 := pr_vlju6057 - vr_saldo_dia;
-								vr_saldo_dia := 0;
-                  END IF;
-                END IF;
-
-							IF vr_saldo_dia > 0 THEN
-                  -- Amortiza o saldo devedor até 59 dias
-								IF vr_saldo_dia >= pr_vlsld59d THEN
-                    pr_vlsld59d := 0;
-                  ELSE
-									pr_vlsld59d := pr_vlsld59d - vr_saldo_dia;
-                  END IF;
-                END IF;
-						ELSIF vr_saldo_dia < 0 THEN -- Se fechou o dia com saldo negativo (débito)
-							-- Desconta o valor dos juros +60 do saldo do dia (débito)
-							vr_saldo_dia := abs(vr_saldo_dia) - (nvl(rw_craplcm.jur60_37, 0) +
-							                                     nvl(rw_craplcm.jur60_38, 0) +
-																							     nvl(rw_craplcm.jur60_57, 0) +
-																							     nvl(rw_craplcm.jur60_2718, 0) +
-																									 nvl(rw_craplcm.iof_prej, 0));
-																									 
-							IF vr_dtprejuz IS NOT NULL AND rw_craplcm.dtmvtolt >= vr_dtprejuz THEN
-								OPEN cr_estjur60(rw_craplcm.dtmvtolt);
-								FETCH cr_estjur60 INTO vr_est_jur60;
-								CLOSE cr_estjur60;
-								
-								IF vr_est_jur60 > 0 THEN
-									pr_vlju6037 := nvl(pr_vlju6037, 0) + vr_est_jur60;
-									vr_saldo_dia := vr_saldo_dia - vr_est_jur60;
-								END IF;
-								
-							END IF;
-
-           -- Incorpora o débito ao saldo devedor até 59 dias de atraso
-							pr_vlsld59d := pr_vlsld59d + vr_saldo_dia;
-						ELSIF vr_saldo_dia = 0 AND vr_dtprejuz IS NOT NULL 
-						AND rw_craplcm.dtmvtolt >= vr_dtprejuz AND nvl(rw_craplcm.iof_prej, 0) > 0 THEN
-						  -- Caso tenha ocorrido débito de IOF no pagamento de prejuízo e tenha ocorrido estorno do 
-							-- pagamento no mesmo dia, é necessário acrescentar o valor do IOF ao saldo até 59 dias
-							-- mesmo que o saldo do dia tenha fechado com o mesmo valor do saldo do dia anteiror
-							-- (Reginaldo/AMcom - P450)
-						  pr_vlsld59d := pr_vlsld59d - abs(rw_craplcm.iof_prej);
+					IF vr_saldo_dia > 0 AND pr_vlju6037 > 0 THEN
+              -- Amortiza os juros + 60 (Hist. 37 + Hist. 2718)
+						IF vr_saldo_dia >= pr_vlju6037 THEN
+							vr_saldo_dia := vr_saldo_dia - pr_vlju6037;
+                pr_vlju6037 := 0;
+              ELSE
+							pr_vlju6037 := pr_vlju6037 - vr_saldo_dia;
+							vr_saldo_dia := 0;
               END IF;
-            END LOOP;
+            END IF;
 
-            -- Soma o valor de IOF debitado após a transferência para prejuízo ao saldo 59 dias (se não foi pago pelos créditos ocorridos na conta)
-            pr_vlsld59d := pr_vlsld59d + vr_vliofprj;
+					IF vr_saldo_dia > 0 AND pr_vlju6038 > 0 THEN
+                -- Amortiza os juros + 60 (Hist. 38)
+						IF vr_saldo_dia >= pr_vlju6038 THEN
+							vr_saldo_dia := vr_saldo_dia - pr_vlju6038;
+                  pr_vlju6038 := 0;
+                ELSE
+							pr_vlju6038 := pr_vlju6038 - vr_saldo_dia;
+							vr_saldo_dia := 0;
+              END IF;
+            END IF;
 
-					-- Tratamento para não mostrar o Saldo Devedor 59D negativo
-					IF pr_vlsld59d < 0 THEN
-						pr_vlsld59d := 0;
+					IF vr_saldo_dia > 0 AND pr_vlju6057 > 0 THEN
+                -- Amortiza os juros + 60 (Hist. 57)
+						IF vr_saldo_dia >= pr_vlju6057 THEN
+							vr_saldo_dia := vr_saldo_dia - pr_vlju6057;
+                  pr_vlju6057 := 0;
+                ELSE
+							pr_vlju6057 := pr_vlju6057 - vr_saldo_dia;
+							vr_saldo_dia := 0;
+              END IF;
+            END IF;
+
+						IF vr_saldo_dia > 0 THEN
+              -- Amortiza o saldo devedor até 59 dias
+							IF vr_saldo_dia >= pr_vlsld59d THEN
+                pr_vlsld59d := 0;
+              ELSE
+								pr_vlsld59d := pr_vlsld59d - vr_saldo_dia;
+              END IF;
+            END IF;
+					ELSIF vr_saldo_dia < 0 THEN -- Se fechou o dia com saldo negativo (débito)
+						-- Desconta o valor dos juros +60 do saldo do dia (débito)
+						vr_saldo_dia := abs(vr_saldo_dia) - (nvl(rw_craplcm.jur60_37, 0) +
+						                                     nvl(rw_craplcm.jur60_38, 0) +
+																						     nvl(rw_craplcm.jur60_57, 0) +
+																						     nvl(rw_craplcm.jur60_2718, 0) +
+																								 nvl(rw_craplcm.iof_prej, 0));
+																								 
+						IF vr_dtprejuz IS NOT NULL AND rw_craplcm.dtmvtolt >= vr_dtprejuz THEN
+							OPEN cr_estjur60(rw_craplcm.dtmvtolt);
+							FETCH cr_estjur60 INTO vr_est_jur60;
+							CLOSE cr_estjur60;
+							
+							IF vr_est_jur60 > 0 THEN
+								pr_vlju6037 := nvl(pr_vlju6037, 0) + vr_est_jur60;
+								vr_saldo_dia := vr_saldo_dia - vr_est_jur60;
+							END IF;
+							
+						END IF;
+
+       -- Incorpora o débito ao saldo devedor até 59 dias de atraso
+						pr_vlsld59d := pr_vlsld59d + vr_saldo_dia;
+					ELSIF vr_saldo_dia = 0 AND vr_dtprejuz IS NOT NULL 
+					AND rw_craplcm.dtmvtolt >= vr_dtprejuz AND nvl(rw_craplcm.iof_prej, 0) > 0 THEN
+					  -- Caso tenha ocorrido débito de IOF no pagamento de prejuízo e tenha ocorrido estorno do 
+						-- pagamento no mesmo dia, é necessário acrescentar o valor do IOF ao saldo até 59 dias
+						-- mesmo que o saldo do dia tenha fechado com o mesmo valor do saldo do dia anteiror
+						-- (Reginaldo/AMcom - P450)
+					  pr_vlsld59d := pr_vlsld59d - abs(rw_craplcm.iof_prej);
+          END IF;
+        END LOOP;
+
+        -- Soma o valor de IOF debitado após a transferência para prejuízo ao saldo 59 dias (se não foi pago pelos créditos ocorridos na conta)
+        pr_vlsld59d := pr_vlsld59d + vr_vliofprj;
+
+				-- Tratamento para não mostrar o Saldo Devedor 59D negativo
+				IF pr_vlsld59d < 0 THEN
+					pr_vlsld59d := 0;
          END IF;
       END IF;
     END IF;
@@ -2247,6 +2257,7 @@ PROCEDURE pc_consulta_sit_empr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código 
                            pr_tag_nova => 'Dados',
                            pr_tag_cont => NULL,
                            pr_des_erro => vr_dscritic);
+
     -- Insere as tags
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                            pr_tag_pai  => 'Dados',
