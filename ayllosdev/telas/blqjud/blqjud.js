@@ -30,6 +30,8 @@
 				  
 				  14/03/2018 - Adicionado parametro que faltava na chamada da procedure
 				     		   consulta-bloqueio-jud. (Kelvin)
+					
+                  21/06/2019 - Tratar caracteres especias ao salvar e atualizar o bloqueio. (Wagner  - PRB0041532).					
  * --------------
  */
  
@@ -1022,10 +1024,10 @@ function alteraBloqueio() {
 
 	var nrsequen = 0;
 
-	var nroficio = $("#nroficio","#frmAcaojud").val();
+    var nroficio = removeCaracteresInvalidos($("#nroficio","#frmAcaojud").val(),true);
 	var nrproces = $("#nrproces","#frmAcaojud").val();
-	var dsjuizem = $("#dsjuizem","#frmAcaojud").val();
-	var dsresord = $("#dsresord","#frmAcaojud").val();
+	var dsjuizem = removeCaracteresInvalidos($("#dsjuizem","#frmAcaojud").val(),true);
+	var dsresord = removeCaracteresInvalidos($("#dsresord","#frmAcaojud").val(),true);
     var dtenvres = $("#dtenvres","#frmAcaojud").val();
 	var flblcrft = $("#flblcrft","#frmAcaojud").val();
 	var dsinfadc = $("#dsinfadc","#frmAcaojud").val();
@@ -1091,10 +1093,10 @@ function gravarBloqueio() {
 		}
 	}  
 	
-	var nroficio = $("#nroficio","#frmAcaojud").val();
+	var nroficio = removeCaracteresInvalidos($("#nroficio","#frmAcaojud").val(),true);
 	var nrproces = $("#nrproces","#frmAcaojud").val();
-	var dsjuizem = $("#dsjuizem","#frmAcaojud").val();
-	var dsresord = $("#dsresord","#frmAcaojud").val();
+	var dsjuizem = removeCaracteresInvalidos($("#dsjuizem","#frmAcaojud").val(),true);
+	var dsresord = removeCaracteresInvalidos($("#dsresord","#frmAcaojud").val(),true);
     var dtenvres = $("#dtenvres","#frmAcaojud").val();
     var dsinfadc = $("#dsinfadc", "#frmAcaojud").val();
     var cdoperac = $('#cdoperac', '#divOperacao').val();
