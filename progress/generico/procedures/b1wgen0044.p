@@ -159,6 +159,10 @@ PROCEDURE calcula_bloqueio_cheque:
                       agencia ATIVA, caso isso seja verdadeiro o tratamento
                       sera como se a agencia do cheque estivesse ATIVA e
                       sera acrescentado 1 dia ao prazo de bloqueio.
+					  
+				   4-Verificação de agência inativa adicionar 1 dia ao prazo 
+				      de bloqueio removida, de acordo com os ajustes do 'P367
+					  Compe sessão única' e ocorrência RITM0014144.
     */
 
 
@@ -299,8 +303,10 @@ PROCEDURE calcula_bloqueio_cheque:
 
     /* Quando a agencia do cheque estiver INATIVA, acrescenta 1 dia ao bloqueio
        para minimizar o risco operacional */
+	/* Verificação removida de acordo com os ajustes do 
+	   P367 - Compe sessão única e ocorrência RITM0014144
     IF   crapagb.cdsitagb <> "S"   THEN
-         aux_qtdiasut = aux_qtdiasut + 1.
+         aux_qtdiasut = aux_qtdiasut + 1. */
 
         
     /* Calculo da data de liberacao */
