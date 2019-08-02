@@ -568,6 +568,8 @@
                22/07/2019 - Apenas permitir incluir proposta de cartao se nao tiver conta cartao gerada 
                             para aquela administradora (Lucas Ranghetti INC0019771)
                             
+               23/07/2019 - Ajuste para nao validar a revisao cadastral para cooperados que acabaram de ser 
+                            admitidos na cooperativa (Anderson RITM0028894)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -659,6 +661,8 @@ FUNCTION solicita_revisao_cadastral_cartoes RETURN LOGICAL
     DEF VAR aux_qtdiarev AS INTEGER                           NO-UNDO.
     DEF VAR h-b1wgen0153 AS HANDLE                            NO-UNDO.
           
+    DEF BUFFER crabass FOR crapass.
+          
     IF (par_iddopcao = 1) OR    /* Novo */
        (par_iddopcao = 7  AND   /* 2aVia */
         par_cdadmcrd = 3) THEN
@@ -693,6 +697,20 @@ FUNCTION solicita_revisao_cadastral_cartoes RETURN LOGICAL
                   RETURN FALSE.
              END.          
           
+          /* Se o cooperado foi cadastrado recem cadastrado, nao vamos validar a revisao cadastral */
+          FOR crabass FIELDS(dtadmiss) WHERE crabass.cdcooper = par_cdcooper AND
+                                             crabass.nrdconta = par_nrdconta
+              NO-LOCK: END.
+
+          IF NOT AVAIL crabass THEN
+             DO:
+                    ASSIGN par_dsmensag = "Associado nao encontrado.".
+                    RETURN FALSE.
+             END.
+          
+          IF par_dtmvtolt <= crabass.dtadmiss THEN
+             RETURN TRUE. 
+
           FIND LAST crapalt WHERE crapalt.cdcooper = par_cdcooper AND
                                   crapalt.nrdconta = par_nrdconta AND                                  
                                   crapalt.tpaltera = 1
@@ -2700,16 +2718,16 @@ PROCEDURE valida_nova_proposta:
                 
                 IF crapass.inpessoa = 1 THEN
                    DO:
-                      /* Se proposta estiver cancelada e conta cartao ainda nao foi gerada */
+                /* Se proposta estiver cancelada e conta cartao ainda nao foi gerada */
                       IF  crawcrd.insitcrd = 6 AND crawcrd.nrcctitg = 0 THEN
-                          NEXT.
+                     NEXT.
                    END.
                 ELSE
                 IF  crawcrd.insitcrd = 6 THEN
                     NEXT.
-                
+                   
                 IF   crawcrd.cdadmcrd = crapadc.cdadmcrd  THEN
-                     DO:               
+                     DO:                        
                          IF  crawcrd.insitcrd = 6 AND 
                              crawcrd.nrcctitg > 0 AND 
                              crapass.inpessoa = 1 THEN
@@ -2755,14 +2773,14 @@ PROCEDURE valida_nova_proposta:
 
                             IF crapass.inpessoa = 1 THEN
                                DO:  
-                                   /* Se proposta estiver cancelada e conta cartao ainda nao foi gerada */
+                            /* Se proposta estiver cancelada e conta cartao ainda nao foi gerada */
                                   IF  cratcrd.insitcrd = 6 AND cratcrd.nrcctitg = 0 THEN
                                       NEXT.
                                END.
                             ELSE
                             IF  cratcrd.insitcrd = 6 THEN
-                                NEXT.                           
-                           
+                                 NEXT.
+
                             FIND cratadc WHERE cratadc.cdcooper = par_cdcooper and
                                                cratadc.cdadmcrd = cratcrd.cdadmcrd NO-LOCK NO-ERROR NO-WAIT.
 
