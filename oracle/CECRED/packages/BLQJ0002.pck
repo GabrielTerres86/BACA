@@ -1285,10 +1285,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     PRAGMA AUTONOMOUS_TRANSACTION;
   BEGIN
     UPDATE tbblqj_ordem_online
-       SET instatus = pr_instatus,
-           dslog_erro = substr(pr_dslog_erro,1,200),
-           dhresposta = decode(pr_instatus,2,SYSDATE,dhresposta)
-     WHERE idordem = pr_idordem;
+       SET instatus      = pr_instatus,
+           dslog_erro    = substr(pr_dslog_erro,1,200),
+           dhresposta    = decode(pr_instatus,2,SYSDATE),
+           dhretornook   = decode(pr_instatus,3,SYSDATE),
+           dhretornoerro = decode(pr_instatus,4,SYSDATE)
+     WHERE idordem       = pr_idordem;
 
     -- Grava a alteracao
     COMMIT;
@@ -1514,7 +1516,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     vr_dscritic   VARCHAR2(4000); --> descricao do erro
     vr_exc_saida  EXCEPTION; --> Excecao prevista
     vr_des_erro   VARCHAR2(10); --> Retorno com erro ou sucesso
-    
+    vr_dsoficio   tbblqj_ordem_bloq_desbloq.dsoficio%TYPE := gene0007.fn_caract_acento(pr_dsoficio);
     
   BEGIN
       
@@ -1585,6 +1587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
          nrdconta,
          cdagenci,
          vlordem,
+         vloperacao,
          dsprocesso,
          nmjuiz,
          vl_diferenca_bloqueio 
@@ -1594,10 +1597,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
          decode(pr_tpproduto,'C',1, -- Conta Corrente
                              'A',2, -- Aplicacao
                                  3),-- Poupanca Programada
-         substr(pr_dsoficio,1,25),
+         substr(vr_dsoficio,1,25),
          pr_nrdconta,
          pr_cdagenci,
          pr_vlordem,
+         0,
          substr(pr_dsprocesso,1,25),
          substr(pr_nmjuiz,1,70),
          decode(pr_tpproduto,'C',pr_vldiff,0)
@@ -1655,7 +1659,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                      ,pr_dsregist => ' CPF/CNPJ: '||pr_nrcpfcnpj||
                                                      ' Tipo: '||pr_tppessoa||
                                                      ' Conta: '||pr_nrdconta||
-                                                     ' Oficio: '||pr_dsoficio
+                                                     ' Oficio: '||vr_dsoficio
                                      ,pr_dsincons => vr_operacao||' Solicitacao: '||pr_dscritic
                                      ,pr_des_erro => vr_des_erro
                                      ,pr_dscritic => vr_dscritic);
@@ -1676,7 +1680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                      ,pr_dsregist => ' CPF/CNPJ: '||pr_nrcpfcnpj||
                                                      ' Tipo: '||pr_tppessoa||
                                                      ' Conta: '||pr_nrdconta||
-                                                     ' Oficio: '||pr_dsoficio
+                                                     ' Oficio: '||vr_dsoficio
                                      ,pr_dsincons => vr_operacao||' Solicitacao: '||pr_dscritic
                                      ,pr_des_erro => vr_des_erro
                                      ,pr_dscritic => vr_dscritic);
@@ -1731,7 +1735,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     vr_nmrescop       crapcop.nmrescop%TYPE; -- Codigo da cooperativa    
     vr_email_juridico crapprm.dsvlrprm%type:='';
     vr_texto_email            varchar2(4000);    
-
+    vr_dsoficio       tbblqj_ordem_transf.dsoficio%TYPE := gene0007.fn_caract_acento(pr_dsoficio);
+    
     -- Variaveis de erro
     vr_cdcritic   PLS_INTEGER; --> codigo retorno de erro
     vr_dscritic   VARCHAR2(4000); --> descricao do erro
@@ -1805,7 +1810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
          decode(pr_tpproduto,'C',1, -- Conta Corrente
                              'A',2, -- Aplicacao
                                  3),-- Poupanca Programada
-         pr_dsoficio,
+         substr(vr_dsoficio,1,25),
          pr_vlordem,
          pr_indbloqueio_saldo,
          pr_nrcnpj_if_destino,
@@ -1879,7 +1884,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                      ,pr_dsregist => ' CPF/CNPJ: '||pr_nrcpfcnpj||
                                                      ' Tipo: '||pr_tppessoa||
                                                      ' Conta: '||pr_nrdconta||
-                                                     ' Oficio: '||pr_dsoficio
+                                                     ' Oficio: '||vr_dsoficio
                                      ,pr_dsincons => 'Solicitacao de TED: '||pr_dscritic
                                      ,pr_des_erro => vr_des_erro
                                      ,pr_dscritic => vr_dscritic);
@@ -1900,7 +1905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                      ,pr_dsregist => ' CPF/CNPJ: '||pr_nrcpfcnpj||
                                                      ' Tipo: '||pr_tppessoa||
                                                      ' Conta: '||pr_nrdconta||
-                                                     ' Oficio: '||pr_dsoficio
+                                                     ' Oficio: '||vr_dsoficio
                                      ,pr_dsincons => 'Solicitacao de TED: '||pr_dscritic
                                      ,pr_des_erro => vr_des_erro
                                      ,pr_dscritic => vr_dscritic);
@@ -3810,6 +3815,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     vr_cdcritic                PLS_INTEGER; --> codigo retorno de erro
     vr_dscritic                VARCHAR2(4000); --> descricao do erro
     vr_exc_saida               EXCEPTION; --> Excecao prevista
+    
+    PROCEDURE pc_grava_historico(pr_nrcpfcnpj IN tbblqj_monitora_ordem_bloq.nrcpfcnpj%TYPE := NULL
+                                ,pr_dsoficio  IN tbblqj_monitora_ordem_bloq.dsoficio%TYPE  := NULL) IS
+    BEGIN 
+      -- Grava todos os registros na tabela de historico do monitoramento
+      INSERT INTO tbblqj_mon_ordem_bloq_hist
+       (dtmvtolt,
+        idordem,
+        idprogres_recid,
+        vlbloqueado,
+        vlsaldo,
+        cdcooper,
+        nrdconta,
+        nrcpfcnpj,
+        dsoficio)
+       SELECT dat.dtmvtolt,
+              tblqjmob.idordem,
+              tblqjmob.idprogres_recid,
+              tblqjmob.vlbloqueado,
+              tblqjmob.vlsaldo,
+              tblqjmob.cdcooper,
+              tblqjmob.nrdconta,
+              tblqjmob.nrcpfcnpj,
+              tblqjmob.dsoficio
+         FROM tbblqj_monitora_ordem_bloq tblqjmob, 
+              crapdat dat
+        WHERE tblqjmob.cdcooper  = dat.cdcooper
+          AND tblqjmob.nrcpfcnpj = nvl(pr_nrcpfcnpj, tblqjmob.nrcpfcnpj)
+          AND tblqjmob.dsoficio  = nvl(pr_dsoficio, tblqjmob.dsoficio)
+          AND NOT EXISTS (SELECT 1 
+                            FROM tbblqj_mon_ordem_bloq_hist tblqjmoh
+                           WHERE tblqjmoh.dtmvtolt        = dat.dtmvtolt
+                             AND tblqjmob.idordem         = tblqjmoh.idordem
+                             AND tblqjmob.idprogres_recid = tblqjmoh.idprogres_recid
+                             AND tblqjmob.vlsaldo         = tblqjmoh.vlsaldo);
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao atualizar na TBBLQJ_MON_ORDEM_BLOQ_HIST (pc_grava_historico): '||SQLERRM;
+        RAISE vr_exc_saida;
+    END pc_grava_historico; 
+    
+    
   BEGIN
      -- Busca os endereços de e-mail do jurídico para envio se for necessário
     OPEN cr_email_juridico;
@@ -3839,6 +3887,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
    -- para atender as solicitações ou se vai encerrar as solicitações
    -- monitoradas
    IF to_number(to_char(sysdate, 'HH24MI')) > vr_hororario_encerramento THEN
+     -- Grava os monitoramentos na tabela de histórico
+     pc_grava_historico;     
+   
      -- Busca os dados do monitoramento
      FOR rw_monitoramento IN cr_monitoramento LOOP
       -- 
@@ -4062,14 +4113,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
            -- excluir o monitoramento.                     
            BEGIN
              UPDATE tbblqj_monitora_ordem_bloq t
-                SET t.vlsaldo = 0
-              WHERE t.nrcpfcnpj = rw_monitoramento.nrcpfcnpj
-                AND t.dsoficio  = rw_monitoramento.dsoficio;
+                SET t.vlsaldo         = 0,
+                    t.vlbloqueado     = decode(t.idordem,rw_monitoramento.idordem,t.vlbloqueado + rw_lancamento.vllanmto,t.vlbloqueado),
+                    t.idprogres_recid = decode(t.idordem,rw_monitoramento.idordem,rw_lancamento.progress_recid,t.idprogres_recid)
+              WHERE t.nrcpfcnpj       = rw_monitoramento.nrcpfcnpj
+                AND t.dsoficio        = rw_monitoramento.dsoficio;
            EXCEPTION
              WHEN OTHERS THEN
                vr_dscritic := 'Erro ao atualizar na tbblqj_ordem_bloq_desbloq: '||SQLERRM;
                RAISE vr_exc_saida;
            END;
+           
+           -- Grava os monitoramentos na tabela de histórico
+           pc_grava_historico(pr_nrcpfcnpj => rw_monitoramento.nrcpfcnpj,
+                              pr_dsoficio  => rw_monitoramento.dsoficio);
                                  
            -- Sai do cursor de Lancamentos pois já atendeu a ordem
            EXIT;            
@@ -4102,6 +4159,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
            END; 
            -- deduz o valor bloqueado do valor que está sendo monitorado.
            vr_saldo := vr_saldo -  rw_lancamento.vllanmto;
+           
+           -- Grava os monitoramentos na tabela de histórico
+           pc_grava_historico(pr_nrcpfcnpj => rw_monitoramento.nrcpfcnpj,
+                              pr_dsoficio  => rw_monitoramento.dsoficio);
+           
          END IF;
            
          -- Verificar se houve algum lançamento de débito entre este lançamento de crédito 
