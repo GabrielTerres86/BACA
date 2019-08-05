@@ -117,6 +117,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
                12/07/2018 - PRJ450 - Inclusao de chamada da LANC0001 para centralizar 
                             lancamentos na CRAPLCM (Teobaldo J, AMcom)
 
+               09/05/2019 - Realizar tratamento para que não seja abortado o processo
+                            quando for realizado a re-aplicação de um resgate de aplicação
+                            com bloqueio de garantia, incidente PRB0041689. (Renato Darosci - Supero)
      ............................................................................. */
 
      DECLARE
@@ -180,6 +183,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
      CURSOR cr_crapdtc (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
        SELECT crapdtc.tpaplica
              ,crapdtc.tpaplrdc
+             ,crapdtc.vlminapl  -- Renato (Supero) - 09/05/2019 - Validar valor minimo
        FROM crapdtc 
        WHERE crapdtc.cdcooper = pr_cdcooper     
        AND   crapdtc.tpaplrdc IN (1,2)
@@ -2106,8 +2110,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS481 (pr_cdcooper IN crapcop.cdcooper%T
              END IF;
              -- Retorna módulo e ação logado - Chamado 786752 - 27/10/2017
              GENE0001.pc_set_modulo(pr_module => vr_cdprocedure, pr_action => NULL);   
+			       
 			 -- Bloqueios de Garantia
-             IF vr_inaplblq = 3 THEN               
+             -- E, se possui saldo acima do mínimo permitido para o tipo da aplicação (Renato - Supero - 09/05/2019)
+             IF vr_inaplblq = 3 AND vr_vlsldapl >= rw_crapdtc.vlminapl THEN
                -- Busca da taxa
                OPEN cr_crapttx(pr_cdcooper => pr_cdcooper
                               ,pr_tptaxrdc => rw_crapdtc.tpaplica
