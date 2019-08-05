@@ -41,6 +41,10 @@ CREATE OR REPLACE PACKAGE CECRED.CCAF0001 AS
                06/06/2017 - Colocar saida da CCAF0001 para gravar LOG no padrão 
                             Incluido set de modulo
                             Incluidos códigos de critica 1027 e 9999 ( Belli Envolti ) - Ch 665812
+
+			   05/08/2019 - Verificação de agência inativa adicionar 1 dia ao prazo 
+				      		de bloqueio removida, de acordo com os ajustes do 'P367
+					  		Compe sessão única' e ocorrência RITM0014144.	
                             
 ..............................................................................*/
 
@@ -662,6 +666,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
                       agencia ATIVA, caso isso seja verdadeiro o tratamento
                       sera como se a agencia do cheque estivesse ATIVA e
                       sera acrescentado 1 dia ao prazo de bloqueio.
+					  
+				   4-Verificação de agência inativa adicionar 1 dia ao prazo 
+				      de bloqueio removida, de acordo com os ajustes do 'P367
+					  Compe sessão única' e ocorrência RITM0014144.					  
 
    Alteracoes: 09/08/2013 - Convers¿o Progress >> Oracle (PLSQL) (Alisson-Amcom)
 
@@ -833,9 +841,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       END IF;
       /* Quando a agencia do cheque estiver INATIVA, acrescenta 1 dia ao bloqueio
        para minimizar o risco operacional */
+	  /* Verificação removida de acordo com os ajustes do 
+	   P367 - Compe sessão única e ocorrência RITM0014144 
       IF upper(rw_crapagb.cdsitagb) <> 'S' THEN
         vr_qtdiasut:= vr_qtdiasut + 1;
-      END IF;
+      END IF;*/
+	  
       /* Calculo da data de liberacao */
       /* 1- Para pagamento no caixa, o lancamento ocorre on-line e comeca a contar os
           dias a partir do dia seguinte (dtmvtopr)
