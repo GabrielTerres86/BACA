@@ -222,14 +222,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_qtregist    INTEGER;
     
     CURSOR cr_titcyb IS
-    SELECT (vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof)) vlsdeved
-          ,0 vlsdprej
-          ,(vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof)) vlatraso
+    SELECT CASE
+             WHEN bdt.inprejuz = 0 THEN (vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof))
+             ELSE 0
+           END as vlsdeved    
+          ,CASE
+             WHEN bdt.inprejuz = 1 THEN nvl(tdb.vlsdprej + (tdb.vlttjmpr - tdb.vlpgjmpr) + (tdb.vlttmupr - tdb.vlpgmupr) + (tdb.vljraprj - tdb.vlpgjrpr) + (tdb.vliofprj - tdb.vliofppr),0)
+             ELSE 0
+           END as vlsdprej
+          ,CASE
+             WHEN bdt.inprejuz = 0 THEN (vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof))
+             ELSE 0
+           END as vlatraso
     FROM   craptdb tdb
           ,tbdsct_titulo_cyber titcyb
+          ,crapbdt bdt
     WHERE  tdb.dtresgat    IS NULL
     AND    tdb.dtlibbdt    IS NOT NULL
     AND    tdb.dtdpagto    IS NULL
+    AND    bdt.nrborder    = tdb.nrborder
+    AND    bdt.nrdconta    = tdb.nrdconta
+    AND    bdt.cdcooper    = tdb.cdcooper
     AND    tdb.nrtitulo    = titcyb.nrtitulo
     AND    tdb.nrborder    = titcyb.nrborder
     AND    tdb.nrdconta    = titcyb.nrdconta
@@ -251,6 +264,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 			 AND prj.dtliquidacao IS NULL;
 		rw_prejuizo cr_prejuizo%ROWTYPE;
 
+		-- Busca os dados de cartoes
+		CURSOR cr_cartoes(pr_cdcooper crapcyb.cdcooper%TYPE
+		                 ,pr_nrdconta crapcyb.nrdconta%TYPE
+										 ,pr_nrctremp crapcyb.nrctremp%TYPE
+		                 ) IS
+		  SELECT c.vlsdeved
+						,0 vlsdprej
+						,c.vlpreapg  vlatraso
+			  FROM crapcyb c 
+			 WHERE c.cdcooper = pr_cdcooper
+				 AND c.nrdconta = pr_nrdconta
+				 AND c.nrctremp = pr_nrctremp
+				 AND c.cdorigem = 5; -- Cartoes
+    --
+		rw_cartoes cr_cartoes%ROWTYPE;
+		--
   BEGIN
       
     ---> ESTOURO DE CONTA <---
@@ -437,6 +466,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                 pr_vlatraso := rw_titcyb.vlatraso;
           END   IF;
           CLOSE cr_titcyb;
+		-- CARTOES
+		ELSIF pr_cdorigem = 5 THEN
+			--
+			OPEN cr_cartoes(pr_cdcooper
+		                 ,pr_nrdconta
+										 ,pr_nrctremp
+		                 );
+			--
+			FETCH cr_cartoes INTO rw_cartoes;
+			--
+			IF cr_cartoes%NOTFOUND THEN
+				--
+				vr_cdcritic := 983;
+				RAISE vr_exc_erro;
+				--
+    END IF;
+			-- Saldo Devedor
+			pr_vlsdeved := rw_cartoes.vlsdeved;
+			-- Saldo Prejuizo
+			pr_vlsdprej := rw_cartoes.vlsdprej;
+			-- Valor em Atraso
+			pr_vlatraso := rw_cartoes.vlatraso;
+			--
+			CLOSE cr_cartoes;
+			--
     END IF;
   EXCEPTION
     WHEN vr_exc_erro THEN    
@@ -900,6 +954,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     
       SELECT tpdescto
             ,tpemprst
+            ,inprejuz
         FROM crapepr
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
@@ -955,7 +1010,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       CLOSE cr_crapepr;
 
     -- Operacao nao permitida para emprestimos consignados
-    IF rw_crapepr.tpdescto = 2 THEN
+    IF rw_crapepr.tpdescto = 2 AND NVL(rw_crapepr.inprejuz,0) = 0 THEN
       vr_cdcritic := 987;
       RAISE vr_exc_erro;  
     END IF;
