@@ -169,6 +169,8 @@
 
 			   23/01/2018 - Buscar valor do cheque descontado (Jonata - RKAM SD 826663).
 			    
+			   16/07/2019 - Valida_dados P437 Nao validar o campo matricula (par_nrcadast) Jackson Barcellos - AMcom
+			    
 
 ........................................................................*/
 
@@ -2653,28 +2655,7 @@ PROCEDURE Valida_Fis PRIVATE :
                       par_cdcritic = 40.
                LEAVE ValidaFis.
             END.
-
-        /* Cad.Emp */
-        IF  par_cdcooper <> 5 THEN
-        DO:
-            /* verifica se a empresa correspondente verifica o D.V. */
-            IF CAN-FIND ( crapemp WHERE crapemp.cdcooper = par_cdcooper
-                                  AND   crapemp.cdempres = par_cdempres
-                                  AND   crapemp.flgvlddv = TRUE) THEN
-            DO:
-                /* verificar o digito do cadastro */
-                IF  NOT ValidaDigFun(INPUT par_cdcooper,
-                                     INPUT 0,
-                                     INPUT 0,
-                                     INPUT par_nrcadast) 
-                    AND par_nrcadast <> 0   THEN
-                DO:
-                    ASSIGN par_nmdcampo = "nrcadast"
-                           par_cdcritic = 41.
-                    LEAVE ValidaFis.
-                END.
-            END.
-        END.
+		/*P437 Nao validar o campo matricula (par_nrcadast) removida validaçao DV*/
 
         /* Ocupacao */
         IF  NOT CAN-FIND(gncdocp WHERE gncdocp.cdocupa = par_cdocpttl) THEN
