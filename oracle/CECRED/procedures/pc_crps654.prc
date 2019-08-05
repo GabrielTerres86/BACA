@@ -53,7 +53,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                     13/12/2018 - Remoção da atualização da Capa de Lote
                                  Yuri - Mouts
   
-                    01/02/2019 - P450 - Ajuste na geracao do prejuizo (Guilherme/AMcom)
+                    01/02/2019 - P450 - Ajuste na geracao do prejuizo (Guilherme/AMcom)	 
+             
+                    12/07/2019 - RITM0011923 - Criado uma condição onde, dependendo a cooperativa em questão
+                                 será considerado ou desconsiderado o valor do limite de crédito. (Daniel Lombardi - Mout's)
+
     ............................................................................ */
 
     DECLARE
@@ -283,8 +287,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
 
         vr_ind_sald := vr_tab_sald.last;
 
-        vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vlsdchsl 
+        --> Daniel Mout's - Se o crapprm.dsvlrprm da coperativa considera o limite de crédito.
+        IF (APLI0009.UsarLimCredParaDebPlanoCotas(pr_cdcooper => pr_cdcooper)) then  
+          -- Faz a somatória normal levando em conta o valor do limite de crédtido
+          vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vlsdchsl 
                        + vr_tab_sald(vr_ind_sald).vllimcre;
+                    
+        ELSE -- Se a coperativa desconsidera
+          -- Faz o somatório sem o valor do limite de créditido.
+          vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vlsdchsl 
+        END IF;
+                    
         vr_vldebito := 0;
 
 

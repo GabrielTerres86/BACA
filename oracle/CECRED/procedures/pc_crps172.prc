@@ -9,7 +9,7 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/96                     Ultima atualizacao: 13/12/2018
+   Data    : Novembro/96                     Ultima atualizacao: 19/07/2019
 
    Dados referentes ao programa:
 
@@ -118,6 +118,9 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
 							
                13/12/2018 - Remoção da atualização da capa de lote
                             Yuri - Mouts
+							
+		       19/07/2019 - Mudanças referentes a requisição RITM0011923
+						    (Daniel Lombardi Mout's)
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -150,7 +153,8 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
            ass.nrdconta nrdconta_ass,
            ass.cdagenci,
            ass.cdsecext,
-           sld.vlsddisp + ass.vllimcre - sld.vlipmfap - sld.vlipmfpg vlsldtot
+           sld.vlsddisp - sld.vlipmfap - sld.vlipmfpg vlsldtot,
+           ass.vllimcre 
       from crapass ass,
            crapsld sld,
            crapcot cot,
@@ -355,8 +359,13 @@ BEGIN
       vr_cdcritic := 251;
       raise vr_exc_saida;
     end if;
-    -- Inicializa a variável com o saldo total
-    vr_vlsldtot := rw_crappla.vlsldtot;
+    -- Verifica se a cooperativa considera ou não o limite de crédito.(Daniel Lombardi Mout'S)
+    if APLI0009.UsarLimCredParaDebPlanoCotas(pr_cdcooper=>pr_cdcooper) then
+      vr_vlsldtot := rw_crappla.vlsldtot + rw_crappla.vllimcre;      
+    else
+      -- Inicializa a variável com o saldo total
+      vr_vlsldtot := rw_crappla.vlsldtot;
+    end if;
     -- Leitura dos lançamentos em depositos a vista, agrupados por histórico e data de referência
     for rw_craplcm in cr_craplcm (pr_cdcooper,
                                   rw_crappla.nrdconta,
