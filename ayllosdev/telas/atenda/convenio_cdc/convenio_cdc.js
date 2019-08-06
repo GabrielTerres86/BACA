@@ -26,6 +26,8 @@
  *                01/06/2018 - Tratar exibição das abas ao acessar telas filhas.
  *                             PRJ - Reestruturação CDC (Odirlei-AMcom)
  *
+ *                31/07/2019 - Permitir a inclusão dos usuários CDC para quem não possuir e tiver o CDC habilitado na tela.
+ *                             (Darlei / Supero)
  * --------------
  */
  
@@ -127,6 +129,10 @@ function manterRotina(operacao) {
 			msgRetorno      = 'Dados inclu&iacute;dos com sucesso!';
             msgOperacao     = 'salvando inclus&atilde;o';
 			break;
+		case 'ALTERAR':
+			msgRetorno      = 'Dados alterados com sucesso!';
+            msgOperacao     = 'salvando altera&atilde;o';
+			break;
 		default: 
 			msgRetorno      = 'Dados alterados com sucesso!';
             msgOperacao     = 'salvando altera&ccedil;&atilde;o';
@@ -181,9 +187,12 @@ function manterRotina(operacao) {
 		success: function(response) {
 			hideMsgAguardo();
 
-            // Se NAO possuir matriz volta para tela inicial, caso contratio volta para a listagem de filiais
-			fncRetorno = (idmatriz == idcooperado_cdc ? 'acessaOpcaoAba(\'P\',0)' : 'abreFiliais(\'' + idmatriz + '\')');
-
+            if((operacao == 'ALTERAR') && (parseInt(idmatriz) == 0)){
+				fncRetorno = 'acessaOpcaoAba(\'P\',0)';
+			}else{
+				// Se NAO possuir matriz volta para tela inicial, caso contratio volta para a listagem de filiais
+				fncRetorno = (idmatriz == idcooperado_cdc ? 'acessaOpcaoAba(\'P\',0)' : 'abreFiliais(\'' + idmatriz + '\')');
+			}
 			showError('inform',msgRetorno,'Alerta - Aimaro','bloqueiaFundo(divRotina);' + fncRetorno);
 			eval(response);
 			

@@ -942,10 +942,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
 
     Objetivo  : Rotina para cadastrar os dados do Convenio CDC.
 
-    Alteracoes: -----
+    Alteracoes: 
+	  -              31/07/2019 - Sempre que for criado um novo lojista ou o mesmo for alterado para ATIVO o 
+    -                           sistema deve verificar se já existe usuário, caso não exista deve criar o 
+    -                           usuário CDC correspondente. (Darlei / Supero)
+	  -
     ..............................................................................*/
     DECLARE
-
+      -- Verificar login existente
+      CURSOR cr_usuario_login(pr_dslogin         IN tbepr_cdc_usuario.dslogin%type,
+                              pr_idcooperado_cdc IN tbepr_cdc_usuario_vinculo.idcooperado_cdc%TYPE) IS      
+        SELECT 1 
+          FROM tbepr_cdc_usuario u,
+               tbepr_cdc_usuario_vinculo v
+         WHERE u.idusuario = v.idusuario 
+           AND u.dslogin   = pr_dslogin
+           AND v.idcooperado_cdc = pr_idcooperado_cdc;    
+      rw_usuario_login cr_usuario_login%ROWTYPE;
+    
+      -- Verificar login antivo existente
+      CURSOR cr_usuario_ativo (pr_dslogin         IN tbepr_cdc_usuario.dslogin%type,
+                               pr_idcooperado_cdc IN tbepr_cdc_usuario_vinculo.idcooperado_cdc%TYPE) IS      
+        SELECT v.idcooperado_cdc,
+               c.nmfantasia
+          FROM tbepr_cdc_usuario u,
+               tbepr_cdc_usuario_vinculo v,
+               tbsite_cooperado_cdc c
+         WHERE u.idusuario = v.idusuario 
+           AND v.idcooperado_cdc = c.idcooperado_cdc
+           AND u.dslogin         = pr_dslogin         
+           AND u.flgativo        = 1
+           AND v.idcooperado_cdc <> pr_idcooperado_cdc; 
+      rw_usuario_ativo cr_usuario_ativo%ROWTYPE;
+      
+      vr_usuario_ativo  INTEGER := 0;
+      vr_usuario_existe INTEGER := 0;
+      
       -- Seleciona o CNAE
       CURSOR cr_tbgen_cnae(pr_cdcnae IN tbgen_cnae.cdcnae%TYPE) IS
         SELECT GENE0007.fn_caract_acento(dscnae) dscnae
@@ -1082,31 +1114,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
             RETURNING idcooperado_cdc 
                  INTO vr_idcooperado_cdc;
            
-          
-          -- Buscar cooperado
-          OPEN cr_crapass(pr_cdcooper => pr_cdcooper
-                         ,pr_nrdconta => pr_nrdconta);
-          FETCH cr_crapass INTO rw_crapass;
-          
-          IF cr_crapass%NOTFOUND THEN
-            -- Fechar cursor
-            CLOSE cr_crapass;
-            -- Gerar crítica
-            vr_cdcritic := 9;
-            vr_dscritic := '';
-            -- Levantar exceção
-            RAISE vr_exc_erro;
         END IF;
-
-          /* Apenas criar usuario para a conta matriz */
-          IF nvl(pr_idmatriz,0) = 0 THEN
-          
-            vr_dslogin := CASE rw_crapass.inpessoa
+        -- Buscar cooperado
+        OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta);
+        FETCH cr_crapass INTO rw_crapass;
+        
+        IF cr_crapass%NOTFOUND THEN
+          -- Fechar cursor
+          CLOSE cr_crapass;
+          -- Gerar crítica
+          vr_cdcritic := 9;
+          vr_dscritic := '';
+          -- Levantar exceção
+          RAISE vr_exc_erro;
+        END IF;
+        vr_dslogin := CASE rw_crapass.inpessoa
                              WHEN 1 THEN lpad(rw_crapass.nrcpfcgc,11,'0')
                              ELSE lpad(rw_crapass.nrcpfcgc,14,'0')
                           END ;
-            vr_dssenha := lower(RAWTOHEX(DBMS_OBFUSCATION_TOOLKIT.md5(input => UTL_RAW.cast_to_raw(vr_dslogin))));
-                
+        vr_dssenha := lower(RAWTOHEX(DBMS_OBFUSCATION_TOOLKIT.md5(input => UTL_RAW.cast_to_raw(vr_dslogin))));
+           
+        -- Verificar login existente
+        OPEN cr_usuario_login(pr_dslogin         => vr_dslogin,
+                              pr_idcooperado_cdc => vr_idcooperado_cdc);        
+        FETCH cr_usuario_login INTO rw_usuario_login;
+        
+        -- Se se encontrou o login
+        IF cr_usuario_login%FOUND THEN
+            vr_usuario_existe := 1;
+        END IF;      
+        CLOSE cr_usuario_login;
+        
+        -- Verificar login ativo existente, deve permitir apenas 1 ativo
+        OPEN cr_usuario_ativo( pr_dslogin         => vr_dslogin,
+                               pr_idcooperado_cdc => vr_idcooperado_cdc);          
+        FETCH cr_usuario_ativo INTO rw_usuario_ativo;
+        
+        -- Se se encontrou o login
+        IF cr_usuario_ativo%FOUND THEN
+            vr_usuario_ativo := 1;
+        END IF;      
+        CLOSE cr_usuario_ativo;
+         
+        IF vr_usuario_existe = 0 AND vr_usuario_ativo = 0 THEN
+          /* Apenas criar usuario para a conta matriz */
+          IF nvl(pr_idmatriz,0) = 0 THEN
+                 
             --> Incluir também novo usuario   
             pc_manter_usuario_cdc( pr_cddopcao  => 'I'             --> Opção da Tela
                                   ,pr_cdusuario => NULL            --> Id. Usuario
@@ -1122,14 +1176,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CVNCDC IS
                                   ,pr_dsemail         => pr_dsemail          --> email do lojista
                                   ,pr_cdcritic  => vr_cdcritic     --> Codigo da critica
                                   ,pr_dscritic  => vr_dscritic);   --> Descricao da critica
-                                            
+                                              
             -- Se retornou crítica
             IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               -- Levantar exceção
               RAISE vr_exc_erro;
             END IF;        
           END IF;
-        END IF;        
+        END IF;              
 
         -- Grava os demais dados
         UPDATE tbsite_cooperado_cdc t
