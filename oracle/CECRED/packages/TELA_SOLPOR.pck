@@ -1633,6 +1633,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
           Observacao: -----
         
           Alteracoes: 					
+                      15/07/2019 - Adicionar regra para impedir que contas que não são
+                                   da modalidade salário, tenham portabilidades de 
+                                   salário aprovadas (Renato Darosci - Supero)	
           ..............................................................................*/
     
         -- Tratamento de erros
@@ -1649,7 +1652,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
         vr_cdagenci VARCHAR2(100);
         vr_nrdcaixa VARCHAR2(100);
         vr_idorigem VARCHAR2(100);
-    
+        
+        vr_cdmodali NUMBER;
+        vr_deserro  VARCHAR2(100);
+        
         -- Variaveis internas
 				vr_nrdrowid  ROWID;
     
@@ -1734,7 +1740,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 
         -- aprovação
         IF pr_idsituacao = 2 THEN					
-					--
+					-- Verificar se a conta é da modalidade salário
+          CADA0006.pc_busca_modalidade_conta(pr_cdcooper          => rw_solicitacao.cdcooper
+                                            ,pr_nrdconta          => rw_solicitacao.nrdconta
+                                            ,pr_cdmodalidade_tipo => vr_cdmodali
+                                            ,pr_des_erro          => vr_deserro
+                                            ,pr_dscritic          => vr_dscritic);
+          
+          -- Se retornar erro
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          -- Se a modalidade da conta for diferente de 2 - Salário
+          IF nvl(vr_cdmodali,0) <> 2 THEN
+            vr_dscritic := 'Apenas contas na modalidade CONTA SALARIO podem ter portabilidade aprovada.';
+						RAISE vr_exc_saida;
+          END IF;
+          
+          --
 				  OPEN cr_sol_emp(pr_dsrowid => pr_dsrowid
 														 ,pr_cdcooper => rw_solicitacao.cdcooper
 														 ,pr_nrdconta => rw_solicitacao.nrdconta);
@@ -1747,7 +1771,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 					END IF;
 
 					CLOSE cr_sol_emp;
-
+          
 					UPDATE tbcc_portabilidade_recebe
 						 SET idsituacao = 2
 								,cdoperador = vr_cdoperad

@@ -88,7 +88,21 @@ CREATE OR REPLACE PACKAGE CECRED.PCPS0001 is
                                        ,pr_nrdocmto    IN NUMBER
                                        ,pr_dscritic   OUT VARCHAR2);
 
-    
+    -- Validar se o depósito está sendo feito numa conta salário ou não.
+		PROCEDURE pc_valida_deposito_cta_sal(pr_cdcooper IN crapcop.cdcooper%TYPE --Código da cooperativa de origem
+			                                  ,pr_cdcopdst IN crapcop.cdcooper%TYPE --Código da cooperativa de destino
+                                        ,pr_nrctadst IN crapass.nrdconta%TYPE --Número da conta de destino do depósito 
+                                        ,pr_idseqttl IN crapttl.idseqttl%TYPE
+                                        ,pr_cdagenci IN NUMBER
+                                        ,pr_nrdcaixa IN NUMBER
+                                        ,pr_cdorigem IN NUMBER   -- Código da origem
+                                        ,pr_nmdatela IN VARCHAR2 -- Nome da tela 
+                                        ,pr_nmprogra IN VARCHAR2 -- Nome do programa
+                                        ,pr_cdoperad IN VARCHAR2 -- Código do operador
+                                        ,pr_flgerlog IN NUMBER
+                                        ,pr_flmobile IN NUMBER
+                                        ,pr_dsretxml OUT xmltype  --> XML de retorno CLOB
+                                        ,pr_dscritic OUT VARCHAR2); --> Descrição da crítica
 END PCPS0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
@@ -2539,6 +2553,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
     Observacao: -----
     
     Alteracoes:
+                15/07/2019 - Considerar também a modalidade do tipo de conta e não
+                             somente a situação da solicitação de portabilidade, 
+                             para realizar o envio de valores para outras IFs. 
+                             (Renato Darosci - Supero)
   ..............................................................................*/
 				
 	  -- Buscar portabilidade aprovadas para o cooperado
@@ -2553,8 +2571,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
 				
     vr_dsmsglog  VARCHAR2(1000);
     vr_dssqlerr  VARCHAR2(1000);
+    vr_cdmodali  NUMBER;
+    vr_des_erro  VARCHAR2(1000);
+    vr_dscritic  VARCHAR2(1000);
+    vr_exc_erro  EXCEPTION;
+    
 	BEGIN
 		
+    -- Buscar a modalidade da conta
+    CADA0006.pc_busca_modalidade_conta(pr_cdcooper          => pr_cdcooper
+                                      ,pr_nrdconta          => pr_nrdconta
+                                      ,pr_cdmodalidade_tipo => vr_cdmodali
+                                      ,pr_des_erro          => vr_des_erro
+                                      ,pr_dscritic          => vr_dscritic);
+   
+    -- Verificar erros na rotina
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    -- Se não for da modalidade conta salário 
+    IF NVL(vr_cdmodali,0) <> 2 THEN
+      -- Retorna false indicando que não irá realizar transferencia de valores
+      RETURN FALSE;
+    END IF;
+    
     -- Buscar as portabilidades
 		OPEN  cr_portabi;
 		FETCH cr_portabi INTO rw_portabi;
@@ -2574,6 +2615,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
 		RETURN TRUE;
 				
 	EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Exception para tratamento pela rotina chamadora
+			RAISE_APPLICATION_ERROR(-20001, 'Erro na rotin FN_VERIFICA_PORTABILIDADE: ' || vr_dscritic);
 	  WHEN OTHERS THEN
       -- Guardar o erro
       vr_dssqlerr := SQLERRM;
@@ -3298,7 +3342,85 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
       
   END pc_estorno_rej_empregador;
   
+	-- Validar se o depósito está sendo feito numa conta salário ou não.
+	PROCEDURE pc_valida_deposito_cta_sal(pr_cdcooper IN crapcop.cdcooper%TYPE --Código da cooperativa de origem
+		                                  ,pr_cdcopdst IN crapcop.cdcooper%TYPE --Código da cooperativa de destino
+                                      ,pr_nrctadst IN crapass.nrdconta%TYPE --Número da conta de destino do depósito 
+                                      ,pr_idseqttl IN crapttl.idseqttl%TYPE
+                                      ,pr_cdagenci IN NUMBER
+                                      ,pr_nrdcaixa IN NUMBER
+                                      ,pr_cdorigem IN NUMBER   -- Código da origem
+                                      ,pr_nmdatela IN VARCHAR2 -- Nome da tela 
+                                      ,pr_nmprogra IN VARCHAR2 -- Nome do programa
+                                      ,pr_cdoperad IN VARCHAR2 -- Código do operador
+                                      ,pr_flgerlog IN NUMBER
+                                      ,pr_flmobile IN NUMBER
+                                      ,pr_dsretxml OUT xmltype  --> XML de retorno CLOB
+                                      ,pr_dscritic OUT VARCHAR2) IS --> Descrição da crítica
+																					 
+    /* .............................................................................
+            Programa: pc_valida_deposito_cta_sal
+            Sistema : CECRED
+            Sigla   : CRD
+            Autor   : Augusto (Supero)
+            Data    : Abril/2019                 Ultima atualizacao: 24/04/2019
+        
+            Dados referentes ao programa:
+        
+            Frequencia: Sempre que for chamado
+        
+            Objetivo: Validar se o depósito está sendo feito numa conta salário ou não.
 
+            Observacao: -----
+        
+            Alteracoes:
+    ............................................................................. */
+
+	-- Variaveis
+	vr_cdmodali  INTEGER;
 	
+	-- Variaveis de critica
+	vr_dscritic crapcri.dscritic%TYPE;
+	vr_des_erro VARCHAR2(1000);
+	
+	--Controle de erro
+	vr_exc_erro EXCEPTION;
+  
+	BEGIN
+		
+	  -- Busca a modalidade da conta destino
+		cada0006.pc_busca_modalidade_conta(pr_cdcooper => pr_cdcopdst
+		                                  ,pr_nrdconta => pr_nrctadst
+																			,pr_cdmodalidade_tipo => vr_cdmodali
+																			,pr_des_erro => vr_des_erro
+																			,pr_dscritic => vr_dscritic);
+		
+		-- Se retornou crítica
+		IF TRIM(vr_dscritic) IS NOT NULL THEN
+			RAISE vr_exc_erro;
+		END IF;
+		
+		-- Se for modalidade 2 significa que é conta salário
+		IF vr_cdmodali = 2 THEN
+				vr_dscritic := 'Lancamento nao permitido para este tipo de conta.';
+				RAISE vr_exc_erro;
+		END IF;
+		
+		pr_dsretxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmsgerr></dsmsgerr></Root>');
+		
+  EXCEPTION
+		WHEN vr_exc_erro THEN
+			--
+			pr_dscritic := vr_dscritic;
+			pr_dsretxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmsgerr>' ||
+                                           pr_dscritic || '</dsmsgerr></Root>');
+
+    WHEN OTHERS THEN
+      --
+      pr_dscritic := 'Erro geral na PCPS0001.PC_VALIDA_DEPOSITO_CTA_SAL: ' || SQLERRM;
+			pr_dsretxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><dsmsgerr>' ||
+                                           pr_dscritic || '</dsmsgerr></Root>');
+  END pc_valida_deposito_cta_sal;
+  
 END PCPS0001;
 /
