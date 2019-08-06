@@ -3507,7 +3507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
     aux_vlrtarif VARCHAR2(13); 
     aux_vllibera VARCHAR2(18); 
     aux_dsfiniof VARCHAR2(3); 
-    aux_percetop NUMBER(5,2);
+    aux_percetop VARCHAR2(30); /* P298.6 */ 
     aux_diapagto NUMBER; 
     aux_mespagto NUMBER; 
     aux_anopagto NUMBER; 
@@ -3784,8 +3784,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
             END CASE;
                         
                         
-         
-         aux_percetop := vr_tcrapsim(idx).percetop;
+         aux_percetop := empr0018.fn_formata_valor('',
+                                                vr_tcrapsim(idx).percetop,
+                                                'fm999g999g990d00',
+                                                '%');/* P298.6 */
          --
          aux_diapagto := to_char(vr_tcrapsim(idx).dtdpagto,'DD'); 
          --

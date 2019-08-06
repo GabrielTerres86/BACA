@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2019-05-02T14:25:07 -->
+<!-- 2019-07-23T09:05:52 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl771_simulacao" language="groovy" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="b70aae67-d612-45f6-872b-f7f8cb2e3101">
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="NEW_DATAADAPTER.xml"/>
 	<queryString language="xPath">
 		<![CDATA[/Dados_simulacao/Simulacao_Emprestimo]]>
 	</queryString>
@@ -262,7 +262,7 @@
 				<textElement textAlignment="Right">
 					<font size="10" isBold="true" pdfFontName="Courier"/>
 				</textElement>
-				<text><![CDATA[Tributos:]]></text>
+				<text><![CDATA[IOF:]]></text>
 			</staticText>
 			<textField>
 				<reportElement x="157" y="173" width="123" height="13" uuid="1c128519-1498-4fe6-9a6c-fa1d8e82dbf4"/>
