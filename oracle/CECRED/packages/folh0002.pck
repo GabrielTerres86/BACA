@@ -8303,6 +8303,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                 p_rowid IS NULL);
       rw_valida_ori cr_valida_ori%ROWTYPE;
 
+    -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    -- Buscar Banco da transferência da conta
+    CURSOR cr_craplcs(pr_cdcooper craplcs.cdcooper%TYPE
+                     ,pr_nrdconta craplcs.nrdconta%TYPE
+                     ,pr_cdempres crapccs.cdempres%TYPE) IS
+      SELECT b.cdbantrf
+        FROM craplcs a
+            ,crapccs b
+       WHERE b.cdcooper  = a.cdcooper
+         AND b.nrdconta  = a.nrdconta
+         AND b.cdempres  = pr_cdempres
+         AND a.cdcooper  = pr_cdcooper
+         AND a.nrdconta  = pr_nrdconta
+         AND a.dtmvtolt  = TRUNC(SYSDATE)
+         AND a.cdhistor IN(560,561,gene0001.fn_param_sistema('CRED',pr_cdcooper,'FOLHAIB_HIS_CRE_TECSAL'))
+         AND a.flgenvio  = 0;
+    rw_craplcs cr_craplcs%ROWTYPE;
+  
       -- Variaveis
       vr_tab_origem typ_tab_origem;
       vr_idx        VARCHAR2(20);
@@ -8317,6 +8335,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_dsdireto   VARCHAR(32767);
       vr_idtpcont   VARCHAR2(1);
       vr_indvalid   VARCHAR2(1);
+    vr_inestcri   NUMBER;         -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    vr_idsitlct   VARCHAR2(1);    -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    vr_dsobslct   VARCHAR2(1000); -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    vr_clobxmlc   CLOB;           -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
 
       -- Variáveis para tratamento do XML
       vr_lenght      NUMBER;
@@ -8803,10 +8825,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       OPEN  cr_nrseqlfp(pr_cdcooper,rw_crapemp.cdempres,vr_nrseqpag);
       FETCH cr_nrseqlfp INTO vr_nrseqlfp;
       CLOSE cr_nrseqlfp;
-
+    --
+    -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+    -- Busca o indicador estado de crise
+    sspb0001.pc_estado_crise (pr_inestcri => vr_inestcri
+                             ,pr_clobxmlc => vr_clobxmlc);
+    -- Fim Pj 475
       FOR vr_idx_pgto IN vr_tab_pgto.first..vr_tab_pgto.last LOOP
 
          IF vr_tab_pgto(vr_idx_pgto).rowidlfp IS NULL THEN
+        -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+        -- Definir a situação como Erro quando for Intercompany e estado de crise ligado
+        vr_idsitlct := 'L';
+        vr_dsobslct := NULL;
+        --
+        IF vr_inestcri > 0 THEN
+          OPEN cr_craplcs(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => vr_tab_pgto(vr_idx_pgto).nrdconta
+                         ,pr_cdempres => rw_crapemp.cdempres);
+          FETCH cr_craplcs INTO rw_craplcs.cdbantrf;
+          IF cr_craplcs%NOTFOUND THEN
+            rw_craplcs.cdbantrf := 85;
+          END IF;
+          IF rw_craplcs.cdbantrf <> 85 THEN
+            vr_idsitlct := 'E';
+            vr_dsobslct := 'Erro encontrado - Estado de Crise Ativo';
+          END IF;
+          CLOSE cr_craplcs;
+        END IF;
+        -- Fim Pj 475
 
             -- Ira um insert para cada conjunto de informações, dessa forma
             -- deve ser realizada a limpeza do registro e a carga para garantir
@@ -8815,7 +8862,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             rw_craplfp.cdcooper := pr_cdcooper;
             rw_craplfp.cdempres := rw_crapemp.cdempres;
             rw_craplfp.nrseqpag := vr_nrseqpag;
-            rw_craplfp.idsitlct := 'L'; -- Lançado
+        rw_craplfp.idsitlct := vr_idsitlct; -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
+        rw_craplfp.dsobslct := vr_dsobslct; -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
             rw_craplfp.nrseqlfp := vr_nrseqlfp;
             rw_craplfp.nrdconta := vr_tab_pgto(vr_idx_pgto).nrdconta;
             rw_craplfp.idtpcont := vr_tab_pgto(vr_idx_pgto).idtpcont;
@@ -9775,7 +9823,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                         pr_cdempres craplfp.cdempres%TYPE,
                         pr_nrseqpag craplfp.nrseqpag%TYPE,
                         pr_nrdconta craplfp.nrdconta%TYPE) IS
-         SELECT lfp.idtpcont,DECODE(lfp.idsitlct,'L','Lançado'
+         SELECT DECODE(lfp.idsitlct,'L','Lançado'
                                    ,'C','Creditado'
                                    ,'T','Transmitido'
                                    ,'D','Devolvido'
@@ -9811,58 +9859,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
             AND ccs.nrdconta(+) = lfp.nrdconta
             AND ccs.nrcpfcgc(+) = lfp.nrcpfemp;
 
-         cursor cr_datadecredito(pr_cdcooper crapass.cdcooper%type,pr_nrseqpag craplfp.nrseqpag%type,pr_nrdconta crapass.nrdconta%type,pr_cdempres craplfp.cdempres%type
-         )is 
-         SELECT lfp.idtpcont,to_char(lcs.dttransf,'dd/mm/rr') data_transf,
-       pfp.nrseqpag,
-       pfp.idsitapr,
-       TO_CHAR(pfp.dtmvtolt, 'dd/mm/yy hh24:mi') dtmvtolt,
-       DECODE(pfp.idtppagt, 'A', 'Arquivo', 'C', 'Convencional', ' ') tppagt,
-       pfp.nrcpfapr,
-       TO_CHAR(pfp.dtsolest, 'hh24:mi') dtsolest,
-       pfp.cdopeest,
-       TO_CHAR(pfp.qtregpag, 'fm999g999g999g999g999g990') qtlctpag,
-       TO_CHAR(pfp.vllctpag, 'fm9g999g999g999g999g990d00') vllctpag,
-       TO_CHAR(NVL(pfp.dthordeb, pfp.dtdebito), 'dd/mm/rr hh24:mi') dtdebito,
-       DECODE(pfp.flsitdeb,
-              0,
-              'Pendente ' || dsobsdeb,
-              1,
-              'Debitado com sucesso',
-              ' ') dssitdeb,
-       pfp.flsitcre,
-       TO_CHAR(NVL(pfp.dthorcre, pfp.dtcredit), 'dd/mm/yyyy') dtcredit,
-       DECODE(pfp.flsitcre, 0, 'Pendente ' || dsobscre, 1, 'Creditado', ' ') dssitcre,
-       TO_CHAR(DECODE(pfp.idsitapr,
-                      1,
-                      folh0001.fn_valor_tarifa_folha(16,
-                                                     emp.nrdconta,
-                                                     emp.cdcontar,
-                                                     pfp.idopdebi,
-                                                     pfp.vllctpag),
-                      pfp.vltarapr),
-               'fm999990d00') vltarifa,
-       DECODE(pfp.flsittar, 0, 'Pendente', 1, 'Debitada', ' ') dssittar
-  FROM crapemp emp -->Cadastro de empresas
-      ,
-       crappfp pfp -->Pagamentos de folha de pagamanto
-      ,
-       craplfp lfp -->Lancamentos do pagamento de folha
-      ,
-       craplcs lcs -->Contem os lancamentos dos funcionarios das empresas que optaram por transferir o salario para outra instituicao financeira.
- WHERE pfp.cdcooper = pr_cdcooper /*parametro*/
-   AND pfp.cdempres = pr_cdempres /*parametro*/
-   AND pfp.cdcooper = emp.cdcooper
-   AND pfp.cdempres = emp.cdempres
-   and pfp.nrseqpag = pr_nrseqpag /*parametro*/
-   and lfp.cdcooper = emp.cdcooper
-   and lfp.cdempres = emp.cdempres
-   and lfp.nrseqpag = pr_nrseqpag /*parametro*/
-   and lfp.nrdconta = pr_nrdconta /*parametro*/
-   and lcs.cdcooper = emp.cdcooper
-   and lcs.cdhistor(+) = 560
-   and lcs.nrridlfp(+)= lfp.progress_recid;
-  rw_datacredito cr_datadecredito%rowtype;
       -- Variaveis
       vr_des_xml  CLOB;
       vr_blnfound BOOLEAN;
@@ -9877,7 +9873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_dssituac VARCHAR2(10);
       vr_nrdrowid ROWID;
       vr_nmdirlgc VARCHAR(400);
-    vr_data_credito varchar2(22);
+
       -- Variaveis Excecao
       vr_exc_erro EXCEPTION;
 
@@ -10034,19 +10030,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                       pr_cdempres => rw_headtag.cdempres,
                                       pr_nrseqpag => rw_relpgto.nrseqpag,
                                       pr_nrdconta => pr_nrctalfp) LOOP
-                                   
-                                   if rw_craplfp.idtpcont =' T' then
-                                   open cr_datadecredito(pr_cdcooper,rw_relpgto.nrseqpag,replace(rw_craplfp.nrdconta,'.'),rw_headtag.cdempres);
-                                   fetch cr_datadecredito into rw_datacredito; --> verificar a necessidade deste cursor Brruno
-                                   vr_data_credito := rw_datacredito.data_transf;
-                                   else 
-                                   vr_data_credito :=  substr(rw_relpgto.dtcredit,1,8);
-                                   end if;
-                                   if cr_datadecredito%isopen then 
-                                   close cr_datadecredito;
-                                   end if;
-                                    
-    
             -- Cria tag lancto
             pc_escreve_xml('<lancto>
                                 <idsitlct>' || rw_craplfp.idsitlct || '</idsitlct>
@@ -10055,7 +10038,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                 <nrcpfcgc>' || rw_craplfp.nrcpfcgc || '</nrcpfcgc>
                                 <nmprimtl><![CDATA[' || NVL(rw_craplfp.nmprimtl,' ') || ']]></nmprimtl>
                                 <dsorigem><![CDATA[' || rw_craplfp.dsorigem || ']]></dsorigem>
-								<dtcredito>'|| vr_data_credito ||'</dtcredito>
                                 <vllancto>' || rw_craplfp.vllancto || '</vllancto>
                                 <dsobslct><![CDATA[' || NVL(rw_craplfp.dsobslct,' ') || ']]></dsobslct>
                                 <dsprotoc>'|| GENE0002.fn_mask(rw_relpgto.nrseqpag,'9999999999')|| GENE0002.fn_mask(rw_craplfp.nrseqlfp,'9999999999') ||'</dsprotoc>
