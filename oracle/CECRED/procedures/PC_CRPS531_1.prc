@@ -364,6 +364,8 @@ end;
  
              07/06/2019 - Permitir processamento de mensagens LTR independente do processo batch da 
 			              AILOS (Diego).                        
+
+			 06/08/2019 - Inclusão de PA e Caixa na mensagem de devolução de TED em espécie (RITM0022091 - Diógenes Lazzarini)						
  
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -651,8 +653,10 @@ end;
             ,tpdctacr
             ,dshistor
             ,ROWID
-            ,nrridlfp 
+			,nrridlfp 
             ,nrdocmto
+            ,cdagenci
+            ,nrdolote
         FROM craptvl 
        WHERE craptvl.cdcooper = pr_cdcooper
          AND craptvl.tpdoctrf = 3
@@ -7047,6 +7051,8 @@ END pc_trata_arquivo_cir0060;
                   || ' Nome do Remetente: ' || vr_nmremetente || '. <br><br>'
                   || ' Valor: ' || to_char(vr_aux_VlrLanc,'fm999g999g999g990d00')  || ' <br>'
                   || ' Número de controle IF: ' || vr_aux_NumCtrlIF    || ' <br>'
+				  || ' Posto de Atendimento: ' || rw_craptvl.cdagenci || ' <br>'
+                  || ' Caixa: ' || substr(rw_craptvl.nrdolote, -3) || ' <br>'				  
                   || ' Motivo da Devolução/Rejeição: ' || vr_aux_CodDevTransf || vr_dsdevolucao|| '. <br><br>'; 
                     
                  gene0003.pc_solicita_email(pr_cdcooper        => rw_crapcop_mensag.cdcooper
