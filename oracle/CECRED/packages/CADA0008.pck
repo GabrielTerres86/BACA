@@ -1117,7 +1117,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     --
     --  Alteração :
     --
-    --
+    --		05/08/2019 - Não atualizar o flag do cadastro positivo através das 
+    --                   telas do Aimaro. (	Miguel Rodrigues - Supero )
     -- ..........................................................................*/
   
       -- Variável de críticas
@@ -1150,7 +1151,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
             SET cdbcochq = pr_cdbcochq,
                 nrdctitg = pr_nrdctitg,
                 nrctacns = pr_nrctacns,
-                incadpos = pr_incadpos,
+                --incadpos = pr_incadpos,  -- Não atualizar flag de cadastro positivo
                 flgiddep = pr_flgiddep,
                 flgrestr = pr_flgrestr,
                 indserma = pr_indserma,
