@@ -478,7 +478,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para gravar dados Seguros Sicredi que foram ajustados
 
-    Alteracoes:
+    Alteracoes: 05/08/2019 - Retornar código de critica 0, para que a mensagem
+                             possa ser retornada corretamente para a tela.
+                             Alcemir Jr. (INC0021298).
     ............................................................................. */
 
     CURSOR cr_crapcop (p_cdcooper IN crapcop.cdagectl%type) IS
@@ -706,7 +708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
     FETCH cr_seg_tela INTO rw_tab_seg_tela(1);
     IF cr_seg_tela%NOTFOUND THEN
       CLOSE cr_seg_tela;
-      pr_cdcritic := 9999;
+      pr_cdcritic := 0;
       pr_des_erro := 'Seguro selecionado invalido!';
       pr_nmdcampo := 'cnewCdcooper';
       RAISE vr_exc_erro;
@@ -715,14 +717,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
 
       -- Validar Cooperativa parâmetro
       IF NOT vr_found_cop THEN
-        pr_cdcritic := 9999;
+        pr_cdcritic := 0;
         pr_des_erro := 'Cooperativa invalida! (' || pr_cdcooper ||')';
         pr_nmdcampo := 'cnewCdcooper';
         RAISE vr_exc_erro;
       ELSE -- Encontrou COOPERATIVA
         -- Validar Conta PARAMETRO
         IF NOT vr_found_ass THEN
-          pr_cdcritic := 9999;
+          pr_cdcritic := 0;
           pr_des_erro := 'Associado nao encontrado na Cooperativa informada! (' || pr_cdcooper ||'/'||pr_nrdconta ||')';
           pr_nmdcampo := 'cnewNrdconta';
           RAISE vr_exc_erro;
@@ -887,7 +889,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
           IF NOT vr_flgsegok OR pr_dscritic IS NOT NULL THEN
             -- OCORREU ERRO NA ATUALIZAÇÃO DO SEGURO
             -- FAZ ROLLBACK
-            pr_cdcritic := 9999;
+            pr_cdcritic := 0;
             pr_des_erro := pr_dscritic;
             pr_nmdcampo := 'cnewCdcooper';
             RAISE vr_exc_erro;
@@ -895,8 +897,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PENSEG AS
             IF vr_dsmsgupd IS NOT NULL THEN
               -- OCORREU CRITICA NA ATUALIZAÇÃO DO SEGURO
               -- FAZ COMMIT MESMO ASSIM
-              pr_cdcritic := 9999;
-              pr_des_erro := vr_dsmsgupd;
+              pr_cdcritic := 0;
+              pr_des_erro := vr_dsmsgupd; 
               pr_nmdcampo := 'cnewCdcooper';
               RAISE vr_exc_critica;
             END IF;
