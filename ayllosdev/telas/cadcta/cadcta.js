@@ -5,6 +5,10 @@
  * OBJETIVO     : Biblioteca de funções da tela CADCTA
  * --------------
  * ALTERAÇÕES   : [14/06/2018] Mateus Z (Mouts)     : Nova rotina "FATCA CRS" (PRJ414).
+ * 
+ *                [05/08/2019] Renato/Miguel (Supero): Manter indicador de cadastro positivo
+ *                                                     bloqueado e não permitindo edição e 
+ *                                                     ajustar a navegação da tela
  * --------------
  *
  */
@@ -684,7 +688,7 @@ function controlaLayoutCadcta(operacao){
 
         showMsgAguardo('Aguarde, carregando alteração da conta/dv ...');
 
-        var camposEditaveis = $('#nmctajur ,#cdconsultor, #incadpos, #flgiddep, #flgrestr, #indserma, #fldevchq, #inlbacen, #nmtalttl, #qtfoltal, #nrinfcad,#nrperger, #nrpatlvr, #dsinfadi', '#frmCadcta');
+        var camposEditaveis = $('#nmctajur ,#cdconsultor, #flgiddep, #flgrestr, #indserma, #fldevchq, #inlbacen, #nmtalttl, #qtfoltal, #nrinfcad,#nrperger, #nrpatlvr, #dsinfadi', '#frmCadcta');
         var camposEditCab   = $('#nmctajur', '#frmCabCadcta');
         var botoes = $('#btAlterar, #btContinuar, #btImpressoes, #btGrEconomico, #btImunidadeTributaria, #btClienteFinanceiro, #btOrgaosProtecaoCredito, #btImpedimentosDesligamento, #btDosie, #btFatcaCrs', '#frmCadcta');
         var botoesAlteracao = $('#btCancelar, #btSalvar', '#frmCadcta');
@@ -1320,17 +1324,18 @@ function setaNavegacaoCampos(){
     
     $('#cdconsultor','#frmCadcta').unbind('keypress').bind('keypress',function(e) {		
         if (e.keyCode == 13 || e.keyCode == 9) {        			
-			$('#incadpos','#frmCadcta').focus();
+            $('#flgiddep', '#frmCadcta').focus();
             return false;            				
 		}
 	});
     
-    $('#incadpos','#frmCadcta').unbind('keypress').bind('keypress',function(e) {
+    // Campo incadpos ficará bloqueado e não será navegável
+    /*$('#incadpos','#frmCadcta').unbind('keypress').bind('keypress',function(e) {
 		if (e.keyCode == 13 || e.keyCode == 9) {			
 			$('#flgiddep','#frmCadcta').focus();
             return false;            				
 		}
-	});
+	});*/
     
     $('#flgiddep','#frmCadcta').unbind('keypress').bind('keypress',function(e) {
 		if (e.keyCode == 13 || e.keyCode == 9) {			
