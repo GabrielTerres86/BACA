@@ -20,9 +20,10 @@
 				  01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
 
                   18/06/2018 - P450 - Inclusão do Motivo do Cancelamento/dsmotcan (Marcel/AMcom)
-				  
+                  
 				  14/06/2019 - Ajustar botao Dossiê para buscar a imagem correta pois estava buscando do 
 				               ambiente de homologação (Lucas Ranghetti INC0016209)
+                  24/07/2019 - P519 - Bloqueio de contratacao e cancelamento de seguros CASA/VIDA para coop CIVIA (Darlei / Supero)
  */
 ?>
 <div id="divSeguro" class="divRegistros">
@@ -43,6 +44,7 @@
 				<tr>
 					<td>
                         <?php echo getByTagName($seguro->tags,'dsTipo'); ?>
+						<input type="hidden" value="<? echo $glbvars["cdcooper"] ;?>" name="cdcooper" id="cdcooper">
                         <input type="hidden" id="dsmotcan"   name="dsmotcan"   value="<?php echo getByTagName($seguro->tags,'dsmotcan');   ?>" />
                         <input type="hidden" id="tpseguro"   name="tpseguro"   value="<?php echo getByTagName($seguro->tags,'tpSeguro');   ?>" />
                         <input type="hidden" id="idorigem"   name="idorigem"   value="<?php echo getByTagName($seguro->tags,'idOrigem');   ?>" />

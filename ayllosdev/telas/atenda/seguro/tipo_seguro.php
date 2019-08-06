@@ -12,6 +12,7 @@
 <form name="frmNovaProp" id="frmNovaProp" class="formulario condensado">	
 	<input type='hidden' value='' name='cdsitdct' id='cdsitdct'>
 	<input type='hidden' value='' name='nmprimtl' id='nmprimtl'>
+	<input type='hidden' value='<? echo $glbvars["cdcooper"] ;?>' name='cdcooper' id='cdcooper'>
 	<fieldset>
 		<legend><? echo utf8ToHtml('Tipo de Seguro') ?></legend>	
 		<label for="tpemprst">Tipo:</label>

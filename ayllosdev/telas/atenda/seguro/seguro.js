@@ -62,8 +62,9 @@
 				  04/09/2018 - Alterado a impressão da proposta seguro prestamista PRJ 438 e incluído campo contrato 
 				  			   para o tipo seguro prestamista. PRJ 438 (Mateus Z - MoutS).
                   04/12/2018 - Retornar saldo devedor para valor do seguro prestamista - Paulo Martins - 438 Sprint 7
-
+                  
 				  13/06/2019 - Corrigido a entrada de caracteres especiais na entrada do nome do beneficiario (Tiago)
+                  24/07/2019 - P519 - Bloqueio de contratacao e cancelamento de seguros CASA/VIDA para coop CIVIA (Darlei / Supero)
  * */
  
 //**************************************************
@@ -224,6 +225,7 @@ function controlaOperacao(operacao) {
                 nmsispar   = $('#nmsispar', $(this)).val();
                 idcontrato = $('#idcontrato', $(this)).val();
 								dsMotcan   = $('#dsmotcan', $(this) ).val();
+				cdcooper   = parseInt($('#cdcooper').val());
 				
 				// for para pegar os valores dos parentes caso seja vida
 				if(tpseguro == 3){
@@ -241,6 +243,11 @@ function controlaOperacao(operacao) {
 		
 		switch (operacao) {
 			case 'C' : 
+				if ((tpseguro == 11 || tpseguro == 3)&&(cdcooper == 13)) {   // se for casa ou vida e cooperativa civia
+					showError('error','Plano de seguro bloqueado para cancelamento, devido processo de migração para Nova Seguradora. Cancelamento deverá ser realizado via Sistema de Gestão de Seguros – SIGAS.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
+					return false;
+					break;
+				}
 				// Se for tipo novo, não é alteráveil pelo Ayllos e nem pode ser impresso
 			    if (idorigem == 'N') {
 			        showError('error', 'Esta ap&oacute;lice n&atilde;o permite esta opera&ccedil;&atildeo! Utilizar o sistema "' + nmsispar + '".', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
@@ -327,6 +334,7 @@ function controlaOperacao(operacao) {
 				break;
 			case 'TF'://tela formulario
 				tpseguro = parseInt($('#tpemprst').val());
+				cdcooper = parseInt($('#cdcooper').val());
 				var cdprodut = 0;
 				var executa_depois = '';
 				switch (tpseguro) {
@@ -339,6 +347,11 @@ function controlaOperacao(operacao) {
 					case 11: // Seguro Residência
 						cdprodut = 19;
 						break;
+				}
+				if ((tpseguro == 11 || tpseguro == 3)&&(cdcooper == 13)) {   // se for casa ou vida e cooperativa civia
+					showError('error','Plano de seguro bloqueado para contratação, devido processo de migração para Nova Seguradora. Adesão deverá ser realizada via Sistema de Gestão de Seguros – SIGAS.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
+					return false;
+					break;
 				}
             if (tpseguro == 11 || tpseguro == 4) {   // se for casa            
 					executa_depois = 'valida_inclusao(' + tpseguro + ');';
@@ -395,8 +408,8 @@ function controlaOperacao(operacao) {
                     }
 					cddopcao = 'C_AUTO';
 				}else if(tpseguro == 11){
-					operacao = 'C_CASA';
-					cddopcao = 'C_CASA';
+                        operacao = 'C_CASA';
+                        cddopcao = 'C_CASA';
 				}else if(tpseguro == 3 && idorigem == 'N'){
 					operacao = 'CONSULTAR_NOVO';
 					cddopcao = 'CONSULTAR_NOVO';
@@ -1250,7 +1263,7 @@ function controlaLayout(operacao) {
 				cNmcidade2 = $('#nmcidade2', frmSeguroCasa);  
 				cCdufresd2 = $('#cdufresd2', frmSeguroCasa);
 				
-				cNmresseg.val(arraySeguroCasa['nmresseg']);
+                cNmresseg.val(arraySeguroCasa['nmresseg']);
 				cNrctrseg.val(arraySeguroCasa['nrctrseg']);
 				cTpplaseg.val(arraySeguroCasa['tpplaseg']);
 				cDdpripag.val(arraySeguroCasa['ddpripag']);
