@@ -11,6 +11,8 @@
   | calcula_emprestimo                      | EMPR0004.pc_calcula_emprestimo       |
   | calcula_data_parcela                    | EMPR0004.pc_calcula_data_parcela     |
   | gera_parcelas_emprestimo                | EMPR0004.pc_gera_parcelas_emprest    |
+  | calcula_emprestimo                      | EMPR0018.pc_calcula_emprestimo       |
+  | valida_novo_calculo                     | EMPR0018.pc_valida_novo_calculo      |
   +-----------------------------------------+--------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA

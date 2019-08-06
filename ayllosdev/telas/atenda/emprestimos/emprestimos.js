@@ -12609,9 +12609,19 @@ function controlaCamposTelaInterveniente(cooperado){
     switch(inpessoa){
         case '1':
             $('label[for="dtnascto"]', '#frmIntevAnuente').text('Data Nasc.:');
+            $('label[for="nrctaava"]', '#frmIntevAnuente').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
+        	$('label[for="inpessoa"]', '#frmIntevAnuente').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
+        	$('label[for="nrcpfcgc"]', '#frmIntevAnuente').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
+        	$('label[for="nmdavali"]', '#frmIntevAnuente').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
+        	//$('label[for="dtnascto"]', '#frmIntevAnuente').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
         break;
         default:
             $('label[for="dtnascto"]', '#frmIntevAnuente').text('Data da Abertura:');
+            $('label[for="nrctaava"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
+        	$('label[for="inpessoa"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
+        	$('label[for="nrcpfcgc"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
+        	$('label[for="nmdavali"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
+        	$('label[for="dtnascto"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
         break;
     }
     if(operacao == 'C_INTEV_ANU'){
@@ -12624,39 +12634,45 @@ function controlaCamposTelaInterveniente(cooperado){
 
 	if (inpessoa == 1 && cooperado == true) {
 
-		$('label[for="nrcpfcgc"]', '#frmIntevAnuente').text('C.P.F:');
+		$('label[for="nrcpfcgc"]', '#frmIntevAnuente').text('CPF:');
 		$('label[for="nmdavali"]', '#frmIntevAnuente').text('Nome:');
+		$('#divNacionalidade', '#frmIntevAnuente').show(); // Rafael Ferreira (Mouts) - Story 13447
 		$('#divCdnacion', '#frmIntevAnuente').hide();
+		$('#dsnacion', '#frmIntevAnuente').show(); // Rafael Ferreira (Mouts) - Story 13447
 		$('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').hide();
 		$('#fsetConjugeInterv', '#frmIntevAnuente').show();
         $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').hide(); //bruno - prj 438 - bug 14962
 
 	} else if (inpessoa == 1 && cooperado == false) {
 
-		$('label[for="nrcpfcgc"]', '#frmIntevAnuente').text('C.P.F:');
+		$('label[for="nrcpfcgc"]', '#frmIntevAnuente').text('CPF:');
 		$('label[for="nmdavali"]', '#frmIntevAnuente').text('Nome:');
+		$('#divNacionalidade', '#frmIntevAnuente').show(); // Rafael Ferreira (Mouts) - Story 13447
 		$('#divCdnacion', '#frmIntevAnuente').show();
 		$('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').show();
 		$('#fsetConjugeInterv', '#frmIntevAnuente').show();
-        $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').show(); //bruno - prj 438 - bug 14962
+        $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').removeClass('rotulo').show(); //bruno - prj 438 - bug 14962
 
 	} else if (inpessoa == 2 && cooperado == true) {
 
-		$('label[for="nrcpfcgc"]', '#frmIntevAnuente').text('C.N.P.J:');
+		$('label[for="nrcpfcgc"]', '#frmIntevAnuente').text('CNPJ:');
 		$('label[for="nmdavali"]', '#frmIntevAnuente').text('Razão Social:');
-		$('#divCdnacion', '#frmIntevAnuente').hide();
+		$('#divNacionalidade', '#frmIntevAnuente').hide(); // Rafael Ferreira (Mouts) - Story 13447
+		//$('#divCdnacion', '#frmIntevAnuente').hide();
 		$('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').hide();
 		$('#fsetConjugeInterv', '#frmIntevAnuente').hide();
         $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').hide(); //bruno - prj 438 - bug 14962
 
 	} else if (inpessoa == 2 && cooperado == false) {
 
-		$('label[for="nrcpfcgc"]', '#frmIntevAnuente').text('C.N.P.J:');
+		$('label[for="nrcpfcgc"]', '#frmIntevAnuente').text('CNPJ:');
 		$('label[for="nmdavali"]', '#frmIntevAnuente').text('Razão Social:');
-		$('#divCdnacion', '#frmIntevAnuente').show();
+		//$('#divCdnacion', '#frmIntevAnuente').hide(); // Rafael Ferreira (Mouts) - Story 13447
+		$('#divNacionalidade', '#frmIntevAnuente').hide(); // Rafael Ferreira (Mouts) - Story 13447
 		$('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').show();
 		$('#fsetConjugeInterv', '#frmIntevAnuente').hide();
         $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').show(); //bruno - prj 438 - bug 14962
+        $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').addClass('rotulo').show(); // Rafael Ferreira (Mouts) - story 13447
 
 	}
 

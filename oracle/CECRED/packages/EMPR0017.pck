@@ -13,6 +13,11 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0017 AS
   -- Frequencia: Sempre que for chamada
   -- Objetivo  : Fornecer Parametros para configurar segmentos de crédito
   --
+  --
+  --			23/07/2019 - Removido filtro de data passado via sessão, criado parametro de data
+  --                         na busca_simulacoes. (P438 Douglas Pagel / AMcom)
+  --
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   TYPE typ_dados_contrato_ccb IS RECORD
@@ -3273,12 +3278,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   --/ Pegando a data final para filtro, limitando pelos dias parametrizados
   vr_dtmvtolt_fim := GREATEST(vr_dtmvtolt_ini,pr_dtmvtolt_fim);   
   --/
-  empr0018.pc_set_parametros(vr_dtmvtolt_ini,vr_dtmvtolt_fim);
-  --
-  --/
-  gene0001.pc_informa_acesso(pr_module => 'EMPR0017'
-                            ,pr_action => 'empr0018.pc_busca_simulacoes');
-  --/
   empr0018.pc_busca_simulacoes(pr_cdcooper => pr_cdcooper,
                                pr_cdagenci => pr_cdagenci,
                                pr_nrdcaixa => pr_nrdcaixa,
@@ -3289,6 +3288,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                                pr_idseqttl => pr_idseqttl,
                                pr_dtmvtolt => vr_dtmvtolt,
                                pr_flgerlog => sys.diutil.int_to_bool(pr_flgerlog),
+							   pr_datainic => vr_dtmvtolt_ini,
+                               pr_datafina => vr_dtmvtolt_fim,
                                pr_tcrapsim => vr_tab_crapsim,
                                pr_cdcritic => vr_cdcritic,
                                pr_des_erro => vr_des_erro,
@@ -3752,7 +3753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   -- ================================================================================================
   --                                                                                                *
   --  Código Situação ||   Descrição Situação ||  Situação (insitest) ||    Decisão (insitapr)        *
-  --  0                ||  Em Análise         ||                      ||     0 ou 5                   *
+  --  0                ||  Em Análise         ||                      ||    0, 5 ou 6                 *
   --  1                ||  Aprovado           ||                     ||     1                        *
   --  2                ||  Concluído           ||                     ||     2 ou 3 ou 4 ou 6          *
   --  3                ||  Expirado           ||  4 ou 5              ||                              *
@@ -3889,10 +3890,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
       AND wepr.nrdconta = pr_nrdconta
       AND wepr.dtmvtolt BETWEEN pr_dtmvtolt_ini AND pr_dtmvtolt_fim
       AND ( (
-            ( pr_situacao = 0 AND wepr.insitapr IN (0,5) ) -- '0-Em estudo/5-Derivar'
+            ( pr_situacao = 0 AND wepr.insitapr IN (0,5,6) ) -- '0-Em estudo/5-Derivar/6-Erro'
             OR
             ( pr_situacao = 1 AND wepr.insitapr IN (1) AND wepr.insitest = 3 ) OR -- 1-Aprovado
-            ( pr_situacao = 2 AND wepr.insitapr IN (2,3,4,6) ) -- 2-Nao aprovado/3-Restricao/4-Refazer//6-Erro
+            ( pr_situacao = 2 AND wepr.insitapr IN (2,3,4) ) -- 2-Nao aprovado/3-Restricao/4-Refazer/
             )
             OR
             (
@@ -3957,9 +3958,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     RETURN CASE 
       WHEN insitest = 6 THEN 4 
       WHEN insitest IN (4,5) THEN 3
-      WHEN insitapr in (0,5) THEN 0       
+      WHEN insitapr in (0,5,6) THEN 0       
       WHEN insitapr = 1 THEN 1
-      WHEN insitapr IN (2,3,4,6) THEN 2      
+      WHEN insitapr IN (2,3,4) THEN 2      
       WHEN insitest = 6 THEN 4 
     END;  
   END fn_retornar_Situacao; 
@@ -4296,7 +4297,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
 
                   3  -- Expirado
                    
-              WHEN epr.insitapr IN (0,5) THEN
+              WHEN epr.insitapr IN (0,5,6) THEN
 
                   0  -- Em Análise
 
@@ -4304,7 +4305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
 
                   1  -- Aprovado
 
-              WHEN epr.insitapr IN (2,3,4,6) THEN
+              WHEN epr.insitapr IN (2,3,4) THEN
                   2  -- Concluído
 
               WHEN epr.insitest IN (6)  THEN
@@ -4319,7 +4320,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
 
                   'Expirado'
                   
-            WHEN epr.insitapr IN (0,5) THEN
+            WHEN epr.insitapr IN (0,5,6) THEN
 
                   'Em Análise'
 
@@ -4327,7 +4328,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
 
                   'Aprovado'
 
-            WHEN epr.insitapr IN (2,3,4,6) THEN
+            WHEN epr.insitapr IN (2,3,4) THEN
 
                   'Concluído'
 
@@ -4882,6 +4883,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
 
   frequencia: sempre que for chamado.
   objetivo  : procedure para gerar propostas de emprestimo, gravando nas estruturas necessárias.
+  
+  Alterações: 22/07/2019 - Inclusão da validação da data de validade da simulação. (Douglas Pagel / AMcom).
     ................................................................................. */
     --
     vr_tab_erro gene0001.typ_tab_erro;
@@ -5530,7 +5533,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
         RAISE vr_exc_erro;
     END IF;
     --    
-    --
+    -- Verifica se a simulação está dentro do prazo de validade
+    IF trunc(rw_crapdat.dtmvtolt) > trunc(rw_crapsim.dtvalidade) THEN
+        vr_dscritic := 'Essa simulação ultrapassou a data de validade! Realize uma nova simulação e envie para análise.';
+        RAISE vr_exc_erro;
+    END IF;
+    
     IF nvl(rw_crapsim.idfiniof,0) = 1 THEN
       vr_vlfinanciado := nvl(rw_crapsim.vlemprst,0) + nvl(rw_crapsim.vliofepr,0) + nvl(rw_crapsim.vlrtarif,0);
     ELSE 
@@ -5721,7 +5729,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
          frequencia: sempre que for chamado.
          objetivo  : procedure para gravar propostas de emprestimo
 
-         Alterações: 28/05/2019 - P438 Incluída busca da dados adicionais para grabar na crapprp. (Douglas Pagel / AMcom)
+         Alterações: 28/05/2019 - P438 Incluída busca da dados adicionais para gravar na crapprp. (Douglas Pagel / AMcom)
+
+                     02/08/2019 - Inclusão da validação da Linha de Crédito e ajuste no valor do campo crawepr.tpdescto
+                                  (Douglas Pagel / AMcom). 
 
       ............................................................................. */
 
@@ -5735,6 +5746,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        AND t.nrdconta = pr_nrdconta
        AND t.nrctremp = pr_nrctremp;
     rw_contrato cr_contrato%ROWTYPE;
+
+    -- Busca dados da linha de crédito
+    CURSOR cr_craplcr(pr_cdcooper IN crawepr.cdcooper%TYPE
+                     ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
+      SELECT l.tpdescto
+        FROM craplcr l
+       WHERE l.cdcooper = pr_cdcooper
+         AND l.cdlcremp = pr_cdlcremp;
+    rw_craplcr cr_craplcr%ROWTYPE;
 
     CURSOR cr_crapttl IS
     SELECT * 
@@ -5768,6 +5788,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     OPEN btch0001.cr_crapdat(pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
     CLOSE btch0001.cr_crapdat;
+    
+    -- Valida a linha de crédito
+    OPEN cr_craplcr(pr_cdcooper => pr_cdcooper
+                   ,pr_cdlcremp => pr_cdlcremp);
+    FETCH cr_craplcr INTO rw_craplcr;
+    
+    IF cr_craplcr%NOTFOUND THEN
+      CLOSE cr_craplcr;
+      vr_cdcritic := 363;
+      RAISE vr_exc_erro;
+    ELSE
+      CLOSE cr_craplcr;
+    END IF;
     
     --Busca Risco do emprestimo
     RATI0002.pc_obtem_emprestimo_risco(
@@ -5875,7 +5908,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
         ,0
         ,0
         ,1
-        ,2
+        ,rw_craplcr.tpdescto
         ,pr_cdlcremp
         ,0
         ,pr_cdfinemp

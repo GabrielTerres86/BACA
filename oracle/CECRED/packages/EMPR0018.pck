@@ -14,6 +14,9 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0018 AS
 
 				11/03/2019 - Inclusão de LOG ao gravar a simulação. (Douglas Pagel / AMcom)
 
+				23/07/2019 - Removido filtro de data passado via sessão, criado parametro de data
+                             na busca_simulacoes. (P438 Douglas Pagel / AMcom)
+
 ..............................................................................*/
 
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -76,7 +79,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0018 AS
       ,nrparepr INTEGER
       ,vlparepr NUMBER(12, 2)
       ,dtparepr DATE    
-      ,indpagto INTEGER
+      ,indpagto INTEGER DEFAULT 0
       ,dtvencto DATE);  
     TYPE typ_tab_parc_epr IS TABLE OF typ_reg_parc_epr INDEX BY PLS_INTEGER;
     
@@ -277,7 +280,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0018 AS
                                       ,pr_tparcepr OUT typ_tab_parc_epr                                   
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Código da crítica tratada
                                       ,pr_des_erro OUT VARCHAR2                   --> Descrição de critica tratada
-                                      ,pr_des_reto OUT VARCHAR                    --> Retorno OK / NOK
+                                      ,pr_des_reto OUT VARCHAR2                   --> Retorno OK / NOK
                                       ,pr_tab_erro OUT gene0001.typ_tab_erro);    --> Tabela com possíves erros
                                       
     -- Excluir simulação de empréstimo
@@ -309,6 +312,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0018 AS
                                  ,pr_idseqttl IN INTEGER
                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                                  ,pr_flgerlog IN BOOLEAN
+								 ,pr_datainic IN DATE DEFAULT NULL           --> Data inicial da pesquisa
+                                 ,pr_datafina IN DATE DEFAULT NULL           --> Data final da pesquisa
                                  ,pr_tcrapsim OUT typ_tab_sim
                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Código da crítica tratada
                                  ,pr_des_erro OUT VARCHAR2                   --> Descrição de critica tratada
@@ -327,6 +332,17 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0018 AS
                                        ,pr_des_reto OUT VARCHAR                    --> Retorno OK / NOK
                                        ,pr_tab_erro OUT gene0001.typ_tab_erro);    --> Tabela com possíves erros
     
+    PROCEDURE pc_consu_tari_emprst_prog(pr_cdcooper IN INTEGER                    
+                                       ,pr_cdlcremp IN INTEGER 
+                                       ,pr_vlemprst IN NUMBER                      --> Valor do empréstimo
+                                       ,pr_nrdconta IN INTEGER                     --> Número da conta do associado
+                                       ,pr_nrctremp IN INTEGER                     --> Número do contrato de empréstimo
+                                       ,pr_dscatbem IN VARCHAR2                    --> Bens informados para o empréstimo
+                                       ,pr_vlrtarif OUT NUMBER                     --> Retorno com o valor da tarifa 
+                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Código da crítica tratada
+                                       ,pr_dscritic OUT VARCHAR2                   --> Descrição de critica tratada
+                                       ,pr_des_reto OUT VARCHAR);                  --> Retorno da execução
+    
     --b1wgen0084.valida_novo_calculo
     PROCEDURE pc_valida_novo_calculo(pr_cdcooper IN crapcop.cdcooper%TYPE
                                     ,pr_cdagenci IN crapage.cdagenci%TYPE
@@ -338,6 +354,17 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0018 AS
                                     ,pr_des_erro OUT VARCHAR2                   --> Descrição de critica tratada
                                     ,pr_des_reto OUT VARCHAR                    --> Retorno OK / NOK
                                     ,pr_tab_erro OUT gene0001.typ_tab_erro);    --> Tabela com possíves erros
+                                    
+    
+    PROCEDURE pc_valida_calculo_prog(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                    ,pr_cdagenci IN crapage.cdagenci%TYPE
+                                    ,pr_nrdcaixa IN INTEGER
+                                    ,pr_qtparepr IN INTEGER
+                                    ,pr_cdlcremp IN INTEGER
+                                    ,pr_flgpagto IN INTEGER
+                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Código da crítica tratada
+                                    ,pr_des_erro OUT VARCHAR2                   --> Descrição de critica tratada
+                                    ,pr_des_reto OUT VARCHAR);                  --> Retorno da execução
                                     
     --Procedure para validar a gravacao de uma simulacao de emprestimo                                
     PROCEDURE pc_valida_gravacao_simulacao(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -427,6 +454,34 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0018 AS
                                    ,pr_des_reto OUT VARCHAR                    --> Retorno OK / NOK
                                    ,pr_tab_erro OUT gene0001.typ_tab_erro);    --> Tabela com possíves erros 
                                 
+   PROCEDURE pc_calcula_emprestimo_prog(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                       ,pr_cdagenci IN crapage.cdagenci%TYPE
+                                       ,pr_nrdcaixa IN INTEGER
+                                       ,pr_cdoperad IN VARCHAR2 
+                                       ,pr_nmdatela IN VARCHAR2
+                                       ,pr_cdorigem IN INTEGER
+                                       ,pr_nrdconta IN crapass.nrdconta%TYPE
+                                       ,pr_idseqttl IN INTEGER   
+                                       ,pr_flgerlog IN INTEGER 
+                                       ,pr_nrctremp IN INTEGER  
+                                       ,pr_cdlcremp IN INTEGER 
+                                       ,pr_cdfinemp IN INTEGER 
+                                       ,pr_vlemprst IN NUMBER
+                                       ,pr_qtparepr IN INTEGER 
+                                       ,pr_dtmvtolt IN DATE
+                                       ,pr_dtdpagto IN DATE
+                                       ,pr_flggrava In INTEGER
+                                       ,pr_dtlibera IN DATE
+                                       ,pr_idfiniof IN INTEGER
+                                       ,pr_qtdiacar OUT INTEGER
+                                       ,pr_vlajuepr OUT NUMBER
+                                       ,pr_txdiaria OUT NUMBER
+                                       ,pr_txmensal OUT NUMBER
+                                       ,pr_tparcepr OUT CLOB
+                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Código da crítica tratada
+                                       ,pr_dscritic OUT VARCHAR2                   --> Descrição de critica tratada
+                                       ,pr_des_reto OUT VARCHAR);                  --> Retorno da execução                                    
+                                
                                                                 
     PROCEDURE pc_gera_parcelas_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE
                                          ,pr_cdagenci IN crapage.cdagenci%TYPE
@@ -472,11 +527,6 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0018 AS
                         ,pr_tag_cont IN VARCHAR2            --> Conteúdo da nova TAG
                         ,pr_des_erro OUT VARCHAR2);
     
-   PROCEDURE pc_set_parametros(pr_dtmvtolt_ini IN DATE
-                               ,pr_dtmvtolt_fim IN DATE);
-
-    FUNCTION fn_get_parametros RETURN typ_parametros;
-
    
 END EMPR0018;                                        
 /
@@ -486,13 +536,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
 
     Programa: EMPR0018           Antigo: sistema/generico/procedures/b1wgen0097.p
     Autor   : Douglas Pagel/AMcom 
-    Data    : 18/12/2018               ultima Atualizacao: --
+    Data    : 18/12/2018               ultima Atualizacao: -- 01/07/2019
      
     Dados referentes ao programa:
    
     Objetivo  : BO para a simulacao de Emprestimos
    
-    Alteracoes: 
+    Alteracoes: 01/07/2019 - P438 - Incluíndo rotinas para serem chamadas pelo PROGRESS
+                             pc_valida_calculo_prog, pc_consu_tari_emprst_prog e pc_calcula_emprestimo_prog.
+                             (Douglas Pagel / AMcom)
 
 ..............................................................................*/
 
@@ -664,7 +716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                       ,pr_tparcepr OUT typ_tab_parc_epr                                      
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Código da crítica tratada
                                       ,pr_des_erro OUT VARCHAR2                  --> Descrição de critica tratada
-                                      ,pr_des_reto OUT VARCHAR                   --> Retorno OK / NOK
+                                      ,pr_des_reto OUT VARCHAR2                  --> Retorno OK / NOK
                                       ,pr_tab_erro OUT gene0001.typ_tab_erro) IS --> Tabela com possíves erros
   /* -------------------------------------------------------------------------------------------------------------
 
@@ -1073,6 +1125,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                  ,pr_idseqttl IN INTEGER
                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                                  ,pr_flgerlog IN BOOLEAN
+								 ,pr_datainic IN DATE DEFAULT NULL           --> Data inicial da pesquisa
+                                 ,pr_datafina IN DATE DEFAULT NULL           --> Data final da pesquisa
                                  ,pr_tcrapsim OUT typ_tab_sim
                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Código da crítica tratada
                                  ,pr_des_erro OUT VARCHAR2                   --> Descrição de critica tratada
@@ -1169,8 +1223,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
         vr_aux_dstransa := 'Buscar simulacoes de emprestimo. ';
       END IF; 
 
-      vr_dt_ini := fn_get_parametros().dtmvtolt_ini;
-      vr_dt_fim := fn_get_parametros().dtmvtolt_fim;
+      vr_dt_ini := pr_datainic;
+      vr_dt_fim := pr_datafina;
       
       --Carrega a tabela de retorno com os dados da simulações
       FOR rw_crapsim in cr_crapsim(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta, pr_cdorigem => pr_cdorigem) LOOP
@@ -1331,7 +1385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
     
     --Variaveis
     vr_aux_inpessoa INTEGER;
-    vr_aux_dscatbem VARCHAR2(25); 
+    vr_aux_dscatbem VARCHAR2(1000); 
     vr_vlrtarif crapfco.vltarifa%TYPE; 
     vr_vltrfesp craplcr.vltrfesp%TYPE; 
     vr_vltrfgar crapfco.vltarifa%TYPE; 
@@ -1503,6 +1557,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
         
     END pc_consulta_tarifa_emprst;
     
+  PROCEDURE pc_consu_tari_emprst_prog(pr_cdcooper IN INTEGER                    
+                                       ,pr_cdlcremp IN INTEGER 
+                                       ,pr_vlemprst IN NUMBER                      --> Valor do empréstimo
+                                       ,pr_nrdconta IN INTEGER                     --> Número da conta do associado
+                                       ,pr_nrctremp IN INTEGER                     --> Número do contrato de empréstimo
+                                       ,pr_dscatbem IN VARCHAR2                    --> Bens informados para o empréstimo
+                                       ,pr_vlrtarif OUT NUMBER                     --> Retorno com o valor da tarifa 
+                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Código da crítica tratada
+                                       ,pr_dscritic OUT VARCHAR2                   --> Descrição de critica tratada
+                                       ,pr_des_reto OUT VARCHAR) IS                --> Retorno da execução
+  /* -------------------------------------------------------------------------------------------------------------
+
+    Programa: pc_consu_tari_emprst_PROG      
+    Autor   : Douglas Pagel / AMcom 
+    Data    : 01/07/2019               ultima Atualizacao: -- 
+     
+    Dados referentes ao programa:
+   
+    Objetivo  : Rotina para retornar o valor da tarifa de um emprestimo pelo PROGRESS
+   
+    Alteracoes: 
+
+  ..............................................................................*/
+  /*Variaveis*/
+  vr_tab_erro gene0001.typ_tab_erro;
+                                       
+  BEGIN
+    EMPR0018.pc_consulta_tarifa_emprst( pr_cdcooper => pr_cdcooper   
+                                       ,pr_cdlcremp => pr_cdlcremp
+                                       ,pr_vlemprst => pr_vlemprst
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctremp => pr_nrctremp
+                                       ,pr_dscatbem => pr_dscatbem
+                                       ,pr_vlrtarif => pr_vlrtarif
+                                       ,pr_cdcritic => pr_cdcritic
+                                       ,pr_des_erro => pr_dscritic
+                                       ,pr_des_reto => pr_des_reto
+                                       ,pr_tab_erro => vr_tab_erro);
+                                       
+  EXCEPTION
+    WHEN OTHERS THEN
+        pr_des_reto := 'NOK';
+        pr_cdcritic := nvl(vr_cdcritic, 0);
+        pr_dscritic := 'Erro na rotina pc_consu_tari_emprst_prog. ' ||
+                       sqlerrm;
+                       
+  END pc_consu_tari_emprst_prog;                                       
+    
    PROCEDURE pc_valida_novo_calculo(pr_cdcooper IN crapcop.cdcooper%TYPE
                                     ,pr_cdagenci IN crapage.cdagenci%TYPE
                                     ,pr_nrdcaixa IN INTEGER
@@ -1647,6 +1749,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                        sqlerrm;     
     END pc_valida_novo_calculo;
     
+  PROCEDURE pc_valida_calculo_prog(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                  ,pr_cdagenci IN crapage.cdagenci%TYPE
+                                  ,pr_nrdcaixa IN INTEGER
+                                  ,pr_qtparepr IN INTEGER
+                                  ,pr_cdlcremp IN INTEGER
+                                  ,pr_flgpagto IN INTEGER
+                                  ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Código da crítica tratada
+                                  ,pr_des_erro OUT VARCHAR2                   --> Descrição de critica tratada
+                                  ,pr_des_reto OUT VARCHAR) IS                --> Retorno da execução
+  /* -------------------------------------------------------------------------------------------------------------
+
+    Programa: pc_valida_calculo_prog      
+    Autor   : Douglas Pagel / AMcom 
+    Data    : 01/07/2019               ultima Atualizacao: -- 
+     
+    Dados referentes ao programa:
+   
+    Objetivo  : Rotina para validar linha e parcelas da simulação pelo PROGRESS
+   
+    Alteracoes: 
+
+  ..............................................................................*/
+  /*Variaveis*/
+  vr_tab_erro gene0001.typ_tab_erro;
+  
+  BEGIN
+    EMPR0018.pc_valida_novo_calculo( pr_cdcooper => pr_cdcooper 
+                                    ,pr_cdagenci => pr_cdagenci
+                                    ,pr_nrdcaixa => pr_nrdcaixa
+                                    ,pr_qtparepr => pr_qtparepr
+                                    ,pr_cdlcremp => pr_cdlcremp
+                                    ,pr_flgpagto => CASE pr_flgpagto WHEN 1 THEN TRUE ELSE FALSE END
+                                    ,pr_cdcritic => pr_cdcritic
+                                    ,pr_des_erro => pr_des_erro
+                                    ,pr_des_reto => pr_des_reto
+                                    ,pr_tab_erro => vr_tab_erro);
+  EXCEPTION
+    WHEN OTHERS THEN
+        pr_des_reto := 'NOK';
+        pr_cdcritic := nvl(vr_cdcritic, 0);
+        pr_des_erro := 'Erro na rotina pc_valida_calculo_prog. ' ||
+                       sqlerrm;         
+  END pc_valida_calculo_prog; 
+   
    PROCEDURE pc_valida_gravacao_simulacao(pr_cdcooper IN crapcop.cdcooper%TYPE
                                     	    ,pr_cdagenci IN crapage.cdagenci%TYPE
                                           ,pr_nrdcaixa IN INTEGER
@@ -3192,7 +3338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
         pr_tparcepr(vr_aux_nrparce).nrdconta := pr_nrdconta;
         pr_tparcepr(vr_aux_nrparce).nrparepr := vr_aux_nrparce; 
         pr_tparcepr(vr_aux_nrparce).vlparepr := vr_vlparepr; 
-        pr_tparcepr(vr_aux_nrparce).dtvencto := vr_tt_datas_parcelas(vr_aux_nrparce).dtparepr; 
+        pr_tparcepr(vr_aux_nrparce).dtparepr := vr_tt_datas_parcelas(vr_aux_nrparce).dtparepr; 
       END LOOP; 
     
       IF pr_flggrava THEN
@@ -3288,6 +3434,131 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
         pr_des_erro := 'Erro na rotina grava a simulação. ' ||sqlerrm;
       
     END pc_calcula_emprestimo; 
+    
+   PROCEDURE pc_calcula_emprestimo_prog(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                       ,pr_cdagenci IN crapage.cdagenci%TYPE
+                                       ,pr_nrdcaixa IN INTEGER
+                                       ,pr_cdoperad IN VARCHAR2 
+                                       ,pr_nmdatela IN VARCHAR2
+                                       ,pr_cdorigem IN INTEGER
+                                       ,pr_nrdconta IN crapass.nrdconta%TYPE
+                                       ,pr_idseqttl IN INTEGER   
+                                       ,pr_flgerlog IN INTEGER 
+                                       ,pr_nrctremp IN INTEGER  
+                                       ,pr_cdlcremp IN INTEGER 
+                                       ,pr_cdfinemp IN INTEGER 
+                                       ,pr_vlemprst IN NUMBER
+                                       ,pr_qtparepr IN INTEGER 
+                                       ,pr_dtmvtolt IN DATE
+                                       ,pr_dtdpagto IN DATE
+                                       ,pr_flggrava In INTEGER
+                                       ,pr_dtlibera IN DATE
+                                       ,pr_idfiniof IN INTEGER
+                                       ,pr_qtdiacar OUT INTEGER
+                                       ,pr_vlajuepr OUT NUMBER
+                                       ,pr_txdiaria OUT NUMBER
+                                       ,pr_txmensal OUT NUMBER
+                                       ,pr_tparcepr OUT CLOB
+                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE      --> Código da crítica tratada
+                                       ,pr_dscritic OUT VARCHAR2                   --> Descrição de critica tratada
+                                       ,pr_des_reto OUT VARCHAR) IS                --> Retorno da execução 
+  /* -------------------------------------------------------------------------------------------------------------
+
+    Programa: pc_calcula_emprestimo_prog      
+    Autor   : Douglas Pagel / AMcom 
+    Data    : 01/07/2019               ultima Atualizacao: -- 
+     
+    Dados referentes ao programa:
+   
+    Objetivo  : Rotina para calcular valores da simulação pelo PROGRESS
+   
+    Alteracoes: 
+
+  ..............................................................................*/
+  /*Variaveis*/
+  vr_tab_erro gene0001.typ_tab_erro; 
+  vr_tparcepr typ_tab_parc_epr;
+  
+  vr_dados_xml CLOB;
+  vr_index PLS_INTEGER;
+  vr_dstexto  VARCHAR2(32767);
+  vr_string   VARCHAR2(32767);
+                                       
+  BEGIN
+    pr_des_reto := 'OK';
+    EMPR0018.pc_calcula_emprestimo(pr_cdcooper =>  pr_cdcooper
+                                  ,pr_cdagenci =>  pr_cdagenci
+                                  ,pr_nrdcaixa =>  pr_nrdcaixa
+                                  ,pr_cdoperad =>  pr_cdoperad
+                                  ,pr_nmdatela =>  pr_nmdatela
+                                  ,pr_cdorigem =>  pr_cdorigem
+                                  ,pr_nrdconta =>  pr_nrdconta
+                                  ,pr_idseqttl =>  pr_idseqttl
+                                  ,pr_flgerlog =>  CASE pr_flgerlog WHEN 1 THEN TRUE ELSE FALSE END
+                                  ,pr_nrctremp =>  pr_nrctremp
+                                  ,pr_cdlcremp =>  pr_cdlcremp
+                                  ,pr_cdfinemp =>  pr_cdfinemp
+                                  ,pr_vlemprst =>  pr_vlemprst
+                                  ,pr_qtparepr =>  pr_qtparepr
+                                  ,pr_dtmvtolt =>  pr_dtmvtolt
+                                  ,pr_dtdpagto =>  pr_dtdpagto
+                                  ,pr_flggrava =>  CASE pr_flggrava WHEN 1 THEN TRUE ELSE FALSE END
+                                  ,pr_dtlibera =>  pr_dtlibera
+                                  ,pr_idfiniof =>  pr_idfiniof
+                                  ,pr_qtdiacar =>  pr_qtdiacar
+                                  ,pr_vlajuepr =>  pr_vlajuepr
+                                  ,pr_txdiaria =>  pr_txdiaria
+                                  ,pr_txmensal =>  pr_txmensal
+                                  ,pr_tparcepr =>  vr_tparcepr
+                                  ,pr_cdcritic =>  pr_cdcritic
+                                  ,pr_des_erro =>  pr_dscritic
+                                  ,pr_des_reto =>  pr_des_reto
+                                  ,pr_tab_erro =>  vr_tab_erro); 
+                                  
+    dbms_lob.createtemporary(pr_tparcepr, TRUE);
+    dbms_lob.open(pr_tparcepr, dbms_lob.lob_readwrite);
+    
+    -- Insere o cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => pr_tparcepr
+                           ,pr_texto_completo => vr_dstexto
+                           ,pr_texto_novo     => '<root>');
+                           
+    vr_index := vr_tparcepr.FIRST;
+     
+    WHILE vr_index IS NOT NULL LOOP      
+      vr_string := '<Registro>'||
+                        '<cdcooper>'|| vr_tparcepr(vr_index).cdcooper ||'</cdcooper>'||
+                        '<nrdconta>'|| vr_tparcepr(vr_index).nrdconta ||'</nrdconta>'||
+                        '<nrctremp>'|| NVL(vr_tparcepr(vr_index).nrctremp,0) ||'</nrctremp>'||
+                        '<nrparepr>'|| NVL(vr_tparcepr(vr_index).nrparepr,0) ||'</nrparepr>'||
+                        '<vlparepr>'|| to_char(NVL(vr_tparcepr(vr_index).vlparepr,0),'fm999g999g990d00','NLS_NUMERIC_CHARACTERS='',.''') ||'</vlparepr>'||
+                        '<dtparepr>'|| to_char(vr_tparcepr(vr_index).dtparepr,'DD/MM/RRRR') ||'</dtparepr>'||
+                        '<indpagto>'|| vr_tparcepr(vr_index).indpagto ||'</indpagto>'||
+                        '<dtvencto>'|| to_char(vr_tparcepr(vr_index).dtvencto,'DD/MM/RRRR') ||'</dtvencto>'||
+                    '</Registro>';
+                    
+      -- Escrever no XML
+      gene0002.pc_escreve_xml(pr_xml            => pr_tparcepr
+                             ,pr_texto_completo => vr_dstexto
+                             ,pr_texto_novo     => vr_string);
+
+      vr_index := vr_tparcepr.next(vr_index);
+            
+    END LOOP;
+    
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => pr_tparcepr
+                           ,pr_texto_completo => vr_dstexto
+                           ,pr_texto_novo     => '</root>'
+                           ,pr_fecha_xml      => TRUE);                                   
+  EXCEPTION
+    WHEN OTHERS THEN
+        pr_des_reto := 'NOK';
+        pr_cdcritic := nvl(vr_cdcritic, 0);
+        pr_dscritic := 'Erro na rotina pc_calcula_emprestimo_prog. ' ||
+                       sqlerrm;  
+                                                     
+  END pc_calcula_emprestimo_prog;
     
    PROCEDURE pc_gera_parcelas_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE
                                          ,pr_cdagenci IN crapage.cdagenci%TYPE
@@ -4374,22 +4645,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
       WHEN OTHERS THEN
         pr_des_erro := 'Erro pc_insere_tag: ' || SQLERRM;
     END insere_tag;
-
-   --/ 
-   PROCEDURE pc_set_parametros(pr_dtmvtolt_ini IN DATE
-                               ,pr_dtmvtolt_fim IN DATE) IS
-    BEGIN
-      
-      vr_parametros.dtmvtolt_ini := pr_dtmvtolt_ini;
-      vr_parametros.dtmvtolt_fim := pr_dtmvtolt_fim;
-      
-    END pc_set_parametros;
-    
-   --/
-   FUNCTION fn_get_parametros RETURN typ_parametros IS
-    BEGIN
-      RETURN vr_parametros;              
-   END fn_get_parametros;
 
                     
 END EMPR0018;

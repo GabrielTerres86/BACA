@@ -4,7 +4,7 @@ create or replace package cecred.TELA_ANALISE_CREDITO is
 
   /* Tabelas para armazenar os retornos dos birôs, titulos e detalhes*/
 
-  --TempTable para retornar valores para tela Atenda (Antigo b1wgen0001tt.i/tt-valores_conta)
+  -- TempTable para retornar valores para tela Atenda (Antigo b1wgen0001tt.i/tt-valores_conta)
   TYPE typ_rec_valores_conta
     IS RECORD ( vlsldcap NUMBER(32,8),
     vlsldepr       NUMBER(32, 8),
