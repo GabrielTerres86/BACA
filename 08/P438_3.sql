@@ -2,12 +2,12 @@
 --> 6 -- UNILOS
 update tbepr_subsegmento s
    set s.cdlinha_credito = 1105
- where s.cdcooper = 6
+ where s.cdcooper in(6,9)
    and s.idsegmento = 1;  
    
 update tbepr_subsegmento s
    set s.cdlinha_credito = 2105
- where s.cdcooper = 6
+ where s.cdcooper in(6,9)
    and s.idsegmento = 2;   
    
 --> 10 -- CREDICOMIN 
