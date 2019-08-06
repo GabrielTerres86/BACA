@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052v.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 23/01/2018
+    Data    : Junho/2010                      Ultima atualizacao: 06/08/2019
   
     Dados referentes ao programa:
   
@@ -170,7 +170,10 @@
 			   23/01/2018 - Buscar valor do cheque descontado (Jonata - RKAM SD 826663).
 			    
 			   16/07/2019 - Valida_dados P437 Nao validar o campo matricula (par_nrcadast) Jackson Barcellos - AMcom
-			    
+
+               06/08/2019 - Corrigido cursor que retorna os cartoes magneticos ativos por cooperado. 
+			                Realizada inclusao da condicao 'tpcarcta  <> 9', para que nao sejam considerados
+							os cartoes magneticos de operadores na validacao (INC0016814 - Jackson).
 
 ........................................................................*/
 
@@ -1546,6 +1549,7 @@ PROCEDURE Produtos_Servicos_Ativos:
         IF CAN-FIND(FIRST crapcrm WHERE crapcrm.cdcooper  = par_cdcooper AND
                                         crapcrm.nrdconta  = par_nrdconta AND
                                         crapcrm.cdsitcar  = 2            AND
+										crapcrm.tpcarcta  <> 9           AND
                                         crapcrm.dtvalcar >= par_dtmvtolt 
                                         NO-LOCK)
         THEN DO:
