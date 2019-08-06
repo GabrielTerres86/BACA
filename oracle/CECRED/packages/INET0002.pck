@@ -1020,7 +1020,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --                          para contemplar o novo Tipo Transacao = 21 (Emprestimos/Financiamentos)
   --                          (PJ 438 - Rafael R. Santos / AMcom).  
   --                        - Inclusão da procedure pc_cria_trans_pend_efet_prop
-
+  --
+  --             05/08/2019 - INC0021893 - Adicionada validação de duplicidade nas transações pendentes 
+  --                          criadas em contas com assinatura conjunta ou operadores.
+  --                          (Guilherme Kuhnen - f0032175)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   --INC0011323
@@ -4250,7 +4254,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     -- Alteração : 25/02/2016 - Receber e gravar novos campos das transacoes TED (Marcos-Supero)
     --
     ---------------------------------------------------------------------------------------------------------------
-                                     
+                 
+    -- Cursores
+    
+    --INC0021893    
+    CURSOR cr_tbgen_trans_pend_dup (pr_cdcooper IN tbspb_trans_pend.cdcooper%TYPE
+                                    ,pr_nrdconta IN tbspb_trans_pend.nrdconta%TYPE
+                                    ,pr_dtdebito IN tbspb_trans_pend.dtdebito%TYPE
+                                    ,pr_dtregistro_transacao IN tbgen_trans_pend.dtregistro_transacao%TYPE
+                                    ,pr_cdagencia_coop_destino IN tbspb_trans_pend.cdagencia_favorecido%TYPE
+                                    ,pr_nrconta_destino IN tbspb_trans_pend.nrconta_favorecido%TYPE
+                           	        ,pr_vltransferencia IN tbspb_trans_pend.vlted%TYPE) IS
+      SELECT MAX (ttp2.hrregistro_transacao)
+        FROM tbspb_trans_pend ttp
+             ,tbgen_trans_pend ttp2
+       WHERE ttp2.cdcooper = ttp.cdcooper
+         AND ttp2.nrdconta = ttp.nrdconta
+         AND ttp.cdtransacao_pendente = ttp2.cdtransacao_pendente
+         AND ttp.cdcooper = pr_cdcooper
+         AND ttp.nrdconta = pr_nrdconta
+         AND ttp.dtdebito = pr_dtdebito
+         AND ttp2.dtmvtolt = pr_dtregistro_transacao
+         AND ttp.cdagencia_favorecido = pr_cdagencia_coop_destino
+         AND ttp.nrconta_favorecido = pr_nrconta_destino
+         AND ttp.vlted = pr_vltransferencia;
+    
+    vr_hrregistro_transacao_dup tbgen_trans_pend.hrregistro_transacao%TYPE; 
+    vr_exc_erro EXCEPTION;   
+    /*INC0021893*/
+                        
     -- Variáveis
     vr_cdcritic crapcri.cdcritic%TYPE := 0;
     vr_dscritic crapcri.dscritic%TYPE := '';
@@ -4267,6 +4299,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     
   BEGIN
 
+    --INC0021893
+    OPEN cr_tbgen_trans_pend_dup(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_dtdebito => pr_dtmvtopg
+                                 ,pr_dtregistro_transacao => pr_dtmvtolt
+                                 ,pr_cdagencia_coop_destino => pr_cdageban
+                                 ,pr_nrconta_destino => pr_nrctadst
+                                 ,pr_vltransferencia => pr_vllanmto);
+            --Posicionar no proximo registro
+            FETCH cr_tbgen_trans_pend_dup INTO vr_hrregistro_transacao_dup;
+              --Se encontrar
+              IF cr_tbgen_trans_pend_dup%FOUND THEN
+                --Compara os segundos do último lançamento para não haver duplicidade
+                IF (((SYSDATE-TRUNC(SYSDATE))*(24*60*60)) - vr_hrregistro_transacao_dup) <= 600 THEN
+                
+                  --Fechar Cursor
+                  CLOSE cr_tbgen_trans_pend_dup;  
+                
+                  vr_cdcritic := 0;
+                  vr_dscritic := 'Ja existe transacao pendente do mesmo valor e favorecido. Consulte suas pendencias.';
+                  
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                    
+                END IF;
+              END IF;  
+            --Fechar Cursor
+            CLOSE cr_tbgen_trans_pend_dup;    
+    /*INC0021893*/
+ 
     IF pr_idagenda > 1 THEN
       vr_idagenda := 2;
     ELSE
@@ -4503,9 +4565,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
       ELSE	
         pr_dscritic := vr_dscritic;
-      END IF;
-        
+      END IF;        
       ROLLBACK;
+      
+    --INC0021893
+    WHEN vr_exc_erro THEN
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;      
+      ROLLBACK;
+    /*INC0021893*/
 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
@@ -4536,9 +4604,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                      ,pr_nrctadst  IN tbtransf_trans_pend.nrconta_destino%TYPE        --> Conta de destino
                                      ,pr_lsdatagd  IN VARCHAR2                                        --> Lista de datas para agendamento
                                      ,pr_idastcjt  IN crapass.idastcjt%TYPE                           --> Indicador de Assinatura Conjunta
- 									                   ,pr_flmobile  IN tbtransf_trans_pend.indmobile%TYPE              --> Indicador Mobile
-									                   ,pr_idtipcar  IN tbtransf_trans_pend.indtipo_cartao%TYPE         --> Indicador Tipo Cartão Utilizado
-									                   ,pr_nrcartao  IN tbtransf_trans_pend.nrcartao%TYPE               --> Numero Cartao
+ 								     ,pr_flmobile  IN tbtransf_trans_pend.indmobile%TYPE              --> Indicador Mobile
+									 ,pr_idtipcar  IN tbtransf_trans_pend.indtipo_cartao%TYPE         --> Indicador Tipo Cartão Utilizado
+									 ,pr_nrcartao  IN tbtransf_trans_pend.nrcartao%TYPE               --> Numero Cartao
                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE                           --> Codigo de Critica
                                      ,pr_dscritic OUT crapcri.dscritic%TYPE) IS                       --> Descricao de Critica
   
@@ -4559,6 +4627,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     --
     ---------------------------------------------------------------------------------------------------------------
     
+    -- Cursores
+    
+    --INC0021893    
+    CURSOR cr_tbgen_trans_pend_dup (pr_cdcooper IN tbtransf_trans_pend.cdcooper%TYPE
+                                    ,pr_nrdconta IN tbtransf_trans_pend.nrdconta%TYPE
+                                    ,pr_dtdebito IN tbtransf_trans_pend.dtdebito%TYPE
+                                    ,pr_dtregistro_transacao IN tbgen_trans_pend.dtregistro_transacao%TYPE
+                                    ,pr_cdagencia_coop_destino IN tbtransf_trans_pend.cdagencia_coop_destino%TYPE
+                                    ,pr_nrconta_destino IN tbtransf_trans_pend.nrconta_destino%TYPE
+                           	        ,pr_vltransferencia IN tbtransf_trans_pend.vltransferencia%TYPE) IS
+      SELECT MAX (ttp2.hrregistro_transacao)
+        FROM tbtransf_trans_pend ttp
+             ,tbgen_trans_pend ttp2
+       WHERE ttp2.cdcooper = ttp.cdcooper
+         AND ttp2.nrdconta = ttp.nrdconta
+         AND ttp.cdtransacao_pendente = ttp2.cdtransacao_pendente
+         AND ttp.cdcooper = pr_cdcooper
+         AND ttp.nrdconta = pr_nrdconta
+         AND ttp.dtdebito = pr_dtdebito
+         AND ttp2.dtmvtolt = pr_dtregistro_transacao
+         AND ttp.cdagencia_coop_destino = pr_cdagencia_coop_destino
+         AND ttp.nrconta_destino = pr_nrconta_destino
+         AND ttp.vltransferencia = pr_vltransferencia;
+    
+    vr_hrregistro_transacao_dup tbgen_trans_pend.hrregistro_transacao%TYPE; 
+    vr_exc_erro EXCEPTION;   
+    /*INC0021893*/
+    
     -- Variáveis
     vr_cdcritic crapcri.cdcritic%TYPE := 0;
     vr_dscritic crapcri.dscritic%TYPE := '';
@@ -4575,6 +4671,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         
   BEGIN
    
+    --INC0021893
+    OPEN cr_tbgen_trans_pend_dup(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_dtdebito => pr_dtmvtopg
+                                 ,pr_dtregistro_transacao => pr_dtmvtolt
+                                 ,pr_cdagencia_coop_destino => pr_cdageban
+                                 ,pr_nrconta_destino => pr_nrctadst
+                                 ,pr_vltransferencia => pr_vllanmto);
+            --Posicionar no proximo registro
+            FETCH cr_tbgen_trans_pend_dup INTO vr_hrregistro_transacao_dup;
+              --Se encontrar
+              IF cr_tbgen_trans_pend_dup%FOUND THEN
+                --Compara os segundos do último lançamento para não haver duplicidade
+                IF (((SYSDATE-TRUNC(SYSDATE))*(24*60*60)) - vr_hrregistro_transacao_dup) <= 600 THEN
+                
+                  --Fechar Cursor
+                  CLOSE cr_tbgen_trans_pend_dup;  
+                
+                  vr_cdcritic := 0;
+                  vr_dscritic := 'Ja existe transacao pendente do mesmo valor e favorecido. Consulte suas pendencias.';
+                  
+                  --Levantar Excecao
+                  RAISE vr_exc_erro;
+                    
+                END IF;
+              END IF;  
+            --Fechar Cursor
+            CLOSE cr_tbgen_trans_pend_dup;    
+    /*INC0021893*/
+ 
     IF pr_idagenda > 1 THEN
       vr_idagenda := 2;
     ELSE
@@ -4781,15 +4907,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);
-      
+      pr_cdcritic := NVL(vr_cdcritic,0);      
       IF NVL(pr_cdcritic,0) > 0 THEN
          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
       ELSE	
          pr_dscritic := vr_dscritic;
-      END IF;
-        
+      END IF;        
       ROLLBACK;
+
+    --INC0021893
+    WHEN vr_exc_erro THEN
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;      
+      ROLLBACK;
+    /*INC0021893*/
 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
