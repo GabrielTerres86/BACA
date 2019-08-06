@@ -360,9 +360,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PREAPV AS
       vr_idcargablq := empr0002.fn_idcarga_pre_aprovado(pr_cdcooper        => vr_cdcooper
                                                        ,pr_tppessoa        => vr_inpessoa
                                                        ,pr_nrcpf_cnpj_base => vr_nrcpfcnpj_base);
-      vr_idcarga := empr0002.fn_idcarga_pre_aprv_sem_vig(pr_cdcooper        => vr_cdcooper
-                                                        ,pr_tppessoa        => vr_inpessoa
-                                                        ,pr_nrcpf_cnpj_base => vr_nrcpfcnpj_base);
+      vr_idcarga := empr0002.fn_idcarga_pre_aprovado(pr_cdcooper        => vr_cdcooper
+                                                    ,pr_tppessoa        => vr_inpessoa
+                                                    ,pr_nrcpf_cnpj_base => vr_nrcpfcnpj_base);
 
       -- Busca dos detalhes da Carga
       IF vr_idcarga > 0 THEN
