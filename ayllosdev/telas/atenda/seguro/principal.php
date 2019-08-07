@@ -155,7 +155,67 @@ if ($flgNovo == false) {    // FAZ O QUE SEMPRE FEZ
 
             </script>
         <?
-    }else{
+    } if($operacao == 'C_VIDA_SIGAS'){ // TELA VIDA SIGAS
+        // Verifica se número da conta foi informado
+        if (!isset($_POST["nrctrseg"])) {
+            exibeErro("Par&acirc;metros incorretos.[Apolice/nrctrseg]");
+        }
+        $nrctrseg = $_POST["nrctrseg"];
+        // Monta o xml de requisição
+        $xml  		= "";
+        $xml 	   .= "<Root>";
+        $xml 	   .= " <Dados>";
+        $xml 	   .= "     <nrdconta>".$nrdconta."</nrdconta>";
+        $xml 	   .= "     <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+        $xml 	   .= "     <nrapolic>".$nrctrseg."</nrapolic>";
+        $xml 	   .= " </Dados>";
+        $xml 	   .= "</Root>";
+
+        $xmlResult = mensageria($xml, "TELA_ATENDA_SEGURO", "BUSCASEGVIDASIGAS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObjeto = getObjectXML($xmlResult);
+        // Se ocorrer um erro, mostra crítica
+        if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+
+            $msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+            exibirErro('error',$msgErro,'Alerta - Aimaro','estadoInicial();',false);
+
+        }
+        $seguro_vida_sigas = $xmlObjeto->roottag->tags;
+        ?>
+            <script type="text/javascript">
+
+                var arraySeguroVidaSigas = new Object();
+
+                arraySeguroVidaSigas['segurado'] = '<?php echo getByTagName($seguro_vida_sigas,'segurado'); ?>';
+                
+                arraySeguroVidaSigas['tpseguro'] = '<?php echo getByTagName($seguro_vida_sigas,'tpseguro'); ?>';
+                arraySeguroVidaSigas['nmresseg'] = '<?php echo getByTagName($seguro_vida_sigas,'nmresseg'); ?>';
+                arraySeguroVidaSigas['dtinivig'] = '<?php echo getByTagName($seguro_vida_sigas,'dtinivig'); ?>';
+                arraySeguroVidaSigas['dtfimvig'] = '<?php echo getByTagName($seguro_vida_sigas,'dtfimvig'); ?>';
+                arraySeguroVidaSigas['nrproposta'] = '<?php echo getByTagName($seguro_vida_sigas,'nrproposta'); ?>';
+                arraySeguroVidaSigas['nrapolice'] = '<?php echo getByTagName($seguro_vida_sigas,'nrapolice'); ?>';
+                arraySeguroVidaSigas['nrendosso'] = '<?php echo getByTagName($seguro_vida_sigas,'nrendosso'); ?>';
+                arraySeguroVidaSigas['dsplano'] = '<?php echo getByTagName($seguro_vida_sigas,'dsplano'); ?>';
+                arraySeguroVidaSigas['dsmoradia'] = '<?php echo getByTagName($seguro_vida_sigas,'dsmoradia'); ?>';
+
+                arraySeguroVidaSigas['dsendres'] = '<?php echo getByTagName($seguro_vida_sigas,'dsendres'); ?>';
+                arraySeguroVidaSigas['nrendere'] = '<?php echo getByTagName($seguro_vida_sigas,'nrendere'); ?>';
+                arraySeguroVidaSigas['complend'] = '<?php echo getByTagName($seguro_vida_sigas,'complend'); ?>';
+                arraySeguroVidaSigas['nmbairro'] = '<?php echo getByTagName($seguro_vida_sigas,'nmbairro'); ?>';
+                arraySeguroVidaSigas['nmcidade'] = '<?php echo getByTagName($seguro_vida_sigas,'nmcidade'); ?>';
+                arraySeguroVidaSigas['cdufresd'] = '<?php echo getByTagName($seguro_vida_sigas,'cdufresd'); ?>';
+
+                arraySeguroVidaSigas['nrpreliq'] = '<?php echo getByTagName($seguro_vida_sigas,'nrpreliq'); ?>';
+                arraySeguroVidaSigas['nrpretot'] = '<?php echo getByTagName($seguro_vida_sigas,'nrpretot'); ?>';
+                arraySeguroVidaSigas['nrqtparce'] = '<?php echo getByTagName($seguro_vida_sigas,'nrqtparce'); ?>';
+                arraySeguroVidaSigas['nrvalparc'] = '<?php echo getByTagName($seguro_vida_sigas,'nrvalparc'); ?>';
+                arraySeguroVidaSigas['nrmdiaven'] = '<?php echo getByTagName($seguro_vida_sigas,'nrmdiaven'); ?>';
+                arraySeguroVidaSigas['nrpercomi'] = '<?php echo getByTagName($seguro_vida_sigas,'nrpercomi'); ?>';
+                arraySeguroVidaSigas['cdidsegp'] = '<?php echo getByTagName($seguro_vida_sigas,'cdidsegp'); ?>';
+
+            </script>
+        <?
+	}else{
         // Monta o xml de requisição
         $xml  = "";
         $xml .= "<Root>";
@@ -414,6 +474,8 @@ if(in_array($operacao,array(''))) {
 	include('form_seguro_casa.php');
 }else if(in_array($operacao,array('C_CASA_SIGAS'))){
 	include('form_seguro_casa_sigas.php');
+}else if(in_array($operacao,array('C_VIDA_SIGAS'))){
+	include('form_seguro_vida_sigas.php');
 }else if(in_array($operacao,array('SEGUR'))) {
 	include('tabela_seguradora.php');
 }else if(in_array($operacao,array('I_CASA'))) {
