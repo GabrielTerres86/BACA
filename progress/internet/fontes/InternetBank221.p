@@ -108,7 +108,7 @@ DEF VAR aux_qtminast AS INT                                            NO-UNDO.
   IF aux_idastcjt = 1 THEN
     DO:
     ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<qtminast>" + STRING(aux_qtminast) + "</qtminast>" +
-                                                           "<Mensagem>" + STRING(aux_dscritic) + "</Mensagem>".
+                                                           "<dsmsgsuc>" + STRING(aux_dscritic) + "</dsmsgsuc>".
   END.
   
   
