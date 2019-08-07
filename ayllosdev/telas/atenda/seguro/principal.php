@@ -97,17 +97,17 @@ if ($flgNovo == false) {    // FAZ O QUE SEMPRE FEZ
     // Se a operacao for para verificar o tipo casa via sigas, senao faz o que fazia antes via progress
     if($operacao == 'C_CASA_SIGAS'){ // TELA CASA SIGAS
         // Verifica se número da conta foi informado
-        if (!isset($_POST["nrctrseg"])) {
-            exibeErro("Par&acirc;metros incorretos.[Apolice/nrctrseg]");
+        if (!isset($_POST["idcontrato"])) {
+            exibeErro("Par&acirc;metros incorretos.[idcontrato]");
         }
-        $nrctrseg = $_POST["nrctrseg"];
+        $idcontrato = $_POST["idcontrato"];
         // Monta o xml de requisição
         $xml  		= "";
         $xml 	   .= "<Root>";
         $xml 	   .= " <Dados>";
         $xml 	   .= "     <nrdconta>".$nrdconta."</nrdconta>";
         $xml 	   .= "     <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-        $xml 	   .= "     <nrapolic>".$nrctrseg."</nrapolic>";
+        $xml 	   .= "     <idcontrato>".$idcontrato."</idcontrato>";
         $xml 	   .= " </Dados>";
         $xml 	   .= "</Root>";
 

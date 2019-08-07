@@ -51,7 +51,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_SEGURO IS
   /* Detalhamento das informações de seguro CASA contratado via SIGAS */
   PROCEDURE pc_detalha_seguro_casa_sigas(pr_nrdconta   IN crapass.nrdconta%TYPE --> Número da conta solicitada;
                                         ,pr_cdcooper   IN crapass.cdcooper%TYPE --> ID Do contrato a detalhar
-                                        ,pr_nrapolic   IN VARCHAR2              --> Apolice
+                                        ,pr_idcontrato IN tbseg_producao_sigas.id%TYPE             --> Id contrato
                                         ,pr_xmllog     IN VARCHAR2              --XML com informações de LOG
                                         ,pr_cdcritic  OUT PLS_INTEGER           --Código da crítica
                                         ,pr_dscritic  OUT VARCHAR2              --Descrição da crítica
@@ -500,8 +500,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
                                          ''SIGAS'' dscanal
                                     FROM tbseg_producao_sigas segpro, crapass ass
                                    WHERE segpro.cden2 = '||vr_cdcooper||'
-                                   AND REGEXP_REPLACE(segpro.nrcpf_cnpj, ''[^0-9]'', '''') = ass.nrcpfcgc
-                                   AND ass.nrdconta = '||pr_nrdconta||'
+                                     AND ass.nrdconta = segpro.nrdconta
+                                     AND segpro.nrdconta = '||pr_nrdconta||'
 
                                   -- Apolices sigas
                                   --    UNION ALL
@@ -890,7 +890,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
   /* Detalhamento das informações de seguro CASA contratado via SIGAS */
   PROCEDURE pc_detalha_seguro_casa_sigas(pr_nrdconta   IN crapass.nrdconta%TYPE --> Número da conta solicitada;
                                         ,pr_cdcooper   IN crapass.cdcooper%TYPE --> ID Do contrato a detalhar
-                                        ,pr_nrapolic   IN VARCHAR2              --> Apolice
+                                        ,pr_idcontrato IN tbseg_producao_sigas.id%TYPE   --> Id contrato
                                         ,pr_xmllog     IN VARCHAR2              --XML com informações de LOG
                                         ,pr_cdcritic  OUT PLS_INTEGER           --Código da crítica
                                         ,pr_dscritic  OUT VARCHAR2              --Descrição da crítica
@@ -969,13 +969,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
                                            ,segpro.nrapolice_certificado        nrapolice
                                            ,segpro.nrendosso                    nrendosso
                                            ,segpro.nmproduto                    dsplano
-                                           ,''''                                dsmoradia
-                                           ,''''                                dsendres
-                                           ,''''                                nrendere
-                                           ,''''                                complend
-                                           ,''''                                nmbairro
-                                           ,segpro.nmcidade_segurado            nmcidade
-                                           ,segpro.cduf_segurado                cdufresd
+                                           ,(SELECT dsvalor 
+                                               FROM tbseg_bens_sigas s
+                                              WHERE s.cdtipo = ''CodigoTipoImovel''
+                                                AND s.id = segpro.id)         dsmoradia
+                                           ,(SELECT dsvalor 
+                                               FROM tbseg_bens_sigas s
+                                              WHERE s.cdtipo = ''CodigoLogradouro''
+                                                AND s.id = segpro.id)         dsendres
+                                           ,(SELECT dsvalor 
+                                               FROM tbseg_bens_sigas s
+                                              WHERE s.cdtipo = ''CodigoNumero''
+                                                AND s.id = segpro.id)         nrendere
+                                           ,(SELECT dsvalor 
+                                               FROM tbseg_bens_sigas s
+                                              WHERE s.cdtipo = ''CodigoComplemento''
+                                                AND s.id = segpro.id)         complend
+                                           ,(SELECT dsvalor 
+                                               FROM tbseg_bens_sigas s
+                                              WHERE s.cdtipo = ''CodigoBairro''
+                                                AND s.id = segpro.id)         nmbairro
+                                           ,(SELECT dsvalor 
+                                               FROM tbseg_bens_sigas s
+                                              WHERE s.cdtipo = ''CodigoCidade''
+                                                AND s.id = segpro.id)         nmcidade
+                                           ,(SELECT dsvalor 
+                                               FROM tbseg_bens_sigas s
+                                              WHERE s.cdtipo = ''CodigoUF''
+                                                AND s.id = segpro.id)         cdufresd
                                            ,to_char(segpro.vlpremio_liquido,''fm999G999G999G999D00'',''NLS_NUMERIC_CHARACTERS=,.'')               nrpreliq
                                            ,to_char(segpro.vlpremio_bruto,''fm999G999G999G999D00'',''NLS_NUMERIC_CHARACTERS=,.'')                 nrpretot
                                            ,segpro.dsparcelamento               nrqtparce
@@ -983,11 +1004,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
                                            ,''''                                nrmdiaven
                                            ,to_char(segpro.vlpercentual_comissao,''fm999G999G999G999D00'',''NLS_NUMERIC_CHARACTERS=,.'')          nrpercomi
                                            ,segpro.nrcpf_cnpj                   dscdsegu
-                                      FROM tbseg_producao_sigas segpro, crapass ass
+                                       FROM tbseg_producao_sigas segpro, crapass ass
                                      WHERE segpro.cden2 = '||pr_cdcooper||'
-                                       AND REGEXP_REPLACE(segpro.nrcpf_cnpj, ''[^0-9]'', '''') = ass.nrcpfcgc
+                                       AND segpro.nrdconta = ass.nrdconta
                                        AND ass.nrdconta = '||pr_nrdconta||'
-                                       AND segpro.nrapolice_certificado = '||pr_nrapolic||'
+                                       AND segpro.id = '||pr_idcontrato||'
                                 ');
       dbms_xmlgen.setRowSetTag(vr_ctx, NULL);
       dbms_xmlgen.setrowtag(vr_ctx, 'Contrato');
