@@ -48,6 +48,55 @@ update tbepr_segmento_canais_perm s
  where s.cdcooper in (6,9,10,12) 
    and s.cdcanal = 3;
 
+update tbepr_segmento_canais_perm s
+   set s.vlmax_autorizado = 30000
+ where s.cdcooper = 6 -- Unilos
+   and s.idsegmento = 1
+   and s.cdcanal = 3;
+
+update tbepr_segmento_canais_perm s
+   set s.vlmax_autorizado = 50000
+ where s.cdcooper = 6 -- Unilos
+   and s.idsegmento = 2
+   and s.cdcanal = 3;   
+
+update tbepr_segmento_canais_perm s
+   set s.vlmax_autorizado = 20000
+ where s.cdcooper = 9 -- Transpocred
+   and s.idsegmento = 1
+   and s.cdcanal = 3;
+   
+update tbepr_segmento_canais_perm s
+   set s.vlmax_autorizado = 30000
+ where s.cdcooper = 9 -- Transpocred
+   and s.idsegmento = 2
+   and s.cdcanal = 3; 
+
+
+update tbepr_segmento_canais_perm s
+   set s.vlmax_autorizado = 15000
+ where s.cdcooper = 10 -- CREDICOMIN
+   and s.idsegmento = 1
+   and s.cdcanal = 3;
+   
+update tbepr_segmento_canais_perm s
+   set s.vlmax_autorizado = 25000
+ where s.cdcooper = 10 -- CREDICOMIN
+   and s.idsegmento = 2
+   and s.cdcanal = 3; 
+
+update tbepr_segmento_canais_perm s
+   set s.vlmax_autorizado = 10000
+ where s.cdcooper = 12 -- CREVISC
+   and s.idsegmento = 1
+   and s.cdcanal = 3;
+   
+update tbepr_segmento_canais_perm s
+   set s.vlmax_autorizado = 10000
+ where s.cdcooper = 12 -- CREVISC
+   and s.idsegmento = 2
+   and s.cdcanal = 3;       
+
 update crapprm p
    set p.dsvlrprm = p.dsvlrprm ||';6;9;10;12'
  where p.cdacesso = 'LIBERA_COOP_SIMULA_IB';  
