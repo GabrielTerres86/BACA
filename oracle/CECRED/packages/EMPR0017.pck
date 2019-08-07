@@ -7199,12 +7199,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     END IF;
     --
     --/
-    pr_dscritic := vr_dscritic;
     IF vr_gerou_pend THEN
-       pr_des_reto := 'NOK';
-    ELSE
-       pr_des_reto := 'OK';
+      pr_dscritic := vr_dscritic;   
     END IF;
+    pr_des_reto := 'OK';
     --
   EXCEPTION 
     WHEN vr_exc_erro
