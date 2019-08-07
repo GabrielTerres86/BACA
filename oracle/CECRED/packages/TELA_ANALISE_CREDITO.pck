@@ -9022,6 +9022,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
   vr_avalista2_aux       number := 0;
   vr_liquidacoes         varchar2(32000);
   vr_index               number := 0;
+  vr_idx                 number := 0;
   vr_total_liquidacoes   number(25,2) :=0;
   
   --Rowtype para calcular os empréstimos aprovados
@@ -9172,6 +9173,8 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
     
       BEGIN
         vr_index := 0;
+        vr_idx := 0;
+        vr_saldo_devedor_empr := 0;
         vr_tab_tabela.delete;
         FOR r1 IN c_liquidacoes LOOP
         
@@ -9258,9 +9261,39 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
           vr_tab_tabela(vr_index).coluna7 := to_char(vr_tab_dados_epr(1).vlpreemp, '999g999g990d00');
           vr_tab_tabela(vr_index).coluna8 := to_char(round(vr_tab_dados_epr(1).vlsdeved, 2), '999g999g990d00');
           vr_tab_tabela(vr_index).coluna9 := 'PP';
-          vr_saldo_devedor_empr := vr_saldo_devedor_empr + round(vr_tab_dados_epr(1).vlsdeved, 2);
+--          vr_saldo_devedor_empr := vr_saldo_devedor_empr + round(vr_tab_dados_epr(1).vlsdeved, 2);
           vr_total_liquidacoes := vr_total_liquidacoes + round(vr_tab_dados_epr(1).vlsdeved, 2);
         
+        END LOOP;
+        empr0001.pc_obtem_dados_empresti
+                         (pr_cdcooper       => pr_cdcooper            --> Cooperativa conectada
+                         ,pr_cdagenci       => 0                      --> Código da agência
+                         ,pr_nrdcaixa       => 0                      --> Número do caixa
+                         ,pr_cdoperad       => 1                      --> Código do operador
+                         ,pr_nmdatela       => 'TELA_UNICA'               --> Nome datela conectada
+                         ,pr_idorigem       => 5                      --> Indicador da origem da chamada
+                         ,pr_nrdconta       => pr_nrdconta            --> Conta do associado
+                         ,pr_idseqttl       => 1                      --> Sequencia de titularidade da conta
+                         ,pr_rw_crapdat     => rw_crapdat             --> Vetor com dados de parâmetro (CRAPDAT)
+                         ,pr_dtcalcul       => ''                     --> Data solicitada do calculo
+                         ,pr_nrctremp       => 0                      --> Número contrato empréstimo
+                         ,pr_cdprogra       => 0                      --> Programa conectado
+                         ,pr_inusatab       => vr_inusatab            --> Indicador de utilização da tabela
+                         ,pr_flgerlog       => 'N'                    --> Gerar log S/N
+                         ,pr_flgcondc       => FALSE                  --> Mostrar emprestimos liquidados sem prejuizo
+                         ,pr_nmprimtl       => ''                     --> Nome Primeiro Titular
+                         ,pr_tab_parempctl  => vr_dstextab_parempctl  --> Dados tabela parametro
+                         ,pr_tab_digitaliza => vr_dstextab_digitaliza --> Dados tabela parametro
+                         ,pr_nriniseq       => 1                      --> Numero inicial da paginacao
+                         ,pr_nrregist       => 9999                   --> Numero de registros por pagina
+                         ,pr_qtregist       => vr_qtregist            --> Qtde total de registros
+                         ,pr_tab_dados_epr  => vr_tab_dados_epr       --> Saida com os dados do empréstimo
+                         ,pr_des_reto       => vr_des_reto            --> Retorno OK / NOK
+                                      , pr_tab_erro => vr_tab_erro); --> Tabela com possíves erros
+        vr_idx := vr_tab_dados_epr.FIRST;
+        WHILE vr_idx IS NOT NULL LOOP
+          vr_saldo_devedor_empr := vr_saldo_devedor_empr + round(vr_tab_dados_epr(vr_idx).vlsdeved, 2);
+          vr_idx := vr_tab_dados_epr.NEXT(vr_idx);
         END LOOP;
       EXCEPTION
         WHEN OTHERS THEN
@@ -9514,25 +9547,25 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
                               fn_tag('Proposta Atual', to_char(round(nvl(vr_vlfinanc, 0),2), '999g999g990d00'));
                               
     vr_string_contrato_epr := vr_string_contrato_epr ||
-                              fn_tag('Saldo Devedor de Empréstimo', to_char(round(nvl(vr_saldo_devedor_empr,0), 2), '999g999g990d00'));
+                              fn_tag('(+) Saldo Devedor de Empréstimo', to_char(round(nvl(vr_saldo_devedor_empr,0), 2), '999g999g990d00'));
                               
     vr_string_contrato_epr := vr_string_contrato_epr ||
-                              fn_tag('Proposta em andamento com Decisão Aprovada', to_char(round(nvl(vr_vlfinanc_andamento,0), 2), '999g999g990d00'));
+                              fn_tag('(+) Proposta em andamento com Decisão Aprovada', to_char(round(nvl(vr_vlfinanc_andamento,0), 2), '999g999g990d00'));
   
     vr_string_contrato_epr := vr_string_contrato_epr ||
-                              fn_tag('Limite de Crédito', to_char(round(nvl(vr_tab_valores_conta(1).vllimite,0), 2), '999g999g990d00'));
+                              fn_tag('(+) Limite de Crédito', to_char(round(nvl(vr_tab_valores_conta(1).vllimite,0), 2), '999g999g990d00'));
                               
     vr_string_contrato_epr := vr_string_contrato_epr ||
-                              fn_tag('Valor Utilizado do Limite de Desconto de Cheque', to_char(round(nvl(vr_vldscchq,0), 2), '999g999g990d00'));
+                              fn_tag('(+) Valor Utilizado do Limite de Desconto de Cheque', to_char(round(nvl(vr_vldscchq,0), 2), '999g999g990d00'));
   
     vr_string_contrato_epr := vr_string_contrato_epr ||
-                              fn_tag('Valor Utilizado do Limite de Desconto de Título', to_char(round(nvl(vr_vlutiliz_titulo,0), 2), '999g999g990d00'));
+                              fn_tag('(+) Valor Utilizado do Limite de Desconto de Título', to_char(round(nvl(vr_vlutiliz_titulo,0), 2), '999g999g990d00'));
 
     vr_string_contrato_epr := vr_string_contrato_epr ||
-                              fn_tag('Limite Cartão de Crédito', to_char(round(NVL(vr_vllimcred, 0), 2), '999g999g990d00'));
+                              fn_tag('(+) Limite Cartão de Crédito', to_char(round(NVL(vr_vllimcred, 0), 2), '999g999g990d00'));
   
     vr_string_contrato_epr := vr_string_contrato_epr ||
-                              fn_tag('Liquidações', to_char(round(nvl(vr_total_liquidacoes,0), 2), '999g999g990d00'));
+                              fn_tag('(-) Liquidações', to_char(round(nvl(vr_total_liquidacoes,0), 2), '999g999g990d00'));
                               
     vr_string_contrato_epr := vr_string_contrato_epr ||
                               fn_tag('Total', to_char(vr_vlendtot, '999g999g990d00'));
