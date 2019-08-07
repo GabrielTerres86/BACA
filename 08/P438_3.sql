@@ -39,7 +39,7 @@ update tbepr_segmento seg
            and seg.cdcooper      = s.cdcooper
            and seg.idsegmento    = s.idsegmento)
 
- where seg.cdcooper in in (6,9,10,12,16)
+ where seg.cdcooper in (6,9,10,12,16)
    and seg.idsegmento in (1,2);
 
  
