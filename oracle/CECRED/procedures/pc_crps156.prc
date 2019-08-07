@@ -406,7 +406,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                 vr_vlrgappr := 0;
                 vr_vlsdappr := 0;
                 vr_vlsldttr := 0;
-         	vr_tpresgate_apl := 1;
+         	
+         	vr_tpresgate_apl := pr_tpresgat;
          	vr_nrseqrgt := vr_nrseqrgt + 1;
 
                 APLI0008.pc_calc_saldo_resgate (pr_cdcooper => pr_cdcooper
@@ -442,14 +443,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                       
                 vr_valortir := vr_valortir + vr_vlrdirrf;
 
-                vr_vlrtotresgate_apl := vr_vlrtotresgate_apl + vr_vlsldttr;
-                vr_vlresgat_apl := vr_vlsldttr;
+                vr_vlrtotresgate_apl := vr_vlrtotresgate_apl + vr_vlrgappr;
+                vr_vlresgat_apl := vr_vlrgappr;
                 vr_tpresgate_apl := 1;
                 IF (pr_tpresgat = 1) THEN
                    IF (vr_vlresgat > vr_vlrtotresgate_apl) THEN
                        vr_tpresgate_apl := 2;
                    ELSIF (vr_vlresgat = vr_vlrtotresgate_apl) THEN
-                          vr_tpresgate_apl := 2;
+                        IF (vr_vlrgappr = vr_vlsldttr) THEN
+                           vr_tpresgate_apl := 2;
+                        ELSE
+                           vr_tpresgate_apl := 1;
+                        END IF;
                           vr_flgfimresga := TRUE;
                    ELSE
                        vr_vlresgat_apl := vr_vlresgat - vr_vlresgat_acu;    
@@ -1015,6 +1020,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
         BEGIN
         vr_gbl_tentativa:=vr_gbl_tentativa+1;         
         vr_geraprotocolo := 0;
+	vr_valortir := 0;
           -- Buscar cadastro da poupanca programada.
           OPEN cr_craprpp (pr_cdcooper => pr_cdcooper,
                            pr_nrdconta => rw_craplrg.nrdconta,
@@ -1194,11 +1200,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
 	  /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */
       IF  (nvl(vr_cdcritic,0) = 0 OR vr_cdcritic = 828 OR vr_cdcritic = 429) THEN
       
-
         IF (rw_craprpp.cdprodut <= 0) THEN
            pc_gera_resgate_poup_prog(pr_cdcooper => pr_cdcooper,
                                           pr_flgcreci => rw_craplrg.flgcreci,
                                           pr_vlresgat => vr_vlresgat);
+           vr_vlresgat_acu := vr_vlresgat;
         ELSE
            pc_gera_resgate_app_prog(pr_cdcooper => pr_cdcooper,
                                           pr_flgcreci => rw_craplrg.flgcreci,
@@ -1235,8 +1241,56 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
           END IF;      
             vr_regexist := TRUE;
             
-      END IF;
+      END IF;      
       
+      IF nvl(vr_cdcritic,0) = 0 THEN
+        IF rw_craprpp.dtvctopp <= rw_crapdat.dtmvtopr THEN
+          vr_cdcritic := 921; --> 921 - Resgate por vencimento com sucesso
+        ELSE
+          vr_cdcritic := 434; --> 434 - Resgate efetuado com sucesso.
+        END IF;
+      END IF;  
+      
+      -- gravar rejeitado
+      IF nvl(vr_cdcritic,0) > 0 THEN
+        BEGIN
+          INSERT INTO craprej
+                      (craprej.dtmvtolt
+                      ,craprej.cdagenci
+                      ,craprej.cdbccxlt
+                      ,craprej.nrdolote
+                      ,craprej.nrdconta
+                      ,craprej.nraplica
+                      ,craprej.dtdaviso
+                      ,craprej.vldaviso
+                      ,craprej.vlsdapli
+                      ,craprej.vllanmto
+                      ,craprej.cdcritic
+                      ,craprej.tpintegr
+                      ,craprej.cdcooper)
+               VALUES (rw_crapdat.dtmvtopr  -- craprej.dtmvtolt 
+                      ,156                  -- craprej.cdagenci 
+                      ,156                  -- craprej.cdbccxlt 
+                      ,156                  -- craprej.nrdolote 
+                      ,rw_craplrg.nrdconta  -- craprej.nrdconta 
+                      ,rw_craplrg.nraplica  -- craprej.nraplica 
+                      ,rw_craplrg.dtmvtolt  -- craprej.dtdaviso 
+                      ,rw_craplrg.vllanmto  -- craprej.vldaviso 
+                      ,vr_saldorpp          -- craprej.vlsdapli 
+                      ,vr_vlresgat          -- craprej.vllanmto 
+                      ,nvl(vr_cdcritic,0)   -- craprej.cdcritic 
+                      ,156                  -- craprej.tpintegr 
+                      ,pr_cdcooper); 
+                      
+          vr_cdcritic := 0;
+          
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Não foi possivel atualizar craprej (nrdconta:'||rw_craplrg.nrdconta||'): '||SQLERRM;
+            RAISE vr_exc_saida;  
+        END;
+      END IF;
+
      /*##############################
          INICIO GERA PROTOCOLO
      ###############################*/
@@ -1343,7 +1397,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
 	                   'Numero do Resgate: ' || TO_CHAR(rw_craprpp.nrctrrpp,'9G999G990')    || '#' ||
 	           'IRRF (Imposto de Renda Retido na Fonte): ' || TO_CHAR(vr_valortir,'999G999G990D00') || '#' ||
 	                   'Aliquota IRRF: '       || vr_dsperirapl  || '#' ||
-	                   'Valor Bruto: '         || TO_CHAR(vr_vlresgat  + vr_valortir,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') || '#'  ||                                 
+	                   'Valor Bruto: '         || TO_CHAR(vr_vlresgat_acu  + vr_valortir,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS=,.') || '#'  ||                                 
 	                   'Cooperativa: '         || UPPER(rw_crapcop.nmextcop) || '#' || 
 	                   'CNPJ: '                || TO_CHAR(gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)) || '#' ||
 	                   UPPER(TRIM(vr_nmcidade)) || ', ' || TO_CHAR(rw_crapdat.dtmvtolt,'dd') || ' DE ' || GENE0001.vr_vet_nmmesano(TO_CHAR(rw_crapdat.dtmvtolt,'mm')) || ' DE ' || TO_CHAR(rw_crapdat.dtmvtolt,'RRRR') || '.';                             
@@ -1355,7 +1409,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
 	                               ,pr_nrdconta => rw_craprpp.nrdconta                         --> Número da conta
 	                               ,pr_nrdocmto => rw_craprpp.nrctrrpp                         --> Número do documento
 	                               ,pr_nrseqaut => 0                                   --> Número da sequencia
-	                               ,pr_vllanmto => vr_vlresgat                         --> Valor lançamento
+	                               ,pr_vllanmto => vr_vlresgat_acu                     --> Valor lançamento
 	                               ,pr_nrdcaixa => 1                         	   --> Número do caixa NOK
 	                               ,pr_gravapro => TRUE                                --> Controle de gravação
 	                               ,pr_cdtippro => 12                                  --> Código de operação
@@ -1371,59 +1425,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
 	                               ,pr_dscritic => vr_dscritic                         --> Descrição crítica
 	                               ,pr_des_erro => vr_des_erro);                       --> Descrição dos erros de processo
 	                             
-	         IF (vr_cdcritic IS NOT NULL ) OR (vr_dscritic IS NOT NULL) THEN
+	         IF (vr_cdcritic <> 0 ) OR (vr_dscritic IS NOT NULL) THEN
 	            RAISE vr_exc_saida;
 	         END IF;
 	END IF;
-
-      
-      IF nvl(vr_cdcritic,0) = 0 THEN
-        IF rw_craprpp.dtvctopp <= rw_crapdat.dtmvtopr THEN
-          vr_cdcritic := 921; --> 921 - Resgate por vencimento com sucesso
-        ELSE
-          vr_cdcritic := 434; --> 434 - Resgate efetuado com sucesso.
-        END IF;
-      END IF;  
-      
-      -- gravar rejeitado
-      IF nvl(vr_cdcritic,0) > 0 THEN
-        BEGIN
-          INSERT INTO craprej
-                      (craprej.dtmvtolt
-                      ,craprej.cdagenci
-                      ,craprej.cdbccxlt
-                      ,craprej.nrdolote
-                      ,craprej.nrdconta
-                      ,craprej.nraplica
-                      ,craprej.dtdaviso
-                      ,craprej.vldaviso
-                      ,craprej.vlsdapli
-                      ,craprej.vllanmto
-                      ,craprej.cdcritic
-                      ,craprej.tpintegr
-                      ,craprej.cdcooper)
-               VALUES (rw_crapdat.dtmvtopr  -- craprej.dtmvtolt 
-                      ,156                  -- craprej.cdagenci 
-                      ,156                  -- craprej.cdbccxlt 
-                      ,156                  -- craprej.nrdolote 
-                      ,rw_craplrg.nrdconta  -- craprej.nrdconta 
-                      ,rw_craplrg.nraplica  -- craprej.nraplica 
-                      ,rw_craplrg.dtmvtolt  -- craprej.dtdaviso 
-                      ,rw_craplrg.vllanmto  -- craprej.vldaviso 
-                      ,vr_saldorpp          -- craprej.vlsdapli 
-                      ,vr_vlresgat          -- craprej.vllanmto 
-                      ,nvl(vr_cdcritic,0)   -- craprej.cdcritic 
-                      ,156                  -- craprej.tpintegr 
-                      ,pr_cdcooper); 
-                      
-          vr_cdcritic := 0;
-          
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Não foi possivel atualizar craprej (nrdconta:'||rw_craplrg.nrdconta||'): '||SQLERRM;
-            RAISE vr_exc_saida;  
-        END;
-      END IF;
       
       /* Atualizar lancamentos de resgates solicitados como processado */
       BEGIN
