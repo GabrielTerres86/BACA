@@ -628,7 +628,9 @@ BEGIN
            nvl(rpad(to_char(rw.dtemissao_documento, 'DDMMYY'), 6, ' '), '      ')     || -- Data de Emissão do Documento (RG)  DATA 
            rpad(rw.cdorgao_expedidor, 6, ' ')  || -- Órgão Emissor do Documento (RG)  Texto[006]
            rpad(to_char(rw.nrendres), 5, ' ')  || -- Número Endereço  Texto[005]
-           rpad(rw.complend, 10, ' ')          || -- Complemento Endereço  Texto[010]
+          
+		  fun_remove_char_esp(pr_texto =>  rpad(rw.complend, 10, ' '))    || 
+	--	   rpad(rw.complend, 10, ' ')          || -- Complemento Endereço  Texto[010]
            rpad(rw.nmbairro, 30, ' ')          || -- Bairro  Texto[030]
            rpad(' ', 2, ' ')                   || -- Dígito Verificador da Conta p/ Débito (alteração HSBC)  Texto[002]
            lpad(to_char(rw.cdagectl),4,'0')    || -- Código da Agência  Inteiro[004]
@@ -728,7 +730,9 @@ BEGIN
            lpad('1', 6, '0')                   || -- Número do Local  Inteiro[006] ?????
            
            LPAD(to_char(rw.vlpreseg,'fm999999999999.90'), 15, '0') || -- Valor do Prêmio	Valor
-           RPAD(substr(rw.endereco,1,40),40,' ') || -- Endereço do Local	Texto[040]
+          
+		   fun_remove_char_esp(pr_texto => RPAD(substr(rw.endereco,1,40),40,' '))  ||
+		 --  RPAD(substr(rw.endereco,1,40),40,' ') || -- Endereço do Local	Texto[040]
            RPAD(SUBSTR(rw.nmcidade,1,20),20,' ') || -- Cidade do Local	Texto[020]
            rpad(SUBSTR(rw.cdufresd,1,2),2,' ')   || -- UF do Local	Texto[002]
            to_char(rw.nrcepend,'fm00000000')     || -- CEP do Local	Texto[008]
@@ -742,7 +746,9 @@ BEGIN
            lpad(' ', 3, ' ')                     || -- Código do Município (somente na exportação de renovação)	Texto[003]
            rpad('0', 4, '0')                     || -- Código do Plano (casos Lar Seguro e Empresa Seguro)	Inteiro[004]
            lpad(' ', 3, ' ')                     || -- Código do Bem	Texto[003]
-           rpad(rw.complend, 20, ' ')            || -- Complemento do Endereço	Texto[020]
+          
+		  fun_remove_char_esp(pr_texto => rpad(rw.complend, 20, ' '))  ||
+		--   rpad(rw.complend, 20, ' ')            || -- Complemento do Endereço	Texto[020]
            lpad(' ', 8, ' ')                     || -- Código da Ocupação2 ( Somente para codigos de produtos com tam. 8)	Texto[008]
            lpad(' ', 264, ' ')                   || -- Espaço Disponível	Texto[264]
            'N'                                   || -- Flag Indica Vistoria (S/N)	Texto[001]
@@ -877,7 +883,9 @@ BEGIN
                                                   -- EE => Empresa     SSS => Sucursal     PPPPPP => Num. Proposta"	Texto[011]
            rpad(' ', 14, ' ')                  || -- Espaço Disponível   Texto[014]
 
-           RPAD(substr(rw.endereco || ' ' || rw.nrendres,1,40),40,' ') || -- Endereço de Cobrança do Segurado ( Incluindo o número )	Texto[040]
+		   fun_remove_char_esp(pr_texto => RPAD(substr(rw.endereco || ' ' || rw.nrendres,1,40),40,' '))  ||
+
+       --    RPAD(substr(rw.endereco || ' ' || rw.nrendres,1,40),40,' ') || -- Endereço de Cobrança do Segurado ( Incluindo o número )	Texto[040]
            RPAD(SUBSTR(rw.nmcidade,1,20),20,' ') || -- Cidade de Cobrança do Segurado	Texto[020]
            to_char(rw.nrcepend,'fm00000000')   || -- CEP de Cobrança do Segurado	Texto[008]
            rpad(SUBSTR(rw.cdufresd,1,2),2,' ') || -- UF de Cobrança do Segurado	Texto[002]         
