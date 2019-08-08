@@ -551,6 +551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   --/
   PROCEDURE monta_textofim_html(pr_site IN VARCHAR2,
                                 pr_tel_ouvid IN VARCHAR2,
+                                pr_tel_ura IN VARCHAR2,
                                 pr_nm_contratante IN VARCHAR2,
                                 pr_nm_coop IN VARCHAR2,
                                 pr_cdcooper IN tbepr_assinaturas_contrato.cdcooper%TYPE,
@@ -569,6 +570,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   --
   -- Frequencia: Sempre que for chamada
   -- Objetivo  : Rotina focando no apoio a formatação do documento CCB NO JASPER crrl772_contrato_ccb
+  --
+  -- Alterações: 08/08/2019 - Ajuste no número de telefone para Tele Atendimento e Ouvidoria e 
+  --                          incluido site por parametro na clausula 18. (Douglas Pagel / AMcom) 
   --
   ---------------------------------------------------------------------------------------------------------------
   --/  
@@ -667,11 +671,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
       vtexto := vtexto||'<br>'||'
       15.  <b><u> Vínculo Cooperativo </b></u> – As partes declaram que este instrumento está vinculado às disposi&ccedil;ões legais cooperativistas vigentes no momento da contrata&ccedil;&atilde;o, ao Estatuto Social da <b>Cooperativa</b> e demais delibera&ccedil;ões assembleares desta, e do seu Conselho de Administra&ccedil;&atilde;o, os quais o <b>Contratante</b> está obrigado por ter livre e espontaneamente aderido ao quadro social da <b>Cooperativa</b>, e cujo teor ratifica, reconhecendo na opera&ccedil;&atilde;o contratada a celebra&ccedil;&atilde;o de um Ato Cooperativo previsto no artigo 79 da Lei Federal núm. 5.764/71, o que afasta qualquer caracteriza&ccedil;&atilde;o de mercantilidade da presente <b>Contrato</b>.';
       vtexto := vtexto||'<br>'||'
-      16.  <b><u> Altera&ccedil;&atilde;o Contratual e/ou Regras do Contrato </b></u> - Quaisquer altera&ccedil;ões que incluam, excluam ou modifiquem as presentes cláusulas ou que venha alterar as regras deste <b>Contrato</b> ficar&atilde;o disponíveis ao(à) <b>Contratante</b> via website (www.viacredi.coop.br) ou nos canais de autoatendimento disponibilizados pela <b>Cooperativa</b>. As referidas altera&ccedil;ões aplicar-se-&atilde;o para todos os contratos e todas as prorroga&ccedil;ões que se fizerem após a data da publica&ccedil;&atilde;o. N&atilde;o havendo concordância com as altera&ccedil;ões promovidas, o <b>Contratante</b> deverá comunicar em at&eacute; 15 (quinze) dias da publica&ccedil;&atilde;o.';
+      16.  <b><u> Altera&ccedil;&atilde;o Contratual e/ou Regras do Contrato </b></u> - Quaisquer altera&ccedil;ões que incluam, excluam ou modifiquem as presentes cláusulas ou que venha alterar as regras deste <b>Contrato</b> ficar&atilde;o disponíveis ao(à) <b>Contratante</b> via website '||pr_site ||' ou nos canais de autoatendimento disponibilizados pela <b>Cooperativa</b>. As referidas altera&ccedil;ões aplicar-se-&atilde;o para todos os contratos e todas as prorroga&ccedil;ões que se fizerem após a data da publica&ccedil;&atilde;o. N&atilde;o havendo concordância com as altera&ccedil;ões promovidas, o <b>Contratante</b> deverá comunicar em at&eacute; 15 (quinze) dias da publica&ccedil;&atilde;o.';
       vtexto := vtexto||'<br>'||'
       17.  <b><u> Envio de SMS e correspondência eletrônica  </b></u>- No intuito de manter o(a) <b>Contratante</b> informado sobre este empr&eacute;stimo e sobre outros produtos, servi&ccedil;os, ofertas ou informa&ccedil;ões de seu interesse, fica autorizado o envio de SMS e e-mails pela <b>Cooperativa</b>. O(A) <b>Contratante</b> poderá cancelar essa autoriza&ccedil;&atilde;o, mediante solicita&ccedil;&atilde;o à Central de Atendimento da <b>Cooperativa</b>.';
       vtexto := vtexto||'<br>'||'
-      18.  <b><u> Solu&ccedil;&atilde;o amigável de conflitos  </b></u> - Para a solu&ccedil;&atilde;o amigável de eventuais conflitos relacionados a este <b>Contrato</b>, o(a) <b>Contratante</b> poderá dirigir seu pedido ou reclama&ccedil;&atilde;o ao Posto de Atendimento responsável pela sua conta corrente. Está ainda à sua disposi&ccedil;&atilde;o o tele atendimento (0800 647 2214), e o website '||pr_site ||' Se n&atilde;o for solucionado o conflito, o(a) <b>Contratante</b> poderá recorrer à Ouvidoria ('||pr_tel_ouvid||'), em dias úteis, 08h00min às 17h00min).';
+      18.  <b><u> Solu&ccedil;&atilde;o amigável de conflitos  </b></u> - Para a solu&ccedil;&atilde;o amigável de eventuais conflitos relacionados a este <b>Contrato</b>, o(a) <b>Contratante</b> poderá dirigir seu pedido ou reclama&ccedil;&atilde;o ao Posto de Atendimento responsável pela sua conta corrente. Está ainda à sua disposi&ccedil;&atilde;o o tele atendimento ('|| pr_tel_ura ||'), e o website '||pr_site ||' Se n&atilde;o for solucionado o conflito, o(a) <b>Contratante</b> poderá recorrer à Ouvidoria ('||pr_tel_ouvid||'), em dias úteis, 08h00min às 17h00min).';
       vtexto := vtexto||'<br>'||'
       19.  <b><u> Declara&ccedil;&atilde;o de Leitura  </b></u> – O(A) <b>Contratante</b> ao assinar o presente <b>Contrato</b>, declara que a leu previamente e que n&atilde;o possuí nenhuma dúvida com rela&ccedil;&atilde;o a quaisquer de suas cláusulas.';
       vtexto := vtexto||'<br>'||'
@@ -1291,6 +1295,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   --
   -- Alterações: 23/07/2019 - Ajuste na composição do valor do IOF e do valor emprestado. (Douglas Pagel / AMcom) 
   --
+  --             08/08/2019 - Ajuste no número de telefone para Tele Atendimento e Ouvidoria. (Douglas Pagel / AMcom) 
+  --
   ---------------------------------------------------------------------------------------------------------------
   --
   --
@@ -1361,6 +1367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
           ,cop.nrtelouv
           ,cop.dsendweb
           ,cop.dsdircop
+          ,cop.nrtelvoz
       FROM crapcop cop
      WHERE cop.cdcooper = pr_cdcooper;
   --
@@ -1978,7 +1985,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                 ,pr_des_erro => pr_dscritic);
 
       monta_textofim_html(rw_crapcop.dsendweb,
-                          rw_crapage.tel_site,
+                          rw_crapcop.nrtelouv,
+                          nvl(rw_crapcop.nrtelura, rw_crapcop.nrtelvoz),
                           rw_crapass.nm_contratante,
                           rw_crapcop.nmextcop,
                           rw_crawepr.cdcooper,
