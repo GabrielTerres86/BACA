@@ -60,7 +60,12 @@ declare
          , seg.vlpreseg
          , seg.dtmvtolt
          , seg.qtprepag
- 		 ,seg.dtdebito
+		 /* Conforme definido e call em 01/08, enviaremos o dia do debito + 092019 fixo, salvo os casos do dia 31, onde nesse caso devera adicionar 102019*/
+		 , CASE WHEN to_char(seg.dtdebito,'DD') = '31' THEN to_date('31/10/2019','DD/MM/RRRR') 
+		   
+		        ELSE to_date(to_char(seg.dtdebito,'DD') || '/09/2019'  ,'DD/MM/RRRR')
+	       
+		   END dtdebito 
          , seg.dtprideb
          , seg.qtparcel
          , seg.tpplaseg
@@ -207,6 +212,39 @@ declare
       END IF;
     END;
   END fn_calc_digito;      
+
+  -- Remove caracteres especiais
+  FUNCTION fun_remove_char_esp(pr_texto IN VARCHAR2
+                              ) 
+    RETURN VARCHAR2 
+  IS
+  /* ..........................................................................
+    
+  Procedure: fun_remove_char_esp
+  Sistema  : Conta-Corrente - Cooperativa de Credito
+  Autor    : xxx
+  Data     : 00/00/00                        Ultima atualizacao: 03/11/2018
+    
+  Dados referentes ao programa:
+    
+  Frequencia: Sempre que for chamado
+  Objetivo  : funÁ„o de remove char especial
+    
+  Alteracoes:     
+  ............................................................................. */
+  BEGIN
+    --
+    RETURN translate(pr_texto,'—¡…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’ƒÀœ÷‹«Ò·ÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ı‰ÎÔˆ¸Á{}®+?∫™∞ß&¥*<>','NAEIOUAEIOUAEIOUAOAEIOUCnaeiouaeiouaeiouaoaeiouc');
+    --RETURN translate(pr_texto,'—¡…Õ”⁄¿»Ã“Ÿ¬ Œ‘€√’ƒÀœ÷‹«Ò·ÈÌÛ˙‡ËÏÚ˘‚ÍÓÙ˚„ı‰ÎÔˆ¸Á.-!"''`#$%().:[/]{}®+?;∫™∞ß&¥*<>','NAEIOUAEIOUAEIOUAOAEIOUCnaeiouaeiouaeiouaoaeiouc');
+    --
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log  
+      CECRED.pc_internal_exception (pr_cdcooper => 3
+                                   ,pr_compleme => 'pr_texto:' || pr_texto
+                                   );
+      RETURN pr_texto;  
+  END fun_remove_char_esp;
   
   -- Subrotina para escrever texto na vari·vel CLOB do XML
   procedure pc_escreve_xml(pr_xml in out nocopy clob,  --> Vari·vel CLOB onde ser· incluÌdo o texto
@@ -506,8 +544,15 @@ BEGIN
            rw.tppessoa                         || -- Tipo de Pessoa ( ëFí = FÌsica , ëJí = JurÌdica, ëIí = Isento )
 --           Rpad(rw.nmbenvid##1, 40, ' ')       || -- Nome do Benefici·rio
            Rpad(' ', 40, ' ')       || -- Nome do Benefici·rio
-           lpad(to_char(rw.dtinivig,'DDMMYY'),6,' ') || -- Data de InÌcio de VigÍncia
-           lpad(to_char(rw.dtfimvig,'DDMMYY'),6,' ') || -- Data de InÌcio de VigÍncia            
+           /****
+		   lpad(to_char(rw.dtinivig,'DDMMYY'),6,' ') || -- Data de InÌcio de VigÍncia
+           lpad(to_char(rw.dtfimvig,'DDMMYY'),6,' ') || -- Data de InÌcio de VigÍncia   
+		   
+		   Conforme definido e call em 01/08, enviaremos datas fixas
+		   
+		    ****/ 
+		    '010919'   || 	-- Data de InÌcio de VigÍncia
+			'010920'  ||    -- Data de Fim de VigÍncia      
            'N'                                 || -- Indicador de RenovaÁ„o (S/N)
            LPAD('0', 6, '0')                   || -- N˙mero da ApÛlice Anterior (Somente para casos de renovaÁ„o e Endosso)
            LPAD(' ', 5, ' ')                   || -- EspaÁo DisponÌvel
@@ -528,7 +573,8 @@ BEGIN
            rpad(nvl(rw.fone, ' '), 12, ' ')    || -- Telefone do Segurado
            '000000'                            || -- Data de AtivaÁ„o Vencimento (somente para CNH)
            LPAD(' ', 12, ' ')                  || -- EspaÁo DisponÌvel
-           RPAD(substr(rw.endereco,1,40),40,' ') || -- EndereÁo do Segurado ( Incluindo o n˙mero )
+           fun_remove_char_esp(pr_texto => RPAD(substr(rw.endereco,1,40),40,' '))    ||  
+		  -- RPAD(substr(rw.endereco,1,40),40,' ') || -- EndereÁo do Segurado ( Incluindo o n˙mero )
            RPAD(SUBSTR(rw.nmcidade,1,20),20,' ') || -- Cidade do Segurado
            to_char(rw.nrcepend,'fm00000000')  || -- CEP do Segurado
            rpad(SUBSTR(rw.cdufresd,1,2),2,' ') || -- UF do Segurado
@@ -554,7 +600,10 @@ BEGIN
 		  A data de vencimento da parcela deve ser montada com o dia desejado para o vencimento, e ser posterior ao inÌcio de vigÍncia.
 		  */
 		  lpad(to_char(rw.dtdebito,'DDMMYY'),6,' ')  || -- Data de Vencimento da 1™  parcela  Data 
+
+
 		  /*
+		   to_char(rw.dtdebito,'DD') || '/09/2019'  || ';' ||
 		   to_char(rw.dtprideb,'DD') || '0819' || -- Data de Vencimento da 1™  parcela  Data
           */ 
 		   rpad(' ', 19, ' ')                  || -- No. do Cart„o (sem espaÁos e caracteres separadores)  Texto[019]
@@ -576,7 +625,7 @@ BEGIN
            lpad(' ', 3, ' ')                   || -- Carteira da Proposta  Texto[003]
            lpad('0', 6, '0')                   || -- Numero da Proposta  Inteiro[006]
            rpad(rw.nrdocumento,10,' ')         || -- Numero do Documeto de Identidade (RG)  Texto[010]
-           rpad(to_char(rw.dtemissao_documento, 'DDMMYY'), 6, ' ')     || -- Data de Emiss„o do Documento (RG)  DATA 
+           nvl(rpad(to_char(rw.dtemissao_documento, 'DDMMYY'), 6, ' '), '      ')     || -- Data de Emiss„o do Documento (RG)  DATA 
            rpad(rw.cdorgao_expedidor, 6, ' ')  || -- ”rg„o Emissor do Documento (RG)  Texto[006]
            rpad(to_char(rw.nrendres), 5, ' ')  || -- N˙mero EndereÁo  Texto[005]
            rpad(rw.complend, 10, ' ')          || -- Complemento EndereÁo  Texto[010]
@@ -609,9 +658,10 @@ BEGIN
            'S'                                 || -- Aceita receber SMS  texto[001]
            '00'                                || -- Codigo do servidor de Origem  Inteiro[002]
            rpad('0', 10, '0')                  || -- Numero da cotacao no servidor de Origem  Inteiro[010]
-           rpad(rw.complend, 20, ' ')          || -- Complemento EndereÁo  Texto[020]
+           fun_remove_char_esp(pr_texto => rpad(rw.complend, 20, ' ')    ) ||  
+		  -- rpad(rw.complend, 20, ' ')          || -- Complemento EndereÁo  Texto[020]
            rpad(nvl(trim(rw.email), ' '), 60, ' ')             || -- Email do cliente  texto[060]
-           rpad(to_char(rw.dtnascimento,'DDMMYYYY'),8,'0') || -- Data de Nascimento do cliente (DDMMAAAA)   Data[008]
+           nvl(rpad(to_char(rw.dtnascimento,'DDMMYYYY'),8,'0'), '        ') || -- Data de Nascimento do cliente (DDMMAAAA)   Data[008]
            rw.sexo                             || -- Sexo do cliente [F]-Feminino [M]-Masculino  texto[01]
            LPAD(to_char(rw.nrcpfcgc),14,'0')   || -- CPF-CNPJ do Titular da Conta Corrente (28/02/2011)   Inteiro[014]
            RPAD(substr(rw.nmprimtl,1,40), 40, ' ') || -- Nome do Titular da Conta Corrente para DÈbito (28/02/2011)  Texto[040]
@@ -888,7 +938,7 @@ BEGIN
 
   pc_print('',TRUE);
   
-  DBMS_XSLPROCESSOR.CLOB2FILE(vr_dslobdev, '/micros/cecred/rafael/', 'hdi_coop_' || to_char(vr_cdcooper) || '.txt', NLS_CHARSET_ID('UTF8'));    
+  DBMS_XSLPROCESSOR.CLOB2FILE(vr_dslobdev, '/micros/cecred/diego/', 'HDI_coop_' || to_char(vr_cdcooper) || '.txt', NLS_CHARSET_ID('UTF8'));    
   
   -- Liberando a memÛria alocada pro CLOB
   dbms_lob.close(vr_dslobdev);
