@@ -3340,7 +3340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
         pr_tparcepr(vr_aux_nrparce).nrdconta := pr_nrdconta;
         pr_tparcepr(vr_aux_nrparce).nrparepr := vr_aux_nrparce; 
         pr_tparcepr(vr_aux_nrparce).vlparepr := vr_vlparepr; 
-        pr_tparcepr(vr_aux_nrparce).dtparepr := vr_tt_datas_parcelas(vr_aux_nrparce).dtparepr; 
+        pr_tparcepr(vr_aux_nrparce).dtvencto := vr_tt_datas_parcelas(vr_aux_nrparce).dtparepr; 
       END LOOP; 
     
       IF pr_flggrava THEN
