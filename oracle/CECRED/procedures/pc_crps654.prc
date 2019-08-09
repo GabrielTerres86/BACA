@@ -295,7 +295,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps654 (pr_cdcooper IN crapcop.cdcooper%T
                     
         ELSE -- Se a coperativa desconsidera
           -- Faz o somatório sem o valor do limite de créditido.
-          vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vlsdchsl 
+          vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp + vr_tab_sald(vr_ind_sald).vlsdchsl;
         END IF;
                     
         vr_vldebito := 0;
