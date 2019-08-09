@@ -240,9 +240,10 @@ declare
   EXCEPTION
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log  
-      CECRED.pc_internal_exception (pr_cdcooper => 3
+     /*
+	  CECRED.pc_internal_exception (pr_cdcooper => 3
                                    ,pr_compleme => 'pr_texto:' || pr_texto
-                                   );
+                                   ); */
       RETURN pr_texto;  
   END fun_remove_char_esp;
   
