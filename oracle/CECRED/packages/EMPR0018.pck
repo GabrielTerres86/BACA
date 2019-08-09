@@ -1582,6 +1582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
   ..............................................................................*/
   /*Variaveis*/
   vr_tab_erro gene0001.typ_tab_erro;
+  vr_cdcritic INTEGER;
                                        
   BEGIN
     EMPR0018.pc_consulta_tarifa_emprst( pr_cdcooper => pr_cdcooper   
@@ -1773,6 +1774,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
   ..............................................................................*/
   /*Variaveis*/
   vr_tab_erro gene0001.typ_tab_erro;
+  vr_cdcritic INTEGER;
   
   BEGIN
     EMPR0018.pc_valida_novo_calculo( pr_cdcooper => pr_cdcooper 
@@ -3483,6 +3485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
   vr_index PLS_INTEGER;
   vr_dstexto  VARCHAR2(32767);
   vr_string   VARCHAR2(32767);
+  vr_cdcritic INTEGER;
                                        
   BEGIN
     pr_des_reto := 'OK';
