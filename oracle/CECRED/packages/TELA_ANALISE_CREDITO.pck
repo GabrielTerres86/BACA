@@ -8913,7 +8913,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
          AND nritetop = 2
          AND nrseqite = pr_nrgarope;
   
-    CURSOR cr_crapbpr IS
+    CURSOR cr_crapbpr(pr_nrctrato in crapbpr.nrctrpro%type) IS
       SELECT t.dscatbem
         FROM crapbpr t
        WHERE t.cdcooper = pr_cdcooper
@@ -8970,7 +8970,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
          AND nrdconta = pr_nrdconta
          AND nrctremp <> pr_nrctrato
          AND insitapr = 1 --Aprovado
-         AND vlempori > 0
+         --AND vlempori > 0 Retirado Paulo - 05/08/2019
          AND nrctremp NOT IN (SELECT nrctremp
                                 FROM crapepr
                                WHERE cdcooper = c.cdcooper
@@ -9027,6 +9027,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
   
   --Rowtype para calcular os empréstimos aprovados
   r_proposta_epr2 c_proposta_epr%ROWTYPE;
+  vr_erro exception;
   
   begin
   
@@ -9075,7 +9076,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
     fetch c_proposta_epr into r_proposta_epr;
   
     /*IOF - TARIFA - VALOR EMPRESTIMO*/
-    FOR rw_crapbpr IN cr_crapbpr LOOP
+    FOR rw_crapbpr IN cr_crapbpr(pr_nrctrato) LOOP
       vr_dscatbem := vr_dscatbem || '|' || rw_crapbpr.dscatbem;
     END LOOP;
   
@@ -9115,8 +9116,22 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
      WHERE cdcooper = pr_cdcooper
        AND cdlcremp = r_proposta_epr.cdlcremp;
   
-                                       
-    -- Calcula tarifa
+     --Buscar a tarifa da convresão progress (Paulo M- 05/08/2019)
+     empr0018.pc_consulta_tarifa_emprst(pr_cdcooper => pr_cdcooper
+                                      , pr_cdlcremp => r_proposta_epr.cdlcremp
+                                      , pr_vlemprst => r_proposta_epr.vlemprst
+                                      , pr_nrdconta => pr_nrdconta
+                                      , pr_nrctremp => pr_nrctrato
+                                      , pr_dscatbem => vr_dscatbem
+                                      , pr_vlrtarif => vr_vlrtarif
+                                      , pr_cdcritic => vr_dscritic
+                                      , pr_des_erro => vr_dscritic
+                                      , pr_des_reto => vr_des_reto
+                                      , pr_tab_erro => vr_tab_erro);
+     if vr_dscritic is not null then
+       raise vr_erro;
+     end if;                                 
+/*    -- Calcula tarifa
      TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
                                ,pr_cdlcremp => r_proposta_epr.cdlcremp
@@ -9134,7 +9149,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
                                ,pr_cdhisgar => vr_cdhistor
                                ,pr_cdfvlgar => vr_cdfvlcop 
                                ,pr_cdcritic => vr_cdcritic
-                               ,pr_dscritic => vr_dscritic);
+                               ,pr_dscritic => vr_dscritic);*/
   
     vr_vlrtarif := ROUND(nvl(vr_vlrtarif, 0), 2) + nvl(vr_vlrtares, 0) + nvl(vr_vltarbem, 0);
     vr_vlfinanc := r_proposta_epr.vlemprst;
@@ -9424,6 +9439,9 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
   
     /*Acumular Proposta em andamento com Situação Analise Finalizada e Decisão Aprovada (VALOR FINANCIADO)*/
   
+    vr_vlfinanc_andamento := 0;
+    vr_vlrdoiof           := 0;
+    vr_vlrtarif           := 0;
     /*Para cada proposta*/
     OPEN c_busca_proposta_andamento;
     LOOP
@@ -9435,7 +9453,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
     
       /*IOF - TARIFA - VALOR EMPRESTIMO*/
       vr_dscatbem := '';
-      FOR rw_crapbpr IN cr_crapbpr LOOP
+      FOR rw_crapbpr IN cr_crapbpr(vr_nrctremp) LOOP
         vr_dscatbem := vr_dscatbem || '|' || rw_crapbpr.dscatbem;
       END LOOP;
     
@@ -9475,7 +9493,19 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
        WHERE cdcooper = pr_cdcooper
          AND cdlcremp = r_proposta_epr2.cdlcremp;
     
-      -- Calcula tarifa
+     --Buscar a tarifa da convresão progress (Paulo M- 05/08/2019)
+     empr0018.pc_consulta_tarifa_emprst(pr_cdcooper => pr_cdcooper
+                                      , pr_cdlcremp => r_proposta_epr2.cdlcremp
+                                      , pr_vlemprst => r_proposta_epr2.vlemprst
+                                      , pr_nrdconta => pr_nrdconta
+                                      , pr_nrctremp => r_proposta_epr2.Nrctremp
+                                      , pr_dscatbem => vr_dscatbem
+                                      , pr_vlrtarif => vr_vlrtarif
+                                      , pr_cdcritic => vr_dscritic
+                                      , pr_des_erro => vr_dscritic
+                                      , pr_des_reto => vr_des_reto
+                                      , pr_tab_erro => vr_tab_erro);         
+/*      -- Calcula tarifa
      TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
                                ,pr_cdlcremp => r_proposta_epr2.cdlcremp
@@ -9493,10 +9523,10 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
                                ,pr_cdhisgar => vr_cdhistor
                                ,pr_cdfvlgar => vr_cdfvlcop 
                                ,pr_cdcritic => vr_cdcritic
-                               ,pr_dscritic => vr_dscritic);
+                               ,pr_dscritic => vr_dscritic);*/
     
-      vr_vlrtarif           := ROUND(nvl(vr_vlrtarif, 0), 2) + nvl(vr_vlrtares, 0) + nvl(vr_vltarbem, 0);
-      vr_vlfinanc_andamento := r_proposta_epr2.vlemprst;
+        --vr_vlrtarif           := ROUND(nvl(vr_vlrtarif, 0), 2) + nvl(vr_vlrtares, 0) + nvl(vr_vltarbem, 0);
+        vr_vlfinanc_andamento := vr_vlfinanc_andamento+r_proposta_epr2.vlemprst;
     
       if r_proposta_epr2.idfiniof = 1 then
         vr_vlfinanc_andamento := vr_vlfinanc_andamento + nvl(vr_vlrdoiof, 0) + nvl(vr_vlrtarif, 0);
@@ -9600,6 +9630,8 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
     pr_dsxmlret := vr_dsxmlret;
   
   EXCEPTION
+    WHEN vr_erro THEN
+       pr_cdcritic := 0;
     WHEN OTHERS THEN
       cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper_principal, pr_compleme => vr_parametros_principal);
       pr_cdcritic := 0;
