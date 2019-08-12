@@ -1985,11 +1985,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        WHERE idordem = pr_idordem;
     rw_solicitacao cr_solicitacao%ROWTYPE;
 
+		-- Buscar o valor total das aplicações bloqueadas judicialmente
+		CURSOR cr_blqapljud (pr_cdcooper IN crapblj.cdcooper%TYPE
+		                    ,pr_nrdconta IN crapblj.nrdconta%TYPE
+												,pr_dtmvtolt IN crapblj.dtblqini%TYPE) IS
+			SELECT nvl(SUM(vlbloque),0)
+				FROM crapblj blj
+			 WHERE blj.cdcooper = pr_cdcooper
+				 AND blj.nrdconta = pr_nrdconta
+				 AND blj.dtblqini <= pr_dtmvtolt
+				 AND blj.dtblqfim IS NULL
+				 AND blj.cdmodali = 2; -- Aplicacao
+
     -- VARIÁVEIS
     vr_tpcoperad PLS_INTEGER; -- Tipo de busca que sera feito no cooperado
     vr_nmprimtl crapass.nmprimtl%TYPE; -- Nome do titular da conta
     vr_ind      PLS_INTEGER; -- Indice sobre a tabela de cooperados
     vr_idordem_consulta tbblqj_ordem_consulta.idordem_consulta%TYPE; -- Sequencial do envio 
+    vr_vlblqapl_gar  NUMBER(15,2); -- Valor total de aplicacao bloqueada em garantia
+		vr_vlblqpoup_gar NUMBER(15,2); -- Valor total de poupança bloqueada em garantia
+		vr_vlblqapl_jud  NUMBER(15,2); -- Valor total de aplicacao bloqueada judicialmente
     
     -- Variaveis Pl/Tables
     vr_tab_cooperado BLQJ0001.typ_tab_cooperado;
@@ -2078,13 +2093,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
         -- Se nao existir registro sai do loop
         EXIT WHEN vr_ind IS NULL;
         
+				-- Zera variáveis
+				vr_vlblqapl_gar := 0;
+        vr_vlblqapl_jud := 0;
+				
         FOR vr_cdmodali IN 1..3 LOOP
 
           -- Início - PJ 416 - O código abaixo substituiu o antertior a pedido do Thiago e Andrino 
           -- apesar de não estar contemplado no escopo do projeto 416
           -- Se o saldo for zerado, nao enviar
-          IF (vr_cdmodali = 2 AND vr_tab_cooperado(vr_ind).vlsldapl = 0) OR -- Aplicacao
-             (vr_cdmodali = 3 AND vr_tab_cooperado(vr_ind).vlsldppr = 0) THEN -- Poupanca
+          IF (vr_cdmodali = 2) THEN -- Aplicacao
+						 
+						 -- Buscar valor total de aplicacao bloqueada em garantia
+						 BLOQ0001.pc_calc_bloqueio_garantia(pr_cdcooper => rw_solicitacao.cdcooper
+																							 ,pr_nrdconta => vr_tab_cooperado(vr_ind).nrdconta
+																							 ,pr_vlbloque_aplica => vr_vlblqapl_gar
+																							 ,pr_vlbloque_poupa => vr_vlblqpoup_gar
+																							 ,pr_dscritic => vr_dscritic);
+						 -- Se retornou erro
+						 IF TRIM(vr_dscritic) IS NOT NULL THEN
+							 -- Levantar exceção
+							 RAISE vr_exc_saida;
+						 END IF;
+							 
+						 -- Buscar valor total de aplicacao bloqueada judicialmente
+						 OPEN cr_blqapljud(pr_cdcooper => rw_solicitacao.cdcooper
+															,pr_nrdconta => vr_tab_cooperado(vr_ind).nrdconta
+															,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+						 FETCH cr_blqapljud INTO vr_vlblqapl_jud;
+						 -- Fechar cursor
+						 CLOSE cr_blqapljud;
+						 -- Se não possuir valor de aplicação bloqueado e disponível
+						 IF vr_vlblqapl_jud = 0 AND vr_vlblqapl_gar = 0 AND vr_tab_cooperado(vr_ind).vlsldapl = 0 THEN
+							 -- Iterar para próxima modalidade
+							 continue;
+						 END IF;
+					ELSIF (vr_cdmodali = 3 AND vr_tab_cooperado(vr_ind).vlsldppr = 0) THEN -- Poupanca
               continue;
           END IF;
 
@@ -2133,6 +2177,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              ,cdagenci  
              ,cdmodali 
              ,vlsaldo_disp
+						 ,vlblqapl_gar
+						 ,vlblqapl_jud
              ,dtabertura
              ,nmrua
              ,nrendereco
@@ -2152,6 +2198,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              ,decode(vr_cdmodali,1,vr_tab_cooperado(vr_ind).vlstotal, -- Deposito a vista
                                  2,vr_tab_cooperado(vr_ind).vlsldapl, -- Aplicacao
                                    vr_tab_cooperado(vr_ind).vlsldppr) -- Poupanca Programada
+						 ,decode(vr_cdmodali,2,vr_vlblqapl_gar,0)
+						 ,decode(vr_cdmodali,2,vr_vlblqapl_jud,0)
              ,vr_tab_cooperado(vr_ind).dtadmiss 
              ,vr_tab_cooperado(vr_ind).dsendere 
              ,vr_tab_cooperado(vr_ind).nrendere 
@@ -3322,6 +3370,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                2,'A',   -- Aplicacao Financeira
                                  'P') cdmodali, -- Poupanca
              a.vlsaldo_disp,
+						 a.vlblqapl_gar,
+						 a.vlblqapl_jud,
              a.dtabertura, 
              a.nmrua, 
              a.nrendereco, 
@@ -3424,6 +3474,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
              '<cdagenci>'||rw_retorno.cdagenci||'</cdagenci>'||chr(13)||
              '<nmtitular>'||rw_retorno.nmtitular||'</nmtitular>'||chr(13)||
              '<vlsddisp>'||to_char(rw_retorno.vlsaldo_disp,'99999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''')||'</vlsddisp>'||chr(13)||
+             '<vlblqapl_gar>'||to_char(rw_retorno.vlblqapl_gar,'99999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''')||'</vlblqapl_gar>'||chr(13)||						 
+             '<vlblqapl_jud>'||to_char(rw_retorno.vlblqapl_jud,'99999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''')||'</vlblqapl_jud>'||chr(13)||						 
              '<dtinicio>'||to_char(rw_retorno.dtabertura,'dd/mm/yyyy')||'</dtinicio>'||chr(13)||
              '<dsendere>'||rw_retorno.nmrua||'</dsendere>'||chr(13)||
              '<nrendere>'||rw_retorno.nrendereco||'</nrendere>'||chr(13)||
