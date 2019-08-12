@@ -142,6 +142,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
   PROCEDURE pc_valida_lancto_folha(pr_cdcooper  IN     crapass.cdcooper%TYPE --> Cooperativa
                                   ,pr_nrdconta  IN     crapass.nrdconta%TYPE --> Conta
                                   ,pr_nrcpfcgc  IN     crapass.nrcpfcgc%TYPE --> CPF
+                                  ,pr_dtcredit  IN     DATE                  --> Data Credito
                                   ,pr_idtpcont  IN OUT VARCHAR2              --> Tipo (C-Conta ou T-CTASAL)
                                   ,pr_nmprimtl     OUT VARCHAR2              --> Nome 
                                   ,pr_dsalerta     OUT VARCHAR2              --> Retornar alertas de validação
@@ -276,7 +277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
    Sistema : Ayllos
    Sigla   : CRED
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015                      Ultima atualizacao: 05/07/2018
+   Data    : Maio/2015                      Ultima atualizacao: 06/08/2019
 
    Dados referentes ao programa:
 
@@ -317,6 +318,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                           - pc_debito_pagto_aprovados
                           - pc_cr_pagto_aprovados_coop
 
+              06/08/2019 - Permitir inclusao de folha CTASAL apenas antes do horario
+                           parametrisado na PAGFOL "Portabilidade (Pgto no dia):"
+                           RITM0032122 - Lucas Ranghetti
   ..............................................................................*/
 
   --Busca LCS com mesmo num de documento
@@ -4841,6 +4845,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper,
                                  pr_nrdconta => rw_craplfp.nrdconta,
                                  pr_nrcpfcgc => rw_craplfp.nrcpfemp,
+                                 pr_dtcredit => null,                                 
                                  pr_idtpcont => rw_craplfp.idtpcont,
                                  pr_nmprimtl => vr_nmprimtl,
                                  pr_dsalerta => vr_dsalerta,
@@ -6185,6 +6190,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper,
                                  pr_nrdconta => rw_craplfp.nrdconta,
                                  pr_nrcpfcgc => rw_craplfp.nrcpfemp,
+                                 pr_dtcredit => null,                                 
                                  pr_idtpcont => rw_craplfp.idtpcont,
                                  pr_nmprimtl => vr_nmprimtl,
                                  pr_dsalerta => vr_dsalerta,
@@ -8441,6 +8447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   PROCEDURE pc_valida_lancto_folha(pr_cdcooper  IN     crapass.cdcooper%TYPE --> Cooperativa
                                   ,pr_nrdconta  IN     crapass.nrdconta%TYPE --> Conta
                                   ,pr_nrcpfcgc  IN     crapass.nrcpfcgc%TYPE --> CPF
+                                  ,pr_dtcredit  IN     DATE                  --> Data Credito
                                   ,pr_idtpcont  IN OUT VARCHAR2              --> Tipo (C-Conta ou T-CTASAL)
                                   ,pr_nmprimtl     OUT VARCHAR2              --> Nome
                                   ,pr_dsalerta     OUT VARCHAR2              --> Retornar alertas de validação
@@ -8541,6 +8548,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
          AND ban.flgdispb = 1; 
     rw_crapban cr_crapban%ROWTYPE; 
     --
+    vr_hrlimpor   VARCHAR2(5);    -- Horario Portabilidade
     vr_inestcri   NUMBER;         -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
     vr_clobxmlc   CLOB;           -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
   BEGIN
@@ -8772,7 +8780,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         ELSE 
           -- Fechar cursor
           CLOSE cr_crapban;
-      END IF;
+        END IF;
         --
         -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
         -- Definir a situação como Erro quando for Intercompany e estado de crise ligado
@@ -8783,6 +8791,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         -- Fim Pj 475
       END IF;
 
+      -- Busca do horário limite para a portabilidade
+      vr_hrlimpor := gene0001.fn_param_sistema('CRED', Pr_cdcooper, 'FOLHAIB_HOR_LIM_PORTAB');
+             
+      -- não deixar fazer a folha ctasal caso o horario estrapole
+      IF vr_hrlimpor < TO_CHAR(SYSDATE,'HH24:MI') AND TO_DATE(PR_dtcredit,'DD/MM/YYYY') = TO_DATE(sysdate,'DD/MM/YYYY') THEN        
+         pr_dsalerta := 'Pagamentos para outras instituicoes so podem ser feitos ate as '||vr_hrlimpor;
+         RETURN;
+      END IF;
+      
     END IF;
 
   EXCEPTION
@@ -9715,15 +9732,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             FOLH0001.pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => vr_nrdconta
                                            ,pr_nrcpfcgc => vr_nrcpfcgc
+                                           ,pr_dtcredit => TO_DATE(pr_dtcredit,'DD/MM/YYYY')
                                            ,pr_idtpcont => vr_idtpcont
                                            ,pr_nmprimtl => vr_nmprimtl
                                            ,pr_dsalerta => vr_dsalert
                                            ,pr_dscritic => pr_dscritic);
-
-            -- Se ocorrer erro de processamento
-            IF pr_dscritic IS NOT NULL THEN
-              RAISE vr_excerror; -- Finaliza o programa
-            END IF;
 
             -- Se ocorreu crítica na validação
             IF vr_dsalert IS NOT NULL THEN
@@ -9740,6 +9753,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
               vr_idcrirga := TRUE; -- Ocorrencia de erro
 
               CONTINUE;
+            ELSE
+              -- Se ocorrer erro de processamento
+              IF pr_dscritic IS NOT NULL THEN
+                RAISE vr_excerror; -- Finaliza o programa
+              END IF;
             END IF;
 
           END IF;

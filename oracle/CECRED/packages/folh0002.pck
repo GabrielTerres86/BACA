@@ -487,7 +487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Maio/2015                      Ultima atualizacao: 15/02/2019
+   Data    : Maio/2015                      Ultima atualizacao: 06/08/2019
 
    Dados referentes ao programa:
 
@@ -516,6 +516,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
                15/02/2019 - Na procedure pc_envia_pagto_apr_ib após o 
                             processamento do arquivo incluir o rm (Lucas Ranghetti #PRB0040468)
+                            
+               06/08/2019 - Permitir inclusao de folha CTASAL apenas antes do horario
+                            parametrisado na PAGFOL "Portabilidade (Pgto no dia):"
+                            RITM0032122 - Lucas Ranghetti
 ..............................................................................*/
    -- Arrays
    -- Campos da tela
@@ -6945,6 +6949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
            FOLH0001.pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper,
                                            pr_nrdconta => rw_craplfp.nrdconta,
                                            pr_nrcpfcgc => rw_craplfp.nrcpfemp,
+                                           pr_dtcredit => rw_crappfp.dtcredit,                                           
                                            pr_idtpcont => rw_craplfp.idtpcont,
                                            pr_nmprimtl => vr_nmprimtl,
                                            pr_dsalerta => vr_dsalerta,
@@ -8625,18 +8630,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          -- Apenas fecha o cursor
          CLOSE cr_crapefp;
 
+         vr_idtpcont:= NULL; -- limpar pois eh um in out
          -- Efetua a validação do lançamento
          FOLH0001.pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => vr_tab_pgto(vr_idx_pgto).nrdconta
                                         ,pr_nrcpfcgc => vr_tab_pgto(vr_idx_pgto).nrcpfemp
+                                        ,pr_dtcredit => pr_dtcredit
                                         ,pr_idtpcont => vr_idtpcont
                                         ,pr_nmprimtl => vr_nmprimtl
                                         ,pr_dsalerta => vr_dsalert
                                         ,pr_dscritic => pr_dscritic);
 
          -- Se ocorrer erro de processamento
-         IF pr_dscritic IS NOT NULL THEN
+         IF pr_dscritic IS NOT NULL OR vr_dsalert is NOT NULL THEN
             pr_cdcritic := 0;
+            IF pr_dscritic IS NULL AND vr_dsalert is NOT NULL THEN
+              pr_dscritic:= vr_dsalert;
+            END IF;
             RAISE vr_erro; -- Finaliza o programa
          END IF;
 
