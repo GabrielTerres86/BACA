@@ -266,12 +266,34 @@ create or replace package cecred.cobr0011 is
                        ,pr_tpocorrencia IN VARCHAR2 dEFAULT 4              -- Tipo de Ocorrência
                        );
   --
-	PROCEDURE pc_gera_movimento_pagamento(pr_dscritic OUT VARCHAR2
-		                                   );
+  PROCEDURE pc_gera_movimento_pagamento(pr_dscritic OUT VARCHAR2
+                                       );
   --
-	PROCEDURE pc_enviar_email_teds (pr_cdcooper IN crapcop.cdcooper%TYPE
+  
+  PROCEDURE pc_enviar_email_teds (pr_cdcooper IN crapcop.cdcooper%TYPE
                                  ,pr_dscritic OUT VARCHAR2);
+  --		   
+  -- Rotina para agendar o debito de custas após desbloqueio judicial                               
+  PROCEDURE pc_agenda_debito_custas ( pr_idtabcob IN ROWID
+                                     ,pr_cdocorre IN crapret.cdocorre%TYPE
+                                     ,pr_tplancto IN VARCHAR2
+                                     ,pr_vlcustas IN crapret.vltarcus%TYPE
+                                     ,pr_cdhistor IN craphis.cdhistor%TYPE
+                                     ,pr_cdmotivo IN craptar.cdmotivo%TYPE
+                                     ,pr_cdcritic OUT INTEGER
+                                     ,pr_dscritic OUT VARCHAR2);                                 
+  --
+  -- Rotina para debitar custas cartorárias de contas bloqueadas judicialmente                                 
+  PROCEDURE pc_debita_bloqueio_judicial ( pr_idtabcob IN ROWID
+                                         ,pr_cdocorre IN crapret.cdocorre%TYPE
+                                         ,pr_tplancto IN VARCHAR2
+                                         ,pr_vlcustas IN crapret.vltarcus%TYPE
+                                         ,pr_cdhistor IN craphis.cdhistor%TYPE
+                                         ,pr_cdmotivo IN craptar.cdmotivo%TYPE
+                                         ,pr_cdcritic OUT INTEGER
+                                         ,pr_dscritic OUT VARCHAR2);                                 
 	--
+
 END cobr0011;
 /
 create or replace package body cecred.cobr0011 IS
@@ -281,7 +303,7 @@ create or replace package body cecred.cobr0011 IS
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Supero
-  --  Data     : Março/2018.                   Ultima atualização: 25/07/2019
+  --  Data     : Março/2018.                   Ultima atualização: 12/08/2019
   --
   -- Dados referentes ao programa:
   --
@@ -309,6 +331,8 @@ create or replace package body cecred.cobr0011 IS
                  25/07/2019 - inc0021120 Na rotina pc_gera_movimento_pagamento, incluído o tipo de ocorrencia 7 
                               (liquidacao em condicional) no cursor cr_conciliados para que haja o repasse do 
                               valor para o cooperado (Carlos)
+                              
+                 12/08/2019 - Ajuste na rotina de débito de custas cartorárias de contas com bloqueio judicial (PRB0042090 - Cechet)
 ---------------------------------------------------------------------------------------------------------------*/
 
   -- Private type declarations
@@ -354,8 +378,17 @@ create or replace package body cecred.cobr0011 IS
            ,crapcob.dtsitcrt
            ,crapcob.nrdident
            ,crapcob.rowid
+           ,cco.cdagenci
+           ,cco.cdbccxlt
+           ,cco.nrdolote
+           ,dat.dtmvtolt
      FROM crapcob
-    WHERE crapcob.ROWID = pr_rowid;
+        , crapcco cco
+        , crapdat dat
+    WHERE crapcob.ROWID = pr_rowid
+      AND cco.cdcooper = crapcob.cdcooper
+      AND cco.nrconven = crapcob.nrcnvcob
+      AND dat.cdcooper = crapcob.cdcooper;
   rw_crapcob cr_crapcob%ROWTYPE;
 
   -- Function and procedure implementations
@@ -1459,6 +1492,7 @@ create or replace package body cecred.cobr0011 IS
     vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;       
     -- Variavel para armazenar tarifa de instrucao
     vr_tab_lat_consolidada  PAGA0001.typ_tab_lat_consolidada;        
+    vr_bloqjud NUMBER(1);       
   BEGIN
     --Inicializar variaveis retorno
     pr_cdcritic:= NULL;
@@ -1506,6 +1540,17 @@ create or replace package body cecred.cobr0011 IS
     END;
 
     IF nvl(pr_vltarifa,0) > 0 THEN
+      
+      -- verificar bloqueio judicial da conta do cooperado
+      blqj0002.pc_verifica_conta_bloqueio(pr_cdcooper => rw_crapcob.cdcooper
+                                        , pr_nrdconta => rw_crapcob.nrdconta
+                                        , pr_id_conta_monitorada => vr_bloqjud
+                                        , pr_cdcritic => vr_cdcritic
+                                        , pr_dscritic => vr_dscritic);
+    
+      -- se a conta nao estiver bloqueada judicialmente, pode prosseguir com a cobrança das custas cartorárias
+      IF vr_bloqjud = 0 THEN
+      
       /* Gerar dados para tt-lcm-consolidada */
       PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => rw_crapcob.rowid --ROWID da cobranca
                                           ,pr_cdocorre => pr_cdocorre      --Codigo Ocorrencia /* 24. Retir. Cartor. */
@@ -1520,6 +1565,20 @@ create or replace package body cecred.cobr0011 IS
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
         RAISE vr_exc_erro;
+        END IF;
+      
+      -- caso contrário, o débito é agendado para ocorrer depois do desbloqueio
+      ELSE   
+        
+         pc_agenda_debito_custas ( pr_idtabcob => rw_crapcob.rowid
+                                  ,pr_cdocorre => pr_cdocorre
+                                  ,pr_tplancto => 'C'
+                                  ,pr_vlcustas => pr_vltarifa
+                                  ,pr_cdhistor => pr_cdhistor
+                                  ,pr_cdmotivo => NULL
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic);         
+        
       END IF;
     END IF;
 		
@@ -1733,7 +1792,7 @@ create or replace package body cecred.cobr0011 IS
     vr_rowid_ret rowid;
     vr_nrseqreg  integer;
     vr_cdhistor craphis.cdhistor%type :=0;
-
+    vr_bloqjud NUMBER(1);
   BEGIN
 
     --Inicializar variaveis retorno
@@ -1768,11 +1827,23 @@ create or replace package body cecred.cobr0011 IS
       RAISE vr_exc_erro;
     END IF;
 
-    -- Gerar dados para tt-lcm-consolidada 
+    IF nvl(pr_vltarifa,0) > 0 THEN
+      
+      -- verificar bloqueio judicial da conta do cooperado
+      blqj0002.pc_verifica_conta_bloqueio(pr_cdcooper => rw_crapcob.cdcooper
+                                        , pr_nrdconta => rw_crapcob.nrdconta
+                                        , pr_id_conta_monitorada => vr_bloqjud
+                                        , pr_cdcritic => vr_cdcritic
+                                        , pr_dscritic => vr_dscritic);
+    
+      -- se a conta nao estiver bloqueada judicialmente, pode prosseguir com a cobrança das custas cartorárias
+      IF vr_bloqjud = 0 THEN
+      
+        /* Gerar dados para tt-lcm-consolidada */           
     PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => rw_crapcob.rowid  --ROWID da cobranca
-                                        ,pr_cdocorre => pr_cdocorre       --Codigo Ocorrencia 
-                                        ,pr_tplancto => 'C'               --Tipo Lancamento   C=Cartorio
-                                        ,pr_vltarifa => nvl(pr_vltarifa,0)--Valor Tarifa
+                                            ,pr_cdocorre => pr_cdocorre      --Codigo Ocorrencia /* 24. Retir. Cartor. */
+                                            ,pr_tplancto => 'C'              --Tipo Lancamento  /* tplancto = "C" Cartorio */
+                                            ,pr_vltarifa => pr_vltarifa      --Valor Tarifa
                                         ,pr_cdhistor => pr_cdhistor       --Codigo Historico
                                         ,pr_cdmotivo => NULL              --Codigo motivo
                                         ,pr_tab_lcm_consolidada => pr_tab_lcm_consolidada --Tabela de Lancamentos
@@ -1783,6 +1854,22 @@ create or replace package body cecred.cobr0011 IS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    
+      -- caso contrário, o débito é agendado para ocorrer depois do desbloqueio
+      ELSE   
+        
+         pc_agenda_debito_custas ( pr_idtabcob => rw_crapcob.rowid
+                                  ,pr_cdocorre => pr_cdocorre
+                                  ,pr_tplancto => 'C'
+                                  ,pr_vlcustas => pr_vltarifa
+                                  ,pr_cdhistor => pr_cdhistor
+                                  ,pr_cdmotivo => NULL
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic);         
+        
+      END IF;
+    END IF;
+    
     
     /* Preparar Lote de Retorno Cooperado */
     PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid    --ROWID da cobranca
@@ -1822,29 +1909,6 @@ create or replace package body cecred.cobr0011 IS
 
     --Se Ocorreu erro
     IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-      --Levantar Excecao
-      RAISE vr_exc_erro;
-    END IF;
-
-		-- Criar Log Cobranca 
-		OPEN cr_crapoco(pr_cdcooper => pr_cdcooper
-		               ,pr_cdocorre => pr_cdocorre
-									 ,pr_dsmotivo => pr_dsmotivo
-		               );
-	  --
-		FETCH cr_crapoco INTO rw_crapoco;
-		--
-		CLOSE cr_crapoco;
-		--
-		vr_dsmotivo:= rw_crapoco.dsmotivo;
-		PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid   --ROWID da Cobranca
-																 ,pr_cdoperad => pr_cdoperad        --Operador
-																 ,pr_dtmvtolt => pr_crapdat.dtmvtolt--Data movimento
-																 ,pr_dsmensag => vr_dsmotivo        --Descricao Mensagem
-																 ,pr_des_erro => vr_des_erro        --Indicador erro
-																 ,pr_dscritic => vr_dscritic);      --Descricao erro
-		--Se ocorreu erro
-		IF vr_des_erro = 'NOK' THEN
 			--Levantar Excecao
 			RAISE vr_exc_erro;
 		END IF;
@@ -1939,7 +2003,7 @@ create or replace package body cecred.cobr0011 IS
     vr_rowid_ret rowid;
     vr_nrseqreg  integer;
     vr_cdhistor craphis.cdhistor%type :=0;
-
+    vr_bloqjud NUMBER(1);
   BEGIN
 
     --Inicializar variaveis retorno
@@ -1973,6 +2037,16 @@ create or replace package body cecred.cobr0011 IS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
+    
+    -- verificar bloqueio judicial da conta do cooperado
+    blqj0002.pc_verifica_conta_bloqueio(pr_cdcooper => rw_crapcob.cdcooper
+                                      , pr_nrdconta => rw_crapcob.nrdconta
+                                      , pr_id_conta_monitorada => vr_bloqjud
+                                      , pr_cdcritic => vr_cdcritic
+                                      , pr_dscritic => vr_dscritic);
+    
+    -- se a conta nao estiver bloqueada judicialmente, pode prosseguir com a cobrança das custas cartorárias
+    IF vr_bloqjud = 0 THEN    
 
     -- Gerar dados para tt-lcm-consolidada 
     PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => rw_crapcob.rowid  --ROWID da cobranca
@@ -1988,6 +2062,20 @@ create or replace package body cecred.cobr0011 IS
     IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
       --Levantar Excecao
       RAISE vr_exc_erro;
+    END IF;
+    
+    -- caso contrário, o débito é agendado para ocorrer depois do desbloqueio
+    ELSE   
+        
+         pc_agenda_debito_custas ( pr_idtabcob => rw_crapcob.rowid
+                                  ,pr_cdocorre => pr_cdocorre
+                                  ,pr_tplancto => 'C'
+                                  ,pr_vlcustas => nvl(pr_vloutcre,0)
+                                  ,pr_cdhistor => pr_cdhistor
+                                  ,pr_cdmotivo => NULL
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic);
+                                  
     END IF;
     
     /* Preparar Lote de Retorno Cooperado */
@@ -2031,30 +2119,7 @@ create or replace package body cecred.cobr0011 IS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-
-		-- Criar Log Cobranca 
-		OPEN cr_crapoco(pr_cdcooper => pr_cdcooper
-		               ,pr_cdocorre => pr_cdocorre
-									 ,pr_dsmotivo => pr_dsmotivo
-		               );
 	  --
-		FETCH cr_crapoco INTO rw_crapoco;
-		--
-		CLOSE cr_crapoco;
-		--
-		vr_dsmotivo:= rw_crapoco.dsmotivo;
-		PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid   --ROWID da Cobranca
-																 ,pr_cdoperad => pr_cdoperad        --Operador
-																 ,pr_dtmvtolt => pr_crapdat.dtmvtolt--Data movimento
-																 ,pr_dsmensag => vr_dsmotivo        --Descricao Mensagem
-																 ,pr_des_erro => vr_des_erro        --Indicador erro
-																 ,pr_dscritic => vr_dscritic);      --Descricao erro
-		--Se ocorreu erro
-		IF vr_des_erro = 'NOK' THEN
-			--Levantar Excecao
-			RAISE vr_exc_erro;
-		END IF;
-		--
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic:= vr_cdcritic;
@@ -3890,6 +3955,311 @@ create or replace package body cecred.cobr0011 IS
         pr_dscritic := 'Não foi possivel enviar o e-mail das TEDs não conciliadas: '||SQLERRM;
 
   END pc_enviar_email_teds;
-	--
+  --					  
+
+  -- Rotina para debitar custas cartorárias de contas bloqueadas judicialmente                                   
+  PROCEDURE pc_agenda_debito_custas ( pr_idtabcob IN ROWID
+                                     ,pr_cdocorre IN crapret.cdocorre%TYPE
+                                     ,pr_tplancto IN VARCHAR2
+                                     ,pr_vlcustas IN crapret.vltarcus%TYPE
+                                     ,pr_cdhistor IN craphis.cdhistor%TYPE
+                                     ,pr_cdmotivo IN craptar.cdmotivo%TYPE
+                                     ,pr_cdcritic OUT INTEGER
+                                     ,pr_dscritic OUT VARCHAR2) IS
+
+    vr_exc_erro            EXCEPTION;
+    vr_tab_lcm_consolidada PAGA0001.typ_tab_lcm_consolidada;
+    vr_des_erro            VARCHAR2(100);
+    vr_dsmotivo            VARCHAR2(1000);    
+    vr_cdcritic            INTEGER;
+    vr_dscritic            VARCHAR2(1000);
+    vr_idprglog            tbgen_prglog.idprglog%TYPE := 0;    
+    vr_dsplsql1             VARCHAR2(4000);
+    vr_dsplsql2             VARCHAR2(4000);    
+    vr_dtjob               DATE;
+    vr_cdprogra            VARCHAR2(100) := 'JBCOBRAN_DEB_CUSTAS';
+    vr_jobname             VARCHAR2(100);
+    
+    CURSOR cr_horario_desbloqjud IS
+      SELECT TRUNC(SYSDATE) + (to_number(substr(to_char(TO_NUMBER(cp.dsvlrprm),'fm0000'),1,2)) * 60 +  
+             to_number(substr(to_char(TO_NUMBER(cp.dsvlrprm),'fm0000'),3,2))) / 1440 + 30/1440 dtdesbloq
+        FROM crapprm cp
+        WHERE cp.nmsistem = 'CRED'
+          AND cp.cdacesso = 'BLQJ_FIM_MONITORAMENTO'             
+          AND cp.cdcooper = 0;
+    rw_horario_desbloqjud cr_horario_desbloqjud%ROWTYPE;
+    
+  BEGIN
+  
+    --vr_cdprogra || '$' || to_char(rw_crapcob.cdcooper,'fm000') || to_char(rw_crapcob.nrdconta,'fm0000000')  --> Nome randomico criado
+    vr_jobname := vr_cdprogra || '_$';      
+  
+    --Inicializar variaveis retorno
+    pr_cdcritic:= NULL;
+    pr_dscritic:= NULL;
+    --Selecionar registro cobranca
+    OPEN cr_crapcob (pr_rowid => pr_idtabcob);
+    --Posicionar no proximo registro
+    FETCH cr_crapcob INTO rw_crapcob;
+    --Se nao encontrar
+    IF cr_crapcob%NOTFOUND THEN
+      --Fechar Cursor
+      CLOSE cr_crapcob;
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    --Fechar Cursor
+    CLOSE cr_crapcob;
+    
+    vr_dsplsql1 := 
+    'declare
+       vr_cdcritic  integer;
+       vr_dscritic  varchar2(4000);
+       vr_assunto   varchar2(200);
+       vr_des_corpo varchar2(4000);
+       vr_email     VARCHAR2(1000);
+       vr_dsmotivo  varchar2(200);
+       vr_des_erro  varchar(100);                         
+     begin                         
+       COBR0011.pc_debita_bloqueio_judicial( 
+                     pr_idtabcob => ''' || to_char(rw_crapcob.rowid) || '''
+                    ,pr_cdocorre => ' || to_char(pr_cdocorre) || '
+                    ,pr_tplancto => ''' || pr_tplancto || '''
+                    ,pr_vlcustas => ' || to_char(pr_vlcustas,'fm999999999999.99') || ' 
+                    ,pr_cdhistor => ' || to_char(pr_cdhistor) || '
+                    ,pr_cdmotivo => ''' || pr_cdmotivo || '''
+                    ,pr_cdcritic => vr_cdcritic
+                    ,pr_dscritic => vr_dscritic);';                                      
+                                
+    vr_dsplsql2 := '                     
+       IF NVL(vr_cdcritic,0) > 0 or trim(vr_dscritic) IS NOT NULL THEN
+         vr_email := gene0001.fn_param_sistema(pr_nmsistem => ''CRED'',
+                                               pr_cdcooper => 0,
+                                               pr_cdacesso => ''EMAIL_NOTIFICA_COBRAN'');
+         vr_assunto := ''[Protesto] Erro ao debitar custas cartorarias'';
+         vr_des_corpo := ''Nao foi possivel debitar custas cartorarias referente ao titulo abaixo: '' || chr(13) || chr(10);                                                                         
+         vr_des_corpo := vr_des_corpo || '' Cooperativa: ' || rw_crapcob.cdcooper ||
+                                         ' Conta: ' || rw_crapcob.nrdconta ||
+                                         ' Convenio: ' || rw_crapcob.nrcnvcob || 
+                                         ' Titulo: ' || rw_crapcob.nrdocmto || 
+                                         ' Valor: ' || to_char(pr_vlcustas,'fm999999999999.99') || ''' || chr(13) || chr(10) ||
+                                         '' Motivo: '' || to_char(vr_cdcritic) || '' - '' || vr_dscritic;                                                                                
+         -- Criar Log Cobranca 
+         vr_dsmotivo:= ''Erro ao debitar custas cartorarias: '' || vr_dscritic; 
+         PAGA0001.pc_cria_log_cobranca(pr_idtabcob => ''' || to_char(rw_crapcob.rowid) || '''
+                                      ,pr_cdoperad => ''1''
+                                      ,pr_dtmvtolt => SYSDATE
+                                      ,pr_dsmensag => vr_dsmotivo
+                                      ,pr_des_erro => vr_des_erro
+                                      ,pr_dscritic => vr_dscritic);
+         gene0003.pc_solicita_email(pr_cdcooper       => 3
+                                   ,pr_cdprogra        => '''||vr_jobname||'''
+                                   ,pr_des_destino     => vr_email
+                                   ,pr_des_assunto     => vr_assunto
+                                   ,pr_des_corpo       => vr_des_corpo
+                                   ,pr_des_anexo       => NULL
+                                   ,pr_flg_remove_anex => ''N'' --> Remover os anexos passados
+                                   ,pr_flg_remete_coop => ''S'' --> Se o envio sera do e-mail da Cooperativa
+                                   ,pr_flg_enviar      => ''S'' --> Enviar o e-mail na hora
+                                   ,pr_des_erro        => vr_dscritic);                                                                                                      
+       END IF;
+       commit;
+     end;';       
+        
+    -- Criar Log Cobranca 
+    vr_dsmotivo:= 'Agendamento de custas apos desbloqueio judicial: R$ ' || to_char(pr_vlcustas,'fm999g999g999d00');
+    PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid   --ROWID da Cobranca
+                                 ,pr_cdoperad => '1'                --Operador
+                                 ,pr_dtmvtolt => SYSDATE            --Data movimento
+                                 ,pr_dsmensag => vr_dsmotivo        --Descricao Mensagem
+                                 ,pr_des_erro => vr_des_erro        --Indicador erro
+                                 ,pr_dscritic => vr_dscritic);      --Descricao erro
+    --Se ocorreu erro
+    IF vr_des_erro = 'NOK' THEN
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;    
+    
+    OPEN cr_horario_desbloqjud;
+    FETCH cr_horario_desbloqjud INTO rw_horario_desbloqjud;
+    
+    IF cr_horario_desbloqjud%FOUND THEN
+      vr_dtjob := rw_horario_desbloqjud.dtdesbloq;
+    ELSE
+      vr_dtjob := trunc(SYSDATE) + 18*60/1440; -- 18:00h
+    END IF;
+    
+    -- teste RC7
+    -- vr_dtjob := SYSDATE + 1/1440;
+    
+    CLOSE cr_horario_desbloqjud;
+          
+    -- Faz a chamada ao programa paralelo atraves de JOB
+    gene0001.pc_submit_job(pr_cdcooper => 3            --> Código da cooperativa
+                          ,pr_cdprogra => vr_cdprogra  --> Código do programa
+                          ,pr_dsplsql  => vr_dsplsql1 || vr_dsplsql2   --> Bloco PLSQL a executar
+                          ,pr_dthrexe  => vr_dtjob     --> Executar nesta hora
+                          ,pr_interva  => NULL         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
+                          ,pr_jobname  => vr_jobname   --> Nome randomico criado
+                          ,pr_des_erro => vr_dscritic);
+
+    -- Testar saida com erro
+    IF vr_dscritic is not null THEN 
+      -- Levantar exceçao
+      raise vr_exc_erro;
+    END IF;
+    
+    
+    EXCEPTION
+      WHEN vr_exc_erro THEN     
+        --> Buscar critica
+        IF nvl(vr_cdcritic,0) > 0 AND 
+          TRIM(vr_dscritic) IS NULL THEN
+          -- Busca descricao        
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+        END IF;  
+        
+        pr_dscritic := vr_dscritic;
+      
+      WHEN OTHERS THEN
+        pr_dscritic := 'Não foi possivel agendar custas apos desbloqueio judicial: '||SQLERRM;    
+    
+  END pc_agenda_debito_custas;  
+  
+  -- Rotina para debitar custas cartorárias de contas bloqueadas judicialmente                                   
+  PROCEDURE pc_debita_bloqueio_judicial ( pr_idtabcob IN ROWID
+                                         ,pr_cdocorre IN crapret.cdocorre%TYPE
+                                         ,pr_tplancto IN VARCHAR2
+                                         ,pr_vlcustas IN crapret.vltarcus%TYPE
+                                         ,pr_cdhistor IN craphis.cdhistor%TYPE
+                                         ,pr_cdmotivo IN craptar.cdmotivo%TYPE
+                                         ,pr_cdcritic OUT INTEGER
+                                         ,pr_dscritic OUT VARCHAR2) IS
+
+    vr_exc_erro            EXCEPTION;
+    vr_tab_lcm_consolidada PAGA0001.typ_tab_lcm_consolidada;
+    vr_des_erro            VARCHAR2(100);
+    vr_dsmotivo            VARCHAR2(1000);    
+    vr_cdcritic            INTEGER;
+    vr_dscritic            VARCHAR2(1000);
+    vr_idprglog            tbgen_prglog.idprglog%TYPE := 0;    
+  BEGIN
+        
+    --Inicializar variaveis retorno
+    pr_cdcritic:= NULL;
+    pr_dscritic:= NULL;
+    --Selecionar registro cobranca
+    OPEN cr_crapcob (pr_rowid => pr_idtabcob);
+    --Posicionar no proximo registro
+    FETCH cr_crapcob INTO rw_crapcob;
+    --Se nao encontrar
+    IF cr_crapcob%NOTFOUND THEN
+      --Fechar Cursor
+      CLOSE cr_crapcob;
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+    --Fechar Cursor
+    CLOSE cr_crapcob;
+        
+    /* Gerar dados para tt-lcm-consolidada */           
+    PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => pr_idtabcob
+                                        ,pr_cdocorre => pr_cdocorre
+                                        ,pr_tplancto => pr_tplancto      --Tipo Lancamento  /* tplancto = "C" Cartorio */
+                                        ,pr_vltarifa => pr_vlcustas      --Valor Tarifa
+                                        ,pr_cdhistor => pr_cdhistor      --Codigo Historico
+                                        ,pr_cdmotivo => pr_cdmotivo      --Codigo motivo
+                                        ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada --Tabela de Lancamentos
+                                        ,pr_cdcritic => vr_cdcritic      --Codigo Critica
+                                        ,pr_dscritic => vr_dscritic);    --Descricao Critica
+                                        
+    IF vr_tab_lcm_consolidada.count() > 0 THEN
+      --
+      paga0001.pc_realiza_lancto_cooperado(pr_cdcooper            => rw_crapcob.cdcooper    -- IN
+                                          ,pr_dtmvtolt            => rw_crapcob.dtmvtolt    -- IN
+                                          ,pr_cdagenci            => rw_crapcob.cdagenci    -- IN
+                                          ,pr_cdbccxlt            => rw_crapcob.cdbccxlt    -- IN
+                                          ,pr_nrdolote            => rw_crapcob.nrdolote    -- IN
+                                          ,pr_cdpesqbb            => rw_crapcob.nrcnvcob    -- IN
+                                          ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada -- IN
+                                          ,pr_cdcritic            => vr_cdcritic            -- OUT
+                                          ,pr_dscritic            => vr_dscritic            -- OUT
+                                          );
+      IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          -- gerar log da crítica mas não deve abortar o processo
+          RAISE vr_exc_erro;
+      END IF;
+      
+    END IF;                                        
+    
+    -- Criar Log Cobranca 
+    vr_dsmotivo:= 'Debito de custas realizado apos desbloqueio judicial';
+    PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid   --ROWID da Cobranca
+                                 ,pr_cdoperad => '1'                --Operador
+                                 ,pr_dtmvtolt => SYSDATE            --Data movimento
+                                 ,pr_dsmensag => vr_dsmotivo        --Descricao Mensagem
+                                 ,pr_des_erro => vr_des_erro        --Indicador erro
+                                 ,pr_dscritic => vr_dscritic);      --Descricao erro
+    --Se ocorreu erro
+    IF vr_des_erro = 'NOK' THEN
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;        
+    
+    EXCEPTION
+      WHEN vr_exc_erro THEN     
+        --> Buscar critica
+        IF nvl(vr_cdcritic,0) > 0 AND 
+          TRIM(vr_dscritic) IS NULL THEN
+          -- Busca descricao        
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+          vr_dscritic := 'Erro ao debitar custas bloqueio judicial: ' || vr_dscritic;
+          
+          pc_log_programa(pr_dstiplog      => 'E'
+                         ,pr_cdprograma    => 'COBR0011.pc_debita_bloqueio_judicial'
+                         ,pr_cdcooper      => 3
+                         ,pr_tpexecucao    => 2 -- job
+                         ,pr_tpocorrencia  => 4
+                         ,pr_cdcriticidade => 0 -- baixa
+                         ,pr_dsmensagem    => vr_dscritic
+                         ,pr_idprglog      => vr_idprglog
+                         ,pr_nmarqlog      => NULL
+                         );   
+                         
+          PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid   --ROWID da Cobranca
+                                       ,pr_cdoperad => '1'                --Operador
+                                       ,pr_dtmvtolt => SYSDATE            --Data movimento
+                                       ,pr_dsmensag => vr_dscritic        --Descricao Mensagem
+                                       ,pr_des_erro => vr_des_erro        --Indicador erro
+                                       ,pr_dscritic => vr_dscritic);      --Descricao erro
+                                          
+        END IF;  
+        
+        pr_dscritic := vr_dscritic;
+      
+      WHEN OTHERS THEN
+        pr_dscritic := 'Não foi possivel debitar custas apos desbloqueio judicial: '||SQLERRM;    
+    
+        pc_log_programa(pr_dstiplog      => 'E'
+                       ,pr_cdprograma    => 'COBR0011.pc_debita_bloqueio_judicial'
+                       ,pr_cdcooper      => 3
+                       ,pr_tpexecucao    => 2 -- job
+                       ,pr_tpocorrencia  => 4
+                       ,pr_cdcriticidade => 0 -- baixa
+                       ,pr_dsmensagem    => pr_dscritic
+                       ,pr_idprglog      => vr_idprglog
+                       ,pr_nmarqlog      => NULL
+                       );
+                       
+        PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid   --ROWID da Cobranca
+                                     ,pr_cdoperad => '1'                --Operador
+                                     ,pr_dtmvtolt => SYSDATE            --Data movimento
+                                     ,pr_dsmensag => pr_dscritic       --Descricao Mensagem
+                                     ,pr_des_erro => vr_des_erro        --Indicador erro
+                                     ,pr_dscritic => vr_dscritic);      --Descricao erro
+                       
+    
+  END pc_debita_bloqueio_judicial;
+
 end cobr0011;
 /
