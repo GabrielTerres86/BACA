@@ -536,8 +536,8 @@ begin
   -- Test statements here
 
   FOR rw IN (SELECT t.dtmvtolt, t.nrdconta, t.cdhistor, t.dsdebcre, vllanmto FROM tbfin_recursos_movimento t
-              WHERE t.dtmvtolt BETWEEN  to_date('02/08/2019','DD/MM/RRRR') 
-                                   AND  to_date('06/08/2019','DD/MM/RRRR') 
+              WHERE t.dtmvtolt BETWEEN  to_date('07/08/2019','DD/MM/RRRR') 
+                                   AND  to_date('09/08/2019','DD/MM/RRRR') 
                 AND t.cdhistor IN ( 2646, 2642)
                 AND t.dsdebcre = 'D'
               ORDER BY t.dtmvtolt, t.nrdconta, t.nrdocmto) LOOP
