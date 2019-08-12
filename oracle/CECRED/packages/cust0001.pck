@@ -3183,6 +3183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                                
                   20/06/2017 - Deleta crítica de cheque pendente de entrega se existir.
                                PRJ300-Desconto de cheque(Lombardi)
+                  26/06/2019 - Adicionada a validação, solicitada na RITM0021658(Bruno Cardoso - Mout'S)           
       ............................................................................. */
     
      BEGIN
@@ -3430,7 +3431,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
        vr_dsdaviso VARCHAR2(4000);       
        
        vr_nrqtddcc INTEGER := 0;
-			 
+       pr_tab_erro GENE0001.typ_tab_erro;
+
        BEGIN
          -- Leitura do calendario da cooperativa
          OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -3649,6 +3651,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0001 IS
                                            ,pr_nrremret => pr_nrremret
                                            ,pr_dtlibera => rw_crapdcc_1.dtlibera
                                            ,pr_intipmvt => pr_intipmvt) LOOP
+                                           
+                                           
+              /*incluido a validação RITM0021658*/
+              pc_validar_cheque(pr_cdcooper => pr_cdcooper,
+                                pr_nrdconta => pr_nrdconta,
+                                pr_dsdocmc7 => rw_crapdcc_2.dsdocmc7,
+                                pr_cdbanchq => rw_crapdcc_2.cdbanchq,
+                                pr_cdagechq => rw_crapdcc_2.cdagechq,
+                                pr_cdcmpchq => rw_crapdcc_2.cdcmpchq,
+                                pr_nrctachq => rw_crapdcc_2.nrctachq,
+                                pr_nrcheque => rw_crapdcc_2.nrcheque,
+                                pr_dtlibera => rw_crapdcc_2.dtlibera,
+                                pr_vlcheque => rw_crapdcc_2.vlcheque,
+                                pr_nrremret => rw_crapdcc_2.nrremret,
+                                pr_dtmvtolt => pr_dtmvtolt,
+                                pr_intipmvt => rw_crapdcc_2.intipmvt,
+                                pr_dtdcaptu => rw_crapdcc_2.dtdcaptu,
+                                pr_inchqcop => rw_crapdcc_2.inchqcop,
+                                pr_cdtipmvt => vr_cdtipmvt,
+                                pr_cdocorre => vr_cdocorre,
+                                pr_cdcritic => pr_cdcritic,
+                                pr_dscritic => pr_dscritic,
+                                pr_tab_erro => pr_tab_erro);
+
+              IF nvl(vr_cdtipmvt, 0) > 0 AND TRIM(vr_cdocorre) IS NOT NULL THEN
+  
+                UPDATE crapdcc
+                   SET crapdcc.cdocorre = vr_cdocorre, crapdcc.inconcil = 0
+                 WHERE crapdcc.cdcooper = pr_cdcooper
+                   AND crapdcc.nrdconta = rw_crapdcc_2.nrdconta
+                   AND crapdcc.nrremret = rw_crapdcc_2.nrremret
+                   AND crapdcc.dsdocmc7 = rw_crapdcc_2.dsdocmc7
+                   AND crapdcc.nrseqarq = rw_crapdcc_2.nrseqarq
+                   AND crapdcc.intipmvt = rw_crapdcc_2.intipmvt; --> iremos atualizar o motivo
+  
+              CONTINUE;
+  
+             END IF;
+             
+            
+             
+             
+        
                                            
              vr_nrseqdig := vr_nrseqdig + 1;  
              vr_nrqtddcc := vr_nrqtddcc + 1;
