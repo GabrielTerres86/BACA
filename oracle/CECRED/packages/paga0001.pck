@@ -1705,6 +1705,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
      11/03/2019 - Quando der erro na rotina pc atualiza trans nao efetiv, 
                   gerar Log pois as rotinas chamadoras iram ignorar o erro.
                   (Belli - Envolti - INC0034476)
+									   
+     24/04/2019 - Incluído tratamento para verificar se o lote esta em lock.
+                  Jose Dill - Mouts (PRB0040712)
 
      11/07/2019 - Correção em mensagem de erro exibida ao cooperado.
                   Se for retornada uma critica no momento de cria o lancamento do DEBITO, 
@@ -18959,6 +18962,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --                Ajuste mensagem de erro 
     --                (Belli - Envolti - Chamado 779415)    
     --
+	--   09/05/2019 - Ajustado para buscar cursor do lote quando ocorrer dup_val
+	--                (Jefferson - MoutS)
     -- .........................................................................    
   BEGIN
     DECLARE
@@ -19000,6 +19005,160 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_exc_saida EXCEPTION;
       --Agrupa os parametros - 15/12/2017 - Chamado 779415 
       vr_dsparame VARCHAR2(4000);
+      
+      pr_nrdrowid ROWID;
+      -- Procedimento para inserir o lote e não deixar tabela lockada
+      PROCEDURE pc_insere_lote (pr_cdcooper IN craplot.cdcooper%TYPE,
+                                pr_dtmvtolt IN craplot.dtmvtolt%TYPE,
+                                pr_cdagenci IN craplot.cdagenci%TYPE,
+                                pr_cdbccxlt IN craplot.cdbccxlt%TYPE,
+                                pr_nrdolote IN craplot.nrdolote%TYPE,
+                                pr_tplotmov IN craplot.tplotmov%TYPE,
+                                pr_craplot  OUT cr_craplot%ROWTYPE,
+                                pr_cdcritic OUT INTEGER,
+                                pr_dscritic OUT VARCHAR2)IS
+
+        -- Pragma - abre nova sessao para tratar a atualizacao
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        -- criar rowtype controle
+        rw_craplot_ctl cr_craplot%ROWTYPE;
+
+    BEGIN
+        -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_insere_lote - D');
+
+        /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
+        FOR i IN 1..100 LOOP
+          BEGIN
+            -- Leitura do lote
+            OPEN cr_craplot (pr_cdcooper  => pr_cdcooper,
+                             pr_dtmvtolt  => pr_dtmvtolt,
+                             pr_cdagenci  => pr_cdagenci,
+                             pr_cdbccxlt  => pr_cdbccxlt,
+                             pr_nrdolote  => pr_nrdolote);
+            FETCH cr_craplot INTO rw_craplot_ctl;
+            pr_dscritic := NULL;
+            EXIT;
+          EXCEPTION
+            WHEN OTHERS THEN
+               IF cr_craplot%ISOPEN THEN
+                 CLOSE cr_craplot;
+               END IF;
+               
+               -- setar critica caso for o ultimo
+               IF i = 100 THEN
+                 pr_dscritic:= pr_dscritic||'Registro de lote '||pr_nrdolote||' em uso. Tente novamente.';                 
+               END IF;
+               -- aguardar 0,5 seg. antes de tentar novamente
+               sys.dbms_lock.sleep(0.1);
+          END;
+        END LOOP;
+
+        -- se encontrou erro ao buscar lote, abortar programa
+        IF pr_dscritic IS NOT NULL THEN
+          ROLLBACK;
+          RETURN;
+        END IF;
+
+        IF cr_craplot%NOTFOUND THEN
+          -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
+          BEGIN
+            IF cr_craplot%ISOPEN THEN
+              CLOSE cr_craplot;
+            END IF;
+            -- criar registros de lote na tabela
+            INSERT INTO craplot
+                    (craplot.cdcooper
+                    ,craplot.dtmvtolt
+                    ,craplot.cdagenci
+                    ,craplot.cdbccxlt
+                    ,craplot.nrdolote
+                    ,craplot.tplotmov)
+            VALUES  (pr_cdcooper
+                    ,pr_dtmvtolt
+                    ,pr_cdagenci
+                    ,pr_cdbccxlt
+                    ,pr_nrdolote
+                    ,pr_tplotmov)
+          RETURNING  craplot.ROWID
+                    ,craplot.nrdolote
+                    ,craplot.cdbccxlt
+                    ,craplot.tplotmov
+                    ,craplot.dtmvtolt
+                    ,craplot.nrseqdig
+                    ,craplot.cdagenci
+                    ,craplot.cdcooper
+                INTO rw_craplot_ctl.ROWID
+                   , rw_craplot_ctl.nrdolote
+                   , rw_craplot_ctl.cdbccxlt
+                   , rw_craplot_ctl.tplotmov
+                   , rw_craplot_ctl.dtmvtolt
+                   , rw_craplot_ctl.nrseqdig
+                   , rw_craplot_ctl.cdagenci
+                   , rw_craplot_ctl.cdcooper;
+          EXCEPTION
+            WHEN Dup_val_on_index THEN
+              -- Leitura do lote
+              OPEN cr_craplot (pr_cdcooper  => pr_cdcooper,
+                               pr_dtmvtolt  => pr_dtmvtolt,
+                               pr_cdagenci  => pr_cdagenci,
+                               pr_cdbccxlt  => pr_cdbccxlt,
+                               pr_nrdolote  => pr_nrdolote);
+              FETCH cr_craplot INTO rw_craplot_ctl;       
+            WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
+              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+              pr_cdcritic := 1034;
+              pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                         'CRAPLOT(26):' ||  
+                         ' cdcooper:'   || pr_cdcooper ||
+                         ', dtmvtolt:'  || pr_dtmvtolt ||
+                         ', cdagenci:'  || pr_cdagenci ||
+                         ', cdbccxlt:'  || pr_cdbccxlt ||
+                         ', nrdolote:'  || pr_nrdolote ||
+                         ', tplotmov:'  || pr_tplotmov ||
+                         '. ' ||sqlerrm;               
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+          END;
+        END IF;
+
+        IF cr_craplot%ISOPEN THEN
+          CLOSE cr_craplot;
+        END IF;
+
+        -- retornar informações para o programa chamador
+        pr_craplot := rw_craplot_ctl;
+
+        COMMIT;
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+          --Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
+          IF cr_craplot%ISOPEN THEN
+            CLOSE cr_craplot;
+          END IF;
+          ROLLBACK;
+        WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+          IF cr_craplot%ISOPEN THEN
+            CLOSE cr_craplot;
+          END IF;
+          -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
+          pr_cdcritic := 9999;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                      'PAGA0001.pc_insere_lote'||
+                      '. ' || SQLERRM ||
+                      '. pr_cdcooper:' || pr_cdcooper || 
+                      ', pr_dtmvtolt:' || pr_dtmvtolt ||
+                      ', pr_cdagenci:' || pr_cdagenci ||
+                      ', pr_cdbccxlt:' || pr_cdbccxlt ||
+                      ', pr_nrdolote:' || pr_nrdolote ||
+                      ', pr_tplotmov:' || pr_tplotmov;        
+          ROLLBACK;
+      END pc_insere_lote;
     BEGIN
 	    -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
 		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_realiza_lancto_cooperado');
@@ -19036,74 +19195,21 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         IF pr_tab_lcm_consolidada(vr_index).nrconven = to_number(pr_cdpesqbb) THEN
           --Se for tarifa
           IF pr_tab_lcm_consolidada(vr_index).tplancto <> 'T' THEN /* Tarifa */
-            --Buscar lote
-            OPEN cr_craplot (pr_cdcooper => pr_cdcooper
-                            ,pr_dtmvtolt => pr_dtmvtolt
-                            ,pr_cdagenci => pr_cdagenci
-                            ,pr_cdbccxlt => pr_cdbccxlt
-                            ,pr_nrdolote => pr_nrdolote);
-            --Posicionar no primeiro registro
-            FETCH cr_craplot INTO rw_craplot;
-            --Verificar se encontrou
-            IF cr_craplot%NOTFOUND THEN
-              --Fechar Cursor
-              CLOSE cr_craplot;
-              BEGIN
-                INSERT INTO craplot
-                  (craplot.cdcooper
-                  ,craplot.dtmvtolt
-                  ,craplot.cdagenci
-                  ,craplot.cdbccxlt
-                  ,craplot.nrdolote
-                  ,craplot.tplotmov)
-                VALUES
-                  (pr_cdcooper
-                  ,pr_dtmvtolt
-                  ,pr_cdagenci
-                  ,pr_cdbccxlt
-                  ,pr_nrdolote
-                  ,1)
-                RETURNING
-                   craplot.cdcooper
-                  ,craplot.dtmvtolt
-                  ,craplot.cdagenci
-                  ,craplot.cdbccxlt
-                  ,craplot.nrdolote
-                  ,craplot.tplotmov
-                  ,craplot.nrseqdig
-                  ,craplot.rowid
-                INTO
-                   rw_craplot.cdcooper
-                  ,rw_craplot.dtmvtolt
-                  ,rw_craplot.cdagenci
-                  ,rw_craplot.cdbccxlt
-                  ,rw_craplot.nrdolote
-                  ,rw_craplot.tplotmov
-                  ,rw_craplot.nrseqdig
-                  ,rw_craplot.rowid;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
-                  CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-                  -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
-                  vr_cdcritic := 1034;
-                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                             'CRAPLOT(26):' ||	
-                             ' cdcooper:'   || pr_cdcooper ||
-                             ', dtmvtolt:'  || pr_dtmvtolt ||
-                             ', cdagenci:'  || pr_cdagenci ||
-                             ', cdbccxlt:'  || pr_cdbccxlt ||
-                             ', nrdolote:'  || pr_nrdolote ||
-                             ', tplotmov:'  || '1' ||
-                             '. ' ||sqlerrm;	
+            pc_insere_lote (pr_cdcooper => pr_cdcooper,
+                            pr_dtmvtolt => pr_dtmvtolt,
+                            pr_cdagenci => pr_cdagenci,
+                            pr_cdbccxlt => pr_cdbccxlt,
+                            pr_nrdolote => pr_nrdolote,
+                            pr_tplotmov => 1,
+                            pr_craplot  => rw_craplot,
+                            pr_cdcritic => vr_cdcritic,
+                            pr_dscritic => vr_dscritic);
+            -- se encontrou erro ao buscar lote, abortar programa
+            IF vr_dscritic IS NOT NULL THEN              
                   --Levantar Excecao
                   RAISE vr_exc_erro;
-              END;
             END IF;
-            --Fechar Cursor
-            IF cr_craplot%ISOPEN THEN
-              CLOSE cr_craplot;
-            END IF;
+            
             --Numero do Convenio existe
             IF pr_tab_lcm_consolidada(vr_index).nrconven > 0 THEN
               vr_nrdocmto:= pr_tab_lcm_consolidada(vr_index).nrconven;
