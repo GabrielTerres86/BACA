@@ -37,7 +37,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
   --
   --    Programa: MENU0001
   --    Autor   : Douglas Quisinski
-  --    Data    : Janeiro/2019                      Ultima Atualizacao:  01/02/2019   
+  --    Data    : Janeiro/2019                      Ultima Atualizacao:  06/05/2019   
   --
   --    Dados referentes ao programa:
   --
@@ -54,6 +54,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
   --              02/05/2019 - Adicionado controle para cooperativas habilitadas para os menus 55 e 56. (PRJ 438 - Douglas / AMcom)
   --  
   --    
+  --              06/05/2019 - Adicionadas opcoes 58 e 59 - P485/2 (Diego). 
   ---------------------------------------------------------------------------------------------------------------
 
   -- Rotina para devolver os itens que devem ser exibidos/escondidos no menu dos canais
@@ -130,7 +131,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
         54 - Tela inicial ATM > Pagamentos - PJ485 - FIM
         55 - Simular e Contratar
         56 - Acompanhamento de Proposta Credito
-        57 - Conta Corrente > Salários > Portabilidade de Salário
+        57 - Conta Corrente > Salários > Portabilidade de Salário	
+        58 - Tela inicial ATM > Deposito
+        59 - Tela inicial ATM > Saldo e Extrato
     
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para listar a configuracao dos itens de menu que podem ser exibidos/escondidos
@@ -254,6 +257,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
       vr_flgatmsld INTEGER := 0; 
       -- FlagTela inicial ATM > Pagamentos
       vr_flgpagatm INTEGER := 0;
+      -- FlagTela inicial ATM > Deposito
+      vr_flgatmdep INTEGER := 0;
+      -- FlagTela inicial ATM > Saldo e Extrato
+      vr_flgatmext INTEGER := 0;
       -- PJ485 - Fim
       -- FlagTela Portabilidade de Salário
       vr_flgctapot INTEGER := 0;
@@ -675,6 +682,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
            vr_flgatmcad := 1; -- item 52
            vr_flgatmsld := 1; -- item 53
            vr_flgpagatm := 1; -- item 54
+           vr_flgatmdep := 1; -- item 58
+           vr_flgatmext := 1; -- item 59
            
            -- Adicionar o Item de Menu de Conta Corrente > Consultas > Extrato na Conta Online
            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
@@ -935,8 +944,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.MENU0001 AS
                                                                               ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
                                                                               ,pr_habilitado => vr_flgpagatm) ); 
             
-        ELSE
+            -- Adicionar o Item de Menu de Tela inicial ATM > Deposito
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 58 -- Lista de Dominio "58 - Tela inicial ATM > Deposito"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgatmdep) ); 
+                                                                              
+            -- Adicionar o Item de Menu de Tela inicial ATM > Saldo e Extrato
+            GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                                   ,pr_texto_completo => vr_xml_temp
+                                   ,pr_texto_novo     => fn_adiciona_item_menu(pr_codigo     => 59 -- Lista de Dominio "59 - Tela inicial ATM > Saldo e Extrato"
+                                                                              ,pr_canal      => pr_idorigem -- Canal de Origem da requisicao
+                                                                              ,pr_habilitado => vr_flgatmext) ); 
             
+        ELSE
             -- Adicionar o Item de Menu da Recarga de celular
             GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                                    ,pr_texto_completo => vr_xml_temp
