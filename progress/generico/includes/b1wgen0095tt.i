@@ -12,6 +12,8 @@
                             Ze.
                             
                 23/07/2013 - Ajuste para melhorar o desempenho no crapcor (Ze)
+                
+                09/08/2019 - Adicionado campo dtliqchq na tabela tt-dctror. RITM0023830 (Lombardi)
 .............................................................................*/
 DEFINE TEMP-TABLE tt-dctror                                             NO-UNDO
     FIELD cdcooper AS INT
@@ -32,7 +34,8 @@ DEFINE TEMP-TABLE tt-dctror                                             NO-UNDO
     FIELD dtvalcor AS DATE
     FIELD flprovis AS LOGI FORMAT "SIM/NAO"
     FIELD dsprovis AS CHAR
-    FIELD flgativo AS LOGI.
+    FIELD flgativo AS LOGI
+    FIELD dtliqchq AS DATE.
 
 DEFINE TEMP-TABLE tt-contra                                             NO-UNDO
     FIELD cdhistor AS INTE

@@ -86,6 +86,9 @@
                        (Jonata - Mouts SCTASK0014736).
                        
                18/05/2019 - Perca de aprovacao do pré-aprovado na conta (Christian - Envolti).
+               
+               09/08/2019 - Alterado procedure busca-contra-ordens para trazer a data de liquidaçao
+                            do cheque. RITM0023830 (Lombardi)
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -3343,7 +3346,8 @@ PROCEDURE busca-contra-ordens:
     DEF VAR aux_nrchqini AS INTE                                       NO-UNDO.
     DEF VAR aux_nrchqfin AS INTE                                       NO-UNDO.
     DEF VAR aux_flgexist AS LOGI INIT FALSE                            NO-UNDO.
-
+    DEF VAR aux_dtrefere AS DATE									                     NO-UNDO.
+    
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-dctror.
 
@@ -3455,6 +3459,23 @@ PROCEDURE busca-contra-ordens:
                             ASSIGN tt-dctror.nrfinchq = par_nrfinchq.
                         ELSE 
                             ASSIGN tt-dctror.nrfinchq = par_nrinichq.
+                        
+                        FIND crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+                        
+                        ASSIGN aux_dtrefere = fn_dia_util_anterior(par_cdcooper, crapdat.dtmvtolt, 1).
+                           
+                        FIND FIRST crapfdc WHERE crapfdc.cdcooper  = par_cdcooper AND
+                                                 crapfdc.cdbanchq  = par_cdbanchq AND
+                                                 crapfdc.cdagechq  = par_cdagechq AND
+                                                 crapfdc.nrctachq  = par_nrctachq AND
+                                                 crapfdc.nrcheque >= INTEGER(TRUNCATE((par_nrinichq / 10),0)) AND
+                                                 crapfdc.dtliqchq <> ?            AND 
+                                                 crapfdc.nrcheque <= INTEGER(TRUNCATE((tt-dctror.nrfinchq / 10),0)) AND 
+                                                 crapfdc.dtliqchq <> aux_dtrefere
+                                                 NO-LOCK NO-ERROR.
+                        IF AVAIL crapfdc THEN
+                           ASSIGN tt-dctror.dtliqchq = crapfdc.dtliqchq.
+                            
                     END.
                 ELSE
                     ASSIGN tt-dctror.nrfinchq = par_nrfinchq. 

@@ -8,6 +8,9 @@
  * ALTERAÇÕES   : 24/06/2016 - Ajustado para chamar formulario de impressão para Opcao "A" (Lucas Ranghetti #448006 )
  * -------------- 
  *				  12/01/2017 - Incluir flprovis no array da custodia/desconto (Lucas Ranghetti #571653)
+ *				  
+ *				  09/08/2019 - Incluida mensagem de aviso quando é incluído um cheque compensado 
+ *				  			   para contra-ordem. RITM0023830 (Lombardi)
  */
 ?> 
 
@@ -295,8 +298,13 @@
 			}
 
 		';
-
-		echo "controlaLayout();";
+		
+		if ($operacao == 'I24' && strlen(getByTagName($registro,'dtliqchq')) > 0) {
+			echo 'hideMsgAguardo();';
+			echo 'showError("error","Cheque j&aacute; pago, validar informa&ccedil;&otilde;es pela tela CHEQUE!","Alerta - Aimaro","controlaLayout();","NaN");';
+		} else {		
+			echo "controlaLayout();";
+		}
 	}
 
 	// Exclusao e Inclusão - Valida contra
