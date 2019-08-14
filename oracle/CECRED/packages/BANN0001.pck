@@ -119,7 +119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BANN0001 IS
                                , pr_idorigem => NULL
                                , pr_cdagenci => NULL
                                , pr_nrdcaixa => NULL
-                               , pr_nmdatela => NULL) = 1 THEN
+                               , pr_nmdatela => 'BANN0001') = 1 THEN
       -- Há pre-aprovado
       vr_pre_aprovado := 1;
     END IF;
