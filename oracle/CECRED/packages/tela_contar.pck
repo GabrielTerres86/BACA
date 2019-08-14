@@ -60,7 +60,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_contar IS
         Programa: pc_consultar_tarifas_web
         Sistema : Ayllos Web
         Autor   : Andre Clemer (Supero)
-        Data    : Outubro/2018                        Ultima atualizacao:
+        Data    : Outubro/2018                        Ultima atualizacao: 13/08/2019
         
         Dados referentes ao programa:
         
@@ -68,7 +68,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_contar IS
         
         Objetivo  : Consulta tarifas
         
-        Alteracoes: -----
+        Alteracoes: 13/08/2019 - Inserir colunas Valor Inicial e Final da Faixa,
+		                         conforme RITM0011962 (Jose Gracik/Mouts).
         ..............................................................................*/
     
         CURSOR cr_tarifas(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -86,7 +87,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_contar IS
                   ,cat.dscatego
                   ,cco.nrconven
                   ,tar.cdtarifa
-                  ,substr(tar.dstarifa, 0, 20) AS dstarifa
+                  ,substr(tar.dstarifa, 0, 80) AS dstarifa
                   ,to_char(fco.vltarifa, 'fm999G999G990D00') AS vltarifa
                   ,to_char(fco.vlmintar, 'fm999G999G990D00') AS vlmintar
                   ,to_char(fco.vlmaxtar, 'fm999G999G990D00') AS vlmaxtar
@@ -95,6 +96,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_contar IS
                   ,substr(his.cdhistor || ' - ' || his.dshistor, 0, 20) AS dshistor
                   ,his.dsexthst
                   ,to_char(fco.dtvigenc, 'DD/MM/RRRR') AS dtvigenc
+				  ,to_char(fvl.vlinifvl, 'fm999G999G990D00') AS vlinifvl
+                  ,to_char(fvl.vlfinfvl, 'fm999G999G990D00') AS vlfinfvl
                   ,fco.cdoperad
                   ,ope.nmoperad
                   ,cco.flgativo
@@ -151,7 +154,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_contar IS
                    OR (pr_cddgrupo = 5 AND gru.cddgrupo = 5) -- CREDITO
                    )
             
-             ORDER BY fco.dtvigenc DESC;
+             ORDER BY fco.dtvigenc DESC, fvl.vlinifvl;
     
         -- Controle de erro
         vr_cdcritic crapcri.cdcritic%TYPE;
@@ -292,25 +295,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_contar IS
                                       ,pr_tag_cont => rw_tarifas.nmoperad
                                       ,pr_des_erro => vr_dscritic);
             
-                -- Grupo Cobranca
-                IF pr_cddgrupo = 3 THEN
                     gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                           ,pr_tag_pai  => 'inf'
                                           ,pr_posicao  => vr_contador
-                                          ,pr_tag_nova => 'nrconven'
-                                          ,pr_tag_cont => rw_tarifas.nrconven
+                                          ,pr_tag_nova => 'vlinifvl'
+                                          ,pr_tag_cont => rw_tarifas.vlinifvl
                                           ,pr_des_erro => vr_dscritic);
-                
-                    gene0007.pc_insere_tag(pr_xml      => pr_retxml
+										
+					gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                           ,pr_tag_pai  => 'inf'
                                           ,pr_posicao  => vr_contador
-                                          ,pr_tag_nova => 'flgativo'
-                                          ,pr_tag_cont => rw_tarifas.flgativo
+                                          ,pr_tag_nova => 'vlfinfvl'
+                                          ,pr_tag_cont => rw_tarifas.vlfinfvl
                                           ,pr_des_erro => vr_dscritic);
-                END IF;
-            
-                -- Grupo Credito
-                IF pr_cddgrupo = 5 THEN
+					
                     gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                           ,pr_tag_pai  => 'inf'
                                           ,pr_posicao  => vr_contador
@@ -337,6 +335,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_contar IS
                                           ,pr_posicao  => vr_contador
                                           ,pr_tag_nova => 'vlmaxtar'
                                           ,pr_tag_cont => rw_tarifas.vlmaxtar
+                                      ,pr_des_erro => vr_dscritic);
+            
+                -- Grupo Cobranca
+                IF pr_cddgrupo = 3 THEN
+                    gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                          ,pr_tag_pai  => 'inf'
+                                          ,pr_posicao  => vr_contador
+                                          ,pr_tag_nova => 'nrconven'
+                                          ,pr_tag_cont => rw_tarifas.nrconven
+                                          ,pr_des_erro => vr_dscritic);
+                
+                    gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                          ,pr_tag_pai  => 'inf'
+                                          ,pr_posicao  => vr_contador
+                                          ,pr_tag_nova => 'flgativo'
+                                          ,pr_tag_cont => rw_tarifas.flgativo
                                           ,pr_des_erro => vr_dscritic);
                 END IF;
             

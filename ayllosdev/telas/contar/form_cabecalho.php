@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 29/10/2018
  * OBJETIVO     : Cabeçalho para a tela CADTAR (Cadastro de tarifas)
  * -------------- 
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 13/08/2019 - Incluir campos no grid, conforme RITM0011962 (Jose Gracik/Mouts).
  *
  * --------------
  */
@@ -46,7 +46,7 @@ function exibeErroNew($msgErro) {
 		<table width="100%">
 			<tr>
 				<td>
-					<label for="cddopcao" class="rotulo" style="width: 165px">Op&ccedil;&atilde;o:</label>
+					<label for="cddopcao" class="rotulo" style="width: 265px">Op&ccedil;&atilde;o:</label>
 					<select id="cddopcao" class="campo" name="cddopcao" style="width: 540px;">
 					<? // if  ( $glbvars["cdcooper"] == 3 ) { ?>
 					<option value="C"> C - Consultar Tarifas </option> 
