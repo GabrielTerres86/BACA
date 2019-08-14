@@ -187,8 +187,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_MANPRT IS
   PROCEDURE pc_gera_conciliacao_auto(pr_cdprograma IN VARCHAR2,
                                      pr_dscritic  OUT VARCHAR2);
                            
-  PROCEDURE pc_gera_conciliacao(pr_idlancto IN tbfin_recursos_movimento.idlancto%TYPE -- ID da TED
-                               ,pr_idsretorno IN VARCHAR2                             -- IDs dos títulos
+  PROCEDURE pc_gera_conciliacao(pr_idlancto   IN VARCHAR2 -- IDs das TED
+                               ,pr_idsretorno IN VARCHAR2 -- IDs dos títulos
+                               ,pr_idconciliacao OUT tbcobran_conciliacao_ieptb.idconciliacao%type --ID da conciliacao
                                ,pr_dscritic  OUT VARCHAR2);
                                
   PROCEDURE pc_gera_conciliacao_web(pr_idlancto IN tbfin_recursos_movimento.idlancto%TYPE -- ID da TED
@@ -316,6 +317,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
      25/07/2019 - inc0021120 Na rotina pc_consulta_nao_conciliados, incluído o tipo de ocorrência 7
                   (liquidacao em condicional) no cursor cr_titulos para que os mesmos apareçam na tela 
                   para serem conciliados (Carlos)
+     24/06/2019 - Permitir conciliar mais de uma TED.
+                  Jose Dill - Mouts (RITM0013002)
    ---------------------------------------------------------------------------*/
     
     
@@ -325,7 +328,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                                         ,pr_vlfinal       IN tbfin_recursos_movimento.vllanmto%TYPE
                                         ,pr_cartorio      IN tbfin_recursos_movimento.nrcnpj_debitada%TYPE
                                         ,pr_flgcon        IN INTEGER) IS
-    select mun.dscidade || ' - ' || mun.cdestado nmcartorio
+    /*select mun.dscidade || ' - ' || mun.cdestado nmcartorio
           ,mov.vllanmto
           ,ret.nrcnvcob
           ,coop.nmrescop
@@ -357,7 +360,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       and ((ret.vltitulo >= pr_vlinicial and ret.vltitulo <= pr_vlfinal) 
          or (pr_vlinicial = 0 and pr_vlfinal = 0))
 --      and (cartorio.nrcpf_cnpj = pr_cartorio or pr_cartorio is null)
-      ;
+      ;*/
+      
+      /*RITM0013002 - Querie atualizada de acordo com a nova estrutura de conciliação*/
+      select 
+           mun.dscidade || ' - ' || mun.cdestado nmcartorio
+          , (SELECT (sys.stragg('Vl '||mov.vllanmto ||'  Dt '||to_char(mov.dtmvtolt,'dd/mm/yy') || '  Ct ' || mov.dsconta_debitada || CHR(13) ||'<br>')) 
+               FROM tbfin_recursos_movimento mov
+                   ,crapban banco
+              WHERE mov.idconciliacao = conc.idconciliacao
+                AND banco.nrispbif = mov.nrispbif
+                AND banco.flgdispb = 1                
+                ) inf_teds 
+          , (SELECT (sys.stragg('Vl '||mov.vllanmto ||' Dt '||to_char(mov.dtmvtolt,'dd/mm/yy') || ' Ct ' || mov.dsconta_debitada || CHR(13) || CHR(10))) 
+               FROM tbfin_recursos_movimento mov
+                   ,crapban banco
+              WHERE mov.idconciliacao = conc.idconciliacao
+                AND banco.nrispbif = mov.nrispbif
+                AND banco.flgdispb = 1                
+                ) inf_teds_compacta                 
+          , (SELECT (sys.stragg(mov.vllanmto ||' - '||to_char(mov.dtmvtolt,'dd/mm/yyyy') || ' - ' || mov.dsconta_debitada||'  ' )) 
+               FROM tbfin_recursos_movimento mov
+                   ,crapban banco
+              WHERE mov.idconciliacao = conc.idconciliacao
+                AND banco.nrispbif = mov.nrispbif
+                AND banco.flgdispb = 1                
+                ) inf_teds_excel                 
+          , (SELECT (sys.stragg(banco.cdbccxlt || '/' || mov.cdagenci_debitada || CHR(13) || CHR(10))) 
+               FROM tbfin_recursos_movimento mov
+                   ,crapban banco
+              WHERE mov.idconciliacao = conc.idconciliacao
+                AND banco.nrispbif = mov.nrispbif
+                AND banco.flgdispb = 1                
+                ) ds_banco_age  
+          , (SELECT SUM(mov.vllanmto) 
+               FROM tbfin_recursos_movimento mov
+                   ,crapban banco
+              WHERE mov.idconciliacao = conc.idconciliacao
+                AND banco.nrispbif = mov.nrispbif
+                AND banco.flgdispb = 1                 
+                ) vl_total_ted                               
+          ,ret.nrcnvcob
+          ,ret.idretorno
+          ,conc.idconciliacao
+          ,coop.nmrescop
+          ,conc.dtconcilicao
+          ,ret.vltitulo
+          ,conc.dtdproc
+          ,mun.dscidade
+          ,mun.cdestado 
+    from tbcobran_conciliacao_ieptb conc
+        ,tbcobran_retorno_ieptb ret
+        ,crapmun mun
+        ,crapcop coop
+    where conc.idconciliacao = ret.idconciliacao 
+      and coop.cdcooper = ret.cdcooper
+      and mun.cdufibge || LPAD(mun.cdcidbge,5,'0') = ret.cdcomarc
+      and ((conc.dtconcilicao between to_date(pr_dtinicial,'DD/MM/RRRR') and to_date(pr_dtfinal,'DD/MM/RRRR')) 
+         or (pr_dtinicial is null and pr_dtfinal is null))
+      and ((ret.vltitulo >= pr_vlinicial and ret.vltitulo <= pr_vlfinal) 
+         or (pr_vlinicial = 0 and pr_vlfinal = 0)) 
+     Order by ret.dtconciliacao desc, ret.idretorno;    
+
+
     rw_tbcobran_conciliacao_ieptb cr_tbcobran_conciliacao_ieptb%ROWTYPE;
                                                                               
     
@@ -877,19 +942,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       IF vr_nrregist > 0 THEN
 
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmcartorio', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.nmcartorio, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vllanmto', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.vllanmto, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmcartorio', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.nmcartorio, pr_des_erro => vr_dscritic); --
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'infteds', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.inf_teds , pr_des_erro => vr_dscritic); 
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'inftedscomp', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.inf_teds_compacta , pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrcnvcob', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.nrcnvcob, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmrescop', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.nmrescop, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.nrdconta, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtconcilicao', pr_tag_cont => to_char(rw_tbcobran_conciliacao_ieptb.dtconcilicao,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vltitulo', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.vltitulo, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vltitulo', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.vltitulo, pr_des_erro => vr_dscritic); 
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtdproc', pr_tag_cont => to_char(rw_tbcobran_conciliacao_ieptb.dtdproc,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdbccxlt', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.cdbccxlt, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdagenci', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.cdagenci_debitada, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdbccxlt', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.ds_banco_age, pr_des_erro => vr_dscritic);  --cdbccxlt
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dscidade', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.dscidade, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdestado', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.cdestado, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtmvtolt', pr_tag_cont => to_char(rw_tbcobran_conciliacao_ieptb.dtmvtolt,'DD/MM/RRRR'), pr_des_erro => vr_dscritic);        
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vltotalted', pr_tag_cont => rw_tbcobran_conciliacao_ieptb.vl_total_ted, pr_des_erro => vr_dscritic);
+
 
         vr_contador := vr_contador + 1;
         vr_flgfirst := FALSE;
@@ -1633,6 +1698,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                      ,pr_cartorio      IN INTEGER) IS
     SELECT ret.idretorno,
            mun.dscidade || ' - ' || mun.cdestado nmcartorio,
+           mun.cdestado, /*RITM0013002*/
            cop.nmrescop,
            ret.nrcnvcob,
            ret.nrdconta,
@@ -1775,6 +1841,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                               ,pr_tag_nova => 'vltitulo_saldo'
                               ,pr_tag_cont => rw_titulos.vlsaldo_titulo
                               ,pr_des_erro => vr_dscritic);
+        /*RITM0013002*/
+		    gene0007.pc_insere_tag(pr_xml => pr_retxml
+                              ,pr_tag_pai => 'inf'
+                              ,pr_posicao => vr_contador
+                              ,pr_tag_nova => 'estado'
+                              ,pr_tag_cont => rw_titulos.cdestado
+                              ,pr_des_erro => vr_dscritic);                              
+                              
                               
         vr_contador := vr_contador + 1;
 
@@ -2219,6 +2293,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     t_titulos titulos_tbl_type;
     
     vr_idprglog NUMBER := 0;
+    
+    vr_idconciliacao number;
 
     CURSOR cr_teds IS
       SELECT ted.idlancto,
@@ -2311,11 +2387,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
              END IF;
 
               -- Se NAO gerou crítica  
-              IF TRIM(vr_dscritic) IS NULL THEN
+              /*IF TRIM(vr_dscritic) IS NULL THEN
               pc_gera_conciliacao(pr_idlancto   => rw_ted.idlancto,
                                   pr_idsretorno => vr_ids_retorno,
+                                  pr_idconciliacao => vr_idconciliacao,
                                   pr_dscritic   => vr_dscritic);
-              END IF;
+              END IF;*/
 
               -- Se gerou alguma crítica
               IF TRIM(vr_dscritic) IS NOT NULL THEN
@@ -2373,8 +2450,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       pr_dscritic:= vr_dscritic;
   END pc_gera_conciliacao_auto;
   
-  PROCEDURE pc_gera_conciliacao(pr_idlancto   IN tbfin_recursos_movimento.idlancto%TYPE -- ID da TED
-                               ,pr_idsretorno IN VARCHAR2
+  PROCEDURE pc_gera_conciliacao(pr_idlancto   IN VARCHAR2 -- ID's das TED
+                               ,pr_idsretorno IN VARCHAR2 -- ID's dos titulos
+                               ,pr_idconciliacao OUT tbcobran_conciliacao_ieptb.idconciliacao%type --ID da conciliacao                     
                                ,pr_dscritic  OUT VARCHAR2) IS
 	/* ............................................................................
 
@@ -2413,9 +2491,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
              ted.dtmvtolt,
              ted.cdhistor,
              ted.nrcnpj_debitada,
-             ted.nmtitular_debitada
+             ted.nmtitular_debitada,
+             caf.cdufresd nome_estado
         FROM tbfin_recursos_movimento ted
-       WHERE ted.idlancto = pr_idlancto;
+         inner join crapban banco on (ted.nrispbif = banco.nrispbif)
+         inner join crapagb agencia on (agencia.cddbanco = banco.cdbccxlt and cdagenci_debitada = agencia.cdageban)
+         left join crapcaf caf on (caf.cdcidade = agencia.cdcidade)         
+       WHERE ted.idlancto IN (SELECT to_number(COLUMN_VALUE)
+                                 FROM xmltable(pr_idlancto)) ;
 
     rw_ted cr_ted%ROWTYPE;
     
@@ -2433,7 +2516,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                                  
     rw_titulos cr_titulos%ROWTYPE;
     
-    PRAGMA AUTONOMOUS_TRANSACTION;
+    vr_estado          varchar2(02);
+    vr_idconciliacao   tbcobran_conciliacao_ieptb.idconciliacao%type;
+    vr_qtdreg          integer := 0;
+    vr_sum_teds        tbfin_recursos_movimento.vllanmto%type;
+    
+    --PRAGMA AUTONOMOUS_TRANSACTION;
     
   BEGIN      
     -- Validações
@@ -2446,7 +2534,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       RAISE vr_exc_saida;
     END IF;
     CLOSE cr_ted;
+        
+    /* Outras validações de TED's*/
+    vr_estado:= null;
+    FOR rw_ted IN cr_ted LOOP    
     
+      IF rw_ted.cdhistor NOT IN (2622,2917) THEN
+        vr_dscritic := 'Histórico da TED não permite uso de conciliação. Favor verificar!';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      IF rw_ted.dtconciliacao IS NOT NULL THEN
+        vr_dscritic := 'Não é possível efetuar a conciliação, pois a TED já foi conciliada.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      IF (rw_ted.nome_estado <> vr_estado) and vr_estado is not null THEN
+        vr_dscritic := 'Não é possível efetuar a conciliação entre estados diferentes.';
+        RAISE vr_exc_saida;
+      END IF;  
+      vr_estado:=  rw_ted.nome_estado; 
+      --
+      vr_sum_teds:= vr_sum_teds + rw_ted.vllanmto;
+    
+    END LOOP;
+    --    
     OPEN cr_titulos;
     FETCH cr_titulos INTO rw_titulos;
     IF cr_titulos%NOTFOUND THEN
@@ -2455,16 +2567,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       RAISE vr_exc_saida;
     END IF;
     CLOSE cr_titulos;
-    
-    IF rw_ted.cdhistor NOT IN (2622,2917) THEN
-      vr_dscritic := 'Histórico da TED não permite uso de conciliação. Favor verificar!';
-      RAISE vr_exc_saida;
-    END IF;
-    
-    IF rw_ted.dtconciliacao IS NOT NULL THEN
-      vr_dscritic := 'Não é possível efetuar a conciliação, pois a TED já foi conciliada.';
-      RAISE vr_exc_saida;
-    END IF;
     
     -- Leitura do calendario da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => rw_ted.cdcooper);
@@ -2481,22 +2583,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       
       -- Validações
       -- Valida se o valor do título excede o valor da TED
-      IF rw_titulos.vlsaldo_titulo > rw_ted.vllanmto THEN
+      IF rw_titulos.vlsaldo_titulo > vr_sum_teds THEN
         vr_dscritic := 'Valor do título não pode exceder o valor da TED. Favor verificar!';
         RAISE vr_exc_saida;
       END IF;
 
       vr_sum_titulos := vr_sum_titulos + rw_titulos.vlsaldo_titulo;
 
-      IF vr_sum_titulos > rw_ted.vllanmto THEN
+      IF vr_sum_titulos > vr_sum_teds THEN
         vr_dscritic := 'Valor total de títulos execede o valor da TED. Favor verificar!';
         RAISE vr_exc_saida;
       END IF;
-      
+      IF vr_qtdreg = 0 THEN
+        /* Para atender a RITM0013002 foi alterado a forma de manter esta tabela, que anteriormente poderia 
+           te N registros, de acordo com o numero de titulos. Com a mudança, ela terá somente um registro que será
+           o responsável pela ligação entre as tabelas de TED e Titulos, que terão este ID atualizados de 
+           acordo com suas conciliações*/
+        --
+        vr_idconciliacao:= fn_sequence('tbcobran_conciliacao_ieptb','idconciliacao',rw_ted.cdcooper,'N'); -- Sequencial
+        pr_idconciliacao:= vr_idconciliacao;
+        --
+        BEGIN
+          INSERT INTO tbcobran_conciliacao_ieptb
+                 (idconciliacao,
+                  dtconcilicao,
+                  inconciliacao,
+                  idrecurso_movto,
+                  idretorno_ieptb,
+                  flgproc,
+                  dtdproc,
+                  cdoperad,
+                  idcartorio
+                 )
+          VALUES (vr_idconciliacao,     -- Sequencial
+                  rw_crapdat.dtmvtolt,  -- Data mvmto
+                  2,                    -- Conciliação Manual
+                  0, -- ID TED Campo não é mais utilizado
+                  0, -- ID Titulo Campo não é mais utilizado
+                  0,
+                  NULL,
+                  '1',
+                  0);
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao gerar conciliação: ' ||SQLERRM;
+              RAISE vr_exc_saida;
+          END;  
+      END IF;   
+      vr_qtdreg:= vr_qtdreg + 1;
+
       -- Atualiza título
       BEGIN
         UPDATE tbcobran_retorno_ieptb
            SET dtconciliacao = rw_crapdat.dtmvtolt
+              ,idconciliacao = vr_idconciliacao /*RITM0013002*/
          WHERE idretorno = rw_titulos.idretorno;
       EXCEPTION
         WHEN OTHERS THEN
@@ -2504,56 +2644,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
           
           RAISE vr_exc_saida;
       END;
-      
-      BEGIN
-        INSERT INTO tbcobran_conciliacao_ieptb
-               (idconciliacao,
-                dtconcilicao,
-                inconciliacao,
-                idrecurso_movto,
-                idretorno_ieptb,
-                flgproc,
-                dtdproc,
-                cdoperad,
-                idcartorio
-               )
-        VALUES (fn_sequence('tbcobran_conciliacao_ieptb','idconciliacao',rw_ted.cdcooper,'N'), -- Sequencial
-                rw_crapdat.dtmvtolt, -- Data mvmto
-                2,                   -- Conciliação Manual
-                pr_idlancto,         -- ID TED
-                rw_titulos.idretorno, -- ID Titulo
-                0,
-                NULL,
-                '1',
-                0);
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao gerar conciliação: ' ||SQLERRM;
-            RAISE vr_exc_saida;
-      END;     
             
     END LOOP;
     
-    IF vr_sum_titulos <> rw_ted.vllanmto THEN
+    IF vr_sum_titulos <> vr_sum_teds THEN
       vr_dscritic := 'Valor total dos títulos não pode ser diferente do valor da TED. Favor verificar!';
       RAISE vr_exc_saida;
     END IF;
-    
     
     -- Atualiza TED
     BEGIN
       UPDATE tbfin_recursos_movimento
          SET dtconciliacao = rw_crapdat.dtmvtolt
-       WHERE idlancto = pr_idlancto;
+           , idconciliacao = vr_idconciliacao  /*RITM0013002*/
+      WHERE idlancto IN (SELECT to_number(COLUMN_VALUE)
+                                 FROM xmltable(pr_idlancto));
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao atualizar movimentação: ' ||SQLERRM;
         RAISE vr_exc_saida;
     END;
-    
-    -- Para teste, rodar usando rollback
-    --ROLLBACK;
-    COMMIT;
+    --
 
   EXCEPTION
     WHEN OTHERS THEN
@@ -2598,6 +2709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     vr_node_name   VARCHAR2(100);
     
     vr_sum_titulos NUMBER := 0;
+    vr_idconciliacao tbcobran_conciliacao_ieptb.idconciliacao%type;
     
     -- Variável de críticas
     vr_dscritic    VARCHAR2(10000);
@@ -2607,6 +2719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     vr_exc_erro    EXCEPTION;
     
     vr_ids         VARCHAR2(10000) := '';
+    vr_ids_ted     VARCHAR2(10000) := '';
   BEGIN
     -- Debug
 /*    pr_retxml := xmltype('<?xml version="1.0" encoding="ISO-8859-1"?>
@@ -2645,27 +2758,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       IF vr_node_name = 'Id' THEN
          vr_ids := vr_ids || TRIM(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node))) || ',';
          CONTINUE;
+      ELSIF vr_node_name = 'IdTed' THEN  /*RITM0013002*/
+          vr_ids_ted := vr_ids_ted || TRIM(xmldom.getnodevalue(xmldom.getfirstchild(vr_item_node))) || ',';
       ELSE
          CONTINUE; -- Descer para o próximo filho
       END IF;
     END LOOP;
       
     vr_ids := SUBSTR(vr_ids, 1, LENGTH(vr_ids) - 1);
+    vr_ids_ted := SUBSTR(vr_ids_ted, 1, LENGTH(vr_ids_ted) - 1);
     
-    pc_gera_conciliacao(pr_idlancto => pr_idlancto
+    pc_gera_conciliacao(pr_idlancto   => vr_ids_ted
                        ,pr_idsretorno => vr_ids
+                       ,pr_idconciliacao => vr_idconciliacao
                        ,pr_dscritic => vr_dscritic);
                        
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
-    
-    COBR0011.pc_gera_movimento_pagamento(pr_dscritic => vr_dscritic);
+
+    COBR0011.pc_gera_movimento_pagamento( pr_idconciliacao => vr_idconciliacao
+                                        , pr_dscritic => vr_dscritic);
     
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
-    
+    --
+    COMMIT;
+    --    
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -2746,6 +2866,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     vr_input_file utl_file.file_type;
     vr_nmdirtxt   VARCHAR2(400);
     
+    --RITM0013002
+    vr_qtd_ted    number;
+
+    /*RITM0013002 - Agrupa as conciliações de acordo com os parâmetros*/
+    CURSOR cr_conc (pr_dtinicial     IN VARCHAR2
+                  ,pr_dtfinal       IN VARCHAR2
+                  ,pr_vlinicial     IN tbfin_recursos_movimento.vllanmto%TYPE
+                  ,pr_vlfinal       IN tbfin_recursos_movimento.vllanmto%TYPE ) IS    
+    SELECT    DISTINCT conc.idconciliacao
+    FROM tbcobran_conciliacao_ieptb conc
+        ,tbcobran_retorno_ieptb ret
+    WHERE conc.idconciliacao   = ret.idconciliacao 
+      AND ((conc.dtconcilicao BETWEEN to_date(pr_dtinicial,'DD/MM/RRRR') AND to_date(pr_dtfinal,'DD/MM/RRRR')) 
+         OR (pr_dtinicial IS NULL AND pr_dtfinal IS NULL))
+      AND ((ret.vltitulo >= pr_vlinicial AND ret.vltitulo <= pr_vlfinal) 
+         OR (pr_vlinicial = 0 AND pr_vlfinal = 0));
+    
+    
+    CURSOR cr_teds_new(pr_idconciliacao     IN tbcobran_conciliacao_ieptb.idconciliacao%TYPE) IS        
+    select gene0002.fn_mask_cpf_cnpj(mov.nrcnpj_debitada,2) nrcpf_cnpj
+          , ban.cdbccxlt 
+          , mov.cdagenci_debitada 
+          , mov.nrdconta 
+          , mov.dtmvtolt 
+          , mov.vllanmto 
+    from tbfin_recursos_movimento mov
+        ,crapban ban
+    where mov.idconciliacao = pr_idconciliacao
+    and   mov.nrispbif      = ban.nrispbif
+    and   ban.flgdispb      = 1;
+    
+    
     CURSOR cr_teds(pr_dtinicial     IN VARCHAR2
                   ,pr_dtfinal       IN VARCHAR2
                   ,pr_vlinicial     IN tbfin_recursos_movimento.vllanmto%TYPE
@@ -2764,6 +2916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
              ,a.idrecurso_movto
              ,a.cdbccxlt
              ,a.idcidade
+             ,a.idconciliacao
       FROM (
         SELECT cartorio.nmcartorio
                   ,mov.vllanmto
@@ -2775,6 +2928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                   ,conc.idrecurso_movto
                   ,conc.idretorno_ieptb
                   ,cartorio.idcidade
+                  ,conc.idconciliacao
             FROM tbcobran_conciliacao_ieptb conc
                 ,tbcobran_retorno_ieptb ret
                 ,tbcobran_cartorio_protesto cartorio
@@ -2782,8 +2936,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
                 ,tbfin_recursos_movimento mov
                 ,crapcop coop
                 ,crapban banco
-            WHERE ret.idretorno = conc.idretorno_ieptb
-              AND conc.idrecurso_movto = mov.idlancto
+            WHERE --ret.idretorno = conc.idretorno_ieptb
+                  conc.idconciliacao = ret.idconciliacao /*RITM0013002*/
+              --AND conc.idrecurso_movto = mov.idlancto
+              AND conc.idconciliacao = mov.idconciliacao
               AND cartorio.idcidade = municipio.idcidade
               AND cartorio.cdcartorio = ret.cdcartorio
               AND municipio.cdcomarc = ret.cdcomarc
@@ -2805,13 +2961,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
              ,a.dtmvtolt
              ,a.idrecurso_movto
              ,a.cdbccxlt
-             ,a.idcidade;
+             ,a.idcidade
+             ,a.idconciliacao;
 
     rw_ted cr_teds%ROWTYPE;
     
-    CURSOR cr_titulos(pr_idmovto      IN tbcobran_conciliacao_ieptb.idrecurso_movto%TYPE
-                     ,pr_idcidade     IN crapmun.idcidade%TYPE) IS
-      select ret.nrdconta
+    CURSOR cr_titulos(pr_idconciliacao IN tbcobran_conciliacao_ieptb.idconciliacao%TYPE) IS
+      /*select ret.nrdconta
             ,ret.nrcnvcob
             ,ret.nrdocmto
             ,ret.cdcooper
@@ -2831,7 +2987,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
         and  banco.nrispbif (+) = mov.nrispbif
         and  banco.cdbccxlt (+) = decode(mov.nrispbif,0,1,banco.cdbccxlt(+))
         and  conc.idrecurso_movto = pr_idmovto
-        and  municipio.idcidade = pr_idcidade;
+        and  municipio.idcidade = pr_idcidade; */
+        
+      /*RITM0013002 - Querie atualizada de acordo com a nova estrutura de conciliação*/    
+      select ret.nrdconta
+            ,ret.nrcnvcob
+            ,ret.nrdocmto
+            ,ret.cdcooper
+            ,coop.nmrescop
+            ,ret.vltitulo
+      from   tbcobran_conciliacao_ieptb conc
+            ,tbcobran_retorno_ieptb ret
+            ,crapcop coop
+      where conc.idconciliacao   = ret.idconciliacao
+        and  coop.cdcooper = ret.cdcooper
+        and  conc.idconciliacao = pr_idconciliacao;
         
     rw_titulo cr_titulos%ROWTYPE;
     
@@ -2858,51 +3028,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
 				           '<vlinicial>'    ||to_char(pr_vlinicial, 'fm999g999g990D00')    ||'</vlinicial>'||
 				           '<vlfinal>'      ||to_char(pr_vlfinal, 'fm999g999g990D00')      ||'</vlfinal>'  ||
                    '<dscartorio>'   ||pr_cartorio       ||'</dscartorio>');
+                  
                    
     pc_escreve_xml('<conciliacoes>');
-                   
-    FOR rw_ted IN cr_teds(pr_dtinicial  => pr_dtinicial
-                                                                ,pr_dtfinal    => pr_dtfinal
-                                                                ,pr_vlinicial  => pr_vlinicial
-															                                  ,pr_vlfinal	   => pr_vlfinal
-                                                                ,pr_cartorio   => pr_cartorio
-                         ,pr_flgcon     => 1
-                         ,pr_idmovto    => NULL
-                         ,pr_idretorno  => NULL) LOOP
-      pc_escreve_xml('<recurso_movimento>');
-
-      pc_escreve_xml('<cdcartorio>'     ||rw_ted.nrcpf_cnpj                            ||'</cdcartorio>'||
-                     '<banco>'     		  ||rw_ted.cdbccxlt       	                      ||'</banco>'||
-                     '<agencia>'    	  ||rw_ted.cdagenci_debitada                     ||'</agencia>'||
-                     '<nrconta>'        ||rw_ted.nrdconta                              ||'</nrconta>'||
-                     '<vlted>'          ||to_char(rw_ted.vllanmto, 'fm999g999g990D00') ||'</vlted>'||
-					           '<dtrecebimento>'  ||to_char(rw_ted.dtmvtolt, 'DD/MM/RRRR')       ||'</dtrecebimento>'||
-					 '<Columns>'        ||
-                       '<column1>'      ||'Conta'          ||'</column1>'||
-                       '<column2>'      ||'Convenio'       ||'</column2>'||
-                       '<column3>'      ||'Documento'      ||'</column3>'||
-                       '<column4>'      ||'Cooperativa'    ||'</column4>'||
-                       '<column5>'      ||'Valor título'   ||'</column5>'||
-	                 '</Columns>');
-	  
-    pc_escreve_xml('<retornos>');
-
-	  FOR rw_titulo IN cr_titulos(pr_idmovto   => rw_ted.idrecurso_movto
-                               ,pr_idcidade  => rw_ted.idcidade) LOOP
-
-        pc_escreve_xml('<retorno_ieptb>');
-		     pc_escreve_xml('<conta>'      ||rw_titulo.nrdconta      ||'</conta>'||
-                        '<convenio>'   ||rw_titulo.nrcnvcob      ||'</convenio>'||
-                        '<documento>'  ||rw_titulo.nrdocmto      ||'</documento>'||
-                        '<cooperativa>'||rw_titulo.nmrescop      ||'</cooperativa>'||
-	          				    '<valor>'      ||to_char(rw_titulo.vltitulo, 'fm999g999g990D00')      ||'</valor>');
-		pc_escreve_xml('</retorno_ieptb>');
-	  END LOOP;																
-	  
-      pc_escreve_xml('</retornos>');	  
-					 
-      pc_escreve_xml('</recurso_movimento>');
-    END LOOP;
+    
+    
+    FOR rw_conc IN cr_conc(pr_dtinicial  => pr_dtinicial
+                          ,pr_dtfinal    => pr_dtfinal
+                          ,pr_vlinicial  => pr_vlinicial
+                          ,pr_vlfinal	   => pr_vlfinal) LOOP
+       --
+       vr_qtd_ted := 0;                   
+       SELECT count(*) into vr_qtd_ted                      
+       FROM tbfin_recursos_movimento mov
+       WHERE mov.idconciliacao = rw_conc.idconciliacao;
+       --
+      FOR rw_ted IN cr_teds_new(pr_idconciliacao  => rw_conc.idconciliacao) LOOP
+        --
+        pc_escreve_xml('<recurso_movimento>');
+        -- Grava informações das TEDs
+        pc_escreve_xml('<cdcartorio>'     ||rw_ted.nrcpf_cnpj                            ||'</cdcartorio>'||
+                       '<banco>'     		  ||rw_ted.cdbccxlt       	                      ||'</banco>'||
+                       '<agencia>'    	  ||rw_ted.cdagenci_debitada                     ||'</agencia>'||
+                       '<nrconta>'        ||rw_ted.nrdconta                              ||'</nrconta>'||
+                       '<vlted>'          ||to_char(rw_ted.vllanmto, 'fm999g999g990D00') ||'</vlted>'||
+                       '<dtrecebimento>'  ||to_char(rw_ted.dtmvtolt, 'DD/MM/RRRR')       ||'</dtrecebimento>'||	  
+                       '<idconciliacao>'||rw_conc.idconciliacao||'</idconciliacao>'); 	  
+        --
+        IF vr_qtd_ted = 1 THEN
+          /*Grava cabeçalho dos titulos*/
+          pc_escreve_xml('<Columns>'        ||
+                         '<column1>'      ||'Conta'          ||'</column1>'||
+                         '<column2>'      ||'Convenio'       ||'</column2>'||
+                         '<column3>'      ||'Documento'      ||'</column3>'||
+                         '<column4>'      ||'Cooperativa'    ||'</column4>'||
+                         '<column5>'      ||'Valor título'   ||'</column5>'||
+                     '</Columns>');          
+          --
+          pc_escreve_xml('<retornos>');
+          -- 
+          FOR rw_titulo IN cr_titulos(pr_idconciliacao   => rw_conc.idconciliacao) LOOP
+            --
+            pc_escreve_xml('<retorno_ieptb>');
+            pc_escreve_xml('<conta>'      ||rw_titulo.nrdconta      ||'</conta>'||
+                              '<convenio>'   ||rw_titulo.nrcnvcob      ||'</convenio>'||
+                              '<documento>'  ||rw_titulo.nrdocmto      ||'</documento>'||
+                              '<cooperativa>'||rw_titulo.nmrescop      ||'</cooperativa>'||
+                              '<valor>'      ||to_char(rw_titulo.vltitulo, 'fm999g999g990D00')      ||'</valor>');
+            pc_escreve_xml('</retorno_ieptb>');
+            --
+          END LOOP; --Fim Titulos																
+          --	  
+          pc_escreve_xml('</retornos>');	     					 
+          --
+        END IF;  
+        --
+        vr_qtd_ted:= vr_qtd_ted -1;  
+        -- 
+        pc_escreve_xml('</recurso_movimento>');
+      END LOOP; --Fim Teds
+      --
+    END LOOP; --Fim Conciliacao
     
     pc_escreve_xml('</conciliacoes>'); 
     -- Fecha a tag principal para encerrar o XML
@@ -2942,7 +3128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     --
     IF pr_dscritic IS NOT NULL THEN
       --
-      RAISE vr_exc_erro;
+      RAISE vr_exc_erro;      
       --
     END IF;
     
@@ -3087,8 +3273,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     -- Criar cabeçalho do CSV
     GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                            ,pr_texto_completo => vr_xml_temp
-                           ,pr_texto_novo     => 'Cartorio;Valor TED;Cooperativa;Convenio;Conta;Data Conc.;Vlr. Titulo;Data Pagto'||chr(10));
-    
+                           --,pr_texto_novo     => 'Cartorio;Valor TED;Cooperativa;Convenio;Conta;Data Conc.;Vlr. Titulo;Data Pagto'||chr(10));
+                           ,pr_texto_novo     => 'Cartorio;Cooperativa;Convenio;Data Conc.;Vlr. Titulo;Informacoes TEDs'||chr(10)); --;
+       
     FOR rw_tbcobran_conciliacao_ieptb IN cr_tbcobran_conciliacao_ieptb(pr_dtinicial => pr_dtinicial
                                                                   ,pr_dtfinal   => pr_dtfinal
                                                                   ,pr_vlinicial => pr_vlinicial
@@ -3099,13 +3286,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
       GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => rw_tbcobran_conciliacao_ieptb.nmcartorio       ||';'||
-                                                   to_char(rw_tbcobran_conciliacao_ieptb.vllanmto, 'fm999g999g990D00')         ||';'||
                                                    rw_tbcobran_conciliacao_ieptb.nmrescop         ||';'||
                                                    rw_tbcobran_conciliacao_ieptb.nrcnvcob         ||';'||
-                                                   rw_tbcobran_conciliacao_ieptb.nrdconta         ||';'||
                                                    to_char(rw_tbcobran_conciliacao_ieptb.dtconcilicao,'DD/MM/YYYY')     ||';'||
                                                    to_char(rw_tbcobran_conciliacao_ieptb.vltitulo, 'fm999g999g990D00')         ||';'||
-                                                   to_char(rw_tbcobran_conciliacao_ieptb.dtmvtolt,'DD/MM/YYYY')         ||chr(10));
+                                                   rw_tbcobran_conciliacao_ieptb.inf_teds_excel         ||';'||chr(10)); /*RITM0013002 - As informacoes de valor, conta e data de recebimento foram agrupados neste campo*/
     END LOOP;
     -- Encerrar o Clob
     GENE0002.pc_escreve_xml(pr_xml            => vr_clob
@@ -3358,6 +3543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
   
     vr_des_assunto VARCHAR2(500);
     vr_conteudo VARCHAR2(500);
+    vr_idconciliacao NUMBER;
     --  
   BEGIN
 
@@ -3452,6 +3638,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPRT IS
     -- Gero a conciliação do título    
     pc_gera_conciliacao(pr_idlancto => pr_idlancto
                        ,pr_idsretorno => pr_idretorno
+                       ,pr_idconciliacao => vr_idconciliacao --RITM0013002
                        ,pr_dscritic => pr_dscritic);
                        
     COBR0011.pc_processa_estorno(pr_cdcooper => pr_cdcooper
