@@ -7186,20 +7186,26 @@ function validaLimite() {
     }
 }
 
-function removeAcentoJustificativaEsteira(){
+//add por Otavio Theiss tratamento  da  RITM0011992
+function removeAcentoJustificativaEsteira(){ 
 
 	var _str = function ()
 	{       
 		var text = $("#justificativa").val();
-		text = text.toLowerCase();                                                         
-		text = text.replace(new RegExp('[ÁÀÂÃ]','gi'), 'a');
-		text = text.replace(new RegExp('[ÉÈÊ]','gi'), 'e');
-		text = text.replace(new RegExp('[ÍÌÎ]','gi'), 'i');
-		text = text.replace(new RegExp('[ÓÒÔÕ]','gi'), 'o');
-		text = text.replace(new RegExp('[ÚÙÛ]','gi'), 'u');
-		text = text.replace(new RegExp('[Ç]','gi'), 'c');
+		text = text.replace(new RegExp('[ÁÀÂÃÄ]','g'), 'A');
+		text = text.replace(new RegExp('[ÉÈÊË]','g'), 'E');
+		text = text.replace(new RegExp('[ÍÌÎÏ]','g'), 'I');
+		text = text.replace(new RegExp('[ÓÒÔÕÖ]','g'), 'O');
+		text = text.replace(new RegExp('[ÚÙÛÜ]','g'), 'U');
+		text = text.replace(new RegExp('[Ç]','g'), 'C'); 
+		text = text.replace(new RegExp('[áàâãä]','g'), 'a');
+		text = text.replace(new RegExp('[éèêë]','g'), 'e');
+		text = text.replace(new RegExp('[íìîï]','g'), 'i');
+		text = text.replace(new RegExp('[óòôõö]','g'), 'o');
+		text = text.replace(new RegExp('[úùûü]','g'), 'u');
+		text = text.replace(new RegExp('[ç]','g'), 'c');
 		text = text.replace(new RegExp('[~^´`\'\"!@#$%¨]','gi'), '');
-		return text;                 
+		return text;       
 	}
-	$("#justificativa").val(_str);
+	$("#justificativa").val(_str); 
 }

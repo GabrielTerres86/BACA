@@ -24,9 +24,6 @@ isPostMethod();
 // Classe para leitura do xml de retorno
 require_once("../../../class/xmlfile.php");	
 
-if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"X")) <> "") {
-	exibirErro('error',$msgError,'Alerta - Aimaro','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
-}
 
 $nrdconta = ( (!empty($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0 );
 $nrctrcrd = ( (!empty($_POST['nrctrcrd'])) ? $_POST['nrctrcrd'] : 0 );
