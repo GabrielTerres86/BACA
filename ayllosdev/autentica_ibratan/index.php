@@ -107,7 +107,13 @@ if(validaEntradaUsuario()){
             */
 
             $_SESSION['globalCDCOOPER'] = $_POST['cdcooper'];
-    
+            $_SESSION['globalCDAGENCI']     = $_POST['cdagenci'];
+            $_SESSION['globalNRDCONTA']     = $_POST['nrdconta'];
+            $_SESSION['globalCDOPERAD']     = $_POST['cdoperad'];
+            $_SESSION['globalNRPROPOSTA']   = $_POST['nrproposta'];
+            $_SESSION['globalTPPRODUTO']    = $_POST['tpproduto'];
+            $_SESSION['globalIDANALISE']    = -1;
+            $_SESSION['globalDHINICIO']     = date('d/m/Y H:i:s');    
             // autentica
             $autentica->atribuiDados($_POST);
 

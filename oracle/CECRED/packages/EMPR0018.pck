@@ -3071,16 +3071,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                              ,pr_dscritic => pr_des_erro
                              ,pr_tab_erro => pr_tab_erro);
                              
+        IF pr_flgerlog THEN
+          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper 
+                             , pr_cdoperad => pr_cdoperad
+                             , pr_dscritic => pr_des_erro
+                             , pr_dsorigem => vr_dsorigem
+                             , pr_dstransa => vr_dstransa
+                             , pr_dttransa => TRUNC(SYSDATE)
+                             , pr_flgtrans => 0 
+                             , pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS'))
+                             , pr_idseqttl => pr_idseqttl
+                             , pr_nmdatela => pr_nmdatela
+                             , pr_nrdconta => pr_nrdconta
+                             , pr_nrdrowid => vr_aux_log_rowid);
+        END IF;                     
+                             
       WHEN vr_exc_saida THEN
         pr_cdcritic:= vr_cdcritic;
         pr_des_erro:= vr_dscritic;
         pr_des_reto := 'NOK';  
+        
+        IF pr_flgerlog THEN
+          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper 
+                             , pr_cdoperad => pr_cdoperad
+                             , pr_dscritic => pr_des_erro
+                             , pr_dsorigem => vr_dsorigem
+                             , pr_dstransa => vr_dstransa
+                             , pr_dttransa => TRUNC(SYSDATE)
+                             , pr_flgtrans => 0 
+                             , pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS'))
+                             , pr_idseqttl => pr_idseqttl
+                             , pr_nmdatela => pr_nmdatela
+                             , pr_nrdconta => pr_nrdconta
+                             , pr_nrdrowid => vr_aux_log_rowid);
+        END IF;
+        
         
       WHEN OTHERS THEN
         pr_des_reto := 'NOK';
         pr_cdcritic := nvl(vr_cdcritic, 0);
         pr_des_erro := 'Erro na rotina grava a simulação: ' ||
                        sqlerrm;   
+        
+        IF pr_flgerlog THEN
+          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper 
+                             , pr_cdoperad => pr_cdoperad
+                             , pr_dscritic => pr_des_erro
+                             , pr_dsorigem => vr_dsorigem
+                             , pr_dstransa => vr_dstransa
+                             , pr_dttransa => TRUNC(SYSDATE)
+                             , pr_flgtrans => 0 
+                             , pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS'))
+                             , pr_idseqttl => pr_idseqttl
+                             , pr_nmdatela => pr_nmdatela
+                             , pr_nrdconta => pr_nrdconta
+                             , pr_nrdrowid => vr_aux_log_rowid);
+        END IF;                  
     END pc_grava_simulacao;
     
    PROCEDURE pc_calcula_emprestimo(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -3412,11 +3458,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
         IF pr_flgerlog THEN
         GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper 
                            , pr_cdoperad => pr_cdoperad
-                           , pr_dscritic => NULL
+                             , pr_dscritic => pr_des_erro
                            , pr_dsorigem => vr_dsorigem
                            , pr_dstransa => vr_dstransa
                            , pr_dttransa => TRUNC(SYSDATE)
-                           , pr_flgtrans => 1 
+                             , pr_flgtrans => 0 
                            , pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS'))
                            , pr_idseqttl => pr_idseqttl
                            , pr_nmdatela => pr_nmdatela
@@ -3430,10 +3476,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
         pr_des_erro:= vr_dscritic;
         pr_des_reto := 'NOK';  
         
+        IF pr_flgerlog THEN
+          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper 
+                             , pr_cdoperad => pr_cdoperad
+                             , pr_dscritic => vr_dscritic
+                             , pr_dsorigem => vr_dsorigem
+                             , pr_dstransa => vr_dstransa
+                             , pr_dttransa => TRUNC(SYSDATE)
+                             , pr_flgtrans => 0 
+                             , pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS'))
+                             , pr_idseqttl => pr_idseqttl
+                             , pr_nmdatela => pr_nmdatela
+                             , pr_nrdconta => pr_nrdconta
+                             , pr_nrdrowid => vr_aux_log_rowid);
+        END IF;
+        
+        
       WHEN OTHERS THEN
         pr_des_reto := 'NOK';
         pr_cdcritic := nvl(vr_cdcritic, 0);
         pr_des_erro := 'Erro na rotina grava a simulação. ' ||sqlerrm;
+      
+        IF pr_flgerlog THEN
+          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper 
+                             , pr_cdoperad => pr_cdoperad
+                             , pr_dscritic => vr_dscritic
+                             , pr_dsorigem => vr_dsorigem
+                             , pr_dstransa => vr_dstransa
+                             , pr_dttransa => TRUNC(SYSDATE)
+                             , pr_flgtrans => 0 
+                             , pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS'))
+                             , pr_idseqttl => pr_idseqttl
+                             , pr_nmdatela => pr_nmdatela
+                             , pr_nrdconta => pr_nrdconta
+                             , pr_nrdrowid => vr_aux_log_rowid);
+        END IF;
+        
       
     END pc_calcula_emprestimo; 
     

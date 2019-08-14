@@ -6229,6 +6229,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
    -- Exceções
    vr_exc_saida EXCEPTION;
+   --Variaveis
+   vr_dstransa VARCHAR2(60);
+   vr_dsorigem VARCHAR2(40);
+   vr_aux_log_rowid ROWID;
 
    -- Tratamento de erros
    vr_cdcritic crapcri.cdcritic%TYPE;
@@ -6330,6 +6334,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
    --
    --
    BEGIN
+     
+    vr_dsorigem := gene0001.vr_vet_des_origens(pr_cdorigem);
+    vr_dstransa := 'Solicitacao de contratacao.';                           
+     
     --
     -- Leitura do calendário da cooperativa
     OPEN btch0001 .cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -6568,6 +6576,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      --
    EXCEPTION
      WHEN vr_exc_saida THEN
+              
+       GENE0001.pc_gera_log( pr_cdcooper => pr_cdcooper 
+                           , pr_cdoperad => pr_cdoperad
+                           , pr_dscritic => vr_dscritic
+                           , pr_dsorigem => vr_dsorigem
+                           , pr_dstransa => vr_dstransa
+                           , pr_dttransa => TRUNC(SYSDATE)
+                           , pr_flgtrans => 0 
+                           , pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS'))
+                           , pr_idseqttl => 1
+                           , pr_nmdatela => 'INTERNET'
+                           , pr_nrdconta => pr_nrdconta
+                           , pr_nrdrowid => vr_aux_log_rowid);
+       
+     
        --/
        pr_des_reto := 'NOK';
        pr_retorno := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
@@ -6580,6 +6603,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        pr_retorno := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                         '<Root><Erro>' ||vr_dscritic||
                                         '</Erro></Root>');
+
+       GENE0001.pc_gera_log( pr_cdcooper => pr_cdcooper 
+                           , pr_cdoperad => pr_cdoperad
+                           , pr_dscritic => vr_dscritic
+                           , pr_dsorigem => vr_dsorigem
+                           , pr_dstransa => vr_dstransa
+                           , pr_dttransa => TRUNC(SYSDATE)
+                           , pr_flgtrans => 0 
+                           , pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS'))
+                           , pr_idseqttl => 1
+                           , pr_nmdatela => 'INTERNET'
+                           , pr_nrdconta => pr_nrdconta
+                           , pr_nrdrowid => vr_aux_log_rowid);                                        
 
    END pc_solicita_contratacao;
   
@@ -7072,7 +7108,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
    --/
    IF exist_transacao_pend_ativa(pr_cdcooper,pr_nrdconta,pr_nrctremp)
      THEN
-       vr_dscritic := 'Ja existe pendencia gerada para esta proprosta';
+       vr_dscritic := 'Ja existe pendencia gerada para esta proposta';
        RAISE vr_exc_erro;
        
    END IF;
@@ -7174,9 +7210,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     END IF;
     --/    
     vr_gerou_pend := TRUE;    
-    vr_dscritic := 'Emprestimo/financiamento registrado com sucesso. '||
-          chr(13)||'Aguardando aprovacao da operacao pelos'||
-          chr(13)||'demais responsaveis.';
+    vr_dscritic := 'Empréstimo/financiamento registrado com sucesso. '||
+          chr(13)||'Aguardando aprovação da operação pelos'||
+          chr(13)||'demais responsáveis.';
       --GOTO ponto_salvo;
     END IF;
     --
