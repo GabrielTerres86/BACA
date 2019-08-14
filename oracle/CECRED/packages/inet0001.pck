@@ -5461,7 +5461,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : maio/2015.                   Ultima atualizacao: 24/09/2015
+  --  Data     : maio/2015.                   Ultima atualizacao: 19/07/2019
   --
   -- Dados referentes ao programa:
   --
@@ -5471,7 +5471,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --
   -- Alteracoes: 24/09/2015 - Realizado a inclusão do pr_nmdatela (Adriano - SD 328034).
   --
-  --
+  --             19/07/2019 - Problemas no loop da pltable pr_tab_internet por causa do acesso
+  --                          a conta pelo 3 titular (Tiago - INC0019543)
   ---------------------------------------------------------------------------------------------------------------
     -------------------------> VARIAVEIS <-------------------------
     vr_tab_limite     INET0001.typ_tab_limite;
@@ -5573,6 +5574,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                            ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><raiz>'); 
 
     FOR vr_contador IN nvl(vr_tab_internet.FIRST,0)..nvl(vr_tab_internet.LAST,-1) LOOP
+    
+      IF NOT vr_tab_internet.exists(vr_contador) THEN
+         CONTINUE;
+      END IF;
     
       -- Montar XML com registros de carencia
       gene0002.pc_escreve_xml(pr_xml            => pr_tab_internet 
