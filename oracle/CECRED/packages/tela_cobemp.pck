@@ -47,11 +47,24 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBEMP IS
 		,nmpescto       craptfc.nmpescto%TYPE
 		,nmopetfn       VARCHAR2(100));
 
+TYPE typ_reg_email IS RECORD
+		(dsdemail       crapcem.dsdemail%TYPE
+		,secpscto       crapcem.secpscto%TYPE
+		,nmpescto       craptfc.nmpescto%TYPE);
+
 
   TYPE type_tab_tel IS TABLE OF typ_reg_tel INDEX BY BINARY_INTEGER;
+  TYPE type_tab_email IS TABLE OF typ_reg_email INDEX BY BINARY_INTEGER;
+
   tab_import tbrecup_boleto_import%ROWTYPE;
 
-  PROCEDURE pc_buscar_email(pr_nrdconta IN INTEGER
+  PROCEDURE pc_buscar_email(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                           ,pr_nrdconta   IN INTEGER --> Número da conta
+                           ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
+                           ,pr_dscritic  OUT VARCHAR2 --> Descrição da crítica
+                           ,pr_tab_email OUT type_tab_email); --> Tabela com registros de emails
+  
+  PROCEDURE pc_buscar_email_web(pr_nrdconta IN INTEGER
                            ,pr_nriniseq IN INTEGER --> Registro inicial da listagem
                            ,pr_nrregist IN INTEGER --> Numero de registros p/ paginaca
                            ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
@@ -159,8 +172,14 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_COBEMP IS
 																	 ,pr_nmdcampo OUT VARCHAR2                      --> Nome do campo com erro
 																	 ,pr_des_erro OUT VARCHAR2);                    --> Erros do processo
 
-  PROCEDURE pc_busca_prazo_venc(pr_inprejuz IN INTEGER                        --> Indicador de prejuizo
-                               ,pr_tpemprst IN INTEGER                        --> Tipo de Conta Emprestimo        
+  PROCEDURE pc_busca_prazo_venc(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                               ,pr_inprejuz  IN INTEGER --> Indicador de prejuizo
+                               ,pr_dtprzmax OUT DATE --> Data prazo máximo
+                               ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                               ,pr_dscritic OUT VARCHAR2); --> Descrição da crítica
+
+  PROCEDURE pc_busca_prazo_venc_web(pr_inprejuz IN INTEGER                        --> Indicador de prejuizo
+                                   ,pr_tpemprst IN INTEGER                        --> Indicador de tipo emprestimo
                                ,pr_xmllog   IN VARCHAR2                       --> XML com informações de LOG
 															 ,pr_cdcritic OUT PLS_INTEGER                   --> Código da crítica
 															 ,pr_dscritic OUT VARCHAR2                      --> Descrição da crítica
@@ -325,15 +344,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
   --             14/11/2017 - Ajsute para devolver informacao de liquidacao do contrato (Jonata - RKAM P364).
   ---------------------------------------------------------------------------
 
-  PROCEDURE pc_buscar_email(pr_nrdconta IN INTEGER
-                           ,pr_nriniseq IN INTEGER --> Registro inicial da listagem
-                           ,pr_nrregist IN INTEGER --> Numero de registros p/ paginaca
-                           ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+  PROCEDURE pc_buscar_email(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                           ,pr_nrdconta   IN INTEGER --> Número da conta
                            ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                            ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
-                           ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
-                           ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
-                           ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+                           ,pr_tab_email OUT type_tab_email) IS --> Tabela com registros de emails
   BEGIN
 
     /* .............................................................................
@@ -341,8 +356,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
     Programa: pc_buscar_email
     Sistema : Cobrança - Cooperativa de Credito
     Sigla   : COB
-    Autor   : Daniel Zimmermann
-    Data    : Agosto/15.                    Ultima atualizacao:
+    Autor   : André Clemer - Supero
+    Data    : Junho/19.                    Ultima atualizacao:
 
     Dados referentes ao programa:
 
@@ -380,32 +395,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
       vr_exc_saida EXCEPTION;
       vr_null      EXCEPTION;
 
-      -- Variaveis de log
-      vr_cdcooper INTEGER;
-      vr_cdoperad VARCHAR2(100);
-      vr_nmdatela VARCHAR2(100);
-      vr_nmeacao  VARCHAR2(100);
-      vr_cdagenci VARCHAR2(100);
-      vr_nrdcaixa VARCHAR2(100);
-      vr_idorigem VARCHAR2(100);
-      vr_contador INTEGER := 0; -- Contador p/ posicao no XML
-      vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
-      vr_flgresgi BOOLEAN := FALSE;
+      vr_contador INTEGER := 0;
 
     BEGIN
 
-      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
-                               pr_cdcooper => vr_cdcooper,
-                               pr_nmdatela => vr_nmdatela,
-                               pr_nmeacao  => vr_nmeacao,
-                               pr_cdagenci => vr_cdagenci,
-                               pr_nrdcaixa => vr_nrdcaixa,
-                               pr_idorigem => vr_idorigem,
-                               pr_cdoperad => vr_cdoperad,
-                               pr_dscritic => vr_dscritic);
-
       -- Verifica se a cooperativa esta cadastrada
-      OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
 
       FETCH btch0001.cr_crapdat
         INTO rw_crapdat;
@@ -421,8 +416,111 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
         CLOSE btch0001.cr_crapdat;
       END IF;
 
+      FOR rw_emails IN cr_emails(pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta) LOOP
+
+        vr_contador := vr_contador + 1;
+        
+        pr_tab_email(vr_contador).dsdemail := rw_emails.dsdemail;
+        pr_tab_email(vr_contador).secpscto := rw_emails.secpscto;
+        pr_tab_email(vr_contador).nmpescto := rw_emails.nmpescto;
+
+      END LOOP;
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+      WHEN OTHERS THEN
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela COBEMP: ' || SQLERRM;
+    END;
+
+  END pc_buscar_email;
+  
+  PROCEDURE pc_buscar_email_web(pr_nrdconta IN INTEGER
+                               ,pr_nriniseq IN INTEGER --> Registro inicial da listagem
+                               ,pr_nrregist IN INTEGER --> Numero de registros p/ paginaca
+                               ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
+                               ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                               ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
+                               ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                               ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
+                               ,pr_des_erro OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_buscar_email_web
+    Sistema : Cobrança - Cooperativa de Credito
+    Sigla   : COB
+    Autor   : Daniel Zimmermann
+    Data    : Agosto/15.                    Ultima atualizacao: 14/06/2019
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina busca email boletos emprestimos.
+
+    Observacao: -----
+
+    Alteracoes: 14/06/2019 - Criada versão web da rotina pc_buscar_email
+                (André Clemer - Supero)
+    ..............................................................................*/
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      vr_null      EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      vr_contador INTEGER := 0; -- Contador p/ posicao no XML
+      vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
+      vr_flgresgi BOOLEAN := FALSE;
+      
+      vr_ind_email INTEGER := 0; -- Indice para a PL/Table retornada da procedure	  
+      vr_tab_email tela_cobemp.type_tab_email; -- PL/Table com os dados retornados da procedure
+
+    BEGIN
+
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                               pr_cdcooper => vr_cdcooper,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nmeacao  => vr_nmeacao,
+                               pr_cdagenci => vr_cdagenci,
+                               pr_nrdcaixa => vr_nrdcaixa,
+                               pr_idorigem => vr_idorigem,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => vr_dscritic);
+
+      pc_buscar_email(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_cdcritic => vr_cdcritic
+                     ,pr_dscritic => vr_dscritic
+                     ,pr_tab_email => vr_tab_email);
+
       -- Criar cabeçalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Root',
                              pr_posicao  => 0,
@@ -430,7 +528,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                              pr_tag_cont => NULL,
                              pr_des_erro => vr_dscritic);
 
-      FOR rw_emails IN cr_emails(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta) LOOP
+      FOR vr_ind_email IN vr_tab_email.first .. vr_tab_email.last LOOP
 
         vr_contador := vr_contador + 1;
 
@@ -446,19 +544,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
                                  pr_tag_pai  => 'email',
                                  pr_posicao  => vr_auxconta,
                                  pr_tag_nova => 'dsdemail',
-                                 pr_tag_cont => TO_CHAR(rw_emails.dsdemail),
+                                 pr_tag_cont => TO_CHAR(vr_tab_email(vr_ind_email).dsdemail),
                                  pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'email',
                                  pr_posicao  => vr_auxconta,
                                  pr_tag_nova => 'secpscto',
-                                 pr_tag_cont => TO_CHAR(rw_emails.secpscto),
+                                 pr_tag_cont => TO_CHAR(vr_tab_email(vr_ind_email).secpscto),
                                  pr_des_erro => vr_dscritic);
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'email',
                                  pr_posicao  => vr_auxconta,
                                  pr_tag_nova => 'nmpescto',
-                                 pr_tag_cont => TO_CHAR(rw_emails.nmpescto),
+                                 pr_tag_cont => TO_CHAR(vr_tab_email(vr_ind_email).nmpescto),
                                  pr_des_erro => vr_dscritic);
 
           vr_auxconta := vr_auxconta + 1;
@@ -510,7 +608,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
         ROLLBACK;
     END;
 
-  END pc_buscar_email;
+  END pc_buscar_email_web;
 
   PROCEDURE pc_buscar_telefone(pr_cdcooper IN  crapcob.cdcooper%TYPE
 							  ,pr_nrdconta IN INTEGER
@@ -2298,14 +2396,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 		END;
 	END pc_gerar_pdf_boletos_w;
 
-  PROCEDURE pc_busca_prazo_venc(pr_inprejuz IN INTEGER                        --> Indicador de prejuizo
-                               ,pr_tpemprst IN INTEGER                        --> Tipo de Conta Emprestimo  
-                               ,pr_xmllog   IN VARCHAR2                       --> XML com informações de LOG
+  PROCEDURE pc_busca_prazo_venc(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                               ,pr_inprejuz  IN INTEGER --> Indicador de prejuizo
+                               ,pr_dtprzmax OUT DATE --> Data prazo máximo
 															 ,pr_cdcritic OUT PLS_INTEGER                   --> Código da crítica
-															 ,pr_dscritic OUT VARCHAR2                      --> Descrição da crítica
-															 ,pr_retxml   IN OUT NOCOPY XMLType             --> Arquivo de retorno do XML
-															 ,pr_nmdcampo OUT VARCHAR2                      --> Nome do campo com erro
-															 ,pr_des_erro OUT VARCHAR2) IS                  --> Erros do processo
+                               ,pr_dscritic OUT VARCHAR2) IS --> Descrição da crítica
 	BEGIN
 	/* .............................................................................
 
@@ -2356,6 +2451,123 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 
 		BEGIN
 
+			-- Verifica se a cooperativa esta cadastrada
+      OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+
+      FETCH btch0001.cr_crapdat
+        INTO rw_crapdat;
+      -- Se não encontrar
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois haverá raise
+        CLOSE btch0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic := 1;
+        RAISE vr_exc_saida;
+      ELSE
+        -- Apenas fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+      END IF;
+
+			vr_qtdiaspz := to_number(gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+																												,pr_cdcooper => pr_cdcooper
+																												,pr_cdacesso => 'COBEMP_PRZ_MAX_VENCTO'));
+
+			vr_dtprzmax := rw_crapdat.dtmvtolt;
+
+      FOR dias IN 1..vr_qtdiaspz LOOP
+				-- Busca caminho da imagem do logo do boleto da cecred
+				vr_dtprzmax := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+																									,pr_dtmvtolt => vr_dtprzmax + 1
+																									,pr_tipo => 'P');
+			END LOOP;
+
+		  -- Se for prejuizo
+      IF pr_inprejuz = 1 THEN
+        -- Nao permite geracao de data maior ou igual que ultimo dia util do mes
+        IF vr_dtprzmax >= rw_crapdat.dtultdia THEN
+           vr_dtprzmax := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                     ,pr_dtmvtolt => rw_crapdat.dtultdia
+                                                     ,pr_tipo => 'A');
+           vr_dtprzmax := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                                     ,pr_dtmvtolt => vr_dtprzmax - 1
+                                                     ,pr_tipo => 'A');
+        END IF;
+      END IF;
+
+      pr_dtprzmax := vr_dtprzmax;
+
+		EXCEPTION
+			WHEN vr_exc_saida THEN
+
+				-- Busca descrição da crítica se houver código
+				IF vr_cdcritic <> 0 THEN
+					pr_cdcritic := vr_cdcritic;
+					pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+				ELSE
+					pr_cdcritic := vr_cdcritic;
+					pr_dscritic := vr_dscritic;
+				END IF;
+
+		WHEN OTHERS THEN
+
+			pr_cdcritic := vr_cdcritic;
+			pr_dscritic := 'Erro geral na rotina da tela TELA_COBEMP: ' || SQLERRM;
+
+		END;
+  END pc_busca_prazo_venc;
+  
+  PROCEDURE pc_busca_prazo_venc_web(pr_inprejuz IN INTEGER                        --> Indicador de prejuizo
+                                   ,pr_tpemprst IN INTEGER                        --> Indicador de tipo emprestimo
+								   ,pr_xmllog   IN VARCHAR2                       --> XML com informações de LOG
+															     ,pr_cdcritic OUT PLS_INTEGER                   --> Código da crítica
+															     ,pr_dscritic OUT VARCHAR2                      --> Descrição da crítica
+															     ,pr_retxml   IN OUT NOCOPY XMLType             --> Arquivo de retorno do XML
+															     ,pr_nmdcampo OUT VARCHAR2                      --> Nome do campo com erro
+															     ,pr_des_erro OUT VARCHAR2) IS                  --> Erros do processo
+	BEGIN
+	/* .............................................................................
+
+		Programa: pc_busca_prazo_venc
+		Sistema : CECRED
+		Sigla   : EMPR
+		Autor   : Lucas Reinert
+		Data    : Agosto/15.                    Ultima atualizacao: 08/03/2017
+
+		Dados referentes ao programa:
+
+		Frequencia: Sempre que for chamado
+
+		Objetivo  : Rotina para buscar o prazo máximo de vencimento da cooperativa
+
+		Observacao: -----
+
+		Alteracoes: 08/03/2017 - Criacao de funcionamento quando prejuizo. (P210.2 - Jaison/Daniel)
+	..............................................................................*/
+		DECLARE
+			----------------------------- VARIAVEIS ---------------------------------
+			-- Variável de críticas
+			vr_cdcritic crapcri.cdcritic%TYPE;
+			vr_dscritic VARCHAR2(10000);
+
+			-- Tratamento de erros
+			vr_exc_saida EXCEPTION;
+
+			-- Variaveis de log
+			vr_cdcooper INTEGER;
+			vr_cdoperad VARCHAR2(100);
+			vr_nmdatela VARCHAR2(100);
+			vr_nmeacao  VARCHAR2(100);
+			vr_cdagenci VARCHAR2(100);
+			vr_nrdcaixa VARCHAR2(100);
+			vr_idorigem VARCHAR2(100);
+
+			-- Variaveis locais
+			vr_dtprzmax DATE;
+
+			------------------------------ CURSORES --------------------------------
+
+		BEGIN
+
 			-- Extrai dados
 			GENE0004.pc_extrai_dados(pr_xml      => pr_retxml,
 															 pr_cdcooper => vr_cdcooper,
@@ -2373,48 +2585,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 				RAISE vr_exc_saida;
 			END IF;
 
-			-- Verifica se a cooperativa esta cadastrada
-      OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
-
-      FETCH btch0001.cr_crapdat
-        INTO rw_crapdat;
-      -- Se não encontrar
-      IF btch0001.cr_crapdat%NOTFOUND THEN
-        -- Fechar o cursor pois haverá raise
-        CLOSE btch0001.cr_crapdat;
-        -- Montar mensagem de critica
-        vr_cdcritic := 1;
-        RAISE vr_exc_saida;
-      ELSE
-        -- Apenas fechar o cursor
-        CLOSE btch0001.cr_crapdat;
-      END IF;
-
-			vr_qtdiaspz := to_number(gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
-																												,pr_cdcooper => vr_cdcooper
-																												,pr_cdacesso => 'COBEMP_PRZ_MAX_VENCTO'));
-
-			vr_dtprzmax := rw_crapdat.dtmvtolt;
-
-      FOR dias IN 1..vr_qtdiaspz LOOP
-				-- Busca caminho da imagem do logo do boleto da cecred
-				vr_dtprzmax := gene0005.fn_valida_dia_util(pr_cdcooper => vr_cdcooper
-																									,pr_dtmvtolt => vr_dtprzmax + 1
-																									,pr_tipo => 'P');
-			END LOOP;
-
-		  -- Se for prejuizo
-      IF pr_inprejuz = 1 THEN
-        -- Nao permite geracao de data maior ou igual que ultimo dia util do mes
-        IF vr_dtprzmax >= rw_crapdat.dtultdia THEN
-           vr_dtprzmax := gene0005.fn_valida_dia_util(pr_cdcooper => vr_cdcooper
-                                                     ,pr_dtmvtolt => rw_crapdat.dtultdia
-                                                     ,pr_tipo => 'A');
-           vr_dtprzmax := gene0005.fn_valida_dia_util(pr_cdcooper => vr_cdcooper
-                                                     ,pr_dtmvtolt => vr_dtprzmax - 1
-                                                     ,pr_tipo => 'A');
-        END IF;
-      END IF;
+      pc_busca_prazo_venc(pr_cdcooper => vr_cdcooper
+                         ,pr_inprejuz => pr_inprejuz
+                         ,pr_dtprzmax => vr_dtprzmax
+                         ,pr_cdcritic => vr_cdcritic
+                         ,pr_dscritic => vr_dscritic);
 
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><dtprzmax>'
 			                              || to_char(vr_dtprzmax, 'DD/MM/RRRR') || '</dtprzmax>');
@@ -2447,7 +2622,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBEMP IS
 																		 '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
 		END;
-  END pc_busca_prazo_venc;
+  END pc_busca_prazo_venc_web;
   
   PROCEDURE pc_lista_pa(pr_cdagenci IN INTEGER          
                        ,pr_nriniseq IN INTEGER --> Registro inicial da listagem

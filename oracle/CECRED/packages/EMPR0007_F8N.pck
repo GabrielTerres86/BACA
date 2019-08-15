@@ -53,18 +53,6 @@ CREATE OR REPLACE PACKAGE CECRED.empr0007_f8n IS
                                ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
                                ,pr_retxml   OUT NOCOPY xmltype);
 
-    PROCEDURE pc_buscar_telefone_api(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
-                                    ,pr_nrdconta IN INTEGER
-                                    ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
-                                    ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
-                                    ,pr_retxml   OUT NOCOPY xmltype); --> Arquivo de retorno do XML
-
-    PROCEDURE pc_buscar_email_api(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
-                                 ,pr_nrdconta IN INTEGER
-                                 ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
-                                 ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
-                                 ,pr_retxml   OUT NOCOPY xmltype); --> Arquivo de retorno do XML
-
     PROCEDURE pc_gera_boleto_contrato_api(pr_nmtela   IN VARCHAR
 											,pr_nrdcaixa IN INTEGER
 											,pr_cdoperad IN crapope.cdoperad%TYPE
@@ -117,6 +105,21 @@ CREATE OR REPLACE PACKAGE CECRED.empr0007_f8n IS
                                       ,pr_nmcontat IN tbrecup_cobranca.nmcontato%TYPE --> Nome de Contato
                                       ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2); --> Descrição da crítica
+
+    PROCEDURE pc_baixar_boleto_api(pr_nmtela   IN VARCHAR --> Nome da tela
+                                  ,pr_nrdcaixa IN INTEGER --> Numero do caixa
+                                  ,pr_cdoperad IN crapope.cdoperad%TYPE --> Código do operador
+                                  ,pr_cdagenci IN crapope.cdagenci%TYPE --> Código da agência
+                                  ,pr_cdorigem IN INTEGER --> Código da origem
+                                  ,pr_cdcooper IN crapepr.cdcooper%TYPE --> Código da cooperativa
+                                  ,pr_nrdconta IN crapepr.nrdconta%TYPE --> Nr. da conta
+                                  ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Nr. contrato de empréstiomo
+                                  ,pr_nrctacob IN crapepr.nrdconta%TYPE --> Nr. da conta cobrança
+                                  ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE --> Nr. convenio
+                                  ,pr_nrdocmto IN crapcob.nrdocmto%TYPE --> Nr. documento
+                                  ,pr_dtmvtolt IN VARCHAR2 --> Data de movimento
+                                  ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2); --> Descrição da crítica
 
 END empr0007_f8n;
 /
@@ -565,341 +568,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0007_f8n IS
     
     END pc_busca_aval_api;
 
-    PROCEDURE pc_buscar_telefone_api(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
-                                    ,pr_nrdconta IN INTEGER
-                                    ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
-                                    ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
-                                    ,pr_retxml   OUT NOCOPY xmltype) IS --> Erros do processo
-    BEGIN
-    
-        /* .............................................................................
-        
-        Programa: pc_buscar_telefone_api
-        Sistema : Cobrança - Cooperativa de Credito
-        Sigla   : COB
-        Autor   : Dioni/Supero
-        Data    : Abril/19.                    Ultima atualizacao:
-        
-        Dados referentes ao programa:
-        
-        Frequencia: Sempre que for chamado
-        
-        Objetivo  : Rotina busca telefone boletos emprestimos.
-        
-        Observacao: -----
-        
-        Alteracoes: -----
-        ..............................................................................*/
-        DECLARE
-        
-            -- Variável de críticas
-            vr_cdcritic crapcri.cdcritic%TYPE;
-            vr_dscritic VARCHAR2(10000);
-        
-            -- Tratamento de erros
-            vr_exc_saida EXCEPTION;
-            vr_null      EXCEPTION;
-        
-            -- Variaveis de log
-            vr_contador INTEGER := 0; -- Contador p/ posicao no XML
-            vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
-            vr_flgresgi BOOLEAN := FALSE;
-        
-            vr_ind_tel INTEGER := 0; -- Indice para a PL/Table retornada da procedure
-        
-            vr_tab_tel tela_cobemp.type_tab_tel; -- PL/Table com os dados retornados da procedure
-        
-        BEGIN
-        
-            tela_cobemp.pc_buscar_telefone(pr_cdcooper => pr_cdcooper
-                                          ,pr_nrdconta => pr_nrdconta
-                                          ,pr_cdcritic => pr_cdcritic
-                                          ,pr_dscritic => pr_dscritic
-                                          ,pr_tab_tel  => vr_tab_tel);
-        
-            -- Criar cabeçalho do XML
-            pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                  ,pr_tag_pai  => 'Root'
-                                  ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'Dados'
-                                  ,pr_tag_cont => NULL
-                                  ,pr_des_erro => vr_dscritic);
-                                  
-            -- Se PL/Table possuir algum registro
-            IF vr_tab_tel.count() > 0 THEN
-                -- Atribui registro inicial como indice
-                vr_ind_tel := 1;
-                -- Se existe registro com o indice inicial
-                IF vr_tab_tel.exists(vr_ind_tel) THEN
-                    FOR vr_ind_tel IN vr_tab_tel.first .. vr_tab_tel.last LOOP
-                    
-                        vr_contador := vr_contador + 1;
-                    
-                        gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                              ,pr_tag_pai  => 'Dados'
-                                              ,pr_posicao  => 0
-                                              ,pr_tag_nova => 'telefone'
-                                              ,pr_tag_cont => NULL
-                                              ,pr_des_erro => vr_dscritic);
-                        gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                              ,pr_tag_pai  => 'telefone'
-                                              ,pr_posicao  => vr_auxconta
-                                              ,pr_tag_nova => 'nrdddtfc'
-                                              ,pr_tag_cont => to_char(vr_tab_tel(vr_ind_tel).nrdddtfc)
-                                              ,pr_des_erro => vr_dscritic);
-                        gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                              ,pr_tag_pai  => 'telefone'
-                                              ,pr_posicao  => vr_auxconta
-                                              ,pr_tag_nova => 'nrtelefo'
-                                              ,pr_tag_cont => to_char(vr_tab_tel(vr_ind_tel).nrtelefo)
-                                              ,pr_des_erro => vr_dscritic);
-                        gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                              ,pr_tag_pai  => 'telefone'
-                                              ,pr_posicao  => vr_auxconta
-                                              ,pr_tag_nova => 'nrdramal'
-                                              ,pr_tag_cont => to_char(vr_tab_tel(vr_ind_tel).nrdramal)
-                                              ,pr_des_erro => vr_dscritic);
-                        gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                              ,pr_tag_pai  => 'telefone'
-                                              ,pr_posicao  => vr_auxconta
-                                              ,pr_tag_nova => 'tptelefo'
-                                              ,pr_tag_cont => vr_tab_tel(vr_ind_tel).destptfc
-                                              ,pr_des_erro => vr_dscritic);
-                        gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                              ,pr_tag_pai  => 'telefone'
-                                              ,pr_posicao  => vr_auxconta
-                                              ,pr_tag_nova => 'nmpescto'
-                                              ,pr_tag_cont => vr_tab_tel(vr_ind_tel).nmpescto
-                                              ,pr_des_erro => vr_dscritic);
-                        gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                              ,pr_tag_pai  => 'telefone'
-                                              ,pr_posicao  => vr_auxconta
-                                              ,pr_tag_nova => 'nmopetfn'
-                                              ,pr_tag_cont => vr_tab_tel(vr_ind_tel).nmopetfn
-                                              ,pr_des_erro => vr_dscritic);
-                    
-                        vr_auxconta := vr_auxconta + 1;
-                    
-                        vr_flgresgi := TRUE;
-                    
-                    END LOOP;
-                END IF;
-            END IF;
-        
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                  ,pr_tag_pai  => 'Root'
-                                  ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'Qtdregis'
-                                  ,pr_tag_cont => vr_contador
-                                  ,pr_des_erro => vr_dscritic);
-        
-            IF NOT vr_flgresgi THEN
-                vr_dscritic := 'Nenhum Numero de Telefone Localizado!';
-                RAISE vr_exc_saida;
-            END IF;
-        
-        EXCEPTION
-            WHEN vr_null THEN
-                NULL;
-            WHEN vr_exc_saida THEN
-            
-                IF vr_cdcritic <> 0 THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-                ELSE
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic;
-                END IF;
-            
-                -- Carregar XML padrão para variável de retorno não utilizada.
-                -- Existe para satisfazer exigência da interface.
-                pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                               '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-                ROLLBACK;
-            WHEN OTHERS THEN
-            
-                pr_cdcritic := vr_cdcritic;
-                pr_dscritic := 'Erro geral na rotina da tela COBEMP: ' || SQLERRM;
-            
-                -- Carregar XML padrão para variável de retorno não utilizada.
-                -- Existe para satisfazer exigência da interface.
-                pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                               '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-                ROLLBACK;
-        END;
-    
-    END pc_buscar_telefone_api;
-
-    PROCEDURE pc_buscar_email_api(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
-                                 ,pr_nrdconta IN INTEGER --> Numero da conta
-                                 ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
-                                 ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
-                                 ,pr_retxml   OUT NOCOPY xmltype) IS --> Arquivo de retorno do XML
-    BEGIN
-    
-        /* .............................................................................
-        
-        Programa: pc_buscar_email_api
-        Sistema : Cobrança - Cooperativa de Credito
-        Sigla   : API - Crédito
-        Autor   : Dioni/Supero
-        Data    : Marco/19.                    Ultima atualizacao:
-        
-        Dados referentes ao programa:
-        
-        Frequencia: Sempre que for chamado
-        
-        Objetivo  : Rotina busca email boletos emprestimos.
-        
-        Observacao: -----
-        
-        Alteracoes: -----
-        ..............................................................................*/
-        DECLARE
-        
-            rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-        
-            -- Selecionar os dados de indexadores pelo nome
-            CURSOR cr_emails(pr_cdcooper IN crapcop.cdcooper%TYPE
-                            ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-                SELECT DISTINCT dsdemail
-                               ,secpscto
-                               ,nmpescto
-                  FROM crapcem
-                 WHERE cdcooper = pr_cdcooper
-                   AND nrdconta = pr_nrdconta
-                UNION
-                SELECT DISTINCT dsemail
-                               ,' '
-                               ,nmcontato
-                  FROM tbrecup_cobranca
-                 WHERE cdcooper = pr_cdcooper
-                   AND nrdconta = pr_nrdconta
-                   AND dsemail IS NOT NULL
-                   AND tpproduto = 0;
-        
-            -- Variável de críticas
-            vr_cdcritic crapcri.cdcritic%TYPE;
-            vr_dscritic VARCHAR2(10000);
-        
-            -- Tratamento de erros
-            vr_exc_saida EXCEPTION;
-            vr_null      EXCEPTION;
-        
-            -- Variaveis de log
-            vr_contador INTEGER := 0; -- Contador p/ posicao no XML
-            vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
-            vr_flgresgi BOOLEAN := FALSE;
-        
-        BEGIN
-        
-            -- Verifica se a cooperativa esta cadastrada
-            OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-        
-            FETCH btch0001.cr_crapdat
-                INTO rw_crapdat;
-            -- Se não encontrar
-            IF btch0001.cr_crapdat%NOTFOUND THEN
-                -- Fechar o cursor pois haverá raise
-                CLOSE btch0001.cr_crapdat;
-                -- Montar mensagem de critica
-                vr_cdcritic := 1;
-                RAISE vr_exc_saida;
-            ELSE
-                -- Apenas fechar o cursor
-                CLOSE btch0001.cr_crapdat;
-            END IF;
-        
-            -- Criar cabeçalho do XML
-            pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                  ,pr_tag_pai  => 'Root'
-                                  ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'Dados'
-                                  ,pr_tag_cont => NULL
-                                  ,pr_des_erro => vr_dscritic);
-        
-            FOR rw_emails IN cr_emails(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta) LOOP
-            
-                vr_contador := vr_contador + 1;
-            
-                gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                      ,pr_tag_pai  => 'Dados'
-                                      ,pr_posicao  => 0
-                                      ,pr_tag_nova => 'email'
-                                      ,pr_tag_cont => NULL
-                                      ,pr_des_erro => vr_dscritic);
-                gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                      ,pr_tag_pai  => 'email'
-                                      ,pr_posicao  => vr_auxconta
-                                      ,pr_tag_nova => 'dsdemail'
-                                      ,pr_tag_cont => to_char(rw_emails.dsdemail)
-                                      ,pr_des_erro => vr_dscritic);
-                gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                      ,pr_tag_pai  => 'email'
-                                      ,pr_posicao  => vr_auxconta
-                                      ,pr_tag_nova => 'secpscto'
-                                      ,pr_tag_cont => to_char(rw_emails.secpscto)
-                                      ,pr_des_erro => vr_dscritic);
-                gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                      ,pr_tag_pai  => 'email'
-                                      ,pr_posicao  => vr_auxconta
-                                      ,pr_tag_nova => 'nmpescto'
-                                      ,pr_tag_cont => to_char(rw_emails.nmpescto)
-                                      ,pr_des_erro => vr_dscritic);
-            
-                vr_auxconta := vr_auxconta + 1;
-            
-                vr_flgresgi := TRUE;
-            
-            END LOOP;
-        
-            gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                  ,pr_tag_pai  => 'Root'
-                                  ,pr_posicao  => 0
-                                  ,pr_tag_nova => 'Qtdregis'
-                                  ,pr_tag_cont => vr_contador
-                                  ,pr_des_erro => vr_dscritic);
-        
-            IF NOT vr_flgresgi THEN
-			    vr_cdcritic := 812;
-                vr_dscritic := 'Nenhum E-mail localizado!';
-                RAISE vr_exc_saida;
-            END IF;
-        
-        EXCEPTION
-            WHEN vr_null THEN
-                NULL;
-            WHEN vr_exc_saida THEN
-            
-                IF vr_cdcritic <> 0 THEN
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-                ELSE
-                    pr_cdcritic := vr_cdcritic;
-                    pr_dscritic := vr_dscritic;
-                END IF;
-            
-                -- Carregar XML padrão para variável de retorno não utilizada.
-                -- Existe para satisfazer exigência da interface.
-                pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                               '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-                ROLLBACK;
-            WHEN OTHERS THEN
-            
-                pr_cdcritic := vr_cdcritic;
-                pr_dscritic := 'Erro geral na rotina da tela COBEMP: ' || SQLERRM;
-            
-                -- Carregar XML padrão para variável de retorno não utilizada.
-                -- Existe para satisfazer exigência da interface.
-                pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                               '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-                ROLLBACK;
-        END;
-    
-    END;
-
     PROCEDURE pc_gera_boleto_contrato_api(pr_nmtela   IN VARCHAR
 											,pr_nrdcaixa IN INTEGER
 											,pr_cdoperad IN crapope.cdoperad%TYPE
@@ -1174,6 +842,107 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0007_f8n IS
                 pr_dscritic := 'Erro geral na rotina da tela COBEMP: ' || SQLERRM;
         END;
     END pc_enviar_boleto_sms_api;
+
+  PROCEDURE pc_baixar_boleto_api(pr_nmtela   IN VARCHAR --> Nome da tela
+                                ,pr_nrdcaixa IN INTEGER --> Numero do caixa
+                                ,pr_cdoperad IN crapope.cdoperad%TYPE --> Código do operador
+                                ,pr_cdagenci IN crapope.cdagenci%TYPE --> Código da agência
+                                ,pr_cdorigem IN INTEGER --> Código da origem
+                                ,pr_cdcooper IN crapepr.cdcooper%TYPE --> Código da cooperativa
+                                ,pr_nrdconta IN crapepr.nrdconta%TYPE --> Nr. da conta
+                                ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Nr. contrato de empréstiomo
+                                ,pr_nrctacob IN crapepr.nrdconta%TYPE --> Nr. da conta cobrança
+                                ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE --> Nr. convenio
+                                ,pr_nrdocmto IN crapcob.nrdocmto%TYPE --> Nr. documento
+                                ,pr_dtmvtolt IN VARCHAR2 --> Data de movimento
+                                ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
+                                ,pr_dscritic OUT VARCHAR2) IS --> Descrição da crítica
+      /* .............................................................................
+      
+          Programa: pc_baixar_boleto_api
+          Sistema : CECRED
+          Sigla   : EMPR
+          Autor   : André Clemer
+          Data    : Junho/2019.                    Ultima atualizacao: --/--/----
+      
+          Dados referentes ao programa:
+      
+          Frequencia: Sempre que for chamado
+      
+          Objetivo  : Rotina para realizar a instrução de baixa de boleto utilizados 
+                      para empréstimo através da API
+      
+          Observacao: -----
+      
+          Alteracoes: 
+      ..............................................................................*/
+  BEGIN
+      DECLARE
+          -- Variáveis locais
+          vr_dstransa VARCHAR2(1000) := 'Boleto cancelado atraves do sistema Cyber';
+
+          -- Variável de críticas
+          vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+          vr_dscritic VARCHAR2(1000); --> Desc. Erro
+      
+          -- Tratamento de erros
+          vr_exc_saida EXCEPTION;
+      BEGIN
+          EMPR0007.pc_inst_baixa_boleto_epr(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctremp
+                                           ,pr_nrctacob => pr_nrctacob
+                                           ,pr_nrcnvcob => pr_nrcnvcob
+                                           ,pr_nrdocmto => pr_nrdocmto
+                                           ,pr_dtmvtolt => to_date(pr_dtmvtolt, 'DD/MM/RRRR')
+                                           ,pr_idorigem => gene0002.fn_char_para_number(pr_cdorigem)
+                                           ,pr_cdoperad => pr_cdoperad
+                                           ,pr_nmdatela => pr_nmtela
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+      
+          -- Se retornou alguma crítica
+          IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+              -- Levanta exceção
+              RAISE vr_exc_saida;
+          END IF;
+      
+          -- Atualiza a Justificativa
+          BEGIN
+              UPDATE tbrecup_cobranca
+                 SET dsjustifica_baixa = vr_dstransa
+               WHERE cdcooper = pr_cdcooper
+                 AND nrdconta = pr_nrdconta
+                 AND nrctremp = pr_nrctremp
+                 AND nrdconta_cob = pr_nrctacob
+                 AND nrcnvcob = pr_nrcnvcob
+                 AND nrboleto = pr_nrdocmto;
+          EXCEPTION
+              WHEN OTHERS THEN
+                  vr_dscritic := 'Problema ao alterar dados na tabela tbrecup_cobranca: ' || SQLERRM;
+                  RAISE vr_exc_saida;
+          END;
+      
+      EXCEPTION
+          WHEN vr_exc_saida THEN
+          
+              IF vr_cdcritic <> 0 THEN
+                  pr_cdcritic := vr_cdcritic;
+                  pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+              ELSE
+                  pr_cdcritic := vr_cdcritic;
+                  pr_dscritic := vr_dscritic;
+              END IF;
+          
+              ROLLBACK;
+          WHEN OTHERS THEN
+          
+              pr_cdcritic := vr_cdcritic;
+              pr_dscritic := 'Erro geral na rotina da tela ' || pr_nmtela || ': ' || SQLERRM;
+
+              ROLLBACK;
+      END;
+  END pc_baixar_boleto_api;
 
 END empr0007_f8n;
 /

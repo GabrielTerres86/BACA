@@ -4661,7 +4661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lucas Reinert
-      Data    : Agosto/15.                    Ultima atualizacao: 10/05/2018
+      Data    : Agosto/15.                    Ultima atualizacao: 24/06/2019
 
       Dados referentes ao programa:
 
@@ -4715,6 +4715,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                
                   15/02/2019 - Ajuste na rotina para criticar se o boleto eh para quitacao do contrato e nao 
                                for Canais. (P298.2.2 - Luciano - Supero)               
+
+                  24/06/2019 - Incluido idorigem na geração do boleto.
+							   P559 - André Clemer (Supero).
+
                                
   ..............................................................................*/
 
@@ -5910,7 +5914,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                  ,peracrescimo
                                  ,perdesconto
                                  ,vldesconto
-                                 ,vldevedor)
+                                 ,vldevedor
+                                 ,cdcanal)
 													VALUES(pr_cdcooper
 													      ,pr_nrdconta
 																,pr_nrctremp
@@ -5928,7 +5933,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                 ,pr_peracres
                                 ,pr_perdesco
                                 ,pr_vldescto
-                                ,pr_vldevedor);
+                                ,pr_vldevedor
+                                ,pr_idorigem);
 
 		  -- Gera log na lgm
 			gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
@@ -6715,8 +6721,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 				      ,cob.dtvencto
 							,cob.vltitulo
 				      ,cob.rowid
+				    ,epr.tpemprst
+				    ,cde.cdcanal
 				  FROM crapcob cob,
-					     tbrecup_cobranca cde
+			         tbrecup_cobranca cde,
+				     crapepr epr
 				 WHERE cob.cdcooper = pr_cdcooper
 				   AND cob.nrdconta = pr_nrctacob
 					 AND cob.nrcnvcob = pr_nrcnvcob
@@ -6724,14 +6733,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 					 AND cde.cdcooper = cob.cdcooper
 					 AND cde.nrdconta_cob = cob.nrdconta
 					 AND cde.nrcnvcob = cob.nrcnvcob
-					 AND cde.nrboleto = cob.nrdocmto;
+				 AND cde.nrboleto = cob.nrdocmto
+				 AND epr.cdcooper = cob.cdcooper
+				 AND epr.nrdconta = cob.nrctasac
+				 AND epr.nrctremp = cob.nrctremp;
 			rw_crapcob cr_crapcob%ROWTYPE;
 
 		BEGIN
+            IF pr_idorigem = 21 THEN
+				vr_dstransa := 'Boleto cancelado atraves do sistema Cyber';
+            END IF;
+
       OPEN cr_crapace;
 			FETCH cr_crapace INTO rw_crapace;
 			
-			IF cr_crapace%NOTFOUND AND pr_cdoperad <> '1' THEN
+			IF cr_crapace%NOTFOUND AND pr_cdoperad <> '1' AND pr_idorigem <> 21 THEN
 				-- Atribui crítica
 				vr_cdcritic := 0;
 				vr_dscritic := 'Operacao nao permitida';
@@ -6756,6 +6772,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
    				-- Atribui crítica
 					vr_cdcritic := 0;
 					vr_dscritic := 'Boleto ja foi liquidado.';
+					-- Gera exceção
+					RAISE vr_exc_saida;
+				END IF;
+				
+				IF pr_idorigem != 21 AND 
+           rw_crapcob.cdcanal <> pr_idorigem AND
+				   rw_crapcob.tpemprst IN (0,1)
+				THEN
+				-- Atribui crítica
+					vr_cdcritic := 0;
+					vr_dscritic := 'Nao e permitido cancelar boletos que nao foram gerados no Aimaro.';
 					-- Gera exceção
 					RAISE vr_exc_saida;
 				END IF;
