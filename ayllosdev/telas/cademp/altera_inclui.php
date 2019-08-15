@@ -227,7 +227,7 @@
 
     /*VALIDA SE OS DADOS DA EMPRESA ESTAO CORRETOS*/
 	//P437 s2
-	if ($opcao == 'A' && $glbvars['VAL_COOPER_CONSIGNADO'] == 'S') {
+	if ($opcao == 'A' && $glbvars['VAL_COOPER_CONSIGNADO'] == 'S' && $indescsg == 2) {
         if ($dscomple == '' || $dscomple == ' ') {
             $dscomple = '-';
         }
@@ -238,14 +238,14 @@
 		$xml .= '       <cdempres>'.$cdempres.'</cdempres>';
 		$xml .= '       <codconvenio>'.$cdempres.'</codconvenio>';
 		$xml .= '       <numcnpjloja>'.$nrdocnpj.'</numcnpjloja>';
-		$xml .= '       <descnomeloja>'.$nmresemp.'</descnomeloja>';
-		$xml .= '       <descrazaoloja>'.$nmextemp.'</descrazaoloja>';
+		$xml .= '       <descnomeloja>'.utf8_decode($nmresemp).'</descnomeloja>';
+		$xml .= '       <descrazaoloja>'.utf8_decode($nmextemp).'</descrazaoloja>';
 		$xml .= '       <ceplogradouro>'.$nrcepend.'</ceplogradouro>';
-		$xml .= '       <desclogradouro>'.$dsendemp.'</desclogradouro>';
+		$xml .= '       <desclogradouro>'.utf8_decode($dsendemp).'</desclogradouro>';
         $xml .= '       <numlogradouro>'.$nrendemp.'</numlogradouro>';
-		$xml .= '       <desccompllogradouro>'.$dscomple.'</desccompllogradouro>';
-		$xml .= '       <descbairrologradouro>'.$nmbairro.'</descbairrologradouro>';
-		$xml .= '       <desccidadelogradouro>'.$nmcidade.'</desccidadelogradouro>';
+		$xml .= '       <desccompllogradouro>'.utf8_decode($dscomple).'</desccompllogradouro>';
+		$xml .= '       <descbairrologradouro>'.utf8_decode($nmbairro).'</descbairrologradouro>';
+		$xml .= '       <desccidadelogradouro>'.utf8_decode($nmcidade).'</desccidadelogradouro>';
 		$xml .= '       <uflogradouro>'.$cdufdemp.'</uflogradouro>';
 		$xml .= '       <dddloja>'.$nrdddemp.'</dddloja>';
 		$xml .= '       <telloja>'.$nrfonemp.'</telloja>';
@@ -277,25 +277,35 @@
 			exit();
 		}else{
 			//cham SOA x FIS
-			$xml = simplexml_load_string($xmlResult);
+			//print_r($xmlResult);
+            //die();
+            $xml = simplexml_load_string($xmlResult);
 			//print_r($xml);
 			$json = json_encode($xml);	
 			$retSOAxFIS = chamaServico($json,$Url_SOA, $Auth_SOA);          
 		}		
 		
-		if($retSOAxFIS == "ERRO"){
-			exibirErro(
-				"error",
-				"Erro ao enviar empresa para FIS",
-				"Alerta - Ayllos",
-				"",
-				false);
-			
-			exit();
-		}
+		if($retSOAxFIS != "OK"){          
+        //if(1 == 2){
+            $auxErro = '';
+            if ($retSOAxFIS->fault->Body->gravaDadosConvenioResponse->return->codigoRetorno->codRetorno){
+                $auxErro = ' ('.$retSOAxFIS->fault->Body->gravaDadosConvenioResponse->return->codigoRetorno->codRetorno. '-'.
+                           $retSOAxFIS->fault->Body->gravaDadosConvenioResponse->return->codigoRetorno->mensagem.')';
+            }else{
+                $auxErro = ' ('.$retSOAxFIS->msg.')';
+            }
+            exibirErro(
+                "error",
+                "Erro ao enviar empresa para FIS".$auxErro ,
+                "Alerta - Ayllos",
+                "",
+                false);
+            
+            exit();
+        }
 	}
 
-    $xml  = "";
+	$xml  = "";
     $xml .= "<Root>";
     $xml .= "  <Cabecalho>";
     $xml .= "       <Bo>b1wgen0166.p</Bo>";
@@ -375,7 +385,7 @@
         die;
     }
 
-    /*salva dados da segunta tela*/
+	/*salva dados da segunta tela*/
     //campo vltrfsal
     //@todo nao esta completo o xml abaixo, o mesmo nao esta salvado o dado na tabela
     $xml  = "";
@@ -562,8 +572,8 @@
     $xml .= "        <new_nrfaxemp>$nrfaxemp</new_nrfaxemp>";
 	
 	//P437
-	$xml .= "        <old_nrfonemp>$old_nrdddemp</old_nrfonemp>";
-    $xml .= "        <new_nrfonemp>$nrdddemp</new_nrfonemp>";
+	$xml .= "        <old_nrdddemp>$old_nrdddemp</old_nrdddemp>";
+    $xml .= "        <new_nrdddemp>$nrdddemp</new_nrdddemp>";
 	
     $xml .= "        <old_nrfonemp>$old_nrfonemp</old_nrfonemp>";
     $xml .= "        <new_nrfonemp>$nrfonemp</new_nrfonemp>";

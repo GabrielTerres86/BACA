@@ -60,6 +60,7 @@
 
      06/08/2018 - Ajuste na formatação do campo e-mail (Andrey Formigari - Mouts)
      28/02/2019 - Projeto 437 Consignado AMcom - JDB (ID 20190208_437) - Ajutes conforme changeset feito por outra empresa	 (14/09/2018 - Tratamento para o projeto 437 Consignado (incluir  flnecont e tpmodcon,  remover indescsg))
+     12/08/2019 - P437 Ajustes yes == 1 AMcom - JDB
 ************************************************************************************************/
 
 //P437 s2
@@ -1793,7 +1794,7 @@ function selecionaEmpresa() {
 
                 // Popula campos Formulario Emprestimo
                 cFlgvlddv.val($('#hflgvlddv', $(this)).val());
-                cFlgvlddv.val() == 'yes' ? cFlgvlddv.attr('checked', 'checked') : cFlgvlddv.removeAttr('checked');
+                (cFlgvlddv.val() == 'yes' || cFlgvlddv.val() == '1') ? cFlgvlddv.attr('checked', 'checked') : cFlgvlddv.removeAttr('checked');                
                 cTpconven.val($('#htpconven', $(this)).val());
                 cTpdebemp.val($('#htpdebemp', $(this)).val());
                 cTpdebcot.val($('#htpdebcot', $(this)).val());
@@ -1804,15 +1805,15 @@ function selecionaEmpresa() {
 				}
                 //<-
 				cFlgpagto.val($('#hflgpagto', $(this)).val());
-                cFlgpagto.val() == 'yes' ? cFlgpagto.attr('checked', 'checked') : cFlgpagto.removeAttr('checked');
+                (cFlgpagto.val() == 'yes' || cFlgpagto.val() == '1') ? cFlgpagto.attr('checked', 'checked') : cFlgpagto.removeAttr('checked');
                 cFlgarqrt.val($('#hflgarqrt', $(this)).val());
-                cFlgarqrt.val() == 'yes' ? cFlgarqrt.attr('checked', 'checked') : cFlgarqrt.removeAttr('checked');
+                (cFlgarqrt.val() == 'yes' || cFlgarqrt.val() == '1') ? cFlgarqrt.attr('checked', 'checked') : cFlgarqrt.removeAttr('checked');                
                 cDtfchfol.val($('#hdtfchfol', $(this)).val());
                 cCdempfol.val($('#hcdempfol', $(this)).val());
                 cDtavsemp.val($('#hdtavsemp', $(this)).val());
                 cDtavscot.val($('#hdtavscot', $(this)).val());
                 cFlgpgtib.val($('#hflgpgtib', $(this)).val());
-                cFlgpgtib.val() == 'yes' ? cFlgpgtib.attr('checked', 'checked') : cFlgpgtib.removeAttr('checked');
+                (cFlgpgtib.val() == 'yes' || cFlgpgtib.val() == '1') ? cFlgpgtib.attr('checked', 'checked') : cFlgpgtib.removeAttr('checked');                
                 $('#dtultufp', '#frmInfIb').val($('#hdtultufp', $(this)).val());
                 cCdcontar.val($('#hcdcontar', $(this)).val());
                 cDscontar.val($('#hdscontar', $(this)).val());

@@ -367,6 +367,10 @@ function buscarDescricao(callback){
                 success: function (response) {
                     try {
                         eval(response);
+                        if (rowid_emp_consig == "") {
+                            Ccdempres.val('');
+							return false;
+						}
                         Ccdempres.val(cdempres);
                         Cindconsignado.val(indconsignado);
                         Crowid_emp_consig.val(rowid_emp_consig);
@@ -403,7 +407,7 @@ function fecharPesquisa(){
     if(indconsignado == "1"){
         CtextIndconsignado.val("Sim");
     } else if(indconsignado == '0') {
-        CtextIndconsignado.val("Não"); 
+        CtextIndconsignado.val("Nã¯¢); 
 	}else if(indconsignado == '2') {
         CtextIndconsignado.val("Pend.");
     }else{
@@ -784,7 +788,7 @@ function atualizaConvenio(){
         // Limpa data de interrupï¿½ï¿½o para INSS
 		DivVencParc.css('display', 'none');
         Cdtfchfol.val('');
-        Cdsdemail.val('');
+        //Cdsdemail.val('');
         Cdsdemailconsig.val('');
         $('input[name=radio_indautrepassecc]').prop('checked', false);
         $('input[name=radio_indinterromper]').prop('checked', false);
@@ -993,7 +997,7 @@ function controlaOperacao(){
     dsdemailconsig = Cdsdemailconsig.val(); // E-mail Consignado
     indalertaemailconsig = Cindalertaemailconsig.is(':checked') ? 1 : 0;
 
-    // Calidações de campos obrigatórios no front
+    // Calidaçµ¥s de campos obrigat?s no front
     if(tpmodconvenio == 0){
         hideMsgAguardo();
             showError(
@@ -1004,7 +1008,7 @@ function controlaOperacao(){
             return false;
     }
 
-    //Validação email
+    //Validaç£¯ email
     if (indalertaemailconsig == 1 && dsdemailconsig == ''){
         if (!validaEmailCademp(dsdemailconsig)) {
             showError('error', 'E-mail Consig. deve ser informado!',
