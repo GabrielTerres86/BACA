@@ -442,7 +442,7 @@ create or replace package body cecred.TELA_CADEMP is
         '<dtavsppr>'|| to_char(vr_tab_dados_emp(vr_index).dtavsppr,'DD/MM/RRRR') ||'</dtavsppr>'||
         '<flgpagto>'|| vr_tab_dados_emp(vr_index).flgpagto ||'</flgpagto>'||
         '<tpconven>'|| vr_tab_dados_emp(vr_index).tpconven ||'</tpconven>'||
-        '<cdufdemp>'|| vr_tab_dados_emp(vr_index).cdufdemp ||'</cdufdemp>'||
+        '<cdufdemp>'|| upper(vr_tab_dados_emp(vr_index).cdufdemp) ||'</cdufdemp>'||
         '<dscomple>'|| vr_tab_dados_emp(vr_index).dscomple ||'</dscomple>'||
         '<dsdemail>'|| vr_tab_dados_emp(vr_index).dsdemail ||'</dsdemail>'||
         '<dsendemp>'|| vr_tab_dados_emp(vr_index).dsendemp ||'</dsendemp>'||
@@ -573,6 +573,10 @@ create or replace package body cecred.TELA_CADEMP is
     vr_telLoja              varchar2(20);
     vr_numConta             crapemp.nrdconta%TYPE;
 
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    
+    vr_datainicio VARCHAR2(20) := TO_CHAR(sysdate, 'yyyy-mm-dd') || 'T' ||
+                                    to_char(sysdate, 'hh24:mi:ss');
     
     CURSOR cr_dados_consig (pr_cdcooper  IN crapemp.cdcooper%TYPE,
                             pr_cdempres  IN crapemp.cdempres%TYPE) IS
@@ -645,6 +649,13 @@ create or replace package body cecred.TELA_CADEMP is
 
       vr_codPromotora:= vr_cdcooper;
 
+       -- busca data movimento da cooperativa        
+      OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      FETCH btch0001.cr_crapdat 
+       INTO rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
+      vr_datainicio := TO_CHAR(rw_crapdat.dtmvtolt, 'yyyy-mm-dd') || 'T' ||
+                               to_char(sysdate, 'hh24:mi:ss');
 
       -- Extraindo os dados do XML que vem da tela EMP    
       vr_cdempres        := TRIM(pr_retxml.extract('/Root/dto/cdempres/text()').getstringval());      
@@ -728,7 +739,7 @@ create or replace package body cecred.TELA_CADEMP is
                            '<cooperativa>'||
                              '<codigo>'||vr_codpromotora||'</codigo>'|| 
                            '</cooperativa>'||
-                           '<dataContratacao>'||rw_dados_consig.dataHoraEnvio||'</dataContratacao>');
+                           '<dataContratacao>'||vr_datainicio||'</dataContratacao>');
         IF rw_dados_consig.datafim IS NOT NULL THEN
            pc_escreve_xml('<dataExpiracao>'||rw_dados_consig.datafim||'</dataExpiracao>');
         END IF;
@@ -745,13 +756,14 @@ create or replace package body cecred.TELA_CADEMP is
                            '<nomeBairro>'||vr_descbairrologradouro||'</nomeBairro>'||
                            '<numeroLogradouro>'||vr_numlogradouro||'</numeroLogradouro>'||
                            '<tipoENomeLogradouro>'||vr_desclogradouro||'</tipoENomeLogradouro>'||
-                           '<UF>'||vr_uflogradouro||'</UF>'||
+                           '<UF>'||upper(vr_uflogradouro)||'</UF>'||
                          '</pessoaContatoEndereco>'||
                          '<pessoaContatoTelefone>'||
                            '<numero>'||vr_telloja||'</numero>'||
                            '<DDD>'||vr_dddloja||'</DDD>'||
-                         '</pessoaContatoTelefone>'||
-                         '<pessoaContatoEmail>'||
+                         '</pessoaContatoTelefone>');
+                         
+        pc_escreve_xml('<pessoaContatoEmail>'||
                            '<enderecoEletronico>'||rw_dados_consig.descemail||'</enderecoEletronico>'||
                            '<nomeContato>'||rw_dados_consig.desccontatoloja||'</nomeContato>'||
                          '</pessoaContatoEmail>'||
@@ -766,7 +778,7 @@ create or replace package body cecred.TELA_CADEMP is
                            '</tipoUsuario>'||
                          '</sistemaTransacao>'||
                          '<interacaoGrafica>'||
-                          '<dataAcaoUsuario>'||rw_dados_consig.datahoraenvio||'</dataAcaoUsuario>'||
+                          '<dataAcaoUsuario>'||vr_datainicio||'</dataAcaoUsuario>'||
                         '</interacaoGrafica>'||
                         '<listaVencimentos>');
 
@@ -779,7 +791,7 @@ create or replace package body cecred.TELA_CADEMP is
              vr_xmlvencto:=  vr_xmlvencto||
                              '<vencimento>'||
                                '<convenioCredito>'||
-                                '<dataContratacao>'||rw_dados_vencto.dataInicioValidade||'</dataContratacao>'||
+                                '<dataContratacao>'||vr_datainicio||'</dataContratacao>'||
                                '</convenioCredito>'||
                                '<configuracaoCredito>'||
                                 '<tratamendoDiaNaoUtil>'||
@@ -813,8 +825,11 @@ create or replace package body cecred.TELA_CADEMP is
       CLOSE cr_dados_consig;
       pc_escreve_xml ('</listaVencimentos>'||
                       '</dto>',true);
-     
+                      
+      --DBMS_OUTPUT.put_line(vr_des_xml);
       pr_retxml := xmltype.createxml(vr_des_xml);
+      
+      --DBMS_OUTPUT.put_line(pr_retxml.getClobVal());
 
       /* liberando a memória alocada pro clob */
       dbms_lob.close(vr_des_xml);
@@ -824,10 +839,11 @@ create or replace package body cecred.TELA_CADEMP is
       WHEN vr_saida THEN
          pr_des_erro := 'OK';
          pr_cdcritic := nvl(vr_cdcritic,0);
-         pr_dscritic := vr_dscritic;
+         --pr_dscritic := vr_dscritic;
+         pr_dscritic := null;
            -- Carregar XML padrao para variavel de retorno
             pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                           '<Root><mensagem>' || pr_dscritic || '</mensagem></Root>');
+                                           '<Root><mensagem>' || vr_dscritic || '</mensagem></Root>');
       WHEN vr_exc_erro THEN
          /*  se foi retornado apenas código */
          IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
@@ -844,7 +860,7 @@ create or replace package body cecred.TELA_CADEMP is
       WHEN OTHERS THEN
            pr_des_erro := 'NOK';
          /* montar descriçao de erro nao tratado */
-           pr_dscritic := 'erro não tratado na tela_consig.pc_busca_param_consig_web ' ||SQLERRM;
+           pr_dscritic := 'erro nao tratado na tela_cademp.pc_busca_dados_consig_fis ' ||SQLERRM;
            -- Carregar XML padrao para variavel de retorno
             pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
