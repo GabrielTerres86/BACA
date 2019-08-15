@@ -147,6 +147,24 @@ BEGIN
          and (crapass.dtelimin is not null or crapass.dtdemiss is not null);
     rw_crapass cr_crapass%ROWTYPE;   
   
+    CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
+                     ,pr_nmsistem IN craptab.nmsistem%TYPE
+                     ,pr_tptabela IN craptab.tptabela%TYPE
+                     ,pr_cdempres IN craptab.cdempres%TYPE
+                     ,pr_cdacesso IN craptab.cdacesso%TYPE
+                     ,pr_dstextab IN craptab.dstextab%TYPE) IS
+      SELECT tab.dstextab
+            ,tab.tpregist
+            ,rowid
+        FROM craptab tab
+       WHERE tab.cdcooper = pr_cdcooper
+         AND UPPER(tab.nmsistem) = UPPER(pr_nmsistem)
+         AND UPPER(tab.tptabela) = UPPER(pr_tptabela)
+         AND tab.cdempres = pr_cdempres
+         AND UPPER(tab.cdacesso) = UPPER(pr_cdacesso)
+         AND to_number(SUBSTR(tab.dstextab,1,7)) = pr_dstextab;
+    rw_craptab cr_craptab%ROWTYPE;
+
   BEGIN
 
     -- Recuperar código da nova aplicação programada
@@ -316,6 +334,31 @@ BEGIN
                vr_dscritic := 'Conta: '|| rw_craprpp.nrdconta || ' Plano: ' || vr_nrseqted || ' - ' || vr_dscritic;
                raise vr_exc_erro;
            END IF;
+
+           OPEN cr_craptab(  pr_cdcooper => pr_cdcooper
+                            ,pr_nmsistem => 'CRED'
+                            ,pr_tptabela => 'BLQRGT'
+                            ,pr_cdempres => 00
+                            ,pr_cdacesso => gene0002.fn_mask(rw_craprpp.nrdconta,'9999999999')
+                            ,pr_dstextab => rw_craprpp.nrctrrpp );
+            FETCH cr_craptab INTO rw_craptab;
+            IF cr_craptab%FOUND THEN
+              /* Se tem bloqueio, migra ele tambem */
+              
+              BEGIN
+                UPDATE craptab
+                   SET dstextab = lpad(vr_nrseqted,7,'0') || substr(dstextab,8,length(dstextab))
+                 WHERE rowid = rw_craptab.rowid;
+              EXCEPTION
+                WHEN OTHERS THEN
+                   CLOSE cr_craptab;
+                   vr_dscritic := 'Erro migrando bloqueio - Conta: '|| rw_craprpp.nrdconta || ' Plano: ' || vr_nrseqted || ' - ' || SQLERRM;
+                   RAISE vr_exc_erro; 
+              END; 
+              
+            END IF;   
+            CLOSE cr_craptab;
+
     ELSE
              
       IF ((pr_cdprogra = 'CRPS148') AND  (pr_vlsdrdpp > 0)) THEN 

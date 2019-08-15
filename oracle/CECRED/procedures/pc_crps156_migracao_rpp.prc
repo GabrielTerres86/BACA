@@ -844,7 +844,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156_migracao_rpp (pr_cdcooper IN crapc
         END;                   
       END LOOP; -- fim loop rpp
       
-      /* Testa se aplicacao esta disponivel para saque */
+      /* Testa se aplicacao esta disponivel para saque 
+         Comentado para nao validar o bloqueio, pois sera migrado também.
       IF nvl(vr_cdcritic,0) <> 484   THEN
         -- buscar percentual
         OPEN cr_craptab( pr_cdcooper => pr_cdcooper
@@ -855,16 +856,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156_migracao_rpp (pr_cdcooper IN crapc
                         ,pr_dstextab => rw_craplrg.nraplica );
         FETCH cr_craptab INTO rw_craptab;
         IF cr_craptab%FOUND THEN
-          /* Vencida e Bloqueada faz o resgate */
+          /* Vencida e Bloqueada faz o resgate 
           IF rw_craprpp.dtvctopp <= rw_crapdat.dtmvtolt  THEN
             vr_cdcritic := 828;
           ELSIF pr_nrdconta = 0 AND rw_craplrg.idautblq = 1 THEN -- Somente validar abaixo se for do processo noturno   
-            /* caso contrario critica, esta bloqueada e nao venceu */
+            /* caso contrario critica, esta bloqueada e nao venceu 
             vr_cdcritic := 640;
           END IF;
         END IF;   
         CLOSE cr_craptab;
-      END IF;
+      END IF; */
       
        /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */
       IF  nvl(vr_cdcritic,0) = 0 OR vr_cdcritic = 828  THEN
@@ -1088,7 +1089,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156_migracao_rpp (pr_cdcooper IN crapc
           vr_dscritic := 'Não foi possivel atualizar craplrg (nrdconta:'||rw_craprpp.nrdconta||'): '||SQLERRM;
           RAISE vr_exc_saida; 
       END; 
-                     
+
       -- A cada registro migrado vamos comitar para nao lockar o plano
       COMMIT;
                      
