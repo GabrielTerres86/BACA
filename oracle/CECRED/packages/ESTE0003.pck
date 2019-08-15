@@ -497,6 +497,8 @@ end pc_obrigacao_analise_autom;
     Frequencia: Sempre que for chamado
     Objetivo  : Tem como objetivo solicitar o retorno da analise no Motor
     Alteraçao : 
+	            08/08/2019 - Adição do campo segueFluxoAtacado ao retorno 
+				             P637 (Darlei / Supero)
         
   ..........................................................................*/
 
@@ -530,7 +532,7 @@ end pc_obrigacao_analise_autom;
   vr_xmllog   VARCHAR2(4000);
   vr_retxml   xmltype;
   vr_nmdcampo VARCHAR2(100);
-      
+  vr_idfluata BOOLEAN; 
   vr_dsprotoc crawepr.dsprotoc%TYPE;
       
   --> Objeto json da proposta
@@ -845,6 +847,11 @@ end pc_obrigacao_analise_autom;
                 vr_datscore := ltrim(rtrim(vr_obj_indicadores.get('dataScoreBVS').to_char(),'"'),'"');
               END IF;
               
+			  -- PJ637 - 08/08/2019
+              IF vr_obj_indicadores.exist('segueFluxoAtacado') THEN
+                vr_idfluata := (CASE WHEN upper(ltrim(rtrim(vr_obj_indicadores.get('segueFluxoAtacado').to_char(),'"'),'"')) = 'TRUE' THEN TRUE ELSE FALSE END);
+              END IF;
+              
             END IF;  
             
             --> Se o DEBUG estiver habilitado
@@ -886,6 +893,7 @@ end pc_obrigacao_analise_autom;
                                                 ,pr_nrperger => vr_nrperger
                                                 ,pr_desscore => vr_desscore
                                                 ,pr_datscore => vr_datscore
+												,pr_idfluata => vr_idfluata
                                                 ,pr_dsrequis => vr_obj_proposta.to_char
                                                 ,pr_namehost => vr_host_esteira||'/'||vr_recurso_este
                                                 ,pr_xmllog   => vr_xmllog 

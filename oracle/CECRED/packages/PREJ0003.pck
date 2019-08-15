@@ -4780,6 +4780,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
 
     -- VARIÁVEIS
     vr_vlpagmto     NUMBER := pr_vlrpagto;
+    vr_vltotpgt    NUMBER := 0; -- PJ637
     vr_cdcritic     NUMBER;
     vr_dscritic     VARCHAR2(1000);
 
@@ -4847,6 +4848,7 @@ PROCEDURE pc_pagar_IOF_conta_prej(pr_cdcooper  IN craplcm.cdcooper%TYPE        -
                                         pr_vldabono => pr_vlrabono,
                                         pr_cdagenci => 1,
                                         pr_cdoperad => pr_cdoperad,
+                    pr_vltotpgt => vr_vltotpgt,
                                         pr_cdcritic => vr_cdcritic,
                                         pr_dscritic => vr_dscritic);
 

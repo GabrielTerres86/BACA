@@ -5,6 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780_1(pr_cdcooper IN crapcop.cdcooper%
                                         ,pr_vldabono in crapepr.vlsdprej%type  --> valor do abono
                                         ,pr_cdagenci IN crapass.cdagenci%type  --> código da agencia
                                         ,pr_cdoperad IN crapnrc.cdoperad%TYPE  --> Código do operador
+                                        ,pr_vltotpgt OUT crapepr.vlsdprej%type --> valor pago (contrato+iof)
                                         ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo da Critica
                                         ,pr_dscritic OUT VARCHAR2) IS          --> Descricao da Critica
 BEGIN
@@ -34,6 +35,9 @@ BEGIN
                            PRJ450 - Regulatorio(Odirlei-AMcom)
               
 			  09/05/2019 - P298.2.2 Tratamento para juros +60 PosFixado (Rafael Faria - Supero)
+
+              25/07/2019 - P637 - Passagem de parâmetro pr_vltotpgt utilizado na EMPR9999              
+
               
     ............................................................................. */
 
@@ -782,6 +786,9 @@ BEGIN
         END;
         --
       END LOOP; -- FIM LOOP PRINCIPAL
+
+      -- retorna o valor pago para controlar sobra de lancamentos - PJ637
+      pr_vltotpgt := vr_vldpagto + vr_vlpiofpr;
       --
   EXCEPTION
       

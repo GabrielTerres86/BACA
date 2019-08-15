@@ -21,6 +21,10 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0004 is
 
                   28/06/2019 - P450 - Reposicionado VariaveisInterna abaixo de VariaveisAdicionais no Proponente (Mario - AMcom)   
 
+				  08/08/2019 - Adição do campo segueFluxoAtacado ao retorno 
+				               P637 (Darlei / Supero)
+
+
   ---------------------------------------------------------------------------------------------------------------*/
   --> Rotina responsavel por montar o objeto json para analise de limite de desconto de títulos
   PROCEDURE pc_gera_json_analise_lim(pr_cdcooper   in crapass.cdcooper%type
@@ -143,6 +147,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
     
       Alteraçao : 
+                  08/08/2019 - Adição do campo segueFluxoAtacado ao retorno 
+				               P637 (Darlei / Supero)
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -211,6 +217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
           ,0 perceto
           ,lim.qtdiavig
           ,lim.cddlinha
+		  ,lim.idfluata -- P637
     from   crapldc ldc
           ,crapass ass
           ,crawlim lim
@@ -591,6 +598,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
         vr_obj_generico.put('tipoGarantiaCodigo'   , rw_crawlim.tpctrato );
         vr_obj_generico.put('tipoGarantiaDescricao', rw_crawlim.dsctrato );
     END IF;
+
+	-- P637 - fluxo atacado - 08/08/2019
+    vr_obj_generico.put('segueFluxoAtacado'    ,(CASE WHEN rw_crawlim.idfluata=1 THEN TRUE ELSE FALSE END)); 
 
     vr_obj_generico.put('debitoEm'    ,rw_crawlim.despagto );
     vr_obj_generico.put('liquidacao'  ,rw_crawlim.dsliquid!='0,0,0,0,0,0,0,0,0,0');
@@ -1468,6 +1478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
         ,0 instatus
         ,lim.dsnivris
         ,lim.insitapr
+		,lim.idfluata -- P637
         ,upper(lim.cdopeapr) cdopeapr
         ,'0,0,0,0,0,0,0,0,0,0' dsliquid
         ,case when nvl(lim.nrctrmnt,0) = 0 then 'LM'
@@ -1679,6 +1690,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
          vr_obj_proposta.put('tipoGarantiaDescricao', rw_crawlim.dsctrato );
      END IF;
 
+	 -- P637 - fluxo atacado - 08/08/2019
+     vr_obj_proposta.put('segueFluxoAtacado'    ,(CASE WHEN rw_crawlim.idfluata=1 THEN TRUE ELSE FALSE END)); 
+     
      --    Buscar dados do operador
      open  cr_crapope;
      fetch cr_crapope into rw_crapope;

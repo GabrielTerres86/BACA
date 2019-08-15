@@ -100,6 +100,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS770(pr_cdcooper IN crapcop.cdcooper%TY
   vr_dsctajud    crapprm.dsvlrprm%TYPE;         --> Parametro de contas que nao podem debitar os emprestimos
   vr_dsctactrjud crapprm.dsvlrprm%TYPE := null; --> Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307  
   vr_vlsddisp    crapsld.vlsddisp%TYPE;
+  vr_vltotpgt    NUMBER := 0; -- PJ637
   
   PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                   pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
@@ -302,6 +303,7 @@ BEGIN
                    pr_vldabono => 0, -- Na automatica não deverá ter abono
                    pr_cdagenci => 1,
                    pr_cdoperad => '1',
+                   pr_vltotpgt => vr_vltotpgt,
                    pr_cdcritic => vr_cdcritic,
                    pr_dscritic => vr_dscritic);
 
@@ -493,6 +495,7 @@ BEGIN
                    pr_vldabono => 0, -- Na automatica não deverá ter abono
                    pr_cdagenci => 1,
                    pr_cdoperad => '1',
+                   pr_vltotpgt => vr_vltotpgt,
                    pr_cdcritic => vr_cdcritic,
                    pr_dscritic => vr_dscritic);
       

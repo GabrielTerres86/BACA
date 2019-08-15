@@ -1161,7 +1161,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 		-- Variaveis locais
     vr_dsparcel gene0002.typ_split;
 	vr_vldpagto crapepr.vlsdeved%TYPE;    
-    vr_vldpagto_aux crapepr.vlsdeved%TYPE;
+    vr_vldpagto_aux crapepr.vlsdeved%TYPE;	 
+    vr_vlpabono crapepr.vlsdeved%TYPE;
     vr_vltotpag craplcm.vllanmto%TYPE;
     vr_flgdel   BOOLEAN;
     vr_flgativo PLS_INTEGER;
@@ -1428,11 +1429,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                  ,pr_vlttjmpr => rw_crapepr.vlttjmpr
                                  ,pr_vlpgjmpr => rw_crapepr.vlpgjmpr
                                  ,pr_cdoperad => pr_cdoperad
-                                 ,pr_vlparcel => pr_vldpagto
+                                 ,pr_vlparcel => 0 --pr_vldpagto PRJ637
                                                ,pr_inliqaco => 'S'
+                                 ,pr_vlrabono => rw_crapepr.vlsdprej
                                                ,pr_nmtelant => pr_nmtelant
                                  ,pr_vliofcpl => rw_crapepr.vliofcpl
-                                               ,pr_vltotpag => vr_vldpagto -- Retorna o valor pr_vltotpag com o valor pago.
+                                 ,pr_vltotpag => vr_vlpabono -- Ignora a saida do valor pago pq abono nao e considerado pagamento vr_vldpagto
                                                ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic);
                                

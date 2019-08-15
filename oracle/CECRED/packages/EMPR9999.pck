@@ -130,6 +130,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR9999 AS
                                         ,pr_cdoperad  IN VARCHAR2                     -- Código do cooperado
                                         ,pr_vlparcel  IN NUMBER                       -- Valor pago do boleto do acordo
                                         ,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
+                                        ,pr_vlrabono  IN NUMBER DEFAULT 0            -- Valor do abono concedido (aplicado somente a contratos em prejuízo P637)
                                         ,pr_nmtelant  IN VARCHAR2                     -- Nome da tela
                                         ,pr_vliofcpl  IN crapepr.vliofcpl%TYPE        -- Valor do IOF complementar
                                         ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
@@ -897,6 +898,7 @@ create or replace package body cecred.EMPR9999 as
                                         ,pr_cdoperad  IN VARCHAR2                     -- Código do cooperado
                                         ,pr_vlparcel  IN NUMBER                       -- Valor pago do boleto do acordo
                                         ,pr_inliqaco  IN VARCHAR2 DEFAULT 'N'         -- Indica que deve realizar a liquidação do acordo
+                                        ,pr_vlrabono  IN NUMBER DEFAULT 0            -- Valor do abono concedido (aplicado somente a contratos em prejuízo P637)
                                         ,pr_nmtelant  IN VARCHAR2                     -- Nome da tela
                                         ,pr_vliofcpl  IN crapepr.vliofcpl%TYPE        -- Valor do IOF complementar
                                         ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
@@ -921,44 +923,34 @@ create or replace package body cecred.EMPR9999 as
 									27/12/2018 - Alteração no tratamento para contas corrente em prejuízo (verificar através
 									             da função PREJ0003.fn_verifica_preju_conta ao invés de usar o "pr_nmdatela").
 															 P450 - Reginaldo/AMcom
-
+                  23/04/2019 - Alteração no programa, foi incluido a pck pc_crps780_1 
+                               P637 - Gilberto/Supero.
     ..........................................................................*/
-    
-    -- Buscar o valor total de lançamentos referente ao pagamento do prejuízo original
-    CURSOR cr_craplem(pr_cdhistor  craplem.cdhistor%TYPE) IS
-      SELECT SUM(lem.vllanmto) vllanmto
-        FROM craplem  lem
-       WHERE lem.cdcooper = pr_cdcooper
-         AND lem.nrdconta = pr_nrdconta
-         AND lem.nrctremp = pr_nrctremp
-         AND lem.cdhistor = pr_cdhistor;
-
     -- VARIÁVEIS
     vr_dtprmutl     DATE; -- Data do primeiro dia útil do mês
-    vr_vlpagmto     NUMBER := pr_vlparcel;
     vr_vlajuste     NUMBER;
-    vr_vllamlem     NUMBER;
-    vr_vlapagar     NUMBER;
+    vr_vlpagmto     NUMBER := pr_vlparcel;
+    vr_vltotpgt     NUMBER := 0; -- PJ637
+    vr_vlabono      NUMBER := pr_vlrabono;
     vr_des_reto     VARCHAR2(10);
     vr_tab_erro     GENE0001.typ_tab_erro;
     vr_cdcritic     NUMBER;
     vr_dscritic     VARCHAR2(1000);
 
-    vr_vlpgmupr     crapepr.vlpgmupr%TYPE;
-    vr_vlpgjmpr     crapepr.vlpgjmpr%TYPE;
-    vr_vlsdprej     crapepr.vlsdprej%TYPE;
-    vr_dtliquid     crapepr.dtliquid%TYPE;
-
-    vr_nrseqdig        craplem.nrseqdig%TYPE;
-
     -- EXCEPTIONS
     vr_exc_erro     EXCEPTION;
-
-		vr_prejuzcc BOOLEAN; -- Indicador de conta corrente em prejuízo
-
+    -- Busca saldo de liquidação Prejuizo
+    CURSOR cr_crapepr IS
+      SELECT -- PRJ637 -> Valor saldo prej liquida
+            (epr.vlsdprej +  -- saldo devedor atualizado
+               (nvl(epr.vltiofpr,0) - nvl(epr.vlpiofpr,0)) + -- valor residual IOF
+               (nvl(epr.vlttmupr,0) - nvl(epr.vlpgmupr,0)) + -- valor residual de multa
+               (nvl(epr.vlttjmpr,0) - nvl(epr.vlpgjmpr,0))) vlsdprjliq 
+        FROM crapepr epr
+       WHERE epr.cdcooper = pr_cdcooper
+         AND epr.nrdconta = pr_nrdconta
+         AND epr.nrctremp = pr_nrctremp; 
   BEGIN
-
-
     ------------------------------------------------------------------------------------------------------------
     -- INICIO DO TRATAMENTO DA COMPEFORA
     ------------------------------------------------------------------------------------------------------------
@@ -1018,436 +1010,33 @@ create or replace package body cecred.EMPR9999 as
     -- FIM DO TRATAMENTO DA COMPEFORA
     ------------------------------------------------------------------------------------------------------------
 
-    -- Se for liquidação do acordo, deve pagar o valor total do prejuízo
-    IF NVL(pr_inliqaco,'N') = 'S' THEN
-      vr_vlpagmto := NVL(pr_vlsdprej,0) + NVL(pr_vlttmupr,0) + NVL(pr_vlttjmpr,0) - NVL(pr_vlpgmupr,0) - NVL(pr_vlpgjmpr,0);
-      GOTO GERAR_ABONO_LEM;
-    END IF;
-
     ------------------------------------------------------------------------------------------------------------
     -- INICIO PARA O LANÇAMENTO DE PAGAMENTO DO PREJUIZO ORIGINAL
-    ------------------------------------------------------------------------------------------------------------
-    -- Limpar a variável
-    vr_vllamlem := NULL;
-
-    -- Carregar os valores
-    vr_vlpgmupr := pr_vlpgmupr;
-    vr_vlpgjmpr := pr_vlpgjmpr;
-    vr_vlsdprej := pr_vlsdprej;
-
-    -- Buscar o valor total de lançamentos referente ao pagamento do prejuízo original
-    OPEN  cr_craplem(382);
-    FETCH cr_craplem INTO vr_vllamlem;
-    CLOSE cr_craplem;
-
-    -- Garantir que variável não esteja null
-    vr_vllamlem := NVL(vr_vllamlem,0);
-
-    -- Guardar o valor a pagar no valor do boleto
-    vr_vlapagar := vr_vlpagmto;
-
-    -- Se o valor do boleto é maior que o prejuizo a pagar, acrescidos dos juros e multas
-    IF (vr_vlapagar > ((pr_vlprejuz + pr_vlttmupr + pr_vlttjmpr) - vr_vllamlem )) THEN
-      -- Define o valor total como o valor a ser pago
-      vr_vlapagar := ((pr_vlprejuz + pr_vlttmupr + pr_vlttjmpr) - vr_vllamlem );
-    END IF;
-
-    ------------------------------------------------------------------------------------------------------------------
-    -- Caso o valor do lançamento for menor ou igual a 0, significa que o pagamento do prejuizo original jah foi pago
-    -- ENTAO DEVERA PULAR PARA O PAGAMENTO DE JUROS DE PREJUIZO (((2º ETAPA)))
-    ------------------------------------------------------------------------------------------------------------------
-    IF vr_vlapagar <= 0 THEN
-      GOTO SEGUNDA_ETAPA;
-    END IF;
-
-    -- Atualiza o valor para pagamento decrementando o valor a pagar
-    vr_vlpagmto := vr_vlpagmto - vr_vlapagar;
-
-    -- ROTINA PARA EFETUAR O LANÇAMENTO
-    EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper       -- Codigo Cooperativa
-                                   ,pr_dtmvtolt => pr_crapdat.dtmvtolt       -- Data Emprestimo
-                                   ,pr_cdagenci => pr_cdagenci       -- Codigo Agencia
-                                   ,pr_cdbccxlt => 100               -- Codigo Caixa
-                                   ,pr_cdoperad => pr_cdoperad       -- Operador
-                                   ,pr_cdpactra => pr_cdagenci       -- Posto Atendimento
-                                   ,pr_tplotmov => 5                 -- Tipo movimento
-                                   ,pr_nrdolote => 650002            -- Numero Lote
-                                   ,pr_nrdconta => pr_nrdconta       -- Numero da Conta
-                                   ,pr_cdhistor => 382               -- Codigo Historico
-                                   ,pr_nrctremp => pr_nrctremp       -- Numero Contrato
-                                   ,pr_vllanmto => vr_vlapagar       -- Valor Lancamento
-                                   ,pr_dtpagemp => pr_crapdat.dtmvtolt -- Data Pagamento Emprestimo
-                                   ,pr_txjurepr => 0                 -- Taxa Juros Emprestimo
-                                   ,pr_vlpreemp => pr_vlpreemp       -- Valor Emprestimo
-                                   ,pr_nrsequni => 0                 -- Numero Sequencia
-                                   ,pr_nrparepr => 0                 -- Numero Parcelas Emprestimo
-                                   ,pr_flgincre => TRUE              -- Indicador Credito
-                                   ,pr_flgcredi => TRUE              -- Credito
-                                   ,pr_nrseqava => 0                 -- Pagamento: Sequencia do avalista
-                                   ,pr_cdorigem => 1                 -- Origem do Lançamento
-                                   ,pr_cdcritic => vr_cdcritic       -- Codigo Erro
-                                   ,pr_dscritic => vr_dscritic);     -- Descricao Erro
-
-    -- Se ocorreu erro
-    IF vr_dscritic IS NOT NULL THEN
-      pr_cdcritic := vr_cdcritic;
-      pr_dscritic := vr_dscritic;
-      RAISE vr_exc_erro;
-    END IF;
-
-    -- Acumula o valor de pagamento realizado
-    pr_vltotpag := NVL(pr_vltotpag,0) + vr_vlapagar;
-
-    -- Inicializa as variáveis dos valores a serem pagos
-    vr_vlpgmupr := NULL;
-    vr_vlpgjmpr := NULL;
-    vr_vlsdprej := NULL;
-
-    -- Se for o tipo de empréstimo 1 PP e 2 POS
-    IF pr_tpemprst in  (1,2) THEN
-      -- 1o Valor de Multa
-      IF (pr_vlttmupr - pr_vlpgmupr) >= vr_vlapagar THEN
-        vr_vlpgmupr := pr_vlpgmupr + vr_vlapagar;
-        vr_vlapagar := 0; -- Zera o valor a pagar pois usou todo o saldo
-      ELSE
-        -- Recalcular o saldo
-        vr_vlapagar := vr_vlapagar - (pr_vlttmupr - pr_vlpgmupr);
-        vr_vlpgmupr := pr_vlpgmupr + (pr_vlttmupr - pr_vlpgmupr);
-      END IF;
-
-      -- Se ainda possui saldo para pagamento
-      IF vr_vlapagar > 0 THEN
-        -- 2o Valor de Multa
-        IF (pr_vlttjmpr - pr_vlpgjmpr) >= vr_vlapagar THEN
-          vr_vlpgjmpr := pr_vlpgjmpr + vr_vlapagar;
-          vr_vlapagar := 0; -- Zera o valor a pagar pois usou todo o saldo
-        ELSE
-          vr_vlapagar := vr_vlapagar - (pr_vlttjmpr - pr_vlpgjmpr);
-          vr_vlpgjmpr := pr_vlpgjmpr + (pr_vlttjmpr - pr_vlpgjmpr);
-        END IF;
-      END IF;
-
-      -- Se ainda possui saldo para pagamento
-      IF vr_vlapagar > 0 THEN
-        -- 3o Valor em Prejuizo
-        vr_vlsdprej := pr_vlsdprej - vr_vlapagar;
-      END IF;
-    ELSE
-      -- Atualizar valor do saldo do Prejuízo
-      vr_vlsdprej := pr_vlsdprej - vr_vlapagar;
-    END IF;
-
-    /***** Atualiza a informação do empréstimo *****/
-    BEGIN
-
-      UPDATE crapepr epr
-         SET epr.vlpgmupr = NVL(vr_vlpgmupr,epr.vlpgmupr)
-           , epr.vlpgjmpr = NVL(vr_vlpgjmpr,epr.vlpgjmpr)
-           , epr.vlsdprej = NVL(vr_vlsdprej,epr.vlsdprej)
-       WHERE epr.cdcooper = pr_cdcooper
-         AND epr.nrdconta = pr_nrdconta
-         AND epr.nrctremp = pr_nrctremp;
-
-    EXCEPTION
-      WHEN OTHERS THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro ao atualizar emprestimo (1a. Etapa): '||SQLERRM;
-        RAISE vr_exc_erro;
-    END;
-    /***********************************************/
-
-    -- Deve atualizar os valores recebidos por parametro -- DESTE PONTO EM DIANTE UTILIZAR AS VARIÁVEIS
-    --vr_vlpgmupr := NVL(vr_vlpgmupr,pr_vlpgmupr);
-    --vr_vlpgjmpr := NVL(vr_vlpgjmpr,pr_vlpgjmpr);
-    vr_vlsdprej := NVL(vr_vlsdprej,pr_vlsdprej);
-
-    ------------------------------------------------------------------------------------------------------------
-    -- FIM PARA O LANÇAMENTO DE PAGAMENTO DO PREJUIZO ORIGINAL
-    ------------------------------------------------------------------------------------------------------------
-
-    ------------------------------------------------------------------------------------------------------------
-    -- INICIO PARA O LANÇAMENTO DE PAGAMENTO DE JUROS  -->  (((2º ETAPA)))  <--
-    ------------------------------------------------------------------------------------------------------------
-    /***********/   <<SEGUNDA_ETAPA>>   /***********/
-    ------------------------------------------------------------------------------------------------------------
-
-    -- Se não há mais valores disponível para pagamentos
-    IF vr_vlpagmto > 0 THEN
-
-      -- Limpar a variável
-      vr_vllamlem := NULL;
-
-      -- Buscar o valor disponivel para efetuar o pagamento de juros do prejuizo
-      OPEN  cr_craplem(390);
-      FETCH cr_craplem INTO vr_vllamlem;
-      CLOSE cr_craplem;
-
-      -- Garantir que variável não esteja null
-      vr_vllamlem := NVL(vr_vllamlem,0);
-
-      -- Guardar o valor a pagar com o valor restante ds pagamentos anteriores
-      vr_vlapagar := vr_vlpagmto;
-
-      -- 05/10/2016 - REMOVIDO o "+ pr_vlttmupr + pr_vlttjmpr" porque estes valores já foram pagos
-
-      -- Se o valor disponivel para pagamento é maior que o saldo do prejuizo.. mais taxas
-      IF vr_vlapagar > vr_vlsdprej THEN
-        vr_vlapagar := vr_vlsdprej;
-      END IF;
-
-    IF vr_vlapagar > 0 THEN
-
-      -- ROTINA PARA EFETUAR O LANÇAMENTO
-      EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper       -- Codigo Cooperativa
-                                     ,pr_dtmvtolt => pr_crapdat.dtmvtolt       -- Data Emprestimo
-                                     ,pr_cdagenci => pr_cdagenci       -- Codigo Agencia
-                                     ,pr_cdbccxlt => 100               -- Codigo Caixa
-                                     ,pr_cdoperad => pr_cdoperad       -- Operador
-                                     ,pr_cdpactra => pr_cdagenci       -- Posto Atendimento
-                                     ,pr_tplotmov => 5                 -- Tipo movimento
-                                     ,pr_nrdolote => 650002            -- Numero Lote
-                                     ,pr_nrdconta => pr_nrdconta       -- Numero da Conta
-                                     ,pr_cdhistor => 391               -- Codigo Historico
-                                     ,pr_nrctremp => pr_nrctremp       -- Numero Contrato
-                                     ,pr_vllanmto => vr_vlapagar       -- Valor Lancamento
-                                     ,pr_dtpagemp => pr_crapdat.dtmvtolt       -- Data Pagamento Emprestimo
-                                     ,pr_txjurepr => 0                 -- Taxa Juros Emprestimo
-                                     ,pr_vlpreemp => pr_vlpreemp       -- Valor Emprestimo
-                                     ,pr_nrsequni => 0                 -- Numero Sequencia
-                                     ,pr_nrparepr => 0                 -- Numero Parcelas Emprestimo
-                                     ,pr_flgincre => TRUE              -- Indicador Credito
-                                     ,pr_flgcredi => TRUE              -- Credito
-                                     ,pr_nrseqava => 0                 -- Pagamento: Sequencia do avalista
-                                     ,pr_cdorigem => 1                 -- Origem do Lançamento
-                                     ,pr_cdcritic => vr_cdcritic       -- Codigo Erro
-                                     ,pr_dscritic => vr_dscritic);     -- Descricao Erro
-
-      -- Se ocorreu erro
-      IF vr_dscritic IS NOT NULL THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-        RAISE vr_exc_erro;
-      END IF;
-
-      END IF;
-
-      -- Acumula o valor de pagamento realizado
-      pr_vltotpag := NVL(pr_vltotpag,0) + vr_vlapagar;
-
-      -- Limpa a variável de data
-      vr_dtliquid := NULL;
-
-      -- Se o valor do prejuízo é maior que o saldo a pagar
-      IF vr_vlsdprej > vr_vlapagar THEN
-        vr_vlsdprej := vr_vlsdprej - vr_vlapagar;
-      ELSE
-        vr_vlsdprej := 0; -- Zera o prejuízo
-        vr_dtliquid := pr_crapdat.dtmvtolt; -- Seta a data de liquidação
-      END IF;
-
-      -- Atualiza a informação do empréstimo
-      BEGIN
-
-        UPDATE crapepr epr
-           SET epr.vlsdprej = NVL(vr_vlsdprej,epr.vlsdprej)
-             , epr.dtliquid = NVL(vr_dtliquid,epr.dtliquid)
-         WHERE epr.cdcooper = pr_cdcooper
-           AND epr.nrdconta = pr_nrdconta
-           AND epr.nrctremp = pr_nrctremp
-           AND epr.dtliquid IS NULL;
-
-      EXCEPTION
-        WHEN OTHERS THEN
-          pr_cdcritic := 0;
-          pr_dscritic := 'Erro ao atualizar emprestimo (2a. Etapa): '||SQLERRM;
-          RAISE vr_exc_erro;
-      END;
-
-    END IF;
-    ------------------------------------------------------------------------------------------------------------
-    -- FIM PARA O LANÇAMENTO DE PAGAMENTO DE JUROS
-    ------------------------------------------------------------------------------------------------------------
-
-		-- Verifica se a conta corrente está em prejuízo - Reginaldo/AMcom
-		vr_prejuzcc := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
-
-    ------------------------------------------------------------------------------------------------------------
-    -- INICIO PARA O LANÇAMENTO DE DEBITO DO PAGAMENTO DE PREJUIZO  -->  (((3º ETAPA)))  <--
-    ------------------------------------------------------------------------------------------------------------
-    IF pr_vltotpag > 0 THEN
-     IF NOT vr_prejuzcc THEN
-      EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
-                                      ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
-                                      ,pr_cdagenci => pr_cdagenci         --> Código da agência
-                                      ,pr_cdbccxlt => 100                 --> Número do caixa
-                                      ,pr_cdoperad => pr_cdoperad         --> Código do Operador
-                                      ,pr_cdpactra => pr_cdagenci         --> P.A. da transação
-                                      ,pr_nrdolote => 650001              --> Numero do Lote
-                                      ,pr_nrdconta => pr_nrdconta         --> Número da conta
-                                      ,pr_cdhistor => 384                 --> Codigo historico
-                                      ,pr_vllanmto => pr_vltotpag - nvl(pr_vliofcpl,0)        --> Valor do debito
-                                      ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
-                                      ,pr_nrctremp => 0                   --> Número do contrato de empréstimo
-                                      ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
-                                      ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
-
-      -- Se ocorreu erro
-      IF vr_des_reto <> 'OK' THEN
-        -- Se possui algum erro na tabela de erros
-        IF vr_tab_erro.COUNT() > 0 THEN
-          pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-        ELSE
-          pr_cdcritic := 0;
-          pr_dscritic := 'Erro ao criar o lancamento na conta corrente.';
-        END IF;
-        RAISE vr_exc_erro;
-      END IF;
-    ELSE
-      -- Lança débito no extrato do prejuízo (para correta contabilização)
-      PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper
-                                      , pr_nrdconta => pr_nrdconta
-                                      , pr_dtmvtolt => pr_crapdat.dtmvtolt
-                                      , pr_cdhistor => 384
-                                      , pr_vllanmto => pr_vltotpag - nvl(pr_vliofcpl,0)
-                                      , pr_nrctremp => pr_nrctremp
-                                      , pr_cdcritic => vr_cdcritic
-                                      , pr_dscritic => vr_dscritic);
-      IF nvl(vr_cdcritic,0) > 0 OR  
-         TRIM(vr_dscritic) IS NOT NULL THEN
-         
-        pr_cdcritic := vr_cdcritic; 
-        pr_dscritic := vr_dscritic;
-        RAISE vr_exc_erro;
-      END IF;   
-
-    END IF; -- Lançamento conta corrente
-
-     IF NVL(pr_vliofcpl,0) > 0 THEN
-       IF NOT vr_prejuzcc THEN
-          EMPR0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper         --> Cooperativa conectada
-                                        ,pr_dtmvtolt => pr_crapdat.dtmvtolt --> Movimento atual
-                                        ,pr_cdagenci => pr_cdagenci         --> Código da agência
-                                        ,pr_cdbccxlt => 100                 --> Número do caixa
-                                        ,pr_cdoperad => pr_cdoperad         --> Código do Operador
-                                        ,pr_cdpactra => pr_cdagenci         --> P.A. da transação
-                                        ,pr_nrdolote => 650001              --> Numero do Lote
-                                        ,pr_nrdconta => pr_nrdconta         --> Número da conta
-                                        ,pr_cdhistor => 2313                --> Codigo historico
-                                        ,pr_vllanmto => pr_vliofcpl         --> Valor do debito
-                                        ,pr_nrparepr => pr_nrparcel         --> Número parcelas empréstimo
-                                        ,pr_nrctremp => 0                   --> Número do contrato de empréstimo
-                                              ,pr_nrseqdig => vr_nrseqdig         --> Número de sequencia de lançamento 
-                                        ,pr_des_reto => vr_des_reto         --> Retorno OK / NOK
-                                        ,pr_tab_erro => vr_tab_erro);       --> Tabela com possíves erros
-
-          -- Se ocorreu erro
-          IF vr_des_reto <> 'OK' THEN
-            -- Se possui algum erro na tabela de erros
-            IF vr_tab_erro.COUNT() > 0 THEN
-              pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-              pr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-            ELSE
-              pr_cdcritic := 0;
-              pr_dscritic := 'Erro ao criar o lancamento de IOF na conta corrente.';
-             END IF;
-            RAISE vr_exc_erro;
-          END IF;
-
-          -- Insere registro de pagamento de IOF na tbgen_iof_lancamento
-          tiof0001.pc_insere_iof(pr_cdcooper     => pr_cdcooper
-                               , pr_nrdconta     => pr_nrdconta
-                               , pr_dtmvtolt     => pr_crapdat.dtmvtolt
-                               , pr_tpproduto    => 1 -- Emprestimo
-                               , pr_nrcontrato   => pr_nrctremp
-                               , pr_idlautom     => null
-                               , pr_dtmvtolt_lcm => pr_crapdat.dtmvtolt
-                               , pr_cdagenci_lcm => pr_cdagenci
-                               , pr_cdbccxlt_lcm => 100
-                               , pr_nrdolote_lcm => 650001
-														 , pr_nrseqdig_lcm => vr_nrseqdig
-                               , pr_vliofpri     => 0
-                               , pr_vliofadi     => 0
-                               , pr_vliofcpl     => pr_vliofcpl
-                               , pr_flgimune     => 0
-                               , pr_cdcritic     => vr_cdcritic
-                               , pr_dscritic     => vr_dscritic);
-
-          if vr_dscritic is not null then
-             raise vr_exc_erro;
+    ----------------------------- := -------------------------------------------------------------------------------
+    if pr_inliqaco = 'S' and vr_vlpagmto = 0 then 
+      --vr_vlabono := pr_vlsdprej;
+      OPEN  cr_crapepr;
+      FETCH cr_crapepr INTO vr_vlabono;
+      CLOSE cr_crapepr;
+    else
+      vr_vlabono := pr_vlrabono;
           end if;
-        END IF; --Lançamento na conta corrente
+    pc_crps780_1(pr_cdcooper =>  pr_cdcooper,
+                                 pr_nrdconta => pr_nrdconta,
+                                 pr_nrctremp => pr_nrctremp,
+                                 pr_vlpagmto => vr_vlpagmto,
+                  pr_vldabono => vr_vlabono,
+                  pr_cdagenci => pr_cdagenci,
+                                 pr_cdoperad => pr_cdoperad,
+                  pr_vltotpgt => vr_vltotpgt,
+                                 pr_cdcritic => vr_cdcritic,
+                                 pr_dscritic => vr_dscritic);
+
+      IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+         RAISE vr_exc_erro;
+     ELSE
+       pr_vltotpag := vr_vltotpgt + vr_vlabono;
       END IF;
-
-    END IF;
-
-    ------------------------------------------------------------------------------------------------------------
-    -- INICIO PARA O LANÇAMENTO DE ABONO NA CRAPLEM
-    ------------------------------------------------------------------------------------------------------------
-    /***********/   <<GERAR_ABONO_LEM>>   /***********/
-    ------------------------------------------------------------------------------------------------------------
-
-    IF NVL(pr_inliqaco,'N') = 'S' THEN
-
-      IF vr_vlpagmto > 0 THEN
-
-      -- ROTINA PARA EFETUAR O LANÇAMENTO
-      EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper       -- Codigo Cooperativa
-                                     ,pr_dtmvtolt => pr_crapdat.dtmvtolt       -- Data Emprestimo
-                                     ,pr_cdagenci => pr_cdagenci       -- Codigo Agencia
-                                     ,pr_cdbccxlt => 100               -- Codigo Caixa
-                                     ,pr_cdoperad => pr_cdoperad       -- Operador
-                                     ,pr_cdpactra => pr_cdagenci       -- Posto Atendimento
-                                     ,pr_tplotmov => 5                 -- Tipo movimento
-                                     ,pr_nrdolote => 650002            -- Numero Lote
-                                     ,pr_nrdconta => pr_nrdconta       -- Numero da Conta
-                                     ,pr_cdhistor => 383               -- Codigo Historico
-                                     ,pr_nrctremp => pr_nrctremp       -- Numero Contrato
-                                     ,pr_vllanmto => vr_vlpagmto       -- Valor Lancamento
-                                     ,pr_dtpagemp => pr_crapdat.dtmvtolt       -- Data Pagamento Emprestimo
-                                     ,pr_txjurepr => 0                 -- Taxa Juros Emprestimo
-                                     ,pr_vlpreemp => pr_vlpreemp       -- Valor Emprestimo
-                                     ,pr_nrsequni => 0                 -- Numero Sequencia
-                                     ,pr_nrparepr => 0                 -- Numero Parcelas Emprestimo
-                                     ,pr_flgincre => TRUE              -- Indicador Credito
-                                     ,pr_flgcredi => TRUE              -- Credito
-                                     ,pr_nrseqava => 0                 -- Pagamento: Sequencia do avalista
-                                     ,pr_cdorigem => 1                 -- Origem do Lançamento
-                                     ,pr_cdcritic => vr_cdcritic       -- Codigo Erro
-                                     ,pr_dscritic => vr_dscritic);     -- Descricao Erro
-
-      -- Se ocorreu erro
-      IF vr_dscritic IS NOT NULL THEN
-        pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-        RAISE vr_exc_erro;
-      END IF;
-
-      -- Atualiza a informação do empréstimo
-      BEGIN
-
-        UPDATE crapepr epr
-           SET epr.vlsdprej = 0
-             , epr.vlpgmupr = pr_vlttmupr
-             , epr.vlpgjmpr = pr_vlttjmpr
-             , epr.dtliquid = pr_crapdat.dtmvtolt
-             , epr.vliofcpl = epr.vliofcpl - nvl(pr_vliofcpl,0)
-         WHERE epr.cdcooper = pr_cdcooper
-           AND epr.nrdconta = pr_nrdconta
-           AND epr.nrctremp = pr_nrctremp;
-
-      EXCEPTION
-        WHEN OTHERS THEN
-          pr_cdcritic := 0;
-          pr_dscritic := 'Erro ao atualizar emprestimo (GERACAO ABONO): '||SQLERRM;
-        RAISE vr_exc_erro;
-      END;
-
-      END IF;
-
-    END IF;
-
-
   EXCEPTION
     WHEN  vr_exc_erro THEN
       pr_vltotpag := 0; -- retornar zero

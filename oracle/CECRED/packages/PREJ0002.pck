@@ -1162,6 +1162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
     vr_inprejuz    INTEGER;
     vr_vlsdprej    NUMBER;
     vr_vlsomato    NUMBER;
+    vr_vltotpgt    NUMBER := 0; -- PROJ637
     vr_tab_saldos  EXTR0001.typ_tab_saldos;
     vr_dsctajud    crapprm.dsvlrprm%TYPE;         --> Parametro de contas que nao podem debitar os emprestimos
     vr_dsctactrjud crapprm.dsvlrprm%TYPE := null; --> Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
@@ -1416,6 +1417,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                         pr_vldabono => pr_vldabono,
                         pr_cdagenci => 1,
                         pr_cdoperad => vr_cdoperad,
+                        pr_vltotpgt => vr_vltotpgt, --PROJ637
                         pr_cdcritic => vr_cdcritic,
                         pr_dscritic => vr_dscritic);
            IF vr_dscritic IS NOT NULL THEN
