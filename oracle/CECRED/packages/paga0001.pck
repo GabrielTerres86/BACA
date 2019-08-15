@@ -1705,7 +1705,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
      11/03/2019 - Quando der erro na rotina pc atualiza trans nao efetiv, 
                   gerar Log pois as rotinas chamadoras iram ignorar o erro.
                   (Belli - Envolti - INC0034476)
-                  
+
+     24/04/2019 - Incluído tratamento para verificar se o lote esta em lock.
+                  Jose Dill - Mouts (PRB0040712)
+
      11/07/2019 - Correção em mensagem de erro exibida ao cooperado.
                   Se for retornada uma critica no momento de cria o lancamento do DEBITO, 
                   passa a não mais emitir o alerta ao cooperado com informacoes de LOG.
@@ -18959,6 +18962,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --                Ajuste mensagem de erro 
     --                (Belli - Envolti - Chamado 779415)    
     --
+	--   09/05/2019 - Ajustado para buscar cursor do lote quando ocorrer dup_val
+	--                (Jefferson - MoutS)
     -- .........................................................................    
   BEGIN
     DECLARE
@@ -19000,6 +19005,160 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_exc_saida EXCEPTION;
       --Agrupa os parametros - 15/12/2017 - Chamado 779415 
       vr_dsparame VARCHAR2(4000);
+      
+      pr_nrdrowid ROWID;
+      -- Procedimento para inserir o lote e não deixar tabela lockada
+      PROCEDURE pc_insere_lote (pr_cdcooper IN craplot.cdcooper%TYPE,
+                                pr_dtmvtolt IN craplot.dtmvtolt%TYPE,
+                                pr_cdagenci IN craplot.cdagenci%TYPE,
+                                pr_cdbccxlt IN craplot.cdbccxlt%TYPE,
+                                pr_nrdolote IN craplot.nrdolote%TYPE,
+                                pr_tplotmov IN craplot.tplotmov%TYPE,
+                                pr_craplot  OUT cr_craplot%ROWTYPE,
+                                pr_cdcritic OUT INTEGER,
+                                pr_dscritic OUT VARCHAR2)IS
+
+        -- Pragma - abre nova sessao para tratar a atualizacao
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        -- criar rowtype controle
+        rw_craplot_ctl cr_craplot%ROWTYPE;
+
+    BEGIN
+        -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_insere_lote - D');
+
+        /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
+        FOR i IN 1..100 LOOP
+          BEGIN
+            -- Leitura do lote
+            OPEN cr_craplot (pr_cdcooper  => pr_cdcooper,
+                             pr_dtmvtolt  => pr_dtmvtolt,
+                             pr_cdagenci  => pr_cdagenci,
+                             pr_cdbccxlt  => pr_cdbccxlt,
+                             pr_nrdolote  => pr_nrdolote);
+            FETCH cr_craplot INTO rw_craplot_ctl;
+            pr_dscritic := NULL;
+            EXIT;
+          EXCEPTION
+            WHEN OTHERS THEN
+               IF cr_craplot%ISOPEN THEN
+                 CLOSE cr_craplot;
+               END IF;
+               
+               -- setar critica caso for o ultimo
+               IF i = 100 THEN
+                 pr_dscritic:= pr_dscritic||'Registro de lote '||pr_nrdolote||' em uso. Tente novamente.';                 
+               END IF;
+               -- aguardar 0,5 seg. antes de tentar novamente
+               sys.dbms_lock.sleep(0.1);
+          END;
+        END LOOP;
+
+        -- se encontrou erro ao buscar lote, abortar programa
+        IF pr_dscritic IS NOT NULL THEN
+          ROLLBACK;
+          RETURN;
+        END IF;
+
+        IF cr_craplot%NOTFOUND THEN
+          -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
+          BEGIN
+            IF cr_craplot%ISOPEN THEN
+              CLOSE cr_craplot;
+            END IF;
+            -- criar registros de lote na tabela
+            INSERT INTO craplot
+                    (craplot.cdcooper
+                    ,craplot.dtmvtolt
+                    ,craplot.cdagenci
+                    ,craplot.cdbccxlt
+                    ,craplot.nrdolote
+                    ,craplot.tplotmov)
+            VALUES  (pr_cdcooper
+                    ,pr_dtmvtolt
+                    ,pr_cdagenci
+                    ,pr_cdbccxlt
+                    ,pr_nrdolote
+                    ,pr_tplotmov)
+          RETURNING  craplot.ROWID
+                    ,craplot.nrdolote
+                    ,craplot.cdbccxlt
+                    ,craplot.tplotmov
+                    ,craplot.dtmvtolt
+                    ,craplot.nrseqdig
+                    ,craplot.cdagenci
+                    ,craplot.cdcooper
+                INTO rw_craplot_ctl.ROWID
+                   , rw_craplot_ctl.nrdolote
+                   , rw_craplot_ctl.cdbccxlt
+                   , rw_craplot_ctl.tplotmov
+                   , rw_craplot_ctl.dtmvtolt
+                   , rw_craplot_ctl.nrseqdig
+                   , rw_craplot_ctl.cdagenci
+                   , rw_craplot_ctl.cdcooper;
+          EXCEPTION
+            WHEN Dup_val_on_index THEN
+              -- Leitura do lote
+              OPEN cr_craplot (pr_cdcooper  => pr_cdcooper,
+                               pr_dtmvtolt  => pr_dtmvtolt,
+                               pr_cdagenci  => pr_cdagenci,
+                               pr_cdbccxlt  => pr_cdbccxlt,
+                               pr_nrdolote  => pr_nrdolote);
+              FETCH cr_craplot INTO rw_craplot_ctl;       
+            WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
+              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+              pr_cdcritic := 1034;
+              pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                         'CRAPLOT(26):' ||  
+                         ' cdcooper:'   || pr_cdcooper ||
+                         ', dtmvtolt:'  || pr_dtmvtolt ||
+                         ', cdagenci:'  || pr_cdagenci ||
+                         ', cdbccxlt:'  || pr_cdbccxlt ||
+                         ', nrdolote:'  || pr_nrdolote ||
+                         ', tplotmov:'  || pr_tplotmov ||
+                         '. ' ||sqlerrm;               
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+          END;
+        END IF;
+
+        IF cr_craplot%ISOPEN THEN
+          CLOSE cr_craplot;
+        END IF;
+
+        -- retornar informações para o programa chamador
+        pr_craplot := rw_craplot_ctl;
+
+        COMMIT;
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+          --Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
+          IF cr_craplot%ISOPEN THEN
+            CLOSE cr_craplot;
+          END IF;
+          ROLLBACK;
+        WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
+          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+          IF cr_craplot%ISOPEN THEN
+            CLOSE cr_craplot;
+          END IF;
+          -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
+          pr_cdcritic := 9999;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
+                      'PAGA0001.pc_insere_lote'||
+                      '. ' || SQLERRM ||
+                      '. pr_cdcooper:' || pr_cdcooper || 
+                      ', pr_dtmvtolt:' || pr_dtmvtolt ||
+                      ', pr_cdagenci:' || pr_cdagenci ||
+                      ', pr_cdbccxlt:' || pr_cdbccxlt ||
+                      ', pr_nrdolote:' || pr_nrdolote ||
+                      ', pr_tplotmov:' || pr_tplotmov;        
+          ROLLBACK;
+      END pc_insere_lote;
     BEGIN
 	    -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
 		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_realiza_lancto_cooperado');
@@ -19036,74 +19195,21 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         IF pr_tab_lcm_consolidada(vr_index).nrconven = to_number(pr_cdpesqbb) THEN
           --Se for tarifa
           IF pr_tab_lcm_consolidada(vr_index).tplancto <> 'T' THEN /* Tarifa */
-            --Buscar lote
-            OPEN cr_craplot (pr_cdcooper => pr_cdcooper
-                            ,pr_dtmvtolt => pr_dtmvtolt
-                            ,pr_cdagenci => pr_cdagenci
-                            ,pr_cdbccxlt => pr_cdbccxlt
-                            ,pr_nrdolote => pr_nrdolote);
-            --Posicionar no primeiro registro
-            FETCH cr_craplot INTO rw_craplot;
-            --Verificar se encontrou
-            IF cr_craplot%NOTFOUND THEN
-              --Fechar Cursor
-              CLOSE cr_craplot;
-              BEGIN
-                INSERT INTO craplot
-                  (craplot.cdcooper
-                  ,craplot.dtmvtolt
-                  ,craplot.cdagenci
-                  ,craplot.cdbccxlt
-                  ,craplot.nrdolote
-                  ,craplot.tplotmov)
-                VALUES
-                  (pr_cdcooper
-                  ,pr_dtmvtolt
-                  ,pr_cdagenci
-                  ,pr_cdbccxlt
-                  ,pr_nrdolote
-                  ,1)
-                RETURNING
-                   craplot.cdcooper
-                  ,craplot.dtmvtolt
-                  ,craplot.cdagenci
-                  ,craplot.cdbccxlt
-                  ,craplot.nrdolote
-                  ,craplot.tplotmov
-                  ,craplot.nrseqdig
-                  ,craplot.rowid
-                INTO
-                   rw_craplot.cdcooper
-                  ,rw_craplot.dtmvtolt
-                  ,rw_craplot.cdagenci
-                  ,rw_craplot.cdbccxlt
-                  ,rw_craplot.nrdolote
-                  ,rw_craplot.tplotmov
-                  ,rw_craplot.nrseqdig
-                  ,rw_craplot.rowid;
-              EXCEPTION
-                WHEN OTHERS THEN
-                  -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
-                  CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-                  -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
-                  vr_cdcritic := 1034;
-                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                             'CRAPLOT(26):' ||	
-                             ' cdcooper:'   || pr_cdcooper ||
-                             ', dtmvtolt:'  || pr_dtmvtolt ||
-                             ', cdagenci:'  || pr_cdagenci ||
-                             ', cdbccxlt:'  || pr_cdbccxlt ||
-                             ', nrdolote:'  || pr_nrdolote ||
-                             ', tplotmov:'  || '1' ||
-                             '. ' ||sqlerrm;	
+            pc_insere_lote (pr_cdcooper => pr_cdcooper,
+                            pr_dtmvtolt => pr_dtmvtolt,
+                            pr_cdagenci => pr_cdagenci,
+                            pr_cdbccxlt => pr_cdbccxlt,
+                            pr_nrdolote => pr_nrdolote,
+                            pr_tplotmov => 1,
+                            pr_craplot  => rw_craplot,
+                            pr_cdcritic => vr_cdcritic,
+                            pr_dscritic => vr_dscritic);
+            -- se encontrou erro ao buscar lote, abortar programa
+            IF vr_dscritic IS NOT NULL THEN              
                   --Levantar Excecao
                   RAISE vr_exc_erro;
-              END;
             END IF;
-            --Fechar Cursor
-            IF cr_craplot%ISOPEN THEN
-              CLOSE cr_craplot;
-            END IF;
+            
             --Numero do Convenio existe
             IF pr_tab_lcm_consolidada(vr_index).nrconven > 0 THEN
               vr_nrdocmto:= pr_tab_lcm_consolidada(vr_index).nrconven;
@@ -27062,206 +27168,99 @@ end;';
        END IF;
        
        IF vr_dscritic IS NULL THEN
-       --Se a origem for TAA
-       IF pr_idorigem = 4 THEN /* TAA */
-         
-         /** Verifica se possui saldo para fazer a operacao **/
-         EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => pr_cdcooper
-                                     ,pr_rw_crapdat => rw_crapdat
-                                     ,pr_cdagenci   => pr_cdagenci
-                                     ,pr_nrdcaixa   => pr_nrdcaixa
-                                     ,pr_cdoperad   => pr_cdoperad
-                                     ,pr_nrdconta   => rw_craplau.nrdconta
-                                     ,pr_vllimcre   => rw_crapass.vllimcre
-                                     ,pr_tipo_busca => 'A' --> tipo de busca(A-dtmvtoan)
-                                     ,pr_flgcrass   => FALSE
-                                     ,pr_dtrefere   => pr_dtmvtolt
-                                     ,pr_des_reto   => vr_dscritic
-                                     ,pr_tab_sald   => vr_tab_saldo
-                                     ,pr_tab_erro   => vr_tab_erro);
-         --Se ocorreu erro
-         IF vr_dscritic = 'NOK' THEN
+         --Se a origem for TAA
+         IF pr_idorigem = 4 THEN /* TAA */
            
-           -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415            
-           -- Tenta buscar o erro no vetor de erro
-           IF vr_tab_erro.COUNT > 0 THEN
-             vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-             vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic ||
-                        ' Retorno extr0001.pc_obtem_saldo_dia' ||
-                        ', pr_nrdconta:'    || rw_craplau.nrdconta ||
-                        ', pr_vllimcre:'    || rw_crapass.vllimcre ||
-                        ', pr_tipo_busca:'  || 'A'                 || --> tipo de busca(A-dtmvtoan)
-                        ', pr_flgcrass:'    || 'FALSE';
+           /** Verifica se possui saldo para fazer a operacao **/
+           EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => pr_cdcooper
+                                       ,pr_rw_crapdat => rw_crapdat
+                                       ,pr_cdagenci   => pr_cdagenci
+                                       ,pr_nrdcaixa   => pr_nrdcaixa
+                                       ,pr_cdoperad   => pr_cdoperad
+                                       ,pr_nrdconta   => rw_craplau.nrdconta
+                                       ,pr_vllimcre   => rw_crapass.vllimcre
+                                       ,pr_tipo_busca => 'A' --> tipo de busca(A-dtmvtoan)
+                                       ,pr_flgcrass   => FALSE
+                                       ,pr_dtrefere   => pr_dtmvtolt
+                                       ,pr_des_reto   => vr_dscritic
+                                       ,pr_tab_sald   => vr_tab_saldo
+                                       ,pr_tab_erro   => vr_tab_erro);
+           --Se ocorreu erro
+           IF vr_dscritic = 'NOK' THEN
+             
+             -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415            
+             -- Tenta buscar o erro no vetor de erro
+             IF vr_tab_erro.COUNT > 0 THEN
+               vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+               vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic ||
+                          ' Retorno extr0001.pc_obtem_saldo_dia' ||
+                          ', pr_nrdconta:'    || rw_craplau.nrdconta ||
+                          ', pr_vllimcre:'    || rw_crapass.vllimcre ||
+                          ', pr_tipo_busca:'  || 'A'                 || --> tipo de busca(A-dtmvtoan)
+                          ', pr_flgcrass:'    || 'FALSE';
+             ELSE
+               vr_cdcritic:= 9998;
+               vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                          ' Retorno extr0001.pc_obtem_saldo_dia' ||
+                          ', pr_nrdconta:'    || rw_craplau.nrdconta ||
+                          ', pr_vllimcre:'    || rw_crapass.vllimcre ||
+                          ', pr_tipo_busca:'  || 'A'                 || --> tipo de busca(A-dtmvtoan)
+                          ', pr_flgcrass:'    || 'FALSE';
+             END IF;
+             
+             --Levantar Excecao           
+             RAISE vr_exc_erro;
+             
            ELSE
-             vr_cdcritic:= 9998;
-             vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                        ' Retorno extr0001.pc_obtem_saldo_dia' ||
-                        ', pr_nrdconta:'    || rw_craplau.nrdconta ||
-                        ', pr_vllimcre:'    || rw_crapass.vllimcre ||
-                        ', pr_tipo_busca:'  || 'A'                 || --> tipo de busca(A-dtmvtoan)
-                        ', pr_flgcrass:'    || 'FALSE';
+             vr_dscritic:= NULL;
            END IF;
+           -- Retorno nome do módulo logado - 15/12/2017 - Chamado 779415
+           GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_debita_agendto_ted');
            
-           --Levantar Excecao           
-           RAISE vr_exc_erro;
-           
-         ELSE
-           vr_dscritic:= NULL;
-         END IF;
-	       -- Retorno nome do módulo logado - 15/12/2017 - Chamado 779415
-		     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_debita_agendto_ted');
-         
-         --Verificar o saldo retornado
-         IF vr_tab_saldo.Count = 0 THEN
-           
-           --Montar mensagem erro
-           --Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
-           vr_cdcritic := 1072; --Nao foi possivel consultar o saldo para a operacao.
-           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-           
-           --Levantar Excecao
-           RAISE vr_exc_erro;
-           
-         ELSE
-           --Se o saldo nao for suficiente
-           IF rw_craplau.vllanaut > (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
-                                     nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) THEN
-              IF pr_execucao = 3 THEN -- Terceira execução do dia (final) gera erro                                              
-              --Verificar a conta de destino
-              OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
-                             ,pr_nrdconta => rw_craplau.nrdconta
-                             ,pr_cddbanco => rw_craplau.cddbanco
-                             ,pr_nrctatrf => rw_craplau.nrctadst
-                             ,pr_cdageban => rw_craplau.cdageban);
-                               
-              FETCH cr_crapcti INTO rw_crapcti;
-
-              vr_nmtldest := '';
-                
-              IF cr_crapcti%FOUND THEN
-                 vr_nmtldest := rw_crapcti.nmtitula;
-              END IF;
-                
-              CLOSE cr_crapcti;
-                 
-              vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
-                               'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
-                               '<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
-                               ' - ' || vr_nmtldest || '</b> agendada para <b>' ||
-                               to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
-                               '</b> por insuficiência de saldo.';
-
-              -- Criação de mensagem no internetbank - [TODO] Remover todas as chamadas do pc_gerar_mensagem quando o novo ibank entrar no ar
-                  GENE0003.pc_gerar_mensagem (pr_cdcooper   => pr_cdcooper
-                                             ,pr_nrdconta   => rw_craplau.nrdconta
-                                       --,pr_idseqttl   => GERA PARA TODOS OS USUÁRIOS
-                                             ,pr_cdprogra   => pr_nmdatela
-                                             ,pr_inpriori   => 0
-                                             ,pr_dsdmensg   => vr_dsdmensg
-                                             ,pr_dsdassun   => 'Transação não efetivada'
-                                             ,pr_dsdremet   => rw_crapcop.nmrescop
-                                             ,pr_dsdplchv   => 'Sem Saldo'
-                                             ,pr_cdoperad   => '1'
-                                             ,pr_cdcadmsg   => '0'
-                                             ,pr_dscritic   => vr_dscritic);
-	            -- Retorno nome do módulo logado - 15/12/2017 - Chamado 779415
-		          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_debita_agendto_ted');
-                                               
-              vr_variaveis_notif('#dataagendamento') := to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY');
-              vr_variaveis_notif('#valor') := to_char(rw_craplau.vllanaut,'fm999g999g990d00');
-              vr_variaveis_notif('#bancodestino') := to_char(rw_craplau.cddbanco);
-              vr_variaveis_notif('#agenciadestino') := to_char(rw_craplau.cdageban);
-              vr_variaveis_notif('#contadestino') := GENE0002.fn_mask_conta(rw_craplau.nrctadst);
-              vr_variaveis_notif('#destinatario') := vr_nmtldest;
-              vr_variaveis_notif('#motivo') := 'insuficiência de saldo';
-                
-              -- Cria uma notificação
-              noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
-                                           ,pr_cdmotivo_mensagem => MOTIVO_TED
-                                           --,pr_dhenvio => SYSDATE
-                                           ,pr_cdcooper => pr_cdcooper
-                                           ,pr_nrdconta => rw_craplau.nrdconta
-                                           ,pr_variaveis => vr_variaveis_notif);
-	            -- Retorno nome do módulo logado - 15/12/2017 - Chamado 779415
-		          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_debita_agendto_ted');
-										
-			  END IF;
-										
-             --Marcar que ocorreu erro TAA
-             vr_flerrtaa:= TRUE;
+           --Verificar o saldo retornado
+           IF vr_tab_saldo.Count = 0 THEN
              
              --Montar mensagem erro
              --Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
-             vr_cdcritic := 717; --Nao ha saldo suficiente para a operacao
+             vr_cdcritic := 1072; --Nao foi possivel consultar o saldo para a operacao.
              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-
-           END IF;
-         END IF;
-       ELSE
-         
-         vr_aux_vllanaut := rw_craplau.vllanaut;
-         
-         --Verificar Operacao
-         INET0001.pc_verifica_operacao (pr_cdcooper => pr_cdcooper          --Código Cooperativa
-                                       ,pr_cdagenci => pr_cdagenci          --Agencia do Associado
-                                       ,pr_nrdcaixa => pr_nrdcaixa          --Numero caixa
-                                       ,pr_nrdconta => rw_craplau.nrdconta  --Numero da conta
-                                       ,pr_idseqttl => rw_craplau.idseqttl  --Identificador Sequencial titulo
-                                       ,pr_dtmvtolt => pr_dtmvtolt          --Data Movimento
-                                       ,pr_idagenda => 1                    --Efetua Debito
-                                       ,pr_dtmvtopg => rw_craplau.dtmvtopg  --Data Pagamento
-                                       ,pr_vllanmto => vr_aux_vllanaut      --Valor Lancamento
-                                       ,pr_cddbanco => rw_craplau.cddbanco  --Codigo banco
-                                       ,pr_cdageban => rw_craplau.cdageban  --Codigo Agencia
-                                       ,pr_nrctatrf => rw_craplau.nrctadst  --Numero Conta Transferencia
-                                       ,pr_cdtiptra => rw_craplau.cdtiptra  --Tipo transacao
-                                       ,pr_cdoperad => pr_cdoperad          --Codigo Operador
-                                       ,pr_tpoperac => 4                    --TED
-                                       ,pr_flgvalid => TRUE                 --Indicador validacoes
-                                       ,pr_dsorigem => vr_dsorigem          --Descricao Origem
-                                       ,pr_nrcpfope => 0                    --CPF operador
-                                       ,pr_flgctrag => FALSE                --controla validacoes na efetivacao de agendamentos */
-                                       ,pr_nmdatela => pr_nmdatela          --> Nome da tela
-                                       ,pr_dstransa => vr_dstrans1          --Descricao da transacao
-                                       ,pr_tab_limite => vr_tab_limite      --Tabelas de retorno de horarios limite
-                                       ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
-                                       ,pr_cdcritic => vr_cdcritic          --Codigo do erro
-                                       ,pr_dscritic => vr_dscritic
-                                       ,pr_assin_conjunta => vr_assin_conjunta);        --Descricao do erro;
-	      -- Retorno nome do módulo logado - 15/12/2017 - Chamado 779415
-		    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_debita_agendto_ted');
-        --Substituicao da condicao fixa por codigo - 15/12/2017 - Chamado 779415 
-        IF vr_dscritic = 'Nao ha saldo suficiente para a operacao.'  OR
-           vr_cdcritic = 717                                           THEN   
-           IF pr_execucao = 3 THEN -- Terceira execução do dia (final) gera erro  
-            --Verificar a conta de destino
-            OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
-                           ,pr_nrdconta => rw_craplau.nrdconta
-                           ,pr_cddbanco => rw_craplau.cddbanco
-                           ,pr_nrctatrf => rw_craplau.nrctadst
-                           ,pr_cdageban => rw_craplau.cdageban);
+             
+             --Levantar Excecao
+             RAISE vr_exc_erro;
+             
+           ELSE
+             --Se o saldo nao for suficiente
+             IF rw_craplau.vllanaut > (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
+                                       nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) THEN
+                IF pr_execucao = 3 THEN -- Terceira execução do dia (final) gera erro                                              
+                --Verificar a conta de destino
+                OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
+                               ,pr_nrdconta => rw_craplau.nrdconta
+                               ,pr_cddbanco => rw_craplau.cddbanco
+                               ,pr_nrctatrf => rw_craplau.nrctadst
+                               ,pr_cdageban => rw_craplau.cdageban);
                                  
-            FETCH cr_crapcti INTO rw_crapcti;
+                FETCH cr_crapcti INTO rw_crapcti;
 
-            vr_nmtldest := '';
+                vr_nmtldest := '';
                   
-            IF cr_crapcti%FOUND THEN
-               vr_nmtldest := rw_crapcti.nmtitula;
-            END IF;
+                IF cr_crapcti%FOUND THEN
+                   vr_nmtldest := rw_crapcti.nmtitula;
+                END IF;
                   
-            CLOSE cr_crapcti;
+                CLOSE cr_crapcti;
+                   
+                vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
+                                 'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
+                                 '<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
+                                 ' - ' || vr_nmtldest || '</b> agendada para <b>' ||
+                                 to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
+                                 '</b> por insuficiência de saldo.';
 
-          vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
-                                   'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
-                                   '<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
-                                   ' - ' || vr_nmtldest || '</b> agendada para <b>' ||
-                                   to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
-                                   '</b> por insuficiência de saldo.';
-																									
-          -- Criação de mensagem no internetbank - [TODO] Remover todas as chamadas do pc_gerar_mensagem quando o novo ibank entrar no ar
+                -- Criação de mensagem no internetbank - [TODO] Remover todas as chamadas do pc_gerar_mensagem quando o novo ibank entrar no ar
                     GENE0003.pc_gerar_mensagem (pr_cdcooper   => pr_cdcooper
                                                ,pr_nrdconta   => rw_craplau.nrdconta
-                                   --,pr_idseqttl   => GERA PARA TODOS OS USUÁRIOS
+                                         --,pr_idseqttl   => GERA PARA TODOS OS USUÁRIOS
                                                ,pr_cdprogra   => pr_nmdatela
                                                ,pr_inpriori   => 0
                                                ,pr_dsdmensg   => vr_dsdmensg
@@ -27270,29 +27269,136 @@ end;';
                                                ,pr_dsdplchv   => 'Sem Saldo'
                                                ,pr_cdoperad   => '1'
                                                ,pr_cdcadmsg   => '0'
-                                               ,pr_dscritic   => vr_dscritic2);
-	        -- Retorno nome do módulo logado - 15/12/2017 - Chamado 779415
-		      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_debita_agendto_ted');
-            vr_variaveis_notif('#dataagendamento') := to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY');
-            vr_variaveis_notif('#valor') := to_char(rw_craplau.vllanaut,'fm999g999g990d00');
-            vr_variaveis_notif('#bancodestino') := to_char(rw_craplau.cddbanco);
-            vr_variaveis_notif('#agenciadestino') := to_char(rw_craplau.cdageban);
-            vr_variaveis_notif('#contadestino') := GENE0002.fn_mask_conta(rw_craplau.nrctadst);
-            vr_variaveis_notif('#destinatario') := vr_nmtldest;
-            vr_variaveis_notif('#motivo') := 'insuficiência de saldo';
-                
-            -- Cria uma notificação
-            noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
-                                         ,pr_cdmotivo_mensagem => MOTIVO_TED
-                                         ,pr_cdcooper => pr_cdcooper
-                                         ,pr_nrdconta => rw_craplau.nrdconta
-                                         ,pr_variaveis => vr_variaveis_notif);
+                                               ,pr_dscritic   => vr_dscritic);
+                -- Retorno nome do módulo logado - 15/12/2017 - Chamado 779415
+                GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_debita_agendto_ted');
+                                                 
+                vr_variaveis_notif('#dataagendamento') := to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY');
+                vr_variaveis_notif('#valor') := to_char(rw_craplau.vllanaut,'fm999g999g990d00');
+                vr_variaveis_notif('#bancodestino') := to_char(rw_craplau.cddbanco);
+                vr_variaveis_notif('#agenciadestino') := to_char(rw_craplau.cdageban);
+                vr_variaveis_notif('#contadestino') := GENE0002.fn_mask_conta(rw_craplau.nrctadst);
+                vr_variaveis_notif('#destinatario') := vr_nmtldest;
+                vr_variaveis_notif('#motivo') := 'insuficiência de saldo';
+                  
+                -- Cria uma notificação
+                noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
+                                             ,pr_cdmotivo_mensagem => MOTIVO_TED
+                                             --,pr_dhenvio => SYSDATE
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_nrdconta => rw_craplau.nrdconta
+                                             ,pr_variaveis => vr_variaveis_notif);
+                -- Retorno nome do módulo logado - 15/12/2017 - Chamado 779415
+                GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_debita_agendto_ted');
+  										
+          END IF;
+  										
+               --Marcar que ocorreu erro TAA
+               vr_flerrtaa:= TRUE;
+               
+               --Montar mensagem erro
+               --Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
+               vr_cdcritic := 717; --Nao ha saldo suficiente para a operacao
+               vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+
+             END IF;
+           END IF;
+         ELSE
+           
+           vr_aux_vllanaut := rw_craplau.vllanaut;
+           
+           --Verificar Operacao
+           INET0001.pc_verifica_operacao (pr_cdcooper => pr_cdcooper          --Código Cooperativa
+                                         ,pr_cdagenci => pr_cdagenci          --Agencia do Associado
+                                         ,pr_nrdcaixa => pr_nrdcaixa          --Numero caixa
+                                         ,pr_nrdconta => rw_craplau.nrdconta  --Numero da conta
+                                         ,pr_idseqttl => rw_craplau.idseqttl  --Identificador Sequencial titulo
+                                         ,pr_dtmvtolt => pr_dtmvtolt          --Data Movimento
+                                         ,pr_idagenda => 1                    --Efetua Debito
+                                         ,pr_dtmvtopg => rw_craplau.dtmvtopg  --Data Pagamento
+                                         ,pr_vllanmto => vr_aux_vllanaut      --Valor Lancamento
+                                         ,pr_cddbanco => rw_craplau.cddbanco  --Codigo banco
+                                         ,pr_cdageban => rw_craplau.cdageban  --Codigo Agencia
+                                         ,pr_nrctatrf => rw_craplau.nrctadst  --Numero Conta Transferencia
+                                         ,pr_cdtiptra => rw_craplau.cdtiptra  --Tipo transacao
+                                         ,pr_cdoperad => pr_cdoperad          --Codigo Operador
+                                         ,pr_tpoperac => 4                    --TED
+                                         ,pr_flgvalid => TRUE                 --Indicador validacoes
+                                         ,pr_dsorigem => vr_dsorigem          --Descricao Origem
+                                         ,pr_nrcpfope => 0                    --CPF operador
+                                         ,pr_flgctrag => FALSE                --controla validacoes na efetivacao de agendamentos */
+                                         ,pr_nmdatela => pr_nmdatela          --> Nome da tela
+                                         ,pr_dstransa => vr_dstrans1          --Descricao da transacao
+                                         ,pr_tab_limite => vr_tab_limite      --Tabelas de retorno de horarios limite
+                                         ,pr_tab_internet => vr_tab_internet --Tabelas de retorno de horarios limite
+                                         ,pr_cdcritic => vr_cdcritic          --Codigo do erro
+                                         ,pr_dscritic => vr_dscritic
+                                         ,pr_assin_conjunta => vr_assin_conjunta);        --Descricao do erro;
+          -- Retorno nome do módulo logado - 15/12/2017 - Chamado 779415
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_debita_agendto_ted');
+          --Substituicao da condicao fixa por codigo - 15/12/2017 - Chamado 779415 
+          IF vr_dscritic = 'Nao ha saldo suficiente para a operacao.'  OR
+             vr_cdcritic = 717                                           THEN   
+             IF pr_execucao = 3 THEN -- Terceira execução do dia (final) gera erro  
+              --Verificar a conta de destino
+              OPEN cr_crapcti(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => rw_craplau.nrdconta
+                             ,pr_cddbanco => rw_craplau.cddbanco
+                             ,pr_nrctatrf => rw_craplau.nrctadst
+                             ,pr_cdageban => rw_craplau.cdageban);
+                                   
+              FETCH cr_crapcti INTO rw_crapcti;
+
+              vr_nmtldest := '';
+                    
+              IF cr_crapcti%FOUND THEN
+                 vr_nmtldest := rw_crapcti.nmtitula;
+              END IF;
+                    
+              CLOSE cr_crapcti;
+
+            vr_dsdmensg := 'Atenção, %23cooperado%23! <br><br><br>' ||
+                                     'Informamos que a seguinte transação não foi efetivada: <br><br> ' ||
+                                     '<b>Transferência</b> para <b>' || rw_craplau.cdageban || '/' || GENE0002.fn_mask_conta(rw_craplau.nrctadst) ||
+                                     ' - ' || vr_nmtldest || '</b> agendada para <b>' ||
+                                     to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY') || '</b> no valor de <b>R$' || To_Char(rw_craplau.vllanaut,'fm999g999g990d00') || ' ' ||
+                                     '</b> por insuficiência de saldo.';
+  																									
+            -- Criação de mensagem no internetbank - [TODO] Remover todas as chamadas do pc_gerar_mensagem quando o novo ibank entrar no ar
+                      GENE0003.pc_gerar_mensagem (pr_cdcooper   => pr_cdcooper
+                                                 ,pr_nrdconta   => rw_craplau.nrdconta
+                                     --,pr_idseqttl   => GERA PARA TODOS OS USUÁRIOS
+                                                 ,pr_cdprogra   => pr_nmdatela
+                                                 ,pr_inpriori   => 0
+                                                 ,pr_dsdmensg   => vr_dsdmensg
+                                                 ,pr_dsdassun   => 'Transação não efetivada'
+                                                 ,pr_dsdremet   => rw_crapcop.nmrescop
+                                                 ,pr_dsdplchv   => 'Sem Saldo'
+                                                 ,pr_cdoperad   => '1'
+                                                 ,pr_cdcadmsg   => '0'
+                                                 ,pr_dscritic   => vr_dscritic2);
+            -- Retorno nome do módulo logado - 15/12/2017 - Chamado 779415
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_debita_agendto_ted');
+              vr_variaveis_notif('#dataagendamento') := to_char(rw_craplau.dtmvtopg, 'DD/MM/YYYY');
+              vr_variaveis_notif('#valor') := to_char(rw_craplau.vllanaut,'fm999g999g990d00');
+              vr_variaveis_notif('#bancodestino') := to_char(rw_craplau.cddbanco);
+              vr_variaveis_notif('#agenciadestino') := to_char(rw_craplau.cdageban);
+              vr_variaveis_notif('#contadestino') := GENE0002.fn_mask_conta(rw_craplau.nrctadst);
+              vr_variaveis_notif('#destinatario') := vr_nmtldest;
+              vr_variaveis_notif('#motivo') := 'insuficiência de saldo';
+                  
+              -- Cria uma notificação
+              noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
+                                           ,pr_cdmotivo_mensagem => MOTIVO_TED
+                                           ,pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => rw_craplau.nrdconta
+                                           ,pr_variaveis => vr_variaveis_notif);
+
+             END IF;
 
            END IF;
-
+            
          END IF;
-          
-       END IF;
        END IF;
        
        --Se origem nao for TAA e nao tem erro ou for TAA e nao deu erro
