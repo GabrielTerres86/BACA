@@ -4,7 +4,6 @@
  2 - Acrediccop 
 13 - Civia
  5 - Acentra */
--->  7 - Credcrea
 
 
 --> 13 - Civia
@@ -49,13 +48,13 @@ update tbepr_segmento seg
            and seg.cdcooper      = s.cdcooper
            and seg.idsegmento    = s.idsegmento)
 
- where seg.cdcooper in (2,5,7,8,13,14)
+ where seg.cdcooper in (2,5,8,13,14)
    and seg.idsegmento in (1,2);
 
  
 update tbepr_segmento_canais_perm s
    set s.tppermissao = 2
- where s.cdcooper in (2,5,7,8,13,14) 
+ where s.cdcooper in (2,5,8,13,14) 
    and s.cdcanal = 3;
 
 /*
@@ -146,7 +145,7 @@ update tbepr_segmento_canais_perm s
    and s.cdcanal = 3;   
 
 update crapprm p
-   set p.dsvlrprm = p.dsvlrprm ||';2;5;7;8;13;14'
+   set p.dsvlrprm = p.dsvlrprm ||';2;5;8;13;14'
  where p.cdacesso = 'LIBERA_COOP_SIMULA_IB';  
 
 Commit; 
