@@ -4310,7 +4310,7 @@ create or replace package body cecred.tela_manbem is
               ,nmcidade = upper(par_nmcidade)
               ,cdufresd = upper(par_cdufresd)
               ,nrcepend = par_nrcepend
-              ,cdnacion = par_cdnacion
+              ,cdnacion = nvl(par_cdnacion,0)
               ,nrendere = par_nrendere
               ,complend = upper(par_complend)
               ,nrcxapst = par_nrcxapst
@@ -4363,7 +4363,7 @@ create or replace package body cecred.tela_manbem is
            upper(par_nmcidade),
            upper(par_cdufresd),
            par_nrcepend,
-           par_cdnacion,
+           nvl(par_cdnacion,0),
            par_nrendere,
            upper(par_complend),
            par_nrcxapst,
