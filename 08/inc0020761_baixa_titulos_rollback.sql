@@ -91,10 +91,12 @@ BEGIN
   
   ----Rollback 
   
-  update crapceb a
-     set a.flgapihm = 0
-   where a.nrdconta in (10605940, 10668225)
-     and a.nrconven = 101004;
+update crapceb a
+   set a.flgapihm = 0, 
+       a.dhhomapi = null, 
+       a.cdhomapi = ''
+ where a.nrdconta in (10605940, 10668225)
+   and a.nrconven = 101004;
 
   COMMIT;
 

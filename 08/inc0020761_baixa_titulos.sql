@@ -89,11 +89,13 @@ BEGIN
     
   END LOOP;
 
- update crapceb a
-    set a.flgapihm = 1
-  where a.nrdconta in (10605940, 10668225)
-    and a.nrconven = 101004;  
-  
+update crapceb a
+   set a.flgapihm = 1, 
+       a.dhhomapi = sysdate, 
+       a.cdhomapi = 'SYS'
+ where a.nrdconta in (10605940, 10668225)
+   and a.nrconven = 101004;
+   
   ----Rollback 
   /*
   update crapceb a
