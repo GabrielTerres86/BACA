@@ -42,7 +42,7 @@ BEGIN
                          rw.dsdoccop || ' - ' ||
                          rw.nrnosnum);
 
-    IF rw.incobran = 0 THEN
+    IF rw.incobran = 3 THEN
 
       UPDATE crapcob
          SET incobran = 0,
