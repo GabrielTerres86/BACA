@@ -2045,7 +2045,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                             ,pr_tag_pai  => 'conta'
                             ,pr_posicao  => 0
                             ,pr_tag_nova => 'vlcapital_saida'
-                            ,pr_tag_cont => w_vlcapital_saida
+                            ,pr_tag_cont => trim(to_char(w_vlcapital_saida, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))
                             ,pr_des_erro => pr_dscritic);
       gene0007.pc_insere_tag(pr_xml      => vr_xml
                             ,pr_tag_pai  => 'conta'
@@ -2063,7 +2063,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                             ,pr_tag_pai  => 'conta'
                             ,pr_posicao  => 0
                             ,pr_tag_nova => 'vlcotas_liberadas'
-                            ,pr_tag_cont => w_vlcotas_liberadas
+                            ,pr_tag_cont => trim(to_char(w_vlcotas_liberadas, 'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))
                             ,pr_des_erro => pr_dscritic);
 
       gene0007.pc_insere_tag(pr_xml      => vr_xml
