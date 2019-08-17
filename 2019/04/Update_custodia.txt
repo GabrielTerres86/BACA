@@ -1,0 +1,4 @@
+update cecred.tbcapt_custodia_aplicacao a
+   set a.qtcotas = 0
+ where a.dscodigo_b3 in
+       (select codigo from cecreddba.b3 b where a.dscodigo_b3 = b.codigo); 
