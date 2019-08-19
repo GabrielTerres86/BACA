@@ -7637,18 +7637,22 @@ create or replace package body cecred.PAGA0002 is
     --              04/04/2018 - Adicionada chamada para a proc pc_permite_produto_tipo
     --                           para verificar se o tipo de conta permite a contratação 
     --                           do produto. PRJ366 (Lombardi).
-    
-                    27/11/2018 - Padrões: Parte 2
-                                 Others, Modulo/Action, PC Internal Exception, PC Log Programa
-                                 Inserts, Updates, Deletes e SELECT's, Parâmetros
-                                 (Envolti - Belli - REQ0029314)
-
     --
-	--              03/09/2018 - Correção para remover lote (Jonata - Mouts).
+    --              27/11/2018 - Padrões: Parte 2
+    --                           Others, Modulo/Action, PC Internal Exception, PC Log Programa
+    --                           Inserts, Updates, Deletes e SELECT's, Parâmetros
+    --                           (Envolti - Belli - REQ0029314)
+    --
+    --
+	  --              03/09/2018 - Correção para remover lote (Jonata - Mouts).
     --         
     --              02/05/2019 - Retirado o returnning e criado variavel vr_cdbccxlt
                                  para ser usada ao inserir na craplau junto com a 
                                  variavel vr_nrdolote. Alcemir Mouts (PRB0041522).  
+    --
+    --              19/08/2019 - INC0022929 - Criada validação para evitar duplicação no agendamento de pagamentos.
+                                 (Guilherme Kuhnen).
+    --
     ...........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -7863,10 +7867,39 @@ create or replace package body cecred.PAGA0002 is
          AND lau.vllanaut = pr_vldocmto
          AND lau.insitlau = 1
          AND lau.dtmvtopg = pr_dtmvtopg;
+         
+    -- INC0022929 - Consultar Pagamentos
+    CURSOR cr_craplau_pag(pr_cdcooper IN craptvl.cdcooper%TYPE
+                         ,pr_dtmvtolt IN craptvl.dtmvtolt%TYPE
+                         ,pr_cdageope IN craptvl.cdagenci%TYPE
+                         ,pr_nrdolote IN craptvl.nrdolote%TYPE
+                         ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                         ,pr_nrdconta IN craptvl.nrdconta%TYPE
+                         ,pr_cdbanfav IN craptvl.cdbccrcb%TYPE
+                         ,pr_cdagefav IN craptvl.cdagercb%TYPE
+                         ,pr_nrctafav IN craptvl.nrcctrcb%TYPE
+                         ,pr_vldocmto IN craptvl.vldocrcb%TYPE
+                         ,pr_dtmvtopg IN craplau.dtmvtopg%TYPE) IS
+
+       SELECT 1
+        FROM craplau lau
+       WHERE lau.cdcooper = pr_cdcooper
+         AND lau.dtmvtolt = pr_dtmvtolt
+         AND lau.cdagenci = pr_cdageope
+         AND lau.nrdolote = pr_nrdolote
+         AND lau.cdbccxlt = pr_cdbccxlt
+         AND lau.nrdconta = pr_nrdconta
+         AND lau.cddbanco = pr_cdbanfav
+         AND lau.cdageban = pr_cdagefav
+         AND lau.nrctadst = pr_nrctafav
+         AND lau.vllanaut = pr_vldocmto
+         AND lau.insitlau = 1
+         AND lau.dtmvtopg = pr_dtmvtopg;
 
     vr_hrtransa_ted craplau.hrtransa%TYPE;
     vr_hrtransa_inter craplcm.hrtransa%TYPE;
     vr_hrtransa_intra craplau.hrtransa%TYPE;
+    rw_craplau_pag cr_craplau_pag%ROWTYPE;  -- INC0022929
 
     ---------------> VARIAVEIS <-----------------
     vr_dscritic VARCHAR2(4000);
@@ -8375,6 +8408,8 @@ create or replace package body cecred.PAGA0002 is
 
       END IF;
 
+      -- Mobile
+
       IF pr_cdtiptra IN (1,3) THEN -- Transferencia Intracooperativa / Salario
         OPEN cr_craplau_intra(pr_cdcooper => pr_cdcooper
                              ,pr_nrdconta => pr_nrdconta
@@ -8455,7 +8490,37 @@ create or replace package body cecred.PAGA0002 is
           RAISE vr_exc_erro;
       END IF;
         CLOSE cr_craplau_ted;
+        
+      ELSIF pr_cdtiptra IN (2) THEN -- INC0022929 - Pagamento
+        
+        /* Controle para envio de 2 Pagamentos iguais pelo ambiente Mobile */
+        OPEN cr_craplau_pag(pr_cdcooper => pr_cdcooper
+                           ,pr_dtmvtolt => pr_dtmvtolt
+                           ,pr_cdageope => pr_cdagenci
+                           ,pr_nrdolote => vr_nrdolote
+                           ,pr_cdbccxlt => vr_cdbccxlt
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_cdbanfav => pr_cddbanco
+                           ,pr_cdagefav => pr_cdageban
+                           ,pr_nrctafav => pr_nrctadst
+                           ,pr_vldocmto => pr_vllanaut
+                           ,pr_dtmvtopg => vr_dtmvtopg);
+
+        --Posicionar no proximo registro
+        FETCH cr_craplau_pag INTO rw_craplau_pag;
+
+        -- se ja existe um lançamento com os mesmos dados em menos de 10 minutos (600 seg) apresentar alerta
+        IF cr_craplau_pag%FOUND THEN
+          vr_dscritic_aux := NULL;
+          vr_cdcritic := 1109; --Agendamento ja existe
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          RAISE vr_exc_erro;
+        END IF;
+        CLOSE cr_craplau_pag;
+      
       END IF;
+
+      -- IB
 
       IF pr_cdtiptra IN (1,3) THEN -- Transferencia Intracooperativa / Salario
         OPEN cr_craplau_intra(pr_cdcooper => pr_cdcooper
@@ -8512,7 +8577,7 @@ create or replace package body cecred.PAGA0002 is
 
       ELSIF pr_cdtiptra IN (4) THEN -- Transferencia TED
 
-        /* Controle para envio de 2 TEDs iguais pelo ambiente Mobile */
+        /* Controle para envio de 2 TEDs iguais pelo ambiente IB */
         OPEN cr_craplau_ted(pr_cdcooper => pr_cdcooper
                            ,pr_dtmvtolt => pr_dtmvtolt
                            ,pr_cdageope => pr_cdagenci
@@ -8537,6 +8602,34 @@ create or replace package body cecred.PAGA0002 is
           RAISE vr_exc_erro;
         END IF;
         CLOSE cr_craplau_ted;
+        
+      ELSIF pr_cdtiptra IN (2) THEN -- INC0022929 - Pagamento
+        
+        /* Controle para envio de 2 Pagamentos iguais pelo ambiente IB */
+        OPEN cr_craplau_pag(pr_cdcooper => pr_cdcooper
+                           ,pr_dtmvtolt => pr_dtmvtolt
+                           ,pr_cdageope => pr_cdagenci
+                           ,pr_nrdolote => vr_nrdolote
+                           ,pr_cdbccxlt => vr_cdbccxlt
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_cdbanfav => pr_cddbanco
+                           ,pr_cdagefav => pr_cdageban
+                           ,pr_nrctafav => pr_nrctadst
+                           ,pr_vldocmto => pr_vllanaut
+                           ,pr_dtmvtopg => vr_dtmvtopg);
+
+        --Posicionar no proximo registro
+        FETCH cr_craplau_pag INTO rw_craplau_pag;
+
+        -- se ja existe um lançamento com os mesmos dados em menos de 10 minutos (600 seg) apresentar alerta
+        IF cr_craplau_pag%FOUND THEN
+          vr_dscritic_aux := NULL;
+          vr_cdcritic := 1109; --Agendamento ja existe
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          RAISE vr_exc_erro;
+        END IF;
+        CLOSE cr_craplau_pag;
+        
       END IF;
 
       --> Para 4-TEDs e 2-Pagamentos de origens InternetBank e Mobile,
