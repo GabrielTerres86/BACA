@@ -612,7 +612,8 @@ create or replace package cecred.PAGA0002 is
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                                       ,pr_tab_agenda_recorrente OUT typ_tab_agenda_recorrente  --> Registros de agendamento recorrentes
                                       ,pr_cdcritic OUT NUMBER                --> codigo de criticas
-                                      ,pr_dscritic OUT VARCHAR2);            --> Descricao critica
+                                      ,pr_dscritic OUT VARCHAR2              --> Descricao critica
+                                      ,pr_assin_conjunta OUT NUMBER);
 
   PROCEDURE pc_verif_agend_recor_prog( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
                                       ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo da agencia
@@ -2031,7 +2032,8 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_dstransa => vr_dstrans1 --> descrição de transação
                                 ,pr_tab_agenda_recorrente => vr_tab_agenda_recorrente  --> Registros de agendamento recorrentes
                                 ,pr_cdcritic => vr_cdcritic --> codigo de criticas
-                                ,pr_dscritic => vr_dscritic);--> Descricao critica
+                                ,pr_dscritic => vr_dscritic --> Descricao critica
+                                ,pr_assin_conjunta => vr_assin_conjunta);
 
 
       IF (nvl(vr_cdcritic,0) <> 0 OR
@@ -8939,6 +8941,8 @@ create or replace package body cecred.PAGA0002 is
     vr_dsparame VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs
     vr_nmrotpro VARCHAR2  (100) := 'pc_verif_agend_recor_prog';
     vr_cdproint VARCHAR2  (100);
+    vr_assin_conjunta NUMBER(1);
+    
     BEGIN
     -- Posiciona procedure - 27/11/2018 - REQ0029314
     vr_cdproint := vr_cdproexe||'.'||vr_nmrotpro;
@@ -8989,7 +8993,8 @@ create or replace package body cecred.PAGA0002 is
                 pr_dstransa => pr_dstransa,
                 pr_tab_agenda_recorrente => vr_tab_agenda_recorrente,
                 pr_cdcritic => pr_cdcritic,
-                pr_dscritic => pr_dscritic);
+                pr_dscritic => pr_dscritic,
+                pr_assin_conjunta => vr_assin_conjunta);
     -- Gerado Log - 27/11/2018 - REQ0029314
     IF nvl(pr_cdcritic,0) > 0 OR
        TRIM(pr_dscritic) IS NOT NULL THEN  
@@ -9102,7 +9107,8 @@ create or replace package body cecred.PAGA0002 is
                                       ,pr_dstransa OUT VARCHAR2              --> descrição de transação
                                       ,pr_tab_agenda_recorrente OUT typ_tab_agenda_recorrente  --> Registros de agendamento recorrentes
                                       ,pr_cdcritic OUT NUMBER                --> codigo de criticas
-                                      ,pr_dscritic OUT VARCHAR2) IS          --> Descricao critica
+                                      ,pr_dscritic OUT VARCHAR2              --> Descricao critica
+                                      ,pr_assin_conjunta OUT NUMBER) IS      --> Possui assinatura conjunta
   /* ..........................................................................
     --
     --  Programa : pc_verif_agend_recorrente        Antiga: b1wgen0015.p/verifica_agendamento_recorrente
@@ -9123,6 +9129,8 @@ create or replace package body cecred.PAGA0002 is
                                  Others, Modulo/Action, PC Internal Exception, PC Log Programa
                                  Inserts, Updates, Deletes e SELECT's, Parâmetros
                                  (Envolti - Belli - REQ0029314)    
+                                 
+                    19/08/2019 - Ajuste para retornar pr_assin_conjunta. PRB0042112 (Lombardi)
     
     -- ..........................................................................*/
 
@@ -9160,7 +9168,7 @@ create or replace package body cecred.PAGA0002 is
     vr_ddagenda     INTEGER;
     vr_dtpagext     VARCHAR2(100);
     vr_idxagend     PLS_INTEGER;
-    vr_assin_conjunta NUMBER(1);
+    vr_assin_conjunta NUMBER(1) := 0;
 
     -- Variaveis de Log e Modulo - 27/11/2018 - REQ0029314
     vr_dsparame VARCHAR2 (4000) := NULL; -- Agrupa parametros para gravar em logs
@@ -9199,32 +9207,32 @@ create or replace package body cecred.PAGA0002 is
       vr_vllanmto := 0;
       /** Procedure para validar limites para transacoes (Transf./Pag./Cob.) **/
       INET0001.pc_verifica_operacao
-                           (pr_cdcooper     => pr_cdcooper         --> Codigo Cooperativa
-                           ,pr_cdagenci     => pr_cdagenci         --> Agencia do Associado
-                           ,pr_nrdcaixa     => pr_nrdcaixa         --> Numero caixa
-                           ,pr_nrdconta     => pr_nrdconta         --> Numero da conta
-                           ,pr_idseqttl     => pr_idseqttl         --> Identificador Sequencial titulo
-                           ,pr_dtmvtolt     => pr_dtmvtolt         --> Data Movimento
-                           ,pr_idagenda     => 3/* AG.RECORRENTE*/ --> Indicador agenda
-                           ,pr_dtmvtopg     => NULL                --> Data Pagamento
-                           ,pr_vllanmto     => vr_vllanmto         --> Valor Lancamento
-                           ,pr_cddbanco     => pr_cddbanco         --> Codigo banco
-                           ,pr_cdageban     => pr_cdageban         --> Codigo Agencia
-                           ,pr_nrctatrf     => 0                   --> Numero Conta Transferencia
-                           ,pr_cdtiptra     => 0                   --> 1 - Transferencia / 2 - Pagamento / 3 - Credito Salario / 4 - TED */
-                           ,pr_cdoperad     => pr_cdoperad         --> Codigo Operador
-                           ,pr_tpoperac     => pr_tpoperac         --> 1 - Transferencia intracooperativa / 2 - Pagamento / 3 - Cobranca /  */     /* 4 - TED / 5 - Transferencia intercooperativa */
-                           ,pr_flgvalid     => FALSE               --> Indicador validacoes
-                           ,pr_dsorigem     => pr_dsorigem         --> Descricao Origem
-                           ,pr_nrcpfope     => pr_nrcpfope         --> CPF operador
-                           ,pr_flgctrag     => TRUE                --> controla validacoes na efetivacao de agendamentos */
-                           ,pr_nmdatela     => pr_nmdatela         --> Nome da tela
-                           ,pr_dstransa     => pr_dstransa         --> Descricao da transacao
-                           ,pr_tab_limite   => vr_tab_limite       --> INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
-                           ,pr_tab_internet => vr_tab_internet     --> INET0001.typ_tab_internet --Tabelas de retorno de horarios limite
-                           ,pr_cdcritic     => vr_cdcritic         --> Codigo do erro
-                           ,pr_dscritic     => vr_dscritic
-                           ,pr_assin_conjunta => vr_assin_conjunta);       --> Descricao do erro
+                           (pr_cdcooper     => pr_cdcooper           --> Codigo Cooperativa
+                           ,pr_cdagenci     => pr_cdagenci           --> Agencia do Associado
+                           ,pr_nrdcaixa     => pr_nrdcaixa           --> Numero caixa
+                           ,pr_nrdconta     => pr_nrdconta           --> Numero da conta
+                           ,pr_idseqttl     => pr_idseqttl           --> Identificador Sequencial titulo
+                           ,pr_dtmvtolt     => pr_dtmvtolt           --> Data Movimento
+                           ,pr_idagenda     => 3/* AG.RECORRENTE*/   --> Indicador agenda
+                           ,pr_dtmvtopg     => NULL                  --> Data Pagamento
+                           ,pr_vllanmto     => vr_vllanmto           --> Valor Lancamento
+                           ,pr_cddbanco     => pr_cddbanco           --> Codigo banco
+                           ,pr_cdageban     => pr_cdageban           --> Codigo Agencia
+                           ,pr_nrctatrf     => 0                     --> Numero Conta Transferencia
+                           ,pr_cdtiptra     => 0                     --> 1 - Transferencia / 2 - Pagamento / 3 - Credito Salario / 4 - TED */
+                           ,pr_cdoperad     => pr_cdoperad           --> Codigo Operador
+                           ,pr_tpoperac     => pr_tpoperac           --> 1 - Transferencia intracooperativa / 2 - Pagamento / 3 - Cobranca /  */     /* 4 - TED / 5 - Transferencia intercooperativa */
+                           ,pr_flgvalid     => FALSE                 --> Indicador validacoes
+                           ,pr_dsorigem     => pr_dsorigem           --> Descricao Origem
+                           ,pr_nrcpfope     => pr_nrcpfope           --> CPF operador
+                           ,pr_flgctrag     => TRUE                  --> controla validacoes na efetivacao de agendamentos */
+                           ,pr_nmdatela     => pr_nmdatela           --> Nome da tela
+                           ,pr_dstransa     => pr_dstransa           --> Descricao da transacao
+                           ,pr_tab_limite   => vr_tab_limite         --> INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
+                           ,pr_tab_internet => vr_tab_internet       --> INET0001.typ_tab_internet --Tabelas de retorno de horarios limite
+                           ,pr_cdcritic     => vr_cdcritic           --> Codigo do erro
+                           ,pr_dscritic     => vr_dscritic           --> Descricao do erro
+                           ,pr_assin_conjunta => pr_assin_conjunta); --> Possui assinatura conjunta
 
       -- verificar se retornou critica
       IF nvl(vr_cdcritic,0) > 0 AND
@@ -9353,8 +9361,12 @@ create or replace package body cecred.PAGA0002 is
                              ,pr_tab_limite   => vr_tab_limite       --> INET0001.typ_tab_limite --Tabelas de retorno de horarios limite
                              ,pr_tab_internet => vr_tab_internet     --> INET0001.typ_tab_internet --Tabelas de retorno de horarios limite
                              ,pr_cdcritic     => vr_cdcritic         --> Codigo do erro
-                             ,pr_dscritic     => vr_dscritic
-                             ,pr_assin_conjunta => vr_assin_conjunta);       --> Descricao do erro
+                             ,pr_dscritic     => vr_dscritic         --> Descricao do erro
+                             ,pr_assin_conjunta => vr_assin_conjunta); --> Possui assinatura conjunta
+        
+        IF vr_assin_conjunta > 0 AND pr_assin_conjunta = 0 THEN
+          pr_assin_conjunta := vr_assin_conjunta;
+        END IF;
 
       END IF;
 
