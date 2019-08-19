@@ -1,0 +1,6 @@
+PL/SQL Developer Test script 3.0
+2
+--Executar o programa de quebra de sigilo bancário
+cecred.pc_quebra_sigilo_bancario;
+0
+0
