@@ -431,6 +431,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                              deve bloquear o envio da TED.
                              (Jonata - Mouts INC0031899).
                              
+                19/06/2019 - Alteração na "pc_enviar_ted": Inclusão de tratamento para transferir da conta Transitória 
+                             para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
+                             P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom. 
+                             
+                16/07/2019 - Alteração na "pc_enviar_ted": Inclusão de tratamento para transferir da conta Transitória 
+                             para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
+                             (Validação feita somente para Contas em Prejuizo).
+                             P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom.                                                          
+			    
                 25/06/2019 - Tratamento para não estourar o limite de crédito quando houver mais de um TED de uma mesma
                              conta encaminhada no mesmo momento.
                              (Jose Dill - Mout PRB0041934)
@@ -1419,13 +1428,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
                   05/06/2019 - Tratar INC0011406 relacionado ao horario de aprovacao da TED (Diego).
 
+                  19/06/2019 - Alteração na "pc_enviar_ted": Inclusão de tratamento para transferir da conta Transitória 
+                               para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
+                               P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom.
+                  
                   21/06/2019 - Tratar INC0015554 - solucao de contorno (Diego).
 
                   10/07/2019 - Tratar INC0019779 relacionado a duplicidade do número de controle IF (Diego).
 
+                  16/07/2019 - Alteração na "pc_enviar_ted": Inclusão de tratamento para transferir da conta Transitória 
+                               para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
+                               (Validação feita somente para Contas em Prejuizo).
+                               P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom.             
+                  
                   16/07/2019 - Tratar para que deposito bacenjud não execute rotina de saldo.
                                Jose Dill (Mouts). INC0020549 
-
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
     -- Buscar dados do associado
@@ -1613,6 +1630,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 	vr_fliseope   INTEGER;
 
     vr_idanalise_fraude tbgen_analise_fraude.idanalise_fraude%TYPE;
+
+    vr_incrineg INTEGER;
+    vr_tab_retorno LANC0001.typ_reg_retorno;
+    
+    vr_inprejuz BOOLEAN; -- Indica se a conta corrente está em prejuízo
 
     ---------------- SUB-ROTINAS ------------------
     -- Procedimento para inserir o lote e não deixar tabela lockada
@@ -2438,7 +2460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
 
     vr_hrtransa := gene0002.fn_busca_time;
-    BEGIN
+
       vr_nrseqdig := fn_sequence('CRAPLOT'
 						                    ,'NRSEQDIG'
 						                    ,''||rw_crapcop.cdcooper||';'
@@ -2447,48 +2469,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 							                     ||rw_craplot_lcm.cdbccxlt||';'
 							                     ||rw_craplot_lcm.nrdolote);
     
-      INSERT INTO craplcm
-                  (craplcm.cdcooper
-                  ,craplcm.dtmvtolt
-                  ,craplcm.hrtransa
-                  ,craplcm.cdagenci
-                  ,craplcm.cdbccxlt
-                  ,craplcm.nrdolote
-                  ,craplcm.nrdconta
-                  ,craplcm.nrdctabb
-                  ,craplcm.nrdctitg
-                  ,craplcm.nrdocmto
-                  ,craplcm.cdhistor
-                  ,craplcm.nrseqdig
-                  ,craplcm.vllanmto
-                  ,craplcm.vldoipmf
-                  ,craplcm.nrautdoc
-                  ,craplcm.cdpesqbb)
-           VALUES (rw_crapcop.cdcooper               --> craplcm.cdcooper
-                  ,rw_crapdat.dtmvtocd               --> craplcm.dtmvtolt
-                  ,vr_hrtransa                       --> craplcm.hrtransa
-                  ,pr_cdageope                       --> craplcm.cdagenci
-                  ,11                                --> craplcm.cdbccxlt
-                    ,rw_craplot_lcm.nrdolote           --> craplcm.nrdolote
-                  ,pr_nrdconta                       --> craplcm.nrdconta
-                  ,pr_nrdconta                       --> craplcm.nrdctabb
-                    ,to_char(pr_nrdconta,'fm00000000') --> craplcm.nrdctitg
-                  ,pr_nrdocmto                       --> craplcm.nrdocmto
-                  ,rw_craphis.cdhistor               --> craplcm.cdhistor
-                  ,vr_nrseqdig             --> craplcm.nrseqdig
-                  ,pr_vldocmto                       --> craplcm.vllanmto
-                  ,0                                 --> craplcm.vldoipmf
-                  ,vr_ultsqlcm                       --> craplcm.nrautdoc
-                  ,'CRAP020');                       --> craplcm.cdpesqbb
-    EXCEPTION
-      WHEN dup_val_on_index THEN
-        -- se deu problema de chave duplicada, solicitar que usuario tente novamente para buscar novo sequencial
+    LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_crapcop.cdcooper                  
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtocd               
+                                      ,pr_hrtransa => vr_hrtransa                       
+                                      ,pr_cdagenci => pr_cdageope                       
+                                      ,pr_cdbccxlt => 11                                
+                                      ,pr_nrdolote => rw_craplot_lcm.nrdolote           
+                                      ,pr_nrdconta => pr_nrdconta                       
+                                      ,pr_nrdctabb => pr_nrdconta                       
+                                      ,pr_nrdctitg => to_char(pr_nrdconta,'fm00000000') 
+                                      ,pr_nrdocmto => pr_nrdocmto                       
+                                      ,pr_cdhistor => rw_craphis.cdhistor               
+                                      ,pr_nrseqdig => vr_nrseqdig                       
+                                      ,pr_vllanmto => pr_vldocmto                       
+                                      ,pr_vldoipmf => 0                                 
+                                      ,pr_nrautdoc => vr_ultsqlcm                       
+                                      ,pr_cdpesqbb => 'CRAP020'
+                                      ,pr_incrineg => vr_incrineg
+                                      ,pr_tab_retorno => vr_tab_retorno
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+                                      
+    IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+      
+      IF vr_cdcritic = 92 THEN -- Lançamento duplicado
         vr_dscritic := 'Não foi possivel enviar TED, tente novamente ou comunique seu PA.';
         RAISE vr_exc_erro;
-      WHEN OTHERS THEN
+      ELSE 
         vr_dscritic := 'Não foi possivel gerar lcm:'||SQLERRM;
         RAISE vr_exc_erro;
-    END;
+      END IF;
+    END IF;
+    
+    -- Verifica se a conta está em prejuízo
+    vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => rw_crapcop.cdcooper
+                                                  , pr_nrdconta => pr_nrdconta);    
+    -- Apenas para conta prejuizo
+    IF vr_inprejuz THEN    
+      --TRANSFERENCIA BLOQUEIO JUDICIAL
+      IF rw_craphis.cdhistor = 1406 THEN
+        -- Se não há saldo suficiente na conta transitória
+        IF PREJ0003.fn_sld_cta_prj(pr_cdcooper => rw_crapcop.cdcooper, pr_nrdconta => pr_nrdconta) < pr_vldocmto THEN 
+           vr_dscritic:= 'Não foi possível gerar lcm: conta corrente em prejuízo sem saldo suficiente no Bloqueados Prejuízo.';
+           RAISE vr_exc_erro;
+        -- Se há saldo suficiente na conta transitória   
+        ELSE
+          vr_dscritic:= NULL;
+          vr_cdcritic:= NULL;
+          --
+          --Efetua a Transferência da Transitória para a Conta Corrente    
+          PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => rw_crapcop.cdcooper   
+                                        , pr_nrdconta => pr_nrdconta                                    
+                                        , pr_vllanmto => pr_vldocmto
+                                        , pr_dtmvtolt => rw_crapdat.dtmvtocd                                                                                                          
+                                        , pr_cdcritic => vr_cdcritic
+                                        , pr_dscritic => vr_dscritic);                                                       
+          --
+          IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+             vr_dscritic:= 'Não foi possível gerar lcm: erro ao transferir o valor do Bloqueados Prejuízo para a Conta Corrente.';
+             RAISE vr_exc_erro;
+          END IF;
+        END IF;   
+      END IF; 
+    END IF;
 
     IF vr_vllantar <> 0 THEN
 		  /* Verificar isenção ou não de tarifa */
