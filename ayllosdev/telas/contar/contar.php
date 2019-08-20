@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 29/10/2018
  * OBJETIVO     : Mostrar tela CONTAR (Consulta de tarifas)
  * --------------
- * ALTERAÇÕES   : 13/08/2019 - Incluir campos no grid, conforme RITM0011962 (Jose Gracik/Mouts).
+ * ALTERAÇÕES   : 13/08/2019 - Incluir campos no grid,  conforme RITM0011962 (Jose Gracik/Mouts).
  *
  *				  
  * --------------
