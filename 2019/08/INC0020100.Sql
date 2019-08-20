@@ -1521,4 +1521,5 @@ UPDATE cecred.crapceb SET crapceb.qtdfloat = 1, crapceb.qtdecprz = 59 WHERE crap
 UPDATE cecred.crapceb SET crapceb.qtdfloat = 1, crapceb.qtdecprz = 59 WHERE crapceb.rowid = 'AAATAVAASAAJEICAAO';
 UPDATE cecred.crapceb SET crapceb.qtdfloat = 1, crapceb.qtdecprz = 59 WHERE crapceb.rowid = 'AAATAVAASAAJEJxAAY';
 UPDATE cecred.crapceb SET crapceb.qtdfloat = 1, crapceb.qtdecprz = 59 WHERE crapceb.rowid = 'AAATAVAJIAADgirAAv';
+
 commit;
