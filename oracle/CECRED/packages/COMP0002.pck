@@ -4634,7 +4634,7 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
                                                     ,pr_tptabela => 'GENERI'
                                                     ,pr_cdempres => 00
                                                     ,pr_cdacesso => 'FINTRFTEDS'
-                                                    ,pr_tpregist => vr_tab_logspb_detalhe(vr_idx_ted).finalid   );
+                                                    ,pr_tpregist => NVL(vr_tab_logspb_detalhe(vr_idx_ted).finalid,0));
 
         IF vr_tab_logspb_detalhe(vr_idx_ted).tpesdst = 'J' THEN
           vr_pessoa_dst := 'Juridica';
@@ -4649,8 +4649,7 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
       ELSE
         vr_cdagerem:= NULL;
         vr_nrctarem:= NULL;
-        vr_dscpfrem:= NULL;
-                  
+        vr_dscpfrem:= NULL;          
       END IF; 
               
   
