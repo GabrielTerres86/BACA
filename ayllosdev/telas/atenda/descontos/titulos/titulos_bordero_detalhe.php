@@ -3,12 +3,11 @@
 	/************************************************************************
 	 Fonte: titulos_bordero_detalhe.php                                        
 	 Autor: Alex Sandro (GFT)
-	 Data : 22/03/2018                Última Alteração: 30/07/2018
+	 Data : 22/03/2018                Última Alteração: 04/04/2018
 	                                                                  
 	 Objetivo  : Detalhe do pagador
 
 	 Alterações: 04/04/2018 - Ajuste nas tabelas de críticas e restrições (Leonardo Oliveira - GFT).
-                 30/07/2019 - Removida porcentagem de Liquidez do pagador com o cedente quando não houver parcelas suficientes para o calculo - Darlei (Supero)
 
 	************************************************************************/
 	
@@ -151,13 +150,7 @@
 					</tr>
 					<tr>
 						<td><? echo formataMoeda(getByTagName($detalhe->tags,'concpaga'));?></td><!--style="vertical-align: bottom;"-->
-						<td><? 
-								if(getByTagName($detalhe->tags,'qtparcmi') == 1){
-									echo '-';
-								}else{
-									echo formataMoeda(getByTagName($detalhe->tags,'liqpagcd'));
-								}
-							?></td>
+						<td><? echo formataMoeda(getByTagName($detalhe->tags,'liqpagcd'));?></td>
 						<td><? echo formataMoeda(getByTagName($detalhe->tags,'liqgeral'));?></td>
 					</tr>
 				</table>

@@ -33,8 +33,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                 06/11/2018 - Fabio dos Santos (GFT) - Inclusao da chamada do InterrompeFluxo da Esteira, na pc_altera_bordero
                 23/11/2018 - Adicionado para guardar o usuario que fez a ultima analise do bordero (clicou no botao analisar) para ser enviado para a esteira
 				01/03/2019 - Removido da clausula WHERE o campo cdtpinsc quando efetuar leitura da crapsab (Daniel)
-				30/07/2019 - Removida porcentagem de Liquidez do pagador com o cedente quando não houver parcelas suficientes para o calculo - Darlei (Supero)
-				
+
   ---------------------------------------------------------------------------------------------------------------------*/
 
   /* Tabela de retorno do histórico de alteração dos contratos de limite*/
@@ -252,7 +251,6 @@ TYPE typ_reg_dados_detalhe IS RECORD(
      liqpagcd        VARCHAR2(20),
      liqgeral        VARCHAR2(20)
     ,dtreapro        VARCHAR2(20) -- Marcelo Telles Coelho - Mouts - 25/04/2019 - RITM0050653
-	,qtparcmi        INTEGER      -- Atende parcelas minimas para porcentagem em tela
 );
 TYPE typ_tab_dados_detalhe IS TABLE OF typ_reg_dados_detalhe INDEX BY BINARY_INTEGER;
   
@@ -952,8 +950,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
       04/09/2018 - Alteração do type de retorno dos históricos de limite, e da data de inclusão quando é Cancelamento de Limite (Andrew Albuquerque - GFT)
 	  19/09/2018 - Alterado a procedure pc_busca_titulos_bordero para adicionar retorno da descrição da 
                    situação do titulo dssittit (Paulo Penteado GFT)
-      30/07/2019 - Removida porcentagem de Liquidez do pagador com o cedente quando não houver parcelas suficientes para o calculo
-				   Darlei (Supero)
   ---------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -6115,16 +6111,6 @@ EXCEPTION
     --  
     vr_idtabtitulo       INTEGER;
     vr_nrinssac            crapcob.nrinssac%TYPE;
-	
-	vr_qtcarpag  NUMBER;
-    vr_qttliqcp  NUMBER;
-    vr_vltliqcp  NUMBER;
-    vr_pcmxctip  NUMBER;
-    vr_qtmitdcl  INTEGER;
-    vr_vlmintcl  NUMBER;
-    vr_dtmvtolt_de crapdat.dtmvtolt%TYPE;
-    vr_dtmvtolt_ate crapdat.dtmvtolt%TYPE;
-	
     vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit;
     vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
     
@@ -6312,59 +6298,6 @@ EXCEPTION
        vr_liqgeral     NUMBER(25,2);
        
        vr_tab_chaves  gene0002.typ_split;
-	   CURSOR cr_liquidez_pagador (pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE
-                                  ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
-                                  ,pr_vlmintcl     IN NUMBER   DEFAULT 0
-                                  ,pr_qtcarpag     IN NUMBER) IS
-         SELECT COUNT(1) AS qtd_titulos,
-                (SUM(CASE
-                         WHEN (dtdpagto IS NOT NULL AND nrdconta_tit IS NULL AND
-                              (dtdpagto <= (dtvencto + pr_qtcarpag))) THEN
-                          vltitulo
-                         ELSE
-                          0
-                       END) / SUM(vltitulo)) * 100 AS pc_cedpag
-           FROM (SELECT cob.dtdpagto,
-                        tit.nrdconta nrdconta_tit,
-                        cob.dtvencto,
-                        cob.vltitulo
-                   FROM crapcob cob -- Titulos do Bordero
-                  INNER JOIN crapceb ceb
-                     ON cob.cdcooper = ceb.cdcooper
-                    AND cob.nrdconta = ceb.nrdconta
-                    AND cob.nrcnvcob = ceb.nrconven
-                   LEFT JOIN craptit tit
-                     ON tit.cdcooper = cob.cdcooper
-                    AND tit.dtmvtolt = cob.dtdpagto
-                    AND tit.nrdconta = cob.nrdconta
-                    AND cob.nrdconta = substr(upper(tit.dscodbar), 26, 8)
-                    AND cob.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
-                    AND cob.nrdocmto = substr(upper(tit.dscodbar), 34, 9)
-                    AND tit.cdbandst = 85
-                    AND tit.cdagenci IN (90,91)
-                  WHERE cob.dtvencto  BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
-                    AND cob.cdcooper = pr_cdcooper
-                    AND cob.nrdconta = pr_nrdconta
-                    AND cob.nrinssac = pr_nrinssac
-                    AND cob.vltitulo >= nvl(pr_vlmintcl,0)
-                    AND cob.cdbanpag = 85
-                  UNION ALL
-                 SELECT cob.dtdpagto,
-                        NULL nrdconta_tit,
-                        cob.dtvencto,
-                        cob.vltitulo
-                   FROM crapcob cob -- Titulos do Bordero
-                  INNER JOIN crapceb ceb
-                     ON cob.cdcooper = ceb.cdcooper
-                    AND cob.nrdconta = ceb.nrdconta
-                    AND cob.nrcnvcob = ceb.nrconven
-                  WHERE cob.dtvencto BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
-                    AND cob.cdcooper = pr_cdcooper
-                    AND cob.nrdconta = pr_nrdconta
-                    AND cob.nrinssac = pr_nrinssac
-                    AND cob.vltitulo >= nvl(pr_vlmintcl,0)
-                    AND cob.cdbanpag <> 85);
-       rw_liquidez_pagador cr_liquidez_pagador%ROWTYPE;
   BEGIN 
        vr_tab_chaves := gene0002.fn_quebra_string(pr_string  => pr_chave,
                                                   pr_delimit => ';');
@@ -6397,44 +6330,7 @@ EXCEPTION
       pr_nrinssac:=rw_crapsab.nrinssac;
       pr_nmdsacad:=rw_crapsab.nmdsacad;
         CLOSE cr_crapsab;
-		
-      OPEN cr_crapass;
-      FETCH cr_crapass INTO rw_crapass;
-      DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
-                                         ,pr_cdagenci          => null -- Não utiliza dentro da procedure
-                                         ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
-                                         ,pr_cdoperad          => null -- Não utiliza dentro da procedure
-                                         ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
-                                         ,pr_idorigem          => null -- Não utiliza dentro da procedure
-                                         ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
-                                         ,pr_inpessoa          => rw_crapass.inpessoa
-                                         ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
-                                         ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
-                                         ,pr_cdcritic          => vr_cdcritic
-                                         ,pr_dscritic          => vr_dscritic);
-        
-      vr_qtcarpag  := vr_tab_dados_dsctit(1).cardbtit_c;
-      vr_qttliqcp  := vr_tab_dados_dsctit(1).qttliqcp;
-      vr_vltliqcp  := vr_tab_dados_dsctit(1).vltliqcp;
-      vr_pcmxctip  := vr_tab_dados_dsctit(1).pcmxctip;
-      vr_qtmitdcl  := vr_tab_dados_dsctit(1).qtmitdcl;
-      vr_vlmintcl  := vr_tab_dados_dsctit(1).vlmintcl;
-      vr_dtmvtolt_de := rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30;
-      vr_dtmvtolt_ate := rw_crapdat.dtmvtolt; 
       
-      OPEN cr_liquidez_pagador(pr_dtmvtolt_de  => vr_dtmvtolt_de
-                              ,pr_dtmvtolt_ate => vr_dtmvtolt_ate
-                              ,pr_vlmintcl     => vr_vlmintcl
-                              ,pr_qtcarpag     => vr_qtcarpag);
-      FETCH cr_liquidez_pagador INTO rw_liquidez_pagador;
-      CLOSE cr_liquidez_pagador;
-      
-      IF (rw_liquidez_pagador.qtd_titulos < vr_qtmitdcl OR (nvl(rw_liquidez_pagador.pc_cedpag,0) = 0 AND rw_liquidez_pagador.qtd_titulos = 0)) THEN
-        pr_tab_dados_detalhe(0).qtparcmi := 1; -- Nao atende o criterio de titulos (mostra "-" na tela)
-      ELSE
-        pr_tab_dados_detalhe(0).qtparcmi := 2;
-      END IF; 
-	  
       -- Caso o bordero esteja liberado ou liquidado, deve carregar as criticas da CRAPABT
       IF rw_crapbdt.insitbdt IN (3,4,5)  THEN -- liquidado ou liberado
         pr_tab_dados_detalhe(0).concpaga := '0';
@@ -6532,7 +6428,21 @@ EXCEPTION
         END LOOP;      
       END IF; 
       ELSE -- bordero ainda esta aberto
-        
+        OPEN cr_crapass;
+        FETCH cr_crapass INTO rw_crapass;
+        DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
+                                   ,pr_cdagenci          => null -- Não utiliza dentro da procedure
+                                   ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
+                                   ,pr_cdoperad          => null -- Não utiliza dentro da procedure
+                                   ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
+                                   ,pr_idorigem          => null -- Não utiliza dentro da procedure
+                                   ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                   ,pr_inpessoa          => rw_crapass.inpessoa
+                                   ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
+                                   ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+                                   ,pr_cdcritic          => vr_cdcritic
+                                   ,pr_dscritic          => vr_dscritic);
+         
         --> DETALHES (BORDERO)
         open cr_crapcbd;
         fetch cr_crapcbd into rw_crapcbd;
@@ -6759,10 +6669,9 @@ EXCEPTION
 
       pc_escreve_xml('<detalhe>'||
                         '<concpaga>'  || vr_tab_dados_detalhe(0).concpaga || '</concpaga>' ||
-                        '<liqpagcd>'  || vr_tab_dados_detalhe(0).liqpagcd || '</liqpagcd>' ||
+                        '<liqpagcd>'  || vr_tab_dados_detalhe(0).liqpagcd || '</liqpagcd>'  ||
                         '<liqgeral>'  || vr_tab_dados_detalhe(0).liqgeral || '</liqgeral>' ||
                         '<dtreapro>'  || vr_tab_dados_detalhe(0).dtreapro || '</dtreapro>' || -- Marcelo Telles Coelho - Mouts - 25/04/2019 - RITM0050653
-						'<qtparcmi>'  || vr_tab_dados_detalhe(0).qtparcmi || '</qtparcmi>' ||
                      '</detalhe>'
       );
           
