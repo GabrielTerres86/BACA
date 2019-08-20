@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 29/10/2018
  * OBJETIVO     : Mostrar tela CONTAR (Consulta de tarifas)
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 13/08/2019 - Incluir campos no grid, conforme RITM0011962 (Jose Gracik/Mouts).
  *
  *				  
  * --------------
@@ -87,7 +87,7 @@ require_once("../../includes/carrega_permissoes.php");
 												<table width="100%" border="0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
 													<tr>
 														<td align="center">
-															<table width="900" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
+															<table width="1100" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
 																<tr>
 																	<td>
 																		<!-- INCLUDE DA TELA DE PESQUISA -->
