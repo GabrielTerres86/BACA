@@ -218,8 +218,11 @@
                             antes de prosseguir com a custodia
                             Rotina gerar_digita (Tiago/Adriano #766582)      
 							
-			   13/04/2018 - Removidas validacoes de valor do cheque - COMPE SESSAO UNICA (Diego)          
+               14/06/2019 - Validação na integração de arquivos de compensação na GERAR_TITULO e GERAR_COMPEL_PRCCTL
+			                Projeto 565 - Renato Cordeiro - AMcom 14/06/2019
 ............................................................................. */
+
+{ sistema/generico/includes/var_oracle.i }
 
 DEF STREAM str_1.
 
@@ -1276,8 +1279,8 @@ PROCEDURE gerar_titulo:
    DEF VAR aux_nrispbif_rem AS INT                                    NO-UNDO.
    DEF VAR aux_nrispbif AS INT                                        NO-UNDO.   
    
-   
-
+   DEF VAR          aux_cdcritic AS INT                               NO-UNDO.
+   DEF VAR          aux_dscritic AS CHAR                              NO-UNDO.
    ASSIGN aux_qttitcxa = 0
           aux_qttitprg = 0
           aux_vltitcxa = 0
@@ -1713,6 +1716,60 @@ PROCEDURE gerar_titulo:
 
    IF ret_cdcritic > 0   THEN
       RETURN.
+
+   FOR EACH craptit WHERE (craptit.cdcooper = par_cdcooper       AND
+                          craptit.dtdpagto  = par_dtmvtolt       AND
+                          CAN-DO("0,2,4",STRING(craptit.insittit)) AND
+                          craptit.tpdocmto  = 20                 AND
+                          (((craptit.cdagenci >= par_cdageini    AND
+                          craptit.cdagenci <= par_cdagefim)      AND
+                          craptit.cdagenci <> 90                 AND
+                          craptit.cdagenci <> 91)                OR
+                         (craptit.cdagenci  = 90                 AND
+                          par_cdageini      = 90)                OR
+                         (craptit.cdagenci  = 91                 AND
+                          par_cdageini      = 91))               AND
+                          craptit.intitcop  = 0                  AND
+                          craptit.flgenvio  = NO)                
+                          NO-LOCK 
+                          BREAK BY craptit.cdagenci:
+    IF FIRST-OF(craptit.cdagenci) THEN
+    DO:
+
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+           /* Efetuar a chamada a rotina Oracle  */
+           RUN STORED-PROCEDURE pc_checa_titulos
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                   ,INPUT craptit.cdagenci
+                                                   ,INPUT par_dtmvtolt
+                                                   ,OUTPUT 0
+                                                   ,OUTPUT "").
+
+           /* Fechar o procedimento para buscarmos o resultado */ 
+           CLOSE STORED-PROC pc_checa_titulos
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+           { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+          
+           ASSIGN aux_dscritic = ""
+                  aux_dscritic = pc_checa_titulos.pr_dscritic
+                                 WHEN pc_checa_titulos.pr_dscritic <> ?
+                  aux_cdcritic = 0
+                  aux_cdcritic = pc_checa_titulos.pr_cdcritic
+                                 WHEN pc_checa_titulos.pr_cdcritic <> ?.
+
+           IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+              DO:
+                  BELL.
+                  HIDE MESSAGE NO-PAUSE.
+                  MESSAGE "Erro: " aux_cdcritic ": " aux_dscritic.
+                  ret_cdcritic = aux_cdcritic.
+                  RETURN.
+              END.
+
+    END.
+   END.
 
    /* gravar tabela */
    ASSIGN par_cdagefim = IF par_cdageini = 0 THEN 
@@ -3910,6 +3967,8 @@ PROCEDURE gerar_compel_prcctl:
    DEF OUTPUT PARAM ret_totregis AS INT                               NO-UNDO.
    DEF OUTPUT PARAM ret_vlrtotal AS DEC                               NO-UNDO.
 
+   DEF VAR          aux_cdcritic AS INT                               NO-UNDO.
+   DEF VAR          aux_dscritic AS CHAR                              NO-UNDO.
    DEF VAR          aux_mes      AS CHAR                              NO-UNDO.
    DEF VAR          glb_nrcalcul AS DEC                               NO-UNDO.
    DEF VAR          glb_dsdctitg AS CHAR                              NO-UNDO.
@@ -4251,6 +4310,51 @@ PROCEDURE gerar_compel_prcctl:
        HIDE MESSAGE NO-PAUSE.
 
    END.   /*  Fim do FOR EACH  */
+
+   FOR EACH crapchd WHERE crapchd.cdcooper  = par_cdcooper       AND
+                          crapchd.dtmvtolt  = par_dtmvtolt       AND
+                          crapchd.cdagenci >= par_cdageini       AND
+                          crapchd.cdagenci <= par_cdagefim       AND
+                          CAN-DO("0,2",STRING(crapchd.insitchq)) NO-LOCK
+                                                                 BREAK BY crapchd.cdagenci:
+    IF FIRST-OF(crapchd.cdagenci) THEN
+    DO:
+
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+           /* Efetuar a chamada a rotina Oracle  */
+           RUN STORED-PROCEDURE pc_checa_compel
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                   ,INPUT crapchd.cdagenci
+                                                   ,INPUT par_dtmvtolt
+                                                   ,OUTPUT 0
+                                                   ,OUTPUT "").
+
+           /* Fechar o procedimento para buscarmos o resultado */ 
+           CLOSE STORED-PROC pc_checa_compel
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+           { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+          
+           ASSIGN aux_dscritic = ""
+                  aux_dscritic = pc_checa_compel.pr_dscritic
+                                 WHEN pc_checa_compel.pr_dscritic <> ?
+                  aux_cdcritic = 0
+                  aux_cdcritic = pc_checa_compel.pr_cdcritic
+                                 WHEN pc_checa_compel.pr_cdcritic <> ?.
+
+           IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+              DO:
+                  BELL.
+                  HIDE MESSAGE NO-PAUSE.
+                  MESSAGE "Erro: " aux_cdcritic ": " aux_dscritic.
+                  ret_cdcritic = aux_cdcritic.
+                  aux_flgerror = TRUE.
+                  LEAVE.
+              END.
+
+    END.
+   END.
 
    /*  Gravar na Tabela  */
    IF   NOT aux_flgerror THEN

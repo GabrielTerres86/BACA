@@ -169,6 +169,9 @@
 
 			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+						   27/05/2019 - Alterações referentes ao proojeto 565 inclusao DEVOLUCAO DIURNA 
+			                ou DEVOLUCAO FRAUDES E IMPEDIMENTOS (DD OU DFI) (Renato Cordeiro - AMcom)		              
+
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -644,11 +647,11 @@ ON RETURN OF tel_cdcooper DO:
       ASSIGN tel_nmprgexe:LIST-ITEMS = "COMPEL,DEVOLU,DOCTOS,TITULO,CAF,CCF,"
                                      + "CONTRA-ORDEM,CUSTODIA,"
                                      + "FAC/ROC,RELACIONAMENTO,"
-                                     + "TIC,ICFJUD,DEVDOC".
+                                     + "TIC,ICFJUD,DEVDOC,DD,DFI". /*ADD DD=DEVOLUÇAO DIURNA E DFI=DEVOLUÇAO DE FRAUDES E IMPEDIMENTOS*/
    ELSE
       ASSIGN tel_nmprgexe:LIST-ITEMS = "COMPEL,DEVOLU,DOCTOS,TITULO," + 
                                        "CAF,CCF,CONTRA-ORDEM,FAC/ROC," +
-                                       "TIC,DEVDOC".
+                                       "TIC,DEVDOC,DD,DFI".
 
   APPLY "GO".
 
@@ -769,7 +772,8 @@ DO WHILE TRUE:
    IF (glb_cdcooper <> 3                      AND
        glb_cddopcao <> "B"                    AND
 	   glb_cddopcao <> "L"                    AND
-	   glb_cddopcao <> "C")                      OR
+       glb_cddopcao <> "C"                    AND 
+       glb_cddopcao <> "X")                      OR       
       (glb_cddepart <> 20  AND   /* TI"                  */
        glb_cddepart <>  8  AND   /* COORD.ADM/FINANCEIRO */
        glb_cddepart <> 11  AND   /* FINANCEIRO           */

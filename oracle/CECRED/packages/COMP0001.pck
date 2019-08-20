@@ -13,7 +13,8 @@ CREATE OR REPLACE PACKAGE CECRED.COMP0001 IS
 -- Frequencia: -----
 -- Objetivo  : Agrupar rotinas genéricas dos sistemas Oracle
 --
--- Alteracoes: 
+-- Alteracoes: 12/06/2019 PJ565 - Jackson Barcellos AMcom (pc_gera_rel782) Inclusao da Rotina para unificar 2 relatorios em 1 (crrl238 + crrl287) = crrl782 
+-- Alteracoes: 18/06/2019 PJ565 - Renato Cordeiro AMcom (pc_gera_rel782) Inclusão validação Nossa remessa
 ---------------------------------------------------------------------------------------------------------------
   
   -- Buscar lista de remessas de custodias.
@@ -60,6 +61,32 @@ CREATE OR REPLACE PACKAGE CECRED.COMP0001 IS
 																		,pr_qtarquiv OUT PLS_INTEGER -- Quantidade de arquivos
 																		,pr_totregis OUT PLS_INTEGER -- Total de registros
 																		,pr_vlrtotal OUT NUMBER);    -- Valor total
+																		
+  -- Rotina para unificar 2 relatorios em 1 (crrl238 + crrl287) = crrl782                                   
+  PROCEDURE pc_gera_rel782(pr_cdcooper IN NUMBER,
+                         pr_cdcritic OUT crapcri.cdcritic%TYPE,
+                         pr_dscritic OUT VARCHAR2); 
+						 
+  -- PROJ.565                       
+  PROCEDURE pc_checa_compel(pr_cdcooper IN crapcop.cdcooper%TYPE  -- Código Cooperativa
+                                              ,pr_cdagenci IN crapchd.cdagenci%TYPE  -- Código Agencia
+                                              ,pr_dtmvtolt IN crapchd.dtmvtolt%TYPE  -- Data da Mov 
+                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da crítica
+                                              ,pr_dscritic OUT VARCHAR2);				
+
+   -- PROJ.565
+   PROCEDURE pc_checa_titulos(pr_cdcooper IN craptit.CDCOOPER%type  -- Código Cooperativa
+                                             ,pr_cdagenci IN craptit.cdagenci%TYPE  -- Código Agencia
+                                             ,pr_dtmvtolt IN craptit.dtmvtolt%TYPE  -- Data da Mov
+                                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da crítica
+                                             ,pr_dscritic OUT VARCHAR2);  
+   --PROJ.565                                          
+   PROCEDURE pc_checa_devd (pr_cdcooper IN crapcop.cdcooper%TYPE  -- Código Cooperativa                                           
+                                           ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da crítica
+                                           ,pr_dscritic OUT VARCHAR2);       					 
+						 
+						 
+                                
 																		
 END COMP0001;                       
 /
@@ -788,6 +815,513 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0001 IS
 				ROLLBACK;
 		END;	
 	END pc_gerar_compel_custodia;
+	 
+  
+  
+  
+PROCEDURE pc_gera_rel782(pr_cdcooper IN NUMBER,
+                         pr_cdcritic OUT crapcri.cdcritic%TYPE,
+                         pr_dscritic OUT VARCHAR2) is
+  
+  --Variaveis erro
+  vr_des_erro varchar2(4000);  
+  vr_cdcritic        crapcri.cdcritic%TYPE;
+  vr_dscritic        VARCHAR2(4000);
+  vr_exc_saida EXCEPTION;
+  
+  --variaveis
+  vr_typsaida        VARCHAR2(100);
+  vr_caminho_integra VARCHAR2(1000);
+  vr_tab_craterr     GENE0001.typ_tab_erro; --> PL Table de erros do sistema
+  vr_nmarqpdf        VARCHAR2(4000);
+   
+  --Busca os dados da cooperativa
+  CURSOR cr_crapcop IS
+    SELECT cop.nmrescop, cop.nmextcop, cop.cdbcoctl
+      FROM crapcop cop
+     WHERE cop.cdcooper = pr_cdcooper;
+  rw_crapcop cr_crapcop%ROWTYPE;
+  -- Cursor generico de calendario
+  rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+  
+   --Cursor para buscar relatorios
+    CURSOR cr_crapslr(pr_cdcooper crapslr.cdcooper%TYPE,
+                      pr_dtmvtolt crapslr.dtmvtolt%TYPE) IS
+     select nrseqsol 
+       from crapslr 
+      where dtmvtolt = pr_dtmvtolt
+            and cdprogra in ('CRPS341','CRPS290') 
+            and cdcooper = pr_cdcooper;
+    rw_crapslr cr_crapslr%ROWTYPE;
+  
+begin
+  
+  -- ..........................................................................
+	-- Programa: pc_gera_rel782
+	-- Sistema : Conta-Corrente - Cooperativa de Credito
+	-- Sigla   : CRED
+	-- Autor   : Jackson Barcellos AMcom
+	-- Data    : Junho/2019.                     Ultima atualizacao:
+
+	-- Dados referentes ao programa:
+
+	-- Frequencia: Job Diario as 07:00
+	-- Objetivo  : Rotina para unificar 2 relatorios em 1 (crrl238 + crrl287) = crrl782
+
+	-- Alteracoes:
+	-- .............................................................................	
+
+  -- Verifica se a cooperativa esta cadastrada
+  OPEN cr_crapcop;
+  FETCH cr_crapcop
+    INTO rw_crapcop;
+  -- Se não encontrar
+  IF cr_crapcop%NOTFOUND THEN
+    -- Fechar o cursor pois havera raise
+    CLOSE cr_crapcop;
+    -- Montar mensagem de critica
+    vr_cdcritic := 651;
+    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+    RAISE vr_exc_saida;
+  ELSE
+    -- Apenas fechar o cursor
+    CLOSE cr_crapcop;
+  END IF;
+
+  -- Verificacao do calendario
+  OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+  FETCH BTCH0001.cr_crapdat
+    INTO rw_crapdat;
+  -- Se nao encontrar
+  IF BTCH0001.cr_crapdat%NOTFOUND THEN
+    -- Fechar o cursor pois havera raise
+    CLOSE BTCH0001.cr_crapdat;
+    -- Montar mensagem de critica
+    vr_cdcritic := 1;
+    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+    RAISE vr_exc_saida;
+  END IF;
+  -- Apenas fechar o cursor
+  CLOSE BTCH0001.cr_crapdat;
+  
+  --Loop nos registros para reimprimir
+  FOR rw_crapslr IN cr_crapslr(pr_cdcooper => pr_cdcooper,
+                               pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP  
+    --gerar relatorios para unificar
+    gene0002.pc_gera_relato(pr_nrseqsol => rw_crapslr.nrseqsol
+                               ,pr_des_erro => vr_des_erro);
+    IF vr_des_erro is not null then
+       vr_cdcritic := 0;
+       vr_dscritic := 'Erro ao gerar relatorio origem: '||vr_des_erro;
+       DBMS_OUTPUT.PUT_LINE(vr_dscritic);
+    END IF;
+  END LOOP;
+  -- busca caminho dos relatorios
+  vr_caminho_integra := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
+                                              ,pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
+  -- unifica os relatorios
+  gene0001.pc_OScommand(pr_typ_comando => 'S',
+                        pr_des_comando => 'cat ' || vr_caminho_integra ||
+                                          '/crrl238.lst ' ||
+                                          vr_caminho_integra ||
+                                          '/crrl287.lst > ' ||
+                                          vr_caminho_integra ||
+                                          '/crrl782.lst',
+                        pr_typ_saida   => vr_typsaida,
+                        pr_des_saida   => vr_dscritic);
+  IF vr_dscritic is not null then
+     vr_cdcritic := 0;
+     vr_dscritic := 'Erro ao unificar os relatorio origem: '||vr_dscritic;
+  END IF;
+
+  -- imprime relatorio novo                      
+  gene0002.pc_imprim(pr_cdcooper   => pr_cdcooper --> Cooperativa conectada
+                    ,pr_cdprogra   => 'COMP0001' --> Nome do programa que solicitou o rep
+                    ,pr_cdrelato   => 782 --> Código do relatório solicitado
+                    ,pr_dtmvtolt   => rw_crapdat.dtmvtolt --> Data movimento atual
+                    ,pr_caminho    => vr_caminho_integra --> Path arquivo origem
+                    ,pr_nmarqimp   => 'crrl782.lst' --> Nome arquivo para impressao
+                    ,pr_nmformul   => '132col' --> Nome do formulário de impressão
+                    ,pr_nrcopias   => 1 --> Quantidade de Copias desejadas
+                    ,pr_dircop_pdf => vr_nmarqpdf --> Retorna o caminho do PDF gerado pela imprim.p
+                    ,pr_cdcritic   => vr_cdcritic --> Código do erro
+                    ,pr_dscritic   => vr_dscritic); --> Saída com erro
+                    
+  IF vr_dscritic is not null then
+     vr_cdcritic := 0;
+     vr_dscritic := 'Erro ao imprimir novo relatorio unificado: '||vr_dscritic;
+  END IF;
+
+  -- remove relatorios originais                   
+  gene0001.pc_OScommand(pr_typ_comando => 'S',
+                        pr_des_comando => 'rm ' || vr_caminho_integra ||
+                                          '/crrl238.lst ',
+                        pr_typ_saida   => vr_typsaida,
+                        pr_des_saida   => vr_dscritic);
+  gene0001.pc_OScommand(pr_typ_comando => 'S',
+                        pr_des_comando => 'rm ' || vr_caminho_integra ||
+                                          '/crrl287.lst ',
+                        pr_typ_saida   => vr_typsaida,
+                        pr_des_saida   => vr_dscritic); 
+                        
+  IF vr_dscritic is not null then
+     vr_cdcritic := 0;
+     vr_dscritic := 'Erro ao remover relatorios origem: '||vr_dscritic;
+  END IF;
+
+  COMMIT;                                          
+                    
+EXCEPTION
+  
+    WHEN vr_exc_saida THEN
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      -- Devolvemos código e critica encontradas das variaveis locais
+      pr_cdcritic := NVL(vr_cdcritic, 0);
+      pr_dscritic := vr_dscritic;
+      -- Efetuar rollback
+      ROLLBACK;
+    WHEN OTHERS THEN
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 0;
+      pr_dscritic := sqlerrm;
+      -- Efetuar rollback
+      ROLLBACK;        
+end;
+
+--PROJ.565
+PROCEDURE pc_checa_compel(pr_cdcooper IN crapcop.cdcooper%TYPE -- Código Cooperativa
+                         ,
+                          pr_cdagenci IN crapchd.cdagenci%TYPE -- Código Agencia
+                         ,
+                          pr_dtmvtolt IN crapchd.dtmvtolt%TYPE -- Data da Mov                                              
+                          
+                         ,
+                          pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código da crítica
+                         ,
+                          pr_dscritic OUT VARCHAR2) IS
+
+  -- .......................................................................................................
+  --3 - COMPEL --TPARQUIV 
+  -- cursores --
+  --Cursor para buscar a QTD e VL.Total de <registros enviados>
+  CURSOR cr_crapchd(pr_cdcooper IN crapchd.cdcooper%TYPE,
+                    pr_cdagenci IN crapchd.cdagenci%TYPE,
+                    pr_dtmvtolt IN crapchd.dtmvtolt%TYPE) IS
+  
+    SELECT COUNT(1) qtd, SUM(vlcheque) soma
+      FROM crapchd
+     WHERE crapchd.cdcooper = pr_cdcooper --<Cooperativa>
+       AND crapchd.dtmvtolt = pr_dtmvtolt --'28/03/2019'--<Data de envio>
+       AND crapchd.cdagenci = pr_cdagenci --1 --<PA>            
+       AND crapchd.cdbccxlt IN (11, 500, 600, 700) --igual ao parametro             
+       AND crapchd.flgenvio = 1;
+  rw_crapchd cr_crapchd%ROWTYPE;
+  -------------------------------------------------------------------------
+  --Cursor para buscar a QTD e VL.Total de <registros processados>
+  CURSOR cr_gncpchq(pr_cdcooper IN crapchd.cdcooper%TYPE,
+                    pr_cdagenci IN crapchd.cdagenci%TYPE,
+                    pr_dtmvtolt IN crapchd.dtmvtolt%TYPE) IS
+  
+    SELECT COUNT(1) qtd, SUM(vlcheque) soma
+      FROM gncpchq
+     WHERE gncpchq.cdcooper = pr_cdcooper --<Cooperativa>
+       AND gncpchq.dtmvtolt = pr_dtmvtolt --'28/03/2019'--<Data de envio>
+       AND gncpchq.cdagenci = pr_cdagenci --1 --pr_cdagenci --1 --<PA>                    
+          -------------------------------------------           
+       and gncpchq.cdoperad = '1';
+  rw_gncpchq cr_gncpchq%ROWTYPE;
+
+  -- Variáveis de erro 
+  vr_exc_saida EXCEPTION;
+  -- Variáveis de criticas 
+
+BEGIN
+  -- Verifica se existe valor no cursor
+  OPEN cr_crapchd(pr_cdcooper => pr_cdcooper,
+                  pr_cdagenci => pr_cdagenci,
+                  pr_dtmvtolt => pr_dtmvtolt);
+
+  FETCH cr_crapchd
+    INTO rw_crapchd;
+  CLOSE cr_crapchd;
+
+  --Verificar qtd e valor da gncpchq <registros processados>
+  OPEN cr_gncpchq(pr_cdcooper => pr_cdcooper,
+                  pr_cdagenci => pr_cdagenci,
+                  pr_dtmvtolt => pr_dtmvtolt);
+
+  FETCH cr_gncpchq
+    INTO rw_gncpchq;
+  CLOSE cr_gncpchq;
+  /** verifica valor e qtd dos cursores**/
+  --
+
+  IF (rw_crapchd.soma) != (rw_gncpchq.soma) or
+     (rw_crapchd.qtd) != (rw_gncpchq.qtd) then
+    pr_cdcritic := 1465;
+    pr_dscritic := 'Quantidade ou valor errado na rotina gerar_compel_prcctl QTD:' ||
+                   rw_crapchd.qtd || ' ' || 'VALOR:' || rw_crapchd.soma || ' ' ||
+                   'e na auxiliar QTD:' || rw_gncpchq.qtd || ' ' ||
+                   'VALOR:' || rw_gncpchq.soma;
+  
+  ELSE
+  
+    BEGIN
+      -- fazer insert na nova tabela [tbcompe_nossaremessa]
+      -- inicio
+      INSERT INTO tbcompe_nossaremessa
+        (cdcooper,
+         cdagenci,
+         tparquiv,
+         dtarquiv,
+         nmarquiv,
+         qtenviad,
+         vlenviad,
+         qtproces,
+         vlproces,
+         insituac,
+         dtevinst,
+         dtrtinst)
+      VALUES
+        (pr_cdcooper,
+         '',
+         3,
+         '',
+         '',
+         rw_crapchd.qtd, --qtenviad,
+         rw_crapchd.soma, --vlenviad,
+         0, --qtproces,
+         0, --vlproces,
+         0, --insituac
+         '', --dtevinst
+         '' --dtrtinst
+         );
+    
+    EXCEPTION
+      WHEN OTHERS THEN
+        null;
+      
+    END;
+  end if;
+
+END pc_checa_compel;
+
+-- PROJ.565
+PROCEDURE pc_checa_titulos(pr_cdcooper IN craptit.CDCOOPER%type -- Código Cooperativa
+                          ,
+                           pr_cdagenci IN craptit.cdagenci%TYPE -- Código Agencia
+                          ,
+                           pr_dtmvtolt IN craptit.dtmvtolt%TYPE -- Data da Mov
+                          ,
+                           pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código da crítica
+                          ,
+                           pr_dscritic OUT VARCHAR2) IS
+  --> descricao do erro
+  -- .......................................................................................................
+  --4 - TITILOS --TPARQUIV
+
+  -- cursores --
+  --Cursor para buscar a QTD e VL.Total de <registros enviados>
+  CURSOR cr_craptit(pr_cdcooper IN craptit.CDCOOPER%type,
+                    pr_cdagenci IN craptit.cdagenci%TYPE,
+                    pr_dtmvtolt IN craptit.dtmvtolt%TYPE) IS
+  
+    SELECT COUNT(1) qtd, SUM(craptit.vldpagto) soma
+      FROM craptit
+     WHERE craptit.cdcooper = pr_cdcooper --<Cooperativa>
+       AND craptit.dtmvtolt = pr_dtmvtolt --'28/03/2019'--<Data de envio>
+       AND craptit.cdagenci = pr_cdagenci --1 --<PA>             
+       AND craptit.insittit IN (0, 2, 4)
+       AND craptit.tpdocmto = 20
+       and craptit.intitcop = 0;
+  rw_craptit cr_craptit%ROWTYPE;
+  -------------------------------------------------------------------------
+  --Cursor para buscar a QTD e VL.Total de <registros processados>
+  CURSOR cr_gncptit(pr_cdcooper IN gncptit.cdcooper%TYPE,
+                    pr_cdagenci IN gncptit.cdagenci%TYPE,
+                    pr_dtmvtolt IN gncptit.dtmvtolt%TYPE) IS
+  
+    SELECT COUNT(1) qtd, SUM(vldpagto) soma
+      FROM gncptit
+     WHERE gncptit.cdcooper = pr_cdcooper --<Cooperativa>
+       AND gncptit.dtmvtolt = pr_dtmvtolt --'28/03/2019'--<Data de envio>
+       AND gncptit.cdagenci = pr_cdagenci --1 --pr_cdagenci --1 --<PA>
+       and gncptit.cdoperad = '1';
+
+  rw_gncptit cr_gncptit%ROWTYPE;
+
+  -- Variáveis de erro 
+  vr_exc_saida EXCEPTION;
+  -- Variáveis de criticas 
+
+BEGIN
+  --Verificar qtd e valor da craptit <registros enviados>
+  OPEN cr_craptit(pr_cdcooper => pr_cdcooper,
+                  pr_cdagenci => pr_cdagenci,
+                  pr_dtmvtolt => pr_dtmvtolt);
+
+  FETCH cr_craptit
+    INTO rw_craptit;
+  CLOSE cr_craptit;
+
+  --Verificar qtd e valor da gncptit <registros processados>
+  OPEN cr_gncptit(pr_cdcooper => pr_cdcooper,
+                  pr_cdagenci => pr_cdagenci,
+                  pr_dtmvtolt => pr_dtmvtolt);
+
+  FETCH cr_gncptit
+    INTO rw_gncptit;
+  CLOSE cr_gncptit;
+  /** verifica valor e qtd dos cursores**/
+  --
+
+  IF (rw_craptit.soma) != (rw_gncptit.soma) or
+     (rw_craptit.qtd) != (rw_gncptit.qtd) then
+    pr_cdcritic := 1465;
+    pr_dscritic := 'Quantidade ou valor errado na rotina gerar_titulos QTD:' ||
+                   rw_craptit.qtd || ' ' || 'VALOR:' || rw_craptit.soma || ' ' ||
+                   'e na auxiliar QTD:' || rw_gncptit.qtd || ' ' ||
+                   'VALOR:' || rw_gncptit.soma;
+  
+  ELSE
+    BEGIN
+      -- fazer insert na nova tabela [tbcompe_nossaremessa]
+      -- inicio
+      INSERT INTO tbcompe_nossaremessa
+        (cdcooper,
+         cdagenci,
+         tparquiv,
+         dtarquiv,
+         nmarquiv,
+         qtenviad,
+         vlenviad,
+         qtproces,
+         vlproces,
+         insituac,
+         dtevinst,
+         dtrtinst)
+      VALUES
+        (pr_cdcooper,
+         '',
+         4, -- TITULOS.
+         '',
+         '',
+         rw_craptit.qtd, --qtenviad,
+         rw_craptit.soma, --vlenviad,
+         0, --qtproces,
+         0, --vlproces,
+         0, --insituac
+         '', --dtevinst
+         '' --dtrtinst
+         );
+    
+    EXCEPTION
+      WHEN OTHERS THEN
+        null;
+      
+    END;
+  end if;
+END pc_checa_titulos;
+
+-- PROJ.565
+PROCEDURE pc_checa_devd(pr_cdcooper IN crapcop.cdcooper%TYPE -- Código Cooperativa
+                        
+                       ,
+                        pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código da crítica
+                       ,
+                        pr_dscritic OUT VARCHAR2) IS
+  -- .......................................................................................................
+  --1 - Dev.Diurna  --TPARQUIV
+  -- cursores --
+  --Cursor para buscar a QTD e VL.Total de <registros enviados>
+  CURSOR cr_crapdev(pr_cdcooper IN crapdev.cdcooper%TYPE) IS
+    SELECT COUNT(1) qtd, SUM(VLLANMTO) soma
+      FROM crapdev
+     WHERE crapdev.cdcooper = pr_cdcooper
+       AND crapdev.cdhistor IN (47, 573)
+       and cdbandep >= 0;
+  rw_crapdev cr_crapdev%ROWTYPE;
+  -------------------------------------------------------------------------
+  --Cursor para buscar a QTD e VL.Total de <registros processados do progress>
+  CURSOR cr_crapdevv(pr_cdcooper IN gncpdev.cdcooper%TYPE) IS
+    SELECT SUM(VLLANMTO) soma, COUNT(1) qtd
+      FROM crapdev
+     WHERE crapdev.cdcooper = pr_cdcooper
+       and crapdev.indevarq = 2;
+
+  rw_crapdevv cr_crapdevv%ROWTYPE;
+
+  -- Variáveis de erro
+  vr_exc_erro EXCEPTION;
+  --vr_dscritic varchar2(4000);
+
+BEGIN
+  --Verificar qtd e valor da crapchd <registros enviados>
+  OPEN cr_crapdev(pr_cdcooper => pr_cdcooper);
+
+  FETCH cr_crapdev
+    INTO rw_crapdev;
+  CLOSE cr_crapdev;
+
+  --Verificar qtd e valor da gncpdev <registros processados>
+  OPEN cr_crapdevv(pr_cdcooper => pr_cdcooper);
+
+  FETCH cr_crapdevv
+    INTO rw_crapdevv;
+  CLOSE cr_crapdevv;
+  /** verifica valor e qtd dos cursores**/
+  --
+  IF (rw_crapdev.soma) != (rw_crapdevv.soma) or
+     (rw_crapdev.qtd) != (rw_crapdevv.qtd) then
+    pr_cdcritic := 1465;
+    pr_dscritic := 'Quantidade ou valor errado na rotina gerar_titulos QTD:' ||
+                   rw_crapdev.qtd || ' ' || 'VALOR:' || rw_crapdev.soma || ' ' ||
+                   'e na auxiliar QTD:' || rw_crapdevv.qtd || ' ' ||
+                   'VALOR:' || rw_crapdevv.soma;
+  
+  ELSE
+    BEGIN
+      -- fazer insert na nova tabela [tbcompe_nossaremessa]
+      -- inicio
+      INSERT INTO tbcompe_nossaremessa
+        (cdcooper,
+         cdagenci,
+         tparquiv,
+         dtarquiv,
+         nmarquiv,
+         qtenviad,
+         vlenviad,
+         qtproces,
+         vlproces,
+         insituac,
+         dtevinst,
+         dtrtinst)
+      VALUES
+        (pr_cdcooper,
+         '',
+         4, -- TITULOS.
+         '',
+         '',
+         rw_crapdev.qtd, --qtenviad,
+         rw_crapdev.soma, --vlenviad,
+         0, --qtproces,
+         0, --vlproces,
+         0, --insituac
+         '', --dtevinst
+         '' --dtrtinst
+         );
+    
+    EXCEPTION
+      WHEN OTHERS THEN
+        null;
+    END;
+  end if;
+
+END pc_checa_devd;	 
 	 
 END COMP0001;
 /

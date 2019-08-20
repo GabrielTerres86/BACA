@@ -1,12 +1,11 @@
 <? 
 /*!
- * FONTE        : pesqsp.php
- * CRIAÇÃO      : Gabriel CApoia (DB1)
- * DATA CRIAÇÃO : 11/01/2013
- * OBJETIVO     : Mostrar tela PESQSP
+ * FONTE        : movcmp.php
+ * CRIAÇÃO      : Jackson Barcellos AMcom
+ * DATA CRIAÇÃO : 06/2019
+ * OBJETIVO     : P565
  * --------------
- * ALTERAÇÕES   : 03/06/2019 Ajuste para nao buscar pesqdp.js do cache 
- *							   Jackson Barcellos - AMcom P565
+ * ALTERAÇÕES   : 
  * --------------
  */
 ?>
@@ -19,10 +18,7 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
 	
-	require_once("../../includes/carrega_permissoes.php");
-	
-	$nometela = str_replace(".php", "", basename($_SERVER['PHP_SELF']));
-	
+	require_once("../../includes/carrega_permissoes.php");	
 ?>
 
 <html>
@@ -37,7 +33,7 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="<? echo $nometela ?>.js?keyrand=<?php echo mt_rand();?>"></script>
+		<script type="text/javascript" src="movcmp.js?keyrand=<?php echo mt_rand(); ?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -62,7 +58,7 @@
 									<table width="100%"  border="0" cellspacing="0" cellpadding="0">
 										<tr>
 											<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml(strtoupper($nometela).' - Pesquisa de Cheques Depositados') ?></td>
+											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('MOVCOMP - Movimento dos documentos da compensação.') ?></td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif" align="right"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold">F2 = AJUDA</a>&nbsp;&nbsp;</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold"><img src="<?php echo $UrlImagens; ?>geral/ico_help.jpg" width="15" height="15" border="0"></a></td>
 											<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
@@ -78,31 +74,19 @@
 												<table width="100%" border="0" cellpadding="10" cellspacing="0" style="background-color: #F4F3F0;">
 													<tr>
 														<td align="center">
-															<table width="600" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
+															<table width="790" border="0" cellpadding="0" cellspacing="0" style="background-color: #F4F3F0;">
 																<tr>
-																	<td>
-																		<!-- INCLUDE DA TELA DE PESQUISA -->
-																		<? require_once("../../includes/pesquisa/pesquisa.php"); ?>
+																	<td>					
 																		
-																		<!-- INCLUDE DA TELA DE PESQUISA ASSOCIADO -->
-																		<? require_once("../../includes/pesquisa/pesquisa_associados.php"); ?>
-																		
-																		<div id="divRotina"></div>
-																		<div id="divUsoGenerico"></div>
-																		
-																		<div id="divTela">
-																			<? include('form_cabecalho.php'); ?>																			
-																			<div id="divTabela"></div>
-																			
-																			<div id="divBotoes" style="margin-bottom:10px" >
-																				<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>
-																				<a href="#" class="botao" id="btSalvar" onclick="btnContinuar(); return false;">Prosseguir</a>
-																			</div>
+																		<div id="divTela" style="height:75px; margin-top:5px;">
+																			<? include('form_cabecalho.php'); ?>				
 																		</div>
+
+																		<br>
 																		
+																		<div id="divTabela" name="divTabela" style="display:none; margin-top:1px;"></div> 
 																		
 																	</td>
-																</tr>
 															</table>					
 														</td>
 													</tr>
@@ -121,7 +105,3 @@
 </table>
 </body>
 </html>
-<script>
-	
-	nometela = "<? echo $nometela ?>"
-</script>
