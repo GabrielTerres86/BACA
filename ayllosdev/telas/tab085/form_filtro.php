@@ -60,6 +60,8 @@
 <script type="text/javascript">
 
 	formataFiltro();
+	//Bruno  - prj 475 - passar cd cooper
+	__CDCOOPER = '<?php echo $glbvars["cdcooper"] ?>';
 	
 </script>
 	

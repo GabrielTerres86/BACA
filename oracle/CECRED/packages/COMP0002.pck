@@ -241,6 +241,7 @@ CREATE OR REPLACE PACKAGE CECRED.COMP0002 is
                                           ,pr_nrdocmto IN craplcm.nrdocmto%TYPE  --> Número do documento
                                           ,pr_dttransa IN crappro.dttransa%TYPE  --> Data da transação                                          
                                           ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
+                                          ,pr_cdhistor IN NUMBER DEFAULT 0       --> Historico
                                           ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
                                           ,pr_dsretorn OUT VARCHAR2);  
                                           
@@ -304,6 +305,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
   -- Objetivo  : Rotinas para busca de comprovantes
   --
 	-- Alteracoes: 14/08/2018 - Adicionado procedure pc_detalhe_compr_doc. (Reinert)
+  --
+  --             30/03/2019 - Adicionado novas informações de TEDs recebidas.
+  --                          Jose Dill - Mouts (P475 - REQ40)
+  --             11/06/2019 - Tratamento para listar TED Judicial.
+  --                          Jose Dill - Mouts (P475 - REQ39)
+  --
+  --
   ---------------------------------------------------------------------------------------------------------------
 
 	CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
@@ -354,7 +362,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
           WHEN pr_protocolo.cdtippro = 3 THEN -- Capital;
             vr_dsprotoc := pr_protocolo.dsinform##1;
           WHEN pr_protocolo.cdtippro = 9 THEN -- TED Realizada
-            vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(4, pr_protocolo.dsinform##2, '#')) || ' - ' || TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##3, '#'));
+            /*REQ39*/
+            IF UPPER(TRIM(gene0002.fn_busca_entrada(3, pr_protocolo.dsinform##3, '#'))) <> 'DEPOSITO JUDICIAL' THEN
+               vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(4, pr_protocolo.dsinform##2, '#')) || ' - ' || TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##3, '#'));
+            ELSE   
+               vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#'));
+            END IF;
+            
           WHEN pr_protocolo.cdtippro IN(10,12) THEN -- Aplicacao POS - Resgate
             vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, TRIM(gene0002.fn_busca_entrada(3, pr_protocolo.dsinform##2, '#')), '-')) || '/' || TRIM(SUBSTR(TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#')), ':')),1,10));
           WHEN pr_protocolo.cdtippro = 13 THEN -- GPS       
@@ -4115,6 +4129,8 @@ PROCEDURE pc_detalhe_compr_recebido(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Có
      Observacao: -----
 
      Alteracoes: 
+               30/03/2019 - Adicionado novas informações de TEDs recebidas.
+                            Jose Dill - Mouts (P475 - REQ40)
 
      ..................................................................................*/  
     
@@ -4139,6 +4155,7 @@ PROCEDURE pc_detalhe_compr_recebido(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Có
                                        ,pr_nrdocmto => pr_nrdocmto
                                        ,pr_dttransa => pr_dttransa
                                        ,pr_cdorigem => pr_cdorigem
+                                       ,pr_cdhistor => pr_cdhistor --REQ40 
                                        ,pr_retxml =>   pr_retxml
                                        ,pr_dsretorn => pr_dsretorn);      
        END CASE;
@@ -4488,6 +4505,7 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
                                         ,pr_nrdocmto IN craplcm.nrdocmto%TYPE  --> Número do documento
                                         ,pr_dttransa IN crappro.dttransa%TYPE  --> Data da transação                                          
                                         ,pr_cdorigem IN NUMBER                 --> Origem: 1-ayllos, 3-internet, 4-TAS
+                                        ,pr_cdhistor IN NUMBER DEFAULT 0       --> Historico
                                         ,pr_retxml   OUT CLOB                  --> Arquivo de retorno do XML                                        
                                         ,pr_dsretorn OUT VARCHAR2) IS
 
@@ -4510,7 +4528,8 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
      Observacao: -----
 
      Alteracoes: 
-
+               30/03/2019 - Adicionado novas informações de TEDs recebidas.
+                            Jose Dill - Mouts (P475 - REQ40)
      ..................................................................................*/  
     
     DECLARE
@@ -4527,6 +4546,14 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
       vr_info_sac typ_reg_info_sac;     
       vr_inpesrem INTEGER := 0;
       vr_inpesdst INTEGER := 0;
+      vr_finalidade VARCHAR2(100); --REQ40
+      vr_pessoa_rem VARCHAR2(10); --REQ40
+      vr_pessoa_dst VARCHAR2(10); --REQ40
+      vr_cdagerem crapcop.cdbcoctl%type; --REQ40
+      vr_nrctarem VARCHAR2(20);  --REQ40
+      vr_dscpfrem VARCHAR2(100); --REQ40
+
+
     BEGIN
             
       SSPB0001.pc_obtem_log_cecred(pr_cdcooper => pr_cdcooper
@@ -4546,6 +4573,7 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
                                   ,pr_inestcri => 0
                                   ,pr_cdifconv => 3
                                   ,pr_vlrdated => 0
+                                  ,pr_cdhistor => pr_cdhistor --REQ40
                                   ,pr_dscritic => vr_dscritic
                                   ,pr_tab_logspb         => vr_tab_logspb        
                                   ,pr_tab_logspb_detalhe => vr_tab_logspb_detalhe
@@ -4579,8 +4607,54 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
       ELSE
         vr_inpesdst := 2; -- JURIDICA
       END IF;
+      --
+      --REQ40
+      IF vr_tab_logspb_detalhe(vr_idx_ted).cdagerem = 0 THEN
+         vr_cdagerem:= NULL;
+      ELSE
+         vr_cdagerem:=   vr_tab_logspb_detalhe(vr_idx_ted).cdagerem;
+      END IF;  
+ 
+      IF NVL(vr_tab_logspb_detalhe(vr_idx_ted).nrctarem,0) <> 0 THEN
+        vr_nrctarem:= TRIM(GENE0002.fn_mask_conta(vr_tab_logspb_detalhe(vr_idx_ted).nrctarem));
+      ELSE
+        vr_nrctarem:= NULL;
+      END IF;     
       
+      IF NVL(vr_tab_logspb_detalhe(vr_idx_ted).dscpfrem,0) <> 0 THEN 
+        vr_dscpfrem:= GENE0002.fn_mask_cpf_cnpj(vr_tab_logspb_detalhe(vr_idx_ted).dscpfrem,vr_inpesrem);  
+      ELSE
+        vr_dscpfrem:= NULL;
+      END IF;      
+      --
+      IF NVL(pr_cdhistor,0) <> 600 THEN
+        --REQ40 - Encaminhar uma lista (array) com o label e o valor do campo. Se o valor estiver nulo, a informação não deverá ser incluída no xml
+        vr_finalidade := tabe0001.fn_busca_dstextab( pr_cdcooper => 1
+                                                    ,pr_nmsistem => 'CRED'
+                                                    ,pr_tptabela => 'GENERI'
+                                                    ,pr_cdempres => 00
+                                                    ,pr_cdacesso => 'FINTRFTEDS'
+                                                    ,pr_tpregist => vr_tab_logspb_detalhe(vr_idx_ted).finalid   );
 
+        IF vr_tab_logspb_detalhe(vr_idx_ted).tpesdst = 'J' THEN
+          vr_pessoa_dst := 'Juridica';
+        ELSE
+          vr_pessoa_dst := 'Fisica';
+        END IF;  
+        IF vr_tab_logspb_detalhe(vr_idx_ted).tpesrem = 'J' THEN
+          vr_pessoa_rem := 'Juridica';
+        ELSE
+          vr_pessoa_rem := 'Fisica';
+        END IF; 
+      ELSE
+        vr_cdagerem:= NULL;
+        vr_nrctarem:= NULL;
+        vr_dscpfrem:= NULL;
+                  
+      END IF; 
+              
+  
+         
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_temp      
                              ,pr_texto_novo     => 
@@ -4588,9 +4662,13 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
                                 '<cdtippro>9</cdtippro>' ||
                                 '<dstippro>' || vr_tab_logspb_detalhe(vr_idx_ted).dstiptra || '</dstippro>' ||
                                 '<cdbanrem>' || LPAD(TO_CHAR(vr_tab_logspb_detalhe(vr_idx_ted).cdbanrem),3,0) || '</cdbanrem>' ||
-                                '<cdagerem>' || LPAD(TO_CHAR(vr_tab_logspb_detalhe(vr_idx_ted).cdagerem),4,0) || '</cdagerem>' ||
-                                '<nrctarem>' || TRIM(GENE0002.fn_mask_conta(vr_tab_logspb_detalhe(vr_idx_ted).nrctarem)) || '</nrctarem>' ||
-                                '<nrcpfrem>' || GENE0002.fn_mask_cpf_cnpj(vr_tab_logspb_detalhe(vr_idx_ted).dscpfrem,vr_inpesrem) || '</nrcpfrem>' ||
+                                --'<cdagerem>' || NVL(LPAD(TO_CHAR(vr_tab_logspb_detalhe(vr_idx_ted).cdagerem),4,0),'') || '</cdagerem>' ||
+                                '<cdagerem>' || LPAD(TO_CHAR(vr_cdagerem),4,0) || '</cdagerem>' ||                                
+                                '<nrctarem>' || vr_nrctarem || '</nrctarem>' ||                       
+                                --'<nrctarem>' || TRIM(GENE0002.fn_mask_conta(vr_tab_logspb_detalhe(vr_idx_ted).nrctarem)) || '</nrctarem>' ||
+                                --'<nrcpfrem>' || GENE0002.fn_mask_cpf_cnpj(vr_tab_logspb_detalhe(vr_idx_ted).dscpfrem,vr_inpesrem) || '</nrcpfrem>' ||
+                                '<nrcpfrem>' ||   vr_dscpfrem || '</nrcpfrem>' ||
+                                
                                 --'<nrcpfrem>' || TO_CHAR(vr_tab_logspb_detalhe(vr_idx_ted).dscpfrem) || '</nrcpfrem>' || JMD
                                 '<nmremete>' || vr_tab_logspb_detalhe(vr_idx_ted).dsnomrem || '</nmremete>' ||
                                 '<cdbandst>' || LPAD(TO_CHAR(vr_tab_logspb_detalhe(vr_idx_ted).cdbandst),3,0) || '</cdbandst>' ||
@@ -4602,6 +4680,16 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
                                 '<vldocmto>' || to_char(vr_tab_logspb_detalhe(vr_idx_ted).vltransa,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')  || '</vldocmto>' ||
                                 '<dttransa>' || to_char(vr_tab_logspb_detalhe(vr_idx_ted).dttransa, 'DD/MM/RRRR')         || '</dttransa>' ||
                                 '<hrautent>' || to_char(to_date(vr_tab_logspb_detalhe(vr_idx_ted).hrtransa,'sssss'),'hh24:mi:ss') || '</hrautent>' ||                                
+                                --REQ40 - Novas informações para o recebimento de TEDs
+                                '<tpctarem>'||vr_tab_logspb_detalhe(vr_idx_ted).tpctrem||'</tpctarem>'||
+                                '<tppesrem>'||vr_pessoa_rem||'</tppesrem>'||
+                                '<tpctadst>'||vr_tab_logspb_detalhe(vr_idx_ted).tpctdst||'</tpctadst>'||
+                                '<tppesdst>'||vr_pessoa_dst||'</tppesdst>'||                               
+                                '<dsfinali>'||vr_finalidade||'</dsfinali>'||
+                                '<dsindeti>'||vr_tab_logspb_detalhe(vr_idx_ted).cdidtra||'</dsindeti>'||
+                                '<dshistor>'||vr_tab_logspb_detalhe(vr_idx_ted).histori||'</dshistor>'||
+                                '<nrctrcre>'||LTRIM(vr_tab_logspb_detalhe(vr_idx_ted).nropecr)||'</nrctrcre>'||
+                                '<dsmotdev>'||LTRIM(vr_tab_logspb_detalhe(vr_idx_ted).cddvtra)||'</dsmotdev>'||
                                 '<infosac>' ||
                                     '<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
                                     '<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 

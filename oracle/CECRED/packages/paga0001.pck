@@ -1276,7 +1276,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                      ,pr_cdprograma     IN VARCHAR2 DEFAULT 'PAGA0001'
                                      ,pr_tpexecucao     IN NUMBER DEFAULT 0 -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
                                      ,pr_cdcriticidade  IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 2 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)                                      
-                                      );                                  
+                                      ); 
                                        
   /* Procedure para cancelar agendamentos pendentes apos termino do ciclo de pagamento dos agentamentos */
   PROCEDURE pc_PAGA0001_cancela_debitos (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -3881,7 +3881,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                 vr_tab_relato(vr_index_relato).cdcooper <> vr_tab_relato(vr_tab_relato.PRIOR(vr_index_relato)).cdcooper THEN
 
                 --Determinar o titulo
-                IF vr_tab_relato(vr_index_relato).cdtiptra = 4 THEN
+                IF vr_tab_relato(vr_index_relato).cdtiptra IN (4,22) THEN /*REQ39*/
                   vr_dstiptra := 'TED';                
                 ELSIF vr_tab_relato(vr_index_relato).fltiptra THEN
                   IF vr_tab_relato(vr_index_relato).fltipdoc THEN
@@ -13654,7 +13654,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
          END IF;
 
          --Se for TED
-         IF vr_tab_agendto(vr_index_agendto).cdtiptra = 4 THEN /* TED */
+         IF vr_tab_agendto(vr_index_agendto).cdtiptra IN (4,22) THEN /* TED */ /*REQ39*/
            pc_debita_agendto_ted(pr_cdcooper => pr_cdcooper
                                 ,pr_cdagenci => vr_cdagenci
                                 ,pr_nrdcaixa => 900
@@ -13853,7 +13853,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                 portabilidade de Salário ( Renato Darosci - Supero - P485)
                    
                    11/06/2019 - Inclusao da origem AIMARO para tratar o envio de TED/Transferência em lote.
-                                Jose Dill - Mouts (P500 - Upload TED)             
+                                Jose Dill - Mouts (P500 - Upload TED)        
+                                
+                   14/06/2019 - Inclusao do tratamento para agendamento de TED Judicial.
+                                Jose Dill - Mouts (P475 - REQ39)
+                                                    
     -----------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -13927,9 +13931,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           AND craplau.cdhistor = craphis.cdhistor
           AND crapass.cdcooper = pr_cdcooper  
           AND ((pr_cdprogra = 'CRPS705' AND 
-                craplau.cdtiptra = 4)   OR
+                craplau.cdtiptra IN (4,22))   OR /*REQ39*/
                (pr_cdprogra <> 'CRPS705' AND 
-                craplau.cdtiptra <> 4 ))                           
+                craplau.cdtiptra NOT IN (4,22) ))  /*REQ39*/                         
           AND ((    craplau.cdcooper = pr_cdcooper
               AND   craplau.dtmvtopg = pr_dtmvtopg
               AND   craplau.insitlau = 1
@@ -14146,7 +14150,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           vr_fltipdoc:= LENGTH(rw_craplau.dslindig) = 55;
           --Descricao da transacao
           vr_dstransa:= rw_craplau.dscedent;
-        ELSIF rw_craplau.cdtiptra = 4 THEN /** TED **/
+        ELSIF rw_craplau.cdtiptra IN (4,22) THEN /** TED **/ /*REQ39*/
             
             --Tipo transação
             vr_fltiptra := false;
@@ -27512,6 +27516,7 @@ end;';
 					                             ,pr_idagenda => 2
                                        ,pr_idportab => vr_idportab
                                        ,pr_nrridlfp => NVL(vr_nrridlfp,0)
+                                       ,pr_cdtiptra => rw_craplau.cdtiptra --> Tipo de transação /*REQ39*/
                                        -- saida        
                                        ,pr_dsprotoc => vr_dsprotoc  --> Retorna protocolo    
                                        ,pr_tab_protocolo_ted => vr_tab_protocolo_ted --> dados do protocolo
@@ -27844,7 +27849,7 @@ end;';
       -- Variaveis para verificao termino ciclo de pagamentos
       vr_flultexe INTEGER;
       vr_qtdexec  INTEGER;
-    
+      
       -- Envio de email
       vr_texto_email     varchar2(4000); 
       vr_endereco_email  crapprm.dsvlrprm%TYPE;
@@ -28010,7 +28015,7 @@ end;';
             END IF;
 
              --Se for TED
-             IF vr_tab_agendto(vr_index_agendto).cdtiptra = 4 THEN /* TED */
+             IF vr_tab_agendto(vr_index_agendto).cdtiptra IN (4,22) THEN /* TED */ /*REQ39*/
                  -- TED não cancela
                  CONTINUE;
              --Se for transferencia
@@ -28156,6 +28161,6 @@ end;';
                                  );                      
     END;
   END pc_PAGA0001_cancela_debitos;     
-
+       
 END PAGA0001;
 /
