@@ -23,6 +23,10 @@
                             relatório CRRL308. Criada nova coluna "Cheques Outros Bancos"
                             Retirado parâmetro Cheques Maiores apresentado no cabeçalho.
                             PRJ367. (Lombardi)
+                            
+              09/08/2019 - Alteracao da busca_cheques_em_custodia para considerar
+                           a data de custodia ao inves da data de liberacao.
+                           INC0016418 (Jefferson - Mout'S)
    
 .............................................................................*/
 
@@ -1445,8 +1449,8 @@ PROCEDURE gera-custodia-cheques:
     DEF  INPUT PARAM par_cdprogra AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dtlibini AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_dtlibfim AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtcusini AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtcusfim AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_inresgat AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_dsiduser AS CHAR                           NO-UNDO.
 
@@ -1509,8 +1513,8 @@ PROCEDURE gera-custodia-cheques:
               INPUT par_nrdconta,
               INPUT par_inresgat,
               INPUT par_dtmvtolt,
-              INPUT par_dtlibini,
-              INPUT par_dtlibfim,                                       
+              INPUT par_dtcusini,
+              INPUT par_dtcusfim,                                       
              OUTPUT TABLE tt-crapcst,
              OUTPUT TABLE tt-erro).
 
@@ -2999,19 +3003,19 @@ PROCEDURE busca_cheques_em_custodia PRIVATE:
     DEFINE INPUT  PARAMETER par_nrdconta AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_inresgat AS LOGICAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_dtmvtolt AS DATE        NO-UNDO.
-    DEFINE INPUT  PARAMETER par_dtlibini AS DATE        NO-UNDO.
-    DEFINE INPUT  PARAMETER par_dtlibfim AS DATE        NO-UNDO.
+    DEFINE INPUT  PARAMETER par_dtcusini AS DATE        NO-UNDO.
+    DEFINE INPUT  PARAMETER par_dtcusfim AS DATE        NO-UNDO.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-crapcst.
     DEFINE OUTPUT PARAMETER TABLE FOR tt-erro.
         
     EMPTY TEMP-TABLE tt-crapcst.
 
-    IF  (par_dtlibini <> ?  AND par_dtlibfim  = ?) OR 
-        (par_dtlibini  = ?  AND par_dtlibfim <> ?) THEN
+    IF  (par_dtcusini <> ?  AND par_dtcusfim  = ?) OR 
+        (par_dtcusini  = ?  AND par_dtcusfim <> ?) THEN
         DO:
 
              ASSIGN aux_cdcritic = 0
-                    aux_dscritic = IF par_dtlibini = ? THEN
+                    aux_dscritic = IF par_dtcusini = ? THEN
                                       "Informe a data inicial."
                                    ELSE
                                       "Informe a data final."
@@ -3028,7 +3032,7 @@ PROCEDURE busca_cheques_em_custodia PRIVATE:
 
         END.
 
-    IF  par_dtlibini = ? THEN
+    IF  par_dtcusini = ? THEN
         DO:
 
             FOR EACH crapcst WHERE crapcst.cdcooper =  par_cdcooper   AND
@@ -3053,8 +3057,8 @@ PROCEDURE busca_cheques_em_custodia PRIVATE:
 
             FOR EACH crapcst WHERE crapcst.cdcooper =  par_cdcooper   AND
                                    crapcst.nrdconta =  par_nrdconta   AND
-                                   crapcst.dtlibera >= par_dtlibini   AND
-                                   crapcst.dtlibera <= par_dtlibfim   AND
+                                   crapcst.dtmvtolt >= par_dtcusini   AND
+                                   crapcst.dtmvtolt <= par_dtcusfim   AND
                                    crapcst.insitchq <> 2              NO-LOCK:
     
                 IF   NOT par_inresgat   AND crapcst.dtdevolu <> ?   THEN NEXT.
