@@ -37,6 +37,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
    25/06/2019 - inc0018730 inclusão de logs para auditoria das contas integradas nos arquivos de
                 confirmação e retorno do ieptb (Carlos)
 
+             
+   02/08/2019 - Comentada a proc cobr0011.pc_gera_movimento_pagamento, devido a alteração na forma e conciliar, que agora permite conciliar mais de uma ted.
+                Jose Dill - Mouts (RITM0013002)           
+              
   ............................................................................. */
   
   -- Declarações
@@ -4578,12 +4582,14 @@ BEGIN                          -- Inicio Bloco Principal
   GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
   
   -- Gera as movimentações
-  cobr0011.pc_gera_movimento_pagamento(pr_dscritic => vr_dscritic);
+  --RITM0013002
+  /*cobr0011.pc_gera_movimento_pagamento(pr_dscritic => vr_dscritic);
   IF vr_dscritic IS NOT NULL THEN
     -- Trata erro
     vr_cdcritic := 0;
     RAISE vr_exc_erro;
-  END IF;
+  END IF;*/
+  
   -- Retorno nome do módulo logado
   GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
   
