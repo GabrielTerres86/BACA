@@ -1714,6 +1714,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   passa a não mais emitir o alerta ao cooperado com informacoes de LOG.
                   Implementacao para atender o INC0015955 - Jackson 
                   
+     24/07/2019 - Ajustes para atualizar o protocolo na estrutura do arquivo cnab para transferências e Ted's.
+                  Jose Dill - Mouts (P500-SM02)                 
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -1967,6 +1969,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 		      ,craplau.flmobile
 		      ,craplau.idtipcar
 		      ,craplau.nrcartao
+          ,craplau.idlancto --(P500-SM02)
     FROM craplau
     WHERE progress_recid = pr_progress_recid;
   rw_craplau cr_craplau%ROWTYPE;
@@ -2178,6 +2181,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     AND   crapceb.nrconven = pr_nrconven
     ORDER BY crapceb.progress_recid ASC;
   rw_crapceb cr_crapceb%ROWTYPE;
+
+  --(P500-SM02)
+  CURSOR cr_tbcnab (pr_cdcooper IN crapcop.cdcooper%TYPE
+                   ,pr_idlancto IN craplau.idlancto%TYPE) IS
+  SELECT tatl.rowid rowid_cnab
+    FROM tbtransf_arquivo_ted_linhas tatl
+        ,tbtransf_arquivo_ted tat
+   WHERE tat.nrseq_arq_ted = tatl.nrseq_arq_ted
+     AND tat.cdcooper      = pr_cdcooper
+     AND tatl.idlancto     = pr_idlancto;
+  rw_tbcnab cr_tbcnab%ROWTYPE;
 
 
   --Tipo de Dados para cursor data
@@ -7262,6 +7276,19 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
            --Atribuir numero documento ao deb/credito
            vr_nrdocdeb:= vr_nrdocmto;
          END IF;
+         /*P500-SM02 Vincular a efetivação da transferência ao arquivo de remessa cnab de TED/Transferência */
+         --Verificar se existe arquivo cnab
+         OPEN cr_tbcnab (pr_cdcooper => pr_cdcooper
+                       ,pr_idlancto => rw_craplau.idlancto);                                         
+         FETCH cr_tbcnab INTO rw_tbcnab;
+         IF cr_tbcnab%FOUND THEN
+           /*Atualizar número do protocolo. Efetuar o vinculo entre a efetivação da transferência com o arquivo
+             de remessa */
+           UPDATE tbtransf_arquivo_ted_linhas tatl
+           SET tatl.dsprotocolo = vr_dsprotoc
+           WHERE tatl.rowid = rw_tbcnab.rowid_cnab;
+       END IF;
+         CLOSE cr_tbcnab;
        END IF;
 
        --Se ocorreu erro na transferencia
@@ -26943,6 +26970,7 @@ end;';
               ,t.nrridlfp
               ,s.cdparecer_analise
               ,s.flganalise_manual
+              ,t.idlancto --(P500-SM02)
           FROM craplau
               ,tbted_det_agendamento t
               ,tbgen_analise_fraude s
@@ -27145,7 +27173,10 @@ end;';
        vr_insitlau:= rw_craplau.insitlau;
        
        -- INC0013286 - Se analise de fraude pendente, gerar critica e deixar TED pendente
-       IF nvl(rw_craplau.cdparecer_analise,0) in (0, 2) AND nvl(rw_craplau.flganalise_manual,0) = 0 THEN
+       IF nvl(rw_craplau.cdparecer_analise,0) in (0, 2) AND nvl(rw_craplau.flganalise_manual,0) = 0 
+          AND rw_craplau.Dsorigem <> 'AIMARO'  THEN /* Incluido a condição da origem para atender a demanda do projeto 500,
+                                                       agendamento de ted em lote*/
+                                                       
          vr_cdcritic := 9999;
          vr_dscritic := 'Aguardando analise do sistema antifraude.';
          -- Chamar geracao de LOG
@@ -27512,6 +27543,7 @@ end;';
 					                             ,pr_idagenda => 2
                                        ,pr_idportab => vr_idportab
                                        ,pr_nrridlfp => NVL(vr_nrridlfp,0)
+                                       ,pr_idlancto => rw_craplau.idlancto --> pr_idlancto --> Id do agendamento (P500-SM02)
                                        -- saida        
                                        ,pr_dsprotoc => vr_dsprotoc  --> Retorna protocolo    
                                        ,pr_tab_protocolo_ted => vr_tab_protocolo_ted --> dados do protocolo
@@ -27637,6 +27669,19 @@ end;';
          
          --Marcar transacao como realizada
          vr_flgtrans:= TRUE;
+
+         /*P500-SM02 Gravar o protocolo da efetivação do TED ao arquivo de remessa cnab de TED/Transferência */
+         --Verificar se existe arquivo cnab
+         OPEN cr_tbcnab (pr_cdcooper => pr_cdcooper
+                       ,pr_idlancto => rw_craplau.idlancto);                                         
+         FETCH cr_tbcnab INTO rw_tbcnab;
+         IF cr_tbcnab%FOUND THEN
+           /*Atualizar número do protocolo */
+           UPDATE tbtransf_arquivo_ted_linhas tatl
+           SET tatl.dsprotocolo = vr_dsprotoc
+           WHERE tatl.rowid = rw_tbcnab.rowid_cnab;
+         END IF;                          
+         CLOSE cr_tbcnab;
          
        END IF;
        
