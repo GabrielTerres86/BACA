@@ -487,7 +487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Maio/2015                      Ultima atualizacao: 15/02/2019
+   Data    : Maio/2015                      Ultima atualizacao: 20/08/2019
 
    Dados referentes ao programa:
 
@@ -516,6 +516,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
                15/02/2019 - Na procedure pc_envia_pagto_apr_ib após o 
                             processamento do arquivo incluir o rm (Lucas Ranghetti #PRB0040468)
+                            
+               06/08/2019 - Permitir inclusao de folha CTASAL apenas antes do horario
+                            parametrisado na PAGFOL "Portabilidade (Pgto no dia):"
+                            RITM0032122 - Lucas Ranghetti
+
+               20/08/2019 - Verificar se conta esta bloqueada judicialmente 
+                            (Lucas Ranghetti - RITM0034650)
 ..............................................................................*/
    -- Arrays
    -- Campos da tela
@@ -6799,7 +6806,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
      vr_dsalerta VARCHAR2(4000);
      vr_des_reto VARCHAR2(3);
      vr_tab_erro GENE0001.typ_tab_erro;
-
+     --
+     vr_id_conta_monitorada NUMBER;
+     vr_cdcritic   NUMBER;
      --
      vr_nrdrowid ROWID;
      
@@ -6858,6 +6867,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          vr_cdtarifa := gene0002.fn_busca_entrada(1,vr_dstarfai,',');
          vr_cdfaixav := gene0002.fn_busca_entrada(2,vr_dstarfai,',');
 
+         -- ranghetti
+          -- Verificar se conta esta bloqueada judicialmente (RITM0034650)
+          BEGIN
+            blqj0002.pc_verifica_conta_bloqueio(pr_cdcooper => pr_cdcooper,
+                                                pr_nrdconta => pr_nrdconta,
+                                                pr_id_conta_monitorada => vr_id_conta_monitorada,
+                                                pr_cdcritic => vr_cdcritic,
+                                                pr_dscritic => vr_dscritic);
+
+            IF vr_id_conta_monitorada = 1 THEN
+              pr_dscritic := 'Conta liberada apenas para consultas. Para Mais informações entre'
+                          || ' em contato com o SAC ou pelo Chat e informe o código BLQ01.';
+              RAISE vr_exc_erro;  
+            END IF;
+          END;
          
          -- Caso NAO esteja como Pendente(1), Reprovado(3)
          -- Se for Solicitacao De Estouro(2), devemos deixar processeguir
@@ -6951,6 +6975,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
            FOLH0001.pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper,
                                            pr_nrdconta => rw_craplfp.nrdconta,
                                            pr_nrcpfcgc => rw_craplfp.nrcpfemp,
+                                           pr_dtcredit => rw_crappfp.dtcredit,                                           
                                            pr_idtpcont => rw_craplfp.idtpcont,
                                            pr_nmprimtl => vr_nmprimtl,
                                            pr_dsalerta => vr_dsalerta,
@@ -7604,6 +7629,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_fldatad1 VARCHAR(1);
       vr_fldatad2 VARCHAR(1);
 
+      vr_id_conta_monitorada NUMBER;
+      vr_cdcritic NUMBER;
+      vr_dscritic VARCHAR2(2000);
+
       -- variaveis de excessao
       vr_erro EXCEPTION;
 
@@ -7623,6 +7652,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
+
+      -- ranghetti
+      -- Verificar se conta esta bloqueada judicialmente (RITM0034650)
+      BEGIN
+        blqj0002.pc_verifica_conta_bloqueio(pr_cdcooper => pr_cdcooper,
+                                            pr_nrdconta => pr_nrdconta,
+                                            pr_id_conta_monitorada => vr_id_conta_monitorada,
+                                            pr_cdcritic => vr_cdcritic,
+                                            pr_dscritic => vr_dscritic);
+
+        IF vr_id_conta_monitorada = 1 THEN
+          pr_dscritic := 'Conta liberada apenas para consultas. Para Mais informações entre'
+                      || ' em contato com o SAC ou pelo Chat e informe o código BLQ01.';
+          RAISE vr_erro;  
+        END IF;
+      END;
 
       -- Inicializa Variaveis
       pr_cdcritic := NULL;
@@ -8378,6 +8423,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_dsalert     VARCHAR2(500); -- Critica
       vr_des_erro     VARCHAR2(500); -- Critica
       vr_des_reto VARCHAR2(3);
+      vr_cdcritic NUMBER;
+      vr_dscritic VARCHAR2(2000);
+      vr_id_conta_monitorada NUMBER(1);
 
    BEGIN
       -- Inicializa Variaveis
@@ -8404,6 +8452,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       ELSE
         CLOSE cr_crapcop;
       END IF;       
+
+      -- rangheti
+      -- Verificar se conta esta bloqueada judicialmente (RITM0034650)
+      BEGIN
+        blqj0002.pc_verifica_conta_bloqueio(pr_cdcooper => pr_cdcooper,
+                                            pr_nrdconta => pr_nrdconta,
+                                            pr_id_conta_monitorada => vr_id_conta_monitorada,
+                                            pr_cdcritic => vr_cdcritic,
+                                            pr_dscritic => vr_dscritic);
+
+        IF vr_id_conta_monitorada = 1 THEN
+          pr_dscritic := 'Conta liberada apenas para consultas. Para Mais informações entre'
+                      || ' em contato com o SAC ou pelo Chat e informe o código BLQ01.';
+          RAISE vr_erro;  
+        END IF;
+      END;
 
       IF pr_dsdspscp = 0 THEN -- Diretorio de upload do gnusites
       -- Busca o diretório do upload do arquivo
@@ -8631,18 +8695,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          -- Apenas fecha o cursor
          CLOSE cr_crapefp;
 
+         vr_idtpcont:= NULL; -- limpar pois eh um in out
          -- Efetua a validação do lançamento
          FOLH0001.pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => vr_tab_pgto(vr_idx_pgto).nrdconta
                                         ,pr_nrcpfcgc => vr_tab_pgto(vr_idx_pgto).nrcpfemp
+                                        ,pr_dtcredit => pr_dtcredit
                                         ,pr_idtpcont => vr_idtpcont
                                         ,pr_nmprimtl => vr_nmprimtl
                                         ,pr_dsalerta => vr_dsalert
                                         ,pr_dscritic => pr_dscritic);
 
          -- Se ocorrer erro de processamento
-         IF pr_dscritic IS NOT NULL THEN
+         IF pr_dscritic IS NOT NULL OR vr_dsalert is NOT NULL THEN
             pr_cdcritic := 0;
+            IF pr_dscritic IS NULL AND vr_dsalert is NOT NULL THEN
+              pr_dscritic:= vr_dsalert;
+            END IF;
             RAISE vr_erro; -- Finaliza o programa
          END IF;
 
