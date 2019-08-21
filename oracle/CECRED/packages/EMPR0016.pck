@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE cecred.EMPR0016 IS
+CREATE OR REPLACE PACKAGE CECRED.EMPR0016 IS
 
   -- Author  : Rafael Muniz Monteiro (Mout's)
   -- Created : 24/08/2018 
@@ -21,7 +21,7 @@ CREATE OR REPLACE PACKAGE cecred.EMPR0016 IS
 
 END EMPR0016;
 /
-CREATE OR REPLACE PACKAGE BODY cecred.EMPR0016 is
+CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0016 is
 
   PROCEDURE pc_credito_online_pp(pr_cdcooper  IN crapcop.cdcooper%TYPE     --> Codigo da Cooperativa
                                 ,pr_nrdconta  IN crapass.nrdconta%TYPE     --> Numero da Conta
@@ -166,7 +166,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.EMPR0016 is
     vr_flgimune        PLS_INTEGER;
     -- Rowid de retorno lançamento de tarifa
     vr_rowid         ROWID;
-    vr_nrdrowid      ROWID;
+    
     
     -- Exceções e variaveis de erro--
     vr_exc_erro  EXCEPTION;
@@ -296,35 +296,11 @@ CREATE OR REPLACE PACKAGE BODY cecred.EMPR0016 is
                                 ,prc_nrctremp => vr_nrctremp) LOOP
       vr_dsbemgar := vr_dsbemgar || '|' || rw_crapbpr.dscatbem;
     END LOOP;    
-    
-    GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
-                    ,pr_cdoperad => '1'
-                    ,pr_dscritic => vr_dscritic
-                    ,pr_dsorigem => 3
-                    ,pr_dstransa => 'Log rotina EMPR0016'
-                    ,pr_dttransa => TRUNC(SYSDATE)
-                    ,pr_flgtrans => 0
-                    ,pr_hrtransa => gene0002.fn_busca_time
-                    ,pr_idseqttl => 0
-                    ,pr_nmdatela => 'ATENDA'
-                    ,pr_nrdconta => vr_nrdconta
-                    ,pr_nrdrowid => vr_nrdrowid);
-
-    -- Gravar Item do LOG
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                           ,pr_nmdcampo => 'vr_nrctremp'
-                           ,pr_dsdadant => ''
-                           ,pr_dsdadatu => vr_nrctremp);   
-    -- Gravar Item do LOG
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                           ,pr_nmdcampo => 'vr_flgcrcta'
-                           ,pr_dsdadant => ''
-                           ,pr_dsdadatu => vr_flgcrcta);                        
     --
     -- Caso seja permitido pela linha creditar, inserir na conta
     IF vr_flgcrcta = 1 THEN
       -- Efetua o credito na conta corrente do cooperado
-      EMPR0001.pc_cria_lancamento_cc_chave(pr_cdcooper => vr_cdcooper   --> Cooperativa conectada
+      EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => vr_cdcooper   --> Cooperativa conectada
                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --> Movimento atual
                                     ,pr_cdagenci => pr_cdagenci   --> Codigo da agencia
                                     ,pr_cdbccxlt => 100           --> Numero do caixa
@@ -336,21 +312,10 @@ CREATE OR REPLACE PACKAGE BODY cecred.EMPR0016 is
                                     ,pr_vllanmto => rw_crawepr.vlemprst --> Valor do emprestimo
                                     ,pr_nrparepr => 0             --> Numero parcelas emprestimo
                                     ,pr_nrctremp => vr_nrctremp   --> Numero do contrato de emprestimo
-                                          ,pr_nrseqdig => vr_nrseqdig
                                     ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
                                     ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
       -- Se ocorreu erro
-      IF vr_des_reto = 'NOK' THEN
-         -- Gravar Item do LOG
-         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                ,pr_nmdcampo => 'Erro'
-                                ,pr_dsdadant => ''
-                                ,pr_dsdadatu => 'Erro_cria_lancamento_cc');  
-        -- Gravar Item do LOG
-         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                ,pr_nmdcampo => 'vr_des_reto'
-                                ,pr_dsdadant => ''
-                                ,pr_dsdadatu => vr_des_reto);                                       
+      IF vr_des_reto <> 'OK' THEN
         -- Se possui algum erro na tabela de erros
         IF vr_tab_erro.COUNT() > 0 THEN
           vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
@@ -359,12 +324,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.EMPR0016 is
           vr_cdcritic := 0;
           vr_dscritic := 'Falha ao criar o lancamento de credito na conta';
         END IF;
-
-        -- Gravar Item do LOG
-        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                 ,pr_nmdcampo => '1vr_dscritic'
-                                 ,pr_dsdadant => ''
-                                 ,pr_dsdadatu => vr_dscritic);          
         RAISE vr_exc_erro;
       END IF;
     END IF;
@@ -733,34 +692,13 @@ CREATE OR REPLACE PACKAGE BODY cecred.EMPR0016 is
     WHEN vr_exc_sair THEN
       NULL;
     WHEN vr_exc_erro THEN -- Exceção para tratar erros
-     -- Gravar Item do LOG
-     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                              ,pr_nmdcampo => 'vr_cdcritic'
-                              ,pr_dsdadant => ''
-                              ,pr_dsdadatu => vr_cdcritic);          
       -- Apenas retornar a variavel de saida
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
         vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       END IF;
-      -- Gravar Item do LOG
-      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                               ,pr_nmdcampo => 'vr_dscritic'
-                               ,pr_dsdadant => ''
-                               ,pr_dsdadatu => vr_dscritic); 
-                                         
       pr_cdcritic := NVL(vr_cdcritic, 0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN -- Erro geral rotina
-         -- Gravar Item do LOG
-         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                ,pr_nmdcampo => 'cdothers'
-                                ,pr_dsdadant => ''
-                                ,pr_dsdadatu => vr_cdcritic);  
-         -- Gravar Item do LOG
-         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                ,pr_nmdcampo => 'dsothers'
-                                ,pr_dsdadant => ''
-                                ,pr_dsdadatu => vr_dscritic);                                        
       pr_cdcritic := NVL(vr_cdcritic, 0);
       pr_dscritic := vr_dscritic ||' '||SQLERRM;
   END pc_credito_online_pp;
