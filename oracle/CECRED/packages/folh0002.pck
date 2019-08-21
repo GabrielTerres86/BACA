@@ -6877,7 +6877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                                 pr_dscritic => vr_dscritic);
 
             IF vr_id_conta_monitorada = 1 THEN
-              pr_dscritic := 'Conta liberada apenas para consultas. Para Mais informações entre'
+              pr_dscritic := 'Conta liberada apenas para consultas. Para mais informações entre'
                           || ' em contato com o SAC ou pelo Chat e informe o código BLQ01.';
               RAISE vr_exc_erro;  
             END IF;
@@ -7663,7 +7663,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                             pr_dscritic => vr_dscritic);
 
         IF vr_id_conta_monitorada = 1 THEN
-          pr_dscritic := 'Conta liberada apenas para consultas. Para Mais informações entre'
+          pr_dscritic := 'Conta liberada apenas para consultas. Para mais informações entre'
                       || ' em contato com o SAC ou pelo Chat e informe o código BLQ01.';
           RAISE vr_erro;  
         END IF;
@@ -8463,7 +8463,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                             pr_dscritic => vr_dscritic);
 
         IF vr_id_conta_monitorada = 1 THEN
-          pr_dscritic := 'Conta liberada apenas para consultas. Para Mais informações entre'
+          pr_dscritic := 'Conta liberada apenas para consultas. Para mais informações entre'
                       || ' em contato com o SAC ou pelo Chat e informe o código BLQ01.';
           RAISE vr_erro;  
         END IF;
