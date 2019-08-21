@@ -4638,13 +4638,17 @@ PROCEDURE pc_detalhe_compr_ted_recebida (pr_cdcooper IN crappro.cdcooper%TYPE  -
 
         IF vr_tab_logspb_detalhe(vr_idx_ted).tpesdst = 'J' THEN
           vr_pessoa_dst := 'Juridica';
-        ELSE
+        ELSIF vr_tab_logspb_detalhe(vr_idx_ted).tpesdst = 'F' THEN
           vr_pessoa_dst := 'Fisica';
+        ELSE
+          vr_pessoa_dst := '';
         END IF;  
         IF vr_tab_logspb_detalhe(vr_idx_ted).tpesrem = 'J' THEN
           vr_pessoa_rem := 'Juridica';
-        ELSE
+        ELSIF vr_tab_logspb_detalhe(vr_idx_ted).tpesrem = 'F' THEN
           vr_pessoa_rem := 'Fisica';
+        ELSE
+          vr_pessoa_rem := '';           
         END IF; 
       ELSE
         vr_cdagerem:= NULL;
