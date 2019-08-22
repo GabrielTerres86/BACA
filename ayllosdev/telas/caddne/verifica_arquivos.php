@@ -1,18 +1,13 @@
 <?php
-/**************************************************************************************
-	ATENÇÃO: SE ESTA TELA ALGUM DIA FOR LIBERADA PARA A PRODUÇÃO TEM QUE SER ALTERADA
-			 PARA O NOVO LAYOUT DO AYLLOS WEB.
-			 FALAR COM O GABRIEL OU DANIEL. 19/02/2013.
-****************************************************************************************/
 
 	/*************************************************************************
 	  Fonte: verifica_arquivos.php                                               
 	  Autor: Henrique / Jorge                                                 
-	  Data : Agosto/2011                       Última Alteração: 13/08/2015
+	  Data : Agosto/2011                       Última Alteração: 		   
 	                                                                   
 	  Objetivo  : Copiar os arquivos do correios.
 	                                                                 
-	  Alterações: 13/08/2015 - Remover o caminho fixo. (James)
+	  Alterações: 										   			  
 	                                                                  
 	***********************************************************************/
 
@@ -36,7 +31,7 @@
 	
 	$msgErro  = 'showError("inform","Importa&ccedil;&atilde;o cancelada!","Alerta - Ayllos","");estado_inicial();';
 
-	$diretorio = dirname(__FILE__) ."/arquivos";
+	$diretorio = "/var/www/ayllos/telas/caddne/arquivos";
 	$arquivos = scandir($diretorio);
 	
 	// Esconder a mensagem  

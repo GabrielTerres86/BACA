@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 01/09/2015
  * OBJETIVO     : Biblioteca de funções da tela CONLDB
  * --------------
- * ALTERAÇÕES   : 10/02/2017 - #602248 Criada a opção P, para processarArquivo() (Carlos)
+ * ALTERAÇÕES   :
  *
  * --------------
  */
@@ -49,8 +49,6 @@ function estadoInicial() {
     $('#divBotoesConta').css({'display': 'none'});
     $('#divListaConta').html('');
 
-	$('#divBotaoProcessar').css({'display': 'none'});
-	
     trocaBotao('voltaPrincipal');
 
     // Limpa conteudo da divBotoes
@@ -127,7 +125,7 @@ function controlaOpcao() {
         $('#dtinicio', '#frmArquivo').focus();
 
 
-    } else if ($('#cddopcao', '#frmCab').val() == 'C') {
+    } else {
 
         $('#frmConta').css({'display': 'block'});
         $('#divBotoesConta').css({'display': 'block'});
@@ -138,8 +136,6 @@ function controlaOpcao() {
         } else {
             $('#cdcooper', '#frmConta').focus();
         }
-    } else {
-		$('#divBotaoProcessar').css({'display': 'block'});
     }
 
     return false;
@@ -404,10 +400,8 @@ function controlaOperacao(operacao) {
 
     if (operacao == 'A') {
         buscaArquivos(1, 15);
-    } else if (operacao == 'C') {
-        buscaContas(1, 15);
     } else {
-		processarArquivo();
+        buscaContas(1, 15);
     }
     return false;
 
@@ -1045,37 +1039,4 @@ function buscaNomeRegional() {
 
     return false;
 
-}
-
-/* Opcao P */
-function processarArquivo() {
-   // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, executando o processo ...");
-	
-    // Carrega dados parametro através de ajax
-    $.ajax({
-        type: 'POST',
-        dataType: 'html',
-        url: UrlSite + 'telas/conldb/processar_arquivo.php',
-        data:
-                {
-                    redirect: 'script_ajax'
-                },
-        error: function(objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
-        },
-        success: function(response) {
-            try {
-                eval(response);	
-			//	$('#divBotoes').css({'display': 'block'});
-                return false;
-            } catch (error) {
-                hideMsgAguardo();
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
-            }
-        }
-    });
-
-    return false;
 }
