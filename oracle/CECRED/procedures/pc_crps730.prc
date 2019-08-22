@@ -37,6 +37,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
    25/06/2019 - inc0018730 inclusão de logs para auditoria das contas integradas nos arquivos de
                 confirmação e retorno do ieptb (Carlos)
 
+   22/08/2019 - INC0021947 Inclusão do protesto por edital (Augusto - Supero)
+
   ............................................................................. */
   
   -- Declarações
@@ -2016,6 +2018,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
     vr_des_erro  VARCHAR2(4000);
     --
     vr_nrretcoo  NUMBER;
+		vr_flgedital BOOLEAN;
     vr_vltitulo  NUMBER;
     vr_vlsaldot  NUMBER;
     -- Variavel vr_vloutcre  NUMBER; não utilizada - 09/11/2018 - SCTASK0034650    
@@ -2213,7 +2216,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
             -- 2: Protestado (9)
-            WHEN vr_tab_arquivo(vr_index_reg).campot33 = '2' THEN
+						WHEN vr_tab_arquivo(vr_index_reg).campot33 IN ('2', 'C') THEN
               -- Seta o motivo e ocorrência a serem utilizados no débito de custas e tarifas da conta do cooperado
               vr_cdocorre := 28;
               vr_dsmotivo := '08';
@@ -2238,6 +2241,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
                 -- Apenas fechar o cursor
                 CLOSE btch0001.cr_crapdat;
               END IF;
+
+              -- Protesto por edital
+							vr_flgedital := FALSE;
+							IF vr_tab_arquivo(vr_index_reg).campot33 = 'C' THEN
+								vr_flgedital := TRUE;
+							END IF;
+
               -- Gerar registro de Retorno = 09 - Baixa
               cobr0011.pc_proc_baixa(pr_cdcooper            => rw_crapcob.cdcooper    -- IN
                                     ,pr_idtabcob            => rw_crapcob.rowid       -- IN
@@ -2249,6 +2259,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
                                     ,pr_crapdat             => rw_crapdat             -- IN
                                     ,pr_cdoperad            => '1'                    -- IN
                                     ,pr_vltarifa            => 0                      -- IN
+																		,pr_flgedita            => vr_flgedital           -- IN
                                     ,pr_ret_nrremret        => vr_nrretcoo            -- OUT
                                     ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada -- IN OUT
                                     ,pr_cdcritic            => vr_cdcritic            -- OUT

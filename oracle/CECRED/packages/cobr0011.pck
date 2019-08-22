@@ -124,6 +124,7 @@ create or replace package cecred.cobr0011 is
                          ,pr_crapdat  IN BTCH0001.cr_crapdat%rowtype -- Data movimento
                          ,pr_cdoperad IN VARCHAR2                 -- Codigo Operador
                          ,pr_vltarifa IN NUMBER                   -- Valor tarifa
+												 ,pr_flgedita IN BOOLEAN DEFAULT FALSE    -- Protesto por edital
                          ,pr_ret_nrremret OUT INTEGER             -- Numero remetente
                          ,pr_tab_lcm_consolidada IN OUT PAGA0001.typ_tab_lcm_consolidada -- Tabela lancamentos consolidada
                           /* parametros de erro */
@@ -1268,6 +1269,7 @@ create or replace package body cecred.cobr0011 IS
                            ,pr_crapdat  IN BTCH0001.cr_crapdat%rowtype -- Data movimento
                            ,pr_cdoperad IN VARCHAR2                 -- Codigo Operador
                            ,pr_vltarifa IN NUMBER                   -- Valor tarifa
+													 ,pr_flgedita IN BOOLEAN DEFAULT FALSE    -- Protesto por edital
                            ,pr_ret_nrremret OUT INTEGER             -- Numero remetente
                            ,pr_tab_lcm_consolidada IN OUT PAGA0001.typ_tab_lcm_consolidada -- Tabela lancamentos consolidada
                             /* parametros de erro */
@@ -1291,6 +1293,7 @@ create or replace package body cecred.cobr0011 IS
     --Variaveis de erro
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
+  	vr_des_erro VARCHAR2(4000);
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
     
@@ -1315,7 +1318,17 @@ create or replace package body cecred.cobr0011 IS
     END IF;
     -- Fechar Cursor
     CLOSE cr_crapcob;
-    -- Gerar motivos de ocorrencia
+    
+
+    -- Se for Protesto por edital gera o log
+		IF pr_flgedita THEN
+			paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
+																	 ,pr_cdoperad => '1'
+																	 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
+																	 ,pr_dsmensag => 'Protesto por edital (IEPTB).'
+																	 ,pr_des_erro => vr_des_erro
+																	 ,pr_dscritic => vr_dscritic);
+		ELSE -- Senão gera os motivos de ocorrencia
     paga0001.pc_proc_motivos_retorno (pr_idtabcob => pr_idtabcob   --Rowid da cobranca
                                      ,pr_cdocorre => pr_cdocorre   --Codigo Ocorrencia
                                      ,pr_dsmotivo => pr_dsmotivo   --Descricao Motivo
@@ -1323,8 +1336,10 @@ create or replace package body cecred.cobr0011 IS
                                      ,pr_cdoperad => pr_cdoperad   --Codigo Operador
                                      ,pr_cdcritic => vr_cdcritic   --Codigo Critica
                                      ,pr_dscritic => vr_dscritic); --Descricao Critica
+    END IF;
+
     --Se ocorreu erro
-    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
