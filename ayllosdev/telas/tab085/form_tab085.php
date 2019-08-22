@@ -19,7 +19,7 @@
 
 <form name="frmTab085" id="frmTab085" class="formulario" style="display:block;">	
     	
-	<fieldset>
+	<fieldset id="spb_str">
 	<legend>Par&acirc;metros SPB-STR</legend>
 		<label for="flgopstr"><?php echo utf8ToHtml("Operando com SPB-STR:"); ?></label>
 		<select  id="flgopstr" name="flgopstr" value="<?php echo getByTagName($parametros->tags,'flgopstr'); ?>">
@@ -39,7 +39,7 @@
 		
 	</fieldset>
 	
-	<fieldset>
+	<fieldset id="spb_pag">
 	<legend>Par&acirc;metros SPB-PAG</legend>
 		<label for="flgoppag" >Operando com SPB-PAG:</label>
 		<select  id="flgoppag" name="flgoppag" value="<?php echo getByTagName($parametros->tags,'flgoppag'); ?>">
@@ -64,7 +64,7 @@
 		
 	</fieldset>
 
-	<fieldset>
+	<fieldset id="vr_boleto">
 	<legend>Par&acirc;metros VR-BOLETO</legend>
 		<label for="flgopbol"><?php echo utf8ToHtml("Pagamento VR-Boleto:"); ?></label>
 		<select  id="flgopbol" name="flgopbol" value="<?php echo getByTagName($parametros->tags,'flgopbol'); ?>">
@@ -84,7 +84,7 @@
 		
 	</fieldset>  
 
-	<fieldset>
+	<fieldset id="estado_crise">
 	<legend>Par&acirc;metros Estado de Crise</legend>
 		
 		<label for="flgcrise"><?php echo utf8ToHtml("Sistema em estado de crise:"); ?></label>
@@ -97,7 +97,7 @@
 		
 	</fieldset>  	
 
-	<fieldset>
+	<fieldset id="trans_agendada">
 	<legend>Par&acirc;metros SPB - Transa&ccedil;&otilde;es Agendadas</legend>
 		
 		<label for="hrtrpen1"><?php echo utf8ToHtml("Execu&ccedil;&atilde;o 1:"); ?></label>
