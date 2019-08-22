@@ -1270,6 +1270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_fator_price_total   NUMBER(25,10);
       vr_saldo_projetado     NUMBER(25,2);
       vr_indice              VARCHAR2(10);      
+      vr_qtdmes              number(2);
     BEGIN
       vr_tab_price.DELETE;
       vr_tab_total_juros.DELETE;
@@ -1336,7 +1337,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
           vr_nrparepr := NVL(vr_nrparepr,0) + 1;
           -- Avanca da data da carencia para o proximo mês
-          vr_dtvencto := TO_DATE(TO_CHAR(vr_dtvencto,'DD')||'/'||TO_CHAR(vr_dtvencto + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
+          --PJ298_5
+          vr_qtdmes := pr_qtdias_carencia / 30;
+          --vr_dtvencto := TO_DATE(TO_CHAR(vr_dtvencto,'DD')||'/'||TO_CHAR(vr_dtvencto + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
+          vr_dtvencto := ADD_MONTHS(TO_DATE(vr_dtvencto,'DD/MM/RRRR'),vr_qtdmes) ;         
         END IF;
 
         vr_datainicial := vr_datafinal;
@@ -1482,6 +1486,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_saldo_projetado        NUMBER(25,10);
       vr_indice                 VARCHAR2(4000);
 			vr_vlrdtaxa               craptxi.vlrdtaxa%TYPE;
+      vr_qtdmes                 number(2);
 
       -- Variaveis tratamento de erros
       vr_cdcritic               crapcri.cdcritic%TYPE;
@@ -1617,7 +1622,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 		  -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
           vr_nrparepr := NVL(vr_nrparepr,0) + 1;
           -- Avanca da data da carencia para o proximo mês
-          vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
+          --PJ298_5
+          vr_qtdmes := pr_qtdias_carencia / 30;
+          vr_dtcarenc := ADD_MONTHS(TO_DATE(vr_dtcarenc,'DD/MM/RRRR'),vr_qtdmes) ;         
+         -- vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
 		  --
                 END IF;
              
