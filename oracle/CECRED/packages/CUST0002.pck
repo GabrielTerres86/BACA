@@ -1026,7 +1026,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para buscar lista de remessas de custodias.
 
-    Alteracoes: 
+    Alteracoes: 21/08/2019 - Ajuste para retornar insithcc. RITM0011937(Lombardi)
     ............................................................................. */
     DECLARE
       --------- CURSOR ---------
@@ -1052,6 +1052,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
                                  '[0-9]<>:',
                                  '[0-9]') dsdocmc7
                       ,hcc.idorigem
+                      ,hcc.insithcc
                       ,rownum rnum
                       ,COUNT(*) over() qtregist
                   FROM crapdcc dcc
@@ -1080,6 +1081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
       vr_retxml        XMLType;
       vr_nrctachq      VARCHAR2(100);
       vr_qtregist      INTEGER;
+      vr_insithcc      craphcc.insithcc%TYPE;
       
     BEGIN
       
@@ -1093,6 +1095,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
                              ,pr_texto_novo     => '<custodias>');
       
       vr_qtregist := 0;
+      vr_insithcc := 0;
       
       -- Percorre remessas
       FOR rw_crapdcc IN cr_crapdcc (pr_cdcooper => pr_cdcooper
@@ -1125,6 +1128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
                                                   || '</custodia>');
         IF vr_qtregist = 0 THEN
           vr_qtregist := rw_crapdcc.qtregist;
+          vr_insithcc := rw_crapdcc.insithcc;
         END IF;
       END LOOP;
       
@@ -1137,6 +1141,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
       gene0002.pc_escreve_xml(pr_xml            => pr_retxml
                              ,pr_texto_completo => vr_xml_pgto_temp
                              ,pr_texto_novo     => '<qtregist>' || vr_qtregist || '</qtregist>'
+                             ,pr_fecha_xml      => TRUE);
+                             
+      -- Encerrar a tag raiz
+      gene0002.pc_escreve_xml(pr_xml            => pr_retxml
+                             ,pr_texto_completo => vr_xml_pgto_temp
+                             ,pr_texto_novo     => '<insithcc>'||vr_insithcc||'</insithcc>'
                              ,pr_fecha_xml      => TRUE);
       
     EXCEPTION
