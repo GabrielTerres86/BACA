@@ -238,8 +238,13 @@ PROCEDURE carrega-convenios-ceb:
 
     /* Trazer os convenios CEB */
     FOR EACH crapceb  WHERE crapceb.cdcooper = par_cdcooper     AND
-                            crapceb.nrdconta = par_nrdconta     AND
-                            (crapceb.dtinsori <= aux_dtcadast OR crapceb.dtinsori = ?) NO-LOCK,
+                            crapceb.nrdconta = par_nrdconta    AND
+                            /*(crapceb.dtinsori <= aux_dtcadast OR crapceb.dtinsori = ?)  NO-LOCK,*/
+                            /*Rafael Ferreira (Mouts)
+                            Data: 14/08/19
+                            INC0021997 - A validaçao para só exibir os convenios antigos é se o Idrecipr for zero */
+                            crapceb.Idrecipr = 0
+                            NO-LOCK,
                                                                   
         FIRST crapcco WHERE crapcco.cdcooper = crapceb.cdcooper AND
                             crapcco.nrconven = crapceb.nrconven NO-LOCK,

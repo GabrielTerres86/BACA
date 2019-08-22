@@ -69,6 +69,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0018 AS
       ,idpessoa NUMBER(15) 
       ,nrseq_telefone NUMBER(5) 
       ,nrseq_email NUMBER(5));
+      --PJ298.4
+      ,vlperidx CRAPSIM.vlperidx%type);
     TYPE typ_tab_sim IS TABLE OF typ_reg_sim INDEX BY PLS_INTEGER;
     
     --Tipo de Registro para parcelas da simulação
@@ -546,6 +548,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                              pc_valida_calculo_prog, pc_consu_tari_emprst_prog e pc_calcula_emprestimo_prog.
                              (Douglas Pagel / AMcom)
 
+               06/08/2019 Inclusão do campo vlperidx 
+               PROJ298.4 Impressão da simulação / Grava simulação (Giba - Supero)
 ..............................................................................*/
 
     vr_parametros    typ_parametros;
@@ -828,7 +832,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
         pr_tcrapsim(pr_nrdconta).vliofcpl := rw_crapsim.vliofcpl;                                                       
         pr_tcrapsim(pr_nrdconta).vliofadc := rw_crapsim.vliofadc;
         pr_tcrapsim(pr_nrdconta).tpemprst := rw_crapsim.tpemprst;
-        
+        --PJ298.4
+        pr_tcrapsim(pr_nrdconta).vlperidx := rw_crapsim.vlperidx;
         IF rw_crapsim.tpemprst = 2 THEN
           pr_tcrapsim(pr_nrdconta).idcarenc := rw_crapsim.idcarenc;
           pr_tcrapsim(pr_nrdconta).vlprecar := rw_crapsim.vlprecar;
@@ -1264,7 +1269,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
         pr_tcrapsim(vr_index).idpessoa := rw_crapsim.idpessoa;
         pr_tcrapsim(vr_index).nrseq_telefone := rw_crapsim.nrseq_telefone;
         pr_tcrapsim(vr_index).nrseq_email := rw_crapsim.nrseq_email;
-          
+        --PJ298.4
+        pr_tcrapsim(vr_index).vlperidx := rw_crapsim.vlperidx;
+        --          
         --Busca a agencia do associado
         OPEN cr_crapass(pr_cdcooper => rw_crapsim.cdcooper
                        ,pr_nrdconta => rw_crapsim.nrdconta);
@@ -2289,7 +2296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
     --Cursor para Linhas de Crédito
     CURSOR cr_craplcr(pr_cdcooper IN craplcr.cdcooper%TYPE
                      ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
-      SELECT lcr.tpctrato, lcr.txmensal
+      SELECT lcr.tpctrato, lcr.txmensal, lcr.tpmodcon,lcr.vlperidx --PRJ298.4
         FROM craplcr lcr
        WHERE lcr.cdcooper = pr_cdcooper
          AND lcr.cdlcremp = pr_cdlcremp;
@@ -2331,7 +2338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
     vr_vlajuepr NUMBER;
     vr_txdiaria NUMBER;
     vr_txmensal NUMBER;
-    
+    vr_vlperidx craplcr.vlperidx%type; --PRJ298.4
     vr_qtdias_carenc INTEGER;
     vr_vlprecar NUMBER;
     vr_vlpreemp NUMBER;
@@ -2550,7 +2557,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
       ELSE --POS
         IF pr_tpemprst = 2 THEN
           vr_txmensal := rw_craplcr.txmensal;
-           
+          vr_vlperidx := rw_craplcr.vlperidx; -- PRJ298.4
           IF pr_idcarenc > 0 THEN
 
             EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => pr_idcarenc
@@ -2820,6 +2827,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
               ,crapsim.idcarenc = pr_idcarenc
               ,crapsim.vlprecar = vr_vlprecar
               ,crapsim.dtcarenc = pr_dtcarenc
+              --PJ298.4
+              ,crapsim.vlperidx = vr_vlperidx
          WHERE crapsim.cdcooper = pr_cdcooper
            AND crapsim.nrdconta = pr_nrdconta
            AND crapsim.nrsimula = vr_nrsimula;
@@ -3801,6 +3810,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
     Alteracoes: 13/06/2019 - Adicionada a informação do CDI junto a taxa mensal quando for Pós Fixado
   -                          SM P298.3 (Darlei / Supero)
   -
+                06/08/2019 - Alteração no campo % CDI, foi incluido o campo vlperidx
+                             PJ298.4 (Giba / Supero) 
   ..............................................................................*/  
                                      
     --
@@ -4081,7 +4092,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
          aux_vlperidx := '';
          IF pr_tpemprst = 2 THEN
            aux_vlperidx := empr0018.fn_formata_valor(' + ',
-                                                rw_craplcr.vlperidx,
+                                                vr_tcrapsim(idx).vlperidx,/*PJ298.4*/-- rw_craplcr.vlperidx,
                                                 'fm990',
                                                 '% CDI');
          END IF;

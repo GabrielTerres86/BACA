@@ -11,7 +11,7 @@
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Consultar cheques em custodia 
    
-   Alteracoes: 
+   Alteracoes: 21/08/2019 - Ajuste para retornar o numero da remessa do cheque. RITM0011937 (Lombardi)
                             
 ..............................................................................*/
     
@@ -99,7 +99,9 @@ FOR EACH tt-cheques-custodia NO-LOCK:
                                    tt-cheques-custodia.tpdevolu + 
                                    "</tpdevolu><cdopedev>" +
                                    tt-cheques-custodia.cdopedev +
-                                   "</cdopedev></CHEQUE>".
+                                   "</cdopedev><nrremret>" +
+                                   STRING(tt-cheques-custodia.nrremret) +
+                                   "</nrremret></CHEQUE>".
                 
 END. /** Fim do FOR EACH tt-cheques-custodia **/
 
