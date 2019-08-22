@@ -228,6 +228,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
                           ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                           ,pr_cdtiptra IN INTEGER  DEFAULT NULL --> Tipo de transação --R39                          
+                           ,pr_idlancto IN NUMBER   DEFAULT NULL  --> Id do agendamento (P500-SM02)
                            -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
@@ -299,6 +300,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
                           ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                           ,pr_cdtiptra IN INTEGER  DEFAULT NULL --> Tipo de transação --R39
+                          ,pr_idlancto IN NUMBER   DEFAULT NULL  --> Id do agendamento (P500-SM02)
                           -- saida
                           ,pr_nrdocmto OUT INTEGER --> Documento TED
                           ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL
@@ -1369,6 +1371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
                           ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                           ,pr_cdtiptra IN INTEGER  DEFAULT NULL --> Tipo de transação --REQ39
+                          ,pr_idlancto IN NUMBER   DEFAULT NULL  --> Id do agendamento (P500-SM02)
                           -- saida
                           ,pr_nrdocmto OUT INTEGER --> Documento TED
                           ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL
@@ -1455,6 +1458,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
                   16/07/2019 - Tratar para que deposito bacenjud não execute rotina de saldo.
                                Jose Dill (Mouts). INC0020549 
+
+                  02/08/2019 - Inclusao do id do lançamento na gravação da craptvl, para a geração do segundo 
+                               arquivo de retorno de Ted.
+                               Jose Dill - Mouts (P500-SM02)
 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
@@ -2220,6 +2227,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 ,craptvl.idanafrd
                 ,craptvl.idmsgenv
                 ,craptvl.nrridlfp -- Id lançamento folha
+                ,craptvl.idlancto -- Id do agendamento (P500-SM02)
                )
          VALUES (rw_crapcop.cdcooper     --> craptvl.cdcooper
                 ,3                       --> craptvl.tpdoctrf
@@ -2265,6 +2273,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 ,vr_idanalise_fraude     --> craptvl.idanafrd
                 ,vr_nrseq_mensagem10 --> craptvl.idmsgenv
                 ,pr_nrridlfp
+                ,pr_idlancto -- Id do agendamento (P500-SM02)
                 )
         RETURNING craptvl.tpdctadb, craptvl.flgtitul
              INTO rw_craptvl.tpdctadb, rw_craptvl.flgtitul;
@@ -3039,6 +3048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
                           ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
                           ,pr_cdtiptra IN INTEGER  DEFAULT NULL --> Tipo de transação --REQ39
+                          ,pr_idlancto IN NUMBER   DEFAULT NULL  --> Id do agendamento (P500-SM02)
                           -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
@@ -3508,6 +3518,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   ,pr_idportab => pr_idportab --> Indicar transferencia de valor de portabilidade de salário
                   ,pr_nrridlfp => pr_nrridlfp --> Indicador do registro do lançamento de folha de pagamento
                   ,pr_cdtiptra => pr_cdtiptra --> Tipo de transação --REQ39
+                  ,pr_idlancto => pr_idlancto --> Id do agendamento (P500-SM02)
                   -- saida
                   ,pr_nrdocmto => vr_nrdocmto --> Documento TED
                   ,pr_nrrectvl => vr_nrrectvl --> Autenticacao TVL

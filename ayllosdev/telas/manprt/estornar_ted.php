@@ -21,6 +21,11 @@
 
 	// Verifica se tela foi chamada pelo m�todo POST
 	isPostMethod();
+	
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'@')) <> '') {		
+		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
+	}
+	
 	$idlancto = (isset($_POST['idlancto'])) ? $_POST['idlancto'] : 0 ;
 	$idretorno = (isset($_POST['idretorno'])) ? $_POST['idretorno'] : 0 ;
 	$cooperativa = (isset($_POST['cooperativa'])) ? $_POST['cooperativa'] : 0 ;

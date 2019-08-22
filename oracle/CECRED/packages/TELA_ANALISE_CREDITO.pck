@@ -1998,7 +1998,7 @@ PROCEDURE pc_gera_dados_analise_credito(pr_cdcooper  IN crawepr.cdcooper%TYPE   
   /*Busca o ID do Grupo Economico*/
   CURSOR c_grupo_economico(pr_cdcooper in tbcc_grupo_economico.cdcooper%type,
                            pr_nrdconta in tbcc_grupo_economico.nrdconta%type) is
- SELECT g.idgrupo
+ SELECT DISTINCT g.idgrupo
    FROM tbcc_grupo_economico g,
         tbcc_grupo_economico_integ i
   WHERE ( g.cdcooper = pr_cdcooper or i.cdcooper = pr_cdcooper)

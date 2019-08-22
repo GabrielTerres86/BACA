@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 17/05/2019
+    Data    : Maio/2010                   Ultima atualizacao: 30/07/2019
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -120,14 +120,11 @@
 						   na camada do progress (INC0018113).
 						   
 	          30/07/2018 - Feito a inversao das chamadas da procedures pc_revalida_nome_cad_unc e pc_revalida_cnpj_cad_unc. (Kelvin)
-							
-			  17/04/2019 - Validar também o CNPJ da empresa se é maior que zero, não apenas pela nome.
-			               Para não ter problema ao cadastrar o cooperado como APOSENTADO.
-						   Alcemir Mouts (INC0011837).
-            
-			  17/05/2019 - Correcao INC00015454 na chamada da procedure pc_valida_emp_conta_salari (Augusto - SUPERO). 
 
-              16/07/2019 - Valida_dados P437 Nao validar o campo matricula (par_nrcadast) Jackson Barcellos - AMcom							
+              30/07/2019 - Adicionado as variáveis aux_vlsalari e aux_nrcpfemp para validação em executar as procedures pc_confirma_pessoa_renda e 
+                           pc_confirma_pessoa_empresa somente quando houver alteração da renda e da empresa por parte do usuário 
+                           pelo sistema Aimaro (Paulo Penteado GFT)
+							
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -202,17 +199,6 @@ PROCEDURE Busca_Dados:
     DEF VAR aux_criticas AS CHAR                                    NO-UNDO.
     DEF VAR aux_dsdrendi AS CHAR                                    NO-UNDO.
     
-    DEF VAR aux_dssituac_e AS CHAR                                    NO-UNDO.
-    DEF VAR aux_idcanal_e  AS INTE                                    NO-UNDO.
-    DEF VAR aux_dscanal_e  AS CHAR                                    NO-UNDO.
-    DEF VAR aux_dtrevisa_e AS DATE                                    NO-UNDO.
-    DEF VAR aux_dscritic_e AS CHAR                                    NO-UNDO.
-    DEF VAR aux_dssituac_r AS CHAR                                    NO-UNDO.
-    DEF VAR aux_idcanal_r  AS INTE                                    NO-UNDO.
-    DEF VAR aux_dscanal_r  AS CHAR                                    NO-UNDO.
-    DEF VAR aux_dtrevisa_r AS DATE                                    NO-UNDO.
-    DEF VAR aux_dscritic_r AS CHAR                                    NO-UNDO.
-
     DEF VAR aux_nrdconta AS INTE                                    NO-UNDO.
     DEF VAR aux_nrcpfcto AS DEC                                     NO-UNDO.
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
@@ -228,35 +214,11 @@ PROCEDURE Busca_Dados:
         EMPTY TEMP-TABLE tt-comercial.
         EMPTY TEMP-TABLE tt-erro.   
 
-     
-        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                           crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
-
-        IF  NOT AVAILABLE crapass  THEN
+        IF  NOT CAN-FIND(crapass WHERE crapass.cdcooper = par_cdcooper AND
+                                       crapass.nrdconta = par_nrdconta) THEN
             DO:
-                ASSIGN aux_cdcritic = 9
-                       aux_dscritic = "".
-                               
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,            /** Sequencia **/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-                                       
-                IF  par_flgerlog  THEN
-                    RUN proc_gerar_log (INPUT par_cdcooper,
-                                        INPUT par_cdoperad,
-                                        INPUT aux_dscritic,
-                                        INPUT aux_dsorigem,
-                                        INPUT aux_dstransa,
-                                        INPUT FALSE,
-                                        INPUT par_idseqttl,
-                                        INPUT par_nmdatela,
-                                        INPUT par_nrdconta,
-                                       OUTPUT aux_nrdrowid).
-         
-                RETURN "NOK".
+               ASSIGN aux_cdcritic = 9.
+               LEAVE Busca.
             END.
 
         FOR FIRST crapttl FIELDS(cdnatopc cdocpttl tpcttrab cdempres nmextemp
@@ -299,90 +261,6 @@ PROCEDURE Busca_Dados:
           tt-comercial.vldrendi[aux_contador] = crapttl.vldrendi[aux_contador].
         
         END.
-        
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
-        /* Efetuar a chamada a rotina Oracle */
-        RUN STORED-PROCEDURE pc_busca_tbcadast
-        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.nrcpfcgc /* Cpf */
-                                            ,INPUT par_idseqttl     /* Numero sequencial  */
-                                            ,INPUT "EMPRESA"        /* Tabela que será buscada */ 
-                                            ,OUTPUT 0               /* Codigo da situacao */
-                                            ,OUTPUT ""              /* Descricao da situacao   */
-                                            ,OUTPUT 0               /* Codigo do Canal    */
-                                            ,OUTPUT ""              /* Descricao do Canal */
-                                            ,OUTPUT ?               /* Data da Revisao    */
-                                            ,OUTPUT "").            /* Descrição da crítica    */
-        /* Fechar o procedimento para buscarmos o resultado */ 
-        CLOSE STORED-PROC pc_busca_tbcadast
-         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-        ASSIGN aux_dssituac_e = pc_busca_tbcadast.pr_dssituac
-                              WHEN pc_busca_tbcadast.pr_dssituac <> ?
-               aux_idcanal_e  = pc_busca_tbcadast.pr_idcanal
-                              WHEN pc_busca_tbcadast.pr_idcanal <> ?
-               aux_dscanal_e  = pc_busca_tbcadast.pr_dscanal
-                              WHEN pc_busca_tbcadast.pr_dscanal <> ?
-               aux_dtrevisa_e = pc_busca_tbcadast.pr_dtrevisa
-                              WHEN pc_busca_tbcadast.pr_dtrevisa <> ?
-               aux_dscritic_e = pc_busca_tbcadast.pr_dscritic
-                              WHEN pc_busca_tbcadast.pr_dscritic <> ?.
-                             
-        /* Se retornou erro */
-        IF aux_dscritic <> "" THEN 
-          DO:
-              RUN gera_erro (INPUT par_cdcooper,
-                             INPUT par_cdagenci,
-                             INPUT par_nrdcaixa,
-                             INPUT 1, /** Sequencia **/
-                             INPUT 0,
-                             INPUT-OUTPUT aux_dscritic).
-          END.    
-
-        ASSIGN tt-comercial.dssituae = aux_dssituac_e
-               tt-comercial.dscanale = aux_dscanal_e
-               tt-comercial.dtrevise = aux_dtrevisa_e.
-
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
-        /* Efetuar a chamada a rotina Oracle */
-        RUN STORED-PROCEDURE pc_busca_tbcadast
-        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.nrcpfcgc /* Cpf */
-                                            ,INPUT par_idseqttl     /* Numero sequencial  */
-                                            ,INPUT "RENDA"          /* Tabela que será buscada */ 
-                                            ,OUTPUT 0               /* Codigo da situacao */
-                                            ,OUTPUT ""              /* Descricao da situacao   */
-                                            ,OUTPUT 0               /* Codigo do Canal    */
-                                            ,OUTPUT ""              /* Descricao do Canal */
-                                            ,OUTPUT ?               /* Data da Revisao    */
-                                            ,OUTPUT "").            /* Descrição da crítica    */
-        /* Fechar o procedimento para buscarmos o resultado */ 
-        CLOSE STORED-PROC pc_busca_tbcadast
-         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-        ASSIGN aux_dssituac_r = pc_busca_tbcadast.pr_dssituac
-                              WHEN pc_busca_tbcadast.pr_dssituac <> ?
-               aux_idcanal_r  = pc_busca_tbcadast.pr_idcanal
-                              WHEN pc_busca_tbcadast.pr_idcanal <> ?
-               aux_dscanal_r  = pc_busca_tbcadast.pr_dscanal
-                              WHEN pc_busca_tbcadast.pr_dscanal <> ?
-               aux_dtrevisa_r = pc_busca_tbcadast.pr_dtrevisa
-                              WHEN pc_busca_tbcadast.pr_dtrevisa <> ?
-               aux_dscritic_r = pc_busca_tbcadast.pr_dscritic
-                              WHEN pc_busca_tbcadast.pr_dscritic <> ?.
-                             
-        /* Se retornou erro */
-        IF aux_dscritic <> "" THEN 
-          DO:
-              RUN gera_erro (INPUT par_cdcooper,
-                             INPUT par_cdagenci,
-                             INPUT par_nrdcaixa,
-                             INPUT 1, /** Sequencia **/
-                             INPUT 0,
-                             INPUT-OUTPUT aux_dscritic).
-          END.    
-
-        ASSIGN tt-comercial.dssituar = aux_dssituac_r
-               tt-comercial.dscanalr = aux_dscanal_r
-               tt-comercial.dtrevisr = aux_dtrevisa_r. 
         
         IF  par_cddopcao = "A" THEN
             ASSIGN
@@ -703,38 +581,14 @@ PROCEDURE Valida_Dados:
         /* se o TPCTTRAB for igual a 3 nao precisa validar os campos abaixo */
 
         /* validacoes p/ tpcttrab = 1 ou = 2 */
-        IF DECI(par_nrcpfemp) > 0 AND (par_nmextemp = "" OR 
+        IF  par_nmextemp = "" OR 
             NOT CAN-FIND(crapemp WHERE crapemp.cdcooper = par_cdcooper AND 
-                                       crapemp.cdempres = par_cdempres)) THEN
+                                       crapemp.cdempres = par_cdempres) THEN
             DO:
                ASSIGN 
                    par_nmdcampo = "cdempres"
                    aux_cdcritic = 40.
                LEAVE Valida.
-            END.
-            
-        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
-
-          RUN STORED-PROCEDURE pc_valida_emp_conta_salario
-          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
-                                               INPUT par_nrdconta, /* Número da conta */
-                                               INPUT DECI(par_nrcpfemp), /*CNPJ da empresa*/
-                                               INPUT par_cdempres, /*Código da empresa*/
-                                               OUTPUT ""). /* Descriçao da crítica */
-
-          CLOSE STORED-PROC pc_valida_emp_conta_salario
-             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-              
-          { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
-
-          ASSIGN aux_dscritic = pc_valida_emp_conta_salario.pr_dscritic
-            WHEN pc_valida_emp_conta_salario.pr_dscritic <> ?.
-
-          IF aux_dscritic <> ""  THEN
-            DO:
-               ASSIGN par_nmdcampo = "cdtipcta"
-                      aux_cdcritic = 0.
-              LEAVE Valida.
             END.
 
         /* cnpj da empresa */
@@ -811,7 +665,27 @@ PROCEDURE Valida_Dados:
                LEAVE Valida.
             END.
 
-		/*P437 Nao validar o campo matricula (par_nrcadast) removida validaçao DV*/
+        /* CECRISACRED nao valida o digito */
+        IF  par_cdcooper <> 5 THEN
+        DO:
+            /* verifica se a empresa correspondente verifica o D.V. */
+            IF CAN-FIND ( crapemp WHERE crapemp.cdcooper = par_cdcooper
+                                  AND   crapemp.cdempres = par_cdempres
+                                  AND   crapemp.flgvlddv = TRUE) THEN
+            DO:
+               IF  NOT ValidaDigFun(INPUT par_cdcooper,
+                                    INPUT par_cdagenci,
+                                    INPUT par_nrdcaixa,
+                                    INPUT par_nrcadast) 
+				   AND par_nrcadast <> 0   THEN
+                   DO:
+                      ASSIGN 
+                          par_nmdcampo = "nrcadast"
+                          aux_cdcritic = 41.
+                      LEAVE Valida.
+                   END.
+            END.
+        END.
 
         /* validar a UF - pode ser vazio, nao eh obrigatorio */
         IF  NOT CAN-DO("AC,AL,AP,AM,BA,CE,DF,ES,GO,MA," +
@@ -1014,6 +888,8 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_rowidenc AS ROWID                                   NO-UNDO.
 	DEF VAR aux_nmpesout AS CHAR                                    NO-UNDO.
 	DEF VAR aux_nrcnpjot AS DECI                                    NO-UNDO.
+    DEF VAR aux_nrcpfemp AS DECI                                    NO-UNDO.
+    DEF VAR aux_vlsalari AS DECI                                    NO-UNDO.
 	
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0021 AS HANDLE                                  NO-UNDO.
@@ -1283,7 +1159,10 @@ PROCEDURE Grava_Dados:
 			   aux_nmpesout = pc_revalida_nome_cad_unc.pr_nmpesout WHEN pc_revalida_nome_cad_unc.pr_nmpesout <> ?.
 	    
 		IF aux_cdcritic <> 0 THEN
-            UNDO Grava, LEAVE Grava.           
+            UNDO Grava, LEAVE Grava. 
+
+        ASSIGN aux_nrcpfemp = crapttl.nrcpfemp
+               aux_vlsalari = crapttl.vlsalari.
 		
         ASSIGN 
             aux_cdempres        = crapttl.cdempres
@@ -1315,84 +1194,98 @@ PROCEDURE Grava_Dados:
                UNDO Grava, LEAVE Grava.
             END.
 
-        IF  crapass.inpessoa = 1 THEN
+        IF  (par_vlsalari <> 0 OR par_nrcpfemp <> 0) AND  
+            (aux_vlsalari <> par_vlsalari OR 
+             aux_nrcpfemp <> par_nrcpfemp) THEN
             DO:
-                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
-                /* Efetuar a chamada a rotina Oracle */
-                RUN STORED-PROCEDURE pc_retorna_IdPessoa
-                aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.nrcpfcgc            
-                                                    ,OUTPUT 0 
-                                                    ,OUTPUT "").               /* Descrição da crítica*/
-                /* Fechar o procedimento para buscarmos o resultado */  
-                CLOSE STORED-PROC pc_retorna_IdPessoa
-                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-                ASSIGN aux_dscritic = pc_retorna_IdPessoa.pr_dscritic
-                                  WHEN pc_retorna_IdPessoa.pr_dscritic <> ?.
-                /* Se retornou erro */
-                IF aux_dscritic <> "" THEN 
-                  DO:
-                      RUN gera_erro (INPUT par_cdcooper,
-                                     INPUT par_cdagenci,
-                                     INPUT par_nrdcaixa,
-                                     INPUT 1, /** Sequencia **/
-                                     INPUT 0,
-                                     INPUT-OUTPUT aux_dscritic).
-                  END.
+                IF  crapass.inpessoa = 1 THEN
+                    DO:
+                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                        /* Efetuar a chamada a rotina Oracle */
 
-                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
-                /* Efetuar a chamada a rotina Oracle */
-                RUN STORED-PROCEDURE pc_confirma_pessoa_renda
-                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
-                                                    ,INPUT pc_retorna_IdPessoa.pr_idpessoa
-                                                    ,INPUT 1                /*Numero sequecial do endereço*/
-                                                    ,INPUT 1                /*Situacao: 1 - Ativo/ 2 - Rejeitado*/
-                                                    ,INPUT 3                /*Canal que efetuou a atualização*/
-                                                    ,OUTPUT "").            /* Descrição da crítica*/
-                /* Fechar o procedimento para buscarmos o resultado */  
-                CLOSE STORED-PROC pc_confirma_pessoa_renda
-                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                        RUN STORED-PROCEDURE pc_retorna_IdPessoa
+                        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.nrcpfcgc            
+                                                            ,OUTPUT 0 
+                                                            ,OUTPUT "").               /* Descrição da crítica*/
+                        /* Fechar o procedimento para buscarmos o resultado */  
+                        CLOSE STORED-PROC pc_retorna_IdPessoa
+                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                        ASSIGN aux_dscritic = pc_retorna_IdPessoa.pr_dscritic
+                                          WHEN pc_retorna_IdPessoa.pr_dscritic <> ?.
+                        /* Se retornou erro */
+                        IF aux_dscritic <> "" THEN 
+                          DO:
+                              RUN gera_erro (INPUT par_cdcooper,
+                                             INPUT par_cdagenci,
+                                             INPUT par_nrdcaixa,
+                                             INPUT 1, /** Sequencia **/
+                                             INPUT 0,
+                                             INPUT-OUTPUT aux_dscritic).
+                          END.
+        
+                        IF  (par_vlsalari <> 0) AND (aux_vlsalari <> par_vlsalari) THEN
+                            DO:
+                                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                                /* Efetuar a chamada a rotina Oracle */
+                                RUN STORED-PROCEDURE pc_confirma_pessoa_renda
+                                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                                    ,INPUT pc_retorna_IdPessoa.pr_idpessoa
+                                                                    ,INPUT 1                /*Numero sequecial do endereço*/
+                                                                    ,INPUT 1                /*Situacao: 1 - Ativo/ 2 - Rejeitado*/
+                                                                    ,INPUT 3                /*Canal que efetuou a atualização*/
+                                                                    ,OUTPUT "").            /* Descrição da crítica*/
+                                /* Fechar o procedimento para buscarmos o resultado */  
+                                CLOSE STORED-PROC pc_confirma_pessoa_renda
+                                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
 
-                ASSIGN aux_dscritic = pc_confirma_pessoa_renda.pr_dscritic
-                                  WHEN pc_confirma_pessoa_renda.pr_dscritic <> ?.
-                /* Se retornou erro */
-                IF aux_dscritic <> "" THEN 
-                  DO:
-                      RUN gera_erro (INPUT par_cdcooper,
-                                     INPUT par_cdagenci,
-                                     INPUT par_nrdcaixa,
-                                     INPUT 1, /** Sequencia **/
-                                     INPUT 0,
-                                     INPUT-OUTPUT aux_dscritic).
-                  END.
+                                ASSIGN aux_dscritic = pc_confirma_pessoa_renda.pr_dscritic
+                                                  WHEN pc_confirma_pessoa_renda.pr_dscritic <> ?.
+                                /* Se retornou erro */
+                                IF aux_dscritic <> "" THEN 
+                                  DO:
 
-                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
-                /* Efetuar a chamada a rotina Oracle */
-                RUN STORED-PROCEDURE pc_confirma_pessoa_empresa
-                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
-                                                    ,INPUT pc_retorna_IdPessoa.pr_idpessoa
-                                                    ,INPUT 1                /*Numero sequecial do endereço*/
-                                                    ,INPUT 1                /*Situacao: 1 - Ativo/ 2 - Rejeitado*/
-                                                    ,INPUT 3                /*Canal que efetuou a atualização*/
-                                                    ,OUTPUT "").            /* Descrição da crítica*/
-                /* Fechar o procedimento para buscarmos o resultado */  
-                CLOSE STORED-PROC pc_confirma_pessoa_empresa
-                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                                      RUN gera_erro (INPUT par_cdcooper,
+                                                     INPUT par_cdagenci,
+                                                     INPUT par_nrdcaixa,
+                                                     INPUT 1, /** Sequencia **/
+                                                     INPUT 0,
+                                                     INPUT-OUTPUT aux_dscritic).
+                                  END.
+                            END.
 
-                ASSIGN aux_dscritic = pc_confirma_pessoa_empresa.pr_dscritic
-                                  WHEN pc_confirma_pessoa_empresa.pr_dscritic <> ?.
-                /* Se retornou erro */
-                IF aux_dscritic <> "" THEN 
-                  DO:
-                      RUN gera_erro (INPUT par_cdcooper,
-                                     INPUT par_cdagenci,
-                                     INPUT par_nrdcaixa,
-                                     INPUT 1, /** Sequencia **/
-                                     INPUT 0,
-                                     INPUT-OUTPUT aux_dscritic).
-                  END.
+                        IF  (par_nrcpfemp <> 0) AND (aux_nrcpfemp <> par_nrcpfemp) THEN
+                            DO:
+                                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                                /* Efetuar a chamada a rotina Oracle */
+                                RUN STORED-PROCEDURE pc_confirma_pessoa_empresa
+                                aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                                    ,INPUT pc_retorna_IdPessoa.pr_idpessoa
+                                                                    ,INPUT 1                /*Numero sequecial do endereço*/
+                                                                    ,INPUT 1                /*Situacao: 1 - Ativo/ 2 - Rejeitado*/
+                                                                    ,INPUT 3                /*Canal que efetuou a atualização*/
+                                                                    ,OUTPUT "").            /* Descrição da crítica*/
+                                /* Fechar o procedimento para buscarmos o resultado */  
+                                CLOSE STORED-PROC pc_confirma_pessoa_empresa
+                                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+                                ASSIGN aux_dscritic = pc_confirma_pessoa_empresa.pr_dscritic
+                                                  WHEN pc_confirma_pessoa_empresa.pr_dscritic <> ?.
+                                /* Se retornou erro */
+                                IF aux_dscritic <> "" THEN 
+                                  DO:
+                                      RUN gera_erro (INPUT par_cdcooper,
+                                                     INPUT par_cdagenci,
+                                                     INPUT par_nrdcaixa,
+                                                     INPUT 1, /** Sequencia **/
+                                                     INPUT 0,
+                                                     INPUT-OUTPUT aux_dscritic).
+                                  END.
+                            END.
+                    END.
+
             END.
 
         /* Se nao for politicamente exposto, excluir tabela 
@@ -1428,6 +1321,25 @@ PROCEDURE Grava_Dados:
                     ASSIGN bcrapttl.inpolexp = par_inpolexp.
                                    
                 END.
+                
+                IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                    RUN sistema/generico/procedures/b1wgen0137.p 
+                    PERSISTENT SET h-b1wgen0137.
+                  
+                RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                          ( INPUT par_cdcooper,
+                            INPUT par_nrdconta,
+                            INPUT par_idseqttl,
+                            INPUT crapttl.nrcpfcgc,
+                            INPUT par_dtmvtolt,
+                            INPUT "37", /* PESSOA EXPOSTA POLITICAMENTE - PEP */
+                            INPUT par_cdoperad,
+                           OUTPUT aux_cdcritic,
+                           OUTPUT aux_dscritic).
+
+                IF  VALID-HANDLE(h-b1wgen0137) THEN
+                  DELETE OBJECT h-b1wgen0137.
+
             END.
         END.   
 
@@ -2936,3 +2848,4 @@ PROCEDURE Grava_Dados_Ppe:
 
 
 END PROCEDURE.
+
