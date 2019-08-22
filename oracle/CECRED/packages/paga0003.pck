@@ -4248,8 +4248,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 	                             caso o sistema não consiga buscar ou gerar um lote valido será abortado o processo
 	                             e apresentado uma mensagem para o cooperado informando que o agendamento não foi 
 	                             realizado evitando este problema novamente e registrando o seguinte. 
-	                             log: Erro o registro de lote do lançamento automático DARF/DAS não foi encontrado.
-
     ..............................................................................*/															 
 
 		rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -4704,7 +4702,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       
       -- Validar se o registro de lote do lançamento automático DARF/DAS foi carregado. 
       IF( rw_craplot.nrdolote IS NULL OR rw_craplot.cdbccxlt IS NULL )THEN
-        vr_dscritic := 'Erro o registro de lote do lançamento automático DARF/DAS não foi encontrado.';
+        vr_dscritic := 'Agendamento não registrado. Aguarde e tente novamente mais tarde.';
         RAISE vr_exc_erro; 
       END IF;
       
