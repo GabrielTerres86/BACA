@@ -252,6 +252,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                31/10/2018 - PJ450 RF04 - Gravando saldo refinanciado na crapepr através da 
                             RISC0004.pc_gravar_saldo_refinanciamento (Douglas Pagel/AMcom)
 
+               26/04/2019 - PJ450 - Inclusão do Saldo CC no Risco Melhora (Mário/AMcom)
+
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -336,6 +338,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,wepr.nrctrliq##10
           ,wepr.rowid
           ,wepr.idquapro
+          ,wepr.nrliquid
       FROM crawepr wepr
      WHERE wepr.cdcooper = pr_cdcooper
        AND wepr.nrdconta = pr_nrdconta
@@ -598,6 +601,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
   vr_des_reto VARCHAR2(3);
   vr_index_pos PLS_INTEGER;
   
+  --Tipo da tabela de saldos
+  vr_indsaldo BINARY_INTEGER;
+  vr_tab_saldo EXTR0001.typ_tab_saldos;
+
   --tabela de Memoria dos detalhes de emprestimo
   vr_tab_crawepr EMPR0001.typ_tab_crawepr;
   -- Tabela Temporaria
@@ -1299,7 +1306,8 @@ BEGIN
          NVL(rw_crawepr.nrctrliq##7, 0) = 0 AND
          NVL(rw_crawepr.nrctrliq##8, 0) = 0 AND
          NVL(rw_crawepr.nrctrliq##9, 0) = 0 AND
-         NVL(rw_crawepr.nrctrliq##10,0) = 0 THEN
+         NVL(rw_crawepr.nrctrliq##10,0) = 0 AND 
+         NVL(rw_crawepr.nrliquid,0) = 0 THEN
          CONTINUE; -- Proximo registro
       END IF;
 
@@ -2148,7 +2156,6 @@ BEGIN
         IF rw_crawepr.idquapro in(2,3,4) THEN
            vr_vlsaldo_refinanciado := vr_vlsaldo_refinanciado + vr_vlsderel;
         END IF;  
-        
         -- Gera Debito Emprestimo(Saldo Devedor)
         BEGIN
           INSERT INTO craplcm
@@ -2626,6 +2633,55 @@ BEGIN
       END IF; -- Fim vr_tab_crawepr(vr_contador).nrctrliq > 0
     END LOOP; -- vr_contador 1..10
     
+    -- PJ450 - Obtem saldo do dia (Mário-AMcom)
+    IF NVL(rw_crawepr.nrliquid,0) > 0 THEN
+    
+      --Limpar tabela erros e saldos
+      vr_tab_erro.DELETE;
+      vr_tab_saldo.DELETE;
+
+      --> Verifica se possui saldo para fazer a operacao 
+      EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => rw_crabepr.cdcooper
+                                  ,pr_rw_crapdat => rw_crapdat
+                                  ,pr_cdagenci   => rw_crapass.cdagenci
+                                  ,pr_nrdcaixa   => 0
+                                  ,pr_cdoperad   => '1'
+                                  ,pr_nrdconta   => rw_crabepr.nrdconta
+                                  ,pr_vllimcre   => 0
+                                  ,pr_tipo_busca => 'A' --> tipo de busca(A-dtmvtoan,I-dtvmtolt)
+                                  ,pr_flgcrass   => FALSE
+                                  ,pr_dtrefere   => rw_crapdat.dtmvtolt
+                                  ,pr_des_reto   => vr_dscritic
+                                  ,pr_tab_sald   => vr_tab_saldo
+                                  ,pr_tab_erro   => vr_tab_erro);
+
+      --Se ocorreu erro
+      IF vr_dscritic = 'NOK' THEN
+        vr_dscritic := NULL;
+      ELSE
+        --Verificar o saldo retornado
+        IF vr_tab_saldo.Count = 0 THEN
+          --Desconsidera o saldo
+          NULL;
+        ELSE
+          -- Posiciona no primeiro registro da tabela temporária
+          vr_indsaldo := vr_tab_saldo.first;
+        
+          --Se o saldo nao for suficiente
+          IF nvl(vr_tab_saldo(vr_indsaldo).vlsddisp,0) <= 0 THEN
+            vr_vlsaldo_refinanciado := vr_vlemprst;
+          ELSE
+            IF vr_vlemprst >= nvl(vr_tab_saldo(vr_indsaldo).vlsddisp,0) then
+              vr_vlsaldo_refinanciado :=  vr_vlemprst - nvl(vr_tab_saldo(vr_indsaldo).vlsddisp,0);
+            ELSE
+              vr_vlsaldo_refinanciado :=  0;
+            END IF;
+		  END IF;
+        END IF;
+        vr_dscritic := NULL;
+      END IF;
+    END IF;
+
     -- Chama a rotina que grava o valor refinanciado na crapepr
     IF vr_vlsaldo_refinanciado > 0 THEN
        RISC0004.pc_gravar_saldo_refin(pr_cdcooper             => pr_cdcooper
