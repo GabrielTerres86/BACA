@@ -1,0 +1,41 @@
+begin
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_calendar = ''GREGORIAN''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_comp = ''BINARY''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_format = ''DD-MON-RR''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_language = ''AMERICAN''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_iso_currency = ''AMERICA''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_language = ''AMERICAN''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_length_semantics = ''BYTE''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_nchar_conv_excp = ''FALSE''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_numeric_characters = '',.''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_sort = ''BINARY''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_territory = ''AMERICA''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_format = ''HH.MI.SSXFF AM''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_time_tz_format = ''HH.MI.SSXFF AM TZR''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
+  
+  --sys.dbms_scheduler.drop_job(job_name => 'CECRED.UPPGTO_SEGUNDO_ARQUIVO');
+  
+  sys.dbms_scheduler.create_job(job_name            => 'CECRED.UPPGTO_SEGUNDO_ARQUIVO',
+                                job_type            => 'PLSQL_BLOCK',
+                                job_action          => 'declare
+                                                               vr_cdcritic number;
+                                                               vr_dscritic varchar2(10000);	
+                                                               						
+                                                        begin 
+                                                               cecred.pgta0001.pc_gerar_seg_arquivo_retorno(pr_cdcritic => vr_cdcritic
+                                                                                                           ,pr_dscritic => vr_dscritic); 
+                                                                if vr_dscritic is not null then
+                                                                    RAISE_application_error(-20500,''Erro rotina pc_gerar_seg_arquivo_retorno: ''||vr_dscritic);
+                                                                end if;
+                                                        end;',
+                                start_date          => to_date('04-08-2019 17:15:00', 'dd-mm-yyyy hh24:mi:ss'),
+                                repeat_interval     => 'Freq=DAILY;ByDay=MON,TUE,WED,THU,FRI;ByHour=17, 19;ByMinute=15;BySecond=0',
+                                end_date            => to_date(null),
+                                job_class           => 'DEFAULT_JOB_CLASS',
+                                enabled             => true,
+                                auto_drop           => true,
+                                comments            => 'Job para geração do segundo arquivo de retorno de Teds e Transferencias');
+end;
+/
