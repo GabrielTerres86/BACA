@@ -68,7 +68,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0018 AS
       ,cdorigem NUMBER(3) 
       ,idpessoa NUMBER(15) 
       ,nrseq_telefone NUMBER(5) 
-      ,nrseq_email NUMBER(5));
+      ,nrseq_email NUMBER(5)
       --PJ298.4
       ,vlperidx CRAPSIM.vlperidx%type);
     TYPE typ_tab_sim IS TABLE OF typ_reg_sim INDEX BY PLS_INTEGER;
@@ -3576,6 +3576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
                                        
   BEGIN
     pr_des_reto := 'OK';
+
     EMPR0018.pc_calcula_emprestimo(pr_cdcooper =>  pr_cdcooper
                                   ,pr_cdagenci =>  pr_cdagenci
                                   ,pr_nrdcaixa =>  pr_nrdcaixa
