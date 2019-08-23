@@ -1,7 +1,7 @@
 <?
 /*************************************************************************
 	Fonte: consulta-habilita.php
-	Autor: Gabriel						Ultima atualizacao: 13/12/2016
+	Autor: Gabriel						Ultima atualizacao: 23/08/2019
 	Data : Dezembro/2010
 	
 	Objetivo: Tela para visualizar a consulta/habilitacao da rotina 
@@ -49,6 +49,10 @@
 				             6 - Cobrança Bancária. PRJ366 (Lombardi).
 
 				20/02/2019 - Nova campo Homologado API (Andrey Formigari - Supero)
+
+                23/08/2019 - INC0022172 - Não carregar o desconto na tela de Habilitação de Cobrança, pois nessa tela são 
+                             descontos adicionais.
+
 
 *************************************************************************/
 
@@ -515,8 +519,11 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                                             // $cat_fldesman = getByTagName($cat->tags,'FLDESMAN');
                                             $cat_fldesman = 1;
                                             $cat_flrecipr = getByTagName($cat->tags,'FLRECIPR');                                       
-                                            $cat_percdesc_old = getByTagName($cat->tags,'PERDESCONTO');     
-                                            $cat_percdesc = isset($perdescontosMap[$cat_cdcatego]) ? $perdescontosMap[$cat_cdcatego] : getByTagName($cat->tags,'PERDESCONTO');
+                                            // Rafael Ferreira (Mouts) - INC0022172 - Não deve carregar o Desconto para não Duplicar
+                                            // $cat_percdesc_old = getByTagName($cat->tags,'PERDESCONTO');     
+                                            // $cat_percdesc = isset($perdescontosMap[$cat_cdcatego]) ? $perdescontosMap[$cat_cdcatego] : getByTagName($cat->tags,'PERDESCONTO');
+                                            $cat_percdesc_old = 0;
+                                            $cat_percdesc = 0;
 
                                             ?>
                                             <tr id="<?php echo 'linCat'.$cont.'_'.$cat_flcatcoo.'_'.$cat_flcatcee; ?>">
