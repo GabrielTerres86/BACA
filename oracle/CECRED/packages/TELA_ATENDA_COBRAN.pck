@@ -652,6 +652,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
               ,crapceb.insrvprt
               ,crapceb.flgdigit
               ,crapceb.fltercan
+              ,crapceb.cdhomapi
+              ,crapceb.dhhomapi
               ,crapceb.rowid
 					FROM crapceb
 				 WHERE cdcooper = pr_cdcooper
@@ -721,6 +723,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 																			,insrvprt
 																			,flgdigit
 																			,fltercan
+															                                ,cdhomapi
+															                                ,dhhomapi
 																			)
 																VALUES(rw_crapceb.cdcooper -- cdcooper
 																			,rw_crapceb.nrdconta -- nrdconta
@@ -759,6 +763,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 																			,rw_crapceb.insrvprt -- insrvprt
 																			,rw_crapceb.flgdigit -- flgdigit
 																			,rw_crapceb.fltercan -- fltercan
+														                                        ,rw_crapceb.cdhomapi
+														                                        ,rw_crapceb.dhhomapi
 																			);
 					--
 				EXCEPTION
@@ -855,6 +861,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
               ,crapceb.insrvprt
               ,crapceb.flgdigit
               ,crapceb.fltercan
+              ,crapceb.cdhomapi
+              ,crapceb.dhhomapi
               ,crapceb.rowid
 					FROM tbcobran_crapceb crapceb
 				 WHERE cdcooper = pr_cdcooper
@@ -938,6 +946,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 														 ,insrvprt
 														 ,flgdigit
 														 ,fltercan
+											                         ,cdhomapi
+											                         ,dhhomapi
 														 )
 											 VALUES(rw_crapceb.cdcooper -- cdcooper
 														 ,rw_crapceb.nrdconta -- nrdconta
@@ -976,6 +986,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 														 ,rw_crapceb.insrvprt -- insrvprt
 														 ,rw_crapceb.flgdigit -- flgdigit
 														 ,rw_crapceb.fltercan -- fltercan
+											                         ,rw_crapceb.cdhomapi
+											                         ,rw_crapceb.dhhomapi
 														 );
 					--
 				EXCEPTION
@@ -2138,7 +2150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                       ,crapceb.qtdecprz
                       ,crapceb.qtdfloat
                       ,crapceb.inenvcob
-					  ,crapceb.dhhomapi
+		      ,crapceb.dhhomapi
                       ,crapceb.cdhomapi
                       ,crapceb.flgapihm
                   FROM crapceb
@@ -2162,7 +2174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                       ,crapceb.qtdecprz
                       ,crapceb.qtdfloat
                       ,crapceb.inenvcob
-					  ,crapceb.dhhomapi
+		      ,crapceb.dhhomapi
                       ,crapceb.cdhomapi
                       ,crapceb.flgapihm
                   FROM tbcobran_crapceb crapceb
@@ -2282,7 +2294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
         
             -- Variaveis
             vr_blnfound      BOOLEAN;
-			vr_blnewreg_cip  BOOLEAN := FALSE;
+	    vr_blnewreg_cip  BOOLEAN := FALSE;
             vr_fldda_sit_ben BOOLEAN;
             vr_flgimpri      INTEGER;
             vr_qtccoceb      NUMBER;
@@ -3042,13 +3054,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                       -- Rafael Ferreira (Mouts) -- INC0020100 - Se por algum motivo vier zero utiliza o Default da crapcco
                       ,crapceb.qtdecprz = decode(nvl(pr_qtdecprz,0), 0, vr_qtdecini, pr_qtdecprz)
                       ,crapceb.inenvcob = pr_inenvcob
-					  ,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
-                      ,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
                       ,crapceb.flgapihm = pr_flgapihm
+                      --,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
+                      --,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
                  WHERE crapceb.cdcooper = vr_cdcooper
                    AND crapceb.nrdconta = pr_nrdconta
                    AND crapceb.nrconven = pr_nrconven
                    AND crapceb.idrecipr = pr_idrecipr;
+                   
+            -- Rafael Ferreira (Mouts) - INC0020100
+            -- Ajustada Logica da atualização de informações de homologação API
+            IF (trim(rw_crapceb.cdhomapi) is null) and (pr_flgapihm = 1) THEN
+              UPDATE crapceb crapceb
+								 SET crapceb.cdhomapi = vr_cdoperad
+                    ,crapceb.dhhomapi = SYSDATE
+               WHERE crapceb.cdcooper = vr_cdcooper
+								 AND crapceb.nrdconta = pr_nrdconta
+								 AND crapceb.nrconven = pr_nrconven
+								 AND crapceb.idrecipr = pr_idrecipr;
+            END IF;
 
               --
                                      
@@ -3082,13 +3106,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                     -- Rafael Ferreira (Mouts) -- INC0020100 - Se por algum motivo vier zero utiliza o Default da crapcco
 										,crapceb.qtdecprz = decode(nvl(pr_qtdecprz,0), 0, vr_qtdecini, pr_qtdecprz)
 										,crapceb.inenvcob = pr_inenvcob
-										,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
-										,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
 										,crapceb.flgapihm = pr_flgapihm
+                    --,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
+                    --,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
 							 WHERE crapceb.cdcooper = vr_cdcooper
 								 AND crapceb.nrdconta = pr_nrdconta
 								 AND crapceb.nrconven = pr_nrconven
 								 AND crapceb.idrecipr = pr_idrecipr;
+            
+            -- Rafael Ferreira (Mouts) - INC0020100
+            -- Ajustada Logica da atualização de informações de homologação API
+            IF (trim(rw_crapceb.cdhomapi) is null) and (pr_flgapihm = 1) THEN
+              UPDATE tbcobran_crapceb crapceb
+								 SET crapceb.cdhomapi = vr_cdoperad
+                    ,crapceb.dhhomapi = SYSDATE
+               WHERE crapceb.cdcooper = vr_cdcooper
+								 AND crapceb.nrdconta = pr_nrdconta
+								 AND crapceb.nrconven = pr_nrconven
+								 AND crapceb.idrecipr = pr_idrecipr;
+            END IF;
 							--
 						EXCEPTION
 							WHEN OTHERS THEN
