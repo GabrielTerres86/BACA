@@ -100,6 +100,9 @@ Alterações:
            
 03/07/2019 RITM0024196 Na rotina pc_carrega_arq_origem_destino, estrutura 18, verificado o tipo de pessoa
            através do tamanho do documento (Carlos)
+           
+23/08/2019 RITM0032523 Correçao da busca de teds e correção do filtro de docs para que os lançamentos constem
+           no mesmo para que sejam atualizados manualmente (Carlos)
 */
 CREATE OR REPLACE PACKAGE BODY CECRED.tela_qbrsig IS
   vr_idreprocessar NUMBER(1) := 0;
@@ -232,19 +235,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_qbrsig IS
 
   TYPE typ_tbarq_origem_destino IS TABLE OF typ_rec_arq_origem_destino INDEX BY PLS_INTEGER;
   vr_tbarq_origem_destino typ_tbarq_origem_destino;
-  
-  -- Dados da TED
-  TYPE typ_rec_ted IS RECORD (datadted DATE
-                             ,cdbancod INTEGER
-                             ,nmclideb VARCHAR2(100)
-                             ,nrcpfdeb NUMBER(25)
-                             ,contadeb INTEGER
-                             ,agenciad INTEGER
-                             ,valorted NUMBER(25,2)
-                             ,regativo INTEGER);
-
-  TYPE typ_tbted IS TABLE OF typ_rec_ted INDEX BY PLS_INTEGER;
-  vr_tbted typ_tbted;
 
   -- Dados do Erro
   TYPE typ_rec_erro IS RECORD (dsorigem VARCHAR(100)
@@ -2816,10 +2806,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_qbrsig IS
         AND tdb.nrborder = pr_nrborder;
 
     -- Buscar as informações de TED
-    CURSOR cr_ted (pr_cdcooper IN INTEGER
-                  ,pr_nrdconta IN INTEGER
-                  ,pr_dtmvtini IN DATE
-                  ,pr_dtmvtfim IN DATE) IS
+    CURSOR cr_ted578 (pr_cdcooper IN INTEGER
+                     ,pr_nrdconta IN INTEGER
+                     ,pr_dtmvtolt IN DATE
+                     ,pr_vllanmto IN NUMBER) IS
       SELECT lmt.vldocmto,
              lmt.cdbandif banco,
              lmt.cdagedif,
@@ -2836,10 +2826,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_qbrsig IS
         FROM craplmt lmt
        WHERE lmt.cdcooper = pr_cdcooper
          AND lmt.nrdconta = pr_nrdconta 
-         AND lmt.dttransa BETWEEN pr_dtmvtini AND pr_dtmvtfim
+         AND lmt.dttransa = pr_dtmvtolt
          AND lmt.idsitmsg = 3 -- (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
+         AND lmt.vldocmto = pr_vllanmto
     ORDER BY lmt.dttransa, lmt.hrtransa, lmt.nrsequen;
-    
+
     CURSOR cr_crapicf (pr_cdcooper     IN INTEGER
                       ,pr_dacaojud     IN VARCHAR2
                       ,pr_nrctareq     IN INTEGER 
@@ -2964,33 +2955,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_qbrsig IS
   BEGIN
       -- Carregar os dados da conta de cada conta investigada
     FOR rw_conta IN cr_conta LOOP
-      -- Para cada conta investigada, devemos carregar os dados de TED
-      vr_tbted.DELETE;
-      FOR rw_ted IN cr_ted(pr_cdcooper => rw_conta.cdcooper
-                          ,pr_nrdconta => rw_conta.nrdconta
-                          ,pr_dtmvtini => rw_conta.dtiniper
-                          ,pr_dtmvtfim => rw_conta.dtfimper) LOOP
-        -- Contador
-        vr_idx_ted := vr_tbted.COUNT + 1;
-        -- Carregar os dados da ted
-        vr_tbted(vr_idx_ted).datadted := rw_ted.dttransa;
-        vr_tbted(vr_idx_ted).cdbancod := rw_ted.banco;
-        vr_tbted(vr_idx_ted).nmclideb := rw_ted.nmtitdif;
-        vr_tbted(vr_idx_ted).nrcpfdeb := rw_ted.nrcpfdif;
-        vr_tbted(vr_idx_ted).contadeb := rw_ted.nrctadif;
-        vr_tbted(vr_idx_ted).agenciad := rw_ted.cdagedif;
-        vr_tbted(vr_idx_ted).valorted := rw_ted.vldocmto;
-        vr_tbted(vr_idx_ted).regativo := 0;
-          
-        -- Se a TED nao possui CPF de origem e o banco eh o 756 (Bancoob)
-        -- Iremos adicionar o CNPJ do banco como origem
-        IF rw_ted.nrcpfdif = 0   AND 
-           rw_ted.banco    = 756 THEN
-           vr_tbted(vr_idx_ted).nrcpfdeb := 02038232000164;
-        END IF;
-      END LOOP;
 
-        -- Percorrer todas as movimentaçoes da conta
+      -- Percorrer todas as movimentaçoes da conta
       FOR rw_lancamento IN cr_lancamento LOOP
         BEGIN
           vrins_cdbandep := NULL;
@@ -4480,71 +4446,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_qbrsig IS
 
             IF vr_cdestsig = 15 OR vr_cdestsig = 0 THEN -- Credito TED
               vr_registro := FALSE;
-              -- Verificar se existem TEDs Carregadas
-              IF  vr_tbted.COUNT > 0 THEN
-                -- Percorrer todas as TEDs
-                FOR x IN vr_tbted.FIRST..vr_tbted.LAST LOOP
-                  -- Identificar a TED por DATA e VALOR - ainda não utilizada ?
-                  IF vr_tbted(x).datadted = rw_lancamento.dtmvtolt AND 
-                     vr_tbted(x).valorted = rw_lancamento.vllanmto AND 
-                     vr_tbted(x).regativo = 0 THEN
-                    -- Alterar o Status para Utilizado
-                    vr_tbted(x).regativo := 1;
 
-                    vrins_cdbandep := vr_tbted(x).cdbancod;
-                    vrins_tpdconta := '';
-                    vrins_inpessoa := '';
-                    vrins_nrcpfcgc := vr_tbted(x).nrcpfdeb;
-                    vrins_nmprimtl := vr_tbted(x).nmclideb;
-                    vrins_tpdocttl := '';
-                    vrins_nrdocttl := '';
-                    vrins_dscodbar := '';
-                    vrins_nmendoss := '';
-                    vrins_docendos := '';
-                    vrins_idsitide := '0'; -- Fixo ZERO
-                    vrins_dsobserv := '';
+              --pesquisar teds
+              FOR rw_ted IN cr_ted578(pr_cdcooper => rw_lancamento.cdcooper
+                                     ,pr_nrdconta => rw_lancamento.nrdconta
+                                     ,pr_dtmvtolt => rw_lancamento.dtmvtolt
+                                     ,pr_vllanmto => rw_lancamento.vllanmto) LOOP
 
-                    IF length(to_char(rw_lancamento.nrdocmto)) > 20 THEN
-                      vrins_nrdocmto := SUBSTR(TRIM(to_char(rw_lancamento.nrdocmto)), -20);
-                    ELSE 
-                      vrins_nrdocmto := to_char(rw_lancamento.nrdocmto);
-                    END IF;
+                vrins_cdbandep := rw_ted.banco;
+                vrins_tpdconta := '';
+                vrins_inpessoa := '';
+                vrins_nrcpfcgc := rw_ted.nrcpfdif;
+                vrins_nmprimtl := rw_ted.nmtitdif;
+                vrins_tpdocttl := '';
+                vrins_nrdocttl := '';
+                vrins_dscodbar := '';
+                vrins_nmendoss := '';
+                vrins_docendos := '';
+                vrins_idsitide := '0'; -- Fixo ZERO
+                vrins_dsobserv := '';
 
-                    -- Verificar se a Conta do Depositante existe
-                    IF vr_tbted(x).contadeb > 0 THEN
-                      -- Se a conta existir mandamos os dados do Depositante
-                      vrins_cdagedep := vr_tbted(x).agenciad;
-                      vrins_nrctadep := vr_tbted(x).contadeb;
-                    ELSE
-                      -- Caso o depositante/favorecido não possua conta no banco, 
-                      -- os campos AGENCIA, CONTA e OBSERVACAO devem possuir, respectivamente, os seguintes valores: 
-                      --              9999, 99999999999999999999 e NAO­CORRENTISTA 
-                      vrins_cdagedep := 9999;
-                      vrins_nrctadep := 99999999999999999999;
-                      vrins_dsobserv := 'NAO­CORRENTISTA';
-                    END IF;
+                IF length(to_char(rw_lancamento.nrdocmto)) > 20 THEN
+                  vrins_nrdocmto := SUBSTR(TRIM(to_char(rw_lancamento.nrdocmto)), -20);
+                ELSE 
+                  vrins_nrdocmto := to_char(rw_lancamento.nrdocmto);
+                END IF;
 
-                    IF vr_cdestsig = 0 THEN
-                      vrins_idsitqbr := 2;
-                      vrins_dsobsqbr := 'Historico nao parametrizado. Informacoes encontradas na regra: 15';
-                    ELSE
-                      vrins_idsitqbr := 1;
-                      vrins_dsobsqbr := '';
-                    END IF;
-                    
-                    pc_atualiza_tbjur(rw_lancamento.rowid);
+                -- Verificar se a Conta do Depositante existe
+                IF rw_ted.nrctadif > 0 THEN
+                  -- Se a conta existir mandamos os dados do Depositante
+                  vrins_cdagedep := rw_ted.cdagedif;
+                  vrins_nrctadep := rw_ted.nrctadif;
+                ELSE
+                  -- Caso o depositante/favorecido não possua conta no banco, 
+                  -- os campos AGENCIA, CONTA e OBSERVACAO devem possuir, respectivamente, os seguintes valores: 
+                  --              9999, 99999999999999999999 e NAO­CORRENTISTA 
+                  vrins_cdagedep := 9999;
+                  vrins_nrctadep := 99999999999999999999;
+                  vrins_dsobserv := 'NAO­CORRENTISTA';
+                END IF;
 
-                    vr_registro := TRUE;
-                    -- Se encontrou a TED, para o LOOP
-                    EXIT; 
-                  END IF; -- Encontrou uma TED para listar
-                END LOOP; -- LOOP das TEDs
-              END IF; -- Existem TEDs carregadas ?
+                -- Se a TED nao possui CPF de origem e o banco eh o 756 (Bancoob)
+                -- Iremos adicionar o CNPJ do banco como origem
+                IF rw_ted.nrcpfdif = 0   AND 
+                   rw_ted.banco    = 756 THEN
+                  vrins_nrcpfcgc := 02038232000164;
+                ELSE
+                  vrins_nrcpfcgc := rw_ted.nrcpfdif;
+                END IF;
+
+                IF vr_cdestsig = 0 THEN
+                  vrins_idsitqbr := 2;
+                  vrins_dsobsqbr := 'Historico nao parametrizado. Informacoes encontradas na regra: 15';
+                ELSE
+                  vrins_idsitqbr := 1;
+                  vrins_dsobsqbr := '';
+                END IF;
+
+                pc_atualiza_tbjur(rw_lancamento.rowid);
+
+                vr_registro := TRUE;
+
+              END LOOP;
 
               IF vr_registro THEN
                 CONTINUE;
               END IF;
-            END IF;-- Historico 578
+            END IF;-- Historico 578 estrutura 15
 
             IF vr_cdestsig = 16 THEN -- Credito DOC
               vrins_cdbandep := rw_lancamento.cdbanchq;
@@ -4565,13 +4533,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_qbrsig IS
                 vrins_nmprimtl := substr(rw_lancamento.cdpesqbb,1,50);
               END IF;
 
-              vrins_idsitqbr := 1;
-              vrins_dsobsqbr := '';
-
-              /*
+              --A tela QBRSIG deve filtrar a situação "3-DOC - Informações devem ser informadas manualmente"
+              --para incluir os CPF/CNPJ da pessoa debitada
               vrins_idsitqbr := 3;
               vrins_dsobsqbr := 'As informacoes de DOC devem ser informadas manualmente.';
-              */
 
               pc_atualiza_tbjur(rw_lancamento.rowid);
 
