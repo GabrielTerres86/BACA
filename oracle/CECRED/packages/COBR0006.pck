@@ -473,7 +473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 18/07/2019
+    Data     : Novembro/2015.                   Ultima atualizacao: 23/08/2019
   
    Dados referentes ao programa:
   
@@ -582,6 +582,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                               
             18/07/2019 - inc0020612 Na rotina pc_trata_segmento_p_240_85, verificado a nulidade do valor de
                          desconto quando o mesmo for obrigatório (Carlos)
+                         
+            23/08/2019 - Limitar a 8 posicoes o CEP do sacado quando importa o arquivo
+                         (Lucas Ranghetti #PRB0042018)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -2027,9 +2030,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         RAISE vr_exc_motivo;
       END IF;
       
-      -- Validar se o CEP do Sacado foi informado, ou está zerado
+      -- Validar se o CEP do Sacado foi informado, ou está zerado ou for maior que 8 posicoes
       IF TRIM(pr_tab_linhas('NRCEPSAC').numero) IS NULL OR 
-         NVL(pr_tab_linhas('NRCEPSAC').numero, 0) = 0 THEN
+         NVL(pr_tab_linhas('NRCEPSAC').numero, 0) = 0   OR
+         length(pr_tab_linhas('NRCEPSAC').numero) > 8  THEN
         
         --  CEP Invalido
         pr_cdmotivo := '48';
@@ -6127,9 +6131,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_reje;
     END IF;
 
-    -- 13.3Q e 14.3Q Valida CEP do Sacado, ou está zerado
+    -- 13.3Q e 14.3Q Valida CEP do Sacado, ou está zerado ou for maior que 8 posicoes
     IF TRIM(pr_rec_cobranca.nrcepsac) IS NULL OR 
-       NVL(pr_rec_cobranca.nrcepsac, 0) = 0 THEN
+       NVL(pr_rec_cobranca.nrcepsac, 0) = 0   OR
+       length(pr_rec_cobranca.nrcepsac) > 8 THEN
        
       --  CEP Invalido
       vr_rej_cdmotivo := '48';
@@ -9099,9 +9104,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
     END IF;
   
-    -- 44.7 CEP do Sacado nao informado, ou zerado
+    -- 44.7 CEP do Sacado nao informado, ou zerado ou for maior que 8 posicoes
     IF TRIM(pr_rec_cobranca.nrcepsac) IS NULL OR 
-       NVL(pr_rec_cobranca.nrcepsac, 0) = 0 THEN
+       NVL(pr_rec_cobranca.nrcepsac, 0) = 0   OR
+       length(pr_rec_cobranca.nrcepsac) > 8 THEN
       
       --  CEP Invalido
       vr_rej_cdmotivo := '48';
