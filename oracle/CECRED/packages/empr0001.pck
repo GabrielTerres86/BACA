@@ -5047,8 +5047,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                     04/01/2019 - chamado INC0027294 (Fabio-Amcom)
 
-										25/06/2019 - PRJ298.3 - Corrigir valor exibido no campo Sld.Prej.Original tela de consulta Prejuízo (Nagasava - Supero)
-
     ............................................................................. */
     DECLARE
       -- Busca do nome do associado
@@ -5255,7 +5253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       -- nova M324
       CURSOR cr_craplem3(prc_nrctremp craplem.nrctremp%TYPE) IS
-        SELECT sum(case when c.cdhistor in (382,2388,2473,2389/*,2391 PRJ298.3*/) then c.vllanmto else 0 end) -
+        SELECT sum(case when c.cdhistor in (382,2388,2473,2389,2391) then c.vllanmto else 0 end) -
                   (sum(case when c.cdhistor in (2392,2474,2393,2395) then c.vllanmto else 0 end))sum_sldPrinc
           FROM craplem c
          WHERE c.cdcooper = pr_cdcooper
