@@ -3535,6 +3535,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                   12/03/2019 - P438 (AMcom) Add sub-rotina pc_notifica_ib
 
 				  29/04/2019 - P438 Tratativa para agencia quando for origem 3. (Douglas Pagel / AMcom)
+          
+          26/08/2019 - P438 Inclusão de origem 10 na tratativa para agencia. (Douglas Pagel / AMcom)
 	 ..............................................................................*/	
 		DECLARE
 		  -- Tratamento de críticas
@@ -3569,7 +3571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
 			  SELECT wpr.cdcooper
               ,wpr.nrdconta
               ,wpr.nrctremp
-              ,DECODE(wpr.cdorigem, 3, ass.cdagenci, wpr.cdagenci) cdagenci
+              ,DECODE(wpr.cdorigem, 3, ass.cdagenci, 10, ass.cdagenci, wpr.cdagenci) cdagenci
               ,wpr.cdopeste
               ,wpr.insitest
               ,decode(wpr.insitapr, 0, 'EM ESTUDO', 1, 'APROVADO', 2, 'NAO APROVADO', 3, 'RESTRICAO', 4, 'REFAZER', 'SITUACAO DESCONHECIDA') dssitapr
