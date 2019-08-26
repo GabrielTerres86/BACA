@@ -67,6 +67,8 @@ $qtlimmip =  getByTagName($result,'qtlimaxp');
 $qtdecprz =  getByTagName($result,'qtdecprz');
 $idrecipr =  getByTagName($result,'idrecipr');
 $inenvcob =  getByTagName($result,'inenvcob');
+$flgapihm =  (getByTagName($result,'flgapihm') == "yes") ? "SIM" : "NAO";
+
 
 echo json_encode(
     array(
@@ -95,6 +97,7 @@ echo json_encode(
         'qtlimmip' => $qtlimmip,
         'qtdecprz' => $qtdecprz,
         'idrecipr' => $idrecipr,
-        'inenvcob' => $inenvcob
+        'inenvcob' => $inenvcob,
+        'flgapihm' => $flgapihm
     )
 );

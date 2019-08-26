@@ -4,6 +4,8 @@
  * CRIA��O      : Helinton Steffens - (Supero)
  * DATA CRIA��O : 29/03/2018 
  * OBJETIVO     : Tabela que apresenta as conciliacoes realizadas
+ * 
+ *	08/07/2019 - Alterações referetentes a RITM13002 (Daniel Lombardi - Mout'S)
  */	
 ?>
 
@@ -13,13 +15,11 @@
 			<thead>
 				<tr>
 					<th><? echo utf8ToHtml('Cart&oacuterio');  ?></th>
-                    <th><? echo utf8ToHtml('Valor Ted');  ?></th>
+                    <th><? echo utf8ToHtml('Informações TED');  ?></th>
                     <th><? echo utf8ToHtml('Coop.');  ?></th>
-                    <th><? echo utf8ToHtml('Convenio');  ?></th>
-                    <th><? echo utf8ToHtml('Conta');  ?></th>
+                    <th><? echo utf8ToHtml('Conv.');  ?></th>
                     <th><? echo utf8ToHtml('Data conc.');  ?></th>
                     <th><? echo utf8ToHtml('Valor T&iacutetulo');  ?></th>
-					<th><? echo utf8ToHtml('Dt. Pag.');  ?></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -28,6 +28,9 @@
 						
 						<td><span><? echo getByTagName($reg->tags,'nmcartorio') ?></span>
 							      <? echo getByTagName($reg->tags,'nmcartorio') ?>
+								  <input type="hidden" id="vlconctotal" value="<? echo getByTagName($reg->tags,'vltotalted') ?>" />
+								  <input type="hidden" id="infotedscomp" value="<? echo getByTagName($reg->tags,'inftedscomp') ?>" />
+                                  <input type="hidden" id="infoteds" value="<? echo getByTagName($reg->tags,'infteds') ?>" />
   								  <input type="hidden" id="cartorio" value="<? echo getByTagName($reg->tags,'nmcartorio') ?>" />
 								  <input type="hidden" id="valorted" value="<? echo getByTagName($reg->tags,'vllanmto') ?>" />
 								  <input type="hidden" id="convenio" value="<? echo getByTagName($reg->tags,'nrcnvcob') ?>" />
@@ -43,16 +46,14 @@
 								  <input type="hidden" id="dtmvtolt" value="<? echo getByTagName($reg->tags,'dtmvtolt') ?>" />
 
 						</td>
-                        <td><span><? echo getByTagName($reg->tags,'vllanmto') ?></span>
-							      <? echo number_format(getByTagName($reg->tags,'vllanmto'), 2, ',', '.') ?>
+                        <td><span><? echo getByTagName($reg->tags,'infteds') ?></span>
+							      <? echo getByTagName($reg->tags,'infteds') ?>
 						</td>
                         <td><span><? echo getByTagName($reg->tags,'nmrescop') ?></span>
 							      <? echo getByTagName($reg->tags,'nmrescop') ?>
 						</td>
 						<td><span><? echo getByTagName($reg->tags,'nrcnvcob') ?></span>
 							      <? echo getByTagName($reg->tags,'nrcnvcob') ?>
-						</td>						<td><span><? echo getByTagName($reg->tags,'nrdconta') ?></span>
-							      <? echo getByTagName($reg->tags,'nrdconta') ?>
 						</td>
 						<td><span><? echo getByTagName($reg->tags,'dtconcilicao') ?></span>
 							      <? echo getByTagName($reg->tags,'dtconcilicao') ?>
@@ -60,9 +61,6 @@
 						<td><span><? echo getByTagName($reg->tags,'vltitulo') ?></span>
 							      <? echo number_format(getByTagName($reg->tags,'vltitulo'), 2, ',', '.') ?>
 						</td>
-						<td><span><? echo getByTagName($reg->tags,'dtmvtolt') ?></span>
-							      <? echo getByTagName($reg->tags,'dtmvtolt') ?>
-						</td>	
 					</tr>
 			<? } ?>	
 			</tbody>
@@ -107,8 +105,8 @@
 	<ul class="complemento">
 	<li><? echo utf8ToHtml('Cart&oacuterio:'); ?></li>
 	<li id="dscartorio"></li>
-	<li><? echo utf8ToHtml('Valor da Ted:'); ?></li>
-	<li id="vlted"></li>
+	<li><? echo utf8ToHtml('Data Conciliação:'); ?></li>
+	<li id="dtconcilacao"></li>
 	</ul>
 	</div>
 
@@ -116,8 +114,8 @@
 	<ul class="complemento">
 	<li><? echo utf8ToHtml('Banco/Ag&ecircncia:'); ?></li>
 	<li id="cdbanpag"></li>
-	<li><? echo utf8ToHtml('Conta:'); ?></li>
-	<li id="nrconta"></li>
+	<li><? echo utf8ToHtml('Valor T&iacutetulo:'); ?></li>
+	<li id="vltitul"></li>
 	</ul>
 	</div>
 
@@ -134,26 +132,17 @@
 	<ul class="complemento">
 	<li><? echo utf8ToHtml('Cooperativa:'); ?></li>
 	<li id="cdcoope"></li>
-	<li><? echo utf8ToHtml('Convernio:'); ?></li>
+	<li><? echo utf8ToHtml('Convênio:'); ?></li>
 	<li id="nrconve"></li>
 	</ul>
 	</div>	
 
 	<div id="linha5">
-	<ul class="complemento">
-	<li><? echo utf8ToHtml('Conta/Documento:'); ?></li>
-	<li id="nrconta"></li>
-	<li><? echo utf8ToHtml('Valor T&iacutetulo:'); ?></li>
-	<li id="vltitul"></li>
-	</ul>
-	</div>	
-
-    <div id="linha6">
-	<ul class="complemento">
-	<li><? echo utf8ToHtml('Data concilia&ccedil&atildeo:'); ?></li>
-	<li id="dtconcilacao"></li>
-	<li><? echo utf8ToHtml('Data pagamento:'); ?></li>
-	<li id="dtpagamento"></li>
+	<ul style="padding-bottom: 40px" class="complemento">
+	<li><? echo utf8ToHtml('Informações TED:'); ?></li> 
+	<li id="inftedcomp"></li> 
+	<li><? echo utf8ToHtml('Total conciliado:'); ?></li>
+	<li id="vltotconc"></li>
 	</ul>
 	</div>	
 

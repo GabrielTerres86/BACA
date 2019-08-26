@@ -49,7 +49,10 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_flgtrinc AS CHARACTER FORMAT "X(256)":U
        FIELD qtcarhor AS CHARACTER FORMAT "X(256)":U
        FIELD aux_idvapost AS CHARACTER FORMAT "X(256)":U
-       FIELD aux_lsfacili AS CHARACTER FORMAT "X(256)":U.      
+       FIELD aux_lsfacili AS CHARACTER FORMAT "X(256)":U.
+      
+     
+      
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
 /*------------------------------------------------------------------------
@@ -104,6 +107,7 @@ DEFINE VARIABLE v-qtdeerro            AS INTEGER                        NO-UNDO.
 DEFINE VARIABLE v-descricaoerro       AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE v-identificacao       AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE aux_gnaprdp           AS CHARACTER                      NO-UNDO.
+DEFINE VARIABLE vetorecurso           AS CHAR FORMAT "x(2000)"          NO-UNDO.    
 /*** Declaração de BOs ***/
 DEFINE VARIABLE h-b1wpgd0012e          AS HANDLE                         NO-UNDO.
 
@@ -135,12 +139,11 @@ craprdf.nrseqdig craprdf.qtrecfor craprdf.qtgrppar
 &Scoped-Define ENABLED-OBJECTS ab_unmap.aux_nrcpfcgc ab_unmap.aux_cddopcao ~
 ab_unmap.aux_dspropos ab_unmap.aux_nrcpfcgc ab_unmap.aux_dsretorn ~
 ab_unmap.aux_idevento ab_unmap.aux_lspermis ab_unmap.aux_nrdrowid ab_unmap.aux_nrseqdig ~
-ab_unmap.aux_stdopcao ab_unmap.aux_dsendurl ab_unmap.aux_idrecpor ab_unmap.aux_cdtiprec ~
-ab_unmap.aux_cdcopope ab_unmap.dtmvtolt ab_unmap.dtvalpro ab_unmap.aux_cdtemeix ~
-ab_unmap.aux_cdeixtem ab_unmap.nmevefor ab_unmap.dsobjeti ab_unmap.dsconteu ~
-ab_unmap.aux_cdevento ab_unmap.dsmetodo ab_unmap.aux_dspublic ab_unmap.dsobserv ab_unmap.dsidadpa ~
+ab_unmap.aux_stdopcao ab_unmap.aux_dsendurl ab_unmap.aux_idrecpor ab_unmap.aux_cdtiprec ab_unmap.aux_cdcopope ab_unmap.dtmvtolt ab_unmap.dtvalpro ab_unmap.aux_cdtemeix ab_unmap.aux_cdeixtem ~
+ab_unmap.nmevefor ab_unmap.dsobjeti ab_unmap.dsconteu ab_unmap.aux_cdevento ab_unmap.dsmetodo ab_unmap.aux_dspublic ab_unmap.dsobserv ab_unmap.dsidadpa ~
 ab_unmap.aux_idforrev ab_unmap.dsprereq ab_unmap.txfacili ab_unmap.vlinvest ~
 ab_unmap.aux_flgtrinc ab_unmap.qtcarhor ab_unmap.aux_idvapost ab_unmap.aux_lsfacili
+
 &Scoped-Define DISPLAYED-FIELDS craprdf.dspropos craprdf.nrcpfcgc ~
 craprdf.nrseqdig craprdf.qtrecfor craprdf.qtgrppar 
 &Scoped-define DISPLAYED-TABLES craprdf ab_unmap
@@ -149,12 +152,10 @@ craprdf.nrseqdig craprdf.qtrecfor craprdf.qtgrppar
 &Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_nrcpfcgc ab_unmap.aux_cddopcao ~
 ab_unmap.aux_dspropos ab_unmap.aux_nrcpfcgc ab_unmap.aux_dsretorn ~
 ab_unmap.aux_idevento ab_unmap.aux_lspermis ab_unmap.aux_nrdrowid ab_unmap.aux_nrseqdig ~
-ab_unmap.aux_stdopcao ab_unmap.aux_dsendurl ab_unmap.aux_idrecpor ab_unmap.aux_cdtiprec ~
-ab_unmap.aux_cdcopope ab_unmap.dtmvtolt ab_unmap.dtvalpro ab_unmap.aux_cdtemeix ab_unmap.aux_cdeixtem ~
-ab_unmap.nmevefor ab_unmap.dsobjeti ab_unmap.dsconteu ab_unmap.aux_cdevento ~
-ab_unmap.dsmetodo ab_unmap.aux_dspublic ab_unmap.dsobserv ab_unmap.dsidadpa ~
+ab_unmap.aux_stdopcao ab_unmap.aux_dsendurl ab_unmap.aux_idrecpor ab_unmap.aux_cdtiprec ab_unmap.aux_cdcopope ab_unmap.dtmvtolt ab_unmap.dtvalpro ab_unmap.aux_cdtemeix ab_unmap.aux_cdeixtem ~
+ab_unmap.nmevefor ab_unmap.dsobjeti ab_unmap.dsconteu ab_unmap.aux_cdevento ab_unmap.dsmetodo ab_unmap.aux_dspublic ab_unmap.dsobserv ab_unmap.dsidadpa ~
 ab_unmap.aux_idforrev ab_unmap.dsprereq ab_unmap.txfacili ab_unmap.vlinvest ~
-ab_unmap.aux_flgtrinc ab_unmap.qtcarhor ab_unmap.aux_idvapost ab_unmap.aux_lsfacili ab_unmap.
+ab_unmap.aux_flgtrinc ab_unmap.qtcarhor ab_unmap.aux_idvapost ab_unmap.aux_lsfacili
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -431,23 +432,45 @@ DEFINE FRAME Web-Frame
 /* **********************  Internal Procedures  *********************** */
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaRecursos w-html 
 
-PROCEDURE CriaListaRecursos:
+PROCEDURE CriaListaRecursos :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+   DEF VAR aux_registros AS INT NO-UNDO.
    
-   RUN RodaJavaScript("var recursos = new Array();").
+   ASSIGN aux_registros = 0.
    
-   FOR EACH gnaprdp WHERE gnaprdp.idevento = INTEGER(ab_unmap.aux_idevento)
-                      AND gnaprdp.cdcooper = 0                              
-                      AND gnaprdp.idsitrec = 1                              
-                      AND gnaprdp.cdtiprec <> 0 
-               NO-LOCK BY gnaprdp.dsrecurs:
-     
-     RUN RodaJavaScript("recursos.push(~{nrseqdig:'" + TRIM(string(gnaprdp.nrseqdig))
-																		+ "',dsrecurs:'" + TRIM(string(gnaprdp.dsrecurs))
-																		+ "',idrecpor:'" + TRIM(string(gnaprdp.idrecpor))
-																		+ "',cdtiprec:'" + TRIM(string(gnaprdp.cdtiprec))+ "'~});").         
+   RUN RodaJavaScript("var recursos=new Array();").
+   
+   FOR EACH gnaprdp NO-LOCK 
+      WHERE gnaprdp.idevento = INT(ab_unmap.aux_idevento) 
+        AND gnaprdp.cdtiprec <> 0
+         BY gnaprdp.dsrecurs:
+      
+     IF vetorecurso <> "" THEN
+       vetorecurso = vetorecurso + ",".
+              
+     vetorecurso = vetorecurso + "~{" + "nrseqdig:"    + "'" + TRIM(string(gnaprdp.nrseqdig))
+                                    + "',dsrecurs:"  + "'" + TRIM(string(gnaprdp.dsrecurs))
+                                    + "',idrecpor:"  + "'" + TRIM(string(gnaprdp.idrecpor))
+                                    + "',cdtiprec:"  + "'" + TRIM(string(gnaprdp.cdtiprec))+ "'~}".
+                     
+     aux_registros  = aux_registros  + 1.
          
+     IF aux_registros > 50 THEN
+       DO:
+         RUN RodaJavaScript("recursos.push(" + STRING(vetorecurso) + ");").
+         ASSIGN vetorecurso = ""
+                aux_registros = 0.
+       END.
+     
     END. /* for each */  
     
+  IF NOT vetorecurso = "" THEN
+    RUN RodaJavaScript("recursos.push(" + STRING(vetorecurso) + ");").
+
 END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE htmOffsets w-html  _WEB-HTM-OFFSETS
@@ -563,8 +586,7 @@ IF VALID-HANDLE(h-b1wpgd0012e) THEN
                     cratrdf.nrcpfcgc = DECIMAL(ab_unmap.aux_nrcpfcgc)
                     cratrdf.dspropos = INPUT ab_unmap.aux_dspropos
                     cratrdf.nrseqdig = INT(ab_unmap.aux_nrseqdig)
-                    /*cratrdf.qtrecfor = INT(INPUT craprdf.qtrecfor)*/
-                    cratrdf.qtrecfor = (IF INT(ab_unmap.aux_cdtiprec) = 5 OR INT(ab_unmap.aux_cdtiprec) = 2 THEN 0 ELSE INT(INPUT craprdf.qtrecfor))
+                    cratrdf.qtrecfor = INT(INPUT craprdf.qtrecfor)
                     cratrdf.qtgrppar = INT(INPUT craprdf.qtgrppar)
                     cratrdf.cdoperad = STRING(gnapses.cdoperad)
                     cratrdf.cdprogra = "WPGD0012d"
@@ -577,15 +599,22 @@ IF VALID-HANDLE(h-b1wpgd0012e) THEN
                 /* cria a temp-table e joga o novo valor digitado para o campo */
                 CREATE cratrdf.
                 BUFFER-COPY craprdf TO cratrdf.
-                
+                MESSAGE " idevento: " + ab_unmap.aux_idevento
+                        " nrcpfcgc: " + ab_unmap.aux_nrcpfcgc
+                        " dspropos: " + STRING(INPUT ab_unmap.aux_dspropos)
+                        " nrseqdig: " + ab_unmap.aux_nrseqdig
+                        " qtrecfor: " + STRING(INPUT craprdf.qtrecfor)
+                        " qtgrppar: " + STRING(INPUT craprdf.qtgrppar)
+                        " cdoperad: " + STRING(gnapses.cdoperad)
+                        " cdprogra: " + "WPGD0012d"
+                        " cdcopope: " + ab_unmap.aux_cdcopope.
                 ASSIGN
                     cratrdf.cdcooper = 0
                     cratrdf.idevento = INT(ab_unmap.aux_idevento)
                     cratrdf.nrcpfcgc = DECIMAL(ab_unmap.aux_nrcpfcgc)
                     cratrdf.dspropos = INPUT ab_unmap.aux_dspropos
                     cratrdf.nrseqdig = INT(ab_unmap.aux_nrseqdig)
-                    /*cratrdf.qtrecfor = INT(INPUT craprdf.qtrecfor)*/
-                    cratrdf.qtrecfor = (IF INT(ab_unmap.aux_cdtiprec) = 5 OR INT(ab_unmap.aux_cdtiprec) = 2 THEN 0 ELSE INT(INPUT craprdf.qtrecfor))
+                    cratrdf.qtrecfor = INT(INPUT craprdf.qtrecfor)
                     cratrdf.qtgrppar = INT(INPUT craprdf.qtgrppar)
                     cratrdf.cdoperad = STRING(gnapses.cdoperad)
                     cratrdf.cdprogra = "WPGD0012d"
@@ -846,10 +875,21 @@ ASSIGN opcao                 = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_flgtrinc = GET-VALUE("aux_flgtrinc")
        ab_unmap.qtcarhor = GET-VALUE("qtcarhor")
        ab_unmap.aux_idvapost = GET-VALUE("aux_idvapost")
-       ab_unmap.aux_lsfacili = GET-VALUE("aux_lsfacili")
-       ab_unmap.aux_cdtiprec = GET-VALUE("aux_cdtiprec").
+       ab_unmap.aux_lsfacili = GET-VALUE("aux_lsfacili").
        
 RUN outputHeader.
+
+aux_gnaprdp = ",0,".
+FOR EACH gnaprdp NO-LOCK WHERE BY gnaprdp.dsrecurs:
+
+    ASSIGN aux_gnaprdp = REPLACE(aux_gnaprdp + gnaprdp.dsrecurs,',','.') + "," + string(gnaprdp.nrseqdig) + ",".
+END.
+
+aux_gnaprdp = SUBSTRING(aux_gnaprdp, 1, LENGTH(aux_gnaprdp) - 1).
+       
+ASSIGN 
+    ab_unmap.aux_nrseqdig:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = aux_gnaprdp.
+
 
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 

@@ -39,6 +39,9 @@
                              devolucoes pela alinea 12. 
                              Chamado PRB0040458 - Gabriel (Mouts).				 
                              
+                29/07/2019 - Alteracoes na mensagem de impressao de carta adicionando
+                             a taxa do bacen. (RITM0020376 - Joao Mannes (Mouts))
+                             
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -126,6 +129,8 @@ DEF VAR rel_nrdconta2 LIKE crapass.nrdconta                         NO-UNDO.
 DEF VAR aux_vlregccf AS DECI     FORMAT "zz9.99"                    NO-UNDO.
 DEF VAR aux_contchq  AS INTE                                        NO-UNDO.
 DEF VAR aux_vltotccf AS DECI     FORMAT "zzz,zz9.99"                NO-UNDO.
+DEF VAR aux_vltarifa AS DECI     FORMAT "zzz,zz9.99"                NO-UNDO.
+DEF VAR aux_vltotal  AS DECI     FORMAT "zzz,zz9.99"                NO-UNDO.
 
 DEF VAR aux_qtchqbob AS INTE                                        NO-UNDO.
 DEF VAR aux_qtchqcec AS INTE                                        NO-UNDO.
@@ -170,14 +175,27 @@ FORM tt-crapneg.cdbanchq                            AT 01
      WITH NO-BOX NO-LABEL DOWN WIDTH 90 FRAME f_relacao_bcobrasil.
 
 FORM SKIP(1)
-    "Autorizo o debito na minha conta corrente da tarifa de exclusao de CCF."
+    "Autorizo o debito na minha conta corrente da tarifa de exclusao de CCF,"
     SKIP
-    "No valor total de: R$" aux_vltotccf
+    "no valor total de R$" aux_vltotccf
     SKIP(3)
     "Atenciosamente,"
     SKIP(2)
     WITH NO-BOX NO-LABEL WIDTH 90 FRAME f_rodape.
 
+FORM SKIP(1)
+    "Autorizo o debito na minha conta corrente da tarifa de exclusao de CCF,"
+    SKIP
+    "no valor de R$" aux_vltotal
+    SKIP
+    "A regularizacao do CCF sera efetuada mediante pagamento da tarifa em "
+    SKIP
+    "conta corrente, ou pagamento em especie no caixa."
+    SKIP(3)
+    "Atenciosamente,"
+    SKIP(2)
+    WITH NO-BOX NO-LABEL WIDTH 90 FRAME f_rodape3.    
+    
 FORM SKIP(4)
     "-------------------------------"
     aux_dsdlinha AT 35 
@@ -1483,8 +1501,24 @@ PROCEDURE Imprime_Carta:
 
         ASSIGN aux_vltotccf = aux_vlregccf * aux_qtchqbob.
 
+        FIND crapfvl WHERE crapfvl.cdfaixav = 13 AND
+                           crapfvl.cdtarifa = 14
+                           NO-LOCK NO-ERROR.
 
-
+        FIND crapfco WHERE crapfco.cdcooper = par_cdcooper AND
+                           crapfco.cdfaixav = crapfvl.cdfaixav AND
+                           crapfco.flgvigen = true
+                           NO-LOCK NO-ERROR.
+        
+        IF AVAILABLE crapfco THEN
+           ASSIGN aux_vltarifa = crapfco.vltarifa.
+             
+        IF (aux_vltarifa > 0) THEN
+           DO:
+             ASSIGN aux_vltotal  = aux_vltotccf + aux_vltarifa.
+             DISPLAY STREAM str_1 aux_vltotal WITH FRAME f_rodape3.
+           END.
+        ELSE
         DISPLAY STREAM str_1 aux_vltotccf WITH FRAME f_rodape.
 
     /*** Pessoa Juridica ***/

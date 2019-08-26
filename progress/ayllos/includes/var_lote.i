@@ -84,7 +84,8 @@
                                                        
                09/08/2013 - Modificado o termo "PAC" para "PA" (Douglas).  
 			   
-			   11/06/2018 - ajuste para o nrlote permitir 7 digitos  (INC0017046) - (Alcemir - Mout's).                
+			   11/06/2018 - ajuste para o nrlote permitir 7 digitos  (INC0017046) - (Alcemir - Mout's).
+			                   
 ............................................................................. */
 
 DEF BUFFER crablem  FOR craplem.

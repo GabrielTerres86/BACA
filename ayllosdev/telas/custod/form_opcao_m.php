@@ -7,6 +7,11 @@
  * --------------
  * ALTERAÇÕES   :
  * --------------
+ *
+ * [09/08/2019] Jefferson       (Mout'S) : Alteracao da busca_cheques_em_custodia para considerar
+ *                                         a data de custodia ao inves da data de liberacao.
+ *                                         INC0016418 (Jefferson - Mout'S)
+ *
  */
 
 session_start();
@@ -32,11 +37,11 @@ include('form_cabecalho.php');
         <input type="text" id="nrdconta" name="nrdconta" value="<?php echo formataContaDV($nrdconta) ?>"/>
         <a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
 
-        <label for="dtlibini"><? echo utf8ToHtml('Data Início:') ?></label>
-        <input type="text" id="dtlibini" name="dtlibini" value="<?php echo $dtlibini ?>"/>
+		<label for="dtcusini">Data Cust&oacute;dia:</label>
+		<input type="text" id="dtcusini" name="dtcusini" value=""/>
 
-        <label for="dtlibfim">Data Final:</label>
-        <input type="text" id="dtlibfim" name="dtlibfim" value="<?php echo $dtlibfim ?>"/>
+		<label for="dtcusfim">At&eacute;:</label>
+		<input type="text" id="dtcusfim" name="dtcusfim" value=""/>
 
         <label for="nmprimtl">Titular:</label>
         <input type="text" id="nmprimtl" name="nmprimtl" value="<?php echo $nmprimtl ?>" />

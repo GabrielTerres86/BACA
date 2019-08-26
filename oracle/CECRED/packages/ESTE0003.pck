@@ -2408,6 +2408,9 @@ PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  IN crawlim.cdcooper%TYPE --> C
 
     Alteraçao : 14/04/2018 - Criação Paulo Penteado (GFT) 
                 
+                05/08/2019 - P438 - Inclusão dos atributos canalCodigo e canalDescricao no Json para identificar 
+                                a origem da operação de crédito na Esteira. (Douglas Pagel / AMcom). 
+
    ..........................................................................*/
    -- Tratamento de erros
    vr_cdcritic number := 0;
@@ -2421,6 +2424,7 @@ PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  IN crawlim.cdcooper%TYPE --> C
    -- Auxiliares
    vr_dsprotocolo  varchar2(1000);
    vr_cdagenci     crapage.cdagenci%TYPE;
+   vr_cdorigem     NUMBER := 0;
 
    -- Variaveis para DEBUG
    vr_flgdebug varchar2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
@@ -2556,6 +2560,12 @@ BEGIN
    vr_obj_efetivar.put('valor'                  , rw_crawlim.vllimite);
 
    vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 5);
+
+   vr_cdorigem := CASE WHEN rw_crawlim.cdoperad = '996' THEN 3 ELSE 5 END;
+   
+   vr_obj_efetivar.put('canalCodigo', vr_cdorigem);
+   vr_obj_efetivar.put('canalDescricao',gene0001.vr_vet_des_origens(vr_cdorigem));
+   
 
    --  Se o DEBUG estiver habilitado
    if  vr_flgdebug = 'S' then

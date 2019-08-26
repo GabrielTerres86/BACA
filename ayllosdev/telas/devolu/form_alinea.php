@@ -9,6 +9,8 @@
  *                08/05/2019 - Inclusão botão alterar alinea
  *                           - Validação do botão Alterar Alinea para mostrar apenas para o depto COMPE
  							   e permissão no PERMIS (Luiz Otávio Olinger Momm - AMCOM)
+ *                16/05/2019 - Conferido se a permissão deve ser apenas para o botão Alterar Alinea
+*							   (Luiz Otávio Olinger Momm - AMCOM)
  * --------------
  */ 
 
@@ -19,8 +21,11 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();		
 
+	// Se for Alterar Alinea deve verificar a permissão
+	if ($_POST['opcao'] == 'AL') {
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'A', false)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Aimaro','',false);
+		}
 	}
 ?>
 
