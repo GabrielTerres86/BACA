@@ -253,7 +253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
   --                          da variavel vr_inrisco_melhora (Douglas Pagel/AMcom)
   --                        - Inclusão da procedure pc_gravar_saldo_refinanciamento (Douglas Pagel/AMcom)
   --             05/12/2018 - Atualizar o nível de risco da conta conforme o maior risco do grupo (Heckmann/AMcom)
-  --
+  --             14/02/2018 - Inclusão do nível de risco (rating) 1 - AA (Heckmann/AMcom)
   ---------------------------------------------------------------------------------------------------------------
 
 -- Retorna o dia útil anterior do calendário da cooperativa
@@ -274,16 +274,17 @@ END fn_dia_anterior;
 FUNCTION fn_traduz_nivel_risco(pr_dsnivris crawepr.dsnivris%TYPE, pr_default_value crapris.innivris%TYPE := NULL)
     RETURN crapris.innivris%TYPE AS nivel_risco crapris.innivris%TYPE;
 BEGIN
-    nivel_risco := CASE WHEN pr_dsnivris = 'A'  THEN 2
-                                        WHEN pr_dsnivris = 'B'  THEN 3
-                                        WHEN pr_dsnivris = 'C'  THEN 4
-                                        WHEN pr_dsnivris = 'D'  THEN 5
-                                        WHEN pr_dsnivris = 'E'  THEN 6
-                                        WHEN pr_dsnivris = 'F'  THEN 7
-                                        WHEN pr_dsnivris = 'G'  THEN 8
-                                        WHEN pr_dsnivris = 'H'  THEN 9
-                                        WHEN pr_dsnivris = 'HH' THEN 10
-                                 ELSE pr_default_value END;
+        nivel_risco := CASE WHEN pr_dsnivris = 'AA'  THEN 1
+                    WHEN pr_dsnivris = 'A'  THEN 2						
+                    WHEN pr_dsnivris = 'B'  THEN 3
+                    WHEN pr_dsnivris = 'C'  THEN 4
+                    WHEN pr_dsnivris = 'D'  THEN 5
+                    WHEN pr_dsnivris = 'E'  THEN 6
+                    WHEN pr_dsnivris = 'F'  THEN 7
+                    WHEN pr_dsnivris = 'G'  THEN 8
+                    WHEN pr_dsnivris = 'H'  THEN 9
+                    WHEN pr_dsnivris = 'HH' THEN 10
+                    ELSE pr_default_value END;
 
     RETURN nivel_risco;
 END fn_traduz_nivel_risco;
@@ -687,7 +688,8 @@ END fn_calc_niv_risco_atraso_adp;
 FUNCTION fn_traduz_risco(innivris NUMBER)
   RETURN crawepr.dsnivris%TYPE AS dsnivris crawepr.dsnivris%TYPE;
 BEGIN
-    dsnivris :=  CASE WHEN innivris = 2  THEN 'A'
+    dsnivris :=   CASE WHEN innivris = 1  THEN 'AA'
+                      WHEN innivris = 2  THEN 'A'
                       WHEN innivris = 3  THEN 'B'
                       WHEN innivris = 4  THEN 'C'
                       WHEN innivris = 5  THEN 'D'
@@ -2306,6 +2308,8 @@ END pc_carrega_tabela_riscos;
    12) RISCO OPERACAO MENOR OU IGUAL AO MAIOR RISCO ENTRE RAT/ATR/AGR
    13) MELHORA MINIMO JA ATINGIDO (MEL)
    14) MELHORA MINIMO JA ATINGIDO (REF)
+   15) QUALIF.OPERAC. NÃO PERMITE "MELHORA"
+   16) RISCO INCLUSÃO ESTÁ NO VALOR MINIMO "A"
 ---------------------------------------*/
 
   BEGIN
@@ -2512,7 +2516,8 @@ END pc_carrega_tabela_riscos;
    Objetivo  : Procedure responsável por fazer todas as validações pertinentes ao
                do Risco Melhora e, quando sucesso, indicar/retornar o nível ao final
 
-   Alteracoes: 
+   Alteracoes: 15/08/2019 - P450 - Ajuste para ser aplicado o Risco Melhora em operações com classificação 
+                            1-Normal e 2-Renovação que tenham o risco de inclusão diferente de A. (Heckmann - AMcom)
   ............................................................................. */
   -- CURSORES
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -2531,6 +2536,7 @@ END pc_carrega_tabela_riscos;
           ,t.dtrisco_melhora
           ,e.vlsaldo_refinanciado
           ,NVL(e.vlsdeved,0) vlsdeved
+          ,NVL(e.vlemprst,0) vlemprst
           ,l.tpctrato -- Tipo Contrato na Linha de Credito
           ,l.permingr
           ,TRIM(b.dscatbem) dscatbem
@@ -2544,6 +2550,8 @@ END pc_carrega_tabela_riscos;
                ELSE 0
              END ) flgavali          -- Se tem avalista
           ,w.idcobope          -- Cobertura Aplicacao
+          ,e.idquaprc          -- Qualificacao da operacao
+          ,w.dsnivori dsriscoinc  -- Risco Inclusao
       FROM crapepr e, crawepr w, crapbpr b
          , tbrisco_operacoes t, craplcr l
      WHERE e.rowid       = PR_ROWIDEPR  -- Rowid do Emprestimo
@@ -2596,6 +2604,7 @@ END pc_carrega_tabela_riscos;
   vr_dtrefere             DATE;
   vr_tem_garantias        BOOLEAN:=FALSE;
   vr_melhora_novo         INTEGER;
+  vr_risco_atual          INTEGER;
   
   vr_sucesso              BOOLEAN:=TRUE;
 
@@ -2669,12 +2678,6 @@ END pc_carrega_tabela_riscos;
       RAISE vr_grava_log;
     END IF;
 
-    IF rw_crapepr.inrisco_refin IS NULL THEN
-    -- 4) EMPRESTIMO NAO TEM RISCO REFIN CALCULADO
-      vr_cdcritica_melhora := 4;
-      RAISE vr_grava_log;
-    END IF;
-
     IF PREJ0003.fn_verifica_preju_ativo(pr_cdcooper => pr_cdcooper
                                       , pr_nrdconta => rw_crapepr.nrdconta
                                       , pr_tipverif => 1 ) THEN
@@ -2696,17 +2699,30 @@ END pc_carrega_tabela_riscos;
 
     -- Se for Sem Garantia, deve liquidar % minimo do saldo refinanciado, conforme parametro
     IF NOT vr_tem_garantias THEN
-      IF rw_crapepr.vlsaldo_refinanciado IS NULL
-      OR rw_crapepr.vlsaldo_refinanciado = 0 THEN
+      
+      IF (rw_crapepr.vlsaldo_refinanciado IS NULL
+      OR rw_crapepr.vlsaldo_refinanciado = 0)
+      AND rw_crapepr.idquaprc IN(3,4) THEN
         -- 7) NAO FOI GRAVADO SALDO REFINANCIADO OU É ZERO
         vr_cdcritica_melhora := 7;
         RAISE vr_grava_log;
       ELSE
-        IF  (rw_crapepr.vlsdeved / rw_crapepr.vlsaldo_refinanciado) >
-            ((100 - pr_tab_ctl_param(1).perc_liquid_sem_garantia)/100) THEN
-          -- 8) SEM GARANTIA, PERC.MIN DE LIQUIDACAO SALDO REFINANCIADO NAO ALCANÇADO
-          vr_cdcritica_melhora := 8;--alterado (era 7)
-          RAISE vr_grava_log;       
+        IF rw_crapepr.idquaprc IN(3,4) THEN
+          IF  (rw_crapepr.vlsdeved / rw_crapepr.vlsaldo_refinanciado) >
+              ((100 - pr_tab_ctl_param(1).perc_liquid_sem_garantia)/100) THEN
+            -- 8) SEM GARANTIA, PERC.MIN DE LIQUIDACAO SALDO REFINANCIADO NAO ALCANÇADO
+            vr_cdcritica_melhora := 8;--alterado (era 7)
+            RAISE vr_grava_log;
+          END IF;
+        ELSE
+          -- Para rw_crapepr.idquaprc IN(1,2) deve-se utilizar
+          -- o Valor Emprestado e nao o Saldo Refinanciado
+          IF  (rw_crapepr.vlsdeved / rw_crapepr.vlemprst) >
+              ((100 - pr_tab_ctl_param(1).perc_liquid_sem_garantia)/100) THEN
+            -- 8) SEM GARANTIA, PERC.MIN DE LIQUIDACAO SALDO REFINANCIADO NAO ALCANÇADO
+            vr_cdcritica_melhora := 8;--alterado (era 7)
+            RAISE vr_grava_log;
+          END IF;          
         END IF;
       END IF;
     ELSE
@@ -2779,12 +2795,30 @@ END pc_carrega_tabela_riscos;
         pr_inrisco_melhora := pr_tab_ctl_param(1).inrisco_melhora_minimo;        
       END IF;
     ELSE
+      
+      -- P450 Inicio
       -- Risco MELHORA ainda não calculado
+      IF rw_crapepr.idquaprc IN (1,2) THEN -- pega risco do inclusao
+        IF rw_crapepr.dsriscoinc <> 'A' THEN
+          pr_inrisco_melhora := fn_traduz_nivel_risco(rw_crapepr.dsriscoinc) - 1;  -- traduz nivel risco
+          vr_risco_atual     := fn_traduz_nivel_risco(rw_crapepr.dsriscoinc);
+        ELSE
+          -- 16) Risco Inclusão está no valor minimo "A"
+          vr_cdcritica_melhora := 16;
+          RAISE vr_grava_log;
+        END IF;
+      ELSIF rw_crapepr.idquaprc IN (3, 4) THEN 
+        pr_inrisco_melhora := rw_crapepr.inrisco_refin - 1;
+        vr_risco_atual     := rw_crapepr.inrisco_refin;
+      ELSE
+        -- 15) Qualif.Operac. não permite "Melhora"
+        vr_cdcritica_melhora := 15;
+        RAISE vr_grava_log;
+      END IF;
+      -- P450 Fim
 
-      pr_inrisco_melhora := rw_crapepr.inrisco_refin - 1;
-
-      -- Se o REFIN Atual ja é menor ou igual ao parametro minimo, não faz nada.
-      IF rw_crapepr.inrisco_refin <= pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
+      -- Se o Risco Atual ja é menor ou igual ao parametro minimo, não faz nada.
+      IF vr_risco_atual  <= pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
         -- 14) Melhora Minimo ja atingido (REF)
         vr_cdcritica_melhora := 14;
         RAISE vr_grava_log;   

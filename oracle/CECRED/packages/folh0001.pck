@@ -140,6 +140,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
   PROCEDURE pc_valida_lancto_folha(pr_cdcooper  IN     crapass.cdcooper%TYPE --> Cooperativa
                                   ,pr_nrdconta  IN     crapass.nrdconta%TYPE --> Conta
                                   ,pr_nrcpfcgc  IN     crapass.nrcpfcgc%TYPE --> CPF
+                                  ,pr_dtcredit  IN     DATE                  --> Data Credito
                                   ,pr_idtpcont  IN OUT VARCHAR2              --> Tipo (C-Conta ou T-CTASAL)
                                   ,pr_nmprimtl     OUT VARCHAR2              --> Nome 
                                   ,pr_dsalerta     OUT VARCHAR2              --> Retornar alertas de validação
@@ -274,7 +275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
    Sistema : Ayllos
    Sigla   : CRED
    Autor   : Renato Darosci - Supero
-   Data    : Maio/2015                      Ultima atualizacao: 05/07/2018
+   Data    : Maio/2015                      Ultima atualizacao: 20/08/2018
 
    Dados referentes ao programa:
 
@@ -315,6 +316,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                           - pc_debito_pagto_aprovados
                           - pc_cr_pagto_aprovados_coop
 
+              06/08/2019 - Permitir inclusao de folha CTASAL apenas antes do horario
+                           parametrisado na PAGFOL "Portabilidade (Pgto no dia):"
+                           RITM0032122 - Lucas Ranghetti   
+
+              20/08/2019 - Verificar se conta esta bloqueada judicialmente 
+                           (Lucas Ranghetti - RITM0034650)
   ..............................................................................*/
 
   --Busca LCS com mesmo num de documento
@@ -4839,6 +4846,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper,
                                  pr_nrdconta => rw_craplfp.nrdconta,
                                  pr_nrcpfcgc => rw_craplfp.nrcpfemp,
+                                 pr_dtcredit => null,                                 
                                  pr_idtpcont => rw_craplfp.idtpcont,
                                  pr_nmprimtl => vr_nmprimtl,
                                  pr_dsalerta => vr_dsalerta,
@@ -6183,6 +6191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper,
                                  pr_nrdconta => rw_craplfp.nrdconta,
                                  pr_nrcpfcgc => rw_craplfp.nrcpfemp,
+                                 pr_dtcredit => null,                                 
                                  pr_idtpcont => rw_craplfp.idtpcont,
                                  pr_nmprimtl => vr_nmprimtl,
                                  pr_dsalerta => vr_dsalerta,
@@ -8439,6 +8448,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   PROCEDURE pc_valida_lancto_folha(pr_cdcooper  IN     crapass.cdcooper%TYPE --> Cooperativa
                                   ,pr_nrdconta  IN     crapass.nrdconta%TYPE --> Conta
                                   ,pr_nrcpfcgc  IN     crapass.nrcpfcgc%TYPE --> CPF
+                                  ,pr_dtcredit  IN     DATE                  --> Data Credito
                                   ,pr_idtpcont  IN OUT VARCHAR2              --> Tipo (C-Conta ou T-CTASAL)
                                   ,pr_nmprimtl     OUT VARCHAR2              --> Nome
                                   ,pr_dsalerta     OUT VARCHAR2              --> Retornar alertas de validação
@@ -8539,6 +8549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
          AND ban.flgdispb = 1; 
     rw_crapban cr_crapban%ROWTYPE; 
     --
+    vr_hrlimpor   VARCHAR2(5);    -- Horario Portabilidade
     vr_inestcri   NUMBER;         -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
     vr_clobxmlc   CLOB;           -- Pj 475 - Marcelo Telles Coelho - Mouts - 16/05/2019
   BEGIN
@@ -8781,6 +8792,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         -- Fim Pj 475
       END IF;
 
+      -- Busca do horário limite para a portabilidade
+      vr_hrlimpor := gene0001.fn_param_sistema('CRED', Pr_cdcooper, 'FOLHAIB_HOR_LIM_PORTAB');
+             
+      -- não deixar fazer a folha ctasal caso o horario estrapole
+      IF vr_hrlimpor < TO_CHAR(SYSDATE,'HH24:MI') AND TO_DATE(PR_dtcredit,'DD/MM/YYYY') = TO_DATE(sysdate,'DD/MM/YYYY') THEN        
+         pr_dsalerta := 'Pagamentos para outras instituicoes so podem ser feitos ate as '||vr_hrlimpor;
+         RETURN;
+    END IF;
+      
     END IF;
 
   EXCEPTION
@@ -8898,7 +8918,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --  Sistema  : IB
   --  Sigla    : CRED
   --  Autor    : Renato Darosci - SUPERO
-  --  Data     : Maio/2015.                   Ultima atualizacao: 24/08/2017
+  --  Data     : Maio/2015.                   Ultima atualizacao: 12/08/2019
   --
   -- Dados referentes ao programa:
   --
@@ -8918,6 +8938,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --                          (Odirlei-AMcom)  
   --
   --             24/08/2017 - Fechar cursor cr_crapofp caso ele ja esteja aberto (Lucas Ranghetti #729039)
+  --
+  --             12/08/2019 - Criticar "Nosso Número" zerado no arquivo CNAB 240 pelo IB. Rafael Ferreira (Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
     -- CURSORES
@@ -9033,6 +9055,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     vr_qtregerr    NUMBER;
     vr_qttotalr    NUMBER;
     vr_qtalerta    NUMBER;
+    vr_nossonum    NUMBER; -- Nosso Numero do arquivo da Febraban
     vr_nmarquiv    VARCHAR2(100); -- Nome do arquivo gerado para gravação dos dados
 
     vr_utlfileh    UTL_FILE.file_type;
@@ -9042,6 +9065,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     vr_retxml      XMLType;
     vr_dsauxml     varchar2(32767);
 
+    vr_id_conta_monitorada NUMBER;
+    vr_cdcritic NUMBER;
+    
     -- Procedure auxiliar para adicionar as criticas do arquivo
     PROCEDURE pc_add_critica(pr_dscritic IN VARCHAR2
                             ,pr_nrdlinha IN NUMBER
@@ -9076,7 +9102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       IF pr_inderror THEN
         vr_tbcritic(nrindice).inderror := 1;
       ELSE
-        vr_tbcritic(nrindice).inderror := 0; -- REgistro de sucesso
+        vr_tbcritic(nrindice).inderror := 0; -- Registro de sucesso
       END IF;
 
     END pc_add_critica;
@@ -9097,6 +9123,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       CLOSE cr_crapcop;
     END IF;   
 
+    -- ranghetti
+    -- Verificar se conta esta bloqueada judicialmente (RITM0034650)
+    BEGIN
+      blqj0002.pc_verifica_conta_bloqueio(pr_cdcooper => pr_cdcooper,
+                                          pr_nrdconta => pr_nrdconta,
+                                          pr_id_conta_monitorada => vr_id_conta_monitorada,
+                                          pr_cdcritic => vr_cdcritic,
+                                          pr_dscritic => vr_dscritic);
+
+      IF vr_id_conta_monitorada = 1 THEN
+        pr_dscritic := 'Conta liberada apenas para consultas. Para mais informações entre'
+                    || ' em contato com o SAC ou pelo Chat e informe o código BLQ01.';
+        RAISE vr_excerror;  
+      END IF;
+    END;
+
     IF pr_iddspscp = 0 THEN -- Diretorio de upload do gnusites
     -- Busca o diretório do upload do arquivo
     vr_dsdireto := GENE0001.fn_diretorio(pr_tpdireto => 'C'
@@ -9108,7 +9150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                ,pr_typ_saida   => vr_typ_said
                                ,pr_des_saida   => vr_des_erro);
 
-      -- Testar erro
+    -- Testar erro
     IF vr_typ_said = 'ERR' THEN
       -- O comando shell executou com erro, gerar log e sair do processo
       pr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
@@ -9146,7 +9188,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     END IF;
 
     -- Se o arquivo estiver aberto
-    IF  utl_file.IS_OPEN(vr_utlfileh) THEN
+    IF utl_file.IS_OPEN(vr_utlfileh) THEN
 
       -- Percorrer as linhas do arquivo
       LOOP
@@ -9713,15 +9755,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             FOLH0001.pc_valida_lancto_folha(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => vr_nrdconta
                                            ,pr_nrcpfcgc => vr_nrcpfcgc
+                                           ,pr_dtcredit => TO_DATE(pr_dtcredit,'DD/MM/YYYY')
                                            ,pr_idtpcont => vr_idtpcont
                                            ,pr_nmprimtl => vr_nmprimtl
                                            ,pr_dsalerta => vr_dsalert
                                            ,pr_dscritic => pr_dscritic);
-
-            -- Se ocorrer erro de processamento
-            IF pr_dscritic IS NOT NULL THEN
-              RAISE vr_excerror; -- Finaliza o programa
-            END IF;
 
             -- Se ocorreu crítica na validação
             IF vr_dsalert IS NOT NULL THEN
@@ -9738,6 +9776,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
               vr_idcrirga := TRUE; -- Ocorrencia de erro
 
               CONTINUE;
+            ELSE
+              -- Se ocorrer erro de processamento
+              IF pr_dscritic IS NOT NULL THEN
+                RAISE vr_excerror; -- Finaliza o programa
+            END IF;
             END IF;
 
           END IF;
@@ -9805,6 +9848,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           -- Contabilizar registros com sucesso
           vr_qtdregok := NVL(vr_qtdregok,0) + 1;
           --------------------------
+          
+        -- Rafael Ferreira (Mouts) - INC0021033
+        -- Se for tipo de registro P
+        ELSIF substr(vr_tbarquiv(ind), 14, 1) = 'P' THEN
+          -- Verifica se o campo "Nosso Numero" está zerado no arquivo
+          BEGIN
+            vr_nossonum := trim(substr(vr_tbarquiv(ind), 45, 9));
+            
+            IF nvl(vr_nossonum,0) = 0 THEN
+              -- Forçamos a execução do when-others abaixo
+              RAISE vr_excerror;
+            END IF;
+            
+          EXCEPTION
+            WHEN OTHERS THEN
+              CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+              -- Criticar Nosso Número Zerado
+              vr_dscritic := 'Nosso Número Inválido!';
+              -- Adiciona a crítica
+              pc_add_critica(vr_dscritic -- pr_dscritic
+                            ,vr_qtlinhas -- pr_nrdlinha
+                            ,TRIM(GENE0002.fn_mask_conta(vr_nrdconta)) -- pr_dsdconta
+                            ,GENE0002.fn_mask_cpf_cnpj(vr_nrdocnpj,1) -- pr_dscpfcgc
+                            ,rw_crapofp.dsorigem            -- pr_dsorigem
+                            ,vr_vlrpagto
+                            ,TRUE ); -- indicar erro
+
+              vr_qtregerr := NVL(vr_qtregerr,0) + 1; -- Contabilizar registros de erro
+              vr_idcrirga := TRUE; -- Ocorrencia de erro
+
+              CONTINUE;
+          END;
+          
+        
         END IF;
 
       -- Se tipo de registro for 5-Linha de trailer do lote
@@ -9881,7 +9958,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_qttotalr := 0;
 
           -- Criticar CNPJ divergente do cadastro da empresa
-          vr_dscritic := 'Qtde de Pagamentos não confere com o Total do LOte!';
+          vr_dscritic := 'Qtde de Pagamentos não confere com o Total do Lote!';
 
           -- Alterar a critica de todos os registros, atribuindo a critica do trailer do arquivo
           IF vr_tbcritic.count > 0 THEN

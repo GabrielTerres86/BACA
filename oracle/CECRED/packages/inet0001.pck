@@ -798,6 +798,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --
   --             12/04/2019 - Ajuste para remover a condição colocada no fim de ano para atender o ticket INC0030017
   --                         (Adriano -INC0012268 ).
+  --             12/06/2019 - Tratamento para TED Judicial.
+  --                          Jose Dill - Mouts (P475 - REQ39)  
   ----------------------------------------- ----------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -853,7 +855,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_datdodia:= PAGA0001.fn_busca_datdodia(pr_cdcooper => pr_cdcooper);
 
       -- Se for para todos ou for ted ou for vr-boleto
-      IF pr_tpoperac IN (0,4,6)  THEN
+      IF pr_tpoperac IN (0,4,6,22)  THEN /*REQ39*/
         -- Busca o indicador estado de crise
         SSPB0001.pc_estado_crise (pr_inestcri => vr_inestcri
                                  ,pr_clobxmlc => vr_clobxmlc);
@@ -869,7 +871,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       END IF;
 
       --Se o tipo de operacao for Todos (0), Transferencia(1) ou Pagamento(2) ou (5) Intercooperativa
-      IF pr_tpoperac IN (0,1,2,4,5)  THEN
+      IF pr_tpoperac IN (0,1,2,4,5,22)  THEN /*REQ39*/
         --Determinar tipo pessoa para busca limite
         IF pr_inpessoa > 1 THEN
           vr_inpessoa:= 2;
@@ -1160,7 +1162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       END IF;
 
       --Se for para todos ou for ted
-      IF pr_tpoperac IN (0,4)  THEN
+      IF pr_tpoperac IN (0,4,22)  THEN /*REQ39*/
         --Se a cooperativa nao existir
         OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
         FETCH cr_crapcop INTO rw_crapcop;
@@ -1238,7 +1240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             IF vr_iddiauti = 1 THEN
               -- Faz a validação somente para dias úteis              
               IF vr_hratual < vr_hrinipag 
-                 and pr_tpoperac = 4 THEN
+                 and pr_tpoperac IN (4,22) THEN /*REQ39*/
                  -- Dentro do limite (antes da abertura da grade)
                 vr_idesthor:= 2;              
               END IF; 
@@ -4084,6 +4086,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                            para utilizar o caixa eletrônico não precisamos da senha de internet cadastrada, e é de lá que vem o valor
                            de limite que o cooperado possui. Programa ajustado para não validar limite quando a transação estiver sendo 
                            feita pelo PA 91 (ATM) (Douglas - Projeto 363)
+                           
+              12/06/2019 - Tratamento para TED Judicial.
+                           Jose Dill - Mouts (P475 - REQ39)             
 
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
@@ -4244,7 +4249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           pr_dstransa:= pr_dstransa || 'Credito de Salario';
           vr_dsdmensa:= 'esse pagamento';
         END IF;
-      ELSIF pr_tpoperac = 4 THEN
+      ELSIF pr_tpoperac IN (4, 22) THEN /*REQ39*/
         vr_tp_transa := 'TED';
         pr_dstransa:= pr_dstransa || 'TED';
         vr_dsdmensa:= 'essa transferencia';
@@ -4538,7 +4543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         --Limite da operacao na cooperativa
         vr_vllimcop:= pr_tab_internet(vr_idseqttl).vlvrbcop;
       ELSE
-        IF pr_tpoperac = 4 THEN /* TED */
+        IF pr_tpoperac IN (4, 22) THEN /*REQ39*/ /* TED */
           --Saldo primeiro titular
           vr_vldspptl:= pr_tab_internet(vr_idseqttl).vldspted;
           --Saldo todos titulares
@@ -4657,7 +4662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         --Saldo todos os titulares
         vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vllimvrb;
       ELSE
-        IF pr_tpoperac = 4 THEN /* TED */
+        IF pr_tpoperac IN (4, 22) THEN /*REQ39*/ /* TED */
           --Saldo primeiro titular
           vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vldspted;
         ELSIF rw_crapass.inpessoa = 1 THEN /* Pessoa Fisica */
@@ -4690,7 +4695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           --Limite diario
           vr_vllimptl:= pr_tab_internet(vr_idseqttl).vllimvrb;
         ELSE
-          IF pr_tpoperac = 4 THEN /* TED */
+          IF pr_tpoperac IN (4, 22) THEN /*REQ39*/ /* TED */
             --Saldo primeiro titular
             vr_vldspptl:= pr_tab_internet(vr_idseqttl).vldspted;
             --Limite diario
@@ -4783,7 +4788,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       IF pr_flgctrag AND pr_idagenda = 1 AND pr_tab_limite(pr_tab_limite.FIRST).idesthor = 1 THEN
         IF pr_tpoperac IN (1,5) THEN
           vr_dscritic:= 'Horario esgotado para transferencias.';
-        ELSIF pr_tpoperac = 4 THEN
+        ELSIF pr_tpoperac IN (4, 22) THEN /*REQ39*/
           vr_dscritic:= 'Horario esgotado para envio de TED.';
         ELSE
           vr_dscritic:= 'Horario esgotado para pagamentos.';
@@ -4807,11 +4812,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                                                ,pr_feriado  => TRUE        --> Nao considera feriados
                                                ,pr_excultdia => FALSE);    --> Desconsidera 31/12 com dia útil
       --Se for transferencia ou ted
-      IF pr_tpoperac IN (1,4,5) THEN
+      IF pr_tpoperac IN (1,4,5,22) THEN /*REQ39*/
         
         /** Data do agendamento nao pode ser o ultimo dia util do ano **/
         IF pr_idagenda = 2  AND
-           pr_tpoperac <> 4 AND 
+           pr_tpoperac <> 4 AND
+           pr_tpoperac <> 22 AND --REQ39 
            pr_dtmvtopg > vr_dtdialim THEN
            
           vr_dscritic := 'Não é possível efetuar agendamentos para este dia.';
@@ -4822,7 +4828,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         END IF;
         
         IF pr_idagenda = 1 AND
-           pr_tpoperac = 4 AND 
+           pr_tpoperac IN (4, 22) /*REQ39*/ AND 
            pr_tab_limite(pr_tab_limite.FIRST).iddiauti = 2 THEN
            
            vr_cdcritic := 0;
@@ -5175,7 +5181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         IF pr_nrcpfope = 0 THEN
          
             /** Obtem valor da tarifa TED **/
-            IF pr_tpoperac = 4 AND
+            IF pr_tpoperac IN (4, 22) /*REQ39*/ AND
                pr_flgexage = 0 THEN
               --Buscar tarifa da TED
               CXON0020.pc_busca_tarifa_ted (pr_cdcooper => pr_cdcooper  --Codigo Cooperativa
@@ -5224,7 +5230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               RAISE vr_exc_erro;
             END IF;
                    
-        ELSIF pr_tpoperac = 4 AND
+        ELSIF pr_tpoperac IN (4, 22) /*REQ39*/ AND
               pr_flgexage = 0 THEN
           --Buscar tarifa da TED
           CXON0020.pc_busca_tarifa_ted (pr_cdcooper => pr_cdcooper  --Codigo Cooperativa
@@ -5248,7 +5254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         
       ELSIF pr_idagenda >= 2  THEN /** Agendamento normal e recorrente **/
 
-        IF pr_tpoperac = 4 THEN
+        IF pr_tpoperac IN (4, 22) THEN /*REQ39*/
           --Buscar tarifa de TED          
           CXON0020.pc_busca_tarifa_ted(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
                                      , pr_cdagenci => 90          --Codigo Agencia
@@ -5295,7 +5301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                 pr_assin_conjunta <> 1 THEN -- e não for transacao pendente
             -- Projeto 475 - Sprint C (Req14) - Tratamento para permitir agendar uma TED antes da abertura da sua grade 
             -- Verificar se estourou o limite de grade para TED
-            IF sspb0003.fn_valida_horario_ted (pr_cdcooper) AND pr_tpoperac = 4 THEN
+            IF sspb0003.fn_valida_horario_ted (pr_cdcooper) AND pr_tpoperac IN (4, 22) THEN /*REQ39*/
                -- Dentro do limite (antes da abertura da grade)
                NULL;              
             ELSE
@@ -5358,7 +5364,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           CLOSE cr_crapage;
           
           
-          IF pr_tpoperac = 4 THEN
+          IF pr_tpoperac IN (4, 22) THEN /*REQ39*/
             --Dia limite recebe dia + quantidade de meses máximo para agendamento
             vr_dtdialim:= ADD_MONTHS(vr_datdodia,pr_tab_limite(pr_tab_limite.FIRST).qtmesfut);
           ELSE  
@@ -5384,7 +5390,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         --Agendamento Recorrente
         IF pr_idagenda = 3 THEN
           
-          IF pr_tpoperac = 4 THEN
+          IF pr_tpoperac IN (4, 22) THEN /*REQ39*/
             --Dia limite recebe dia + quantidade de meses máximo para agendamento
             vr_dtdialim:= ADD_MONTHS(vr_datdodia,pr_tab_limite(pr_tab_limite.FIRST).qtmesrec);
           ELSE  
@@ -6517,6 +6523,8 @@ PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type 
               agendamento pendente.
   
   Alteracoes: 
+             20/03/2019 - Ajuste para tratar o TED Judicial.
+                          Jose Dill (Mouts) Sprint E1 - REQ39
             
   ---------------------------------------------------------------------------------------------------------------*/                                      
     -- CURSORES
@@ -6672,7 +6680,7 @@ PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type 
       END IF;      
     END IF; 
     
-    IF pr_cdtiptra = 4 THEN -- TED
+    IF pr_cdtiptra in (4,22) THEN -- TED e TED Judicial (REQ39)
       IF vr_tab_internet(pr_idseqttl).vllimted <= 0 THEN
         pr_msgretor := 'Operador nao possui limite de TED cadastrado (2)';
         RAISE vr_exit;

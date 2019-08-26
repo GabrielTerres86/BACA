@@ -190,6 +190,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                                   ,pr_dshistor IN VARCHAR2               --> Descriçao de historico
                                   ,pr_cdispbif IN crapcti.nrispbif%TYPE  --> Oito primeiras posicoes do cnpj.
                                   ,pr_idagenda IN INTEGER                --> Indicador de agendamento
+                                  ,pr_cdtiptra IN INTEGER  DEFAULT NULL --> Tipo de transação --R39
                                   /* parametros de saida */
                                   ,pr_dstransa OUT VARCHAR2              --> Descrição de transação
                                   ,pr_cdcritic OUT INTEGER               --> Codigo do erro
@@ -226,7 +227,9 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
                           ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
                           ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
-                          -- saida
+                          ,pr_cdtiptra IN INTEGER  DEFAULT NULL --> Tipo de transação --R39                          
+                           ,pr_idlancto IN NUMBER   DEFAULT NULL  --> Id do agendamento (P500-SM02)
+                           -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
                           ,pr_cdcritic OUT INTEGER               --> Codigo do erro
@@ -296,6 +299,8 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
                           ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
                           ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
+                          ,pr_cdtiptra IN INTEGER  DEFAULT NULL --> Tipo de transação --R39
+                          ,pr_idlancto IN NUMBER   DEFAULT NULL  --> Id do agendamento (P500-SM02)
                           -- saida
                           ,pr_nrdocmto OUT INTEGER --> Documento TED
                           ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL
@@ -328,6 +333,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0020 AS
                             ,pr_dshistor IN VARCHAR2 --> Descriçao do Histórico
                             ,pr_cdispbif IN INTEGER  --> ISPB Banco Favorecido
                             ,pr_idagenda IN INTEGER  --> Indicador de agendamento
+                            ,pr_cdtiptra IN INTEGER  DEFAULT NULL --> Tipo de transação --R39
                             ,pr_des_erro OUT VARCHAR2);
 
   FUNCTION fn_verifica_lote_uso(pr_rowid rowid) RETURN NUMBER;
@@ -375,7 +381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     Sistema  : Procedimentos e funcoes das transacoes do caixa online
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Junho/2013.                   Ultima atualizacao: 01/03/2019
+    Data     : Junho/2013.                   Ultima atualizacao: 16/07/2019
 
     Dados referentes ao programa:
 
@@ -431,6 +437,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                              deve bloquear o envio da TED.
                              (Jonata - Mouts INC0031899).
                              
+                19/06/2019 - Alteração na "pc_enviar_ted": Inclusão de tratamento para transferir da conta Transitória 
+                             para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
+                             P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom. 
+                             
+                16/07/2019 - Alteração na "pc_enviar_ted": Inclusão de tratamento para transferir da conta Transitória 
+                             para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
+                             (Validação feita somente para Contas em Prejuizo).
+                             P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom.                                                          
+			    
                 25/06/2019 - Tratamento para não estourar o limite de crédito quando houver mais de um TED de uma mesma
                              conta encaminhada no mesmo momento.
                              (Jose Dill - Mout PRB0041934)
@@ -678,6 +693,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                             ,pr_dshistor IN VARCHAR2 --> Descriçao do Histórico
                             ,pr_cdispbif IN INTEGER  --> ISPB Banco Favorecido
                             ,pr_idagenda IN INTEGER  --> Indicador de agendamento
+                            ,pr_cdtiptra IN INTEGER  DEFAULT NULL --> Tipo de transação --REQ39
                             ,pr_des_erro OUT VARCHAR2)IS --> Indicador se retornou com erro (OK ou NOK)
 
   /*---------------------------------------------------------------------------------------------------------------
@@ -701,6 +717,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   01/03/2019 - Se o banco ainda não estiver operante no SPB (Data de inicio da operação), 
                                deve bloquear o envio da TED.
                                (Jonata - Mouts INC0031899).
+
+                  27/03/2019 - Adicionado o parametro do tipo de transação para fazer o tratamento do 
+                               Ted Judicial.
+                               (Jose Dill - Mouts  P475 - REQ39)                                
 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
@@ -938,6 +958,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     END IF;
     
+    
     -- Verificar se banco já está em operação no SPB
     IF rw_crapban.flgdispb = 1 /*true*/      AND 
        trunc(SYSDATE) < rw_crapban.dtinispb  THEN
@@ -946,24 +967,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       RAISE vr_exc_erro;
     END IF;
     
-    -- Validar agencia
-    IF TRIM(pr_cdagefav) IS NULL THEN
-      vr_cdcritic := 0;
-      vr_dscritic := 'Agencia invalida.';
-      RAISE vr_exc_erro;
-    END IF;
+    /*REQ39 - Para o TED Judicial estas validações não são necessárias*/
+    IF NVL(pr_cdtiptra,0) <> 22 THEN 
+      -- Validar agencia
+      IF TRIM(pr_cdagefav) IS NULL THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Agencia invalida.';
+        RAISE vr_exc_erro;
+      END IF;
 
-    -- Verificar conta favorecida
-    IF nvl(pr_nrctafav,0) = 0 THEN
-      vr_cdcritic := 0;
-      vr_dscritic := 'Conta do favorecido deve ser informada.';
-      RAISE vr_exc_erro;
-    END IF;
-    IF TRIM(pr_nmfavore) IS NULL THEN
-      vr_cdcritic := 0;
-      vr_dscritic := 'Nome favorecido deve ser informado.';
-      RAISE vr_exc_erro;
-    END IF;
+      -- Verificar conta favorecida
+      IF nvl(pr_nrctafav,0) = 0 THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Conta do favorecido deve ser informada.';
+        RAISE vr_exc_erro;
+      END IF;
+      IF TRIM(pr_nmfavore) IS NULL THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Nome favorecido deve ser informado.';
+        RAISE vr_exc_erro;
+      END IF;
 
     IF pr_inpesfav = 1 THEN
 
@@ -1047,11 +1070,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         vr_dscritic := 'Dados inconsistentes. Impossibilidade de realizar a transação.';
         RAISE vr_exc_erro;
     END IF;
-
+    ELSE
+      --    
+      CLOSE cr_crapcbf;
     END IF;
-    CLOSE cr_crapcbf;
-
-
+    
     -- Ler tabela generica -  Tipo de conta
     vr_dstextab := tabe0001.fn_busca_dstextab( pr_cdcooper => rw_crapcop.cdcooper
                                               ,pr_nmsistem => 'CRED'
@@ -1065,6 +1088,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       vr_dscritic := NULL;
       RAISE vr_exc_erro;
     END IF;
+    
+    END IF; --Fim REQ39
+
 
     -- Ler tabela generica
     vr_dstextab := tabe0001.fn_busca_dstextab( pr_cdcooper => rw_crapcop.cdcooper
@@ -1135,6 +1161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                   ,pr_dshistor IN VARCHAR2               --> Descriçao de historico
                                   ,pr_cdispbif IN crapcti.nrispbif%TYPE  --> Oito primeiras posicoes do cnpj.
                                   ,pr_idagenda IN INTEGER                --> Indicador de agendamento
+                                  ,pr_cdtiptra IN INTEGER  DEFAULT NULL --> Tipo de transação --REQ39
                                   /* parametros de saida */
                                   ,pr_dstransa OUT VARCHAR2              --> Descrição de transação
                                   ,pr_cdcritic OUT INTEGER               --> Codigo do erro
@@ -1153,6 +1180,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Objetivo  : Procedure para verificar os dados da TED
 
       Alteração : 08/06/2015 - Conversão Progress -> Oracle (Odirlei-Amcom)
+                 
+                  27/03/2019 - Adicionado o parametro do tipo de transação para fazer o tratamento do 
+                               Ted Judicial.
+                              (Jose Dill - Mouts  P475 - REQ39)       
 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
@@ -1286,6 +1317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                             ,pr_dshistor => pr_dshistor   --> Descriçao do Histórico
                             ,pr_cdispbif => pr_cdispbif   --> ISPB Banco Favorecido
                             ,pr_idagenda => pr_idagenda   --> Indicador de agendamento
+                            ,pr_cdtiptra => pr_cdtiptra   --> Tipo de transação --REQ39
                             ,pr_des_erro => vr_des_erro); --> Indicador se retornou com erro (OK ou NOK)
 
     IF vr_des_erro <> 'OK' THEN
@@ -1347,6 +1379,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
                           ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
                           ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
+                          ,pr_cdtiptra IN INTEGER  DEFAULT NULL --> Tipo de transação --REQ39
+                          ,pr_idlancto IN NUMBER   DEFAULT NULL  --> Id do agendamento (P500-SM02)
                           -- saida
                           ,pr_nrdocmto OUT INTEGER --> Documento TED
                           ,pr_nrrectvl OUT ROWID   --> Autenticacao TVL
@@ -1409,6 +1443,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   
                   28/08/2018 - Tratamento de exceção pra chamada AFRA0004.pc_monitora_operacao (Tiago - RITM0025395)
 
+                  27/03/2019 - Adicionado o parametro do tipo de transação para fazer o tratamento do 
+                               Ted Judicial.
+                               (Jose Dill - Mouts  P475 - REQ39)
+                               
+                  03/04/2019 - Gerar a fase 20 na tabela de trace quando o ofsaaa estiver desativado.
+                               (Jose Dill - Mouts  P475 - REQ60)
+                  
+                  
                   08/02/2019 - Realizado a inclusão de parametro para indicar que está sendo realizada uma 
                                transferencia de salário via portabilidade, de forma que o programa possa tratar
                                a requisição como TEC de salário. Foram realizados os ajustes também para que 
@@ -1419,12 +1461,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
                   05/06/2019 - Tratar INC0011406 relacionado ao horario de aprovacao da TED (Diego).
 
+                  19/06/2019 - Alteração na "pc_enviar_ted": Inclusão de tratamento para transferir da conta Transitória 
+                               para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
+                               P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom.
+                  
                   21/06/2019 - Tratar INC0015554 - solucao de contorno (Diego).
 
                   10/07/2019 - Tratar INC0019779 relacionado a duplicidade do número de controle IF (Diego).
 
+                  16/07/2019 - Alteração na "pc_enviar_ted": Inclusão de tratamento para transferir da conta Transitória 
+                               para a Conta Corrente quando o histórico for o 1406 - TRANSFERENCIA BLOQUEIO JUDICIAL.
+                               (Validação feita somente para Contas em Prejuizo).
+                               P450.2 - BUG 22067 - Marcelo Elias Gonçalves/AMcom.             
+                  
                   16/07/2019 - Tratar para que deposito bacenjud não execute rotina de saldo.
                                Jose Dill (Mouts). INC0020549 
+
+                  02/08/2019 - Inclusao do id do lançamento na gravação da craptvl, para a geração do segundo 
+                               arquivo de retorno de Ted.
+                               Jose Dill - Mouts (P500-SM02)
 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
@@ -1485,7 +1540,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
          AND craptvl.nrcctrcb = pr_nrctafav
          AND craptvl.vldocrcb = pr_vldocmto;
     rw_craptvl_max cr_craptvl_max%ROWTYPE;
-
 
     -- Buscar dados historico
     CURSOR cr_craphis (pr_cdcooper craphis.cdcooper%TYPE,
@@ -1613,6 +1667,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 	vr_fliseope   INTEGER;
 
     vr_idanalise_fraude tbgen_analise_fraude.idanalise_fraude%TYPE;
+
+    vr_incrineg INTEGER;
+    vr_tab_retorno LANC0001.typ_reg_retorno;
+    
+    vr_inprejuz BOOLEAN; -- Indica se a conta corrente está em prejuízo
 
     ---------------- SUB-ROTINAS ------------------
     -- Procedimento para inserir o lote e não deixar tabela lockada
@@ -1861,7 +1920,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       END IF;
     END IF;    
     -- Fim INC0030535
-
+    
     -- Se for uma transação de portabilidade de salário (P485 - Renato Darosci - Supero)
     IF NVL(pr_idportab,0) = 1 THEN
       -- Indica como 2 por configurar uma TEC
@@ -1873,12 +1932,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       
     /* Se alterar numero de controle, ajustar procedure atualiza-doc-ted */
     vr_nrctrlif := vr_idtected||to_char(rw_crapdat.dtmvtocd,'RRMMDD')
-                      ||to_char(rw_crapcop.cdagectl,'fm0000')
-                       -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
-                       -- Buscar o NRDOCMTO para evitar duplicidadr de NumCtrlIF
-                       -- || to_char(SYSDATE,'sssss')
-                       --   /* para evitar duplicidade devido paralelismo */
-                      ||to_char(pr_nrdocmto,'fm00000000');
+                              ||to_char(rw_crapcop.cdagectl,'fm0000')
+                              -- Marcelo Telles Coelho - Projeto 475 - SPRINT B
+                              -- Buscar o NRDOCMTO para evitar duplicidadr de NumCtrlIF
+                              -- || to_char(SYSDATE,'sssss')
+                              --   /* para evitar duplicidade devido paralelismo */
+                              ||to_char(pr_nrdocmto,'fm00000000');
     -- Fim Projeto 475
 
     IF pr_flmobile = 1 THEN /* Canal Mobile */
@@ -2019,6 +2078,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                                           ,pr_iddispositivo => pr_iddispos
                                           ,pr_idanalise_fraude => vr_idanalise_fraude
                                           ,pr_dscritic   => vr_dscritic);
+      /*REQ60 - Se não gerou registro de antifraude, indica que o OFSAA esta inativo e a fase 20
+                deve ser gravada com a mensagem de ofsa inativo*/
+      IF NVL(vr_idanalise_fraude,0) = 0 THEN
+         --
+         sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                 ,pr_nmmensagem             => 'OFSAA desativado'
+                                 ,pr_nrcontrole             => vr_nrctrlif
+                                 ,pr_nrcontrole_str_pag     => NULL
+                                 ,pr_nrcontrole_dev_or      => NULL
+                                 ,pr_dhmensagem             => sysdate
+                                 ,pr_insituacao             => 'OK'
+                                 ,pr_dsxml_mensagem         => null
+                                 ,pr_dsxml_completo         => null
+                                 ,pr_nrseq_mensagem_xml     => null
+                                 ,pr_nrdconta               => pr_nrdconta
+                                 ,pr_cdcooper               => pr_cdcooper
+                                 ,pr_cdproduto              => 30 -- TED
+                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem20
+                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                 ,pr_dscritic               => vr_dscritic
+                                 ,pr_des_erro               => vr_des_erro);
+          -- Se ocorreu erro
+          IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+            -- Levantar Excecao
+            vr_cdcritic := 0;
+            RAISE vr_exc_erro;
+          END IF;
+      END IF;
+      --                                      
       vr_dscritic := NULL;
     ELSE
       -- Everton - Mouts - Projeto 475
@@ -2162,6 +2250,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 ,craptvl.idanafrd
                 ,craptvl.idmsgenv
                 ,craptvl.nrridlfp -- Id lançamento folha
+                ,craptvl.idlancto -- Id do agendamento (P500-SM02)
                )
          VALUES (rw_crapcop.cdcooper     --> craptvl.cdcooper
                 ,3                       --> craptvl.tpdoctrf
@@ -2207,6 +2296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                 ,vr_idanalise_fraude     --> craptvl.idanafrd
                 ,vr_nrseq_mensagem10 --> craptvl.idmsgenv
                 ,pr_nrridlfp
+                ,pr_idlancto -- Id do agendamento (P500-SM02)
                 )
         RETURNING craptvl.tpdctadb, craptvl.flgtitul
              INTO rw_craptvl.tpdctadb, rw_craptvl.flgtitul;
@@ -2288,13 +2378,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     END IF;
 
     -- Se for bloqueio judicial (bacenjud), utiliza o historico 1406-TR.BLOQ.JUD
-    IF pr_tpctafav = 9 THEN
-      vr_cdhisted := 1406;
+    IF NVL(pr_tpctafav,0) = 9 OR pr_cdtiptra = 22 THEN --REQ39
+      IF pr_cdtiptra = 22 THEN
+        vr_cdhisted := 2974; --REQ39 
+      ELSE
+        vr_cdhisted := 1406;
+      END IF;
     ELSE
-    -- definir historico de ted
-    vr_cdhisted := 555;
-    END IF;
-
+      -- definir historico de ted
+      vr_cdhisted := 555;
+      END IF;
+      
     ELSE
       -- Portabilidade não deve cobrar tarifa
       vr_vllantar := 0;    
@@ -2438,7 +2532,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     
 
     vr_hrtransa := gene0002.fn_busca_time;
-    BEGIN
+
       vr_nrseqdig := fn_sequence('CRAPLOT'
 						                    ,'NRSEQDIG'
 						                    ,''||rw_crapcop.cdcooper||';'
@@ -2447,48 +2541,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 							                     ||rw_craplot_lcm.cdbccxlt||';'
 							                     ||rw_craplot_lcm.nrdolote);
     
-      INSERT INTO craplcm
-                  (craplcm.cdcooper
-                  ,craplcm.dtmvtolt
-                  ,craplcm.hrtransa
-                  ,craplcm.cdagenci
-                  ,craplcm.cdbccxlt
-                  ,craplcm.nrdolote
-                  ,craplcm.nrdconta
-                  ,craplcm.nrdctabb
-                  ,craplcm.nrdctitg
-                  ,craplcm.nrdocmto
-                  ,craplcm.cdhistor
-                  ,craplcm.nrseqdig
-                  ,craplcm.vllanmto
-                  ,craplcm.vldoipmf
-                  ,craplcm.nrautdoc
-                  ,craplcm.cdpesqbb)
-           VALUES (rw_crapcop.cdcooper               --> craplcm.cdcooper
-                  ,rw_crapdat.dtmvtocd               --> craplcm.dtmvtolt
-                  ,vr_hrtransa                       --> craplcm.hrtransa
-                  ,pr_cdageope                       --> craplcm.cdagenci
-                  ,11                                --> craplcm.cdbccxlt
-                    ,rw_craplot_lcm.nrdolote           --> craplcm.nrdolote
-                  ,pr_nrdconta                       --> craplcm.nrdconta
-                  ,pr_nrdconta                       --> craplcm.nrdctabb
-                    ,to_char(pr_nrdconta,'fm00000000') --> craplcm.nrdctitg
-                  ,pr_nrdocmto                       --> craplcm.nrdocmto
-                  ,rw_craphis.cdhistor               --> craplcm.cdhistor
-                  ,vr_nrseqdig             --> craplcm.nrseqdig
-                  ,pr_vldocmto                       --> craplcm.vllanmto
-                  ,0                                 --> craplcm.vldoipmf
-                  ,vr_ultsqlcm                       --> craplcm.nrautdoc
-                  ,'CRAP020');                       --> craplcm.cdpesqbb
-    EXCEPTION
-      WHEN dup_val_on_index THEN
-        -- se deu problema de chave duplicada, solicitar que usuario tente novamente para buscar novo sequencial
+    LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_crapcop.cdcooper                  
+                                      ,pr_dtmvtolt => rw_crapdat.dtmvtocd               
+                                      ,pr_hrtransa => vr_hrtransa                       
+                                      ,pr_cdagenci => pr_cdageope                       
+                                      ,pr_cdbccxlt => 11                                
+                                      ,pr_nrdolote => rw_craplot_lcm.nrdolote           
+                                      ,pr_nrdconta => pr_nrdconta                       
+                                      ,pr_nrdctabb => pr_nrdconta                       
+                                      ,pr_nrdctitg => to_char(pr_nrdconta,'fm00000000') 
+                                      ,pr_nrdocmto => pr_nrdocmto                       
+                                      ,pr_cdhistor => rw_craphis.cdhistor               
+                                      ,pr_nrseqdig => vr_nrseqdig                       
+                                      ,pr_vllanmto => pr_vldocmto                       
+                                      ,pr_vldoipmf => 0                                 
+                                      ,pr_nrautdoc => vr_ultsqlcm                       
+                                      ,pr_cdpesqbb => 'CRAP020'
+                                      ,pr_incrineg => vr_incrineg
+                                      ,pr_tab_retorno => vr_tab_retorno
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+                                      
+    IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+      
+      IF vr_cdcritic = 92 THEN -- Lançamento duplicado
         vr_dscritic := 'Não foi possivel enviar TED, tente novamente ou comunique seu PA.';
         RAISE vr_exc_erro;
-      WHEN OTHERS THEN
+      ELSE 
         vr_dscritic := 'Não foi possivel gerar lcm:'||SQLERRM;
         RAISE vr_exc_erro;
-    END;
+      END IF;
+    END IF;
+    
+    -- Verifica se a conta está em prejuízo
+    vr_inprejuz := PREJ0003.fn_verifica_preju_conta(pr_cdcooper => rw_crapcop.cdcooper
+                                                  , pr_nrdconta => pr_nrdconta);    
+    -- Apenas para conta prejuizo
+    IF vr_inprejuz THEN    
+      --TRANSFERENCIA BLOQUEIO JUDICIAL
+      IF rw_craphis.cdhistor = 1406 THEN
+        -- Se não há saldo suficiente na conta transitória
+        IF PREJ0003.fn_sld_cta_prj(pr_cdcooper => rw_crapcop.cdcooper, pr_nrdconta => pr_nrdconta) < pr_vldocmto THEN 
+           vr_dscritic:= 'Não foi possível gerar lcm: conta corrente em prejuízo sem saldo suficiente no Bloqueados Prejuízo.';
+           RAISE vr_exc_erro;
+        -- Se há saldo suficiente na conta transitória   
+        ELSE
+          vr_dscritic:= NULL;
+          vr_cdcritic:= NULL;
+          --
+          --Efetua a Transferência da Transitória para a Conta Corrente    
+          PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => rw_crapcop.cdcooper   
+                                        , pr_nrdconta => pr_nrdconta                                    
+                                        , pr_vllanmto => pr_vldocmto
+                                        , pr_dtmvtolt => rw_crapdat.dtmvtocd                                                                                                          
+                                        , pr_cdcritic => vr_cdcritic
+                                        , pr_dscritic => vr_dscritic);                                                       
+          --
+          IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic, 0) > 0 THEN
+             vr_dscritic:= 'Não foi possível gerar lcm: erro ao transferir o valor do Bloqueados Prejuízo para a Conta Corrente.';
+             RAISE vr_exc_erro;
+          END IF;
+        END IF;   
+      END IF; 
+    END IF;
 
     IF vr_vllantar <> 0 THEN
 		  /* Verificar isenção ou não de tarifa */
@@ -2581,8 +2696,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
         END IF;
       END IF;
 
-      IF pr_tpctafav = 9 THEN -- Se for BacenJud nao deve cobrar tarifa
-        NULL;
+      IF pr_tpctafav = 9 -- Se for BacenJud nao deve cobrar tarifa
+              AND Nvl(pr_cdtiptra,0) <> 22 THEN --REQ39 - Para TED Judicial deve cobrar tarifa
+              NULL;
 	    -- Se não isenta cobrança da tarifa
       ELSIF vr_fliseope <> 1 THEN
 
@@ -2812,6 +2928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_hrtransa =>  vr_hrtransa          --> Hora transacao
                           ,pr_cdispbif =>  pr_cdispbif          --> ISPB Banco
                           ,pr_flvldhor =>  vr_flvldhor          --> --> Flag para verificar se deve validar o horario permitido para TED(1-valida,0-nao valida) -- Marcelo Telles Coelho - Projeto 475 - Sprint B
+                          ,pr_cdtiptra =>  pr_cdtiptra          --> Tipo de Transação --REQ39
                           --------- SAIDA  --------
                           ,pr_cdcritic =>  vr_cdcritic          --> Codigo do erro
                           ,pr_dscritic =>  vr_dscritic );	    --> Descricao do erro
@@ -2974,6 +3091,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_iddispos IN VARCHAR2 DEFAULT NULL  --> Identif. do dispositivo mobile
                           ,pr_idportab IN NUMBER   DEFAULT 0     --> Indica uma transferencia de portabilidade (TEC de salário)
                           ,pr_nrridlfp IN NUMBER   DEFAULT 0     --> Indica o registro de lançamento da folha de pagamento, caso necessite devolução
+                          ,pr_cdtiptra IN INTEGER  DEFAULT NULL --> Tipo de transação --REQ39
+                          ,pr_idlancto IN NUMBER   DEFAULT NULL  --> Id do agendamento (P500-SM02)
                           -- saida
                           ,pr_dsprotoc OUT crappro.dsprotoc%TYPE --> Retorna protocolo
                           ,pr_tab_protocolo_ted OUT cxon0020.typ_tab_protocolo_ted --> dados do protocolo
@@ -3003,6 +3122,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 				  13/08/2017 - Ajuste para pegar o erro corretamente (Jonata - RKAM / P364).
 
 				  13/06/2018 - Ajuste para limpar caracteres especiais (Andrey Formigari - MOUTS).
+          
+          27/03/2019 - Adicionado o parametro do tipo de transação para fazer o tratamento do 
+                               Ted Judicial.
+                               (Jose Dill - Mouts  P475 - REQ39)          
 
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------
@@ -3227,17 +3350,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
     -- Verifica senha, apenas se não for TEC de salário (Renato - Supero - P485)
     IF NVL(pr_idportab,1) = 0 THEN
-    -- Verificar cadastro de senha
-    OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper,
-                     pr_nrdconta => pr_nrdconta,
-                     pr_idseqttl => pr_idseqttl,
-                     pr_nrcpfcgc => 0);
-    IF cr_crapsnh%NOTFOUND THEN
+      -- Verificar cadastro de senha
+      OPEN cr_crapsnh (pr_cdcooper => pr_cdcooper,
+                       pr_nrdconta => pr_nrdconta,
+                       pr_idseqttl => pr_idseqttl,
+                       pr_nrcpfcgc => 0);
+      IF cr_crapsnh%NOTFOUND THEN
+        CLOSE cr_crapsnh;
+        vr_dscritic := 'Senha para conta on-line nao cadastrada';
+        RAISE vr_exc_erro;
+      END IF;
       CLOSE cr_crapsnh;
-      vr_dscritic := 'Senha para conta on-line nao cadastrada';
-      RAISE vr_exc_erro;
-    END IF;
-    CLOSE cr_crapsnh;
     END if;
 
     -- se for pessoa juridica
@@ -3438,6 +3561,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                   ,pr_iddispos => pr_iddispos --> ID Dispositivo mobile
                   ,pr_idportab => pr_idportab --> Indicar transferencia de valor de portabilidade de salário
                   ,pr_nrridlfp => pr_nrridlfp --> Indicador do registro do lançamento de folha de pagamento
+                  ,pr_cdtiptra => pr_cdtiptra --> Tipo de transação --REQ39
+                  ,pr_idlancto => pr_idlancto --> Id do agendamento (P500-SM02)
                   -- saida
                   ,pr_nrdocmto => vr_nrdocmto --> Documento TED
                   ,pr_nrrectvl => vr_nrrectvl --> Autenticacao TVL

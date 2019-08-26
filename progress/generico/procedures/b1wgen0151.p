@@ -3,7 +3,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0151.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : 07/02/2013                     Ultima atualizacao: 17/08/2018
+    Data    : 07/02/2013                     Ultima atualizacao: 06/08/2019
 
     Objetivo  : Tranformacao BO tela PESQDP.
 
@@ -67,6 +67,10 @@
                            
         17/08/2018 - Removendo validacao do titular do javascript e colocando no
 					 progress. (SCTASK002723 - Kelvin)
+
+        06/08/2019 - Permitir inclusao de folha CTASAL apenas antes do horario
+                     parametrisado na PAGFOL "Portabilidade (Pgto no dia):"
+                     RITM0032122 - Lucas Ranghetti
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -351,6 +355,7 @@ diferente ou para outra cooperativa.” */
                        NO-ERROR (INPUT crapcop.cdcooper,
                                  INPUT crapass.nrdconta,
                                  INPUT crapass.nrcpfcgc,
+                                 INPUT ?, /* dtcredit */
                                  INPUT 'C',
                                  OUTPUT "",
                                  OUTPUT "",

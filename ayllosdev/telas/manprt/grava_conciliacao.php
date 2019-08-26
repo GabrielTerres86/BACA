@@ -5,6 +5,8 @@ Autor     : André Clemer
 Data      : Abril/2018                 Última alteração: --/--/----
 Objetivo  : Script para efetuar conciliação manual
 Alterações: 
+
+	08/07/2019 - Alterações referetentes a RITM13002 (Daniel Lombardi - Mout'S)
 ************************************************************************/
 
 session_start();	
@@ -33,7 +35,11 @@ $idlancto  = $_POST["idlancto"];
 $xml   = "";
 $xml  .= "<Root>";
 $xml  .= "  <Dados>";
-$xml  .= "    <idlancto>{$idlancto}</idlancto>";
+$xml  .= "    <idlancto>";
+foreach($idlancto as $idted) {
+$xml  .= "      <IdTed>{$idted}</IdTed>";
+}
+$xml  .= "    </idlancto>";
 $xml  .= "    <Titulos>";
 foreach($idsTitulo as $id) {
 $xml  .= "      <Id>{$id}</Id>";

@@ -62,13 +62,14 @@
              14/02/2017 - Inclusao da variavel aux_flgretativo e aux_flgretquitado. 
                           (Jaison/James - PRJ302)
 
-			 11/06/2018 - ajuste para o nrlote permitir 7 digitos (Alcemir Mout's) - (INC0017046).
+		     11/06/2018 - ajuste para o nrlote permitir 7 digitos (Alcemir - Mout's)- (INC0017046) .
+
 ............................................................................. */
 
 DEF {1} SHARED VAR tel_dtmvtolt AS DATE    FORMAT "99/99/9999"          NO-UNDO.
 DEF {1} SHARED VAR tel_cdagenci AS INT     FORMAT "zz9"                 NO-UNDO.
 DEF {1} SHARED VAR tel_cdbccxlt AS INT     FORMAT "zz9"                 NO-UNDO.
-DEF {1} SHARED VAR tel_nrdolote AS INT     FORMAT "zzzz,zz9"             NO-UNDO.
+DEF {1} SHARED VAR tel_nrdolote AS INT     FORMAT "zzzz,zz9"            NO-UNDO.
 DEF {1} SHARED VAR tel_qtinfoln AS INT     FORMAT "zz,zz9"              NO-UNDO.
 DEF {1} SHARED VAR tel_vlinfodb AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99"  NO-UNDO.
 DEF {1} SHARED VAR tel_vlinfocr AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99"  NO-UNDO.
@@ -96,7 +97,7 @@ DEF {1} SHARED VAR tel_nrboleto AS INT     FORMAT "zzz,zzz,9"           NO-UNDO.
 DEF {1} SHARED VAR aux_dtmvtolt AS DATE                                 NO-UNDO.
 DEF {1} SHARED VAR aux_cdagenci AS INT     FORMAT "zz9"                 NO-UNDO.
 DEF {1} SHARED VAR aux_cdbccxlt AS INT     FORMAT "zz9"                 NO-UNDO.
-DEF {1} SHARED VAR aux_nrdolote AS INT     FORMAT "zzzz,zz9"             NO-UNDO.
+DEF {1} SHARED VAR aux_nrdolote AS INT     FORMAT "zzzz,zz9"            NO-UNDO.
 DEF {1} SHARED VAR aux_qtinfoln AS INT     FORMAT "zz,zz9"              NO-UNDO.
 DEF {1} SHARED VAR aux_vlinfodb AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99"  NO-UNDO.
 DEF {1} SHARED VAR aux_vlinfocr AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99"  NO-UNDO.

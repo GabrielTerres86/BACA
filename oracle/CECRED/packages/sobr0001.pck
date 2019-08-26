@@ -1065,10 +1065,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         -- Guardar dia atual
         vr_dtmvtolt := rw_crapdat.dtmvtolt;
         
-        
+        -- Verifica se eh o ultimo dia util
         IF vr_dtmvtolt = gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
                                                      pr_dtmvtolt => TO_DATE('31/12'||TO_CHAR(vr_dtmvtolt,'RRRR'),'DD/MM/RRRR'), 
-                                                     pr_tipo     => 'A') THEN
+                                                     pr_tipo     => 'A',
+                                                     pr_feriado   => true,
+                                                     pr_excultdia => true) THEN
           -- Busca o ultimo dia util do ano anterior
           vr_dtmvtaan := vr_dtmvtolt;
           -- Montagem das datas para busca das informações
@@ -1080,7 +1082,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           -- Busca o ultimo dia util do ano anterior
           vr_dtmvtaan := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
                                                      pr_dtmvtolt => trunc(vr_dtmvtolt,'YYYY') - 1, -- busca a data de 31/12 do ano anterior
-                                                     pr_tipo     => 'A'); -- Dia anterior
+                                                     pr_tipo     => 'A',
+                                                     pr_feriado   => true,
+                                                     pr_excultdia => true); -- Dia anterior
           -- Montagem das datas para busca das informações
           vr_dtliminf := to_date('3112'||(to_char(vr_dtmvtolt,'YYYY')-2),'DDMMYYYY'); -- Busca o ultimo dia do ano de dois anos atras
           vr_dtlimsup := trunc(vr_dtmvtolt,'YYYY'); -- Pega o primeiro dia do ano

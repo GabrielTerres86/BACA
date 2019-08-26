@@ -146,7 +146,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
     
-      Alteraçao : 
+      Alteraçao : 05/08/2019 - P438 - Inclusão do atributo canalOrigem no Json para identificar 
+                                a origem da operação de crédito no Motor. (Douglas Pagel / AMcom).
+
                   08/08/2019 - Adição do campo segueFluxoAtacado ao retorno 
 				               P637 (Darlei / Supero)
         
@@ -218,6 +220,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
           ,lim.qtdiavig
           ,lim.cddlinha
 		  ,lim.idfluata -- P637
+          ,lim.cdoperad
     from   crapldc ldc
           ,crapass ass
           ,crawlim lim
@@ -491,6 +494,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
       
     vr_vlpatref      tbcadast_cooperativa.vlpatrimonio_referencial%TYPE;
       
+    vr_cdorigem NUMBER := 0;
+
   BEGIN
   
     --Verificar se a data existe
@@ -743,6 +748,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     CLOSE cr_tbcadast_cooperativa;    
     -- Incluir Patrimonio referencial da cooperativa
     vr_obj_generico.put('valorPatrimonioReferencial',ESTE0001.fn_decimal_ibra(vr_vlpatref));
+    
+    vr_cdorigem := CASE WHEN rw_crawlim.cdoperad = '996' THEN 3 ELSE 5 END;
+    
+    vr_obj_generico.put('canalOrigem',vr_cdorigem);
     
     vr_obj_analise.put('indicadoresCliente', vr_obj_generico);         
     
@@ -1588,6 +1597,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
   vr_dsdirarq  varchar2(1000);
   vr_dscomando varchar2(1000);
   vr_vllimati     craplim.vllimite%TYPE;
+  vr_cdorigem NUMBER := 0;
 
   --- variavel cartoes
   vr_vltotccr NUMBER;
@@ -1973,6 +1983,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
          close cr_crapjfn;
          vr_obj_proposta.put('faturamentoAnual',rw_crapjfn.vltotfat);
      end if;
+
+     vr_cdorigem := CASE WHEN rw_crawlim.cdoperad = '996' THEN 3 ELSE 5 END;
+   
+     vr_obj_proposta.put('canalCodigo', vr_cdorigem);
+     vr_obj_proposta.put('canalDescricao',gene0001.vr_vet_des_origens(vr_cdorigem));
 
      -- Devolver o objeto criado
      pr_proposta := vr_obj_proposta;

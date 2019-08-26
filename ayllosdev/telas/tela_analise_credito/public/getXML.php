@@ -789,9 +789,6 @@ function generateTabela($vetor = array(), $modo = 'screen') {
 
                                         foreach ($colunas as $coluna) {
 
-                                            // if verifica array coluna
-                                            if (is_array($coluna)) {
-
                                             // abre coluna
                                             if ($modo != 'pdf') {
 
@@ -813,6 +810,10 @@ function generateTabela($vetor = array(), $modo = 'screen') {
                                                 }
                                             }
 
+                                        // if verifica array coluna
+                                        if (is_array($coluna)) {
+
+
 
                                             // percorre celulas (td)
                                                 foreach ($coluna as $conteudo) {
@@ -828,6 +829,20 @@ function generateTabela($vetor = array(), $modo = 'screen') {
 
                                             }
 
+                                        // else verifica array coluna
+                                        } else {
+
+                                            // se chegou aqui, não é vetor (veio uma coluna só)
+                                            if ($ativaThead == 0) {
+                                                $table .= '<td>' . verificaTexto($coluna) . '</td>';
+                                            } else {
+                                                $table .= '<th>' . verificaTexto($coluna) . '</th>';
+                                            }
+                                            $ativaThead++;
+
+                                        // fim verifica array coluna
+                                        }
+                                    }
 
                                             // fecha coluna
                                             if ($cont === 1) {
@@ -840,21 +855,10 @@ function generateTabela($vetor = array(), $modo = 'screen') {
                                                 }
                                             }
 
-
-                                            // else verifica array coluna
-                                            } else {
-
-                                                // $table .='<tr><td>'.verificaTexto($coluna).'</td></tr>';
-
-                                            // fim verifica array coluna
-                                            }
-
-                                        }
-
                                     // else verifica array colunas
                                     } else {
 
-                                    // $table .='<tr><td>'.verificaTexto($colunas).'</td></tr>';
+                                    // se chegou aqui, é por que só veio uma coluna na tabela. Não é pra acontecer isso.
 
                                     // fim verifica array colunas
                                     }
@@ -863,7 +867,7 @@ function generateTabela($vetor = array(), $modo = 'screen') {
                             // else verifica array linha
                             } else {
 
-                            // $table .='<tr><td>'.verificaTexto($linha).'</td></tr>';
+                            // se chegou aqui, é por que a tabela não esta correta
 
                             }// fim verifica array linha
 
