@@ -57,7 +57,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
 
     Objetivo  : Rotina para calcular a data conforme a carencia informada.
 
-    Alteracoes: 
+    Alteracoes: PJ298.3 Simulação do Pós, foi incluido a variável vr_qtdmes
+                08/08/2019 - Giba (Supero)
     ..............................................................................*/
 
     DECLARE
@@ -81,7 +82,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
       vr_dd       VARCHAR2(2);
       vr_mmaaaa   VARCHAR2(8);
       vr_qtddias  tbepr_posfix_param_carencia.qtddias%TYPE;
-
+      vr_qtdmes   number(2);
     BEGIN
       -- Busca os dias
       OPEN cr_param(pr_idcarenc => pr_idcarenc);
@@ -96,8 +97,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_EMPRESTIMO IS
             vr_dscritic := 'Data de Pagamento não pode ser maior ou igual ao dia 28.';
             RAISE vr_exc_saida;
           END IF;
+          --PJ298_5
+          vr_qtdmes := vr_qtddias / 30;
           vr_dtcarenc := TO_DATE(pr_dtcarenc, 'DD/MM/RRRR');
-          vr_dtcarenc := vr_dtcarenc + vr_qtddias;
+          vr_dtcarenc := ADD_MONTHS(TO_DATE(vr_dtcarenc,'DD/MM/RRRR'),vr_qtdmes);
           vr_mmaaaa   := TO_CHAR(vr_dtcarenc,'MM/RRRR');
           vr_dtcarenc := TO_DATE(vr_dd || '/' || vr_mmaaaa, 'DD/MM/RRRR');
         EXCEPTION
