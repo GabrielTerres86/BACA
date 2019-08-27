@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-141
+154
 /*
 
 Lucas Ranghetti - INC0023074
@@ -135,6 +135,19 @@ BEGIN
   END LOOP;
 
   COMMIT;
+
+   -- Atualizar Cep dos sacados retirando um digito do CEP para 
+   -- que cooperado consiga alterar através do IB
+  BEGIN 
+    UPDATE crapsab b
+       SET b.nrcepsac = substr(b.nrcepsac, 1, 8)
+     WHERE length(b.nrcepsac) > 8;
+     
+     COMMIT;
+  EXCEPTION
+   WHEN OTHERS THEN
+     DBMS_OUTPUT.put_line('Erro ao atualizar CEP. ' || SQLERRM);
+  END;
 
 EXCEPTION
   WHEN OTHERS THEN
