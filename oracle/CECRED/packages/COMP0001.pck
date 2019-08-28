@@ -68,26 +68,54 @@ CREATE OR REPLACE PACKAGE CECRED.COMP0001 IS
                          pr_dscritic OUT VARCHAR2); 
 						 
   -- PROJ.565                       
-  PROCEDURE pc_checa_compel(pr_cdcooper IN crapcop.cdcooper%TYPE  -- Código Cooperativa
-                                              ,pr_cdagenci IN crapchd.cdagenci%TYPE  -- Código Agencia
-                                              ,pr_dtmvtolt IN crapchd.dtmvtolt%TYPE  -- Data da Mov 
-                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da crítica
-                                              ,pr_dscritic OUT VARCHAR2);				
+PROCEDURE pc_checa_compel(pr_cdcooper IN craptit.CDCOOPER%type,
+                           pr_nmarquiv IN VARCHAR2,
+                           pr_cdagectl IN crapcop.cdagectl%TYPE,
+                           pr_cdagenci IN craptit.cdagenci%TYPE,
+                           pr_dtmvtolt IN craptit.dtmvtolt%TYPE, -- Data da Mov
+                           pr_totregis IN NUMBER,
+                           pr_vltotarq IN NUMBER,
+                           pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Código da crítica
+                           pr_dscritic OUT VARCHAR2);			
 
    -- PROJ.565
-   PROCEDURE pc_checa_titulos(pr_cdcooper IN craptit.CDCOOPER%type  -- Código Cooperativa
-                                             ,pr_cdagenci IN craptit.cdagenci%TYPE  -- Código Agencia
-                                             ,pr_dtmvtolt IN craptit.dtmvtolt%TYPE  -- Data da Mov
-                                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da crítica
-                                             ,pr_dscritic OUT VARCHAR2);  
-   --PROJ.565                                          
-   PROCEDURE pc_checa_devd (pr_cdcooper IN crapcop.cdcooper%TYPE  -- Código Cooperativa                                           
-                                           ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da crítica
-                                           ,pr_dscritic OUT VARCHAR2);       					 
-						 
-						 
-                                
-																		
+PROCEDURE pc_checa_titulos(pr_cdcooper IN craptit.CDCOOPER%type,
+                           pr_nmarquiv IN VARCHAR2,
+                           pr_cdagectl IN crapcop.cdagectl%TYPE,
+                           pr_cdagenci IN craptit.cdagenci%TYPE,
+                           pr_dtmvtolt IN craptit.dtmvtolt%TYPE, -- Data da Mov
+                           pr_totregis IN NUMBER,
+                           pr_vltotarq IN NUMBER,
+                           pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Código da crítica
+                           pr_dscritic OUT VARCHAR2); 
+   --PROJ.565      
+PROCEDURE pc_checa_devolu (pr_cdcooper IN craptit.CDCOOPER%type,
+                           pr_nmarquiv IN VARCHAR2,
+                           pr_cdagectl IN crapcop.cdagectl%TYPE,
+                           pr_cdagenci IN craptit.cdagenci%TYPE,
+                           pr_dtmvtolt IN craptit.dtmvtolt%TYPE, -- Data da Mov
+                           pr_totregis IN NUMBER,
+                           pr_vltotarq IN NUMBER,
+                           pr_tparquiv IN tbcompe_nossaremessa.tparquiv%TYPE,
+                           pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Código da crítica
+                           pr_dscritic OUT VARCHAR2);
+                           																		
+   --PROJ.565      
+CURSOR cr_tbcompe_nossaremessa (pr_cdcooper IN tbcompe_nossaremessa.cdcooper%TYPE,
+                                pr_cdagenci IN tbcompe_nossaremessa.cdagenci%TYPE,
+                                pr_tparquiv IN tbcompe_nossaremessa.tparquiv%TYPE,
+                                pr_dtmvtolt IN tbcompe_nossaremessa.dtarquiv%TYPE,
+                                pr_nmarquiv IN tbcompe_nossaremessa.nmarquiv%TYPE) IS
+    SELECT rowid FROM tbcompe_nossaremessa a 
+    WHERE a.cdcooper = pr_cdcooper
+      AND a.cdagenci = pr_cdagenci
+      AND a.tparquiv = pr_tparquiv
+      AND a.dtarquiv = pr_dtmvtolt
+      AND a.nmarquiv = pr_nmarquiv;
+rw_tbcompe_nossaremessa cr_tbcompe_nossaremessa%ROWTYPE;
+  
+
+                           
 END COMP0001;                       
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.COMP0001 IS
@@ -106,6 +134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0001 IS
 -- Objetivo  : Agrupar rotinas genéricas dos sistemas Oracle
 --
 -- Alteracoes: 
+-- PJ565.1 - Tratamento para geração de dados para a tela MOVCMP - Renato Cordeiro - AMcom
 ---------------------------------------------------------------------------------------------------------------
 
   -- Buscar lista de remessas de custodias.
@@ -993,135 +1022,100 @@ EXCEPTION
 end;
 
 --PROJ.565
-PROCEDURE pc_checa_compel(pr_cdcooper IN crapcop.cdcooper%TYPE -- Código Cooperativa
-                         ,
-                          pr_cdagenci IN crapchd.cdagenci%TYPE -- Código Agencia
-                         ,
-                          pr_dtmvtolt IN crapchd.dtmvtolt%TYPE -- Data da Mov                                              
-                          
-                         ,
-                          pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código da crítica
-                         ,
-                          pr_dscritic OUT VARCHAR2) IS
-
-  -- .......................................................................................................
-  --3 - COMPEL --TPARQUIV 
-  -- cursores --
-  --Cursor para buscar a QTD e VL.Total de <registros enviados>
-  CURSOR cr_crapchd(pr_cdcooper IN crapchd.cdcooper%TYPE,
-                    pr_cdagenci IN crapchd.cdagenci%TYPE,
-                    pr_dtmvtolt IN crapchd.dtmvtolt%TYPE) IS
-  
-    SELECT COUNT(1) qtd, SUM(vlcheque) soma
-      FROM crapchd
-     WHERE crapchd.cdcooper = pr_cdcooper --<Cooperativa>
-       AND crapchd.dtmvtolt = pr_dtmvtolt --'28/03/2019'--<Data de envio>
-       AND crapchd.cdagenci = pr_cdagenci --1 --<PA>            
-       AND crapchd.cdbccxlt IN (11, 500, 600, 700) --igual ao parametro             
-       AND crapchd.flgenvio = 1;
-  rw_crapchd cr_crapchd%ROWTYPE;
-  -------------------------------------------------------------------------
-  --Cursor para buscar a QTD e VL.Total de <registros processados>
-  CURSOR cr_gncpchq(pr_cdcooper IN crapchd.cdcooper%TYPE,
-                    pr_cdagenci IN crapchd.cdagenci%TYPE,
-                    pr_dtmvtolt IN crapchd.dtmvtolt%TYPE) IS
-  
-    SELECT COUNT(1) qtd, SUM(vlcheque) soma
-      FROM gncpchq
-     WHERE gncpchq.cdcooper = pr_cdcooper --<Cooperativa>
-       AND gncpchq.dtmvtolt = pr_dtmvtolt --'28/03/2019'--<Data de envio>
-       AND gncpchq.cdagenci = pr_cdagenci --1 --pr_cdagenci --1 --<PA>                    
-          -------------------------------------------           
-       and gncpchq.cdoperad = '1';
-  rw_gncpchq cr_gncpchq%ROWTYPE;
+PROCEDURE pc_checa_compel(pr_cdcooper IN craptit.CDCOOPER%type,
+                           pr_nmarquiv IN VARCHAR2,
+                           pr_cdagectl IN crapcop.cdagectl%TYPE,
+                           pr_cdagenci IN craptit.cdagenci%TYPE,
+                           pr_dtmvtolt IN craptit.dtmvtolt%TYPE, -- Data da Mov
+                           pr_totregis IN NUMBER,
+                           pr_vltotarq IN NUMBER,
+                           pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Código da crítica
+                           pr_dscritic OUT VARCHAR2) IS
 
   -- Variáveis de erro 
   vr_exc_saida EXCEPTION;
   -- Variáveis de criticas 
 
 BEGIN
-  -- Verifica se existe valor no cursor
-  OPEN cr_crapchd(pr_cdcooper => pr_cdcooper,
-                  pr_cdagenci => pr_cdagenci,
-                  pr_dtmvtolt => pr_dtmvtolt);
-
-  FETCH cr_crapchd
-    INTO rw_crapchd;
-  CLOSE cr_crapchd;
-
-  --Verificar qtd e valor da gncpchq <registros processados>
-  OPEN cr_gncpchq(pr_cdcooper => pr_cdcooper,
-                  pr_cdagenci => pr_cdagenci,
-                  pr_dtmvtolt => pr_dtmvtolt);
-
-  FETCH cr_gncpchq
-    INTO rw_gncpchq;
-  CLOSE cr_gncpchq;
-  /** verifica valor e qtd dos cursores**/
-  --
-
-  IF (rw_crapchd.soma) != (rw_gncpchq.soma) or
-     (rw_crapchd.qtd) != (rw_gncpchq.qtd) then
-    pr_cdcritic := 1465;
-    pr_dscritic := 'Quantidade ou valor errado na rotina gerar_compel_prcctl QTD:' ||
-                   rw_crapchd.qtd || ' ' || 'VALOR:' || rw_crapchd.soma || ' ' ||
-                   'e na auxiliar QTD:' || rw_gncpchq.qtd || ' ' ||
-                   'VALOR:' || rw_gncpchq.soma;
   
-  ELSE
-  
-    BEGIN
-      -- fazer insert na nova tabela [tbcompe_nossaremessa]
-      -- inicio
-      INSERT INTO tbcompe_nossaremessa
-        (cdcooper,
-         cdagenci,
-         tparquiv,
-         dtarquiv,
-         nmarquiv,
-         qtenviad,
-         vlenviad,
-         qtproces,
-         vlproces,
-         insituac,
-         dtevinst,
-         dtrtinst)
-      VALUES
-        (pr_cdcooper,
-         '',
-         3,
-         '',
-         '',
-         rw_crapchd.qtd, --qtenviad,
-         rw_crapchd.soma, --vlenviad,
-         0, --qtproces,
-         0, --vlproces,
-         0, --insituac
-         '', --dtevinst
-         '' --dtrtinst
-         );
-    
-    EXCEPTION
-      WHEN OTHERS THEN
-        null;
-      
-    END;
-  end if;
+   IF pr_nmarquiv = ' ' THEN
+           DELETE tbcompe_nossaremessa a
+           WHERE a.cdcooper = pr_cdcooper
+             AND a.tparquiv = 3
+             AND a.cdagenci = pr_cdagenci
+             AND a.DTARQUIV = pr_dtmvtolt;
+   ELSE
+        IF cr_tbcompe_nossaremessa%ISOPEN THEN
+          close cr_tbcompe_nossaremessa;
+        END IF;
+        OPEN cr_tbcompe_nossaremessa(pr_cdcooper, pr_cdagenci, 3, pr_dtmvtolt,pr_nmarquiv);
+        FETCH cr_tbcompe_nossaremessa INTO rw_tbcompe_nossaremessa;
+        IF cr_tbcompe_nossaremessa%FOUND THEN
+          UPDATE tbcompe_nossaremessa a
+             SET a.qtenviad = pr_totregis,
+                 a.qtproces = 0,
+                 a.vlenviad = pr_vltotarq,
+                 a.vlproces = 0,
+                 a.nmarquiv = pr_nmarquiv
+           WHERE rowid = rw_tbcompe_nossaremessa.rowid;
+        ELSE
 
+          BEGIN
+          -- fazer insert na nova tabela [tbcompe_nossaremessa]
+          -- inicio
+          INSERT INTO tbcompe_nossaremessa
+            (cdcooper,
+             cdagenci,
+             tparquiv,
+             dtarquiv,
+             nmarquiv,
+             qtenviad,
+             vlenviad,
+             qtproces,
+             vlproces,
+             insituac,
+             dtevinst,
+             dtrtinst)
+          VALUES
+            (pr_cdcooper,
+             pr_cdagenci,
+             3, -- Tipo de Arquivo: 1 - DEVOLUCAO DIURNA, 2 - DEVOLUCAO FRAUDES E IMPEDIMENTOS, 3 - COMPEL, 4 - TITULOS.
+             pr_dtmvtolt,
+             pr_nmarquiv,
+             pr_totregis, --qtenviad,
+             pr_vltotarq, --vlenviad,
+             0, --qtproces,
+             0, --vlproces,
+             'Aguardando retorno ABBC', --insituac
+             '', --dtevinst
+             '' --dtrtinst
+             );
+          
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_dscritic := SQLERRM;
+            
+        END;
+        close cr_tbcompe_nossaremessa;
+      END IF;
+
+   END IF;
+EXCEPTION
+  WHEN vr_exc_saida THEN
+    ROLLBACK;
 END pc_checa_compel;
 
 -- PROJ.565
-PROCEDURE pc_checa_titulos(pr_cdcooper IN craptit.CDCOOPER%type -- Código Cooperativa
-                          ,
-                           pr_cdagenci IN craptit.cdagenci%TYPE -- Código Agencia
-                          ,
-                           pr_dtmvtolt IN craptit.dtmvtolt%TYPE -- Data da Mov
-                          ,
-                           pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código da crítica
-                          ,
+
+PROCEDURE pc_checa_titulos(pr_cdcooper IN craptit.CDCOOPER%type,
+                           pr_nmarquiv IN VARCHAR2,
+                           pr_cdagectl IN crapcop.cdagectl%TYPE,
+                           pr_cdagenci IN craptit.cdagenci%TYPE,
+                           pr_dtmvtolt IN craptit.dtmvtolt%TYPE, -- Data da Mov
+                           pr_totregis IN NUMBER,
+                           pr_vltotarq IN NUMBER,
+                           pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Código da crítica
                            pr_dscritic OUT VARCHAR2) IS
-  --> descricao do erro
-  -- .......................................................................................................
   --4 - TITILOS --TPARQUIV
 
   -- cursores --
@@ -1151,7 +1145,7 @@ PROCEDURE pc_checa_titulos(pr_cdcooper IN craptit.CDCOOPER%type -- Código Cooper
        AND gncptit.dtmvtolt = pr_dtmvtolt --'28/03/2019'--<Data de envio>
        AND gncptit.cdagenci = pr_cdagenci --1 --pr_cdagenci --1 --<PA>
        and gncptit.cdoperad = '1';
-
+       
   rw_gncptit cr_gncptit%ROWTYPE;
 
   -- Variáveis de erro 
@@ -1159,169 +1153,164 @@ PROCEDURE pc_checa_titulos(pr_cdcooper IN craptit.CDCOOPER%type -- Código Cooper
   -- Variáveis de criticas 
 
 BEGIN
-  --Verificar qtd e valor da craptit <registros enviados>
-  OPEN cr_craptit(pr_cdcooper => pr_cdcooper,
-                  pr_cdagenci => pr_cdagenci,
-                  pr_dtmvtolt => pr_dtmvtolt);
 
-  FETCH cr_craptit
-    INTO rw_craptit;
-  CLOSE cr_craptit;
+   IF pr_nmarquiv = ' ' THEN
+           DELETE tbcompe_nossaremessa a
+           WHERE a.cdcooper = pr_cdcooper
+             AND a.tparquiv = 4
+             AND a.cdagenci = pr_cdagenci
+             AND a.DTARQUIV = pr_dtmvtolt;
+   ELSE
+      OPEN cr_tbcompe_nossaremessa(pr_cdcooper, pr_cdagenci, 4, pr_dtmvtolt,pr_nmarquiv);
+      FETCH cr_tbcompe_nossaremessa INTO rw_tbcompe_nossaremessa;
+      IF cr_tbcompe_nossaremessa%FOUND THEN
+        UPDATE tbcompe_nossaremessa a
+           SET a.qtenviad = pr_totregis,
+               a.qtproces = 0,
+               a.vlenviad = pr_vltotarq,
+               a.vlproces = 0
+         WHERE rowid = rw_tbcompe_nossaremessa.rowid;
+      ELSE
+        BEGIN
+          -- fazer insert na nova tabela [tbcompe_nossaremessa]
+          -- inicio
+          INSERT INTO tbcompe_nossaremessa
+            (cdcooper,
+             cdagenci,
+             tparquiv,
+             dtarquiv,
+             nmarquiv,
+             qtenviad,
+             vlenviad,
+             qtproces,
+             vlproces,
+             insituac,
+             dtevinst,
+             dtrtinst)
+          VALUES
+            (pr_cdcooper,
+             pr_cdagenci,
+             4, -- TITULOS.
+             pr_dtmvtolt,
+             pr_nmarquiv,
+             pr_totregis, --qtenviad,
+             pr_vltotarq, --vlenviad,
+             0, --qtproces,
+             0, --vlproces,
+             'Aguardando retorno ABBC', --insituac
+             '', --dtevinst
+             '' --dtrtinst
+             );
+          
+        EXCEPTION
+          WHEN OTHERS THEN
+            null;
+            
+        END;
+      END IF;
+      CLOSE cr_tbcompe_nossaremessa;
+   END IF;
 
-  --Verificar qtd e valor da gncptit <registros processados>
-  OPEN cr_gncptit(pr_cdcooper => pr_cdcooper,
-                  pr_cdagenci => pr_cdagenci,
-                  pr_dtmvtolt => pr_dtmvtolt);
 
-  FETCH cr_gncptit
-    INTO rw_gncptit;
-  CLOSE cr_gncptit;
-  /** verifica valor e qtd dos cursores**/
-  --
-
-  IF (rw_craptit.soma) != (rw_gncptit.soma) or
-     (rw_craptit.qtd) != (rw_gncptit.qtd) then
-    pr_cdcritic := 1465;
-    pr_dscritic := 'Quantidade ou valor errado na rotina gerar_titulos QTD:' ||
-                   rw_craptit.qtd || ' ' || 'VALOR:' || rw_craptit.soma || ' ' ||
-                   'e na auxiliar QTD:' || rw_gncptit.qtd || ' ' ||
-                   'VALOR:' || rw_gncptit.soma;
-  
-  ELSE
-    BEGIN
-      -- fazer insert na nova tabela [tbcompe_nossaremessa]
-      -- inicio
-      INSERT INTO tbcompe_nossaremessa
-        (cdcooper,
-         cdagenci,
-         tparquiv,
-         dtarquiv,
-         nmarquiv,
-         qtenviad,
-         vlenviad,
-         qtproces,
-         vlproces,
-         insituac,
-         dtevinst,
-         dtrtinst)
-      VALUES
-        (pr_cdcooper,
-         '',
-         4, -- TITULOS.
-         '',
-         '',
-         rw_craptit.qtd, --qtenviad,
-         rw_craptit.soma, --vlenviad,
-         0, --qtproces,
-         0, --vlproces,
-         0, --insituac
-         '', --dtevinst
-         '' --dtrtinst
-         );
-    
-    EXCEPTION
-      WHEN OTHERS THEN
-        null;
-      
-    END;
-  end if;
 END pc_checa_titulos;
 
 -- PROJ.565
-PROCEDURE pc_checa_devd(pr_cdcooper IN crapcop.cdcooper%TYPE -- Código Cooperativa
-                        
-                       ,
-                        pr_cdcritic OUT crapcri.cdcritic%TYPE --> Código da crítica
-                       ,
-                        pr_dscritic OUT VARCHAR2) IS
+PROCEDURE pc_checa_devolu (pr_cdcooper IN craptit.CDCOOPER%type,
+                           pr_nmarquiv IN VARCHAR2,
+                           pr_cdagectl IN crapcop.cdagectl%TYPE,
+                           pr_cdagenci IN craptit.cdagenci%TYPE,
+                           pr_dtmvtolt IN craptit.dtmvtolt%TYPE, -- Data da Mov
+                           pr_totregis IN NUMBER,
+                           pr_vltotarq IN NUMBER,
+                           pr_tparquiv IN tbcompe_nossaremessa.tparquiv%TYPE,
+                           pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Código da crítica
+                           pr_dscritic OUT VARCHAR2) IS
   -- .......................................................................................................
   --1 - Dev.Diurna  --TPARQUIV
   -- cursores --
   --Cursor para buscar a QTD e VL.Total de <registros enviados>
   CURSOR cr_crapdev(pr_cdcooper IN crapdev.cdcooper%TYPE) IS
-    SELECT COUNT(1) qtd, SUM(VLLANMTO) soma
+    SELECT COUNT(1) qtd, SUM(VLLANMTO) valor
       FROM crapdev
      WHERE crapdev.cdcooper = pr_cdcooper
        AND crapdev.cdhistor IN (47, 573)
+       AND crapdev.indevarq = 2
        and cdbandep >= 0;
   rw_crapdev cr_crapdev%ROWTYPE;
-  -------------------------------------------------------------------------
-  --Cursor para buscar a QTD e VL.Total de <registros processados do progress>
-  CURSOR cr_crapdevv(pr_cdcooper IN gncpdev.cdcooper%TYPE) IS
-    SELECT SUM(VLLANMTO) soma, COUNT(1) qtd
-      FROM crapdev
-     WHERE crapdev.cdcooper = pr_cdcooper
-       and crapdev.indevarq = 2;
-
-  rw_crapdevv cr_crapdevv%ROWTYPE;
 
   -- Variáveis de erro
   vr_exc_erro EXCEPTION;
   --vr_dscritic varchar2(4000);
 
 BEGIN
-  --Verificar qtd e valor da crapchd <registros enviados>
-  OPEN cr_crapdev(pr_cdcooper => pr_cdcooper);
-
-  FETCH cr_crapdev
-    INTO rw_crapdev;
-  CLOSE cr_crapdev;
-
-  --Verificar qtd e valor da gncpdev <registros processados>
-  OPEN cr_crapdevv(pr_cdcooper => pr_cdcooper);
-
-  FETCH cr_crapdevv
-    INTO rw_crapdevv;
-  CLOSE cr_crapdevv;
-  /** verifica valor e qtd dos cursores**/
-  --
-  IF (rw_crapdev.soma) != (rw_crapdevv.soma) or
-     (rw_crapdev.qtd) != (rw_crapdevv.qtd) then
-    pr_cdcritic := 1465;
-    pr_dscritic := 'Quantidade ou valor errado na rotina gerar_titulos QTD:' ||
-                   rw_crapdev.qtd || ' ' || 'VALOR:' || rw_crapdev.soma || ' ' ||
-                   'e na auxiliar QTD:' || rw_crapdevv.qtd || ' ' ||
-                   'VALOR:' || rw_crapdevv.soma;
-  
+  IF pr_nmarquiv = ' ' THEN
+          DELETE tbcompe_nossaremessa a
+          WHERE a.cdcooper = pr_cdcooper
+            AND a.tparquiv = pr_tparquiv
+            AND a.DTARQUIV = pr_dtmvtolt;
   ELSE
-    BEGIN
-      -- fazer insert na nova tabela [tbcompe_nossaremessa]
-      -- inicio
-      INSERT INTO tbcompe_nossaremessa
-        (cdcooper,
-         cdagenci,
-         tparquiv,
-         dtarquiv,
-         nmarquiv,
-         qtenviad,
-         vlenviad,
-         qtproces,
-         vlproces,
-         insituac,
-         dtevinst,
-         dtrtinst)
-      VALUES
-        (pr_cdcooper,
-         '',
-         4, -- TITULOS.
-         '',
-         '',
-         rw_crapdev.qtd, --qtenviad,
-         rw_crapdev.soma, --vlenviad,
-         0, --qtproces,
-         0, --vlproces,
-         0, --insituac
-         '', --dtevinst
-         '' --dtrtinst
-         );
-    
-    EXCEPTION
-      WHEN OTHERS THEN
-        null;
-    END;
-  end if;
+          -- fazer insert na nova tabela [tbcompe_nossaremessa]
+          -- inicio
+          INSERT INTO tbcompe_nossaremessa 
+            (cdcooper,
+             cdagenci,
+             tparquiv,
+             dtarquiv,
+             nmarquiv,
+             qtenviad,
+             vlenviad,
+             qtproces,
+             vlproces,
+             insituac,
+             dtevinst,
+             dtrtinst)
+          VALUES
+            (pr_cdcooper,
+             0,
+             pr_tparquiv, -- Tipo de Arquivo: 1 - DEVOLUCAO DIURNA, 2 - DEVOLUCAO FRAUDES E IMPEDIMENTOS, 3 - COMPEL, 4 - TITULOS.
+             pr_dtmvtolt,
+             pr_nmarquiv,
+           pr_totregis, --qtenviad,
+           pr_vltotarq, --vlenviad,
+           0, --qtproces,
+           0, --vlproces,
+           'Aguardando retorno ABBC', --insituac
+           '', --dtevinst
+           '' --dtrtinst
+           );
 
-END pc_checa_devd;	 
+      --Verificar qtd e valor da crapchd <registros enviados>
+      OPEN cr_crapdev(pr_cdcooper => pr_cdcooper);
+
+      FETCH cr_crapdev
+        INTO rw_crapdev;
+      CLOSE cr_crapdev;
+
+      --
+      IF (rw_crapdev.qtd) != pr_totregis or
+         (rw_crapdev.valor) != pr_vltotarq then
+        pr_cdcritic := 1465;
+        pr_dscritic := 'Cooperativa: '||pr_cdcooper||' Arquivo: '||pr_nmarquiv||'. Qtd ou valor errado QTD:' ||
+                       pr_totregis || ' ' || ' VALOR:' || pr_vltotarq ||
+                       '. Na DEVOLU:' || rw_crapdev.qtd || ' ' ||
+                       ' VALOR:' || rw_crapdev.valor;
+             
+          CECRED.gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                            ,pr_cdprogra        => null
+                                            ,pr_des_destino     => 'compe@ailos.coop.br'
+                                            ,pr_des_assunto     => 'Arquivo ABBC inconsistencia.'
+                                            ,pr_des_corpo       => pr_dscritic
+                                            ,pr_des_anexo       => NULL
+                                            ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                            ,pr_flg_remete_coop => 'S' --> Se o envio sera do e-mail da Cooperativa
+                                            ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                            ,pr_des_erro        => pr_dscritic);
+
+      END IF;
+
+  END IF;
+
+END pc_checa_devolu;	 
 	 
 END COMP0001;
 /

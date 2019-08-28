@@ -281,6 +281,7 @@
 			        09/07/2019 - P565.1-RF20 - Retirar o valor do cheque devolvido da tabela de bloqueados - CRAPDPB na proc gera_lancamento.
                            (Fernanda Kelli de Oliveira - AMCom)                           
 
+              30/07/2019 - PJ565 - Validaçoes e gravaçao da estrutura tabema nossa remessa - Renato Cordeiro - AMcom
 						   
 ..............................................................................*/
 
@@ -391,6 +392,9 @@ DEF        VAR aux_des_erro AS CHAR                                  NO-UNDO.
 DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
 
 DEF        VAR aux_flgreapr AS INT                                   NO-UNDO.
+					
+DEF        VAR aux_cdcritic AS INTEGER                               NO-UNDO.
+DEF        VAR vr_gera_devolu_coop3 AS CHAR                          NO-UNDO.
 
 /*P565.1-RF20*/
 DEF        VAR aux2_cdhistor AS INTE                                 NO-UNDO.
@@ -471,6 +475,14 @@ ASSIGN aux_nmcidade = TRIM(crapcop.nmcidade)
        res_nrdctabb = INTEGER(SUBSTRING(glb_dsrestar,01,08))
        res_nrdocmto = INTEGER(SUBSTRING(glb_dsrestar,10,07))
        res_cdhistor = INTEGER(SUBSTRING(glb_dsrestar,18,03)).
+
+ASSIGN vr_gera_devolu_coop3 = "N".
+IF p-cdcooper = 3 AND p-cddevolu = 5 THEN
+   DO:
+      ASSIGN vr_gera_devolu_coop3 = "S".
+      RUN gera_arquivo_cecred.
+      RETURN.
+   END.
 
 CASE p-cddevolu:
 
@@ -2540,6 +2552,14 @@ PROCEDURE gera_arquivo_cecred:
    DEF VAR aux_totvldiu AS DEC     FORMAT "zzz,zzz,zzz,zz9.99"        NO-UNDO.
    DEF VAR aux_totqtnot AS INT     FORMAT "zzz,zz9"                   NO-UNDO.
    DEF VAR aux_totvlnot AS DEC     FORMAT "zzz,zzz,zzz,zz9.99"        NO-UNDO.
+
+   DEF VAR aux_totqt        AS INT     FORMAT "zzz,zz9"                   NO-UNDO.
+   DEF VAR aux_totvl        AS DEC     FORMAT "zzz,zzz,zzz,zz9.99"        NO-UNDO.
+   DEF VAR aux_totqtdiu_age AS INT     FORMAT "zzz,zz9"                   NO-UNDO.
+   DEF VAR aux_totvldiu_age AS DEC     FORMAT "zzz,zzz,zzz,zz9.99"        NO-UNDO.
+   DEF VAR aux_totqtnot_age AS INT     FORMAT "zzz,zz9"                   NO-UNDO.
+   DEF VAR aux_totvlnot_age AS DEC     FORMAT "zzz,zzz,zzz,zz9.99"        NO-UNDO.
+
    DEF VAR aux_totqtdes AS INT     FORMAT "zzz,zz9"                   NO-UNDO.
    DEF VAR aux_totvldes AS DEC     FORMAT "zzz,zzz,zzz,zz9.99"        NO-UNDO.
    DEF VAR aux_totqtrej AS INT     FORMAT "zzz,zz9"                   NO-UNDO.
@@ -2563,6 +2583,11 @@ PROCEDURE gera_arquivo_cecred:
 
    DEF VAR h-b1wgen0011 AS HANDLE                                     NO-UNDO.
 
+   DEF VAR aux_tparquiv AS INT                                        NO-UNDO.
+
+   DEF BUFFER b-crapdev FOR crapdev.
+   
+   DEF VAR vr_gerou_arquivo AS INT                                    NO-UNDO.
    
    FORM "Relacao dos cheques 085 devolvidos no dia" AT 20
          glb_dtmvtolt  NO-LABEL FORMAT "99/99/9999"
@@ -2614,7 +2639,7 @@ PROCEDURE gera_arquivo_cecred:
         aux_totqtdiu                                 AT 65
         aux_totvldiu                                 AT 73
         SKIP(1)
-        "TOTAL DE DEVOLUCOES NO ARQUIVO NOTURNO: "   AT 22
+        "TOTAL DE DEVOLUCOES NO ARQUIVO FRAUDE: "    AT 23
         aux_totqtnot                                 AT 65
         aux_totvlnot                                 AT 73
         SKIP(1)
@@ -2639,7 +2664,7 @@ PROCEDURE gera_arquivo_cecred:
                             crapage.flgdsede = TRUE
                             NO-LOCK NO-ERROR.
 
-   IF   NOT AVAILABLE crapage THEN
+   IF   NOT AVAILABLE crapage AND vr_gera_devolu_coop3 <> "S" THEN
         DO:
             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + " - " +
                               glb_cdprogra + "' --> '" +
@@ -2705,6 +2730,12 @@ PROCEDURE gera_arquivo_cecred:
           aux_totvldiu = 0
           aux_totqtnot = 0
           aux_totvlnot = 0
+
+          aux_totqtdiu_age = 0
+          aux_totvldiu_age = 0
+          aux_totqtnot_age = 0
+          aux_totvlnot_age = 0
+
           aux_totqtdes = 0
           aux_totvldes = 0
           aux_totqtrej = 0
@@ -2717,7 +2748,9 @@ PROCEDURE gera_arquivo_cecred:
    
    FOR EACH crapdev WHERE crapdev.cdcooper = p-cdcooper        AND
                           crapdev.cdbanchq = crapcop.cdbcoctl  AND
-                          crapdev.insitdev = 1                 AND
+                          (
+                            (crapdev.insitdev = 1) OR (vr_gera_devolu_coop3 = "S" AND crapdev.insitdev <> 2)
+                          ) AND
                           crapdev.cdhistor <> 46               AND
                           crapdev.cdalinea > 0                 NO-LOCK
                           BREAK BY crapdev.cdagechq    
@@ -2801,6 +2834,7 @@ PROCEDURE gera_arquivo_cecred:
        /* Diego - Devolucoes automaticas alinea 37, não geram lançamento de 
        devolução na conta do cooperado, serão apenas retornadas no arquivo 
        de devolução  */
+       
        IF   crapdev.nrdconta = 0 THEN
             DO:
                 CREATE tt-relchdv.
@@ -2815,17 +2849,32 @@ PROCEDURE gera_arquivo_cecred:
                        tt-relchdv.dstipcta = ""
                        aux_dsorigem        = "".       
 
+                IF vr_gera_devolu_coop3 = "S" THEN
+                      ASSIGN aux_dsorigem = "Arq. Diurno"
+                             aux_totqtdiu = aux_totqtdiu + 1
+                             aux_totvldiu = aux_totvldiu +
+                                            crapdev.vllanmto
+                             aux_totqtdiu_age = aux_totqtdiu_age + 1
+                             aux_totvldiu_age = aux_totvldiu_age +
+                                                crapdev.vllanmto.
+                ELSE
                 CASE crapdev.indevarq:
                      WHEN 1 THEN 
-                             ASSIGN aux_dsorigem = "Arq. Noturno"
+                               ASSIGN aux_dsorigem = "Arq. Fraude"
                                     aux_totqtnot = aux_totqtnot + 1
                                     aux_totvlnot = aux_totvlnot +
+                                                     crapdev.vllanmto
+                                      aux_totqtnot_age = aux_totqtdiu_age + 1
+                                      aux_totvlnot_age = aux_totvlnot_age +
                                                    crapdev.vllanmto.
            
                      WHEN 2 THEN 
                              ASSIGN aux_dsorigem = "Arq. Diurno"
                                     aux_totqtdiu = aux_totqtdiu + 1
                                     aux_totvldiu = aux_totvldiu +
+                                                     crapdev.vllanmto
+                                      aux_totqtdiu_age = aux_totqtdiu_age + 1
+                                      aux_totvldiu_age = aux_totvldiu_age +
                                                    crapdev.vllanmto.
                 END CASE.     
 
@@ -2835,7 +2884,7 @@ PROCEDURE gera_arquivo_cecred:
               
                 IF   p-cddevolu = 5 THEN
                      DO:
-                         IF   crapdev.indevarq <> 2 THEN
+                         IF   crapdev.indevarq <> 2 AND vr_gera_devolu_coop3 <> "S" THEN
                               NEXT.
                      END.
                 ELSE
@@ -3222,9 +3271,12 @@ PROCEDURE gera_arquivo_cecred:
        ELSE
             DO:
                 CASE crapdev.indevarq:
-                         WHEN 1 THEN ASSIGN aux_dsorigem = "Arq. Noturno"
+                         WHEN 1 THEN ASSIGN aux_dsorigem = "Arq. Fraude"
                                             aux_totqtnot = aux_totqtnot + 1
                                             aux_totvlnot = aux_totvlnot +
+                                                           crapdev.vllanmto
+                                            aux_totqtnot_age = aux_totqtnot_age + 1
+                                            aux_totvlnot_age = aux_totvlnot_age +
                                                            crapdev.vllanmto.
            
                          WHEN 2 THEN 
@@ -3232,6 +3284,9 @@ PROCEDURE gera_arquivo_cecred:
                             ASSIGN aux_dsorigem = "Arq. Diurno"
                                    aux_totqtdiu = aux_totqtdiu + 1
                                    aux_totvldiu = aux_totvldiu +
+                                                  crapdev.vllanmto
+                                   aux_totqtdiu_age = aux_totqtdiu_age + 1
+                                   aux_totvldiu_age = aux_totvldiu_age +
                                                   crapdev.vllanmto.
                          END.
                 END CASE.     
@@ -3334,7 +3389,7 @@ PROCEDURE gera_arquivo_cecred:
                NEXT.
            END.    										     
        
-       IF   p-cddevolu = 5 THEN
+       IF   p-cddevolu = 5 AND (vr_gera_devolu_coop3 <> "S") THEN
             DO:
                  IF   crapdev.indevarq <> 2 THEN
                       NEXT.
@@ -3470,6 +3525,68 @@ PROCEDURE gera_arquivo_cecred:
                 VALIDATE gncpdev.
                               
             END.
+
+
+   END. /*FOR EACH crapdev&=*/
+
+   IF vr_gerou_arquivo = 1 AND (aux_totqtnot_age > 0 OR aux_totqtdiu_age > 0) THEN
+   DO:
+
+      CASE p-cddevolu:
+           WHEN 6 THEN 
+                   ASSIGN aux_totqt = aux_totqtnot_age
+                          aux_totvl = aux_totvlnot_age
+                          aux_tparquiv = 2.
+           WHEN 5 THEN 
+                   ASSIGN aux_totqt = aux_totqtdiu_age
+                          aux_totvl = aux_totvldiu_age
+                          aux_tparquiv = 1.
+      END CASE.     
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+           /* Efetuar a chamada a rotina Oracle  */
+           RUN STORED-PROCEDURE pc_checa_devolu
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT p-cdcooper 
+                                                   ,INPUT aux_nmarquiv
+                                                   ,INPUT 0   /* crapcop.cdagectl */
+                                                   ,INPUT 0   /* crapass.cdagenci */
+                                                   ,INPUT glb_dtmvtolt
+                                                   ,INPUT aux_totqt
+                                                   ,INPUT aux_totvl
+                                                   ,INPUT aux_tparquiv
+                                                   ,OUTPUT 0
+                                                   ,OUTPUT "").
+
+           /* Fechar o procedimento para buscarmos o resultado */ 
+           CLOSE STORED-PROC pc_checa_devolu
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+           { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+          
+           ASSIGN aux_dscritic = ""
+                  aux_dscritic = pc_checa_devolu.pr_dscritic
+                                 WHEN pc_checa_devolu.pr_dscritic <> ?
+                  aux_cdcritic = 0
+                  aux_cdcritic = pc_checa_devolu.pr_cdcritic
+                                 WHEN pc_checa_devolu.pr_cdcritic <> ?.
+
+           ASSIGN aux_totqtdiu_age = 0
+                  aux_totvldiu_age = 0
+                  aux_totqtnot_age = 0
+                  aux_totvlnot_age = 0.
+   END.
+
+   IF vr_gera_devolu_coop3 = "S" THEN
+   DO:
+   
+      FOR EACH b-crapdev WHERE b-crapdev.cdcooper = p-cdcooper     AND
+                               b-crapdev.cdbanchq = crapcop.cdbcoctl  AND
+                               (
+                                 (b-crapdev.insitdev = 1) OR (vr_gera_devolu_coop3 = "S")
+                               ) AND
+                               b-crapdev.cdhistor <> 46               AND
+                               b-crapdev.cdalinea > 0:
+          ASSIGN b-crapdev.insitdev = 1.
+      END.
    END.
    
    IF aux_contador > 0 THEN
@@ -3665,7 +3782,7 @@ PROCEDURE verifica_locks:
             END.
       ELSE
             DO:
-                IF   CAN-DO("47,191,338,573",STRING(crapdev.cdhistor))  THEN
+                IF   CAN-DO("47,191,338,573",STRING(crapdev.cdhistor)) AND p-cdcooper <> 3 THEN
                      DO:
                          glb_nrcalcul = 
                            INT(SUBSTR(STRING(crapdev.nrcheque,"9999999"),1,6)).

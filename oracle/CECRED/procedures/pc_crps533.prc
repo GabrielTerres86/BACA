@@ -347,14 +347,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
 			   01/02/2019 - Tratamento para gerar alinea 49 na segunda apresentação da alinea 20
                       (Adriano - INC0011272).
-          20/05/2019 - Projeto 565 - Alteração compensação cheques
-                            Renato Cordeiro - Projeto 565 - Melhorias compensação cheques.
-                            
          19/07/2019 - Projeto 565 - Alteração compensação cheques
                       Rafael Rocha - Projeto 565 - INsert na tbcompe_suaremessa
 
          12/08/2019 - Projeto 565 - Ajuste na Alteração compensação cheques
-                      Luis Fagundes - Projeto 565 - INsert na tbcompe_suaremessa
+                      Renato Cordeiro - Projeto 565 - INsert na tbcompe_suaremessa
 
 ............................................................................. */
 
@@ -2936,6 +2933,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                      end if;
                      -- atribui para o indice conteudo da CONTA e VALOR
                      vr_indice := SUBSTR(vr_setlinha,15,09)||SUBSTR(vr_setlinha,34,17)||SUBSTR(vr_setlinha,25,06)||lpad(vr_cont_indice,10,'0');
+                     vr_cont_indice := vr_cont_indice + 1;
                      vr_compensacao(vr_indice).linhaatual := SUBSTR(vr_setlinha,1,10);
                      vr_compensacao(vr_indice).nrdconta   := TO_NUMBER(SUBSTR(vr_setlinha,15,09));
                      vr_compensacao(vr_indice).nrdocmto   := TO_NUMBER(SUBSTR(vr_setlinha,25,06));
@@ -2992,7 +2990,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                 ,pr_des_text => vr_setlinha); --> Texto lido
 
                     --Incrementa o contador de linhas
-                    vr_conta_linha:= vr_conta_linha+1;
+  --                  vr_conta_linha:= vr_conta_linha+1;
 
                     --Se for a primeira linha ignora
                     IF vr_conta_linha = 1 THEN
@@ -6957,4 +6955,4 @@ END pc_avalia_proc_parceiro;
         ROLLBACK;
      END;
    END pc_crps533;
-
+/
