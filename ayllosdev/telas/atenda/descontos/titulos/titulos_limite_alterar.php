@@ -12,6 +12,8 @@
  * 002: [20/08/2015] Kelvin 			(CECRED) : Ajuste feito para não inserir caracters 
  *												   especiais na observação, conforme solicitado
  *	   										       no chamado 315453.
+ * 003: [17/07/2019] Jefferson Gubetti  (Mouts)  : Ajustes referente a reformulação da tela avalista - 
+ *                                                 PRJ 438 - Sprint 16
  */
 ?>
 
@@ -94,10 +96,8 @@
 	$dados = $xmlObjDados->roottag->tags[0]->tags[0]->tags;
 	$avais = $xmlObjDados->roottag->tags[1]->tags;
 	$risco = $xmlObjDados->roottag->tags[2]->tags;
-	$registros = $avais;
 	
-	$flgAval01 = count($avais) == 1 || count($avais) == 2 ? true : false;
-	$flgAval02 = count($avais) == 2 ? true : false;
+	
 	
 	// Alimentar data rating
 	for ($i = 0; $i < count($risco); $i++) { 								
@@ -130,6 +130,47 @@
 ?>
 
 <script type="text/javascript">
-	var operacao = '<? echo $cddopcao ?>';
+
+	var arrayAvalistas = new Array();
+	nrAvalistas     = 0;
+	contAvalistas   = 1;
+	<? 
+	for ($i=0; $i<count($avais); $i++) {
+	    if (getByTagName($avais[$i]->tags,'nrctaava') != 0 || getByTagName($avais[$i]->tags,'nrcpfcgc') != 0) {
+	?>
+			var arrayAvalista<? echo $i; ?> = new Object();
+			arrayAvalista<? echo $i; ?>['nrctaava'] = '<? echo getByTagName($avais[$i]->tags,'nrctaava'); ?>';
+			arrayAvalista<? echo $i; ?>['cdnacion'] = '<? echo getByTagName($avais[$i]->tags,'cdnacion'); ?>';
+			arrayAvalista<? echo $i; ?>['dsnacion'] = '<? echo getByTagName($avais[$i]->tags,'dsnacion'); ?>';
+			arrayAvalista<? echo $i; ?>['tpdocava'] = '<? echo getByTagName($avais[$i]->tags,'tpdocava'); ?>';
+			arrayAvalista<? echo $i; ?>['nmconjug'] = '<? echo getByTagName($avais[$i]->tags,'nmconjug'); ?>';
+			arrayAvalista<? echo $i; ?>['tpdoccjg'] = '<? echo getByTagName($avais[$i]->tags,'tpdoccjg'); ?>';
+			arrayAvalista<? echo $i; ?>['dsendre1'] = '<? echo getByTagName($avais[$i]->tags,'dsendre1'); ?>';
+			arrayAvalista<? echo $i; ?>['nrfonres'] = '<? echo getByTagName($avais[$i]->tags,'nrfonres'); ?>';
+			arrayAvalista<? echo $i; ?>['nmcidade'] = '<? echo getByTagName($avais[$i]->tags,'nmcidade'); ?>';
+			arrayAvalista<? echo $i; ?>['nrcepend'] = '<? echo getByTagName($avais[$i]->tags,'nrcepend'); ?>';
+			arrayAvalista<? echo $i; ?>['nmdavali'] = '<? echo getByTagName($avais[$i]->tags,'nmdavali'); ?>';
+			arrayAvalista<? echo $i; ?>['nrcpfcgc'] = '<? echo getByTagName($avais[$i]->tags,'nrcpfcgc'); ?>';
+			arrayAvalista<? echo $i; ?>['nrdocava'] = '<? echo getByTagName($avais[$i]->tags,'nrdocava'); ?>';
+			arrayAvalista<? echo $i; ?>['nrcpfcjg'] = '<? echo getByTagName($avais[$i]->tags,'nrcpfcjg'); ?>';
+			arrayAvalista<? echo $i; ?>['nrdoccjg'] = '<? echo getByTagName($avais[$i]->tags,'nrdoccjg'); ?>';
+			arrayAvalista<? echo $i; ?>['dsendre2'] = '<? echo getByTagName($avais[$i]->tags,'dsendre2'); ?>';
+			arrayAvalista<? echo $i; ?>['dsdemail'] = '<? echo getByTagName($avais[$i]->tags,'dsdemail'); ?>';
+			arrayAvalista<? echo $i; ?>['cdufresd'] = '<? echo getByTagName($avais[$i]->tags,'cdufresd'); ?>';
+			arrayAvalista<? echo $i; ?>['vlrenmes'] = '<? echo getByTagName($avais[$i]->tags,'vlrenmes'); ?>';
+			arrayAvalista<? echo $i; ?>['vledvmto'] = '<? echo getByTagName($avais[$i]->tags,'vledvmto'); ?>';
+			arrayAvalista<? echo $i; ?>['nrendere'] = '<? echo getByTagName($avais[$i]->tags,'nrendere'); ?>';
+			arrayAvalista<? echo $i; ?>['complend'] = '<? echo getByTagName($avais[$i]->tags,'complend'); ?>';
+			arrayAvalista<? echo $i; ?>['nrcxapst'] = '<? echo getByTagName($avais[$i]->tags,'nrcxapst'); ?>';
+			arrayAvalista<? echo $i; ?>['inpessoa'] = '<? echo getByTagName($avais[$i]->tags,'inpessoa'); ?>';
+			arrayAvalista<? echo $i; ?>['dtnascto'] = '<? echo getByTagName($avais[$i]->tags,'dtnascto'); ?>';
+			arrayAvalista<? echo $i; ?>['nrctacjg'] = '<? echo getByTagName($avais[$i]->tags,'nrctacjg'); ?>';
+			arrayAvalista<? echo $i; ?>['vlrencjg'] = '<? echo getByTagName($avais[$i]->tags,'vlrencjg'); ?>';
+			arrayAvalistas[<? echo $i; ?>] = arrayAvalista<? echo $i; ?>;
+			nrAvalistas++;
+	<?	
+		}
+	}
+	?>
 	habilitaAvalista(true, operacao);
 </script>

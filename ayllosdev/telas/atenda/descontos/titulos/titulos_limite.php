@@ -209,7 +209,7 @@
 		<?php if ($qtLimites == 0) {
 			echo 'onClick="return false;"';
 			} else {
-				echo 'onClick="carregaDadosConsultaLimiteDscTit();return false;"'; 
+				echo 'onClick="carregaDadosConsultaLimiteDscTit(\'C\');return false;"'; 
 		} ?> />
 	
 	<input 

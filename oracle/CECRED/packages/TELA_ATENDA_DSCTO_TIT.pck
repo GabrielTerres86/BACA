@@ -2398,6 +2398,7 @@ PROCEDURE pc_cancelar_proposta(pr_cdcooper    in crapcop.cdcooper%type --> Códig
     Objetivo  : Procedure para cancelar uma proposta de limite de desconto de titulo.
 
     Alteração : 12/04/2018 - Criação (Paulo Penteado (GFT))
+                16/07/2019 - Alterada mensagem de erro quando situação não é 'Em Estudo'. PRJ 438 - Sprint 16 (Mateus Z / Mouts)
 
   ---------------------------------------------------------------------------------------------------------------------*/
 
@@ -2437,7 +2438,8 @@ BEGIN
 
    --  Verifica se a situação está 'Ativo' ou 'Cancelado'
    if  rw_crawlim.insitlim in (2,3) then
-       vr_dscritic := 'Para esta operação, a situação da Proposta não deve ser "Ativa"';-- ou "Cancelada".';
+       -- PRJ 438 - Sprint 16 - Alterada a mensagem de erro
+       vr_dscritic := 'Para esta operação, a situação da Proposta deve estar em "Em estudo"';
        raise vr_exc_saida;
    end if;
 

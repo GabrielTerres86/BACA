@@ -19,6 +19,16 @@
 							  novo padrao os botoes (Lucas R./Gielow - Projeto CET)
 
 				 15/04/2018 - Correção botão voltar (Leonardo Oliveira - GFT)
+                 01/02/2019 - Remover a impressão do Rating Atual conforme estória: Product Backlog Item 13986:
+                              Rating - Ajustes em Telas Desabilitar impressão
+                              P450 - Luiz Otávio Olinger Momm (AMCOM)
+                 18/03/2019 - Solicitado para retornar o botão imprimir rating
+                              P450 - Luiz Otávio Olinger Momm (AMCOM)
+                 09/05/2019 - Solicitado para retirar o botão imprimir rating
+                 			  <a href="#" class="botao" id="btRating" 		 onClick="gerarImpressao(8,1,'no','mostraImprimirGenerico()');return false;">Rating</a>
+                              P450 - Luiz Otávio Olinger Momm (AMCOM)
+
+				 16/07/2019 - Removido a opção 'Nota Promissoria' da tela de Impressão. PRJ 438 - Sprint 16 (Mateus Z / Mouts)
 	************************************************************************/
 	
 	session_start();
@@ -69,8 +79,6 @@
 	<a href="#" class="botao" id="btContrato" 		 onClick="verificaEnvioEmail(2,1);return false;">Contrato</a>
 	<a href="#" class="botao" id="btCet"      		 onClick="verificaEnvioEmail(9,1);return false;">CET     </a>
 	<a href="#" class="botao" id="btProposta"        onClick="verificaEnvioEmail(3,1);return false;">Proposta</a>
-	<a href="#" class="botao" id="btNotaPromissoria" onClick="verificaEnvioEmail(4,1);return false;">Nota Promissoria</a>
-	<a href="#" class="botao" id="btRating" 		 onClick="gerarImpressao(8,1,'no','mostraImprimirGenerico()');return false;">Rating</a>
 	<br/>
 	<br/>
 	

@@ -45,6 +45,7 @@
                12/02/2018 -Exposição das procedures 'busca_dados_limite_manutencao' e 'realizar_manutencao_contrato' (Leonardo Oliveira - GFT)
 
                24/04/2018 - Adicionado a procedure busca_dados_proposta_manuten (Paulo Penteado GFT)
+               12/07/2019 - Incluido campos de avalista nas procs de gravaçao e alteraçao do desconto de titulos. PRJ 438 - Sprint 16 (Jefferson - MoutS)
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0138tt.i }
@@ -149,6 +150,17 @@ DEF VAR aux_nrender2 AS INTE                                           NO-UNDO.
 DEF VAR aux_complen2 AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrcxaps2 AS INTE                                           NO-UNDO.
 
+/* PRJ 438 Sprint 16 */
+DEF VAR aux_vlrecjg1 AS DECI                                           NO-UNDO.
+DEF VAR aux_vlrecjg2 AS DECI                                           NO-UNDO.
+DEF VAR aux_cdnacio1 AS INTE                                           NO-UNDO.
+DEF VAR aux_cdnacio2 AS INTE                                           NO-UNDO.
+DEF VAR aux_inpesso1 AS INTE                                           NO-UNDO.
+DEF VAR aux_inpesso2 AS INTE                                           NO-UNDO.
+DEF VAR aux_dtnasct1 AS DATE                                           NO-UNDO.
+DEF VAR aux_dtnasct2 AS DATE                                           NO-UNDO.
+DEF VAR aux_vlrenme1 AS DECI                                           NO-UNDO.
+DEF VAR aux_vlrenme2 AS DECI                                           NO-UNDO.
 DEF VAR aux_dsiduser AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqpdf AS CHAR                                           NO-UNDO.
@@ -263,6 +275,17 @@ PROCEDURE valores_entrada:
             WHEN "complen2" THEN aux_complen2 = tt-param.valorCampo.
             WHEN "nrcxaps2" THEN aux_nrcxaps2 = INTE(tt-param.valorCampo).
 
+            /* PRJ 438 - Sprint 16 */
+            WHEN "vlrecjg1" THEN aux_vlrecjg1 = DECI(tt-param.valorCampo).
+            WHEN "cdnacio1" THEN aux_cdnacio1 = INTE(tt-param.valorCampo).
+            WHEN "inpesso1" THEN aux_inpesso1 = INTE(tt-param.valorCampo).
+            WHEN "dtnasct1" THEN aux_dtnasct1 = DATE(tt-param.valorCampo).
+            WHEN "vlrenme1" THEN aux_vlrenme1 = DECI(tt-param.valorCampo).
+            WHEN "vlrecjg2" THEN aux_vlrecjg2 = DECI(tt-param.valorCampo).
+            WHEN "cdnacio2" THEN aux_cdnacio2 = INTE(tt-param.valorCampo).
+            WHEN "inpesso2" THEN aux_inpesso2 = INTE(tt-param.valorCampo).
+            WHEN "dtnasct2" THEN aux_dtnasct2 = DATE(tt-param.valorCampo).
+            WHEN "vlrenme2" THEN aux_vlrenme2 = DECI(tt-param.valorCampo).
             /* Rating */
             WHEN "nrgarope" THEN aux_nrgarope = INTE(tt-param.valorCampo).
             WHEN "nrinfcad" THEN aux_nrinfcad = INTE(tt-param.valorCampo).
@@ -766,6 +789,11 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_nrender1,
                                        INPUT aux_complen1,
                                        INPUT aux_nrcxaps1,
+                                       INPUT aux_vlrecjg1,
+                                       INPUT aux_cdnacio1,
+                                       INPUT aux_inpesso1,
+                                       INPUT aux_dtnasct1,
+                                       INPUT aux_vlrenme1,
                                        /** 2o avalista **/             
                                        INPUT aux_nrctaav2,              
                                        INPUT aux_nmdaval2,               
@@ -786,6 +814,11 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_nrender2,
                                        INPUT aux_complen2,
                                        INPUT aux_nrcxaps2,
+                                       INPUT aux_vlrecjg2,
+                                       INPUT aux_cdnacio2,
+                                       INPUT aux_inpesso2,
+                                       INPUT aux_dtnasct2,
+                                       INPUT aux_vlrenme2,
                                        /* Rating */
                                        INPUT aux_nrgarope,
                                        INPUT aux_nrinfcad,
@@ -1037,6 +1070,11 @@ PROCEDURE efetua_alteracao_limite:
                                         INPUT aux_nrender1,
                                         INPUT aux_complen1,
                                         INPUT aux_nrcxaps1,
+                                        INPUT aux_vlrecjg1,
+                                        INPUT aux_cdnacio1,
+                                        INPUT aux_inpesso1,
+                                        INPUT aux_dtnasct1,
+                                        INPUT aux_vlrenme1,
                                         /** 2o avalista **/             
                                         INPUT aux_nrctaav2,              
                                         INPUT aux_nmdaval2,               
@@ -1057,6 +1095,11 @@ PROCEDURE efetua_alteracao_limite:
                                         INPUT aux_nrender2,
                                         INPUT aux_complen2,
                                         INPUT aux_nrcxaps2,
+                                        INPUT aux_vlrecjg2,
+                                        INPUT aux_cdnacio2,
+                                        INPUT aux_inpesso2,
+                                        INPUT aux_dtnasct2,
+                                        INPUT aux_vlrenme2,
                                         /* Rating */
                                         INPUT aux_nrgarope,
                                         INPUT aux_nrinfcad,
