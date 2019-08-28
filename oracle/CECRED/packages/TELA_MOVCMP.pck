@@ -138,7 +138,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVCMP IS
                qtproces,
                vlproces,
                insituac,
-               DECODE(insituac,0,'Problemas processamento',1,'Processado','NA')dssituac,
                dtevinst,
                dtrtinst,
                qtregist
@@ -296,7 +295,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MOVCMP IS
                               '<qtproces>' || rw_cr_nr.qtproces || '</qtproces>' ||
                               '<vlproces>' || rw_cr_nr.vlproces || '</vlproces>' || 
                               '<insituac>' || rw_cr_nr.insituac || '</insituac>' ||
-                              '<dssituac>' || rw_cr_nr.dssituac || '</dssituac>' ||                              
+                              --'<dssituac>' || rw_cr_nr.dssituac || '</dssituac>' ||
                               '<dtevinst>' || rw_cr_nr.dtevinst || '</dtevinst>' || 
                               '<dtrtinst>' || rw_cr_nr.dtrtinst || '</dtrtinst>' || 
                            '</inf>');

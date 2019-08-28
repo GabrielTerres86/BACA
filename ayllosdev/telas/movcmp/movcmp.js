@@ -125,7 +125,7 @@ function formataTpRemessa(){
 }
 
 function controlaOperacao(operacao,nriniseq,nrregist){	
-	if (operacao == 'C' && btnOK.hasClass('botao')){
+	if ((operacao == 'C' && btnOK.hasClass('botao')) || (operacao == 'CX')){		
 		showMsgAguardo( 'Aguarde ...' );	
 				
 		// Carrega dados da conta através de ajax
@@ -208,13 +208,12 @@ function formataTabelanr(){
     var arrayLargura = new Array();
     arrayLargura[0] = '12%';
     arrayLargura[1] = '5%';
-    arrayLargura[2] = '11%';
+    arrayLargura[2] = '16%';
     arrayLargura[3] = '13%';
     arrayLargura[4] = '10%'; 
     arrayLargura[5] = '16%';
     arrayLargura[6] = '10%';
     arrayLargura[7] = '16%';
-    arrayLargura[8] = '5%';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
@@ -225,7 +224,6 @@ function formataTabelanr(){
 	arrayAlinha[5] = 'center';
     arrayAlinha[6] = 'right';
     arrayAlinha[7] = 'center';
-	arrayAlinha[8] = 'left';
 
     var metodoTabela = 'selecionaLinhanr($(this))';
 
@@ -255,7 +253,7 @@ function formataTabelanr(){
 	$('label[for="vlproces"]','#'+frmMovnr).addClass('rotulo-linha').css('width', '200px');	
 
 	$('#nmarquiv','#'+frmMovnr).css('width', '300').desabilitaCampo();
-	$('#insituac','#'+frmMovnr).css('width', '200').desabilitaCampo();
+	$('#insituac','#'+frmMovnr).css('width', '300').desabilitaCampo();
 	$('#qtenviad','#'+frmMovnr).css({'width':'150','text-align':'right'}).desabilitaCampo();
 	$('#vlenviad','#'+frmMovnr).css({'width':'160','text-align':'right'}).desabilitaCampo();
 	$('#qtproces','#'+frmMovnr).css({'width':'150','text-align':'right'}).desabilitaCampo();
@@ -272,7 +270,7 @@ function selecionaLinhanr(tr){
 	$('#vlproces','#divMovnr' ).val(number_format(parseFloat(avlproces.replace(',','.')),2,',','.'));
 	
 	$('#nmarquiv','#divMovnr' ).val( $('#nmarquiv', tr ).val() );
-	$('#insituac','#divMovnr' ).val( $('#dssituac', tr ).val() );
+	$('#insituac','#divMovnr' ).val( $('#insituac', tr ).val() );
 	$('#qtenviad','#divMovnr' ).val( $('#qtenviad', tr ).val() );
 	$('#qtproces','#divMovnr' ).val( $('#qtproces', tr ).val() );
 	

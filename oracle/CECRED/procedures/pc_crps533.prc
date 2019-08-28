@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 23/01/2019
+   Data    : Dezembro/2009                   Ultima atualizacao: 20/08/2019
 
    Dados referentes ao programa:
 
@@ -628,6 +628,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        
        vr_flg_criou_lcm   BOOLEAN := FALSE;
        vr_nrseqdig        NUMBER;
+       
+       aux_imprimir       VARCHAR2(4000);
        
        -- Código do programa
        vr_cdprogra crapprg.cdprogra%TYPE;
@@ -2607,11 +2609,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
         cdageapr      craplcm.cdagechq%TYPE,
         dados_log     VARCHAR2(500));
 
-      type tab_compensacao IS TABLE of typ_compensacao INDEX BY VARCHAR2(27);
+      type tab_compensacao IS TABLE of typ_compensacao INDEX BY VARCHAR2(43);
  
       vr_compensacao tab_compensacao;
   
-      vr_indice  varchar2(27);
+      vr_indice      varchar2(43);
+      vr_cont_indice number(10);
    
       vr_result  varchar2(27);
       
@@ -2906,6 +2909,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                 END IF;
 
                 vr_conta_linha_tab := 0;
+                vr_cont_indice     := 1;
                 WHILE vr_conta_linha_tab <> 9999999999 LOOP
                    -- Le os dados do arquivo e coloca na variavel vr_setlinha
                    gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -2931,7 +2935,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                        null;
                      end if;
                      -- atribui para o indice conteudo da CONTA e VALOR
-                     vr_indice := SUBSTR(vr_setlinha,15,09)||SUBSTR(vr_setlinha,34,17);
+                     vr_indice := SUBSTR(vr_setlinha,15,09)||SUBSTR(vr_setlinha,34,17)||SUBSTR(vr_setlinha,25,06)||lpad(vr_cont_indice,10,'0');
                      vr_compensacao(vr_indice).linhaatual := SUBSTR(vr_setlinha,1,10);
                      vr_compensacao(vr_indice).nrdconta   := TO_NUMBER(SUBSTR(vr_setlinha,15,09));
                      vr_compensacao(vr_indice).nrdocmto   := TO_NUMBER(SUBSTR(vr_setlinha,25,06));
@@ -5972,6 +5976,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                        ,pr_texto_novo     => '</crrl526>'
                                        ,pr_fecha_xml      => TRUE);
 
+                  --PJ 565.1
                 BEGIN
                   INSERT INTO tbcompe_suaremessa
                     (cdcooper,

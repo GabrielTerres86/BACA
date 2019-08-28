@@ -26,7 +26,6 @@ $tvlproces = 0;
                     <th>Valor Env.</th>
                     <th>Qtd. Proc.</th>
                     <th>Valor Proc.</th>
-                    <th>Sit.</th>
 				</tr>			
 			</thead>
 			<tbody>
@@ -47,7 +46,7 @@ $tvlproces = 0;
                         $tvlproces = getByTagName($item->tags,'vlproces'); 
                     }?>
 
-					<tr>                        
+					<tr title="<? echo getByTagName($item->tags,'insituac') ?>">                        
 						<td><? echo getByTagName($item->tags,'nmrescop'); ?></td>
 						<td><? echo getByTagName($item->tags,'cdagenci'); ?></td>
 						<td><? echo getByTagName($item->tags,'dsarquiv'); ?></td>
@@ -56,7 +55,6 @@ $tvlproces = 0;
                         <td><? echo number_format(str_replace(",",".",getByTagName($item->tags,'vlenviad')),2,",","."); ?></td>                        
                         <td><? echo getByTagName($item->tags,'qtproces'); ?></td>
                         <td><? echo number_format(str_replace(",",".",getByTagName($item->tags,'vlproces')),2,",","."); ?></td>
-                        <td><? echo getByTagName($item->tags,'insituac'); ?></td>                        
                         <input type="hidden" id="cdcooper" name="cdcooper" value="<? echo getByTagName($item->tags,'cdcooper') ?>" />
                         <input type="hidden" id="cdagenci" name="cdagenci" value="<? echo getByTagName($item->tags,'cdagenci') ?>" />
                         <input type="hidden" id="tparquiv" name="dsarquiv" value="<? echo getByTagName($item->tags,'tparquiv') ?>" />
@@ -66,7 +64,6 @@ $tvlproces = 0;
                         <input type="hidden" id="qtproces" name="qtproces" value="<? echo $tqtproces ?>" />
                         <input type="hidden" id="vlproces" name="vlproces" value="<? echo $tvlproces ?>" />
                         <input type="hidden" id="insituac" name="insituac" value="<? echo getByTagName($item->tags,'insituac') ?>" />
-                        <input type="hidden" id="dssituac" name="dssituac" value="<? echo getByTagName($item->tags,'dssituac') ?>" />
                         <input type="hidden" id="nmarquiv" name="nmarquiv" value="<? echo getByTagName($item->tags,'nmarquiv') ?>" />   
 					</tr>				
 				<? } ?>			
@@ -163,11 +160,11 @@ $tvlproces = 0;
 <script type="text/javascript">
 
     $('a.paginacaoAnterior').unbind('click').bind('click', function() {
-        controlaOperacao('C',<?php echo "'" . ($nriniseq - $nrregist) . "','" . $nrregist . "'"; ?>);
+        controlaOperacao('CX',<?php echo "'" . ($nriniseq - $nrregist) . "','" . $nrregist . "'"; ?>);
     });
 
     $('a.paginacaoProximo').unbind('click').bind('click', function() {
-        controlaOperacao('C',<?php echo "'" . ($nriniseq + $nrregist) . "','" . $nrregist . "'"; ?>);
+        controlaOperacao('CX',<?php echo "'" . ($nriniseq + $nrregist) . "','" . $nrregist . "'"; ?>);
     });
 </script>
 

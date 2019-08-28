@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CHEQ0003 IS
   --  Sistema  : Rotinas focadas no sistema de Cheques - Devolução de cheques
   --  Sigla    : CHEQ
   --  Autor    : André Bohn (Mouts)
-  --  Data     : Outubro/2018.                   Ultima atualizacao:   15/08/2019
+  --  Data     : Outubro/2018.                   Ultima atualizacao:   20/08/2019
   --
   -- Dados referentes ao programa:
   --
@@ -4380,7 +4380,9 @@ procedure pc_imp_arq_abbc(pr_cooper    in crapchd.cdcooper%TYPE) is
  vr_recebedir2    VARCHAR2(100);
  vr_dircoop       VARCHAR2(100);
  vr_montadir     VARCHAR2(100);
-  
+ vr_stemail       VARCHAR2(1); 
+ vr_email_dest    VARCHAR2(100);
+ vr_dsemail       varchar2(400); 
  vr_serv_ftp      VARCHAR2(100);
  vr_user_ftp      VARCHAR2(100);
  vr_pass_ftp      VARCHAR2(100);
@@ -4531,7 +4533,7 @@ begin
                RAISE vr_exec_erro;
        END;
                
-      vr_tab_linhacsv := gene0002.fn_quebra_string(vr_setlinha,';');
+      vr_tab_linhacsv := gene0002.fn_quebra_string(vr_setlinha,',');
          
       -- percorrer os campos do arquivo CSV
       FOR idx IN 1..vr_tab_linhacsv.count() LOOP
@@ -4540,8 +4542,8 @@ begin
          CASE
             WHEN idx = 6  THEN vr_tab_arq(vr_index).NMARQABBC         := vr_tab_linhacsv(idx);
             WHEN idx = 9  THEN vr_tab_arq(vr_index).dssitvalidacao    := vr_tab_linhacsv(idx);
+            WHEN idx = 12 THEN vr_tab_arq(vr_index).qtregistros       := gene0002.fn_char_para_number(vr_tab_linhacsv(idx));
             WHEN idx = 15 THEN vr_tab_arq(vr_index).vltotal           := gene0002.fn_char_para_number(vr_tab_linhacsv(idx));
-            WHEN idx = 16 THEN vr_tab_arq(vr_index).qtregistros       := gene0002.fn_char_para_number(vr_tab_linhacsv(idx));
             ELSE CONTINUE;
          END CASE;
        END LOOP;
@@ -4557,12 +4559,13 @@ begin
      OPEN c_protoc(vr_tab_arq(i).NMARQABBC);
      FETCH c_protoc INTO r_remessa; 
      
-     IF c_protoc%notfound THEN
+     IF c_protoc%found THEN
       BEGIN
           update cecred.tbcompe_nossaremessa a
              set a.qtproces = vr_tab_arq(i).qtregistros,
                  a.vlproces = vr_tab_arq(i).vltotal,
-                 a.insituac = vr_tab_arq(i).dssitvalidacao
+                 a.insituac = vr_tab_arq(i).dssitvalidacao,
+                 a.nmarqrec = rw_nmarquiv
            where a.nmarquiv = vr_tab_arq(i).NMARQABBC;
                
       EXCEPTION
@@ -4572,6 +4575,30 @@ begin
     
      END IF;	
      CLOSE c_protoc; 
+     
+    --envia email caso exista alguma validação com inconsistência
+    If upper(vr_tab_arq(i).dssitvalidacao) like '%INCONSISTENCIA%' OR
+       upper(vr_tab_arq(i).dssitvalidacao) like '%INCONSISTÊNCIA%' then
+         
+    --retorna email ailos destino para aviso de inconsistencia 
+       vr_email_dest  := gene0001.fn_param_sistema('CRED',
+                                                  '0',
+                                                  'EMAIL_RET_VALID_SINC');
+                                                     
+       vr_dsemail := 'Arquivo ' || vr_tab_arq(i).NMARQABBC ||' retornou com inconsistencia!' ; 
+         
+      CECRED.gene0003.pc_solicita_email(pr_cdcooper        => pr_cooper
+                                        ,pr_cdprogra        => null
+                                        ,pr_des_destino     => vr_email_dest
+                                        ,pr_des_assunto     => 'Arquivo ABBC inconsistencia.'
+                                        ,pr_des_corpo       => vr_dsemail
+                                        ,pr_des_anexo       => NULL
+                                        ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                        ,pr_flg_remete_coop => 'S' --> Se o envio sera do e-mail da Cooperativa
+                                        ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                        ,pr_des_erro        => vr_dscritic);
+    end if;
+     
    END IF; 
   END LOOP;
   
