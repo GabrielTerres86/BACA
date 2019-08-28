@@ -790,7 +790,7 @@ create or replace package body cecred.RATI0003 IS
       FETCH cr_qtconta
        INTO rw_qtconta;
       CLOSE cr_qtconta;
-      vr_obj_generic4.put('Qtconta',NVL(rw_qtconta.qtconta,0));
+      vr_obj_generic4.put('QtConta',NVL(rw_qtconta.qtconta,0));
 
       IF to_char(rw_crapdat.dtmvtoan, 'MM') <> to_char(rw_crapdat.dtmvtolt, 'MM') THEN
          -- Utilizar o final do mês como data
@@ -830,7 +830,7 @@ create or replace package body cecred.RATI0003 IS
         FETCH cr_qtidade
          INTO rw_qtidade;
         CLOSE cr_qtidade;
-        vr_obj_generic4.put('Qtidade',NVL(rw_qtidade.qtidade,0));
+        vr_obj_generic4.put('QtIdade',NVL(rw_qtidade.qtidade,0));
 
       -- Para Pessoas Juridicas
       ELSE
