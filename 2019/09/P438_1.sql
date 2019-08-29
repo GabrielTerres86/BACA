@@ -133,9 +133,10 @@ BEGIN
   --/
  --/
  
+
  --> Crédito Aprovado
 UPDATE tbgen_notif_automatica_prm p
-   SET p.dsmotivo_mensagem = 'Crédito Aprovado',
+   SET p.dsmotivo_mensagem = 'CRÉDITO - Crédito Aprovado',
        p.dsvariaveis_mensagem = '<br/>#valor - Valor do emprestimo (Ex.: 45,00)'
  WHERE p.cdmensagem = 493
    and p.cdorigem_mensagem = 8;
@@ -145,32 +146,32 @@ UPDATE TBGEN_NOTIF_MSG_CADASTRO n
    SET n.dstitulo_mensagem = 'Crédito Aprovado',       
        n.dstexto_mensagem  = 'Sua solicitação de crédito foi aprovada. Saiba como contratar.',
        n.dshtml_mensagem   = '<p><b>#nomecompleto</b></p>'||
-                             '<p>Falta pouco! Para que o valor de <b>R$ #valor</b> seja creditado na sua conta, clique no menu <u>EMPRÉSTIMOS</u> > <u>Acompanhamento de Propostas</u>  Leia o contrato,'||
-                             'verifique os valores e confirme a contratação digitando a sua senha de segurança.</p>'
+                             '<p>Falta pouco! Para que o valor de <b>R$ #valor</b> seja creditado na sua conta, clique no menu <em>Empréstimos</em> > <em>Empréstimos e Financiamentos</em> > <em>Acompanhamento de Propostas.</em></p>'||
+                             '<p>Leia o contrato, verifique os valores e confirme a contratação digitando a sua senha de segurança.</p>'
       
  WHERE n.cdmensagem = 493
    and n.cdorigem_mensagem = 8;   
 
--- NOVA SITUAÇÃO DE PROPOSTA
-   
+-- NOVA SITUAÇÃO DE PROPOSTA   
 UPDATE tbgen_notif_automatica_prm p
-   SET p.dsvariaveis_mensagem = '<br/>#valor - Valor do emprestimo (Ex.: 45,00)'
+   SET p.dsmotivo_mensagem = 'CRÉDITO - Atualização de status de solicitação de crédito',
+       p.dsvariaveis_mensagem = '<br/>#valor - Valor do emprestimo (Ex.: 45,00)'
  WHERE p.cdmensagem = 494
    and p.cdorigem_mensagem = 8;
    
 
 UPDATE TBGEN_NOTIF_MSG_CADASTRO n
-   SET n.dstitulo_mensagem = 'Atualização de status de solicitação de crédito.',       
+   SET n.dstitulo_mensagem = 'Atualização de status de solicitação de crédito',       
        n.dstexto_mensagem  = 'O status da sua solicitação de crédito foi atualizado.',
        n.dshtml_mensagem   = '<p><b>#nomecompleto</b></p>'||
-                             '<p>Acompanhe o andamento da sua solicitação de crédito no valor de <b>R$ #valor</b> no menu <u>EMPRÉSTIMOS</u> > <u>Acompanhamento de Propostas</u>.</p>'      
+                             '<p>Acompanhe o andamento da sua solicitação de crédito no valor de <b>R$ #valor</b> no menu: <em>Empréstimos</em> > <em>Empréstimos e Financiamentos</em> > <em>Acompanhamento de Propostas</em>.</p>'      
  WHERE n.cdmensagem = 494
    and n.cdorigem_mensagem = 8;  
    
--- PROPOSTA DE EMPRÉSTIMO EFETIVADA
-   
+-- PROPOSTA DE EMPRÉSTIMO EFETIVADA   
 UPDATE tbgen_notif_automatica_prm p
-   SET p.dsvariaveis_mensagem = '<br/>#valor - Valor do emprestimo (Ex.: 45,00)'
+   SET p.dsmotivo_mensagem = 'CRÉDITO - Crédito disponível',
+       p.dsvariaveis_mensagem = '<br/>#valor - Valor do emprestimo (Ex.: 45,00)'
  WHERE p.cdmensagem = 495
    and p.cdorigem_mensagem = 8;
    
@@ -179,9 +180,10 @@ UPDATE TBGEN_NOTIF_MSG_CADASTRO n
    SET n.dstitulo_mensagem = 'Crédito disponível',       
        n.dstexto_mensagem  = 'Sua solicitação de crédito foi efetivada. O valor já está na sua conta.',
        n.dshtml_mensagem   = '<p><b>#nomecompleto</b></p>'||
-                             '<p>O valor de <b>R$ #valor</b> referente a sua solicitação de crédito foi efetivada e já está disponível na sua conta. Verifique seu extrato para mais detalhes.</p>'      
+                             '<p>O valor de <b>R$ #valor</b> referente a sua solicitação de crédito foi efetivada e já está disponível na sua conta.</p> <p>Verifique seu extrato para mais detalhes.</p>'      
  WHERE n.cdmensagem = 495
    and n.cdorigem_mensagem = 8;
+
 
  
  COMMIT;
