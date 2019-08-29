@@ -350,10 +350,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS674
       END IF;    
       
 
-      IF vr_cdcritic > 0 OR
-         vr_dscritic IS NOT NULL THEN
-         RAISE vr_exc_saida;
-      END IF;   
       
       -- Processo OK, devemos chamar a fimprg
       btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper

@@ -1266,6 +1266,9 @@ END pc_incluir_bordero_esteira;
 
       Alteraçao : 24/04/2018 Criação (Paulo Penteado (GFT))
 
+                  05/08/2019 - P438 - Inclusão dos atributos canalCodigo e canalDescricao no Json para identificar 
+                                a origem da operação de crédito na Esteira. (Douglas Pagel / AMcom). 
+
     ..........................................................................*/
 
   cursor cr_crapass is
@@ -1560,6 +1563,7 @@ END pc_incluir_bordero_esteira;
   vr_vlborder_brt craptdb.vltitulo%TYPE;
   vl_aprov_nefet NUMBER;
   vr_qtde_titulos PLS_INTEGER;
+  vr_cdorigem NUMBER := 0;
 
   vr_tab_dados_dsctit_cr cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052 para Cooperativa e Cobrança Registrada
   vr_tab_dados_dsctit_sr cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052 para Cooperativa e Cobrança Sem Registro
@@ -2075,6 +2079,11 @@ END pc_incluir_bordero_esteira;
          close cr_crapjfn;
          vr_obj_bordero.put('faturamentoAnual',rw_crapjfn.vltotfat);
      end if;
+     
+     vr_cdorigem := CASE WHEN rw_crapbdt.cdoperad = '996' THEN 3 ELSE 5 END;
+   
+     vr_obj_bordero.put('canalCodigo', vr_cdorigem);
+     vr_obj_bordero.put('canalDescricao',gene0001.vr_vet_des_origens(vr_cdorigem));
 
      -- Devolver o objeto criado
      pr_bordero_envio := vr_obj_bordero;

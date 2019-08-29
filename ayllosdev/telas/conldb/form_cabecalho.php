@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO     : 14/09/2015			
  * OBJETIVO         : Cabeçalho para a tela CONLDB
  * --------------
- * ALTERAÇÕES   : 10/02/2017 - #602248 Inclusao da opcao P - Processar arquivo (Carlos)
+ * ALTERAÇÕES   : 
  * --------------
  */
 
@@ -23,7 +23,6 @@ isPostMethod();
     <select id="cddopcao" name="cddopcao">
         <option value="A"> A - Arquivos</option> 
         <option value="C"> C - Contas</option>
-		<option value="P"> P - Processar arquivo</option>
     </select>
 
     <a href="#" class="botao" id="btnOK" onClick="controlaOpcao();

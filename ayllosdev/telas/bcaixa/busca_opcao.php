@@ -1,4 +1,4 @@
-<?php
+<? 
 /*!
  * FONTE        : busca_opcao.php
  * CRIAÇÃO      : Rogérius Militão (DB1)
@@ -7,9 +7,10 @@
  *
  * 16/04/2013 - Incluir parametro tpcaicof na Busca_Dados (Lucas R.)
  * 28/08/2013 - Incluido o parametro dtrefere na procedure Busca_Dados (Carlos)
- * 27/07/2016 - Correcao no tratamento do retorno XML. SD 479874 (Carlos R.)
  */
+?>
  
+<?
 	session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
@@ -25,10 +26,6 @@
 	$cdopecxa = (isset($_POST['cdopecxa'])) ? $_POST['cdopecxa'] : '';
 	$cdoplanc = (isset($_POST['cdoplanc'])) ? $_POST['cdoplanc'] : '';
 	$tpcaicof = (isset($_POST['tpcaicof'])) ? $_POST['tpcaicof'] : '';
-	if ( !isset($dsiduser) ) { 
-		$dsiduser = (isset($_POST['dsiduser'])) ? $_POST['dsiduser'] : '';
-	}
-	$cdprogra = ( isset($glbvars['cdprogra']) ) ? $glbvars['cdprogra'] : 0;
 	
 	$auxiliar = $cddopcao.$cdoplanc;
 
@@ -50,7 +47,7 @@
 		$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
 		$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
 		$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
-		$xml .= '		<cdprogra>'.$cdprogra.'</cdprogra>';
+		$xml .= '		<cdprogra>'.$glbvars['cdprogra'].'</cdprogra>';
 		$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
 		$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
 		$xml .= '		<dtmvtopr>'.$glbvars['dtmvtopr'].'</dtmvtopr>';
@@ -73,15 +70,15 @@
 		// Cria objeto para classe de tratamento de XML
 		$xmlObj = getObjectXML($xmlResult);
 		
-		if ( isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
+		if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
 			exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
 		}
 
-		$boletimcx 	= ( isset($xmlObj->roottag->tags[0]->tags) ) ? $xmlObj->roottag->tags[0]->tags : array();
-		$lanctos	= ( isset($xmlObj->roottag->tags[1]->tags) ) ? $xmlObj->roottag->tags[1]->tags : array();
-		$crapbcx	= ( isset($xmlObj->roottag->tags[2]->tags) ) ? $xmlObj->roottag->tags[2]->tags : array();
-		$msgretor 	= ( isset($xmlObj->roottag->tags[0]->attributes['MSGRETOR']) ) ? $xmlObj->roottag->tags[0]->attributes['MSGRETOR'] : ''; // opcao K
-		$saldot   	= ( isset($xmlObj->roottag->tags[0]->attributes['SALDOT']) ) ? $xmlObj->roottag->tags[0]->attributes['SALDOT'] : 0;
+		$boletimcx 	= $xmlObj->roottag->tags[0]->tags;
+		$lanctos	= $xmlObj->roottag->tags[1]->tags;
+		$crapbcx	= $xmlObj->roottag->tags[2]->tags;
+		$msgretor 	= $xmlObj->roottag->tags[0]->attributes['MSGRETOR']; // opcao K
+		$saldot   	= $xmlObj->roottag->tags[0]->attributes['SALDOT'];
 
 	}			
 	
@@ -103,5 +100,5 @@
 	}
 ?>
 <script>
-msgretor = '<?php echo $msgretor; ?>';
+msgretor = '<? echo $msgretor ?>';
 </script>

@@ -283,13 +283,19 @@ DEFINE FRAME Web-Frame
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaHistoricos w-html 
 
 PROCEDURE CriaListaHistoricos :
-
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+   DEF VAR aux_registros AS INT    NO-UNDO.
    DEF VAR aux_dsdcampo  AS CHAR   NO-UNDO.
    DEF VAR aux_dtatuali  AS CHAR   NO-UNDO.
    DEF VAR aux_nmoperad  AS CHAR   NO-UNDO.
    
+   ASSIGN aux_registros = 0.
    
-   RUN RodaJavaScript("var historicos = new Array();").
+   RUN RodaJavaScript("var historicos=new Array();").
 
    FOR EACH craphfp NO-LOCK 
       WHERE craphfp.idevento = INT(ab_unmap.aux_idevento) 
@@ -318,16 +324,22 @@ PROCEDURE CriaListaHistoricos :
        ASSIGN aux_nmoperad =  craphfp.cdoperad + " - " + crapope.nmoperad.
      END.
 
-     RUN RodaJavaScript("historicos.push(nmdcampo:'" + TRIM(STRING(craphfp.nmdcampo))
-                                    + "',dsdcampo:'" + aux_dsdcampo
-                                    + "',dtatuali:'" + aux_dtatuali
-                                    + "',dsantcmp:'" + TRIM(STRING(craphfp.dsantcmp))
-                                    + "',dsatucmp:'" + TRIM(STRING(craphfp.dsatucmp))
-                                    + "',nmoperad:'" + aux_nmoperad
-                                    + "',cdcopope:'" + TRIM(STRING(craphfp.cdcopope))
-                                    + "',cdoperad:'" + TRIM(STRING(craphfp.cdoperad)) + "'~});").
-       
-    
+     vetorhistori = vetorhistori + "~{" 
+                                    + "nmdcampo:"  + "'" + TRIM(STRING(craphfp.nmdcampo))
+                                    + "',dsdcampo:"  + "'" + aux_dsdcampo
+                                    + "',dtatuali:"  + "'" + aux_dtatuali
+                                    + "',dsantcmp:"  + "'" + TRIM(STRING(craphfp.dsantcmp))
+                                    + "',dsatucmp:"  + "'" + TRIM(STRING(craphfp.dsatucmp))
+                                    + "',nmoperad:"  + "'" + aux_nmoperad
+                                    + "',cdcopope:"  + "'" + TRIM(STRING(craphfp.cdcopope))
+                                    + "',cdoperad:"  + "'" + TRIM(STRING(craphfp.cdoperad)) + "'~}".
+                     
+     IF  vetorhistori <> "" THEN
+     DO:
+       RUN RodaJavaScript("historicos.push(" + STRING(vetorhistori) + ");").
+       ASSIGN vetorhistori = ""
+              aux_registros = 0.     
+     END.
     END. /* for each */  
 
 END PROCEDURE.

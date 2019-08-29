@@ -31,7 +31,7 @@ require_once("../../includes/carrega_permissoes.php");
         <script type="text/javascript" src="../../scripts/mascara.js"></script>
         <script type="text/javascript" src="../../scripts/menu.js"></script>
         <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-        <script type="text/javascript" src="custod.js"></script>
+        <script type="text/javascript" src="custod.js?keyrand=<?=mt_rand();?>"></script>
         <script>
             var dtmvtopr = '<?php echo $glbvars['dtmvtopr'] ?>';
             var dtmvtolt = '<?php echo $glbvars['dtmvtolt'] ?>';

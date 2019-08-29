@@ -6,7 +6,7 @@
 	                                                                  
 	 Objetivo  : Mostrar o form do cabecalho da TAB085.                                  
 	                                                                  
-	 Alterações: 
+	 Alterações: 11/04/2019 - Alteração do titulo de filtros - Bruno Luiz Katzjarowski - Mout's
 	 
 	 
 	
@@ -26,8 +26,9 @@
     <option value="C" selected> C - Consultar par&acirc;metros</option>
     
     <?php
-		echo ($glbvars["cdcooper"] == 3 ?  '<option value="A"> A - Alterar par&acirc;metros </option>' : '');
-		echo ($glbvars["cdcooper"] == 3 ?  '<option value="H"> H - Hor&aacute;rio agendamento </option>' : '');
+		//bruno - prj 475 - Alteração do titulo de filtros
+		echo ($glbvars["cdcooper"] == 3 ?  '<option value="A"> A - Alterar par&acirc;metros (STR, PAG e VR Boleto)</option>' : '');
+		echo ($glbvars["cdcooper"] == 3 ?  '<option value="H"> H - Hor&aacute;rio agendamento e Estado de Crise </option>' : '');
 	?>
     
 	</select>

@@ -1276,7 +1276,7 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
                                      ,pr_cdprograma     IN VARCHAR2 DEFAULT 'PAGA0001'
                                      ,pr_tpexecucao     IN NUMBER DEFAULT 0 -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
                                      ,pr_cdcriticidade  IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 2 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)                                      
-                                      );                                  
+                                      );
                                        
   /* Procedure para cancelar agendamentos pendentes apos termino do ciclo de pagamento dos agentamentos */
   PROCEDURE pc_PAGA0001_cancela_debitos (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -1706,14 +1706,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
                   gerar Log pois as rotinas chamadoras iram ignorar o erro.
                   (Belli - Envolti - INC0034476)
 
-     24/04/2019 - Incluído tratamento para verificar se o lote esta em lock.
-                  Jose Dill - Mouts (PRB0040712)
-
      11/07/2019 - Correção em mensagem de erro exibida ao cooperado.
                   Se for retornada uma critica no momento de cria o lancamento do DEBITO, 
                   passa a não mais emitir o alerta ao cooperado com informacoes de LOG.
                   Implementacao para atender o INC0015955 - Jackson 
                   
+     24/07/2019 - Ajustes para atualizar o protocolo na estrutura do arquivo cnab para transferências e Ted's.
+                  Jose Dill - Mouts (P500-SM02)                 
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Cursores da Package */
@@ -1967,6 +1966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
 		      ,craplau.flmobile
 		      ,craplau.idtipcar
 		      ,craplau.nrcartao
+          ,craplau.idlancto --(P500-SM02)
     FROM craplau
     WHERE progress_recid = pr_progress_recid;
   rw_craplau cr_craplau%ROWTYPE;
@@ -2178,6 +2178,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
     AND   crapceb.nrconven = pr_nrconven
     ORDER BY crapceb.progress_recid ASC;
   rw_crapceb cr_crapceb%ROWTYPE;
+
+  --(P500-SM02)
+  CURSOR cr_tbcnab (pr_cdcooper IN crapcop.cdcooper%TYPE
+                   ,pr_idlancto IN craplau.idlancto%TYPE) IS
+  SELECT tatl.rowid rowid_cnab
+    FROM tbtransf_arquivo_ted_linhas tatl
+        ,tbtransf_arquivo_ted tat
+   WHERE tat.nrseq_arq_ted = tatl.nrseq_arq_ted
+     AND tat.cdcooper      = pr_cdcooper
+     AND tatl.idlancto     = pr_idlancto;
+  rw_tbcnab cr_tbcnab%ROWTYPE;
 
 
   --Tipo de Dados para cursor data
@@ -3881,7 +3892,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                 vr_tab_relato(vr_index_relato).cdcooper <> vr_tab_relato(vr_tab_relato.PRIOR(vr_index_relato)).cdcooper THEN
 
                 --Determinar o titulo
-                IF vr_tab_relato(vr_index_relato).cdtiptra = 4 THEN
+                IF vr_tab_relato(vr_index_relato).cdtiptra IN (4,22) THEN /*REQ39*/
                   vr_dstiptra := 'TED';                
                 ELSIF vr_tab_relato(vr_index_relato).fltiptra THEN
                   IF vr_tab_relato(vr_index_relato).fltipdoc THEN
@@ -7262,6 +7273,19 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
            --Atribuir numero documento ao deb/credito
            vr_nrdocdeb:= vr_nrdocmto;
          END IF;
+         /*P500-SM02 Vincular a efetivação da transferência ao arquivo de remessa cnab de TED/Transferência */
+         --Verificar se existe arquivo cnab
+         OPEN cr_tbcnab (pr_cdcooper => pr_cdcooper
+                       ,pr_idlancto => rw_craplau.idlancto);                                         
+         FETCH cr_tbcnab INTO rw_tbcnab;
+         IF cr_tbcnab%FOUND THEN
+           /*Atualizar número do protocolo. Efetuar o vinculo entre a efetivação da transferência com o arquivo
+             de remessa */
+           UPDATE tbtransf_arquivo_ted_linhas tatl
+           SET tatl.dsprotocolo = vr_dsprotoc
+           WHERE tatl.rowid = rw_tbcnab.rowid_cnab;
+       END IF;
+         CLOSE cr_tbcnab;
        END IF;
 
        --Se ocorreu erro na transferencia
@@ -13654,7 +13678,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
          END IF;
 
          --Se for TED
-         IF vr_tab_agendto(vr_index_agendto).cdtiptra = 4 THEN /* TED */
+         IF vr_tab_agendto(vr_index_agendto).cdtiptra IN (4,22) THEN /* TED */ /*REQ39*/
            pc_debita_agendto_ted(pr_cdcooper => pr_cdcooper
                                 ,pr_cdagenci => vr_cdagenci
                                 ,pr_nrdcaixa => 900
@@ -13853,7 +13877,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                 portabilidade de Salário ( Renato Darosci - Supero - P485)
                    
                    11/06/2019 - Inclusao da origem AIMARO para tratar o envio de TED/Transferência em lote.
-                                Jose Dill - Mouts (P500 - Upload TED)             
+                                Jose Dill - Mouts (P500 - Upload TED)
+                                
+                   14/06/2019 - Inclusao do tratamento para agendamento de TED Judicial.
+                                Jose Dill - Mouts (P475 - REQ39)
+                                                    
     -----------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -13927,9 +13955,9 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           AND craplau.cdhistor = craphis.cdhistor
           AND crapass.cdcooper = pr_cdcooper  
           AND ((pr_cdprogra = 'CRPS705' AND 
-                craplau.cdtiptra = 4)   OR
+                craplau.cdtiptra IN (4,22))   OR /*REQ39*/
                (pr_cdprogra <> 'CRPS705' AND 
-                craplau.cdtiptra <> 4 ))                           
+                craplau.cdtiptra NOT IN (4,22) ))  /*REQ39*/                         
           AND ((    craplau.cdcooper = pr_cdcooper
               AND   craplau.dtmvtopg = pr_dtmvtopg
               AND   craplau.insitlau = 1
@@ -14146,7 +14174,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           vr_fltipdoc:= LENGTH(rw_craplau.dslindig) = 55;
           --Descricao da transacao
           vr_dstransa:= rw_craplau.dscedent;
-        ELSIF rw_craplau.cdtiptra = 4 THEN /** TED **/
+        ELSIF rw_craplau.cdtiptra IN (4,22) THEN /** TED **/ /*REQ39*/
             
             --Tipo transação
             vr_fltiptra := false;
@@ -18962,8 +18990,6 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --                Ajuste mensagem de erro 
     --                (Belli - Envolti - Chamado 779415)    
     --
-	--   09/05/2019 - Ajustado para buscar cursor do lote quando ocorrer dup_val
-	--                (Jefferson - MoutS)
     -- .........................................................................    
   BEGIN
     DECLARE
@@ -19005,174 +19031,20 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_exc_saida EXCEPTION;
       --Agrupa os parametros - 15/12/2017 - Chamado 779415 
       vr_dsparame VARCHAR2(4000);
-      
-      pr_nrdrowid ROWID;
-      -- Procedimento para inserir o lote e não deixar tabela lockada
-      PROCEDURE pc_insere_lote (pr_cdcooper IN craplot.cdcooper%TYPE,
-                                pr_dtmvtolt IN craplot.dtmvtolt%TYPE,
-                                pr_cdagenci IN craplot.cdagenci%TYPE,
-                                pr_cdbccxlt IN craplot.cdbccxlt%TYPE,
-                                pr_nrdolote IN craplot.nrdolote%TYPE,
-                                pr_tplotmov IN craplot.tplotmov%TYPE,
-                                pr_craplot  OUT cr_craplot%ROWTYPE,
-                                pr_cdcritic OUT INTEGER,
-                                pr_dscritic OUT VARCHAR2)IS
-
-        -- Pragma - abre nova sessao para tratar a atualizacao
-        PRAGMA AUTONOMOUS_TRANSACTION;
-        -- criar rowtype controle
-        rw_craplot_ctl cr_craplot%ROWTYPE;
-
     BEGIN
         -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_insere_lote - D');
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_realiza_lancto_cooperado');
 
-        /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
-        FOR i IN 1..100 LOOP
-          BEGIN
-            -- Leitura do lote
-            OPEN cr_craplot (pr_cdcooper  => pr_cdcooper,
-                             pr_dtmvtolt  => pr_dtmvtolt,
-                             pr_cdagenci  => pr_cdagenci,
-                             pr_cdbccxlt  => pr_cdbccxlt,
-                             pr_nrdolote  => pr_nrdolote);
-            FETCH cr_craplot INTO rw_craplot_ctl;
+      --Inicializar variavel retorno erro
+      pr_cdcritic:= NULL;
             pr_dscritic := NULL;
-            EXIT;
-          EXCEPTION
-            WHEN OTHERS THEN
-               IF cr_craplot%ISOPEN THEN
-                 CLOSE cr_craplot;
-               END IF;
-               
-               -- setar critica caso for o ultimo
-               IF i = 100 THEN
-                 pr_dscritic:= pr_dscritic||'Registro de lote '||pr_nrdolote||' em uso. Tente novamente.';                 
-               END IF;
-               -- aguardar 0,5 seg. antes de tentar novamente
-               sys.dbms_lock.sleep(0.1);
-          END;
-        END LOOP;
-
-        -- se encontrou erro ao buscar lote, abortar programa
-        IF pr_dscritic IS NOT NULL THEN
-          ROLLBACK;
-          RETURN;
-        END IF;
-
-        IF cr_craplot%NOTFOUND THEN
-          -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
-          BEGIN
-            IF cr_craplot%ISOPEN THEN
-              CLOSE cr_craplot;
-            END IF;
-            -- criar registros de lote na tabela
-            INSERT INTO craplot
-                    (craplot.cdcooper
-                    ,craplot.dtmvtolt
-                    ,craplot.cdagenci
-                    ,craplot.cdbccxlt
-                    ,craplot.nrdolote
-                    ,craplot.tplotmov)
-            VALUES  (pr_cdcooper
-                    ,pr_dtmvtolt
-                    ,pr_cdagenci
-                    ,pr_cdbccxlt
-                    ,pr_nrdolote
-                    ,pr_tplotmov)
-          RETURNING  craplot.ROWID
-                    ,craplot.nrdolote
-                    ,craplot.cdbccxlt
-                    ,craplot.tplotmov
-                    ,craplot.dtmvtolt
-                    ,craplot.nrseqdig
-                    ,craplot.cdagenci
-                    ,craplot.cdcooper
-                INTO rw_craplot_ctl.ROWID
-                   , rw_craplot_ctl.nrdolote
-                   , rw_craplot_ctl.cdbccxlt
-                   , rw_craplot_ctl.tplotmov
-                   , rw_craplot_ctl.dtmvtolt
-                   , rw_craplot_ctl.nrseqdig
-                   , rw_craplot_ctl.cdagenci
-                   , rw_craplot_ctl.cdcooper;
-          EXCEPTION
-            WHEN Dup_val_on_index THEN
-              -- Leitura do lote
-              OPEN cr_craplot (pr_cdcooper  => pr_cdcooper,
-                               pr_dtmvtolt  => pr_dtmvtolt,
-                               pr_cdagenci  => pr_cdagenci,
-                               pr_cdbccxlt  => pr_cdbccxlt,
-                               pr_nrdolote  => pr_nrdolote);
-              FETCH cr_craplot INTO rw_craplot_ctl;       
-            WHEN OTHERS THEN
-              -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
-              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
-              pr_cdcritic := 1034;
-              pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
-                         'CRAPLOT(26):' ||  
-                         ' cdcooper:'   || pr_cdcooper ||
-                         ', dtmvtolt:'  || pr_dtmvtolt ||
-                         ', cdagenci:'  || pr_cdagenci ||
-                         ', cdbccxlt:'  || pr_cdbccxlt ||
-                         ', nrdolote:'  || pr_nrdolote ||
-                         ', tplotmov:'  || pr_tplotmov ||
-                         '. ' ||sqlerrm;               
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-          END;
-        END IF;
-
-        IF cr_craplot%ISOPEN THEN
-          CLOSE cr_craplot;
-        END IF;
-
-        -- retornar informações para o programa chamador
-        pr_craplot := rw_craplot_ctl;
-
-        COMMIT;
-      EXCEPTION
-        WHEN vr_exc_erro THEN
-          --Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
-          IF cr_craplot%ISOPEN THEN
-            CLOSE cr_craplot;
-          END IF;
-          ROLLBACK;
-        WHEN OTHERS THEN
-          -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
-          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
-          IF cr_craplot%ISOPEN THEN
-            CLOSE cr_craplot;
-          END IF;
-          -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
-          pr_cdcritic := 9999;
-          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
-                      'PAGA0001.pc_insere_lote'||
-                      '. ' || SQLERRM ||
-                      '. pr_cdcooper:' || pr_cdcooper || 
+      --Ajuste mensagem de erro - 15/12/2017 - Chamado 779415
+      vr_dsparame :=  ' pr_cdcooper:' || pr_cdcooper ||
                       ', pr_dtmvtolt:' || pr_dtmvtolt ||
                       ', pr_cdagenci:' || pr_cdagenci ||
                       ', pr_cdbccxlt:' || pr_cdbccxlt ||
                       ', pr_nrdolote:' || pr_nrdolote ||
-                      ', pr_tplotmov:' || pr_tplotmov;        
-          ROLLBACK;
-      END pc_insere_lote;
-    BEGIN
-	    -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
-		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PAGA0001.pc_realiza_lancto_cooperado');
-      
-      --Inicializar variavel retorno erro
-      pr_cdcritic:= NULL;
-      pr_dscritic:= NULL;
-      --Ajuste mensagem de erro - 15/12/2017 - Chamado 779415
-      vr_dsparame :=  ' pr_cdcooper:' || pr_cdcooper || 
-                      ', pr_dtmvtolt:' || pr_dtmvtolt || 
-                      ', pr_cdagenci:' || pr_cdagenci || 
-                      ', pr_cdbccxlt:' || pr_cdbccxlt || 
-                      ', pr_nrdolote:' || pr_nrdolote ||  
-                      ', pr_cdpesqbb:' || pr_cdpesqbb; 
+                      ', pr_cdpesqbb:' || pr_cdpesqbb;
       --Verificar se a data existe
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -19180,7 +19052,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       IF BTCH0001.cr_crapdat%NOTFOUND THEN
         -- Fechar o cursor pois haverá raise
         CLOSE BTCH0001.cr_crapdat;
-        --Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
+        --Ajuste mensagem de erro - 15/12/2017 - Chamado 779415
         -- Montar mensagem de critica
         vr_cdcritic := 1; --Registro de controles de data nao encontrado
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -19188,28 +19060,81 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       ELSE
         -- Apenas fechar o cursor
         CLOSE BTCH0001.cr_crapdat;
-      END IF;
+               END IF;
       --Percorrer todos os lancamentos
       vr_index:= pr_tab_lcm_consolidada.FIRST;
       WHILE vr_index IS NOT NULL LOOP
         IF pr_tab_lcm_consolidada(vr_index).nrconven = to_number(pr_cdpesqbb) THEN
           --Se for tarifa
           IF pr_tab_lcm_consolidada(vr_index).tplancto <> 'T' THEN /* Tarifa */
-            pc_insere_lote (pr_cdcooper => pr_cdcooper,
-                            pr_dtmvtolt => pr_dtmvtolt,
-                            pr_cdagenci => pr_cdagenci,
-                            pr_cdbccxlt => pr_cdbccxlt,
-                            pr_nrdolote => pr_nrdolote,
-                            pr_tplotmov => 1,
-                            pr_craplot  => rw_craplot,
-                            pr_cdcritic => vr_cdcritic,
-                            pr_dscritic => vr_dscritic);
-            -- se encontrou erro ao buscar lote, abortar programa
-            IF vr_dscritic IS NOT NULL THEN              
-                  --Levantar Excecao
-                  RAISE vr_exc_erro;
-            END IF;
-            
+            --Buscar lote
+            OPEN cr_craplot (pr_cdcooper => pr_cdcooper
+                            ,pr_dtmvtolt => pr_dtmvtolt
+                            ,pr_cdagenci => pr_cdagenci
+                            ,pr_cdbccxlt => pr_cdbccxlt
+                            ,pr_nrdolote => pr_nrdolote);
+            --Posicionar no primeiro registro
+            FETCH cr_craplot INTO rw_craplot;
+            --Verificar se encontrou
+        IF cr_craplot%NOTFOUND THEN
+              --Fechar Cursor
+              CLOSE cr_craplot;
+          BEGIN
+            INSERT INTO craplot
+                    (craplot.cdcooper
+                    ,craplot.dtmvtolt
+                    ,craplot.cdagenci
+                    ,craplot.cdbccxlt
+                    ,craplot.nrdolote
+                    ,craplot.tplotmov)
+                VALUES
+                  (pr_cdcooper
+                    ,pr_dtmvtolt
+                    ,pr_cdagenci
+                    ,pr_cdbccxlt
+                    ,pr_nrdolote
+                  ,1)
+                RETURNING
+                   craplot.cdcooper
+                  ,craplot.dtmvtolt
+                  ,craplot.cdagenci
+                  ,craplot.cdbccxlt
+                    ,craplot.nrdolote
+                    ,craplot.tplotmov
+                    ,craplot.nrseqdig
+                  ,craplot.rowid
+                INTO
+                   rw_craplot.cdcooper
+                  ,rw_craplot.dtmvtolt
+                  ,rw_craplot.cdagenci
+                  ,rw_craplot.cdbccxlt
+                  ,rw_craplot.nrdolote
+                  ,rw_craplot.tplotmov
+                  ,rw_craplot.nrseqdig
+                  ,rw_craplot.rowid;
+          EXCEPTION
+            WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
+              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+                  -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415
+                  vr_cdcritic := 1034;
+                  vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                         'CRAPLOT(26):' ||  
+                         ' cdcooper:'   || pr_cdcooper ||
+                         ', dtmvtolt:'  || pr_dtmvtolt ||
+                         ', cdagenci:'  || pr_cdagenci ||
+                         ', cdbccxlt:'  || pr_cdbccxlt ||
+                         ', nrdolote:'  || pr_nrdolote ||
+                             ', tplotmov:'  || '1' ||
+                         '. ' ||sqlerrm;               
+              --Levantar Excecao
+              RAISE vr_exc_erro;
+          END;
+        END IF;
+            --Fechar Cursor
+        IF cr_craplot%ISOPEN THEN
+          CLOSE cr_craplot;
+        END IF;
             --Numero do Convenio existe
             IF pr_tab_lcm_consolidada(vr_index).nrconven > 0 THEN
               vr_nrdocmto:= pr_tab_lcm_consolidada(vr_index).nrconven;
@@ -26943,6 +26868,7 @@ end;';
               ,t.nrridlfp
               ,s.cdparecer_analise
               ,s.flganalise_manual
+              ,t.idlancto --(P500-SM02)
           FROM craplau
               ,tbted_det_agendamento t
               ,tbgen_analise_fraude s
@@ -27145,7 +27071,10 @@ end;';
        vr_insitlau:= rw_craplau.insitlau;
        
        -- INC0013286 - Se analise de fraude pendente, gerar critica e deixar TED pendente
-       IF nvl(rw_craplau.cdparecer_analise,0) in (0, 2) AND nvl(rw_craplau.flganalise_manual,0) = 0 THEN
+       IF nvl(rw_craplau.cdparecer_analise,0) in (0, 2) AND nvl(rw_craplau.flganalise_manual,0) = 0 
+          AND rw_craplau.Dsorigem <> 'AIMARO'  THEN /* Incluido a condição da origem para atender a demanda do projeto 500,
+                                                       agendamento de ted em lote*/
+                                                       
          vr_cdcritic := 9999;
          vr_dscritic := 'Aguardando analise do sistema antifraude.';
          -- Chamar geracao de LOG
@@ -27512,6 +27441,8 @@ end;';
 					                             ,pr_idagenda => 2
                                        ,pr_idportab => vr_idportab
                                        ,pr_nrridlfp => NVL(vr_nrridlfp,0)
+                                       ,pr_cdtiptra => rw_craplau.cdtiptra --> Tipo de transação /*REQ39*/
+                                       ,pr_idlancto => rw_craplau.idlancto --> pr_idlancto --> Id do agendamento (P500-SM02)
                                        -- saida        
                                        ,pr_dsprotoc => vr_dsprotoc  --> Retorna protocolo    
                                        ,pr_tab_protocolo_ted => vr_tab_protocolo_ted --> dados do protocolo
@@ -27638,8 +27569,21 @@ end;';
          --Marcar transacao como realizada
          vr_flgtrans:= TRUE;
          
+         /*P500-SM02 Gravar o protocolo da efetivação do TED ao arquivo de remessa cnab de TED/Transferência */
+         --Verificar se existe arquivo cnab
+         OPEN cr_tbcnab (pr_cdcooper => pr_cdcooper
+                       ,pr_idlancto => rw_craplau.idlancto);                                         
+         FETCH cr_tbcnab INTO rw_tbcnab;
+         IF cr_tbcnab%FOUND THEN
+           /*Atualizar número do protocolo */
+           UPDATE tbtransf_arquivo_ted_linhas tatl
+           SET tatl.dsprotocolo = vr_dsprotoc
+           WHERE tatl.rowid = rw_tbcnab.rowid_cnab;
        END IF;
+         CLOSE cr_tbcnab;
        
+       END IF;
+
        --Se nao executou a transacao
        IF NOT vr_flgtrans AND vr_dscritic IS NULL THEN
          
@@ -27844,7 +27788,7 @@ end;';
       -- Variaveis para verificao termino ciclo de pagamentos
       vr_flultexe INTEGER;
       vr_qtdexec  INTEGER;
-    
+
       -- Envio de email
       vr_texto_email     varchar2(4000); 
       vr_endereco_email  crapprm.dsvlrprm%TYPE;
@@ -28010,7 +27954,7 @@ end;';
             END IF;
 
              --Se for TED
-             IF vr_tab_agendto(vr_index_agendto).cdtiptra = 4 THEN /* TED */
+             IF vr_tab_agendto(vr_index_agendto).cdtiptra IN (4,22) THEN /* TED */ /*REQ39*/
                  -- TED não cancela
                  CONTINUE;
              --Se for transferencia
@@ -28156,6 +28100,6 @@ end;';
                                  );                      
     END;
   END pc_PAGA0001_cancela_debitos;     
-
+       
 END PAGA0001;
 /

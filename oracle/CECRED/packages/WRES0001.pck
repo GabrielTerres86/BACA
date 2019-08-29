@@ -6,12 +6,14 @@ CREATE OR REPLACE PACKAGE CECRED.WRES0001 AS
     Sistema  : Rotinas genéricas para acesso a um serviço HTTP
     Sigla    : WRES
     Autor    : Ricardo Linhares
-    Data     : Outubro/2016.                   Ultima atualizacao: 
+    Data     : Outubro/2016.                   Ultima atualizacao: 11/07/2017
   
    Dados referentes ao programa:
   
    Frequencia: -----
    Objetivo  : Fornecer funcionalidades para acessar um serviço HTTP
+
+   Alterações: 11/07/2017 - Alterado timeout default para 110 (Ricardo).
                 
   ---------------------------------------------------------------------------*/
 
@@ -32,7 +34,7 @@ CREATE OR REPLACE PACKAGE CECRED.WRES0001 AS
   TYPE typ_http_request IS RECORD(endereco  VARCHAR2(1000) -- Diretório do Servidor. Ex: http://mobilebankhml.cecred.coop.br/apí
                                  ,rota      VARCHAR2(255) -- Rota completa da Api. Ex: conta/cooperativas
                                  ,verbo     VARCHAR2(10) -- Método da requisição HTTP, Ex: GET
-                                 ,timeout   NUMBER DEFAULT 30 -- Tempo máximo para espera de uma resposta da requisição HTTP
+                                 ,timeout   NUMBER DEFAULT 110 -- Tempo máximo para espera de uma resposta da requisição HTTP
                                  ,cabecalho   typ_tab_http_cabecalho -- Lista de propriedades do header da requisição HTTP
                                  ,parametros  typ_tab_http_parametros -- Lista de parâmetros GET (na URL) da requisição HTTP
                                  ,conteudo     CLOB -- Content da requisição HTTP
@@ -91,13 +93,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WRES0001 AS
                        ,pr_dtrequisicao IN DATE
                        ,pr_resposta     IN typ_http_response
                        ,pr_dtresposta   IN DATE
-                       ,pr_cdcritic     IN crapcri.cdcritic%TYPE) IS
+                       ,pr_cdcritic     IN crapcri.cdcritic%TYPE) IS   
   PRAGMA AUTONOMOUS_TRANSACTION;                       
   BEGIN
    DECLARE
      vr_clob_cabecalho_requisicao CLOB;
-     vr_clob_cabecalho_resposta   CLOB; 
-     
+     vr_clob_cabecalho_resposta   CLOB;
+
    BEGIN
      -- Cria um CLOB do cabeçalho da Requisição
      pc_cabecalho_to_clob(pr_cabecalho => pr_requisicao.cabecalho
