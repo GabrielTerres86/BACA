@@ -16,7 +16,7 @@ update crawepr w
                                AND epr2.nrdconta = epr.nrdconta
                                AND epr2.nrctremp = epr.nrctremp));
 /                               
---commit;
+commit;
 /                               
 BEGIN
   --/
@@ -132,7 +132,7 @@ BEGIN
   VALUES ('INSITRNV', '5', 'Cancelado');
   --/
  --/
--- COMMIT;
+ COMMIT;
  --/
 END;
                                
