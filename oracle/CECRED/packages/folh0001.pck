@@ -8792,7 +8792,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         -- Fim Pj 475
       END IF;
 
-      -- Busca do horário limite para a portabilidade
+     /* -- Busca do horário limite para a portabilidade
       vr_hrlimpor := gene0001.fn_param_sistema('CRED', Pr_cdcooper, 'FOLHAIB_HOR_LIM_PORTAB');
              
       -- não deixar fazer a folha ctasal caso o horario estrapole
@@ -8800,6 +8800,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
          pr_dsalerta := 'Pagamentos para outras instituicoes so podem ser feitos ate as '||vr_hrlimpor;
          RETURN;
     END IF;
+	*/
       
     END IF;
 
