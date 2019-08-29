@@ -7,6 +7,8 @@
    Alteracoes   : 18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
                   23/03/2019 - PRJ 438 - BUG 18068 - Atualizar flag de alteração para sempre validar se houve ou não alteração
                                nos valores em tela - Bruno Luiz Katzjarowski - Mout's
+				  19/04/2019 - Ajuste na tela garantia de operação, para salvar seus dados apenas no 
+                               final da inclusão, alteração de empréstimo - PRJ 438. (Mateus Z / Mouts)
  */
 
 $(document).ready(function() {
@@ -27,8 +29,6 @@ $(document).ready(function() {
 
 });
 
-//bruno - prj 438 - bug 14235
-var __aux_acao = "";
 
 var rGar_rotulos1 = $('label[for="gar_vlropera"],label[for="gar_codlinha"],label[for="gar_permingr"],label[for="gar_pro_apli"],label[for="gar_pro_poup"],label[for="gar_pro_raut"],label[for="gar_ter_ncta"],label[for="gar_ter_apli"],label[for="gar_ter_poup"]', '#frmGAROPC');
 var rGar_rotulos2 = $('label[for="gar_pro_apli_0"],label[for="gar_pro_apli_1"],label[for="gar_pro_poup_0"],label[for="gar_pro_poup_1"],label[for="gar_pro_raut_0"],label[for="gar_pro_raut_1"],label[for="gar_ter_apli_0"],label[for="gar_ter_apli_1"],label[for="gar_ter_poup_0"],label[for="gar_ter_poup_1"]', '#frmGAROPC');
@@ -273,8 +273,12 @@ function gravarGAROPC(gar_ret_nomcampo, gar_ret_nomformu, gar_ret_execfunc, gar_
     var gar_ter_apli_sld = $('#gar_ter_apli_sld', '#frmGAROPC').val();
     var gar_ter_poup_sld = $('#gar_ter_poup_sld', '#frmGAROPC').val();
 
-    //bruno - bug 6666
-    var _data = {
+    // Carrega conteudo da opcao atraves do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/garopc/grava_dados.php',
+        data: {
             nmdatela     : gar_nmdatela,
             idcobert     : gar_idcobert,
             tipaber      : cGar_tipaber.val(),
@@ -299,73 +303,99 @@ function gravarGAROPC(gar_ret_nomcampo, gar_ret_nomformu, gar_ret_execfunc, gar_
             ret_nomformu : gar_ret_nomformu,
             ret_execfunc : gar_ret_execfunc,
             err_execfunc : gar_err_execfunc,
-            aux_acao: __aux_acao, //prj 438 - bug 14235
             redirect     : 'html_ajax'
-        };
-
-    //Bruno - bug 6666
-    //Ao entrar na tela garopc salvar o primeiro envio à grava_dados
-    if(__aux_acao == 'EMPRESTIMO'){
-        if(__garopcArr == null)
-            __garopcArr = _data;
-        else{
-            if(validaAlteracaoGaropc(__garopcArr, _data)){
-                _data.flagAlteracao = true;
-            }else{
-                _data.flagAlteracao = false;
-            }
-        }
-    }
-
-    // Carrega conteudo da opcao atraves do Ajax
-    $.ajax({
-        type: 'POST',
-        dataType: 'html',
-        url: UrlSite + 'telas/garopc/grava_dados.php',
-        data: _data,
+        },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo($(\'#frmGAROPC\'))');
         },
         success: function (response) {
             eval(response);
-        },
-        complete: function(a,e,i,o){ //bruno - bug 6666
-            var response = a.responseText;
-            //Alterar array somente depois de gravado e não contendo erros
-            if(response.indexOf('error') === -1){
-                //Atualizar versão do array auxiliar da garopc
-                if(__aux_acao == 'EMPRESTIMO'){
-                    __garopcArr = _data;
-                }
-            }
         }
     });
 
 }
 
+function validarGAROPC(gar_ret_execfunc, gar_err_execfunc) {
 
-/**
- * Bruno Luiz Katzjarowski - Mout's - 23/03/2019
- * @param {object} arrOld Valores antigos
- * @param {object} arrNew Valores novos
- * @return {boolean} true -> Há alterações, false -> não há alterações
- */
-function validaAlteracaoGaropc(arrOld, arrNew){
-    if(arrOld.nrctater != arrNew.nrctater) return true;
-    if(arrOld.lintpctr != arrNew.lintpctr) return true;
-    if(arrOld.vlropera != arrNew.vlropera) return true;
-    if(arrOld.permingr != arrNew.permingr) return true;
-    if(arrOld.inresper != arrNew.inresper) return true;
-    if(arrOld.diatrper != arrNew.diatrper) return true;
-    if(arrOld.tpctrato != arrNew.tpctrato) return true;
-    if(arrOld.inaplpro != arrNew.inaplpro) return true;
-    if(arrOld.inpoupro != arrNew.inpoupro) return true;
-    if(arrOld.vlpoupro != arrNew.vlpoupro) return true;
-    if(arrOld.inresaut != arrNew.inresaut) return true;
-    if(arrOld.inaplter != arrNew.inaplter) return true;
-    if(arrOld.vlaplter != arrNew.vlaplter) return true;
-    if(arrOld.inpouter != arrNew.inpouter) return true;
-    if(arrOld.vlpouter != arrNew.vlpouter) return true;
-    return false;
+    var gar_nmdatela = $('#gar_nmdatela', '#frmGAROPC').val();
+    var gar_idcobert = normalizaNumero($('#gar_idcobert', '#frmGAROPC').val());
+    var gar_nrdconta = normalizaNumero($('#gar_nrdconta', '#frmGAROPC').val());
+    var gar_diatrper = normalizaNumero($('#gar_diatrper', '#frmGAROPC').val());
+    var gar_pro_apli = $('input[name=gar_pro_apli]:radio:checked', '#frmGAROPC').val();
+    var gar_pro_poup = $('input[name=gar_pro_poup]:radio:checked', '#frmGAROPC').val();
+    var gar_pro_raut = $('input[name=gar_pro_raut]:radio:checked', '#frmGAROPC').val();
+    var gar_ter_apli = $('input[name=gar_ter_apli]:radio:checked', '#frmGAROPC').val();
+    var gar_ter_poup = $('input[name=gar_ter_poup]:radio:checked', '#frmGAROPC').val();
+
+    var gar_pro_apli_sld = $('#gar_pro_apli_sld', '#frmGAROPC').val();
+    var gar_pro_poup_sld = $('#gar_pro_poup_sld', '#frmGAROPC').val();
+    var gar_ter_apli_sld = $('#gar_ter_apli_sld', '#frmGAROPC').val();
+    var gar_ter_poup_sld = $('#gar_ter_poup_sld', '#frmGAROPC').val();
+
+    // PRJ 438 - Salvar os campos para serem gravados ao final da tela Emprestimo
+    campos_garopc_emp = {
+        nmdatela: gar_nmdatela,
+        idcobert: gar_idcobert,
+        tipaber:  cGar_tipaber.val(),
+        nrdconta: gar_nrdconta,
+        nrctater: normalizaNumero(cGar_ter_ncta.val()),
+        lintpctr: cGar_lintpctr.val(),
+        vlropera: gar_vlropera,
+        permingr: cGar_permingr.val(),
+        inresper: gar_inresper,
+        diatrper: gar_diatrper,
+        tpctrato: gar_tpctrato,
+        inaplpro: gar_pro_apli,
+        vlaplpro: gar_pro_apli_sld,
+        inpoupro: gar_pro_poup,
+        vlpoupro: gar_pro_poup_sld,
+        inresaut: gar_pro_raut,
+        inaplter: gar_ter_apli,
+        vlaplter: gar_ter_apli_sld,
+        inpouter: gar_ter_poup,
+        vlpouter: gar_ter_poup_sld
+    };
+
+    // PRJ 438
+    flgPassouGAROPC = true;
+
+    // Carrega conteudo da opcao atraves do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/garopc/valida_dados.php',
+        data: {
+            nmdatela     : gar_nmdatela,
+            tipaber      : cGar_tipaber.val(),
+            nrdconta     : gar_nrdconta,
+            nrctater     : normalizaNumero(cGar_ter_ncta.val()),
+            lintpctr     : cGar_lintpctr.val(),
+            vlropera     : gar_vlropera,
+            permingr     : cGar_permingr.val(),
+            inresper     : gar_inresper,
+            diatrper     : gar_diatrper,
+            tpctrato     : gar_tpctrato,
+            inaplpro     : gar_pro_apli,
+            vlaplpro     : gar_pro_apli_sld,
+            inpoupro     : gar_pro_poup,
+            vlpoupro     : gar_pro_poup_sld,
+            inresaut     : gar_pro_raut,
+            inaplter     : gar_ter_apli,
+            vlaplter     : gar_ter_apli_sld,
+            inpouter     : gar_ter_poup,
+            vlpouter     : gar_ter_poup_sld,
+            ret_execfunc : gar_ret_execfunc,
+            err_execfunc : gar_err_execfunc,
+            redirect     : 'html_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo($(\'#frmGAROPC\'))');
+        },
+        success: function (response) {
+            eval(response);
+        }
+    });
+
 }
