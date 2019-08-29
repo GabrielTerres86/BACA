@@ -27,6 +27,7 @@
  * 015: [08/11/2018] Criação do botão de Altera Somente Bens - PRJ438 - Sprint 5 (Mateus Z / Mouts)
  * 016: [05/02/2019] Inclusao da coluna origem. P438. (Douglas Pagel / AMcom)	
  * 017: [28/06/2019] Incluido campo hidden tpemprst PRJ 438 - Sprint 13 - (Mateus Z / Mouts)
+ * 018: [16/08/2019] Inclusao da origem 10 (MOBILE). P438 (Douglas Pagel / AMcom)
  */
 ?>
 
@@ -79,6 +80,9 @@
                         break;
 					case 5:
                         $tipoOrigem = "URA";
+                        break;
+                    case 10:
+                        $tipoOrigem = "Mobile";
                         break;
                 }
 				?>
