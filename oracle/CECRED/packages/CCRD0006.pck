@@ -15,7 +15,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
   --              02/10/2018 - Ajustada rotina de envio de email com antecipações não processadas a mais de 1 hora
    --                          (André - Mouts PRB0040347)               
   --              08/10/2018 - Inclusão das tags tppontovenda e tpvlpagamento no processamento dos arquivos CIP. 
-  --                           (SCTASK0024874 - Andre - Mouts)           
+  --                           (SCTASK0024874 - Andre - Mouts)  
+  --              30/08/2019 - AILOS RITM0017086 - Diego Batista Pereira da Silva ajustado cursor pc_lista_arquivos.cr_tabela
+  --                           referente a lista de arquivos da tela CONCIP para validar nrispb_credor e nrispb_devedor na clausula WHERE.
   -- 
   --  Variáveis globais
   vr_database_name           VARCHAR2(50);
@@ -9288,87 +9290,109 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     -- Cursor sobre os arquivos processados
     CURSOR cr_tabela(pr_dtinicio DATE, pr_dtfinal DATE, pr_dtinicioliq DATE, pr_dtfinalliq DATE) IS
-select y.*
-from (
-select x.*,
-             upper( 
-                 (select max(decode(slc.cdispb_if_debitada, '00000000', 'BANCO DO BRASIL',ban.nmresbcc))
-                 from tbdomic_liqtrans_mensagem_slc slc
-                      ,crapban ban
-              where (SUBSTR(LPAD(x.nrcnpj_credenciador, 14, '0'), 1, 8) = pr_credenciadora OR (pr_credenciadora IS NULL)) --filtro credenciadora
-         AND slc.nrcnpj_nliquidante_debitado(+) = x.nrcnpj_credenciador --amarra cpnj do lct com slc
-         AND ban.nrispbif(+) = slc.cdispb_if_debitada --pega nome pelo ispb
-         AND (slc.cdispb_if_debitada = pr_bcoliquidante OR (pr_bcoliquidante IS NULL)) --filtro de bco liquidante
-                 ))  AS bcoliquidante
-from  (
-      SELECT  arq.nmarquivo_origem nmarquivo,
-              case instr(upper(lct.nmcredenciador),'BANCOOB') when 0 then
-                case instr(upper(lct.nmcredenciador),'ELAVON') when 0 then
-                    case instr(upper(lct.nmcredenciador),'STONE') when 0 then
-                          case instr(upper(lct.nmcredenciador),'BRADESCO') when 0 then
-                               case instr(upper(lct.nmcredenciador),'SOROCRED') when 0 then
-                                    case instr(upper(lct.nmcredenciador),'BANESTES') when 0 then
-                                         case instr(upper(lct.nmcredenciador),'SAFRA') when 0 then
-                                              upper(lct.nmcredenciador)
-                                         else 'SAFRA' end
-                                    else 'BANESTES' end
-                               else 'SOROCRED' end
-                          else 'BRADESCO' end
-                    else 'STONE' end
-                else 'ELAVON' end
-              else 'BANCOOB' end AS nmcredenciador,
-              to_char(to_date(substr(arq.dharquivo_origem,1,10),'YYYY-MM-DD'),'DD/MM/YYYY')||' '||substr(arq.dharquivo_origem,12,5) dtinclusao,
-              substr(arq.dharquivo_origem,12,5) hrinclusao,
-              to_char(to_date(substr(pdv.dtpagamento,1,10),'YYYY-MM-DD'),'DD/MM/YYYY') dtliquidacao,
-              arq.nmarquivo_gerado,
-              decode(arq2.nmarquivo_origem, null, decode(arq.nmarquivo_retorno, null, null, 'RET'), 'ERR') tpretorno,
-              decode(arq.tparquivo, 1, 'CR', 2, 'DB', 3, 'AT')               tparquivo,
-              to_char(arq.dharquivo_gerado,'DD/MM/YYYY HH24:MI')             dtgeracao,
-              lct.nrcnpj_credenciador,
-              sum(decode(nvl(pdv.cdocorrencia,'XX'),'XX',0,1))               qtprocessados,
-              sum(decode(nvl(pdv.cdocorrencia,'XX'),'XX',0,pdv.vlpagamento)) vlprocessados,
-              sum(decode(lct.insituacao,2,decode(nvl(pdv.cdocorrencia,'XX'),'00',decode(nvl(pdv.cdocorrencia_retorno,'00'),'00',1,0),0),0)) qtintegrados,
-              sum(decode(lct.insituacao,2,decode(nvl(pdv.cdocorrencia,'XX'),'00',decode(nvl(pdv.cdocorrencia_retorno,'00'),'00',pdv.vlpagamento,0),0),0)) vlintegrados,
-              sum(decode(lct.insituacao,2,decode(nvl(pdv.cdocorrencia,'XX'),'01',decode(arq.tparquivo,1,1,0),0),0)) qtagendados,
-              sum(decode(lct.insituacao,2,decode(nvl(pdv.cdocorrencia,'XX'),'01',decode(arq.tparquivo,1,pdv.vlpagamento,0),0),0)) vlagendados,
-              sum(decode(nvl(pdv.cdocorrencia, 'XX'),'00',decode(nvl(pdv.cdocorrencia_retorno, '00'),'00',
-                  decode(nvl(pdv.dsocorrencia_retorno, 'XX'),'XX',0,1)),'01',decode(arq.tparquivo, 1, 0, 1),'XX',
-                  decode(nvl(pdv.dsocorrencia_retorno, 'XX'),'XX',0,1),1)) qterros,
-              sum(decode(nvl(pdv.cdocorrencia, 'XX'),'00',decode(nvl(pdv.cdocorrencia_retorno, '00'),'00',
-                  decode(nvl(pdv.dsocorrencia_retorno, 'XX'),'XX',0,pdv.vlpagamento)),'01',decode(arq.tparquivo, 1, 0, pdv.vlpagamento),'XX',
-                  decode(nvl(pdv.dsocorrencia_retorno, 'XX'),'XX',0,pdv.vlpagamento), pdv.vlpagamento)) vlerros,
-              count(1) over() qttotalreg
-        FROM  tbdomic_liqtrans_arquivo arq
-             ,tbdomic_liqtrans_lancto lct
-             ,tbdomic_liqtrans_centraliza ctz
-             ,tbdomic_liqtrans_pdv pdv
-             ,tbdomic_liqtrans_arquivo arq2
-       WHERE lct.idarquivo = arq.idarquivo
-         AND lct.insituacao <> 3 -- não pegar arquivos que vieram com problema no XML
-         AND ctz.idlancto = lct.idlancto
-         AND pdv.idcentraliza = ctz.idcentraliza
-         AND (pdv.tpforma_transf = pr_formtran OR (pr_formtran = '0' AND pdv.tpforma_transf IS NOT NULL)) --filtro forma transf
-         AND (to_date(substr(arq.dharquivo_origem,1,10),'YYYY-MM-DD') BETWEEN pr_dtinicio AND pr_dtfinal
-         OR   trunc(arq.dharquivo_gerado) BETWEEN pr_dtinicio AND pr_dtfinal)
-         AND (to_date(substr(pdv.dtpagamento,1,10),'YYYY-MM-DD') BETWEEN pr_dtinicioliq AND pr_dtfinalliq)
-         AND arq2.nmarquivo_origem(+) = arq.nmarquivo_gerado||'_ERR'
-         AND (arq.tparquivo = pr_tparquivo OR (pr_tparquivo = 0 AND arq.tparquivo IN(1, 2, 3))) --filtro de tipo de arquivo
-       GROUP BY  arq.nmarquivo_origem, 
-                  lct.nmcredenciador,
-                 to_char(to_date(substr(arq.dharquivo_origem,1,10),'YYYY-MM-DD'),'DD/MM/YYYY'),
-                 substr(arq.dharquivo_origem,12,5),
-                 arq.nmarquivo_gerado,
-                 arq.nmarquivo_retorno,
-                 arq2.nmarquivo_origem,
-                 decode(arq.tparquivo, 1, 'CR', 2, 'DB', 3, 'AT'),
-                 to_char(arq.dharquivo_gerado,'DD/MM/YYYY HH24:MI'),
-                 to_char(to_date(substr(pdv.dtpagamento,1,10),'YYYY-MM-DD'),'DD/MM/YYYY'),
-                 lct.nrcnpj_credenciador
-       ) x 
-       ) y
-       where  (SUBSTR(LPAD(y.nrcnpj_credenciador, 14, '0'), 1, 8)= pr_credenciadora OR (pr_credenciadora IS NULL)) --filtro credenciadora
-              and (y.bcoliquidante is not null OR (pr_bcoliquidante IS NULL)) --filtro de bco liquidante
-             ORDER BY y.nmarquivo;
+      SELECT y.*
+      FROM
+        (SELECT x.*,
+            upper(
+                (SELECT max(decode(slc.cdispb_if_debitada, '00000000', 'BANCO DO BRASIL', ban.nmresbcc))
+                 FROM tbdomic_liqtrans_mensagem_slc slc, crapban ban
+                 WHERE (SUBSTR(LPAD(x.nrcnpj_credenciador, 14, '0'), 1, 8) = pr_credenciadora
+                    OR (pr_credenciadora IS NULL))--filtro credenciadora
+
+                 AND slc.nrcnpj_nliquidante_debitado(+) = x.nrcnpj_credenciador --amarra cpnj do lct com slc
+
+                 AND slc.cdispb_if_creditada(+) = x.nrispb_credor
+                 AND slc.Cdispb_If_Debitada(+) = x.nrispb_devedor
+    						 
+                 AND ban.nrispbif(+) = slc.cdispb_if_debitada --pega nome pelo ispb
+
+                 AND (slc.cdispb_if_debitada = pr_bcoliquidante
+                    OR (pr_bcoliquidante IS NULL))--filtro de bco liquidante
+       )) AS bcoliquidante
+         FROM
+         (SELECT arq.nmarquivo_origem nmarquivo,
+             lct.nrispb_credor,
+             lct.nrispb_devedor,
+             CASE instr(upper(lct.nmcredenciador), 'BANCOOB')
+               WHEN 0 THEN CASE instr(upper(lct.nmcredenciador), 'ELAVON')
+                       WHEN 0 THEN CASE instr(upper(lct.nmcredenciador), 'STONE')
+                               WHEN 0 THEN CASE instr(upper(lct.nmcredenciador), 'BRADESCO')
+                                       WHEN 0 THEN CASE instr(upper(lct.nmcredenciador), 'SOROCRED')
+                                               WHEN 0 THEN CASE instr(upper(lct.nmcredenciador), 'BANESTES')
+                                                       WHEN 0 THEN CASE instr(upper(lct.nmcredenciador), 'SAFRA')
+                                                               WHEN 0 THEN upper(lct.nmcredenciador)
+                                                               ELSE 'SAFRA'
+                                                             END
+                                                       ELSE 'BANESTES'
+                                                     END
+                                               ELSE 'SOROCRED'
+                                             END
+                                       ELSE 'BRADESCO'
+                                     END
+                               ELSE 'STONE'
+                             END
+                       ELSE 'ELAVON'
+                     END
+               ELSE 'BANCOOB'
+             END AS nmcredenciador,
+             to_char(to_date(substr(arq.dharquivo_origem, 1, 10), 'YYYY-MM-DD'), 'DD/MM/YYYY')||' '||substr(arq.dharquivo_origem, 12, 5) dtinclusao,
+             substr(arq.dharquivo_origem, 12, 5) hrinclusao,
+             to_char(to_date(substr(pdv.dtpagamento, 1, 10), 'YYYY-MM-DD'), 'DD/MM/YYYY') dtliquidacao,
+             arq.nmarquivo_gerado,
+             decode(arq2.nmarquivo_origem, NULL, decode(arq.nmarquivo_retorno, NULL, NULL, 'RET'), 'ERR') tpretorno,
+             decode(arq.tparquivo, 1, 'CR', 2, 'DB', 3, 'AT') tparquivo,
+             to_char(arq.dharquivo_gerado, 'DD/MM/YYYY HH24:MI') dtgeracao,
+             lct.nrcnpj_credenciador,
+             sum(decode(nvl(pdv.cdocorrencia, 'XX'), 'XX', 0, 1)) qtprocessados,
+             sum(decode(nvl(pdv.cdocorrencia, 'XX'), 'XX', 0, pdv.vlpagamento)) vlprocessados,
+             sum(decode(lct.insituacao, 2, decode(nvl(pdv.cdocorrencia, 'XX'), '00', decode(nvl(pdv.cdocorrencia_retorno, '00'), '00', 1, 0), 0), 0)) qtintegrados,
+             sum(decode(lct.insituacao, 2, decode(nvl(pdv.cdocorrencia, 'XX'), '00', decode(nvl(pdv.cdocorrencia_retorno, '00'), '00', pdv.vlpagamento, 0), 0), 0)) vlintegrados,
+             sum(decode(lct.insituacao, 2, decode(nvl(pdv.cdocorrencia, 'XX'), '01', decode(arq.tparquivo, 1, 1, 0), 0), 0)) qtagendados,
+             sum(decode(lct.insituacao, 2, decode(nvl(pdv.cdocorrencia, 'XX'), '01', decode(arq.tparquivo, 1, pdv.vlpagamento, 0), 0), 0)) vlagendados,
+             sum(decode(nvl(pdv.cdocorrencia, 'XX'), '00', decode(nvl(pdv.cdocorrencia_retorno, '00'), '00', decode(nvl(pdv.dsocorrencia_retorno, 'XX'), 'XX', 0, 1)), '01', decode(arq.tparquivo, 1, 0, 1), 'XX', decode(nvl(pdv.dsocorrencia_retorno, 'XX'), 'XX', 0, 1), 1)) qterros,
+             sum(decode(nvl(pdv.cdocorrencia, 'XX'), '00', decode(nvl(pdv.cdocorrencia_retorno, '00'), '00', decode(nvl(pdv.dsocorrencia_retorno, 'XX'), 'XX', 0, pdv.vlpagamento)), '01', decode(arq.tparquivo, 1, 0, pdv.vlpagamento), 'XX', decode(nvl(pdv.dsocorrencia_retorno, 'XX'), 'XX', 0, pdv.vlpagamento), pdv.vlpagamento)) vlerros,
+             count(1) over() qttotalreg
+          FROM tbdomic_liqtrans_arquivo arq,
+             tbdomic_liqtrans_lancto lct,
+             tbdomic_liqtrans_centraliza ctz,
+             tbdomic_liqtrans_pdv pdv,
+             tbdomic_liqtrans_arquivo arq2
+          WHERE lct.idarquivo = arq.idarquivo
+          AND lct.insituacao <> 3 -- não pegar arquivos que vieram com problema no XML
+
+          AND ctz.idlancto = lct.idlancto
+          AND pdv.idcentraliza = ctz.idcentraliza
+          AND (pdv.tpforma_transf = pr_formtran
+             OR (pr_formtran = '0'
+               AND pdv.tpforma_transf IS NOT NULL))--filtro forma transf
+
+          AND (to_date(substr(arq.dharquivo_origem, 1, 10), 'YYYY-MM-DD') BETWEEN pr_dtinicio AND pr_dtfinal
+             OR trunc(arq.dharquivo_gerado) BETWEEN pr_dtinicio AND pr_dtfinal)
+          AND (to_date(substr(pdv.dtpagamento, 1, 10), 'YYYY-MM-DD') BETWEEN pr_dtinicioliq AND pr_dtfinalliq)
+          AND arq2.nmarquivo_origem(+) = arq.nmarquivo_gerado||'_ERR'
+          AND (arq.tparquivo = pr_tparquivo
+             OR (pr_tparquivo = 0
+               AND arq.tparquivo IN(1,2,3)))--filtro de tipo de arquivo
+          GROUP BY arq.nmarquivo_origem,
+               lct.nmcredenciador,
+               lct.nrispb_credor,
+               lct.nrispb_devedor,
+               to_char(to_date(substr(arq.dharquivo_origem, 1, 10), 'YYYY-MM-DD'), 'DD/MM/YYYY'),
+               substr(arq.dharquivo_origem, 12, 5),
+               arq.nmarquivo_gerado,
+               arq.nmarquivo_retorno,
+               arq2.nmarquivo_origem,
+               decode(arq.tparquivo, 1, 'CR', 2, 'DB', 3, 'AT'),
+               to_char(arq.dharquivo_gerado, 'DD/MM/YYYY HH24:MI'),
+               to_char(to_date(substr(pdv.dtpagamento, 1, 10), 'YYYY-MM-DD'), 'DD/MM/YYYY'),
+               lct.nrcnpj_credenciador) x) y
+      WHERE (SUBSTR(LPAD(y.nrcnpj_credenciador, 14, '0'), 1, 8)= pr_credenciadora
+           OR (pr_credenciadora IS NULL))--filtro credenciadora
+
+        AND (y.bcoliquidante IS NOT NULL
+           OR (pr_bcoliquidante IS NULL))--filtro de bco liquidante
+
+      ORDER BY y.nmarquivo;
     
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
