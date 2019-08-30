@@ -4502,9 +4502,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     IF vr_flcria_empresa THEN
 
       -- Verifica se a empresa eh uma pessoa fisica ou juridica
-      -- Se o CNPJ nao bater com o calculado
-      IF nvl(pr_crapttl.nrcpfemp,0) > 0 AND
-         SUBSTR(pr_crapttl.nrcpfemp,LENGTH(pr_crapttl.nrcpfemp)-1) <> gene0005.fn_retorna_digito_cnpj(pr_nrcalcul => SUBSTR(pr_crapttl.nrcpfemp,1,LENGTH(pr_crapttl.nrcpfemp)-2)) THEN
+      -- Se o código da empresa for 9999 então é PF
+      IF pr_crapttl.cdempres = 9999 THEN
 
         rw_pessoa_fisica := NULL;
         OPEN cr_pessoa_fisica(pr_nrcpf => pr_crapttl.nrcpfemp);

@@ -2635,7 +2635,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0011 IS
              a.vlsalari,
              a.cdturnos,
              a.nmextemp,
-             a.nrcpfemp
+             a.nrcpfemp,
+						 a.cdempres
         FROM crapttl a
        WHERE a.cdcooper = pr_cdcooper
          AND a.nrdconta = pr_nrdconta
@@ -2744,9 +2745,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0011 IS
       IF vr_cria_pj THEN
         
         -- Verifica se a empresa eh uma pessoa fisica ou juridica
-        -- Se o CNPJ nao bater com o calculado
-        IF nvl(vr_pessoa_pj.nrcnpj,0) > 0 AND
-           SUBSTR(vr_pessoa_pj.nrcnpj,LENGTH(vr_pessoa_pj.nrcnpj)-1) <> gene0005.fn_retorna_digito_cnpj(pr_nrcalcul => SUBSTR(vr_pessoa_pj.nrcnpj,1,LENGTH(vr_pessoa_pj.nrcnpj)-2)) THEN
+        -- Se o código da empresa for 9999 então é PF
+        IF rw_crapttl.cdempres = 9999 THEN
           -- Popula os dados para PF
           vr_pessoa_pf.nrcpf                := vr_pessoa_pj.nrcnpj;
           vr_pessoa_pf.nmpessoa             := rw_crapttl.nmextemp;

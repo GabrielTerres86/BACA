@@ -302,7 +302,7 @@ function manterRotina(operacao) {
 
 function controlaLayout(operacao) {
     altura = inpessoa == 1 ? '460px' : '360px';
-    largura = '580px';
+    largura = '615px';
     divRotina.css('width', largura);
     $('#divConteudoOpcao').css('height', altura);
 
@@ -312,18 +312,20 @@ function controlaLayout(operacao) {
     var rColFS1_70 = $('label[for="cdnvlcgo"]', '#' + nomeForm);
     var rColFS1_53 = $('label[for="dsproftl"],label[for="dtadmemp"]', '#' + nomeForm);
     var rColFS1_90 = $('label[for="nmextemp"]', '#' + nomeForm);
-    var rLinha_1 = $('label[for="vlsalari"],label[for="nrcadast"]', '#' + nomeForm);
+    var rLinha_1 = $('label[for="vlsalari"]', '#' + nomeForm);
+    var rLinha_11 = $('label[for="nrcadast"]', '#' + nomeForm);
     var rTurno = $('label[for="cdturnos"]', '#' + nomeForm);
     var rOtrsrend = $('label[for="otrsrend"]', '#' + nomeForm);
     var rPolitica = $('label[for="inpolexp"]', '#' + nomeForm);
 
     rotulos_1.addClass('rotulo').css('width', '90px');
-    rColFS1_60.css('width', '60px');
+    rColFS1_60.css('width', '79px');
     rColFS1_70.css('width', '70px');
-    rColFS1_53.css('width', '53px');
-    rColFS1_90.css('width', '90px');
-    rLinha_1.addClass('rotulo-linha');
-    rOtrsrend.addClass('rotulo-linha').css('width', '217px');
+    rColFS1_53.css('width', '60px');
+    rColFS1_90.css('width', '114px');
+    rLinha_1.css('width', '55px').addClass('rotulo-linha');
+    rLinha_11.css('width', '71px').addClass('rotulo-linha');
+    rOtrsrend.addClass('rotulo-linha').css('width', '245px');
     rTurno.addClass('rotulo').css('width', '40px');
     rPolitica.addClass('rotulo').css('width', '170px');
 
@@ -348,17 +350,17 @@ function controlaLayout(operacao) {
     cTodos_1.desabilitaCampo();
     cCodigo_1.addClass('codigo pesquisa');
     cDescNatOcup.addClass('descricao').css('width', '128px');
-    cDescOcupacao.addClass('descricao').css('width', '135px');
-    cDescEmpresa.addClass('descricao').css('width', '135px');
+    cDescOcupacao.addClass('descricao').css('width', '143px');
+    cDescEmpresa.addClass('descricao').css('width', '144px');
     cTpCrtTrb.css('width', '185px');
-    cNomeEmp.css('width', '228px').attr('maxlength', '35').addClass('alphanum');
+    cNomeEmp.css('width', '232px').attr('maxlength', '35').addClass('alphanum');
     cCnpj.addClass('cnpj').css('width', '120px');
     cFuncao.css('width', '117px').attr('maxlength', '20').addClass('alphanum');
     cNivelCargo.css('width', '120px');
     cTurno.css('width', '125px');
     cDtAdm.css('width', '67px').addClass('data');
     cRend.css('width', '68px').attr('alt', 'p6p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');;
-    cCadEmp.css('width', '58px').addClass('inteiro');
+    cCadEmp.css('width', '58px').addClass('inteiro cadempresa');
     cOtrsrend.css('width', '68px').attr('alt', 'p6p3c2D').css('text-align', 'right').autoNumeric().trigger('blur');;
     cPolitica.css('width', '70px');
 

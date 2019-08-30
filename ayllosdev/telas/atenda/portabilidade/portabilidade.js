@@ -101,10 +101,10 @@ function controlaLayout(cddopcao) {
 		
 		nomeForm = 'frmDadosPortabilidade';		
 		if (glb_opcao == '0') {
-			altura = '650px';
+			altura = '680px';
         	largura = '555px';
 		} else {
-			altura = '580px';
+			altura = '590px';
         	largura = '555px';
 		}
         
@@ -119,6 +119,7 @@ function controlaLayout(cddopcao) {
 		var rCdageban = $('label[for="cdageban"]', '#'+nomeForm);
 		var rNrispbif_banco_folha = $('label[for="nrispbif_banco_folha"]', '#'+nomeForm);
 		var rNrcnpjif = $('label[for="nrcnpjif"]', '#'+nomeForm);
+		var rTppessoa_emp = $('#lbl_tppessoa_empregador', '#'+nomeForm);
 		var rNrdocnpj_emp = $('label[for="nrdocnpj_emp"]', '#'+nomeForm);
 		var rNmprimtl_emp = $('label[for="nmprimtl_emp"]', '#'+nomeForm);
 		var rNrispbif = $('label[for="nrispbif"]', '#'+nomeForm);
@@ -181,6 +182,8 @@ function controlaLayout(cddopcao) {
 		rNrcnpjif.css({ 'width': '165px' });
 		cNrcnpjif.css({ 'width': '135px' });
 		
+		rTppessoa_emp.addClass('rotulo').css({ 'width': '98px' });
+
 		rNrdocnpj_emp.addClass('rotulo').css({ 'width': '98px' });
 		cNrdocnpj_emp.css({ 'width': '112px' });
 		

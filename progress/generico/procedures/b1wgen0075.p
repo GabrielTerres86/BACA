@@ -124,6 +124,8 @@
               30/07/2019 - Adicionado as variáveis aux_vlsalari e aux_nrcpfemp para validação em executar as procedures pc_confirma_pessoa_renda e 
                            pc_confirma_pessoa_empresa somente quando houver alteração da renda e da empresa por parte do usuário 
                            pelo sistema Aimaro (Paulo Penteado GFT)
+                           
+             29/08/2019 PJ485.6 - Ajuste na validaçao e retorno do empregador PF - Augusto (Supero)
 							
 .............................................................................*/
 
@@ -253,7 +255,13 @@ PROCEDURE Busca_Dados:
             tt-comercial.vlsalari = crapttl.vlsalari
             tt-comercial.cdturnos = crapttl.cdturnos
             tt-comercial.dsjusren = crapttl.dsjusren
-            tt-comercial.inpolexp = crapttl.inpolexp.
+            tt-comercial.inpolexp = crapttl.inpolexp
+            tt-comercial.tppesemp = 2. /* Tipo de pessoa do empregador: inicialmente PJ */
+            
+        
+        /* Se for empresa PF... */
+        IF crapttl.cdempres = 9999 THEN
+          ASSIGN tt-comercial.tppesemp = 1.
 
         DO aux_contador = 1 TO EXTENT(tt-comercial.tpdrendi):
           ASSIGN 
@@ -572,6 +580,23 @@ PROCEDURE Valida_Dados:
 				   LEAVE Valida.
 				END.
 		END.	
+		
+         /* [PJ485.6] Validaçoes para empregador PF */
+         IF par_cdempres = 9999 THEN
+         DO:
+            IF TRIM(par_nrcpfemp) = "0" THEN
+            DO:
+               ASSIGN aux_dscritic = "CPF do empregador deve ser informado."
+                      par_nmdcampo = "nrcpfemp".
+               LEAVE Valida.
+            END.
+            IF  TRIM(par_nmextemp) = "" THEN
+            DO:
+               ASSIGN aux_dscritic = "Nome do empregador deve ser informado."
+                      par_nmdcampo = "nmextemp".
+               LEAVE Valida.
+            END.
+         END.
 		
         /* efetuar validacoes quando o contrato de trabalho for = 1 ou 2 */
         IF  par_tpcttrab = 3   OR

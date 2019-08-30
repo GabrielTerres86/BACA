@@ -59,6 +59,7 @@
 	$dsmotivo                       = getByTagName($registro->tags,'dsmotivo');
 	$dsrowid                        = getByTagName($registro->tags,'dsrowid');
 	$idsituacao_regularizacao       = getByTagName($registro->tags,'idsituacao_regularizacao');
+	$tppessoa_empregador       		= getByTagName($registro->tags,'tppessoa_empregador');
 	
 	/***
 	 ** Deve apresentar na tela os campos que estao gravados na ultima solicitacao de portabilidade:
@@ -104,7 +105,14 @@
 
         <fieldset>
             <legend>Empregador</legend>
-            <label for="nrcnpj_empregador_r" class="clsCampos" style="width:90px">CNPJ:</label>
+			
+			<label style="width:110px" id="lbl_tppessoa_empregador" class="clsCampos">Tipo:</label>
+			<input type="radio" style="margin-right: 5px" <?=($tppessoa_empregador == "1" ? "checked" : "")?> id="tppessoa_fisica" disabled readonly name="tppessoa_empregador" value="1"/> <label style="margin-right: 25px" for="tppessoa_fisica">F&iacute;sica</label>
+			<input type="radio" style="margin-right: 5px" <?=($tppessoa_empregador == "2" ? "checked" : "")?> id="tppessoa_juridica" disabled readonly name="tppessoa_empregador" value="2"/> <label for="tppessoa_juridica">J&uacute;ridica</label>
+
+			<br style="clear:both"/>
+
+            <label for="nrcnpj_empregador_r" class="clsCampos" style="width:90px"><?=($tppessoa_empregador == "1" ? "CPF" : "CNPJ")?>:</label>
             <input name="nrcnpj_empregador_r" type="text" id="nrcnpj_empregador_r" readonly="readonly" class="campo campoTelaSemBorda" value="<?php echo $nrcnpj_empregador_r; ?>" style="width:110px" />
 
             <label for="dsnome_empregador_r" class="clsCampos" style="width:65px">Nome:</label>

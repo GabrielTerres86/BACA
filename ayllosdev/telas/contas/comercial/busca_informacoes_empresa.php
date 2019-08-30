@@ -71,6 +71,14 @@
 			echo "$('#cdempres').val('".$cdemprot."');";
 			//echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);";
 			echo "$('#nrcpfemp').val('".$nrcnpjot."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);";
+			// [PJ485.6] Validação para empregador PF
+			if ($cdemprot == 9999) {
+				echo "$('label[for=\"nrcpfemp\"]').html('CPF:');";
+				echo "$('#nmextemp').habilitaCampo();";
+			} else {
+				echo "$('label[for=\"nrcpfemp\"]').html('CNPJ:');";
+				echo "$('#nmextemp').desabilitaCampo();";
+			}
 		}else{			
 			echo "$('#nmresemp').val('".$nmempout."');";		
 			echo "$('#cdempres').val('".$cdemprot."');";

@@ -51,27 +51,29 @@
 		exit();
 	}
 	
-	$nrcpfcgc           = getByTagName($registro->tags,'nrcpfcgc');
-	$nmprimtl           = getByTagName($registro->tags,'nmprimtl');
-	$nrtelefo           = getByTagName($registro->tags,'nrtelefo');
-	$dsdemail           = getByTagName($registro->tags,'dsdemail');
-	$cdbanco_folha      = getByTagName($registro->tags,'cdbanco_folha');
-	$nrispb_banco_folha = getByTagName($registro->tags,'nrispb_banco_folha');
-	$nrcnpj_banco_folha = getByTagName($registro->tags,'nrcnpj_banco_folha');
-	$nrdocnpj_emp       = getByTagName($registro->tags,'nrdocnpj_emp');
-	$nmprimtl_emp       = getByTagName($registro->tags,'nmprimtl_emp');
-	$nrispbif           = getByTagName($registro->tags,'nrispbif');
-	$nrdocnpj           = getByTagName($registro->tags,'nrdocnpj');
-	$cdagectl           = getByTagName($registro->tags,'cdagectl');
-	$nrdconta_formatada = getByTagName($registro->tags,'nrdconta');
-	$dssituacao         = getByTagName($registro->tags,'dssituacao');
-	$nrnu_portabilidade = getByTagName($registro->tags,'nrnu_portabilidade');
-	$dtsolicita         = getByTagName($registro->tags,'dtsolicita');
-	$dtretorno          = getByTagName($registro->tags,'dtretorno');
-	$dsmotivo           = getByTagName($registro->tags,'dsmotivo');
-	$cdsituacao 		= getByTagName($registro->tags,'cdsituacao');
-	$dsrowid            = getByTagName($registro->tags,'dsrowid');
-	$nrsolicitacao      = getByTagName($registro->tags,'nrsolicitacao');
+	$nrcpfcgc            = getByTagName($registro->tags,'nrcpfcgc');
+	$nmprimtl            = getByTagName($registro->tags,'nmprimtl');
+	$nrtelefo            = getByTagName($registro->tags,'nrtelefo');
+	$dsdemail            = getByTagName($registro->tags,'dsdemail');
+	$cdbanco_folha       = getByTagName($registro->tags,'cdbanco_folha');
+	$nrispb_banco_folha  = getByTagName($registro->tags,'nrispb_banco_folha');
+	$nrcnpj_banco_folha  = getByTagName($registro->tags,'nrcnpj_banco_folha');
+	$nrdocnpj_emp        = getByTagName($registro->tags,'nrdocnpj_emp');
+	$nmprimtl_emp        = getByTagName($registro->tags,'nmprimtl_emp');
+	$nrispbif            = getByTagName($registro->tags,'nrispbif');
+	$nrdocnpj            = getByTagName($registro->tags,'nrdocnpj');
+	$cdagectl            = getByTagName($registro->tags,'cdagectl');
+	$nrdconta_formatada  = getByTagName($registro->tags,'nrdconta');
+	$dssituacao          = getByTagName($registro->tags,'dssituacao');
+	$nrnu_portabilidade  = getByTagName($registro->tags,'nrnu_portabilidade');
+	$dtsolicita          = getByTagName($registro->tags,'dtsolicita');
+	$dtretorno           = getByTagName($registro->tags,'dtretorno');
+	$dsmotivo            = getByTagName($registro->tags,'dsmotivo');
+	$cdsituacao 		 = getByTagName($registro->tags,'cdsituacao');
+	$dsrowid             = getByTagName($registro->tags,'dsrowid');
+	$nrsolicitacao       = getByTagName($registro->tags,'nrsolicitacao');
+	$tppessoa_empregador = getByTagName($registro->tags,'tppessoa_empregador');
+
 	/***
 	 ** Deve apresentar na tela os campos que estao gravados na ultima solicitacao de portabilidade:
      **
@@ -161,7 +163,14 @@
 	
 	<fieldset>
 		<legend>Empregador</legend>
-		<label for="nrdocnpj_emp" class="clsCampos">CNPJ:</label>
+		
+		<label id="lbl_tppessoa_empregador" class="clsCampos">Tipo:</label>
+		<input type="radio" style="margin-right: 5px" <?=($tppessoa_empregador == "1" ? "checked" : "")?> id="tppessoa_fisica" disabled readonly name="tppessoa_empregador" value="1"/> <label style="margin-right: 25px" for="tppessoa_fisica">F&iacute;sica</label>
+		<input type="radio" style="margin-right: 5px" <?=($tppessoa_empregador == "2" ? "checked" : "")?> id="tppessoa_juridica" disabled readonly name="tppessoa_empregador" value="2"/> <label for="tppessoa_juridica">J&uacute;ridica</label>
+		
+		<br style="clear:both"/>
+
+		<label for="nrdocnpj_emp" class="clsCampos"><?=($tppessoa_empregador == "1" ? "CPF" : "CNPJ")?>:</label>
 		<input name="nrdocnpj_emp" type="text" id="nrdocnpj_emp" readonly="readonly" class="campo" value="<?php echo $nrdocnpj_emp; ?>" />
 
 		<label for="nmprimtl_emp" class="clsCampos">Nome:</label>
