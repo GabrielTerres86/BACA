@@ -79,6 +79,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                                    pr_flganama  IN NUMBER DEFAULT 0,                           --> Indicador analise efetuada manualmente
                                    pr_dstransa  IN VARCHAR2,                                   --> Descrição da trasaçao para log                                            
                                    pr_dscrilog  IN VARCHAR2,                                   --> Em caso de status de erro, apresentar critica para log
+                                   pr_dsdetcri  IN VARCHAR2 DEFAULT NULL,    
                                    pr_dscritic OUT VARCHAR2 );                                   
   
   --> Rotina para carregar no objeto json os dados da conta
@@ -182,7 +183,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                                                                                --> 4 - Erro na comunicação com antifraude
                                            pr_cdcritic   OUT  NUMBER,       --> Código da Crítica 
                                            pr_dscritic   OUT VARCHAR2,      --> Descrição da Crítica 
-                                           pr_dsdetcri   OUT VARCHAR2);     --> Detalhe da critica                                            
+                                           pr_dsdetcri   IN OUT VARCHAR2);     --> Detalhe da critica                                            
                                            
   --> Rotina para estornar TED reprovada pela analise de fraude
   PROCEDURE pc_estornar_ted_analise (pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, -->Id da análise de fraude
@@ -4498,7 +4499,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                   pr_dstransa IN VARCHAR2,
                                   pr_idanalis IN tbgen_analise_fraude.idanalise_fraude%TYPE,
                                   pr_campoalt IN typ_tab_campo_alt,
-                                  pr_dscrilog IN VARCHAR2)IS
+                                  pr_dscrilog IN VARCHAR2,
+                                  pr_dsdetcri IN VARCHAR2 DEFAULT NULL)IS
                                        
     vr_nrdrowid  ROWID;
     vr_dsorigem  VARCHAR2(30) := NULL;
@@ -4533,6 +4535,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                               pr_nmdcampo => 'Indicador de analise de fraude',
                               pr_dsdadant => pr_idanalis,
                               pr_dsdadatu => pr_idanalis);
+    
+    if pr_dsdetcri is not null then
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'Erro recebido SOA',
+                                pr_dsdadant => NULL,
+                                pr_dsdadatu => pr_dsdetcri);      
+    end if;                          
     
     --> verificar se contem campos alterados
     IF pr_campoalt.count > 0 THEN
@@ -4581,6 +4590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                    pr_flganama  IN NUMBER DEFAULT 0,                           --> Indicador analise efetuada manualmente
                                    pr_dstransa  IN VARCHAR2,                                   --> Descrição da trasaçao para log                                            
                                    pr_dscrilog  IN VARCHAR2,                                   --> Em caso de status de erro, apresentar critica para log
+                                   pr_dsdetcri  IN VARCHAR2 DEFAULT NULL,                      --> Crítica SOA           
                                    pr_dscritic OUT VARCHAR2 ) IS
   /* ..........................................................................
     
@@ -4698,6 +4708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                            pr_dstransa => pr_dstransa,
                            pr_idanalis => rw_fraude.idanalise_fraude,
                            pr_dscrilog => pr_dscrilog,
+                           pr_dsdetcri => pr_dsdetcri, -- Adicionado para gravar crítica SOA
                            pr_campoalt => vr_tab_campo_alt);
      
   EXCEPTION
@@ -6407,7 +6418,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                                                                --> 4 - Erro na comunicação com antifraude
                                            pr_cdcritic   OUT  NUMBER,       --> Código da Crítica 
                                            pr_dscritic   OUT VARCHAR2,      --> Descrição da Crítica 
-                                           pr_dsdetcri   OUT VARCHAR2) IS   --> Detalhe da critica    
+                                           pr_dsdetcri   IN OUT VARCHAR2) IS --> Detalhe da critica    
   /* ..........................................................................
     
       Programa : pc_reg_conf_entrega_antifraude        
@@ -6519,7 +6530,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                            pr_cdcanal =>  vr_cdcanal,      --> Canal origem do parecer
                            pr_dstransa => vr_dstransa,     --> Descrição da trasaçao para log                                            
                            pr_dscrilog => vr_dscrilog,     --> Em caso de status de erro, apresentar critica para log
-                           pr_dscritic => vr_dsdetcri);
+                           pr_dscritic => vr_dsdetcri,
+                           pr_dsdetcri => pr_dsdetcri);    -- Crítica recebida pelo SOA
     IF TRIM(vr_dsdetcri) IS NOT NULL THEN
       vr_cdcritic := 996;
       RAISE vr_exc_erro;
@@ -6566,6 +6578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                 pr_cdcanal  => 1, -- Ayllos      --> Canal do parecer da analise  
                                 pr_dstransa => vr_dstransa,      --> Descrição da trasaçao para log                                            
                                 pr_dscrilog => vr_dscritic,      --> Em caso de status de erro, apresentar critica para log
+                                pr_dsdetcri => pr_dsdetcri,      --> Crítica Recebida SOA
                                 pr_dscritic => vr_dscritic_aux);
           
          IF TRIM(vr_dscritic_aux) IS NOT NULL THEN
