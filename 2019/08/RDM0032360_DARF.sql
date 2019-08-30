@@ -1200,3 +1200,4 @@ UPDATE craplft SET craplft.insitfat = 2 ,craplft.dtdenvio = '02/09/2019' WHERE c
 UPDATE craplft SET craplft.insitfat = 2 ,craplft.dtdenvio = '02/09/2019' WHERE craplft.progress_recid = 34685044;
 
 COMMIT;
+ 

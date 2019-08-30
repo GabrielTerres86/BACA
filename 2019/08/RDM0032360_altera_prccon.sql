@@ -3,3 +3,5 @@ UPDATE craptel
  WHERE UPPER(craptel.nmdatela) = 'PRCCON';
  
 COMMIT;
+
+
