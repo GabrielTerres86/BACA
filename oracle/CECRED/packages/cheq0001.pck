@@ -1,11 +1,11 @@
-CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
+CREATE OR REPLACE PACKAGE CECRED.CHEQ0001 IS
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : CHEQ0001
   --  Sistema  : Rotinas focadas no sistema de Cheques
   --  Sigla    : GENE
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Maio/2013.                   Ultima atualizacao: 13/09/2013
+  --  Data     : Maio/2013.                   Ultima atualizacao: 29/05/2019
   --
   -- Dados referentes ao programa:
   --
@@ -33,6 +33,9 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
   --
   --                07/12/2018 - Melhoria no processo de devoluções de cheques.
   --                             Alcemir Mout's (INC0022559).
+  --
+  --                29/05/2019 - Adicionadas procedures pc_busca_sum_lanc_cheque, pc_busca_sum_lanc_chq_web para buscar valores de lancamento do chque por historico
+  --                             Jackson Barcellos AMcom P565
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicao to tipo de array para teste da cdalinea na crepdev
@@ -116,7 +119,8 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
                            ,pr_dsdocmc7    IN crapfdc.dsdocmc7%TYPE                 --> Descrição documento CMC - 7
                            ,pr_cdcmpchq    IN crapfdc.cdcmpchq%TYPE                 --> Campo cheque
                            ,pr_cdageaco    IN crapfdc.cdageaco%TYPE                 --> Agencia Acolhedora
-                           ,pr_fim         OUT BOOLEAN                              --> Controle de saída da execução externa
+                           ,pr_vlacerto    IN craplcm.vllanmto%TYPE                 --> Valor acerto P565                           
+						   ,pr_fim         OUT BOOLEAN                              --> Controle de saída da execução externa
                            ,pr_des_erro    OUT VARCHAR2);                           --> Retorno de erro
 
   /* Calcular o CMC-7 do cheque */
@@ -267,9 +271,25 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
                                    ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
                                    ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo
   
+  PROCEDURE pc_busca_sum_lanc_cheque(pr_cdcooper IN NUMBER                 --> Cooperativa
+                                     ,pr_nrdconta IN NUMBER                --> Numero da conta
+                                     ,pr_cdhistor IN NUMBER                --> Codigo do historico
+                                     ,pr_nrdocmto IN NUMBER                --> numero do cheque / documento
+                                     ,pr_vllanmto OUT NUMBER) ;            --> Retorno soma dos lançamentos
+  
+  PROCEDURE pc_busca_sum_lanc_chq_web(pr_cdcooper IN NUMBER                  --> Cooperativa
+                                     ,pr_nrdconta IN NUMBER                  --> Numero da conta
+                                     ,pr_nrdocmto IN NUMBER                  --> Numero do documento
+                                     ,pr_xmllog     IN VARCHAR2              --> XML com informações de LOG
+                                     ,pr_cdcritic  OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic  OUT VARCHAR2              --> Descrição da crítica
+                                     ,pr_retxml IN OUT NOCOPY XMLType        --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+                                     ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo
+  
 END CHEQ0001;
 /
-CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
+CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0001 AS
   /* ---------------------------------------------------------------------------------------------------------------
 
     Programa : CHEQ0001
@@ -316,7 +336,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                        
               11/02/2019 - Ajuste para criticar corretamente a existência de uma requisição 
                            (Jose Dill Mouts - PRB0040497)                        
-                     
+              29/05/2019 - Adicionadas procedures pc_busca_sum_lanc_cheque, pc_busca_sum_lanc_chq_web para buscar valores de lancamento do chque por historico
+                           Jackson Barcellos AMcom P565                      
+						   
   --------------------------------------------------------------------------------------------------------------- */
 
 
@@ -1531,7 +1553,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                            ,pr_dsdocmc7    IN crapfdc.dsdocmc7%TYPE                 --> Descrição documento CMC - 7
                            ,pr_cdcmpchq    IN crapfdc.cdcmpchq%TYPE                 --> Campo cheque
                            ,pr_cdageaco    IN crapfdc.cdageaco%TYPE                 --> Agencia Acolhedora
-                           ,pr_fim         OUT BOOLEAN                              --> Controle de saída da execução externa
+                           ,pr_vlacerto    IN craplcm.vllanmto%TYPE                 --> Valor acerto P565                           
+						   ,pr_fim         OUT BOOLEAN                              --> Controle de saída da execução externa
                            ,pr_des_erro    OUT VARCHAR2) IS                         --> Retorno de erro
   /* .............................................................................
 
@@ -1539,7 +1562,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : WEB
    Autor   : David
-   Data    : Maio/2013.                        Ultima atualizacao: 20/10/2017
+   Data    : Maio/2013.                        Ultima atualizacao: 29/05/2019
 
    Dados referentes ao programa:
 
@@ -1556,6 +1579,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
 
                19/10/2017 - Ajsute para pegar corretamente a observação do cheque
 			               (Adriano - SD 774552)
+                     
+               29/05/2019 - Adicionada coluna vlacerto Jackson Barcellos P565
   ............................................................................. */
   BEGIN
     DECLARE
@@ -1648,7 +1673,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         pr_tab_cheques(vr_index)('cdagechq') := pr_cdagechq;
         pr_tab_cheques(vr_index)('cdageaco') := pr_cdageaco;
         
-
+        -- P565
+        pr_tab_cheques(vr_index)('vlacerto') := pr_vlacerto;        
+		
         -- Validar o tipo do cheque
         IF pr_tpcheque = 1 THEN
           pr_tab_cheques(vr_index)('tpcheque') := '  ';
@@ -2435,6 +2462,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                   
                      24/11/2017 - Quando usar a opcao todos e filtrar pelo nr cheque
                                   deve ordenar a lista pelo numero do cheque (Tiago/Adriano)
+                     
+                     29/05/2019 - Adicionada coluna vlacerto (P565 - Jackson Barcellos AMcom)
      .............................................................................*/
     
     -- Variáveis
@@ -2477,6 +2506,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     vr_tab_tags    gene0007.typ_tab_tagxml;       --> PL Table para armazenar TAG´s do XML
     vr_finaliza    BOOLEAN;                       --> Executa interrupção do LOOP por comando externo
     vr_qtregist    PLS_INTEGER;                   --> Quantidade de registros processados
+    vr_vlacerto   NUMBER;                        --> Valor de acerto de lancamento do cheque P565
+    vr_vlacertoc   NUMBER;                        --> Valor de acerto credito de lancamento do cheque P565
+    vr_vlacertod   NUMBER;                        --> Valor de acerto debito de lancamento do cheque P565	
 
   BEGIN
     -- Carga inicial das variáveis
@@ -2633,6 +2665,27 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       dbms_sql.column_value(vr_cursor, 26, vr_cdcmpchq);
       dbms_sql.column_value(vr_cursor, 27, vr_cdageaco);
 
+      -- P565 Busca o vlacerto para os historicos Cred. 2992 e Deb. 2991 
+      pc_busca_sum_lanc_cheque (pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_cdhistor => 2992
+                                ,pr_nrdocmto => vr_nrcheque||vr_nrdigchq
+                                ,pr_vllanmto => vr_vlacertoc);
+      pc_busca_sum_lanc_cheque (pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_cdhistor => 2991
+                                ,pr_nrdocmto => vr_nrcheque||vr_nrdigchq
+                                ,pr_vllanmto => vr_vlacertod);
+      IF (vr_vlacertoc > 0 AND vr_vlacertod > 0 ) THEN
+         vr_vlacerto := vr_vlacertoc - vr_vlacertod; 
+      ELSIF (vr_vlacertod > 0) THEN
+         vr_vlacerto := (vr_vlacertod * -1); 
+      ELSIF (vr_vlacertoc > 0) THEN
+         vr_vlacerto := vr_vlacertoc; 
+      ELSE
+         vr_vlacerto := 0;
+      END IF;
+
       -- Chamar procedure para gerar PL Table de listagem dos cheques
       cheq0001.pc_gera_cheques(pr_nrtipoop    => pr_nrtipoop
                               ,pr_cdcooper    => pr_cdcooper
@@ -2669,7 +2722,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                               ,pr_dsdocmc7    => vr_dsdocmc7
                               ,pr_cdcmpchq    => vr_cdcmpchq
                               ,pr_cdageaco    => vr_cdageaco
-                              ,pr_fim         => vr_finaliza
+                              ,pr_vlacerto    => vr_vlacerto                              
+							  ,pr_fim         => vr_finaliza
                               ,pr_des_erro    => pr_des_erro);
 
       -- Verifica se ocorreram erros de execução
@@ -2729,7 +2783,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     gene0007.pc_gera_tag(pr_nome_tag  => 'cdagechq', pr_tab_tag   => vr_tab_tags);
     gene0007.pc_gera_tag(pr_nome_tag  => 'cdageaco', pr_tab_tag   => vr_tab_tags);
     gene0007.pc_gera_tag(pr_nome_tag  => 'dtlibtic', pr_tab_tag   => vr_tab_tags);
-    
+    gene0007.pc_gera_tag(pr_nome_tag  => 'vlacerto', pr_tab_tag   => vr_tab_tags);    
     
 
     -- Criar cabeçalho do XML
@@ -5274,6 +5328,134 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
   END pc_busca_conta_pelo_cpf;
+  PROCEDURE pc_busca_sum_lanc_cheque (pr_cdcooper IN NUMBER, pr_nrdconta IN NUMBER, pr_cdhistor IN NUMBER, pr_nrdocmto IN NUMBER, pr_vllanmto OUT NUMBER) IS
+  /*
+    --  Projeto  : 565_1
+    --  Programa : pc_busca_sum_lanc_cheque
+    --  Sistema  : AIMARO.
+    --  Sigla    : CHEQUE
+    --  Autor    : Jackson Barcellos
+    --  Data     : Maio/2019.                   Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Buscar o Valor total por historico na tabela de lancamentos de um cheque.
+    --
+    --   Alteracoes: 
+  */
+  BEGIN
+    DECLARE
+      -- Soma vllanmto nos lançamentos de cheque
+      CURSOR cr_craplcm IS
+         SELECT coalesce(sum(vllanmto), 0)
+           FROM craplcm lcm
+          WHERE lcm.cdcooper = pr_cdcooper
+            AND lcm.nrdconta = pr_nrdconta
+            AND lcm.cdhistor = pr_cdhistor
+            AND lcm.nrdocmto = pr_nrdocmto
+            AND lcm.dtmvtolt = (SELECT max(aux.dtmvtolt) 
+                                  FROM craplcm aux 
+                                 WHERE aux.cdcooper = lcm.cdcooper
+                                       AND aux.nrdconta = lcm.nrdconta
+                                       AND aux.cdhistor = lcm.cdhistor
+                                       AND aux.nrdocmto = lcm.nrdocmto
+                                ); 
+                 
+      aux_vlacerto NUMBER:= 0;
+      
+    BEGIN
+
+         OPEN cr_craplcm;
+         FETCH cr_craplcm INTO aux_vlacerto;
+         
+         IF cr_craplcm%FOUND THEN
+           pr_vllanmto:= aux_vlacerto;
+         END IF;
+         CLOSE cr_craplcm;
+      
+    EXCEPTION WHEN OTHERS THEN
+         pr_vllanmto := NULL; 
+    END;
+           
+  END pc_busca_sum_lanc_cheque;
+  
+  PROCEDURE pc_busca_sum_lanc_chq_web(pr_cdcooper IN NUMBER                  --> Cooperativa
+                                     ,pr_nrdconta IN NUMBER                  --> Numero da conta
+                                     ,pr_nrdocmto IN NUMBER                  --> Numero do documento
+                                     ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                     ,pr_cdcritic  OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic  OUT VARCHAR2              --> Descrição da crítica
+                                     ,pr_retxml IN OUT NOCOPY XMLType        --> Arquivo de retorno do XML
+                                     ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+                                     ,pr_des_erro  OUT VARCHAR2) is            --> Erros do processo
+  /*
+Baca
+insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+values ('SUMLNCCHQ', 'cheq0001', 'pc_busca_sum_lanc_chq_web', 'pr_cdcooper,pr_nrdconta,pr_nrdocmto', (select nrseqrdr from craprdr where nmprogra = 'CHEQUE'));
+commit;
+    --  Projeto  : 565_1
+    --  Programa : pc_busca_sum_lanc_chq_web
+    --  Sistema  : AIMARO.
+    --  Sigla    : CHEQUE
+    --  Autor    : Jackson Barcellos
+    --  Data     : Maio/2019.                   Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Buscar o Valor total por historico na tabela de lancamentos de um cheque via mensageria.
+    --
+    --   Alteracoes: 
+  */                                
+  BEGIN
+    DECLARE
+      aux_vlacertoc NUMBER:=0;
+      aux_vlacertod NUMBER:=0;
+      aux_vlacerto  NUMBER:=0;
+      
+      vr_cdcritic  crapcri.cdcritic%TYPE;
+      vr_dscritic  crapcri.dscritic%TYPE;
+      
+    BEGIN
+      -- P565 Busca o vlacerto para os historicos Cred. 2992 e Deb. 2991 
+      pc_busca_sum_lanc_cheque (pr_cdcooper => pr_cdcooper
+                               	, pr_nrdconta => pr_nrdconta
+                                , pr_cdhistor => 2992
+                                , pr_nrdocmto => pr_nrdocmto
+                                , pr_vllanmto => aux_vlacertoc);
+      pc_busca_sum_lanc_cheque (pr_cdcooper => pr_cdcooper
+                               	, pr_nrdconta => pr_nrdconta
+                                , pr_cdhistor => 2991
+                                , pr_nrdocmto => pr_nrdocmto
+                                , pr_vllanmto => aux_vlacertod);
+      IF (aux_vlacertoc > 0 AND aux_vlacertod > 0 ) THEN
+         aux_vlacerto := aux_vlacertoc - aux_vlacertod; 
+      ELSIF (aux_vlacertod > 0) THEN
+         aux_vlacerto := (aux_vlacertod * -1); 
+      ELSIF (aux_vlacertoc > 0) THEN
+         aux_vlacerto := aux_vlacertoc; 
+      ELSE
+         aux_vlacerto := 0;
+      END IF;
+      
+      -- Atualiza o XML de retorno
+      pr_retxml := xmltype('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><retorno>' || aux_vlacerto || '</retorno></Root>');
+    
+      -- Finaliza com status de sucesso
+      pr_des_erro := 'OK';
+     
+    EXCEPTION WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina pc_busca_sum_lanc_chq_web: ' || SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      
+    END;
+  END pc_busca_sum_lanc_chq_web;          
             
 END CHEQ0001;
 /

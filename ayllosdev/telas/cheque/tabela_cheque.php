@@ -9,6 +9,7 @@
  *                18/12/2012 - Retirar o campo Conta da TIC (Ze).
  *				  30/06/2014 - Adicionado campo cdageaco nos detalhes do cheque. (Reinert)
  *				  16/09/2014 - Inclusão da coluna Age - cdagechq na tela. (Vanessa)
+ * 				  30/05/2019 - Adicionado campo vlacerto P565 (Jackson Barcellos AMcom)
  */	
 ?>
 <? $search  = array('.','-'); ?>
@@ -64,6 +65,8 @@
 				$nrctatic	= getByTagName($cheque->tags,'nrctatic');
 				$dtlibtic	= getByTagName($cheque->tags,'dtlibtic');
 				$cdageaco	= getByTagName($cheque->tags,'cdageaco');
+				//P565
+				$vlacerto	= getByTagName($cheque->tags,'vlacerto');
 				
 			?>			
 				<tr <? if($flgsubtd == 'yes') echo 'class="sublinhado"'; ?>>
@@ -85,6 +88,7 @@
 						<input type="hidden" id="cdagetic" value="<? echo $cdagetic ?>" />
 						<input type="hidden" id="dtlibtic" value="<? echo $dtlibtic ?>" />
 						<input type="hidden" id="cdageaco" value="<? echo $cdageaco ?>" />
+						<input type="hidden" id="vlacerto" value="<? echo $vlacerto ?>" />
 						
 						<span><? echo str_replace($search,'',$cdbanchq) ?></span>
 						<? echo $cdbanchq ?></td>

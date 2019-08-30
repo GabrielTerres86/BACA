@@ -524,6 +524,8 @@
                29/05/2018 - Alteraçao INSERT na craplcm pela chamada da rotina LANC0001
                             PRJ450 - Renato Cordeiro ( AMcom )         
 
+               07/08/2019 - Valida número do documento como CHEQUE quando históricos 2991 e 2992 
+                            (Renato Cordeiro - AMcom)
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
 
@@ -1393,8 +1395,11 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                    tel_cdhistor = 49  OR tel_cdhistor = 156   OR
                    tel_cdhistor = 191 OR tel_cdhistor = 521   OR
                    tel_cdhistor = 621 OR tel_cdhistor = 1873  OR
-                   tel_cdhistor = 1874)  THEN
-                   DO:
+                   tel_cdhistor = 1874 OR tel_cdhistor = 2991 OR
+                   tel_cdhistor = 2992)  THEN                   DO:
+                       IF (tel_cdhistor = 2991 OR tel_cdhistor = 2992) THEN DO:
+                         ASSIGN aux_nrdconta = tel_nrdctabb.
+                       END.
                        ASSIGN glb_nrchqsdv = INT(SUBSTR(STRING(tel_nrdocmto,
                                                     "9999999"),1,6))
                               glb_nrchqcdv = tel_nrdocmto.
@@ -1423,6 +1428,10 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                 
                                 IF   crapfdc.tpcheque <> 1 THEN
                                      glb_cdcritic = 646.
+                                ELSE
+                                IF (tel_cdhistor = 2991 OR tel_cdhistor = 2992) AND
+                                   (crapfdc.dtliqchq = ? OR crapfdc.dtemschq = ? OR crapfdc.dtretchq = ?) THEN
+                                    glb_cdcritic = 108.
                             END.
                        ELSE
                             DO:  
@@ -1447,6 +1456,8 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                     DO:    
                                         /* Se for conta incorporada deve ler o
                                            registro crapfdc na coop. nova */
+
+                          IF NOT (tel_cdhistor = 2991 OR tel_cdhistor = 2992) THEN DO:
                           IF  craptco.cdcopant = 4  OR
                               craptco.cdcopant = 15 OR
                               craptco.cdcopant = 17 THEN DO:
@@ -1541,6 +1552,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                               
                                      END.                
                             END.         
+                          END.
 
                        IF   glb_cdcritic <> 0 THEN
                             DO:
@@ -1573,6 +1585,33 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                                          NEXT-PROMPT tel_nrdocmto
                                          WITH FRAME f_landpv.
                                          NEXT.
+                                     END.
+                            END.
+                       ELSE
+                       IF tel_cdhistor = 2991 OR tel_cdhistor = 2992 THEN
+                            DO:
+                                FIND LAST craplcm WHERE
+                                     craplcm.cdcooper =  glb_cdcooper     AND
+                                     craplcm.nrdconta =  tel_nrdctabb     AND
+                                     craplcm.nrdocmto =  tel_nrdocmto
+                                     USE-INDEX craplcm2 NO-LOCK NO-ERROR.
+
+                                IF   NOT AVAILABLE craplcm THEN
+                                     DO:
+                                        FIND LAST crapchd WHERE
+                                             crapchd.cdcooper =  glb_cdcooper     AND
+                                             crapchd.nrdconta =  tel_nrdctabb     AND
+                                             crapchd.nrcheque =  tel_nrdocmto
+                                             USE-INDEX crapchd2 NO-LOCK NO-ERROR.
+                                        IF   NOT AVAILABLE crapchd THEN
+                                          DO:
+                                             MESSAGE "Cheque nao localizado.".
+                                             PAUSE 20 NO-MESSAGE.
+                                             glb_cdcritic = 244.
+                                             NEXT-PROMPT tel_nrdocmto
+                                             WITH FRAME f_landpv.
+                                             NEXT.
+                   END.
                                      END.
                             END.
                    END.
@@ -1655,7 +1694,9 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                         NEXT.
                    END.     
               ELSE
+              DO:
                    aux_nrdconta = tel_nrdctabb.
+              END.
 
               ant_nrdconta = aux_nrdconta.
 

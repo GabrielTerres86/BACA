@@ -8,6 +8,7 @@
  *                18/12/2012 - Retirar o campo Conta da TIC (Ze).
  *				  30/06/2014 - Adicionado campo cdageaco nos detalhes do cheque. (Reinert)
  *				  10/06/2016 - Incluir style nos forms (Lucas Ranghetti #422753)
+ *				  29/05/2019 - Inclusão do valor do acerto (Jackson Barcellos - AMcom)
  */  
 ?>
 
@@ -67,6 +68,10 @@
 
 		<label for="cdagetic"><? echo utf8ToHtml('Agência:') ?></label>
 		<input name="cdagetic" id="cdagetic" type="text" />
+
+		<label for="vlacerto"><? echo utf8ToHtml('Valor do acerto:') ?></label>
+		<input  name="vlacerto" id="vlacerto" type="text" />
+		<br />
 
 		<label for="dtlibtic"><? echo utf8ToHtml('Liberação em:') ?></label>
 		<input  name="dtlibtic" id="dtlibtic" type="text" />
