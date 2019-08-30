@@ -16,8 +16,6 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0006 AS
    --                          (André - Mouts PRB0040347)               
   --              08/10/2018 - Inclusão das tags tppontovenda e tpvlpagamento no processamento dos arquivos CIP. 
   --                           (SCTASK0024874 - Andre - Mouts)  
-  --              30/08/2019 - AILOS RITM0017086 - Diego Batista Pereira da Silva ajustado cursor pc_lista_arquivos.cr_tabela
-  --                           referente a lista de arquivos da tela CONCIP para validar nrispb_credor e nrispb_devedor na clausula WHERE.
   -- 
   --  Variáveis globais
   vr_database_name           VARCHAR2(50);
@@ -489,7 +487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   --
   --  Programa: CCRD0006
   --  Autor   : Andrei Vieira
-  --  Data    : Junho/2017                     Ultima Atualizacao: 22/04/2019
+  --  Data    : Junho/2017                     Ultima Atualizacao: 30/08/2019
   --  Dados referentes ao programa:
   --
   --  Objetivo  : Package referente a regras de leitura e geracao de arquivos XML de domicilio bancario
@@ -512,6 +510,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                   22/04/2019 - Inclusão de CNPJs/Códigos Cartões Parceiros para apresentar nome 
                                do arquirente no extrato Aimaro.
                                (Jackson - RITM0013845).
+							   
+                  30/08/2019 - AILOS RITM0017086 - Diego Batista Pereira da Silva ajustado cursor pc_lista_arquivos.cr_tabela
+                               referente a lista de arquivos da tela CONCIP para validar nrispb_credor e nrispb_devedor na clausula WHERE.
+							   
 */
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                     pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
