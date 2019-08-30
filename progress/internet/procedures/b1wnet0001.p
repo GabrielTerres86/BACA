@@ -4834,7 +4834,10 @@ PROCEDURE p_cria_titulo:
         RETURN "NOK".
     END.
     
-    IF p-flgregis THEN
+    /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validaçao nao é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
+    /*IF p-flgregis THEN
     DO:
         FIND crappnp WHERE crappnp.nmextcid = crapsab.nmcidsac AND
                            crappnp.cduflogr = crapsab.cdufsaca NO-LOCK NO-ERROR.
@@ -4856,7 +4859,7 @@ PROCEDURE p_cria_titulo:
                    crapcol.hrtransa = TIME.
         END.
 
-    END.
+    END.*/
 
     /* se banco emite e expede, nosso num conv+ceb+doctmo -
        Rafael Cechet 29/03/11 */

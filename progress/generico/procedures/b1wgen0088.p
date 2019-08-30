@@ -2837,7 +2837,10 @@ PROCEDURE inst-protestar:
     IF  NOT AVAILABLE crapsab  THEN
         RETURN "NOK".
 
-    FIND crappnp WHERE crappnp.nmextcid = crapsab.nmcidsac AND
+    /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validaçao nao é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
+    /*FIND crappnp WHERE crappnp.nmextcid = crapsab.nmcidsac AND
                        crappnp.cduflogr = crapsab.cdufsaca NO-LOCK NO-ERROR.
 
     IF  AVAILABLE crappnp THEN
@@ -2856,7 +2859,7 @@ PROCEDURE inst-protestar:
             ret_dsinserr = "Praça não executante de protesto " + 
                            "– Instrução não efetuada".
             RETURN "NOK".
-        END.
+        END.*/
 
     /* tratamento para titulos migrados */
     IF  bcrapcob.flgregis = TRUE AND
@@ -6423,7 +6426,10 @@ PROCEDURE inst-protestar-arq-rem-085:
         RETURN "NOK".
     END.
 
-    FIND crappnp WHERE crappnp.nmextcid = crapsab.nmcidsac AND
+    /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validaçao nao é mais necessária
+      pois agora Todas as cidades podem ter protesto*/    
+    /*FIND crappnp WHERE crappnp.nmextcid = crapsab.nmcidsac AND
                        crappnp.cduflogr = crapsab.cdufsaca NO-LOCK NO-ERROR.
 
     IF  AVAILABLE crappnp THEN
@@ -6442,7 +6448,7 @@ PROCEDURE inst-protestar-arq-rem-085:
             ret_dsinserr = "Praça não executante de protesto " + 
                            "– Instrução não efetuada".
             RETURN "NOK".
-        END.
+        END.*/
 
 /***** FIM - VALIDACOES PARA RECUSAR ******/
     
