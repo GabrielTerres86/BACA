@@ -2682,6 +2682,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                          ,pr_nmtabela => 'TBCADAST_PESSOA_EMAIL'        --> Nome da tabela
                          ,pr_dsnoprin => 'emails'                       --> Nó principal do xml
                          ,pr_dsnofilh => 'email'                        --> Nós filhos
+						 ,pr_clausula => '(INSITUACAO = 1)'             --> Cláusula Where						 
                          ,pr_retorno  => pr_retorno                     --> XML de retorno
                          ,pr_dscritic => pr_dscritic);
 
