@@ -1518,7 +1518,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
                                         ,pr_tpevento               => 'LEMBRETE_EFETIVACAO'
                                         ,pr_tproduto_evento        => 'CREDITO'
                                         ,pr_tpoperacao             => 'EMAIL'
-                                        ,pr_dhoperacao             =>  trunc(sysdate) ||' '||vr_hora_envio                                     
+                                        ,pr_dhoperacao             => to_date(to_char(sysdate,'DD/MM/RRRR') ||' '||vr_hora_envio,'DD/MM/RRRR HH24:MI:SS')
                                         ,pr_dsconteudo_requisicao  => vr_des_xml
                                         ,pr_idevento               => vr_idevento
                                         ,pr_dscritic               => vr_dscritic);
