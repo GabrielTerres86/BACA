@@ -357,10 +357,6 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0002 AS
                                     ,pr_dscritic OUT VARCHAR2 --> Descricao Erro
                                     );
 
-/* P565_1*/
-PROCEDURE pc_gera_relato(pr_nrseqsol IN crapslr.nrseqsol%TYPE    --> Sequencia da solicitação
-                        ,pr_des_erro  OUT VARCHAR2);
-
 END GENE0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
@@ -371,7 +367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  : Rotinas genéricas para mascaras e relatórios
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 19/04/2018
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 12/12/2018
   --
   -- Dados referentes ao programa:
   --

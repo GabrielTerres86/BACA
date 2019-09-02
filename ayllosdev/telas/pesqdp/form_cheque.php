@@ -6,7 +6,6 @@
  * OBJETIVO     : Formlario nome do arquivo
  * --------------
  * ALTERAÇÕES   :
- *				  30/05/2019 - Adicionado campo vlracerto P565 (Jackson Barcellos AMcom)
  * --------------
  */ 
 ?>
@@ -41,9 +40,6 @@
 			
 			<label for="dsbccxlt"><? echo utf8ToHtml('Capturado:') ?></label>
 			<input id="dsbccxlt" name="dsbccxlt" type="text"/>
-
-			<label for="vlacerto"><? echo utf8ToHtml('Valor do Acerto:') ?></label>
-			<input id="vlacerto" name="vlacerto" type="text"/>
 			
 			<br style="clear:both" />
 		</div>

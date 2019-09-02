@@ -7635,30 +7635,6 @@ END pc_gera_titulos_iptu_prog;
         --Retornar data dias
         vr_dttolera:= CXON0014.fn_retorna_data_dias(pr_nrdedias => To_Number(SUBSTR(pr_codigo_barras,21,3)) --Numero de Dias
                                                    ,pr_inanocal => vr_inanocal); --Indicador do Ano
-                                                   
-        /* Criticar quantidade de dias inválidos no código de barras - INICIO */
-        -- Para a Data de Vencimento
-        IF SUBSTR(pr_codigo_barras,21,3) IS NOT NULL AND 
-           (To_Number(SUBSTR(pr_codigo_barras,21,3)) < 1 OR
-            To_Number(SUBSTR(pr_codigo_barras,21,3)) > 366) THEN
-          --Mensagem erro
-          pr_cdcritic:= 0;
-          pr_dscritic:= 'Data do vecimento invalida.';
-          RAISE vr_exc_erro;
-      END IF;
-        
-        -- Para o Período de Apuração
-        IF SUBSTR(pr_codigo_barras,42,3) IS NOT NULL AND 
-           (To_Number(SUBSTR(pr_codigo_barras,42,3)) < 1 OR
-            To_Number(SUBSTR(pr_codigo_barras,42,3)) > 366) THEN
-          --Mensagem erro
-          pr_cdcritic:= 0;
-          pr_dscritic:= 'Periodo de apuracao invalido.';
-          RAISE vr_exc_erro;
-        END IF;
-        
-        /* Criticar quantidade de dias inválidos no código de barras - FIM */
-                                                           
       END IF;
       /* DARF NUMERADO / DAS */
       IF pr_cdempcon IN (385,328) AND pr_cdsegmto = 5 THEN /* DARFC0385 ou DAS - SIMPLES NACIONAL */
@@ -11992,10 +11968,6 @@ END pc_gera_titulos_iptu_prog;
                                do boleto.
                              - Ajustado o tratamento de erro na chamada da pc_verifica_vencimento_titulo
                              (Douglas - Chamado 628306)
-                             
-                   18/06/2019 - Projeto 565 - Quando agencias 90 ou 91, chamar rotina de validação de data do boleto pela 
-                                agência do cooperado
-                             (Renato Cordeiro - AMcom)
     ...........................................................................*/
     --Selecionar informacoes cobranca
     CURSOR cr_crapcob (pr_nrcnvcob IN crapcob.nrcnvcob%type
@@ -12013,13 +11985,10 @@ END pc_gera_titulos_iptu_prog;
              crapcob.vljurdia,
              crapcob.tpjurmor,
              crapcob.dtvencto,
-             crapcob.dsinform,
-             crapass.cdagenci
-        FROM crapass, crapcob, crapceb, crapcco
+             crapcob.dsinform
+        FROM crapcob, crapceb, crapcco
        WHERE crapceb.nrconven = pr_nrcnvcob
          AND crapceb.nrdconta = pr_nrdconta
-         AND crapass.cdcooper = pr_cdcooper
-         AND crapass.nrdconta = pr_nrdconta
          AND crapcco.cdcooper = crapceb.cdcooper + 0
          AND crapcco.nrconven = crapceb.nrconven + 0
          AND crapcob.cdcooper = crapceb.cdcooper + 0
@@ -12056,8 +12025,6 @@ END pc_gera_titulos_iptu_prog;
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic   VARCHAR2(4000);
     vr_tab_erro GENE0001.typ_tab_erro;
-
-    vr_cdagenci       crapass.cdagenci%TYPE;
 
   BEGIN
     vr_codigo_barras := pr_codigo_barras;
@@ -12261,15 +12228,8 @@ END pc_gera_titulos_iptu_prog;
       vr_tab_erro.DELETE;
 
       --Verificar vencimento do titulo
-      
-      if pr_cdagenci in (90,91) then
-        vr_cdagenci := rw_crapcob.cdagenci;
-      else
-        vr_cdagenci := pr_cdagenci;
-      end if;
-      
       pc_verifica_vencimento_titulo (pr_cod_cooper      => pr_cdcooper          --Codigo Cooperativa
-                                    ,pr_cod_agencia     => vr_cdagenci          --Codigo da Agencia
+                                    ,pr_cod_agencia     => pr_cdagenci          --Codigo da Agencia
                                     ,pr_dt_agendamento  => NULL                 --Data Agendamento
                                     ,pr_dt_vencto       => rw_crapcob.dtvencto  --Data Vencimento
                                     ,pr_critica_data    => vr_critica_data      --Critica na validacao

@@ -16,7 +16,6 @@
  * [26/04/2017] Lucas Ranghetti         : Limpar numero do cheque quando acionar o estado inicial.
  * [14/07/2017] Lucas Reinert           : Alteração para o cancelamento manual de produtos. Projeto 364.
  * [14/11/2017] Jonata   (RKAM)         : Ajuste para chamar rotina correta (P364).
- * [29/05/2019] Jackson Barcellos		: Adicionado vlacerto (P565).
  * --------------
  */
 
@@ -34,8 +33,7 @@ var cNrdconta, cNmprimtl, cQtrequis, cNrtipoop,
 var cNrpedido, cDtsolped, cDtrecped, cDsdocmc7,
 	cDscordem, cDtmvtolt, cVlcheque, cVldacpmf, cCdtpdchq, 
 	cCdbandep, cCdagedep, cNrctadep, cDsobserv, cCdbantic,
-	cCdagetic, cNrctaTic, cDtlibtic, cCdageaco,
-	cVlacerto; //P565
+	cCdagetic, cNrctaTic, cDtlibtic, cCdageaco;
 
 $(document).ready(function() {
 	
@@ -80,7 +78,6 @@ $(document).ready(function() {
 	cCdagetic	= $('#cdagetic','#frmCheque');
 	cNrctatic	= $('#nrctatic','#frmCheque');
 	cDtlibtic	= $('#dtlibtic','#frmCheque');
-	cVlacerto   = $('#vlacerto','#frmCheque');//P565
 	
 	
 	controlaLayout();
@@ -308,7 +305,6 @@ function formataFormulario() {
 	var rCdagetic	= $('label[for="cdagetic"]','#frmCheque');
 	var rNrctatic	= $('label[for="nrctatic"]','#frmCheque');
 	var rDtlibtic	= $('label[for="dtlibtic"]','#frmCheque');
-	var rVlacerto   = $('label[for="vlacerto"]','#frmCheque');//P565	
 
 	rNrpedido.css('width', '130px').addClass('rotulo');
 	rDtsolped.css('width','100px').addClass('rotulo-linha');
@@ -327,8 +323,7 @@ function formataFormulario() {
 	rNrctatic.css('width','100px').addClass('rotulo-linha');
 	rCdbantic.css('width','130px').addClass('rotulo');
     rCdagetic.css('width','100px').addClass('rotulo-linha');	
-	rDtlibtic.css('width','127px').addClass('rotulo-linha');	
-	rVlacerto.css('width','95px').addClass('rotulo-linha');//P565		
+	rDtlibtic.css('width','95px').addClass('rotulo-linha');	
 	
 	
 	cTodos.desabilitaCampo();
@@ -350,7 +345,6 @@ function formataFormulario() {
 	cCdagetic.css({'width': '98px'}).addClass('integer');
 	cNrctatic.css({'width': '98px'}).addClass('integer');
 	cDtlibtic.css({'width': '98px'}).addClass('data');
-	cVlacerto.css({'width': '98px'}).addClass('moeda');	//P565
 	
 	/*
 	if ( $.browser.msie ) {	// IE
@@ -419,15 +413,6 @@ function selecionaCheque() {
 			
 			var aVlcheque = ( typeof $('#vlcheque', $(this)).val() == 'undefined' ) ? 0 : $('#vlcheque', $(this)).val();			
 			var aVldacpmf = ( typeof $('#vldacpmf', $(this)).val() == 'undefined' ) ? 0 : $('#vldacpmf', $(this)).val();			
-
-			//P565
-			var aVlacerto = ( typeof $('#vlacerto', $(this)).val() == 'undefined' ) ? 0 : $('#vlacerto', $(this)).val(); 
-			if (aVlacerto > 0) 
-				cVlacerto.val('(C) ' + number_format(parseFloat(aVlacerto.replace(',','.')),2,',','.'));
-			else if (aVlacerto < 0)
-				cVlacerto.val('(D) ' + number_format(parseFloat((aVlacerto*-1).toString().replace(',','.')),2,',','.'));
-			else
-				cVlacerto.val(number_format(parseFloat(aVlacerto.replace(',','.')),2,',','.'));
 			
 			cNrpedido.val($('#nrpedido', $(this)).val());
 			cDtsolped.val($('#dtsolped', $(this)).val());

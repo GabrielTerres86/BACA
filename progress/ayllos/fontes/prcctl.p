@@ -169,8 +169,6 @@
 
 			   26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
-         25/07/2019 - PJ565.1 Permite opçao DEVOLU opçao X
-
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -261,7 +259,7 @@ DEF VAR tel_pesquisa AS CHAR        FORMAT "x(20)"                     NO-UNDO.
 DEF VAR tel_tpdevolu AS CHAR        FORMAT "X(10)" 
     VIEW-AS COMBO-BOX LIST-ITEMS "VLB",
                                  "Diurna",
-                                 "Fraude" 
+                                 "Noturna" 
     INNER-LINES 3 NO-UNDO.
 
 /* variaveis para impressao */
@@ -399,11 +397,11 @@ FORM glb_cddopcao AT 03
 
 FORM tel_cdcooper AT 07 LABEL "Cooperativa"
                         HELP "Selecione a Cooperativa"
-     tel_cdagenci AT 39 LABEL "PA"
-                        HELP "Informe o numero do PA ou zero '0' para todos."
-     SKIP
-     tel_nmprgexe AT 07 LABEL "Processar"
+     tel_nmprgexe AT 39 LABEL "Processar"
                         HELP "Informe qual tipo de arquivo a processar"
+     SKIP
+     tel_cdagenci AT 15 LABEL "PA"
+                        HELP "Informe o numero do PA ou zero '0' para todos."
      tel_flgenvio AT 43 LABEL "Opcao"
                   HELP "Informe 'N' para nao enviados ou 'E' para enviados."
      SKIP
@@ -624,6 +622,14 @@ ON RETURN OF tel_nmprgexe DO:
                      crawage.cdbanchq = crapage.cdbanchq.
           END.
       END.
+  
+  IF   (glb_cddopcao = "X"      OR 
+        glb_cddopcao = "E")     AND
+        tel_nmprgexe = "DEVOLU" THEN 
+        DO:
+            MESSAGE "Opcao '" glb_cddopcao "' invalida para " tel_nmprgexe.
+            RETURN.
+        END.
   APPLY "GO".
 END.
 
@@ -1239,7 +1245,6 @@ DO WHILE TRUE:
                                             END.
                                                 
                                        DO TRANSACTION:
- 
                                           CREATE crapsol.
                                           ASSIGN crapsol.cdcooper =
                                                          crapcop.cdcooper
@@ -1268,7 +1273,7 @@ DO WHILE TRUE:
                                                  crapsol.nrdevias = 1
                                                  crapsol.nrseqsol = 
                                                                  aux_nrseqsol.
-                                          VALIDATE crapsol NO-ERROR.
+                                          VALIDATE crapsol.
                                        END.
                                        
 											END.
@@ -1361,7 +1366,7 @@ DO WHILE TRUE:
                                              crapsol.insitsol = 1
                                              crapsol.nrdevias = 1
                                              crapsol.nrseqsol = aux_nrseqsol.
-                                      VALIDATE crapsol NO-ERROR.
+                                      VALIDATE crapsol.
                                    END.
                                    
 								   IF INTE(tel_cdcooper) <> glb_cdcooper THEN
@@ -1377,20 +1382,19 @@ DO WHILE TRUE:
                                                  crapsol.nrdevias = 1
                                                  crapsol.nrseqsol = 
                                                                  aux_nrseqsol.
-                                          VALIDATE crapsol NO-ERROR.
+                                          VALIDATE crapsol.
                                        END.
                                    END.
+
                                        IF tel_tpdevolu = "VLB" THEN
                                            RUN fontes/crps264.p 
                                                       (INPUT INT(tel_cdcooper),
                                                        INPUT 4).
                                        ELSE
                                        IF tel_tpdevolu = "Diurna" THEN
-                                       DO:
                                            RUN fontes/crps264.p
                                                        (INPUT INT(tel_cdcooper),
                                                         INPUT 5).
-                                       END.
                                        ELSE
                                            RUN fontes/crps264.p
                                                        (INPUT INT(tel_cdcooper),
@@ -2073,19 +2077,8 @@ DO WHILE TRUE:
                    NEXT.
                 END.
 
-                IF tel_nmprgexe:SCREEN-VALUE = "DEVOLU" THEN
-                DO:
-                    HIDE tel_cdagenci IN FRAME f_prcctl_2.
-                    VIEW tel_tpdevolu IN FRAME f_prcctl_2.
-                    UPDATE tel_tpdevolu WITH FRAME f_prcctl_2.
-                    ASSIGN tel_cdagenci = 0.
-                    LEAVE.
-                END.
-                ELSE
-                DO:
                 UPDATE tel_cdagenci WITH FRAME f_prcctl_2.
                 LEAVE.
-                END.
              END.
 
              IF   KEYFUNCTION(LASTKEY) = "END-ERROR" THEN  /* F4 OU FIM */
@@ -2123,7 +2116,6 @@ DO WHILE TRUE:
                                          INPUT  0,
                                          INPUT  0,
                                          INPUT  0,
-                                         INPUT  tel_tpdevolu,
                                          OUTPUT glb_cdcritic).
                                          
                      DELETE PROCEDURE h-b1wgen0012.    
@@ -2163,7 +2155,6 @@ DO WHILE TRUE:
                                      INPUT  0,
                                      INPUT  0,
                                      INPUT  0,
-                                     INPUT  tel_tpdevolu,
                                      OUTPUT glb_cdcritic).
                                      
                  DELETE PROCEDURE h-b1wgen0012.
