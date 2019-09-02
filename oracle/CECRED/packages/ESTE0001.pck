@@ -2768,7 +2768,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       pr_cdcritic := 0;
       pr_dscritic := 'Não foi possivel realizar inclusao da proposta de Análise de Crédito: '||SQLERRM;
 
-      IF NOT ( este0001.fn_agenda_reenvio_analise(pr_cdcooper,pr_nrdconta,pr_nrctremp) ) THEN
+      IF NOT ( este0001.fn_agenda_reenvio_analise(pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_cdagenci,pr_cdoperad) ) THEN
         --/
         este0001.pc_notificacoes_prop(pr_cdcooper,pr_nrdconta,pr_nrctremp,vr_cdcritic,vr_dscritic);          
       END IF;
@@ -3368,7 +3368,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por verificar a proposta e enviar 
                   inclusao ou alteração da proposta na esteira
-      Alteração : 
+      
+      Alteração : 06/08/2019 - P438 - Inclusão da chamada para retentativa de envio 
+                               em caso de retorno de erro. (Douglas Pagel / AMcom).
         
     ..........................................................................*/
     
@@ -3387,6 +3389,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
             ,wpr.dtenvest
             ,wpr.dtenvmot
             ,wpr.dsprotoc
+            ,wpr.cdorigem
 				FROM crawepr wpr
 			 WHERE wpr.cdcooper = pr_cdcooper
 				 AND wpr.nrdconta = pr_nrdconta
@@ -5790,6 +5793,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
   FUNCTION fn_agenda_reenvio_analise(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
                                     ,pr_nrdconta    IN crapass.nrdconta%TYPE --> Numero da conta
                                     ,pr_nrctremp    IN crawepr.nrctremp%TYPE --> Numero do contrato
+                                    ,pr_cdagenci    IN crawepr.cdagenci%TYPE DEFAULT NULL --> PA que irá acionar o motor
+                                    ,pr_cdoperad    IN crawepr.cdoperad%TYPE DEFAULT NULL --> Operador que irá acionar o motor
                                      ) RETURN BOOLEAN IS 
   /* ............................................................................
    Programa: fn_agenda_reenvio_analise
