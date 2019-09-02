@@ -29,10 +29,6 @@
                             
                02/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)             
-
-               15/08/2019 - PJ565.1 - Alteração para permitir devolução diurna na coop 3
-			                Renato Cordeiro - AMcom             
-
 ............................................................................. */
 
 { includes/var_online.i }
@@ -120,8 +116,7 @@ ON RETURN OF b_consulta DO:
             
                 /* para a CECRED, somente permitir alteracao do processo "Devolucao Doc"  */ 
                 IF  INT(tel_cdcooper) = 3 AND 
-                    tt-processos.nmproces <> "DEVOLUCAO DOC" AND
-                    tt-processos.nmproces <> "DEVOLUCAO DIURNA" THEN
+                    tt-processos.nmproces <> "DEVOLUCAO DOC" THEN
                     DO:
                         MESSAGE "Cooperativa nao permite alteracao.".
                         PAUSE 3 NO-MESSAGE.

@@ -11,8 +11,7 @@
  *							   para filtro, numero de conta e numero de cheque, conforme
  *							   solicitado na melhoria 300189 (Kelvin)	
  *                15/02/2017 - Zerar os tabindex quando busca um cheque e clica no botão
- *                             voltar. Andrey Formigari (Mouts) SD 612621.
- *				  30/05/2019 - Adicionado campo vlacerto P565 (Jackson Barcellos AMcom)                               
+                               voltar. Andrey Formigari (Mouts) SD 612621.
  * --------------
  */
 
@@ -29,8 +28,7 @@ var dsdircop;
 var dtmvtola,   tipocons,   vlcheque,   nrcampo1,   nrcampo2,   nrcampo3,   dtmvtini,   dtmvtfim,
     cdbccxlt, 	dtmvtol2, 	tpdsaida, 	nrregist, 	nriniseq, 	nrdconta,	nrcheque,   nmprimtl,   
 	cdagenci,   nmextage,   tpdsaida,   dsiduser,	rCddopcao, 	cCddopcao,  btnOK,      cddopcao,   
-	dsdocmc7,   dtdevolu,	cTodosCabecalho, cTodosConsulta, cTodosCheque, cTodosDevolvidos,
-	vlacerto,  rVlacerto,  cVlacerto;
+	dsdocmc7,   dtdevolu,	cTodosCabecalho, cTodosConsulta, cTodosCheque, cTodosDevolvidos;
 
 var rDtmvtola, rTipocons, rVlcheque, rNrcampo1, rNrcampo2, rNrcampo3,
     cDtmvtola, cTipocons, cVlcheque, cNrcampo1, cNrcampo2, cNrcampo3,
@@ -778,8 +776,6 @@ function formataDetalhe(){
 	rCdcmpchq = $('label[for="cdcmpchq"]','#divCheque');
 	rDsbccxlt = $('label[for="dsbccxlt"]','#divCheque');
 
-	rVlacerto = $('label[for="vlacerto"]','#divCheque');
-
 	cCdagechq = $('#cdagechq','#divCheque');
 	cCdbccxlt = $('#cdbccxlt','#divCheque');
 	cDsdocmc7 = $('#dsdocmc7','#divCheque');
@@ -789,18 +785,14 @@ function formataDetalhe(){
 	cCdcmpchq = $('#cdcmpchq','#divCheque');
 	cDsbccxlt = $('#dsbccxlt','#divCheque');
 
-	cVlacerto = $('#vlacerto','#divCheque');
-
 	rCdcmpchq.addClass('rotulo').css({'width':'120px'});
-	rCdbccxlt.css({'width':'70px'});
-	rCdagechq.css({'width':'80px'});
-	rNrcheque.css({'width':'92px'});
+	rCdbccxlt.css({'width':'60px'});
+	rCdagechq.css({'width':'70px'});
+	rNrcheque.css({'width':'74px'});
 	rNrctachq.addClass('rotulo').css({'width':'120px'});
-	rVlcheque.css({'width':'40px'});
+	rVlcheque.css({'width':'205px'});
 	rDsdocmc7.addClass('rotulo').css({'width':'120px'});
-	rDsbccxlt.css({'width':'79px'});
-
-	rVlacerto.css({'width':'100px'});	
+	rDsbccxlt.css({'width':'70px'});
 
 	cCdcmpchq.css({'width':'40px'});
 	cCdbccxlt.css({'width':'40px'});
@@ -809,9 +801,7 @@ function formataDetalhe(){
 	cNrctachq.css({'width':'95px'}).addClass('conta');
 	cVlcheque.css({'width':'100px'}).addClass('moeda');
 	cDsdocmc7.css({'width':'250px'});
-	cDsbccxlt.css({'width':'109px'});
-
-	cVlacerto.css({'width':'100px', 'text-align':'right'});
+	cDsbccxlt.css({'width':'80px'});
 
 	cTodosCheque.desabilitaCampo();
 
@@ -836,15 +826,6 @@ function selecionaCheque(tr){
 	$('#nmextage','#frmConsulta').val($('#nmextage', tr ).val() );
 	$('#nrcheque','#frmConsulta').val($('#nrcheque', tr ).val() );
 
-	//P565
-	var aVlacerto = $('#vlacerto', tr ).val();
-	aVlacerto = ( typeof aVlacerto == 'undefined' ) ? 0 : aVlacerto; 
-	if (aVlacerto > 0) 
-		$('#vlacerto','#'+divCheque ).val('(C) ' + number_format(parseFloat(aVlacerto.replace(',','.')),2,',','.'));
-	else if (aVlacerto < 0)
-		$('#vlacerto','#'+divCheque ).val('(D) ' + number_format(parseFloat((aVlacerto*-1).toString().replace(',','.')),2,',','.'));
-	else
-		$('#vlacerto','#'+divCheque ).val(number_format(parseFloat(aVlacerto.replace(',','.')),2,',','.'));
 
 	return false;
 }

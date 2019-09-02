@@ -52,9 +52,6 @@
 
 		    08/03/2018 - Removida DEVOLUCAO VLB - COMPE Sessao Unica (Diego).
 
-		    20/08/2019 - PJ565.1 - Tratamento para atnder alteração na tela HRCOMP
-			             Renato Cordeiro - AMcom.
-
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0183tt.i }
@@ -503,8 +500,7 @@ PROCEDURE grava_dados:
     ELSE
         DO:
             IF  par_cdcoopex = 3 AND 
-                par_dsprogra <> "DEVOLUCAO DOC" AND
-                par_dsprogra <> "DEVOLUCAO DIURNA" THEN
+                par_dsprogra <> "DEVOLUCAO DOC" THEN
                 DO:
                     ASSIGN aux_cdcritic = 0
     								       aux_dscritic = "Cooperativa nao permite alteracao.".

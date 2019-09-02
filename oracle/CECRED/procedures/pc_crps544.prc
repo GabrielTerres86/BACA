@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS544 (pr_cdcooper  IN crapcop.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme / Supero
-   Data    : Dezembro/2009.                      Ultima atualizacao: 09/08/2019
+   Data    : Dezembro/2009.                      Ultima atualizacao: 16/02/2017
 
    Dados referentes ao programa:
 
@@ -31,9 +31,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS544 (pr_cdcooper  IN crapcop.cdcooper%
                10/10/2013 - Ajuste de criticas (Gabriel).
                
                16/02/2017 - Ajuste ref ao novo layout ROC640 (Rafael).
-
-               16/07/2019 - PJ565 - Insert na TBCOMPE_SUAREMESSA.
-                            Rafael Rocha (AmCom)
 ............................................................................. */
 
   -- Variaveis de uso no programa
@@ -54,12 +51,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS544 (pr_cdcooper  IN crapcop.cdcooper%
   vr_dscritic         VARCHAR2(2000);              -- Descricao da critica
   vr_exc_saida        EXCEPTION;                   -- Tratamento de excecao sem parar a cadeia
   vr_exc_fimprg       EXCEPTION;                   -- Tratamento de excecao parando a cadeia
-  --/
-  vr_qtregrec PLS_INTEGER  :=0;
-  vr_vlregrec tbcompe_suaremessa.vlintegr%TYPE;
-  vr_qtregrej PLS_INTEGER  :=0;
-  vr_vlregrej tbcompe_suaremessa.vlrejeit%TYPE;
-  --
+
   -- Cursor da cooperativa logada
   CURSOR cr_crapcop (pr_cdcooper crapcop.cdcooper%TYPE) IS
     SELECT cop.dsdircop
@@ -505,42 +497,6 @@ BEGIN
 
     END IF; -- Fim da verificação se o arquivo esta aberto
 
-      -- pj565
-      BEGIN
-        --/
-        SELECT SUM(vlrecdoc) ,
-               SUM(a.qtrecdoc) 
-          INTO vr_qtregrec,
-               vr_vlregrec
-          FROM gnfcomp a 
-         WHERE a.cdcooper = pr_cdcooper 
-           AND a.dtmvtolt = vr_dtleiarq
-           AND cdtipdoc IN (40, 140);
-            
-          INSERT INTO tbcompe_suaremessa
-              (cdcooper,
-               tparquiv,
-               dtarquiv,
-               qtrecebd,
-               vlrecebd,
-               nmarqrec)
-          VALUES
-              (pr_cdcooper,
-               4,
-               trunc(sysdate),
-               vr_qtregrec,
-               vr_vlregrec,
-               vr_vet_arquivos(vr_pos));
-          --/
-          EXCEPTION
-             WHEN DUP_VAL_ON_INDEX THEN
-                NULL;
-      WHEN OTHERS THEN
-        cecred.pc_internal_exception;
-        vr_dscritic := 'Erro ao inserir na tabela tbcompe_suaremessa, Rotina pc_crps533.pc_integra_todas_coop. '||sqlerrm;
-        RAISE vr_exc_saida;
-      END;
- 
   END LOOP; -- Fim da leitura de todos os arquivos
 
   -- Processo OK, devemos chamar a fimprg
@@ -596,3 +552,4 @@ EXCEPTION
 
 END PC_CRPS544;
 /
+

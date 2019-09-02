@@ -11,7 +11,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/SUPERO
-   Data    : Dezembro/2009                   Ultima atualizacao: 07/08/2019
+   Data    : Dezembro/2009                   Ultima atualizacao: 03/04/2018
 
    Dados referentes ao programa:
 
@@ -138,8 +138,6 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                
                23/05/2018 - P450 - Alteração INSERT na craplcm e lot pelas chamadas da rotina LANC0001
                             Renato Cordeiro (AMcom)         
-              09/07/2019  - p565 - validacao sr
-							Rafael Rocha (AmCom)
 ............................................................................. */
 
   -- Cursor genérico de calendário
@@ -461,12 +459,6 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
                                ,nmarquivo     VARCHAR2(200));
   TYPE typ_tabarq  IS TABLE OF typ_diretorio INDEX BY BINARY_INTEGER;
 
-  ---
-  vr_qtdtotal NUMBER(15,2);    
-  vr_qtdlanc  NUMBER(15,2);
-  vr_vlrtotal NUMBER(15,2);
-  vr_vlrlanc  NUMBER(15,2);
-
   --
   -- Código do programa
   vr_cdprogra      crapprg.cdprogra%type;
@@ -563,13 +555,7 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
 
   vr_rw_craplot  lanc0001.cr_craplot%ROWTYPE;
   vr_tab_retorno lanc0001.typ_reg_retorno;
-
-  vr_qtregint PLS_INTEGER  :=0;
-  vr_vlregint tbcompe_suaremessa.vlintegr%TYPE;
-  vr_qtregrej PLS_INTEGER  :=0;
-  vr_vlregrej tbcompe_suaremessa.vlrejeit%TYPE;
-
-  vr_nomearquivo varchar2(100);
+  vr_flgreapr    VARCHAR2(03);
 
   PROCEDURE pc_escreve_xml(pr_des_dados in VARCHAR2,
                            pr_idtipo    IN NUMBER) IS
@@ -808,9 +794,6 @@ BEGIN
         vr_arquivos(vr_arquivos.COUNT()+1).idarquivo := 1;
         vr_arquivos(vr_arquivos.COUNT()  ).nmarquivo := vr_array_arquivo(ind);
 
-        --pj565
-        vr_nomearquivo := vr_array_arquivo(ind);
-
       ELSIF vr_array_arquivo(ind) LIKE ('1'||lpad(rw_crapcop.cdagectl,4,'0')||'%.DNC') THEN
         -- Grupo de arquivos .DNC
         vr_arquivos(vr_arquivos.COUNT()+1).idarquivo := 2;
@@ -826,9 +809,6 @@ BEGIN
           -- Grupo de arquivos DDN e DNN
           vr_arquivos(vr_arquivos.COUNT()+1).idarquivo := 3;
           vr_arquivos(vr_arquivos.COUNT()  ).nmarquivo := vr_array_arquivo(ind);
-
-          --pj565
-        vr_nomearquivo := vr_array_arquivo(ind);
 
         ELSIF vr_array_arquivo(ind) LIKE ('1'||lpad(rw_crabcop.cdagectl,4,'0')||'%.DNC') THEN
           -- Grupo de arquivos .DNC
@@ -2216,16 +2196,6 @@ BEGIN
       IF vr_tab_crawrel_2.next(vr_ind_crawrel_2) IS NULL OR -- Se o proximo registro da pl table nao existir
          vr_tab_crawrel_2(vr_tab_crawrel_2.next(vr_ind_crawrel_2)).flgmigra <> vr_tab_crawrel_2(vr_ind_crawrel_2).flgmigra THEN -- Se o flag de migracao posterior for diferente do flag de migracao atual
 
-      vr_qtdtotal := vr_qtdcstod_ger + vr_qtddscon_ger +
-                     vr_qtdlnchq_ger + vr_qtdcaixa_ger;
-                     
-      vr_qtdlanc  := vr_qtdlnchq_ger;
-                          
-      vr_vlrtotal := vr_totcstod_ger + vr_totdscon_ger + 
-                     vr_totlnchq_ger + vr_totcaixa_ger;
-                     
-      vr_vlrlanc  := vr_totlnchq_ger;
-      
         -- Inclui os totalizadores
         pc_escreve_xml(  '<qtdcstod_ger>'|| vr_qtdcstod_ger                                   ||'</qtdcstod_ger>'||
                          '<totcstod_ger>'|| to_char(vr_totcstod_ger,'FM99G999G990D00')        ||'</totcstod_ger>'||
@@ -2315,55 +2285,6 @@ BEGIN
 
     vr_ind_crawrel_2 := vr_tab_crawrel_2.next(vr_ind_crawrel_2);
   END LOOP;
-  
-   -- pj565
-  BEGIN
-              
-        SELECT COUNT(*) qtd_reg_int, 
-               nvl(SUM(vllanmto),0) vlt_reg_int
-          INTO vr_qtregint,
-               vr_vlregint
-          FROM craplcm
-         WHERE cdcooper = pr_cdcooper
-           AND dtmvtolt = rw_crapdat.dtmvtolt
-           AND cdhistor IN (351, 24, 27, 657, 399)
-           AND dsidenti = 'CTL';
-
-          vr_qtregrej := vr_qtdtotal - vr_qtregint;        
-          vr_vlregrej := vr_vlrtotal - vr_vlregint;
-            
-          INSERT INTO tbcompe_suaremessa
-              (cdcooper,
-               tparquiv,
-               dtarquiv,
-               qtrecebd,
-               vlrecebd,
-               qtintegr,
-               vlintegr,
-               qtrejeit,
-               vlrejeit,
-               nmarqrec)
-          VALUES
-              (pr_cdcooper,
-               1,
-               trunc(sysdate),
-               vr_qtdtotal,
-               vr_vlrtotal,
-               vr_qtregint,
-               vr_vlregint,
-               vr_qtregrej,
-               vr_vlregrej,
-               vr_nomearquivo
-              );
-
-          EXCEPTION
-             WHEN DUP_VAL_ON_INDEX THEN
-                NULL;
-      WHEN OTHERS THEN
-        cecred.pc_internal_exception;
-        vr_dscritic := 'Erro ao inserir na tabela tbcompe_suaremessa, Rotina pc_crps535.pc_integra_todas_coop. '||sqlerrm;
-        RAISE vr_exc_saida;
-      END;
 
 
   --

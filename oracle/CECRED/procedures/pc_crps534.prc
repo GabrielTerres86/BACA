@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009.                  Ultima atualizacao: 06/08/2019
+   Data    : Dezembro/2009.                  Ultima atualizacao: 05/01/2018
    Dados referentes ao programa:
 
    Frequencia: Diario (Batch).
@@ -152,11 +152,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 													
                23/01/2019 - Tramento de DOCs recebidos para Liquidacao de Boletos em cartório (P352 - Cechet)
 
-               16/07/2019 - PJ565 - Insert na TBCOMPE_SUAREMESSA
-                            Rafael Rocha (AmCom)
 													
-               06/08/2019 - PJ565 - Ajuste Insert na TBCOMPE_SUAREMESSA para agencia invalida
-                            Luis Fagundes (AmCom)
   ............................................................................ */
 
 
@@ -292,7 +288,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
   vr_tplotmov        NUMBER := 1;
   vr_cdcmpori        crapddc.cdcmpori%TYPE;
   vr_nrdconta_incorp crapass.nrdconta%TYPE;
-  vr_captagencia     craplct.cdagenci%TYPE;
   --
   vr_tpdsdocs     VARCHAR2(1);
   vr_dsrelcpf     VARCHAR2(20);
@@ -354,15 +349,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
    vr_tab_retorno  lanc0001.typ_reg_retorno;
    vr_incrineg     number;
     
-   -----------------
-   vr_qtrecebd    cecred.tbcompe_suaremessa.qtrecebd%type := 0;
-   vr_vlrecebd    cecred.tbcompe_suaremessa.vlrecebd%type := 0;
-   vr_qtintegr    cecred.tbcompe_suaremessa.qtintegr%type := 0;
-   vr_vlintegr    cecred.tbcompe_suaremessa.vlintegr%type := 0;
-   vr_qtrejeit    cecred.tbcompe_suaremessa.qtrejeit%type := 0;
-   vr_vlrejeit    cecred.tbcompe_suaremessa.vlrejeit%type := 0;
-   ------------------
-   
   --------------------------- ROTINAS INTERNAS ----------------------------
 
   --> Controla log proc_batch, atualizando parâmetros conforme tipo de ocorrência
@@ -1292,36 +1278,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
     TYPE typ_tbrelato IS TABLE OF typ_rcrelato INDEX BY VARCHAR2(100);
     TYPE typ_arquivo IS TABLE OF VARCHAR2(1000) INDEX BY BINARY_INTEGER;
 
-    -- cursores
-    CURSOR c_crapddc(pr_dtmvtolt date,
-                     pr_cdagenci number)is
-       select count(*) qtd,
-              sum(a.vldocmto) vlrdoc
-        from  crapddc a
-       where  cdcooper = 3 
-         and  dtmvtolt = pr_dtmvtolt 
-         and  cdagenci = pr_cdagenci;
-         
-     r_crapddc c_crapddc%rowtype;
-     
-    CURSOR c_tbfin(pr_dtmvtolt date,
-                   pr_cdagenci number)is
-      select count(*) qtd,
-             sum(x.vllanmto) vlrdoc
-        from tbfin_recursos_movimento x 
-       where x.cdcooper = 3 
-         and dtmvtolt   = pr_dtmvtolt 
-         and x.cdagenci_creditada = pr_cdagenci;
-         
-     r_tbfin c_tbfin%rowtype;      
-     
-    ---------          
     -- Variáveis locais
     vr_tbrelato    typ_tbrelato;
     vr_flgrejei    BOOLEAN;
     vr_vlcredit    NUMBER;
-    vr_nomearquivo     varchar2(100);
-    
     -- Arquivo lido
     vr_utlfileh    UTL_FILE.file_type;
     -- Array para guardar as linhas dos arquivos
@@ -1470,8 +1430,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)
                       || '. Arquivo: ' || pr_tbarquiv(vr_nrindice);
 
-        vr_nomearquivo := pr_tbarquiv(vr_nrindice);
-        
         -- Envio centralizado de log de erro
         pc_gera_log(pr_cdcooper_in   => pr_cdcooper,
                     pr_dstiplog      => 'O',
@@ -1578,8 +1536,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
               -- Caso o registro não exista... sai do loop
               EXIT WHEN NOT vr_tbrelato.EXISTS(vr_indchave);
             END LOOP;
-           --usa agencia para inserir na tbcomp_suaremessa
-           vr_captagencia := vr_cdagercb;
 
            -- Se conta 10000003 ou 20000006 e Agencia 100, entao é
            -- DOC recebida de boleto pago em cartório
@@ -1734,64 +1690,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
 
     END LOOP; -- Fim da leitura dos arquivos
 
-   --insere tabela tbcompe_suaremessa Tela MOVCMP
-   OPEN c_crapddc(vr_dtmvtolt,
-                 vr_captagencia);
-   FETCH c_crapddc into r_crapddc;
-   CLOSE c_crapddc;
-   
-   OPEN c_tbfin(vr_dtmvtolt,
-                 vr_captagencia);
-   FETCH c_tbfin into r_tbfin;
-   CLOSE c_tbfin;
-   ----- 
-   IF vr_captagencia = 100 THEN
-     vr_qtrecebd := r_tbfin.qtd;
-     vr_vlrecebd := r_tbfin.vlrdoc;
-      vr_qtintegr := r_tbfin.qtd;
-      vr_vlintegr := r_tbfin.vlrdoc;  
-   ELSE    
-       vr_qtrecebd := r_crapddc.qtd;
-       vr_vlrecebd := r_crapddc.vlrdoc;
-       vr_qtrejeit := r_crapddc.qtd;
-       vr_vlrejeit := r_crapddc.vlrdoc; 
-   END IF;  
-     
-  -- pj565
-    BEGIN
-      INSERT INTO tbcompe_suaremessa
-          (cdcooper,
-           tparquiv,
-           dtarquiv,
-           qtrecebd,
-           vlrecebd,
-           qtintegr,
-           vlintegr,
-           qtrejeit,
-           vlrejeit,
-           nmarqrec)
-      VALUES
-          (3,
-           2,
-           trunc(sysdate),
-           vr_qtrecebd,
-           vr_vlrecebd,
-           vr_qtintegr,
-           vr_vlintegr,
-           vr_qtrejeit,
-           vr_vlrejeit,
-           vr_nomearquivo
-          );
-    EXCEPTION
-       WHEN DUP_VAL_ON_INDEX THEN
-          NULL;
-    WHEN OTHERS THEN
-        cecred.pc_internal_exception;
-        vr_des_erro:= 'Erro ao inserir na tabela tbcompe_suaremessa, Rotina pc_crps533.pc_integra_cecred '||sqlerrm;
-        RAISE vr_exc_saida;
-    END;
-      -----------------
-   
     /*** GERAÇÃO DO RELATÓRIO COM OS DADOS PROCESSADOS ***/
     -- Se há registros para serem inseridos no relatório
     IF vr_tbrelato.COUNT() > 0 THEN
@@ -3494,41 +3392,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps534 (
                                    '    <vlregint>'||to_char(vr_vlregint,'FM9G999G999G999G990D00')||'</vlregint>'||chr(10)||
                                    '    <vlregrej>'||to_char(vr_vlregrej,'FM9G999G999G999G990D00')||'</vlregrej>'||chr(10)||
                                    '  </total> ');
-      
-            -- pj565
-            BEGIN
-              INSERT INTO tbcompe_suaremessa
-                  (cdcooper,
-                   tparquiv,
-                   dtarquiv,
-                   qtrecebd,
-                   vlrecebd,
-                   qtintegr,
-                   vlintegr,
-                   qtrejeit,
-                   vlrejeit,
-                   nmarqrec)
-              VALUES
-                  (pr_cdcooper,
-                   2,
-                   trunc(sysdate),
-                   vr_qtregrec,
-                   vr_vlregrec,
-                   vr_qtregint,
-                   vr_vlregint,
-                   vr_qtregrej,
-                   vr_vlregrej,
-                   pr_tbarquiv(vr_nrindice)
-                  );
-                EXCEPTION
-                   WHEN DUP_VAL_ON_INDEX THEN
-                      NULL;
-                WHEN OTHERS THEN
-                    cecred.pc_internal_exception;
-                    vr_des_erro:= 'Erro ao inserir na tabela tbcompe_suaremessa, Rotina pc_crps533.pc_integra_todas_coop. '||sqlerrm;
-                    RAISE vr_exc_saida;
-                END;
-      
       END IF;
     END LOOP;
 
