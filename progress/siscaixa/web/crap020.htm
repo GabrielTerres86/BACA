@@ -49,6 +49,9 @@
 			  02/02/2019 - Correção para o tipo de documento "TED C":
 							-> Ao optar por "Espécie" deve ser permitir apenas para não cooperados
 						   (Jonata - Mouts PRB0040337).
+						   
+			  30/08/2019 - Correção o campo "Código Identificador Transferência" para não aceitar acentos ou caracteres especiais.
+						   PRB0041891 - Diego Batista Pereira da Silva - AILOS
 -->
 
 
@@ -75,6 +78,50 @@ var EncPinpad = ""; /* CRYTO PASSWORD */
 var focoOK = true; /* CONTROLE DE FOCO CAMPO SENHA CARTÃO */
 
 var lChangePara = false;
+
+$(document).ready(function () {
+	$(document.action.v_cdidtran).keyup(function (e) {
+		this.value = removeAcentos(this.value);
+	});
+
+	$(document.action.v_cdidtran).onBlur(function (e) {
+		this.value = removeAcentos(this.value);
+	});  
+});
+
+/*
+* 30/08/2019 - Diego Batista Pereira da Silva - AILOS
+* Função que retira acentos quaisquer ou caracteres especiais de uma palavra ou texto.
+*/
+function removeAcentos(str) {
+	var valor = "";
+	try {
+		valor = str.normalize('NFD').replace(/([\u0300-\u036f]|[^0-9a-zA-Z\s])/g, ''); //Não é compativel com IE
+	} catch (e) {
+		try {
+			valor = str.replace(/[àáâãäå]/g, "a")
+					  .replace(/[ÀÁÂÃÄÅ]/g, "A")
+					  .replace(/[ÒÓÔÕÖØ]/g, "O")
+					  .replace(/[òóôõöø]/g, "o")
+					  .replace(/[ÈÉÊË]/g, "E")
+					  .replace(/[èéêë]/g, "e")
+					  .replace(/[Ç]/g, "C")
+					  .replace(/[ç]/g, "c")
+					  .replace(/[ÌÍÎÏ]/g, "I")
+					  .replace(/[ìíîï]/g, "i")
+					  .replace(/[ÙÚÛÜ]/g, "U")
+					  .replace(/[ùúûü]/g, "u")
+					  .replace(/[ÿ]/g, "y")
+					  .replace(/[Ñ]/g, "N")
+					  .replace(/[ñ]/g, "n")
+					  .replace(/[~^`´¨º]/g, "")
+					  .replace(/([\u0300-\u036f]|[^0-9a-zA-Z\s])/g, '');
+		} catch (e) {
+			valor = "";
+		}
+	}
+	return valor;
+}
 
 function selectOpcao (opcao) {
 
