@@ -142,7 +142,8 @@ BEGIN
   VALUES ('INSITRNV', '5', 'Cancelado');
   --/
  --/
- 
+ insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+ values ('CRED', 0, 'EMPR_REMETENTE_PROP_OPE', 'Remetende de email do serviço SOA de propostas', 'noreply-servicos@ailos.coop.br');
 
  --> Crédito Aprovado
 UPDATE tbgen_notif_automatica_prm p
