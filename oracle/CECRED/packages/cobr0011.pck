@@ -3362,13 +3362,11 @@ create or replace package body cecred.cobr0011 IS
 						,tri.vltitulo vlliquid
 						,tri.vlsaldo_titulo
 						,crapdat.dtmvtolt
-            ,trm.nrdconta nrdconta_trm
 						,crapcco.nrdolote
 						,crapcco.cdagenci
 						,crapcco.cdbccxlt
 						,crapcco.nrconven
 				FROM tbcobran_conciliacao_ieptb tci
-						,tbfin_recursos_movimento   trm
 						,tbcobran_retorno_ieptb     tri
 						,crapcob
 						,crapcop
@@ -3382,7 +3380,6 @@ create or replace package body cecred.cobr0011 IS
 				 AND crapcob.nrcnvcob    = tri.nrcnvcob
 				 AND crapcob.nrdocmto    = tri.nrdocmto
 				 --AND tci.idrecurso_movto = trm.idlancto
-         AND tci.idconciliacao   = trm.idconciliacao /*RITM0013002*/
 				 --AND tci.idretorno_ieptb = tri.idretorno
          AND tci.idconciliacao   = tri.idconciliacao /*RITM0013002*/
          AND tci.idconciliacao   = pr_idconciliacao  /*RITM0013002*/
@@ -3394,6 +3391,17 @@ create or replace package body cecred.cobr0011 IS
 				 AND tri.tpocorre        IN (1,7);
 		--
 		rw_conciliados cr_conciliados%ROWTYPE;
+                --
+	        CURSOR cr_tbfin_rec_mov IS
+	          SELECT DISTINCT trm.nrdconta
+	                ,tri.vlsaldo_titulo
+	                ,tri.cdcooper
+	            FROM tbfin_recursos_movimento trm
+	                ,tbcobran_retorno_ieptb   tri
+	           WHERE trm.idconciliacao = pr_idconciliacao
+	             AND trm.idconciliacao = tri.idconciliacao;
+	        --
+		rw_tbfin_rec_mov cr_tbfin_rec_mov%ROWTYPE;
 		--
 		CURSOR cr_crapret(pr_cdcooper crapret.cdcooper%TYPE
                      ,pr_nrcnvcob crapret.nrcnvcob%TYPE
@@ -3605,24 +3613,28 @@ create or replace package body cecred.cobr0011 IS
 					RAISE vr_exc_erro;
 			END;
 			--
-			IF nvl(rw_conciliados.vlsaldo_titulo, 0) > 0 THEN
-				--
-				pc_totaliza_cooperativa(pr_cdcooper => rw_conciliados.cdcooper         -- IN
-                               ,pr_nrdconta => rw_conciliados.nrdconta_trm     -- Conta Recurso movimento
-															 ,pr_vlpagmto => nvl(rw_conciliados.vlsaldo_titulo, 0) -- IN
-															 ,pr_dscritic => pr_dscritic                     -- OUT
-															 );
-				--
-				IF pr_dscritic IS NOT NULL THEN
-					--
-					RAISE vr_exc_erro;
-					--
-				END IF;
-				--
-			END IF;
-
 		END LOOP;
-			--
+                --
+                FOR rw_tbfin_rec_mov IN cr_tbfin_rec_mov LOOP    
+		    --
+		    IF nvl(rw_tbfin_rec_mov.vlsaldo_titulo, 0) > 0 THEN
+		        --
+			pc_totaliza_cooperativa(pr_cdcooper => rw_tbfin_rec_mov.cdcooper
+                                               ,pr_nrdconta => rw_tbfin_rec_mov.nrdconta
+                                               ,pr_vlpagmto => nvl(rw_tbfin_rec_mov.vlsaldo_titulo, 0)
+			                       ,pr_dscritic => pr_dscritic
+			                        );
+		        --
+		        IF pr_dscritic IS NOT NULL THEN
+		        --
+		            RAISE vr_exc_erro;
+		        --
+		        END IF;
+		        --
+		    END IF;
+                    --
+	        END LOOP;
+		--
     /*RITM0013002 - Retirado para fora a atualização, pois agora haverá somente um registro
       na tabela de conciliação, relacionada com as TEDs e Titulos*/
 			BEGIN
