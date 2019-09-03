@@ -117,7 +117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0003 AS
   --  Sistema  : Rotinas focadas no sistema de Cheques - Devolução automática de cheques
   --  Sigla    : CHEQ
   --  Autor    : Andre (Mouts)
-  --  Data     : Outubro/2018.                   Ultima atualizacao: Maio/2019
+  --  Data     : Outubro/2018.                   Ultima atualizacao:
   --
   -- Dados referentes ao programa:
   --
@@ -128,8 +128,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0003 AS
   --                            Problema PRB0040612 (Andre - MoutS)
   --               16/04/2019 - Remover verificação de Dev. Aut. Cheques para cheques com Contra-Ordem
   --                            RITM0011849 (Jefferson - MoutS)
-  --               29/05/2019 - Projeto 565 - RF20 - Alteração histórico 351 para hstórico 2973 no tratamento de devolução
-  --                            (Fernanda Kelli - AMcom)
   --               16/05/2019 - Inclusão rotinas tratamento código de segurança cheque - projeto 505
   --                            (Renato Cordeiro - AMcom)
   --               17/07/2019 - Tratamento para multiplas solicitações de talões - PJ505 código de segurança cheque
@@ -826,7 +824,7 @@ BEGIN
                                                       pr_nrdconta => pr_nrdconta, 
                                                       pr_nrdctabb => pr_nrdconta,
                                                       pr_nrdocmto => nvl(vr_nrdocmto, 0),
-                                                      pr_cdhistor => (CASE pr_tpopechq WHEN 1 THEN 2973 ELSE 399 END), 
+                                                      pr_cdhistor => (CASE pr_tpopechq WHEN 1 THEN 351 ELSE 399 END), 
                                                       pr_vllanmto => rw_crapfdc.vlcheque, 
                                                       pr_cdcooper => pr_cdcoopdp, 
                                                       pr_cdbanchq => rw_crapfdc.cdbanchq, 
@@ -1011,7 +1009,7 @@ BEGIN
                                               pr_nrdconta => pr_nrdconta, 
                                               pr_nrdctabb => pr_nrdconta,
                                               pr_nrdocmto => nvl(vr_nrdocmto, 0),
-                                              pr_cdhistor => (CASE pr_tpopechq WHEN 1 THEN 2973 ELSE 399 END), -- Quando devolução contra ordem tambem por Historico 2973
+                                              pr_cdhistor => (CASE pr_tpopechq WHEN 1 THEN 351 ELSE 399 END), 
                                               pr_vllanmto => rw_crapfdc.vlcheque, 
                                               pr_cdcooper => pr_cdcoopdp, 
                                               pr_cdbanchq => rw_crapfdc.cdbanchq, 
