@@ -320,6 +320,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     -- Alteracoes: 
     --  
     --       04/06/2019 - Limpar registros de erros de envios anteriores. (Renato Darosci - Supero)          
+    -- 
+    --       22/08/2019 - Alterar a rotina para envio de empregador PF. (Renato Darosci - Supero)
+    --
     ---------------------------------------------------------------------------------------------------------------
     
     -- Buscar os dados das solicitações que estão para ser enviadas
@@ -330,7 +333,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
        WHERE t.idsituacao = 1  -- A solicitar
          FOR UPDATE ;   -- Lock dos registros para evitar atualizações no momento de processamento
         
-    
     vr_dsapcsdoc     CONSTANT VARCHAR2(10) := 'APCS101';
 
     vr_dsxmlarq      xmltype;         --> XML do arquivo
@@ -340,6 +342,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     vr_dscritic      VARCHAR2(1000);
     vr_nrctpart      VARCHAR2(20); -- Chave de relacionamento
     vr_nrposxml      NUMBER;
+    vr_tppesepr      VARCHAR2(1);  -- Tipo pessoa empregador
+    vr_dsdocepr      VARCHAR2(14); -- Documento empregador
     
     -- Procedure para atualizar o registro de solicitação para REPROVADO
     PROCEDURE pc_reprova_solicitacao(pr_dsdrowid  IN VARCHAR2
@@ -516,10 +520,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
                    ,pr_tag_cont => LPAD(rg_dados.nrcnpj_banco_folha,14,'0') 
                    ,pr_posicao  => vr_nrposxml);
       
+      
+      -- Definir e formatar dados do empregador
+      IF rg_dados.tppessoa_empregador = 1 THEN
+        vr_tppesepr := 'F';
+        vr_dsdocepr := LPAD(rg_dados.nrcnpj_empregador,11,'0');
+      ELSE 
+        vr_tppesepr := 'J';
+        vr_dsdocepr := LPAD(rg_dados.nrcnpj_empregador,14,'0');
+      END IF;
+      
+      -- Tipo pessoa empregador
+      pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
+                   ,pr_tag_nova => 'TpPessoaEmprdr'
+                   ,pr_tag_cont => vr_tppesepr
+                   ,pr_posicao  => vr_nrposxml);
+
       -- CNPJ do Empregador
       pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
-                   ,pr_tag_nova => 'CNPJEmprdr'
-                   ,pr_tag_cont => LPAD(rg_dados.nrcnpj_empregador,14,'0') 
+                   ,pr_tag_nova => 'CNPJ_CPFEmprdr'
+                   ,pr_tag_cont => vr_dsdocepr
                    ,pr_posicao  => vr_nrposxml);
       
       -- CNPJ Participante Folha Pagamento
@@ -623,6 +643,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     --             respectivos NU Portabilidades.
     --
     -- Alteracoes: 
+    --             22/08/2019 - Alteração para adequar a nova estrutura do arquivo e tratar erros nas 
+    --                          informações do empregador PF (Renato Darosci - Supero).
     --             
     ---------------------------------------------------------------------------------------------------------------
 
@@ -655,7 +677,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
            , erdsdemail
            , ernrispbfl
            , ernrcnpjfl
-           , ernrcnpjep
+           , ertppesepr
+           , ernrdocepr
            , ernmdoempr
            , ernrispbdt
            , ernrcnpjdt
@@ -679,7 +702,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
                             , ergrupofol  VARCHAR2(20) PATH 'Grupo_APCS101RET_FolhaPgto/@CodErro'
                             , ernrispbfl  VARCHAR2(20) PATH 'Grupo_APCS101RET_FolhaPgto/ISPBPartFolhaPgto/@CodErro'
                             , ernrcnpjfl  VARCHAR2(20) PATH 'Grupo_APCS101RET_FolhaPgto/CNPJPartFolhaPgto/@CodErro'
-                            , ernrcnpjep  VARCHAR2(20) PATH 'Grupo_APCS101RET_FolhaPgto/CNPJEmprdr/@CodErro'
+                            , ertppesepr  VARCHAR2(20) PATH 'Grupo_APCS101RET_FolhaPgto/TpPessoaEmprdr/@CodErro'
+                            , ernrdocepr  VARCHAR2(20) PATH 'Grupo_APCS101RET_FolhaPgto/CNPJ_CPFEmprdr/@CodErro'
                             , ernmdoempr  VARCHAR2(20) PATH 'Grupo_APCS101RET_FolhaPgto/DenSocEmprdr/@CodErro'
                             , ergrupodst  VARCHAR2(20) PATH 'Grupo_APCS101RET_Dest/@CodErro'
                             , ernrispbdt  VARCHAR2(20) PATH 'Grupo_APCS101RET_Dest/ISPBPartDest/@CodErro'
@@ -935,12 +959,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       END IF; 
       
       -- Verifica se encontrou erro
-      IF rg_dados.ernrcnpjep IS NOT NULL THEN
+      IF rg_dados.ertppesepr IS NOT NULL THEN
         -- Inserir registro de erro
         pc_insere_erro(pr_cdcooper => vr_cdcooper
                       ,pr_nrdconta => vr_nrdconta
                       ,pr_nrsolici => vr_nrsolici
-                      ,pr_cddoerro => rg_dados.ernrcnpjep);
+                      ,pr_cddoerro => rg_dados.ertppesepr);
+      END IF;
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.ernrdocepr IS NOT NULL THEN
+        -- Inserir registro de erro
+        pc_insere_erro(pr_cdcooper => vr_cdcooper
+                      ,pr_nrdconta => vr_nrdconta
+                      ,pr_nrsolici => vr_nrsolici
+                      ,pr_cddoerro => rg_dados.ernrdocepr);
       END IF; 
       
       -- Verifica se encontrou erro
@@ -1116,6 +1149,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     --             04/04/2019 - Ajustar regra de validação da modalidade da conta, pois estava invertida, reprovando 
     --                          assim as solicitações para contas salário (Renato Darosci - SUPERO - INC0036168)
     --
+    --             22/08/2019 - Alterado para ler o novo campo de tipo pessoa empregador e atualizar o nome da tag
+    --                          do documento do empregador e tratar os novos campos. (Renato Darosci - Supero)
     ---------------------------------------------------------------------------------------------------------------
 
     -- CONTANTES
@@ -1132,7 +1167,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
            , dsdemail
            , nrispbfl
            , nrcnpjfl
-           , nrcnpjep
+           , tppesepr
+           , nrdocepr
            , nmdoempr
            , nrispbdt
            , nrcnpjdt
@@ -1151,7 +1187,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
                             , dsdemail  VARCHAR2(50) PATH 'Grupo_APCS102_Cli/EmailCli'
                             , nrispbfl  NUMBER       PATH 'Grupo_APCS102_FolhaPgto/ISPBPartFolhaPgto'
                             , nrcnpjfl  NUMBER       PATH 'Grupo_APCS102_FolhaPgto/CNPJPartFolhaPgto'
-                            , nrcnpjep  NUMBER       PATH 'Grupo_APCS102_FolhaPgto/CNPJEmprdr'
+                            , tppesepr  VARCHAR2(5)  PATH 'Grupo_APCS102_FolhaPgto/TpPessoaEmprdr'
+                            , nrdocepr  NUMBER       PATH 'Grupo_APCS102_FolhaPgto/CNPJ_CPFEmprdr'
                             , nmdoempr  VARCHAR2(50) PATH 'Grupo_APCS102_FolhaPgto/DenSocEmprdr'
                             , nrispbdt  NUMBER       PATH 'Grupo_APCS102_Dest/ISPBPartDest'
                             , nrcnpjdt  NUMBER       PATH 'Grupo_APCS102_Dest/CNPJPartDest'
@@ -1199,6 +1236,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     vr_dscritic     VARCHAR2(1000);
     vr_nmarquiv     VARCHAR2(100);
     vr_dtarquiv     DATE;
+    vr_tppesepr     NUMBER;
     
     vr_cdcooper     crapass.cdcooper%TYPE;
     vr_nrdconta     crapass.nrdconta%TYPE;
@@ -1316,7 +1354,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         CLOSE cr_crapttl;   
         
         --  Verificar se o CNPJ do empregador e do arquivo são iguais
-        IF rg_crapttl.nrcpfemp <> rg_dadosret.nrcnpjep THEN
+        IF rg_crapttl.nrcpfemp <> rg_dadosret.nrdocepr  THEN
           -- Deve marcar os registro como reprovado
           vr_idsituac := 3; -- Reprovada
           vr_dsdomrep := vr_dsmotivoreprv;
@@ -1347,6 +1385,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
         vr_nrctadst := rg_dadosret.nrctadst;
       END IF;
       
+      -- Verifica o tipo de pessoa do empregador
+      IF rg_dadosret.tppesepr = 'F' THEN
+        -- Pessoa Física
+        vr_tppesepr := 1;
+      ELSE 
+        -- Pessoa Jurídica
+        vr_tppesepr := 2;
+      END IF;
       
       -- INSERIR REGISTRO DE PORTABILIDADE SOLICITADA
       BEGIN
@@ -1361,6 +1407,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
                           ,dsdemail
                           ,nrispb_banco_folha
                           ,nrcnpj_banco_folha
+                          ,tppessoa_empregador
                           ,nrcnpj_empregador
                           ,dsnome_empregador
                           ,nrispb_destinataria
@@ -1384,7 +1431,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
                           ,rg_dadosret.dsdemail -- dsdemail
                           ,rg_dadosret.nrispbfl -- nrispb_banco_folha
                           ,rg_dadosret.nrcnpjfl -- nrcnpj_banco_folha
-                          ,rg_dadosret.nrcnpjep -- nrcnpj_empregador
+                          ,vr_tppesepr          -- tppessoa_empregador
+                          ,rg_dadosret.nrdocepr -- nrcnpj_empregador
                           ,rg_dadosret.nmdoempr -- dsnome_empregador
                           ,rg_dadosret.nrispbdt -- nrispb_destinataria
                           ,rg_dadosret.nrcnpjdt -- nrcnpj_destinataria
@@ -1456,7 +1504,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     -- Objetivo  : Realizar a leitura dos retornos pendentes e enviar via arquivo
     --
     -- Alteracoes: 03/07/2019 - Tratar INC0013340 (Diego).
-    --             
+    --   
+    --             22/08/2019 - Alterar a rotina para envio de empregador PF. (Renato Darosci - Supero)          
     ---------------------------------------------------------------------------------------------------------------
     
     -- Buscar os dados das solicitações que estão para ser enviadas
@@ -1478,6 +1527,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     vr_nrposxml      NUMBER;
     vr_nrposapr      NUMBER;
     vr_nrposrep      NUMBER;
+    vr_tppesepr      VARCHAR2(1);  -- Tipo pessoa empregador
+    vr_dsdocepr      VARCHAR2(14); -- Documento empregador
     
     
     -- Procedure para atualizar o registro de portabilidade retornado
@@ -1668,10 +1719,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
                      ,pr_tag_cont => LPAD(rg_dados.nrcnpj_banco_folha,14,'0')
                      ,pr_posicao  => vr_nrposapr );
         
+        -- Definir e formatar dados do empregador
+        IF rg_dados.tppessoa_empregador = 1 THEN
+          vr_tppesepr := 'F';
+          vr_dsdocepr := LPAD(rg_dados.nrcnpj_empregador,11,'0');
+        ELSE 
+          vr_tppesepr := 'J';
+          vr_dsdocepr := LPAD(rg_dados.nrcnpj_empregador,14,'0');
+        END IF;
+        
+        -- Tipo de pessoa Empregador
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
+                     ,pr_tag_nova => 'TpPessoaEmprdr'
+                     ,pr_tag_cont => vr_tppesepr
+                     ,pr_posicao  => vr_nrposapr );
+
         -- CNPJ do Empregador
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
-                     ,pr_tag_nova => 'CNPJEmprdr'
-                     ,pr_tag_cont => LPAD(rg_dados.nrcnpj_empregador,14,'0')
+                     ,pr_tag_nova => 'CNPJ_CPFEmprdr'
+                     ,pr_tag_cont => vr_dsdocepr
                      ,pr_posicao  => vr_nrposapr );
         
         -- CNPJ Participante Folha Pagamento
@@ -1781,6 +1847,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
     --             respectivos NU Portabilidades.
     --
     -- Alteracoes: 
+    --             22/08/2019 - Alteração para adequar a nova estrutura do arquivo e tratar erros nas 
+    --                          informações do empregador PF (Renato Darosci - Supero).
     --             
     ---------------------------------------------------------------------------------------------------------------
 
@@ -1804,7 +1872,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
            , erdsdemail
            , ernrispbfl
            , ernrcnpjfl
-           , ernrcnpjep
+           , ertppesepr
+           , ernrdocepr
            , ernmdoempr
            , ernrispbdt
            , ernrcnpjdt
@@ -1832,7 +1901,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
                             , ergrupofol  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_FolhaPgto/@CodErro'
                             , ernrispbfl  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_FolhaPgto/ISPBPartFolhaPgto/@CodErro'
                             , ernrcnpjfl  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_FolhaPgto/CNPJPartFolhaPgto/@CodErro'
-                            , ernrcnpjep  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_FolhaPgto/CNPJEmprdr/@CodErro'
+                            , ertppesepr  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_FolhaPgto/TpPessoaEmprdr/@CodErro'
+                            , ernrdocepr  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_FolhaPgto/CNPJ_CPFEmprdr/@CodErro'
                             , ernmdoempr  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_FolhaPgto/DenSocEmprdr/@CodErro'
                             , ergrupodst  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_Dest/@CodErro'
                             , ernrispbdt  VARCHAR2(20) PATH 'Grupo_APCS103RET_PortddCtSalrAprovd/Grupo_APCS103RET_Dest/ISPBPartDest/@CodErro'
@@ -2003,10 +2073,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0002 IS
       END IF; 
       
       -- Verifica se encontrou erro
-      IF rg_dados.ernrcnpjep IS NOT NULL THEN
+      IF rg_dados.ertppesepr IS NOT NULL THEN
         -- Inserir registro de erro
         pc_insere_erro(pr_nrnuport => rg_dados.nrnuportab
-                      ,pr_cddoerro => rg_dados.ernrcnpjep);
+                      ,pr_cddoerro => rg_dados.ertppesepr);
+      END IF;
+      
+      -- Verifica se encontrou erro
+      IF rg_dados.ernrdocepr IS NOT NULL THEN
+        -- Inserir registro de erro
+        pc_insere_erro(pr_nrnuport => rg_dados.nrnuportab
+                      ,pr_cddoerro => rg_dados.ernrdocepr);
       END IF; 
       
       -- Verifica se encontrou erro
@@ -3648,6 +3725,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
     -- Objetivo  : Realizar a leitura do arquivo atualizando os registros de contestação conforme situação.
     --
     -- Alteracoes: 
+    --             22/08/2019 - Removido os campos não utilizados da consulta (Renato Darosci - Supero). 
     --             
     ---------------------------------------------------------------------------------------------------------------
     -- CONTANTES
@@ -3661,21 +3739,6 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
            , nrconttc   
            , motvcont
            , dtconttc
-           , nrcpfcgc
-           , dsnomcli
-           , dstelefo
-           , dsdemail
-           , codauttc
-           , nrispbfl
-           , nrcnpjfl
-           , nrcnpjep
-           , nmdoempr
-           , nrispbdt
-           , nrcnpjdt
-           , cdtipcta
-           , cdagedst
-           , nrctadst
-           , nrctapgt
         FROM DATA
            , XMLTABLE(('/APCSDOC/SISARQ/'||vr_dsapcsdoc||'/Grupo_'||vr_dsapcsdoc||'_ConttcPortddCtSalr')
                       PASSING XMLTYPE(xml)
@@ -3683,22 +3746,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
                             , nrnuport  NUMBER       PATH 'NUPortddPCS'
                             , nrconttc  VARCHAR2(21) PATH 'NUConttcPCS'
                             , motvcont  NUMBER       PATH 'MotvConttc'
-                            , dtconttc  DATE         PATH 'DtConttc'
-                            , nrcpfcgc  NUMBER       PATH 'Grupo_APCS202_Cli/CPFCli'
-                            , dsnomcli  VARCHAR2(80) PATH 'Grupo_APCS202_Cli/NomCli'
-                            , dstelefo  VARCHAR2(20) PATH 'Grupo_APCS202_Cli/TelCli'
-                            , dsdemail  VARCHAR2(50) PATH 'Grupo_APCS202_Cli/EmailCli'
-                            , codauttc  VARCHAR2(50) PATH 'Grupo_APCS202_Cli/CodAuttcBenfcrio'
-                            , nrispbfl  NUMBER       PATH 'Grupo_APCS202_FolhaPgto/ISPBPartFolhaPgto'
-                            , nrcnpjfl  NUMBER       PATH 'Grupo_APCS202_FolhaPgto/CNPJPartFolhaPgto'
-                            , nrcnpjep  NUMBER       PATH 'Grupo_APCS202_FolhaPgto/CNPJEmprdr'
-                            , nmdoempr  VARCHAR2(50) PATH 'Grupo_APCS202_FolhaPgto/DenSocEmprdr'
-                            , nrispbdt  NUMBER       PATH 'Grupo_APCS202_Dest/ISPBPartDest'
-                            , nrcnpjdt  NUMBER       PATH 'Grupo_APCS202_Dest/CNPJPartDest'
-                            , cdtipcta  VARCHAR2(5)  PATH 'Grupo_APCS202_Dest/TpCtDest'
-                            , cdagedst  NUMBER       PATH 'Grupo_APCS202_Dest/AgCliDest'
-                            , nrctadst  NUMBER       PATH 'Grupo_APCS202_Dest/CtCliDest'
-                            , nrctapgt  NUMBER       PATH 'Grupo_APCS202_Dest/CtPagtoDest' );
+                            , dtconttc  DATE         PATH 'DtConttc' );
 
      -- Buscar a solicitação da contestação 
     CURSOR cr_portab(pr_nrnuport  tbcc_portabilidade_recebe.nrnu_portabilidade%TYPE) IS
@@ -4827,6 +4875,7 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
           ,t.cdtipo_cta_destinataria
           ,t.cdagencia_destinataria
           ,t.nrdconta_destinataria
+          ,t.tppessoa_empregador
       FROM tbcc_portabilidade_recebe t
           ,tbcc_portab_regularizacao a
      WHERE t.nrnu_portabilidade      =  a.nrnu_portabilidade
@@ -4844,6 +4893,8 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
     vr_nrposxml      NUMBER;
     vr_nrposapr      NUMBER;
     vr_nrposrep      NUMBER;
+    vr_tppesepr      VARCHAR2(1);  -- Tipo pessoa empregador
+    vr_dsdocepr      VARCHAR2(14); -- Documento empregador
     
     -- Procedure para atualizar o registro de portabilidade retornado
     PROCEDURE pc_atualiza_retorno(pr_dsdrowid  IN VARCHAR2) IS
@@ -5050,10 +5101,26 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
                      ,pr_tag_cont => LPAD(rg_dados.nrcnpj_banco_folha,14,'0')
                      ,pr_posicao  => vr_nrposapr );
         
+        -- Definir e formatar dados do empregador
+        IF rg_dados.tppessoa_empregador = 1 THEN
+          vr_tppesepr := 'F';
+          vr_dsdocepr := LPAD(rg_dados.nrcnpj_empregador,11,'0');
+        ELSE 
+          vr_tppesepr := 'J';
+          vr_dsdocepr := LPAD(rg_dados.nrcnpj_empregador,14,'0');
+        END IF;
+        
+        
+        -- Tipo Pessoa do Empregador
+        pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
+                     ,pr_tag_nova => 'TpPessoaEmprdr'
+                     ,pr_tag_cont => vr_tppesepr
+                     ,pr_posicao  => vr_nrposapr );
+        
         -- CNPJ do Empregador
         pc_insere_tag(pr_tag_pai  => 'Grupo_'||vr_dsapcsdoc||'_FolhaPgto'
-                     ,pr_tag_nova => 'CNPJEmprdr'
-                     ,pr_tag_cont => LPAD(rg_dados.nrcnpj_empregador,14,'0')
+                     ,pr_tag_nova => 'CNPJ_CPFEmprdr'
+                     ,pr_tag_cont => vr_dsdocepr
                      ,pr_posicao  => vr_nrposapr );
         
         -- CNPJ Participante Folha Pagamento
@@ -5163,6 +5230,8 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
     --             respectivos NU Portabilidades.
     --
     -- Alteracoes: 
+    --             22/08/2019 - Alteração para adequar a nova estrutura do arquivo e tratar erros nas 
+    --                          informações do empregador PF (Renato Darosci - Supero).
     --             
     ---------------------------------------------------------------------------------------------------------------
 
@@ -5187,7 +5256,8 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
            , erdsdemail
            , ernrispbfl
            , ernrcnpjfl
-           , ernrcnpjep
+           , ertppesepr
+           , ernrdocepr
            , ernmdoempr
            , ernrispbdt
            , ernrcnpjdt
@@ -5217,7 +5287,8 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
                             , ergrupofol  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_FolhaPgto/@CodErro'
                             , ernrispbfl  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_FolhaPgto/ISPBPartFolhaPgto/@CodErro'
                             , ernrcnpjfl  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_FolhaPgto/CNPJPartFolhaPgto/@CodErro'
-                            , ernrcnpjep  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_FolhaPgto/CNPJEmprdr/@CodErro'
+                            , ertppesepr  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_FolhaPgto/TpPessoaEmprdr/@CodErro'
+                            , ernrdocepr  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_FolhaPgto/CNPJ_CPFEmprdr/@CodErro'
                             , ernmdoempr  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_FolhaPgto/DenSocEmprdr/@CodErro'
                             , ergrupodst  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Dest/@CodErro'
                             , ernrispbdt  VARCHAR2(20) PATH 'Grupo_APCS301RET_ReglzcAprovd/Grupo_APCS301RET_Dest/ISPBPartDest/@CodErro'
@@ -5388,8 +5459,14 @@ PROCEDURE pc_proc_RET_APCS201(pr_dsxmlarq  IN CLOB          --> Conteúdo do arqu
         END IF; 
         
         -- Verifica se encontrou erro
-        IF rg_dados.ernrcnpjep IS NOT NULL THEN
-          vr_cdmoterr := rg_dados.ernrcnpjep;
+        IF rg_dados.ertppesepr IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ertppesepr;
+          raise vr_achouerro;
+        END IF;
+        
+        -- Verifica se encontrou erro
+        IF rg_dados.ernrdocepr IS NOT NULL THEN
+          vr_cdmoterr := rg_dados.ernrdocepr;
           raise vr_achouerro;
         END IF; 
         
