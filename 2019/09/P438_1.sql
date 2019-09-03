@@ -20,36 +20,45 @@ commit;
 /                               
 BEGIN
   --/
+  DELETE CRAPPRM WHERE CDACESSO = 'QT_RETENTATIVAS_ANALISE';    
   INSERT INTO CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
   VALUES ('CRED', 0, 'QT_RETENTATIVAS_ANALISE', 'Quantidade de tentativas de reenvio da proposta de credito para analise', '3');
   --/
+  DELETE CRAPPRM WHERE CDACESSO = 'QT_MINUTOS_RETENTATIVAS';
   INSERT INTO CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) 
-  VALUES ('CRED', 0, 'QT_MINUTOS_RETENTATIVAS', 'Quantidade de minutos que o sistema terá de esperar para iniciar nova tentativa de reenvio da proposta de credito para analise', 1);
+  VALUES ('CRED', 0, 'QT_MINUTOS_RETENTATIVAS', 'Quantidade de minutos que o sistema terá de esperar para iniciar nova tentativa de reenvio da proposta de credito para analise', 30);
   --/
+  DELETE CRAPPRM WHERE CDACESSO = 'METODO_REENVIO_ATIVO';
   INSERT INTO CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) 
   VALUES ('CRED', 0, 'METODO_REENVIO_ATIVO', 'Indica se o metodo do reenvio das propostas de credito para analise esta ativo (0/1)', 1); 
   --/
+  DELETE CRAPPRM WHERE CDACESSO = 'METODO_REENVIO_TPEMPRST';  
   INSERT INTO CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) 
   VALUES ('CRED', 0, 'METODO_REENVIO_TPEMPRST', 'Contem os tipos de emprestimos que participam do metodo de reenvio das propostas de credito para analise', 1); 
   --/ 
+  DELETE CRAPPRM WHERE CDACESSO = 'METODO_REENVIO_MSG';    
   INSERT INTO CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) 
-  VALUES ('CRED', 0, 'METODO_REENVIO_MSG', 'Contem a mensagem direcionada ao operador caso o mesmo esteja tentando enviar uma proposta para analise junto com o JOB este0001.pc_job_reenvio_analise', 'Ja existe um reenvio para analise, iniciado pelo sistema, em andamento. Aguarde.'); 
+  VALUES ('CRED', 0, 'METODO_REENVIO_MSG', 'Contem a mensagem direcionada ao operador caso o mesmo esteja tentando enviar uma proposta para analise junto com o JOB este0001.pc_job_reenvio_analise', 'Ja existe um reenvio para analise, iniciado pelo sistema. Aguarde.'); 
   
   /*Parâmetro do corpo do email para retentativas de envio para análise */
+  DELETE CRAPPRM WHERE CDACESSO = 'MSG_REL_RETENTA_ANALISE';    
   insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
   values ('CRED', 0, 'MSG_REL_RETENTA_ANALISE', 
       'Corpo do e-mail que será enviado com os dados das propostas que excederam as tentativas de reenvio para análise.', 
       'Cooperativa, Segue lista de propostas de empréstimo/financiamento que foram enviadas ao motor de crédito e houve erro no retorno.  É necessário enviar novamente essas propostas para análise do motor, através do botão analisar em Atenda>Empréstimo.');
 
   /*Parâmetro do assunto do email para retentativas de envio para análise */
+  DELETE CRAPPRM WHERE CDACESSO = 'ASS_REL_RETENTA_ANALISE';    
   insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
   values ('CRED', 0, 'ASS_REL_RETENTA_ANALISE', 'Assunto do e-mail que será enviado com os dados das propostas que excederam as tentativas de reenvio para análise.', 'Propostas Pendentes de Análise.');
                                               
   /*Parâmetro de dias para relatório de retentativas de envio para análise */
+  DELETE CRAPPRM WHERE CDACESSO = 'DIAS_REL_RETENTA_ANALISE';    
   insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
-  values ('CRED', 0, 'DIAS_REL_RETENTA_ANALISE', 'Quantidade máxima de dias que a proposta deve estar pendente para que entre no relatório das que excederam as tentativas de reenvio para análise.', '30');
+  values ('CRED', 0, 'DIAS_REL_RETENTA_ANALISE', 'Quantidade máxima de dias que a proposta deve estar pendente para que entre no relatório das que excederam as tentativas de reenvio para análise.', '15');
 
   /*Parâmetro do endereço de email para retentativas de envio para análise */
+  DELETE CRAPPRM WHERE CDACESSO = 'EMAIL_RETENTA_ANALISE';    
   insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
   values ('CRED', 11, 'EMAIL_RETENTA_ANALISE', 
       'Endereço do e-mail que será enviado com os dados das propostas que excederam as tentativas de reenvio para análise.', 
@@ -116,6 +125,7 @@ BEGIN
       'comitedecredito@acredi.coop.br');	
 
    --/
+  DELETE tbepr_dominio_campo where NMDOMINIO = 'INSITRNV'; 
   INSERT INTO tbepr_dominio_campo (NMDOMINIO, CDDOMINIO, DSCODIGO)
   VALUES ('INSITRNV', '0', 'Nao enviado');
   --/
