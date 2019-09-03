@@ -1194,6 +1194,16 @@ function filtraConciliacao(elem) {
 
 function abrirModalDevolverTED() {
 
+  var favorite = [];
+  $.each($("input[name='check']:checked"), function(){
+      favorite.push($(this).val());
+  });
+	favorite = favorite.join(", ");
+	if (favorite.length > 0) {
+		showError('error', 'Desmarque a caixa de sele&ccedil;&atilde;o para devolu&ccedil;&atilde;o', 'Alerta - Ayllos');
+		return;
+	}
+  
     if (registro == null)
         return;
 
