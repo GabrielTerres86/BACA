@@ -85,7 +85,7 @@ var atualizacaoDesconto = false;
 
 var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcebhm, qtTitulares,
     vtitulares, dsdmesag, flgregon, flgpgdiv, flcooexp, flceeexp, flserasa, qtdfloat,
-    flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails, qtbolcob, flgapihm, nrdconta, cddopcao;
+    flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails, qtbolcob, flgapihm, nrdconta, cddopcao, qtbolcob;
 
 var cee = false;
 var coo = false;
@@ -3114,6 +3114,7 @@ function editarConvenio(nrconven) {
             flsercco = response.flsercco;
             flgregis = response.flgregis;
             cddbanco = response.cddbanco;
+            qtbolcob = response.qtbolcob;
 
             var cddopcao = $('#cddopcao', '#divConteudoOpcao').val();
 

@@ -652,6 +652,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
               ,crapceb.insrvprt
               ,crapceb.flgdigit
               ,crapceb.fltercan
+              ,crapceb.cdhomapi
+              ,crapceb.dhhomapi
               ,crapceb.rowid
 					FROM crapceb
 				 WHERE cdcooper = pr_cdcooper
@@ -721,6 +723,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 																			,insrvprt
 																			,flgdigit
 																			,fltercan
+															                                ,cdhomapi
+															                                ,dhhomapi
 																			)
 																VALUES(rw_crapceb.cdcooper -- cdcooper
 																			,rw_crapceb.nrdconta -- nrdconta
@@ -759,6 +763,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 																			,rw_crapceb.insrvprt -- insrvprt
 																			,rw_crapceb.flgdigit -- flgdigit
 																			,rw_crapceb.fltercan -- fltercan
+														                                        ,rw_crapceb.cdhomapi
+														                                        ,rw_crapceb.dhhomapi
 																			);
 					--
 				EXCEPTION
@@ -855,6 +861,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
               ,crapceb.insrvprt
               ,crapceb.flgdigit
               ,crapceb.fltercan
+              ,crapceb.cdhomapi
+              ,crapceb.dhhomapi
               ,crapceb.rowid
 					FROM tbcobran_crapceb crapceb
 				 WHERE cdcooper = pr_cdcooper
@@ -938,6 +946,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 														 ,insrvprt
 														 ,flgdigit
 														 ,fltercan
+											                         ,cdhomapi
+											                         ,dhhomapi
 														 )
 											 VALUES(rw_crapceb.cdcooper -- cdcooper
 														 ,rw_crapceb.nrdconta -- nrdconta
@@ -976,6 +986,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 														 ,rw_crapceb.insrvprt -- insrvprt
 														 ,rw_crapceb.flgdigit -- flgdigit
 														 ,rw_crapceb.fltercan -- fltercan
+											                         ,rw_crapceb.cdhomapi
+											                         ,rw_crapceb.dhhomapi
 														 );
 					--
 				EXCEPTION
@@ -2138,7 +2150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                       ,crapceb.qtdecprz
                       ,crapceb.qtdfloat
                       ,crapceb.inenvcob
-					  ,crapceb.dhhomapi
+		      ,crapceb.dhhomapi
                       ,crapceb.cdhomapi
                       ,crapceb.flgapihm
                   FROM crapceb
@@ -2162,7 +2174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                       ,crapceb.qtdecprz
                       ,crapceb.qtdfloat
                       ,crapceb.inenvcob
-					  ,crapceb.dhhomapi
+		      ,crapceb.dhhomapi
                       ,crapceb.cdhomapi
                       ,crapceb.flgapihm
                   FROM tbcobran_crapceb crapceb
@@ -2282,7 +2294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
         
             -- Variaveis
             vr_blnfound      BOOLEAN;
-			vr_blnewreg_cip  BOOLEAN := FALSE;
+	    vr_blnewreg_cip  BOOLEAN := FALSE;
             vr_fldda_sit_ben BOOLEAN;
             vr_flgimpri      INTEGER;
             vr_qtccoceb      NUMBER;
@@ -3042,13 +3054,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                       -- Rafael Ferreira (Mouts) -- INC0020100 - Se por algum motivo vier zero utiliza o Default da crapcco
                       ,crapceb.qtdecprz = decode(nvl(pr_qtdecprz,0), 0, vr_qtdecini, pr_qtdecprz)
                       ,crapceb.inenvcob = pr_inenvcob
-					  ,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
-                      ,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
                       ,crapceb.flgapihm = pr_flgapihm
+                      --,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
+                      --,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
                  WHERE crapceb.cdcooper = vr_cdcooper
                    AND crapceb.nrdconta = pr_nrdconta
                    AND crapceb.nrconven = pr_nrconven
                    AND crapceb.idrecipr = pr_idrecipr;
+                   
+            -- Rafael Ferreira (Mouts) - INC0020100
+            -- Ajustada Logica da atualização de informações de homologação API
+            IF (trim(rw_crapceb.cdhomapi) is null) and (pr_flgapihm = 1) THEN
+              UPDATE crapceb crapceb
+								 SET crapceb.cdhomapi = vr_cdoperad
+                    ,crapceb.dhhomapi = SYSDATE
+               WHERE crapceb.cdcooper = vr_cdcooper
+								 AND crapceb.nrdconta = pr_nrdconta
+								 AND crapceb.nrconven = pr_nrconven
+								 AND crapceb.idrecipr = pr_idrecipr;
+            END IF;
 
               --
                                      
@@ -3082,13 +3106,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                     -- Rafael Ferreira (Mouts) -- INC0020100 - Se por algum motivo vier zero utiliza o Default da crapcco
 										,crapceb.qtdecprz = decode(nvl(pr_qtdecprz,0), 0, vr_qtdecini, pr_qtdecprz)
 										,crapceb.inenvcob = pr_inenvcob
-										,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
-										,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
 										,crapceb.flgapihm = pr_flgapihm
+                    --,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
+                    --,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
 							 WHERE crapceb.cdcooper = vr_cdcooper
 								 AND crapceb.nrdconta = pr_nrdconta
 								 AND crapceb.nrconven = pr_nrconven
 								 AND crapceb.idrecipr = pr_idrecipr;
+            
+            -- Rafael Ferreira (Mouts) - INC0020100
+            -- Ajustada Logica da atualização de informações de homologação API
+            IF (trim(rw_crapceb.cdhomapi) is null) and (pr_flgapihm = 1) THEN
+              UPDATE tbcobran_crapceb crapceb
+								 SET crapceb.cdhomapi = vr_cdoperad
+                    ,crapceb.dhhomapi = SYSDATE
+               WHERE crapceb.cdcooper = vr_cdcooper
+								 AND crapceb.nrdconta = pr_nrdconta
+								 AND crapceb.nrconven = pr_nrconven
+								 AND crapceb.idrecipr = pr_idrecipr;
+            END IF;
 							--
 						EXCEPTION
 							WHEN OTHERS THEN
@@ -6631,19 +6667,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                                       ,pr_tag_cont => rw_convenios.flgcebhm
                                       ,pr_des_erro => vr_dscritic);
 
-                gene0007.pc_insere_tag(pr_xml      => pr_retxml
-                                      ,pr_tag_pai  => 'Convenio'
-                                      ,pr_posicao  => vr_contador
-                                      ,pr_tag_nova => 'flgapihm'
-                                      ,pr_tag_cont => rw_convenios.flgapihm
-                                      ,pr_des_erro => vr_dscritic);
-            
+
                 gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                       ,pr_tag_pai  => 'Convenio'
                                       ,pr_posicao  => vr_contador
                                       ,pr_tag_nova => 'qtbolcob'
                                       ,pr_tag_cont => rw_convenios.qtbolcob
                                       ,pr_des_erro => vr_dscritic);
+                                      
+
+                gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                      ,pr_tag_pai  => 'Convenio'
+                                      ,pr_posicao  => vr_contador
+                                      ,pr_tag_nova => 'flgapihm'
+                                      ,pr_tag_cont => rw_convenios.flgapihm
+                                      ,pr_des_erro => vr_dscritic);
+                                      
+                -- Não alterar a ordem que estas Tags são gravadas, pois isso vai para um Array no PHP
+                -- Se precisar adicionar Campos coloque no após este 
             
                 vr_contador := vr_contador + 1;
             
@@ -6824,6 +6865,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
             pr_des_erro := 'Floating é obrigatório!';
             RAISE vr_exc_saida;
         END IF;
+        
     
         -- Efetiva a reciprocidade e retorna o ID gerado
         BEGIN
@@ -7055,7 +7097,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                 IF vr_total_coo > 0 AND vr_convenio(6) = 1 THEN
                     vr_perdesconto := fn_busca_perdesconto(0, vr_perdesconto, vr_total_coo);
                 END IF;
-            
+                
+                    
                 pc_habilita_convenio(pr_nrdconta    => pr_nrdconta
                                     ,pr_nrconven    => vr_convenio(1)
                                     ,pr_insitceb    => vr_insitceb
@@ -9856,7 +9899,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                   ,crapceb.cddemail
                   ,crapceb.flgcebhm
                   ,crapceb.flgapihm
-                  ,crapceb.rowid ROWID_CRAPCEB
+                  ,(SELECT COUNT(1)
+                      FROM crapcob
+                     WHERE crapcob.cdcooper = pr_cdcooper
+                       AND crapcob.nrdconta = pr_nrdconta
+                       AND crapcob.nrcnvcob = crapceb.nrconven) AS qtbolcob
               FROM crapceb
                   ,crapcco
              WHERE crapcco.cdcooper = crapceb.cdcooper
@@ -10070,6 +10117,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                                   ,pr_tag_nova => 'flgcebhm'
                                   ,pr_tag_cont => rw_convenio.flgcebhm
                                   ,pr_des_erro => vr_dscritic);
+
+
+            gene0007.pc_insere_tag(pr_xml       => pr_retxml
+                                   ,pr_tag_pai  => 'Convenio'
+                                   ,pr_posicao  => 0
+                                   ,pr_tag_nova => 'qtbolcob'
+                                   ,pr_tag_cont => rw_convenio.qtbolcob
+                                   ,pr_des_erro => vr_dscritic);
+                                   
 
             gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                   ,pr_tag_pai  => 'Convenio'
