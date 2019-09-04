@@ -14566,7 +14566,7 @@ procedure pc_gerar_seg_arquivo_retorno (pr_cdcritic  OUT PLS_INTEGER --> Código 
   and   tatl.dsret_cnab = 'BD'
   and   tatl.cdsegmento = 'A'
   and   tatl.cdbco_comp is not null
-  and   to_date(tatl.dtprv_pgto) = pr_dtretorno
+  and   to_date(tatl.dtprv_pgto,'DDMMYYYY') = pr_dtretorno
   order by tat.cdcooper, tat.nrdconta, tat.nrseq_arquivo, tatl.nrseq_arq_ted_linha;
   
   rw_segret cr_segret%ROWTYPE;
