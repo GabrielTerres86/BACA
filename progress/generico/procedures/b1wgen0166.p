@@ -97,7 +97,7 @@
                 12/04/2016 - Ajuste nas rotinas Altera_inclui, Gera_arquivo_log e Imprime_relacao para gravar/alterar, gerar log
 				             e imprimir o campo nrdddemp  da tabela crapemp - P437 - Consignado Josiane stiehler - AMcom.
 
-                29/08/2019 PJ485.6 - Ajuste na rotina de geraçao do código da empresa (9999 sempre sera empresa PF) - Augusto (Supero)                     
+                29/08/2019 PJ485.6 - Ajuste na rotina de geraçao do código da empresa (9998 sempre sera empresa PF) - Augusto (Supero)                     
 
 .............................................................................*/
 
@@ -815,16 +815,21 @@ PROCEDURE Define_cdempres:
 
     EMPTY TEMP-TABLE tt-erro.
 
-    /* ValidaÃ§ao para empresa PF (9999) */
-    FIND LAST crapemp WHERE crapemp.cdcooper = par_cdcooper AND crapemp.cdempres <> 9999.
-        NO-LOCK NO-ERROR.
+    /* Validaçao para empresa PF (9998) */
+    FIND LAST crapemp WHERE crapemp.cdcooper = par_cdcooper AND crapemp.cdempres <> 9998 NO-LOCK NO-ERROR.
     
     IF AVAIL crapemp THEN
     DO:
         ASSIGN par_cdempres = crapemp.cdempres + 1.
-        /* Se o proximo for 9999 (empresa PF) retorna 10.000 */
-        IF par_cdempres = 9999 THEN
-          ASSIGN par_cdempres = 10000.
+        
+        /* Se o proximo for 9998 (empresa PF) retorna a maior em filtrar os códigos */
+        IF par_cdempres = 9998 THEN
+        DO:
+          /* Buscar o próximo ignorando demais códigos */
+          FIND LAST crapemp WHERE crapemp.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+          
+          ASSIGN par_cdempres = crapemp.cdempres + 1.
+        END.
     END.
     ELSE
         ASSIGN par_cdempres = 1.

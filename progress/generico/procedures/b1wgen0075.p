@@ -303,7 +303,7 @@ PROCEDURE Busca_Dados:
             
         
         /* Se for empresa PF... */
-        IF crapttl.cdempres = 9999 THEN
+        IF crapttl.cdempres = 9998 THEN
           ASSIGN tt-comercial.tppesemp = 1.
 
         DO aux_contador = 1 TO EXTENT(tt-comercial.tpdrendi):
@@ -709,7 +709,7 @@ PROCEDURE Valida_Dados:
 		END.	
 		
          /* [PJ485.6] Validaçoes para empregador PF */
-         IF par_cdempres = 9999 THEN
+         IF par_cdempres = 9998 THEN
          DO:
             IF TRIM(par_nrcpfemp) = "0" THEN
             DO:

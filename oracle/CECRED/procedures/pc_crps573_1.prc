@@ -4009,7 +4009,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                    vr_nrcpfemp := NULL;
                  ELSE 
                    -- Verifica se o empregador é PF
-                   IF NVL(rw_consigna.cdempres,0) = 9999 THEN
+                   IF NVL(rw_consigna.cdempres,0) = 9998 THEN
                      -- Tratar como CPF
                      vr_nrcpfemp := LPAD(rw_consigna.nrcpfemp,11,'0');
                    ELSE 

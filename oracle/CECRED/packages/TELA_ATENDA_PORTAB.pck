@@ -431,7 +431,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
         CLOSE cr_crapttl;
       	   
         vr_tppessoa_empregador := 2;
-          IF vr_cdempres = 9999 THEN
+          IF vr_cdempres = 9998 THEN
             vr_tppessoa_empregador := 1;
           END IF; 
       ELSE
@@ -1906,7 +1906,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
 			CLOSE cr_crapttl;
     
       vr_tppessoa_empregador := 2;
-      IF rw_crapttl.cdempres = 9999 THEN
+      IF rw_crapttl.cdempres = 9998 THEN
         vr_tppessoa_empregador := 1;
       END IF;
     

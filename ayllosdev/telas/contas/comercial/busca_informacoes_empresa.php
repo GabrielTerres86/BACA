@@ -72,7 +72,7 @@
 			//echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);";
 			echo "$('#nrcpfemp').val('".$nrcnpjot."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);";
 			// [PJ485.6] Validação para empregador PF
-			if ($cdemprot == 9999) {
+			if ($cdemprot == 9998) {
 				echo "$('label[for=\"nrcpfemp\"]').html('CPF:');";
 				echo "$('#nmextemp').habilitaCampo();";
 			} else {

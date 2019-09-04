@@ -2745,8 +2745,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0011 IS
       IF vr_cria_pj THEN
         
         -- Verifica se a empresa eh uma pessoa fisica ou juridica
-        -- Se o código da empresa for 9999 então é PF
-        IF rw_crapttl.cdempres = 9999 THEN
+        -- Se o código da empresa for 9998 então é PF
+        IF rw_crapttl.cdempres = 9998 THEN
           -- Popula os dados para PF
           vr_pessoa_pf.nrcpf                := vr_pessoa_pj.nrcnpj;
           vr_pessoa_pf.nmpessoa             := rw_crapttl.nmextemp;

@@ -1137,7 +1137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
 					vr_tppesemp := 2; -- PJ
 					vr_dstppese := 'Pessoa Juridica';
 					vr_dscpfcnpj := gene0002.fn_mask_cpf_cnpj(rw_crapttl.nrcpfemp, 2);
-					IF rw_crapttl.cdempres = 9999 THEN
+					IF rw_crapttl.cdempres = 9998 THEN
 					   vr_tppesemp := 1; -- PF
 						 vr_dstppese := 'Pessoa Fisica';
 						 vr_dscpfcnpj := gene0002.fn_mask_cpf_cnpj(rw_crapttl.nrcpfemp, 1);
