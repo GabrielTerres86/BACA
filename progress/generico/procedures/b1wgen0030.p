@@ -4065,7 +4065,10 @@ PROCEDURE busca_dados_limite:
            tt-dsctit_dados_limite.nrperger = craplim.nrperger
            /* Faturamento unico cliente - Pessoa Juridica */
            tt-dsctit_dados_limite.perfatcl = crapjfn.perfatcl
-                                             WHEN AVAILABLE crapjfn.
+                                             WHEN AVAILABLE crapjfn
+           /* PRJ 438 - Sprint 16 - Incluido campo de nivel de risco e taxa na tela do Desconto do Limite de Titulos */
+           tt-dsctit_dados_limite.txmensal = crapldc.txmensal
+           tt-dsctit_dados_limite.nivrisco = "A".
     
     RETURN "OK".
 
