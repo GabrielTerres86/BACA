@@ -2829,9 +2829,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     
 		  -- Solicitada
       IF rw_portab_envia.cdsituacao = 2 THEN        
-        vr_situacao := 5; -- Cancelada
+        vr_situacao := 5; -- A cancelar
       ELSE 
-        vr_situacao := 7; -- A cancelar
+        vr_situacao := 7; -- Cancelada
       END IF;
     
       OPEN cr_motivo(pr_cdmotivo);

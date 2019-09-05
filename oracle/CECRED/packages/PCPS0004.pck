@@ -765,9 +765,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
     
       -- Solicitada
       IF rw_portab_envia.idsituacao = 2 THEN        
-        vr_situacao := 5; -- Cancelada
+        vr_situacao := 5; -- A cancelar
       ELSE 
-        vr_situacao := 7; -- A cancelar
+        vr_situacao := 7; -- Cancelada
       END IF;
       -- O motivo de cancelamento será sempre “1 – Desistência do Cliente”, 
       --visto que no Internet Banking não há local para seleção de outro motivo especifico.
