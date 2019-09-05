@@ -28,13 +28,19 @@ if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"X"))
 	exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
 }
 
+function nl2br2($string, $convertCharset = true) {
+	if ($convertCharset)
+		$string = htmlentities($string);
+	return str_replace(array("\r\n", "\r", "\n"), "<br />", $string);
+}
+
 $cdcooper                 = ( (!empty($_POST['cdcooper'])) ? $_POST['cdcooper'] : $glbvars['cdcooper'] );
 $nrdconta                 = ( (!empty($_POST['nrdconta'])) ? $_POST['nrdconta'] : $glbvars['nrdconta'] );
 $convenios                = ( (!empty($_POST['convenios'])) ? json_decode($_POST['convenios']) : '' );
 $perdesconto              = ( (!empty($_POST['perdesconto'])) ? json_decode($_POST['perdesconto']) : '' );
 $boletos_liquidados       = ( (!empty($_POST['boletos_liquidados'])) ? $_POST['boletos_liquidados'] : null );
 $volume_liquidacao        = ( (!empty($_POST['volume_liquidacao'])) ? $_POST['volume_liquidacao'] : null );
-$qtdfloat                 = ( (!empty($_POST['qtdfloat'])) ? $_POST['qtdfloat'] : null );
+$qtdfloat                 = ( (isset($_POST['qtdfloat'])) ? $_POST['qtdfloat'] : null );
 $vlaplicacoes             = ( (!empty($_POST['vlaplicacoes'])) ? $_POST['vlaplicacoes'] : null );
 $vldeposito               = ( (!empty($_POST['vldeposito'])) ? $_POST['vldeposito'] : null );
 $dtfimcontrato            = ( (!empty($_POST['dtfimcontrato'])) ? $_POST['dtfimcontrato'] : null );
@@ -77,7 +83,7 @@ $xml .= "   <vldesconto_coo>".converteFloat($vldesconto_coo)."</vldesconto_coo>"
 $xml .= "   <dtfimadicional_coo>".$dtfimadicional_coo."</dtfimadicional_coo>";
 $xml .= "   <vldesconto_cee>".converteFloat($vldesconto_cee)."</vldesconto_cee>";
 $xml .= "   <dtfimadicional_cee>".$dtfimadicional_cee."</dtfimadicional_cee>";
-$xml .= "   <txtjustificativa>".$txtjustificativa."</txtjustificativa>";
+$xml .= "   <txtjustificativa>".utf8_decode($txtjustificativa)."</txtjustificativa>";
 $xml .= "   <idvinculacao>".$idvinculacao."</idvinculacao>";
 $xml .= "   <perdesconto>".implode("|", $perdesconto)."</perdesconto>";
 $xml .= "   <vldescontoconcedido_coo>".converteFloat($vldescontoconcedido_coo)."</vldescontoconcedido_coo>";
@@ -94,7 +100,7 @@ if (strtoupper($xmlDados->tags[0]->name) == 'ERRO') {
     if ($msgErro == "") {
         $msgErro = $xmlDados->tags[0]->cdata;
     }
-    exibirErro('error',$msgErro,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
+    exibirErro('error',nl2br2($msgErro),'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);
     
 }else{
     $idcalculo_reciproci = getByTagName($xmlDados,"IDCALCULO_RECIPROCI");

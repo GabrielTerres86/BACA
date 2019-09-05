@@ -383,7 +383,7 @@ atualizacaoDesconto = false;
 			<input type="hidden" id="debito_reajuste_reciproci_old" value="<?php echo $vr_flgdebito_reversao; ?>">
 			<select class="campo" id="debito_reajuste_reciproci" name="debito_reajuste_reciproci" style="width:153px;">
 				<option value="1" <?php echo (($vr_flgdebito_reversao == "1" ? 'selected' : ''))?>>Sim</option>
-				<option value="0" <?php echo (($vr_flgdebito_reversao == "0" ? 'selected' : ((!$vr_flgdebito_reversao ? 'selected' : ''))))?>>N&atilde;o</option>
+				<option value="0" <?php echo (($vr_flgdebito_reversao == "0" ? 'selected' : (!$vr_flgdebito_reversao ? 'selected' : '') ))?>>N&atilde;o</option>
 			</select>
 		</td>
 	</tr>
@@ -504,12 +504,18 @@ cVldesconto_coo = $('#vldesconto_coo', '.tabelaDesconto');
 cDataFimAdicionalCee = $('#dtfimadicional_cee', '.tabelaDesconto');
 cDataFimAdicionalCoo = $('#dtfimadicional_coo', '.tabelaDesconto');
 cJustificativaDesc = $('#txtjustificativa', '.tabelaDesconto');
+cDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto');
 
 validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 validaEmiteExpede(false);
 <?php if ($cddopcao != 'I' && $cddopcao != 'C') { echo 'calcula_desconto();'; } ?>
 
 cDataFimContrato.change(function (){
+	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
+});
+
+
+cDebitoReajusteReciproci.change(function(){
 	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 });
 

@@ -30,7 +30,7 @@ include("../../../includes/carrega_permissoes.php");
 $ls_nrconvenio = ( (!empty($_POST['convenios'])) ? $_POST['convenios'] : '' );
 $qtboletos_liquidados = ( (!empty($_POST['boletos_liquidados'])) ? $_POST['boletos_liquidados'] : 0 );
 $vlliquidados = ( (!empty($_POST['volume_liquidacao'])) ? $_POST['volume_liquidacao'] : 0 );
-$idfloating = ( (!empty($_POST['qtdfloat'])) ? $_POST['qtdfloat'] : '');
+$idfloating = ( (isset($_POST['qtdfloat'])) ? $_POST['qtdfloat'] : '');
 $idvinculacao = ( (!empty($_POST['idvinculacao'])) ? $_POST['idvinculacao'] : 0 );
 $vlaplicacoes = ( (!empty($_POST['vlaplicacoes'])) ? $_POST['vlaplicacoes'] : 0 );
 $vldeposito = ( (!empty($_POST['vldeposito'])) ? $_POST['vldeposito'] : 0 );

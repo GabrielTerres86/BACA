@@ -2994,6 +2994,12 @@ function validaHabilitacaoCamposBtn(cddopcao) {
     var cDataFimAdicionalCooOld = $('#dtfimadicional_coo_old', '.tabelaDesconto');
     var cJustificativaDesc = $('#txtjustificativa', '.tabelaDesconto');
     var cJustificativaDescOld = $('#txtjustificativa_old', '.tabelaDesconto');
+    var cQtdFloatOld = $('#qtdfloat_old', '.tabelaDesconto');
+    var cQtdFloat = $('#qtdfloat', '.tabelaDesconto');
+    var cDebitoReajusteReciprociOld = $('#debito_reajuste_reciproci_old', '.tabelaDesconto');
+    var cDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto');
+
+    
 
     var vVldesconto_cee = Number(converteNumero(cVldesconto_cee.val()));
     var vVldesconto_ceeOld = Number(converteNumero(cVldesconto_ceeOld.val()));
@@ -3005,6 +3011,11 @@ function validaHabilitacaoCamposBtn(cddopcao) {
     var vDataFimAdicionalCooOld = cDataFimAdicionalCooOld.val();
     var vJustificativaDesc = cJustificativaDesc.val();
     var vJustificativaDescOld = cJustificativaDescOld.val();
+    var vQtdFloatOld = cQtdFloatOld.val();
+    var vQtdFloat = cQtdFloat.val();
+    var vDebitoReajusteReciprociOld = cDebitoReajusteReciprociOld.val();
+    var vDebitoReajusteReciproci = cDebitoReajusteReciproci.val();
+
 
     if (!cee && !coo) {
         cJustificativaDesc.desabilitaCampo();
@@ -3033,7 +3044,9 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 			(vDataFimAdicionalCee != vDataFimAdicionalCeeOld && vDataFimAdicionalCee) ||
 			(vDataFimAdicionalCoo != vDataFimAdicionalCooOld && vDataFimAdicionalCoo) ||
             (vJustificativaDesc != vJustificativaDescOld && vJustificativaDesc && vJustificativaDescOld) ||
-            (atualizacaoDesconto)) {
+            (atualizacaoDesconto) || 
+            (vQtdFloat == 0 && (vQtdFloat != vQtdFloatOld) ) ||
+            (vDebitoReajusteReciproci == 0 && (vDebitoReajusteReciproci != vDebitoReajusteReciprociOld)) ) {
 
         btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
         btnContinuar.prop('disabled', true);
@@ -3378,6 +3391,8 @@ function calcula_desconto() {
             eval(response);
         }
     });
+
+    validaHabilitacaoCamposBtn();
 }
 
 function atualizarDescontos() {
