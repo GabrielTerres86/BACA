@@ -3,7 +3,7 @@
 
    Programa: sistema/internet/procedures/b1wnet0001.p                  
    Autor   : David
-   Data    : 14/07/2006                        Ultima atualizacao: 30/08/2018
+   Data    : 14/07/2006                        Ultima atualizacao: 26/08/2019
 
    Dados referentes ao programa:
 
@@ -300,6 +300,7 @@
 	           04/04/2019 - Ajuste na rotina cria_tt-consulta-blt para não incluir informação
 			                de titulos descontados liquidados (Daniel - Ailos)
       
+             26/08/2019 - Validar CEP do Sacado, permitir ate 8 posicoes (Lucas Ranghetti PRB004018)
 .............................................................................*/
 
 
@@ -3661,6 +3662,16 @@ PROCEDURE gerencia-sacados:
                        
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.    
+            
+        /* Validar CEP apenas 8 digitos */
+        IF  LENGTH(par_nrcepsac) > 8  THEN
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "CEP invalido.".
+                       
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.
+        /***********/
 
         IF  TRIM(par_nmbaisac) = ""  THEN
             DO:

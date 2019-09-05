@@ -998,14 +998,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0010 IS
          dsemail, 
          nmpessoa_contato, 
          nmsetor_pessoa_contato, 
-         cdoperad_altera)
+         cdoperad_altera,
+		 insituacao)
        VALUES
         (pr_pessoa_email.idpessoa, 
          pr_pessoa_email.nrseq_email, 
          pr_pessoa_email.dsemail, 
          pr_pessoa_email.nmpessoa_contato, 
          pr_pessoa_email.nmsetor_pessoa_contato, 
-         pr_pessoa_email.cdoperad_altera);
+         pr_pessoa_email.cdoperad_altera,
+		 pr_pessoa_email.insituacao);
     EXCEPTION
       WHEN dup_val_on_index THEN
         -- Efetua a atualizacao do e-mail

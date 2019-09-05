@@ -180,7 +180,7 @@ BEGIN
                                          END conta
                                   FROM crapass ass
                                     LEFT JOIN crapttl ttl ON ttl.cdcooper = ass.cdcooper AND ttl.nrdconta = ass.nrdconta AND ROWNUM = 1
-                                  WHERE ass.cdcooper = crapcyb.cdcooper
+                                  WHERE ass.cdcooper = pr_cdcooper--crapcyb.cdcooper
                                     AND ass.nrcpfcnpj_base = pr_nrcpfcnpj_base)
          AND ','||pr_cdorigem||',' LIKE ('%,'||crapcyb.cdorigem||',%')
          AND crapcyb.qtdiaatr > pr_qtdiaatr
@@ -209,7 +209,7 @@ BEGIN
                                          END conta
                                   FROM crapass ass
                                     LEFT JOIN crapttl ttl ON ttl.cdcooper = ass.cdcooper AND ttl.nrdconta = ass.nrdconta AND ROWNUM = 1
-                                  WHERE ass.cdcooper = crapneg.cdcooper
+                                  WHERE ass.cdcooper = pr_cdcooper--crapneg.cdcooper
                                     AND ass.nrcpfcnpj_base = pr_nrcpfcnpj_base)
          AND crapneg.cdhisest = pr_cdhisest
          AND crapneg.dtiniest >= pr_dtiniest
@@ -331,7 +331,7 @@ BEGIN
                                      END conta
                               FROM crapass ass
                                 LEFT JOIN crapttl ttl ON ttl.cdcooper = ass.cdcooper AND ttl.nrdconta = ass.nrdconta AND ROWNUM = 1
-                              WHERE ass.cdcooper = cyb.cdcooper
+                              WHERE ass.cdcooper = pr_cdcooper--cyb.cdcooper
                                 AND ass.nrcpfcnpj_base = pr_nrcpfcnpj_base)
          AND cyb.cdorigem = 4
          AND cyb.dtdbaixa IS NULL;

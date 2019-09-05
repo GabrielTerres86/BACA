@@ -231,6 +231,7 @@ PROCEDURE valida_dados:
     DEF  INPUT PARAM par_qtfoltal AS INTE                           NO-UNDO.
 	  DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
 	  DEF  INPUT PARAM par_dtvallic AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdclcnae AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro. 
 
@@ -306,6 +307,30 @@ PROCEDURE valida_dados:
                  ASSIGN aux_cdcritic = 878.
                  LEAVE Valida.
              END.
+             
+        /* CNAE */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            
+        RUN STORED-PROCEDURE pc_valida_cnae
+              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdclcnae, 0, "").
+
+        CLOSE STORED-PROC pc_valida_cnae
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_cdcritic = pc_valida_cnae.pr_cdcritic 
+                                 WHEN pc_valida_cnae.pr_cdcritic <> ?
+               aux_dscritic = pc_valida_cnae.pr_dscritic 
+                                 WHEN pc_valida_cnae.pr_dscritic <> ?.
+        
+        IF  aux_cdcritic <> 0 OR TRIM(aux_dscritic) <> ""  THEN
+            DO:
+               ASSIGN aux_cdcritic = 1501.
+               LEAVE Valida.
+            END. 
 
         IF  par_nmtalttl = "" THEN
             DO:

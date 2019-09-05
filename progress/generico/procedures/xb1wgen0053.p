@@ -170,6 +170,7 @@ PROCEDURE Valida_Dados:
                              INPUT aux_qtfoltal,
                              INPUT aux_nrlicamb,
                              INPUT aux_dtvallic,
+                             INPUT aux_cdclcnae,
                             OUTPUT TABLE tt-erro).
 
     IF  RETURN-VALUE = "NOK" THEN

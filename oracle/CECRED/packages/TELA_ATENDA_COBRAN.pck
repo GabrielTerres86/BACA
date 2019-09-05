@@ -5972,13 +5972,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
     END pc_conv_recip_desc;
 
     -- PRJ431
-    FUNCTION fn_busca_data_corte RETURN crapprm.dsvlrprm%TYPE IS
+    FUNCTION fn_busca_data_corte(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN crapprm.dsvlrprm%TYPE IS
         /* .............................................................................
           Programa: pc_busca_data_corte
           Sistema : CECRED
           Sigla   : COBRAN
           Autor   : Augusto (Supero)
-          Data    : Agosto/18.                    Ultima atualizacao: --/--/----
+          Data    : Agosto/18.                    Ultima atualizacao: 03/09/2019
         
           Dados referentes ao programa:
         
@@ -5988,11 +5988,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
         
           Observacao: -----
         
-          Alteracoes:
+          Alteracoes: 03/09/2019 - Rafael Ferreira (Mouts) - Implementado parametro de Filial
         ..............................................................................*/
     BEGIN
+      
+        -- Tenta Retornar a Data de Inicio da Nova Reciprocidade para a Filial recebida no Parametro
+        -- Se receber Nullo retorna o Parametro Geral
         RETURN gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                        ,pr_cdcooper => 0
+                                        ,pr_cdcooper => nvl(pr_cdcooper,0)
                                         ,pr_cdacesso => 'DT_VIG_RECECIPR_V2');
     END fn_busca_data_corte;
 
@@ -9000,10 +9003,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 																	 ,trunc(crapceb.dtinsori)
 																	 ,crapceb.nrdconta
 																	 ,crapceb.cdcooper
-                           -- Rafael Ferreira (Mouts) - INC0021997. Data: 14/08/19
-                           /* Conforme alinhado com George Maicon Kruger (Ailos) a tela nova de
-                              reciprocidade só deve mostrar Convenios que tenham idrecipr > 0*/
-                           /*
+                           
 													 UNION ALL
 														 SELECT to_char(crapceb.nrconven)
 																	 ,crapceb.idrecipr
@@ -9128,7 +9128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                                                    AND flgativo = 1
                                                    AND flrecipr = 1
                                                    AND dsorgarq <> 'PROTESTO') --verificar se este bloco esta ok
-                                                   */
+                                                   
                     ) ceb
                   ,tbrecip_aprovador_calculo tac
                   ,tbrecip_calculo cal
@@ -9208,7 +9208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
         --
         FOR rw_lista_contratos IN cr_lista_contratos(pr_cdcooper   => pr_cdcooper
                                                     ,pr_nrdconta   => pr_nrdconta
-                                                    ,pr_data_corte => fn_busca_data_corte
+                                                    ,pr_data_corte => fn_busca_data_corte(pr_cdcooper)
                                                     ,pr_cdoperad   => vr_cdoperad) LOOP
             --
             pc_escreve_xml('<inf>' || '<list_cnv>' || rw_lista_contratos.list_cnv || '</list_cnv>' ||
