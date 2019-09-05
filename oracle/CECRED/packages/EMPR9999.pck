@@ -1035,7 +1035,7 @@ create or replace package body cecred.EMPR9999 as
       IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
          RAISE vr_exc_erro;
      ELSE
-       pr_vltotpag := vr_vltotpgt + vr_vlabono;
+       pr_vltotpag := vr_vltotpgt /*+ vr_vlabono*/; --retirado 30/08/2019
       END IF;
   EXCEPTION
     WHEN  vr_exc_erro THEN
