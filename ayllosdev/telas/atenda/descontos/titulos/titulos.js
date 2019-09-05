@@ -1241,13 +1241,18 @@ function mostraTelaAltera() {
 }
 
 function confirmaEnvioAnalise(){
-    showConfirmacao(
-        "Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito?",
-        "Confirma&ccedil;&atilde;o - Aimaro",
-        "validaAnaliseTitulo();",
-        "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",
-        "sim.gif",
-        "nao.gif");
+	// PRJ 438 - Sprint 16 - Adicionado validação para não deixar enviar para análise novamente caso a situação seja "Enviado para análise manual"
+    if (insitest == 2){
+        showError('error', 'A proposta n&atilde;o pode ser enviada para An&aacute;lise de cr&eacute;dito, verifique a situa&ccedil;&atilde;o da proposta!', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
+    }else{
+		showConfirmacao(
+			"Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito?",
+			"Confirma&ccedil;&atilde;o - Aimaro",
+			"validaAnaliseTitulo();",
+			"blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",
+			"sim.gif",
+			"nao.gif");
+	}
     return false;
 }
 
