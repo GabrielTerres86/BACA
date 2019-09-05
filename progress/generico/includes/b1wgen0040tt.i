@@ -17,6 +17,8 @@
                 30/06/2014 - Incluir campo cdageaco na tt-cheque. (Reinert)
                 
                 16/09/2014 - Inclusão do campo cdagechq na tt-cheque. (Vanessa)
+                
+                21/08/2019 - Inclusão do campo nrremret na tt-cheques-custodia. RITM0011937 (Lombardi)
 ..............................................................................*/
 
 
@@ -34,7 +36,8 @@ DEF TEMP-TABLE tt-cheques-custodia                                      NO-UNDO
     FIELD vlcheque AS DECI
     FIELD dtdevolu AS DATE  
     FIELD tpdevolu AS CHAR
-    FIELD cdopedev AS CHAR.
+    FIELD cdopedev AS CHAR
+    FIELD nrremret AS INTE.
 
 DEF TEMP-TABLE tt-consulta-cheque                                       NO-UNDO
     FIELD nrcheque LIKE crapfdc.nrcheque

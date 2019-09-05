@@ -513,6 +513,8 @@ function validaDadosLimites(flgconti, titulares, cddopcao) {
     var inarqcbr = $("#inarqcbr", "#divOpcaoConsulta").val();
     var cddemail = $("#dsdemail", "#divOpcaoConsulta").val();
 
+  
+
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, Validando os dados da habilita&ccedil;&atilde;o do conv&ecirc;nio ...");
 
@@ -1113,6 +1115,7 @@ function controlaLayout(nomeForm) {
         var Ldsdemail = $('label[for="dsdemail"]', '#' + nomeForm);
         var Lflgcruni = $('label[for="flgcruni"]', '#' + nomeForm);
         var Lflgcebhm = $('label[for="flgcebhm"]', '#' + nomeForm);
+        var Lflgapihm = $('label[for="flgapihm"]', '#' + nomeForm);
         var Lqtdfloat = $('label[for="qtdfloat"]', '#' + nomeForm);
         var Lflprotes = $('label[for="flprotes"]', '#' + nomeForm);
         var Lqtlimmip = $('label[for="qtlimmip"]', '#' + nomeForm);
@@ -1127,6 +1130,7 @@ function controlaLayout(nomeForm) {
         var Cdsdemail = $('#dsdemail', '#' + nomeForm);
         var Cflgcruni = $('#flgcruni', '#' + nomeForm);
         var Cflgcebhm = $('#flgcebhm', '#' + nomeForm);
+        var Cflgapihm = $('#flgapihm', '#' + nomeForm);
         var Ccddopcao = $('#cddopcao', '#' + nomeForm);
         var Cqtdfloat = $('#qtdfloat', '#' + nomeForm);
         var Cqtdecprz = $('#qtdecprz', '#' + nomeForm);
@@ -1148,6 +1152,7 @@ function controlaLayout(nomeForm) {
         Ldsdemail.addClass('rotulo').css('width', '210px');
         Lflgcruni.addClass('rotulo').css('width', '210px');
         Lflgcebhm.addClass('rotulo').css('width', '210px');
+        Lflgapihm.addClass('rotulo').css('width', '210px');
         Lqtdfloat.addClass('rotulo').css('width', '210px');
         Lflprotes.addClass('rotulo').css('width', '210px');
         Lqtlimmip.addClass('rotulo').css('width', '210px');
@@ -1161,6 +1166,7 @@ function controlaLayout(nomeForm) {
         Cdsdemail.css({ 'width': '200px' });
         Cflgcruni.css({ 'width': '50px' });
         Cflgcebhm.css({ 'width': '50px' });
+        Cflgapihm.css({ 'width': '50px' });
         Cqtdfloat.css({ 'width': '70px' });
         Cqtdecprz.css({ 'width': '50px' }).attr('maxlength', '5').setMask("INTEGER", "zzzzz", ".", "");
         Cqtlimmip.css({ 'width': '30px' }).attr('maxlength', '3').setMask("INTEGER", "zzz", ".", "");

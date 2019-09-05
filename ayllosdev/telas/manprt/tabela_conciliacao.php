@@ -45,6 +45,7 @@ $registros 	= $xmlObjeto->roottag->tags[0]->tags;
             <th width="20">&nbsp;</th>
             <th>Cart&oacute;rio</th>
             <th>Cooperativa</th>
+            <th>UF</th>
             <th>Convenio</th>
             <th>Conta</th>
             <th>Doc.</th>
@@ -66,12 +67,15 @@ $registros 	= $xmlObjeto->roottag->tags[0]->tags;
                     <? echo getByTagName($result->tags,'nmrescop'); ?>
                 </td>
                 <td width="80">
-                    <? echo getByTagName($result->tags,'nrcnvcob'); ?>
+                    <? echo getByTagName($result->tags,'estado'); ?>
                 </td>
                 <td width="80">
-                    <? echo formataContaDV(getByTagName($result->tags,'nrdconta')); ?>
+                    <? echo getByTagName($result->tags,'nrcnvcob'); ?>
                 </td>
                 <td width="65">
+                    <? echo formataContaDV(getByTagName($result->tags,'nrdconta')); ?>
+                </td>
+                <td width="80">
                     <? echo getByTagName($result->tags,'nrdocmto'); ?>
                 </td>
                 <td width="80">

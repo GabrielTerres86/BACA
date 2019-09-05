@@ -164,6 +164,8 @@
 * 133: [28/06/2019] Adicionado validações no clique do botão Efetivar PRJ 438 - Sprint 13 (Mateus Z / Mouts)
 * 134: [27/06/2019] Não permitir financiamento de IOF na simulação de empréstimo quando a finalidade for "74 - Portabilidade de crédito" - PRJ438 - Rubens Lima (Mouts).
 * 135: [28/06/2019] Alterado o fluxo de consulta para ao final mostrar a tela de demonstração do empréstimo PRJ 438 - Sprint 13 (Mateus Z / Mouts)
+* 136: [19/04/2019] Ajuste na tela garantia de operação, para salvar seus dados apenas no 
+*                   final da inclusão, alteração de empréstimo - PRJ 438. (Mateus Z / Mouts)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -176,8 +178,6 @@
  */
 var __BOTAO_TAB = 9;
 var __BOTAO_ENTER = 13;
-//bruno - prj 438 - bug 14235
-var __ACAO_GAROPC_EMPRESTIMO = 'EMPRESTIMO';
 var __TELA_DADOS_SOLICITACAO = 'TELA_DADOS_SOLICITACAO'; //bruno - prj 438 - bug 14625
 /** 
  * ----------------------------------
@@ -201,9 +201,6 @@ var __flag_dataPagamento = false; //Validar se a chamada de validaDados do campo
 /*
 FIM VARIAVEIS DE CONTROLE
 */
-
-//bruno - bug 6666
-var __garopcArr = null;
 
 var qtmesblq = 0;
 var bloquear_pre_aprovado = false;
@@ -466,10 +463,34 @@ var aux_inobriga_rating = ""; //PRJ - 438 - Rating - bruno
 
 var aux_insitapr = ""; //bruno - prj 438 - bug 13658
 
-var __aux_ingarapr = ""; //bruno - prj 438 - bug 14235
-
 var aux_nrctremp_consulta = ''; //rubens - prj 438 - bug 14283
 
+// PRJ 438 - Melhoria para salvar os campos e realizar a gravação da GAROPC apenas no final da criação de empréstimo
+var campos_garopc_emp = {
+    nmdatela: '',
+    idcobert: '',
+    tipaber: '',
+    nrdconta: '',
+    nrctater: '',
+    lintpctr: '',
+    vlropera: '',
+    permingr: '',
+    inresper: '',
+    diatrper: '',
+    tpctrato: '',
+    inaplpro: '',
+    vlaplpro: '',
+    inpoupro: '',
+    vlpoupro: '',
+    inresaut: '',
+    inaplter: '',
+    vlaplter: '',
+    inpouter: '',
+    vlpouter: ''
+};
+
+// PRJ 438 - Flag para verificar se já passou pela GAROPC (garantia de aplicação)
+var flgPassouGAROPC = false;
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
 
     // Mostra mensagem de aguardo
@@ -764,6 +785,9 @@ function controlaOperacao(operacao) {
         	//bruno - prj 438 - bug 13658
         	aux_insitapr = $("#divEmpres table tr.corSelecao").find("input[id='insitapr']").val();
 
+        	// PRJ 438
+        	flgPassouGAROPC = false;
+
 			// PRJ 438 - Adicionado controle para situação ANULADA
         	if (insitest == 6) {
         	    showError('error', 'A situa&ccedil;&atilde;o est&aacute; "Anulada".', 'Alerta - Aimaro', '');
@@ -863,11 +887,27 @@ function controlaOperacao(operacao) {
             cddopcao = 'A';
             break;
 		case 'I_GAROPC': 
-			abrirTelaGAROPC(operacao);
+            // PRJ 438 - Se ja passou pela tela de Garantia de Aplicacao e apenas estava passando denovo apos ter clicado em Voltar
+            // entao apenas exibir a GAROPC, nao eh necessario carregar ela completamente denovo
+            if(flgPassouGAROPC == true){
+            	exibeRotina($('#divUsoGAROPC'));
+            	$('#divRotina').css({'display':'none'});
+				bloqueiaFundo(divRotina);
+            } else {
+				abrirTelaGAROPC(operacao);
+            }			
 			return false;
 			break;
 		case 'A_GAROPC': 
-			abrirTelaGAROPC(operacao);
+            // PRJ 438 - Se ja passou pela tela de Garantia de Aplicacao e apenas estava passando denovo apos ter clicado em Voltar
+            // entao apenas exibir a GAROPC, nao eh necessario carregar ela completamente denovo
+            if(flgPassouGAROPC == true){
+            	exibeRotina($('#divUsoGAROPC'));
+            	$('#divRotina').css({'display':'none'});
+				bloqueiaFundo(divRotina);
+            } else {
+				abrirTelaGAROPC(operacao);
+            }	
 			return false;
 			break;
 		case 'C_GAROPC': 
@@ -1077,6 +1117,8 @@ function controlaOperacao(operacao) {
             break;
         case 'I':
             booPrimeiroBen = false; //809763
+            // PRJ 438
+            flgPassouGAROPC = false;
             if (msgDsdidade != '') {
                 showError('inform', msgDsdidade, 'Alerta - Aimaro', 'controlaOperacao("TI");');
             } else if (possuiPortabilidade == 'S' && cadastroNovo == 'N') { /* portabilidade */
@@ -2118,8 +2160,25 @@ function manterRotina(operacao) {
             vlrtarif: vlrtarif, vlrtotal: vlrtotal, vlfinanc: vlfinanc,
             // PRJ 438
             vlrecjg1: vlrecjg1, vlrecjg2: vlrecjg2, 
-            //bruno - prj 438 - bug 14235
-            aux_ingarapr: __aux_ingarapr,
+            //PRJ 438 - GAROPC
+            idcobert: campos_garopc_emp.idcobert, 
+            tipaber:  campos_garopc_emp.tipaber,
+			nrctater: campos_garopc_emp.nrctater, 
+			lintpctr: campos_garopc_emp.lintpctr,
+			vlropera: campos_garopc_emp.vlropera, 
+			permingr: campos_garopc_emp.permingr, 
+			inresper: campos_garopc_emp.inresper,
+			diatrper: campos_garopc_emp.diatrper, 
+			tpctrato: campos_garopc_emp.tpctrato, 
+			inaplpro: campos_garopc_emp.inaplpro,
+			vlaplpro: campos_garopc_emp.vlaplpro, 
+			inpoupro: campos_garopc_emp.inpoupro, 
+			vlpoupro: campos_garopc_emp.vlpoupro,
+			inresaut: campos_garopc_emp.inresaut, 
+			inaplter: campos_garopc_emp.inaplter, 
+			vlaplter: campos_garopc_emp.vlaplter, 
+			inpouter: campos_garopc_emp.inpouter, 
+			vlpouter: campos_garopc_emp.vlpouter,
             executandoProdutos: executandoProdutos, redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -10728,6 +10787,7 @@ function calculaCet(operacao) {
         success: function(response) {
             hideMsgAguardo();
             eval(response);
+            bloqueiaFundo(divRotina);
             return false;
         }
     });
@@ -11588,7 +11648,6 @@ function abrirTelaGAROPC(operacao) {
 						   ' controlaOperacao(\\\'' + opera + '_DADOS_AVAL\\\');',
             ret_voltfunc : ' controlaOperacao(\'' + opera + '_INICIO\');',
             ret_errofunc : '$(\\\'#divRotina\\\').css({\\\'display\\\':\\\'block\\\'});bloqueiaFundo($(\\\'#divRotina\\\'));',
-            ACAO: __ACAO_GAROPC_EMPRESTIMO, //prj 438 - bug 14235
 			redirect     : 'html_ajax'
         },
         error: function (objAjax, responseError, objExcept) {

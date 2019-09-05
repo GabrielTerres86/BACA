@@ -1202,7 +1202,11 @@ create or replace package body cecred.PAGA0002 is
                                (Envolti - Belli - REQ0029314)
 				  13/02/2019 - Correcao da finalidade 400 (Tributos Municipais ISS - LCP) para 157
                                (Jonata  - Mouts / INC0032530).
-
+                               
+                   27/03/2019 - Adpatação para o novo tipo de TED, o Judicial, realizado através do IB. Para se diferenciar o TED
+                                normal do Judicial (via IB), foi criada o código 22 para o 
+                                (Jose Dill - Mouts  P475 - REQ39)
+                                
     .................................................................................*/
     ----------------> CURSORES  <---------------
     CURSOR cr_crapass (prc_cdcooper IN crapass.cdcooper%TYPE,
@@ -1277,6 +1281,10 @@ create or replace package body cecred.PAGA0002 is
     vr_idagenda INTEGER; -- Projeto 475 Sprint C
     vr_dsmsgspb VARCHAR2(500);
     vr_flopespb INTEGER;
+    vr_tpoperac INTEGER; --REQ39
+	
+    V_HORA2      VARCHAR2(100);
+    V_HORA_ATUAL VARCHAR(100);
     
     vr_qtminast       crapass.qtminast%TYPE;
 
@@ -1378,7 +1386,7 @@ create or replace package body cecred.PAGA0002 is
                       ,pr_dsdadant => ' '
                       ,pr_dsdadatu => to_char(pr_cdageban,'fm0000'));
 
-        IF pr_tpoperac = 4 THEN
+        IF vr_tpoperac = 4 THEN
           vr_nrctatrf := TRIM(gene0002.fn_mask(pr_nrctatrf,'zzzzzzzzzzzzzzzzzzz.9'));
         ELSE
           vr_nrctatrf := TRIM(gene0002.fn_mask(pr_nrctatrf,'zzzz.zzz.9'));
@@ -1625,7 +1633,7 @@ create or replace package body cecred.PAGA0002 is
       -- Inclusão do módulo e ação logado
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_cdproint);
 
-      IF pr_tpoperac = 4  THEN /** TED **/
+      IF vr_tpoperac = 4  THEN /** TED **/
 
         vr_nmtitula := pr_nmtitula;
         vr_intipcta := pr_intipcta;
@@ -1864,6 +1872,16 @@ create or replace package body cecred.PAGA0002 is
     vr_cdcritic := 0;
     vr_dscritic := NULL;
     vr_dtmvtopg := pr_dtmvtopg;
+    
+    /*REQ39 - Devido ao serviço esta passando somente um parametro para os campos pr_cdtiptra e pr_tpoperac, houve
+            a necessidade de trata-la para a TED Judicial, que deve ter o pr_tpoperac = 4 e o pr_cdtiptra = 22. 
+            Quando o pararâmetro pr_tpoperac vier com 22, indica que é um TED Judicial */
+    IF pr_tpoperac = 22 THEN
+      vr_tpoperac := 4;
+    ELSE
+      vr_tpoperac := pr_tpoperac;  
+    END IF;  
+             
 
     -- Validar que a agencia do banco creditada contenha apenas 4 digitos,
     -- evitando erro no processamento da mensagem pela cabine.
@@ -1894,7 +1912,7 @@ create or replace package body cecred.PAGA0002 is
     -- evitando erro no processamento da mensagem pela cabine.
     -- Início da validação.
     IF pr_intipcta <> 3 THEN
-      IF pr_cdageban = 0 THEN
+      IF pr_cdageban = 0 and pr_cdtiptra <> 22 THEN --REQ39 - Não validar agência para TED Judicial
         vr_cdcritic := 134; -- Agencia invalida
         RAISE vr_exc_erro;
       END IF;          
@@ -1947,7 +1965,21 @@ create or replace package body cecred.PAGA0002 is
     ELSE
       vr_dstransf := pr_dstransf;
     END IF;
-		
+
+    /* REQ39 - Quando informado a finalidade “100 - Deposito Judicial" deve ser validado
+       o código identificador e o mesmo pode ter no máximo 18 posições.*/
+    IF pr_cdfinali = 100 THEN
+      
+      IF length(trim(pr_dstransf)) > 18 THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Codigo identificador deve conter no maximo 18 posicoes alfanumericas.';
+        RAISE vr_exc_erro;        
+      END IF;      
+    ELSE
+      vr_dstransf := pr_dstransf;
+    END IF;
+    --
+  
     INET0002.pc_valid_repre_legal_trans(pr_cdcooper => pr_cdcooper
                                        ,pr_nrdconta => pr_nrdconta
                                        ,pr_idseqttl => pr_idseqttl
@@ -1983,7 +2015,7 @@ create or replace package body cecred.PAGA0002 is
     -- da abertura da grade da TED. Neste caso o parametro de tipo de agendamento será alterado de um para dois para que 
     -- o mesmo seja agendado para o próprio dia (d0)
     vr_idagenda := pr_idagenda;
-    IF pr_idagenda = 1 and pr_tpoperac = 4 then
+    IF pr_idagenda = 1 and vr_tpoperac = 4 then
       --      
       IF sspb0003.fn_valida_horario_ted(pr_cdcooper => pr_cdcooper) then
          If  vr_idastcjt = 1 then
@@ -1999,7 +2031,7 @@ create or replace package body cecred.PAGA0002 is
     -- Definir descrição da transação
     SELECT DECODE(pr_flgexecu,1,NULL,'Valida ')||
            DECODE(vr_idagenda,1,NULL,'Agendamento para ')||
-           DECODE(pr_tpoperac,4,'Transferencia de TED','Transferencia de Valores')
+           DECODE(vr_tpoperac,4,'Transferencia de TED','Transferencia de Valores')
     INTO vr_dstransa
     FROM dual;    
 
@@ -2024,7 +2056,7 @@ create or replace package body cecred.PAGA0002 is
                                 ,pr_cdtiptra => pr_cdtiptra --> Tipo de transação
                                 ,pr_lsdatagd => pr_lsdatagd --> lista de datas agendamento
                                 ,pr_cdoperad => '996'       --> Codigo do operador
-                                ,pr_tpoperac => pr_tpoperac --> tipo de operação
+                                ,pr_tpoperac => vr_tpoperac --> tipo de operação
                                 ,pr_dsorigem => pr_dsorigem --> Descrição de origem do registro
                                 ,pr_nrcpfope => (CASE WHEN vr_idastcjt = 1 AND pr_nrcpfope = 0 THEN nvl(vr_nrcpfcgc,pr_nrcpfope) ELSE nvl(pr_nrcpfope,0) END) --> CPF operador ou do representante legal quando conta exigir assinatura multipla
                                 ,pr_nmdatela => pr_nmprogra --> Nome da tela
@@ -2069,7 +2101,7 @@ create or replace package body cecred.PAGA0002 is
                            ,pr_nrctatrf     => pr_nrctatrf        --> Numero Conta Transferencia
                            ,pr_cdtiptra     => pr_cdtiptra        --> 1 - Transferencia / 2 - Pagamento / 3 - Credito Salario / 4 - TED */
                            ,pr_cdoperad     => 996                --> Codigo Operador
-                           ,pr_tpoperac     => pr_tpoperac        --> 1 - Transferencia intracooperativa / 2 - Pagamento / 3 - Cobranca /  */     /* 4 - TED / 5 - Transferencia intercooperativa */
+                           ,pr_tpoperac     => vr_tpoperac        --> 1 - Transferencia intracooperativa / 2 - Pagamento / 3 - Cobranca /  */     /* 4 - TED / 5 - Transferencia intercooperativa */
                            ,pr_flgvalid     => TRUE               --> Indicador validacoes
                            ,pr_dsorigem     => pr_dsorigem        --> Descricao Origem
                            ,pr_nrcpfope     => nvl(pr_nrcpfope,0)--(CASE WHEN vr_idastcjt = 1 AND pr_nrcpfope = 0 THEN nvl(vr_nrcpfcgc,0) ELSE nvl(pr_nrcpfope,0) END) --> CPF operador ou do representante legal quando conta exigir assinatura multipla
@@ -2099,7 +2131,7 @@ create or replace package body cecred.PAGA0002 is
     END IF;
 
       -- Se nao retornou erro, validar dados TED
-    IF pr_tpoperac = 4 AND /** TED **/
+    IF vr_tpoperac = 4 AND /** TED **/
        pr_flgexecu = 0 THEN
 
         CXON0020.pc_verifica_dados_ted
@@ -2120,7 +2152,8 @@ create or replace package body cecred.PAGA0002 is
                           ,pr_cdfinali => pr_cdfinali  --> Codigo de finalidade
                           ,pr_dshistor => pr_dshistor  --> Descriçao de historico
                           ,pr_cdispbif => pr_cdispbif  --> Oito primeiras posicoes do cnpj.
-                            ,pr_idagenda => vr_idagenda  --> Indicador de agenda
+                          ,pr_idagenda => vr_idagenda --> Indicador de agenda
+                          ,pr_cdtiptra => pr_cdtiptra --> Tipo de transação --REQ39 - TED Judicial
                           /* parametros de saida */
                           ,pr_dstransa => vr_dstrans1  --> Descrição de transação
                           ,pr_cdcritic => vr_cdcritic  --> Codigo do erro
@@ -2171,7 +2204,7 @@ create or replace package body cecred.PAGA0002 is
       -- Projeto 475 Sprint C Req14
       vr_dsmsgspb:= '';
       vr_flopespb:= 1;
-      IF pr_tpoperac = 4 and vr_idagenda = 2 
+      IF vr_tpoperac = 4 and vr_idagenda = 2 
          and sspb0003.fn_valida_horario_ted (pr_cdcooper) 
          and trunc(vr_dtmvtopg) = trunc(sysdate) THEN
          vr_flopespb:= 0;
@@ -2185,7 +2218,7 @@ create or replace package body cecred.PAGA0002 is
       -- Retornar data selecinada no app para a operação não seja agendada
       IF pr_flmobile = 1  AND  -- App Mobile
          vr_idagenda = 1  AND  -- Débito Nesta Data
-         pr_tpoperac <> 4 AND  -- Somente Transferência
+         vr_tpoperac <> 4 AND  -- Somente Transferência
          pr_dshistor IS NOT NULL THEN
          BEGIN
            vr_dtmvtmob := TO_DATE(pr_dshistor,'dd/mm/RRRR');
@@ -2302,7 +2335,7 @@ create or replace package body cecred.PAGA0002 is
       END IF;
 
       -- TED
-      IF pr_cdtiptra = 4 THEN
+      IF pr_cdtiptra IN (4,22) THEN --REQ39
          --Cria transacao pendente de TED
 
          INET0002.pc_cria_trans_pend_ted( pr_cdagenci => pr_cdagenci    --> Codigo do PA
@@ -2402,7 +2435,7 @@ create or replace package body cecred.PAGA0002 is
       END IF;
 
       -- Se for TED
-      IF pr_cdtiptra = 4 THEN
+      IF pr_cdtiptra IN (4,22) THEN --REQ39
         --vr_cdcritic := 1417; -- Transferencia(s) registrada(s) com sucesso. Aguardando aprovação do(s) preposto(s)
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1417);
       ELSE
@@ -2459,7 +2492,7 @@ create or replace package body cecred.PAGA0002 is
       END IF;
 
 
-      IF pr_tpoperac = 4 THEN /** TED **/
+      IF vr_tpoperac = 4 THEN /** TED **/
         --> Procedure para executar o envio da TED
         CXON0020.pc_executa_envio_ted
                           (pr_cdcooper => pr_cdcooper  --> Cooperativa
@@ -2487,7 +2520,8 @@ create or replace package body cecred.PAGA0002 is
                           ,pr_idagenda => vr_idagenda  --> Tipo de agendamento
                           ,pr_iptransa => pr_iptransa  --> IP da transacao no IBank/mobile
                           ,pr_dstransa => vr_dstransa  --> Descrição da transacao no IBank/mobile
-                          ,pr_iddispos => pr_iddispos  --> Identificador do dispositivo movel 
+                          ,pr_iddispos => pr_iddispos  --> Identificador do dispositivo movel
+                          ,pr_cdtiptra => pr_cdtiptra --> Tipo de transação --REQ39
                           -- saida
                           ,pr_dsprotoc => vr_dsprotoc  --> Retorna protocolo
                           ,pr_tab_protocolo_ted => vr_tab_protocolo_ted --> dados do protocolo
@@ -2502,7 +2536,7 @@ create or replace package body cecred.PAGA0002 is
       ELSE
 
         /* Intracooperativa */
-        IF pr_tpoperac = 1 THEN
+        IF vr_tpoperac = 1 THEN
           --Executar rotina verifica-historico-transferencia
           PAGA0001.pc_verifica_historico_transf
                                        (pr_cdcooper => pr_cdcooper   --> Codigo Cooperativa
@@ -2608,11 +2642,11 @@ create or replace package body cecred.PAGA0002 is
           -- Retorna módulo e ação logado
           GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_cdproint);
           
-        END IF; -- FIM IF pr_tpoperac = 1 THEN
-      END IF; -- FIM IF pr_tpoperac = 4 THEN /** TED **/
+        END IF; -- FIM IF vr_tpoperac = 1 THEN
+      END IF; -- FIM IF vr_tpoperac = 4 THEN /** TED **/
 
       -- se não apresentou critica nos processos acima
-        IF pr_tpoperac = 4  THEN /** TED **/
+        IF vr_tpoperac = 4  THEN /** TED **/
           IF vr_tab_protocolo_ted.count > 0 THEN
 
             -- montar retorno em xml com as informações dos protocolos
@@ -2673,14 +2707,16 @@ create or replace package body cecred.PAGA0002 is
         END IF;
 
     ELSIF vr_idagenda = 2  THEN /** Agendamento **/
-      IF pr_tpoperac = 5   THEN /* Transf. intercoop. */
+      IF vr_tpoperac = 5   THEN /* Transf. intercoop. */
 
         vr_cdhisdeb := 1009;
 
-      ELSIF pr_tpoperac = 4 THEN -- TED
-
-        vr_cdhisdeb := 555;
-
+      ELSIF vr_tpoperac = 4 THEN -- TED
+        IF pr_cdtiptra = 22 THEN
+          vr_cdhisdeb := 2974; /*REQ39*/
+        ELSE
+          vr_cdhisdeb := 555;
+        END IF;  
       ELSE
         --Executar rotina verifica-historico-transferencia
         PAGA0001.pc_verifica_historico_transf
@@ -2803,7 +2839,7 @@ create or replace package body cecred.PAGA0002 is
         -- Retorna módulo e ação logado
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_cdproint);
 
-        IF pr_cdtiptra = 4 THEN  
+        IF pr_cdtiptra IN (4,22) THEN --REQ39  
           -- Transferencia agendada com sucesso para o dia '||to_char(vr_dtmvtopg,'DD/MM/RRRR')||', mediante saldo disponivel em conta corrente.
           --vr_cdcritic := 1420; 
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1420) || to_char(vr_dtmvtopg,'DD/MM/RRRR');          
@@ -2831,11 +2867,11 @@ create or replace package body cecred.PAGA0002 is
 
     ELSIF vr_idagenda = 3  THEN /** Agendamento recorrente **/
 
-      IF pr_tpoperac = 5   THEN /* Transf. intercoop. */
+      IF vr_tpoperac = 5   THEN /* Transf. intercoop. */
 
         vr_cdhisdeb := 1009;
 
-      ELSIF pr_tpoperac = 4 THEN -- TED
+      ELSIF vr_tpoperac = 4 THEN -- TED
 
         vr_cdhisdeb := 555;
 
@@ -7996,7 +8032,7 @@ create or replace package body cecred.PAGA0002 is
       END IF;
     ELSIF pr_cdtiptra = 3 THEN
       pr_dstransa := 'Agendamento para Credito de Salario';
-    ELSIF pr_cdtiptra = 4 THEN
+    ELSIF pr_cdtiptra IN (4,22) THEN --REQ39
       pr_dstransa := 'Agendamento para TED';
     END IF;
 
@@ -8195,7 +8231,7 @@ create or replace package body cecred.PAGA0002 is
                        to_char(pr_lindigi5,'fm00000000000000');
 
       END IF;
-    ELSIF pr_cdtiptra = 4 THEN -- TED
+    ELSIF pr_cdtiptra IN (4,22) THEN -- TED  --REQ39
 
       -- Definir numero do lote
       vr_nrdolote := 11000 + pr_nrdcaixa;
@@ -8463,7 +8499,7 @@ create or replace package body cecred.PAGA0002 is
         --Fechar Cursor
         CLOSE cr_craplau_inter;
 
-      ELSIF pr_cdtiptra IN (4) THEN -- Transferencia TED
+      ELSIF pr_cdtiptra IN (4,22) THEN -- Transferencia TED --REQ39
 
         /* Controle para envio de 2 TEDs iguais pelo ambiente Mobile */
         OPEN cr_craplau_ted(pr_cdcooper => pr_cdcooper
@@ -8575,7 +8611,7 @@ create or replace package body cecred.PAGA0002 is
         --Fechar Cursor
         CLOSE cr_craplau_inter;
 
-      ELSIF pr_cdtiptra IN (4) THEN -- Transferencia TED
+      ELSIF pr_cdtiptra IN (4,22) THEN -- Transferencia TED --REQ39
 
         /* Controle para envio de 2 TEDs iguais pelo ambiente IB */
         OPEN cr_craplau_ted(pr_cdcooper => pr_cdcooper
@@ -8636,7 +8672,7 @@ create or replace package body cecred.PAGA0002 is
       --> Deve ser gerado o registro de analise de fraude antes de
       --> realizar a operação
 
-      IF pr_cdtiptra IN (4,2) AND pr_dsorigem = 'INTERNET' THEN
+      IF pr_cdtiptra IN (4,2,22) AND pr_dsorigem = 'INTERNET' THEN --REQ39
 
         IF pr_flmobile = 1 THEN
           vr_idorigem := 10; --> MOBILE
@@ -8644,7 +8680,7 @@ create or replace package body cecred.PAGA0002 is
           vr_idorigem := 3; --> InternetBank
         END IF;
 
-        IF pr_cdtiptra = 4 THEN
+        IF pr_cdtiptra IN(4,22) THEN --REQ39
           vr_cdprodut_afra := 30; --> TED
           vr_cdoperac_afra := 12; --> TED Eletronica
         ELSIF pr_cdtiptra = 2 THEN
@@ -8793,7 +8829,7 @@ create or replace package body cecred.PAGA0002 is
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_cdproint);
 
         -- Se for TED, criar informações do agendamento
-        IF pr_cdtiptra = 4 THEN
+        IF pr_cdtiptra IN (4,22) THEN --REQ39
           BEGIN
           INSERT INTO tbted_det_agendamento
             (idlancto
@@ -11718,7 +11754,7 @@ create or replace package body cecred.PAGA0002 is
         IF rw_craplau.insitlau = 1 OR -- PENDENTE
            rw_craplau.insitlau = 2 THEN -- EFETIVADO
 
-          IF rw_craplau.cdtiptra = 4 THEN -- TED
+          IF rw_craplau.cdtiptra IN (4,22) THEN -- TED /*REQ39 - Ted Judicial*/
             -- Se jah foi efetivado nao pode ser permitido o cancelamento.
             IF rw_craplau.insitlau = 2 THEN
               vr_incancel := 2;
@@ -11813,7 +11849,7 @@ create or replace package body cecred.PAGA0002 is
         ELSIF rw_craplau.cdtiptra = 3 THEN
           vr_dstiptra := 'Credito de Salario';
           vr_idlstdom := 3; -- Crédito Salário
-        ELSIF rw_craplau.cdtiptra = 4 THEN
+        ELSIF rw_craplau.cdtiptra IN (4,22) THEN /*REQ39 - Ted Judicial*/
           vr_dstiptra := 'TED';
           vr_idlstdom := 4; -- TED         
         ELSE
@@ -11857,7 +11893,7 @@ create or replace package body cecred.PAGA0002 is
           GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_cdproint);  
           vr_nrctadst := vr_nrctadst ||  ' - ' || rw_crabass.nmprimtl;
 
-        ELSIF rw_craplau.cdtiptra = 4 THEN -- TED
+        ELSIF rw_craplau.cdtiptra IN (4,22) THEN -- TED
 
           OPEN cr_crapban(pr_cddbanco => rw_craplau.cddbanco);
 
@@ -12425,6 +12461,11 @@ create or replace package body cecred.PAGA0002 is
                                  Others, Modulo/Action, PC Internal Exception, PC Log Programa
                                  Inserts, Updates, Deletes e SELECT's, Parâmetros
                                  (Envolti - Belli - REQ0029314)
+
+    --             
+    --              24/05/2019 - Inclusão do tratamento para TED Judicial (Tipo transação = 22). P475 - RE39
+    --                          (Jose Dill - Mouts)  
+    --   
                                  
     ...........................................................................*/
 
@@ -12750,7 +12791,7 @@ create or replace package body cecred.PAGA0002 is
       GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_cdproint);
         
     --> Se for agendamento de TED
-    ELSIF rw_craplau.cdtiptra = 4 THEN
+    ELSIF rw_craplau.cdtiptra IN(4,22) THEN /*REQ39 - Ted Judicial*/
       --> Somente pode ser permitido cancela-lo se o mesmo AINDA ESTA COM O STATUS DE "EFETIVADO".
       IF rw_craplau.insitlau <> 1 THEN
         -- Ajustada mensagem - 27/11/2018 - REQ0029314

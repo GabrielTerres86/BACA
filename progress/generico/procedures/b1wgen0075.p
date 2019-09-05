@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 17/05/2019
+    Data    : Maio/2010                   Ultima atualizacao: 30/07/2019
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -127,7 +127,11 @@
             
 			  17/05/2019 - Correcao INC00015454 na chamada da procedure pc_valida_emp_conta_salari (Augusto - SUPERO). 
 
-              16/07/2019 - Valida_dados P437 Nao validar o campo matricula (par_nrcadast) Jackson Barcellos - AMcom							
+              16/07/2019 - Valida_dados P437 Nao validar o campo matricula(par_nrcadast) Jackson Barcellos - AMcom							
+
+              30/07/2019 - Adicionado as variáveis aux_vlsalari e aux_nrcpfemp para validação em executar as procedures pc_confirma_pessoa_renda e 
+                           pc_confirma_pessoa_empresa somente quando houver alteração da renda e da empresa por parte do usuário 
+                           pelo sistema Aimaro (Paulo Penteado GFT)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1014,6 +1018,8 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_rowidenc AS ROWID                                   NO-UNDO.
 	DEF VAR aux_nmpesout AS CHAR                                    NO-UNDO.
 	DEF VAR aux_nrcnpjot AS DECI                                    NO-UNDO.
+    DEF VAR aux_nrcpfemp AS DECI                                    NO-UNDO.
+    DEF VAR aux_vlsalari AS DECI                                    NO-UNDO.
 	
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0021 AS HANDLE                                  NO-UNDO.
@@ -1285,6 +1291,9 @@ PROCEDURE Grava_Dados:
 		IF aux_cdcritic <> 0 THEN
             UNDO Grava, LEAVE Grava.           
 		
+        ASSIGN aux_nrcpfemp = crapttl.nrcpfemp
+               aux_vlsalari = crapttl.vlsalari.
+		
         ASSIGN 
             aux_cdempres        = crapttl.cdempres
             crapttl.cdnatopc    = par_cdnatopc
@@ -1315,6 +1324,10 @@ PROCEDURE Grava_Dados:
                UNDO Grava, LEAVE Grava.
             END.
 
+        IF  (par_vlsalari <> 0 OR par_nrcpfemp <> 0) AND  
+            (aux_vlsalari <> par_vlsalari OR 
+             aux_nrcpfemp <> par_nrcpfemp) THEN
+            DO:
         IF  crapass.inpessoa = 1 THEN
             DO:
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
@@ -1340,6 +1353,8 @@ PROCEDURE Grava_Dados:
                                      INPUT-OUTPUT aux_dscritic).
                   END.
 
+                        IF  (par_vlsalari <> 0) AND (aux_vlsalari <> par_vlsalari) THEN
+                            DO:
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
                 /* Efetuar a chamada a rotina Oracle */
                 RUN STORED-PROCEDURE pc_confirma_pessoa_renda
@@ -1359,6 +1374,7 @@ PROCEDURE Grava_Dados:
                 /* Se retornou erro */
                 IF aux_dscritic <> "" THEN 
                   DO:
+
                       RUN gera_erro (INPUT par_cdcooper,
                                      INPUT par_cdagenci,
                                      INPUT par_nrdcaixa,
@@ -1366,7 +1382,10 @@ PROCEDURE Grava_Dados:
                                      INPUT 0,
                                      INPUT-OUTPUT aux_dscritic).
                   END.
+                            END.
 
+                        IF  (par_nrcpfemp <> 0) AND (aux_nrcpfemp <> par_nrcpfemp) THEN
+                            DO:
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
                 /* Efetuar a chamada a rotina Oracle */
                 RUN STORED-PROCEDURE pc_confirma_pessoa_empresa
@@ -1393,6 +1412,9 @@ PROCEDURE Grava_Dados:
                                      INPUT 0,
                                      INPUT-OUTPUT aux_dscritic).
                   END.
+            END.
+                    END.
+
             END.
 
         /* Se nao for politicamente exposto, excluir tabela 

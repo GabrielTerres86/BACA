@@ -716,6 +716,7 @@ $("#qtdecprz","#frmConsulta").unbind('blur').bind('blur', function(e) {
         $("#flceeexp","#divOpcaoConsulta").prop("disabled",true);
         $("#flgcruni","#divOpcaoConsulta").prop("disabled",true);
         $("#flgcebhm","#divOpcaoConsulta").prop("disabled",true);
+        $("#flgapihm","#divOpcaoConsulta").prop("disabled",true);
         $("#cddbanco","#divOpcaoConsulta").prop("disabled",true);
         $("#flserasa","#divOpcaoConsulta").prop("disabled",true);
         $("#qtdfloat","#divOpcaoConsulta").prop("disabled",true);

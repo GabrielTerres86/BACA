@@ -57,6 +57,8 @@ DEF VAR aux_dtlibini AS DATE                                        NO-UNDO.
 DEF VAR aux_dtlibfim AS DATE                                        NO-UNDO.
 DEF VAR aux_vldescto AS DECI                                        NO-UNDO.
 DEF VAR aux_dtlibera AS DATE                                        NO-UNDO.
+DEF VAR aux_dtcusini AS DATE                                        NO-UNDO.
+DEF VAR aux_dtcusfim AS DATE                                        NO-UNDO.
 DEF VAR aux_cdagencx AS INTE                                        NO-UNDO.
 DEF VAR aux_dsiduser AS CHAR                                        NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR                                        NO-UNDO.
@@ -385,8 +387,8 @@ PROCEDURE gera-custodia-cheques:
                               INPUT aux_cdprogra,
                               INPUT aux_dtmvtolt,
                               INPUT aux_nrdconta,
-                              INPUT aux_dtlibini,
-                              INPUT aux_dtlibfim,
+                              INPUT aux_dtcusini,
+                              INPUT aux_dtcusfim,
                               INPUT aux_inresgat,
                               INPUT aux_dsiduser,
                               INPUT TABLE tt-crapass,
@@ -549,6 +551,8 @@ PROCEDURE valores_entrada:
             WHEN "dtlibini" THEN aux_dtlibini = DATE(tt-param.valorCampo).
             WHEN "dtlibfim" THEN aux_dtlibfim = DATE(tt-param.valorCampo).
             WHEN "dtlibera" THEN aux_dtlibera = DATE(tt-param.valorCampo).
+            WHEN "dtcusini" THEN aux_dtcusini = DATE(tt-param.valorCampo).
+            WHEN "dtcusfim" THEN aux_dtcusfim = DATE(tt-param.valorCampo).
             WHEN "cdagencx" THEN aux_cdagencx = INTE(tt-param.valorCampo).
             WHEN "dsiduser" THEN aux_dsiduser = tt-param.valorCampo.
             WHEN "vlcheque" THEN aux_vlcheque = DECI(tt-param.valorCampo).

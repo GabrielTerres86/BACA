@@ -825,12 +825,14 @@
                                       1 = Perde Aprovacao 
                                       2 = Aprovacao Auto.
 									  
-	      29/03/2019 - Incidente 0033759 - Erro na geracao automatica da cessao de credito - Ramon		  
+          29/03/2019 - Incidente 0033759 - Erro na geracao automatica da cessao de credito - Ramon		  
 
           20/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
           			 
           15/04/2019 - P438 - Alterada valida-dados-gerais para não permitir utilizar linha ou finalidade de credito
 							que esteja cadastrada em SubSegmento de contratacao Online. (Douglas Pagel / AMcom)
+
+          29/04/2019 - P450 - Nas rotinas altera-valor-proposta e recalcular-emprestimo, incluir para atualizar o campo dsnivori (Heckmann - AMcom)
 
           11/05/2019 - P298.2.2 - Ajuste de valores de prejuizo (Rafael Faria - Supero)
 		
@@ -9434,7 +9436,8 @@ PROCEDURE altera-valor-proposta:
                       UNDO Grava_valor, LEAVE Grava_valor.
                   END.    
 
-               ASSIGN crawepr.dsnivris = UPPER(aux_nivrisco).
+               ASSIGN crawepr.dsnivris = UPPER(aux_nivrisco)
+                      crawepr.dsnivori = UPPER(aux_nivrisco).
 
            END.
 
@@ -14654,7 +14657,8 @@ PROCEDURE recalcular_emprestimo:
                   
        /* Atualiza os campos da proposta de emprestimo */
        ASSIGN crawepr.percetop = aux_percetop
-              crawepr.dsnivris = UPPER(aux_nivrisco).
+              crawepr.dsnivris = UPPER(aux_nivrisco)
+              crawepr.dsnivori = UPPER(aux_nivrisco).
 
        CREATE tt-msg-confirma.
        ASSIGN tt-msg-confirma.inconfir = 1

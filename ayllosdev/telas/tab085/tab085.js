@@ -5,10 +5,17 @@
                                                                    
  Objetivo  : Permitie a consulta e cadastro de parametros referente ao SPB.
                                                                      
- Alterações:  
+ Alterações:  11/04/2019 -  Remover filtro quando cdcooper for diferente de 3 (Aillos) - Bruno Luiz Katzjarowki - Mout's
 
 ************************************************************************/
- 
+
+/** 
+ * Variaveis Auxiliares
+*/
+var __CDCOOPER = ""; //Bruno - PRJ 475
+/**
+ * FIM VARIAVEIS AUXILIARES
+ */
 
 $(document).ready(function () {
 
@@ -39,7 +46,7 @@ function formataCabecalho() {
     removeOpacidade('divTela');
     $('#frmCabTab085').css('display', 'block');
 
-    highlightObjFocus($('#frmCabTab085'));
+    //highl2ightObjFocus($('#frmCabTab085'));
     $('#cddopcao', '#frmCabTab085').focus();
 
     //Ao pressionar botao cddopcao
@@ -571,10 +578,13 @@ function controlaVoltar(tipo) {
         break;
 
         case '2':
-
-            $('#divTab085').html('').css('display','none');
-            formataFiltro();
-
+            //Se for Coooperativa aillos (3) Pode voltar para escolher a cooperativa, caso não, volta ao estado inicial
+            if(__CDCOOPER == 3){
+                $('#divTab085').html('').css('display','none');
+                formataFiltro();
+            }else{            
+                estadoInicial();
+            }
         break;
 
     }
@@ -675,6 +685,22 @@ function consultaParametros() {
                 try {
 
                     $('#divTab085').html(response);
+
+                    //Bruno - prj 475
+                    var frm = "#frmTab085";
+                    switch(cddopcao){
+                        case 'A':
+                            $('#estado_crise',frm).hide(); 
+                            $('#trans_agendada',frm).hide();
+                        break;
+                        case 'H':
+                            $('#spb_str',frm).hide();
+                            $('#spb_pag',frm).hide();
+                            $('#vr_boleto',frm).hide();
+                            $('#flgcrise',frm).habilitaCampo();
+                        break;
+                    }
+                    atribuiEventosCampos();
                     
                     return false;
                 } catch (error) {
@@ -720,6 +746,18 @@ function apresentaFormFiltro() {
                 try {
 
                     $('#divFiltro').html(response);
+
+                    //Bruno - PRJ 475 - Remover filtro quando cdcooper for diferente de 3 (Aillos)          
+                    if(__CDCOOPER != 3){
+                        $('#frmFiltro').hide();
+                        consultaParametros();
+                    }else{
+                        if($('#cddopcao','#frmCabTab085').val() == 'H'){
+                            $('#frmFiltro').hide();
+                            consultaParametros();
+                        }
+                    }
+                    //Fim - bruno prj 475
                     
                     return false;
                 } catch (error) {
@@ -741,3 +779,42 @@ function apresentaFormFiltro() {
     return false;
 
 }
+
+
+/**
+ * Autor: Bruno Luiz Katzjarowski - Mout's
+ * Data: 11/04/2019
+ *  Atribuir eventos à campos
+ */
+function atribuiEventosCampos(){
+
+    var frm = '#frmTab085';
+    var secVrBoleto = '#vr_boleto';
+
+    //Eventos: Parametros: VR-BOLETO
+    var sectionVrBoleto = $(secVrBoleto, frm);
+
+
+    var flgopbol = $('#flgopbol',sectionVrBoleto);
+    if(flgopbol.val() == '0'){
+        $('#iniopbol',sectionVrBoleto).desabilitaCampo();
+        $('#fimopbol',sectionVrBoleto).desabilitaCampo();
+    }
+
+    $(flgopbol).unbind('change').bind('change',function(){
+        var ini = $('#iniopbol',sectionVrBoleto);
+        var fim = $('#fimopbol',sectionVrBoleto); 
+        if($(this).val() == 0){
+            ini.desabilitaCampo();
+            fim.desabilitaCampo();
+            ini.val('00:00');
+            fim.val('00:00');
+        }else{
+            ini.habilitaCampo();
+            fim.habilitaCampo();
+            ini.val('00:00');
+            fim.val('00:00');
+        }
+    });
+
+}            

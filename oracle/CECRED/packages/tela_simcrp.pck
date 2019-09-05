@@ -1757,7 +1757,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 						vr_desconto_ind21_coo := vr_resultado_ind21;
 						--
 					END IF;
-				-- Quantidade da Aplicação
+				-- Valor de Investimento (Quantidade de Aplicação)
 				WHEN 22 THEN
 					--
 					IF vr_vlaplicacoes < rw_indicador.vlminimo THEN
@@ -1785,10 +1785,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 						vr_desconto_ind22_coo := vr_resultado_ind22;
 						--
 					END IF;
-				-- Quantidade de Depósito à Vista
-				WHEN 25 THEN
-					-- Só considera este indicador para a cooperativa Viacredi
-					IF pr_cdcooper = 16 THEN
+				-- Valor de Depósito à Vista (Quantidade de Depósito à Vista)
+                                WHEN 23 THEN
 						--
 						IF vr_vldeposito < rw_indicador.vlminimo THEN
 							--
@@ -1816,7 +1814,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SIMCRP AS
 							--
 						END IF;
 						--
-					END IF;
 				-- Caso o indicador não tenha tratamento
 				ELSE
 					--

@@ -37,6 +37,8 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
   --
   --                11/02/2019 - Gerar data de movimento da crapltr com sysdate (PRB0040602 - Jose Dill - Mouts)
   --
+  --                19/08/2019 - Bloqueio adicional para evitar agendamentos de recarga na data atual (Diógenes - INC0022696)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   TYPE typ_reg_critic IS
@@ -374,6 +376,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
   --                16/07/2018 - Inclusão do campo dsorigem no retorno da procedure pc_carrega_agend_recarga, Prj. 363 (Jean Michel)
   --
   --                15/02/2019 - Gerar data de movimento da crapltr com o dia útil correto (PRB0040602 - Jose Dill - Mouts)
+  --
+  --                19/08/2019 - Bloqueio adicional para evitar agendamentos de recarga na data atual (Diógenes - INC0022696)
   --
   ---------------------------------------------------------------------------------------------------------------
   
@@ -2834,7 +2838,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     Objetivo  : Rotina para cadastrar agendamento de recarga de celular para data 
 		            futura ou recorrente
 
-    Alteracoes: -----
+    Alteracoes: 
+	
+				19/08/2019 - Bloqueio adicional para evitar agendamentos de recarga na data atual (Diógenes - INC0022696)
+				
     ..............................................................................*/
 	  DECLARE
 	  -- Variavel de criticas
@@ -2868,6 +2875,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					 WHERE idoperacao = pr_idoperac
 					   AND insit_operacao = 3; -- Transação pendente
 				ELSE
+				
+			        IF (pr_dtrecarga <= TRUNC(SYSDATE)) THEN
+						vr_cdcritic := 1500; 
+						RAISE vr_exc_erro; 
+					END IF; 
+				
 					-- Insere registro de agendamento para data futura
 					INSERT INTO tbrecarga_operacao(cdcooper
 																				,nrdconta
@@ -2903,6 +2916,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                                  pr_delimit => ',');
 				-- Devemos gerar uma operação de recarga para cada data de agendamento
         FOR i IN vr_lsdatagd.FIRST..vr_lsdatagd.LAST LOOP
+		
+					IF (TO_DATE(vr_lsdatagd(i), 'DD/MM/RRRR') <= TRUNC(SYSDATE)) THEN
+						vr_cdcritic := 1500; 
+						RAISE vr_exc_erro; 
+					END IF; 
+		
 					-- Insere registro de agendamento recorrente
 					INSERT INTO tbrecarga_operacao(cdcooper
 																				,nrdconta
