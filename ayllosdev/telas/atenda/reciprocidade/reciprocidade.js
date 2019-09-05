@@ -2806,7 +2806,9 @@ function validaDados(pedeSenha) {
     vDataFimAdicionalCee = Number(cDataFimAdicionalCee.find('option:selected').text());
     vDataFimAdicionalCoo = Number(cDataFimAdicionalCoo.find('option:selected').text());
     vJustificativaDesc = cJustificativaDesc.val();
-
+    vQtdFloat = $('#qtdfloat', '.tabelaDesconto').val();
+    vDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto').val();
+    
     // valida se o campo Data fim do contrato está preenchido
     if (!vDataFimContrato) {
         showError("error", "Selecione um valor para a Data fim do contrato.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -2829,6 +2831,12 @@ function validaDados(pedeSenha) {
     }
 
     if ((vDataFimAdicionalCee || vDataFimAdicionalCoo || atualizacaoDesconto) && !vJustificativaDesc) {
+        showError("error", "&Eacute; necess&aacute;rio informar o campo Justificativa desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        return false;
+    }
+
+
+    if ((vQtdFloat == 0 || vDebitoReajusteReciproci == 0) && !vJustificativaDesc) {
         showError("error", "&Eacute; necess&aacute;rio informar o campo Justificativa desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
@@ -2933,8 +2941,15 @@ function incluiDesconto(houveAlteracao) {
         dtfimadicional_cee = 0;
     }
 
+
+    // Estas Validações apagam o campo de Justificativa caso haja alguma coisa escrita e não seja mais
+    // necessário aprovar
     var descricaoJustificativaDesconto = vJustificativaDesc;
-    if (parseInt($('#vldesconto_cee', '.tabelaDesconto').val() || 0) <= 0 && parseInt($('#vldesconto_coo', '.tabelaDesconto').val() || 0) <= 0) {
+    if (parseInt($('#vldesconto_cee', '.tabelaDesconto').val() || 0) <= 0 && 
+        parseInt($('#vldesconto_coo', '.tabelaDesconto').val() || 0) <= 0 &&
+        parseInt($('#qtdfloat', '.tabelaDesconto').val() || 0) > 0 &&
+        $('#debito_reajuste_reciproci', '.tabelaDesconto').val() > 0
+        ) {
         descricaoJustificativaDesconto = "";
     }
 
