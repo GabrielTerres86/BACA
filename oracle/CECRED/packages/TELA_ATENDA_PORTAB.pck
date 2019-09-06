@@ -523,7 +523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
                              pr_tag_nova => 'nrdocnpj_emp',
-                             pr_tag_cont => gene0002.fn_mask_cpf_cnpj(vr_nrdocnpj, 2),
+                             pr_tag_cont => gene0002.fn_mask_cpf_cnpj(vr_nrdocnpj, vr_tppessoa_empregador),
                              pr_des_erro => vr_dscritic);
     
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -1389,7 +1389,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     
       -- Empregador
       IF NVL(rw_portab_recebe.nrcnpj_empregador, 0) > 0 THEN
-        vr_dscnpjbc := gene0002.fn_mask_cpf_cnpj(rw_portab_recebe.nrcnpj_empregador, 2);
+        vr_dscnpjbc := gene0002.fn_mask_cpf_cnpj(rw_portab_recebe.nrcnpj_empregador, rw_portab_recebe.tppessoa_empregador);
       ELSE
         vr_dscnpjbc := NULL;
       END IF;

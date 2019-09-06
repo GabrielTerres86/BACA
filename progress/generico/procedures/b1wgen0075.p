@@ -290,7 +290,6 @@ PROCEDURE Busca_Dados:
             tt-comercial.tpcttrab = crapttl.tpcttrab
             tt-comercial.cdempres = crapttl.cdempres
             tt-comercial.nmextemp = crapttl.nmextemp
-            tt-comercial.nrcpfemp = STRING(crapttl.nrcpfemp,"99999999999999")
             tt-comercial.dsproftl = crapttl.dsproftl
             tt-comercial.cdnvlcgo = crapttl.cdnvlcgo
             tt-comercial.nrcadast = crapttl.nrcadast
@@ -304,7 +303,10 @@ PROCEDURE Busca_Dados:
         
         /* Se for empresa PF... */
         IF crapttl.cdempres = 9998 THEN
-          ASSIGN tt-comercial.tppesemp = 1.
+          ASSIGN tt-comercial.tppesemp = 1
+                 tt-comercial.nrcpfemp = STRING(crapttl.nrcpfemp,"99999999999").
+        ELSE 
+          ASSIGN tt-comercial.nrcpfemp = STRING(crapttl.nrcpfemp,"99999999999999").
 
         DO aux_contador = 1 TO EXTENT(tt-comercial.tpdrendi):
           ASSIGN 
@@ -459,6 +461,7 @@ PROCEDURE Busca_Dados:
             DO:
             
             IF  crapemp.cdempres <> 81   AND
+                crapemp.cdempres <> 9998 AND
                 NOT(crapemp.cdcooper = 2 AND crapemp.cdempres = 88) THEN
                 DO:
                    ASSIGN

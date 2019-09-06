@@ -1404,3 +1404,31 @@ function buscaInfEmpresa(){
     });
 }
 
+function controlaCpfCnpj() {
+	
+	// Atribuindo as máscaras para os campos
+	$('input.cnpj'			).setMask('INTEGER','z.zzz.zzz/zzzz-zz','/.-','');
+	$('input.cpf'			).setMask('INTEGER','999.999.999-99','.-','');	
+	
+	// Alinhando os campos para direita
+	$('.cnpj,.cpf').css('text-align','right');	
+	
+	/*!
+	 * ALTERAÇÃO  : 027
+	 * OBJETIVO   : Ao entrar no campo cpf ou cnpj, verifica se não existe valor digitado, caso afirmativo limpa o campo para digitação
+	 */		
+	$('input.cnpj').unbind('focusin').bind('focusin', function() {
+		$(this).addClass('campoFocusIn');	/*064*/
+		valorAtual = normalizaNumero( $(this).val() );
+		valorAtual = ( valorAtual == '0' ) ? '' : valorAtual;
+		$(this).val( valorAtual );
+	});
+	$('input.cpf').unbind('focusin').bind('focusin', function() {
+		$(this).addClass('campoFocusIn');	/*064*/
+		valorAtual = normalizaNumero( $(this).val() );
+		valorAtual = ( valorAtual == '0' ) ? '' : valorAtual;
+		$(this).val( valorAtual );
+	});	
+	
+	return true;
+}

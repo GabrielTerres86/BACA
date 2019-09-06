@@ -22,6 +22,7 @@
 	require_once("../../../class/xmlfile.php");
 	isPostMethod();		
 	
+	
     $cdempres = $_POST['cdempres'] == '' ?  0  : $_POST['cdempres'];
 	$nrdconta = $_POST['nrdconta'] == '' ?  0  : $_POST['nrdconta'];
 	$idseqttl = $_POST['idseqttl'] == '' ?  0  : $_POST['idseqttl'];
@@ -69,21 +70,26 @@
 		if($idaltera == 1){			
 			echo "$('#nmresemp').val('".$nmempout."');";
 			echo "$('#cdempres').val('".$cdemprot."');";
-			//echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);";
+		    //echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);";
 			echo "$('#nrcpfemp').val('".$nrcnpjot."').prop('disabled', false).addClass('campo').removeClass('campoTelaSemBorda').attr('readonly', false);";
 			// [PJ485.6] Validação para empregador PF
 			if ($cdemprot == 9998) {
 				echo "$('label[for=\"nrcpfemp\"]').html('CPF:');";
-				echo "$('#nmextemp').habilitaCampo();";
+				echo "$('#nrcpfemp').addClass('cpf').removeClass('cnpj');";
+				//echo "$('#nmextemp').habilitaCampo();";
+				
 			} else {
 				echo "$('label[for=\"nrcpfemp\"]').html('CNPJ:');";
-				echo "$('#nmextemp').desabilitaCampo();";
+				echo "$('#nrcpfemp').addClass('cnpj').removeClass('cpf');";
+				//echo "$('#nmextemp').desabilitaCampo();";
 			}
+			
 		}else{			
 			echo "$('#nmresemp').val('".$nmempout."');";		
 			echo "$('#cdempres').val('".$cdemprot."');";
 			echo "$('#nmextemp').val('".$nmpessoa."').prop('disabled', true).addClass('campoTelaSemBorda').removeClass('campo');";
 			echo "$('#nrcpfemp').val('".$nrcnpjot."').prop('disabled', true).addClass('campoTelaSemBorda').removeClass('campo');";
 		}
+		echo "controlaCpfCnpj();";
 	}
 ?>	

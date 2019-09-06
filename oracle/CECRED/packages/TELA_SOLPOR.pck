@@ -744,7 +744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 								,tpr.dstelefone telefone
 								,tpr.dsdemail email
 								,tpr.nmprimtl
-								,GENE0002.fn_mask_cpf_cnpj(tpr.nrcnpj_empregador, 2) nrcnpj_empregador
+								,GENE0002.fn_mask_cpf_cnpj(tpr.nrcnpj_empregador, tpr.tppessoa_empregador) nrcnpj_empregador
 								,tpr.dsnome_empregador
 								,lpad(ban.cdbccxlt, 3, '0') || ' - ' || ban.nmresbcc banco
 								,tpr.cdagencia_destinataria
@@ -753,6 +753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 								,tpr.dtavaliacao
 								,tpr.dtretorno
 								,dcp.dscodigo motivo
+								,tpr.tppessoa_empregador
 						FROM tbcc_portabilidade_recebe tpr
 								,crapban                   ban
 								,tbcc_dominio_campo        dom
@@ -869,6 +870,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 									,pr_posicao  => 0
 									,pr_tag_nova => 'nrcnpj_empregador'
 									,pr_tag_cont => rw_solicitacao.nrcnpj_empregador
+									,pr_des_erro => vr_dscritic);
+									
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+									,pr_tag_pai  => 'Solicitacao'
+									,pr_posicao  => 0
+									,pr_tag_nova => 'tppessoa_empregador'
+									,pr_tag_cont => rw_solicitacao.tppessoa_empregador
 									,pr_des_erro => vr_dscritic);
 
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -1008,7 +1016,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 								,'(' || lpad(tpe.nrddd_telefone, 2, '0') || ')' || tpe.nrtelefone telefone
 								,tpe.nmprimtl
 								,tpe.dsdemail email
-								,GENE0002.fn_mask_cpf_cnpj(tpe.nrcnpj_empregador, 2) nrcnpj_empregador
+								,GENE0002.fn_mask_cpf_cnpj(tpe.nrcnpj_empregador, tpe.tppessoa_empregador) nrcnpj_empregador
+                ,tpe.tppessoa_empregador
 								,tpe.dsnome_empregador
 								,lpad(ban.cdbccxlt, 3, '0') || ' - ' || ban.nmresbcc banco
 								,tpe.nrispb_banco_folha
@@ -1155,7 +1164,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SOLPOR IS
 													,pr_tag_nova => 'nrcnpj_empregador'
 													,pr_tag_cont => rw_solicitacao.nrcnpj_empregador
 													,pr_des_erro => vr_dscritic);
-
+        
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Solicitacao'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'tppessoa_empregador'
+                          ,pr_tag_cont => rw_solicitacao.tppessoa_empregador
+                          ,pr_des_erro => vr_dscritic);
+        
 				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
 													,pr_tag_pai  => 'Solicitacao'
 													,pr_posicao  => 0
