@@ -77,6 +77,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_IMPPRE AS
                               ,pr_retxml    IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                               ,pr_nmdcampo OUT VARCHAR2           --> Nome do Campo
                               ,pr_des_erro OUT VARCHAR2);         --> Saida OK/NOK
+   
 END TELA_IMPPRE;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
@@ -117,6 +118,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
   
   -- Cursor generico de calendario
   rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+  
+  -- Traduz o campo cdsituacao para ser usado no csv.
+  FUNCTION fn_traduz_cdsituacao(pr_cdsituacao IN crapcpa.cdsituacao%TYPE) RETURN VARCHAR2 IS
+  BEGIN
+   
+    DECLARE
+    vr_retorno VARCHAR2(40) := pr_cdsituacao;
+    BEGIN
+      CASE pr_cdsituacao
+       WHEN 'A' THEN vr_retorno:= 'Aceita';
+       WHEN 'B' THEN vr_retorno:= 'Bloqueada';
+       WHEN 'R' THEN vr_retorno:= 'Recusada';
+      END CASE;
+     return vr_retorno;
+    END;
+  END fn_traduz_cdsituacao;
+
+    -- Traduz o campo de bloqueio manual para ser usado no csv.
+  FUNCTION fn_traduz_bloq_manual(pr_bloq_manual NUMBER) RETURN VARCHAR2 IS
+  BEGIN
+    DECLARE
+    vr_retorno VARCHAR2(40) := pr_bloq_manual;
+    BEGIN
+      CASE pr_bloq_manual
+       WHEN 0 THEN vr_retorno:= 'Nao';
+       WHEN 1 THEN vr_retorno:= 'Sim';
+      END CASE;
+     return vr_retorno;
+    END;
+  END fn_traduz_bloq_manual;
   
   -- Lista Cargas Disponíveis SAS
   PROCEDURE pc_lista_cargas_SAS(pr_nrregist  IN NUMBER                -- Quantidade de registros
@@ -784,9 +815,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
               ,COUNT(CASE WHEN cpa.tppessoa = 1 THEN 1 END) qtd_regis_pf
               ,COUNT(CASE WHEN cpa.tppessoa = 2 THEN 1 END) qtd_regis_pj
           FROM crapcpa cpa
+             , tbepr_carga_pre_aprv car
+             , crapdat dat
          WHERE cpa.iddcarga = pr_idcarga
+           AND car.idcarga = cpa.iddcarga
+           AND dat.cdcooper = cpa.cdcooper
            AND cpa.vlcalpre > 0
-           AND cpa.vlcalpar > 0;
+           AND cpa.vlcalpar > 0
+           AND (car.indsituacao_carga <> 2
+              OR (car.indsituacao_carga = 2
+                  AND car.flgcarga_bloqueada = 0
+                  AND (car.dtfinal_vigencia is null or car.dtfinal_vigencia >= dat.dtmvtolt)
+                  AND cpa.cdsituacao = 'A'
+                  AND 0 = EMPR0002.fn_tem_bloq_preaprov_manual(cpa.cdcooper, cpa.nrcpfcnpj_base))
+                  );
       rw_det_carga cr_det_carga%ROWTYPE;
       
       -- Buscar limite minimo para parcela da carga desconsiderando limite ZERO
@@ -834,6 +876,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
                 ,cpa.tppessoa
                 ,DECODE(cpa.tppessoa, 1, 'PF', 2, 'PJ') dstppessoa
                 ,cop.nmrescop dscooper
+                ,cpa.cdsituacao
+                ,EMPR0002.fn_tem_bloq_preaprov_manual(cpa.cdcooper, cpa.nrcpfcnpj_base) bloq_manual
            FROM tbepr_carga_pre_aprv car
                 ,crapcpa cpa
                 ,crapcop cop  
@@ -877,7 +921,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
       CURSOR cr_cpa_sp(pr_idcarga IN crapcpa.iddcarga%TYPE) IS 
         SELECT SUM(cpa.vlcalpre) tot_libera_sp
         FROM crapcpa cpa
-        WHERE cpa.iddcarga = pr_idcarga;
+           , tbepr_carga_pre_aprv car
+           , crapdat dat
+        WHERE cpa.iddcarga = pr_idcarga
+          AND car.idcarga = cpa.iddcarga
+          AND dat.cdcooper = cpa.cdcooper
+          AND (car.indsituacao_carga <> 2
+          OR (car.indsituacao_carga = 2
+          AND car.flgcarga_bloqueada = 0
+          AND (car.dtfinal_vigencia is null or car.dtfinal_vigencia >= dat.dtmvtolt)
+          AND cpa.cdsituacao = 'A'
+          AND 0 = EMPR0002.fn_tem_bloq_preaprov_manual(cpa.cdcooper, cpa.nrcpfcnpj_base)));
+
       rw_cpa_sp cr_cpa_sp%ROWTYPE;
 	  
       -- Controle de mudanças de registros
@@ -1129,6 +1184,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
             OPEN cr_cpa_sp(pr_idcarga => rw_his.idcarga);
             FETCH cr_cpa_sp INTO rw_cpa_sp;
             CLOSE cr_cpa_sp;				
+          
             gene0002.pc_escreve_xml(vr_clobxml
                                    ,vr_dstexto
                                    , '<HistorCarga>'
@@ -1196,7 +1252,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
 
       -- Enviar o cabeçalho para o CSV
       gene0002.pc_escreve_xml(vr_clobxml,vr_dstexto,
-                              'Cooperativa;tipo carga;numero carga;descricao carga;tipo pessoa;CPF ou CNPJ base;linha de credito;parcela;limite;data de liberacao;data de vigencia;'||CHR(10));
+                              'Cooperativa;tipo carga;numero carga;descricao carga;tipo pessoa;CPF ou CNPJ base;linha de credito;parcela;limite;data de liberacao;data de vigencia;Situacao;Bloqueio Manual'||CHR(10));
 
         -- Efetuar a consulta dos cooperados da carga
         FOR rw_info IN cr_info_carga(pr_idcarga) LOOP      
@@ -1213,6 +1269,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
                                  ||rw_info.vlcalpre_csv ||';'
                                  ||rw_info.dtliberacao||';'
                                  ||rw_info.dtfinal_vigencia||';'
+                                 ||fn_traduz_cdsituacao(rw_info.cdsituacao)||';'
+                                 ||fn_traduz_bloq_manual(rw_info.bloq_manual)||';'
                                  ||CHR(10));
         END LOOP;
     
