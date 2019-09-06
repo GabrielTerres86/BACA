@@ -63,6 +63,12 @@
 
                   20/02/2019 - Novo campo Homologado API (Andrey Formigari - Supero)
 
+                  05/09/2019 - RITM0037203 - Possibilitar Float 0 (Rafael Ferreira - Mouts)
+
+                  05/09/2019 - RITM0037630 - Enviar contrato para Aprovação quando o Float for 0 ou
+                                o "Debito reajuste da tarifa" for NÃO
+                               (Rafael Ferreira - Mouts)
+
  ***********************************************************************/
 
 var dsdregis = "";  // Variavel para armazenar os valores dos titulares
