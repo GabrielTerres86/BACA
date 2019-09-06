@@ -44,6 +44,7 @@
 			   28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro
          
                11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
+               12/07/2019 - Incluido campos de avalista nas procs de gravaçao e alteraçao do desconto de cheque. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
 ............................................................................ */
 
 
@@ -81,12 +82,14 @@ DEF VAR aux_cddlinha AS INTE                                           NO-UNDO.
 
 DEF VAR aux_dsramati AS CHAR                                           NO-UNDO.
 DEF VAR aux_vlmedtit AS DECI                                           NO-UNDO.
+/*
 DEF VAR aux_vlfatura AS DECI                                           NO-UNDO.
 DEF VAR aux_vloutras AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsalari AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsalcon AS DECI                                           NO-UNDO.
 DEF VAR aux_dsdbens1 AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsdbens2 AS CHAR                                           NO-UNDO.
+*/
 DEF VAR aux_dsobserv AS CHAR                                           NO-UNDO.
 DEF VAR aux_qtdiavig AS INTE                                           NO-UNDO.
 DEF VAR aux_idimpres AS INTE                                           NO-UNDO.
@@ -143,6 +146,17 @@ DEF VAR aux_nrender2 AS INTE                                           NO-UNDO.
 DEF VAR aux_complen2 AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrcxaps2 AS INTE                                           NO-UNDO.
 
+/* PRJ 438 Sprint 14 */
+DEF VAR aux_vlrecjg1 AS DECI                                           NO-UNDO.
+DEF VAR aux_vlrecjg2 AS DECI                                           NO-UNDO.
+DEF VAR aux_cdnacio1 AS INTE                                           NO-UNDO.
+DEF VAR aux_cdnacio2 AS INTE                                           NO-UNDO.
+DEF VAR aux_inpesso1 AS INTE                                           NO-UNDO.
+DEF VAR aux_inpesso2 AS INTE                                           NO-UNDO.
+DEF VAR aux_dtnasct1 AS DATE                                           NO-UNDO.
+DEF VAR aux_dtnasct2 AS DATE                                           NO-UNDO.
+DEF VAR aux_vlrenme1 AS DECI                                           NO-UNDO.
+DEF VAR aux_vlrenme2 AS DECI                                           NO-UNDO.
 DEF VAR aux_dsiduser AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqpdf AS CHAR                                           NO-UNDO.
@@ -208,12 +222,14 @@ PROCEDURE valores_entrada:
             WHEN "qtdiavig" THEN aux_qtdiavig = INTE(tt-param.valorCampo).
             WHEN "dsramati" THEN aux_dsramati = tt-param.valorCampo.
             WHEN "vlmedtit" THEN aux_vlmedtit = DECI(tt-param.valorCampo).
+/*
             WHEN "vlfatura" THEN aux_vlfatura = DECI(tt-param.valorCampo).
             WHEN "vloutras" THEN aux_vloutras = DECI(tt-param.valorCampo).
             WHEN "vlsalari" THEN aux_vlsalari = DECI(tt-param.valorCampo).
             WHEN "vlsalcon" THEN aux_vlsalcon = DECI(tt-param.valorCampo).
             WHEN "dsdbens1" THEN aux_dsdbens1 = tt-param.valorCampo.
             WHEN "dsdbens2" THEN aux_dsdbens2 = tt-param.valorCampo.
+*/
             WHEN "dsobserv" THEN aux_dsobserv = tt-param.valorCampo.
             WHEN "idimpres" THEN aux_idimpres = INTE(tt-param.valorCampo).
             WHEN "limorbor" THEN aux_limorbor = INTE(tt-param.valorCampo).
@@ -260,6 +276,17 @@ PROCEDURE valores_entrada:
             WHEN "complen2" THEN aux_complen2 = tt-param.valorCampo.
             WHEN "nrcxaps2" THEN aux_nrcxaps2 = INTE(tt-param.valorCampo).
 
+            /* PRJ 438 - Sprint 14 */
+            WHEN "vlrecjg1" THEN aux_vlrecjg1 = DECI(tt-param.valorCampo).
+            WHEN "cdnacio1" THEN aux_cdnacio1 = INTE(tt-param.valorCampo).
+            WHEN "inpesso1" THEN aux_inpesso1 = INTE(tt-param.valorCampo).
+            WHEN "dtnasct1" THEN aux_dtnasct1 = DATE(tt-param.valorCampo).
+            WHEN "vlrenme1" THEN aux_vlrenme1 = DECI(tt-param.valorCampo).
+            WHEN "vlrecjg2" THEN aux_vlrecjg2 = DECI(tt-param.valorCampo).
+            WHEN "cdnacio2" THEN aux_cdnacio2 = INTE(tt-param.valorCampo).
+            WHEN "inpesso2" THEN aux_inpesso2 = INTE(tt-param.valorCampo).
+            WHEN "dtnasct2" THEN aux_dtnasct2 = DATE(tt-param.valorCampo).
+            WHEN "vlrenme2" THEN aux_vlrenme2 = DECI(tt-param.valorCampo).
             /* Rating */
             WHEN "nrgarope" THEN aux_nrgarope = INTE(tt-param.valorCampo).
             WHEN "nrinfcad" THEN aux_nrinfcad = INTE(tt-param.valorCampo).
@@ -339,6 +366,17 @@ PROCEDURE busca_limites:
 END PROCEDURE.
 
 
+/****************************************************************************/
+/*                  Buscar limites de uma conta informada                   */
+/****************************************************************************/
+PROCEDURE busca_limite_ativo:
+    RUN busca_limite_ativo IN hBO (INPUT aux_cdcooper,
+                                   INPUT aux_nrdconta,
+                                   INPUT aux_dtmvtolt,
+                                  OUTPUT TABLE tt-limite_chq).
+    RUN piXmlSaida (INPUT TEMP-TABLE tt-limite_chq:HANDLE,
+                    INPUT "Dados").
+END PROCEDURE.
 /****************************************************************************/
 /*                  Buscar borderos de uma conta informada                  */
 /****************************************************************************/
@@ -725,12 +763,14 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_vllimite,
                                        INPUT aux_dsramati,
                                        INPUT aux_vlmedtit,
+/*
                                        INPUT aux_vlfatura,
                                        INPUT aux_vloutras,
                                        INPUT aux_vlsalari,
                                        INPUT aux_vlsalcon,
                                        INPUT aux_dsdbens1,
                                        INPUT aux_dsdbens2,
+*/
                                        INPUT aux_cddlinha,
                                        INPUT aux_dsobserv,
                                        INPUT aux_qtdiavig,
@@ -755,6 +795,11 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_nrender1,
                                        INPUT aux_complen1,
                                        INPUT aux_nrcxaps1,
+                                       INPUT aux_vlrecjg1,
+                                       INPUT aux_cdnacio1,
+                                       INPUT aux_inpesso1,
+                                       INPUT aux_dtnasct1,
+                                       INPUT aux_vlrenme1,
                                        /** 2o avalista **/             
                                        INPUT aux_nrctaav2,              
                                        INPUT aux_nmdaval2,               
@@ -775,6 +820,11 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_nrender2,
                                        INPUT aux_complen2,
                                        INPUT aux_nrcxaps2,
+                                       INPUT aux_vlrecjg2,
+                                       INPUT aux_cdnacio2,
+                                       INPUT aux_inpesso2,
+                                       INPUT aux_dtnasct2,
+                                       INPUT aux_vlrenme2,
                                        /** Rating **/
                                        INPUT aux_nrgarope,
                                        INPUT aux_nrinfcad,
@@ -1001,12 +1051,14 @@ PROCEDURE efetua_alteracao_limite:
                                         INPUT aux_vllimite,
                                         INPUT aux_dsramati,
                                         INPUT aux_vlmedtit,
+/*
                                         INPUT aux_vlfatura,
                                         INPUT aux_vloutras,
                                         INPUT aux_vlsalari,
                                         INPUT aux_vlsalcon,
                                         INPUT aux_dsdbens1,
                                         INPUT aux_dsdbens2,
+*/
                                         INPUT aux_nrctrlim,
                                         INPUT aux_cddlinha,
                                         INPUT aux_dsobserv,
@@ -1030,6 +1082,11 @@ PROCEDURE efetua_alteracao_limite:
                                         INPUT aux_nrender1,
                                         INPUT aux_complen1,
                                         INPUT aux_nrcxaps1,
+                                        INPUT aux_vlrecjg1,
+                                        INPUT aux_cdnacio1,
+                                        INPUT aux_inpesso1,
+                                        INPUT aux_dtnasct1,
+                                        INPUT aux_vlrenme1,
                                         /** 2o avalista **/             
                                         INPUT aux_nrctaav2,              
                                         INPUT aux_nmdaval2,               
@@ -1050,6 +1107,11 @@ PROCEDURE efetua_alteracao_limite:
                                         INPUT aux_nrender2,
                                         INPUT aux_complen2,
                                         INPUT aux_nrcxaps2,
+                                        INPUT aux_vlrecjg2,
+                                        INPUT aux_cdnacio2,
+                                        INPUT aux_inpesso2,
+                                        INPUT aux_dtnasct2,
+                                        INPUT aux_vlrenme2,
                                         /** Rating **/
                                         INPUT aux_nrgarope,
                                         INPUT aux_nrinfcad,

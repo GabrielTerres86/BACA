@@ -20,11 +20,10 @@
  *                                                 do ctr de limite. PRJ300 - Descto cheque.  
 		 28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
  * 008: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
-
+ * 009: [14/03/2019] P450 - Remover Rating na inclusão de limite (Luiz Otávio Olinger Momm - AMCOM)
+ * 010: [08/07/2019] Mateus Z  (Mouts) : Alterações referentes a remoção da tela de Rendas PRJ 438 - Sprint 14.
+ * 011: [12/07/2019] PRJ 438 - Sprint 14 - Alteração referente a reformulação da tela avalista (Mateus Z - Mouts)
  */
-?>
-
-<?php 
 	
 	session_start();
 	
@@ -39,8 +38,35 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	
+
+	// AMCOM - Retira Etapa Rating exceto para Ailos (coop 3)
+
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <cdacesso>HABILITA_RATING_NOVO</cdacesso>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "TELA_PARRAT", "CONSULTA_PARAM_CRAPPRM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjPRM = getObjectXML($xmlResult);
+
+	$habrat = 'N';
+	if (strtoupper($xmlObjPRM->roottag->tags[0]->name) == "ERRO") {
+		$habrat = 'N';
+	} else {
+		$habrat = $xmlObjPRM->roottag->tags[0]->tags;
+		$habrat = getByTagName($habrat[0]->tags, 'PR_DSVLRPRM');
+	}
+
+	if ($glbvars["cdcooper"] == 3) {
+		$habrat = 'N';
+	}
+	// ********************************************
+
+
 	// Verifica se os parâmetros necessários foram informados
-	$params = array("nrdconta","nrctrlim","cddlinha","vllimite","dsramati","vlmedtit","vlfatura","vloutras","vlsalari","vlsalcon","dsdbens1","dsdbens2","dsobserv",
+	$params = array("nrdconta","nrctrlim","cddlinha","vllimite","dsramati","vlmedtit","vlfatura","dsobserv",
                     "nrctaav1","nmdaval1","nrcpfav1","tpdocav1","dsdocav1","nmdcjav1","cpfcjav1","tdccjav1","doccjav1","ende1av1","ende2av1","nrcepav1","nmcidav1","cdufava1","nrfonav1","emailav1",
                     "nrctaav2","nmdaval2","nrcpfav2","tpdocav2","dsdocav2","nmdcjav2","cpfcjav2","tdccjav2","doccjav2","ende1av2","ende2av2","nrcepav2","nmcidav2","cdufava2","nrfonav2","emailav2",
 					"nrgarope","nrinfcad","nrliquid","nrpatlvr","nrperger","vltotsfn","perfatcl", "idcobope",
@@ -60,11 +86,6 @@
 	$dsramati = $_POST["dsramati"];
 	$vlmedtit = $_POST["vlmedtit"];
 	$vlfatura = $_POST["vlfatura"];
-	$vloutras = $_POST["vloutras"];
-	$vlsalari = $_POST["vlsalari"];
-	$vlsalcon = $_POST["vlsalcon"];
-	$dsdbens1 = $_POST["dsdbens1"];
-	$dsdbens2 = $_POST["dsdbens2"];
 	$dsobserv = retiraAcentos(removeCaracteresInvalidos($_POST["dsobserv"]));
 	
 	$cddlinha = $_POST["cddlinha"];
@@ -121,7 +142,17 @@
 
 	$cddopcao = $_POST["cddopcao"];
 	
-		
+	// PRJ 438 - Sprint 14
+	$vlrecjg1 = isset($_POST["vlrecjg1"]) ? $_POST["vlrecjg1"] : "0,00";  
+	$vlrecjg2 = isset($_POST["vlrecjg2"]) ? $_POST["vlrecjg2"] : "0,00";
+	$cdnacio1 = $_POST["cdnacio1"];
+	$cdnacio2 = $_POST["cdnacio2"];
+	$inpesso1 = $_POST["inpesso1"];
+	$inpesso2 = $_POST["inpesso2"];
+	$dtnasct1 = $_POST["dtnasct1"];
+	$dtnasct2 = $_POST["dtnasct2"];
+	$vlrenme1 = $_POST["vlrenme1"];
+	$vlrenme2 = $_POST["vlrenme2"];	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
 		exibeErro($msgError);		
 	}
@@ -167,54 +198,23 @@
 	}
 	
 	// Verifica se valor total sfn é um decimal válido
-	if (!validaDecimal($vltotsfn)) {
+	if (!validaDecimal($vltotsfn) && $habrat == 'N') {
 		exibeErro("Valor Total SFN inv&aacute;lido.");
 	}	
 	
 	// Verifica se o percentual de faturamento é um decimal válido
-	if (!validaDecimal($perfatcl)) {
+	if (!validaDecimal($perfatcl) && $habrat == 'N') {
 		exibeErro("Percentual de Faturamento inv&aacute;lido.");
 	}
 	
-	// Verifica se número da conta do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav1)) {
-		exibeErro("Conta/dv do 1o Avalista inv&aacute;lida.");
-	}
 	
-	// Verifica se número da conta do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav2)) {
-		exibeErro("Conta/dv do 2o Avalista inv&aacute;lida.");
-	}	
 	
-	// Verifica se CPF do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav1)) {
-		exibeErro("CPF do 1o Avalista inv&aacute;lido.");
-	}	
 	
-	// Verifica se CPF do Conjugê do 1° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav1)) {
-		exibeErro("CPF do C&ocirc;njuge do 1o Avalista inv&aacute;lido.");
-	}	
 	
-	// Verifica se CPF do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav2)) {
-		exibeErro("CPF do 2o Avalista inv&aacute;lido.");
-	}	
 	
-	// Verifica se CPF do Conjugê do 2° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav2)) {
-		exibeErro("CPF do C&ocirc;njuge do 2o Avalista inv&aacute;lido.");
-	}	
 	
-	// Verifica se CEP do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcepav1)) {
-		exibeErro("CEP do 1o Avalista inv&aacute;lido.");
-	}	
 	
-	// Verifica se CEP do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcepav2)) {
-		exibeErro("CEP do 2o Avalista inv&aacute;lido.");
-	}		
+	
 	
 	// Verifica se o CPF/CNPJ &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrcpfcgc)) {
@@ -242,11 +242,6 @@
 	$xmlSetGravarLimite .= "		<dsramati>".$dsramati."</dsramati>";
 	$xmlSetGravarLimite .= "		<vlmedtit>".$vlmedtit."</vlmedtit>";
 	$xmlSetGravarLimite .= "		<vlfatura>".$vlfatura."</vlfatura>";
-	$xmlSetGravarLimite .= "		<vloutras>".$vloutras."</vloutras>";
-	$xmlSetGravarLimite .= "		<vlsalari>".$vlsalari."</vlsalari>";
-	$xmlSetGravarLimite .= "		<vlsalcon>".$vlsalcon."</vlsalcon>";
-	$xmlSetGravarLimite .= "		<dsdbens1>".$dsdbens1."</dsdbens1>";
-	$xmlSetGravarLimite .= "		<dsdbens2>".$dsdbens2."</dsdbens2>";
 	$xmlSetGravarLimite .= "		<nrctrlim>".$nrctrlim."</nrctrlim>";
 	$xmlSetGravarLimite .= "		<cddlinha>".$cddlinha."</cddlinha>";
 	$xmlSetGravarLimite .= "		<dsobserv>".$dsobserv."</dsobserv>";
@@ -297,6 +292,17 @@
 	$xmlSetGravarLimite .= "		<vltotsfn>".$vltotsfn."</vltotsfn>";
 	$xmlSetGravarLimite .= "		<perfatcl>".$perfatcl."</perfatcl>";
     $xmlSetGravarLimite .= "		<idcobope>".$idcobope."</idcobope>";
+    // PRJ 438 - Sprint 14
+	$xmlSetGravarLimite .= "		<vlrecjg1>".$vlrecjg1."</vlrecjg1>";
+	$xmlSetGravarLimite .= "		<vlrecjg2>".$vlrecjg2."</vlrecjg2>";
+	$xmlSetGravarLimite .= "		<cdnacio1>".$cdnacio1."</cdnacio1>";
+	$xmlSetGravarLimite .= "		<cdnacio2>".$cdnacio2."</cdnacio2>";
+	$xmlSetGravarLimite .= "		<inpesso1>".$inpesso1."</inpesso1>";
+	$xmlSetGravarLimite .= "		<inpesso2>".$inpesso2."</inpesso2>";
+	$xmlSetGravarLimite .= "		<dtnasct1>".$dtnasct1."</dtnasct1>";
+	$xmlSetGravarLimite .= "		<dtnasct2>".$dtnasct2."</dtnasct2>";
+	$xmlSetGravarLimite .= "		<vlrenme1>".$vlrenme1."</vlrenme1>";
+	$xmlSetGravarLimite .= "		<vlrenme2>".$vlrenme2."</vlrenme2>";
 	$xmlSetGravarLimite .= "	</Dados>";
 	$xmlSetGravarLimite .= "</Root>";
 	
@@ -313,7 +319,8 @@
 	 
 	if ($cddopcao == "A"){
 		$opermail = "Alterado Limite de Desconto de Cheques.";
-	}else{  if ($cddopcao == "I"){
+	} else {
+		if ($cddopcao == "I") {
                 // Buscar numer do contrato gerado 
                 $nrctrlim = $xmlObjLimite->roottag->tags[0]->attributes["NRCTRLIM"];
 				$opermail = "Novo Limite de Desconto de Cheques.";
@@ -341,7 +348,14 @@
 		$msg[] = str_replace('|@|','<br>',getByTagName($mensagem->tags,'dsmensag'));
 	}
 	$stringArrayMsg = implode( "|", $msg);
+
+	if ($habrat == 'N') {
 	echo 'exibirMensagens("'.$stringArrayMsg.'","atualizaDadosRating(\"divOpcoesDaOpcao3\");");';
+	} else {
+		echo 'hideMsgAguardo();';
+		echo 'blockBackground(parseInt($("#divRotina").css("z-index")));';
+		echo 'mostraImprimirLimite()';
+	}
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
@@ -350,5 +364,4 @@
 		exit();
 	}
 		
-	
 ?>

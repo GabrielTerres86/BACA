@@ -60,6 +60,8 @@
                             Projeto 300. (Odirlei-AMcom)
                             
                11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
+			   09/07/2019 - Inclusão das outras rendas do conjuge. PRJ438 - Sprint 14 - Rubens Lima (Mouts)
+               09/07/2019 - Adicionado os campos Nivel de Risco e Taxa na tt-dscchq_dados_limite PRJ 438 - Sprint 14 (Mateus Z / Mouts)
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-desconto_cheques NO-UNDO
@@ -140,7 +142,10 @@ DEF TEMP-TABLE tt-dscchq_dados_limite NO-UNDO
     FIELD dtinivig AS DATE
     FIELD txcetano AS DECI
     FIELD txcetmes AS DECI
-    FIELD idcobope AS INTEGER.
+    FIELD idcobope AS INTEGER
+    /* PRJ 438 - Sprint 14 - Incluido campo de nivel de risco e taxa na tela do Desconto do Limite de Cheques */
+    FIELD nivrisco LIKE craplim.dsrisco
+    FIELD txmensal LIKE crapldc.txmensal.
 
 DEFINE TEMP-TABLE tt-dados_nota_pro_chq NO-UNDO
     FIELD ddmvtolt AS INTE
@@ -216,7 +221,8 @@ DEF TEMP-TABLE tt-proposta_limite_chq NO-UNDO
     FIELD nmrescop AS CHAR
     FIELD nmoperad AS CHAR
     FIELD nmresco1 AS CHAR
-    FIELD nmresco2 AS CHAR.
+    FIELD nmresco2 AS CHAR
+    FIELD vlrencjg AS DECI.
 
 DEF TEMP-TABLE tt-contrato_limite_chq NO-UNDO
     FIELD nmcidade AS CHAR

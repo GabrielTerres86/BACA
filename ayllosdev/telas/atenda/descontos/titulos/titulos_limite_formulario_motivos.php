@@ -31,7 +31,7 @@
 
 <div id="divBotoesMotivos">
 
-	<a href="#" class="botao" id="btnVoltarLimite" onClick="voltaDiv(3,2,4,'DESCONTO DE CHEQUES - LIMITE');">Voltar </a>
+	<a href="#" class="botao" id="btnVoltarLimite" onClick="voltaDiv(3,2,4,'DESCONTO DE T&Iacute;TULOS - LIMITE');">Voltar </a>
 
 	<a href="#" class="botao" id="btnContinuarLimite" onClick="gravaMotivosAnulacao();" <? echo $inaltera == 'N' ? 'style="color: gray; cursor: default; pointer-events: none;"' : '' ?>>Concluir </a>
 	

@@ -576,6 +576,10 @@
 
 			   09/04/2019 - Ajustado busca_total_descontos para contabilizar total de desconto de titulo atraves no campo
 			                saldo do titulo vlsldtit (Daniel - Ailos)
+               12/07/2019 - Incluido campos de avalista nas procs de gravaçao e alteraçao do desconto de titulos. PRJ 438 - Sprint 16 (Jefferson - MoutS)
+               16/07/2019 - Incluido procedure Oracle para criar ou atualizar a tabela CRAPPRP
+                            PRJ438 - Sprint 16 - Rubens Lima - Mout's
+			   18/07/2019 - Incluido retorno dos campos Nivel de Risco , Taxa e ajustado o campo Data de Cancelamento na proc busca_dados_proposta. PRJ 438 - Sprint 16 (Mateus Z / Mouts)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -3928,7 +3932,7 @@ PROCEDURE busca_dados_limite:
     IF  NOT AVAILABLE crapprp   THEN                                   
         DO:
             ASSIGN aux_cdcritic = 0.
-                   aux_dscritic = "Regisro de proposta de desconto de titulo" +
+                   aux_dscritic = "Registro de proposta de desconto de titulo" +
                                   " nao encontrada.".
 
             RUN gera_erro (INPUT par_cdcooper,
@@ -4061,7 +4065,10 @@ PROCEDURE busca_dados_limite:
            tt-dsctit_dados_limite.nrperger = craplim.nrperger
            /* Faturamento unico cliente - Pessoa Juridica */
            tt-dsctit_dados_limite.perfatcl = crapjfn.perfatcl
-                                             WHEN AVAILABLE crapjfn.
+                                             WHEN AVAILABLE crapjfn
+           /* PRJ 438 - Sprint 16 - Incluido campo de nivel de risco e taxa na tela do Desconto do Limite de Titulos */
+           tt-dsctit_dados_limite.txmensal = crapldc.txmensal
+           tt-dsctit_dados_limite.nivrisco = "A".
     
     RETURN "OK".
 
@@ -4301,7 +4308,13 @@ PROCEDURE busca_dados_proposta:
            tt-dsctit_dados_limite.vllimite = crawlim.vllimite
            tt-dsctit_dados_limite.qtdiavig = crawlim.qtdiavig
            tt-dsctit_dados_limite.cddlinha = crawlim.cddlinha
-           tt-dsctit_dados_limite.dtcancel = crawlim.dtcancel
+           /* PRJ 438 - Sprint 16 - Incluído campo Data do Cancelamento na tela de Consulta.
+              A partir da migraçao para o oracle, quando é feito um cancelamento, a data é 
+              salva na coluna dtrejeit, porém nas antigas a data está na coluna dtcancel */
+           tt-dsctit_dados_limite.dtcancel = IF  crawlim.dtcancel <> ? THEN
+                                         crawlim.dtcancel
+                                     ELSE 
+                                         crawlim.dtrejeit
            tt-dsctit_dados_limite.nrctaav1 = crawlim.nrctaav1
            tt-dsctit_dados_limite.nrctaav2 = crawlim.nrctaav2
            tt-dsctit_dados_limite.flgdigit = crawlim.flgdigit
@@ -4316,7 +4329,10 @@ PROCEDURE busca_dados_proposta:
            /* Faturamento unico cliente - Pessoa Juridica */
            tt-dsctit_dados_limite.perfatcl = crapjfn.perfatcl
                                              WHEN AVAILABLE crapjfn
-           tt-dsctit_dados_limite.idcobop = crawlim.idcobop.
+           tt-dsctit_dados_limite.idcobop = crawlim.idcobop
+           /* PRJ 438 - Sprint 16 - Incluido campo de nivel de risco e taxa na tela do Desconto do Limite de Titulos */
+           tt-dsctit_dados_limite.txmensal = crapldc.txmensal
+           tt-dsctit_dados_limite.nivrisco = "A".
     
     RETURN "OK".
 
@@ -4960,6 +4976,12 @@ PROCEDURE efetua_inclusao_limite:
     DEF  INPUT PARAM par_nrender1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_complen1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps1 AS INTE                           NO-UNDO.
+    /* PRJ 438 Sprint 16 */
+	  DEF  INPUT PARAM par_vlrecjg1 AS DECI                           NO-UNDO.
+	  DEF  INPUT PARAM par_cdnacio1 AS DECI                           NO-UNDO.
+	  DEF  INPUT PARAM par_inpesso1 AS DECI                           NO-UNDO.
+	  DEF  INPUT PARAM par_dtnasct1 AS DECI                           NO-UNDO.
+	  DEF  INPUT PARAM par_vlrenme1 AS DECI                           NO-UNDO.
     /** ------------------- Parametros do 2 avalista ------------------- **/
     DEF  INPUT PARAM par_nrctaav2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmdaval2 AS CHAR                           NO-UNDO.
@@ -4980,6 +5002,12 @@ PROCEDURE efetua_inclusao_limite:
     DEF  INPUT PARAM par_nrender2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_complen2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps2 AS INTE                           NO-UNDO.
+    /* PRJ 438 Sprint 16 */
+	  DEF  INPUT PARAM par_vlrecjg2 AS DECI                           NO-UNDO.
+	  DEF  INPUT PARAM par_cdnacio2 AS DECI                           NO-UNDO.
+	  DEF  INPUT PARAM par_inpesso2 AS DECI                           NO-UNDO.
+	  DEF  INPUT PARAM par_dtnasct2 AS DECI                           NO-UNDO.
+	  DEF  INPUT PARAM par_vlrenme2 AS DECI                           NO-UNDO.
     /** ---------------------------- RATING ---------------------------- **/
     DEF  INPUT PARAM par_nrgarope AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrinfcad AS INTE                           NO-UNDO.
@@ -5217,15 +5245,15 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
-                                                    INPUT 0, /* Nacao*/
+                                                    INPUT par_cdnacio1,
                                                     INPUT 0,  /* Vl. Endiv. */
-                                                    INPUT 0,  /* Vl. Rendim */
+                                                    INPUT par_vlrenme1,
                                                     INPUT par_nrender1,
                                                     INPUT par_complen1,
                                                     INPUT par_nrcxaps1,
-                                                    INPUT 0,  /* inpessoa 1o avail */
-                                                    INPUT ?,  /* dtnascto 1o avail */ 
-													INPUT 0, /* par_vlrecjg1 */
+                                                    INPUT par_inpesso1,
+                                                    INPUT par_dtnasct1,
+                                                    INPUT par_vlrecjg1,
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -5243,15 +5271,15 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
-                                                    INPUT 0, /* Nacao */
+                                                    INPUT par_cdnacio2,
                                                     INPUT 0,  /* Vl. Endiv */
-                                                    INPUT 0,  /* Vl. Rendim. */
+                                                    INPUT par_vlrenme2,
                                                     INPUT par_nrender2,
                                                     INPUT par_complen2,
                                                     INPUT par_nrcxaps2,
-                                                    INPUT 0,  /* inpessoa 2o avail */
-                                                    INPUT ?,  /* dtnascto 2o avail */
-													INPUT 0, /* par_vlrecjg2 */
+                                                    INPUT par_inpesso2,
+                                                    INPUT par_dtnasct2,
+                                                    INPUT par_vlrecjg2,
                                                     INPUT "",
                                                    OUTPUT TABLE tt-erro).
         
@@ -5504,7 +5532,20 @@ PROCEDURE efetua_inclusao_limite:
                 UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
             END.               
                
-        CREATE crapprp.
+        /*PRJ438 - Sprint 16 - Cria ou atualiza a CRAPPRP*/
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        RUN STORED-PROCEDURE pc_cria_atualiza_prp
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_nrdconta
+                                              ,INPUT par_nrctrlim
+                                              ,INPUT 3
+                                              ,INPUT CAPS(par_dsramati)
+                                              ,INPUT par_vlmedtit
+                                              ,INPUT CAPS(par_dsobserv)
+                                              ,INPUT par_cdcooper
+                                              ,INPUT par_dtmvtolt).
+        CLOSE STORED-PROC pc_cria_atualiza_prp
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+     /* CREATE crapprp.
         ASSIGN crapprp.nrdconta = par_nrdconta
                crapprp.nrctrato = par_nrctrlim
                crapprp.tpctrato = 3 /* Limite de Dscto Titulo */
@@ -5521,7 +5562,7 @@ PROCEDURE efetua_inclusao_limite:
                crapprp.dsobserv[3] = ""
                crapprp.cdcooper    = par_cdcooper
                crapprp.dtmvtolt    = par_dtmvtolt.
-        VALIDATE crapprp.                   
+        VALIDATE crapprp. */
         
         /* Verificar se a conta pertence ao grupo economico novo */	
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -5759,6 +5800,12 @@ PROCEDURE efetua_alteracao_limite:
     DEF  INPUT PARAM par_nrender1 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_complen1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps1 AS INTE                           NO-UNDO.
+    /* PRJ 438 Sprint 16 */
+  	DEF  INPUT PARAM par_vlrecjg1 AS DECI                           NO-UNDO.
+  	DEF  INPUT PARAM par_cdnacio1 AS DECI                           NO-UNDO.
+  	DEF  INPUT PARAM par_inpesso1 AS DECI                           NO-UNDO.
+  	DEF  INPUT PARAM par_dtnasct1 AS DECI                           NO-UNDO.
+  	DEF  INPUT PARAM par_vlrenme1 AS DECI                           NO-UNDO.
     /** ------------------- Parametros do 2 avalista ------------------- **/
     DEF  INPUT PARAM par_nrctaav2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmdaval2 AS CHAR                           NO-UNDO.
@@ -5779,6 +5826,12 @@ PROCEDURE efetua_alteracao_limite:
     DEF  INPUT PARAM par_nrender2 AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_complen2 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrcxaps2 AS INTE                           NO-UNDO.
+    /* PRJ 438 Sprint 16 */
+  	DEF  INPUT PARAM par_vlrecjg2 AS DECI                           NO-UNDO.
+  	DEF  INPUT PARAM par_cdnacio2 AS DECI                           NO-UNDO.
+  	DEF  INPUT PARAM par_inpesso2 AS DECI                           NO-UNDO.
+  	DEF  INPUT PARAM par_dtnasct2 AS DECI                           NO-UNDO.
+  	DEF  INPUT PARAM par_vlrenme2 AS DECI                           NO-UNDO.
     /** ---------------------------- RATING --------------------------- **/
     DEF  INPUT PARAM par_nrgarope AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrinfcad AS INTE                           NO-UNDO.
@@ -5904,15 +5957,15 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav1, 
                                   INPUT par_cdufava1, 
                                   INPUT par_nrcepav1, 
-                                  INPUT 0, /* Nacao */
+                                  INPUT par_cdnacio1,
                                   INPUT 0,  /* Vl. Endividamento */
-                                  INPUT 0,  /* Vl. Renda */
+                                  INPUT par_vlrenme1,
                                   INPUT par_nrender1,
                                   INPUT par_complen1,
                                   INPUT par_nrcxaps1,
-                                  INPUT 0,  /* inpessoa 1o avail */
-                                  INPUT ?,  /* dtnascto 1o avail */
-								  INPUT 0, /* par_vlrecjg1 */
+                                  INPUT par_inpesso1,
+                                  INPUT par_dtnasct1,
+                                  INPUT par_vlrecjg1,
                                   /** 2 avalista **/
                                   INPUT par_nrctaav2, 
                                   INPUT par_nmdaval2, 
@@ -5930,15 +5983,15 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav2, 
                                   INPUT par_cdufava2, 
                                   INPUT par_nrcepav2,
-                                  INPUT 0,  /* Nacao */ 
+                                  INPUT par_cdnacio2,
                                   INPUT 0,   /* Vl. Endividamento */
-                                  INPUT 0,   /* Vl. Renda*/
+                                  INPUT par_vlrenme2,
                                   INPUT par_nrender2,
                                   INPUT par_complen2,
                                   INPUT par_nrcxaps2,
-                                  INPUT 0,  /* inpessoa 2o avail */
-                                  INPUT ?,  /* dtnascto 2o avail */
-								  INPUT 0, /* par_vlrecjg2 */
+                                  INPUT par_inpesso2,
+                                  INPUT par_dtnasct2,
+                                  INPUT par_vlrecjg2,
                                   INPUT ""). /* Bens dos aval */ 
 
         DELETE PROCEDURE h-b1wgen9999.
@@ -6239,26 +6292,31 @@ PROCEDURE efetua_alteracao_limite:
                 UNDO TRANS_ALTERA, LEAVE TRANS_ALTERA.
             END.        
         
+        /*PRJ438 - Sprint 16 - Faz backup dos valores para salvar no LOG*/
         ASSIGN old_dsramati     = crapprp.dsramati
-               crapprp.dsramati = CAPS(par_dsramati)
                old_vlmedchq     = crapprp.vlmedchq
-               crapprp.vlmedchq = par_vlmedtit
                old_vlfatura     = crapprp.vlfatura
-               crapprp.vlfatura = par_vlfatura
                old_vloutras     = crapprp.vloutras
-               crapprp.vloutras = par_vloutras
                old_vlsalari     = crapprp.vlsalari
-               crapprp.vlsalari = par_vlsalari
                old_vlsalcon     = crapprp.vlsalcon
-               crapprp.vlsalcon = par_vlsalcon
                old_dsdeben1     = SUBSTR(crapprp.dsdebens,1,60)
                old_dsdeben2     = SUBSTR(crapprp.dsdebens,60,61)
-               crapprp.dsdebens = STRING(par_dsdbens1,"x(60)") +
-                                  STRING(par_dsdbens2,"x(60)")
-               old_dsobser1     = crapprp.dsobserv[1]
-               crapprp.dsobserv[1] = CAPS(par_dsobserv)
-               crapprp.dsobserv[2] = ""
-               crapprp.dsobserv[3] = "".
+               old_dsobser1     = crapprp.dsobserv[1].
+
+        /*PRJ438 - Sprint 16 - Cria ou atualiza a CRAPPRP*/
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_cria_atualiza_prp
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_nrdconta
+                                              ,INPUT par_nrctrlim
+                                              ,INPUT 3
+                                              ,INPUT CAPS(par_dsramati)
+                                              ,INPUT par_vlmedtit
+                                              ,INPUT CAPS(par_dsobserv)
+                                              ,INPUT par_cdcooper
+                                              ,INPUT par_dtmvtolt).
+        CLOSE STORED-PROC pc_cria_atualiza_prp
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
           aux_handproc = PROC-HANDLE NO-ERROR (INPUT 0
@@ -19414,7 +19472,11 @@ PROCEDURE realizar_manutencao_contrato:
     DEF VAR aux_complen1 AS CHAR    NO-UNDO.
     DEF VAR aux_nrender1 AS INTE    NO-UNDO.
     DEF VAR aux_nrcxaps1 AS INTE    NO-UNDO.
-    
+    DEF VAR aux_vlrecjg1 AS DECI    NO-UNDO.
+    DEF VAR aux_cdnacio1 AS INTE    NO-UNDO.
+    DEF VAR aux_inpesso1 AS INTE    NO-UNDO.
+    DEF VAR aux_dtnasct1 AS DATE    NO-UNDO.
+    DEF VAR aux_vlrenme1 AS DECI    NO-UNDO.
     DEF VAR aux_nrctaav2 AS INTE    NO-UNDO.
     DEF VAR aux_nmdaval2 AS CHAR    NO-UNDO.
     DEF VAR aux_nrcpfav2 AS DECI    NO-UNDO.
@@ -19434,6 +19496,11 @@ PROCEDURE realizar_manutencao_contrato:
     DEF VAR aux_complen2 AS CHAR    NO-UNDO.
     DEF VAR aux_nrender2 AS INTE    NO-UNDO.
     DEF VAR aux_nrcxaps2 AS INTE    NO-UNDO.
+    DEF VAR aux_vlrecjg2 AS DECI    NO-UNDO.
+    DEF VAR aux_cdnacio2 AS INTE    NO-UNDO.
+    DEF VAR aux_inpesso2 AS INTE    NO-UNDO.
+    DEF VAR aux_dtnasct2 AS DATE    NO-UNDO.
+    DEF VAR aux_vlrenme2 AS DECI    NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-msg-confirma.
@@ -19462,6 +19529,11 @@ PROCEDURE realizar_manutencao_contrato:
            aux_nrender1 = 0
            aux_complen1 = ""
            aux_nrcxaps1 = 0
+           aux_vlrecjg1 = 0
+           aux_cdnacio1 = 0
+           aux_inpesso1 = 0
+           aux_dtnasct1 = ?
+           aux_vlrenme1 = 0
            aux_nrctaav2 = 0
            aux_nmdaval2 = ""
            aux_nrcpfav2 = 0
@@ -19480,7 +19552,12 @@ PROCEDURE realizar_manutencao_contrato:
            aux_nrcepav2 = 0
            aux_nrender2 = 0
            aux_complen2 = ""
-           aux_nrcxaps2 = 0.
+           aux_nrcxaps2 = 0
+           aux_vlrecjg2 = 0
+           aux_cdnacio2 = 0
+           aux_inpesso2 = 0
+           aux_dtnasct2 = ?
+           aux_vlrenme2 = 0.
     
     FIND crapldc WHERE crapldc.cdcooper = par_cdcooper   AND
                       crapldc.cddlinha = par_cddlinha   AND
@@ -19562,7 +19639,12 @@ PROCEDURE realizar_manutencao_contrato:
                         aux_nrcepav1 = tt-dados-avais.nrcepend
                         aux_complen1 = tt-dados-avais.complend 
                         aux_nrender1 = tt-dados-avais.nrendere 
-                        aux_nrcxaps1 = tt-dados-avais.nrcxapst.
+                        aux_nrcxaps1 = tt-dados-avais.nrcxapst
+                        aux_vlrecjg1 = tt-dados-avais.vlrencjg
+                        aux_cdnacio1 = tt-dados-avais.cdnacion
+                        aux_inpesso1 = tt-dados-avais.inpessoa
+                        aux_dtnasct1 = tt-dados-avais.dtnascto
+                        aux_vlrenme1 = tt-dados-avais.vlrenmes.
             
             FIND NEXT tt-dados-avais NO-LOCK NO-ERROR.
 
@@ -19585,7 +19667,12 @@ PROCEDURE realizar_manutencao_contrato:
                         aux_nrcepav2 = tt-dados-avais.nrcepend
                         aux_complen2 = tt-dados-avais.complend 
                         aux_nrender2 = tt-dados-avais.nrendere 
-                        aux_nrcxaps2 = tt-dados-avais.nrcxapst.
+                        aux_nrcxaps2 = tt-dados-avais.nrcxapst
+                        aux_vlrecjg2 = tt-dados-avais.vlrencjg
+                        aux_cdnacio2 = tt-dados-avais.cdnacion
+                        aux_inpesso2 = tt-dados-avais.inpessoa
+                        aux_dtnasct2 = tt-dados-avais.dtnascto
+                        aux_vlrenme2 = tt-dados-avais.vlrenmes.
       END.
       
     
@@ -19631,6 +19718,11 @@ PROCEDURE realizar_manutencao_contrato:
                    INPUT aux_nrender1,
                    INPUT aux_complen1,
                    INPUT aux_nrcxaps1,
+                   INPUT aux_vlrecjg1,
+                   INPUT aux_cdnacio1,
+                   INPUT aux_inpesso1,
+                   INPUT aux_dtnasct1,
+                   INPUT aux_vlrenme1,
                    INPUT aux_nrctaav2,
                    INPUT aux_nmdaval2,
                    INPUT aux_nrcpfav2,
@@ -19650,6 +19742,11 @@ PROCEDURE realizar_manutencao_contrato:
                    INPUT aux_nrender2,
                    INPUT aux_complen2,
                    INPUT aux_nrcxaps2,
+                   INPUT aux_vlrecjg2,
+                   INPUT aux_cdnacio2,
+                   INPUT aux_inpesso2,
+                   INPUT aux_dtnasct2,
+                   INPUT aux_vlrenme2,
                    INPUT tt-dsctit_dados_limite.nrgarope,
                    INPUT tt-dsctit_dados_limite.nrinfcad,
                    INPUT tt-dsctit_dados_limite.nrliquid,
