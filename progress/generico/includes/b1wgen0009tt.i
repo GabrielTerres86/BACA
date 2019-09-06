@@ -60,6 +60,13 @@
                             Projeto 300. (Odirlei-AMcom)
                             
                11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
+			   
+               13/05/2019 - P450 - Rating - Retorno Rating na tt-limite_chq. 
+                            Luiz Otavio Olinger Momm - AMcom.
+
+               23/05/2019 - P450 - Rating - Retorno Rating na tt-limite_chq e tt-bordero_chq.
+                            Luiz Otavio Olinger Momm - AMcom.
+
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-desconto_cheques NO-UNDO
@@ -87,7 +94,10 @@ DEF TEMP-TABLE tt-limite_chq NO-UNDO
     FIELD nrdrecid AS RECID
     FIELD flgenvio AS CHAR
     FIELD insitlim AS INTE
-    FIELD idcobope AS INTE.
+    FIELD idcobope AS INTE
+    FIELD inrisrat AS CHAR    /* P450   */
+    FIELD origerat AS CHAR.   /* P450   */ 
+
 
 /* TAB019 */
 DEF TEMP-TABLE tt-dados_dscchq NO-UNDO
@@ -270,7 +280,9 @@ DEF TEMP-TABLE tt-bordero_chq NO-UNDO
     FIELD dtlibbdc LIKE crapbdc.dtlibbdc
     FIELD qtdaprov AS INTE
     FIELD vlraprov AS DECI
-    FIELD flcusthj AS INTE. /* flag bordero possui cheques custodiados hj */
+    FIELD flcusthj AS INTE   /* flag bordero possui cheques custodiados hj */
+    FIELD inrisrat AS CHAR   /* P450   */
+    FIELD origerat AS CHAR.  /* P450   */ 
     
 DEF TEMP-TABLE tt-dscchq_dados_bordero NO-UNDO
     FIELD nrborder AS INTE

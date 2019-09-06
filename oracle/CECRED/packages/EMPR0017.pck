@@ -15,7 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0017 AS
   --
   --
   --			23/07/2019 - Removido filtro de data passado via sessão, criado parametro de data
-  --                         na busca_simulacoes. (P438 Douglas Pagel / AMcom)
+  --                                 na busca_simulacoes. (P438 Douglas Pagel / AMcom)
   --
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -332,11 +332,14 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0017 AS
  
   PROCEDURE pc_start_motor(pr_cdcooper IN crapcop.cdcooper%TYPE
                           ,pr_nrdconta IN crapass.nrdconta%TYPE 
-                          ,pr_nrctremp IN crawepr.nrctremp%TYPE);
+                          ,pr_nrctremp IN crawepr.nrctremp%TYPE
+                          ,pr_job_reenvio IN NUMBER DEFAULT 0);
   
   PROCEDURE pc_aciona_motor(pr_cdcooper IN crapcop.cdcooper%TYPE
                            ,pr_nrdconta IN crapass.nrdconta%TYPE 
-                           ,pr_nrctremp IN crawepr.nrctremp%TYPE);
+                           ,pr_nrctremp IN crawepr.nrctremp%TYPE
+                           ,pr_timestamp IN TIMESTAMP WITH TIME ZONE DEFAULT NULL
+                           ,pr_job_reenvio IN BOOLEAN DEFAULT FALSE);
 
   PROCEDURE pc_email_esteira(pr_cdcooper IN NUMBER,
                              pr_nrdconta IN NUMBER,
@@ -360,13 +363,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   -- Frequencia: Sempre que for chamada
   -- Objetivo  : Rotinas focando no processo de simulação/contratação de emprestimo
   --
+  -- Alterações:
+  --
+  --            16/07/2019 - PRJ 438 - Alterado rotinas pc_start_motor, pc_aciona_motor para controle de reenvio de analise pelo JOB
+  --                         Rafael Rocha (AmCom)
+
+  --
+  --            04/09/2019 - Adicionaro efetivacao Rating na efetivacao da proposta 
+  --                         na pc_solicita_contratacao (Luiz Otávio Olinger Momm - AMCOM)
+  --
   ---------------------------------------------------------------------------------------------------------------
   --
   -- variáveis globais
   vg_xml_retorno xmltype;
   vtexto VARCHAR2(32000);
   vr_exc_erro EXCEPTION;
-  vr_rowid  ROWID;
+  vr_rowid    ROWID;
   --
   FUNCTION fn_get_cr_crapdat(pr_cdcooper IN crapcop.cdcooper%TYPE) 
     RETURN BTCH0001.cr_crapdat%ROWTYPE IS
@@ -385,6 +397,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     THEN
       RETURN rw_crapdat;
   END fn_get_cr_crapdat;
+
   --> Funcao para formatar o numero em decimal conforme padrao da SOA
   FUNCTION fn_decimal_soa (pr_numero IN number) RETURN VARCHAR2 is
   BEGIN
@@ -1613,14 +1626,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      OPEN cr_crapsim(rw_crawepr.cdcooper,rw_crawepr.nrdconta,rw_crawepr.nrsimula);
      FETCH cr_crapsim INTO rw_crapsim;
      CLOSE cr_crapsim;
-
+     
      OPEN cr_crapass(pr_cdcooper,pr_nrdconta);
      FETCH cr_crapass INTO rw_crapass;
      CLOSE cr_crapass;
      
-     vr_vlemprestado := rw_crawepr.vlr_emprest;
+    vr_vlemprestado := rw_crawepr.vlr_emprest;
      
-     vr_vliofepr := 0;
+    vr_vliofepr := 0;
      
      tiof0001.pc_calcula_iof_epr(pr_cdcooper => rw_crawepr.cdcooper,
                                  pr_nrdconta => rw_crawepr.nrdconta,
@@ -1869,7 +1882,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                 ,pr_tag_pai  => 'dados'
                 ,pr_posicao  => vr_contador
                 ,pr_tag_nova => 'valor_emprestado'
-                ,pr_tag_cont => fn_decimal_soa(nvl(vr_vlemprestado,0))
+                ,pr_tag_cont => fn_decimal_soa(nvl(vr_vlemprestado,0)) 
                 ,pr_des_erro => pr_dscritic);
 
       insere_tag(pr_xml      => pr_retorno
@@ -3296,7 +3309,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                                pr_idseqttl => pr_idseqttl,
                                pr_dtmvtolt => vr_dtmvtolt,
                                pr_flgerlog => sys.diutil.int_to_bool(pr_flgerlog),
-							   pr_datainic => vr_dtmvtolt_ini,
+                               pr_datainic => vr_dtmvtolt_ini,
                                pr_datafina => vr_dtmvtolt_fim,
                                pr_tcrapsim => vr_tab_crapsim,
                                pr_cdcritic => vr_cdcritic,
@@ -3759,7 +3772,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   --
   -- *** legenda para o parametro pr_situacao ****
   -- ================================================================================================
-  --                                                                                                *
+  --                                                                                                  *
   --  Código Situação ||   Descrição Situação ||  Situação (insitest) ||    Decisão (insitapr)        *
   --  0                ||  Em Análise         ||                      ||    0, 5 ou 6                 *
   --  1                ||  Aprovado           ||                     ||     1                        *
@@ -5742,6 +5755,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                      02/08/2019 - Inclusão da validação da Linha de Crédito e ajuste no valor do campo crawepr.tpdescto
                                   (Douglas Pagel / AMcom). 
 
+                     16/08/2019 - P450 - Na chamada da pc_obtem_emprestimo_risco, incluir pr_nrctremp
+                                  (Elton / AMcom). 
       ............................................................................. */
 
     CURSOR cr_contrato(pr_cdcooper IN crawepr.cdcooper%TYPE
@@ -5754,7 +5769,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        AND t.nrdconta = pr_nrdconta
        AND t.nrctremp = pr_nrctremp;
     rw_contrato cr_contrato%ROWTYPE;
-
+    
     -- Busca dados da linha de crédito
     CURSOR cr_craplcr(pr_cdcooper IN crawepr.cdcooper%TYPE
                      ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
@@ -5763,7 +5778,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        WHERE l.cdcooper = pr_cdcooper
          AND l.cdlcremp = pr_cdlcremp;
     rw_craplcr cr_craplcr%ROWTYPE;
-
+    
     CURSOR cr_crapttl IS
     SELECT * 
       FROM crapttl 
@@ -5771,7 +5786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        AND nrdconta = pr_nrdconta
        AND idseqttl = 1;
     rw_crapttl cr_crapttl%ROWTYPE;
-
+    
      -- Monta o registro de data
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -5824,6 +5839,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                       pr_cdfinemp => pr_cdfinemp, 
                       pr_cdlcremp => pr_cdlcremp, 
                       pr_dsctrliq => '', 
+                      pr_nrctremp => pr_nrctremp, -- P450
                       pr_nivrisco => vr_dsnivris,
                       pr_dscritic => vr_dscritic, 
                       pr_cdcritic => vr_cdcritic);
@@ -6224,6 +6240,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
 
        frequencia: sempre que for chamado.
        objetivo  : procedure para efetivar propostas de emprestimo
+       alterações:
+                   04/09/2019 - Adicionaro efetivacao Rating na efetivacao da proposta 
+                                na pc_solicita_contratacao (Luiz Otávio Olinger Momm - AMCOM)
+
       ............................................................................. */
    --
    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -6256,6 +6276,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
    vr_nmarqpdf    VARCHAR2(100);  
    vr_nmdirpdf    VARCHAR2(200);
    vr_rowid       ROWID;
+   vr_habrat       VARCHAR2(1) := 'N';    -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
+   vr_strating     NUMBER;                -- P450
+   vr_flgrating    NUMBER;                -- P450
+   vr_vlendivid    craplim.vllimite%TYPE; -- P450 - Valor do Endividamento do Cooperado
+   vr_vllimrating  craplim.vllimite%TYPE; -- P450 - Valor do Parametro Rating (Limite) TAB056
+
    --
    --
    CURSOR cr_crawepr(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -6271,7 +6297,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
             epr.dtdpagto,
             epr.insitapr,
             epr.insitest,
-            --epr.insitdig,
+            epr.dtinclus,
+            epr.cdfinemp,
             epr.dtaprova,
             epr.cdlcremp
        FROM crawepr epr
@@ -6436,6 +6463,72 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     
     --/ grava efetivacao da proposta
     --
+
+    -- P450 SPT13 - alteracao para habilitar rating novo
+    vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                           pr_cdcooper => rw_crawepr.cdcooper,
+                                           pr_cdacesso => 'HABILITA_RATING_NOVO');
+
+    IF (rw_crawepr.cdcooper <> 3 AND vr_habrat = 'S') THEN
+          
+       /* Validar Status rating */
+       RATI0003.pc_busca_status_rating(pr_cdcooper  => rw_crawepr.cdcooper
+                                      ,pr_nrdconta  => rw_crawepr.nrdconta
+                                      ,pr_nrctrato  => rw_crawepr.nrctremp
+                                      ,pr_tpctrato  => 90
+                                      ,pr_strating  => vr_strating
+                                      ,pr_flgrating => vr_flgrating
+                                      ,pr_cdcritic  => vr_cdcritic
+                                      ,pr_dscritic  => vr_dscritic);
+
+       IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_saida;
+       END IF;
+       -- Buscar Valor Endividamento e Valor Limite Rating (TAB056)
+       RATI0003.pc_busca_endivid_param(pr_cdcooper => rw_crawepr.cdcooper
+                                      ,pr_nrdconta => rw_crawepr.nrdconta
+                                      ,pr_vlendivi => vr_vlendivid
+                                      ,pr_vlrating => vr_vllimrating
+                                      ,pr_dscritic => vr_dscritic);
+       IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_saida;
+       END IF;
+
+       -- Status do rating inválido
+       IF vr_flgrating = 0 THEN
+         vr_dscritic := 'Contrato não pode ser efetivado porque não há Rating válido.';
+         RAISE vr_exc_saida;
+
+       ELSE -- Status do rating válido
+
+         -- Se Endividamento + Contrato atual > Parametro Rating (TAB056
+         IF (vr_vlendivid  > vr_vllimrating) THEN
+
+           -- Gravar o Rating da operação, efetivando-o
+           rati0003.pc_grava_rating_operacao(pr_cdcooper          => rw_crawepr.cdcooper
+                                            ,pr_nrdconta          => rw_crawepr.nrdconta
+                                            ,pr_nrctrato          => rw_crawepr.nrctremp
+                                            ,pr_tpctrato          => 90
+                                            ,pr_dtrating          => rw_crapdat.dtmvtolt
+                                            ,pr_strating          => 4
+                                            ,pr_cdoprrat          => rw_crawepr.cdoperad
+                                            ,pr_nrcpfcnpj_base    => rw_crapass.nrcpfcnpj_base
+                                            --Variáveis para gravar o histórico
+                                            ,pr_cdoperad          => rw_crawepr.cdoperad
+                                            ,pr_dtmvtolt          => rw_crapdat.dtmvtolt
+                                            ,pr_justificativa     => 'Efetivado através do Internet Banking'
+                                            --Variáveis de crítica
+                                            ,pr_cdcritic          => vr_cdcritic
+                                            ,pr_dscritic          => vr_dscritic);
+
+           IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+             RAISE vr_exc_saida;
+           END IF;
+         END IF;
+       END IF;
+     END IF;
+     -- P450 SPT13 - alteracao para habilitar rating novo
+    
      empr0014.pc_grava_efetivacao_proposta(pr_cdcooper => rw_crawepr.cdcooper,
                                            pr_cdagenci => rw_crawepr.cdagenci,
                                            pr_nrdcaixa => NULL,
@@ -6603,7 +6696,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        pr_retorno := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                         '<Root><Erro>' ||vr_dscritic||
                                         '</Erro></Root>');
-
+                                        
        GENE0001.pc_gera_log( pr_cdcooper => pr_cdcooper 
                            , pr_cdoperad => pr_cdoperad
                            , pr_dscritic => vr_dscritic
@@ -7698,7 +7791,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
 
   PROCEDURE pc_start_motor(pr_cdcooper IN crapcop.cdcooper%TYPE
                           ,pr_nrdconta IN crapass.nrdconta%TYPE 
-                          ,pr_nrctremp IN crawepr.nrctremp%TYPE) IS
+                          ,pr_nrctremp IN crawepr.nrctremp%TYPE
+                          ,pr_job_reenvio IN NUMBER DEFAULT 0) IS
     CURSOR cr_crawepr(pr_cdcooper IN crapcop.cdcooper%TYPE
                      ,pr_nrdconta IN crapass.nrdconta%TYPE
                      ,pr_nrctremp IN crawepr.nrctremp%TYPE) IS
@@ -7712,8 +7806,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
          AND wpr.nrdconta = pr_nrdconta
          AND wpr.nrctremp = pr_nrctremp;
     rw_crawepr cr_crawepr%ROWTYPE;
+    
+    CURSOR cr_reenvio (pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapass.nrdconta%TYPE 
+                      ,pr_nrctremp IN crawepr.nrctremp%TYPE ) IS
+      SELECT r.cdagenci, r.cdoperad
+        FROM tbepr_reenvio_analise r
+       WHERE r.cdcooper = pr_cdcooper
+         AND r.nrdconta = pr_nrdconta
+         AND r.nrctremp = pr_nrctremp
+       ORDER BY r.idreenvio desc;
+    rw_reenvio cr_reenvio%ROWTYPE;
+       
     vr_des_reto VARCHAR2(10);
-
+    
+    vr_cdagenci tbepr_reenvio_analise.cdagenci%TYPE;
+    vr_cdoperad tbepr_reenvio_analise.cdoperad%TYPE;
 
   BEGIN
  
@@ -7722,31 +7830,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        IF cr_crawepr%FOUND THEN
          CLOSE cr_crawepr;
          --/
+       IF pr_job_reenvio > 0 THEN
+          este0001.pc_set_job_reenvioanalise();
+         
+         -- Busca o reenvio agendado para usar o mesmo operador
+         -- e pa na ultima consulta da proposta
+         OPEN cr_reenvio(pr_cdcooper,pr_nrdconta,pr_nrctremp);
+         FETCH cr_reenvio INTO rw_reenvio;
+         IF cr_reenvio%FOUND THEN
+           CLOSE cr_reenvio;
+           vr_cdagenci := nvl(rw_reenvio.cdagenci,0);
+           vr_cdoperad := nvl(rw_reenvio.cdoperad,'');  
+         ELSE
+           CLOSE cr_reenvio;
+         END IF;
+       END IF; 
+       
+       IF nvl(vr_cdagenci,0) = 0 THEN
+         vr_cdagenci := rw_crawepr.cdagenci_ass;
+       END IF;
+       
+       IF vr_cdoperad = '' or vr_cdoperad is null THEN
+         vr_cdoperad := rw_crawepr.cdoperad;
+       END IF;
+
          pc_inclui_proposta_esteira(pr_cdcooper => rw_crawepr.cdcooper
-                                   ,pr_cdagenci => rw_crawepr.cdagenci_ass 
-                                   ,pr_cdoperad => rw_crawepr.cdoperad
+                                 ,pr_cdagenci => vr_cdagenci 
+                                 ,pr_cdoperad => vr_cdoperad
                                    ,pr_cdorigem => rw_crawepr.cdorigem
                                    ,pr_nrdconta => rw_crawepr.nrdconta
                                    ,pr_nrctremp => rw_crawepr.nrctremp
                                    ,pr_dtmvtolt => rw_crawepr.dtmvtolt
                                    ,pr_des_reto => vr_des_reto);
          --/
-         IF vr_des_reto = 'NOK' 
+       /* IF vr_des_reto = 'NOK' 
            THEN
              --/
              pc_email_esteira(pr_cdcooper => rw_crawepr.cdcooper,
                               pr_nrdconta => rw_crawepr.nrdconta,
                               pr_nrctremp => rw_crawepr.nrctremp);
-         END IF;
+         END IF;*/
        --/
        ELSE
          CLOSE cr_crawepr; 
        END IF;
   END pc_start_motor;
-    
+  --/    
   PROCEDURE pc_aciona_motor(pr_cdcooper IN crapcop.cdcooper%TYPE
                            ,pr_nrdconta IN crapass.nrdconta%TYPE 
-                           ,pr_nrctremp IN crawepr.nrctremp%TYPE) IS
+                           ,pr_nrctremp IN crawepr.nrctremp%TYPE
+                           ,pr_timestamp IN TIMESTAMP WITH TIME ZONE DEFAULT NULL
+                           ,pr_job_reenvio IN BOOLEAN DEFAULT FALSE) IS
+   --/
    CURSOR cr_verifica_job(pr_jobname   IN VARCHAR2
                          ,pr_cdcooper  IN crapass.cdcooper%TYPE
                          ,pr_nrdconta  IN crapass.nrdconta%TYPE
@@ -7759,19 +7894,80 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
          AND JOB_ACTION LIKE '%pr_cdcooper => '||pr_cdcooper||'%'
          AND JOB_ACTION LIKE '%pr_nrdconta => '||pr_nrdconta||'%'
          AND JOB_ACTION LIKE '%pr_nrctremp => '||pr_nrctremp||'%';
+   
     rw_verifica_job cr_verifica_job%ROWTYPE;
     --
     -- Bloco PLSQL para chamar a execução paralela do pc_crps414
     vr_dsplsql VARCHAR2(4000);
     -- Job name dos processos criados
     vr_jobname VARCHAR2(100);
-
+   vr_timestamp TIMESTAMP;
     vr_dscritic crapcri.dscritic%TYPE;
-
+   ct_next_min  CONSTANT TIMESTAMP WITH TIME ZONE := (SYSDATE + 1/1440);
+   --
+   PROCEDURE pc_atualiza_qtd_reenvio(pr_cdcooper  IN crapass.cdcooper%TYPE
+                                   ,pr_nrdconta  IN crapass.nrdconta%TYPE
+                                   ,pr_nrctremp  IN NUMBER) IS
+    --/
+    vr_existe_agendamento NUMBER;
+    --/
     BEGIN
+     --/
+     SELECT COUNT(*)
+       INTO vr_existe_agendamento
+       FROM tbepr_reenvio_analise ra
+      WHERE ra.cdcooper = pr_cdcooper
+        AND ra.nrdconta = pr_nrdconta
+        AND ra.nrctremp = pr_nrctremp;
+     --/
+     IF vr_existe_agendamento > 0 THEN
+       UPDATE crawepr w
+          SET w.qttentreenv = NVL(w.qttentreenv,0) + 1
+        WHERE w.cdcooper = pr_cdcooper
+          AND w.nrdconta = pr_nrdconta
+          AND w.nrctremp = pr_nrctremp;
+     END IF;
+     --/
+   EXCEPTION WHEN OTHERS THEN
+      NULL;
+   END pc_atualiza_qtd_reenvio;
+   --/
+   --/ Atualiza situação do agendamento de reenvio automatico para analise quando existir
+   PROCEDURE pc_atualiza_agendamento(pr_cdcooper  IN crawepr.cdcooper%TYPE
+                                    ,pr_nrdconta  IN crawepr.nrdconta%TYPE
+                                    ,pr_nrctremp  IN crawepr.nrctremp%TYPE ) IS
+    BEGIN
+      --/
+      FOR rw_agend IN ( SELECT *
+                          FROM tbepr_reenvio_analise tra
+                         WHERE tra.cdcooper = pr_cdcooper
+                           AND tra.nrdconta = pr_nrdconta
+                           AND tra.nrctremp = pr_nrctremp
+                           AND trunc(tra.dtagernv) = trunc(sysdate) )
+      LOOP
+       --/
+       UPDATE tbepr_reenvio_analise r
+          SET r.insitrnv = 3 -- Em execucao
+        WHERE r.cdcooper = rw_agend.cdcooper
+          AND r.nrdconta = rw_agend.nrdconta
+          AND r.nrctremp = rw_agend.nrctremp;
+      END LOOP;
+      --/
+   END pc_atualiza_agendamento;
+   --
+   --/
+   BEGIN
+     --/
+     pc_atualiza_qtd_reenvio(pr_cdcooper,pr_nrdconta,pr_nrctremp);
+     pc_atualiza_agendamento(pr_cdcooper,pr_nrdconta,pr_nrctremp);
+     COMMIT;
+     --       
+     --/ se nao chegar valor pelo parametro, programa para o proximo minuto.
+     vr_timestamp := nvl(pr_timestamp,ct_next_min);
+
       -- Montar o prefixo do código do programa para o jobname
       vr_jobname := 'JBEPR_START_MOTOR_$';
-      OPEN cr_verifica_job (pr_jobname   => vr_jobname
+     OPEN cr_verifica_job (pr_jobname   => 'JBEPR_START_MOTOR_'
                            ,pr_cdcooper  => pr_cdcooper
                            ,pr_nrdconta  => pr_nrdconta
                            ,pr_nrctremp  => pr_nrctremp);
@@ -7783,14 +7979,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
         vr_dsplsql := 'BEGIN'||chr(13)
                        || '  EMPR0017.pc_start_motor(pr_cdcooper => '||pr_cdcooper ||chr(13)
                        || '                         ,pr_nrdconta => '||pr_nrdconta ||chr(13)
-                       || '                         ,pr_nrctremp => '||pr_nrctremp||chr(13)
-                       || '                          );'||chr(13)
+                       || '                         ,pr_nrctremp => '||pr_nrctremp||chr(13);
+        IF pr_job_reenvio THEN
+          vr_dsplsql := vr_dsplsql || '                         ,pr_job_reenvio => '||'1'||chr(13);
+        END IF;
+         vr_dsplsql := vr_dsplsql || '                          );'||chr(13)
                        || 'END;';
         -- Faz a chamada ao programa paralelo atraves de JOB
         gene0001.pc_submit_job(pr_cdcooper  => pr_cdcooper  --> Código da cooperativa
                               ,pr_cdprogra  => 'JBEPR_START_MOTOR' --> Código do programa
                               ,pr_dsplsql   => vr_dsplsql   --> Bloco PLSQL a executar
-                              ,pr_dthrexe   => SYSDATE  + 1/1440 --> Executar após 1 minuto
+                              ,pr_dthrexe   => vr_timestamp -- SYSDATE  + 1/1440 --> Executar após 1 minuto
                               ,pr_interva   => null         --> Sem intervalo de execução da fila, ou seja, apenas 1 vez
                               ,pr_jobname   => vr_jobname   --> Nome randomico criado
                               ,pr_des_erro  => vr_dscritic);
@@ -7804,12 +8003,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                                                      || ', erro: '||vr_dscritic,
                                      pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                                                   pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+          --/
         END IF;
+        
       ELSE
         CLOSE cr_verifica_job;
       END IF;
-    END pc_aciona_motor;    
+   EXCEPTION WHEN OTHERS THEN
+           pc_email_esteira(pr_cdcooper => pr_cdcooper,
+                            pr_nrdconta => pr_nrdconta,
+                            pr_nrctremp => pr_nrctremp);                                                                                  
 
+    END pc_aciona_motor;    
+  --/
    PROCEDURE pc_email_esteira(pr_cdcooper IN NUMBER,
                               pr_nrdconta IN NUMBER,
                               pr_nrctremp IN NUMBER) IS
@@ -7842,7 +8048,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     --/   
     BEGIN
       --
-      --/ aqui ele busca o e-mail do PA, caso nao encontre no cadastro, busca o que estiver parametrizado
+      --/ aqui ele busca o e-mail que estiver parametrizadodo  caso nao encontre no cadastro busca do PA, 
       vr_email_dest := nvl(gene0001.fn_param_sistema('CRED',pr_cdcooper,'ERRO_EMAIL_ESTEIRA')
                           ,fn_get_email_pa(pr_cdcooper,pr_nrdconta));
       --

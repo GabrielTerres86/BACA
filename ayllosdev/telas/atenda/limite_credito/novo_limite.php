@@ -206,9 +206,34 @@
 		//$fncImpressao = "acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idPrincipal.",'".$glbvars["opcoesTela"][$idPrincipal]."');";
 	}
 
-	//bruno - prj 438 - sprint 7 - tela rating
-	$voltaAvalista  = "controlaVoltarAvalista();"; 
-	$metodoAvanca   = "validarDadosRating();"; //bruno - prj 438 - sprint 7 - tela rating
+
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <cdacesso>HABILITA_RATING_NOVO</cdacesso>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "TELA_PARRAT", "CONSULTA_PARAM_CRAPPRM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjPRM = getObjectXML($xmlResult);
+
+	$habrat = 'N';
+	if (strtoupper($xmlObjPRM->roottag->tags[0]->name) == "ERRO") {
+		$habrat = 'N';
+	} else {
+		$habrat = $xmlObjPRM->roottag->tags[0]->tags;
+		$habrat = getByTagName($habrat[0]->tags, 'PR_DSVLRPRM');
+	}
+
+	if ($glbvars["cdcooper"] == 3 || $habrat == 'N') {
+		//bruno - prj 438 - sprint 7 - tela rating
+		$voltaAvalista  = "controlaVoltarAvalista(true);"; 
+		$metodoAvanca   = "validarDadosRating();"; //bruno - prj 438 - sprint 7 - tela rating
+	} else {
+		//bruno - prj 438 - sprint 7 - tela rating
+		$voltaAvalista  = "controlaVoltarAvalista(false);"; 
+		$metodoAvanca   = "validarDadosRating();"; //bruno - prj 438 - sprint 7 - tela rating
+	}
 
 	if ($cddopcao != 'N') { // Consulta
 		//bruno - prj 438 - sprint 7 - remoção telas

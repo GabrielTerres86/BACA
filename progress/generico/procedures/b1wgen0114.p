@@ -54,22 +54,24 @@
                              de uma proposta de portabilidade. (Reinert)
 
                 11/03/2016 - Tratar para apenas permitir aprovar pela tela CAMPRV
-				                  se a esteira estiver em contigencia.
-							      PRJ207 - Esteira de credito (Odirlei-AMcom)
+                             se a esteira estiver em contigencia.
+                             PRJ207 - Esteira de credito (Odirlei-AMcom)
 
                              
                 01/02/2016 - Incluir consulta de situacao antes do cancelamento
                              de uma proposta de portabilidade. (Reinert)  
 
-				24/03/2016 - Passar informacoes da cooperativa para inclusao 
-						     da portabilidade (SD 422198 - Carlos Rafael Tanholi)
+                24/03/2016 - Passar informacoes da cooperativa para inclusao 
+                             da portabilidade (SD 422198 - Carlos Rafael Tanholi)
 
-				12/04/2016 - Adicionado nova situacao "SI8" na consulta para 
-							 cancelamento de propostas de portabilidade. (Reinert)
+                12/04/2016 - Adicionado nova situacao "SI8" na consulta para 
+                             cancelamento de propostas de portabilidade. (Reinert)
                              
                 18/04/2017 - Adicionado validações referentes ao cadastro de proposta
                              na procedure Valida_Dados. (Reinert - PRJ337).
 
+                18/04/2017 - Retirado a validação dos campos RATING antigo no Valida_Dados
+                             (Luiz Otavio Olinger Momm - AMCOM).
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -372,11 +374,20 @@ PROCEDURE Valida_Dados:
      
      DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
      DEF VAR aux_vlutiliz AS DECI                                    NO-UNDO.
-	   DEF VAR aux_contigen AS CHAR                                    NO-UNDO.
+     DEF VAR aux_contigen AS CHAR                                    NO-UNDO.
      DEF VAR h-b1wgen9999 AS HANDLE                                  NO-UNDO.
-     
+     DEF VAR aux_habrat   AS CHAR                                    NO-UNDO.
      EMPTY TEMP-TABLE tt-erro.
 
+     FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
+                              crapprm.cdacesso = 'HABILITA_RATING_NOVO' AND
+                              crapprm.cdcooper = par_cdcooper
+                              NO-LOCK NO-ERROR.
+
+     ASSIGN aux_habrat = 'N'.
+     IF AVAIL crapprm THEN DO:
+       ASSIGN aux_habrat = crapprm.dsvlrprm.
+     END.
      ASSIGN aux_dscritic = ""
             aux_cdcritic = 0
             aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -389,7 +400,9 @@ PROCEDURE Valida_Dados:
        DO:
        
           IF par_nrdcont1 <> 0 AND
-             par_nrctremp <> 0 THEN
+             par_nrctremp <> 0 AND
+            (aux_habrat = 'N'  OR
+	     par_cdcooper = 3) THEN
             DO:
               FIND FIRST crapprp WHERE crapprp.cdcooper = par_cdcooper AND 
                                        crapprp.nrdconta = par_nrdcont1 AND 

@@ -151,6 +151,7 @@ CREATE OR REPLACE PACKAGE CECRED.RATI0002 is
                                       ,pr_cdfinemp IN crapepr.cdfinemp%TYPE  --> Finalidade do emprestimo
                                       ,pr_cdlcremp IN crapepr.cdlcremp%TYPE  --> Linha de credito do emprestimo
                                       ,pr_dsctrliq IN VARCHAR2               --> Lista de descrições de situação dos contratos
+                                      ,pr_nrctremp IN crawepr.nrctremp%TYPE DEFAULT NULL  --> Número do contrato de emprestimos
                                       ------ OUT ------
                                       ,pr_nivrisco     OUT VARCHAR2          --> Retorna nivel do risco
                                       ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
@@ -3227,6 +3228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
                                       ,pr_cdfinemp IN crapepr.cdfinemp%TYPE  --> Finalidade do emprestimo
                                       ,pr_cdlcremp IN crapepr.cdlcremp%TYPE  --> Linha de credito do emprestimo
                                       ,pr_dsctrliq IN VARCHAR2               --> Lista de descrições de situação dos contratos
+                                      ,pr_nrctremp IN crawepr.nrctremp%TYPE DEFAULT NULL  --> Número do contrato de emprestimos - P450
                                       ------ OUT ------
                                       ,pr_nivrisco     OUT VARCHAR2          --> Retorna nivel do risco
                                       ,pr_dscritic     OUT VARCHAR2          --> Descrição da critica
@@ -3425,6 +3427,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rati0002 IS
       END IF;
     
     END IF;
+    
+    -- P450 - Rating    
+    RISC0004.pc_busca_risco_inclusao(pr_cdcooper   => pr_cdcooper --> Codigo da cooperativa
+                                    ,pr_nrdconta   => pr_nrdconta --> Número da conta
+                                    ,pr_dsctrliq   => pr_dsctrliq --> Lista de Contratos Liquidados
+                                    ,pr_rw_crapdat => rw_crapdat  --> Data da cooperativa
+                                    ,pr_nrctremp   => pr_nrctremp --> Número contrato emprestimos
+                                    ,pr_innivris   => vr_innivris --> Risco Inclusão
+                                    ,pr_cdcritic   => vr_cdcritic 
+                                    ,pr_dscritic   => vr_dscritic);
+ 
+    -- Se houve retorno não Ok
+    IF nvl(vr_cdcritic,0) > 0 or vr_dscritic is not null  THEN
+      RAISE vr_exc_erro;
+    END IF;  
+    ----------------
     
     --> Somente vamos verificar a cessao de credito, caso possui a finalidade
     IF pr_cdfinemp > 0 THEN

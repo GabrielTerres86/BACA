@@ -26,10 +26,10 @@
  * 011: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  * 012: [28/03/2018] Andre Avila (GFT):  Alteração da opção retorno dos botões.
  * 013: [03/05/2018] Andre Avila (GFT):  Alteração da opção retorno do botão cancelar.
+ * 015: [29/05/2019] Luiz Otávio OM (AMCOM) : Adicionado Etapa Rating para Cooperatova Ailos (3)
  * 014: [04/06/2019] Mateus Z  (Mouts) : Alteração para chamar tela de autorização quando alterar valor. PRJ 470 - SM2
  */
-
-
+define('cooperativaCetralAilosEtapaRating', 3);
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
 
@@ -205,8 +205,9 @@
 	
 	// Variável que indica se é uma operação para cadastrar nova proposta - Utiliza na include rating_busca_dados.php
 	$cdOperacao = $cddopcao;
-	
-	include("../../../../includes/rating/rating_busca_dados.php"); 
+	if ($glbvars["cdcooper"] == cooperativaCetralAilosEtapaRating) {
+		include("../../../../includes/rating/rating_busca_dados.php"); 
+	} 
 ?>
 
 <script type="text/javascript">
@@ -349,37 +350,30 @@
 	$('#btnContinuarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
 		if (operacao == 'A') {
 			$('#divBotoesRenda').css('display','none');
-			var aux_vllimite = normalizaNumero($("#vllimite","#frmDadosLimiteDscTit").val());
-			aux_vllimite_anterior = normalizaNumero(aux_vllimite_anterior);
-			if(aux_vllimite_anterior != aux_vllimite){
-				aux_fncRatingSuccess = "chamarImpressao('PROPOSTA');";
-			} else {
-				aux_fncRatingSuccess = "carregaLimitesTitulosPropostas();";
-			}
-			/*Motor em contingencia*/
-			if(flctgmot){
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",aux_fncRatingSuccess);
-			}else{
-				fncRatingSuccess = aux_fncRatingSuccess;
+				fncRatingSuccess = 'carregaLimitesTitulosPropostas()';
 				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDscTit_Renda;divBotoesRenda');
-			}
 		} else if (operacao == 'C') {
 			$('#divBotoesRenda').css('display','none');
+			<? if ($glbvars["cdcooper"] == cooperativaCetralAilosEtapaRating) { ?>
+			//bruno - prj 470 - tela autorizacao
 			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulos()");
+			<? } else { ?>
+			dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDscTit_Renda;divBotoesRenda');
+			<? } ?>
 		} else {
 			$('#divBotoesRenda').css('display','none');
+			<? if ($glbvars["cdcooper"] == cooperativaCetralAilosEtapaRating) { ?>
 			//bruno - prj 470 - tela autorizacao
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","chamarImpressao('PROPOSTA');");
+			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite(\'PROPOSTA\')");
+			<? } else { ?>
+			dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDscTit_Renda;divBotoesRenda');
+			<? } ?>
 		}
 		return false;
 	});
 	
 	$('#btnVoltarObservacao','#divBotoesObs').unbind('click').bind('click',function() {
-		if(operacao == 'A' && flctgmot){
 		dscShowHideDiv('divDadosRating','divDscTit_Observacao;divBotoesObs');
-		}else{
-			dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDscTit_Observacao;divBotoesObs');
-		}
 		return false;
 	});
 	

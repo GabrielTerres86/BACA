@@ -29,7 +29,10 @@
  * 014: [13/04/2018] Leonardo Oliveira (GFT): Campo 'nrctrlim' escondido quando for uma inclusão, cddopcao = 'I'.
  * 015: [16/04/2018] Lombardi     (CECRED) : Incluida chamada da function validaValorProduto. PRJ366
  * 016: [13/04/2018] Leonardo Oliveira (GFT): Campo 'nrctrlim' escondido quando for uma inclusão, cddopcao = 'I'.
+ * 017: [29/05/2019] Luiz Otávio OM (AMCOM) : Adicionado Etapa Rating para Cooperativa Ailos (3)
+
  */
+define('cooperativaCetralAilosEtapaRating', 3);
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
 
@@ -206,7 +209,9 @@
 	// Variável que indica se é uma operação para cadastrar nova proposta - Utiliza na include rating_busca_dados.php
 	$cdOperacao = $cddopcao;
 	
-	include("../../../../includes/rating/rating_busca_dados.php"); 
+	if ($glbvars["cdcooper"] == cooperativaCetralAilosEtapaRating) {
+		include("../../../../includes/rating/rating_busca_dados.php"); 
+	}
 ?>
 
 <script type="text/javascript">
@@ -346,61 +351,34 @@
 	
 	$('#btnContinuarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
 		if (operacao == 'A') {
-			/*Motor em contingencia*/
-
-			//bruno - prj 470 - tela autorizacao
-			if(flctgmot){
-			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',
-			"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
-			"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
-			"fecharRotinaGenerico('<? echo $tipo ?>');");
-			}
-			else{
-				informarRating('divDscTit_Renda',
-				"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
-				"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
-				"chamarImpressao('<? echo $tipo ?>');");
-
-				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda;divDscTit_Renda');
-			}
+				<? if ($glbvars["cdcooper"] == cooperativaCetralAilosEtapaRating) { ?>
+				informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
+				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDscTit_Renda;divBotoesRenda;divDscTit_Renda');
+				<? } else { ?>
+				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDscTit_Renda;divBotoesRenda');
+				<? } ?>
 		} else if (operacao == 'C') {
+			<? if ($glbvars["cdcooper"] == cooperativaCetralAilosEtapaRating) { ?>
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',
-			"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
-			"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
-			"fecharRotinaGenerico('<? echo $tipo ?>'); console.log('Entrei 2');");
+			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
+			<? } else { ?>
+			$('#divBotoesRenda').css('display','none');
+			dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDscTit_Renda;divBotoesRenda');
+			<? } ?>
 		} else {
-			/*Motor em contingencia*/
-			//bruno - prj 470 - tela autorizacao
-			if(flctgmot){
-			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',
-			"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
-			"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
-			"chamarImpressao('<? echo $tipo ?>'); console.log('Entrei 3');");
-		}
-			else{
-				//bruno - prj 470 - tela autorizacao
-				informarRating('divDscTit_Renda',
-				"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
-				"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
-				"chamarImpressao('<? echo $tipo ?>'); console.log('Entrei 4');");
-
+				<? if ($glbvars["cdcooper"] == cooperativaCetralAilosEtapaRating) { ?>
+				informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
 				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda;divDscTit_Renda');
-			}
+				<? } else { ?>
+				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDscTit_Renda;divBotoesRenda');
+				<? } ?>
 		}
 		return false;
 	});
 	
 	$('#btnVoltarObservacao','#divBotoesObs').unbind('click').bind('click',function() {
-		if(flctgmot){
-		dscShowHideDiv('divDadosRating','divDscTit_Observacao;divBotoesObs');
-		}
-		else{
 			$('#divBotoesRenda').css('display','block');
 			dscShowHideDiv('divDscTit_Renda','divDscTit_Observacao;divBotoesObs');
-		}
 		return false;
 	});
 	
