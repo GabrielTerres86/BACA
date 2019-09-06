@@ -5,7 +5,7 @@
 
  Objetivo  : Rotinas responsaveis pela tela CADGRP
 
- Alterações:
+ Alterações: 05/07/2019 - Alterações referente à segunda fase do projeto P484.2 (Gabriel Marcos - Mouts).
 
 ************************************************************************/
 
@@ -192,7 +192,6 @@ function apresentaFormFiltro() {
 
 }
 
-
 function consultaPeriodoEditalAssembleias(nriniseq,nrregist) {
 
 	var cddopcao = $('#cddopcao','#frmCabCadgrp').val(); 
@@ -238,7 +237,6 @@ function consultaPeriodoEditalAssembleias(nriniseq,nrregist) {
 	return false;
 
 }
-
 
 function consultaDetalhadaGrupos(nriniseq,nrregist) {
 
@@ -362,20 +360,17 @@ function consultaParametrosFracoesGrupo(){
             hideMsgAguardo();
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                 try {
-
                     $('#divCadgrp').html(response);
 
                     return false;
                 } catch (error) {
-
                     showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "estadoInicial();");
                 }
             } else {
                 try {
-
                     eval(response);
-                } catch (error) {
 
+                } catch (error) {
                     showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "estadoInicial();");
                 }
             }
@@ -394,13 +389,35 @@ function formataFormOpcaoP(){
     //Label dos campos
     $('label[for="frmideal"]', "#frmOpcaoP").addClass("rotulo").css({ "width": "180px" });
     $('label[for="frmmaxim"]', "#frmOpcaoP").addClass("rotulo").css({ "width": "180px" });
-	$('label[for="intermin"]', "#frmOpcaoP").addClass("rotulo").css({ "width": "180px" });
-
+    $('label[for="intermin"]', "#frmOpcaoP").addClass("rotulo").css({ "width": "180px" });
+		
+    $('label[for="antecedencia_envnot"]', "#frmOpcaoP").addClass("rotulo").css({ "width": "180px" });
+    $('label[for="hrenvio_mensagem"]', "#frmOpcaoP").addClass("rotulo").css({ "width": "180px" });
+    $('label[for="dstitulo_banner"]', "#frmOpcaoP").addClass("rotulo").css({ "width": "180px" });
+    $('label[for="dtexibir_de"]', "#frmOpcaoP").addClass("rotulo").css({ "width": "180px" });
+		
+    $('label[for="flgemail"]', "#frmOpcaoP").addClass("rotulo").css({ "width": "180px" });
+    $('label[for="dstitulo_email"]', "#frmOpcaoP").addClass("rotulo").css({ "width": "180px" });
+    $('label[for="conteudo_email"]', "#frmOpcaoP").addClass("rotulo").css({ "width": "180px" });
+    $('label[for="lstemail"]', "#frmOpcaoP").addClass("rotulo").css({ "width": "180px" });
 
     //Campos 
     $('#frmideal', '#frmOpcaoP').css({ 'width': '235px'}).desabilitaCampo().addClass('inteiro').attr('maxlength', '10');   
     $('#frmmaxim', '#frmOpcaoP').css({ 'width': '235px'}).desabilitaCampo().addClass('inteiro').attr('maxlength', '10');  
-	$('#intermin', '#frmOpcaoP').css({ 'width': '235px'}).desabilitaCampo().addClass('inteiro').attr('maxlength', '10');  
+    $('#intermin', '#frmOpcaoP').css({ 'width': '235px'}).desabilitaCampo().addClass('inteiro').attr('maxlength', '10');
+		
+    $('#antecedencia_envnot', '#frmOpcaoP').css({ 'width': '235px' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '10');  
+    $('#hrenvio_mensagem', '#frmOpcaoP').css({ 'width': '235px' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '10');  
+    $('#dstitulo_banner', '#frmOpcaoP').css({ 'width': '235px', 'text-align':'right' }).desabilitaCampo().attr('maxlength', '50');  
+    $('#dstitulo_banner', '#frmOpcaoP').val(removeAcentos(removeCaracteresInvalidos($('#dstitulo_banner', '#frmOpcaoP').val())));  
+    $('#dtexibir_de', '#frmOpcaoP').css({ 'width': '235px', 'text-align': 'right' }).desabilitaCampo().addClass('data').attr('maxlength', '10');  
+		
+    $('#flgemail', '#frmOpcaoP').css({ 'width': '235px' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '10');  
+    $('#dstitulo_email', '#frmOpcaoP').css({ 'width': '235px', 'text-align':'right' }).desabilitaCampo().attr('maxlength', '50');  
+    $('#dstitulo_email', '#frmOpcaoP').val(removeAcentos(removeCaracteresInvalidos($('#dstitulo_email', '#frmOpcaoP').val())));  
+    $('#conteudo_email', '#frmOpcaoP').css({ 'width': '235px', 'height':'60px', 'text-align':'right', 'margin':3 }).desabilitaCampo().attr('maxlength', '50');  		
+    $('#lstemail', '#frmOpcaoP').css({ 'width': '235px', 'height':'60px', 'text-align':'right', 'margin':3 }).attr('maxlength', '100').desabilitaCampo(); 
+    $('#lstemail', '#frmOpcaoP').val(removeAcentos(removeCaracteresInvalidos($('#lstemail', '#frmOpcaoP').val()))); 
 
     $('#btConcluir','#divBotoesOpcaoP').css('display', 'none');
     $('#btAlterar','#divBotoesOpcaoP').css('display', 'inline');
@@ -483,9 +500,10 @@ function formataFormBuscaGrupo(){
     //Campos 
     $('#cdagenci', '#frmDetalhadaGrupo').css({ 'width': '60px'}).desabilitaCampo().addClass('inteiro').attr('maxlength', '2');   
     $('#nrdgrupo', '#frmDetalhadaGrupo').css({ 'width': '60px'}).desabilitaCampo().addClass('inteiro').attr('maxlength', '2');   
+    $('#flgvinculo', '#frmDetalhadaGrupo').desabilitaCampo();
     $('#dsfuncao', '#frmDetalhadaGrupo').css({ 'width': '350px'}).desabilitaCampo().attr('maxlength', '100');   
-    $('#nrdconta', '#frmDetalhadaGrupo').css({ 'width': '160px', 'text-align': 'right' }).addClass('conta').attr('maxlength', '10').desabilitaCampo();  
-    $('#nrcpfcgc', '#frmDetalhadaGrupo').css('width','160px').addClass('inteiro').attr('maxlength','18').desabilitaCampo();   
+    $('#nrdconta', '#frmDetalhadaGrupo').css({ 'width': '160px', 'text-align': 'left' }).attr('maxlength', '10').desabilitaCampo();  
+    $('#nrcpfcgc', '#frmDetalhadaGrupo').css({ 'width': '160px', 'text-align': 'left' }).attr('maxlength','18').desabilitaCampo();   
     $('#nmprimtl', '#frmDetalhadaGrupo').css({ 'width': '350px'}).desabilitaCampo().attr('maxlength', '100');   
 
     $('#btConcluir','#divBotoesBuscaGrupo').css('display', 'none');
@@ -530,9 +548,8 @@ function formataFormBuscaGrupo(){
                 // PA
                 if (campoAnterior == 'nrdgrupo') {
                     var filtrosPesq = 'Código;nrdgrupo;100px;S;0|Agência;cdagenci;30px;N;' + $('#cdagenci','#frmDetalhadaGrupo').val() + ';S;codigo;';
-					var colunas = 'Código;nrdgrupo;20%;center';
+					var colunas = 'Código;nrdgrupo;20%;center|Data Prevista;dtinieve;20%;center;';
 					mostraPesquisa("TELA_CADGRP", "BUSCA_GRP_DISP", "Grupo Dispon&iacute;vel", "30", filtrosPesq, colunas, '','$(\'#nrdgrupo\',\'#frmDetalhadaGrupo\').focus();','frmDetalhadaGrupo');
-
                     return false;
 
                 } 
@@ -549,8 +566,9 @@ function formataFormBuscaGrupo(){
 function controlaBotao(){
 
 	$('#nrdgrupo', '#frmDetalhadaGrupo').habilitaCampo().focus();
+	$('#flgvinculo', '#frmDetalhadaGrupo').habilitaCampo();
 	$('#btAlterar','#divBotoesBuscaGrupo').css('display', 'none');
-   	$('#btConcluir','#divBotoesBuscaGrupo').css('display', 'inline');
+	$('#btConcluir','#divBotoesBuscaGrupo').css('display', 'inline');
 	return false;
 
 }
@@ -636,8 +654,8 @@ function formataFiltroBuscaGrupo(){
 
 
     //Campos 
-    $("#nrdconta", "#frmFiltroBuscaGrupo").css({ 'width': '185px', 'text-align': 'right' }).addClass('conta').attr('maxlength', '10').habilitaCampo();
-	$('#nrcpfcgc', '#frmFiltroBuscaGrupo').css('width','185px').addClass('inteiro').attr('maxlength','18').habilitaCampo();
+    $("#nrdconta", "#frmFiltroBuscaGrupo").css({ 'width': '185px', 'text-align': 'left' }).addClass('conta').attr('maxlength', '10').habilitaCampo();
+    $('#nrcpfcgc', '#frmFiltroBuscaGrupo').css({ 'width': '185px', 'text-align': 'left' }).addClass('inteiro').attr('maxlength','18').habilitaCampo();
 
     $('#divFiltro').css('display', 'block');
     $('#divBotoesFiltroBuscaGrupo').css('display', 'block');
@@ -747,7 +765,7 @@ function controlaPesquisas() {
 					//filtros = 'Codigo;cdsegura;80px;S;' + cdsegura + ';S|Descricao;nmresseg;280px;S;;S';
 					filtrosPesq = 'Código;nrdgrupo;100px;S;0|Agência;cdagenci;30px;N;' + $('#cdagenci','#' + nmformul).val() + ';S;codigo;';
 					//filtrosPesq = "Código;nrdgrupo;100px;S;0";
-					colunas = 'Código;nrdgrupo;20%;center';
+					var colunas = 'Código;nrdgrupo;20%;center|Data Prevista;dtinieve;20%;center;';
 					mostraPesquisa("TELA_CADGRP", "BUSCA_GRP_DISP", "Grupo Dispon&iacute;vel", "30", filtrosPesq, colunas, '','$(\'#nrdgrupo\',\'#' + nmformul +'\').focus();',nmformul);
 
 					return false;
@@ -850,8 +868,18 @@ function controlaFormOpcaoP(){
 
 	$('#frmideal', '#frmOpcaoP').habilitaCampo().focus();
 	$('#frmmaxim', '#frmOpcaoP').habilitaCampo();
+	
+	$('#antecedencia_envnot', '#frmOpcaoP').habilitaCampo();
+	$('#hrenvio_mensagem', '#frmOpcaoP').habilitaCampo();
+	$('#dstitulo_banner', '#frmOpcaoP').habilitaCampo();
+	$('#dtexibir_de', '#frmOpcaoP').habilitaCampo();
+	
+	$('#flgemail', '#frmOpcaoP').habilitaCampo();
+	$('#dstitulo_email', '#frmOpcaoP').habilitaCampo();
+	$('#lstemail', '#frmOpcaoP').habilitaCampo();
+	
 	$('#btConcluir','#divBotoesOpcaoP').css('display', 'inline');
-    $('#btAlterar','#divBotoesOpcaoP').css('display', 'none');
+	$('#btAlterar','#divBotoesOpcaoP').css('display', 'none');
 
 	return false;
 
@@ -925,6 +953,31 @@ function alterarParametrosFracoesGrupo() {
     var frmideal = $('#frmideal', '#frmOpcaoP').val();
     var frmmaxim = $('#frmmaxim', '#frmOpcaoP').val();
 
+    var antecedencia_envnot = $('#antecedencia_envnot', '#frmOpcaoP').val();
+    var hrenvio_mensagem = $('#hrenvio_mensagem', '#frmOpcaoP').val();
+    var dstitulo_banner = $('#dstitulo_banner', '#frmOpcaoP').val();
+    var dtexibir_de = $('#dtexibir_de', '#frmOpcaoP').val();
+		
+    //var flgemail = $('#flgemail', '#frmOpcaoP').val();
+    var dstitulo_email = $('#dstitulo_email', '#frmOpcaoP').val();
+    var lstemail = $('#lstemail', '#frmOpcaoP').val();
+    var flgemail = 0;
+
+    if ($('input[name="flgemail"]:checked', '#frmOpcaoP').val() == "on"){
+        flgemail = 1;
+    }
+		
+    /******************* Validar array de email da tela *******************/
+    var arrayEmail = ($('#lstemail', '#frmOpcaoP').val()).split(',');
+
+    for (var i = 0; i < arrayEmail.length; i++) {
+        if (!validaEmail(arrayEmail[i])) {
+            showError("error","O e-mail " + arrayEmail[i] + " n&atilde;o &eacute; v&aacute;lido.","Alerta - Aimaro","");	
+            return false;
+        }
+    }
+    /************** Fim validacao de array de email da tela **************/
+
     $('input', '#frmOpcaoP').removeClass('campoErro').desabilitaCampo();
 
     // Mostra mensagem de aguardo
@@ -937,7 +990,14 @@ function alterarParametrosFracoesGrupo() {
         data: {
             cddopcao: cddopcao,
             frmideal: frmideal,
-			frmmaxim: frmmaxim,
+            frmmaxim: frmmaxim,
+            antecedencia_envnot: antecedencia_envnot,
+            hrenvio_mensagem: hrenvio_mensagem,
+            dstitulo_banner: dstitulo_banner,
+            dtexibir_de: dtexibir_de,
+            flgemail: flgemail,						
+            dstitulo_email: dstitulo_email,						
+            lstemail: lstemail,						
             redirect: "html_ajax" // Tipo de retorno do ajax
         },
         error: function (objAjax, responseError, objExcept) {            
@@ -963,7 +1023,12 @@ function alterarGrupoCooperado() {
 
     var cddopcao = $('#cddopcao', '#frmCabCadgrp').val();
     var nrdgrupo = $('#nrdgrupo', '#frmDetalhadaGrupo').val();
+    var flgvinculo = 0;
     var rowid = $('#rowid', '#frmDetalhadaGrupo').val();
+
+    if ($('input[name="flgvinculo"]:checked', '#frmDetalhadaGrupo').val() == "on"){
+      flgvinculo = 1;
+    }
 
     $('input', '#frmDetalhadaGrupo').removeClass('campoErro').desabilitaCampo();
 
@@ -977,6 +1042,7 @@ function alterarGrupoCooperado() {
         data: {
             cddopcao: cddopcao,
             nrdgrupo: nrdgrupo,
+            flgvinculo: flgvinculo,
 			rowid: rowid,
             redirect: "html_ajax" // Tipo de retorno do ajax
         },
@@ -985,7 +1051,7 @@ function alterarGrupoCooperado() {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {            
-			hideMsgAguardo();
+            hideMsgAguardo();
             try {
                 eval(response);
             } catch (error) {
@@ -1697,6 +1763,10 @@ function formataTabelaListaAgencias(){
 
 	});
 
+}
+
+function confirmaValidaDistribui(){
+	showConfirmacao('Deseja confirmar opera&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Aimaro', 'validaDistribuiContaGrupo();', '', 'sim.gif', 'nao.gif');
 }
 
 function validaDistribuiContaGrupo(){

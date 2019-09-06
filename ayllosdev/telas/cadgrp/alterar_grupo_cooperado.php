@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Setembro/2018 
  * OBJETIVO     : Rotina para alterar o grupo do cooperado
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 05/07/2019 - Vincular cooperado a grupo - P484.2 (Gabriel Marcos - Mouts).
  */
 ?> 
 
@@ -28,6 +28,7 @@
 	}
 
 	$nrdgrupo = (isset($_POST["nrdgrupo"])) ? $_POST["nrdgrupo"] : 0;
+	$flgvinculo = (isset($_POST["flgvinculo"])) ? $_POST["flgvinculo"] : 0;
 	$rowid    = (isset($_POST["rowid"])) ? $_POST["rowid"] : 0;
 	
 	
@@ -36,10 +37,11 @@
 	$xml 	   .= "<Root>";
 	$xml 	   .= " <Dados>";
 	$xml 	   .= "     <nrdgrupo>".$nrdgrupo."</nrdgrupo>";		
+	$xml 	   .= "     <flgvinculo>".$flgvinculo."</flgvinculo>";	
 	$xml 	   .= "     <rowid>".$rowid."</rowid>";	
 	$xml 	   .= " </Dados>";
 	$xml 	   .= "</Root>";
-	
+
 	// Executa script para envio do XML	
 	$xmlResult = mensageria($xml, "TELA_CADGRP", "ALTERAR_GRUPO_COOP", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjParametros = getObjectXML($xmlResult);
@@ -53,5 +55,5 @@
 					
 	}
 	
-	exibirErro('inform','Atualiza&ccedil;&atilde;o efetuada com sucesso.','Alerta - Ayllos','controlaVoltar(\'6\');', false);
+	exibirErro('inform','Atualiza&ccedil;&atilde;o efetuada com sucesso.','Alerta - Ayllos','buscaGrupoCooperado();', false);
  ?>

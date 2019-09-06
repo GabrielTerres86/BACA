@@ -14,7 +14,10 @@
 				 
 				 01/12/2015 - Correção de bug de layout na tag <UL><LI> no IE (Dionathan)
 				 
-			     30/07/2016 - Adicionado classe (SetWindow) - necessaria para navegação com teclado - (Evandro - RKAM)							  
+			     30/07/2016 - Adicionado classe (SetWindow) - necessaria para navegação com teclado - (Evandro - RKAM)	
+
+			     05/07/2019 - Destacar evento do cooperado - P484.2 - Gabriel Marcos (Mouts).
+
 	************************************************************************/
 	
 	session_start();
@@ -115,7 +118,7 @@
                             <li>
                               <input type="image" src="<?php echo $UrlImagens; ?>botoes/confirmada.gif" onClick="mostraEventosEmAndamento('C');return false;"  >
                             </li>
-                            <li >
+                            <li>
                               <input name="qtconfir" type="text" id="qtconfir" />
                               <br />
                               <br />
@@ -127,6 +130,11 @@
                             <li>
                               <input name="dtinique" type="text" id="dtinique" />
                               <input name="dtfimque" type="text" id="dtfimque" />
+                            </li>
+
+                            <li>
+                              <br>
+                              <input type="image" src="<?php echo $UrlImagens; ?>botoes/cargos.gif" name="btnCargos" id="btnCargos" value="Cargos" onClick="mostraCargos();return false;">
                             </li>
                           </ul>
                         </form>

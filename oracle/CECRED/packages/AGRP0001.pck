@@ -1,5 +1,17 @@
 CREATE OR REPLACE PACKAGE CECRED.AGRP0001 IS
 
+  -- Tabela de memoria que recebe dados para insert
+  type typ_dados_insert is record (cdcooper crapass.cdcooper%type
+                                  ,cdagenci crapass.cdagenci%type
+                                  ,nrdconta crapass.nrdconta%type
+                                  ,nrcpfcgc crapass.nrcpfcgc%type
+                                  ,idpessoa tbcadast_pessoa.idpessoa%type
+                                  ,nrdgrupo number
+                                  ,tpvincul crapass.tpvincul%type
+                                  ,cdbanner tbevento_grupos.cdbanner_parban%type);                       
+  type typ_table_insert is table of typ_dados_insert index by BINARY_INTEGER;
+  vr_table_insert typ_table_insert; 
+
   function md5 (valor varchar) return varchar2;
 
   procedure pc_distribui_conta_grupo_auto (pr_cdcooper  in crapass.cdcooper%type
@@ -10,6 +22,7 @@ CREATE OR REPLACE PACKAGE CECRED.AGRP0001 IS
                                      ,pr_cdagenci  in crapass.cdagenci%type
                                      ,pr_cdoperad  in crapope.cdoperad%type
                                      ,pr_qtdgrupo  in number
+                                     ,pr_idparale  in number
                                      ,pr_cdcritic out pls_integer
                                      ,pr_dscritic out varchar2);
                                 
@@ -51,7 +64,13 @@ CREATE OR REPLACE PACKAGE CECRED.AGRP0001 IS
                              ,pr_nrdconta   in tbcadast_pessoa.idpessoa%type
                              ,pr_nrcrcard   in crapcrd.nrcrcard%type
                              ,pr_dscritic  out varchar2);
-  
+
+  procedure pc_atualiza_matric_j (pr_cdcooper in  crapass.cdcooper%type
+                                 ,pr_nrdconta in  crapass.nrdconta%type
+                                 ,pr_nrcpfcgc in  crapass.nrcpfcgc%type     
+                                 ,pr_cdcritic out crapcri.cdcritic%type
+                                 ,pr_dscritic out varchar2);       
+
 END AGRP0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
@@ -71,65 +90,91 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
   --
   ---------------------------------------------------------------------------
 
-    vr_exc_erro  exception;
-    vr_exc_saida exception; 
-    vr_cdcritic  pls_integer;
-    vr_dscritic  varchar2(10000); 
+  vr_exc_erro  exception;
+  vr_exc_saida exception; 
+  vr_cdcritic  pls_integer;
+  vr_dscritic  varchar2(10000); 
+  vr_des_erro  varchar2(10);
+  vr_idparale  integer;
+  vr_dsplsql   varchar2(1000);
+  vr_jobname   varchar2(1000);
+  
+  vr_nmdgrupo   varchar2(8);
+  rw_dsvlrprm   varchar2(100);     
+  vr_frmaxima   number := 0;                                         
+  vr_fraideal   number := 0;      
+  vr_intermin   number := 0;
+  vr_tpsituacao number := 0;
+  vr_nrdrowid   rowid;
+  vr_conteudo_email tbevento_param.conteudo_email%type;
+  vr_dstitulo_email tbevento_param.dstitulo_email%type;
+  vr_flgemail       tbevento_param.flgemail%type;
+  vr_lstemail       tbevento_param.lstemail%type;
+  vr_qtdmembros     tbevento_grupos.qtd_membros%type := 0;
 
-    rw_dsvlrprm  varchar2(100);     
-    vr_frmaxima  number:=0;                                         
-    vr_fraideal  number:=0;      
-    vr_intermin  number:=0;
 
-    -- Busca dados do conjuge
-    cursor cr_crapcje (pr_cdcooper in crapass.cdcooper%type
-                      ,pr_cdagenci in crapass.cdagenci%type
-                      ,pr_nrcpfcgc in crapass.nrcpfcgc%type) is
-    select ass.cdcooper
-         , ass.cdagenci
-         , ass.nrcpfcgc
-         , ass.nrdconta
-         , ass.inpessoa
-         , ass.dtadmiss
-         , pes.idpessoa
-         , ass.tpvincul
-      from crapass ass
-         , crapcop cop
-         , tbcadast_pessoa pes
-         , tbcadast_pessoa c
-         , tbcadast_pessoa_relacao d
-         , tbcadast_pessoa e
-         , tbcadast_dominio_campo f
-     where c.nrcpfcgc    = pr_nrcpfcgc
-       and d.idpessoa    = c.idpessoa
-       and e.idpessoa    = d.idpessoa_relacao
-       and f.cddominio   = d.tprelacao
-       and f.nmdominio   = 'TPRELACAO'
-       and f.cddominio   = 1
-       and cop.flgativo  = 1
-       and cop.cdcooper  = pr_cdcooper
-       and cop.nrdocnpj <> ass.nrcpfcgc
-       and ass.cdcooper  = cop.cdcooper
-       and ass.cdagenci  = pr_cdagenci
-       and ass.nrcpfcgc  = e.nrcpfcgc
-       and ass.dtdemiss is null
-       and pes.nrcpfcgc  = ass.nrcpfcgc
-     order
-        by ass.dtadmiss
-         , ass.nrdconta;
-    rw_crapcje cr_crapcje%rowtype;
+  -- Busca dados do conjuge
+  cursor cr_crapcje (pr_cdcooper in crapass.cdcooper%type
+                    ,pr_cdagenci in crapass.cdagenci%type
+                    ,pr_nrcpfcgc in crapass.nrcpfcgc%type) is
+  select ass.cdcooper
+       , ass.cdagenci
+       , ass.nrcpfcgc
+       , ass.nrdconta
+       , ass.inpessoa
+       , ass.dtadmiss
+       , pes.idpessoa
+       , ass.tpvincul
+    from crapass ass
+       , crapcop cop
+       , tbcadast_pessoa pes
+       , tbcadast_pessoa c
+       , tbcadast_pessoa_relacao d
+       , tbcadast_pessoa e
+       , tbcadast_dominio_campo f
+       , (select cdcooper
+               , nrcpfcgc
+               , cdfuncao tpvincul
+            from tbcadast_vig_funcao_pessoa
+           where cdfuncao in ('CL','CS','CM')
+             and dtfim_vigencia is null) xxx
+   where c.nrcpfcgc    = pr_nrcpfcgc
+     and d.idpessoa    = c.idpessoa
+     and e.idpessoa    = d.idpessoa_relacao
+     and f.cddominio   = d.tprelacao
+     and f.nmdominio   = 'TPRELACAO'
+     and f.cddominio   = 1
+     and cop.flgativo  = 1
+     and cop.cdcooper  = pr_cdcooper
+     and cop.nrdocnpj <> ass.nrcpfcgc
+     and ass.cdcooper  = cop.cdcooper
+     and ass.cdagenci  = pr_cdagenci
+     and ass.nrcpfcgc  = e.nrcpfcgc
+     and ass.dtdemiss is null
+     and pes.nrcpfcgc  = ass.nrcpfcgc
+     and xxx.cdcooper (+) = ass.cdcooper
+     and xxx.nrcpfcgc (+) = ass.nrcpfcgc
+     and not exists (select 1
+                       from tbevento_pessoa_grupos
+                      where cdcooper = ass.cdcooper
+                        and nrcpfcgc = ass.nrcpfcgc)
+     and not exists (select 1
+                       from crapass a
+                      where a.cdcooper  = ass.cdcooper
+                        and a.nrcpfcgc  = ass.nrcpfcgc
+                        and a.nrdconta <> ass.nrdconta
+                        and a.dtdemiss  is null
+                        and ((a.dtadmiss < ass.dtadmiss) or
+                             (a.dtadmiss = ass.dtadmiss and
+                              a.nrdconta < ass.nrdconta)))
+   order
+      by ass.dtadmiss
+       , ass.nrdconta;
+  rw_crapcje cr_crapcje%rowtype;
 
-    -- Array para guardar o split dos dados contidos na dsvlrprm       
-    vr_parametro  gene0002.typ_split; 
+  -- Array para guardar o split dos dados contidos na dsvlrprm       
+  vr_parametro  gene0002.typ_split; 
     
-    -- Busca parametros cadastrados
-    cursor cr_dsvlrprm (pr_cdcooper crapprm.cdcooper%type) is
-    select prm.dsvlrprm
-      from crapprm prm
-     where prm.nmsistem = 'CRED'
-       and prm.cdcooper = pr_cdcooper
-       and prm.cdacesso = 'TELA_CADGRP_OPCAO_P'; 
- 
   -- Funcao para criptografar dados
   function md5 (valor varchar) return varchar2 is
     v_input varchar2(2000) := valor;
@@ -137,6 +182,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
   begin
     hexkey := rawtohex(dbms_obfuscation_toolkit.md5(input => UTL_RAW.cast_to_raw(v_input)));
     return nvl(hexkey,'');
+  end;
+  
+  -- Funcao para criptografar dados
+  function fn_evento_a_ocorrer (pr_cdcooper in tbevento_grupos.cdcooper%type
+                               ,pr_cdagenci in tbevento_grupos.cdcooper%type) return number is
+    -- Busca evento que ainda nao ocorreu e com menor qtd membros
+    cursor cr_evento_a_ocorrer (pr_cdcooper in tbevento_grupos.cdcooper%type
+                               ,pr_cdagenci in tbevento_grupos.cdcooper%type) is
+    select adp.nrdgrupo
+      from crapldp ldp
+         , crapadp adp
+         , tbevento_exercicio exe
+         , crapdat dat
+         , tbevento_grupos grp
+     where ldp.cdcooper = pr_cdcooper
+       and ldp.cdagenci = pr_cdagenci
+       and ldp.cdcooper = adp.cdcooper
+       and ldp.nrseqdig = adp.cdlocali
+       and adp.idevento = 2
+       and ldp.idevento = 1
+       and adp.nrdgrupo > 0
+       and dat.cdcooper = ldp.cdcooper
+       and adp.dtinieve > dat.dtmvtolt
+       and exe.cdcooper = ldp.cdcooper
+       and exe.flgativo = 1
+       and adp.dtanoage = to_char(exe.nrano_exercicio,'yyyy')
+       and grp.cdcooper = ldp.cdcooper
+       and grp.cdagenci = ldp.cdagenci
+       and grp.nrdgrupo = adp.nrdgrupo
+     order
+        by grp.qtd_membros;
+    rw_evento_a_ocorrer cr_evento_a_ocorrer%rowtype;
+  
+  begin
+    -- Busca evento que ainda nao ocorreu
+    open cr_evento_a_ocorrer (pr_cdcooper, pr_cdagenci);
+    fetch cr_evento_a_ocorrer into rw_evento_a_ocorrer;
+    close cr_evento_a_ocorrer;
+          
+    if rw_evento_a_ocorrer.nrdgrupo is not null then
+      return rw_evento_a_ocorrer.nrdgrupo;
+    else
+      return null;
+    end if;
+  exception
+    when others then
+      if cr_evento_a_ocorrer%isopen then
+        close cr_evento_a_ocorrer;
+      end if;
+      return null;
+  end;
+  
+  -- Funcao para aplicar mascara
+  function fn_mascara_nmdgrupo (pr_cdagenci in tbevento_grupos.cdagenci%type
+                               ,pr_nrdgrupo in tbevento_grupos.nrdgrupo%type) return varchar2 is
+ 
+  begin
+    return to_char(trim('PA'||trim(to_char(pr_cdagenci,'000'))||'-'||trim(to_char(pr_nrdgrupo,'00'))));
+  exception
+    when others then
+      return to_char('PA000-00');
   end;
 
   procedure pc_distribui_conta_grupo_auto (pr_cdcooper  in crapass.cdcooper%type
@@ -156,8 +262,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
   --             dos grupos devido ao estouro da quantidade maxima de 
   --             cooperados por grupo
   --
-  -- Alteracoes:
-  --
+  -- Alteracoes: 13/08/2019 - Melhoria em logs e execucao em paralelo.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).
   --------------------------------------------------------------------------  
     
     -- Busca agencias para verificacao
@@ -236,7 +342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     vr_qtdgrupo number := 0;
     vr_idprglog number := 0;
     vr_contador number := 0;
-    vr_cdprogra varchar2(100) := 'DST_AUTO_GRUPOS';
+    vr_cdprogra varchar2(100) := 'AGRP0001.JBAGRP_AUTO_GRUPOS';
     vr_cdcooper crapass.cdcooper%type := 0;
 
   begin
@@ -249,6 +355,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                    ,pr_cdcooper   => 0
                    ,pr_tpexecucao => 0     
                    ,pr_idprglog   => vr_idprglog);
+                   
+    -- Se houver algum erro, o id vira zerado              
+    vr_idparale := gene0001.fn_gera_id_paralelo;
+    
+    -- Levantar exceção
+    if vr_idparale = 0 then
+      vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_id_paral.';
+      raise vr_exc_saida;
+    end if;
 
     -- Loop em cooperativas e agencias
     for rw_crapcop in cr_crapcop (nvl(pr_cdcooper,0)) loop
@@ -307,32 +422,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
           
           close cr_busca_travamento_grupos;
 
-          -- Verifica parametros cadastrados em base
-          open cr_dsvlrprm (rw_crapcop.cdcooper);
-
-          fetch cr_dsvlrprm into rw_dsvlrprm;
-          close cr_dsvlrprm;
-                  
-          vr_parametro := gene0002.fn_quebra_string(pr_string => rw_dsvlrprm
-                                                   ,pr_delimit => ';');
-              
-          -- Se encontrou popula variaveis                                          
-          for i in 1..vr_parametro.count() loop
-            case
-              when i = 1 then vr_frmaxima := to_number(vr_parametro(i));
-              when i = 2 then vr_fraideal := to_number(vr_parametro(i));
-              when i = 3 then vr_intermin := to_number(vr_parametro(i));
-              else null;
-            end case;
-          end loop;
+          begin
+            select c.intermin
+                 , c.frmmaxim
+                 , c.frmideal
+              into vr_intermin
+                 , vr_frmaxima
+                 , vr_fraideal
+              from tbevento_param c
+             where c.cdcooper = vr_cdcooper;
+          exception
+            when others then
+              vr_dscritic:= 'Erro ao manipular tabela de parametros: '||sqlerrm;
+              raise vr_exc_saida;  
+          end;
           
           -- Se nao encontrou fracoes deve abortar cooperativa
           if nvl(vr_frmaxima,0) = 0 or nvl(vr_fraideal,0) = 0 or nvl(vr_intermin,0) = 0 then
-
             vr_dscritic := 'AGRP0001.pc_distribui_conta_grupo_auto: '||
                            'Fracoes de grupo nao encontradas. Coop: '|| vr_cdcooper;
             raise vr_exc_saida;
-            
           end if;
   
         end if;
@@ -342,14 +451,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
         if vr_dscritic is not null then
           raise vr_exc_saida;
         end if;
+        
+        rw_verifica_agencias := null;
 
         -- Analisa se parametros estao dentro da regra
         open cr_verifica_agencias (rw_crapcop.cdcooper
                                   ,rw_crapcop.cdagenci);
         fetch cr_verifica_agencias into rw_verifica_agencias;
+        close cr_verifica_agencias;
         
         -- Analisa tabela de grupos
-        if cr_verifica_agencias%found then
+        if rw_verifica_agencias.cdcooper is not null then
             
           -- Ou estourou qtd maxima ou agencia ainda nao foi locada
           if rw_verifica_agencias.contador > vr_frmaxima or 
@@ -377,8 +489,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
             -- Se nao possui membros no PA aborta
             else
-              close cr_verifica_agencias;
               continue;
+            end if;
+      
+            -- Somente dois digitos sao permitidos
+            -- caso contrario estoura qtd caracteres da tabela
+            if vr_qtdgrupo > 99 then
+              vr_dscritic := 'Quantidade máxima de 99 grupos ultrapassada.';
+              -- Logar fim de execução sem sucesso
+              cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                                    ,pr_cdprograma    => vr_cdprogra
+                                    ,pr_cdcooper      => rw_crapcop.cdcooper
+                                    ,pr_tpexecucao    => 2   -- Job
+                                    ,pr_tpocorrencia  => 2   -- Erro nao tratado
+                                    ,pr_cdcriticidade => 1   -- Media
+                                    ,pr_cdmensagem    => 0
+                                    ,pr_dsmensagem    => 'Module: AGRP0001 Agencia: '||
+                                                         rw_crapcop.cdagenci ||' Grupos: '||
+                                                         vr_qtdgrupo||' '||vr_dscritic
+                                    ,pr_idprglog      => vr_idprglog);
+              raise vr_exc_saida;
             end if;
 
             -- Limpeza de variaveis 
@@ -388,94 +518,77 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
             -- Apenas distribui se existir a necessidade de aumentar
             -- a quantidade de grupos inicialmente distribuida
             if vr_qtdgrupo > rw_verifica_agencias.qtdregis then
-
-              -- Rotina de distribuicao de grupos
-              pc_distribui_conta_grupo (pr_cdcooper => rw_verifica_agencias.cdcooper
-                                       ,pr_cdagenci => rw_verifica_agencias.cdagenci
-                                       ,pr_cdoperad => nvl(pr_cdoperad,1)
-                                       ,pr_qtdgrupo => vr_qtdgrupo
-                                       ,pr_cdcritic => vr_cdcritic
-                                       ,pr_dscritic => vr_dscritic);
               
-              -- Se retornar com critica fazer validacoes
-              if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
-               
-                begin
-                    
-                  update tbevento_grupos
-                     set flgsituacao = 2 -- Critica
-                   where cdcooper    = rw_crapcop.cdcooper
-                     and cdagenci    = rw_crapcop.cdagenci;
-                     
-                exception
-                    
-                  when others then
-                    
-                    vr_dscritic := 'Erro na atualizacao da tabela de grupos.';
-                    raise vr_exc_saida;
-                      
-                end;   
-                  
-                vr_idprglog := 0;
-                  
-                -- Logar fim de execução sem sucesso
-                cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                                      ,pr_cdprograma    => 'AGRP0001.pc_distribui_conta_grupo_auto'
-                                      ,pr_cdcooper      => rw_crapcop.cdcooper
-                                      ,pr_tpexecucao    => 2   -- Job
-                                      ,pr_tpocorrencia  => 2   -- Erro nao tratado
-                                      ,pr_cdcriticidade => 1   -- Media
-                                      ,pr_cdmensagem    => 0
-                                      ,pr_dsmensagem    => 'Agencia: '|| rw_crapcop.cdagenci  ||
-                                                           ' Module: AGRP0001 '||
-                                                           vr_dscritic
-                                      ,pr_idprglog      => vr_idprglog);
-                
-                -- Limpeza de variaveis para proxima agencia
-                vr_cdcritic := null;
-                vr_dscritic := null;
-                  
-              else
-                  
-                begin
-                    
-                  -- Sem retorno de critica, deve atualizar
-                  -- flag de sucesso na tabela de resumo de grupos
-                  update tbevento_grupos
-                     set flgsituacao = 1 -- Sucesso
-                   where cdcooper    = rw_crapcop.cdcooper
-                     and cdagenci    = rw_crapcop.cdagenci;
-                    
-                exception
-                    
-                  when others then
-                      
-                    vr_dscritic := 'Erro na atualizacao da tabela de grupos.';
-                    raise vr_exc_saida;
+              gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
+                                        ,pr_idprogra => lpad(rw_verifica_agencias.cdagenci,3,'0')
+                                        ,pr_des_erro => vr_dscritic);
 
-                end;
-     
+              -- Testar saida com erro
+              if vr_dscritic is not null then
+                -- Levantar exceçao
+                raise vr_exc_saida;
               end if;
+             
+              -- Montar o bloco PLSQL que será executado
+              -- Ou seja, executaremos a geração dos dados
+              -- para a agência atual atraves de Job no banco
+              vr_dsplsql := 'declare'||chr(13)
+                         || '  vr_cdcritic number;'||chr(13)
+                         || '  vr_dscritic varchar2(4000);'||chr(13)
+                         || 'begin'||chr(13)
+                         || '  agrp0001.pc_distribui_conta_grupo('||rw_verifica_agencias.cdcooper
+                         ||                                    ','||rw_verifica_agencias.cdagenci
+                         ||                                    ','||nvl(pr_cdoperad,1)
+                         ||                                    ','||vr_qtdgrupo
+                         ||                                    ','||vr_idparale
+                         ||                                    ',vr_cdcritic,vr_dscritic);'||chr(13)
+                         || 'end;';
+
+              vr_jobname := 'AGRP_PAR_'||
+                            trim(to_char(rw_verifica_agencias.cdcooper,'00'))||'_'||
+                            trim(to_char(rw_verifica_agencias.cdagenci,'000'))||'$';
+                             
+              -- Faz a chamada ao programa paralelo atraves de JOB
+              gene0001.pc_submit_job(pr_cdcooper  => rw_verifica_agencias.cdcooper 
+                                    ,pr_cdprogra  => vr_cdprogra  
+                                    ,pr_dsplsql   => vr_dsplsql   
+                                    ,pr_dthrexe   => SYSTIMESTAMP 
+                                    ,pr_interva   => NULL
+                                    ,pr_jobname   => vr_jobname   
+                                    ,pr_des_erro  => vr_dscritic);
+
+              -- Levantar exceçao                                
+              if vr_dscritic is not null then
+                raise vr_exc_saida;
+              end if;
+        
+              -- Chama rotina que irá pausar este processo controlador
+              -- caso tenhamos excedido a quantidade de JOBS em execuçao
+              gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                          ,pr_qtdproce => 10
+                                          ,pr_des_erro => vr_dscritic);
               
+              -- Testar saida com erro
+              if vr_dscritic is not null then
+                -- Levantar exceçao
+                raise vr_exc_saida;
+              end if;
+
             end if;
 
           end if;
         
         end if;
 
-        close cr_verifica_agencias;
-
       exception
         
         when vr_exc_saida then
           
           -- Retorno para tela cadgrp
-		  pr_dsretorn := vr_dscritic;
+          pr_dsretorn := vr_dscritic;
 
-          vr_idprglog := 0;  
-        
           cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                                ,pr_cdprograma    => 'AGRP0001.pc_distribui_conta_grupo_auto'
+                                ,pr_cdprograma    => vr_cdprogra
                                 ,pr_cdcooper      => rw_crapcop.cdcooper
                                 ,pr_tpexecucao    => 2   -- Job
                                 ,pr_tpocorrencia  => 2   -- Erro nao tratado
@@ -483,12 +596,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                                 ,pr_cdmensagem    => 0
                                 ,pr_dsmensagem    => ' Module: AGRP0001 '||vr_dscritic
                                 ,pr_idprglog      => vr_idprglog);
+  
+          -- Encerrar o job do processamento paralelo dessa agência
+          gene0001.pc_encerra_paralelo(pr_idparale => vr_idparale
+                                      ,pr_idprogra => lpad(rw_verifica_agencias.cdagenci,3,'0')
+                                      ,pr_des_erro => vr_dscritic);
+                                      
       end;
-    
-      commit;
 
     end loop;
     
+    -- Chama rotina de aguardo agora passando 0, para esperarmos
+    -- até que todos os Jobs tenha finalizado seu processamento
+    gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                ,pr_qtdproce => 0
+                                ,pr_des_erro => vr_dscritic);
+     
+    -- Testar saida com erro
+    if vr_dscritic is not null then
+      -- Levantar exceçao
+      raise vr_exc_saida;
+    end if;
+
     -- Gera log no fim da execução
     pc_log_programa(pr_dstiplog   => 'F'         
                    ,pr_cdprograma => vr_cdprogra 
@@ -511,7 +640,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                      ,pr_cdcooper   => 0
                      ,pr_tpexecucao => 0    
                      ,pr_flgsucesso => 0 
-                     ,pr_idprglog   => vr_idprglog);   
+                     ,pr_idprglog   => vr_idprglog);  
+                     
+      pr_dsretorn := vr_dscritic;
+      
+      cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                            ,pr_cdprograma    => vr_cdprogra
+                            ,pr_cdcooper      => vr_cdcooper
+                            ,pr_tpexecucao    => 2   -- Job
+                            ,pr_tpocorrencia  => 2   -- Erro nao tratado
+                            ,pr_cdcriticidade => 3   -- Critica
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => ' Module: AGRP0001 '||vr_dscritic
+                            ,pr_idprglog      => vr_idprglog); 
 
     when others then
       
@@ -527,11 +668,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
        
       vr_cdcritic := 0;
       vr_dscritic := 'Erro não tratado AGRP0001.pc_distribui_conta_grupo_auto: '||SQLERRM;
-      vr_idprglog := 0;
       pr_dsretorn := vr_dscritic;
       
       cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                            ,pr_cdprograma    => 'AGRP0001.pc_distribui_conta_grupo_auto'
+                            ,pr_cdprograma    => vr_cdprogra
                             ,pr_cdcooper      => vr_cdcooper
                             ,pr_tpexecucao    => 2   -- Job
                             ,pr_tpocorrencia  => 2   -- Erro nao tratado
@@ -546,6 +686,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                                      ,pr_cdagenci  in crapass.cdagenci%type
                                      ,pr_cdoperad  in crapope.cdoperad%type
                                      ,pr_qtdgrupo  in number
+                                     ,pr_idparale  in number
                                      ,pr_cdcritic out pls_integer
                                      ,pr_dscritic out varchar2) is
 
@@ -560,7 +701,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
   --
   -- Objetivo  : Buscar cooperados aptos a serem distribuidos em grupos
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Melhoria em logs e execucao em paralelo.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).
   --
   --------------------------------------------------------------------------  
 
@@ -572,24 +714,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
          , ass.nrcpfcgc
          , ass.nrdconta
          , ass.inpessoa
-         , ass.tpvincul
+         , xxx.tpvincul
          , pes.idpessoa
-         , case ass.tpvincul when 'CD' then 6
-                             when 'DT' then 5
-                             when 'DS' then 4
-                             when 'CL' then 3
-                             when 'CS' then 2
-                             when 'CM' then 1
-                             else 0 end ordenado
       from crapass ass
          , tbcadast_pessoa pes
+         , (select cdcooper
+                 , nrcpfcgc
+                 , cdfuncao tpvincul
+              from tbcadast_vig_funcao_pessoa
+             where cdfuncao in ('CL','CS','CM')
+               and dtfim_vigencia is null) xxx
      where ass.cdcooper  = pr_cdcooper
        and ass.cdagenci  = pr_cdagenci
+       and ass.inpessoa  < 3
        and ass.dtdemiss is null
        and pes.nrcpfcgc  = ass.nrcpfcgc
+       and xxx.cdcooper (+) = ass.cdcooper
+       and xxx.nrcpfcgc (+) = ass.nrcpfcgc
+       and not exists (select 1
+                         from tbevento_pessoa_grupos
+                        where cdcooper = ass.cdcooper
+                          and nrcpfcgc = ass.nrcpfcgc)
+       and not exists (select 1
+                         from crapass a
+                        where a.cdcooper  = ass.cdcooper
+                          and a.nrcpfcgc  = ass.nrcpfcgc
+                          and a.nrdconta <> ass.nrdconta
+                          and a.dtdemiss  is null
+                          and ((a.dtadmiss < ass.dtadmiss) or
+                               (a.dtadmiss = ass.dtadmiss and
+                                a.nrdconta < ass.nrdconta)))
      order
-        by ordenado desc;
-        
+        by ass.inpessoa
+         , ass.dtadmiss
+         , ass.nrdconta;
+  
     -- Busca dados da cooperativa
     cursor cr_crapcop (pr_cdcooper in crapass.cdcooper%type) is
     select cop.nrdocnpj
@@ -614,23 +773,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
        and ass.nrdconta = grp.nrdconta;
     rw_participa_grupo cr_participa_grupo%rowtype;
 
+    CURSOR cr_pessoa_juridica (pr_nrcpfcgc in tbcadast_pessoa.nrcpfcgc%TYPE) is
+    SELECT pes2.nrcpfcgc
+         , pes2.idpessoa
+      FROM tbcadast_pessoa_juridica_rep rep,
+           tbcadast_pessoa pes,
+           tbcadast_pessoa pes2
+     WHERE rep.idpessoa = pes.idpessoa
+       AND pes.nrcpfcgc = pr_nrcpfcgc
+       AND rep.idpessoa_representante = pes2.idpessoa
+     ORDER BY rep.dtadmissao ASC,rep.persocio DESC  ;     
+    
     vr_nrdgrupo tbevento_pessoa_grupos.nrdgrupo%type := 1;
     vr_nrdconta crapass.nrdconta%type;
-    vr_cdprogra varchar2(100) := 'DST_GRUPOS_';
+    vr_cdprogra varchar2(100) := 'AGRP0001.GRUPOS_'||
+                                 trim(to_char(pr_cdcooper,'00'))||'_'||
+                                 trim(to_char(pr_cdagenci,'000'));
     vr_idprglog number;
-    
-    -- Tabela de memoria que recebe dados para insert
-    type typ_dados_insert is record (cdcooper crapass.cdcooper%type
-                                    ,cdagenci crapass.cdagenci%type
-                                    ,nrdconta crapass.nrdconta%type
-                                    ,nrcpfcgc crapass.nrcpfcgc%type
-                                    ,idpessoa tbcadast_pessoa.idpessoa%type
-                                    ,nrdgrupo number
-                                    ,tpvincul crapass.tpvincul%type);                       
-    type typ_table_insert is table of typ_dados_insert index by varchar2(20);--binary_integer;  
-    vr_table_insert typ_table_insert; 
-    
-    vr_idx varchar2(20);
+    vr_idx BINARY_INTEGER;
     
     -- Tabela de memoria para controle de grupos
     type typ_dados_control is record (contador number);                       
@@ -641,44 +801,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     type typ_dados_comites is record (contador number);                       
     type typ_table_comites is table of typ_dados_comites index by binary_integer;  
     vr_table_comites typ_table_comites; 
-
-    -- Retorna conta mais antiga ou de menor numero do cooperado
-    procedure pc_buscar_conta (pr_cdcooper  in crapass.cdcooper%type
-                              ,pr_nrcpfcgc  in crapass.nrcpfcgc%type
-                              ,vr_nrdconta out crapass.nrdconta%type) is
-                              
-      -- Cursor para retornar conta mais antiga ou de menor
-      -- numero para utilizar como comparacao no retorno
-      cursor cr_crapass (pr_cdcooper crapass.cdcooper%type
-                        ,pr_nrcpfcgc crapass.nrcpfcgc%type) is
-      select ass.nrdconta
-        from crapass ass
-       where ass.cdcooper  = pr_cdcooper
-         and ass.nrcpfcgc  = pr_nrcpfcgc
-         and ass.dtdemiss is null
-       order
-          by ass.dtadmiss
-           , ass.nrdconta;
-      rw_crapass cr_crapass%rowtype;
     
-    begin
-      
-      -- Buscar variavel de conta
-      open cr_crapass (pr_cdcooper
-                      ,pr_nrcpfcgc);
-      fetch cr_crapass into rw_crapass;
-      close cr_crapass;
-
-      -- Atribuicao a variavel
-      vr_nrdconta := rw_crapass.nrdconta;
-    
-    exception
-      
-      when others then
-      
-        null;
-    
-    end; 
+    -- Tabela temporaria do bulk collect
+    type typ_dados_cursor is table of cr_crapass%rowtype;
+    vr_dados_cursor typ_dados_cursor;
+    vr_int BINARY_INTEGER;
 
   begin
     
@@ -686,7 +813,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       
     -- Gera log no início da execução
     pc_log_programa(pr_dstiplog   => 'I'         
-                   ,pr_cdprograma => vr_cdprogra||trim(to_char(pr_cdagenci,'000')) 
+                   ,pr_cdprograma => vr_cdprogra 
                    ,pr_cdcooper   => pr_cdcooper
                    ,pr_tpexecucao => 0     
                    ,pr_idprglog   => vr_idprglog);
@@ -705,382 +832,400 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     end if;
     
     -- Inicializacao de variaveis
+    vr_table_insert.delete;
+
     for i in 1..pr_qtdgrupo loop
       vr_table_control(i).contador := 0;
       vr_table_comites(i).contador := 0;
     end loop;
-    
+
     -- Busca dados da cooperativa
     open cr_crapcop (pr_cdcooper);
     fetch cr_crapcop into rw_crapcop;
     close cr_crapcop;
 
     -- Loop nos cooperados aptos a estarem na assembleia
-    for rw_crapass in cr_crapass (pr_cdcooper 
-                                 ,pr_cdagenci) loop
-
-      -- Nao analisa conta administrativa
-      if rw_crapass.nrcpfcgc = rw_crapcop.nrdocnpj then
-        continue;
-      end if;
-
-      -- Adicionado para melhoria de performance
-      pc_buscar_conta (rw_crapass.cdcooper
-                      ,rw_crapass.nrcpfcgc
-                      ,vr_nrdconta);
-                      
-      -- Se conta retornada nao for a mais antiga e ou de
-      -- menor numero, nao interessa e pula para proxima                
-      if nvl(vr_nrdconta,0) <> rw_crapass.nrdconta then
-        continue;
-      end if;
-
-      vr_nrdgrupo := 1;
+    open cr_crapass (pr_cdcooper 
+                    ,pr_cdagenci);
+    loop 
       
-      -- Determinacao do grupo com menor quantidade de membros
-      if rw_crapass.tpvincul in ('CL','CS','CM') then
-        -- Controle de populacao
-        for i in 2..pr_qtdgrupo loop
-          if vr_table_comites(i).contador < vr_table_comites(vr_nrdgrupo).contador then
-            vr_nrdgrupo := i;
-          end if;
-        end loop;
-      else
-        -- Controle de populacao
-        for i in 2..pr_qtdgrupo loop
-          if vr_table_control(i).contador < vr_table_control(vr_nrdgrupo).contador then
-            vr_nrdgrupo := i;
-          end if;
-        end loop;
-      end if;
+      fetch cr_crapass bulk collect into vr_dados_cursor limit 200;
+      exit when vr_dados_cursor.count = 0;
+      
+      for vr_int in 1 .. vr_dados_cursor.count loop
 
-      -- Se for delegado, cooperado nao deve ser locado,
-      -- por que ele nao foi deletado pela pc_atz_grp_agenci
-      -- Se ele tiver conjuge, quando conjuge for analisado
-      -- vai encontrar delegado e ir em direcao ao seu grupo
-      if rw_crapass.tpvincul in ('CD','DT','DS') then
-        continue;
-      end if;
-        
-      -- Primeiro trata pessoa fisica
-      if rw_crapass.inpessoa = 1 then
-
-        begin
-
-          -- Caso nao tenha sido locado na tabela de memoria
-          if not vr_table_insert.exists(rw_crapass.nrcpfcgc) then
-
-            -- Para insert na tabela de grupos
-            vr_table_insert(rw_crapass.nrcpfcgc).cdcooper := rw_crapass.cdcooper;
-            vr_table_insert(rw_crapass.nrcpfcgc).cdagenci := rw_crapass.cdagenci;
-            vr_table_insert(rw_crapass.nrcpfcgc).nrdconta := rw_crapass.nrdconta;
-            vr_table_insert(rw_crapass.nrcpfcgc).nrcpfcgc := rw_crapass.nrcpfcgc;
-            vr_table_insert(rw_crapass.nrcpfcgc).idpessoa := rw_crapass.idpessoa;
-            vr_table_insert(rw_crapass.nrcpfcgc).nrdgrupo := vr_nrdgrupo;
-            vr_table_insert(rw_crapass.nrcpfcgc).tpvincul := rw_crapass.tpvincul;
-              
-            -- Para controle de populacao
-            vr_table_control(vr_nrdgrupo).contador := vr_table_control(vr_nrdgrupo).contador + 1;
-            
-            -- Se for comite, cooperado sera locado,
-            -- Se ele tiver conjuge, quando conjuge for analisado
-            -- vai encontrar comite e ir em direcao ao seu grupo
-            if rw_crapass.tpvincul in ('CL','CS','CM') then
-              vr_table_comites(vr_nrdgrupo).contador := vr_table_comites(vr_nrdgrupo).contador + 1;
-              continue;
-            end if;
-
-          end if;
-
-        exception
-
-          when others then
-              
-            vr_dscritic := 'Erro na AGRP0001.pc_distribui_conta_grupo (1) --> '|| sqlerrm;
-            raise vr_exc_saida;
-            
-        end;
-          
-        -- Verifica conjuge do cooperado
-        open cr_crapcje (rw_crapass.cdcooper
-                        ,rw_crapass.cdagenci
-                        ,rw_crapass.nrcpfcgc);
-        fetch cr_crapcje into rw_crapcje;
-        
-        if cr_crapcje%found then
-
-          -- Adicionado para melhoria de performance
-          pc_buscar_conta (rw_crapcje.cdcooper
-                          ,rw_crapcje.nrcpfcgc
-                          ,vr_nrdconta);
-          
-          -- Se conta conjuge nao for a mais antiga e ou de
-          -- menor numero, nao interessa e pula para proxima               
-          if nvl(vr_nrdconta,0) <> rw_crapcje.nrdconta then
-            close cr_crapcje;
-            continue;
-          end if;
-          
-          begin
-
-            -- Se conjuge for delegado, conta da ass
-            -- vai em direcao ao conjuge (procura na grupo_assembleia)
-            if rw_crapcje.tpvincul in ('CD','DT','DS') then
-
-              -- Busca grupo do coperado
-              open cr_participa_grupo (rw_crapcje.cdcooper
-                                      ,rw_crapcje.cdagenci 
-                                      ,rw_crapcje.nrcpfcgc);
-              fetch cr_participa_grupo into rw_participa_grupo;
-
-              if cr_participa_grupo%found then
-
-                vr_nrdgrupo := rw_participa_grupo.nrdgrupo;
-
-                -- Garantia que ass esta em grupo (desnecessario)
-                -- muda crapass de grupo
-                if vr_table_insert.exists(rw_crapass.nrcpfcgc) then
-                    
-                  -- Para controle de populacao
-                  vr_table_control(vr_table_insert(rw_crapass.nrcpfcgc).nrdgrupo).contador := vr_table_control(vr_table_insert(rw_crapass.nrcpfcgc).nrdgrupo).contador - 1;
-                
-                  -- Muda de grupo
-                  vr_table_insert(rw_crapass.nrcpfcgc).nrdgrupo := vr_nrdgrupo;
-                  
-                  -- Para controle de populacao
-                  vr_table_control(vr_nrdgrupo).contador := vr_table_control(vr_nrdgrupo).contador + 1;
-
-                end if;
-
-              end if;
-                
-              close cr_participa_grupo;
-            
-            -- Se conjuge for comite, conta da ass
-            -- vai em direcao ao conjuge (procura na tab_memoria)
-            elsif rw_crapcje.tpvincul in ('CL','CS','CM') then
-              
-              -- Necessario devido 'marido' e 'esposa' serem comites
-              if vr_table_insert.exists(rw_crapcje.nrcpfcgc) then
-                vr_nrdgrupo := vr_table_insert(rw_crapcje.nrcpfcgc).nrdgrupo;
-              end if;
-              
-              -- Se conjuge nao foi locado e nao for nenhuma das funcoes
-              -- de comite e delegado ele pode ser locado
-              if vr_table_insert.exists(rw_crapass.nrcpfcgc) then
-                    
-                -- Para controle de populacao
-                vr_table_control(vr_table_insert(rw_crapass.nrcpfcgc).nrdgrupo).contador := vr_table_control(vr_table_insert(rw_crapass.nrcpfcgc).nrdgrupo).contador - 1;
-                
-                -- Muda de grupo
-                vr_table_insert(rw_crapass.nrcpfcgc).nrdgrupo := vr_nrdgrupo;
-                  
-                -- Para controle de populacao
-                vr_table_control(vr_nrdgrupo).contador := vr_table_control(vr_nrdgrupo).contador + 1;
-
-              end if;
-
-            -- Se conjuge nao possui nenhuma funcao
-            else
-
-              -- Se conjuge nao foi locado e nao for nenhuma das funcoes
-              -- de comite e delegado ele pode ser locado no grupo da ass
-              if not vr_table_insert.exists(rw_crapcje.nrcpfcgc) then
-
-                -- Para insert na tabela de grupos
-                vr_table_insert(rw_crapcje.nrcpfcgc).cdcooper := rw_crapcje.cdcooper;
-                vr_table_insert(rw_crapcje.nrcpfcgc).cdagenci := rw_crapcje.cdagenci;
-                vr_table_insert(rw_crapcje.nrcpfcgc).nrdconta := rw_crapcje.nrdconta;
-                vr_table_insert(rw_crapcje.nrcpfcgc).nrcpfcgc := rw_crapcje.nrcpfcgc;
-                vr_table_insert(rw_crapcje.nrcpfcgc).idpessoa := rw_crapcje.idpessoa;
-                vr_table_insert(rw_crapcje.nrcpfcgc).nrdgrupo := vr_nrdgrupo;
-                vr_table_insert(rw_crapcje.nrcpfcgc).tpvincul := rw_crapcje.tpvincul;
-                  
-                -- Para controle de populacao
-                vr_table_control(vr_nrdgrupo).contador := vr_table_control(vr_nrdgrupo).contador + 1;
-                  
-              -- Caso ja tenha sido locado
-              -- ass vai em direcao ao cje
-              else
-                
-                vr_nrdgrupo := vr_table_insert(rw_crapcje.nrcpfcgc).nrdgrupo;
-                    
-                -- Para controle de populacao
-                vr_table_control(vr_table_insert(rw_crapass.nrcpfcgc).nrdgrupo).contador := vr_table_control(vr_table_insert(rw_crapass.nrcpfcgc).nrdgrupo).contador - 1;
-                
-                -- Muda de grupo
-                vr_table_insert(rw_crapass.nrcpfcgc).nrdgrupo := vr_nrdgrupo;
-                  
-                -- Para controle de populacao
-                vr_table_control(vr_nrdgrupo).contador := vr_table_control(vr_nrdgrupo).contador + 1;
-
-              end if;
-     
-            end if;
-            
-          exception
-
-            when others then
-              
-              vr_dscritic := 'Erro na AGRP0001.pc_distribui_conta_grupo (2) --> '|| sqlerrm;
-              raise vr_exc_saida; 
-
-          end;
-
+        -- Contas administrativas e ja locadas sao puladas                
+        if (vr_dados_cursor(vr_int).nrcpfcgc   = rw_crapcop.nrdocnpj) or
+           (vr_table_insert.exists(vr_dados_cursor(vr_int).idpessoa)) then
+          continue;
         end if;
 
-        close cr_crapcje;
+        vr_nrdgrupo := 1;
+        
+        -- Determinacao do grupo com menor quantidade de membros
+        if vr_dados_cursor(vr_int).tpvincul in ('CL','CS','CM') then
+          -- Controle de populacao
+          for i in 2..pr_qtdgrupo loop
+            if vr_table_comites(i).contador < vr_table_comites(vr_nrdgrupo).contador then
+              vr_nrdgrupo := i;
+            end if;
+          end loop;
+        else
+          -- Controle de populacao
+          for i in 2..pr_qtdgrupo loop
+            if vr_table_control(i).contador < vr_table_control(vr_nrdgrupo).contador then
+              vr_nrdgrupo := i;
+            end if;
+          end loop;
+        end if;
 
-      -- Posteriormente trata pessoa juridica
-      -- no grupo com menor quantidade de pessoas
-      elsif rw_crapass.inpessoa = 2 then
+        -- Primeiro trata pessoa fisica
+        if vr_dados_cursor(vr_int).inpessoa = 1 then
 
-        begin
-
-          -- Caso ainda nao tenha sido locado
-          -- e colocado no grupo com menor qtd membros
-          if not vr_table_insert.exists(rw_crapass.nrcpfcgc) then
+          begin
 
             -- Para insert na tabela de grupos
-            vr_table_insert(rw_crapass.nrcpfcgc).cdcooper := rw_crapass.cdcooper;
-            vr_table_insert(rw_crapass.nrcpfcgc).cdagenci := rw_crapass.cdagenci;
-            vr_table_insert(rw_crapass.nrcpfcgc).nrdconta := rw_crapass.nrdconta;
-            vr_table_insert(rw_crapass.nrcpfcgc).nrcpfcgc := rw_crapass.nrcpfcgc;
-            vr_table_insert(rw_crapass.nrcpfcgc).idpessoa := rw_crapass.idpessoa;
-            vr_table_insert(rw_crapass.nrcpfcgc).nrdgrupo := vr_nrdgrupo;
-            vr_table_insert(rw_crapass.nrcpfcgc).tpvincul := rw_crapass.tpvincul;
-            
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).cdcooper := vr_dados_cursor(vr_int).cdcooper;
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).cdagenci := vr_dados_cursor(vr_int).cdagenci;
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).nrdconta := vr_dados_cursor(vr_int).nrdconta;
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).nrcpfcgc := vr_dados_cursor(vr_int).nrcpfcgc;
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).idpessoa := vr_dados_cursor(vr_int).idpessoa;
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).nrdgrupo := vr_nrdgrupo;
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).tpvincul := vr_dados_cursor(vr_int).tpvincul;
+              
             -- Para controle de populacao
             vr_table_control(vr_nrdgrupo).contador := vr_table_control(vr_nrdgrupo).contador + 1;
-            if rw_crapass.tpvincul in ('CL','CS','CM') then
+            
+            -- Se for comite
+            if vr_dados_cursor(vr_int).tpvincul in ('CL','CS','CM') then
               vr_table_comites(vr_nrdgrupo).contador := vr_table_comites(vr_nrdgrupo).contador + 1;
             end if;
-            
-          end if;
+
+          exception
+            when others then
+              vr_dscritic := 'Erro na AGRP0001.pc_distribui_conta_grupo (1) --> '|| sqlerrm;
+              raise vr_exc_saida;
+          end;
           
-        exception
+          -- Limpeza de variavel
+          rw_crapcje := null;
+            
+          -- Verifica conjuge do cooperado
+          open cr_crapcje (vr_dados_cursor(vr_int).cdcooper
+                          ,vr_dados_cursor(vr_int).cdagenci
+                          ,vr_dados_cursor(vr_int).nrcpfcgc);
+          fetch cr_crapcje into rw_crapcje;
+          close cr_crapcje;
 
-          when others then
+          -- Se encontrou conjuge
+          if rw_crapcje.cdagenci is not null then
 
-            vr_dscritic := 'Erro na AGRP0001.pc_distribui_conta_grupo (3) --> '|| sqlerrm;
-            raise vr_exc_saida;
+            begin
 
-        end;
+              if not vr_table_insert.exists(rw_crapcje.idpessoa) then
 
-      end if;
+                -- Para insert na tabela de grupos
+                vr_table_insert(rw_crapcje.idpessoa).cdcooper := rw_crapcje.cdcooper;
+                vr_table_insert(rw_crapcje.idpessoa).cdagenci := rw_crapcje.cdagenci;
+                vr_table_insert(rw_crapcje.idpessoa).nrdconta := rw_crapcje.nrdconta;
+                vr_table_insert(rw_crapcje.idpessoa).nrcpfcgc := rw_crapcje.nrcpfcgc;
+                vr_table_insert(rw_crapcje.idpessoa).idpessoa := rw_crapcje.idpessoa;
+                vr_table_insert(rw_crapcje.idpessoa).nrdgrupo := vr_nrdgrupo;
+                vr_table_insert(rw_crapcje.idpessoa).tpvincul := rw_crapcje.tpvincul;
+    
+                -- Para controle de populacao
+                vr_table_control(vr_nrdgrupo).contador := vr_table_control(vr_nrdgrupo).contador + 1;
 
+                if rw_crapcje.tpvincul in ('CL','CS','CM') then
+                  vr_table_comites(vr_nrdgrupo).contador := vr_table_comites(vr_nrdgrupo).contador + 1;
+                end if;
+              
+                continue;
+                
+              end if;
+    
+              if rw_crapcje.tpvincul in ('CL','CS','CM') then 
+    
+                -- Ambos possuem cargos - nenhuma acao
+                if vr_table_insert(vr_dados_cursor(vr_int).idpessoa).tpvincul in ('CL','CS','CM') then 
+                  continue;
+                -- Conjuge possui cargo - primeiro registro vai 
+                -- em direcao do conjuge encontrado
+                else
+                  -- Para controle de populacao
+                  vr_table_control(vr_table_insert(vr_dados_cursor(vr_int).idpessoa).nrdgrupo).contador := vr_table_control(vr_table_insert(vr_dados_cursor(vr_int).idpessoa).nrdgrupo).contador - 1;
+                  -- Muda de grupo
+                  vr_table_insert(vr_dados_cursor(vr_int).idpessoa).nrdgrupo := vr_nrdgrupo;                  
+                  -- Para controle de populacao
+                  vr_table_control(vr_nrdgrupo).contador := vr_table_control(vr_nrdgrupo).contador + 1;
+                end if;
+
+              -- Se conjuge nao possui nenhuma funcao
+              else
+   
+                vr_nrdgrupo := vr_table_insert(vr_dados_cursor(vr_int).idpessoa).nrdgrupo;
+                   
+                -- Para controle de populacao
+                vr_table_control(vr_table_insert(rw_crapcje.idpessoa).nrdgrupo).contador := vr_table_control(vr_table_insert(rw_crapcje.idpessoa).nrdgrupo).contador - 1;
+              
+                -- Muda de grupo
+                vr_table_insert(rw_crapcje.idpessoa).nrdgrupo := vr_nrdgrupo;
+                
+                -- Para controle de populacao
+                vr_table_control(vr_nrdgrupo).contador := vr_table_control(vr_nrdgrupo).contador + 1;
+
+              end if;
+
+            exception
+              when others then
+                vr_dscritic := 'Erro na AGRP0001.pc_distribui_conta_grupo (2) --> '|| sqlerrm;
+                raise vr_exc_saida;
+            end;
+
+          end if;
+
+        -- Posteriormente trata pessoa juridica
+        -- no grupo com menor quantidade de pessoas
+        elsif vr_dados_cursor(vr_int).inpessoa = 2 then
+          
+          -- P484.2 Incluir a validacao de caso tenha algum representante da PJ em um grupo desta 
+          -- PA, adicionar a empresa no mesmo grupo do representante mais velho da empresa, caso 
+          -- seja a mesma data dos representantes, devera pegar o de maior percentual societario
+          for rw_pessoa_juridica in cr_pessoa_juridica(vr_dados_cursor(vr_int).nrcpfcgc) loop
+            if vr_table_insert.exists(rw_pessoa_juridica.idpessoa) then
+              vr_nrdgrupo := vr_table_insert(rw_pessoa_juridica.idpessoa).nrdgrupo;
+              exit;
+            end if;          
+          end loop;
+
+          begin
+            
+            -- Para insert na tabela de grupos
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).cdcooper := vr_dados_cursor(vr_int).cdcooper;
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).cdagenci := vr_dados_cursor(vr_int).cdagenci;
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).nrdconta := vr_dados_cursor(vr_int).nrdconta;
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).nrcpfcgc := vr_dados_cursor(vr_int).nrcpfcgc;
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).idpessoa := vr_dados_cursor(vr_int).idpessoa;
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).nrdgrupo := vr_nrdgrupo;
+            vr_table_insert(vr_dados_cursor(vr_int).idpessoa).tpvincul := vr_dados_cursor(vr_int).tpvincul;
+
+            -- Para controle de populacao
+            vr_table_control(vr_nrdgrupo).contador := vr_table_control(vr_nrdgrupo).contador + 1;
+            
+            if vr_dados_cursor(vr_int).tpvincul in ('CL','CS','CM') then
+              vr_table_comites(vr_nrdgrupo).contador := vr_table_comites(vr_nrdgrupo).contador + 1;
+            end if;
+
+          exception
+            when others then
+              vr_dscritic := 'Erro na AGRP0001.pc_distribui_conta_grupo (3) --> '|| sqlerrm;
+              raise vr_exc_saida;
+          end;
+          
+        end if;
+
+      end loop;
+    
     end loop;
 
-    -- Index de cpf / cnpj
-    vr_idx := vr_table_insert.first;
-    
-    while vr_idx is not null
-      
-    loop
+    -- Verifica parametros cadastrados em base
+    -- Default zero, em periodos de implantacao
+    -- o parametro pode ser alterado para 1
+    -- para que o sistema nao seja sobrecarregado
+    begin
+      select nvl(c.flag_integra,0)
+        into vr_tpsituacao
+        from tbevento_param c
+       where c.cdcooper = pr_cdcooper;
+    exception
+      when others then
+        vr_dscritic := 'Erro ao manipular tbevento_param: '||sqlerrm;
+        raise vr_exc_saida;
+    end;  
 
-      begin
-        
-        -- Insere na tabela de grupos
-        insert into tbevento_pessoa_grupos 
-                    (cdcooper
-                    ,cdagenci
-                    ,nrdconta
-                    ,nrcpfcgc
-                    ,nrdgrupo
-                    ,cdoperad_altera
-                    ,dhalteracao
-                    ,idpessoa)
-             values (vr_table_insert(vr_idx).cdcooper
-                    ,vr_table_insert(vr_idx).cdagenci
-                    ,vr_table_insert(vr_idx).nrdconta
-                    ,vr_table_insert(vr_idx).nrcpfcgc
-                    ,vr_table_insert(vr_idx).nrdgrupo
-                    ,pr_cdoperad
-                    ,sysdate
-                    ,vr_table_insert(vr_idx).idpessoa);
-                    
+    begin
+      forall vr_idx in indices of vr_table_insert save exceptions
+      insert into tbevento_pessoa_grupos 
+                  (cdcooper
+                  ,cdagenci
+                  ,nrdconta
+                  ,nrcpfcgc
+                  ,nrdgrupo
+                  ,cdoperad_altera
+                  ,dhalteracao
+                  ,idpessoa)
+           values (vr_table_insert(vr_idx).cdcooper
+                  ,vr_table_insert(vr_idx).cdagenci
+                  ,vr_table_insert(vr_idx).nrdconta
+                  ,vr_table_insert(vr_idx).nrcpfcgc
+                  ,vr_table_insert(vr_idx).nrdgrupo
+                  ,pr_cdoperad
+                  ,sysdate
+                  ,vr_table_insert(vr_idx).idpessoa);
+    exception
+      when others then
+        vr_dscritic := 'Erro na AGRP0001.pc_distribui_conta_grupo (4) --> ';
+        for ind in 1 .. sql%bulk_exceptions.count loop
+          vr_dscritic := substr(vr_dscritic||sql%bulk_exceptions(ind).error_index||',',1,4000);
+        end loop;
+        -- Logar fim de execução sem sucesso
+        cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                              ,pr_cdprograma    => vr_cdprogra
+                              ,pr_cdcooper      => pr_cdcooper
+                              ,pr_tpexecucao    => 2   -- Job
+                              ,pr_tpocorrencia  => 2   -- Erro nao tratado
+                              ,pr_cdcriticidade => 1   -- Media
+                              ,pr_cdmensagem    => 0
+                              ,pr_dsmensagem    => 'Module: AGRP0001 '||vr_dscritic
+                              ,pr_idprglog      => vr_idprglog);
+    end;
+    
+    begin
+      forall vr_idx in indices of vr_table_insert save exceptions
+      insert into tbhistor_pessoa_grupos (cdcooper
+                                         ,idpessoa
+                                         ,nrdconta
+                                         ,dhalteracao
+                                         ,tpsituacao
+                                         ,dhcomunicacao
+                                         ,dserro
+                                         ,qttentativa
+                                         ,nrdgrupo)
+                                  values (vr_table_insert(vr_idx).cdcooper
+                                         ,vr_table_insert(vr_idx).idpessoa
+                                         ,vr_table_insert(vr_idx).nrdconta
+                                         ,sysdate
+                                         ,vr_tpsituacao
+                                         ,null
+                                         ,null
+                                         ,null
+                                         ,vr_table_insert(vr_idx).nrdgrupo);
+    exception
+      when others then
+        vr_dscritic := 'Erro na AGRP0001.pc_distribui_conta_grupo (5) --> ';
+        for ind in 1 .. sql%bulk_exceptions.count loop
+          vr_dscritic := substr(vr_dscritic||sql%bulk_exceptions(ind).error_index||',',1,4000);
+        end loop;
+        -- Logar fim de execução sem sucesso
+        cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                              ,pr_cdprograma    => vr_cdprogra
+                              ,pr_cdcooper      => pr_cdcooper
+                              ,pr_tpexecucao    => 2   -- Job
+                              ,pr_tpocorrencia  => 2   -- Erro nao tratado
+                              ,pr_cdcriticidade => 1   -- Media
+                              ,pr_cdmensagem    => 0
+                              ,pr_dsmensagem    => 'Module: AGRP0001 '||vr_dscritic
+                              ,pr_idprglog      => vr_idprglog);
+    end;
+
+    begin
+
+      for i in 1..pr_qtdgrupo loop
         -- Atualiza tabela de resumo de grupos
         update tbevento_grupos
-           set qtd_membros = qtd_membros + 1
-         where cdcooper    = vr_table_insert(vr_idx).cdcooper
-           and cdagenci    = vr_table_insert(vr_idx).cdagenci
-           and nrdgrupo    = vr_table_insert(vr_idx).nrdgrupo;
-
-      exception
-        when dup_val_on_index then
-          null;
-        when others then
-          vr_dscritic := 'Erro na AGRP0001.pc_distribui_conta_grupo (4) --> '|| sqlerrm;
-          raise vr_exc_saida;
-      end;
+           set qtd_membros = qtd_membros + vr_table_control(i).contador
+             , flgsituacao = 1 -- Sucesso
+         where cdcooper    = pr_cdcooper
+           and cdagenci    = pr_cdagenci
+           and nrdgrupo    = i;
+      end loop;
       
-      begin
-        -- Gerar informacao de alteracao ao SOA
-        insert 
-          into tbhistor_pessoa_grupos (cdcooper
-                                      ,idpessoa
-                                      ,nrdconta
-                                      ,dhalteracao
-                                      ,tpsituacao
-                                      ,dhcomunicacao
-                                      ,dserro
-                                      ,qttentativa
-                                      ,nrdgrupo)
-        values                        (vr_table_insert(vr_idx).cdcooper
-                                      ,vr_table_insert(vr_idx).idpessoa
-                                      ,vr_table_insert(vr_idx).nrdconta
-                                      ,sysdate
-                                      ,0 --1 Primeira execucao sera como "Enviado"
-                                      ,null
-                                      ,null
-                                      ,null
-                                      ,vr_table_insert(vr_idx).nrdgrupo);                         
-      exception
-        when others then
-          vr_dscritic := 'Erro na AGRP0001 - inserir registro na tbhistor_pessoa_grupos  --> '|| sqlerrm;
-          raise vr_exc_saida;
-      end;
-        
-      -- Avanca ao proximo cpf / cnpj
-      vr_idx := vr_table_insert.next(vr_idx); 
+    exception
+      when others then
+        vr_dscritic := 'Erro na atualizacao da tbevento_grupos(0).';
+        raise vr_exc_saida;
+    end;
 
-    end loop;
-    
+    if pr_idparale is not null then
+
+      -- Encerrar o job do processamento paralelo dessa agência
+      gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => lpad(pr_cdagenci,3,'0')
+                                  ,pr_des_erro => vr_dscritic);
+
+    end if;
+
     -- Gera log no início da execução
     pc_log_programa(pr_dstiplog   => 'F'         
-                   ,pr_cdprograma => vr_cdprogra||trim(to_char(pr_cdagenci,'000')) 
+                   ,pr_cdprograma => vr_cdprogra
                    ,pr_cdcooper   => pr_cdcooper
                    ,pr_tpexecucao => 0    
                    ,pr_flgsucesso => 1 
                    ,pr_idprglog   => vr_idprglog);
+                   
+    commit;
 
   exception
     
     when vr_exc_saida then
-       
+      
+      rollback;
+
       pr_cdcritic := nvl(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
-      
+
       -- Gera log no início da execução
       pc_log_programa(pr_dstiplog   => 'F'         
-                     ,pr_cdprograma => vr_cdprogra||trim(to_char(pr_cdagenci,'000')) 
+                     ,pr_cdprograma => vr_cdprogra
                      ,pr_cdcooper   => pr_cdcooper
                      ,pr_tpexecucao => 0     
                      ,pr_flgsucesso => 0
                      ,pr_idprglog   => vr_idprglog);
+                     
+      -- Logar fim de execução sem sucesso
+      cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                            ,pr_cdprograma    => vr_cdprogra
+                            ,pr_cdcooper      => pr_cdcooper
+                            ,pr_tpexecucao    => 2   -- Job
+                            ,pr_tpocorrencia  => 2   -- Erro nao tratado
+                            ,pr_cdcriticidade => 1   -- Media
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => 'Module: AGRP0001 '||vr_dscritic
+                            ,pr_idprglog      => vr_idprglog);
+
+      if pr_idparale is not null then
+                                    
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => lpad(pr_cdagenci,3,'0')
+                                    ,pr_des_erro => vr_dscritic);
+                                  
+      end if;
 
     when others then
 
+      rollback;
+
       pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na AGRP0001.pc_distribui_conta_grupo (5) --> '|| sqlerrm;
-      
+      pr_dscritic:= 'Erro na AGRP0001.pc_distribui_conta_grupo (6) --> '|| sqlerrm;
+
       -- Gera log no início da execução
       pc_log_programa(pr_dstiplog   => 'F'         
-                     ,pr_cdprograma => vr_cdprogra||trim(to_char(pr_cdagenci,'000')) 
+                     ,pr_cdprograma => vr_cdprogra
                      ,pr_cdcooper   => pr_cdcooper
                      ,pr_tpexecucao => 0    
                      ,pr_flgsucesso => 0 
                      ,pr_idprglog   => vr_idprglog);
+                     
+      -- Logar fim de execução sem sucesso
+      cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                            ,pr_cdprograma    => vr_cdprogra
+                            ,pr_cdcooper      => pr_cdcooper
+                            ,pr_tpexecucao    => 2   -- Job
+                            ,pr_tpocorrencia  => 2   -- Erro nao tratado
+                            ,pr_cdcriticidade => 1   -- Media
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => 'Module: AGRP0001 '||vr_dscritic
+                            ,pr_idprglog      => vr_idprglog);
+                            
+      if pr_idparale is not null then
+                                    
+        -- Encerrar o job do processamento paralelo dessa agência
+        gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                    ,pr_idprogra => lpad(pr_cdagenci,3,'0')
+                                    ,pr_des_erro => vr_dscritic);
+                                  
+      end if;
       
   end pc_distribui_conta_grupo;
  
@@ -1102,49 +1247,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
   --
   -- Objetivo  : Faz a limpeza dos grupos para redistribuicao
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Melhoria na reformulacao de grupos.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).
   --
   --------------------------------------------------------------------------  
 
     -- Loop principal para limpeza da tabela de grupos
     cursor cr_limpeza_grupos (pr_cdcooper in tbevento_pessoa_grupos.cdcooper%type
                              ,pr_cdagenci in tbevento_pessoa_grupos.cdagenci%type) is
-    select grp.cdcooper
-         , grp.cdagenci
-         , grp.nrcpfcgc
-         , grp.nrdgrupo
-         , grp.nrdconta
-         , grp.idpessoa
-         , ass.tpvincul
-      from tbevento_pessoa_grupos grp
-         , crapass                ass
+    select grp.nrdgrupo
+      from tbevento_grupos grp
      where grp.cdcooper = pr_cdcooper
-       and grp.cdagenci = pr_cdagenci
-       and ass.cdcooper = grp.cdcooper
-       and ass.cdagenci = grp.cdagenci
-       and ass.nrdconta = grp.nrdconta
-       and ass.nrcpfcgc = grp.nrcpfcgc;
-
+       and grp.cdagenci = pr_cdagenci;
+       
     -- Verificacoes para membros que sao delegados
-    cursor cr_atlz_grupos (pr_cdcooper in tbevento_pessoa_grupos.cdcooper%type
-                          ,pr_cdagenci in tbevento_pessoa_grupos.cdagenci%type)is
+    cursor cr_busca_vinculado (pr_cdcooper in tbevento_pessoa_grupos.cdcooper%type
+                              ,pr_cdagenci in tbevento_pessoa_grupos.cdagenci%type
+                              ,pr_nrdgrupo in tbevento_pessoa_grupos.nrdgrupo%type) is
     select grp.cdcooper
          , grp.cdagenci
-         , grp.nrdgrupo
          , grp.nrcpfcgc
          , vig.cdfuncao
          , vig.dtinicio_vigencia
          , vig.rowid
-         , max(grp.nrdgrupo) over (partition by grp.cdagenci) qtdregis
       from tbevento_pessoa_grupos     grp
-         , tbcadast_vig_funcao_pessoa vig
+         , tbcadast_vig_funcao_pessoa vig       
      where grp.cdcooper = pr_cdcooper
        and grp.cdagenci = pr_cdagenci
+       and grp.nrdgrupo > pr_nrdgrupo
        and vig.cdcooper = grp.cdcooper
        and vig.nrcpfcgc = grp.nrcpfcgc
        and vig.cdfuncao in ('DT','DS')
        and vig.dtfim_vigencia is null;
-    rw_atlz_grupos cr_atlz_grupos%rowtype;
+    rw_busca_vinculado cr_busca_vinculado%rowtype;
     
     -- Busca data de movimentacao da cooperativa
     cursor cr_crapdat (pr_cdcooper crapdat.cdcooper%type) is
@@ -1153,281 +1288,168 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
      where dat.cdcooper = pr_cdcooper;
     rw_crapdat cr_crapdat%rowtype;
     
-    -- Tabela de memoria que recebe dados para delete e update
-    type typ_dados_grupos is record (cdcooper crapass.cdcooper%type
-                                    ,cdagenci crapass.cdagenci%type
-                                    ,nrcpfcgc crapass.nrcpfcgc%type
-                                    ,nrdgrupo number);                       
-    type typ_table_grupos is table of typ_dados_grupos index by varchar2(20);--binary_integer;  
-    vr_table_grupos typ_table_grupos; 
-
-    vr_idx varchar2(20);
-
     vr_cdcritic pls_integer;
     vr_dscritic varchar2(4000);
     vr_contador number := 0;
     vr_nmdgrupo varchar2(8);
-    
+
   begin
     
     -- Busca data da cooperativa
     open cr_crapdat (pr_cdcooper);
     fetch cr_crapdat into rw_crapdat;
-    
-    -- Se nao encontrar aborta
-    if cr_crapdat%notfound then
-      
-      close cr_crapdat;
-      vr_dscritic := 'Data da cooperativa não cadastrada.';
-      raise vr_exc_erro;
-
-    end if;
-    
     close cr_crapdat;
 
-    -- Deleta todos exceto delegados
+    -- Se nao encontrar aborta
+    if rw_crapdat.dtmvtolt is null then
+      vr_dscritic := 'Data da cooperativa não cadastrada.';
+      raise vr_exc_erro;
+    end if;
+
+    -- Tratamento para delegados e tabela de descricao de grupos
+    for rw_busca_vinculado in cr_busca_vinculado (pr_cdcooper
+                                                 ,pr_cdagenci
+                                                 ,pr_qtdgrupo) loop
+
+      -- Inativa cargo de delegado
+      tela_pessoa.pc_inativa_cargos (pr_cdcooper          => rw_busca_vinculado.cdcooper
+                                    ,pr_nrcpfcgc          => rw_busca_vinculado.nrcpfcgc
+                                    ,pr_cdfuncao          => rw_busca_vinculado.cdfuncao
+                                    ,pr_dtinicio_vigencia => rw_busca_vinculado.dtinicio_vigencia
+                                    ,pr_dtfim_vigencia    => rw_crapdat.dtmvtolt
+                                    ,pr_nrdrowid          => rw_busca_vinculado.rowid
+                                    ,pr_cdoperad          => pr_cdoperad
+                                    ,pr_cdcritic          => vr_cdcritic
+                                    ,pr_dscritic          => vr_dscritic);
+                            
+      if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
+        raise vr_exc_erro;
+      end if;
+
+    end loop;
+
+    -- Deleta todos exceto pessoas vinculadas
     for rw_limpeza_grupos in cr_limpeza_grupos (pr_cdcooper
                                                ,pr_cdagenci) loop
-            
-      -- Nao faz limpeza de delegados por que eles
-      -- estao vinculados ao seu grupo
-      if rw_limpeza_grupos.tpvincul in ('DT','DS','CD') then
-        continue;
-      end if;
-      
+         
       begin
-
-        -- Armazena cooperados na tabela de memoria
-        vr_table_grupos(rw_limpeza_grupos.nrcpfcgc).cdcooper := rw_limpeza_grupos.cdcooper;
-        vr_table_grupos(rw_limpeza_grupos.nrcpfcgc).cdagenci := rw_limpeza_grupos.cdagenci;
-        vr_table_grupos(rw_limpeza_grupos.nrcpfcgc).nrcpfcgc := rw_limpeza_grupos.nrcpfcgc;
-        vr_table_grupos(rw_limpeza_grupos.nrcpfcgc).nrdgrupo := rw_limpeza_grupos.nrdgrupo;
+                                          
+        if rw_limpeza_grupos.nrdgrupo > pr_qtdgrupo then
+          
+          -- Deleta todos os membros
+          delete
+            from tbevento_pessoa_grupos
+           where cdcooper   = pr_cdcooper
+             and cdagenci   = pr_cdagenci
+             and nrdgrupo   = rw_limpeza_grupos.nrdgrupo;
+             
+        else
+          
+          -- Deleta apenas nao vinculados
+          delete
+            from tbevento_pessoa_grupos
+           where cdcooper   = pr_cdcooper
+             and cdagenci   = pr_cdagenci
+             and nrdgrupo   = rw_limpeza_grupos.nrdgrupo
+             and nvl(flgvinculo,0) = 0;
+             
+          vr_qtdmembros := sql%rowcount;
         
+        end if;
+   
       exception
-        
         when others then
-          
-          vr_dscritic := 'Erro na AGRP0001.pc_atz_grp_agenci(1) --> '|| sqlerrm;
+          vr_dscritic := 'Erro na AGRP0001.pc_atz_grp_agenci(1.1) --> '|| sqlerrm;
           raise vr_exc_saida;
+      end; 
+
+      begin
+        
+        if rw_limpeza_grupos.nrdgrupo > pr_qtdgrupo then
+        
+          delete
+            from tbevento_grupos
+           where cdcooper = pr_cdcooper
+             and cdagenci = pr_cdagenci
+             and nrdgrupo = rw_limpeza_grupos.nrdgrupo;
+       
+        else
           
-      end;
- 
+          -- Atualiza tabela de resumo de grupos
+          update tbevento_grupos
+             set flgsituacao = 0 -- Em andamento
+               , qtd_membros = qtd_membros - nvl(vr_qtdmembros,0)
+           where cdcooper    = pr_cdcooper
+             and cdagenci    = pr_cdagenci
+             and nrdgrupo    = rw_limpeza_grupos.nrdgrupo;
+           
+        end if;
+  
+      exception
+        when others then
+          vr_dscritic := 'Erro na AGRP0001.pc_atz_grp_agenci(1.2) --> '|| sqlerrm;
+          raise vr_exc_saida;
+      end; 
+
     end loop;
-    
-    -- Index do cpf / cnpj
-    vr_idx := vr_table_grupos.first;
-    
-    while vr_idx is not null
-      
+
+    -- Tratamento para execucao zero
+    -- E para criacao de novos grupos
     loop
 
-      begin
-    
-        -- Deleta cooperado
-        delete
-          from tbevento_pessoa_grupos
-         where cdcooper = vr_table_grupos(vr_idx).cdcooper
-           and cdagenci = vr_table_grupos(vr_idx).cdagenci
-           and nrcpfcgc = vr_table_grupos(vr_idx).nrcpfcgc;
-           
-        -- Atualiza tabela de resumo de grupos
-        update tbevento_grupos
-           set flgsituacao = 0 -- Em andamento
-             , qtd_membros = qtd_membros - 1
-         where cdcooper    = vr_table_grupos(vr_idx).cdcooper
-           and cdagenci    = vr_table_grupos(vr_idx).cdagenci
-           and nrdgrupo    = vr_table_grupos(vr_idx).nrdgrupo;
-
-      exception
-
-        when others then
-            
-          vr_dscritic := 'Erro na AGRP0001.pc_atz_grp_agenci(2) --> '|| sqlerrm;
-          raise vr_exc_saida;
-
-      end;
-      
-      -- Avanca ao proximo cpf / cnpj
-      vr_idx := vr_table_grupos.next(vr_idx); 
-
-    end loop;
-
-    -- Deleta grupo da tabela de descricao de grupos
-    -- que for maior que o numero da nova redestribuicao
-    -- tratamento para grupo desfeito
-    begin 
-      
-      delete
-        from tbevento_grupos
-       where cdcooper = pr_cdcooper
-         and cdagenci = pr_cdagenci
-         and nrdgrupo > pr_qtdgrupo;
-       
-    exception
-      
-      when others then
-        
-        vr_dscritic := 'Erro na AGRP0001.pc_atz_grp_agenci(3) --> '|| sqlerrm;
-        raise vr_exc_saida;
-        
-    end;
-
-    -- Verifica se existe delegado em grupo
-    open cr_atlz_grupos (pr_cdcooper
-                        ,pr_cdagenci);
-    fetch cr_atlz_grupos into rw_atlz_grupos;
-    
-    -- Se sim, faz verificacoes
-    if cr_atlz_grupos%found then
-      
-      close cr_atlz_grupos;
-
-      -- Tratamento para delegados e tabela de descricao de grupos
-      for rw_atlz_grupos in cr_atlz_grupos (pr_cdcooper
-                                           ,pr_cdagenci) loop
-  
-        -- Se o numero do maior grupo for igual ao numero de grupos
-        -- da nova redistribuicao, aborta loop
-        if    pr_qtdgrupo = rw_atlz_grupos.qtdregis then
-          
-          exit;
-          
-        -- Tratamento para grupo desfeito
-        elsif pr_qtdgrupo < rw_atlz_grupos.qtdregis then
-        
-          -- Se grupo do delegado foi desfeito, atribui
-          -- fim da vigencia para a funcao de delegado
-          if rw_atlz_grupos.nrdgrupo > pr_qtdgrupo then
-
-            -- Deleta delegado da tabela de grupos
-            delete
-              from tbevento_pessoa_grupos
-             where cdcooper = rw_atlz_grupos.cdcooper
-               and cdagenci = rw_atlz_grupos.cdagenci
-               and nrcpfcgc = rw_atlz_grupos.nrcpfcgc;
-
-            -- Inativa cargo de delegado
-            tela_pessoa.pc_inativa_cargos (pr_cdcooper          => rw_atlz_grupos.cdcooper
-                                          ,pr_nrcpfcgc          => rw_atlz_grupos.nrcpfcgc
-                                          ,pr_cdfuncao          => rw_atlz_grupos.cdfuncao
-                                          ,pr_dtinicio_vigencia => rw_atlz_grupos.dtinicio_vigencia
-                                          ,pr_dtfim_vigencia    => rw_crapdat.dtmvtolt
-                                          ,pr_nrdrowid          => rw_atlz_grupos.rowid
-                                          ,pr_cdoperad          => pr_cdoperad
-                                          ,pr_cdcritic          => vr_cdcritic
-                                          ,pr_dscritic          => vr_dscritic);
-                              
-            if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
-              raise vr_exc_erro;
-            end if;
-
-          end if;
-
-        -- Tratamento para formacao de novo grupo
-        elsif pr_qtdgrupo > rw_atlz_grupos.qtdregis then
-
-          loop
-            
-            exit when (pr_qtdgrupo = vr_contador);
-         
-            vr_contador := vr_contador + 1;
-            vr_nmdgrupo := 'PA'||trim(to_char(pr_cdagenci,'000'))||'-'||trim(to_char(vr_contador,'00'));
-       
-            begin
-                
-              insert
-                into tbevento_grupos
-              values (rw_atlz_grupos.cdcooper
-                     ,rw_atlz_grupos.cdagenci
-                     ,vr_contador
-                     ,vr_nmdgrupo
-                     ,pr_cdoperad
-                     ,sysdate
-                     ,0
-                     ,0);
-                     
-            exception
-                
-              when dup_val_on_index then
-                  
-                  update tbevento_grupos
-                     set flgsituacao = 0 -- Em andamento
-                   where cdcooper    = rw_atlz_grupos.cdcooper
-                     and cdagenci    = rw_atlz_grupos.cdagenci
-                     and nrdgrupo    = vr_contador;
-                  
-              when others then
-                
-                -- Montar mensagem de critica
-                vr_cdcritic := 0;
-                vr_dscritic := 'Erro ao inserir grupo! (1) ' || SQLERRM;
-                -- volta para o programa chamador
-                raise vr_exc_erro;
-                
-            end;
-              
-          end loop;
-                
-          -- Sair do loop
-          exit;
-
-        end if;
-
-      end loop;
-    
-    -- Se nao existe delegado na agencia
-    -- todos os grupos devem ser recriados
-    else
-      
-      close cr_atlz_grupos;
+      exit when (pr_qtdgrupo = vr_contador);
+      vr_contador := vr_contador + 1;
+      vr_nmdgrupo := fn_mascara_nmdgrupo(pr_cdagenci,vr_contador);
      
-      loop
-              
-        exit when (pr_qtdgrupo = vr_contador);
-                   
-        vr_contador := vr_contador + 1;
-        vr_nmdgrupo := 'PA'||trim(to_char(pr_cdagenci,'000'))||'-'||trim(to_char(vr_contador,'00'));
-                    
-        begin
-                          
-          insert
-            into tbevento_grupos
-          values (pr_cdcooper
-                 ,pr_cdagenci
-                 ,vr_contador
-                 ,vr_nmdgrupo
-                 ,pr_cdoperad
-                 ,sysdate
-                 ,0
-                 ,0);
-                               
-        exception
-                          
-          when dup_val_on_index then
-                            
+      begin
+
+        insert
+          into tbevento_grupos
+               (cdcooper
+               ,cdagenci
+               ,nrdgrupo
+               ,nmdgrupo
+               ,cdoperad
+               ,dhcriacao
+               ,qtd_membros
+               ,flgsituacao
+               ,dscritica
+               ,flgsitnot
+               ,dhenvnoti)
+        values (pr_cdcooper
+               ,pr_cdagenci
+               ,vr_contador
+               ,vr_nmdgrupo
+               ,pr_cdoperad
+               ,sysdate
+               ,0
+               ,0
+               ,NULL
+               ,NULL
+               ,NULL);
+               
+      exception
+          
+        when dup_val_on_index then
+            
             update tbevento_grupos
                set flgsituacao = 0 -- Em andamento
-                 , qtd_membros = 0
-             where cdcooper    = rw_atlz_grupos.cdcooper
-               and cdagenci    = rw_atlz_grupos.cdagenci
+             where cdcooper    = pr_cdcooper
+               and cdagenci    = pr_cdagenci
                and nrdgrupo    = vr_contador;
-                 
-          when others then
-                          
-            -- Montar mensagem de critica
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao inserir grupo! (2) ' || SQLERRM;
-            -- volta para o programa chamador
-            raise vr_exc_erro;
-                          
-        end;
-                        
-      end loop;
-     
-    end if;
-    
-    --commit;
-
+            
+        when others then
+          
+          -- Montar mensagem de critica
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao inserir grupo! (1) ' || SQLERRM;
+          -- volta para o programa chamador
+          raise vr_exc_erro;
+          
+      end;
+            
+    end loop;
+                
   exception
     
     when vr_exc_erro then
@@ -1459,7 +1481,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
   --
   -- Objetivo  : Alterar a agencia do cooperado e relocar em grupo
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Grupos sem membros serao deletados e enviar
+  --                          email ao inativar cargo de delegado.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).
   --
   --------------------------------------------------------------------------  
 
@@ -1487,9 +1511,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
          , grp.nrcpfcgc
          , grp.nrdgrupo
          , grp.idpessoa
+         , res.qtd_membros
+         , res.nmdgrupo
+         , cop.nmrescop
       from tbevento_pessoa_grupos grp
+         , tbevento_grupos        res
+         , crapcop                cop
      where grp.cdcooper = pr_cdcooper
-       and grp.nrcpfcgc = pr_nrcpfcgc;
+       and grp.nrcpfcgc = pr_nrcpfcgc
+       and res.cdcooper = grp.cdcooper
+       and res.cdagenci = grp.cdagenci
+       and res.nrdgrupo = grp.nrdgrupo
+       and cop.cdcooper = grp.cdcooper;
     rw_buscar_cooperado cr_buscar_cooperado%rowtype;
     rw_buscar_conjuge   cr_buscar_cooperado%rowtype;
     
@@ -1501,17 +1534,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
          , vig.cdfuncao
          , vig.dtinicio_vigencia
          , vig.rowid
+         , pes.dsfuncao
       from tbcadast_vig_funcao_pessoa vig
+         , tbcadast_funcao_pessoa     pes
      where vig.cdcooper  = pr_cdcooper
        and vig.nrcpfcgc  = pr_nrcpfcgc
        and vig.cdfuncao in ('DT','DS')
-       and vig.dtfim_vigencia is null;
+       and vig.dtfim_vigencia is null
+       and pes.cdfuncao = vig.cdfuncao;
     rw_busca_funcao cr_busca_funcao%rowtype;
     
     -- Analisa grupo com menor qtd membros
     cursor cr_busca_grupo_novo (pr_cdcooper in tbevento_grupos.cdcooper%type
                                ,pr_cdagenci in tbevento_grupos.cdagenci%type) is
     select dsc.nrdgrupo
+         , dsc.nmdgrupo
       from tbevento_grupos dsc
      where dsc.cdcooper = pr_cdcooper
        and dsc.cdagenci = pr_cdagenci
@@ -1527,9 +1564,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     rw_crapdat cr_crapdat%rowtype;
     
     vr_nrdgrupo number;
-    vr_nrdrowid rowid;
     vr_idprglog number;
-    vr_cdprogra varchar2(400) := 'pc_agencia_conta';
+    vr_cdprogra varchar2(400) := 'agrp0001.pc_agencia_conta';
 
   begin
     
@@ -1608,14 +1644,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
           vr_dscritic := 'Erro ao excluir cooperado de grupo: '||sqlerrm;
           raise vr_exc_erro;
       end;
-        
+
       -- Atualiza tabela de resumo de grupos
       begin
-        update tbevento_grupos
-           set qtd_membros = qtd_membros - 1
-         where cdcooper = rw_buscar_cooperado.cdcooper
-           and cdagenci = rw_buscar_cooperado.cdagenci
-           and nrdgrupo = rw_buscar_cooperado.nrdgrupo;
+        if rw_buscar_cooperado.qtd_membros > 1 then
+          update tbevento_grupos
+             set qtd_membros = qtd_membros - 1
+           where cdcooper = rw_buscar_cooperado.cdcooper
+             and cdagenci = rw_buscar_cooperado.cdagenci
+             and nrdgrupo = rw_buscar_cooperado.nrdgrupo;
+        else
+          delete
+            from tbevento_grupos
+           where cdcooper = rw_buscar_cooperado.cdcooper
+             and cdagenci = rw_buscar_cooperado.cdagenci
+             and nrdgrupo = rw_buscar_cooperado.nrdgrupo;
+        end if;
       exception
         when others then
           vr_dscritic := 'Erro ao atualizar tabela de descricao de grupos(1): '||sqlerrm;
@@ -1629,8 +1673,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
       if cr_busca_funcao%found then
           
-        close cr_busca_funcao;
-
         -- Busca data da cooperativa
         open cr_crapdat (pr_cdcooper);
         fetch cr_crapdat into rw_crapdat;
@@ -1659,7 +1701,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
           raise vr_exc_erro;
         end if;
         
+        begin
+          select c.flgemail
+               , c.conteudo_email
+               , c.lstemail
+               , c.dstitulo_email
+            into vr_flgemail
+               , vr_conteudo_email
+               , vr_lstemail
+               , vr_dstitulo_email
+            from tbevento_param c
+           where c.cdcooper = pr_cdcooper;
+        exception
+          when others then
+            vr_dscritic:= 'Erro ao manipular tabela de parametros: '||sqlerrm;
+            raise vr_exc_saida;  
+        end;
+        
+        -- Se produto esta ativo e cadastrado corretamente
+        if vr_flgemail = 1         and 
+           vr_lstemail is not null and 
+           vr_dstitulo_email is not null and
+           vr_conteudo_email is not null then
+        
+          -- Substituicao de variaveis
+          vr_conteudo_email := replace(vr_conteudo_email,'#numero',trim(gene0002.fn_mask_conta(rw_buscar_cooperado.nrdconta)));
+          vr_conteudo_email := replace(vr_conteudo_email,'#cooper',rw_buscar_cooperado.nmrescop);
+          vr_conteudo_email := replace(vr_conteudo_email,'#operac','trocou de agência');
+          vr_conteudo_email := replace(vr_conteudo_email,'#grupos',rw_buscar_cooperado.nmdgrupo);
+          vr_conteudo_email := replace(vr_conteudo_email,'#cargos',rw_busca_funcao.dsfuncao);            
+
+          -- Ao final, solicitar o envio do Email
+          gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                    ,pr_cdprogra        => vr_cdprogra
+                                    ,pr_des_destino     => vr_lstemail
+                                    ,pr_des_assunto     => vr_dstitulo_email
+                                    ,pr_des_corpo       => vr_conteudo_email
+                                    ,pr_des_anexo       => null
+                                    ,pr_flg_remove_anex => 'S' --> Remover os anexos passados
+                                    ,pr_flg_remete_coop => 'N' --> E-mail da Cooperativa
+                                    ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                    ,pr_des_erro        => vr_dscritic);
+                                  
+          -- Aborta em caso de critica                       
+          if trim(vr_dscritic) is not null then
+            raise vr_exc_erro;
+          end if;
+         
+        end if;
+        
       end if;
+      
+      close cr_busca_funcao;
 
       -- Busca conjuge na agencia nova
       open cr_crapcje (rw_crapass.cdcooper
@@ -1682,10 +1775,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
         close cr_buscar_cooperado;
 
+      else
+        -- Prioridade a grupo que ainda nao ocorreu
+        vr_nrdgrupo := fn_evento_a_ocorrer(rw_crapass.cdcooper
+                                          ,rw_crapass.cdagenci);
       end if;
         
       close cr_crapcje;
-        
+
       -- Caso de alguma forma grupo nao tenha sido atribuido
       if vr_nrdgrupo is null then
               
@@ -1695,11 +1792,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
           
         -- Significa que agencia nao possui grupos
         if cr_busca_grupo_novo%notfound then
-          close cr_busca_grupo_novo;
-          vr_dscritic := 'Agência não possui um grupo formado.';
-          raise vr_exc_erro; 
+          begin
+            rw_busca_grupo_novo.nrdgrupo := 1;
+            vr_nmdgrupo := fn_mascara_nmdgrupo(rw_crapass.cdagenci,rw_busca_grupo_novo.nrdgrupo);
+            insert
+              into tbevento_grupos
+                   (cdcooper
+                   ,cdagenci
+                   ,nrdgrupo
+                   ,nmdgrupo
+                   ,cdoperad
+                   ,dhcriacao
+                   ,qtd_membros
+                   ,flgsituacao)
+            values (rw_crapass.cdcooper
+                   ,rw_crapass.cdagenci
+                   ,rw_busca_grupo_novo.nrdgrupo
+                   ,vr_nmdgrupo
+                   ,1
+                   ,sysdate
+                   ,0
+                   ,1);
+          exception
+            when others then
+              close cr_busca_grupo_novo;
+              vr_dscritic := 'Erro ao criar tbevento_grupos: '||sqlerrm;
+              raise vr_exc_erro;
+          end;
         end if;
-          
+        
         close cr_busca_grupo_novo;
             
         vr_nrdgrupo := rw_busca_grupo_novo.nrdgrupo;
@@ -1718,13 +1839,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                     ,dhalteracao
                     ,idpessoa)
              values (rw_crapass.cdcooper
-                   , rw_crapass.cdagenci -- Agencia nova
-                   , rw_crapass.nrdconta
-                   , rw_crapass.nrcpfcgc
-                   , vr_nrdgrupo
-                   , 1
-                   , sysdate
-                   , rw_crapass.idpessoa);
+                    ,rw_crapass.cdagenci -- Agencia nova
+                    ,rw_crapass.nrdconta
+                    ,rw_crapass.nrcpfcgc
+                    ,vr_nrdgrupo
+                    ,1
+                    ,sysdate
+                    ,rw_crapass.idpessoa);
       exception
         when others then
           vr_dscritic := 'Erro ao inserir em grupo: '||sqlerrm;
@@ -1744,14 +1865,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
           raise vr_exc_erro;
       end;
 
-      -- Gravar log de insercao de funcao
+      -- Gravar log
       gene0001.pc_gera_log(pr_cdcooper => rw_buscar_cooperado.cdcooper
                           ,pr_cdoperad => 1
                           ,pr_dscritic => null
-                          ,pr_dsorigem => 'AIMARO WEB'
-                          ,pr_dstransa => 'Agencia alterada.'||
-                                          ' Grupo Antigo: '||rw_buscar_cooperado.cdagenci||'-'||rw_buscar_cooperado.nrdgrupo||
-                                          ' Grupo Novo: '||rw_crapass.cdagenci||'-'||vr_nrdgrupo
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
+                          ,pr_dstransa => 'Alteracao dados assembleia'
                           ,pr_dttransa => trunc(sysdate)
                           ,pr_flgtrans => 1
                           ,pr_hrtransa => gene0002.fn_busca_time
@@ -1760,13 +1879,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                           ,pr_nrdconta => rw_buscar_cooperado.nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
                           
+      -- Gerar log item
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Mudanca de grupo'
+                               ,pr_dsdadant => rw_buscar_cooperado.nmdgrupo
+                               ,pr_dsdadatu => fn_mascara_nmdgrupo(rw_crapass.cdagenci,vr_nrdgrupo));
+    
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdcooper', pr_tag_cont => rw_crapass.cdcooper,      pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'idpessoa', pr_tag_cont => rw_crapass.idpessoa,      pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdagenci', pr_tag_cont => rw_crapass.cdagenci,      pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrdconta', pr_tag_cont => rw_crapass.nrdconta,      pr_des_erro => vr_dscritic);                           
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrctamd5', pr_tag_cont => md5(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrdgrupo', pr_tag_cont => vr_nrdgrupo,              pr_des_erro => vr_dscritic);                            
-                        
+          
     end if;
 
     -- Gera log no início da execução
@@ -1778,7 +1903,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     -- Grava critica da execucao
     cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                          ,pr_cdprograma    => 'AGRP0001.pc_agencia_conta'
+                          ,pr_cdprograma    => vr_cdprogra
                           ,pr_cdcooper      => nvl(pr_cdcooper,0)
                           ,pr_tpexecucao    => 0   -- Outros
                           ,pr_tpocorrencia  => 4   -- Mensagem
@@ -1787,7 +1912,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                           ,pr_dsmensagem    => 'Sucesso! Cooperativa: '||
                                                 nvl(pr_cdcooper,0)||' Conta: '||
                                                 nvl(pr_nrdconta,0)|| 
-                                               ' Module: AGRP0001 '||pr_dscritic
+                                               ' Module: '||vr_cdprogra
                           ,pr_idprglog      => vr_idprglog);
 
     commit;
@@ -1796,8 +1921,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     
     when vr_exc_erro then
       
+      rollback;
+      
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'AGRP0001.pc_agencia_conta: ' || vr_dscritic;
+      pr_dscritic := vr_cdprogra||': '|| vr_dscritic;
     
       -- Gera log no fim da execução
       pc_log_programa(pr_dstiplog   => 'F'         
@@ -1809,21 +1936,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
       -- Grava critica da execucao
       cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                            ,pr_cdprograma    => 'AGRP0001.pc_agencia_conta'
+                            ,pr_cdprograma    => vr_cdprogra
                             ,pr_cdcooper      => nvl(pr_cdcooper,0)
                             ,pr_tpexecucao    => 0   -- Outros
                             ,pr_tpocorrencia  => 4   -- Mensagem
                             ,pr_cdcriticidade => 0   -- Baixo
                             ,pr_cdmensagem    => 0
-                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
-                                                 ' Conta: '          ||nvl(pr_nrdconta,0)|| 
-                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_dsmensagem    => 'Cooperativa: '||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '     ||nvl(pr_nrdconta,0)|| 
+                                                 ' Module: '    ||pr_dscritic
                             ,pr_idprglog      => vr_idprglog);
 
     when others then
       
+      rollback;
+    
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro nao tratado: AGRP0001.pc_agencia_conta: '||sqlerrm;
+      pr_dscritic := 'Erro nao tratado: '||vr_cdprogra||': '||sqlerrm;
       
       -- Gera log no fim da execução
       pc_log_programa(pr_dstiplog   => 'F'         
@@ -1835,15 +1964,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
       -- Grava critica da execucao
       cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                            ,pr_cdprograma    => 'AGRP0001.pc_agencia_conta'
+                            ,pr_cdprograma    => vr_cdprogra
                             ,pr_cdcooper      => nvl(pr_cdcooper,0)
                             ,pr_tpexecucao    => 0   -- Outros
                             ,pr_tpocorrencia  => 4   -- Mensagem
                             ,pr_cdcriticidade => 0   -- Baixo
                             ,pr_cdmensagem    => 0
-                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
-                                                 ' Conta: '          ||nvl(pr_nrdconta,0)|| 
-                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_dsmensagem    => 'Cooperativa: '||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '     ||nvl(pr_nrdconta,0)|| 
+                                                 ' Module: '    ||pr_dscritic
                             ,pr_idprglog      => vr_idprglog);
 
   end pc_agencia_conta;
@@ -1865,7 +1994,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
   --
   -- Objetivo  : Demitir cooperado e verificar necessidade de relocar em grupo
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Grupos sem membros serao deletados e enviar
+  --                          email ao inativar cargo de delegado.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).
   --
   --------------------------------------------------------------------------  
 
@@ -1893,9 +2024,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
          , grp.nrcpfcgc
          , grp.nrdgrupo
          , grp.idpessoa
+         , res.qtd_membros
+         , res.nmdgrupo
+         , cop.nmrescop
       from tbevento_pessoa_grupos grp
+         , tbevento_grupos        res
+         , crapcop                cop
      where grp.cdcooper = pr_cdcooper
-       and grp.nrcpfcgc = pr_nrcpfcgc;
+       and grp.nrcpfcgc = pr_nrcpfcgc
+       and res.cdcooper = grp.cdcooper
+       and res.cdagenci = grp.cdagenci
+       and res.nrdgrupo = grp.nrdgrupo
+       and cop.cdcooper = grp.cdcooper;
     rw_tabela_de_grupos cr_tabela_de_grupos%rowtype;
     rw_buscar_conjuge   cr_tabela_de_grupos%rowtype;
     
@@ -1907,11 +2047,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
          , vig.cdfuncao
          , vig.dtinicio_vigencia
          , vig.rowid
+         , pes.dsfuncao
       from tbcadast_vig_funcao_pessoa vig
+         , tbcadast_funcao_pessoa pes
      where vig.cdcooper  = pr_cdcooper
        and vig.nrcpfcgc  = pr_nrcpfcgc
        and vig.cdfuncao in ('DT','DS')
-       and vig.dtfim_vigencia is null;
+       and vig.dtfim_vigencia is null
+       and pes.cdfuncao = vig.cdfuncao;
     rw_busca_funcao cr_busca_funcao%rowtype;
     
     -- Analisar se cooperado possui outra conta ativa para relocacao
@@ -1954,12 +2097,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     rw_crapdat cr_crapdat%rowtype;
     
     vr_nrdgrupo number;
-    vr_nrdrowid rowid;
     vr_idprglog number;
-    vr_cdprogra varchar2(400) := 'pc_demitir_conta';
+    vr_cdprogra varchar2(400) := 'agrp0001.pc_demitir_conta';
     
   begin
-    
+
     -- Gera log no início da execução
     pc_log_programa(pr_dstiplog   => 'I'         
                    ,pr_cdprograma => vr_cdprogra
@@ -2037,11 +2179,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
         
       -- Atualiza tabela de resumo de grupos
       begin
-        update tbevento_grupos
-           set qtd_membros = qtd_membros - 1
-         where cdcooper = rw_tabela_de_grupos.cdcooper
-           and cdagenci = rw_tabela_de_grupos.cdagenci
-           and nrdgrupo = rw_tabela_de_grupos.nrdgrupo;
+        if rw_tabela_de_grupos.qtd_membros > 1 then
+          update tbevento_grupos
+             set qtd_membros = qtd_membros - 1
+           where cdcooper = rw_tabela_de_grupos.cdcooper
+             and cdagenci = rw_tabela_de_grupos.cdagenci
+             and nrdgrupo = rw_tabela_de_grupos.nrdgrupo;
+        else
+          delete
+            from tbevento_grupos
+           where cdcooper = rw_tabela_de_grupos.cdcooper
+             and cdagenci = rw_tabela_de_grupos.cdagenci
+             and nrdgrupo = rw_tabela_de_grupos.nrdgrupo;
+        end if;
       exception
         when others then
           vr_dscritic := 'Erro ao atualizar tabela de descricao de grupos(1): '||sqlerrm;
@@ -2052,8 +2202,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       gene0001.pc_gera_log(pr_cdcooper => rw_tabela_de_grupos.cdcooper
                           ,pr_cdoperad => 1
                           ,pr_dscritic => null
-                          ,pr_dsorigem => 'AIMARO WEB'
-                          ,pr_dstransa => 'Conta Demitida: removida de grupo.'
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
+                          ,pr_dstransa => 'Alteracao dados assembleia'
                           ,pr_dttransa => trunc(sysdate)
                           ,pr_flgtrans => 1
                           ,pr_hrtransa => gene0002.fn_busca_time
@@ -2061,14 +2211,118 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                           ,pr_nmdatela => 'AGRP0001'
                           ,pr_nrdconta => rw_tabela_de_grupos.nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
+                          
+      -- Gerar log item
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Cooperado perdeu grupo'
+                               ,pr_dsdadant => rw_tabela_de_grupos.nrdgrupo
+                               ,pr_dsdadatu => ' ');
 
       -- Analisar se cooperado possui outra conta ativa para relocacao
       open cr_buscar_conta_ativa (rw_tabela_de_grupos.cdcooper
                                  ,rw_tabela_de_grupos.nrdconta
                                  ,rw_tabela_de_grupos.nrcpfcgc);
       fetch cr_buscar_conta_ativa into rw_buscar_conta_ativa;
+      close cr_buscar_conta_ativa;
 
-      if    cr_buscar_conta_ativa%notfound then
+      -- Se nao possui mais conta ativa ou mudou de agencia perde funcao
+      if  rw_buscar_conta_ativa.cdagenci is null or
+         (rw_buscar_conta_ativa.cdagenci <> rw_tabela_de_grupos.cdagenci) then
+
+        -- Se possuir funcao de delegado, deve inativa-la
+        open cr_busca_funcao (rw_tabela_de_grupos.cdcooper
+                             ,rw_tabela_de_grupos.nrcpfcgc);
+        fetch cr_busca_funcao into rw_busca_funcao;
+
+        -- Cooperado deve possuir funcao de delegado ativa, logica so ira inativar
+        -- funcao se ele nao possuir a sua conta mais antiga dentro do mesmo PA
+        if cr_busca_funcao%found then
+            
+          -- Busca data da cooperativa
+          open cr_crapdat (pr_cdcooper);
+          fetch cr_crapdat into rw_crapdat;
+            
+          -- Se nao encontrar aborta
+          if cr_crapdat%notfound then
+            close cr_crapdat;
+            vr_dscritic := 'Data da cooperativa não cadastrada.';
+            raise vr_exc_erro;
+          end if;
+            
+          close cr_crapdat;
+            
+          -- Inativa cargo de delegado
+          tela_pessoa.pc_inativa_cargos (pr_cdcooper          => rw_busca_funcao.cdcooper
+                                        ,pr_nrcpfcgc          => rw_busca_funcao.nrcpfcgc
+                                        ,pr_cdfuncao          => rw_busca_funcao.cdfuncao
+                                        ,pr_dtinicio_vigencia => rw_busca_funcao.dtinicio_vigencia
+                                        ,pr_dtfim_vigencia    => rw_crapdat.dtmvtolt
+                                        ,pr_nrdrowid          => rw_busca_funcao.rowid
+                                        ,pr_cdoperad          => 1
+                                        ,pr_cdcritic          => vr_cdcritic
+                                        ,pr_dscritic          => vr_dscritic);
+               
+          -- Aborta em caso de critica                       
+          if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
+            raise vr_exc_erro;
+          end if;
+          
+          begin
+            select c.flgemail
+                 , c.conteudo_email
+                 , c.lstemail
+                 , c.dstitulo_email
+              into vr_flgemail
+                 , vr_conteudo_email
+                 , vr_lstemail
+                 , vr_dstitulo_email
+              from tbevento_param c
+             where c.cdcooper = pr_cdcooper;
+          exception
+            when others then
+              vr_dscritic:= 'Erro ao manipular tabela de parametros: '||sqlerrm;
+              raise vr_exc_saida;  
+          end;
+        
+          -- Se produto esta ativo e cadastrado corretamente
+          if vr_flgemail = 1         and 
+             vr_lstemail is not null and 
+             vr_dstitulo_email is not null and
+             vr_conteudo_email is not null then
+          
+            -- Substituicao de variaveis
+            vr_conteudo_email := replace(vr_conteudo_email,'#numero',trim(gene0002.fn_mask_conta(rw_tabela_de_grupos.nrdconta)));
+            vr_conteudo_email := replace(vr_conteudo_email,'#cooper',rw_tabela_de_grupos.nmrescop);
+            vr_conteudo_email := replace(vr_conteudo_email,'#operac','foi demitida');
+            vr_conteudo_email := replace(vr_conteudo_email,'#grupos',rw_tabela_de_grupos.nmdgrupo);
+            vr_conteudo_email := replace(vr_conteudo_email,'#cargos',rw_busca_funcao.dsfuncao);            
+
+            -- Ao final, solicitar o envio do Email
+            gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
+                                      ,pr_cdprogra        => vr_cdprogra
+                                      ,pr_des_destino     => vr_lstemail
+                                      ,pr_des_assunto     => vr_dstitulo_email
+                                      ,pr_des_corpo       => vr_conteudo_email
+                                      ,pr_des_anexo       => null
+                                      ,pr_flg_remove_anex => 'S' --> Remover os anexos passados
+                                      ,pr_flg_remete_coop => 'N' --> E-mail da Cooperativa
+                                      ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                      ,pr_des_erro        => vr_dscritic);
+                                    
+            -- Aborta em caso de critica                       
+            if trim(vr_dscritic) is not null then
+              raise vr_exc_erro;
+            end if;
+
+          end if;
+
+        end if;
+        
+        close cr_busca_funcao;
+
+      end if;
+        
+      if rw_buscar_conta_ativa.cdagenci is null then
 
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdcooper', pr_tag_cont => rw_tabela_de_grupos.cdcooper,      pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'idpessoa', pr_tag_cont => rw_tabela_de_grupos.idpessoa,      pr_des_erro => vr_dscritic);
@@ -2079,50 +2333,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdstatus', pr_tag_cont => '0',                               pr_des_erro => vr_dscritic);                           
 
       else
-
+        
         if rw_buscar_conta_ativa.cdagenci <> rw_tabela_de_grupos.cdagenci then
-
-          -- Se possuir funcao de delegado, deve inativa-la
-          open cr_busca_funcao (rw_buscar_conta_ativa.cdcooper
-                               ,rw_buscar_conta_ativa.nrcpfcgc);
-          fetch cr_busca_funcao into rw_busca_funcao;
-
-          -- Cooperado deve possuir funcao de delegado ativa, logica so ira inativar
-          -- funcao se ele nao possuir a sua conta mais antiga dentro do mesmo PA
-          if cr_busca_funcao%found then
-              
-            -- Busca data da cooperativa
-            open cr_crapdat (pr_cdcooper);
-            fetch cr_crapdat into rw_crapdat;
-              
-            -- Se nao encontrar aborta
-            if cr_crapdat%notfound then
-              close cr_crapdat;
-              vr_dscritic := 'Data da cooperativa não cadastrada.';
-              raise vr_exc_erro;
-            end if;
-              
-            close cr_crapdat;
-              
-            -- Inativa cargo de delegado
-            tela_pessoa.pc_inativa_cargos (pr_cdcooper          => rw_busca_funcao.cdcooper
-                                          ,pr_nrcpfcgc          => rw_busca_funcao.nrcpfcgc
-                                          ,pr_cdfuncao          => rw_busca_funcao.cdfuncao
-                                          ,pr_dtinicio_vigencia => rw_busca_funcao.dtinicio_vigencia
-                                          ,pr_dtfim_vigencia    => rw_crapdat.dtmvtolt
-                                          ,pr_nrdrowid          => rw_busca_funcao.rowid
-                                          ,pr_cdoperad          => 1
-                                          ,pr_cdcritic          => vr_cdcritic
-                                          ,pr_dscritic          => vr_dscritic);
-                 
-            -- Aborta em caso de critica                       
-            if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
-              raise vr_exc_erro;
-            end if;
-
-          end if;
-          
-          close cr_busca_funcao;
 
           -- Busca conjuge na agencia nova
           open cr_crapcje (rw_buscar_conta_ativa.cdcooper
@@ -2132,7 +2344,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
             
           -- Caso encontre conjuge
           if cr_crapcje%found then
-            
+           
             -- Busca grupo do conjuge
             open cr_tabela_de_grupos (rw_crapcje.cdcooper
                                      ,rw_crapcje.nrcpfcgc);
@@ -2142,36 +2354,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
             if cr_tabela_de_grupos%found then
               vr_nrdgrupo := rw_buscar_conjuge.nrdgrupo;
             end if;
-            
+           
             close cr_tabela_de_grupos;
             
+          else
+            -- Prioridade a grupo que ainda nao ocorreu
+            vr_nrdgrupo := fn_evento_a_ocorrer(rw_buscar_conta_ativa.cdcooper
+                                              ,rw_buscar_conta_ativa.cdagenci);
           end if;
-            
+          
           close cr_crapcje;
 
         -- Se nao mudou de agencia mantem no mesmo grupo
         elsif rw_buscar_conta_ativa.cdagenci = rw_tabela_de_grupos.cdagenci then
-        
           vr_nrdgrupo := rw_tabela_de_grupos.nrdgrupo;
-          
         end if;
-        
+
         -- Caso de alguma forma grupo nao tenha sido atribuido
         if vr_nrdgrupo is null then
-              
+             
           open cr_busca_grupo_novo (rw_buscar_conta_ativa.cdcooper
                                    ,rw_buscar_conta_ativa.cdagenci);
           fetch cr_busca_grupo_novo into rw_busca_grupo_novo;
-          
+
           -- Significa que agencia nao possui grupos
           if cr_busca_grupo_novo%notfound then
-            close cr_busca_grupo_novo;
-            vr_dscritic := 'Agência não possui um grupo formado.';
-            raise vr_exc_erro; 
+            begin
+              rw_busca_grupo_novo.nrdgrupo := 1;
+              vr_nmdgrupo := fn_mascara_nmdgrupo(rw_buscar_conta_ativa.cdagenci,rw_busca_grupo_novo.nrdgrupo);
+              insert
+                into tbevento_grupos
+                     (cdcooper
+                     ,cdagenci
+                     ,nrdgrupo
+                     ,nmdgrupo
+                     ,cdoperad
+                     ,dhcriacao
+                     ,qtd_membros
+                     ,flgsituacao)
+              values (rw_buscar_conta_ativa.cdcooper
+                     ,rw_buscar_conta_ativa.cdagenci
+                     ,rw_busca_grupo_novo.nrdgrupo
+                     ,vr_nmdgrupo
+                     ,1
+                     ,sysdate
+                     ,0
+                     ,1);
+            exception
+              when others then
+                close cr_busca_grupo_novo;
+                vr_dscritic := 'Erro ao criar tbevento_grupos: '||sqlerrm;
+                raise vr_exc_erro;
+            end;
           end if;
           
           close cr_busca_grupo_novo;
-            
+          
           vr_nrdgrupo := rw_busca_grupo_novo.nrdgrupo;
             
         end if;   
@@ -2200,7 +2438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
             vr_dscritic := 'Erro ao inserir em grupo(1): '||sqlerrm;
             raise vr_exc_erro;
         end;
-          
+         
         -- Atualiza tabela de resumo de grupos
         begin
           update tbevento_grupos
@@ -2213,20 +2451,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
             vr_dscritic := 'Erro ao atualizar tabela de descricao de grupos(2): '||sqlerrm;
             raise vr_exc_erro;
         end;
-          
-        -- Gravar log de insercao de funcao
-        gene0001.pc_gera_log(pr_cdcooper => rw_buscar_conta_ativa.cdcooper
-                            ,pr_cdoperad => 1
-                            ,pr_dscritic => null
-                            ,pr_dsorigem => 'AIMARO WEB'
-                            ,pr_dstransa => 'Conta Demitida: cooperado relocado em grupo.'
-                            ,pr_dttransa => trunc(sysdate)
-                            ,pr_flgtrans => 1
-                            ,pr_hrtransa => gene0002.fn_busca_time
-                            ,pr_idseqttl => 1
-                            ,pr_nmdatela => 'AGRP0001'
-                            ,pr_nrdconta => rw_buscar_conta_ativa.nrdconta
-                            ,pr_nrdrowid => vr_nrdrowid);
+        
+        -- Gerar log item
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Cooperado relocado em grupo.'
+                                 ,pr_dsdadant => rw_tabela_de_grupos.nrdgrupo
+                                 ,pr_dsdadatu => vr_nrdgrupo);
 
         -- Conta removida de grupo e outra conta relocada em grupo        
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdcooper', pr_tag_cont => rw_buscar_conta_ativa.cdcooper,      pr_des_erro => vr_dscritic);
@@ -2236,11 +2466,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrctamd5', pr_tag_cont => md5(rw_buscar_conta_ativa.nrdconta), pr_des_erro => vr_dscritic);                           
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'nrdgrupo', pr_tag_cont => vr_nrdgrupo,                         pr_des_erro => vr_dscritic);                           
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdstatus', pr_tag_cont => '1',                                 pr_des_erro => vr_dscritic);                           
-     
-      end if; --cr_buscar_conta_ativa;
 
+      end if;
+      
     end if;
-    
+
     -- Gera log no início da execução
     pc_log_programa(pr_dstiplog   => 'F'         
                    ,pr_cdprograma => vr_cdprogra
@@ -2250,7 +2480,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     -- Grava critica da execucao
     cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                          ,pr_cdprograma    => 'AGRP0001.pc_demitir_conta'
+                          ,pr_cdprograma    => vr_cdprogra
                           ,pr_cdcooper      => nvl(pr_cdcooper,0)
                           ,pr_tpexecucao    => 0   -- Outros
                           ,pr_tpocorrencia  => 4   -- Mensagem
@@ -2259,7 +2489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                           ,pr_dsmensagem    => 'Sucesso! Cooperativa: '||
                                                 nvl(pr_cdcooper,0)||' Conta: '||
                                                 nvl(pr_nrdconta,0)|| 
-                                               ' Module: AGRP0001 '||pr_dscritic
+                                               ' Module: '||vr_cdprogra
                           ,pr_idprglog      => vr_idprglog); 
 
     commit;
@@ -2268,8 +2498,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     when vr_exc_erro then
       
+      rollback;
+    
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'AGRP0001.pc_demitir_conta: ' || vr_dscritic;
+      pr_dscritic := vr_cdprogra||': '||vr_dscritic;
     
       -- Gera log no fim da execução
       pc_log_programa(pr_dstiplog   => 'F'         
@@ -2281,21 +2513,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
       -- Grava critica da execucao
       cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                            ,pr_cdprograma    => 'AGRP0001.pc_demitir_conta'
+                            ,pr_cdprograma    => vr_cdprogra
                             ,pr_cdcooper      => nvl(pr_cdcooper,0)
                             ,pr_tpexecucao    => 0   -- Outros
                             ,pr_tpocorrencia  => 4   -- Mensagem
                             ,pr_cdcriticidade => 0   -- Baixo
                             ,pr_cdmensagem    => 0
-                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
-                                                 ' Conta: '          ||nvl(pr_nrdconta,0)|| 
-                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_dsmensagem    => 'Cooperativa: '||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '     ||nvl(pr_nrdconta,0)|| 
+                                                 ' Module: '    ||pr_dscritic
                             ,pr_idprglog      => vr_idprglog);
 
     when others then
       
+      rollback;
+      
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro nao tratado: AGRP0001.pc_demitir_conta: '||sqlerrm;
+      pr_dscritic := 'Erro nao tratado: '||vr_cdprogra||': '||sqlerrm;
       
       -- Gera log no fim da execução
       pc_log_programa(pr_dstiplog   => 'F'         
@@ -2307,15 +2541,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
       -- Grava critica da execucao
       cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                            ,pr_cdprograma    => 'AGRP0001.pc_demitir_conta'
+                            ,pr_cdprograma    => vr_cdprogra
                             ,pr_cdcooper      => nvl(pr_cdcooper,0)
                             ,pr_tpexecucao    => 0   -- Outros
                             ,pr_tpocorrencia  => 4   -- Mensagem
                             ,pr_cdcriticidade => 0   -- Baixo
                             ,pr_cdmensagem    => 0
-                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
-                                                 ' Conta: '          ||nvl(pr_nrdconta,0)|| 
-                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_dsmensagem    => 'Cooperativa: '||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '     ||nvl(pr_nrdconta,0)|| 
+                                                 ' Module: '    ||pr_dscritic
                             ,pr_idprglog      => vr_idprglog);
 
   end pc_demitir_conta;
@@ -2337,7 +2571,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
   --
   -- Objetivo  : Admitir cooperados e verificar necessidade de relocar em grupo
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Melhoria na geracao de logs, se nao encontrar grupos
+  --                          deve-se criar um novo. Locar em assembleia que nao ocorreu.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).
   --
   --------------------------------------------------------------------------  
 
@@ -2392,13 +2628,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     select cop.flgrupos
       from crapcop cop
      where cop.cdcooper = pr_cdcooper
-	   and cop.flgrupos = 1;  -- Evento assemblear ativo
+     and cop.flgrupos = 1;  -- Evento assemblear ativo
     rw_crapcop cr_crapcop%rowtype;
 
     vr_nrdgrupo number;
-    vr_nrdrowid rowid;
     vr_idprglog number;
-    vr_cdprogra varchar2(400) := 'pc_admitir_conta';
+    vr_cdprogra varchar2(400) := 'agrp0001.pc_admitir_conta';
     
   begin
     
@@ -2510,10 +2745,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
           vr_nrdgrupo := rw_buscar_conjuge.nrdgrupo;
         end if;
 
+      else
+        -- Prioridade a grupo que ainda nao ocorreu
+        vr_nrdgrupo := fn_evento_a_ocorrer(rw_crapass.cdcooper
+                                          ,rw_crapass.cdagenci);
       end if;
         
       close cr_crapcje;
-        
+
       -- Caso de alguma forma grupo nao tenha sido atribuido
       if vr_nrdgrupo is null then
               
@@ -2523,9 +2762,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
           
         -- Significa que agencia nao possui grupos
         if cr_busca_grupo_novo%notfound then
-          close cr_busca_grupo_novo;
-          vr_dscritic := 'Agência não possui um grupo formado.';
-          raise vr_exc_erro; 
+          begin
+            rw_busca_grupo_novo.nrdgrupo := 1;
+            vr_nmdgrupo := fn_mascara_nmdgrupo(rw_crapass.cdagenci,rw_busca_grupo_novo.nrdgrupo);
+            insert
+              into tbevento_grupos
+                   (cdcooper
+                   ,cdagenci
+                   ,nrdgrupo
+                   ,nmdgrupo
+                   ,cdoperad
+                   ,dhcriacao
+                   ,qtd_membros
+                   ,flgsituacao)
+            values (rw_crapass.cdcooper
+                   ,rw_crapass.cdagenci
+                   ,rw_busca_grupo_novo.nrdgrupo
+                   ,vr_nmdgrupo
+                   ,1
+                   ,sysdate
+                   ,0
+                   ,1);
+          exception
+            when others then
+              close cr_busca_grupo_novo;
+              vr_dscritic := 'Erro ao criar tbevento_grupos: '||sqlerrm;
+              raise vr_exc_erro;
+          end;
         end if;
           
         close cr_busca_grupo_novo;
@@ -2576,8 +2839,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       gene0001.pc_gera_log(pr_cdcooper => rw_crapass.cdcooper
                           ,pr_cdoperad => 1
                           ,pr_dscritic => null
-                          ,pr_dsorigem => 'AIMARO WEB'
-                          ,pr_dstransa => 'Conta Admitida: cooperado locado em grupo.'
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
+                          ,pr_dstransa => 'Alteracao dados assembleia'
                           ,pr_dttransa => trunc(sysdate)
                           ,pr_flgtrans => 1
                           ,pr_hrtransa => gene0002.fn_busca_time
@@ -2585,6 +2848,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                           ,pr_nmdatela => 'AGRP0001'
                           ,pr_nrdconta => rw_crapass.nrdconta
                           ,pr_nrdrowid => vr_nrdrowid);
+                          
+      -- Gerar log item
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Cooperado locado em grupo'
+                               ,pr_dsdadant => ' '
+                               ,pr_dsdadatu => vr_nrdgrupo);
 
       -- Popular variaveis do XML
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'cdcooper', pr_tag_cont => rw_crapass.cdcooper,      pr_des_erro => vr_dscritic);
@@ -2605,7 +2874,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     -- Grava critica da execucao
     cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                          ,pr_cdprograma    => 'AGRP0001.pc_admitir_conta'
+                          ,pr_cdprograma    => vr_cdprogra
                           ,pr_cdcooper      => nvl(pr_cdcooper,0)
                           ,pr_tpexecucao    => 0   -- Outros
                           ,pr_tpocorrencia  => 4   -- Mensagem
@@ -2614,7 +2883,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                           ,pr_dsmensagem    => 'Sucesso! Cooperativa: '||
                                                 nvl(pr_cdcooper,0)||' Conta: '||
                                                 nvl(pr_nrdconta,0)|| 
-                                               ' Module: AGRP0001 '||pr_dscritic
+                                               ' Module: '||vr_cdprogra
                           ,pr_idprglog      => vr_idprglog);
 
     commit;
@@ -2623,8 +2892,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     when vr_exc_erro then
       
+      rollback;
+    
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'AGRP0001.pc_admitir_conta: ' || vr_dscritic;
+      pr_dscritic := vr_cdprogra||': '||vr_dscritic;
     
       -- Gera log no fim da execução
       pc_log_programa(pr_dstiplog   => 'F'         
@@ -2636,21 +2907,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
       -- Grava critica da execucao
       cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                            ,pr_cdprograma    => 'AGRP0001.pc_admitir_conta'
+                            ,pr_cdprograma    => vr_cdprogra
                             ,pr_cdcooper      => nvl(pr_cdcooper,0)
                             ,pr_tpexecucao    => 0   -- Outros
                             ,pr_tpocorrencia  => 4   -- Mensagem
                             ,pr_cdcriticidade => 0   -- Baixo
                             ,pr_cdmensagem    => 0
-                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
-                                                 ' Conta: '          ||nvl(pr_nrdconta,0)|| 
-                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_dsmensagem    => 'Cooperativa: '||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '     ||nvl(pr_nrdconta,0)|| 
+                                                 ' Module: '    ||pr_dscritic
                             ,pr_idprglog      => vr_idprglog);
 
     when others then
       
+      rollback;
+    
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro nao tratado: AGRP0001.pc_admitir_conta: '||sqlerrm;
+      pr_dscritic := 'Erro nao tratado: '||vr_cdprogra||': '||sqlerrm;
       
       -- Gera log no fim da execução
       pc_log_programa(pr_dstiplog   => 'F'         
@@ -2662,15 +2935,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
       -- Grava critica da execucao
       cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                            ,pr_cdprograma    => 'AGRP0001.pc_admitir_conta'
+                            ,pr_cdprograma    => vr_cdprogra
                             ,pr_cdcooper      => nvl(pr_cdcooper,0)
                             ,pr_tpexecucao    => 0   -- Outros
                             ,pr_tpocorrencia  => 4   -- Mensagem
                             ,pr_cdcriticidade => 0   -- Baixo
                             ,pr_cdmensagem    => 0
-                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
-                                                 ' Conta: '          ||nvl(pr_nrdconta,0)|| 
-                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_dsmensagem    => 'Cooperativa: '||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '     ||nvl(pr_nrdconta,0)|| 
+                                                 ' Module: '    ||pr_dscritic
                             ,pr_idprglog      => vr_idprglog);
 
   end pc_admitir_conta;
@@ -2692,7 +2965,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
   --
   -- Objetivo  : Retornar informacoes completas do cooperado via XML
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Padronizacao e melhoria na geracao de logs.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).
   --
   --------------------------------------------------------------------------  
 
@@ -2733,10 +3007,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     
     vr_contador integer := 0;
     vr_idprglog number;
-    vr_cdprogra varchar2(400) := 'pc_obtem_nova_pessoa';
+    vr_cdprogra varchar2(400) := 'agrp0001.pc_obtem_nova_pessoa';
 
   begin
-    
+
     -- Gera log no início da execução
     pc_log_programa(pr_dstiplog   => 'I'         
                    ,pr_cdprograma => vr_cdprogra
@@ -2804,7 +3078,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     -- Grava critica da execucao
     cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                          ,pr_cdprograma    => 'AGRP0001.pc_obtem_nova_pessoa'
+                          ,pr_cdprograma    => vr_cdprogra
                           ,pr_cdcooper      => nvl(pr_cdcooper,0)
                           ,pr_tpexecucao    => 0   -- Outros
                           ,pr_tpocorrencia  => 4   -- Mensagem
@@ -2813,7 +3087,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
                           ,pr_dsmensagem    => 'Sucesso! Cooperativa: '||
                                                 nvl(pr_cdcooper,0)||' Idpessoa: '||
                                                 nvl(pr_idpessoa,0)|| 
-                                               ' Module: AGRP0001 '||pr_dscritic
+                                               ' Module: '||vr_cdprogra
                           ,pr_idprglog      => vr_idprglog);
 
     commit;                                              
@@ -2822,8 +3096,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
     when vr_exc_erro then
       
+      rollback;
+    
       pr_cdcritic := vr_cdcritic;
-      pr_dscritic := 'AGRP0001.pc_obtem_nova_pessoa: ' || vr_dscritic;
+      pr_dscritic := vr_cdprogra||': '||vr_dscritic;
     
       -- Gera log no fim da execução
       pc_log_programa(pr_dstiplog   => 'F'         
@@ -2835,21 +3111,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
       -- Grava critica da execucao
       cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                            ,pr_cdprograma    => 'AGRP0001.pc_obtem_nova_pessoa'
+                            ,pr_cdprograma    => vr_cdprogra
                             ,pr_cdcooper      => nvl(pr_cdcooper,0)
                             ,pr_tpexecucao    => 0   -- Outros
                             ,pr_tpocorrencia  => 4   -- Mensagem
                             ,pr_cdcriticidade => 0   -- Baixo
                             ,pr_cdmensagem    => 0
-                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
-                                                 ' Idpessoa: '       ||nvl(pr_idpessoa,0)|| 
-                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_dsmensagem    => 'Cooperativa: '||nvl(pr_cdcooper,0)||
+                                                 ' Idpessoa: '  ||nvl(pr_idpessoa,0)|| 
+                                                 ' Module: '    ||pr_dscritic
                             ,pr_idprglog      => vr_idprglog);
 
     when others then
       
+      rollback;
+    
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro nao tratado: AGRP0001.pc_obtem_nova_pessoa: '||sqlerrm;
+      pr_dscritic := 'Erro nao tratado: '||vr_cdprogra||': '||sqlerrm;
       
       -- Gera log no fim da execução
       pc_log_programa(pr_dstiplog   => 'F'         
@@ -2861,15 +3139,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
 
       -- Grava critica da execucao
       cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                            ,pr_cdprograma    => 'AGRP0001.pc_obtem_nova_pessoa'
+                            ,pr_cdprograma    => vr_cdprogra
                             ,pr_cdcooper      => nvl(pr_cdcooper,0)
                             ,pr_tpexecucao    => 0   -- Outros
                             ,pr_tpocorrencia  => 4   -- Mensagem
                             ,pr_cdcriticidade => 0   -- Baixo
                             ,pr_cdmensagem    => 0
-                            ,pr_dsmensagem    => 'Cooperativa: '     ||nvl(pr_cdcooper,0)||
-                                                 ' Idpessoa: '       ||nvl(pr_idpessoa,0)|| 
-                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_dsmensagem    => 'Cooperativa: '||nvl(pr_cdcooper,0)||
+                                                 ' Idpessoa: '  ||nvl(pr_idpessoa,0)|| 
+                                                 ' Module: '    ||pr_dscritic
                             ,pr_idprglog      => vr_idprglog);
 
   end pc_obtem_nova_pessoa;
@@ -3071,7 +3349,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
   --
   -- Objetivo  : Fazer controle de cartoes para envio ao soa
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Criado tabela tbevento_param para controle.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).
   --
   --------------------------------------------------------------------------  
 
@@ -3121,6 +3400,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
     
     close cr_crapass;
     
+    -- Verifica parametros cadastrados em base
+    -- Default zero, em periodos de implantacao
+    -- o parametro pode ser alterado para 1
+    -- para que o sistema nao seja sobrecarregado
+    begin
+      select nvl(c.flag_integra,0)
+        into vr_tpsituacao
+        from tbevento_param c
+       where c.cdcooper = pr_cdcooper;
+    exception
+      when others then
+        vr_dscritic := 'Erro ao manipular tbevento_param: '||sqlerrm;
+        raise vr_exc_saida;
+    end;  
+    
     begin
       -- Inserir na tabela de monitoramento do soa
       insert 
@@ -3138,7 +3432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       values                      (rw_crapass.cdcooper
                                   ,rw_crapass.idpessoa
                                   ,sysdate
-                                  ,0
+                                  ,vr_tpsituacao
                                   ,null
                                   ,null
                                   ,null
@@ -3163,6 +3457,195 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
       pr_dscritic := 'Erro nao tratado: AGRP0001.pc_cartoes_conta: '||sqlerrm;
       
   end pc_cartoes_conta;
+
+  procedure pc_atualiza_matric_j (pr_cdcooper in  crapass.cdcooper%type
+                                 ,pr_nrdconta in  crapass.nrdconta%type
+                                 ,pr_nrcpfcgc in  crapass.nrcpfcgc%type     
+                                 ,pr_cdcritic out crapcri.cdcritic%type
+                                 ,pr_dscritic out varchar2) is
+
+    ---------------------------------------------------------------------------
+    --
+    --  Programa : pc_atualiza_matric_j
+    --  Sistema  : Ayllos Web
+    --  Autor    : Gabriel Marcos
+    --  Data     : Julho/2019                 Ultima atualizacao:
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Objetivo  : Atualizar cpf/cnpj na tabela de assembleias
+    --             Receber acao da tela matric opcao j
+    --
+    -- Alteracoes:
+    --
+    ---------------------------------------------------------------------------
+
+    -- Verificar existencia na tabela de grupos
+    cursor cr_tbevento (pr_cdcooper in crapass.cdcooper%type
+                       ,pr_nrdconta in crapass.nrdconta%type) is
+    select pes.idpessoa
+         , pes.nrcpfcgc
+      from tbcadast_pessoa pes
+         , crapass ass
+     where pes.nrcpfcgc = ass.nrcpfcgc
+       and ass.cdcooper = pr_cdcooper
+       and ass.nrdconta = pr_nrdconta; 
+    rw_tbevento cr_tbevento%rowtype;
+    
+    -- Busca contas do cooperado para gravar log
+    cursor cr_busca_cooperado (pr_cdcooper in crapass.cdcooper%type
+                              ,pr_nrdconta in crapass.nrdconta%type) is
+    select xxx.cdcooper
+         , xxx.nrdconta
+      from crapass ass
+         , crapass xxx
+     where ass.cdcooper = pr_cdcooper
+       and ass.nrdconta = pr_nrdconta
+       and xxx.cdcooper = ass.cdcooper
+       and xxx.nrcpfcgc = ass.nrcpfcgc
+       and xxx.dtdemiss is null;
+
+    vr_exc_erro exception;
+    vr_cdcritic number;
+    vr_dscritic varchar2(4000); 
+    vr_idprglog number := 0;
+    vr_cdprogra varchar2(400) := 'agrp0001.pc_atualiza_matric_j';
+
+  begin
+
+    -- Gera log no início da execução
+    pc_log_programa(pr_dstiplog   => 'I'         
+                   ,pr_cdprograma => vr_cdprogra
+                   ,pr_cdcooper   => nvl(pr_cdcooper,0)
+                   ,pr_tpexecucao => 0     
+                   ,pr_idprglog   => vr_idprglog); 
+
+    -- Busca cooperado na tabela de grupos
+    open cr_tbevento (pr_cdcooper, pr_nrdconta);
+    fetch cr_tbevento into rw_tbevento;
+    close cr_tbevento;
+    
+    -- Se nao encontrar critica acao
+    if rw_tbevento.idpessoa is null then
+      vr_dscritic := 'Cooperado não encontrado na tabela de associados.';
+      raise vr_exc_erro;
+    else
+      begin
+        -- Se encontrar atualiza o cpf/cnpj
+        update tbevento_pessoa_grupos pes
+           set pes.nrcpfcgc = pr_nrcpfcgc
+         where pes.cdcooper = pr_cdcooper
+           and pes.idpessoa = rw_tbevento.idpessoa;
+      exception
+        when others then
+          vr_dscritic := 'Erro ao manipular tbevento_pessoa_grupos - '||sqlerrm;
+          raise vr_exc_erro;
+      end;
+    end if;
+    
+    for rw_busca_cooperado in cr_busca_cooperado (pr_cdcooper,pr_nrdconta) loop
+    
+      gene0001.pc_gera_log(pr_cdcooper => rw_busca_cooperado.cdcooper
+                          ,pr_cdoperad => '1'
+                          ,pr_dscritic => null
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
+                          ,pr_dstransa => 'Alteracao dados assembleia'
+                          ,pr_dttransa => trunc(sysdate)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => gene0002.fn_busca_time
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'CADGRP'
+                          ,pr_nrdconta => rw_busca_cooperado.nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+                        
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => 'Mudanca de cpf/cnpj'
+                               ,pr_dsdadant => rw_tbevento.nrcpfcgc
+                               ,pr_dsdadatu => pr_nrcpfcgc);
+                             
+    end loop;
+
+    -- Gera log no fim da execução
+    pc_log_programa(pr_dstiplog   => 'F'         
+                   ,pr_cdprograma => vr_cdprogra
+                   ,pr_cdcooper   => nvl(pr_cdcooper,0)
+                   ,pr_tpexecucao => 0    
+                   ,pr_flgsucesso => 1
+                   ,pr_idprglog   => vr_idprglog);    
+                   
+    -- Grava critica da execucao
+    cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                          ,pr_cdprograma    => vr_cdprogra
+                          ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                          ,pr_tpexecucao    => 0   -- Outros
+                          ,pr_tpocorrencia  => 4   -- Mensagem
+                          ,pr_cdcriticidade => 0   -- Baixo
+                          ,pr_cdmensagem    => 0
+                          ,pr_dsmensagem    => 'Sucesso! Cooperativa: '||
+                                                nvl(pr_cdcooper,0)||' Conta: '||
+                                                nvl(pr_nrdconta,0)||' Cpf: '||
+                                                nvl(pr_nrcpfcgc,0)||
+                                               ' Module: '||vr_cdprogra
+                          ,pr_idprglog      => vr_idprglog);                       
+  
+  exception
+
+    when vr_exc_erro then
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_cdprogra||': '||vr_dscritic;
+    
+      -- Gera log no fim da execução
+      pc_log_programa(pr_dstiplog   => 'F'         
+                     ,pr_cdprograma => vr_cdprogra
+                     ,pr_cdcooper   => nvl(pr_cdcooper,0)
+                     ,pr_tpexecucao => 0    
+                     ,pr_flgsucesso => 0 
+                     ,pr_idprglog   => vr_idprglog);
+
+      -- Grava critica da execucao
+      cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                            ,pr_cdprograma    => vr_cdprogra
+                            ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                            ,pr_tpexecucao    => 0   -- Outros
+                            ,pr_tpocorrencia  => 4   -- Mensagem
+                            ,pr_cdcriticidade => 0   -- Baixo
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => 'Cooperativa: '||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '||nvl(pr_nrdconta,0)||
+                                                 ' Cpf: '||nvl(pr_nrcpfcgc,0)||
+                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_idprglog      => vr_idprglog);
+
+
+    when others then
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Falha não tratada - '||vr_cdprogra||': '||vr_dscritic;
+      
+      -- Gera log no fim da execução
+      pc_log_programa(pr_dstiplog   => 'F'         
+                     ,pr_cdprograma => vr_cdprogra
+                     ,pr_cdcooper   => nvl(pr_cdcooper,0)
+                     ,pr_tpexecucao => 0    
+                     ,pr_flgsucesso => 0 
+                     ,pr_idprglog   => vr_idprglog);
+
+      -- Grava critica da execucao
+      cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                            ,pr_cdprograma    => vr_cdprogra
+                            ,pr_cdcooper      => nvl(pr_cdcooper,0)
+                            ,pr_tpexecucao    => 0   -- Outros
+                            ,pr_tpocorrencia  => 4   -- Mensagem
+                            ,pr_cdcriticidade => 0   -- Baixo
+                            ,pr_cdmensagem    => 0
+                            ,pr_dsmensagem    => 'Cooperativa: '||nvl(pr_cdcooper,0)||
+                                                 ' Conta: '||nvl(pr_nrdconta,0)||
+                                                 ' Cpf: '||nvl(pr_nrcpfcgc,0)||
+                                                 ' Module: AGRP0001 '||pr_dscritic
+                            ,pr_idprglog      => vr_idprglog);  
+                            
+  END pc_atualiza_matric_j;  
 
 end AGRP0001;
 /
