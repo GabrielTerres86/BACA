@@ -5,7 +5,8 @@
  * DATA CRIAÇÃO : 11/01/2013
  * OBJETIVO     : Mostrar tela PESQSP
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 03/06/2019 Ajuste para nao buscar pesqdp.js do cache 
+ *							   Jackson Barcellos - AMcom P565
  * --------------
  */
 ?>
@@ -36,7 +37,7 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="<? echo $nometela ?>.js"></script>
+		<script type="text/javascript" src="<? echo $nometela ?>.js?keyrand=<?php echo mt_rand();?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">

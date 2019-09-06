@@ -114,6 +114,7 @@
  * 100: [26/04/2018] Christian		  (CECRED) : Tratativas no controle de tecla ESC. Chamadas a metodos indevidos, causando erros apenas na execucao do Ayllos embarcado no CRM.
  * 101: [27/08/2018] Marco Amorim     (Mout'S) : Criada a Função para remover Todos os Caracteres epeciais e acentos.
  * 102: [12/12/2018] Anderson-Alan    (Supero) : Criado funções para controle do novo formulário de Assinatura Eletronica com Senha do TA ou Internet. (P432)
+  * 103: [07/06/2019] Jackson Barcellos (AMcom) : Manutenção da funcao "formataTabela" Adicionado metodo click
 */ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -1981,8 +1982,9 @@ $.fn.extend({
 	 *              larguras         [Opcional]    -> Array unidimencional onde constam-se as larguras de cada coluna da tabela
 	 *              alinhamento      [Opcional]    -> Array unidimencional onde constam-se os alinhamentos de cada coluna da tabela
 	 *              metodoDuploClick [Opcional]    -> Metodo que será chamado no duplo clique na linha "registro" da tabela
+	 * 				metodoClick      [Opcional]    -> Metodo que será chamado no clique na linha "registro" da tabela 07/06/2019 Jackson Barcellos AMcom	 
 	 */
-    formataTabela: function (ordemInicial, larguras, alinhamento, metodoDuploClick) {
+    formataTabela: function (ordemInicial, larguras, alinhamento, metodoDuploClick, metodoClick) {
 
 		var tabela = $(this);
 
@@ -2053,6 +2055,9 @@ $.fn.extend({
                 $('table > tbody > tr', divRegistro).each(function (i) {
                     $(this).unbind('click').bind('click', function () {
                         $('table', divRegistro).zebraTabela(i);
+                        if (typeof metodoClick != 'undefined') {
+                        	eval(metodoClick);
+                        }						
 					});
 				});				
 
@@ -2069,6 +2074,9 @@ $.fn.extend({
         $('table > tbody > tr', divRegistro).each(function (i) {
             $(this).bind('click', function () {
                 $('table', divRegistro).zebraTabela(i);
+                if (typeof metodoClick != 'undefined') {
+                	eval(metodoClick);
+                }				
 			});
 		});
 
