@@ -1727,7 +1727,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGRP0001 IS
           -- Substituicao de variaveis
           vr_conteudo_email := replace(vr_conteudo_email,'#numero',trim(gene0002.fn_mask_conta(rw_buscar_cooperado.nrdconta)));
           vr_conteudo_email := replace(vr_conteudo_email,'#cooper',rw_buscar_cooperado.nmrescop);
-          vr_conteudo_email := replace(vr_conteudo_email,'#operac','trocou de agência');
+          vr_conteudo_email := replace(vr_conteudo_email,'#operac','trocou de pa');
           vr_conteudo_email := replace(vr_conteudo_email,'#grupos',rw_buscar_cooperado.nmdgrupo);
           vr_conteudo_email := replace(vr_conteudo_email,'#cargos',rw_busca_funcao.dsfuncao);            
 
