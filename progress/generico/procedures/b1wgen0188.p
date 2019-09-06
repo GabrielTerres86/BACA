@@ -117,6 +117,8 @@
 
 				28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
                 
+                27/11/2018 - P410 - Ajuste nrseqdig na chamada pc_insere_iof ORACLE. (Douglas Pagel/AMcom)
+
                 13/12/2018  HANDLE sem delete h-b1wgen0060 INC0027352 (Oscar).
 
                 20/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
@@ -1776,7 +1778,7 @@ PROCEDURE grava_dados_conta PRIVATE:
                                                    ,INPUT craplot.cdagenci /* codigo da agencia  */
                                                    ,INPUT craplot.cdbccxlt /* Codigo caixa*/
                                                    ,INPUT craplot.nrdolote /* numero do lote */
-                                                   ,INPUT craplot.nrseqdig + 1  /* sequencia do lote */
+                                                   ,INPUT craplot.nrseqdig  /* sequencia do lote */
                                                    ,INPUT aux_vliofpri     /* iof principal */
                                                    ,INPUT aux_vliofadi     /* iof adicional */
                                                    ,INPUT 0                /* iof complementar */
