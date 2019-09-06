@@ -3327,6 +3327,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
           AND ppp.nrcpfcnpj_base = pr_nrcpfcnpj_base
           AND ppp.cdcooper = pr_cdcooper
           AND ppp.dtregulariza IS NULL;
+          rw_motivos_abertos cr_motivos_abertos%ROWTYPE;
       
       -- Variaveis auxiliares
       vr_idcarga crapcpa.iddcarga%TYPE;
@@ -3384,6 +3385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         OPEN cr_motivos_abertos(pr_idcarga        => vr_idcarga
                                ,pr_nrcpfcnpj_base => rw_crapass.nrcpfcnpj_base
                                ,pr_cdcooper       => pr_cdcooper);
+        FETCH cr_motivos_abertos INTO rw_motivos_abertos;
         
         IF cr_motivos_abertos%NOTFOUND THEN
           UPDATE crapcpa cpa

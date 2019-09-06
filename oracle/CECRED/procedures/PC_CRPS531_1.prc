@@ -365,7 +365,13 @@ end;
              07/06/2019 - Permitir processamento de mensagens LTR independente do processo batch da 
 			              AILOS (Diego).                        
 
-			 06/08/2019 - Inclusão de PA e Caixa na mensagem de devolução de TED em espécie (RITM0022091 - Diógenes Lazzarini)						
+             23/03/2019 - Vincular mensagens de devolução redigidas na cabine. 
+                          P475 Sprint E2 - REQ53 - Jose Dill - Mouts         
+
+             16/07/2019 - Revitalização de lote.
+                          Jose Dill - Mouts (P475).        
+
+             06/08/2019 - Inclusão de PA e Caixa na mensagem de devolução de TED em espécie (RITM0022091 - Diógenes Lazzarini)
  
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -447,6 +453,13 @@ end;
         FROM crapcop cop
        WHERE cop.nrctactl = pr_nrctactl
          AND cop.flgativo = nvl(pr_flgativo,cop.flgativo);
+    
+    /* Buscar mensagem recebida de acordo com o nr de controle de origem (mensagens devolvidas)*/     
+    CURSOR cr_busca_rec_devol (p_nrcontrole_str_pag IN varchar2) IS 
+    SELECT *
+    FROM tbspb_msg_recebida tmr
+    WHERE tmr.nrcontrole_str_pag = p_nrcontrole_str_pag ;
+    rw_busca_rec_devol cr_busca_rec_devol%ROWTYPE;    
 
     -- Buscar o próximo sequencial para o lançamento
     CURSOR cr_lcm_nrseqdig(pr_cdcooper  craplcm.cdcooper%TYPE
@@ -653,7 +666,7 @@ end;
             ,tpdctacr
             ,dshistor
             ,ROWID
-			,nrridlfp 
+            ,nrridlfp 
             ,nrdocmto
             ,cdagenci
             ,nrdolote
@@ -6755,47 +6768,47 @@ END pc_trata_arquivo_cir0060;
                 vr_nrdcontacir:= rw_crapcopctl.nrctactl;
                 --
                 vr_aux_cdhistor := 2483;
-                vr_aux_cdpesqbb := 'CREDITO EM CONTA REF. CEDULA PERICIADA LEGITIMA';   
+                vr_aux_cdpesqbb := 'CREDITO EM CONTA REF. CEDULA PERICIADA LEGITIMA';
                 --
-                -- Gerar lançamento em conta
-                BEGIN
-                  INSERT INTO craplcm
-                     (cdcooper
-                     ,dtmvtolt
-                     ,cdagenci
-                     ,cdbccxlt
-                     ,nrdolote
-                     ,nrdconta
-                     ,nrdctabb
-                     ,nrdocmto
-                     ,cdhistor
-                     ,nrseqdig
-                     ,cdpesqbb
-                     ,vllanmto
-                     ,cdoperad
-                     ,hrtransa)
-                  VALUES
-                     (3 --Gravar sempre em conta corrente na base 3 da central 
-                     ,vr_aux_dtmvtolt     
-                     ,rw_craplot_rvt.cdagenci --INC0032794
-                     ,rw_craplot_rvt.cdbccxlt 
-                     ,rw_craplot_rvt.nrdolote 
-                     ,vr_nrdcontacir     
-                     ,vr_nrdcontacir     
-                     ,vr_aux_nrdocmto     
-                     ,vr_aux_cdhistor     
-                     ,nvl(rw_craplot_rvt.nrseqdig,0) + 1
-                     ,vr_aux_cdpesqbb     
-                     ,vr_aux_VlrLanc      
-                     ,'1'
-                     ,to_char(vr_glb_dataatual,'sssss'));
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    vr_dscritic := 'Erro ao inserir na tabela craplcm --> ' || SQLERRM;
-                   -- Sair da rotina
-                   RAISE vr_exc_saida;
-                END;
 
+                -- Buscar o último NRSEQDIG para a CRAPLCM
+                OPEN  cr_lcm_nrseqdig(3                          -- pr_cdcooper
+                                     ,vr_aux_dtmvtolt            -- pr_dtmvtolt
+                                     ,rw_craplot_rvt.cdagenci    -- pr_cdagenci
+                                     ,rw_craplot_rvt.cdbccxlt    -- pr_cdbccxlt
+                                     ,rw_craplot_rvt.nrdolote);  -- pr_nrdolote
+                FETCH cr_lcm_nrseqdig INTO vr_nrlcmdig;
+                CLOSE cr_lcm_nrseqdig;
+
+                -- Atualizar o NRSEQDIG da CRAPLCM
+                vr_nrlcmdig := nvl(vr_nrlcmdig,0) + 1;                              
+                
+                -- Inserir Lancamento de debito na conta
+                LANC0001.pc_gerar_lancamento_conta
+                              ( pr_cdcooper => 3
+                               ,pr_dtmvtolt => vr_aux_dtmvtolt
+                               ,pr_cdagenci => rw_craplot_rvt.cdagenci
+                               ,pr_cdbccxlt => rw_craplot_rvt.cdbccxlt
+                               ,pr_nrdolote => rw_craplot_rvt.nrdolote
+                               ,pr_nrdconta => vr_nrdcontacir
+                               ,pr_nrdctabb => vr_nrdcontacir
+                               ,pr_nrdctitg => GENE0002.fn_mask(vr_nrdcontacir,'99999999')
+                               ,pr_nrdocmto => vr_aux_nrdocmto
+                               ,pr_cdhistor => vr_aux_cdhistor
+                               ,pr_nrseqdig => vr_nrlcmdig --nvl(rw_craplot_rvt.nrseqdig,0) + 1
+                               ,pr_cdpesqbb => vr_aux_cdpesqbb
+                               ,pr_vllanmto => vr_aux_VlrLanc
+                               --> OUT <--
+                               ,pr_tab_retorno => vr_tab_retorno
+                               ,pr_incrineg => vr_incrineg           -- Indicador de crítica de negócio
+                               ,pr_cdcritic => vr_cdcritic
+                               ,pr_dscritic => vr_dscritic);
+
+                IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                    -- Sair da rotina
+                    RAISE vr_exc_saida;
+                END IF;
+                
                 -- Atualizar capa do Lote
                 BEGIN
                   UPDATE craplot SET craplot.vlinfocr = nvl(craplot.vlinfocr,0) + vr_aux_VlrLanc
@@ -6809,8 +6822,9 @@ END pc_trata_arquivo_cir0060;
                     vr_dscritic := 'Erro ao atualizar tabela craplot. ' || SQLERRM;
                     -- Sair da rotina
                     RAISE vr_exc_saida;
-                END;
-                                         
+                END;                
+
+
             Else
                -- Não faz nenhum tratamento caso agência seja inválida                   
                Null;
@@ -8376,6 +8390,9 @@ END pc_trata_arquivo_cir0060;
               END IF;
             EXCEPTION
             WHEN OTHERS THEN
+              /* Mensagens que não foram tratadas ou foram criadas pela cabine, intencionalmente entrarão nesta
+                 exceção para serem devidamente tratadas. O erro ira ocorrer na conversão da variavel vr_lixo 
+                 do código acima. */
               IF vr_aux_CodMsg IS NULL THEN
                 vr_trace_cdfase   := 999; -- Mensagens não tratadas
                 vr_trace_idorigem := 'R';
@@ -8401,6 +8418,15 @@ END pc_trata_arquivo_cir0060;
                 ELSE
                   rw_crapcop_MSG.cdcooper := rw_crapcop_mensag.cdcooper;
                 END IF;
+                -- Buscar a cooperativa da mensagem de recebimento para as mensagens de devolução
+                -- P475 - REQ53
+                IF vr_aux_CodMsg IN ('STR0010','PAG0111','STR0048') THEN 
+                  OPEN cr_busca_rec_devol(vr_aux_NumCtrlRem_Or);
+                  FETCH  cr_busca_rec_devol INTO rw_busca_rec_devol;
+                  rw_crapcop_MSG.cdcooper := rw_busca_rec_devol.cdcooper;
+                  CLOSE cr_busca_rec_devol;
+                END IF;
+                --
               END IF;
             END;
             --
@@ -8463,6 +8489,74 @@ END pc_trata_arquivo_cir0060;
             pc_gera_erro_xml(pr_dsdehist => 'Mensagem Invalida para o Tipo de Transacao ou Finalidade.'
                             ,pr_codierro => 4
                             ,pr_dscritic => vr_dscritic);
+          ELSIF vr_aux_CodMsg IN('PAG0111','STR0010','STR0048') THEN
+            -- Tratar devolução redigida na cabine - P475 - REQ53
+            -- Criar o vinculo com a mensagem recebida    
+            -- Buscar mensagem recebida
+            OPEN cr_busca_rec_devol(vr_aux_NumCtrlRem_Or);
+            FETCH  cr_busca_rec_devol INTO rw_busca_rec_devol;
+            IF cr_busca_rec_devol%FOUND THEN
+              -- Gravar a fase 120 de devolução para a mensagem recebida
+              vr_trace_cdfase             := 120; -- Cancelamento de mensagem da IF no Ailos
+              vr_trace_idorigem           := 'R';
+              vr_trace_inenvio            := 0;
+              vr_trace_nmmensagem         := vr_aux_CodMsg;
+              vr_trace_nrcontrole_if      := vr_aux_NumCtrlRem_Or;
+              vr_trace_nrcontrole_str_pag := vr_aux_NumCtrlRem_Or;
+              vr_trace_nrcontrole_dev     := vr_aux_NumCtrlIF;
+              vr_trace_cdcooper           := rw_busca_rec_devol.cdcooper;
+              vr_trace_nrdconta           := rw_busca_rec_devol.nrdconta;
+              --
+              SSPB0003.pc_grava_trace_spb (pr_cdfase                 => vr_trace_cdfase
+                                          ,pr_idorigem               => vr_trace_idorigem
+                                          ,pr_inenvio                => vr_trace_inenvio
+                                          ,pr_nmmensagem             => vr_aux_CodMsg
+                                          ,pr_nrcontrole             => vr_trace_nrcontrole_if
+                                          ,pr_nrcontrole_str_pag     => vr_trace_nrcontrole_str_pag
+                                          ,pr_nrcontrole_dev_or      => vr_trace_nrcontrole_dev
+                                          ,pr_dhmensagem             => SYSDATE
+                                          ,pc_dhdthr_bc              => NULL
+                                          ,pr_insituacao             => 'OK'
+                                          ,pr_dsxml_mensagem         => NULL
+                                          ,pr_dsxml_completo         => NULL
+                                          ,pr_nrseq_mensagem_xml     => vr_nrseq_mensagem_xml
+                                          ,pr_cdcooper               => rw_busca_rec_devol.cdcooper
+                                          ,pr_nrdconta               => vr_trace_nrdconta
+                                          ,pr_cdproduto              => 30 -- TED
+                                          ,pr_nrseq_mensagem         => vr_nrseq_mensagem
+                                          ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                          ,pr_dscritic               => vr_dscritic
+                                          ,pr_des_erro               => vr_des_erro
+                                          );
+              IF vr_dscritic IS NOT NULL THEN
+                -- Acionar rotina de LOG
+                BTCH0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+                                          ,pr_ind_tipo_log  => 2 -- Erro não tratado
+                                          ,pr_des_log       => to_char(sysdate,'dd/mm/yyyy') || ' - ' || to_char(sysdate,'hh24:mi:ss')
+                                                            ||' - '|| vr_glb_cdprogra ||' --> '
+                                                            ||'Erro execucao - '
+                                                            || 'Nr.Controle IF: ' || vr_aux_NumCtrlIF || ' '
+                                                            || 'Mensagem: ' || vr_aux_CodMsg || ' '
+                                                            || 'Na Rotina de vincular devolucao redigida --> '||vr_dscritic
+                                          ,pr_nmarqlog      => vr_logprogr
+                                          ,pr_cdprograma    => vr_glb_cdprogra
+                                          ,pr_dstiplog      => 'E'
+                                          ,pr_tpexecucao    => 3
+                                          ,pr_cdcriticidade => 0
+                                          ,pr_flgsucesso    => 1
+                                          ,pr_cdmensagem    => vr_cdcritic);
+                RAISE vr_exc_saida;
+              END IF;
+              --
+              -- Vincular a mensagem de recebimento a mensagem enviada redigida na cabine
+              UPDATE TBSPB_MSG_ENVIADA TME 
+              SET TME.NRCONTROLE_STR_PAG_REC = vr_aux_NumCtrlRem_Or
+              WHERE TME.NRCONTROLE_IF = vr_aux_NumCtrlIF ;   
+              --           
+            END IF;
+            CLOSE cr_busca_rec_devol;   
+
+            --
           ELSE
             -- Tratamento Cecred
             pc_trata_cecred (pr_cdagectl => NULL

@@ -7,6 +7,8 @@
                                                                    	 
  Alterações:  
 
+ 001: [02/08/2019] Ajuste no limite dos campos tipo numerico para não exceder o tamanho no banco. (P438 Douglas Pagel /AMcom).
+
 ************************************************************************/
 
 var RegLinha = new Object();
@@ -209,13 +211,13 @@ function formataFormularioConsulta() {
     
     // campo
     $("#dssegmento", "#frmConsulta").css({ 'width': '445px', 'text-align': 'left' }).attr('maxlength', '90').desabilitaCampo();
-    $('#qtsimulacoes_padrao', '#frmConsulta').css({ 'width': '40px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '3').desabilitaCampo();
-    $('#limite_max_proposta', '#frmConsulta').css({ 'width': '40px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '5').desabilitaCampo();
-    $('#variacao_parc', '#frmConsulta').css({ 'width': '40px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '3').desabilitaCampo();
-    $('#nrintervalo_proposta', '#frmConsulta').css({ 'width': '40px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '5').desabilitaCampo();
+    $('#qtsimulacoes_padrao', '#frmConsulta').css({ 'width': '40px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '2').desabilitaCampo();
+    $('#limite_max_proposta', '#frmConsulta').css({ 'width': '40px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '2').desabilitaCampo();
+    $('#variacao_parc', '#frmConsulta').css({ 'width': '40px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '2').desabilitaCampo();
+    $('#nrintervalo_proposta', '#frmConsulta').css({ 'width': '40px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '2').desabilitaCampo();
     $('#descricao_segmento', '#frmConsulta').css({ 'width': '450px'}).attr('maxlength', '2000').desabilitaCampo();
 	$('#tabFinali', '#frmConsulta').css({ 'height': '100px'});
-    $('#qtdias_validade', '#frmConsulta').css({ 'width': '40px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '4').desabilitaCampo();
+    $('#qtdias_validade', '#frmConsulta').css({ 'width': '40px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '2').desabilitaCampo();
 	
 	$('#tipo_pessoa_1', '#frmConsulta').css({ 'width': '15px'}).desabilitaCampo();
 	$('#tipo_pessoa_2', '#frmConsulta').css({ 'width': '15px'}).desabilitaCampo();

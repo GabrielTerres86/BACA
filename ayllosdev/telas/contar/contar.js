@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : 19/07/2018
  * OBJETIVO     : Biblioteca de funções da tela CONTAR (Consulta de tarifas)
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 13/08/2019 - Incluir campos no grid, conforme RITM0011962 (Jose Gracik/Mouts).
  *
  * --------------
  */
@@ -249,15 +249,12 @@ function Grid() {
 
         var ordemInicial = new Array();
 
-        var arrayLargura = ['170px', '60px', '195px', '185px', '65px'];
-        var arrayAlinha = ['left', 'center', 'left', 'left', 'center', 'right'];
-
         if (cddgrupo == 3) {
-            arrayLargura = ['110px', '60px', '185px', '65px', '60px', '145px', '65px'];
-            arrayAlinha = ['left', 'center', 'left', 'center', 'center', 'left', 'center', 'right'];
-        } else if (cddgrupo == 5) {
-            arrayLargura = ['110px', '60px', '185px', '165px', '65px', '60px', '60px'];
-            arrayAlinha = ['left', 'center', 'left', 'left', 'center', 'right', 'right', 'right'];
+            arrayLargura = ['110px', '50px', '185px', '60px', '50px', '145px', '60px', '60px', '80px', '35px', '35px', '40px'];
+            arrayAlinha = ['left', 'center', 'left', 'center', 'center', 'left', 'center', 'right', 'right', 'right', 'right', 'right', 'right'];
+        } else {
+            arrayLargura = ['120px', '50px', '200px', '160px', '70px', '65px', '80px', '60px', '50px', '55px'];
+            arrayAlinha = ['left', 'center', 'left', 'left', 'center', 'right', 'right', 'right', 'right', 'right', 'right'];
         }
 
         var tabelaHeader = $('table > thead > tr > th', divRegistro);

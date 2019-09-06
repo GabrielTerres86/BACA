@@ -1998,7 +1998,7 @@ PROCEDURE pc_gera_dados_analise_credito(pr_cdcooper  IN crawepr.cdcooper%TYPE   
   /*Busca o ID do Grupo Economico*/
   CURSOR c_grupo_economico(pr_cdcooper in tbcc_grupo_economico.cdcooper%type,
                            pr_nrdconta in tbcc_grupo_economico.nrdconta%type) is
- SELECT g.idgrupo
+ SELECT DISTINCT g.idgrupo
    FROM tbcc_grupo_economico g,
         tbcc_grupo_economico_integ i
   WHERE ( g.cdcooper = pr_cdcooper or i.cdcooper = pr_cdcooper)
@@ -8615,7 +8615,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
                 crapass a
        WHERE e.cdcooper = prc_cdcooper
             and a.cdcooper   = e.cdcooper --incluido rubens
-            and e.cdorigem   = 9
+            and e.cdorigem   in (9,5)
             and e.cdoperad   = 'MOTOR'
             and e.dsoperacao NOT LIKE '%ERRO%'
             and e.dsoperacao NOT LIKE '%DESCONHECIDA%'
@@ -8697,7 +8697,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
             null;
       END;
     
-      vr_string_xml := vr_string_xml || fn_tag_table(NULL, vr_tab_tabela);
+      vr_string_xml := vr_string_xml || fn_tag_table('Mensagens', vr_tab_tabela);
     
       vr_string_xml := vr_string_xml || '</linhas>
                                          </valor>

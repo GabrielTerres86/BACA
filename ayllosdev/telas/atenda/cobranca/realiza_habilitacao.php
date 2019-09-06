@@ -78,7 +78,7 @@
     $flseralt = (int) trim($_POST["flseralt"]);
 	$nrcpfcgc = $_POST["nrcpfcgc"];
 	$cddopcao = trim($_POST["cddopcao"]);
-    $qtdfloat = $_POST["qtdfloat"];
+    $qtdfloat = trim($_POST["qtdfloat"]);
     $flprotes = $_POST["flprotes"];
 	$insrvprt = $_POST["insrvprt"];
 	$flproalt = (int) trim($_POST["flproalt"]);

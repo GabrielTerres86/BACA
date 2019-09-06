@@ -117,7 +117,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0003 AS
   --  Sistema  : Rotinas focadas no sistema de Cheques - Devolução automática de cheques
   --  Sigla    : CHEQ
   --  Autor    : Andre (Mouts)
-  --  Data     : Outubro/2018.                   Ultima atualizacao: Maio/2019
+  --  Data     : Outubro/2018.                   Ultima atualizacao:
   --
   -- Dados referentes ao programa:
   --
@@ -138,6 +138,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0003 AS
   --                            (Renato Cordeiro - AMcom)
   --               24/07/2019 - Acerto relatório 392 mostrar todos os taloes solicitados - PJ505 código de segurança cheque
   --                            (Renato Cordeiro - AMcom)
+  --               26/08/2019 - Projeto 565 - RF20 - Alteração na pc_efetiva_devchq_depositante, para lançar o histórico 351
+  --                            para a conta da cooper e as demais continuar com o hstórico 2973 para dev. cheques contra-ordem
+  --                            (Fernanda Kelli - AMcom)  
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -944,6 +947,8 @@ PROCEDURE pc_efetiva_devchq_depositante(pr_cdcoopch IN crapchd.cdcooper%TYPE  --
    vr_tab_retorno lanc0001.typ_reg_retorno;  
    vr_incrineg  INTEGER;
    vr_nrdocmto    craplcm.nrdocmto%TYPE;
+   --Proj565.RF20
+   vr_cdhistor craphis.cdhistor%Type := NULL;
        
 BEGIN
   -- Incluido nome do módulo logado
@@ -1003,6 +1008,18 @@ BEGIN
                                    ,pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic);
   
+          --P565-RF20
+          IF pr_tpopechq = 1 THEN --1 - Custódia
+            --Se Cooper ViaCredi
+            IF pr_nrdconta = 85448 AND pr_cdcoopdp = 1 THEN
+              vr_cdhistor := 351; 
+            ELSE
+              vr_cdhistor := 2973;
+            END IF;  
+          ELSE
+            vr_cdhistor := 399;     
+          END IF;
+            
           Lanc0001.pc_gerar_lancamento_conta( pr_dtmvtolt => pr_dtmvtolt, 
                                               pr_dtrefere => pr_dtmvtolt, 
                                               pr_cdagenci => pr_cdagenci,
@@ -1011,7 +1028,7 @@ BEGIN
                                               pr_nrdconta => pr_nrdconta, 
                                               pr_nrdctabb => pr_nrdconta,
                                               pr_nrdocmto => nvl(vr_nrdocmto, 0),
-                                              pr_cdhistor => (CASE pr_tpopechq WHEN 1 THEN 2973 ELSE 399 END), -- Quando devolução contra ordem tambem por Historico 2973
+                                              pr_cdhistor => vr_cdhistor,--P565-RF20
                                               pr_vllanmto => rw_crapfdc.vlcheque, 
                                               pr_cdcooper => pr_cdcoopdp, 
                                               pr_cdbanchq => rw_crapfdc.cdbanchq, 

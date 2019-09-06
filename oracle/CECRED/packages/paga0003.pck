@@ -4242,8 +4242,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                ajustes para arrecadação de FGTS/DAE.
                                PRJ406-FGTS (Odirlei-AMcom)
 
-				  03/09/2018 - Correção para remover lote (Jonata - Mouts).
-
+                  03/09/2018 - Correção para remover lote (Jonata - Mouts).
+                  
+                  16/08/2019 - Foi realizada a correção no processo de agendamento de DAS validando se existe um lote, 
+	                             caso o sistema não consiga buscar ou gerar um lote valido será abortado o processo
+	                             e apresentado uma mensagem para o cooperado informando que o agendamento não foi 
+	                             realizado evitando este problema novamente e registrando o seguinte. 
     ..............................................................................*/															 
 
 		rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -4694,6 +4698,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         rw_craplot.tplotmov := 12;
         rw_craplot.cdhistor := 0;
         
+      END IF;
+      
+      -- Validar se o registro de lote do lançamento automático DARF/DAS foi carregado. 
+      IF( rw_craplot.nrdolote IS NULL OR rw_craplot.cdbccxlt IS NULL )THEN
+        vr_dscritic := 'Agendamento não registrado. Aguarde e tente novamente mais tarde.';
+        RAISE vr_exc_erro; 
       END IF;
       
 			IF pr_idorigem = 3 THEN -- INTERNET

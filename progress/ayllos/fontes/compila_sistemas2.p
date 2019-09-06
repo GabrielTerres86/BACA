@@ -335,9 +335,7 @@ UNIX SILENT VALUE("rm " + aux_nmarqlog + " 2> /dev/null").
 
 
 /* ajusta o propath para compilar os programas */
-ASSIGN aux_propath  = ",/usr/coop"                             +
-                      ",/usr/coop/sistema"                     +
-                      ",/usr/coop/sistema/siscaixa/web"        +
+ASSIGN aux_propath  = ",/usr/coop/sistema/siscaixa/web"        +
                       ",/usr/coop/sistema/generico"            +
                       ",/usr/coop/sistema/generico/procedures" +
                       ",/usr/coop/sistema/internet"            +
@@ -359,11 +357,8 @@ FOR EACH arquivos WHERE arquivos.selected = YES NO-LOCK:
     FIND tt_naocompilaveis WHERE 
          tt_naocompilaveis.cdprogra = TRIM(arquivos.nmarquiv) NO-LOCK NO-ERROR.
          
-    IF NOT  AVAILABLE tt_naocompilaveis   THEN
-         DO:
-/*
+    IF   AVAILABLE tt_naocompilaveis   THEN
          NEXT.
-*/
     
     DISP arquivos.nmarquiv @ aux_dsdlinha
          WITH FRAME f_compilando.
@@ -377,7 +372,6 @@ FOR EACH arquivos WHERE arquivos.selected = YES NO-LOCK:
     IF  RETURN-VALUE = "OK"  THEN
         RUN compila_programa(INPUT arquivos.dsdireto,
                              INPUT arquivos.nmarquiv).
-    END.
 END.
 
 /* limpa o propath */

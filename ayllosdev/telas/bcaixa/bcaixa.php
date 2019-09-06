@@ -1,4 +1,4 @@
-<?php 
+<? 
 /*!
  * FONTE        : bcaixa.php
  * CRIAÇÃO      : Rogérius Militão (DB1)
@@ -6,9 +6,11 @@
  * OBJETIVO     : Mostrar tela BCAIXA
  * --------------
  * ALTERAÇÕES   : 16/04/2013 - Alterado ../../css/estilo.css para ../../css/estilo2.css (Lucas R.)
-	*				 27/07/2016 - Correcao no uso da variavel $glbvars. SD 479874 (Carlos R.)
  * --------------
  */
+?>
+
+<? 
 	session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');	
@@ -19,16 +21,16 @@
 	require_once("../../includes/carrega_permissoes.php");	
 ?>
 <script>
-var dtmvtglb = '<?php echo ( isset($glbvars['dtmvtolt']) ) ? $glbvars['dtmvtolt'] : ''; ?>';
-var cdageglb = '<?php echo ( isset($glbvars['cdagenci']) ) ? $glbvars['cdagenci'] : 0; ?>';
-var cdopeglb = '<?php echo ( isset($glbvars['cdoperad']) ) ? $glbvars['cdoperad'] : 0; ?>';
+var dtmvtglb = '<?php echo $glbvars['dtmvtolt'] ?>';
+var cdageglb = '<?php echo $glbvars['cdagenci'] ?>';
+var cdopeglb = '<?php echo $glbvars['cdoperad'] ?>';
 </script>
 
 <html>
     <head>
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">	
 		<meta http-equiv="Pragma" content="no-cache">
-		<title><?php echo $TituloSistema; ?></title>
+		<title><? echo $TituloSistema; ?></title>
 		<link href="../../css/estilo2.css" rel="stylesheet" type="text/css">
 		<script type="text/javascript" src="../../scripts/scripts.js" charset="utf-8"></script>
 		<script type="text/javascript" src="../../scripts/dimensions.js"></script>
@@ -81,18 +83,23 @@ var cdopeglb = '<?php echo ( isset($glbvars['cdoperad']) ) ? $glbvars['cdoperad'
 																<tr>
 																	<td>
 																		<!-- INCLUDE DA TELA DE PESQUISA -->
-																		<?php require_once("../../includes/pesquisa/pesquisa.php"); ?>
+																		<? require_once("../../includes/pesquisa/pesquisa.php"); ?>
 																		
 																		<!-- INCLUDE DA TELA DE PESQUISA ASSOCIADO -->
-																		<?php require_once("../../includes/pesquisa/pesquisa_associados.php"); ?>
+																		<? require_once("../../includes/pesquisa/pesquisa_associados.php"); ?>
 																		
 																		<div id="divRotina"></div>
 																		<div id="divUsoGenerico"></div>
 																		
 																		<div id="divTela">
-																			<?php include('form_cabecalho.php'); ?>
-																			<?php include('form_bcaixa.php'); ?>
+																			<? include('form_cabecalho.php'); ?>
+																			<? include('form_bcaixa.php'); ?>
+																			<? //include('tab_consulta.php'); ?>
+																			<? //include('tab_saldos.php'); ?>
+																			<? //include('tab_saldo_atual.php'); ?>
 																		</div>
+																		
+																		
 																	</td>
 																</tr>
 															</table>					

@@ -10,6 +10,7 @@
 * 001: [05/09/2012] Mudar para layout padrao (Gabriel) 
 * 002: [19/09/2013] Comentado a opcao de gerar proposta. (Irlan).
 * 003: [30/06/2015] Ajustes referentes Projeto 215 - DV 3 (Daniel).
+* 004: [01/07/2019] P438 - Inclusão do campo oculto CDORIGEM (Douglas Pagel / AMcom)
 */
 ?>
 
@@ -37,6 +38,7 @@
                         <input type="hidden" id="tpfinali" name="tpfinali" value="<? echo getByTagName($simulacao->tags,'tpfinali') ?>"/>
                         <input type="hidden" id="cdmodali" name="cdmodali" value="<? echo getByTagName($simulacao->tags,'cdmodali') ?>"/>
                         <input type="hidden" id="tpemprst" name="tpemprst" value="<? echo getByTagName($simulacao->tags,'tpemprst') ?>"/>
+						<input type="hidden" id="cdorigem" name="cdorigem" value="<? echo getByTagName($simulacao->tags,'cdorigem') ?>"/>
                     </td>					
                     <td id="dtlibera"><span><? echo getByTagName($simulacao->tags,'dtlibera') ?></span><? echo getByTagName($simulacao->tags,'dtlibera') ?></td>
                     <td id="dtdpagto"><span><? echo getByTagName($simulacao->tags,'dtdpagto') ?></span><? echo getByTagName($simulacao->tags,'dtdpagto') ?></td>

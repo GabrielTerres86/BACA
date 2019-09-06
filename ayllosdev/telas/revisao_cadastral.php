@@ -75,5 +75,5 @@
 	$stringArrayMsg = implode("|", $msg);
 	
 	echo 'exibirMensagens(\''.$stringArrayMsg.'\',\''.$metodo.'\');';
-	// exibirErro('inform',$msgRetorno.'<br />'.$msgAlerta,'Alerta - Ayllos','controlaOperacao(\'\')',false);
+    exibirErro('inform',$msgRetorno.'Alterações realizadas com sucesso'.$msgAlerta,'Alerta - Ayllos','controlaOperacao(\'\')',false);
 ?>

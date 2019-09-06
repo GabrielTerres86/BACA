@@ -43,7 +43,8 @@ $nmdopcao = $_POST['nmdopcao'];
 $inresgat = $_POST['inresgat'];
 $dtiniper = $_POST['dtiniper'];
 $dtfimper = $_POST['dtfimper'];
-
+$dtcusini = $_POST['dtcusini'];
+$dtcusfim = $_POST['dtcusfim'];
 $dtlibera = $_POST['dtlibera'];
 $protocolo = (!empty($_POST['protocolo'])) ? unserialize($_POST['protocolo']) : array();
 
@@ -86,6 +87,8 @@ $xml .= '           <inresgat>' . $inresgat . '</inresgat>';
 $xml .= '           <dtiniper>' . $dtiniper . '</dtiniper>';
 $xml .= '           <dtfimper>' . $dtfimper . '</dtfimper>';
 $xml .= '           <dtlibera>' . $dtlibera . '</dtlibera>';
+$xml .= '   		<dtcusini>' . $dtcusini . '</dtcusini>';
+$xml .= '	    	<dtcusfim>' . $dtcusfim . '</dtcusfim>';
 $xml .= xmlFilho($protocolo, 'Cheques', 'Itens');
 $xml .= '	</Dados>';
 $xml .= '</Root>';

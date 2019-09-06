@@ -266,8 +266,8 @@ create or replace package cecred.cobr0011 is
                        ,pr_tpocorrencia IN VARCHAR2 dEFAULT 4              -- Tipo de Ocorrência
                        );
   --
-  PROCEDURE pc_gera_movimento_pagamento(pr_dscritic OUT VARCHAR2
-                                       );
+	PROCEDURE pc_gera_movimento_pagamento(pr_idconciliacao in tbcobran_conciliacao_ieptb.idconciliacao%type --ID da conciliacao
+                                       ,pr_dscritic OUT VARCHAR2);
   --
   
   PROCEDURE pc_enviar_email_teds (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -331,8 +331,11 @@ create or replace package body cecred.cobr0011 IS
                  25/07/2019 - inc0021120 Na rotina pc_gera_movimento_pagamento, incluído o tipo de ocorrencia 7 
                               (liquidacao em condicional) no cursor cr_conciliados para que haja o repasse do 
                               valor para o cooperado (Carlos)
-                              
-                 12/08/2019 - Ajuste na rotina de débito de custas cartorárias de contas com bloqueio judicial (PRB0042090 - Cechet)
+  --
+  --             02/08/2019 - Alteração na estrutura de conciliação para permitir conciliar mais de um TED.
+  --                          Jose Dill - Mouts (RITM0013002)
+  --                            
+  --             12/08/2019 - Ajuste na rotina de débito de custas cartorárias de contas com bloqueio judicial (PRB0042090 - Cechet)
 ---------------------------------------------------------------------------------------------------------------*/
 
   -- Private type declarations
@@ -3342,8 +3345,8 @@ create or replace package body cecred.cobr0011 IS
 			pr_dscritic := 'Erro na pc_totaliza_cooperativa: ' || SQLERRM;
 	END pc_totaliza_cooperativa;
 	--
-	PROCEDURE pc_gera_movimento_pagamento(pr_dscritic OUT VARCHAR2
-		                                   ) IS
+	PROCEDURE pc_gera_movimento_pagamento(pr_idconciliacao in tbcobran_conciliacao_ieptb.idconciliacao%type -- ID da conciliacao
+                                       ,pr_dscritic OUT VARCHAR2) IS
     --
 		CURSOR cr_conciliados IS
 		  SELECT crapcob.rowid crapcob_id
@@ -3364,7 +3367,6 @@ create or replace package body cecred.cobr0011 IS
 						,crapcco.cdagenci
 						,crapcco.cdbccxlt
 						,crapcco.nrconven
-						,tci.rowid
 				FROM tbcobran_conciliacao_ieptb tci
 						,tbfin_recursos_movimento   trm
 						,tbcobran_retorno_ieptb     tri
@@ -3379,8 +3381,11 @@ create or replace package body cecred.cobr0011 IS
 				 AND crapcob.nrdconta    = tri.nrdconta
 				 AND crapcob.nrcnvcob    = tri.nrcnvcob
 				 AND crapcob.nrdocmto    = tri.nrdocmto
-				 AND tci.idrecurso_movto = trm.idlancto
-				 AND tci.idretorno_ieptb = tri.idretorno
+				 --AND tci.idrecurso_movto = trm.idlancto
+         AND tci.idconciliacao   = trm.idconciliacao /*RITM0013002*/
+				 --AND tci.idretorno_ieptb = tri.idretorno
+         AND tci.idconciliacao   = tri.idconciliacao /*RITM0013002*/
+         AND tci.idconciliacao   = pr_idconciliacao  /*RITM0013002*/
 				 AND crapcco.cdcooper    = crapcob.cdcooper
 				 AND crapcco.nrconven    = crapcob.nrcnvcob
 				 AND tci.dtconcilicao    IS NOT NULL
@@ -3615,12 +3620,16 @@ create or replace package body cecred.cobr0011 IS
 				END IF;
 				--
 			END IF;
+
+		END LOOP;
 			--
+    /*RITM0013002 - Retirado para fora a atualização, pois agora haverá somente um registro
+      na tabela de conciliação, relacionada com as TEDs e Titulos*/
 			BEGIN
 				--
 				UPDATE tbcobran_conciliacao_ieptb tci
 				   SET tci.flgproc = 1
-				 WHERE tci.rowid = rw_conciliados.rowid;
+       WHERE tci.idconciliacao = pr_idconciliacao; 
 				--
 			EXCEPTION
 				WHEN OTHERS THEN
@@ -3628,7 +3637,6 @@ create or replace package body cecred.cobr0011 IS
 					RAISE vr_exc_erro;
 			END;
 			--
-		END LOOP;
 
 		-- Gerar os lançamentos por cooperativa e na central
 		vr_index_coop := 0;

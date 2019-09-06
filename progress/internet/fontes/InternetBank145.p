@@ -4,14 +4,16 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lombardi
-   Data    : Agosto/2015                        Ultima atualizacao:
+   Data    : Agosto/2015                        Ultima atualizacao: 06/08/2019
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
    
    Objetivo  :
       
-   Alteracoes:
+   Alteracoes:  06/08/2019 - Permitir inclusao de folha CTASAL apenas antes do horario
+                             parametrisado na PAGFOL "Portabilidade (Pgto no dia):"
+                             RITM0032122 - Lucas Ranghetti
 ..............................................................................*/
 
 { sistema/internet/includes/var_ibank.i    }
@@ -45,6 +47,7 @@ RUN STORED-PROCEDURE pc_valida_lancto_folha aux_handproc = PROC-HANDLE NO-ERROR
                      (INPUT INT(par_cdcooper),
                       INPUT INT(par_nrdctemp),
                       INPUT DECIMAL(REPLACE(par_nrcpfemp,"-","")),
+                      INPUT ?,
                       INPUT ?,
                       OUTPUT "",
                       OUTPUT "",

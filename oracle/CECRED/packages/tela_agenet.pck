@@ -149,7 +149,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
                              PRJ335 - Analise de fraude (Odirlei-AMcom)
                                 
                 23/01/2018 - Ajustado rotina devido a arrecadação de FGTS/DAE.
-                             PRJ-406 - FGTS(Odirlei-AMcom)                
+                             PRJ-406 - FGTS(Odirlei-AMcom)   
+                             
+                30/06/2019 - Ajuste para tratar TED Judicial.
+                             Jose Dill - Mouts (P475 - REQ39)                          
     ............................................................................. */
     
       --Curosor para pegar os agendamentos  
@@ -638,7 +641,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
             
             END IF;
             
-          ELSIF rw_craplau.cdtiptra = 4 THEN --TED
+          ELSIF rw_craplau.cdtiptra IN (4, 22) THEN --TED /*REQ39*/
             
             OPEN cr_crapcti_dst(rw_craplau.cdcooper
                                ,rw_craplau.cddbanco

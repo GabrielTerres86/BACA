@@ -9,7 +9,7 @@ Objetivo  : importa arquivo para o servidor. Baseado no arquivo upload_file_cont
 			e sem necessidade de um servico no lado do Ayllos  para monitorar ebaixar o arquivo
 			(copia do upload_file mas com formatacao do nome do arquivo com a conta).
 
-Alterações: 
+Alterações: 24/06/2019 - Ajuste no fclose para fechar a variavel/arquivo correto - PRJ 500 (Mateus Z / Mouts)
 
 ***********************************************************************/
 //$Arq deve ser passado com o caminho do arquivo    * caminho/arquivo
@@ -33,7 +33,7 @@ if (!function_exists('formataCdcooper')) {
 /* Leitura do conteudo do arquivo pra variavel */
 $wArq=fopen($Arq,"r+");
 $conteudo=fread($wArq,filesize($Arq));
-fclose($Arq);
+fclose($wArq);
 
 /* Montagem do nome do arquivo, incluindo o codigo da cooperativa em seu início */
 $NomeArq    = formataCdcooper($glbvars["cdcooper"]).".".$nrdconta.".".$filename;
