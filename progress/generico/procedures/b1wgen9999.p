@@ -1156,6 +1156,7 @@ PROCEDURE lista_avalistas:
                        tt-dados-avais.nmcidade = TRIM(crapenc.nmcidade)
                        tt-dados-avais.cdufresd = TRIM(crapenc.cdufende)
                        tt-dados-avais.nrcepend = crapenc.nrcepend
+                       tt-dados-avais.cdnacion = crapass.cdnacion	
                        tt-dados-avais.dsnacion = crapnac.dsnacion WHEN AVAIL crapnac
                        tt-dados-avais.vledvmto = aux_vledvmto
                        tt-dados-avais.vlrenmes = aux_vlrenmes

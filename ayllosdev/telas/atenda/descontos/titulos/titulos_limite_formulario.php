@@ -29,7 +29,38 @@
  * 014: [13/04/2018] Leonardo Oliveira (GFT): Campo 'nrctrlim' escondido quando for uma inclusão, cddopcao = 'I'.
  * 015: [16/04/2018] Lombardi     (CECRED) : Incluida chamada da function validaValorProduto. PRJ366
  * 016: [13/04/2018] Leonardo Oliveira (GFT): Campo 'nrctrlim' escondido quando for uma inclusão, cddopcao = 'I'.
+ * 017: [29/05/2019] Luiz Otávio OM (AMCOM) : Adicionado Etapa Rating para Cooperatova Ailos (3)
+ * 018: [18/07/2019] Mateus Z     (Mouts)  : Alterado layout da primeira tela de inclusão/alteração/consulta 
+ *                                           (Dados do Limite) PRJ 438 - Sprint 16
+ * 019: [19/07/2019] Rubens Lima    (Mouts): Exclusão do form Rendas e alteração dos fluxos da tela (PJ438 sprint 16)
+ * 020: [19/07/2019] Jefferson      (MoutS): Incluir tela de demonstração de limite de desconto de cheques (PJ438 sprint 16)
  */
+
+// ********************************************
+// AMCOM - Retira Etapa Rating exceto para Ailos (coop 3)
+
+$xml = "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+$xml .= "   <cdacesso>HABILITA_RATING_NOVO</cdacesso>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "TELA_PARRAT", "CONSULTA_PARAM_CRAPPRM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObjPRM = getObjectXML($xmlResult);
+
+$habrat = 'N';
+if (strtoupper($xmlObjPRM->roottag->tags[0]->name) == "ERRO") {
+	$habrat = 'N';
+} else {
+	$habrat = $xmlObjPRM->roottag->tags[0]->tags;
+	$habrat = getByTagName($habrat[0]->tags, 'PR_DSVLRPRM');
+}
+
+if ($glbvars["cdcooper"] == 3) {
+	$habrat = 'N';
+}
+// ********************************************
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
 
@@ -39,7 +70,14 @@
 	
 		<fieldset>
 		
-			<legend>Dados do Limite</legend>
+			<legend><? echo utf8ToHtml('Dados da Solicitação') ?></legend>
+			<input type="hidden" name="qtdiavig" id="qtdiavig" value="0">
+			<input type="hidden" name="dsramati" id="dsramati" value="">
+			<input type="hidden" name="vlmedtit" id="vlmedtit" value="0,00">
+			<input type="hidden" name="vlfatura" id="vlfatura" value="0,00">
+			<label for="nivrisco"><? echo utf8ToHtml('Nível de Risco:') ?></label>
+			<input type="text" name="nivrisco" id="nivrisco" value="" class="campoTelaSemBorda" disabled>
+			<br />
 			
 			<? if ($cddopcao == "I") { ?>
 			
@@ -47,46 +85,30 @@
 			
 			<? }else { ?> 
 				
-			<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
+				<label for="nrctrlim"><? echo utf8ToHtml('Número da Proposta:') ?></label>
 			<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
-			<br />
-			
-			<label></label>
 			<br />
 			
 			<? } ?>
 			
 			<label for="vllimite"><? echo utf8ToHtml('Valor do Limite:') ?></label>
-			<input type="text" name="vllimite" id="vllimite" value="0,00" class="campo">
+			<input type="text" name="vllimite" id="vllimite" value="" class="campo">
 			
-			<label for="qtdiavig"><? echo utf8ToHtml('Vigência:') ?></label>
-			<input type="text" name="qtdiavig" id="qtdiavig" value="0" class="campoTelaSemBorda" disabled>
 			<br />
 			
 			<label for="cddlinha"><? echo utf8ToHtml('Linha de descontos:') ?></label>
-			<input type="text" name="cddlinha" id="cddlinha" value="0" class="campo">
+			<input type="text" name="cddlinha" id="cddlinha" value="" class="campo codigo pesquisa">
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 			<input type="text" name="cddlinh2" id="cddlinh2" value="" class="campoTelaSemBorda" disabled>
 			<br />
 			
-			<label for="txjurmor"><? echo utf8ToHtml('Juros mora:') ?></label>
-			<input type="text" name="txjurmor" id="txjurmor" value="%" class="campoTelaSemBorda" disabled>
-			<br />
+			<!-- PRJ 438 - Sprint 16 - Incluído o campo taxa da linha de descontos -->
+			<label for="txmensal"> <? echo utf8ToHtml('Taxa:') ?></label>
+			<input name="txmensal" id="txmensal" type="text" value="" class="campoTelaSemBorda" disabled>
 			
-			<label for="txdmulta"><? echo utf8ToHtml('taxa de multa:') ?></label>
-			<input type="text" name="txdmulta" id="txdmulta" value="0,000000%" class="campoTelaSemBorda" disabled>
-			<br />
 			
-			<label for="dsramati"><? echo utf8ToHtml('Ramo de Atividade:') ?></label>
-			<input type="text" name="dsramati" id="dsramati" value="" class="campo">
-			<br />
 			
-			<label for="vlmedtit"><? echo utf8ToHtml('Valor médio dos títulos:') ?></label>
-			<input type="text" name="vlmedtit" id="vlmedtit" value="0,00" class="campo">
-			<br />
 			
-			<label for="vlfatura"><? echo utf8ToHtml('Faturamento mensal:') ?></label>
-			<input type="text" name="vlfatura" id="vlfatura" value="0,00" class="campo">
 			
 		</fieldset>
 		
@@ -96,36 +118,20 @@
   
   <div id="divFormGAROPC"></div>
 	
-	<div id="divDscTit_Renda">
 	
-		<fieldset>
 		
-			<legend>Rendas</legend>
 								
-				<label for="lbrendas"><? echo utf8ToHtml('Rendas:') ?></label>
-				<label for="vlsalari"><? echo utf8ToHtml('Salário:') ?></label>
-				<input type="text" name="vlsalari" id="vlsalari" value="0,00" class="campo">
 				
-				<label for="vlsalcon"><? echo utf8ToHtml('Cônjuge:') ?></label>
-				<input type="text" name="vlsalcon" id="vlsalcon" value="0,00" class="campo">
-				<br />
 				
-				<label for="vloutras"><? echo utf8ToHtml('Outras:') ?></label>
-				<input type="text" name="vloutras" id="vloutras" value="0,00" class="campo">
-				<br />
-				<label class="rotulo"></label>
-				<br />
 				
-				<label for="dsdbens1"><? echo utf8ToHtml('Bens:') ?></label>
-				<input type="text" name="dsdbens1" id="dsdbens1" value="" class="campo">
-				<br />
 				
-				<label for="dsdbens2"><? echo utf8ToHtml('') ?></label>
-				<input type="text" name="dsdbens2" id="dsdbens2" value="" class="campo">
 								
-		</fieldset>
 		
-	</div>
+				
+				
+				
+				
+								
 	
 	<div id="divDscTit_Observacao">
 	
@@ -141,10 +147,54 @@
 	<div id="divDscTit_Avalistas" class="condensado" >
 	
 		<? 	// ALTERAÇÃO 001: Substituido formulário antigo pelo include				
-			include('../../../../includes/avalistas/form_avalista.php'); 
+//			include('../../../../includes/avalistas/form_avalista.php'); 
+			include('form_dados_aval.php');
 		?>	
 		</div>									
 		
+	<div id="divDscTit_Demonstracao">
+		<fieldset id="fsDscTit_Demonstracao">
+			<legend style="text-align: center !important;">
+				<?	// alterar o titulo do legend conforme opção
+					switch ($cddopcao) {
+						case 'E': echo utf8ToHtml('Efetivação da Proposta'); break;							        // Efetivar
+						default:  echo utf8ToHtml('Demonstração do Limite de Desconto de T&iacute;tulos'); break;	// Outras opções
+					}
+				?>
+			</legend>
+			<label for="demoNivrisco" class="rotulo txtNormalBold"><? echo utf8ToHtml('Nível de Risco:') ?></label>
+			<input type="text" name="demoNivrisco" id="demoNivrisco" value="" class="campo">
+			<br /><br />
+
+			<? if ($cddopcao != "I") { ?>
+			
+				<label for="demoNrctrlim" class="rotulo txtNormalBold"><? echo utf8ToHtml('Número da Proposta:') ?></label>
+				<input type="text" name="demoNrctrlim" id="demoNrctrlim" value="" class="campo">
+				<br /><br />
+			
+			<? } ?>
+
+			<label for="demoVllimite" class="rotulo txtNormalBold"><? echo utf8ToHtml('Valor do Limite:') ?></label>
+			<input type="text" name="demoVllimite" id="demoVllimite" value="" class="campo">
+			<br /><br />
+			<label for="demoCddlinha" class="rotulo txtNormalBold"><? echo utf8ToHtml('Linha de Crédito:') ?></label>
+			<input type="text" name="demoCddlinha" id="demoCddlinha" value="" class="campo">
+			<br /><br />
+			<label for="demoTxmensal" class="rotulo txtNormalBold"><? echo utf8ToHtml('Taxa:') ?></label>
+			<input type="text" name="demoTxmensal" id="demoTxmensal" value="" class="campo">
+			<br /><br />
+			<label for="demoQtdiavig" class="rotulo txtNormalBold"><? echo utf8ToHtml('Vigência:') ?></label>
+			<input type="text" name="demoQtdiavig" id="demoQtdiavig" value="" class="campo">
+		</fieldset>
+		<script type="text/javascript">
+			// formatações CSS da demonstração
+		    $('label','#fsDscTit_Demonstracao').css({ 'width': '120px' });
+		    $('legend','#fsDscTit_Demonstracao').css({ 'margin-bottom': '10px' });
+		    $('#fsDscTit_Demonstracao').css({ 'width':'320px' });
+		    $('input[type="text"]','#fsDscTit_Demonstracao').css({ 'width':'180px' });
+			$("input[type='text']","#fsDscTit_Demonstracao").prop("disabled",true).attr("class","campoTelaSemBorda");
+		</script>
+	</div>
 </form>
 
 <div id="divBotoesLimite">
@@ -167,12 +217,9 @@
 
 </div>
 
-<div id="divBotoesRenda">
 		
-	<input type="image" id="btnVoltarRendas" name="btnVoltarRendas" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
-	<input type="image" id="btnContinuarRendas" name="btnContinuarRendas" src="<? echo $UrlImagens; ?>botoes/continuar.gif" />
 	
-</div>
+	
 
 <div id="divBotoesObs" >
 		
@@ -183,14 +230,28 @@
 
 <div id="divBotoesAval">						
 		
-	<input type="image" id="btnVoltarAvalistas" name="btnVoltarAvalistas" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
-	<? if ($cddopcao <> "C") { ?>
-		   <input type="image" id="btnCancelarLimite" name="btnCancelarLimite" src="<? echo $UrlImagens; ?>botoes/cancelar.gif" />
+	<input type="image" id="btnVoltarAvalistas" name="btnVoltarAvalistas" src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="controlaVoltarAvalista();">
+	<? if ($cddopcao == "I" || $cddopcao == "A") { ?>
+		<input type="image" id="btnLimparAvalista" src="<? echo $UrlImagens; ?>botoes/limpar.gif" onClick="limpaFormAvalistas(true);">
 	<? } ?>
-	<input type="image" id="btnConcluirLimite" name="btnConcluirLimite" src="<? echo $UrlImagens; ?>botoes/concluir.gif" />
+	<input type="image" id="btContinuarAvalistas" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="controlaContinuarAvalista();">
 			
 </div>	
 
+<div id="divBotoesDemo">
+<? 
+		if ($cddopcao == "E") {
+			echo ' <input type="image" id="btnVoltarDemonstracaoE" 	name="btnVoltarDemonstracaoE" 	src="'.$UrlImagens.'botoes/voltar.gif"> ';
+			echo ' <input type="image" id="btnConcluirLimiteE" 		name="btnConcluirLimiteE" 		src="'.$UrlImagens.'botoes/concluir.gif"> ';
+ 		} else {
+			echo ' <input type="image" id="btnVoltarDemonstracao" 	name="btnVoltarDemonstracao" 	src="'.$UrlImagens.'botoes/voltar.gif"> ';
+			if ($cddopcao == "I" || $cddopcao == "A") {
+				echo ' <input type="image" id="btnCancelarLimite" 	name="btnCancelarLimite" 		src="'.$UrlImagens.'botoes/cancelar.gif"> ';
+			}
+			echo ' <input type="image" id="btnConcluirLimite"		name="btnConcluirLimite" 		src="'.$UrlImagens.'botoes/concluir.gif"> ';
+		}
+	?>
+</div>
 <? 
 	if ($cddopcao <> "I") {
 		// Alimentar dados do rating - Variáveis utilizadas na include rating_busca_dados.php	
@@ -206,18 +267,82 @@
 	// Variável que indica se é uma operação para cadastrar nova proposta - Utiliza na include rating_busca_dados.php
 	$cdOperacao = $cddopcao;
 	
+	if ($habrat == 'N') {
 	include("../../../../includes/rating/rating_busca_dados.php"); 
+	}
 ?>
 
 <script type="text/javascript">
+
+	var habrat = '<?=$habrat?>';
+
+	// PJ438 - Sprint 16
+	function continuarRating(showContinuar, showVoltar, execContinuar, execVoltar) {
+
+		var divHide = showVoltar.split(";");		
+		for (var i = 0; i < divHide.length; i++) {
+			$("#" + divHide[i]).css("display","none");
+		}	
+
+		if (operacao == 'A') {
+			/*Motor em contingencia*/
+
+			//bruno - prj 470 - tela autorizacao
+			if(flctgmot && habrat == 'N'){
+				informarRating('',
+							"dscShowHideDiv('"+showContinuar+"','divDadosRating');"+execContinuar,
+							"dscShowHideDiv('"+showVoltar+"','divDadosRating');"+execVoltar,
+							"fecharRotinaGenerico('<? echo $tipo ?>');");
+			} else {
+				fncRatingSuccess = "chamarImpressao('<? echo $tipo ?>');";
+				dscShowHideDiv(showContinuar,'divDadosRating');
+				eval(execContinuar);
+			}
+		} else if (operacao == 'C') {
+			if (habrat == 'N') {
+				informarRating('',
+							"dscShowHideDiv('"+showContinuar+"','divDadosRating');"+execContinuar,
+							"dscShowHideDiv('"+showVoltar+"','divDadosRating');"+execVoltar,
+							"fecharRotinaGenerico('<? echo $tipo ?>'); console.log('Entrei 2');");
+			} else {
+				fncRatingSuccess = "fecharRotinaGenerico('<? echo $tipo ?>');";
+				dscShowHideDiv(showContinuar,'divDadosRating');
+				eval(execContinuar);
+			}
+		} else {
+			/*Motor em contingencia*/
+			//bruno - prj 470 - tela autorizacao
+			if(flctgmot && habrat == 'N'){
+				informarRating('',
+							   "dscShowHideDiv('"+showContinuar+"','divDadosRating');"+execContinuar,
+							   "dscShowHideDiv('"+showVoltar+"','divDadosRating');"+execVoltar,
+							   "chamarImpressao('<? echo $tipo ?>'); console.log('Entrei 3');");
+			} else {
+				fncRatingSuccess = "chamarImpressao('<? echo $tipo ?>');";
+				dscShowHideDiv(showContinuar,'divDadosRating');
+				eval(execContinuar);
+			}
+		}
+		return false;
+
+	}
 
 	formataLayout('frmDadosLimiteDscTit');
 
 	operacao = '<? echo $cddopcao; ?>';
 	
-	dscShowHideDiv("divOpcoesDaOpcao3;divDscTit_Limite;divBotoesLimite","divBotoesGAROPC;divBotoesRenda;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscTit_Renda;divDscTit_Observacao;divDscTit_Avalistas;divDscTit_Confirma");
+    if (operacao == "E") {
+		dscShowHideDiv("divOpcoesDaOpcao3;divDscTit_Demonstracao;divBotoesDemo","divDscTit_Limite;divBotoesLimite;divBotoesGAROPC;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscTit_Observacao;divDscTit_Avalistas");
+	} else {
+		dscShowHideDiv("divOpcoesDaOpcao3;divDscTit_Limite;divBotoesLimite","divBotoesGAROPC;divBotoesObs;divBotoesDemo;divBotoesAval;divOpcoesDaOpcao2;divDscTit_Observacao;divDscTit_Demonstracao;divDscTit_Avalistas");
+		// [018]
+	}
 
-	$("#divDscTit_Confirma").css("display","<? if ($cddopcao == "I") { echo "block"; } else { echo "none"; } ?>");
+	var arrayAvalistas = new Array();
+	if (operacao == 'I') {
+		var nrAvalistas = 0;
+		var contAvalistas = 1;
+	}
 		
 	// Muda o título da tela
 	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - LIMITE - <? if ($cddopcao == "A") { echo "ALTERAR"; } elseif ($cddopcao == "C") { echo "CONSULTAR"; } else { echo "INCLUIR"; } ?>");
@@ -226,30 +351,40 @@
 	// Alimentar campos do formulário para gerenciar limite
 	if ($cddopcao == "I") { 
 		echo '$("#qtdiavig","#frmDadosLimiteDscTit").val("'.formataNumericos('zzz.zz9',$dados[6]->cdata,'.').' dias");';
-		echo '$("#txdmulta","#frmDadosLimiteDscTit").val("'.number_format(str_replace(",",".",$dados[12]->cdata),6,",",".").'%");';
+		// PRJ 438 - Sprint 16 - Incluido nivel de risco (nasce com valor A)
+		echo '$("#nivrisco","#frmDadosLimiteDscTit").val("A");';
 	} else { 
 		echo '$("#nrctrlim","#frmDadosLimiteDscTit").val("'.formataNumericos('z.zzz.zz9',$dados[14]->cdata,'.').'");';
 		echo '$("#vllimite","#frmDadosLimiteDscTit").val("'.number_format(str_replace(",",".",$dados[15]->cdata),2,",",".").'");';
 		echo '$("#qtdiavig","#frmDadosLimiteDscTit").val("'.formataNumericos('zzz.zz9',$dados[16]->cdata,'.').' dias");';
 		echo '$("#cddlinha","#frmDadosLimiteDscTit").val("'.formataNumericos('zz9',$dados[17]->cdata,'.').'");';
 		echo '$("#cddlinh2","#frmDadosLimiteDscTit").val("'.$dados[2]->cdata.'");';
-		echo '$("#txdmulta","#frmDadosLimiteDscTit").val("'.number_format(str_replace(",",".",$dados[0]->cdata),6,",",".").'%");';
 		echo '$("#dsramati","#frmDadosLimiteDscTit").val("'.$dados[4]->cdata.'");';
 		echo '$("#vlmedtit","#frmDadosLimiteDscTit").val("'.number_format(str_replace(",",".",$dados[5]->cdata),2,",",".").'");';
 		echo '$("#vlfatura","#frmDadosLimiteDscTit").val("'.number_format(str_replace(",",".",$dados[6]->cdata),2,",",".").'");';
-		echo '$("#vlsalari","#frmDadosLimiteDscTit").val("'.number_format(str_replace(",",".",$dados[8]->cdata),2,",",".").'");';
-		echo '$("#vlsalcon","#frmDadosLimiteDscTit").val("'.number_format(str_replace(",",".",$dados[9]->cdata),2,",",".").'");';
-		echo '$("#vloutras","#frmDadosLimiteDscTit").val("'.number_format(str_replace(",",".",$dados[7]->cdata),2,",",".").'");';
-		echo '$("#dsdbens1","#frmDadosLimiteDscTit").val("'.trim($dados[10]->cdata).'");';
-		echo '$("#dsdbens2","#frmDadosLimiteDscTit").val("'.trim($dados[11]->cdata).'");';	
 		echo '$("#dsobserv","#frmDadosLimiteDscTit").val("'.str_replace(chr(13),"\\n",str_replace(chr(10),"\\r",$dados[12]->cdata)).'");';
 		echo '$("#antnrctr","#frmDadosLimiteDscTit").val("'.formataNumericos('zzz.zz9',$dados[14]->cdata,'.').'");';
+		// PRJ 438 - Sprint 16 - Incluido nivel de risco e taxa
+		echo '$("#nivrisco","#frmDadosLimiteDscTit").val("'.$dados[31]->cdata.'");';
+		echo '$("#txmensal","#frmDadosLimiteDscTit").val("'.$dados[32]->cdata.'");';
 
+		/*
+		 *
+		 * Preencher os dados da tela de demonstração
+		 *
+		 */
+		echo '$("#demoNivrisco","#divDscTit_Demonstracao").val( $("#nivrisco","#frmDadosLimiteDscTit").val() );';
+		echo '$("#demoNrctrlim","#divDscTit_Demonstracao").val("'.formataNumericos('z.zzz.zz9',$dados[14]->cdata,'.').'");';
+		echo '$("#demoVllimite","#divDscTit_Demonstracao").val("'.number_format(str_replace(",",".",$dados[15]->cdata),2,",",".").'");';
+		$cdlinhaConcat = formataNumericos('zz9',$dados[17]->cdata,'.') . ' ' . $dados[2]->cdata;
+		echo '$("#demoCddlinha","#divDscTit_Demonstracao").val("'.$cdlinhaConcat.'");';
+		echo '$("#demoTxmensal","#divDscTit_Demonstracao").val("'.number_format(str_replace(",",".",$dados[0]->cdata),6,",",".").'%");';
+		echo '$("#demoQtdiavig","#divDscTit_Demonstracao").val("'.formataNumericos('zzz.zz9',$dados[16]->cdata,'.').' dias");';
 	}
 	?>
 	
 	// Na consulta não permitir manipulação dos campos
-	if (operacao == 'C') {
+	if (operacao == 'C' || operacao == 'E') {
 	
 		$("input[type='text']",'#'+nomeForm).prop("disabled",true).attr("class","campoTelaSemBorda");
 		$("textarea",'#'+nomeForm).attr("readonly",true);
@@ -265,17 +400,10 @@
 		// Dados do Limite	
 		$("#nrctrlim",'#'+nomeForm).setMask("INTEGER","z.zzz.zz9","");
 		$("#vllimite",'#'+nomeForm).setMask("DECIMAL","zzz.zzz.zz9,99","");
-		$("#cddlinha",'#'+nomeForm).setMask("INTEGER","zz9","");
 		$("#vlmedtit",'#'+nomeForm).setMask("DECIMAL","z.zzz.zz9,99","");
 		$("#vlfatura",'#'+nomeForm).setMask("DECIMAL","zzz.zzz.zz9,99","");
 		$("#dsramati",'#'+nomeForm).setMask("STRING","40",charPermitido(),"");
 
-		// Rendas
-		$("#vloutras",'#'+nomeForm).setMask("DECIMAL","zzz.zzz.zz9,99","");
-		$("#vlsalari",'#'+nomeForm).setMask("DECIMAL","zzz.zzz.zz9,99","");
-		$("#vlsalcon",'#'+nomeForm).setMask("DECIMAL","zzz.zzz.zz9,99","");
-		$("#dsdbens1",'#'+nomeForm).setMask("STRING","60",charPermitido(),"");
-		$("#dsdbens2",'#'+nomeForm).setMask("STRING","60",charPermitido(),"");
 
 	}
 
@@ -294,13 +422,16 @@
 		return false;
 	});
 	
+	//PRJ 438 - Sprint 16
 	$('#btnContinuarLimite','#divBotoesLimite').unbind('click').bind('click',function() {
 		if (operacao == 'C') {
       <? if ($dados[30]->cdata > 0) { ?>
 			abrirTelaGAROPC("C");
       blockBackground(parseInt($("#divRotina").css("z-index")));
+      <? // } else if ($dados[12]->cdata > 0) { ?>
+//			continuarRating("divDscTit_Observacao;divBotoesObs","divDscTit_Limite;divBotoesLimite");
       <? } else { ?>
-			dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDscTit_Limite;divBotoesLimite');
+			continuarRating("","divDscTit_Limite;divBotoesLimite","$('#btnContinuarObservacao', '#divBotoesObs').trigger('click');","");
       <? } ?>
 		} else {
 			aux_inconfir = 1; 
@@ -322,107 +453,90 @@
 		return false;
 	});
 	
+    //PRJ 438 - Sprint 16	
   $("#btnContinuarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
-    gravarGAROPC('idcobert','frmDadosLimiteDscTit','dscShowHideDiv("divDscTit_Renda;divBotoesRenda","divFormGAROPC;divBotoesGAROPC", "");$("#frmDadosLimiteDscTit").css("width", 515);bloqueiaFundo($("#divDscTit_Renda"));');
+	let aux = '';
+//	if ($('#dsobserv','#divDscTit_Observacao').val() == '' && operacao == 'C') {
+	  aux = 'continuarRating("","divFormGAROPC;divBotoesGAROPC","$(\'#btnContinuarObservacao\', \'#divBotoesObs\').trigger(\'click\');","$(\'#frmDadosLimiteDscTit\').css(\'width\', 540);");';
+//	} else {
+//	  aux = 'continuarRating("divDscTit_Observacao;divBotoesObs","divFormGAROPC;divBotoesGAROPC","","$(\'#frmDadosLimiteDscTit\').css(\'width\', 540);");';
+//	}
+  	gravarGAROPC('idcobert','frmDadosLimiteDscTit',aux+'$("#frmDadosLimiteDscTit").css("width", 515);bloqueiaFundo($("#divDscTit_Observacao"));');
+  	$('#nrctaava','#divDscTit_Avalistas').focus();
     return false;
 	});
 	
-	$('#btnVoltarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
+	//PRJ 438 - Sprint 16
+	$('#btnVoltarObservacao','#divBotoesObs').unbind('click').bind('click',function() {
+		if(operacao == 'A' && flctgmot && habrat == 'N'){
+		    dscShowHideDiv('divDadosRating','divDscTit_Observacao;divBotoesObs');
+			return false;
+		} else if (habrat == 'N') {
+			dscShowHideDiv('divDadosRating','divDscTit_Observacao;divBotoesObs');
+			return false;
+		} else{
     <? if ($cddopcao == "C") { ?>
       <? if ($dados[30]->cdata > 0) { ?>
-        dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscTit_Renda;divBotoesRenda');
+        			dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscTit_Observacao;divBotoesObs');
         $("#frmDadosLimiteDscTit").css("width", 540);
       <? } else { ?>
-		dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Renda;divBotoesRenda');
+        			dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Observacao;divBotoesObs');
       <? } ?>      
     <? } else if ($cddopcao == "A" || $cddopcao == "I") { ?>
-      dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscTit_Renda;divBotoesRenda');
+        			dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscTit_Observacao;divBotoesObs');
       $("#frmDadosLimiteDscTit").css("width", 540);
     <? } else { ?>
-		dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Renda;divBotoesRenda');
+				dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Observacao;divBotoesObs');
     <? } ?>
-		return false;
-	});
-	
-	$('#btnContinuarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
-		if (operacao == 'A') {
-			/*Motor em contingencia*/
-
-			//bruno - prj 470 - tela autorizacao
-			if(flctgmot){
-			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',
-			"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
-			"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
-			"fecharRotinaGenerico('<? echo $tipo ?>');");
-			}
-			else{
-				informarRating('divDscTit_Renda',
-				"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
-				"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
-				"chamarImpressao('<? echo $tipo ?>');");
-
-				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda;divDscTit_Renda');
-			}
-		} else if (operacao == 'C') {
-			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',
-			"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
-			"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
-			"fecharRotinaGenerico('<? echo $tipo ?>'); console.log('Entrei 2');");
-		} else {
-			/*Motor em contingencia*/
-			//bruno - prj 470 - tela autorizacao
-			if(flctgmot){
-			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',
-			"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
-			"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
-			"chamarImpressao('<? echo $tipo ?>'); console.log('Entrei 3');");
-		}
-			else{
-				//bruno - prj 470 - tela autorizacao
-				informarRating('divDscTit_Renda',
-				"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
-				"dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');",
-				"chamarImpressao('<? echo $tipo ?>'); console.log('Entrei 4');");
-
-				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda;divDscTit_Renda');
-			}
-		}
-		return false;
-	});
-	
-	$('#btnVoltarObservacao','#divBotoesObs').unbind('click').bind('click',function() {
-		if(flctgmot){
-		dscShowHideDiv('divDadosRating','divDscTit_Observacao;divBotoesObs');
-		}
-		else{
-			$('#divBotoesRenda').css('display','block');
-			dscShowHideDiv('divDscTit_Renda','divDscTit_Observacao;divBotoesObs');
 		}
 		return false;
 	});
 	
 	$('#btnContinuarObservacao','#divBotoesObs').unbind('click').bind('click',function() {
-    $("#frmDadosLimiteDscTit").css("width", 525);
+		if(nrAvalistas == 0 && operacao == 'C') {
+            $("#frmDadosLimiteDscTit").css("width", 525);
+			dscShowHideDiv("divDscTit_Demonstracao;divBotoesDemo","divDscTit_Observacao;divBotoesObs");
+			preencherDemonstracao();
+			return false;
+			}
+		if(nrAvalistas > 0){
+			atualizarCamposTelaAvalistas();
+		}
+	    $("#frmDadosLimiteDscTit").css("width", 525);
 		dscShowHideDiv('divDscTit_Avalistas;divBotoesAval','divDscTit_Observacao;divBotoesObs');
 		return false;
 	});
-	
-	$('#btnVoltarAvalistas','#divBotoesAval').unbind('click').bind('click',function() {
-		dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDscTit_Avalistas;divBotoesAval');
+	$("#btnVoltarDemonstracao","#divBotoesDemo").unbind("click").bind("click",function() {
+		if(nrAvalistas == 0 && operacao == 'C') {
+//			if ($('#dsobserv','#divDscTit_Observacao').val() != '') {
+//				$("#frmDadosLimiteDscTit").css("width", 515);
+//				dscShowHideDiv("divDscTit_Observacao;divBotoesObs","divDscTit_Demonstracao;divBotoesDemo");
+//			} else {
+				dscShowHideDiv('','divDscTit_Demonstracao;divBotoesDemo');	  
+				$('#btnVoltarObservacao', '#divBotoesObs').trigger('click');
+//			}
+			return false;
+		}
+	 	abrirTelaDemoDescontoTitulo(false);
+		return false;
+	});
+	$("#btnVoltarDemonstracaoE","#divBotoesDemo").unbind("click").bind("click",function() {
+		voltaDiv(3,2,4,"DESCONTO DE T&Iacute;TULOS - LIMITE");
+		return false;
+	});
+	$("#btnConcluirLimiteE","#divBotoesDemo").unbind("click").bind("click",function() {
+        showConfirmacao('Deseja confirmar opera&ccedil&atildeo?','Confirma&ccedil&atildeo - Aimaro','confirmaNovoLimite();voltaDiv(3,2,4,"DESCONTO DE T&Iacute;TULOS - LIMITE");','metodoBlock();','sim.gif','nao.gif');
 		return false;
 	});
 	
 	if (operacao != 'C') {
-		$('#btnCancelarLimite','#divBotoesAval').unbind('click').bind('click',function() {
+		$('#btnCancelarLimite','#divBotoesDemo').unbind('click').bind('click',function() {
 			voltaDiv(3,2,4,'DESCONTO DE T&Iacute;TULOS - LIMITE');
 			return false;
 		});
 	}
 	
-	$('#btnConcluirLimite','#divBotoesAval').unbind('click').bind('click',function() {
+	$('#btnConcluirLimite','#divBotoesDemo').unbind('click').bind('click',function() {
 		if (operacao == 'C') {
 			voltaDiv(3,2,4,'DESCONTO DE T&Iacute;TULOS - LIMITE');
 		} else {

@@ -5621,6 +5621,8 @@ END fn_letra_risco;
     --               19/01/2018 - Inclusao da nova versao de contrato para impressao.
     --                            (Jaison/Lucas SUPERO - PRJ404)
     --
+    --               18/07/2019 - Incluído outras rendas do cônjuge.
+    --                            PRJ 438 - Sprint 16 - Rubens Lima (Mout's)
     -- .........................................................................*/
     
     ----------->>> CURSORES  <<<-------- 
@@ -5777,6 +5779,26 @@ END fn_letra_risco;
          AND enc.cdseqinc = 1;
     rw_crapenc cr_crapenc%ROWTYPE;
 
+    --> Buscar conjuge
+    CURSOR cr_conjuge (pr_cdcooper crapcje.cdcooper%TYPE,
+                       pr_nrdconta crapcje.nrdconta%TYPE ) IS
+     SELECT e.nrctacje
+     FROM crapcje e
+     WHERE cdcooper = pr_cdcooper
+     AND   nrdconta = pr_nrdconta
+     AND   idseqttl = 1;    
+    --Rendas
+    CURSOR cr_rendas(pr_cdcooper crapcje.cdcooper%TYPE,
+                     pr_nrdconta crapcje.nrdconta%TYPE ) IS
+     SELECT NVL(t.vldrendi##1,0) + 
+            NVL(t.vldrendi##2,0) + 
+            NVL(t.vldrendi##3,0) + 
+            NVL(t.vldrendi##4,0) + 
+            NVL(t.vldrendi##5,0) + 
+            NVL(t.vldrendi##6,0)
+     FROM crapttl t
+     WHERE t.cdcooper = pr_cdcooper
+     AND   t.nrdconta = pr_nrdconta;
     ----------->>> TEMPTABLE <<<--------
     vr_tab_dados_avais         typ_tab_dados_avais;
     vr_tab_tit_bordero         typ_tab_tit_bordero;
@@ -5790,6 +5812,8 @@ END fn_letra_risco;
     vr_tab_emprestimos         EMPR0001.typ_tab_dados_epr;
     vr_tab_grupo               GECO0001.typ_tab_crapgrp;
     vr_tab_rating_hist         typ_tab_rating_hist;
+    vr_nrctacjg                CRAPCJE.nrctacje%TYPE;
+    vr_vlrencjg                NUMBER :=0;
     
     vr_idxctlim                PLS_INTEGER;
     vr_idxpromi                PLS_INTEGER;
@@ -6582,6 +6606,18 @@ END fn_letra_risco;
      --Buscar indice do primeiro registro
      vr_idx_proposta := vr_tab_dados_proposta.FIRST; 
             
+     /*Busca a conta do cônjuge*/
+     OPEN cr_conjuge (pr_cdcooper => pr_cdcooper,
+                      pr_nrdconta => pr_nrdconta);
+     FETCH cr_conjuge INTO vr_nrctacjg;                 
+     CLOSE cr_conjuge;
+     /*Se possuir conjuge, busca as rendas*/
+     IF NVL(vr_nrctacjg,0) > 0 THEN
+       OPEN cr_rendas (pr_cdcooper => pr_cdcooper,
+                       pr_nrdconta => vr_nrctacjg);
+        FETCH cr_rendas INTO vr_vlrencjg;
+       CLOSE cr_rendas;
+	 END IF;
      pc_escreve_xml('<Proposta>');                 
      pc_escreve_xml(
                           '<nrdconta>'	|| TRIM(GENE0002.fn_mask_conta(vr_tab_dados_proposta(vr_idx_proposta).nrdconta)) 	   || '</nrdconta>' ||
@@ -6601,6 +6637,7 @@ END fn_letra_risco;
                           '<dsagenci>'	||  rw_crapage.nmresage                            || '</dsagenci>' ||
                           '<vlsalari>'	|| to_char(vr_tab_dados_proposta(vr_idx_proposta).vlsalari,'FM999G999G990D00')  || '</vlsalari>' ||
                           '<vlsalcon>'	|| to_char(vr_tab_dados_proposta(vr_idx_proposta).vlsalcon,'FM999G999G990D00')  || '</vlsalcon>' ||
+                          '<vlrencjg>'	|| to_char(vr_vlrencjg,'FM999G999G990D00')  || '</vlrencjg>' ||
                           '<vlfatura>'	|| to_char(vr_tab_dados_proposta(vr_idx_proposta).vlfatura,'FM999G999G990D00')  || '</vlfatura>' ||
                           '<vllimcre>'	|| to_char(vr_tab_dados_proposta(vr_idx_proposta).vllimcre,'FM999G999G990D00')  || '</vllimcre>' ||
                           '<vltotccr>'	|| to_char(vr_tab_dados_proposta(vr_idx_proposta).vltotccr,'FM999G999G990D00')  || '</vltotccr>' ||
