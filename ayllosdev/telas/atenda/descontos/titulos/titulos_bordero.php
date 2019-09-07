@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: titulos_bordero.php                                       
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração:26/06/2017
+	 Data : Novembro/2008                Última Alteração:26/07/2019
 	                                                                  
 	 Objetivo  : Mostrar opcao Borderos de descontos de Títulos        
 	                                                                  	 
@@ -22,8 +22,20 @@
 				 28/04/2018 - Inclusão de novas colunas na grid de borderô e migrado chamada de progress para oracle (Alex Sandro  - GFT)
 
 				 07/05/2018 - Adicionada verificação para definir se o bordero vai seguir o fluxo novo ou o antigo (Luis Fernando - GFT)
-				 
+
 				 05/09/2018 - Adicionado campo de prejuizo para o bordero (Luis Fernando - GFT)
+
+				 11/03/2019 - Adicionada coluna Rating dos Limites de Desconto de Cheque e de Desconto de Título (Luiz Otávio Olinger Momm - AMCOM)
+
+				 12/03/2019 - Adicionada coluna Rating dos Limites de Desconto de Cheque e de Desconto de Título (Luiz Otávio Olinger Momm - AMCOM)
+
+				 08/05/2019 - Corrigido problema na função selecionaBorderoTitulos que faltou parâmetros. (Luiz Otávio Olinger Momm - AMCOM)
+
+				 24/05/2019 - P450 - Removido mensageiria para pesquisa de rating por proposta (Luiz Otávio Olinger Momm - AMCOM).
+
+				 26/07/2019 - P450 - Ajustado tamanhos dos retornos de status para não quebrar a tabela
+                                              (Luiz Otávio Olinger Momm - AMCOM).
+
 	************************************************************************/
 	
 	session_start();
@@ -169,13 +181,19 @@
 						<th>Situa&ccedil;&atilde;o do Border&ocirc;</th>
 						<th>Decis&atilde;o da An&aacute;lise</th>
 						<th>Data Libera&ccedil;&atilde;o</th>
+						<!-- 12/03/2019 -->
+						<th>Rating</th>
+						<!-- 12/03/2019 -->
 					</tr>			
 				</thead>
 				<tbody>
-					<?  for ($i = 0; $i < $qtBorderos; $i++) { 								
+					<?
+						for ($i = 0; $i < $qtBorderos; $i++) {
 							$cor = "";
-							
+
+							$rating = $borderos[$i]->tags[11]->cdata;					
 							$mtdClick = "selecionaBorderoTitulos('".($i + 1)."','".$qtBorderos."','".($borderos[$i]->tags[1]->cdata)."','".($borderos[$i]->tags[2]->cdata)."','".($borderos[$i]->tags[7]->cdata)."',".$borderos[$i]->tags[10]->cdata.");";
+
 						?>
 						<tr id="trBordero<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 						
@@ -197,9 +215,12 @@
 							<td><span><? echo $borderos[$i]->tags[6]->cdata ?></span>
 								<? echo number_format(str_replace(",",".",$borderos[$i]->tags[6]->cdata),2,",","."); ?></td>
 							
-							<td><? echo $borderos[$i]->tags[7]->cdata; ?></td>
-							<td><? echo $borderos[$i]->tags[8]->cdata; ?></td>
-							<td><? echo $borderos[$i]->tags[9]->cdata; ?></td>
+							<td><? echo ucfirst(strtolower($borderos[$i]->tags[7]->cdata)); ?></td>
+							<td><? echo wordwrap(ucfirst(strtolower($borderos[$i]->tags[8]->cdata)), 15, "<br />\n"); ?></td>
+							<td><? echo wordwrap(ucfirst(strtolower($borderos[$i]->tags[9]->cdata)), 15, "<br />\n"); ?></td>
+							<!-- 12/03/2019 -->
+							<td><? echo $rating; ?></td>
+							<!-- 12/03/2019 -->
 						</tr>							
 					<?} // Fim do for ?>			
 				</tbody>
@@ -274,14 +295,17 @@ else{
 					<th>Qt.Tits</th>
 					<th>Valor</th>
 					<th>Situa&ccedil;&atilde;o</th>
+					<!-- 11/03/2019 -->
+					<th>Rating</th>
+					<!-- 11/03/2019 -->
 					<th style="display:none;"></th>
 					<th style="display:none;"></th>
 				</tr>			
 			</thead>
 			<tbody>
-				<?  for ($i = 0; $i < $qtBorderos; $i++) { 								
+				<?
+					for ($i = 0; $i < $qtBorderos; $i++) {
 						$cor = "";
-						
 						$mtdClick = "selecionaBorderoTitulos('".($i + 1)."','".$qtBorderos."','".($borderos[$i]->tags[1]->cdata)."','".($borderos[$i]->tags[2]->cdata)."');";
 					?>
 					<tr id="trBordero<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
@@ -301,8 +325,12 @@ else{
 							<? echo number_format(str_replace(",",".",$borderos[$i]->tags[4]->cdata),2,",","."); ?></td>
 						
 						<td><? echo $borderos[$i]->tags[5]->cdata; ?></td>
-							<td style="display:none;"></td>
-							<td style="display:none;"></td>
+                        
+						<!-- 11/03/2019 -->
+						<td></td>
+						<!-- 11/03/2019 -->
+						<td style="display:none;"></td>
+						<td style="display:none;"></td>
 					</tr>							
 				<?} // Fim do for ?>			
 			</tbody>

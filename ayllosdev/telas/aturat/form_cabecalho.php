@@ -7,7 +7,10 @@
 	 Objetivo  : Mostrar o form do cabecalho da ATURAT.                                  
 	                                                                  
 	 Alterações: 
-	 
+	 --------------
+	 [24/04/2019] Luiz Otávio Olinger Momm - AMCOM: Opção R: Desabilitar opção. Os relatórios serão migrados para o BI (Product Backlog Item 18540:Tratamento tela Aturat)
+	 [23/05/2019] Luiz Otávio Olinger Momm - AMCOM: Opção R: Habilitado apenas para a central Ailos (coop 3)
+
 	 
 	
 	**********************************************************************/
@@ -26,7 +29,9 @@
 	<select id="cddopcao" name="cddopcao">
 		<option value="C"> <? echo utf8ToHtml('C - Consultar ratings') ?> </option> 
 		<option value="A"> <? echo utf8ToHtml('A - Alterar ratings') ?> </option>
-		<option value="R"> <? echo utf8ToHtml('R - Relatorio ratings') ?> </option>		
+		<? if ($glbvars["cdcooper"] == 3) { ?>
+		<option value="R"> <? echo utf8ToHtml('R - Relatorio ratings') ?> </option>
+		<? } ?>
 		<option value="L"> <? echo utf8ToHtml('L - Atualiza&ccedil;&atilde;o da nota do cooperado') ?> </option>
 	</select>
   

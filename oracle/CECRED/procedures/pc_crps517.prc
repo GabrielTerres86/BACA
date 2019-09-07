@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps517(pr_cdcooper IN crapcop.cdcooper%TYPE) IS   --> Cooperativa solicitada 
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps517(pr_cdcooper IN crapcop.cdcooper%TYPE) IS   --> Cooperativa solicitada
   BEGIN
     /* .............................................................................
 

@@ -93,6 +93,17 @@ if ($salvarAcao == 'P') {
 	
 	$xmlResult = mensageria($xml, "TELA_PARRAT", "ALTERA_PARAM_RATING", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+
+		if ($msgErro == "") {
+			$msgErro = $xmlObj->roottag->tags[0]->cdata;
+		}
+
+		$nmdcampo = $xmlObj->roottag->tags[0]->attributes['NMDCAMPO'];
+		exibeErroNew($msgErro,$nmdcampo);
+		return;
+	}
 	
 	echo 'showError("inform","Par&acirc;metros alterados com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';
 	return;
@@ -113,6 +124,17 @@ if ($salvarAcao == 'B') {
 			
 			$xmlResult = mensageria($xml, "TELA_PARRAT", "ALTERAR_BIRO_RATING", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 			$xmlObj = getObjectXML($xmlResult);
+			if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+				$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+
+				if ($msgErro == "") {
+					$msgErro = $xmlObj->roottag->tags[0]->cdata;
+				}
+
+				$nmdcampo = $xmlObj->roottag->tags[0]->attributes['NMDCAMPO'];
+				exibeErroNew($msgErro,$nmdcampo);
+				return;
+			}
 		}
 	}
 	echo 'hideMsgAguardo(); showError("inform","Par&acirc;metros alterados com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';
@@ -134,6 +156,17 @@ if ($salvarAcao == 'M') {
 			
 			$xmlResult = mensageria($xml, "TELA_PARRAT", "ALTERAR_MODELO_RATING", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 			$xmlObj = getObjectXML($xmlResult);
+			if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+				$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+
+				if ($msgErro == "") {
+					$msgErro = $xmlObj->roottag->tags[0]->cdata;
+				}
+
+				$nmdcampo = $xmlObj->roottag->tags[0]->attributes['NMDCAMPO'];
+				exibeErroNew($msgErro,$nmdcampo);
+				return;
+			}
 		}
 	}
 	echo 'hideMsgAguardo(); showError("inform","Par&acirc;metros alterados com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';

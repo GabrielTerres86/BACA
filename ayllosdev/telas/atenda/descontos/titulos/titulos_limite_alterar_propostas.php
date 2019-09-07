@@ -13,10 +13,9 @@
  *												   especiais na observação, conforme solicitado
  *	   										       no chamado 315453.
  * 003: [28/03/2018] Andre Avila 		(GFT) 	 : Adaptado para Propostas
+ * 004: [20/05/2019] Luiz Otávio O. M. (AMCOM)   : Retirado Etapa Rating quando estiver em contigência
+ * 005: [28/05/2019] Luiz Otávio O. M. (AMCOM)   : Adicionado Etapa Rating para Cooperatova Ailos (3)
  */
-?>
-
-<?php 
 	session_start();
 	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
@@ -25,10 +24,36 @@
 	require_once("../../../../includes/controla_secao.php");
 
 	// Verifica se tela foi chamada pelo método POST
-	isPostMethod();	
+	isPostMethod();
 	 	
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
+
+	// ********************************************
+	// AMCOM - Retira Etapa Rating exceto para Ailos (coop 3)
+
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <cdacesso>HABILITA_RATING_NOVO</cdacesso>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "TELA_PARRAT", "CONSULTA_PARAM_CRAPPRM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjPRM = getObjectXML($xmlResult);
+
+	$habrat = 'N';
+	if (strtoupper($xmlObjPRM->roottag->tags[0]->name) == "ERRO") {
+		$habrat = 'N';
+	} else {
+		$habrat = $xmlObjPRM->roottag->tags[0]->tags;
+		$habrat = getByTagName($habrat[0]->tags, 'PR_DSVLRPRM');
+	}
+
+	if ($glbvars["cdcooper"] == 3) {
+		$habrat = 'N';
+	}
+	// ********************************************
 
 
 	require_once("../../../../includes/carrega_permissoes.php");
@@ -70,7 +95,15 @@
 		exibirErro('error',$root->erro->registro->dscritic->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		exit;
 	}
-	$flctgmot = $root->dados->flctgmot;
+
+	/* 004/005 */
+	// Para Central Ailos deve manter rating antigo
+	if ($habrat == 'N') {
+		$flctgmot = $root->dados->flctgmot;
+	} else {
+		$flctgmot = '0';
+	}
+	/* 004/005 */
 
 	// Monta o xml de requisição
 	$xmlGetDados = "";

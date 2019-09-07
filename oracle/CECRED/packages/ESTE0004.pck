@@ -71,7 +71,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
 
       Alteracoes: 23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
                   Referentes a proposta. (Lindon Carlos Pecile - GFT)
-  
+
+                  05/06/2019 - P450 - Adicionada a variavel BiroScore no JSON de envio 
+                               a Ibratan (Heckmann - AMcom)
+
+                  13/08/2019 - P450 - Inclusão do modeloRating na pc_gera_json_analise_lim para informar o tipo de calculo que
+                               Ibratan deve calcular e retornar do Rating definido na PARRAT
+                               Luiz Otavio Olinger Momm - AMCOM
+
   ---------------------------------------------------------------------------------------------------------------*/
   CURSOR cr_craplim(pr_cdcooper IN crapass.cdcooper%TYPE
                    ,pr_nrdconta IN crapass.nrdconta%TYPE
@@ -146,9 +153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
     
-      Alteraçao : 05/08/2019 - P438 - Inclusão do atributo canalOrigem no Json para identificar 
-                                a origem da operação de crédito no Motor. (Douglas Pagel / AMcom).
-
+      Alteraçao : 
                   08/08/2019 - Adição do campo segueFluxoAtacado ao retorno 
 				               P637 (Darlei / Supero)
         
@@ -219,7 +224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
           ,0 perceto
           ,lim.qtdiavig
           ,lim.cddlinha
-		  ,lim.idfluata -- P637
+          ,lim.idfluata -- P637
           ,lim.cdoperad
     from   crapldc ldc
           ,crapass ass
@@ -493,7 +498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     vr_vllimati      craplim.vllimite%TYPE;
       
     vr_vlpatref      tbcadast_cooperativa.vlpatrimonio_referencial%TYPE;
-      
+    
     vr_cdorigem NUMBER := 0;
 
   BEGIN
@@ -706,8 +711,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
         vr_obj_generico.put('bemEmGarantia', vr_lst_generic2);
       END IF;
     END IF;  
-    
-    vr_obj_generico.put('operacao', rw_crawlim.dsoperac); 
+
+    vr_obj_generico.put('BiroScore',rati0003.fn_tipo_biro(pr_cdcooper => pr_cdcooper));
+
+    vr_obj_generico.put('operacao', rw_crawlim.dsoperac);
     
     -- Buscar IOF
     vr_valoriof := 0;
@@ -748,17 +755,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     CLOSE cr_tbcadast_cooperativa;    
     -- Incluir Patrimonio referencial da cooperativa
     vr_obj_generico.put('valorPatrimonioReferencial',ESTE0001.fn_decimal_ibra(vr_vlpatref));
-    
+
     vr_cdorigem := CASE WHEN rw_crawlim.cdoperad = '996' THEN 3 ELSE 5 END;
-    
+
     vr_obj_generico.put('canalOrigem',vr_cdorigem);
+
+    /* P450 - Rating modelo calculo */
+    vr_obj_generico.put('modeloRating', RATI0003.fn_retorna_modelo_rating(pr_cdcooper));
     
-    vr_obj_analise.put('indicadoresCliente', vr_obj_generico);         
-    
+    vr_obj_analise.put('indicadoresCliente', vr_obj_generico);
+
     este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
                                     ,pr_nrdconta => pr_nrdconta
-                                    ,pr_nrctremp => 0
-                                    ,pr_flprepon => FALSE
+                                    ,pr_nrctremp => pr_nrctrlim  -- P450-LUIZAMCOM - Na producao estava igual a 0
+                                    ,pr_flprepon => false
                                     ,pr_tpprodut => 1
                                     ,pr_inPropon => True
                                     ,pr_dsjsonan => vr_obj_generico
@@ -816,7 +826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
 
         ELSE
           -- Enviaremos os dados básicos encontrados na tabela de conjugue
-          vr_obj_conjuge.put('documento'      ,este0002.fn_mask_cpf_cnpj(rw_crapcje.nrcpfcjg,1));
+          vr_obj_conjuge.put('documento'      ,este0002.fn_mask_cpf_cnpj(NVL(rw_crapcje.nrcpfcjg,0),1));
           vr_obj_conjuge.put('tipoPessoa'     ,'FISICA');
           vr_obj_conjuge.put('nome'           ,rw_crapcje.nmconjug);
           
@@ -1079,7 +1089,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
 
          ELSE
            -- Enviaremos os dados básicos encontrados na tabela de responsável legal
-           vr_obj_responsav.put('documento'      , este0002.fn_mask_cpf_cnpj(rw_crapcrl.nrcpfcgc,1));
+           vr_obj_responsav.put('documento'      , este0002.fn_mask_cpf_cnpj(NVL(rw_crapcrl.nrcpfcgc,0),1));
            vr_obj_responsav.put('tipoPessoa'     ,'FISICA');
            vr_obj_responsav.put('nome'           ,rw_crapcrl.nmrespon);
            IF rw_crapcrl.cddosexo = 1 THEN
@@ -1251,8 +1261,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
           vr_lst_generico.append(vr_obj_particip.to_json_value());
 
         ELSE
-          -- Enviaremos os dados básicos encontrados na tabela de Participaçoes    
-          vr_obj_particip.put('documento'      ,este0002.fn_mask_cpf_cnpj(rw_crapepa.nrdocsoc,2));
+          -- Enviaremos os dados básicos encontrados na tabela de Participaçoes
+          vr_obj_particip.put('documento'      ,este0002.fn_mask_cpf_cnpj(NVL(rw_crapepa.nrdocsoc,0),2));
           vr_obj_particip.put('tipoPessoa'     ,'JURIDICA');
           vr_obj_particip.put('razaoSocial'    ,rw_crapepa.nmprimtl);
           

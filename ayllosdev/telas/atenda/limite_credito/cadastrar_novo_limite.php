@@ -11,35 +11,43 @@
 	//***                                                                  ***//
 	//***             27/10/2010 - Tratamento para projeto de linhas de    ***//
 	//***                          crédito (David).                        ***//
-	//***																   ***//
+	//***                                                                  ***//
 	//***             13/02/2015 - Retirado Validação do campo valor total ***//
-	//***                          sfn (Lucas R./Gielow)				   ***//
-	//*** 																   ***//
-	//***			  23/02/2015 - Adicionado a validação do campo sfn     ***//
-	//***						   e corrigido o erro onde fazia com que   ***//	
-	//***						   validações criticassem indevidamente    ***//
-    //***  						   (Kelvin)								   ***//  
+	//***                          sfn (Lucas R./Gielow)                   ***//
+	//***                                                                  ***//
+	//***             23/02/2015 - Adicionado a validação do campo sfn     ***//
+	//***                          e corrigido o erro onde fazia com que   ***//	
+	//***                          validações criticassem indevidamente    ***//
+	//***                          (Kelvin)                                ***//  
 	//***                                                                  ***//
 	//***             13/04/2015 - Consultas automatizadas (Gabriel-RKAM)  ***//
 	//***                                                                  ***//
 	//***             08/07/2015 - Remoção de acentuação do campo de       ***//
 	//***                          observação (Lunelli - SD 300819|300893) ***// 
-	//***																   ***//
+	//***                                                                  ***//
 	//***             20/07/2015 - Ajuste no tratamento de caracteres      ***//
-	//***						  (Kelvin)								   ***//
+	//***                          (Kelvin)                                ***//
 	//***                                                                  ***//
-    //***             17/06/2016 - M181 - Alterar o CDAGENCI para          ***//
-    //***                         passar o CDPACTRA (Rafael Maciel - RKAM) ***//
+	//***             17/06/2016 - M181 - Alterar o CDAGENCI para          ***//
+	//***                          passar o CDPACTRA (Rafael Maciel - RKAM)***//
 	//***                                                                  ***//
-    //***             05/12/2017 - Insersão do campo idcobope.             ***//
-    //***                          Projeto 404 (Lombardi)                  ***//
+	//***             05/12/2017 - Insersão do campo idcobope.             ***//
+	//***                          Projeto 404 (Lombardi)                  ***//
+	//***                                                                  ***//
+	//***             21/03/2019 - Remover Etapa Rating                    ***//
+	//***                          Projeto 450 (Luiz Otávio Olinger        ***//
+	//***                          Momm - AMCOM)                           ***//
+	//***                                                                  ***//
+	//***             29/03/2019 - Manter Etapa Rating para Central Ailos  ***//
+	//***                          Projeto 450 (Luiz Otávio Olinger        ***//
+	//***                          Momm - AMCOM)                           ***//
 	//************************************************************************//
 	
 	session_start();
 	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
 	require_once("../../../includes/config.php");
-	require_once("../../../includes/funcoes.php");		
+	require_once("../../../includes/funcoes.php");
 	require_once("../../../includes/controla_secao.php");
 
 	// Verifica se tela foi chamada pelo método POST
@@ -47,23 +55,64 @@
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");
-	
+
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <cdacesso>HABILITA_RATING_NOVO</cdacesso>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "TELA_PARRAT", "CONSULTA_PARAM_CRAPPRM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjPRM = getObjectXML($xmlResult);
+
+	$habrat = 'N';
+	if (strtoupper($xmlObjPRM->roottag->tags[0]->name) == "ERRO") {
+		$habrat = 'N';
+	} else {
+		$habrat = $xmlObjPRM->roottag->tags[0]->tags;
+		$habrat = getByTagName($habrat[0]->tags, 'PR_DSVLRPRM');
+	}
+
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
 		exibeErro($msgError);		
 	}	
 	
 	// Verifica se os parâmetros necessários foram informados
-	$params = array("nrdconta","nrctrlim","cddlinha","vllimite","flgimpnp","vlsalari","vlsalcon","vloutras","vlalugue","dsobserv",
-					"nrgarope","nrinfcad","nrliquid","nrpatlvr","nrperger","perfatcl","nrctaav1","nmdaval1","nrcpfav1",
-					"tpdocav1","dsdocav1","nmdcjav1","cpfcjav1","tdccjav1","doccjav1","ende1av1","ende2av1","nrcepav1","nmcidav1",
-					"cdufava1","nrfonav1","emailav1","vlrenme1","nrctaav2","nmdaval2","nrcpfav2","tpdocav2","dsdocav2","nmdcjav2","cpfcjav2",
-					"tdccjav2","doccjav2","ende1av2","ende2av2","nrcepav2","nmcidav2","cdufava2","nrfonav2","emailav2","vlrenme2",
-					"idcobope");
+	if ($glbvars["cdcooper"] == 3 || $habrat == 'N') {
+		$params = array("nrdconta","nrctrlim","cddlinha","vllimite","flgimpnp","vlsalari","vlsalcon","vloutras","vlalugue","dsobserv",
+						"nrgarope","nrinfcad","nrliquid","nrpatlvr","nrperger","perfatcl","nrctaav1","nmdaval1","nrcpfav1",
+						"tpdocav1","dsdocav1","nmdcjav1","cpfcjav1","tdccjav1","doccjav1","ende1av1","ende2av1","nrcepav1","nmcidav1",
+						"cdufava1","nrfonav1","emailav1","vlrenme1","nrctaav2","nmdaval2","nrcpfav2","tpdocav2","dsdocav2","nmdcjav2","cpfcjav2",
+						"tdccjav2","doccjav2","ende1av2","ende2av2","nrcepav2","nmcidav2","cdufava2","nrfonav2","emailav2","vlrenme2",
+						"idcobope");
+	} else {
+		$params = array("nrdconta","nrctrlim","cddlinha","vllimite","flgimpnp","vlsalari","vlsalcon","vloutras","vlalugue","dsobserv",
+						"nrctaav1","nmdaval1","nrcpfav1",
+						"tpdocav1","dsdocav1","nmdcjav1","cpfcjav1","tdccjav1","doccjav1","ende1av1","ende2av1","nrcepav1","nmcidav1",
+						"cdufava1","nrfonav1","emailav1","vlrenme1","nrctaav2","nmdaval2","nrcpfav2","tpdocav2","dsdocav2","nmdcjav2","cpfcjav2",
+						"tdccjav2","doccjav2","ende1av2","ende2av2","nrcepav2","nmcidav2","cdufava2","nrfonav2","emailav2","vlrenme2",
+						"idcobope");
+	}
 
 	foreach ($params as $nomeParam) {
-		if (!in_array($nomeParam,array_keys($_POST))) {			
+		if (!in_array($nomeParam,array_keys($_POST))) {
 			exibeErro("Par&acirc;metros incorretos.");
 		}	
+	}
+
+	if ($glbvars["cdcooper"] == 3 || $habrat == 'N') {
+		$nrgarope = $_POST["nrgarope"];
+		$nrliquid = $_POST["nrliquid"];
+		$nrpatlvr = $_POST["nrpatlvr"];
+		$nrinfcad = $_POST["nrinfcad"];
+		$nrperger = $_POST["nrperger"];
+	} else {
+		$nrgarope = 0;
+		$nrliquid = 0;
+		$nrpatlvr = 0;
+		$nrinfcad = 0;
+		$nrperger = 0;
 	}
 
 	$nrdconta = $_POST["nrdconta"];
@@ -76,12 +125,7 @@
 	$vloutras = $_POST["vloutras"];
 	$vlalugue = $_POST["vlalugue"];
 	$dsobserv = $_POST["dsobserv"];	
-	$nrgarope = $_POST["nrgarope"];
-	$nrinfcad = $_POST["nrinfcad"];
-	$nrliquid = $_POST["nrliquid"];
-	$nrpatlvr = $_POST["nrpatlvr"];
-	$nrperger = $_POST["nrperger"];	
-	$perfatcl = $_POST["perfatcl"];	
+
 	$nrctaav1 = $_POST["nrctaav1"];
 	$nmdaval1 = $_POST["nmdaval1"];
 	$nrcpfav1 = $_POST["nrcpfav1"];
@@ -251,18 +295,31 @@
 
 	// Gravar dados do rating do cooperado
 	//bruno - prj 470 - tela autorizacao
-	//echo 'atualizaDadosRating("divConteudoOpcao");';
+	if ($glbvars["cdcooper"] == 3 || $habrat == 'N') {
+		//echo 'atualizaDadosRating("divConteudoOpcao");';
 	
-	//bruno - prj 470 - tela autorizacao
-	//echo 'eval(fncRatingSuccess);';
-	if($stringArrayMsg != "")
-	echo 'chamarImpressaoLimiteCredito(false);';
-	// echo 'var p = {
-	// 	vlcontrato: "'.$vllimite.'",
-	// 	nrcontrato: "'.$nrctrlim.'",
-	// };';
-	// echo 'chamarImpressao(p);';
+		//bruno - prj 470 - tela autorizacao
+		//echo 'eval(fncRatingSuccess);';
+		if($stringArrayMsg != "")
+		echo 'chamarImpressaoLimiteCredito(false);';
+		// echo 'var p = {
+		// 	vlcontrato: "'.$vllimite.'",
+		// 	nrcontrato: "'.$nrctrlim.'",
+		// };';
+		// echo 'chamarImpressao(p);'; 
+	} else {
+		//echo 'atualizaDadosRating("divConteudoOpcao");';
 	
+		//bruno - prj 470 - tela autorizacao
+		//echo 'eval(fncRatingSuccess);';
+		if($stringArrayMsg != "")
+		echo 'chamarImpressaoLimiteCredito(false);';
+		// echo 'var p = {
+		// 	vlcontrato: "'.$vllimite.'",
+		// 	nrcontrato: "'.$nrctrlim.'",
+		// };';
+		// echo 'chamarImpressao(p);';
+	}
 	// Mensagens de alerta
 	$msg = Array();
 			

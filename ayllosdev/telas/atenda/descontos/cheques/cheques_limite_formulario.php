@@ -28,10 +28,41 @@
  * 012: [26/05/2017] Odirlei Busana (AMcom)  : Desabilitar campo de numero do contrato, será gerado automaticamente. PRJ300 - desconto de cheque
  * 013: [26/06/2017] Jonata            (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364)
  * 014: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
- * 015: [13/04/2018] Lombardi     (CECRED) : Incluida chamada da function validaValorProduto. PRJ366
- * 016: [04/06/2019] Mateus Z      (Mouts) : Alteração para chamar tela de autorização quando alterar valor. PRJ 470 SM2
+ * 015: [13/04/2018] Lombardi     (CECRED)   : Incluida chamada da function validaValorProduto. PRJ366
+ * 016: [04/06/2019] Mateus Z      (Mouts)   : Alteração para chamar tela de autorização quando alterar valor. PRJ 470 SM2
+ * 017: [29/03/2019] Luiz Otávio (AMCOM)     : Retirado etapa Rating - P450
  */
+
+// ********************************************
+// AMCOM - Retira Etapa Rating exceto para Ailos (coop 3)
+
+$xml = "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+$xml .= "   <cdacesso>HABILITA_RATING_NOVO</cdacesso>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "TELA_PARRAT", "CONSULTA_PARAM_CRAPPRM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObjPRM = getObjectXML($xmlResult);
+
+$habrat = 'N';
+if (strtoupper($xmlObjPRM->roottag->tags[0]->name) == "ERRO") {
+	$habrat = 'N';
+} else {
+	$habrat = $xmlObjPRM->roottag->tags[0]->tags;
+	$habrat = getByTagName($habrat[0]->tags, 'PR_DSVLRPRM');
+}
+
+if ($glbvars["cdcooper"] == 3) {
+	$habrat = 'N';
+}
+// ********************************************
+
 ?>
+<script type="text/javascript">
+	var habrat = '<?=$habrat?>';
+</script>
 
 <form action="" name="frmDadosLimiteDscChq" id="frmDadosLimiteDscChq">
 
@@ -203,7 +234,9 @@
 	// Variável que indica se é uma operação para cadastrar nova proposta - Utiliza na include rating_busca_dados.php
 	$cdOperacao = $cddopcao;
 
-	include("../../../../includes/rating/rating_busca_dados.php"); 
+	if ($habrat == 'N') {
+		include("../../../../includes/rating/rating_busca_dados.php"); 
+	}
 ?>
 
 <script type="text/javascript">
@@ -352,35 +385,76 @@
 	
 	$("#btnContinuarRendas","#divBotoesRenda").unbind("click").bind("click",function() {
 		<? if ($cddopcao == "A") { ?>
-			$('#divBotoesRenda').css('display','none');
-			// Pj470 - SM2 -- Mateus Zimmermann -- Mouts 
-			var aux_vllimite = normalizaNumero($("#vllimite","#frmDadosLimiteDscChq").val());
-			aux_vllimite_anterior = normalizaNumero(aux_vllimite_anterior);
-			var aux_fncRatingSuccess = '';
-			if(aux_vllimite_anterior != aux_vllimite){
-				aux_fncRatingSuccess = "chamarImpressaoChequeLimite();";
-			}else{
-				aux_fncRatingSuccess = "carregaLimitesCheques();";
+			// Rating Antigo
+			if (habrat == 'N') {
+				$('#divBotoesRenda').css('display','none');
+				// Pj470 - SM2 -- Mateus Zimmermann -- Mouts 
+				var aux_vllimite = normalizaNumero($("#vllimite","#frmDadosLimiteDscChq").val());
+				aux_vllimite_anterior = normalizaNumero(aux_vllimite_anterior);
+				var aux_fncRatingSuccess = '';
+				if(aux_vllimite_anterior != aux_vllimite){
+					aux_fncRatingSuccess = "chamarImpressaoChequeLimite();";
+				}else{
+					aux_fncRatingSuccess = "carregaLimitesCheques();";
+				}
+				informarRating("divDscChq_Renda","dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscChq_Renda;divBotoesRenda','divDadosRating');", aux_fncRatingSuccess);
+				// Fim Pj470 - SM2
+			// Rating Novo
+			} else {
+				$("#divDscChq_Renda").css("display","none");
+				// Pj470 - SM2 -- Mateus Zimmermann -- Mouts 
+				var aux_vllimite = normalizaNumero($("#vllimite","#frmDadosLimiteDscChq").val());
+				aux_vllimite_anterior = normalizaNumero(aux_vllimite_anterior);
+				var aux_fncRatingSuccess = '';
+				if(aux_vllimite_anterior != aux_vllimite){
+					aux_fncRatingSuccess = "chamarImpressaoChequeLimite();";
+				}else{
+					aux_fncRatingSuccess = "carregaLimitesCheques();";
+				}
+
+				dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda');
+				// informarRating("divDscChq_Renda","dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscChq_Renda;divBotoesRenda','divDadosRating');", aux_fncRatingSuccess);
+				// Fim Pj470 - SM2
 			}
-			informarRating("divDscChq_Renda","dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscChq_Renda;divBotoesRenda','divDadosRating');", aux_fncRatingSuccess);
-			// Fim Pj470 - SM2	
+			// Fim Rating
 		<? } elseif ($cddopcao == "C") { ?>
-			$('#divBotoesRenda').css('display','none');
-			informarRating("divDscChq_Renda","dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscChq_Renda;divBotoesRenda','divDadosRating');","carregaLimitesCheques()");
+			// Rating Antigo
+			if (habrat == 'N') {
+				$('#divBotoesRenda').css('display','none');
+				informarRating("divDscChq_Renda","dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscChq_Renda;divBotoesRenda','divDadosRating');","carregaLimitesCheques()");
+			// Rating Novo
+			} else {
+				$("#divDscChq_Renda").css("display","none");
+				dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda');
+			}
+			// Fim Rating
 		<? } else { ?>
-			$('#divBotoesRenda').css('display','none');
-			//prj 470 - tela autorizacao
-			informarRating("divDscChq_Renda",
-						   "dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
-						   "dscShowHideDiv('divDscChq_Renda;divBotoesRenda','divDadosRating');",
-						   "chamarImpressaoChequeLimite()");
+			// Rating Antigo
+			if (habrat == 'N') {
+				$('#divBotoesRenda').css('display','none');
+				//prj 470 - tela autorizacao
+				informarRating("divDscChq_Renda",
+							   "dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')",
+							   "dscShowHideDiv('divDscChq_Renda;divBotoesRenda','divDadosRating');",
+							   "chamarImpressaoChequeLimite()");
+			// Rating Novo
+			} else {
+				$("#divDscChq_Renda").css("display","none");
+				dscShowHideDiv('divDscChq_Observacao;divBotoesObs','divDadosRating;divBotoesRenda');
+			}
+			// Fim Rating
 		<? } ?>
 		return false;
 	});
 	
 	$("#btnVoltarObservacao","#divBotoesObs").unbind("click").bind("click",function() {
-		dscShowHideDiv("divDadosRating","divDscChq_Observacao;divBotoesObs");
-		return false;
+		if (habrat == 'N') {
+			dscShowHideDiv("divDadosRating","divDscChq_Observacao;divBotoesObs");
+			return false;
+		} else {
+			dscShowHideDiv("divDscChq_Renda;divBotoesRenda","divDscChq_Observacao;divBotoesObs");
+			return false;
+        	} 
 	});
 	
 	$("#btnContinuarObservacao","#divBotoesObs").unbind("click").bind("click",function() {

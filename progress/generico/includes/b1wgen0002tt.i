@@ -104,105 +104,107 @@
                12/07/2013 - Adicionado NO-UNDO nas temp-tables: tt-dados-coope,
                             tt-dados-assoc e tt-fiador. (Fabricio)
 
-              08/10/2013 - Novas temp-tables para restruturaçao de contratos:
-                           tt-fiadores, tt-intervenientes, tt-bens-contratos
-                           (Lucas)
+               08/10/2013 - Novas temp-tables para restruturaçao de contratos:
+                            tt-fiadores, tt-intervenientes, tt-bens-contratos
+                            (Lucas)
 
-              31/01/2013 - Incluir uflicenc na tt-bens-alienacao
-                           (Guilherme/SUPERO)
-                           
-              07/01/2014 - Retirado inicializacao de variavel qtpromis 0.(Jorge)
-              
-              09/01/2014 - Incluir qtlemcal na tt-dados-epr (James).
-              
-              24/02/2014 - Criado tt-dados-epr-out, copia da tt-dados-epr. (Jorge)
-              
-              05/03/2014 - Incluido "qtlemcal","vlprvenc" e "vlpraven" na 
-                           tt-dados-epr (James).
-              
-                         - Incluido idseqbem na tt-bens-alienacao 
-                           (Guilherme/SUPERO)
-                           
-              22/08/2014 - Projeto Automatizaçao de Consultas em Propostas
-                           de Crédito (Jonata-RKAM).
-                           
-              10/09/2014 - Incluido flgpreap na tt-dados-epr (James)
-              
-              25/09/2014 - Incluir campo na tt-proposta-epr inpessoa
-                           (Lucas R.)
-                           
-              03/11/2014 - Incluido as campos vlttmupr, vlttjmpr, vlpgmupr, 
-                           vlpgjmpr na tt-dados-epr (Daniel).
-                           
-              07/11/2014 - Incluido o campo cdorigem na tt-proposta-epr. 
-                           (Jaison)
-                           
-              24/11/2014 - Incluido o campo cdorigem na tt-dados-epr. 
-                           (James)
-                           
-              09/01/2015 - Projeto microcredito (Jonata-RKAM).
-              
-              20/01/2015 - Adicionado campo dstipbem em tt-bens-alienacao.
-                           (Jorge/Gielow) - SD 241854
-                           
-              18/01/2015 - Projeto Complemento de Análise de Propostas
-                           Empréstimos e Financiamentos
-                           (Tiago Castro - RKAM)
-                           
-              19/05/2015 - Incluido nova temp-table para o projeto de cessao
+               31/01/2013 - Incluir uflicenc na tt-bens-alienacao
+                            (Guilherme/SUPERO)
+
+               07/01/2014 - Retirado inicializacao de variavel qtpromis 0.(Jorge)
+
+               09/01/2014 - Incluir qtlemcal na tt-dados-epr (James).
+
+               24/02/2014 - Criado tt-dados-epr-out, copia da tt-dados-epr. (Jorge)
+
+               05/03/2014 - Incluido "qtlemcal","vlprvenc" e "vlpraven" na 
+                            tt-dados-epr (James).
+                          - Incluido idseqbem na tt-bens-alienacao 
+                            (Guilherme/SUPERO)
+
+               22/08/2014 - Projeto Automatizaçao de Consultas em Propostas
+                            de Crédito (Jonata-RKAM).
+
+               10/09/2014 - Incluido flgpreap na tt-dados-epr (James)
+
+               25/09/2014 - Incluir campo na tt-proposta-epr inpessoa
+                            (Lucas R.)
+
+               03/11/2014 - Incluido as campos vlttmupr, vlttjmpr, vlpgmupr, 
+                            vlpgjmpr na tt-dados-epr (Daniel).
+
+               07/11/2014 - Incluido o campo cdorigem na tt-proposta-epr. 
+                            (Jaison)
+
+               24/11/2014 - Incluido o campo cdorigem na tt-dados-epr. 
+                            (James)
+
+               09/01/2015 - Projeto microcredito (Jonata-RKAM).
+
+               20/01/2015 - Adicionado campo dstipbem em tt-bens-alienacao.
+                            (Jorge/Gielow) - SD 241854
+
+               18/01/2015 - Projeto Complemento de Análise de Propostas
+                            Empréstimos e Financiamentos
+                            (Tiago Castro - RKAM)
+
+               19/05/2015 - Incluido nova temp-table para o projeto de cessao
                            de credito (James)  
- 	                                                                    
-              25/06/2015 - Projeto 215 - DV 3, incluso novo campo liquidia na 
-                           tt-dados-epr (Daniel)    
- 
-              25/06/2015 - Criacao do FIELD portabil AS CHAR nas TEMP-TABLES
-                           (tt-dados-epr,tt-proposta-epr) Projeto Portabilidade
-                           de Credito (Carlos Rafael Tanholi). 
-                           
-              07/07/2015 - Criacao do FIELD err_efet na tt-proposta-epr.
-                           (Jaison/Diego - SD: 290027)
-                           
-              05/10/2015 - Revisao de contratos (Gabriel-RKAM)  
-              
-              17/11/2015 - Incluso novo campo dtapgoib na tt-dados-epr e
-			               cdorigem na tt-extrato_epr (Daniel) 
 
-			  22/03/2016 - Incluso novo campo dssitest na tt-proposta-epr 
-			               (Projeto Esteira de Credito - Daniel/Oscar) 	
-                           
-              23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
-                           Correçao nas TEMP-TABLES colocar NO-UNDO, tt-intervenientes (Oscar).             
-                           
-              07/07/2015 - Criacao do FIELD insitest na tt-proposta-epr.
-                           (Jaison/Marcos Martini - PRJ337)
-              20/09/2017 - Projeto 410 - Incluidos campos de indicacao de IOF, 
-                           tarifa e valor total para demonstração do empréstimo (Diogo - Mouts)
-                           
-              05/04/2017 - Adicionado parametros de carencia do produto Pos-Fixado. (Jaison/James - PRJ298)
+               25/06/2015 - Projeto 215 - DV 3, incluso novo campo liquidia na 
+                            tt-dados-epr (Daniel)    
 
-              19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
-                           PRJ339 - CRM (Odirlei-AMcom)
-              
-              15/12/2017 - Inserção do campo idcobope nas TEMP-TABLE tt-dados-epr
-                           e tt-proposta-epr. PRJ404 (Lombardi)
+               25/06/2015 - Criacao do FIELD portabil AS CHAR nas TEMP-TABLES
+                            (tt-dados-epr,tt-proposta-epr) Projeto Portabilidade
+                            de Credito (Carlos Rafael Tanholi). 
 
-			  05/02/2018 - Inclusao do campo vlrdtaxa na tt tt-extrato_epr. (James)
+               07/07/2015 - Criacao do FIELD err_efet na tt-proposta-epr.
+                            (Jaison/Diego - SD: 290027)
 
-			  25/01/2018 - Inclusão do FIELD NIVRIORI na tt-proposta-epr.
-			               (Reginaldo AMcom)
+               05/10/2015 - Revisao de contratos (Gabriel-RKAM)  
 
-			  21/02/2018 - Inclusão do FIELD IDENEMPR na tt-dados-epr.
-			               (Simas AMcom)
-              
-              14/12/2017 - Inclusao de campos na tt tt-proposta-epr, campos
-                           flintcdc e inintegra_cont,Prj. 402 (Jean Michel)
-              
-              04/07/2018 - P410 - Inclusão dos campos vltiofpr e vlpiofpr (Marcos-Envolti)
-              
-              17/09/2018 - P442 - Inclusao de campos dos bens da Proposta (Marcos-Envolti)
-              
-              22/10/2018 - P438 - Inclusao de campos alienação hipoteca (Paulo-Martins)
-              
+               17/11/2015 - Incluso novo campo dtapgoib na tt-dados-epr e
+                            cdorigem na tt-extrato_epr (Daniel) 
+
+               22/03/2016 - Incluso novo campo dssitest na tt-proposta-epr 
+                            (Projeto Esteira de Credito - Daniel/Oscar) 	
+
+               23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados-epr-out (Oscar).
+                            Correçao nas TEMP-TABLES colocar NO-UNDO, tt-intervenientes (Oscar).             
+
+               07/07/2015 - Criacao do FIELD insitest na tt-proposta-epr.
+                            (Jaison/Marcos Martini - PRJ337)
+
+               20/09/2017 - Projeto 410 - Incluidos campos de indicacao de IOF, 
+                            tarifa e valor total para demonstração do empréstimo (Diogo - Mouts)
+
+               05/04/2017 - Adicionado parametros de carencia do produto Pos-Fixado. (Jaison/James - PRJ298)
+
+               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                            PRJ339 - CRM (Odirlei-AMcom)
+
+               15/12/2017 - Inserção do campo idcobope nas TEMP-TABLE tt-dados-epr
+                            e tt-proposta-epr. PRJ404 (Lombardi)
+
+               05/02/2018 - Inclusao do campo vlrdtaxa na tt tt-extrato_epr. (James)
+
+               25/01/2018 - Inclusao do FIELD NIVRIORI na tt-proposta-epr.
+                            (Reginaldo AMcom)
+
+               21/02/2018 - Inclusao do FIELD IDENEMPR na tt-dados-epr.
+                            (Simas AMcom)
+
+               14/12/2017 - Inclusao de campos na tt tt-proposta-epr, campos
+                            flintcdc e inintegra_cont,Prj. 402 (Jean Michel)
+
+               04/07/2018 - P410 - Inclusao dos campos vltiofpr e vlpiofpr (Marcos-Envolti)
+
+               17/09/2018 - P442 - Inclusao de campos dos bens da Proposta (Marcos-Envolti)
+
+               22/10/2018 - P438 - Inclusao de campos alienaçao hipoteca (Paulo-Martins)
+
+               13/05/2019 - P450 - Rating - Retorno Rating na tt-proposta-epr. 
+                            Luiz Otavio Olinger Momm - AMcom.
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
     FIELD nrdconta LIKE crapass.nrdconta
@@ -407,7 +409,12 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD flintcdc LIKE crapcop.flintcdc
     FIELD inintegra_cont AS INT
     FIELD tpfinali LIKE crapfin.tpfinali
-    FIELD vlprecar LIKE crawepr.vlprecar.
+    FIELD vlprecar LIKE crawepr.vlprecar
+    FIELD inratnot AS INTE   /* vr_inrisco_rating  */
+    FIELD inratori AS INTE   /* vr_origem_rating  */
+    FIELD inratret AS INTE   /* vr_desc_sit  */
+    FIELD inrisrat AS CHAR   /* P450   */
+    FIELD origerat AS CHAR.  /* P450   */ 
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR

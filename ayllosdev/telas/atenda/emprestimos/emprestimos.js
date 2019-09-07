@@ -166,6 +166,10 @@
 * 135: [28/06/2019] Alterado o fluxo de consulta para ao final mostrar a tela de demonstração do empréstimo PRJ 438 - Sprint 13 (Mateus Z / Mouts)
 * 136: [19/04/2019] Ajuste na tela garantia de operação, para salvar seus dados apenas no 
 *                   final da inclusão, alteração de empréstimo - PRJ 438. (Mateus Z / Mouts)
+* 122: [14/02/2019] Adicionado na tabela controlaLayout na divEmpres as 3 novas colunas do crédito rating P450 (Luiz Otávio Olinger Momm - AMCOM)
+* 123: [25/02/2019] Inclusão do botão Alterar Rating P450 (Luiz Otávio Olinger Momm - AMCOM).
+* 126: [08/04/2019] P450 - Ajustes de interface conforme solicitação Ailos (Luiz Otávio Olinger Momm - AMCOM).
+* 127: [22/05/2019] P450/P441 - Coluna status taxas mostrar por configuração (Luiz Otávio Olinger Momm - AMCOM).
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -178,6 +182,8 @@
  */
 var __BOTAO_TAB = 9;
 var __BOTAO_ENTER = 13;
+//bruno - prj 438 - bug 14235
+var __ACAO_GAROPC_EMPRESTIMO = 'EMPRESTIMO';
 var __TELA_DADOS_SOLICITACAO = 'TELA_DADOS_SOLICITACAO'; //bruno - prj 438 - bug 14625
 /** 
  * ----------------------------------
@@ -463,6 +469,8 @@ var aux_inobriga_rating = ""; //PRJ - 438 - Rating - bruno
 
 var aux_insitapr = ""; //bruno - prj 438 - bug 13658
 
+var __aux_ingarapr = ""; //bruno - prj 438 - bug 14235
+
 var aux_nrctremp_consulta = ''; //rubens - prj 438 - bug 14283
 
 // PRJ 438 - Melhoria para salvar os campos e realizar a gravação da GAROPC apenas no final da criação de empréstimo
@@ -631,7 +639,7 @@ function controlaOperacao(operacao) {
     // Para isso verifico a linha que está selecionado e pego o valor do INPUT HIDDEN desta linha
     if (in_array(operacao, ['TA', 'TE', 'TC', 'A_NOVA_PROP', 'A_NUMERO', 'A_VALOR', 'A_AVALISTA', 'IMP', 'REG_GRAVAMES', 'VAL_GRAVAMES',
                             'PORTAB_CRED_C', 'VAL_RECALCULAR_EMPRESTIMO', 'RECALCULAR_EMPRESTIMO', 'PORTAB_CRED_A', 'PORTAB_CRED_I', 'ENV_ESTEIRA',
-							'ACIONAMENTOS', 'A_SOMBENS', 'MOTIVOS'])) {
+                            'ACIONAMENTOS', 'A_SOMBENS', 'MOTIVOS', 'ALTERAR_RATING'])) {
 
         nrctremp = (nrctremp == '') ? '' : nrctremp;
         tplcremp = (tplcremp == 0) ? 0 : tplcremp;
@@ -1657,6 +1665,12 @@ function controlaOperacao(operacao) {
             carregaDadosConsultaMotivos();
 			return false;
             break;
+/* [123] */
+        case 'ALTERAR_RATING':
+            carregarAlteracaoRating(nrdconta, $("#divEmpres table tr.corSelecao").find("input[id='nrctremp']").val(), '90');
+            return false;
+            break;
+/* [123] */
         default:
             operacao = '';
             nrctremp = '';
@@ -2333,41 +2347,62 @@ function controlaLayout(operacao) {
 
         divRegistro.css('height', '150px');
 
-        altura = '230px';
-        largura = '1050px';
+        altura = '245px';
+        // [122]
+        if (atendaEmprestimoStatusTaxas) {
+        	largura = '1210px';
+        } else {
+        	largura = '1150px';
+        }
+        // [122]
 
         var ordemInicial = new Array();
         //ordemInicial = [[0, 0]];
 
         var arrayLargura = new Array();
-        arrayLargura[0] = '60px';
-        arrayLargura[1] = '60px';
-        arrayLargura[2] = '130px';
-        arrayLargura[3] = '75px';
-        arrayLargura[4] = '75px';
-        arrayLargura[5] = '65px';
-        arrayLargura[6] = '35px';
-        arrayLargura[7] = '35px';
-        arrayLargura[8] = '35px';
-        arrayLargura[9] = '65px';
-        arrayLargura[10] = '120px';
-		arrayLargura[11] = '80px';
-		arrayLargura[12] = '65px';
+        var contadorLargura = 0;
+        arrayLargura[contadorLargura++] = '60px';
+        arrayLargura[contadorLargura++] = '60px';
+        arrayLargura[contadorLargura++] = '70px';
+        arrayLargura[contadorLargura++] = '90px';
+        arrayLargura[contadorLargura++] = '80px';
+        arrayLargura[contadorLargura++] = '80px';
+        arrayLargura[contadorLargura++] = '40px';
+
+        arrayLargura[contadorLargura++] = '35px';
+        arrayLargura[contadorLargura++] = '50px'; // AC
+        arrayLargura[contadorLargura++] = '135px';
+        arrayLargura[contadorLargura++] = '90px';
+        // [122]
+        arrayLargura[contadorLargura++] = '50px';  // Nota Rating
+        arrayLargura[contadorLargura++] = '60px';  // Retorno Rating
+        if (atendaEmprestimoStatusTaxas) {
+        	arrayLargura[contadorLargura++] = '60px';  // Status Taxas
+        }
+        // [122]
 
         var arrayAlinha = new Array();
-        arrayAlinha[0] = 'center';
-        arrayAlinha[1] = 'right';
-        arrayAlinha[2] = 'center';
-        arrayAlinha[3] = 'right';
-        arrayAlinha[4] = 'right';
-        arrayAlinha[5] = 'right';
-        arrayAlinha[6] = 'center';
-        arrayAlinha[7] = 'center';
-        arrayAlinha[8] = 'center';
-        arrayAlinha[9] = 'center';
-        arrayAlinha[10] = 'center';
-        arrayAlinha[11] = 'center';
-		arrayAlinha[12] = 'center';
+        var contadorAlinha = 0;
+        arrayAlinha[contadorAlinha++] = 'center';
+        arrayAlinha[contadorAlinha++] = 'right';
+        arrayAlinha[contadorAlinha++] = 'center';
+        arrayAlinha[contadorAlinha++] = 'right';
+        arrayAlinha[contadorAlinha++] = 'right';
+        arrayAlinha[contadorAlinha++] = 'right';
+        arrayAlinha[contadorAlinha++] = 'center';
+
+        arrayAlinha[contadorAlinha++] = 'center';
+        arrayAlinha[contadorAlinha++] = 'center';
+        arrayAlinha[contadorAlinha++] = 'center';
+        arrayAlinha[contadorAlinha++] = 'center';
+        // [122]
+        arrayAlinha[contadorAlinha++] = 'center';
+        arrayAlinha[contadorAlinha++] = 'center';
+        arrayAlinha[contadorAlinha++] = 'center';
+        if (atendaEmprestimoStatusTaxas) {
+        	arrayAlinha[contadorAlinha++] = 'center';
+        }
+        // [122]
 
         var metodoTabela = 'controlaOperacao(\'TA\')';
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
@@ -4970,7 +5005,7 @@ function controlaLayout(operacao) {
         if (tpemprst == 2) {
             altura = '230px';
         } else {
-        altura = '205px';
+            altura = '205px';
         }
 
         var rVlemprst = $('label[for="vlemprst"]', '#' + nomeForm);
@@ -5389,13 +5424,13 @@ function attArray(novaOp, cdcooper) {
         arrayIntervs[atual]['cdnacion'] = $('#cdnacion', '#frmIntevAnuente').val();
         arrayIntervs[atual]['dsnacion'] = $('#dsnacion', '#frmIntevAnuente').val();
         arrayIntervs[atual]['tpdocava'] = $('#tpdocava', '#frmIntevAnuente').val();
-        arrayIntervs[atual]['nmconjug'] = $('#nmconjug', '#frmIntevAnuente').val().toUpperCase(); 
+        arrayIntervs[atual]['nmconjug'] = $('#nmconjug', '#frmIntevAnuente').val().toUpperCase();
         arrayIntervs[atual]['tpdoccjg'] = $('#tpdoccjg', '#frmIntevAnuente').val();
         arrayIntervs[atual]['dsendre1'] = $('#dsendre1', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrfonres'] = $('#nrfonres', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nmcidade'] = $('#nmcidade', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrcepend'] = $('#nrcepend', '#frmIntevAnuente').val();
-        arrayIntervs[atual]['nmdavali'] = $('#nmdavali', '#frmIntevAnuente').val().toUpperCase(); 
+        arrayIntervs[atual]['nmdavali'] = $('#nmdavali', '#frmIntevAnuente').val().toUpperCase();
         arrayIntervs[atual]['nrcpfcgc'] = $('#nrcpfcgc', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrdocava'] = $('#nrdocava', '#frmIntevAnuente').val();
         arrayIntervs[atual]['nrcpfcjg'] = $('#nrcpfcjg', '#frmIntevAnuente').val();
@@ -10775,7 +10810,7 @@ function calculaCet(operacao) {
             nrdconta: nrdconta,
             cdfinemp: cdfinemp,
             operacao: operacao,
-       portabilidade: possuiPortabilidade,
+            portabilidade: possuiPortabilidade,
             dsctrliq: arrayProposta['dsctrliq'],
             dtcarenc: dtcarenc,
             redirect: 'script_ajax'
@@ -11648,6 +11683,7 @@ function abrirTelaGAROPC(operacao) {
 						   ' controlaOperacao(\\\'' + opera + '_DADOS_AVAL\\\');',
             ret_voltfunc : ' controlaOperacao(\'' + opera + '_INICIO\');',
             ret_errofunc : '$(\\\'#divRotina\\\').css({\\\'display\\\':\\\'block\\\'});bloqueiaFundo($(\\\'#divRotina\\\'));',
+            ACAO: __ACAO_GAROPC_EMPRESTIMO, //prj 438 - bug 14235
 			redirect     : 'html_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -11714,9 +11750,9 @@ function calculaDataCarencia(idForm) {
 		url: UrlSite + 'telas/atenda/emprestimos/busca_dados.php',
 		data: {
 			acao    : 'CALC_DATA_CARENCIA',
-            idcarenc: idcarenc,
+			idcarenc: idcarenc,
 			dtcarenc: dtcarenc,
-            nomeform: idForm,
+			nomeform: idForm,
 			redirect: "script_ajax"
 		},
 		error: function(objAjax,responseError,objExcept){
@@ -12370,15 +12406,15 @@ function controlaCamposTelaAvalista(cooperado){
         $('label[for="nrcpfcgc"]', '#frmDadosAval').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
         $('label[for="nmdavali"]', '#frmDadosAval').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
         $('label[for="vlrenmes"]', '#frmDadosAval').css('width', '120px').text('Rendimento Mensal:');
-		$('label[for="dtnascto"]', '#frmDadosAval').css('width', '80px').text('Data Nasc.:'); // Rafael Ferreira (Mouts) - Story 13447
+        $('label[for="dtnascto"]', '#frmDadosAval').css('width', '80px').text('Data Nasc.:'); // Rafael Ferreira (Mouts) - Story 13447
         $('#fsetConjugeAval', '#frmDadosAval').show();
     }else{
-    	$('label[for="nrctaava"]', '#frmDadosAval').css('width', '100px'); // Rafael Ferreira (Mouts) - Story 13447
+        $('label[for="nrctaava"]', '#frmDadosAval').css('width', '100px'); // Rafael Ferreira (Mouts) - Story 13447
         $('label[for="inpessoa"]', '#frmDadosAval').css('width', '100px'); // Rafael Ferreira (Mouts) - Story 13447
         $('label[for="nrcpfcgc"]', '#frmDadosAval').css('width', '100px'); // Rafael Ferreira (Mouts) - Story 13447
         $('label[for="nmdavali"]', '#frmDadosAval').css('width', '100px'); // Rafael Ferreira (Mouts) - Story 13447
-		$('label[for="vlrenmes"]', '#frmDadosAval').css('width', '150px').text('Faturamente Médio Mensal:');
-		$('label[for="dtnascto"]', '#frmDadosAval').css('width', '100px').text('Data da Abertura:');
+        $('label[for="vlrenmes"]', '#frmDadosAval').css('width', '150px').text('Faturamente Médio Mensal:');
+        $('label[for="dtnascto"]', '#frmDadosAval').css('width', '100px').text('Data da Abertura:');
         $('#fsetConjugeAval', '#frmDadosAval').hide();
     }
 
@@ -12669,18 +12705,18 @@ function controlaCamposTelaInterveniente(cooperado){
         case '1':
             $('label[for="dtnascto"]', '#frmIntevAnuente').text('Data Nasc.:');
             $('label[for="nrctaava"]', '#frmIntevAnuente').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
-        	$('label[for="inpessoa"]', '#frmIntevAnuente').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
-        	$('label[for="nrcpfcgc"]', '#frmIntevAnuente').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
-        	$('label[for="nmdavali"]', '#frmIntevAnuente').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
+            $('label[for="inpessoa"]', '#frmIntevAnuente').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
+            $('label[for="nrcpfcgc"]', '#frmIntevAnuente').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
+            $('label[for="nmdavali"]', '#frmIntevAnuente').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
         	//$('label[for="dtnascto"]', '#frmIntevAnuente').css('width', '80px'); // Rafael Ferreira (Mouts) - Story 13447
         break;
         default:
             $('label[for="dtnascto"]', '#frmIntevAnuente').text('Data da Abertura:');
             $('label[for="nrctaava"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
-        	$('label[for="inpessoa"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
-        	$('label[for="nrcpfcgc"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
-        	$('label[for="nmdavali"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
-        	$('label[for="dtnascto"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
+            $('label[for="inpessoa"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
+            $('label[for="nrcpfcgc"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
+            $('label[for="nmdavali"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
+            $('label[for="dtnascto"]', '#frmIntevAnuente').css('width', '95px'); // Rafael Ferreira (Mouts) - Story 13447
         break;
     }
     if(operacao == 'C_INTEV_ANU'){
@@ -12700,7 +12736,7 @@ function controlaCamposTelaInterveniente(cooperado){
 		$('#dsnacion', '#frmIntevAnuente').show(); // Rafael Ferreira (Mouts) - Story 13447
 		$('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').hide();
 		$('#fsetConjugeInterv', '#frmIntevAnuente').show();
-        $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').hide(); //bruno - prj 438 - bug 14962
+		$('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').hide(); //bruno - prj 438 - bug 14962
 
 	} else if (inpessoa == 1 && cooperado == false) {
 
@@ -12710,7 +12746,7 @@ function controlaCamposTelaInterveniente(cooperado){
 		$('#divCdnacion', '#frmIntevAnuente').show();
 		$('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').show();
 		$('#fsetConjugeInterv', '#frmIntevAnuente').show();
-        $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').removeClass('rotulo').show(); //bruno - prj 438 - bug 14962
+		$('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').removeClass('rotulo').show(); //bruno - prj 438 - bug 14962
 
 	} else if (inpessoa == 2 && cooperado == true) {
 
@@ -12730,8 +12766,8 @@ function controlaCamposTelaInterveniente(cooperado){
 		$('#divNacionalidade', '#frmIntevAnuente').hide(); // Rafael Ferreira (Mouts) - Story 13447
 		$('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').show();
 		$('#fsetConjugeInterv', '#frmIntevAnuente').hide();
-        $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').show(); //bruno - prj 438 - bug 14962
-        $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').addClass('rotulo').show(); // Rafael Ferreira (Mouts) - story 13447
+		$('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').show(); //bruno - prj 438 - bug 14962
+		$('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').addClass('rotulo').show(); // Rafael Ferreira (Mouts) - story 13447
 
 	}
 
@@ -13218,3 +13254,95 @@ function restaurarBotoesTelaInicial(verificar){
 function focaCampo(campo){
     $('#'+campo.campo,'#'+campo.form).focus();
 }
+
+/* [123] */
+function formatarTelaAlteracaoRating(){
+
+    divRotina.css('width', '415px');
+    $('#divConteudoOpcao').css({'height': '', 'width': '400px'});
+    $('#frmDadosMotivos').css('width','400px');
+
+    $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px', 'padding': '10px 3px 5px 3px'});
+    $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
+
+}
+
+function carregarAlteracaoRating(nrdconta, nrctremp, tipoProduto) {
+    showMsgAguardo('Aguarde, enviando rating ...');
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/emprestimos/rating/rating.php',
+        data: {
+            nrdconta: nrdconta,
+            contrato: nrctremp,
+            tipoProduto: tipoProduto,
+            btntipo: '2',
+            redirect: 'html_ajax'
+            },
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','Não foi possível concluir a requisição.','Alerta - Aimaro',"unblockBackground()");
+        },
+        success: function(response) {
+        	hideMsgAguardo();
+            if (response.toLowerCase().indexOf("-- ERRO RATING --".toLowerCase()) != -1) {
+                showError('error',response,'Alerta - Aimaro',"unblockBackground()");
+            } else {
+                $('#divConteudoOpcao').html(response);
+                layoutPadrao();
+                formatarTelaAlteracaoRating();
+                divRotina.centralizaRotinaH();
+                bloqueiaFundo(divRotina);
+
+                $("#btVoltar", "#divBotoesFormRatingManutencao").unbind('click').bind('click', function() {
+                    controlaOperacao('AT');
+                });
+
+                $("#btSalvar", "#divBotoesFormRatingManutencao").unbind('click').bind('click', function() {
+                    salvarAlteracaoRating();
+                });
+            }
+            return false;
+
+        }
+    });
+
+    return false;
+}
+
+function salvarAlteracaoRating() {
+
+	showMsgAguardo('Aguarde, enviando rating ...');
+    $.ajax({
+        type: 'POST',
+        url: UrlSite + 'telas/atenda/emprestimos/rating/ajax_rating.php',
+        dataType: "json",
+        data: {
+            flgopcao: 'salvarRating',
+            btntipo: '2',
+            cdcooper: $("#divBotoesFormRatingManutencao").data('cdcooper'),
+            nrcpfcgc: $("#divBotoesFormRatingManutencao").data('nrcpfcgc'),
+            nrdconta: $("#divBotoesFormRatingManutencao").data('nrdconta'),
+            contrato: $("#divBotoesFormRatingManutencao").data('contrato'),
+            justificativa: $("#campoJustificativa", "#frmRatingManutencao").val(),
+            notanova: $("#notanova", "#frmRatingManutencao").val()
+        }
+    }).done(function(jsonResult) {
+    	hideMsgAguardo();
+        if (jsonResult.erro == true) {
+            showError('error', jsonResult.msg, 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
+        } else {
+            // fechaRotina($('#divUsoGenerico'), $('#divRotina'));
+            controlaOperacao();
+        }
+        return true;
+    }).fail(function(jsonResult) {
+    	hideMsgAguardo();
+        showError('error', 'Falha de comunicação com servidor. Tente novamente.', 'Alerta - Aimaro', 'bloqueiaFundo(divRotina)');
+    }).always(function() {
+
+    });
+}
+/* [123] */
