@@ -37,7 +37,7 @@
 	$tpregist = (isset($_POST['tpregist'])) ? $_POST['tpregist'] : '';	
 	$tpregtrb = (isset($_POST['tpregtrb'])) ? $_POST['tpregtrb'] : '';
 	$impSoDeclaracao = (isset($_POST['imprimirsodeclaracaosn'])) ? $_POST['imprimirsodeclaracaosn'] : '0';	//vem de impressoes.js
-	
+
 	// Retirando caracteres do cpf e cnpj  
 	$arrayRetirada = array('.','-');                                                        
 	$nrdconta = str_replace($arrayRetirada,'',$nrdconta);
@@ -83,6 +83,8 @@
 
 	$GLOBALS['tprelato'] = 'ficha_cadastral';
 
+	$nomeArquivoPDF = 'ficha_cadastral_'.$impchave;
+
 	if (empty($tpregtrb)){
 		$tpregtrb = getByTagName($xmlObjeto->roottag->tags[11]->tags[0]->tags,'tpregtrb');			
 	}
@@ -98,6 +100,7 @@
 		if ($impSoDeclaracao){
 			//Somente a declaração do simples nacional e o regime de tributação deve ser 1 ou 2 (simples nacional)
 			if ($tpregtrb == '1'){
+				$nomeArquivoPDF = 'declaracao_simples_'.$impchave;
 				$conteudo .= file_get_contents('./imp_declaracao_simples.php');
 			}
 		}
@@ -115,5 +118,5 @@
 	}
 	$dompdf->set_paper('a4');
 	$dompdf->render();
-	$dompdf->stream('ficha_cadastral_'.$impchave.'.pdf', $opcoes );	
+	$dompdf->stream($nomeArquivoPDF.'.pdf', $opcoes);	
 ?>

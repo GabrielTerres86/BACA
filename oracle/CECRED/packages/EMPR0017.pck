@@ -15,7 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0017 AS
   --
   --
   --			23/07/2019 - Removido filtro de data passado via sessão, criado parametro de data
-  --                                 na busca_simulacoes. (P438 Douglas Pagel / AMcom)
+  --                         na busca_simulacoes. (P438 Douglas Pagel / AMcom)
   --
   --
   ---------------------------------------------------------------------------------------------------------------
@@ -378,7 +378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   vg_xml_retorno xmltype;
   vtexto VARCHAR2(32000);
   vr_exc_erro EXCEPTION;
-  vr_rowid    ROWID;
+  vr_rowid  ROWID;
   --
   FUNCTION fn_get_cr_crapdat(pr_cdcooper IN crapcop.cdcooper%TYPE) 
     RETURN BTCH0001.cr_crapdat%ROWTYPE IS
@@ -397,7 +397,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     THEN
       RETURN rw_crapdat;
   END fn_get_cr_crapdat;
-
   --> Funcao para formatar o numero em decimal conforme padrao da SOA
   FUNCTION fn_decimal_soa (pr_numero IN number) RETURN VARCHAR2 is
   BEGIN
@@ -1626,14 +1625,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      OPEN cr_crapsim(rw_crawepr.cdcooper,rw_crawepr.nrdconta,rw_crawepr.nrsimula);
      FETCH cr_crapsim INTO rw_crapsim;
      CLOSE cr_crapsim;
-     
+
      OPEN cr_crapass(pr_cdcooper,pr_nrdconta);
      FETCH cr_crapass INTO rw_crapass;
      CLOSE cr_crapass;
      
-    vr_vlemprestado := rw_crawepr.vlr_emprest;
+     vr_vlemprestado := rw_crawepr.vlr_emprest;
      
-    vr_vliofepr := 0;
+     vr_vliofepr := 0;
      
      tiof0001.pc_calcula_iof_epr(pr_cdcooper => rw_crawepr.cdcooper,
                                  pr_nrdconta => rw_crawepr.nrdconta,
@@ -1882,7 +1881,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                 ,pr_tag_pai  => 'dados'
                 ,pr_posicao  => vr_contador
                 ,pr_tag_nova => 'valor_emprestado'
-                ,pr_tag_cont => fn_decimal_soa(nvl(vr_vlemprestado,0)) 
+                ,pr_tag_cont => fn_decimal_soa(nvl(vr_vlemprestado,0))
                 ,pr_des_erro => pr_dscritic);
 
       insere_tag(pr_xml      => pr_retorno
@@ -3309,7 +3308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                                pr_idseqttl => pr_idseqttl,
                                pr_dtmvtolt => vr_dtmvtolt,
                                pr_flgerlog => sys.diutil.int_to_bool(pr_flgerlog),
-                               pr_datainic => vr_dtmvtolt_ini,
+							   pr_datainic => vr_dtmvtolt_ini,
                                pr_datafina => vr_dtmvtolt_fim,
                                pr_tcrapsim => vr_tab_crapsim,
                                pr_cdcritic => vr_cdcritic,
@@ -3772,7 +3771,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   --
   -- *** legenda para o parametro pr_situacao ****
   -- ================================================================================================
-  --                                                                                                  *
+  --                                                                                                *
   --  Código Situação ||   Descrição Situação ||  Situação (insitest) ||    Decisão (insitapr)        *
   --  0                ||  Em Análise         ||                      ||    0, 5 ou 6                 *
   --  1                ||  Aprovado           ||                     ||     1                        *
@@ -5769,7 +5768,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        AND t.nrdconta = pr_nrdconta
        AND t.nrctremp = pr_nrctremp;
     rw_contrato cr_contrato%ROWTYPE;
-    
+
     -- Busca dados da linha de crédito
     CURSOR cr_craplcr(pr_cdcooper IN crawepr.cdcooper%TYPE
                      ,pr_cdlcremp IN craplcr.cdlcremp%TYPE) IS
@@ -5778,7 +5777,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        WHERE l.cdcooper = pr_cdcooper
          AND l.cdlcremp = pr_cdlcremp;
     rw_craplcr cr_craplcr%ROWTYPE;
-    
+
     CURSOR cr_crapttl IS
     SELECT * 
       FROM crapttl 
@@ -5786,7 +5785,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        AND nrdconta = pr_nrdconta
        AND idseqttl = 1;
     rw_crapttl cr_crapttl%ROWTYPE;
-    
+
      -- Monta o registro de data
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -6281,7 +6280,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
    vr_flgrating    NUMBER;                -- P450
    vr_vlendivid    craplim.vllimite%TYPE; -- P450 - Valor do Endividamento do Cooperado
    vr_vllimrating  craplim.vllimite%TYPE; -- P450 - Valor do Parametro Rating (Limite) TAB056
-
    --
    --
    CURSOR cr_crawepr(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -6696,7 +6694,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        pr_retorno := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                         '<Root><Erro>' ||vr_dscritic||
                                         '</Erro></Root>');
-                                        
+
        GENE0001.pc_gera_log( pr_cdcooper => pr_cdcooper 
                            , pr_cdoperad => pr_cdoperad
                            , pr_dscritic => vr_dscritic
@@ -7855,8 +7853,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        END IF;
 
          pc_inclui_proposta_esteira(pr_cdcooper => rw_crawepr.cdcooper
-                                 ,pr_cdagenci => vr_cdagenci 
-                                 ,pr_cdoperad => vr_cdoperad
+                                   ,pr_cdagenci => vr_cdagenci 
+                                   ,pr_cdoperad => vr_cdoperad
                                    ,pr_cdorigem => rw_crawepr.cdorigem
                                    ,pr_nrdconta => rw_crawepr.nrdconta
                                    ,pr_nrctremp => rw_crawepr.nrctremp
@@ -7894,7 +7892,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
          AND JOB_ACTION LIKE '%pr_cdcooper => '||pr_cdcooper||'%'
          AND JOB_ACTION LIKE '%pr_nrdconta => '||pr_nrdconta||'%'
          AND JOB_ACTION LIKE '%pr_nrctremp => '||pr_nrctremp||'%';
-   
     rw_verifica_job cr_verifica_job%ROWTYPE;
     --
     -- Bloco PLSQL para chamar a execução paralela do pc_crps414

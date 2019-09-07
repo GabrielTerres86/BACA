@@ -173,6 +173,8 @@
 			   28/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
                
 			   03/06/2019 - Retirada validação de bloqueio de conta. (RITM0019350 - Lombardi).
+         
+               21/08/2019 - Ajustado para nao bloquear mais a conta por tempo de alteraçao de senha. (INC0023036 - Lombardi)
                
 ..............................................................................*/
 
@@ -4704,7 +4706,7 @@ PROCEDURE confirma-senha:
                 ELSE
                     ASSIGN crapopi.qtacerro = 0.
             END.
-        
+        /* INC0023036 - NAO BLOQUEAR MAIS A CONTA POR TEMPO DE ALTERAÇAO DE SENHA
         IF  NOT par_flgalter THEN
             DO:
                 IF  crapass.inpessoa = 1  THEN
@@ -4761,7 +4763,7 @@ PROCEDURE confirma-senha:
                             END.
                     END.
             END.
-
+        */
         ASSIGN aux_flgtrans = TRUE.
         
     END. /** Fim do DO TRANSACTION - TRANSACAO **/

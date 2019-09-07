@@ -73,6 +73,9 @@
                
                01/06/2018 - Ajuste no retorno da PROC consulta-cheque-compensado
                              para retornar o INBLQVIC. PRJ 372 - (Mateus Z / Mouts)
+               
+               21/08/2019 - Ajuste na PROC consultar-cheques-custodia pra retornar 
+                            o numero da remessa do cheque. RITM0011937 (Lombardi)
 
 ..............................................................................*/
 
@@ -219,6 +222,18 @@ PROCEDURE consultar-cheques-custodia:
                 par_qtcheque >= (par_nriniseq + par_nrregist)  THEN
                 NEXT.
         
+        FIND crapdcc WHERE crapdcc.cdcooper = crapcst.cdcooper AND
+                           crapdcc.nrdconta = crapcst.nrdconta AND
+                           crapdcc.dtlibera = crapcst.dtlibera AND
+                           crapdcc.nrdolote = crapcst.nrdolote AND
+                           crapdcc.cdcmpchq = crapcst.cdcmpchq AND
+                           crapdcc.cdbanchq = crapcst.cdbanchq AND
+                           crapdcc.cdagechq = crapcst.cdagechq AND
+                           crapdcc.nrcheque = crapcst.nrcheque AND
+                           crapdcc.nrctachq = crapcst.nrctachq AND
+                           CAN-DO("1,3", STRING(crapdcc.intipmvt))
+                           NO-LOCK NO-ERROR.
+        
         CREATE tt-cheques-custodia.
         ASSIGN tt-cheques-custodia.dtlibera = crapcst.dtlibera  
                tt-cheques-custodia.cdbanchq = crapcst.cdbanchq  
@@ -234,7 +249,11 @@ PROCEDURE consultar-cheques-custodia:
                                                   "Resgatado"
                                               ELSE
                                                   "Descontado"
-               tt-cheques-custodia.cdopedev = crapcst.cdopedev.
+               tt-cheques-custodia.cdopedev = crapcst.cdopedev
+               tt-cheques-custodia.nrremret = IF AVAILABLE crapdcc  THEN
+                                                  crapdcc.nrremret
+                                              ELSE
+                                                  0.
 
     END. /** Fim do FOR EACH crapcst **/
 

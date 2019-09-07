@@ -1,7 +1,7 @@
 <?
 /*************************************************************************
 	Fonte: consulta-habilita.php
-	Autor: Gabriel						Ultima atualizacao: 13/12/2016
+	Autor: Gabriel						Ultima atualizacao: 23/08/2019
 	Data : Dezembro/2010
 	
 	Objetivo: Tela para visualizar a consulta/habilitacao da rotina 
@@ -49,6 +49,10 @@
 				             6 - Cobrança Bancária. PRJ366 (Lombardi).
 
 				20/02/2019 - Nova campo Homologado API (Andrey Formigari - Supero)
+
+                23/08/2019 - INC0022172 - Não carregar o desconto na tela de Habilitação de Cobrança, pois nessa tela são 
+                             descontos adicionais.
+
 
 *************************************************************************/
 
@@ -100,32 +104,135 @@ if ($idaba === 1) {
 
 $dsorgarq    = trim($_POST["dsorgarq"]);
 $insitceb    = !empty($_POST["insitceb"]) ? trim($_POST["insitceb"]) : 0;
-$inarqcbr    = $_POST["inarqcbr"];
-$cddemail    = $_POST["cddemail"];
-$flgregon    = retornaFlag($_POST["flgregon"]);
-$flgpgdiv    = retornaFlag($_POST["flgpgdiv"]);
-$flcooexp    = retornaFlag($_POST["flcooexp"]);
-$flceeexp    = retornaFlag($_POST["flceeexp"]);
-$flserasa    = retornaFlag($_POST["flserasa"]);
-$cddbanco	 = trim($_POST["cddbanco"]);
-$flgcebhm    = retornaFlag(isset($_POST["flgcebhm"]) ? trim($_POST["flgcebhm"]) : 0);
-$flgapihm    = trim($_POST["flgapihm"]);
 $cddopcao    = trim($_POST["cddopcao"]);
-$dsdmesag    = $_POST["dsdmesag"];
-$titulares   = $_POST["titulares"];
-$qtTitulares = $_POST["qtTitulares"];
-$emails_titular = $_POST["emails"];
-$flsercco    = $_POST["flsercco"];
-$qtdfloat    = trim($_POST["qtdfloat"]);
-$flprotes    = retornaFlag($_POST["flprotes"]);
-$qtlimaxp    = trim($_POST["qtlimaxp"]);
-$qtlimmip    = trim($_POST["qtlimmip"]);
-$flproaut    = trim($_POST["flproaut"]);
-$insrvprt    = trim($_POST["insrvprt"]);
-$qtdecprz    = trim($_POST["qtdecprz"]);
-$idrecipr	 = trim($_POST["idrecipr"]);
-$inenvcob	 = trim($_POST["inenvcob"]);
-$qtbolcob	 = trim($_POST["qtbolcob"]);
+
+// Rafael Ferreira (Mouts) - INC0020100 - Situac 3
+/* Este procedimento foi criado devido a necessidade de pesquisar o convenio existente do Cooperado
+   no momento da INCLUSAO na nova tela de reciprocidade. Na estrutura atual o sistema usa o idrecipr para fazer a busca dos convenios existentes, porém isso não atende para pesquisar convenios antigos. Neste sentido foi necessário fazer este tratamento para pesquisar buscando pelo numero do convenio SOMENTE
+   na INCLUSAO da tela de Cobrança.*/
+if ($cddopcao == "I") {
+
+    // Busca Informação da CRAPCEB
+    // Montar o xml de Requisicao
+    $xml  = "";
+    $xml .= "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= "   <nrconven>".$nrconven."</nrconven>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+
+    // Executa script para envio do XML
+    $xmlResult = mensageria($xml, "TELA_ATENDA_COBRAN", "CONSULTA_CONVENIO_INSERT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getObjectXML($xmlResult);
+    $dados = $xmlObj->roottag->tags[0]->tags;
+
+    // Se ocorrer um erro, mostra crítica
+    // if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+    //   $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+    //   exibeErro(utf8_encode($msgErro));
+    // }
+
+
+    $inarqcbr       = getByTagName($dados,"inarqcbr");
+    $cddemail       = getByTagName($dados,"cddemail");
+    $flgregon       = retornaFlag(getByTagName($dados,"flgregon") ? getByTagName($dados,"flgregon") : 0);
+    $flgpgdiv       = retornaFlag(getByTagName($dados,"flgpgdiv") ? getByTagName($dados,"flgpgdiv") : 0);
+    $flcooexp       = retornaFlag(getByTagName($dados,"flcooexp") ? getByTagName($dados,"flcooexp") : 0);
+    $flceeexp       = retornaFlag(getByTagName($dados,"flceeexp") ? getByTagName($dados,"flceeexp") : 0);
+    $flserasa       = retornaFlag(getByTagName($dados,"flserasa") ? getByTagName($dados,"flserasa") : 0);
+    $cddbanco       = getByTagName($dados,"cddbanco");
+    $dsdmesag       = getByTagName($dados,"dsdmesag");
+    $titulares      = getByTagName($dados,"titulares");
+    $qtTitulares    = getByTagName($dados,"qtTitulares");
+    // $emails_titular = getByTagName($dados,"emails");
+    $flsercco       = getByTagName($dados,"flsercco");
+    $qtdfloat       = getByTagName($dados,"qtdfloat");
+    $flprotes       = retornaFlag(getByTagName($dados,"flprotes") ? getByTagName($dados,"flprotes") : 0);
+    $qtlimaxp       = getByTagName($dados,"qtlimaxp");
+    $qtlimmip       = getByTagName($dados,"qtlimmip");
+    $flproaut       = getByTagName($dados,"flproaut");
+    $insrvprt       = getBytagName($dados,"insrvprt");
+    $qtdecprz       = getByTagName($dados,"qtdecprz"); // Decurso de Prazo
+    $idrecipr       = getByTagName($dados,"idrecipr");
+    $inenvcob       = getByTagName($dados,"inenvcob");
+    //$qtbolcob       = getByTagName($dados,"qtbolcob");
+    $flgcebhm       = retornaFlag(getByTagName($dados,"flgcebhm") ? getByTagName($dados,"flgcebhm") : 0);
+    $flgapihm       = retornaFlag(getByTagName($dados,"flgapihm") ? getByTagName($dados,"flgapihm") : 0);
+
+
+
+    // Carrega E-mails
+    // Monta o xml para a requisicao
+    $xmlGetDadosCobranca  = "";
+    $xmlGetDadosCobranca .= "<Root>";
+    $xmlGetDadosCobranca .= " <Cabecalho>";
+    $xmlGetDadosCobranca .= "   <Bo>b1wgen0082.p</Bo>";
+    $xmlGetDadosCobranca .= "   <Proc>carrega-convenios-ceb</Proc>";
+    $xmlGetDadosCobranca .= " </Cabecalho>";
+    $xmlGetDadosCobranca .= " <Dados>";
+    $xmlGetDadosCobranca .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+    $xmlGetDadosCobranca .= "   <cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+    $xmlGetDadosCobranca .= "   <nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
+    $xmlGetDadosCobranca .= "   <cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+    $xmlGetDadosCobranca .= "   <nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
+    $xmlGetDadosCobranca .= "   <idorigem>".$glbvars["idorigem"]."</idorigem>";
+    $xmlGetDadosCobranca .= "   <nrdconta>".$nrdconta."</nrdconta>";
+    $xmlGetDadosCobranca .= "   <idseqttl>1</idseqttl>";
+    $xmlGetDadosCobranca .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+    $xmlGetDadosCobranca .= " </Dados>";
+    $xmlGetDadosCobranca .= "</Root>";
+
+    // Executa script para envio do XML
+    $xmlResult = getDataXML($xmlGetDadosCobranca);
+    // Cria objeto para classe de tratamento de XML
+    $xmlObjDadosCobranca = getObjectXML($xmlResult);
+    // Se ocorrer um erro, mostra cr&iacute;tica
+    if (isset($xmlObjDadosCobranca->roottag->tags[0]->name) && strtoupper($xmlObjDadosCobranca->roottag->tags[0]->name) == "ERRO") {
+    	exibeErro($xmlObjDadosCobranca->roottag->tags[0]->tags[0]->tags[4]->cdata);
+    }
+
+    $emails = $xmlObjDadosCobranca->roottag->tags[2]->tags;
+
+    $emails_titular = '';
+
+    // Concatena todos os emails do cooperado
+    foreach($emails as $email) {
+       $emails_titular  = ($emails_titular == '') ? '' : $emails_titular . '|';
+       $emails_titular .= $email->tags[0]->cdata . ',' . $email->tags[1]->cdata;
+    }
+
+} else {
+
+    $inarqcbr    = $_POST["inarqcbr"];
+    $cddemail    = $_POST["cddemail"];
+    $flgregon    = retornaFlag($_POST["flgregon"]);
+    $flgpgdiv    = retornaFlag($_POST["flgpgdiv"]);
+    $flcooexp    = retornaFlag($_POST["flcooexp"]);
+    $flceeexp    = retornaFlag($_POST["flceeexp"]);
+    $flserasa    = retornaFlag($_POST["flserasa"]);
+    $cddbanco    = trim($_POST["cddbanco"]);
+    $dsdmesag    = $_POST["dsdmesag"];
+    $titulares   = $_POST["titulares"];
+    $qtTitulares = $_POST["qtTitulares"];
+    $emails_titular = $_POST["emails"];
+    $flsercco    = $_POST["flsercco"];
+    $qtdfloat    = trim($_POST["qtdfloat"]);
+    $flprotes    = retornaFlag($_POST["flprotes"]);
+    $qtlimaxp    = trim($_POST["qtlimaxp"]);
+    $qtlimmip    = trim($_POST["qtlimmip"]);
+    $flproaut    = trim($_POST["flproaut"]);
+    $insrvprt    = trim($_POST["insrvprt"]);
+    $qtdecprz    = trim($_POST["qtdecprz"]);
+    $idrecipr    = trim($_POST["idrecipr"]);
+    $inenvcob    = trim($_POST["inenvcob"]);
+    $qtbolcob    = trim($_POST["qtbolcob"]);
+    $flgcebhm    = retornaFlag(isset($_POST["flgcebhm"]) ? trim($_POST["flgcebhm"]) : 0);
+    $flgapihm    = retornaFlag(isset($_POST["flgapihm"]) ? trim($_POST["flgapihm"]) : 0);
+ }
+
+
 
 // Monta o xml de requisição
 $xml  = "";
@@ -198,7 +305,7 @@ $cco_qtlimaxp = getByTagName($xmlDados->tags,"QTLIMITEMAX_TOLERANCIA");
 $cco_flgregis = getByTagName($xmlDados->tags,"FLGREGIS");
 	
 $insrvprt = $cco_insrvprt;
-if ($cddopcao == "I" || ($cddopcao == "A" && empty($qtdecprz))) {
+if ($cddopcao == "A" && empty($qtdecprz)) {
     $qtdecprz = $cco_qtdecini;
     // Conforme solicitado no projeto 431 o campo passa a ser padrão SIM
     $flgregis = 'SIM';
@@ -412,8 +519,11 @@ $qtapurac  = getByTagName($xmlDados->tags,"QTAPURAC");
                                             // $cat_fldesman = getByTagName($cat->tags,'FLDESMAN');
                                             $cat_fldesman = 1;
                                             $cat_flrecipr = getByTagName($cat->tags,'FLRECIPR');                                       
-                                            $cat_percdesc_old = getByTagName($cat->tags,'PERDESCONTO');     
-                                            $cat_percdesc = isset($perdescontosMap[$cat_cdcatego]) ? $perdescontosMap[$cat_cdcatego] : getByTagName($cat->tags,'PERDESCONTO');
+                                            // Rafael Ferreira (Mouts) - INC0022172 - Não deve carregar o Desconto para não Duplicar
+                                            // $cat_percdesc_old = getByTagName($cat->tags,'PERDESCONTO');     
+                                            // $cat_percdesc = isset($perdescontosMap[$cat_cdcatego]) ? $perdescontosMap[$cat_cdcatego] : getByTagName($cat->tags,'PERDESCONTO');
+                                            $cat_percdesc_old = 0;
+                                            $cat_percdesc = 0;
 
                                             ?>
                                             <tr id="<?php echo 'linCat'.$cont.'_'.$cat_flcatcoo.'_'.$cat_flcatcee; ?>">
@@ -730,6 +840,7 @@ onChangeProtesto();
         $("#flcooexp","#divOpcaoConsulta").prop("disabled",true);
         $("#flceeexp","#divOpcaoConsulta").prop("disabled",true);
         $("#flgcebhm","#divOpcaoConsulta").prop("disabled",true);
+        $("#flgapihm","#divOpcaoConsulta").prop("disabled",true);
         $("#cddbanco","#divOpcaoConsulta").prop("disabled",true);
         $("#flserasa","#divOpcaoConsulta").prop("disabled",true);
         $("#qtdfloat","#divOpcaoConsulta").prop("disabled",true);

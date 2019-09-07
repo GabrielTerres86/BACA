@@ -7618,7 +7618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-  BEGIN
+      BEGIN
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                  ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
@@ -7648,6 +7648,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       CLOSE cr_param_sms;
       
       vr_nmdireto := rw_param_sms.dsdirenv;
+      -- variavel para armazenar a data/hora de envio do arquivo
+      vr_dhenvio := SYSDATE;
       
       OPEN cr_cde_sms;
       
@@ -7669,9 +7671,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
           
            vr_cdcooper := rw_cde_sms.cdcooper;          
            
-           -- variavel para armazenar a data/hora de envio do arquivo
-           vr_dhenvio := SYSDATE;
-
            vr_nmarquiv := to_char(vr_dhenvio,'RRRRMMDD_HH24MISS')  || '_' ||
                           to_char(rw_cde_sms.cdagectl,'fm0000') || '_' ||
                           'COBEMP';

@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 22/05/2019
+ * FONTE        : emprestimos.js                            Última alteração: 03/06/2019
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -182,6 +182,8 @@
  */
 var __BOTAO_TAB = 9;
 var __BOTAO_ENTER = 13;
+//bruno - prj 438 - bug 14235
+var __ACAO_GAROPC_EMPRESTIMO = 'EMPRESTIMO';
 var __TELA_DADOS_SOLICITACAO = 'TELA_DADOS_SOLICITACAO'; //bruno - prj 438 - bug 14625
 /** 
  * ----------------------------------
@@ -466,6 +468,8 @@ var aux_cdfinemp_rating = ""; //PRJ - 438 - Rating - bruno
 var aux_inobriga_rating = ""; //PRJ - 438 - Rating - bruno
 
 var aux_insitapr = ""; //bruno - prj 438 - bug 13658
+
+var __aux_ingarapr = ""; //bruno - prj 438 - bug 14235
 
 var aux_nrctremp_consulta = ''; //rubens - prj 438 - bug 14283
 
@@ -11538,7 +11542,7 @@ function formataAcionamento() {
     var arrayLargura = new Array();
 
     arrayLargura[0] = '80px';
-    arrayLargura[1] = '110px';
+	  arrayLargura[1] = '110px';
     arrayLargura[2] = '100px';
     arrayLargura[3] = '196px';
     arrayLargura[4] = '120px';
@@ -11679,6 +11683,7 @@ function abrirTelaGAROPC(operacao) {
 						   ' controlaOperacao(\\\'' + opera + '_DADOS_AVAL\\\');',
             ret_voltfunc : ' controlaOperacao(\'' + opera + '_INICIO\');',
             ret_errofunc : '$(\\\'#divRotina\\\').css({\\\'display\\\':\\\'block\\\'});bloqueiaFundo($(\\\'#divRotina\\\'));',
+            ACAO: __ACAO_GAROPC_EMPRESTIMO, //prj 438 - bug 14235
 			redirect     : 'html_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -12751,7 +12756,7 @@ function controlaCamposTelaInterveniente(cooperado){
 		//$('#divCdnacion', '#frmIntevAnuente').hide();
 		$('label[for="dsdemail"], #dsdemail', '#frmIntevAnuente').hide();
 		$('#fsetConjugeInterv', '#frmIntevAnuente').hide();
-		$('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').hide(); //bruno - prj 438 - bug 14962
+        $('label[for="dtnascto"], #dtnascto' ,'#frmIntevAnuente').hide(); //bruno - prj 438 - bug 14962
 
 	} else if (inpessoa == 2 && cooperado == false) {
 

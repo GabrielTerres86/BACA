@@ -56,7 +56,12 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADCNA AS
                            ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                            ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                            ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                           ,pr_des_erro OUT VARCHAR2);           --> Erros do processo                                    
+                           ,pr_des_erro OUT VARCHAR2);           --> Erros do processo         
+                           
+  --Validar se CNAE está cadastrado                         
+  PROCEDURE pc_valida_cnae(pr_cdcnae IN tbgen_cnae.cdcnae%TYPE  --> Código do CNAE
+                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                          ,pr_dscritic OUT VARCHAR2);                                                    
                                                                                      
 END TELA_CADCNA;
 /
@@ -674,6 +679,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCNA AS
       ROLLBACK;   
   
   END pc_alterar_cnae;  
+  
+  --Valida se CNAE está cadastrado no sistema
+  PROCEDURE pc_valida_cnae(pr_cdcnae IN tbgen_cnae.cdcnae%TYPE  --> Código do CNAE
+                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                          ,pr_dscritic OUT VARCHAR2) IS         --> Descrição da crítica
+                         
+  /* .............................................................................
+   Programa: pc_valida_cnae
+   Sistema : Conta-Corrente - Cooperativa de Credito
+   Sigla   : CRED
+   Autor   : David - AILOS
+   Data    : Agosto/2019                        Ultima atualizacao: --/--/----
+
+   Dados referentes ao programa:
+
+   Frequencia: Sempre que for chamado
+   Objetivo  : Rotina para validar se o CNAE está cadastrado
+
+   Alteracoes: 
+                
+    ............................................................................. */                                    
+    CURSOR cr_cnae (pr_cdcnae IN tbgen_cnae.cdcnae%TYPE) IS
+    SELECT cnae.cdcnae          
+      FROM tbgen_cnae cnae
+     WHERE cdcnae = nvl(pr_cdcnae,0);     
+    rw_cnae cr_cnae%ROWTYPE;
+    
+    --Variaveis de erro
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;         
+    vr_exc_saida EXCEPTION;    
+  
+  BEGIN
+          
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'CADCNA'
+                              ,pr_action => null);
+              
+    OPEN cr_cnae(pr_cdcnae);
+    FETCH cr_cnae INTO rw_cnae;      
+    
+    IF cr_cnae%NOTFOUND THEN      
+      CLOSE cr_cnae;      
+      vr_cdcritic := 1501;
+      RAISE vr_exc_saida;      
+    END IF;  
+    
+    CLOSE cr_cnae;        
+  
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      
+      vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+            
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      
+    WHEN OTHERS THEN
+      
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral (TELA_CADCNA.pc_valida_cnae).';
+        
+  END pc_valida_cnae;  
   
   
 END TELA_CADCNA;

@@ -2549,7 +2549,8 @@ PROCEDURE pc_gera_conciliacao_spb ( pr_tipo_concilacao  IN VARCHAR2 --> Tipo de 
 
    Objetivo  : Gerar o arquivo de conciliação entre o Aimaro e JDSPB
 
-   Alteracoes: 
+   Alteracoes:    08/08/2019 - Melhorias para otimizar a performance de execução da conciliação.
+                               Jose Dill - Mouts (P475 - Sprint E)
    ........................................................................... */
  
   /* Seleciona as informações das mensagens enviadas no Aimaro, de acordo com o período solicitado*/
@@ -2576,6 +2577,8 @@ PROCEDURE pc_gera_conciliacao_spb ( pr_tipo_concilacao  IN VARCHAR2 --> Tipo de 
   AND pr_tipo_mensagem IN ('E','T')    
   AND tma.cdcooper = cop.cdcooper (+)                     
   UNION
+  /*  Neste union buscar somente as mensagens de convenio agendadas no dia anterior e efetivadas
+       na data atual da conciliação  */ 
   SELECT tmaf.nmmensagem
         ,tma.nrcontrole_if 
         ,tma.cdcooper
@@ -2586,10 +2589,7 @@ PROCEDURE pc_gera_conciliacao_spb ( pr_tipo_concilacao  IN VARCHAR2 --> Tipo de 
         ,tma.nrispb_deb
         ,tma.nrispb_cre
         ,to_char(cop.cdagectl) nr_legado
-        ,(Select trunc(f.dhmensagem)
-       From tbspb_msg_enviada_fase f
-       where f.nrseq_mensagem = tmaf.nrseq_mensagem     
-       and   f.cdfase in (10,15)) dataincage
+        ,trunc(tma.dhmensagem) dataincage
         ,2 Agendado
   FROM tbspb_msg_enviada tma
       ,tbspb_msg_enviada_fase tmaf
@@ -2597,12 +2597,8 @@ PROCEDURE pc_gera_conciliacao_spb ( pr_tipo_concilacao  IN VARCHAR2 --> Tipo de 
   WHERE TRUNC(tmaf.dhmensagem) BETWEEN pr_data_ini
                            AND pr_data_fim
   AND tma.nrseq_mensagem = tmaf.nrseq_mensagem
-  AND tmaf.cdfase = 55     
-  AND trunc(tmaf.dhmensagem) > 
-      (Select trunc(f.dhmensagem)
-       From tbspb_msg_enviada_fase f
-       where f.nrseq_mensagem = tmaf.nrseq_mensagem     
-       and   f.cdfase in (10,15))    
+  AND tmaf.cdfase = 55 
+  AND trunc(tmaf.dhmensagem) > trunc(tma.dhmensagem)    
   AND pr_tipo_mensagem IN ('E','T')  
   AND tma.cdcooper = cop.cdcooper (+)           
   ORDER BY cdcooper, dhmensagem;

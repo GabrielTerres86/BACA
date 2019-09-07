@@ -8,6 +8,7 @@ Objetivo  : importa arquivo para o servidor. Baseado no gnuclient_upload_file.ph
 				 e sem necessidade de um servico no lado do Ayllos  para monitorar ebaixar o arquivo.
 
 Alterações: 17/07/2016 - Alteracao para chamada da funcao cecredCript. SD 484516
+            24/06/2019 - Ajuste no fclose para fechar a variavel/arquivo correto - PRJ 500 (Mateus Z / Mouts)
 
 ***********************************************************************/
 //$Arq deve ser passado com o caminho do arquivo    * caminho/arquivo
@@ -31,7 +32,7 @@ if (!function_exists('formataCdcooper')) {
 /* Leitura do conteudo do arquivo pra variavel */
 $wArq=fopen($Arq,"r+");
 $conteudo=fread($wArq,filesize($Arq));
-fclose($Arq);
+fclose($wArq);
 
 /* Montagem do nome do arquivo, incluindo o codigo da cooperativa em seu início */
 $NomeArq    = formataCdcooper($glbvars["cdcooper"]).".0.".$filename;

@@ -82,6 +82,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
   -- Objetivo  : Centralizar rotinas relacionadas a Tela TAB085
   --
   -- Alteracoes:
+  --           17/04/2019 - Melhorias gerais e correções de erros.
+  --                        Jose Dill (Mouts). P475 - REQ14
   --
   --
   ---------------------------------------------------------------------------
@@ -181,7 +183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
       -- Incluir nome do módulo logado
       GENE0001.pc_informa_acesso(pr_module => 'TAB085'
                                 ,pr_action => null);
-
+                                
       -- Extrai dados do xml
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
                                pr_cdcooper => vr_cdcooper,
@@ -196,7 +198,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
       -- Se retornou alguma crítica
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         -- Levanta exceção
-        RAISE vr_exc_saida;
+        RAISE vr_exc_saida;        
       END IF;
 
       IF pr_cdcopsel IS NULL THEN
@@ -222,31 +224,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
       IF pr_cddopcao IN ('H', 'A') AND
          pr_cdcopsel = 0   THEN
 
-        -- Buscar dados da TAB
-        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => 0
-                                                 ,pr_nmsistem => 'CRED'
-                                                 ,pr_tptabela => 'GENERI'
-                                                 ,pr_cdempres => 00
-                                                 ,pr_cdacesso => 'HRAGENDEBTED'
-                                                 ,pr_tpregist => 0);
+        /*REQ14 - Seleciona somente as informações de agendamento de TED's para opção H. O estado de crise 
+                  deve ser inicializado como default Não. Para a opação A, as informacoes de SPB e VR-Boleto
+                  devem ser inicializados com default Não para todos os campos.*/
+        IF pr_cddopcao = 'H' THEN
 
-        --Se nao encontrou parametro
-        IF TRIM(vr_dstextab) IS NULL THEN
-          vr_dstextab:=0;
+          -- Buscar dados da TAB
+          vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => 0
+                                                   ,pr_nmsistem => 'CRED'
+                                                   ,pr_tptabela => 'GENERI'
+                                                   ,pr_cdempres => 00
+                                                   ,pr_cdacesso => 'HRAGENDEBTED'
+                                                   ,pr_tpregist => 0);
+
+          --Se nao encontrou parametro
+          IF TRIM(vr_dstextab) IS NULL THEN
+            vr_dstextab:=0;
+          END IF;
+        
+          vr_hrtrpen1 := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 1
+                                                                    ,pr_dstext  => vr_dstextab
+                                                                    ,pr_delimitador => ';'),'hh24mi'),'hh24:mi');
+
+          vr_hrtrpen2 := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 2
+                                                                    ,pr_dstext  => vr_dstextab
+                                                                    ,pr_delimitador => ';'),'hh24mi'),'hh24:mi');
+
+          vr_hrtrpen3 := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 3
+                                                                    ,pr_dstext  => vr_dstextab
+                                                                    ,pr_delimitador => ';'),'hh24mi'),'hh24:mi');
         END IF;
-
-        vr_hrtrpen1 := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 1
-                                                                  ,pr_dstext  => vr_dstextab
-                                                                  ,pr_delimitador => ';'),'hh24mi'),'hh24:mi');
-
-        vr_hrtrpen2 := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 2
-                                                                  ,pr_dstext  => vr_dstextab
-                                                                  ,pr_delimitador => ';'),'hh24mi'),'hh24:mi');
-
-        vr_hrtrpen3 := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 3
-                                                                  ,pr_dstext  => vr_dstextab
-                                                                  ,pr_delimitador => ';'),'hh24mi'),'hh24:mi');
-
+        
+        --REQ14
+        vr_flgcrise := (CASE upper(TABE0001.fn_busca_dstextab(pr_cdcooper => 0
+                                                                     ,pr_nmsistem => 'CRED'
+                                                                     ,pr_tptabela => 'GENERI'
+                                                                     ,pr_cdempres => 00
+                                                                     ,pr_cdacesso => 'ESTCRISE'
+                                                                     ,pr_tpregist => 0))
+                                   WHEN 'S' THEN
+                                      1
+                                   ELSE
+                                      0
+                                   END);        
+                
         -- Monta documento XML de ERRO
         dbms_lob.createtemporary(vr_clob, TRUE);
         dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
@@ -270,7 +291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
                                                      '  <vlmaxpag>' || to_char(0,'fm999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.''')||'</vlmaxpag>'||
                                                      '  <iniopbol>' || to_char(to_date(0,'sssss'),'hh24:mi')||'</iniopbol>'||
                                                      '  <fimopbol>' || to_char(to_date(0,'sssss'),'hh24:mi')||'</fimopbol>'||
-                                                     '  <flgcrise>0</flgcrise>'||
+                                                     '  <flgcrise>'||vr_flgcrise||'</flgcrise>'||
                                                      '  <hrtrpen1>' || vr_hrtrpen1||'</hrtrpen1>'||
                                                      '  <hrtrpen2>' || vr_hrtrpen2||'</hrtrpen2>'||
                                                      '  <hrtrpen3>' || vr_hrtrpen3||'</hrtrpen3>'||
@@ -289,7 +310,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
         dbms_lob.close(vr_clob);
 
       ELSE
+        /* Seleciona as informações de uma cooperativa em específico. Busca os dados do SPB-STR e PAG
+           através da tabela crapcop.*/
 
+        
         OPEN cr_crapcop(pr_cdcooper => pr_cdcopsel);
 
         FETCH cr_crapcop INTO rw_crapcop;
@@ -313,39 +337,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
           CLOSE cr_crapcop;
 
         END IF;
+  
+        /* REQ14 - Selecionar as informações do VR_Boletos para a opção C e A*/
+        IF pr_cddopcao IN ('C','A') THEN 
+          -- Buscar dados da TAB
+          vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_crapcop.cdcooper
+                                                   ,pr_nmsistem => 'CRED'
+                                                   ,pr_tptabela => 'GENERI'
+                                                   ,pr_cdempres => 00
+                                                   ,pr_cdacesso => 'HRVRBOLETO'
+                                                   ,pr_tpregist => 0);
 
-        -- Buscar dados da TAB
-        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_crapcop.cdcooper
-                                                 ,pr_nmsistem => 'CRED'
-                                                 ,pr_tptabela => 'GENERI'
-                                                 ,pr_cdempres => 00
-                                                 ,pr_cdacesso => 'HRVRBOLETO'
-                                                 ,pr_tpregist => 0);
+          --Se nao encontrou parametro
+          IF TRIM(vr_dstextab) IS NULL THEN
+            vr_cdcritic := 55;
+            RAISE vr_exc_saida;
+          END IF;
 
-        --Se nao encontrou parametro
-        IF TRIM(vr_dstextab) IS NULL THEN
-          vr_cdcritic := 55;
-          RAISE vr_exc_saida;
+          vr_flgopbol := (CASE upper(gene0002.fn_busca_entrada( pr_postext => 1
+                                                               ,pr_dstext  => vr_dstextab
+                                                               ,pr_delimitador => ';'))
+                             WHEN 'YES' THEN
+                                1
+                             ELSE
+                                0
+                          END);
+
+          vr_iniopbol := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 2
+                                                                    ,pr_dstext  => vr_dstextab
+                                                                    ,pr_delimitador => ';'),'sssss'),'hh24:mi');
+
+          vr_fimopbol := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 3
+                                                                    ,pr_dstext  => vr_dstextab
+                                                                    ,pr_delimitador => ';'),'sssss'),'hh24:mi');
+
         END IF;
-
-        vr_flgopbol := (CASE upper(gene0002.fn_busca_entrada( pr_postext => 1
-                                                             ,pr_dstext  => vr_dstextab
-                                                             ,pr_delimitador => ';'))
-                           WHEN 'YES' THEN
-                              1
-                           ELSE
-                              0
-                        END);
-
-        vr_iniopbol := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 2
-                                                                  ,pr_dstext  => vr_dstextab
-                                                                  ,pr_delimitador => ';'),'sssss'),'hh24:mi');
-
-        vr_fimopbol := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 3
-                                                                  ,pr_dstext  => vr_dstextab
-                                                                  ,pr_delimitador => ';'),'sssss'),'hh24:mi');
-
-
+        --
         vr_flgcrise := (CASE upper(TABE0001.fn_busca_dstextab(pr_cdcooper => 0
                                                              ,pr_nmsistem => 'CRED'
                                                              ,pr_tptabela => 'GENERI'
@@ -357,7 +384,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
                            ELSE
                               0
                         END);
-
+                        
         -- Buscar dados da TAB
         vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => 0
                                                  ,pr_nmsistem => 'CRED'
@@ -369,8 +396,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
         --Se nao encontrou parametro
         IF TRIM(vr_dstextab) IS NULL THEN
           vr_dstextab:=0;
---          vr_cdcritic := 55;
---          RAISE vr_exc_saida;
         END IF;
 
         vr_hrtrpen1 := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 1
@@ -384,7 +409,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
         vr_hrtrpen3 := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 3
                                                                   ,pr_dstext  => vr_dstextab
                                                                   ,pr_delimitador => ';'),'hh24:mi'),'hh24:mi');
-
 
         -- Monta documento XML de ERRO
         dbms_lob.createtemporary(vr_clob, TRUE);
@@ -692,7 +716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
     vr_ind PLS_INTEGER := 0;
 
   BEGIN
-
+      
     -- Inicializando as tabelas temporarias
     vr_tab_log.DELETE;
 
@@ -716,7 +740,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
       RAISE vr_exc_saida;
     END IF;
 
-    OPEN cr_crapcop(pr_cdcooper => vr_cdcooper);
+    OPEN cr_crapcop(pr_cdcooper => vr_cdcooper); 
 
     FETCH cr_crapcop into rw_crapcop;
 
@@ -750,416 +774,433 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
 
     END IF;
 
-  IF pr_cddopcao = 'A' THEN
+    /* REQ14 - Valida e altera as informações da opção A (SPB STR, PAG e VR-Boleto) */
+    IF pr_cddopcao = 'A' THEN
 
-    IF pr_flgopstr IS NULL     OR
-       pr_flgopstr NOT IN(0,1) THEN
+      IF pr_flgopstr IS NULL     OR
+         pr_flgopstr NOT IN(0,1) THEN
 
-      -- Busca critica
-      vr_dscritic := 'Não informado se opera com SPB-STR.';
-      pr_nmdcampo := 'flgopstr';
+        -- Busca critica
+        vr_dscritic := 'Não informado se opera com SPB-STR.';
+        pr_nmdcampo := 'flgopstr';
 
-      RAISE vr_exc_saida;
-
-    END if;
-
-    IF pr_flgoppag IS NULL     OR
-       pr_flgoppag NOT IN(0,1) THEN
-
-      -- Busca critica
-      vr_dscritic := 'Não informado se opera com SPB-PAG.';
-      pr_nmdcampo := 'flgoppag';
-
-      RAISE vr_exc_saida;
-
-    END if;
-
-    BEGIN
-
-      vr_hhinistr := to_number(to_char(to_date(pr_iniopstr,'hh24:mi:ss'),'hh24'));
-      vr_mministr := to_number(to_char(to_date(pr_iniopstr,'hh24:mi:ss'),'mi'));
-
-    EXCEPTION
-      WHEN OTHERS THEN
-        -- Montar mensagem de critica
-        vr_cdcritic := 0;
-        vr_dscritic := 'O intervalo em horas deve estar entre 0 e 23.';
-        pr_nmdcampo := 'iniopstr';
-
-        -- volta para o programa chamador
         RAISE vr_exc_saida;
 
-    END;
+      END if;
 
-    BEGIN
+      IF pr_flgoppag IS NULL     OR
+         pr_flgoppag NOT IN(0,1) THEN
 
-      vr_hhfimstr := to_number(to_char(to_date(pr_fimopstr,'hh24:mi:ss'),'hh24'));
-      vr_mmfimstr := to_number(to_char(to_date(pr_fimopstr,'hh24:mi:ss'),'mi'));
+        -- Busca critica
+        vr_dscritic := 'Não informado se opera com SPB-PAG.';
+        pr_nmdcampo := 'flgoppag';
 
-    EXCEPTION
-      WHEN OTHERS THEN
-        -- Montar mensagem de critica
-        vr_cdcritic := 0;
-        vr_dscritic := 'O intervalo em horas deve estar entre 0 e 23.';
-        pr_nmdcampo := 'fimopstr';
-
-        -- volta para o programa chamador
         RAISE vr_exc_saida;
 
-    END;
-
-    IF vr_hhinistr > vr_hhfimstr THEN
-
-      -- Montar mensagem de critica
-      vr_cdcritic := 687;
-      pr_nmdcampo := 'iniopstr';
-
-      -- volta para o programa chamador
-      RAISE vr_exc_saida;
-
-    END IF;
-
-    BEGIN
-
-      vr_hhinipag := to_number(to_char(to_date(pr_inioppag,'hh24:mi:ss'),'hh24'));
-      vr_mminipag := to_number(to_char(to_date(pr_inioppag,'hh24:mi:ss'),'mi'));
-
-    EXCEPTION
-      WHEN OTHERS THEN
-        -- Montar mensagem de critica
-        vr_cdcritic := 0;
-        vr_dscritic := 'O intervalo em horas deve estar entre 0 e 23.';
-        pr_nmdcampo := 'inioppag';
-
-        -- volta para o programa chamador
-        RAISE vr_exc_saida;
-
-    END;
-
-    BEGIN
-
-      vr_hhfimpag := to_number(to_char(to_date(pr_fimoppag,'hh24:mi:ss'),'hh24'));
-      vr_mmfimpag := to_number(to_char(to_date(pr_fimoppag,'hh24:mi:ss'),'mi'));
-
-    EXCEPTION
-      WHEN OTHERS THEN
-        -- Montar mensagem de critica
-        vr_cdcritic := 0;
-        vr_dscritic := 'O intervalo em horas deve estar entre 0 e 23.';
-        pr_nmdcampo := 'fimoppag';
-
-        -- volta para o programa chamador
-        RAISE vr_exc_saida;
-
-    END;
-
-    IF vr_hhinipag > vr_hhfimpag THEN
-
-      -- Montar mensagem de critica
-      vr_cdcritic := 687;
-      pr_nmdcampo := 'inioppag';
-
-      -- volta para o programa chamador
-      RAISE vr_exc_saida;
-
-    END IF;
-
-    BEGIN
-
-      vr_hhinibol := to_number(to_char(to_date(pr_iniopbol,'hh24:mi:ss'),'hh24'));
-      vr_mminibol := to_number(to_char(to_date(pr_iniopbol,'hh24:mi:ss'),'mi'));
-
-    EXCEPTION
-      WHEN OTHERS THEN
-        -- Montar mensagem de critica
-        vr_cdcritic := 0;
-        vr_dscritic := 'O intervalo em horas deve estar entre 0 e 23.';
-        pr_nmdcampo := 'iniopbol';
-
-        -- volta para o programa chamador
-        RAISE vr_exc_saida;
-
-    END;
-
-    BEGIN
-
-      vr_hhfimbol := to_number(to_char(to_date(pr_fimopbol,'hh24:mi:ss'),'hh24'));
-      vr_mmfimbol := to_number(to_char(to_date(pr_fimopbol,'hh24:mi:ss'),'mi'));
-
-    EXCEPTION
-      WHEN OTHERS THEN
-        -- Montar mensagem de critica
-        vr_cdcritic := 0;
-        vr_dscritic := 'O intervalo em horas deve estar entre 0 e 23.';
-        pr_nmdcampo := 'fimopbol';
-
-        -- volta para o programa chamador
-        RAISE vr_exc_saida;
-
-    END;
-
-    IF vr_hhinibol > vr_hhfimbol THEN
-
-      -- Montar mensagem de critica
-      vr_cdcritic := 687;
-      pr_nmdcampo := 'iniopbol';
-
-      -- volta para o programa chamador
-      RAISE vr_exc_saida;
-
-    END IF;
-
-    IF pr_flgopstr = 0                                                 AND
-       to_number(to_char(to_date(pr_iniopstr,'hh24:mi'),'sssss')) <> 0 AND
-       to_number(to_char(to_date(pr_iniopstr,'hh24:mi'),'sssss')) <> 0 THEN
-
-      -- Montar mensagem de critica
-      vr_dscritic := 'Horário não deve ser informado.';
-      pr_nmdcampo := 'flgopstr';
-
-      -- volta para o programa chamador
-      RAISE vr_exc_saida;
-
-    END IF;
-
-    IF pr_flgoppag = 0                                                 AND
-       to_number(to_char(to_date(pr_inioppag,'hh24:mi'),'sssss')) <> 0 AND
-       to_number(to_char(to_date(pr_inioppag,'hh24:mi'),'sssss')) <> 0 THEN
-
-      -- Montar mensagem de critica
-      vr_dscritic := 'Horário não deve ser informado.';
-      pr_nmdcampo := 'flgoppag';
-
-      -- volta para o programa chamador
-      RAISE vr_exc_saida;
-
-    END IF;
-
-    FOR rw_cooperativa IN cr_cooperativa(pr_cdcooper => pr_cdcopsel) LOOP
+      END if;
 
       BEGIN
 
-        UPDATE crapcop
-           SET crapcop.flgopstr = pr_flgopstr
-              ,crapcop.flgoppag = pr_flgoppag
-              ,crapcop.iniopstr = CASE WHEN pr_flgopstr = 1 THEN to_number(to_char(to_date(pr_iniopstr,'hh24:mi'),'sssss')) ELSE crapcop.iniopstr END
-              ,crapcop.fimopstr = CASE WHEN pr_flgopstr = 1 THEN to_number(to_char(to_date(pr_fimopstr,'hh24:mi'),'sssss')) ELSE crapcop.fimopstr END
-              ,crapcop.inioppag = CASE WHEN pr_flgoppag = 1 THEN to_number(to_char(to_date(pr_inioppag,'hh24:mi'),'sssss')) ELSE crapcop.inioppag END
-              ,crapcop.fimoppag = CASE WHEN pr_flgoppag = 1 THEN to_number(to_char(to_date(pr_fimoppag,'hh24:mi'),'sssss')) ELSE crapcop.fimoppag END
-              ,crapcop.vlmaxpag = CASE WHEN pr_flgoppag = 1 THEN pr_vlmaxpag                                                ELSE crapcop.vlmaxpag END
-         WHERE crapcop.cdcooper = rw_cooperativa.progress_recid;
+        vr_hhinistr := to_number(to_char(to_date(pr_iniopstr,'hh24:mi:ss'),'hh24'));
+        vr_mministr := to_number(to_char(to_date(pr_iniopstr,'hh24:mi:ss'),'mi'));
 
       EXCEPTION
         WHEN OTHERS THEN
           -- Montar mensagem de critica
           vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao atualizar parâmetros para a cooperativa!' || SQLERRM;
+          vr_dscritic := 'O intervalo em horas deve estar entre 0 e 23.';
+          pr_nmdcampo := 'iniopstr';
+
           -- volta para o programa chamador
           RAISE vr_exc_saida;
 
       END;
 
-      -- Busca craptab
-      OPEN cr_craptab(pr_cdcooper => rw_cooperativa.cdcooper,
-                      pr_nmsistem => 'CRED',
-                      pr_tptabela => 'GENERI',
-                      pr_cdempres => 0,
-                      pr_cdacesso => 'HRVRBOLETO',
-                      pr_tpregist => 0);
+      BEGIN
 
-      FETCH cr_craptab INTO rw_craptab;
+        vr_hhfimstr := to_number(to_char(to_date(pr_fimopstr,'hh24:mi:ss'),'hh24'));
+        vr_mmfimstr := to_number(to_char(to_date(pr_fimopstr,'hh24:mi:ss'),'mi'));
 
-      -- Gerar erro caso não encontre
-      IF cr_craptab%NOTFOUND THEN
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Montar mensagem de critica
+          vr_cdcritic := 0;
+          vr_dscritic := 'O intervalo em horas deve estar entre 0 e 23.';
+          pr_nmdcampo := 'fimopstr';
 
-         -- Fechar cursor pois teremos raise
-         CLOSE cr_craptab;
+          -- volta para o programa chamador
+          RAISE vr_exc_saida;
 
-         vr_dstextab := '';
+      END;
 
-         BEGIN
+      IF vr_hhinistr > vr_hhfimstr THEN
 
-          INSERT INTO craptab (craptab.cdcooper
-                              ,craptab.nmsistem
-                              ,craptab.tptabela
-                              ,craptab.cdempres
-                              ,craptab.cdacesso
-                              ,craptab.tpregist
-                              ,craptab.dstextab)
-                       VALUES(rw_cooperativa.cdcooper
-                             ,'CRED'
-                             ,'GENERI'
-                             ,0
-                             ,'HRVRBOLETO'
-                             ,0
-                             ,(CASE pr_flgopbol
-                                WHEN 1 THEN
-                                  'YES'
-                                ELSE
-                                  'NO'
-                               END) || ';' ||
-                               to_number(to_char(to_date(pr_iniopbol,'hh24:mi:ss'),'sssss')) || ';' ||
-                               to_number(to_char(to_date(pr_fimopbol,'hh24:mi:ss'),'sssss')) || ';');
-          EXCEPTION
-            WHEN OTHERS THEN
-              -- Montar mensagem de critica
-              vr_cdcritic := 0;
-              vr_dscritic := 'Erro ao gravar tabela de controle!' || SQLERRM;
-              -- volta para o programa chamador
-              RAISE vr_exc_saida;
+        -- Montar mensagem de critica
+        vr_cdcritic := 687;
+        pr_nmdcampo := 'iniopstr';
 
-        END;
-
-      ELSE
-        -- Apenas fechar o cursor
-        CLOSE cr_craptab;
-
-        vr_dstextab := rw_craptab.dstextab;
-
-        BEGIN
-
-          UPDATE craptab
-             SET craptab.dstextab = (CASE pr_flgopbol
-                                      WHEN 1 THEN
-                                        'YES'
-                                      ELSE
-                                        'NO'
-                                     END) || ';' ||
-                                     to_number(to_char(to_date(pr_iniopbol,'hh24:mi:ss'),'sssss')) || ';' ||
-                                     to_number(to_char(to_date(pr_fimopbol,'hh24:mi:ss'),'sssss')) || ';'
-           WHERE craptab.progress_recid = rw_craptab.progress_recid;
-          EXCEPTION
-            WHEN OTHERS THEN
-              -- Montar mensagem de critica
-              vr_cdcritic := 0;
-              vr_dscritic := 'Erro ao atualizar tabela de controle!' || SQLERRM;
-              -- volta para o programa chamador
-              RAISE vr_exc_saida;
-
-        END;
+        -- volta para o programa chamador
+        RAISE vr_exc_saida;
 
       END IF;
 
-      vr_log_flgopbol := (CASE upper(gene0002.fn_busca_entrada( pr_postext => 1
-                                                               ,pr_dstext  => vr_dstextab
-                                                               ,pr_delimitador => ';'))
-                            WHEN 'YES' THEN
-                               1
-                            ELSE
-                               0
-                          END);
+      BEGIN
 
-      vr_log_iniopbol := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 2
-                                                                    ,pr_dstext  => vr_dstextab
-                                                                    ,pr_delimitador => ';'),'sssss'),'hh24:mi');
+        vr_hhinipag := to_number(to_char(to_date(pr_inioppag,'hh24:mi:ss'),'hh24'));
+        vr_mminipag := to_number(to_char(to_date(pr_inioppag,'hh24:mi:ss'),'mi'));
 
-      vr_log_fimopbol := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 3
-                                                                    ,pr_dstext  => vr_dstextab
-                                                                    ,pr_delimitador => ';'),'sssss'),'hh24:mi');
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Montar mensagem de critica
+          vr_cdcritic := 0;
+          vr_dscritic := 'O intervalo em horas deve estar entre 0 e 23.';
+          pr_nmdcampo := 'inioppag';
 
-      vr_ind:= vr_ind + 1;
+          -- volta para o programa chamador
+          RAISE vr_exc_saida;
 
-      -- alimentando a tabela temporaria
-      vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
-      vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
-      vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
-      vr_tab_log(vr_ind).dsdcampo := 'Operando com SPB-STR';
-      vr_tab_log(vr_ind).vlrantes := (CASE WHEN rw_cooperativa.flgopstr = 0 THEN 'Nao' ELSE 'Sim' END);
-      vr_tab_log(vr_ind).vldepois := (CASE WHEN pr_flgopstr = 0 THEN 'Nao' ELSE 'Sim' END);
+      END;
 
-      vr_ind:= vr_ind + 1;
+      BEGIN
 
-      -- alimentando a tabela temporaria
-      vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
-      vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
-      vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
-      vr_tab_log(vr_ind).dsdcampo := 'Horario inicial para SPB-STR';
-      vr_tab_log(vr_ind).vlrantes := to_char(to_date(rw_cooperativa.iniopstr,'sssss'),'hh24:mi');
-      vr_tab_log(vr_ind).vldepois := pr_iniopstr;
+        vr_hhfimpag := to_number(to_char(to_date(pr_fimoppag,'hh24:mi:ss'),'hh24'));
+        vr_mmfimpag := to_number(to_char(to_date(pr_fimoppag,'hh24:mi:ss'),'mi'));
 
-      vr_ind:= vr_ind + 1;
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Montar mensagem de critica
+          vr_cdcritic := 0;
+          vr_dscritic := 'O intervalo em horas deve estar entre 0 e 23.';
+          pr_nmdcampo := 'fimoppag';
 
-      -- alimentando a tabela temporaria
-      vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
-      vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
-      vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
-      vr_tab_log(vr_ind).dsdcampo := 'Horario final para SPB-STR';
-      vr_tab_log(vr_ind).vlrantes := to_char(to_date(rw_cooperativa.fimopstr,'sssss'),'hh24:mi');
-      vr_tab_log(vr_ind).vldepois := pr_fimopstr;
+          -- volta para o programa chamador
+          RAISE vr_exc_saida;
 
-      vr_ind:= vr_ind + 1;
+      END;
 
-      -- alimentando a tabela temporaria
-      vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
-      vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
-      vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
-      vr_tab_log(vr_ind).dsdcampo := 'Operando com SPB-PAG';
-      vr_tab_log(vr_ind).vlrantes := (CASE WHEN rw_cooperativa.flgoppag = 0 THEN 'Nao' ELSE 'Sim' END);
-      vr_tab_log(vr_ind).vldepois := (CASE WHEN pr_flgoppag = 0 THEN 'Nao' ELSE 'Sim' END);
+      IF vr_hhinipag > vr_hhfimpag THEN
 
-      vr_ind:= vr_ind + 1;
+        -- Montar mensagem de critica
+        vr_cdcritic := 687;
+        pr_nmdcampo := 'inioppag';
 
-      -- alimentando a tabela temporaria
-      vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
-      vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
-      vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
-      vr_tab_log(vr_ind).dsdcampo := 'Horario inicial para SPB-PAG';
-      vr_tab_log(vr_ind).vlrantes := to_char(to_date(rw_cooperativa.inioppag,'sssss'),'hh24:mi');
-      vr_tab_log(vr_ind).vldepois := pr_inioppag;
+        -- volta para o programa chamador
+        RAISE vr_exc_saida;
 
-      vr_ind:= vr_ind + 1;
+      END IF;
 
-      -- alimentando a tabela temporaria
-      vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
-      vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
-      vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
-      vr_tab_log(vr_ind).dsdcampo := 'Horario final para SPB-PAG';
-      vr_tab_log(vr_ind).vlrantes := to_char(to_date(rw_cooperativa.fimoppag,'sssss'),'hh24:mi');
-      vr_tab_log(vr_ind).vldepois := pr_fimoppag;
+      BEGIN
 
-      vr_ind:= vr_ind + 1;
+        vr_hhinibol := to_number(to_char(to_date(pr_iniopbol,'hh24:mi:ss'),'hh24'));
+        vr_mminibol := to_number(to_char(to_date(pr_iniopbol,'hh24:mi:ss'),'mi'));
 
-      -- alimentando a tabela temporaria
-      vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
-      vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
-      vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
-      vr_tab_log(vr_ind).dsdcampo := 'Valor maximo';
-      vr_tab_log(vr_ind).vlrantes := to_char(rw_cooperativa.vlmaxpag,'fm999g999g999g990d00');
-      vr_tab_log(vr_ind).vldepois := to_char(pr_vlmaxpag,'fm999g999g999g990d00');
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Montar mensagem de critica
+          vr_cdcritic := 0;
+          vr_dscritic := 'O intervalo em horas deve estar entre 0 e 23.';
+          pr_nmdcampo := 'iniopbol';
 
-      vr_ind:= vr_ind + 1;
+          -- volta para o programa chamador
+          RAISE vr_exc_saida;
 
-      -- alimentando a tabela temporaria
-      vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
-      vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
-      vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
-      vr_tab_log(vr_ind).dsdcampo := 'Pagamento VR-BOLETO';
-      vr_tab_log(vr_ind).vlrantes := (CASE WHEN vr_log_flgopbol = 0 THEN 'Nao' ELSE 'Sim' END);
-      vr_tab_log(vr_ind).vldepois := (CASE WHEN pr_flgopbol = 0 THEN 'Nao' ELSE 'Sim' END);
+      END;
 
-      vr_ind:= vr_ind + 1;
+      BEGIN
 
-      -- alimentando a tabela temporaria
-      vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
-      vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
-      vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
-      vr_tab_log(vr_ind).dsdcampo := 'Horario inicial de pagamento VR-BOLETO';
-      vr_tab_log(vr_ind).vlrantes := vr_log_iniopbol;
-      vr_tab_log(vr_ind).vldepois := pr_iniopbol;
+        vr_hhfimbol := to_number(to_char(to_date(pr_fimopbol,'hh24:mi:ss'),'hh24'));
+        vr_mmfimbol := to_number(to_char(to_date(pr_fimopbol,'hh24:mi:ss'),'mi'));
 
-      vr_ind:= vr_ind + 1;
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Montar mensagem de critica
+          vr_cdcritic := 0;
+          vr_dscritic := 'O intervalo em horas deve estar entre 0 e 23.';
+          pr_nmdcampo := 'fimopbol';
 
-      -- alimentando a tabela temporaria
-      vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
-      vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
-      vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
-      vr_tab_log(vr_ind).dsdcampo := 'Horario final de pagamento VR-BOLETO';
-      vr_tab_log(vr_ind).vlrantes := vr_log_fimopbol;
-      vr_tab_log(vr_ind).vldepois := pr_fimopbol;
+          -- volta para o programa chamador
+          RAISE vr_exc_saida;
 
-    END LOOP;
+      END;
 
-    IF pr_cdcopsel = 0 THEN
+      IF vr_hhinibol > vr_hhfimbol THEN
+
+        -- Montar mensagem de critica
+        vr_cdcritic := 687;
+        pr_nmdcampo := 'iniopbol';
+
+        -- volta para o programa chamador
+        RAISE vr_exc_saida;
+
+      END IF;
+
+      IF pr_flgopstr = 0                                                 AND
+         to_number(to_char(to_date(pr_iniopstr,'hh24:mi'),'sssss')) <> 0 AND
+         to_number(to_char(to_date(pr_iniopstr,'hh24:mi'),'sssss')) <> 0 THEN
+
+        -- Montar mensagem de critica
+        vr_dscritic := 'Horário não deve ser informado.';
+        pr_nmdcampo := 'flgopstr';
+
+        -- volta para o programa chamador
+        RAISE vr_exc_saida;
+
+      END IF;
+
+      IF pr_flgoppag = 0                                                 AND
+         to_number(to_char(to_date(pr_inioppag,'hh24:mi'),'sssss')) <> 0 AND
+         to_number(to_char(to_date(pr_inioppag,'hh24:mi'),'sssss')) <> 0 THEN
+
+        -- Montar mensagem de critica
+        vr_dscritic := 'Horário não deve ser informado.';
+        pr_nmdcampo := 'flgoppag';
+
+        -- volta para o programa chamador
+        RAISE vr_exc_saida;
+
+      END IF;
+
+      FOR rw_cooperativa IN cr_cooperativa(pr_cdcooper => pr_cdcopsel) LOOP
+
+        BEGIN
+
+          UPDATE crapcop
+             SET crapcop.flgopstr = pr_flgopstr
+                ,crapcop.flgoppag = pr_flgoppag
+                ,crapcop.iniopstr = CASE WHEN pr_flgopstr = 1 THEN to_number(to_char(to_date(pr_iniopstr,'hh24:mi'),'sssss')) ELSE 0 END /*REQ14 - Nao estava gravando zero quando parametro igual a não. Idem demais campos.*/
+                ,crapcop.fimopstr = CASE WHEN pr_flgopstr = 1 THEN to_number(to_char(to_date(pr_fimopstr,'hh24:mi'),'sssss')) ELSE 0 END
+                ,crapcop.inioppag = CASE WHEN pr_flgoppag = 1 THEN to_number(to_char(to_date(pr_inioppag,'hh24:mi'),'sssss')) ELSE 0 END
+                ,crapcop.fimoppag = CASE WHEN pr_flgoppag = 1 THEN to_number(to_char(to_date(pr_fimoppag,'hh24:mi'),'sssss')) ELSE 0 END
+                ,crapcop.vlmaxpag = CASE WHEN pr_flgoppag = 1 THEN pr_vlmaxpag                                                ELSE 0 END
+           WHERE crapcop.cdcooper = rw_cooperativa.progress_recid;
+
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- Montar mensagem de critica
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao atualizar parâmetros para a cooperativa!' || SQLERRM;
+            -- volta para o programa chamador
+            RAISE vr_exc_saida;
+
+        END;
+
+        -- Busca craptab
+        OPEN cr_craptab(pr_cdcooper => rw_cooperativa.cdcooper,
+                        pr_nmsistem => 'CRED',
+                        pr_tptabela => 'GENERI',
+                        pr_cdempres => 0,
+                        pr_cdacesso => 'HRVRBOLETO',
+                        pr_tpregist => 0);
+
+        FETCH cr_craptab INTO rw_craptab;
+
+        -- Gerar erro caso não encontre
+        IF cr_craptab%NOTFOUND THEN
+
+           -- Fechar cursor pois teremos raise
+           CLOSE cr_craptab;
+
+           vr_dstextab := '';
+
+           BEGIN
+
+            INSERT INTO craptab (craptab.cdcooper
+                                ,craptab.nmsistem
+                                ,craptab.tptabela
+                                ,craptab.cdempres
+                                ,craptab.cdacesso
+                                ,craptab.tpregist
+                                ,craptab.dstextab)
+                         VALUES(rw_cooperativa.cdcooper
+                               ,'CRED'
+                               ,'GENERI'
+                               ,0
+                               ,'HRVRBOLETO'
+                               ,0
+                               ,(CASE pr_flgopbol
+                                  WHEN 1 THEN
+                                    'YES'
+                                  ELSE
+                                    'NO'
+                                 END) || ';' ||
+                                 to_number(to_char(to_date(pr_iniopbol,'hh24:mi:ss'),'sssss')) || ';' ||
+                                 to_number(to_char(to_date(pr_fimopbol,'hh24:mi:ss'),'sssss')) || ';');
+            EXCEPTION
+              WHEN OTHERS THEN
+                -- Montar mensagem de critica
+                vr_cdcritic := 0;
+                vr_dscritic := 'Erro ao gravar tabela de controle!' || SQLERRM;
+                -- volta para o programa chamador
+                RAISE vr_exc_saida;
+
+          END;
+
+        ELSE
+          -- Apenas fechar o cursor
+          CLOSE cr_craptab;
+
+          vr_dstextab := rw_craptab.dstextab;
+
+          BEGIN
+
+            UPDATE craptab
+               SET craptab.dstextab = (CASE pr_flgopbol
+                                        WHEN 1 THEN
+                                          'YES'
+                                        ELSE
+                                          'NO'
+                                       END) || ';' ||
+                                       to_number(to_char(to_date(pr_iniopbol,'hh24:mi:ss'),'sssss')) || ';' ||
+                                       to_number(to_char(to_date(pr_fimopbol,'hh24:mi:ss'),'sssss')) || ';'
+             WHERE craptab.progress_recid = rw_craptab.progress_recid;
+            EXCEPTION
+              WHEN OTHERS THEN
+                -- Montar mensagem de critica
+                vr_cdcritic := 0;
+                vr_dscritic := 'Erro ao atualizar tabela de controle!' || SQLERRM;
+                -- volta para o programa chamador
+                RAISE vr_exc_saida;
+
+          END;
+
+        END IF;
+
+        vr_log_flgopbol := (CASE upper(gene0002.fn_busca_entrada( pr_postext => 1
+                                                                 ,pr_dstext  => vr_dstextab
+                                                                 ,pr_delimitador => ';'))
+                              WHEN 'YES' THEN
+                                 1
+                              ELSE
+                                 0
+                            END);
+
+        vr_log_iniopbol := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 2
+                                                                      ,pr_dstext  => vr_dstextab
+                                                                      ,pr_delimitador => ';'),'sssss'),'hh24:mi');
+
+        vr_log_fimopbol := to_char(to_date( gene0002.fn_busca_entrada( pr_postext => 3
+                                                                      ,pr_dstext  => vr_dstextab
+                                                                      ,pr_delimitador => ';'),'sssss'),'hh24:mi');
+
+        vr_ind:= vr_ind + 1;
+
+        -- alimentando a tabela temporaria
+        vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
+        vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
+        vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
+        vr_tab_log(vr_ind).dsdcampo := 'Operando com SPB-STR';
+        vr_tab_log(vr_ind).vlrantes := (CASE WHEN rw_cooperativa.flgopstr = 0 THEN 'Nao' ELSE 'Sim' END);
+        vr_tab_log(vr_ind).vldepois := (CASE WHEN pr_flgopstr = 0 THEN 'Nao' ELSE 'Sim' END);
+
+        vr_ind:= vr_ind + 1;
+
+        -- alimentando a tabela temporaria
+        vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
+        vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
+        vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
+        vr_tab_log(vr_ind).dsdcampo := 'Horario inicial para SPB-STR';
+        vr_tab_log(vr_ind).vlrantes := to_char(to_date(rw_cooperativa.iniopstr,'sssss'),'hh24:mi');
+        vr_tab_log(vr_ind).vldepois := pr_iniopstr;
+
+        vr_ind:= vr_ind + 1;
+
+        -- alimentando a tabela temporaria
+        vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
+        vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
+        vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
+        vr_tab_log(vr_ind).dsdcampo := 'Horario final para SPB-STR';
+        vr_tab_log(vr_ind).vlrantes := to_char(to_date(rw_cooperativa.fimopstr,'sssss'),'hh24:mi');
+        vr_tab_log(vr_ind).vldepois := pr_fimopstr;
+
+        vr_ind:= vr_ind + 1;
+
+        -- alimentando a tabela temporaria
+        vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
+        vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
+        vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
+        vr_tab_log(vr_ind).dsdcampo := 'Operando com SPB-PAG';
+        vr_tab_log(vr_ind).vlrantes := (CASE WHEN rw_cooperativa.flgoppag = 0 THEN 'Nao' ELSE 'Sim' END);
+        vr_tab_log(vr_ind).vldepois := (CASE WHEN pr_flgoppag = 0 THEN 'Nao' ELSE 'Sim' END);
+
+        vr_ind:= vr_ind + 1;
+
+        -- alimentando a tabela temporaria
+        vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
+        vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
+        vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
+        vr_tab_log(vr_ind).dsdcampo := 'Horario inicial para SPB-PAG';
+        vr_tab_log(vr_ind).vlrantes := to_char(to_date(rw_cooperativa.inioppag,'sssss'),'hh24:mi');
+        vr_tab_log(vr_ind).vldepois := pr_inioppag;
+
+        vr_ind:= vr_ind + 1;
+
+        -- alimentando a tabela temporaria
+        vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
+        vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
+        vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
+        vr_tab_log(vr_ind).dsdcampo := 'Horario final para SPB-PAG';
+        vr_tab_log(vr_ind).vlrantes := to_char(to_date(rw_cooperativa.fimoppag,'sssss'),'hh24:mi');
+        vr_tab_log(vr_ind).vldepois := pr_fimoppag;
+
+        vr_ind:= vr_ind + 1;
+
+        -- alimentando a tabela temporaria
+        vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
+        vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
+        vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
+        vr_tab_log(vr_ind).dsdcampo := 'Valor maximo';
+        vr_tab_log(vr_ind).vlrantes := to_char(rw_cooperativa.vlmaxpag,'fm999g999g999g990d00');
+        vr_tab_log(vr_ind).vldepois := to_char(pr_vlmaxpag,'fm999g999g999g990d00');
+
+        vr_ind:= vr_ind + 1;
+
+        -- alimentando a tabela temporaria
+        vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
+        vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
+        vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
+        vr_tab_log(vr_ind).dsdcampo := 'Pagamento VR-BOLETO';
+        vr_tab_log(vr_ind).vlrantes := (CASE WHEN vr_log_flgopbol = 0 THEN 'Nao' ELSE 'Sim' END);
+        vr_tab_log(vr_ind).vldepois := (CASE WHEN pr_flgopbol = 0 THEN 'Nao' ELSE 'Sim' END);
+
+        vr_ind:= vr_ind + 1;
+
+        -- alimentando a tabela temporaria
+        vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
+        vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
+        vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
+        vr_tab_log(vr_ind).dsdcampo := 'Horario inicial de pagamento VR-BOLETO';
+        vr_tab_log(vr_ind).vlrantes := vr_log_iniopbol;
+        vr_tab_log(vr_ind).vldepois := pr_iniopbol;
+
+        vr_ind:= vr_ind + 1;
+
+        -- alimentando a tabela temporaria
+        vr_tab_log(vr_ind).cdcooper := vr_cdcooper;
+        vr_tab_log(vr_ind).cdoperad := vr_cdoperad;
+        vr_tab_log(vr_ind).nmrescop := rw_cooperativa.nmrescop;
+        vr_tab_log(vr_ind).dsdcampo := 'Horario final de pagamento VR-BOLETO';
+        vr_tab_log(vr_ind).vlrantes := vr_log_fimopbol;
+        vr_tab_log(vr_ind).vldepois := pr_fimopbol;
+
+      END LOOP;
+
+      pc_gera_log(pr_cdcooper => vr_cdcooper
+                 ,pr_tab_log  => vr_tab_log
+                 ,pr_dscritic => vr_dscritic
+                 ,pr_des_erro => vr_des_erro);
+
+      IF vr_des_erro <> 'OK' THEN
+
+        -- volta para o programa chamador
+        RAISE vr_exc_saida;
+
+      END IF;      
+
+    END IF; -- IF pr_cddopcao = 'A' THEN
+      
+
+    /* REQ14 - A opção H atualiza as informacoes do estado de crise e de agendamentos*/
+    IF pr_cddopcao = 'H' THEN
 
       -- Busca craptab
       OPEN cr_craptab(pr_cdcooper => 0,
@@ -1209,6 +1250,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
 
         vr_flgcrise := rw_craptab.dstextab;
 
+
         BEGIN
 
           UPDATE craptab
@@ -1225,22 +1267,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
         END;
 
       END IF;
-    END IF;
-
-    pc_gera_log(pr_cdcooper => vr_cdcooper
-               ,pr_tab_log  => vr_tab_log
-               ,pr_dscritic => vr_dscritic
-               ,pr_des_erro => vr_des_erro);
-
-    IF vr_des_erro <> 'OK' THEN
-
-      -- volta para o programa chamador
-      RAISE vr_exc_saida;
-
-    END IF;
-  END IF; -- IF pr_cddopcao = 'A' THEN
-
-    IF pr_cddopcao = 'H' THEN
+      
 
       BEGIN
 
@@ -1292,6 +1319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
         RAISE vr_exc_saida;
 
       END;
+      
       -- Busca craptab
       OPEN cr_craptab(pr_cdcooper => 0,
                       pr_nmsistem => 'CRED',
@@ -1414,7 +1442,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB085 IS
       vr_tab_log(vr_ind).nmrescop := 'Todas';
       vr_tab_log(vr_ind).dsdcampo := 'Horario execucao 3 para SPB-Transacoes Agendadas';
       vr_tab_log(vr_ind).vlrantes := vr_log_hrtrpen3;
-      vr_tab_log(vr_ind).vldepois := pr_hrtrpen1;
+      vr_tab_log(vr_ind).vldepois := pr_hrtrpen3;
+      --
+      pc_gera_log(pr_cdcooper => vr_cdcooper
+                     ,pr_tab_log  => vr_tab_log
+                     ,pr_dscritic => vr_dscritic
+                     ,pr_des_erro => vr_des_erro);
+      --
+      IF vr_des_erro <> 'OK' THEN
+        -- volta para o programa chamador
+        RAISE vr_exc_saida;
+      END IF;            
 
     END IF; -- IF pr_cddopcao = 'H' THEN
 

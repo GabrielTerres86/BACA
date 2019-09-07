@@ -79,6 +79,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                                    pr_flganama  IN NUMBER DEFAULT 0,                           --> Indicador analise efetuada manualmente
                                    pr_dstransa  IN VARCHAR2,                                   --> Descrição da trasaçao para log                                            
                                    pr_dscrilog  IN VARCHAR2,                                   --> Em caso de status de erro, apresentar critica para log
+                                   pr_dsdetcri  IN VARCHAR2 DEFAULT NULL,    
                                    pr_dscritic OUT VARCHAR2 );                                   
   
   --> Rotina para carregar no objeto json os dados da conta
@@ -182,7 +183,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
                                                                                --> 4 - Erro na comunicação com antifraude
                                            pr_cdcritic   OUT  NUMBER,       --> Código da Crítica 
                                            pr_dscritic   OUT VARCHAR2,      --> Descrição da Crítica 
-                                           pr_dsdetcri   OUT VARCHAR2);     --> Detalhe da critica                                            
+                                           pr_dsdetcri   IN OUT VARCHAR2);     --> Detalhe da critica                                            
                                            
   --> Rotina para estornar TED reprovada pela analise de fraude
   PROCEDURE pc_estornar_ted_analise (pr_idanalis  IN tbgen_analise_fraude.idanalise_fraude%TYPE, -->Id da análise de fraude
@@ -4498,7 +4499,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                   pr_dstransa IN VARCHAR2,
                                   pr_idanalis IN tbgen_analise_fraude.idanalise_fraude%TYPE,
                                   pr_campoalt IN typ_tab_campo_alt,
-                                  pr_dscrilog IN VARCHAR2)IS
+                                  pr_dscrilog IN VARCHAR2,
+                                  pr_dsdetcri IN VARCHAR2 DEFAULT NULL)IS
                                        
     vr_nrdrowid  ROWID;
     vr_dsorigem  VARCHAR2(30) := NULL;
@@ -4533,6 +4535,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                               pr_nmdcampo => 'Indicador de analise de fraude',
                               pr_dsdadant => pr_idanalis,
                               pr_dsdadatu => pr_idanalis);
+    
+    if pr_dsdetcri is not null then
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'Erro recebido SOA',
+                                pr_dsdadant => NULL,
+                                pr_dsdadatu => pr_dsdetcri);      
+    end if;                          
     
     --> verificar se contem campos alterados
     IF pr_campoalt.count > 0 THEN
@@ -4581,6 +4590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                    pr_flganama  IN NUMBER DEFAULT 0,                           --> Indicador analise efetuada manualmente
                                    pr_dstransa  IN VARCHAR2,                                   --> Descrição da trasaçao para log                                            
                                    pr_dscrilog  IN VARCHAR2,                                   --> Em caso de status de erro, apresentar critica para log
+                                   pr_dsdetcri  IN VARCHAR2 DEFAULT NULL,                      --> Crítica SOA           
                                    pr_dscritic OUT VARCHAR2 ) IS
   /* ..........................................................................
     
@@ -4698,6 +4708,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                            pr_dstransa => pr_dstransa,
                            pr_idanalis => rw_fraude.idanalise_fraude,
                            pr_dscrilog => pr_dscrilog,
+                           pr_dsdetcri => pr_dsdetcri, -- Adicionado para gravar crítica SOA
                            pr_campoalt => vr_tab_campo_alt);
      
   EXCEPTION
@@ -4823,6 +4834,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       Objetivo  : Excecutar rotinas referentes a aprovação da analise de fraude
       
       Alteração : 06/04/2018 - Incluido tratamento para aprovacao de GPS
+      
+                  03/05/2019 - Incluído tratamento para TED Judicial.
+                               Jose Dill (Mouts) - REQ39
         
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -4933,9 +4947,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_mmaacomp      VARCHAR2(6);
     vr_cdidenti      VARCHAR2(20);
     
+    
     --Variaveis Projeto 475
     vr_nrseq_mensagem      tbspb_msg_enviada_fase.nrseq_mensagem%type;
     vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type;
+    vr_cdtiptra      INTEGER; --REQ39
 
   BEGIN
   
@@ -4991,7 +5007,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         
         END IF;
         
-        
+        /*REQ39 - Quando for uma TED Judicial, deve passar o tipo de transação como 22, caso contrário nulo.
+                  Para validar se é uma TED Judicial, utilizar a codigo da finalidade (Finalidade TED Judicial = 100) */
+        IF rw_craptvl.cdfinrcb = 100 THEN
+           vr_cdtiptra := 22;
+        ELSE
+           vr_cdtiptra := null;
+        END IF;
+        --                        
         --> Enviar TED SPB
         -- Procedimento para envio do TED para o SPB
         
@@ -5036,6 +5059,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                               ,pr_hrtransa =>  rw_craptvl.hrtransa       --> Hora transacao 
                               ,pr_cdispbif =>  rw_craptvl.nrispbif       --> ISPB Banco
                               ,pr_flvldhor =>  0 -- Nao valida           --> Flag para verificar se deve validar o horario permitido para TED
+                              ,pr_cdtiptra =>  vr_cdtiptra               --> Tipo de transação /*REQ39*/
                               --------- SAIDA  --------
                               ,pr_cdcritic =>  vr_cdcritic               --> Codigo do erro
                               ,pr_dscritic =>  vr_dscritic );	           --> Descricao do erro
@@ -5301,6 +5325,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         
                   09/04/2018 - Inclusao de chamada para pc_estornar_gps_analise .
                                PRJ381 Analise de fraude (Teobaldo - AMcom)
+                               
+                  03/05/2019 - Incluído tratamento para TED Judicial.
+                               Jose Dill (Mouts) - REQ39
+                     
     ..........................................................................*/
     -----------> CURSORES <-----------
     
@@ -5350,6 +5378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_nrseq_mensagem      tbspb_msg_enviada_fase.nrseq_mensagem%type;
     vr_nrseq_mensagem_fase tbspb_msg_enviada_fase.nrseq_mensagem_fase%type;
     vr_nrseq_mensagem_xml  tbspb_msg_xml.nrseq_mensagem_xml%type;
+    vr_cdtiptra      INTEGER; --REQ39
     
   BEGIN
   
@@ -5467,84 +5496,94 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                      pr_nrdconta => rw_fraude.nrdconta);
     FETCH cr_craptvl INTO rw_craptvl;
 
-    IF cr_craptvl%NOTFOUND THEN
+      IF cr_craptvl%NOTFOUND THEN
+        CLOSE cr_craptvl;
+      ELSE
+        --
       CLOSE cr_craptvl;
-    ELSE
-      --
-    CLOSE cr_craptvl;
-      -- Fase 20 - controle mensagem SPB
-      sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
-                                 ,pr_nmmensagem             => 'Reprovada pelo OFSAA'
-                               ,pr_nrcontrole             => rw_craptvl.idopetrf
-                                 ,pr_nrcontrole_str_pag     => NULL
-                                 ,pr_nrcontrole_dev_or      => NULL
-                                 ,pr_dhmensagem             => sysdate
-                                 ,pr_insituacao             => 'NOK'
-                                 ,pr_dsxml_mensagem         => null
-                                 ,pr_dsxml_completo         => null
-                                 ,pr_nrseq_mensagem_xml     => null
-                                 ,pr_nrdconta               => rw_fraude.nrdconta
-                                 ,pr_cdcooper               => rw_fraude.cdcooper
-                                 ,pr_cdproduto              => 30 -- TED
-                                 ,pr_nrseq_mensagem         => vr_nrseq_mensagem
-                                 ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
-                                 ,pr_dscritic               => vr_dscritic
-                                 ,pr_des_erro               => vr_des_erro);
-      --
-      -- Se ocorreu erro
-      IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
-        -- Levantar Excecao
-        vr_cdcritic := 0;
-        RAISE vr_exc_erro;
-      END IF;
-    -- Projeto 475 Sprint C2 - Jose Dill
-    -- Procedimento para envio do TED para o SPB
-    -- Neste caso será invocada prc somente para gerar o arquivo xml e não será enviado para o SPB    
-    SSPB0001.pc_proc_envia_tec_ted 
-                          (pr_cdcooper =>  rw_craptvl.cdcooper       --> Cooperativa
-                          ,pr_cdagenci =>  rw_craptvl.cdagenci       --> Cod. Agencia  
-                          ,pr_nrdcaixa =>  900                       --> Numero  Caixa  
-                          ,pr_cdoperad =>  rw_craptvl.cdoperad       --> Operador     
-                          ,pr_titulari =>  (rw_craptvl.flgtitul = 1) --> Mesmo Titular.
-                          ,pr_vldocmto =>  rw_craptvl.vldocrcb       --> Vlr. DOCMTO    
-                          ,pr_nrctrlif =>  rw_craptvl.idopetrf       --> NumCtrlIF   
-                          ,pr_nrdconta =>  rw_craptvl.nrdconta       --> Nro Conta
-                          ,pr_cdbccxlt =>  rw_craptvl.cdbccrcb       --> Codigo Banco 
-                          ,pr_cdagenbc =>  rw_craptvl.cdagercb       --> Cod Agencia 
-                          ,pr_nrcctrcb =>  rw_craptvl.nrcctrcb       --> Nr.Ct.destino   
-                          ,pr_cdfinrcb =>  rw_craptvl.cdfinrcb       --> Finalidade     
-                          ,pr_tpdctadb =>  rw_craptvl.tpdctadb       --> Tp. conta deb 
-                          ,pr_tpdctacr =>  rw_craptvl.tpdctacr       --> Tp conta cred  
-                          ,pr_nmpesemi =>  rw_craptvl.nmpesemi       --> Nome Do titular 
-                          ,pr_nmpesde1 =>  NULL                      --> Nome De 2TTT 
-                          ,pr_cpfcgemi =>  rw_craptvl.cpfcgemi       --> CPF/CNPJ Do titular 
-                          ,pr_cpfcgdel =>  0                         --> CPF sec TTL
-                          ,pr_nmpesrcb =>  rw_craptvl.nmpesrcb       --> Nome Para 
-                          ,pr_nmstlrcb =>  NULL                      --> Nome Para 2TTL
-                          ,pr_cpfcgrcb =>  rw_craptvl.cpfcgrcb       --> CPF/CNPJ Para
-                          ,pr_cpstlrcb =>  0                         --> CPF Para 2TTL
-                          ,pr_tppesemi => (CASE rw_craptvl.flgpesdb 
-                                              WHEN 1 THEN 1 
-                                              ELSE 2
-                                           END)                      --> Tp. pessoa De  
-                          ,pr_tppesrec =>  (CASE rw_craptvl.flgpescr 
-                                              WHEN 1 THEN 1 
-                                              ELSE 2
-                                           END)                      --> Tp. pessoa Para 
-                          ,pr_flgctsal =>  FALSE                     --> CC Sal
-                          ,pr_cdidtran =>  ''                        --> tipo de transferencia
-                          ,pr_cdorigem =>  rw_craptvl.idorigem       --> Cod. Origem    
-                          ,pr_dtagendt =>  NULL                      --> data egendamento
-                          ,pr_nrseqarq =>  0                         --> nr. seq arq.
-                          ,pr_cdconven =>  0                         --> Cod. Convenio
-                          ,pr_dshistor =>  rw_craptvl.dshistor       --> Dsc do Hist.  
-                          ,pr_hrtransa =>  rw_craptvl.hrtransa       --> Hora transacao 
-                          ,pr_cdispbif =>  rw_craptvl.nrispbif       --> ISPB Banco
-                          ,pr_flvldhor =>  0 -- Nao valida           --> Flag para verificar se deve validar o horario permitido para TED
-                          ,pr_inenvio  =>  0 -- Não envia SPB        --> Flag para indicar se envia TEC/TED para SBP                          
-                          --------- SAIDA  --------
-                          ,pr_cdcritic =>  vr_cdcritic               --> Codigo do erro
-                          ,pr_dscritic =>  vr_dscritic );	           --> Descricao do erro
+        -- Fase 20 - controle mensagem SPB
+        sspb0003.pc_grava_trace_spb(pr_cdfase                 => 20
+                                   ,pr_nmmensagem             => 'Reprovada pelo OFSAA'
+                                 ,pr_nrcontrole             => rw_craptvl.idopetrf
+                                   ,pr_nrcontrole_str_pag     => NULL
+                                   ,pr_nrcontrole_dev_or      => NULL
+                                   ,pr_dhmensagem             => sysdate
+                                   ,pr_insituacao             => 'NOK'
+                                   ,pr_dsxml_mensagem         => null
+                                   ,pr_dsxml_completo         => null
+                                   ,pr_nrseq_mensagem_xml     => null
+                                   ,pr_nrdconta               => rw_fraude.nrdconta
+                                   ,pr_cdcooper               => rw_fraude.cdcooper
+                                   ,pr_cdproduto              => 30 -- TED
+                                   ,pr_nrseq_mensagem         => vr_nrseq_mensagem
+                                   ,pr_nrseq_mensagem_fase    => vr_nrseq_mensagem_fase
+                                   ,pr_dscritic               => vr_dscritic
+                                   ,pr_des_erro               => vr_des_erro);
+        --
+        -- Se ocorreu erro
+        IF NVL(vr_des_erro,'OK') <> 'OK' OR TRIM(vr_dscritic) IS NOT NULL THEN
+          -- Levantar Excecao
+          vr_cdcritic := 0;
+          RAISE vr_exc_erro;
+        END IF;
+        
+        /*REQ39 - Quando for uma TED Judicial, deve passar o tipo de transação como 22, caso contrário nulo.
+          Para validar se é uma TED Judicial, utilizar a codigo da finalidade (Finalidade TED Judicial = 100) */
+        IF rw_craptvl.cdfinrcb = 100 THEN
+           vr_cdtiptra := 22;
+        ELSE
+           vr_cdtiptra := null;
+        END IF;
+        
+        -- Projeto 475 Sprint C2 - Jose Dill
+        -- Procedimento para envio do TED para o SPB
+        -- Neste caso será invocada prc somente para gerar o arquivo xml e não será enviado para o SPB    
+        SSPB0001.pc_proc_envia_tec_ted 
+                              (pr_cdcooper =>  rw_craptvl.cdcooper       --> Cooperativa
+                              ,pr_cdagenci =>  rw_craptvl.cdagenci       --> Cod. Agencia  
+                              ,pr_nrdcaixa =>  900                       --> Numero  Caixa  
+                              ,pr_cdoperad =>  rw_craptvl.cdoperad       --> Operador     
+                              ,pr_titulari =>  (rw_craptvl.flgtitul = 1) --> Mesmo Titular.
+                              ,pr_vldocmto =>  rw_craptvl.vldocrcb       --> Vlr. DOCMTO    
+                              ,pr_nrctrlif =>  rw_craptvl.idopetrf       --> NumCtrlIF   
+                              ,pr_nrdconta =>  rw_craptvl.nrdconta       --> Nro Conta
+                              ,pr_cdbccxlt =>  rw_craptvl.cdbccrcb       --> Codigo Banco 
+                              ,pr_cdagenbc =>  rw_craptvl.cdagercb       --> Cod Agencia 
+                              ,pr_nrcctrcb =>  rw_craptvl.nrcctrcb       --> Nr.Ct.destino   
+                              ,pr_cdfinrcb =>  rw_craptvl.cdfinrcb       --> Finalidade     
+                              ,pr_tpdctadb =>  rw_craptvl.tpdctadb       --> Tp. conta deb 
+                              ,pr_tpdctacr =>  rw_craptvl.tpdctacr       --> Tp conta cred  
+                              ,pr_nmpesemi =>  rw_craptvl.nmpesemi       --> Nome Do titular 
+                              ,pr_nmpesde1 =>  NULL                      --> Nome De 2TTT 
+                              ,pr_cpfcgemi =>  rw_craptvl.cpfcgemi       --> CPF/CNPJ Do titular 
+                              ,pr_cpfcgdel =>  0                         --> CPF sec TTL
+                              ,pr_nmpesrcb =>  rw_craptvl.nmpesrcb       --> Nome Para 
+                              ,pr_nmstlrcb =>  NULL                      --> Nome Para 2TTL
+                              ,pr_cpfcgrcb =>  rw_craptvl.cpfcgrcb       --> CPF/CNPJ Para
+                              ,pr_cpstlrcb =>  0                         --> CPF Para 2TTL
+                              ,pr_tppesemi => (CASE rw_craptvl.flgpesdb 
+                                                  WHEN 1 THEN 1 
+                                                  ELSE 2
+                                               END)                      --> Tp. pessoa De  
+                              ,pr_tppesrec =>  (CASE rw_craptvl.flgpescr 
+                                                  WHEN 1 THEN 1 
+                                                  ELSE 2
+                                               END)                      --> Tp. pessoa Para 
+                              ,pr_flgctsal =>  FALSE                     --> CC Sal
+                              ,pr_cdidtran =>  ''                        --> tipo de transferencia
+                              ,pr_cdorigem =>  rw_craptvl.idorigem       --> Cod. Origem    
+                              ,pr_dtagendt =>  NULL                      --> data egendamento
+                              ,pr_nrseqarq =>  0                         --> nr. seq arq.
+                              ,pr_cdconven =>  0                         --> Cod. Convenio
+                              ,pr_dshistor =>  rw_craptvl.dshistor       --> Dsc do Hist.  
+                              ,pr_hrtransa =>  rw_craptvl.hrtransa       --> Hora transacao 
+                              ,pr_cdispbif =>  rw_craptvl.nrispbif       --> ISPB Banco
+                              ,pr_flvldhor =>  0 -- Nao valida           --> Flag para verificar se deve validar o horario permitido para TED
+                              ,pr_inenvio  =>  0 -- Não envia SPB        --> Flag para indicar se envia TEC/TED para SBP   
+                              ,pr_cdtiptra =>  vr_cdtiptra               --> Tipo de transação /*REQ39*/                       
+                              --------- SAIDA  --------
+                              ,pr_cdcritic =>  vr_cdcritic               --> Codigo do erro
+                              ,pr_dscritic =>  vr_dscritic );	           --> Descricao do erro
 
     IF nvl(vr_cdcritic,0) <> 0 OR
          TRIM(vr_dscritic) IS NOT NULL THEN
@@ -6379,7 +6418,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                                                                --> 4 - Erro na comunicação com antifraude
                                            pr_cdcritic   OUT  NUMBER,       --> Código da Crítica 
                                            pr_dscritic   OUT VARCHAR2,      --> Descrição da Crítica 
-                                           pr_dsdetcri   OUT VARCHAR2) IS   --> Detalhe da critica    
+                                           pr_dsdetcri   IN OUT VARCHAR2) IS --> Detalhe da critica    
   /* ..........................................................................
     
       Programa : pc_reg_conf_entrega_antifraude        
@@ -6491,7 +6530,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                            pr_cdcanal =>  vr_cdcanal,      --> Canal origem do parecer
                            pr_dstransa => vr_dstransa,     --> Descrição da trasaçao para log                                            
                            pr_dscrilog => vr_dscrilog,     --> Em caso de status de erro, apresentar critica para log
-                           pr_dscritic => vr_dsdetcri);
+                           pr_dscritic => vr_dsdetcri,
+                           pr_dsdetcri => pr_dsdetcri);    -- Crítica recebida pelo SOA
     IF TRIM(vr_dsdetcri) IS NOT NULL THEN
       vr_cdcritic := 996;
       RAISE vr_exc_erro;
@@ -6538,6 +6578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
                                 pr_cdcanal  => 1, -- Ayllos      --> Canal do parecer da analise  
                                 pr_dstransa => vr_dstransa,      --> Descrição da trasaçao para log                                            
                                 pr_dscrilog => vr_dscritic,      --> Em caso de status de erro, apresentar critica para log
+                                pr_dsdetcri => pr_dsdetcri,      --> Crítica Recebida SOA
                                 pr_dscritic => vr_dscritic_aux);
           
          IF TRIM(vr_dscritic_aux) IS NOT NULL THEN
