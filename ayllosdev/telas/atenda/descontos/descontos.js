@@ -68,10 +68,14 @@
 	         17/09/2018 - Inserção do campo de Acordo - Vitor S. Assanuma (GFT)
 
 	         20/09/2018 - Inserção do campo de Acordo - Vitor S. Assanuma (GFT)
-			 14/02/2019 - Adicionado na tabela divLimites e divPropostas as 3 novas colunas do crédito rating P450 (Luiz Otávio Olinger Momm - AMCOM)
-             24/05/2019 - P450 - Removido mensageiria para pesquisa de rating por proposta (Luiz Otávio Olinger Momm - AMCOM).
-		     09/07/2019 - PRJ 438 - Sprint 14 - Alterado layout da primeira tela de Inclusão/alteração/consulta (Dados do Limite) - Mateus Z (Mouts)
-			 16/07/2019 - PRJ 438 - Sprint 16 - Removido a função 'acessaOpcaoAba' (Mateus Z / Mouts)
+
+			     14/02/2019 - Adicionado na tabela divLimites e divPropostas as 3 novas colunas do crédito rating P450 (Luiz Otávio Olinger Momm - AMCOM)
+           
+           24/05/2019 - P450 - Removido mensageiria para pesquisa de rating por proposta (Luiz Otávio Olinger Momm - AMCOM).
+		       
+           09/07/2019 - PRJ 438 - Sprint 14 - Alterado layout da primeira tela de Inclusão/alteração/consulta (Dados do Limite) - Mateus Z (Mouts)
+			 
+           16/07/2019 - PRJ 438 - Sprint 16 - Removido a função 'acessaOpcaoAba' (Mateus Z / Mouts)
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -349,7 +353,7 @@ function formataLayout(nomeForm){
 		arrayLargura[4] = '80px';
 		arrayLargura[5] = '60px';
 		arrayLargura[6] = '80px';
-        arrayLargura[7] = '80px';
+		arrayLargura[7] = '80px';
 		arrayLargura[8] = '120px';
 		
 				
@@ -377,7 +381,6 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'divBorderosTitulos' ){
 	
-	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
 						
@@ -385,7 +388,7 @@ function formataLayout(nomeForm){
 		
 		var ordemInicial = new Array();
 				
-		if(flgverbor){ 
+		if(flgverbor){
 			$('#'+nomeForm).css('width','1005px');
 			var arrayLargura = new Array();
 			arrayLargura[0] = '60px';
@@ -396,9 +399,9 @@ function formataLayout(nomeForm){
 			arrayLargura[5] = '60px';
 			arrayLargura[6] = '80px';
 			arrayLargura[7] = '110px';
-            arrayLargura[8] = '110px';
-            arrayLargura[9] = '110px';
-            arrayLargura[10] = '';
+			arrayLargura[8] = '110px';
+			arrayLargura[9] = '110px';
+			arrayLargura[10] = '';
 			
 					
 			var arrayAlinha = new Array();
@@ -412,7 +415,7 @@ function formataLayout(nomeForm){
 			arrayAlinha[7] = 'center';
 			arrayAlinha[8] = 'center';
 			arrayAlinha[9] = 'center';
-            arrayAlinha[10] = 'center';
+			arrayAlinha[10] = 'center';
 		}
 		else{
 			$('#'+nomeForm).css('width','745px');
@@ -422,8 +425,8 @@ function formataLayout(nomeForm){
 			arrayLargura[2] = '80px';
 			arrayLargura[3] = '70px';
 			arrayLargura[4] = '100px';
-            arrayLargura[5] = '120px';
-            arrayLargura[6] = '80px';
+			arrayLargura[5] = '120px';
+			arrayLargura[6] = '80px';
 			arrayLargura[7] = '';
 					
 			var arrayAlinha = new Array();
@@ -433,8 +436,8 @@ function formataLayout(nomeForm){
 			arrayAlinha[3] = 'right';
 			arrayAlinha[4] = 'right';
 			arrayAlinha[5] = 'center';
-            arrayAlinha[6] = 'center';
-            arrayAlinha[7] = 'center';
+			arrayAlinha[6] = 'center';
+			arrayAlinha[7] = 'center';
 		}
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
@@ -732,16 +735,15 @@ function formataLayout(nomeForm){
 			
 	}else if ( nomeForm == 'divPropostas' ){
 
-			
-        $('#'+nomeForm).css('width','1030px');
-	
-		var divRegistro = $('div.divRegistros','#'+nomeForm);		
-		var tabela      = $('table', divRegistro );	
-						
+		$('#'+nomeForm).css('width','1030px');
+
+		var divRegistro = $('div.divRegistros','#'+nomeForm);
+		var tabela      = $('table', divRegistro );
+
 		divRegistro.css('height','135px');
-		
+
 		var ordemInicial = new Array();
-				
+
 		var arrayLargura = new Array();
 
 		arrayLargura[0]  = '75px'; // data proposta
@@ -752,14 +754,14 @@ function formataLayout(nomeForm){
 		arrayLargura[5]  = '40px'; // linha desconto
 		arrayLargura[6]  = '100px'; // situação proposta
 		arrayLargura[7]  = '130px'; // situação análise
-        arrayLargura[8]  = '130px'; // decisão
-        // [14/02/2019]
-        arrayLargura[9]  = '60px'; // nota rating
-//        arrayLargura[10] = '60px'; // origem
-        // [14/02/2019]
-				
+		arrayLargura[8]  = '130px'; // decisão
+		// [14/02/2019]
+		arrayLargura[9]  = '60px'; // nota rating
+		// arrayLargura[10] = '60px'; // origem
+		// [14/02/2019]
+
 		var arrayAlinha = new Array();
-		
+
 		arrayAlinha[0] = 'center';
 		arrayAlinha[1] = 'center';
 		arrayAlinha[2] = 'center';
@@ -769,19 +771,20 @@ function formataLayout(nomeForm){
 		arrayAlinha[6] = 'center';
 		arrayAlinha[7] = 'center';
 		arrayAlinha[8] = 'center';
-        // [14/02/2019]
-        arrayAlinha[9] = 'center';
-        arrayAlinha[10] = 'center';
-        // [14/02/2019]
-						
+        
+		// [14/02/2019]
+		arrayAlinha[9] = 'center';
+		arrayAlinha[10] = 'center';
+		// [14/02/2019]
+
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
-		
+
 		$('tbody > tr',tabela).each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
-				$(this).focus();		
+				$(this).focus();
 			}
 		});
-	
+
 		ajustarCentralizacao();
 
 	}else if ( nomeForm == 'divContratos' ){
@@ -826,16 +829,16 @@ function formataLayout(nomeForm){
 		ajustarCentralizacao();
 
 	}else if( nomeForm == 'divLimites' ){
-				
+
 		$('#'+nomeForm).css('width','800px');
-	
-		var divRegistro = $('div.divRegistros','#'+nomeForm);		
+
+		var divRegistro = $('div.divRegistros','#'+nomeForm);
 		var tabela      = $('table', divRegistro );
-						
+
 		divRegistro.css('height','135px');
 		
 		var ordemInicial = new Array();
-				
+
 		var arrayLargura = new Array();
 		arrayLargura[0] = '60px';
 		arrayLargura[1] = '60px';
@@ -843,10 +846,10 @@ function formataLayout(nomeForm){
 		arrayLargura[3] = '80px';
 		arrayLargura[4] = '40px';
 		arrayLargura[5] = '40px';
-        arrayLargura[6] = '90px';
-        arrayLargura[7] = '80px';
-        arrayLargura[8] = '50px';
-				
+		arrayLargura[6] = '90px';
+		arrayLargura[7] = '80px';
+		arrayLargura[8] = '50px';
+
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
 		arrayAlinha[1] = 'center';
@@ -856,13 +859,14 @@ function formataLayout(nomeForm){
 		arrayAlinha[5] = 'center';
 		arrayAlinha[6] = 'center';
 		arrayAlinha[7] = 'center';
-        arrayAlinha[8] = 'center';
-						
+		arrayAlinha[8] = 'center';
+		arrayAlinha[9] = 'center';
+
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
 		$('tbody > tr',tabela).each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
-				$(this).focus();		
+				$(this).focus();
 			}
 		});
 	
@@ -872,12 +876,14 @@ function formataLayout(nomeForm){
         var Lnivrisco = $('label[for="nivrisco"]','#'+nomeForm);
 		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
 		var Lvllimite = $('label[for="vllimite"]','#'+nomeForm);
+		var Lqtdiavig = $('label[for="qtdiavig"]','#'+nomeForm);
 		var Lcddlinha = $('label[for="cddlinha"]','#'+nomeForm);
         var Ltxmensal = $('label[for="txmensal"]','#'+nomeForm);
         var Ldtcancel = $('label[for="dtcancel"]','#'+nomeForm);
         var Cnivrisco = $('#nivrisco','#'+nomeForm);
 		var Cnrctrlim = $('#nrctrlim','#'+nomeForm);
 		var Cvllimite = $('#vllimite','#'+nomeForm);
+		var Cqtdiavig = $('#qtdiavig','#'+nomeForm);
 		var Ccddlinha = $('#cddlinha','#'+nomeForm);
 		var Ccddlinh2 = $('#cddlinh2','#'+nomeForm);
         var Ctxmensal = $('#txmensal','#'+nomeForm);
@@ -1930,11 +1936,11 @@ function formataCampoCmc7(exitCampo, nomeForm){
 
 function formataTabelaEmiten(){
 	// Tabela
-    var divRegistro = $('div.divRegistros', '#divEmiten');
+	var divRegistro = $('div.divRegistros', '#divEmiten');
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 	
-    $('#divEmiten').css({'margin-top':'5px'});
+	$('#divEmiten').css({'margin-top':'5px'});
 //	divRegistro.css({'height':'305px','width':'1000px','padding-bottom':'2px'});
 
 	var ordemInicial = new Array();
@@ -1946,10 +1952,10 @@ function formataTabelaEmiten(){
 	arrayLargura[3] = '150px';
 	arrayLargura[4] = '350px';
 	
-    var arrayAlinha = new Array();
+	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'right';
 	arrayAlinha[1] = 'right';
-    arrayAlinha[2] = 'right';
+	arrayAlinha[2] = 'right';
 	arrayAlinha[3] = 'center';
 	arrayAlinha[4] = 'center';
 	arrayAlinha[5] = 'left';

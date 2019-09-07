@@ -146,8 +146,8 @@
 
 	/* 006 */
 	if ($glbvars["cdcooper"] == cooperativaCetralAilosEtapaRating) {
-	$flctgmot = $root->dados->flctgmot;
-	$flctgest = $root->dados->flctgest;
+		$flctgmot = $root->dados->flctgmot;
+		$flctgest = $root->dados->flctgest;
 	} else {
 		$flctgmot = 0;
 		$flctgest = 0;

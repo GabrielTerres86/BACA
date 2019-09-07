@@ -7,6 +7,8 @@
  * Alterações: 30/05/2019 - Ajuste para pegar o número do contrato formatado, para serer usado
  *                          no link do DigiDoc - PRJ 438 (Mateus Z / Mouts)
  *
+ *             14/05/2019 - Adicionar novo rating - P450 no limite de crédito (Luiz Otávio Olinger Momm - AMCOM)
+ *
  *             14/06/2019 - Ajuste para tratar o campo observações(dsobserv), quando tinha múltiplas 
  *                          linhas estava dando erro de javascript - PRJ 438 (Mateus Z / Mouts)
  */
@@ -23,6 +25,8 @@
 				<th><? echo utf8ToHtml('Vigência do Contrato'); ?></th>
 				<th><? echo utf8ToHtml('Data da Renovação'); ?></th>
 				<th><? echo utf8ToHtml('Situação'); ?></th>
+				<th><? echo utf8ToHtml('Nota Rating'); ?></th>
+				<th title="Origem Rating"><? echo utf8ToHtml('Retorno'); ?></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -41,6 +45,8 @@
 						<td><?php echo $limite->{'dtfimvig'}; ?></td><?php  //dtfimvig -> Vigência do Contrato ?>
 						<td><?php echo $limite->{'dtrenova'}; ?></td><?php  //dtrenova -> Data da Renovação ?>
 						<td><?php echo $limite->{'insitlim'}; ?></td><?php  //insitlim -> Situação (ativo|pausado(proposto)) ?>
+						<td><?php echo utf8_decode($limite->{'pr_dsrisco_rating'}); ?></td>
+						<td><?php echo utf8_decode($limite->{'pr_origem_rating'}); ?></td>
 					</tr>
 				<?php
 				}

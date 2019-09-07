@@ -80,7 +80,8 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                 ,pr_flgpreap IN NUMBER                --> Identificador de pre aprovado
                                 ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
                                 ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
-                                ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado -- P637                                                             
+                                ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado -- P637
+                                ,pr_scorerat IN VARCHAR2 DEFAULT ''   --> Score Rating -- P450 - 29/07/2019
                                 ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -406,13 +407,13 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0012 IS
                                          ,pr_nmdcampo   OUT VARCHAR2                           --> Nome do Campo
                                          ,pr_des_erro   OUT VARCHAR2) ;                       --> Saida OK/NOK
   
-  PROCEDURE pc_registra_push_sit_prop_cdc (pr_cdcooper   IN tbgen_evento_soa.cdcooper%TYPE      --> Coodigo Cooperativa
+   PROCEDURE pc_registra_push_sit_prop_cdc (pr_cdcooper   IN tbgen_evento_soa.cdcooper%TYPE     --> Coodigo Cooperativa
                                           ,pr_nrdconta   IN VARCHAR2                            --> Numero da Conta do Associado
                                           ,pr_nrctremp   IN VARCHAR2                            --> Numero do contrato
                                           ,pr_insitpro   IN NUMBER                              --> Situação da proposta
                                           -->> SAIDA
-                                          ,pr_cdcritic OUT PLS_INTEGER                --> Código da crítica
-                                          ,pr_dscritic OUT VARCHAR2);               --> Descrição da crítica
+                                          ,pr_cdcritic OUT PLS_INTEGER                          --> Código da crítica
+                                          ,pr_dscritic OUT VARCHAR2);                           --> Descrição da crítica
 
   PROCEDURE pc_prepara_push_prop_cdc (pr_cdcooper   IN tbepr_cdc_emprestimo.cdcooper%TYPE      --> Coodigo Cooperativa
                                      ,pr_nrdconta   IN tbepr_cdc_emprestimo.nrdconta%TYPE      --> Numero da Conta do Associado
@@ -456,6 +457,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
   -- Objetivo  : Centralizar rotinas para integração do CDC x Autorizador.
   --
   -- Alteracoes: 21/11/2018 - pc_retorna_lojista para usar subsegmento (Fabio - AMcom).
+  -- 
+  --             29/07/2019 - Adicionada a gravação do Rating após análise da proposta
+  --                          no portal do lojista (Luiz Otávio Olinger Momm - AMCOM).
+  --
+  --             31/07/2019 - Adicionada a efetivação do Rating ao efetiver uma proposta
+  --                          do CDC com validação de Endividamento do cooperado
+  --                          (Luiz Otávio Olinger Momm - AMCOM).
   --
   ---------------------------------------------------------------------------
 
@@ -823,8 +831,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
               RAISE vr_exc_erro;
         END;
       END IF;
-      
-     
 
       -- Criar o CLOB para converter JSON para CLOB
       dbms_lob.createtemporary(vr_dsjsonan_clob, TRUE, dbms_lob.CALL);
@@ -838,7 +844,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                       ,pr_idacionamento => pr_idacionamento
                                       ,pr_dsresposta_requisicao => vr_dsjsonan_clob
                                       ,pr_dscritic => vr_dscritic);
-      
+                                      
       IF vr_dscritic IS NOT NULL THEN
          RAISE vr_exc_erro;
       END IF;
@@ -898,7 +904,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     Objetivo  : Montar retorno da proposta criada para envio de dados a Ibratan para a 
                 chamada do Motor de Crédito
       
-    Alteracoes: 
+    Alteracoes: 26/07/2019 - Adicionado rotina para ler o JSON de retorno e atualiza
+                             os dados do Rating enviado pela IBRATAN - P450
+                             (Luiz Otávio Olinger Momm - AMCOM)
   ............................................................................. */
   
     -- Variáveis para tratamento de erros
@@ -907,7 +915,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     vr_dscritic crapcri.dscritic%TYPE;
 
     vr_dsjsonan_clob CLOB;
-
+    
     BEGIN
     
       pc_monta_ret_proposta_json( pr_cdcooper => pr_cdcooper      --> Cooperativa
@@ -921,7 +929,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                  ,pr_retjson  => vr_dsjsonan_clob --> Retorno json proposta
                                  ,pr_cdcritic => vr_cdcritic      --> Código da crítica
                                  ,pr_dscritic => vr_dscritic);   --> Descrição da crítica
-    
+
       -- Retornar para o XML
       pr_retxml := XMLType.createXML('<Root><Dados><dsjsonan><![CDATA[' || vr_dsjsonan_clob ||']]></dsjsonan></Dados></Root>');
                       
@@ -1091,7 +1099,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                                ,pr_flgpreap IN NUMBER                --> Identificador de pre aprovado
                                ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
                                ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
-                               ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado -- P637                                                             
+                               ,pr_idfluata IN BOOLEAN DEFAULT FALSE --> Indicador Segue Fluxo Atacado -- P637
+                               ,pr_scorerat IN VARCHAR2 DEFAULT ''   --> Score Rating -- P450 - 29/07/2019 
                                ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -1117,6 +1126,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
    Alteracoes: 18/04/2019 - Incluido novo campo segueFluxoAtacado no retorno do motor de credito
 			   P637 - Luciano Kienolt - Supero
 
+               29/07/2019 - Adicionada a gravação do Rating após análise da proposta
+                           no portal do lojista (Luiz Otávio Olinger Momm - AMCOM).
+
    ..............................................................................*/  
    DECLARE
      -- Tratamento de críticas
@@ -1126,12 +1138,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
      vr_des_reto VARCHAR2(10);
       
      -- Variáveis auxiliares
-     vr_msg_detalhe  VARCHAR2(10000);      --> Detalhe da mensagem    
-     vr_status       PLS_INTEGER;          --> Status
-     vr_des_reto_web VARCHAR2(10);
-     vr_nrtransacao  NUMBER(25) := 0;      --> Numero da transacao
-     vr_inpessoa     PLS_INTEGER := 0;     --> 1 - PF/ 2 - PJ
-     vr_insitapr     crawepr.insitapr%TYPE; --> Situacao Aprovacao(0-Em estudo/1-Aprovado/2-Nao aprovado/3-Restricao/4-Refazer)
+     vr_msg_detalhe    VARCHAR2(10000);      --> Detalhe da mensagem    
+     vr_status         PLS_INTEGER;          --> Status
+     vr_des_reto_web   VARCHAR2(10);
+     vr_nrtransacao    NUMBER(25) := 0;      --> Numero da transacao
+     vr_inpessoa       PLS_INTEGER := 0;     --> 1 - PF/ 2 - PJ
+     vr_nrcpfcnpj_base NUMBER(15) := 0;      --> CPF/CNPJ base
+     vr_insitapr       crawepr.insitapr%TYPE; --> Situacao Aprovacao(0-Em estudo/1-Aprovado/2-Nao aprovado/3-Restricao/4-Refazer)
       
      -- Buscar a proposta de empréstimo vinculada ao protocolo
      CURSOR cr_crawepr(pr_cdcooper crawepr.cdcooper%TYPE
@@ -1156,22 +1169,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
      CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                       ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
      SELECT ass.inpessoa
+           ,ass.nrcpfcnpj_base     -- P450 - 29/07/2019
        FROM crapass ass
       WHERE ass.cdcooper = pr_cdcooper
         AND ass.nrdconta = pr_nrdconta;
      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
       
     -- Variaveis temp para ajuste valores recebidos nos indicadores
-    vr_indrisco VARCHAR2(100); --> Nível do risco calculado para a operação
-    vr_nrnotrat VARCHAR2(100); --> Valor do rating calculado para a operação
-    vr_nrinfcad VARCHAR2(100); --> Valor do item Informações Cadastrais calculado no Rating
-    vr_nrliquid VARCHAR2(100); --> Valor do item Liquidez calculado no Rating
-    vr_nrgarope VARCHAR2(100); --> Valor das Garantias calculada no Rating
-    vr_nrparlvr VARCHAR2(100); --> Valor do Patrimônio Pessoal Livre calculado no Rating
-    vr_nrperger VARCHAR2(100); --> Valor da Percepção Geral da Empresa calculada no Rating
-    vr_desscore VARCHAR2(100); --> Descricao do Score Boa Vista
-    vr_datscore VARCHAR2(100); --> Data do Score Boa Vista
-    vr_idfluata BOOLEAN; --> Segue Fluxo Atacado -- P637
+    vr_indrisco           VARCHAR2(100); --> Nível do risco calculado para a operação
+    vr_nrnotrat           VARCHAR2(100); --> Valor do rating calculado para a operação
+    vr_nrinfcad           VARCHAR2(100); --> Valor do item Informações Cadastrais calculado no Rating
+    vr_nrliquid           VARCHAR2(100); --> Valor do item Liquidez calculado no Rating
+    vr_nrgarope           VARCHAR2(100); --> Valor das Garantias calculada no Rating
+    vr_nrparlvr           VARCHAR2(100); --> Valor do Patrimônio Pessoal Livre calculado no Rating
+    vr_nrperger           VARCHAR2(100); --> Valor da Percepção Geral da Empresa calculada no Rating
+    vr_desscore           VARCHAR2(100); --> Descricao do Score Boa Vista
+    vr_datscore           VARCHAR2(100); --> Data do Score Boa Vista
+    vr_idfluata           BOOLEAN;       --> Segue Fluxo Atacado -- P637
+    vr_scorerat           VARCHAR2(100); --> Score Rating -- P450 - 29/07/2019
+    vr_innivel_rating     NUMBER(5);     --> Score Rating -- P450 - 29/07/2019
+    vr_desc_nivel_rating  VARCHAR2(100); --> Descrição do nível do Rating -- P450 - 29/07/2019
+    vr_in_risco_rat       INTEGER;       --> Descrição do nível do Rating -- P450 - 29/07/2019
 
     -- Função para verificar se parâmetro passado é numérico
     FUNCTION fn_is_number(pr_vlparam IN VARCHAR2) RETURN BOOLEAN IS
@@ -1275,7 +1293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                        || 'erro interno no sistema(4)';
         RAISE vr_exc_saida;
 		  END IF;
-  
+
     -- Se os parâmetros abaixo possuirem algum valor diferente do verificado
     IF NOT pr_cdorigem IN(5,9) OR NOT lower(pr_dsresana) IN('aprovar', 'aprovar_auto', 'reprovar', 'derivar', 'erro') THEN
       -- Montar mensagem de critica
@@ -1296,11 +1314,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     vr_nrperger := fn_converte_null(pr_nrperger);
     vr_desscore := fn_converte_null(pr_desscore);
     vr_datscore := fn_converte_null(pr_datscore);
+    vr_scorerat := fn_converte_null(pr_scorerat); -- P450 - 29/07/2019
       
     -- Buscar o tipo de pessoa
     OPEN cr_crapass(pr_cdcooper => rw_crawepr.cdcooper
                    ,pr_nrdconta => rw_crawepr.nrdconta);
-    FETCH cr_crapass INTO vr_inpessoa;
+    FETCH cr_crapass INTO vr_inpessoa, vr_nrcpfcnpj_base;
     CLOSE cr_crapass;
       
     IF lower(pr_dsresana) IN ('aprovar', 'reprovar', 'derivar') THEN
@@ -1318,7 +1337,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
           vr_msg_detalhe := 'Retorno Analise Automatica nao foi processado, ocorreu erro interno no sistema(6)';
           RAISE vr_exc_saida;
       END IF;
-        
+
       -- Se risco não for um dos verificados abaixo
       IF NOT pr_indrisco IN('AA','A','B','C','D','E','F','G','H') THEN
         -- Montar mensagem de critica
@@ -1364,7 +1383,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
     ELSE
       vr_insitapr := 6; -- Erro
     END IF;
-        
+
     -- Atualizar proposta de empréstimo
     WEBS0001.pc_atualiza_prop_srv_emprestim(pr_cdcooper    => rw_crawepr.cdcooper --> Codigo da cooperativa
                                            ,pr_nrdconta    => rw_crawepr.nrdconta --> Numero da conta
@@ -1416,6 +1435,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
       -- Se resultado da análise não retornou erro
       IF lower(pr_dsresana) != 'erro' THEN
+
+        -- P450 gravar operacao - 29/07/2019 --
+        
+        -- Nível Rating --
+        vr_desc_nivel_rating := UPPER(ltrim(rtrim(vr_scorerat,'"'),'"'));
+        -- Classificacao do Nivel de Risco do Rating (1-Baixo/2-Medio/3-Alto)
+        vr_innivel_rating := NULL;
+        IF vr_desc_nivel_rating = 'BAIXO' THEN
+          vr_innivel_rating := 1;
+        ELSIF vr_desc_nivel_rating = 'MEDIO' THEN
+          vr_innivel_rating := 2;
+        ELSIF vr_desc_nivel_rating = 'ALTO' THEN
+          vr_innivel_rating := 3;
+        END IF;
+        -- Nível Rating --
+        
+        vr_in_risco_rat  := risc0004.fn_traduz_nivel_risco(vr_indrisco);
+
+        RATI0003.pc_grava_rating_operacao(pr_cdcooper => rw_crawepr.cdcooper
+                                         ,pr_nrdconta => rw_crawepr.nrdconta
+                                         ,pr_nrctrato => rw_crawepr.nrctremp
+                                         ,pr_tpctrato => 90
+                                         ,pr_ntrating => NULL
+                                         ,pr_ntrataut => vr_in_risco_rat
+                                         ,pr_dtrating => rw_crapdat.dtmvtolt
+                                         ,pr_strating => 2
+                                         ,pr_orrating => 1
+                                         ,pr_cdoprrat => 'AUTOCDC'
+                                         ,pr_dtrataut => rw_crapdat.dtmvtolt
+                                         ,pr_innivel_rating     => vr_innivel_rating
+                                         ,pr_nrcpfcnpj_base     => vr_nrcpfcnpj_base
+                                         ,pr_inpontos_rating    => gene0002.fn_char_para_number(vr_nrnotrat) --> Pontuacao do Rating retornada do Motor
+                                         ,pr_insegmento_rating  => NULL --> Informacao de qual Garantia foi utilizada para calculo Rating do Motor
+                                         ,pr_inrisco_rat_inc    => NULL --> Nivel de Rating da Inclusao da Proposta
+                                         ,pr_innivel_rat_inc    => NULL --> Classificacao do Nivel de Risco do Rating Inclusao (1-Baixo/2-Medio/3-Alto)
+                                         ,pr_inpontos_rat_inc   => vr_nrnotrat --> Pontuacao do Rating retornada do Motor no momento da Inclusao
+                                         ,pr_insegmento_rat_inc => NULL --> Informacao de qual Garantia foi utilizada para calculo Rating na Inclusao
+                                         --Variáveis para gravar o histórico
+                                         ,pr_cdoperad           => NULL  --> Operador que gerou historico de rating
+                                         ,pr_dtmvtolt           => rw_crapdat.dtmvtolt  --> Data/Hora do historico de rating
+                                         ,pr_valor              => NULL  --> Valor Contratado/Operaca
+                                         ,pr_rating_sugerido    => NULL  --> Nivel de Risco Rating Novo apos alteracao manual/automatica
+                                         ,pr_justificativa      => NULL  --> Justificativa do operador para alteracao do Rating
+                                         ,pr_tpoperacao_rating  => NULL  --> Tipo de Operacao que gerou historico de rating (Dominio: tbgen_dominio_campo)
+                                         ,pr_cdcritic           => vr_cdcritic
+                                         ,pr_dscritic           => vr_dscritic);
+        -- P450 gravar operacao - 29/07/2019 --
+      
         -- Acionar rotina para processamento consultas automatizadas
         SSPC0001.pc_retorna_conaut_esteira(rw_crawepr.cdcooper
                                           ,rw_crawepr.nrdconta
@@ -5641,6 +5708,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
 
     vr_tab_ratings  rati0001.typ_tab_ratings;
     vr_mensagem     VARCHAR2(4000);
+    vr_habrat       VARCHAR2(1) := 'N';    -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
+    vr_strating     NUMBER;                -- P450
+    vr_flgrating    NUMBER;                -- P450
+    vr_vlendivid    craplim.vllimite%TYPE; -- P450 - Valor do Endividamento do Cooperado
+    vr_vllimrating  craplim.vllimite%TYPE; -- P450 - Valor do Parametro Rating (Limite) TAB056
+    -- P450 - Verifica Conta (Cadastro de associados)
+    cursor cr_crapass (pr_cdcooper  IN crawepr.cdcooper%TYPE     --> cooperativa
+                      ,pr_nrdconta  IN crawepr.nrdconta%TYPE) IS --> numero da conta
+      select dtelimin
+            ,cdsitdtl
+            ,cdagenci
+            ,inpessoa
+            ,nrdconta
+            ,nrcpfcnpj_base
+       from  crapass
+       where crapass.cdcooper = pr_cdcooper
+         and crapass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%rowtype;
     
     vr_rowid        ROWID;
 
@@ -5839,6 +5924,86 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0012 IS
                               ); 
           continue;
         end if;
+
+        -- P450 SPT13 - alteracao para habilitar rating novo
+        vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                               pr_cdcooper => rw_rapassecdc.cdcooper,
+                                               pr_cdacesso => 'HABILITA_RATING_NOVO');
+
+
+        IF (rw_rapassecdc.cdcooper <> 3 OR vr_habrat = 'S') THEN
+          
+          --    Retorda dados da conta
+          open  cr_crapass(pr_cdcooper => rw_rapassecdc.cdcooper    --> Codigo da cooperativa
+                          ,pr_nrdconta => rw_rapassecdc.nrdconta);  --> Todas as contas
+          fetch cr_crapass into rw_crapass;
+          if    cr_crapass%notfound then
+                close cr_crapass;
+                vr_cdcritic := 9;
+                raise vr_exc_saida;
+          end   if;
+          close cr_crapass;
+          
+          /* Validar Status rating */
+          RATI0003.pc_busca_status_rating(pr_cdcooper  => rw_rapassecdc.cdcooper
+                                         ,pr_nrdconta  => rw_rapassecdc.nrdconta
+                                         ,pr_nrctrato  => rw_rapassecdc.nrctremp
+                                         ,pr_tpctrato  => 90
+                                         ,pr_strating  => vr_strating
+                                         ,pr_flgrating => vr_flgrating
+                                         ,pr_cdcritic  => vr_cdcritic
+                                         ,pr_dscritic  => vr_dscritic);
+
+          IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+             RAISE vr_exc_saida;
+          END IF;
+          -- Buscar Valor Endividamento e Valor Limite Rating (TAB056)
+          RATI0003.pc_busca_endivid_param(pr_cdcooper => rw_rapassecdc.cdcooper
+                                         ,pr_nrdconta => rw_rapassecdc.nrdconta
+                                         ,pr_vlendivi => vr_vlendivid
+                                         ,pr_vlrating => vr_vllimrating
+                                         ,pr_dscritic => vr_dscritic);
+          IF TRIM(vr_dscritic) IS NOT NULL THEN
+             RAISE vr_exc_saida;
+          END IF;
+
+          -- Status do rating inválido
+          IF vr_flgrating = 0 THEN
+            vr_dscritic := 'Contrato não pode ser efetivado porque não há Rating válido.';
+            RAISE vr_exc_saida;
+
+          ELSE -- Status do rating válido
+
+            -- Se Endividamento + Contrato atual > Parametro Rating (TAB056
+            IF (vr_vlendivid  > vr_vllimrating) THEN
+
+              -- Gravar o Rating da operação, efetivando-o
+              rati0003.pc_grava_rating_operacao(pr_cdcooper          => rw_rapassecdc.cdcooper
+                                               ,pr_nrdconta          => rw_rapassecdc.nrdconta
+                                               ,pr_nrctrato          => rw_rapassecdc.nrctremp
+                                               ,pr_tpctrato          => 90
+                                               ,pr_dtrating          => rw_crapdat.dtmvtolt
+                                               ,pr_strating          => 4
+                                               ,pr_cdoprrat          => vr_cdoperad
+                                               ,pr_nrcpfcnpj_base    => rw_crapass.nrcpfcnpj_base
+                                               --Variáveis para gravar o histórico
+                                               ,pr_cdoperad          => vr_cdoperad
+                                               ,pr_dtmvtolt          => rw_crapdat.dtmvtolt
+                                               ,pr_valor             => NULL
+                                               ,pr_rating_sugerido   => NULL
+                                               ,pr_justificativa     => NULL
+                                               ,pr_tpoperacao_rating => NULL
+                                               --Variáveis de crítica
+                                               ,pr_cdcritic          => vr_cdcritic
+                                               ,pr_dscritic          => vr_dscritic);
+
+              IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                RAISE vr_exc_saida;
+              END IF;
+            END IF;
+          END IF;
+        END IF;
+        -- P450 SPT13 - alteracao para habilitar rating novo
 
         -- atualiar ibratan quanto a efetivacao da proposta
         este0001.pc_efetivar_proposta_est (pr_cdcooper => rw_rapassecdc.cdcooper --> Codigo da cooperativa

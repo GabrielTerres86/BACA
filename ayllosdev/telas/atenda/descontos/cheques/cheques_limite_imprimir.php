@@ -11,17 +11,18 @@
 	 Alterações: 14/06/2010 - Adaptação para RATING (David).
 	 
 	             21/09/2010 - Ajuste para enviar impressoes via email para 
-				              o PAC Sede (David).
-							  
-				 12/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
-				 
-				 22/07/2014 - Ajustes para incluir botao do cet e ajustado 
-							  novo padrao os botoes (Lucas R./Gielow - Projeto CET)
-                 01/02/2019 - Remover a impressão do Rating Atual conforme estória: Product Backlog Item 13986:
-                              Rating - Ajustes em Telas Desabilitar impressão
-                              P450 - Luiz Otávio Olinger Momm (AMCOM) 
+                                  o PAC Sede (David).
 
-                 02/07/2019 - PRJ 438 - Sprint 14 - Removido a opção 'Nota Promissoria' da tela de Impressão  (Mateus Z / Mouts)
+	             12/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
+
+	             22/07/2014 - Ajustes para incluir botao do cet e ajustado 
+                                  novo padrao os botoes (Lucas R./Gielow - Projeto CET)
+
+	             01/02/2019 - Remover a impressão do Rating Atual conforme estória: Product Backlog Item 13986:
+                                  Rating - Ajustes em Telas Desabilitar impressão
+                                  P450 - Luiz Otávio Olinger Momm (AMCOM)
+
+                     02/07/2019 - PRJ 438 - Sprint 14 - Removido a opção 'Nota Promissoria' da tela de Impressão  (Mateus Z / Mouts)
 	************************************************************************/
 	
 	session_start();

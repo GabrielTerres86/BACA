@@ -42,9 +42,9 @@
 
                   23/05/2019 - P450 - Removido mensageiria para pesquisa de rating por proposta (Luiz Otávio Olinger Momm - AMCOM).
 
-			      02/07/2019 - PRJ 438 - Sprint 14 - Alterado nome do botão 'Confirmar Novo Limite' para 'Efetivar' (Mateus Z / Mouts)
+                  02/07/2019 - PRJ 438 - Sprint 14 - Alterado nome do botão 'Confirmar Novo Limite' para 'Efetivar' (Mateus Z / Mouts)
 
-            17/07/2019 - PRJ 438 - Sprint 16 - Ultimas alterações do desconto de cheque  - Paulo Martins - Mouts
+                  17/07/2019 - PRJ 438 - Sprint 16 - Ultimas alterações do desconto de cheque  - Paulo Martins - Mouts
 	************************************************************************/
 	
 	session_start();
@@ -106,7 +106,7 @@
 	
 	$limites   = $xmlObjLimites->roottag->tags[0]->tags;
 	$qtLimites = count($limites);
-	
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -116,21 +116,21 @@
 		exit();
 	}    	
 	
-    // [07/03/2019]
-    $permiteAlterarRating = false;
-    $oXML = new XmlMensageria();
-    $oXML->add('cooperat', $glbvars["cdcooper"]);
+	// [07/03/2019]
+	$permiteAlterarRating = false;
+	$oXML = new XmlMensageria();
+	$oXML->add('cooperat', $glbvars["cdcooper"]);
 
-    $xmlResult = mensageria($oXML, "TELA_PARRAT", "CONSULTA_PARAM_RATING", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObj = getObjectXML($xmlResult);
+	$xmlResult = mensageria($oXML, "TELA_PARRAT", "CONSULTA_PARAM_RATING", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);
 
-    $registrosPARRAT = $xmlObj->roottag->tags[0]->tags;
-    foreach ($registrosPARRAT as $r) {
-        if (getByTagName($r->tags, 'pr_inpermite_alterar') == '1') {
-            $permiteAlterarRating = true;
-        }
-    }
-    // [07/03/2019]
+	$registrosPARRAT = $xmlObj->roottag->tags[0]->tags;
+	foreach ($registrosPARRAT as $r) {
+		if (getByTagName($r->tags, 'pr_inpermite_alterar') == '1') {
+			$permiteAlterarRating = true;
+		}
+	}
+	// [07/03/2019]
 
 	// ********************************************
 	// AMCOM - Retira Etapa Rating exceto para Ailos (coop 3)
@@ -172,20 +172,20 @@
 					<th>LD</th>
 					<th >Situa&ccedil;&atilde;o</th>
 					<th>Comit&ecirc;</th>
-                    <!-- [14/02/2019] -->
-                    <th><? echo utf8ToHtml('Nota Rating');?></th>
-                    <th title="Origem Rating"><? echo utf8ToHtml('Retorno');?></th>
-                    <!-- [14/02/2019] -->
+					<!-- [14/02/2019] -->
+					<th><? echo utf8ToHtml('Nota Rating');?></th>
+					<th title="Origem Rating"><? echo utf8ToHtml('Retorno');?></th>
+					<!-- [14/02/2019] -->
 
 				</tr>			
 			</thead>
 			<tbody>
 				<?  for ($i = 0; $i < $qtLimites; $i++) {
-												
-                        $msgErro = '';
-		                $notaRating = $limites[$i]->tags[12]->cdata;
-		                $origemRating = $limites[$i]->tags[13]->cdata;
-                        $situacaoRating = '';
+
+						$msgErro = '';
+						$notaRating = $limites[$i]->tags[12]->cdata;
+						$origemRating = $limites[$i]->tags[13]->cdata;
+						$situacaoRating = '';
 
 						$mtdClick = "selecionaLimiteCheques('".($i + 1)."','".$qtLimites."','".($limites[$i]->tags[3]->cdata)."','".($limites[$i]->tags[6]->cdata)."','".($limites[$i]->tags[10]->cdata)."','".($limites[$i]->tags[2]->cdata)."',".($limites[$i]->tags[11]->cdata).");";
 				?>
@@ -216,10 +216,10 @@
 						
 						<td title="<? echo stringTabela($limites[$i]->tags[9]->cdata, 50, 'primeira'); ?>"><? echo stringTabela($limites[$i]->tags[9]->cdata, 20, 'primeira'); ?></td>
 
-                        <!-- [14/02/2019][15/03/2019] -->
-                        <td><?=$notaRating?></td>
-                        <td title="<?=stringTabela($origemRating, 30, 'primeira'); ?>"><?=stringTabela($origemRating, 10, 'primeira'); ?></td>
-                        <!-- [14/02/2019][15/03/2019] -->
+						<!-- [14/02/2019][15/03/2019] -->
+						<td><?=$notaRating?></td>
+						<td title="<?=stringTabela($origemRating, 30, 'primeira'); ?>"><?=stringTabela($origemRating, 10, 'primeira'); ?></td>
+						<!-- [14/02/2019][15/03/2019] -->
 					</tr>
 				<?} // Fim do for ?>			
 			</tbody>
@@ -249,30 +249,30 @@
 	<a href="#" class="botao" name="btnVoltar" id="btnVoltar" onClick="voltaDiv(2,1,4,'DESCONTO DE CHEQUES','DSC CHQS');carregaCheques();return false;" >Voltar</a>
 	<a href="#" class="botao" name="btnAlterar" id="btnAlterar" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispA.'" onClick="return false;"'; } else { echo 'style="'.$dispA.'" onClick="mostraTelaAltera();return false;"'; } ?> >Alterar</a>
 	<a href="#" class="botao" name="btnCancelar" id="btnCancelar" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispX.'" onClick="return false;"'; } else { echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o limite de desconto de cheques?\',\'Confirma&ccedil;&atilde;o - Aimaro\',\'cancelaLimiteDscChq()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> >Cancelar</a>
-	<a href="#" class="botao" name="btnConsultar" id="btnConsultar" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="carregaDadosConsultaLimiteDscChq(\'C\');return false;"'; } ?> >Consultar</a>
+	<a href="#" class="botao" name="btnConsultar" id="btnConsultar" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="carregaDadosConsultaLimiteDscChq();return false;"'; } ?> >Consultar</a>
 	<a href="#" class="botao" name="btnExcluir" id="btnExcluir" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="showConfirmacao(\'Deseja excluir o limite de desconto de cheques?\',\'Confirma&ccedil;&atilde;o - Aimaro\',\'excluirLimiteDscChq()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> >Excluir</a>
 	<div style="height: 3px;"></div>
 	<a href="#" class="botao" name="btnIncluir" id="btnIncluir" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscChq(1);return false;"'; } ?> >Incluir</a>
 	<a href="#" class="botao" name="btnImprimir" id="btnImprimir" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> >Imprimir</a>
 	<a href="#" class="botao" name="btnConfNovLimite" id="btnConfNovLimite" style="<? echo $dispN ?>" onClick="carregaDadosConsultaLimiteDscChq('E');return false;">Efetivar</a>
 	<a href="#" class="botao" name="btnUltimasAlteracoes" id="btnUltimasAlteracoes" onClick="ultimasAlteracoes();return false;">Últimas Alterações</a>
-
-<?
+    
+    <?
 	if ($habrat == 'S') {
 	?>
-		<!-- 12/03/2019 -->
+    <!-- 12/03/2019 -->
 		<a href="#" class="botao" name="btnRatingMotor" id="btnRatingMotor" style="<? echo $dispL ?>" onClick="ratingMotor('2');">Analisar Rating</a>
-		<!-- 12/03/2019 -->
-		<?
-		// 07/03/2019
-		if ($permiteAlterarRating) {
-		?>
-		<a href="#" class="botao" name="btnConfAlterarRating" id="btnConfAlterarRating" style="<? echo $dispT ?>" onClick="btnChequeRating();">Alterar Rating</a>
-		<?
-		}
-		// 07/03/2019
+    <!-- 12/03/2019 -->
+    <?
+    // 07/03/2019
+    if ($permiteAlterarRating) {
+    ?>
+	<a href="#" class="botao" name="btnConfAlterarRating" id="btnConfAlterarRating" style="<? echo $dispT ?>" onClick="btnChequeRating();">Alterar Rating</a>
+    <?
+    }
+    // 07/03/2019
 	}
-?>
+    ?>
 </div>
 
 <script type="text/javascript">

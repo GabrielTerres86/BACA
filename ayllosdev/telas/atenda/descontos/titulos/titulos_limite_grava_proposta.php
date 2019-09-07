@@ -3,7 +3,7 @@
  * FONTE        : titulos_limite_grava_proposta.php
  * CRIAÇÃO      : David
  * DATA CRIAÇÃO : Junho/2010
- * OBJETIVO     : Gravar proposta do limite de desconto de títulos	             		        				   
+ * OBJETIVO     : Gravar proposta do limite de desconto de títulos
  * --------------
  * ALTERAÇÕES   :
  * --------------
@@ -15,21 +15,27 @@
  *								         	    especiais na observação, conforme solicitado
  *	   										    no chamado 315453. 
          17/06/2016 - M181 - Alterar o CDAGENCI para          
-                      passar o CDPACTRA (Rafael Maciel - RKAM)					  
-		 28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
-		 
-		 22/03/2018 - Incluso tratativa para retornar numero de contrato gerado automaticamente. (Daniel - projeto 403)
+                      passar o CDPACTRA (Rafael Maciel - RKAM)
 
-		 29/05/2019 - Adicionado Etapa Rating para Cooperatova Ailos (3) Luiz Otávio Olinger Momm (AMCOM)
+         28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+
+         22/03/2018 - Incluso tratativa para retornar numero de contrato gerado automaticamente. (Daniel - projeto 403)
+
+	 29/05/2019 - Adicionado Etapa Rating para Cooperatova Ailos (3) Luiz Otávio Olinger Momm (AMCOM)
+
  * 009: [17/07/2019] Jefferson G      (MoutS) : Alteração referente a reformulação da tela avalista
  *                                              PRJ 438 - Sprint 16
 
  * 010: [23/07/2019] - Remoção dos campos de renda que não são mais necessários. PRJ438 - Rubens Lima (Mouts)
  */
+?>
+
+
+<?php 
 
 	session_start();
-	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+
+	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
 	require_once("../../../../includes/config.php");
 	require_once("../../../../includes/funcoes.php");
 	require_once("../../../../includes/controla_secao.php");
@@ -39,7 +45,7 @@
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
-	
+
 	// ********************************************
 	// AMCOM - Retira Etapa Rating exceto para Ailos (coop 3)
 
@@ -76,15 +82,15 @@
 					"cddopcao","nrcpfcgc","redirect");
 
 	foreach ($params as $nomeParam) {
-		if (!in_array($nomeParam,array_keys($_POST))) {			
+		if (!in_array($nomeParam,array_keys($_POST))) {
 			exibeErro("Par&acirc;metros incorretos.");
-		}	
-	}				  
+		}
+	}
 
 	$nrdconta = $_POST["nrdconta"];
 	$nrcpfcgc = $_POST["nrcpfcgc"];
-	
-	$nrctrlim = $_POST["nrctrlim"];	
+
+	$nrctrlim = $_POST["nrctrlim"];
 	$vllimite = $_POST["vllimite"];
 	$dsramati = $_POST["dsramati"];
 	$vlmedtit = $_POST["vlmedtit"];
@@ -129,9 +135,9 @@
 	$cdufava2 = $_POST["cdufava2"];
 	$nrfonav2 = $_POST["nrfonav2"];
 	$emailav2 = $_POST["emailav2"];
-	$nrender2 = $_POST['nrender2'];	
-	$complen2 = $_POST['complen2'];	
-	$nrcxaps2 = $_POST['nrcxaps2'];	
+	$nrender2 = $_POST['nrender2'];
+	$complen2 = $_POST['complen2'];
+	$nrcxaps2 = $_POST['nrcxaps2'];
 
 	$nrgarope = $_POST["nrgarope"];
 	$nrinfcad = $_POST["nrinfcad"];
@@ -140,7 +146,7 @@
 	$nrperger = $_POST["nrperger"];	
 	$vltotsfn = $_POST["vltotsfn"]?$_POST["vltotsfn"]:'00,00';
 	$perfatcl = $_POST["perfatcl"]?$_POST["perfatcl"]:'00,00';
-    $idcobope = $_POST["idcobope"];
+	$idcobope = $_POST["idcobope"];
 
 	$cddopcao = $_POST["cddopcao"];
 	
@@ -168,42 +174,42 @@
 	if (!validaInteiro($nrctrlim)) {
 		exibeErro("N&uacute;mero do contrato inv&aacute;lido.");
 	}
-	
+
 	// Verifica se o código do contrato é um inteiro válido
 	if (!validaInteiro($cddlinha)) {
 		exibeErro("C&oacute;digo da linha de desconto inv&aacute;lido.");
-	}	
+	}
 	
 	// Verifica se identificador de garantia é um inteiro válido
 	if (!validaInteiro($nrgarope)) {
 		exibeErro("Garantia inv&aacute;lida.");
 	}
-	
+
 	// Verifica se identificador de informação cadastral é um inteiro válido
 	if (!validaInteiro($nrinfcad)) {
 		exibeErro("Informa&ccedil;&etilde;o cadastral inv&aacute;lida.");
 	}
-	
+
 	// Verifica se identificador de liquidez é um inteiro válido
 	if (!validaInteiro($nrliquid)) {
 		exibeErro("Liquidez de garantia inv&aacute;lida.");
 	}
-	
+
 	// Verifica se identificador de patrimônio é um inteiro válido
 	if (!validaInteiro($nrpatlvr)) {
 		exibeErro("Patrim&ocirc;nio pessoal inv&aacute;lido.");
 	}
-	
+
 	// Verifica se identificador de percepção é um inteiro válido
 	if (!validaInteiro($nrperger)) {
 		exibeErro("Percep&ccedil;&atilde;o geral inv&aacute;lida.");
 	}
-	
+
 	// Verifica se valor total sfn é um decimal válido
 	if (!validaDecimal($vltotsfn)) {
 		exibeErro("Valor Total SFN inv&aacute;lido.");
-	}	
-	
+	}
+
 	// Verifica se o percentual de faturamento é um decimal válido
 	if (!validaDecimal($perfatcl)) {
 		exibeErro("Percentual de Faturamento inv&aacute;lido.");
@@ -220,7 +226,7 @@
 	// Verifica se o CPF/CNPJ &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrcpfcgc)) {
 		exibeErro("N&uacute;mero de CPF/CNPJ inv&aacute;lido.");
-	}		
+	}
 
 	// Monta o xml de requisição
 	$xmlSetGravarLimite  = "";
@@ -265,7 +271,7 @@
 	$xmlSetGravarLimite .= "		<emailav1>".$emailav1."</emailav1>";
 	$xmlSetGravarLimite .= "		<nrender1>".$nrender1."</nrender1>";
 	$xmlSetGravarLimite .= "		<complen1>".$complen1."</complen1>";
-	$xmlSetGravarLimite .= "		<nrcxaps1>".$nrcxaps1."</nrcxaps1>";	
+	$xmlSetGravarLimite .= "		<nrcxaps1>".$nrcxaps1."</nrcxaps1>";
 	$xmlSetGravarLimite .= "		<nrctaav2>".$nrctaav2."</nrctaav2>";
 	$xmlSetGravarLimite .= "		<nmdaval2>".$nmdaval2."</nmdaval2>";
 	$xmlSetGravarLimite .= "		<nrcpfav2>".$nrcpfav2."</nrcpfav2>";
@@ -284,12 +290,12 @@
 	$xmlSetGravarLimite .= "		<emailav2>".$emailav2."</emailav2>";
 	$xmlSetGravarLimite .= "		<nrender2>".$nrender2."</nrender2>";
 	$xmlSetGravarLimite .= "		<complen2>".$complen2."</complen2>";
-	$xmlSetGravarLimite .= "		<nrcxaps2>".$nrcxaps2."</nrcxaps2>";	
+	$xmlSetGravarLimite .= "		<nrcxaps2>".$nrcxaps2."</nrcxaps2>";
 	$xmlSetGravarLimite .= "		<nrgarope>".$nrgarope."</nrgarope>";
 	$xmlSetGravarLimite .= "		<nrinfcad>".$nrinfcad."</nrinfcad>";
 	$xmlSetGravarLimite .= "		<nrliquid>".$nrliquid."</nrliquid>";
 	$xmlSetGravarLimite .= "		<nrpatlvr>".$nrpatlvr."</nrpatlvr>";
-	$xmlSetGravarLimite .= "		<nrperger>".$nrperger."</nrperger>";	
+	$xmlSetGravarLimite .= "		<nrperger>".$nrperger."</nrperger>";
 	$xmlSetGravarLimite .= "		<vltotsfn>".$vltotsfn."</vltotsfn>";
 	$xmlSetGravarLimite .= "		<perfatcl>".$perfatcl."</perfatcl>";
     $xmlSetGravarLimite .= "		<idcobope>".$idcobope."</idcobope>";
@@ -306,27 +312,27 @@
 	$xmlSetGravarLimite .= "		<vlrenme2>".$vlrenme2."</vlrenme2>";
 	$xmlSetGravarLimite .= "	</Dados>";
 	$xmlSetGravarLimite .= "</Root>";
-	
+
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlSetGravarLimite);
-	
+
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjLimite = getObjectXML($xmlResult);
-	
+
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjLimite->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata);
-	} 	
+	}
 	
 	if ($cddopcao == "A"){
 		$opermail = "Alterar Limite de Desconto de T&iacute;tulos";
 	}else{  if ($cddopcao == "I"){
 				// Buscar numero do contrato gerado 
-                $nrctrlim = $xmlObjLimite->roottag->tags[0]->attributes["NRCTRLIM"];	
+				$nrctrlim = $xmlObjLimite->roottag->tags[0]->attributes["NRCTRLIM"];
 				$opermail = "Novo Limite de Desconto de T&iacute;tulos";
 			}
 	}
-		
+
 	// Esconde mensagem de aguardo
 	// Bloqueia conteúdo que está átras do div da rotina
 	echo 'hideMsgAguardo();';
@@ -350,17 +356,18 @@
 	$stringArrayMsg = implode( "|", $msg);
 
 	if ($habrat == 'N') {
-	echo 'exibirMensagens("'.$stringArrayMsg.'","atualizaDadosRating(\"divOpcoesDaOpcao3\");");';
+		echo 'exibirMensagens("'.$stringArrayMsg.'","atualizaDadosRating(\"divOpcoesDaOpcao3\");");';
 	} else {
 		echo 'exibirMensagens("'.$stringArrayMsg.'","carregaLimitesTitulosPropostas();hideMsgAguardo();");';
+		echo 'hideMsgAguardo();';
+		echo 'blockBackground(parseInt($("#divRotina").css("z-index")));';
+		echo 'chamarImpressao(\'PROPOSTA\');';
 	}
-	
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
 		echo 'showError("error","'.$msgErro.'","Alerta - Aimaro","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
-		
-	
 ?>

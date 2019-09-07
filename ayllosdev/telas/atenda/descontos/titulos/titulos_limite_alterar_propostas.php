@@ -24,7 +24,7 @@
 	require_once("../../../../includes/controla_secao.php");
 
 	// Verifica se tela foi chamada pelo método POST
-	isPostMethod();	
+	isPostMethod();
 	 	
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
@@ -99,7 +99,7 @@
 	/* 004/005 */
 	// Para Central Ailos deve manter rating antigo
 	if ($habrat == 'N') {
-	$flctgmot = $root->dados->flctgmot;
+		$flctgmot = $root->dados->flctgmot;
 	} else {
 		$flctgmot = '0';
 	}

@@ -99,6 +99,11 @@
                              
                 09/01/2019 - P298.2.2 - Luciano (Supero) - Na tela Atenda > Ocorrencias> Prejuízo> 
                              deverá apresentar as informaçoes de prejuízo do contrato Pós-Fixado.
+
+                09/04/2019 - Alterado na lista_ocorren, para buscar o risco a partir da rotina 
+                             RATI0003.pc_ret_risco_tbrisco, em substituição a tabela crapnrc. 
+                             P450-Rating (Elton/Amcom).
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0027tt.i }
@@ -157,6 +162,11 @@ PROCEDURE lista_ocorren:
     DEF VAR aux_dsdrisco    AS CHAR   FORMAT "x(02)" EXTENT 20         NO-UNDO.
     DEF VAR aux_qtregist    AS INTE                                    NO-UNDO.
     DEF VAR aux_innivris    LIKE crapris.innivris                      NO-UNDO.
+    
+    /* Variaveis para rotina pc_ret_risco_tbrisco */
+    DEF VAR aux_risco_rat          AS INTE                             NO-UNDO. /* P450 - Rating */
+    DEF VAR aux_indrisco_rat       AS CHAR                             NO-UNDO. /* P450 - Rating */ 
+    DEF VAR aux_habrat             AS CHAR                             NO-UNDO. /* P450 - Rating */
     
     DEF VAR h-b1wgen0002    AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0138    AS HANDLE                                  NO-UNDO.
@@ -506,21 +516,148 @@ PROCEDURE lista_ocorren:
 
     END.    
 
-    /* Rating efetivo */
-    FIND crapnrc WHERE crapnrc.cdcooper = par_cdcooper   AND
-                       crapnrc.nrdconta = par_nrdconta   AND
-                       crapnrc.insitrat = 2     
-                       NO-LOCK NO-ERROR.
+    /* Busca do risco rating Efetivo ----  p450-rating   */
+    FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
+                             crapprm.cdacesso = 'HABILITA_RATING_NOVO' AND
+                             crapprm.cdcooper = par_cdcooper
+                             NO-LOCK NO-ERROR.
+       
+    ASSIGN aux_habrat = 'N'.
+    IF AVAIL crapprm THEN DO:
+      ASSIGN aux_habrat = crapprm.dsvlrprm.
+    END.
+       
+    /* Habilita novo rating */
+    IF aux_habrat = 'S' AND par_cdcooper <> 3 THEN DO:
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-    IF   aux_qtctrord      > 0   OR
-         aux_qtdevolu      > 0   OR
-         crapass.dtdsdspc <> ?   OR
-         crapsld.qtddsdev  > 0   OR
-         crapsld.qtddtdev  > 0   OR
-         aux_flginadi            OR
-         aux_flglbace            OR
-         aux_flgeprat            OR
-         aux_flgpreju            OR
+      RUN STORED-PROCEDURE pc_ret_risco_tbrisco
+      aux_handproc = PROC-HANDLE
+         ( INPUT  par_cdcooper      /* pr_cdcooper */
+          ,INPUT  par_nrdconta      /* pr_nrdconta */
+          ,INPUT  ?                 /* pr_tpctrato */
+          ,INPUT  ?                 /* pr_nrctremp */
+          ,INPUT  4                 /* pr_insit_rating  4- Efetivo */
+          ,OUTPUT 0                /* pr_inrisco */
+          ,OUTPUT 0                /* pr_cdcritic */
+          ,OUTPUT ""               /* pr_dscritic */
+          ).
+
+      CLOSE STORED-PROCEDURE pc_ret_risco_tbrisco WHERE PROC-HANDLE = aux_handproc.
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+      ASSIGN aux_cdcritic = 0
+             aux_cdcritic = pc_ret_risco_tbrisco.pr_cdcritic
+                           WHEN pc_ret_risco_tbrisco.pr_cdcritic <> ?
+             aux_dscritic = ""
+             aux_dscritic = pc_ret_risco_tbrisco.pr_dscritic
+                           WHEN pc_ret_risco_tbrisco.pr_dscritic <> ?
+             aux_risco_rat = 0
+             aux_risco_rat = pc_ret_risco_tbrisco.pr_inrisco
+                           WHEN pc_ret_risco_tbrisco.pr_inrisco <> ?.
+                         
+      IF aux_cdcritic > 0 OR 
+        aux_dscritic <> "" THEN                       
+      DO:
+       RUN gera_erro (INPUT par_cdcooper,
+                       INPUT par_cdagenci,
+                       INPUT par_nrdcaixa,
+                       INPUT 1,   /** Sequencia **/
+                       INPUT aux_cdcritic,
+                       INPUT-OUTPUT aux_dscritic).    	
+       RETURN "NOK".
+      END.
+ 
+      CASE aux_risco_rat:
+         WHEN 1  THEN ASSIGN aux_indrisco_rat = "AA".
+         WHEN 2  THEN ASSIGN aux_indrisco_rat = "A" .
+         WHEN 3  THEN ASSIGN aux_indrisco_rat = "B" .
+         WHEN 4  THEN ASSIGN aux_indrisco_rat = "C" .
+         WHEN 5  THEN ASSIGN aux_indrisco_rat = "D" .
+         WHEN 6  THEN ASSIGN aux_indrisco_rat = "E" .
+         WHEN 7  THEN ASSIGN aux_indrisco_rat = "F" .
+         WHEN 8  THEN ASSIGN aux_indrisco_rat = "G" .
+         WHEN 9  THEN ASSIGN aux_indrisco_rat = "H" .
+         WHEN 10 THEN ASSIGN aux_indrisco_rat = "HH".
+         OTHERWISE aux_indrisco_rat = "".
+      END CASE.                        
+
+      IF   aux_qtctrord      > 0   OR
+           aux_qtdevolu      > 0   OR
+           crapass.dtdsdspc <> ?   OR
+           crapsld.qtddsdev  > 0   OR
+           crapsld.qtddtdev  > 0   OR
+           aux_flginadi            OR
+           aux_flglbace            OR
+           aux_flgeprat            OR
+           aux_flgpreju            OR
+        
+          (aux_indrisco_rat <> "" AND  
+           aux_indrisco_rat <> "A")  OR
+        
+          (aux_nivrisco     <> ""    AND
+           aux_nivrisco     <> "A")  THEN
+           ASSIGN aux_flgocorr = TRUE.
+      ELSE
+           ASSIGN aux_flgocorr = FALSE.
+    
+      IF NOT VALID-HANDLE(h-b1wgen0138) THEN
+         RUN sistema/generico/procedures/b1wgen0138.p
+             PERSISTENT SET h-b1wgen0138.
+
+      DYNAMIC-FUNCTION("busca_grupo" IN h-b1wgen0138, INPUT par_cdcooper,
+                                                      INPUT par_nrdconta,
+                                                      OUTPUT aux_nrdgrupo,
+                                                      OUTPUT aux_gergrupo,
+                                                      OUTPUT aux_dsdrisgp).
+
+      IF VALID-HANDLE(h-b1wgen0138) THEN
+         DELETE OBJECT h-b1wgen0138.
+
+      CREATE tt-ocorren.
+
+      ASSIGN tt-ocorren.qtctrord = aux_qtctrord
+             tt-ocorren.qtdevolu = aux_qtdevolu
+             tt-ocorren.dtcnsspc = crapass.dtcnsspc
+             tt-ocorren.dtdsdsps = crapass.dtdsdspc
+             tt-ocorren.qtddsdev = crapsld.qtddsdev
+             tt-ocorren.dtdsdclq = crapsld.dtdsdclq
+             tt-ocorren.qtddtdev = crapsld.qtddtdev
+             tt-ocorren.flginadi = aux_flginadi
+             tt-ocorren.flglbace = aux_flglbace
+             tt-ocorren.flgeprat = aux_flgeprat
+             tt-ocorren.indrisco = aux_indrisco_rat
+             tt-ocorren.nivrisco = aux_nivrisco
+             tt-ocorren.flgpreju = aux_flgpreju
+             tt-ocorren.flgjucta = aux_flgjucta
+             tt-ocorren.flgocorr = aux_flgocorr
+             tt-ocorren.dtdrisco = aux_dtdrisco
+             tt-ocorren.qtdiaris = aux_qtdiaris
+             tt-ocorren.inrisctl = IF crapass.inrisctl = "AA" THEN
+                                      "A"
+                                   ELSE
+                                      crapass.inrisctl
+             tt-ocorren.dtrisctl = crapass.dtrisctl
+             tt-ocorren.dsdrisgp = aux_dsdrisgp
+             tt-ocorren.innivris = aux_innivris.
+    /* Habilita novo rating */
+    END.
+    ELSE DO:
+      /* Rating efetivo */
+      FIND crapnrc WHERE crapnrc.cdcooper = par_cdcooper   AND
+                         crapnrc.nrdconta = par_nrdconta   AND
+                         crapnrc.insitrat = 2     
+                         NO-LOCK NO-ERROR.
+
+      IF   aux_qtctrord      > 0   OR
+           aux_qtdevolu      > 0   OR
+           crapass.dtdsdspc <> ?   OR
+           crapsld.qtddsdev  > 0   OR
+           crapsld.qtddtdev  > 0   OR
+           aux_flginadi            OR
+           aux_flglbace            OR
+           aux_flgeprat            OR
+           aux_flgpreju            OR
         
         (AVAIL crapnrc          AND
          crapnrc.indrisco <> "" AND  
@@ -529,49 +666,50 @@ PROCEDURE lista_ocorren:
         (aux_nivrisco     <> ""    AND
          aux_nivrisco     <> "A")  THEN
          ASSIGN aux_flgocorr = TRUE.
-    ELSE
+      ELSE
          ASSIGN aux_flgocorr = FALSE.
     
-    IF NOT VALID-HANDLE(h-b1wgen0138) THEN
-       RUN sistema/generico/procedures/b1wgen0138.p
-           PERSISTENT SET h-b1wgen0138.
+      IF NOT VALID-HANDLE(h-b1wgen0138) THEN
+         RUN sistema/generico/procedures/b1wgen0138.p
+             PERSISTENT SET h-b1wgen0138.
 
-    DYNAMIC-FUNCTION("busca_grupo" IN h-b1wgen0138, INPUT par_cdcooper,
-                                                    INPUT par_nrdconta,
-                                                    OUTPUT aux_nrdgrupo,
-                                                    OUTPUT aux_gergrupo,
-                                                    OUTPUT aux_dsdrisgp).
+      DYNAMIC-FUNCTION("busca_grupo" IN h-b1wgen0138, INPUT par_cdcooper,
+                                                      INPUT par_nrdconta,
+                                                      OUTPUT aux_nrdgrupo,
+                                                      OUTPUT aux_gergrupo,
+                                                      OUTPUT aux_dsdrisgp).
 
-    IF VALID-HANDLE(h-b1wgen0138) THEN
-       DELETE OBJECT h-b1wgen0138.
+      IF VALID-HANDLE(h-b1wgen0138) THEN
+         DELETE OBJECT h-b1wgen0138.
 
-    CREATE tt-ocorren.
+      CREATE tt-ocorren.
 
-    ASSIGN tt-ocorren.qtctrord = aux_qtctrord
-           tt-ocorren.qtdevolu = aux_qtdevolu
-           tt-ocorren.dtcnsspc = crapass.dtcnsspc
-           tt-ocorren.dtdsdsps = crapass.dtdsdspc
-           tt-ocorren.qtddsdev = crapsld.qtddsdev
-           tt-ocorren.dtdsdclq = crapsld.dtdsdclq
-           tt-ocorren.qtddtdev = crapsld.qtddtdev
-           tt-ocorren.flginadi = aux_flginadi
-           tt-ocorren.flglbace = aux_flglbace
-           tt-ocorren.flgeprat = aux_flgeprat
-           tt-ocorren.indrisco = crapnrc.indrisco WHEN AVAIL crapnrc
-           tt-ocorren.nivrisco = aux_nivrisco
-           tt-ocorren.flgpreju = aux_flgpreju
-           tt-ocorren.flgjucta = aux_flgjucta
-           tt-ocorren.flgocorr = aux_flgocorr
-           tt-ocorren.dtdrisco = aux_dtdrisco
-           tt-ocorren.qtdiaris = aux_qtdiaris
-           tt-ocorren.inrisctl = IF crapass.inrisctl = "AA" THEN
-                                    "A"
-                                 ELSE
-                                    crapass.inrisctl
-           tt-ocorren.dtrisctl = crapass.dtrisctl
-           tt-ocorren.dsdrisgp = aux_dsdrisgp
-           tt-ocorren.innivris = aux_innivris. 
-     
+      ASSIGN tt-ocorren.qtctrord = aux_qtctrord
+             tt-ocorren.qtdevolu = aux_qtdevolu
+             tt-ocorren.dtcnsspc = crapass.dtcnsspc
+             tt-ocorren.dtdsdsps = crapass.dtdsdspc
+             tt-ocorren.qtddsdev = crapsld.qtddsdev
+             tt-ocorren.dtdsdclq = crapsld.dtdsdclq
+             tt-ocorren.qtddtdev = crapsld.qtddtdev
+             tt-ocorren.flginadi = aux_flginadi
+             tt-ocorren.flglbace = aux_flglbace
+             tt-ocorren.flgeprat = aux_flgeprat
+             tt-ocorren.indrisco = crapnrc.indrisco WHEN AVAIL crapnrc
+             tt-ocorren.nivrisco = aux_nivrisco
+             tt-ocorren.flgpreju = aux_flgpreju
+             tt-ocorren.flgjucta = aux_flgjucta
+             tt-ocorren.flgocorr = aux_flgocorr
+             tt-ocorren.dtdrisco = aux_dtdrisco
+             tt-ocorren.qtdiaris = aux_qtdiaris
+             tt-ocorren.inrisctl = IF crapass.inrisctl = "AA" THEN
+                                      "A"
+                                   ELSE
+                                      crapass.inrisctl
+             tt-ocorren.dtrisctl = crapass.dtrisctl
+             tt-ocorren.dsdrisgp = aux_dsdrisgp
+             tt-ocorren.innivris = aux_innivris. 
+    END.
+
     IF  par_flgerlog  THEN
         RUN proc_gerar_log (INPUT par_cdcooper,
                             INPUT par_cdoperad,

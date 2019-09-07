@@ -10,47 +10,47 @@
 	                                                                  	 
 	 Alterações: 09/06/2010 - Mostrar descrição da situação (David).
 
-				 25/06/2010 - Mostar campo de envio a sede (Gabriel).
+                     25/06/2010 - Mostar campo de envio a sede (Gabriel).
 				 
-				 12/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
+                     12/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
 				 
-				 18/11/2011 - Ajustes para nao mostrar botao quando nao tiver permissao (Jorge)
+                     18/11/2011 - Ajustes para nao mostrar botao quando nao tiver permissao (Jorge)
 				 
-				 21/05/2015 - Alterado para apresentar mensagem ao realizar inclusao
- 							  de proposta de novo limite de desconto de titulo para
- 							  menores nao emancipados (Reinert).
+                     21/05/2015 - Alterado para apresentar mensagem ao realizar inclusao
+                                  de proposta de novo limite de desconto de titulo para
+                                  menores nao emancipados (Reinert).
 
-				 17/12/2015 - Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
+                     17/12/2015 - Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
 
-				 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
+                     26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 
-				 28/08/2018 - Adaptado arquivo para Porpostas. Andre Avila.
+                     28/08/2018 - Adaptado arquivo para Porpostas. Andre Avila.
 
-				 15/04/2018 - Alteração no botão 'Detalhes da Proposta' (Leonardo Oliveira - GFT).
+                     15/04/2018 - Alteração no botão 'Detalhes da Proposta' (Leonardo Oliveira - GFT).
 
-				 18/04/2018 - Alteração da coluna 'contrato' para 'prospota', inclusão da coluna 'contrato' (Leonardo Oliveira - GFT).
+                     18/04/2018 - Alteração da coluna 'contrato' para 'prospota', inclusão da coluna 'contrato' (Leonardo Oliveira - GFT).
 
-				 19/04/2018 - Adição do parâmetro 'nrctrmnt' ao ser selecionado uma proposta.  (Leonardo Oliveira - GFT).
+                     19/04/2018 - Adição do parâmetro 'nrctrmnt' ao ser selecionado uma proposta.  (Leonardo Oliveira - GFT).
 
-				 26/04/2018 - Ajuste nos valores retornados ao buscar propostas (Leonardo Oliveira - GFT).
+                     26/04/2018 - Ajuste nos valores retornados ao buscar propostas (Leonardo Oliveira - GFT).
 
-				 26/04/2018 - Ajuste na funcao de chamada da proposta e manutencao (Vitor Shimada Assanuma - GFT)
+                     26/04/2018 - Ajuste na funcao de chamada da proposta e manutencao (Vitor Shimada Assanuma - GFT)
 
-				 14/08/2018 - Incluido novo botao 'Anular'. PRJ 438 (Mateus Z - Mouts)
+                     14/08/2018 - Incluido novo botao 'Anular'. PRJ 438 (Mateus Z - Mouts)
 
-                 14/02/2019 - P450 - Inclusão dos campos nota do rating, origem da nota do rating e Status  (Luiz Otávio Olinger Momm - AMCOM)
+                     14/02/2019 - P450 - Inclusão dos campos nota do rating, origem da nota do rating e Status  (Luiz Otávio Olinger Momm - AMCOM)
                  
-                 07/03/2019 - P450 - Inclusão da consulta do parametro se a coopoerativa pode Alterar Rating P450 (Luiz Otávio Olinger Momm - AMCOM).
+                     07/03/2019 - P450 - Inclusão da consulta do parametro se a coopoerativa pode Alterar Rating P450 (Luiz Otávio Olinger Momm - AMCOM).
                  
-                 15/03/2019 - P450 - Inclusão da consulta Rating (Luiz Otávio Olinger Momm - AMCOM).
+                     15/03/2019 - P450 - Inclusão da consulta Rating (Luiz Otávio Olinger Momm - AMCOM).
                  
-                 08/04/2019 - P450 - Ajustes de interface conforme solicitação Ailos (Luiz Otávio Olinger Momm - AMCOM).
+                     08/04/2019 - P450 - Ajustes de interface conforme solicitação Ailos (Luiz Otávio Olinger Momm - AMCOM).
 
-                 25/04/2019 - P450 - Ajustes de interface conforme solicitação Ailos (Luiz Otávio Olinger Momm - AMCOM).
+                     25/04/2019 - P450 - Ajustes de interface conforme solicitação Ailos (Luiz Otávio Olinger Momm - AMCOM).
 
-                 13/05/2019 - P450 - Não mostrar Rating quando estiver como situação "não analisado" (Luiz Otávio Olinger Momm - AMCOM).
+                     13/05/2019 - P450 - Não mostrar Rating quando estiver como situação "não analisado" (Luiz Otávio Olinger Momm - AMCOM).
 
-                 24/05/2019 - P450 - Removido mensageiria para pesquisa de rating por proposta (Luiz Otávio Olinger Momm - AMCOM).
+                     24/05/2019 - P450 - Removido mensageiria para pesquisa de rating por proposta (Luiz Otávio Olinger Momm - AMCOM).
 
 	************************************************************************/
 	
@@ -158,7 +158,7 @@
 		<table>
 			<thead>
 				<tr>
-					<th>Data<br>Proposta</th>
+					<th>Data Proposta</th>
 					<th>Contrato</th>
 					<th>Proposta</th>
 					<th>Valor<br>Limite</th>
@@ -167,14 +167,14 @@
 					<th>Situa&ccedil;&atilde;o<br>Proposta</th>
 					<th>Situa&ccedil;&atilde;o<br>An&aacute;lise</th>
 					<th>Decis&atilde;o</th>
-                    <!-- [14/02/2019] -->
-                    <th><? echo utf8ToHtml('Nota Rating');?></th>
-                    <th title="Origem"><? echo utf8ToHtml('Retorno');?></th>
-                    <!-- [14/02/2019] -->
-				</tr>			
+					<!-- [14/02/2019] -->
+					<th><? echo utf8ToHtml('Nota Rating');?></th>
+					<th title="Origem"><? echo utf8ToHtml('Retorno');?></th>
+					<!-- [14/02/2019] -->
+				</tr>
 			</thead>
 			<tbody>
-				
+
 				<?  for ($i = 0; $i < $qtLimites; $i++) {
 
 						$pr_dtpropos = getByTagName($limites[$i]->tags,"dtpropos");//0  data da proposta
@@ -195,12 +195,12 @@
 						$pr_inctrmnt = getByTagName($limites[$i]->tags,"inctrmnt");//12
 
                 
-                        /* 15/03/2019 */
-                        $msgErro = '';
-                        $notaRating = getByTagName($limites[$i]->tags,"inrisrat");;
-                        $origemRating = getByTagName($limites[$i]->tags,"origerat");;
-                        $situacaoRating = '';
-                        /* 15/03/2019 */
+						/* 15/03/2019 */
+						$msgErro = '';
+						$notaRating = getByTagName($limites[$i]->tags,"inrisrat");;
+						$origemRating = getByTagName($limites[$i]->tags,"origerat");;
+						$situacaoRating = '';
+						/* 15/03/2019 */
                 
 						$mtdClick = "selecionaLimiteTitulosProposta('"
 							.($i + 1)."', '" 		// id linha
@@ -232,12 +232,12 @@
 						</td>
 						
 						<td>
-              <? 
+<?
 								$valor_retira_ponto_virgula = str_replace(",","",$pr_vllimite);
 								$valor_retira_ponto_virgula = str_replace(".","",$valor_retira_ponto_virgula);
 								$valor_formatado = formataNumericos('zzz.zz9,99',$valor_retira_ponto_virgula,'.,');
 								echo $valor_formatado; 
-							?>
+?>
 						</td>
 
 						<td><? echo $pr_qtdiavig; ?></td>
@@ -245,18 +245,18 @@
 						<td><? echo $pr_cddlinha; ?></td>
 						
 						<td><? echo stringTabela($pr_dssitlim, 20, 'primeira'); ?></td>
-						
-                        <td title="<?=stringTabela($pr_dssitest, 50, 'primeira'); ?>"><? echo stringTabela($pr_dssitest, 20, 'primeira'); ?></td>
 
-                        <td title="<?=stringTabela($pr_dssitapr, 50, 'primeira'); ?>"><? echo stringTabela($pr_dssitapr, 20, 'primeira'); ?></td>
+						<td title="<?=stringTabela($pr_dssitest, 50, 'primeira'); ?>"><? echo stringTabela($pr_dssitest, 20, 'primeira'); ?></td>
 
-                        <!-- [14/02/2019] -->
-                        <td><?=$notaRating?></td>
-                        <td title="<?=stringTabela($origemRating, 30, 'primeira'); ?>"><?=stringTabela($origemRating, 10, 'primeira'); ?></td>
-                        <!-- [14/02/2019] -->
+						<td title="<?=stringTabela($pr_dssitapr, 50, 'primeira'); ?>"><? echo stringTabela($pr_dssitapr, 20, 'primeira'); ?></td>
+
+						<!-- [14/02/2019] -->
+						<td><?=$notaRating?></td>
+						<td title="<?=stringTabela($origemRating, 30, 'primeira'); ?>"><?=stringTabela($origemRating, 10, 'primeira'); ?></td>
+						<!-- [14/02/2019] -->
 
 					</tr>
-				<?} // Fim do for ?>			
+				<?} // Fim do for ?>
 			</tbody>
 		</table>
 	</div>
@@ -426,4 +426,3 @@
 	}
 
 </script>
-<script type="text/javascript" src="descontos/desconto_rating.js?keyrand=<?php echo mt_rand(); ?>"></script>

@@ -146,7 +146,10 @@ DEF TEMP-TABLE tt-bordero_tit NO-UNDO
     FIELD qtcompln AS INTE
     FIELD vlcompcr AS DECI
     FIELD dssitbdt AS CHAR
-    FIELD nrrecid  AS INTE.
+    FIELD nrrecid  AS INTE
+    FIELD inrisrat AS CHAR    /* P450   */
+    FIELD origerat AS CHAR.   /* P450   */ 
+
 
 DEF TEMP-TABLE tt-limite_tit NO-UNDO
     FIELD dtpropos LIKE craplim.dtpropos
