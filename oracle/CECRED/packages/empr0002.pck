@@ -75,6 +75,13 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
   -- Definição do índice e tabela para contas em arquivo
   TYPE typ_tab_arquivo IS TABLE OF typ_reg_arquivo INDEX BY VARCHAR2(400);
   
+  /* Retorna se o CPF possui um bloqueio manual.
+     Retorna 1 - Possui bloqueio. 0 - Não possui bloqueio manual, ou bloqueio ja foi liberado.
+   */
+  FUNCTION fn_tem_bloq_preaprov_manual(pr_cdcooper       crapcop.cdcooper%TYPE
+                                 ,pr_nrcpfcnpj_base crapass.nrcpfcnpj_base%TYPE DEFAULT 0) RETURN NUMBER;
+                                 
+
   /* Busca da flg de PreAprovado liberado ou não ao Cooperado */
   FUNCTION fn_flg_preapv_liberado(pr_cdcooper       crapcop.cdcooper%TYPE 
                                  ,pr_nrdconta       crapass.nrdconta%TYPE DEFAULT 0
@@ -459,6 +466,80 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     FROM crapcop 
    WHERE cdcooper = pr_cdcooper;
   rw_crapcop cr_crapcop%ROWTYPE;              
+  
+  
+  FUNCTION fn_tem_bloq_preaprov_manual(pr_cdcooper       crapcop.cdcooper%TYPE
+                                 ,pr_nrcpfcnpj_base crapass.nrcpfcnpj_base%TYPE DEFAULT 0) RETURN NUMBER IS
+  BEGIN
+    -- ..........................................................................
+    --
+    --  Programa : fn_tem_bloq_preaprov_manual
+    --  Sistema  : Pre-Aprovado - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Werinton Ferrari
+    --  Data     : Setembro/2019.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que chamado por outros programas.
+    --   Objetivo  : Retorna se o CPF possui um bloqueio manual.
+    --               Retorna 1 - Possui bloqueio. 
+    --                       0 - Não possui bloqueio manual, ou bloqueio ja foi liberado.
+    --
+    --   Alteracoes:
+    -- .............................................................................
+    DECLARE
+    
+    
+     -- Cursor para buscar registros de bloqueio de carga manual
+      CURSOR cr_regbloq(pr_cdcooper        tbcc_hist_param_pessoa_prod.cdcooper%TYPE
+                       ,pr_nrcpfcnpj_base  tbcc_hist_param_pessoa_prod.nrcpfcnpj_base%TYPE
+                       ,pr_dtsistema       DATE) IS
+        SELECT flglibera
+        FROM (SELECT h.*
+              FROM tbcc_hist_param_pessoa_prod h
+              WHERE h.cdcooper = pr_cdcooper
+                AND h.nrcpfcnpj_base = pr_nrcpfcnpj_base
+                AND (TRUNC(h.dtvigencia_paramet) IS NULL
+                     OR h.dtvigencia_paramet >= trunc(pr_dtsistema))
+              ORDER BY h.idregistro DESC)
+        WHERE ROWNUM = 1;
+      rw_regbloq cr_regbloq%ROWTYPE;
+    
+      -- Cursor generico de calendario
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+      -- Retornos da chamada
+      vr_flglibera  tbcc_hist_param_pessoa_prod.flglibera%TYPE;
+    BEGIN
+      
+
+      -- Leitura do calendario da CECRED
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+      
+     -- Buscar se existe carga manual e seus respectivos bloqueios
+      OPEN cr_regbloq(pr_cdcooper        => pr_cdcooper
+                     ,pr_nrcpfcnpj_base  => pr_nrcpfcnpj_base
+                     ,pr_dtsistema       => rw_crapdat.dtmvtolt);
+      FETCH cr_regbloq INTO rw_regbloq;
+        
+      IF cr_regbloq%FOUND THEN
+        -- SE Retornou dados, mas veio com 1 quer dizer que teve bloqueio mas foi liberado, 
+        -- entao muda o retorno para zero. Pois Zero e liberado.
+        IF rw_regbloq.flglibera = 1 THEN
+           vr_flglibera := 0;
+        ELSE
+           vr_flglibera := 1;
+        END IF;
+      ELSE     
+        -- Se nao possui registro, quer dizer que nunca teve bloqueio.
+        vr_flglibera:= 0;
+      END IF;
+    
+      RETURN vr_flglibera;
+    END;
+  END fn_tem_bloq_preaprov_manual;
   
   /* Busca da flg de PreAprovado liberado ou não ao Cooperado */
   FUNCTION fn_flg_preapv_liberado(pr_cdcooper       crapcop.cdcooper%TYPE
