@@ -15,6 +15,8 @@
  *										     menores nao emancipados.
  * 004: [13/04/2018] Lombardi     (CECRED) : Incluida validacao se a adesao do produto é permitida
  *									         para o tipo de conta do coperado. PRJ366
+ * 005: [12/07/2019] Mateus Z      (Mouts) : Ajustes referente a reformulação da tela avalista - 
+ *                                           PRJ 438 - Sprint 14 (Mateus Z / Mouts)
  */
 ?>
 
@@ -166,5 +168,5 @@
 	include("cheques_limite_formulario.php");	
 ?>
 <script type="text/javascript">
-	habilitaAvalista(true);
+	habilitaAvalista(true, operacao);
 </script>

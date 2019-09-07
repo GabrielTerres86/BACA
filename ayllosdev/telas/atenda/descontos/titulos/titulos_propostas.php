@@ -158,7 +158,7 @@
 		<table>
 			<thead>
 				<tr>
-					<th>Data<br>Proposta</th>
+					<th>Data Proposta</th>
 					<th>Contrato</th>
 					<th>Proposta</th>
 					<th>Valor<br>Limite</th>
@@ -302,7 +302,7 @@
 			echo 'onClick="return false;"';
 		} else {
 			echo 'style="'.$dispC.'"';
-			echo 'onClick="carregaDadosConsultaPropostaDscTit(); return false;" ';
+			echo 'onClick="carregaDadosConsultaPropostaDscTit(\'C\'); return false;" ';
 		} ?> />
 
 
@@ -358,13 +358,13 @@
 	<input 
 		type="button"
 		class="botao"
-		value="Efetivar Limite"
+		value="Efetivar"
 		id="btnEfetivarLimite"
 		name="btnEfetivarLimite"
 		<?php if ($qtLimites == 0) {
 			echo 'onClick="return false;"';
 		} else {
-			echo 'onClick="efetuarNovoLimite();" ';
+			echo 'onClick="carregaDadosConsultaPropostaDscTit(\'E\'); return false;" ';
 		} ?>/>
 	
 	<input 
@@ -426,4 +426,3 @@
 	}
 
 </script>
-<script type="text/javascript" src="descontos/desconto_rating.js?keyrand=<?php echo mt_rand(); ?>"></script>

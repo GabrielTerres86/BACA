@@ -69,10 +69,13 @@
 
 	         20/09/2018 - Inserção do campo de Acordo - Vitor S. Assanuma (GFT)
 
-	         14/02/2019 - Adicionado na tabela divLimites e divPropostas as 3 novas colunas do crédito rating P450 (Luiz Otávio Olinger Momm - AMCOM)
-
-	         24/05/2019 - P450 - Removido mensageiria para pesquisa de rating por proposta (Luiz Otávio Olinger Momm - AMCOM).
-
+			     14/02/2019 - Adicionado na tabela divLimites e divPropostas as 3 novas colunas do crédito rating P450 (Luiz Otávio Olinger Momm - AMCOM)
+           
+           24/05/2019 - P450 - Removido mensageiria para pesquisa de rating por proposta (Luiz Otávio Olinger Momm - AMCOM).
+		       
+           09/07/2019 - PRJ 438 - Sprint 14 - Alterado layout da primeira tela de Inclusão/alteração/consulta (Dados do Limite) - Mateus Z (Mouts)
+			 
+           16/07/2019 - PRJ 438 - Sprint 16 - Removido a função 'acessaOpcaoAba' (Mateus Z / Mouts)
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -453,7 +456,7 @@ function formataLayout(nomeForm){
 		var arrayLargura = new Array();
 
 		$('#'+nomeForm).css('width','700px');
-	    divRegistro.css({'height': '255px', 'padding-bottom': '2px'});
+	    divRegistro.css({'height': '210px', 'padding-bottom': '2px'});
 
 		arrayLargura[0] = '60px'; // Contrato
 		arrayLargura[1] = '80px'; // Dt Ini
@@ -461,8 +464,9 @@ function formataLayout(nomeForm){
 		arrayLargura[3] = '80px'; // Vl Limite
 		arrayLargura[4] = '80px'; // Situacao
 		arrayLargura[5] = '80px'; // Dt Situacao
-		//arrayLargura[5] = '80px'; // Motivo
-		
+		arrayLargura[6] = '80px'; // Dt Situacao
+		arrayLargura[7] = '80px'; // Dt Situacao
+		arrayLargura[8] = '80px'; // Dt Cancelamento
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
@@ -513,7 +517,6 @@ function formataLayout(nomeForm){
 		arrayAlinha[7] = 'center';
 		arrayAlinha[8] = 'center';
 		arrayAlinha[9] = 'center';
-		arrayAlinha[10] = 'center';
 		
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 
@@ -866,93 +869,53 @@ function formataLayout(nomeForm){
 				$(this).focus();
 			}
 		});
-
+	
 		ajustarCentralizacao();
-
-	}else if ( nomeForm == 'frmDadosLimiteDscChq' || nomeForm == 'frmDadosLimiteDscTit'){
-
+		
+    }else if ( nomeForm == 'frmDadosLimiteDscChq' ){
+        var Lnivrisco = $('label[for="nivrisco"]','#'+nomeForm);
 		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
 		var Lvllimite = $('label[for="vllimite"]','#'+nomeForm);
 		var Lqtdiavig = $('label[for="qtdiavig"]','#'+nomeForm);
 		var Lcddlinha = $('label[for="cddlinha"]','#'+nomeForm);
-		
+        var Ltxmensal = $('label[for="txmensal"]','#'+nomeForm);
+        var Ldtcancel = $('label[for="dtcancel"]','#'+nomeForm);
+        var Cnivrisco = $('#nivrisco','#'+nomeForm);
 		var Cnrctrlim = $('#nrctrlim','#'+nomeForm);
 		var Cvllimite = $('#vllimite','#'+nomeForm);
 		var Cqtdiavig = $('#qtdiavig','#'+nomeForm);
 		var Ccddlinha = $('#cddlinha','#'+nomeForm);
 		var Ccddlinh2 = $('#cddlinh2','#'+nomeForm);
+        var Ctxmensal = $('#txmensal','#'+nomeForm);
 		
 		
-		var Ltxjurmor = $('label[for="txjurmor"]','#'+nomeForm);
-		var Ltxdmulta = $('label[for="txdmulta"]','#'+nomeForm);
-		var Ldsramati = $('label[for="dsramati"]','#'+nomeForm);
-		var Lvlmedtit = $('label[for="vlmedtit"]','#'+nomeForm);
-		var Lvlfatura = $('label[for="vlfatura"]','#'+nomeForm);
-		var Ldtcancel = $('label[for="dtcancel"]','#'+nomeForm);
-		
-		var Ctxjurmor = $('#txjurmor','#'+nomeForm);
-		var Ctxdmulta = $('#txdmulta','#'+nomeForm);
-		var Cdsramati = $('#dsramati','#'+nomeForm);
-		var Cvlmedtit = $('#vlmedtit','#'+nomeForm);
-		var Cvlfatura = $('#vlfatura','#'+nomeForm);
 		var Cdtcancel = $('#dtcancel','#'+nomeForm);
 
 		
-		var Llbrendas = $('label[for="lbrendas"]','#'+nomeForm);
-		var Lvlsalari = $('label[for="vlsalari"]','#'+nomeForm);
-		var Lvlsalcon = $('label[for="vlsalcon"]','#'+nomeForm);
-		var Lvloutras = $('label[for="vloutras"]','#'+nomeForm);
-		var Ldsdbens1 = $('label[for="dsdbens1"]','#'+nomeForm);
-		var Ldsdbens2 = $('label[for="dsdbens2"]','#'+nomeForm);
 				
-		var Cvlsalari = $('#vlsalari','#'+nomeForm);
-		var Cvlsalcon = $('#vlsalcon','#'+nomeForm);
-		var Cvloutras = $('#vloutras','#'+nomeForm);
-		var Cdsdbens1 = $('#dsdbens1','#'+nomeForm);
-		var Cdsdbens2 = $('#dsdbens2','#'+nomeForm);
 
 		
 		var Ldsobserv = $('label[for="dsobserv"]','#'+nomeForm);
 		var Cdsobserv = $('#dsobserv','#'+nomeForm);
 		
 		$('#'+nomeForm).css('width','515px');
-		
-		Lnrctrlim.addClass('rotulo').css('width','150px');
-		Lvllimite.addClass('rotulo').css('width','150px');
-		Lqtdiavig.css('width','130px');
-		Lcddlinha.addClass('rotulo').css('width','150px');
-		Ltxjurmor.addClass('rotulo').css('width','150px');
-		Ltxdmulta.addClass('rotulo').css('width','150px');
-		Ldsramati.addClass('rotulo').css('width','150px');
-		Lvlmedtit.addClass('rotulo').css('width','150px');
-		Lvlfatura.addClass('rotulo').css('width','150px');
-		Ldtcancel.css('width','130px');
+        Lnivrisco.addClass('rotulo').css('width','220px');
+        Lnrctrlim.addClass('rotulo').css('width','220px');
+        Lvllimite.addClass('rotulo').css('width','220px');
+        Lcddlinha.addClass('rotulo').css('width','220px');
+        Ltxmensal.addClass('rotulo').css('width','220px');
+        Ldtcancel.addClass('rotulo').css('width','220px');
+        Cnivrisco.css({'width':'100px'});
 		
 		Cnrctrlim.css({'width':'100px','text-align':'right'});
 		Cvllimite.css({'width':'100px','text-align':'right'});
-		Cqtdiavig.css({'width':'65px','text-align':'right'});
 		Ccddlinha.css({'width':'40px','text-align':'right'});
-		Ccddlinh2.css({'width':'255px'});
-		Ctxjurmor.css({'width':'100px','text-align':'right'});
-		Ctxdmulta.css({'width':'100px','text-align':'right'});
-		Cdsramati.css({'width':'300px'});
-		Cvlmedtit.css({'width':'100px','text-align':'right'});
-		Cvlfatura.css({'width':'100px','text-align':'right'});
+        Ccddlinh2.css({'width':'185px'});
+        Ctxmensal.css({'width':'65px','text-align':'right'});
 		Cdtcancel.css({'width':'65px'});
 		
 		
-		Llbrendas.addClass('rotulo').css('width','80px');
-		Lvlsalari.css('width','50px');
-		Lvlsalcon.addClass('rotulo-linha');
-		Lvloutras.addClass('rotulo').css('width','130px');
-		Ldsdbens1.addClass('rotulo').css('width','80px');
-		Ldsdbens2.addClass('rotulo').css('width','80px');
 			
-		Cvlsalari.css({'width':'100px','text-align':'right'});
-		Cvlsalcon.css({'width':'100px','text-align':'right'});
-		Cvloutras.css({'width':'100px','text-align':'right'});
-		Cdsdbens1.css({'width':'350px','text-align':'left'});
-		Cdsdbens2.css({'width':'350px','text-align':'left'});
 							
 		Cdsobserv.addClass('alphanum').css({'width':'485px','height':'80px','float':'left','margin':'3px 0px 3px 3px','padding-right':'1px'});
 		
@@ -970,46 +933,58 @@ function formataLayout(nomeForm){
 				Ccddlinha.focus();
 			}
 		});
-		
-		Cdsramati.unbind('keypress').bind('keypress', function(e){
+    }else if (nomeForm == 'frmDadosLimiteDscTit'){
+	
+		var Lnivrisco = $('label[for="nivrisco"]','#'+nomeForm);
+		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
+		var Lvllimite = $('label[for="vllimite"]','#'+nomeForm);
+		var Lcddlinha = $('label[for="cddlinha"]','#'+nomeForm);
+        var Ltxmensal = $('label[for="txmensal"]','#'+nomeForm);
+        var Ldtcancel = $('label[for="dtcancel"]','#'+nomeForm);
+        var Cnivrisco = $('#nivrisco','#'+nomeForm);
+		var Cnrctrlim = $('#nrctrlim','#'+nomeForm);
+		var Cvllimite = $('#vllimite','#'+nomeForm);
+		var Ccddlinha = $('#cddlinha','#'+nomeForm);
+		var Ccddlinh2 = $('#cddlinh2','#'+nomeForm);
+        var Ctxmensal = $('#txmensal','#'+nomeForm);
+        var Cdtcancel = $('#dtcancel','#'+nomeForm);
+		var Ldsobserv = $('label[for="dsobserv"]','#'+nomeForm);
+		var Cdsobserv = $('#dsobserv','#'+nomeForm);
+		$('#'+nomeForm).css('width','515px');
+        Lnivrisco.addClass('rotulo').css('width','220px');
+        Lnrctrlim.addClass('rotulo').css('width','220px');
+        Lvllimite.addClass('rotulo').css('width','220px');
+        Lcddlinha.addClass('rotulo').css('width','220px');
+        Ltxmensal.addClass('rotulo').css('width','220px');
+        Ldtcancel.addClass('rotulo').css('width','220px');
+        Cnivrisco.css({'width':'100px'});
+		Cnrctrlim.css({'width':'100px','text-align':'right'});
+		Cvllimite.css({'width':'100px','text-align':'right'});
+		Ccddlinha.css({'width':'40px','text-align':'right'});
+        Ccddlinh2.css({'width':'185px'});
+        Ctxmensal.css({'width':'65px','text-align':'right'});
+        Cdtcancel.css({'width':'65px'});
+		Cdsobserv.addClass('alphanum').css({'width':'485px','height':'80px','float':'left','margin':'3px 0px 3px 3px','padding-right':'1px'});
+		Cnrctrlim.unbind('keypress').bind('keypress', function(e){
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-				Cvlmedtit.focus();
+				Cvllimite.focus();
 			}
 		});
 		
-		Cvlmedtit.unbind('keypress').bind('keypress', function(e){
+		Cvllimite.unbind('keypress').bind('keypress', function(e){
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-				Cvlfatura.focus();
-			}
-		});
+				Ccddlinha.focus();
 		
-		Cvlsalari.unbind('keypress').bind('keypress', function(e){
-			/*Se foi pressionado a telca ENTER*/
-			if(e.keyCode == 13){
-				Cvlsalcon.focus();
-			}
-		});
 		
-		Cvlsalcon.unbind('keypress').bind('keypress', function(e){
-			/*Se foi pressionado a telca ENTER*/
-			if(e.keyCode == 13){
-				Cvloutras.focus();
-			}
-		});
 		
-		Cvloutras.unbind('keypress').bind('keypress', function(e){
-			/*Se foi pressionado a telca ENTER*/
-			if(e.keyCode == 13){
-					Cdsdbens1.focus();
-			}
-		});
 		
-		Cdsdbens1.unbind('keypress').bind('keypress', function(e){
-			/*Se foi pressionado a telca ENTER*/
-			if(e.keyCode == 13){
-					Cdsdbens2.focus();
+		
+		
+		
+		
+		
 			}
 		});
 		
@@ -1989,69 +1964,8 @@ function formataTabelaEmiten(){
 	return false;
 }
 
-function acessaOpcaoAba(id){
-	var nrOpcoes = 2;
-    showMsgAguardo("Aguarde, carregando dados do t&iacute;tulo ...");
 
-    // Atribui cor de destaque para aba da opção
-	nrOpcoes = nrOpcoes + 1;
-	for (var i = 0; i < nrOpcoes; i++) {
-		if (id == i) { // Atribui estilos para foco da opção
-			$("#linkAba" + id).attr("class","txtBrancoBold");
-			$("#imgAbaEsq" + id).attr("src",UrlImagens + "background/mnu_sle.gif");				
-			$("#imgAbaDir" + id).attr("src",UrlImagens + "background/mnu_sld.gif");
-			$("#imgAbaCen" + id).css("background-color","#969FA9");
-			continue;			
-		}
 		
-		$("#linkAba" + i).attr("class","txtNormalBold");
-		$("#imgAbaEsq" + i).attr("src",UrlImagens + "background/mnu_nle.gif");			
-		$("#imgAbaDir" + i).attr("src",UrlImagens + "background/mnu_nld.gif");
-		$("#imgAbaCen" + i).css("background-color","#C6C8CA");
-	}
 
-    if (id == 0){
-        $.ajax({
-            type: "POST",
-            url: UrlSite + "telas/atenda/descontos/titulos/titulos.php",
-            dataType: "html",
-            data: {
-                nrdconta: nrdconta,
-                cdproduto: cdproduto,
-                executandoProdutos: executandoProdutos,
-                redirect: "html_ajax"
-            },      
-            error: function(objAjax,responseError,objExcept) {
-                hideMsgAguardo();
-                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-            },
-            success: function(response) {
-                $("#divConteudoTab").html(response);
-            }               
-        });
-        return false;
-    }else if (id == 1){
-    	var nrctrlim = $("#frmTitulos #nrctrlim").val();
-    	$.ajax({
-            type: "POST",
-            url: UrlSite + "telas/atenda/descontos/titulos/titulos_historico.php",
-            dataType: "html",
-            data: {
-                nrdconta: nrdconta,
-                nrctrlim: nrctrlim,
-                redirect: "html_ajax"
-            },      
-            error: function(objAjax,responseError,objExcept) {
-                hideMsgAguardo();
-                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-            },
-            success: function(response) {
-                $("#divConteudoTab").html(response);
-            }               
-        });
-        return false;
-	}else{
-    	hideMsgAguardo();
-        showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-    }
-}
+
+		

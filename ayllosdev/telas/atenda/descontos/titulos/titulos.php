@@ -31,6 +31,7 @@
 
 				 07/05/2018 - Adicionada verificação para definir se o bordero vai seguir o fluxo novo ou o antigo (Luis Fernando - GFT)
 
+				 16/07/2019 - Novo botão 'Últimas Alterações'. PRJ 438 - Sprint 16 (Mateus Z / Mouts)
 	***************************************************************************/
 	
 	session_start();
@@ -265,6 +266,15 @@
 		Resgatar T&iacute;tulos
 	</a>
 	<?}?>
+	<!-- PRJ 438 - Sprint 16 - Incluído botão para acessar a tela de Últimas Alterações -->
+	<a
+		href="#"
+		class="botao" 
+		name="btnUltimasAlteracoes"
+		id="btnUltimasAlteracoes"
+		onClick="acessaTelaUltimasAlteracoes();return false;" >
+			&Uacute;ltimas Altera&ccedil;&otilde;es
+	</a>
 </div>
 
 

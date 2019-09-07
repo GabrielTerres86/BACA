@@ -21,6 +21,8 @@
 	             01/02/2019 - Remover a impressão do Rating Atual conforme estória: Product Backlog Item 13986:
                                   Rating - Ajustes em Telas Desabilitar impressão
                                   P450 - Luiz Otávio Olinger Momm (AMCOM)
+
+                     02/07/2019 - PRJ 438 - Sprint 14 - Removido a opção 'Nota Promissoria' da tela de Impressão  (Mateus Z / Mouts)
 	************************************************************************/
 	
 	session_start();
@@ -60,7 +62,6 @@
 	<a href="#" class="botao" id="btContrato" 		 onClick="verificaEnvioEmail(2,1);return false;">Contrato</a>
 	<a href="#" class="botao" id="btCet"      		 onClick="verificaEnvioEmail(9,1);return false;">CET     </a>
 	<a href="#" class="botao" id="btProposta"        onClick="verificaEnvioEmail(3,1);return false;">Proposta</a>
-	<a href="#" class="botao" id="btNotaPromissoria" onClick="verificaEnvioEmail(4,1);return false;">Nota Promissoria</a>
 
 	<br/>
 	<br/>

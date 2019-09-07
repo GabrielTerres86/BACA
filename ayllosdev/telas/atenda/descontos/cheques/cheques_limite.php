@@ -42,6 +42,9 @@
 
                   23/05/2019 - P450 - Removido mensageiria para pesquisa de rating por proposta (Luiz Otávio Olinger Momm - AMCOM).
 
+                  02/07/2019 - PRJ 438 - Sprint 14 - Alterado nome do botão 'Confirmar Novo Limite' para 'Efetivar' (Mateus Z / Mouts)
+
+                  17/07/2019 - PRJ 438 - Sprint 16 - Ultimas alterações do desconto de cheque  - Paulo Martins - Mouts
 	************************************************************************/
 	
 	session_start();
@@ -81,7 +84,7 @@
 	$xmlGetLimites .= "<Root>";
 	$xmlGetLimites .= "	<Cabecalho>";
 	$xmlGetLimites .= "		<Bo>b1wgen0009.p</Bo>";
-	$xmlGetLimites .= "		<Proc>busca_limites</Proc>";
+	$xmlGetLimites .= "		<Proc>busca_limite_ativo</Proc>";
 	$xmlGetLimites .= "	</Cabecalho>";
 	$xmlGetLimites .= "	<Dados>";
 	$xmlGetLimites .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
@@ -232,6 +235,14 @@
 	$dispE = (!in_array("E",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispN = (!in_array("N",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+
+	/* Criar Insert */
+	$dispL = (!in_array("L",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	$dispL = '';
+
+	$dispT = (!in_array("T",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	$dispT = '';
+	/* Criar Insert */
 ?>
 
 <div id="divBotoesChequesLimite">
@@ -243,7 +254,8 @@
 	<div style="height: 3px;"></div>
 	<a href="#" class="botao" name="btnIncluir" id="btnIncluir" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscChq(1);return false;"'; } ?> >Incluir</a>
 	<a href="#" class="botao" name="btnImprimir" id="btnImprimir" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> >Imprimir</a>
-	<a href="#" class="botao" name="btnConfNovLimite" id="btnConfNovLimite" style="<? echo $dispN ?>" onClick="confirmaNovoLimite();">Confirmar Novo Limite</a>
+	<a href="#" class="botao" name="btnConfNovLimite" id="btnConfNovLimite" style="<? echo $dispN ?>" onClick="carregaDadosConsultaLimiteDscChq('E');return false;">Efetivar</a>
+	<a href="#" class="botao" name="btnUltimasAlteracoes" id="btnUltimasAlteracoes" onClick="ultimasAlteracoes();return false;">Últimas Alterações</a>
     
     <?
 	if ($habrat == 'S') {

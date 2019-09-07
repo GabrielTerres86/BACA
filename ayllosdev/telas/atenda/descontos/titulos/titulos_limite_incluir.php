@@ -17,6 +17,7 @@
  *									            para o tipo de conta do coperado. PRJ366
  * 005: [20/05/2019] Luiz Otávio OM (AMCOM)   : Retirado Etapa Rating
  * 006: [29/05/2019] Luiz Otávio OM (AMCOM)   : Adicionado Etapa Rating para Cooperatova Ailos (3)
+ * 007: [17/07/2019] Jefferson G      (Mouts) : Ajustes referente a reformulação da tela avalista - PRJ 438 - Sprint 16
  */
 
 	define('cooperativaCetralAilosEtapaRating', 3);
@@ -161,7 +162,7 @@
 	
 ?>
 <script type="text/javascript">
-	habilitaAvalista(true);
+	habilitaAvalista(true, operacao);
 	/*Motor em contingencia*/
 	var flctgmot = <?=$flctgmot?$flctgmot:0?>;
 </script>
