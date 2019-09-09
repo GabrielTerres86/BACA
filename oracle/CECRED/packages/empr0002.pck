@@ -17,6 +17,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
   --                          do pre aprovado para fase 3 do Projeto 299
   --                          Pre aprovado.(Lombardi)
   --
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- temptable para retornar dados da cpa, antigo b1wgen188tt.i/tt-dados-cpa
