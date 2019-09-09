@@ -1396,7 +1396,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
        RECORD(nrdconta NUMBER);       -- Numero da conta
 
     -- Instancia e indexa por tipo de pessoa com o index - 1-Fisico/2-Juridico
-    TYPE typ_tab_descricao IS TABLE OF typ_reg_contas INDEX BY VARCHAR2(36);
+    TYPE typ_tab_descricao IS TABLE OF typ_reg_contas INDEX BY VARCHAR2(45);
 
     -- Instancia e indexa por Debito/Credito
     TYPE typ_tab_debcre IS TABLE OF typ_tab_descricao INDEX BY VARCHAR2(1);
@@ -1409,7 +1409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_tab_contas        typ_tab_produto;
 
     -- Armazenar as informações principais do microcredito
-    TYPE typ_tab_microtrpre IS TABLE OF typ_decimal INDEX BY VARCHAR2(43);
+    TYPE typ_tab_microtrpre IS TABLE OF typ_decimal INDEX BY VARCHAR2(53);
     TYPE typ_tab_dsorgrec   IS TABLE OF typ_tab_microtrpre INDEX BY VARCHAR2(4);
     vr_tab_microcredito        typ_tab_dsorgrec;
 
@@ -1554,8 +1554,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_contador           INTEGER;
 
     vr_arrchave1 VARCHAR(4);
-    vr_contador1 VARCHAR(43);
-    vr_arrchave2 VARCHAR(43);
+    vr_contador1 VARCHAR(53);
+    vr_arrchave2 VARCHAR(53);
     vr_flgmicro  BOOLEAN ;
 
     vr_totrendap     typ_decimal_pfpj;
@@ -1629,6 +1629,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_descricao VARCHAR2(200);
     vr_chave2 varchar2(10);
 
+    -- Valor juro +60
+    vr_valjur60          NUMBER := 0;
+    vr_dsjur60           VARCHAR2(10) := 'JUROS 60 ';
+    vr_jurchave2         VARCHAR(53);
+    
     vr_flverbor crapbdt.flverbor%TYPE;
 
     -- Escrever linha no arquivo
@@ -1738,6 +1743,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('MICROCREDITO BNDES').nrdconta := 1681;
     vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('MICROCREDITO BNDES').nrdconta := 1667;
 
+    -- MICROCREDITO +60
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('JUROS 60 MICROCREDITO DIM').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('JUROS 60 MICROCREDITO DIM').nrdconta := 1676;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('JUROS 60 MICROCREDITO DIM').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('JUROS 60 MICROCREDITO DIM').nrdconta := 1676;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('JUROS 60 MICROCREDITO DIM').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('JUROS 60 MICROCREDITO DIM').nrdconta := 1686;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('JUROS 60 MICROCREDITO DIM').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('JUROS 60 MICROCREDITO DIM').nrdconta := 1686;
+    
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO BNDES').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO BNDES').nrdconta := 1677;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO BNDES').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO BNDES').nrdconta := 1677;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO BNDES').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO BNDES').nrdconta := 1681;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO BNDES').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO BNDES').nrdconta := 1681;
+    
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO BRDE').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO BRDE').nrdconta := 1678;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO BRDE').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO BRDE').nrdconta := 1678;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO BRDE').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO BRDE').nrdconta := 1682;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO BRDE').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO BRDE').nrdconta := 1682;
+    
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO CAIXA').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO CAIXA').nrdconta := 1683;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO CAIXA').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO CAIXA').nrdconta := 1683;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO CAIXA').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO CAIXA').nrdconta := 1685;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO CAIXA').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO CAIXA').nrdconta := 1685;
+    
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO DIM').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO DIM').nrdconta := 1684;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO DIM').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO DIM').nrdconta := 1684;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO DIM').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO DIM').nrdconta := 1686;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO DIM').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO DIM').nrdconta := 1686;   
+    
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1687;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1662;
+    vr_tab_contas(vr_price_atr)(vr_price_pj)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1687;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pf)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1688;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_deb)('JUROS 60 MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1667;
+    vr_tab_contas(vr_price_pre)(vr_price_pj)(vr_price_cre)('JUROS 60 MICROCREDITO PNMPO BNDES AILOS').nrdconta := 1688;
+    
+    
     -- CONTAS JUROS +60
     -- vr_tab_risco('B') := 3;
     vr_tab_contas(vr_price_atr)(vr_price_pf)(vr_price_deb)('3').nrdconta := 9302;
@@ -1808,27 +1869,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     FOR rw_tabmicro IN cr_tabmicro(pr_cdcooper) LOOP
          -- Inicializa tabela de Microcrédito vr_price_pre||vr_price_pf;
         vr_arrchave1 := vr_price_pre||vr_price_pf;
-        vr_arrchave2 := (LPAD(rw_tabmicro.dsorgrec,40,' ')||LPAD(rw_tabmicro.cdagenci,3,0));
+        vr_arrchave2 := (LPAD(rw_tabmicro.dsorgrec,50,' ')||LPAD(rw_tabmicro.cdagenci,3,0));
         vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := 0;
         vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).dsc   := '';
+        
+        -- Inicializa tabela juros +60
+        vr_jurchave2 := (LPAD(vr_dsjur60||rw_tabmicro.dsorgrec,50,' ')||LPAD(rw_tabmicro.cdagenci,3,0));
+        vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).valor := 0;
+        vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).dsc   := '';
 
         -- Inicializa tabela de Microcrédito vr_price_pre||vr_price_pj;
         vr_arrchave1 := vr_price_pre||vr_price_pj;
-        vr_arrchave2 := (LPAD(rw_tabmicro.dsorgrec,40,' ')||LPAD(rw_tabmicro.cdagenci,3,0));
+        vr_arrchave2 := (LPAD(rw_tabmicro.dsorgrec,50,' ')||LPAD(rw_tabmicro.cdagenci,3,0));
         vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := 0;
         vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).dsc   := '';
+        
+        -- Inicializa tabela juros +60
+        vr_jurchave2 := (LPAD(vr_dsjur60||rw_tabmicro.dsorgrec,50,' ')||LPAD(rw_tabmicro.cdagenci,3,0));
+        vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).valor := 0;
+        vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).dsc   := '';
 
         -- Inicializa tabela de Microcrédito vr_price_atr||vr_price_pf;
         vr_arrchave1 := vr_price_atr||vr_price_pf;
-        vr_arrchave2 := (LPAD(rw_tabmicro.dsorgrec,40,' ')||LPAD(rw_tabmicro.cdagenci,3,0));
+        vr_arrchave2 := (LPAD(rw_tabmicro.dsorgrec,50,' ')||LPAD(rw_tabmicro.cdagenci,3,0));
         vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := 0;
         vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).dsc   := '';
+        
+        -- Inicializa tabela juros +60
+        vr_jurchave2 := (LPAD(vr_dsjur60||rw_tabmicro.dsorgrec,50,' ')||LPAD(rw_tabmicro.cdagenci,3,0));
+        vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).valor := 0;
+        vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).dsc   := '';
 
         -- Inicializa tabela de Microcrédito vr_price_atr||vr_price_pj;
         vr_arrchave1 := vr_price_atr||vr_price_pj;
-        vr_arrchave2 := (LPAD(rw_tabmicro.dsorgrec,40,' ')||LPAD(rw_tabmicro.cdagenci,3,0));
+        vr_arrchave2 := (LPAD(rw_tabmicro.dsorgrec,50,' ')||LPAD(rw_tabmicro.cdagenci,3,0));
         vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := 0;
         vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).dsc   := '';
+        
+        -- Inicializa tabela juros +60
+        vr_jurchave2 := (LPAD(vr_dsjur60||rw_tabmicro.dsorgrec,50,' ')||LPAD(rw_tabmicro.cdagenci,3,0));
+        vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).valor := 0;
+        vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).dsc   := '';
     END LOOP;
 
     -- Percorrer todos os dados de risco
@@ -1848,12 +1929,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
       vr_vlprejuz_conta := 0;
       vr_vldivida := 0;
+      vr_valjur60 := 0;
 
       --> Necessario acrescentar valor da do juros + 60 no ADP, 
       -- visto que este valor não é apresentado nos vencimentos
       IF rw_crapris.cdorigem = 1 THEN
         vr_vldivida := vr_vldivida + nvl(rw_crapris.vljura60,0);
       END IF;
+      
+      vr_valjur60 := nvl(rw_crapris.vljura60,0);
       
       -- Percorrer os valores do risco
       FOR rw_crapvri IN cr_crapvri(pr_cdcooper,
@@ -2227,11 +2311,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
             IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
               IF rw_craplcr.dsorgrec <> 'MICROCREDITO PNMPO CAIXA' OR pr_cdcooper <> 3 THEN
                vr_arrchave1 := vr_price_atr||vr_price_pf;
-               vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,40,' ')||LPAD(rw_crapris.cdagenci,3,0));
+               vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,50,' ')||LPAD(rw_crapris.cdagenci,3,0));
+               vr_jurchave2 := (LPAD(vr_dsjur60||rw_craplcr.dsorgrec,50,' ')||LPAD(rw_crapris.cdagenci,3,0));
                 
                --Acumulador de TR Pessoa fisica
-               vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor + vr_vldivida;
+               vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,50,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,50,' ')||'999').valor + vr_vldivida;
                vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
+               -- Acumulador de TR PF +60
+               vr_tab_microcredito(vr_arrchave1)(LPAD(vr_dsjur60||rw_craplcr.dsorgrec,50,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(vr_dsjur60||rw_craplcr.dsorgrec,50,' ')||'999').valor + vr_valjur60;
+               vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).valor + vr_valjur60;
             END IF;
             END IF;
 
@@ -2250,11 +2338,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
             --Microcrédito
             IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
                vr_arrchave1 := vr_price_pre||vr_price_pf;
-               vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,40,' ')||LPAD(rw_crapris.cdagenci,3,0));
-               -- Acumulador PRE Pessoa Fisica
-               vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor + vr_vldivida;
-               vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
+               vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,50,' ')||LPAD(rw_crapris.cdagenci,3,0));
+               vr_jurchave2 := (LPAD(vr_dsjur60||rw_craplcr.dsorgrec,50,' ')||LPAD(rw_crapris.cdagenci,3,0));
 
+               -- Acumulador PRE Pessoa Fisica
+               vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,50,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,50,' ')||'999').valor + vr_vldivida;
+               vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
+               -- Acumulador de TR PF +60
+               vr_tab_microcredito(vr_arrchave1)(LPAD(vr_dsjur60||rw_craplcr.dsorgrec,50,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(vr_dsjur60||rw_craplcr.dsorgrec,50,' ')||'999').valor + vr_valjur60;
+               vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).valor + vr_valjur60;
             END IF;
 
           --> Pos fixado
@@ -2299,10 +2391,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
             IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
               IF rw_craplcr.dsorgrec <> 'MICROCREDITO PNMPO CAIXA' OR pr_cdcooper <> 3 THEN
                vr_arrchave1 := vr_price_atr||vr_price_pj;
-               vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,40,' ')||LPAD(rw_crapris.cdagenci,3,0));
+               vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,50,' ')||LPAD(rw_crapris.cdagenci,3,0));
+               vr_jurchave2 := (LPAD(vr_dsjur60||rw_craplcr.dsorgrec,50,' ')||LPAD(rw_crapris.cdagenci,3,0));
+               
                -- Acumulador PRE Pessoa Fisica
-               vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor + vr_vldivida;
+               vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,50,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,50,' ')||'999').valor + vr_vldivida;
                vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
+               -- Acumulador de TR PF +60
+               vr_tab_microcredito(vr_arrchave1)(LPAD(vr_dsjur60||rw_craplcr.dsorgrec,50,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(vr_dsjur60||rw_craplcr.dsorgrec,50,' ')||'999').valor + vr_valjur60;
+               vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).valor + vr_valjur60;
             END IF;
             END IF;
             --> prefixado
@@ -2320,10 +2417,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
             --Microcrédito
             IF rw_craplcr.cdusolcr = 1 AND rw_craplcr.dsorgrec <> ' ' THEN
                vr_arrchave1 := vr_price_pre||vr_price_pj;
-               vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,40,' ')||LPAD(rw_crapris.cdagenci,3,0));
+               vr_arrchave2 := (LPAD(rw_craplcr.dsorgrec,50,' ')||LPAD(rw_crapris.cdagenci,3,0));
+               vr_jurchave2 := (LPAD(vr_dsjur60||rw_craplcr.dsorgrec,50,' ')||LPAD(rw_crapris.cdagenci,3,0));
+               
                -- Acumulador PRE Pessoa Fisica
-               vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,40,' ')||'999').valor + vr_vldivida;
+               vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,50,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(rw_craplcr.dsorgrec,50,' ')||'999').valor + vr_vldivida;
                vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_arrchave2).valor + vr_vldivida;
+               -- Acumulador de TR PF +60
+               vr_tab_microcredito(vr_arrchave1)(LPAD(vr_dsjur60||rw_craplcr.dsorgrec,50,' ')||'999').valor := vr_tab_microcredito(vr_arrchave1)(LPAD(vr_dsjur60||rw_craplcr.dsorgrec,50,' ')||'999').valor + vr_valjur60;
+               vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).valor := vr_tab_microcredito(vr_arrchave1)(vr_jurchave2).valor + vr_valjur60;
 
             END IF;
 
@@ -6601,8 +6703,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_contador1 <> ' ' THEN
        vr_arrchave2 := '1';
        WHILE vr_contador1 IS NOT NULL LOOP
-             IF TRIM(vr_arrchave2) <> TRIM(substr(vr_contador1,0,40)) THEN
-                vr_arrchave2 := substr(vr_contador1,0,40);
+             IF TRIM(vr_arrchave2) <> TRIM(substr(vr_contador1,0,50)) THEN
+                vr_arrchave2 := substr(vr_contador1,0,50);
                 vr_relmicro_atr_pf := vr_tab_microcredito(vr_price_atr||vr_price_pf)(vr_arrchave2||'999').valor;
                -- Monta a linha de cabeçalho
                IF vr_relmicro_atr_pf > 0 THEN
@@ -6692,8 +6794,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_contador1 <> ' ' THEN
        vr_arrchave2 := 'PF';
        WHILE vr_contador1 IS NOT NULL LOOP
-             IF TRIM(vr_arrchave2) <> TRIM(substr(vr_contador1,0,40)) THEN
-                vr_arrchave2 := substr(vr_contador1,0,40);
+             IF TRIM(vr_arrchave2) <> TRIM(substr(vr_contador1,0,50)) THEN
+                vr_arrchave2 := substr(vr_contador1,0,50);
                 vr_relmicro_pre_pf := vr_tab_microcredito(vr_price_pre||vr_price_pf)(vr_arrchave2||'999').valor;
                -- Monta a linha de cabeçalho
                IF vr_relmicro_pre_pf > 0 THEN
@@ -6784,8 +6886,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
      IF vr_contador1 <> ' ' THEN
         vr_arrchave2 := '1';
         WHILE vr_contador1 IS NOT NULL LOOP
-             IF TRIM(vr_arrchave2) <> TRIM(substr(vr_contador1,0,40)) THEN
-                vr_arrchave2 := substr(vr_contador1,0,40);
+             IF TRIM(vr_arrchave2) <> TRIM(substr(vr_contador1,0,50)) THEN
+                vr_arrchave2 := substr(vr_contador1,0,50);
                 vr_relmicro_atr_pj := vr_tab_microcredito(vr_price_atr||vr_price_pj)(vr_arrchave2||'999').valor;
                -- Monta a linha de cabeçalho
                IF vr_relmicro_atr_pj > 0 THEN
@@ -6875,8 +6977,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_contador1 <> ' ' THEN
        vr_arrchave2 := 'PF';
        WHILE vr_contador1 IS NOT NULL LOOP
-             IF TRIM(vr_arrchave2) <> TRIM(substr(vr_contador1,0,40)) THEN
-                vr_arrchave2 := substr(vr_contador1,0,40);
+             IF TRIM(vr_arrchave2) <> TRIM(substr(vr_contador1,0,50)) THEN
+                vr_arrchave2 := substr(vr_contador1,0,50);
                 vr_relmicro_pre_pj := vr_tab_microcredito(vr_price_pre||vr_price_pj)(vr_arrchave2||'999').valor;
                -- Monta a linha de cabeçalho
                IF vr_relmicro_pre_pj > 0 THEN
