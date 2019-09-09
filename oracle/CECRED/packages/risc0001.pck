@@ -94,7 +94,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --  Sistema  : Rotinas para Calculos de Risco
   --  Sigla    : RISC
   --  Autor    : Marcos Ernani Martini - Supero
-  --  Data     : Agosto/2014.                   Ultima atualizacao: 15/02/2019
+  --  Data     : Agosto/2014.                   Ultima atualizacao: 19/08/2019
   --
   -- Dados referentes ao programa:
   --
@@ -121,6 +121,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --                          do grupo (Fabio Adriano - AMcom)
   --
   --             01/04/2019 - Correção historicos contabilização operações de desconto de tiutlo (Daniel - Ailos) 
+  --
+  --             19/08/2019 - Segregação de juros 60 até 90 dias e acima de 90 dias. (Darlei / Supero)
   ---------------------------------------------------------------------------------------------------------------
 
   -- constantes para geracao de arquivos contabeis
