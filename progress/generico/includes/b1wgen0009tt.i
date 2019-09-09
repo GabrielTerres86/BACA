@@ -99,7 +99,8 @@ DEF TEMP-TABLE tt-limite_chq NO-UNDO
     FIELD insitlim AS INTE
     FIELD idcobope AS INTE
     FIELD inrisrat AS CHAR    /* P450   */
-    FIELD origerat AS CHAR.   /* P450   */ 
+    FIELD origerat AS CHAR    /* P450   */ 
+    FIELD dtcancel AS DATE.
 
 
 /* TAB019 */

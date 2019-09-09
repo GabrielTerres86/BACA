@@ -371,16 +371,8 @@ BEGIN
 
          return;
        END IF;
-                          
-   open  cr_crapass;
-   fetch cr_crapass into rw_crapass;
-   if    cr_crapass%notfound then
-         close cr_crapass;
-         vr_dscritic := 'Associado nao cadastrado. Conta: ' || pr_nrdconta;
-         raise vr_exc_saida;
+       -- P450 SPT13 - alteracao para habilitar rating novo
    end   if;
-   close cr_crapass;
-   
    vr_cdagenci := nvl(nullif(pr_cdagenci, 0), rw_crapass.cdagenci);
      
    open  cr_crawlim;
