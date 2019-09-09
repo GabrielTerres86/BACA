@@ -1338,9 +1338,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           vr_nrparepr := NVL(vr_nrparepr,0) + 1;
           -- Avanca da data da carencia para o proximo mês
           --PJ298_5
-          vr_qtdmes := pr_qtdias_carencia / 30;
-          --vr_dtvencto := TO_DATE(TO_CHAR(vr_dtvencto,'DD')||'/'||TO_CHAR(vr_dtvencto + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
-          vr_dtvencto := ADD_MONTHS(TO_DATE(vr_dtvencto,'DD/MM/RRRR'),vr_qtdmes) ;         
+          --vr_qtdmes := pr_qtdias_carencia / 30;
+          --vr_dtvencto := ADD_MONTHS(TO_DATE(vr_dtvencto,'DD/MM/RRRR'),vr_qtdmes) ;         
+          vr_dtvencto := TO_DATE(TO_CHAR(vr_dtvencto,'DD')||'/'||TO_CHAR(vr_dtvencto + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
         END IF;
 
         vr_datainicial := vr_datafinal;
@@ -1623,9 +1623,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           vr_nrparepr := NVL(vr_nrparepr,0) + 1;
           -- Avanca da data da carencia para o proximo mês
           --PJ298_5
-          vr_qtdmes := pr_qtdias_carencia / 30;
-          vr_dtcarenc := ADD_MONTHS(TO_DATE(vr_dtcarenc,'DD/MM/RRRR'),vr_qtdmes) ;         
-         -- vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
+          --vr_qtdmes := pr_qtdias_carencia / 30;
+          --vr_dtcarenc := ADD_MONTHS(TO_DATE(vr_dtcarenc,'DD/MM/RRRR'),vr_qtdmes); -- Retirar
+          vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
 		  --
                 END IF;
              
