@@ -4639,8 +4639,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         -- A agência 91 (TAA) não realiza validação de limite para as transações, então quando fo agencia 91 e as mensagens de erro que não encontraram 
         -- os limites, elas serão ignoradas e o processo irá continuar
         -- Se for qualquer outra mensagem de erro, ela deverá ser retornada
-        IF pr_cdagenci = 91 AND
-           vr_dscritic IN ('Não encontrou limites para a conta.','Senha para conta on-line nao cadastrada.') THEN
+        IF pr_cdagenci = 91 THEN
                NULL;
         ELSE
         --Levantar Excecao
