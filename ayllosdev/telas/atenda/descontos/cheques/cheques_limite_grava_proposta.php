@@ -37,7 +37,7 @@
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
-
+	
 
 	// AMCOM - Retira Etapa Rating exceto para Ailos (coop 3)
 
@@ -86,11 +86,6 @@
 	$dsramati = $_POST["dsramati"];
 	$vlmedtit = $_POST["vlmedtit"];
 	$vlfatura = $_POST["vlfatura"];
-	$vloutras = $_POST["vloutras"];
-	$vlsalari = $_POST["vlsalari"];
-	$vlsalcon = $_POST["vlsalcon"];
-	$dsdbens1 = $_POST["dsdbens1"];
-	$dsdbens2 = $_POST["dsdbens2"];
 	$dsobserv = retiraAcentos(removeCaracteresInvalidos($_POST["dsobserv"]));
 	
 	$cddlinha = $_POST["cddlinha"];
@@ -148,7 +143,7 @@
 	$cddopcao = $_POST["cddopcao"];
 	
 	// PRJ 438 - Sprint 14
-	$vlrecjg1 = isset($_POST["vlrecjg1"]) ? $_POST["vlrecjg1"] : "0,00";
+	$vlrecjg1 = isset($_POST["vlrecjg1"]) ? $_POST["vlrecjg1"] : "0,00";  
 	$vlrecjg2 = isset($_POST["vlrecjg2"]) ? $_POST["vlrecjg2"] : "0,00";
 	$cdnacio1 = $_POST["cdnacio1"];
 	$cdnacio2 = $_POST["cdnacio2"];
@@ -157,11 +152,11 @@
 	$dtnasct1 = $_POST["dtnasct1"];
 	$dtnasct2 = $_POST["dtnasct2"];
 	$vlrenme1 = $_POST["vlrenme1"];
-	$vlrenme2 = $_POST["vlrenme2"];
+	$vlrenme2 = $_POST["vlrenme2"];	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
-		exibeErro($msgError);
+		exibeErro($msgError);		
 	}
-
+	
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
@@ -212,45 +207,14 @@
 		exibeErro("Percentual de Faturamento inv&aacute;lido.");
 	}
 	
-	// Verifica se número da conta do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav1)) {
-		exibeErro("Conta/dv do 1o Avalista inv&aacute;lida.");
-	}
 	
-	// Verifica se número da conta do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrctaav2)) {
-		exibeErro("Conta/dv do 2o Avalista inv&aacute;lida.");
-	}	
 	
-	// Verifica se CPF do 1° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav1)) {
-		exibeErro("CPF do 1o Avalista inv&aacute;lido.");
-	}	
 	
-	// Verifica se CPF do Conjugê do 1° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav1)) {
-		exibeErro("CPF do C&ocirc;njuge do 1o Avalista inv&aacute;lido.");
-	}	
 	
-	// Verifica se CPF do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcpfav2)) {
-		exibeErro("CPF do 2o Avalista inv&aacute;lido.");
-	}	
 	
-	// Verifica se CPF do Conjugê do 2° avalista é um inteiro válido
-	if (!validaInteiro($cpfcjav2)) {
-		exibeErro("CPF do C&ocirc;njuge do 2o Avalista inv&aacute;lido.");
-	}	
 	
-	// Verifica se CEP do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcepav1)) {
-		exibeErro("CEP do 1o Avalista inv&aacute;lido.");
-	}	
 	
-	// Verifica se CEP do 2° avalista é um inteiro válido
-	if (!validaInteiro($nrcepav2)) {
-		exibeErro("CEP do 2o Avalista inv&aacute;lido.");
-	}		
+	
 	
 	// Verifica se o CPF/CNPJ &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nrcpfcgc)) {
@@ -278,11 +242,6 @@
 	$xmlSetGravarLimite .= "		<dsramati>".$dsramati."</dsramati>";
 	$xmlSetGravarLimite .= "		<vlmedtit>".$vlmedtit."</vlmedtit>";
 	$xmlSetGravarLimite .= "		<vlfatura>".$vlfatura."</vlfatura>";
-	$xmlSetGravarLimite .= "		<vloutras>".$vloutras."</vloutras>";
-	$xmlSetGravarLimite .= "		<vlsalari>".$vlsalari."</vlsalari>";
-	$xmlSetGravarLimite .= "		<vlsalcon>".$vlsalcon."</vlsalcon>";
-	$xmlSetGravarLimite .= "		<dsdbens1>".$dsdbens1."</dsdbens1>";
-	$xmlSetGravarLimite .= "		<dsdbens2>".$dsdbens2."</dsdbens2>";
 	$xmlSetGravarLimite .= "		<nrctrlim>".$nrctrlim."</nrctrlim>";
 	$xmlSetGravarLimite .= "		<cddlinha>".$cddlinha."</cddlinha>";
 	$xmlSetGravarLimite .= "		<dsobserv>".$dsobserv."</dsobserv>";
@@ -332,8 +291,8 @@
 	$xmlSetGravarLimite .= "		<nrperger>".$nrperger."</nrperger>";
 	$xmlSetGravarLimite .= "		<vltotsfn>".$vltotsfn."</vltotsfn>";
 	$xmlSetGravarLimite .= "		<perfatcl>".$perfatcl."</perfatcl>";
-	$xmlSetGravarLimite .= "		<idcobope>".$idcobope."</idcobope>";
-	// PRJ 438 - Sprint 14
+    $xmlSetGravarLimite .= "		<idcobope>".$idcobope."</idcobope>";
+    // PRJ 438 - Sprint 14
 	$xmlSetGravarLimite .= "		<vlrecjg1>".$vlrecjg1."</vlrecjg1>";
 	$xmlSetGravarLimite .= "		<vlrecjg2>".$vlrecjg2."</vlrecjg2>";
 	$xmlSetGravarLimite .= "		<cdnacio1>".$cdnacio1."</cdnacio1>";
@@ -362,12 +321,12 @@
 		$opermail = "Alterado Limite de Desconto de Cheques.";
 	} else {
 		if ($cddopcao == "I") {
-			// Buscar numer do contrato gerado 
-			$nrctrlim = $xmlObjLimite->roottag->tags[0]->attributes["NRCTRLIM"];
-			$opermail = "Novo Limite de Desconto de Cheques.";
-		}
+                // Buscar numer do contrato gerado 
+                $nrctrlim = $xmlObjLimite->roottag->tags[0]->attributes["NRCTRLIM"];
+				$opermail = "Novo Limite de Desconto de Cheques.";
+			}
 	}
-
+		
 	// Esconde mensagem de aguardo
 	// Bloqueia conteúdo que está átras do div da rotina
 	echo 'hideMsgAguardo();';

@@ -81,6 +81,7 @@
 
                20/04/2018 - Incluido o campo 'dtultmnt' na TEMP-TABLE tt-desconto_titulos (Paulo Penteado GFT)
 
+               18/07/2019 - Adicionado os campos Nivel de Risco e Taxa na tt-dsctit_dados_limite PRJ 438 - Sprint 16 (Mateus Z / Mouts)
 ..............................................................................*/
     
 DEF TEMP-TABLE crawljt NO-UNDO
@@ -197,7 +198,10 @@ DEF TEMP-TABLE tt-dsctit_dados_limite NO-UNDO
     FIELD perfatcl LIKE crapjfn.perfatcl
     FIELD flgdigit LIKE craplim.flgdigit
     FIELD cdtipdoc AS INTEGER
-    FIELD idcobope AS INTEGER.
+    FIELD idcobope AS INTEGER
+    /* PRJ 438 - Sprint 14 - Incluido campo de nivel de risco e taxa na tela do Desconto do Limite de Cheques */
+    FIELD nivrisco LIKE craplim.dsrisco
+    FIELD txmensal LIKE crapldc.txmensal.
 
 DEF TEMP-TABLE tt-desconto_titulos NO-UNDO
     FIELD nrctrlim AS INTE
