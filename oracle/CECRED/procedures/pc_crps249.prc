@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                     Ultima atualizacao: 29/01/2019
+   Data    : Novembro/98                     Ultima atualizacao: 09/09/2019
 
    Dados referentes ao programa:
 
@@ -679,7 +679,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 
                05/07/2019 - Ajuste conta SUA REMESSA covenio Desconto de Titulo (Daniel)
 			   
-			   09/07/2019 - Retirado geracao pc_proc_lcm_tdb (Daniel)
+			   09/07/2019 - Retirado geracao pc_proc_lcm_tdb (Daniel)  
+
+               09/09/2019 - Ajuste cursor crapcdb onde estava efetuando um exit de forma incorreta. (Daniel)  
 
 ............................................................................ */
 
@@ -11300,6 +11302,7 @@ BEGIN
                    vr_dtmvtolt);
   loop
     fetch cr_crapcdb2 bulk collect into rw_crapcdb limit 5000;
+	  exit when rw_crapcdb.COUNT = 0; 
 
     -- Grava dados operacionais contábeis
     pc_grava_crapopc_bulk(pr_cdcooper,
@@ -11308,8 +11311,6 @@ BEGIN
                      1, -- tpregist = 1 desconto de cheques
                      2, -- cdtipope = 2 liquidacao cheque recebido para desconto
                      vr_cdprogra);
-
-    exit when cr_crapcdb2%rowcount <= 5000;
 
     -- Incluir nome do módulo logado
     gene0001.pc_informa_acesso(pr_module => 'PC_CRPS249', pr_action => vr_cdprogra);
