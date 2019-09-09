@@ -1938,6 +1938,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           --Limite TED
           vr_vllimted:= 0;
         ELSE
+          --Fechar Cursor
+          CLOSE cr_crapsnh;          
           --Limite Web
           vr_vllimweb:= rw_crapsnh.vllimweb;
           --Limite Pagamento
@@ -1947,10 +1949,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           --Limite TED
           vr_vllimted:= rw_crapsnh.vllimted;
         END IF;
-        --Fechar Cursor
-        CLOSE cr_crapsnh;
-        --Criar registro limite internet
-        vr_index:= rw_crapsnh.idseqttl;
+
+        --Criar registro limite internet para o idseqttl 1 que foi utilizado no cursor
+        vr_index:= 1;
         pr_tab_internet(vr_index).idseqttl:= vr_index;
         pr_tab_internet(vr_index).vlwebcop:= NVL(vr_tab_vllimweb,0);
         pr_tab_internet(vr_index).vlpgocop:= NVL(vr_tab_vllimpgo,0);
@@ -4438,11 +4439,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               -- A pc_busca_limites vai carregar o valor dos limites da conta, e quando não encontra o valor de limite retorna as mensagens de erro
               -- porém carrega o valor dos limites com 0
               -- A agência 91 (TAA) não realiza validação de limite para as transações, então quando fo agencia 91 e as mensagens de erro que não encontraram 
-              -- os limites, elas serão ignoradas e o processo irá continuar
-              -- Se for qualquer outra mensagem de erro, ela deverá ser retornada
-              IF pr_cdagenci = 91 AND
-                 vr_dscritic IN ('Não encontrou limites para a conta.','Senha para conta on-line nao cadastrada.') THEN
-                     NULL;
+              -- os limites, elas serão ignoradas e o processo irá continuar              
+              IF pr_cdagenci = 91 THEN
+                NULL;
               ELSE
               --Levantar Excecao
               RAISE vr_exc_erro;
@@ -4505,11 +4504,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           -- A pc_busca_limites vai carregar o valor dos limites da conta, e quando não encontra o valor de limite retorna as mensagens de erro
           -- porém carrega o valor dos limites com 0
           -- A agência 91 (TAA) não realiza validação de limite para as transações, então quando fo agencia 91 e as mensagens de erro que não encontraram 
-          -- os limites, elas serão ignoradas e o processo irá continuar
-          -- Se for qualquer outra mensagem de erro, ela deverá ser retornada
-          IF pr_cdagenci = 91 AND
-             vr_dscritic IN ('Não encontrou limites para a conta.','Senha para conta on-line nao cadastrada.') THEN
-                 NULL;
+          -- os limites, elas serão ignoradas e o processo irá continuar          
+          IF pr_cdagenci = 91 THEN
+            NULL;
           ELSE
         --Levantar Excecao
         RAISE vr_exc_erro;
