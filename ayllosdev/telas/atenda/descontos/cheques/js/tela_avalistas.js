@@ -353,6 +353,8 @@ function iniciaAval() {
 
     if (operacao == 'I' || operacao == 'A') {
         cConta.habilitaCampo();
+    } else {
+        cConta.desabilitaCampo(); // anderson
     }
 
     return false;

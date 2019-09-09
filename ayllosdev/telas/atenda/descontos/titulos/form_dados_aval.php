@@ -22,7 +22,7 @@
 	    <input name="crm_inacesso" id="crm_inacesso" type="hidden" value="<? echo $glbvars["CRM_INACESSO"] ?>" />
 
 		<label for="nrctaava">Conta:</label>
-		<input name="nrctaava" id="nrctaava" type="text" value="" autofocus />
+		<input name="nrctaava" id="nrctaava" type="text" value="" />
 		<a style='padding: 3px 0 0 3px;'><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<br />
 
@@ -139,6 +139,10 @@
 		operacao = '<? echo $cddopcao ?>';
 		formataAvalista();
 		highlightObjFocus($('#frmDadosAval'));
+		if (operacao == "C") {
+			$('#nrctaava','#divDscTit_Avalistas').prop( "disabled", true );
+			$('#nrctaava','#divDscTit_Avalistas').addClass( "campoTelaSemBorda" );
+		}
 	});
 	
 </script>	

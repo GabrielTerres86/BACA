@@ -13,12 +13,15 @@ CREATE OR REPLACE PACKAGE CECRED."ESTE0003" is
 
       Alteracoes: 23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
                                Referentes a proposta. (Lindon Carlos Pecile - GFT)
+
                   14/04/2018 - Adicionado a procedure pc_crps703 (Paulo Penteado (GFT)) 
-				  29/08/2018 - Adicionado verificação para não permir Analisar proposta 
-                             com situação "Anulada". PRJ 438 (Mateus Z- Mouts)
+                               29/08/2018 - Adicionado verificação para não permir Analisar proposta 
+                               com situação "Anulada". PRJ 438 (Mateus Z- Mouts)
+
                   01/03/2019 - Correção para não possibilitar que propostas sem informação de rating sejam 
-				               enviadas para esteira de credito.	   
-				  06/11/2018 - Inclusao da procedure Interromper Fluxo pc_interrompe_proposta_lim_est (Fabio dos Santos - GFT)
+                               enviadas para esteira de credito.	   
+
+                  06/11/2018 - Inclusao da procedure Interromper Fluxo pc_interrompe_proposta_lim_est (Fabio dos Santos - GFT)
   
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -371,16 +374,8 @@ BEGIN
 
          return;
        END IF;
-                          
-   open  cr_crapass;
-   fetch cr_crapass into rw_crapass;
-   if    cr_crapass%notfound then
-         close cr_crapass;
-         vr_dscritic := 'Associado nao cadastrado. Conta: ' || pr_nrdconta;
-         raise vr_exc_saida;
+       -- P450 SPT13 - alteracao para habilitar rating novo
    end   if;
-   close cr_crapass;
-   
    vr_cdagenci := nvl(nullif(pr_cdagenci, 0), rw_crapass.cdagenci);
      
    open  cr_crawlim;

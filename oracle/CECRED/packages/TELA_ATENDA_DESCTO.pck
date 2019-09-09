@@ -15,6 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED."TELA_ATENDA_DESCTO" IS
   --       11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
   --       07/03/2019 - prj450 - Rating - Tratamento do Botão Confirma Novo limite Web
   --                          na tela - Desconto de Cheques (Fabio Adriano - AMcom)
+  --
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_ren_lim_desc_cheque_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta
@@ -2949,12 +2950,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED."TELA_ATENDA_DESCTO" IS
     vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 1;
     vr_variaveis_notif NOTI0001.typ_variaveis_notif;
 
-    CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-      SELECT nmrescop
-        FROM crapcop
-        WHERE cdcooper = pr_cdcooper;
-    rw_crapcop cr_crapcop%ROWTYPE;
-    
     -- Variaveis auxiliares
     vr_flgfound     BOOLEAN;
     vr_vlendivid    craplim.vllimite%TYPE; -- Valor do Endividamento do Cooperado

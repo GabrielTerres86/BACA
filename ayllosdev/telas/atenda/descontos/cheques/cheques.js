@@ -1510,7 +1510,7 @@ function confirmaNovoLimite(cddopera) {
 
 	showMsgAguardo('Aguarde, Confirmando novo Limite...');
 
-	valor_limite = valor_limite.replace(/\./g,"").replace(',', '.');
+	var aux_valor_limite = valor_limite.replace(/\./g,"").replace(',', '.');
 
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({
@@ -1518,7 +1518,7 @@ function confirmaNovoLimite(cddopera) {
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_confirmar_novo_limite.php",
 		data: {
 			nrdconta: nrdconta,
-			vllimite: valor_limite,
+			vllimite: aux_valor_limite,
 			nrctrlim: nrcontrato,
 			cddopera: cddopera,
 			idcobope: idcobope,

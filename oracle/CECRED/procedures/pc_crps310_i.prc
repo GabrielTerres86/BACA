@@ -221,7 +221,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS310_I" (pr_cdcooper   IN crapcop.cdco
 
                  04/12/2014 - Ajuste no calculo de dias de atraso. (James)
 
-                         02/01/2014 - Ajuste para nao gravar nulo no campo vljura60 para
+                 02/01/2014 - Ajuste para nao gravar nulo no campo vljura60 para
                               o emprestimo tipo novo. (James)
 
                  19/01/2015 - Ajuste quanto a data de fim da vigencia de contratos, onde
@@ -7594,9 +7594,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS310_I" (pr_cdcooper   IN crapcop.cdco
 
       -- P450 SPT16 - alteracao para habilitar rating novo
       IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
-        risc0000_tmp.pc_grava_log(pr_cdcooper => pr_cdcooper
-                                , pr_dsmensag => ' === > Versão Rating < ==='
-                                , pr_des_erro => vr_dscritic);
         -- Buscar rating por base do nr cpfcnpj -- P450
         FOR rw_tbrisco_ope IN cr_tbrisco_ope (pr_cdcooper  => pr_cdcooper) LOOP
           vr_idx_rating := LPAD(rw_tbrisco_ope.CDCOOPER,3,0)  ||
@@ -7604,9 +7601,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS310_I" (pr_cdcooper   IN crapcop.cdco
                            LPAD(rw_tbrisco_ope.nrctremp,10,0) ;
           vr_tab_tbrisco_ope(vr_idx_rating).indrisco := rw_tbrisco_ope.INRISCO_RATING;
         END LOOP;
-        risc0000_tmp.pc_grava_log(pr_cdcooper => pr_cdcooper
-                                , pr_dsmensag => ' === > Versão Rating < ==='
-                                , pr_des_erro => vr_dscritic);
       -- P450 SPT16 - alteracao para habilitar rating novo
       ELSE
         -- Buscar notas de rating do contrado da conta

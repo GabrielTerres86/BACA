@@ -332,6 +332,10 @@ define('cooperativaCetralAilosEtapaRating', 3);
 		var nrAvalistas = 0;
 		var contAvalistas = 1;
 	}
+	if (operacao == 'C') {
+            $('#nrctaava','#divDscTit_Avalistas').prop('disabled', true);
+			$('#nrctaava','#divDscTit_Avalistas').addClass( "campoTelaSemBorda" );
+	}
 
 		
 	// Muda o título da tela

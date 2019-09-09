@@ -334,6 +334,8 @@ function formataAvalista() {
         cTodos_4.desabilitaCampo();
 
         $('#btLimparAvalista', '#' + nomeDiv).hide();
+        $('#nrctaava','#divDscTit_Avalistas').prop('disabled', true);
+        $('#nrctaava','#divDscTit_Avalistas').addClass( "campoTelaSemBorda" );
     }
 
     $('legend:first', '#' + nomeDiv).html('Dados dos Avalistas/Fiadores 1');
@@ -435,13 +437,14 @@ function iniciaAval() {
     var cConta = $('#nrcpfcgc', '#' + nomeDiv); // anderson
 
     $('select,input', '#' + nomeDiv + ' fieldset').desabilitaCampo();
-
+/*
     if (normalizaNumero(cConta.val()) == 0) {
         cConta.habilitaCampo();
     }
-
-    if (operacao == 'I' || operacao == 'A') {
-        cConta.habilitaCampo();
+*/
+    if (operacao == "C") {
+            $('#nrctaava','#divDscTit_Avalistas').prop( "disabled", true );
+            $('#nrctaava','#divDscTit_Avalistas').addClass( "campoTelaSemBorda" );
     }
 
     return false;
@@ -657,7 +660,7 @@ function habilitarCamposAvalista(){
 
         $('#dsendre1,#cdufresd,#dsendre2,#nmcidade,#dsnacion', '#' + nomeDiv).desabilitaCampo();
         controlaPesquisas();
-        cNome.focus();
+        //cNome.focus(); // anderson
         
     }
 }
@@ -718,7 +721,8 @@ function aplicarEventosLupasTelaAvalista(){
         mostraPesquisaEndereco(nomeDiv, camposOrigem, divRotina);
         return false;
     });
-    $('#nrctaava','#divDscTit_Avalistas').focus();
+    // anderson
+    //$('#nrctaava','#divDscTit_Avalistas').focus(); // cccc
 }
 
 function controlaLayoutContas(){

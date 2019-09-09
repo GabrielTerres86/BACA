@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: cheques_limite_consultar.php                          
 	 Autor: Guilherme                                                 
-	 Data : Março/2009                        Última Alteração: 20/08/2015
+	 Data : Março/2009                        Última Alteração: 12/07/2019
 	                                                                  
 	 Objetivo  : Carregar dados para consulta de um limite
 	                                                                  	 

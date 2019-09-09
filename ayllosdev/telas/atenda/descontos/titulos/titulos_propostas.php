@@ -158,7 +158,7 @@
 		<table>
 			<thead>
 				<tr>
-					<th>Data Proposta</th>
+					<th>Data<br>Proposta</th>
 					<th>Contrato</th>
 					<th>Proposta</th>
 					<th>Valor<br>Limite</th>
@@ -426,3 +426,4 @@
 	}
 
 </script>
+<script type="text/javascript" src="descontos/desconto_rating.js?keyrand=<?php echo mt_rand(); ?>"></script>
