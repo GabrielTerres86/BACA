@@ -2949,12 +2949,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED."TELA_ATENDA_DESCTO" IS
     vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 1;
     vr_variaveis_notif NOTI0001.typ_variaveis_notif;
 
-    CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-      SELECT nmrescop
-        FROM crapcop
-        WHERE cdcooper = pr_cdcooper;
-    rw_crapcop cr_crapcop%ROWTYPE;
-    
     -- Variaveis auxiliares
     vr_flgfound     BOOLEAN;
     vr_vlendivid    craplim.vllimite%TYPE; -- Valor do Endividamento do Cooperado

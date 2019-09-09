@@ -96,7 +96,8 @@ DEF TEMP-TABLE tt-limite_chq NO-UNDO
     FIELD insitlim AS INTE
     FIELD idcobope AS INTE
     FIELD inrisrat AS CHAR    /* P450   */
-    FIELD origerat AS CHAR.   /* P450   */ 
+    FIELD origerat AS CHAR    /* P450   */ 
+    FIELD dtcancel AS DATE.
 
 
 /* TAB019 */
@@ -226,7 +227,8 @@ DEF TEMP-TABLE tt-proposta_limite_chq NO-UNDO
     FIELD nmrescop AS CHAR
     FIELD nmoperad AS CHAR
     FIELD nmresco1 AS CHAR
-    FIELD nmresco2 AS CHAR.
+    FIELD nmresco2 AS CHAR
+    FIELD vlrencjg AS DECI.
 
 DEF TEMP-TABLE tt-contrato_limite_chq NO-UNDO
     FIELD nmcidade AS CHAR

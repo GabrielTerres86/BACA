@@ -299,6 +299,9 @@
            14/05/2019 - Adicionado pc_atualiza_contrato_rating para alteracao do numero do contrato/proposta
                         P450 - Luiz Otavio Olinger Momm (AMCOM).
 
+           12/07/2019 - Incluido campos de avalista nas procs de gravaçao e alteraçao do desconto de cheque. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
+                        P450 - Luiz Otavio Olinger Momm (AMCOM).
+
            23/05/2019 - Adicionado pc_retorna_inf_rating retornar o Rating das propostas e bordero
                         P450 - Luiz Otavio Olinger Momm (AMCOM).
 ............................................................................. */
@@ -5098,6 +5101,8 @@ PROCEDURE efetua_alteracao_limite:
         END.
 
 
+	/* Removido pelo 438 */
+        /*
         IF  var_vlfatura <> par_vlfatura  THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
@@ -5146,6 +5151,8 @@ PROCEDURE efetua_alteracao_limite:
                                     INPUT par_dsdbens2).    
         END.
         
+        */
+
         IF  var_nrctrlim <> par_nrctrlim  THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
