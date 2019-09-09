@@ -403,6 +403,8 @@ define('cooperativaCetralAilosEtapaRating', 3);
       <? if ($dados[30]->cdata > 0) { ?>
 			abrirTelaGAROPC("C");
       blockBackground(parseInt($("#divRotina").css("z-index")));
+			$('#nrctaava','#divDscTit_Avalistas').prop( "disabled", true );
+			$('#nrctaava','#divDscTit_Avalistas').addClass( "campoTelaSemBorda" );
       <? // } else if ($dados[12]->cdata > 0) { ?>
 //			continuarRating("divDscTit_Observacao;divBotoesObs","divDscTit_Limite;divBotoesLimite");
       <? } else { ?>

@@ -5250,6 +5250,7 @@ PROCEDURE efetua_alteracao_limite:
         END.
 
 
+        /*
         IF  var_vlfatura <> par_vlfatura  THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
@@ -5298,6 +5299,7 @@ PROCEDURE efetua_alteracao_limite:
                                     INPUT par_dsdbens2).    
         END.
         
+		*/
         IF  var_nrctrlim <> par_nrctrlim  THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,

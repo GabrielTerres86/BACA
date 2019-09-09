@@ -124,7 +124,7 @@
 						
 						<td><? echo $limites[$i]->tags[9]->cdata; ?></td>
 						<!--Data de cancelamento-->
-						<td><? echo $limites[$i]->tags[12]->cdata; ?></td>
+						<td><? echo $limites[$i]->tags[14]->cdata; ?></td>
 					</tr>
 				<?} // Fim do for ?>			
 			</tbody>

@@ -876,68 +876,6 @@ function formataLayout(nomeForm){
         var Lnivrisco = $('label[for="nivrisco"]','#'+nomeForm);
 		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
 		var Lvllimite = $('label[for="vllimite"]','#'+nomeForm);
-		var Lqtdiavig = $('label[for="qtdiavig"]','#'+nomeForm);
-		var Lcddlinha = $('label[for="cddlinha"]','#'+nomeForm);
-        var Ltxmensal = $('label[for="txmensal"]','#'+nomeForm);
-        var Ldtcancel = $('label[for="dtcancel"]','#'+nomeForm);
-        var Cnivrisco = $('#nivrisco','#'+nomeForm);
-		var Cnrctrlim = $('#nrctrlim','#'+nomeForm);
-		var Cvllimite = $('#vllimite','#'+nomeForm);
-		var Cqtdiavig = $('#qtdiavig','#'+nomeForm);
-		var Ccddlinha = $('#cddlinha','#'+nomeForm);
-		var Ccddlinh2 = $('#cddlinh2','#'+nomeForm);
-        var Ctxmensal = $('#txmensal','#'+nomeForm);
-		
-		
-		var Cdtcancel = $('#dtcancel','#'+nomeForm);
-
-		
-				
-
-		
-		var Ldsobserv = $('label[for="dsobserv"]','#'+nomeForm);
-		var Cdsobserv = $('#dsobserv','#'+nomeForm);
-		
-		$('#'+nomeForm).css('width','515px');
-        Lnivrisco.addClass('rotulo').css('width','220px');
-        Lnrctrlim.addClass('rotulo').css('width','220px');
-        Lvllimite.addClass('rotulo').css('width','220px');
-        Lcddlinha.addClass('rotulo').css('width','220px');
-        Ltxmensal.addClass('rotulo').css('width','220px');
-        Ldtcancel.addClass('rotulo').css('width','220px');
-        Cnivrisco.css({'width':'100px'});
-		
-		Cnrctrlim.css({'width':'100px','text-align':'right'});
-		Cvllimite.css({'width':'100px','text-align':'right'});
-		Ccddlinha.css({'width':'40px','text-align':'right'});
-        Ccddlinh2.css({'width':'185px'});
-        Ctxmensal.css({'width':'65px','text-align':'right'});
-		Cdtcancel.css({'width':'65px'});
-		
-		
-			
-							
-		Cdsobserv.addClass('alphanum').css({'width':'485px','height':'80px','float':'left','margin':'3px 0px 3px 3px','padding-right':'1px'});
-		
-		
-		Cnrctrlim.unbind('keypress').bind('keypress', function(e){
-			/*Se foi pressionado a telca ENTER*/
-			if(e.keyCode == 13){
-				Cvllimite.focus();
-			}
-		});
-		
-		Cvllimite.unbind('keypress').bind('keypress', function(e){
-			/*Se foi pressionado a telca ENTER*/
-			if(e.keyCode == 13){
-				Ccddlinha.focus();
-			}
-		});
-    }else if (nomeForm == 'frmDadosLimiteDscTit'){
-	
-		var Lnivrisco = $('label[for="nivrisco"]','#'+nomeForm);
-		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
-		var Lvllimite = $('label[for="vllimite"]','#'+nomeForm);
 		var Lcddlinha = $('label[for="cddlinha"]','#'+nomeForm);
         var Ltxmensal = $('label[for="txmensal"]','#'+nomeForm);
         var Ldtcancel = $('label[for="dtcancel"]','#'+nomeForm);
@@ -976,9 +914,52 @@ function formataLayout(nomeForm){
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
 				Ccddlinha.focus();
+			}
+		});
+	}else if (nomeForm == 'frmDadosLimiteDscTit'){
+		var Lnivrisco = $('label[for="nivrisco"]','#'+nomeForm);
+		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
+		var Lvllimite = $('label[for="vllimite"]','#'+nomeForm);
+		var Lcddlinha = $('label[for="cddlinha"]','#'+nomeForm);
+		var Ltxmensal = $('label[for="txmensal"]','#'+nomeForm);
+		var Ldtcancel = $('label[for="dtcancel"]','#'+nomeForm);
+		
+		var Cnivrisco = $('#nivrisco','#'+nomeForm);
+		var Cnrctrlim = $('#nrctrlim','#'+nomeForm);
+		var Cvllimite = $('#vllimite','#'+nomeForm);
+		var Ccddlinha = $('#cddlinha','#'+nomeForm);
+		var Ccddlinh2 = $('#cddlinh2','#'+nomeForm);
+		var Ctxmensal = $('#txmensal','#'+nomeForm);
+		var Cdtcancel = $('#dtcancel','#'+nomeForm);
 		
 		
-		
+		var Ldsobserv = $('label[for="dsobserv"]','#'+nomeForm);
+		var Cdsobserv = $('#dsobserv','#'+nomeForm);
+		$('#'+nomeForm).css('width','515px');
+		Lnivrisco.addClass('rotulo').css('width','220px');
+		Lnrctrlim.addClass('rotulo').css('width','220px');
+		Lvllimite.addClass('rotulo').css('width','220px');
+		Lcddlinha.addClass('rotulo').css('width','220px');
+		Ltxmensal.addClass('rotulo').css('width','220px');
+		Ldtcancel.addClass('rotulo').css('width','220px');
+		Cnivrisco.css({'width':'100px'});
+		Cnrctrlim.css({'width':'100px','text-align':'right'});
+		Cvllimite.css({'width':'100px','text-align':'right'});
+		Ccddlinha.css({'width':'40px','text-align':'right'});
+		Ccddlinh2.css({'width':'185px'});
+		Ctxmensal.css({'width':'65px','text-align':'right'});
+		Cdtcancel.css({'width':'65px'});
+		Cdsobserv.addClass('alphanum').css({'width':'485px','height':'80px','float':'left','margin':'3px 0px 3px 3px','padding-right':'1px'});
+		Cnrctrlim.unbind('keypress').bind('keypress', function(e){
+			/*Se foi pressionado a telca ENTER*/
+			if(e.keyCode == 13){
+				Cvllimite.focus();
+			}
+		});
+		Cvllimite.unbind('keypress').bind('keypress', function(e){
+			/*Se foi pressionado a telca ENTER*/
+			if(e.keyCode == 13){
+				Ccddlinha.focus();
 		
 		
 		

@@ -158,7 +158,7 @@
 		<table>
 			<thead>
 				<tr>
-					<th>Data Proposta</th>
+					<th>Data<br>Proposta</th>
 					<th>Contrato</th>
 					<th>Proposta</th>
 					<th>Valor<br>Limite</th>
