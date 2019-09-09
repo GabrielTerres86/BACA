@@ -240,6 +240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                        ,pr_nrdconta IN crapenc.nrdconta%TYPE) IS
         SELECT crapttl.nrcpfemp
               ,crapttl.nmextemp
+              ,crapttl.cdempres
           FROM crapttl
          WHERE crapttl.cdcooper = pr_cdcooper
            AND crapttl.nrdconta = pr_nrdconta
@@ -276,6 +277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
               ,tpe.dsnome_empregador
               ,tpe.ROWID dsrowid
 							,tpe.nrsolicitacao
+              ,tpe.tppessoa_empregador
           FROM tbcc_portabilidade_envia tpe
               ,tbcc_dominio_campo       dom
               ,tbcc_dominio_campo       dcp
@@ -320,10 +322,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       vr_cdbanco_bf VARCHAR2(100);
       vr_nrispb_bf  VARCHAR2(100);
       vr_dscnpj_bf  VARCHAR2(100);
+      vr_tppessoa_empregador tbcc_portabilidade_envia.tppessoa_empregador%TYPE;
     
       -- Variaveis para CADA0008.pc_busca_inf_emp
       vr_nrdocnpj tbcc_portabilidade_envia.nrcnpj_empregador%TYPE;
       vr_nmpessot tbcadast_pessoa.nmpessoa%TYPE;
+      vr_cdempres crapttl.cdempres%TYPE;
     
       -- Variaveis Gerais
       vr_nrcpfcgc     crapass.nrcpfcgc%TYPE;
@@ -399,6 +403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     
       -- Se houver portabilidade pendente
       IF nvl(rw_portab_envia.cdsituacao, 0) NOT IN (1, 2, 3, 5, 6, 9) THEN
+        
         -- Selecionar o Telefone
         OPEN cr_craptfc(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta);
         FETCH cr_craptfc
@@ -415,7 +420,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
         OPEN cr_crapttl(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta);
         FETCH cr_crapttl
           INTO vr_nrdocnpj
-              ,vr_nmpessot;
+              ,vr_nmpessot
+              ,vr_cdempres;
       
         IF cr_crapttl%NOTFOUND THEN
 					CLOSE cr_crapttl;
@@ -423,7 +429,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
           RAISE vr_exc_erro;
         END IF;
         CLOSE cr_crapttl;
-      
+      	   
+        vr_tppessoa_empregador := 2;
+          IF vr_cdempres = 9998 THEN
+            vr_tppessoa_empregador := 1;
+          END IF; 
       ELSE
         vr_nrcpfcgc   := rw_portab_envia.nrcpfcgc;
         vr_nmprimtl   := rw_portab_envia.nmprimtl;
@@ -433,6 +443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
         vr_nmpessot   := rw_portab_envia.dsnome_empregador;
         vr_cdbanco_bf := rw_portab_envia.cdbanco_folha;
         vr_nrispb_bf  := rw_portab_envia.nrispb_banco_folha;
+          vr_tppessoa_empregador := rw_portab_envia.tppessoa_empregador;
         IF NVL(rw_portab_envia.nrcnpj_banco_folha, 0) > 0 THEN
           vr_dscnpj_bf := gene0002.fn_mask_cpf_cnpj(rw_portab_envia.nrcnpj_banco_folha, 2);
         ELSE
@@ -502,10 +513,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     
       -- Empregador
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Dados',
+                               pr_posicao  => 0,
+                               pr_tag_nova => 'tppessoa_empregador',
+                               pr_tag_cont => vr_tppessoa_empregador,
+                               pr_des_erro => vr_dscritic);
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Dados',
                              pr_posicao  => 0,
                              pr_tag_nova => 'nrdocnpj_emp',
-                             pr_tag_cont => gene0002.fn_mask_cpf_cnpj(vr_nrdocnpj, 2),
+                             pr_tag_cont => gene0002.fn_mask_cpf_cnpj(vr_nrdocnpj, vr_tppessoa_empregador),
                              pr_des_erro => vr_dscritic);
     
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -1263,6 +1281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
 							,dcp.cddominio cdmotivo
 							,to_char(tpr.dtavaliacao, 'DD/MM/RRRR HH24:MI:SS') dtavaliacao
               ,tpr.rowid
+              ,tpr.tppessoa_empregador
               ,(SELECT tprc.idsituacao
                   FROM (SELECT t.nrnu_portabilidade
                              , t.idsituacao
@@ -1370,7 +1389,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     
       -- Empregador
       IF NVL(rw_portab_recebe.nrcnpj_empregador, 0) > 0 THEN
-        vr_dscnpjbc := gene0002.fn_mask_cpf_cnpj(rw_portab_recebe.nrcnpj_empregador, 2);
+        vr_dscnpjbc := gene0002.fn_mask_cpf_cnpj(rw_portab_recebe.nrcnpj_empregador, rw_portab_recebe.tppessoa_empregador);
       ELSE
         vr_dscnpjbc := NULL;
       END IF;
@@ -1386,6 +1405,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                              pr_posicao  => 0,
                              pr_tag_nova => 'dsnome_empregador',
                              pr_tag_cont => rw_portab_recebe.dsnome_empregador,
+                             pr_des_erro => vr_dscritic);
+    
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Dados',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'tppessoa_empregador',
+                             pr_tag_cont => rw_portab_recebe.tppessoa_empregador,
                              pr_des_erro => vr_dscritic);
     
       -- Instituição Destinataria
@@ -1726,6 +1752,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
                        ,pr_nrdconta IN crapenc.nrdconta%TYPE) IS
         SELECT crapttl.nrcpfemp
               ,crapttl.nmextemp
+              ,crapttl.cdempres
           FROM crapttl
          WHERE crapttl.cdcooper = pr_cdcooper
            AND crapttl.nrdconta = pr_nrdconta
@@ -1764,6 +1791,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
     
       -- Variaveis locais
       vr_nrsolicitacao tbcc_portabilidade_envia.nrsolicitacao%TYPE;
+      vr_tppessoa_empregador tbcc_portabilidade_envia.tppessoa_empregador%TYPE;
     
     BEGIN
       -- Incluir Nome do Módulo Logado
@@ -1877,6 +1905,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
       END IF;
 			CLOSE cr_crapttl;
     
+      vr_tppessoa_empregador := 2;
+      IF rw_crapttl.cdempres = 9998 THEN
+        vr_tppessoa_empregador := 1;
+      END IF;
+    
       IF TRIM(rw_crapttl.nmextemp) IS NULL THEN
         vr_dscritic := 'Nome do empregador nao encontrado.';
         RAISE vr_exc_erro;
@@ -1955,7 +1988,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
           ,cdtipo_conta
           ,cdagencia
           ,idsituacao
-          ,cdoperador)
+          ,cdoperador
+          ,tppessoa_empregador)
         VALUES
           (vr_cdcooper
           ,pr_nrdconta
@@ -1977,7 +2011,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
           ,'CC' -- Conta Corrente
           ,rw_crapcop.cdagectl
           ,1 -- a solicitar
-          ,vr_cdoperad);
+          ,vr_cdoperad
+          ,vr_tppessoa_empregador);
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao criar solicitacao de portabilidade: ' || SQLERRM;
@@ -2792,12 +2827,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_PORTAB IS
         INTO rw_portab_envia;
 			CLOSE cr_portab_envia;
     
-      IF rw_portab_envia.cdsituacao = 1 THEN
-        -- A solicitar
-        vr_situacao := 7; -- Cancelada
-      ELSE 
-        -- Solicitada OU Aprovada
+		  -- Solicitada
+      IF rw_portab_envia.cdsituacao = 2 THEN        
         vr_situacao := 5; -- A cancelar
+      ELSE 
+        vr_situacao := 7; -- Cancelada
       END IF;
     
       OPEN cr_motivo(pr_cdmotivo);

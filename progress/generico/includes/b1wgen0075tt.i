@@ -17,6 +17,8 @@
 				18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
+              
+        29/08/2019 PJ485.6 - Inclusao do tipo de pessoa do empregador na tt comercial - Augusto (Supero)              
 
 .............................................................................*/
 
@@ -62,7 +64,8 @@ DEFINE TEMP-TABLE tt-comercial NO-UNDO
     FIELD dtrevise AS DATE
     FIELD dssituar AS CHAR
     FIELD dscanalr AS CHAR
-    FIELD dtrevisr AS DATE.
+    FIELD dtrevisr AS DATE
+    FIELD tppesemp AS INTE.
 
 &IF DEFINED(TT-LOG) <> 0 &THEN
 

@@ -70,6 +70,7 @@ $dtretorno = getByTagName($solicitacao,"dtretorno");
 $dtavaliacao = getByTagName($solicitacao,"dtavaliacao");
 $motivo = getByTagName($solicitacao,"motivo");
 $nrsolicitacao = getByTagName($solicitacao,"nrsolicitacao");
+$tppessoa_empregador = getByTagName($solicitacao,"tppessoa_empregador");
 
 ?>
 
@@ -142,7 +143,13 @@ $nrsolicitacao = getByTagName($solicitacao,"nrsolicitacao");
                                             <fieldset style="margin-top:10px">
                                                 <legend>Empregador</legend>
 
-                                                <label style="margin-left: 15px;width:105px">CNPJ:</label>
+												<label style="margin-left: 15px;width:105px" id="lbl_tppessoa_empregador" class="clsCampos">Tipo:</label>
+												<input type="radio" style="margin-right: 5px" <?=($tppessoa_empregador == "1" ? "checked" : "")?> id="tppessoa_fisica" disabled readonly name="tppessoa_empregador" value="1"/> <label style="margin-right: 25px" for="tppessoa_fisica">F&iacute;sica</label>
+												<input type="radio" style="margin-right: 5px" <?=($tppessoa_empregador == "2" ? "checked" : "")?> id="tppessoa_juridica" disabled readonly name="tppessoa_empregador" value="2"/> <label for="tppessoa_juridica">Jur&iacute;dica</label>
+
+												<br style="clear:both"/>
+
+                                                <label style="margin-left: 15px;width:105px"><?=($tppessoa_empregador == "1" ? "CPF" : "CNPJ")?>:</label>
                                                 <input value="<?=$nrcnpj_empregador?>" type="text" class="campoTelaSemBorda" readonly disabled style="margin-right: 5px;width:120px">
 
                                                 <label style="margin-left: 15px;">Nome:</label>
