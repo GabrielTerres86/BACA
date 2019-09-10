@@ -376,7 +376,7 @@
 <!-- Utiliza classes diferentes para que o foco não se posicione no botão errado -->
 	<a href="#" class="opBtnCRM    botao" id="btDemissCRM"     onclick="verificaProdutosAtivosCRM();">Desligar</a>
 	<a href="#" class="opBtnCRM    botao" id="btSaqueCRM"      onclick="abrirRotinaSaqueParcialCRM();">Saque Parcial</a>
-	<a href="#" class="opAlterar botao" id="btDesligarAlt" onclick="verificaProdutosAtivos();return false;">Desligar</a>
+	<a href="#" class="opBtnCRM    botao" id="btDesligarAlt" onclick="verificaProdutosAtivos();return false;">Desligar</a>
 	
 	<? if (getByTagName($registro,'flgtermo') == '1'){?>
 		
