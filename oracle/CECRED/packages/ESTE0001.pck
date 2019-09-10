@@ -1448,6 +1448,10 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
 							   PJ 450 - Diego Simas (AMcom) (Fluxo Atraso)							   
 
                   12/02/2019 - P442 - Nova estrutura do PreAprovado (Marcos-Envolti)
+		  
+		  29/03/2019 - P410 SM - Considerar valor do IOF e taxa quando estes foram financiados.
+                               (Douglas Pagel / AMcom)
+			       
                  10/07/2019 - P438 - Inclusão dos atributos canalCodigo e canalDescricao no Json para identificar 
                                 a origem da operação de crédito na Esteira. (Douglas Pagel / AMcom).
     ..........................................................................*/
@@ -1507,6 +1511,12 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
              -- Indica que am linha de credito eh CDC ou C DC
              DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => epr.cdcooper
                                                ,pr_cdfinemp => epr.cdfinemp),3,1,0) AS inlcrcdc,
+	     epr.idfiniof,
+             epr.dtdpagto,
+             epr.dtlibera,
+             epr.tpemprst,
+             epr.dtcarenc,
+             epr.idcarenc,
              epr.idfluata,	 
              epr.cdorigem
         FROM crawepr epr,
@@ -1531,7 +1541,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                              pr_nrcpfcgc crapass.nrcpfcgc%TYPE) IS
       SELECT cdcooper,
              nrdconta,
-             flgcrdpa               
+             flgcrdpa,
+             inpessoa
         FROM crapass
        WHERE cdcooper = pr_cdcooper
          AND nrcpfcgc = pr_nrcpfcgc -- CPF/CGC passado
@@ -1614,6 +1625,24 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
          AND oper.nrctremp = pr_nrctremp;
     rw_risco_operacoes cr_risco_operacoes%ROWTYPE;
 
+    -- Projeto 410 - 29/03/2019 - SM - buscar bens da proposta
+    CURSOR cr_crapbpr IS 
+      SELECT t.dscatbem
+        FROM crapbpr t
+       WHERE t.cdcooper = pr_cdcooper
+             AND t.nrdconta = pr_nrdconta
+             AND t.nrctrpro = pr_nrctremp;
+    rw_crapbpr cr_crapbpr%ROWTYPE;
+    
+    -- Projeto 410 - 29/03/2019 - SM  - cursor sobre o cadastro de linhas de credito (tela LCREDI)
+    CURSOR cr_craplcr(pr_cdlcremp craplcr.cdlcremp%TYPE) IS
+      SELECT tpctrato,
+             cdusolcr
+        FROM craplcr
+       WHERE cdcooper = pr_cdcooper
+         AND cdlcremp = pr_cdlcremp;
+    rw_craplcr cr_craplcr%ROWTYPE;
+
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
     vr_cdcritic NUMBER;
@@ -1652,6 +1681,25 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       
     --- variavel cartoes
     vr_vltotccr NUMBER;
+
+    -- Projeto 410 - 29/03/2019 - SM - Verificar informaçoes de IOF e tarifa
+    vr_vlpreclc NUMBER := 0;               
+    vr_dscatbem varchar2(1000);
+    vr_vlemprst number;
+    vr_vlrdoiof number;
+    vr_vlrtarif number;
+    vr_vlrtares number;
+    vr_vltarbem number;
+    vr_vliofpri number;
+    vr_vliofadi number;
+    vr_flgimune PLS_INTEGER;
+    vr_tpctrato NUMBER := 0;               
+    vr_cdhisbem NUMBER := 0;               
+    vr_cdhistor NUMBER := 0;               
+    vr_cdusolcr NUMBER := 0;               
+    vr_vlfinanc NUMBER := 0;
+    vr_cdfvlcop crapfco.cdfvlcop%TYPE;
+    vr_qtdiascarenc NUMBER := 0;
 
   BEGIN
     
@@ -1696,6 +1744,95 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     END IF;
     CLOSE cr_crawepr;
     
+    -- Busca os dados do cadastro de linhas de credito
+    OPEN  cr_craplcr(rw_crawepr.cdlcremp);
+    FETCH cr_craplcr INTO rw_craplcr;
+    CLOSE cr_craplcr;
+    
+    -- Projeto 410 - SM - recalculo de IOF e tarifa para incluir no valor do emprestimo 
+    IF rw_crawepr.tpemprst = 2 THEN
+      EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_crawepr.idcarenc 
+                                        , pr_qtddias => vr_qtdiascarenc
+                                        , pr_cdcritic => vr_cdcritic
+                                        , pr_dscritic => vr_dscritic);
+                                        
+      IF vr_cdcritic <> 0 or NOT ( TRIM(vr_dscritic) IS NULL) THEN
+        RAISE vr_exc_erro;    
+      END IF;                                    
+                                                                                
+    END IF;
+             
+    IF rw_crawepr.idfiniof = 1 THEN
+       vr_dscatbem := '';
+       FOR rw_crapbpr IN cr_crapbpr LOOP
+           vr_dscatbem := vr_dscatbem || '|' || rw_crapbpr.dscatbem;
+       END LOOP;
+              
+       -- Buscar iof
+       TIOF0001.pc_calcula_iof_epr( pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_nrctremp => pr_nrctremp
+                                   ,pr_dtmvtolt => rw_crawepr.dtmvtolt
+                                   ,pr_inpessoa => rw_crapass.inpessoa
+                                   ,pr_cdfinemp => rw_crawepr.cdfinemp
+                                   ,pr_cdlcremp => rw_crawepr.cdlcremp
+                                   ,pr_qtpreemp => rw_crawepr.qtpreemp
+                                   ,pr_vlpreemp => rw_crawepr.vlpreemp
+                                   ,pr_vlemprst => rw_crawepr.vlemprst
+                                   ,pr_dtdpagto => rw_crawepr.dtdpagto
+                                   ,pr_dtlibera => rw_crawepr.dtlibera
+                                   ,pr_tpemprst => rw_crawepr.tpemprst
+                                   ,pr_dtcarenc        => rw_crawepr.dtcarenc
+                                   ,pr_qtdias_carencia => vr_qtdiascarenc
+                                   ,pr_valoriof => vr_vlrdoiof
+                                   ,pr_dscatbem => vr_dscatbem
+                                   ,pr_idfiniof => rw_crawepr.idfiniof
+                                   ,pr_dsctrliq => rw_crawepr.dsliquid
+                                   ,pr_idgravar => 'N'
+                                   ,pr_vlpreclc => vr_vlpreclc
+                                   ,pr_vliofpri => vr_vliofpri
+                                   ,pr_vliofadi => vr_vliofadi
+                                   ,pr_flgimune => vr_flgimune
+                                   ,pr_dscritic => vr_dscritic);
+                                         
+        -- VERIFICA SE OCORREU UMA CRITICA
+        IF vr_cdcritic <> 0 or NOT ( TRIM(vr_dscritic) IS NULL) THEN
+          RAISE vr_exc_erro;
+        END IF;
+            
+      -- Calcula tarifa
+      TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
+                               , pr_nrdconta => pr_nrdconta
+                               , pr_cdlcremp => rw_crawepr.cdlcremp
+                               , pr_vlemprst => rw_crawepr.vlemprst
+                               , pr_cdusolcr => rw_craplcr.cdusolcr 
+                               , pr_tpctrato => rw_craplcr.tpctrato
+                               , pr_dsbemgar => vr_dscatbem
+                               , pr_cdprogra => 'RelCET'
+                               , pr_flgemail => 'N'
+                               , pr_vlrtarif => vr_vlrtarif
+                               , pr_vltrfesp => vr_vlrtares
+                               , pr_vltrfgar => vr_vltarbem
+                               , pr_cdhistor => vr_cdhistor
+                               , pr_cdfvlcop => vr_cdfvlcop
+                               , pr_cdhisgar => vr_cdhistor
+                               , pr_cdfvlgar => vr_cdfvlcop
+                               , pr_cdcritic => vr_cdcritic
+                               , pr_dscritic => vr_dscritic);
+            
+      -- VERIFICA SE OCORREU UMA CRITICA
+      IF vr_cdcritic <> 0 or NOT ( TRIM(vr_dscritic) IS NULL) THEN
+        RAISE vr_exc_erro;
+      END IF;
+            
+      vr_vlrtarif := ROUND(nvl(vr_vlrtarif,0),2) + nvl(vr_vlrtares,0) + nvl(vr_vltarbem,0);
+                                               
+      -- valor total emprestado
+      vr_vlemprst := nvl(rw_crawepr.vlemprst,0) + nvl(vr_vlrdoiof,0) + nvl(vr_vlrtarif,0);      
+    ELSE
+      vr_vlemprst := rw_crawepr.vlemprst;
+    END IF; -- Projeto 410 - SM
+
     --> Criar objeto json para agencia da proposta
     vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
     vr_obj_agencia.put('PACodigo', pr_cdagenci);    
@@ -1735,7 +1872,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       vr_obj_proposta.put('cooperadoDocumento' , lpad(rw_crapass.nrcpfcgc,14,'0'));
     END IF;
     vr_obj_proposta.put('numero'             , rw_crawepr.nrctremp);
-    vr_obj_proposta.put('valor'              , fn_decimal_ibra(rw_crawepr.vlemprst));
+    vr_obj_proposta.put('valor'              , fn_decimal_ibra(vr_vlemprst));
     vr_obj_proposta.put('parcelaQuantidade'  , rw_crawepr.qtpreemp);
     vr_obj_proposta.put('parcelaPrimeiroVencimento', fn_Data_ibra(rw_crawepr.dtvencto));
     vr_obj_proposta.put('parcelaValor'       , fn_decimal_ibra(rw_crawepr.vlpreemp));
