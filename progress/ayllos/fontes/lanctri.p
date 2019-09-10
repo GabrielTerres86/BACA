@@ -245,6 +245,9 @@
                             
 			   03/09/2018 - Efetivaçao do seguro prestamista TR -- PRJ438 - Paulo Martins (Mouts)
                             
+               28/01/2019 - P410 Correcao duplicidade lancamento IOF tbgen_iof_lancamento
+                            (Douglas Pagel / AMcom).
+                            
 ............................................................................. */
 
 { includes/var_online.i }
@@ -1507,53 +1510,6 @@ DO WHILE TRUE:
              craplot.vlcompdb = craplot.vlcompdb + tel_vlemprst.
 
       VALIDATE crablem.
-      
-
-      /* Se houve valor de IOF calculado */
-      IF aux_vliofpri + aux_vliofadi > 0 THEN
-      DO:
-
-          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
-          /* Efetuar a chamada a rotina Oracle */
-          RUN STORED-PROCEDURE pc_insere_iof
-          aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper        /* Cooperativa              */ 
-                                              ,INPUT tel_nrdconta        /* Numero da Conta Corrente */
-                                              ,INPUT tel_dtmvtolt        /* Data de Movimento        */
-                                              ,INPUT 1                   /* Emprestimo               */
-                                              ,INPUT tel_nrctremp        /* Numero do Bordero        */
-                                              ,INPUT ?                   /* ID Lautom                */
-                                              ,INPUT tel_dtmvtolt        /* Data Movimento LCM       */
-                                              ,INPUT tel_cdagenci        /* Numero da Agencia LCM    */
-                                              ,INPUT 100                 /* Numero do Caixa LCM      */
-                                              ,INPUT tel_nrdolote        /* Numero do Lote LCM       */
-                                              ,INPUT tel_nrseqdig        /* Sequencia LCM            */
-                                              ,INPUT aux_vliofpri        /* Valor Principal IOF      */
-                                              ,INPUT aux_vliofadi        /* Valor Adicional IOF      */
-                                              ,INPUT 0                   /* Valor Complementar IOF   */
-                                              ,INPUT aux_flgimune        /* Possui imunidade tributária (1 - Sim / 0 - Nao) */
-                                              ,OUTPUT 0                  /* Codigo da Critica        */
-                                              ,OUTPUT "").               /* Descriçao da crítica     */
-                                              
-          /* Fechar o procedimento para buscarmos o resultado */ 
-          CLOSE STORED-PROC pc_insere_iof
-            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-          ASSIGN glb_cdcritic = 0
-                 glb_dscritic = ""
-                 glb_cdcritic = pc_insere_iof.pr_cdcritic
-                                WHEN pc_insere_iof.pr_cdcritic <> ?
-                 glb_dscritic = pc_insere_iof.pr_dscritic
-                                WHEN pc_insere_iof.pr_dscritic <> ?.
-          /* Se retornou erro */
-          IF glb_cdcritic > 0 OR glb_dscritic <> "" THEN 
-             DO:
-                 ASSIGN glb_dscritic = "Erro ao inserir lancamento de IOF: " + glb_dscritic.
-                 MESSAGE glb_dscritic.
-                 PAUSE 3 NO-MESSAGE.
-                 UNDO, RETURN.
-             END.
-      
-      END.
       
       /* Caso for emprestimos com emissao de boletos, criar crapsab
          Este tipo de emprestimo nao tem avalistas */

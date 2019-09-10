@@ -8513,6 +8513,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    15/08/2017 - Inclusao do campo qtdiacal. (Jaison/James - PRJ298)
 
                    01/02/2018 - Inclusao do campo vltaxprd. (James)
+                   
+                   28/01/2019 - P410 Ajuste para retornar o pr_nrseqdig. (Douglas Pagel / AMcom)
     ............................................................................. */
 
     DECLARE
@@ -8605,6 +8607,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Levantar Excecao
           RAISE vr_exc_erro;
       END;
+        --Retornar o número sequencial para o parametro de saida.
+        pr_nrseqdig := vr_nrseqdig;    
       END IF;
 
     EXCEPTION

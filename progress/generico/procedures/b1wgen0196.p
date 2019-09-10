@@ -28,6 +28,8 @@
 
 			   28/06/2018 - Ajustes projeto CDC. PRJ439 - CDC (Odirlei-AMcom)
 
+               27/11/2018 - P410 - Ajuste nrseqdig na chamada pc_insere_iof ORACLE. (Douglas Pagel/AMcom)
+
                21/12/2018 - P298.2.2 - Apresentar pagamento na carencia (Adriano Nagasava - Supero)
 
                21/04/2019 - P450 - Cessao de Cartao deve ter Qualificacao 5-Cessao
@@ -1115,7 +1117,7 @@ END PROCEDURE. /* END grava_dados */
                                                    ,INPUT craplot.cdagenci /* codigo da agencia  */
                                                    ,INPUT craplot.cdbccxlt /* Codigo caixa*/
                                                    ,INPUT craplot.nrdolote /* numero do lote */
-                                                   ,INPUT craplot.nrseqdig + 1 /* sequencia do lote */
+                                                   ,INPUT craplot.nrseqdig /* sequencia do lote */
                                                    ,INPUT aux_vliofpri /* par_vltariof     iof principal */
                                                    ,INPUT aux_vliofadi                /* iof adicional */
                                                    ,INPUT 0                /* iof complementar */

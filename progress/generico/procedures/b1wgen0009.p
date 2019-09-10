@@ -297,6 +297,8 @@
 
            19/09/2018 - Utilizar a funçao fn_sequence para gerar o nrseqdig (Jonata - Mouts PRB0040066).
 
+		   29/11/2018 - P410 - Ajuste na chamada pc_insere_iof para nrseqdig (Douglas Pagel / AMcom). 
+
 ............................................................................. */
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -12712,7 +12714,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                                               ,INPUT craplot.cdagenci       /* Chave: Agencia do Lancamento */
                                                               ,INPUT craplot.cdbccxlt       /* Chave: Caixa do Lancamento */
                                                               ,INPUT craplot.nrdolote       /* Chave: Lote do Lancamento */
-                                                              ,INPUT craplot.nrseqdig + 1   /* Chave: Sequencia do Lancamento */
+                                                              ,INPUT craplot.nrseqdig       /* Chave: Sequencia do Lancamento */
                                                               ,INPUT ROUND(aux_vltotiofpri, 2)  /* Valor do IOF Principal */
                                                               ,INPUT ROUND(aux_vltotiofadi, 2)  /* Valor do IOF Adicional */
                                                               ,INPUT ROUND(aux_vltotiofcpl, 2)  /* Valor do IOF Complementar */

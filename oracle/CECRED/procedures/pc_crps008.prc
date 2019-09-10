@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/92.                     Ultima atualizacao: 05/11/2018
+   Data    : Janeiro/92.                     Ultima atualizacao: 23/04/2019
 
    Dados referentes ao programa:
 
@@ -160,6 +160,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                06/08/2018 - Inclusao de maiores detalhes nos logs de erros - Andreatta (MOUTs) 
 
                05/11/2018 - Correção de erro na composição do saldo após débito do histórico 37 (Reginaldo/AMcom/P450)
+                            
+               23/04/2019 - Inclusão da chamada a TIOF0001.pc_insere_iof ao incrementar o valor do IOF no campo vliofmes
+                            (PRJ410 - SM - Douglas Pagel / AMcom)
                             
      ............................................................................. */
 
@@ -2251,6 +2254,26 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS008(pr_cdcooper  IN NUMBER            
                  vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||vr_dscritic;
                    RAISE vr_exc_saida;
                  END IF;
+                 
+                 -----------------------------------------------------------------------------------------------
+                 -- Efetuar a gravacao do IOF
+                 -----------------------------------------------------------------------------------------------
+                 TIOF0001.pc_insere_iof(pr_cdcooper   => pr_cdcooper
+                                       ,pr_nrdconta   => rw_crapsld(idx).nrdconta
+                                       ,pr_dtmvtolt   => rw_crapdat.dtmvtolt
+                                       ,pr_tpproduto  => 5   --> Adiantamento a Depositante
+                                       ,pr_nrcontrato => 0
+                                       ,pr_vliofpri   => vr_vliofpri
+                                       ,pr_vliofadi   => vr_vliofadi
+                                       ,pr_flgimune   => vr_flgimune
+                                       ,pr_cdcritic   => vr_cdcritic
+                                       ,pr_dscritic   => vr_dscritic);
+                                       
+                 -- Condicao para verificar se houve critica                             
+                 IF vr_dscritic IS NOT NULL THEN
+                 vr_dscritic := ' CONTA = '||gene0002.fn_mask_conta(rw_crapsld(idx).nrdconta)||' --> '||vr_dscritic;
+                   RAISE vr_exc_saida;
+                 END IF;                                       
                    
                  -- Atualizar valor do iof no mes na tabela de saldo
                  IF vr_flgimune = 0 THEN
