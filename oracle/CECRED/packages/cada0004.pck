@@ -4554,6 +4554,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED."CADA0004" IS
     --              25/02/2019 - P442 - Envio da Taxa na mensagem do PreAprovado (Marcos-Envolti)
     --
     --              22/07/2019 - Alteração de mensagens de bloqueio judicial para contas monitoradas (RITM0022588 - Joao Mannes (Mouts))
+    --              
+    --              09/09/2019 - Ajuste na formatação de mensagens de bloqueio judicial para contas monitoradas (INC0024009 - Andre Bohn (Mouts))
     -- ..........................................................................*/
 
     ---------------> CURSORES <----------------
@@ -6436,7 +6438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."CADA0004" IS
 
       FOR rw_processos_monitorados IN cr_processos_monitorados(pr_cdcooper => pr_cdcooper,
                                                                pr_nrdconta => pr_nrdconta) LOOP
-        vr_processos_monitorados := vr_processos_monitorados || ' Processo: '||rw_processos_monitorados.dsprocesso||'. '||rw_processos_monitorados.nmjuiz||'. Saldo a bloquear: '|| rw_processos_monitorados.vlsaldo||'. ';
+        vr_processos_monitorados := vr_processos_monitorados || ' Processo: '||rw_processos_monitorados.dsprocesso||'. '||rw_processos_monitorados.nmjuiz||'. Saldo a bloquear: R$ ' || to_char(rw_processos_monitorados.vlsaldo,'fm999g999g990d00') ||'. ';
       END LOOP;
       IF vr_id_conta_monitorada = 1 THEN
         pc_cria_registro_msg(pr_dsmensag             => 'Cooperado possui bloqueio judicial. '|| vr_processos_monitorados||'Conforme normativa do BACEN, débitos não serão autorizados.',
