@@ -38,7 +38,9 @@
 	<option value="S" <?php echo $cddopcao == 'S' ? 'selected' : '' ?>>S - Consultar o saldo cont&aacute;bil.</option>
 	<option value="T" <?php echo $cddopcao == 'T' ? 'selected' : '' ?>>T - Pesquisar uma cust&oacute;dia informando apenas o valor.</option>
 	<option value="H" <?php echo $cddopcao == 'H' ? 'selected' : '' ?>>H - Resgatar Cheques em Cust&oacute;dia.</option>
+<!--
 	<option value="X" <?php echo $cddopcao == 'X' ? 'selected' : '' ?>>X - Cancelamento Resgate de Cheque.</option>
+-->
 	<option value="L" <?php echo $cddopcao == 'L' ? 'selected' : '' ?>>L - Conciliar/Custodiar Cheque.</option>
 	<option value="I" <?php echo $cddopcao == 'I' ? 'selected' : '' ?>>I - Incluir Cheque em Cust&oacute;dia.</option>
 	<option value="N" <?php echo $cddopcao == 'N' ? 'selected' : '' ?>>N - Imprimir comprovante de resgate de cheque custodiado.</option>
