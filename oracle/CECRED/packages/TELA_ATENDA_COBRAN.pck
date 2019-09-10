@@ -6354,7 +6354,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
             vr_nmvinculacao              := rw_info_desconto.nmvinculacao;
         ELSE
             vr_qtdmes_retorno_reciproci  := 0;
-            vr_flgdebito_reversao        := 1;
+            vr_flgdebito_reversao        := 0;
             vr_qtdfloat                  := 1;
             vr_vldesconto_adicional_coo  := 0;
             vr_idfim_desc_adicional_coo  := 0;

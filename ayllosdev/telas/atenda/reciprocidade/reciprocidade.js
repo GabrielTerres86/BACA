@@ -2813,7 +2813,7 @@ function validaDados(pedeSenha) {
     vDataFimAdicionalCoo = Number(cDataFimAdicionalCoo.find('option:selected').text());
     vJustificativaDesc = cJustificativaDesc.val();
     vQtdFloat = $('#qtdfloat', '.tabelaDesconto').val();
-    vDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto').val();
+    //vDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto').val();
     
     // valida se o campo Data fim do contrato está preenchido
     if (!vDataFimContrato) {
@@ -2842,7 +2842,8 @@ function validaDados(pedeSenha) {
     }
 
 
-    if ((vQtdFloat == 0 || vDebitoReajusteReciproci == 0) && !vJustificativaDesc) {
+    //if ((vQtdFloat == 0 || vDebitoReajusteReciproci == 0) && !vJustificativaDesc) {
+    if ((vQtdFloat == 0) && !vJustificativaDesc) {
         showError("error", "&Eacute; necess&aacute;rio informar o campo Justificativa desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
@@ -2953,8 +2954,8 @@ function incluiDesconto(houveAlteracao) {
     var descricaoJustificativaDesconto = vJustificativaDesc;
     if (parseInt($('#vldesconto_cee', '.tabelaDesconto').val() || 0) <= 0 && 
         parseInt($('#vldesconto_coo', '.tabelaDesconto').val() || 0) <= 0 &&
-        parseInt($('#qtdfloat', '.tabelaDesconto').val() || 0) > 0 &&
-        $('#debito_reajuste_reciproci', '.tabelaDesconto').val() > 0
+        parseInt($('#qtdfloat', '.tabelaDesconto').val() || 0) > 0
+        //$('#debito_reajuste_reciproci', '.tabelaDesconto').val() > 0
         ) {
         descricaoJustificativaDesconto = "";
     }
@@ -3017,8 +3018,8 @@ function validaHabilitacaoCamposBtn(cddopcao) {
     var cJustificativaDescOld = $('#txtjustificativa_old', '.tabelaDesconto');
     var cQtdFloatOld = $('#qtdfloat_old', '.tabelaDesconto');
     var cQtdFloat = $('#qtdfloat', '.tabelaDesconto');
-    var cDebitoReajusteReciprociOld = $('#debito_reajuste_reciproci_old', '.tabelaDesconto');
-    var cDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto');
+    //var cDebitoReajusteReciprociOld = $('#debito_reajuste_reciproci_old', '.tabelaDesconto');
+    //var cDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto');
 
     
 
@@ -3034,8 +3035,8 @@ function validaHabilitacaoCamposBtn(cddopcao) {
     var vJustificativaDescOld = cJustificativaDescOld.val();
     var vQtdFloatOld = cQtdFloatOld.val();
     var vQtdFloat = cQtdFloat.val();
-    var vDebitoReajusteReciprociOld = cDebitoReajusteReciprociOld.val();
-    var vDebitoReajusteReciproci = cDebitoReajusteReciproci.val();
+    //var vDebitoReajusteReciprociOld = cDebitoReajusteReciprociOld.val();
+    //var vDebitoReajusteReciproci = cDebitoReajusteReciproci.val();
 
 
     if (!cee && !coo) {
@@ -3066,8 +3067,9 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 			(vDataFimAdicionalCoo != vDataFimAdicionalCooOld && vDataFimAdicionalCoo) ||
             (vJustificativaDesc != vJustificativaDescOld && vJustificativaDesc && vJustificativaDescOld) ||
             (atualizacaoDesconto) || 
-            (vQtdFloat == 0 && (vQtdFloat != vQtdFloatOld) ) ||
-            (vDebitoReajusteReciproci == 0 && (vDebitoReajusteReciproci != vDebitoReajusteReciprociOld)) ) {
+            (vQtdFloat == 0 && (vQtdFloat != vQtdFloatOld) )
+            //(vDebitoReajusteReciproci == 0 && (vDebitoReajusteReciproci != vDebitoReajusteReciprociOld)) ) {
+             ) {
 
         btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
         btnContinuar.prop('disabled', true);

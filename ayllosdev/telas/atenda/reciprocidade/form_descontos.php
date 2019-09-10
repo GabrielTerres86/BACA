@@ -504,7 +504,7 @@ cVldesconto_coo = $('#vldesconto_coo', '.tabelaDesconto');
 cDataFimAdicionalCee = $('#dtfimadicional_cee', '.tabelaDesconto');
 cDataFimAdicionalCoo = $('#dtfimadicional_coo', '.tabelaDesconto');
 cJustificativaDesc = $('#txtjustificativa', '.tabelaDesconto');
-cDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto');
+// cDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto');
 
 validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 validaEmiteExpede(false);
@@ -515,9 +515,9 @@ cDataFimContrato.change(function (){
 });
 
 
-cDebitoReajusteReciproci.change(function(){
-	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
-});
+// cDebitoReajusteReciproci.change(function(){
+//	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
+//});
 
 $('#vldesconto_cee, #vldesconto_coo, #txtjustificativa').bind('keyup', function (){
 	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
