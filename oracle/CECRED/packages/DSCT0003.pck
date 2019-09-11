@@ -11357,7 +11357,7 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
        AND lim.nrdconta = pr_nrdconta
        AND lim.nrctrlim = pr_nrctrlim
        AND lim.tpctrlim = 3
-       AND lim.nrgarope > 0
+--       AND lim.nrgarope > 0
        AND lim.nrliquid > 0;
     rw_crawlim cr_crawlim%ROWTYPE;
     vr_habrat VARCHAR2(1) := 'N'; -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
@@ -11399,6 +11399,7 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
         CLOSE cr_crawlim;
       END IF;
 
+/*
       IF (vr_cdcooper <> 3 AND vr_habrat = 'S') THEN
         OPEN cr_rating_novo(pr_cdcooper => vr_cdcooper
                            ,pr_nrdconta => pr_nrdconta
@@ -11417,7 +11418,8 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
           END IF;
         END IF;
       END IF;
-      
+*/
+
       -- inicializar o clob
       vr_des_xml := null;
       dbms_lob.createtemporary(vr_des_xml, true);
