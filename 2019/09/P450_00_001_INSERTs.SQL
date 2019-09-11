@@ -15,7 +15,7 @@ INSERT INTO crapprm (nmsistem,cdcooper,cdacesso,dstexprm,dsvlrprm)
         ,0                                              --cdcooper (Geral para Todas as Cooperativas)
         ,'DT_CORTE_REFOR_RATING'                        --cdacesso
         ,'Data de Corte do Projeto Reformulação Rating' --dstexprm
-        ,'18/09/2019');                                 --dsvlrprm
+        ,'13/09/2019');                                 --dsvlrprm
 
 
 
