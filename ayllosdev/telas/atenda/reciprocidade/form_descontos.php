@@ -473,7 +473,7 @@ atualizacaoDesconto = false;
 		<tr class="corPar">
 			<td>
 				<textarea name="txtjustificativa_old" id="txtjustificativa_old" style="display:none"><?php echo utf8_decode($vr_dsjustificativa_desc_adic); ?></textarea>
-				<textarea name="txtjustificativa" id="txtjustificativa" class="textarea campoTelaSemBorda" disabled style="width: 100%;min-height: 70px;"><?php echo utf8_decode($vr_dsjustificativa_desc_adic); ?></textarea>
+				<textarea name="txtjustificativa" id="txtjustificativa" class="textarea campoTelaSemBorda" disabled onchange="validaDados(true); return false;" style="width: 100%;min-height: 70px;"><?php echo utf8_decode($vr_dsjustificativa_desc_adic); ?></textarea>
 			</td>
 		</tr>
 	</table>
