@@ -263,6 +263,12 @@
 						   
               12/12/2018 - Alterado mascara do contrato nas procedures gera-arquivo-impressao-rating
                            e efetivar_rating (Andre Clemer - Supero)
+
+              07/05/2019 - Alterado na procedure verifica_rating para o rating antigo ser usado apenas pela central Ailos
+                           (Luiz Otávio Olinger Momm - AMCOM)
+
+              16/08/2019 - P450 - Na procedure obtem_emprestimo_risco, incluido pr_nrctremp
+                           (Elton - AMCOM)
 .............................................................................*/
   
   
@@ -1345,10 +1351,26 @@ PROCEDURE calcula-rating:
 
     DEF VAR          par_flgefeti AS LOGI                            NO-UNDO.
     DEF VAR          aux_flgatuas AS LOGI INIT FALSE                 NO-UNDO.
+    DEF VAR          aux_habrat   AS CHAR                            NO-UNDO. /* P450 - Rating */
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-crapras.
-    
+
+    FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
+                             crapprm.cdacesso = 'HABILITA_RATING_NOVO' AND
+                             crapprm.cdcooper = par_cdcooper
+                             NO-LOCK NO-ERROR.
+       
+    ASSIGN aux_habrat = 'N'.
+    IF AVAIL crapprm THEN DO:
+      ASSIGN aux_habrat = crapprm.dsvlrprm.
+    END.
+       
+    /* Habilita novo rating */
+    IF aux_habrat = 'S' AND par_cdcooper <> 3 THEN DO:
+      RETURN "OK".
+    END.
+    /* Habilita novo rating */
     
     /* Limpa as outras temp-table na procedure gera-arquivo-impressao-rating */
     
@@ -3351,11 +3373,28 @@ PROCEDURE verifica_rating:
     DEF VAR          aux_nrliquid AS INTE                             NO-UNDO.
     DEF VAR          aux_nrpatlvr AS INTE                             NO-UNDO.
     DEF VAR          aux_nrperger AS INTE                             NO-UNDO.
+    DEF VAR          aux_habrat   AS CHAR                             NO-UNDO. /* P450 - Rating */
 
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
+
+    FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
+                              crapprm.cdacesso = 'HABILITA_RATING_NOVO' AND
+                              crapprm.cdcooper = par_cdcooper
+                              NO-LOCK NO-ERROR.
+       
+    ASSIGN aux_habrat = 'N'.
+    IF AVAIL crapprm THEN DO:
+      ASSIGN aux_habrat = crapprm.dsvlrprm.
+    END.
+
+    /* Habilita novo rating */
+    IF aux_habrat = 'S' AND par_cdcooper <> 3 THEN DO:
+      RETURN "OK".
+    END.
+    /* Habilita novo rating */
 
     IF  par_flgerlog  THEN
         ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -4424,6 +4463,7 @@ PROCEDURE obtem_emprestimo_risco:
     DEF  INPUT PARAM par_cdlcremp AS INTE                            NO-UNDO.
     DEF  INPUT PARAM par_nrctrliq AS INTE EXTENT 10                  NO-UNDO.
     DEF  INPUT PARAM par_dsctrliq AS CHAR                            NO-UNDO.
+    DEF  INPUT PARAM par_nrctremp AS INTE                            NO-UNDO.	
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM par_nivrisco AS CHAR                            NO-UNDO.
@@ -4463,6 +4503,7 @@ PROCEDURE obtem_emprestimo_risco:
                   ,INPUT par_cdfinemp /* pr_cdfinemp --> Finalidade do emprestimo */
                   ,INPUT par_cdlcremp /* pr_cdlcremp --> Linha de credito do emprestimo */
                   ,INPUT aux_dsctrliq /* pr_dsctrliq --> Lista de descriçoes de situaçao dos contratos */
+                  ,INPUT par_nrctremp /*             --> Número contrato emprestimo - P450 */
                   /* --------- OUT --------- */
                   ,OUTPUT ""          /* pr_nivrisco --> Retorna nivel do risco  */
                   ,OUTPUT ""          /* pr_dscritic --> Descriçao da critica    */

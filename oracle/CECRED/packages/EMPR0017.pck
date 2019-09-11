@@ -363,10 +363,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   -- Frequencia: Sempre que for chamada
   -- Objetivo  : Rotinas focando no processo de simulação/contratação de emprestimo
   --
-  -- Alterações: 
+  -- Alterações:
   --
-  --          16/07/2019 - PRJ 438 - Alterado rotinas pc_start_motor, pc_aciona_motor para controle de reenvio de analise pelo JOB
-  --                       Rafael Rocha (AmCom)
+  --            16/07/2019 - PRJ 438 - Alterado rotinas pc_start_motor, pc_aciona_motor para controle de reenvio de analise pelo JOB
+  --                         Rafael Rocha (AmCom)
+
+  --
+  --            04/09/2019 - Adicionaro efetivacao Rating na efetivacao da proposta 
+  --                         na pc_solicita_contratacao (Luiz Otávio Olinger Momm - AMCOM)
+  --
   ---------------------------------------------------------------------------------------------------------------
   --
   -- variáveis globais
@@ -5749,6 +5754,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                      02/08/2019 - Inclusão da validação da Linha de Crédito e ajuste no valor do campo crawepr.tpdescto
                                   (Douglas Pagel / AMcom). 
 
+                     16/08/2019 - P450 - Na chamada da pc_obtem_emprestimo_risco, incluir pr_nrctremp
+                                  (Elton / AMcom). 
       ............................................................................. */
 
     CURSOR cr_contrato(pr_cdcooper IN crawepr.cdcooper%TYPE
@@ -5831,6 +5838,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                       pr_cdfinemp => pr_cdfinemp, 
                       pr_cdlcremp => pr_cdlcremp, 
                       pr_dsctrliq => '', 
+                      pr_nrctremp => pr_nrctremp, -- P450
                       pr_nivrisco => vr_dsnivris,
                       pr_dscritic => vr_dscritic, 
                       pr_cdcritic => vr_cdcritic);
@@ -6231,6 +6239,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
 
        frequencia: sempre que for chamado.
        objetivo  : procedure para efetivar propostas de emprestimo
+       alterações:
+                   04/09/2019 - Adicionaro efetivacao Rating na efetivacao da proposta 
+                                na pc_solicita_contratacao (Luiz Otávio Olinger Momm - AMCOM)
+
       ............................................................................. */
    --
    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -6263,6 +6275,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
    vr_nmarqpdf    VARCHAR2(100);  
    vr_nmdirpdf    VARCHAR2(200);
    vr_rowid       ROWID;
+   vr_habrat       VARCHAR2(1) := 'N';    -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
+   vr_strating     NUMBER;                -- P450
+   vr_flgrating    NUMBER;                -- P450
+   vr_vlendivid    craplim.vllimite%TYPE; -- P450 - Valor do Endividamento do Cooperado
+   vr_vllimrating  craplim.vllimite%TYPE; -- P450 - Valor do Parametro Rating (Limite) TAB056
    --
    --
    CURSOR cr_crawepr(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -6444,6 +6461,72 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     
     --/ grava efetivacao da proposta
     --
+
+    -- P450 SPT13 - alteracao para habilitar rating novo
+    vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                           pr_cdcooper => rw_crawepr.cdcooper,
+                                           pr_cdacesso => 'HABILITA_RATING_NOVO');
+
+    IF (rw_crawepr.cdcooper <> 3 AND vr_habrat = 'S') THEN
+          
+       /* Validar Status rating */
+       RATI0003.pc_busca_status_rating(pr_cdcooper  => rw_crawepr.cdcooper
+                                      ,pr_nrdconta  => rw_crawepr.nrdconta
+                                      ,pr_nrctrato  => rw_crawepr.nrctremp
+                                      ,pr_tpctrato  => 90
+                                      ,pr_strating  => vr_strating
+                                      ,pr_flgrating => vr_flgrating
+                                      ,pr_cdcritic  => vr_cdcritic
+                                      ,pr_dscritic  => vr_dscritic);
+
+       IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_saida;
+       END IF;
+       -- Buscar Valor Endividamento e Valor Limite Rating (TAB056)
+       RATI0003.pc_busca_endivid_param(pr_cdcooper => rw_crawepr.cdcooper
+                                      ,pr_nrdconta => rw_crawepr.nrdconta
+                                      ,pr_vlendivi => vr_vlendivid
+                                      ,pr_vlrating => vr_vllimrating
+                                      ,pr_dscritic => vr_dscritic);
+       IF TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_saida;
+       END IF;
+
+       -- Status do rating inválido
+       IF vr_flgrating = 0 THEN
+         vr_dscritic := 'Contrato não pode ser efetivado porque não há Rating válido.';
+         RAISE vr_exc_saida;
+
+       ELSE -- Status do rating válido
+
+         -- Se Endividamento + Contrato atual > Parametro Rating (TAB056
+         IF (vr_vlendivid  > vr_vllimrating) THEN
+
+           -- Gravar o Rating da operação, efetivando-o
+           rati0003.pc_grava_rating_operacao(pr_cdcooper          => rw_crawepr.cdcooper
+                                            ,pr_nrdconta          => rw_crawepr.nrdconta
+                                            ,pr_nrctrato          => rw_crawepr.nrctremp
+                                            ,pr_tpctrato          => 90
+                                            ,pr_dtrating          => rw_crapdat.dtmvtolt
+                                            ,pr_strating          => 4
+                                            ,pr_cdoprrat          => rw_crawepr.cdoperad
+                                            ,pr_nrcpfcnpj_base    => rw_crapass.nrcpfcnpj_base
+                                            --Variáveis para gravar o histórico
+                                            ,pr_cdoperad          => rw_crawepr.cdoperad
+                                            ,pr_dtmvtolt          => rw_crapdat.dtmvtolt
+                                            ,pr_justificativa     => 'Efetivado através do Internet Banking'
+                                            --Variáveis de crítica
+                                            ,pr_cdcritic          => vr_cdcritic
+                                            ,pr_dscritic          => vr_dscritic);
+
+           IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+             RAISE vr_exc_saida;
+           END IF;
+         END IF;
+       END IF;
+     END IF;
+     -- P450 SPT13 - alteracao para habilitar rating novo
+    
      empr0014.pc_grava_efetivacao_proposta(pr_cdcooper => rw_crawepr.cdcooper,
                                            pr_cdagenci => rw_crawepr.cdagenci,
                                            pr_nrdcaixa => NULL,
@@ -7734,7 +7817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     rw_reenvio cr_reenvio%ROWTYPE;
        
     vr_des_reto VARCHAR2(10);
-
+    
     vr_cdagenci tbepr_reenvio_analise.cdagenci%TYPE;
     vr_cdoperad tbepr_reenvio_analise.cdoperad%TYPE;
 
@@ -7758,7 +7841,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
            vr_cdoperad := nvl(rw_reenvio.cdoperad,'');  
          ELSE
            CLOSE cr_reenvio;
-       END IF; 
+         END IF;
        END IF; 
        
        IF nvl(vr_cdagenci,0) = 0 THEN
@@ -7770,8 +7853,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        END IF;
 
          pc_inclui_proposta_esteira(pr_cdcooper => rw_crawepr.cdcooper
-                                 ,pr_cdagenci => vr_cdagenci 
-                                 ,pr_cdoperad => vr_cdoperad
+                                   ,pr_cdagenci => vr_cdagenci 
+                                   ,pr_cdoperad => vr_cdoperad
                                    ,pr_cdorigem => rw_crawepr.cdorigem
                                    ,pr_nrdconta => rw_crawepr.nrdconta
                                    ,pr_nrctremp => rw_crawepr.nrctremp
@@ -7809,7 +7892,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
          AND JOB_ACTION LIKE '%pr_cdcooper => '||pr_cdcooper||'%'
          AND JOB_ACTION LIKE '%pr_nrdconta => '||pr_nrdconta||'%'
          AND JOB_ACTION LIKE '%pr_nrctremp => '||pr_nrctremp||'%';
-   
     rw_verifica_job cr_verifica_job%ROWTYPE;
     --
     -- Bloco PLSQL para chamar a execução paralela do pc_crps414

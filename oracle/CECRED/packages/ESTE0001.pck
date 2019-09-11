@@ -312,6 +312,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
           16/07/2019 - PRJ 438 - Add. pc_notificacoes_prop,fn_agenda_reenvio_analise,pc_job_reenvio_analise,pc_email_reenvio_analise
                      - Rafael R. Santos(AmCom)
 
+                  24/08/2019 - PRJ 450 - Adicionado no JSON o nivelRisco para enviar para a esteira a nota recebida
+                               do motor (Luiz Otavio Olinger Momm - AMCOM)
+
+                  27/08/2019 - PRJ 450 - Adicionado leitura do segmento enviado pela IBRATAN na 
+                               pc_solicita_retorno_analise do motor (Luiz Otavio Olinger Momm - AMCOM)
+
+  -------------------------------------
+
   ---------------------------------------------------------------------------------------------------------------*/
   --/ variavel global para controle do JOB de reenvio para analise
   vg_job_reenvio_analise BOOLEAN := FALSE;
@@ -1595,6 +1603,16 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
          AND ris.cdmodali in(299,499)
          AND ris.inddocto = 1;
     vr_qtddiatr NUMBER;
+    
+    -- Busca NivelRating - P450 24/08/2019
+    CURSOR cr_risco_operacoes IS
+      SELECT oper.inrisco_rating_autom, oper.innivel_rating, oper.inpontos_rating
+        FROM tbrisco_operacoes oper
+       WHERE oper.tpctrato = 90
+         AND oper.cdcooper = pr_cdcooper
+         AND oper.nrdconta = pr_nrdconta
+         AND oper.nrctremp = pr_nrctremp;
+    rw_risco_operacoes cr_risco_operacoes%ROWTYPE;
 
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
@@ -1611,6 +1629,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_obj_imagem   json := json();
     vr_lst_doctos   json_list := json_list();
     vr_json_valor   json_value;
+    vr_obj_indicadores     json := json(); -- P450 24/08/2019 - Indicadores Rating
     
     -- Variaveis auxiliares
     vr_data_aux     DATE := NULL;
@@ -1688,6 +1707,28 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_obj_agencia.put('PACodigo', rw_crapass.cdagenci);    
     vr_obj_proposta.put('cooperadoContaPA' ,vr_obj_agencia);
     
+    -- Informar Nota Rating para Esteira - P450 24/08/2019
+    OPEN cr_risco_operacoes;
+    FETCH cr_risco_operacoes INTO rw_risco_operacoes;
+
+    -- Se não localizar não incluir o bloco de indicadoresGeradosRegra que viria do MOTOR - P450 24/08/2019
+    IF cr_risco_operacoes%FOUND THEN
+
+        IF rw_risco_operacoes.innivel_rating = 1 THEN
+          vr_obj_proposta.put('parecerPreAnalise', 'BAIXO');
+        END IF;
+        IF rw_risco_operacoes.innivel_rating = 2 THEN
+          vr_obj_proposta.put('parecerPreAnalise', 'MEDIO');
+        END IF;
+        IF rw_risco_operacoes.innivel_rating = 3 THEN
+          vr_obj_proposta.put('parecerPreAnalise', 'ALTO');
+        END IF;
+
+        vr_obj_proposta.put('ratingPolitica', rw_risco_operacoes.inrisco_rating_autom);
+        vr_obj_proposta.put('notaRating', rw_risco_operacoes.inpontos_rating);
+    END IF;
+    CLOSE cr_risco_operacoes;
+
     -- Nr. conta sem o digito
     vr_obj_proposta.put('cooperadoContaNum',to_number(substr(rw_crapass.nrdconta,1,length(rw_crapass.nrdconta)-1)));
     -- Somente o digito
@@ -1723,8 +1764,11 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
        3 – Desconto Cheques 
        4 – Desconto Títulos 
        5 – Cartão de Crédito 
-       6 – Limite de Crédito) */
-       
+       6 – Limite de Crédito
+       9 – Consignado
+       10 - Rating
+       12 - Limite de Pré-aprovado
+     */
     -- Se for CDC e diversos
     IF rw_crawepr.cdfinemp = 58 AND rw_crawepr.inlcrcdc = 1 THEN
       vr_obj_proposta.put('produtoCreditoSegmentoCodigo'    ,0); -- CDC Diversos
@@ -2130,8 +2174,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                   15/12/2017 - P337 - SM - Ajustes no envio para retormar reinício 
                                de fluxo (Marcos-Supero)        
 
-                  17/07/2019 - Inclusao da chamada da fn_agenda_reenvio_analise
-                               Rafael Rocha (AmCom)
+                  16/04/2019 - p450 Projeto rating chamado rotina para rati0004.pc_solicita_retorno
+                               para resgatar o rating da ibratan e salvar em tbrisco operações  
+
     ..........................................................................*/
     
     -----------> VARIAVEIS <-----------
@@ -2203,7 +2248,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
     vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
-    --
+    vr_habrat VARCHAR2(1) := 'N'; -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
     --/ verifica se existe reenvio automatico agendado para a proposta de credito em execucao
     FUNCTION fn_reenvio_ativo_job(pr_cdcooper  IN crawepr.cdcooper%TYPE
                                  ,pr_nrdconta  IN crawepr.nrdconta%TYPE
@@ -2234,15 +2279,20 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     --/  
     vr_existe_agend NUMBER(5);
     --
-    BEGIN
-      --/
+  BEGIN    
+
+    vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                           pr_cdcooper => pr_cdcooper,
+                                           pr_cdacesso => 'HABILITA_RATING_NOVO');
+					   
       FOR rw IN ( SELECT ROWID
                     FROM tbepr_reenvio_analise tra
                    WHERE tra.cdcooper = pr_cdcooper
                      AND tra.nrdconta = pr_nrdconta
                      AND tra.nrctremp = pr_nrctremp
                  )
-      LOOP                    
+      LOOP  
+           
   
        UPDATE tbepr_reenvio_analise
           SET insitrnv = 5  -- Cancelado
@@ -2534,6 +2584,25 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                 END LOOP;
               END IF;
             END IF;
+
+      -- P450 SPT13 - alteracao para habilitar rating novo
+      IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
+        --> Gravar a analise do Rating a partir do retorno do Motor
+        rati0004.pc_busca_rating_motor(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_nrctrato => pr_nrctremp
+                                      ,pr_tpctrato => 90
+                                      ,pr_dtmvtolt => pr_dtmvtolt
+                                      ,pr_dsconteudo_requisicao => vr_dsconteudo_requisicao
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+
+        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+      -- P450 SPT13 - alteracao para habilitar rating novo
+
           EXCEPTION
             WHEN OTHERS THEN 
               -- Ignorar se o conteudo nao for JSON não conseguiremos ler as mensagens
@@ -2767,7 +2836,6 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := 'Não foi possivel realizar inclusao da proposta de Análise de Crédito: '||SQLERRM;
-
       IF NOT ( este0001.fn_agenda_reenvio_analise(pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_cdagenci,pr_cdoperad) ) THEN
         --/
         este0001.pc_notificacoes_prop(pr_cdcooper,pr_nrdconta,pr_nrctremp,vr_cdcritic,vr_dscritic);          
@@ -3553,7 +3621,6 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                 pr_dsdirlog     => NULL,
                                 pr_dstiplog     => 'O',
                                 PR_CDPROGRAMA   => NULL);      
-
       IF NOT ( este0001.fn_agenda_reenvio_analise(pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_cdagenci,pr_cdoperad) ) THEN
         --/
         este0001.pc_notificacoes_prop(pr_cdcooper,pr_nrdconta,pr_nrctremp,vr_cdcritic,vr_dscritic);          
@@ -4459,7 +4526,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
      , 6 – Desconto de Títulos – Borderô
      , 7 – Cartão de Crédito
      , 8 – Limite de Crédito (Conta)
-     , 9 – Consignado)
+     , 9 – Consignado
+     , 10 - Rating
+     , 12 - Limite de Pré-aprovado)
      */
 
     IF rw_crawepr.cdfinemp = 58 and rw_crawepr.inlcrcdc = 1 THEN
@@ -4928,10 +4997,11 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     IF vr_obj_retorno.exist('situacao') THEN
       vr_cdsitest   := vr_obj_retorno.get('situacao').to_char();
     END IF;
-    
-    --> Código do segmento de produto de crédito 
-    -- (0 – CDC Diversos, 1 – CDC Veículos, 2 – Empréstimos/Financiamentos, 
-    -- 3 – Desconto Cheques, 4 – Desconto Títulos, 5 – Cartão de Crédito, 6 – Limite de Crédito) 
+
+    --> Código do segmento de produto de crédito
+    -- (0 – CDC Diversos, 1 – CDC Veículos, 2 – Empréstimos/Financiamentos,
+    -- 3 – Desconto Cheques, 4 – Desconto Títulos, 5 – Cartão de Crédito, 6 – Limite de Crédito,
+    -- 10 - Rating, 12 - Limite de Pré-aprovado)
     IF vr_obj_retorno.exist('produtoCreditoSegmentoCodigo') THEN
       vr_cdsegpro_ret := vr_obj_retorno.get('produtoCreditoSegmentoCodigo').to_char();    
     END IF;
@@ -5218,7 +5288,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     
     Frequencia: Sempre que for chamado
     Objetivo  : Tem como objetivo solicitar o retorno da analise no Motor
-    Alteração : 
+    Alteração : 27/08/2019 - PRJ 450 - Adicionado leitura do segmento enviado pela IBRATAN na 
+                             pc_solicita_retorno_analise do motor (Luiz Otavio Olinger Momm - AMCOM)
         
   ..........................................................................*/
 
@@ -5264,9 +5335,14 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_request  json0001.typ_http_request;
     vr_response json0001.typ_http_response;
 	
-	  -- Cursores
-	  rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-    
+    -- Variáveis do rating
+    vr_in_risco_rat       INTEGER;
+    vr_inpontos_rating    tbrisco_operacoes.inpontos_rating%type;
+    vr_innivel_rating     tbrisco_operacoes.innivel_rating%type;
+
+    -- Cursores
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
     -- Cooperativas com análise automática obrigatória
     CURSOR cr_crapcop IS
       SELECT cdcooper
@@ -5297,13 +5373,29 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
          AND wpr.insitest = 1-- Enviadas para Analise Automática
          /*FOR UPDATE*/;
 
+    -- Busca do nr cpfcnpj base do associado
+    CURSOR cr_crapass_ope (pr_cdcooper  IN crapass.cdcooper%TYPE     --> Coop. conectada
+                          ,pr_nrdconta  IN crapass.nrdconta%TYPE) IS --> Codigo Conta
+      SELECT ass.nrcpfcnpj_base
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass_ope   cr_crapass_ope%ROWTYPE;
+
     -- Variaveis para DEBUG
-    vr_flgdebug VARCHAR2(100);
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
-              
-	BEGIN
-    
-		-- Buscar todas as Coops com obrigatoriedade de Análise Automática    
+    vr_flgdebug             VARCHAR2(100);
+    vr_idaciona             tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_insegmento_rating    tbrisco_operacoes.insegmento_rating%TYPE;    -- 27/08/2019 - PRJ 450
+
+    vr_habrat VARCHAR2(1) := 'N'; -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
+
+  BEGIN
+
+    vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                           pr_cdcooper => pr_cdcooper,
+                                           pr_cdacesso => 'HABILITA_RATING_NOVO');
+
+    -- Buscar todas as Coops com obrigatoriedade de Análise Automática
     FOR rw_crapcop IN cr_crapcop LOOP
       
       -- Buscar o tempo máximo de espera em segundos pela analise do motor		
@@ -5561,11 +5653,19 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                 vr_nrliquid := ltrim(rtrim(vr_obj_indicadores.get('liquidez').to_char(),'"'),'"');
               END IF;
 
-              -- Garantia -- 
+              -- Garantia --
               IF vr_obj_indicadores.exist('garantia') THEN
                 vr_nrgarope := ltrim(rtrim(vr_obj_indicadores.get('garantia').to_char(),'"'),'"');
               END IF;
-      		    
+
+              --> Segmento -->
+              IF vr_obj_indicadores.exist('segmento') THEN
+                 vr_insegmento_rating := ltrim(rtrim(vr_obj_indicadores.get('segmento').to_char(),'"'),'"');
+                 IF UPPER(vr_insegmento_rating) = 'NULL' OR vr_insegmento_rating IS NULL THEN
+                   vr_insegmento_rating := '';
+                 END IF;
+              END IF;
+
               -- Indicador de operação de crédito em atraso
               IF vr_obj_indicadores.exist('liquidOpCredAtraso') THEN
                 vr_inopeatr := ltrim(rtrim(vr_obj_indicadores.get('liquidOpCredAtraso').to_char(),'"'),'"');
@@ -5649,11 +5749,62 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                                 ,pr_idfluata => vr_idfluata -- PJ637
                                                 -- OUT (Não trataremos retorno de erro pois é tudo efetuado na rotina chamada)
                                                 ,pr_xmllog   => vr_xmllog 
-                                                ,pr_cdcritic => vr_cdcritic 
-                                                ,pr_dscritic => vr_dscritic 
-                                                ,pr_retxml   => vr_retxml   
-                                                ,pr_nmdcampo => vr_nmdcampo 
+                                                ,pr_cdcritic => vr_cdcritic
+                                                ,pr_dscritic => vr_dscritic
+                                                ,pr_retxml   => vr_retxml
+                                                ,pr_nmdcampo => vr_nmdcampo
                                                 ,pr_des_erro => vr_des_erro );
+
+            -- P450 SPT13 - alteracao para habilitar rating novo
+            IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
+              IF lower(vr_dsresana) = 'aprovar'
+                OR lower(vr_dsresana) = 'reprovar'
+                OR lower(vr_dsresana) = 'derivar'  THEN
+
+                OPEN cr_crapass_ope(pr_cdcooper
+                                   ,pr_nrdconta);
+                FETCH cr_crapass_ope INTO rw_crapass_ope;
+                CLOSE cr_crapass_ope;
+
+                vr_in_risco_rat  := risc0004.fn_traduz_nivel_risco(vr_indrisco);
+
+                -- Gravar o Rating da operação que retornou do Ibratan
+                RATI0003.pc_grava_rating_operacao(pr_cdcooper           => pr_cdcooper       -- confirmar parametro AMCOMLUIZ
+                                                 ,pr_nrdconta           => pr_nrdconta       -- confirmar parametro AMCOMLUIZ
+                                                 ,pr_tpctrato           => 90
+                                                 ,pr_nrctrato           => pr_nrctremp
+                                                 ,pr_ntrating           => vr_in_risco_rat
+                                                 ,pr_ntrataut           => vr_in_risco_rat
+                                                 ,pr_dtrating           => rw_crapdat.dtmvtolt
+                                                 ,pr_strating           => 2
+                                                 ,pr_orrating           => 1
+                                                 ,pr_cdoprrat           => NULL
+                                                 ,pr_dtrataut           => rw_crapdat.dtmvtolt
+                                                 ,pr_innivel_rating     => vr_innivel_rating
+                                                 ,pr_nrcpfcnpj_base     => rw_crapass_ope.nrcpfcnpj_base
+                                                 ,pr_inpontos_rating    => gene0002.fn_char_para_number(vr_nrnotrat) --> Pontuacao do Rating retornada do Motor
+                                                 ,pr_insegmento_rating  => vr_insegmento_rating --> Informacao de qual Garantia foi utilizada para calculo Rating do Motor
+                                                 ,pr_inrisco_rat_inc    => NULL --> Nivel de Rating da Inclusao da Proposta
+                                                 ,pr_innivel_rat_inc    => NULL --> Classificacao do Nivel de Risco do Rating Inclusao (1-Baixo/2-Medio/3-Alto)
+                                                 ,pr_inpontos_rat_inc   => vr_inpontos_rating --> Pontuacao do Rating retornada do Motor no momento da Inclusao
+                                                 ,pr_insegmento_rat_inc => NULL --> Informacao de qual Garantia foi utilizada para calculo Rating na Inclusao
+                                                 --Variáveis para gravar o histórico
+                                                 ,pr_cdoperad           => NULL  --> Operador que gerou historico de rating
+                                                 ,pr_dtmvtolt           => rw_crapdat.dtmvtolt  --> Data/Hora do historico de rating
+                                                 ,pr_valor              => NULL  --> Valor Contratado/Operaca
+                                                 ,pr_rating_sugerido    => NULL  --> Nivel de Risco Rating Novo apos alteracao manual/automatica
+                                                 ,pr_justificativa      => NULL  --> Justificativa do operador para alteracao do Rating
+                                                 ,pr_tpoperacao_rating  => NULL  --> Tipo de Operacao que gerou historico de rating (Dominio: tbgen_dominio_campo)
+                                                 ,pr_cdcritic           => vr_cdcritic
+                                                 ,pr_dscritic           => vr_dscritic);
+
+                IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                  RAISE vr_exc_erro;
+                END IF;
+              END IF;
+
+      END IF;
+      -- P450 SPT13 - alteracao para habilitar rating novo
           END IF;
           -- Efetuar commit
           COMMIT;
@@ -5729,7 +5880,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
    Sigla   : CRED
    Autor   : Rafael Rocha (AmCom)
    Data    : Maio/19.                    Ultima atualizacao:
-
+	
    Dados referentes ao programa:
 
    Frequencia: Sempre que for chamado

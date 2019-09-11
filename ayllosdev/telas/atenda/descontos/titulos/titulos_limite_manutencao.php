@@ -237,7 +237,7 @@
 	}
 	
 	// Muda o título da tela
-	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - TITULOS - MANUTEN&Ccedil;&Atilde;o");
+	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - T&Iacute;TULOS - MANUTEN&Ccedil;&Atilde;o");
 
 	formataLayout('frmTitLimiteManutencao');
 

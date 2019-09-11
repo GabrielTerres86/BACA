@@ -7,7 +7,7 @@
 
 	 Objetivo  : Mostrar opção Títulos da Rotina de Histórico do Desconto de Títulos
 
-	 Alterações: 
+	 Alterações: 16/07/2019 - PRJ 438 - Sprint 16 - Incluido botão voltar, para voltar para a tela principal (Mateus Z / Mouts)
 
 	***************************************************************************/
 	
@@ -94,6 +94,10 @@
 			</tbody>
 		</table>
 	</div>
+</div>
+<!-- PRJ 438 - Sprint 16 - Incluido botão voltar, para voltar para a tela principal -->
+<div id="divBotoes">
+	<a href="#" class="botao" id="btVoltar" onclick="acessaTelaPrincipal();return false;">Voltar</a>
 </div>
 
 <script type="text/javascript">

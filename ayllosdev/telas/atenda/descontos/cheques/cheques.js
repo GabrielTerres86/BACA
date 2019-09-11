@@ -37,6 +37,8 @@
  * 021: [06/02/2018] Mateus Z  (Mouts)  : Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia.
  * 022: [16/04/2018] Lombardi  (CECRED) : Adicionado parametro vlcompcr no ajax da function verificarEmitentes. PRJ366
  * 023: [04/06/2019] Mateus Z  (Mouts) : Alteração para chamar tela de autorização quando alterar valor. PRJ 470 - SM2
+ * 024: [08/07/2019] Mateus Z  (Mouts) : Alterações referente ao PRJ 438 - Sprint 14 - Reformulação do Desconto de Cheques.
+ * 025: [17/07/2019] Paulo Martins  (Mouts) : Alterações referente ao PRJ 438 - Sprint 16 
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -66,6 +68,7 @@ var strHTML 		= ''; // Variável usada na criação da div de alerta do grupo ec
 var strHTML2 		= ''; // Variável usada na criação do form onde serão mostradas as mensagens de alerta do grupo economico.
 var dsmetodo   		= ''; // Variável usada para manipular o método a ser executado na função encerraMsgsGrupoEconomico.
 
+var aux_cddopcao = "";
 
 var aux_inconfir = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
 var aux_inconfi2 = ""; /*Variável usada para controlar validações que serão realizadas dentro das ptocedures valida_proposta, efetua_liber_anali_bordero.*/
@@ -82,8 +85,7 @@ var ChqsRemovidos = [];
 var aux_vllimite_anterior = 0;
 // Fim Pj470 - SM2
 
-// ALTERAÇÃO 001: Carrega biblioteca javascript referente aos AVALISTAS
-$.getScript(UrlSite + 'includes/avalistas/avalistas.js');
+$.getScript(UrlSite + "telas/atenda/descontos/cheques/js/tela_avalistas.js");
 
 //bruno - prj 470 - tela autorizacao
 $.getScript(UrlSite + 'includes/autorizacao_contrato/autorizacao_contrato.js');
@@ -626,7 +628,7 @@ function excluirLimiteDscChq() {
 
 // OPÇÃO CONSULTAR
 // Carregar os dados para consulta de limite de desconto de cheques
-function carregaDadosConsultaLimiteDscChq() {
+function carregaDadosConsultaLimiteDscChq(cddopcao) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando dados de desconto de cheques ...");
 
@@ -638,6 +640,7 @@ function carregaDadosConsultaLimiteDscChq() {
 		data: {
 			nrdconta: nrdconta,
 			nrctrlim: nrcontrato,
+			cddopcao: cddopcao,
 			redirect: "html_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -646,6 +649,7 @@ function carregaDadosConsultaLimiteDscChq() {
 		},
 		success: function(response) {
 			$("#divOpcoesDaOpcao3").html(response);
+			preencherDemonstracao();
 		}
 	});
 
@@ -680,6 +684,19 @@ function carregaDadosInclusaoLimiteDscChq(inconfir) {
 
 }
 
+function abrirTelaDemoDescontoCheque(abrir){
+    if(typeof abrir == 'undefined'){
+        abrir = false;
+    }
+    if(abrir){
+		$("#frmDadosLimiteDscChq").css("width", 525);
+		dscShowHideDiv("divDscChq_Demonstracao;divBotoesDemo","divDscChq_Avalistas;divBotoesAval");
+		preencherDemonstracao();
+    }else{
+		$("#frmDadosLimiteDscChq").css("width", 515);
+		dscShowHideDiv("divDscChq_Avalistas;divBotoesAval","divDscChq_Demonstracao;divBotoesDemo");
+    }
+}
 // OPÇÃO ALTERAR
 function mostraTelaAltera() {
 
@@ -835,10 +852,62 @@ function carregaDadosAlteraLimiteDscChq() {
 // Função para gravar dados do limite de desconto de cheques
 function gravaLimiteDscChq(cddopcao) {
 
-	var nrcpfcgc = $("#nrcpfcgc","#frmCabAtenda").val().replace(".","").replace(".","").replace("-","").replace("/","");
 
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, efetuando " + (cddopcao == "A" ? "altera&ccedil;&atilde;o" : "inclus&atilde;o") + " do limite ...");
+	var nrcpfcgc = $("#nrcpfcgc","#frmCabAtenda").val().replace(".","").replace(".","").replace("-","").replace("/","");
+	// PRJ 438 - Sprint 7 - Função com a atribuição das variaveis dos avalistas
+    geraRegsDinamicosAvalistas();
+    var nrctaav1 = (typeof aux_nrctaav0 == 'undefined') ? 0  : aux_nrctaav0;
+    var nmdaval1 = (typeof aux_nmdaval0 == 'undefined') ? '' : aux_nmdaval0;
+	var nrcpfav1 = (typeof aux_nrcpfav0 == 'undefined') ? '' : aux_nrcpfav0;
+	var tpdocav1 = (typeof aux_tpdocav0 == 'undefined') ? '' : aux_tpdocav0;
+	var dsdocav1 = (typeof aux_dsdocav0 == 'undefined') ? '' : aux_dsdocav0;
+	var nmdcjav1 = (typeof aux_nmdcjav0 == 'undefined') ? '' : aux_nmdcjav0;
+	var cpfcjav1 = (typeof aux_cpfcjav0 == 'undefined') ? '' : aux_cpfcjav0;
+	var tdccjav1 = (typeof aux_tdccjav0 == 'undefined') ? '' : aux_tdccjav0;
+	var doccjav1 = (typeof aux_doccjav0 == 'undefined') ? '' : aux_doccjav0;
+	var ende1av1 = (typeof aux_ende1av0 == 'undefined') ? '' : aux_ende1av0;
+	var ende2av1 = (typeof aux_ende2av0 == 'undefined') ? '' : aux_ende2av0;
+	var nrfonav1 = (typeof aux_nrfonav0 == 'undefined') ? '' : aux_nrfonav0;
+	var emailav1 = (typeof aux_emailav0 == 'undefined') ? '' : aux_emailav0;
+	var nmcidav1 = (typeof aux_nmcidav0 == 'undefined') ? '' : aux_nmcidav0;
+	var cdufava1 = (typeof aux_cdufava0 == 'undefined') ? '' : aux_cdufava0;
+	var nrcepav1 = (typeof aux_nrcepav0 == 'undefined') ? '' : aux_nrcepav0;
+	var cdnacio1 = (typeof aux_cdnacio0 == 'undefined') ? '' : aux_cdnacio0;
+	var vledvmt1 = (typeof aux_vledvmt0 == 'undefined') ? '' : aux_vledvmt0;
+	var vlrenme1 = (typeof aux_vlrenme0 == 'undefined') ? '' : aux_vlrenme0;
+	var nrender1 = (typeof aux_nrender0 == 'undefined') ? '' : aux_nrender0;
+	var complen1 = (typeof aux_complen0 == 'undefined') ? '' : aux_complen0;
+	var nrcxaps1 = (typeof aux_nrcxaps0 == 'undefined') ? '' : aux_nrcxaps0;
+	var inpesso1 = (typeof aux_inpesso0 == 'undefined') ? '' : aux_inpesso0;
+	var dtnasct1 = (typeof aux_dtnasct0 == 'undefined') ? '' : aux_dtnasct0;
+	var vlrecjg1 = (typeof aux_vlrencj0 == 'undefined') ? '' : aux_vlrencj0;
+	var nrctaav2 = (typeof aux_nrctaav1 == 'undefined') ? 0  : aux_nrctaav1;
+	var nmdaval2 = (typeof aux_nmdaval1 == 'undefined') ? '' : aux_nmdaval1;
+	var nrcpfav2 = (typeof aux_nrcpfav1 == 'undefined') ? '' : aux_nrcpfav1;
+	var tpdocav2 = (typeof aux_tpdocav1 == 'undefined') ? '' : aux_tpdocav1;
+	var dsdocav2 = (typeof aux_dsdocav1 == 'undefined') ? '' : aux_dsdocav1;
+	var nmdcjav2 = (typeof aux_nmdcjav1 == 'undefined') ? '' : aux_nmdcjav1;
+	var cpfcjav2 = (typeof aux_cpfcjav1 == 'undefined') ? '' : aux_cpfcjav1;
+	var tdccjav2 = (typeof aux_tdccjav1 == 'undefined') ? '' : aux_tdccjav1;
+	var doccjav2 = (typeof aux_doccjav1 == 'undefined') ? '' : aux_doccjav1;
+	var ende1av2 = (typeof aux_ende1av1 == 'undefined') ? '' : aux_ende1av1;
+	var ende2av2 = (typeof aux_ende2av1 == 'undefined') ? '' : aux_ende2av1;
+	var nrfonav2 = (typeof aux_nrfonav1 == 'undefined') ? '' : aux_nrfonav1;
+	var emailav2 = (typeof aux_emailav1 == 'undefined') ? '' : aux_emailav1;
+	var nmcidav2 = (typeof aux_nmcidav1 == 'undefined') ? '' : aux_nmcidav1;
+	var cdufava2 = (typeof aux_cdufava1 == 'undefined') ? '' : aux_cdufava1;
+	var nrcepav2 = (typeof aux_nrcepav1 == 'undefined') ? '' : aux_nrcepav1;
+	var cdnacio2 = (typeof aux_cdnacio1 == 'undefined') ? '' : aux_cdnacio1;
+	var vledvmt2 = (typeof aux_vledvmt1 == 'undefined') ? '' : aux_vledvmt1;
+	var vlrenme2 = (typeof aux_vlrenme1 == 'undefined') ? '' : aux_vlrenme1;
+	var nrender2 = (typeof aux_nrender1 == 'undefined') ? '' : aux_nrender1;
+	var complen2 = (typeof aux_complen1 == 'undefined') ? '' : aux_complen1;
+	var nrcxaps2 = (typeof aux_nrcxaps1 == 'undefined') ? '' : aux_nrcxaps1;
+	var inpesso2 = (typeof aux_inpesso1 == 'undefined') ? '' : aux_inpesso1;
+    var dtnasct2 = (typeof aux_dtnasct1 == 'undefined') ? '' : aux_dtnasct1;
+	var vlrecjg2 = (typeof aux_vlrecjg1 == 'undefined') ? '' : aux_vlrecjg1;
 	$.ajax({
 		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_grava_proposta.php",
@@ -852,56 +921,61 @@ function gravaLimiteDscChq(cddopcao) {
 			dsramati: $("#dsramati","#frmDadosLimiteDscChq").val(),
             vlmedtit: $("#vlmedtit","#frmDadosLimiteDscChq").val().replace(/\./g,""),
 			vlfatura: $("#vlfatura","#frmDadosLimiteDscChq").val().replace(/\./g,""),
-			vloutras: $("#vloutras","#frmDadosLimiteDscChq").val().replace(/\./g,""),
-			vlsalari: $("#vlsalari","#frmDadosLimiteDscChq").val().replace(/\./g,""),
-			vlsalcon: $("#vlsalcon","#frmDadosLimiteDscChq").val().replace(/\./g,""),
-			dsdbens1: $("#dsdbens1","#frmDadosLimiteDscChq").val(),
-			dsdbens2: $("#dsdbens2","#frmDadosLimiteDscChq").val(),
 			cddlinha: $("#cddlinha","#frmDadosLimiteDscChq").val(),
 			dsobserv: removeCaracteresInvalidos(removeAcentos($("#dsobserv","#frmDadosLimiteDscChq").val())),
 			qtdiavig: $("#qtdiavig","#frmDadosLimiteDscChq").val().replace(/dias/,""),
 
 			// 1o. Avalista
-			nrctaav1: normalizaNumero($("#nrctaav1","#frmDadosLimiteDscChq").val()),
-			nmdaval1: $("#nmdaval1","#frmDadosLimiteDscChq").val(),
-			nrcpfav1: normalizaNumero($("#nrcpfav1","#frmDadosLimiteDscChq").val()),
-			tpdocav1: $("#tpdocav1","#frmDadosLimiteDscChq").val(),
-			dsdocav1: $("#dsdocav1","#frmDadosLimiteDscChq").val(),
-			nmdcjav1: $("#nmdcjav1","#frmDadosLimiteDscChq").val(),
-			cpfcjav1: normalizaNumero($("#cpfcjav1","#frmDadosLimiteDscChq").val()),
-			tdccjav1: $("#tdccjav1","#frmDadosLimiteDscChq").val(),
-			doccjav1: $("#doccjav1","#frmDadosLimiteDscChq").val(),
-			ende1av1: $("#ende1av1","#frmDadosLimiteDscChq").val(),
-			ende2av1: $("#ende2av1","#frmDadosLimiteDscChq").val(),
-			nrcepav1: normalizaNumero($("#nrcepav1","#frmDadosLimiteDscChq").val()),
-			nmcidav1: $("#nmcidav1","#frmDadosLimiteDscChq").val(),
-			cdufava1: $("#cdufava1","#frmDadosLimiteDscChq").val(),
-			nrfonav1: $("#nrfonav1","#frmDadosLimiteDscChq").val(),
-			emailav1: $("#emailav1","#frmDadosLimiteDscChq").val(),
-			nrender1: normalizaNumero($("#nrender1","#frmDadosLimiteDscChq").val()),
-			complen1: $("#complen1","#frmDadosLimiteDscChq").val(),
-			nrcxaps1: normalizaNumero($("#nrcxaps1","#frmDadosLimiteDscChq").val()),
+			nrctaav1: normalizaNumero(nrctaav1),
+			nmdaval1: nmdaval1,
+			nrcpfav1: normalizaNumero(nrcpfav1),
+			tpdocav1: tpdocav1,
+			dsdocav1: dsdocav1,
+			nmdcjav1: nmdcjav1,
+			cpfcjav1: normalizaNumero(cpfcjav1),
+			tdccjav1: tdccjav1,
+			doccjav1: doccjav1,
+			ende1av1: ende1av1,
+			ende2av1: ende2av1,
+			nrcepav1: normalizaNumero(nrcepav1),
+			nmcidav1: nmcidav1,
+			cdufava1: cdufava1,
+			nrfonav1: nrfonav1,
+			emailav1: emailav1,
+			nrender1: normalizaNumero(nrender1),
+			complen1: complen1,
+			nrcxaps1: normalizaNumero(nrcxaps1),
+			vlrenme1: vlrenme1,
+            vlrecjg1: vlrecjg1,
+            cdnacio1: cdnacio1,
+			inpesso1: inpesso1,
+			dtnasct1: dtnasct1,
 
 			// 2o. Avalista
-			nrctaav2: normalizaNumero($("#nrctaav2","#frmDadosLimiteDscChq").val()),
-			nmdaval2: $("#nmdaval2","#frmDadosLimiteDscChq").val(),
-			nrcpfav2: normalizaNumero($("#nrcpfav2","#frmDadosLimiteDscChq").val()),
-			tpdocav2: $("#tpdocav2","#frmDadosLimiteDscChq").val(),
-			dsdocav2: $("#dsdocav2","#frmDadosLimiteDscChq").val(),
-			nmdcjav2: $("#nmdcjav2","#frmDadosLimiteDscChq").val(),
-			cpfcjav2: normalizaNumero($("#cpfcjav2","#frmDadosLimiteDscChq").val()),
-			tdccjav2: $("#tdccjav2","#frmDadosLimiteDscChq").val(),
-			doccjav2: $("#doccjav2","#frmDadosLimiteDscChq").val(),
-			ende1av2: $("#ende1av2","#frmDadosLimiteDscChq").val(),
-			ende2av2: $("#ende2av2","#frmDadosLimiteDscChq").val(),
-			nrcepav2: normalizaNumero($("#nrcepav2","#frmDadosLimiteDscChq").val()),
-			nmcidav2: $("#nmcidav2","#frmDadosLimiteDscChq").val(),
-			cdufava2: $("#cdufava2","#frmDadosLimiteDscChq").val(),
-			nrfonav2: $("#nrfonav2","#frmDadosLimiteDscChq").val(),
-			emailav2: $("#emailav2","#frmDadosLimiteDscChq").val(),
-			nrender2: normalizaNumero($("#nrender2","#frmDadosLimiteDscChq").val()),
-			complen2: $("#complen2","#frmDadosLimiteDscChq").val(),
-			nrcxaps2: normalizaNumero($("#nrcxaps2","#frmDadosLimiteDscChq").val()),
+			nrctaav2: normalizaNumero(nrctaav2),
+			nmdaval2: nmdaval2,
+			nrcpfav2: normalizaNumero(nrcpfav2),
+			tpdocav2: tpdocav2,
+			dsdocav2: dsdocav2,
+			nmdcjav2: nmdcjav2,
+			cpfcjav2: normalizaNumero(cpfcjav2),
+			tdccjav2: tdccjav2,
+			doccjav2: doccjav2,
+			ende1av2: ende1av2,
+			ende2av2: ende2av2,
+			nrcepav2: normalizaNumero(nrcepav2),
+			nmcidav2: nmcidav2,
+			cdufava2: cdufava2,
+			nrfonav2: nrfonav2,
+			emailav2: emailav2,
+			nrender2: normalizaNumero(nrender2),
+			complen2: complen2,
+			nrcxaps2: normalizaNumero(nrcxaps2),
+			vlrenme2: vlrenme2,
+            vlrecjg2: vlrecjg2,
+            cdnacio2: cdnacio2,
+			inpesso2: inpesso2,
+			dtnasct2: dtnasct2,
             idcobope: normalizaNumero($("#idcobert","#frmDadosLimiteDscChq").val()),
 
 			// Variáveis globais alimentadas na função validaDadosRating em rating.js
@@ -1027,12 +1101,12 @@ function validarAvalistas() {
 	var nrcpfav2 = normalizaNumero( $('#nrcpfav2','#'+nomeForm).val() );
 	var cpfcjav2 = normalizaNumero( $('#cpfcjav2','#'+nomeForm).val() );
 
-	var nmdaval1 = trim( $('#nmdaval1','#'+nomeForm).val() );
-	var ende1av1 = trim( $('#ende1av1','#'+nomeForm).val() );
+	var nmdaval1 = trim( $('#nmdaval1','#'+nomeForm).val() || '' );
+	var ende1av1 = trim( $('#ende1av1','#'+nomeForm).val() || '' );
 	var nrcepav1 = normalizaNumero($("#nrcepav1",'#'+nomeForm).val())
 
-	var nmdaval2 = trim( $('#nmdaval2','#'+nomeForm).val() );
-	var ende1av2 = trim( $('#ende1av2','#'+nomeForm).val() );
+	var nmdaval2 = trim( $('#nmdaval2','#'+nomeForm).val() || '' );
+	var ende1av2 = trim( $('#ende1av2','#'+nomeForm).val() || '' );
 	var nrcepav2 = normalizaNumero($("#nrcepav2",'#'+nomeForm).val());
 
 
@@ -1089,7 +1163,7 @@ function controlaLupas(){
 					procedure	= 'lista-linhas-desc-chq';
 					titulo      = 'Linhas de Desconto de Cheque';
 					qtReg		= '5';
-					filtros 	= 'C&oacutedigo;cddlinha;30px;S;0|Descr;cddlinh2;100px;S;;N;';
+					filtros 	= 'C&oacutedigo;cddlinha;30px;S;0|Descr;cddlinh2;100px;S;;N;|;txmensal;;;';
 					colunas 	= 'Cod.;cddlinha;15%;right|Descr;dsdlinha;65%;left|Taxa;txmensal;20%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina);
 					return false;
@@ -1104,6 +1178,8 @@ function controlaLupas(){
 		var filtrosDesc = 'nrdconta|'+ nrdconta;
 
 		buscaDescricao('b1wgen0009.p','linha-desc-chq','Linhas de Desconto de Cheque',$(this).attr('name'),'cddlinh2',$(this).val(),'dsdlinha',filtrosDesc,nomeFormulario);
+		$('#cddlinha', '#divDscChq_Limite').attr('aux', '');
+		buscaDescricao('b1wgen0009.p','linha-desc-chq','Linhas de Desconto de Cheque',$(this).attr('name'),'txmensal',$(this).val(),'txmensal',filtrosDesc,nomeFormulario);
 		return false;
 	});
 
@@ -1115,6 +1191,8 @@ function controlaLupas(){
 			var filtrosDesc = 'nrdconta|'+ nrdconta;
 
 			buscaDescricao('b1wgen0009.p','linha-desc-chq','Linhas de Desconto de Cheque',$(this).attr('name'),'cddlinh2',$(this).val(),'dsdlinha',filtrosDesc,nomeFormulario);
+			$('#cddlinha', '#divDscChq_Limite').attr('aux', '');
+			buscaDescricao('b1wgen0009.p','linha-desc-chq','Linhas de Desconto de Cheque',$(this).attr('name'),'txmensal',$(this).val(),'txmensal',filtrosDesc,nomeFormulario);
 
 			return false;
 
@@ -1204,6 +1282,8 @@ function buscaGrupoEconomico() {
 		url: UrlSite + 'telas/atenda/descontos/titulos/busca_grupo_economico.php',
 		data: {
 			nrdconta: nrdconta,
+			// PRJ 438 - Sprint 14 - Flag para nao validar o avalista, que já é validado anteriormente (0 não validar / 1 validar)
+			flgValidarAvalistas: 0,
 			redirect: 'html_ajax'
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -1430,13 +1510,15 @@ function confirmaNovoLimite(cddopera) {
 
 	showMsgAguardo('Aguarde, Confirmando novo Limite...');
 
+	var aux_valor_limite = valor_limite.replace(/\./g,"").replace(',', '.');
+
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({
 		type: "POST",
 		url: UrlSite + "telas/atenda/descontos/cheques/cheques_limite_confirmar_novo_limite.php",
 		data: {
 			nrdconta: nrdconta,
-			vllimite: valor_limite,
+			vllimite: aux_valor_limite,
 			nrctrlim: nrcontrato,
 			cddopera: cddopera,
 			idcobope: idcobope,
@@ -1460,6 +1542,28 @@ function confirmaNovoLimite(cddopera) {
 	return false;
 }
 
+function ultimasAlteracoes() {
+    showMsgAguardo("Aguarde, carregando &uacute;ltimas altera&ccedil;&otilde;es ...");
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/cheques/cheques_historico.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrctrlim: 0,
+            redirect: "html_ajax"
+        },      
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+            hideMsgAguardo();        	
+            $("#divOpcoesDaOpcao2").html(response);
+        }               
+    });
+    return false;     	
+}
 function verificaMensagens(mensagem_01,mensagem_02,mensagem_03,mensagem_04,qtctarel,grupo,vlutiliz,vlexcedi) {
 
 	if (mensagem_01 != '')
@@ -3770,5 +3874,33 @@ function formataTabelaResponsaveisAssinatura(){
     arrayAlinha[0] = 'center';
 
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
-    
+}
+function telefone(fone){
+	if(fone != null){
+		fone = fone.replace(/\D/g,"");                 //Remove tudo o que não é dígito
+		if (fone.length < 10 || fone.length > 11)
+			return '';
+		fone = fone.replace(/^(\d\d)(\d)/g,"($1) $2"); //Coloca parênteses em volta dos dois primeiros dígitos
+		fone = fone.replace(/(\d{4})(\d)/,"$1-$2");    //Coloca hífen entre o quarto e o quinto dígitos
+		return fone;
+	} else {
+		return '';
+	}
+}
+// PJ438
+function preencherDemonstracao() {
+	var demoNivrisco  = $('#nivrisco',"#frmDadosLimiteDscChq").val();
+	var demoNrctrlim  = $('#nrctrlim',"#frmDadosLimiteDscChq").val();
+	var demoVllimite  = $('#vllimite',"#frmDadosLimiteDscChq").val();
+	var demoCddlinha  = $('#cddlinha',"#frmDadosLimiteDscChq").val();
+	    demoCddlinha += ' - ';
+	    demoCddlinha += $('#cddlinh2',"#frmDadosLimiteDscChq").val();
+	var demoTxmensal  = $('#txmensal',"#frmDadosLimiteDscChq").val();
+	var demoQtdiavig  = $('#qtdiavig',"#frmDadosLimiteDscChq").val();
+	$('#demoNivrisco').val(demoNivrisco);
+	$('#demoNrctrlim').val(demoNrctrlim);
+	$('#demoVllimite').val(demoVllimite);
+	$('#demoCddlinha').val(demoCddlinha);
+	$('#demoTxmensal').val(demoTxmensal);
+	$('#demoQtdiavig').val(demoQtdiavig);
 }
