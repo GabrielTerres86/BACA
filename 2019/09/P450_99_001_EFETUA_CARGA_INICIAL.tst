@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-986
+968
 /****************************************************************************************************************
 Função: Carga Inicial TBRISCO_OPERACAO
 Criação: Abril/2019
@@ -159,8 +159,9 @@ DECLARE
     AND  ((nrc.tpctrrat IN (2,3) AND lim.insitlim IN (2,3))
     -- Limite de crédito ativo
     OR    (nrc.tpctrrat = 1 AND lim.insitlim = 2))
-    AND    nrc.cdcooper = pr_cdcooper;
-
+    AND    nrc.cdcooper = pr_cdcooper
+    AND    nrc.nrdconta = lim.nrdconta
+    AND    nrc.nrctrrat = lim.nrctrlim;
 
   --Cursor para buscar Bordero do rating por contrato
   CURSOR cr_craplim(pr_cdcooper IN crapcop.cdcooper%TYPE) IS  
@@ -935,32 +936,13 @@ BEGIN
       EXCEPTION
         WHEN Dup_Val_On_Index THEN
           BEGIN
-            UPDATE tbrisco_operacoes opr
-            SET    opr.insituacao_rating    = rw_crapris.insituacao_rating
-                  ,opr.cdoperad_rating      = rw_crapris.cdoperad_rating
-                  ,opr.inrisco_rating       = rw_crapris.inrisco_rating
-                  ,opr.inrisco_rating_autom = rw_crapris.inrisco_rating
-                  ,opr.dtrisco_rating       = Decode(rw_crapris.insituacao_rating,3,NULL,rw_crapris.dteftrat)
-                  ,opr.dtrisco_rating_autom = rw_crapris.dteftrat
-                  ,opr.innivel_rating       = rw_crapris.innivel_rating
-                  ,opr.nrcpfcnpj_base       = rw_crapris.nrcpfcnpj_base
-                  ,opr.inpessoa             = rw_crapris.inpessoa
-                  ,opr.inpontos_rating      = rw_crapris.inpontos_rating
-                  ,opr.flintegrar_sas       = rw_crapris.flintegrar_sas
-            WHERE  opr.cdcooper             = rw_crapris.cdcooper
-            AND    opr.nrdconta             = rw_crapris.nrdconta
-            AND    opr.nrctremp             = vr_nrctremp
-            AND    opr.tpctrato             = rw_crapris.tpctrato;
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao Atualizar a TBRISCO_OPERACOES (Contratos Sem Rating). Cooperativa: '||rw_crapris.cdcooper||' | Conta: '||rw_crapris.nrdconta||' | Contrato: '||rw_crapris.nrctremp||' | Tipo: '||rw_crapris.tpctrato||'. Erro: '||SubStr(SQLERRM,1,255);
-              RAISE vr_exc_erro;
+            NULL;
           END;
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao Inserir na TBRISCO_OPERACOES (Contratos Sem Rating). Cooperativa: '||rw_crapris.cdcooper||' | Conta: '||rw_crapris.nrdconta||' | Contrato: '||rw_crapris.nrctremp||' | Tipo: '||rw_crapris.tpctrato||'. Erro: '||SubStr(SQLERRM,1,255);
           RAISE vr_exc_erro;
-      END;    
-    
+      END;
+
       -- Salva a cada (X) qtde de registros
       IF Nvl(vr_qtde_reg,0) = Nvl(vr_qtregsalva,0) THEN
         vr_qtde_reg := 0;
