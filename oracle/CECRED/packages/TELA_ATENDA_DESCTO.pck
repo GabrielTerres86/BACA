@@ -15,6 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED."TELA_ATENDA_DESCTO" IS
   --       11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
   --       07/03/2019 - prj450 - Rating - Tratamento do Botão Confirma Novo limite Web
   --                          na tela - Desconto de Cheques (Fabio Adriano - AMcom)
+  --
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_ren_lim_desc_cheque_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da Conta

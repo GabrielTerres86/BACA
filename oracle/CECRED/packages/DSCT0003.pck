@@ -11357,7 +11357,7 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
        AND lim.nrdconta = pr_nrdconta
        AND lim.nrctrlim = pr_nrctrlim
        AND lim.tpctrlim = 3
-       AND lim.nrgarope > 0
+--       AND lim.nrgarope > 0
        AND lim.nrliquid > 0;
     rw_crawlim cr_crawlim%ROWTYPE;
     vr_habrat VARCHAR2(1) := 'N'; -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
@@ -11384,21 +11384,23 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
                                              pr_cdcooper => vr_cdcooper, 
                                              pr_cdacesso => 'HABILITA_RATING_NOVO');
 
-      IF (vr_cdcooper = 3 OR vr_habrat = 'N') THEN
-        OPEN cr_crawlim(pr_cdcooper => vr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta
-                       ,pr_nrctrlim => pr_nrctrlim);
-        FETCH cr_crawlim INTO rw_crawlim;
 
-        IF cr_crawlim%NOTFOUND THEN
-          -- Fechar o cursor
-          CLOSE cr_crawlim;
-          vr_dscritic := 'Não permitido impressão da Proposta. Necessario efetuar analise.';
-          RAISE vr_exc_erro;
-        ELSE
-          CLOSE cr_crawlim;
-        END IF;
+      OPEN cr_crawlim(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctrlim => pr_nrctrlim);
+      FETCH cr_crawlim INTO rw_crawlim;
+
+      IF cr_crawlim%NOTFOUND THEN
+        -- Fechar o cursor
+        CLOSE cr_crawlim;
+        vr_dscritic := 'Não permitido impressão da Proposta. Necessario efetuar analise.';
+        RAISE vr_exc_erro;
       ELSE
+        CLOSE cr_crawlim;
+      END IF;
+
+/*
+      IF (vr_cdcooper <> 3 AND vr_habrat = 'S') THEN
         OPEN cr_rating_novo(pr_cdcooper => vr_cdcooper
                            ,pr_nrdconta => pr_nrdconta
                            ,pr_nrctrlim => pr_nrctrlim);
@@ -11406,16 +11408,17 @@ PROCEDURE pc_verifica_impressao (pr_nrdconta  IN craplim.nrdconta%TYPE,
         IF cr_rating_novo%NOTFOUND THEN
           -- Fechar o cursor
           CLOSE cr_rating_novo;
-          vr_dscritic := 'Não permitido impressão da Proposta. Necessario efetuar analise.';
+          vr_dscritic := 'Não há Rating. Necessario efetuar analise.';
           RAISE vr_exc_erro;
         ELSE
           CLOSE cr_rating_novo;
           IF NVL(rw_rating_novo.inrisco_rating_autom, 0) = 0 THEN
-            vr_dscritic := 'Não permitido impressão da Proposta. Necessario efetuar analise.';
+            vr_dscritic := 'Rating inválido. Necessario efetuar analise.';
             RAISE vr_exc_erro;
           END IF;
         END IF;
       END IF;
+*/
 
       -- inicializar o clob
       vr_des_xml := null;

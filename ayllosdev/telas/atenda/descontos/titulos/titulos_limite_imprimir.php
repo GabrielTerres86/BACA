@@ -83,7 +83,7 @@
 	<a href="#" class="botao" id="btContrato" 		 onClick="verificaEnvioEmail(2,1);return false;">Contrato</a>
 	<a href="#" class="botao" id="btCet"      		 onClick="verificaEnvioEmail(9,1);return false;">CET     </a>
 	<a href="#" class="botao" id="btProposta"        onClick="verificaEnvioEmail(3,1);return false;">Proposta</a>
-	<a href="#" class="botao" id="btRating" 		 onClick="gerarImpressao(8,1,'no','mostraImprimirGenerico()');return false;">Rating</a>
+
 	<br/>
 	<br/>
 	

@@ -29,13 +29,38 @@
  * 014: [13/04/2018] Leonardo Oliveira (GFT): Campo 'nrctrlim' escondido quando for uma inclusão, cddopcao = 'I'.
  * 015: [16/04/2018] Lombardi     (CECRED) : Incluida chamada da function validaValorProduto. PRJ366
  * 016: [13/04/2018] Leonardo Oliveira (GFT): Campo 'nrctrlim' escondido quando for uma inclusão, cddopcao = 'I'.
- * 017: [29/05/2019] Luiz Otávio OM (AMCOM) : Adicionado Etapa Rating para Cooperatova Ailos (3)
+ * 017: [29/05/2019] Luiz Otávio OM (AMCOM) : Adicionado Etapa Rating para Cooperativa Ailos (3)
  * 018: [18/07/2019] Mateus Z     (Mouts)  : Alterado layout da primeira tela de inclusão/alteração/consulta 
  *                                           (Dados do Limite) PRJ 438 - Sprint 16
  * 019: [19/07/2019] Rubens Lima    (Mouts): Exclusão do form Rendas e alteração dos fluxos da tela (PJ438 sprint 16)
  * 020: [19/07/2019] Jefferson      (MoutS): Incluir tela de demonstração de limite de desconto de cheques (PJ438 sprint 16)
  */
-define('cooperativaCetralAilosEtapaRating', 3);
+
+// ********************************************
+// AMCOM - Retira Etapa Rating exceto para Ailos (coop 3)
+
+$xml = "<Root>";
+$xml .= " <Dados>";
+$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+$xml .= "   <cdacesso>HABILITA_RATING_NOVO</cdacesso>";
+$xml .= " </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "TELA_PARRAT", "CONSULTA_PARAM_CRAPPRM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObjPRM = getObjectXML($xmlResult);
+
+$habrat = 'N';
+if (strtoupper($xmlObjPRM->roottag->tags[0]->name) == "ERRO") {
+	$habrat = 'N';
+} else {
+	$habrat = $xmlObjPRM->roottag->tags[0]->tags;
+	$habrat = getByTagName($habrat[0]->tags, 'PR_DSVLRPRM');
+}
+
+if ($glbvars["cdcooper"] == 3) {
+	$habrat = 'N';
+}
+// ********************************************
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
 
@@ -241,8 +266,8 @@ define('cooperativaCetralAilosEtapaRating', 3);
 	
 	// Variável que indica se é uma operação para cadastrar nova proposta - Utiliza na include rating_busca_dados.php
 	$cdOperacao = $cddopcao;
-	
-	if ($glbvars["cdcooper"] == cooperativaCetralAilosEtapaRating) {
+
+	if ($habrat == 'N') {
 		include("../../../../includes/rating/rating_busca_dados.php"); 
 	}
 ?>

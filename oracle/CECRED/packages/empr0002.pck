@@ -17,6 +17,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
   --                          do pre aprovado para fase 3 do Projeto 299
   --                          Pre aprovado.(Lombardi)
   --
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- temptable para retornar dados da cpa, antigo b1wgen188tt.i/tt-dados-cpa
@@ -7794,5 +7795,307 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     END;   
   END pc_job_desblo_preapvr_rating;   
 
+  -- Rotina para validar e registrar a requição de contratação do pré-aprovado
+  PROCEDURE pc_registra_requisicao_pre(pr_cdcooper     IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                                      ,pr_nrdconta     IN crapass.nrdconta%TYPE  --> Número da Conta do Cooperado
+                                      ,pr_idcontrl    OUT tbepr_pre_aprovado_controle.idcontrole%TYPE
+                                      ,pr_dscritic    OUT VARCHAR2)  IS
+    /* .............................................................................
+
+     Programa: pc_registra_requisicao_pre
+     Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
+     Sigla   : EMPR
+     Autor   : Renato Darosci  [Supero]
+     Data    : Julho/2019.                    Ultima atualizacao:
+
+     Dados referentes ao programa:
+
+     Frequencia:
+
+     Objetivo  : Realizar o tratamento e registro de requisições do pré-aprovado
+
+     Alteracoes: 
+
+     ..............................................................................*/
+  
+    -- Rotina pragma, destinada a registrar a requisição do pré-aprovado
+    PRAGMA AUTONOMOUS_TRANSACTION;
+  
+    -- CURSORES
+    -- Buscar o número do CPF do titular da conta
+    CURSOR cr_crapass IS
+      SELECT t.nrcpfcgc
+        FROM crapass t
+       WHERE t.cdcooper = pr_cdcooper
+         AND t.nrdconta = pr_nrdconta;
+    
+    -- Buscar registros de requisições para a conta ou CPF
+    CURSOR cr_requisicao(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE) IS
+      SELECT *
+        FROM tbepr_pre_aprovado_controle t
+       WHERE (t.cdcooper = pr_cdcooper
+         AND  t.nrdconta = pr_nrdconta)
+          OR t.nrcpfcgc = pr_nrcpfcgc
+       ORDER BY t.dhrequisao DESC;
+    rw_requisicao    cr_requisicao%ROWTYPE;
+    
+    -- Buscar a última requisição inclusa na tabela 
+    CURSOR cr_lastid IS
+      SELECT MAX(idcontrole) 
+        FROM tbepr_pre_aprovado_controle t;
+    
+    -- Buscar o parametro de intervalo de tempo
+    CURSOR cr_prmtempo(pr_cdpartar    crappco.cdpartar%TYPE) IS
+      SELECT to_number(t.dsconteu)
+        FROM crappco t
+       WHERE t.cdcooper = pr_cdcooper
+         AND t.cdpartar = pr_cdpartar;
+    
+    -- Cursor para extrair os tempos 
+    CURSOR cr_calculo(pr_hrtstamp  TIMESTAMP
+                     ,pr_hrrequis  TIMESTAMP) IS
+      SELECT (EXTRACT(DAY    FROM (pr_hrtstamp - pr_hrrequis ) ) * 86.400 )
+           + (EXTRACT(HOUR   FROM (pr_hrtstamp - pr_hrrequis ) ) * 3600   )
+           + (EXTRACT(MINUTE FROM (pr_hrtstamp - pr_hrrequis ) ) * 60     )
+           +  EXTRACT(SECOND FROM (pr_hrtstamp - pr_hrrequis ) ) 
+        FROM dual;
+           
+    -- VARIÁVEIS
+    vr_idrequis    BOOLEAN;
+    vr_nrcpfcgc    crapass.nrcpfcgc%TYPE;
+    vr_idcontrl    tbepr_pre_aprovado_controle.idcontrole%TYPE;
+    vr_qttmpreq    NUMBER;
+    vr_qtinterv    NUMBER;
+    vr_cdpartar    crappco.cdpartar%TYPE;
+    vr_nrdrowid    VARCHAR2(100);
+    vr_dsmsglog    VARCHAR2(1000);
+    vr_hrtstamp    TIMESTAMP;
+    
+  BEGIN
+    
+    -- Buscar o número do documento do cooperado
+    OPEN  cr_crapass;
+    FETCH cr_crapass INTO vr_nrcpfcgc;
+    
+    -- Se não encontrar cooperado
+    IF cr_crapass%NOTFOUND THEN
+      -- Fechar cursor
+      CLOSE cr_crapass;
+      -- retornar a mensagem de critica
+      pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => 9);
+      -- Rolback da sessão
+      ROLLBACK;
+      -- Sair da rotina
+      RETURN;
+    END IF;
+    
+    -- Fechar cursor
+    CLOSE cr_crapass;
+  
+    -- Realizar o lock da tabela de controle
+    LOCK TABLE tbepr_pre_aprovado_controle IN EXCLUSIVE MODE; 
+    
+    -- Verificar se existe registro de solicitação pela conta ou pelo CPF
+    OPEN  cr_requisicao(vr_nrcpfcgc);
+    FETCH cr_requisicao INTO rw_requisicao;
+    
+    -- Guardar a situação do cursor
+    vr_idrequis := cr_requisicao%FOUND;
+      
+    -- Fechar o cursor aberto
+    CLOSE cr_requisicao;
+    
+    -- Se não encontrar registros
+    IF NOT vr_idrequis THEN
+      -- Buscar o último ID gerado na tabela
+      OPEN  cr_lastid;
+      FETCH cr_lastid INTO vr_idcontrl;
+      CLOSE cr_lastid;
+      
+      -- Incrementar variável
+      vr_idcontrl := NVL(vr_idcontrl,0) + 1;
+      
+      -- Inserir o registro de controle
+      INSERT INTO tbepr_pre_aprovado_controle
+                       (idcontrole
+                       ,cdcooper
+                       ,nrdconta
+                       ,nrcpfcgc
+                       ,dhrequisao
+                       ,idsucesso)
+                VALUES (vr_idcontrl   -- idcontrole
+                       ,pr_cdcooper   -- cdcooper
+                       ,pr_nrdconta   -- nrdconta
+                       ,vr_nrcpfcgc   -- nrcpfcgc
+                       ,SYSTIMESTAMP  -- dhrequisao
+                       ,0);           -- idsucesso
+       
+      -- Retornar o id controle gerado
+      pr_idcontrl := vr_idcontrl;
+      
+    ELSE
+     
+      -- Verificar se a requisição é uma requisição concluída com sucesso
+      IF rw_requisicao.idsucesso = 1 THEN
+        vr_cdpartar := 73; -- Validar pelo parametro de tempo entre solicitações de empréstimos efetuadas
+      ELSE 
+        vr_cdpartar := 72; -- Validar pelo parametro de tempo entre requisições
+      END IF;
+      
+      BEGIN
+        -- Buscar o intervalo para solicitações de pré-aprovado
+        OPEN  cr_prmtempo(vr_cdpartar);
+        FETCH cr_prmtempo INTO vr_qttmpreq;
+        
+        -- Se não encontrar o parametro de tempo cadastrado, não valida
+        IF cr_prmtempo%NOTFOUND THEN
+          -- Fechar o cursor
+          CLOSE cr_prmtempo;
+          
+          -- O processo seguirá normalmente
+          pr_dscritic := NULL;
+          
+          -- Rollback da sessão
+          ROLLBACK;
+          
+          -- Encerra a rotina 
+          RETURN;
+        END IF;
+        
+        -- Fechar o cursor
+        CLOSE cr_prmtempo;
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Retornar mensagem de crítica
+          pr_dscritic := 'Erro ao buscar parametros das requisicoes: '||SQLERRM;
+          -- Aplicar o rollback na sessão pragma
+          ROLLBACK;
+          -- Sair da rotina
+          RETURN;
+      END;
+      
+      -- Armazenar o timestamp utilizado nas validações
+      vr_hrtstamp := SYSTIMESTAMP;
+      
+      BEGIN
+        -- Calcular o intervalo
+        OPEN  cr_calculo(vr_hrtstamp, rw_requisicao.dhrequisao);
+        FETCH cr_calculo INTO vr_qtinterv;
+        CLOSE cr_calculo;
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Retornar mensagem de crítica
+          pr_dscritic := 'Erro ao calcular intervalo das requisicoes: '||SQLERRM;
+          -- Aplicar o rollback na sessão pragma
+          ROLLBACK;
+          -- Sair da rotina
+          RETURN;
+      END;
+        
+      -- Verifica se o tempo mínimo foi atingido
+      IF vr_qtinterv >= vr_qttmpreq THEN
+        
+        -- Atualizar o horário da última requisição
+        UPDATE tbepr_pre_aprovado_controle t
+           SET t.dhrequisao = vr_hrtstamp
+             , t.idsucesso  = 0 -- novo fluxo
+         WHERE t.idcontrole = rw_requisicao.idcontrole;
+        
+        -- Retornar o id controle gerado
+        pr_idcontrl := rw_requisicao.idcontrole;
+        
+      ELSE
+        -- Verificar se a requisição é uma requisição concluída com sucesso
+        IF rw_requisicao.idsucesso = 1 THEN
+          -- Retornar mensagem de critica solicitando que aguarde mais alguns minutos
+          pr_dscritic := 'Verificado contrato de pre-aprovado efetivado recentemente.';
+          
+        ELSE
+          -- Retornar mensagem de critica solicitando que aguarde mais alguns minutos
+          pr_dscritic := 'Verificado ocorrencia de requisicoes seguidas ou simultaneas.';
+
+        END IF;
+                
+        -- Gerar log de erro
+        -- Efetua os inserts para apresentacao na tela VERLOG
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                             pr_cdoperad => '1',
+                             pr_dscritic => pr_dscritic,
+                             pr_dsorigem => '',
+                             pr_dstransa => 'Requisicao de Pre Aprovado REJEITADA',
+                             pr_dttransa => TRUNC(SYSDATE),
+                             pr_flgtrans => 0,
+                             pr_hrtransa => to_char(SYSDATE, 'SSSSS'),
+                             pr_idseqttl => 1,
+                             pr_nmdatela => ' ',
+                             pr_nrdconta => pr_nrdconta,
+                             pr_nrdrowid => vr_nrdrowid);
+
+        -- Gravar o tempo entre as requisições
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Horario das requisicoes',
+                                  pr_dsdadant => to_char(rw_requisicao.dhrequisao, 'hh24:mi:ss.sssss'),
+                                  pr_dsdadatu => to_char(vr_hrtstamp             , 'hh24:mi:ss.sssss'));
+        
+        -- Gravar o parametro utilizado na validação
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Tempo minimo param.(segundos)',
+                                  pr_dsdadant => vr_qttmpreq,
+                                  pr_dsdadatu => NULL);
+      END IF;
+   
+    END IF ;                
+    
+    -- Commita a sessão liberando o lock da tabela
+    COMMIT;
+          
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro ao registrar requisicao: '||SQLERRM;
+      ROLLBACK;
+  END pc_registra_requisicao_pre;
+  
+  -- Rotina para validar e registrar a requição de contratação do pré-aprovado
+  PROCEDURE pc_requisicao_pre_finaliza(pr_idcontrl     IN tbepr_pre_aprovado_controle.idcontrole%TYPE -- Id de controle
+                                      ,pr_dscritic    OUT VARCHAR2)  IS
+    /* .............................................................................
+
+     Programa: pc_requisicao_pre_finaliza
+     Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
+     Sigla   : EMPR
+     Autor   : Renato Darosci  [Supero]
+     Data    : Julho/2019.                    Ultima atualizacao:
+
+     Dados referentes ao programa:
+
+     Frequencia:
+
+     Objetivo  : Realizar a indicação de finalização do processo de solicitação de pré-aprovado
+
+     Alteracoes: 
+
+     ..............................................................................*/
+    
+    -- Rotina pragma, destinada a registrar finalização da requisição do pré-aprovado
+    PRAGMA AUTONOMOUS_TRANSACTION;
+    
+  BEGIN
+      
+    -- Se foi informado id de controle
+    IF NVL(pr_idcontrl,0) > 0 THEN
+      -- Atualizar o indicador da requisição
+      UPDATE tbepr_pre_aprovado_controle t
+         SET t.idsucesso  = 1 -- Indica sucesso na solicitação
+       WHERE t.idcontrole = pr_idcontrl;
+    END IF;
+    
+    COMMIT;
+  
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro ao atualizar indicador da requisicao: '||SQLERRM;
+      ROLLBACK;
+  END pc_requisicao_pre_finaliza;
+  
 END EMPR0002;
 /
