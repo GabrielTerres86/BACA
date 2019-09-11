@@ -4051,6 +4051,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                                        ,pr_nrctrato       => 0  --> Número do contrato do rating
                                                        ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
                                                        ,pr_dtrataut       => rw_crapcop.dtmvtolt --> Data do Rating retornado do MOTOR
+                                                       ,pr_dtrating       => rw_crapcop.dtmvtolt --> Data de Efetivacao do Rating
                                                        ,pr_strating       => 5   --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
                                                        ,pr_orrating       => 4   --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
                                                        ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
@@ -5182,7 +5183,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
                                                          ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
                                                          ,pr_dtrataut       => rw_crapcop.dtmvtolt --> Data do Rating retornado do MOTOR
-
+                                                         ,pr_dtrating       => rw_crapcop.dtmvtolt --> Data de Efetivacao do Rating
+                                       
                                                          ,pr_strating       => 5   --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
                                                          ,pr_orrating       => 4   --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
                                                          ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
