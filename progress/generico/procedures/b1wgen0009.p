@@ -298,17 +298,18 @@
 
            12/07/2019 - Incluido campos de avalista nas procs de gravaçao e alteraçao do desconto de cheque. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
                         P450 - Luiz Otavio Olinger Momm (AMCOM).
+
            23/05/2019 - Adicionado pc_retorna_inf_rating retornar o Rating das propostas e bordero
                         P450 - Luiz Otavio Olinger Momm (AMCOM).
 
            05/07/2019 - Inclusão de "outras rendas" do conjuge para a impressão da proposta - (PRJ 438 - Rubens Lima - Mouts).
-           
-	   09/07/2019 - Incluido retorno dos campos Nivel de Risco e Taxa na proc busca_dados_limite. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
-           
-	   12/07/2019 - Incluido campos de avalista nas procs de gravaçao e alteraçao do desconto de cheque. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
+
+           09/07/2019 - Incluido retorno dos campos Nivel de Risco e Taxa na proc busca_dados_limite. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
+
+           12/07/2019 - Incluido campos de avalista nas procs de gravaçao e alteraçao do desconto de cheque. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
 
            17/07/2019 - Alterado busca_limites, criado busca_limites_ativo. PRJ 438 - Sprint 16 (Paulo M / Mouts)
-			
+
 ............................................................................. */
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -5246,17 +5247,17 @@ PROCEDURE efetua_alteracao_limite:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "vlmedchq",
                                     INPUT TRIM(STRING(var_vlmedchq, "zzz,zzz,zz9.99")),
-                                    INPUT TRIM(STRING(par_vlmedchq, "zzz,zzz,zz9.99"))).    
+                                    INPUT TRIM(STRING(par_vlmedchq, "zzz,zzz,zz9.99"))).
         END.
 
-
+        /* Removido pelo 438 */
         /*
         IF  var_vlfatura <> par_vlfatura  THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "vlfatura",
                                     INPUT TRIM(STRING(var_vlfatura, "zzz,zzz,zz9.99")),
-                                    INPUT TRIM(STRING(par_vlfatura, "zzz,zzz,zz9.99"))).    
+                                    INPUT TRIM(STRING(par_vlfatura, "zzz,zzz,zz9.99"))).
         END.
         
         IF  var_vloutras <> par_vloutras  THEN
@@ -5264,7 +5265,7 @@ PROCEDURE efetua_alteracao_limite:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "vloutras",
                                     INPUT TRIM(STRING(var_vloutras, "zzz,zzz,zz9.99")),
-                                    INPUT TRIM(STRING(par_vloutras, "zzz,zzz,zz9.99"))).    
+                                    INPUT TRIM(STRING(par_vloutras, "zzz,zzz,zz9.99"))).
         END.
 
         IF  var_vlsalari <> par_vlsalari  THEN
@@ -5272,7 +5273,7 @@ PROCEDURE efetua_alteracao_limite:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "vlsalari",
                                     INPUT TRIM(STRING(var_vlsalari, "zzz,zzz,zz9.99")),
-                                    INPUT TRIM(STRING(par_vlsalari, "zzz,zzz,zz9.99"))).    
+                                    INPUT TRIM(STRING(par_vlsalari, "zzz,zzz,zz9.99"))).
         END.
         
         IF  var_vlsalcon <> par_vlsalcon  THEN
@@ -5280,7 +5281,7 @@ PROCEDURE efetua_alteracao_limite:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "vlsalcon",
                                     INPUT TRIM(STRING(var_vlsalcon, "zzz,zzz,zz9.99")),
-                                    INPUT TRIM(STRING(par_vlsalcon, "zzz,zzz,zz9.99"))).    
+                                    INPUT TRIM(STRING(par_vlsalcon, "zzz,zzz,zz9.99"))).
         END.
         
         IF  var_dsdbens1 <> par_dsdbens1  THEN
@@ -5288,7 +5289,7 @@ PROCEDURE efetua_alteracao_limite:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "dsdbens1",
                                     INPUT var_dsdbens1,
-                                    INPUT par_dsdbens1).    
+                                    INPUT par_dsdbens1).
         END.
         
         IF  var_dsdbens2 <> par_dsdbens2  THEN
@@ -5296,10 +5297,10 @@ PROCEDURE efetua_alteracao_limite:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,
                                     INPUT "dsdbens2",
                                     INPUT var_dsdbens2,
-                                    INPUT par_dsdbens2).    
+                                    INPUT par_dsdbens2).
         END.
-        
-		*/
+        */
+
         IF  var_nrctrlim <> par_nrctrlim  THEN
         DO:
             RUN proc_gerar_log_item(INPUT aux_nrdrowid,

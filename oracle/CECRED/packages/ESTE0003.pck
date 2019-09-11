@@ -939,6 +939,9 @@ end pc_obrigacao_analise_autom;
                 -- Segmento --
                 IF vr_obj_indicadores.exist('segmento') THEN
                    vr_insegmento_rating := ltrim(rtrim(vr_obj_indicadores.get('segmento').to_char(),'"'),'"');
+                   IF UPPER(vr_insegmento_rating) = 'NULL' OR vr_insegmento_rating IS NULL THEN
+                     vr_insegmento_rating := '';
+                   END IF;
                 END IF;
 
               END IF;

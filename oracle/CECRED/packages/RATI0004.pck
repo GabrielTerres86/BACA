@@ -643,6 +643,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."RATI0004" IS
           --> Segmento -->
           IF vr_obj_indicadores.exist('segmento') THEN
              vr_insegmento_rating := ltrim(rtrim(vr_obj_indicadores.get('segmento').to_char(),'"'),'"');
+             -- Quando retornar null pode ser string e nao BOOLEAN
+             IF UPPER(vr_insegmento_rating) = 'NULL' OR vr_insegmento_rating IS NULL THEN
+               vr_insegmento_rating := '';
+             END IF;
           END IF;
 
           -- Nível Rating --
@@ -877,6 +881,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED."RATI0004" IS
       --> Segmento -->
       IF vr_obj_indicadores.exist('segmento') THEN
          vr_insegmento_rating := ltrim(rtrim(vr_obj_indicadores.get('segmento').to_char(),'"'),'"');
+         -- Quando retornar null pode ser string e nao BOOLEAN
+         IF UPPER(vr_insegmento_rating) = 'NULL' OR vr_insegmento_rating IS NULL THEN
+           vr_insegmento_rating := '';
+         END IF;
       END IF;
 
        --> Pontos Rating
