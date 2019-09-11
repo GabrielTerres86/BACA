@@ -16,7 +16,12 @@ begin
     nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
     nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
 
-  --sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBATUALIZARATING');
+  BEGIN
+    sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBATUALIZARATING');
+  EXCEPTION
+    WHEN OTHERS THEN
+      NULL;
+  END;
 
   sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBATUALIZARATING',
                                 job_type            => 'PLSQL_BLOCK',
@@ -36,6 +41,6 @@ begin
                                 job_class           => 'DEFAULT_JOB_CLASS',
                                 enabled             => true,
                                 auto_drop           => true,
-                                comments            => 'Atualizar o Rating da operaÃ§Ã£o em LOTE, via Ibratan');
+                                comments            => 'Atualizar o Rating da operação em LOTE, via Ibratan');
 end;
 /
