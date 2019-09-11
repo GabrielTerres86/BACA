@@ -1713,6 +1713,17 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
 
     -- Se não localizar não incluir o bloco de indicadoresGeradosRegra que viria do MOTOR - P450 24/08/2019
     IF cr_risco_operacoes%FOUND THEN
+
+        IF rw_risco_operacoes.innivel_rating = 1 THEN
+          vr_obj_proposta.put('parecerPreAnalise', 'BAIXO');
+        END IF;
+        IF rw_risco_operacoes.innivel_rating = 2 THEN
+          vr_obj_proposta.put('parecerPreAnalise', 'MEDIO');
+        END IF;
+        IF rw_risco_operacoes.innivel_rating = 3 THEN
+          vr_obj_proposta.put('parecerPreAnalise', 'ALTO');
+        END IF;
+
         vr_obj_proposta.put('ratingPolitica', rw_risco_operacoes.inrisco_rating_autom);
         vr_obj_proposta.put('notaRating', rw_risco_operacoes.inpontos_rating);
     END IF;
