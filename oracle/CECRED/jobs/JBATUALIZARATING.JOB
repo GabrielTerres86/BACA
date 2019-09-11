@@ -26,6 +26,9 @@ begin
                                                         begin 
                                                           cecred.rati0003.pc_job_rating(pr_cdcritic => vr_cdcritic,
                                                                                         pr_dscritic => vr_dscritic);
+                                                          IF vr_dscritic IS NOT NULL THEN
+                                                            RAISE_application_error(-20500,''Erro: ''||vr_dscritic);
+                                                          END IF;
                                                         end;',
                                 start_date          => to_date('01-04-2019 14:00:00', 'dd-mm-yyyy hh24:mi:ss'),
                                 repeat_interval     => 'Freq=DAILY;ByDay=MON,TUE,WED,THU,FRI,SAT,SUN;ByHour=18,21;ByMinute=45;BySecond=00',
