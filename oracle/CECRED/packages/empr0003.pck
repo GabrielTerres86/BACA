@@ -2918,6 +2918,9 @@ BEGIN
                                            ,pr_dtdpagto        => rw_crawepr.dtdpagto
                                            ,pr_qtpreemp        => rw_crawepr.qtpreemp
                                            ,pr_vlemprst        => vr_vlemprst
+                                           --PJ298_3
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_nrctremp => pr_nrctremp
                                            ,pr_qtdias_carencia => rw_crawepr.qtddias
                                            ,pr_vlpreemp        => vr_vlpreemp
                                            ,pr_vljurcor        => vr_vljurcor
