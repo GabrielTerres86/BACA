@@ -6764,7 +6764,7 @@ END pc_valida_rat_expirado;
                                         'dd/mm/rrrr');
     IF vr_dt_corte_refor_rating IS NULL THEN
       -- Se nao encontrou, assume data fixa
-      vr_dt_corte_refor_rating := to_date('04/09/2019','dd/mm/yyyy');
+      vr_dt_corte_refor_rating := to_date('11/09/2019','dd/mm/yyyy');
     END IF;
 
     --> Buscar as cooperativas
@@ -7235,7 +7235,7 @@ END pc_valida_rat_expirado;
                                                    ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
                                                    ,pr_dtrataut       => rw_crapdat.dtmvtolt --> Data do Rating retornado do MOTOR
 
-                                                   ,pr_strating       => 3   --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
+                                                   ,pr_strating       => 5   --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
                                                    ,pr_orrating       => 4   --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
                                                    ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
                                                    ,pr_nrcpfcnpj_base => rw_tbrating_contrato.nrcpfcnpj_base --> Numero do CPF/CNPJ Base do associado
@@ -7276,7 +7276,7 @@ END pc_valida_rat_expirado;
                                                      ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
                                                      ,pr_dtrataut       => rw_crapdat.dtmvtolt --> Data do Rating retornado do MOTOR
 
-                                                     ,pr_strating       => 3 --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
+                                                     ,pr_strating       => 5 --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
                                                      ,pr_orrating       => 4 --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
                                                      ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
                                                      ,pr_nrcpfcnpj_base => rw_tbrating_contrato.nrcpfcnpj_base --> Numero do CPF/CNPJ Base do associado
@@ -7554,8 +7554,8 @@ END pc_valida_rat_expirado;
       INTO rw_tab056;
     IF cr_tab056%NOTFOUND THEN
       CLOSE cr_tab056;
-      -- Caso nao tenha o parametro cadastrado, assumir 50mil.
-      pr_vlrating := 50000;
+      -- Caso nao tenha o parametro cadastrado, assumir 0.
+      pr_vlrating := 0;
     ELSE
       CLOSE cr_tab056;
       pr_vlrating := rw_tab056.vlrtab056;

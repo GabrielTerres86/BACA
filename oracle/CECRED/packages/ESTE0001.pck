@@ -5650,6 +5650,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
               --> Segmento -->
               IF vr_obj_indicadores.exist('segmento') THEN
                  vr_insegmento_rating := ltrim(rtrim(vr_obj_indicadores.get('segmento').to_char(),'"'),'"');
+                 IF UPPER(vr_insegmento_rating) = 'NULL' OR vr_insegmento_rating IS NULL THEN
+                   vr_insegmento_rating := '';
+                 END IF;
               END IF;
 
               -- Indicador de operação de crédito em atraso

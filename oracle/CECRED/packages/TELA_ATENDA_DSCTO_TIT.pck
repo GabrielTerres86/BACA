@@ -1980,96 +1980,6 @@ BEGIN
            raise vr_exc_saida;
    end;
 
-   -- P450 SPT13 - alteracao para habilitar rating novo
-   IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
-     /* Validar rating */
-     RATI0003.pc_busca_status_rating(pr_cdcooper  => pr_cdcooper
-                                    ,pr_nrdconta  => pr_nrdconta
-                                    ,pr_tpctrato  => 3
-                                    ,pr_nrctrato  => pr_nrctrlim
-                                    ,pr_strating  => vr_strating
-                                    ,pr_flgrating => vr_flgrating
-                                    ,pr_cdcritic  => vr_cdcritic
-                                    ,pr_dscritic  => vr_dscritic);
-
-     /*
-     AMCOM: Luiz Otávio Olinger Momm - P450
-     Caso não localizar o Rating verificar se existir o Numero do Contrato a sofrer Manutencao
-     */
-     IF vr_flgrating = 0 THEN
-       OPEN cr_crawlim_maj (pr_nrctrlim);
-       FETCH cr_crawlim_maj INTO rw_crawlim_maj;
- 
-       IF cr_crawlim_maj%FOUND THEN
-         vr_nrctrlim_maj := rw_crawlim_maj.nrctrmnt;
-         IF vr_nrctrlim_maj > 0 THEN
-           /* Validar rating */
-           RATI0003.pc_busca_status_rating(pr_cdcooper  => pr_cdcooper
-                                          ,pr_nrdconta  => pr_nrdconta
-                                          ,pr_tpctrato  => 3
-                                          ,pr_nrctrato  => vr_nrctrlim_maj
-                                          ,pr_strating  => vr_strating
-                                          ,pr_flgrating => vr_flgrating
-                                          ,pr_cdcritic  => vr_cdcritic
-                                          ,pr_dscritic  => vr_dscritic);
-         END IF;
-       END IF;
-     END IF;
-     /*
-     AMCOM: Luiz Otávio Olinger Momm - P450
-     */
-     
-     IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-       RAISE vr_exc_saida;
-     END IF;
-
-     -- Buscar Valor Endividamento e Valor Limite Rating (TAB056)
-     RATI0003.pc_busca_endivid_param(pr_cdcooper => pr_cdcooper
-                                    ,pr_nrdconta => pr_nrdconta
-                                    ,pr_vlendivi => vr_vlendivid
-                                    ,pr_vlrating => vr_vllimrating
-                                    ,pr_dscritic => vr_dscritic);
-     IF TRIM(vr_dscritic) IS NOT NULL THEN
-       RAISE vr_exc_saida;
-     END IF;
-
-     -- Status do rating inválido
-     IF vr_flgrating = 0 THEN
-       vr_dscritic := 'Contrato não pode ser efetivado porque não há Rating válido.';
-       RAISE vr_exc_saida;
-
-     ELSE -- Status do rating valido
-
-       -- Se Endividamento > Parametro Rating (TAB056)
-       IF (vr_vlendivid  > vr_vllimrating)  THEN
-         -- Gravar o Rating da operação, efetivando-o
-         rati0003.pc_grava_rating_operacao(pr_cdcooper => pr_cdcooper
-                                          ,pr_nrdconta => pr_nrdconta
-                                          ,pr_tpctrato => 3
-                                          ,pr_nrctrato => pr_nrctrlim
-                                          ,pr_dtrating => rw_crapdat.dtmvtolt
-                                          ,pr_dtrataut => rw_crapdat.dtmvtolt
-                                          ,pr_strating => 4
-                                          --Variáveis para gravar o histórico
-                                          ,pr_cdoperad => pr_cdoperad
-                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                          ,pr_valor => rw_crawlim.vllimite
-                                          ,pr_rating_sugerido => NULL
-                                          ,pr_justificativa => 'Efetivação do rating'
-                                          ,pr_tpoperacao_rating => 2
-                                          ,pr_nrcpfcnpj_base     => rw_crapass.nrcpfcnpj_base
-                                          --Variáveis de crítica
-                                          ,pr_cdcritic => vr_cdcritic
-                                          ,pr_dscritic => vr_dscritic);
-
-         IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-           RAISE vr_exc_saida;
-         END IF;
-       END IF; -- Fim endividamento
-     END IF; -- Fim status do rating
-   END IF;
-   -- P450 SPT13 - alteracao para habilitar rating novo
-   
    -- awae: Gerar histórico de Majoração/manutenção de Proposta.
    pc_gravar_hist_alt_limite(pr_cdcooper => pr_cdcooper
                             ,pr_nrdconta => pr_nrdconta
@@ -2082,6 +1992,7 @@ BEGIN
    if  vr_cdcritic > 0 or trim(vr_dscritic) is not null then
       raise vr_exc_saida;
    end if;
+
    -- Se possui cobertura vinculada
    IF rw_crawlim.idcobope > 0 AND vr_flcraplim = FALSE THEN
         -- Chama bloqueio/desbloqueio da garantia
