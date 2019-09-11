@@ -6764,7 +6764,7 @@ END pc_valida_rat_expirado;
                                         'dd/mm/rrrr');
     IF vr_dt_corte_refor_rating IS NULL THEN
       -- Se nao encontrou, assume data fixa
-      vr_dt_corte_refor_rating := to_date('11/09/2019','dd/mm/yyyy');
+      vr_dt_corte_refor_rating := to_date('13/09/2019','dd/mm/yyyy');
     END IF;
 
     --> Buscar as cooperativas
