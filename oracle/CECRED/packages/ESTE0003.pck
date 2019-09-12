@@ -1494,7 +1494,22 @@ PROCEDURE pc_incluir_proposta(pr_cdcooper  IN crawlim.cdcooper%TYPE   --> Codigo
     and    ac.tpacionamento = 2; 
   --> Somente Retorno
   vr_dsconteudo_requisicao tbgen_webservice_aciona.dsconteudo_requisicao%TYPE;
-    
+
+  -- P450 Majoracao
+  cursor cr_crawlim_maj(pr_nrctrlim IN crawlim.nrctrlim%type
+                       ,pr_cdcooper IN crapcop.cdcooper%type
+                       ,pr_nrdconta IN crapass.nrdconta%type) is
+  select nrctrmnt                         -- Numero do Contrato a sofrer Manutencao
+  from   crawlim 
+  where  tpctrlim = 3
+  and    cdcooper = pr_cdcooper
+  and    nrdconta = pr_nrdconta
+  and    nrctrlim = pr_nrctrlim;
+  rw_crawlim_maj cr_crawlim_maj%rowtype;
+  vr_nrctrlim_maj  crawlim.nrctrlim%TYPE; -- Codigo contrato pai quando proposta majorada
+  -- P450 Majoracao
+
+
   --> Hora de Envio
   vr_hrenvest crawlim.hrenvest%TYPE;
   --> Quantidade de segundos de Espera
@@ -1518,7 +1533,11 @@ PROCEDURE pc_incluir_proposta(pr_cdcooper  IN crawlim.cdcooper%TYPE   --> Codigo
   vr_habrat varchar2(1) := 'N';
 
 BEGIN
-    
+
+  vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                         pr_cdcooper => pr_cdcooper,
+                                         pr_cdacesso => 'HABILITA_RATING_NOVO');
+
   --> Se o DEBUG estiver habilitado
   IF vr_flgdebug = 'S' THEN
     --> Gravar dados log acionamento
@@ -1781,14 +1800,45 @@ BEGIN
                  -- P450 SPT13 - alteracao para habilitar rating novo
                  IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
                    --> Gravar a analise do Rating a partir do retorno do Motor
-                   rati0004.pc_busca_rating_motor(pr_cdcooper => pr_cdcooper
-                                                 ,pr_nrdconta => pr_nrdconta
-                                                 ,pr_nrctrato => pr_nrctrlim
-                                                 ,pr_tpctrato => 3
-                                                 ,pr_dtmvtolt => pr_dtmvtolt
-                                                 ,pr_dsconteudo_requisicao => vr_dsconteudo_requisicao
-                                                 ,pr_cdcritic => vr_cdcritic
-                                                 ,pr_dscritic => vr_dscritic);
+                   
+                   -- MAJORACAO - P450 Verificar rating pai
+                   OPEN cr_crawlim_maj (pr_nrctrlim => pr_nrctrlim
+                                       ,pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta);
+                   FETCH cr_crawlim_maj INTO rw_crawlim_maj;
+
+                   IF cr_crawlim_maj%FOUND THEN
+
+                     rati0004.pc_busca_rating_motor(pr_cdcooper => pr_cdcooper
+                                                   ,pr_nrdconta => pr_nrdconta
+                                                   ,pr_nrctrato => rw_crawlim_maj.nrctrmnt
+                                                   ,pr_tpctrato => 3
+                                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                                   ,pr_dsconteudo_requisicao => vr_dsconteudo_requisicao
+                                                   ,pr_cdcritic => vr_cdcritic
+                                                   ,pr_dscritic => vr_dscritic);
+
+                     rati0003.pc_grava_rating_operacao(pr_cdcooper => pr_cdcooper
+                                                      ,pr_nrdconta => pr_nrdconta
+                                                      ,pr_tpctrato => 3
+                                                      ,pr_nrctrato => rw_crawlim_maj.nrctrmnt
+                                                      ,pr_strating => 4
+                                                      ,pr_dtrating => pr_dtmvtolt
+                                                      ,pr_dtrataut => pr_dtmvtolt
+                                                      ,pr_dtmvtolt => pr_dtmvtolt
+                                                      ,pr_cdcritic => vr_cdcritic
+                                                      ,pr_dscritic => vr_dscritic);
+                                                      
+                   ELSE
+                     rati0004.pc_busca_rating_motor(pr_cdcooper => pr_cdcooper
+                                                   ,pr_nrdconta => pr_nrdconta
+                                                   ,pr_nrctrato => pr_nrctrlim
+                                                   ,pr_tpctrato => 3
+                                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                                   ,pr_dsconteudo_requisicao => vr_dsconteudo_requisicao
+                                                   ,pr_cdcritic => vr_cdcritic
+                                                   ,pr_dscritic => vr_dscritic);
+                   END IF;
 
                    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                      RAISE vr_exc_erro;
