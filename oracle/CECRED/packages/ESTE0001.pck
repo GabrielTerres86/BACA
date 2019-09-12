@@ -2166,7 +2166,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                   16/04/2019 - p450 Projeto rating chamado rotina para rati0004.pc_solicita_retorno
                                para resgatar o rating da ibratan e salvar em tbrisco operações  
 
-                  09/09/2019 - P438 - Inclusão da critica 4516. (Douglas Pagel / Amcom) 
+                  09/09/2019 - P438 - Inclusão da critica 1503. (Douglas Pagel / Amcom) 
 
     .........................................................................*/
     
@@ -2337,7 +2337,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     -- aborta o processo com critica
     IF fn_reenvio_ativo_job(pr_cdcooper,pr_nrdconta,pr_nrctremp) AND NOT fn_get_job_reenvioanalise
       THEN
-         vr_cdcritic := 4516; -- Ja existe um reenvio para analise em andamento. Aguarde.
+         vr_cdcritic := 1503; -- Ja existe um reenvio para analise em andamento. Aguarde.
          vr_dscritic := null;
          RAISE vr_exc_erro;
           
