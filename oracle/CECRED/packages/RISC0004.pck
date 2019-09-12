@@ -3239,9 +3239,9 @@ CURSOR cr_crapass_ope (pr_cdcooper  IN crapass.cdcooper%TYPE     --> Coop. conec
     --
     END IF;
 
-    vr_innivris_central := 2;
-
     IF ((nvl(pr_dsctrliq, '0') <> '0') OR (TRIM(pr_dsctrliq) <> '')) THEN
+
+      vr_innivris_central := 2;
 
       vr_dsctrliq := replace(replace(pr_dsctrliq,'.',''),',',';');
 
@@ -3273,12 +3273,15 @@ CURSOR cr_crapass_ope (pr_cdcooper  IN crapass.cdcooper%TYPE     --> Coop. conec
 
         CLOSE cr_crapris;
         vr_indice   := vr_indice + 1;
-      EXIT WHEN (vr_split_pr_dsliquid.count = vr_indice - 1);
+        EXIT WHEN (vr_split_pr_dsliquid.count = vr_indice - 1);
       END LOOP;
+
+      -- verificar quem é o pior
+      pr_innivris := GREATEST(vr_innivris_central, vr_innivris_rating);
+    ELSE -- SE NAO LIQUIDA NENHUM CONTRATO, RISCO INCLUSÃO É RATING
+      pr_innivris := vr_innivris_rating;
     END IF;
 
-    -- verificar quem é o pior
-    pr_innivris := GREATEST(vr_innivris_central, vr_innivris_rating);
 
   EXCEPTION
     WHEN vr_exc_erro THEN

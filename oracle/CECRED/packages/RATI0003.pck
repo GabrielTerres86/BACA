@@ -6728,6 +6728,37 @@ END pc_valida_rat_expirado;
          AND p_tpctrato = 2; -- Lim.Desc.Cheque
     rw_borderos cr_borderos%ROWTYPE;
 
+  --> Buscar Pre-Aprovados para Atualizar no modelo Aimaro
+  CURSOR cr_pre_aprov_aimaro(p_cdcooper IN tbrisco_operacoes.cdcooper%TYPE) IS
+    SELECT DISTINCT opr.cdcooper cdcooper
+          ,opr.nrdconta    nrdconta
+          ,opr.nrctremp    nrctrato
+          ,opr.tpctrato    tpctrato
+          ,opr.nrcpfcnpj_base nrcpfcnpj_base
+      FROM crapcpa cpa
+          ,tbepr_carga_pre_aprv pre
+          ,tbrisco_operacoes opr
+          ,tbrat_param_geral tpg
+          ,crapass ass
+          ,crapdat dat
+     WHERE cpa.cdcooper = p_cdcooper
+       AND pre.cdcooper = cpa.cdcooper
+       AND pre.idcarga  = cpa.iddcarga
+       AND pre.cdcooper = dat.cdcooper
+       AND pre.flgcarga_bloqueada = 0  -- 0-Nao bloqueada
+       AND pre.indsituacao_carga = 2   -- 2-Liberada
+       AND opr.cdcooper = cpa.cdcooper
+       AND opr.nrcpfcnpj_base = cpa.nrcpfcnpj_base
+       AND opr.nrctremp    = 0
+       AND cpa.cdcooper = ass.cdcooper
+       AND cpa.nrcpfcnpj_base = ass.nrcpfcnpj_base
+       AND cpa.cdcooper = tpg.cdcooper
+       AND ass.inpessoa = tpg.inpessoa
+       AND tpg.tpproduto   = 90
+       AND opr.tpctrato = 68
+       AND opr.flencerrado = 0 -- Contratos ativos
+       AND opr.flintegrar_sas = 1;
+
   -- Parametros
   vr_dt_corte_refor_rating  DATE;
   vr_modelo_rating  tbrat_param_geral.tpmodelo_rating%TYPE;
@@ -7197,60 +7228,97 @@ END pc_valida_rat_expirado;
         COMMIT; -- Grava os registros dos Borderos do Limite
         --
       ELSIF vr_modelo_rating = 1 THEN -- Modelo Cálculo Rating = 1 - Aimaro
-        -- LEITURA DOS RATINGS DA CARGA
-        FOR rw_tbrating_carga IN cr_tbrating_carga(pr_cdcooper => rw_crapcop.cdcooper) LOOP
-          -- Rating Contrato
-          FOR rw_tbrating_contrato IN cr_tbrating_contrato(pr_cdcooper => rw_crapcop.cdcooper,
-                                                           pr_idcarga  => rw_tbrating_carga.idcarga,
-                                                           pr_tpctrato => 68) LOOP                                            
-            pc_busca_rat_contigencia(pr_cdcooper => rw_tbrating_contrato.cdcooper,
-                                     pr_nrcpfcgc => rw_tbrating_contrato.nrcpfcnpj_base, --> CPFCNPJ BASE
-                                     pr_innivris => vr_innivris,                         --> risco contingencia
-                                     pr_cdcritic => vr_cdcritic,
-                                     pr_dscritic => vr_dscritic);
+        FOR rw_pre_aprov_aimaro IN cr_pre_aprov_aimaro(p_cdcooper => rw_crapcop.cdcooper) LOOP
+          pc_busca_rat_contigencia(pr_cdcooper => rw_pre_aprov_aimaro.cdcooper,
+                                   pr_nrcpfcgc => rw_pre_aprov_aimaro.nrcpfcnpj_base, --> CPFCNPJ BASE
+                                   pr_innivris => vr_innivris,                         --> risco contingencia
+                                   pr_cdcritic => vr_cdcritic,
+                                   pr_dscritic => vr_dscritic);
                                      
-            IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-              --> Gerar informaçoes do log
-              gene0001.pc_gera_log(pr_cdcooper => rw_tbrating_contrato.cdcooper,
-                                   pr_cdoperad => 'MOTOR',
-                                   pr_dscritic => 'Erro ao buscar o Rating de Contingência do Pré-Aprovado. ' || 
-                                                  'CPF/CNPJ Base: ' || rw_tbrating_contrato.nrcpfcnpj_base,
-                                   pr_dsorigem => 'SAS',
-                                   pr_dstransa => 'Processa Rating Operações',
-                                   pr_dttransa => trunc(SYSDATE),
-                                   pr_flgtrans => 1, --> FALSE
-                                   pr_hrtransa => gene0002.fn_busca_time,
-                                   pr_idseqttl => 1,
-                                   pr_nmdatela => 'JOBRAT',
-                                   pr_nrdconta => rw_tbrating_contrato.nrdconta,
-                                   pr_nrdrowid => vr_nrdrowid);
-            END IF;
+          IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            --> Gerar informaçoes do log
+            gene0001.pc_gera_log(pr_cdcooper => rw_pre_aprov_aimaro.cdcooper,
+                                 pr_cdoperad => 'MOTOR',
+                                 pr_dscritic => 'Erro ao buscar o Rating de Contingência do Pré-Aprovado. ' || 
+                                                'CPF/CNPJ Base: ' || rw_tbrating_contrato.nrcpfcnpj_base,
+                                 pr_dsorigem => 'SAS',
+                                 pr_dstransa => 'Processa Rating Operações',
+                                 pr_dttransa => trunc(SYSDATE),
+                                 pr_flgtrans => 1, --> FALSE
+                                 pr_hrtransa => gene0002.fn_busca_time,
+                                 pr_idseqttl => 1,
+                                 pr_nmdatela => 'JOBRAT',
+                                 pr_nrdconta => rw_pre_aprov_aimaro.nrdconta,
+                                 pr_nrdrowid => vr_nrdrowid);
+          END IF;
           
-            -- grava o rating contingencia
-            RATI0003.pc_grava_rating_operacao(pr_cdcooper       => rw_tbrating_contrato.cdcooper  --> Código da Cooperativa
-                                                   ,pr_nrdconta       => rw_tbrating_contrato.nrdconta  --> Conta do associado
-                                                   ,pr_tpctrato       => rw_tbrating_contrato.tpctrato  --> Tipo do contrato de rating
-                                                   ,pr_nrctrato       => rw_tbrating_contrato.nrctrato  --> Número do contrato do rating
+          -- grava o rating contingencia
+          RATI0003.pc_grava_rating_operacao(pr_cdcooper       => rw_pre_aprov_aimaro.cdcooper  --> Código da Cooperativa
+                                           ,pr_nrdconta       => rw_pre_aprov_aimaro.nrdconta  --> Conta do associado
+                                           ,pr_tpctrato       => rw_pre_aprov_aimaro.tpctrato  --> Tipo do contrato de rating
+                                           ,pr_nrctrato       => rw_pre_aprov_aimaro.nrctrato  --> Número do contrato do rating
 
-                                                   ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
-                                                   ,pr_dtrataut       => rw_crapdat.dtmvtolt --> Data do Rating retornado do MOTOR
-                                                   ,pr_dtrating       => rw_crapdat.dtmvtolt --> Data de Efetivacao do Rating
+                                           ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
+                                           ,pr_dtrataut       => rw_crapdat.dtmvtolt --> Data do Rating retornado do MOTOR
+                                           ,pr_dtrating       => rw_crapdat.dtmvtolt --> Data de Efetivacao do Rating
                                                    
-                                                   ,pr_strating       => 5   --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
-                                                   ,pr_orrating       => 4   --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
-                                                   ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
-                                                   ,pr_nrcpfcnpj_base => rw_tbrating_contrato.nrcpfcnpj_base --> Numero do CPF/CNPJ Base do associado
-                                                   ,pr_cdoperad       => '1'
-                                                   ,pr_dtmvtolt       => rw_crapdat.dtmvtolt
-                                                   ,pr_cdcritic       => vr_cdcritic
-                                                   ,pr_dscritic       => vr_dscritic);
+                                           ,pr_strating       => 5   --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
+                                           ,pr_orrating       => 4   --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
+                                           ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
+                                           ,pr_nrcpfcnpj_base => rw_pre_aprov_aimaro.nrcpfcnpj_base --> Numero do CPF/CNPJ Base do associado
+                                           ,pr_cdoperad       => '1'
+                                           ,pr_dtmvtolt       => rw_crapdat.dtmvtolt
+                                           ,pr_cdcritic       => vr_cdcritic
+                                           ,pr_dscritic       => vr_dscritic);
             
+          IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            --> Gerar informaçoes do log
+            gene0001.pc_gera_log(pr_cdcooper => rw_pre_aprov_aimaro.cdcooper,
+                                 pr_cdoperad => 'MOTOR',
+                                 pr_dscritic => 'Erro ao gravar Rating modelo Aimaro do Pré-Aprovado. Conta: ' ||
+                                                rw_pre_aprov_aimaro.nrdconta || ', CPF/CNPJ Base: ' || rw_pre_aprov_aimaro.nrcpfcnpj_base,
+                                 pr_dsorigem => 'SAS',
+                                 pr_dstransa => 'Processa Rating Operações',
+                                 pr_dttransa => trunc(SYSDATE),
+                                 pr_flgtrans => 1, --> FALSE
+                                 pr_hrtransa => gene0002.fn_busca_time,
+                                 pr_idseqttl => 1,
+                                 pr_nmdatela => 'JOBRAT',
+                                 pr_nrdconta => rw_pre_aprov_aimaro.nrdconta,
+                                 pr_nrdrowid => vr_nrdrowid);
+          END IF;
+          
+          --Busca Empréstimos Pré-Aprovado
+          FOR rw_empr_pre_aprovado IN cr_empr_pre_aprovado(p_cdfinemp       => 68 --Pré-Aprovado
+                                                          ,p_cdcooper       => rw_pre_aprov_aimaro.cdcooper
+                                                          ,p_nrcpfcnpj_base => rw_pre_aprov_aimaro.nrcpfcnpj_base
+                                                          ,pr_dtrating      => vr_dt_corte_refor_rating) LOOP
+
+            -- grava o rating contingencia
+            RATI0003.pc_grava_rating_operacao(pr_cdcooper       => rw_empr_pre_aprovado.cdcooper --> Código da Cooperativa
+                                             ,pr_nrdconta       => rw_empr_pre_aprovado.nrdconta --> Conta do associado
+                                             ,pr_tpctrato       => rw_empr_pre_aprovado.tpctrato --> Tipo do contrato de rating
+                                             ,pr_nrctrato       => rw_empr_pre_aprovado.nrctrato --> Número do contrato do rating
+
+                                             ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
+                                             ,pr_dtrataut       => rw_crapdat.dtmvtolt --> Data do Rating retornado do MOTOR
+                                             ,pr_dtrating       => rw_crapdat.dtmvtolt --> Data de Efetivacao do Rating
+
+                                             ,pr_strating       => 5 --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
+                                             ,pr_orrating       => 4 --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
+                                             ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
+                                             ,pr_nrcpfcnpj_base => rw_pre_aprov_aimaro.nrcpfcnpj_base --> Numero do CPF/CNPJ Base do associado
+                                             ,pr_cdoperad       => '1'
+                                             ,pr_dtmvtolt       => rw_crapdat.dtmvtolt
+                                             ,pr_cdcritic       => vr_cdcritic
+                                             ,pr_dscritic       => vr_dscritic);
+                                     
             IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               --> Gerar informaçoes do log
-              gene0001.pc_gera_log(pr_cdcooper => rw_tbrating_contrato.cdcooper,
+              gene0001.pc_gera_log(pr_cdcooper => rw_empr_pre_aprovado.cdcooper,
                                    pr_cdoperad => 'MOTOR',
-                                   pr_dscritic => 'Erro ao gravar Rating modelo Aimaro do Pré-Aprovado. Conta: ' ||
-                                                  rw_tbrating_contrato.nrdconta || ', CPF/CNPJ Base: ' || rw_tbrating_contrato.nrcpfcnpj_base,
+                                   pr_dscritic => 'Erro ao gravar Rating modelo Aimaro do Empréstimo Pré-Aprovado: ' ||
+                                                  rw_pre_aprov_aimaro.nrctrato || ', CPF/CNPJ Base: ' || rw_pre_aprov_aimaro.nrcpfcnpj_base,
                                    pr_dsorigem => 'SAS',
                                    pr_dstransa => 'Processa Rating Operações',
                                    pr_dttransa => trunc(SYSDATE),
@@ -7258,61 +7326,13 @@ END pc_valida_rat_expirado;
                                    pr_hrtransa => gene0002.fn_busca_time,
                                    pr_idseqttl => 1,
                                    pr_nmdatela => 'JOBRAT',
-                                   pr_nrdconta => rw_tbrating_contrato.nrdconta,
+                                   pr_nrdconta => rw_empr_pre_aprovado.nrdconta,
                                    pr_nrdrowid => vr_nrdrowid);
             END IF;
-          
-            --Busca Empréstimos Pré-Aprovado
-            FOR rw_empr_pre_aprovado IN cr_empr_pre_aprovado(p_cdfinemp       => 68 --Pré-Aprovado
-                                                            ,p_cdcooper       => rw_tbrating_contrato.cdcooper
-                                                            ,p_nrcpfcnpj_base => rw_tbrating_contrato.nrcpfcnpj_base
-                                                            ,pr_dtrating      => vr_dt_corte_refor_rating) LOOP
-
-              -- grava o rating contingencia
-              RATI0003.pc_grava_rating_operacao(pr_cdcooper       => rw_empr_pre_aprovado.cdcooper --> Código da Cooperativa
-                                                     ,pr_nrdconta       => rw_empr_pre_aprovado.nrdconta --> Conta do associado
-                                                     ,pr_tpctrato       => rw_empr_pre_aprovado.tpctrato --> Tipo do contrato de rating
-                                                     ,pr_nrctrato       => rw_empr_pre_aprovado.nrctrato --> Número do contrato do rating
-
-                                                     ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
-                                                     ,pr_dtrataut       => rw_crapdat.dtmvtolt --> Data do Rating retornado do MOTOR
-                                                     ,pr_dtrating       => rw_crapdat.dtmvtolt --> Data de Efetivacao do Rating
-
-                                                     ,pr_strating       => 5 --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
-                                                     ,pr_orrating       => 4 --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
-                                                     ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
-                                                     ,pr_nrcpfcnpj_base => rw_tbrating_contrato.nrcpfcnpj_base --> Numero do CPF/CNPJ Base do associado
-                                                     ,pr_cdoperad       => '1'
-                                                     ,pr_dtmvtolt       => rw_crapdat.dtmvtolt
-                                                     ,pr_cdcritic       => vr_cdcritic
-                                                     ,pr_dscritic       => vr_dscritic);
-                                     
-              IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-                --> Gerar informaçoes do log
-                gene0001.pc_gera_log(pr_cdcooper => rw_empr_pre_aprovado.cdcooper,
-                                     pr_cdoperad => 'MOTOR',
-                                     pr_dscritic => 'Erro ao gravar Rating modelo Aimaro do Empréstimo Pré-Aprovado: ' ||
-                                                    rw_tbrating_contrato.nrctrato || ', CPF/CNPJ Base: ' || rw_tbrating_contrato.nrcpfcnpj_base,
-                                     pr_dsorigem => 'SAS',
-                                     pr_dstransa => 'Processa Rating Operações',
-                                     pr_dttransa => trunc(SYSDATE),
-                                     pr_flgtrans => 1, --> FALSE
-                                     pr_hrtransa => gene0002.fn_busca_time,
-                                     pr_idseqttl => 1,
-                                     pr_nmdatela => 'JOBRAT',
-                                     pr_nrdconta => rw_empr_pre_aprovado.nrdconta,
-                                     pr_nrdrowid => vr_nrdrowid);
-              END IF;
               
-              -- Commit parcial cada 1000 registros;
-              vr_cont_commit := vr_cont_commit + 1;
-              IF vr_cont_commit >= vr_qtde_commit THEN
-                vr_cont_commit := 0;
-                COMMIT;
-              END IF;
-            END LOOP;
-          END LOOP;
-        END LOOP;
+          END LOOP; -- rw_empr_pre_aprovado
+          COMMIT; 
+        END LOOP; -- rw_pre_aprov_aimaro
       END IF;
 
       -- Atualiza base de dados Cooperativa
