@@ -11,6 +11,11 @@ VALUES (1004,701,'Solicitação de Empréstimo',5,1,1,'2.4.0.0',NULL);
 update tbcadast_pessoa_email e
    set e.insituacao = 1
  where e.insituacao is null;  
+ 
+ 
+ update crapprm p
+   set p.dsvlrprm = '16;6;9;10;12;2;5;13;14;1;11;7'
+ where p.cdacesso = 'LIBERA_COOP_SIMULA_IB'; 
 
 commit;
 end;                               
