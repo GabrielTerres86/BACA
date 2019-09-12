@@ -219,7 +219,8 @@ PROCEDURE carrega-convenios-ceb:
     EMPTY TEMP-TABLE tt-emails-titular.
 
     FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
-                             crapprm.cdacesso = 'DT_VIG_RECECIPR_V2'
+                             crapprm.cdacesso = 'DT_VIG_RECECIPR_V2' AND
+                             crapprm.cdcooper = par_cdcooper
                              NO-LOCK NO-ERROR.
     IF AVAIL crapprm THEN
     DO:
@@ -227,10 +228,10 @@ PROCEDURE carrega-convenios-ceb:
     END.
 	
 	FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
-							 crapprm.cdcooper = par_cdcooper AND
-                             crapprm.cdacesso = 'RECIPROCIDADE_PILOTO' AND
-							 crapprm.dsvlrprm = '1'
-                             NO-LOCK NO-ERROR.
+                           crapprm.cdcooper = par_cdcooper AND
+                           crapprm.cdacesso = 'RECIPROCIDADE_PILOTO' AND
+							             crapprm.dsvlrprm = '1'
+                           NO-LOCK NO-ERROR.
     IF NOT AVAIL crapprm THEN
     DO:
       ASSIGN aux_dtcadast = NOW.
@@ -238,8 +239,9 @@ PROCEDURE carrega-convenios-ceb:
 
     /* Trazer os convenios CEB */
     FOR EACH crapceb  WHERE crapceb.cdcooper = par_cdcooper     AND
-                            crapceb.nrdconta = par_nrdconta     AND
-                            (crapceb.dtinsori <= aux_dtcadast OR crapceb.dtinsori = ?) NO-LOCK,
+                            crapceb.nrdconta = par_nrdconta    AND
+                            (crapceb.dtinsori <= aux_dtcadast OR crapceb.dtinsori = ?)  NO-LOCK,
+                            
                                                                   
         FIRST crapcco WHERE crapcco.cdcooper = crapceb.cdcooper AND
                             crapcco.nrconven = crapceb.nrconven NO-LOCK,

@@ -198,56 +198,55 @@
                          está ativa, pois estava deixando incluir 
                          proposta com linha bloqueada
                          SD 234036 (Tiago/Rosangela).
-                         
-            21/01/2015 - Substituicao da chamada da procedure consulta-aplicacoes 
-                         da BO b1wgen0004 pela procedure obtem-dados-aplicacoes 
-                         da BO b1wgen0081.Também foi adicionado o procedimento 
-                         pc_busca_saldos_aplicacoes da package APLI0005. 
-                         (Carlos Rafael Tanholi - Projeto Captacao)    
-                                
+
+            21/01/2015 - Substituicao da chamada da procedure consulta-aplicacoes
+                         da BO b1wgen0004 pela procedure obtem-dados-aplicacoes
+                         da BO b1wgen0081.Também foi adicionado o procedimento
+                         pc_busca_saldos_aplicacoes da package APLI0005.
+                         (Carlos Rafael Tanholi - Projeto Captacao)
+
             22/01/2015 - Alterado o formato do campo nrctremp para 8 
                          caracters (Kelvin - 233714)
-            
+
             30/03/2015 - Foi adicionado filtros a mais na procedure busca_cheques_bordero
                          no momento de buscar os dados do emitente. SD - 269063 (Kelvin)
-                         
+
             11/05/2015 - Alterado para apresentar mensagem ao realizar inclusao
                          de proposta de novo limite de desconto de cheque para
                          menores nao emancipados. (Reinert)
-                         
+
             19/06/2015 - Ajuste para passar o numero do cpf do conjuge do avalista
-                         corretamente. (Jorge/Gielow) - SD 290885     
-                         
+                         corretamente. (Jorge/Gielow) - SD 290885
+
             12/08/2015 - Projeto Reformulacao cadastral
                          Eliminado o campo nmdsecao (Tiago Castro - RKAM).
-                         
+
             26/08/2015 - Ajuste na passagem de cpf/cnpj em lugares indevidos, 
                          conforme relatado no chamado 314472. (Kelvin).
-            
+
             13/10/2015 - Ajuste na tipagem do vllimite que estava como int 
                          e foi passando para decimal. SD 325240 (Kelvin).
-                         
+
             27/11/2015 - #356857 Alteracao na rotina de liberacao de borderos 
                          de desconto de cheques (efetua_liber_anali_bordero) 
                          para que grave o lote 19000 + numero do PA do operador 
                          ao inves do lote 8452 no que diz respeito ao IOF (Carlos)
-                         
-           18/12/2015 - Criada procedure para edição de número do contrato de limite 
-                        (Lunelli - SD 360072 [M175])
-                                             
-           17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
-                                             
+
+            18/12/2015 - Criada procedure para edição de número do contrato de limite 
+                         (Lunelli - SD 360072 [M175])
+
+            17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+
             20/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
                          efetua_liber_anali_bordero. Inclusao de funcionamento
                          de pedir senha do coordenador. (Jaison/James)
 
-	       25/10/2016 - Verificar CNAE restrito Melhoria 310 (Tiago/Thiago)
+           25/10/2016 - Verificar CNAE restrito Melhoria 310 (Tiago/Thiago)
 
            05/09/2016 - Criacao do campo perrenov na tt-desconto_cheques.
                         Projeto 300. (Lombardi)
-                        
 
-          07/11/2016 - Ajuste na procedure imprime_cet para enviar novos parametros (Daniel)  
+           07/11/2016 - Ajuste na procedure imprime_cet para enviar novos parametros (Daniel)
 
            09/09/2016 - Criacao do campo insitblq na tt-desconto_cheques.
                         Projeto 300. (Lombardi)
@@ -257,46 +256,59 @@
 
            23/09/2016 - Alterado busca_parametros_dscchq para leitura
                         da nova TAB de desconto segmentada por tipo de pessoa.
-                        PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
+                        PRJ-300 - Desconto de cheque(Odirlei-AMcom)
           
-		   09/11/2016 - Alterado campo crapabc.nrseqdig para crapabc.cdocorre.
-		                PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
-					      
-            12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
-					      
+           09/11/2016 - Alterado campo crapabc.nrseqdig para crapabc.cdocorre.
+                        PRJ-300 - Desconto de cheque(Odirlei-AMcom)
+                          
+           12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
+
            26/05/2017 - Alterado efetua_inclusao_limite para gerar o numero do 
-                       contrato de limite.  PRJ-300 - Desconto de cheque(Odirlei-AMcom)         
-                            
+                       contrato de limite.  PRJ-300 - Desconto de cheque(Odirlei-AMcom)
+
            30/05/2017 - Criacao dos campos qtdaprov e vlraprov na tt-bordero_chq
-                        Projeto 300. (Lombardi)       
+                        Projeto 300. (Lombardi)
 
            02/06/2017 - Ajuste para resgatar cheque custodiado no dia de hj
                         quando excluir bordero.
-                        PRJ300 - Desconto de cheque(Odirlei-AMcom)         
-						
+                        PRJ300 - Desconto de cheque(Odirlei-AMcom)
+
            12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
-			            crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
-			 		    (Adriano - P339).  
-						
-		       14/07/2017 - na exclusao do bordero, gerar registro de LOG - Jean (Mout´s)   
-		       
+                        crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+                        (Adriano - P339).  
+                        
+           14/07/2017 - na exclusao do bordero, gerar registro de LOG - Jean (Mout´s)
+
            17/07/2017 - Ajustes na geraçao do registro de LOG na exclusao do bordero
                         Projeto 300. (Lombardi)
-					                
-		       29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+
+           29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
            
            04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
                         de novo limite. (Chamado 768648) - (Fabricio)
-					                
+
            20/10/2017 - Projeto 410 - Ajustado cálculo do IOF na liberação do borderô
-                            (Diogo - MoutS)
-					                
+                        (Diogo - MoutS)
+
            11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
-                                                        
+
            26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
            19/09/2018 - Utilizar a funçao fn_sequence para gerar o nrseqdig (Jonata - Mouts PRB0040066).
 
+           12/07/2019 - Incluido campos de avalista nas procs de gravaçao e alteraçao do desconto de cheque. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
+                        P450 - Luiz Otavio Olinger Momm (AMCOM).
+           23/05/2019 - Adicionado pc_retorna_inf_rating retornar o Rating das propostas e bordero
+                        P450 - Luiz Otavio Olinger Momm (AMCOM).
+
+           05/07/2019 - Inclusão de "outras rendas" do conjuge para a impressão da proposta - (PRJ 438 - Rubens Lima - Mouts).
+           
+	   09/07/2019 - Incluido retorno dos campos Nivel de Risco e Taxa na proc busca_dados_limite. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
+           
+	   12/07/2019 - Incluido campos de avalista nas procs de gravaçao e alteraçao do desconto de cheque. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
+
+           17/07/2019 - Alterado busca_limites, criado busca_limites_ativo. PRJ 438 - Sprint 16 (Paulo M / Mouts)
+			
 ............................................................................. */
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -332,6 +344,55 @@ DEFINE VARIABLE aux_nrdrowid AS ROWID       NO-UNDO.
 
 DEFINE VARIABLE const_txiofpf AS DECIMAL DECIMALS 4 INITIAL 0.0082  NO-UNDO.
 DEFINE VARIABLE const_txiofpj AS DECIMAL DECIMALS 4 INITIAL 0.0041  NO-UNDO.
+
+DEF VAR vr_xml                 AS LONGCHAR                      NO-UNDO.
+DEF VAR vr_des_inrisco_rat_inc AS CHAR                          NO-UNDO.
+DEF VAR vr_inpontos_rat_inc    AS INTEGER                       NO-UNDO.
+DEF VAR vr_innivel_rat_inc     AS CHAR                          NO-UNDO.
+DEF VAR vr_insegmento_rat_inc  AS CHAR                          NO-UNDO.
+DEF VAR vr_vlr                 AS INTEGER                       NO-UNDO.
+DEF VAR vr_qtdreg              AS INTEGER                       NO-UNDO.
+DEF VAR vr_nrctro_out          AS INTEGER                       NO-UNDO.
+DEF VAR vr_tpctrato_out        AS INTEGER                       NO-UNDO.
+   
+/* Informacoes com os Ratings do Cooperado */
+DEF TEMP-TABLE tt-ratings-novo  NO-UNDO
+    FIELD cdagenci AS INTE
+    FIELD nrdconta AS INTE
+    FIELD nrctrrat AS INTE
+    FIELD tpctrrat AS INTE
+    FIELD indrisco AS CHAR
+    FIELD dtmvtolt AS DATE
+    FIELD dteftrat AS DATE
+    FIELD cdoperad AS CHAR
+    FIELD insitrat AS INTE
+    FIELD dsditrat AS CHAR
+    FIELD nrnotrat AS DECI
+    FIELD vlutlrat AS DECI
+    FIELD vloperac AS DECI
+    FIELD dsdopera AS CHAR
+    FIELD dsdrisco AS CHAR
+    FIELD flgorige AS LOGI
+    FIELD inrisctl AS CHAR
+    FIELD nrnotatl AS DECI
+    FIELD dtrefere AS DATE
+    FIELD des_inrisco_rat_inc AS CHAR       
+    FIELD inpontos_rat_inc AS INTE
+    FIELD innivel_rat_inc AS CHAR
+    FIELD insegmento_rat_inc AS CHAR.
+
+/* Informacoes dos campos de rating do cooperado */
+DEF TEMP-TABLE tt-valores-rating-novo   NO-UNDO
+    FIELD nrinfcad AS INTE 
+    FIELD nrpatlvr AS INTE 
+    FIELD nrperger AS INTE
+    FIELD vltotsfn AS DECI
+    FIELD perfatcl LIKE crapjfn.perfatcl
+    FIELD nrgarope AS INTE
+    FIELD nrliquid AS INTE
+    FIELD inpessoa AS INTE.
+    
+
 FUNCTION linha-desc-chq RETURNS LOGICAL
         (INPUT par_cdcooper AS INT,
          INPUT par_cdagenci AS INT,                    
@@ -675,7 +736,7 @@ PROCEDURE busca_dados_limite_incluir:
     DEF VAR         aux_nrdmeses AS INTE            NO-UNDO.
     DEF VAR         aux_dsdidade AS CHAR            NO-UNDO.
     DEF VAR         aux_dsoperac AS CHAR            NO-UNDO.
-	DEF VAR      aux_flgrestrito AS INTE            NO-UNDO.
+    DEF VAR         aux_flgrestrito AS INTE         NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-risco.
@@ -841,7 +902,7 @@ PROCEDURE busca_dados_limite_incluir:
     
    /*Se tem cnae verificar se e um cnae restrito*/
    IF  crapass.cdclcnae > 0 THEN
-	   DO:
+       DO:
 
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -858,14 +919,14 @@ PROCEDURE busca_dados_limite_incluir:
             ASSIGN aux_flgrestrito = INTE(pc_valida_cnae_restrito.pr_flgrestrito)
                                         WHEN pc_valida_cnae_restrito.pr_flgrestrito <> ?.
 
-			IF  aux_flgrestrito = 1 THEN
-				DO:
-    					CREATE tt-msg-confirma.
-						ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
-								tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema AILOS. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
-				END.
+            IF  aux_flgrestrito = 1 THEN
+                DO:
+                  CREATE tt-msg-confirma.
+                  ASSIGN tt-msg-confirma.inconfir = par_inconfir + 1
+                         tt-msg-confirma.dsmensag = "CNAE restrito, conforme previsto na Política de Responsabilidade <br> Socioambiental do Sistema AILOS. Necessário apresentar Licença Regulatória.<br><br>Deseja continuar?".
+                END.
 
-		END.
+        END.
 
     IF NOT VALID-HANDLE(h-b1wgen0110) THEN
        RUN sistema/generico/procedures/b1wgen0110.p
@@ -1569,20 +1630,17 @@ PROCEDURE valida_proposta_dados:
                                            INPUT par_idseqttl,
                                            INPUT par_nmdatela,
                                            INPUT par_nrdconta,
-                                          OUTPUT aux_nrdrowid). 
-             
+                                          OUTPUT aux_nrdrowid).
                    END.
-                
                 RETURN "NOK".
-          
              END.
-       
+
           IF par_inconfi2 > 10  THEN
              DO:
                 IF  aux_vlr_maxutl > 0  THEN
                 DO:
                     IF par_vllimite > aux_vlutiliz THEN
-                       ASSIGN aux_valor = par_vllimite.       
+                       ASSIGN aux_valor = par_vllimite.
                     ELSE
                        ASSIGN aux_valor = aux_vlutiliz.
 
@@ -1597,11 +1655,8 @@ PROCEDURE valida_proposta_dados:
                                         tt-msg-confirma.dsmensag = "Vlrs(Utl) Excedidos(Utiliz. " +
                                               TRIM(STRING(aux_vlutiliz,"zzz,zzz,zz9.99")) + " Excedido " + 
                                               TRIM(STRING((aux_valor - aux_vlr_maxutl),"zzz,zzz,zz9.99")) + ")Confirma? ".
-                      
                                  RETURN "OK".
-                      
-                              END.      
-                      
+                              END.
                        END.
 
                     IF par_inconfi2 = 12             AND
@@ -1629,14 +1684,12 @@ PROCEDURE valida_proposta_dados:
                                           INPUT aux_cdcritic,
                                           INPUT-OUTPUT aux_dscritic). 
 
-                           RETURN "NOK".     
-                     
+                           RETURN "NOK".
                        END.
 
                 END.
-
              END.
-          
+
           IF par_inconfi4 = 71  THEN
              DO:
                 IF aux_valor >  aux_vlr_minscr  THEN
@@ -1644,11 +1697,8 @@ PROCEDURE valida_proposta_dados:
                       CREATE tt-msg-confirma.
                       ASSIGN tt-msg-confirma.inconfir = par_inconfi4 + 1
                              tt-msg-confirma.dsmensag = "Efetue consulta no SCR.".
-
                    END.
-
              END.
-
        END.
 
     IF par_cddopcao = "I"  THEN
@@ -1679,12 +1729,9 @@ PROCEDURE valida_proposta_dados:
                                        INPUT par_idseqttl,
                                        INPUT par_nmdatela,
                                        INPUT par_nrdconta,
-                                      OUTPUT aux_nrdrowid). 
-    
+                                      OUTPUT aux_nrdrowid).
                END.
-    
                RETURN "NOK".
-    
            END.
     
            IF  CAN-FIND(crapprp WHERE crapprp.cdcooper = par_cdcooper   AND
@@ -1714,11 +1761,8 @@ PROCEDURE valida_proposta_dados:
                                        INPUT par_nmdatela,
                                        INPUT par_nrdconta,
                                       OUTPUT aux_nrdrowid). 
-          
                END.
-    
                RETURN "NOK".
-      
            END.
        END.
        
@@ -1734,10 +1778,8 @@ PROCEDURE valida_proposta_dados:
                                INPUT par_nmdatela,
                                INPUT par_nrdconta,
                               OUTPUT aux_nrdrowid).
-                              
-       END.    
-    
-    RETURN "OK".       
+       END.
+    RETURN "OK".
 
 END PROCEDURE.
 
@@ -1914,12 +1956,12 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE INPUT  PARAMETER par_vllimite AS DECIMAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_dsramati AS CHARACTER   NO-UNDO.
     DEFINE INPUT  PARAMETER par_vlmedchq AS DECIMAL     NO-UNDO.
-    DEFINE INPUT  PARAMETER par_vlfatura AS DECIMAL     NO-UNDO.
+    /*DEFINE INPUT  PARAMETER par_vlfatura AS DECIMAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_vloutras AS DECIMAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_vlsalari AS DECIMAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_vlsalcon AS DECIMAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_dsdbens1 AS CHARACTER   NO-UNDO.
-    DEFINE INPUT  PARAMETER par_dsdbens2 AS CHARACTER   NO-UNDO.
+    DEFINE INPUT  PARAMETER par_dsdbens2 AS CHARACTER   NO-UNDO. */
     DEFINE INPUT  PARAMETER par_cddlinha AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_dsobserv AS CHARACTER   NO-UNDO.   
     DEFINE INPUT  PARAMETER par_qtdiavig AS INTEGER     NO-UNDO. 
@@ -1944,6 +1986,12 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE INPUT  PARAMETER par_nrender1 AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_complen1 AS CHARACTER   NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrcxaps1 AS INTEGER     NO-UNDO.
+    /* PRJ 438 Sprint 14 */
+	DEFINE INPUT  PARAMETER par_vlrecjg1 AS DECIMAL     NO-UNDO.
+    DEFINE INPUT  PARAMETER par_cdnacio1 AS INTEGER     NO-UNDO.
+	DEFINE INPUT  PARAMETER par_inpesso1 AS INTEGER     NO-UNDO.
+    DEFINE INPUT  PARAMETER par_dtnasct1 AS DATE        NO-UNDO.
+    DEFINE INPUT  PARAMETER par_vlrenme1 AS DECIMAL     NO-UNDO.
     /** -------------------- Parametros do 2 avalista ------------------- **/
     DEFINE INPUT  PARAMETER par_nrctaav2 AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_nmdaval2 AS CHARACTER   NO-UNDO.
@@ -1964,6 +2012,12 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE INPUT  PARAMETER par_nrender2 AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_complen2 AS CHARACTER   NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrcxaps2 AS INTEGER     NO-UNDO.
+    /* PRJ 438 Sprint 14 */
+	DEFINE INPUT  PARAMETER par_vlrecjg2 AS DECIMAL     NO-UNDO.
+    DEFINE INPUT  PARAMETER par_cdnacio2 AS INTEGER     NO-UNDO.
+	DEFINE INPUT  PARAMETER par_inpesso2 AS INTEGER     NO-UNDO.
+    DEFINE INPUT  PARAMETER par_dtnasct2 AS DATE        NO-UNDO.
+    DEFINE INPUT  PARAMETER par_vlrenme2 AS DECIMAL     NO-UNDO.    
     /** ----------------------------- Rating ---------------------------- **/
     DEFINE INPUT  PARAMETER par_nrgarope AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrinfcad AS INTEGER     NO-UNDO.
@@ -1986,9 +2040,9 @@ PROCEDURE efetua_inclusao_limite:
     DEFINE VARIABLE aux_lscontas AS CHARACTER   NO-UNDO.
     DEFINE VARIABLE aux_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE VARIABLE aux_nrseqcar AS INTEGER     NO-UNDO.
-    DEF VAR aux_mensagens    AS CHAR                    NO-UNDO.    
-    DEF VAR aux_dsfrase      AS CHAR                    NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
-    DEF VAR aux_dsdlinha     AS CHAR                    NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+    DEF VAR aux_mensagens    AS CHAR            NO-UNDO.    
+    DEF VAR aux_dsfrase      AS CHAR            NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
+    DEF VAR aux_dsdlinha     AS CHAR            NO-UNDO. /* Pj470 - SM2 -- MArcelo Telles Coelho -- Mouts */
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -2150,15 +2204,15 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav1,
                                                     INPUT par_cdufava1,
                                                     INPUT par_nrcepav1,
+                                                    INPUT par_cdnacio1,
                                                     INPUT 0,
-                                                    INPUT 0,
-                                                    INPUT 0,
+                                                    INPUT par_vlrenme1,
                                                     INPUT par_nrender1,
                                                     INPUT par_complen1,
                                                     INPUT par_nrcxaps1,
-                                                    INPUT 0,            /* inpessoa 1o avail */
-                                                    INPUT ?,            /* dtnascto 1o avail */
-													INPUT 0, /* par_vlrecjg1 */
+                                                    INPUT par_inpesso1,
+                                                    INPUT par_dtnasct1,
+                                                    INPUT par_vlrecjg1,
                                                     /** 2o avalista **/
                                                     INPUT par_nrctaav2,
                                                     INPUT par_nmdaval2, 
@@ -2176,15 +2230,15 @@ PROCEDURE efetua_inclusao_limite:
                                                     INPUT par_nmcidav2, 
                                                     INPUT par_cdufava2, 
                                                     INPUT par_nrcepav2,
+                                                    INPUT par_cdnacio2,
                                                     INPUT 0,
-                                                    INPUT 0,
-                                                    INPUT 0,
+                                                    INPUT par_vlrenme2,
                                                     INPUT par_nrender2,
                                                     INPUT par_complen2,
                                                     INPUT par_nrcxaps2,
-                                                    INPUT 0,            /* inpessoa 2o avail */
-                                                    INPUT ?,            /* dtnascto 2o avail */
-													INPUT 0, /* par_vlrecjg2 */
+                                                    INPUT par_inpesso2,
+                                                    INPUT par_dtnasct2,
+                                                    INPUT par_vlrecjg2, /* par_vlrecjg2 */
                                                     INPUT "",
                                                    OUTPUT TABLE tt-erro).
         
@@ -2422,7 +2476,20 @@ PROCEDURE efetua_inclusao_limite:
                 UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI.
             END.               
                
-        CREATE crapprp.
+        /*PRJ438 - Sprint 14 - Cria ou atualiza a CRAPPRP*/
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        RUN STORED-PROCEDURE pc_cria_atualiza_prp
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_nrdconta
+                                              ,INPUT par_nrctrlim
+                                              ,INPUT 2
+                                              ,INPUT CAPS(par_dsramati)
+                                              ,INPUT par_vlmedchq
+                                              ,INPUT CAPS(par_dsobserv)
+                                              ,INPUT par_cdcooper
+                                              ,INPUT par_dtmvtolt).
+        CLOSE STORED-PROC pc_cria_atualiza_prp
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        /*CREATE crapprp.
         ASSIGN crapprp.nrdconta = par_nrdconta
                crapprp.nrctrato = par_nrctrlim
                crapprp.tpctrato = 2 /* Dscto Cheque */
@@ -2439,9 +2506,9 @@ PROCEDURE efetua_inclusao_limite:
                crapprp.dsobserv[3] = ""
                crapprp.cdcooper    = par_cdcooper
                crapprp.dtmvtolt    = par_dtmvtolt.
-        VALIDATE crapprp.
+        VALIDATE crapprp. */
 
-        /* Verificar se a conta pertence ao grupo economico novo */	
+        /* Verificar se a conta pertence ao grupo economico novo */ 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
         RUN STORED-PROCEDURE pc_obtem_mensagem_grp_econ_prg
@@ -2647,10 +2714,21 @@ PROCEDURE busca_limites:
     DEFINE INPUT PARAMETER par_cdcooper AS INTEGER     NO-UNDO.
     DEFINE INPUT PARAMETER par_nrdconta AS INTEGER     NO-UNDO.
     DEFINE INPUT PARAMETER par_dtmvtolt AS DATE        NO-UNDO.
+    DEFINE VAR             aux_habrat   AS CHAR        NO-UNDO. /* P450 - Rating */
     
     DEFINE OUTPUT PARAMETER TABLE FOR tt-limite_chq.
 
     EMPTY TEMP-TABLE tt-limite_chq.
+
+    FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
+                             crapprm.cdacesso = 'HABILITA_RATING_NOVO' AND
+                             crapprm.cdcooper = par_cdcooper
+                             NO-LOCK NO-ERROR.
+
+    ASSIGN aux_habrat = 'N'.
+    IF AVAIL crapprm THEN DO:
+      ASSIGN aux_habrat = crapprm.dsvlrprm.
+    END.
 
     FOR EACH craplim WHERE craplim.cdcooper = par_cdcooper  AND
                            craplim.nrdconta = par_nrdconta  AND
@@ -2688,9 +2766,134 @@ PROCEDURE busca_limites:
                                        ELSE
                                             "NAO"
               tt-limite_chq.insitlim = craplim.insitlim
+              tt-limite_chq.idcobope = craplim.idcobope
+              tt-limite_chq.dtcancel = craplim.dtcancel.
+              /* ***** inicio P450  ****/
+              /* Habilita novo rating */
+              IF aux_habrat = 'S' AND par_cdcooper <> 3 THEN DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                /* Efetuar a chamada a rotina Oracle da RATI0003, para buscar os ratings das propostas */
+                RUN STORED-PROCEDURE pc_retorna_inf_rating
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, 
+                                                       INPUT par_nrdconta,
+                                                       INPUT 2,
+                                                       INPUT craplim.nrctrlim, 
+                                                       OUTPUT 0,           /* pr_insituacao_rating */
+                                                       OUTPUT "",          /* pr_inorigem_rating */
+                                                       OUTPUT "",          /* pr_inrisco_rating_autom */
+                                                       OUTPUT 0,           /* pr_cdcritic */
+                                                       OUTPUT "").         /* pr_dscritic */
+                /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC pc_retorna_inf_rating
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                ASSIGN aux_cdcritic               = 0
+                        aux_dscritic               = ""
+                        tt-limite_chq.inrisrat     = ""
+                        tt-limite_chq.origerat     = ""
+                        aux_cdcritic               = INT(pc_retorna_inf_rating.pr_cdcritic) 
+                                                     WHEN pc_retorna_inf_rating.pr_cdcritic <> ?
+                        aux_dscritic               = pc_retorna_inf_rating.pr_dscritic
+                                                     WHEN pc_retorna_inf_rating.pr_dscritic <> ?
+                        tt-limite_chq.inrisrat     = pc_retorna_inf_rating.pr_inrisco_rating_autom
+                                                     WHEN pc_retorna_inf_rating.pr_inrisco_rating_autom <> ?
+                        tt-limite_chq.origerat     = pc_retorna_inf_rating.pr_inorigem_rating
+                                                     WHEN pc_retorna_inf_rating.pr_inrisco_rating_autom <> ?.
+              END.
+	      /* Habilita novo rating */
+              /* ***** fim P450  ****/
+    END.  /*  Fim da leitura do craplim  */
+    RETURN "OK".
+END PROCEDURE.
+/****************************************************************************
+            Buscar limite de uma conta informada por parâmetro          
+*****************************************************************************/
+PROCEDURE busca_limite_ativo:
+    DEFINE INPUT PARAMETER par_cdcooper AS INTEGER     NO-UNDO.
+    DEFINE INPUT PARAMETER par_nrdconta AS INTEGER     NO-UNDO.
+    DEFINE INPUT PARAMETER par_dtmvtolt AS DATE        NO-UNDO.
+    DEFINE VAR             aux_habrat   AS CHAR        NO-UNDO.
+    DEFINE OUTPUT PARAMETER TABLE FOR tt-limite_chq.
+    EMPTY TEMP-TABLE tt-limite_chq.
+    FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
+                             crapprm.cdacesso = 'HABILITA_RATING_NOVO' AND
+                             crapprm.cdcooper = par_cdcooper
+                             NO-LOCK NO-ERROR.
+    ASSIGN aux_habrat = 'N'.
+    IF AVAIL crapprm THEN DO:
+      ASSIGN aux_habrat = crapprm.dsvlrprm.
+    END.
+    FOR EACH craplim WHERE craplim.cdcooper = par_cdcooper  AND
+                           craplim.nrdconta = par_nrdconta  AND
+                           craplim.tpctrlim = 2             AND 
+                           craplim.insitlim <> 3 NO-LOCK:
+        FIND crapprp WHERE crapprp.cdcooper = craplim.cdcooper   AND
+                           crapprp.nrdconta = craplim.nrdconta   AND
+                           crapprp.tpctrato = craplim.tpctrlim   AND
+                           crapprp.nrctrato = craplim.nrctrlim
+                           NO-LOCK NO-ERROR.
+        CREATE tt-limite_chq.
+        ASSIGN tt-limite_chq.dtpropos = craplim.dtpropos
+               tt-limite_chq.dtinivig = craplim.dtinivig
+               tt-limite_chq.nrctrlim = craplim.nrctrlim
+               tt-limite_chq.vllimite = craplim.vllimite
+               tt-limite_chq.qtdiavig = craplim.qtdiavig
+               tt-limite_chq.cddlinha = craplim.cddlinha
+               tt-limite_chq.dssitlim = (IF craplim.insitlim = 1 THEN
+                                            "EM ESTUDO"
+                                         ELSE 
+                                         IF craplim.insitlim = 2 THEN
+                                            "ATIVO"
+                                         ELSE
+                                         IF craplim.insitlim = 3 THEN
+                                            "CANCELADO"
+                                         ELSE 
+                                            "DIFERENTE")
+              tt-limite_chq.nrdrecid  = RECID (craplim)
+              tt-limite_chq.flgenvio = IF   AVAIL  crapprp  THEN
+                                            IF   crapprp.flgenvio   THEN
+                                                 "SIM"
+                                            ELSE
+                                                 "NAO"
+                                       ELSE
+                                            "NAO"
+              tt-limite_chq.insitlim = craplim.insitlim
               tt-limite_chq.idcobope = craplim.idcobope.
 
-
+              /* ***** inicio P450  ****/
+              /* Habilita novo rating */
+              IF aux_habrat = 'S' AND par_cdcooper <> 3 THEN DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                /* Efetuar a chamada a rotina Oracle da RATI0003, para buscar os ratings das propostas */
+                RUN STORED-PROCEDURE pc_retorna_inf_rating
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, 
+                                                       INPUT par_nrdconta,
+                                                       INPUT 2,
+                                                       INPUT craplim.nrctrlim, 
+                                                       OUTPUT 0,           /* pr_insituacao_rating */
+                                                       OUTPUT "",          /* pr_inorigem_rating */
+                                                       OUTPUT "",          /* pr_inrisco_rating_autom */
+                                                       OUTPUT 0,           /* pr_cdcritic */
+                                                       OUTPUT "").         /* pr_dscritic */
+                /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC pc_retorna_inf_rating
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                ASSIGN aux_cdcritic               = 0
+                        aux_dscritic               = ""
+                        tt-limite_chq.inrisrat     = ""
+                        tt-limite_chq.origerat     = ""
+                        aux_cdcritic               = INT(pc_retorna_inf_rating.pr_cdcritic) 
+                                                     WHEN pc_retorna_inf_rating.pr_cdcritic <> ?
+                        aux_dscritic               = pc_retorna_inf_rating.pr_dscritic
+                                                     WHEN pc_retorna_inf_rating.pr_dscritic <> ?
+                        tt-limite_chq.inrisrat     = pc_retorna_inf_rating.pr_inrisco_rating_autom
+                                                     WHEN pc_retorna_inf_rating.pr_inrisco_rating_autom <> ?
+                        tt-limite_chq.origerat     = pc_retorna_inf_rating.pr_inorigem_rating
+                                                     WHEN pc_retorna_inf_rating.pr_inrisco_rating_autom <> ?.
+              END.
+	      /* Habilita novo rating */
+              /* ***** fim P450  ****/
     END.  /*  Fim da leitura do craplim  */
     
     RETURN "OK".
@@ -2895,7 +3098,7 @@ PROCEDURE busca_dados_limite:
     IF  NOT AVAILABLE crapprp   THEN                                   
         DO:
             ASSIGN aux_cdcritic = 0.
-                   aux_dscritic = "Regisro de proposta de desconto de cheque nao encontrada.".
+                   aux_dscritic = "Registro de proposta de desconto de cheque nao encontrada.".
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -3148,7 +3351,10 @@ PROCEDURE busca_dados_limite:
            tt-dscchq_dados_limite.dtinivig = craplim.dtinivig
            tt-dscchq_dados_limite.txcetano = aux_txcetano
            tt-dscchq_dados_limite.txcetmes = aux_txcetmes
-           tt-dscchq_dados_limite.idcobope = craplim.idcobope.
+           tt-dscchq_dados_limite.idcobope = craplim.idcobope
+           /* PRJ 438 - Sprint 14 - Incluido campo de nivel de risco e taxa na tela do Desconto do Limite de Cheques */
+           tt-dscchq_dados_limite.txmensal = crapldc.txmensal
+           tt-dscchq_dados_limite.nivrisco = craplim.dsrisco.
     
     IF  par_flgerlog  THEN
         DO:
@@ -4296,12 +4502,14 @@ PROCEDURE efetua_alteracao_limite:
     DEFINE INPUT  PARAMETER par_vllimite AS DECIMAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_dsramati AS CHARACTER   NO-UNDO.
     DEFINE INPUT  PARAMETER par_vlmedchq AS DECIMAL     NO-UNDO.
+/*
     DEFINE INPUT  PARAMETER par_vlfatura AS DECIMAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_vloutras AS DECIMAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_vlsalari AS DECIMAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_vlsalcon AS DECIMAL     NO-UNDO.
     DEFINE INPUT  PARAMETER par_dsdbens1 AS CHARACTER   NO-UNDO.
     DEFINE INPUT  PARAMETER par_dsdbens2 AS CHARACTER   NO-UNDO.
+*/
     DEFINE INPUT  PARAMETER par_nrctrlim AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_cddlinha AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_dsobserv AS CHARACTER   NO-UNDO.    
@@ -4325,6 +4533,12 @@ PROCEDURE efetua_alteracao_limite:
     DEFINE INPUT  PARAMETER par_nrender1 AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_complen1 AS CHARACTER   NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrcxaps1 AS INTEGER     NO-UNDO.
+    /* PRJ 438 Sprint 14 */
+	DEFINE INPUT  PARAMETER par_vlrecjg1 AS DECIMAL     NO-UNDO.
+    DEFINE INPUT  PARAMETER par_cdnacio1 AS INTEGER     NO-UNDO.
+	DEFINE INPUT  PARAMETER par_inpesso1 AS INTEGER     NO-UNDO.
+    DEFINE INPUT  PARAMETER par_dtnasct1 AS DATE        NO-UNDO.
+    DEFINE INPUT  PARAMETER par_vlrenme1 AS DECIMAL     NO-UNDO.
     /** ------------------- Parametros do 2 avalista ------------------- **/
     DEFINE INPUT  PARAMETER par_nrctaav2 AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_nmdaval2 AS CHARACTER   NO-UNDO.
@@ -4345,6 +4559,12 @@ PROCEDURE efetua_alteracao_limite:
     DEFINE INPUT  PARAMETER par_nrender2 AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_complen2 AS CHARACTER   NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrcxaps2 AS INTEGER     NO-UNDO.
+    /* PRJ 438 Sprint 14 */
+	DEFINE INPUT  PARAMETER par_vlrecjg2 AS DECIMAL     NO-UNDO.
+    DEFINE INPUT  PARAMETER par_cdnacio2 AS INTEGER     NO-UNDO.
+	DEFINE INPUT  PARAMETER par_inpesso2 AS INTEGER     NO-UNDO.
+    DEFINE INPUT  PARAMETER par_dtnasct2 AS DATE        NO-UNDO.
+    DEFINE INPUT  PARAMETER par_vlrenme2 AS DECIMAL     NO-UNDO.
     /** ----------------------------- Rating ---------------------------- **/
     DEFINE INPUT  PARAMETER par_nrgarope AS INTEGER     NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrinfcad AS INTEGER     NO-UNDO.
@@ -4402,6 +4622,8 @@ PROCEDURE efetua_alteracao_limite:
     DEFINE VARIABLE var_nrperger LIKE craplim.nrperger.
     DEFINE VARIABLE var_vltotsfn LIKE craplim.vltotsfn.
     DEFINE VARIABLE var_perfatcl LIKE crapjfn.perfatcl.
+    
+    DEFINE VARIABLE aux_habrat   AS CHAR         NO-UNDO. /* P450 - Rating */ 
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -4483,15 +4705,15 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav1, 
                                   INPUT par_cdufava1, 
                                   INPUT par_nrcepav1, 
-                                  INPUT 0, /* nacionalidade*/
-                                  INPUT 0, /* endividamento */
-                                  INPUT 0, /* renda mensal */
+                                  INPUT par_cdnacio1,
+                                  INPUT 0,
+                                  INPUT par_vlrenme1,
                                   INPUT par_nrender1,
                                   INPUT par_complen1,
                                   INPUT par_nrcxaps1,
-                                  INPUT 0, /* inpessoa 1o aval */
-                                  INPUT ?, /* dtnascto 1o aval */
-								  INPUT 0, /* par_vlrecjg1 */
+                                  INPUT par_inpesso1,
+                                  INPUT par_dtnasct1,
+                                  INPUT par_vlrecjg1,
 
                                   /** 2 avalista **/
                                   INPUT par_nrctaav2, 
@@ -4510,15 +4732,15 @@ PROCEDURE efetua_alteracao_limite:
                                   INPUT par_nmcidav2, 
                                   INPUT par_cdufava2, 
                                   INPUT par_nrcepav2,
-                                  INPUT 0,  /* nacionalidade */
-                                  INPUT 0,  /* Endividamento */
+                                  INPUT par_cdnacio2,
                                   INPUT 0,
+                                  INPUT par_vlrenme2,
                                   INPUT par_nrender2,
                                   INPUT par_complen2,
                                   INPUT par_nrcxaps2,
-                                  INPUT 0, /* inpessoa 2o aval */
-                                  INPUT ?, /* dtnascto 2o aval */
-								  INPUT 0, /* par_vlrecjg2 */
+                                  INPUT par_inpesso2,
+                                  INPUT par_dtnasct2,
+                                  INPUT par_vlrecjg2,
                                   INPUT ""). /* Renda mensal */
                         
         DELETE PROCEDURE h-b1wgen9999.
@@ -4812,6 +5034,7 @@ PROCEDURE efetua_alteracao_limite:
                 UNDO TRANS_ALTERA, LEAVE TRANS_ALTERA.
             END.        
         
+        /*
         ASSIGN var_dsramati = crapprp.dsramati
                var_vlmedchq = crapprp.vlmedchq
                var_vlfatura = crapprp.vlfatura
@@ -4831,7 +5054,20 @@ PROCEDURE efetua_alteracao_limite:
                                   STRING(par_dsdbens2,"x(60)")
                crapprp.dsobserv[1] = CAPS(par_dsobserv)
                crapprp.dsobserv[2] = ""
-               crapprp.dsobserv[3] = "".
+               crapprp.dsobserv[3] = "". */
+        /*PRJ438 - Sprint 14 - Cria ou atualiza a CRAPPRP*/
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        RUN STORED-PROCEDURE pc_cria_atualiza_prp
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_nrdconta
+                                              ,INPUT par_nrctrlim
+                                              ,INPUT 2
+                                              ,INPUT CAPS(par_dsramati)
+                                              ,INPUT par_vlmedchq
+                                              ,INPUT CAPS(par_dsobserv)
+                                              ,INPUT par_cdcooper
+                                              ,INPUT par_dtmvtolt).
+        CLOSE STORED-PROC pc_cria_atualiza_prp
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
         
 
         /* Verificar se a conta pertence ao grupo economico novo */        
@@ -4875,6 +5111,73 @@ PROCEDURE efetua_alteracao_limite:
                 FIND CURRENT crapjfn NO-LOCK NO-ERROR.
                 RELEASE crapjfn.
             END.
+
+        FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
+                                 crapprm.cdacesso = 'HABILITA_RATING_NOVO' AND
+                                 crapprm.cdcooper = par_cdcooper
+                                 NO-LOCK NO-ERROR.
+       
+        ASSIGN aux_habrat = 'N'.
+        IF AVAIL crapprm THEN DO:
+          ASSIGN aux_habrat = crapprm.dsvlrprm.
+        END.
+       
+        /* Habilita novo rating */
+        IF aux_habrat = 'S' AND par_cdcooper <> 3 THEN DO:
+       
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            
+          /* Efetuar a chamada da rotina Oracle, para limpar as informacoes do rating -P450 Rating */
+          RUN STORED-PROCEDURE pc_grava_rating_operacao
+            aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT par_cdcooper
+                              ,INPUT par_nrdconta
+                              ,INPUT 2            /* Tipo Contrato */
+                              ,INPUT par_nrctrlim
+                              ,INPUT ?
+                              ,INPUT ?             /* null para pr_ntrataut */
+                              ,INPUT par_dtmvtolt  /* pr_dtrating */
+                              ,INPUT 0             /* pr_strating => 0 -- Nao Enviado */
+                              ,INPUT 0             /* pr_orrating =>  */
+                              ,INPUT par_cdoperad
+                              ,INPUT ?             /* null para pr_dtrataut */
+                              ,INPUT ?             /* null pr_innivel_rating */
+                              ,INPUT ?
+                              ,INPUT ?             /* pr_inpontos_rating     */
+                              ,INPUT ?             /* pr_insegmento_rating   */
+                              ,INPUT ?             /* pr_inrisco_rat_inc     */
+                              ,INPUT ?             /* pr_innivel_rat_inc     */
+                              ,INPUT ?             /* pr_inpontos_rat_inc    */
+                              ,INPUT ?             /* pr_insegmento_rat_inc  */
+                              ,INPUT ?             /* pr_efetivacao_rating   */
+                              ,INPUT par_cdoperad  /* pr_cdoperad*/
+                              ,INPUT par_dtmvtolt
+                              ,INPUT par_vllimite
+                              ,INPUT ? /*sugerido*/
+                              ,INPUT "" /*Justif*/
+                              ,INPUT ?
+                              ,OUTPUT 0            /* pr_cdcritic */
+                              ,OUTPUT "").         /* pr_dscritic */
+
+              /* Fechar o procedimento para buscarmos o resultado */ 
+              CLOSE STORED-PROC pc_grava_rating_operacao
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+              ASSIGN aux_cdcritic  = 0
+                     aux_dscritic  = ""
+                     aux_cdcritic = pc_grava_rating_operacao.pr_cdcritic
+                                       WHEN pc_grava_rating_operacao.pr_cdcritic <> ?
+                     aux_dscritic = pc_grava_rating_operacao.pr_dscritic
+                                       WHEN pc_grava_rating_operacao.pr_dscritic <> ?.
+              IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                DO:
+                  ASSIGN aux_flgderro = TRUE.                
+                  UNDO TRANS_ALTERA, LEAVE TRANS_ALTERA.
+                END.
+        END.
+	/* Habilita novo rating */
            
     END. /* Final da transacao */
 
@@ -5264,6 +5567,17 @@ PROCEDURE gera-impressao-limite:
     DEF VAR aux_vlendivi AS DEC                                     NO-UNDO.
     DEF VAR aux_dscetan1 AS CHAR FORMAT "x(80)"                     NO-UNDO.
     DEF VAR aux_dscetan2 AS CHAR FORMAT "x(80)"                     NO-UNDO.
+    DEF VAR aux_habrat   AS CHAR                                    NO-UNDO. /* P450 - Rating */
+
+    FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
+                             crapprm.cdacesso = 'HABILITA_RATING_NOVO' AND
+                             crapprm.cdcooper = par_cdcooper
+                             NO-LOCK NO-ERROR.
+
+    ASSIGN aux_habrat = 'N'.
+    IF AVAIL crapprm THEN DO:
+      ASSIGN aux_habrat = crapprm.dsvlrprm.
+    END.
 
     /** FORM's para Proposta de Limite de Descontos de Cheques **/
     FORM tt-proposta_limite_chq.nmextcop FORMAT "x(50)"
@@ -5309,8 +5623,10 @@ PROCEDURE gera-impressao-limite:
          "Salario:"                  AT 31 tt-proposta_limite_chq.vlsalari FORMAT "zzz,zzz,zz9.99"
          "Salario do Conjuge:"       AT 66 tt-proposta_limite_chq.vlsalcon FORMAT "zzz,zzz,zz9.99" 
          SKIP
+         "Outras:"                   AT 28 tt-proposta_limite_chq.vloutras FORMAT "zzz,zzz,zz9.99" /*PRJ 438 - Sprint 14*/
+         "Outras:"                   AT 74 tt-proposta_limite_chq.vlrencjg FORMAT "zzz,zzz,zz9.99" /*PRJ 438 - Sprint 14*/
+         SKIP
          "Faturamento Mensal:"       AT 16 tt-proposta_limite_chq.vlfatura FORMAT "zzz,zzz,zz9.99"
-         "Outras:"                   AT 74 tt-proposta_limite_chq.vloutras FORMAT "zzz,zzz,zz9.99"
          SKIP(1)
          "\033\105 LIMITES \033\106"
          "Cheque Especial:"          AT 16 tt-proposta_limite_chq.vllimcre FORMAT "zzz,zzz,zz9.99"
@@ -5409,6 +5725,18 @@ PROCEDURE gera-impressao-limite:
          tt-proposta_limite_chq.nmresco2 FORMAT "x(40)" AT 04
          WITH NO-BOX NO-LABELS WIDTH 96 FRAME f_aprovacao.
 
+    FORM "Risco da Proposta:"                                       AT 01
+        SKIP(1)
+        tt-ratings-novo.dsdopera LABEL "Operacao"                FORMAT "x(15)"      AT 01
+        SKIP(1)
+        tt-ratings-novo.nrctrrat LABEL "Contrato"                FORMAT "zz,zzz,zz9" AT 01
+        tt-ratings-novo.inpontos_rat_inc LABEL "   Pontuacao"    FORMAT "99999"       
+        tt-ratings-novo.des_inrisco_rat_inc LABEL "   Nota"      FORMAT "x(2)"        /*ex. A*/
+        tt-ratings-novo.innivel_rat_inc LABEL "   Risco"         FORMAT "x(6)"        /*ex. Risco BAIXO*/
+        SKIP(1)
+	tt-ratings-novo.insegmento_rat_inc LABEL "Segmento"      FORMAT "x(30)"
+        WITH SIDE-LABEL WIDTH 120 FRAME f_rating_atual_novo.
+        
     FORM SKIP(2)
          "Risco da Proposta:"                                    AT 01
          SKIP(1)                                    
@@ -6015,6 +6343,7 @@ PROCEDURE gera-impressao-limite:
                 tt-proposta_limite_chq.vllimcre  tt-proposta_limite_chq.vltotccr
                 tt-proposta_limite_chq.vlaplica  tt-proposta_limite_chq.dsdeben1
                 tt-proposta_limite_chq.dsdeben2  tt-proposta_limite_chq.vlfatura
+                tt-proposta_limite_chq.vlrencjg
                 WITH FRAME f_pro_rec.
         
             DISPLAY STREAM str_dscchq 
@@ -6068,41 +6397,137 @@ PROCEDURE gera-impressao-limite:
             PAGE STREAM str_dscchq.
 
             PUT STREAM str_dscchq CONTROL "\0330\033x0\022\033\115" NULL.
-        
-            /** Rating da proposta atual **/
-            FIND tt-ratings WHERE 
-                 tt-ratings.tpctrrat = 2                               AND
-                 tt-ratings.nrctrrat = tt-proposta_limite_chq.nrctrlim
-                 NO-LOCK NO-ERROR.
-        
-            IF  AVAIL tt-ratings   THEN
-                DISPLAY STREAM str_dscchq 
-                    tt-ratings.dsdopera  tt-ratings.nrctrrat
-                    tt-ratings.indrisco  tt-ratings.nrnotrat
-                    tt-ratings.dsdrisco  WITH FRAME f_rating_atual. 
-                
-            IF  CAN-FIND(FIRST tt-ratings WHERE NOT 
-                   (tt-ratings.tpctrrat = 2  AND
-                    tt-ratings.nrctrrat = tt-proposta_limite_chq.nrctrlim)) THEN
-                VIEW STREAM str_dscchq FRAME f_historico_rating_1.
-        
-            /** Todos os outros ratings de operacoes ainda em aberto **/
-            FOR EACH tt-ratings WHERE 
-                NOT (tt-ratings.tpctrrat = 2                 AND
-                     tt-ratings.nrctrrat = craplim.nrctrlim) NO-LOCK
-                     BY tt-ratings.insitrat DESC
-                        BY tt-ratings.nrnotrat DESC:
-        
-                DISPLAY STREAM str_dscchq 
-                    tt-ratings.dsdopera  tt-ratings.nrctrrat
-                    tt-ratings.indrisco  tt-ratings.nrnotrat
-                    tt-ratings.vloperac  tt-ratings.dsditrat
-                    WITH FRAME f_historico_rating_2.
-        
-                DOWN WITH FRAME f_historico_rating_2.
-        
-            END. /** Fim do FOR EACH tt-ratings **/
 
+            /* Habilita novo rating */
+            IF aux_habrat = 'S' AND par_cdcooper <> 3 THEN DO:
+
+              /*RATING NOVO*/
+              ASSIGN vr_des_inrisco_rat_inc = ""       
+                     vr_inpontos_rat_inc    = 0
+                     vr_innivel_rat_inc     = ""
+                     vr_insegmento_rat_inc  = ""
+                     vr_vlr                 = 0
+                     vr_qtdreg              = 0
+                     vr_nrctro_out          = 0
+                     vr_tpctrato_out        = 0.
+                   
+              ASSIGN aux_dscritic = "".
+              ASSIGN aux_cdcritic = 0.
+            
+              EMPTY TEMP-TABLE tt-ratings-novo.
+            
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        
+              RUN STORED-PROCEDURE pc_busca_dados_rating_inclusao
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper      /*COOPERATIVA */
+                                                      ,INPUT par_nrdconta /*tt-proposta_limite_chq.nrdconta  CONTA  */
+                                                      ,INPUT par_nrctrlim /*tt-proposta_limite_chq.nrctrlim NUM CONTRATO DA CONTA*/
+                                                      ,INPUT 2                /*TIPO CONTRATO DA CONTA*/
+                                                      ,OUTPUT "" /*pr_des_inrisco_rat_inc - Nivel de Rating da Inclusao da Proposta*/
+                                                      ,OUTPUT 0  /*pr_inpontos_rat_inc    - Pontuacao do Rating retornada do Motor no momento da Inclusao*/
+                                                      ,OUTPUT "" /*pr_innivel_rat_inc     - Nivel de Risco do Rating Inclusao (1-Baixo/2-Medio/3-Alto)*/
+                                                      ,OUTPUT "" /*pr_insegmento_rat_inc   - qual Garantia foi utilizada para calculo Rating na Inclusao*/
+                                                      ,OUTPUT 0                /*pr_vlr  crapepr.vlemprst*/
+                                                      ,OUTPUT 0                /*pr_qtdreg QTDE REG.*/
+                                                      ,OUTPUT 0                /*pr_nrctro_out CONTRATO DA CONTA*/
+                                                      ,OUTPUT 0                /*pr_tpctrato_out TIPO CONTRATO DA CONTA*/
+                                                      ,OUTPUT ""               /*Arquivo de retorno do XML*/
+                                                      ,OUTPUT 0                /*pr_cdcritic  */
+                                                      ,OUTPUT "").             /*Descricao da critica*/
+                                                      
+               CLOSE STORED-PROC pc_busca_dados_rating_inclusao
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                   
+               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            
+               ASSIGN vr_xml = pc_busca_dados_rating_inclusao.pr_retxml_clob
+                             WHEN pc_busca_dados_rating_inclusao.pr_retxml_clob <> ?.
+               ASSIGN aux_cdcritic = pc_busca_dados_rating_inclusao.pr_cdcritic
+                             WHEN pc_busca_dados_rating_inclusao.pr_cdcritic <> ?.
+               ASSIGN aux_dscritic = pc_busca_dados_rating_inclusao.pr_dscritic
+                             WHEN pc_busca_dados_rating_inclusao.pr_dscritic <> ?.
+               ASSIGN vr_des_inrisco_rat_inc = pc_busca_dados_rating_inclusao.pr_des_inrisco_rat_inc 
+                             WHEN pc_busca_dados_rating_inclusao.pr_des_inrisco_rat_inc <> ? .
+               ASSIGN vr_inpontos_rat_inc = pc_busca_dados_rating_inclusao.pr_inpontos_rat_inc 
+                             WHEN pc_busca_dados_rating_inclusao.pr_inpontos_rat_inc <> ? .
+               ASSIGN vr_innivel_rat_inc = pc_busca_dados_rating_inclusao.pr_innivel_rat_inc 
+                             WHEN pc_busca_dados_rating_inclusao.pr_innivel_rat_inc <> ? .
+               ASSIGN vr_insegmento_rat_inc = pc_busca_dados_rating_inclusao.pr_insegmento_rat_inc 
+                             WHEN pc_busca_dados_rating_inclusao.pr_insegmento_rat_inc <> ? .
+               ASSIGN vr_vlr = pc_busca_dados_rating_inclusao.pr_vlr 
+                             WHEN pc_busca_dados_rating_inclusao.pr_vlr <> ? .
+               ASSIGN vr_qtdreg = pc_busca_dados_rating_inclusao.pr_qtdreg 
+                             WHEN pc_busca_dados_rating_inclusao.pr_qtdreg <> ? .
+               ASSIGN vr_nrctro_out = pc_busca_dados_rating_inclusao.pr_nrctro_out 
+                             WHEN pc_busca_dados_rating_inclusao.pr_nrctro_out<> ? .
+               ASSIGN vr_tpctrato_out = pc_busca_dados_rating_inclusao.pr_tpctrato_out 
+                             WHEN pc_busca_dados_rating_inclusao.pr_tpctrato_out <> ? .
+
+               CREATE tt-ratings-novo.  
+               ASSIGN tt-ratings-novo.nrctrrat = vr_nrctro_out
+                      tt-ratings-novo.tpctrrat = vr_tpctrato_out
+                      tt-ratings-novo.vloperac = vr_vlr
+                      tt-ratings-novo.dsdopera = "Desconto Cheque"
+                      tt-ratings-novo.innivel_rat_inc = vr_innivel_rat_inc   
+                      tt-ratings-novo.des_inrisco_rat_inc = vr_des_inrisco_rat_inc  /*Nota Rating */
+                      tt-ratings-novo.inpontos_rat_inc = vr_inpontos_rat_inc
+                      tt-ratings-novo.insegmento_rat_inc = vr_insegmento_rat_inc.
+		      
+               FIND tt-ratings-novo WHERE 
+                    tt-ratings-novo.tpctrrat = 2   AND
+                    tt-ratings-novo.nrctrrat = tt-proposta_limite_chq.nrctrlim NO-LOCK NO-ERROR.
+        
+               IF   ((AVAIL tt-ratings-novo) AND
+                     (tt-ratings-novo.des_inrisco_rat_inc <> ? AND tt-ratings-novo.innivel_rat_inc <> ?)) THEN
+               DO:
+                   DISPLAY STREAM str_dscchq 
+                        tt-ratings-novo.dsdopera 
+                        tt-ratings-novo.nrctrrat 
+                        tt-ratings-novo.inpontos_rat_inc 
+                        tt-ratings-novo.des_inrisco_rat_inc 
+                        tt-ratings-novo.innivel_rat_inc 
+                        tt-ratings-novo.insegmento_rat_inc
+                    WITH FRAME f_rating_atual_novo.   
+
+               END.
+            END.
+            /* Habilita novo rating */
+            ELSE DO:
+	     
+              FIND tt-ratings WHERE 
+                   tt-ratings.tpctrrat = 2                               AND
+                   tt-ratings.nrctrrat = tt-proposta_limite_chq.nrctrlim
+                   NO-LOCK NO-ERROR.
+        
+              IF  AVAIL tt-ratings   THEN
+                  DISPLAY STREAM str_dscchq 
+                      tt-ratings.dsdopera  tt-ratings.nrctrrat
+                      tt-ratings.indrisco  tt-ratings.nrnotrat
+                      tt-ratings.dsdrisco  WITH FRAME f_rating_atual. 
+
+              IF  CAN-FIND(FIRST tt-ratings WHERE NOT 
+                     (tt-ratings.tpctrrat = 2  AND
+                      tt-ratings.nrctrrat = tt-proposta_limite_chq.nrctrlim)) THEN
+                  VIEW STREAM str_dscchq FRAME f_historico_rating_1.
+        
+              /** Todos os outros ratings de operacoes ainda em aberto **/
+              FOR EACH tt-ratings WHERE 
+                  NOT (tt-ratings.tpctrrat = 2                 AND
+                       tt-ratings.nrctrrat = craplim.nrctrlim) NO-LOCK
+                       BY tt-ratings.insitrat DESC
+                       BY tt-ratings.nrnotrat DESC:
+        
+                  DISPLAY STREAM str_dscchq 
+                      tt-ratings.dsdopera  tt-ratings.nrctrrat
+                      tt-ratings.indrisco  tt-ratings.nrnotrat
+                      tt-ratings.vloperac  tt-ratings.dsditrat
+                      WITH FRAME f_historico_rating_2.
+        
+                  DOWN WITH FRAME f_historico_rating_2.
+        
+              END. /** Fim do FOR EACH tt-ratings **/
+            END.
+        
             IF NOT VALID-HANDLE(h-b1wgen0138) THEN
                RUN sistema/generico/procedures/b1wgen0138.p
                    PERSISTENT SET h-b1wgen0138.
@@ -7554,6 +7979,10 @@ PROCEDURE busca_dados_impressao_dscchq:
     IF  NOT AVAIL crapage THEN
         RETURN "NOK".
 
+	IF tt-dscchq_dados_limite.dsdbens1 = ? THEN
+		ASSIGN tt-dscchq_dados_limite.dsdbens1 = " ".
+	IF tt-dscchq_dados_limite.dsdbens2 = ? THEN
+		ASSIGN tt-dscchq_dados_limite.dsdbens2 = " ".
     IF  par_idimpres = 1  THEN /* Limite - COMPLETA */
     DO:
 
@@ -9118,6 +9547,8 @@ PROCEDURE carrega_dados_proposta_limite:
     DEFINE VARIABLE h-b1wgen0028 AS HANDLE             NO-UNDO.
     DEFINE VARIABLE rel_dsagenci AS CHARACTER          NO-UNDO.
     DEFINE VARIABLE rel_vlaplica AS DECIMAL            NO-UNDO.
+    DEFINE VARIABLE aux_vlrencjg AS DECIMAL            NO-UNDO. /* PRJ438 - SPRINT 14*/
+    DEFINE VARIABLE aux_nrctacjg AS DECIMAL            NO-UNDO. /* PRJ438 - SPRINT 14*/
     DEFINE VARIABLE aux_vltotccr AS DECIMAL            NO-UNDO.
     DEFINE VARIABLE aux_dstipcta AS CHARACTER          NO-UNDO.
     DEFINE VARIABLE aux_dssitdct AS CHARACTER          NO-UNDO.
@@ -9504,6 +9935,21 @@ PROCEDURE carrega_dados_proposta_limite:
                aux_vlprepla = tt-dados-capital.vlprepla.
     
 
+    /*PRJ 438 - SPRINT 14 - Busca a conta e os outros rendimentos do conjuge*/
+    ASSIGN aux_vlrencjg = 0 .
+    FIND crapcje WHERE crapcje.cdcooper = par_cdcooper AND
+                       crapcje.nrdconta = par_nrdconta AND
+                       crapcje.idseqttl = 1
+                       NO-LOCK NO-ERROR.
+      IF AVAIL crapcje THEN
+      DO:
+        ASSIGN aux_nrctacjg = crapcje.nrctacje.  
+        FIND crapttl WHERE crapttl.cdcooper = par_cdcooper  AND
+                           crapttl.nrdconta = aux_nrctacjg
+                           NO-LOCK NO-ERROR.
+        IF  AVAIL crapttl  THEN
+                ASSIGN aux_vlrencjg = crapttl.vldrendi[1] + crapttl.vldrendi[2] + crapttl.vldrendi[3] + crapttl.vldrendi[4] + crapttl.vldrendi[5] + crapttl.vldrendi[6] .
+      END.
     CREATE tt-proposta_limite_chq.
     ASSIGN tt-proposta_limite_chq.dsagenci = rel_dsagenci
            tt-proposta_limite_chq.vlaplica = rel_vlaplica
@@ -9518,6 +9964,7 @@ PROCEDURE carrega_dados_proposta_limite:
            tt-proposta_limite_chq.vlsalari = par_vlsalari
            tt-proposta_limite_chq.vlsalcon = par_vlsalcon
            tt-proposta_limite_chq.vloutras = par_vloutras
+           tt-proposta_limite_chq.vlrencjg = aux_vlrencjg /* PRJ438 - SPRINT 14*/
            tt-proposta_limite_chq.ddmvtolt = DAY(par_dtmvtolt)
            tt-proposta_limite_chq.aamvtolt = YEAR(par_dtmvtolt)
            tt-proposta_limite_chq.nrctrlim = par_nrctrlim
@@ -9674,6 +10121,7 @@ PROCEDURE busca_borderos:
     DEFINE VARIABLE aux_qtdaprov AS INTEGER     NO-UNDO.
     DEFINE VARIABLE aux_vlraprov AS DECIMAL     NO-UNDO.
     DEFINE VARIABLE aux_flcusthj AS INTEGER     NO-UNDO.
+    DEFINE VARIABLE aux_habrat   AS CHAR        NO-UNDO. /* P450 - Rating */
     
     
     EMPTY TEMP-TABLE tt-bordero_chq.
@@ -9753,7 +10201,7 @@ PROCEDURE busca_borderos:
           
             END.
           END.
-    
+
         CREATE tt-bordero_chq.
         ASSIGN tt-bordero_chq.dtmvtolt = crapbdc.dtmvtolt
                tt-bordero_chq.nrborder = crapbdc.nrborder
@@ -9778,11 +10226,60 @@ PROCEDURE busca_borderos:
                tt-bordero_chq.qtdaprov = aux_qtdaprov
                tt-bordero_chq.vlraprov = aux_vlraprov
                tt-bordero_chq.flcusthj = aux_flcusthj.
+
+        /* ***** inicio P450  ****/
+        FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
+                                 crapprm.cdacesso = 'HABILITA_RATING_NOVO' AND
+                                 crapprm.cdcooper = par_cdcooper
+                                 NO-LOCK NO-ERROR.
+
+        ASSIGN aux_habrat = 'N'.
+          IF AVAIL crapprm THEN DO:
+            ASSIGN aux_habrat = crapprm.dsvlrprm.
+          END.
+
+         /* Habilita novo rating */
+         IF aux_habrat = 'S' AND par_cdcooper <> 3 THEN DO:
+
+           { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+           /* Efetuar a chamada a rotina Oracle da RATI0003, para buscar os ratings das propostas */
+           RUN STORED-PROCEDURE pc_retorna_inf_rating
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, 
+                                                  INPUT par_nrdconta,
+                                                  INPUT 92,
+                                                  INPUT crapbdc.nrborder, 
+                                                  OUTPUT 0,           /* pr_insituacao_rating */
+                                                  OUTPUT "",          /* pr_inorigem_rating */
+                                                  OUTPUT "",          /* pr_inrisco_rating_autom */
+                                                  OUTPUT 0,           /* pr_cdcritic */
+                                                  OUTPUT "").         /* pr_dscritic */
+
+           /* Fechar o procedimento para buscarmos o resultado */ 
+           CLOSE STORED-PROC pc_retorna_inf_rating
+           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+           { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+           ASSIGN aux_cdcritic               = 0
+                  aux_dscritic               = ""
+                  tt-bordero_chq.inrisrat    = ""
+                  tt-bordero_chq.origerat    = ""
+                  aux_cdcritic               = INT(pc_retorna_inf_rating.pr_cdcritic) 
+                                               WHEN pc_retorna_inf_rating.pr_cdcritic <> ?
+                  aux_dscritic               = pc_retorna_inf_rating.pr_dscritic
+                                               WHEN pc_retorna_inf_rating.pr_dscritic <> ?
+                  tt-bordero_chq.inrisrat    = pc_retorna_inf_rating.pr_inrisco_rating_autom
+                                               WHEN pc_retorna_inf_rating.pr_inrisco_rating_autom <> ?
+                  tt-bordero_chq.origerat    = pc_retorna_inf_rating.pr_inorigem_rating
+                                               WHEN pc_retorna_inf_rating.pr_inrisco_rating_autom <> ?.
+         END.
+         /* Habilita novo rating */
+         /* ***** fim P450  ****/
     
     END.  /*  Fim da leitura do crapbdc  */
-    
+
     RETURN "OK".
-    
 END PROCEDURE. 
 
 /*****************************************************************************
@@ -10592,7 +11089,7 @@ PROCEDURE efetua_exclusao_bordero:
                 
                     IF  AVAILABLE craplau  THEN
                         DELETE craplau.
-				    END.
+                    END.
     
             DELETE crapcdb.                   
                            
@@ -10728,7 +11225,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEFINE INPUT  PARAMETER par_nrdconta AS INTEGER         NO-UNDO.
     DEFINE INPUT  PARAMETER par_idseqttl AS INTEGER         NO-UNDO.
     DEFINE INPUT  PARAMETER par_dtmvtolt AS DATE            NO-UNDO.
-    DEFINE INPUT  PARAMETER par_dtmvtopr AS DATE            NO-UNDO.    
+    DEFINE INPUT  PARAMETER par_dtmvtopr AS DATE            NO-UNDO.
     DEFINE INPUT  PARAMETER par_inproces AS INTEGER         NO-UNDO.
     DEFINE INPUT  PARAMETER par_nrborder AS INTEGER         NO-UNDO.
     DEFINE INPUT  PARAMETER par_cddopcao AS CHARACTER       NO-UNDO.
@@ -10794,9 +11291,10 @@ PROCEDURE efetua_liber_anali_bordero:
     DEFINE VARIABLE aux_dsdrisco AS CHAR    NO-UNDO.
     DEFINE VARIABLE aux_dsoperac AS CHAR    NO-UNDO.
     DEFINE VARIABLE aux_flgimune AS INTEGER NO-UNDO.
+
     DEFINE VARIABLE aux_flpedsen AS LOGICAL INIT "N"                 NO-UNDO.
-	DEFINE VARIABLE aux_nrsequen AS INTE                             NO-UNDO.
-    
+    DEFINE VARIABLE aux_nrsequen AS INTE                             NO-UNDO.
+
     DEF VAR aux_cdpactra LIKE crapope.cdpactra                       NO-UNDO.
 
     DEFINE VARIABLE h-b1wgen9999 AS HANDLE  NO-UNDO.
@@ -10844,7 +11342,6 @@ PROCEDURE efetua_liber_anali_bordero:
        IF par_flgerlog  THEN
           DO:
               ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,",")).
-       
               IF par_cddopcao = "N"  THEN
                  ASSIGN aux_dstransa = "Efetuar analise de bordero de " +
                                        "desconto de cheque".
@@ -10971,7 +11468,7 @@ PROCEDURE efetua_liber_anali_bordero:
       
              IF AVAIL tt-erro  THEN
                 DO:
-                    UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.                             
+                    UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
                 END.
              ELSE
                 DO:
@@ -10979,7 +11476,7 @@ PROCEDURE efetua_liber_anali_bordero:
                            aux_dscritic = "Registro da tabela de IOF nao " + 
                                           "encontrada.".
                 
-                    UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.                                                            
+                    UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
                 END.
 
           END.
@@ -10998,7 +11495,7 @@ PROCEDURE efetua_liber_anali_bordero:
               ASSIGN aux_cdcritic = 0
                      aux_dscritic = "Registro de limites nao encontrado.".
           
-              UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.                          
+              UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
 
           END.
     
@@ -11063,7 +11560,7 @@ PROCEDURE efetua_liber_anali_bordero:
                      aux_dscritic = "Bordero possui cheque com vencto " +
                                     "superior a 31/12/2010.".
              
-              UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.                        
+              UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
           END. 
 
        ASSIGN tab_vllimite = tt-dados_dscchq.vllimite
@@ -11214,7 +11711,7 @@ PROCEDURE efetua_liber_anali_bordero:
                 
                       IF aux_cdcritic > 0  THEN
                          DO:     
-                             UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.                                  
+                             UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
                          END.        
                    END.
                 
@@ -11264,7 +11761,7 @@ PROCEDURE efetua_liber_anali_bordero:
                 
                       IF aux_cdcritic > 0  THEN
                          DO:
-                             UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.                        
+                             UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
                          END.        
                 
                       ASSIGN crapabc.cdoperad = par_cdoperad
@@ -11311,7 +11808,7 @@ PROCEDURE efetua_liber_anali_bordero:
                 
                       IF aux_cdcritic > 0  THEN
                          DO:
-                             UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.                       
+                             UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
                          END.        
 
                    END.
@@ -11350,27 +11847,26 @@ PROCEDURE efetua_liber_anali_bordero:
                                             crapabc.nrcheque = crabcdb.nrcheque
                                             crapabc.cdocorre = 2
                                             crapabc.cdcooper = par_cdcooper.
-                                  END.           
+                                  END.
 
                             END.
-                   
-                         ASSIGN aux_cdcritic = 0.     
+
+                         ASSIGN aux_cdcritic = 0.
                          LEAVE.
                    
                       END. /* Fim do DO ... TO */
                 
                       IF aux_cdcritic > 0  THEN
                          DO:  
-                             UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.        
-                         END.        
-                
+                             UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
+                         END.
+
                       ASSIGN crapabc.cdoperad = par_cdoperad
                              crapabc.dsrestri = "Percentual de cheques do " + 
                                                 "emitente excedido no contrato."
                              crapabc.nrcheque = crabcdb.nrcheque
                              crapabc.nrdconta = crabcdb.nrdconta
                              crapabc.nrcpfcgc = crabcdb.nrcpfcgc
-                      
                              par_indrestr     = 1.
 
                       VALIDATE crapabc.
@@ -11407,9 +11903,9 @@ PROCEDURE efetua_liber_anali_bordero:
                       IF aux_cdcritic > 0  THEN
                          DO:
                              UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
-                         END.                             
-             
-                   END.        
+                         END.
+
+                   END.
              
              END.
           /**proc_maximo_emitente**/
@@ -11508,9 +12004,9 @@ PROCEDURE efetua_liber_anali_bordero:
                 IF aux_cdcritic > 0  THEN
                    DO:
                        UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
-                   END.                                         
+                   END.
 
-             END.        
+             END.
         
           /**proc_maximo_contrato**/
 
@@ -11604,7 +12100,7 @@ PROCEDURE efetua_liber_anali_bordero:
 
                 IF aux_cdcritic > 0  THEN
                    DO:
-                       UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.         
+                       UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
                    END.
 
              END.
@@ -11661,7 +12157,7 @@ PROCEDURE efetua_liber_anali_bordero:
     
                  IF aux_cdcritic > 0  THEN
                     DO:
-                        UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.                                               
+                        UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
                     END.
                
                  ASSIGN crapabc.cdoperad = par_cdoperad
@@ -11706,7 +12202,7 @@ PROCEDURE efetua_liber_anali_bordero:
             
                  IF aux_cdcritic > 0  THEN
                     DO:
-                        UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.                         
+                        UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
                     END.
               END.
 
@@ -11764,7 +12260,7 @@ PROCEDURE efetua_liber_anali_bordero:
 
                      IF aux_cdcritic > 0  THEN
                         DO:
-                            UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.                                             
+                            UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
                         END.
 
                      ASSIGN crapabc.cdoperad = par_cdoperad
@@ -11811,7 +12307,7 @@ PROCEDURE efetua_liber_anali_bordero:
 
                      IF aux_cdcritic > 0  THEN
                         DO:
-                            UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.              
+                            UNDO TRANS_LIBERA , LEAVE TRANS_LIBERA.
                         END.
                   END.
 
@@ -12559,24 +13055,24 @@ PROCEDURE efetua_liber_anali_bordero:
 
              IF  NOT AVAILABLE craplcm   THEN
                  DO:
-				    /* Busca a proxima sequencia do campo crapmat.nrseqcar */
-				    RUN STORED-PROCEDURE pc_sequence_progress
-				    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
-					 								    ,INPUT "NRSEQDIG"
-					 								    ,INPUT STRING(par_cdcooper) + ";" + 
-														 	   STRING(craplot.dtmvtolt,"99/99/9999") + ";" + 
-															   STRING(craplot.cdagenci) + ";" +
-															   STRING(craplot.cdbccxlt) + ";" + 
-															   STRING(craplot.nrdolote)
-													    ,INPUT "N"
-													    ,"").
-																							
-				    CLOSE STORED-PROC pc_sequence_progress
-				    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-								  
-				    ASSIGN aux_nrsequen = INTE(pc_sequence_progress.pr_sequence)
-										   WHEN pc_sequence_progress.pr_sequence <> ?.
-										   
+                    /* Busca a proxima sequencia do campo crapmat.nrseqcar */
+                    RUN STORED-PROCEDURE pc_sequence_progress
+                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLOT"
+                                                        ,INPUT "NRSEQDIG"
+                                                        ,INPUT STRING(par_cdcooper) + ";" + 
+                                                               STRING(craplot.dtmvtolt,"99/99/9999") + ";" + 
+                                                               STRING(craplot.cdagenci) + ";" +
+                                                               STRING(craplot.cdbccxlt) + ";" + 
+                                                               STRING(craplot.nrdolote)
+                                                        ,INPUT "N"
+                                                        ,"").
+                                                                                            
+                    CLOSE STORED-PROC pc_sequence_progress
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                                  
+                    ASSIGN aux_nrsequen = INTE(pc_sequence_progress.pr_sequence)
+                                           WHEN pc_sequence_progress.pr_sequence <> ?.
+                                           
                     /* Cria lancamento da conta do associado */
                     CREATE craplcm.
                     ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt 
@@ -13527,10 +14023,11 @@ PROCEDURE altera-numero-proposta-limite:
     DEF  VAR     aux_dsoperac     AS CHAR                           NO-UNDO.
     DEF  VAR     aux_nrctrlim     AS INTE                           NO-UNDO.
     DEF  VAR     h-b1wgen0110     AS HANDLE                         NO-UNDO.
-                                 
+    DEF  VAR     aux_habrat       AS CHAR                           NO-UNDO. /* P450 - Rating */
+
     DEF  BUFFER  crabavt          FOR crapavt.
     DEF  BUFFER  crabavl          FOR crapavl.
-                                 
+
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN aux_cdcritic = 0
@@ -13818,6 +14315,51 @@ PROCEDURE altera-numero-proposta-limite:
         IF  aux_cdcritic <> 0   THEN
             UNDO, LEAVE.
 
+        FIND FIRST crapprm WHERE crapprm.nmsistem = 'CRED' AND
+                                 crapprm.cdacesso = 'HABILITA_RATING_NOVO' AND
+                                 crapprm.cdcooper = par_cdcooper
+                                 NO-LOCK NO-ERROR.
+       
+        ASSIGN aux_habrat = 'N'.
+        IF AVAIL crapprm THEN DO:
+          ASSIGN aux_habrat = crapprm.dsvlrprm.
+        END.
+       
+        /* Habilita novo rating */
+        IF aux_habrat = 'S' AND par_cdcooper <> 3 THEN DO:
+       
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+          /* Efetuar a chamada da rotina Oracle, altera contrato no rating -P450 Rating */
+          RUN STORED-PROCEDURE pc_atualiza_contrato_rating
+            aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT par_cdcooper
+                              ,INPUT par_nrdconta
+                              ,INPUT 2            /* Limite de Desconto de Cheque */
+                              ,INPUT crapprp.nrctrato
+                              ,INPUT par_nrctrlim
+                              ,OUTPUT 0            /* pr_cdcritic */
+                              ,OUTPUT "").         /* pr_dscritic */  
+
+
+              /* Fechar o procedimento para buscarmos o resultado */ 
+              CLOSE STORED-PROC pc_atualiza_contrato_rating
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+              ASSIGN aux_cdcritic  = 0
+                     aux_dscritic  = ""
+                     aux_cdcritic = pc_atualiza_contrato_rating.pr_cdcritic
+                                       WHEN pc_atualiza_contrato_rating.pr_cdcritic <> ?
+                     aux_dscritic = pc_atualiza_contrato_rating.pr_dscritic
+                                       WHEN pc_atualiza_contrato_rating.pr_dscritic <> ?.
+              IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+                DO:
+                  UNDO, LEAVE.
+                END.
+        END.
+        /* Efetuar a chamada da rotina Oracle, altera contrato no rating -P450 Rating */
         /* Novo numero de contrato */
         ASSIGN crapprp.nrctrato = par_nrctrlim.
 

@@ -2588,7 +2588,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 02/02/2018
+       Data    : Janeiro/2016                     Ultima atualizacao: 12/08/2019
 
        Dados referentes ao programa:
 
@@ -2602,6 +2602,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 								(Andrei - Mouts). 
                 
                    01/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto
+                   
+                   12/08/2019 - Incluída Validação de Desconto Superior a Valor do Documento
+                                Rafael Ferreira (Mouts) - INC0021299
                    
     ............................................................................ */   
     
@@ -2710,6 +2713,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           IF pr_rec_header.nrremass = 0 THEN
             vr_cdcritic := 0;
             vr_dscritic := 'Instrucao pendente de processamento na CIP. Tente novamente.';            
+            RAISE vr_processa_erro;  
+          END IF;
+          
+          CONTINUE;          
+        END IF;
+        
+        -- Rafael Ferreira (Mouts) - INC0021299
+        -- Valida se o Desconto é igual ou superior ao valor Total do Documento
+        IF nvl(vr_instrucao.vldescto,0) >= nvl(vr_instrucao.vltitulo,0) THEN
+          -- Armazenar a rejeicao, todos serao processados no proximo passo
+          -- 29 - Motivo Valor do Desconto Maior ou Igual ao Valor do Título
+          pc_grava_rejeitado(pr_cdcooper      => vr_instrucao.cdcooper  --> Codigo da Cooperativa
+                            ,pr_nrdconta      => vr_instrucao.nrdconta  --> Numero da Conta
+                            ,pr_nrcnvcob      => vr_instrucao.nrcnvcob  --> Numero do Convenio
+                            ,pr_vltitulo      => vr_instrucao.vltitulo  --> Valor do Titulo
+                            ,pr_cdbcoctl      => pr_rec_header.cdbcoctl --> Codigo do banco na central
+                            ,pr_cdagectl      => pr_rec_header.cdagectl --> Codigo da Agencial na central
+                            ,pr_nrnosnum      => vr_instrucao.nrnosnum  --> Nosso Numero
+                            ,pr_dsdoccop      => vr_instrucao.dsdoccop  --> Descricao do Documento
+                            ,pr_nrremass      => pr_rec_header.nrremass --> Numero da Remessa
+                            ,pr_dtvencto      => vr_instrucao.dtvencto  --> Data de Vencimento
+                            ,pr_dtmvtolt      => pr_dtmvtolt            --> Data de Movimento
+                            ,pr_cdoperad      => pr_cdoperad            --> Operador
+                            ,pr_cdocorre      => 03                     --> Codigo da Ocorrencia
+                            ,pr_cdmotivo      => '29'                   --> Motivo da Rejeicao
+                            ,pr_tab_rejeitado => pr_tab_rejeitado);     --> Tabela de Rejeitados
+                                      
+          IF pr_rec_header.nrremass = 0 THEN
+            vr_cdcritic := 0;
+            vr_dscritic := 'Valor do Desconto Maior ou Igual ao Valor do Título.';
             RAISE vr_processa_erro;  
           END IF;
           

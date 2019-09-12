@@ -195,7 +195,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
 
                    24/10/2018 - P442 - AJustes na chamada da Valida Bens Alienados (Marcos-Envolti)
 
-				   12/02/2019 - P442 - PreAprovado nova estrutura (Marcos-Envolti)
+                   12/02/2019 - P442 - PreAprovado nova estrutura (Marcos-Envolti)
+
+                   16/08/2019 - P450 - Na chamada pc_obtem_emprestimo_risco, incluir pr_nrctremp (Elton -AMcom)
 
     ............................................................................. */
       ----->> CURSORES <<-----
@@ -575,7 +577,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
                                      ,pr_vlemprst  => rw_crawepr.vlemprst          --> Valor do emprestimo
                                      ,pr_diapagto  => to_char(pr_dtdpagto,'DD')    --> Dia de pagamento
                                      ,pr_nrcpfope  => pr_nrcpfope    --> CPF do operador
-									 ,pr_nrctremp  => 0              --> numero do contrato genérico
+                                     ,pr_nrctremp  => 0              --> numero do contrato genérico
                                      ,pr_cdcritic  => pr_cdcritic    --> Retorna codigo da critica
                                      ,pr_dscritic  => pr_dscritic    --> Retorna descrição da critica
                                       );
@@ -1352,10 +1354,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0014 AS
                                      rw_crawepr.nrctrliq##7||';'||rw_crawepr.nrctrliq##8||';'||
                                      rw_crawepr.nrctrliq##9||';'||rw_crawepr.nrctrliq##10
                             , 
+                      pr_nrctremp => rw_crawepr.nrctremp, -- P450
                       pr_nivrisco => vr_dsnivris,
                       pr_dscritic => pr_dscritic, 
                       pr_cdcritic => pr_cdcritic);
-                      
+
       if nvl(pr_dscritic,'OK') <> 'OK' or nvl(pr_cdcritic,0) <> 0 then
         raise vr_exc_saida;
       end if;

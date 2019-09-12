@@ -2,9 +2,14 @@
 /************************************************************************
 Fonte     : modal_conciliacao.php
 Autor     : André Clemer
-Data      : 12/04/2018                 Última alteração: --/--/----
+Data      : 12/04/2018                 Última alteração: 16/04/2019
 Objetivo  : Modal de conciliação da tela MANPRT
 Alterações: 
+
+  16/04/2019 - INC0011935 - Melhorias diversas nos layouts de teds e conciliação:
+               - modal de conciliação arrastável e correção das colunas para não obstruir as caixas de seleção;
+               - aumentadas as alturas das listas de teds e modal de conciliação, reajustes das colunas (Carlos)
+
 ************************************************************************/
 
 session_start();
@@ -28,7 +33,7 @@ $cartorio = (!empty($_POST['cartorio'])) ? $_POST['cartorio'] : null;
               <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tr>
                   <td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-                  <td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">CONCILIA&Ccedil;&Atilde;O</td>
+                  <td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">CONCILIA&Ccedil;&Atilde;O</td>
                   <td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">
                     <a href="#" onClick="fechaRotina($('#divRotina'));return false;">
                   <img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0">
@@ -71,7 +76,7 @@ $cartorio = (!empty($_POST['cartorio'])) ? $_POST['cartorio'] : null;
                           </table>
                         </div>
 
-                        <div class="divRegistros">
+                        <div class="divRegistros" style="height:250px">
                           <? require_once("tabela_conciliacao.php"); ?>
                         </div>
                         <table width="100%">

@@ -8,14 +8,12 @@
 	/*************************************************************************
 	  Fonte: limpa_arquivos.php                                               
 	  Autor: Henrique - Jorge                                                 
-	  Data : Agosto/2011                       Última Alteração: 13/08/2015
+	  Data : Agosto/2011                       Última Alteração: 30/07/2014
 	                                                                   
 	  Objetivo  : Limpar acentos e dividir em arquivos menores, arquivo do correio.              
 	                                                                 
 	  Alterações: 30/07/2014 - Alterar limite de linhas por arquivo de  
 	                           15.000 para 5.000 (David).
-							   
-				  13/08/2015 - Remover o caminho fixo. (James)			   
 	                                                                  
 	***********************************************************************/
 
@@ -45,19 +43,19 @@
 	$cduflogr = $_POST["cduflogr"];
 	
 	if ($cduflogr == "LOG_LOCALIDADE.TXT") {
-		$nmarquiv = dirname(__FILE__) . "/arquivos/LOG_LOCALIDADE.TXT";	
-		$nmretorn = dirname(__FILE__) . "/arquivos/LOCALIDADE.TXT";
+		$nmarquiv = "/var/www/ayllos/telas/caddne/arquivos/LOG_LOCALIDADE.TXT";	
+		$nmretorn = "/var/www/ayllos/telas/caddne/arquivos/LOCALIDADE.TXT";
 	} elseif ($cduflogr == "LOG_BAIRRO.TXT") {
-		$nmarquiv = dirname(__FILE__) . "/arquivos/LOG_BAIRRO.TXT";	
-		$nmretorn = dirname(__FILE__) . "/arquivos/BAIRRO.TXT";			
+		$nmarquiv = "/var/www/ayllos/telas/caddne/arquivos/LOG_BAIRRO.TXT";	
+		$nmretorn = "/var/www/ayllos/telas/caddne/arquivos/BAIRRO.TXT";			
 	} elseif ($cduflogr == "UNID_OPER") {
-		$nmarquiv = dirname(__FILE__) . "/arquivos/LOG_UNID_OPER.TXT";
+		$nmarquiv = "/var/www/ayllos/telas/caddne/arquivos/LOG_UNID_OPER.TXT";
 	} elseif ($cduflogr == "CPC") {
-		$nmarquiv = dirname(__FILE__) . "/arquivos/LOG_CPC.TXT";
+		$nmarquiv = "/var/www/ayllos/telas/caddne/arquivos/LOG_CPC.TXT";
 	} elseif ($cduflogr == "GRANDE_USUARIO") {
-		$nmarquiv = dirname(__FILE__) . "/arquivos/LOG_GRANDE_USUARIO.TXT";			
+		$nmarquiv = "/var/www/ayllos/telas/caddne/arquivos/LOG_GRANDE_USUARIO.TXT";			
 	} else {
-		$nmarquiv = dirname(__FILE__) . "/arquivos/LOG_LOGRADOURO_".$cduflogr.".TXT";
+		$nmarquiv = "/var/www/ayllos/telas/caddne/arquivos/LOG_LOGRADOURO_".$cduflogr.".TXT";
 	}
 
 	// Caso não consiga encontrar o aquivo é cancelada a limpeza.
@@ -82,7 +80,7 @@
 		
 		if(($contLin == 0 || $contLin == $LinLimit) && ($cduflogr != "LOG_LOCALIDADE.TXT") && ($cduflogr != "LOG_BAIRRO.TXT")){
 			$contArq++;
-			$nmretorn = dirname(__FILE__) . "/arquivos/".$cduflogr."_".$contArq.".TXT";
+			$nmretorn = "/var/www/ayllos/telas/caddne/arquivos/".$cduflogr."_".$contArq.".TXT";
 			$retorno = fopen($nmretorn,"w");
 		}else if(($contLin == 0) && (($cduflogr == "LOG_LOCALIDADE.TXT") || ($cduflogr == "LOG_BAIRRO.TXT"))){
 			$retorno = fopen($nmretorn,"w");

@@ -26,6 +26,25 @@
 
                   11/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
 
+                  14/02/2019 - P450 - Inclusão dos campos nota do rating, origem da nota do rating e Status  (Luiz Otávio Olinger Momm - AMCOM)
+
+                  05/03/2019 - P450 - Inclusão botao Alterar Rating (Luiz Otávio Olinger Momm - AMCOM)
+
+                  07/03/2019 - P450 - Inclusão da consulta do parametro se a coopoerativa pode Alterar Rating P450 (Luiz Otávio Olinger Momm - AMCOM).
+                  
+                  12/03/2019 - P450 - Inclusão botao Analisar (Luiz Otávio Olinger Momm - AMCOM)
+                  
+                  15/03/2019 - P450 - Inclusão da consulta Rating (Luiz Otávio Olinger Momm - AMCOM)
+
+                  25/04/2019 - P450 - Ajustes de interface conforme solicitação Ailos (Luiz Otávio Olinger Momm - AMCOM).
+
+                  13/05/2019 - P450 - Não mostrar Rating quando estiver como situação "não analisado" (Luiz Otávio Olinger Momm - AMCOM).
+
+                  23/05/2019 - P450 - Removido mensageiria para pesquisa de rating por proposta (Luiz Otávio Olinger Momm - AMCOM).
+
+                  02/07/2019 - PRJ 438 - Sprint 14 - Alterado nome do botão 'Confirmar Novo Limite' para 'Efetivar' (Mateus Z / Mouts)
+
+                  17/07/2019 - PRJ 438 - Sprint 16 - Ultimas alterações do desconto de cheque  - Paulo Martins - Mouts
 	************************************************************************/
 	
 	session_start();
@@ -65,7 +84,7 @@
 	$xmlGetLimites .= "<Root>";
 	$xmlGetLimites .= "	<Cabecalho>";
 	$xmlGetLimites .= "		<Bo>b1wgen0009.p</Bo>";
-	$xmlGetLimites .= "		<Proc>busca_limites</Proc>";
+	$xmlGetLimites .= "		<Proc>busca_limite_ativo</Proc>";
 	$xmlGetLimites .= "	</Cabecalho>";
 	$xmlGetLimites .= "	<Dados>";
 	$xmlGetLimites .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
@@ -87,7 +106,7 @@
 	
 	$limites   = $xmlObjLimites->roottag->tags[0]->tags;
 	$qtLimites = count($limites);
-	
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -97,6 +116,47 @@
 		exit();
 	}    	
 	
+	// [07/03/2019]
+	$permiteAlterarRating = false;
+	$oXML = new XmlMensageria();
+	$oXML->add('cooperat', $glbvars["cdcooper"]);
+
+	$xmlResult = mensageria($oXML, "TELA_PARRAT", "CONSULTA_PARAM_RATING", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);
+
+	$registrosPARRAT = $xmlObj->roottag->tags[0]->tags;
+	foreach ($registrosPARRAT as $r) {
+		if (getByTagName($r->tags, 'pr_inpermite_alterar') == '1') {
+			$permiteAlterarRating = true;
+		}
+	}
+	// [07/03/2019]
+
+	// ********************************************
+	// AMCOM - Retira Etapa Rating exceto para Ailos (coop 3)
+
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <cdacesso>HABILITA_RATING_NOVO</cdacesso>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "TELA_PARRAT", "CONSULTA_PARAM_CRAPPRM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjPRM = getObjectXML($xmlResult);
+
+	$habrat = 'N';
+	if (strtoupper($xmlObjPRM->roottag->tags[0]->name) == "ERRO") {
+		$habrat = 'N';
+	} else {
+		$habrat = $xmlObjPRM->roottag->tags[0]->tags;
+		$habrat = getByTagName($habrat[0]->tags, 'PR_DSVLRPRM');
+	}
+
+	if ($glbvars["cdcooper"] == 3) {
+		$habrat = 'N';
+	}
+	// ********************************************
 ?>
 
 <div id="divLimites">
@@ -112,11 +172,21 @@
 					<th>LD</th>
 					<th >Situa&ccedil;&atilde;o</th>
 					<th>Comit&ecirc;</th>
+					<!-- [14/02/2019] -->
+					<th><? echo utf8ToHtml('Nota Rating');?></th>
+					<th title="Origem Rating"><? echo utf8ToHtml('Retorno');?></th>
+					<!-- [14/02/2019] -->
+
 				</tr>			
 			</thead>
 			<tbody>
 				<?  for ($i = 0; $i < $qtLimites; $i++) {
-												
+
+						$msgErro = '';
+						$notaRating = $limites[$i]->tags[12]->cdata;
+						$origemRating = $limites[$i]->tags[13]->cdata;
+						$situacaoRating = '';
+
 						$mtdClick = "selecionaLimiteCheques('".($i + 1)."','".$qtLimites."','".($limites[$i]->tags[3]->cdata)."','".($limites[$i]->tags[6]->cdata)."','".($limites[$i]->tags[10]->cdata)."','".($limites[$i]->tags[2]->cdata)."',".($limites[$i]->tags[11]->cdata).");";
 				?>
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
@@ -142,9 +212,14 @@
 						
 						<td><? echo $limites[$i]->tags[5]->cdata; ?></td>
 						
-						<td><? echo $limites[$i]->tags[6]->cdata; ?></td>
+						<td title="<? echo stringTabela($limites[$i]->tags[6]->cdata, 50, 'primeira'); ?>"><? echo stringTabela($limites[$i]->tags[6]->cdata, 20, 'primeira'); ?></td>
 						
-						<td><? echo $limites[$i]->tags[9]->cdata; ?></td>
+						<td title="<? echo stringTabela($limites[$i]->tags[9]->cdata, 50, 'primeira'); ?>"><? echo stringTabela($limites[$i]->tags[9]->cdata, 20, 'primeira'); ?></td>
+
+						<!-- [14/02/2019][15/03/2019] -->
+						<td><?=$notaRating?></td>
+						<td title="<?=stringTabela($origemRating, 30, 'primeira'); ?>"><?=stringTabela($origemRating, 10, 'primeira'); ?></td>
+						<!-- [14/02/2019][15/03/2019] -->
 					</tr>
 				<?} // Fim do for ?>			
 			</tbody>
@@ -160,6 +235,14 @@
 	$dispE = (!in_array("E",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispN = (!in_array("N",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+
+	/* Criar Insert */
+	$dispL = (!in_array("L",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	$dispL = '';
+
+	$dispT = (!in_array("T",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	$dispT = '';
+	/* Criar Insert */
 ?>
 
 <div id="divBotoesChequesLimite">
@@ -171,7 +254,25 @@
 	<div style="height: 3px;"></div>
 	<a href="#" class="botao" name="btnIncluir" id="btnIncluir" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscChq(1);return false;"'; } ?> >Incluir</a>
 	<a href="#" class="botao" name="btnImprimir" id="btnImprimir" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> >Imprimir</a>
-	<a href="#" class="botao" name="btnConfNovLimite" id="btnConfNovLimite" style="<? echo $dispN ?>" onClick="confirmaNovoLimite();">Confirmar Novo Limite</a>
+	<a href="#" class="botao" name="btnConfNovLimite" id="btnConfNovLimite" style="<? echo $dispN ?>" onClick="carregaDadosConsultaLimiteDscChq('E');return false;">Efetivar</a>
+	<a href="#" class="botao" name="btnUltimasAlteracoes" id="btnUltimasAlteracoes" onClick="ultimasAlteracoes();return false;">Últimas Alterações</a>
+    
+    <?
+	if ($habrat == 'S') {
+	?>
+    <!-- 12/03/2019 -->
+		<a href="#" class="botao" name="btnRatingMotor" id="btnRatingMotor" style="<? echo $dispL ?>" onClick="ratingMotor('2');">Analisar Rating</a>
+    <!-- 12/03/2019 -->
+    <?
+    // 07/03/2019
+    if ($permiteAlterarRating) {
+    ?>
+	<a href="#" class="botao" name="btnConfAlterarRating" id="btnConfAlterarRating" style="<? echo $dispT ?>" onClick="btnChequeRating();">Alterar Rating</a>
+    <?
+    }
+    // 07/03/2019
+	}
+    ?>
 </div>
 
 <script type="text/javascript">
@@ -196,3 +297,4 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 	}
 	
 </script>
+<script type="text/javascript" src="descontos/desconto_rating.js?keyrand=<?php echo mt_rand(); ?>"></script>

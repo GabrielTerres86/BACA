@@ -219,73 +219,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
   --
   --             28/06/2019 - Incluir dtcancel e retirar a titularidade quando proposta
   --                          rejeitada na esteira (Lucas Ranghetti PRB0041968)
+  --
+  --             16/07/2019 - Movido a rotina pc_notifica_ib para a este0001.pc_notificacoes_prop
+  --
   ---------------------------------------------------------------------------  
   --
-  -- 
-  PROCEDURE pc_notifica_ib(pr_cdcooper IN crawepr.cdcooper%TYPE,
-                           pr_nrdconta IN crawepr.nrdconta%TYPE,
-                           pr_nrctremp IN crawepr.nrctremp%TYPE) IS
-    /* .............................................................................
-     Programa: pc_notifica_ib
-     Sistema : Rotinas referentes ao Internet Bank
-     Sigla   : CRED
-     Autor   : 
-     Data    : Maio/19.                    Ultima atualizacao:
-
-     Dados referentes ao programa:
-
-     Frequencia: Sempre que for chamado
-
-     Objetivo  : Cria notificações na conta do cooperado sobre o retorno do motor 
-     --
-     Observacao: -----
-     Alteracoes:
-     ..............................................................................*/
-     --/
-     CURSOR cr_wpr IS
-       SELECT wpr.cdcooper,
-              wpr.nrdconta,
-              wpr.nrctremp,
-              wpr.insitapr
-         FROM crawepr wpr, crapsim sim
-        WHERE wpr.cdcooper = pr_cdcooper
-          AND wpr.nrdconta = pr_nrdconta
-          AND wpr.nrctremp = pr_nrctremp
-          AND wpr.cdcooper = sim.cdcooper
-          AND wpr.nrdconta = sim.nrdconta
-          AND wpr.nrsimula = sim.nrsimula
-          AND wpr.cdorigem = 3
-          AND wpr.nrsimula IS NOT NULL;
-     --/
-     rw_wpr cr_wpr%ROWTYPE;
-     vr_des_reto_not VARCHAR2(10);
-     --/            
-		BEGIN
-       --/        
-       OPEN cr_wpr;
-       FETCH cr_wpr INTO rw_wpr;
-       IF cr_wpr%FOUND THEN
-        CLOSE cr_wpr;
-         --/
-         IF NVL(rw_wpr.insitapr,0) IN (1,2,3,4,6)
-           THEN
-             empr0017.pc_cria_notificacao(pr_cdcooper => rw_wpr.cdcooper,
-                                          pr_nrdconta => rw_wpr.nrdconta,
-                                          pr_nrctremp => rw_wpr.nrctremp,
-                                          pr_tporigem => 0, -- motor
-                                          pr_des_reto => vr_des_reto_not);
-           --/ erro envia email tambem
-           IF rw_wpr.insitapr = 6
-              THEN
-                empr0017.pc_email_esteira(pr_cdcooper => rw_wpr.cdcooper, 
-                                          pr_nrdconta => rw_wpr.nrdconta, 
-                                          pr_nrctremp => rw_wpr.nrctremp);
-           END IF;
-         END IF;                            
-        ELSE
-         CLOSE cr_wpr;
-        END IF;       
-  END pc_notifica_ib;
 
   PROCEDURE pc_gera_retor_proposta_esteira(pr_status       IN PLS_INTEGER,           --> Status
                                            pr_nrtransacao  IN NUMBER,                --> Numero da transacao
@@ -1471,12 +1409,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                                ,pr_dscritic => vr_dscritic); --> Descricao da critica
       END IF;
       
-      --/ P438 
-      IF rw_crawepr.cdorigem = 3
-        THEN
-           pc_notifica_ib(pr_cdcooper,pr_nrdconta,pr_nrctremp);
-      END IF;
-      
       -- Caso nao ocorreu nenhum erro, vamos retorna como status de OK
       pr_status      := 202;      
       pr_msg_detalhe := 'Parecer da proposta atualizado com sucesso.';
@@ -1494,10 +1426,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         pr_cdcritic    := 978;
         pr_msg_detalhe := 'Parecer nao foi atualizado, ocorreu uma erro interno no sistema.(1) ';          
         --/ P438 
-        IF rw_crawepr.cdorigem = 3
-          THEN
-             pc_notifica_ib(pr_cdcooper,pr_nrdconta,pr_nrctremp);
-        END IF;
+          --/
         
       WHEN OTHERS THEN
         ROLLBACK;
@@ -1505,11 +1434,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         pr_status      := 500;
         pr_cdcritic    := 978;
         pr_msg_detalhe := 'Parecer nao foi atualizado, ocorreu uma erro interno no sistema.(2):';
-
-        IF rw_crawepr.cdorigem = 3
-          THEN
-             pc_notifica_ib(pr_cdcooper,pr_nrdconta,pr_nrctremp);
-        END IF;
+        --
+          --/
         
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
                                    pr_ind_tipo_log => 3, 
@@ -3535,8 +3461,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                   12/03/2019 - P438 (AMcom) Add sub-rotina pc_notifica_ib
 
 				  29/04/2019 - P438 Tratativa para agencia quando for origem 3. (Douglas Pagel / AMcom)
-          
-          26/08/2019 - P438 Inclusão de origem 10 na tratativa para agencia. (Douglas Pagel / AMcom)
+     
+                  26/08/2019 - P438 Inclusão de origem 10 na tratativa para agencia. (Douglas Pagel / AMcom)
 	 ..............................................................................*/	
 		DECLARE
 		  -- Tratamento de críticas

@@ -13,15 +13,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
 
     Frequencia: Diario.
     Objetivo  : Renovacao automatica do limite de desconto de cheque.
-    
+
     Alteração : 17/04/2017 - Alterar datas pois rotina será executada via Job.
-                             PRJ300-Desconto de Cheque (Odirlei-AMcom)  	  
-       
+                             PRJ300-Desconto de Cheque (Odirlei-AMcom)
+
                 25/05/2017 - Retirado processo de bloqueio de inclusao de bordero
-                             conforme solicitado area de negocio Gilmar (Daniel)  
-       
+                             conforme solicitado area de negocio Gilmar (Daniel)
+
                 06/06/2018 - Ajustes para considerar titulos de bordero vencidos (Andrew Albuquerque - GFT)
-       
+
+                21/03/2019 - Projeto rating adicionado a chamada pc_solicitar_rating_motor
+
+                29/05/2019 - Ajuste no atualização do Rating quando vence o produto (Mario - AMcom)
+
+                05/06/2019 - Inclusão de parametro RATING_RENOVACAO_ATIVO (Mario - AMcom)
+
+                16/08/2019 - P450 - Grava rating como vencimdo pc_grava_rating_operacao sem
+                             pesquisar a contingencia (Luiz Otavio Olinger Momm - AMCOM)
+
     ............................................................................ */
 
     DECLARE
@@ -34,15 +43,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
-      vr_dscritic   VARCHAR2(4000);     
-      
-      -- Regras            
+      vr_dscritic   VARCHAR2(4000);
+
+      -- Regras
       vr_dtaltera   DATE;           --> Data de revisao cadastral
       vr_dtmincta   DATE;           --> Data do Tempo Minimo de Conta
       vr_dstextab   VARCHAR2(1000); --> Campo da tabela generica
       vr_vlarrast   NUMBER;         --> Valor Arrasto
       vr_nivrisco   VARCHAR2(2);    --> Nivel de Risco
-      
+      vr_in_risco_rat INTEGER;
       -- Auxiliares
       vr_flgfound   BOOLEAN;        --> Verifica se achou registro
       vr_liquidez   NUMBER;         --> Percentual de liquidez
@@ -50,10 +59,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
       vr_flgsaldo   INTEGER;        --> Indicador do saldo
       vr_dtperant   DATE;           --> Data Anterior
       vr_dtultmes_ant DATE;         --> Data ultimo dia mês anterior
-      
+      -- Parametro de Flag Rating Renovacao Ativo: 0-Não Ativo, 1-Ativo
+      vr_flg_Rating_Renovacao_Ativo    NUMBER := 0;
+      vr_habrat VARCHAR2(1) := 'N'; -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
+      vr_vlendivid                     craplim.vllimite%TYPE; -- Valor do Endividamento do Cooperado
+      vr_vllimrating                   craplim.vllimite%TYPE; -- Valor do Parametro Rating (Limite) TAB056
+      vr_strating                      tbrisco_operacoes.insituacao_rating%TYPE; -- Identificador da Situacao Rating
+      vr_dtrating                      tbrisco_operacoes.dtrisco_rating%TYPE; -- Data para efetivar o rating;
+
       -- Consulta de limite
       vr_tab_lim_desconto DSCC0001.typ_tab_lim_desconto;
-      
+
       ------------------------------- CURSORES ---------------------------------
       -- Busca dos dados da cooperativa
       CURSOR cr_crapcop IS
@@ -63,7 +79,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
           FROM crapcop cop
          WHERE cop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
-      
+
       -- Listagem de alterações cadastrais
       CURSOR cr_crapalt(pr_cdcooper IN crapalt.cdcooper%TYPE
                        ,pr_nrdconta IN crapalt.nrdconta%TYPE) IS
@@ -76,8 +92,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
            AND ROWNUM = 1;
 --        ORDER BY crapalt.dtaltera DESC; --> Recadastramento
       rw_crapalt cr_crapalt%ROWTYPE;
-      
-      -- Verifica se possui registro no CYBER 
+
+      -- Verifica se possui registro no CYBER
       CURSOR cr_crapcyb(pr_cdcooper IN crapcyb.cdcooper%TYPE,
                         pr_nrdconta IN crapcyb.nrdconta%TYPE,
                         pr_cdorigem VARCHAR2,
@@ -86,12 +102,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
           FROM crapcyb
          WHERE crapcyb.cdcooper = pr_cdcooper
            AND crapcyb.nrdconta = pr_nrdconta
-           AND ','||pr_cdorigem||',' LIKE ('%,'||crapcyb.cdorigem||',%')           
+           AND ','||pr_cdorigem||',' LIKE ('%,'||crapcyb.cdorigem||',%')
            AND crapcyb.qtdiaatr > pr_qtdiaatr
            AND crapcyb.dtdbaixa IS NULL
            AND ROWNUM = 1;
       rw_crapcyb cr_crapcyb%ROWTYPE;
-    
+
       -- Limite de desconto
       CURSOR cr_craplim_crapass(pr_cdcooper IN crapass.cdcooper%TYPE,
                                 pr_inpessoa IN crapass.inpessoa%TYPE,
@@ -114,7 +130,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                crapass.nrdctitg,
                crapass.flgctitg,
                crapass.flgrenli,
-               crapass.inpessoa
+               crapass.inpessoa,
+               crapass.nrcpfcnpj_base
           FROM craplim, crapass
          WHERE craplim.cdcooper = pr_cdcooper
            AND craplim.tpctrlim = 2 -- Desconto de Cheque
@@ -125,10 +142,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
            -- Vencimento no Final de Semana
            AND ((nvl(craplim.dtfimvig, craplim.dtinivig + craplim.qtdiavig) > pr_dtmvtoan   AND
                  nvl(craplim.dtfimvig, craplim.dtinivig + craplim.qtdiavig) <= pr_dtmvtolt) OR
-               -- Tentativas de Renovacao      
+               -- Tentativas de Renovacao
                 (nvl(craplim.dtfimvig, craplim.dtinivig + craplim.qtdiavig) >= (pr_dtmvtolt - pr_qtdiaren) AND
                  nvl(craplim.dtfimvig, craplim.dtinivig + craplim.qtdiavig) <= pr_dtmvtolt));
-      
+
       -- Linhas de desconto de cheque
       CURSOR cr_crapldc(pr_cdcooper IN crapldc.cdcooper%TYPE) IS
         SELECT crapldc.cddlinha
@@ -137,7 +154,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
           FROM crapldc
          WHERE crapldc.cdcooper = pr_cdcooper
            AND crapldc.tpdescto = 2;
-         
+
       -- Regras do limite de desconto de cheque
       CURSOR cr_craprli(pr_cdcooper IN craprli.cdcooper%TYPE) IS
         SELECT craprli.cdcooper,
@@ -156,7 +173,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
           FROM craprli
          WHERE craprli.cdcooper = pr_cdcooper
            AND craprli.tplimite = 2; -- Lim. Desconto de Cheque
-      
+
       -- Risco com divida (Valor Arrasto)
       CURSOR cr_ris_comdiv(pr_cdcooper IN crapris.cdcooper%TYPE
                           ,pr_nrdconta IN crapris.nrdconta%TYPE
@@ -173,7 +190,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
            AND vldivida > pr_vldivida
            AND rownum = 1;
       rw_ris_comdiv cr_ris_comdiv%ROWTYPE;
-      
+
       -- Risco sem divida
       CURSOR cr_ris_semdiv(pr_cdcooper IN crapris.cdcooper%TYPE
                           ,pr_nrdconta IN crapris.nrdconta%TYPE
@@ -186,7 +203,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
            AND dtrefere = pr_dtrefere
            AND inddocto = pr_inddocto;
       rw_ris_semdiv cr_ris_semdiv%ROWTYPE;
-      
+
       --Calcular o valor devolvido
       CURSOR cr_craplcm(pr_cdcooper     IN crapcop.cdcooper%TYPE
                        ,pr_nrdconta     IN crapass.nrdconta%TYPE
@@ -199,12 +216,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
             AND lcm.cdhistor = 399
             AND lcm.dtmvtolt BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate;
       rw_craplcm cr_craplcm%ROWTYPE;
-      
+
       --Para calcular o valor descontado utilizar a leitura:
       CURSOR cr_crapcdb(pr_cdcooper     IN crapcop.cdcooper%TYPE
                        ,pr_nrdconta     IN crapass.nrdconta%TYPE
                        ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE
-                       ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE) IS       
+                       ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE) IS
         SELECT nvl(SUM(cdb.vlcheque), 0) vldescto
           FROM crapcdb cdb,
                crapbdc dbc
@@ -218,9 +235,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
            AND cdb.nrdolote = dbc.nrdolote
            AND cdb.nrborder = dbc.nrborder
            AND cdb.nrdconta = dbc.nrdconta;
-                
+
       rw_crapcdb cr_crapcdb%ROWTYPE;
-      
+
       CURSOR cr_craplim (pr_cdcooper IN craplim.cdcooper%TYPE
                         ,pr_cddlinha IN craplim.cddlinha%TYPE
                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
@@ -242,26 +259,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
            AND cdb.insitchq = 2
            AND ROWNUM = 1; -- Processado
       rw_craplim cr_craplim%ROWTYPE;
-      
+
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-      
+       -- Busca do nr cpfcnpj base do associado
+       CURSOR cr_crapass_ope (pr_cdcooper  IN crapass.cdcooper%TYPE     --> Coop. conectada
+                             ,pr_nrdconta  IN crapass.nrdconta%TYPE) IS --> Codigo Conta
+       SELECT  ass.nrcpfcnpj_base
+          FROM crapass ass
+       WHERE ass.cdcooper  = pr_cdcooper
+          AND ass.nrdconta = pr_nrdconta;
+       rw_crapass_ope   cr_crapass_ope%ROWTYPE;
       ------------------------------- TIPOS DE REGISTROS -----------------------
       TYPE typ_reg_crapldc IS RECORD
         (flgstlcr crapldc.flgstlcr%TYPE); -- Situacao da linha
-      
+
       -- Tabela temporaria para os tipos de risco
       TYPE typ_reg_craptab IS RECORD
         (dsdrisco craptab.dstextab%TYPE);
-      
+
       ------------------------------- TIPOS DE DADOS ---------------------------
       TYPE typ_tab_crapldc  IS TABLE OF typ_reg_crapldc INDEX BY PLS_INTEGER;
       TYPE typ_tab_craptab  IS TABLE OF typ_reg_craptab INDEX BY PLS_INTEGER;
-      
+
       ----------------------------- VETORES DE MEMORIA -------------------------
       vr_tab_crapldc  typ_tab_crapldc;
       vr_tab_craptab  typ_tab_craptab;
-      
+
       ----------------------------- PROCEDURES ---------------------------------
       --Procedure para limpar os dados das tabelas de memoria
       PROCEDURE pc_limpa_tabela IS
@@ -275,40 +299,40 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
           --Sair do programa
           RAISE vr_exc_saida;
       END;
-      
+
       -- Registra LOG de alteração para a tela ALTERA
       PROCEDURE pc_gera_log_alteracao(pr_cdcooper IN crapcop.cdcooper%TYPE
-                                     ,pr_nrdconta IN crapcop.nrdconta%TYPE                                             
+                                     ,pr_nrdconta IN crapcop.nrdconta%TYPE
                                      ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                                      ,pr_cdoperad IN crapope.cdoperad%TYPE
                                      ,pr_nrctrlim IN craplim.nrctrlim%TYPE
                                      ,pr_nrdctitg IN crapass.nrdctitg%TYPE
-                                     ,pr_flgctitg IN crapass.flgctitg%TYPE) IS     
-      
-        -- Variaveis de Log de Alteracao    
+                                     ,pr_flgctitg IN crapass.flgctitg%TYPE) IS
+
+        -- Variaveis de Log de Alteracao
         vr_flgctitg crapalt.flgctitg%TYPE;
         vr_dsaltera LONG;
-        
+
         -- Variaveis com erros
         vr_des_erro   VARCHAR2(4000);
-           
+
         -- Cursor alteracao de cadastro
         CURSOR cr_crapalt (pr_cdcooper IN crapcop.cdcooper%TYPE
                           ,pr_nrdconta IN crapass.nrdconta%TYPE
                           ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
-                  
+
           SELECT crapalt.dsaltera,
                  crapalt.rowid
             FROM crapalt
            WHERE crapalt.cdcooper = pr_cdcooper
              AND crapalt.nrdconta = pr_nrdconta
-             AND crapalt.dtaltera = pr_dtmvtolt;             
+             AND crapalt.dtaltera = pr_dtmvtolt;
         rw_crapalt cr_crapalt%ROWTYPE;
 
       BEGIN
-            
+
         -- Por default fica como 3
-        vr_flgctitg  := 3;    
+        vr_flgctitg  := 3;
         vr_dsaltera  := 'Renov. Aut. Limite Desc. de Cheque: ' || pr_nrctrlim || ',';
 
         -- Se for conta integracao ativa, seta a flag para enviar ao BB
@@ -321,7 +345,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
         OPEN cr_crapalt(pr_cdcooper => pr_cdcooper
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_dtmvtolt => pr_dtmvtolt);
-                
+
         FETCH cr_crapalt INTO rw_crapalt;
         --Verificar se encontrou
         IF cr_crapalt%FOUND THEN
@@ -329,7 +353,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
           CLOSE cr_crapalt;
           -- Altera o registro
           BEGIN
-            UPDATE crapalt SET 
+            UPDATE crapalt SET
                    crapalt.dsaltera = rw_crapalt.dsaltera || vr_dsaltera,
                    crapalt.flgctitg = vr_flgctitg
              WHERE crapalt.rowid = rw_crapalt.rowid;
@@ -338,13 +362,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
               vr_des_erro := 'Conta: '    || pr_nrdconta ||'.'||
                              'Contrato: ' || pr_nrctrlim ||'.'||
                              'Erro ao atualizar crapalt. '||SQLERRM;
-              
+
               -- Catalogar o Erro
               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                         ,pr_ind_tipo_log => 2 -- Erro tratato
                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                             ||vr_cdprogra || ' --> '|| vr_des_erro);
-          END;       
+          END;
         ELSE
           --Fechar Cursor
           CLOSE cr_crapalt;
@@ -371,18 +395,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
               vr_des_erro:= 'Conta: '    || pr_nrdconta ||'.'||
                             'Contrato: ' || pr_nrctrlim ||'.'||
                             'Erro ao inserir crapalt. '||SQLERRM;
-                    
+
               -- Catalogar o Erro
               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                         ,pr_ind_tipo_log => 2 -- Erro tratato
                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                             ||vr_cdprogra || ' --> ' || vr_des_erro);
           END;
-         
+
         END IF;
-        
+
       END pc_gera_log_alteracao;
-       
+
       -- Procedure para atualizar a nao renovacao do limite de desconto
       PROCEDURE pc_nao_renovar(pr_craplim_crapass IN cr_craplim_crapass%ROWTYPE
                               ,pr_dsnrenov        IN VARCHAR2
@@ -390,8 +414,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
         -- Variaveis com erros
         vr_exc_erro   EXCEPTION;
         vr_des_erro   VARCHAR2(4000);
-        
-      BEGIN  
+
+      BEGIN
         -- Atualizar a tabela de limite de desconto de cheque
         UPDATE craplim
            SET dsnrenov = pr_dsnrenov || '|' || pr_dsvlrmot
@@ -408,13 +432,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                         || vr_cdprogra || ' --> '|| vr_des_erro);
       END;
-      
+
       -- Procedure para liberacao e bloqueio de inclusao de bordero
       PROCEDURE pc_blq_lib_inclusao_bord(pr_cdcooper IN crapcop.cdcooper%TYPE
                                         ,pr_dscritic OUT VARCHAR2) IS
         BEGIN
         DECLARE
-         
+
         CURSOR cr_craplim_crapsld(pr_cdcooper IN crapass.cdcooper%TYPE,
                                   pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
           SELECT craplim.cdcooper,
@@ -431,7 +455,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
              AND craplim.insitlim = 2
              AND craplim.dtfimvig >= pr_dtmvtolt;
         --rw_craplim cr_craplim%ROWTYPE;
-        
+
         CURSOR cr_craplcm(pr_cdcooper IN crapass.cdcooper%TYPE
                          ,pr_nrdconta IN craplcm.nrdconta%TYPE
                          ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE) IS
@@ -443,25 +467,25 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
              AND craplcm.dtmvtolt = pr_dtmvtolt
              AND ROWNUM = 1;
         rw_craplcm cr_craplcm%ROWTYPE;
-        
+
         ------------------------------- VARIAVEIS -------------------------------
-         
+
         -- Tratamento de erros
         vr_exc_saida  EXCEPTION;
         vr_dscritic   VARCHAR2(4000);
-         
+
         -- Cursor genérico de calendário
         rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-         
+
         BEGIN
-           
+
           --------------- REGRA DE NEGOCIO ------------------
-           
+
           -- Leitura do calendario da cooperativa
           OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
           FETCH btch0001.cr_crapdat INTO rw_crapdat;
           CLOSE btch0001.cr_crapdat;
-           
+
           FOR rw_craplim_crapsld IN cr_craplim_crapsld( pr_cdcooper => pr_cdcooper,
                                                         pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
             -- Verifica se o saldo é positivo
@@ -471,7 +495,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                              ,pr_nrdconta => rw_craplim_crapsld.nrdconta
                              ,pr_dtmvtolt => rw_crapdat.dtmvtoan);
               FETCH cr_craplcm INTO rw_craplcm;
-                 
+
               -- Verifica a conta do associado
               IF cr_craplcm%NOTFOUND THEN
                 CLOSE cr_craplcm;
@@ -505,7 +529,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
               END IF;
             END IF;
           END LOOP;
-          
+
         EXCEPTION
           WHEN vr_exc_saida THEN
             -- Se foi retornado apenas código
@@ -518,17 +542,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
             pr_dscritic := SQLERRM;
         END;
       END pc_blq_lib_inclusao_bord;
-      
+
       --> Rotina para cobrança das tarifas de renovação de contrato
       PROCEDURE pc_gera_tarifa_renova( pr_cdcooper crapcop.cdcooper%TYPE,
                                        pr_crapdat  btch0001.cr_crapdat%ROWTYPE) IS
-      
+
         --------> CURSORES <--------
         CURSOR cr_craplim_tari IS
           SELECT ass.inpessoa,
                  ass.nrdconta,
                  lim.nrctrlim,
-                 lim.vllimite 
+                 lim.vllimite
             FROM craplim lim,
                  crapass ass
            WHERE lim.cdcooper = ass.cdcooper
@@ -539,13 +563,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
              AND lim.dtrenova = pr_crapdat.dtmvtoan
              AND lim.tprenova = 'A'
              AND lim.qtrenova > 0;
-        
+
         --------> VARIAVEIS <--------
         --> Critica
         vr_cdcritic PLS_INTEGER;
         vr_dscritic VARCHAR2(4000);
         vr_tab_erro GENE0001.typ_tab_erro;
-        
+
         -- Variaveis de tarifa
         vr_cdhistor craphis.cdhistor%TYPE;
         vr_cdhisest craphis.cdhistor%TYPE;
@@ -554,18 +578,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
         vr_cdfvlcop crapfco.cdfvlcop%TYPE;
         vr_vltarifa crapfco.vltarifa%TYPE;
         vr_cdbattar VARCHAR2(10);
-        
+
         vr_rowid         ROWID;
-        
-      BEGIN                
-      
+
+      BEGIN
+
         --> buscar os limites renovados hj para cobrança de Tarifa
         FOR rw_craplim_tari IN cr_craplim_tari LOOP
-        
+
           -- 1 - Pessoa Fisica
           IF rw_craplim_tari.inpessoa = 1 THEN
             vr_cdbattar := 'DSCCHQREPF'; -- Renovacao contrato pessoa fisica
-          ELSE            
+          ELSE
             vr_cdbattar := 'DSCCHQREPJ'; -- Renovacao contrato pessoa juridica
           END IF;
 
@@ -607,12 +631,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
             -- Se não Existe Tarifa
             CONTINUE;
           END IF;
-          
+
           -- Verifica se valor da tarifa esta zerado
           IF vr_vltarifa = 0 THEN
             CONTINUE;
           END IF;
-
+          
           -- Criar Lançamento automatico Tarifas de contrato de desconto de cheques
           TARI0001.pc_cria_lan_auto_tarifa( pr_cdcooper     => pr_cdcooper
                                           , pr_nrdconta     => rw_craplim_tari.nrdconta
@@ -660,9 +684,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
             vr_cdcritic:= 0;
             vr_dscritic:= NULL;
           END IF;
-        
+
         END LOOP;
-      
+
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic:= 'Não foi possivel gerar tarifa de renovação: '||SQLERRM;
@@ -675,8 +699,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
           vr_cdcritic:= 0;
           vr_dscritic:= NULL;
       END pc_gera_tarifa_renova;
-      
-      
+
+
     BEGIN
       -- Incluir nome do módulo logado
       GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra);
@@ -694,7 +718,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
         -- Apenas fechar o cursor
         CLOSE cr_crapcop;
       END IF;
-      
+
       -- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat
@@ -710,10 +734,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
-            
+
 
       pc_limpa_tabela;
-      
+
+      --> Buscar Parametro
+      vr_flg_Rating_Renovacao_Ativo := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                                ,pr_cdcooper => 0
+                                                                ,pr_cdacesso => 'RATING_RENOVACAO_ATIVO');
+
+      vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                             pr_cdcooper => pr_cdcooper,
+                                             pr_cdacesso => 'HABILITA_RATING_NOVO');
+
       -- Seleciona valor de arrasto da tabela generica
       vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                ,pr_nmsistem => 'CRED'
@@ -733,24 +766,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
       vr_tab_craptab(7).dsdrisco  := 'F';
       vr_tab_craptab(8).dsdrisco  := 'G';
       vr_tab_craptab(9).dsdrisco  := 'H';
-      vr_tab_craptab(10).dsdrisco := 'H';    
-      
+      vr_tab_craptab(10).dsdrisco := 'H';
+
       -- Consulta o limite de desconto por tipo de pessoa
-      DSCC0001.pc_busca_tab_limdescont( pr_cdcooper => pr_cdcooper                  --> Codigo da cooperativa 
+      DSCC0001.pc_busca_tab_limdescont( pr_cdcooper => pr_cdcooper                  --> Codigo da cooperativa
                                        ,pr_inpessoa => 0                            --> Tipo de pessoa ( 0 - todos 1-Fisica e 2-Juridica)
-                                       ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
+                                       ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto
                                        ,pr_cdcritic => vr_cdcritic                  --> Código da crítica
-                                       ,pr_dscritic => vr_dscritic);                --> Descrição da crítica                
-          
+                                       ,pr_dscritic => vr_dscritic);                --> Descrição da crítica
+
       -- Se retornou alguma crítica
       IF TRIM(vr_dscritic) IS NOT NULL OR nvl(vr_cdcritic,0) > 0 THEN
         RAISE vr_exc_saida;
-      END IF; 
-           
+      END IF;
+
       -- Buscar todas as linhas de desconto de cheque
       FOR rw_crapldc IN cr_crapldc(pr_cdcooper => pr_cdcooper) LOOP
         vr_tab_crapldc(rw_crapldc.cddlinha).flgstlcr  := rw_crapldc.flgstlcr;
-        
+
         -- Verifica se linha de credito de desconto de cheque possui saldo
         -- Verificando existem se borderôs de desconto ativos
         OPEN cr_craplim (pr_cdcooper => pr_cdcooper
@@ -764,7 +797,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
           vr_flgsaldo := 0;-- Nao possui saldo
         END IF;
         CLOSE cr_craplim;
-        
+
         -- Atualiza o indicador
         BEGIN
           UPDATE crapldc
@@ -779,19 +812,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
             --Levantar Excecao
             RAISE vr_exc_saida;
         END;
-        
+
       END LOOP;
-      
+
       -- Definir dia util anterior ao dia de ontem para o filtro de periodo
-      vr_dtperant := gene0005.fn_valida_dia_util( pr_cdcooper => pr_cdcooper, 
-                                                  pr_dtmvtolt => rw_crapdat.dtmvtoan-1, 
+      vr_dtperant := gene0005.fn_valida_dia_util( pr_cdcooper => pr_cdcooper,
+                                                  pr_dtmvtolt => rw_crapdat.dtmvtoan-1,
                                                   pr_tipo     => 'A' );
-      
+
       --> Definir o ultimo dia do mes anterior com base no dia anterior
       vr_dtultmes_ant := last_day(add_months(rw_crapdat.dtmvtoan,-1));
-      
-      
-      FOR rw_craprli IN cr_craprli(pr_cdcooper => pr_cdcooper) LOOP        
+
+
+      FOR rw_craprli IN cr_craprli(pr_cdcooper => pr_cdcooper) LOOP
         -- Buscar todos os limites de desconto de cheque que vencem hoje ou
         -- que venceram de acordo com a quantidade de tentativas para renovacao
         FOR rw_craplim_crapass IN cr_craplim_crapass (pr_cdcooper => rw_craprli.cdcooper
@@ -799,16 +832,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                                                      ,pr_dtmvtolt => rw_crapdat.dtmvtoan
                                                      ,pr_dtmvtoan => vr_dtperant
                                                      ,pr_qtdiaren => rw_craprli.qtdiaren) LOOP
-                                                      
+
           -- Verifica a situacao do limite do desconto de cheque
           IF nvl(rw_craplim_crapass.flgrenli,0) = 0 THEN
             -- Atualiza motivo da nao renovacao do limite de desconto de cheque
-            pc_nao_renovar(pr_craplim_crapass => rw_craplim_crapass                        
+            pc_nao_renovar(pr_craplim_crapass => rw_craplim_crapass
                           ,pr_dsnrenov        => 'Desabilitado Renovacao Automatica'
                           ,pr_dsvlrmot        => '');
             CONTINUE;
           END IF;
-          
+
           -- Verifica se a linha rotativa esta cadastrada
           IF NOT vr_tab_crapldc.EXISTS(rw_craplim_crapass.cddlinha) THEN
             vr_dscritic := 'Linha de Credito nao cadastrada. Linha: ' || rw_craplim_crapass.cddlinha;
@@ -819,7 +852,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                                                           || vr_cdprogra || ' --> '|| vr_dscritic);
             CONTINUE;
           END IF;
-          
+
           -- Verifica a situacao do limite de desconto de cheque
           IF nvl(vr_tab_crapldc(rw_craplim_crapass.cddlinha).flgstlcr,0) = 0 THEN
             -- Atualiza motivo da nao renovacao do limite de desconto de cheque
@@ -828,7 +861,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                           ,pr_dsvlrmot        => rw_craplim_crapass.cddlinha);
             CONTINUE;
           END IF;
-                             
+
           -- Verifica a situacao da conta
           IF (INSTR(';' || rw_craprli.dssitdop || ';',';' || rw_craplim_crapass.cdsitdct || ';') <= 0) THEN
             -- Atualiza motivo da nao renovacao do limite de desconto de cheque
@@ -837,14 +870,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                           ,pr_dsvlrmot        => rw_craplim_crapass.cdsitdct);
             CONTINUE;
           END IF;
-          
+
           -- Pega o menor valor
-          IF nvl(rw_craprli.vlmaxren,0) < vr_tab_lim_desconto(rw_craplim_crapass.inpessoa).vllimite THEN 
+          IF nvl(rw_craprli.vlmaxren,0) < vr_tab_lim_desconto(rw_craplim_crapass.inpessoa).vllimite THEN
             vr_vllimite := rw_craprli.vlmaxren;
           ELSE
             vr_vllimite := vr_tab_lim_desconto(rw_craplim_crapass.inpessoa).vllimite;
           END IF;
-          
+
           -- Valida se o limite do contrato respeita o Limite Maximo do Contrato
           IF nvl(rw_craplim_crapass.vllimite,0) > vr_vllimite THEN
             -- Atualiza motivo da nao renovacao do limite de desconto de cheque
@@ -853,9 +886,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                           ,pr_dsvlrmot        => TO_CHAR(rw_craplim_crapass.vllimite,'fm999g999g999g990d00'));
             CONTINUE;
           END IF;
-            
+
           -- Verificar a quantidade maxima que pode renovar
-          IF ((nvl(rw_craprli.qtmaxren,0) > 0)                                    AND 
+          IF ((nvl(rw_craprli.qtmaxren,0) > 0)                                    AND
               (nvl(rw_craplim_crapass.qtrenova,0) >= nvl(rw_craprli.qtmaxren,0))) THEN
             -- Atualiza motivo da nao renovacao do limite de desconto de cheque
             pc_nao_renovar(pr_craplim_crapass => rw_craplim_crapass
@@ -863,7 +896,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                           ,pr_dsvlrmot        => rw_craplim_crapass.qtrenova);
             CONTINUE;
           END IF;
-            
+
           vr_dtmincta := ADD_MONTHS(rw_crapdat.dtmvtolt, - (rw_craprli.qtmincta));
           -- Verificar o tempo de conta
           IF rw_craplim_crapass.dtadmiss > vr_dtmincta THEN
@@ -872,8 +905,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                           ,pr_dsnrenov        => 'Tempo de Conta'
                           ,pr_dsvlrmot        => to_char(rw_craplim_crapass.dtadmiss,'DD/MM/RRRR'));
             CONTINUE;
-          END IF;          
-          
+          END IF;
+
           -- Risco com divida (Valor Arrasto)
           OPEN cr_ris_comdiv(pr_cdcooper => rw_craplim_crapass.cdcooper
                             ,pr_nrdconta => rw_craplim_crapass.nrdconta
@@ -883,6 +916,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
           FETCH cr_ris_comdiv
            INTO rw_ris_comdiv;
           CLOSE cr_ris_comdiv;
+          
           -- Se encontrar
           IF rw_ris_comdiv.innivris IS NOT NULL THEN
             vr_nivrisco := TRIM(vr_tab_craptab(rw_ris_comdiv.innivris).dsdrisco);
@@ -901,19 +935,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
               IF rw_ris_semdiv.innivris = 10 THEN
                 vr_nivrisco := TRIM(vr_tab_craptab(rw_ris_semdiv.innivris).dsdrisco);
               ELSE
-                vr_nivrisco := TRIM(vr_tab_craptab(2).dsdrisco);                  
+                vr_nivrisco := TRIM(vr_tab_craptab(2).dsdrisco);
               END IF;
             ELSE
               vr_nivrisco := TRIM(vr_tab_craptab(2).dsdrisco);
             END IF;
-              
+
           END IF;
 
           -- Caso seja uma classificacao antiga
           IF vr_nivrisco = 'AA' THEN
             vr_nivrisco := 'A';
           END IF;
-          
+
           -- Verifica o risco da conta
           IF (INSTR(';' || rw_craprli.dsrisdop || ';',';' || vr_nivrisco || ';') <= 0) THEN
             -- Atualiza motivo da nao renovacao do limite de desconto de cheque
@@ -922,9 +956,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                           ,pr_dsvlrmot        => vr_nivrisco);
             CONTINUE;
           END IF;
-          
+
           vr_dtaltera := NULL;
-          
+
           -- Revisão Cadastral
           OPEN cr_crapalt(pr_cdcooper => rw_craplim_crapass.cdcooper
                          ,pr_nrdconta => rw_craplim_crapass.nrdconta);
@@ -935,9 +969,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
             CLOSE cr_crapalt;
             vr_dtaltera := rw_crapalt.dtaltera;
           ELSE
-            CLOSE cr_crapalt;            
-          END IF;          
-          
+            CLOSE cr_crapalt;
+          END IF;
+
           -- Verifica a revisao cadastral se estah dentro do periodo
           IF ((ADD_MONTHS(rw_crapdat.dtmvtoan, - (rw_craprli.nrrevcad)) > vr_dtaltera) OR (vr_dtaltera IS NULL)) THEN
             pc_nao_renovar(pr_craplim_crapass => rw_craplim_crapass
@@ -945,7 +979,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                           ,pr_dsvlrmot        => to_char(vr_dtaltera,'DD/MM/RRRR'));
             CONTINUE;
           END IF;
-          
+
           -- Verifica se o cooperado possui algum emprestimo em atraso no CYBER
           OPEN cr_crapcyb(pr_cdcooper => rw_craplim_crapass.cdcooper
                          ,pr_nrdconta => rw_craplim_crapass.nrdconta
@@ -959,12 +993,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
             pc_nao_renovar(pr_craplim_crapass => rw_craplim_crapass
                           ,pr_dsnrenov        => 'Qtde de dias Atraso do Emprestimo'
                           ,pr_dsvlrmot        => nvl(rw_crapcyb.qtdiaatr,0));
-            
+
             CONTINUE;
           ELSE
             CLOSE cr_crapcyb;
-          END IF; 
-            
+          END IF;
+
           -- Verifica se o cooperado possui estouro de conta no CYBER
           OPEN cr_crapcyb(pr_cdcooper => rw_craplim_crapass.cdcooper
                          ,pr_nrdconta => rw_craplim_crapass.nrdconta
@@ -977,11 +1011,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
             pc_nao_renovar(pr_craplim_crapass => rw_craplim_crapass
                           ,pr_dsnrenov        => 'Qtde de dias Atraso Conta Corrente'
                           ,pr_dsvlrmot        => nvl(rw_crapcyb.qtdiaatr,0));
-            
+
             CONTINUE;
           ELSE
-            CLOSE cr_crapcyb;  
-          END IF;                    
+            CLOSE cr_crapcyb;
+          END IF;
           
           -- Valor Descontado
           OPEN cr_crapcdb(pr_cdcooper     => rw_craplim_crapass.cdcooper
@@ -991,11 +1025,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
           FETCH cr_crapcdb INTO rw_crapcdb;
           vr_flgfound := cr_crapcdb%FOUND;
           CLOSE cr_crapcdb;
-          
+
           -- Se não houver desconto, liquidez é 100%
           IF rw_crapcdb.vldescto = 0 THEN
             vr_liquidez := 100;
-          ELSE 
+          ELSE
             -- Valor Devolvido
             OPEN cr_craplcm(pr_cdcooper     => rw_craplim_crapass.cdcooper
                            ,pr_nrdconta     => rw_craplim_crapass.nrdconta
@@ -1003,24 +1037,76 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                            ,pr_dtmvtolt_ate => rw_crapdat.dtmvtoan);
             FETCH cr_craplcm INTO rw_craplcm;
             CLOSE cr_craplcm;
-          
+
             vr_liquidez := 100 - (rw_craplcm.vldevolv / rw_crapcdb.vldescto * 100);
           END IF;
-          
-          -- Verifica se o cooperado possui liquidez no produto de desconto de cheques 
-          -- maior ou igual ao percentual cadastrado 
-          IF vr_liquidez < rw_craprli.pcliqdez THEN 
+
+          -- Verifica se o cooperado possui liquidez no produto de desconto de cheques
+          -- maior ou igual ao percentual cadastrado
+          IF vr_liquidez < rw_craprli.pcliqdez THEN
             -- Atualiza motivo da nao renovacao do limite de desconto de cheque
             pc_nao_renovar(pr_craplim_crapass => rw_craplim_crapass
                           ,pr_dsnrenov        => 'Liquidez no produto de desconto de cheques'
                           ,pr_dsvlrmot        => ROUND(nvl(vr_liquidez,0),2));
-            
+
             CONTINUE;
           END IF;
-          
+
+          -- P450 SPT13 - alteracao para habilitar rating novo
+          IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
+            -- Verifica processamento do Rating Renovacao
+            IF vr_flg_Rating_Renovacao_Ativo = 1 THEN
+              -- Grava rating
+
+              -- Buscar Valor Endividamento e Valor Limite Rating (TAB056)
+              RATI0003.pc_busca_endivid_param(pr_cdcooper => pr_cdcooper
+                                             ,pr_nrdconta => rw_craplim_crapass.nrdconta
+                                             ,pr_vlendivi => vr_vlendivid
+                                             ,pr_vlrating => vr_vllimrating
+                                             ,pr_dscritic => vr_dscritic);
+
+              IF TRIM(vr_dscritic) IS NOT NULL THEN
+                vr_cdcritic := 0;
+                pc_nao_renovar(pr_craplim_crapass => rw_craplim_crapass
+                              ,pr_dsnrenov        => 'Erro ao buscar o endividamento no desct. cheque PC_CRPS710_I.'
+                              ,pr_dsvlrmot        => ROUND(nvl(vr_liquidez,0),2));
+                CONTINUE;
+              END IF;
+
+              vr_strating := 2; -- Analisado
+              vr_dtrating := NULL;
+              IF (vr_vlendivid  > vr_vllimrating)  THEN
+                -- Gravar o Rating da operação, efetivando-o
+                vr_strating := 4; -- Efetivado
+                vr_dtrating := rw_crapdat.dtmvtolt;
+              END IF;
+
+              rati0003.pc_grava_rating_operacao( pr_cdcooper           => pr_cdcooper
+                                                ,pr_nrdconta           => rw_craplim_crapass.nrdconta
+                                                ,pr_tpctrato           => 2
+                                                ,pr_nrctrato           => rw_craplim_crapass.nrctrlim
+                                                ,pr_strating           => vr_strating
+                                                ,pr_dtrataut           => rw_crapdat.dtmvtolt  --> Data da nova renovação
+                                                ,pr_dtmvtolt           => rw_crapdat.dtmvtolt  --> Data/Hora do historico de rating
+                                                ,pr_dtrating           => vr_dtrating
+                                                --Variáveis de crítica
+                                                ,pr_cdcritic           => vr_cdcritic     --> Critica encontrada no processo
+                                                ,pr_dscritic           => vr_dscritic);   --> Descritivo do erro
+
+              IF ( vr_cdcritic >= 0 AND vr_cdcritic IS NOT NULL) OR TRIM(vr_dscritic) IS NOT NULL THEN
+                vr_cdcritic := 0;
+                pc_nao_renovar(pr_craplim_crapass => rw_craplim_crapass
+                              ,pr_dsnrenov        => 'Erro ao atualizar o rating no desct. cheque PC_CRPS710_I.'
+                              ,pr_dsvlrmot        => ROUND(nvl(vr_liquidez,0),2));
+                CONTINUE;
+              END IF;
+            END IF;
+          END IF;
+          -- P450 SPT13 - alteracao para habilitar rating novo
+
           -- Atualiza os dados do limite de desconto de cheque
           BEGIN
-            UPDATE craplim SET 
+            UPDATE craplim SET
                    dtrenova = rw_crapdat.dtmvtoan,
                    tprenova = 'A',
                    dsnrenov = ' ',
@@ -1039,7 +1125,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                                                             vr_cdprogra || ' --> ' || vr_dscritic);
               CONTINUE;
           END;
-          
+
           -- Gera Log de alteracao
           pc_gera_log_alteracao(pr_cdcooper => rw_craplim_crapass.cdcooper
                                ,pr_nrdconta => rw_craplim_crapass.nrdconta
@@ -1048,13 +1134,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
                                ,pr_nrctrlim => rw_craplim_crapass.nrctrlim
                                ,pr_nrdctitg => rw_craplim_crapass.nrdctitg
                                ,pr_flgctitg => rw_craplim_crapass.flgctitg);
-          
+
         END LOOP; -- END LOOP FOR rw_craplim
-      
+
       END LOOP; -- END LOOP FOR rw_craprli
-      
+
       pc_limpa_tabela;
-      
+
       --> Rotina para cobrança das tarifas de renovação de contrato
       pc_gera_tarifa_renova (pr_cdcooper => pr_cdcooper,
                              pr_crapdat  => rw_crapdat);
@@ -1062,7 +1148,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
       -- Rotina para bloqueio e desbloqueio da inclusao de cordero
       pc_blq_lib_inclusao_bord(pr_cdcooper => pr_cdcooper
                               ,pr_dscritic => vr_dscritic);
-      
+
       IF pr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
@@ -1082,7 +1168,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
         -- Efetuar rollback
-        ROLLBACK;  
+        ROLLBACK;
       WHEN OTHERS THEN
         -- Efetuar retorno do erro não tratado
         pr_cdcritic := 0;
@@ -1092,5 +1178,4 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps710_I ( pr_cdcooper IN crapcop.cdcoope
     END;
 
   END pc_crps710_I;
-  
 /

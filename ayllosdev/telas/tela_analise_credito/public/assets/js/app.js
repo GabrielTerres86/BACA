@@ -65,8 +65,24 @@ $(document).ready(function(){
 *  Log de tempo ativo
 *  a cada 60 segundos envia um log para o banco
 */
-
     var tempoLog = 60000;
+   
+    $.ajax({
+        type:"POST",
+        url: "getUnload.php",
+        data: {
+            requisicao : 'log'
+        },
+        beforeSend: function() {
+            //Não há necessidade de loader
+        },
+        success: function(response) {
+            //console.log('log registrado');
+        },
+        error: function(response) {
+            //console.log('erro ao registrar log');
+        }
+    });
    
     window.setInterval(function(){
 
@@ -80,10 +96,10 @@ $(document).ready(function(){
                 //Não há necessidade de loader
             },
             success: function(response) {
-                console.log('log registrado');
+                //console.log('log registrado');
             },
             error: function(response) {
-                console.log('erro ao registrar log');
+                //console.log('erro ao registrar log');
             }
 });
     }, tempoLog);

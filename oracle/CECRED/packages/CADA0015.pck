@@ -718,6 +718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       vr_pessoa_email.nmpessoa_contato        := pr_crapcem.nmpescto;
       vr_pessoa_email.nmsetor_pessoa_contato  := pr_crapcem.secpscto;
       vr_pessoa_email.cdoperad_altera         := pr_cdoperad;
+	  vr_pessoa_email.insituacao			  := 1; --Ativo	
 
       -- Efetua a inclusao
       cada0010.pc_cadast_pessoa_email (pr_pessoa_email => vr_pessoa_email

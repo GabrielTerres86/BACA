@@ -5,7 +5,8 @@
  * DATA CRIACAO : Novembro/2017
  * OBJETIVO     : Grava os dados
  
-   Alteracoes   : 
+   Alteracoes   : 19/04/2019 - Ajuste na tela garantia de operação, para salvar seus dados apenas no 
+                               final da inclusão, alteração de empréstimo - PRJ 438. (Mateus Z / Mouts)
  */
 
     session_start();
@@ -41,12 +42,6 @@
     $ret_nomformu = (isset($_POST['ret_nomformu'])) ? $_POST['ret_nomformu'] : '';
     $ret_execfunc = (isset($_POST['ret_execfunc'])) ? $_POST['ret_execfunc'] : '';
     $err_execfunc = (isset($_POST['err_execfunc'])) ? $_POST['err_execfunc'] : '';
-
-    //bruno - prj 438 - bug 14235
-    $aux_acao = (isset($_POST['aux_acao'])) ? $_POST['aux_acao'] : '';
-    //bruno - prj 438 - bug 6666
-    $flagAlteracao = (isset($_POST['flagAlteracao'])) ? $_POST['flagAlteracao'] : true; //Caso não retorne a flagAlteracao entender que está alterando sempre
-    
 
     $xml  = "";
     $xml .= "<Root>";
@@ -87,19 +82,6 @@
 
     echo "$('#".$ret_nomcampo."', '#".$ret_nomformu."').val('".getByTagName($registros->tags,'IDCOBERT')."');";
     echo "fechaRotina($('#divUsoGAROPC'));";
-
-
-    //bruno - prj 438 - bug 14235
-    switch ($aux_acao) {
-        case 'EMPRESTIMO':
-            //0 - não perede aprovação
-            //1 - perde aprovação
-            //bruno - bug 6666
-            if($flagAlteracao == 'true'){
-            echo '__aux_ingarapr = "'.getByTagName($registros->tags,'ingarapr').'";';
-            }
-            break;
-    }
 
     echo $ret_execfunc;
 ?>

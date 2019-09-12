@@ -441,6 +441,10 @@
               26/03/2019 - PRB0040591 - Problema com CRAPSNH "perdidos" e inativos que impossibilitam
                            mudar o limite de titular (Andreatta-Mouts)
 
+              11/06/2019 - Ajuste para tratar TED Judicial.
+                           Jose Dill - Mouts (P475 - REQ39)
+
+
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -523,7 +527,7 @@ PROCEDURE horario_operacao:
 
 
     IF  par_tpoperac = 0  OR   /** Todos            **/ 
-        par_tpoperac = 4  OR   /** TED              **/
+        par_tpoperac = 4  OR   par_tpoperac = 22 OR   /** TED **/ /*REQ39*/
         par_tpoperac = 6       /** VR-Boleto        **/
         /* par_tpoperac = 7  THEN */ /** Folha Pagamento  **/ /*Projeto 475 - Sprint D2 - Marcelo Coelho - não verificar crise para Folha */
         THEN
@@ -718,7 +722,7 @@ PROCEDURE horario_operacao:
                 END.
         END. 
     
-    IF  par_tpoperac = 0 OR par_tpoperac = 4  THEN /** TED **/
+    IF  par_tpoperac = 0 OR par_tpoperac = 4  OR par_tpoperac = 22 THEN /** TED **/ /*REQ39*/
         DO:
             FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
 
@@ -1218,7 +1222,7 @@ PROCEDURE verifica_operacao:
     DEF  INPUT PARAM par_cdageban LIKE crapcti.cdageban             NO-UNDO.
     DEF  INPUT PARAM par_nrctatrf LIKE crapcti.nrctatrf             NO-UNDO.
     DEF  INPUT PARAM par_cdtiptra AS INTE                           NO-UNDO.
-    /* 1 - Transferencia / 2 - Pagamento / 3 - Credito Salario / 4 - TED */
+    /* 1 - Transferencia / 2 - Pagamento / 3 - Credito Salario / 4 - TED / 22 - TED JUDICIAL*/ /*REQ39*/
     DEF  INPUT PARAM par_cdoperad LIKE crapope.cdoperad             NO-UNDO.
     DEF  INPUT PARAM par_tpoperac AS INTE                           NO-UNDO.
     /* 1 - Transferencia intracooperativa / 2 - Pagamento / 3 - Cobranca /  */
@@ -1291,7 +1295,7 @@ PROCEDURE verifica_operacao:
                 ASSIGN par_dstransa = par_dstransa + "Credito de Salario". 
         END.    
     ELSE
-    IF  par_tpoperac = 4  THEN
+    IF  par_tpoperac = 4 OR par_tpoperac = 22 THEN /*REQ39*/
         ASSIGN par_dstransa = par_dstransa + "TED".
     ELSE
     IF  par_tpoperac = 2  THEN /** Operacao de Pagamento **/
@@ -1463,7 +1467,7 @@ PROCEDURE verifica_operacao:
                aux_vllimptl = tt-limites-internet.vllimvrb
                aux_vllimcop = tt-limites-internet.vlvrbcop.
         ELSE
-    IF  par_tpoperac = 4   THEN /* TED */
+    IF  par_tpoperac = 4 OR par_tpoperac = 22  THEN /* TED */ /*REQ39*/
         ASSIGN aux_vldspptl = tt-limites-internet.vldspted
                aux_vldspttl = tt-limites-internet.vldspted
                aux_vllimptl = tt-limites-internet.vllimted
@@ -1516,7 +1520,7 @@ PROCEDURE verifica_operacao:
                     IF  par_tpoperac = 6 THEN /* VR Boleto */
                 ASSIGN aux_vllimptl = tt-limites-internet.vllimvrb.
                         ELSE                
-            IF  par_tpoperac = 4   THEN /* TED */
+            IF  par_tpoperac = 4 OR par_tpoperac = 22 THEN /* TED */ /*REQ39*/
                 ASSIGN aux_vldspptl = tt-limites-internet.vldspted
                        aux_vllimptl = tt-limites-internet.vllimted.
             ELSE
@@ -1592,7 +1596,7 @@ PROCEDURE verifica_operacao:
                                       par_tpoperac = 5 THEN
                                       "transferencias."
                                   ELSE
-                                  IF  par_tpoperac = 4  THEN
+                                  IF  par_tpoperac = 4 OR par_tpoperac = 22 THEN /*REQ39*/
                                       "envio de TED."
                                   ELSE
                                       "pagamentos.").
@@ -1611,7 +1615,7 @@ PROCEDURE verifica_operacao:
                           INPUT-OUTPUT aux_dtdialim).
     IF  par_tpoperac = 1  OR    /** Transferencia **/
         par_tpoperac = 5  OR    /* Transf. Intercooperativa */
-        par_tpoperac = 4  THEN  /** TED           **/
+        par_tpoperac = 4  OR par_tpoperac = 22  THEN  /** TED **/ /*REQ39*/
         DO:
             /** Data do agendamento nao pode ser o ultimo dia util do ano **/
             IF (CAN-DO("1,5",STRING(par_tpoperac)) AND  
@@ -1623,7 +1627,7 @@ PROCEDURE verifica_operacao:
                     RETURN "NOK".
                 END.
 
-            IF  par_tpoperac = 4        AND 
+            IF  (par_tpoperac = 4 OR par_tpoperac = 22) /*REQ39*/      AND 
                 tt-limite.iddiauti = 2  AND
                (DAY(aux_dtdialim) <> 31 AND MONTH(aux_dtdialim) <> 12)  THEN
                 DO: 
@@ -1873,7 +1877,7 @@ PROCEDURE verifica_operacao:
                     END. 
 
                     /** Obtem valor da tarifa TED **/
-                    IF  par_tpoperac = 4  THEN
+                    IF  par_tpoperac = 4 OR par_tpoperac = 22 THEN /*REQ39*/
                         DO: 
                             RUN dbo/b1crap20.p PERSISTENT SET h-b1crap20.
 
@@ -2519,6 +2523,7 @@ PROCEDURE verifica-dados-ted:
     DEF  INPUT PARAM par_dshistor AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_cdispbif LIKE crapcti.nrispbif             NO-UNDO.
     DEF  INPUT param par_idagenda AS INTE                           NO-UNDO.
+    DEF  INPUT param par_tptransa AS INTE                           NO-UNDO. /*REQ39*/
     DEF OUTPUT PARAM par_dstransa AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
 
@@ -2548,6 +2553,7 @@ PROCEDURE verifica-dados-ted:
                                    INPUT par_dshistor,
      INPUT par_cdispbif,
      INPUT par_idagenda,
+     INPUT par_tptransa, /*REQ39 - Inclusao do parametro do tipo de transaçao */
      OUTPUT "",  /*par_dstransa*/     
      OUTPUT 0,  /*par_cdcritic*/     
      OUTPUT ""). /*par_dscritic*/

@@ -261,6 +261,30 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                        ,pr_nrctremp IN crawepr.nrctremp%TYPE
                                        ,pr_dsprotoc IN crawepr.dsprotoc%TYPE);
 									
+  PROCEDURE pc_notificacoes_prop(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                                ,pr_nrdconta    IN crapass.nrdconta%TYPE --> Numero da conta
+                                ,pr_nrctremp    IN crawepr.nrctremp%TYPE --> Numero do contrato
+                                ,pr_cdcritic    OUT PLS_INTEGER          --> Codigo da critica
+                                ,pr_dscritic    OUT VARCHAR2             --> Descricao da critica
+                                 );
+  
+  FUNCTION fn_agenda_reenvio_analise(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                                    ,pr_nrdconta    IN crapass.nrdconta%TYPE --> Numero da conta
+                                    ,pr_nrctremp    IN crawepr.nrctremp%TYPE --> Numero do contrato
+                                    ,pr_cdagenci    IN crawepr.cdagenci%TYPE DEFAULT NULL --> PA que irá acionar o motor
+                                    ,pr_cdoperad    IN crawepr.cdoperad%TYPE DEFAULT NULL --> Operador que irá acionar o motor
+                                     ) RETURN BOOLEAN;
+  
+  PROCEDURE pc_job_reenvio_analise;
+  
+  PROCEDURE pc_email_reenvio_analise(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                    ,pr_dscritic OUT VARCHAR);             --> Descricao da critica    
+
+  PROCEDURE pc_set_job_reenvioanalise;  
+
+  FUNCTION fn_get_job_reenvioanalise RETURN BOOLEAN;
+
 END ESTE0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
@@ -285,7 +309,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 							   Fluxo Atraso (quantidadeDiasAtraso)
 							   PJ 450 - Diego Simas (AMcom)		
 
+          16/07/2019 - PRJ 438 - Add. pc_notificacoes_prop,fn_agenda_reenvio_analise,pc_job_reenvio_analise,pc_email_reenvio_analise
+                     - Rafael R. Santos(AmCom)
+
+                  24/08/2019 - PRJ 450 - Adicionado no JSON o nivelRisco para enviar para a esteira a nota recebida
+                               do motor (Luiz Otavio Olinger Momm - AMCOM)
+
+                  27/08/2019 - PRJ 450 - Adicionado leitura do segmento enviado pela IBRATAN na 
+                               pc_solicita_retorno_analise do motor (Luiz Otavio Olinger Momm - AMCOM)
+
+  -------------------------------------
+
   ---------------------------------------------------------------------------------------------------------------*/
+  --/ variavel global para controle do JOB de reenvio para analise
+  vg_job_reenvio_analise BOOLEAN := FALSE;
   --> Funcao para formatar o numero em decimal conforme padrao da IBRATAN
   FUNCTION fn_decimal_ibra (pr_numero IN number) RETURN NUMBER IS --RETURN VARCHAR2 is
   BEGIN
@@ -1566,6 +1603,16 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
          AND ris.cdmodali in(299,499)
          AND ris.inddocto = 1;
     vr_qtddiatr NUMBER;
+    
+    -- Busca NivelRating - P450 24/08/2019
+    CURSOR cr_risco_operacoes IS
+      SELECT oper.inrisco_rating_autom, oper.innivel_rating, oper.inpontos_rating
+        FROM tbrisco_operacoes oper
+       WHERE oper.tpctrato = 90
+         AND oper.cdcooper = pr_cdcooper
+         AND oper.nrdconta = pr_nrdconta
+         AND oper.nrctremp = pr_nrctremp;
+    rw_risco_operacoes cr_risco_operacoes%ROWTYPE;
 
     -----------> VARIAVEIS <-----------
     -- Tratamento de erros
@@ -1582,6 +1629,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_obj_imagem   json := json();
     vr_lst_doctos   json_list := json_list();
     vr_json_valor   json_value;
+    vr_obj_indicadores     json := json(); -- P450 24/08/2019 - Indicadores Rating
     
     -- Variaveis auxiliares
     vr_data_aux     DATE := NULL;
@@ -1659,6 +1707,17 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_obj_agencia.put('PACodigo', rw_crapass.cdagenci);    
     vr_obj_proposta.put('cooperadoContaPA' ,vr_obj_agencia);
     
+    -- Informar Nota Rating para Esteira - P450 24/08/2019
+    OPEN cr_risco_operacoes;
+    FETCH cr_risco_operacoes INTO rw_risco_operacoes;
+
+    -- Se não localizar não incluir o bloco de indicadoresGeradosRegra que viria do MOTOR - P450 24/08/2019
+    IF cr_risco_operacoes%FOUND THEN
+        vr_obj_proposta.put('ratingPolitica', rw_risco_operacoes.inrisco_rating_autom);
+        vr_obj_proposta.put('notaRating', rw_risco_operacoes.inpontos_rating);
+    END IF;
+    CLOSE cr_risco_operacoes;
+
     -- Nr. conta sem o digito
     vr_obj_proposta.put('cooperadoContaNum',to_number(substr(rw_crapass.nrdconta,1,length(rw_crapass.nrdconta)-1)));
     -- Somente o digito
@@ -1694,8 +1753,11 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
        3 – Desconto Cheques 
        4 – Desconto Títulos 
        5 – Cartão de Crédito 
-       6 – Limite de Crédito) */
-       
+       6 – Limite de Crédito
+       9 – Consignado
+       10 - Rating
+       12 - Limite de Pré-aprovado
+     */
     -- Se for CDC e diversos
     IF rw_crawepr.cdfinemp = 58 AND rw_crawepr.inlcrcdc = 1 THEN
       vr_obj_proposta.put('produtoCreditoSegmentoCodigo'    ,0); -- CDC Diversos
@@ -2100,6 +2162,10 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
         
                   15/12/2017 - P337 - SM - Ajustes no envio para retormar reinício 
                                de fluxo (Marcos-Supero)        
+
+                  16/04/2019 - p450 Projeto rating chamado rotina para rati0004.pc_solicita_retorno
+                               para resgatar o rating da ibratan e salvar em tbrisco operações  
+
     ..........................................................................*/
     
     -----------> VARIAVEIS <-----------
@@ -2171,6 +2237,63 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
     vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
+    vr_habrat VARCHAR2(1) := 'N'; -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
+    --/ verifica se existe reenvio automatico agendado para a proposta de credito em execucao
+    FUNCTION fn_reenvio_ativo_job(pr_cdcooper  IN crawepr.cdcooper%TYPE
+                                 ,pr_nrdconta  IN crawepr.nrdconta%TYPE
+                                 ,pr_nrctremp  IN crawepr.nrctremp%TYPE) RETURN  BOOLEAN IS
+    --/  
+    vr_existe_agend NUMBER(5);
+    --
+  BEGIN    
+      --/
+      SELECT COUNT(*)
+        INTO vr_existe_agend
+        FROM tbepr_reenvio_analise tra
+       WHERE tra.cdcooper = pr_cdcooper
+         AND tra.nrdconta = pr_nrdconta
+         AND tra.nrctremp = pr_nrctremp
+         AND trunc(tra.dtagernv) = trunc(sysdate) 
+         AND tra.insitrnv = 3; -- em execucao
+      --/      
+      RETURN ( vr_existe_agend > 0 );
+      --/
+    EXCEPTION WHEN OTHERS THEN
+      RETURN FALSE; 
+    END fn_reenvio_ativo_job;
+    --
+    PROCEDURE pc_cancela_reenvio(pr_cdcooper  IN crawepr.cdcooper%TYPE
+                                ,pr_nrdconta  IN crawepr.nrdconta%TYPE
+                                ,pr_nrctremp  IN crawepr.nrctremp%TYPE) IS
+    --/  
+    vr_existe_agend NUMBER(5);
+    --
+  BEGIN    
+
+    vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                           pr_cdcooper => pr_cdcooper,
+                                           pr_cdacesso => 'HABILITA_RATING_NOVO');
+					   
+      FOR rw IN ( SELECT ROWID
+                    FROM tbepr_reenvio_analise tra
+                   WHERE tra.cdcooper = pr_cdcooper
+                     AND tra.nrdconta = pr_nrdconta
+                     AND tra.nrctremp = pr_nrctremp
+                 )
+      LOOP  
+           
+  
+       UPDATE tbepr_reenvio_analise
+          SET insitrnv = 5  -- Cancelado
+        WHERE ROWID = rw.rowid;
+        -- Efetuar gravação
+        COMMIT;
+      END LOOP;
+      --/
+    EXCEPTION WHEN OTHERS THEN
+     NULL;
+    END pc_cancela_reenvio;
+   --/
   BEGIN    
     
     -- Se o DEBUG estiver habilitado
@@ -2207,6 +2330,18 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
 	  OPEN cr_crawepr;
 		FETCH cr_crawepr INTO rw_crawepr;
 		CLOSE cr_crawepr;
+    --
+    --/caso exista um reenvio pelo JOB ativo e a sessao nao for a do JOB, 
+    -- aborta o processo com critica
+    IF fn_reenvio_ativo_job(pr_cdcooper,pr_nrdconta,pr_nrctremp) AND NOT fn_get_job_reenvioanalise
+      THEN
+         vr_dscritic := gene0001.fn_param_sistema('CRED',pr_cdcooper,'METODO_REENVIO_MSG');
+         RAISE vr_exc_erro;
+          
+    ELSIF NOT fn_get_job_reenvioanalise THEN
+       -- se nao for sessao do JOB cancela reenvio agendado pelo JOB caso exista.
+       pc_cancela_reenvio(pr_cdcooper,pr_nrdconta,pr_nrctremp);
+    END IF;
     
     -- Verificar se a Cooperativa/Linha/Finalidade Obriga a passagem pelo Motor
     pc_obrigacao_analise_automatic(pr_cdcooper => pr_cdcooper
@@ -2438,6 +2573,25 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                 END LOOP;
               END IF;
             END IF;
+
+      -- P450 SPT13 - alteracao para habilitar rating novo
+      IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
+        --> Gravar a analise do Rating a partir do retorno do Motor
+        rati0004.pc_busca_rating_motor(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_nrctrato => pr_nrctremp
+                                      ,pr_tpctrato => 90
+                                      ,pr_dtmvtolt => pr_dtmvtolt
+                                      ,pr_dsconteudo_requisicao => vr_dsconteudo_requisicao
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+
+        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END IF;
+      -- P450 SPT13 - alteracao para habilitar rating novo
+
           EXCEPTION
             WHEN OTHERS THEN 
               -- Ignorar se o conteudo nao for JSON não conseguiremos ler as mensagens
@@ -2624,6 +2778,27 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       --  RAISE vr_exc_erro;
       --END IF;
     END IF;  
+    --/
+
+    --/
+    IF fn_get_job_reenvioanalise THEN
+      UPDATE tbepr_reenvio_analise tra
+         SET tra.insitrnv = 4 -- concluido 
+       WHERE tra.cdcooper = pr_cdcooper
+         AND tra.nrdconta = pr_nrdconta
+         AND tra.nrctremp = pr_nrctremp
+         AND tra.insitrnv <> 5
+         AND trunc(tra.dtagernv) = trunc(sysdate) ;
+     END IF;
+    --/
+    
+    -- Verificação para retentativa de envio
+    IF rw_crawepr.insitest = 3 AND rw_crawepr.insitapr IN (0,6) THEN
+      IF NOT ( este0001.fn_agenda_reenvio_analise(pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_cdagenci,pr_cdoperad) ) THEN
+        --/
+        este0001.pc_notificacoes_prop(pr_cdcooper,pr_nrdconta,pr_nrctremp,vr_cdcritic,vr_dscritic);          
+      END IF;  
+    END IF;
     
     COMMIT;   
     
@@ -2640,9 +2815,21 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
     
+      --/ P438 
+      IF NOT ( este0001.fn_agenda_reenvio_analise(pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_cdagenci,pr_cdoperad) ) THEN
+        --/
+        este0001.pc_notificacoes_prop(pr_cdcooper,pr_nrdconta,pr_nrctremp,vr_cdcritic,vr_dscritic);          
+      END IF;
+
+    
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := 'Não foi possivel realizar inclusao da proposta de Análise de Crédito: '||SQLERRM;
+      IF NOT ( este0001.fn_agenda_reenvio_analise(pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_cdagenci,pr_cdoperad) ) THEN
+        --/
+        este0001.pc_notificacoes_prop(pr_cdcooper,pr_nrdconta,pr_nrctremp,vr_cdcritic,vr_dscritic);          
+      END IF;
+
   END pc_incluir_proposta_est;
     
   --> Rotina responsavel por gerar a alteracao da proposta para a esteira
@@ -3238,7 +3425,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
       Frequencia: Sempre que for chamado
       Objetivo  : Rotina responsavel por verificar a proposta e enviar 
                   inclusao ou alteração da proposta na esteira
-      Alteração : 
+      
+      Alteração : 06/08/2019 - P438 - Inclusão da chamada para retentativa de envio 
+                               em caso de retorno de erro. (Douglas Pagel / AMcom).
         
     ..........................................................................*/
     
@@ -3257,6 +3446,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
             ,wpr.dtenvest
             ,wpr.dtenvmot
             ,wpr.dsprotoc
+            ,wpr.cdorigem
 				FROM crawepr wpr
 			 WHERE wpr.cdcooper = pr_cdcooper
 				 AND wpr.nrdconta = pr_nrdconta
@@ -3398,6 +3588,11 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                 pr_dstiplog     => 'O',
                                 PR_CDPROGRAMA   => NULL);
     
+      IF NOT ( este0001.fn_agenda_reenvio_analise(pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_cdagenci,pr_cdoperad) ) THEN
+        --/
+        este0001.pc_notificacoes_prop(pr_cdcooper,pr_nrdconta,pr_nrctremp,vr_cdcritic,vr_dscritic);          
+      END IF;
+
     WHEN OTHERS THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Não foi possivel realizar derivacao da proposta de Análise de Crédito: '||SQLERRM;
@@ -3415,6 +3610,11 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                 pr_dsdirlog     => NULL,
                                 pr_dstiplog     => 'O',
                                 PR_CDPROGRAMA   => NULL);      
+      IF NOT ( este0001.fn_agenda_reenvio_analise(pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_cdagenci,pr_cdoperad) ) THEN
+        --/
+        este0001.pc_notificacoes_prop(pr_cdcooper,pr_nrdconta,pr_nrctremp,vr_cdcritic,vr_dscritic);          
+      END IF;
+
   END pc_derivar_proposta_est;
   
   --> Rotina responsavel por gerar o cancelamento da proposta para a esteira
@@ -4315,7 +4515,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
      , 6 – Desconto de Títulos – Borderô
      , 7 – Cartão de Crédito
      , 8 – Limite de Crédito (Conta)
-     , 9 – Consignado)
+     , 9 – Consignado
+     , 10 - Rating
+     , 12 - Limite de Pré-aprovado)
      */
 
     IF rw_crawepr.cdfinemp = 58 and rw_crawepr.inlcrcdc = 1 THEN
@@ -4784,10 +4986,11 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     IF vr_obj_retorno.exist('situacao') THEN
       vr_cdsitest   := vr_obj_retorno.get('situacao').to_char();
     END IF;
-    
-    --> Código do segmento de produto de crédito 
-    -- (0 – CDC Diversos, 1 – CDC Veículos, 2 – Empréstimos/Financiamentos, 
-    -- 3 – Desconto Cheques, 4 – Desconto Títulos, 5 – Cartão de Crédito, 6 – Limite de Crédito) 
+
+    --> Código do segmento de produto de crédito
+    -- (0 – CDC Diversos, 1 – CDC Veículos, 2 – Empréstimos/Financiamentos,
+    -- 3 – Desconto Cheques, 4 – Desconto Títulos, 5 – Cartão de Crédito, 6 – Limite de Crédito,
+    -- 10 - Rating, 12 - Limite de Pré-aprovado)
     IF vr_obj_retorno.exist('produtoCreditoSegmentoCodigo') THEN
       vr_cdsegpro_ret := vr_obj_retorno.get('produtoCreditoSegmentoCodigo').to_char();    
     END IF;
@@ -5074,7 +5277,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     
     Frequencia: Sempre que for chamado
     Objetivo  : Tem como objetivo solicitar o retorno da analise no Motor
-    Alteração : 
+    Alteração : 27/08/2019 - PRJ 450 - Adicionado leitura do segmento enviado pela IBRATAN na 
+                             pc_solicita_retorno_analise do motor (Luiz Otavio Olinger Momm - AMCOM)
         
   ..........................................................................*/
 
@@ -5120,9 +5324,14 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_request  json0001.typ_http_request;
     vr_response json0001.typ_http_response;
 	
-	  -- Cursores
-	  rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-    
+    -- Variáveis do rating
+    vr_in_risco_rat       INTEGER;
+    vr_inpontos_rating    tbrisco_operacoes.inpontos_rating%type;
+    vr_innivel_rating     tbrisco_operacoes.innivel_rating%type;
+
+    -- Cursores
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
     -- Cooperativas com análise automática obrigatória
     CURSOR cr_crapcop IS
       SELECT cdcooper
@@ -5153,13 +5362,29 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
          AND wpr.insitest = 1-- Enviadas para Analise Automática
          /*FOR UPDATE*/;
 
+    -- Busca do nr cpfcnpj base do associado
+    CURSOR cr_crapass_ope (pr_cdcooper  IN crapass.cdcooper%TYPE     --> Coop. conectada
+                          ,pr_nrdconta  IN crapass.nrdconta%TYPE) IS --> Codigo Conta
+      SELECT ass.nrcpfcnpj_base
+        FROM crapass ass
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta;
+    rw_crapass_ope   cr_crapass_ope%ROWTYPE;
+
     -- Variaveis para DEBUG
-    vr_flgdebug VARCHAR2(100);
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
-              
-	BEGIN
-    
-		-- Buscar todas as Coops com obrigatoriedade de Análise Automática    
+    vr_flgdebug             VARCHAR2(100);
+    vr_idaciona             tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_insegmento_rating    tbrisco_operacoes.insegmento_rating%TYPE;    -- 27/08/2019 - PRJ 450
+
+    vr_habrat VARCHAR2(1) := 'N'; -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
+
+  BEGIN
+
+    vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                           pr_cdcooper => pr_cdcooper,
+                                           pr_cdacesso => 'HABILITA_RATING_NOVO');
+
+    -- Buscar todas as Coops com obrigatoriedade de Análise Automática
     FOR rw_crapcop IN cr_crapcop LOOP
       
       -- Buscar o tempo máximo de espera em segundos pela analise do motor		
@@ -5417,11 +5642,16 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                 vr_nrliquid := ltrim(rtrim(vr_obj_indicadores.get('liquidez').to_char(),'"'),'"');
               END IF;
 
-              -- Garantia -- 
+              -- Garantia --
               IF vr_obj_indicadores.exist('garantia') THEN
                 vr_nrgarope := ltrim(rtrim(vr_obj_indicadores.get('garantia').to_char(),'"'),'"');
               END IF;
-      		    
+
+              --> Segmento -->
+              IF vr_obj_indicadores.exist('segmento') THEN
+                 vr_insegmento_rating := ltrim(rtrim(vr_obj_indicadores.get('segmento').to_char(),'"'),'"');
+              END IF;
+
               -- Indicador de operação de crédito em atraso
               IF vr_obj_indicadores.exist('liquidOpCredAtraso') THEN
                 vr_inopeatr := ltrim(rtrim(vr_obj_indicadores.get('liquidOpCredAtraso').to_char(),'"'),'"');
@@ -5505,11 +5735,62 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                                 ,pr_idfluata => vr_idfluata -- PJ637
                                                 -- OUT (Não trataremos retorno de erro pois é tudo efetuado na rotina chamada)
                                                 ,pr_xmllog   => vr_xmllog 
-                                                ,pr_cdcritic => vr_cdcritic 
-                                                ,pr_dscritic => vr_dscritic 
-                                                ,pr_retxml   => vr_retxml   
-                                                ,pr_nmdcampo => vr_nmdcampo 
+                                                ,pr_cdcritic => vr_cdcritic
+                                                ,pr_dscritic => vr_dscritic
+                                                ,pr_retxml   => vr_retxml
+                                                ,pr_nmdcampo => vr_nmdcampo
                                                 ,pr_des_erro => vr_des_erro );
+
+            -- P450 SPT13 - alteracao para habilitar rating novo
+            IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
+              IF lower(vr_dsresana) = 'aprovar'
+                OR lower(vr_dsresana) = 'reprovar'
+                OR lower(vr_dsresana) = 'derivar'  THEN
+
+                OPEN cr_crapass_ope(pr_cdcooper
+                                   ,pr_nrdconta);
+                FETCH cr_crapass_ope INTO rw_crapass_ope;
+                CLOSE cr_crapass_ope;
+
+                vr_in_risco_rat  := risc0004.fn_traduz_nivel_risco(vr_indrisco);
+
+                -- Gravar o Rating da operação que retornou do Ibratan
+                RATI0003.pc_grava_rating_operacao(pr_cdcooper           => pr_cdcooper       -- confirmar parametro AMCOMLUIZ
+                                                 ,pr_nrdconta           => pr_nrdconta       -- confirmar parametro AMCOMLUIZ
+                                                 ,pr_tpctrato           => 90
+                                                 ,pr_nrctrato           => pr_nrctremp
+                                                 ,pr_ntrating           => vr_in_risco_rat
+                                                 ,pr_ntrataut           => vr_in_risco_rat
+                                                 ,pr_dtrating           => rw_crapdat.dtmvtolt
+                                                 ,pr_strating           => 2
+                                                 ,pr_orrating           => 1
+                                                 ,pr_cdoprrat           => NULL
+                                                 ,pr_dtrataut           => rw_crapdat.dtmvtolt
+                                                 ,pr_innivel_rating     => vr_innivel_rating
+                                                 ,pr_nrcpfcnpj_base     => rw_crapass_ope.nrcpfcnpj_base
+                                                 ,pr_inpontos_rating    => gene0002.fn_char_para_number(vr_nrnotrat) --> Pontuacao do Rating retornada do Motor
+                                                 ,pr_insegmento_rating  => vr_insegmento_rating --> Informacao de qual Garantia foi utilizada para calculo Rating do Motor
+                                                 ,pr_inrisco_rat_inc    => NULL --> Nivel de Rating da Inclusao da Proposta
+                                                 ,pr_innivel_rat_inc    => NULL --> Classificacao do Nivel de Risco do Rating Inclusao (1-Baixo/2-Medio/3-Alto)
+                                                 ,pr_inpontos_rat_inc   => vr_inpontos_rating --> Pontuacao do Rating retornada do Motor no momento da Inclusao
+                                                 ,pr_insegmento_rat_inc => NULL --> Informacao de qual Garantia foi utilizada para calculo Rating na Inclusao
+                                                 --Variáveis para gravar o histórico
+                                                 ,pr_cdoperad           => NULL  --> Operador que gerou historico de rating
+                                                 ,pr_dtmvtolt           => rw_crapdat.dtmvtolt  --> Data/Hora do historico de rating
+                                                 ,pr_valor              => NULL  --> Valor Contratado/Operaca
+                                                 ,pr_rating_sugerido    => NULL  --> Nivel de Risco Rating Novo apos alteracao manual/automatica
+                                                 ,pr_justificativa      => NULL  --> Justificativa do operador para alteracao do Rating
+                                                 ,pr_tpoperacao_rating  => NULL  --> Tipo de Operacao que gerou historico de rating (Dominio: tbgen_dominio_campo)
+                                                 ,pr_cdcritic           => vr_cdcritic
+                                                 ,pr_dscritic           => vr_dscritic);
+
+                IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                  RAISE vr_exc_erro;
+                END IF;
+              END IF;
+
+      END IF;
+      -- P450 SPT13 - alteracao para habilitar rating novo
           END IF;
           -- Efetuar commit
           COMMIT;
@@ -5572,6 +5853,509 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                  pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
                                                                               pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
 	END pc_solicita_retorno_analise;
+  --/ Rotina para gerar as notificações relacionadas as propostas de emprestimo
+  PROCEDURE pc_notificacoes_prop(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                                ,pr_nrdconta    IN crapass.nrdconta%TYPE --> Numero da conta
+                                ,pr_nrctremp    IN crawepr.nrctremp%TYPE --> Numero do contrato
+                                ,pr_cdcritic    OUT PLS_INTEGER          --> Codigo da critica
+                                ,pr_dscritic    OUT VARCHAR2             --> Descricao da critica
+                                 ) IS
+  /* .............................................................................
+   Programa: pc_notificacoes_prop
+   Sistema : Rotinas referentes ao WebService de propostas
+   Sigla   : CRED
+   Autor   : Rafael Rocha (AmCom)
+   Data    : Maio/19.                    Ultima atualizacao:
+	
+   Dados referentes ao programa:
+
+   Frequencia: Sempre que for chamado
+
+   Objetivo  : Criar notificações relacionadas as propostas de crédito
+   --
+   Observacao: --
+   ..............................................................................*/
+   --/
+   CURSOR cr_wpr IS
+     SELECT wpr.cdcooper,
+            wpr.nrdconta,
+            wpr.nrctremp,
+            wpr.insitapr,
+            wpr.cdorigem
+       FROM crawepr wpr, crapsim sim
+      WHERE wpr.cdcooper = pr_cdcooper
+        AND wpr.nrdconta = pr_nrdconta
+        AND wpr.nrctremp = pr_nrctremp
+        AND wpr.cdcooper = sim.cdcooper
+        AND wpr.nrdconta = sim.nrdconta
+        AND wpr.nrsimula = sim.nrsimula
+        -- AND wpr.cdorigem = 3
+        AND wpr.nrsimula IS NOT NULL;
+   --/
+   rw_wpr cr_wpr%ROWTYPE;
+   vr_des_reto_not VARCHAR2(10);
+   --/            
+	 BEGIN
+     --/        
+     OPEN cr_wpr;
+     FETCH cr_wpr INTO rw_wpr;
+     IF cr_wpr%FOUND THEN
+     CLOSE cr_wpr;
+      --/
+      IF NVL(rw_wpr.insitapr,0) IN (1,2,3,4,5,6) THEN
+       IF rw_wpr.cdorigem = 3 THEN
+           empr0017.pc_cria_notificacao(pr_cdcooper => rw_wpr.cdcooper,
+                                        pr_nrdconta => rw_wpr.nrdconta,
+                                        pr_nrctremp => rw_wpr.nrctremp,
+                                        pr_tporigem => 0, -- motor
+                                        pr_des_reto => vr_des_reto_not);
+       END IF;
+       --/ envia email tambem quando erro e derivar
+       -- A situação insitapr = 5(Derivar) aqui, é somente quando obtemos erro na este0001.pc_derivar_proposta_est
+       -- ou seja, quando na tentativa de derivar ocorrer um erro ( exception da rotina ).
+       -- Com este cenário, temos uma situação de ERRO onde o crawepr.insitapr fica = 5(Derivar).
+       IF rw_wpr.insitapr IN (5,6) THEN
+           empr0017.pc_email_esteira(pr_cdcooper => rw_wpr.cdcooper, 
+                                     pr_nrdconta => rw_wpr.nrdconta, 
+                                     pr_nrctremp => rw_wpr.nrctremp);
+       END IF;
+      END IF;                            
+     ELSE
+       CLOSE cr_wpr;
+     END IF;
+     
+  END pc_notificacoes_prop;
+  --
+  --/ Rotina para agendar reenvio de propostas para analise de credito
+  FUNCTION fn_agenda_reenvio_analise(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
+                                    ,pr_nrdconta    IN crapass.nrdconta%TYPE --> Numero da conta
+                                    ,pr_nrctremp    IN crawepr.nrctremp%TYPE --> Numero do contrato
+                                    ,pr_cdagenci    IN crawepr.cdagenci%TYPE DEFAULT NULL --> PA que irá acionar o motor
+                                    ,pr_cdoperad    IN crawepr.cdoperad%TYPE DEFAULT NULL --> Operador que irá acionar o motor
+                                     ) RETURN BOOLEAN IS 
+  /* ............................................................................
+   Programa: fn_agenda_reenvio_analise
+   Sistema : Rotinas referentes ao WebService de propostas
+   Sigla   : CRED
+   Autor   : Rafael Rocha (AmCom)
+   Data    : Julho/19.            Ultima atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Sempre que for chamado
+
+   Objetivo  : Agendar reenvio de propostas para analise de credito. 
+
+   Observacao: Há um Job que roda de tempo em tempo, fazendo leitura na tabela tbepr_reenvio_analise
+               e programando reenvio da proposta para anaise de credito.
+               Desta forma, a inserção/atualizacao do registro(conforme regra) na tabela tbepr_reenvio_analise 
+               representa um agendamento de reenvio para analise de credito.
+   Alteracoes:
+   ..............................................................................*/
+  --
+  --/ Variavel recebe valor em minutos para a proxima tentativa de envio para analise
+  vr_qt_minutos VARCHAR2(10) := nvl(gene0001.fn_param_sistema('CRED',0,'QT_MINUTOS_RETENTATIVAS'),5);
+  --/
+  vr_aplicou_dml NUMBER := 0;
+  --/
+  CURSOR cr_wepr(pr_cdcooper IN crawepr.cdcooper%TYPE,
+                 pr_nrdconta IN crawepr.nrdconta%TYPE,
+                 pr_nrctremp IN crawepr.nrctremp%TYPE) IS
+   SELECT *
+     FROM crawepr
+    WHERE cdcooper = pr_cdcooper
+      AND nrdconta = pr_nrdconta
+      AND nrctremp = pr_nrctremp;
+   rw_wepr cr_wepr%ROWTYPE; 
+  --/
+  FUNCTION fn_valida_proposta(pr_cdcooper IN crawepr.cdcooper%TYPE,
+                              pr_nrdconta IN crawepr.nrdconta%TYPE,
+                              pr_nrctremp IN crawepr.nrctremp%TYPE) RETURN BOOLEAN IS
+  vr_existe NUMBER(2);
+  --/
+  BEGIN
+   --/
+   SELECT COUNT(*)
+     INTO vr_existe
+     FROM crawepr w
+    WHERE w.cdcooper = pr_cdcooper
+      AND w.nrdconta = pr_nrdconta
+      AND w.nrctremp = pr_nrctremp
+      AND w.insitapr > 1 -- nao aprovada
+      AND w.insitest > 0 -- algum retorno
+      AND NOT EXISTS ( SELECT 1
+                         FROM crapepr epr
+                        WHERE epr.cdcooper = w.cdcooper
+                          AND epr.nrdconta = w.nrdconta
+                          AND epr.nrctremp = w.nrctremp)
+      --/ somente se a proposta não tiver seu agendamento cancelado
+      AND NOT EXISTS ( SELECT 1
+                         FROM tbepr_reenvio_analise tra
+                        WHERE tra.cdcooper = w.cdcooper
+                          AND tra.nrdconta = w.nrdconta
+                          AND tra.nrctremp = w.nrctremp
+                          AND tra.insitrnv = 5 --cancelado
+                      );
+   --/
+   RETURN vr_existe > 0;
+  END fn_valida_proposta;
+  --/
+  FUNCTION fn_valida_reenvios_prop(pr_cdcooper IN crawepr.cdcooper%TYPE,
+                                   pr_nrdconta IN crawepr.nrdconta%TYPE,
+                                   pr_nrctremp IN crawepr.nrctremp%TYPE) RETURN BOOLEAN IS
+
+   --/
+   vr_qttentreenv crawepr.qttentreenv%TYPE;
+   --/
+  BEGIN
+   --/
+   SELECT nvl(wpr.qttentreenv,0)
+     INTO vr_qttentreenv
+     FROM crawepr wpr
+    WHERE wpr.cdcooper = pr_cdcooper
+      AND wpr.nrdconta = pr_nrdconta
+      AND wpr.nrctremp = pr_nrctremp;
+
+   --/ retorna possitivo somente quando a quantidade de tentativas nao atingiu
+   --/ a quantidade parametrizada.    
+   RETURN ( vr_qttentreenv < nvl(gene0001.fn_param_sistema('CRED',0,'QT_RETENTATIVAS_ANALISE'),3) );
+    
+  END fn_valida_reenvios_prop;
+  --/  
+  BEGIN
+   --/
+   IF fn_valida_proposta(pr_cdcooper,pr_nrdconta,pr_nrctremp)
+   AND fn_valida_reenvios_prop(pr_cdcooper,pr_nrdconta,pr_nrctremp) THEN
+    --/
+    OPEN cr_wepr(pr_cdcooper,pr_nrdconta,pr_nrctremp);
+    FETCH cr_wepr INTO rw_wepr;
+    CLOSE cr_wepr;
+   
+    --/ As situações abaixo condicionadas tem que ser as mesmas
+    -- na pc_notificacoes_prop na parte onde chama a empr0017.pc_email_esteira
+    -- A situação 5(Derivar) aqui, é somente quando obtemos erro na este0001.pc_derivar_proposta_est
+    -- ou seja, quando na tentativa de derivar ocorrer um erro ( exception da rotina ).
+    -- Com este cenário, temos uma situação de erro onde o crawepr.insitapr fica = 5
+    IF rw_wepr.insitapr IN (5,6) THEN
+     --/
+     UPDATE tbepr_reenvio_analise
+        SET insitrnv = 0,
+            dtagernv = trunc(sysdate),
+            nrhragen = to_char((SYSDATE + vr_qt_minutos/1440),'sssss'),
+            cdagenci = nvl(pr_cdagenci, cdagenci),
+            cdoperad = nvl(pr_cdoperad, cdoperad)
+      WHERE cdcooper = pr_cdcooper
+        AND nrdconta = pr_nrdconta
+        AND nrctremp = pr_nrctremp;
+     --/
+     vr_aplicou_dml := SQL%ROWCOUNT; 
+     --/
+     IF vr_aplicou_dml = 0 THEN
+       --/
+       BEGIN
+        INSERT INTO tbepr_reenvio_analise
+              (dtinclus,
+               cdcooper,
+               nrdconta,
+               nrctremp,
+               insitrnv,
+               dtagernv,
+               nrhragen,
+               cdagenci,
+               cdoperad)
+            VALUES
+              (trunc(sysdate),
+               rw_wepr.cdcooper,
+               rw_wepr.nrdconta,
+               rw_wepr.nrctremp,
+               0,
+               trunc(sysdate),
+               to_char((SYSDATE + vr_qt_minutos/1440),'sssss'), -- o cadastro no parametro é por minutos
+               nvl(pr_cdagenci,0),
+               nvl(pr_cdoperad, ''));
+           --/
+           vr_aplicou_dml := SQL%ROWCOUNT; 
+       EXCEPTION WHEN OTHERS THEN
+          NULL;
+       END;
+     END IF; -- vr_aplicou_dml = 0
+    END IF; -- IF rw_wepr.insitapr IN (5,6)
+   END IF; -- fn_valida_proposta, fn_valida_reenvios_prop
+   --/
+   IF vr_aplicou_dml > 0 THEN
+     --/ libera registro para o job
+     COMMIT;
+   END IF;  
+   --
+   --/
+   RETURN ( vr_aplicou_dml > 0 );
+   
+  END fn_agenda_reenvio_analise;
+  --
+  --/ Procedure exposta para o job reenviar propostas de credito, previamente agendadas, para de analise.
+  PROCEDURE pc_job_reenvio_analise IS
+
+  /* ..........................................................................
+
+   Programa : pc_job_reenvio_analise
+   Sistema  : Credito
+   Sigla    : CRED
+   Autor    : Rafael Rocha (Amcom)
+   Data     : 07/2019.                   Ultima atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Sempre que for chamado
+   Objetivo  : Procedimento para reenviar propostas de credito, previamente agendadas, para analise.
+
+   Alteração : 17/07/2019 - Inclusão da chamada para o envio da SMS. (Douglas Pagel / AMcom).
+  ...........................................................................*/
+    
+  vr_next_min  TIMESTAMP WITH TIME ZONE;
+  ct_next_day  CONSTANT TIMESTAMP WITH TIME ZONE := TRUNC(SYSDATE + 1) + 8/24; 
+  vr_timestamp TIMESTAMP WITH TIME ZONE;
+  vr_dscritic  VARCHAR2(32000);
+  vr_job_reenvio BOOLEAN := TRUE;
+  --/
+  rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+  --/
+  FUNCTION fn_get_cr_crapdat(pr_cdcooper IN crapcop.cdcooper%TYPE)
+      RETURN BTCH0001.cr_crapdat%ROWTYPE IS
+    --/
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+    --/
+    BEGIN
+     --/
+     OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+     CLOSE BTCH0001.cr_crapdat;
+     --/
+     RETURN rw_crapdat;
+    EXCEPTION WHEN OTHERS
+      THEN
+        RETURN rw_crapdat;
+  END fn_get_cr_crapdat;
+  --
+  --/
+  BEGIN
+   --/
+   FOR rw_coop IN (SELECT cop.cdcooper
+                     FROM crapcop cop
+                    WHERE cop.flgativo = 1
+                    ORDER BY cop.cdcooper)
+   LOOP
+     -- verifica se metodo esta ativo para a cooperativa, caso nao ele vai para proxima coop.
+     continue WHEN nvl(gene0001.fn_param_sistema('CRED',rw_coop.cdcooper,'METODO_REENVIO_ATIVO'),'0') = '0';
+     --/
+     rw_crapdat := fn_get_cr_crapdat(rw_coop.cdcooper);
+     --/ tra.nrhragen,'sssss'
+     FOR rw_crawepr IN (SELECT wpr.*, tra.rowid AS rowid_reenvio
+                          FROM tbepr_reenvio_analise tra,
+                               crawepr wpr
+                         WHERE tra.cdcooper = rw_coop.cdcooper
+                           AND TRUNC(tra.dtagernv) = TRUNC(SYSDATE)
+                           AND gene0002.fn_converte_time_data(gene0002.fn_busca_entrada(1,to_char(tra.nrhragen),' ')) <= gene0002.fn_converte_time_data(gene0002.fn_busca_entrada(1,to_char(SYSDATE,'sssss'),' '))
+                           AND nvl(wpr.qttentreenv,0) < nvl(GENE0001.fn_param_sistema('CRED', 0, 'QT_RETENTATIVAS_ANALISE'),0)
+                           AND tra.insitrnv IN (0,4) -- (0) nao enviado ou (4) concluido
+                           AND tra.cdcooper = wpr.cdcooper
+                           AND tra.nrdconta = wpr.nrdconta
+                           AND tra.nrctremp = wpr.nrctremp
+                           AND wpr.insitapr <> 1
+                           AND NOT EXISTS (SELECT 1
+                                             FROM crapepr epr
+                                            WHERE epr.cdcooper = wpr.cdcooper
+                                              AND epr.nrdconta = wpr.nrdconta
+                                              AND epr.nrctremp = wpr.nrctremp))
+     LOOP
+      --/
+      vr_next_min := (SYSDATE + 2/1440);
+      --/caso o sistema da cooperativa não esteja online (rw_crapdat.inproces <> 1), 
+      -- programa o reenvio para o proximo dia as 08hs     
+      vr_timestamp := (CASE WHEN rw_crapdat.inproces <> 1 THEN ct_next_day ELSE vr_next_min END);
+      --
+      --/ caso a cooperativa nao esteja online, agenda para dia seguinte
+      IF vr_timestamp = ct_next_day THEN
+        --/
+        UPDATE tbepr_reenvio_analise tra
+           SET tra.insitrnv = 1, -- agendado
+               tra.dtagernv = trunc(ct_next_day)
+         WHERE tra.rowid = rw_crawepr.rowid_reenvio;
+         
+      ELSE
+        --/
+        UPDATE tbepr_reenvio_analise tra
+           SET tra.insitrnv = 1 -- agendado
+         WHERE tra.rowid = rw_crawepr.rowid_reenvio;
+      END IF;
+      --/
+      empr0017.pc_aciona_motor(pr_cdcooper => rw_crawepr.cdcooper,
+                               pr_nrdconta => rw_crawepr.nrdconta,
+                               pr_nrctremp => rw_crawepr.nrctremp,
+                               pr_timestamp => vr_timestamp,
+                               pr_job_reenvio => vr_job_reenvio);
+
+      --/ libera o registro para proxima leitura do job
+      COMMIT;
+     END LOOP;
+     --/
+   END LOOP;
+    
+  END pc_job_reenvio_analise;  
+  --
+  --/  
+  PROCEDURE pc_email_reenvio_analise(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                    ,pr_dscritic OUT VARCHAR) IS           --> Descricao da critica
+
+    CURSOR cr_coop IS
+      SELECT cop.cdcooper, dat.dtmvtolt
+        FROM crapcop cop, crapdat dat
+       WHERE cop.cdcooper = pr_cdcooper
+         AND cop.cdcooper = dat.cdcooper;
+    rw_coop cr_coop%ROWTYPE;
+ 
+    CURSOR cr_crawepr(pr_cdcooper crawepr.cdcooper%TYPE) IS
+      SELECT a.cdagenci
+            ,w.cdcooper
+            ,w.nrdconta
+            ,w.nrctremp
+            ,w.dtmvtolt
+            ,w.vlemprst
+        FROM crawepr w
+            ,crapass a
+            ,crapdat d
+       WHERE w.cdcooper = pr_cdcooper
+         AND nvl(w.qttentreenv, 0) >=
+             GENE0001.fn_param_sistema('CRED', pr_cdcooper, 'QT_RETENTATIVAS_ANALISE')
+         AND w.dtmvtolt BETWEEN (d.dtmvtolt - GENE0001.fn_param_sistema('CRED', pr_cdcooper, 'DIAS_REL_RETENTA_ANALISE')) AND d.dtmvtolt
+         AND w.insitapr || w.insitest <> 13 -- aprovada com analise finalizada
+         AND NOT EXISTS (SELECT 1
+                           FROM crapepr epr
+                          WHERE epr.cdcooper = w.cdcooper
+                            AND epr.nrdconta = w.nrdconta
+                            AND epr.nrctremp = w.nrctremp)
+         AND a.cdcooper = w.cdcooper 
+         AND a.nrdconta = w.nrdconta
+         AND d.cdcooper = w.cdcooper
+      ORDER BY w.dtmvtolt;
+
+    vr_cdcritic      crapcri.cdcritic%TYPE; -- Codigo de critica
+    vr_dscritic      VARCHAR2(2000); -- Descricao de critica
+    vr_exc_saida     EXCEPTION; -- Tratamento de excecao parando a cadeia
+                               
+    PROCEDURE pc_gera_csv(pr_cdcooper in crawepr.cdcoopeR%TYPE) IS
+
+      vr_cdprogra      crapprg.cdprogra%TYPE := 'JOB'; -- Codigo do presente programa
+      vr_arquivo_txt   UTL_FILE.FILE_TYPE; -- Arquivo csv
+      vr_nmdiretorio   VARCHAR2(50); -- Diretorio do csv
+      vr_email_dest    VARCHAR2(1000); -- Email do destinatario csv
+      vr_assunto_email VARCHAR(1000);
+      vr_corpo_email   VARCHAR(4000);
+      vr_qt_registros  INTEGER;
+      vr_nmarquivo     VARCHAR2(100);
+
+    BEGIN
+    
+      -- Buscar o diretorio /rl
+      vr_nmdiretorio := GENE0001.fn_diretorio(pr_tpdireto => 'c',
+                                              pr_cdcooper => pr_cdcooper);
+
+      vr_nmarquivo := 'crps783.csv';
+      vr_email_dest :=    GENE0001.fn_param_sistema('CRED', pr_cdcooper, 'EMAIL_RETENTA_ANALISE');   
+      vr_assunto_email := GENE0001.fn_param_sistema('CRED', pr_cdcooper, 'ASS_REL_RETENTA_ANALISE'); 
+      vr_corpo_email :=   GENE0001.fn_param_sistema('CRED', pr_cdcooper, 'MSG_REL_RETENTA_ANALISE');                     
+
+      GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdiretorio || '/rl', --> Diretório do arquivo
+                               pr_nmarquiv => vr_nmarquivo, --> Nome do arquivo
+                               pr_tipabert => 'W', --> Modo de abertura (R,W,A)
+                               pr_utlfileh => vr_arquivo_txt, --> Handle do arquivo aberto
+                               pr_des_erro => vr_dscritic); --> Retorno da critica
+
+      -- Se retornou erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      --
+      -- Cabecalho do crrl579.csv
+      GENE0001.pc_escr_linha_arquivo(vr_arquivo_txt,
+                                     'Cooperativa;Conta;PA do Cooperado;Número da Proposta;Data da Proposta;Valor da Proposta');
+      vr_qt_registros := 0;
+      FOR rw_reenv IN cr_crawepr(pr_cdcooper) LOOP
+        -- Escrever detalhe do .csv
+        GENE0001.pc_escr_linha_arquivo(vr_arquivo_txt,
+                                       rw_reenv.cdcooper || ';' ||
+                                       gene0002.fn_mask_conta(rw_reenv.nrdconta) || ';' ||
+                                       rw_reenv.cdagenci || ';' ||
+                                       gene0002.fn_mask_contrato(rw_reenv.nrctremp) || ';' ||
+                                       to_char(rw_reenv.dtmvtolt) || ';' ||
+                                       to_char(rw_reenv.vlemprst,'fm99999g999g990d00') );
+        vr_qt_registros := vr_qt_registros + 1;
+      END LOOP;
+      
+      -- Fechar o arquivo crrl579.csv
+      GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arquivo_txt);
+
+      IF vr_email_dest IS NOT NULL AND vr_qt_registros > 0 THEN
+        -- Converter o arquiovo para envio
+        GENE0003.pc_converte_arquivo(pr_cdcooper => pr_cdcooper,
+                                     pr_nmarquiv => vr_nmdiretorio || '/rl/'||vr_nmarquivo,
+                                     pr_nmarqenv => vr_nmarquivo,
+                                     pr_des_erro => vr_dscritic);
+                                     
+        IF NOT vr_dscritic IS NULL THEN 
+          RAISE vr_exc_saida;
+        END IF;
+                                     
+        -- Enviar arquivo .csv por email
+        GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper,
+                                   pr_cdprogra        => vr_cdprogra,
+                                   pr_des_destino     => vr_email_dest,
+                                   pr_des_assunto     => vr_assunto_email,
+                                   pr_des_corpo       => vr_corpo_email,
+                                   pr_des_anexo       => vr_nmdiretorio ||'/converte/'||vr_nmarquivo,
+                                   pr_flg_remove_anex => 'N', --> Remover os anexos passados
+                                   pr_flg_remete_coop => 'N', --> Se o envio será do e-mail da Cooperativa
+                                   pr_flg_enviar      => 'S', --> Enviar o e-mail na hora
+                                   pr_des_erro        => vr_dscritic);
+                                     
+        IF NOT vr_dscritic IS NULL THEN 
+          RAISE vr_exc_saida;
+        END IF;   
+      END IF;
+    END pc_gera_csv;
+
+  BEGIN
+    FOR rw_coop IN cr_coop LOOP
+      pc_gera_csv(rw_coop.cdcooper);
+    END LOOP;
+    
+  EXCEPTION 
+    WHEN vr_exc_saida THEN
+      IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic, 
+                                                 pr_dscritic => vr_dscritic);
+      
+      END IF;
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro não tratado na rotina pc_email_reenvio_analise: ' || sqlerrm;
+      
+  END pc_email_reenvio_analise;
+  --/
+  PROCEDURE pc_set_job_reenvioanalise IS    
+  BEGIN
+    vg_job_reenvio_analise := TRUE;
+  END pc_set_job_reenvioanalise;
+  --/
+  FUNCTION fn_get_job_reenvioanalise RETURN BOOLEAN IS
+  BEGIN
+     RETURN vg_job_reenvio_analise;
+  END fn_get_job_reenvioanalise;
+
 	
 END ESTE0001;
 /

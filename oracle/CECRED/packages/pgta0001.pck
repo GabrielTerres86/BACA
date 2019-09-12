@@ -660,6 +660,10 @@ procedure pc_salva_arquivo_remessa (pr_nrseq_arq_ted   in tbtransf_arquivo_ted.n
                                    ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
                                    ,pr_des_erro  OUT VARCHAR2);        --> Erros do processo 
                                                                      
+
+procedure pc_gerar_seg_arquivo_retorno (pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2    --> Descrição da crítica
+                                   );                                                                     
 END PGTA0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
@@ -13061,7 +13065,8 @@ procedure pc_verifica_layout_ted (pr_cdcooper   in craphis.cdcooper%type
   --
   -- Dados referentes ao programa:
   --
-  -- Objetivo  : Validar as informações do arquivo (header, trailer, segmento a)
+  -- Objetivo  : Validar as informações do layout do arquivo (header, trailer, segmento a),
+  --             gravar as informações em tabela e realizar o agendamento das Teds/Transferencias. 
   --             
   --
   -- Alteracoes:
@@ -13444,14 +13449,16 @@ BEGIN
                                              nrdconta,    
                                              cdcooper, 
                                              dtgeracao, 
-                                             dsarquivo)
+                                             dsarquivo,
+                                             idtipoarq)
                                      values (null , 
                                              vr_nmarvalidar,             
                                              vr_nrseq_arq_ted,
                                              pr_nrdconta, 
                                              pr_cdcooper,   
                                              sysdate, 
-                                             vr_clob_ted)
+                                             vr_clob_ted,
+                                             1 /*Primeiro arquivo de retorno*/)
                                      RETURNING nrseq_arq_ted, rowid
                                      INTO vr_id_nrseq_arq_ted, vr_arq_ted_rowid;     
            --
@@ -13735,8 +13742,8 @@ BEGIN
                                 ,pr_cdoperad => '1'          --> Codigo do operador
                                 ,pr_nrdconta => pr_nrdconta  --> Numero da conta do cooperado
                                 ,pr_idseqttl => 1            --> Sequencial do titular
-                                ,pr_dtmvtolt => TRUNC(SYSDATE) --pr_dtmvtolt  --> Data do movimento 
-                                ,pr_cdorigem => 1            --> Origem ???
+                                ,pr_dtmvtolt => TRUNC(SYSDATE) --> Data do movimento 
+                                ,pr_cdorigem => 1            --> Origem 
                                 ,pr_dsorigem => 'AIMARO'     --> Descrição de origem do registro 
                                 ,pr_nmprogra => 'PGTA0001'   --> Nome do programa que chamou
                                 ,pr_cdtiptra => vr_cdtiptra  --> Tipo de transação
@@ -13755,23 +13762,23 @@ BEGIN
                                 ,pr_cddbanco => vr_cddbanco  --> Codigo do banco
                                 ,pr_cdageban => vr_cdageban  --> Codigo de agencia bancaria
                                 ,pr_nrctadst => vr_nrctadst  --> Numero da conta destino
-                                ,pr_cdcoptfn => null --pr_cdcoptfn  --> Codigo que identifica a cooperativa do cash.
-                                ,pr_cdagetfn => null --pr_cdagetfn  --> Numero do pac do cash.
-                                ,pr_nrterfin => null --pr_nrterfin  --> Numero do terminal financeiro.
+                                ,pr_cdcoptfn => null         --> Codigo que identifica a cooperativa do cash.
+                                ,pr_cdagetfn => null        --> Numero do pac do cash.
+                                ,pr_nrterfin => null        --> Numero do terminal financeiro.
 
-                                ,pr_nrcpfope => 0 --pr_nrcpfope  --> Numero do cpf do operador juridico ???
+                                ,pr_nrcpfope => 0            --> Numero do cpf do operador juridico 
                                 ,pr_idtitdda => 0            --> Contem o identificador do titulo dda.
                                 ,pr_cdtrapen => 0            --> Codigo da Transacao Pendente
-                                ,pr_flmobile => 0 --pr_flmobile  --> Indicador Mobile ???
+                                ,pr_flmobile => 0            --> Indicador Mobile 
                                 ,pr_idtipcar => 0            --> Indicador Tipo Cartão Utilizado
                                 ,pr_nrcartao => 0            --> Nr Cartao
 
                                 ,pr_cdfinali => vr_cdfinali  --> Codigo de finalidade
-                                ,pr_dstransf => ''           --> Descricao da transferencia ???
-                                ,pr_dshistor => '' --pr_dshistor  --> Descricao da finalidade ???
-                                ,pr_iptransa => null --pr_iptransa  --> IP da transacao no IBank/mobile ???
+                                ,pr_dstransf => ''           --> Descricao da transferencia 
+                                ,pr_dshistor => ''     --> Descricao da finalidade 
+                                ,pr_iptransa => null   --> IP da transacao no IBank/mobile
                                 ,pr_cdctrlcs => null         
-                                ,pr_iddispos => null --pr_iddispos  --> Identificador do dispositivo movel??? 
+                                ,pr_iddispos => null   --> Identificador do dispositivo movel 
                                 /* parametros de saida */
                                 ,pr_idlancto => vr_idlancto
                                 ,pr_dstransa => vr_dstrans1  --> Descrição de transação
@@ -13780,7 +13787,15 @@ BEGIN
                                 ,pr_cdsegmto => vr_cdsegmto
                                 ,pr_dscritic => vr_dscritic);--> Descricao critica  
             
-                     
+           /* Verifica se o agendamento retornou alguma critica e neste caso faz o devido tratamento e muda a situação
+              do agendamento de BD para a situação correta. */                     
+           IF vr_dscritic IS NOT NULL THEN 
+              IF   vr_dscritic = '1431 - Ja existe TED de mesmo valor e favorecido. Consulte seus agendamentos ou tente novamente em 10 min.(1)' THEN
+                 vr_tab_dados_segmento_a(vr_idx).tperrocnab:= 'YS';
+              ELSE
+                 vr_tab_dados_segmento_a(vr_idx).tperrocnab:= 'YK';
+              END IF;
+           END IF;   
          END IF;     
          
          -- Gravar os registros nas tabelas de controle  
@@ -14510,6 +14525,607 @@ EXCEPTION
 
 END pc_salva_arquivo_remessa;
 
+
+procedure pc_gerar_seg_arquivo_retorno (pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2    --> Descrição da crítica
+                                   ) IS       
+
+  ---------------------------------------------------------------------------
+  --
+  --  Programa : pc_gerar_seg_arquivo_retorno
+  --  Sistema  : Ayllos Web
+  --  Autor    : Jose Dill
+  --  Data     : Julho/2019                Ultima atualizacao:
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Objetivo  : Gerar o segundo arquivo de retorno cnab de Transferência e Teds (Diário)
+  --          
+  --
+  -- Alteracoes:
+  --
+  ---------------------------------------------------------------------------
+  
+  /*Seleciona os agendamentos incluídos com sucesso através do Upload de arquivo CNAB
+    de acordo com a data informada (diária)*/
+  CURSOR cr_segret (pr_dtretorno IN DATE) IS
+  select tat.cdcooper
+        ,tat.nrdconta
+        ,tat.nmarquivo
+        ,tat.nrseq_arquivo
+        ,decode(tatl.cdbco_fav, '085','Transferencia','TED') Tipo_operacao
+        ,tat.nrseq_arq_ted
+        ,tatl.dslinha_arq
+        ,tatl.dsprotocolo
+        ,tatl.idlancto
+        ,tatl.cdbco_comp
+        ,tatl.vlrpgto
+  from tbtransf_arquivo_ted_linhas tatl
+      ,tbtransf_arquivo_ted tat
+  where tat.nrseq_arq_ted = tatl.nrseq_arq_ted
+  and   tatl.dsret_cnab = 'BD'
+  and   tatl.cdsegmento = 'A'
+  and   tatl.cdbco_comp is not null
+  and   to_date(tatl.dtprv_pgto) = pr_dtretorno
+  order by tat.cdcooper, tat.nrdconta, tat.nrseq_arquivo, tatl.nrseq_arq_ted_linha;
+  
+  rw_segret cr_segret%ROWTYPE;
+  
+  /* Busca a situação do TED na LOGSPB */
+  CURSOR cr_sitted (pr_cdcooper in crapcop.cdcooper%type
+                   ,pr_idlancto in craplau.idlancto%type) IS
+  select tela_logspb.fn_define_situacao_enviada(tvl.idmsgenv) situacao
+        ,lau.insitlau
+  from craplau lau
+      ,craptvl tvl
+      ,tbspb_msg_enviada tme
+  where lau.cdcooper = pr_cdcooper
+  and   lau.idlancto = pr_idlancto
+  and   lau.cdcooper = tvl.cdcooper
+  and   lau.idlancto = tvl.idlancto
+  and   tvl.idmsgenv = tme.nrseq_mensagem;
+  
+  rw_sitted cr_sitted%ROWTYPE;
+
+
+  /* Busca situação da Transferencia */
+  CURSOR cr_sittrf (pr_cdcooper in crapcop.cdcooper%type
+                   ,pr_idlancto in craplau.idlancto%type) IS
+  select lau.insitlau
+  from craplau lau
+  where lau.cdcooper = pr_cdcooper
+  and   lau.idlancto = pr_idlancto;
+  
+  rw_sittrf cr_sittrf%ROWTYPE; 
+   
+  -- Tratamento de erros
+  vr_exc_erro  EXCEPTION;
+  vr_dscritic VARCHAR2(4000);
+  vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
+  
+  -- Variaveis de sistemas
+  vr_cdcooper crapcop.cdcooper%type;
+  vr_nrdconta crapass.nrdconta%type;
+  vr_fgprimeiro        BOOLEAN:= false;
+  vr_fgheader          BOOLEAN:= true;
+  vr_arq_retorno       CLOB;
+  vr_texto_arq_retorno VARCHAR2(32767);
+  vr_segmento_a        tbtransf_arquivo_ted_linhas.dslinha_arq%type;
+  vr_segmento_b        tbtransf_arquivo_ted_linhas.dslinha_arq%type;
+  vr_header_0          tbtransf_arquivo_ted_linhas.dslinha_arq%type;
+  vr_header_1          tbtransf_arquivo_ted_linhas.dslinha_arq%type;    
+  vr_trailer_5         tbtransf_arquivo_ted_linhas.dslinha_arq%type;    
+  vr_trailer_9         tbtransf_arquivo_ted_linhas.dslinha_arq%type;    
+  vr_nmarquivo_ret     VARCHAR2(50);
+  vr_codcnabret        VARCHAR2(02);
+  vr_nr_seq_segret     NUMBER:= 0;
+  vr_qt_reg_conta      NUMBER;
+  vr_nrseq_arq_ted     tbtransf_arquivo_ted.nrseq_arq_ted%type;
+  vr_qt_reg_a_b_header NUMBER:= 0;
+  vr_qt_reg_total      NUMBER:= 0;
+  v_vlr_segmento_a     NUMBER(15,2):= 0;
+  vr_dtretorno         DATE;
+  vr_nrseq_reglote_a_b NUMBER:=0;
+
+PROCEDURE pc_gerar_segmento_b (pr_banco_comp    IN VARCHAR2
+                              ,pr_dsprotocolo   IN VARCHAR2) IS 
+/* .............................................................................
+   
+    Objetivo  : Gerar a linha do segmento b.
+    
+    Observacao: 
+    
+    Alteracoes:
+..............................................................................*/
+  
+  vr_banco_comp VARCHAR2(03);
+  vr_lote_ser   VARCHAR2(04):= '0001';
+  vr_tipo_reg   VARCHAR2(01):= '3';
+  vr_nrseq_reglote VARCHAR2(05):= ' ';
+  vr_codsegmento VARCHAR2(01):= 'B';
+  vr_cnab        VARCHAR2(03):= ' ';
+  vr_autentetic  VARCHAR2(56):= ' ';
+  vr_cnab_aux    VARCHAR2(157):= ' ';
+  vr_ocorrencia  VARCHAR2(10):= ' ';
+BEGIN
+  --
+  vr_banco_comp := pr_banco_comp;  
+  vr_tipo_reg   := '3';
+  --
+  vr_nrseq_reglote_a_b:= vr_nrseq_reglote_a_b + 1;
+  vr_nrseq_reglote := lpad(vr_nrseq_reglote_a_b,5,'0');
+  vr_codsegmento := 'B';
+  vr_cnab        := rpad(vr_cnab,3,' '); 
+  vr_autentetic  := rpad(NVL(pr_dsprotocolo,' '),56,' '); 
+  vr_cnab_aux    := rpad(vr_cnab_aux,157,' '); 
+  vr_ocorrencia  := lpad(' ',10,' '); 
+  --   
+  vr_segmento_b:= vr_banco_comp||vr_lote_ser||vr_tipo_reg||vr_nrseq_reglote
+                ||vr_codsegmento||vr_cnab||vr_autentetic||vr_cnab_aux||vr_ocorrencia;
+  -- 
+  vr_qt_reg_a_b_header:= vr_qt_reg_a_b_header + 1;
+  vr_qt_reg_total     := vr_qt_reg_total + 1;
+  -- 
+EXCEPTION
+  WHEN OTHERS THEN
+    vr_dscritic := 'Erro na pc_gerar_segmento_b: '||sqlerrm;
+    RAISE vr_exc_erro;
+END pc_gerar_segmento_b;
+
+FUNCTION fn_retorna_situacao (pr_idlancto      IN CRAPLAU.IDLANCTO%TYPE
+                              ,pr_tipo_operacao IN VARCHAR2) RETURN VARCHAR2 IS 
+/* .............................................................................
+   
+    Objetivo  : Buscar a situação da TED/Transferencia e retorna-la.
+    
+    Observacao: 
+    
+    Alteracoes:
+..............................................................................*/
+  
+
+BEGIN
+  IF pr_tipo_operacao = 'TED' THEN
+    --TED
+    OPEN cr_sitted(vr_cdcooper, pr_idlancto);
+    FETCH cr_sitted INTO rw_sitted;
+    IF cr_sitted%FOUND THEN
+     IF rw_sitted.Insitlau = 2 THEN
+       IF rw_sitted.situacao = 'EFETIVADA' THEN
+         vr_codcnabret := 'YI';
+       ELSIF rw_sitted.situacao = 'DEVOLVIDA' THEN
+            vr_codcnabret := 'YM';
+       ELSIF rw_sitted.situacao = 'ESTORNADA' THEN
+            vr_codcnabret := 'YN';
+       ELSIF rw_sitted.situacao = 'REJEITADA' THEN
+            vr_codcnabret := 'YP';
+       ELSIF rw_sitted.situacao = 'PENDENTE CAMARA' THEN
+            vr_codcnabret := 'YQ';
+       ELSIF rw_sitted.situacao = 'EM PROCESSAMENTO' THEN
+            vr_codcnabret := 'YR';
+       ELSE
+         vr_codcnabret := 'YK';  
+       END IF;          
+     ELSE
+       IF rw_sitted.Insitlau = 3 THEN
+         vr_codcnabret := 'YL';
+       ELSIF rw_sitted.Insitlau = 4 THEN
+         vr_codcnabret := 'HF';  
+       ELSE
+         vr_codcnabret := 'YK';
+       END IF;  
+     END IF;           
+    ELSE
+     vr_codcnabret := 'YK'; 
+    END IF;
+    CLOSE cr_sitted;
+    --
+  ELSE
+    -- Transferencia
+    OPEN cr_sittrf(vr_cdcooper, pr_idlancto);
+    FETCH cr_sittrf INTO rw_sittrf;
+    IF cr_sittrf%FOUND THEN    
+     IF rw_sittrf.insitlau = 2  THEN
+         vr_codcnabret := 'YI';
+     ELSE
+       IF rw_sittrf.Insitlau = 3 THEN
+         vr_codcnabret := 'YL';
+       ELSIF rw_sittrf.Insitlau = 4 THEN
+         vr_codcnabret := 'HF';  
+       ELSE
+         vr_codcnabret := 'YK';
+       END IF;  
+     END IF;           
+    ELSE
+     vr_codcnabret := 'YK'; 
+    END IF;
+    CLOSE cr_sittrf;
+  END IF;   
+  --
+  RETURN vr_codcnabret;
+EXCEPTION
+  WHEN OTHERS THEN
+    vr_dscritic := 'Erro na fn_retorna_situacao: '||sqlerrm;
+    RAISE vr_exc_erro;
+END fn_retorna_situacao;
+
+
+PROCEDURE pc_gerar_header (pr_nrseq_arq_ted in tbtransf_arquivo_ted_linhas.nrseq_arq_ted%type) IS 
+/* .............................................................................
+   
+    Objetivo  : Gerar as linhas do header.
+    
+    Observacao: 
+    
+    Alteracoes:
+..............................................................................*/
+
+  CURSOR cr_dadheader (pr_nrseq_arq_ted in tbtransf_arquivo_ted_linhas.nrseq_arq_ted%type) is
+  select tatl.dslinha_arq
+       , tatl.dstipo_reg
+  from tbtransf_arquivo_ted_linhas tatl
+  where tatl.nrseq_arq_ted = pr_nrseq_arq_ted
+  and   tatl.dstipo_reg in ('0','1') /*0 - Header Arquivo, 1 - Header Lote */
+  order by tatl.dstipo_reg ;
+
+BEGIN
+  FOR rw_dadheader in cr_dadheader (pr_nrseq_arq_ted) LOOP 
+    --
+    IF rw_dadheader.Dstipo_Reg = '0' THEN
+      -- Buscar nr de sequencia do segundo arquivo de retorno
+      SELECT NVL(MAX(TAT.NRSEQ_ARQUIVO),0) + 1 INTO vr_nr_seq_segret
+      FROM TBTRANSF_ARQUIVO_TED TAT
+      WHERE TAT.CDCOOPER = vr_cdcooper
+      AND   TAT.NRDCONTA = vr_nrdconta
+      AND   TAT.IDTIPOARQ = 2;     
+      -- 
+      vr_header_0 := rw_dadheader.dslinha_arq;
+      vr_header_0 := Substr(vr_header_0,1,143)||
+                     To_char(vr_dtretorno,'DDMMYYYY')||
+                     Substr(vr_header_0,152,6)||
+                     LPad(To_char(vr_nr_seq_segret),6,'0')||
+                     Substr(vr_header_0,164,75);
+      --
+      vr_qt_reg_a_b_header:= vr_qt_reg_a_b_header + 1;
+      vr_qt_reg_total:= vr_qt_reg_total +1;
+      --               
+    ELSE
+      vr_header_1 := rw_dadheader.dslinha_arq; 
+      --
+      vr_qt_reg_a_b_header:= vr_qt_reg_a_b_header + 1;
+      vr_qt_reg_total:= vr_qt_reg_total + 1;
+      --               
+    END IF;       
+  END LOOP;
+  --  
+EXCEPTION
+  WHEN OTHERS THEN
+    vr_dscritic := 'Erro na pc_gerar_header: '||sqlerrm;
+    RAISE vr_exc_erro;
+  
+END pc_gerar_header;
+
+PROCEDURE pc_gerar_trailer (pr_nrseq_arq_ted in tbtransf_arquivo_ted_linhas.nrseq_arq_ted%type) IS 
+/* .............................................................................
+   
+    Objetivo  : Gerar as linhas do trailer.
+    
+    Observacao: 
+    
+    Alteracoes:
+..............................................................................*/  
+    
+  CURSOR cr_dadheader (pr_nrseq_arq_ted in tbtransf_arquivo_ted_linhas.nrseq_arq_ted%type) is
+  select tatl.dslinha_arq
+       , tatl.dstipo_reg
+  from tbtransf_arquivo_ted_linhas tatl
+  where tatl.nrseq_arq_ted = pr_nrseq_arq_ted
+  and   tatl.dstipo_reg in ('5','9') /*5 - Trailer Lote, 9 - Trailer Arquivo*/
+  order by tatl.dstipo_reg ;
+
+BEGIN
+  FOR rw_dadheader in cr_dadheader (pr_nrseq_arq_ted) LOOP 
+    --
+    IF rw_dadheader.Dstipo_Reg = '5' THEN /*Trailer Lote*/
+      -- 
+      vr_trailer_5 := rw_dadheader.dslinha_arq;
+      vr_trailer_5 := Substr(vr_trailer_5,1,17)||
+                      LPad(To_Char(vr_qt_reg_a_b_header),6,'0')|| 
+                      LPad(To_Char((v_vlr_segmento_a * 100)),18 ,'0')|| 
+                      Substr(vr_trailer_5,42,199);
+      --
+      vr_qt_reg_total:= vr_qt_reg_total + 1;
+    ELSE /*Trailer Arquivo*/
+      vr_qt_reg_total:= vr_qt_reg_total + 1;
+      --
+      vr_trailer_9 := rw_dadheader.dslinha_arq; 
+      vr_trailer_9 := Substr(vr_trailer_9,1,23)||
+                      LPad(To_Char(vr_qt_reg_total),6,'0')|| 
+                      Substr(vr_trailer_9,30,211);      
+    END IF;       
+  END LOOP;
+  --
+  vr_qt_reg_a_b_header:= 0;
+  v_vlr_segmento_a    := 0;
+  vr_qt_reg_total     := 0;  
+  --
+
+EXCEPTION
+  WHEN OTHERS THEN
+    vr_dscritic := 'Erro na pc_gerar_trailer: '||sqlerrm;
+    RAISE vr_exc_erro;
+  
+END pc_gerar_trailer;
+   
+BEGIN
+   vr_cdcooper:= null;
+   vr_nrdconta:= null;
+   vr_qt_reg_conta:= 0;
+   vr_dtretorno:= trunc(sysdate);
+   --
+   FOR rw_segret in cr_segret (vr_dtretorno) LOOP   
+      -- Agrupar por Cooperativa e Conta
+      IF rw_segret.cdcooper = vr_cdcooper  AND rw_segret.nrdconta = vr_nrdconta THEN
+        -- Gerar informação do Segmento A
+        vr_segmento_a := rw_segret.dslinha_arq;  
+        vr_segmento_a := Substr(vr_segmento_a,1,3)||'0001'||Substr(vr_segmento_a,8,233);
+        --
+        vr_qt_reg_a_b_header:= vr_qt_reg_a_b_header + 1;
+        vr_qt_reg_total     := vr_qt_reg_total    + 1;
+        v_vlr_segmento_a := v_vlr_segmento_a + TO_NUMBER(rw_segret.vlrpgto,'999999999999999') / 100; 
+        --
+        -- Gerar informação do Segmento B
+        IF fn_retorna_situacao(rw_segret.idlancto
+                              ,rw_segret.tipo_operacao) = 'YI' THEN
+            
+          -- Gravar linhas do Segmento A 
+          /* Atualiza o numero de sequencia do lote no segmento a*/
+          vr_nrseq_reglote_a_b:= vr_nrseq_reglote_a_b + 1;
+          vr_segmento_a:= Substr(vr_segmento_a,1,8)||lpad(vr_nrseq_reglote_a_b,5,0)||Substr(vr_segmento_a,14,237);
+          /* Atualiza o código de retorno no segmento a*/
+          vr_segmento_a:= Substr(vr_segmento_a,1,238)||vr_codcnabret;
+          /* Atualiza o numero sequencial do arquivo no segmento a*/
+          vr_segmento_a:= Substr(vr_segmento_a,1,154)||LPad(rw_segret.nrseq_arquivo,8,'0')||Substr(vr_segmento_a,163,78);
+          --
+          pc_gerar_segmento_b(rw_segret.cdbco_comp
+                             ,rw_segret.dsprotocolo); 
+          --                   
+          gene0002.pc_escreve_xml(vr_arq_retorno,vr_texto_arq_retorno,vr_segmento_a||chr(10));
+          gene0002.pc_escreve_xml(vr_arq_retorno,vr_texto_arq_retorno,vr_segmento_b||chr(10)); 
+          --
+        ELSE
+          -- Gravar linha do Segmento A 
+          /* Atualiza o numero de sequencia do lote no segmento a*/
+          vr_nrseq_reglote_a_b:= vr_nrseq_reglote_a_b + 1;
+          vr_segmento_a:= Substr(vr_segmento_a,1,8)||lpad(vr_nrseq_reglote_a_b,5,0)||Substr(vr_segmento_a,14,237);
+        
+          /* Atualiza o código de retorno no segmento a*/
+          vr_segmento_a:= Substr(vr_segmento_a,1,238)||vr_codcnabret;
+          /* Atualiza o numero sequencial do arquivo no segmento a*/
+          vr_segmento_a:= Substr(vr_segmento_a,1,154)||LPad(rw_segret.nrseq_arquivo,8,'0')||Substr(vr_segmento_a,163,78);
+          --
+          gene0002.pc_escreve_xml(vr_arq_retorno,vr_texto_arq_retorno,vr_segmento_a||chr(10));
+        END IF;                   
+       
+      ELSE
+        -- Senão for o primeiro registro, gerar informações do Trailer
+        IF vr_fgprimeiro THEN
+           --           
+           -- Gerar informações do Trailer da Conta Anterior   
+           pc_gerar_trailer(vr_nrseq_arq_ted);
+           --
+           gene0002.pc_escreve_xml(vr_arq_retorno,vr_texto_arq_retorno,vr_trailer_5||chr(10));
+           gene0002.pc_escreve_xml(vr_arq_retorno,vr_texto_arq_retorno,vr_trailer_9,True);                  
+           -- Criar registro de retorno           
+           BEGIN
+              vr_nmarquivo_ret:= 'TED_'||LPAD(vr_nrdconta,8,0)||'_MOV'||TO_CHAR(vr_dtretorno,'DDMMYYYY')||'.RET';
+              INSERT INTO tbtransf_arquivo_ted (nrseq_arq_ted,   
+                                               nmarquivo, 
+                                               nrseq_arquivo,
+                                               nrdconta,    
+                                               cdcooper, 
+                                               dtgeracao, 
+                                               dsarquivo)
+                                       values (null , 
+                                               vr_nmarquivo_ret,
+                                               vr_nr_seq_segret, 
+                                               vr_nrdconta, 
+                                               vr_cdcooper,   
+                                               sysdate, 
+                                               vr_arq_retorno);     
+             --
+           EXCEPTION
+             WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir dados na tbtransf_arquivo_ted segundo arquivo: '||sqlerrm;
+                RAISE vr_exc_erro;
+           END;   
+
+           -- Fechar arquivo de retorno 
+           -- Liberando a memoria alocada pro CLOB
+           dbms_lob.close(vr_arq_retorno);
+           dbms_lob.freetemporary(vr_arq_retorno);
+           -- Criar novo arquivo de retorno
+           vr_fgheader:= True;
+           -- Inicializar arquivo
+           dbms_lob.createtemporary(vr_arq_retorno, TRUE);
+           dbms_lob.open(vr_arq_retorno, dbms_lob.lob_readwrite);
+        ELSE
+           --Primeiro registro processado
+           vr_fgprimeiro:= true;
+           -- Criar arquivo de retorno           
+           -- Inicializar arquivo
+           dbms_lob.createtemporary(vr_arq_retorno, TRUE);
+           dbms_lob.open(vr_arq_retorno, dbms_lob.lob_readwrite);
+            --
+        END IF;      
+        --
+        vr_qt_reg_conta:= vr_qt_reg_conta + 1;
+        --
+        vr_cdcooper := rw_segret.cdcooper;
+        vr_nrdconta := rw_segret.nrdconta;
+        vr_nrseq_arq_ted:= rw_segret.nrseq_arq_ted;
+        -- Gerar informacoes do header
+        IF vr_fgheader THEN
+          -- Buscar informações do header do arquivo de retorno
+          vr_fgheader:= false;
+          -- Grava informações do header no arquivo de retorno
+          pc_gerar_header(rw_segret.nrseq_arq_ted);
+          --
+          gene0002.pc_escreve_xml(vr_arq_retorno,vr_texto_arq_retorno,vr_header_0||chr(10));
+          gene0002.pc_escreve_xml(vr_arq_retorno,vr_texto_arq_retorno,vr_header_1||chr(10));  
+          --      
+        END IF;  
+        -- Gerar informação do Segmento A
+        vr_segmento_a := rw_segret.dslinha_arq;
+        vr_segmento_a := Substr(vr_segmento_a,1,3)||'0001'||Substr(vr_segmento_a,8,233);     
+        --
+        
+        vr_qt_reg_a_b_header:= vr_qt_reg_a_b_header + 1;
+        vr_qt_reg_total     := vr_qt_reg_total      + 1;
+        v_vlr_segmento_a    := v_vlr_segmento_a + TO_NUMBER(rw_segret.vlrpgto,'999999999999999') / 100;
+        --              
+        -- Gerar informação do Segmento B
+        IF fn_retorna_situacao(rw_segret.idlancto
+                              ,rw_segret.tipo_operacao) = 'YI' THEN
+   
+          -- Gravar linhas do Segmento A
+          /* Atualiza o numero de sequencia do lote no segmento a*/
+          vr_nrseq_reglote_a_b:= vr_nrseq_reglote_a_b + 1;
+          vr_segmento_a:= Substr(vr_segmento_a,1,8)||lpad(vr_nrseq_reglote_a_b,5,0)||Substr(vr_segmento_a,14,237);
+          
+          /* Atualiza o código de retorno no segmento a*/
+          vr_segmento_a:= Substr(vr_segmento_a,1,238)||vr_codcnabret;
+          /* Atualiza o numero sequencial do arquivo no segmento a*/
+          vr_segmento_a:= Substr(vr_segmento_a,1,154)||LPad(rw_segret.nrseq_arquivo,8,'0')||Substr(vr_segmento_a,163,78);
+          --
+          pc_gerar_segmento_b(rw_segret.cdbco_comp
+                             ,rw_segret.dsprotocolo);
+          --          
+          gene0002.pc_escreve_xml(vr_arq_retorno,vr_texto_arq_retorno,vr_segmento_a||chr(10));
+          gene0002.pc_escreve_xml(vr_arq_retorno,vr_texto_arq_retorno,vr_segmento_b||chr(10)); 
+          --
+        ELSE
+          -- Gravar linha do Segmento A 
+          /* Atualiza o numero de sequencia do lote no segmento a*/
+          vr_nrseq_reglote_a_b:= vr_nrseq_reglote_a_b + 1;
+          vr_segmento_a:= Substr(vr_segmento_a,1,8)||lpad(vr_nrseq_reglote_a_b,5,0)||Substr(vr_segmento_a,14,237);
+          
+          /* Atualiza o código de retorno no segmento a*/
+          vr_segmento_a:= Substr(vr_segmento_a,1,238)||vr_codcnabret;
+          /* Atualiza o numero sequencial do arquivo no segmento a*/
+          vr_segmento_a:= Substr(vr_segmento_a,1,154)||LPad(rw_segret.nrseq_arquivo,8,'0')||Substr(vr_segmento_a,163,78);
+          --
+          gene0002.pc_escreve_xml(vr_arq_retorno,vr_texto_arq_retorno,vr_segmento_a||chr(10));
+        END IF;                   
+        
+      END IF;   
+
+   END LOOP;
+   --
+   IF vr_qt_reg_conta > 0 THEN
+     --Gerar informações do Trailer da última Conta 
+     pc_gerar_trailer(vr_nrseq_arq_ted);
+     --
+     gene0002.pc_escreve_xml(vr_arq_retorno,vr_texto_arq_retorno,vr_trailer_5||chr(10));
+     gene0002.pc_escreve_xml(vr_arq_retorno,vr_texto_arq_retorno,vr_trailer_9,True);        
+     -- Criar registro de retorno
+     BEGIN
+        vr_nmarquivo_ret:= 'TED_'||LPAD(vr_nrdconta,8,0)||'_MOV'||TO_CHAR(vr_dtretorno,'DDMMYYYY')||'.RET';
+        INSERT INTO tbtransf_arquivo_ted (nrseq_arq_ted,   
+                                         nmarquivo, 
+                                         nrseq_arquivo,
+                                         nrdconta,    
+                                         cdcooper, 
+                                         dtgeracao, 
+                                         dsarquivo,
+                                         idtipoarq)
+                                 values (null , 
+                                         vr_nmarquivo_ret,             
+                                         vr_nr_seq_segret,
+                                         vr_nrdconta, 
+                                         vr_cdcooper,   
+                                         sysdate, 
+                                         vr_arq_retorno,
+                                         2 /*Segundo arquivo de retorno*/);     
+       --
+     EXCEPTION
+       WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir dados na tbtransf_arquivo_ted segundo arquivo: '||sqlerrm;
+          RAISE vr_exc_erro;
+     END;  
+     -- Fechar arquivo de retorno 
+     -- Liberando a memoria alocada pro CLOB
+     dbms_lob.close(vr_arq_retorno);
+     dbms_lob.freetemporary(vr_arq_retorno);   
+     --
+   END IF;
+   COMMIT;
+   --
+   DECLARE
+     vr_aux_dsdemail VARCHAR2(1000);
+     vr_aux_dscorpo  VARCHAR2(1000); 
+   BEGIN
+
+     vr_aux_dsdemail:= gene0001.fn_param_sistema('CRED',0,'EMAIL_RETORNO_TEDS');
+     vr_aux_dscorpo := 'Informamos que o arquivo retorno consolidado foi disponibilizado para download na tela UPPGTO > Opção E.';
+     --
+     pr_cdcritic     := null;
+     pr_dscritic     := null;
+     --
+     -- Enviar Email para o responsavel
+    gene0003.pc_solicita_email(pr_cdcooper        => 3
+                              ,pr_cdprogra        => 'UPPGTO'
+                              ,pr_des_destino     => vr_aux_dsdemail
+                              ,pr_des_assunto     => 'Arquivo Retorno – TED e Transferências'
+                              ,pr_des_corpo       => vr_aux_dscorpo
+                              ,pr_des_anexo       => ''
+                              ,pr_flg_enviar      => 'S'
+                              ,pr_flg_log_batch   => 'N' 
+                              ,pr_des_erro        => vr_dscritic);
+     -- Se ocorreu erro
+     IF trim(vr_dscritic) IS NOT NULL THEN
+       NULL;
+     END IF;
+     COMMIT;
+  END;
+         
+EXCEPTION
+  WHEN vr_exc_erro THEN
+    Rollback;
+    pr_dscritic := vr_dscritic;
+    --
+    CECRED.pc_log_programa(pr_dstiplog  => 'E'
+                      ,pr_cdprograma    => 'PGTA0001'
+                      ,pr_cdcooper      => 3
+                      ,pr_tpexecucao    => 2 
+                      ,pr_tpocorrencia  => 2
+                      ,pr_cdcriticidade => 3
+                      ,pr_cdmensagem    => null
+                      ,pr_dsmensagem    => pr_dscritic
+                      ,pr_idprglog      => vr_idprglog
+                      ,pr_nmarqlog      => NULL);
+    --      
+    CECRED.pc_internal_exception( pr_cdcooper => 3 ,pr_compleme => pr_dscritic );
+    --
+  WHEN OTHERS THEN
+    Rollback;
+    -- Monta mensagem de erro
+    pr_dscritic := 'Erro em pc_gerar_seg_arquivo_retorno: ' || SQLERRM;
+    --
+    CECRED.pc_log_programa(pr_dstiplog  => 'E'
+                      ,pr_cdprograma    => 'PGTA0001'
+                      ,pr_cdcooper      => 3
+                      ,pr_tpexecucao    => 2 
+                      ,pr_tpocorrencia  => 2
+                      ,pr_cdcriticidade => 3
+                      ,pr_cdmensagem    => null
+                      ,pr_dsmensagem    => pr_dscritic
+                      ,pr_idprglog      => vr_idprglog
+                      ,pr_nmarqlog      => NULL);
+    --                   
+    CECRED.pc_internal_exception( pr_cdcooper => 3 
+                                 ,pr_compleme => pr_dscritic );   
+end pc_gerar_seg_arquivo_retorno;
 
 
 END PGTA0001;

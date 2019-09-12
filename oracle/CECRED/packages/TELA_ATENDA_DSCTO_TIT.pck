@@ -32,8 +32,10 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                              titulos/boletos (utilizado em outras package) (Andrew Albuquerque - GFT)
                 06/11/2018 - Fabio dos Santos (GFT) - Inclusao da chamada do InterrompeFluxo da Esteira, na pc_altera_bordero
                 23/11/2018 - Adicionado para guardar o usuario que fez a ultima analise do bordero (clicou no botao analisar) para ser enviado para a esteira
-				01/03/2019 - Removido da clausula WHERE o campo cdtpinsc quando efetuar leitura da crapsab (Daniel)
-
+                01/03/2019 - Removido da clausula WHERE o campo cdtpinsc quando efetuar leitura da crapsab (Daniel)
+                07/03/2019 - prj450 - Desconto de Titulos - Validar Rating na Efetivação da Proposta
+                             (Fabio Adriano - AMcom)
+                30/07/2019 - Removida porcentagem de Liquidez do pagador com o cedente quando não houver parcelas suficientes para o calculo - Darlei (Supero)
   ---------------------------------------------------------------------------------------------------------------------*/
 
   /* Tabela de retorno do histórico de alteração dos contratos de limite*/
@@ -251,6 +253,7 @@ TYPE typ_reg_dados_detalhe IS RECORD(
      liqpagcd        VARCHAR2(20),
      liqgeral        VARCHAR2(20)
     ,dtreapro        VARCHAR2(20) -- Marcelo Telles Coelho - Mouts - 25/04/2019 - RITM0050653
+    ,qtparcmi        INTEGER      -- Atende parcelas minimas para porcentagem em tela
 );
 TYPE typ_tab_dados_detalhe IS TABLE OF typ_reg_dados_detalhe INDEX BY BINARY_INTEGER;
   
@@ -357,11 +360,12 @@ TYPE typ_tab_titulo IS TABLE OF typ_reg_titulo INDEX BY BINARY_INTEGER;
               AND    tap.nrdconta = cob.nrdconta
               AND    tap.nrinssac = cob.nrinssac),'A') AS dssituac
         ,COUNT(1) over() qtregist 
-  FROM   crapcob cob 
-         INNER JOIN crapsab sab ON sab.nrinssac = cob.nrinssac AND 
-                                   sab.cdcooper = cob.cdcooper AND 
-                                   sab.nrdconta = cob.nrdconta  
-         LEFT  JOIN craptdb tdb ON cob.cdcooper = tdb.cdcooper AND 
+  FROM   crapcob cob
+         INNER JOIN crapsab sab ON sab.nrinssac = cob.nrinssac AND
+                                   sab.cdtpinsc = cob.cdtpinsc AND
+                                   sab.cdcooper = cob.cdcooper AND
+                                   sab.nrdconta = cob.nrdconta
+         LEFT  JOIN craptdb tdb ON cob.cdcooper = tdb.cdcooper AND
                                    cob.cdbandoc = tdb.cdbandoc AND  
                                    cob.nrdctabb = tdb.nrdctabb AND  
                                    cob.nrdconta = tdb.nrdconta AND  
@@ -948,8 +952,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
                    de contrato de limite (Andrew Albuquerque - GFT)
 	  23/08/2018 - PRJ 438 - Gravar, Alterar e Consultar motivos de anulação - Paulo Martins - Mouts
       04/09/2018 - Alteração do type de retorno dos históricos de limite, e da data de inclusão quando é Cancelamento de Limite (Andrew Albuquerque - GFT)
-	  19/09/2018 - Alterado a procedure pc_busca_titulos_bordero para adicionar retorno da descrição da 
+      19/09/2018 - Alterado a procedure pc_busca_titulos_bordero para adicionar retorno da descrição da
                    situação do titulo dssittit (Paulo Penteado GFT)
+      05/03/2019 - P450 - Desconto de Titulos - Validar Rating na Efetivação da Proposta
+                   (Fabio Adriano - AMcom)
+      15/04/2019 - P450 - Bug 19190:Erro ao apresentar o rating tela ocorrencias - Desconto de Titulos (Heckmann - AMcom)
+
+      30/07/2019 - Removida porcentagem de Liquidez do pagador com o cedente quando não houver parcelas suficientes para o calculo
+                   Darlei (Supero)
+
+      06/08/2019 - Correção para ao efetivar usar o Numero do Contrato a sofrer Manutencao e não a proposta
+                   majorada. (Luiz Otavio Olinger Momm - AMCOM)
+
+      07/08/2019 - Adicionado pesquisa de rating com tratamento para propostas majoradas no
+                   pc_obtem_dados_proposta_web. (Luiz Otavio Olinger Momm - AMCOM)
+
+      09/08/2019 - P450 - Adicionada a gravação do rating na efetivação na pc_renovar_lim_desc_titulo
+                   Luiz Otavio Olinger Momm - AMCOM
+
+      10/09/2019 - P450 - Bug 21022 - Ajuste na atualização da tabela TBRisco_Operacoes
+                   Retirada do parametro XML e inclusão de nr_cpfcnpj_base (AMcom - Mário)
+
+      24/05/2019 - prj450 - Consultar e retornar o rating do Bordero e Proposta (Luiz Otávio Olinger Momm - AMCOM)
+      
+      28/08/2019 - PJ450 - Bug 25706 - Colocar as validações de Status de Rating e Endividamento antes e não depois
+                   de gravar histórico de alteração do limite, pois na da pc_gravar_hist_alt_limite tem Commit. 
+                   (Marcelo Elias Gonçalves/AMcom).
   ---------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -1192,6 +1220,7 @@ PROCEDURE pc_validar_efetivacao_proposta(pr_cdcooper          in crapcop.cdcoope
          ,cdagenci
          ,inpessoa
          ,nrdconta
+         ,nrcpfcnpj_base
    from   crapass
    where  crapass.cdcooper = pr_cdcooper
    and    crapass.nrdconta = pr_nrdconta;
@@ -1539,9 +1568,15 @@ BEGIN
   --               Adicionado o insert na tabela craplim, pois quando confirmar a proposta de limite, 
   --               deve-se gerar um contrato. (Paulo Penteado (GFT))
   --
-  --  23/08/2018 - Alteraçao na procedure pc_efetivar_proposta / Registrar na tabela de histórico de alteraçao 
+  --  23/08/2018 - Alteraçao na procedure pc_efetivar_proposta / Registrar na tabela de histórico de alteraçao
   --               de contrato de limite (Andrew Albuquerque - GFT)
   --
+  --  07/03/2019 - prj450 - Desconto de Titulos - Validar Rating na Efetivação da Proposta
+  --              (Fabio Adriano - AMcom)
+  --
+  --  28/08/2019 - PJ450 - Bug 25706 - Colocar as validações de Status de Rating e Endividamento antes e não depois
+  --               de gravar histórico de alteração do limite, pois na da pc_gravar_hist_alt_limite tem Commit. 
+  --               (Marcelo Elias Gonçalves/AMcom).
   ----------------------------------------------------------------------------------
 DECLARE
    -- Informações de data do sistema
@@ -1554,6 +1589,7 @@ DECLARE
    -- Tratamento de erros
    vr_exc_saida   exception;
    vr_retorna_msg exception;
+   vr_exc_strating EXCEPTION;
 
    -- Variaveis auxiliares
    vr_nrdolote     craplot.nrdolote%type;
@@ -1571,7 +1607,12 @@ DECLARE
    vr_dtvigenc      crapfco.dtvigenc%type;
    vr_cdfvlcop      crapfco.cdfvlcop%type;
    vr_rowid_craplat rowid;
-
+   vr_strating      NUMBER;
+   vr_flgrating     NUMBER;
+   vr_vlendivid     craplim.vllimite%TYPE; -- Valor do Endividamento do Cooperado
+   vr_vllimrating   craplim.vllimite%TYPE; -- Valor do Parametro Rating (Limite) TAB056
+   vr_nrctrlim_maj  crawlim.nrctrlim%TYPE; -- Codigo contrato pai quando proposta majorada
+   
    -- PL Tables
    vr_tab_impress_coop     rati0001.typ_tab_impress_coop;
    vr_tab_impress_rating   rati0001.typ_tab_impress_rating;
@@ -1590,6 +1631,7 @@ DECLARE
          ,cdagenci
          ,inpessoa
          ,nrdconta
+         ,nrcpfcnpj_base
    from   crapass
    where  crapass.cdcooper = pr_cdcooper
    and    crapass.nrdconta = pr_nrdconta;
@@ -1616,7 +1658,17 @@ DECLARE
    and    lim.tpctrlim = pr_tpctrlim
    and    lim.nrctrlim = pr_nrctrlim;
    rw_crawlim cr_crawlim%rowtype;
+
+   cursor cr_crawlim_maj(vr_nrctrlim IN crawlim.nrctrlim%TYPE) is
+   select nrctrmnt                   -- Numero do Contrato a sofrer Manutencao
+   from   crawlim 
+   where  tpctrlim = 3
+   and    cdcooper = pr_cdcooper
+   and    nrdconta = pr_nrdconta
+   and    nrctrlim = vr_nrctrlim;
+   rw_crawlim_maj cr_crawlim_maj%rowtype;
    
+
    cursor cr_craplim is
    select lim.cdcooper
          ,lim.nrdconta
@@ -1630,7 +1682,13 @@ DECLARE
    and    lim.nrctrlim = rw_crawlim.nrctrmnt;
    rw_craplim cr_craplim%rowtype;
 
+   vr_habrat VARCHAR2(1) := 'N'; -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
+
 BEGIN
+
+   vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                          pr_cdcooper => pr_cdcooper,
+                                          pr_cdacesso => 'HABILITA_RATING_NOVO');
    --    Verifica se a data esta cadastrada
    open  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
    fetch btch0001.cr_crapdat into rw_crapdat;
@@ -1818,9 +1876,11 @@ BEGIN
            raise vr_exc_saida;
        end if;
 
-       -- Gera Rating
-       rati0001.pc_gera_rating(pr_cdcooper => pr_cdcooper                         --> Codigo Cooperativa
-                              ,pr_cdagenci => pr_cdagenci                         --> Codigo Agencia
+       -- P450 SPT13 - alteracao para habilitar rating novo
+       IF (pr_cdcooper = 3 OR vr_habrat = 'N') THEN
+         -- Gera Rating
+         rati0001.pc_gera_rating(pr_cdcooper => pr_cdcooper                         --> Codigo Cooperativa
+                                ,pr_cdagenci => pr_cdagenci                         --> Codigo Agencia
                               ,pr_nrdcaixa => pr_nrdcaixa                         --> Numero Caixa
                               ,pr_cdoperad => pr_cdoperad                         --> Codigo Operador
                               ,pr_nmdatela => 'ATENDA'                            --> Nome da tela
@@ -1850,10 +1910,12 @@ BEGIN
        if  vr_des_erro <> 'OK' then
            vr_cdcritic:= vr_tab_erro(0).cdcritic;
            vr_dscritic:= vr_tab_erro(0).dscritic;
-           raise vr_exc_saida;
-           return;
-       end if;
-
+             raise vr_exc_saida;
+             return;
+         end if;
+       END IF;
+       -- P450 SPT13 - alteracao para habilitar rating novo
+       
        -- awae: Gerar histórico de Liberação de Proposta.
        vr_dsmotivo := 'LIBERAÇÃO DE LIMITE';
        
@@ -1918,6 +1980,96 @@ BEGIN
            raise vr_exc_saida;
    end;
 
+   -- P450 SPT13 - alteracao para habilitar rating novo
+   IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
+     /* Validar rating */
+     RATI0003.pc_busca_status_rating(pr_cdcooper  => pr_cdcooper
+                                    ,pr_nrdconta  => pr_nrdconta
+                                    ,pr_tpctrato  => 3
+                                    ,pr_nrctrato  => pr_nrctrlim
+                                    ,pr_strating  => vr_strating
+                                    ,pr_flgrating => vr_flgrating
+                                    ,pr_cdcritic  => vr_cdcritic
+                                    ,pr_dscritic  => vr_dscritic);
+
+     /*
+     AMCOM: Luiz Otávio Olinger Momm - P450
+     Caso não localizar o Rating verificar se existir o Numero do Contrato a sofrer Manutencao
+     */
+     IF vr_flgrating = 0 THEN
+       OPEN cr_crawlim_maj (pr_nrctrlim);
+       FETCH cr_crawlim_maj INTO rw_crawlim_maj;
+ 
+       IF cr_crawlim_maj%FOUND THEN
+         vr_nrctrlim_maj := rw_crawlim_maj.nrctrmnt;
+         IF vr_nrctrlim_maj > 0 THEN
+           /* Validar rating */
+           RATI0003.pc_busca_status_rating(pr_cdcooper  => pr_cdcooper
+                                          ,pr_nrdconta  => pr_nrdconta
+                                          ,pr_tpctrato  => 3
+                                          ,pr_nrctrato  => vr_nrctrlim_maj
+                                          ,pr_strating  => vr_strating
+                                          ,pr_flgrating => vr_flgrating
+                                          ,pr_cdcritic  => vr_cdcritic
+                                          ,pr_dscritic  => vr_dscritic);
+         END IF;
+       END IF;
+     END IF;
+     /*
+     AMCOM: Luiz Otávio Olinger Momm - P450
+     */
+     
+     IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+       RAISE vr_exc_saida;
+     END IF;
+
+     -- Buscar Valor Endividamento e Valor Limite Rating (TAB056)
+     RATI0003.pc_busca_endivid_param(pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_vlendivi => vr_vlendivid
+                                    ,pr_vlrating => vr_vllimrating
+                                    ,pr_dscritic => vr_dscritic);
+     IF TRIM(vr_dscritic) IS NOT NULL THEN
+       RAISE vr_exc_saida;
+     END IF;
+
+     -- Status do rating inválido
+     IF vr_flgrating = 0 THEN
+       vr_dscritic := 'Contrato não pode ser efetivado porque não há Rating válido.';
+       RAISE vr_exc_saida;
+
+     ELSE -- Status do rating valido
+
+       -- Se Endividamento > Parametro Rating (TAB056)
+       IF (vr_vlendivid  > vr_vllimrating)  THEN
+         -- Gravar o Rating da operação, efetivando-o
+         rati0003.pc_grava_rating_operacao(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_tpctrato => 3
+                                          ,pr_nrctrato => pr_nrctrlim
+                                          ,pr_dtrating => rw_crapdat.dtmvtolt
+                                          ,pr_dtrataut => rw_crapdat.dtmvtolt
+                                          ,pr_strating => 4
+                                          --Variáveis para gravar o histórico
+                                          ,pr_cdoperad => pr_cdoperad
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                          ,pr_valor => rw_crawlim.vllimite
+                                          ,pr_rating_sugerido => NULL
+                                          ,pr_justificativa => 'Efetivação do rating'
+                                          ,pr_tpoperacao_rating => 2
+                                          ,pr_nrcpfcnpj_base     => rw_crapass.nrcpfcnpj_base
+                                          --Variáveis de crítica
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+
+         IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+           RAISE vr_exc_saida;
+         END IF;
+       END IF; -- Fim endividamento
+     END IF; -- Fim status do rating
+   END IF;
+   -- P450 SPT13 - alteracao para habilitar rating novo
+   
    -- awae: Gerar histórico de Majoração/manutenção de Proposta.
    pc_gravar_hist_alt_limite(pr_cdcooper => pr_cdcooper
                             ,pr_nrdconta => pr_nrdconta
@@ -1980,7 +2132,11 @@ EXCEPTION
         pr_dscritic := vr_dscritic;
 
         ROLLBACK;
+   when vr_exc_strating THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Contrato não pode ser efetivado porque não há Rating válido - pc_efetiva_proposta ' ;
 
+        ROLLBACK;
    when others then
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral na rotina da tela pc_efetivar_proposta: ' || sqlerrm;
@@ -2394,6 +2550,7 @@ PROCEDURE pc_cancelar_proposta(pr_cdcooper    in crapcop.cdcooper%type --> Códig
     Objetivo  : Procedure para cancelar uma proposta de limite de desconto de titulo.
 
     Alteração : 12/04/2018 - Criação (Paulo Penteado (GFT))
+                16/07/2019 - Alterada mensagem de erro quando situação não é 'Em Estudo'. PRJ 438 - Sprint 16 (Mateus Z / Mouts)
 
   ---------------------------------------------------------------------------------------------------------------------*/
 
@@ -2433,7 +2590,8 @@ BEGIN
 
    --  Verifica se a situação está 'Ativo' ou 'Cancelado'
    if  rw_crawlim.insitlim in (2,3) then
-       vr_dscritic := 'Para esta operação, a situação da Proposta não deve ser "Ativa"';-- ou "Cancelada".';
+       -- PRJ 438 - Sprint 16 - Alterada a mensagem de erro
+       vr_dscritic := 'Para esta operação, a situação da Proposta deve estar em "Em estudo"';
        raise vr_exc_saida;
    end if;
 
@@ -2998,7 +3156,8 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
 
     Objetivo  : Rotina para renovar limite de desconto de titulos.
 
-    Alteracoes: 
+    Alteracoes: 09/08/2019 - P450 - Adicionada a gravação do rating na efetivação
+                             Luiz Otavio Olinger Momm - AMCOM
     ..............................................................................*/
     DECLARE
 
@@ -3031,7 +3190,21 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
            AND craplim.nrctrlim = pr_nrctrlim
            AND craplim.tpctrlim = 3; -- Limite de crédito de desconto de titulo
     rw_craplim cr_craplim%ROWTYPE;
-    
+
+    -- Verifica Conta
+    CURSOR cr_crapass (pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT dtelimin
+            ,cdsitdtl
+            ,cdagenci
+            ,nrcpfcnpj_base
+            ,inpessoa
+       FROM crapass
+      WHERE crapass.cdcooper = pr_cdcooper
+        AND crapass.nrdconta = pr_nrdconta;
+    rw_crapass cr_crapass%ROWTYPE;
+    vr_flgfound   BOOLEAN;
+
     BEGIN
       pr_des_erro := 'OK';
       pr_nmdcampo := NULL;
@@ -3082,6 +3255,17 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
         CLOSE BTCH0001.cr_crapdat;
       END IF;
       
+      -- Verifica se existe a conta
+      OPEN cr_crapass (vr_cdcooper, pr_nrdconta);
+      FETCH cr_crapass INTO rw_crapass;
+      vr_flgfound := cr_crapass%FOUND;
+      CLOSE cr_crapass;
+      -- Se nao existir
+      IF NOT vr_flgfound THEN
+        vr_cdcritic := 9;
+        RAISE vr_exc_saida;
+      END IF;
+
       -- Chama rotina de renovação
       LIMI0001.pc_renovar_lim_desc_titulo(pr_cdcooper => vr_cdcooper
                                          ,pr_nrdconta => pr_nrdconta
@@ -3635,6 +3819,7 @@ PROCEDURE pc_obtem_dados_proposta_web(pr_nrdconta in crapass.nrdconta%type --> C
     Objetivo  : Procedure para carregar as informações da proposta na tela
 
     Alteração : 26/03/2018 - Criação (Paulo Penteado (GFT))
+                07/08/2019 - Adicionado pesquisa de rating com tratamento para propostas majoradas
 
   ---------------------------------------------------------------------------------------------------------------------*/
    vr_tab_dados_proposta typ_tab_dados_proposta;
@@ -3656,6 +3841,25 @@ PROCEDURE pc_obtem_dados_proposta_web(pr_nrdconta in crapass.nrdconta%type --> C
    vr_nrdcaixa varchar2(100);
    vr_idorigem varchar2(100);
 
+    -- Variáveis Rating
+    vr_insituacao_rating    integer;
+    vr_inorigem_rating      varchar(200);
+    vr_inrisco_rating_autom varchar(200);
+    vr_contrato_rating      integer;
+    
+    cursor cr_crawlim_maj(pr_nrctrlim IN crawlim.nrctrlim%type
+                         ,pr_cdcooper IN crapcop.cdcooper%type
+                         ,pr_nrdconta IN crapass.nrdconta%type) is
+    select nrctrmnt                   -- Numero do Contrato a sofrer Manutencao
+    from   crawlim 
+    where  tpctrlim = 3
+    and    cdcooper = pr_cdcooper
+    and    nrdconta = pr_nrdconta
+    and    nrctrlim = pr_nrctrlim;
+    rw_crawlim_maj cr_crawlim_maj%rowtype;
+    vr_nrctrlim_maj  crawlim.nrctrlim%TYPE; -- Codigo contrato pai quando proposta majorada
+
+    vr_habrat VARCHAR2(1) := 'N'; -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
 
 BEGIN
    pr_des_erro := 'OK';
@@ -3679,6 +3883,10 @@ BEGIN
                           ,pr_dscritic           => vr_dscritic
                           );
 
+   vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                          pr_cdcooper => vr_cdcooper,
+                                          pr_cdacesso => 'HABILITA_RATING_NOVO');
+
    if  vr_cdcritic > 0  or vr_dscritic is not null then
        raise vr_exc_saida;
    end if;
@@ -3695,6 +3903,70 @@ BEGIN
                   '<Dados qtregist="' || vr_qtregist ||'" >');
 
    while vr_index is not null loop
+         -- 24/05/2019 Consulta Rating --
+         -- P450 SPT13 - alteracao para habilitar rating novo
+         vr_inrisco_rating_autom := '';
+         vr_inorigem_rating := '';
+
+         IF (vr_cdcooper <> 3 AND vr_habrat = 'S') THEN
+           /*
+           Numero de proposta e contrato geralmente são iguais porém, pegamos um caso que era diferente.
+           Então verifica se tem contrato usa do contrato senão usa da proposta.
+           */
+           vr_contrato_rating := nvl(vr_tab_dados_proposta(vr_index).nrctrmnt,0);
+           if vr_contrato_rating = 0 then
+             vr_contrato_rating := vr_tab_dados_proposta(vr_index).nrctrlim;
+           end if;
+
+           rati0003.pc_retorna_inf_rating(vr_cdcooper,
+                                          pr_nrdconta,
+                                          3,
+                                          vr_contrato_rating,
+                                          ----OUT----
+                                          vr_insituacao_rating,
+                                          vr_inorigem_rating,
+                                          vr_inrisco_rating_autom,
+                                          vr_cdcritic,
+                                          vr_dscritic
+                                           );
+
+           /*
+           AMCOM: Luiz Otávio Olinger Momm - P450
+           Caso não localizar o Rating verificar se existir o Numero do Contrato a sofrer Manutencao
+           */
+           IF vr_inorigem_rating = '' AND vr_inorigem_rating = '' THEN
+             OPEN cr_crawlim_maj (pr_nrctrlim => vr_contrato_rating
+                                 ,pr_cdcooper => vr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta);
+             FETCH cr_crawlim_maj INTO rw_crawlim_maj;
+       
+             IF cr_crawlim_maj%FOUND THEN
+               vr_nrctrlim_maj := rw_crawlim_maj.nrctrmnt;
+               IF vr_nrctrlim_maj > 0 THEN
+                 /* Validar rating */
+                 rati0003.pc_retorna_inf_rating(vr_cdcooper,
+                                                pr_nrdconta,
+                                                3,
+                                                vr_nrctrlim_maj,
+                                                ----OUT----
+                                                vr_insituacao_rating,
+                                                vr_inorigem_rating,
+                                                vr_inrisco_rating_autom,
+                                                vr_cdcritic,
+                                                vr_dscritic
+                                                 );
+               END IF;
+             END IF;
+           END IF;
+           /*
+           AMCOM: Luiz Otávio Olinger Momm - P450
+           */
+
+
+        END IF;
+        -- P450 SPT13 - alteracao para habilitar rating novo
+        -- 24/05/2019 Consulta Rating --
+
          pc_escreve_xml('<inf>' ||
                            '<dtpropos>'|| to_char(vr_tab_dados_proposta(vr_index).dtpropos, 'DD/MM/RRRR') ||'</dtpropos>'||
                            '<nrctrlim>'|| vr_tab_dados_proposta(vr_index).nrctrlim ||'</nrctrlim>'||
@@ -3709,6 +3981,8 @@ BEGIN
                            '<insitest>'|| vr_tab_dados_proposta(vr_index).insitest ||'</insitest>'||
                            '<insitapr>'|| vr_tab_dados_proposta(vr_index).insitapr ||'</insitapr>'||
                            '<inctrmnt>'|| vr_tab_dados_proposta(vr_index).inctrmnt ||'</inctrmnt>'||
+                           '<inrisrat>'|| vr_inrisco_rating_autom                  || '</inrisrat>'  ||
+                           '<origerat>'|| vr_inorigem_rating                       || '</origerat>'  ||
                         '</inf>');
 
        vr_index := vr_tab_dados_proposta.next(vr_index);
@@ -4066,7 +4340,8 @@ END pc_obtem_proposta_aciona_web;
              cob.cdbandoc
         FROM cecred.crapcob cob -- titulos
        INNER JOIN cecred.crapsab sab -- dados do sacado, para pegar o nome do sacado corretamente
-          ON sab.nrinssac = cob.nrinssac 
+          ON sab.nrinssac = cob.nrinssac
+         AND sab.cdtpinsc = cob.cdtpinsc
          AND sab.cdcooper = cob.cdcooper
          AND sab.nrdconta = cob.nrdconta
          -- Regras Fixas
@@ -5466,6 +5741,7 @@ PROCEDURE pc_insere_bordero(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Co
     Alteração : 18/05/2018 - Criação, separado da procedure pc_insere_bordero_web (Paulo Penteado (GFT))
                 15/06/2018 - Retorno se o bordero teve criticas ou nao ao inserir. [Vitor Shimada Assanuma (GFT)]
                 23/08/2018 - Inserção do bordero com risco 2 (A) [Vitor Shimada Assanuma (GFT)]
+                11/03/2019 - Registrar qual foi o rating usando quando Inserir Borderô
   ---------------------------------------------------------------------------------------------------------------------*/
    -- Variável de críticas
    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -5579,7 +5855,9 @@ PROCEDURE pc_insere_bordero(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Co
           AND crapbdt.insitbdt <= 4  -- borderos que estao em estudo, analisados, liberados, liquidados
           AND craptdb.dtresgat IS NULL;
     rw_craptdb cr_craptdb%rowtype;
-          
+
+    vr_habrat VARCHAR2(1) := 'N'; -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
+
    BEGIN
       /*VERIFICA SE O CONTRATO EXISTE E AINDA ESTÁ ATIVO*/
       OPEN cr_craplim;
@@ -5615,7 +5893,11 @@ PROCEDURE pc_insere_bordero(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Co
      END IF;
      CLOSE cr_crapass;
 
-      --carregando os dados de prazo limite da TAB052 
+     vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                            pr_cdcooper => pr_cdcooper,
+                                            pr_cdacesso => 'HABILITA_RATING_NOVO');
+
+      --carregando os dados de prazo limite da TAB052
      dsct0002.pc_busca_parametros_dsctit(pr_cdcooper, --pr_cdcooper,
                                                  null, --Agencia de operação
                                                  null, --Número do caixa
@@ -5796,8 +6078,27 @@ PROCEDURE pc_insere_bordero(pr_cdcooper          IN crapcop.cdcooper%TYPE --> Co
            ,/*26*/ 2);
 
       pr_tab_borderos(1).nrborder := vr_nrborder;
-                
-      /*INSERE OS TITULOS DO PONTEIRO vr_tab_dados_titulos*/
+
+      -- P450 SPT13 - alteracao para habilitar rating novo
+      IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
+        /* 11/03/2019
+        Projeto rating inserir na tabela de operações qual foi o rating usando no borderô */
+        rati0003.pc_grava_rating_bordero( pr_cdcooper =>  pr_cdcooper,
+                                          pr_nrdconta =>  pr_nrdconta,
+                                          pr_nrctro   =>  rw_craplim.nrctrlim,
+                                          pr_tpctrato =>  3,
+                                          pr_nrborder =>  vr_nrborder,
+                                          pr_cdoperad =>  pr_cdoperad,
+                                          pr_cdcritic =>  vr_cdcritic,
+                                          pr_dscritic =>  vr_dscritic);
+        IF  vr_cdcritic > 0  OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+       /*INSERE OS TITULOS DO PONTEIRO vr_tab_dados_titulos*/
+      END IF;
+      -- P450 SPT13 - alteracao para habilitar rating novo
+
       vr_index:= pr_tab_dados_titulos.first;
       vr_idtabtitulo := 0;
       WHILE vr_index IS NOT NULL LOOP
@@ -6111,6 +6412,16 @@ EXCEPTION
     --  
     vr_idtabtitulo       INTEGER;
     vr_nrinssac            crapcob.nrinssac%TYPE;
+	
+    vr_qtcarpag  NUMBER;
+    vr_qttliqcp  NUMBER;
+    vr_vltliqcp  NUMBER;
+    vr_pcmxctip  NUMBER;
+    vr_qtmitdcl  INTEGER;
+    vr_vlmintcl  NUMBER;
+    vr_dtmvtolt_de crapdat.dtmvtolt%TYPE;
+    vr_dtmvtolt_ate crapdat.dtmvtolt%TYPE;
+	
     vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit;
     vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
     
@@ -6298,7 +6609,60 @@ EXCEPTION
        vr_liqgeral     NUMBER(25,2);
        
        vr_tab_chaves  gene0002.typ_split;
-  BEGIN 
+	   CURSOR cr_liquidez_pagador (pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE
+                                  ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
+                                  ,pr_vlmintcl     IN NUMBER   DEFAULT 0
+                                  ,pr_qtcarpag     IN NUMBER) IS
+         SELECT COUNT(1) AS qtd_titulos,
+                (SUM(CASE
+                         WHEN (dtdpagto IS NOT NULL AND nrdconta_tit IS NULL AND
+                              (dtdpagto <= (dtvencto + pr_qtcarpag))) THEN
+                          vltitulo
+                         ELSE
+                          0
+                       END) / SUM(vltitulo)) * 100 AS pc_cedpag
+           FROM (SELECT cob.dtdpagto,
+                        tit.nrdconta nrdconta_tit,
+                        cob.dtvencto,
+                        cob.vltitulo
+                   FROM crapcob cob -- Titulos do Bordero
+                  INNER JOIN crapceb ceb
+                     ON cob.cdcooper = ceb.cdcooper
+                    AND cob.nrdconta = ceb.nrdconta
+                    AND cob.nrcnvcob = ceb.nrconven
+                   LEFT JOIN craptit tit
+                     ON tit.cdcooper = cob.cdcooper
+                    AND tit.dtmvtolt = cob.dtdpagto
+                    AND tit.nrdconta = cob.nrdconta
+                    AND cob.nrdconta = substr(upper(tit.dscodbar), 26, 8)
+                    AND cob.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
+                    AND cob.nrdocmto = substr(upper(tit.dscodbar), 34, 9)
+                    AND tit.cdbandst = 85
+                    AND tit.cdagenci IN (90,91)
+                  WHERE cob.dtvencto  BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+                    AND cob.cdcooper = pr_cdcooper
+                    AND cob.nrdconta = pr_nrdconta
+                    AND cob.nrinssac = pr_nrinssac
+                    AND cob.vltitulo >= nvl(pr_vlmintcl,0)
+                    AND cob.cdbanpag = 85
+                  UNION ALL
+                 SELECT cob.dtdpagto,
+                        NULL nrdconta_tit,
+                        cob.dtvencto,
+                        cob.vltitulo
+                   FROM crapcob cob -- Titulos do Bordero
+                  INNER JOIN crapceb ceb
+                     ON cob.cdcooper = ceb.cdcooper
+                    AND cob.nrdconta = ceb.nrdconta
+                    AND cob.nrcnvcob = ceb.nrconven
+                  WHERE cob.dtvencto BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+                    AND cob.cdcooper = pr_cdcooper
+                    AND cob.nrdconta = pr_nrdconta
+                    AND cob.nrinssac = pr_nrinssac
+                    AND cob.vltitulo >= nvl(pr_vlmintcl,0)
+                    AND cob.cdbanpag <> 85);
+       rw_liquidez_pagador cr_liquidez_pagador%ROWTYPE;
+  BEGIN
        vr_tab_chaves := gene0002.fn_quebra_string(pr_string  => pr_chave,
                                                   pr_delimit => ';');
        
@@ -6330,7 +6694,44 @@ EXCEPTION
       pr_nrinssac:=rw_crapsab.nrinssac;
       pr_nmdsacad:=rw_crapsab.nmdsacad;
         CLOSE cr_crapsab;
+		
+      OPEN cr_crapass;
+      FETCH cr_crapass INTO rw_crapass;
+      DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
+                                         ,pr_cdagenci          => null -- Não utiliza dentro da procedure
+                                         ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
+                                         ,pr_cdoperad          => null -- Não utiliza dentro da procedure
+                                         ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
+                                         ,pr_idorigem          => null -- Não utiliza dentro da procedure
+                                         ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                         ,pr_inpessoa          => rw_crapass.inpessoa
+                                         ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
+                                         ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+                                         ,pr_cdcritic          => vr_cdcritic
+                                         ,pr_dscritic          => vr_dscritic);
+        
+      vr_qtcarpag  := vr_tab_dados_dsctit(1).cardbtit_c;
+      vr_qttliqcp  := vr_tab_dados_dsctit(1).qttliqcp;
+      vr_vltliqcp  := vr_tab_dados_dsctit(1).vltliqcp;
+      vr_pcmxctip  := vr_tab_dados_dsctit(1).pcmxctip;
+      vr_qtmitdcl  := vr_tab_dados_dsctit(1).qtmitdcl;
+      vr_vlmintcl  := vr_tab_dados_dsctit(1).vlmintcl;
+      vr_dtmvtolt_de := rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30;
+      vr_dtmvtolt_ate := rw_crapdat.dtmvtolt; 
       
+      OPEN cr_liquidez_pagador(pr_dtmvtolt_de  => vr_dtmvtolt_de
+                              ,pr_dtmvtolt_ate => vr_dtmvtolt_ate
+                              ,pr_vlmintcl     => vr_vlmintcl
+                              ,pr_qtcarpag     => vr_qtcarpag);
+      FETCH cr_liquidez_pagador INTO rw_liquidez_pagador;
+      CLOSE cr_liquidez_pagador;
+      
+      IF (rw_liquidez_pagador.qtd_titulos < vr_qtmitdcl OR (nvl(rw_liquidez_pagador.pc_cedpag,0) = 0 AND rw_liquidez_pagador.qtd_titulos = 0)) THEN
+        pr_tab_dados_detalhe(0).qtparcmi := 1; -- Nao atende o criterio de titulos (mostra "-" na tela)
+      ELSE
+        pr_tab_dados_detalhe(0).qtparcmi := 2;
+      END IF; 
+	  
       -- Caso o bordero esteja liberado ou liquidado, deve carregar as criticas da CRAPABT
       IF rw_crapbdt.insitbdt IN (3,4,5)  THEN -- liquidado ou liberado
         pr_tab_dados_detalhe(0).concpaga := '0';
@@ -6426,23 +6827,9 @@ EXCEPTION
                pr_tab_dados_biro(vr_idtabtitulo).dtultneg := rw_craprpf.dtultneg;
                vr_idtabtitulo := vr_idtabtitulo + 1;
         END LOOP;      
-      END IF; 
+      END IF;
       ELSE -- bordero ainda esta aberto
-        OPEN cr_crapass;
-        FETCH cr_crapass INTO rw_crapass;
-        DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
-                                   ,pr_cdagenci          => null -- Não utiliza dentro da procedure
-                                   ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
-                                   ,pr_cdoperad          => null -- Não utiliza dentro da procedure
-                                   ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
-                                   ,pr_idorigem          => null -- Não utiliza dentro da procedure
-                                   ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
-                                   ,pr_inpessoa          => rw_crapass.inpessoa
-                                   ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
-                                   ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
-                                   ,pr_cdcritic          => vr_cdcritic
-                                   ,pr_dscritic          => vr_dscritic);
-         
+
         --> DETALHES (BORDERO)
         open cr_crapcbd;
         fetch cr_crapcbd into rw_crapcbd;
@@ -6672,6 +7059,7 @@ EXCEPTION
                         '<liqpagcd>'  || vr_tab_dados_detalhe(0).liqpagcd || '</liqpagcd>'  ||
                         '<liqgeral>'  || vr_tab_dados_detalhe(0).liqgeral || '</liqgeral>' ||
                         '<dtreapro>'  || vr_tab_dados_detalhe(0).dtreapro || '</dtreapro>' || -- Marcelo Telles Coelho - Mouts - 25/04/2019 - RITM0050653
+                        '<qtparcmi>'  || vr_tab_dados_detalhe(0).qtparcmi || '</qtparcmi>' ||
                      '</detalhe>'
       );
           
@@ -7696,9 +8084,10 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
       vr_nrdcaixa varchar2(100);
       vr_idorigem varchar2(100);
       vr_inseriu boolean;
-      
-       --TAB
-       pr_tab_dados_dsctit cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052
+
+      vr_dslog        VARCHAR2(4000);
+      -- TAB
+      pr_tab_dados_dsctit cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052
        pr_tab_cecred_dsctit cecred.dsct0002.typ_tab_cecred_dsctit; -- retorno da TAB052
          
       vr_dtmvtopr DATE;
@@ -7969,7 +8358,9 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
             AND craplot.tplotmov = 34
             AND craplot.dtmvtolt = vr_dtmvtolt --Altera o lote apenas se a data de movimentacao seja a mesma do lote
         ;
-        
+
+        vr_dslog := pr_dtmvtolt || ' ' || ' Operador ' || vr_cdoperad || ' Alterou o bordero ' ||pr_nrborder ;
+
         vr_chave := replace(pr_chave,',',''',''');
         /*Remove títulos do bordero que foram removidos da tela de seleção de titulos na alteração*/
         vr_sql := 'SELECT cdcooper,nrdconta,nrcnvcob,nrdocmto FROM '||
@@ -9081,6 +9472,12 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
      vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
      vr_dscritic varchar2(1000);        --> Desc. Erro
 
+    -- Variáveis Rating
+    vr_insituacao_rating    integer;
+    vr_inorigem_rating      varchar(200);
+    vr_inrisco_rating_autom varchar(200);
+    
+    vr_habrat varchar(1) := 'N';
 
     BEGIN
       pr_des_erro := 'OK';
@@ -9096,6 +9493,10 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                               , pr_idorigem => vr_idorigem
                               , pr_cdoperad => vr_cdoperad
                               , pr_dscritic => vr_dscritic);
+
+      vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                             pr_cdcooper => vr_cdcooper,
+                                             pr_cdacesso => 'HABILITA_RATING_NOVO');
 
        pc_busca_borderos (pr_nrdconta,
                           vr_cdcooper,
@@ -9126,8 +9527,47 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
 
       vr_index := vr_tab_borderos.first;
       while vr_index is not null loop
-            pc_escreve_xml('<inf>'||
-                              '<dtmvtolt>'     || TO_CHAR(vr_tab_borderos(vr_index).dtmvtolt, 'DD/MM/RRRR')   || '</dtmvtolt>' ||
+            -- P450 SPT13 - alteracao para habilitar rating novo
+            IF (vr_cdcooper <> 3 AND vr_habrat = 'S') THEN
+              -- 24/05/2019 Consulta Rating --
+              rati0003.pc_retorna_inf_rating(vr_cdcooper,
+                                             pr_nrdconta,
+                                             91,
+                                             vr_tab_borderos(vr_index).nrborder,
+                                             ----OUT----
+                                             vr_insituacao_rating,
+                                             vr_inorigem_rating,
+                                             vr_inrisco_rating_autom,
+                                             vr_cdcritic,
+                                             vr_dscritic
+                                             );
+
+              pc_escreve_xml('<inf>'||
+                                '<dtmvtolt>'     || TO_CHAR(vr_tab_borderos(vr_index).dtmvtolt, 'DD/MM/RRRR')   || '</dtmvtolt>' ||
+                                '<nrborder>'     || vr_tab_borderos(vr_index).nrborder                          || '</nrborder>'          ||
+                                '<nrctrlim>'     || vr_tab_borderos(vr_index).nrctrlim                          || '</nrctrlim>' ||
+
+                                '<aux_qttottit>' || vr_tab_borderos(vr_index).aux_qttottit                      || '</aux_qttottit>' ||
+                                '<aux_vltottit>' || vr_tab_borderos(vr_index).aux_vltottit                      || '</aux_vltottit>' ||
+
+                                '<aux_qtsitapr>' || vr_tab_borderos(vr_index).aux_qtsitapr                      || '</aux_qtsitapr>' ||
+                                '<aux_vlsitapr>' || vr_tab_borderos(vr_index).aux_vlsitapr                      || '</aux_vlsitapr>' ||
+
+                                '<dssitbdt>'     || vr_tab_borderos(vr_index).dssitbdt                          || '</dssitbdt>' ||
+                                '<dsinsitapr>'   || vr_tab_borderos(vr_index).dsinsitapr                        || '</dsinsitapr>'  ||
+                                '<dtlibbdt>'     || TO_CHAR(vr_tab_borderos(vr_index).dtlibbdt, 'DD/MM/RRRR')   || '</dtlibbdt>'  ||
+                                '<inprejuz>'     || vr_tab_borderos(vr_index).inprejuz                          || '</inprejuz>'  ||
+
+                                '<inrisrat>'     || vr_inrisco_rating_autom                                     || '</inrisrat>'  ||
+                                '<origerat>'     || vr_inorigem_rating                                          || '</origerat>'  ||
+                             '</inf>'
+              );
+              vr_index := vr_tab_borderos.next(vr_index);
+              -- 24/05/2019 Consulta Rating --
+            ELSE
+
+              pc_escreve_xml('<inf>'||
+                                '<dtmvtolt>'     || TO_CHAR(vr_tab_borderos(vr_index).dtmvtolt, 'DD/MM/RRRR')   || '</dtmvtolt>' ||
                               '<nrborder>'     || vr_tab_borderos(vr_index).nrborder                          || '</nrborder>'          ||
                               '<nrctrlim>'     || vr_tab_borderos(vr_index).nrctrlim                          || '</nrctrlim>' ||
 
@@ -9143,8 +9583,11 @@ PROCEDURE pc_buscar_tit_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> N
                               '<inprejuz>'     || vr_tab_borderos(vr_index).inprejuz                          || '</inprejuz>'  ||
 
                            '</inf>'
-            );
-            vr_index := vr_tab_borderos.next(vr_index);
+              );
+              vr_index := vr_tab_borderos.next(vr_index);
+      END IF;
+      -- P450 SPT13 - alteracao para habilitar rating novo
+
       end loop;
 
       pc_escreve_xml ('</dados></root>',true);

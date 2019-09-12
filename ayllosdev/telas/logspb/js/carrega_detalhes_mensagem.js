@@ -90,7 +90,7 @@ function carregarTabelaLayout4(response){
 	//{cdfase: "20", nmfase: "Não utiliza OFSAA", datafase: "27-09-2018 13:28:11", xmlfase: Array(0)}
 	$('tr',tbody).remove(); //Remover itens antigos da tabela
 
-	var colunas = ['cdfase', 'nmfase', 'datafase', 'xmlfase'];
+	var colunas = ['cdfase', 'nmfase', 'dscompl', 'datafase', 'xmlfase'];
 
 	if(typeof layout4 == "undefined"){
 		$(tabela).hide();
@@ -162,7 +162,7 @@ function carregarTabelaLayout2(response){
 	}
 
 	/* se retornou mais de um registro */
-	var colunas = ['cdfase', 'nmfase', 'datafase', 'xmlfase'];
+	var colunas = ['cdfase', 'nmfase', 'dscompl', 'datafase', 'xmlfase'];
 	if(typeof layout2.item.length == "number"){
 		var itens = layout2.item;
 		for (var i = 0; i < itens.length; i++) {
@@ -206,6 +206,7 @@ function getLinhaLayout2(colunas, linha){
 		var coluna = colunas[i];
 		if(coluna == "xmlfase"){
 			if(linha[coluna] != ""){
+
 				//ATRIBUIR EVENTO DE ON CLICK PARA ABERTURA DO XML AQUI
 				var td = $('<td>',{
 					"class": 'colunaXML',

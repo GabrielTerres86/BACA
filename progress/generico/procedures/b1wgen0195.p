@@ -12,6 +12,10 @@
 
                14/12/2017 - SM Motor de Crédito - Interrupçao de Fluxo (Marcos-Supero)
 
+               15/05/2019 - Efetuar a chamada a rotina Oracle, para gravar o
+                            risco contingencia - P450 Rating
+                            (Luiz Otavio Olinger Momm - AMCOM)
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -290,7 +294,46 @@ PROCEDURE Enviar_proposta_esteira:
     IF par_cdcritic > 0 OR 
        par_dscritic <> "" THEN                       
     DO:       
-       RETURN "NOK".
+
+      /* Quando em contigencia a proposta deve ter rating para acessar a CMAPRV */
+      FIND FIRST crapass
+        WHERE crapass.cdcooper = par_cdcooper
+          AND crapass.nrdconta = par_nrdconta
+          NO-LOCK NO-ERROR.
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            
+      /* Efetuar a chamada a rotina Oracle, para gravar o risco contingencia -P450 Rating */
+      RUN STORED-PROCEDURE pc_solicitar_rating_motor
+        aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT par_cdcooper
+                              ,INPUT par_nrdconta
+                              ,INPUT 90               /* Tipo Contrato */                                         
+                              ,INPUT par_nrctremp     /* Tipo do contrato de rating */
+                              ,INPUT par_cdoperad     /* Codigo do operador */
+                              ,INPUT ?                /* Codigo da agencia */                                 
+                              ,INPUT par_dtmvtolt
+                              ,INPUT crapass.inpessoa /* Tipo de pessoa */  
+                              ,OUTPUT 0               /* pr_cdcritic */
+                              ,OUTPUT "").            /* pr_dscritic */  
+
+      /* Fechar o procedimento para buscarmos o resultado */ 
+      CLOSE STORED-PROC pc_solicitar_rating_motor
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+      ASSIGN aux_cdcritic  = 0
+             aux_dscritic  = ""
+             aux_cdcritic = pc_solicitar_rating_motor.pr_cdcritic
+                             WHEN pc_solicitar_rating_motor.pr_cdcritic <> ?
+             aux_dscritic = pc_solicitar_rating_motor.pr_dscritic
+                             WHEN pc_solicitar_rating_motor.pr_dscritic <> ?.
+
+      IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
+        RETURN "NOK".
+      END.
+      /* Quando em contigencia a proposta deve ter rating para acessar a CMAPRV */
+      RETURN "NOK".
     END.
     
     

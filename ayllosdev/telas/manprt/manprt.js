@@ -4,7 +4,13 @@
  * DATA CRIA��O : 13/03/2018
  * OBJETIVO     : Biblioteca de fun��es da tela MANPRT
  */
+/*!
+  16/04/2019 - INC0011935 - Melhorias diversas nos layouts de teds e conciliação:
+               - modal de conciliação arrastável e correção das colunas para não obstruir as caixas de seleção;
+               - aumentadas as alturas das listas de teds e modal de conciliação, reajustes das colunas (Carlos)
 
+  08/07/2019 - Alterações referetentes a RITM13002 (Daniel Lombardi - Mout'S)
+*/
 //Formul�rios e Tabela
 var frmCab = 'frmCab';
 var frmOpcao = 'frmOpcao';
@@ -608,14 +614,15 @@ function formataTabelaConciliacao() {
     var tabela = $('table', '#divRotina .divRegistros');
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '15px';
-    arrayLargura[1] = '230px';
+    arrayLargura[0] = '20px';
+    arrayLargura[1] = '210px';
     arrayLargura[2] = '120px';
     arrayLargura[3] = '80px';
     arrayLargura[4] = '80px';
     arrayLargura[5] = '65px';
     arrayLargura[6] = '80px';
     arrayLargura[7] = '80px';
+    arrayLargura[8] = '80px';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
@@ -626,6 +633,7 @@ function formataTabelaConciliacao() {
     arrayAlinha[5] = 'center';
     arrayAlinha[6] = 'center';
     arrayAlinha[7] = 'right';
+    arrayAlinha[8] = 'right';
 
     tabela.formataTabela([], arrayLargura, arrayAlinha, '');
 
@@ -639,27 +647,30 @@ function formataTabelaTeds() {
     var linha = $('table > tbody > tr', divRegistro);
 
     $('#' + frmTabela).css({ 'margin-top': '10px' });
-    divRegistro.css({ 'border': '1px solid #777', 'height': '130px'  });
+    divRegistro.css({ 'border': '1px solid #777', 'height': '300px', 'width' : '800px'  });
 
     var ordemInicial = new Array();
     //ordemInicial = [[0,0]];	
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '210px';
-    arrayLargura[1] = '120px';
-    arrayLargura[2] = '90px';
-    arrayLargura[3] = '80px';
-    arrayLargura[4] = '90px';
-    arrayLargura[5] = '50px';
+    arrayLargura[0] = '20px';
+    arrayLargura[1] = '232px';
+    arrayLargura[2] = '20px';
+    arrayLargura[3] = '120px';
+    arrayLargura[4] = '80px';
+    arrayLargura[5] = '100px';
+    arrayLargura[6] = '70px';
+    arrayLargura[7] = '55px';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
-    arrayAlinha[1] = 'center';
+    arrayAlinha[1] = 'left';
     arrayAlinha[2] = 'center';
     arrayAlinha[3] = 'center';
     arrayAlinha[4] = 'center';
-    arrayAlinha[5] = 'right';
-
+    arrayAlinha[5] = 'center';
+    arrayAlinha[6] = 'center';
+    arrayAlinha[7] = 'right';
 
     var metodoTabela = '';
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
@@ -707,6 +718,14 @@ function formataTabelaTeds() {
     $('li:eq(2)', linha5).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
     $('li:eq(3)', linha5).addClass('txtNormal');
 
+    // complemento linha 6
+    var linha6 = $('ul.complemento', '#linha6').css({ 'clear': 'both', 'border-top': '0', 'width': '99.5%' });
+
+    $('li:eq(0)', linha6).addClass('txtNormalBold').css({ 'width': '18%', 'text-align': 'right' });
+    $('li:eq(1)', linha6).addClass('txtNormal').css({ 'width': '48%' });
+    $('li:eq(2)', linha6).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
+    $('li:eq(3)', linha6).addClass('txtNormal');
+
     // seleciona o registro que � clicado
     $('table > tbody > tr', divRegistro).die("click").live("click", function () {
         selecionaTabela($(this));
@@ -729,30 +748,26 @@ function formataTabelaConciliacoes() {
     var linha = $('table > tbody > tr', divRegistro);
 
     $('#' + frmTabela).css({ 'margin-top': '10px' });
-    divRegistro.css({ 'border': '1px solid #777', 'height': '130px'  });
+    divRegistro.css({ 'border': '1px solid #777', 'height': '300px', 'width' : '800px'  });
 
     var ordemInicial = new Array();
     //ordemInicial = [[0,0]];	
 
     var arrayLargura = new Array();
-    arrayLargura[0] = '210px';
-    arrayLargura[1] = '60px';
-    arrayLargura[2] = '50px';
-    arrayLargura[3] = '65px';
-    arrayLargura[4] = '45px';
-    arrayLargura[5] = '70px';
-    arrayLargura[6] = '70px';
-    arrayLargura[7] = '60px';
+    arrayLargura[0] = '133px';
+    arrayLargura[1] = '276px';
+    arrayLargura[2] = '110px';
+    arrayLargura[3] = '50px';
+    arrayLargura[4] = '75px';
+    arrayLargura[5] = '75px';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
-    arrayAlinha[1] = 'right';
+    arrayAlinha[1] = 'center';
     arrayAlinha[2] = 'center';
     arrayAlinha[3] = 'center';
     arrayAlinha[4] = 'center';
     arrayAlinha[5] = 'center';
-    arrayAlinha[6] = 'right';
-    arrayAlinha[7] = 'center';
 
 
     var metodoTabela = '';
@@ -918,6 +933,9 @@ function selecionaTabela(tr) {
 		$('#vltitul', '.complemento').html(number_format($('#valortit', tr).val(), 2, ',', '.'));
 		$('#dtpagamento', '.complemento').html($('#dtmvtolt', tr).val());
 		$('#vlted', '.complemento').html(number_format($('#valorted', tr).val(), 2, ',', '.'));
+        $('#infted', '.complemento').html($('#infoteds', tr).val());
+		$('#inftedcomp', '.complemento').html($('#infotedscomp', tr).val());
+		$('#vltotconc', '.complemento').html(number_format($('#vlconctotal', tr).val(), 2, ',', '.'));
 	}
 
     return false;
@@ -985,7 +1003,7 @@ function abrirModalConciliacao() {
 
     var idlancto = $('#idlancto', '.complemento').val();
     var dtinicio = $('#dtrecebimento', '.complemento').html();
-    var vlrfinal = $('#vlted', '.complemento').html();
+    var vlrfinal = $('#vlTedTotal', '.complemento').html();
     var cartorio = $('#dscartorio', '.complemento').html();
 
     $.ajax({
@@ -993,7 +1011,7 @@ function abrirModalConciliacao() {
         dataType: 'html',
         url: UrlSite + 'telas/manprt/modal_conciliacao.php',
         data: {
-            idlancto: idlancto,
+            idlancto: idlancto,//idsTed[i]
             dtinicio: dtinicio,
             vlrfinal: vlrfinal,
             cartorio: cartorio,
@@ -1042,6 +1060,61 @@ function verificaCheckbox(elem, valorCheckbox) {
     }
 }
 
+function verificaCheckboxTed(elem, valorCheckbox, estado) {
+	
+	// ver estado clicado
+	var estadoClicado = estado;
+	//console.log('estadoClicado: ',estadoClicado); 
+	
+	// pegar valor atual
+	var estadoAtual = $('#estadoAtual','#frmTabela').val();
+	//console.log('estadoAtual: ',estadoAtual);
+	
+	var contaConf = $('#contaConferencia', '#frmTabela').val();
+	//console.log('contaConferencia: ', contaConf); 
+	
+	if(estadoAtual.length == 0){
+		$('#estadoAtual','#frmTabela').val(estadoClicado);
+		$('#contaConferencia', '#frmTabela').val(valorCheckbox)
+	}
+	
+	//compara o clicado com atual 
+	if(estadoAtual == estadoClicado && contaConf != valorCheckbox || estadoAtual == 0) {
+		//alert('igual');
+		var valorInput = $('#vlTedTotal').html() ? converteMoedaFloat($('#vlTedTotal').html()) : 0;
+		var totalConc = 0;
+
+		totalConc = $(elem).is(':checked') ? (valorInput + valorCheckbox) : (valorInput - valorCheckbox);
+		totalConc = totalConc.toFixed(2);
+
+		$('#vlTedTotal').html(number_format(totalConc, 2, ',', '.'));
+		
+	} else {
+		if(contaConf == valorCheckbox) {
+			$('#estadoAtual','#frmTabela').val('');
+			$('#vlTedTotal').html(number_format(valorInput, 2, ',', '.'));
+			desmarcarCheckboxes();
+			//alert('reset');
+		}else {
+			//alert('diferente');
+			showError('error', 'UF divergente da primeira TED selecionada.', 'Alerta - Ayllos');
+			$(elem).prop("checked", false)
+		}
+	}    
+}
+
+function desmarcarCheckboxes(){
+	$('#estadoAtual','#frmTabela').val('');
+	$(".marcar").each(
+		function() {
+			if ($(this).prop("checked")) {
+				$(this).prop("checked", false);
+				$('#vlTedTotal').html(number_format(0, 2, ',', '.'));
+			}
+        } 
+    )
+}
+
 function validaConciliacao() {
     //showConfirmacao('Confirma a concilia&ccedil;&atilde;o?', 'MANPRT', "pedeSenhaCoordenador(2, 'efetuaConciliacao();', 'fechaRotina($(\"#divRotina\"))')", 'estadoInicial();', 'sim.gif', 'nao.gif');
 	//pedeSenhaCoordenador(2, 'efetuaConciliacao();', 'fechaRotina($(\"#divRotina\"))')
@@ -1060,9 +1133,13 @@ function efetuaConciliacao() {
     showMsgAguardo('Aguarde, efetuando concilia&ccedil;&atilde;o...');
 
     var idsTitulo = [];
-    var idlancto = $('#idlancto', '.complemento').val();
     $('[name=idsTitulo]:checkbox:checked').each(function(i){
         idsTitulo[i] = $(this).val();
+    });
+    var idlancto = [];
+    $('[name=check]:checkbox:checked').each(function(i){
+        //idsTed[i] = $('#idlancto', '.complemento').val(); Antigo método
+        idlancto[i] = $('#idlancto', $(this).parent().parent()).val(); 
     });
 
     $.ajax({

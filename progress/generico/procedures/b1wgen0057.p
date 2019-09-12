@@ -908,6 +908,8 @@ PROCEDURE Valida_Dados:
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
+    DEF  BUFFER crabttl FOR crapttl.
+
     DEF VAR aux_nrcpfemp AS CHAR                                    NO-UNDO.
     
     ASSIGN
@@ -1005,6 +1007,17 @@ PROCEDURE Valida_Dados:
                    END.
 
             END.               
+       ELSE
+            DO:
+               IF  NOT CAN-FIND(crabttl WHERE crabttl.cdcooper = par_cdcooper AND
+                                              crabttl.nrdconta = par_nrctacje AND
+                                              crabttl.idseqttl = 1) THEN
+                   DO:
+                      /* Cooperado nao encontrado */
+                      ASSIGN aux_cdcritic = 9.
+                      LEAVE Valida.
+                   END.
+            END.
 
        /* escolaridade */
        IF  par_gresccje < 5 AND par_cdfrmttl <> 0 THEN

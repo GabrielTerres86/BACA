@@ -8,25 +8,30 @@
 	 Objetivo  : Mostrar opcao Borderos de descontos de cheques        
 	                                                                  	 
 	 Alterações: 11/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
-				
-				 18/11/2011 - Ajustes para nao mostrar botao quando nao tiver permissao (Jorge)
-				 
-				 10/08/2012 - Substituição do botão ANALISE por PRE-ANALISE (Lucas)
-				 
-				 02/01/2015 - Ajuste format nrborder. (Chamado 181988) - (Fabricio)
-				 
-				 16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
 
-				 23/03/2017 - Inclusao de botão Rejeitar.  Projeto 300 (Lombardi)
+                 18/11/2011 - Ajustes para nao mostrar botao quando nao tiver permissao (Jorge)
+			 
+                 10/08/2012 - Substituição do botão ANALISE por PRE-ANALISE (Lucas)
+
+                 02/01/2015 - Ajuste format nrborder. (Chamado 181988) - (Fabricio)
+
+                 16/12/2016 - Alterações Referentes ao projeto 300. (Reinert)
+
+                 23/03/2017 - Inclusao de botão Rejeitar.  Projeto 300 (Lombardi)
 
                  31/05/2017 - Ajuste para verificar se possui cheque custodiado
-                               no dia de hoje. 
-                               PRJ300- Desconto de cheque. (Odirlei-AMcom) 
+                              no dia de hoje. 
+                              PRJ300- Desconto de cheque. (Odirlei-AMcom) 
 							   
                  26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
-				 							    
 
-				 06/02/2018 - Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia. (Mateus Zimmermann - Mouts)
+                 06/02/2018 - Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia. (Mateus Zimmermann - Mouts)
+
+                 11/03/2019 - Adicionada coluna Rating dos Limites de Desconto de Cheque e de Desconto de Título (Luiz Otávio Olinger Momm - AMCOM)
+
+                 24/05/2019 - P450 - Removido mensageiria para pesquisa de rating por proposta e implementado no Progress e PLSQL
+                                     (Luiz Otávio Olinger Momm - AMCOM).
+
 	************************************************************************/
 	
 	session_start();
@@ -155,13 +160,17 @@
 					<th>Valor Aprovado</th>
 					<th>Situa&ccedil;&atilde;o</th>
 					<th>Data Libera&ccedil;&atilde;o</th>
+					<!-- 11/03/2019 -->
+					<th>Rating</th>
+					<!-- 11/03/2019 -->
                     <th style="display:none;" >Possui Cheque Custodiado hoje</th>
 				</tr>			
 			</thead>
 			<tbody>
 				<?  for ($i = 0; $i < $qtBorderos; $i++) { 								
 						$cor = "";
-						
+						$rating = $borderos[$i]->tags[12]->cdata;
+
 						$mtdClick = "selecionaBorderoCheques('".($i + 1)."','".$qtBorderos."','".$borderos[$i]->tags[1]->cdata."','".$borderos[$i]->tags[2]->cdata."','".$borderos[$i]->tags[7]->cdata."','".(trim($borderos[$i]->tags[5]->cdata) == "REJEITADO" ? 1 : 0)."','".$borderos[$i]->tags[11]->cdata."');";
 					?>
 					<tr id="trBordero<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
@@ -188,6 +197,17 @@
 							
 						<td><? echo $borderos[$i]->tags[5]->cdata; ?></td>
 						<td><? echo $borderos[$i]->tags[8]->cdata; ?></td>
+
+						<!-- 11/03/2019 -->
+						<td title="<?=$msgErro?>"><?
+						if (strlen($msgErro)) {
+							echo substr($msgErro, 0, 10) . '...'; 
+						} else {
+							echo $rating;
+						}
+						?></td>
+						<!-- 11/03/2019 -->
+
                         <td style="display:none;"> <? echo $borderos[$i]->tags[11]->cdata; ?></td>
 					</tr>							
 				<?} // Fim do for ?>			

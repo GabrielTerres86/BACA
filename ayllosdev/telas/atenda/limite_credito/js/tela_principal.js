@@ -1,10 +1,12 @@
 /**
  * Autor: Bruno Luiz Katzjarowski - Mout's
  * Data: 27/11/2018
- * Ultima alteração: 30/05/2019
+ * Ultima alteração: 14/05/2019
  * 
  * Alterações: 30/05/2019 - Ajuste no link do Digidoc para pegar usar o número conta e contrato 
  *                          formatados - PRJ 438 (Mateus Z / Mouts)
+ *
+ *             14/05/2019 - Adicionar novo rating - P450 no limite de crédito (Luiz Otávio Olinger Momm - AMCOM)
  * 
  */
 $(document).ready(function(){
@@ -33,7 +35,7 @@ function formatarTabela(){
         'width': '950px'
     });
     $('#divConteudoOpcao').css({
-        'width': '950px'
+        'width': '1100px'
     });
     $('.botao').css({
         'margin-top':'5px'
@@ -299,7 +301,9 @@ function getLarguraTabelaPrincipal(){
         '100px', //VLLIMITE -> Valor do Limite de Crédito
         '100px', //CDDLINHA -> Taxa
         '100px', //DTFIMVIG -> Vigência do Contrato
-        '100px'  //DTRENOVA -> Data da Renovação
+        '100px', //DTRENOVA -> Data da Renovação
+        '110px', //INSITLIM -> Situação
+        '60px'   //Nota Rating
         //'50px'  //INSITLIM -> Situação
     );
 }
@@ -317,7 +321,9 @@ function getAlinhamentoTabelaPrincipal(){
         'center', //CDDLINHA -> Taxa
         'center', //DTFIMVIG -> Vigência do Contrato
         'center', //DTRENOVA -> Data da Renovação
-        'center'  //INSITLIM -> Situação
+        'center',  //INSITLIM -> Situação
+        'center',  //pr_dsrisco_rating -> Nota Rating
+        'center'   //pr_origem_rating -> Retorno (Origem Rating)
     );
 }
 

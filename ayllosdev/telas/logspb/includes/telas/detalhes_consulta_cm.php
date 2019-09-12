@@ -80,6 +80,7 @@ Alterações:
 			<tr>
 				<th>Fase</th>
 				<th>Descri&ccedil;&atilde;o</th>
+				<th>Complemento/Explica&ccedil;&atilde;o</th>
 				<th>Data/Hora</th>
 				<th>Data XML</th>
 			</tr>
@@ -107,6 +108,7 @@ Alterações:
 			<tr>
 				<th>Fase</th>
 				<th>Descri&ccedil;&atilde;o</th>
+				<th>Complemento/Explica&ccedil;&atilde;o</th>
 				<th>Data/Hora</th>
 				<th>Data XML</th>
 			</tr>
