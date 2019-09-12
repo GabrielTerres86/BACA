@@ -175,6 +175,9 @@
 			   03/06/2019 - Retirada validação de bloqueio de conta. (RITM0019350 - Lombardi).
          
                21/08/2019 - Ajustado para nao bloquear mais a conta por tempo de alteraçao de senha. (INC0023036 - Lombardi)
+
+               22/07/2019 - Incluido validacao no permissoes-menu-mobile para menu 1004 
+                             Simulacao de emprestimo. (P438 Douglas Pagel - AMcom).
                
 ..............................................................................*/
 
@@ -3130,6 +3133,9 @@ PROCEDURE permissoes-menu-mobile:
     
     DEF VAR aux_dscctsal AS CHAR                                    NO-UNDO.
 
+    DEF VAR aux_flgsimul AS LOGI                                    NO-UNDO.
+    DEF VAR aux_desc_prm AS CHAR                                    NO-UNDO.
+
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-itens-menu.
@@ -3257,6 +3263,72 @@ PROCEDURE permissoes-menu-mobile:
     ELSE
       aux_flgresga = FALSE.
       
+    /* VERIFICAR SE A CONTA PERMITE SIMULAR E CONTRATAR EMPRESTIMOS */
+    ASSIGN aux_flgsimul =  FALSE.
+    
+    /* Verifica se o menu esta habilitado para a cooperativa */
+    
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+                
+    RUN STORED-PROCEDURE pc_param_sistema aux_handproc = PROC-HANDLE
+       (INPUT "CRED",           /* pr_nmsistem */
+        INPUT par_cdcooper,     /* pr_cdcooper */
+        INPUT "LIBERA_COOP_SIMULA_IB",  /* pr_cdacesso */
+        OUTPUT ""               /* pr_dsvlrprm */
+        ).
+
+    CLOSE STORED-PROCEDURE pc_param_sistema WHERE PROC-HANDLE = aux_handproc.
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_desc_prm = ""
+           aux_desc_prm = pc_param_sistema.pr_dsvlrprm 
+                          WHEN pc_param_sistema.pr_dsvlrprm <> ?. 
+    
+    /*Se a cooperativa pode exibir o menu*/
+    IF LOOKUP(STRING(par_cdcooper), aux_desc_prm, ";") > 0 THEN
+      DO:
+        /*Se NAO eh um operador*/
+        IF par_nrcpfope = ?  OR par_nrcpfope = 0 THEN
+          DO:
+            /*Se a conta tem permissao para o produto*/
+            { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
+                     
+            RUN STORED-PROCEDURE pc_valida_adesao_produto
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT par_cdcooper,
+                                         INPUT par_nrdconta,
+                                         INPUT 31,   /* EMPRESTIMO */
+                                         OUTPUT 0,   /* pr_cdcritic */
+                                         OUTPUT ""). /* pr_dscritic */
+                        
+            CLOSE STORED-PROC pc_valida_adesao_produto
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+             { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+             ASSIGN aux_cdcritic = 0
+                   aux_dscritic = ""
+                   aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
+                                      WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+                   aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                                      WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+            
+            IF  aux_cdcritic = 0 AND aux_dscritic = "" THEN
+              DO:
+                /*Verifica se eh PF e primeiro titular, ou PJ*/
+                IF AVAILABLE crapass THEN
+                  DO:
+                    IF ( (crapass.inpessoa = 1 AND par_idseqttl = 1) 
+                      OR (crapass.inpessoa = 2) ) THEN
+                      DO:
+                        /*Pode exibir o menu*/
+                        ASSIGN aux_flgsimul = TRUE.  
+                      END.
+                  END. 
+              END.
+          END.
+      END.
+    
+    /* FIM VERIFICAR SE A CONTA PERMITE SIMULAR E CONTRATAR EMPRESTIMOS */
+    
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 204. /*TRANSAÇOES PENDENTES*/
            tt-itens-menu-mobile.flcreate = aux_flgsittp.
@@ -3351,6 +3423,11 @@ PROCEDURE permissoes-menu-mobile:
         ASSIGN tt-itens-menu-mobile.flcreate = aux_flgresga.
       END.
 
+    FIND FIRST tt-itens-menu-mobile WHERE tt-itens-menu-mobile.cditemmn = 1004 EXCLUSIVE-LOCK NO-ERROR. /* SIMULACAO EMPRESTIMO*/
+    IF AVAILABLE tt-itens-menu-mobile THEN
+      DO:
+        ASSIGN tt-itens-menu-mobile.flcreate = aux_flgsimul.
+      END.
 
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -3396,7 +3473,7 @@ PROCEDURE permissoes-menu-mobile:
     IF aux_cdmodali = 2 THEN
       DO:
       
-        ASSIGN aux_dscctsal = "10,20,103,104,30,200,300,301,302,400,401,402,500,804,902,40,1001".
+        ASSIGN aux_dscctsal = "10,20,103,104,30,200,300,301,302,400,401,402,500,804,902,40,1001,1004".
 
         FOR EACH tt-itens-menu-mobile NO-LOCK:
           IF NOT CAN-DO(aux_dscctsal, STRING(tt-itens-menu-mobile.cditemmn)) THEN
