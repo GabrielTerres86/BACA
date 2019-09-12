@@ -35,7 +35,7 @@ declare
       from crapope t
      where cdcooper = pr_cdcooper
 --       and cddepart = pr_cddepart
-       AND t.cdoperad IN ('f0031090','f0030689','f0030517','f0031803','f0030688','f0030567','f0030539')
+       AND upper(t.cdoperad) IN ('F0031090','F0030689','F0030517','F0031803','F0030688','F0030567','F0030539')
        ;
   rw_crapope  cr_crapope%ROWTYPE;
   v_contcons  number := 0;
