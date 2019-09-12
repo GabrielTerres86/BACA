@@ -20,7 +20,9 @@ Begin EXECUTE IMMEDIATE '
    job_type => 'PLSQL_BLOCK',
    job_action          => '
   BEGIN
-     cecred.cheq0003.pc_imp_arq_abbc(pr_cooper => :pr_cooper);
+    cecred.cheq0003.pc_imp_arq_abbc(pr_cooper => 3);
+  EXCEPTION when others then
+     raise_application_error(-20001, ''Erro job CECRED.JBCHQ_PROCESSA_PROTOCOLO_ABBC ''|| sqlerrm);
   END;',
   start_date          => to_date('20-06-2019 00:00:00', 'dd-mm-yyyy hh24:mi:ss'),
   repeat_interval     => 'Freq=Minutely;Interval=15;ByDay=Mon, Tue, Wed, Thu, Fri;ByHour= 13, 14, 15, 16, 17, 18, 19, 20, 21, 22',
