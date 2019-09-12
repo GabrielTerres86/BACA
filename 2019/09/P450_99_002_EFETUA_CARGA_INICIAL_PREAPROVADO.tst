@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-138
+139
 /****************************************************************************************************************
 Função: Carga Inicial TBRISCO_OPERACAO - Atualização dos Pré-Aprovados com Rating de Contingência.
 Criação: Abril/2019
@@ -90,6 +90,7 @@ BEGIN
                                        ,pr_tpctrato       => rw_limite_pre_aprovado.tpctrato  --> Tipo do contrato de rating
                                        ,pr_nrctrato       => rw_limite_pre_aprovado.nrctremp  --> Número do contrato do rating
  
+                                       ,pr_ntrating       => vr_innivris  --> Nivel de Risco Rating EFETIVO
                                        ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
                                        ,pr_dtrataut       => rw_crapdat.dtmvtolt --> Data do Rating retornado do MOTOR
                                        ,pr_innivel_rating => 2 --> Classificacao do Nivel de Risco do Rating (1-Baixo/2-Medio/3-Alto)
