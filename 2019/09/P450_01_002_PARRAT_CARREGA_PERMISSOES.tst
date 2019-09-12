@@ -1,11 +1,8 @@
 PL/SQL Developer Test script 3.0
-147
+116
 /* Libera acesso a tela PARRAT para os operadores do  cdcooper = 3. */
 declare
   
-  -- INFORME CDCOOPER CURSOR cr_crapcop -- QUAIS COOPERATIVAS
-  -- INFORME cddepart CURSOR cr_crapdpo_consulta QUAIS grupos liberados para consulta
-  -- INFORME cddepart CURSOR cr_crapdpo_alterar QUAIS grupos liberados para Alteração e consultar 
   -- SIGLA_TELA := 'PARRAT'; 
   SIGLA_TELA VARCHAR2(100) := 'PARRAT';
   /****************************************/
@@ -35,55 +32,25 @@ declare
   cursor cr_crapope(pr_cdcooper in crapcop.cdcooper%TYPE,
                     pr_cddepart in crapope.cddepart%TYPE) is
     select cdoperad
-      from crapope
+      from crapope t
      where cdcooper = pr_cdcooper
-       and cddepart = pr_cddepart;
+--       and cddepart = pr_cddepart
+       AND t.cdoperad IN ('f0031090','f0030689','f0030517','f0031803','f0030688','f0030567','f0030539')
+       ;
   rw_crapope  cr_crapope%ROWTYPE;
   v_contcons  number := 0;
   v_contalter number := 0;
    
-begin
+BEGIN
+  
+  DELETE FROM crapace a  --CDCOOPER, UPPER(NMDATELA), UPPER(NMROTINA), UPPER(CDDOPCAO), UPPER(CDOPERAD), IDAMBACE
+        WHERE a.cdcooper = 3
+          AND UPPER(NMDATELA) = UPPER('PARRAT') 
+          AND UPPER(NMROTINA) = UPPER(' ');
+  COMMIT;
   --PARA CADA COOPERATIVA CADASTRADA
   FOR rw_crapcop IN cr_crapcop LOOP
   
-    -- busca os grupos definidos para acessar sistema para consulta 
-    for rw_crapdpo_consulta in cr_crapdpo_consulta(rw_crapcop.cdcooper) LOOP
-    
-      --FAZ O INSERT PARA OPERADORES DO GRUPOS APENAS  CONSULTAR
-      FOR rw_crapope IN cr_crapope(rw_crapcop.cdcooper,
-                                   rw_crapdpo_consulta.cddepart) LOOP
-        v_contcons := nvl(v_contcons,0) + 1;
-     begin
-        insert into crapace
-          (nmdatela,
-           cddopcao,
-           cdoperad,
-           nmrotina,
-           cdcooper,
-           nrmodulo,
-           idevento,
-           idambace)
-        values
-          (SIGLA_TELA,
-           'C',
-           rw_crapope.cdoperad,
-           ' ',
-           rw_crapcop.cdcooper,
-           8,
-           0,
-           2);
-      EXCEPTION
-      WHEN dup_val_on_index THEN
-        NULL;
-      end;
-      END LOOP; -- FIM CURSOR OPERADORES
-         dbms_output.put_line('Coop: '||rw_crapcop.cdcooper||'-'||rw_crapcop.NMRESCOP||' Concedido permissões Consulta grupo: '||rw_crapdpo_consulta.cddepart||' - '||rw_crapdpo_consulta.dsdepart||'. Totais de registros: '||v_contcons);
-    end loop; -- FIM GRUPO PARA CONSULTA 
-  
-    ------------------------------------------------------------------------
-    -- busca os grupos definidos para acessar sistema para alteração 
-    for rw_crapdpo_alterar in cr_crapdpo_alterar(rw_crapcop.cdcooper) LOOP
-    
       --faz o insert para operadores do grupo   consultar/ altearção 
       FOR rw_crapope IN cr_crapope(rw_crapcop.cdcooper,
                                    rw_crapdpo_alterar.cddepart) LOOP
@@ -111,6 +78,8 @@ begin
       WHEN dup_val_on_index THEN
         NULL;
       end;
+      
+      
       begin
         insert into crapace
           (nmdatela,
@@ -137,7 +106,7 @@ begin
       END LOOP; -- fim operadores
        
      dbms_output.put_line('Coop: '||rw_crapcop.cdcooper||'-'||rw_crapcop.NMRESCOP||' Concedido permissões Alteração/consulta grupo: '||rw_crapdpo_alterar.cddepart||' - '||rw_crapdpo_alterar.dsdepart||'. Totais de registros: '||v_contalter);
-    END LOOP;  -- fim grupos operadores
+
   END LOOP;    -- fim cooperativas
   COMMIT;
 
