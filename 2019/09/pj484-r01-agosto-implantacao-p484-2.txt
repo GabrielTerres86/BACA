@@ -35,7 +35,7 @@ SELECT grp.cdcooper
 
 begin
 
--- Gera log no inÌcio da execuÁ„o
+-- Gera log no in√≠cio da execu√ß√£o
 pc_log_programa(pr_dstiplog   => 'I'         
                ,pr_cdprograma => vr_cdprogra 
                ,pr_cdcooper   => 0
@@ -95,7 +95,7 @@ end;
 
 begin
 insert into tbgen_notif_msg_cadastro (CDMENSAGEM, CDORIGEM_MENSAGEM, DSTITULO_MENSAGEM, DSTEXTO_MENSAGEM, DSHTML_MENSAGEM, CDICONE, INEXIBIR_BANNER, NMIMAGEM_BANNER, INEXIBE_BOTAO_ACAO_MOBILE, DSTEXTO_BOTAO_ACAO_MOBILE, CDMENU_ACAO_MOBILE, DSLINK_ACAO_MOBILE, DSMENSAGEM_ACAO_MOBILE, DSPARAM_ACAO_MOBILE, INENVIAR_PUSH)
-values ((select (max(cdmensagem)+1) from tbgen_notif_msg_cadastro), vr_cdorigem_mensagem, 'Assembleias 2020', 'Dia #data ‡s #horario , #local , #endereco , #cidade', 
+values ((select (max(cdmensagem)+1) from tbgen_notif_msg_cadastro), vr_cdorigem_mensagem, 'Assembleias 2020', 'Dia #data √†s #horario , #local , #endereco , #cidade', 
 '<p>Ficou mais f&aacute;cil votar nas nossas Assembleias: o evento realizado na sua regi&atilde;o agora tem poder de decis&atilde;o. Venha, conhe&ccedil;a os resultados de 2019 e decida os pr&oacute;ximos passos da sua Cooperativa. Juntos vamos sempre mais longe.</p>
 <p><strong>Como voc&ecirc; transferiu sua conta para outro Posto de Atendimento, a data do evento teve altera&ccedil;&atilde;o. Confira a nova data:</strong></p>
 <p><strong>Dia:</strong> #data<br />
@@ -105,7 +105,7 @@ values ((select (max(cdmensagem)+1) from tbgen_notif_msg_cadastro), vr_cdorigem_
 <p>Essa &eacute; a data exclusiva para voce votar nas decis&otilde;es da Cooperativa.</p>
 <p><strong>Obs: </strong><strong>Se voc&ecirc; tiver alguma d&uacute;vida entre em contato conosco pelo SAC 0800 647 2200.</strong></p>
 <p>Aguardamos voc&ecirc; ;)</p>'
-, 11, 1, 'assembleias_2019_viacredi.jpg', 1, 'Saiba mais', null, 'http://www.aquivoceparticipa.coop.br/', 'VocÍ ser· redirecionado para fora do app.', null, 1)
+, 11, 1, 'assembleias_2019_viacredi.jpg', 1, 'Saiba mais', null, 'http://www.aquivoceparticipa.coop.br/', 'Voc√™ ser√° redirecionado para fora do app.', null, 1)
 returning cdmensagem  
      into vr_cdmensagem;
 exception
@@ -116,7 +116,7 @@ end;
 
 begin
 insert into tbgen_notif_automatica_prm (CDORIGEM_MENSAGEM, CDMOTIVO_MENSAGEM, DSMOTIVO_MENSAGEM, CDMENSAGEM, DSVARIAVEIS_MENSAGEM, INMENSAGEM_ATIVA, INTIPO_REPETICAO, NRDIAS_SEMANA, NRSEMANAS_REPETICAO, NRDIAS_MES, NRMESES_REPETICAO, HRENVIO_MENSAGEM, NMFUNCAO_CONTAS, DHULTIMA_EXECUCAO)
-values (vr_cdorigem_mensagem, 1, 'Troca de AgÍncia', vr_cdmensagem, '<br/>#data  - Data do evento (Ex: 20/02) <br/>#horario - Hor·rio do evento (Ex: 19:00)<br/>#local - Local do evento (Ex: Vila Germ‚nica)<br/>#endereco - EndereÁo do Evento (Ex: Rua XV de Novembro, 500)<br/>#cidade - Cidade do evento (Ex: Blumenau)', 1, 0, null, null, null, null, null, null, null);
+values (vr_cdorigem_mensagem, 1, 'Troca de Ag√™ncia', vr_cdmensagem, '<br/>#data  - Data do evento (Ex: 20/02) <br/>#horario - Hor√°rio do evento (Ex: 19:00)<br/>#local - Local do evento (Ex: Vila Germ√¢nica)<br/>#endereco - Endere√ßo do Evento (Ex: Rua XV de Novembro, 500)<br/>#cidade - Cidade do evento (Ex: Blumenau)', 1, 0, null, null, null, null, null, null, null);
 exception
 when others then
 vr_dscritic := 'Erro ao manipular tbgen_notif_automatica_prm(1): '||sqlerrm;
@@ -129,7 +129,7 @@ end;
 
 begin
 insert into tbgen_notif_msg_cadastro (CDMENSAGEM, CDORIGEM_MENSAGEM, DSTITULO_MENSAGEM, DSTEXTO_MENSAGEM, DSHTML_MENSAGEM, CDICONE, INEXIBIR_BANNER, NMIMAGEM_BANNER, INEXIBE_BOTAO_ACAO_MOBILE, DSTEXTO_BOTAO_ACAO_MOBILE, CDMENU_ACAO_MOBILE, DSLINK_ACAO_MOBILE, DSMENSAGEM_ACAO_MOBILE, DSPARAM_ACAO_MOBILE, INENVIAR_PUSH)
-values ((select (max(cdmensagem)+1) from tbgen_notif_msg_cadastro), vr_cdorigem_mensagem, 'Assembleias 2020', 'Dia #data ‡s #horario , #local , #endereco , #cidade', 
+values ((select (max(cdmensagem)+1) from tbgen_notif_msg_cadastro), vr_cdorigem_mensagem, 'Assembleias 2020', 'Dia #data √†s #horario , #local , #endereco , #cidade', 
 '<p>Ficou mais f&aacute;cil votar nas nossas Assembleias: o evento realizado na sua regi&atilde;o agora tem poder de decis&atilde;o. Venha, conhe&ccedil;a os resultados de 2019 e decida os pr&oacute;ximos passos da sua Cooperativa. Juntos vamos sempre mais longe.</p>
 <p><strong>Dia:</strong> #data<br />
 <strong>Hora:</strong> #horario<br />
@@ -138,7 +138,7 @@ values ((select (max(cdmensagem)+1) from tbgen_notif_msg_cadastro), vr_cdorigem_
 <p>Essa &eacute; a data exclusiva para voc&ecirc; votar nas decis&otilde;es da Cooperativa.</p>
 <p><strong>Obs: </strong><strong>Se voc&ecirc; tiver alguma d&uacute;vida entre em contato conosco pelo SAC 0800 647 2200.</strong></p>
 <p>Aguardamos voc&ecirc; ;)</p>'
-, 11, 1, 'assembleias_2019_viacredi.jpg', 1, 'Saiba mais', null, 'http://www.aquivoceparticipa.coop.br/', 'VocÍ ser· redirecionado para fora do app.', null, 1)
+, 11, 1, 'assembleias_2019_viacredi.jpg', 1, 'Saiba mais', null, 'http://www.aquivoceparticipa.coop.br/', 'Voc√™ ser√° redirecionado para fora do app.', null, 1)
 returning cdmensagem  
      into vr_cdmensagem;
 exception
@@ -149,7 +149,7 @@ end;
 
 begin
 insert into tbgen_notif_automatica_prm (CDORIGEM_MENSAGEM, CDMOTIVO_MENSAGEM, DSMOTIVO_MENSAGEM, CDMENSAGEM, DSVARIAVEIS_MENSAGEM, INMENSAGEM_ATIVA, INTIPO_REPETICAO, NRDIAS_SEMANA, NRSEMANAS_REPETICAO, NRDIAS_MES, NRMESES_REPETICAO, HRENVIO_MENSAGEM, NMFUNCAO_CONTAS, DHULTIMA_EXECUCAO)
-values (vr_cdorigem_mensagem, 2, 'Demiss„o de cooperado', vr_cdmensagem, '<br/>#data  - Data do evento (Ex: 20/02) <br/>#horario - Hor·rio do evento (Ex: 19:00)<br/>#local - Local do evento (Ex: Vila Germ‚nica)<br/>#endereco - EndereÁo do Evento (Ex: Rua XV de Novembro, 500)<br/>#cidade - Cidade do evento (Ex: Blumenau)', 1, 0, null, null, null, null, null, null, null);
+values (vr_cdorigem_mensagem, 2, 'Demiss√£o de cooperado', vr_cdmensagem, '<br/>#data  - Data do evento (Ex: 20/02) <br/>#horario - Hor√°rio do evento (Ex: 19:00)<br/>#local - Local do evento (Ex: Vila Germ√¢nica)<br/>#endereco - Endere√ßo do Evento (Ex: Rua XV de Novembro, 500)<br/>#cidade - Cidade do evento (Ex: Blumenau)', 1, 0, null, null, null, null, null, null, null);
 exception
 when others then
 vr_dscritic := 'Erro ao manipular tbgen_notif_automatica_prm(2): '||sqlerrm;
@@ -247,7 +247,7 @@ END LOOP;
 BEGIN
 UPDATE crapass t
 SET t.tpvincul = ' '
-WHERE t.tpvincul IN ('DT','DS','CD');   
+WHERE t.tpvincul IN ('DT','DS','CD','CL','CM','CS');   
 EXCEPTION
 WHEN OTHERS THEN
 vr_dscritic := 'Erro ao manipular crapass(1): '||sqlerrm;
@@ -255,7 +255,7 @@ raise vr_exc_erro;
 END;
 /* #################################### Rafael ##################################### */
 
--- Gera log no inÌcio da execuÁ„o
+-- Gera log no in√≠cio da execu√ß√£o
 pc_log_programa(pr_dstiplog   => 'F'         
                ,pr_cdprograma => vr_cdprogra 
                ,pr_cdcooper   => 0
@@ -265,7 +265,7 @@ pc_log_programa(pr_dstiplog   => 'F'
 
 dbms_output.put_line('Sucesso!');
 
---commit;
+commit;
 
 exception
   
@@ -275,7 +275,7 @@ rollback;
 
 dbms_output.put_line('Erro: '||vr_dscritic);
   
--- Gera log no inÌcio da execuÁ„o
+-- Gera log no in√≠cio da execu√ß√£o
 pc_log_programa(pr_dstiplog   => 'F'         
                ,pr_cdprograma => vr_cdprogra 
                ,pr_cdcooper   => 0
@@ -297,11 +297,11 @@ when others then
 
 rollback;
 
-vr_dscritic := 'Erro n„o tratado: '||sqlerrm||' '||vr_dscritic;
+vr_dscritic := 'Erro n√£o tratado: '||sqlerrm||' '||vr_dscritic;
 
 dbms_output.put_line('Erro: '||vr_dscritic);
   
--- Gera log no inÌcio da execuÁ„o
+-- Gera log no in√≠cio da execu√ß√£o
 pc_log_programa(pr_dstiplog   => 'F'         
                ,pr_cdprograma => vr_cdprogra 
                ,pr_cdcooper   => 0
