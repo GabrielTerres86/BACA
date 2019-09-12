@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-264
+262
 declare
   -- Non-scalar parameters require additional processing 
   vr_tab_dsdrisco         cecred.rati0001.typ_tab_dsdrisco;
@@ -29,7 +29,6 @@ declare
     SELECT c.cdcooper, d.dtmvtolt
       FROM crapcop c, crapdat d
      WHERE c.flgativo = 1
-       AND c.cdcooper = 11 -- REMOVER
        AND d.cdcooper = c.cdcooper
      ORDER BY c.cdcooper ;
   rw_cop  cr_cop%ROWTYPE;
@@ -263,7 +262,6 @@ BEGIN
                                                || vr_dslinha);
                                                
 end;
-
 8
 pr_cdcooper
 0
