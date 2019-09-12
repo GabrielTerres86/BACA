@@ -1819,8 +1819,6 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
           rw_crawepr.instatus := 2;
         END IF;
       END IF;
-      /*1-pre-aprovado, 2-analise manual, 3-nao conceder */
-      vr_obj_proposta.put('parecerPreAnalise', rw_crawepr.instatus);
     ELSE
       /* Zerado para CDC */
       vr_obj_proposta.put('parecerPreAnalise', 0);
