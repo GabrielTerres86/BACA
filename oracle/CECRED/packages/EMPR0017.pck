@@ -1553,7 +1553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      WHERE sim.cdcooper = pr_cdcooper
        AND sim.nrdconta = pr_nrdconta
        AND sim.nrsimula = pr_nrsimula
-       AND sim.cdorigem = 3;
+       AND sim.cdorigem in (3,10);
     rw_crapsim cr_crapsim%ROWTYPE;
     
     
@@ -1570,7 +1570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      WHERE sim.cdcooper = pr_cdcooper
        AND sim.nrdconta = pr_nrdconta
        AND sim.nrsimula = pr_nrsimula
-       AND sim.cdorigem = 3;
+       AND sim.cdorigem in (3,10);
      
      RETURN vr_count > 0;
   --/      
@@ -1614,18 +1614,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        RAISE vr_exc_erro;
      END IF;
      CLOSE cr_crawepr;
-     --
-     -- Se não tem simulação vinculada a proposta ou nao é origem 3 (IB), não permite gerar o CCB
-     IF NOT fn_simulacao_vinculada(rw_crawepr.cdcooper,rw_crawepr.nrdconta,nvl(rw_crawepr.nrsimula,0))
-       OR rw_crawepr.cdorigem <> 3 THEN
-        vr_dscritic := 'Impressão não disponível para este tipo de contrato!';
-       RAISE vr_exc_erro;
-     END IF;
-
+     
      OPEN cr_crapsim(rw_crawepr.cdcooper,rw_crawepr.nrdconta,rw_crawepr.nrsimula);
      FETCH cr_crapsim INTO rw_crapsim;
      CLOSE cr_crapsim;
-
+     
      OPEN cr_crapass(pr_cdcooper,pr_nrdconta);
      FETCH cr_crapass INTO rw_crapass;
      CLOSE cr_crapass;
@@ -1668,6 +1661,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      END IF;
      
      --
+     -- Se não tem simulação vinculada a proposta ou nao é origem 3 (IB), não permite gerar o CCB
+     IF NOT fn_simulacao_vinculada(rw_crawepr.cdcooper,rw_crawepr.nrdconta,nvl(rw_crawepr.nrsimula,0))
+       OR rw_crawepr.cdorigem not in (3,10) THEN
+        vr_dscritic := 'Impressão não disponível para este tipo de contrato!';
+       RAISE vr_exc_erro;
+     END IF;
+
      OPEN cr_crapass1(pr_cdcooper,pr_nrdconta);
      FETCH cr_crapass1 INTO rw_crapass1;
      CLOSE cr_crapass1;     
@@ -3925,7 +3925,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
             ( pr_situacao IS NULL )
           )
       AND nvl(wepr.nrsimula,0) > 0
-      AND wepr.cdorigem = pr_cdorigem 
+      AND ( ( pr_cdorigem in (3,10) AND wepr.cdorigem in (3,10) )
+          OR ( wepr.cdorigem = pr_cdorigem ) )
       AND wepr.dtrefatu >= ( dat.dtmvtolt - nvl(gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_DIAS_EXIBE_PROP_IB'), 0) )
       AND NOT EXISTS ( SELECT 1
                          FROM crapepr epr
@@ -5495,7 +5496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     END IF;
     --
     --/
-    IF pr_cdorigem = 3
+    IF pr_cdorigem in (3,10)
       THEN
         --/
         pc_valida_horario_ib(pr_cdcooper,vr_des_reto,vr_dscritic);
@@ -7158,8 +7159,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                             pr_dstransa => 'pc_solicita_contratacao_ib', 
                             pr_cdprogra => 'empr0017');
    
-   IF pr_cdorigem = 3
-     THEN
+   IF pr_cdorigem in (3,10) THEN
        --/
        empr0017.pc_valida_horario_ib(pr_cdcooper,vr_des_reto,vr_dscritic);
    END IF;    
