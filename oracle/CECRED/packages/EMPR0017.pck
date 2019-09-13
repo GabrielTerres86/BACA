@@ -2322,7 +2322,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   --/
   BEGIN
    
-     IF pr_vlemprst > pr_vlbem
+     IF pr_vlemprst < 100 THEN
+        vr_dscritic := 'O valor mínimo para contratação é de R$ 100,00.';
+        RETURN FALSE;      
+     ELSIF pr_vlemprst > pr_vlbem
        THEN
          vr_percent_solicit := ROUND((((pr_vlemprst / pr_vlbem)*100)-100),2);
          IF vr_percent_solicit > get_row_sub().pemax_autorizado
