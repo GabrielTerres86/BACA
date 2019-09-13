@@ -6405,7 +6405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
 
     IF trunc(rw_crawepr.dtdpagto) <= trunc(rw_crapdat.dtmvtolt)
       THEN
-        vr_dscritic := 'Sua proposta está com data de primeiro pagamento para '||fn_Data_soa(rw_crawepr.dtdpagto)||', por este motivo você deve realizar uma nova simulação.';
+        vr_dscritic := 'A proposta está com data de primeiro pagamento para '||fn_Data_soa(rw_crawepr.dtdpagto)||', realize uma nova simulação.';
         RAISE vr_exc_saida;
     END IF;
     --
