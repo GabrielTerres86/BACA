@@ -73,6 +73,7 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 051: [10/04/2018] Luis Fernando (Gft)	: Criada nova função getClassXml que devolve um objeto modificado do xmlFile fazendo algumas alterações em métodos para facilitar a construção
  * 052: [20/08/2018] Maykon (Envolti) : P442 - Criadas funcoes para Fipe, Aditiv e Manbem
  * 053: [16/10/2018] Bruno Luiz Katzjarowski (Mout's) : Criar rotina para detectar encode da string e converter para o encode da página
+ * 054: [05/09/2019] Adicionado um nó xmlInsere na mensageiria para ajudar na localização das chamadas - Luiz Otavio Olinger Momm - AMCOM
   */
 
 // Função para requisição de dados através de XML 
@@ -1785,8 +1786,7 @@ function mensageria($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci,$nrdcaixa, $
  */
 function xmlInsere($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci, $nrdcaixa, $idorigem, $cdoperad, $tag){
     global $glbvars;
-     
-	 //var_dump($glbvars);
+
     $novo = "<params>" .
                 "<nmprogra>" . $nmprogra . "</nmprogra>" .
                 "<nmeacao>"  . $nmeacao . "</nmeacao>" .
@@ -1795,16 +1795,17 @@ function xmlInsere($xml, $nmprogra, $nmeacao, $cdcooper, $cdagenci, $nrdcaixa, $
                 "<nrdcaixa>" . $nrdcaixa . "</nrdcaixa>" .
                 "<idorigem>" . $idorigem . "</idorigem>" .
                 "<cdoperad>" . $cdoperad . "</cdoperad>" .
+                "<filesphp>" . $_SERVER["SCRIPT_FILENAME"]  . "</filesphp>" .  // 054: [05/09/2019] AMCOM P450 - Melhorando a vida das pessoas
              "</params>";
     
     if(isset($glbvars["nmdatela"]) && isset($glbvars["telpermi"]) && $glbvars["nmdatela"] == $glbvars["telpermi"] && $glbvars["nmrotina"] == $glbvars["rotpermi"]){
-		
+
         $novo .= "<Permissao>" .
                     "<nmdatela>" . $glbvars["telpermi"] . "</nmdatela>" .
                     "<nmrotina>" . $glbvars["rotpermi"] . "</nmrotina>" .
                     "<cddopcao>" . $glbvars["opcpermi"] . "</cddopcao>" .
-                    "<idsistem>" . $glbvars["idsistem"] . "</idsistem>" .	
-                    "<inproces>" . $glbvars["inproces"] . "</inproces>" .			
+                    "<idsistem>" . $glbvars["idsistem"] . "</idsistem>" .
+                    "<inproces>" . $glbvars["inproces"] . "</inproces>" .
                     "<cdagecxa>" . $glbvars["cdagenci"] . "</cdagecxa>" .
                     "<nrdcaixa>" . $glbvars["nrdcaixa"] . "</nrdcaixa>" .
                     "<cdopecxa>" . $glbvars["cdoperad"] . "</cdopecxa>" .

@@ -1,4 +1,22 @@
 create or replace procedure cecred.pc_processa_majoracao(pr_skcarga in number) is
+  /* .............................................................................
+
+  Programa: pc_processa_majoracao                      
+  Sistema : 
+  Sigla   : CRED
+  Autor   : 
+  Data    :                                Ultima atualizacao:  20/08/2019
+
+  Dados referentes ao programa:
+
+  Frequencia: Diaria
+
+  
+  Objetivo  : 
+
+  Alteracoes: 20/08/2019 - P450 - Verifica se rating continua ao majorar via SAS
+                           Luiz Otavio Olinegr Momm (AMCOM)
+  ............................................................................. */
   vr_dserro varchar2(1000);
   vr_contador_rating number := 0;
 

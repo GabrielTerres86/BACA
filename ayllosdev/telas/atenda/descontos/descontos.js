@@ -68,6 +68,14 @@
 	         17/09/2018 - Inserção do campo de Acordo - Vitor S. Assanuma (GFT)
 
 	         20/09/2018 - Inserção do campo de Acordo - Vitor S. Assanuma (GFT)
+
+			     14/02/2019 - Adicionado na tabela divLimites e divPropostas as 3 novas colunas do crédito rating P450 (Luiz Otávio Olinger Momm - AMCOM)
+           
+           24/05/2019 - P450 - Removido mensageiria para pesquisa de rating por proposta (Luiz Otávio Olinger Momm - AMCOM).
+		       
+           09/07/2019 - PRJ 438 - Sprint 14 - Alterado layout da primeira tela de Inclusão/alteração/consulta (Dados do Limite) - Mateus Z (Mouts)
+			 
+           16/07/2019 - PRJ 438 - Sprint 16 - Removido a função 'acessaOpcaoAba' (Mateus Z / Mouts)
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -328,7 +336,7 @@ function formataLayout(nomeForm){
 				
 	}else if ( nomeForm == 'divBorderos' ){
 	
-		$('#'+nomeForm).css('width','785px');
+		$('#'+nomeForm).css('width','885px');
 	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
@@ -345,7 +353,8 @@ function formataLayout(nomeForm){
 		arrayLargura[4] = '80px';
 		arrayLargura[5] = '60px';
 		arrayLargura[6] = '80px';
-		arrayLargura[7] = '120px';
+		arrayLargura[7] = '80px';
+		arrayLargura[8] = '120px';
 		
 				
 		var arrayAlinha = new Array();
@@ -358,6 +367,7 @@ function formataLayout(nomeForm){
 		arrayAlinha[6] = 'right';
 		arrayAlinha[7] = 'center';
 		arrayAlinha[8] = 'center';
+		arrayAlinha[9] = 'center';
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
@@ -371,7 +381,6 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'divBorderosTitulos' ){
 	
-	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
 						
@@ -379,8 +388,8 @@ function formataLayout(nomeForm){
 		
 		var ordemInicial = new Array();
 				
-		if(flgverbor){ 
-			$('#'+nomeForm).css('width','945px');
+		if(flgverbor){
+			$('#'+nomeForm).css('width','1005px');
 			var arrayLargura = new Array();
 			arrayLargura[0] = '60px';
 			arrayLargura[1] = '60px';
@@ -389,9 +398,10 @@ function formataLayout(nomeForm){
 			arrayLargura[4] = '60px';
 			arrayLargura[5] = '60px';
 			arrayLargura[6] = '80px';
-			arrayLargura[7] = '120px';
-			arrayLargura[8] = '';
-			arrayLargura[9] = '65px';
+			arrayLargura[7] = '110px';
+			arrayLargura[8] = '110px';
+			arrayLargura[9] = '110px';
+			arrayLargura[10] = '';
 			
 					
 			var arrayAlinha = new Array();
@@ -405,6 +415,7 @@ function formataLayout(nomeForm){
 			arrayAlinha[7] = 'center';
 			arrayAlinha[8] = 'center';
 			arrayAlinha[9] = 'center';
+			arrayAlinha[10] = 'center';
 		}
 		else{
 			$('#'+nomeForm).css('width','745px');
@@ -413,8 +424,10 @@ function formataLayout(nomeForm){
 			arrayLargura[1] = '80px';
 			arrayLargura[2] = '80px';
 			arrayLargura[3] = '70px';
-			arrayLargura[4] = '140px';
-			arrayLargura[5] = '';
+			arrayLargura[4] = '100px';
+			arrayLargura[5] = '120px';
+			arrayLargura[6] = '80px';
+			arrayLargura[7] = '';
 					
 			var arrayAlinha = new Array();
 			arrayAlinha[0] = 'center';
@@ -423,6 +436,8 @@ function formataLayout(nomeForm){
 			arrayAlinha[3] = 'right';
 			arrayAlinha[4] = 'right';
 			arrayAlinha[5] = 'center';
+			arrayAlinha[6] = 'center';
+			arrayAlinha[7] = 'center';
 		}
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
@@ -441,7 +456,7 @@ function formataLayout(nomeForm){
 		var arrayLargura = new Array();
 
 		$('#'+nomeForm).css('width','700px');
-	    divRegistro.css({'height': '255px', 'padding-bottom': '2px'});
+	    divRegistro.css({'height': '210px', 'padding-bottom': '2px'});
 
 		arrayLargura[0] = '60px'; // Contrato
 		arrayLargura[1] = '80px'; // Dt Ini
@@ -449,8 +464,9 @@ function formataLayout(nomeForm){
 		arrayLargura[3] = '80px'; // Vl Limite
 		arrayLargura[4] = '80px'; // Situacao
 		arrayLargura[5] = '80px'; // Dt Situacao
-		//arrayLargura[5] = '80px'; // Motivo
-		
+		arrayLargura[6] = '80px'; // Dt Situacao
+		arrayLargura[7] = '80px'; // Dt Situacao
+		arrayLargura[8] = '80px'; // Dt Cancelamento
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
@@ -501,7 +517,6 @@ function formataLayout(nomeForm){
 		arrayAlinha[7] = 'center';
 		arrayAlinha[8] = 'center';
 		arrayAlinha[9] = 'center';
-		arrayAlinha[10] = 'center';
 		
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 
@@ -720,48 +735,56 @@ function formataLayout(nomeForm){
 			
 	}else if ( nomeForm == 'divPropostas' ){
 
-			
-		$('#'+nomeForm).css('width','860px');
-	
-		var divRegistro = $('div.divRegistros','#'+nomeForm);		
-		var tabela      = $('table', divRegistro );	
-						
+		$('#'+nomeForm).css('width','1030px');
+
+		var divRegistro = $('div.divRegistros','#'+nomeForm);
+		var tabela      = $('table', divRegistro );
+
 		divRegistro.css('height','135px');
-		
+
 		var ordemInicial = new Array();
-				
+
 		var arrayLargura = new Array();
 
-		arrayLargura[0] = '80px';
-		arrayLargura[1] = '60px';
-		arrayLargura[2] = '60px';
-		arrayLargura[3] = '80px';
-		arrayLargura[4] = '60px';
-		arrayLargura[5] = '60px';
-		arrayLargura[6] = '100px';
-		arrayLargura[7] = '110px';
-		//arrayLargura[8] = '120px';	//não descomentar essa linha pois desalinha as colunas
-				
+		arrayLargura[0]  = '75px'; // data proposta
+		arrayLargura[1]  = '75px'; // contrato
+		arrayLargura[2]  = '75px'; // proposta
+		arrayLargura[3]  = '90px'; // valor
+		arrayLargura[4]  = '40px'; // dias vigência
+		arrayLargura[5]  = '40px'; // linha desconto
+		arrayLargura[6]  = '100px'; // situação proposta
+		arrayLargura[7]  = '130px'; // situação análise
+		arrayLargura[8]  = '130px'; // decisão
+		// [14/02/2019]
+		arrayLargura[9]  = '60px'; // nota rating
+		// arrayLargura[10] = '60px'; // origem
+		// [14/02/2019]
+
 		var arrayAlinha = new Array();
-		
+
 		arrayAlinha[0] = 'center';
 		arrayAlinha[1] = 'center';
 		arrayAlinha[2] = 'center';
-		arrayAlinha[3] = 'right';
-		arrayAlinha[4] = 'right';
+		arrayAlinha[3] = 'center';
+		arrayAlinha[4] = 'center';
 		arrayAlinha[5] = 'center';
 		arrayAlinha[6] = 'center';
 		arrayAlinha[7] = 'center';
 		arrayAlinha[8] = 'center';
-						
+        
+		// [14/02/2019]
+		arrayAlinha[9] = 'center';
+		arrayAlinha[10] = 'center';
+		// [14/02/2019]
+
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
-		
+
 		$('tbody > tr',tabela).each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
-				$(this).focus();		
+				$(this).focus();
 			}
 		});
-	
+
 		ajustarCentralizacao();
 
 	}else if ( nomeForm == 'divContratos' ){
@@ -806,25 +829,27 @@ function formataLayout(nomeForm){
 		ajustarCentralizacao();
 
 	}else if( nomeForm == 'divLimites' ){
-				
+
 		$('#'+nomeForm).css('width','800px');
-	
-		var divRegistro = $('div.divRegistros','#'+nomeForm);		
+
+		var divRegistro = $('div.divRegistros','#'+nomeForm);
 		var tabela      = $('table', divRegistro );
-						
+
 		divRegistro.css('height','135px');
 		
 		var ordemInicial = new Array();
-				
+
 		var arrayLargura = new Array();
 		arrayLargura[0] = '60px';
 		arrayLargura[1] = '60px';
 		arrayLargura[2] = '60px';
 		arrayLargura[3] = '80px';
-		arrayLargura[4] = '60px';
-		arrayLargura[5] = '60px';
-		arrayLargura[6] = '120px';
-				
+		arrayLargura[4] = '40px';
+		arrayLargura[5] = '40px';
+		arrayLargura[6] = '90px';
+		arrayLargura[7] = '80px';
+		arrayLargura[8] = '50px';
+
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
 		arrayAlinha[1] = 'center';
@@ -834,105 +859,50 @@ function formataLayout(nomeForm){
 		arrayAlinha[5] = 'center';
 		arrayAlinha[6] = 'center';
 		arrayAlinha[7] = 'center';
-						
+		arrayAlinha[8] = 'center';
+		arrayAlinha[9] = 'center';
+
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
 		$('tbody > tr',tabela).each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
-				$(this).focus();		
+				$(this).focus();
 			}
 		});
 	
 		ajustarCentralizacao();
 		
-	}else if ( nomeForm == 'frmDadosLimiteDscChq' || nomeForm == 'frmDadosLimiteDscTit'){
-	
+    }else if ( nomeForm == 'frmDadosLimiteDscChq' ){
+        var Lnivrisco = $('label[for="nivrisco"]','#'+nomeForm);
 		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
 		var Lvllimite = $('label[for="vllimite"]','#'+nomeForm);
-		var Lqtdiavig = $('label[for="qtdiavig"]','#'+nomeForm);
 		var Lcddlinha = $('label[for="cddlinha"]','#'+nomeForm);
-		
+        var Ltxmensal = $('label[for="txmensal"]','#'+nomeForm);
+        var Ldtcancel = $('label[for="dtcancel"]','#'+nomeForm);
+        var Cnivrisco = $('#nivrisco','#'+nomeForm);
 		var Cnrctrlim = $('#nrctrlim','#'+nomeForm);
 		var Cvllimite = $('#vllimite','#'+nomeForm);
-		var Cqtdiavig = $('#qtdiavig','#'+nomeForm);
 		var Ccddlinha = $('#cddlinha','#'+nomeForm);
 		var Ccddlinh2 = $('#cddlinh2','#'+nomeForm);
-		
-		
-		var Ltxjurmor = $('label[for="txjurmor"]','#'+nomeForm);
-		var Ltxdmulta = $('label[for="txdmulta"]','#'+nomeForm);
-		var Ldsramati = $('label[for="dsramati"]','#'+nomeForm);
-		var Lvlmedtit = $('label[for="vlmedtit"]','#'+nomeForm);
-		var Lvlfatura = $('label[for="vlfatura"]','#'+nomeForm);
-		var Ldtcancel = $('label[for="dtcancel"]','#'+nomeForm);
-		
-		var Ctxjurmor = $('#txjurmor','#'+nomeForm);
-		var Ctxdmulta = $('#txdmulta','#'+nomeForm);
-		var Cdsramati = $('#dsramati','#'+nomeForm);
-		var Cvlmedtit = $('#vlmedtit','#'+nomeForm);
-		var Cvlfatura = $('#vlfatura','#'+nomeForm);
-		var Cdtcancel = $('#dtcancel','#'+nomeForm);
-
-		
-		var Llbrendas = $('label[for="lbrendas"]','#'+nomeForm);
-		var Lvlsalari = $('label[for="vlsalari"]','#'+nomeForm);
-		var Lvlsalcon = $('label[for="vlsalcon"]','#'+nomeForm);
-		var Lvloutras = $('label[for="vloutras"]','#'+nomeForm);
-		var Ldsdbens1 = $('label[for="dsdbens1"]','#'+nomeForm);
-		var Ldsdbens2 = $('label[for="dsdbens2"]','#'+nomeForm);
-				
-		var Cvlsalari = $('#vlsalari','#'+nomeForm);
-		var Cvlsalcon = $('#vlsalcon','#'+nomeForm);
-		var Cvloutras = $('#vloutras','#'+nomeForm);
-		var Cdsdbens1 = $('#dsdbens1','#'+nomeForm);
-		var Cdsdbens2 = $('#dsdbens2','#'+nomeForm);
-
-		
+        var Ctxmensal = $('#txmensal','#'+nomeForm);
+        var Cdtcancel = $('#dtcancel','#'+nomeForm);
 		var Ldsobserv = $('label[for="dsobserv"]','#'+nomeForm);
 		var Cdsobserv = $('#dsobserv','#'+nomeForm);
-		
 		$('#'+nomeForm).css('width','515px');
-		
-		Lnrctrlim.addClass('rotulo').css('width','150px');
-		Lvllimite.addClass('rotulo').css('width','150px');
-		Lqtdiavig.css('width','130px');
-		Lcddlinha.addClass('rotulo').css('width','150px');
-		Ltxjurmor.addClass('rotulo').css('width','150px');
-		Ltxdmulta.addClass('rotulo').css('width','150px');
-		Ldsramati.addClass('rotulo').css('width','150px');
-		Lvlmedtit.addClass('rotulo').css('width','150px');
-		Lvlfatura.addClass('rotulo').css('width','150px');
-		Ldtcancel.css('width','130px');
-		
+        Lnivrisco.addClass('rotulo').css('width','220px');
+        Lnrctrlim.addClass('rotulo').css('width','220px');
+        Lvllimite.addClass('rotulo').css('width','220px');
+        Lcddlinha.addClass('rotulo').css('width','220px');
+        Ltxmensal.addClass('rotulo').css('width','220px');
+        Ldtcancel.addClass('rotulo').css('width','220px');
+        Cnivrisco.css({'width':'100px'});
 		Cnrctrlim.css({'width':'100px','text-align':'right'});
 		Cvllimite.css({'width':'100px','text-align':'right'});
-		Cqtdiavig.css({'width':'65px','text-align':'right'});
 		Ccddlinha.css({'width':'40px','text-align':'right'});
-		Ccddlinh2.css({'width':'255px'});
-		Ctxjurmor.css({'width':'100px','text-align':'right'});
-		Ctxdmulta.css({'width':'100px','text-align':'right'});
-		Cdsramati.css({'width':'300px'});
-		Cvlmedtit.css({'width':'100px','text-align':'right'});
-		Cvlfatura.css({'width':'100px','text-align':'right'});
-		Cdtcancel.css({'width':'65px'});
-		
-		
-		Llbrendas.addClass('rotulo').css('width','80px');
-		Lvlsalari.css('width','50px');
-		Lvlsalcon.addClass('rotulo-linha');
-		Lvloutras.addClass('rotulo').css('width','130px');
-		Ldsdbens1.addClass('rotulo').css('width','80px');
-		Ldsdbens2.addClass('rotulo').css('width','80px');
-			
-		Cvlsalari.css({'width':'100px','text-align':'right'});
-		Cvlsalcon.css({'width':'100px','text-align':'right'});
-		Cvloutras.css({'width':'100px','text-align':'right'});
-		Cdsdbens1.css({'width':'350px','text-align':'left'});
-		Cdsdbens2.css({'width':'350px','text-align':'left'});
-							
+        Ccddlinh2.css({'width':'185px'});
+        Ctxmensal.css({'width':'65px','text-align':'right'});
+        Cdtcancel.css({'width':'65px'});
 		Cdsobserv.addClass('alphanum').css({'width':'485px','height':'80px','float':'left','margin':'3px 0px 3px 3px','padding-right':'1px'});
-		
-		
 		Cnrctrlim.unbind('keypress').bind('keypress', function(e){
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
@@ -946,46 +916,56 @@ function formataLayout(nomeForm){
 				Ccddlinha.focus();
 			}
 		});
+	}else if (nomeForm == 'frmDadosLimiteDscTit'){
+		var Lnivrisco = $('label[for="nivrisco"]','#'+nomeForm);
+		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
+		var Lvllimite = $('label[for="vllimite"]','#'+nomeForm);
+		var Lcddlinha = $('label[for="cddlinha"]','#'+nomeForm);
+		var Ltxmensal = $('label[for="txmensal"]','#'+nomeForm);
+		var Ldtcancel = $('label[for="dtcancel"]','#'+nomeForm);
 		
-		Cdsramati.unbind('keypress').bind('keypress', function(e){
+		var Cnivrisco = $('#nivrisco','#'+nomeForm);
+		var Cnrctrlim = $('#nrctrlim','#'+nomeForm);
+		var Cvllimite = $('#vllimite','#'+nomeForm);
+		var Ccddlinha = $('#cddlinha','#'+nomeForm);
+		var Ccddlinh2 = $('#cddlinh2','#'+nomeForm);
+		var Ctxmensal = $('#txmensal','#'+nomeForm);
+		var Cdtcancel = $('#dtcancel','#'+nomeForm);
+		
+		
+		var Ldsobserv = $('label[for="dsobserv"]','#'+nomeForm);
+		var Cdsobserv = $('#dsobserv','#'+nomeForm);
+		$('#'+nomeForm).css('width','515px');
+		Lnivrisco.addClass('rotulo').css('width','220px');
+		Lnrctrlim.addClass('rotulo').css('width','220px');
+		Lvllimite.addClass('rotulo').css('width','220px');
+		Lcddlinha.addClass('rotulo').css('width','220px');
+		Ltxmensal.addClass('rotulo').css('width','220px');
+		Ldtcancel.addClass('rotulo').css('width','220px');
+		Cnivrisco.css({'width':'100px'});
+		Cnrctrlim.css({'width':'100px','text-align':'right'});
+		Cvllimite.css({'width':'100px','text-align':'right'});
+		Ccddlinha.css({'width':'40px','text-align':'right'});
+		Ccddlinh2.css({'width':'185px'});
+		Ctxmensal.css({'width':'65px','text-align':'right'});
+		Cdtcancel.css({'width':'65px'});
+		Cdsobserv.addClass('alphanum').css({'width':'485px','height':'80px','float':'left','margin':'3px 0px 3px 3px','padding-right':'1px'});
+		Cnrctrlim.unbind('keypress').bind('keypress', function(e){
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-				Cvlmedtit.focus();
+				Cvllimite.focus();
 			}
 		});
-		
-		Cvlmedtit.unbind('keypress').bind('keypress', function(e){
+		Cvllimite.unbind('keypress').bind('keypress', function(e){
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-				Cvlfatura.focus();
-			}
-		});
+				Ccddlinha.focus();
 		
-		Cvlsalari.unbind('keypress').bind('keypress', function(e){
-			/*Se foi pressionado a telca ENTER*/
-			if(e.keyCode == 13){
-				Cvlsalcon.focus();
-			}
-		});
 		
-		Cvlsalcon.unbind('keypress').bind('keypress', function(e){
-			/*Se foi pressionado a telca ENTER*/
-			if(e.keyCode == 13){
-				Cvloutras.focus();
-			}
-		});
 		
-		Cvloutras.unbind('keypress').bind('keypress', function(e){
-			/*Se foi pressionado a telca ENTER*/
-			if(e.keyCode == 13){
-					Cdsdbens1.focus();
-			}
-		});
 		
-		Cdsdbens1.unbind('keypress').bind('keypress', function(e){
-			/*Se foi pressionado a telca ENTER*/
-			if(e.keyCode == 13){
-					Cdsdbens2.focus();
+		
+		
 			}
 		});
 		
@@ -1937,11 +1917,11 @@ function formataCampoCmc7(exitCampo, nomeForm){
 
 function formataTabelaEmiten(){
 	// Tabela
-    var divRegistro = $('div.divRegistros', '#divEmiten');
+	var divRegistro = $('div.divRegistros', '#divEmiten');
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 	
-    $('#divEmiten').css({'margin-top':'5px'});
+	$('#divEmiten').css({'margin-top':'5px'});
 //	divRegistro.css({'height':'305px','width':'1000px','padding-bottom':'2px'});
 
 	var ordemInicial = new Array();
@@ -1953,10 +1933,10 @@ function formataTabelaEmiten(){
 	arrayLargura[3] = '150px';
 	arrayLargura[4] = '350px';
 	
-    var arrayAlinha = new Array();
+	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'right';
 	arrayAlinha[1] = 'right';
-    arrayAlinha[2] = 'right';
+	arrayAlinha[2] = 'right';
 	arrayAlinha[3] = 'center';
 	arrayAlinha[4] = 'center';
 	arrayAlinha[5] = 'left';
@@ -1965,69 +1945,8 @@ function formataTabelaEmiten(){
 	return false;
 }
 
-function acessaOpcaoAba(id){
-	var nrOpcoes = 2;
-    showMsgAguardo("Aguarde, carregando dados do t&iacute;tulo ...");
 
-    // Atribui cor de destaque para aba da opção
-	nrOpcoes = nrOpcoes + 1;
-	for (var i = 0; i < nrOpcoes; i++) {
-		if (id == i) { // Atribui estilos para foco da opção
-			$("#linkAba" + id).attr("class","txtBrancoBold");
-			$("#imgAbaEsq" + id).attr("src",UrlImagens + "background/mnu_sle.gif");				
-			$("#imgAbaDir" + id).attr("src",UrlImagens + "background/mnu_sld.gif");
-			$("#imgAbaCen" + id).css("background-color","#969FA9");
-			continue;			
-		}
 		
-		$("#linkAba" + i).attr("class","txtNormalBold");
-		$("#imgAbaEsq" + i).attr("src",UrlImagens + "background/mnu_nle.gif");			
-		$("#imgAbaDir" + i).attr("src",UrlImagens + "background/mnu_nld.gif");
-		$("#imgAbaCen" + i).css("background-color","#C6C8CA");
-	}
 
-    if (id == 0){
-        $.ajax({
-            type: "POST",
-            url: UrlSite + "telas/atenda/descontos/titulos/titulos.php",
-            dataType: "html",
-            data: {
-                nrdconta: nrdconta,
-                cdproduto: cdproduto,
-                executandoProdutos: executandoProdutos,
-                redirect: "html_ajax"
-            },      
-            error: function(objAjax,responseError,objExcept) {
-                hideMsgAguardo();
-                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-            },
-            success: function(response) {
-                $("#divConteudoTab").html(response);
-            }               
-        });
-        return false;
-    }else if (id == 1){
-    	var nrctrlim = $("#frmTitulos #nrctrlim").val();
-    	$.ajax({
-            type: "POST",
-            url: UrlSite + "telas/atenda/descontos/titulos/titulos_historico.php",
-            dataType: "html",
-            data: {
-                nrdconta: nrdconta,
-                nrctrlim: nrctrlim,
-                redirect: "html_ajax"
-            },      
-            error: function(objAjax,responseError,objExcept) {
-                hideMsgAguardo();
-                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-            },
-            success: function(response) {
-                $("#divConteudoTab").html(response);
-            }               
-        });
-        return false;
-	}else{
-    	hideMsgAguardo();
-        showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Aimaro","blockBackground(parseInt($('#divRotina').css('z-index')))");
-    }
-}
+
+		

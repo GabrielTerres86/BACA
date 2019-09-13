@@ -114,7 +114,8 @@
  * 100: [26/04/2018] Christian		  (CECRED) : Tratativas no controle de tecla ESC. Chamadas a metodos indevidos, causando erros apenas na execucao do Ayllos embarcado no CRM.
  * 101: [27/08/2018] Marco Amorim     (Mout'S) : Criada a Função para remover Todos os Caracteres epeciais e acentos.
  * 102: [12/12/2018] Anderson-Alan    (Supero) : Criado funções para controle do novo formulário de Assinatura Eletronica com Senha do TA ou Internet. (P432)
-  * 103: [07/06/2019] Jackson Barcellos (AMcom) : Manutenção da funcao "formataTabela" Adicionado metodo click
+ * 103: [30/01/2019] Luiz Otavio Momm (AMCOM)  : Adicionada a tela de associado para pesquisa por nome e cpfcgc e adicionado o evento de sair pelo teclado
+ * 104: [07/06/2019] Jackson Barcellos (AMcom) : Manutenção da funcao "formataTabela" Adicionado metodo click
 */ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -352,7 +353,13 @@ $(document).ready(function () {
                         $('.fecharPesquisa', '#divPesquisaAssociado').click();
 					} 
 					return true;						
-					
+				// ALTERAÇÃO 103
+				} else if ($('#divPesquisaAssociadoDadosCadastrais').css('visibility') == 'visible') {
+					if (e.which == 27 || e.which == 115) {
+						$('.fecharPesquisa', '#divPesquisaAssociadoDadosCadastrais').click();
+					} 
+					return true;
+				// ALTERAÇÃO 103
                 } else if ($('#divMsgsAlerta').css('visibility') == 'visible') {
                     if (e.which == 27 || e.which == 115) {
                         encerraMsgsAlerta();
@@ -438,11 +445,11 @@ $(document).ready(function () {
 	}
 	
 	/*!
-	 * ALTERAÇÃO  : 019 | 040
+	 * ALTERAÇÃO  : 019 | 040 | 103
 	 * OBJETIVO   : Tornar as mensagens padrão de Erro ou Confirmação "Movimentáveis", permitindo arrastar a janela para qualquer direção, com o objetivo
 	 *              de desobstruindo os dados que se encontram logo abaixo da caixa de mensagem. Funcionalidade replicada as telas de rotinas.
 	 */	 
-	var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divPesquisaEnderecoAssociado, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta, #divUsoGAROPC');
+	var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divPesquisaEnderecoAssociado, #divPesquisaAssociadoDadosCadastrais, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta, #divUsoGAROPC');
 	elementosDrag.unbind('dragstart');	
     elementosDrag.bind('dragstart', function (event) {
 		return $(event.target).is('.ponteiroDrag');

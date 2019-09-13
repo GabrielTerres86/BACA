@@ -36,6 +36,7 @@ CREATE OR REPLACE PACKAGE CECRED.CHEQ0001 IS
   --
   --                29/05/2019 - Adicionadas procedures pc_busca_sum_lanc_cheque, pc_busca_sum_lanc_chq_web para buscar valores de lancamento do chque por historico
   --                             Jackson Barcellos AMcom P565
+--                23/07/2019 - Cria ou altera a proposta de desconto - PRJ438 - Sprint 16 - Rubens Lima (Mouts)  
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicao to tipo de array para teste da cdalinea na crepdev
@@ -339,6 +340,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0001 AS
               29/05/2019 - Adicionadas procedures pc_busca_sum_lanc_cheque, pc_busca_sum_lanc_chq_web para buscar valores de lancamento do chque por historico
                            Jackson Barcellos AMcom P565                      
 						   
+              23/07/2019 - Incluído a procedure PC_CRIA_ATUALIZA_PRP para atualizar o cadastro de propostas.
+                           PRJ438 - Sprint 16 - Rubens Lima (Mout's)             
+
   --------------------------------------------------------------------------------------------------------------- */
 
 
@@ -5328,6 +5332,163 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0001 AS
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
   END pc_busca_conta_pelo_cpf;
+PROCEDURE pc_cria_atualiza_prp (pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta
+                               ,pr_nrctrlim IN craplim.nrctrlim%TYPE --> Numero do contrato
+                               ,pr_tpctrato IN craplim.tpctrlim%TYPE --> Tipo do contrato
+                               ,pr_dsramati IN crapprp.dsramati%TYPE --> Ramo de Atividade
+                               ,pr_vlmedchq IN crapprp.vlmedchq%TYPE --> Valor médio de cheques
+                               ,pr_dsobserv IN crapprp.dsobserv##1%TYPE --> Observações
+                               ,pr_cdcooper IN crapprp.cdcooper%TYPE --> Cooperativa
+                               ,pr_dtmvtolt IN crapprp.dtmvtolt%TYPE) IS --> Data o movimento
+    -- ..........................................................................
+    --
+    --  Programa : pc_cria_atualiza_prp
+    --  Sistema  : AIMARO
+    --  Sigla    : CHEQUE
+    --  Autor    : Rubens Lima (Mouts)
+    --  Data     : Jul/2019                   Ultima atualizacao: 23/07/2019
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Criar ou atualizar dados da CRAPPRP (b1wgen0009.p, b1wgen0030.p)
+    --
+    --  Alteracoes: 
+    -- .............................................................................
+  --Cursores
+  CURSOR c_busca_renda_pessoa (pr_cdcooper IN crapcop.cdcooper%TYPE
+                              ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+    SELECT t.vlsalari
+          ,t.vldrendi##1 + t.vldrendi##2 + t.vldrendi##3 + t.vldrendi##4 + t.vldrendi##5 + t.vldrendi##6 vloutros
+     FROM crapttl t
+         ,crapass a
+    WHERE t.cdcooper = a.cdcooper
+    AND   t.nrcpfcgc = a.nrcpfcgc
+    --AND   a.dtdemiss IS NULL
+    AND   t.cdcooper = pr_cdcooper
+    AND   t.nrdconta = pr_nrdconta;
+  CURSOR c_busca_conta_conjuge (pr_cdcooper IN crapcop.cdcooper%TYPE
+                               ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+    SELECT nrctacje
+    FROM crapcje
+    WHERE cdcooper = pr_cdcooper
+    AND   nrdconta = pr_nrdconta;
+  CURSOR c_busca_bens (pr_cdcooper IN crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+    SELECT initcap(dsrelbem) dsrelbem
+    FROM crapbem
+    WHERE cdcooper = pr_cdcooper
+    AND   nrdconta = pr_nrdconta;                       
+  CURSOR c_busca_dados_comerciais (pr_nrdconta crapass.nrdconta%TYPE,
+                                   pr_cdcooper crapass.cdcooper%TYPE) IS
+    SELECT round(((
+            jfn.vlrftbru##1 +
+            jfn.vlrftbru##2 +
+            jfn.vlrftbru##3 +
+            jfn.vlrftbru##4 +
+            jfn.vlrftbru##5 +
+            jfn.vlrftbru##6 +
+            jfn.vlrftbru##7 +
+            jfn.vlrftbru##8 +
+            jfn.vlrftbru##9 +
+            jfn.vlrftbru##10 +
+            jfn.vlrftbru##11 +
+            jfn.vlrftbru##12) / 
+            (decode(jfn.vlrftbru##1,0,0,1) + 
+             decode(jfn.vlrftbru##2,0,0,1) +
+             decode(jfn.vlrftbru##3,0,0,1) +
+             decode(jfn.vlrftbru##4,0,0,1) +
+             decode(jfn.vlrftbru##5,0,0,1) +
+             decode(jfn.vlrftbru##6,0,0,1) +
+             decode(jfn.vlrftbru##7,0,0,1) +
+             decode(jfn.vlrftbru##8,0,0,1) +
+             decode(jfn.vlrftbru##9,0,0,1) +
+             decode(jfn.vlrftbru##10,0,0,1) +
+             decode(jfn.vlrftbru##11,0,0,1) +
+             decode(jfn.vlrftbru##12,0,0,1))
+            ),2) vlrmedfatbru --Faturamento Medio Bruto Mes
+    FROM crapjfn jfn
+        ,crapass a
+    WHERE jfn.cdcooper = a.cdcooper
+    AND   jfn.nrdconta = a.nrdconta
+    AND   a.dtdemiss IS NULL
+    AND   a.inpessoa <> 1
+    AND jfn.cdcooper = pr_cdcooper
+    AND   jfn.nrdconta = pr_nrdconta;    
+  --Variáveis
+  vr_vlfatura     NUMBER:=0;
+  vr_vloutras     NUMBER:=0;
+  vr_vlsalari     NUMBER:=0;
+  vr_vlsalcon     NUMBER:=0;
+  pr_dsdbens      VARCHAR2(10000) := NULL;
+  vr_nrctacje     CRAPCJE.NRCTACJE%TYPE := 0;
+  vr_null         NUMBER := 0;
+BEGIN
+  /*Busca dados de faturamento quando PJ*/
+  OPEN c_busca_dados_comerciais (pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta);
+   FETCH c_busca_dados_comerciais INTO vr_vlfatura;                                
+  CLOSE c_busca_dados_comerciais;                                
+  /*Busca a renda do proponente e outras rendas*/
+  OPEN c_busca_renda_pessoa (pr_cdcooper, pr_nrdconta);
+   FETCH c_busca_renda_pessoa INTO vr_vlsalari, vr_vloutras;
+  CLOSE c_busca_renda_pessoa;
+  OPEN c_busca_conta_conjuge (pr_cdcooper => pr_cdcooper
+                            , pr_nrdconta => pr_nrdconta);
+   FETCH c_busca_conta_conjuge INTO vr_nrctacje;
+  CLOSE c_busca_conta_conjuge;
+  /*Se tiver conjuge*/
+  IF (NVL(vr_nrctacje,0) > 0) THEN
+     /*Busca a renda para o conjuge*/
+   OPEN c_busca_renda_pessoa (pr_cdcooper, vr_nrctacje);
+    FETCH c_busca_renda_pessoa INTO vr_vlsalcon, vr_null;
+   CLOSE c_busca_renda_pessoa;
+  END IF;
+  /*Busca os bens do associado*/
+  FOR r1 in c_busca_bens (pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta) LOOP
+    IF (pr_dsdbens IS NULL) THEN
+      pr_dsdbens := r1.dsrelbem;
+    ELSE
+      IF ((LENGTH(pr_dsdbens) + LENGTH(r1.dsrelbem)) < 120) THEN
+        pr_dsdbens := pr_dsdbens || ', ' || r1.dsrelbem;
+      ELSE
+        EXIT;
+      END IF;
+    END IF;
+  END LOOP;
+  BEGIN
+    /*Cria a proposta de limite*/
+    INSERT INTO crapprp (nrdconta, nrctrato, tpctrato, dsramati, vlmedchq, vlfatura, vloutras, vlsalari
+                        ,vlsalcon, dsdebens, dsobserv##1, cdcooper, dtmvtolt )
+                        VALUES
+                        (pr_nrdconta, pr_nrctrlim, pr_tpctrato ,pr_dsramati ,pr_vlmedchq ,vr_vlfatura                      
+                        ,vr_vloutras ,vr_vlsalari ,vr_vlsalcon ,pr_dsdbens ,pr_dsobserv ,pr_cdcooper ,pr_dtmvtolt);
+  EXCEPTION
+    WHEN DUP_VAL_ON_INDEX THEN
+      /*Atualiza a proposta de limite caso a mesma já existir*/
+      UPDATE crapprp
+      SET nrdconta = pr_nrdconta
+         ,nrctrato = pr_nrctrlim
+         ,tpctrato = pr_tpctrato
+         ,dsramati = pr_dsramati
+         ,vlmedchq = pr_vlmedchq
+         ,vlfatura = vr_vlfatura
+         ,vloutras = vr_vloutras
+         ,vlsalari = vr_vlsalari
+         ,vlsalcon = vr_vlsalcon
+         ,dsdebens = pr_dsdbens
+         ,dsobserv##1 = pr_dsobserv
+         ,cdcooper = pr_cdcooper
+         ,dtmvtolt = pr_dtmvtolt
+      WHERE cdcooper = pr_cdcooper
+      AND   nrdconta = pr_nrdconta
+      AND   nrctrato = pr_nrctrlim
+      AND   tpctrato = pr_tpctrato;
+    WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_compleme => 'pr_cdcooper: '|| pr_cdcooper || ' - pr_nrdconta: ' || pr_nrdconta || ' - pr_nrctrlim: ' || pr_nrctrlim);
+  END;
+END;
   PROCEDURE pc_busca_sum_lanc_cheque (pr_cdcooper IN NUMBER, pr_nrdconta IN NUMBER, pr_cdhistor IN NUMBER, pr_nrdocmto IN NUMBER, pr_vllanmto OUT NUMBER) IS
   /*
     --  Projeto  : 565_1

@@ -10,6 +10,7 @@
  * 001: [06/05/2011] Rogerius Militao      (DB1) : Adaptação no formulário de avalista genérico
  * 002: [26/05/2017] Odirlei Busana      (AMcom) : Incluido retorno do nrctrlim. PRJ300 - Desconto de cheque
  * 003: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+ * 004: [08/07/2019] Mateus Z  (Mouts) : Alterações referentes a remoção da tela de Rendas PRJ 438 - Sprint 14.
  */
 ?>
 
@@ -28,7 +29,7 @@
 	require_once("../../../../class/xmlfile.php");
 	
 	// Verifica se os parâmetros necessários foram informados
-	$params = array("nrdconta","nrctrlim","cddlinha","vllimite","dsramati","vlmedtit","vlfatura","vloutras","vlsalari","vlsalcon","dsdbens1","dsdbens2","dsobserv","qtdiavig",
+	$params = array("nrdconta","nrctrlim","cddlinha","vllimite","dsramati","vlmedtit","vlfatura","dsobserv","qtdiavig",
                     "nrctaav1","nmdaval1","nrcpfav1","tpdocav1","dsdocav1","nmdcjav1","cpfcjav1","tdccjav1","doccjav1","ende1av1","ende2av1","nrcepav1","nmcidav1","cdufava1","nrfonav1","emailav1",
                     "nrctaav2","nmdaval2","nrcpfav2","tpdocav2","dsdocav2","nmdcjav2","cpfcjav2","tdccjav2","doccjav2","ende1av2","ende2av2","nrcepav2","nmcidav2","cdufava2","nrfonav2","emailav2",
                     "redirect", "idcobope");
@@ -46,11 +47,6 @@
 	$dsramati = $_POST["dsramati"];
 	$vlmedtit = $_POST["vlmedtit"];
 	$vlfatura = $_POST["vlfatura"];
-	$vloutras = $_POST["vloutras"];
-	$vlsalari = $_POST["vlsalari"];
-	$vlsalcon = $_POST["vlsalcon"];
-	$dsdbens1 = $_POST["dsdbens1"];
-	$dsdbens2 = $_POST["dsdbens2"];
 	$dsobserv = $_POST["dsobserv"];
 	$qtdiavig = $_POST["qtdiavig"];
 	$cddlinha = $_POST["cddlinha"];
@@ -172,11 +168,6 @@
 	$xmlSetDadosLimIncluir .= "		<dsramati>".$dsramati."</dsramati>";
 	$xmlSetDadosLimIncluir .= "		<vlmedtit>".$vlmedtit."</vlmedtit>";
 	$xmlSetDadosLimIncluir .= "		<vlfatura>".$vlfatura."</vlfatura>";
-	$xmlSetDadosLimIncluir .= "		<vloutras>".$vloutras."</vloutras>";
-	$xmlSetDadosLimIncluir .= "		<vlsalari>".$vlsalari."</vlsalari>";
-	$xmlSetDadosLimIncluir .= "		<vlsalcon>".$vlsalcon."</vlsalcon>";
-	$xmlSetDadosLimIncluir .= "		<dsdbens1>".$dsdbens1."</dsdbens1>";
-	$xmlSetDadosLimIncluir .= "		<dsdbens2>".$dsdbens2."</dsdbens2>";
 	$xmlSetDadosLimIncluir .= "		<nrctrlim>".$nrctrlim."</nrctrlim>";
 	$xmlSetDadosLimIncluir .= "		<cddlinha>".$cddlinha."</cddlinha>";
 	$xmlSetDadosLimIncluir .= "		<dsobserv>".$dsobserv."</dsobserv>";
