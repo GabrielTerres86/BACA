@@ -1843,17 +1843,6 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
     vr_obj_agencia.put('PACodigo', rw_crapass.cdagenci);    
     vr_obj_proposta.put('cooperadoContaPA' ,vr_obj_agencia);
-    
-    -- Informar Nota Rating para Esteira - P450 24/08/2019
-    OPEN cr_risco_operacoes;
-    FETCH cr_risco_operacoes INTO rw_risco_operacoes;
-
-    -- Se não localizar não incluir o bloco de indicadoresGeradosRegra que viria do MOTOR - P450 24/08/2019
-    IF cr_risco_operacoes%FOUND THEN
-        vr_obj_proposta.put('ratingPolitica', rw_risco_operacoes.inrisco_rating_autom);
-        vr_obj_proposta.put('notaRating', rw_risco_operacoes.inpontos_rating);
-    END IF;
-    CLOSE cr_risco_operacoes;
 
     -- Nr. conta sem o digito
     vr_obj_proposta.put('cooperadoContaNum',to_number(substr(rw_crapass.nrdconta,1,length(rw_crapass.nrdconta)-1)));
@@ -1955,8 +1944,17 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
           rw_crawepr.instatus := 2;
         END IF;
       END IF;
-      /*1-pre-aprovado, 2-analise manual, 3-nao conceder */
-      vr_obj_proposta.put('parecerPreAnalise', rw_crawepr.instatus);
+        -- Informar Nota Rating para Esteira - P450 24/08/2019
+        OPEN cr_risco_operacoes;
+        FETCH cr_risco_operacoes INTO rw_risco_operacoes;
+
+        -- Se não localizar não incluir o os campos para esteira - P450 24/08/2019
+        IF cr_risco_operacoes%FOUND THEN
+          vr_obj_proposta.put('parecerPreAnalise', rw_risco_operacoes.innivel_rating);
+          vr_obj_proposta.put('ratingPolitica', rw_risco_operacoes.inrisco_rating_autom);
+          vr_obj_proposta.put('notaRating', rw_risco_operacoes.inpontos_rating);
+        END IF;
+        CLOSE cr_risco_operacoes;
     ELSE
       /* Zerado para CDC */
       vr_obj_proposta.put('parecerPreAnalise', 0);
@@ -2432,6 +2430,10 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     END pc_cancela_reenvio;
    --/
   BEGIN    
+    --
+    vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                           pr_cdcooper => pr_cdcooper,
+                                           pr_cdacesso => 'HABILITA_RATING_NOVO');
     
     -- Se o DEBUG estiver habilitado
     IF vr_flgdebug = 'S' THEN
@@ -5416,6 +5418,8 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     Objetivo  : Tem como objetivo solicitar o retorno da analise no Motor
     Alteração : 27/08/2019 - PRJ 450 - Adicionado leitura do segmento enviado pela IBRATAN na 
                              pc_solicita_retorno_analise do motor (Luiz Otavio Olinger Momm - AMCOM)
+                12/09/2019 - PRJ 450 - Adicionado leitura do scoreRating na gravacao rating
+                             (Luiz Otavio Olinger Momm - AMCOM)
         
   ..........................................................................*/
 
@@ -5465,6 +5469,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     vr_in_risco_rat       INTEGER;
     vr_inpontos_rating    tbrisco_operacoes.inpontos_rating%type;
     vr_innivel_rating     tbrisco_operacoes.innivel_rating%type;
+    vr_desc_nivel_rating  VARCHAR2(100);
 
     -- Cursores
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -5503,6 +5508,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
     CURSOR cr_crapass_ope (pr_cdcooper  IN crapass.cdcooper%TYPE     --> Coop. conectada
                           ,pr_nrdconta  IN crapass.nrdconta%TYPE) IS --> Codigo Conta
       SELECT ass.nrcpfcnpj_base
+            ,ass.inpessoa               -- P450
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
@@ -5768,8 +5774,55 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
               IF vr_obj_indicadores.exist('notaRating') THEN
                 vr_nrnotrat := ltrim(rtrim(vr_obj_indicadores.get('notaRating').to_char(),'"'),'"');
               END IF;
-      				
-              -- Informação Cadastral -- 
+
+              -- Nível Rating --
+              IF vr_obj_indicadores.exist('scoreRating') THEN
+                vr_desc_nivel_rating := UPPER(ltrim(rtrim(vr_obj_indicadores.get('scoreRating').to_char(),'"'),'"'));
+                -- Classificacao do Nivel de Risco do Rating (1-Baixo/2-Medio/3-Alto)
+                IF vr_desc_nivel_rating = 'BAIXO' THEN
+                  vr_innivel_rating := 1;
+                ELSIF vr_desc_nivel_rating = 'MEDIO' THEN
+                  vr_innivel_rating := 2;
+                ELSIF vr_desc_nivel_rating = 'ALTO' THEN
+                  vr_innivel_rating := 3;
+                END IF;
+
+                BEGIN
+                  UPDATE tbrisco_operacoes
+                     SET innivel_rating = vr_innivel_rating
+                   WHERE cdcooper = pr_cdcooper
+                     AND nrdconta = pr_nrdconta
+                     AND nrctremp = pr_nrctremp
+                     AND tpctrato = 90;
+                   IF SQL%ROWCOUNT = 0 THEN
+                     OPEN cr_crapass_ope(pr_cdcooper
+                                        ,pr_nrdconta);
+                     FETCH cr_crapass_ope INTO rw_crapass_ope;
+                     CLOSE cr_crapass_ope;
+
+                     INSERT INTO tbrisco_operacoes
+                       (cdcooper,
+                        nrdconta,
+                        nrctremp,
+                        tpctrato,
+                        innivel_rating,
+                        nrcpfcnpj_base,
+                        inpessoa)
+                     VALUES
+                       (pr_cdcooper,
+                        pr_nrdconta,
+                        pr_nrctremp,
+                        90,
+                        vr_innivel_rating,
+                        rw_crapass_ope.nrcpfcnpj_base,
+                        rw_crapass_ope.inpessoa);
+
+                   END IF;
+                 END;
+              END IF;
+              -- Fim nível rating
+
+              -- Informação Cadastral --
               IF vr_obj_indicadores.exist('informacaoCadastral') THEN
                 vr_nrinfcad := ltrim(rtrim(vr_obj_indicadores.get('informacaoCadastral').to_char(),'"'),'"');
               END IF;
@@ -5787,6 +5840,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
               --> Segmento -->
               IF vr_obj_indicadores.exist('segmento') THEN
                  vr_insegmento_rating := ltrim(rtrim(vr_obj_indicadores.get('segmento').to_char(),'"'),'"');
+                 IF UPPER(vr_insegmento_rating) = 'NULL' OR vr_insegmento_rating IS NULL THEN
+                   vr_insegmento_rating := '';
+                 END IF;
               END IF;
 
               -- Indicador de operação de crédito em atraso
