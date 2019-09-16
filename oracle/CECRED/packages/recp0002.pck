@@ -130,6 +130,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 	--                         tabela CRAPSLD (vliofmes) quando o acordo é cancelado.
 	--  											 (Reginaldo - AMcom - P450)
   --
+	--             15/08/2019 - Revitalização da rotina pc_cancelar_acordo para guardar 
+  --                          os log a fim de identificar possível lock
+  --                          (Ana Volles - PRB0041875)
   ---------------------------------------------------------------------------
   -- Formato de retorno para numerico no xml
   vr_formtnum   VARCHAR2(30) := '99999999999990D00';
@@ -137,6 +140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   vr_pdrdonum   VARCHAR2(30) := 'NLS_NUMERIC_CHARACTERS=''.,''';
   -- Formato de retorno para data no xml
   vr_frmtdata   VARCHAR2(20) := 'DD/MM/RRRR';
+  vr_cdprogra   VARCHAR2(100) := 'RECP0002'; --PRB0041875
   
   ---------------> CURSORES <-------------
   --> Buscar saldo do associado
@@ -150,12 +154,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
        AND crapsld.nrdconta = pr_nrdconta;
   rw_crapsld cr_crapsld%ROWTYPE;
 
+  ------------------------------ PROCEDURES --------------------------------    
+  --> Grava informações para resolver erro de programa/ sistema
+  PROCEDURE pc_gera_log(pr_cdcooper      IN PLS_INTEGER           --> Cooperativa
+                       ,pr_dstiplog      IN VARCHAR2              --> Tipo Log
+                       ,pr_dscritic      IN VARCHAR2 DEFAULT NULL --> Descricao da critica
+                       ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0
+                       ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0
+                       ,pr_ind_tipo_log  IN tbgen_prglog_ocorrencia.tpocorrencia%type DEFAULT 2
+                       ,pr_nmarqlog      IN tbgen_prglog.nmarqlog%type DEFAULT NULL
+                       ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%type DEFAULT 1 -- cadeia - 12/02/2019 - REQ0035813
+                       ) IS
+    -----------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_gera_log
+    --  Sistema  : Rotina para gravar logs em tabelas
+    --  Sigla    : CRED
+    --  Autor    : Ana Lúcia E. Volles - Envolti
+    --  Data     : Agosto/2019           Ultima atualizacao: 15/08/2019
+    --  Chamado  : PRB0041875
+    --
+    -- Dados referentes ao programa:
+    -- Frequencia: Rotina executada em qualquer frequencia.
+    -- Objetivo  : Controla gravação de log em tabelas.
+    --
+    -- Alteracoes:  
+    --             
+    ------------------------------------------------------------------------------------------------------------   
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
+    --
+  BEGIN         
+    --> Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
+                           pr_cdcooper      => pr_cdcooper, 
+                           pr_tpocorrencia  => pr_ind_tipo_log, 
+                           pr_cdprograma    => vr_cdprogra, 
+                           pr_tpexecucao    => pr_tpexecucao,
+                           pr_cdcriticidade => pr_cdcriticidade,
+                           pr_cdmensagem    => pr_cdmensagem,    
+                           pr_dsmensagem    => pr_dscritic,               
+                           pr_idprglog      => vr_idprglog,
+                           pr_nmarqlog      => pr_nmarqlog);
+  EXCEPTION
+    WHEN OTHERS THEN
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+  END pc_gera_log;
+
   PROCEDURE pc_quebra_desc_contrat(pr_nrcontrato  IN VARCHAR2,
                                    pr_cdcooper   OUT NUMBER,
                                    pr_cdorigem   OUT NUMBER,
                                    pr_nrdconta   OUT NUMBER,
                                    pr_nrctremp   OUT NUMBER )IS
   BEGIN
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_quebra_desc_contrat');
     
       -- Código da Cooperativa
       pr_cdcooper := substr(pr_nrcontrato,1,4);
@@ -166,6 +218,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       -- Número do Contrato
       pr_nrctremp := substr(pr_nrcontrato,17,8);    
   
+    -- Limpa nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END;
   
   --> Calcula o saldo do contrado do cooperado
@@ -185,7 +239,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
    Sistema : Rotinas referentes ao WebService
    Sigla   : WEBS
    Autor   : Odirlei Busana - AMcom
-   Data    : Julho/2016.                    Ultima atualizacao: 19/09/2016
+   Data    : Julho/2016.                    Ultima atualizacao: 15/08/2019
 
    Dados referentes ao programa:
 
@@ -201,6 +255,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 
                05/06/2018 - Adicionado tratamento para saldo devedor do desconto de titulos (Paulo Penteado (GFT)) 
 
+               15/08/2019 - Setado o módulo que está executando e gravação de log nas exceptions 
+                            (Ana Volles - PRB0041875)
    ..............................................................................*/                                    
     ---------------> VARIAVEIS <------------
     -- Tratamento de erros
@@ -279,8 +335,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 				 AND c.cdorigem = 5; -- Cartoes
     --
 		rw_cartoes cr_cartoes%ROWTYPE;
+    vr_dsparame  VARCHAR2(4000);
 		--
   BEGIN
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_calcular_saldo_contrato');
+
+    vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper
+                 ||', pr_nrdconta:'||pr_nrdconta
+                 ||', pr_cdorigem:'||pr_cdorigem
+                 ||', pr_nrctremp:'||pr_nrctremp
+                 ||', pr_vllimcre:'||pr_vllimcre;
       
     ---> ESTOURO DE CONTA <---
     IF pr_cdorigem = 1 THEN
@@ -322,6 +387,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         --Sair com erro
         RAISE vr_exc_erro;
       END IF;
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_calcular_saldo_contrato');
         
       --Buscar Indice
       vr_index_saldo := vr_tab_saldos.FIRST;
@@ -441,6 +508,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         --Sair com erro
         RAISE vr_exc_erro;
       END IF;
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_calcular_saldo_contrato');
     
       -- Condicao para verificar se encontrou contrato de emprestimo
       IF vr_tab_dados_epr.COUNT > 0 THEN
@@ -492,6 +561,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 			CLOSE cr_cartoes;
 			--
     END IF;
+    -- Limpa nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN    
       --> Buscar descrição critica
@@ -501,9 +572,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;      
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := 'Nao foi possivel calcular saldo do contrato '||pr_nrctremp||': '||SQLERRM;      
+      
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
       
   END pc_calcular_saldo_contrato;  
   
@@ -521,7 +611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
    Sistema : Rotinas referentes ao WebService
    Sigla   : WEBS
    Autor   : Odirlei Busana - AMcom
-   Data    : Julho/2016.                    Ultima atualizacao: 19/09/2016
+   Data    : Julho/2016.                    Ultima atualizacao: 15/08/2019
 
    Dados referentes ao programa:
 
@@ -532,6 +622,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
    Observacao: -----
    Alteracoes: 19/09/2016 - Alterar o parâmetro “pr_nrcontrato” para VARCHAR2,
 							Prj. 302 (Jean Michel).
+
+               15/08/2019 - Setado o módulo que está executando e gravação de log nas exceptions 
+                            (Ana Volles - PRB0041875)
    ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -570,8 +663,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_cdorigem   INTEGER;
     vr_nrdconta   crapass.nrdconta%TYPE;
     vr_nrctremp   crapepr.nrctremp%TYPE;
+    vr_dsparame   VARCHAR2(4000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_consultar_saldo_contrato');
       
     IF pr_nrcontrato IS NOT NULL THEN
       pc_quebra_desc_contrat(pr_nrcontrato => pr_nrcontrato,
@@ -584,6 +680,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       RAISE vr_exc_erro;  
     END IF;
     
+    vr_dsparame := ' - pr_nrgrupo:'||pr_nrgrupo
+                 ||', pr_nrcontrato:'||pr_nrcontrato
+                 ||', pr_cdcooper:'||vr_cdcooper
+                 ||', pr_cdorigem:'||vr_cdorigem
+                 ||', pr_nrdconta:'||vr_nrdconta
+                 ||', pr_nrctremp:'||vr_nrctremp;
     -- Leitura do calendário da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -643,6 +745,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN       
       RAISE vr_exc_erro_det;
     END IF;
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     
   EXCEPTION
     WHEN vr_exc_erro_det THEN
@@ -655,6 +759,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       pr_cdcritic := 983;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 983);
       pr_dsdetcri := vr_dscritic;
+    
+      --Grava log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
     
     WHEN vr_exc_erro THEN    
       --> Buscar descrição critica
@@ -673,11 +785,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       pr_dscritic := vr_dscritic;
       pr_dsdetcri := vr_dscritic;
       
+      --Grava log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+      
     WHEN OTHERS THEN
       pr_cdcritic := 983;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
-      pr_dscritic := vr_dscritic;      
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       pr_dsdetcri := SQLERRM;      
+
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||sqlerrm||vr_dsparame,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
       
   END pc_consultar_saldo_contrato;
   
@@ -693,7 +822,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
    Sistema : Rotinas referentes ao WebService
    Sigla   : WEBS
    Autor   : Odirlei Busana - AMcom
-   Data    : Julho/2016.                    Ultima atualizacao:
+   Data    : Julho/2016.                    Ultima atualizacao: 15/08/2019
 
    Dados referentes ao programa:
 
@@ -702,7 +831,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
    Objetivo  : Retornar o saldo dos contratos do CPF/CNPJ informado
 
    Observacao: -----
-   Alteracoes:
+   Alteracoes: 15/08/2019 - Setado o módulo que está executando e gravação de log nas exceptions 
+                            (Ana Volles - PRB0041875)
    ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -748,6 +878,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_fcrapcyb   BOOLEAN;
     
     vr_dsctremp   VARCHAR2(50);
+    vr_dsparame   VARCHAR2(4000);
     
     -- Variáveis para armazenar as informações em XML
     vr_dscdoxml         CLOB;
@@ -762,6 +893,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     END;
     
   BEGIN
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_consultar_saldo_cooperado');
+      
+    vr_dsparame := ' - pr_inPessoa:'||pr_inPessoa
+                 ||', pr_nrcpfcgc:'||pr_nrcpfcgc;
       
     vr_cdcooper := 0; 
     
@@ -830,6 +966,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
            TRIM(vr_dscritic) IS NOT NULL THEN           
           RAISE vr_exc_erro_det;   
         END IF;
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_consultar_saldo_cooperado');
         
         vr_dsctremp := LPAD(rw_crapass.cdcooper,4,'0') || LPAD(rw_crapcyb.cdorigem,4,'0') || 
                        LPAD(rw_crapass.nrdconta,8,'0') || LPAD(rw_crapcyb.nrctremp,8,'0');
@@ -859,6 +997,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     pc_escreve_xml('</contratos>',TRUE);
     pr_xmlrespo := XMLType.createxml(vr_dscdoxml);    
     
+    -- Limpa nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro_det THEN
       --> Buscar descrição critica
@@ -871,6 +1011,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       pr_cdcritic := 983;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 983);
       pr_dsdetcri := vr_dscritic;
+      
+      --Grava log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
       
     WHEN vr_exc_erro THEN
     
@@ -890,12 +1038,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       pr_dscritic := vr_dscritic;
       pr_dsdetcri := vr_dscritic;
       
+      --Grava log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+      
     WHEN OTHERS THEN
       pr_cdcritic := 983;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
-      pr_dscritic := vr_dscritic;      
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       pr_dsdetcri := SQLERRM; 
       
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||sqlerrm||vr_dsparame,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
       
   END pc_consultar_saldo_cooperado;    
   
@@ -914,7 +1078,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
    Sistema : Rotinas referentes ao WebService
    Sigla   : WEBS
    Autor   : Odirlei Busana - AMcom
-   Data    : Julho/2016.                    Ultima atualizacao: 30/01/2017
+   Data    : Julho/2016.                    Ultima atualizacao: 15/08/2019
 
    Dados referentes ao programa:
 
@@ -930,6 +1094,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 
 			   26/09/2018 - Retirado a crítica para pós-fixado de forma a atender os requisitos do projeto PRJ298.2 (Adriano Nagasava - Supero)
 
+               15/08/2019 - Setado o módulo que está executando e gravação de log nas exceptions 
+                            (Ana Volles - PRB0041875)
    ..............................................................................*/                                    
    
     ---------------> CURSORES <-------------
@@ -986,8 +1152,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_exc_erro   EXCEPTION;
     vr_vliofdev   NUMBER;
     vr_vlbasiof   NUMBER;
+    vr_dsparame   VARCHAR2(4000);
     
   BEGIN
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_gravar_contrato_acordo');
+
+    vr_dsparame := ' - pr_nracordo:'||pr_nracordo
+                 ||', pr_cdcooper:'||pr_cdcooper
+                 ||', pr_nrdconta:'||pr_nrdconta
+                 ||', pr_cdorigem:'||pr_cdorigem
+                 ||', pr_nrctremp:'||pr_nrctremp
+                 ||', pr_nrdgrupo:'||pr_nrdgrupo;
   
     --> Buscar contrado no cyber
     OPEN cr_crapcyb (pr_cdcooper  => pr_cdcooper,
@@ -1056,6 +1232,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_gravar_contrato_acordo');
 
       --> Buscar valor iof Calculado até o dia atual
       vr_vliofdev := rw_crapsld.vliofmes;
@@ -1100,15 +1278,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         RAISE vr_exc_erro;  
     END;
     
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN          
       
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
       
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := 'Nao foi possivel gravar contrato do acordo '||pr_nrctremp||': '||SQLERRM;      
+
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
   END pc_gravar_contrato_acordo;
   
   --> Rotina para gerar os boletos e gravar as parcelas
@@ -1130,7 +1329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     Sistema : Rotinas referentes ao WebService
     Sigla   : WEBS
     Autor   : Odirlei Busana - AMcom
-    Data    : Julho/2016.                    Ultima atualizacao: 21/07/2016 
+    Data    : Julho/2016.                    Ultima atualizacao: 15/08/2019 
 
     Dados referentes ao programa:
 
@@ -1139,7 +1338,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     Objetivo  : Rotina para gerar os boletos e gravar as parcelas
 
     Observacao: -----
-    Alteracoes:
+    Alteracoes: 15/08/2019 - Setado o módulo que está executando e gravação de log nas exceptions 
+                             (Ana Volles - PRB0041875)
     ..............................................................................*/                                    
    
     ---------------> CURSORES <-------------
@@ -1151,6 +1351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     
     vr_tab_cob    cobr0005.typ_tab_cob;
     vr_idxcob     PLS_INTEGER;
+    vr_dsparame   VARCHAR2(4000);
     
     -- Variáveis para armazenar as informações em XML
     vr_dscdoxml         CLOB;
@@ -1165,6 +1366,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     END;
     
   BEGIN
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_gravar_parcela');
+
+    vr_dsparame := ' - pr_nracordo:'||pr_nracordo
+                 ||', pr_cdcooper:'||pr_cdcooper
+                 ||', pr_nrdconta:'||pr_nrdconta
+                 ||', pr_nrdconta_cob:'||pr_nrdconta_cob
+                 ||', pr_nrcnvcob:'||pr_nrcnvcob
+                 ||', pr_inpessoa:'||pr_inpessoa
+                 ||', pr_nrcpfcgc:'||pr_nrcpfcgc
+                 ||', pr_dtmvtolt:'||pr_dtmvtolt;
     
     IF pr_tab_parcelas.count = 0 THEN
       vr_cdcritic := 989; -- Nenhuma parcela encontrada.
@@ -1178,7 +1390,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     
     vr_texto_completo := NULL;
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><boletos>');
-    
     
     --> Varrer parcelas
     FOR idx IN pr_tab_parcelas.first..pr_tab_parcelas.last LOOP
@@ -1218,6 +1429,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
          -- Levanta exceção
          RAISE vr_exc_erro;
       END IF;
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_gravar_parcela');
       
       vr_idxcob := vr_tab_cob.first;
       IF vr_idxcob IS NULL THEN
@@ -1249,7 +1462,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       END;
       
       pc_escreve_xml('<boleto>'||
-      
                        '<Beneficiario>'     || vr_tab_cob(vr_idxcob).nmprimtl                          || '</Beneficiario>'     ||
                        '<NossoNumero>'      || vr_tab_cob(vr_idxcob).nossonro                          || '</NossoNumero>'      ||
                        '<DataVencimento>'   || to_char(vr_tab_cob(vr_idxcob).dtvencto,vr_frmtdata)     || '</DataVencimento>'   ||
@@ -1260,9 +1472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                        '<LinhaDigitavel>'   || vr_tab_cob(vr_idxcob).lindigit || '</LinhaDigitavel>'   ||
                        '<CodigoBarras>'     || vr_tab_cob(vr_idxcob).cdbarras || '</CodigoBarras>'     ||
                        '<NumeroParcela>'    || pr_tab_parcelas(idx).nrparcel || '</NumeroParcela>'    ||       
-      
                      '</boleto>');
-      
     
     END LOOP;
     
@@ -1270,16 +1480,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     pc_escreve_xml('</boletos>',TRUE);
     pr_xmlbolet := XMLType.createxml(vr_dscdoxml); 
     
-    
+    -- Limpa nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
     
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
       
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := SQLERRM;
+      
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
       
   END pc_gravar_parcela;
   
@@ -1294,7 +1523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       Sistema : Rotinas referentes ao WebService
       Sigla   : WEBS
       Autor   : Odirlei Busana - AMcom
-      Data    : Julho/2016.                    Ultima atualizacao: 29/09/2016
+      Data    : Julho/2016.                    Ultima atualizacao: 15/08/2019
 
       Dados referentes ao programa:
 
@@ -1320,6 +1549,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                Marcelo Coelho (Mouts) - Chamado 785483
 
 			      04/10/2018 - Ajuste para o cursor cr_crapass delimitando enderecos com UF e CEP para o cooperado. (INC0024750 - Saquetta)
+
+                  15/08/2019 - Setado o módulo que está executando e gravação de log nas exceptions 
+                               (Ana Volles - PRB0041875)
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -1440,6 +1672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     
     vr_tab_parcelas typ_tab_parcelas;
     v_idxparce      INTEGER;        
+    vr_dsparame     VARCHAR2(4000);
     
     -- Variáveis para armazenar as informações em XML
     vr_dscdoxml         CLOB;
@@ -1454,6 +1687,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     END;
     
   BEGIN
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_gerar_acordo');
       
     vr_cdcooper := 0; 
     BEGIN
@@ -1476,6 +1711,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       RAISE vr_exc_erro;  
     END IF;
     
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_gerar_acordo');
+    
+    vr_dsparame := ' - vr_cdcooper:'||vr_cdcooper
+                 ||', vr_cdorigem:'||vr_cdorigem
+                 ||', vr_nrdconta:'||vr_nrdconta
+                 ||', vr_nrctremp:'||vr_nrctremp;
+
     -- Leitura do calendário da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -1581,6 +1824,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     ------------------------------------------------
     --          GRAVAR OS DADOS DO ACORDO         --
     ------------------------------------------------
+
     BEGIN
       vr_nracordo := TRIM(pr_xmlrequi.extract('/Root/Acordo/Numero/text()').getstringval());
     EXCEPTION
@@ -1612,12 +1856,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
           pr_dscritic := vr_dscritic;
           RAISE vr_exc_saida;
         END IF;
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_gerar_acordo');
         
         RAISE vr_exc_saida;          
       WHEN OTHERS THEN
         vr_dscritic := 'Nao foi possivel inserir acordo: '||SQLERRM;
         RAISE vr_exc_erro_det;                
     END;    
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_gerar_acordo');
     
     vr_xmldoc:= xmldom.newDOMDocument(pr_xmlrequi);    
         
@@ -1654,6 +1902,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         vr_cdcritic := 484; --> Contrato não encontrado
         RAISE vr_exc_erro;  
       END IF;
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_gerar_acordo');
       
       -- Verifica se contrato esta em acordo
       OPEN cr_portab(pr_cdcooper => vr_cdcooper_aux
@@ -1710,8 +1960,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         ELSE
           RAISE vr_exc_erro_det;   
         END IF;  
-        
       END IF; 
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_gerar_acordo');
       
     END LOOP;
     
@@ -1774,7 +2025,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         END IF; 
       END IF; 
     END IF;
-    
+    -- Limpa nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     --> apenas sair do programa
     WHEN vr_exc_saida THEN
@@ -1791,11 +2043,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 993);
       pr_dsdetcri := vr_dscritic;
       
+      --Grava log
+      pc_gera_log(pr_cdcooper      => vr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+      
     WHEN vr_exc_erro THEN
       --> Buscar descrição critica
       IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
-         
       ELSIF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
         pr_dsdetcri := vr_dscritic; 
@@ -1809,14 +2068,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       pr_dscritic := vr_dscritic;
       pr_dsdetcri := nvl(pr_dsdetcri,vr_dscritic);
       
+      --Grava log
+      pc_gera_log(pr_cdcooper      => vr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+      
     WHEN OTHERS THEN
       pr_cdcritic := 993;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic); 
-      pr_dscritic := vr_dscritic;      
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic); 
       pr_dsdetcri := SQLERRM; 
-	  pc_internal_exception(vr_cdcooper);
+
+      CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => vr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||sqlerrm||vr_dsparame,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+
   END pc_gerar_acordo;
   
+--teste x ok
   --> Rotina responsavel por cancelar acordo
   PROCEDURE pc_cancelar_acordo (pr_nracordo    IN  NUMBER,       --> Numero do acordo
                                 pr_dtcancel    IN  DATE,         --> Data de Cancelamento                                               
@@ -1828,7 +2105,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       Sistema : Rotinas referentes ao WebService
       Sigla   : WEBS
       Autor   : Odirlei Busana - AMcom
-      Data    : Julho/2016.                    Ultima atualizacao: 29/10/2018
+      Data    : Julho/2016.                    Ultima atualizacao: 15/08/2019
 
       Dados referentes ao programa:
 
@@ -1859,6 +2136,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 									             quando o acordo é cancelado.
 															 (Reginaldo - AMcom - P450) 
 
+	                15/08/2019 - Revitalização para guardar os logs a fim de identificar possível lock
+                               (Ana Volles - PRB0041875)
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -1923,6 +2202,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_cdcritic     INTEGER;    
     vr_exc_erro     EXCEPTION;
     vr_exc_erro_det EXCEPTION;
+    vr_dsparame     VARCHAR2(4000);
+
        
     -- Pl/Table utilizada na procedure de baixa
     vr_tab_lat_consolidada     paga0001.typ_tab_lat_consolidada;      
@@ -1931,6 +2212,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_tab_erro    gene0001.typ_tab_erro;
     
   BEGIN
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_cancelar_acordo');
+
+    vr_dsparame := ' - pr_nracordo:'||pr_nracordo
+                 ||', pr_dtcancel:'||pr_dtcancel;
     
     --> Buscar situacao do acordo
     OPEN cr_tbacordo;
@@ -1960,14 +2246,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     IF btch0001.cr_crapdat%NOTFOUND THEN      
       CLOSE btch0001.cr_crapdat;
       -- Montar mensagem de critica
-      vr_dscritic := 'Sistema sem data de movimento, tente novamente mais tarde';
+      vr_dscritic := gene0001.fn_busca_critica(1); --'Sistema sem data de movimento, tente novamente mais tarde';
       RAISE vr_exc_erro;
     ELSE
       CLOSE btch0001.cr_crapdat;
     END IF;
         
     IF nvl(rw_crapdat.inproces,0) <> 1 THEN
-      vr_dscritic := 'Processo da Cooperativa nao finalizou, tente novamente mais tarde';
+      vr_dscritic := gene0001.fn_busca_critica(1206); --'Processo da Cooperativa nao finalizou, tente novamente mais tarde';
       RAISE vr_exc_erro;
     END IF;
     
@@ -1981,6 +2267,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       FETCH cr_crapcob INTO rw_crapcob;
       IF cr_crapcob%FOUND THEN
         CLOSE cr_crapcob;
+        
+        --
+        --PRB0041875 - serão gravados em tabela os registros lidos, para companhamento, pois
+        --este select foi relatado como último comendo executado antes do lock da JOB_ACRDO_CYBER
+        --Grava log
+        pc_gera_log(pr_cdcooper      => rw_tbacordo.cdcooper,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => 'Parcelas: cdcooper:'||rw_tbacordo.cdcooper
+                                      ||', nrdconta_cob:'||rw_parcelas.nrdconta_cob
+                                      ||', nrconvenio:'||rw_parcelas.nrconvenio
+                                      ||', nrboleto:'||rw_parcelas.nrboleto,
+                    pr_cdcriticidade => 0,
+                    pr_cdmensagem    => 0,
+                    pr_ind_tipo_log  => 4);  --Alerta
+        --
         
         -- Efetua baixa
         COBR0007.pc_inst_pedido_baixa(pr_idregcob => rw_crapcob.rowid
@@ -1996,6 +2297,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         IF nvl(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro_det;
         END IF;
+        
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_cancelar_acordo');
         
       ELSE
         CLOSE cr_crapcob;
@@ -2041,11 +2345,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
           vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
         ELSE
           vr_cdcritic := 0;
-          vr_dscritic := 'Erro ao criar o lancamento de desbloqueio de acordo';
+          vr_dscritic := gene0001.fn_busca_critica(1505); --'Erro ao criar o lancamento de desbloqueio de acordo';
         END IF;
-        
         RAISE vr_exc_erro;
       END IF;
+
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_cancelar_acordo');
     END IF;
     
     BEGIN
@@ -2066,7 +2372,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                          AND tbrecup_acordo_contrato.nracordo = rw_tbacordo.nracordo);
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao atualizar o CYBER: '||SQLERRM;
+        CECRED.pc_internal_exception (pr_cdcooper => rw_tbacordo.cdcooper);
+
+        --Erro ao atualizar o CYBER
+        vr_cdcritic := 1035;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapcyc:'||
+                      ' flgehvip:decode(cdmotcin,2,flgehvip,7,flgehvip,flvipant)'||
+                      ', cdmotcin:decode(cdmotcin,2,cdmotcin,7,cdmotcin,cdmotant)'||
+                      ', dtaltera:'||rw_crapdat.dtmvtolt||
+                      ', cdoperad:'||'cyber'||
+                      ' com - verifica se existe em tbrecup_acordo_contrato e'||
+                      ' nracordo:'||rw_tbacordo.nracordo||
+                      '. '||sqlerrm;
+
         RAISE vr_exc_erro_det;
     END;
 		
@@ -2083,7 +2401,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 				   AND sld.nrdconta = rw_tbacordo.nrdconta;
 			EXCEPTION
 				WHEN OTHERS THEN
-					vr_dscritic := 'Erro ao atualizar valor do IOF na CRAPSLD: ' || SQLERRM;
+          CECRED.pc_internal_exception (pr_cdcooper => rw_tbacordo.cdcooper);
+
+          --Erro ao atualizar valor do IOF na CRAPSLD
+          vr_cdcritic := 1035;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapsld:'||
+                        ' vliofmes:'||'vliofmes + '||rw_contrato.vliofdev||' + '||rw_contrato.vliofpag||
+                        ' com cdcooper:'||rw_tbacordo.cdcooper||
+                        ', nrdconta:'||rw_tbacordo.nrdconta||
+                        '. '||sqlerrm;
+
           RAISE vr_exc_erro_det;
 			END;
 			
@@ -2094,7 +2421,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
          WHERE tbgen_iof_lancamento.nracordo = pr_nracordo;
 			EXCEPTION
 				WHEN OTHERS THEN
-					vr_dscritic := 'Erro ao atualizar numero do acordo na TBGEN_IOF_LANCAMENTO: ' || SQLERRM;
+          CECRED.pc_internal_exception (pr_cdcooper => rw_tbacordo.cdcooper); --grava cdcooper OK
+          --Erro ao atualizar numero do acordo na TBGEN_IOF_LANCAMENTO
+          vr_cdcritic := 1035;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'tbgen_iof_lancamento:'||
+                        ' nracordo:'||'NULL'||
+                        ' com nracordo:'||pr_nracordo||
+                        '. '||sqlerrm;
+
           RAISE vr_exc_erro_det;
 			END;
 		END IF;
@@ -2109,9 +2443,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
        WHERE nracordo = rw_tbacordo.nracordo;
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao atualizar acordo: '||SQLERRM;
+        CECRED.pc_internal_exception (pr_cdcooper => rw_tbacordo.cdcooper);
+
+        --Erro ao atualizar acordo
+          vr_cdcritic := 1035;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'tbrecup_acordo:'||
+                        ' cdsituacao:'||'3'||
+                        ' dtcancela:'||pr_dtcancel||
+                        ' com nracordo:'||rw_tbacordo.nracordo||
+                        '. '||sqlerrm;
+
         RAISE vr_exc_erro_det;   
     END;     
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
       
   EXCEPTION
     WHEN vr_exc_erro_det THEN
@@ -2121,32 +2466,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       END IF;
       
       --> Apenas critica generica e detalhe critica em outro parametro        
-      pr_cdcritic := 994;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 994);
+      pr_cdcritic := 994;  --Nao foi possivel cancelar acordo.
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
       pr_dsdetcri := vr_dscritic;
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => rw_tbacordo.cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+
     WHEN vr_exc_erro THEN
       --> Buscar descrição critica
       IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
          
-      ELSIF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL THEN
+      ELSIF nvl(vr_cdcritic,0) = 0 AND vr_dscritic IS NULL THEN--Aqui não gravaria nada nas variáveis - ???
         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
         pr_dsdetcri := vr_dscritic;
       END IF;
       
       IF NVL(vr_cdcritic,0) = 0 THEN
-        vr_cdcritic := 994;
+        vr_cdcritic := 994;  --Nao foi possivel cancelar acordo.
       END IF;
       
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
       pr_dsdetcri := nvl(pr_dsdetcri,vr_dscritic);
       
+      --Grava log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+      
     WHEN OTHERS THEN
       pr_cdcritic := 994;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
-      pr_dscritic := vr_dscritic;      
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic); 
       pr_dsdetcri := SQLERRM; 
+
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||sqlerrm||vr_dsparame,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
             
   END pc_cancelar_acordo;
   
@@ -2163,7 +2534,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       Sistema : Rotinas referentes ao WebService
       Sigla   : WEBS
       Autor   : Odirlei Busana - AMcom
-      Data    : Janeiro/2017.                    Ultima atualizacao: 
+      Data    : Janeiro/2017.                    Ultima atualizacao: 15/08/2019
 
       Dados referentes ao programa:
 
@@ -2172,7 +2543,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       Objetivo  : Rotina responsavel por retornar dados dos boletos do acordo
 
       Observacao: -----
-      Alteracoes: 
+      Alteracoes: 15/08/2019 - Setado o módulo que está executando e gravação de log nas exceptions 
+                               (Ana Volles - PRB0041875)
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -2201,6 +2573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_tab_cob    cobr0005.typ_tab_cob;
     vr_idxcob     PLS_INTEGER;
     vr_flexiste   BOOLEAN := FALSE;    
+    vr_dsparame   VARCHAR2(4000);
     
     -- Variáveis para armazenar as informações em XML
     vr_dscdoxml         CLOB;
@@ -2213,8 +2586,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       gene0002.pc_escreve_xml(vr_dscdoxml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
     END;
     
-    
   BEGIN
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_consultar_boleto_acordo');
     
     -- Inicializar o CLOB
     vr_dscdoxml := NULL;
@@ -2223,6 +2597,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     
     vr_texto_completo := NULL;
     pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><boletos>');
+
+    vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper
+                 ||', pr_nrdconta:'||pr_nrdconta
+                 ||', pr_nracordo:'||pr_nracordo;
     
     -- Listar parcelas do acordo
     FOR rw_acordo_parc IN cr_acordo_parc( pr_cdcooper => pr_cdcooper,
@@ -2252,6 +2630,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
          -- Levanta exceção
          RAISE vr_exc_erro;
       END IF;
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0002.pc_consultar_boleto_acordo');
       
       vr_idxcob := vr_tab_cob.first;
       IF vr_idxcob IS NULL THEN
@@ -2286,7 +2666,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       RAISE vr_exc_erro;        
     END IF;
     
-    
+    -- Limpa nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro_det THEN
       --> Buscar descrição critica
@@ -2298,6 +2679,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       pr_cdcritic := 993;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
       pr_dsdetcri := vr_dscritic;
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+
     WHEN vr_exc_erro THEN
       --> Buscar descrição critica
       IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
@@ -2316,11 +2706,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
       pr_dscritic := vr_dscritic;
       pr_dsdetcri := nvl(pr_dsdetcri,vr_dscritic);
       
+      --Grava log
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
+      
     WHEN OTHERS THEN
       pr_cdcritic := 993;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
-      pr_dscritic := vr_dscritic;      
+      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
       pr_dsdetcri := SQLERRM; 
+
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+
+      pc_gera_log(pr_cdcooper      => pr_cdcooper,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||sqlerrm||vr_dsparame,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+            
   END pc_consultar_boleto_acordo;
                                                               	
 END RECP0002;
