@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CHEQ0003 IS
   --  Sistema  : Rotinas focadas no sistema de Cheques - Devolução de cheques
   --  Sigla    : CHEQ
   --  Autor    : André Bohn (Mouts)
-  --  Data     : Outubro/2018.                   Ultima atualizacao:
+  --  Data     : Outubro/2018.                   Ultima atualizacao:   20/08/2019
   --
   -- Dados referentes ao programa:
   --
@@ -108,6 +108,9 @@ CREATE OR REPLACE PACKAGE CECRED.CHEQ0003 IS
                                pr_nrdocumento IN NUMBER,
                                pr_cdhashcode OUT VARCHAR2);
 
+  --Importa arquivo ABBC e grava tb CECRED.TBCOMPE_PROTOCOL_ARQ_ABBC                             
+  PROCEDURE pc_imp_arq_abbc(pr_cooper    in crapchd.cdcooper%TYPE);
+
 END CHEQ0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0003 AS
@@ -117,7 +120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CHEQ0003 AS
   --  Sistema  : Rotinas focadas no sistema de Cheques - Devolução automática de cheques
   --  Sigla    : CHEQ
   --  Autor    : Andre (Mouts)
-  --  Data     : Outubro/2018.                   Ultima atualizacao:
+  --  Data     : Outubro/2018.                   Ultima atualizacao: 26/07/2019
   --
   -- Dados referentes ao programa:
   --
@@ -4368,6 +4371,260 @@ EXCEPTION
   WHEN NO_DATA_FOUND THEN
     pr_cdhashcode:=null;
 END pc_obtem_hashcode;
+
+
+-----
+procedure pc_imp_arq_abbc(pr_cooper    in crapchd.cdcooper%TYPE) is
+
+ --Tabela com as remessas enviadas para ABBC
+ CURSOR c_protoc(pr_nome   varchar2)is
+  select * 
+    from CECRED.tbcompe_nossaremessa b
+   where b.nmarquiv = pr_nome;
+ 
+ r_remessa c_protoc%rowtype;
+
+ --PL-TABLE
+  TYPE typ_tab_abbc IS TABLE OF CECRED.TBCOMPE_PROTOCOL_ARQ_ABBC%ROWTYPE
+  INDEX BY PLS_INTEGER;
+ 
+ vr_tab_arq typ_tab_abbc;
+ --
+ pr_cdcritic  crapcri.cdcritic%TYPE;
+ pr_dscritic  varchar2(4000);
+ 
+ vr_recebedir     VARCHAR2(100);
+ vr_recebedir2    VARCHAR2(100);
+ vr_dircoop       VARCHAR2(100);
+ vr_montadir     VARCHAR2(100);
+ vr_stemail       VARCHAR2(1); 
+ vr_email_dest    VARCHAR2(100);
+ vr_dsemail       varchar2(400); 
+ vr_serv_ftp      VARCHAR2(100);
+ vr_user_ftp      VARCHAR2(100);
+ vr_pass_ftp      VARCHAR2(100);
+ vr_nmarquiv      VARCHAR2(100);
+ vr_dir_local     VARCHAR2(100);
+ vr_dir_remoto    VARCHAR2(100);
+ vr_script_ftp    VARCHAR2(600);
+ vr_comand_ftp    VARCHAR2(1000);
+ vr_typ_saida     VARCHAR2(3);
+ vr_caminho       VARCHAR2(100);
+ vr_exc_saida     EXCEPTION;
+ 
+ vr_dscritic      VARCHAR2(400);
+ vr_nomarqui      VARCHAR2(4000);
+ vr_cmarquiv      VARCHAR2(4000);
+ vr_farquivo      utl_file.file_type;
+ vr_setlinha      VARCHAR2(4000); 
+ vr_compnome      VARCHAR2(4);
+ vr_index         number;
+ vr_tab_linhacsv  gene0002.typ_split;
+ 
+ rw_nmdireto      VARCHAR2(100);
+ rw_nmarquiv      VARCHAR2(100);
+ 
+ vr_exec_erro         EXCEPTION;
+ vr_exc_proxima_linha EXCEPTION;
+
+begin
+  -->Inicializar variaveis critica
+  pr_cdcritic := 0;
+  pr_dscritic := NULL;
+  
+   -- Leitura do calendário da cooperativa
+  OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cooper);
+  FETCH btch0001.cr_crapdat INTO btch0001.rw_crapdat;
+  -- Se não encontrar
+  IF btch0001.cr_crapdat%NOTFOUND THEN
+    -- Fechar o cursor pois efetuaremos raise
+    CLOSE btch0001.cr_crapdat;
+    
+    RAISE vr_exc_saida;
+  END IF;
+ 
+ -->L085 é o banco depois vem a data DDMM.csv
+ -->Monta nome do arquivo para busca em diretorno
+  vr_compnome := to_char(btch0001.rw_crapdat.dtmvtolt,'DDMM');
+  vr_nomarqui := 'L085'||vr_compnome||'.csv';
+
+  CLOSE btch0001.cr_crapdat;
+ -->Buscar caminho de parametro
+  vr_cmarquiv := gene0001.fn_param_sistema('CRED',
+                                           0,
+                                           'PTC_CTL_DIR_ABBC');
+                                           
+  vr_recebedir := gene0001.fn_param_sistema('CRED',
+                                            0,
+                                           'DIRRECABBC'); 
+                                           
+  vr_recebedir2 :=  vr_cmarquiv || vr_recebedir ;
+  
+  vr_dircoop := gene0001.fn_param_sistema('CRED',pr_cooper,'ROOT_DIRCOOP');
+  
+  vr_montadir := vr_dircoop || vr_recebedir ||'/'|| vr_nomarqui;
+                                                                                 
+	-- Busca nome do servidor
+  vr_serv_ftp := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                          ,pr_cdcooper => '0'
+                                          ,pr_cdacesso => 'TRAN_BBC_SERV_FTP');
+  -- Busca nome de usuario
+  vr_user_ftp := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                          ,pr_cdcooper => '0'
+                                          ,pr_cdacesso => 'TRAN_BBC_USER_FTP');
+  -- Busca senha do usuario
+  vr_pass_ftp := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                          ,pr_cdcooper => '0'
+                                          ,pr_cdacesso => 'TRAN_BBC_PASS_FTP');
+
+  vr_dir_local := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                          ,pr_cdcooper => '0'
+                                          ,pr_cdacesso => 'TRAN_BBC_DIR_PROT');
+                                        
+  --vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'SCRIPT_SHELL_FTP_ABBC');
+  
+  vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
+  
+  -- Preparar o comando de conexão e envio ao FTP
+      vr_comand_ftp := vr_script_ftp
+                    || ' -recebe'
+                    || ' -srv '          || vr_serv_ftp
+                    || ' -usr '          || vr_user_ftp
+                    || ' -pass '         || vr_pass_ftp
+                    || ' -arq '          || CHR(39) || vr_nomarqui  || CHR(39)
+                    || ' -dir_local '    || CHR(39) || vr_recebedir2  || CHR(39)
+                    || ' -dir_remoto '   || CHR(39) || vr_dir_local || CHR(39);
+
+      -- Chama procedure de envio e recebimento via ftp
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_comand_ftp
+                           ,pr_flg_aguard  => 'S'
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => pr_dscritic);
+
+      -- Se ocorreu erro dar RAISE
+      IF vr_typ_saida = 'ERR' THEN
+        pr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comand_ftp ||
+                      ' - Erro: ' || pr_dscritic;
+        RAISE vr_exc_saida;
+      END IF;                                      
+         
+                             
+
+ -->Verificar se existe arquivo
+    IF gene0001.fn_exis_arquivo(pr_caminho => vr_montadir) = FALSE THEN
+      vr_dscritic := 'Arquivo ' || vr_cmarquiv || '/' || vr_nomarqui ||' - '|| ' não encontrado!';
+      RAISE vr_exec_erro;
+    END IF;
+    
+    cecred.gene0001.pc_separa_arquivo_path(pr_caminho => vr_montadir,
+                                         pr_direto   => rw_nmdireto,
+                                         pr_arquivo  => rw_nmarquiv);
+
+ --  Ler arquivo excel (exemplo L0851504.csv)
+  gene0001.pc_abre_arquivo(pr_nmdireto => rw_nmdireto  --> Diretorio do arquivo
+                          ,pr_nmarquiv => rw_nmarquiv  --> Nome do arquivo
+                          ,pr_tipabert => 'R'            --> Modo de abertura (R,W,A)
+                          ,pr_utlfileh => vr_farquivo  --> Handle do arquivo aberto
+                          ,pr_des_erro => vr_dscritic);  --> Erro
+
+          IF vr_dscritic IS NOT NULL THEN
+             RAISE vr_exec_erro;
+          END IF;
+     
+    vr_index := 1;
+    LOOP
+        
+    BEGIN
+      BEGIN
+       -- loop para ler a linha do arquivo
+        gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_farquivo --> Handle do arquivo aberto
+                                    ,pr_des_text => vr_setlinha); --> Texto lido
+         
+       EXCEPTION
+            WHEN NO_DATA_FOUND THEN
+              --Chegou ao final arquivo, sair do loop
+              EXIT;
+            WHEN OTHERS THEN
+               vr_dscritic:= 'Erro na leitura do arquivo. '||sqlerrm;
+               RAISE vr_exec_erro;
+       END;
+               
+      vr_tab_linhacsv := gene0002.fn_quebra_string(vr_setlinha,',');
+         
+      -- percorrer os campos do arquivo CSV
+      FOR idx IN 1..vr_tab_linhacsv.count() LOOP
+              
+       -- verificar os campos 
+         CASE
+            WHEN idx = 6  THEN vr_tab_arq(vr_index).NMARQABBC         := vr_tab_linhacsv(idx);
+            WHEN idx = 9  THEN vr_tab_arq(vr_index).dssitvalidacao    := vr_tab_linhacsv(idx);
+            WHEN idx = 12 THEN vr_tab_arq(vr_index).qtregistros       := gene0002.fn_char_para_number(vr_tab_linhacsv(idx));
+            WHEN idx = 15 THEN vr_tab_arq(vr_index).vltotal           := gene0002.fn_char_para_number(vr_tab_linhacsv(idx));
+            ELSE CONTINUE;
+         END CASE;
+       END LOOP;
+  END;   
+  
+  vr_index := vr_index + 1;          
+  END LOOP;   
+   
+  FOR i in vr_tab_arq.first..vr_tab_arq.last loop 
+      
+   --descarta primeira linha arquivo cabeçalho
+   IF i != 1 THEN
+     OPEN c_protoc(vr_tab_arq(i).NMARQABBC);
+     FETCH c_protoc INTO r_remessa; 
+     
+     IF c_protoc%found THEN
+      BEGIN
+          update cecred.tbcompe_nossaremessa a
+             set a.qtproces = vr_tab_arq(i).qtregistros,
+                 a.vlproces = vr_tab_arq(i).vltotal,
+                 a.insituac = vr_tab_arq(i).dssitvalidacao,
+                 a.nmarqrec = rw_nmarquiv
+           where a.nmarquiv = vr_tab_arq(i).NMARQABBC;
+               
+      EXCEPTION
+          WHEN OTHERS THEN        
+              vr_dscritic := 'Erro ao inserir CECRED.tbcompe_nossaremessa: '||sqlerrm;
+      END;        
+    
+     END IF;	
+     CLOSE c_protoc; 
+     
+    --envia email caso exista alguma validação com inconsistência
+    If upper(vr_tab_arq(i).dssitvalidacao) like '%INCONSISTENCIA%' OR
+       upper(vr_tab_arq(i).dssitvalidacao) like '%INCONSISTÊNCIA%' then
+         
+    --retorna email ailos destino para aviso de inconsistencia 
+       vr_email_dest  := gene0001.fn_param_sistema('CRED',
+                                                  '0',
+                                                  'EMAIL_RET_VALID_SINC');
+                                                     
+       vr_dsemail := 'Arquivo ' || vr_tab_arq(i).NMARQABBC ||' retornou com inconsistencia!' ; 
+         
+      CECRED.gene0003.pc_solicita_email(pr_cdcooper        => pr_cooper
+                                        ,pr_cdprogra        => null
+                                        ,pr_des_destino     => vr_email_dest
+                                        ,pr_des_assunto     => 'Arquivo ABBC inconsistencia.'
+                                        ,pr_des_corpo       => vr_dsemail
+                                        ,pr_des_anexo       => NULL
+                                        ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                        ,pr_flg_remete_coop => 'S' --> Se o envio sera do e-mail da Cooperativa
+                                        ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                        ,pr_des_erro        => vr_dscritic);
+    end if;
+     
+   END IF; 
+  END LOOP;
+  
+exception
+  when vr_exec_erro  then
+    pr_dscritic := vr_dscritic;
+  when others then
+    pr_dscritic := 'Erro geral : ' || SQLERRM;
+end pc_imp_arq_abbc;
 
 
 END CHEQ0003;

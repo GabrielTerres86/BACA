@@ -28,6 +28,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS543 (pr_cdcooper  IN crapcop.cdcooper%
                12/09/2013 - Conversao Progress => Oracle (Gabriel).
 
                10/10/2013 - Ajuste para controle de criticas (Gabriel).
+
+               20/05/2019 - PJ565 - Arquivos FAC -  Renato Cordeiro - AMcom
+			             
+               02/07/2019 - PJ565 - Arquivos FAC (parametrizado nome arquivo) -  Rafael Rocha - AMcom
 ............................................................................. */
 
   -- Variaveis de uso no programa
@@ -180,7 +184,9 @@ BEGIN
                    to_char(rw_crapdat.dtmvtolt,'dd');
 
     -- Nome do arquivo no diretorio integra
-    vr_nmarquiv := vr_dsdireto_integra || '/FAC640D9.'|| ltrim(to_char(rw_crapcop.cdbcoctl,'000'));
+         vr_nmarquiv := vr_dsdireto_integra || '/' /*FAC64003*/
+                        ||gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdcooper => 0 , pr_cdacesso =>'NM_ARQ_PAC_FECHAM_PROVIS' )
+                        ||'.'|| ltrim(to_char(rw_crapcop.cdbcoctl,'000'));
 
     -- Periocidade do arquivo
     vr_idperiod := 'D';
@@ -191,7 +197,9 @@ BEGIN
     vr_nmarqlog := NULL;
 
     -- Nome do arquivo no diretorio integra
-    vr_nmarquiv := vr_dsdireto_integra || '/FAC640N9.' || ltrim (to_char(rw_crapcop.cdbcoctl,'000'));
+    vr_nmarquiv := vr_dsdireto_integra || '/'/*FAC64009*/
+                   ||gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdcooper => 0 , pr_cdacesso =>'NM_ARQ_PAC_FECHAM_DEFIN' )
+                   ||'.' || ltrim (to_char(rw_crapcop.cdbcoctl,'000'));
 
     -- Periocidade do arquivo
     vr_idperiod := 'N';
@@ -427,7 +435,7 @@ BEGIN
                     ,vr_dtleiarq
                     ,to_date(substr(vr_setlinha,14,2) || '/'  || substr(vr_setlinha,12,2) || '/' || substr(vr_setlinha,8,4)
                            ,'dd/mm/yyyy')
-                    ,vr_nmarquiv
+                    ,substr(vr_nmarquiv,1,40) -- add para reduzir a qtd de caracteres 
                     ,to_number(substr(vr_setlinha,52,17)) / 100
                     ,to_number(substr(vr_setlinha,26,17)) / 100
                     ,substr(vr_setlinha,69,1)
@@ -443,7 +451,7 @@ BEGIN
 
             -- Tratamento de erro para a insercao na gnfcomp
             EXCEPTION
-
+			WHEN DUP_VAL_ON_INDEX THEN NULL;
               WHEN OTHERS THEN
 
                 vr_dscritic := 'Erro na insercao na gnfcomp. ' || sqlerrm;

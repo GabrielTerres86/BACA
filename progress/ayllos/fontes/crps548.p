@@ -66,6 +66,8 @@
 
 			    26/05/2018 - Ajustes referente alteracao da nova marca (P413 - Jonata Mouts).
 
+          14/08/2019 - PJ565 - Ajuste relatorio 533 (FAC) - Renato AMcom
+
 ..............................................................................*/
 
 DEF STREAM str_1.
@@ -143,6 +145,9 @@ DEF VAR h-b1wgen0011 AS HANDLE                                         NO-UNDO.
 /* Devolucao boletos 085 */
 DEF VAR aux_ponteiro    AS INT                                         NO-UNDO.
 DEF VAR vlr_totdevol    AS DEC INIT 0                                  NO-UNDO.
+
+DEF BUFFER b-gnfcomp FOR gnfcomp.
+DEF BUFFER b-crapdat FOR crapdat.
 
 DEF TEMP-TABLE w-relatorio                                             NO-UNDO
     FIELD cdcooper  AS INT
@@ -603,13 +608,26 @@ ASSIGN aux_vlcobvlb = IF  AVAILABLE craptab  THEN
              ASSIGN rel_nrcheque[1] = rel_nrcheque[1] + gnfcomp.vlremdoc
                     rel_srcheque[1] = rel_srcheque[1] + gnfcomp.vlrecdoc.
         ELSE
-        IF   CAN-DO("11,31,73",STRING(gnfcomp.cdtipdoc))  THEN
+        IF   CAN-DO("11,31,73,434",STRING(gnfcomp.cdtipdoc))  THEN
              ASSIGN rel_dvchqrmn[1] = rel_dvchqrmn[1] + gnfcomp.vlremdoc
                     rel_dvchqrcn[1] = rel_dvchqrcn[1] + gnfcomp.vlrecdoc.
         ELSE
         IF   CAN-DO("12,32",STRING(gnfcomp.cdtipdoc))  THEN
              ASSIGN rel_dvchqrmd[1] = rel_dvchqrmd[1] + gnfcomp.vlremdoc
                     rel_dvchqrcd[1] = rel_dvchqrcd[1] + gnfcomp.vlrecdoc.
+      END.
+      FIND b-crapdat WHERE b-crapdat.cdcooper = 3.
+    FOR EACH b-gnfcomp WHERE b-gnfcomp.cdcooper = 3            AND
+                           b-gnfcomp.dtmvtolt = b-crapdat.dtmvtoan AND
+                           b-gnfcomp.cdtipfec = 1            AND
+                           b-gnfcomp.idregist = 1            AND
+                           b-gnfcomp.cdtipdoc <> 0           NO-LOCK
+                           BREAK BY b-gnfcomp.cdperarq
+                                    BY b-gnfcomp.cdtipdoc:
+
+        IF   CAN-DO("12,32",STRING(b-gnfcomp.cdtipdoc))  THEN
+             ASSIGN rel_dvchqrmd[1] = rel_dvchqrmd[1] + b-gnfcomp.vlremdoc
+                    rel_dvchqrcd[1] = rel_dvchqrcd[1] + b-gnfcomp.vlrecdoc.
                   
     END.
 
