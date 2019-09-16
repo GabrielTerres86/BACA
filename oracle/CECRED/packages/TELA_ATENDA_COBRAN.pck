@@ -9273,7 +9273,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
           Sistema : CECRED
           Sigla   : COBRAN
           Autor   : Augusto (Supero)
-          Data    : Agosto/18.                    Ultima atualizacao: --/--/----
+          Data    : Agosto/18.                    Ultima atualizacao: 27/08/2019
         
           Dados referentes ao programa:
         
@@ -9283,7 +9283,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
         
           Observacao: -----
         
-          Alteracoes:
+          Alteracoes: 27/08/2019 - Rafael Ferreira (Mouts) - INC0023442 - Alterada tabela crapass para tbcc_associados
         ..............................................................................*/
     
         -- Vinculação
@@ -9319,7 +9319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                   ,v.idvinculacao
               INTO vr_nmvinculacao
                   ,vr_idvinculacao
-              FROM crapass            s
+              FROM tbcc_associados    s
                   ,tbrecip_vinculacao v
              WHERE s.cdcooper = vr_cdcooper
                AND s.nrdconta = pr_nrdconta
