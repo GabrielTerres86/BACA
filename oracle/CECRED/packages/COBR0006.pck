@@ -473,7 +473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Procedimentos para  gerais da cobranca
     Sigla    : CRED
     Autor    : Odirlei Busana - AMcom
-    Data     : Novembro/2015.                   Ultima atualizacao: 18/07/2019
+    Data     : Novembro/2015.                   Ultima atualizacao: 23/08/2019
   
    Dados referentes ao programa:
   
@@ -582,6 +582,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                               
             18/07/2019 - inc0020612 Na rotina pc_trata_segmento_p_240_85, verificado a nulidade do valor de
                          desconto quando o mesmo for obrigatório (Carlos)
+
+           23/08/2019 - Set modulo
+                        (Ana Volles - PRB0041875)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ------------------------------- CURSORES ---------------------------------    
@@ -667,6 +670,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
   vr_qtd_emi_ret CONSTANT INTEGER := NVL(gene0001.fn_param_sistema('CRED',0,'QTD_DIAS_EMISSAO_RETR'), 90);
   ---------------------------------
   
+  vr_cdprogra   VARCHAR2(100) := 'COBR0006'; --PRB0041875
+
+  --> Grava informações para resolver erro de programa/ sistema
+  PROCEDURE pc_gera_log(pr_cdcooper      IN PLS_INTEGER           --> Cooperativa
+                       ,pr_dstiplog      IN VARCHAR2              --> Tipo Log
+                       ,pr_dscritic      IN VARCHAR2 DEFAULT NULL --> Descricao da critica
+                       ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0
+                       ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0
+                       ,pr_ind_tipo_log  IN tbgen_prglog_ocorrencia.tpocorrencia%type DEFAULT 2
+                       ,pr_nmarqlog      IN tbgen_prglog.nmarqlog%type DEFAULT NULL
+                       ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%type DEFAULT 1 -- cadeia - 12/02/2019 - REQ0035813
+                       ) IS
+    -----------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_gera_log
+    --  Sistema  : Rotina para gravar logs em tabelas
+    --  Sigla    : CRED
+    --  Autor    : Ana Lúcia E. Volles - Envolti
+    --  Data     : Agosto/2019           Ultima atualizacao: 23/08/2019
+    --  Chamado  : PRB0041875
+    --
+    -- Dados referentes ao programa:
+    -- Frequencia: Rotina executada em qualquer frequencia.
+    -- Objetivo  : Controla gravação de log em tabelas.
+    --
+    -- Alteracoes:  
+    --             
+    ------------------------------------------------------------------------------------------------------------   
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
+    --
+  BEGIN         
+    --> Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
+                           pr_cdcooper      => pr_cdcooper, 
+                           pr_tpocorrencia  => pr_ind_tipo_log, 
+                           pr_cdprograma    => vr_cdprogra, 
+                           pr_tpexecucao    => pr_tpexecucao,
+                           pr_cdcriticidade => pr_cdcriticidade,
+                           pr_cdmensagem    => pr_cdmensagem,    
+                           pr_dsmensagem    => pr_dscritic,               
+                           pr_idprglog      => vr_idprglog,
+                           pr_nmarqlog      => pr_nmarqlog);
+  EXCEPTION
+    WHEN OTHERS THEN
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+  END pc_gera_log;
+
   /* Funcao para validacao dos caracteres */
   FUNCTION fn_valida_caracteres (pr_flgnumer IN BOOLEAN,  -- Validar Numeros?
                                  pr_flgletra IN BOOLEAN,  -- Validar Letras?
@@ -886,7 +936,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Objetivo  : Realizar a inclusão/atualização dos registros para monitoração do processo de importação dos arquivos CNAB. 
     --             Esse monitoramento será integrado com o Aymaru.
 
-    -- Alteracoes:
+    -- Alteracoes: 23/08/2019 - Set modulo
+    --            (Ana Volles - PRB0041875)
     --
     -- .............................................................................
     DECLARE
@@ -921,6 +972,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_nrsequence crapsqu.nrseqatu%TYPE;
 
     BEGIN
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_monitora_processo');
 
       --Busca o tipo de serviço
       OPEN cr_tbgen_aplicacao_barramento(pr_cdservico => pr_cdservico);
@@ -1110,6 +1163,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       -- Gravar
       COMMIT;
       
+      -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         /* Se aconteceu erro, gera o log e envia o erro por e-mail */
@@ -1161,7 +1216,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Frequencia: Sempre que chamado
        Objetivo  : Inicializa todos os campos da cobranca
 
-       Alteracoes: 
+       Alteracoes: 23/08/2019 - Set modulo
+                  (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1255,7 +1311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -1266,6 +1322,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
 				   13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS  ----------------------------
@@ -1300,7 +1359,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Dezembro/2015.                   Ultima atualizacao: 15/01/2018
+       Data    : Dezembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -1312,6 +1371,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 
                    15/01/2018 - Ajustar para gravar o tipo de desconto no campo cdmensag (tipo de desconto)
                                 (Douglas - Chamado 831413)                                
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1334,6 +1396,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     ------------------------------- VARIAVEIS -------------------------------
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_grava_boleto');
+
     vr_cdcooper := pr_rec_cobranca.cdcooper;
     vr_nrdconta := pr_rec_cobranca.nrdconta;
     vr_cdbandoc := pr_rec_cobranca.cdbandoc;
@@ -1436,6 +1501,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_qtbloque := pr_qtbloque + 1;
     pr_vlrtotal := pr_vlrtotal + NVL(pr_rec_cobranca.vltitulo, 0);
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_saida THEN
       -- Nao eh erro, apenas para a execucao
@@ -1456,7 +1523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Dezembro/2015.                   Ultima atualizacao: 13/02/2017 
+       Data    : Dezembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -1465,6 +1532,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
        Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1533,7 +1603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Dezembro/2015.                   Ultima atualizacao: 13/02/2017
+       Data    : Dezembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -1542,6 +1612,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
        Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1599,7 +1672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Dezembro/2015.                   Ultima atualizacao: 13/02/2017
+       Data    : Dezembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -1608,6 +1681,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
        Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1619,11 +1695,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     ------------------------------- VARIAVEIS -------------------------------
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_valida_grava_rejeitado');
+
     IF pr_cdmotivo = 'S3' OR pr_cdmotivo = 'S4' THEN
       
       -- Inconsistencia Negativacao Serasa
       vr_cdocorre := 92;      
-    
     ELSIF pr_cdocorre = 1 THEN
       -- Gerar Rejeicao com Ocorrencia 03 - Entrada Rejeitada
       vr_cdocorre := 03;
@@ -1649,6 +1727,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                       ,pr_cdmotivo      => pr_cdmotivo        --> Motivo da Rejeicao
                       ,pr_tab_rejeitado => pr_tab_rejeitado); --> Tabela de Rejeitados
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END pc_valida_grava_rejeitado;
 
 
@@ -1664,7 +1744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 13/02/2017 
+       Data    : Janeiro/2016                     Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -1676,6 +1756,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
 
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1709,7 +1791,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_dscritic := 'Erro geral na COBR0006.pc_grava_sacado -> ' || SQLERRM;
   END pc_grava_sacado;
 
-
   --> Rotina tem como objetivo efetuar a validacao de campos quando for comando de instrucao.
   PROCEDURE pc_valida_exec_instrucao ( pr_cdcooper     IN crapcop.cdcooper%TYPE,   --> Codigo da cooperativa
                                        pr_nrdconta     IN crapass.nrdconta%TYPE,   --> Numero da conta do cooperado
@@ -1726,7 +1807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 17/03/2016
+       Data    : Novembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -1746,6 +1827,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    17/03/2017 - Removido a validação que verificava se o CEP do pagador do boleto existe no Ayllos. 
                                 Solicitado pelo Leomir e aprovado pelo Victor (cobrança)
                                (Douglas - Chamado 601436)
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -1774,6 +1858,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_dscritic  VARCHAR2(255);
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_valida_exec_instrucao');
+
     --> Inicializa variaveis
     pr_cdmotivo:= '';
     
@@ -1869,6 +1956,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Protestar
     IF pr_cdocorre = 09 THEN
 	
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_valida_exec_instrucao');
+
 	  tela_parprt.pc_consulta_periodo_parprt(pr_cdcooper => pr_cdcooper,
 										     pr_qtlimitemin_tolerancia => vr_limitemin,
 										     pr_qtlimitemax_tolerancia => vr_limitemax,
@@ -1879,6 +1969,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         pr_cdmotivo := '38';
         RAISE vr_exc_motivo;
       END IF;
+      -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     
       IF rw_crapcob.dtvencto >= TRUNC(SYSDATE) THEN
         -- Pedido de Protesto Nao Permitido para o Titulo
@@ -1928,6 +2020,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                pr_cdmotivo := '39';
                RAISE vr_exc_motivo;
              END IF; 
+             -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+             GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_valida_exec_instrucao');
         END IF;
         
       ELSE -- CNAB 400
@@ -1980,6 +2074,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_cdmotivo := '05';
                 RAISE vr_exc_motivo;
         END IF;
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_valida_exec_instrucao');
           END IF;
         
         END IF;
@@ -2009,6 +2105,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         pr_cdmotivo := '46';
         RAISE vr_exc_motivo;
       END IF;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_valida_exec_instrucao');
   
       -- Valida Endereco do Sacado
       IF TRIM(REPLACE(pr_tab_linhas('DSENDSAC').texto,',','')) IS NULL THEN
@@ -2048,8 +2146,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         RAISE vr_exc_motivo;
         
       END IF;
-      
-      
       
 /* Nao sera mais validado se o CEP existe no sistema
    Chamado 601436 -> Solicitado por Leomir e autorizado pelo Victor Hugo Zimmerman
@@ -2091,6 +2187,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       END IF;
 	  */
     END IF;
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     
   EXCEPTION
     WHEN vr_exc_saida THEN
@@ -2120,7 +2218,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 15/01/2018
+       Data    : Janeiro/2016                     Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -2146,6 +2244,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                   15/01/2018 - Gravar o cdmensag (tipo de desconto) que foi carregado
                                (Douglas - Chamado 831413)                                
+
+                  23/08/2019 - Set modulo
+                               (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -2178,6 +2279,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_cdmotivo VARCHAR2(10);
 
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_titulos');
     vr_qtd_proc:= 0;
     -- Percorrer todos os titulos que foram identificados e realizar as validacoes necessarias
     vr_idx_cob := pr_tab_crapcob.FIRST;
@@ -2232,6 +2335,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 vr_cdcritic:= NULL;
                 vr_dscritic:= NULL;
               END IF;
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_titulos');
                                                  
               CONTINUE;
             END IF;
@@ -2420,6 +2525,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_des_erro:= NULL;
           vr_dscritic:= NULL;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_titulos');
         
         -- Caso o tip de emissao seja cooperativa emite e expede deve gerar log para a tela cobran
         IF pr_tab_crapcob(vr_idx_cob).cdbandoc = 085 AND
@@ -2447,6 +2554,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             vr_des_erro:= NULL;
             vr_dscritic:= NULL;
           END IF;
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_titulos');
         END IF;
         
         -- se o sacado nao for DDA, confirmar registro do titulo, 
@@ -2506,6 +2615,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             vr_cdcritic:= NULL;
             vr_dscritic:= NULL;
           END IF;
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_titulos');
           
           -- Cria registro para cobranca tarifa.
           vr_idx_lat:= lpad(pr_tab_crapcob(vr_idx_cob).cdcooper,10,'0')||
@@ -2559,8 +2670,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
            vr_cdcritic:= NULL;
            vr_dscritic:= NULL;
          END IF;                   
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_titulos');
                    
      END IF;
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     
   EXCEPTION 
     WHEN OTHERS THEN
@@ -2588,7 +2703,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 12/08/2019
+       Data    : Janeiro/2016                     Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -2603,9 +2718,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 
                    01/02/2018 - Alterações referente ao PRJ352 - Nova solução de protesto
                    
-                   12/08/2019 - Incluída Validação de Desconto Superior a Valor do Documento
-                                Rafael Ferreira (Mouts) - INC0021299
-                   
+                   23/08/2019 - Set modeulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -2641,6 +2755,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 		vr_dsocorre crapoco.dsocorre%TYPE;
 
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
   
     vr_qtd_proc:= 0;
     
@@ -2689,6 +2805,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           -- Fecha cursor
           CLOSE cr_crapcob;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
         
         -- verificar se a instrucao está pendente de processamento na CIP
         IF rw_crapcob.ininscip = 1 THEN
@@ -2718,6 +2836,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           
           CONTINUE;          
         END IF;
+
+ -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
         
         -- Rafael Ferreira (Mouts) - INC0021299
         -- Valida se o Desconto é igual ou superior ao valor Total do Documento
@@ -2777,6 +2898,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           
           CONTINUE;          
         END IF;        
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
         
         -- Verificar se ja esta Liquidado
         IF rw_crapcob.incobran = 5 THEN
@@ -2798,6 +2921,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           END IF;
           CONTINUE;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
         
         -- Ocorrencias:
         --   02 - Baixar
@@ -2824,6 +2949,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           END IF;
           CONTINUE;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
         
         --Cria log cobranca
         IF nvl(vr_instrucao.nrremass,0) > 0 THEN
@@ -2862,6 +2989,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             --Levantar Excecao
             RAISE vr_processa_erro;
           END IF;
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
         END IF;
         
         -- Verificar que eh a instrucao que foi identificada
@@ -2932,6 +3061,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
 
           -- 04 = Concessao de Abatimento
           WHEN 04 THEN
@@ -2951,6 +3082,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
 
           -- 05 = Cancelamento de Abatimento
           WHEN 05 THEN
@@ -2969,6 +3102,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
 
           -- 06 = Alteracao de Vencimento
           WHEN 06 THEN
@@ -2988,6 +3123,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
 
           -- 07 = Concessao de Desconto
           WHEN 07 THEN
@@ -3008,6 +3145,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
 
           -- 08 = Cancelamento de Desconto
           WHEN 08 THEN
@@ -3026,6 +3165,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
 
           -- 09 = Protestar
           WHEN 09 THEN
@@ -3045,6 +3186,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
 
           -- 10 = Sustar Protesto e Baixar
           WHEN 10 THEN
@@ -3116,6 +3259,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
 
           -- 11 = Sustar Protesto e Manter em Carteira
           WHEN 11 THEN
@@ -3189,6 +3334,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
 
           -- 31 = Alteracao de Outros Dados
           WHEN 31 THEN
@@ -3213,6 +3360,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
           
           -- 41 = Cancelar Protesto
           WHEN 41 THEN
@@ -3231,6 +3380,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
 
           -- 80 = Instrução automática de protesto
           WHEN 80 THEN
@@ -3252,6 +3403,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
           
           -- 81 = Excluir Protesto com Carta de Anuência Eletrônica -- REVISAR
           WHEN 81 THEN
@@ -3271,6 +3424,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
           
           -- 90 = Alterar tipo de emissao CEE
           WHEN 90 THEN
@@ -3289,6 +3444,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
             
           -- 93 = Negativar Serasa
           WHEN 93 THEN
@@ -3305,6 +3462,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
            
           -- 94 = Cancelar Negativacao Serasa
           WHEN 94 THEN
@@ -3320,6 +3479,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
             
           -- 95 = Instrucao manual de envio de SMS
           WHEN 95 THEN
@@ -3338,6 +3499,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
 
           -- 96 = Cancelamento de envio de SMS
           WHEN 96 THEN
@@ -3354,6 +3517,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
 
           -- Instrucoes que nao estavam previstas
           ELSE
@@ -3373,6 +3538,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
             
             --Cria log cobranca
             PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid --> ROWID da Cobranca
@@ -3389,7 +3556,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               --Levantar Excecao
               RAISE vr_processa_erro;
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_instrucoes');
         END CASE;
+
+        -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
         
       EXCEPTION
         WHEN vr_processa_erro THEN
@@ -3455,7 +3627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 26/01/2016
+       Data    : Janeiro/2016                     Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -3464,6 +3636,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    remessa
 
        Alteracoes: 26/01/2016 - Conversão Progress -> Oracle (Douglas Quisinski)
+
+                   23/08/2019 - Set modulo e Revitalização para guardar os logs a fim de 
+                                identificar possível lock
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -3518,8 +3694,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_nrremrtc INTEGER;
     vr_nrremcre INTEGER;
     vr_nrseqreg INTEGER;
+    --PRB0041875
+    vr_dsparame VARCHAR2(1000);
+    vr_cdcritic NUMBER;
+    vr_dscritic VARCHAR2(2000);
 
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_rejeitados');
   
     -- Percorrer todos os registros rejeitados
     FOR vr_idx IN 1..pr_tab_rejeitado.COUNT() LOOP
@@ -3533,6 +3715,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                      ,pr_dtmvtolt => vr_rejeitado.dtmvtolt
                      ,pr_intipmvt => 2);
                      
+      --PRB0041875
+      vr_dsparame := ' - cdcooper:'||vr_rejeitado.cdcooper
+                   ||', nrdconta:'||vr_rejeitado.nrdconta
+                   ||', nrcnvcob:'||vr_rejeitado.nrcnvcob
+                   ||', dtmvtolt:'||vr_rejeitado.dtmvtolt;
+
       FETCH cr_craprtc INTO rw_craprtc;
       
       IF cr_craprtc%NOTFOUND THEN 
@@ -3546,6 +3734,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                                   vr_rejeitado.nrdconta || ';' || 
                                                   vr_rejeitado.nrcnvcob || ';2');
         
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_rejeitados');
+
+        BEGIN
+          --Como não tem exception nos inserts, guarda os valores a serem inseridos
+          --Se ocorrer erro, grava na others também o conteúdo da vr_dscritic
+          --Se não ocorrer, não grava nada
+          --E não altera o retorno ao usuário (pr_dscritic)
+          vr_cdcritic := 1034;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'craprtc:'||
+                        ' cdcooper:'||vr_rejeitado.cdcooper||
+                        ', nrdconta:'||vr_rejeitado.nrdconta||
+                        ', nrcnvcob:'||vr_rejeitado.nrcnvcob||
+                        ', dtmvtolt:'||vr_rejeitado.dtmvtolt||
+                        ', nrremret:'||vr_nrremrtc||
+                        ', nmarquiv:'||vr_rejeitado.nmarqrtc||
+                        ', flgproce:0'||
+                        ', cdoperad:'||vr_rejeitado.cdoperad||
+                        ', dtaltera:'||vr_rejeitado.dtmvtolt||
+                        ', hrtransa:'||GENE0002.fn_busca_time||
+                        ', dtdenvio:NULL'||
+                        ', qtreglot:1'||
+                        ', intipmvt:2'||
+                        '. '||sqlerrm;
+
         -- Insere registro
         INSERT INTO craprtc(cdcooper
                            ,nrdconta
@@ -3606,6 +3819,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         
         -- Fecha o cursor
         CLOSE cr_crapcre2;
+        BEGIN
+          --Como não tem exception nos inserts, guarda os valores a serem inseridos
+          --Se ocorrer erro, grava na others também o conteúdo da vr_dscritic
+          --Se não ocorrer, não grava nada
+          --E não altera o retorno ao usuário (pr_dscritic)
+          vr_cdcritic := 1034;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapcre:'||
+                        ' cdcooper:'||vr_rejeitado.cdcooper||
+                        ', nrcnvcob:'||vr_rejeitado.nrcnvcob||
+                        ', dtmvtolt:'||vr_rejeitado.dtmvtolt||
+                        ', nrremret:'||vr_nrremcre||
+                        ', intipmvt:2'||
+                        ', nmarquiv:'||vr_rejeitado.nmarqcre||
+                        ', flgproce:1'||
+                        ', cdoperad:'||vr_rejeitado.cdoperad||
+                        ', dtaltera:'||vr_rejeitado.dtaltera||
+                        ', hrtranfi:'||GENE0002.fn_busca_time||
+                        '. '||sqlerrm;
         
         -- Insere registro
         INSERT INTO crapcre(cdcooper
@@ -3628,6 +3859,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                            ,vr_rejeitado.cdoperad
                            ,vr_rejeitado.dtaltera
                            ,GENE0002.fn_busca_time);
+
+          vr_cdcritic := 0;
+          vr_dscritic := NULL;
+        END;
       ELSE
         -- Fecha cursor
         CLOSE cr_crapcre;
@@ -3643,6 +3878,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                                 vr_nrremcre
                                 ,pr_flgdecre => 'N');
                                 
+      BEGIN
+        --Como não tem exception nos inserts, guarda os valores a serem inseridos
+        --Se ocorrer erro, grava na others também o conteúdo da vr_dscritic
+        --Se não ocorrer, não grava nada
+        --E não altera o retorno ao usuário (pr_dscritic)
+        vr_cdcritic := 1034;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapret:'||
+                      ' cdcooper:'||vr_rejeitado.cdcooper||
+                      ', nrcnvcob:'||vr_rejeitado.nrcnvcob||
+                      ', nrdconta:'||vr_rejeitado.nrdconta||
+                      ', nrdocmto:0'||
+                      ', nrretcoo:'||vr_nrremrtc|| -- Ultimo da RTC
+                      ', nrremret:'||vr_nrremcre|| -- Ultimo da CRE
+                      ', nrseqreg:'||vr_nrseqreg|| -- Ultimo da RET
+                      ', cdocorre:'||vr_rejeitado.cdocorre||
+                      ', cdmotivo:'||nvl(trim(vr_rejeitado.cdmotivo),' ')||
+                      ', vltitulo:'||vr_rejeitado.vltitulo||
+                      ', vlabatim:0'||
+                      ', vldescto:0'||
+                      ', vltarass:0'||
+                      ', vltarcus:0'||
+                      ', cdbcorec:'||vr_rejeitado.cdbcorec||
+                      ', cdagerec:'||vr_rejeitado.cdagerec||
+                      ', dtocorre:'||vr_rejeitado.dtocorre||
+                      ', cdoperad:'||vr_rejeitado.cdoperad||
+                      ', dtaltera:'||vr_rejeitado.dtaltera||
+                      ', hrtransa:'||GENE0002.fn_busca_time||
+                      ', nrnosnum:'||vr_rejeitado.nrnosnum||
+                      ', dsdoccop:'||vr_rejeitado.dsdoccop||
+                      ', nrremass:'||vr_rejeitado.nrremass||
+                      ', dtvencto:'||vr_rejeitado.dtvencto||
+                      '. '||sqlerrm;
+
       -- Insere registro
       INSERT INTO crapret(cdcooper
                          ,nrcnvcob
@@ -3692,12 +3960,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                          ,vr_rejeitado.dsdoccop
                          ,vr_rejeitado.nrremass
                          ,vr_rejeitado.dtvencto);
+
+          vr_cdcritic := 0;
+          vr_dscritic := NULL;
+      END;
+
     END LOOP;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     
   EXCEPTION 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
       pr_dscritic := 'Erro geral na COBR0006.pc_processa_rejeitados --> ' || SQLERRM;
+
+      --PRB0041875
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame||vr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
   END pc_processa_rejeitados;
 
   --> Procedure para processar os titulos que foram identificados no arquivo
@@ -3710,7 +3996,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 16/05/2017
+       Data    : Janeiro/2016                     Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -3734,6 +4020,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 						 
 			       26/06/2019 - Ajuste para retirar acentos e caracteres especiais do sacado
 				                Alcemir Jr. (PRB0041807).                            
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -3762,6 +4051,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_dsendsac crapsab.dsendsac%TYPE; 
 
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_sacados');
   
     -- Percorrer todos os registros rejeitados
     FOR vr_idx IN 1..pr_tab_sacado.COUNT() LOOP
@@ -3839,6 +4130,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       END;
     END LOOP;
       
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN OTHERS THEN
       pr_cdcritic := 0;
@@ -3865,7 +4158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 28/01/2016
+       Data    : Janeiro/2016                     Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -3873,6 +4166,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Gerar o protocolo da transacao
 
        Alteracoes: 28/01/2016 - Conversão Progress -> Oracle (Douglas Quisinski)
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -3905,6 +4201,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_dsinfor3 crappro.dsinform##3%TYPE;
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_protocolo_transacao');
     -- Verifica se a cooperativa esta cadastrada
     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
@@ -3975,6 +4273,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;    
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -4005,7 +4305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Janeiro/2016                     Ultima atualizacao: 13/02/2017
+       Data    : Janeiro/2016                     Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -4017,6 +4317,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
 
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
      
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4029,6 +4331,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     rw_craprtc COBR0006.cr_craprtc%ROWTYPE;
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_grava_rtc');
     OPEN cr_craprtc (pr_cdcooper => pr_cdcooper
                     ,pr_nrdconta => pr_nrdconta
                     ,pr_nrcnvcob => pr_nrcnvcob
@@ -4087,6 +4391,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_des_reto := 'OK';
       
     END IF;
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     
   EXCEPTION
     WHEN OTHERS THEN
@@ -4115,7 +4421,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei -RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 13/02/2017
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -4124,6 +4430,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
        Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     vr_index INTEGER;
@@ -4164,7 +4473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao:  31/12/2018
+       Data    : Marco/2016.                   Ultima atualizacao:  23/08/2019
 
        Dados referentes ao programa:
 
@@ -4174,6 +4483,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Alteracoes:  31/12/2018 - Alterar mensagem de erro de "Arquivo CNAB invalido."
                                  para "Arquivo de remessa fora do layout."
                                  (Douglas - INC0029384)
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS  ----------------------------
@@ -4196,6 +4508,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 		vr_exc_saida EXCEPTION;
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_identifica_arq_cnab');
 
     IF trim(pr_nmarqint) IS NULL THEN
       
@@ -4213,11 +4527,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RETURN;
     
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_identifica_arq_cnab');
     
     -- separa diretorio e nmarquivo
     gene0001.pc_separa_arquivo_path(pr_caminho => pr_nmarqint, 
                                     pr_direto  => vr_dsdireto, 
                                     pr_arquivo => vr_nmarquiv);
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_identifica_arq_cnab');
 
     --Abrir arquivo
     gene0001.pc_abre_arquivo ( pr_nmdireto => vr_dsdireto    --> Diretório do arquivo
@@ -4225,6 +4543,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                               ,pr_tipabert => 'R'            --> Modo de abertura (R,W,A)
                               ,pr_utlfileh => vr_ind_arquiv  --> Handle do arquivo aberto
                               ,pr_des_erro => vr_dscritic);  --> Erro
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_identifica_arq_cnab');
                       
     IF vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
@@ -4259,6 +4579,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             RETURN;
             
           END IF;
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_identifica_arq_cnab');
                                   
           IF length(vr_dslinha) = 240 OR 
              length(vr_dslinha) = 241 THEN
@@ -4296,7 +4618,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 RETURN;
 
             END;
-            
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_identifica_arq_cnab');
 
             BEGIN 
 		    pr_nrdconta := to_number(substr(vr_dslinha,59,13));
@@ -4316,8 +4639,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 RETURN;
                 
             END;
-            
-            
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_identifica_arq_cnab');
             
           ELSIF pr_tparquiv = 'CNAB400' THEN
             
@@ -4339,6 +4662,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 RETURN;
                 
             END;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_identifica_arq_cnab');
 
             BEGIN 
 			pr_nrdconta := to_number(substr(vr_dslinha,32,9));
@@ -4358,6 +4683,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 RETURN;
                 
             END;		      
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_identifica_arq_cnab');
                                 
           END IF;           
         
@@ -4378,6 +4705,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             RETURN;
                          
           END IF; 
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_identifica_arq_cnab');
         
         END IF;
         
@@ -4392,6 +4721,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END; 
       
     pr_des_reto := 'OK';
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   
   EXCEPTION 
     WHEN vr_exc_saida  THEN
@@ -4431,7 +4762,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Marco/2016                           Ultima atualizacao: 05/10/2016
+    Data     : Marco/2016                           Ultima atualizacao: 23/08/2019
     
     Dados referentes ao programa:
     
@@ -4439,6 +4770,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Objetivo   : Alterar e-mail dos sacados
     
     Alterações : 05/10/2016 - Ajustes referente a melhoria M271 (Kelvin)
+
+                 23/08/2019 - Set modulo
+                              (Ana Volles - PRB0041875)
     -------------------------------------------------------------------------------------------------------------*/                                
   
     CURSOR cr_crapsab(pr_cdcooper IN crapsab.cdcooper%TYPE
@@ -4469,6 +4803,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     PRAGMA EXCEPTION_INIT(vr_exc_locked, -54);
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_altera_email_cel_sacado');
   
     vr_dsdemail := TRIM(pr_dsdemail);
     
@@ -4481,7 +4817,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     /* Se o e-mail foi preenchido, temos que verificar se ele eh valido */
     IF vr_dsdemail IS NOT NULL THEN
       
-      
       IF GENE0003.fn_valida_email(pr_dsdemail => vr_dsdemail) <> 1 THEN
         
         vr_cdcritic := 0;
@@ -4490,7 +4825,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         RAISE vr_exc_erro;
         
       END IF;
-    
     
     END IF;
     
@@ -4535,7 +4869,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
          
     END;   
     
-    
     --Realiza a alteração do registro de sacado                          
     BEGIN
             
@@ -4557,7 +4890,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         vr_dscritic := 'Nao foi possivel atualizar o email do sacado - ' || sqlerrm;
         
         RAISE vr_exc_erro;             
-    
     END;
     
     -- Realizar a gravação do email do pagador    
@@ -4574,10 +4906,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       END IF;
       RAISE vr_exc_erro;
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_altera_email_cel_sacado');
     
     --Retorno OK
     pr_des_erro:= 'OK';  
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
       
@@ -4621,7 +4957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 02/12/2016 
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -4630,6 +4966,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
        Alteracoes: 02/12/2016 - Ajuste para levantar exception (NOK) quando for encontrado registro de rejeição
                                 (Andrei - RKAM).
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS  ----------------------------
@@ -4645,6 +4984,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 	vr_nrdconta   crapass.nrdconta%TYPE;
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_valida_arquivo_cobranca');
        
     COBR0006.pc_identifica_arq_cnab (pr_cdcooper => pr_cdcooper,  --> Codigo da cooperativa
                                      pr_nmarqint => pr_nmarqint,  --> Numero da conta do cooperado
@@ -4661,6 +5002,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_erro;
     
     END IF;                                         
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_valida_arquivo_cobranca');
     
     IF vr_tparquiv = 'CNAB240' AND
        vr_cddbanco = 1         THEN
@@ -4701,9 +5044,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_erro; 
         
     END IF;  
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_valida_arquivo_cobranca');
     
     pr_des_reto := 'OK';
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION  
     WHEN vr_exc_erro THEN         
       
@@ -4728,14 +5075,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Andrei - RKAM
-    Data     : Marco/2016                           Ultima atualizacao:  
+    Data     : Marco/2016                           Ultima atualizacao: 23/08/2019
   
     Dados referentes ao programa:
    
     Frequencia: -----
     Objetivo   : Procedure para validar arquivos de cobranca via progress
   
-    Alterações :  
+    Alterações : 23/08/2019 - Set modulo
+                              (Ana Volles - PRB0041875)
   ---------------------------------------------------------------------------------------------------------------*/
 
     --Variaveis de Criticas
@@ -4758,6 +5106,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_exc_erro  EXCEPTION;                                       
         
     BEGIN
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_valida_arquivo_cob_car');
       
       --Inicializar Variaveis
       vr_cdcritic:= 0;                         
@@ -4804,6 +5154,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_index:= vr_tab_rejeita.NEXT(vr_index);
           
         END LOOP;  
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_valida_arquivo_cob_car');
         
         -- Encerrar a tag raiz 
         gene0002.pc_escreve_xml(pr_xml            => pr_clob_ret 
@@ -4819,6 +5171,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       --Retorno
       pr_des_erro:= 'OK';    
 
+      -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         
@@ -4856,7 +5210,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 22/12/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -4870,6 +5224,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    16/11/2017 - Quando INPESSOA = 3 considerar com o sendo 2 (SD795292 - AJFink)
 
                    22/12/2017 - Carregar o CPF/CNPJ do titular da conta (Douglas - Chamado 819777)
+
+                   23/08/2019 - Set modulo (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -4934,6 +5290,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_nrconven   NUMBER;
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_header_arq_85');
     
     --> Numero da Remessa do Cooperado 
     vr_nrremass := pr_tab_linhas('NRSEQARQ').numero;    
@@ -5107,6 +5465,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_des_reto := 'OK';
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION  
     WHEN vr_exc_erro THEN      
       
@@ -5138,7 +5498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 25/11/2015
+       Data    : Novembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -5149,6 +5509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    16/11/2016 - Quando INPESSOA = 3 considerar com o sendo 2 (SD795292 - AJFink)
 
+                   23/08/2019 - Set modulo (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -5181,6 +5542,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_nrremret  NUMBER;
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_header_lote_85');
     
     --> Numero da Remessa do Cooperado 
     vr_nrremret := pr_tab_linhas('NRREMRET').numero;   
@@ -5295,6 +5658,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_des_reto := 'OK';
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION  
     WHEN vr_exc_erro THEN      
       
@@ -5337,7 +5702,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 11/01/2018
+       Data    : Novembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -5366,6 +5731,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    11/01/2018 - Ajustar para executar RAISE apenas se ocorreu erro nas validações da
                                 pc_valida_exec_instrucao e o boleto tenha sido rejeitado, caso contrário
                                 o processo deve continuar. (Douglas 828517)
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -5382,6 +5750,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_rej_cdmotivo VARCHAR2(2);
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_p_85');
+
     IF pr_tab_linhas('CDMOVRE').numero = '01' THEN
       pr_qtdregis := pr_qtdregis + 1;
     ELSE
@@ -5409,6 +5780,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                             pr_dscritic => vr_dscritic,
                             pr_tab_crawrej => pr_tab_crawrej);
          END IF;
+         -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_p_85');
        ELSE
          vr_dscritic:= '';
          -- Armazenar a instrucao para gravacao ao fim do arquivo
@@ -5424,6 +5797,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                             pr_dscritic => vr_dscritic,
                             pr_tab_crawrej => pr_tab_crawrej);
          END IF;
+         -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_p_85');
        END IF;       
     END IF;
     
@@ -5446,6 +5821,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        vr_rej_cdmotivo := '08';
        RAISE vr_exc_reje;
     END IF;      
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_p_85');
     
     --SD#580867
     if nvl(length(TRIM(pr_tab_linhas('DSNOSNUM').texto)),0) > 17 then
@@ -5522,6 +5899,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                             ,pr_tab_rejeitado => pr_tab_rejeitado);       --> Tabela de Rejeitados
           RAISE vr_exc_fim;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_p_85');
       END IF;
     END IF;
   
@@ -5577,7 +5956,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           RAISE vr_exc_reje;
         END IF;
       END IF;
-      
     END IF;
     
     -- 21.3P Valida Valor do Titulo
@@ -5829,6 +6207,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_des_reto := 'OK';
   
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_fim  THEN
       -- Fim da execucao devido a ocorrencia que nao necessita do 
@@ -5916,7 +6296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 22/12/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -5950,6 +6330,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    22/12/2017 - Validar se o CPF/CNPJ do pagador é o mesmo do titular da conta
                                 e rejeitar com o motivo '46' (Douglas - Chamado 819777)
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -5979,6 +6362,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_dsnegufds tbcobran_param_protesto.dsnegufds%TYPE;
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_q_85');
 
     --> Validacao de Comandos de Instrucao
     IF pr_rec_cobranca.cdocorre <> 1 THEN -- 01 - Remessa
@@ -6014,6 +6399,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       RAISE vr_exc_fim;
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_q_85');
 
     -- Dados do sacado
     pr_rec_cobranca.nmdsacad := fn_remove_chr_especial(pr_texto => pr_tab_linhas('NMDSACAD').texto);
@@ -6051,7 +6438,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         vr_rej_cdmotivo := 'S4';
         RAISE vr_exc_reje;     
       END IF;
-      
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_q_85');
     END IF;
     
     -- 01.3Q Banco
@@ -6081,6 +6469,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_rej_cdmotivo := '46';
       RAISE vr_exc_reje;
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_q_85');
 
     -- se pagador dor PF, entao validar CPF
     IF pr_rec_cobranca.cdtpinsc = 1 THEN
@@ -6092,6 +6482,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         vr_rej_cdmotivo := '46';
         RAISE vr_exc_reje;
       END IF;                             
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_q_85');
     END IF;
     
     -- se pagador dor PJ, entao validar CNPJ
@@ -6104,6 +6496,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         vr_rej_cdmotivo := '46';
         RAISE vr_exc_reje;
       END IF;                             
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_q_85');
     END IF;        
     
     -- Validar se o CPF/CNPJ do pagador é o mesmo do Beneficiário
@@ -6182,7 +6576,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
     END IF;
     
-
 /* Nao sera mais validado se o CEP existe no sistema
    Chamado 601436 -> Solicitado por Leomir e autorizado pelo Victor Hugo Zimmerman
    
@@ -6248,7 +6641,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         
     CLOSE cr_caduf;
 
-
     -- 17.3Q Valida Tipo de Inscricao Avalista
     pr_rec_cobranca.cdtpinav := nvl(pr_tab_linhas('CDTPINAV').numero,0);
     IF pr_rec_cobranca.cdtpinav <> 0 AND  -- Vazio
@@ -6273,6 +6665,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         vr_rej_cdmotivo := '53';
         RAISE vr_exc_reje;
       END IF;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_q_85');
     END IF;
 
     -- 19.3Q Valida Nome do Sacado Avalista
@@ -6305,6 +6699,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_des_reto := 'OK';
   
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_fim  THEN
       -- Fim da execucao devido a ocorrencia que nao necessita do 
@@ -6390,7 +6786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -6402,6 +6798,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 		           13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
 
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -6417,6 +6815,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_rej_cdmotivo VARCHAR2(2);
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_r_240_85');
+
     -- Somente valor de o codigo de movimento for 1
     IF pr_tab_linhas('CDMOVRE').numero <> 1 THEN
       RAISE vr_exc_fim;
@@ -6459,6 +6860,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
     pr_des_reto := 'OK';
   
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_fim  THEN
       -- Fim da execucao devido a ocorrencia que nao necessita do 
@@ -6544,7 +6947,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -6556,6 +6959,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
 
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -6570,6 +6975,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_rej_cdmotivo VARCHAR2(2);
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_s_240_85');
     
     -- Importar linha de mensagem quando solicitacao de remessa
     IF pr_tab_linhas('CDMOVRE').numero = 1 AND 
@@ -6590,6 +6997,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_des_reto := 'OK';
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_fim  THEN
       -- Fim da execucao devido a ocorrencia que nao necessita do 
@@ -6655,7 +7064,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Douglas Quisinski
-       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -6670,6 +7079,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    18/01/2019 - INC0027091 - Inclusão de motivo XW para SMS não contratado 
                    (Douglas Pagel/ AMcom).
 
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -6690,6 +7101,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_dscritic VARCHAR2(500);
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_y04_240_85');
     
     -- Importar linha de mensagem quando solicitacao de remessa
     IF pr_tab_linhas('TPREGOPC').numero = 3 THEN
@@ -6736,6 +7149,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           pr_rec_cobranca.insmsvct := pr_tab_linhas('INSMSVCT').numero;
           pr_rec_cobranca.insmspos := pr_tab_linhas('INSMSPOS').numero;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_y04_240_85');
        CLOSE cr_config;
       END IF;
 
@@ -6746,11 +7161,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                           pr_tab_sacado   => pr_tab_sacado,   --> Tabela de Instrucoes
                           pr_dscritic     => vr_dscritic);    --> Descricao do Erro
       END IF;
-
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_y04_240_85');
     END IF;
     
     pr_des_reto := 'OK';
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
       
     WHEN OTHERS THEN
@@ -6812,13 +7230,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Ricardo Linhares
-       Data    : Dezembro/2016.                   Ultima atualizacao: 
+       Data    : Dezembro/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Tratar linha do arquivo tipo de segmento Y-53
 
+       Alteracoes: 23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
 
     ............................................................................ */   
     
@@ -6834,6 +7254,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_rej_cdmotivo VARCHAR2(2);
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_y53_240_85');
   
     -- verifica se possui permissão para pagamento divergente
     IF pr_rec_header.flgpgdiv = 0 THEN
@@ -6899,6 +7321,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
     pr_des_reto := 'OK';
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_reje THEN
       -- Rejeitou a cobranca e nao deve continuar o processamento
@@ -6977,8 +7401,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
   END pc_trata_segmento_y53_240_85;
 
-
-
   --> Tratar linha do arquicvo Header do arquivo
   PROCEDURE pc_trata_header_arq_240_01 (pr_cdcooper    IN crapcop.cdcooper%TYPE,   --> Codigo da cooperativa
                                         pr_nrdconta    IN crapass.nrdconta%TYPE,   --> Numero da conta do cooperado
@@ -6995,14 +7417,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao:  
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Tratar linha do arquicvo Header do arquivo
 
-       Alteracoes:  
+       Alteracoes: 23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -7039,6 +7462,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_nrconven   NUMBER;
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_header_arq_01');
     
     --> Numero da Remessa do Cooperado 
     vr_nrremass := pr_tab_linhas('NRSEQARQ').numero;   
@@ -7085,6 +7510,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_des_reto := 'OK';
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION  
     WHEN vr_exc_erro THEN      
       
@@ -7116,14 +7543,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que chamado
        Objetivo  : Tratar linha do arquicvo Header do lote
 
-       Alteracoes: 
+       Alteracoes: 23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -7133,6 +7561,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_dscritic   VARCHAR2(4000);
 
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_header_lote_01');
     
     --> Tipo de Registro
     IF pr_tab_linhas('TPREGIST').numero <> 1 THEN 
@@ -7142,6 +7572,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_des_reto := 'OK';
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION  
     WHEN vr_exc_erro THEN      
       
@@ -7184,7 +7616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 13/02/2017
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -7197,6 +7629,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        
 	               13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts).
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -7208,6 +7643,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_rej_cdmotivo VARCHAR2(2);
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_p_01');
     
     IF pr_tab_linhas('CDMOVRE').numero = '01' THEN
       pr_qtdregis := pr_qtdregis + 1;
@@ -7235,6 +7672,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                          pr_dscritic => vr_dscritic,
                          pr_tab_crawrej => pr_tab_crawrej);
       END IF;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_p_01');
        
     END IF;
     
@@ -7270,6 +7709,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 pr_tab_crawrej => pr_tab_crawrej);
                                 
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_p_01');
     
     IF TRUNC(SYSDATE) - vr_qtd_emi_ret > pr_rec_cobranca.dtemscob THEN
     
@@ -7282,6 +7723,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 pr_tab_crawrej => pr_tab_crawrej);
                                 
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_p_01');
     
     IF pr_rec_cobranca.dtvencto < TRUNC(SYSDATE)           OR 
        pr_rec_cobranca.dtvencto < pr_rec_cobranca.dtemscob THEN 
@@ -7293,6 +7736,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 pr_tab_crawrej => pr_tab_crawrej);
                                 
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_p_01');
 
     -- Formatar nosso numero com 17 posicoes para separa o numero da conta e o numero do boleto
     pr_rec_cobranca.dsnosnum := to_char(TRIM(pr_tab_linhas('DSNOSNUM').texto),'fm00000000000000000');
@@ -7301,7 +7746,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.vltitulo:= pr_tab_linhas('VLTITULO').numero;
     pr_rec_cobranca.dtvencto:= pr_tab_linhas('DTVENCTO').data;
     pr_rec_cobranca.dtemscob:= pr_tab_linhas('DTEMSCOB').data; 
-    
     
     IF pr_rec_header.flgutceb = 0 THEN
       
@@ -7313,11 +7757,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_rec_cobranca.nrdconta := to_number(SUBSTR(pr_rec_cobranca.dsnosnum,8,4));
       pr_rec_cobranca.nrbloque := to_number(SUBSTR(pr_rec_cobranca.dsnosnum,12,6));
     
-    
     END IF;
     
     pr_des_reto := 'OK';
   
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_fim  THEN
       -- Fim da execucao devido a ocorrencia que nao necessita do 
@@ -7406,7 +7851,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 13/02/2017 
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -7418,6 +7863,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
                    08/11/2017 - Adicionar chamada para a função fn_remove_chr_especial que
                                 remove o caractere invalido chr(160) (Douglas - Chamado 778480)
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -7459,6 +7907,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_rej_cdmotivo VARCHAR2(2);
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_q_01');
 
     --> Validacao de Comandos de Instrucao
     IF pr_rec_cobranca.cdocorre <> 1 THEN -- 01 - Remessa
@@ -7496,6 +7946,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       
       RAISE vr_exc_fim;
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_q_01');
 
     -- Dados do sacado
     pr_rec_cobranca.nmdsacad := fn_remove_chr_especial(pr_texto => pr_tab_linhas('NMDSACAD').texto);
@@ -7532,6 +7984,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_rec_cobranca.nrdconta := rw_crapceb.nrdconta;
               
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_q_01');
       
     IF pr_rec_cobranca.nrdconta <> pr_nrdconta THEN
             
@@ -7542,6 +7996,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 pr_tab_crawrej => pr_tab_crawrej);
           
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_q_01');
             
     --> Buscar dados do associado
     OPEN cr_crapass (pr_cdcooper => pr_cdcooper,
@@ -7564,6 +8020,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_nmprimtl := rw_crapass.nmprimtl;
              
     END IF;      
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_segmento_q_01');
     
     pr_rec_cobranca.cdtpinsc := nvl(pr_tab_linhas('INPESSOA').numero,0);
     pr_rec_cobranca.nrinssac := pr_tab_linhas('NRCPFCGC').numero;
@@ -7584,6 +8042,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                         
     pr_des_reto := 'OK';
   
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_fim  THEN
       
@@ -7614,7 +8074,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       Sistema  : Cred
       Sigla    : COBR0006
       Autor    : Alisson C. Berrido - AMcom
-      Data     : Julho/2013.                     Ultima atualizacao: 11/01/2016
+      Data     : Julho/2013.                     Ultima atualizacao: 23/08/2019
 
       Dados referentes ao programa:
 
@@ -7636,6 +8096,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        11/01/2016 - Procedure movida da package PAGA0001 para COBR0006
                     (Douglas - Importacao de Arquivos CNAB)
 
+       23/08/2019 - Set modeulo e Revitalização para guardar os logs a fim de identificar 
+                    possível lock
+                    (Ana Volles - PRB0041875)
      .........................................................................*/
   BEGIN
     DECLARE
@@ -7729,7 +8192,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_dscritic VARCHAR2(4000);
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
+      vr_dsparame VARCHAR2(1000);
+      
     BEGIN
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_prep_retorno_cooper_90');
+
+      --PRB0041875
+      vr_dsparame := ' - pr_idregcob:'||pr_idregcob
+                   ||', pr_cdocorre:'||pr_cdocorre
+                   ||', pr_cdmotivo:'||pr_cdmotivo
+                   ||', pr_vltarifa:'||pr_vltarifa
+                   ||', pr_cdbcoctl:'||pr_cdbcoctl
+                   ||', pr_cdagectl:'||pr_cdagectl
+                   ||', pr_dtmvtolt:'||pr_dtmvtolt
+                   ||', pr_cdoperad:'||pr_cdoperad
+                   ||', pr_nrremass:'||pr_nrremass
+                   ||', pr_dtcatanu:'||pr_dtcatanu;
+
       --Inicializar variaveis retorno
       pr_cdcritic:= NULL;
       pr_dscritic:= NULL;
@@ -7781,6 +8261,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           END IF;
         END IF;
       END IF;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_prep_retorno_cooper_90');
+
       /*** Gerar tarifas Cooperado **/
       /*** somente se for comandado pelo cooperado ***/
       /* 9=Baixa '09'=Comandada pelo Banco 085 (temporario) */
@@ -7848,8 +8331,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             ,2);
         EXCEPTION
           WHEN Others THEN
+            --PRB0041875
+            CECRED.pc_internal_exception (pr_cdcooper => rw_crapcob.cdcooper);
+            --Padronizado o conteúdo da vr_dscritic, porém, não será alterado o conteúdo
+            --da vr_cdcritic de retorno da procedure
             vr_cdcritic:= 0;
-            vr_dscritic:= 'Erro ao inserir na tabela craprtc. '||sqlerrm;
+            vr_dscritic := gene0001.fn_busca_critica(1034)||'craprtc:'||
+                          ' cdcooper:'||rw_crapcob.cdcooper||
+                          ', nrdconta:'||rw_crapcob.nrdconta||
+                          ', nrcnvcob:'||rw_crapcob.nrcnvcob||
+                          ', dtmvtolt:'||pr_dtmvtolt||
+                          ', nrremret:'||vr_nrremrtc||
+                          ', nmarquiv:'||vr_nmarquiv||
+                          ', flgproce:0'||
+                          ', dtdenvio:NULL'||
+                          ', qtreglot:1'||
+                          ', cdoperad:'||pr_cdoperad||
+                          ', dtaltera:'||pr_dtmvtolt||
+                          ', hrtransa:'||gene0002.fn_busca_time||
+                          ', intipmvt:2'||
+                          '. '||sqlerrm;
+
             --Levantar Excecao
             RAISE vr_exc_erro;
         END;
@@ -7947,8 +8449,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             ,gene0002.fn_busca_time);
         EXCEPTION
           WHEN Others THEN
+            --PRB0041875
+            CECRED.pc_internal_exception (pr_cdcooper => rw_crapcob.cdcooper);
+
             vr_cdcritic:= 0;
-            vr_dscritic:= 'Erro ao inserir na tabela crapcre. '||sqlerrm;
+            --Padronizado o conteúdo da vr_dscritic, porém, não será alterado o conteúdo
+            --da vr_cdcritic de retorno da procedure
+            vr_dscritic := gene0001.fn_busca_critica(1034)||'crapcre:'||
+                          ' cdcooper:'||rw_crapcob.cdcooper||
+                          ', nrcnvcob:'||rw_crapcob.nrcnvcob||
+                          ', dtmvtolt:'||pr_dtmvtolt||
+                          ', nrremret:'||vr_nrremcre||
+                          ', intipmvt:2'||
+                          ', nmarquiv:'||vr_nmarqcre||
+                          ', flgproce:1'||
+                          ', cdoperad:'||pr_cdoperad||
+                          ', dtaltera:'||pr_dtmvtolt||
+                          ', hrtranfi:'||gene0002.fn_busca_time||
+                          '. '||sqlerrm;
             --Levantar Excecao
             RAISE vr_exc_erro;
         END;
@@ -7964,6 +8482,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_nrseqreg := fn_sequence('CRAPRET','NRSEQREG', rw_crapcob.cdcooper||';'||
                                                        rw_crapcob.nrcnvcob||';'||
                                                        vr_nrremcre);
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_prep_retorno_cooper_90');
       --Criar movimento retorno titulos bancarios
       BEGIN
         INSERT INTO crapret
@@ -8018,19 +8538,74 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           ,pr_dtcatanu);
       EXCEPTION
         WHEN Others THEN
+          --PRB0041875
+          CECRED.pc_internal_exception (pr_cdcooper => rw_crapcob.cdcooper);
           vr_cdcritic:= 0;
-          vr_dscritic:= 'Erro ao inserir na tabela crapret. '||sqlerrm;
+          --Padronizado o conteúdo da vr_dscritic, porém, não será alterado o conteúdo
+          --da vr_cdcritic de retorno da procedure
+          vr_dscritic := gene0001.fn_busca_critica(1034)||'crapret:'||
+                        ' cdcooper:'||rw_crapcob.cdcooper||
+                        ', nrcnvcob:'||rw_crapcob.nrcnvcob||
+                        ', nrdconta:'||rw_crapcob.nrdconta||
+                        ', nrdocmto:'||rw_crapcob.nrdocmto||
+                        ', nrretcoo:'||vr_nrremrtc|| -- Ultimo da RTC
+                        ', nrremret:'||vr_nrremcre|| -- Ultimo da CRE
+                        ', nrseqreg:'||vr_nrseqreg|| -- Ultimo da RET
+                        ', cdocorre:'||pr_cdocorre||
+                        ', cdmotivo:'||nvl(pr_cdmotivo,' ')||
+                        ', vltitulo:'||rw_crapcob.vltitulo||
+                        ', vlabatim:'||rw_crapcob.vlabatim||
+                        ', vldescto:'||rw_crapcob.vldescto||
+                        ', vltarass:'||vr_vltarifa||
+                        ', cdbcorec:'||pr_cdbcoctl||
+                        ', cdagerec:'||pr_cdagectl||
+                        ', dtocorre:'||pr_dtmvtolt||
+                        ', cdoperad:'||pr_cdoperad||
+                        ', dtaltera:'||pr_dtmvtolt||
+                        ', hrtransa:'||gene0002.fn_busca_time||
+                        ', nrnosnum:'||rw_crapcob.nrnosnum||
+                        ', dsdoccop:'||rw_crapcob.dsdoccop||
+                        ', nrremass:'||pr_nrremass||
+                        ', dtvencto:'||rw_crapcob.dtvencto||
+                        ', dtcatanu:'||pr_dtcatanu||
+                        '. '||sqlerrm;
+
           --Levantar Excecao
           RAISE vr_exc_erro;
       END;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
+
+      --PRB0041875
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 1,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 1);
       WHEN OTHERS THEN
         -- Erro
         pr_cdcritic:= 0;
         pr_dscritic:= 'Erro na rotina COBR0006.pc_prep_retorno_cooper_90. '||sqlerrm;
+
+        --PRB0041875
+        CECRED.pc_internal_exception (pr_cdcooper => 3);
+
+        --Grava log
+        pc_gera_log(pr_cdcooper      => 3,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
+                    pr_cdcriticidade => 2,
+                    pr_cdmensagem    => nvl(pr_cdcritic,0),
+                    pr_ind_tipo_log  => 2);
+
     END;
   END pc_prep_retorno_cooper_90;
 
@@ -8050,7 +8625,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 22/12/2017
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -8058,6 +8633,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Objetivo  : Tratar linha do arquicvo Header do arquivo
 
        Alteracoes: 22/12/2017 - Carregar o CPF/CNPJ do titular da conta (Douglas - Chamado 819777)
+
+                   23/08/2019 - Set modulo (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------    
@@ -8118,6 +8695,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_nrconven   NUMBER;
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_header_arq_cnab400');
     
     --> Numero da Remessa do Cooperado 
     vr_nrremass := pr_tab_linhas('NRSEQREM').numero;    
@@ -8329,6 +8908,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_des_reto := 'OK';
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION  
     WHEN vr_exc_erro THEN      
       
@@ -8371,7 +8952,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 15/01/2018
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -8409,7 +8990,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    15/01/2018 - Ajustar para quando o cooperado informar o valor de desconto
                                 o cdmensag seja gravado com 1 (Vencimento até o desconto)
                                 (Douglas - Chamado 831413)
-    ............................................................................ */   
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
+................................................ */
     
     --> Buscar dados do associado
     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
@@ -8446,6 +9030,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 	vr_des_erro  VARCHAR2(255);
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_detalhe_cnab400');
     
     IF pr_tab_linhas('TPCOMAND').numero = '01' THEN
       pr_qtdregis := pr_qtdregis + 1;
@@ -8476,6 +9062,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                            ,pr_dscritic => vr_dscritic
                            ,pr_tab_crawrej => pr_tab_crawrej);
          END IF;
+         -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_detalhe_cnab400');
        ELSE
          
          vr_dscritic:= '';
@@ -8494,9 +9082,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                            ,pr_tab_crawrej => pr_tab_crawrej);
                             
          END IF;
+         -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_detalhe_cnab400');
          
        END IF;   
-           
     END IF;
     
     -- Inicializar
@@ -8598,8 +9187,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                           ,pr_tab_rejeitado => pr_tab_rejeitado);       --> Tabela de Rejeitados      
               
       END IF;
-      
       RAISE vr_exc_fim;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_detalhe_cnab400');
       
     END IF;      
      
@@ -8810,11 +9400,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     ELSIF pr_rec_cobranca.cddespec = 12 THEN /* Duplicata de Servico */
       pr_rec_cobranca.cddespec := '02';    
     ELSE
-      
       -- Especie do Titulo Invalido
       vr_rej_cdmotivo := '21';
       RAISE vr_exc_reje;
-      
     END IF;
     
     -- 30.7 Data de Emissao
@@ -9011,7 +9599,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       pr_rec_cobranca.tpdescto := 1;
     END IF;
     
-    
     -- 37.7 Valor de Abatimento
     pr_rec_cobranca.vlabatim := pr_tab_linhas('VLABATIM').numero;
     
@@ -9058,6 +9645,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_reje;
       
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_detalhe_cnab400');
     
     -- se pagador dor PF, entao validar CPF
     IF pr_rec_cobranca.cdtpinsc = 1 THEN
@@ -9069,6 +9658,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_rej_cdmotivo := '46';
       RAISE vr_exc_reje;
       END IF;                             
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_detalhe_cnab400');
     END IF;
       
     -- se pagador dor PJ, entao validar CNPJ
@@ -9081,6 +9672,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_rej_cdmotivo := '46';
       RAISE vr_exc_reje;
       END IF;                             
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_detalhe_cnab400');
     END IF;
       
     -- Validar se o CPF/CNPJ do pagador é o mesmo do Beneficiário
@@ -9249,6 +9842,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             RAISE vr_exc_reje;
             
           END IF;
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_detalhe_cnab400');
         
         END IF;         
          
@@ -9278,6 +9873,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             RAISE vr_exc_reje;
             
           END IF;
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_detalhe_cnab400');
         
         END IF;
       
@@ -9350,6 +9947,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           
         END IF;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_detalhe_cnab400');
         
       END IF;
             
@@ -9370,6 +9969,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_des_reto := 'OK';
   
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_fim  THEN
       -- Fim da execucao devido a ocorrencia que nao necessita do 
@@ -9457,7 +10058,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 13/02/2017 
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -9466,6 +10067,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
        Alteracoes: 13/02/2017 - Ajuste para utilizar NOCOPY na passagem de PLTABLE como parâmetro
 								(Andrei - Mouts). 
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS  ----------------------------
@@ -9478,6 +10082,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_cdcritic     INTEGER;
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_trata_multa_cnab400');
 
     --> Nao executar em caso de Instrucao
     IF pr_rec_cobranca.cdocorre <> 1 THEN 
@@ -9562,6 +10168,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_des_reto := 'OK';
   
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION 
     WHEN vr_exc_fim  THEN
       -- Fim da execucao devido a ocorrencia que nao necessita do 
@@ -9650,7 +10258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 13/02/2017
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -9670,6 +10278,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    09/11/2017 - Inclusão de chamada da procedure npcb0002.pc_libera_sessao_sqlserver_npc.
                                 (SD#791193 - AJFink)
 
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -9735,8 +10345,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
   BEGIN
-
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_intarq_remes_cnab240_001');
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
 
     -- Verifica se a cooperativa esta cadastrada
     OPEN cr_crapcop;
@@ -9768,12 +10378,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_dscritic := 'Tabela com parametro vencimento nao encontrado.';
       RAISE vr_exc_erro;
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
     
     --> buscar diretorio da cooperativa
     vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'C', 
                                          pr_cdcooper => pr_cdcooper, 
                                          pr_nmsubdir => NULL);
     
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
     
     vr_diasvcto := SUBSTR(vr_dstextab,1,2);
     
@@ -9781,18 +10395,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     gene0001.pc_separa_arquivo_path(pr_caminho => pr_nmarquiv, 
                                     pr_direto  => vr_dsdireto, 
                                     pr_arquivo => vr_nmarquiv);
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
     
     -- Buscar arquivo a ser importado
     gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
                               ,pr_pesq     => vr_nmarquiv
                               ,pr_listarq  => vr_listarqu
                               ,pr_des_erro => vr_dscritic);
-
     -- Se ocorrer erro ao recuperar lista de arquivos, registra no log
     IF TRIM(vr_dscritic) IS NOT NULL THEN 
       vr_dscritic := 'Nao foi possivel localizar arquivo '||pr_nmarquiv||': '||vr_dscritic;
       RAISE vr_exc_erro;
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
     
     --Inicia o processo de monitoramento para o Aymaru
     pc_monitora_processo(pr_cdcooper  => pr_cdcooper --> Cooperativa conectada
@@ -9807,10 +10424,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                         ,pr_qterro       => 0        --> Quantidade de registros com erro
                         ,pr_rowid_resumo => vr_rowid_resumo --> ROWID do resumo do processo 
                         ,pr_rowid_item_resumo => vr_rowid_item_resumo);
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
                         
     vr_tab_listarqu := gene0002.fn_quebra_string(pr_string => vr_listarqu,
                                                  pr_delimit => ',');
     
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
+
     vr_contador := 0;
                                             
     IF vr_tab_listarqu.count > 0 THEN
@@ -9846,6 +10468,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_dscritic := 'Erro dos2ux arquivos: '||vr_dscritic;
           RAISE vr_exc_erro;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
         
         -- Comando para listar a primeira linha do arquivo
         vr_dscomand:= 'head -1 ' ||vr_nmfisico;
@@ -9861,6 +10485,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_dscritic:= 'Não foi possivel executar comando unix. '||vr_dscomand;
           RAISE vr_exc_erro;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
         
         --> Verificar tamanho da linha do arquivo (padrao cnab240)
         IF length(vr_setlinha) > 243 THEN
@@ -9916,6 +10542,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
       
       IF vr_tab_linhas.count = 0 THEN
         
@@ -9983,6 +10611,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               RAISE vr_exc_saida;
               
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
             
             -- Se nao ocorreu erro no header, carrega as informacoes de banco
             vr_rec_header.cdbcoctl := rw_crapcop.cdbcoctl;
@@ -10026,6 +10656,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               RAISE vr_exc_saida;
               
             END IF; 
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
             
           ---------------  Detalhe ---------------
           ELSIF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'P' THEN    
@@ -10050,6 +10682,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                        pr_tab_crawrej   => pr_tab_crawrej,            --> Tabela de Rejeitados
                                        pr_des_reto      => vr_des_reto);              --> Retorno OK/NOK
                                 
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
           ---------------  Detalhe ---------------
           ELSIF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'Q' THEN
             
@@ -10072,6 +10706,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                          pr_tab_sacado    => vr_tab_sacado,             --> Tabela de Sacados
                                          pr_des_reto      => pr_des_reto);
                    
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
              END IF;            
           
           END IF;
@@ -10100,6 +10736,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                               pr_tab_crawrej => pr_tab_crawrej);
                               
            END IF;                          
+           -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+           GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
            
         END IF;
         
@@ -10130,6 +10768,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           RAISE vr_exc_erro;
           
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
                
         IF vr_qtbloque > 0 THEN
           pc_protocolo_transacao(pr_cdcooper  => pr_cdcooper --> Codigo da cooperativa
@@ -10198,10 +10838,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               RAISE vr_exc_erro;
               
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
             
             CONTINUE;
             
           END IF;
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
           
           -- Cria Lote de Remessa do Cooperado 
           pc_grava_rtc(pr_cdcooper  => pr_cdcooper, --> Codigo da cooperativa
@@ -10261,10 +10905,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               RAISE vr_exc_erro;
               
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
             
             CONTINUE;
             
           END IF;
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
           
         END IF;
         
@@ -10333,6 +10981,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
                             
         -- Apos a importacao, processar PL TABLE das instrucoes
         pc_processa_instrucoes(pr_cdcooper      => pr_cdcooper --> Codigo da Cooperativa
@@ -10358,6 +11008,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
                  
         -- Apos a importacao, processar PL TABLE de rejeitados
         pc_processa_rejeitados (pr_tab_rejeitado => vr_tab_rejeitado --> Tabela de rejeitados
@@ -10377,6 +11029,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
                             
         -- Apos a importacao, processar PL TABLE de sacados
         pc_processa_sacados(pr_tab_sacado => vr_tab_sacado --> Tabela de sacados
@@ -10396,14 +11050,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
         
         PAGA0001.pc_efetua_lancto_tarifas_lat(pr_cdcooper => pr_cdcooper
                                              ,pr_dtmvtolt => pr_dtmvtolt
                                              ,pr_tab_lat_consolidada => vr_tab_lat_consolidada
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);
-
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_intarq_remes_cnab240_001');
 
         -- Se ocorreu critica escreve no proc_message.log
         -- Não para o processo
@@ -10417,8 +11071,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                                         vr_cdcritic || ' - ' || vr_dscritic);
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
-          
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
         
       END IF;
       
@@ -10453,13 +11108,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                           ,pr_rowid_resumo => vr_rowid_resumo --> ROWID do resumo do processo 
                           ,pr_rowid_item_resumo => vr_rowid_item_resumo); 
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_01');
                             
     COMMIT;
     npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_1');
     
     pr_des_reto := 'OK';
     
-    gene0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   EXCEPTION  
     WHEN vr_exc_saida THEN
       gene0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
@@ -10576,7 +11234,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana - AMcom
-       Data    : Novembro/2015.                   Ultima atualizacao: 13/02/2017
+       Data    : Novembro/2015.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -10601,6 +11259,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 				   20/08/2018 - Foi incluido a validação do segmento Q
 							    (Felipe - Mouts).
 
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -10667,8 +11327,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
   BEGIN
-
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_intarq_remes_cnab240_085');
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
 
     -- Verifica se a cooperativa esta cadastrada
     OPEN cr_crapcop;
@@ -10696,12 +11356,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_dscritic := 'Tabela com parametro vencimento nao encontrado.';
       RAISE vr_exc_erro;
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
     
     --> buscar diretorio da cooperativa
     vr_dsdircop := gene0001.fn_diretorio(pr_tpdireto => 'C', 
                                          pr_cdcooper => pr_cdcooper, 
                                          pr_nmsubdir => NULL);
     
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
     
     vr_diasvcto := SUBSTR(vr_dstextab,1,2);
     
@@ -10710,17 +11374,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                     pr_direto  => vr_dsdireto, 
                                     pr_arquivo => vr_nmarquiv);
     
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
+
     -- Buscar arquivo a ser importado
     gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
                               ,pr_pesq     => vr_nmarquiv
                               ,pr_listarq  => vr_listarqu
                               ,pr_des_erro => vr_dscritic);
-
     -- Se ocorrer erro ao recuperar lista de arquivos, registra no log
     IF TRIM(vr_dscritic) IS NOT NULL THEN 
       vr_dscritic := 'Nao foi possivel localizar arquivo '||pr_nmarquiv||': '||vr_dscritic;
       RAISE vr_exc_erro;
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
     
     --Inicia o processo de monitoramento para o Aymaru
     pc_monitora_processo(pr_cdcooper  => pr_cdcooper --> Cooperativa conectada
@@ -10735,10 +11403,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                         ,pr_qterro       => 0        --> Quantidade de registros com erro
                         ,pr_rowid_resumo => vr_rowid_resumo --> ROWID do resumo do processo 
                         ,pr_rowid_item_resumo => vr_rowid_item_resumo);
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
                         
     vr_tab_listarqu := gene0002.fn_quebra_string(pr_string => vr_listarqu,
                                                  pr_delimit => ',');
     
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
+
     vr_contador := 0;
                                             
     IF vr_tab_listarqu.count > 0 THEN
@@ -10773,6 +11446,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_dscritic := 'Erro dos2ux arquivos: '||vr_dscritic;
           RAISE vr_exc_erro;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
         
         -- Comando para listar a primeira linha do arquivo
         vr_dscomand:= 'head -1 ' ||vr_nmfisico;
@@ -10787,6 +11462,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_dscritic:= 'Não foi possivel executar comando unix. '||vr_dscomand;
           RAISE vr_exc_erro;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
         
         --> Verificar tamanho da linha do arquivo (padrao cnab240)
         IF length(vr_setlinha) > 243 THEN
@@ -10829,6 +11506,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                       pr_direto  => vr_dsdireto, 
                                       pr_arquivo => vr_nmarquiv);
       
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
+
       --> Ler arquivo conforme configurado no cadastro de layout 
       gene0009.pc_importa_arq_layout( pr_nmlayout   => 'CNAB240',      --> Nome do Layout do arquivo a ser importado
                                       pr_dsdireto   => vr_dsdireto,    --> Descrição do diretorio onde o arquivo se enconta
@@ -10840,6 +11520,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
       
       IF vr_tab_linhas.count = 0 THEN
         vr_cdcritic := 999;
@@ -10884,6 +11566,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                ,pr_cdocorre      => vr_rec_cobranca.cdocorre --> Codigo da Ocorrencia
                                ,pr_cdmotivo      => vr_rej_cdmotivo          --> Motivo da Rejeicao
                                ,pr_tab_rejeitado => vr_tab_rejeitado);       --> Tabela de Rejeitados
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
           END IF;
 
 
@@ -10926,6 +11610,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               RAISE vr_exc_saida;
               
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
             
             -- Se nao ocorreu erro no header, carrega as informacoes de banco
             vr_rec_header.cdbcoctl := rw_crapcop.cdbcoctl;
@@ -10995,6 +11681,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                        pr_tab_crawrej   => pr_tab_crawrej,            --> Tabela de Rejeitados
                                        pr_des_reto      => vr_des_reto);              --> Retorno OK/NOK
                                 
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
+
           ---------------  Detalhe ---------------
           ELSIF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'Q' THEN
              
@@ -11017,6 +11706,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                          pr_tab_sacado    => vr_tab_sacado,             --> Tabela de Sacados
                                          pr_des_reto      => pr_des_reto);
              
+               -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
              END IF;
             
           ---------------  Detalhe ---------------
@@ -11038,6 +11729,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                           pr_rec_cobranca  => vr_rec_cobranca,           --> Dados da Cobranca
                                           pr_tab_rejeitado => vr_tab_rejeitado,          --> Tabela de Rejeitados
                                           pr_des_reto      => vr_des_reto);                --> Retorno OK/NOK
+
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
             END IF;
           ---------------  Detalhe ---------------
           ELSIF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'S' THEN
@@ -11058,6 +11752,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                           pr_rec_cobranca  => vr_rec_cobranca,           --> Dados da Cobranca
                                           pr_tab_rejeitado => vr_tab_rejeitado,          --> Tabela de Rejeitados
                                           pr_des_reto      => vr_des_reto);              --> Retorno OK/NOK
+
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
             END IF;
 
           ---------------  Detalhe ---------------
@@ -11080,7 +11777,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                             pr_tab_sacado    => vr_tab_sacado,             --> Tabela de Sacados
                                             pr_tab_rejeitado => vr_tab_rejeitado,          --> Tabela de Rejeitados
                                             pr_des_reto      => vr_des_reto);              --> Retorno OK/NOK
+
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
             END IF;
+
           ELSIF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'Y53' THEN
             
             -- Verificar se a cobranca foi rejeitada
@@ -11099,8 +11800,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                             pr_rec_cobranca  => vr_rec_cobranca,           --> Dados da Cobranca
                                             pr_tab_rejeitado => vr_tab_rejeitado,          --> Tabela de Rejeitados
                                             pr_des_reto      => vr_des_reto);              --> Retorno OK/NOK
+
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
             END IF;
-            
             
           END IF;
           
@@ -11128,8 +11831,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                ,pr_tab_rejeitado => vr_tab_rejeitado);       --> Tabela de Rejeitados
           vr_rec_cobranca.flgrejei:= TRUE;
       
-        END IF; 
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
 
+        END IF; 
         
         -- Após finalizar as linhas do arquivo, temos que validar o ultimo titulo processado
         --> Cria o ultimo boleto ou gera instrucao apenas se nao tiver erros 
@@ -11154,6 +11859,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 pr_dscritic => vr_dscritic,
                                 pr_tab_crawrej => pr_tab_crawrej);
              END IF;
+
+             -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+             GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
            ELSE
              vr_dscritic:= '';
              -- Armazenar a instrucao para gravacao ao fim do arquivo
@@ -11169,6 +11877,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 pr_dscritic => vr_dscritic,
                                 pr_tab_crawrej => pr_tab_crawrej);
              END IF;
+
+             -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+             GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
            END IF;       
         END IF;
         
@@ -11199,6 +11910,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           RAISE vr_exc_erro;
           
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
         
         IF vr_qtbloque > 0 THEN
           pc_protocolo_transacao(pr_cdcooper  => pr_cdcooper --> Codigo da cooperativa
@@ -11270,6 +11983,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             CONTINUE;
             
           END IF;
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
           
           -- Cria Lote de Remessa do Cooperado 
           pc_grava_rtc(pr_cdcooper  => pr_cdcooper, --> Codigo da cooperativa
@@ -11331,6 +12046,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             
             CONTINUE;
           END IF;
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
         END IF;
         
         -- Busca as informacoes
@@ -11367,6 +12084,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                            pr_dscritic => 'Nenhum boleto foi processado!',
                            pr_tab_crawrej => pr_tab_crawrej);
                            
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
+
           CONTINUE;
           
         END IF;
@@ -11397,6 +12117,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
                             
         -- Apos a importacao, processar PL TABLE das instrucoes
         pc_processa_instrucoes(pr_cdcooper      => pr_cdcooper --> Codigo da Cooperativa
@@ -11423,6 +12145,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_dscritic:= NULL;
           
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
                 
         -- Apos a importacao, processar PL TABLE de rejeitados
         pc_processa_rejeitados (pr_tab_rejeitado => vr_tab_rejeitado --> Tabela de rejeitados
@@ -11442,6 +12166,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
                             
         -- Apos a importacao, processar PL TABLE de sacados
         pc_processa_sacados(pr_tab_sacado => vr_tab_sacado --> Tabela de sacados
@@ -11461,6 +12187,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
         
         PAGA0001.pc_efetua_lancto_tarifas_lat(pr_cdcooper => pr_cdcooper
                                              ,pr_dtmvtolt => pr_dtmvtolt
@@ -11468,7 +12196,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);
 
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_intarq_remes_cnab240_085');
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
 
         -- Se ocorreu critica escreve no proc_message.log
         -- Não para o processo
@@ -11484,6 +12213,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           vr_dscritic:= NULL;
           
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
         
       END IF;
       
@@ -11518,12 +12249,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                           ,pr_rowid_resumo => vr_rowid_resumo --> ROWID do resumo do processo 
                           ,pr_rowid_item_resumo => vr_rowid_item_resumo); 
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb240_85');
                         
     COMMIT;
     npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_5');
     
     pr_des_reto := 'OK';
 
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   EXCEPTION  
     WHEN vr_exc_saida THEN
@@ -11639,7 +12373,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM
-       Data    : Marco/2016.                   Ultima atualizacao:13/02/2017
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -11659,6 +12393,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                    09/11/2017 - Inclusão de chamada da procedure npcb0002.pc_libera_sessao_sqlserver_npc.
                                 (SD#791193 - AJFink)
 
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------
@@ -11724,8 +12460,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
   BEGIN
-
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_intarq_remes_cnab400_085');
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
 
     -- Verifica se a cooperativa esta cadastrada
     OPEN cr_crapcop;
@@ -11752,6 +12488,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                          pr_cdcooper => pr_cdcooper, 
                                          pr_nmsubdir => NULL);    
     
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
+
     --> Buscar parametro de vencimento
     vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => 3, 
                                                pr_nmsistem => 'CRED', 
@@ -11763,6 +12502,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_dscritic := 'Tabela com parametro vencimento nao encontrado.';
       RAISE vr_exc_erro;
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
 
     vr_diasvcto := SUBSTR(vr_dstextab,1,2);
     
@@ -11771,6 +12512,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                     pr_direto  => vr_dsdireto, 
                                     pr_arquivo => vr_nmarquiv);
     
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
+
     -- Buscar arquivo a ser importado
     gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
                               ,pr_pesq     => vr_nmarquiv
@@ -11784,6 +12528,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_erro;
       
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
     
     --Inicia o processo de monitoramento para o Aymaru
     pc_monitora_processo(pr_cdcooper  => pr_cdcooper --> Cooperativa conectada
@@ -11799,6 +12545,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                         ,pr_rowid_resumo => vr_rowid_resumo --> ROWID do resumo do processo 
                         ,pr_rowid_item_resumo => vr_rowid_item_resumo);
     
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
+
     vr_tab_listarqu := gene0002.fn_quebra_string(pr_string => vr_listarqu,
                                                  pr_delimit => ',');
     
@@ -11830,6 +12579,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           RAISE vr_exc_erro;
           
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
         
         -- Comando para listar a primeira linha do arquivo
         vr_dscomand:= 'head -1 ' ||vr_nmfisico;
@@ -11847,6 +12598,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           RAISE vr_exc_erro;
           
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
         
         --> Verificar tamanho da linha do arquivo (padrao cnab400)
         IF length(vr_setlinha) > 403 THEN
@@ -11895,6 +12648,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                       pr_direto  => vr_dsdireto, 
                                       pr_arquivo => vr_nmarquiv);
       
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
+
       --> Ler arquivo conforme configurado no cadastro de layout 
       gene0009.pc_importa_arq_layout(pr_nmlayout   => 'CNAB400'       --> Nome do Layout do arquivo a ser importado
                                     ,pr_dsdireto   => vr_dsdireto     --> Descrição do diretorio onde o arquivo se enconta
@@ -11905,6 +12661,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
       
       IF vr_tab_linhas.count = 0 THEN
         
@@ -11974,6 +12732,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               RAISE vr_exc_saida;
               
             END IF;
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
             
             -- Se nao ocorreu erro no header, carrega as informacoes de banco
             vr_rec_header.cdbcoctl := rw_crapcop.cdbcoctl;
@@ -12006,6 +12766,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                      pr_tab_crawrej   => pr_tab_crawrej,            --> Tabela dae rejeitados
                                      pr_des_reto      => vr_des_reto);              --> Retorno OK/NOK
                                 
+            -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
+
           ---------------  Multa ---------------
           ELSIF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto = 'MU' THEN
             
@@ -12024,6 +12787,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                     ,pr_tab_sacado    => vr_tab_sacado             --> Tabela de Sacados
                                     ,pr_des_reto      => pr_des_reto);	
              
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
              END IF;
                       
           END IF;
@@ -12054,6 +12819,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                ,pr_dscritic => vr_dscritic
                                ,pr_tab_crawrej => pr_tab_crawrej);
              END IF;
+             -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+             GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
              
            ELSE
              
@@ -12073,6 +12840,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                ,pr_tab_crawrej => pr_tab_crawrej);
                                 
              END IF;
+             -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+             GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
              
            END IF;       
            
@@ -12105,6 +12874,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
           RAISE vr_exc_erro;
           
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
         
         IF vr_qtbloque > 0 THEN
           pc_protocolo_transacao(pr_cdcooper  => pr_cdcooper --> Codigo da cooperativa
@@ -12178,6 +12949,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             CONTINUE;
             
           END IF;
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
           
           -- Cria Lote de Remessa do Cooperado 
           pc_grava_rtc(pr_cdcooper  => pr_cdcooper, --> Codigo da cooperativa
@@ -12241,6 +13014,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
             CONTINUE;
             
           END IF;
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
           
         END IF;
         
@@ -12308,8 +13083,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                                         
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
-          
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
                             
         -- Apos a importacao, processar PL TABLE das instrucoes
         pc_processa_instrucoes(pr_cdcooper      => pr_cdcooper --> Codigo da Cooperativa
@@ -12335,8 +13111,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                                         
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
-          
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
            
         -- Apos a importacao, processar PL TABLE de rejeitados
         pc_processa_rejeitados (pr_tab_rejeitado => vr_tab_rejeitado --> Tabela de rejeitados
@@ -12346,7 +13123,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         -- Se ocorreu critica escreve no proc_message.log
         -- Não para o processo
         IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
@@ -12357,8 +13133,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                                         
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
-          
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
                             
         -- Apos a importacao, processar PL TABLE de sacados
         pc_processa_sacados(pr_tab_sacado => vr_tab_sacado --> Tabela de sacados
@@ -12368,7 +13145,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         -- Se ocorreu critica escreve no proc_message.log
         -- Não para o processo
         IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          
           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                     ,pr_ind_tipo_log => 2 -- Erro tratato
                                     ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
@@ -12379,8 +13155,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                                         
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
-          
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
                 
         PAGA0001.pc_efetua_lancto_tarifas_lat(pr_cdcooper => pr_cdcooper
                                              ,pr_dtmvtolt => pr_dtmvtolt
@@ -12388,8 +13165,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                              ,pr_cdcritic => vr_cdcritic
                                              ,pr_dscritic => vr_dscritic);
 
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'pc_intarq_remes_cnab400_085');
-        
         -- Se ocorreu critica escreve no proc_message.log
         -- Não para o processo
         IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
@@ -12403,8 +13178,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                                         
           vr_cdcritic:= NULL;
           vr_dscritic:= NULL;
-          
         END IF;
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
         
       END IF;
       
@@ -12439,12 +13215,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                           ,pr_rowid_resumo => vr_rowid_resumo --> ROWID do resumo do processo 
                           ,pr_rowid_item_resumo => vr_rowid_item_resumo); 
     END IF; 
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_intarq_rem_cnb400_85');
                         
     COMMIT;
     npcb0002.pc_libera_sessao_sqlserver_npc(pr_cdprogra_org => 'COBR006_9');
     
     pr_des_reto := 'OK';
 
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   EXCEPTION  
     WHEN vr_exc_saida THEN
@@ -12553,7 +13332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei -RKAM
-       Data    : Marco/2016.                   Ultima atualizacao: 12/03/2019 
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -12570,6 +13349,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 
                    12/03/2019 - Validar numero do boleto zero no arquivo de remessa
                                 (Lucas Ranghetti INC0031367)
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------    
@@ -12675,6 +13457,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_idx       PLS_INTEGER;
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
     
     vr_tab_rejeita.delete;
     
@@ -12691,12 +13475,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_erro;
       
     END IF; 
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
     
     -- separa diretorio e nmarquivo
     gene0001.pc_separa_arquivo_path(pr_caminho => pr_nmarqint, 
                                     pr_direto  => vr_dsdireto, 
                                     pr_arquivo => vr_nmarquiv);
     
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
+
     -- Buscar arquivo a ser importado
     gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
                               ,pr_pesq     => vr_nmarquiv
@@ -12717,10 +13506,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
       RAISE vr_exc_erro;
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
     
     vr_tab_listarqu := gene0002.fn_quebra_string(pr_string => vr_listarqu,
                                                  pr_delimit => ',');   
           
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
+
     -- Processar arquivos
     FOR i IN vr_tab_listarqu.first..vr_tab_listarqu.last LOOP
       
@@ -12747,6 +13541,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
         RAISE vr_exc_erro;
       END IF;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
       
       IF vr_tab_linhas.count = 0 THEN
         
@@ -12762,6 +13558,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                   ,pr_des_reto => vr_des_reto);
 
         RAISE vr_exc_erro; 
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
          
       ELSE
         
@@ -12793,6 +13591,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                         
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
                                         
             --> Cod. Banco na compen.
@@ -12808,6 +13608,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Lote do servico
@@ -12823,6 +13625,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Tipo de registro
@@ -12838,6 +13642,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Uso exclusivo FEBRABAN
@@ -12853,6 +13659,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_tab_rejeita => vr_tab_rejeita 
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
+
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
           
             --> Numero de inscricao
@@ -12868,6 +13677,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
           
             --> Agencia
@@ -12883,6 +13694,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --Busca convenio
@@ -12911,6 +13724,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 vr_split := gene0002.fn_quebra_string(pr_string  => gene0001.fn_busca_critica(563)
                                                      ,pr_delimit => '-');         
                                                      
+                -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+                GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
+
                 COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
                                           ,pr_nrlinseq => to_char(vr_contalin,'00000')
                                           ,pr_cdseqcri => vr_contaerr
@@ -12919,6 +13735,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                           ,pr_critica => vr_critica      
                                           ,pr_des_reto => vr_des_reto);               
                 
+                -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+                GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
               ELSE
                 
                 CLOSE cr_crapcco2;
@@ -12935,9 +13753,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                             ,pr_critica => vr_critica      
                                             ,pr_des_reto => vr_des_reto);
 
-                
+                  -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+                  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
                 END IF;
-              
               
               END IF;  
                 
@@ -12964,6 +13782,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Nome do banco
@@ -12979,6 +13799,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
           --------------------  Header do Lote ---------------------
@@ -12996,6 +13818,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                         
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Cod. Banco na compensa.
@@ -13011,6 +13835,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
                         
             --> Lote do servico
@@ -13026,6 +13852,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Tipo de registro
@@ -13041,6 +13869,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Tipo de servico 
@@ -13056,6 +13886,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Exclusivo FEBRABAN
@@ -13072,6 +13904,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Uso exclusivo Febraban
@@ -13088,6 +13922,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Numero de Inscricao da empresa
@@ -13103,6 +13939,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
                         
             --> Agencia
@@ -13118,6 +13956,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --Busca convenio
@@ -13153,7 +13993,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                           ,pr_critica => vr_critica      
                                           ,pr_des_reto => vr_des_reto);
                 
-                
+                -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+                GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
               ELSE
                 
                 CLOSE cr_crapcco2;
@@ -13170,9 +14011,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                             ,pr_critica => vr_critica      
                                             ,pr_des_reto => vr_des_reto);
 
-                
+                  -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+                  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
                 END IF;
-              
               
               END IF;  
                 
@@ -13195,6 +14036,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
                         
           ---------------  Detalhe ---------------
@@ -13213,6 +14056,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                         
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             -- Formatar nosso numero com 17 posicoes para separa o numero da conta e o numero do boleto
@@ -13243,7 +14088,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                
-            
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Agencia Mantenedora da Conta
@@ -13260,7 +14106,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
             
-            
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Conta corrente
@@ -13277,6 +14124,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
             
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Numero do documento
@@ -13294,7 +14143,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
             
-            
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Valor do Titulo
@@ -13311,7 +14161,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
             
-            
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
                         
           ---------------  Detalhe - Segmento Q ---------------
@@ -13329,6 +14180,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                         
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --Busca conveio
@@ -13355,7 +14208,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
              
-              
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             ELSE
                 
               CLOSE cr_crapceb; 
@@ -13380,6 +14234,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                          
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;    
               
             --Busca conta
@@ -13403,6 +14259,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
             
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             ELSE
               
               CLOSE cr_crapass;
@@ -13424,7 +14282,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
             
-                                           
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;               
             
             --> Nome do sacado
@@ -13441,7 +14300,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                           
-
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Endereco
@@ -13458,7 +14318,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                           
-
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --> Bairro
@@ -13475,7 +14336,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                           
-
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             --CEP
@@ -13492,7 +14354,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                           
-
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             -- Cidade
@@ -13509,7 +14372,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                           
-
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             -- Unidade da Federacao
@@ -13526,7 +14390,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                           
-
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
                         
           ---------------  Trailer do Lote ---------------
@@ -13544,6 +14409,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                         
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             IF vr_tab_campos('TPREGIST').numero <> 5 THEN 
@@ -13561,6 +14428,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             -- Qtd. registros do lote
@@ -13576,6 +14445,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             -- Qtd. titulos em cobranca
@@ -13591,6 +14462,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             -- Vlr. total dos titulos em carteira
@@ -13606,6 +14479,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
           ---------------  Trailer do arquivo ---------------
@@ -13623,6 +14498,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                         
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             IF vr_tab_campos('NRLOTSER').numero <> 9999 THEN 
@@ -13637,6 +14514,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
             
             IF vr_tab_campos('TPREGIST').numero <> 9 THEN 
@@ -13651,6 +14530,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
           
             IF vr_tab_campos('DSUSOFEB').texto IS NOT NULL THEN 
@@ -13665,6 +14546,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
           
             -- Qtd. Lotes do arquivo
@@ -13680,6 +14563,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
           
             IF vr_tab_campos('QTREGARQ').numero <> vr_contalin THEN 
@@ -13695,6 +14580,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
 
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
             END IF;
           
           ELSIF vr_tab_linhas(vr_idlinha)('$LAYOUT$').texto <> 'S' THEN
@@ -13710,7 +14597,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                       ,pr_critica => vr_critica      
                                       ,pr_des_reto => vr_des_reto);
                                         
-          
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
           END IF;
           
          END LOOP;    
@@ -13750,6 +14638,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                   ,pr_critica => vr_critica      
                                   ,pr_des_reto => vr_des_reto);
 
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
+
         vr_contaerr := vr_contaerr + 1;
         vr_tab_rejeita(vr_idx).cdseqcri := vr_contaerr; 
         vr_tpcritic := vr_tab_rejeita(vr_idx).tpcritic;
@@ -13763,6 +14654,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                   ,pr_critica => vr_critica      
                                   ,pr_des_reto => vr_des_reto);
         
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
+
       ELSE
         
         vr_tab_rejeita(vr_idx).cdseqcri := vr_contaerr;  
@@ -13775,6 +14669,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                   ,pr_tab_rejeita => pr_rec_rejeita 
                                   ,pr_critica => vr_critica      
                                   ,pr_des_reto => vr_des_reto);
+
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa');
                                   
       END IF;
         
@@ -13782,6 +14679,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         
     pr_des_reto := 'OK';
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   EXCEPTION  
     WHEN vr_exc_erro THEN         
     begin
@@ -13873,7 +14772,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei
-       Data    : Marco/2016.                   Ultima atualizacao: 12/03/2019
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -13892,6 +14791,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 
                    12/03/2019 - Validar numero do boleto zero no arquivo de remessa
                                 (Lucas Ranghetti INC0031367)
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------    
@@ -14003,6 +14905,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_idx      PLS_INTEGER;
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab240_085');
     
     vr_tab_rejeita.delete;
     
@@ -14025,6 +14929,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                     pr_direto  => vr_dsdireto, 
                                     pr_arquivo => vr_nmarquiv);
     
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab240_085');
+
     -- Buscar arquivo a ser importado
     gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
                               ,pr_pesq     => vr_nmarquiv
@@ -14045,10 +14952,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
       RAISE vr_exc_erro;
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab240_085');
     
     vr_tab_listarqu := gene0002.fn_quebra_string(pr_string => vr_listarqu,
                                                  pr_delimit => ',');   
           
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab240_085');
+
     -- Processar arquivos
     FOR i IN vr_tab_listarqu.first..vr_tab_listarqu.last LOOP
       
@@ -14075,6 +14987,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
         RAISE vr_exc_erro;
       END IF;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab240_085');
       
       IF vr_tab_linhas.count = 0 THEN
         
@@ -14181,6 +15095,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_tab_rejeita => vr_tab_rejeita 
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
+
             END IF;
           
             --> Numero de inscricao
@@ -14296,7 +15211,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
              
-              
             ELSE
                 
               CLOSE cr_crapceb; 
@@ -14518,6 +15432,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               vr_split := gene0002.fn_quebra_string(pr_string  => gene0001.fn_busca_critica(563)
                                                    ,pr_delimit => '-');                                                        
                  
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab240_085');
+
               COBR0006.pc_cria_rejeitado(pr_tpcritic => 2
                                         ,pr_nrlinseq => to_char(vr_contalin,'00000')
                                         ,pr_cdseqcri => vr_contaerr
@@ -14625,7 +15542,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
             
-            
             END IF;
             
             --> Conta corrente
@@ -14712,7 +15628,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                           
-
             END IF;
             
             --> Endereco
@@ -14729,7 +15644,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                           
-
             END IF;
             
             --> Bairro
@@ -14745,7 +15659,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_tab_rejeita => vr_tab_rejeita 
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
-                                          
 
             END IF;
             
@@ -14762,7 +15675,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
                                           
-
             END IF;
             
             -- Cidade
@@ -14778,7 +15690,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                         ,pr_tab_rejeita => vr_tab_rejeita 
                                         ,pr_critica => vr_critica      
                                         ,pr_des_reto => vr_des_reto);
-                                          
 
             END IF;
             
@@ -14844,7 +15755,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 
               END IF; 
                                           
-                                                        
             END IF;
             
           ----- Segmento R
@@ -14966,6 +15876,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               vr_nrcelsac := 0;
               
               vr_nrinssac := 0;
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab240_085');
                                                         
             END IF;
             
@@ -14992,6 +15904,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               
               vr_split := gene0002.fn_quebra_string(pr_string  => gene0001.fn_busca_critica(468)
                                                    ,pr_delimit => '-');                                                        
+
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab240_085');
                  
               COBR0006.pc_cria_rejeitado(pr_tpcritic => 4
                                         ,pr_nrlinseq => to_char(vr_contalin,'00000')
@@ -15268,6 +16183,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_des_reto := 'OK';
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   EXCEPTION  
     WHEN vr_exc_erro THEN         
     begin
@@ -15358,7 +16275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Andrei - RKAM 
-       Data    : Marco/2016.                   Ultima atualizacao: 12/03/2019
+       Data    : Marco/2016.                   Ultima atualizacao: 23/08/2019
 
        Dados referentes ao programa:
 
@@ -15367,6 +16284,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
 
        Alteracoes: 12/03/2019 - Validar numero do boleto zero no arquivo de remessa
                                 (Lucas Ranghetti INC0031367)
+
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     ............................................................................ */   
     
     ------------------------------- CURSORES ---------------------------------    
@@ -15450,6 +16370,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_idx      PLS_INTEGER;
     
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab400_085');
     
     vr_tab_rejeita.delete;
     
@@ -15472,6 +16394,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                     pr_direto  => vr_dsdireto, 
                                     pr_arquivo => vr_nmarquiv);
     
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab400_085');
+
     -- Buscar arquivo a ser importado
     gene0001.pc_lista_arquivos(pr_path     => vr_dsdireto
                               ,pr_pesq     => vr_nmarquiv
@@ -15485,10 +16410,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       RAISE vr_exc_erro;
       
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab400_085');
     
     vr_tab_listarqu := gene0002.fn_quebra_string(pr_string => vr_listarqu,
                                                  pr_delimit => ',');   
           
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab400_085');
+
     -- Processar arquivos
     FOR i IN vr_tab_listarqu.first..vr_tab_listarqu.last LOOP
       
@@ -15506,6 +16436,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab400_085');
       
       IF vr_tab_linhas.count = 0 THEN
         
@@ -15705,6 +16637,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               vr_split := gene0002.fn_quebra_string(pr_string  => gene0001.fn_busca_critica(563)
                                                    ,pr_delimit => '-');  
                                                    
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab400_085');
+
               COBR0006.pc_cria_rejeitado(pr_tpcritic => 1
                                         ,pr_nrlinseq => to_char(vr_contalin,'00000')
                                         ,pr_cdseqcri => vr_contaerr
@@ -15990,6 +16925,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
               vr_split := gene0002.fn_quebra_string(pr_string  => gene0001.fn_busca_critica(468)
                                                    ,pr_delimit => '-');                                                        
                  
+              -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_importa_cnab400_085');
+
               COBR0006.pc_cria_rejeitado(pr_tpcritic => 4
                                         ,pr_nrlinseq => to_char(vr_contalin,'00000')
                                         ,pr_cdseqcri => vr_contaerr
@@ -16080,6 +17018,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     pr_des_reto := 'OK';
     
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   EXCEPTION  
     WHEN vr_exc_erro THEN         
       
@@ -16113,7 +17053,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : Andrei - RKAM
-      Data    : Marco/2016.                       Ultima atualizacao: 07/06/2016
+      Data    : Marco/2016.                       Ultima atualizacao: 23/08/2019
    
       Dados referentes ao programa:
        
@@ -16140,6 +17080,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                   07/06/2016 - Ajuste para remover o arquivo original da pasta upload
                                (Andrei - RKAM).             
                                     
+                  23/08/2019 - Set modulo
+                               (Ana Volles - PRB0041875)
     .................................................................................*/
     CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
     SELECT cop.dsdircop
@@ -16178,6 +17120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
   BEGIN
 
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
     GENE0001.pc_set_modulo(pr_module => 'pc_InternetBank69', pr_action => 'pc_InternetBank69');
 
     --Inicializa variaveis
@@ -16219,6 +17162,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                      '/upload/'                                                  ||
                      pr_nmarquiv;
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => 'pc_InternetBank69', pr_action => 'pc_InternetBank69');
                                          
     --> Montar xml de retorno dos dados <---
     -- Criar documento XML
@@ -16284,6 +17229,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                ,pr_texto_novo     => '<flgvalok>OK</flgvalok>');
                                                           
       END IF;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => 'pc_InternetBank69', pr_action => 'pc_InternetBank69');
             
       pr_dsretorn := 'OK';
       
@@ -16294,6 +17241,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                   pr_typ_saida   => vr_typ_said,
                                   pr_des_saida   => vr_dscritic); 
                                   
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => 'pc_InternetBank69', pr_action => 'pc_InternetBank69');
       RETURN;  
         
     ELSE  
@@ -16360,6 +17309,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         RAISE vr_exc_erro; 
           
       END IF;                                                       
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => 'pc_InternetBank69', pr_action => 'pc_InternetBank69');
       
       IF NOT (vr_tparquiv = 'CNAB240' AND
               vr_cddbanco = 1 )       AND
@@ -16441,6 +17392,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                ,pr_texto_completo => vr_xml_temp 
                                ,pr_texto_novo     => '<rejeitados>'); 
             
+        -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => 'pc_InternetBank69', pr_action => 'pc_InternetBank69');
+
         FOR i IN vr_tab_crawrej.first..vr_tab_crawrej.last LOOP
              
           --> Montar xml de retorno dos dados <---
@@ -16454,6 +17408,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                                           '<nrlinseq>99999</nrlinseq>' || 
                                                       '</cobranca>');                          
             
+          -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+          GENE0001.pc_set_modulo(pr_module => 'pc_InternetBank69', pr_action => 'pc_InternetBank69');
         END LOOP;
           
         --> Montar xml de retorno dos dados <---
@@ -16473,6 +17429,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         RAISE vr_exc_erro;  
                                                                
       END IF;
+      -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => 'pc_InternetBank69', pr_action => 'pc_InternetBank69');
         
       --> Montar xml de retorno dos dados <---
       gene0002.pc_escreve_xml(pr_xml            => pr_xml_operacao69 
@@ -16486,6 +17444,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                                   '</dados>'); 
       
     END IF;
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => 'pc_InternetBank69', pr_action => 'pc_InternetBank69');
       
     --> Mover arquivo 
     vr_dscomand := 'mv '|| vr_dsarquiv || ' ' ||
@@ -16550,14 +17510,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                                 ,pr_cdcritic     OUT INTEGER                -- Código do erro
                                 ,pr_dscritic     OUT VARCHAR2) IS           -- Descricao do erro
                                   
-   
      /* ..........................................................................
     
       Programa : pc_rejeitar_arquivo        
       Sistema : Internet - Cooperativa de Credito
       Sigla   : CRED
       Autor   : Odirlei Busana - AMcom
-      Data    : Julho/2017.                       Ultima atualizacao: 13/02/2017
+      Data    : Julho/2017.                       Ultima atualizacao: 23/08/2019
    
       Dados referentes ao programa:
        
@@ -16570,6 +17529,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                   29/05/2018 - Ajuste para mover arquivos para pasta FTP e melhoria no script.
 				               Gabriel (Mouts) - Chamado INC0015743.                   
 
+                   23/08/2019 - Set modulo
+                                (Ana Volles - PRB0041875)
     .................................................................................*/
     
     -- Busca dados da Cooperativa
@@ -16608,6 +17569,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_dscritic VARCHAR2(5000) := NULL;
   
   BEGIN
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_rejeitar_arquivo');
+
     -- Inicializa Variaveis
     vr_cdcritic:= 0;
     vr_dscritic:= NULL;
@@ -16635,32 +17599,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_dir_coop := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                         ,pr_cdcooper => pr_cdcooper);
      
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_rejeitar_arquivo');
+
     -- Diretório do arquivo de Erro (.ERR)
     vr_diretorio_err := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                              ,pr_cdcooper => pr_cdcooper
                                              ,pr_nmsubdir => '/upload/ftp') ;  
       
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_rejeitar_arquivo');
+
     -- Renomeia o Arquivo .REM para .ERR
     gene0001.pc_OScommand_Shell('mv ' || vr_diretorio_err || '/' || pr_nmarquiv || ' ' || 
                                 vr_diretorio_err || '/' || vr_nmarquivo_err); 
         
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_rejeitar_arquivo');
+
     -- Caminho script que envia/recebe via FTP os arquivos de custodia cheque
     vr_script_cust := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                ,pr_cdcooper => '0'
                                                ,pr_cdacesso => 'SCRIPT_ENV_REC_ARQ_CUST');
       
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_rejeitar_arquivo');
+
     vr_serv_ftp := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                             ,pr_cdcooper => '0'
                                             ,pr_cdacesso => 'CUST_CHQ_ARQ_SERV_FTP'); 
                                                 
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_rejeitar_arquivo');
+
     vr_user_ftp := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                             ,pr_cdcooper => '0'
                                             ,pr_cdacesso => 'CUST_CHQ_ARQ_USER_FTP');
                                               
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_rejeitar_arquivo');
+
     vr_pass_ftp := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                             ,pr_cdcooper => '0'
                                             ,pr_cdacesso => 'CUST_CHQ_ARQ_PASS_FTP');   
                                               
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_rejeitar_arquivo');
+
     vr_dir_retorno := '/' ||TRIM(rw_crapcop.dsdircop)   ||
                       '/' || TRIM(to_char(pr_nrdconta)) || '/RETORNO';                                                                              
             
@@ -16687,6 +17672,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
       RAISE vr_exc_erro;
     END IF;                    
+    -- Inclui nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'COBR0006.pc_rejeitar_arquivo');
 
     -- Verifica Qual a Origem
     CASE pr_idorigem 
@@ -16710,6 +17697,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                         ,pr_nrdconta => pr_nrdconta
                         ,pr_nrdrowid => vr_nrdrowid);
                         
+    -- Limpa nome do modulo logado - 23/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
       -- Retorna variaveis de saida
