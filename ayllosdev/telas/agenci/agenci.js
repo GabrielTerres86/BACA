@@ -276,10 +276,11 @@ function formataTabela() {
 	var ordemInicial = new Array();
 
 	var arrayLargura = new Array();
-	arrayLargura[0] = '55px';
+	arrayLargura[0] = '250px';
 
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'center';
+	arrayAlinha[1] = 'center';
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
 
