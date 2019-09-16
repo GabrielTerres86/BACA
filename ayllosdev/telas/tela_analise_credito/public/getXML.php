@@ -729,6 +729,8 @@ function generateBloco($vetor = array(), $modo = 'screen') {
 function generateTabela($vetor = array(), $modo = 'screen') {
 
     $table = '';
+    $validarQtdCelular    = array();
+
 
         if (isset($vetor['linhas'])) {
 
@@ -813,7 +815,7 @@ function generateTabela($vetor = array(), $modo = 'screen') {
                                         // if verifica array coluna
                                         if (is_array($coluna)) {
 
-
+                                            $qtdCelulas = 0;
 
                                             // percorre celulas (td)
                                                 foreach ($coluna as $conteudo) {
@@ -824,13 +826,20 @@ function generateTabela($vetor = array(), $modo = 'screen') {
                                                     $table .= '<td>' . verificaTexto($conteudo) . '</td>';
                                                 }
 
+                                                $qtdCelulas++;
+
                                                     // conferir se existe dado
                                                 // $table .= '<td>' . verificaTexto($conteudo) . '</td>';
 
                                             }
 
+                                            // adicionar quantas celulas tem nessa linha
+                                            array_push($validarQtdCelular, $qtdCelulas);
+
                                         // else verifica array coluna
                                         } else {
+
+                                            $qtdCelulas = 1;
 
                                             // se chegou aqui, não é vetor (veio uma coluna só)
                                             if ($ativaThead == 0) {
@@ -839,6 +848,9 @@ function generateTabela($vetor = array(), $modo = 'screen') {
                                                 $table .= '<th>' . verificaTexto($coluna) . '</th>';
                                             }
                                             $ativaThead++;
+
+                                            // adicionar quantas celulas tem nessa linha
+                                            array_push($validarQtdCelular, $qtdCelulas);
 
                                         // fim verifica array coluna
                                         }
@@ -885,7 +897,40 @@ function generateTabela($vetor = array(), $modo = 'screen') {
             $table = warning("Uma tabela sem dados foi encontrada no XML");
         }
 
+        $confereAnterior    = 0;
+        $confereAtual       = 0;
+        $iniciar            = false;
+        $validacao          = true;
+
+        foreach ($validarQtdCelular as $celulaAtual) {
+
+            if ($iniciar === false) {
+
+                $confereAtual = $celulaAtual;
+                $iniciar  = true;
+
+            } else {
+
+                $confereAnterior = $confereAtual;
+                $confereAtual    = $celulaAtual;
+
+                // consistencia das tabelas
+                if ($confereAnterior != $confereAtual) {
+                    $validacao = false;
+                }
+            }
+
+        }
+
+        if ($validacao === true) {
     return $table;
+        } else {
+            if ($modo == "pdf") {
+                return "<p>Tabela inconsistente, não foi possível apresentar os dados</p>";
+            } else {
+                return warning("Tabela inconsistente, não foi possível apresentar os dados");
+            }
+        }
 }
 
 /*

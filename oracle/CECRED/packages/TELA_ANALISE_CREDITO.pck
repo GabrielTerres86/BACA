@@ -64,6 +64,39 @@ create or replace package cecred.TELA_ANALISE_CREDITO is
 
   TYPE typ_tab_dados_titulos IS TABLE OF typ_reg_dados_titulos INDEX BY BINARY_INTEGER;
 
+  --Tipo de Registro para Empresas Participantes (b1wgen0080tt.i)
+  TYPE typ_reg_crapepa IS
+    RECORD (cdcooper crapepa.cdcooper%type
+           ,nrdconta crapepa.nrdconta%type
+           ,nrdocsoc crapepa.nrdocsoc%type
+           ,nrctasoc crapepa.nrctasoc%type
+           ,nmfansia crapepa.nmfansia%type
+           ,nrinsest crapepa.nrinsest%type
+           ,natjurid crapepa.natjurid%type
+           ,dtiniatv crapepa.dtiniatv%type
+           ,qtfilial crapepa.qtfilial%type
+           ,qtfuncio crapepa.qtfuncio%type
+           ,dsendweb crapepa.dsendweb%type
+           ,cdseteco crapepa.cdseteco%type
+           ,cdmodali crapepa.cdmodali%type
+           ,cdrmativ crapepa.cdrmativ%type
+           ,vledvmto crapepa.vledvmto%type
+           ,dtadmiss crapepa.dtadmiss%type
+           ,dtmvtolt crapepa.dtmvtolt%type
+           ,persocio crapepa.persocio%type
+           ,nmprimtl crapepa.nmprimtl%type
+           ,cddconta VARCHAR2(1000)
+           ,dsvalida VARCHAR2(1000)
+           ,cdcpfcgc VARCHAR2(100)
+           ,dsestcvl VARCHAR2(1000)
+           ,nrdrowid ROWID
+           ,nmseteco craptab.dstextab%type
+           ,dsnatjur gncdntj.dsnatjur%type
+           ,dsrmativ gnrativ.nmrmativ%type);  
+           
+  --Tipo de tabela de memoria para empresas participantes
+  TYPE typ_tab_crapepa IS TABLE OF typ_reg_crapepa INDEX BY PLS_INTEGER;           
+
   
   /* Utilizado para carregar os dados da atenda para ser reutilizados */
   vr_tab_cabec            CADA0004.typ_tab_cabec;
@@ -223,7 +256,11 @@ PROCEDURE pc_consulta_consultas_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE  --> 
                                    ,pr_dscritic OUT VARCHAR2                   --> Descricao da critica
                                    ,pr_dsxmlret OUT CLOB);
 
-  --> Arquivo de retorno do XML
+  PROCEDURE pc_consulta_cad_conjuge_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE --> Cooperativa
+                                         ,pr_nrdconta IN crapass.nrdconta%TYPE --> Conta
+                                         ,pr_cdcritic OUT PLS_INTEGER          --> Codigo da critica
+                                         ,pr_dscritic OUT VARCHAR2             --> Descricao da critica
+                                         ,pr_dsxmlret OUT CLOB);               --> Arquivo de retorno do XML
 
   PROCEDURE pc_consulta_garantia(pr_cdcooper  IN crapass.cdcooper%TYPE --> Cooperativa
                                 ,pr_nrdconta IN crapass.nrdconta%TYPE       --> Conta
@@ -265,6 +302,11 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE       --> C
                                  ,pr_dscritic OUT VARCHAR2                   --> Descricao da critica
                                  ,pr_dsxmlret OUT CLOB);
 
+  PROCEDURE pc_consulta_scr_conj_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         --> Cooperativa
+                                      ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE         --> CPFCGC
+                                      ,pr_cdcritic OUT PLS_INTEGER                  --> Codigo da critica
+                                      ,pr_dscritic OUT VARCHAR2                     --> Descricao da critica
+                                      ,pr_dsxmlret OUT CLOB);
   PROCEDURE pc_consulta_operacoes(pr_cdcooper IN crawepr.cdcooper%TYPE --> Cooperativa
                                  ,pr_nrdconta  IN crawepr.nrdconta%TYPE       --> Conta
                                  ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE       --> Data do movimeneto atual da cooperativa
@@ -480,8 +522,8 @@ create or replace package body cecred.TELA_ANALISE_CREDITO is
           tbcadast_pessoa p
      WHERE p.idpessoa = pr_idpessoa
        AND a.nrcpfcgc = p.nrcpfcgc
-       AND a.cdcooper = pr_cdcooper
-      AND a.dtdemiss is null; --bug 19602
+       AND a.cdcooper = pr_cdcooper;
+       --AND a.dtdemiss is null; --bug 19602 -- Retirado Spritt 15 - Homologação
       r_pessoa_por_id c_pessoa_por_id%rowtype;
 
   /*Chaves identificam a pessoa*/
@@ -837,6 +879,19 @@ create or replace package body cecred.TELA_ANALISE_CREDITO is
      and s.persocio > 0; -- Somente com participação societaria      
   r_socios c_socios%rowtype;      
 
+  /*Tela contas representante/procurador*/
+  cursor c_repproc(pr_cdcooper in number,
+                   pr_nrdconta in number) is  
+    select s.cdcooper,
+         s.nrdconta,
+         s.nrdctato, -- Socios
+         s.nrcpfcgc
+    from crapavt s
+   where s.cdcooper = pr_cdcooper
+     and s.tpctrato = 6 /*procurad*/
+     and s.nrdconta = pr_nrdconta -- Empresa
+     and s.nrctremp = 0;
+
   /*Contas por cpfcnpj*/
     CURSOR c_contas(pr_cdcooper in number,
                     p_nrcpfcgc in crapass.nrcpfcgc%type) IS
@@ -857,20 +912,46 @@ create or replace package body cecred.TELA_ANALISE_CREDITO is
        AND a.nrcpfcgc = p.nrcpfcgc;
     r_contas c_contas%rowtype;  
   /*Outras Contas*/
-  CURSOR c_outras_contas(pr_cdcooper in number,
-                         p_nrcpfcgc in crapass.nrcpfcgc%type) IS
-   SELECT a.nrdconta,
-          p.idpessoa,
-          a.nrcpfcgc,
-          a.inprejuz,
-          a.inpessoa
+  CURSOR c_outras_contas_pj(pr_cdcooper in number,
+                            pr_nrdctato in number) IS
+   SELECT a.nrdconta
+         ,a.cdagenci
+         ,a.dtadmiss
+         ,a.inprejuz
+         ,a.nrcpfcgc
+         ,p.idpessoa
+         ,a.inpessoa
+         ,avt.dsproftl
+         ,to_char(avt.dtvalida,'dd/mm/rrrr') dtvalida
      FROM crapass a,
-          tbcadast_pessoa p
-     WHERE a.cdcooper = pr_cdcooper
-       AND a.nrcpfcgc = p_nrcpfcgc
-      AND a.dtdemiss is null
-       AND a.nrcpfcgc = p.nrcpfcgc;
-  r_outras_contas c_outras_contas%rowtype;    
+          tbcadast_pessoa p,
+          crapavt avt
+     WHERE a.dtdemiss is null
+       AND a.inpessoa = 2 -- PJ
+       AND a.nrdconta = avt.nrdconta
+       AND a.cdcooper = avt.cdcooper
+       AND a.nrcpfcgc = p.nrcpfcgc
+       AND avt.tpctrato = 6     
+       AND avt.nrdctato > 0       
+       AND avt.nrdctato = pr_nrdctato
+       AND avt.cdcooper = pr_cdcooper;
+       
+  r_outras_contas_pj c_outras_contas_pj%rowtype;
+  
+  CURSOR c_outras_contas_qtd(pr_cdcooper in number,
+                             pr_nrdctato in crapass.nrcpfcgc%type) IS
+   SELECT count(1) qtd
+     FROM crapass a,
+          tbcadast_pessoa p,
+          crapavt avt
+     WHERE a.dtdemiss is null
+       AND a.inpessoa = 2 -- PJ
+       AND a.nrdconta = avt.nrdconta
+       AND a.cdcooper = avt.cdcooper
+       AND a.nrcpfcgc = p.nrcpfcgc
+       AND avt.tpctrato = 6     
+       AND avt.nrdctato > 0       
+       AND avt.nrdctato = pr_nrdctato; 
 
   --cursor 3.3.1 b
   cursor c_busca_garantia (   pr_nrgarope IN craprad.nrseqite%TYPE,
@@ -977,6 +1058,61 @@ create or replace package body cecred.TELA_ANALISE_CREDITO is
      ORDER BY dtinivig DESC;
   r_lim_tit c_limite_desc_tit%rowtype;
 
+  /*Cônjuge não cooperado*/
+  CURSOR c_conjuge_nao_coop (pr_cdcooper IN crapcop.cdcooper%TYPE,
+                             pr_nrdconta IN crapass.nrdconta%TYPE) IS
+    SELECT j.nmconjug
+          ,j.nrcpfcjg
+    FROM crapcje j
+    WHERE cdcooper = pr_cdcooper
+    AND   nrdconta = pr_nrdconta
+    AND   nrdconta <> nrctacje;
+    r_conjuge_nao_coop c_conjuge_nao_coop%ROWTYPE;                            
+  /*Dados Cadastrais Cônjuge não cooperado*/
+  CURSOR c_consulta_cad_conjuge_ncoop (pr_cdcooper IN crapcop.cdcooper%TYPE,
+                                       pr_nrdconta IN crapass.nrdconta%TYPE) IS
+    SELECT j.nmconjug
+          ,j.nrcpfcjg
+          ,j.dtnasccj
+     FROM crapcje j
+     WHERE cdcooper = pr_cdcooper
+     AND   nrdconta = pr_nrdconta
+     AND   nrdconta <> nrctacje;
+    r_consulta_cad_conjuge_ncoop c_consulta_cad_conjuge_ncoop%ROWTYPE;
+   /*Dados Comerciais Cônjuge não cooperado*/
+   CURSOR c_dados_comerciais_conj_ncoop (pr_cdcooper IN crapcop.cdcooper%TYPE,
+                                         pr_nrdconta IN crapass.nrdconta%TYPE) IS
+    SELECT este0002.fn_des_cdnatopc(j.cdnatopc) ntocupacao
+          ,este0002.fn_des_cdocupa(j.cdocpcje) ocupacao
+          ,este0002.fn_des_tpcttrab(j.tpcttrab) vinculo
+          ,j.nmextemp empresa
+          ,j.dsproftl cargo
+          ,j.dtadmemp
+          ,j.vlsalari
+     FROM crapcje j
+     WHERE j.cdcooper = pr_cdcooper
+     AND   j.nrdconta = pr_nrdconta
+     AND   j.nrdconta <> nrctacje;
+    r_dados_comerciais_conj_ncoop c_dados_comerciais_conj_ncoop%ROWTYPE;  
+
+  /*Busca a classe de risco*/
+  CURSOR c_busca_classe_risco_serasa (pr_nrconbir IN crapcbd.nrconbir%TYPE
+                                     ,pr_nrseqdet IN crapcbd.nrseqdet%TYPE) IS
+   SELECT c.dsclaris
+    FROM crapcbd c
+    WHERE c.nrconbir = pr_nrconbir
+    AND   c.nrseqdet = pr_nrseqdet;
+   vr_dsclaris crapcbd.dsclaris%TYPE;                                   
+
+  /*Busca a probabilidade de inadimplência*/
+  CURSOR c_busca_inadimplencia (pr_nrconbir IN crapcbd.nrconbir%TYPE
+                               ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE) IS
+   SELECT c.peinadim
+    FROM crapcbd c
+    WHERE c.nrconbir = pr_nrconbir
+    AND   c.nrcpfcgc = pr_nrcpfcgc
+    AND   c.peinadim IS NOT NULL;
+   vr_peinadim crapcbd.peinadim%TYPE;
   /*Para construção das tabelas*/
   /* Tipo para armazenamento das colunas*/
     TYPE typ_rec_tabela IS
@@ -2053,7 +2189,12 @@ PROCEDURE pc_gera_dados_analise_credito(pr_cdcooper  IN crawepr.cdcooper%TYPE   
   vr_string          CLOB;
 
   vr_filtro varchar2(10);
+  vr_filtro_qs varchar2(10);
   vr_nrfiltro number;
+  vr_nrfiltro_qs number;
+  vr_qtd_pf   number;
+  vr_contasPJ varchar2(32000);
+  vr_montaPersona boolean := true;
 
   ERRO_PRINCIPAL EXCEPTION;
 
@@ -2141,7 +2282,8 @@ procedure pc_gera_dados_persona(pr_persona in varchar2,
                       <tituloFiltro>cadastro</tituloFiltro>
                       <subcategorias>';
 
-      if (pr_inpessoa = 1) then
+      /*Persona é cooperada*/
+      IF (pr_inpessoa = 1 AND pr_nrdconta <> 0) THEN
         /* Consulta Cadastro PF*/
         pc_consulta_cadastro_pf(pr_cdcooper => pr_cdcooper ,
                                 pr_nrdconta => pr_nrdconta,
@@ -2150,6 +2292,13 @@ procedure pc_gera_dados_persona(pr_persona in varchar2,
                                 pr_dscritic => vr_dscritic,
                                 pr_dsxmlret => vr_xml);
 
+	    /* Consulta Cadastro Conjuge não cooperado*/
+      ELSIF (pr_inpessoa = 1 AND pr_nrdconta = 0) THEN
+        pc_consulta_cad_conjuge_ncoop(pr_cdcooper => pr_cdcooper,
+                                      pr_nrdconta => pr_nrdconta,
+                                      pr_cdcritic => vr_cdcritic,
+                                      pr_dscritic => vr_dscritic,
+                                      pr_dsxmlret => vr_xml);
       else
         /* Consulta Cadastro PJ*/
         pc_consulta_cadastro_pj(pr_cdcooper => pr_cdcooper ,
@@ -2219,6 +2368,8 @@ procedure pc_gera_dados_persona(pr_persona in varchar2,
         /* Fim da Proposta*/
       end if;
 
+      /*Não executar para conjuge não cooperado*/
+      IF (pr_nrdconta <> 0) THEN
       /*Operações para todas as personas*/
       
       vr_string_persona := vr_string_persona||'<categoria>'||
@@ -2239,7 +2390,7 @@ procedure pc_gera_dados_persona(pr_persona in varchar2,
       vr_string_persona := vr_string_persona||vr_xml_aux;
       --vr_string_persona := vr_string_persona||'</subcategorias></categoria>';
 
-
+      if substr(pr_persona,1,2) not in ('QS','GE') or substr(pr_persona,1,8) not in ('Conta PJ') then
       /*Operações Outras Contas*/
       for r_contas in c_contas(pr_cdcooper,pr_nrcpfcgc) loop
         if pr_nrdconta != r_contas.nrdconta then
@@ -2269,6 +2420,7 @@ procedure pc_gera_dados_persona(pr_persona in varchar2,
         vr_string_persona := vr_string_persona||vr_xml_aux; 
         end if;                           
       end loop;
+      end if;
       vr_string_persona := vr_string_persona||'</subcategorias></categoria>';
 
 
@@ -2326,6 +2478,57 @@ procedure pc_gera_dados_persona(pr_persona in varchar2,
       vr_string_persona := vr_string_persona||vr_xml_aux;
       vr_string_persona := vr_string_persona||'</subcategorias></categoria>';                       
       
+      /*Conjuge não cooperado*/
+      ELSIF pr_nrdconta = 0 THEN
+        /*Operações*/
+        vr_string_persona := vr_string_persona ||
+           '<categoria>
+              <tituloTela>Operações</tituloTela>
+              <tituloFiltro>operacoes</tituloFiltro>
+              <subcategorias>
+                  <subcategoria>
+                      <tituloTela>Operações</tituloTela>
+                      <tituloFiltro>operacoes</tituloFiltro>
+                      <campos>
+                          <campo>
+                              <nome>Cônjuge Não Cooperado</nome>
+                              <tipo>string</tipo>
+                              <valor>Não possui dados para apresentação</valor>
+                          </campo>
+                      </campos>
+                  </subcategoria>
+                </subcategorias>
+              </categoria>';
+        /*SCR*/
+        pc_consulta_scr_conj_ncoop(pr_cdcooper => pr_cdcooper,
+                                   pr_nrcpfcgc => pr_nrcpfcgc, -->CPF do cônjuge
+                                   pr_cdcritic => vr_cdcritic,
+                                   pr_dscritic => vr_dscritic,
+                                   pr_dsxmlret => vr_xml);
+      vr_string_persona := vr_string_persona||vr_xml;
+      vr_string_persona := vr_string_persona||'</subcategorias></categoria>';
+      /*Consultas*/
+        vr_string_persona := vr_string_persona ||
+           '<categoria>
+              <tituloTela>Consulta</tituloTela>
+              <tituloFiltro>consulta</tituloFiltro>
+                            <subcategorias>';
+       vr_xml := null;      
+       pc_consulta_consultas_ncoop(pr_cdcooper => pr_cdcooper,
+                                   pr_nrdconta => pr_nrdconta,
+                                   pr_nrcontrato => vr_nrctrato_principal,
+                                   pr_inpessoa => 1,
+                                   pr_nrcpfcgc => pr_nrcpfcgc,
+                                   pr_persona  => pr_persona,
+                                   pr_cdcritic => vr_cdcritic,
+                                   pr_dscritic => vr_dscritic ,
+                                   pr_dsxmlret => vr_xml);
+      
+       vr_string_persona := vr_string_persona||vr_xml;
+
+       vr_string_persona := vr_string_persona||vr_xml_aux;
+       vr_string_persona := vr_string_persona||'</subcategorias></categoria>';       
+      END IF;
       vr_string_persona := vr_string_persona||'</categorias></persona>';
 
       pr_xmlOut := vr_string_persona;
@@ -2523,8 +2726,84 @@ procedure pc_gera_dados_persona(pr_persona in varchar2,
       end if;
     close c_pessoa;
       
+      /*CONTAS JURIDICAS*/
+      --Sprint 15 - US 23910
+      if r_pessoa.inpessoa = 1 then -- Se for pessoa Física
+        open c_outras_contas_qtd(pr_cdcooper,pr_nrdconta);
+         fetch c_outras_contas_qtd into vr_qtd_pf;
+        close c_outras_contas_qtd;
+
+        if vr_qtd_pf > 1 then
+          vr_filtro := '_1';
+        else
+          vr_filtro := null;
+        end if;
         
-      /*FIM-PROPONENTE*/
+        vr_qtd_pf := 1;
+        vr_nrfiltro_qs := 0;
+        vr_contasPJ := null;
+        for r_contas_pj in c_outras_contas_pj(pr_cdcooper,pr_nrdconta) loop
+           --Carregar dados das contas PJ
+           pc_gera_dados_persona(pr_persona => 'Conta PJ '||gene0002.fn_mask_conta(r_contas_pj.nrdconta),
+                                 pr_persona_filtro => 'contapj'||vr_filtro,
+                                 pr_cdcooper => pr_cdcooper,
+                                 pr_nrdconta => r_contas_pj.nrdconta,
+                                 pr_idpessoa => r_contas_pj.idpessoa,
+                                 pr_nrcpfcgc => r_contas_pj.nrcpfcgc,
+                                 pr_inpessoa => r_contas_pj.inpessoa,
+                                 pr_xmlOut => vr_xml);
+
+           pc_escreve_xml(pr_xml            => vr_dsxmlret,
+                          pr_texto_completo => vr_string_completa,
+                          pr_texto_novo     => vr_xml,
+                          pr_fecha_xml      => TRUE);
+           
+           vr_qtd_pf := vr_qtd_pf+1;            
+           vr_filtro := '_'||to_char(vr_qtd_pf);           
+           
+               
+           /*QUADRO SOCIETARIO*/
+           for r_socios in c_repproc(pr_cdcooper,r_contas_pj.nrdconta) loop
+             open c_pessoa(r_socios.cdcooper, r_socios.nrdctato);
+              fetch c_pessoa into r_pessoa;
+               if c_pessoa%found and r_socios.nrdctato != pr_nrdconta then
+
+                  vr_nrfiltro_qs := vr_nrfiltro_qs+1;
+                  vr_filtro_qs := '_'||to_char(vr_nrfiltro_qs);
+                  --Verificar contas que já estão no qs
+                  if vr_contasPJ is not null then
+                    if instr(vr_contasPJ,'#'||r_pessoa.nrdconta||'#') > 0 then
+                      vr_montaPersona := false;
+                    end if;
+                
+                  end if;
+                  
+                  if vr_montaPersona then
+                    pc_gera_dados_persona(pr_persona => 'QS '||r_pessoa.nrdconta,
+                                          pr_persona_filtro => 'quadro'||vr_filtro_qs,
+                                          pr_cdcooper => pr_cdcooper,
+                                          pr_nrdconta => r_pessoa.nrdconta,
+                                          pr_idpessoa => r_pessoa.idpessoa,
+                                          pr_nrcpfcgc => r_pessoa.nrcpfcgc,
+                                          pr_inpessoa => r_pessoa.inpessoa,
+                                          pr_xmlOut => vr_xml);
+
+                                          pc_escreve_xml(pr_xml            => vr_dsxmlret,
+                                          pr_texto_completo => vr_string_completa,
+                                          pr_texto_novo     => vr_xml,
+                                          pr_fecha_xml      => TRUE);
+                  end if;                        
+                  vr_montaPersona := true;
+                  vr_contasPJ := vr_contasPJ||'#'||r_pessoa.nrdconta||'#';
+
+               end if;
+             close c_pessoa;
+           end loop;
+           /*FIM-QUADRO SOCIETARIO*/           
+        end loop;
+      end if;
+        
+      /*FIM - CONTAS JURIDICAS*/      
 
       /*CONJUGE*/
 
@@ -2550,6 +2829,26 @@ procedure pc_gera_dados_persona(pr_persona in varchar2,
                                     pr_texto_novo     => vr_xml,
                                     pr_fecha_xml      => TRUE);
 
+            else
+              /*PRJ 438 - Sprint 15 - Story 23669 - Cônjuge não cooperado*/
+              OPEN c_conjuge_nao_coop (pr_cdcooper => pr_cdcooper,
+                                       pr_nrdconta => pr_nrdconta);
+               FETCH c_conjuge_nao_coop into r_conjuge_nao_coop;
+               IF c_conjuge_nao_coop%FOUND THEN
+                 pc_gera_dados_persona(pr_persona => 'Cônjuge',
+                                       pr_persona_filtro => 'conjuge',
+                                       pr_cdcooper => pr_cdcooper,
+                                       pr_nrdconta => 0, --não possui conta
+                                       pr_idpessoa => r_conjuge.idpessoa_relacao,
+                                       pr_nrcpfcgc => r_conjuge_nao_coop.nrcpfcjg,
+                                       pr_inpessoa => 1, --pessoa física
+                                       pr_xmlOut => vr_xml);
+                 pc_escreve_xml(pr_xml            => vr_dsxmlret,
+                                pr_texto_completo => vr_string_completa,
+                                pr_texto_novo     => vr_xml,
+                                pr_fecha_xml      => TRUE);
+            end if;
+              CLOSE c_conjuge_nao_coop;
             end if;
           close c_pessoa_por_id;
        end if;
@@ -3196,6 +3495,24 @@ PROCEDURE pc_lista_cred_recebidos(pr_cdcooper IN crapass.cdcooper%TYPE
      and co.tpctrato = pr_tpctrato;
   r_cjg_coresponsavel c_cjg_coresponsavel%rowtype;
   
+  CURSOR c_contas_pj(pr_cdcooper in number,
+                     pr_nrdctato in number) IS
+   SELECT gene0002.fn_mask_conta(a.nrdconta) nrdconta
+         ,avt.dsproftl
+         ,to_char(avt.dtvalida,'dd/mm/rrrr') dtvalida
+     FROM crapass a,
+          tbcadast_pessoa p,
+          crapavt avt
+     WHERE a.dtdemiss is null
+       AND a.inpessoa = 2 -- PJ
+       AND a.nrdconta = avt.nrdconta
+       AND a.cdcooper = avt.cdcooper
+       AND a.nrcpfcgc = p.nrcpfcgc
+       AND avt.tpctrato = 6     
+       AND avt.nrdctato > 0       
+       AND avt.nrdctato = pr_nrdctato
+       AND avt.cdcooper = pr_cdcooper;  
+
     vr_dsxmlret CLOB;
   
   vr_totalRendimentoOutros number; -- bruno - dados comerciais
@@ -3240,6 +3557,35 @@ PROCEDURE pc_lista_cred_recebidos(pr_cdcooper IN crapass.cdcooper%TYPE
     end if;
    close c_cadastro;
 
+   /*Montar tabela com as informações Representante Procurador*/
+   vr_string := vr_string||'<campo>
+                            <nome>Representante/Procurador das contas Jurídicas</nome>
+                            <tipo>table</tipo>
+                            <valor>
+                            <linhas>';
+      vr_index := 1;
+      vr_tab_tabela.delete;
+      for r_outras_contas_pj in c_contas_pj(pr_cdcooper,pr_nrdconta) loop
+       vr_tab_tabela(vr_index).coluna1 := r_outras_contas_pj.nrdconta;
+       vr_tab_tabela(vr_index).coluna2 := r_outras_contas_pj.dsproftl;
+       vr_tab_tabela(vr_index).coluna3 := case when substr(r_outras_contas_pj.dtvalida,-4) = '9999' then 'INDETERMINADO' else r_outras_contas_pj.dtvalida end;
+       vr_index := vr_index+1;
+      end loop;
+
+      if vr_tab_tabela.COUNT > 0 then
+        /*Gera Tags Xml*/
+        vr_string := vr_string||fn_tag_table('Conta PJ;Cargo;Vigência',vr_tab_tabela);
+      else
+        vr_tab_tabela(1).coluna1 := '-';
+        vr_tab_tabela(1).coluna2 := '-';
+        vr_tab_tabela(1).coluna3 := '-';
+        vr_string := vr_string||fn_tag_table('Conta PJ;Cargo;Vigência',vr_tab_tabela);
+      end if;
+
+     vr_string := vr_string||'</linhas>
+                              </valor>
+                              </campo>';    
+    
   
     vr_string := vr_string || '</campos></subcategoria>';
   
@@ -3431,7 +3777,7 @@ PROCEDURE pc_lista_cred_recebidos(pr_cdcooper IN crapass.cdcooper%TYPE
       vr_string := vr_string || fn_tag_table('Tipo de Renda;Valor', vr_tab_tabela);
     
     vr_string := vr_string||'<linha><colunas>'
-                          ||'<coluna>&lt;b&gt;Total&lt;/b&gt;</coluna>'
+                          ||'<coluna>Total</coluna>'
                           ||'<coluna>'||to_char(vr_totalRendimentoOutros,'999g999g990d00')||'</coluna>'
                           ||'</colunas></linha>'; -- bruno - Dados Comerciais
   else
@@ -3510,7 +3856,7 @@ PROCEDURE pc_lista_cred_recebidos(pr_cdcooper IN crapass.cdcooper%TYPE
       Programa: pc_consulta_cadastro_pj
       Sistema : Aimaro/Ibratan
       Autor   : Rubens Lima
-      Data    : Março/2019                 Ultima atualizacao: 23/04/2019
+      Data    : Março/2019                 Ultima atualizacao: 31/07/2019
     
       Dados referentes ao programa:
     
@@ -3518,8 +3864,97 @@ PROCEDURE pc_lista_cred_recebidos(pr_cdcooper IN crapass.cdcooper%TYPE
     
       Objetivo  : Rotina para consultar as informações do cadastro PJ
     
-      Alteracoes:
+      Alteracoes: PRJ438 - Sprint 15 - Inclusão da tabela de faturamento empresarial.
+                           Rubens Lima - 31/07/2019 - Mouts
     ..............................................................................*/
+   /*Busca os dados de faturamento empresarial*/
+   CURSOR c_busca_dados_faturamento (pr_cdcooper IN crapcop.cdcooper%TYPE,
+                                     pr_nrdconta IN crapass.nrdconta%TYPE) IS
+    SELECT j.vlrftbru##1 valor
+          ,j.mesftbru##1 mes
+          ,j.anoftbru##1 ano    
+    FROM crapjfn j
+    WHERE j.cdcooper = pr_cdcooper
+    AND   j.nrdconta = pr_nrdconta
+    UNION ALL
+    SELECT j.vlrftbru##2 
+          ,j.mesftbru##2
+          ,j.anoftbru##2     
+    FROM crapjfn j
+    WHERE j.cdcooper = pr_cdcooper
+    AND   j.nrdconta = pr_nrdconta
+    UNION ALL
+    SELECT j.vlrftbru##3 
+          ,j.mesftbru##3
+          ,j.anoftbru##3     
+    FROM crapjfn j
+    WHERE j.cdcooper = pr_cdcooper
+    AND   j.nrdconta = pr_nrdconta
+    UNION ALL
+    SELECT j.vlrftbru##4 
+          ,j.mesftbru##4
+          ,j.anoftbru##4     
+    FROM crapjfn j
+    WHERE j.cdcooper = pr_cdcooper
+    AND   j.nrdconta = pr_nrdconta
+    UNION ALL
+    SELECT j.vlrftbru##5 
+          ,j.mesftbru##5
+          ,j.anoftbru##5     
+    FROM crapjfn j
+    WHERE j.cdcooper = pr_cdcooper
+    AND   j.nrdconta = pr_nrdconta
+    UNION ALL
+    SELECT j.vlrftbru##6 
+          ,j.mesftbru##6
+          ,j.anoftbru##6     
+    FROM crapjfn j
+    WHERE j.cdcooper = pr_cdcooper
+    AND   j.nrdconta = pr_nrdconta
+    UNION ALL
+    SELECT j.vlrftbru##7 
+          ,j.mesftbru##7
+          ,j.anoftbru##7     
+    FROM crapjfn j
+    WHERE j.cdcooper = pr_cdcooper
+    AND   j.nrdconta = pr_nrdconta
+    UNION ALL
+    SELECT j.vlrftbru##8 
+          ,j.mesftbru##8
+          ,j.anoftbru##8     
+    FROM crapjfn j
+    WHERE j.cdcooper = pr_cdcooper
+    AND   j.nrdconta = pr_nrdconta
+    UNION ALL
+    SELECT j.vlrftbru##9 
+          ,j.mesftbru##9
+          ,j.anoftbru##9     
+    FROM crapjfn j
+    WHERE j.cdcooper = pr_cdcooper
+    AND   j.nrdconta = pr_nrdconta
+    UNION ALL
+    SELECT j.vlrftbru##10 
+          ,j.mesftbru##10
+          ,j.anoftbru##10     
+    FROM crapjfn j
+    WHERE j.cdcooper = pr_cdcooper
+    AND   j.nrdconta = pr_nrdconta
+    UNION ALL
+    SELECT j.vlrftbru##11 
+          ,j.mesftbru##11
+          ,j.anoftbru##11     
+    FROM crapjfn j
+    WHERE j.cdcooper = pr_cdcooper
+    AND   j.nrdconta = pr_nrdconta
+    UNION ALL
+    SELECT j.vlrftbru##12 
+          ,j.mesftbru##12
+          ,j.anoftbru##12     
+    FROM crapjfn j
+    WHERE j.cdcooper = pr_cdcooper
+    AND   j.nrdconta = pr_nrdconta
+    ORDER BY 3 DESC, 2 DESC;
+    r_busca_dados_faturamento c_busca_dados_faturamento%ROWTYPE;
   
     vr_dsxmlret CLOB;
   
@@ -3656,8 +4091,53 @@ PROCEDURE pc_lista_cred_recebidos(pr_cdcooper IN crapass.cdcooper%TYPE
                    '</campo>';
     else
       /*Gera Tags Xml*/
-      vr_string := vr_string||'<campos>'||
-                   r_dados_comerciais_fat.vlrmedfatbru||
+      vr_string := vr_string||'<campos>';
+
+      /*TABELA - Faturamento*/
+      vr_index  := 1;
+      vr_tab_tabela.delete;
+      OPEN c_busca_dados_faturamento (pr_cdcooper => pr_cdcooper,
+                                      pr_nrdconta => pr_nrdconta);
+       LOOP
+       FETCH c_busca_dados_faturamento INTO r_busca_dados_faturamento;
+       EXIT WHEN c_busca_dados_faturamento%NOTFOUND;
+       /*Enquanto tiver registros*/
+       IF c_busca_dados_faturamento%FOUND THEN
+         /*No primeiro laço monta as tags*/
+         IF (vr_index = 1) THEN
+           vr_string := vr_string || '<campo>
+                                      <nome>Faturamento</nome>
+                                      <tipo>table</tipo>
+                                      <valor>
+                                      <linhas>';
+         END IF;
+         /*Não gerar dados quando não houver lançamento*/
+         IF (NVL(r_busca_dados_faturamento.mes,0)) > 0 THEN
+           vr_tab_tabela(vr_index).coluna1 := r_busca_dados_faturamento.mes;
+           vr_tab_tabela(vr_index).coluna2 := r_busca_dados_faturamento.ano;
+           vr_tab_tabela(vr_index).coluna3 := 
+           TO_CHAR(r_busca_dados_faturamento.valor,'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.''');
+         END IF;
+         vr_index := vr_index + 1;
+       END IF;
+      END LOOP;
+      CLOSE c_busca_dados_faturamento;      
+      /*Gera a tabela*/
+      IF vr_tab_tabela.COUNT > 0 THEN
+        vr_string := vr_string||fn_tag_table('Mês;Ano;Faturamento',vr_tab_tabela);
+        vr_string := vr_string || '</linhas>
+                                   </valor>
+                                   </campo>';      
+      ELSE
+        vr_tab_tabela(1).coluna1 := '-';
+        vr_tab_tabela(1).coluna2 := '-';
+        vr_tab_tabela(1).coluna3 := '-';
+        vr_string := vr_string||fn_tag_table('Mês;Ano;Faturamento',vr_tab_tabela);
+        vr_string := vr_string || '</linhas>
+                                   </valor>
+                                   </campo>';      
+      END IF;
+      vr_string := vr_string || r_dados_comerciais_fat.vlrmedfatbru||
                    r_dados_comerciais_fat.perfatcl;
     end if;
   
@@ -3704,7 +4184,77 @@ PROCEDURE pc_lista_cred_recebidos(pr_cdcooper IN crapass.cdcooper%TYPE
     
   END pc_consulta_cadastro_pj;
 
+/*Sprint 15*/
+PROCEDURE pc_consulta_cad_conjuge_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE --> Cooperativa
+                                       ,pr_nrdconta IN crapass.nrdconta%TYPE --> Conta
+                                       ,pr_cdcritic OUT PLS_INTEGER          --> Codigo da critica
+                                       ,pr_dscritic OUT VARCHAR2             --> Descricao da critica
+                                       ,pr_dsxmlret OUT CLOB) IS             --> Arquivo de retorno do XML
+	/* .............................................................................
+  Programa: pc_consulta_cad_conjuge_ncoop
+  Sistema : Aimaro/Ibratan
+  Autor   : Rubens Lima
+  Data    : Agosto/2019                 Ultima atualizacao:
+  Dados referentes ao programa:
+  Frequencia: Sempre que for chamado
+  Objetivo  : Consulta o cadastro de cônjuge não cooperado
+  Alteracoes: 
+  ..............................................................................*/
+  vr_dsxmlret CLOB;
+  vr_string     CLOB;
   
+  BEGIN
+    -- Criar documento XML
+    dbms_lob.createtemporary(vr_dsxmlret, TRUE);
+    dbms_lob.open(vr_dsxmlret, dbms_lob.lob_readwrite);
+    vr_string := '<subcategoria>'||
+                 '<tituloTela>Dados Cadastrais</tituloTela>'||
+                 '<campos>';
+    OPEN c_consulta_cad_conjuge_ncoop(pr_cdcooper,vr_nrdconta_principal);
+     FETCH c_consulta_cad_conjuge_ncoop INTO r_consulta_cad_conjuge_ncoop;
+     IF c_consulta_cad_conjuge_ncoop%FOUND THEN
+        /*Gera Tags Xml*/
+        vr_string := vr_string||
+                     fn_tag('CPF', gene0002.fn_mask_cpf_cnpj(r_consulta_cad_conjuge_ncoop.nrcpfcjg,1))||
+                     fn_tag('Nome',r_consulta_cad_conjuge_ncoop.nmconjug)||
+                     fn_tag('Idade',trunc(months_between(rw_crapdat.dtmvtolt,
+                                          r_consulta_cad_conjuge_ncoop.dtnasccj) / 12)|| ' anos');
+     END IF;
+    CLOSE c_consulta_cad_conjuge_ncoop;
+    vr_string := vr_string || '</campos></subcategoria>';
+    vr_string := vr_string||'<subcategoria>'||
+                            '<tituloTela>Dados Comerciais</tituloTela>'||
+                            '<campos>';
+    -- Dados segundo cursor
+    open c_dados_comerciais_conj_ncoop (pr_cdcooper, vr_nrdconta_principal);
+     fetch c_dados_comerciais_conj_ncoop into r_dados_comerciais_conj_ncoop;
+      if c_dados_comerciais_conj_ncoop%found then
+      /*Gera Tags Xml*/
+       vr_string := vr_string||
+                    fn_tag('Natureza da Ocupação',r_dados_comerciais_conj_ncoop.ntocupacao)||
+                    fn_tag('Ocupação',r_dados_comerciais_conj_ncoop.ocupacao)||
+                    fn_tag('Tipo de Contrato de Trabalho',r_dados_comerciais_conj_ncoop.vinculo)||
+                    fn_tag('Empresa',r_dados_comerciais_conj_ncoop.empresa)||
+                    fn_tag('Cargo',r_dados_comerciais_conj_ncoop.cargo)||
+                    fn_tag('Tempo de Empresa',NVL(trunc(months_between(rw_crapdat.dtmvtolt,
+                                              r_dados_comerciais_conj_ncoop.dtadmemp) / 12),0)|| ' anos')||
+                    fn_tag('Salario',TO_CHAR(r_dados_comerciais_conj_ncoop.vlsalari,
+                                            'fm9g999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.''')); 
+      end if;
+     vr_string := vr_string || '</campos>';
+     close c_dados_comerciais_conj_ncoop;
+     -- Encerrar a tag raiz
+     pc_escreve_xml(pr_xml            => vr_dsxmlret,
+                    pr_texto_completo => vr_string,
+                    pr_texto_novo     => '</subcategoria>',
+                    pr_fecha_xml => TRUE);
+     pr_dsxmlret := vr_dsxmlret;
+  EXCEPTION
+    WHEN OTHERS THEN
+      cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper_principal, pr_compleme => vr_parametros_principal);
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro pc_consulta_cad_conjuge_ncoop: '||sqlerrm;
+  END;
   PROCEDURE pc_consulta_garantia(pr_cdcooper  IN crapass.cdcooper%TYPE --> Cooperativa
                                ,pr_nrdconta IN crapass.nrdconta%TYPE       --> Conta
                                ,pr_nrctrato IN crawepr.nrctremp%TYPE
@@ -5520,7 +6070,7 @@ SELECT CASE WHEN LENGTH(v.nrcpfcgc) > 11 then 'JURÍDICA' else 'FÍSICA' END inpes
     primeiro grava como reaproveitamento. */
   CURSOR c_crapcbd(pr_nrconbir crapcbd.nrconbir%type,
                    pr_nrcpfcgc crapcbd.nrcpfcgc%type) is
-   select fn_tag('Data da Consulta', to_char(NVL(crapcbd.dtreapro,crapcbd.dtconbir), 'DD/MM/YYYY')) datareaproveitamento,
+/*   select fn_tag('Data da Consulta', to_char(NVL(crapcbd.dtreapro,crapcbd.dtconbir), 'DD/MM/YYYY')) datareaproveitamento,
           fn_tag('Reaproveitamento', decode(NVL(crapcbd.inreapro,0),0,'Não','Sim')) reaproveitamento,
           fn_tag('Data-base Bacen', CASE WHEN crapcbd.dtbaseba IS NOT NULL THEN to_char(crapcbd.dtbaseba, 'MM/YYYY') ELSE '-' END) databasebacen, -- Data base bacen
           fn_tag('Quantidade de Operações', NVL(temp.qtopescr,crapcbd.qtopescr)) qtoperacoes, -- Qt. Operações
@@ -5565,6 +6115,27 @@ SELECT CASE WHEN LENGTH(v.nrcpfcgc) > 11 then 'JURÍDICA' else 'FÍSICA' END inpes
          AND crapmbr.cdmodbir = crapcbd.cdmodbir
          AND crapcbd.cdcooper = temp.cdcooper (+)
          AND crapcbd.nrdconta = temp.nrdconta (+)
+         order by to_number(nrordimp); --bug 22113*/
+   select fn_tag('Data da Consulta', to_char(NVL(crapcbd.dtreapro,crapcbd.dtconbir), 'DD/MM/YYYY')) datareaproveitamento,
+          fn_tag('Reaproveitamento', decode(NVL(crapcbd.inreapro,0),0,'Não','Sim')) reaproveitamento,
+          fn_tag('Data-base Bacen', CASE WHEN crapcbd.dtbaseba IS NOT NULL THEN to_char(crapcbd.dtbaseba, 'MM/YYYY') ELSE '-' END) databasebacen, -- Data base bacen
+          fn_tag('Quantidade de Operações', crapcbd.qtopescr) qtoperacoes, -- Qt. Operações
+          fn_tag('Quantidade de Instituições Financeiras', crapcbd.qtifoper) qtifs, -- Qt. IFs
+          fn_tag('Operação do Sistema Financeiro Nacional (Endividamento)', to_char(crapcbd.vltotsfn,'999g999g990d00')) endividamento, -- OP. SFN (Endividamento)
+          fn_tag('Operações Vencidas', to_char(crapcbd.vlopescr,'999g999g990d00')) vencidas, -- Op.Vencidas
+          fn_tag('Operações de Prejuízo', to_char(crapcbd.vlprejui,'999g999g990d00')) prejuizo,  -- Op.Prejuízo
+          fn_tag('Operações Vencidas nos últimos 12 meses', to_char(crapcbd.vlprejme,'999g999g990d00')) vencidas12meses, -- Op.Vencidas ultimos 12 meses
+          fn_tag('Operações de Prejuízo nos últimos 12 meses', to_char(crapcbd.vlopesme,'999g999g990d00')) prejuizo12meses,  -- Op.Prejuízo ultimos 12 meses
+          crapcbd.nrcpfcgc
+        FROM crapbir,
+             crapmbr,
+             crapcbd
+       WHERE crapcbd.nrconbir = pr_nrconbir
+         AND crapcbd.nrcpfcgc = pr_nrcpfcgc
+         AND crapbir.cdbircon = crapcbd.cdbircon
+         AND crapmbr.cdbircon = crapcbd.cdbircon
+         AND crapmbr.cdmodbir = crapcbd.cdmodbir
+         AND crapcbd.Intippes IN (1,2,3) --1-Titular/ 2-Avalista/ 3-Conjuge
          order by to_number(nrordimp); --bug 22113
   r_crapcbd c_crapcbd%rowtype;
   --
@@ -5577,9 +6148,8 @@ SELECT CASE WHEN LENGTH(v.nrcpfcgc) > 11 then 'JURÍDICA' else 'FÍSICA' END inpes
      FROM tbgen_modalidade_biro a
     WHERE a.nrconbir = prc_nrconbir--2735256
       --AND a.nrseqdet = pr_nrseqdet
-      AND a.nrcpfcgc = prc_nrcpfcgc
+      AND a.nrcpfcgc = prc_nrcpfcgc;
       
-      ;                       
   --
   CURSOR cr_nrconbir IS
     SELECT cbd.nrconbir,
@@ -5796,6 +6366,28 @@ SELECT CASE WHEN LENGTH(v.nrcpfcgc) > 11 then 'JURÍDICA' else 'FÍSICA' END inpes
     
   END IF;                        
     
+
+
+    /*PRJ 438 - Sprint 15 - Story 23824*/
+    --Somente PJ
+    IF(r_pessoa.inpessoa > 1) THEN
+      OPEN c_busca_classe_risco_serasa (pr_nrconbir => vr_nrconbir
+                                       ,pr_nrseqdet => vr_nrseqdet);                                     
+       FETCH c_busca_classe_risco_serasa INTO vr_dsclaris;
+       IF c_busca_classe_risco_serasa%FOUND THEN
+         vr_string := vr_string||fn_tag('Classe de risco do Serasa', vr_dsclaris);
+       END IF;
+      CLOSE c_busca_classe_risco_serasa;
+
+      /*PRJ 438 - Sprint 15 - Story 23820*/
+      OPEN c_busca_inadimplencia (pr_nrconbir => vr_nrconbir
+                                 ,pr_nrcpfcgc => pr_nrcpfcgc);                                     
+       FETCH c_busca_inadimplencia INTO vr_peinadim;
+       IF c_busca_inadimplencia%FOUND THEN
+         vr_string := vr_string||fn_tag('Probabilidade de Inadimplência', to_char(vr_peinadim,'990D00')  || ' %');
+       END IF;
+      CLOSE c_busca_inadimplencia;
+    END IF;      
     vr_string := vr_string||'</campos></subcategoria>';
     -- Fim Resumo das Informações do Titular               
     
@@ -5914,11 +6506,12 @@ SELECT CASE WHEN LENGTH(v.nrcpfcgc) > 11 then 'JURÍDICA' else 'FÍSICA' END inpes
       Alteracoes:
     ..............................................................................*/
   
-    vr_string varchar2(4000);
+    vr_string CLOB;
     vr_existe BOOLEAN;
   
     cursor c_crapopf is
-      select opf.nrcpfcgc
+      select opf.nrcpfcgc,
+             a.inpessoa
         from crapass a,
              crapopf opf
        where a.cdcooper = pr_cdcooper
@@ -5944,19 +6537,43 @@ SELECT CASE WHEN LENGTH(v.nrcpfcgc) > 11 then 'JURÍDICA' else 'FÍSICA' END inpes
     r_consulta_scr c_consulta_scr%rowtype;
   
     cursor c_modalidades(pr_nrcpfcgc crapass.nrcpfcgc%type) is
-      select vop.nrcpfcgc,
-             substr(vop.cdmodali, 1, 2) cdmodali,
-             gnmodal.dsmodali,
-             sum(vop.vlvencto) vencimento
+    select distinct substr(vop.cdmodali,1,2) cdmodali,
+                    substr(vop.cdmodali,3,2) cdsubmod
+      from crapvop vop
+     where vop.nrcpfcgc = pr_nrcpfcgc
+       and vop.dtrefere >= (select max(dtrefere) from crapopf)
+       and vop.cdvencto in (120, 130) -- 31-60 61-90 
+       order by substr(vop.cdmodali,1,2),substr(vop.cdmodali,3,2);    
+
+    cursor c_modalidades_vencto(pr_nrcpfcgc crapass.nrcpfcgc%type,
+                                pr_cdvencto crapvop.cdvencto%type,
+                                pr_cdmodali gnsbmod.cdmodali%type,
+                                pr_cdsubmod gnsbmod.cdmodali%type) is
+    select s.cdmodali,
+           to_char(s.cdsubmod) cdsubmod,
+           s.dssubmod,
+           to_char(nvl(sum(vop.vlvencto),0),'999g999g990d00') vencimento
         from crapvop vop,
-             gnmodal
+           gnmodal m, --Modalidade
+           gnsbmod s  -- Submodalidade
        where vop.nrcpfcgc = pr_nrcpfcgc
          and vop.dtrefere >= (select max(dtrefere) from crapopf)
-         and gnmodal.cdmodali = substr(vop.cdmodali, 1, 2)
-       group by vop.nrcpfcgc, gnmodal.dsmodali, substr(vop.cdmodali, 1, 2);
-    r_modalidades c_modalidades%rowtype;
+       and m.cdmodali = substr(vop.cdmodali,1,2)
+       and s.cdmodali = SUBSTR(vop.cdmodali,1,2)
+       and s.cdsubmod = SUBSTR(vop.cdmodali,3,2)
+       and vop.cdvencto = pr_cdvencto -- 120,130 -- 31-60 61-90
+       and s.cdmodali = pr_cdmodali
+       and s.cdsubmod = pr_cdsubmod
+  group by s.cdmodali,
+           vop.nrcpfcgc, 
+           s.cdsubmod,
+           s.dssubmod, 
+           vop.cdvencto;           
+
+    r_modalidades_vencto c_modalidades_vencto%rowtype;
   
-    -- 31 dias a 60 dias
+
+/*    -- 31 dias a 60 dias
     cursor c_vencimento_120(pr_nrcpfcgc crapass.nrcpfcgc%type,
                             pr_cdmodali crapvop.cdmodali%type) is
       select vop.cdvencto,
@@ -5980,7 +6597,7 @@ SELECT CASE WHEN LENGTH(v.nrcpfcgc) > 11 then 'JURÍDICA' else 'FÍSICA' END inpes
          and substr(vop.cdmodali, 1, 2) = pr_cdmodali
          and vop.cdvencto = 130
        group by vop.cdvencto;
-    r_vencimento_130 c_vencimento_130%rowtype;
+    r_vencimento_130 c_vencimento_130%rowtype;*/
   
  
     cursor c_crapvop(pr_nrcpfcgc crapass.nrcpfcgc%type) is
@@ -6051,6 +6668,25 @@ SELECT CASE WHEN LENGTH(v.nrcpfcgc) > 11 then 'JURÍDICA' else 'FÍSICA' END inpes
       END IF;
       CLOSE c_crapvop;
     
+    /*PRJ 438 - Sprint 15 - Story 23824*/
+    if r_crapopf.inpessoa > 1 then -- Somente PJ
+      OPEN c_busca_classe_risco_serasa (pr_nrconbir => vr_nrconbir
+                                       ,pr_nrseqdet => vr_nrseqdet);                                     
+       FETCH c_busca_classe_risco_serasa INTO vr_dsclaris;
+       IF c_busca_classe_risco_serasa%FOUND THEN
+         vr_string := vr_string||fn_tag('Classe de risco do Serasa', vr_dsclaris);
+       END IF;
+      CLOSE c_busca_classe_risco_serasa;
+
+      /*PRJ 438 - Sprint 15 - Story 23820*/
+      OPEN c_busca_inadimplencia (pr_nrconbir => vr_nrconbir
+                                 ,pr_nrcpfcgc => r_crapopf.nrcpfcgc);                                     
+       FETCH c_busca_inadimplencia INTO vr_peinadim;
+       IF c_busca_inadimplencia%FOUND THEN
+         vr_string := vr_string||fn_tag('Probabilidade de Inadimplência', vr_peinadim || ' %');
+       END IF;
+      CLOSE c_busca_inadimplencia;
+    end if;
       vr_string := vr_string || '</campos></subcategoria>';
       -- Fim Resumo das Informações do Titular   
     
@@ -6062,38 +6698,38 @@ SELECT CASE WHEN LENGTH(v.nrcpfcgc) > 11 then 'JURÍDICA' else 'FÍSICA' END inpes
         vr_existe := TRUE;
         vr_tab_tabela.delete;
       
+        open c_modalidades_vencto(r_crapopf.nrcpfcgc,120,r_modalidades.cdmodali,r_modalidades.cdsubmod);
+         fetch c_modalidades_vencto into r_modalidades_vencto;
+          if c_modalidades_vencto%found then
+            vr_tab_tabela(1).coluna1 := r_modalidades_vencto.vencimento;
+          else
+            vr_tab_tabela(1).coluna1 := '-';
+          end if;
+        close c_modalidades_vencto;
+        
+        open c_modalidades_vencto(r_crapopf.nrcpfcgc,130,r_modalidades.cdmodali,r_modalidades.cdsubmod);
+         fetch c_modalidades_vencto into r_modalidades_vencto;
+          if c_modalidades_vencto%found then
+            vr_tab_tabela(1).coluna2 := r_modalidades_vencto.vencimento;
+          else
+            vr_tab_tabela(1).coluna2 := '-';
+          end if;
+        close c_modalidades_vencto;        
+
         vr_string := vr_string || '<campo>
-                                   <nome>Modalidade: ' || r_modalidades.cdmodali || ' - ' ||
-                     r_modalidades.dsmodali || '</nome>
+                                   <nome>Modalidade: ' || r_modalidades_vencto.cdsubmod || ' - ' ||r_modalidades_vencto.dssubmod || '</nome>
+
                                    <tipo>table</tipo>
                                    <valor>
                                    <linhas>';
-      
-        -- 31 dias a 60 dias
-        r_vencimento_120.vencimento := NULL;
-        OPEN c_vencimento_120(r_modalidades.nrcpfcgc, r_modalidades.cdmodali);
-        FETCH c_vencimento_120 INTO r_vencimento_120;
-      
-        vr_tab_tabela(1).coluna1 := nvl(r_vencimento_120.vencimento, 0);
-      
-        CLOSE c_vencimento_120;
-      
-        -- 61 dias a 60 dias
-        r_vencimento_130.vencimento := NULL;
-        OPEN c_vencimento_130(r_modalidades.nrcpfcgc, r_modalidades.cdmodali);
-        FETCH c_vencimento_130 INTO r_vencimento_130;
-      
-        vr_tab_tabela(1).coluna2 := nvl(r_vencimento_130.vencimento, 0);
-      
-        CLOSE c_vencimento_130;
       
         vr_string := vr_string || fn_tag_table('31 dias a 60 dias;61 dias a 90 dias', vr_tab_tabela);
       
         vr_string := vr_string || '</linhas>
                                    </valor>
                                    </campo>';
-      
       END LOOP;
+      
       -- se nao encontrou modalidade
       IF NOT vr_existe THEN
         vr_tab_tabela.delete;
@@ -6355,6 +6991,170 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
 
   END pc_consulta_scr_ncoop;
 
+PROCEDURE pc_consulta_scr_conj_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         --> Cooperativa
+                                    ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE         --> CPFCGC
+                                    ,pr_cdcritic OUT PLS_INTEGER                  --> Codigo da critica
+                                    ,pr_dscritic OUT VARCHAR2                     --> Descricao da critica
+                                    ,pr_dsxmlret OUT CLOB) IS                     --> Arquivo de retorno do XML
+  /* .............................................................................
+    Programa: pc_consulta_scr_conj_ncoop
+    Sistema : Aimaro/Ibratan
+    Autor   : Rubens Lima (Mouts)
+    Data    : Agosto/2019                 Ultima atualizacao: 
+    Dados referentes ao programa:
+    Frequencia: Sempre que for chamado
+    Objetivo  : Consulta SCR do Cônjuge não cooperado
+    Alteracoes:
+  ..............................................................................*/
+  vr_dsxmlret CLOB;
+  vr_string   CLOB;
+  --Variáveis para o birô
+  vr_nrconbir crapcbd.nrconbir%TYPE;
+  vr_nrseqdet crapcbd.nrseqdet%TYPE;
+  --Exception
+  vr_notfound EXCEPTION;
+  /*Consulta se o conjuge faz parte da proposta (co-responsavel) */
+  CURSOR c_busca_conjuge_biro (pr_cdcooper IN crapcop.cdcooper%TYPE,
+                               pr_nrconbir IN crapcbd.nrconbir%TYPE,
+                               pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE) IS
+   SELECT 1 
+    FROM tbgen_modalidade_biro
+    WHERE nrconbir = pr_nrconbir
+    AND   nrcpfcgc = pr_nrcpfcgc;                               
+   r_busca_conjuge_biro c_busca_conjuge_biro%ROWTYPE;
+  CURSOR c_crapcbd(pr_nrconbir crapcbd.nrconbir%TYPE, pr_nrcpfcgc crapcbd.nrcpfcgc%TYPE) IS
+   SELECT fn_tag('Data da Consulta', to_char(crapcbd.dtreapro,'DD/MM/YYYY')) datareaproveitamento,
+          fn_tag('Reaproveitamento', decode(NVL(crapcbd.inreapro,0),0,'Não','Sim')) reaproveitamento,
+          fn_tag('Data-base Bacen', CASE WHEN crapcbd.dtbaseba IS NOT NULL THEN to_char(crapcbd.dtbaseba, 'MM/YYYY') ELSE '-' END) databasebacen -- Data base bacen
+     FROM crapcbd
+    WHERE crapcbd.nrconbir = pr_nrconbir
+      AND crapcbd.nrcpfcgc = pr_nrcpfcgc
+      AND crapcbd.cdbircon = 3; -- SRC Bacen Completo
+  r_crapcbd c_crapcbd%ROWTYPE;
+  --
+  CURSOR cr_modalidade(prc_nrconbir tbgen_modalidade_biro.nrconbir%type,
+                       prc_nrcpfcgc tbgen_modalidade_biro.nrcpfcgc%TYPE
+                       ) IS
+    SELECT DISTINCT 'Modalidade - '||a.cdmodbir||' - '||REPLACE(SUBSTR(to_char(a.xmlmodal),2,INSTR(to_char(a.xmlmodal),'>')-2),'_',' ') Modalidade
+          ,REPLACE(REPLACE(regexp_substr(to_char(a.xmlmodal),'<'||'VPERCVE_31D_60D'||'>[^<]*'),'<'||'VPERCVE_31D_60D'||'>',null),'.',',') VPERCVE_31D_60D
+          ,REPLACE(REPLACE(regexp_substr(to_char(a.xmlmodal),'<'||'VPERCVE_61D_90D'||'>[^<]*'),'<'||'VPERCVE_61D_90D'||'>',null),'.',',') VPERCVE_61D_90D
+     FROM tbgen_modalidade_biro a
+    WHERE a.nrconbir = prc_nrconbir
+      AND a.nrcpfcgc = prc_nrcpfcgc;
+  --
+  BEGIN
+    vr_cdcritic := 0;
+    vr_dscritic := null;
+    -- Criar documento XML
+    dbms_lob.createtemporary(vr_dsxmlret, TRUE);
+    dbms_lob.open(vr_dsxmlret, dbms_lob.lob_readwrite);
+    vr_string := '<categoria>'||
+                 '<tituloTela>SCR</tituloTela>'||
+                 '<tituloFiltro>scr</tituloFiltro>'||
+                 '<subcategorias>';
+    /*Busca o número do birô do titular*/
+    sspc0001.pc_busca_consulta_biro(pr_cdcooper => pr_cdcooper,
+                                    pr_nrdconta => vr_nrdconta_principal,
+                                    pr_nrconbir => vr_nrconbir,
+                                    pr_nrseqdet => vr_nrseqdet);
+    /*Verifica se o conjuge faz parte (co-participacao)*/
+    OPEN c_busca_conjuge_biro (pr_cdcooper => pr_cdcooper,
+                               pr_nrconbir => vr_nrconbir,
+                               pr_nrcpfcgc => pr_nrcpfcgc);
+     FETCH c_busca_conjuge_biro INTO r_busca_conjuge_biro;
+     IF c_busca_conjuge_biro%NOTFOUND THEN
+       RAISE vr_notfound;
+     END IF;
+    CLOSE c_busca_conjuge_biro;
+    -- Resumo das Informações do Titular
+    vr_string := vr_string || '<subcategoria>'||
+                              '<tituloTela>Resumo das Informações do Cônjuge</tituloTela>'||
+                               '<campos>';
+    OPEN c_crapcbd(pr_nrconbir => vr_nrconbir,
+                   pr_nrcpfcgc => vr_nrcpfcgc_principal);
+     FETCH c_crapcbd INTO r_crapcbd;
+    IF c_crapcbd%FOUND THEN
+    CLOSE c_crapcbd;
+      vr_string := vr_string || r_crapcbd.datareaproveitamento||
+                                r_crapcbd.reaproveitamento||
+                                r_crapcbd.databasebacen;
+    END IF;
+    vr_string := vr_string||'</campos></subcategoria>';
+    -- Fim Resumo das Informações - É a mesma do titular
+    -- SCR
+    vr_string := vr_string || '<subcategoria>'||
+                              '<tituloTela>SCR</tituloTela>'||
+                              '<campos>';
+    vr_tab_tabela.delete;
+    FOR rw_modalidade IN cr_modalidade(prc_nrconbir => vr_nrconbir,
+                                       prc_nrcpfcgc => pr_nrcpfcgc)LOOP
+        vr_string := vr_string||'<campo>
+                                 <nome>' || rw_modalidade.modalidade ||'</nome>
+                                 <tipo>table</tipo>
+                                 <valor>
+                                 <linhas>';
+        --
+        vr_tab_tabela(1).coluna1 := to_char(nvl(rw_modalidade.vpercve_31d_60d, 0),'999g999g990d00');
+        vr_tab_tabela(1).coluna2 := to_char(nvl(rw_modalidade.vpercve_61d_90d, 0),'999g999g990d00');
+        --
+        vr_string := vr_string||fn_tag_table('31 dias a 60 dias;61 dias a 90 dias',vr_tab_tabela);
+        --
+        vr_string := vr_string||'</linhas>
+                                 </valor>
+                                 </campo>';
+      END LOOP;
+    vr_string := vr_string||'</campos>';
+    -- Encerrar a tag raiz
+    pc_escreve_xml(pr_xml => vr_dsxmlret,
+                  pr_texto_completo => vr_string,
+                  pr_texto_novo => '</subcategoria>',
+                  pr_fecha_xml => TRUE);
+    -- Cria o XML a ser retornado
+    pr_dsxmlret := vr_dsxmlret;
+    EXCEPTION
+    WHEN vr_notfound THEN
+      vr_string := vr_string ||
+                   '<subcategoria>
+                        <tituloTela>Consulta</tituloTela>
+                        <tituloFiltro>consula</tituloFiltro>
+                        <campos>
+                            <campo>
+                                <nome>Cônjuge Não Cooperado</nome>
+                                <tipo>string</tipo>
+                                <valor>Não possui dados para apresentação</valor>
+                            </campo>
+                        </campos>';
+    -- Encerrar a tag raiz
+    pc_escreve_xml(pr_xml => vr_dsxmlret,
+                  pr_texto_completo => vr_string,
+                  pr_texto_novo => '</subcategoria>',
+                  pr_fecha_xml => TRUE);
+    -- Cria o XML a ser retornado
+    pr_dsxmlret := vr_dsxmlret;
+    WHEN OTHERS THEN
+      /* Tratar erro */
+      cecred.pc_internal_exception(pr_cdcooper => vr_cdcooper_principal, pr_compleme => vr_parametros_principal);
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro TELA_ANALISE_CREDITO.PC_CONSULTA_SCR - '||SQLERRM;
+      vr_string := '<categoria>'||
+                       '<tituloTela>SCR</tituloTela>'||
+                       '<tituloFiltro>scr</tituloFiltro>'||
+                       '<subcategorias>'||
+                             '<subcategoria>'||
+                                 '<erros>'||
+                                     '<erro>'||
+                                         '<cdcritic>0</cdcritic>'||
+                                         '<dscritic>'||pr_dscritic||'</dscritic>'||
+                                     '</erro>'||
+                                 '</erros>';
+    -- Encerrar a tag raiz
+    pc_escreve_xml(pr_xml => vr_dsxmlret,
+                  pr_texto_completo => vr_string,
+                  pr_texto_novo => '</subcategoria>',
+                  pr_fecha_xml => TRUE);
+    -- Cria o XML a ser retornado
+    pr_dsxmlret := vr_dsxmlret;
+  END pc_consulta_scr_conj_ncoop;
   PROCEDURE pc_consulta_operacoes(pr_cdcooper IN crawepr.cdcooper%TYPE --> Cooperativa
                                ,pr_nrdconta  IN crawepr.nrdconta%TYPE       --> Conta
                                ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE       --> Data do movimeneto atual da cooperativa
@@ -6367,6 +7167,17 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
     vr_dsxmlret CLOB;
     vr_string   CLOB;
   
+    /*Variáveis do totalizador das co-resnponsabilidade*/
+    --Saldo Devedor, 
+    vr_tot_saldo_devedor number(25,2) :=0;
+
+    --Prest Pagas / Total, 
+    vr_tot_prestacoes_pagas_empr number :=0;
+    vr_tot_prestacoes_empr      number :=0;
+    --Valor das Prestações.
+    vr_tot_valor_prestacoes number(25,2) :=0;
+    vr_tot_valor_atraso     number(25,2) :=0;
+
    PROCEDURE pc_busca_borderos (pr_nrdconta IN crapbdt.nrdconta%TYPE
                                ,pr_cdcooper IN crapbdt.cdcooper%TYPE) IS
       /*---------------------------------------------------------------------------------------------------------------------
@@ -6526,13 +7337,12 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
     
       -- Váriaveis
       vr_index                      NUMBER;
-      aux_qtmesdec                  NUMBER;
-      aux_qtpreemp                  NUMBER;
-      aux_qtprecal                  NUMBER;
       tot_vlsdeved                  NUMBER;
       tot_vlpreemp                  NUMBER;
-      tot_qtprecal                  NUMBER;
-      vr_dspontualidade             VARCHAR2(30) := 'Sem Atrasos';
+      tot_qtd_parcelas_atraso       NUMBER;
+      tot_vl_parcelas_atraso        NUMBER;
+      tot_qtd_prestacoe_pagas       NUMBER;
+      tot_qtd_prestacoe             NUMBER;      
       vr_liquidar                   VARCHAR2(15);
       vr_lista_contratos_liquidados VARCHAR2(100) := '';
       vr_vlsdeved                   NUMBER;
@@ -6556,20 +7366,6 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
       vr_nrctaava2_aux number := 0;
     
       ---------->>> CURSORES <<<----------
-      CURSOR cr_crapris(pr_nrctremp IN crapris.nrctremp%TYPE) IS
-        SELECT CASE
-                 WHEN max(qtdiaatr) = 0   THEN 'Sem Atrasos'
-                 WHEN max(qtdiaatr) <= 60 THEN 'Até 60 dias'
-                 WHEN max(qtdiaatr) > 60  THEN 'Mais 60 dias ou renegociações'
-               END dspontualidade
-          FROM crapris
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta
-           AND nrctremp = pr_nrctremp
-           AND dtrefere <= LAST_DAY(rw_crapdat.dtmvtolt)
-           AND inddocto = 1;
-      rw_crapris cr_crapris%ROWTYPE;
-    
       CURSOR cr_crawepr IS
         SELECT a.nrctrliq##1 || ',' ||
                a.nrctrliq##2 || ',' ||
@@ -6607,6 +7403,18 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
            AND ris.dtrefere = pr_dtmvtoan;
       rw_tbrisco_central cr_tbrisco_central%ROWTYPE;
     
+      /*Parcelas Vencidas*/
+      CURSOR cr_crappep(pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+        SELECT count(1) qtd_parcelas
+          FROM crappep
+         WHERE cdcooper = pr_cdcooper
+               AND nrdconta = pr_nrdconta
+               AND nrctremp = pr_nrctremp
+               AND inliquid = 0 -- Não liquidada
+               AND dtvencto <= rw_crapdat.dtmvtoan; -- Parcela Vencida      
+        r_crappep cr_crappep%rowtype;
+      
+
     BEGIN
     
       -- busca o tipo de documento GED
@@ -6684,33 +7492,16 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
       IF vr_tab_dados_epr.COUNT() > 0 THEN
         tot_vlsdeved := 0;
         tot_vlpreemp := 0;
-        tot_qtprecal := 0;
+        tot_qtd_parcelas_atraso :=0;
+        tot_vl_parcelas_atraso  :=0;
+        tot_qtd_prestacoe_pagas :=0;
+        tot_qtd_prestacoe :=0;
         vr_index     := 1;
         FOR i IN 1 .. vr_tab_dados_epr.COUNT() LOOP
         
           IF vr_tab_dados_epr(i).vlsdeved <= 0 THEN
             CONTINUE;
           END IF;
-        
-          aux_qtmesdec := vr_tab_dados_epr(i).qtmesdec - vr_tab_dados_epr(i).qtprecal;
-          aux_qtpreemp := vr_tab_dados_epr(i).qtpreemp - vr_tab_dados_epr(i).qtprecal;
-        
-          IF aux_qtmesdec > aux_qtpreemp THEN
-            aux_qtprecal := aux_qtpreemp;
-          ELSE
-            aux_qtprecal := aux_qtmesdec;
-          END IF;
-        
-          IF aux_qtprecal < 0 THEN
-            aux_qtprecal := 0;
-          END IF;
-        
-          OPEN cr_crapris(pr_nrctremp => vr_tab_dados_epr(i).nrctremp);
-                  FETCH cr_crapris INTO rw_crapris;
-          IF cr_crapris%FOUND THEN
-            vr_dspontualidade := rw_crapris.dspontualidade;
-          END IF;
-          CLOSE cr_crapris;
         
           -- Resetar a variavel
           vr_garantia := '-';
@@ -6753,12 +7544,19 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
             vr_liquidar := 'Não';
           END IF;
         
-          tot_vlsdeved := tot_vlsdeved + vr_tab_dados_epr(i).vlsdeved;
-          tot_vlpreemp := tot_vlpreemp + vr_tab_dados_epr(i).vlpreemp;
-          tot_qtprecal := tot_qtprecal + aux_qtprecal;
+          open cr_crappep(vr_tab_dados_epr(i).nrctremp); --Bug 25739
+           fetch cr_crappep into r_crappep;
+             if cr_crappep%found then
+               tot_qtd_parcelas_atraso := tot_qtd_parcelas_atraso+r_crappep.qtd_parcelas;
+               tot_vl_parcelas_atraso  := tot_vl_parcelas_atraso+vr_tab_dados_epr(i).vltotpag;
+             end if;
+          close cr_crappep;
         
                   vr_vlsdeved := vr_tab_dados_epr(i).vlsdeved + vr_tab_dados_epr(i).vliofcpl + vr_tab_dados_epr(i).vlmrapar + vr_tab_dados_epr(i).vlmtapar; 
         
+          tot_vlsdeved := tot_vlsdeved + vr_vlsdeved;
+          tot_vlpreemp := tot_vlpreemp + vr_tab_dados_epr(i).vlpreemp;
+
           -- Busca calendário para a cooperativa selecionada
           OPEN cr_dat;
                   FETCH cr_dat INTO rw_dat;
@@ -6777,14 +7575,22 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
           vr_tab_tabela(vr_index).coluna2 := CASE WHEN vr_risco_inclusao IS NULL THEN '-' ELSE vr_risco_inclusao END; -- Risco Inclusão
           vr_tab_tabela(vr_index).coluna3 := trim(to_char(vr_vlsdeved,'999g999g990d00')); -- Saldo Devedor
           vr_tab_tabela(vr_index).coluna4 := substr(trim(vr_tab_dados_epr(i).dspreapg), 1, 11); -- Prestações
+          
+          --Totalizador prestações
+          tot_qtd_prestacoe_pagas  := tot_qtd_prestacoe_pagas + to_number(substr(substr(trim(vr_tab_dados_epr(i).dspreapg), 1, 11),1,instr(substr(trim(vr_tab_dados_epr(i).dspreapg), 1, 11),'/')-1));
+          tot_qtd_prestacoe        := tot_qtd_prestacoe       + to_number(substr(substr(trim(vr_tab_dados_epr(i).dspreapg), 1, 11),instr(substr(trim(vr_tab_dados_epr(i).dspreapg), 1, 11),'/')+1));
+          
           vr_tab_tabela(vr_index).coluna5 := to_char(vr_tab_dados_epr(i).vlpreemp, '999g999g990d00'); -- Valor Prestações
-          vr_tab_tabela(vr_index).coluna6 := to_char(aux_qtprecal, 'fm990d0000'); -- Atraso/Parcela
+         
+          vr_tab_tabela(vr_index).coluna6 := CASE WHEN vr_tab_dados_epr(i).vltotpag > 0 THEN to_char(vr_tab_dados_epr(i).vltotpag,'999g999g990d00') ELSE '0' END; -- A pagar/Parcela
+          --vr_tab_tabela(vr_index).coluna6 := CASE WHEN vr_tab_dados_epr(i).vltotpag > 0 THEN to_char(vr_tab_dados_epr(i).vltotpag,'999g999g990d00')||' / '||to_char(r_crappep.qtd_parcelas) ELSE '0 / 0' END; -- A pagar/Parcela
+         
           vr_tab_tabela(vr_index).coluna7 := vr_tab_dados_epr(i).dsfinemp; -- Finalidade
           vr_tab_tabela(vr_index).coluna8 := vr_tab_dados_epr(i).dslcremp; -- Linha de Crédito
           vr_tab_tabela(vr_index).coluna9 := trim(to_char(vr_tab_dados_epr(i).txmensal,'990D000000')); -- Taxa
           vr_tab_tabela(vr_index).coluna10 := CASE WHEN vr_garantia IS NULL THEN '-' ELSE vr_garantia END; -- Garantia
           vr_tab_tabela(vr_index).coluna11 := CASE WHEN vr_liquidar IS NULL THEN '-' ELSE vr_liquidar END; -- Liquidar
-          vr_tab_tabela(vr_index).coluna12 := CASE WHEN vr_dspontualidade IS NOT NULL THEN vr_dspontualidade ELSE 'Sem Atrasos' END; -- Pontualidade
+          vr_tab_tabela(vr_index).coluna12 := CASE WHEN nvl(r_crappep.qtd_parcelas,0) =  0 THEN 'Sem Atrasos' ELSE 'Em Atraso' END; -- Pontualidade
           vr_index := vr_index + 1;
         
         END LOOP;
@@ -6804,17 +7610,21 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
       END IF;
     
       -- Colocar a linha de Totais --bug 20882
-      IF vr_tab_dados_epr.COUNT() > 1 THEN
+      IF vr_tab_tabela.COUNT() > 1 THEN
       
-        vr_tab_tabela(vr_index).coluna1 := '&lt;b&gt;Total&lt;/b&gt;';
+        vr_tab_tabela(vr_index).coluna1 := 'Total';
         vr_tab_tabela(vr_index).coluna2 := '-';
               vr_tab_tabela(vr_index).coluna3 := case when tot_vlsdeved > 0 then 
                                                     to_char(tot_vlsdeved,'999g999g990d00') else '-' end; -- Saldo Devedor
-        vr_tab_tabela(vr_index).coluna4 := '-';
+        vr_tab_tabela(vr_index).coluna4 := tot_qtd_prestacoe_pagas||' / '||tot_qtd_prestacoe;
+        
+        
               vr_tab_tabela(vr_index).coluna5 := case when tot_vlpreemp > 0 then
                                                     to_char(tot_vlpreemp,'999g999g990d00') else '-' end; -- Valor Prestações
-              vr_tab_tabela(vr_index).coluna6 := case when tot_qtprecal > 0 then
-                                                    to_char(tot_qtprecal,'fm990d0000') else '-' end; -- Atraso/Parcelas
+        vr_tab_tabela(vr_index).coluna6 := case when tot_qtd_parcelas_atraso > 0 then
+                                                     --to_char(tot_vl_parcelas_atraso,'999g999g990d00')||' / '||to_char(tot_qtd_parcelas_atraso) else '-' end; -- A pagar/Parcelas Retirado - Pedido Sirlei
+                                                     to_char(tot_vl_parcelas_atraso,'999g999g990d00') else '-' end; -- A pagar/Parcelas
+               
         vr_tab_tabela(vr_index).coluna7 := '-';
         vr_tab_tabela(vr_index).coluna8 := '-';
         vr_tab_tabela(vr_index).coluna9 := '-';
@@ -6850,7 +7660,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
                                    <valor>
                                    <linhas>';
     
-          vr_string := vr_string||fn_tag_table('Contrato;Risco Inclusão;Saldo Devedor;Prestações;Valor Prestações;Atraso/Parcela;Finalidade;Linha de Crédito;Taxa;Garantia;Liquidar;Pontualidade', vr_tab_tabela);
+          vr_string := vr_string||fn_tag_table('Contrato;Risco Inclusão;Saldo Devedor;Prestações;Valor Prestações;Atraso a Pagar;Finalidade;Linha de Crédito;Taxa;Garantia;Liquidar;Pontualidade', vr_tab_tabela);
     
       vr_string := vr_string || '</linhas>
                                    </valor>
@@ -7810,9 +8620,15 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
               
                 --Pega os dados da tabela de emprestimos
                 vr_tab_tabela(vr_index).coluna2 := vr_tab_aval(i).vldivida; --Saldo Devedor
+                vr_tot_saldo_devedor := vr_tot_saldo_devedor+to_number(replace(vr_tab_aval(i).vldivida,'.'));
               vr_tab_tabela(vr_index).coluna3 := REPLACE(REPLACE(SUBSTR(vr_tab_dados_epr(j).dspreapg,5,11),',0000',''),'/',' / '); --Prest. Pagas/Total
+                
+                vr_tot_prestacoes_pagas_empr := vr_tot_prestacoes_pagas_empr+to_number(substr(vr_tab_dados_epr(j).dspreapg,1,instr(vr_tab_dados_epr(j).dspreapg,'/')-1));
+                vr_tot_prestacoes_empr       := vr_tot_prestacoes_empr+to_number(substr(vr_tab_dados_epr(j).dspreapg,instr(vr_tab_dados_epr(j).dspreapg,'/')+1,instr(vr_tab_dados_epr(j).dspreapg,'->')-instr(vr_tab_dados_epr(j).dspreapg,'/')-1));
                 vr_tab_tabela(vr_index).coluna4 := vr_tab_dados_epr(j).vlpreemp; --Prestações
-                vr_tab_tabela(vr_index).coluna5 := vr_tab_dados_epr(j).vltotpag; --Atraso / Parcela
+                vr_tot_valor_prestacoes := vr_tot_valor_prestacoes+vr_tab_dados_epr(j).vlpreemp;
+                vr_tab_tabela(vr_index).coluna5 := to_char(vr_tab_dados_epr(j).vltotpag,'999g999g990d00'); --Atraso / Parcela
+                vr_tot_valor_atraso     := vr_tot_valor_atraso+vr_tab_dados_epr(j).vltotpag;
                 vr_tab_tabela(vr_index).coluna6 := vr_tab_dados_epr(j).dsfinemp; --Finalidade
                 vr_tab_tabela(vr_index).coluna7 := vr_tab_dados_epr(j).dslcremp; --Linha de Crédito
                 vr_tab_tabela(vr_index).coluna8 := 'Aval conta ' -- Bug 20848
@@ -7833,6 +8649,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
              if c_busca_saldo_deved_dsctit%found then
               
                 vr_tab_tabela(vr_index).coluna2 := vr_tab_aval(i).vldivida;
+                vr_tot_saldo_devedor := vr_tot_saldo_devedor+to_number(replace(vr_tab_aval(i).vldivida,'.'));
                 --Quando for desconto de título não tem prestação e atraso/parcela bug19838
                 vr_tab_tabela(vr_index).coluna3 := '-';
                 vr_tab_tabela(vr_index).coluna4 := '-';
@@ -7860,6 +8677,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
               
                 --Quando for desconto de título não tem prestação e atraso/parcela bug19838
                 vr_tab_tabela(vr_index).coluna2 := vr_tab_aval(i).vldivida;
+                vr_tot_saldo_devedor := vr_tot_saldo_devedor+to_number(replace(vr_tab_aval(i).vldivida,'.'));
                 vr_tab_tabela(vr_index).coluna3 := '-';
                 vr_tab_tabela(vr_index).coluna4 := '-';
                 vr_tab_tabela(vr_index).coluna5 := '-';
@@ -7885,6 +8703,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
                 /*Monta a tabela*/
                 vr_tab_tabela(vr_index).coluna1 := gene0002.fn_mask_contrato(r_busca_dados_descchq.contrato);
                 vr_tab_tabela(vr_index).coluna2 := to_char(r_busca_dados_descchq.saldodeved, '999g999g990d00');
+                vr_tot_saldo_devedor := vr_tot_saldo_devedor + r_busca_dados_descchq.saldodeved;
                 --Quando for desconto de cheque não tem prestação nem atraso/parcela nem finalidade
                 vr_tab_tabela(vr_index).coluna3 := '-';
                 vr_tab_tabela(vr_index).coluna4 := '-';
@@ -7903,6 +8722,17 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
           
           END LOOP;
         
+          --Monta o totalizador
+          vr_tab_tabela(vr_index).coluna1 := 'Total';
+          vr_tab_tabela(vr_index).coluna2 := to_char(vr_tot_saldo_devedor, '999g999g990d00');
+          vr_tab_tabela(vr_index).coluna3 := to_char(vr_tot_prestacoes_pagas_empr||' / '||vr_tot_prestacoes_empr);
+          vr_tab_tabela(vr_index).coluna4 := to_char(vr_tot_valor_prestacoes, '999g999g990d00');
+          vr_tab_tabela(vr_index).coluna5 := to_char(vr_tot_valor_atraso,'999g999g990d00');
+          vr_tab_tabela(vr_index).coluna6 := '-';
+          vr_tab_tabela(vr_index).coluna7 := '-';
+          vr_tab_tabela(vr_index).coluna8 := '-';  
+          
+                    
         ELSE
           vr_tab_tabela(1).coluna1 := '-';
           vr_tab_tabela(1).coluna2 := '-';
@@ -7937,6 +8767,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
         vr_tab_tabela(1).coluna8 := '-';
       END IF;
       --
+      
     vr_string := vr_string||fn_tag_table('Contrato;Saldo Devedor;Prest. Pagas / Total;Valor das Prestações;Atraso Parcela;Finalidade;Linha de Crédito;Responsabilidade'
                 ,vr_tab_tabela);
       vr_string := vr_string || '</linhas>
@@ -9128,9 +9959,12 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
                                       , pr_des_erro => vr_dscritic
                                       , pr_des_reto => vr_des_reto
                                       , pr_tab_erro => vr_tab_erro);
+                                      
      if vr_dscritic is not null then
        raise vr_erro;
      end if;                                 
+                                      
+
 /*    -- Calcula tarifa
      TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
@@ -9276,7 +10110,6 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
           vr_tab_tabela(vr_index).coluna7 := to_char(vr_tab_dados_epr(1).vlpreemp, '999g999g990d00');
           vr_tab_tabela(vr_index).coluna8 := to_char(round(vr_tab_dados_epr(1).vlsdeved, 2), '999g999g990d00');
           vr_tab_tabela(vr_index).coluna9 := 'PP';
---          vr_saldo_devedor_empr := vr_saldo_devedor_empr + round(vr_tab_dados_epr(1).vlsdeved, 2);
           vr_total_liquidacoes := vr_total_liquidacoes + round(vr_tab_dados_epr(1).vlsdeved, 2);
         
         END LOOP;
@@ -9314,7 +10147,6 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
         WHEN OTHERS THEN
           vr_totslddeved := 0;
       END;
-    
     
       /*Valor empréstimo - Total saldo devedor*/
       vr_totslddeved := r_crwepr.vlemprst - vr_totslddeved;
@@ -9374,7 +10206,7 @@ PROCEDURE pc_consulta_scr_ncoop(pr_cdcooper IN crapass.cdcooper%TYPE         -->
     if vr_tab_tabela.COUNT > 0 then
         /*Total de liquidações*/
         vr_index := vr_index + 1;
-        vr_tab_tabela(vr_index).coluna1 := '&lt;b&gt;Total&lt;/b&gt;';
+        vr_tab_tabela(vr_index).coluna1 := 'Total';
         vr_tab_tabela(vr_index).coluna2 := '-';
         vr_tab_tabela(vr_index).coluna3 := '-';
         vr_tab_tabela(vr_index).coluna4 := '-';
@@ -10594,7 +11426,7 @@ end;
       vr_index := vr_index + 1;
     
       /**/
-      vr_tab_tabela(vr_index).coluna1 := '&lt;b&gt;Total&lt;/b&gt;';
+      vr_tab_tabela(vr_index).coluna1 := 'Total';
       vr_tab_tabela(vr_index).coluna2 := '-';
       vr_tab_tabela(vr_index).coluna3 := to_char(vr_total_proposta, '999g999g990d00');
       vr_tab_tabela(vr_index).coluna4 := '-';
@@ -10860,29 +11692,32 @@ end;
        ORDER BY 1 DESC;
     r_busca_restri c_busca_restri%ROWTYPE;
   
-    /* Lista de participação */
-   CURSOR c_busca_participacao (pr_nrconbir crapcbd.nrconbir%TYPE,
+    /* Lista de participação Aimaro */
+   CURSOR c_busca_participacao_aimaro (pr_cdcooper crapass.cdcooper%TYPE,
                                 pr_nrdconta crapass.nrdconta%TYPE) IS
+      select pig.nrctasoc,
+             case when pig.nrctasoc > 0 then a.nmprimtl else pig.nmprimtl end nome,
+             case when pig.nrctasoc > 0 then gene0002.fn_mask_cpf_cnpj(a.nrcpfcgc,2) else gene0002.fn_mask_cpf_cnpj(pig.nrdocsoc,2) end cpfcgc,
+             to_char(pig.persocio,'990D99') persocio
+        from crapepa pig,
+             crapass a
+       where pig.cdcooper = pr_cdcooper 
+         and pig.nrdconta = pr_nrdconta
+         and pig.nrctasoc = a.nrdconta(+)
+         and pig.cdcooper = a.cdcooper(+);            
+
+    r_busca_participacao_aimaro c_busca_participacao_aimaro%ROWTYPE;
+    
+   CURSOR c_busca_participacao_motor (pr_nrconbir crapcbd.nrconbir%TYPE) IS
       SELECT distinct c.nrcpfcgc --Documento
-                     ,nmtitcon --Nome / Razão Social
+                   ,c.nmtitcon --Nome / Razão Social
                      ,c.dtentsoc --Data de Início
                      ,to_char(c.percapvt, '990D99') percapvt --Percentual do Capital Votante
                      ,to_char(c.pertotal, '990D99') pertotal --Percentual de Participação
      FROM crapcbd c
-          ,crapass a
-           ,crapavt s
-       WHERE a.cdcooper = 1
-         AND a.cdcooper = c.cdcooper
-         AND c.cdcooper = s.cdcooper
-         AND a.nrcpfcgc = c.nrcpfcgc
-         AND c.nrconbir = pr_nrconbir --Birô consultado
-       AND  c.intippes in (4,5)
-         AND s.tpctrato = 6 /*procurad*/
-         AND s.nrdconta = pr_nrdconta
-         AND s.nrcpfcgc = c.nrcpfcgc
-         AND s.nrctremp = 0
-         AND s.persocio > 0;
-    r_busca_participacao c_busca_participacao%ROWTYPE;
+        WHERE c.nrconbir = pr_nrconbir --Birô consultado
+          AND c.intippes in (4,5);
+    r_busca_participacao_motor c_busca_participacao_motor%ROWTYPE;    
   
     /*Lista de anotações negativas - Órgão de Proteção ao Crédito*/
     CURSOR c_busca_orgao_prot_cred(pr_nrconbir craprpf.nrconbir%TYPE
@@ -11148,7 +11983,8 @@ end;
       --Sem Restrição
       IF nvl(v_rtReadJson, '-') = '-' THEN
         vr_string_operacoes := vr_string_operacoes||
-                               fn_tag('Situação','Sem Restrição.'||' Consulta Boa Vista em: '||
+                               fn_tag('Situação','Sem Restrição.'||' Consulta em: '|| -- Retirado Boa Vista
+                               --fn_tag('Situação','Sem Restrição.'||' Consulta Boa Vista em: '|| -- Retirado Boa Vista
                                case when rw_dtconsulta.dhacionamento is not null 
                                     then to_char(rw_dtconsulta.dhacionamento,'DD/MM/YYYY')
                                     else 'SEM CONSULTA' end);
@@ -11156,7 +11992,8 @@ end;
         --Com Restrição
         vr_temrestri        := 1;
         vr_string_operacoes := vr_string_operacoes || fn_tag('Situação',
-                                                             'Com Restrição.'||' Consulta Boa Vista em: '|| case
+                                                             --'Com Restrição.'||' Consulta Boa Vista em: '|| case
+                                                             'Com Restrição.'||' Consulta em: '|| case
                                                                when rw_dtconsulta.dhacionamento is not null then
                                     to_char(rw_dtconsulta.dhacionamento, 'DD/MM/YYYY')
                                     else 'SEM CONSULTA'end);
@@ -11207,7 +12044,8 @@ end;
         END IF;
       
           vr_string_operacoes := vr_string_operacoes||
-                              fn_tag('Situação',vr_dsrestricao||' Consulta Boa Vista em: '||
+                                fn_tag('Situação',vr_dsrestricao||' Consulta em: '||
+                              --fn_tag('Situação',vr_dsrestricao||' Consulta Boa Vista em: '||
                               case when vr_dt_cons_biro is not null 
                                 then to_char(vr_dt_cons_biro,'DD/MM/YYYY')
                               else 'SEM CONSULTA' end);  
@@ -11221,7 +12059,8 @@ end;
         END IF;
       
           vr_string_operacoes := vr_string_operacoes||
-                              fn_tag('Situação','Sem Restrição'||' Consulta Boa Vista em: '||
+                              fn_tag('Situação','Sem Restrição'||' Consulta em: '||
+                              --fn_tag('Situação',vr_dsrestricao||' Consulta Boa Vista em: '||
                               case when vr_dt_cons_biro is not null --data consulta boa vista
                                 then to_char(vr_dt_cons_biro,'DD/MM/YYYY')
                               else 'SEM CONSULTA' end);  
@@ -11940,44 +12779,80 @@ end;
                              '<campos>'; -- Abertura da tag de campos da subcategoria
     
       vr_string_operacoes := vr_string_operacoes || '<campo>
-                                                <nome>Lista de Controle Societário</nome>
+                                                <nome>Lista de Participação Empresa - Aimaro</nome>
                                                 <tipo>table</tipo>
                                                 <valor>
                                                 <linhas>';
       vr_index            := 0;
       vr_tab_tabela.delete;
     
-   OPEN c_busca_participacao(pr_nrconbir => vr_nrconbir,
+      OPEN c_busca_participacao_aimaro(pr_cdcooper => pr_cdcooper,
                              pr_nrdconta => pr_nrdconta);
       LOOP
-    FETCH c_busca_participacao INTO r_busca_participacao;
-      
-        IF c_busca_participacao%FOUND THEN
+       FETCH c_busca_participacao_aimaro INTO r_busca_participacao_aimaro;
+        IF c_busca_participacao_aimaro%FOUND THEN
           vr_index := vr_index + 1;
-          vr_tab_tabela(vr_index).coluna1 := gene0002.fn_mask_cpf_cnpj(r_busca_participacao.nrcpfcgc,
-                                         CASE WHEN LENGTH(r_busca_participacao.nrcpfcgc) > 11 THEN 2 ELSE 1 END);
-          vr_tab_tabela(vr_index).coluna2 := r_busca_participacao.nmtitcon;
-      vr_tab_tabela(vr_index).coluna3 := case when 
-               r_busca_participacao.dtentsoc is not null then to_char(r_busca_participacao.dtentsoc,'DD/MM/YYYY') else '-' end;
-      vr_tab_tabela(vr_index).coluna4 := trim(r_busca_participacao.percapvt ||'%');
-      vr_tab_tabela(vr_index).coluna5 := trim(r_busca_participacao.pertotal ||'%');
+          vr_tab_tabela(vr_index).coluna1 := r_busca_participacao_aimaro.nrctasoc;
+          vr_tab_tabela(vr_index).coluna2 := r_busca_participacao_aimaro.nome;
+          vr_tab_tabela(vr_index).coluna3 := r_busca_participacao_aimaro.cpfcgc;
+          vr_tab_tabela(vr_index).coluna4 := trim(r_busca_participacao_aimaro.persocio ||'%');
+        ELSE
+          EXIT;
+        END IF;
+      END LOOP;
+
+      CLOSE c_busca_participacao_aimaro;
+      
+      IF vr_tab_tabela.COUNT > 0 THEN
+        /*Gera Tags Xml*/
+        vr_string_operacoes := vr_string_operacoes||fn_tag_table('Conta/dv;Razão Social;C.N.P.J;%Societário',vr_tab_tabela);
+      ELSE
+        vr_tab_tabela(1).coluna1 := '-';
+        vr_tab_tabela(1).coluna2 := '-';
+        vr_tab_tabela(1).coluna3 := '-';
+        vr_tab_tabela(1).coluna4 := '-';
+        vr_string_operacoes := vr_string_operacoes||fn_tag_table('Conta/dv;Razão Social;C.N.P.J;%Societário',vr_tab_tabela);
+      END IF;
+
+      vr_string_operacoes := vr_string_operacoes || '</linhas>
+                                                  </valor>
+                                                  </campo>';
+      -- Lista com somente as informações do Motor
+      vr_string_operacoes := vr_string_operacoes || '<campo>
+                                                <nome>Lista de Controle Societário - Motor</nome>
+                                                <tipo>table</tipo>
+                                                <valor>
+                                                <linhas>';
+      vr_index := 0;
+      vr_tab_tabela.delete;
+
+      OPEN c_busca_participacao_motor(pr_nrconbir => vr_nrconbir);
+      LOOP
+       FETCH c_busca_participacao_motor INTO r_busca_participacao_motor;
+        IF c_busca_participacao_motor%FOUND THEN
+          vr_index := vr_index + 1;
+          vr_tab_tabela(vr_index).coluna1 := gene0002.fn_mask_cpf_cnpj(r_busca_participacao_motor.nrcpfcgc,CASE WHEN LENGTH(r_busca_participacao_motor.nrcpfcgc) > 11 THEN 2 ELSE 1 END);
+          vr_tab_tabela(vr_index).coluna2 := r_busca_participacao_motor.nmtitcon;
+          vr_tab_tabela(vr_index).coluna3 := case when r_busca_participacao_motor.dtentsoc is not null then to_char(r_busca_participacao_motor.dtentsoc,'DD/MM/YYYY') else '-' end;
+          --vr_tab_tabela(vr_index).coluna4 := trim(r_busca_participacao_motor.percapvt ||'%');
+          vr_tab_tabela(vr_index).coluna5 := trim(r_busca_participacao_motor.pertotal ||'%');
         ELSE
           EXIT;
         END IF;
       END LOOP;
     
-      CLOSE c_busca_participacao;
+      CLOSE c_busca_participacao_motor;
     
       IF vr_tab_tabela.COUNT > 0 THEN
         /*Gera Tags Xml*/
-    vr_string_operacoes := vr_string_operacoes||fn_tag_table('Documento;Nome / Razão Social;Data de Início;Percentual de Capital Votante;Percentual de Participação',vr_tab_tabela);
+    vr_string_operacoes := vr_string_operacoes||fn_tag_table('Documento;Nome / Razão Social;Data de Início;Percentual de Participação',vr_tab_tabela);
       ELSE
         vr_tab_tabela(1).coluna1 := '-';
         vr_tab_tabela(1).coluna2 := '-';
         vr_tab_tabela(1).coluna3 := '-';
         vr_tab_tabela(1).coluna4 := '-';
         vr_tab_tabela(1).coluna5 := '-';
-    vr_string_operacoes := vr_string_operacoes||fn_tag_table('Documento;Nome / Razão Social;Data de Início;Percentual de Capital Votante;Percentual de Participação',vr_tab_tabela);
+    vr_string_operacoes := vr_string_operacoes||fn_tag_table('Documento;Nome / Razão Social;Data de Início;Percentual de Participação',vr_tab_tabela);
       END IF;
     
       vr_string_operacoes := vr_string_operacoes || '</linhas>
@@ -12464,7 +13339,8 @@ PROCEDURE pc_consulta_consultas_ncoop(pr_cdcooper   IN crapass.cdcooper%TYPE, --
         END IF;
       
         vr_string_operacoes := vr_string_operacoes || fn_tag('Situação',
-                                                             vr_dsrestricao || ' Consulta Boa Vista em: ' || CASE
+                                                             --vr_dsrestricao || ' Consulta Boa Vista em: ' || CASE
+                                                             vr_dsrestricao || ' Consulta em: ' || CASE
                                                                 WHEN vr_dt_cons_biro IS NOT NULL THEN
                                                                  to_char(vr_dt_cons_biro, 'DD/MM/YYYY')
                                                                 ELSE
@@ -12480,7 +13356,8 @@ PROCEDURE pc_consulta_consultas_ncoop(pr_cdcooper   IN crapass.cdcooper%TYPE, --
         END IF;
       
         vr_string_operacoes := vr_string_operacoes || fn_tag('Situação',
-                                                             'Sem Restrição' || ' Consulta Boa Vista em: ' || CASE
+                                                             --'Sem Restrição' || ' Consulta Boa Vista em: ' || CASE
+                                                               'Sem Restrição' || ' Consulta em: ' || CASE
                                                                 WHEN vr_dt_cons_biro IS NOT NULL --data consulta boa vista
                                                                  THEN
                                                                  to_char(vr_dt_cons_biro, 'DD/MM/YYYY')
@@ -14197,23 +15074,33 @@ PROCEDURE pc_busca_rendas_aut(pr_cdcooper IN crapass.cdcooper%TYPE
   
     /*Busca os dados do cartão quando PF*/
     cursor c_busca_cartao is
-      select vllimcrd, dddebito, dddebant, nrctrcrd, nrcrcard
+      select vllimcrd, dddebito, dddebant, nrctrcrd, nrcrcard, insitcrd, cdadmcrd, dtsol2vi
        from crawcrd
        where cdcooper = pr_cdcooper
        and nrdconta = pr_nrdconta
-       and insitcrd IN (2,3,4)
-       and flgprcrd = 1
-       and cdadmcrd <> 16;
+       --and insitcrd IN (2,3,4,5)
+       --and flgprcrd = 1
+       and cdadmcrd <> 16
+     order by progress_recid desc;
+       /* P438 Sprint 17 - Adição do cartão BB*/
+/*      union 
+      select vllimcrd, dddebito, dddebant, nrctrcrd, nrcrcard, insitcrd, cdadmcrd,dtsol2vi
+       from crawcrd
+       where cdcooper = pr_cdcooper
+       and nrdconta = pr_nrdconta
+       and insitcrd IN (4,5)
+       and cdadmcrd >= 83 and cdadmcrd <= 88;*/
   
     /*Busca os dados do cartão quandi PJ (Busca primeiro cartão. Valores iguais / limite compartilhado) */
     cursor c_busca_cartao_pj is
-      select vllimcrd, dddebito, dddebant, nrctrcrd, nrcrcard
+      select vllimcrd, dddebito, dddebant, nrctrcrd, nrcrcard, insitcrd ,cdadmcrd, dtsol2vi
        from crawcrd
        where cdcooper = pr_cdcooper
        and nrdconta = pr_nrdconta
-       and insitcrd IN (2,3,4)
+       --and insitcrd IN (2,3,4,5)
        and cdadmcrd <> 17
-       and rownum <=1;
+     order by progress_recid desc;
+--       and rownum <=1;
   
     /*Busca se é PF ou PJ para saber qual cursor abrir*/
      cursor c_busca_tipo_pessoa is
@@ -14222,6 +15109,19 @@ PROCEDURE pc_busca_rendas_aut(pr_cdcooper IN crapass.cdcooper%TYPE
        where c.cdcooper = pr_cdcooper
        and   c.nrdconta = pr_nrdconta;
   
+    /*Sprint 15 - US23823*/
+    CURSOR cr_crdatraso (pr_cdcooper crapsnh.cdcooper%TYPE,
+                         pr_nrdconta crapsnh.nrdconta%TYPE )IS
+      SELECT * 
+        FROM (SELECT atr.qtdias_atraso,
+                     atr.vlsaldo_devedor
+                FROM tbcrd_alerta_atraso atr
+               WHERE atr.cdcooper = pr_cdcooper
+                 AND atr.nrdconta = pr_nrdconta
+                 ORDER BY atr.qtdias_atraso DESC, atr.vlsaldo_devedor DESC)
+       WHERE rownum <= 1;        
+       
+
     -- Removido pois será uma melhoria da próxima sprint   
     /*cursor c_busca_lancamentos (pr_nrcontrato in tbcrd_fatura.nrcontrato%type) is
     select round(sum(vlfatura) / count(1), 2) as media_cartao
@@ -14244,6 +15144,61 @@ PROCEDURE pc_busca_rendas_aut(pr_cdcooper IN crapass.cdcooper%TYPE
     vr_dsxmlret CLOB;
     vr_dstexto  CLOB;
     vr_inpessoa NUMBER;
+    vr_qtdDiasAtrado NUMBER(5);
+    vr_saldoDevedor NUMBER(25,2);
+    vr_qtdiaatr INTEGER := 0;
+    --
+    vr_situacao VARCHAR2(20);
+    vr_imp_dias_atraso boolean;
+
+FUNCTION fn_retorna_situacao_cartao  (pr_insitcrd IN INTEGER,
+                                      pr_dtsol2vi IN DATE,
+                                      pr_cdadmcrd IN INTEGER) Return Varchar2 IS
+
+  aux_dssitcrd varchar2(20);
+
+BEGIN   
+  IF (pr_insitcrd  = 4  AND 
+      pr_dtsol2vi IS NOT NULL) OR
+      pr_insitcrd  = 7  THEN 
+      aux_dssitcrd:='Sol.2v';
+  ELSIF pr_insitcrd = 0   THEN 
+        aux_dssitcrd:='Estudo';
+  ELSIF pr_insitcrd = 1   THEN 
+        aux_dssitcrd:='Aprov.';
+  ELSIF pr_insitcrd = 2   THEN 
+        aux_dssitcrd:='Solic.';
+  ELSIF pr_insitcrd = 3  THEN 
+        aux_dssitcrd:='Liber.';
+  ELSIF pr_insitcrd = 4 AND
+        pr_cdadmcrd>= 83 AND pr_cdadmcrd <= 88 THEN 
+        aux_dssitcrd:='Prc.BB';
+  ELSIF pr_insitcrd = 4  THEN 
+        aux_dssitcrd:='Em uso';
+  ELSIF pr_insitcrd = 5  THEN
+        IF (pr_cdadmcrd >=83 AND pr_cdadmcrd <= 88) OR 
+           (pr_cdadmcrd >=10 AND pr_cdadmcrd <= 80) THEN 
+           aux_dssitcrd:='Bloque';
+        ELSE
+           aux_dssitcrd:='Cancel';
+        END IF;
+  ELSIF pr_insitcrd = 6  THEN 
+        IF pr_cdadmcrd >=10 AND pr_cdadmcrd <= 80  THEN 
+           aux_dssitcrd:='Cancel';
+        ELSE
+           aux_dssitcrd:='Encer.';
+        END IF;   
+  ELSIF pr_insitcrd = 8  THEN 
+        aux_dssitcrd:='Em Analise';
+  ELSIF pr_insitcrd = 9  THEN 
+        aux_dssitcrd:='Enviado Bancoob';
+  ELSE 
+        aux_dssitcrd:='??????';
+  END IF;        
+
+  RETURN aux_dssitcrd;
+
+END;
   
   begin
   
@@ -14263,9 +15218,28 @@ PROCEDURE pc_busca_rendas_aut(pr_cdcooper IN crapass.cdcooper%TYPE
      fetch c_busca_tipo_pessoa into vr_inpessoa;
     close c_busca_tipo_pessoa;
     
+    BEGIN
+      vr_qtdiaatr := gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
+                                               pr_cdcooper => 0,
+                                               pr_cdacesso => 'QTD_DIAS_FAT_CRD_ATRASO');
+    EXCEPTION
+     WHEN OTHERS THEN
+        vr_qtdiaatr := 0;
+    END;
+        
+    --> Buscar alerta de atraso do cartao
+    FOR rw_crdatraso IN cr_crdatraso( pr_cdcooper => pr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta) LOOP
+      
+      IF (rw_crdatraso.qtdias_atraso > 0) AND (rw_crdatraso.qtdias_atraso > vr_qtdiaatr) THEN
+        vr_qtdDiasAtrado := rw_crdatraso.qtdias_atraso;
+        vr_saldoDevedor  := rw_crdatraso.vlsaldo_devedor;
+      END IF;
+    END LOOP;    
+    
     
     if (vr_inpessoa = 1) then
-    
+      vr_imp_dias_atraso := true;
       for r_cartao in c_busca_cartao loop
         
         if vr_index > 0 then
@@ -14273,6 +15247,12 @@ PROCEDURE pc_busca_rendas_aut(pr_cdcooper IN crapass.cdcooper%TYPE
         end if;
       
         vr_string := vr_string || fn_tag('Cartão', to_char(r_cartao.nrcrcard, '9999g9999g9999g9999'));
+        /* P438 Sprint 17 - Adição da coluna situação */
+        vr_situacao:= fn_retorna_situacao_cartao (r_cartao.insitcrd
+                                                 ,r_cartao.dtsol2vi 
+                                                 ,r_cartao.cdadmcrd);
+        vr_string := vr_string || fn_tag('Situação', vr_situacao);
+        --
         vr_string := vr_string || fn_tag('Limite de Crédito', to_char(r_cartao.vllimcrd, '999g999g990d00'));
       
         -- Removido pois será uma melhoria da próxima sprint
@@ -14286,16 +15266,27 @@ PROCEDURE pc_busca_rendas_aut(pr_cdcooper IN crapass.cdcooper%TYPE
         end if;*/
       
         vr_string := vr_string || fn_tag('Dia Vencimento', to_char(r_cartao.dddebito));
-        vr_string := vr_string || fn_tag('Dia Vencimento 2ª Via', to_char(r_cartao.dddebant));
+        if vr_imp_dias_atraso then
+          vr_imp_dias_atraso := false; -- Imprime somente no primeiro cartão
+        vr_string := vr_string || fn_tag('Dias em atraso', to_char(vr_qtdDiasAtrado));  
+          vr_string := vr_string || fn_tag('Valor do atraso', to_char(vr_saldoDevedor,'999g999g990d00')); 
+        end if;  
+        --vr_string := vr_string || fn_tag('Dia Vencimento 2ª Via', to_char(r_cartao.dddebant));
       
         vr_index := vr_index + 1;
       
       end loop;
     else
-      
+      vr_imp_dias_atraso := true;
       for r_cartao in c_busca_cartao_pj loop
       
         vr_string := vr_string || fn_tag('Cartão', to_char(r_cartao.nrcrcard, '9999g9999g9999g9999'));
+        /* P438 Sprint 17 - Adição da coluna situação */
+        vr_situacao:= fn_retorna_situacao_cartao (r_cartao.insitcrd
+                                                 ,r_cartao.dtsol2vi 
+                                                 ,r_cartao.cdadmcrd);
+        vr_string := vr_string || fn_tag('Situação', vr_situacao);
+        --        
         vr_string := vr_string || fn_tag('Limite de Crédito', to_char(r_cartao.vllimcrd, '999g999g990d00'));
       
         -- Removido pois será uma melhoria da próxima sprint
@@ -14309,7 +15300,12 @@ PROCEDURE pc_busca_rendas_aut(pr_cdcooper IN crapass.cdcooper%TYPE
         end if;*/
       
         vr_string := vr_string || fn_tag('Dia Vencimento', to_char(r_cartao.dddebito));
-        vr_string := vr_string || fn_tag('Dia Vencimento 2ª Via', to_char(r_cartao.dddebant));
+        if vr_imp_dias_atraso then
+          vr_imp_dias_atraso := false; -- Imprime somente no primeiro cartão
+          vr_string := vr_string || fn_tag('Dias em atraso', to_char(vr_qtdDiasAtrado));  
+          vr_string := vr_string || fn_tag('Valor do atraso', to_char(vr_saldoDevedor,'999g999g990d00')); 
+        end if;  
+        --vr_string := vr_string || fn_tag('Dia Vencimento 2ª Via', to_char(r_cartao.dddebant));
       
         vr_index := vr_index + 1;
       
@@ -14319,10 +15315,12 @@ PROCEDURE pc_busca_rendas_aut(pr_cdcooper IN crapass.cdcooper%TYPE
     /*Se não encontrou dados, monta uma categoria vazia bug 20672*/
     if (vr_index = 0) then
       vr_string := vr_string || fn_tag('Cartão', '-');
+      vr_string := vr_string || fn_tag('Situação','-');
       vr_string := vr_string || fn_tag('Limite de Crédito', '-');
-      vr_string := vr_string || fn_tag('Média das últimas 3 faturas', '-');
+      --vr_string := vr_string || fn_tag('Média das últimas 3 faturas', '-');
       vr_string := vr_string || fn_tag('Dia Vencimento', '-');
-      vr_string := vr_string || fn_tag('Dia Vencimento 2ª Via', '-');
+      vr_string := vr_string || fn_tag('Dias em atraso', '-');
+      vr_string := vr_string || fn_tag('Valor do atraso', '-');
     end if;
   
     vr_string := vr_string || '</campos></subcategoria>';
@@ -14978,9 +15976,9 @@ procedure pc_busca_media_titulo(pr_cdcooper IN crapass.cdcooper%TYPE
      end if;
   
     -- Colocar a linha de Totais
-    IF vr_tab_tabela_secundaria.COUNT() > 1 THEN
+    IF vr_tab_tabela_secundaria.COUNT() >= 1 THEN
       vr_index := vr_tab_tabela_secundaria.COUNT() + 1;
-      vr_tab_tabela_secundaria(vr_index).coluna1 := '&lt;b&gt;Total&lt;/b&gt;';
+      vr_tab_tabela_secundaria(vr_index).coluna1 := 'Total';
       vr_tab_tabela_secundaria(vr_index).coluna2 := '-';
       vr_tab_tabela_secundaria(vr_index).coluna3 := '-';
       vr_tab_tabela_secundaria(vr_index).coluna4 := '-';

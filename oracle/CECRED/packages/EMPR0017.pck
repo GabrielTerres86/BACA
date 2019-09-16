@@ -154,7 +154,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0017 AS
                                  ,pr_nrdcaixa IN NUMBER                             --  Código de caixa do canal de atendimento – Valor fixo '900' para Internet
                                  ,pr_dtmvtolt_ini IN crapdat.dtmvtolt%TYPE          --  Data de início para pesquisa
                                  ,pr_dtmvtolt_fim IN crapdat.dtmvtolt%TYPE          --  Data de fim para pesquisa
-                                 ,pr_situacao IN NUMBER DEFAULT NULL                --  Situação da Proposta (0 – Em Análise,1 – Aprovado,2 – Concluído,3 – Expirado,4 – Cancelado)
+                                 ,pr_situacao IN NUMBER DEFAULT NULL                --  Situação da Proposta (0 – Em Análise,1 – Aprovado,2 – Não autorizado,3 – Expirado,4 – Cancelado)
                                  ,pr_cdorigem crawepr.cdorigem%TYPE                 --  Identificador do CANAL de origem da Consulta – Valor fixo '3' para Internet
                                  ,pr_flgerlog IN NUMBER                             --  Flag de Geração de Log (O campo não deve ser exposto no barramento e deverá assumir o valor “true” como default.
                                  ,pr_des_reto OUT VARCHAR                           --> Retorno OK / NOK
@@ -1553,7 +1553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      WHERE sim.cdcooper = pr_cdcooper
        AND sim.nrdconta = pr_nrdconta
        AND sim.nrsimula = pr_nrsimula
-       AND sim.cdorigem = 3;
+       AND sim.cdorigem in (3,10);
     rw_crapsim cr_crapsim%ROWTYPE;
     
     
@@ -1570,7 +1570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      WHERE sim.cdcooper = pr_cdcooper
        AND sim.nrdconta = pr_nrdconta
        AND sim.nrsimula = pr_nrsimula
-       AND sim.cdorigem = 3;
+       AND sim.cdorigem in (3,10);
      
      RETURN vr_count > 0;
   --/      
@@ -1614,18 +1614,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
        RAISE vr_exc_erro;
      END IF;
      CLOSE cr_crawepr;
-     --
-     -- Se não tem simulação vinculada a proposta ou nao é origem 3 (IB), não permite gerar o CCB
-     IF NOT fn_simulacao_vinculada(rw_crawepr.cdcooper,rw_crawepr.nrdconta,nvl(rw_crawepr.nrsimula,0))
-       OR rw_crawepr.cdorigem <> 3 THEN
-        vr_dscritic := 'Impressão não disponível para este tipo de contrato!';
-       RAISE vr_exc_erro;
-     END IF;
-
+     
      OPEN cr_crapsim(rw_crawepr.cdcooper,rw_crawepr.nrdconta,rw_crawepr.nrsimula);
      FETCH cr_crapsim INTO rw_crapsim;
      CLOSE cr_crapsim;
-
+     
      OPEN cr_crapass(pr_cdcooper,pr_nrdconta);
      FETCH cr_crapass INTO rw_crapass;
      CLOSE cr_crapass;
@@ -1668,6 +1661,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      END IF;
      
      --
+     -- Se não tem simulação vinculada a proposta ou nao é origem 3 (IB), não permite gerar o CCB
+     IF NOT fn_simulacao_vinculada(rw_crawepr.cdcooper,rw_crawepr.nrdconta,nvl(rw_crawepr.nrsimula,0))
+       OR rw_crawepr.cdorigem not in (3,10) THEN
+        vr_dscritic := 'Impressão não disponível para este tipo de contrato!';
+       RAISE vr_exc_erro;
+     END IF;
+
      OPEN cr_crapass1(pr_cdcooper,pr_nrdconta);
      FETCH cr_crapass1 INTO rw_crapass1;
      CLOSE cr_crapass1;     
@@ -2183,6 +2183,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
               ,pr_tag_cont => substr(vr_dsdirarq,2)
               ,pr_des_erro => vr_dscritic);
 
+    insere_tag(pr_xml      => vr_retorno_xml
+              ,pr_tag_pai  => 'retorno'
+              ,pr_posicao  => 0
+              ,pr_tag_nova => 'dsdirarq_local'
+              ,pr_tag_cont => vr_nom_direto
+              ,pr_des_erro => vr_dscritic);
 
     pr_xml := vr_retorno_xml;
     pr_des_reto := 'OK';
@@ -2316,7 +2322,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   --/
   BEGIN
    
-     IF pr_vlemprst > pr_vlbem
+     IF pr_vlemprst < 100 THEN
+        vr_dscritic := 'O valor mínimo para contratação é de R$ 100,00.';
+        RETURN FALSE;      
+     ELSIF pr_vlemprst > pr_vlbem
        THEN
          vr_percent_solicit := ROUND((((pr_vlemprst / pr_vlbem)*100)-100),2);
          IF vr_percent_solicit > get_row_sub().pemax_autorizado
@@ -3322,16 +3331,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
      RAISE vr_exc_erro;
 
    END IF;
-
+ 
    --
-   IF NOT( fn_existe_simulacao ) THEN
-
-     vr_dscritic := 'Nao encontrado dados de simulacao';
-     RAISE vr_exc_erro;
-
-   END IF;
-   --
+   if fn_existe_simulacao then
+   
    monta_xml_retorno();
+   else
+     vr_retorno := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Simulacoes/>');     
+   end if;
    --
    pr_retorno := vr_retorno;
    --
@@ -3745,7 +3752,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                                  ,pr_nrdcaixa IN NUMBER                             --  Código de caixa do canal de atendimento – Valor fixo '900' para Internet
                                  ,pr_dtmvtolt_ini IN crapdat.dtmvtolt%TYPE          --  Data de início para pesquisa
                                  ,pr_dtmvtolt_fim IN crapdat.dtmvtolt%TYPE          --  Data de fim para pesquisa
-                                 ,pr_situacao IN NUMBER DEFAULT NULL                --  Situação da Proposta (0 – Em Análise,1 – Aprovado,2 – Concluído,3 – Expirado,4 – Cancelado)
+                                 ,pr_situacao IN NUMBER DEFAULT NULL                --  Situação da Proposta (0 – Em Análise,1 – Aprovado,2 – Não autorizado,3 – Expirado,4 – Cancelado)
                                  ,pr_cdorigem crawepr.cdorigem%TYPE                 --  Identificador do CANAL de origem da Consulta – Valor fixo '3' para Internet
                                  ,pr_flgerlog IN NUMBER                             --  Flag de Geração de Log (O campo não deve ser exposto no barramento e deverá assumir o valor “true” como default.
                                  ,pr_des_reto OUT VARCHAR                           --> Retorno OK / NOK
@@ -3775,7 +3782,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
   --  Código Situação ||   Descrição Situação ||  Situação (insitest) ||    Decisão (insitapr)        *
   --  0                ||  Em Análise         ||                      ||    0, 5 ou 6                 *
   --  1                ||  Aprovado           ||                     ||     1                        *
-  --  2                ||  Concluído           ||                     ||     2 ou 3 ou 4 ou 6          *
+  --  2                ||  Não autorizado     ||                     ||     2 ou 3 ou 4               *
   --  3                ||  Expirado           ||  4 ou 5              ||                              *
   --  4                ||  Cancelado           ||  6                  ||                              *
   -- ================================================================================================
@@ -3925,7 +3932,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
             ( pr_situacao IS NULL )
           )
       AND nvl(wepr.nrsimula,0) > 0
-      AND wepr.cdorigem = pr_cdorigem 
+      AND ( ( pr_cdorigem in (3,10) AND wepr.cdorigem in (3,10) )
+          OR ( wepr.cdorigem = pr_cdorigem ) )
       AND wepr.dtrefatu >= ( dat.dtmvtolt - nvl(gene0001.fn_param_sistema('CRED',pr_cdcooper,'QTD_DIAS_EXIBE_PROP_IB'), 0) )
       AND NOT EXISTS ( SELECT 1
                          FROM crapepr epr
@@ -4125,15 +4133,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
 
    pc_busca_propostas();
 
+   --  
    --
    IF NOT( fn_existe_proposta ) THEN
 
-     vr_dscritic := 'Nao encontrado dados de proposta';
-     RAISE vr_exc_erro;
-
+     vr_retorno := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?><Propostas/>');
+   ELSE  
+     monta_xml_retorno();
    END IF;
-   --
-   monta_xml_retorno();
    --
    pr_retorno := vr_retorno;
    --
@@ -4326,7 +4333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                   1  -- Aprovado
 
               WHEN epr.insitapr IN (2,3,4) THEN
-                  2  -- Concluído
+                  2  -- Não autorizado
 
               WHEN epr.insitest IN (6)  THEN
 
@@ -4350,7 +4357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
 
             WHEN epr.insitapr IN (2,3,4) THEN
 
-                  'Concluído'
+                  'Não Autorizado'
 
             WHEN epr.insitest IN (6)  THEN
 
@@ -5495,7 +5502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
     END IF;
     --
     --/
-    IF pr_cdorigem = 3
+    IF pr_cdorigem in (3,10)
       THEN
         --/
         pc_valida_horario_ib(pr_cdcooper,vr_des_reto,vr_dscritic);
@@ -6274,12 +6281,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
    vr_retxml      xmltype; 
    vr_nmarqpdf    VARCHAR2(100);  
    vr_nmdirpdf    VARCHAR2(200);
+   vr_nmdirpdf_local VARCHAR2(200);
    vr_rowid       ROWID;
    vr_habrat       VARCHAR2(1) := 'N';    -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
    vr_strating     NUMBER;                -- P450
    vr_flgrating    NUMBER;                -- P450
    vr_vlendivid    craplim.vllimite%TYPE; -- P450 - Valor do Endividamento do Cooperado
    vr_vllimrating  craplim.vllimite%TYPE; -- P450 - Valor do Parametro Rating (Limite) TAB056
+
    --
    --
    CURSOR cr_crawepr(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -6396,7 +6405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
 
     IF trunc(rw_crawepr.dtdpagto) <= trunc(rw_crapdat.dtmvtolt)
       THEN
-        vr_dscritic := 'Sua proposta está com data de primeiro pagamento para '||fn_Data_soa(rw_crawepr.dtdpagto)||', por este motivo você deve realizar uma nova simulação.';
+        vr_dscritic := 'A proposta está com data de primeiro pagamento para '||fn_Data_soa(rw_crawepr.dtdpagto)||', realize uma nova simulação.';
         RAISE vr_exc_saida;
     END IF;
     --
@@ -6619,12 +6628,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
       --Busca o arquivo do contrato gerado para enviar ao FTP
       vr_nmarqpdf := vr_retxml.extract('/retorno/nmarqpdf/text()').getstringval();
       vr_nmdirpdf := vr_retxml.extract('/retorno/dsdirarq/text()').getstringval();
+      vr_nmdirpdf_local := vr_retxml.extract('/retorno/dsdirarq_local/text()').getstringval();
+      
+      
         
       IF nvl(vr_nmarqpdf,'') = '' OR nvl(vr_nmdirpdf,'') = '' THEN
         vr_dscritic := 'Erro ao recuperar o contrato gerado.';
         RAISE vr_exc_saida;  
       ELSE
-        gene0002.pc_transf_arq_smartshare(pr_nmdiretorio => vr_nmdirpdf
+        gene0002.pc_transf_arq_smartshare(pr_nmdiretorio => vr_nmdirpdf_local
                                         , pr_nmarquiv    => vr_nmarqpdf 
                                         , pr_cdcooper    => pr_cdcooper
                                         , pr_des_reto    => vr_des_reto
@@ -6975,7 +6987,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
 
         WHEN pr_situacao = 2 THEN
 
-           RETURN 'Concluido';
+           RETURN 'Não Autorizado';
 
         WHEN pr_situacao = 3 THEN
 
@@ -7158,8 +7170,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0017 AS
                             pr_dstransa => 'pc_solicita_contratacao_ib', 
                             pr_cdprogra => 'empr0017');
    
-   IF pr_cdorigem = 3
-     THEN
+   IF pr_cdorigem in (3,10) THEN
        --/
        empr0017.pc_valida_horario_ib(pr_cdcooper,vr_des_reto,vr_dscritic);
    END IF;    

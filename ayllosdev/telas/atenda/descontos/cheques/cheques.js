@@ -555,6 +555,7 @@ function chamarImpressaoChequeLimite(){
 		funcaoImpressao: "mostraImprimirLimite();",
 		funcaoGeraProtocolo: 'carregaLimitesCheques();'
 	};
+	$('#divUsoGenerico').html('');
 	mostraTelaAutorizacaoContrato(params);
 }
 

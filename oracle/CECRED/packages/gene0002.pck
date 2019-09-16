@@ -6534,6 +6534,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
    
     Alteracoes: 30/04/2019 - PRJ438 Removido controles de transação. (Douglas Pagel / AMcom).
 				
+                08/08/2019 - PRJ438 Buscar o diretório local conforme parametro. (Douglas Pagel / AMcom).
+				
 
     ..........................................................................................*/
     --/
@@ -6634,6 +6636,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                                   ,pr_cdcooper => pr_cdcooper
                                                   ,pr_nmsubdir => '/log') || '/proc_autbur.log'; 
 
+          vr_arquivo_log :=  replace(replace(SRCSTR => vr_arquivo_log, OLDSUB => 'cooph6', NEWSUB => 'coop'),'coopl','coop');
+
           -- Preparar o comando de conexão e envio ao FTP
           vr_comand_ftp := vr_script_ftp
                         || CASE pr_idoperac WHEN 'E' THEN ' -envia' ELSE ' -recebe' END
@@ -6707,9 +6711,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                                 ,pr_cdcooper => '0'
                                                 ,pr_cdacesso => 'TRAN_CCB_DIR_FTP');
       -- Busca diretotio local da cooperativa
-      vr_dir_local := GENE0001.fn_diretorio(pr_tpdireto => 'C'
-                                           ,pr_cdcooper => pr_cdcooper   --> Cooperativa
-                                           ,pr_nmsubdir => '/rl');
+      vr_dir_local := replace(replace(pr_nmdiretorio,'cooph6','coop'),'coopl','coop'); 
+      
       -- Busca script FTP                                 
       vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
 
