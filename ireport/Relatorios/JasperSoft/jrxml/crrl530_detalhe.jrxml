@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2019-06-12T16:36:13 -->
+<!-- 2019-09-04T16:21:16 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel080" language="groovy" pageWidth="442" pageHeight="732" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="1.8181818181818183"/>
 	<property name="ireport.x" value="0"/>
@@ -220,14 +220,14 @@
 					<text><![CDATA[BANCO]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="123" y="69" width="41" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
+					<reportElement x="149" y="69" width="41" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[CHEQUE]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="164" y="69" width="45" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b">
+					<reportElement x="194" y="69" width="45" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b">
 						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					</reportElement>
@@ -237,7 +237,7 @@
 					<text><![CDATA[MOT.DEV]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="215" y="69" width="100" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
+					<reportElement x="243" y="69" width="100" height="11" uuid="4c890675-e579-402d-97dd-0ceebf62ea5b"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
@@ -251,14 +251,14 @@
 					<text><![CDATA[AG.]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="77" y="69" width="43" height="11" uuid="989e241b-a2b1-4404-8536-5059381a5285"/>
+					<reportElement x="77" y="69" width="67" height="11" uuid="989e241b-a2b1-4404-8536-5059381a5285"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[C.C]]></text>
 				</staticText>
 				<staticText>
-					<reportElement x="322" y="69" width="76" height="11" uuid="b7dd8744-9c9e-4628-b26a-445d6941adb7">
+					<reportElement x="360" y="69" width="58" height="11" uuid="b7dd8744-9c9e-4628-b26a-445d6941adb7">
 						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					</reportElement>
 					<textElement textAlignment="Right">
@@ -277,7 +277,7 @@
 					<text><![CDATA[COOPERADO:]]></text>
 				</staticText>
 				<textField>
-					<reportElement x="401" y="69" width="19" height="11" uuid="434c74d7-5de3-4e65-962d-2d97e5e52aa3"/>
+					<reportElement x="421" y="69" width="19" height="11" uuid="434c74d7-5de3-4e65-962d-2d97e5e52aa3"/>
 					<textElement textAlignment="Left">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
@@ -319,28 +319,28 @@
 					<text><![CDATA[|]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="118" y="69" width="8" height="11" uuid="e60497a5-3294-4880-8766-2af53eee9f05"/>
+					<reportElement mode="Transparent" x="144" y="69" width="8" height="11" uuid="e60497a5-3294-4880-8766-2af53eee9f05"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[|]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="206" y="69" width="8" height="11" uuid="35ab524c-a4ee-4f44-9d75-5f414a221ecd"/>
+					<reportElement mode="Transparent" x="234" y="69" width="8" height="11" uuid="35ab524c-a4ee-4f44-9d75-5f414a221ecd"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[|]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="313" y="69" width="8" height="11" uuid="dbf11f89-f15e-4c4c-8b05-f3bdfce60df1"/>
+					<reportElement mode="Transparent" x="343" y="69" width="8" height="11" uuid="dbf11f89-f15e-4c4c-8b05-f3bdfce60df1"/>
 					<textElement textAlignment="Center">
 						<font fontName="Courier New" size="9"/>
 					</textElement>
 					<text><![CDATA[|]]></text>
 				</staticText>
 				<staticText>
-					<reportElement mode="Transparent" x="160" y="69" width="8" height="11" uuid="ba72d93e-c9ac-4b54-9706-040733ed5f1d">
+					<reportElement mode="Transparent" x="189" y="69" width="8" height="11" uuid="ba72d93e-c9ac-4b54-9706-040733ed5f1d">
 						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 					</reportElement>
@@ -549,7 +549,7 @@
 				<textFieldExpression><![CDATA[$F{cdbanchq}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="123" y="11" width="41" height="11" uuid="a9a23665-9242-4c60-b061-043bad1b4a44"/>
+				<reportElement x="149" y="11" width="41" height="11" uuid="a9a23665-9242-4c60-b061-043bad1b4a44"/>
 				<box>
 					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -562,7 +562,7 @@
 				<textFieldExpression><![CDATA[$F{nrcheque}.trim()]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="164" y="11" width="45" height="11" uuid="601abe67-9b2a-435b-9f12-207a54035e4b">
+				<reportElement x="194" y="11" width="45" height="11" uuid="601abe67-9b2a-435b-9f12-207a54035e4b">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 				</reportElement>
 				<box>
@@ -577,7 +577,7 @@
 				<textFieldExpression><![CDATA[$F{nralinea}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="215" y="11" width="100" height="11" uuid="d2d08981-007a-4ff9-ac04-a1436fa8a5a7"/>
+				<reportElement x="243" y="11" width="100" height="11" uuid="d2d08981-007a-4ff9-ac04-a1436fa8a5a7"/>
 				<box>
 					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -605,7 +605,7 @@
 				<textFieldExpression><![CDATA[$F{cdageapr}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="76" y="11" width="45" height="11" uuid="cc0002fa-ef53-4765-815b-c2be859795d4"/>
+				<reportElement x="76" y="11" width="69" height="11" uuid="cc0002fa-ef53-4765-815b-c2be859795d4"/>
 				<box>
 					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -618,7 +618,7 @@
 				<textFieldExpression><![CDATA[$F{nrctachq}]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="322" y="11" width="112" height="11" uuid="a7f4de31-12b8-48aa-acd1-d02503ceae08"/>
+				<reportElement x="350" y="11" width="84" height="11" uuid="a7f4de31-12b8-48aa-acd1-d02503ceae08"/>
 				<box>
 					<topPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
 					<leftPen lineWidth="0.0" lineStyle="Solid" lineColor="#000000"/>
@@ -628,7 +628,7 @@
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="9"/>
 				</textElement>
-				<textFieldExpression><![CDATA["[  ] SIM [  ] NAO"]]></textFieldExpression>
+				<textFieldExpression><![CDATA["[  ]SIM [  ]NAO"]]></textFieldExpression>
 			</textField>
 			<staticText>
 				<reportElement mode="Transparent" x="33" y="11" width="8" height="11" uuid="715b781d-0bdc-4fbd-b832-31e0004edaae">
@@ -651,7 +651,7 @@
 				<text><![CDATA[|]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Transparent" x="118" y="11" width="8" height="11" uuid="6aca833c-d106-4ce8-9947-b0fffa21b0df">
+				<reportElement mode="Transparent" x="144" y="11" width="8" height="11" uuid="6aca833c-d106-4ce8-9947-b0fffa21b0df">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Center">
@@ -660,7 +660,7 @@
 				<text><![CDATA[|]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Transparent" x="313" y="11" width="8" height="11" uuid="2a2a4eb6-59ac-4b5f-ae2d-b7a5c90a102f"/>
+				<reportElement mode="Transparent" x="343" y="11" width="8" height="11" uuid="2a2a4eb6-59ac-4b5f-ae2d-b7a5c90a102f"/>
 				<textElement textAlignment="Center">
 					<font fontName="Courier New" size="9"/>
 				</textElement>
@@ -683,7 +683,7 @@
 				<text><![CDATA[|]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Transparent" x="159" y="11" width="8" height="11" uuid="5dd3ef8a-d42b-4ed6-9cb9-0191a19d54a4">
+				<reportElement mode="Transparent" x="189" y="11" width="8" height="11" uuid="5dd3ef8a-d42b-4ed6-9cb9-0191a19d54a4">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Center">
@@ -692,7 +692,7 @@
 				<text><![CDATA[|]]></text>
 			</staticText>
 			<staticText>
-				<reportElement mode="Transparent" x="206" y="11" width="8" height="11" uuid="af09fe80-60fe-43f8-b6dd-4b7b77d3b375">
+				<reportElement mode="Transparent" x="234" y="11" width="8" height="11" uuid="af09fe80-60fe-43f8-b6dd-4b7b77d3b375">
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Center">
