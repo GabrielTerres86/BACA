@@ -3050,14 +3050,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   BEGIN
     DECLARE
       --Cursores Locais
+      /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validação não é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
       --Selecionar Pracas nao executantes Protesto
-      CURSOR cr_crappnp (pr_nmextcid IN crappnp.nmextcid%type
+      /*CURSOR cr_crappnp (pr_nmextcid IN crappnp.nmextcid%type
                         ,pr_cduflogr IN crappnp.cduflogr%type) IS
         SELECT pnp.nmextcid
           FROM crappnp pnp
          WHERE UPPER(pnp.nmextcid) = UPPER(pr_nmextcid)
            AND UPPER(pnp.cduflogr) = UPPER(pr_cduflogr);
-      rw_crappnp cr_crappnp%ROWTYPE;
+      rw_crappnp cr_crappnp%ROWTYPE;*/
       
       -- verificar se o CEP existe nos correios
       CURSOR cr_cep (pr_nrceplog IN crapdne.nrceplog%TYPE) IS
@@ -3504,7 +3507,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       FETCH cr_crapcco INTO rw_crapcco;
       CLOSE cr_crapcco;      
       
-      IF rw_crapcco.insrvprt = 2 THEN -- BB
+      /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validação não é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
+      /*IF rw_crapcco.insrvprt = 2 THEN -- BB
       --Selecionar pracas nao executantes de processo
       OPEN cr_crappnp (pr_nmextcid => rw_crapsab.nmcidsac
                       ,pr_cduflogr => rw_crapsab.cdufsaca);
@@ -3545,7 +3551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       IF cr_crappnp%ISOPEN THEN
         CLOSE cr_crappnp;
       END IF;
-      END IF;
+      END IF;*/
       
       IF rw_crapcco.insrvprt = 1 THEN -- Serviço de Protesto IEPTB
         
@@ -10729,14 +10735,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
 
+    /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validação não é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
     --Selecionar Pracas nao executantes Protesto
-    CURSOR cr_crappnp (pr_nmextcid IN crappnp.nmextcid%type
+    /*CURSOR cr_crappnp (pr_nmextcid IN crappnp.nmextcid%type
                       ,pr_cduflogr IN crappnp.cduflogr%type) IS
       SELECT pnp.nmextcid
         FROM crappnp pnp
        WHERE UPPER(pnp.nmextcid) = UPPER(pr_nmextcid)
          AND UPPER(pnp.cduflogr) = UPPER(pr_cduflogr);
-    rw_crappnp cr_crappnp%ROWTYPE;
+    rw_crappnp cr_crappnp%ROWTYPE;*/
 
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     
@@ -11118,8 +11127,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       CLOSE cr_crapsab;
     END IF;  
       
+    /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validação não é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
     --Selecionar pracas nao executantes de processo
-    OPEN cr_crappnp (pr_nmextcid => rw_crapsab.nmcidsac
+   /* OPEN cr_crappnp (pr_nmextcid => rw_crapsab.nmcidsac
                     ,pr_cduflogr => rw_crapsab.cdufsaca);
     --Posicionar no proximo registro
     FETCH cr_crappnp INTO rw_crappnp;
@@ -11154,7 +11166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --Fechar Cursor
     IF cr_crappnp%ISOPEN THEN
       CLOSE cr_crappnp;
-    END IF;
+    END IF;*/
     ------ FIM - VALIDACOES PARA RECUSAR ------
 
     IF rw_crapcob.cdbandoc = 85 THEN
