@@ -36,7 +36,7 @@ BEGIN
     
   END LOOP;
   
-  --COMMIT;
+  COMMIT;
   
   -- Apresenta uma mensagem de ok
   dbms_output.put_line('Parametrizacao criada com sucesso');
