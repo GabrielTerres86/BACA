@@ -13,6 +13,11 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB098 IS
                         ,pr_prz_baixa_cip           IN VARCHAR2
                         ,pr_vlvrboleto              IN VARCHAR2
                         ,pr_vlcontig_cip            IN VARCHAR2
+                        ,pr_sit_pag_divergente      IN NUMBER --> 1 - ATIVO, 2 - INATIVO
+                        ,pr_pag_a_menor             IN NUMBER --> 0 - FALSE, 1 - TRUE
+                        ,pr_pag_a_maior             IN NUMBER --> 0 - FALSE, 1 - TRUE
+                        ,pr_tip_tolerancia          IN NUMBER --> 1 - VALOR, 2 - PERCENTUAL
+                        ,pr_vl_tolerancia           IN VARCHAR2
                         ,pr_xmllog     IN VARCHAR2 --> XML com informacoes de LOG
                         ,pr_cdcritic   OUT PLS_INTEGER --> Codigo da critica
                         ,pr_dscritic   OUT VARCHAR2 --> Descricao da critica
@@ -214,6 +219,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB098 IS
 
    DECLARE
       
+      CURSOR cr_crapope(pr_cdcooper crapope.cdcooper%TYPE
+                       ,pr_cdoperad crapope.cdoperad%TYPE) IS
+        SELECT crapope.cdoperad || ' - ' || crapope.nmoperad dsoperad
+          FROM crapope
+         WHERE crapope.cdsitope = 1
+           AND crapope.cdoperad = pr_cdoperad
+           AND crapope.cdcooper = pr_cdcooper;
+      rw_crapope cr_crapope%ROWTYPE;
+      
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
@@ -224,6 +238,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB098 IS
 	    vr_rollout_cip_reg_valor VARCHAR2(20);
 	    vr_rollout_cip_pag_data VARCHAR2(20);
 	    vr_rollout_cip_pag_valor VARCHAR2(20);       
+      
+      vr_nmdireto  VARCHAR2(2000);
+      vr_nmrquivo  VARCHAR2(2000);
+      vr_comando   VARCHAR2(2000);
+      vr_typ_saida VARCHAR2(4000);
+      vr_saida_so  VARCHAR2(1000);
+      vr_tab_split gene0002.typ_split;
+      vr_cdoperad  VARCHAR2(100);
+      
+      vr_nrdrowid ROWID;
       
     BEGIN
   
@@ -248,8 +272,66 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB098 IS
      pc_insere_tag_dados(pr_retxml, 'prz_baixa_cip',      fn_buscar_param(pr_cdcooper, 'PRZ_BAIXA_CIP'),  vr_dscritic);                                                    
      pc_insere_tag_dados(pr_retxml, 'vlvrboleto',         fn_buscar_param(pr_cdcooper, 'VLVRBOLETO'),     vr_dscritic);                                                    
      pc_insere_tag_dados(pr_retxml, 'vlcontig_cip',       fn_buscar_param(pr_cdcooper, 'VLCONTIG_CIP'),   vr_dscritic);
-                       
-                                               
+     
+     pc_insere_tag_dados(pr_retxml, 'sit_pag_divergente', fn_buscar_param(pr_cdcooper, 'SIT_PAG_DIVERGENTE'), vr_dscritic);
+     pc_insere_tag_dados(pr_retxml, 'pag_a_menor',        fn_buscar_param(pr_cdcooper, 'PAG_A_MENOR'),        vr_dscritic);
+     pc_insere_tag_dados(pr_retxml, 'pag_a_maior',        fn_buscar_param(pr_cdcooper, 'PAG_A_MAIOR'),        vr_dscritic);
+     pc_insere_tag_dados(pr_retxml, 'tip_tolerancia',     fn_buscar_param(pr_cdcooper, 'TIP_TOLERANCIA'),     vr_dscritic);
+     pc_insere_tag_dados(pr_retxml, 'vl_tolerancia',      fn_buscar_param(pr_cdcooper, 'VL_TOLERANCIA'),      vr_dscritic);
+     
+     BEGIN
+       
+       vr_cdoperad := 'Não foi possível carregar última alteração';
+       
+       -- monta diretorio de log da cooperativa
+       vr_nmdireto := GENE0001.fn_diretorio(pr_tpdireto => 'C' --> /cooperativa
+                                           ,pr_cdcooper => pr_cdcooper --> Cooperativa
+                                           ,pr_nmsubdir => 'log');
+       
+       -- monta nome do arquivo
+       vr_nmrquivo := 'TAB098.log';
+       
+       /* o comando abaixo ignora quebras de linha atraves do 'grep -v' e o 'tail -1' retorna
+          a ultima linha do resultado do grep */
+       vr_comando := 'grep -v '||'''^$'' '||vr_nmdireto||'/'||vr_nmrquivo||'| tail -1';
+       
+       -- Executar o comando no unix
+       GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                            ,pr_des_comando => vr_comando
+                            ,pr_typ_saida   => vr_typ_saida
+                            ,pr_des_saida   => vr_saida_so);
+       
+       --Se ocorreu erro dar RAISE
+       IF vr_typ_saida = 'ERR' THEN
+         vr_cdcritic:= 1114; --Nao foi possivel executar comando unix
+         vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic)||' '||vr_comando;
+         RAISE vr_exc_saida;
+       ELSE
+         vr_tab_split := gene0002.fn_quebra_string(vr_saida_so,' ');
+         
+         vr_tab_split(14) := TRIM(TRANSLATE(vr_tab_split(14),CHR(10)||CHR(13),' '));
+         
+         OPEN cr_crapope(pr_cdcooper => pr_cdcooper
+                        ,pr_cdoperad => vr_tab_split(14));
+         FETCH cr_crapope INTO rw_crapope;
+         IF cr_crapope%FOUND THEN
+           CLOSE cr_crapope;
+           vr_cdoperad := rw_crapope.dsoperad;
+         ELSE
+           CLOSE cr_crapope;
+           vr_cdoperad := 'Não foi possível carregar nome do operador, verifique a LOGTEL';
+         END IF;
+	 
+         pc_insere_tag_dados(pr_retxml,'dtcadast',vr_tab_split(1) || ' ' || vr_tab_split(2),vr_dscritic);
+       END IF;
+       
+     EXCEPTION
+       WHEN OTHERS THEN
+         cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
+                                     ,pr_compleme => vr_cdcritic || ' - ' || vr_dscritic);
+     END;
+     pc_insere_tag_dados(pr_retxml,'cdoperad',vr_cdoperad,vr_dscritic);
+     
     EXCEPTION
       WHEN vr_exc_saida THEN
         IF vr_cdcritic <> 0 THEN
@@ -279,6 +361,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB098 IS
                          ,pr_prz_baixa_cip         IN VARCHAR2
                          ,pr_vlvrboleto            IN VARCHAR2
                          ,pr_vlcontig_cip          IN VARCHAR2
+                         ,pr_sit_pag_divergente    IN NUMBER --> 1 - ATIVO, 2 - INATIVO
+                         ,pr_pag_a_menor           IN NUMBER --> 0 - FALSE, 1 - TRUE
+                         ,pr_pag_a_maior           IN NUMBER --> 0 - FALSE, 1 - TRUE
+                         ,pr_tip_tolerancia        IN NUMBER --> 1 - VALOR, 2 - PERCENTUAL
+                         ,pr_vl_tolerancia         IN VARCHAR2
                          ,pr_xmllog     IN VARCHAR2 --> XML com informacoes de LOG
                          ,pr_cdcritic   OUT PLS_INTEGER --> Codigo da critica
                          ,pr_dscritic   OUT VARCHAR2 --> Descricao da critica
@@ -309,6 +396,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB098 IS
       vr_prz_baixa_cip           VARCHAR2(10);
       vr_vlvrboleto              VARCHAR2(50);
       vr_vlcontig_cip            VARCHAR2(50);      
+      vr_sit_pag_divergente      NUMBER; --> 1 - ATIVO, 2 - INATIVO
+      vr_pag_a_menor             NUMBER; --> 0 - FALSE, 1 - TRUE
+      vr_pag_a_maior             NUMBER; --> 0 - FALSE, 1 - TRUE
+      vr_tip_tolerancia          NUMBER; --> 1 - VALOR, 2 - PERCENTUAL
+      vr_vl_tolerancia           VARCHAR2(50);
       vr_vet_dados gene0002.typ_split;
       vr_dstextab  craptab.dstextab%TYPE;      
       vr_rollout_cip_reg craptab.dstextab%TYPE;
@@ -353,6 +445,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB098 IS
         IF vr_vlcontig_cip <> pr_vlcontig_cip THEN
           pc_atualizar_param(pr_cdcooper, 'VLCONTIG_CIP', pr_vlcontig_cip, pr_cdcritic, pr_dscritic);
           pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'VLCONTIG_CIP', vr_vlcontig_cip, pr_vlcontig_cip);          
+        END IF;
+	
+        vr_sit_pag_divergente := NVL(fn_buscar_param(pr_cdcooper, 'SIT_PAG_DIVERGENTE'),' ');
+        IF vr_sit_pag_divergente <> pr_sit_pag_divergente THEN
+          pc_atualizar_param(pr_cdcooper, 'SIT_PAG_DIVERGENTE', pr_sit_pag_divergente, pr_cdcritic, pr_dscritic);
+          pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'SIT_PAG_DIVERGENTE', vr_sit_pag_divergente, pr_sit_pag_divergente);
+        END IF;
+	
+        vr_pag_a_menor := NVL(fn_buscar_param(pr_cdcooper, 'PAG_A_MENOR'),' ');
+        IF vr_pag_a_menor <> pr_pag_a_menor THEN
+          pc_atualizar_param(pr_cdcooper, 'PAG_A_MENOR', pr_pag_a_menor, pr_cdcritic, pr_dscritic);
+          pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'PAG_A_MENOR', vr_pag_a_menor, pr_pag_a_menor);
+        END IF;
+	
+        vr_pag_a_maior := NVL(fn_buscar_param(pr_cdcooper, 'PAG_A_MAIOR'),' ');
+        IF vr_pag_a_maior <> pr_pag_a_maior THEN
+          pc_atualizar_param(pr_cdcooper, 'PAG_A_MAIOR', pr_pag_a_maior, pr_cdcritic, pr_dscritic);
+          pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'PAG_A_MAIOR', vr_pag_a_maior, pr_pag_a_maior);
+        END IF;
+	
+        vr_tip_tolerancia := NVL(fn_buscar_param(pr_cdcooper, 'TIP_TOLERANCIA'),' ');
+        IF vr_tip_tolerancia <> pr_tip_tolerancia THEN
+          pc_atualizar_param(pr_cdcooper, 'TIP_TOLERANCIA', pr_tip_tolerancia, pr_cdcritic, pr_dscritic);
+          pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'TIP_TOLERANCIA', vr_tip_tolerancia, pr_tip_tolerancia);
+        END IF;
+	
+        vr_vl_tolerancia := NVL(fn_buscar_param(pr_cdcooper, 'VL_TOLERANCIA'),' ');
+        IF vr_vl_tolerancia <> pr_vl_tolerancia THEN
+          pc_atualizar_param(pr_cdcooper, 'VL_TOLERANCIA', pr_vl_tolerancia, pr_cdcritic, pr_dscritic);
+          pc_auditar_alteracao(pr_cdcooper, vr_utlfileh, pr_cdoperad, 'VL_TOLERANCIA', vr_vl_tolerancia, pr_vl_tolerancia);
         END IF;
         
         -- Fechar arquivo

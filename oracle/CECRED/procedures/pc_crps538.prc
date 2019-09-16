@@ -788,6 +788,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                ,crapcob.dtvctori
                ,crapcob.nrdctabb
                ,crapcob.nrctasac
+               ,crapcob.inpagdiv
+               ,crapcob.vlminimo
          FROM crapcob
          WHERE crapcob.cdcooper = pr_cdcooper
          AND   crapcob.cdbandoc = pr_cdbandoc
@@ -809,7 +811,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          AND   crapret.nrdconta = pr_nrdconta
          AND   crapret.nrcnvcob = pr_nrcnvcob
          AND   crapret.nrdocmto = pr_nrdocmto;
-
+       
        --Selecionar Informacoes do Sacado
        CURSOR cr_crapsab (pr_cdcooper IN crapsab.cdcooper%TYPE
                          ,pr_nrdconta IN crapsab.nrdconta%TYPE
@@ -1317,6 +1319,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        vr_rel_dspesqbb VARCHAR2(100);
        vr_vltotpag     NUMBER:= 0;
        
+       -- Parametros de pagamentos divergentes
+       vr_tolerancia          NUMBER;
+       vr_resto               NUMBER;
+       vr_resto_positivo      NUMBER;
+       vr_flgmenor            BOOLEAN := FALSE;
+       vr_flgmaior            BOOLEAN := FALSE;
+       vr_permite_divergencia BOOLEAN := FALSE;
+       
        vr_tot_reg      number := 0;
        vr_tot_paerr    number := 0;
        --vr_rejeitad     BOOLEAN;
@@ -1399,6 +1409,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
        vr_aux_cdocorre    NUMBER;
 
+       FUNCTION fn_buscar_param(pr_cdcooper IN crapcop.cdcooper%TYPE
+                               ,pr_cdacesso IN VARCHAR2) RETURN VARCHAR2 IS
+       BEGIN
+         RETURN tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                          ,pr_nmsistem => 'CRED'
+                                          ,pr_tptabela => 'GENERI'
+                                          ,pr_cdempres => 0
+                                          ,pr_cdacesso => pr_cdacesso
+                                          ,pr_tpregist => 0);
+       END fn_buscar_param;
+       
        -- Ajuste log e colocada Procedure para o inicio da rotina - 15/03/2018 - Chamado 801483 
        -- Controla Controla log
        PROCEDURE pc_controla_log_batch( pr_dstiplog IN VARCHAR2            -- I-início/ F-fim/ O-ocorrência/ E- rro
@@ -5650,6 +5671,193 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                     RAISE vr_exc_proximo;
                  END IF;
 
+                 -- Devolver pagamentos divergentes (SIT_PAG_DIVERGENTE: 1 = ATIVO, 2 = INATIVO)
+                 IF (NVL(fn_buscar_param(pr_cdcooper, 'SIT_PAG_DIVERGENTE'),2) = 1) THEN
+                   -- Resto da diferença entre vlfatura e vlliquid
+                   vr_resto := TRUNC(vr_vlliquid,2) - TRUNC(vr_vlfatura,2);
+                   -- vr_resto diferente de zero
+                   IF (NVL(vr_resto,0) <> 0) AND (NOT vr_liqaposb) THEN
+                     -- Pagamento com valor divergente
+                     vr_cdcritic:= 940;
+                     -- Buscar descricao critica
+                     vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+		     
+                     -- create craprej
+                     BEGIN
+                       INSERT INTO craprej
+                         (craprej.dtmvtolt
+                         ,craprej.cdagenci
+                         ,craprej.vllanmto
+                         ,craprej.nrseqdig
+                         ,craprej.cdpesqbb
+                         ,craprej.cdcritic
+                         ,craprej.cdcooper
+                         ,craprej.nrdconta
+                         ,craprej.cdbccxlt
+                         ,craprej.nrdocmto)
+                       VALUES
+                         (rw_crapdat.dtmvtolt
+                         ,vr_cdagepag
+                         ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12))) / 100
+                         ,TO_NUMBER(TRIM(SUBSTR(vr_setlinha,151,10)))
+                         ,vr_setlinha
+                         ,vr_cdcritic
+                         ,pr_cdcooper
+                         ,vr_nrdconta
+                         ,vr_cdbanpag
+                         ,vr_nrdocmto)
+                       RETURNING
+                          craprej.dtmvtolt
+                         ,craprej.cdagenci
+                         ,craprej.vllanmto
+                         ,craprej.nrseqdig
+                         ,craprej.cdpesqbb
+                         ,craprej.cdcritic
+                         ,craprej.cdcooper
+                         ,craprej.nrdconta
+                         ,craprej.cdbccxlt
+                         ,craprej.nrdocmto
+                       INTO
+                         rw_craprej.dtmvtolt
+                         ,rw_craprej.cdagenci
+                         ,rw_craprej.vllanmto
+                         ,rw_craprej.nrseqdig
+                         ,rw_craprej.cdpesqbb
+                         ,rw_craprej.cdcritic
+                         ,rw_craprej.cdcooper
+                         ,rw_craprej.nrdconta
+                         ,rw_craprej.cdbccxlt
+                         ,rw_craprej.nrdocmto;
+                     EXCEPTION
+                       WHEN OTHERS THEN
+                         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+                         vr_cdcritic := 1034;
+                         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                                          ' craprej(15):'||
+                                          ' dtmvtolt:'   ||  rw_crapdat.dtmvtolt ||
+                                          ', cdagenci:'  ||  vr_cdagepag ||
+                                          ', vllanmto:'  ||  TO_NUMBER(TRIM(SUBSTR(vr_setlinha,85,12)))  || ' / 100 ' ||
+                                          ', nrseqdig:'  ||  TO_NUMBER(TRIM(SUBSTR(vr_setlinha,151,10))) ||
+                                          ', cdpesqbb:'  ||  vr_setlinha ||
+                                          ', cdcritic:'  ||  vr_cdcritic ||
+                                          ', cdcooper:'  ||  pr_cdcooper ||
+                                          ', nrdconta:'  ||  vr_nrdconta ||
+                                          ', cdbccxlt:'  ||  vr_cdbanpag ||
+                                          ', nrdocmto:'  ||  vr_nrdocmto ||
+                                          '. ' || SQLERRM;
+                         --Levantar Excecao
+                         RAISE vr_exc_sair;
+                     END;
+		     
+                     --Atualizar tabela memoria cratrej
+                     pc_gera_cratrej (rw_craprej);
+                     IF TRIM(vr_dscritic) IS NOT NULL THEN
+                       RAISE vr_exc_sair;                       
+                     END IF;
+		     
+                   END IF; -- Fim - vr_resto diferente de zero
+		   
+	           -- Busca valor de tolerância
+	           vr_tolerancia := TRUNC(NVL(fn_buscar_param(pr_cdcooper, 'VL_TOLERANCIA'),0),2);
+	           -- Se for percentual, calcula o valor final (TIP_TOLERANCIA: 1 = VALOR, 2 = PERCENTUAL)
+	           IF (NVL(fn_buscar_param(pr_cdcooper, 'TIP_TOLERANCIA'),1) = 2) THEN
+	             vr_tolerancia := TRUNC((TRUNC(vr_vlfatura,2) * TRUNC((vr_tolerancia / 100),2)),2);
+	           END IF;
+		   
+	           -- Flags maior e menor
+	           vr_flgmenor := FALSE;
+	           vr_flgmaior := FALSE;
+	           vr_resto_positivo := vr_resto;
+	           IF (vr_resto < 0) THEN
+	             vr_resto_positivo := vr_resto * -1;
+	           END IF;
+	           IF (vr_resto_positivo > vr_tolerancia) THEN
+	             vr_flgmenor := (vr_resto < 0) AND (NVL(fn_buscar_param(pr_cdcooper, 'PAG_A_MENOR'),0) = 1);
+	             vr_flgmaior := (vr_resto > 0) AND (NVL(fn_buscar_param(pr_cdcooper, 'PAG_A_MAIOR'),0) = 1);
+	           END IF;
+		     
+	           -- Se deve devolver maior ou menor
+	           IF (vr_flgmenor OR vr_flgmaior) THEN
+	             -- Verificar boleto configurado como divergente
+	             vr_permite_divergencia := FALSE;
+	             IF rw_crapcob.inpagdiv > 0 THEN
+	               vr_permite_divergencia :=
+	                 -- permite qualquer valor
+	                 ((rw_crapcob.inpagdiv = 2)
+	                 -- permite qualquer valor desde que nao seja menor que o definido
+	               OR (rw_crapcob.inpagdiv = 1
+	                     AND rw_crapcob.vlminimo < TRUNC(vr_vlliquid,2)));
+	             END IF;
+	             -- Ignorar boleto configurado como divergente
+	             IF NOT vr_permite_divergencia THEN
+	               -- Rejeitado
+	               vr_flgrejei:= TRUE;
+		
+	               -- Criacao da tabela generica gncptit - utilizada na conciliacao 
+	               pc_insert_gncptit(pr_nrdispar => 15              -- Numero sequencial do dispare da prc
+	                                ,pr_idx      => idx
+	                                ,pr_cdtipreg => 3              /* Sua Remessa - Erro */
+	                                ,pr_flgconci => 1              /* registro conciliado */
+	                                ,pr_flgpcctl => 0              /* processou na central */
+	                                ,pr_cdcritic => vr_cdcritic
+	                                ,pr_flgpgdda => NULL
+	                                ,pr_nrispbds => vr_nrispbif_rec
+	                                ,pr_cdcriret => vr_cdcrignc
+	                                ,pr_dscritic => vr_dscritic );
+		
+	               IF NVL(vr_cdcrignc,0) > 0 THEN
+	                 vr_cdcritic := vr_cdcrignc;
+	                 RAISE vr_exc_sair;
+	               END IF;
+		
+	               --Criar log Cobranca
+	               PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid               --ROWID da Cobranca
+	                                            ,pr_cdoperad => vr_cdoperad                    --Operador
+	                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt            --Data movimento
+	                                            ,pr_dsmensag =>                                --Descricao Mensagem
+	                                             'Pagamento de R$ ' || TRIM(TO_CHAR(TRUNC(vr_vlliquid,2), '999G999G990d00'))
+	                                             || ' devolvido por diferença na liquidação. Valor correto seria R$ '
+	                                             || TRIM(TO_CHAR(TRUNC(vr_vlfatura,2), '999G999G990d00'))
+	                                            ,pr_des_erro => vr_des_erro                    --Indicador erro
+	                                            ,pr_dscritic => vr_dscritic);                  --Descricao erro
+	               --Se ocorreu erro
+	               IF vr_des_erro = 'NOK' THEN
+	                 --Levantar Excecao
+	                 RAISE vr_exc_sair;
+	               END IF;
+		
+	               --> Gerar Devolucao
+	               vr_cdmotdev := 82;
+		
+	               --> Procedimento para grava registro de devolucao
+	               pc_grava_devolucao ( pr_cdcooper   => rw_crapcop.cdcooper  --> codigo da cooperativa
+	                                   ,pr_dtmvtolt   => rw_crapdat.dtmvtolt  --> data do movimento
+	                                   ,pr_dtmvtopr   => rw_crapdat.dtmvtopr  --> data do próximo movimento
+	                                   ,pr_nrseqarq   => vr_nrseqarq          --> numero sequencial do arquivo da devolucao (cob615)
+	                                   ,pr_dscodbar   => vr_dscodbar_ori      --> codigo de barras
+	                                   ,pr_nrispbif   => vr_nrispbif_rec      --> numero do ispb recebedora
+	                                   ,pr_vlliquid   => vr_vlliquid          --> valor de liquidacao do titulo
+	                                   ,pr_dtocorre   => vr_dtmvtolt          --> data da ocorrencia da devolucao
+	                                   ,pr_nrdconta   => vr_nrdconta          --> numero da conta do cooperado
+	                                   ,pr_nrcnvcob   => vr_nrcnvcob          --> numero do convenio de cobranca do cooperado
+	                                   ,pr_nrdocmto   => vr_nrdocmto          --> numero do boleto de cobranca
+	                                   ,pr_cdmotdev   => vr_cdmotdev          --> codigo do motivo da devolucao
+	                                   ,pr_tpcaptur   => vr_tpcaptur          --> tipo de captura (cob615)
+	                                   ,pr_tpdocmto   => vr_tpdocmto          --> codigo do tipo de documento (cob615)
+	                                   ,pr_cdagerem   => vr_cdagepag          --> codigo da agencia do remetente (cob615)
+	                                   ,pr_dslinarq   => vr_setlinha
+	                                   ,pr_cdcritic   => vr_cdcritic          -- Ajuste Mensagem e Log - 15/03/2018 - Chamado 801483
+	                                   ,pr_dscritic   => vr_dscritic);
+	               IF TRIM(vr_dscritic) IS NOT NULL THEN
+	                 RAISE vr_exc_sair;
+	               END IF;
+			 
+	               RAISE vr_exc_proximo;
+		
+	             END IF; -- Fim - Ignorar boleto configurado como divergente
+	           END IF; -- Fim - Se deve devolver maior ou menor
+		   
+                 ELSE
                  /* se pagou valor menor do que deveria, joga critica no log */
                  IF TRUNC(vr_vlliquid,2) < TRUNC(vr_vlfatura,2) AND NOT vr_liqaposb THEN
                    vr_cdcritic:= 940;
@@ -5789,13 +5997,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                      IF NVL(vr_cdcritic,0) > 0 THEN
                        RAISE vr_exc_sair;
                      END IF;                     
-                     
+                      END IF;
                     END IF;
+                 END IF;
 
-                 ELSIF TRUNC(vr_vlliquid,2) > TRUNC(vr_vlfatura,2) THEN
+                 IF TRUNC(vr_vlliquid,2) > TRUNC(vr_vlfatura,2) THEN
                    --Juros recebe valor liquidacao menos o valor fatura
                    vr_vlrjuros:= nvl(vr_vlrjuros,0) + (nvl(vr_vlliquid,0) - nvl(vr_vlfatura,0));
                  END IF;
+		 
                  --Determinar o tipo de liquidacao
                  CASE SUBSTR(vr_setlinha,50,1)
                    WHEN '1' THEN vr_dsmotivo:= '03'; /*Liquidaçao no Guiche de Caixa*/
