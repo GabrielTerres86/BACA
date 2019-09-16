@@ -577,8 +577,11 @@
 
                16/11/2018 - Alterado para buscar o qtd dias de renovacao da tabela craprli (Paulo Penteao GFT)
 
+               29/11/2018 - P410 - Ajuste na chamada pc_insere_iof para nrseqdig (Douglas Pagel / AMcom).
+
                09/04/2019 - Ajustado busca_total_descontos para contabilizar total de desconto de titulo atraves no campo
                             saldo do titulo vlsldtit (Daniel - Ailos)
+
                24/05/2019 - Adicionado pc_retorna_inf_rating retornar o Rating na busca de bordero.
                             Mesmo migrado para o PLSQL foi implemetado a consulta na rotina antiga e testada.
                             P450 - Luiz Otavio Olinger Momm (AMCOM).
@@ -589,7 +592,9 @@
                             PRJ438 - Sprint 16 - Rubens Lima - Mout's
                
 	       18/07/2019 - Incluido retorno dos campos Nivel de Risco , Taxa e ajustado o campo Data de Cancelamento na proc busca_dados_proposta. PRJ 438 - Sprint 16 (Mateus Z / Mouts)
-                            
+
+			   09/04/2019 - Ajustado busca_total_descontos para contabilizar total de desconto de titulo atraves no campo
+			                saldo do titulo vlsldtit (Daniel - Ailos)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -2661,7 +2666,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                                       ,INPUT craplot.cdagenci       /* Chave: Agencia do Lancamento */
                                                       ,INPUT craplot.cdbccxlt       /* Chave: Caixa do Lancamento */
                                                       ,INPUT craplot.nrdolote       /* Chave: Lote do Lancamento */
-                                                      ,INPUT craplot.nrseqdig + 1   /* Chave: Sequencia do Lancamento */
+                                                      ,INPUT craplot.nrseqdig       /* Chave: Sequencia do Lancamento */
                                                       ,INPUT ROUND(aux_vltotiofpri, 2)  /* Valor do IOF Principal */
                                                       ,INPUT ROUND(aux_vltotiofadi, 2)  /* Valor do IOF Adicional */
                                                       ,INPUT ROUND(aux_vltotiofcpl, 2)  /* Valor do IOF Complementar */

@@ -296,6 +296,8 @@
 
            19/09/2018 - Utilizar a funçao fn_sequence para gerar o nrseqdig (Jonata - Mouts PRB0040066).
 
+           29/11/2018 - P410 - Ajuste na chamada pc_insere_iof para nrseqdig (Douglas Pagel / AMcom).
+ 
            12/07/2019 - Incluido campos de avalista nas procs de gravaçao e alteraçao do desconto de cheque. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
                         P450 - Luiz Otavio Olinger Momm (AMCOM).
 
@@ -303,10 +305,8 @@
                         P450 - Luiz Otavio Olinger Momm (AMCOM).
 
            05/07/2019 - Inclusão de "outras rendas" do conjuge para a impressão da proposta - (PRJ 438 - Rubens Lima - Mouts).
-
-           09/07/2019 - Incluido retorno dos campos Nivel de Risco e Taxa na proc busca_dados_limite. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
-
-           12/07/2019 - Incluido campos de avalista nas procs de gravaçao e alteraçao do desconto de cheque. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
+	       09/07/2019 - Incluido retorno dos campos Nivel de Risco e Taxa na proc busca_dados_limite. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
+	       12/07/2019 - Incluido campos de avalista nas procs de gravaçao e alteraçao do desconto de cheque. PRJ 438 - Sprint 14 (Mateus Z / Mouts)
 
            17/07/2019 - Alterado busca_limites, criado busca_limites_ativo. PRJ 438 - Sprint 16 (Paulo M / Mouts)
 
@@ -13211,7 +13211,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                                               ,INPUT craplot.cdagenci       /* Chave: Agencia do Lancamento */
                                                               ,INPUT craplot.cdbccxlt       /* Chave: Caixa do Lancamento */
                                                               ,INPUT craplot.nrdolote       /* Chave: Lote do Lancamento */
-                                                              ,INPUT craplot.nrseqdig + 1   /* Chave: Sequencia do Lancamento */
+                                                              ,INPUT craplot.nrseqdig       /* Chave: Sequencia do Lancamento */
                                                               ,INPUT ROUND(aux_vltotiofpri, 2)  /* Valor do IOF Principal */
                                                               ,INPUT ROUND(aux_vltotiofadi, 2)  /* Valor do IOF Adicional */
                                                               ,INPUT ROUND(aux_vltotiofcpl, 2)  /* Valor do IOF Complementar */
