@@ -2,7 +2,7 @@
 /**
  * Autor: Bruno Luiz Katzjarowski - Mout's
  * Data: 12/12/2018;
- * Ultima alteração:
+ * Ultima alteração: 05/07/2019 - Destacar evento do cooperado - P484.2 - Gabriel Marcos (Mouts).
  * 
  * Alterações:
  */
@@ -23,15 +23,16 @@
     $nrdconta = $_POST['nrdconta'];
     $nmdgrupo = $_POST['nmdgrupo'];
     $cdcooper = $glbvars['cdcooper'];
-    $nrcpfcgc = $_POST['nrcpfcgc'];
+    //$nrcpfcgc = $_POST['nrcpfcgc'];
+    $nrcpfcgc = preg_replace( '/[^0-9]/', '', $_POST["nrcpfcgc"]);
 
     $xml  = "";
     $xml .= "<Root>";
     $xml .= "	<Dados>";
-	$xml .= "		<nrcpfcgc>".$nrcpfcgc."</nrcpfcgc>";
+    $xml .= "		<nrcpfcgc>".$nrcpfcgc."</nrcpfcgc>";
     $xml .= "	</Dados>";
     $xml .= "</Root>";
-    
+		
     // Executa script para envio do XML
     $xmlResult = mensageria($xml, "CADA0003", "RETORNA_GRUPO_CPF",  //   LISTA_FORNECEDORES
                             $glbvars["cdcooper"],
@@ -43,7 +44,6 @@
     
     //$xmlObj = getObjectXML($xmlResult);
     $xmlObj = new SimpleXMLElement($xmlResult);
-
 
     $retorno = array(
         'retorno' => array(),

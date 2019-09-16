@@ -11,6 +11,8 @@
    Alteracoes:  07/02/2011 - Alteracao nos parametros da BO do historico
                              para trazer a listagem num arquivo PDF
                              (Gabriel).                                                   
+                13/08/2019 - Vincular inscricao de pessoa juridica com socio
+                             Gabriel Marcos (Mouts) - P484.2 
 
 ............................................................................ */
 
@@ -46,7 +48,7 @@ DEF VAR aux_finpesqu AS INTE                                           NO-UNDO.
 DEF VAR aux_idevento AS INTE                                           NO-UNDO.
 DEF VAR aux_cdevento AS INTE                                           NO-UNDO.
 DEF VAR aux_tpimpres AS CHAR                                           NO-UNDO.
- 
+DEF VAR aux_nrcpfcgc AS DECI                                           NO-UNDO.
 
 DEF VAR par_nrdrowid AS ROWID                                          NO-UNDO.
 DEF VAR par_flgcoope AS LOGI                                           NO-UNDO.
@@ -108,6 +110,7 @@ PROCEDURE valores_entrada:
             WHEN "idevento" THEN aux_idevento = INTE(tt-param.valorCampo).
             WHEN "cdevento" THEN aux_cdevento = INTE(tt-param.valorCampo).
             WHEN "tpimpres" THEN aux_tpimpres = tt-param.valorCampo.
+            WHEN "nrcpfcgc" THEN aux_nrcpfcgc = DECI(tt-param.valorCampo).
 
         END CASE.
         
@@ -544,7 +547,7 @@ END PROCEDURE.
 Gravar na crapidp a pre-inscricao ao evento selecionado.
 *****************************************************************************/
 PROCEDURE grava-pre-inscricao:
-          
+
     RUN grava-pre-inscricao IN hBO (INPUT aux_cdcooper,
                                     INPUT aux_cdagenci,
                                     INPUT aux_nrdcaixa,
@@ -562,6 +565,7 @@ PROCEDURE grava-pre-inscricao:
                                     INPUT aux_nrdddins,
                                     INPUT aux_nrtelefo,
                                     INPUT aux_idseqttl,
+                                    INPUT aux_nrcpfcgc,																		
                                     INPUT aux_idorigem,
                                     INPUT aux_nmdatela,
                                     INPUT NO, /* Log */
