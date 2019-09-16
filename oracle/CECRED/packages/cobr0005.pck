@@ -651,6 +651,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --
   --              18/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO" - dslocpag
   --                           (P559 - Darlei Zillmer - Supero)
+  --
+	--              30/08/2019 - INC0020919 - Ajuste na validação da tarifa na pc_gera_tarifa_sms_enviados - Augusto (Supero)
   ---------------------------------------------------------------------------------------------------------------
     
   --Ch 839539
@@ -9953,8 +9955,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           
           vr_idxtar := rw_sms_cobran.cdtarifa;
           
-          --> Se ainda não foi buscada essa tarifa
-          IF NOT vr_tab_tarifa.exists(vr_idxtar) THEN
+          --> Se ainda não foi buscada essa tarifa ou se o historico esta vazio
+          IF NOT vr_tab_tarifa.exists(vr_idxtar) OR vr_tab_tarifa(vr_idxtar).cdhistor IS NULL OR vr_tab_tarifa(vr_idxtar).cdhistor = 0 OR vr_tab_tarifa(vr_idxtar).cdfvlcop IS NULL THEN
             vr_cdcritic := NULL;
             vr_dscritic := NULL;
             
