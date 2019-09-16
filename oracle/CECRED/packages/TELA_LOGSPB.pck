@@ -137,6 +137,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
   --                11-06-2019 - Inclusão de uma coluna nos detalhes das mensagens (Fases).
   --                             Jose Dill - Mouts (P475 - REQ66)
   --
+  --				06-09-2019 - Remoção da máscara padrão de contas Ailos para apresentar contas de destino, utilizado máscara única.
+  --							 Diógenes Lazzarini - PRB0041598
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_crapcop (pr_cdcooper IN NUMBER) IS
@@ -762,6 +765,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
     Objetivo  : Rotina para carregar as mensagens SPB a serem apresentadas
 
     Alteracoes:
+    				  06-09-2019 - Remoção da máscara padrão de contas Ailos para apresentar contas de destino, utilizado máscara única.
+  							 	   Diógenes Lazzarini - PRB0041598
+  							 	       
     ............................................................................. */
     CURSOR cr_mensagem (pr_dtmensagem_de  IN DATE
                        ,pr_dtmensagem_ate IN DATE
@@ -1235,7 +1241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
                     || '<cpfcnpjremet>'   || TRIM(vr_CNPJ_CPFCliDebtd)                                                 || '</cpfcnpjremet>'
                     || '<bancodest>'      || TRIM(vr_bancodest)                                                        || '</bancodest>'
                     || '<agenciadest>'    || TRIM(vr_AgCredtd)                                                         || '</agenciadest>'
-                    || '<contadest>'      || TRIM(gene0002.fn_mask_conta(pr_nrdconta => vr_CtCredtd))                  || '</contadest>'
+                    || '<contadest>'      || TRIM(gene0002.fn_mask(pr_dsorigi => vr_CtCredtd, pr_dsforma => 'zzzzzzzzzzzzzz.zzz.z')) || '</contadest>'
                     || '<nomedest>'       || vr_NomCliCredtd                                                           || '</nomedest>'
                     || '<cpfcnpjdest>'    || vr_CNPJ_CPFCliCredtd                                                      || '</cpfcnpjdest>'
                       || '<motdev>'         || vr_dsdevolucao                                                            || '</motdev>'
@@ -1272,7 +1278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
                                   ||';'|| TRIM(vr_CNPJ_CPFCliDebtd)
                                   ||';'|| TRIM(Replace(vr_bancodest,';',''))
                                   ||';'|| TRIM(vr_AgCredtd)
-                                  ||';'|| TRIM(gene0002.fn_mask_conta(pr_nrdconta => vr_CtCredtd))
+                                  ||';'|| TRIM(gene0002.fn_mask(pr_dsorigi => vr_CtCredtd, pr_dsforma => 'zzzzzzzzzzzzzz.zzz.z'))
                                   ||';'|| vr_NomCliCredtd
                                   ||';'|| vr_CNPJ_CPFCliCredtd
                                   ||';'|| Replace(vr_dsdevolucao,';','')
@@ -2270,7 +2276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'cpfcnpjremet'  ,pr_tag_cont => TRIM(rw_layout_1.CNPJ_CPFCliDebtd),pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'bancodest'     ,pr_tag_cont => TRIM(vr_bancodest),pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'agenciadest'   ,pr_tag_cont => TRIM(rw_layout_1.AgCredtd),pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'contadest'     ,pr_tag_cont => TRIM(gene0002.fn_mask_conta(pr_nrdconta => rw_layout_1.CtCredtd)),pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'contadest'     ,pr_tag_cont => TRIM(gene0002.fn_mask(pr_dsorigi => rw_layout_1.CtCredtd, pr_dsforma => 'zzzzzzzzzzzzzz.zzz.z')),pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'nomedest'      ,pr_tag_cont => TRIM(rw_layout_1.NomCliCredtd),pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'cpfcnpjdest'   ,pr_tag_cont => rw_layout_1.CNPJ_CPFCliCredtd,pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'origem'        ,pr_tag_cont => rw_layout_1.dsorigem,pr_des_erro => vr_dscritic);
