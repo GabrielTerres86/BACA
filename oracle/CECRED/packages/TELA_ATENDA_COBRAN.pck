@@ -3045,8 +3045,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                       ,crapceb.flserasa = pr_flserasa
                       ,crapceb.insitceb = vr_insitceb
                       ,crapceb.cdhomolo = vr_cdoperad
-                      -- Rafael Ferreira (Mouts) -- INC0020100 - Se por algum motivo vier zero utiliza o Default da crapcco
-                      ,crapceb.qtdfloat = decode(nvl(pr_qtdfloat,0), 0, vr_qtdfloat, pr_qtdfloat)
+                      ,crapceb.qtdfloat = nvl(pr_qtdfloat,0)
                       ,crapceb.flprotes = pr_flprotes
                       ,crapceb.insrvprt = pr_insrvprt
                       ,crapceb.qtlimaxp = pr_qtlimaxp
@@ -3055,8 +3054,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
                       ,crapceb.qtdecprz = decode(nvl(pr_qtdecprz,0), 0, vr_qtdecini, pr_qtdecprz)
                       ,crapceb.inenvcob = pr_inenvcob
                       ,crapceb.flgapihm = pr_flgapihm
-                      --,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
-                      --,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
                  WHERE crapceb.cdcooper = vr_cdcooper
                    AND crapceb.nrdconta = pr_nrdconta
                    AND crapceb.nrconven = pr_nrconven
@@ -3097,8 +3094,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 										,crapceb.flserasa = pr_flserasa
 										,crapceb.insitceb = vr_insitceb
 										,crapceb.cdhomolo = vr_cdoperad
-                    -- Rafael Ferreira (Mouts) -- INC0020100 - Se por algum motivo vier zero utiliza o Default da crapcco
-										,crapceb.qtdfloat = decode(nvl(pr_qtdfloat,0), 0, vr_qtdfloat, pr_qtdfloat)
+                    								,crapceb.qtdfloat = nvl(pr_qtdfloat,0)
 										,crapceb.flprotes = pr_flprotes
 										,crapceb.insrvprt = pr_insrvprt
 										,crapceb.qtlimaxp = pr_qtlimaxp
@@ -3107,8 +3103,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
 										,crapceb.qtdecprz = decode(nvl(pr_qtdecprz,0), 0, vr_qtdecini, pr_qtdecprz)
 										,crapceb.inenvcob = pr_inenvcob
 										,crapceb.flgapihm = pr_flgapihm
-                    --,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
-                    --,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
 							 WHERE crapceb.cdcooper = vr_cdcooper
 								 AND crapceb.nrdconta = pr_nrdconta
 								 AND crapceb.nrconven = pr_nrconven

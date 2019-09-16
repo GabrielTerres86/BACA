@@ -63,6 +63,12 @@
 
                   20/02/2019 - Novo campo Homologado API (Andrey Formigari - Supero)
 
+                  05/09/2019 - RITM0037203 - Possibilitar Float 0 (Rafael Ferreira - Mouts)
+
+                  05/09/2019 - RITM0037630 - Enviar contrato para Aprovação quando o Float for 0 ou
+                                o "Debito reajuste da tarifa" for NÃO
+                               (Rafael Ferreira - Mouts)
+
  ***********************************************************************/
 
 var dsdregis = "";  // Variavel para armazenar os valores dos titulares
@@ -2806,7 +2812,9 @@ function validaDados(pedeSenha) {
     vDataFimAdicionalCee = Number(cDataFimAdicionalCee.find('option:selected').text());
     vDataFimAdicionalCoo = Number(cDataFimAdicionalCoo.find('option:selected').text());
     vJustificativaDesc = cJustificativaDesc.val();
-
+    vQtdFloat = $('#qtdfloat', '.tabelaDesconto').val();
+    //vDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto').val();
+    
     // valida se o campo Data fim do contrato está preenchido
     if (!vDataFimContrato) {
         showError("error", "Selecione um valor para a Data fim do contrato.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -2829,6 +2837,13 @@ function validaDados(pedeSenha) {
     }
 
     if ((vDataFimAdicionalCee || vDataFimAdicionalCoo || atualizacaoDesconto) && !vJustificativaDesc) {
+        showError("error", "&Eacute; necess&aacute;rio informar o campo Justificativa desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        return false;
+    }
+
+
+    //if ((vQtdFloat == 0 || vDebitoReajusteReciproci == 0) && !vJustificativaDesc) {
+    if ((vQtdFloat == 0) && !vJustificativaDesc) {
         showError("error", "&Eacute; necess&aacute;rio informar o campo Justificativa desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
     }
@@ -2933,8 +2948,15 @@ function incluiDesconto(houveAlteracao) {
         dtfimadicional_cee = 0;
     }
 
+
+    // Estas Validações apagam o campo de Justificativa caso haja alguma coisa escrita e não seja mais
+    // necessário aprovar
     var descricaoJustificativaDesconto = vJustificativaDesc;
-    if (parseInt($('#vldesconto_cee', '.tabelaDesconto').val() || 0) <= 0 && parseInt($('#vldesconto_coo', '.tabelaDesconto').val() || 0) <= 0) {
+    if (parseInt($('#vldesconto_cee', '.tabelaDesconto').val() || 0) <= 0 && 
+        parseInt($('#vldesconto_coo', '.tabelaDesconto').val() || 0) <= 0 &&
+        parseInt($('#qtdfloat', '.tabelaDesconto').val() || 0) > 0
+        //$('#debito_reajuste_reciproci', '.tabelaDesconto').val() > 0
+        ) {
         descricaoJustificativaDesconto = "";
     }
 
@@ -2994,6 +3016,12 @@ function validaHabilitacaoCamposBtn(cddopcao) {
     var cDataFimAdicionalCooOld = $('#dtfimadicional_coo_old', '.tabelaDesconto');
     var cJustificativaDesc = $('#txtjustificativa', '.tabelaDesconto');
     var cJustificativaDescOld = $('#txtjustificativa_old', '.tabelaDesconto');
+    var cQtdFloatOld = $('#qtdfloat_old', '.tabelaDesconto');
+    var cQtdFloat = $('#qtdfloat', '.tabelaDesconto');
+    //var cDebitoReajusteReciprociOld = $('#debito_reajuste_reciproci_old', '.tabelaDesconto');
+    //var cDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto');
+
+    
 
     var vVldesconto_cee = Number(converteNumero(cVldesconto_cee.val()));
     var vVldesconto_ceeOld = Number(converteNumero(cVldesconto_ceeOld.val()));
@@ -3005,6 +3033,11 @@ function validaHabilitacaoCamposBtn(cddopcao) {
     var vDataFimAdicionalCooOld = cDataFimAdicionalCooOld.val();
     var vJustificativaDesc = cJustificativaDesc.val();
     var vJustificativaDescOld = cJustificativaDescOld.val();
+    var vQtdFloatOld = cQtdFloatOld.val();
+    var vQtdFloat = cQtdFloat.val();
+    //var vDebitoReajusteReciprociOld = cDebitoReajusteReciprociOld.val();
+    //var vDebitoReajusteReciproci = cDebitoReajusteReciproci.val();
+
 
     if (!cee && !coo) {
         cJustificativaDesc.desabilitaCampo();
@@ -3033,7 +3066,10 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 			(vDataFimAdicionalCee != vDataFimAdicionalCeeOld && vDataFimAdicionalCee) ||
 			(vDataFimAdicionalCoo != vDataFimAdicionalCooOld && vDataFimAdicionalCoo) ||
             (vJustificativaDesc != vJustificativaDescOld && vJustificativaDesc && vJustificativaDescOld) ||
-            (atualizacaoDesconto)) {
+            (atualizacaoDesconto) || 
+            (vQtdFloat == 0 && (vQtdFloat != vQtdFloatOld) )
+            //(vDebitoReajusteReciproci == 0 && (vDebitoReajusteReciproci != vDebitoReajusteReciprociOld)) ) {
+             ) {
 
         btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
         btnContinuar.prop('disabled', true);
@@ -3378,6 +3414,8 @@ function calcula_desconto() {
             eval(response);
         }
     });
+
+    validaHabilitacaoCamposBtn();
 }
 
 function atualizarDescontos() {
