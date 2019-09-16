@@ -12,6 +12,16 @@ update tbcadast_pessoa_email e
    set e.insituacao = 1
  where e.insituacao is null;  
  
+update tbepr_segmento_canais_perm e
+   set e.tppermissao = 2,
+       e.vlmax_autorizado = (select x.vlmax_autorizado 
+                               from tbepr_segmento_canais_perm x
+                              where x.cdcooper   = e.cdcooper
+                                and x.idsegmento = e.idsegmento
+                                and x.cdcanal = 3)
+ where e.cdcanal = 10
+   and e.cdcooper <> 8;
+ 
  
  update crapprm p
    set p.dsvlrprm = '16;6;9;10;12;2;5;13;14;1;11;7'
