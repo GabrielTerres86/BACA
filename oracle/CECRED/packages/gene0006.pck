@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 06/12/2017
+   Data    : Agosto/2006                   Ultima Atualizacao: 22/08/2019
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -58,6 +58,9 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
 
                06/12/2017 - Adicionado procedure PC_LISTA_PROTOCOLOS_POR_TIPOS 
                             (P285 - Ricardo Linhares).
+
+               22/08/2019 - Ajustar tamanho do campo dscedent na typ_reg_protocolo
+                            (Douglas - Projeto 363)
 ............................................................................. */
 
   /* Objetos de uso comum */
@@ -75,7 +78,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0006 IS
           ,dsinform##2 crappro.dsinform##2%TYPE
           ,dsinform##3 crappro.dsinform##3%TYPE
           ,dsprotoc crappro.dsprotoc%TYPE
-          ,dscedent crappro.dscedent%TYPE
+          ,dscedent VARCHAR(300)
           ,flgagend crappro.flgagend%TYPE
           ,nmprepos crappro.nmprepos%TYPE
           ,nrcpfpre crappro.nrcpfpre%TYPE
