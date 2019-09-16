@@ -2196,6 +2196,7 @@ PROCEDURE retorna-vlr-tit-vencto:
     DEF OUTPUT PARAM par_dscritic      AS CHAR                       NO-UNDO.
     
     DEF VAR aux_tppesbenf AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dtvencto  AS CHAR                                    NO-UNDO.	
     
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -2226,6 +2227,7 @@ PROCEDURE retorna-vlr-tit-vencto:
                          ,OUTPUT ""      /* pr_nrctrlcs     -- Numero do controle da consulta */
                          ,OUTPUT 0       /* pr_flblq_valor  -- Flag para bloquear o valor de pagamento */
                          ,OUTPUT 0       /* pr_fltitven     -- Flag indicador de titulo vencido */
+                         ,OUTPUT ""      /* pr_dtvencto  Márcio Mouts -RITM0011951*/					 						 
                          ,OUTPUT ""      /* pr_des_erro     -- Indicador erro OK/NOK */
                          ,OUTPUT 0       /* pr_cdcritic     -- Código do erro  */
                          ,OUTPUT "").    /* pr_dscritic     -- Descricao do erro  */
@@ -2239,7 +2241,8 @@ PROCEDURE retorna-vlr-tit-vencto:
                par_vlrjuros = 0
                par_vlrmulta = 0
                par_flblqval = 0
-               par_fltitven = 0.
+               par_fltitven = 0
+		       aux_dtvencto = "".
        ASSIGN  aux_tppesbenf = ""
                par_nrdocbnf = 0
                par_nmbenefi = ""
@@ -2251,7 +2254,9 @@ PROCEDURE retorna-vlr-tit-vencto:
                par_vlrmulta = pc_consultar_valor_titulo.pr_vlrmulta
                               WHEN pc_consultar_valor_titulo.pr_vlrmulta <> ?
                par_fltitven = pc_consultar_valor_titulo.pr_fltitven
-                              WHEN pc_consultar_valor_titulo.pr_fltitven <> ?.
+                              WHEN pc_consultar_valor_titulo.pr_fltitven <> ?
+               aux_dtvencto  = pc_consultar_valor_titulo.pr_dtvencto
+                               WHEN pc_consultar_valor_titulo.pr_dtvencto <> ?.
        ASSIGN  aux_tppesbenf = pc_consultar_valor_titulo.pr_tppesbenf
                               WHEN pc_consultar_valor_titulo.pr_tppesbenf <> ?
                par_nrdocbnf = pc_consultar_valor_titulo.pr_nrdocbenf
