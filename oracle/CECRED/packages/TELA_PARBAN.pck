@@ -338,8 +338,7 @@ IS
       WHERE 1=1
       AND    tban.CDBANNER = decode(pr_cdbanner,0,tban.CDBANNER,pr_cdbanner)
       AND    tban.cdcanal  = pr_cdcanal
-      
-      AND    tban.dtexibir_ate >= trunc(SYSDATE - 90)
+      AND    (tban.dtexibir_ate >= trunc(SYSDATE - 90) or tban.inexibir_quando = 0)
       AND    tbpa.cdcanal  = tban.cdcanal
       AND    tbfg.cdbanner (+)= tban.cdbanner
       AND    tbfg.cdcanal  (+)= tban.cdcanal
