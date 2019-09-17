@@ -257,6 +257,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 			   17/05/2019 - Adicionada verificação para recálculo somente se houve resgate (Jefferson - MoutS)
 
                06/02/2019 - P442 - Remoção da chamada a rotina que grava a posição do pre-aprovado para verificação na Atenda. (Marcos-Envolti)
+	       
+	       25/06/2019 - Correção no update da tbgen_iof_lancamento para não considerar o registro de provisão 
+                            de IOF (ADP) gerado no dia. (P410 v2 Douglas Pagel / AMcom)
 
      ............................................................................. */
 
@@ -3336,7 +3339,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              AND tbgen_iof_lancamento.cdagenci_lcm IS NULL
              AND tbgen_iof_lancamento.cdbccxlt_lcm IS NULL
              AND tbgen_iof_lancamento.nrdolote_lcm IS NULL
-             AND tbgen_iof_lancamento.nrseqdig_lcm IS NULL;
+             AND tbgen_iof_lancamento.nrseqdig_lcm IS NULL
+             AND tbgen_iof_lancamento.dtmvtolt < vr_tab_tarifas(vr_tarindic).dtmvtolt;
       EXCEPTION
         WHEN OTHERS THEN 
            FOR i IN 1..SQL%BULK_EXCEPTIONS.count LOOP

@@ -1,817 +1,808 @@
 <!--
-	Alteracoes: 22/10/2012 - Limitação tamanho maximo dos campos Evento, Objetivo,
-							 Conteúdo, Metodologia, Publico Alvo, Observações e
+  Alteracoes: 22/10/2012 - Limitação tamanho maximo dos campos Evento, Objetivo,
+                           Conteúdo, Metodologia, Publico Alvo, Observações e
                            inclusão chamada para biblioteca de funções funcoes.js (Daniel).
-							 
-				30/06/2015 - Inclusao de novos campos Projeto Progrid (Vanessa)		
 
-				08/10/2015 - Inclusao do campo Recurso e Transporte Incluso PRJ 229(Vanessa). 
-				
-				09/12/2015 - Inclusão do campo cdcopope (Vanessa)
-        
-                19/01/2016 - Aumento da tela wpgd0016 (Lombardi)
-            
-                19/04/2016 - Removi os campos de Publico Alvo (Carlos Rafael Tanhol).
-                
-                30/05/2016 - Ajustes PRJ229 - Melhorias OQS (Odirlei-AMcom)
+              30/06/2015 - Inclusao de novos campos Projeto Progrid (Vanessa)
+
+              08/10/2015 - Inclusao do campo Recurso e Transporte Incluso PRJ 229(Vanessa).
+  
+              09/12/2015 - Inclusão do campo cdcopope (Vanessa)
+    
+              19/01/2016 - Aumento da tela wpgd0016 (Lombardi)
+    
+              19/04/2016 - Removi os campos de Publico Alvo (Carlos Rafael Tanhol).
+    
+              30/05/2016 - Ajustes PRJ229 - Melhorias OQS (Odirlei-AMcom)
 
               28/11/2016 - Melhoria na performance de arrays js (Jean Michel).
 -->
 <html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-<meta name="wsoptions" content="no-output">
-<title>Propostas (wpgd0012c)</title>
-<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
-    <script type="text/javascript" src="/cecred/jsbiblio/biblio.js"></script>
-    <script type="text/javascript" src="/cecred/jsbiblio/frcod.js"></script>    
-    <script type="text/javascript" src="/cecred/js/funcoes.js"></script>
-    <script type="text/javascript" src="/web/scripts/ajax.js" charset="utf-8"></script>
-    <script type="text/javascript" src="/web/scripts/scripts.js" charset="utf-8"></script>
-    <script type="text/javascript" src="/web/scripts/funcoes.js"></script>
-    <script type="text/javascript" src="/web/scripts/mascara.js"></script>   
-</head>
-<body onunload="fecharTela();" >
-<form action="#." method="POST" name="form">
-<input name="aux_cddopcao" type="hidden" value="">
-<input name="aux_lspermis" type="hidden" value="">
-<input name="aux_nrdrowid" type="hidden" value="">
-<input name="aux_dsretorn" type="hidden" value="">
-<input name="aux_stdopcao" type="hidden" value="">
-<input name="aux_dsendurl" type="hidden" value="">
-<input name="aux_nrcpfcgc" type="hidden" value="">
-<input name="aux_idevento" type="hidden" value="">
-<input name="aux_idexclui" type="hidden" value="">
-<input name="aux_nmpagina" type="hidden" value="">
-<input name="aux_lsfacili" type="hidden" value="">
-<input name="cdevento"     type="hidden" value="">
-<input name="cdeixtem"     type="hidden" value="">
-<input name="nrseqtem"     type="hidden" value="">
-<input name="idtrainc"     type="hidden" value="">
-<input name="idforrev"     type="hidden" value="">
-<input name="aux_cdcopope" type="hidden" value="">
-<input name="aux_idvapost" type="hidden" value="">
-<input name="aux_nrpropos" type="hidden" value="">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <meta name="wsoptions" content="no-output">
+    <title>Propostas (wpgd0012c)</title>
+    <link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+    <script SRC="/cecred/js/funcoes.js"></script>
+  </head>
+  <body onunload="fecharTela();" >
+    <form action="#." method="POST" name="form">
+      <input name="aux_cddopcao" type="hidden" value="">
+      <input name="aux_lspermis" type="hidden" value="">
+      <input name="aux_nrdrowid" type="hidden" value="">
+      <input name="aux_dsretorn" type="hidden" value="">
+      <input name="aux_stdopcao" type="hidden" value="">
+      <input name="aux_dsendurl" type="hidden" value="">
+      <input name="aux_nrcpfcgc" type="hidden" value="">
+      <input name="aux_idevento" type="hidden" value="">
+      <input name="aux_idexclui" type="hidden" value="">
+      <input name="aux_nmpagina" type="hidden" value="">
+      <input name="aux_lsfacili" type="hidden" value="">
+      <input name="cdevento"     type="hidden" value="">
+      <input name="cdeixtem"     type="hidden" value="">
+      <input name="nrseqtem"     type="hidden" value="">
+      <input name="idtrainc"     type="hidden" value="">
+      <input name="idforrev"     type="hidden" value="">
+      <input name="aux_cdcopope" type="hidden" value="">
+      <input name="aux_idvapost" type="hidden" value="">
+      <input name="aux_nrpropos" type="hidden" value="">
 
-  <table border="0" cellpadding="0" cellspacing="0">
-    <tr valign="botton">
-      <td>
-	    <table border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
-		  <tr>
-            <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
-            <td align="center" nowrap width="150" class="linkGuia">Adicionar Proposta</td>
-            <td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="8" height="21"></td>
-          </tr>
-        </table>
-      <td>
-    </tr>
-    <tr valign="top">
-      <td>
-        <table cellpadding="0" cellspacing="1" bgColor="#999999">
-	      <tr bgColor="#FFFFFF">
-	        <td>
-              <table align="center" border="0">  
-                <tr>
-                  <td colspan="6" height="8"></td>
-                </tr>
-                <tr>
-                  <td width="200" align="right" class="NomeCampo">Proposta:</td>
-                  <td width="63"><input name="nrpropos" type="text" class="Campo" size="10" readonly></td>
-                  <td width="83" class="NomeCampo" align="right">Recebimento:</td>
-                      <td width="72"><input name="dtmvtolt" type="text" class="Campo data" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="FormataData(this.name, this.value)"></td>
-                  <td width="51" class="NomeCampo" align="right">Validade:</td>
-                      <td width="203"><input name="dtvalpro" type="text" class="Campo data" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="FormataData(this.name, this.value)" value=""></td>
-                </tr>
-              </table>
-				  <div id="divProposta">
-					<br>
-					<table border="0" align="center" cellspacing="1">
-					  <tr>
-						<td class="NomeCampo" align="right">Tema:</td>
-						<td colspan="4">
-						  <select name="aux_cdtemeix" size="1" class="Campo" onChange="MostraEixos();MostraEventos(this.value)">
-							<option>Selecione um Tema</option>
-						  </select>
-						</td>
-						<td >&nbsp;</td>
-					  </tr>
-					   <tr>
-						<td class="NomeCampo" align="right">Eixo tem&aacute;tico:</td>
-						<td colspan="4">
-						  <select name="aux_cdeixtem" size="1" class="Campo" >
-							<option>Selecione um eixo tem&aacute;tico</option>
-						  </select>
-						</td>
-						<td >&nbsp;</td>
-					  </tr>
-					  <tr>
-						<td class="NomeCampo" align="right">Vincular ao evento:</td>
-						<td colspan="4" >
-						  <select name="aux_cdevento" size="1" class="Campo" id="aux_cdevento">
-							<option selected>Selecione um evento</option>
-						  </select>
-						</td>
-						<td >&nbsp;</td>
-					  </tr>
-					  <tr>
-						<td class="NomeCampo" align="right">Evento:</td>
-                  <td colspan="5"><input name="nmevefor" type="text" class="Campo alpha" maxlength="50" size=50></td>
-					  </tr>
-					  <tr>
-						<td width="141" class="NomeCampo" align="right">Objetivo:</td>
-                  <td colspan="6" ><textarea name="dsobjeti" cols="80" rows="2" class="CampoTextArea alphanum" onKeyUp="ValidaTamanho(this.form.dsobjeti,4000)" onKeyDown="ValidaTamanho(this.form.dsobjeti,4000)"></textarea></td>
-					  </tr>
-					  <tr>
-						<td class="NomeCampo" align="right">Conte&uacute;do:</td>
-                  <td colspan="6" ><textarea name="dsconteu" cols="80" rows="2" class="CampoTextArea alphanum" onKeyUp="ValidaTamanho(this.form.dsconteu,4000)" onKeyDown="ValidaTamanho(this.form.dsconteu,4000)"></textarea></td>
-					  </tr>
-					  <tr>
-						<td class="NomeCampo" align="right">Metodologia:</td>
-                  <td colspan="6" ><textarea name="dsmetodo" cols="80" rows="2" class="CampoTextArea alphanum" onKeyUp="ValidaTamanho(this.form.dsmetodo,4000)" onKeyDown="ValidaTamanho(this.form.dsmetodo,4000)"></textarea></td>
-					  </tr>
-					  <tr>
-						<td class="NomeCampo" align="right">Observa&ccedil;&otilde;es:</td>
-                  <td colspan="6" ><textarea name="dsobserv" cols="80" rows="2" class="CampoTextArea alphanum" onKeyUp="ValidaTamanho(this.form.dsobserv,4000)" onKeyDown="ValidaTamanho(this.form.dsobserv,4000)"></textarea></td>
-					  </tr>	
-					
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr valign="botton">
+          <td>
+            <table border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+              <tr>
+                <td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+                <td align="center" nowrap width="150" class="linkGuia">Adicionar Proposta</td>
+                <td width="11" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="8" height="21"></td>
+              </tr>
+            </table>
+          <td>
+        </tr>
+        <tr valign="top">
+          <td>
+            <table cellpadding="0" cellspacing="1" bgColor="#999999">
+              <tr bgColor="#FFFFFF">
+                <td>
+                  <table align="center" border="0">
+                    <tr>
+                      <td colspan="6" height="8"></td>
+                    </tr>
+                    <tr>
+                      <td width="200" align="right" class="NomeCampo">Proposta:</td>
+                      <td width="63"><input name="nrpropos" type="text" class="Campo" size="10" readonly></td>
+                      <td width="83" class="NomeCampo" align="right">Recebimento:</td>
+                      <td width="72"><input name="dtmvtolt" type="text" class="Campo" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="FormataData(this.name, this.value)"></td>
+                      <td width="51" class="NomeCampo" align="right">Validade:</td>
+                      <td width="203"><input name="dtvalpro" type="text" class="Campo" size="10" maxlength="10" onKeyDown="validaInteiro(event)" onkeypress="FormataData(this.name, this.value)" value=""></td>
+                    </tr>
+                  </table>
+                  <div id="divProposta">
+                  <br>
+                  <table border="0" align="center" cellspacing="1">
+                  <tr>
+                  <td class="NomeCampo" align="right">Tema:</td>
+                  <td colspan="4">
+                  <select name="aux_cdtemeix" size="1" class="Campo" onChange="MostraEixos();MostraEventos(this.value)">
+                  <option>Selecione um Tema</option>
+                  </select>
+                  </td>
+                  <td >&nbsp;</td>
+                  </tr>
+                  <tr>
+                  <td class="NomeCampo" align="right">Eixo tem&aacute;tico:</td>
+                  <td colspan="4">
+                  <select name="aux_cdeixtem" size="1" class="Campo" >
+                  <option>Selecione um eixo tem&aacute;tico</option>
+                  </select>
+                  </td>
+                  <td >&nbsp;</td>
+                  </tr>
+                  <tr>
+                  <td class="NomeCampo" align="right">Vincular ao evento:</td>
+                  <td colspan="4" >
+                  <select name="aux_cdevento" size="1" class="Campo" id="aux_cdevento">
+                  <option selected>Selecione um evento</option>
+                  </select>
+                  </td>
+                  <td >&nbsp;</td>
+                  </tr>
+                  <tr>
+                  <td class="NomeCampo" align="right">Evento:</td>
+                  <td colspan="5"><input name="nmevefor" type="text" class="Campo" maxlength="50" size=50></td>
+                  </tr>
+                  <tr>
+                  <td width="141" class="NomeCampo" align="right">Objetivo:</td>
+                  <td colspan="6" ><textarea name="dsobjeti" cols="80" rows="2" class="TextoFormulario" onKeyUp="ValidaTamanho(this.form.dsobjeti,4000)" onKeyDown="ValidaTamanho(this.form.dsobjeti,4000)"></textarea></td>
+                  </tr>
+                  <tr>
+                  <td class="NomeCampo" align="right">Conte&uacute;do:</td>
+                  <td colspan="6" ><textarea name="dsconteu" cols="80" rows="2" class="TextoFormulario" onKeyUp="ValidaTamanho(this.form.dsconteu,4000)" onKeyDown="ValidaTamanho(this.form.dsconteu,4000)"></textarea></td>
+                  </tr>
+                  <tr>
+                  <td class="NomeCampo" align="right">Metodologia:</td>
+                  <td colspan="6" ><textarea name="dsmetodo" cols="80" rows="2" class="TextoFormulario" onKeyUp="ValidaTamanho(this.form.dsmetodo,4000)" onKeyDown="ValidaTamanho(this.form.dsmetodo,4000)"></textarea></td>
+                  </tr>
+                  <tr>
+                  <td class="NomeCampo" align="right">Observa&ccedil;&otilde;es:</td>
+                  <td colspan="6" ><textarea name="dsobserv" cols="80" rows="2" class="TextoFormulario" onKeyUp="ValidaTamanho(this.form.dsobserv,4000)" onKeyDown="ValidaTamanho(this.form.dsobserv,4000)"></textarea></td>
+                  </tr>
 
-					  <tr>
-						<td class="NomeCampo" align="right">Forma Realização Evento:</td>
-						<td colspan="6" >
-							<select name="aux_idforrev" size="1" class="Campo" id="aux_idforrev">								
-						  </select>
-					  </tr>
-					  <tr>
-						<td class="NomeCampo" align="right">Pr&eacute;-Requisitos para<br> Participar do Evento:</td>
-                  <td colspan="6" ><textarea name="dsprereq" cols="80" rows="2" class="CampoTextArea alphanum" onKeyUp="ValidaTamanho(this.form.dsobserv,1000)" onKeyDown="ValidaTamanho(this.form.dsobserv,1000)"></textarea></td>
-					  </tr>	
-					  
-					  <tr>
-						<td align="right" colspan="6" class="txtTituloHid" height="30" valign="bottom">
-						  <a href="#." onClick="mostraDiv('divFacili')">Selecionar Facilitadores</a>
-						</td>
-					  </tr>	
-					  <tr>
-						<td class="NomeCampo" align="right">Facilitadores:</td>
-							<td colspan="6">
-                  <textarea name="txfacili" class="CampoTextArea alphanum" rows="3" cols="80" readonly="true"></textarea>
-						</td>
-					  </tr>	
-					  <tr>
-						<td align="right" colspan="6" class="txtTituloHid" height="30" valign="bottom">
-						  <a href="#." name='selrecurso' onClick="mostraDiv('divRecurso')">Selecionar Recurso</a>
-						</td>
-					  </tr>	
-					  <tr>
-						<td class="NomeCampo" align="right">Recurso:</td>
-							<td colspan="6">
-                  <textarea name="txrecurs" id="txrecurs" class="CampoTextArea alphanum" rows="3" cols="80" readonly="true"></textarea>
-						</td>
-					  </tr>		
-					  <tr>
-						<td class="NomeCampo" align="right">Investimento(R$):</td>
-						<td width="40" ><input name="vlinvest" type="text" class="Campo" size="5" maxlength="25" onkeyup="formataNum(this,event,'.,')"></td> 
-						<td class="NomeCampo" align="right">Transporte Incluso:</td>
-						<td width="40" class="NomeCampo" align="l"><input type="checkbox" value="on" name="aux_flgtrinc" checked onFocus="window.status = 'Permite Alterar.'"></td>
-						<td class="NomeCampo" align="right">Carga hor&aacute;ria:</td>
-						<td width="41"><input name="qtcarhor" type="text" class="Campo" size="5" maxlength="5" onkeyup="formataNum(this,event,':')"></td>
-					  </tr> 
-						  <tr>
-									<td colspan="6" align="center">
-							  <img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" onClick="Salvar()">
-							</td>
-						  </tr>
-					</table>
-				  </div>
-					
-				  <div id="divFacili">
-					<table border="0" align="center" width="90%" height="585">
-					  <tr valign="top">
-						<td>
-							<table width="100%" border="0" align="center" cellspacing="0">
-							  <tr>
-								<td height="20" colspan="2">&nbsp;</td>
-							  <tr>
-								<td height="25" width="400" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg">&nbsp; &nbsp;Facilitador(es) do Fornecedor</td>
-								<td height="25" align="right" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg" nowrap>
-                        <!--<a href="#." onclick="AdFacili();">Cadastrar</a>-->
-								</td>							
-							  </tr>
-							</table>
-						</td>					
-					  </tr>
-					  <tr valign="top">
-						<td>
-						  <div style="overflow: auto; height:'347';">
-							<table width="100%" id="tbfacili" border="1" bordercolor="#CCCCCC" align="center" cellspacing="0">
-							  <!-- INCUI DADOS -->
-							</table>
-						  </div>
-						</td>					
-					  </tr>
-					  <tr align="center">
-						<td>
-						  <img style="cursor:hand;" src="/cecred/images/botoes/btn_ok.gif" onClick="montaFacili(); mostraDiv('divProposta');">
-						  <img style="cursor:hand;" src="/cecred/images/botoes/btn_restaurar.gif" onClick="restaurar();">
-						</td>
-					  </tr>
-					</table>			    
-				  </div>
-			  
-				<div id="divRecurso">
-					<table border="0" align="center" width="90%" height="585">
-					  <tr valign="top">
-						<td>
-							<table width="100%" border="0" align="center" cellspacing="0">
-							  <tr>
-								<td height="20" colspan="2">&nbsp;</td>
-							  <tr>
-								<td height="25" width="400" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg">&nbsp; &nbsp;Recurso</td>
-								<td height="25" align="right" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg" nowrap>
-								<a href="#." onclick="AdRecurso();">Adicionar</a>
-								</td>							
-							  </tr>
-							</table>
-						</td>					
-					  </tr>
-					  <tr valign="top">
-						<td>
-						  <div style="overflow: auto; height:'347';">
-							<table width="100%" id="tbrecurs" border="0" bordercolor="#CCCCCC" align="center" cellspacing="0">
-							  <!-- INCUI DADOS -->
-							</table>
-						  </div>
-						</td>					
-					  </tr>
-					  <tr align="center">
-						<td>
-						  <img style="cursor:hand;" src="/cecred/images/botoes/btn_ok.gif" onClick="montaRecurso(); mostraDiv('divProposta');">
-						</td>
-					  </tr>
-					</table>			    
-				</div>
-            </td>
-          </tr>
-		 </table>
-      </td>
-    </tr>
-  </table>  
-</form>
-</body>
+
+                  <tr>
+                  <td class="NomeCampo" align="right">Forma Realização Evento:</td>
+                  <td colspan="6" >
+                  <select name="aux_idforrev" size="1" class="Campo" id="aux_idforrev">
+                  </select>
+                  </tr>
+                  <tr>
+                  <td class="NomeCampo" align="right">Pr&eacute;-Requisitos para<br> Participar do Evento:</td>
+                  <td colspan="6" ><textarea name="dsprereq" cols="80" rows="2" class="TextoFormulario" onKeyUp="ValidaTamanho(this.form.dsobserv,1000)" onKeyDown="ValidaTamanho(this.form.dsobserv,1000)"></textarea></td>
+                  </tr>
+
+                  <tr>
+                  <td align="right" colspan="6" class="txtTituloHid" height="30" valign="bottom">
+                  <a href="#." onClick="mostraDiv('divFacili')">Selecionar Facilitadores</a>
+                  </td>
+                  </tr>
+                  <tr>
+                  <td class="NomeCampo" align="right">Facilitadores:</td>
+                  <td colspan="6">
+                  <textarea name="txfacili" class="TextoFormulario" rows="3" cols="80" readonly="true"></textarea>
+                  </td>
+                  </tr>
+                  <tr>
+                  <td align="right" colspan="6" class="txtTituloHid" height="30" valign="bottom">
+                  <a href="#." name='selrecurso' onClick="mostraDiv('divRecurso')">Selecionar Recurso</a>
+                  </td>
+                  </tr>
+                  <tr>
+                  <td class="NomeCampo" align="right">Recurso:</td>
+                  <td colspan="6">
+                  <textarea name="txrecurs" id="txrecurs" class="TextoFormulario" rows="3" cols="80" readonly="true"></textarea>
+                  </td>
+                  </tr>
+                  <tr>
+                  <td class="NomeCampo" align="right">Investimento(R$):</td>
+                  <td width="40" ><input name="vlinvest" type="text" class="Campo" size="5" maxlength="25" onkeyup="formataNum(this,event,'.,')"></td>
+                  <td class="NomeCampo" align="right">Transporte Incluso:</td>
+                  <td width="40" class="NomeCampo" align="l"><input type="checkbox" value="on" name="aux_flgtrinc" checked onFocus="window.status = 'Permite Alterar.'"></td>
+                  <td class="NomeCampo" align="right">Carga hor&aacute;ria:</td>
+                  <td width="41"><input name="qtcarhor" type="text" class="Campo" size="5" maxlength="5" onkeyup="formataNum(this,event,':')"></td>
+                  </tr>
+                  <tr>
+                  <td colspan="6" align="center">
+                  <img style="cursor:hand;" src="/cecred/images/botoes/btn_salvar.gif" onClick="Salvar()">
+                  </td>
+                  </tr>
+                  </table>
+                  </div>
+
+                  <div id="divFacili">
+                  <table border="0" align="center" width="90%" height="585">
+                    <tr valign="top">
+                      <td>
+                        <table width="100%" border="0" align="center" cellspacing="0">
+                        <tr>
+                        <td height="20" colspan="2">&nbsp;</td>
+                        <tr>
+                        <td height="25" width="400" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg">&nbsp; &nbsp;Facilitador(es) do Fornecedor</td>
+                        <td height="25" align="right" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg" nowrap>
+                        <a href="#." onclick="AdFacili();">Cadastrar</a>
+                        </td>
+                        </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr valign="top">
+                      <td>
+                        <div style="overflow: auto; height:'347';">
+                          <table width="100%" id="tbfacili" border="1" bordercolor="#CCCCCC" align="center" cellspacing="0">
+                            <!-- INCUI DADOS -->
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr align="center">
+                      <td>
+                        <img style="cursor:hand;" src="/cecred/images/botoes/btn_ok.gif" onClick="montaFacili(); mostraDiv('divProposta');">
+                        <img style="cursor:hand;" src="/cecred/images/botoes/btn_restaurar.gif" onClick="restaurar();">
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+
+                <div id="divRecurso">
+                <table border="0" align="center" width="90%" height="585">
+                <tr valign="top">
+                <td>
+                <table width="100%" border="0" align="center" cellspacing="0">
+                <tr>
+                <td height="20" colspan="2">&nbsp;</td>
+                <tr>
+                <td height="25" width="400" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg">&nbsp; &nbsp;Recurso</td>
+                <td height="25" align="right" class="txtMenuTitulos" background="/cecred/images/menu/fnd_title.jpg" nowrap>
+                <a href="#." onclick="AdRecurso();">Adicionar</a>
+                </td>
+                </tr>
+                </table>
+                </td>
+                </tr>
+                <tr valign="top">
+                <td>
+                  <div style="overflow: auto; height:'347';">
+                  <table width="100%" id="tbrecurs" border="0" bordercolor="#CCCCCC" align="center" cellspacing="0">
+                  <!-- INCUI DADOS -->
+                          </table>
+                        </div>
+                      </td>
+                      </tr>
+                      <tr align="center">
+                        <td>
+                          <img style="cursor:hand;" src="/cecred/images/botoes/btn_ok.gif" onClick="montaRecurso(); mostraDiv('divProposta');">
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </form>
+  </body>  
   <script LANGUAGE="JAVASCRIPT">
-   NomeDoProgramaPrincipal  = '/wpgd0012c.w';
-   NomeDoProgramaDeListagem = '/wpgd0012cls.w';
-   NomeDoProgramaDeAjuda    = '/wpgd0012caj.w';
-   
-   NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
-   document.form.action = NomeDoProgramaPrincipal;
+    NomeDoProgramaPrincipal  = '/wpgd0012c.w';
+    NomeDoProgramaDeListagem = '/wpgd0012cls.w';
+    NomeDoProgramaDeAjuda    = '/wpgd0012caj.w';
 
-   // Formata a carga horária
-   document.form.qtcarhor.value = document.form.qtcarhor.value.replace(",",":");
+    NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+    document.form.action = NomeDoProgramaPrincipal;
 
-function ValidaDados(form){
-   var msg=""; 
+    // Formata a carga horária
+    document.form.qtcarhor.value = document.form.qtcarhor.value.replace(",",":");
 
-	if (document.form.dtmvtolt.value == "") {
-	  msg = msg + "Data de Recebimento não pode ser vazia. ";
-	}
+    function ValidaDados(form){
+      var msg="";
 
-	if (document.form.dtvalpro.value == "") {
-	  msg = msg + "Data de Validade não pode ser vazia. ";
-	}
+      if (document.form.dtmvtolt.value == "") {
+      msg = msg + "Data de Recebimento não pode ser vazia. ";
+      }
 
-	if (document.form.aux_cdtemeix.value == "") {
-	  msg = msg + "Selecione um tema. ";
-	}
-	
-	if (document.form.qtcarhor.value.length > 5)
-	   msg = msg + "Carga horária incorreta";
-	   
-	// valida carga horaria com 99:99
-	if ((document.form.qtcarhor.value != '') &&
-	   (document.form.qtcarhor.value.substring(2,3) != ','))
-	   msg = msg + "Formato da hora invalido. Utilize HH:MM";	   
-	
-	if (document.form.aux_idforrev.value == 0) {
-	  msg = msg + "Selecione a Forma Realização Evento. ";
-	}
-    
-   if(msg == "")
-     return true
-   else{
-     alert(msg);
-     return false
-   }
-}
+      if (document.form.dtvalpro.value == "") {
+      msg = msg + "Data de Validade não pode ser vazia. ";
+      }
+
+      if (document.form.aux_cdtemeix.value == "") {
+      msg = msg + "Selecione um tema. ";
+      }
+
+      if (document.form.qtcarhor.value.length > 5)
+      msg = msg + "Carga horária incorreta";
+
+      // valida carga horaria com 99:99
+      if ((document.form.qtcarhor.value != '') &&
+      (document.form.qtcarhor.value.substring(2,3) != ','))
+      msg = msg + "Formato da hora invalido. Utilize HH:MM";
+
+      if (document.form.aux_idforrev.value == 0) {
+        msg = msg + "Selecione a Forma Realização Evento. ";
+      }
+
+      if(msg == "")
+      return true
+      else{
+      alert(msg);
+      return false
+      }
+    }
 
     function LimparCampos(){
-   document.form.cdevento.value = '';
-   document.form.cdeixtem.value = '';  
-}
+      document.form.cdevento.value = '';
+      document.form.cdeixtem.value = '';
+    }
 
-function Recarrega(){ 
-  document.form.cdeixtem.value = document.form.aux_cdtemeix.value;
-  document.form.cdevento.value = document.form.aux_cdevento.value;
-  document.form.idforrev.value = document.form.aux_idforrev.value; 
-  document.form.aux_cddopcao.value='rec';
-  armazenaFacili(); 
-  document.form.nrpropos.disabled = false;
-  document.form.submit();  
-}
+    function Recarrega(){
+      document.form.cdeixtem.value = document.form.aux_cdtemeix.value;
+      document.form.cdevento.value = document.form.aux_cdevento.value;
+      document.form.idforrev.value = document.form.aux_idforrev.value;
+      document.form.aux_cddopcao.value='rec';
+      armazenaFacili();
+      document.form.nrpropos.disabled = false;
+      document.form.submit();
+    }
 
     function CarregaPrincipal(){}
 
     function Incluir(){
-   var vaux = document.form.aux_lspermis.value; 
-   if (vaux.substring(0,1) == 'I'){ 
-          if (document.form.aux_stdopcao.value == 'i'){ 
-                   alert('Você já esta no modo de inclusão'); 
-                   return false
-                } 
-             else{ 
-                   document.form.aux_cddopcao.value ='in'; 
-                   document.form.aux_stdopcao.value ='i';
-                   LimparCampos(); 
-                   return true
-                } 
-       } 
-    else{ 
-          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-          return false
-       }
-}
-
-function Salvar(){
-
-   // Formata a carga horária
-   document.form.qtcarhor.value = document.form.qtcarhor.value.replace(":",",");
-   
-   var vaux = document.form.aux_lspermis.value; 
-   if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')) { 
-      if (ValidaDados(document.forms[0])) {
-         document.form.aux_cddopcao.value='sa';
-      document.form.cdeixtem.value = document.form.aux_cdeixtem.value;
-
-         document.form.cdevento.value = document.form.aux_cdevento.value;
-      document.form.idforrev.value = document.form.aux_idforrev.value;
-		 
-		 armazenaFacili(); 		
-         status = 'Salvando. Por favor, aguarde ...';
-         document.form.nrpropos.disabled = false;
-         document.form.submit(); 
-         return true;
-      } 
-      else { 
-            return false;
-      }  
-   }
-   else { 
-         alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-         return false;
-   }
-}
-
-
-function MostraEixos(){
-  for (var i=document.all.aux_cdeixtem.options.length; i>=0; i--){
-    document.all.aux_cdeixtem.remove(i); 
-  }
-   //alert("MostraEixos: " + document.form.aux_cdtemeix.value);
-  var oOption;
-  var idevento;
-  var cdcooper;
-  var cdeixtem;
-  setTimeout(function(){
-	   oOption = document.createElement("OPTION");
-	   document.all.aux_cdeixtem.options.add(oOption);
-	   oOption.innerText = "Sem Eixo Tematico";
-	   oOption.value = 0;
-	   arrayinfos = document.form.aux_cdtemeix.value.split("-");
-	   //arrayinfos = document.form.cdeixtem.value.split("-");
-	   
-	   nrseqtem = arrayinfos[0];
-	   idevento = arrayinfos[1]; 
-	   cdcooper = arrayinfos[2]; 
-	   cdeixtem = arrayinfos[3]; 
-	   
-	   for(i=0;i<meixos.length;i++){     
-		if (meixos[i].idevento == idevento && meixos[i].cdcooper == cdcooper && meixos[i].cdeixtem == cdeixtem ){	
-			 oOption = document.createElement("OPTION");
-			 document.all.aux_cdeixtem.options.add(oOption);
-			 oOption.innerText = meixos[i].dseixtem;
-			 oOption.value = meixos[i].cdeixtem;
-		  if(meixos[i].cdeixtem == cdeixtem){ 
-			oOption.selected = meixos[i].cdeixtem;
-		  }
-		}
-	 }
-	},2000);
-}
-
-function MostraEventos(arrayDados){
-
-			var oOption;
-			
-  for (var i=document.all.aux_cdevento.options.length; i>=0; i--){
-    document.all.aux_cdevento.remove(i); 
-  }
-  
-  arrayinfos = arrayDados.split("-");
-  nrseqtem = arrayinfos[0];
-  idevento = arrayinfos[1]; 
-  cdcooper = arrayinfos[2]; 
-  cdeixtem = arrayinfos[3]; 	
-  cdevento = document.form.cdevento.value;
-  
-  oOption = document.createElement("OPTION");
-  document.all.aux_cdevento.options.add(oOption);
-  oOption.innerText = "Sem vínculo";
-  oOption.value = 0;
-
-  for(i=0;i<mevento.length;i++){   
-				if(parseInt(mevento[i].nrseqtem) == parseInt(nrseqtem)){
-      oOption = document.createElement("OPTION");
-      document.all.aux_cdevento.options.add(oOption);
-      oOption.innerText = mevento[i].nmevento;
-      oOption.value = mevento[i].cdevento;
-      
-      if(mevento[i].cdevento == cdevento){ 
-        oOption.selected = mevento[i].cdevento;
+      var vaux = document.form.aux_lspermis.value;
+      if (vaux.substring(0,1) == 'I'){
+      if (document.form.aux_stdopcao.value == 'i'){
+      alert('Você já esta no modo de inclusão');
+      return false
+      }
+      else{
+      document.form.aux_cddopcao.value ='in';
+      document.form.aux_stdopcao.value ='i';
+      LimparCampos();
+      return true
+      }
+      }
+      else{
+      alert('Desculpe, mas você não tem permissão para executar esta função.');
+      return false
       }
     }
-  }
+
+    function Salvar(){
+
+      // Formata a carga horária
+      document.form.qtcarhor.value = document.form.qtcarhor.value.replace(":",",");
+
+      var vaux = document.form.aux_lspermis.value;
+      if ((vaux.substring(1,2) == 'A') || (document.form.aux_stdopcao.value == 'i')) {
+      if (ValidaDados(document.forms[0])) {
+      document.form.aux_cddopcao.value='sa';
+      document.form.cdeixtem.value = document.form.aux_cdeixtem.value;
+
+      document.form.cdevento.value = document.form.aux_cdevento.value;
+      document.form.idforrev.value = document.form.aux_idforrev.value;
+
+      armazenaFacili();
+      status = 'Salvando. Por favor, aguarde ...';
+      document.form.nrpropos.disabled = false;
+      document.form.submit();
+      return true;
+      }
+      else {
+      return false;
+      }
+      }
+      else {
+      alert('Desculpe, mas você não tem permissão para executar esta função.');
+      return false;
+      }
+    }
+
+
+    function MostraEixos(){
+      for (var i=document.all.aux_cdeixtem.options.length; i>=0; i--){
+      document.all.aux_cdeixtem.remove(i);
+      }
+      //alert("MostraEixos: " + document.form.aux_cdtemeix.value);
+      var oOption;
+      var idevento;
+      var cdcooper;
+      var cdeixtem;
+      setTimeout(function(){
+      oOption = document.createElement("OPTION");
+      document.all.aux_cdeixtem.options.add(oOption);
+      oOption.innerText = "Sem Eixo Tematico";
+      oOption.value = 0;
+      arrayinfos = document.form.aux_cdtemeix.value.split("-");
+      //arrayinfos = document.form.cdeixtem.value.split("-");
+
+      nrseqtem = arrayinfos[0];
+      idevento = arrayinfos[1];
+      cdcooper = arrayinfos[2];
+      cdeixtem = arrayinfos[3];
+
+      for(i=0;i<meixos.length;i++){
+      if (meixos[i].idevento == idevento && meixos[i].cdcooper == cdcooper && meixos[i].cdeixtem == cdeixtem ){
+      oOption = document.createElement("OPTION");
+      document.all.aux_cdeixtem.options.add(oOption);
+      oOption.innerText = meixos[i].dseixtem;
+      oOption.value = meixos[i].cdeixtem;
+      if(meixos[i].cdeixtem == cdeixtem){
+      oOption.selected = meixos[i].cdeixtem;
+      }
+      }
+      }
+      },2000);
+    }
+
+    function MostraEventos(arrayDados){
+
+      for (var i=document.all.aux_cdevento.options.length; i>=0; i--){
+        document.all.aux_cdevento.remove(i);
+      }
+
+      var oOption;
+      arrayinfos = arrayDados.split("-");
+      nrseqtem = arrayinfos[0];
+      idevento = arrayinfos[1];
+      cdcooper = arrayinfos[2];
+      cdeixtem = arrayinfos[3];
+      cdevento = document.form.cdevento.value;
+
+      oOption = document.createElement("OPTION");
+      document.all.aux_cdevento.options.add(oOption);
+      oOption.innerText = "Sem vínculo";
+      oOption.value = 0;
+
+      for(i=0;i<mevento.length;i++){
+		  if(parseInt(mevento[i].nrseqtem) == parseInt(nrseqtem)){
+			  oOption = document.createElement("OPTION");
+			  document.all.aux_cdevento.options.add(oOption);
+			  oOption.innerText = mevento[i].nmevento;
+			  oOption.value = mevento[i].cdevento;
+
+			  if(mevento[i].cdevento == cdevento){
+				oOption.selected = mevento[i].cdevento;
+			  }
+		  }
+      }
 	  
-}
+    }
 
     function MostraFormaRealizacao(){
-		  
-   for (var i=document.all.aux_idforrev.options.length; i>=0; i--)
-      document.all.aux_idforrev.remove(i); 
 
-   var oOption;
-  
-   idforrev = document.form.idforrev.value;
-   
-   oOption = document.createElement("OPTION");
-   document.all.aux_idforrev.options.add(oOption);
-   oOption.innerText = "-- Selecionar --";
-   oOption.value = 0;
-   if (idforrev == 0){ 
-		oOption.selected = idforrev;
-	}	
-   	    
-    oOption = document.createElement("OPTION");
-	document.all.aux_idforrev.options.add(oOption);
-	oOption.innerText ="PRESENCIAL";
-	oOption.value = 1;
-	
-	if (idforrev == 1){ 
-		oOption.selected = idforrev;
-	}
-	
-	oOption = document.createElement("OPTION");
-	document.all.aux_idforrev.options.add(oOption);
-	oOption.innerText ="EAD";
-	oOption.value = 2;
-	
-	if (idforrev == 2){ 
-		oOption.selected = idforrev;
-	}
-	
-	oOption = document.createElement("OPTION");
-	document.all.aux_idforrev.options.add(oOption);
-	oOption.innerText ="HIBRIDO";
-	oOption.value = 3;
-	
-	if (idforrev == 3){ 
-		oOption.selected = idforrev;
-	}	
-      
-}
+      for (var i=document.all.aux_idforrev.options.length; i>=0; i--)
+      document.all.aux_idforrev.remove(i);
 
-function AdFacili(){
+      var oOption;
 
-  document.form.aux_cddopcao.value='';
-  
-  VarURL = document.form.aux_dsendurl.value  + '/wpgd0016.htm?aux_idevento=' + document.form.aux_idevento.value + '&aux_nrcpfcgc=' + document.form.aux_nrcpfcgc.value+
-  '&aux_cdtemeix=' + document.form.aux_cdtemeix.value+'&aux_cdeixtem=' + document.form.aux_cdeixtem.value +
-  //'&aux_cdevento=' + document.form.aux_cdevento.value+'&aux_dspublic=' + document.form.aux_dspublic.value +
-  '&aux_cdevento=' + document.form.aux_cdevento.value +
-  '&aux_idforrev=' + document.form.aux_idforrev.value+'&aux_flgtrinc=' + document.form.aux_flgtrinc.value+
-  '&dtmvtolt=' + document.form.dtmvtolt.value+'&dtvalpro=' + document.form.dtvalpro.value +
-  '&dsobjeti=' + document.form.dsobjeti.value+'&dsconteu=' + document.form.dsconteu.value +
-  '&dsmetodo=' + document.form.dsmetodo.value+'&nmevefor=' + document.form.nmevefor.value +
-  //'&dsobserv=' + document.form.dsobserv.value+'&dsidadpa=' + document.form.dsidadpa.value +  
-  '&dsobserv=' + document.form.dsobserv.value +
-  '&txfacili=' + document.form.txfacili.value+'&vlinvest=' + document.form.vlinvest.value +
-  '&dsprereq=' + document.form.dsprereq.value+'&qtcarhor=' + document.form.qtcarhor.value +
-  '&aux_lsfacili=' + document.form.aux_lsfacili.value;
-  
-  window.open(VarURL,'Facili','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=520,height=620,top=10,left=10');
-}
+      idforrev = document.form.idforrev.value;
 
-function AdRecurso(){
-  armazenaFacili();	
-  document.form.aux_cddopcao.value='';
-  VarURL = document.form.aux_dsendurl.value  + '/wpgd0012d.htm?aux_idevento=' + document.form.aux_idevento.value + '&aux_nrcpfcgc=' + document.form.aux_nrcpfcgc.value + 
-  '&aux_dspropos=' + document.form.nrpropos.value+'&aux_cdcopope=' + document.form.aux_cdcopope.value +
-  '&aux_cdtemeix=' + document.form.aux_cdtemeix.value+'&aux_cdeixtem=' + document.form.aux_cdeixtem.value +
-  //'&aux_cdevento=' + document.form.aux_cdevento.value+'&aux_dspublic=' + document.form.aux_dspublic.value +
-  '&aux_cdevento=' + document.form.aux_cdevento.value +
-  '&aux_idforrev=' + document.form.aux_idforrev.value+'&aux_flgtrinc=' + document.form.aux_flgtrinc.value+
-  '&dtmvtolt=' + document.form.dtmvtolt.value+'&dtvalpro=' + document.form.dtvalpro.value +
-  '&dsobjeti=' + document.form.dsobjeti.value+'&dsconteu=' + document.form.dsconteu.value +
-  '&dsmetodo=' + document.form.dsmetodo.value+'&nmevefor=' + document.form.nmevefor.value +
-  //'&dsobserv=' + document.form.dsobserv.value + '&dsidadpa=' + document.form.dsidadpa.value +
-  '&dsobserv=' + document.form.dsobserv.value + 
-  '&txfacili=' + document.form.txfacili.value+'&vlinvest=' + document.form.vlinvest.value +
-  '&dsprereq=' + document.form.dsprereq.value+'&qtcarhor=' + document.form.qtcarhor.value +
-  '&aux_lsfacili=' + document.form.aux_lsfacili.value +'&aux_idvapost=1'  ;
-   
-  
-  window.open(VarURL,'Recurso','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=720,height=200,top=10,left=10');
-}
+      oOption = document.createElement("OPTION");
+      document.all.aux_idforrev.options.add(oOption);
+      oOption.innerText = "-- Selecionar --";
+      oOption.value = 0;
+      if (idforrev == 0){
+      oOption.selected = idforrev;
+      }
 
-function PosicionaEvento(){ 
+      oOption = document.createElement("OPTION");
+      document.all.aux_idforrev.options.add(oOption);
+      oOption.innerText ="PRESENCIAL";
+      oOption.value = 1;
+
+      if (idforrev == 1){
+      oOption.selected = idforrev;
+      }
+
+      oOption = document.createElement("OPTION");
+      document.all.aux_idforrev.options.add(oOption);
+      oOption.innerText ="EAD";
+      oOption.value = 2;
+
+      if (idforrev == 2){
+      oOption.selected = idforrev;
+      }
+
+      oOption = document.createElement("OPTION");
+      document.all.aux_idforrev.options.add(oOption);
+      oOption.innerText ="HIBRIDO";
+      oOption.value = 3;
+
+      if (idforrev == 3){
+      oOption.selected = idforrev;
+      }
+
+    }
+
+    function AdFacili(){
+
+      document.form.aux_cddopcao.value='';
+
+      VarURL = document.form.aux_dsendurl.value  + '/wpgd0016.htm?aux_idevento=' + document.form.aux_idevento.value + '&aux_nrcpfcgc=' + document.form.aux_nrcpfcgc.value+
+      '&aux_cdtemeix=' + document.form.aux_cdtemeix.value+'&aux_cdeixtem=' + document.form.aux_cdeixtem.value +
+      //'&aux_cdevento=' + document.form.aux_cdevento.value+'&aux_dspublic=' + document.form.aux_dspublic.value +
+      '&aux_cdevento=' + document.form.aux_cdevento.value +
+      '&aux_idforrev=' + document.form.aux_idforrev.value+'&aux_flgtrinc=' + document.form.aux_flgtrinc.value+
+      '&dtmvtolt=' + document.form.dtmvtolt.value+'&dtvalpro=' + document.form.dtvalpro.value +
+      '&dsobjeti=' + document.form.dsobjeti.value+'&dsconteu=' + document.form.dsconteu.value +
+      '&dsmetodo=' + document.form.dsmetodo.value+'&nmevefor=' + document.form.nmevefor.value +
+      //'&dsobserv=' + document.form.dsobserv.value+'&dsidadpa=' + document.form.dsidadpa.value +
+      '&dsobserv=' + document.form.dsobserv.value +
+      '&txfacili=' + document.form.txfacili.value+'&vlinvest=' + document.form.vlinvest.value +
+      '&dsprereq=' + document.form.dsprereq.value+'&qtcarhor=' + document.form.qtcarhor.value +
+      '&aux_lsfacili=' + document.form.aux_lsfacili.value;
+
+      window.open(VarURL,'Facili','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=520,height=620,top=10,left=10');
+    }
+
+    function AdRecurso(){
+      armazenaFacili();
+      document.form.aux_cddopcao.value='';
+      VarURL = document.form.aux_dsendurl.value  + '/wpgd0012d.htm?aux_idevento=' + document.form.aux_idevento.value + '&aux_nrcpfcgc=' + document.form.aux_nrcpfcgc.value +
+      '&aux_dspropos=' + document.form.nrpropos.value+'&aux_cdcopope=' + document.form.aux_cdcopope.value +
+      '&aux_cdtemeix=' + document.form.aux_cdtemeix.value+'&aux_cdeixtem=' + document.form.aux_cdeixtem.value +
+      //'&aux_cdevento=' + document.form.aux_cdevento.value+'&aux_dspublic=' + document.form.aux_dspublic.value +
+      '&aux_cdevento=' + document.form.aux_cdevento.value +
+      '&aux_idforrev=' + document.form.aux_idforrev.value+'&aux_flgtrinc=' + document.form.aux_flgtrinc.value+
+      '&dtmvtolt=' + document.form.dtmvtolt.value+'&dtvalpro=' + document.form.dtvalpro.value +
+      '&dsobjeti=' + document.form.dsobjeti.value+'&dsconteu=' + document.form.dsconteu.value +
+      '&dsmetodo=' + document.form.dsmetodo.value+'&nmevefor=' + document.form.nmevefor.value +
+      //'&dsobserv=' + document.form.dsobserv.value + '&dsidadpa=' + document.form.dsidadpa.value +
+      '&dsobserv=' + document.form.dsobserv.value +
+      '&txfacili=' + document.form.txfacili.value+'&vlinvest=' + document.form.vlinvest.value +
+      '&dsprereq=' + document.form.dsprereq.value+'&qtcarhor=' + document.form.qtcarhor.value +
+      '&aux_lsfacili=' + document.form.aux_lsfacili.value +'&aux_idvapost=1'  ;
+
+
+      window.open(VarURL,'Recurso','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=720,height=200,top=10,left=10');
+    }
+
+    function PosicionaEvento(){
 
       document.form.aux_cdeixtem.value = document.form.cdeixtem.value;
 
-   document.form.aux_cdevento.value = document.form.cdevento.value;
-   //setTimeout(function(){MostraEixos;},1000);   
-   MostraEixos(); 
-   MostraFormaRealizacao();      
- 
+      document.form.aux_cdevento.value = document.form.cdevento.value;
+      //setTimeout(function(){MostraEixos;},1000);
+      MostraEixos();
+      MostraFormaRealizacao();
+
       setTimeout(function(){MostraEventos(document.form.aux_cdtemeix.value);},2000);
-} 
+    }
     
-function mostraFacili(){ 
-  var row;var cell;
+    function mostraFacili(){
+      var row;var cell;
 
-  for(var i=document.all.tbfacili.rows.length; i>1; i--)
-     document.all.tbfacili.deleteRow(i-1); 
+      for(var i=document.all.tbfacili.rows.length; i>1; i--)
+      document.all.tbfacili.deleteRow(i-1);
 
-  for(i=0;i<mfacili.length;i++)
-  {
+      for(i=0;i<mfacili.length;i++)
+      {
 
-     row=tbfacili.insertRow();	 
-     row.onclick=mudaCor;
-     row.checked = false;
-     row.value=mfacili[i].nmfacili;
-     row.title="Clique para vinculá-lo à esta proposta."
-	 
-     if(mfacili[i].flgescol=='yes')
-     {
-        row.bgColor = '#CCCCCC';
-        row.checked = true;
-     }
+      row=tbfacili.insertRow();
+      row.onclick=mudaCor;
+      row.checked = false;
+      row.value=mfacili[i].nmfacili;
+      row.title="Clique para vinculá-lo à esta proposta."
 
-     cell=row.insertCell();   
-     cell.className = 'txtNormal';
-     cell.height = 20;
-     cell.width = '100%';
-     cell.align = 'left';
-     cell.style.cursor = 'hand';
-     cell.innerText= '  ' + mfacili[i].nmfacili;
-	 
-     // gastar 1 célula
-     //cell=row.insertCell();	  
-  }
-}
+      if(mfacili[i].flgescol=='yes')
+      {
+      row.bgColor = '#CCCCCC';
+      row.checked = true;
+      }
 
-function mostraRecurso(){
-  var row;
-  var cell;
-  var cor = '#EEE9E9';
-  
-  for(var i=document.all.tbrecurs.rows.length; i>1; i--)
-     document.all.tbrecurs.deleteRow(i-1); 
-	
-  for(i=0;i<mrecurso.length;i++)
-  {
-	
-     row=tbrecurs.insertRow();	
-	 if (cor == '#FFFFFF')
-		cor = '#EEE9E9';
-	 else
-		cor = '#FFFFFF';
+      cell=row.insertCell();
+      cell.className = 'txtNormal';
+      cell.height = 20;
+      cell.width = '100%';
+      cell.align = 'left';
+      cell.style.cursor = 'hand';
+      cell.innerText= '  ' + mfacili[i].nmfacili;
 
-	 row.bgColor = cor;
-     row.value=mrecurso[i].dsrecurs;
-	 row.border = 0;
-     row.title="Recurso vinculado à esta proposta."
-	 
-     cell=row.insertCell();   
-     cell.className = 'txtNormal';
-     cell.height = 20;
-     cell.width = '90%';
-     cell.align = 'left';    
-	 cell.innerText= '  ' + mrecurso[i].dsrecurs;
-	 
-	 cell=row.insertCell();   
-     cell.className = 'txtNormal';
-     cell.height = 20;
-     cell.width = '5%';
-     cell.align = 'center';
-     cell.style.cursor = 'hand';
-     linky='<a href="#." onClick=EdRecurso("' + mrecurso[i].rowidrec + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_atualizar.gif" title="Atualizar" border="0"></a>';
-     cell.innerHTML=linky;
-	 
-	  cell=row.insertCell();   
-     cell.className = 'txtNormal';
-     cell.height = 20;
-     cell.width = '5%';
-     cell.align = 'center';
-     cell.style.cursor = 'hand';
-	 linky='<a href="#." onClick=ExRecurso("' +  mrecurso[i].rowidrec + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
-     cell.innerHTML=linky; 
-	
-	   
-  }
+      // gastar 1 célula
+      //cell=row.insertCell();
+      }
+      }
 
-}
+      function mostraRecurso(){
+      var row;
+      var cell;
+      var cor = '#EEE9E9';
+
+      for(var i=document.all.tbrecurs.rows.length; i>1; i--)
+      document.all.tbrecurs.deleteRow(i-1);
+
+      for(i=0;i<mrecurso.length;i++)
+      {
+
+      row=tbrecurs.insertRow();
+      if (cor == '#FFFFFF')
+      cor = '#EEE9E9';
+      else
+      cor = '#FFFFFF';
+
+      row.bgColor = cor;
+      row.value=mrecurso[i].dsrecurs;
+      row.border = 0;
+      row.title="Recurso vinculado à esta proposta."
+
+      cell=row.insertCell();
+      cell.className = 'txtNormal';
+      cell.height = 20;
+      cell.width = '90%';
+      cell.align = 'left';
+      cell.innerText= '  ' + mrecurso[i].dsrecurs;
+
+      cell=row.insertCell();
+      cell.className = 'txtNormal';
+      cell.height = 20;
+      cell.width = '5%';
+      cell.align = 'center';
+      cell.style.cursor = 'hand';
+      linky='<a href="#." onClick=EdRecurso("' + mrecurso[i].rowidrec + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_atualizar.gif" title="Atualizar" border="0"></a>';
+      cell.innerHTML=linky;
+
+      cell=row.insertCell();
+      cell.className = 'txtNormal';
+      cell.height = 20;
+      cell.width = '5%';
+      cell.align = 'center';
+      cell.style.cursor = 'hand';
+      linky='<a href="#." onClick=ExRecurso("' +  mrecurso[i].rowidrec + '"); class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';
+      cell.innerHTML=linky;
+
+
+      }
+
+    }
     
     function EdRecurso(rowid){
-  document.form.aux_cddopcao.value='pe';
-  VarURL = document.form.aux_dsendurl.value  + '/wpgd0012d.htm?aux_idevento=' + document.form.aux_idevento.value + '&aux_nrcpfcgc=' + document.form.aux_nrcpfcgc.value + '&aux_dspropos=' + document.form.nrpropos.value + '&LinkRowid=' + rowid + '&aux_cddopcao=' + document.form.aux_cddopcao.value+'&aux_cdcopope=' + document.form.aux_cdcopope.value ;
-  window.open(VarURL,'Recurso','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=720,height=200,top=10,left=10');
-}
+      document.form.aux_cddopcao.value='pe';
+      VarURL = document.form.aux_dsendurl.value  + '/wpgd0012d.htm?aux_idevento=' + document.form.aux_idevento.value + '&aux_nrcpfcgc=' + document.form.aux_nrcpfcgc.value + '&aux_dspropos=' + document.form.nrpropos.value + '&LinkRowid=' + rowid + '&aux_cddopcao=' + document.form.aux_cddopcao.value+'&aux_cdcopope=' + document.form.aux_cdcopope.value ;
+      window.open(VarURL,'Recurso','toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=no,resizable=yes,width=720,height=200,top=10,left=10');
+    }
 
     function ExRecurso(rowid){
-   if(rowid != "")
-   {
+      if(rowid != "")
+      {
       if (!confirm('Confirma Exclusão do Recurso?'))
       {
-         return false;
+      return false;
       }
-   
+
       document.form.aux_nrdrowid.value = rowid;
       document.form.aux_cddopcao.value = "exr";
       document.form.nrpropos.disabled = false;
       document.form.submit();
-   }
-}
-function mudaCor(){
+      }
+      }
+      function mudaCor(){
 
-  if (this.checked==false){
+      if (this.checked==false){
       this.bgColor = '#CCCCCC';
-      this.checked = true; 
-  }
-  else{
+      this.checked = true;
+      }
+      else{
       this.bgColor = '#FFFFFF';
       this.checked = false;
-  }
-}
-
-
-function mostraDiv(nomediv){   
-  if(nomediv=='')
-     nomediv='divProposta';
-
-  document.form.aux_nmpagina.value=nomediv;
-  document.all.divProposta.style.display = 'none';
-  document.all.divFacili.style.display = 'none';
-  document.all.divRecurso.style.display = 'none';
-  document.all[nomediv].style.display = 'block';
-
-  if(nomediv != 'divProposta'){
-     document.form.nrpropos.readOnly = true;
-     document.form.dtmvtolt.readOnly = true;
-     document.form.dtvalpro.readOnly = true;
-  }else{
-    if(document.form.aux_nrdrowid.value != "?"){
-      document.form.nrpropos.readOnly = false;
+      }
     }
-		document.form.dtmvtolt.readOnly = false;
-		document.form.dtvalpro.readOnly = false;
-  }
-}
 
-function montaFacili(){
-  //alert('montaFacili');
-  // mostra os facilitadores na textarea
-  document.form.txfacili.value = '';  
-  for(var i=0;i<tbfacili.rows.length; i++)
-  {
-     if(tbfacili.rows[i].checked)
-        if(document.form.txfacili.value=='')
-          document.form.txfacili.value = '- ' + tbfacili.rows[i].value;
-        else
-          document.form.txfacili.value = document.form.txfacili.value + '\n- ' + tbfacili.rows[i].value;	    
-  }
-}
 
-function montaRecurso(){
-  
+    function mostraDiv(nomediv){
+      if(nomediv=='')
+      nomediv='divProposta';
+
+      document.form.aux_nmpagina.value=nomediv;
+      document.all.divProposta.style.display = 'none';
+      document.all.divFacili.style.display = 'none';
+      document.all.divRecurso.style.display = 'none';
+      document.all[nomediv].style.display = 'block';
+
+      if(nomediv != 'divProposta'){
+      document.form.nrpropos.readOnly = true;
+      document.form.dtmvtolt.readOnly = true;
+      document.form.dtvalpro.readOnly = true;
+      }else{
+      if(document.form.aux_nrdrowid.value != "?"){
+      document.form.nrpropos.readOnly = false;
+      }
+      document.form.dtmvtolt.readOnly = false;
+      document.form.dtvalpro.readOnly = false;
+      }
+    }
+
+    function montaFacili(){
+      //alert('montaFacili');
+      // mostra os facilitadores na textarea
+      document.form.txfacili.value = '';
+      for(var i=0;i<tbfacili.rows.length; i++)
+      {
+      if(tbfacili.rows[i].checked)
+      if(document.form.txfacili.value=='')
+      document.form.txfacili.value = '- ' + tbfacili.rows[i].value;
+      else
+      document.form.txfacili.value = document.form.txfacili.value + '\n- ' + tbfacili.rows[i].value;
+      }
+    }
+
+    function montaRecurso(){
+
       // mostra os recursos na textarea
-  document.form.txrecurs.value = '';  
-  for(var i=0;i<tbrecurs.rows.length; i++)
-  {
-    
-	if(document.form.txrecurs.value=='')
-	  document.form.txrecurs.value = '- ' + tbrecurs.rows[i].value;
-	else
-	  document.form.txrecurs.value = document.form.txrecurs.value + '\n- ' + tbrecurs.rows[i].value;	    
-  }
-}
+      document.form.txrecurs.value = '';
+      for(var i=0;i<tbrecurs.rows.length; i++)
+      {
 
-function armazenaFacili(){
+      if(document.form.txrecurs.value=='')
+      document.form.txrecurs.value = '- ' + tbrecurs.rows[i].value;
+      else
+      document.form.txrecurs.value = document.form.txrecurs.value + '\n- ' + tbrecurs.rows[i].value;
+      }
+    }
+
+    function armazenaFacili(){
 
       document.form.aux_lsfacili.value = '';
 
-   for(var i=0;i<tbfacili.rows.length; i++){ 
-	 if(tbfacili.rows[i].checked)
-	   if(document.form.aux_lsfacili.value=='')
-		 document.form.aux_lsfacili.value = mfacili[i].idfacili;
-	   else
-		 document.form.aux_lsfacili.value = document.form.aux_lsfacili.value  + ',' + mfacili[i].idfacili;
-	}
+      for(var i=0;i<tbfacili.rows.length; i++){
+      if(tbfacili.rows[i].checked)
+      if(document.form.aux_lsfacili.value=='')
+      document.form.aux_lsfacili.value = mfacili[i].idfacili;
+      else
+      document.form.aux_lsfacili.value = document.form.aux_lsfacili.value  + ',' + mfacili[i].idfacili;
+      }
 
-}
+    }
 
-function restaurar(){ //alert('restaurar');
-  document.form.aux_cddopcao.value='';		
-  
+    function restaurar(){ //alert('restaurar');
+      document.form.aux_cddopcao.value='';
+
       armazenaFacili();
       document.form.aux_nrpropos.value = document.form.nrpropos.value;
 
-  status = 'Fechando tela. Por favor, aguarde ...';
-  document.form.submit();   
-  mostraFacili();
-  montaFacili();
-  montaRecurso();  
-  
-  mostraDiv('divProposta');
-}
+      status = 'Fechando tela. Por favor, aguarde ...';
+      document.form.submit();
+      mostraFacili();
+      montaFacili();
+      montaRecurso();
 
-function excluido(){ 
- alert('Atualizacao executada com sucesso');
- window.opener.mostraDiv('divRecurso');
-}
+      mostraDiv('divProposta');
+    }
 
-// tira as barras caso não tiver valor na data
-if (document.form.dtvalpro.value == '/  /')
-    document.form.dtvalpro.value = '';
+    function excluido(){
+      alert('Atualizacao executada com sucesso');
+      window.opener.mostraDiv('divRecurso');
+    }
 
-//PosicionaEvento();
-mostraFacili();
-montaFacili();
-mostraRecurso();
-montaRecurso();
+    // tira as barras caso não tiver valor na data
+    if (document.form.dtvalpro.value == '/  /')
+      document.form.dtvalpro.value = '';
 
-
-
-if (document.form.idtrainc.value == 'S') {
-	document.getElementById("aux_flgtrinc").checked = true;
-}else{
-	document.getElementById("aux_flgtrinc").checked = false;
-}
-mostraDiv(document.form.aux_nmpagina.value);
+    //PosicionaEvento();
+    mostraFacili();
+    montaFacili();
+    mostraRecurso();
+    montaRecurso();
 
 
-// Funcao: FormataData
-// Objetivo: Preenche o campo de data com as barras, possibilitando que o usuário digite apenas 
-//    os números correspondentes à data
-// Parametros de Entrada: 
-//    campo: indica qual campo da tela deve ser formatado para data
-//    teclapress: qual tecla o usuário pressionou
-// Parametros de Saida: 
-//    campo já com a data formatada
-function FormataData(campo,teclapress)  {
-   
-   var tecla = teclapress.keycode;
-   vr = teclapress;
-  
-   vr = vr.replace(".",""); 
-   vr = vr.replace("/",""); 
-   tam = vr.length ;
-           
-   if ( tecla != 9 && tecla != 8 )   {
-   
-      if ( tam > 2 && tam < 5 )   
-	     document.form[campo].value = vr.substr(0, tam - 2) + '/' + vr.substr( tam - 2, tam );
-	  if ( tam > 5 && tam < 8 )  
-	     document.form[campo].value = vr.substr(0, 2) + '/' +
-		    vr.substr( 2, 2) + '/' + vr.substr( 4, 4);
-	}	  
-}
 
-function fecharTela(){
-    document.form.aux_cddopcao.value='ft';		
-    status = 'Fechando tela. Por favor, aguarde ...';
-    document.form.submit(); 
-}
+    if (document.form.idtrainc.value == 'S') {
+      document.getElementById("aux_flgtrinc").checked = true;
+    }else{
+      document.getElementById("aux_flgtrinc").checked = false;
+    }
+    mostraDiv(document.form.aux_nmpagina.value);
+
+
+    // Funcao: FormataData
+    // Objetivo: Preenche o campo de data com as barras, possibilitando que o usuário digite apenas
+    //    os números correspondentes à data
+    // Parametros de Entrada:
+    //    campo: indica qual campo da tela deve ser formatado para data
+    //    teclapress: qual tecla o usuário pressionou
+    // Parametros de Saida:
+    //    campo já com a data formatada
+    function FormataData(campo,teclapress)  {
+
+      var tecla = teclapress.keycode;
+      vr = teclapress;
+
+      vr = vr.replace(".","");
+      vr = vr.replace("/","");
+      tam = vr.length ;
+
+      if ( tecla != 9 && tecla != 8 )   {
+
+      if ( tam > 2 && tam < 5 )
+      document.form[campo].value = vr.substr(0, tam - 2) + '/' + vr.substr( tam - 2, tam );
+      if ( tam > 5 && tam < 8 )
+      document.form[campo].value = vr.substr(0, 2) + '/' +
+      vr.substr( 2, 2) + '/' + vr.substr( 4, 4);
+      }
+    }
+
+    function fecharTela(){
+      document.form.aux_cddopcao.value='ft';
+      status = 'Fechando tela. Por favor, aguarde ...';
+      document.form.submit();
+    }
 
     //Garantir que não seja perdido o numero da proposta ao restaurar a tela
     if (document.form.nrpropos.value == ""){
       document.form.nrpropos.value = document.form.aux_nrpropos.value;
     }
 
-// Desabilita os campos chaves, se estiver posicionado em algum registro
+    // Desabilita os campos chaves, se estiver posicionado em algum registro
     if(document.form.aux_nrdrowid.value != "?"){
-   document.form.nrpropos.disabled = true;
-}
-    
-    layoutPadrao();
+      document.form.nrpropos.disabled = true;
+    }
     
   </script>
 </html>                                                                  

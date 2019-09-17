@@ -76,7 +76,11 @@ function formataCabecalho() {
 
     cCddopcao.unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 13 || e.keyCode == 9 || e.KeyCode == 18) {
-            cCdcooper.focus();
+            if (cCdcooper.length == 1) {
+                cCdcooper.focus();
+            } else {
+                btnOK();
+            }
             return false;
         }
     });
@@ -116,6 +120,41 @@ function formataFormulario(cddopcao) {
     $('#divMsgAjuda').css('display', 'block');
     $('#btVoltar', '#divMsgAjuda').show();
 
+    $('label[for="sit_pag_divergente"]', '#frmTab098').css({'width':'309px'}).addClass('rotulo');
+    $('#sit_pag_divergente', '#frmTab098').addClass('rotulo-linha').css({'width':'135px'});
+    
+    $('label[for="pag_a_menor"]', '#frmTab098').css({'width':'309px'}).addClass('rotulo');
+    $('#pag_a_menor', '#frmTab098').addClass('rotulo-linha');
+    
+    $('label[for="pag_a_maior"]', '#frmTab098').css({'width':'309px'}).addClass('rotulo');
+    $('#pag_a_maior', '#frmTab098').addClass('rotulo-linha');
+    
+    $('label[for="tip_tolerancia"]', '#frmTab098').css({'width':'309px'}).addClass('rotulo');
+    $('#tip_tolerancia', '#frmTab098').addClass('rotulo-linha').css({'width':'135px'});
+    
+    $('label[for="vl_tolerancia"]', '#frmTab098').css({'width':'309px'}).addClass('rotulo');
+    $('#vl_tolerancia', '#frmTab098').addClass('rotulo-linha');
+    
+    $("#dtcadast", "#frmTab098").css({'width':'150px'});
+    
+    let vl_tolerancia = $('#vl_tolerancia', '#frmTab098').val();
+    
+	  $('#tip_tolerancia', '#frmTab098').unbind('change').bind('change',function() {
+        if ($('#tip_tolerancia', '#frmTab098').val() == 1) { // VALOR
+            $('#vl_tolerancia', '#frmTab098').removeClass('porcento').addClass('moeda').val('0');
+            $('#simbolo_percentual', '#frmTab098').hide();
+            layoutPadrao();
+        } else { // PERCENTUAL
+            $('#vl_tolerancia', '#frmTab098').removeClass('moeda').addClass('porcento').val('0');
+            $('#simbolo_percentual', '#frmTab098').show();
+            layoutPadrao();
+        }
+		    return false;
+    });
+    
+    $('#tip_tolerancia', '#frmTab098').trigger('change');
+    $('#vl_tolerancia', '#frmTab098').val(vl_tolerancia);
+    
     //opção de alteração
     if(cddopcao == 'A') {
         cTodosFormulario.habilitaCampo();
@@ -173,6 +212,15 @@ function carregarDados() {
 }
 
 function alterarDados() {
+    var sit_pag_divergente = $('#sit_pag_divergente', '#frmTab098').val() == 1;
+    var pag_a_menor = $('#pag_a_menor', '#frmTab098').prop('checked');
+    var pag_a_maior = $('#pag_a_maior', '#frmTab098').prop('checked');
+    
+    if (sit_pag_divergente && !pag_a_menor && !pag_a_maior) {
+		showError('error','Selecione pelo menos uma forma de devolu&ccedil;&atilde;o.','Alerta - Ayllos','hideMsgAguardo();');
+		return false;
+    }
+    
     showConfirmacao('Confirma a atualiza&ccedil;&atilde;o dos par&acirc;metros?', 'Tab098', 'grava_dados();', 'voltaDiv();estadoInicial();', 'sim.gif', 'nao.gif');
 }
 
@@ -189,6 +237,12 @@ function grava_dados() {
     var prz_baixa_cip = $('#prz_baixa_cip','#frmTab098').val();
     var vlvrboleto = $('#vlvrboleto','#frmTab098').val();
 
+    var sit_pag_divergente = $('#sit_pag_divergente', '#frmTab098').val();
+    var pag_a_menor = $('#pag_a_menor', '#frmTab098').prop('checked') ? 1 : 0 ;
+    var pag_a_maior = $('#pag_a_maior', '#frmTab098').prop('checked') ? 1 : 0 ;
+    var tip_tolerancia = $('#tip_tolerancia', '#frmTab098').val();
+    var vl_tolerancia = $('#vl_tolerancia', '#frmTab098').val();
+    
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, enviando informa&ccedil;&otilde;es ...");
 
@@ -201,6 +255,11 @@ function grava_dados() {
             vlcontig_cip            : vlcontig_cip,
             prz_baixa_cip           : prz_baixa_cip,
             vlvrboleto              : vlvrboleto,
+            sit_pag_divergente      : sit_pag_divergente,
+            pag_a_menor             : pag_a_menor,
+            pag_a_maior             : pag_a_maior,
+            tip_tolerancia          : tip_tolerancia,
+            vl_tolerancia           : vl_tolerancia,
             redirect             : "script_ajax" // Tipo de retorno do ajax
         },
         error: function(objAjax, responseError, objExcept) {

@@ -43,6 +43,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
                             
                31/10/2018 - Padrões - Complemento de descrições no retorno de erros.
                             (Belli - Envolti - Chd REQ0031662) 
+														
+							 09/09/2019 - PRJ573 - Incluir chamada da rotina para processamento dos arquivos do
+							              CPC (Nagasava - Supero).
+														
      ............................................................................. */
 
      DECLARE
@@ -1289,6 +1293,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
 
        --Salvar informacoes no banco de dados
        COMMIT;
+       
+			 -- PRJ573
+			 cybe0004.pc_importa_arquivo_cpc(pr_des_reto => vr_des_erro
+			                                ,pr_dscritic => pr_dscritic
+																			);
+       --
+			 IF pr_dscritic IS NOT NULL OR
+				  vr_des_erro <> 'OK' THEN
+				 --
+				 RAISE vr_exc_saida;
+				 --
+			 END IF;
        
        -- Limpa módulo e ação logado
        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);

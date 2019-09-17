@@ -567,6 +567,8 @@ PRJ319 - SMS Cobrança (Odirlei - AMcom)
                            PRJ438 - Agilidade de credito (Odirlei)          
               
 
+              10/06/2019 - Ajustes para atender o TED Judicial. Tratamento do tipo de transacao novo (22 - Ted Judicial).
+                           Jose Dill - Mouts (P475 - REQ39)
  .....................................................................................................*/
 { sistema/internet/includes/var_ibank.i }
 
@@ -864,7 +866,9 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                aux_dscedent = aux_dscedent + aux_nmabrevi.
                 END.                
             ELSE
-                    IF  tbgen_trans_pend.tptransacao = 4  THEN /** TED **/ 
+                    IF  tbgen_trans_pend.tptransacao = 4  
+                     OR tbgen_trans_pend.tptransacao = 22 /*REQ39*/
+                                                          THEN /** TED **/ 
                 DO: 
 
                         FIND tbspb_trans_pend 
@@ -1038,7 +1042,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                                        aux_dstptran = "Agendamento de Resgate".
                                     END.
                             ELSE 
-                            IF  tbcapt_trans_pend.tpoperacao = 4 THEN /* Cancelamento Agendamento */
+                            IF  tbcapt_trans_pend.tpoperacao = 4 OR tbcapt_trans_pend.tpoperacao = 22 THEN /* Cancelamento Agendamento */ /*REQ39*/
                                     DO:
                                 EMPTY TEMP-TABLE tt-agendamento.
     
@@ -1260,7 +1264,9 @@ PROCEDURE proc_cria_critica_transacao_oper:
                     IF  tbgen_trans_pend.tptransacao = 3 THEN
                     aux_dstiptra = "Credito de Salario".
                 ELSE
-                    IF  tbgen_trans_pend.tptransacao = 4 THEN
+                    IF  tbgen_trans_pend.tptransacao = 4 
+                    OR  tbgen_trans_pend.tptransacao = 22 /*REQ39*/
+                    THEN
                     aux_dstiptra = "TED".
             ELSE
                     IF  tbgen_trans_pend.tptransacao = 1 OR
@@ -2802,7 +2808,7 @@ PROCEDURE cancelar-agendamento:
               END.
         
         END.  /* se for TED */
-        ELSE IF craplau.cdtiptra = 4 THEN
+        ELSE IF craplau.cdtiptra = 4 OR craplau.cdtiptra = 22 THEN /*REQ39*/
         DO: 
            /*Somente pode ser permitido cancela-lo se o mesmo AINDA ESTA
              COM O STATUS DE "EFETIVADO". */
@@ -3187,7 +3193,7 @@ PROCEDURE cancelar-agendamento:
         END.
    
 	/* Se for agendamento de TED*/
-    IF craplau.cdtiptra = 4 THEN
+    IF craplau.cdtiptra = 4 OR craplau.cdtiptra = 22 THEN /*REQ39*/
        DO:
 	      RUN proc_gerar_log (INPUT par_cdcooper,
                               INPUT par_cdoperad,
@@ -5032,7 +5038,9 @@ PROCEDURE aprova_trans_pend:
                                 RETURN "NOK".
                             END.
                     END.
-                ELSE IF tbgen_trans_pend.tptransacao = 4 THEN /* TED */
+                ELSE IF tbgen_trans_pend.tptransacao = 4 
+                     OR tbgen_trans_pend.tptransacao = 22 /*REQ39*/
+                     THEN /* TED */
                     DO:
                         FOR FIRST tbspb_trans_pend WHERE tbspb_trans_pend.cdtransacao_pendente = aux_cddoitem NO-LOCK. END.
         
@@ -6584,7 +6592,9 @@ PROCEDURE aprova_trans_pend:
                                                 INPUT aux_conttran).
                                                     
                 	END.
-                ELSE IF tt-tbgen_trans_pend.tptransacao = 4 THEN /* TED */
+                ELSE IF tt-tbgen_trans_pend.tptransacao = 4 
+                     OR tt-tbgen_trans_pend.tptransacao = 22 /*REQ39*/
+                     THEN /* TED */
                 	DO:
                         ASSIGN aux_vltarifa = 0.
 
@@ -6792,6 +6802,7 @@ PROCEDURE aprova_trans_pend:
                                                                INPUT tt-tbspb_trans_pend.dshistorico,
                                                                INPUT tt-tbspb_trans_pend.nrispb_banco_favorecido,
                                                                INPUT tt-tbspb_trans_pend.idagenda,
+                                                               INPUT tt-tbgen_trans_pend.tptransacao, /*REQ39*/
                                                               OUTPUT aux_dstransa,
                                                               OUTPUT aux_dscritic).
 
@@ -12454,7 +12465,9 @@ PROCEDURE pc_valores_online:
                 ELSE IF tt-tbgen_trans_pend.idmovimento_conta = 3 THEN /* Agendamento */
                     ASSIGN tt-vlrdat.vlronlin = tt-vlrdat.vlronlin + tt-tbtransf_trans_pend.vltransferencia.
         END.
-    ELSE IF tt-tbgen_trans_pend.tptransacao = 4 THEN /* TED */
+    ELSE IF tt-tbgen_trans_pend.tptransacao = 4 
+         OR tt-tbgen_trans_pend.tptransacao = 22
+         THEN /* TED */
         DO:
             FOR FIRST tt-tbspb_trans_pend WHERE tt-tbspb_trans_pend.cdtransacao_pendente = tt-tbgen_trans_pend.cdtransacao_pendente NO-LOCK. END.
             
@@ -12715,6 +12728,8 @@ FUNCTION IdentificaMovCC RETURNS INTEGER
        par_tptransacao = 2 OR   /* Pagamentos               */
        par_tptransacao = 3 OR   /* Crédito de Salário       */
        par_tptransacao = 4 OR   /* TED                      */
+       par_tptransacao = 22 OR   /* TED JUDICIAL REQ39      */
+       
        par_tptransacao = 5 OR   /* Transferencia Intercoop. */
        par_tptransacao = 11 OR  /* Pagamento DARF/DAS */
        par_tptransacao = 14 OR  /* Pagamento FGTS */

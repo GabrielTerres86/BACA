@@ -14,6 +14,13 @@ BEGIN
                     nls_time_format = ''HH.MI.SSXFF AM''
                     nls_time_tz_format = ''HH.MI.SSXFF AM TZR'' nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM'' nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
   
+  BEGIN
+  sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBEPR_CRPS682_PREAPROV');
+  EXCEPTION
+    WHEN OTHERS THEN
+         NULL;
+  END;
+  
   sys.dbms_scheduler.create_job(job_name           => 'CECRED.JBEPR_CRPS682_PREAPROV'
                                ,job_type           => 'PLSQL_BLOCK'
                                ,job_action         => 'DECLARE

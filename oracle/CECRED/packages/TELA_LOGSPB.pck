@@ -134,6 +134,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
   --                Construido para o Projeto 475
   --
   --    Alteracoes:
+  --                11-06-2019 - Inclusão de uma coluna nos detalhes das mensagens (Fases).
+  --                             Jose Dill - Mouts (P475 - REQ66)
+  --
+  --				06-09-2019 - Remoção da máscara padrão de contas Ailos para apresentar contas de destino, utilizado máscara única.
+  --							 Diógenes Lazzarini - PRB0041598
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -760,6 +765,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
     Objetivo  : Rotina para carregar as mensagens SPB a serem apresentadas
 
     Alteracoes:
+    				  06-09-2019 - Remoção da máscara padrão de contas Ailos para apresentar contas de destino, utilizado máscara única.
+  							 	   Diógenes Lazzarini - PRB0041598
+  							 	       
     ............................................................................. */
     CURSOR cr_mensagem (pr_dtmensagem_de  IN DATE
                        ,pr_dtmensagem_ate IN DATE
@@ -1233,7 +1241,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
                     || '<cpfcnpjremet>'   || TRIM(vr_CNPJ_CPFCliDebtd)                                                 || '</cpfcnpjremet>'
                     || '<bancodest>'      || TRIM(vr_bancodest)                                                        || '</bancodest>'
                     || '<agenciadest>'    || TRIM(vr_AgCredtd)                                                         || '</agenciadest>'
-                    || '<contadest>'      || TRIM(gene0002.fn_mask_conta(pr_nrdconta => vr_CtCredtd))                  || '</contadest>'
+                    || '<contadest>'      || TRIM(gene0002.fn_mask(pr_dsorigi => vr_CtCredtd, pr_dsforma => 'zzzzzzzzzzzzzz.zzz.z')) || '</contadest>'
                     || '<nomedest>'       || vr_NomCliCredtd                                                           || '</nomedest>'
                     || '<cpfcnpjdest>'    || vr_CNPJ_CPFCliCredtd                                                      || '</cpfcnpjdest>'
                       || '<motdev>'         || vr_dsdevolucao                                                            || '</motdev>'
@@ -1270,7 +1278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
                                   ||';'|| TRIM(vr_CNPJ_CPFCliDebtd)
                                   ||';'|| TRIM(Replace(vr_bancodest,';',''))
                                   ||';'|| TRIM(vr_AgCredtd)
-                                  ||';'|| TRIM(gene0002.fn_mask_conta(pr_nrdconta => vr_CtCredtd))
+                                  ||';'|| TRIM(gene0002.fn_mask(pr_dsorigi => vr_CtCredtd, pr_dsforma => 'zzzzzzzzzzzzzz.zzz.z'))
                                   ||';'|| vr_NomCliCredtd
                                   ||';'|| vr_CNPJ_CPFCliCredtd
                                   ||';'|| Replace(vr_dsdevolucao,';','')
@@ -1448,6 +1456,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
     Sigla   : SPB
     Autor   : Marcelo Telles Coelho
     Data    : Outubro/2018                       Ultima atualizacao:
+    
+             11/06/2019 - Permitir consultar intervalo de 10 dias.
+                          Jose Dill - Mouts (P475 - REQ65)
 
     Dados referentes ao programa:
 
@@ -1543,10 +1554,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       vr_dscritic := 'Valor DE deve ser menor que o Valor ATE!';
       RAISE vr_exc_erro;
     END IF;
-    -- Validar intervalor de 7 dias
-    If (vr_dtmensagem_ate - vr_dtmensagem_de) > 7 then
+    -- Validar intervalor de 10 dias
+    If (vr_dtmensagem_ate - vr_dtmensagem_de) > 10 then
       vr_cdcritic := 0;
-      vr_dscritic := 'Período informado deve ser igual ou inferior a 7 dias!';
+      vr_dscritic := 'Período informado deve ser igual ou inferior a 10 dias!';
       RAISE vr_exc_erro;
     End If;
 
@@ -2000,6 +2011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
                       ,pr_idorigem       IN VARCHAR2) IS
     SELECT b.cdfase
           ,b.nmmensagem
+          ,d.nmfase
           ,b.dhmensagem
           ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 1),'><','>' || CHR(10) || '<') dsxml_completo_1
           ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 4001),'><','>' || CHR(10) || '<') dsxml_completo_2          
@@ -2014,13 +2026,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       FROM tbspb_msg_enviada a
           ,tbspb_msg_enviada_fase b
           ,tbspb_msg_xml c
+          ,tbspb_fase_mensagem d
      WHERE a.nrseq_mensagem         = pr_nrseq_mensagem
        AND b.nrseq_mensagem         = a.nrseq_mensagem
        AND c.nrseq_mensagem_xml (+) = b.nrseq_mensagem_xml
+       and b.cdfase                 = d.cdfase
        AND pr_idorigem              = 'E'
     UNION
     SELECT b.cdfase
           ,b.nmmensagem
+          ,d.nmfase
           ,b.dhmensagem
           ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 1),'><','>' || CHR(10) || '<') dsxml_completo_1
           ,REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 4001),'><','>' || CHR(10) || '<') dsxml_completo_2          
@@ -2035,9 +2050,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       FROM tbspb_msg_recebida a
           ,tbspb_msg_recebida_fase b
           ,tbspb_msg_xml c
+          ,tbspb_fase_mensagem d
      WHERE a.nrseq_mensagem         = pr_nrseq_mensagem
        AND b.nrseq_mensagem         = a.nrseq_mensagem
        AND c.nrseq_mensagem_xml (+) = b.nrseq_mensagem_xml
+       AND b.cdfase                 = d.cdfase
        AND pr_idorigem              = 'R'
      ORDER BY dhmensagem, cdfase;
 
@@ -2259,7 +2276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'cpfcnpjremet'  ,pr_tag_cont => TRIM(rw_layout_1.CNPJ_CPFCliDebtd),pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'bancodest'     ,pr_tag_cont => TRIM(vr_bancodest),pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'agenciadest'   ,pr_tag_cont => TRIM(rw_layout_1.AgCredtd),pr_des_erro => vr_dscritic);
-      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'contadest'     ,pr_tag_cont => TRIM(gene0002.fn_mask_conta(pr_nrdconta => rw_layout_1.CtCredtd)),pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'contadest'     ,pr_tag_cont => TRIM(gene0002.fn_mask(pr_dsorigi => rw_layout_1.CtCredtd, pr_dsforma => 'zzzzzzzzzzzzzz.zzz.z')),pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'nomedest'      ,pr_tag_cont => TRIM(rw_layout_1.NomCliCredtd),pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'cpfcnpjdest'   ,pr_tag_cont => rw_layout_1.CNPJ_CPFCliCredtd,pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item1',pr_posicao => vr_contador,pr_tag_nova => 'origem'        ,pr_tag_cont => rw_layout_1.dsorigem,pr_des_erro => vr_dscritic);
@@ -2311,6 +2328,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'layout_2',pr_posicao => 0          ,pr_tag_nova => 'item'    ,pr_tag_cont => null                      ,pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item'    ,pr_posicao => vr_contador,pr_tag_nova => 'cdfase'  ,pr_tag_cont => rw_layout_2.cdfase        ,pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item'    ,pr_posicao => vr_contador,pr_tag_nova => 'nmfase'  ,pr_tag_cont => rw_layout_2.nmmensagem    ,pr_des_erro => vr_dscritic);
+      --REQ66
+      gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item'    ,pr_posicao => vr_contador,pr_tag_nova => 'dscompl'  ,pr_tag_cont => UPPER(rw_layout_2.nmfase)        ,pr_des_erro => vr_dscritic);
+      --
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item'    ,pr_posicao => vr_contador,pr_tag_nova => 'datafase',pr_tag_cont => vr_dhmensagem             ,pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item'    ,pr_posicao => vr_contador,pr_tag_nova => 'xmlfase' ,pr_tag_cont => vr_xml_1||vr_xml_2||vr_xml_3||vr_xml_4||vr_xml_5||vr_xml_6||vr_xml_7||vr_xml_8||vr_xml_9,pr_des_erro => vr_dscritic);
       vr_nrcontrole_dev := rw_layout_2.nrcontrole_dev;
@@ -2375,21 +2395,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
       FOR rw_layout_4 IN (SELECT a.cdfase
                                 ,a.nmmensagem
                                 ,a.dhmensagem
+                                ,c.nmfase
                                 ,REPLACE(REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 1),'><','>' || CHR(10) || '<'),' ','') dsxml_completo
                             FROM tbspb_msg_enviada_fase a
                                 ,tbspb_msg_xml b
+                                ,tbspb_fase_mensagem c
                            WHERE nrseq_mensagem           = vr_nrseq_mensagem_3
                              AND b.nrseq_mensagem_xml (+) = a.nrseq_mensagem_xml
+                             AND a.cdfase                 = c.cdfase
                              AND vr_idorigem_3            = 'E'
                            UNION ALL
                           SELECT a.cdfase
                                 ,a.nmmensagem
                                 ,a.dhmensagem
+                                ,c.nmfase
                                 ,REPLACE(REPLACE(DBMS_LOB.SUBSTR(dsxml_completo, 4000, 1),'><','>' || CHR(10) || '<'),' ','') dsxml_completo
                            FROM tbspb_msg_recebida_fase a
                                ,tbspb_msg_xml b
+                               ,tbspb_fase_mensagem c
                           WHERE nrseq_mensagem           = vr_nrseq_mensagem_3
                             AND b.nrseq_mensagem_xml (+) = a.nrseq_mensagem_xml
+                            AND a.cdfase                 = c.cdfase
                             AND vr_idorigem_3            = 'R'
                            ORDER BY cdfase)
       LOOP
@@ -2397,6 +2423,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LOGSPB AS
         gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'layout_4',pr_posicao => 0          ,pr_tag_nova => 'item4'   ,pr_tag_cont => null                      ,pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item4'   ,pr_posicao => vr_contador,pr_tag_nova => 'cdfase'  ,pr_tag_cont => rw_layout_4.cdfase        ,pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item4'   ,pr_posicao => vr_contador,pr_tag_nova => 'nmfase'  ,pr_tag_cont => rw_layout_4.nmmensagem    ,pr_des_erro => vr_dscritic);
+        --REQ66
+        gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item4'    ,pr_posicao => vr_contador,pr_tag_nova => 'dscompl' ,pr_tag_cont => UPPER(rw_layout_4.nmfase)        ,pr_des_erro => vr_dscritic);
+        --
         gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item4'   ,pr_posicao => vr_contador,pr_tag_nova => 'datafase',pr_tag_cont => vr_dhmensagem             ,pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'item4'   ,pr_posicao => vr_contador,pr_tag_nova => 'xmlfase' ,pr_tag_cont => rw_layout_4.dsxml_completo,pr_des_erro => vr_dscritic);
         vr_contador := vr_contador + 1;

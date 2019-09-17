@@ -1166,8 +1166,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
          AND sim.dtmvtolt BETWEEN vr_dt_ini AND vr_dt_fim
          AND NOT ( vr_dt_ini IS NULL ) 
          AND NOT ( vr_dt_fim IS NULL )
-         AND ( ( pr_cdorigem = 3 AND sim.cdorigem = pr_cdorigem )
-          OR ( NVL(pr_cdorigem,0) != 3 ) )
+         AND ( ( pr_cdorigem in (3,10) AND sim.cdorigem in (3,10) )
+          OR ( NVL(pr_cdorigem,0) not in (3, 10 ) ) )
          AND NOT EXISTS ( SELECT 1
                             FROM crawepr wpr
                            WHERE wpr.cdcooper = sim.cdcooper
@@ -1179,8 +1179,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0018 AS
        WHERE sim.cdcooper = pr_cdcooper
          AND sim.nrdconta = pr_nrdconta         
          AND sim.dtmvtolt BETWEEN nvl(vr_dt_ini,to_date('01/01/1500','dd/mm/rrrr')) AND nvl(vr_dt_fim,to_date('01/01/3999','dd/mm/rrrr'))
-         AND ( ( pr_cdorigem = 3 AND sim.cdorigem = pr_cdorigem )
-          OR ( NVL(pr_cdorigem,0) != 3 ) )
+         AND ( ( pr_cdorigem in (3,10) AND sim.cdorigem in (3,10) )
+          OR ( NVL(pr_cdorigem,0) not in (3, 10 ) ) )
          AND NOT EXISTS ( SELECT 1
                             FROM crawepr wpr
                            WHERE wpr.cdcooper = sim.cdcooper

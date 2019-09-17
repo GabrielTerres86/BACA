@@ -30,7 +30,11 @@
  				  
                   11/10/2017 - Liberacao melhoria 442 (Heitor - Mouts)							   
 							   
-          07/06/2018 - P410 - Incluido tela de resumo da contratação + declaração isenção imóvel - Arins/Martini - Envolti                  
+                  07/06/2018 - P410 - Incluido tela de resumo da contratação + declaração isenção imóvel - Arins/Martini - Envolti                  
+
+                  31/01/2019 - Remover a impressão do Rating Atual conforme estória: Product Backlog Item 13986:
+                               Rating - Ajustes em Telas Desabilitar impressão
+                               P450 - Luiz Otávio Olinger Momm (AMCOM)
 
  */	
 
@@ -43,11 +47,11 @@
 	
 	if ($glbvars["cdcooper"] == 3) {
 		$divBloqueia = "blockBackground(parseInt($('#divRotina').css('z-index')))";
-		$imp_rating = "showError('inform','Utilize a tela ATURAT para a impress&atilde;o do rating.','Alerta - Aimaro',".$divBloqueia.");";
-		$imp_rating_proposta = "showError('inform','Utilize a tela ATURAT para a impress&atilde;o do rating.','Alerta - Aimaro',".$divBloqueia.");";
+
+
 	} else {
-		$imp_rating = "verificaImpressao(5);";
-		$imp_rating_proposta = "verificaImpressao(10);";
+
+
 	}
     
 	function exibeErro($msgErro) {
@@ -58,8 +62,8 @@
 		exit();
 	}
     
-    // Buscar informacao se deve permitir o envio de email para o comite
-    $xml = '';
+        // Buscar informacao se deve permitir o envio de email para o comite
+        $xml = '';
 	$xml .= '<Root>';
 	$xml .= '	<Dados>';
 	$xml .= '		<nrdconta>' . $_POST['nrdconta'] . '</nrdconta>';
@@ -182,11 +186,11 @@
                                                     echo '<a href="#" class="botao" onClick="verificaImpressao(4); return false;">' . utf8ToHtml('Nota Promissória') . '</a>';
                                                 }
                                             ?>
-											<a href="#" class="botao" onClick="<?php echo $imp_rating; ?> return false;">Rating Atual</a>
+
 											<a href="#" class="botao" onClick="verificaImpressao(7);return false;">Consultas</a>
 											<a href="#" class="botao" onClick="verificaImpressao(11);return false;"><? echo utf8ToHtml('Política')?></a>
 											<a href="#" class="botao" onClick="verificaAntecipacao(); return false;"><? echo utf8ToHtml('Antecipação')?></a>
-											<a href="#" class="botao" onClick="<?php echo $imp_rating_proposta; ?> return false;">Rating Proposta</a>
+
 											<?php
 												if ($isencaoIOF == 'S') {
 														echo '<a href="#" class="botao" onClick="verificaImpressao(57);return false;">Declara&ccedil;&atilde;o Financ. Im&oacute;veis</a>';

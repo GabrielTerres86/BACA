@@ -115,7 +115,7 @@ LAYOUT DETALHES_CONSULTA_CM.PHP
  #detalhesConsultaCM table{
  	padding-top: 10px;
  }
- 	#tabelLayout2, #tabelLayout3, #tabelLayout4{width: 450px !important;}
+ 	#tabelLayout2, #tabelLayout3, #tabelLayout4{width: 85% !important;}
 
  	#detalhesConsultaCM table thead tr{
 		margin-right: 2px !important;

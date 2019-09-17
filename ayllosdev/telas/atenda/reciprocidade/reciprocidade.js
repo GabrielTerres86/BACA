@@ -63,6 +63,12 @@
 
                   20/02/2019 - Novo campo Homologado API (Andrey Formigari - Supero)
 
+                  05/09/2019 - RITM0037203 - Possibilitar Float 0 (Rafael Ferreira - Mouts)
+
+                  05/09/2019 - RITM0037630 - Enviar contrato para Aprovação quando o Float for 0 ou
+                                o "Debito reajuste da tarifa" for NÃO
+                               (Rafael Ferreira - Mouts)
+
  ***********************************************************************/
 
 var dsdregis = "";  // Variavel para armazenar os valores dos titulares
@@ -85,7 +91,7 @@ var atualizacaoDesconto = false;
 
 var nrcnvceb, insitceb, inarqcbr, cddemail, dsdemail, flgcebhm, qtTitulares,
     vtitulares, dsdmesag, flgregon, flgpgdiv, flcooexp, flceeexp, flserasa, qtdfloat,
-    flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails, qtbolcob, flgapihm;
+    flprotes, qtlimmip, qtlimaxp, qtdecprz, idrecipr, inenvcob, flsercco, emails, qtbolcob, flgapihm, nrdconta, cddopcao, qtbolcob;
 
 var cee = false;
 var coo = false;
@@ -98,6 +104,7 @@ function habilitaSetor(setorLogado) {
     // Se o setor logado não for 1-CANAIS, 18-SUPORTE ou 20-TI
     if ((setorLogado != 1) && (setorLogado != 18) && (setorLogado != 20)) {
         $('#flgcebhm', '#frmConsulta').desabilitaCampo();
+        $('#flgapihm', '#frmConsulta').desabilitaCampo();
     }
 }
 
@@ -536,7 +543,8 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, id
         emails = $("#emails_titular").val();
     }
 
-    if (flginclu == "true") { // Se esta incluindo , zerar campos
+    // Rafael Ferreira (Mouts) - INC0020100 - Situac 3
+    /*if (flginclu == "true") { // Se esta incluindo , zerar campos
         nrcnvceb = 0;
         insitceb = "1";
         inarqcbr = 0;
@@ -549,7 +557,8 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, id
         qtdecprz = "";
         idrecipr = 0;
         flgapihm = "NAO";
-    }
+    }*/
+
 
     if (cddbanco == "") {
         cddbanco = $("#cddbanco", "#divConteudoOpcao").val();
@@ -563,6 +572,8 @@ function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco, id
     showMsgAguardo("Aguarde, carregando ...");
 
     var index = retornaIndice(descontoConvenios, 'convenio', nrconven);
+
+
     if (index != null) {
         var item = descontoConvenios[index];
         cddemail = item.cddemail;
@@ -1335,6 +1346,7 @@ function controlaLayout(nomeForm) {
         var Linarqcbr = $('label[for="inarqcbr"]', '#' + nomeForm);
         var Ldsdemail = $('label[for="dsdemail"]', '#' + nomeForm);
         var Lflgcebhm = $('label[for="flgcebhm"]', '#' + nomeForm);
+        var Lflgapihm = $('label[for="flgapihm"]', "#" + nomeForm);
         var Lqtdfloat = $('label[for="qtdfloat"]', '#' + nomeForm);
         var Lflprotes = $('label[for="flprotes"]', '#' + nomeForm);
         var Lqtlimmip = $('label[for="qtlimmip"]', '#' + nomeForm);
@@ -1348,6 +1360,7 @@ function controlaLayout(nomeForm) {
         var Cinarqcbr = $('#inarqcbr', '#' + nomeForm);
         var Cdsdemail = $('#dsdemail', '#' + nomeForm);
         var Cflgcebhm = $('#flgcebhm', '#' + nomeForm);
+        var Cflgapihm = $('#flgapihm', '#' + nomeForm);
         var Ccddopcao = $('#cddopcao', '#' + nomeForm);
         var Cqtdfloat = $('#qtdfloat', '#' + nomeForm);
         var Cqtdecprz = $('#qtdecprz', '#' + nomeForm);
@@ -1368,6 +1381,7 @@ function controlaLayout(nomeForm) {
         Linarqcbr.addClass('rotulo').css('width', '210px');
         Ldsdemail.addClass('rotulo').css('width', '210px');
         Lflgcebhm.addClass('rotulo').css('width', '210px');
+        Lflgapihm.addClass('rotulo').css('width', '210px');
         Lqtdfloat.addClass('rotulo').css('width', '210px');
         Lflprotes.addClass('rotulo').css('width', '210px');
         Lqtlimmip.addClass('rotulo').css('width', '210px');
@@ -1380,6 +1394,7 @@ function controlaLayout(nomeForm) {
         Cinarqcbr.css({ 'width': '155px' });
         Cdsdemail.css({ 'width': '200px' });
         Cflgcebhm.css({ 'width': '50px' });
+        Cflgapihm.css({ 'width': '50px' });
         Cqtdfloat.css({ 'width': '70px' });
         Cqtdecprz.css({ 'width': '50px' }).attr('maxlength', '5').setMask("INTEGER", "zzzzz", ".", "");
         Cqtlimmip.css({ 'width': '30px' }).attr('maxlength', '3').setMask("INTEGER", "zzz", ".", "");
@@ -1774,6 +1789,7 @@ function atualizarConvenios(cddopcao) {
     var cddemail = $("#dsdemail", "#divOpcaoConsulta").val();
     var divCnvHomol = $("#divCnvHomol", "#divOpcaoConsulta").val();
     var flgcebhm = $("#flgcebhm", "#divOpcaoConsulta").val();
+    var flgapihm = $("#flgapihm", "#divOpcaoConsulta").val();
 
     var index = null;
 
@@ -1817,6 +1833,11 @@ function atualizarConvenios(cddopcao) {
     } else {
         flgcebhm = 0;
     }
+    if ($("#flgapihm", "#divOpcaoConsulta").val() == 'yes') {
+        flgapihm = 1;
+    } else {
+        flgapihm = 0;
+    }
 
     var convenio = {
         convenio: nrconven,
@@ -1838,8 +1859,11 @@ function atualizarConvenios(cddopcao) {
         cddemail: cddemail,
         divCnvHomol: divCnvHomol,
         flgcebhm: flgcebhm,
-        qtbolcob: qtbolcob
+        qtbolcob: qtbolcob,
+        flgapihm: flgapihm
     };
+
+
     descontoConvenios[index] = convenio;
     validaEmiteExpede(true);
     sairDescontoConvenio();
@@ -2788,7 +2812,9 @@ function validaDados(pedeSenha) {
     vDataFimAdicionalCee = Number(cDataFimAdicionalCee.find('option:selected').text());
     vDataFimAdicionalCoo = Number(cDataFimAdicionalCoo.find('option:selected').text());
     vJustificativaDesc = cJustificativaDesc.val();
-
+    vQtdFloat = $('#qtdfloat', '.tabelaDesconto').val();
+    //vDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto').val();
+    
     // valida se o campo Data fim do contrato está preenchido
     if (!vDataFimContrato) {
         showError("error", "Selecione um valor para a Data fim do contrato.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
@@ -2815,9 +2841,20 @@ function validaDados(pedeSenha) {
         return false;
     }
 
+
+    //if ((vQtdFloat == 0 || vDebitoReajusteReciproci == 0) && !vJustificativaDesc) {
+    if ((vQtdFloat == 0) && !vJustificativaDesc) {
+        showError("error", "&Eacute; necess&aacute;rio informar o campo Justificativa desconto adicional.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        return false;
+    }
+
     coo = false;
     cee = false;
     ativo = false;
+
+    var conveniosValidados = true;
+
+
     for (var i = 0, len = descontoConvenios.length; i < len; ++i) {
         // 'undefined' = novo / 0 = novo, 1 = ativo
         if (typeof descontoConvenios[i].insitceb === 'undefined' || descontoConvenios[i].insitceb == '1' || descontoConvenios[i].insitceb == '3' || descontoConvenios[i].insitceb == '0') {
@@ -2833,13 +2870,30 @@ function validaDados(pedeSenha) {
         } else {
             coo = false;
             cee = false;
+
+
+            // Rafael Ferreira (Mouts) - INC0020100 - Situac 3
+            // Valida se foi Editado e Salvo Todos os Convenios
+            if (coo == false && cee == false) {
+                if ((typeof descontoConvenios[i].cddemail  == "undefined") && (typeof descontoConvenios[i].qtdecprz == "undefined") ) {
+                    conveniosValidados = false;
+                }
+            }
+
             break;
         }
     }
 
+
     if (descontoConvenios && !ativo) {
         showError("error", "&Eacute; necess&aacute;rio ter pelo menos um conv&ecirc;nio ativo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         return false;
+    }
+
+
+    if (conveniosValidados == false) {
+        showError("error", "Favor Editar e Salvar todos os conv&ecirc;nios.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));");
+        return;
     }
 
     if (coo == false && cee == false) {
@@ -2894,8 +2948,15 @@ function incluiDesconto(houveAlteracao) {
         dtfimadicional_cee = 0;
     }
 
+
+    // Estas Validações apagam o campo de Justificativa caso haja alguma coisa escrita e não seja mais
+    // necessário aprovar
     var descricaoJustificativaDesconto = vJustificativaDesc;
-    if (parseInt($('#vldesconto_cee', '.tabelaDesconto').val() || 0) <= 0 && parseInt($('#vldesconto_coo', '.tabelaDesconto').val() || 0) <= 0) {
+    if (parseInt($('#vldesconto_cee', '.tabelaDesconto').val() || 0) <= 0 && 
+        parseInt($('#vldesconto_coo', '.tabelaDesconto').val() || 0) <= 0 &&
+        parseInt($('#qtdfloat', '.tabelaDesconto').val() || 0) > 0
+        //$('#debito_reajuste_reciproci', '.tabelaDesconto').val() > 0
+        ) {
         descricaoJustificativaDesconto = "";
     }
 
@@ -2955,6 +3016,12 @@ function validaHabilitacaoCamposBtn(cddopcao) {
     var cDataFimAdicionalCooOld = $('#dtfimadicional_coo_old', '.tabelaDesconto');
     var cJustificativaDesc = $('#txtjustificativa', '.tabelaDesconto');
     var cJustificativaDescOld = $('#txtjustificativa_old', '.tabelaDesconto');
+    var cQtdFloatOld = $('#qtdfloat_old', '.tabelaDesconto');
+    var cQtdFloat = $('#qtdfloat', '.tabelaDesconto');
+    //var cDebitoReajusteReciprociOld = $('#debito_reajuste_reciproci_old', '.tabelaDesconto');
+    //var cDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto');
+
+    
 
     var vVldesconto_cee = Number(converteNumero(cVldesconto_cee.val()));
     var vVldesconto_ceeOld = Number(converteNumero(cVldesconto_ceeOld.val()));
@@ -2966,6 +3033,11 @@ function validaHabilitacaoCamposBtn(cddopcao) {
     var vDataFimAdicionalCooOld = cDataFimAdicionalCooOld.val();
     var vJustificativaDesc = cJustificativaDesc.val();
     var vJustificativaDescOld = cJustificativaDescOld.val();
+    var vQtdFloatOld = cQtdFloatOld.val();
+    var vQtdFloat = cQtdFloat.val();
+    //var vDebitoReajusteReciprociOld = cDebitoReajusteReciprociOld.val();
+    //var vDebitoReajusteReciproci = cDebitoReajusteReciproci.val();
+
 
     if (!cee && !coo) {
         cJustificativaDesc.desabilitaCampo();
@@ -2994,7 +3066,10 @@ function validaHabilitacaoCamposBtn(cddopcao) {
 			(vDataFimAdicionalCee != vDataFimAdicionalCeeOld && vDataFimAdicionalCee) ||
 			(vDataFimAdicionalCoo != vDataFimAdicionalCooOld && vDataFimAdicionalCoo) ||
             (vJustificativaDesc != vJustificativaDescOld && vJustificativaDesc && vJustificativaDescOld) ||
-            (atualizacaoDesconto)) {
+            (atualizacaoDesconto) || 
+            (vQtdFloat == 0 && (vQtdFloat != vQtdFloatOld) )
+            //(vDebitoReajusteReciproci == 0 && (vDebitoReajusteReciproci != vDebitoReajusteReciprociOld)) ) {
+             ) {
 
         btnContinuar.removeClass('botaoDesativado').addClass('botaoDesativado');
         btnContinuar.prop('disabled', true);
@@ -3056,6 +3131,7 @@ function editarConvenio(nrconven) {
             cddemail = response.cddemail;
             flgcruni = response.flgcruni;
             flgcebhm = response.flgcebhm;
+            flgapihm = response.flgapihm;
             qtTitulares = response.qtTitulares;
             titulares = response.titulares;
             dsdmesag = response.dsdmesag;
@@ -3074,6 +3150,7 @@ function editarConvenio(nrconven) {
             flsercco = response.flsercco;
             flgregis = response.flgregis;
             cddbanco = response.cddbanco;
+            qtbolcob = response.qtbolcob;
 
             var cddopcao = $('#cddopcao', '#divConteudoOpcao').val();
 
@@ -3337,6 +3414,8 @@ function calcula_desconto() {
             eval(response);
         }
     });
+
+    validaHabilitacaoCamposBtn();
 }
 
 function atualizarDescontos() {

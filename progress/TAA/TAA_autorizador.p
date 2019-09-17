@@ -9573,6 +9573,7 @@ PROCEDURE calcula_valor_titulo:
 	DEF VAR aux_vlrjuros                AS DECI         NO-UNDO.
 	DEF VAR aux_vlrmulta                AS DECI         NO-UNDO.
 	DEF VAR aux_fltitven                AS INTE         NO-UNDO.
+    DEF VAR aux_dtvencto                AS CHAR         NO-UNDO.	
     DEF VAR aux_flblqval                AS INTE         NO-UNDO.
 													   
     DEF VAR aux_tppesbenf               AS CHAR         NO-UNDO.
@@ -9633,6 +9634,7 @@ PROCEDURE calcula_valor_titulo:
                          ,OUTPUT ""      /* pr_nrctrlcs     -- Numero do controle da consulta */
                          ,OUTPUT 0       /* pr_flblq_valor  -- Flag para bloquear o valor de pagamento */
                          ,OUTPUT 0       /* pr_fltitven     -- Flag indicador de titulo vencido */
+                         ,OUTPUT ""      /* pr_dtvencto  Márcio Mouts -RITM0011951*/					 						 
                          ,OUTPUT ""      /* pr_des_erro     -- Indicador erro OK/NOK */
                          ,OUTPUT 0       /* pr_cdcritic     -- Código do erro  */
                          ,OUTPUT "").    /* pr_dscritic     -- Descricao do erro  */
@@ -9674,6 +9676,7 @@ PROCEDURE calcula_valor_titulo:
            aux_vlrjuros = 0
            aux_vlrmulta = 0
            aux_fltitven = 0
+		   aux_dtvencto = ""		   
            aux_flblqval = 0.
   ASSIGN aux_tppesbenf = ""
          aux_nrdocbnf = 0
@@ -9687,6 +9690,8 @@ PROCEDURE calcula_valor_titulo:
                         WHEN pc_consultar_valor_titulo.pr_vlrmulta <> ?
          aux_fltitven = pc_consultar_valor_titulo.pr_fltitven
                         WHEN pc_consultar_valor_titulo.pr_fltitven <> ?
+         aux_dtvencto = pc_consultar_valor_titulo.pr_dtvencto
+                        WHEN pc_consultar_valor_titulo.pr_dtvencto <> ?
          aux_flblqval = pc_consultar_valor_titulo.pr_flblq_valor
                         WHEN pc_consultar_valor_titulo.pr_flblq_valor <> ?.
   ASSIGN aux_tppesbenf = pc_consultar_valor_titulo.pr_tppesbenf

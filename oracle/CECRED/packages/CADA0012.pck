@@ -2599,6 +2599,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                                   ,pr_idpessoa               IN NUMBER -- Identificador unico da pessoa (FK tbcadast_pessoa)
                                   ,pr_nrseq_email            IN OUT NUMBER -- Numero sequencial do email
                                   ,pr_dscritic               OUT VARCHAR2) IS
+  
+  /* ..........................................................................
+  --
+  --  Programa : pc_cadast_pessoa_email
+  --  Sistema  : Conta-Corrente - Cooperativa de Credito
+  --  Sigla    : CADA
+  --  Autor    : 
+  --  Data     :                    Ultima atualizacao:
+  --
+  --  Dados referentes ao programa:
+  --
+  --   Frequencia: Sempre que for chamado
+  --   Objetivo  : Rotina para cadastrar email de contato
+  --
+  --  Alteração : 06/09/2019 - Inclusao do campo default de situação de email (P438 - Odirlei)
+  --
+  --
+  -- ..........................................................................*/
+  
     -- Tratamento de erros
     vr_cdcritic crapcri.cdcritic%TYPE;
     -- PlTable que receberá os dados parametrizados
@@ -2612,6 +2631,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
     vr_pessoa_email.cdoperad_altera := pr_cdoperad_altera;
     vr_pessoa_email.idpessoa := pr_idpessoa;
     vr_pessoa_email.nrseq_email := pr_nrseq_email;
+    vr_pessoa_email.insituacao  := 1;    
 
     -- Chama rotina passando um registro
     cada0010.pc_cadast_pessoa_email(pr_pessoa_email => vr_pessoa_email
@@ -2682,6 +2702,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cada0012 IS
                          ,pr_nmtabela => 'TBCADAST_PESSOA_EMAIL'        --> Nome da tabela
                          ,pr_dsnoprin => 'emails'                       --> Nó principal do xml
                          ,pr_dsnofilh => 'email'                        --> Nós filhos
+						 ,pr_clausula => '(INSITUACAO = 1)'             --> Cláusula Where						 
                          ,pr_retorno  => pr_retorno                     --> XML de retorno
                          ,pr_dscritic => pr_dscritic);
 

@@ -123,7 +123,7 @@
 				<td>
 					<label for="nrrevcad">Revis&atilde;o Cadastral:</label>	
 					<select name="nrrevcad" id="nrrevcad">
-						<? for ($i = 1; $i <= 24;$i++){ ?>
+						<? for ($i = 1; $i <= 36;$i++){ ?>
 							<option value="<?= $i ?>"><?= $i ?></option>
 						<? } ?>
 					</select>

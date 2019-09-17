@@ -494,6 +494,11 @@
                08/05/2019 - inc0012536 adicionada a validação do código da espécie 2 (duplicata de serviço) juntamente com a UF 
                             não autorizada. Duplicatas de serviço dos estados listados não podem ir para protesto (Carlos)
 
+               22/08/2019 - INC0020897 Tratamento para os campos nulos (convertidos para espaço vazio) do sacado na exibição dos boletos.
+               
+               06/09/2019 - INC0015371 - Ajuste na rotina cria_tt-consulta-blt e proc_nosso_numero para validar corretamente os títulos passiveis de negativaçao e 
+	                          considerar a data para negativaçao automatica - Augusto (Supero).
+
 ........................................................................... */
 
 { sistema/generico/includes/var_internet.i }
@@ -4219,10 +4224,12 @@ PROCEDURE cria_tt-consulta-blt.
                                            IF crapsab.nrendsac > 0 THEN
                                               ", " + STRING(crapsab.nrendsac)
                                            ELSE "")
-                tt-consulta-blt.complend = crapsab.complend
-                tt-consulta-blt.nmbaisac = crapsab.nmbaisac
-                tt-consulta-blt.nmcidsac = crapsab.nmcidsac
-                tt-consulta-blt.cdufsaca = crapsab.cdufsaca
+                tt-consulta-blt.nmdsacad = (IF tt-consulta-blt.nmdsacad <> ? THEN tt-consulta-blt.nmdsacad ELSE " ")
+                tt-consulta-blt.dsendsac = (IF tt-consulta-blt.dsendsac <> ? THEN tt-consulta-blt.dsendsac ELSE " ")                                           
+                tt-consulta-blt.complend = (IF crapsab.complend <> ? THEN crapsab.complend ELSE " ")
+                tt-consulta-blt.nmbaisac = (IF crapsab.nmbaisac <> ? THEN crapsab.nmbaisac ELSE " ")
+                tt-consulta-blt.nmcidsac = (IF crapsab.nmcidsac <> ? THEN crapsab.nmcidsac ELSE " ")
+                tt-consulta-blt.cdufsaca = (IF crapsab.cdufsaca <> ? THEN crapsab.cdufsaca ELSE " ")
                     tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
                     
              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
@@ -4413,41 +4420,25 @@ PROCEDURE cria_tt-consulta-blt.
             tt-consulta-blt.qtdiaprt = crapcob.qtdiaprt
             tt-consulta-blt.insitcrt = crapcob.insitcrt.
 
-     /* Se o boleto nao possui as informacoes de Negativacao, vamos buscar do convenio */
-     IF (tt-consulta-blt.flserasa = FALSE OR 
-         tt-consulta-blt.qtdianeg = 0)  AND
-         tt-consulta-blt.inserasa = "0" THEN
+     /* Logicas alteradas no INC0015371 para contemplar convenios que permitem negativaçao ou protesto */
+     /* inserasa: 0 = Nao negativa */        
+     /* insitcrt: 0 = Sem Protesto / insitcrt: 4 = Sustado */
+
+     ASSIGN tt-consulta-blt.flserasa = FALSE
+            tt-consulta-blt.flgdprot = FALSE.
+
+     IF crapcob.inserasa = 0 AND CAN-DO("0,4", STRING(crapcob.insitcrt)) THEN
      DO:
-         IF NOT (tt-consulta-blt.flgdprot = TRUE AND 
-                 tt-consulta-blt.qtdiaprt > 0)   THEN
-         DO:
+
+       /* Se o convenio permite Negativaçao */
              ASSIGN tt-consulta-blt.qtdianeg = 0
                     tt-consulta-blt.flserasa = crapceb.flserasa.
-         END.
-         ELSE 
-             DO:
-                 ASSIGN tt-consulta-blt.qtdianeg = 0
-                        tt-consulta-blt.flserasa = FALSE.
-             END.
-     END.
 
-     /* Se o boleto nao possui as informacoes de Protesto, vamos buscar do convenio */
-     IF tt-consulta-blt.flgdprot = FALSE OR 
-        tt-consulta-blt.qtdiaprt = 0     THEN
-     DO:
-         IF NOT (tt-consulta-blt.flserasa = TRUE AND 
-                 tt-consulta-blt.qtdianeg > 0)   OR
-                 tt-consulta-blt.inserasa <> "0" THEN
-         DO:
+       /* Se o convenio permite Protesto */
              ASSIGN tt-consulta-blt.qtdiaprt = 0
                     tt-consulta-blt.flgdprot = crapceb.flprotes.
          END.
-         ELSE 
-             DO:
-                 ASSIGN tt-consulta-blt.qtdiaprt = 0
-                        tt-consulta-blt.flgdprot = FALSE.
-             END.
-     END.
+     /* Logicas alteradas no INC0015371 */
 
      /* Verificar se o boleto pertence a um carne.
         O boleto de um carne eh criado na crapcol com a informacao "CARNE"
@@ -5151,10 +5142,12 @@ PROCEDURE cria_tt-consulta-blt_tdb.
                                          IF crapsab.nrendsac > 0 THEN
                                             ", " + STRING(crapsab.nrendsac)
                                          ELSE "")
-              tt-consulta-blt.complend = crapsab.complend
-              tt-consulta-blt.nmbaisac = crapsab.nmbaisac
-              tt-consulta-blt.nmcidsac = crapsab.nmcidsac
-              tt-consulta-blt.cdufsaca = crapsab.cdufsaca
+              tt-consulta-blt.nmdsacad = (IF tt-consulta-blt.nmdsacad <> ? THEN tt-consulta-blt.nmdsacad ELSE " ")
+              tt-consulta-blt.dsendsac = (IF tt-consulta-blt.dsendsac <> ? THEN tt-consulta-blt.dsendsac ELSE " ")                                         
+              tt-consulta-blt.complend = (IF crapsab.complend <> ? THEN crapsab.complend ELSE " ")
+              tt-consulta-blt.nmbaisac = (IF crapsab.nmbaisac <> ? THEN crapsab.nmbaisac ELSE " ")
+              tt-consulta-blt.nmcidsac = (IF crapsab.nmcidsac <> ? THEN crapsab.nmcidsac ELSE " ")
+              tt-consulta-blt.cdufsaca = (IF crapsab.cdufsaca <> ? THEN crapsab.cdufsaca ELSE " ")
                     tt-consulta-blt.nrcepsac = crapsab.nrcepsac.
 
              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
@@ -5515,12 +5508,12 @@ PROCEDURE proc_nosso_numero.
                    aux_na_cdufsaca = "NA"
                    aux_na_nrcepsac = 00000000.
         ELSE
-            ASSIGN aux_na_nmdsacad = crapsab.nmdsacad
-                   aux_na_dsendsac = crapsab.dsendsac
-                   aux_na_complend = crapsab.complend
-                   aux_na_nmbaisac = crapsab.nmbaisac
-                   aux_na_nmcidsac = crapsab.nmcidsac
-                   aux_na_cdufsaca = crapsab.cdufsaca
+            ASSIGN aux_na_nmdsacad = (IF crapsab.nmdsacad <> ? THEN crapsab.nmdsacad ELSE " ") 
+                   aux_na_dsendsac = (IF crapsab.dsendsac <> ? THEN crapsab.dsendsac ELSE " ")                   
+                   aux_na_complend = (IF crapsab.complend <> ? THEN crapsab.complend ELSE " ")
+                   aux_na_nmbaisac = (IF crapsab.nmbaisac <> ? THEN crapsab.nmbaisac ELSE " ")
+                   aux_na_nmcidsac = (IF crapsab.nmcidsac <> ? THEN crapsab.nmcidsac ELSE " ")
+                   aux_na_cdufsaca = (IF crapsab.cdufsaca <> ? THEN crapsab.cdufsaca ELSE " ")
                    aux_na_nrcepsac = crapsab.nrcepsac.
 
         /* Assume como Padrão Cooperado Emite e Expede*/
@@ -5750,41 +5743,29 @@ PROCEDURE proc_nosso_numero.
                   tt-consulta-blt.qtdiaprt = crapcob.qtdiaprt
                   tt-consulta-blt.insitcrt = crapcob.insitcrt.
 
-           /* Se o boleto nao possui as informacoes de Negativacao, vamos buscar do convenio */
-           IF (tt-consulta-blt.flserasa = FALSE OR 
-               tt-consulta-blt.qtdianeg = 0 )   AND 
-               tt-consulta-blt.inserasa = "N"  THEN
+                  
+                  
+                  
+           /* Logicas alteradas no INC0015371 para contemplar convenios que permitem negativaçao ou protesto */
+           /* inserasa: 0 = Nao negativa */        
+           /* insitcrt: 0 = Sem Protesto / insitcrt: 4 = Sustado */
+
+           ASSIGN tt-consulta-blt.flserasa = FALSE
+                  tt-consulta-blt.flgdprot = FALSE.
+
+           IF crapcob.inserasa = 0 AND CAN-DO("0,4", STRING(crapcob.insitcrt)) THEN
            DO:
-               IF NOT (tt-consulta-blt.flgdprot = TRUE AND 
-                       tt-consulta-blt.qtdiaprt > 0)   THEN
-               DO:
+
+             /* Se o convenio permite Negativaçao */
                    ASSIGN tt-consulta-blt.qtdianeg = 0
                           tt-consulta-blt.flserasa = crapceb.flserasa.
-               END.
-               ELSE 
-                   DO:
-                       ASSIGN tt-consulta-blt.qtdianeg = 0
-                              tt-consulta-blt.flserasa = FALSE.
-                   END.
-           END.
 
-           /* Se o boleto nao possui as informacoes de Protesto, vamos buscar do convenio */
-           IF tt-consulta-blt.flgdprot = FALSE OR 
-              tt-consulta-blt.qtdiaprt = 0     THEN
-           DO:
-               IF NOT (tt-consulta-blt.flserasa = TRUE AND 
-                       tt-consulta-blt.qtdianeg > 0 )  OR
-                       tt-consulta-blt.inserasa <> "N" THEN
-               DO:
+             /* Se o convenio permite Protesto */
                    ASSIGN tt-consulta-blt.qtdiaprt = 0
                           tt-consulta-blt.flgdprot = crapceb.flprotes.
                END.
-               ELSE 
-                   DO:
-                       ASSIGN tt-consulta-blt.qtdiaprt = 0
-                              tt-consulta-blt.flgdprot = FALSE.
-                   END.
-           END.
+           /* Logicas alteradas no INC0015371 */
+           
 
            /* Verificar se o boleto pertence a um carne.
               O boleto de um carne eh criado na crapcol com a informacao "CARNE"

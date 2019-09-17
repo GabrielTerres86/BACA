@@ -104,7 +104,7 @@
 		<a href="#" class="botao" id="btCet"      onClick="verificaEnvioEmail(6,'yes');   return false;">CET       </a>
 		<a href="#" class="botao" id="btProposta" onClick="verificaEnvioEmail(3,'no');    return false;">Proposta  </a>
 		<a href="#" class="botao" id="btRecisao"  onClick="verificaEnvioEmail(4,'no');    return false;">Recisao   </a>
-		<a href="#" class="botao" id="btRating"   onClick="<?php echo $imp_rating; ?>     return false;">Rating    </a>
+
 		<a href="#" class="botao" id="btConsulta" onClick="carregarImpresso(7,'no','no'); return false;">Consultas </a>		
 	</div>
 

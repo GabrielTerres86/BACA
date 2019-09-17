@@ -70,6 +70,10 @@
 				02/02/2019 - Correção para o tipo de documento "TED C":
 							-> Ao optar por "Espécie" deve ser permitir apenas para não cooperados
 						   (Jonata - Mouts PRB0040337).
+						   
+				02/09/2019 - Modificado o fonte progress acrescentando o SUBSTR para limitar em 
+							25 caracteres o campo "Código Identificador Transferência - v_cdidtran". 
+							(Diego Batista - Ailos PRB0041891).
 							  
 ----------------------------------------------------------------------------- **/
 
@@ -1296,7 +1300,7 @@ PROCEDURE process-web-request :
                                                   INTEGER(v_codfin),
                                                   v_deschistorico,
                                                   STRING(v_ispbif),
-												  v_cdidtran).
+												  SUBSTR(v_cdidtran,1,25)).
 
                 IF  RETURN-VALUE = "NOK" THEN DO:
                     ASSIGN v_btn_ok = ''
@@ -1430,7 +1434,7 @@ PROCEDURE process-web-request :
                                                     INPUT v_cpfcgcpara2,
                                                     INPUT i-pessoa-de,
                                                     INPUT i-pessoa-para,
-                                                    INPUT v_cdidtran,
+                                                    INPUT SUBSTR(v_cdidtran,1,25),
                                                     INPUT INT(v_ispbif),
                                                     INPUT aux_idtipcar,
                                                     INPUT v_opcao,

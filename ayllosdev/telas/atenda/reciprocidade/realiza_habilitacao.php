@@ -98,7 +98,8 @@
     $perdesconto = $_POST["perdesconto"];
 	$executandoProdutos = $_POST['executandoProdutos'];
 	$flgapihm = trim($_POST["flgapihm"]);
-
+	
+	
 	foreach($convenios as $convenio) {
 		$xmlHabilitaConvenio  = "";
 		$xmlHabilitaConvenio .= "<Root>";

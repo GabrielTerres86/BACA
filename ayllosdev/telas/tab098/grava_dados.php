@@ -30,6 +30,12 @@
 	$vlvrboleto 	= $_POST['vlvrboleto'];
     $vlcontig_cip 	= $_POST['vlcontig_cip'];
 
+    $sit_pag_divergente = $_POST['sit_pag_divergente'];
+    $pag_a_menor 	= $_POST['pag_a_menor'];
+    $pag_a_maior 	= $_POST['pag_a_maior'];
+    $tip_tolerancia 	= $_POST['tip_tolerancia'];
+    $vl_tolerancia 	= $_POST['vl_tolerancia'];
+    
     $dsmensag = 'Parâmetros alterados com sucesso!';
 
 	// Montar o xml de Requisicao
@@ -41,6 +47,11 @@
 	$xmlCarregaDados .= "	<prz_baixa_cip>".$prz_baixa_cip."</prz_baixa_cip>";
 	$xmlCarregaDados .= "	<vlvrboleto>".$vlvrboleto."</vlvrboleto>";
     $xmlCarregaDados .= "	<vlcontig_cip>". $vlcontig_cip.   "</vlcontig_cip>";
+	$xmlCarregaDados .= "	<sit_pag_divergente>"    .$sit_pag_divergente.     "</sit_pag_divergente>";
+	$xmlCarregaDados .= "	<pag_a_menor>"           .$pag_a_menor.            "</pag_a_menor>";
+	$xmlCarregaDados .= "	<pag_a_maior>"           .$pag_a_maior.            "</pag_a_maior>";
+	$xmlCarregaDados .= "	<tip_tolerancia>"        .$tip_tolerancia.         "</tip_tolerancia>";
+	$xmlCarregaDados .= "	<vl_tolerancia>"         .$vl_tolerancia.          "</vl_tolerancia>";
 	$xmlCarregaDados .= " </Dados>";
 	$xmlCarregaDados .= "</Root>";
 
@@ -50,7 +61,11 @@
 	echo 'hideMsgAguardo();';
 
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObj->roottag->tags[0]->cdata,'Alerta - Ayllos',"bloqueiaFundo($('#divRotina'));",false);
+		if ($xmlObj->roottag->tags[0]->cdata == '') {
+			exibirErro('error','Erro inesperado no processo','Alerta - Ayllos',"fechaRotina($(\'#divRotina\'));",false);
+		} else {
+			exibirErro('error',$xmlObj->roottag->tags[0]->cdata,'Alerta - Ayllos',"fechaRotina($(\'#divRotina\'));",false);
+		}
 	}
 
     echo "showError('inform','".$dsmensag."','Tab098','fechaRotina($(\'#divRotina\'));estadoInicial();');";

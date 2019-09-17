@@ -31,6 +31,7 @@
 					<thead>
 						<tr>
 							<th><? echo utf8ToHtml('Feriados Municipais'); ?></th>
+							<th>Status</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -41,6 +42,7 @@
 								<td><span><? echo dataParaTimestamp(getByTagName($f->tags,'dtferiad')); ?></span>
 										  <? echo getByTagName($f->tags,'dtferiad'); ?>
 								</td>
+								<td><? echo getByTagName($f->tags,'flgbaixa') == "1" ? "Baixado" : ""; ?></td>
 							</tr>
 					<? } ?>	
 					</tbody>

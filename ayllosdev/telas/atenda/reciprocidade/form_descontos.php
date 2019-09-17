@@ -383,7 +383,7 @@ atualizacaoDesconto = false;
 			<input type="hidden" id="debito_reajuste_reciproci_old" value="<?php echo $vr_flgdebito_reversao; ?>">
 			<select class="campo" id="debito_reajuste_reciproci" name="debito_reajuste_reciproci" style="width:153px;">
 				<option value="1" <?php echo (($vr_flgdebito_reversao == "1" ? 'selected' : ''))?>>Sim</option>
-				<option value="0" <?php echo (($vr_flgdebito_reversao == "0" ? 'selected' : ((!$vr_flgdebito_reversao ? 'selected' : ''))))?>>N&atilde;o</option>
+				<option value="0" <?php echo (($vr_flgdebito_reversao == "0" ? 'selected' : (!$vr_flgdebito_reversao ? 'selected' : '') ))?>>N&atilde;o</option>
 			</select>
 		</td>
 	</tr>
@@ -473,7 +473,7 @@ atualizacaoDesconto = false;
 		<tr class="corPar">
 			<td>
 				<textarea name="txtjustificativa_old" id="txtjustificativa_old" style="display:none"><?php echo utf8_decode($vr_dsjustificativa_desc_adic); ?></textarea>
-				<textarea name="txtjustificativa" id="txtjustificativa" class="textarea campoTelaSemBorda" disabled style="width: 100%;min-height: 70px;"><?php echo utf8_decode($vr_dsjustificativa_desc_adic); ?></textarea>
+				<textarea name="txtjustificativa" id="txtjustificativa" class="textarea campoTelaSemBorda" disabled onchange="validaDados(true); return false;" style="width: 100%;min-height: 70px;"><?php echo utf8_decode($vr_dsjustificativa_desc_adic); ?></textarea>
 			</td>
 		</tr>
 	</table>
@@ -504,6 +504,7 @@ cVldesconto_coo = $('#vldesconto_coo', '.tabelaDesconto');
 cDataFimAdicionalCee = $('#dtfimadicional_cee', '.tabelaDesconto');
 cDataFimAdicionalCoo = $('#dtfimadicional_coo', '.tabelaDesconto');
 cJustificativaDesc = $('#txtjustificativa', '.tabelaDesconto');
+// cDebitoReajusteReciproci = $('#debito_reajuste_reciproci', '.tabelaDesconto');
 
 validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 validaEmiteExpede(false);
@@ -512,6 +513,11 @@ validaEmiteExpede(false);
 cDataFimContrato.change(function (){
 	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
 });
+
+
+// cDebitoReajusteReciproci.change(function(){
+//	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');
+//});
 
 $('#vldesconto_cee, #vldesconto_coo, #txtjustificativa').bind('keyup', function (){
 	validaHabilitacaoCamposBtn('<?php echo $cddopcao; ?>');

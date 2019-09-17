@@ -290,6 +290,10 @@
                03/12/2018 - P410 - Ajuste no valor do campo Valor Operacao do item 3 na impressao 
                             da proposta (Douglas Pagel / AMcom).
                                                    
+               20/03/2019 - PRJ450 - Rating. Novos campos devem ser visualizados no arquivo PDF (Fabio Adriano - Amcom).
+	       
+	       05/09/2019 - PRJ450 - Validado Rating na impresssao da proposta valida_impressao
+	                             para nao imprimir proposta sem rating (Heckmann - AMcom)
 .............................................................................*/
 
 /*................................ DEFINICOES ...............................*/
@@ -476,6 +480,42 @@ DEF TEMP-TABLE cratepr                                                 NO-UNDO
     FIELD nrctremp  AS INTE
     FIELD dsgarant  AS CHAR FORMAT "x(18)".
 
+/* Informacoes com os Ratings do Cooperado */
+DEF TEMP-TABLE tt-ratings-novo  NO-UNDO
+    FIELD cdagenci AS INTE
+    FIELD nrdconta AS INTE
+    FIELD nrctrrat AS INTE
+    FIELD tpctrrat AS INTE
+    FIELD indrisco AS CHAR
+    FIELD dtmvtolt AS DATE
+    FIELD dteftrat AS DATE
+    FIELD cdoperad AS CHAR
+    FIELD insitrat AS INTE
+    FIELD dsditrat AS CHAR
+    FIELD nrnotrat AS DECI
+    FIELD vlutlrat AS DECI
+    FIELD vloperac AS DECI
+    FIELD dsdopera AS CHAR
+    FIELD dsdrisco AS CHAR
+    FIELD flgorige AS LOGI
+    FIELD inrisctl AS CHAR
+    FIELD nrnotatl AS DECI
+    FIELD dtrefere AS DATE
+    FIELD des_inrisco_rat_inc AS CHAR
+    FIELD inpontos_rat_inc AS INTE
+    FIELD innivel_rat_inc AS CHAR
+    FIELD insegmento_rat_inc AS CHAR.
+
+/* Informacoes dos campos de rating do cooperado */
+DEF TEMP-TABLE tt-valores-rating-novo   NO-UNDO
+    FIELD nrinfcad AS INTE 
+    FIELD nrpatlvr AS INTE 
+    FIELD nrperger AS INTE
+    FIELD vltotsfn AS DECI
+    FIELD perfatcl LIKE crapjfn.perfatcl
+    FIELD nrgarope AS INTE
+    FIELD nrliquid AS INTE
+    FIELD inpessoa AS INTE.
 /*................................. FUNCTIONS ..............................*/
 
 /* Verifica da TAB016 se o interveniente esta habilitado */
@@ -4028,17 +4068,30 @@ PROCEDURE impressao-prnf:
    DEF VAR aux_dtultdma AS DATE                                      NO-UNDO.
   
   /* Variaveis para o XML */ 
-   DEF VAR xDoc          AS HANDLE                                   NO-UNDO.   
-   DEF VAR xRoot         AS HANDLE                                   NO-UNDO.  
-   DEF VAR xRoot2        AS HANDLE                                   NO-UNDO.  
-   DEF VAR xField        AS HANDLE                                   NO-UNDO. 
-   DEF VAR xText         AS HANDLE                                   NO-UNDO. 
-   DEF VAR aux_cont_raiz AS INTEGER                                  NO-UNDO. 
-   DEF VAR aux_cont      AS INTEGER                                  NO-UNDO. 
-   DEF VAR ponteiro_xml  AS MEMPTR                                   NO-UNDO. 
+   DEF VAR xDoc          AS HANDLE                                   NO-UNDO.
+   DEF VAR xRoot         AS HANDLE                                   NO-UNDO.
+   DEF VAR xRoot2        AS HANDLE                                   NO-UNDO.
+   DEF VAR xField        AS HANDLE                                   NO-UNDO.
+   DEF VAR xText         AS HANDLE                                   NO-UNDO.
+   DEF VAR aux_cont_raiz AS INTEGER                                  NO-UNDO.
+   DEF VAR aux_cont      AS INTEGER                                  NO-UNDO.
+   DEF VAR ponteiro_xml  AS MEMPTR                                   NO-UNDO.
+   DEF VAR lGood         AS LOGICAL                                  NO-UNDO.
+   DEF VAR aux_historico AS INTEGER                                  NO-UNDO.
+  
+   DEF VAR vr_xml                 AS LONGCHAR                        NO-UNDO.
+   DEF VAR vr_des_inrisco_rat_inc AS CHAR                            NO-UNDO.
+   DEF VAR vr_inpontos_rat_inc    AS INTEGER                         NO-UNDO.
+   DEF VAR vr_innivel_rat_inc     AS CHAR                            NO-UNDO.
+   DEF VAR vr_insegmento_rat_inc  AS CHAR                            NO-UNDO.
+   DEF VAR vr_vlr                 AS INTEGER                         NO-UNDO.
+   DEF VAR vr_qtdreg              AS INTEGER                         NO-UNDO.
+   DEF VAR vr_nrctro_out          AS INTEGER                         NO-UNDO.
+   DEF VAR vr_tpctrato_out        AS INTEGER                         NO-UNDO.
    DEF VAR xml_req       AS LONGCHAR                                 NO-UNDO.
 
    DEF VAR aux_dssitcta AS CHAR                                      NO-UNDO.
+   DEF VAR aux_dtiniris AS DATE                                      NO-UNDO.
 
    /*  Nota Promissoria .................................................... */
    
@@ -4055,7 +4108,7 @@ PROCEDURE impressao-prnf:
         "N O T A  P R O M I S S O R I A"  "a" 
         crapcop.nmrescop       FORMAT "x(11)" 
         SKIP
-        crapcop.nmextcop       FORMAT "x(50)"       
+        crapcop.nmextcop       FORMAT "x(50)"
         rel_nrdocnpj     AT 52 FORMAT "x(23)"
         SKIP
         "ou a sua ordem a quantia de"       
@@ -4075,16 +4128,16 @@ PROCEDURE impressao-prnf:
         SKIP(1)              
         "Na apresentacao desta, pagarei por  esta  unica  via  de" AT 19 
         SKIP
-        "N O T A  P R O M I S S O R I A"  "a" 
-        crapcop.nmrescop       FORMAT "x(11)" 
+        "N O T A  P R O M I S S O R I A"  "a"
+        crapcop.nmrescop       FORMAT "x(11)"
         SKIP
-        crapcop.nmextcop       FORMAT "x(50)"       
+        crapcop.nmextcop       FORMAT "x(50)"
         rel_nrdocnpj     AT 52 FORMAT "x(23)"
         SKIP
         "ou a sua ordem a quantia de"       
-        rel_dspreemp[1] AT 29 FORMAT "x(46)" 
+        rel_dspreemp[1] AT 29 FORMAT "x(46)"
         SKIP
-        rel_dspreemp[2]       FORMAT "x(74)" 
+        rel_dspreemp[2]       FORMAT "x(74)"
         SKIP
         "em moeda corrente deste pais."
         WITH COLUMN 7 NO-BOX NO-LABELS DOWN WIDTH 137 FRAME f_cab2_promissoria.
@@ -4126,7 +4179,7 @@ PROCEDURE impressao-prnf:
         rel_dsendav2[3]  AT 50  FORMAT "x(47)"
         SKIP(3)
         "________________________________________________"
-        "_______________________________________________"             
+        "_______________________________________________"
         SKIP
         rel_nmcjgav1            FORMAT "x(48)"
         rel_nmcjgav2     AT 50  FORMAT "x(47)"
@@ -4192,7 +4245,7 @@ PROCEDURE impressao-prnf:
          "Nome:"    rel_nmprimtl[1]   FORMAT "x(35)"
          SKIP(1)
          WITH NO-BOX NO-LABELS WIDTH 130 FRAME f_pro_dados.
-                                           
+
    FORM  "\033\017" 
          "CPF/CNPJ:"            aux_nrcpfcgc
          "Adm COOP:"            rel_dtadmiss     FORMAT "99/99/9999"
@@ -4225,7 +4278,7 @@ PROCEDURE impressao-prnf:
    FORM  "\033\017"       /* Letra menor*/
          "CPF/CNPJ:"                           aux_nrcpfcgc
          "Adm COOP:"                   AT 34   rel_dtadmiss FORMAT "99/99/9999"
-         "Ramo de atividade:"          AT 56   rel_nmrmativ          
+         "Ramo de atividade:"          AT 56   rel_nmrmativ
          SKIP
          SPACE(1)
          "Fundacao:"                           rel_dtiniatv
@@ -4741,16 +4794,27 @@ PROCEDURE impressao-prnf:
    
    FORM "Risco da Proposta:"                                       AT 01
         SKIP(1)
-        tt-ratings.dsdopera LABEL "Operacao"    FORMAT "x(12)"     AT 01
+        tt-ratings-novo.dsdopera LABEL "Operacao"                 FORMAT "x(12)"      AT 01
+        SKIP(1)
+           tt-ratings-novo.nrctrrat LABEL "Contrato"              FORMAT "zz,zzz,zz9" AT 01
+           tt-ratings-novo.inpontos_rat_inc LABEL "   Pontuacao"  FORMAT "99999"    
+           tt-ratings-novo.des_inrisco_rat_inc LABEL "   Nota"    FORMAT "x(2)"        /*ex. A*/
+           tt-ratings-novo.innivel_rat_inc LABEL "   Risco"       FORMAT "x(6)"        /*ex. Risco BAIXO*/
+        SKIP(1)
+           tt-ratings-novo.insegmento_rat_inc LABEL "Segmento"    FORMAT "x(30)"
+        WITH SIDE-LABEL WIDTH 120 FRAME f_rating_atual_novo.
+   FORM "Risco da Proposta:"                                        AT 01
+        SKIP(1)
+        tt-ratings.dsdopera LABEL "Operacao"    FORMAT "x(12)"      AT 01
         tt-ratings.nrctrrat LABEL "Contrato"    FORMAT "zz,zzz,zz9" AT 26
-        tt-ratings.indrisco LABEL "Risco"       FORMAT "x(2)"      AT 49
-        tt-ratings.nrnotrat LABEL "Nota"        FORMAT "zz9.99"    AT 61
-        tt-ratings.dsdrisco NO-LABEL            FORMAT "x(20)"     AT 76
+        tt-ratings.indrisco LABEL "Risco"       FORMAT "x(2)"       AT 49
+        tt-ratings.nrnotrat LABEL "Nota"        FORMAT "zz9.99"     AT 61
+        tt-ratings.dsdrisco NO-LABEL            FORMAT "x(20)"      AT 76
         WITH SIDE-LABEL WIDTH 120 FRAME f_rating_atual.
-   
+
    FORM "Historico dos Ratings" AT 01
-        WITH FRAME f_historico_rating_1.   
-                                                                             
+        WITH FRAME f_historico_rating_1.
+
    FORM tt-ratings.dsdopera COLUMN-LABEL "Operacao"       FORMAT "x(18)" AT 01 
         tt-ratings.nrctrrat COLUMN-LABEL "Contrato"       FORMAT "zz,zzz,zz9"
         tt-ratings.indrisco COLUMN-LABEL "Risco"          FORMAT "x(2)"     
@@ -7887,10 +7951,86 @@ PROCEDURE impressao-prnf:
             IF VALID-HANDLE(h-b1wgen0043) THEN
                DELETE OBJECT h-b1wgen0043.
 
+            /*RATING NOVO*/
+            ASSIGN vr_des_inrisco_rat_inc = ""       
+                   vr_inpontos_rat_inc    = 0
+                   vr_innivel_rat_inc     = ""
+                   vr_insegmento_rat_inc  = ""
+                   vr_vlr                 = 0
+                   vr_qtdreg              = 0
+                   vr_nrctro_out          = 0
+                   vr_tpctrato_out        = 0.
+                   
+            ASSIGN aux_dscritic = "".
+            ASSIGN aux_cdcritic = 0.
+            
+             EMPTY TEMP-TABLE tt-ratings-novo.
+            
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                        
+            RUN STORED-PROCEDURE pc_busca_dados_rating_inclusao
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper      /*COOPERATIVA */
+                                                      ,INPUT crawepr.nrdconta  /*CONTA  */
+                                                      ,INPUT crawepr.nrctremp  /*NUM CONTRATO DA CONTA*/
+                                                      ,INPUT 90                /*TIPO CONTRATO DA CONTA*/
+                                                      ,OUTPUT "" /*pr_des_inrisco_rat_inc - Nivel de Rating da Inclusao da Proposta*/
+                                                      ,OUTPUT 0  /*pr_inpontos_rat_inc    - Pontuacao do Rating retornada do Motor no momento da Inclusao*/
+                                                      ,OUTPUT "" /*pr_innivel_rat_inc     - Nivel de Risco do Rating Inclusao (1-Baixo/2-Medio/3-Alto)*/
+                                                      ,OUTPUT "" /*pr_insegmento_rat_inc   - qual Garantia foi utilizada para calculo Rating na Inclusao*/
+                                                      ,OUTPUT 0                /*pr_vlr  crapepr.vlemprst*/
+                                                      ,OUTPUT 0                /*pr_qtdreg QTDE REG.*/
+                                                      ,OUTPUT 0                /*pr_nrctro_out CONTRATO DA CONTA*/
+                                                      ,OUTPUT 0                /*pr_tpctrato_out TIPO CONTRATO DA CONTA*/
+                                                      ,OUTPUT ""               /*Arquivo de retorno do XML*/
+                                                      ,OUTPUT 0                /*pr_cdcritic  */
+                                                      ,OUTPUT "").             /*Descricao da critica*/
+                                                      
+            CLOSE STORED-PROC pc_busca_dados_rating_inclusao
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                   
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN vr_xml = pc_busca_dados_rating_inclusao.pr_retxml_clob
+                             WHEN pc_busca_dados_rating_inclusao.pr_retxml_clob <> ?.
+            ASSIGN aux_cdcritic = pc_busca_dados_rating_inclusao.pr_cdcritic
+                             WHEN pc_busca_dados_rating_inclusao.pr_cdcritic <> ?.
+            ASSIGN aux_dscritic = pc_busca_dados_rating_inclusao.pr_dscritic
+                             WHEN pc_busca_dados_rating_inclusao.pr_dscritic <> ?.
+            ASSIGN vr_des_inrisco_rat_inc = pc_busca_dados_rating_inclusao.pr_des_inrisco_rat_inc 
+                             WHEN pc_busca_dados_rating_inclusao.pr_des_inrisco_rat_inc <> ? .
+            ASSIGN vr_inpontos_rat_inc = pc_busca_dados_rating_inclusao.pr_inpontos_rat_inc 
+                             WHEN pc_busca_dados_rating_inclusao.pr_inpontos_rat_inc <> ? .
+            ASSIGN vr_innivel_rat_inc = pc_busca_dados_rating_inclusao.pr_innivel_rat_inc 
+                             WHEN pc_busca_dados_rating_inclusao.pr_innivel_rat_inc <> ? .
+            ASSIGN vr_insegmento_rat_inc = pc_busca_dados_rating_inclusao.pr_insegmento_rat_inc 
+                             WHEN pc_busca_dados_rating_inclusao.pr_insegmento_rat_inc <> ? .
+            ASSIGN vr_vlr = pc_busca_dados_rating_inclusao.pr_vlr  
+                             WHEN pc_busca_dados_rating_inclusao.pr_vlr <> ? .
+            ASSIGN vr_qtdreg = pc_busca_dados_rating_inclusao.pr_qtdreg 
+                             WHEN pc_busca_dados_rating_inclusao.pr_qtdreg <> ? .
+            ASSIGN vr_nrctro_out = pc_busca_dados_rating_inclusao.pr_nrctro_out 
+                             WHEN pc_busca_dados_rating_inclusao.pr_nrctro_out<> ? .
+            ASSIGN vr_tpctrato_out = pc_busca_dados_rating_inclusao.pr_tpctrato_out 
+                            WHEN pc_busca_dados_rating_inclusao.pr_tpctrato_out <> ? .
+
+            CREATE tt-ratings-novo. 
+            ASSIGN tt-ratings-novo.nrctrrat = vr_nrctro_out
+                   tt-ratings-novo.tpctrrat = vr_tpctrato_out
+                   tt-ratings-novo.vloperac = vr_vlr
+                   tt-ratings-novo.dsdopera = "Emprestimo"
+                   tt-ratings-novo.innivel_rat_inc = vr_innivel_rat_inc   
+                   tt-ratings-novo.des_inrisco_rat_inc = vr_des_inrisco_rat_inc  /*Nota Rating */
+                   tt-ratings-novo.inpontos_rat_inc = vr_inpontos_rat_inc
+                   tt-ratings-novo.insegmento_rat_inc = vr_insegmento_rat_inc.
             /* Rating desta proposta */
             IF  par_cdcooper <> 3  THEN /* nao imprime para CECRED */
             DO:
-                
+            
+	    /*
+            ** Todo Rating antigo e migrado para a nova tabela sem necessidade
+            ** de verificar se habrat está como S ou N
+	    */
+	    /*    
                 FIND tt-ratings WHERE tt-ratings.tpctrrat = 90   AND
                                       tt-ratings.nrctrrat = crawepr.nrctremp
                                       NO-LOCK NO-ERROR.
@@ -7904,6 +8044,25 @@ PROCEDURE impressao-prnf:
                                         tt-ratings.nrnotrat
                                         tt-ratings.dsdrisco
                                         WITH FRAME f_rating_atual.   
+                     END.
+	    */
+	    
+                FIND tt-ratings-novo WHERE 
+                     tt-ratings-novo.tpctrrat = 90   AND
+                     tt-ratings-novo.nrctrrat = crawepr.nrctremp
+                                      NO-LOCK NO-ERROR.
+                
+                IF   ((AVAIL tt-ratings-novo) AND
+                      (tt-ratings-novo.des_inrisco_rat_inc <> ? AND tt-ratings-novo.innivel_rat_inc <> ?)) THEN
+                     DO:
+                         DISPLAY STREAM str_1 
+                              tt-ratings-novo.dsdopera 
+                              tt-ratings-novo.nrctrrat 
+                              tt-ratings-novo.inpontos_rat_inc 
+                              tt-ratings-novo.des_inrisco_rat_inc 
+                              tt-ratings-novo.innivel_rat_inc 
+                              tt-ratings-novo.insegmento_rat_inc
+                              WITH FRAME f_rating_atual_novo.   
                      END.
     
                 IF   CAN-FIND (FIRST tt-ratings WHERE NOT 
@@ -9118,6 +9277,7 @@ PROCEDURE valida_impressao:
 
     DEF VAR aux_cdagenci AS INTE                                       NO-UNDO.
     DEF VAR aux_returnvl AS CHAR                                       NO-UNDO.
+    DEF VAR aux_inrisrat AS CHAR                                       NO-UNDO. /* P450 */
 
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Valida impressao."
@@ -9246,7 +9406,49 @@ PROCEDURE valida_impressao:
 
                     ASSIGN aux_returnvl = "NOK".
 
-    END.
+                END.
+
+              /* P450 - Valida se tem Rating ou não */
+              IF  par_inobriga <> "N" THEN DO:
+
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                /* Efetuar a chamada a rotina Oracle da RATI0003, para buscar os ratings das propostas */
+                RUN STORED-PROCEDURE pc_retorna_inf_rating
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.cdcooper, 
+                                                       INPUT crawepr.nrdconta,
+                                                       INPUT 90,
+                                                       INPUT crawepr.nrctremp, 
+                                                       OUTPUT 0,          /* pr_insituacao_rating */
+                                                       OUTPUT "",          /* pr_inorigem_rating */
+                                                       OUTPUT "",          /* pr_inrisco_rating_autom */
+                                                       OUTPUT 0,           /* pr_cdcritic */
+                                                       OUTPUT "").         /* pr_dscritic */
+
+                  /* Fechar o procedimento para buscarmos o resultado */ 
+                  CLOSE STORED-PROC pc_retorna_inf_rating
+                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
+                ASSIGN aux_cdcritic               = 0
+                       aux_dscritic               = ""
+                       aux_cdcritic               = INT(pc_retorna_inf_rating.pr_cdcritic) 
+                WHEN pc_retorna_inf_rating.pr_cdcritic <> ?
+                       aux_dscritic               = pc_retorna_inf_rating.pr_dscritic
+                WHEN pc_retorna_inf_rating.pr_dscritic <> ?
+                       aux_inrisrat               = pc_retorna_inf_rating.pr_inrisco_rating_autom
+                WHEN pc_retorna_inf_rating.pr_inrisco_rating_autom <> ?.
+                MESSAGE "AMCOMLUIZ 2".
+
+                IF aux_inrisrat = ? THEN
+                  DO:
+                    aux_returnvl = "NOK".
+                    aux_dscritic = "Proposta sem rating".
+                  END.
+
+              END.
+              /* P450 - Valida se tem Rating ou não */
             END.
         END.    
 

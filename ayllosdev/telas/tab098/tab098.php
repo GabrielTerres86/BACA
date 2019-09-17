@@ -87,7 +87,7 @@
 	<script type="text/javascript" src="../../scripts/ui/jquery.ui.datepicker.js"></script>
 	<script type="text/javascript" src="../../scripts/ui/i18n/jquery.ui.datepicker-pt-BR.js"></script>
 	<script type="text/javascript" src="../../scripts/tooltip.js"></script>
-   <script type="text/javascript" src="tab098.js"></script>	
+        <script type="text/javascript" src="tab098.js?keyrand=<?=mt_rand();?>"></script>	
   </head>
 
   <body>

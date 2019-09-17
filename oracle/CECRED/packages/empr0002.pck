@@ -14,13 +14,14 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
   -- Objetivo  : Agrupar rotinas genericas refente a tela PARPRE
 
   -- Alteracoes: 03/08/2016 - Alterada estrutura da tela cadpre e outras rotinas
-  --                          do pre aprovado para fase 3 do Projeto 299 
+  --                          do pre aprovado para fase 3 do Projeto 299
   --                          Pre aprovado.(Lombardi)
   --
+  --
   ---------------------------------------------------------------------------------------------------------------
-   
+
   -- temptable para retornar dados da cpa, antigo b1wgen188tt.i/tt-dados-cpa
-  TYPE typ_rec_dados_cpa 
+  TYPE typ_rec_dados_cpa
     IS RECORD(cdcooper crapepr.cdcooper%TYPE
              ,nrdconta crapepr.nrdconta%TYPE
              ,inpessoa crapass.inpessoa%TYPE
@@ -75,6 +76,13 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0002 AS
   -- Definição do índice e tabela para contas em arquivo
   TYPE typ_tab_arquivo IS TABLE OF typ_reg_arquivo INDEX BY VARCHAR2(400);
   
+  /* Retorna se o CPF possui um bloqueio manual.
+     Retorna 1 - Possui bloqueio. 0 - Não possui bloqueio manual, ou bloqueio ja foi liberado.
+   */
+  FUNCTION fn_tem_bloq_preaprov_manual(pr_cdcooper       crapcop.cdcooper%TYPE
+                                 ,pr_nrcpfcnpj_base crapass.nrcpfcnpj_base%TYPE DEFAULT 0) RETURN NUMBER;
+                                 
+
   /* Busca da flg de PreAprovado liberado ou não ao Cooperado */
   FUNCTION fn_flg_preapv_liberado(pr_cdcooper       crapcop.cdcooper%TYPE 
                                  ,pr_nrdconta       crapass.nrdconta%TYPE DEFAULT 0
@@ -421,6 +429,13 @@ PROCEDURE pc_assinatura_contrato_pre(pr_cdcooper     IN crapcop.cdcooper%TYPE  -
                                     ,pr_cdcritic     OUT INTEGER               --> Código de críticia
                                     ,pr_dscritic     OUT VARCHAR2);
 
+  PROCEDURE pc_desbloqueio_pre_aprv_rating(pr_cdcooper  IN crawepr.cdcooper%TYPE DEFAULT 0 --> Código da Cooperativa
+                                          ,pr_cdcritic  OUT INTEGER                        --> Código de críticia
+                                          ,pr_dscritic  OUT VARCHAR2);
+                                        
+  PROCEDURE pc_job_desblo_preapvr_rating(pr_cdcritic  OUT INTEGER            
+                                        ,pr_dscritic  OUT VARCHAR2); 
+                                      
 END EMPR0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
@@ -439,6 +454,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
   -- Objetivo  : Agrupar rotinas genericas refente a tela CADPRE
   --
   -- Alteracoes: 13/11/2015 - Ajustado leitura na CRAPOPE incluindo upper (Odirlei-AMcom)
+  --             24/08/2019 - Concatenado Rating na mensagem para o operador na pc_busca_dados_cpa
+  --             (Luiz Otavio Olinegr Momm - AMCOM)
   --
   ---------------------------------------------------------------------------------------------------------------
   
@@ -450,6 +467,80 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     FROM crapcop 
    WHERE cdcooper = pr_cdcooper;
   rw_crapcop cr_crapcop%ROWTYPE;              
+  
+  
+  FUNCTION fn_tem_bloq_preaprov_manual(pr_cdcooper       crapcop.cdcooper%TYPE
+                                 ,pr_nrcpfcnpj_base crapass.nrcpfcnpj_base%TYPE DEFAULT 0) RETURN NUMBER IS
+  BEGIN
+    -- ..........................................................................
+    --
+    --  Programa : fn_tem_bloq_preaprov_manual
+    --  Sistema  : Pre-Aprovado - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Werinton Ferrari
+    --  Data     : Setembro/2019.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que chamado por outros programas.
+    --   Objetivo  : Retorna se o CPF possui um bloqueio manual.
+    --               Retorna 1 - Possui bloqueio. 
+    --                       0 - Não possui bloqueio manual, ou bloqueio ja foi liberado.
+    --
+    --   Alteracoes:
+    -- .............................................................................
+    DECLARE
+    
+    
+     -- Cursor para buscar registros de bloqueio de carga manual
+      CURSOR cr_regbloq(pr_cdcooper        tbcc_hist_param_pessoa_prod.cdcooper%TYPE
+                       ,pr_nrcpfcnpj_base  tbcc_hist_param_pessoa_prod.nrcpfcnpj_base%TYPE
+                       ,pr_dtsistema       DATE) IS
+        SELECT flglibera
+        FROM (SELECT h.*
+              FROM tbcc_hist_param_pessoa_prod h
+              WHERE h.cdcooper = pr_cdcooper
+                AND h.nrcpfcnpj_base = pr_nrcpfcnpj_base
+                AND (TRUNC(h.dtvigencia_paramet) IS NULL
+                     OR h.dtvigencia_paramet >= trunc(pr_dtsistema))
+              ORDER BY h.idregistro DESC)
+        WHERE ROWNUM = 1;
+      rw_regbloq cr_regbloq%ROWTYPE;
+    
+      -- Cursor generico de calendario
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+      -- Retornos da chamada
+      vr_flglibera  tbcc_hist_param_pessoa_prod.flglibera%TYPE;
+    BEGIN
+      
+
+      -- Leitura do calendario da CECRED
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      CLOSE BTCH0001.cr_crapdat;
+      
+     -- Buscar se existe carga manual e seus respectivos bloqueios
+      OPEN cr_regbloq(pr_cdcooper        => pr_cdcooper
+                     ,pr_nrcpfcnpj_base  => pr_nrcpfcnpj_base
+                     ,pr_dtsistema       => rw_crapdat.dtmvtolt);
+      FETCH cr_regbloq INTO rw_regbloq;
+        
+      IF cr_regbloq%FOUND THEN
+        -- SE Retornou dados, mas veio com 1 quer dizer que teve bloqueio mas foi liberado, 
+        -- entao muda o retorno para zero. Pois Zero e liberado.
+        IF rw_regbloq.flglibera = 1 THEN
+           vr_flglibera := 0;
+        ELSE
+           vr_flglibera := 1;
+        END IF;
+      ELSE     
+        -- Se nao possui registro, quer dizer que nunca teve bloqueio.
+        vr_flglibera:= 0;
+      END IF;
+    
+      RETURN vr_flglibera;
+    END;
+  END fn_tem_bloq_preaprov_manual;
   
   /* Busca da flg de PreAprovado liberado ou não ao Cooperado */
   FUNCTION fn_flg_preapv_liberado(pr_cdcooper       crapcop.cdcooper%TYPE
@@ -718,7 +809,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
      Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
      Sigla   : EMPR
      Autor   : Odirlei Busana(AMcom)
-     Data    : Outubro/2015.                    Ultima atualizacao: 13/01/2016
+     Data    : Outubro/2015.                    Ultima atualizacao: 24/09/2019
 
      Dados referentes ao programa:
 
@@ -730,9 +821,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
 
                  13/01/2016 - Verificacao de carga ativa - Pre-Aprovado fase II.
                               (Jaison/Anderson)
-                              
-                 12/02/2018 - Repasse de novos campos             
 
+                 12/02/2018 - Repasse de novos campos
+
+                 24/08/2019 - Concatenado Rating na mensagem para o operador na pc_busca_dados_cpa
+                              (Luiz Otavio Olinegr Momm - AMCOM)
     ..............................................................................*/ 
 
     ---------------> CURSORES <-----------------
@@ -793,6 +886,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
          AND lcr.cdlcremp = pr_cdlcremp;
     rw_craplcr cr_craplcr%ROWTYPE;
 
+    --> Busca NivelRating - P450 24/08/2019
+    CURSOR cr_risco_operacoes (pr_cdcooper       IN crapcpa.cdcooper%TYPE
+                              ,pr_nrcpfcnpj_base IN crapcpa.nrcpfcnpj_base%TYPE) IS
+      SELECT oper.inrisco_rating_autom
+        FROM tbrisco_operacoes oper
+       WHERE oper.tpctrato = 68
+         AND oper.cdcooper = pr_cdcooper
+         AND oper.nrcpfcnpj_base = pr_nrcpfcnpj_base;
     ---------------> VARIAVEIS <----------------       
    
     --> Tratamento de erros
@@ -801,11 +902,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
     vr_dscritic  VARCHAR2(4000);
     
     -- Auxiliares
-    vr_idx       PLS_INTEGER;
-    vr_idcarga   tbepr_carga_pre_aprv.idcarga%TYPE;
+    vr_idx          PLS_INTEGER;
+    vr_idcarga      tbepr_carga_pre_aprv.idcarga%TYPE;
     vr_vlparcel  NUMBER(25,2);
     vr_vldispon  NUMBER(25,2);
     vr_dscargamanu tbepr_carga_pre_aprv.dscarga%TYPE;
+    vr_innivris     NUMBER;        -- P450 24/08/2019 - nivelRisco Rating (AA a HH)
+    vr_dsnivris     VARCHAR2(200); -- P450 24/08/2019 - nota Rating (AA a HH)
     
   BEGIN
     pr_tab_erro.delete;
@@ -931,9 +1034,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
           vr_dscargamanu := 'CARGA: '||rw_crapcpa.mensagem;
        
        END IF;       
+
+       -- Informar Nota Rating para Esteira - P450 24/08/2019
+       OPEN cr_risco_operacoes(pr_cdcooper =>       rw_crapass.cdcooper
+                           ,pr_nrcpfcnpj_base => rw_crapcpa.nrcpfcnpj_base);
+       FETCH cr_risco_operacoes
+         INTO vr_innivris;
+       CLOSE cr_risco_operacoes;
+
+       -- Se não localizar não incluir o bloco de indicadoresGeradosRegra que viria do MOTOR - P450 24/08/2019
+           vr_dsnivris := '';
+           IF vr_innivris IS NOT NULL THEN
+             vr_dsnivris := risc0004.fn_traduz_risco(vr_innivris);
+             IF LENGTH(TRIM(NVL(vr_dsnivris, ''))) > 0 THEN
+               vr_dsnivris := 'Rating (' || vr_dsnivris || ') ';
+             END IF;
+           END IF;
        pr_tab_dados_cpa(vr_idx).msgmanua := 'Atenção: Cooperado possui Crédito Pré-Aprovado, limite '||
                                             'máximo de R$ '||to_char(pr_tab_dados_cpa(vr_idx).vldiscrd,'FM999G999G990D00MI')||
                                             ', taxa de '||to_char(pr_tab_dados_cpa(vr_idx).txmensal,'FM990D00MI')||'% a.m. '||
+                                            vr_dsnivris ||
                                             vr_dscargamanu;      
     END IF;
   EXCEPTION
@@ -2450,7 +2570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                FETCH cr_cpa_sas INTO rw_cpa_sas;
                CLOSE cr_cpa_sas;			
 			   
-               -- Atualizar a posição (CRAPCPA
+               -- Atualizar a posição (CRAPCPA)
                BEGIN
                  UPDATE crapcpa cpa
                     SET cpa.vlcalpre = vr_vig_vl_limite
@@ -3246,6 +3366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
           AND ppp.nrcpfcnpj_base = pr_nrcpfcnpj_base
           AND ppp.cdcooper = pr_cdcooper
           AND ppp.dtregulariza IS NULL;
+      rw_motivos_abertos cr_motivos_abertos%ROWTYPE;
       
       -- Variaveis auxiliares
       vr_idcarga crapcpa.iddcarga%TYPE;
@@ -3303,7 +3424,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         OPEN cr_motivos_abertos(pr_idcarga        => vr_idcarga
                                ,pr_nrcpfcnpj_base => rw_crapass.nrcpfcnpj_base
                                ,pr_cdcooper       => pr_cdcooper);
-        
+        FETCH cr_motivos_abertos INTO rw_motivos_abertos;
+
         IF cr_motivos_abertos%NOTFOUND THEN
           UPDATE crapcpa cpa
           SET cpa.cdsituacao = 'A'
@@ -3416,6 +3538,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
               ,row_number() over (partition By cpa.tppessoa
                                       order by cpa.tppessoa
                                               ,cpa.nrcpfcnpj_base) nrseqreg          
+              ,cpa.nrdconta
+              ,cpa.dtmvtolt
           FROM crapcpa cpa
          WHERE cpa.iddcarga = pr_idcarga
            AND cpa.cdsituacao = 'A'; -- Somente aprovados
@@ -3491,6 +3615,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
          WHERE cpa.iddcarga   = pr_idcarga
            AND cpa.cdsituacao = 'R';
 
+      vr_flgrating         PLS_INTEGER;
+      vr_insituacao_rating tbrisco_operacoes.insituacao_rating%TYPE;
+
+      vr_innivris       tbrisco_operacoes.inrisco_rating%TYPE;
     BEGIN
       -- Validar se cooperativa existe
       OPEN cr_crapcop(pr_cdcooper);
@@ -3880,6 +4008,64 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                       vr_dscritic := 'Erro ao atualizar situacao do registro para Rejeitado(ASS): '||SQLERRM;
                       RAISE vr_exc_saida;
                   END;
+                ELSE
+                  -- Buscar o status do rating pré-aprovado
+                  rati0003.pc_busca_status_rating(pr_cdcooper => rw_cpa.cdcooper
+                                                 ,pr_nrdconta => rw_cpa.nrcpfcnpj_base
+                                                 ,pr_tpctrato => 68
+                                                 ,pr_nrctrato => 0
+                                                 ,pr_strating => vr_insituacao_rating 
+                                                 ,pr_flgrating => vr_flgrating
+                                                 ,pr_cdcritic => vr_cdcritic 
+                                                 ,pr_dscritic => vr_dscritic);
+                  -- So irá gravar Rating caso o limite pré-aprovado esteja invalido
+                  -- Diferente de Analisado ou Efetivo
+                  IF nvl(vr_flgrating,0) = 0 THEN  -- Rating nao valido
+                    IF rati0003.fn_retorna_modelo_rating(pr_cdcooper => rw_cpa.cdcooper) = 2 THEN -- Modelo Ibratan
+                    rati0003.pc_grava_rating_operacao(pr_cdcooper => rw_cpa.cdcooper
+                                                     ,pr_nrdconta => vr_nrdconta
+                                                     ,pr_tpctrato => 68
+                                                     ,pr_nrctrato => 0
+                                                     ,pr_strating => 3 
+                                                     ,pr_orrating => 1
+                                                     ,pr_cdoprrat => pr_cdoperad
+                                                     ,pr_nrcpfcnpj_base => rw_cpa.nrcpfcnpj_base 
+                                                     ,pr_cdoperad => pr_cdoperad 
+                                                     ,pr_dtmvtolt => rw_crapcop.dtmvtolt
+                                                     ,pr_justificativa => 'Carga automática SAS limite' 
+                                                     ,pr_tpoperacao_rating => 68 
+                                                     ,pr_cdcritic =>  vr_cdcritic
+                                                     ,pr_dscritic => vr_dscritic);
+                    IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                      RAISE vr_exc_saida;
+                      END IF;
+                    ELSIF rati0003.fn_retorna_modelo_rating(pr_cdcooper => rw_cpa.cdcooper) = 1 THEN -- Modelo Aimaro, gravar em modo contingência
+                      rati0003.pc_busca_rat_contigencia(pr_cdcooper => rw_cpa.cdcooper,
+                                                       pr_nrcpfcgc => rw_cpa.nrcpfcnpj_base, --> CPFCNPJ BASE
+                                                       pr_innivris => vr_innivris,                         --> risco contingencia
+                                                       pr_cdcritic => vr_cdcritic,
+                                                       pr_dscritic => vr_dscritic);
+                      -- grava o rating contingencia
+                      RATI0003.pc_grava_rating_operacao(pr_cdcooper       => rw_cpa.cdcooper  --> Código da Cooperativa
+                                                       ,pr_nrdconta       => vr_nrdconta  --> Conta do associado
+                                                       ,pr_tpctrato       => 68  --> Tipo do contrato de rating
+                                                       ,pr_nrctrato       => 0  --> Número do contrato do rating
+                                                       ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
+                                                       ,pr_dtrataut       => rw_crapcop.dtmvtolt --> Data do Rating retornado do MOTOR
+                                                       ,pr_dtrating       => rw_crapcop.dtmvtolt --> Data de Efetivacao do Rating
+                                                       ,pr_strating       => 5   --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
+                                                       ,pr_orrating       => 4   --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
+                                                       ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
+                                                       ,pr_nrcpfcnpj_base => rw_cpa.nrcpfcnpj_base --> Numero do CPF/CNPJ Base do associado
+                                                       ,pr_cdoperad       => '1'
+                                                       ,pr_dtmvtolt       => rw_crapcop.dtmvtolt
+                                                       ,pr_cdcritic       => vr_cdcritic
+                                                       ,pr_dscritic       => vr_dscritic);
+                      IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                        RAISE vr_exc_saida;
+                      END IF;
+                    END IF;
+                  END IF;
                 END IF;
               END LOOP; 
 
@@ -4099,7 +4285,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                         ,cpa.vlcalpre = vr_vlcalpre
                         ,cpa.vlpot_lim_max = vr_limMax
                    WHERE cpa.rowid = rw_cpa.nr_rowid; 
+                  -- P450 Inicio
+                  -- Buscar o status do rating pré-aprovado
+                  rati0003.pc_busca_status_rating(pr_cdcooper => rw_cpa.cdcooper
+                                                 ,pr_nrdconta => rw_cpa.nrcpfcnpj_base
+                                                 ,pr_tpctrato => 68
+                                                 ,pr_nrctrato => 0
+                                                 ,pr_strating => vr_insituacao_rating 
+                                                 ,pr_flgrating => vr_flgrating
+                                                 ,pr_cdcritic => vr_cdcritic 
+                                                 ,pr_dscritic => vr_dscritic);
+                  IF nvl(vr_insituacao_rating,0) NOT IN (2,4,6) THEN -- 6-Modelo Aimaro gravado em contingência
+                    -- Bloquear situação do limite do cooperado
+                    empr0002.pc_proces_perca_pre_aprovad(pr_cdcooper        => rw_cpa.cdcooper
+                                                        ,pr_idcarga         => vr_idcarga
+                                                        ,pr_nrdconta        => 0 
+                                                        ,pr_tppessoa        => rw_cpa.tppessoa 
+                                                        ,pr_nrcpf_cnpj_base => rw_cpa.nrcpfcnpj_base
+                                                        ,pr_dtmvtolt        => rw_cpa.dtmvtolt
+                                                        ,pr_idmotivo        => 82--> Bloqueio pre-aprovado sem rating
+                                                        ,pr_qtdiaatr        => 0 --> valor não será mais enviado
+                                                        ,pr_valoratr        => 0 --> valor não será mais enviado
+                                                        ,pr_dscritic        => vr_dscritic);
+
+                    IF vr_dscritic IS NOT NULL THEN
+                      RAISE vr_exc_saida;
+                    END IF;
                     
+                  END IF;                                       
+                  -- P450 Fim
+
                   -- Buscar todas as Contas do Cooperado via CPF/CNPJ
                   FOR rw_crapass IN cr_crapass(pr_cdcooper,rw_cpa.tppessoa,rw_cpa.nrcpfcnpj_base) LOOP
                     -- Gerar LOG
@@ -4294,7 +4509,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                  efetuar leitura linha a linha e integrar as informações ao 
                  produto Pré_aprovado
      
-     Alteracoes: 
+     Alteracoes: 04/09/2019 - Adicionado rotina para modelo Aimaro gravar Rating em
+                              Contingência - Weverton Otoni (AMCOM)
      ..............................................................................*/                                        
   BEGIN
     DECLARE
@@ -4338,12 +4554,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       
       -- Dados para o XML
       vr_txtclob VARCHAR2(32767);
-      vr_fltemerr VARCHAR2(1);      -- Se há erro                                  
+      vr_fltemerr VARCHAR2(1);      -- Se há erro
       vr_flgbloqcarga VARCHAR2(1);  -- Se há erro bloqueando a carga
-      vr_dsmensag VARCHAR2(5000);   -- Mensagem para ser retornada a tela      
+      vr_dsmensag VARCHAR2(5000);   -- Mensagem para ser retornada a tela
 
-      vr_idx2     PLS_INTEGER;  
-    
+      vr_idx2     PLS_INTEGER;
+
+      vr_flgrating         PLS_INTEGER;
+      vr_insituacao_rating tbrisco_operacoes.insituacao_rating%TYPE;
+      
       -- Vetores para armazenar as chaves de Carga e Cooperado e evitar duplicidade
       TYPE typ_reg_hash_busca IS TABLE OF PLS_INTEGER INDEX BY VARCHAR2(1000);
       vr_tab_hash_cargas   typ_reg_hash_busca;
@@ -4352,6 +4571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       vr_idx_hase_cooperad VARCHAR2(1000);
       vr_idx_carga         PLS_INTEGER;
 
+      vr_innivris       tbrisco_operacoes.inrisco_rating%TYPE;
       -- Vetor de cooperados da Carga (Detalhe)
       TYPE typ_reg_cooperad IS RECORD(tppesoa   crapcpa.tppessoa%TYPE
                                      ,nrcpfcnpj  NUMBER(14)
@@ -4415,11 +4635,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       vr_nrdconta crapass.nrdconta%TYPE;                
     
       -- Chacagem de existencia do Cooperado
-      CURSOR cr_crapass(pr_cdcooper crapcop.cdcooper%TYPE
+      CURSOR cr_crapass(pr_cdcooper  crapcop.cdcooper%TYPE
+                       ,pr_inpessoa  crapass.inpessoa%TYPE
                        ,pr_nrcpfcnpj crapass.nrcpfcnpj_base%TYPE) IS
         SELECT ass.nrdconta
         FROM crapass ass
         WHERE ass.cdcooper = pr_cdcooper
+           AND inpessoa = pr_inpessoa
           AND ass.nrcpfcnpj_base = pr_nrcpfcnpj;
       
       -- Checagem da Linha de Credito
@@ -4900,8 +5122,83 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                       AND nrcpfcnpj_base = vr_tab_carga(vr_idx1).tabcooper(vr_idx2).nrcpfcnpj
                       AND tppessoa = vr_tab_carga(vr_idx1).tabcooper(vr_idx2).tppesoa;                                                                          
 
-                    -- Buscar todas as Contas do Cooperado via CPF/CNPJ
-                    FOR rw_crapass IN cr_crapass(vr_tab_carga(vr_idx1).cdcooper,vr_tab_carga(vr_idx1).tabcooper(vr_idx2).nrcpfcnpj) LOOP
+                    -- P450 - inicio
+                    -- Na segunda entrega do pre-aprovado a pc_grava_rating_operacao
+                    -- deverá ser colocada aqui e passar zero para o número da conta.
+                    -- Atualmente está dentro do próximo laço para não dar erro de chave
+                    -- na tabela tbrisco_operacoes
+
+                    -- P450
+                    -- Na segunda etapa do pré-aprovado deverá retirar daqui a gravação do rating
+                    -- Gravar o rating
+
+                    -- Testar existencia de associado com o CPF/CNPJ Base
+                    vr_nrdconta := NULL;
+                    OPEN cr_crapass(vr_tab_carga(vr_idx1).cdcooper
+                                   ,vr_tab_carga(vr_idx1).tabcooper(vr_idx2).tppesoa
+                                   ,vr_tab_carga(vr_idx1).tabcooper(vr_idx2).nrcpfcnpj);
+                    FETCH cr_crapass INTO vr_nrdconta;
+                    CLOSE cr_crapass;
+
+                    -- Buscar o status do rating pré-aprovado
+                    rati0003.pc_busca_status_rating(pr_cdcooper  => vr_tab_carga(vr_idx1).cdcooper
+                                                   ,pr_nrdconta  => vr_tab_carga(vr_idx1).tabcooper(vr_idx2).nrcpfcnpj
+                                                   ,pr_tpctrato  => 68
+                                                   ,pr_nrctrato  => 0
+                                                   ,pr_strating  => vr_insituacao_rating 
+                                                   ,pr_flgrating => vr_flgrating
+                                                   ,pr_cdcritic  => vr_cdcritic 
+                                                   ,pr_dscritic  => vr_dscritic);
+
+                    -- So irá gravar Rating caso o limite pré-aprovado esteja invalido
+                    -- Diferente de Analisado ou Efetivo
+                    IF nvl(vr_flgrating,0) = 0 THEN  -- Rating nao valido
+                      IF rati0003.fn_retorna_modelo_rating(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper) = 2 THEN -- Modelo Ibratan
+                        rati0003.pc_grava_rating_operacao(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper
+                                                         ,pr_nrdconta => vr_nrdconta
+                                                         ,pr_tpctrato => 68
+                                                         ,pr_nrctrato => 0
+                                                         ,pr_strating => 3 
+                                                         ,pr_orrating => 1
+                                                         ,pr_cdoprrat => pr_cdoperad
+                                                         ,pr_nrcpfcnpj_base => vr_tab_carga(vr_idx1).tabcooper(vr_idx2).nrcpfcnpj
+                                                         ,pr_cdoperad       => pr_cdoperad 
+                                                         ,pr_dtmvtolt       => rw_crapcop.dtmvtolt
+                                                         ,pr_justificativa  => 'Carga manual do limite' 
+                                                         ,pr_tpoperacao_rating => 68 
+                                                         ,pr_cdcritic        => vr_cdcritic
+                                                         ,pr_dscritic        => vr_dscritic);
+                       -- Não criticar garvação do rating
+                      ELSIF rati0003.fn_retorna_modelo_rating(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper) = 1 THEN -- Modelo Aimaro, gravar em modo contingência
+                        rati0003.pc_busca_rat_contigencia(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper,
+                                                         pr_nrcpfcgc => vr_tab_carga(vr_idx1).tabcooper(vr_idx2).nrcpfcnpj, --> CPFCNPJ BASE
+                                                         pr_innivris => vr_innivris,                         --> risco contingencia
+                                                         pr_cdcritic => vr_cdcritic,
+                                                         pr_dscritic => vr_dscritic);
+                        
+                        -- grava o rating contingencia
+                        RATI0003.pc_grava_rating_operacao(pr_cdcooper       => vr_tab_carga(vr_idx1).cdcooper  --> Código da Cooperativa
+                                                         ,pr_nrdconta       => vr_nrdconta  --> Conta do associado
+                                                         ,pr_tpctrato       => 68  --> Tipo do contrato de rating
+                                                         ,pr_nrctrato       => 0  --> Número do contrato do rating
+
+                                                         ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
+                                                         ,pr_dtrataut       => rw_crapcop.dtmvtolt --> Data do Rating retornado do MOTOR
+                                                         ,pr_dtrating       => rw_crapcop.dtmvtolt --> Data de Efetivacao do Rating
+                                       
+                                                         ,pr_strating       => 5   --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
+                                                         ,pr_orrating       => 4   --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
+                                                         ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
+                                                         ,pr_nrcpfcnpj_base => vr_tab_carga(vr_idx1).tabcooper(vr_idx2).nrcpfcnpj --> Numero do CPF/CNPJ Base do associado
+                                                         ,pr_cdoperad       => '1'
+                                                         ,pr_dtmvtolt       => rw_crapcop.dtmvtolt
+                                                         ,pr_cdcritic       => vr_cdcritic
+                                                         ,pr_dscritic       => vr_dscritic);            
+                      END IF;     
+                    END IF;
+                     -- P450
+                    
+                    
                       -- Gerar LOG
                       gene0001.pc_gera_log(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper
                                           ,pr_cdoperad => pr_cdoperad
@@ -4913,7 +5210,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
                                           ,pr_idseqttl => 0
                                           ,pr_nmdatela => pr_cdprogra
-                                          ,pr_nrdconta => rw_crapass.nrdconta
+                                          ,pr_nrdconta => vr_nrdconta
                                           ,pr_nrdrowid => vr_nrdrowid);                      
                       gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                                ,pr_nmdcampo => 'Liberacao de pre-aprovado'
@@ -4939,7 +5236,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                                                ,pr_nmdcampo => 'PreAprovado Calculado'
                                                ,pr_dsdadant => NULL
                                                ,pr_dsdadatu => to_char(vr_vlcalpre,'fm999g999g999g999d00'));                                                                                         
-                    END LOOP;
                   EXCEPTION
                     WHEN vr_exc_saida THEN
                       RAISE vr_exc_saida;
@@ -6826,9 +7122,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
      Dados referentes ao programa:
 
      Objetivo  : Liberar carga manual após cálculo de rating.
-     
-     Alteracoes: 
-     ..............................................................................*/ 
+
+     Alteracoes:
+                 23/08/2019 - Bloquear limites caso não tenha rating analisado ou efetivo
+                              Bloquear a carga caso todos os limites estão bloqueados
+                              (P450 - Heckmann - AMcom).
+     ..............................................................................*/
   BEGIN
     DECLARE
       -- Cursor generico de calendario
@@ -6852,11 +7151,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
         SELECT cpa.nrcpfcnpj_base
               ,cpa.tppessoa
               ,cpa.cdcooper
+              ,cpa.nrdconta
         FROM crapcpa cpa
         WHERE cpa.cdcooper = pr_cdcooper
           AND cpa.iddcarga = pr_idcarga;
       
+      -- Cursor para verificar se todos os limites da carga estão liberados
+      CURSOR cr_bloqueados_cpa(pr_cdcooper        IN crapass.cdcooper%TYPE
+                              ,pr_idcarga         IN crapcpa.iddcarga%TYPE) IS
+        SELECT count(1) qt_registros
+        FROM crapcpa cpa
+        WHERE cpa.cdcooper = pr_cdcooper
+          AND cpa.iddcarga = pr_idcarga
+          AND cpa.cdsituacao IN ('A','B');
+      rw_bloqueados_cpa cr_bloqueados_cpa%ROWTYPE;
+
       vr_exc_saida EXCEPTION;
+      vr_flgrating         PLS_INTEGER;
+      vr_insituacao_rating tbrisco_operacoes.insituacao_rating%TYPE;
+      vr_cdcritic          PLS_INTEGER;
+      vr_dscritic          VARCHAR2(4000);
     BEGIN
       -- Validar se cooperativa existe
       OPEN cr_crapcop(pr_cdcooper);
@@ -6894,17 +7208,68 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       SET cpa.cdsituacao = 'A'
       WHERE cpa.iddcarga = pr_idcarga
         AND cpa.cdcooper = pr_cdcooper;
-	  
-	  -- Susbituir registros do mesmo documento anteriores, deixando vigente somente o mais atual
-      FOR rw_substitui_cpa IN cr_substitui_cpa(pr_cdcooper => pr_cdcooper, pr_idcarga => pr_idcarga) LOOP         
+
+    -- Susbituir registros do mesmo documento anteriores, deixando vigente somente o mais atual
+      FOR rw_substitui_cpa IN cr_substitui_cpa(pr_cdcooper => pr_cdcooper, pr_idcarga => pr_idcarga) LOOP
+
+        -- P450 Inicio
+        -- Manter os limites bloqueados caso não tenham rating
+        rati0003.pc_busca_status_rating(pr_cdcooper => pr_cdcooper
+                                       -- É passado o número do cpfcnpj base para verificar se há rating
+                                       ,pr_nrdconta => rw_substitui_cpa.nrcpfcnpj_base
+                                       ,pr_tpctrato => 68
+                                       ,pr_nrctrato => 0
+                                       ,pr_strating => vr_insituacao_rating
+                                       ,pr_flgrating => vr_flgrating
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+        IF nvl(vr_insituacao_rating,0) NOT IN (2,4,6) THEN -- 6-Modelo Aimaro gravado em contingência
+          -- Bloquear situação do limite do cooperado
+
+          empr0002.pc_proces_perca_pre_aprovad(pr_cdcooper        => pr_cdcooper
+                                              ,pr_idcarga         => pr_idcarga
+                                              ,pr_nrdconta        => 0
+                                              ,pr_tppessoa        => rw_substitui_cpa.tppessoa
+                                              ,pr_nrcpf_cnpj_base => rw_substitui_cpa.nrcpfcnpj_base
+                                              ,pr_dtmvtolt        => rw_crapdat.dtmvtolt
+                                              ,pr_idmotivo        => 82--> Bloqueio pre-aprovado sem rating
+                                              ,pr_qtdiaatr        => 0 --> valor não será mais enviado
+                                              ,pr_valoratr        => 0 --> valor não será mais enviado
+                                              ,pr_dscritic        => vr_dscritic);
+
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+
+        END IF;
+        -- P450 Fim
+
         UPDATE crapcpa cpa
            SET cpa.cdsituacao = 'S'
          WHERE cpa.cdcooper = rw_substitui_cpa.cdcooper
            AND cpa.tppessoa = rw_substitui_cpa.tppessoa
            AND cpa.nrcpfcnpj_base = rw_substitui_cpa.nrcpfcnpj_base
-           AND cpa.iddcarga < pr_idcarga;       
-      END LOOP;            
-    
+           AND cpa.iddcarga < pr_idcarga;
+      END LOOP;
+
+      -- P450 Inicio
+      -- Verificar se todos os limites da carga estão liberados
+      OPEN cr_bloqueados_cpa(pr_cdcooper => pr_cdcooper
+                            ,pr_idcarga => pr_idcarga);
+      FETCH cr_bloqueados_cpa INTO rw_bloqueados_cpa;
+      CLOSE cr_bloqueados_cpa;
+
+      -- Se não tiver nenhum limite ativo, deve bloquear toda a carga
+      IF rw_bloqueados_cpa.qt_registros = 0 THEN
+
+        -- Bloquear carga
+        UPDATE tbepr_carga_pre_aprv car
+           SET car.indsituacao_carga  = 1
+              ,car.flgcarga_bloqueada = 1
+         WHERE car.idcarga = pr_idcarga;
+
+       END IF;
+      -- P450 Fim
       COMMIT;
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -7259,5 +7624,176 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       END IF; 
     END;
   END pc_assinatura_contrato_pre;   
+
+  /* Desbloqueio pre-aprovado quando bloqueados por falta de rating */
+  PROCEDURE pc_desbloqueio_pre_aprv_rating(pr_cdcooper  IN crawepr.cdcooper%TYPE DEFAULT 0 --> Código da Cooperativa
+                                          ,pr_cdcritic  OUT INTEGER               --> Código de críticia
+                                          ,pr_dscritic  OUT VARCHAR2) IS          --> Descrição da crítica
+  /*.............................................................................
+         programa: pc_desbloqueio_pre_aprv_rating
+         sigla   : cred
+         autor   : Elton (Amcom)
+         data    : Agosto/2019                      ultima atualizacao:
+
+         dados referentes ao programa:
+
+         frequencia: sempre que for chamado a partir do JOB
+         objetivo  : desbloquear pre-aprovado por motivo de falta de rating. 
+
+         alteracoes:
+    ............................................................................. */
+  BEGIN
+    DECLARE
+
+      -- busca cooperativas ativas
+      CURSOR cr_crapcop IS
+        SELECT cop.cdcooper
+              ,dat.dtmvtolt
+              ,dat.dtmvtoan
+          FROM crapcop cop
+              ,crapdat dat
+         WHERE cop.cdcooper = dat.cdcooper
+           AND cop.cdcooper = DECODE(pr_cdcooper,0,cop.cdcooper,pr_cdcooper) -- 0-para todas
+           AND cop.flgativo = 1;
+
+      -- lista cargas ativas
+      CURSOR cr_cargas(pr_cdcooper crapcop.cdcooper%TYPE
+                      ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS   
+        SELECT distinct cpa.iddcarga
+            FROM crapcpa              cpa
+                ,tbepr_carga_pre_aprv car
+           WHERE cpa.cdcooper = pr_cdcooper
+             AND car.cdcooper = cpa.cdcooper
+             AND cpa.iddcarga = car.idcarga
+             AND NVL(car.dtfinal_vigencia,TRUNC(SYSDATE)) >= TRUNC(pr_dtmvtolt)
+             AND cpa.cdsituacao IN ('A','B');
+
+      -- Buscar casos com bloqueio 
+      CURSOR cr_desbloquear (pr_iddcarga crapcpa.iddcarga%TYPE) IS           
+        SELECT ppp.cdcooper, ppp.nrcpfcnpj_base, ppp.tppessoa
+          FROM tbepr_motivo_nao_aprv ppp
+         WHERE ppp.idmotivo = 82 --Bloqueio pre-aprovado sem rating
+           AND ppp.idcarga  = pr_iddcarga;
+     
+      vr_flgrating         PLS_INTEGER;
+      vr_insituacao_rating tbrisco_operacoes.insituacao_rating%TYPE;
+      
+      vr_exc_saida  EXCEPTION;
+      vr_cdcritic  crapcri.cdcritic%TYPE;
+      vr_dscritic  crapcri.dscritic%TYPE;
+      
+    BEGIN              
+
+      -- Carregar cooperativas
+      FOR rw_crapcop IN cr_crapcop LOOP 
+                                                  
+        -- buscar cargas ativas (manuais ou automaticas)
+        FOR rw_cargas IN cr_cargas(pr_cdcooper => rw_crapcop.cdcooper
+                                  ,pr_dtmvtolt => rw_crapcop.dtmvtolt)  LOOP
+
+          -- verificar casos bloqueados
+          FOR rw_desbloquear IN cr_desbloquear(pr_iddcarga => rw_cargas.iddcarga) LOOP
+
+             --verifica se tem rating para cooperado
+             rati0003.pc_busca_status_rating(pr_cdcooper  => rw_crapcop.cdcooper
+                                            ,pr_nrdconta  => rw_desbloquear.nrcpfcnpj_base
+                                            ,pr_tpctrato  => 68
+                                            ,pr_nrctrato  => 0
+                                            ,pr_strating  => vr_insituacao_rating 
+                                            ,pr_flgrating => vr_flgrating
+                                            ,pr_cdcritic  => vr_cdcritic 
+                                            ,pr_dscritic  => vr_dscritic);
+        
+             IF nvl(vr_insituacao_rating,0) IN (2,4) THEN --2-Analisado 4-efetivo
+                --desbloquear
+                pc_regularz_perca_pre_aprovad(pr_cdcooper        => rw_crapcop.cdcooper
+                                             ,pr_idcarga         => rw_cargas.iddcarga
+                                             ,pr_nrdconta        => 0
+                                             ,pr_tppessoa        => rw_desbloquear.tppessoa    
+                                             ,pr_nrcpf_cnpj_base => rw_desbloquear.nrcpfcnpj_base
+                                             ,pr_idmotivo        => 82
+                                             ,pr_dtmvtolt        => rw_crapcop.dtmvtolt
+                                             ,pr_dscritic        => vr_dscritic);
+        
+                IF vr_dscritic IS NOT NULL THEN
+                  RAISE vr_exc_saida;
+                END IF;
+             
+             END IF;   
+          END LOOP;
+        END LOOP;    
+      END LOOP;    
+      COMMIT;
+    EXCEPTION
+
+      WHEN vr_exc_saida THEN
+        ROLLBACK;
+        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+          vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        pr_dscritic := 'Erro na EMPR0002.pc_desbloqueio_pre_aprv_rating. '||vr_dscritic;
+        
+      WHEN OTHERS THEN
+        ROLLBACK;
+        
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro não tratado na EMPR0002.pc_desbloqueio_pre_aprv_rating ' || SQLERRM; 
+    END;
+  END pc_desbloqueio_pre_aprv_rating; 
+
+  /* Job para Desbloqueio pre-aprovado quando bloqueados por falta de rating */
+  PROCEDURE pc_job_desblo_preapvr_rating(pr_cdcritic  OUT INTEGER               --> Código de críticia
+                                        ,pr_dscritic  OUT VARCHAR2) IS          --> Descrição da crítica
+  /*.............................................................................
+         programa: pc_job_desblo_preapvr_rating
+         sigla   : cred
+         autor   : Elton (Amcom)
+         data    : Agosto/2019                      ultima atualizacao:
+
+         dados referentes ao programa:
+
+         frequencia: sempre que for chamado a partir do JOB JBEPR_DESBLOQ_PREAPRV_RAT
+         objetivo  : desbloquear pre-aprovado por motivo de falta de rating. 
+
+         alteracoes:
+    ............................................................................. */
+  BEGIN
+    DECLARE
+
+      CURSOR cr_busca_cargas IS
+        SELECT cdcooper, idcarga
+          FROM tbepr_carga_pre_aprv
+         WHERE indsituacao_carga = 1
+           AND tpcarga = 1;
+           
+	    vr_exc_erro  EXCEPTION;
+     
+    BEGIN              
+ 
+      FOR rw_busca_cargas IN cr_busca_cargas LOOP
+        pc_libera_manual_rating(pr_cdcooper   => rw_busca_cargas.cdcooper
+                               ,pr_idcarga    => rw_busca_cargas.idcarga
+                               ,pr_des_erro   => pr_dscritic);
+                                     
+        IF pr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+      END LOOP;
+
+      -- gera a tentativa de desbloqueio dos casos de pre aprovados bloqueados por falta de rating
+      pc_desbloqueio_pre_aprv_rating(pr_cdcooper => 0-- para todas as cooperativas
+                                    ,pr_cdcritic => pr_cdcritic
+                                    ,pr_dscritic => pr_dscritic);
+   
+    EXCEPTION
+
+      WHEN vr_exc_erro THEN
+        pr_dscritic := 'Erro ao executar empr0002.pc_job_desblo_preapvr_rating: ' || pr_dscritic;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        ROLLBACK;
+    END;   
+  END pc_job_desblo_preapvr_rating;
+
 END EMPR0002;
 /

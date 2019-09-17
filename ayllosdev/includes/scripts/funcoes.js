@@ -89,6 +89,7 @@
  * 077: [15/10/2015] Kelvin			  (CECRED) : Criada funcao removeCaracteresInvalidos() e removeAcentos()
 												 para auxiliar na remoção dos caracteres que invalidam o xml.
  * 078: [28/10/2015] Heitor           (RKAM)   : Criada funcao utf8_decode para utilizacao de acentuacao php x js
+ * 079: [30/01/2019] Luiz Otávio Momm (AMCOM)  : Adicionada a tela de associado para pesquisa por nome e cpfcgc e adicionado o evento de sair pelo teclado
  */ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -321,6 +322,13 @@ $(document).ready(function() {
 					} 
 					return true;						
 					
+				// ALTERAÇÃO 079
+				} else if ( $('#divPesquisaAssociadoDadosCadastrais').css('visibility') == 'visible') {
+					if ( e.which == 27 || e.which == 115 ) {
+						$('.fecharPesquisa','#divPesquisaAssociadoDadosCadastrais').click();
+					} 
+					return true;
+				// ALTERAÇÃO 079
 				} else if ( $('#divPesquisa').css('visibility') == 'visible') {
 					if ( e.which == 27 || e.which == 115 ) {
 						$('.fecharPesquisa','#divPesquisa').click();
@@ -390,11 +398,11 @@ $(document).ready(function() {
 	}
 	
 	/*!
-	 * ALTERAÇÃO  : 019 | 040
+	 * ALTERAÇÃO  : 019 | 040 | 079
 	 * OBJETIVO   : Tornar as mensagens padrão de Erro ou Confirmação "Movimentáveis", permitindo arrastar a janela para qualquer direção, com o objetivo
 	 *              de desobstruindo os dados que se encontram logo abaixo da caixa de mensagem. Funcionalidade replicada as telas de rotinas.
 	 */	 
-	var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta');
+	var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divFormularioEndereco, #divPesquisaAssociado, #divPesquisaAssociadoDadosCadastrais, #divUsoGenerico, #divMsgsAlerta');
 	elementosDrag.unbind('dragstart');	
 	elementosDrag.bind('dragstart',function( event ){
 		return $(event.target).is('.ponteiroDrag');

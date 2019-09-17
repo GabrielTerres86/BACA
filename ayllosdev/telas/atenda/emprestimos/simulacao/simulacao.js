@@ -16,6 +16,7 @@
  * 007: [30/06/2015] Ajustes referente Projeto 215 - DV 3 (Daniel)
  * 008: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * 009: [13/12/2018] Projeto 298.2 - Inclusos novos campos tpemprst e campos de carencia (Andre Clemer - Supero)
+ * 010: [01/07/2019] Projeto 438 - Bloquear botões Alterar e Gerar Proposta para Simulações de origem 3 e 10. (Douglas Pagel / AMcom)
  */
 
 //******************************
@@ -46,6 +47,7 @@ function controlaOperacaoSimulacoes(operacao, nrSimulaInc) {
                 aux_tpfinali = $(this).find('#tpfinali').val();
                 aux_cdmodali_simulacao = $(this).find('#cdmodali').val();
                 aux_tpemprst = $(this).find('#tpemprst').val();
+				aux_cdorigem = $(this).find('#cdorigem').val();
             }
         });
         if (indarray == '') {
@@ -67,6 +69,10 @@ function controlaOperacaoSimulacoes(operacao, nrSimulaInc) {
 
             //Mostra o formulario de simulação
         case 'A_SIMULACAO':
+			if (aux_cdorigem == 3 || aux_cdorigem == 10) {
+        	    showError('error', 'Não é permitido alterar simulação com origem em canais digitais!', 'Alerta - Aimaro', 'hideMsgAguardo(); bloqueiaFundo($("#divUsoGenerico"));');
+        		return false;
+        	}
             showMsgAguardo("Aguarde, Abrindo formul&aacute;rio para altera&ccedil;&atilde;o...");
             //Preencho o formulario com os dados da simulação selecionada
             buscarDadosSimulacao(auxind, operacao,'');
@@ -93,7 +99,10 @@ function controlaOperacaoSimulacoes(operacao, nrSimulaInc) {
             carregarImpressaoSimulacao(auxind);
             break;
         case 'GPR':
-
+            if (aux_cdorigem == 3 || aux_cdorigem == 10) {
+        	    showError('error', 'Não é permitido gerar proposta de simulação com origem em canais digitais!', 'Alerta - Aimaro', 'hideMsgAguardo(); bloqueiaFundo($("#divUsoGenerico"));');
+        		return false;
+        	}
             var aux_dtmvtolt = $('#dtmvtolt', '#divProcSimulacoesTabela').val();
 
             // Data Liberação
@@ -562,10 +571,15 @@ function gerarProposta() {
         if ($(this).hasClass('corSelecao')) {
 
             aux_nrsimula = $(this).find('#nrsimula > span').text();
-
+			aux_cdorigem = $(this).find('#cdorigem').val();
 
         }
     });
+	
+	if (aux_cdorigem == 3 || aux_cdorigem == 10) {
+		showError('error', 'Não é permitido gerar proposta de simulação com origem em canais digitais!', 'Alerta - Aimaro', 'hideMsgAguardo(); bloqueiaFundo($("#divUsoGenerico"));');
+		return false;
+	}
 
     showConfirmacao('Confirma a Geração da Proposta com Base na Simulação Nº ' + aux_nrsimula + ' ?', 'Confirma&ccedil;&atilde;o - Aimaro', 'controlaOperacaoSimulacoes(\'GPR\')', "blockBackground(parseInt($('#divRotina').css('z-index')))", 'sim.gif', 'nao.gif');
 

@@ -742,6 +742,22 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2); --> Descricao da critica   
 
+  PROCEDURE pc_retorna_representante(pr_nrdconta IN  crapass.nrdconta%type
+                                    ,pr_xmllog   IN  VARCHAR2              
+                                    ,pr_cdcritic OUT PLS_INTEGER          
+                                    ,pr_dscritic OUT VARCHAR2             
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    
+                                    ,pr_nmdcampo OUT VARCHAR2             
+                                    ,pr_des_erro OUT VARCHAR2);
+                        
+  PROCEDURE pc_retorna_eventos(pr_nrdconta IN  crapass.nrdconta%type
+                              ,pr_xmllog   IN  VARCHAR2              
+                              ,pr_cdcritic OUT PLS_INTEGER          
+                              ,pr_dscritic OUT VARCHAR2             
+                              ,pr_retxml   IN OUT NOCOPY XMLType    
+                              ,pr_nmdcampo OUT VARCHAR2             
+                              ,pr_des_erro OUT VARCHAR2);
+
   PROCEDURE pc_lista_contas_porCpfCnpj(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE  --> Numero do CPF / CGC do cooperado
                            ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                            ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -14604,6 +14620,310 @@ exception
                                    '<Root><Erro>' || pr_dscritic ||
                                    '</Erro></Root>');
   END pc_retorna_grupo_cpf; 
+  
+  PROCEDURE pc_retorna_representante(pr_nrdconta IN  crapass.nrdconta%type
+                                    ,pr_xmllog   IN  VARCHAR2              
+                                    ,pr_cdcritic OUT PLS_INTEGER          
+                                    ,pr_dscritic OUT VARCHAR2             
+                                    ,pr_retxml   IN OUT NOCOPY XMLType    
+                                    ,pr_nmdcampo OUT VARCHAR2             
+                                    ,pr_des_erro OUT VARCHAR2) IS
+                                        
+    /* .............................................................................
+
+    Programa:  pc_retorna_representante
+    Sistema :  Aimaro
+    Autor   :  Gabriel (Mouts)
+    Data    :  Julho/2019                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Retorna socios da conta pj
+
+    Alteracoes: 
+    ..............................................................................*/                                     
+
+    -- Cursor para loop de representantes
+    cursor cr_busca_representante (pr_cdcooper in crapass.cdcooper%type
+                                  ,pr_nrdconta in crapass.nrdconta%type) is
+    select pef.nrcpfcgc
+         , pef.nmpessoa
+         , pef.idpessoa
+      from crapass ass
+         , tbcadast_pessoa pej
+         , tbcadast_pessoa_juridica_rep rep  
+         , tbcadast_pessoa pef
+     where ass.cdcooper = pr_cdcooper
+       and ass.nrdconta = pr_nrdconta
+       and pej.nrcpfcgc = ass.nrcpfcgc
+       and pej.idpessoa = rep.idpessoa
+       and pef.idpessoa = rep.idpessoa_representante;
+
+    -- Busca telefone do representante
+    cursor cr_busca_telefone (pr_idpessoa in crapass.cdcooper%type) is
+    select tel.nrddd
+         , tel.nrtelefone
+      from tbcadast_pessoa_telefone tel
+     where tel.idpessoa = pr_idpessoa;
+    rw_busca_telefone cr_busca_telefone%rowtype;
+
+    -- Tratamento de erros
+    vr_exc_saida  EXCEPTION;
+    vr_cdcritic   PLS_INTEGER;
+    vr_dscritic   VARCHAR2(4000); 
+    vr_nmeacao    VARCHAR2(100);    
+
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_dsorigem VARCHAR2(1000);
+    vr_contador NUMBER := 0;
+
+  BEGIN
+    
+    gene0001.pc_informa_acesso(pr_module => 'CADA0003');
+
+    -- Extrai os dados vindos do XML
+    GENE0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log
+    if trim(vr_dscritic) is not null then
+      raise vr_exc_saida;
+    end if;
+
+    FOR rw_busca_representante in cr_busca_representante(vr_cdcooper,pr_nrdconta) LOOP
+      if vr_contador = 0 then
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+      end if;
+      -- Busca telefone do representante
+      open  cr_busca_telefone (rw_busca_representante.idpessoa);
+      fetch cr_busca_telefone into rw_busca_telefone;
+      close cr_busca_telefone;
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);              
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrcpfcgc',   pr_tag_cont => rw_busca_representante.nrcpfcgc, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmpessoa',   pr_tag_cont => rw_busca_representante.nmpessoa, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrddd',      pr_tag_cont => rw_busca_telefone.nrddd,         pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrtelefone', pr_tag_cont => rw_busca_telefone.nrtelefone,    pr_des_erro => vr_dscritic);
+      vr_contador := vr_contador + 1;        
+    END LOOP;        
+ 
+    pr_des_erro := 'OK';
+
+  exception
+    
+    when vr_exc_saida then
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+
+      pr_des_erro := 'NOK';
+      
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic ||
+                                     '</Erro></Root>');
+                                     
+    when others then
+
+      cecred.pc_internal_exception(3);
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral em CADA0003.pc_retorna_representante.';
+      pr_des_erro := 'NOK';
+  
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic ||
+                                     '</Erro></Root>');
+                                     
+  END pc_retorna_representante;   
+  
+  procedure pc_retorna_eventos(pr_nrdconta in  crapass.nrdconta%type
+                              ,pr_xmllog   in  varchar2           
+                              ,pr_cdcritic out pls_integer          
+                              ,pr_dscritic out varchar2
+                              ,pr_retxml   in out nocopy XMLType    
+                              ,pr_nmdcampo out varchar2
+                              ,pr_des_erro out varchar2) is
+                                        
+    /* .............................................................................
+
+    Programa:  pc_retorna_eventos
+    Sistema :  Aimaro
+    Autor   :  Gabriel (Mouts)
+    Data    :  Julho/2019                 Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Retorna eventos assembleares com pre inscricao
+
+    Alteracoes: 
+    ..............................................................................*/                                     
+
+    -- Busca cpf do cooperado
+    cursor cr_crapass (pr_cdcooper in crapass.cdcooper%type
+                      ,pr_nrdconta in crapass.nrdconta%type) is
+    select xxx.nrdconta
+         , xxx.nrcpfcgc
+      from crapass ass
+         , crapass xxx
+     where ass.cdcooper = pr_cdcooper
+       and ass.nrdconta = pr_nrdconta
+       and xxx.cdcooper = ass.cdcooper
+       and xxx.nrcpfcgc = ass.nrcpfcgc;
+
+    -- Busca eventos do cooperado
+    cursor cr_crapidp (pr_cdcooper in crapidp.cdcooper%type
+                      ,pr_nrdconta in crapidp.nrdconta%type
+                      ,pr_nrcpfcgc in crapidp.nrcpfcgc%type) is
+    SELECT adp.nmdgrupo
+          ,to_char(adp.dtinieve,'dd/mm/yyyy') dtinieve
+          ,idp.nminseve
+      FROM crapedp edp
+          ,crapadp adp
+          ,crapidp idp
+          ,crapcdp cdp
+          ,gnappdp pdp
+          ,crapldp ldp
+     WHERE adp.idstaeve = 1
+       AND adp.nrdgrupo > 0
+       AND idp.idevento = 2
+       AND idp.cdcooper = pr_cdcooper
+       AND ((idp.nrdconta = pr_nrdconta) or
+            (idp.nrcpfcgc = pr_nrcpfcgc))
+       AND idp.idstains = 1
+       AND edp.cdevento = adp.cdevento                                                              
+       AND edp.idevento = adp.idevento                                                              
+       AND edp.cdcooper = adp.cdcooper                                                              
+       AND edp.dtanoage = adp.dtanoage                                                              
+       AND idp.idevento = edp.idevento                                                              
+       AND idp.cdevento = edp.cdevento                                                              
+       AND idp.idevento = adp.idevento                                                              
+       AND idp.cdevento = adp.cdevento                                                              
+       AND idp.nrseqeve = adp.nrseqdig                                                              
+       AND cdp.idevento(+) = adp.idevento                                                             
+       AND cdp.dtanoage(+) = adp.dtanoage                                                              
+       AND cdp.cdcooper(+) = adp.cdcooper                                                              
+       AND cdp.cdagenci(+) = adp.cdagenci                                                              
+       AND cdp.cdevento(+) = adp.cdevento                                                              
+       AND cdp.tpcuseve(+) = 1                                                                         
+       AND cdp.cdcuseve(+) = 1                                                                         
+       AND pdp.nrcpfcgc(+) = cdp.nrcpfcgc                                                              
+       AND pdp.nrpropos(+) = cdp.nrpropos                                                              
+       AND adp.cdlocali    = ldp.nrseqdig
+       and rownum < 6;
+
+    -- Tratamento de erros
+    vr_exc_saida  EXCEPTION;
+    vr_cdcritic   PLS_INTEGER;
+    vr_dscritic   VARCHAR2(4000); 
+    vr_nmeacao    VARCHAR2(100);    
+
+    -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_dsorigem VARCHAR2(1000);
+    vr_contador NUMBER := 0;
+    
+  begin
+    
+    gene0001.pc_informa_acesso(pr_module => 'CADA0003');
+
+    -- Extrai os dados vindos do XML
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic); 
+    
+    -- Verifica se houve erro recuperando informacoes de log
+    if trim(vr_dscritic) is not null then
+      raise vr_exc_saida;
+    end if;
+
+    -- Cabecalho do xml
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+
+    -- Busca todas as contas do cooperado
+    for rw_crapass in cr_crapass (vr_cdcooper,pr_nrdconta) loop
+
+      -- Busca eventos em todas as contas
+      for rw_crapidp in cr_crapidp (vr_cdcooper
+                                   ,rw_crapass.nrdconta
+                                   ,rw_crapass.nrcpfcgc) loop
+
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);              
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmdgrupo', pr_tag_cont => rw_crapidp.nmdgrupo, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtinieve', pr_tag_cont => rw_crapidp.dtinieve, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nminseve', pr_tag_cont => rw_crapidp.nminseve, pr_des_erro => vr_dscritic);      
+        vr_contador := vr_contador + 1; 
+      
+      end loop;
+      
+    end loop;      
+
+    pr_des_erro := 'OK';
+
+  exception
+    
+    when vr_exc_saida then
+      
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;
+
+      pr_des_erro := 'NOK';
+      
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic ||
+                                     '</Erro></Root>');
+                                     
+    when others then
+
+      cecred.pc_internal_exception(3);
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral em CADA0003.pc_retorna_eventos.';
+      pr_des_erro := 'NOK';
+  
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic ||
+                                     '</Erro></Root>');
+                                     
+  END pc_retorna_eventos;
   
 PROCEDURE pc_lista_contas_porCpfCnpj(pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE --> Numero do CPF / CGC do cooperado
                                     ,

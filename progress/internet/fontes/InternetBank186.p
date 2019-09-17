@@ -14,6 +14,8 @@
    Alteracoes:
                20/01/2017 - PRJ 340-Nova Plataforma de Cobrança - Incluir os novos
                             parametros que serao retornados para a tela (Renato - Supero)
+			   29/04/2019 - RITM0011951 - SCTASK0053162 Adicionar a data de vencimento da CIP 
+			                no retorno do InternetBank186 (INC0033893) - Marcio (Mouts)
 ..............................................................................*/
 { sistema/internet/includes/var_ibank.i    }
 { sistema/generico/includes/var_internet.i }
@@ -39,6 +41,7 @@ DEF VAR aux_vlfatura                AS DECI         NO-UNDO.
 DEF VAR aux_vlrjuros                AS DECI         NO-UNDO.
 DEF VAR aux_vlrmulta                AS DECI         NO-UNDO.
 DEF VAR aux_fltitven                AS INTE         NO-UNDO.
+DEF VAR aux_dtvencto                AS CHAR         NO-UNDO.
 DEF VAR aux_nrdocbenf               AS DECI         NO-UNDO. 
 DEF VAR aux_tppesbenf               AS CHAR         NO-UNDO.
 DEF VAR aux_dsbenefic               AS CHAR         NO-UNDO. 
@@ -80,6 +83,7 @@ RUN STORED-PROCEDURE pc_consultar_valor_titulo
                      ,OUTPUT ""    /* pr_cdctrlcs  */
                      ,OUTPUT 0     /* pr_flblq_valor */
                      ,OUTPUT 0     /* pr_fltitven  */
+                     ,OUTPUT ""    /* pr_dtvencto  Márcio Mouts -RITM0011951*/					 
                      ,OUTPUT ""    /* pr_des_erro  */
                      ,OUTPUT 0     /* pr_cdcritic  */
                      ,OUTPUT "").  /* pr_dscritic  */
@@ -95,6 +99,7 @@ CLOSE STORED-PROC pc_consultar_valor_titulo aux_statproc = PROC-STATUS
            aux_vlrjuros = 0
            aux_vlrmulta = 0
            aux_fltitven = 0
+		   aux_dtvencto = ""
            aux_nrdocbenf = 0
            aux_tppesbenf = ""
            aux_dsbenefic = ""
@@ -109,6 +114,8 @@ CLOSE STORED-PROC pc_consultar_valor_titulo aux_statproc = PROC-STATUS
                            WHEN pc_consultar_valor_titulo.pr_vlrmulta <> ?
            aux_fltitven  = pc_consultar_valor_titulo.pr_fltitven
                            WHEN pc_consultar_valor_titulo.pr_fltitven <> ?
+           aux_dtvencto  = pc_consultar_valor_titulo.pr_dtvencto
+                           WHEN pc_consultar_valor_titulo.pr_dtvencto <> ?
            aux_nrdocbenf = pc_consultar_valor_titulo.pr_nrdocbenf
                            WHEN pc_consultar_valor_titulo.pr_nrdocbenf <> ?
            aux_tppesbenf = pc_consultar_valor_titulo.pr_tppesbenf
@@ -157,6 +164,7 @@ ASSIGN xml_operacao.dslinxml = "<cabecalho>
                                   <vlrdescto>" + TRIM(STRING(aux_vlrdescto,'zzz,zzz,zzz,zzz,zzz,zz9.99')) + "</vlrdescto>
                                   <cdctrlcs>"  + aux_cdctrlcs          + "</cdctrlcs>
                                   <flblq_vlr>" + STRING(aux_flblq_vlr) + "</flblq_vlr>
+								  <dtvencto>" + STRING(aux_dtvencto) + "</dtvencto>
                                 </cabecalho>".
 
 RETURN "OK".

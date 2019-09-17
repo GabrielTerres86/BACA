@@ -93,15 +93,68 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
             17/07/2019 - PJ 450.2 - Ajuste na procedure na pc_imp_arq_acordo_quitado. Retirado chamada da 
                          PREJ0003.pc_gera_debt_cta_prj para contratos de empréstimos, pois o débito do prejuízo 
                          já é feito nas rotinas de empréstimos para conta em prejuízo (Marcelo/Amcom).
+
+            15/08/2019 - Revitalização da rotina pc_cancelar_acordo para guardar 
+                         os log a fim de identificar possível lock
+                         (Ana Volles - PRB0041875)
   ---------------------------------------------------------------------------------------------------------------*/
 
   vr_flgerlog BOOLEAN := FALSE;
+  vr_cdprogra   VARCHAR2(100) := 'RECP0003'; --PRB0041875
+
+  ------------------------------ PROCEDURES --------------------------------    
+  --> Grava informações para resolver erro de programa/ sistema
+  PROCEDURE pc_gera_log(pr_cdcooper      IN PLS_INTEGER           --> Cooperativa
+                       ,pr_dstiplog      IN VARCHAR2              --> Tipo Log
+                       ,pr_dscritic      IN VARCHAR2 DEFAULT NULL --> Descricao da critica
+                       ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0
+                       ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0
+                       ,pr_ind_tipo_log  IN tbgen_prglog_ocorrencia.tpocorrencia%type DEFAULT 2
+                       ,pr_nmarqlog      IN tbgen_prglog.nmarqlog%type DEFAULT NULL
+                       ,pr_tpexecucao    IN tbgen_prglog.tpexecucao%type DEFAULT 1 -- cadeia - 12/02/2019 - REQ0035813
+                       ) IS
+    -----------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_gera_log
+    --  Sistema  : Rotina para gravar logs em tabelas
+    --  Sigla    : CRED
+    --  Autor    : Ana Lúcia E. Volles - Envolti
+    --  Data     : Agosto/2019           Ultima atualizacao: 15/08/2019
+    --  Chamado  : PRB0041875
+    --
+    -- Dados referentes ao programa:
+    -- Frequencia: Rotina executada em qualquer frequencia.
+    -- Objetivo  : Controla gravação de log em tabelas.
+    --
+    -- Alteracoes:  
+    --             
+    ------------------------------------------------------------------------------------------------------------   
+    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
+    --
+  BEGIN         
+    --> Controlar geração de log de execução dos jobs                                
+    CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
+                           pr_cdcooper      => pr_cdcooper, 
+                           pr_tpocorrencia  => pr_ind_tipo_log, 
+                           pr_cdprograma    => vr_cdprogra, 
+                           pr_tpexecucao    => pr_tpexecucao,
+                           pr_cdcriticidade => pr_cdcriticidade,
+                           pr_cdmensagem    => pr_cdmensagem,    
+                           pr_dsmensagem    => pr_dscritic,               
+                           pr_idprglog      => vr_idprglog,
+                           pr_nmarqlog      => pr_nmarqlog);
+  EXCEPTION
+    WHEN OTHERS THEN
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+  END pc_gera_log;
 
   -- Controla log proc_batch, para apensa exibir qnd realmente processar informacao
   PROCEDURE pc_controla_log_batch(pr_cdcooper IN PLS_INTEGER
                                  ,pr_dstiplog IN VARCHAR2
                                  ,pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
   BEGIN
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_controla_log_batch');
 
     --> Controlar geração de log de execução dos jobs
     BTCH0001.pc_log_exec_job( pr_cdcooper  => pr_cdcooper    --> Cooperativa
@@ -111,6 +164,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                              ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
                              ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
 
+    -- Limpa nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   END pc_controla_log_batch;
 
   -- Procedure para converter arquivos unix
@@ -119,6 +174,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                          ,pr_pesq     IN  VARCHAR2                  -- Filtro dos Arquivos
                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE     -- Codigo Erro
                                          ,pr_dscritic OUT crapcri.dscritic%TYPE) IS -- Descricao erro
+  /* .............................................................................
+    Programa: pc_converte_arquivo_txt_unix
+    Sistema : 
+    Sigla   : 
+    Autor   : 
+    Data    :                                Ultima atualizacao: 15/08/2019
+    Dados referentes ao programa:
+    Frequencia: Sempre que for chamado
+    Objetivo  : 
+    Observacao: -----
+    Alteracoes: 15/08/2019 - Setado o módulo que está executando e gravação de log nas exceptions 
+                             (Ana Volles - PRB0041875)
+  ..............................................................................*/                                    
     BEGIN
       DECLARE
         -- Variaveis Locais
@@ -135,8 +203,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
         vr_typ_saida VARCHAR2(10);
         vr_comando   VARCHAR2(4000);
+        vr_dsparame  VARCHAR2(2000);
         
       BEGIN
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_converte_arquivo_txt_unix');
+
+        vr_dsparame := ' - pr_cdcooper:'||pr_cdcooper
+                     ||', pr_caminho:'||pr_caminho
+                     ||', pr_pesq:'||pr_pesq;
+
         
         vr_cdcritic := 0;
         vr_dscritic := '';
@@ -180,6 +256,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
            vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
            RAISE vr_exc_saida;
          END IF;
+         -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_converte_arquivo_txt_unix');
 
          -- Converte o arquivo para formato unix */
          vr_comando:= 'mv '||pr_caminho||'/TMP_'||vr_tab_arqtmp(vr_index)|| ' ' ||
@@ -196,12 +274,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
            vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
            RAISE vr_exc_saida;
          END IF;
+         -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_converte_arquivo_txt_unix');
 
          -- Proximo registro
          vr_index:= vr_tab_arqtmp.NEXT(vr_index);
-             
        END LOOP;
 
+        -- Limpa nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
      EXCEPTION
        WHEN vr_exc_saida THEN
          pr_cdcritic := vr_cdcritic;
@@ -212,9 +293,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
            pr_dscritic := vr_dscritic;
          END IF;
 
+        --Grava log
+        pc_gera_log(pr_cdcooper      => 3,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
+                    pr_cdcriticidade => 1,
+                    pr_cdmensagem    => nvl(pr_cdcritic,0),
+                    pr_ind_tipo_log  => 1);
+
        WHEN OTHERS THEN
          pr_cdcritic := 0;
          pr_dscritic:= 'Erro ao converter arquivo para Dos no RECP0003.pc_converte_arquivo_txt_unix '||SQLERRM;
+
+        --PRB0041875
+        CECRED.pc_internal_exception (pr_cdcooper => 3);
+
+        --Grava log
+        pc_gera_log(pr_cdcooper      => 3,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
+                    pr_cdcriticidade => 2,
+                    pr_cdmensagem    => nvl(pr_cdcritic,0),
+                    pr_ind_tipo_log  => 2);
      END;
    END pc_converte_arquivo_txt_unix;
   
@@ -223,6 +323,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                     ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
     
+  /* .............................................................................
+    Programa: pc_imp_arq_acordo_cancel
+    Sistema : 
+    Sigla   : 
+    Autor   : 
+    Data    :                                Ultima atualizacao: 15/08/2019
+    Dados referentes ao programa:
+    Frequencia: Sempre que for chamado
+    Objetivo  : 
+    Observacao: -----
+    Alteracoes: 15/08/2019 - Setado o módulo que está executando e gravação de log nas exceptions 
+                             (Ana Volles - PRB0041875)
+  ..............................................................................*/                                    
       -- Variaveis de Erros
       vr_cdcritic crapcri.cdcritic%TYPE := 0;
       vr_dscritic crapcri.dscritic%TYPE := '';
@@ -263,6 +376,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       rw_tbacordo cr_tbacordo%ROWTYPE;
 
     BEGIN
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_cancel');
 
       pr_flgemail := FALSE; 
 
@@ -287,6 +402,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                              ,pr_dstiplog => 'E'
                              ,pr_dscritic => vr_dscritic);
       END IF;
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_cancel');
 
       -- Carregar a lista de arquivos na temp table
       vr_tab_arqzip := gene0002.fn_quebra_string(pr_string => vr_listadir);
@@ -343,6 +460,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_cancel');
 
         -- Executar Extracao do arquivo zip
         gene0002.pc_zipcecred (pr_cdcooper => vr_cdcooper
@@ -362,6 +481,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           pr_flgemail := TRUE;
           CONTINUE;
         END IF;
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_cancel');
 
         -- Lista todos os arquivos .txt do diretorio criado
         vr_endarqtxt:= vr_endarqui || '/' || vr_nmtmparq;
@@ -381,6 +502,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           pr_flgemail := TRUE;
           CONTINUE;
         END IF;
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_cancel');
 
         IF vr_listadir IS NULL THEN
           CONTINUE;
@@ -401,6 +524,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           pr_flgemail := TRUE;
           CONTINUE;
         END IF;
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_cancel');
 
         -- Carregar a lista de arquivos na temp table
         vr_tab_arqtxt:= gene0002.fn_quebra_string(pr_string => vr_listadir);
@@ -436,6 +561,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                vr_idx_txt:= vr_tab_arqtxt.NEXT(vr_idx_txt);
                CONTINUE;
              END IF;
+             -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+             GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_cancel');
 
              vr_nrlinha := 0;
 
@@ -508,6 +635,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                    ROLLBACK; -- Desfaz acoes
                    EXIT; -- Sai do loop de linhas
                  END IF;
+                 -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                 GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_cancel');
 
                END IF; --Arquivo aberto
              END LOOP;
@@ -545,6 +674,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                ,pr_dstiplog => 'E'
                                ,pr_dscritic => vr_dscritic);
         END IF;
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_cancel');
 
         -- Remove o diretorio criado
         vr_comando:= 'rm -R '||vr_endarqui||'/'||vr_nmtmparq;
@@ -563,6 +694,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                ,pr_dstiplog => 'E'
                                ,pr_dscritic => vr_dscritic);
         END IF;                
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_cancel');
 
         -- Envio centralizado de log de erro
         BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
@@ -574,6 +707,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         vr_nrindice:= vr_tab_arqzip.NEXT(vr_nrindice);
 
       END LOOP;
+      -- Limpa nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
 
   EXCEPTION
     WHEN OTHERS THEN
@@ -586,6 +721,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                            ,pr_dscritic => pr_dscritic);
       ROLLBACK;
       npcb0002.pc_libera_sessao_sqlserver_npc('RECP0003_2');
+
+      --PRB0041875
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+      --
+      
   END pc_imp_arq_acordo_cancel;
 
   -- Importa arquivo referente a acordos quitados
@@ -593,6 +741,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                      ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
     
+  /* .............................................................................
+    Programa: pc_imp_arq_acordo_cancel
+    Sistema : 
+    Sigla   : 
+    Autor   : 
+    Data    :                                Ultima atualizacao: 15/08/2019
+    Dados referentes ao programa:
+    Frequencia: Sempre que for chamado
+    Objetivo  : 
+    Observacao: -----
+    Alteracoes: 15/08/2019 - Setado o módulo que está executando e gravação de log nas exceptions 
+                             (Ana Volles - PRB0041875)
+  ..............................................................................*/                                    
       -- Variaveis de Erros
       vr_cdcritic crapcri.cdcritic%TYPE := 0;
       vr_dscritic crapcri.dscritic%TYPE := '';
@@ -759,6 +920,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       vr_index_saldo INTEGER;
 
     BEGIN
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 
       FOR rw_crapcop IN cr_crapcop LOOP
         OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
@@ -793,6 +956,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                              ,pr_dstiplog => 'E'
                              ,pr_dscritic => vr_dscritic);
       END IF;
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 
       -- Carregar a lista de arquivos na temp table
       vr_tab_arqzip := gene0002.fn_quebra_string(pr_string => vr_listadir);
@@ -849,6 +1014,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 
         -- Executar Extracao do arquivo zip
         gene0002.pc_zipcecred (pr_cdcooper => vr_cdcooper
@@ -868,6 +1035,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           pr_flgemail := TRUE;
           CONTINUE;
         END IF;
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 
         -- Lista todos os arquivos .txt do diretorio criado
         vr_endarqtxt := vr_endarqui || '/' || vr_nmtmparq;
@@ -887,6 +1056,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           pr_flgemail := TRUE;
           CONTINUE;
         END IF;
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 
         IF vr_listadir IS NULL THEN
           CONTINUE;
@@ -907,6 +1078,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
           pr_flgemail := TRUE;
           CONTINUE;
         END IF;
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 
         -- Carregar a lista de arquivos na temp table
         vr_tab_arqtxt:= gene0002.fn_quebra_string(pr_string => vr_listadir);
@@ -945,6 +1118,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                vr_idx_txt:= vr_tab_arqtxt.NEXT(vr_idx_txt);
                CONTINUE;
              END IF;
+             -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+             GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 
              vr_nrlinha := 0;
              <<LEITURA_TXT>>
@@ -1028,6 +1203,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                        ROLLBACK; -- Desfaz acoes
                        EXIT LEITURA_TXT;
                      END IF;
+                     -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 
                      --Buscar Indice
                      vr_index_saldo := vr_tab_saldos.FIRST;
@@ -1064,6 +1241,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          ROLLBACK; -- Desfaz acoes
                          EXIT LEITURA_TXT;
                        END IF;
+                       -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 
                        vr_vllanacc := NVL(vr_vllanacc,0) + NVL(ABS(vr_vltotpag),0);  -- Valor para lancto de abatimento na C/C (Reginaldo/AMcom - P450)
                        
@@ -1147,6 +1326,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          ROLLBACK; -- Desfaz acoes
                          EXIT LEITURA_TXT;
                        END IF;
+                       -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
                         
                        -- Não deve mais gerar lancamento 2181 para pagamento prejuizo.
                        -- vr_vllancam := NVL(vr_vllancam,0) + NVL(vr_vltotpag,0);   
@@ -1191,6 +1372,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          ROLLBACK; -- Desfaz acoes
                          EXIT LEITURA_TXT;
                        END IF;
+                       -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
                        
                        vr_vllanact := NVL(vr_vllanact,0) + NVL(vr_vltotpag,0); 
                       -- Emprestimo TR
@@ -1235,6 +1418,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                           ROLLBACK; -- Desfaz acoes
                           EXIT LEITURA_TXT;
                         END IF;
+                        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
                        
                         vr_vllanact := NVL(vr_vllanact,0) + NVL(vr_vltotpag,0); 
                       -- Emprestimo PP
@@ -1274,6 +1459,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                           ROLLBACK; -- Desfaz acoes
                           EXIT LEITURA_TXT;
                         END IF;
+                        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
                        
                         vr_vllanact := NVL(vr_vllanact,0) + NVL(vr_vltotpag,0);
 						-- Emprestimo Pos-Fixado
@@ -1319,6 +1506,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                           ROLLBACK; -- Desfaz acoes
                           EXIT LEITURA_TXT;
                         END IF;
+                        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
                        
                         vr_vllanact := NVL(vr_vllanact,0) + NVL(vr_vltotpag,0);
                       END IF;
@@ -1345,6 +1534,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                           ROLLBACK; -- Desfaz acoes
                           EXIT LEITURA_TXT;
                         END IF;
+                        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
                     END IF;
 				  END IF;
                    BEGIN
@@ -1423,6 +1614,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                       ROLLBACK; -- Desfaz acoes
                       EXIT LEITURA_TXT;
                     END IF;
+                    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 										ELSE
 											PREJ0003.pc_gera_cred_cta_prj(pr_cdcooper => rw_crapass.cdcooper
 				                            , pr_nrdconta => rw_crapass.nrdconta
@@ -1441,6 +1634,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 												ROLLBACK; -- Desfaz acoes
 												EXIT LEITURA_TXT;
 											END IF;
+                      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 										END IF;
 
                  END IF;
@@ -1484,6 +1679,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                      ROLLBACK; -- Desfaz acoes
                      EXIT LEITURA_TXT;
                    END IF;
+                   -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                   GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
                    ELSE
                      IF vr_vllanacc > 0 THEN -- Abatimento em conta corrente
                        IF vr_vllanacc > rw_nracordo.vlbloqueado THEN
@@ -1523,6 +1720,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                            ROLLBACK; -- Desfaz acoes
                            EXIT LEITURA_TXT;
                          END IF;
+                         -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 
                  -- Atualiza valor do abono do saldo do prejuízo da conta corrente
                  BEGIN
@@ -1593,6 +1792,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                          ROLLBACK; -- Desfaz acoes
                          EXIT LEITURA_TXT;
                        END IF;
+                       -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+                       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
                        
                      END IF;
                    END IF;
@@ -1652,6 +1853,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 
         -- Remove o diretorio criado
         vr_comando:= 'rm -Rf '||vr_endarqui||'/'||vr_nmtmparq||' 1> /dev/null';
@@ -1671,6 +1874,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                ,pr_dscritic => vr_dscritic);
           CONTINUE;
         END IF;                
+        -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_imp_arq_acordo_quitado');
 
         -- Envio centralizado de log de erro
         BTCH0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper,
@@ -1682,6 +1887,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
         vr_nrindice:= vr_tab_arqzip.NEXT(vr_nrindice);
 
       END LOOP;
+      -- Limpa nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
       
   EXCEPTION
     WHEN OTHERS THEN
@@ -1694,17 +1901,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                            ,pr_dscritic => pr_dscritic);
 
       ROLLBACK;
+
+      --PRB0041875
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => nvl(pr_cdcritic,0),
+                  pr_ind_tipo_log  => 2);
+      --
+      
   END pc_imp_arq_acordo_quitado; 
 
   PROCEDURE pc_import_arq_acordo_job IS
-
+  /* .............................................................................
+    Programa: pc_import_arq_acordo_job
+    Sistema : 
+    Sigla   : 
+    Autor   : 
+    Data    :                                Ultima atualizacao: 15/08/2019
+    Dados referentes ao programa:
+    Frequencia: Sempre que for chamado
+    Objetivo  : 
+    Observacao: -----
+    Alteracoes: 15/08/2019 - Revitalização para guardar os logs a fim de identificar possível lock
+                             (Ana Volles - PRB0041875)
+  ..............................................................................*/                                    
     -- Variaveis de Erros
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic crapcri.dscritic%TYPE;
     vr_flgemail_cancelado BOOLEAN := FALSE;
     vr_flgemail_quitado BOOLEAN := FALSE;
     vr_dscemail VARCHAR2(4000) := '';     
+
   BEGIN
+    -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_import_arq_acordo_job');
+
     -- Buscar o CRAPDAT da cooperativa
     OPEN BTCH0001.cr_crapdat(3); 
     FETCH BTCH0001.cr_crapdat INTO BTCH0001.rw_crapdat;
@@ -1730,11 +1966,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
       pc_imp_arq_acordo_cancel(pr_flgemail => vr_flgemail_cancelado
                               ,pr_cdcritic => vr_cdcritic
                               ,pr_dscritic => vr_dscritic);
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_import_arq_acordo_job');
 
       -- Importacao de arquivo de acordos quitados
       pc_imp_arq_acordo_quitado(pr_flgemail => vr_flgemail_quitado
                                ,pr_cdcritic => vr_cdcritic
                                ,pr_dscritic => vr_dscritic);
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_import_arq_acordo_job');
 
       IF vr_flgemail_cancelado AND vr_flgemail_quitado THEN
         vr_dscemail := 'Houve erro de importação no arquivo referente a acordos cancelados e quitados.';
@@ -1765,12 +2005,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                ,pr_dscritic => vr_dscritic);
         END IF;
       END IF;
+      -- Inclui nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'RECP0003.pc_import_arq_acordo_job');
 
       -- Log de final de execucao
       pc_controla_log_batch(pr_cdcooper => 3
                            ,pr_dstiplog => 'F');
 
       COMMIT;
+      -- Limpa nome do modulo logado - 15/08/2019 - PRB0041875
+      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
      
   EXCEPTION
     WHEN OTHERS THEN
@@ -1779,6 +2023,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                ,pr_dstiplog => 'E'
                                ,pr_dscritic => SQLERRM);
       ROLLBACK;
+
+      --PRB0041875
+      CECRED.pc_internal_exception (pr_cdcooper => 3);
+
+      -- Montar descrição de erro não tratado
+      vr_cdcritic := 9999;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'RECP0003.pc_import_arq_acordo_job. '||sqlerrm;
+
+      --Grava log
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => vr_dscritic,
+                  pr_cdcriticidade => 2,
+                  pr_cdmensagem    => vr_cdcritic,
+                  pr_ind_tipo_log  => 2);
+      --
+
   END pc_import_arq_acordo_job;
   
 END RECP0003;

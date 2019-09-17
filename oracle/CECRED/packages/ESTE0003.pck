@@ -1,4 +1,4 @@
-create or replace package cecred.ESTE0003 is
+CREATE OR REPLACE PACKAGE CECRED."ESTE0003" is
   /* ---------------------------------------------------------------------------------------------------------------
 
       Programa : ESTE0003
@@ -13,12 +13,15 @@ create or replace package cecred.ESTE0003 is
 
       Alteracoes: 23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
                                Referentes a proposta. (Lindon Carlos Pecile - GFT)
+
                   14/04/2018 - Adicionado a procedure pc_crps703 (Paulo Penteado (GFT)) 
-				  29/08/2018 - Adicionado verificação para não permir Analisar proposta 
-                             com situação "Anulada". PRJ 438 (Mateus Z- Mouts)
+                               29/08/2018 - Adicionado verificação para não permir Analisar proposta 
+                               com situação "Anulada". PRJ 438 (Mateus Z- Mouts)
+
                   01/03/2019 - Correção para não possibilitar que propostas sem informação de rating sejam 
-				               enviadas para esteira de credito.	   
-				  06/11/2018 - Inclusao da procedure Interromper Fluxo pc_interrompe_proposta_lim_est (Fabio dos Santos - GFT)
+                               enviadas para esteira de credito.	   
+
+                  06/11/2018 - Inclusao da procedure Interromper Fluxo pc_interrompe_proposta_lim_est (Fabio dos Santos - GFT)
   
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -180,7 +183,7 @@ PROCEDURE pc_interrompe_proposta_lim_est(pr_cdcooper  IN crawlim.cdcooper%TYPE, 
 
 end ESTE0003;
 /
-create or replace package body cecred.ESTE0003 is
+CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0003 is
 
 vr_dsmensag varchar2(1000);
 vr_flctgest boolean;
@@ -284,6 +287,7 @@ PROCEDURE pc_enviar_proposta_esteira(pr_cdcooper in  crawlim.cdcooper%type      
   select ass.nmprimtl
         ,ass.inpessoa
         ,ass.cdagenci
+        ,ass.nrcpfcnpj_base
   from   crapass ass
   where  ass.cdcooper = pr_cdcooper
   and    ass.nrdconta = pr_nrdconta;
@@ -300,7 +304,14 @@ PROCEDURE pc_enviar_proposta_esteira(pr_cdcooper in  crawlim.cdcooper%type      
   and    lim.tpctrlim = pr_tpctrlim;
   rw_crawlim cr_crawlim%ROWTYPE;
 
+  vr_habrat VARCHAR2(1) := 'N'; -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
+
 BEGIN
+
+   vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                          pr_cdcooper => pr_cdcooper,
+                                          pr_cdacesso => 'HABILITA_RATING_NOVO');
+
    pr_des_erro := 'OK';
    vr_tpenvest := pr_tpenvest;
   
@@ -318,6 +329,15 @@ BEGIN
        vr_dscritic := 'A proposta está \"Anulada\"';
        RAISE vr_exc_saida;
    END IF;
+
+   open  cr_crapass;
+   fetch cr_crapass into rw_crapass;
+   if    cr_crapass%notfound then
+         close cr_crapass;
+         vr_dscritic := 'Associado nao cadastrado. Conta: ' || pr_nrdconta;
+         raise vr_exc_saida;
+   end   if;
+   close cr_crapass;
   
    pc_verifica_contigenc_motor(pr_cdcooper => pr_cdcooper    --> Codigo da Cooperativa
                               ,pr_flctgmot => vr_flctgmot    --> Flag de contingencia flag de 
@@ -333,18 +353,29 @@ BEGIN
        pr_cdcritic := 0;
        pr_dscritic := '';
        pr_dsmensag := 'O Motor e a Esteira estao em contingencia, efetue a análise manual e para efetivar pressione o botao \"Efetivar Limite\".';
-       return;
-   end if;
-                          
-   open  cr_crapass;
-   fetch cr_crapass into rw_crapass;
-   if    cr_crapass%notfound then
-         close cr_crapass;
-         vr_dscritic := 'Associado nao cadastrado. Conta: ' || pr_nrdconta;
-         raise vr_exc_saida;
+
+
+       -- P450 SPT13 - alteracao para habilitar rating novo
+       IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
+         rati0003.pc_grava_rating_operacao(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_tpctrato => pr_tpctrlim
+                                          ,pr_nrctrato => pr_nrctrlim
+                                          ,pr_dtrataut => to_date(rw_crawlim.dtpropos, 'DD/MM/RRRR')
+                                          ,pr_strating => 2
+                                          ,pr_orrating => 4
+                                          ,pr_nrcpfcnpj_base => rw_crapass.nrcpfcnpj_base
+                                          ,pr_dtmvtolt => to_date(rw_crawlim.dtpropos, 'DD/MM/RRRR')
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+         IF NVL(vr_cdcritic,0) > 0  OR TRIM(vr_dscritic) IS NOT NULL THEN
+           RAISE vr_exc_saida;
+         END IF;
+
+         return;
+       END IF;
+       -- P450 SPT13 - alteracao para habilitar rating novo
    end   if;
-   close cr_crapass;
-   
    vr_cdagenci := nvl(nullif(pr_cdagenci, 0), rw_crapass.cdagenci);
      
    open  cr_crawlim;
@@ -496,10 +527,19 @@ end pc_obrigacao_analise_autom;
     
     Frequencia: Sempre que for chamado
     Objetivo  : Tem como objetivo solicitar o retorno da analise no Motor
-    Alteraçao : 
-	            08/08/2019 - Adição do campo segueFluxoAtacado ao retorno 
-				             P637 (Darlei / Supero)
-        
+    Alteração :  03/2019 Incluido rati0003.pc_grava_rating_operacao proj 450 rating
+    
+                 22/05/2019 - PRJ 450 Projeto Rating - Realizar apenas uma requisição na Ibratan
+                              para buscar o rating (Heckmann - AMcom)
+			     
+                 08/08/2019 - Adição do campo segueFluxoAtacado ao retorno 
+                             P637 (Darlei / Supero)
+
+                 27/08/2019 - PRJ 450 - Adicionado leitura do segmento enviado pela IBRATAN na 
+                              pc_solicita_retorno_analise do motor (Luiz Otavio Olinger Momm - AMCOM)
+
+                 30/08/2019 - PRJ 450 - Adicionado a validação do contrato pai caso for uma proposta
+                              majorada no pc_solicita_retorno, para atualizar as notas de todos (Luiz Otavio Olinger Momm - AMCOM)
   ..........................................................................*/
 
   
@@ -566,6 +606,7 @@ end pc_obrigacao_analise_autom;
           ,lim.dtenvmot
           ,lim.hrenvmot
           ,lim.tpctrlim
+          ,nvl(lim.nrctrmnt,0) nrctrmnt  -- P450 para atualizar o contrato pai da majoracao
           ,lim.rowid
     from   crawlim lim
     WHERE  lim.cdcooper = pr_cdcooper
@@ -578,12 +619,34 @@ end pc_obrigacao_analise_autom;
     --> Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100);
     vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
-              
+    -- Busca do nr cpfcnpj base do associado
+    CURSOR cr_crapass_ope (pr_cdcooper  IN crapass.cdcooper%TYPE     --> Coop. conectada
+                           ,pr_nrdconta  IN crapass.nrdconta%TYPE) IS --> Codigo Conta
+     SELECT ass.nrcpfcnpj_base, ass.inpessoa, ass.cdagenci
+       FROM crapass ass
+      WHERE ass.cdcooper  = pr_cdcooper
+        AND ass.nrdconta = pr_nrdconta;
+    rw_crapass_ope   cr_crapass_ope%ROWTYPE;
+    vr_in_risco_rat  INTEGER;
+
+    vr_inpontos_rating    tbrisco_operacoes.inpontos_rating%type; /*number(6,2)*/
+    vr_innivel_rating     tbrisco_operacoes.innivel_rating%type; /*number(5)*/
+    vr_insegmento_rating  tbrisco_operacoes.insegmento_rating%TYPE;
+    vr_desc_nivel_rating  VARCHAR2(100);
+
+    vr_habrat             VARCHAR2(1) := 'N';    -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
+    vr_nrcontrato         crawlim.nrctrlim%TYPE; -- P450 - Contrato que dever ser salvo o Rating
+
       BEGIN
-            --> Buscar todas as Coops com obrigatoriedade de Análise Automática    
+
+        vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                               pr_cdcooper => pr_cdcooper,
+                                               pr_cdacesso => 'HABILITA_RATING_NOVO');
+
+            --> Buscar todas as Coops com obrigatoriedade de Análise Automática
   FOR rw_crapcop IN cr_crapcop LOOP
-      
-    --> Buscar o tempo máximo de espera em segundos pela analise do motor            
+
+    --> Buscar o tempo máximo de espera em segundos pela analise do motor
               vr_qtsegund := gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'TIME_RESP_MOTOR_DESC');
     
       --Verificar se a data existe
@@ -851,9 +914,41 @@ end pc_obrigacao_analise_autom;
               IF vr_obj_indicadores.exist('segueFluxoAtacado') THEN
                 vr_idfluata := (CASE WHEN upper(ltrim(rtrim(vr_obj_indicadores.get('segueFluxoAtacado').to_char(),'"'),'"')) = 'TRUE' THEN TRUE ELSE FALSE END);
               END IF;
-              
-            END IF;  
-            
+
+              -- P450 SPT13 - alteracao para habilitar rating novo
+              IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
+                -- Incluido 04/2019 projeto 450 Rating
+                -- Pontos  Rating --
+                IF vr_nrnotrat IS NOT NULL  THEN
+                  vr_inpontos_rating := gene0002.fn_char_para_number(vr_nrnotrat) ;
+                END IF;
+
+                -- Nível Rating --
+                IF vr_obj_indicadores.exist('scoreRating') THEN
+                  vr_desc_nivel_rating := ltrim(rtrim(vr_obj_indicadores.get('scoreRating').to_char(),'"'),'"');
+                    -- Classificacao do Nivel de Risco do Rating (1-Baixo/2-Medio/3-Alto)
+                    IF UPPER(vr_desc_nivel_rating) = 'BAIXO' THEN
+                      vr_innivel_rating := 1;
+                    ELSIF UPPER(vr_desc_nivel_rating) = 'MEDIO' THEN
+                      vr_innivel_rating := 2;
+                    ELSIF UPPER(vr_desc_nivel_rating) = 'ALTO' THEN
+                      vr_innivel_rating := 3;
+                    END IF;
+                END IF;
+                
+                -- Segmento --
+                IF vr_obj_indicadores.exist('segmento') THEN
+                   vr_insegmento_rating := ltrim(rtrim(vr_obj_indicadores.get('segmento').to_char(),'"'),'"');
+                   IF UPPER(vr_insegmento_rating) = 'NULL' OR vr_insegmento_rating IS NULL THEN
+                     vr_insegmento_rating := '';
+                   END IF;
+                END IF;
+
+              END IF;
+              -- P450 SPT13 - alteracao para habilitar rating novo
+
+            END IF;
+
             --> Se o DEBUG estiver habilitado
             IF vr_flgdebug = 'S' THEN
               --> Gravar dados log acionamento
@@ -900,8 +995,57 @@ end pc_obrigacao_analise_autom;
                                                 ,pr_cdcritic => vr_cdcritic 
                                                 ,pr_dscritic => vr_dscritic 
                                                 ,pr_retxml   => vr_retxml   
-                                                ,pr_nmdcampo => vr_nmdcampo 
+                                                ,pr_nmdcampo => vr_nmdcampo
                                                 ,pr_des_erro => vr_des_erro );
+
+            -- P450 SPT13 - alteracao para habilitar rating novo
+            IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
+              IF lower(vr_dsresana) = 'aprovar'
+               OR lower(vr_dsresana) = 'reprovar'
+               OR lower(vr_dsresana) = 'derivar'  THEN
+
+                OPEN cr_crapass_ope(rw_crapcop.cdcooper
+                                   ,rw_crawlim.nrdconta);
+                FETCH cr_crapass_ope INTO rw_crapass_ope;
+                CLOSE cr_crapass_ope;
+
+                vr_in_risco_rat  := risc0004.fn_traduz_nivel_risco(vr_indrisco);
+
+                -- Se nao for majoracao entao usa o contrato/proposta do desc limite
+                IF rw_crawlim.nrctrmnt = 0 THEN
+                  vr_nrcontrato := rw_crawlim.nrctrlim;
+                -- Senao usa o contrato pai
+                ELSE
+                  vr_nrcontrato := rw_crawlim.nrctrmnt;
+                END IF;
+
+                -- Gravar o Rating da operação que retornou do Ibratan
+                RATI0003.pc_grava_rating_operacao(pr_cdcooper           => rw_crapcop.cdcooper
+                                                 ,pr_nrdconta           => rw_crawlim.nrdconta
+                                                 ,pr_tpctrato           => 3
+                                                 ,pr_nrctrato           => vr_nrcontrato
+                                                 ,pr_ntrating           => vr_in_risco_rat
+                                                 ,pr_ntrataut           => vr_in_risco_rat
+                                                 ,pr_dtrating           => rw_crapdat.dtmvtolt
+                                                 ,pr_strating           => 2
+                                                 ,pr_orrating           => 1
+                                                 ,pr_dtrataut           => rw_crapdat.dtmvtolt
+                                                 ,pr_innivel_rating     => vr_innivel_rating
+                                                 ,pr_nrcpfcnpj_base     => rw_crapass_ope.nrcpfcnpj_base
+                                                 ,pr_inpontos_rating    => gene0002.fn_char_para_number(vr_nrnotrat) --> Pontuacao do Rating retornada do Motor
+                                                 ,pr_insegmento_rating  => vr_insegmento_rating --> Informacao de qual Garantia foi utilizada para calculo Rating do Motor
+                                                 ,pr_inpontos_rat_inc   => vr_inpontos_rating --> Pontuacao do Rating retornada do Motor no momento da Inclusao
+                                                 --Variáveis para gravar o histórico
+                                                 ,pr_dtmvtolt           => rw_crapdat.dtmvtolt  --> Data/Hora do historico de rating
+                                                 ,pr_cdcritic           => vr_cdcritic
+                                                 ,pr_dscritic           => vr_dscritic);
+
+                IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                  RAISE vr_exc_erro;
+                END IF;
+              END IF;
+            END IF;
+            -- P450 SPT13 - alteracao para habilitar rating novo
           END IF;
           --> Efetuar commit
           COMMIT;
@@ -1283,6 +1427,11 @@ PROCEDURE pc_incluir_proposta(pr_cdcooper  IN crawlim.cdcooper%TYPE   --> Codigo
         
                 15/12/2017 - P337 - SM - Ajustes no envio para retormar reinício 
                              de fluxo (Marcos-Supero)        
+
+                17/ 04/2019 - 450 Projeto Rating  Daniele Rocha 
+                
+                23/05/2019 - 450 Projeto Rating - Realizar apenas uma requisição na Ibratan
+                             para buscar o rating (Heckmann - AMcom)
   ..........................................................................*/
     
   ----------- VARIAVEIS <-----------
@@ -1293,10 +1442,23 @@ PROCEDURE pc_incluir_proposta(pr_cdcooper  IN crawlim.cdcooper%TYPE   --> Codigo
     
   vr_obj_proposta json := json();
   vr_obj_proposta_clob clob;
-    
+
+  --> Variaveis do Rating
+  vr_obj_retorno json     := json();
+  vr_obj_indicadores json := json();
+  vr_dssitret             VARCHAR2(100);
+  vr_indrisco             VARCHAR2(100);
+  vr_nrnotrat             VARCHAR2(100);
+  vr_inpontos_rating      tbrisco_operacoes.inpontos_rating%type;
+  vr_innivel_rating       tbrisco_operacoes.innivel_rating%type;
+  vr_desc_nivel_rating    VARCHAR2(100);
+  vr_nrgarope             VARCHAR2(100);
+  vr_dsresana             VARCHAR2(100);
+  vr_in_risco_rat         INTEGER;
+
   vr_dsprotoc VARCHAR2(1000);
   vr_comprecu VARCHAR2(1000);
-    
+
   --> Buscar informaçoes da Proposta
   cursor cr_crawlim is
   select lim.insitest
@@ -1310,6 +1472,7 @@ PROCEDURE pc_incluir_proposta(pr_cdcooper  IN crawlim.cdcooper%TYPE   --> Codigo
         ,lim.cddlinha
         ,lim.tpctrlim
         ,lim.rowid
+        ,ass.nrcpfcnpj_base
   from   crapass ass
         ,crawlim lim
   where  ass.cdcooper = lim.cdcooper
@@ -1331,7 +1494,22 @@ PROCEDURE pc_incluir_proposta(pr_cdcooper  IN crawlim.cdcooper%TYPE   --> Codigo
     and    ac.tpacionamento = 2; 
   --> Somente Retorno
   vr_dsconteudo_requisicao tbgen_webservice_aciona.dsconteudo_requisicao%TYPE;
-    
+
+  -- P450 Majoracao
+  cursor cr_crawlim_maj(pr_nrctrlim IN crawlim.nrctrlim%type
+                       ,pr_cdcooper IN crapcop.cdcooper%type
+                       ,pr_nrdconta IN crapass.nrdconta%type) is
+  select nrctrmnt                         -- Numero do Contrato a sofrer Manutencao
+  from   crawlim 
+  where  tpctrlim = 3
+  and    cdcooper = pr_cdcooper
+  and    nrdconta = pr_nrdconta
+  and    nrctrlim = pr_nrctrlim;
+  rw_crawlim_maj cr_crawlim_maj%rowtype;
+  vr_nrctrlim_maj  crawlim.nrctrlim%TYPE; -- Codigo contrato pai quando proposta majorada
+  -- P450 Majoracao
+
+
   --> Hora de Envio
   vr_hrenvest crawlim.hrenvest%TYPE;
   --> Quantidade de segundos de Espera
@@ -1351,9 +1529,15 @@ PROCEDURE pc_incluir_proposta(pr_cdcooper  IN crawlim.cdcooper%TYPE   --> Codigo
   --> Variaveis para DEBUG
   vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
   vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
-    
-BEGIN    
-    
+  
+  vr_habrat varchar2(1) := 'N';
+
+BEGIN
+
+  vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                         pr_cdcooper => pr_cdcooper,
+                                         pr_cdacesso => 'HABILITA_RATING_NOVO');
+
   --> Se o DEBUG estiver habilitado
   IF vr_flgdebug = 'S' THEN
     --> Gravar dados log acionamento
@@ -1612,6 +1796,55 @@ BEGIN
                          end loop;
                      end if;
                  end if;
+
+                 -- P450 SPT13 - alteracao para habilitar rating novo
+                 IF (pr_cdcooper <> 3 AND vr_habrat = 'S') THEN
+                   --> Gravar a analise do Rating a partir do retorno do Motor
+                   
+                   -- MAJORACAO - P450 Verificar rating pai
+                   OPEN cr_crawlim_maj (pr_nrctrlim => pr_nrctrlim
+                                       ,pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta);
+                   FETCH cr_crawlim_maj INTO rw_crawlim_maj;
+
+                   IF cr_crawlim_maj%FOUND THEN
+
+                     rati0004.pc_busca_rating_motor(pr_cdcooper => pr_cdcooper
+                                                   ,pr_nrdconta => pr_nrdconta
+                                                   ,pr_nrctrato => rw_crawlim_maj.nrctrmnt
+                                                   ,pr_tpctrato => 3
+                                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                                   ,pr_dsconteudo_requisicao => vr_dsconteudo_requisicao
+                                                   ,pr_cdcritic => vr_cdcritic
+                                                   ,pr_dscritic => vr_dscritic);
+
+                     rati0003.pc_grava_rating_operacao(pr_cdcooper => pr_cdcooper
+                                                      ,pr_nrdconta => pr_nrdconta
+                                                      ,pr_tpctrato => 3
+                                                      ,pr_nrctrato => rw_crawlim_maj.nrctrmnt
+                                                      ,pr_strating => 4
+                                                      ,pr_dtrating => pr_dtmvtolt
+                                                      ,pr_dtrataut => pr_dtmvtolt
+                                                      ,pr_dtmvtolt => pr_dtmvtolt
+                                                      ,pr_cdcritic => vr_cdcritic
+                                                      ,pr_dscritic => vr_dscritic);
+                                                      
+                   ELSE
+                     rati0004.pc_busca_rating_motor(pr_cdcooper => pr_cdcooper
+                                                   ,pr_nrdconta => pr_nrdconta
+                                                   ,pr_nrctrato => pr_nrctrlim
+                                                   ,pr_tpctrato => 3
+                                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                                   ,pr_dsconteudo_requisicao => vr_dsconteudo_requisicao
+                                                   ,pr_cdcritic => vr_cdcritic
+                                                   ,pr_dscritic => vr_dscritic);
+                   END IF;
+
+                   IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                     RAISE vr_exc_erro;
+                   END IF;
+                 END IF;
+                 -- P450 SPT13 - alteracao para habilitar rating novo
               exception
                  when others then 
                       null; --> Ignorar se o conteudo nao for JSON nao conseguiremos ler as mensagens
@@ -2407,7 +2640,10 @@ PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  IN crawlim.cdcooper%TYPE --> C
     Objetivo  : Enviadar proposta de limites de desconto de titulos como efetivadas para o Ibratan
 
     Alteraçao : 14/04/2018 - Criação Paulo Penteado (GFT) 
-                
+    
+                05/08/2019 - P438 - Inclusão dos atributos canalCodigo e canalDescricao no Json para identificar 
+                                a origem da operação de crédito na Esteira. (Douglas Pagel / AMcom). 
+
    ..........................................................................*/
    -- Tratamento de erros
    vr_cdcritic number := 0;
@@ -2421,6 +2657,7 @@ PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  IN crawlim.cdcooper%TYPE --> C
    -- Auxiliares
    vr_dsprotocolo  varchar2(1000);
    vr_cdagenci     crapage.cdagenci%TYPE;
+   vr_cdorigem     NUMBER := 0;
 
    -- Variaveis para DEBUG
    vr_flgdebug varchar2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
@@ -2472,6 +2709,16 @@ PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  IN crawlim.cdcooper%TYPE --> C
    and    lim.nrdconta = pr_nrdconta
    and    lim.cdcooper = pr_cdcooper;
    rw_crawlim cr_crawlim%rowtype;
+   
+   -- Busca NivelRating - P450 24/08/2019
+   CURSOR cr_risco_operacoes IS
+     SELECT oper.inrisco_rating_autom, oper.innivel_rating, oper.inpontos_rating
+       FROM tbrisco_operacoes oper
+      WHERE oper.tpctrato = 3
+        AND oper.cdcooper = pr_cdcooper
+        AND oper.nrdconta = pr_nrdconta
+        AND oper.nrctremp = pr_nrctrlim;
+   rw_risco_operacoes cr_risco_operacoes%ROWTYPE;
 
 BEGIN
    open  cr_crapass;
@@ -2521,6 +2768,17 @@ BEGIN
    vr_obj_efetivar.put('PA' ,vr_obj_agencia);
    vr_obj_agencia := json();
 
+   -- Informar Nota Rating para Esteira - P450 24/08/2019
+   OPEN cr_risco_operacoes;
+   FETCH cr_risco_operacoes INTO rw_risco_operacoes;
+
+   -- Se não localizar não incluir o bloco de indicadoresGeradosRegra que viria do MOTOR - P450 24/08/2019
+   IF cr_risco_operacoes%FOUND THEN
+     vr_obj_efetivar.put('ratingPolitica', rw_risco_operacoes.inrisco_rating_autom);
+     vr_obj_efetivar.put('notaRating', rw_risco_operacoes.inpontos_rating);
+   END IF;
+   CLOSE cr_risco_operacoes;
+
    -- Criar objeto json para agencia do cooperado
    vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
    vr_obj_agencia.put('PACodigo', rw_crapass.cdagenci);
@@ -2556,6 +2814,12 @@ BEGIN
    vr_obj_efetivar.put('valor'                  , rw_crawlim.vllimite);
 
    vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 5);
+
+   vr_cdorigem := CASE WHEN rw_crawlim.cdoperad = '996' THEN 3 ELSE 5 END;
+   
+   vr_obj_efetivar.put('canalCodigo', vr_cdorigem);
+   vr_obj_efetivar.put('canalDescricao',gene0001.vr_vet_des_origens(vr_cdorigem));
+   
 
    --  Se o DEBUG estiver habilitado
    if  vr_flgdebug = 'S' then

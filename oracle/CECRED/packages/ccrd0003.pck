@@ -11499,8 +11499,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                     IF vr_des_erro <> 'OK' THEN
                       pc_log_message;
                       vr_des_erro := '';
-                    END IF;
-                  END IF; 
+					END IF;
+				   else  -- Workaround para desbloqueio de cartao via 0800 (arquivo CCB retona operacao 02 e novidade 10  issue/INC0023924/develop
+                    -- Atualiza os dados da situacao do cartao
+                    atualiza_situacao_cartao(pr_cdcooper => vr_cdcooper,
+                                             pr_nrdconta => vr_nrdconta,
+                                             pr_nrcrcard => vr_nrcrcard,                                           
+                                             pr_insitcrd => 1,                                    
+                                             pr_dtmvtolt => vr_dtmvtolt,
+                                             pr_des_erro => vr_des_erro,
+                                             pr_cdcritic => vr_cdcritic,
+                                             pr_dscritic => vr_dscritic);
+                    -- Verifica se ocorreu erro                          
+                    IF vr_des_erro <> 'OK' THEN
+                      pc_log_message;
+                      vr_des_erro := '';
+                    END IF; 
+                   END IF; 
 
                   -- tipo de operacao 10 (desbloqueio) nao deve fazer mais nada alem disto (Fabricio).
                   CONTINUE;

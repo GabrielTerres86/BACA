@@ -2238,6 +2238,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
   --
   --             12/03/2018 - (AmCom) - Add tptransa 21 - emprestimos/financiamentos
   --
+  --             27/03/2019 - Ajustes para permitir criar as transações para o TED Judicial
+  --                          Jose Dill - Mouts (P475 - REQ39)  
+  --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -2646,7 +2649,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 															'<b>' || TO_CHAR(rw_tbpagto_trans_pend.dtdebito,'DD/MM/RRRR') || '</b>' || ' no valor de <b>R$ ' ||
 															TO_CHAR(rw_tbpagto_trans_pend.vlpagamento,'fm999g999g990d00') || '</b>.<br>';
 					
-					WHEN pr_tptransa = 4 THEN --TED
+					WHEN pr_tptransa IN (4,22) THEN --TED E TED JUDICIAL --REQ39
 							 OPEN cr_tbspb_trans_pend(pr_cddoitem => pr_cdtranpe);
 							 FETCH cr_tbspb_trans_pend INTO rw_tbspb_trans_pend;				
 							IF cr_tbspb_trans_pend%NOTFOUND THEN
@@ -2660,25 +2663,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                  --Fechar Cursor
 							   CLOSE cr_tbspb_trans_pend;
 							END IF;
-						
-							OPEN cr_crapcti(pr_cdcooper => rw_tbspb_trans_pend.cdcooper,
-															pr_nrdconta => rw_tbspb_trans_pend.nrdconta,
-															pr_cddbanco => rw_tbspb_trans_pend.cdbanco_favorecido,
-															pr_cdageban => rw_tbspb_trans_pend.cdagencia_favorecido,
-															pr_nrctatrf => rw_tbspb_trans_pend.nrconta_favorecido);
-							FETCH cr_crapcti INTO vr_nmtitula;	
-							IF cr_crapcti%NOTFOUND THEN
-                 --Fechar Cursor
-                 CLOSE cr_crapcti;
+						  /*REQ39 - Não validar cadastro de transferência para TED Judicial */
+              IF pr_tptransa <> 22 THEN
+                OPEN cr_crapcti(pr_cdcooper => rw_tbspb_trans_pend.cdcooper,
+                                pr_nrdconta => rw_tbspb_trans_pend.nrdconta,
+                                pr_cddbanco => rw_tbspb_trans_pend.cdbanco_favorecido,
+                                pr_cdageban => rw_tbspb_trans_pend.cdagencia_favorecido,
+                                pr_nrctatrf => rw_tbspb_trans_pend.nrconta_favorecido);
+                FETCH cr_crapcti INTO vr_nmtitula;	
+                IF cr_crapcti%NOTFOUND THEN
+                   --Fechar Cursor
+                   CLOSE cr_crapcti;
 
-								 vr_cdcritic:= 0;
-								 vr_dscritic:= 'Registro de Cadastro de transferencias nao encontrado.';
-								 --Levantar Excecao
-								 RAISE vr_exc_erro;
-              ELSE
-                 --Fechar Cursor
-							   CLOSE cr_crapcti;
-							END IF;
+                   vr_cdcritic:= 0;
+                   vr_dscritic:= 'Registro de Cadastro de transferencias nao encontrado.';
+                   --Levantar Excecao
+                   RAISE vr_exc_erro;
+                ELSE
+                   --Fechar Cursor
+                   CLOSE cr_crapcti;
+                END IF;
+              END IF;
 
 							pr_dsdmensg := pr_dsdmensg ||
 														 '<b>TED</b> para <b>' ||
@@ -4253,6 +4258,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     --
     -- Alteração : 25/02/2016 - Receber e gravar novos campos das transacoes TED (Marcos-Supero)
     --
+    --             27/03/2019 - Ajustes para permitir criar as transações para o TED Judicial
+    --                          Jose Dill - Mouts (P475 - REQ39)
     ---------------------------------------------------------------------------------------------------------------
                  
     -- Cursores
@@ -4295,7 +4302,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     -- log verlog
     vr_nrdrowid ROWID;
     vr_dstransa VARCHAR2(100);
-    vr_dsorigem VARCHAR2(100) := GENE0001.vr_vet_des_origens(pr_idorigem);     
+    vr_dsorigem VARCHAR2(100) := GENE0001.vr_vet_des_origens(pr_idorigem);   
+    vr_cdtiptra INTEGER; --REQ39 
     
   BEGIN
 
@@ -4346,7 +4354,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       FOR i IN vr_tab_lsdatagd.first..vr_tab_lsdatagd.last LOOP
       
         vr_dtmvtopg := to_date(vr_tab_lsdatagd(i),'DD/MM/RRRR');
-        
+        /* REQ39 - Quando for um TED Judicial deve ser passado o tipo de transação 22*/
+        IF pr_cdfinali = 100 THEN
+           vr_cdtiptra:= 22;
+        ELSE
+           vr_cdtiptra:= 4; 
+        END IF;   
+        --
         INET0002.pc_cria_transacao_operador(pr_cdagenci => pr_cdagenci
                                            ,pr_nrdcaixa => pr_nrdcaixa
                                            ,pr_cdoperad => pr_cdoperad
@@ -4361,7 +4375,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                            ,pr_cdagetfn => pr_cdagetfn
                                            ,pr_nrterfin => pr_nrterfin
                                            ,pr_dtmvtolt => pr_dtmvtolt
-                                           ,pr_cdtiptra => 4
+                                           ,pr_cdtiptra => vr_cdtiptra --REQ39
                                            ,pr_idastcjt => pr_idastcjt
                                            ,pr_tab_crapavt => vr_tab_crapavt
                                            ,pr_cdtranpe => vr_cdtranpe
@@ -4426,7 +4440,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                 ,pr_nrdconta => pr_nrdconta
                                 ,pr_nrcpfrep => pr_nrcpfrep
                                 ,pr_dtmvtolt => pr_dtmvtolt
-                                ,pr_cdtiptra => 4 
+                                ,pr_cdtiptra => vr_cdtiptra --REQ39
                                 ,pr_tab_crapavt => vr_tab_crapavt
                                 ,pr_cdtranpe => vr_cdtranpe
                                 ,pr_cdcritic => vr_cdcritic
@@ -4438,7 +4452,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       END LOOP;
 
     ELSE
-      
+      /* REQ39 - Quando for um TED Judicial deve ser passado o tipo de transação 22*/
+      IF pr_cdfinali = 100 THEN
+         vr_cdtiptra:= 22;
+      ELSE
+         vr_cdtiptra:= 4; 
+      END IF;  
       INET0002.pc_cria_transacao_operador(pr_cdagenci => pr_cdagenci
                                            ,pr_nrdcaixa => pr_nrdcaixa
                                            ,pr_cdoperad => pr_cdoperad
@@ -4453,7 +4472,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                            ,pr_cdagetfn => pr_cdagetfn
                                            ,pr_nrterfin => pr_nrterfin
                                            ,pr_dtmvtolt => pr_dtmvtolt
-                                           ,pr_cdtiptra => 4
+                                           ,pr_cdtiptra => vr_cdtiptra --REQ39
                                            ,pr_idastcjt => pr_idastcjt
                                            ,pr_tab_crapavt => vr_tab_crapavt
                                            ,pr_cdtranpe => vr_cdtranpe
@@ -4518,7 +4537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                 ,pr_nrdconta => pr_nrdconta
                                 ,pr_nrcpfrep => pr_nrcpfrep
                                 ,pr_dtmvtolt => pr_dtmvtolt
-                                ,pr_cdtiptra => 4 
+                                ,pr_cdtiptra => vr_cdtiptra --REQ39 
                                 ,pr_tab_crapavt => vr_tab_crapavt
                                 ,pr_cdtranpe => vr_cdtranpe
                                 ,pr_cdcritic => vr_cdcritic
@@ -4565,7 +4584,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
       ELSE	
         pr_dscritic := vr_dscritic;
-      END IF;        
+      END IF;
+        
       ROLLBACK;
       
     --INC0021893
@@ -4907,12 +4927,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 
   EXCEPTION
     WHEN vr_exec_saida THEN
-      pr_cdcritic := NVL(vr_cdcritic,0);      
+      pr_cdcritic := NVL(vr_cdcritic,0);
+      
       IF NVL(pr_cdcritic,0) > 0 THEN
          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
       ELSE	
          pr_dscritic := vr_dscritic;
-      END IF;        
+      END IF;
+        
       ROLLBACK;
 
     --INC0021893
@@ -8144,7 +8166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                    vr_dtdebito := TO_CHAR(rw_tbpagto_trans_pend.dtdebito,'DD/MM/RRRR');
                    vr_identdda := CASE WHEN rw_tbpagto_trans_pend.idtitulo_dda = 0 THEN 'NÃO' ELSE 'SIM' END;
                          
-              WHEN vr_tptranpe = 4 THEN --TED
+              WHEN vr_tptranpe IN (4,22) THEN --TED /*REQ39*/
                          
                    OPEN cr_tbspb_trans_pend(pr_cddoitem => vr_cdtranpe);
                    FETCH cr_tbspb_trans_pend INTO rw_tbspb_trans_pend;
@@ -8163,26 +8185,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                        CONTINUE;
                     END IF;
                  END IF;
-                       
-                 --Cadastro de Transferencias pela Internet
-                 OPEN cr_crapcti( pr_cdcooper => rw_tbspb_trans_pend.cdcooper,
-                                  pr_nrdconta => rw_tbspb_trans_pend.nrdconta,
-                                  pr_cddbanco => rw_tbspb_trans_pend.cdbanco_favorecido,
-                                  pr_cdageban => rw_tbspb_trans_pend.cdagencia_favorecido,
-                                  pr_nrctatrf => rw_tbspb_trans_pend.nrconta_favorecido);
-                 FETCH cr_crapcti INTO rw_crapcti;	
-                 IF cr_crapcti%NOTFOUND THEN
-                    --Fechar Cursor
-                    CLOSE cr_crapcti;
+                 
+                 IF vr_tptranpe <> 22 THEN /*REQ39*/      
+                   --Cadastro de Transferencias pela Internet
+                   OPEN cr_crapcti( pr_cdcooper => rw_tbspb_trans_pend.cdcooper,
+                                    pr_nrdconta => rw_tbspb_trans_pend.nrdconta,
+                                    pr_cddbanco => rw_tbspb_trans_pend.cdbanco_favorecido,
+                                    pr_cdageban => rw_tbspb_trans_pend.cdagencia_favorecido,
+                                    pr_nrctatrf => rw_tbspb_trans_pend.nrconta_favorecido);
+                   FETCH cr_crapcti INTO rw_crapcti;	
+                   IF cr_crapcti%NOTFOUND THEN
+                      --Fechar Cursor
+                      CLOSE cr_crapcti;
 
-                    vr_cdcritic:= 0;
-                    vr_dscritic:= 'Registro de Cadastro de transferencias nao encontrado.';
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
-                 ELSE
-                    --Fechar Cursor
-                    CLOSE cr_crapcti;
-                 END IF;
+                      vr_cdcritic:= 0;
+                      vr_dscritic:= 'Registro de Cadastro de transferencias nao encontrado.';
+                      --Levantar Excecao
+                      RAISE vr_exc_erro;
+                   ELSE
+                      --Fechar Cursor
+                      CLOSE cr_crapcti;
+                   END IF;
+                 END IF; 
                  
                  --Buscar nome do banco favorecido
                  IF rw_tbspb_trans_pend.nrispb_banco_favorecido = 0 THEN
@@ -8215,26 +8239,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                    vr_dsfindad := 'FINALIDADE NAO CADASTRADA';
                  END IF;
                  
-                 --Buscar Agencia
-                 OPEN cr_crapagb( pr_cddbanco => vr_cddbanco ,
-                                  pr_cdageban => rw_tbspb_trans_pend.cdagencia_favorecido);
-                 FETCH cr_crapagb INTO vr_dsagenci;	
-                 IF cr_crapagb%NOTFOUND THEN
-                    --Fechar Cursor
-                    CLOSE cr_crapagb;
-                    vr_dsagenci := 'AGENCIA NAO CADASTRADA';
+                 IF vr_tptranpe <> 22 THEN /*REQ39*/
+                   --Buscar Agencia
+                   OPEN cr_crapagb( pr_cddbanco => vr_cddbanco ,
+                                    pr_cdageban => rw_tbspb_trans_pend.cdagencia_favorecido);
+                   FETCH cr_crapagb INTO vr_dsagenci;	
+                   IF cr_crapagb%NOTFOUND THEN
+                      --Fechar Cursor
+                      CLOSE cr_crapagb;
+                      vr_dsagenci := 'AGENCIA NAO CADASTRADA';
+                   ELSE
+                      --Fechar Cursor
+                      CLOSE cr_crapagb;
+                   END IF;
                  ELSE
-                    --Fechar Cursor
-                    CLOSE cr_crapagb;
-                 END IF;
-                 
+                   vr_dsagenci:= NULL;
+                 END IF;                 
                  --Valor a somar
                  vr_vlasomar := rw_tbspb_trans_pend.vlted;
                  
                  --Variaveis de resumo
                  vr_dsvltran := TO_CHAR(rw_tbspb_trans_pend.vlted,'fm999g999g990d00'); -- Valor
                  vr_dsdtefet := CASE WHEN rw_tbspb_trans_pend.idagendamento = 1 THEN 'Nesta Data' ELSE TO_CHAR(rw_tbspb_trans_pend.dtdebito,'DD/MM/RRRR') END; -- Data Efetivacao
-                 vr_dsdescri := TO_CHAR(rw_tbspb_trans_pend.nrconta_favorecido) || ' - ' || SUBSTR(rw_crapcti.nmtitula,1,20); -- Descricao
+                 IF vr_tptranpe <> 22 THEN /*REQ39*/
+                    vr_dsdescri := TO_CHAR(rw_tbspb_trans_pend.nrconta_favorecido) || ' - ' || SUBSTR(rw_crapcti.nmtitula,1,20); -- Descricao
+                    vr_nomdofav := rw_crapcti.nmtitula; --Nome do Favorecido
+                    vr_cpfcgcfv := rw_crapcti.nrcpfcgc; --CPF/CNPJ do Favorecido
+                 ELSE
+                    /*REQ39 - TED Judicial não possui dados de favorecido*/
+                    vr_dsdescri := TO_CHAR(vr_cddbanco)||' - '||UPPER(vr_nmextbcc) ; -- Nome do banco
+                    vr_nomdofav := NULL; --Nome do Favorecido
+                    vr_cpfcgcfv := NULL; --CPF/CNPJ do Favorecido  
+                 END IF;
                  vr_dstptran := 'TED'; -- Tipo de Transacao
                  vr_dsagenda := CASE WHEN rw_tbspb_trans_pend.idagendamento = 1 THEN 'NÃO' ELSE 'SIM' END; -- Agendamento
                  
@@ -8243,8 +8279,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                  vr_nmdoispb := rw_tbspb_trans_pend.nrispb_banco_favorecido || '-' || vr_nmextbcc; --ISPB
                  vr_nmagenci := rw_tbspb_trans_pend.cdagencia_favorecido || '-' || vr_dsagenci; --Agencia do Favorecido
                  vr_nrctafav := rw_tbspb_trans_pend.nrconta_favorecido; --Conta do Favorecido
-                 vr_nomdofav := rw_crapcti.nmtitula; --Nome do Favorecido
-                 vr_cpfcgcfv := rw_crapcti.nrcpfcgc; --CPF/CNPJ do Favorecido
                  vr_dshistco := rw_tbspb_trans_pend.dshistorico; --Historico Complementar
                  vr_cdidenti := rw_tbspb_trans_pend.dscodigo_identificador; --Codigo Identificador
                  vr_dtdodebi := TO_CHAR(rw_tbspb_trans_pend.dtdebito,'DD/MM/RRRR'); --Debito Em
@@ -9126,20 +9160,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
             || '<dados_campo><label>Débito Em</label><valor>'               ||vr_dtdebito||'</valor></dados_campo>'
             || '<dados_campo><label>Identificação DDA</label><valor>'       ||vr_identdda||'</valor></dados_campo>'
             || '<dados_campo><label>Indicador de Agendamento</label><valor>'||vr_dsagenda||'</valor></dados_campo>';
-         ELSIF vr_tptranpe = 4 THEN --TED
-            vr_xml_auxi := vr_xml_auxi
-            || '<dados_campo><label>Banco do Favorecido</label><valor>'     ||vr_nmbanfav||'</valor></dados_campo>'
-            || '<dados_campo><label>ISPB</label><valor>'                    ||vr_nmdoispb||'</valor></dados_campo>'
-            || '<dados_campo><label>Agência do Favorecido</label><valor>'   ||vr_nmagenci||'</valor></dados_campo>'
-            || '<dados_campo><label>Conta do Favorecido</label><valor>'     ||vr_nrctafav||'</valor></dados_campo>'
-            || '<dados_campo><label>Nome do Favorecido</label><valor>'      ||vr_nomdofav||'</valor></dados_campo>'
-            || '<dados_campo><label>CPF/CNPJ do Favorecido</label><valor>'  ||vr_cpfcgcfv||'</valor></dados_campo>'
-            || '<dados_campo><label>Finalidade</label><valor>'              ||vr_dsfindad||'</valor></dados_campo>'
-            || '<dados_campo><label>Histórico Complementar</label><valor>'  ||vr_dshistco||'</valor></dados_campo>'
-            || '<dados_campo><label>Código Identificador</label><valor>'    ||vr_cdidenti||'</valor></dados_campo>'
-            || '<dados_campo><label>Valor da TED</label><valor>'            ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
-            || '<dados_campo><label>Débito Em</label><valor>'               ||vr_dtdodebi||'</valor></dados_campo>'
-            || '<dados_campo><label>Indicador de Agendamento</label><valor>'||vr_dsagenda||'</valor></dados_campo>';            
+         ELSIF vr_tptranpe IN (4,22) THEN --TED /*REQ39*/
+              IF vr_tptranpe = 4 THEN
+                vr_xml_auxi := vr_xml_auxi
+                || '<dados_campo><label>Banco do Favorecido</label><valor>'     ||vr_nmbanfav||'</valor></dados_campo>'
+                || '<dados_campo><label>ISPB</label><valor>'                    ||vr_nmdoispb||'</valor></dados_campo>'
+                || '<dados_campo><label>Agência do Favorecido</label><valor>'   ||vr_nmagenci||'</valor></dados_campo>'
+                || '<dados_campo><label>Conta do Favorecido</label><valor>'     ||vr_nrctafav||'</valor></dados_campo>'
+                || '<dados_campo><label>Nome do Favorecido</label><valor>'      ||vr_nomdofav||'</valor></dados_campo>'
+                || '<dados_campo><label>CPF/CNPJ do Favorecido</label><valor>'  ||vr_cpfcgcfv||'</valor></dados_campo>'
+                || '<dados_campo><label>Finalidade</label><valor>'              ||vr_dsfindad||'</valor></dados_campo>'
+                || '<dados_campo><label>Histórico Complementar</label><valor>'  ||vr_dshistco||'</valor></dados_campo>'
+                || '<dados_campo><label>Código Identificador</label><valor>'    ||vr_cdidenti||'</valor></dados_campo>'
+                || '<dados_campo><label>Valor da TED</label><valor>'            ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
+                || '<dados_campo><label>Débito Em</label><valor>'               ||vr_dtdodebi||'</valor></dados_campo>'
+                || '<dados_campo><label>Indicador de Agendamento</label><valor>'||vr_dsagenda||'</valor></dados_campo>';            
+              ELSE
+                vr_xml_auxi := vr_xml_auxi
+                || '<dados_campo><label>Banco do Favorecido</label><valor>'     ||vr_nmbanfav||'</valor></dados_campo>'
+                || '<dados_campo><label>ISPB</label><valor>'                    ||vr_nmdoispb||'</valor></dados_campo>'
+                || '<dados_campo><label>Finalidade</label><valor>'              ||vr_dsfindad||'</valor></dados_campo>'
+                || '<dados_campo><label>Código Identificador</label><valor>'    ||vr_cdidenti||'</valor></dados_campo>'
+                || '<dados_campo><label>Valor da TED</label><valor>'            ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'
+                || '<dados_campo><label>Débito Em</label><valor>'               ||vr_dtdodebi||'</valor></dados_campo>'
+                || '<dados_campo><label>Indicador de Agendamento</label><valor>'||vr_dsagenda||'</valor></dados_campo>';            
+              END IF;                
          ELSIF vr_tptranpe = 6 THEN --Credito Pre-Aprovado
             vr_xml_auxi := vr_xml_auxi
             || '<dados_campo><label>Valor do Crédito</label><valor>'      ||NVL(TRIM(vr_dsvltran), '0,00')||'</valor></dados_campo>'

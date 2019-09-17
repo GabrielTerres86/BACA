@@ -1803,13 +1803,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
            AND tit.dscodbar = pr_dscodbar;
       rw_craptit cr_craptit%ROWTYPE;
       
-      -- Buscar praça não executante de protesto
+      /*Rafael Ferreira (Mouts) - INC0022229
+          Conforme informado por Deise Carina Tonn da area de Negócio, esta validação não é mais necessária
+          pois agora Todas as cidades podem ter protesto*/
+      /*-- Buscar praça não executante de protesto
       CURSOR cr_crappnp(pr_nmextcid  crappnp.nmextcid%TYPE
                        ,pr_cduflogr  crappnp.cduflogr%TYPE) IS
         SELECT 1
           FROM crappnp  pnp
          WHERE pnp.nmextcid = pr_nmextcid  
-           AND pnp.cduflogr = pr_cduflogr;
+           AND pnp.cduflogr = pr_cduflogr;*/
                        
       --Selecionar informacoes dos bancos
       CURSOR cr_crapban_ispb (pr_nrispbif IN crapban.nrispbif%type) IS
@@ -1991,13 +1994,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
         vr_indiaprt := NULL;
         
       
+        /*Rafael Ferreira (Mouts) - INC0022229
+          Conforme informado por Deise Carina Tonn da area de Negócio, esta validação não é mais necessária
+          pois agora Todas as cidades podem ter protesto*/
         -- Buscar praça não executante de protesto
-        OPEN  cr_crappnp(rw_crapsab.nmcidsac
+        /*OPEN  cr_crappnp(rw_crapsab.nmcidsac
                         ,rw_crapsab.cdufsaca);
-        FETCH cr_crappnp INTO vr_inauxreg;
+        FETCH cr_crappnp INTO vr_inauxreg;*/
 
         -- Se encontrar registro    
-        IF cr_crappnp%FOUND THEN
+        /*IF cr_crappnp%FOUND THEN
           -- Atribuir o valor as variáveis para atualizar os campos no update
           vr_flgdprot := 0; -- FALSE
           vr_qtdiaprt := 0;
@@ -2026,7 +2032,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED."DDDA0001" AS
               pr_dscritic := 'PC_CRIA_TITULO: Erro ao inserir CRAPCOL: '||SQLERRM;
               RETURN;
           END;
-        END IF;
+        END IF;*/
         
         -- Atualizar informações de cobrança
         BEGIN

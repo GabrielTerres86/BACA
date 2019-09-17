@@ -29,19 +29,19 @@
                 08/08/2013 - Incluido campo cdufnatu. (Reinert)
                 
                 15/08/2013 - Incluido flgdigit = FALSE na crpdoc, para
-                             digitalizaÁ„o de documentos (Jean Michel).
+                             digitaliza√ß√£o de documentos (Jean Michel).
                 
                 19/08/2013 - Incluido a chamada da procedure 
                              "atualiza_data_manutencao_cadastro" dentro da
                              procedure "grava_dados" (James).
                              
-                30/10/2013 - AlteraÁ„o referente a criaÁ„o de registros na
+                30/10/2013 - Altera√ß√£o referente a cria√ß√£o de registros na
                              crapdoc (Jean Michel).
                              
                 13/12/2013 - Adicionado VALIDATE para CREATE. (Jorge)
                 
-                16/01/2014 - Alterado criaÁ„o de registros na crapdoc, quando
-                             cooperado for demitido, n„o cria registros. 
+                16/01/2014 - Alterado cria√ß√£o de registros na crapdoc, quando
+                             cooperado for demitido, n√£o cria registros. 
                              (Jean Michel)
                 
                 28/02/2014 - Incluir validacao para somente gravar na crapdoc
@@ -80,13 +80,13 @@
                              procedure grava_dados pois a validacao acontece
                              antes de salvar (Carlos)
                              
-                25/05/2015 - Inlcuir create da crapdoc na inclus„o para o 
+                25/05/2015 - Inlcuir create da crapdoc na inclus√£o para o 
                              tpdocmto = 4 e tipo 6 (Lucas Ranghetti #287169)
                             
                 10/07/2015 - Projeto reformulacao Cadastral (Gabriel-RKAM).             
                 
-                05/10/2015 - Adicionado nova opÁ„o "J" para alteraÁ„o apenas do cpf/cnpj e 
-                             removido a possibilidade de alteraÁ„o pela opÁ„o "X", conforme 
+                05/10/2015 - Adicionado nova op√ß√£o "J" para altera√ß√£o apenas do cpf/cnpj e 
+                             removido a possibilidade de altera√ß√£o pela op√ß√£o "X", conforme 
                              solicitado no chamado 321572 (Kelvin).    
                 
                 17/12/2015 - Remocao da pendencia do documento de ficha cadastral
@@ -99,7 +99,7 @@
                 16/03/2016 - Incluir validacao para nao criar crapdoc para pessoa juridica
                              tipo 2 (Lucas Ranghetti #391492)
                 17/06/2016 - Inclusao de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
-                  - Inclus„o do parametro CDAGENCI para a funcao GRAVA_DADOS
+                  - Inclus√£o do parametro CDAGENCI para a funcao GRAVA_DADOS
 
                 25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
@@ -112,15 +112,15 @@
                              problema com validacao da data de nascimento.
                              Heitor (Mouts) - Chamado 702785	    	
 
-                11/08/2017 - IncluÌdo o n˙mero do cpf ou cnpj na tabela crapdoc.
+                11/08/2017 - Inclu√≠do o n√∫mero do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)
 				 
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                              o idseqttl como zero (Luacas Ranghetti #756813)
 
                 23/10/2017 - Ajustes para nao validar responsavel legal ao incluir CONTA
-                             na tela MATRIC, pois validaÁao ocorrer· apenas apos a inclusao
-                             para garantir replicaÁao dos dados da tbcadast.
+                             na tela MATRIC, pois valida√ßao ocorrer√° apenas apos a inclusao
+                             para garantir replica√ßao dos dados da tbcadast.
                              PRJ339 - CRM (Odirlei-AMcom)
                
 			   14/11/2017 - Ajuste na rotina que busca contas demitidas para enviar conta
@@ -134,7 +134,10 @@
 			   13/07/2018 - Novo campo Nome Social (#SCTASK0017525 - Andrey Formigari)
 
 			   10/09/2018 - Ajuste na busca pelo Nome Social (Andrey Formigari - Mouts)
-
+				 
+			   13/08/2019 - Atualizar cpf/cnpj na tabela de eventos - Projeto 484.2
+                            Gabriel Marcos (Mouts).
+				 
 ............................................................................*/
 
 
@@ -648,7 +651,7 @@ PROCEDURE Valida_Dados:
        
            /* Sera realizada a validacao de emancipacao apenas para pessoas
               que tiverem o estado civil diferente dos apresentados na 
-              condicao abaixo. Quando casado, a pessoa È automaticamente 
+              condicao abaixo. Quando casado, a pessoa √© automaticamente 
               emancipada.*/
            IF par_inpessoa = 1 AND 
               par_inhabmen = 1 AND 
@@ -831,7 +834,7 @@ PROCEDURE Valida_Dados:
         
                /* Sera realizada a validacao de emancipacao apenas para pessoas
                   que tiverem o estado civil diferente dos apresentados na 
-                  condicao abaixo. Quando casado, a pessoa È automaticamente 
+                  condicao abaixo. Quando casado, a pessoa √© automaticamente 
                   emancipada.*/
                IF par_inpessoa = 1 AND 
                   NOT CAN-DO("2,3,4,5,6,7,8,9,11",STRING(par_cdestcvl)) AND
@@ -976,8 +979,8 @@ PROCEDURE Valida_Dados:
 
             END.
 
-        /* Nao validar para tela MATRIC Inclusao, pois validaÁao dever· chamar apos a gravaÁao
-           e replicaÁao da estrutura de pessao  */    
+        /* Nao validar para tela MATRIC Inclusao, pois valida√ßao dever√° chamar apos a grava√ßao
+           e replica√ßao da estrutura de pessao  */    
            
         IF par_nmdatela <> 'MATRIC' OR 
            par_cddopcao <> 'I' THEN
@@ -1781,7 +1784,7 @@ PROCEDURE Grava_Dados:
                                     DO:
                                         IF par_nrcpfcgc <> crapass.nrcpfcgc THEN
                                             aux_nrcpfcgc = par_nrcpfcgc.
-    
+	
                                         IF  par_inpessoa = 1 THEN
                                             DO:
                                             
@@ -1869,6 +1872,24 @@ PROCEDURE Grava_Dados:
                                                 END.
                                             END.
                                         END.
+																				
+																				/* Atualiza cpf na tabela de eventos */
+                                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                                        /* Efetuar a chamada a rotina Oracle  */
+                                        RUN STORED-PROCEDURE pc_atualiza_matric_j
+                                                                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                                                                                      INPUT par_nrdconta,
+                                                                                                      INPUT par_nrcpfcgc,
+                                                                                                     OUTPUT 0,   /* pr_cdcritic */
+                                                                                                     OUTPUT ""). /* pr_dscritic */  
+                                        
+                                        /* Fechar o procedimento para buscarmos o resultado */ 
+                                        CLOSE STORED-PROC pc_atualiza_matric_j
+                                                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                                        
+                                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+																				
                                     END.
                             END.
 
@@ -1916,7 +1937,7 @@ PROCEDURE Grava_Dados:
                                                         INPUT par_idseqttl,
                                                         INPUT aux_nrcpfcgc,
                                                         INPUT par_dtmvtolt,
-                                                        INPUT "2", /* CARTEIRA IDENTIFICA«AO */
+                                                        INPUT "2", /* CARTEIRA IDENTIFICA√áAO */
                                                         INPUT par_cdoperad,
                                                        OUTPUT aux_cdcritic,
                                                        OUTPUT aux_dscritic).
@@ -1969,7 +1990,7 @@ PROCEDURE Grava_Dados:
                                           -> matricula 
                                           -> carteira de identificacao 
                                           -> CPF 
-                                          -> comprovante de endereÁo 
+                                          -> comprovante de endere√ßo 
                                           -> cartao assinatura */
                                 IF NOT VALID-HANDLE(h-b1wgen0137) THEN
                                     RUN sistema/generico/procedures/b1wgen0137.p 
@@ -1984,9 +2005,9 @@ PROCEDURE Grava_Dados:
                                             /* 45 - CONTRATO ABERTURA DE CONTA PF 
                                                54 - FICHA CADASTRAL 
                                                 8 - MATRICULA
-                                                2 - CARTEIRA IDENTIFICA«AO 
+                                                2 - CARTEIRA IDENTIFICA√áAO 
                                                 1 - CPF - CADASTRO DE PESSOAS FISICAS 
-                                                3 - COMPROVANTE DE ENDERE«O 
+                                                3 - COMPROVANTE DE ENDERE√áO 
                                                 6 - CARTAO DE ASSINATURA */
                                             INPUT "8;2;1;3;6", 
                                             INPUT par_cdoperad,
@@ -2036,7 +2057,7 @@ PROCEDURE Grava_Dados:
                                                   INPUT aux_nrcpfcgc,
                                                   INPUT par_dtmvtolt, 
                                                   /*
-                                                      59 - Documento de EmancipaÁao 
+                                                      59 - Documento de Emancipa√ßao 
                                                   */
                                                   INPUT "59", 
                                                     INPUT par_cdoperad,
@@ -2087,7 +2108,7 @@ PROCEDURE Grava_Dados:
                                           -> ficha cadastral
                                           -> matricula 
                                           -> CARTAO DE CNPJ  
-                                          -> comprovante de endereÁo */
+                                          -> comprovante de endere√ßo */
                                 IF NOT VALID-HANDLE(h-b1wgen0137) THEN
                                     RUN sistema/generico/procedures/b1wgen0137.p 
                                     PERSISTENT SET h-b1wgen0137.
@@ -2100,7 +2121,7 @@ PROCEDURE Grava_Dados:
                                             INPUT par_dtmvtolt,
                                             /* 46 - CONTRATO ABERTURA DE CONTA PJ 
                                                10 - CARTAO DE CNPJ 
-                                                3 - COMPROVANTE DE ENDERE«O                                                 
+                                                3 - COMPROVANTE DE ENDERE√áO                                                 
                                                54 - FICHA CADASTRAL                                                 
                                                 8 - MATRICULA */
                                             INPUT "46;10;3;54;8", 
@@ -2664,7 +2685,7 @@ PROCEDURE busca_contas_demitidas:
 		ASSIGN par_qtdregis = par_qtdregis + 1
 		       par_vlrtotal = par_vlrtotal + aux_vldcotas.
 
-		/* controles da paginaÁ„o */
+		/* controles da pagina√ß√£o */
 		IF  (par_qtdregis < par_nriniseq                    OR
 			par_qtdregis > (par_nriniseq + par_nrregist))  THEN
 			NEXT.
@@ -2770,4 +2791,3 @@ PROCEDURE Produtos_Servicos_Ativos:
 	 
 END PROCEDURE.										
 /*............................................................................*/
-

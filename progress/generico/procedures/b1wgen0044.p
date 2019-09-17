@@ -162,7 +162,7 @@ PROCEDURE calcula_bloqueio_cheque:
 					  
 				   4-Verificação de agência inativa adicionar 1 dia ao prazo 
 				      de bloqueio removida, de acordo com os ajustes do 'P367
-					  Compe sessão única' e ocorrência RITM0014144.
+					  Compe sessão única' e ocorrência RITM0014144.					  
     */
 
 

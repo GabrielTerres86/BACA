@@ -1,0 +1,53 @@
+/* 
+ * FONTE        : ratmov.css
+ * CRIAÇÃO      : Luiz Otávio Olinger Momm - AMcom
+ * DATA CRIAÇÃO : 29/01/2019
+ * OBJETIVO     : Estilos para Filtros - Alteração/Consulta da Nota do Rating após a Efetivação
+ */
+
+.tituloRegistros {
+	width: 890px;
+}
+
+.table_checkbox {
+	position: relative;
+	display : table; 
+}
+.row_checkbox {
+	width: 400px;
+}
+
+.col_checkbox {
+	float: left;
+	width: 200px;
+	vertical-align:middle;
+	display: table-cell;
+	line-height: 25px;
+}
+
+.col_checkbox > input[type="checkbox"] {
+	margin: 5px 5px 0px 5px;
+}
+
+.lupaDesabilitada {
+	filter: gray; /* IE6-9 */
+	-webkit-filter: grayscale(1); /* Google Chrome, Safari 6+ & Opera 15+ */
+	filter: grayscale(1); /* Microsoft Edge and Firefox 35+ */
+}
+
+.lupaHabilita {
+	-webkit-filter: grayscale(0);
+	filter: none;
+}
+
+table.tituloRegistrosGrid {width:890px;border-collapse:collapse;}
+table.tituloRegistrosGrid thead tr {border-bottom:1px dotted #999;}
+table.tituloRegistrosGrid thead tr th {font-size:11px;height:22px;border-right:1px dotted #999;background-color:#f7d3ce; text-align: center;}
+
+div.divRegistrosGrid {height:150px;width:890px;overflow-x:hidden;overflow-y:scroll;}
+div.divRegistrosGrid table {width:100%;border-collapse:collapse;}
+div.divRegistrosGrid table thead {display:none;}
+div.divRegistrosGrid table tbody tr {height:26px;}
+div.divRegistrosGrid table tbody tr:hover {outline:1px solid #6B7984;color: #000;}
+div.divRegistrosGrid table tbody tr td {border-right:1px dotted #999;font-size:11px;color:#333; text-align: center;}
+div.divRegistrosGrid table tbody tr td span {display:none;}

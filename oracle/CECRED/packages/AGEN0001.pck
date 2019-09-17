@@ -85,6 +85,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
   -- Objetivo  : Disponibilizar rotinas de busca de agendamentos para SOA
   --
   -- Alterações: 16/07/2018 - Incluido campo dsorigem de retorno no XML da procedure pc_lista_agendamentos, Prj. 363 (Jean Michel)
+  --             12/06/2019 - Incluido tratamento para TED Judicial. 
+  --                          Jose Dill - Mouts (P475 - REQ39)
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_crapass(pr_cdcooper crapass.cdcooper%TYPE
@@ -156,6 +158,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
             END IF;
             
           WHEN vr_cdtiptra IN (1,3,4,5) THEN vr_dsagenda := substr(pr_tab_dados_agendamento.dsageban,1,4) || '/' || pr_tab_dados_agendamento.nrctadst;
+          --REQ39
+          WHEN vr_cdtiptra = 22 THEN vr_dsagenda := pr_tab_dados_agendamento.dsageban;
         END CASE;
 
         RETURN vr_dsagenda;
@@ -245,7 +249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 			  IF pr_cdtipmod = 1 THEN -- Pagamento
                 vr_dstiptra := '2;10;12;13'; -- Pagamento; DARF/DAS/FGTS/DAE
   			ELSIF pr_cdtipmod = 2 THEN -- Transferências 
-          vr_dstiptra := '1;3;4;5'; --Transferencias inter; Credito salario; TED; Transferencias intra
+          vr_dstiptra := '1;3;4;5;22'; --Transferencias inter; Credito salario; TED; Transferencias intra
 
 				END IF;
 						
@@ -417,6 +421,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
                               cadastrado", pois existem agencias que de fato nao temos a
                               descricao. (Anderson P285).
 
+                 17/06/2019 - Atribuir o identificador de deposito judicial ao comprovante.
+                              Jose Dill - Mouts (P475 - Req39)
+                              
      ..................................................................................*/     
      
    DECLARE
@@ -452,7 +459,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
             ,NVL2(agb.cdageban, LPAD(agb.cdageban,4,'0') || ' - ' || REPLACE(UPPER(TRIM(agb.nmageban)),'&','e'),'Nao cadastrado') AS dsdagenc
 						,NVL(ban.cdbccxlt, 0) AS cdbandst
 						,NVL2(ban.cdbccxlt, REPLACE(UPPER(TRIM(ban.nmextbcc)),'&','e'),'Nao cadastrado') AS dsbandst						
-						,NVL(lau.cdageban, 0) AS cdagedst
+					 	,NVL(lau.cdageban, 0) AS cdagedst
 						,NVL2(agb.cdageban, REPLACE(UPPER(TRIM(agb.nmageban)),'&','e'),' ') AS dsagedst						
             ,TRIM(GENE0002.fn_mask_conta(cti.nrctatrf)) || ' - ' || cti.nmtitula AS dstitula
             ,TRIM(GENE0002.fn_mask_conta(cti.nrctatrf)) AS dsctadst
@@ -460,6 +467,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
             ,lau.nmprepos
             ,lau.nrcpfpre
             ,lau.nrcpfope
+            ,tda.dsidentific dsidenti
        FROM craplau lau
 	LEFT JOIN crapcop cop
          ON cop.cdcooper = lau.cdcooper
@@ -474,6 +482,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
         AND cti.cddbanco = lau.cddbanco
         AND cti.cdageban = lau.cdageban
         AND cti.nrctatrf = lau.nrctadst
+  LEFT JOIN tbted_det_agendamento tda
+         ON lau.idlancto = tda.idlancto /*REQ39*/      
       WHERE lau.idlancto = pr_idlancto; 
       rw_agendamento cr_agendamento%ROWTYPE;                
   
@@ -558,7 +568,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 															'<hrautent>' || rw_agendamento.hrtransa || '</hrautent>' ||
 															'<dtmvtopg>' || rw_agendamento.dtmvtopg || '</dtmvtopg>' ||																
 															'<vldocmto>' || to_char(rw_agendamento.vllanaut,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.') || '</vldocmto>' ||																
-															'<dssituac>' || rw_agendamento.dssitlau || '</dssituac>' ||
+														  '<dsidenti>' || rw_agendamento.dsidenti ||'</dsidenti>'  || /*REQ39*/
+                             	'<dssituac>' || rw_agendamento.dssitlau || '</dssituac>' ||
 															'<infosac>'  ||
 																	'<nrtelsac>' || vr_info_sac.nrtelsac || '</nrtelsac>' ||
 																	'<nrtelouv>' || vr_info_sac.nrtelouv || '</nrtelouv>' || 
@@ -2135,7 +2146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
          pc_detalhe_agendamento_pagam(pr_idlancto => pr_idlancto
                                      ,pr_retxml   => pr_retxml
                                      ,pr_dsretorn => pr_dsretorn);                              
-       WHEN pr_cdtiptra = 4 THEN
+       WHEN pr_cdtiptra IN (4, 22) THEN /*REQ39*/
          pc_detalhe_agendamento_ted(pr_idlancto => pr_idlancto
                                    ,pr_retxml   => pr_retxml
                                    ,pr_dsretorn => pr_dsretorn);

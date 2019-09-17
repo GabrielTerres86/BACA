@@ -292,6 +292,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
     ..............................................................................*/
     DECLARE
 
+		  -- Selecionar os dados da parametrizacao
+      CURSOR cr_param IS
+        SELECT TBCOBRAN_PARAM_PROTESTO.hrenvio_arquivo
+          FROM TBCOBRAN_PARAM_PROTESTO
+         WHERE TBCOBRAN_PARAM_PROTESTO.cdcooper = 3; -- Central
+      rw_param cr_param%ROWTYPE;
+
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
@@ -307,6 +314,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
       vr_cdagenci VARCHAR2(100);
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
+
+      -- Variaveis gerais
+      vr_hrenvio_arquivo tbcobran_param_protesto.hrenvio_arquivo%TYPE;
 
     BEGIN
       -- Extrai os dados vindos do XML
@@ -326,8 +336,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
         RAISE vr_exc_saida;
       END IF;
 
+      IF pr_cdcooper <> 3 THEN
+				-- Retorna o horario da Central e salva na vr_hrenvio_arquivo
+				OPEN cr_param;
+				FETCH cr_param INTO rw_param;
+        CLOSE cr_param;
+
       BEGIN
-        -- Inserir registro
+					-- Inserir registro (considerando o horario da central)
         INSERT INTO TBCOBRAN_PARAM_PROTESTO
                    (TBCOBRAN_PARAM_PROTESTO.cdcooper
                    ,TBCOBRAN_PARAM_PROTESTO.qtlimitemin_tolerancia
@@ -342,7 +358,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
              VALUES(pr_cdcooper
                    ,pr_qtlimitemin_tolerancia
                    ,pr_qtlimitemax_tolerancia
-                   ,TO_CHAR(TO_DATE(pr_hrenvio_arquivo,'HH24:MI'),'SSSSS')
+										 ,nvl(rw_param.hrenvio_arquivo, 0)
                    ,pr_qtdias_cancelamento
                    ,pr_flcancelamento
                    ,pr_dsuf
@@ -351,17 +367,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
                    );
       EXCEPTION
         WHEN DUP_VAL_ON_INDEX THEN
-          -- Se ja existe deve alterar
+						-- Se ja existe deve alterar (sem considerar o horario)
           BEGIN
             UPDATE TBCOBRAN_PARAM_PROTESTO
                SET TBCOBRAN_PARAM_PROTESTO.qtlimitemin_tolerancia = pr_qtlimitemin_tolerancia
                   ,TBCOBRAN_PARAM_PROTESTO.qtlimitemax_tolerancia = pr_qtlimitemax_tolerancia
-                  ,TBCOBRAN_PARAM_PROTESTO.hrenvio_arquivo        = TO_CHAR(TO_DATE(pr_hrenvio_arquivo,'HH24:MI'),'SSSSS')
                   ,TBCOBRAN_PARAM_PROTESTO.qtdias_cancelamento    = pr_qtdias_cancelamento
                   ,TBCOBRAN_PARAM_PROTESTO.flcancelamento         = pr_flcancelamento
-                  ,TBCOBRAN_PARAM_PROTESTO.dsuf                   = pr_dsuf
-                  ,TBCOBRAN_PARAM_PROTESTO.dscnae                 = pr_dscnae
-                  ,TBCOBRAN_PARAM_PROTESTO.dsnegufds              = pr_dsnegufds
              WHERE TBCOBRAN_PARAM_PROTESTO.cdcooper               = pr_cdcooper;
 
           EXCEPTION
@@ -370,6 +382,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
             RAISE vr_exc_saida;
           END;
       END;
+      ELSE -- Se for a Central, reflete o horario e UFs para todas as cooperativas
+        BEGIN
+					UPDATE TBCOBRAN_PARAM_PROTESTO
+						 SET TBCOBRAN_PARAM_PROTESTO.hrenvio_arquivo = TO_CHAR(TO_DATE(pr_hrenvio_arquivo,'HH24:MI'),'SSSSS')
+								,TBCOBRAN_PARAM_PROTESTO.dsuf            = pr_dsuf
+								,TBCOBRAN_PARAM_PROTESTO.dscnae          = pr_dscnae
+								,TBCOBRAN_PARAM_PROTESTO.dsnegufds       = pr_dsnegufds;
+			  EXCEPTION
+					WHEN OTHERS THEN
+					vr_dscritic := 'Problema ao atualizar parametros: ' || SQLERRM;
+					RAISE vr_exc_saida;
+				END;
+      END IF;
 
       COMMIT;
 
