@@ -63,11 +63,13 @@ $(document).ready(function(){
 			html_avalista 	= '';	// html sub persona avalista
 			html_grupo 		= '';	// html sub persona grupo econômico
 			html_quadro		= '';	// html sub persona quadro societário
+			html_contapj	= '';	// html sub persona de contas PJ
 
 			// quantidade de personas múltiplas
 			qtd_persona_avalista 	= 0;
 			qtd_persona_grupo		= 0;
 			qtd_persona_quadro 		= 0;
+			qtd_persona_contapj 	= 0;
 
 			/*
 			*
@@ -146,6 +148,21 @@ $(document).ready(function(){
 							// monta bloco html do filtro principal
 							html_persona += '<li class="nav-item"><a class="menu-toggle nav-link" tipo="quadro"><i class="menu-icon far fa-circle check-quadro"></i>Quadro Societário</a></li>';
 						}	
+
+					// conta PJ
+					} else if (persona[i].search("contapj_") >= 0) {
+
+						// atualiza quantidade de personas conta PJ
+						qtd_persona_contapj++;
+					
+						// monta bloco html do filtro secundário
+						html_contapj += '<div class="dib"><a class="filtro nav-link-sub word-break-yeah" filtro="persona" ativo="nao" tipo="'+persona[i]+'"><i class="far fa-circle check-contapj check-'+persona[i]+'"></i>'+persona_tela[i]+'</a></div>';
+
+						// quando estiver no primeiro registro de conta PJ, inserir um item de toggle no menu principal
+						if (persona[i] == 'contapj_1') {
+							// monta bloco html do filtro principal
+							html_persona += '<li class="nav-item"><a class="menu-toggle nav-link" tipo="contapj"><i class="menu-icon far fa-circle check-contapj"></i>Conta PJ</a></li>';
+						}	
 					}
 				}
 			}
@@ -159,6 +176,8 @@ $(document).ready(function(){
 			// btn todos do quadro societário
 			html_quadro 	+= '<div class="dib"><a class="filtro nav-link-sub" filtro="persona_quadro" ativo="nao" tipo="quadro_todos"><i class="far fa-circle check-personas"></i>Todos</a></div>';
 
+			// btn todos do conta PJ
+			html_contapj 	+= '<div class="dib"><a class="filtro nav-link-sub" filtro="persona_contapj" ativo="nao" tipo="contapj_todos"><i class="far fa-circle check-personas"></i>Todos</a></div>';
 	    	// blocos de html
 			$('#html_blocos').html(blocos);
 
@@ -170,6 +189,7 @@ $(document).ready(function(){
 			$('.html_avalista').html(html_avalista); 	// filtro personas - avalista
 			$('.html_grupo').html(html_grupo);		  	// filtro personas - grupo econômico
 			$('.html_quadro').html(html_quadro);	  	// filtro personas - quadro societário
+			$('.html_contapj').html(html_contapj);	  	// filtro personas - conta PJ
 
 			/* 
 			*  OCULTAR todos os blocos na exibição inicial
@@ -307,6 +327,26 @@ $(document).ready(function(){
 				}
 			}
 
+			if (tipo == 'contapj') {
+				contapjAtivo = $('[tipo="contapj_todos"]').attr("ativo");
+				if (contapjAtivo == 'sim') {
+					$('[tipo*="contapj_todos"]')[0].click();
+				} else {
+					// seta atributo do filtro para NÃO
+					$('[tipo*="contapj_"]').attr("ativo", "nao");
+					// troca o icone de todas as categorias
+					$('.check-contapj').attr("class", "menu-icon far fa-circle check-contapj");
+					// percorre vetor de personas e remove os conta PJ
+					for (var i = 1; i <= qtd_persona_contapj; i++) {
+						// remove do vetor de itens
+						persona = arrayRemove(persona, 'contapj_' + i);
+						// oculta todos os contapjs
+						$("[class*=contapj_]").fadeOut(220);
+					}
+					// muda o icone para desmarcado
+					$('i','[tipo='+tipo+']').attr("class", "menu-icon far fa-circle check-contapj");
+				}
+			}
 			if (tipo == 'grupo') {
 
 				grupoAtivo = $('[tipo="grupo_todos"]').attr("ativo");
@@ -381,12 +421,14 @@ $(document).ready(function(){
 			$('.check-avalista').attr("class", "menu-icon far fa-circle check-avalista");
 			$('.check-grupo').attr("class", "menu-icon far fa-circle check-grupo");
 			$('.check-quadro').attr("class", "menu-icon far fa-circle check-quadro");
+			$('.check-contapj').attr("class", "menu-icon far fa-circle check-contapj");
 
 			// seta todos os filtros de persona e categoria para não ativos
 			$('[filtro="persona"]').attr("ativo", "nao");
 			$('[filtro="persona_avalista"]').attr("ativo", "nao");
 			$('[filtro="persona_grupo"]').attr("ativo", "nao");
 			$('[filtro="persona_quadro"]').attr("ativo", "nao");
+			$('[filtro="persona_contapj"]').attr("ativo", "nao");
 			$('[filtro="categoria"]').attr("ativo", "nao");
 			
 			// mostra o bloco do conteúdo clicado na busca
@@ -405,15 +447,18 @@ $(document).ready(function(){
 			$('.html_avalista').fadeOut(220);
 			$('.html_grupo').fadeOut(220);
 			$('.html_quadro').fadeOut(220);
+			$('.html_contapj').fadeOut(220);
 
 			// seta atributo do filtro para NÃO
 			$('[tipo="avalista"]').attr("ativo", "nao");
 			$('[tipo="quadro"]').attr("ativo", "nao");
+			$('[tipo="contapj"]').attr("ativo", "nao");
 			$('[tipo="grupo"]').attr("ativo", "nao");
 
 			// muda o icone para desmarcado
 			$('i','[tipo="avalista"]').attr("class", "menu-icon far fa-circle check-avalista");
 			$('i','[tipo="quadro"]').attr("class", "menu-icon far fa-circle check-quadro");
+			$('i','[tipo="contapj"]').attr("class", "menu-icon far fa-circle check-contapj");
 			$('i','[tipo="grupo"]').attr("class", "menu-icon far fa-circle check-grupo");
 
 			// ativa categoria e persona relacionado a busca
@@ -441,6 +486,11 @@ $(document).ready(function(){
 				$('.html_quadro').fadeIn(220);
 				$('i','[tipo="quadro"]').attr("class", "menu-icon fas fa-circle check-quadro");
 				$('[tipo="quadro"]').attr("ativo", "sim");
+			} else if(busca_persona.search("contapj_") > -1) {
+				// executa toggle no sub menu de persona correspondente ao clique
+				$('.html_contapj').fadeIn(220);
+				$('i','[tipo="contapj"]').attr("class", "menu-icon fas fa-circle check-contapj");
+				$('[tipo="contapj"]').attr("ativo", "sim");
 			}
 
 		/* 
@@ -605,7 +655,43 @@ $(document).ready(function(){
 				// muda o icone para desmarcado
 				$('i','[tipo='+tipo+']').attr("class", "menu-icon fas fa-check-circle check-quadro");
 			}
-
+/* 
+		*  Clique vem do botão de TODOS DO CONTA PJ
+		*/
+		} else if (tipo == 'contapj_todos') {
+			// se esta ativo
+			if (ativo == "sim") {
+				// seta atributo do filtro para NÃO
+				$('[tipo*="contapj_"]').attr("ativo", "nao");
+				// troca o icone de todas as categorias
+				$('.check-contapj').attr("class", "menu-icon far fa-circle check-contapj");
+				// percorre vetor de personas e remove os conta PJ
+				for (var i = 1; i <= qtd_persona_contapj; i++) {
+					// remove do vetor de itens
+					persona = arrayRemove(persona, 'contapj_' + i);
+					// oculta todos os quadros
+					$("[class*=contapj_]").fadeOut(220);
+				}
+				// muda o icone para desmarcado
+				$('i','[tipo='+tipo+']').attr("class", "menu-icon far fa-circle check-contapj");
+			// se esta inativo
+			} else {
+				// seta atributo do filtro para NÃO
+				$('[tipo*="contapj_"]').attr("ativo", "sim");
+				// troca o icone de todas as categorias
+				$('.check-contapj').attr("class", "menu-icon fas fa-check-circle check-contapj");
+				// percorre vetor de personas e remove os quadros
+				for (var i = 1; i <= qtd_persona_contapj; i++) {
+					for (var j = categoria.length - 1; j >= 0; j--) {
+						// remove do vetor de itens
+						persona.push('contapj_' + i);
+						// exibe os quadros 
+						$('.contapj_' + i + '_' + categoria[j]).fadeIn(220);
+					}
+				}
+				// muda o icone para desmarcado
+				$('i','[tipo='+tipo+']').attr("class", "menu-icon fas fa-check-circle check-contapj");
+			}
 		/* 
 		*  Clique vem do botão de TODAS AS CATEGORIAS
 		*/
@@ -680,6 +766,8 @@ $(document).ready(function(){
 				var classe_persona_sub = 'check-grupo';
 			} else if(tipo.search("quadro_") > -1) {
 				var classe_persona_sub = 'check-quadro';
+			} else if(tipo.search("contapj_") > -1) {
+				var classe_persona_sub = 'check-contapj';
 			} else  {
 				var classe_persona_sub = 'check-personas';  // unique
 			}

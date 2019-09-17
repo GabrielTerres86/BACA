@@ -261,6 +261,7 @@ class Core {
 					          <div class="row sub-menu html_avalista"></div>
 					          <div class="row sub-menu html_grupo"></div>
 					          <div class="row sub-menu html_quadro"></div>
+					          <div class="row sub-menu html_contapj"></div>
 				          	</div>
 				        </div>
 
