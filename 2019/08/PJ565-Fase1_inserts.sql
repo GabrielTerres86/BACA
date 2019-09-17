@@ -1,14 +1,5 @@
 
 insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
-values ('CRED', 0, 'TRAN_BBC_SERV_FTP', 'Nome do servidor FTP da Transabbc', 'transabbc');
-
-insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
-values ('CRED', 0, 'TRAN_BBC_USER_FTP', 'Usuario do servidor FTP da Transabbc', '0850001l');
-
-insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
-values ('CRED', 0, 'TRAN_BBC_PASS_FTP', 'Senha do servidor FTP da Transabbc', 'cbba085');
-
-insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
 values ('CRED', 0, 'DIRRECABBC', 'Parametro drecionado ao recebimento do arquivo ftp abbc ', 'cecred/arq');
 
 insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
