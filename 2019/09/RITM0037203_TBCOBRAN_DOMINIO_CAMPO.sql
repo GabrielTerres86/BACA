@@ -1,0 +1,6 @@
+BEGIN
+   insert into TBCOBRAN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+   values ('TPFLOATING_RECIPR', '0', '0');
+   
+   commit;
+END;
