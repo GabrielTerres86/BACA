@@ -33,6 +33,8 @@
 			
 			<label for="vlcheque"><? echo utf8ToHtml('Valor:') ?></label>
 			<input id="vlcheque" name="vlcheque" type="text"/>
+			<label for="vlacerto"><? echo utf8ToHtml('Valor do Acerto:') ?></label>
+			<input id="vlacerto" name="vlacerto" type="text"/>
 			
 			<br style="clear:both" />	
 					
@@ -42,8 +44,6 @@
 			<label for="dsbccxlt"><? echo utf8ToHtml('Capturado:') ?></label>
 			<input id="dsbccxlt" name="dsbccxlt" type="text"/>
 
-			<label for="vlacerto"><? echo utf8ToHtml('Valor do Acerto:') ?></label>
-			<input id="vlacerto" name="vlacerto" type="text"/>
 			
 			<br style="clear:both" />
 		</div>

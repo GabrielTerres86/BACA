@@ -2982,28 +2982,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                   --Esse bloco é necessário para poder controlar as linhas que devem ser ignoradas
                   BEGIN
 
-                    --Verifica se o arquivo está aberto
-                    IF  NOT utl_file.IS_OPEN(vr_input_file) THEN
-                      vr_des_erro:= 'O arquivo não está aberto.';
-                      RAISE vr_exc_erro;
-                    END IF;
-
-                    -- Le os dados do arquivo e coloca na variavel vr_setlinha
-                    gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                ,pr_des_text => vr_setlinha); --> Texto lido
-
                     --Incrementa o contador de linhas
   --                  vr_conta_linha:= vr_conta_linha+1;
-
-                    --Se for a primeira linha ignora
-                    IF vr_conta_linha = 1 THEN
-                      -- Le os dados do arquivo e coloca na variavel vr_setlinha
-                     gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                                 ,pr_des_text => vr_setlinha); --> Texto lido
-
-                      --Incrementa o contador de linhas
-                      vr_conta_linha:= vr_conta_linha+1;
-                    END IF;
 
                     -- Sair quando não existir mais linhas
                     EXIT WHEN vr_flgsair = TRUE;

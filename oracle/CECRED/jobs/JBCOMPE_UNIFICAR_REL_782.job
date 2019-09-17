@@ -48,7 +48,7 @@ BEGIN
                               pr_dscritic => vr_dscritic);
       -- executa o JOB
       IF vr_dscritic IS NOT NULL THEN
-         pr_dscritic := pr_dscritic||'cdcooper: '|| rw_cooper.cdcooper || '('||vr_dscritic||')'||CHR(13);
+         pr_dscritic := vr_dscritic;
       END IF;
     END LOOP;
     IF pr_dscritic IS NOT NULL THEN

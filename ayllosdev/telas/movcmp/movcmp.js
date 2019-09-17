@@ -127,6 +127,9 @@ function formataTpRemessa(){
 function controlaOperacao(operacao,nriniseq,nrregist){	
 	if ((operacao == 'C' && btnOK.hasClass('botao')) || (operacao == 'CX')){		
 		showMsgAguardo( 'Aguarde ...' );	
+		if (operacao == 'CX'){
+			operacao = 'C';	
+		}
 				
 		// Carrega dados da conta através de ajax
 		$.ajax({		
