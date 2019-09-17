@@ -33,6 +33,9 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0002 IS
   --              10/10/2017 - M434 - Adicionar dois novos parâmetros para atender o SPC/Brasil que usa chave 
   --                           de criptografia para o acesso ao SFTP. (Oscar)
   -- 
+  --              13/05/2019 - Ajuste para controle das remessas para Bureaux - Enriquecimento
+  --                           P573_2 - Luciano - Supero
+
   ---------------------------------------------------------------------------------------------------------------
 
   -- Funcao generica para buscar o nome resumido da cooperativa --
@@ -291,6 +294,9 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0002 IS
   PROCEDURE pc_devolu_diaria(pr_idtpreme IN crapcrb.idtpreme%TYPE --> Tipo da Remessa
                             ,pr_dscritic OUT VARCHAR2);           --> Retorno de crítica
 
+  -- Rotina para direcionar a devolução diária dos retornos - Enriquecimento
+  PROCEDURE pc_devolu_diaria_enriquece(pr_dscritic OUT VARCHAR2); --> Retorno de crítica                            
+
   -- Rotina para controlar todo o processo de envio / retorno dos arquivos dos Bureaux
   PROCEDURE pc_controle_remessas(pr_dscritic OUT VARCHAR2);
 
@@ -302,6 +308,17 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0002 IS
                                   pr_dscritic   IN VARCHAR2 DEFAULT NULL, -- Descrição do Log
                                   pr_cdprograma IN VARCHAR2               -- Código da rotina
                                   ); 
+																	
+  PROCEDURE pc_envio_remessa_ftp(pr_nmarquiv IN VARCHAR2              --> Nome arquivo a enviar
+                                ,pr_nmdireto IN VARCHAR2              --> Diretório do arquivo a enviar
+                                ,pr_idenvseg IN crapcrb.idtpreme%TYPE --> Indicador de utilizacao de protocolo seguro (SFTP)
+                                ,pr_ftp_site IN VARCHAR2              --> Site de acesso ao FTP
+                                ,pr_ftp_user IN VARCHAR2              --> Usuário para acesso ao FTP
+                                ,pr_ftp_pass IN VARCHAR2              --> Senha para acesso ao FTP
+                                ,pr_ftp_path IN VARCHAR2              --> Pasta no FTP para envio do arquivo
+                                ,pr_key_path IN VARCHAR2              --> Caminho da chave de criptografia quando o (SFTP) usar.
+                                ,pr_passphra IN VARCHAR2              --> Senha da chave de criptografica quando o (SFTP) usar.
+                                ,pr_dscritic OUT VARCHAR2);																	
   --
 END CYBE0002;
 /
@@ -358,6 +375,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --              
   --              03/08/2018 - Ajustes e comentários para definir onde estiver COBEMP para funcionar para COBTIT também - Luis Fernando (GFT)
   --              25/09/2018 - Ajuste para organizar os arquivos antes de começar o envio para o Bureaux. (Saquetta)
+  --              13/05/2019 - Ajuste para controle das remessas para Bureaux - Enriquecimento
+  --                           P573_2 - Luciano - Supero
   ---------------------------------------------------------------------------------------------------------------
 
   -- Tratamento de erros
@@ -546,6 +565,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
      GROUP BY crb.idtpreme;
   rw_dev cr_dev_penden%ROWTYPE;
 
+  -- Remessas com algum retorno não processado (Agrupadas por Bureaux)
+  CURSOR cr_dev_penenr(pr_dtmvtolt IN crapcrb.dtmvtolt%TYPE DEFAULT NULL
+                      ,pr_idtpsoli IN crappbc.idtpsoli%TYPE DEFAULT NULL
+                      ,pr_flcsdcnl IN VARCHAR2 DEFAULT 'S') IS
+    SELECT distinct crb.idtpreme
+      FROM crappbc pbc
+          ,crapcrb crb
+     WHERE crb.dtmvtolt = nvl(pr_dtmvtolt,crb.dtmvtolt)
+       AND pbc.idtpsoli = nvl(pr_idtpsoli,pbc.idtpsoli)
+       AND pbc.idtpreme = crb.idtpreme
+       AND pbc.flgativo = 1   --> Somente ativos
+       AND ((pr_flcsdcnl = 'S' AND crb.dtcancel IS NULL) OR pr_flcsdcnl = 'N') --> Desconsiderar as canceladas quando solicitado
+       -- Com algum arquivo de retorno não processado
+       AND EXISTS(SELECT 1
+                    FROM craparb arb
+                   WHERE crb.idtpreme = arb.idtpreme
+                     AND crb.dtmvtolt = arb.dtmvtolt
+                     AND arb.cdestarq = 4 --> Retorno
+                     AND arb.flproces = 0 --> Ainda não processado
+                     AND arb.dtcancel IS NULL); --> Não cancelado
+  rw_devenr cr_dev_penenr%ROWTYPE;
+  
+  
   -- Testar estágio específico
   CURSOR cr_exis_estagio(pr_idtpreme IN crapcrb.idtpreme%TYPE
                         ,pr_dtmvtolt IN crapcrb.dtmvtolt%TYPE
@@ -6895,6 +6937,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
               ,pbc.qtinterr
               ,pbc.idtpsoli
               ,pbc.idenvseg
+              ,pbc.dsfnrndv
           FROM crapcrb crb
               ,crappbc pbc
          WHERE crb.idtpreme = pr_idtpreme
@@ -7559,6 +7602,247 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     END;
   END pc_devolu_diaria;
 
+  -- Rotina para direcionar a devolução diária dos retornos a PPWare
+  PROCEDURE pc_devolu_diaria_enriquece(pr_dscritic OUT VARCHAR2) IS         --> Retorno de crítica
+  BEGIN
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_devolu_diaria_enriquece
+    --  Sistema  : CYBER
+    --  Sigla    : CRED
+    --  Autor    : Luciano - SUPERO
+    --  Data     : Maio/2019.                   Ultima atualizacao: 
+    --
+    -- Dados referentes ao programa:
+    --
+    -- Frequencia: -----
+    -- Objetivo  : Efetuar o encerramento diário do Bureaux de Enriquecimento, gerando um ZIP com todos os arquivos 
+    --             pendentes e copiando para a pasta de retorno ao PPWare Cyber
+    -- Alteracoes:
+    --
+    ---------------------------------------------------------------------------------------------------------------
+    DECLARE
+      -- Remessas com algum retorno não processado (Agrupadas por Bureaux - Enriquecimento) P573_2
+      CURSOR cr_remenr(pr_dtmvtolt IN crapcrb.dtmvtolt%TYPE DEFAULT NULL
+                      ,pr_idtpsoli IN crappbc.idtpsoli%TYPE DEFAULT NULL
+                      ,pr_flcsdcnl IN VARCHAR2 DEFAULT 'S'
+											) IS
+        SELECT crb.idtpreme
+              ,pbc.dsdirret
+              ,pbc.dsfnrndv
+              ,arb.nmarquiv
+              ,arb.blarquiv
+              ,arb.nrseqarq
+              ,arb.rowid
+              ,arb.dtmvtolt
+          FROM crappbc pbc
+              ,crapcrb crb
+              ,craparb arb
+         WHERE crb.dtmvtolt = nvl(pr_dtmvtolt,crb.dtmvtolt)
+           AND pbc.idtpsoli = nvl(pr_idtpsoli,pbc.idtpsoli)
+           AND pbc.idtpreme = crb.idtpreme
+           AND pbc.flgativo = 1   --> Somente ativos
+           AND UPPER(pbc.dsdirret) like UPPER('%enriquec%')
+           AND ((pr_flcsdcnl = 'S' AND crb.dtcancel IS NULL) OR pr_flcsdcnl = 'N') --> Desconsiderar as canceladas quando solicitado
+           -- Com algum arquivo de retorno não processado
+           AND arb.idtpreme = crb.idtpreme
+           AND arb.dtmvtolt = crb.dtmvtolt
+           AND arb.dtcancel IS NULL --> Arq não cancelado
+           AND arb.cdestarq = 4 --> Retorno
+           AND arb.flproces = 0;--> Não processados ainda
+      rw_remenr cr_remenr%ROWTYPE;   
+      -- Verificação de encerramento efetuado no dia atual para este Bureaux
+      CURSOR cr_enc_bur(pr_idtpreme crapcrb.idtpreme%TYPE) IS
+
+        SELECT 'S'
+          FROM craperb erb
+         WHERE erb.idtpreme = pr_idtpreme
+           AND trunc(erb.dtexeeve) = trunc(SYSDATE)
+           AND erb.cdesteve = 5    --> Encerramento
+           AND erb.flerreve = 0;   --> Desconsiderar erros
+      vr_enc_bur VARCHAR2(1);
+      --        
+      vr_nom_arquiv VARCHAR2(100);         --> Nome do arquivo final
+      vr_nmarquiv   VARCHAR2(100);         --> Nome temporário dos arquivos
+      vr_dir_temp   VARCHAR2(1000);        --> Dir temporário para trabalho com os arquivos
+      vr_typ_said   VARCHAR2(3);           --> Retorno das chamadas ao SO
+      vr_dsdirret   crappbc.dsdirret%TYPE;
+      --
+      vr_dslstarq cecred.typ_simplestringarray; --> Lista de arquivos encontrados
+    BEGIN
+      -- Inclusão do módulo e ação logado 
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_devolu_diaria_enriquece');      
+
+      vr_nom_arquiv := to_char(SYSDATE,'YYYYMMDD_HH24MISS')||'_ENRIQUECIMENTO.zip';
+      -- Buscar dir temporário
+      vr_dir_temp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_DIR_TEMP');
+      -- Limpar diretório temporário
+      pc_limpeza_diretorio(pr_nmdireto => vr_dir_temp   --> Diretório para limpeza
+                          ,pr_dscritic => vr_dscritic);
+      -- Testar retorno de erro
+      IF vr_dscritic IS NOT NULL THEN
+        raise vr_excerror;
+      END IF;
+
+      -- Buscamos todos os arquivos de retorno não processados - Enriquecimento
+      FOR rw_remenr IN cr_remenr LOOP
+        OPEN cr_enc_bur(pr_idtpreme => rw_remenr.idtpreme);
+        FETCH cr_enc_bur
+         INTO vr_enc_bur;
+        CLOSE cr_enc_bur;
+        -- Se já houve o retorno
+        IF nvl(vr_enc_bur,'N') = 'S' THEN
+          -- Já houve, então, somente amanhã
+          continue;
+        END IF;
+        
+        vr_dsdirret := rw_remenr.dsdirret;
+        -- Se há função para renomeamento do arquivo antes de devolver a PPWare
+        IF rw_remenr.dsfnrndv is not NULL THEN
+          -- Chamamos a mesma dinamicamente para renomeamento do arquivo
+          BEGIN
+            vr_nmarquiv := fn_dinamic_function(rw_remenr.dsfnrndv,rw_remenr.rowid);
+          EXCEPTION
+            WHEN OTHERS THEN
+              -- No caso de erro de programa gravar tabela especifica de log 
+              CECRED.pc_internal_exception; 
+              -- Devemos inserir o evento do erro e
+              pc_insere_evento_remessa(pr_idtpreme => rw_remenr.idtpreme
+                                      ,pr_dtmvtolt => rw_remenr.dtmvtolt
+                                      ,pr_nrseqarq => rw_remenr.nrseqarq
+                                      ,pr_cdesteve => 5 --> Fixo - Devolução
+                                      ,pr_flerreve => 1 --> Erro
+                                      ,pr_dslogeve => 'Erro chamar funcao para renomeamento do arquivo a devolver: '||SQLERRM
+                                      ,pr_dscritic => pr_dscritic);
+              -- Gravamos
+              COMMIT;
+              raise vr_excerror;
+          END;
+        ELSE
+          -- Mantemos o nome original
+          vr_nmarquiv := rw_remenr.nmarquiv;
+        END IF;
+        -- Devemos criar o arquivo na pasta temp, usando função que converte BLOB em arquivo
+        gene0002.pc_blob_para_arquivo(pr_blob     => rw_remenr.blarquiv --> Bytes do arquivo
+                                     ,pr_caminho  => vr_dir_temp        --> Dir temp
+                                     ,pr_arquivo  => vr_nmarquiv        --> Nome a devolver
+                                     ,pr_des_erro => vr_dscritic);
+        -- Retorna do módulo e ação logado 
+        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_devolu_diaria_enriquece');
+        -- Se retornou erro, incrementar a mensagem e retornoar
+        IF vr_dscritic IS NOT NULL THEN
+          -- Devemos inserir o evento do erro 
+          pc_insere_evento_remessa(pr_idtpreme => rw_remenr.idtpreme
+                                  ,pr_dtmvtolt => rw_remenr.dtmvtolt
+                                  ,pr_nrseqarq => rw_remenr.nrseqarq
+                                  ,pr_cdesteve => 5 --> Fixo - Devolucao
+                                  ,pr_flerreve => 1 --> Erro
+                                  ,pr_dslogeve => vr_dscritic
+                                  ,pr_dscritic => pr_dscritic);
+          -- Gravamos
+          COMMIT;
+          raise vr_excerror;
+        END IF;
+        -- Usarei a variavel de critica para montar o log que será enviado
+        vr_dscritic := 'Arquivo '||rw_remenr.nmarquiv||' processado na devolução e compactado no arquivo '||
+                       vr_nom_arquiv;
+        -- Inserir evento na remessa para indicar a geração do ZIP a remessa
+        pc_insere_evento_remessa(pr_idtpreme => rw_remenr.idtpreme
+                                ,pr_dtmvtolt => rw_remenr.dtmvtolt
+                                ,pr_nrseqarq => rw_remenr.nrseqarq
+                                ,pr_cdesteve => 5 --> Fixo - Encerramento
+                                ,pr_flerreve => 0 --> Sucesso
+                                ,pr_dslogeve => vr_dscritic
+                                ,pr_dscritic => vr_dscritic);
+        -- Se retornou erro
+        IF vr_dscritic IS NOT NULL THEN
+          -- Se houve erro, temos de desfazer essa atualização, senão
+          -- o arquivo poderá ficar marcado como devolvido só que não
+          ROLLBACK;
+          -- Devemos inserir o evento do erro e
+          pc_insere_evento_remessa(pr_idtpreme => rw_remenr.idtpreme
+                                  ,pr_dtmvtolt => rw_remenr.dtmvtolt
+                                  ,pr_nrseqarq => rw_remenr.nrseqarq
+                                  ,pr_cdesteve => 5 --> Fixo - Encerramento
+                                  ,pr_flerreve => 1 --> Erro
+                                  ,pr_dslogeve => vr_dscritic
+                                  ,pr_dscritic => pr_dscritic);
+          -- Gravamos
+          COMMIT;
+          raise vr_excerror;
+        END IF;
+        -- Atualizamos o arquivo como processado 
+        BEGIN
+          UPDATE craparb
+             SET flproces = 1
+                ,nmarqren = decode(rw_remenr.dsfnrndv,NULL,NULL,vr_nmarquiv)
+           WHERE ROWID = rw_remenr.rowid;
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- No caso de erro de programa gravar tabela especifica de log 
+            CECRED.pc_internal_exception; 
+            -- Se houve erro, temos de desfazer essa atualização, senão
+            -- o arquivo poderá ficar marcado como devolvido só que não
+            ROLLBACK;
+            -- Montar descrição
+            vr_dscritic := 'Erro ao atualizar situação do arquivo de retorno: '||SQLERRM;
+            -- Devemos inserir o evento do erro e
+            pc_insere_evento_remessa(pr_idtpreme => rw_remenr.idtpreme
+                                    ,pr_dtmvtolt => rw_remenr.dtmvtolt
+                                    ,pr_nrseqarq => rw_remenr.nrseqarq
+                                    ,pr_cdesteve => 5 --> Fixo - Encerramento
+                                    ,pr_flerreve => 1 --> Erro
+                                    ,pr_dslogeve => vr_dscritic
+                                    ,pr_dscritic => pr_dscritic);
+            -- Gravamos
+            COMMIT;
+            raise vr_excerror;
+        END;
+      END LOOP;
+
+      -- Após a criação de todos os arquivos na pasta temp, devemos compactá-los
+      -- gerando o arquivo final conforme o nome montado na rotina chamadora
+      gene0002.pc_zipcecred(pr_cdcooper => 3                               --> Sempre Cecred
+                           ,pr_tpfuncao => 'A'                             --> Adicionar
+                           ,pr_dsorigem => vr_dir_temp||'/*'               --> Todos os Arquivos do dir temp
+                           ,pr_dsdestin => vr_dir_temp||'/'||vr_nom_arquiv --> Arquivo ZIP
+                           ,pr_dspasswd => NULL                            --> Sem senha
+                           ,pr_des_erro => vr_dscritic);                   --> Erros
+                           
+      -- Retorna do módulo e ação logado 
+      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'CYBE0002.pc_devolu_diaria_enriquece');
+      -- Se houve retorno de erro
+      IF vr_dscritic IS NOT NULL THEN
+        -- Retornar e desfazer as alterações
+        ROLLBACK;
+        raise vr_excerror;
+      END IF;
+
+      -- Mover do diretório temp ao final
+      gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_dir_temp||'/'||vr_nom_arquiv||' '||vr_dsdirret
+                                 ,pr_typ_saida   => vr_typ_said
+                                 ,pr_des_saida   => vr_dscritic);
+      -- Testar retorno de erro
+      IF vr_typ_said = 'ERR' THEN
+        -- Retornar e desfazer as alterações
+        ROLLBACK;
+        raise vr_excerror;
+      END IF;
+
+      -- Gravar o encerramento do Bureaux
+      COMMIT;
+
+    EXCEPTION
+      WHEN vr_excerror THEN
+        -- Devolvemos o problema
+        pr_dscritic := vr_dscritic;
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log 
+        CECRED.pc_internal_exception; 
+        -- Retorna o erro para a procedure chamadora
+        pr_dscritic := 'Erro --> na rotina CYBE0002.pc_devolu_diaria_enriquece --> '||SQLERRM;
+    END;
+  END pc_devolu_diaria_enriquece;
 
   -- Rotina para controlar todo o processo de envio / retorno dos arquivos dos Bureaux
   PROCEDURE pc_controle_remessas(pr_dscritic OUT VARCHAR2) IS --> Retorno de crítica
@@ -7610,6 +7894,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
     --            - Colocado logs no padrão
     --              ( Belli - Envolti - Chamado 719114)
     --
+    -- 13/05/2019 - Trata Bureaux de Enriquecimento desviando para tratar no processo pc_devolu_diaria_enriquece
+    --              P573_2 - Luciano - Supero
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
       -- Variaveis para exceção
@@ -7647,6 +7933,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
            AND dtferiad = pr_dtproces;
       vr_flgferiad VARCHAR2(1);
 
+      -- Buscar caracteristicas do Bureaux
+      CURSOR cr_crappbc(pr_idtpreme crappbc.idtpreme%TYPE) IS
+        SELECT pbc.dsdirret
+              ,pbc.dsfnrndv
+          FROM crappbc pbc
+         WHERE pbc.idtpreme = pr_idtpreme;
+      rw_pbc cr_crappbc%ROWTYPE;      
+      
       -- Parâmetros gerais
       vr_hora_envio      VARCHAR2(10);   --> Hora de início da preparação / Envio
       vr_hora_retor      VARCHAR2(10);   --> Hora de início da chegagem dos retornos
@@ -7995,6 +8289,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
                 -- Já houve, então, somente amanhã
                 continue;
               END IF;
+              -- Buscar caracteristicas do Bureaux
+               OPEN cr_crappbc(pr_idtpreme => rw_crb.idtpreme);
+              FETCH cr_crappbc
+               INTO rw_pbc;
+              CLOSE cr_crappbc;              
+              IF UPPER(rw_pbc.dsdirret) LIKE UPPER('%enriquec%') then -- P573_2
+                -- Desvia tratamento para Enriquecimento
+                continue;
+              END IF;
               -- Chegando neste ponto, temos remessas retornadas do Bureaux
               -- então procedemos com encerramento da remessa com a cópia dos
               -- arquivos retornados ao Cyber e atualização da situação
@@ -8023,6 +8326,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
               -- Efetuar gravação
               COMMIT;
             END LOOP;
+--
+            -- Tratar bureaux de Enriquecimento - P573_2
+            FOR rw_devenr IN cr_dev_penenr(pr_idtpsoli => 'A') LOOP
+              -- Chegando neste ponto, temos remessas retornadas do Bureaux
+              -- então procedemos com encerramento da remessa com a cópia dos
+              -- arquivos retornados ao Cyber e atualização da situação
+              pc_devolu_diaria_enriquece(pr_dscritic => vr_dscritic);
+              -- Se houver retorno de crítica
+              IF vr_dscritic IS NOT NULL THEN
+
+                -- Log de erro de execucao
+                pc_controla_log_batch(pr_dstiplog   => 'E',
+                                      pr_dscritic   => vr_dscritic,
+                                      pr_cdprograma => vr_nomdojob);  
+
+                -- Enviaremos e-mail para a área de crédito para avisar do problema na busca do
+                -- arquivo deste Bureaux juntamente dos problemas ocorridos.
+                gene0003.pc_solicita_email(pr_cdcooper    => 3
+                                          ,pr_cdprogra    => 'CYBE0002'
+                                          ,pr_des_destino => vr_email_alert
+                                          ,pr_des_assunto => 'Encerramento Bureaux - Enriquecimento - com erros'
+                                          ,pr_des_anexo   => ''
+                                          ,pr_des_corpo   => 'Houveram problemas durante o encerramento das remessas do Bureaux, Abaixo seguem os detalhes do erro encontrado:<br><br> '||vr_dscritic
+                                          ,pr_flg_enviar  => 'N'
+                                          ,pr_des_erro    => vr_dscritic);
+              END IF;
+              -- Efetuar gravação
+              COMMIT;
+            END LOOP;
+--            
           END IF;
         END IF;
 
