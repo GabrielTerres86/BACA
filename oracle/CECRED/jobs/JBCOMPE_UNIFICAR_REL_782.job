@@ -13,13 +13,13 @@ BEGIN
   nls_length_semantics = ''BYTE''
   nls_nchar_conv_excp = ''FALSE''
   nls_numeric_characters = ''.,''
-  nls= ''BINARY''
+  nls_sort = ''BINARY''
   nls_territory = ''AMERICA''
   nls_time_format = ''HH.MI.SSXFF AM''
   nls_time_tz_format = ''HH.MI.SSXFF AM TZR''
   nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
   nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR'''; 
-    
+  --sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBCOMPE_UNIFICAR_REL_782');
   sys.dbms_scheduler.create_job(
     job_name        => 'CECRED.JBCOMPE_UNIFICAR_REL_782',
     job_type        => 'PLSQL_BLOCK',
