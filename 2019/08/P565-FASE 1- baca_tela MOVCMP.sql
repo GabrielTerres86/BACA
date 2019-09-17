@@ -22,7 +22,7 @@ BEGIN
   DELETE FROM crapprg WHERE cdprogra = v_cdprogra;
   DELETE FROM crapaca WHERE nmdeacao = v_nmdeacao;
   DELETE FROM craprdr where nmprogra = v_nmprogra;
-
+  DELETE FROM crapaca WHERE nmdeacao = 'SUMLNCCHQ';
   
   FOR i IN coop.FIRST .. coop.LAST LOOP
     pr_cdcooper := coop(i);
