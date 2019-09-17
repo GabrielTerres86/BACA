@@ -4,8 +4,8 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   --  Programa : COBR0007
   --  Sistema  : Procedimentos gerais para execucao de inetrucoes de baixa
   --  Sigla    : CRED
-  --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao: 27/02/2019
+  --  Autor    : Douglas Quisinski 
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 09/09/2019
   --
   -- Dados referentes ao programa:
   --
@@ -21,6 +21,8 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   --    24/05/2019 - Configurado campo que enviava null na pc_inst_protestar. 
   --                 (Daniel Lombardi - Mout'S)
   --    25/06/2019 - Ajuste para não permitir baixar titulos em borderos que tenham saldo (Daniel - Ailos)
+  --    
+  --    09/09/2019 - Ajuste para permitir efetuar protesto de titulos descontados. (Daniel - Ailos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Validar se o título está no serasa
@@ -1349,7 +1351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           vr_dtcalcul := rw_craptdb.dtvencto + vr_qtdiacar + 1;
           vr_dtcalcul := gene0005.fn_valida_dia_util(rw_crapcob.cdcooper,vr_dtcalcul,'P',TRUE,FALSE);
           
-          IF pr_cdinstru <> '95' THEN -- NÃO VALIDAR INSTRUCAO 95, POIS E ENVIO SMS
+          IF pr_cdinstru NOT IN ('95','09') THEN -- NÃO VALIDAR INSTRUCAO 95 ENVIO SMS E 09 PROTESTO
 
             -- e a situação é em estudo e não esta vencido
             IF ((rw_craptdb.insittit = 0 AND vr_dtcalcul >= pr_dtmvtolt) OR
