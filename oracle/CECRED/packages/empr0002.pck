@@ -2815,7 +2815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
            AND cpa.tppessoa = pr_tppessoa
            AND cpa.nrcpfcnpj_base = pr_nrcpf_cnpj_base
            AND cpa.iddcarga = car.idcarga
-           AND NVL(car.dtfinal_vigencia,TRUNC(SYSDATE)) >= TRUNC(pr_dtmvtolt)
+           AND NVL(car.dtfinal_vigencia,TRUNC(pr_dtmvtolt)) >= TRUNC(pr_dtmvtolt)
            AND cpa.cdsituacao IN ('A', 'B') 
            AND ROWNUM = 1
          ORDER BY car.tpcarga ASC, car.dtcalculo DESC;
@@ -2949,7 +2949,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
            AND cpa.iddcarga = car.idcarga
            AND car.indsituacao_carga  = 2
            AND car.flgcarga_bloqueada = 0
-           AND NVL(car.dtfinal_vigencia,TRUNC(SYSDATE)) >= TRUNC(pr_dtmvtolt)
+           AND NVL(car.dtfinal_vigencia,TRUNC(pr_dtmvtolt)) >= TRUNC(pr_dtmvtolt)
            AND cpa.cdsituacao = 'A'
          ORDER BY car.tpcarga ASC, car.dtcalculo DESC;
          
@@ -7665,7 +7665,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
            WHERE cpa.cdcooper = pr_cdcooper
              AND car.cdcooper = cpa.cdcooper
              AND cpa.iddcarga = car.idcarga
-             AND NVL(car.dtfinal_vigencia,TRUNC(SYSDATE)) >= TRUNC(pr_dtmvtolt)
+             AND NVL(car.dtfinal_vigencia,TRUNC(pr_dtmvtolt)) >= TRUNC(pr_dtmvtolt)
              AND cpa.cdsituacao IN ('A','B');
 
       -- Buscar casos com bloqueio 
