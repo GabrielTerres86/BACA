@@ -272,6 +272,16 @@ CREATE OR REPLACE PACKAGE CECRED.CHEQ0001 IS
                                    ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
                                    ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo
   
+  /* Cria ou atualiza o cadastro de propostas */
+   PROCEDURE pc_cria_atualiza_prp (pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da conta
+                                  ,pr_nrctrlim IN craplim.nrctrlim%TYPE --> Numero do contrato
+                                  ,pr_tpctrato IN craplim.tpctrlim%TYPE --> Tipo do contrato
+                                  ,pr_dsramati IN crapprp.dsramati%TYPE --> Ramo de Atividade
+                                  ,pr_vlmedchq IN crapprp.vlmedchq%TYPE --> Valor médio de cheques
+                                  ,pr_dsobserv IN crapprp.dsobserv##1%TYPE --> Observações
+                                  ,pr_cdcooper IN crapprp.cdcooper%TYPE --> Cooperativa
+                                  ,pr_dtmvtolt IN crapprp.dtmvtolt%TYPE); --> Data o movimento
+
   PROCEDURE pc_busca_sum_lanc_cheque(pr_cdcooper IN NUMBER                 --> Cooperativa
                                      ,pr_nrdconta IN NUMBER                --> Numero da conta
                                      ,pr_cdhistor IN NUMBER                --> Codigo do historico
