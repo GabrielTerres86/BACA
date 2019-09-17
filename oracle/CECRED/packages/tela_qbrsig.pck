@@ -103,6 +103,8 @@ Alterações:
            
 23/08/2019 RITM0032523 Correçao da busca de teds e correção do filtro de docs para que os lançamentos constem
            no mesmo para que sejam atualizados manualmente (Carlos)
+
+06/09/2019 RITM0034490 Inclusão de nova regra, para identificar lançamentos de salário (Carlos)
 */
 CREATE OR REPLACE PACKAGE BODY CECRED.tela_qbrsig IS
   vr_idreprocessar NUMBER(1) := 0;
@@ -2389,6 +2391,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_qbrsig IS
        WHERE emp.cdcooper = pr_cdcooper
          AND emp.nrdconta = pr_nrdconta;
     rw_empresa cr_empresa%ROWTYPE;
+    
+    -- Buscar os dados da conta que fez o crédito
+    CURSOR cr_crapass_origem(pr_cdcooper IN crapcop.cdcooper%TYPE
+                            ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                            ,pr_nrdolote IN craplcm.nrdolote%TYPE) IS
+      SELECT a.*
+        FROM crapass a
+            ,craplcm l
+       WHERE a.cdcooper = l.cdcooper
+         AND a.nrdconta = l.nrdconta
+         AND l.nrdolote = pr_nrdolote
+         AND l.dtmvtolt = pr_dtmvtolt
+         AND l.cdhistor = 889
+         AND l.cdcooper = pr_cdcooper;
+    rw_crapass_origem cr_crapass_origem%ROWTYPE;
     
     -- Buscar os dados da conta salario
     CURSOR cr_conta_salario(pr_cdcooper IN INTEGER
@@ -5371,6 +5388,69 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_qbrsig IS
 
               CONTINUE;
             END IF;
+
+            IF vr_cdestsig = 30 OR vr_cdestsig = 0 THEN -- Credito de Salario
+              vr_registro := FALSE;
+
+              vr_inpessoa := '';
+              vr_nrcpfcgc := '';
+              vr_nmprimtl := '';
+              vr_cdagenci := '';
+
+              -- Buscar os dados da conta que fez o crédito
+              OPEN cr_crapass_origem (pr_cdcooper => rw_lancamento.cdcooper
+                                     ,pr_dtmvtolt => rw_lancamento.dtmvtolt
+                                     ,pr_nrdolote => rw_lancamento.nrdolote
+                                     );
+              FETCH cr_crapass_origem INTO rw_crapass_origem;
+              -- Encontrou a conta?
+              IF cr_crapass_origem%FOUND THEN
+                vr_inpessoa := rw_crapass_origem.inpessoa;
+                vr_nrcpfcgc := rw_crapass_origem.nrcpfcgc;
+                vr_nmprimtl := rw_crapass_origem.nmprimtl;
+                vr_cdagenci := rw_crapass_origem.cdagenci;
+                
+                vrins_cdbandep := '085';
+                vrins_cdagedep := rw_conta.cdagenci;
+                vrins_nrctadep := rw_lancamento.nrdconta;
+                vrins_tpdconta := '4'; -- Outros
+                vrins_inpessoa := vr_inpessoa;
+                vrins_nrcpfcgc := vr_nrcpfcgc;
+                vrins_nmprimtl := vr_nmprimtl;
+                vrins_tpdocttl := '';
+                vrins_nrdocttl := '';
+                vrins_dscodbar := '';
+                vrins_nmendoss := '';
+                vrins_docendos := '';
+                vrins_idsitide := '0'; -- Fixo ZERO
+                vrins_dsobserv := '';
+
+                IF length(to_char(rw_lancamento.nrdocmto)) > 20 THEN
+                  vrins_nrdocmto := SUBSTR(TRIM(to_char(rw_lancamento.nrdocmto)), -20);
+                ELSE 
+                  vrins_nrdocmto := to_char(rw_lancamento.nrdocmto);
+                END IF;
+
+                IF vr_cdestsig = 0 THEN
+                  vrins_idsitqbr := 2;
+                  vrins_dsobsqbr := 'Historico nao parametrizado. Informacoes encontradas na regra: 30';
+                ELSE
+                  vrins_idsitqbr := 1;
+                  vrins_dsobsqbr := '';
+                END IF;
+                
+                pc_atualiza_tbjur(rw_lancamento.rowid);
+                
+                vr_registro := TRUE;
+              END IF;
+
+              -- Fechar Cursor
+              CLOSE cr_crapass_origem;
+
+              IF vr_registro THEN
+                CONTINUE;
+              END IF;
+            END IF; -- Historico 8
 
             vrins_cdbandep := '';
             vrins_cdagedep := '';
