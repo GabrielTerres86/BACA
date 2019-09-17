@@ -144,7 +144,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001_f8n AS
                                            ,pr_dtmvtolt        => pr_dtmvtolt
                                            ,pr_flgerlog        => vr_flgerlog
                                ,pr_nrctremp => pr_nrctremp
-                                           ,pr_dtmvtoan        => pr_dtmvtolt
+                                           ,pr_dtmvtoan        => GENE0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,
+                                                                                              pr_dtmvtolt  => pr_dtmvtolt - 1,
+                                                                                              pr_tipo      => 'A')
                                            ,pr_nrparepr        => pr_nrparepr
                                            ,pr_des_reto        => vr_des_reto
                                            ,pr_tab_erro        => vr_tab_erro
