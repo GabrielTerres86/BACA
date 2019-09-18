@@ -3786,6 +3786,10 @@ GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0006.pc_processa_ins
                            ,NULL
                            ,1
                            ,2);
+
+          vr_cdcritic := 0;
+          vr_dscritic := NULL;
+        END;
       ELSE
         -- Fecha cursor
         CLOSE cr_craprtc;
