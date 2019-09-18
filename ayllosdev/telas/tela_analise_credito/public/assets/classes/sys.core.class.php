@@ -6,7 +6,6 @@
 *  fevereiro/março de 2019
 * 
 *  Classe principal, carrega configs, cabeçalho, rodapé e estrutura inicial do sistema
-* 
 */
 
 class Core {
@@ -261,6 +260,7 @@ class Core {
 					          <div class="row sub-menu html_avalista"></div>
 					          <div class="row sub-menu html_grupo"></div>
 					          <div class="row sub-menu html_quadro"></div>
+					          <div class="row sub-menu html_contapj"></div>
 				          	</div>
 				        </div>
 
