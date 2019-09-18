@@ -1355,10 +1355,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
           vr_nrparepr := NVL(vr_nrparepr,0) + 1;
           -- Avanca da data da carencia para o proximo mês
-          --PJ298_5
-          vr_qtdmes := pr_qtdias_carencia / 30;
-          vr_dtvencto := ADD_MONTHS(TO_DATE(vr_dtvencto,'DD/MM/RRRR'),vr_qtdmes) ;         
-          --vr_dtvencto := TO_DATE(TO_CHAR(vr_dtvencto,'DD')||'/'||TO_CHAR(vr_dtvencto + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
+          vr_dtvencto := TO_DATE(TO_CHAR(vr_dtvencto,'DD')||'/'||TO_CHAR(vr_dtvencto + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
         END IF;
 
         vr_datainicial := vr_datafinal;
@@ -1640,10 +1637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 		  -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
           vr_nrparepr := NVL(vr_nrparepr,0) + 1;
           -- Avanca da data da carencia para o proximo mês
-          --PJ298_5
-          vr_qtdmes := pr_qtdias_carencia / 30;
-          vr_dtcarenc := ADD_MONTHS(TO_DATE(vr_dtcarenc,'DD/MM/RRRR'),vr_qtdmes) ;         
-         -- vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
+          vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
 		  --
                 END IF;
              
@@ -9198,10 +9192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 		     -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
           vr_nrparepr := NVL(vr_nrparepr,0) + 1;
           -- Avanca da data da carencia para o proximo mês
-          --PJ298_5
-          vr_qtdmes := pr_qtdias_carencia / 30;
-          vr_dtcarenc := ADD_MONTHS(TO_DATE(vr_dtcarenc,'DD/MM/RRRR'),vr_qtdmes) ;         
-          --vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
+          vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
 		    --
         END IF;
              
@@ -9322,30 +9313,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_vljurcor            NUMBER := 0;
       vr_qtdia_uteis         PLS_INTEGER;
       vr_data_inicial        DATE;
-      
-    --PJ 298_3
-    -- Cursor de taxa mensal
-    CURSOR cr_crawepr(pr_cdcooper IN crapepr.cdcooper%TYPE
-                     ,pr_nrdconta IN crapepr.nrdconta%TYPE
-                     ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
-      SELECT w.txmensal 
-            ,w.cddindex
-            ,(w.vlperidx/100) vlperidx
-        FROM crawepr w
-       WHERE w.cdcooper = pr_cdcooper
-         AND w.nrdconta = pr_nrdconta
-         AND w.nrctremp = pr_nrctremp;
-    rw_crawepr cr_crawepr%ROWTYPE;           
-
-      vr_datafinal           DATE;
-      vr_datainicial         DATE;
-      vr_tab_saldo_projetado typ_tab_saldo_projetado;
-      vr_tab_total_juros     typ_tab_total_juros;
-      vr_saldo_projetado     NUMBER(25,2) := pr_vlemprst;
       vr_taxa_periodo        NUMBER(25,10);
       vr_tab_parcelas        EMPR0011.typ_tab_parcelas;
-			vr_vlrdtaxa            craptxi.vlrdtaxa%TYPE;
-      vr_txmensal            crawepr.txmensal%TYPE;
 
       -- Variaveis tratamento de erros
       vr_cdcritic            crapcri.cdcritic%TYPE;
@@ -9353,8 +9322,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_exc_erro            EXCEPTION;
 
     BEGIN
-      -- Chama o calculo da parcela PJ298_3
-      pc_calcula_prest_principal_pos(pr_cdcooper        => pr_cdcooper
+      -- Chama o calculo da parcela
+      pc_calcula_parcelas_pos_fixado(pr_cdcooper        => pr_cdcooper
                                     ,pr_dtcalcul        => pr_dtcalcul
                                     ,pr_cdlcremp        => pr_cdlcremp
                                     ,pr_dtcarenc        => pr_dtcarenc
@@ -9362,9 +9331,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                     ,pr_dtdpagto        => pr_dtdpagto
                                     ,pr_qtpreemp        => pr_qtpreemp
                                     ,pr_vlemprst        => pr_vlemprst
-                                    --PJ298_3
-                                    ,pr_nrdconta        => pr_nrdconta
-                                    ,pr_nrctremp        => pr_nrctremp
                                     ,pr_tab_parcelas    => vr_tab_parcelas
                                     ,pr_cdcritic        => vr_cdcritic
                                     ,pr_dscritic        => vr_dscritic);
@@ -9419,67 +9385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           --------------------------------------------------------------------------------------------
           -- Regras do Cálculo do Juros de Correcao no vencimento da Parcela
           --------------------------------------------------------------------------------------------          
-          vr_vljurcor := (vr_saldo_projetado + vr_vljurcor) * vr_tab_parcelas(vr_indice).taxa_periodo;
-          
-          --- PJ298_3
-          OPEN cr_crawepr(pr_cdcooper => pr_cdcooper
-                 ,pr_nrdconta => pr_nrdconta
-                 ,pr_nrctremp => pr_nrctremp);
-                 FETCH cr_crawepr INTO rw_crawepr;
-          -- se achou registro
-          IF cr_crawepr%FOUND THEN
-            vr_txmensal := rw_crawepr.txmensal;
-            CLOSE cr_crawepr;
-          ELSE
-            vr_txmensal := 0;
-            CLOSE cr_crawepr;
-          END IF;
-          vr_tab_saldo_projetado.DELETE;
-          vr_vlrdtaxa    := vr_tab_parcelas(vr_indice).vlrdtaxa; 
-          -- Condicao para verificar qual será a data final para fins de calculo (Data do Pagamento ou Ultimo dia do Mes)
-          IF TO_NUMBER(TO_CHAR(pr_dtdpagto,'DD')) > TO_NUMBER(TO_CHAR(pr_dtcalcul,'DD')) THEN
-            vr_datafinal := TO_DATE(TO_CHAR(pr_dtdpagto,'DD')||'/'||TO_CHAR(pr_dtcalcul,'MM/RRRR'),'DD/MM/RRRR');
-          ELSE
-            vr_datafinal := LAST_DAY(pr_dtcalcul /*pr_dtdpagto*/);
-          end if;
-          -- Data Inicial será a data de efetivação do contrato
-          vr_datainicial := pr_dtcalcul;
-          WHILE  vr_datafinal < LAST_DAY(pr_dtdpagto) LOOP
-              -- Procedure para calcular o saldo projetado
-              pc_calcula_saldo_projetado(pr_cdcooper            => pr_cdcooper
-                                        ,pr_flgbatch            => FALSE --pr_flgbatch
-                                        ,pr_dtefetiv            => pr_dtcalcul
-                                        ,pr_datainicial         => vr_datainicial
-                                        ,pr_datafinal           => vr_datafinal
-                                        ,pr_nrparepr            => pr_qtpreemp --vr_nrparepr
-                                        ,pr_dtvencto            => pr_dtcarenc --vr_dtcarenc
-                                        ,pr_vlrdtaxa            => vr_vlrdtaxa
-                                        ,pr_dtdpagto            => pr_dtdpagto
-                                        ,pr_txmensal            => vr_txmensal --rw_craplcr.txmensal
-                                        ,pr_vlsprojt            => vr_saldo_projetado
-                                        ,pr_tab_saldo_projetado => vr_tab_saldo_projetado
-                                        ,pr_tab_total_juros     => vr_tab_total_juros
-                                        ,pr_cdcritic            => vr_cdcritic
-                                        ,pr_dscritic            => vr_dscritic);
-                             
-              -- Condicao para verificar se houve erro
-              IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-                RAISE vr_exc_erro;
-              END IF;
-         
-              vr_saldo_projetado := vr_saldo_projetado + NVL(vr_tab_saldo_projetado(vr_tab_saldo_projetado.LAST).juros_correcao,0); 
-
-              vr_datainicial := vr_datafinal;
-
-              IF TO_CHAR(vr_datafinal,'DD') = TO_CHAR(pr_dtdpagto,'DD') AND vr_datafinal <> LAST_DAY(vr_datafinal) THEN
-                vr_datafinal := LAST_DAY(vr_datafinal);
-              ELSE
-                vr_datafinal := ADD_MONTHS(TO_DATE(TO_CHAR(pr_dtdpagto,'DD')||TO_CHAR(vr_datafinal,'/MM/RRRR'),'DD/MM/RRRR'),1);
-              END IF;
-              -- Novo Cálculo do Juros de Correcao
-              vr_vljurcor     := NVL(vr_tab_saldo_projetado(vr_tab_saldo_projetado.LAST).juros_correcao,0);
-            END LOOP;      
-            -- FIM PJ298_3
+          vr_vljurcor := (pr_vlemprst + vr_vljurcor) * vr_tab_parcelas(vr_indice).taxa_periodo;
           EXIT;
         END IF;
       END LOOP;
