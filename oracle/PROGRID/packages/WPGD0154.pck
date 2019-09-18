@@ -354,6 +354,22 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
                                 ,pr_retxml     IN OUT NOCOPY XMLType        --> Arquivo de retorno do XML
                                 ,pr_nmdcampo   OUT VARCHAR2                 --> Nome do campo com erro
                                 ,pr_des_erro   OUT VARCHAR2) IS             --> Descricao do Erro
+		
+  ---------------------------------------------------------------------------
+  --
+  --  Programa : pc_importa_inscritos
+  --  Sistema  : Ayllos Web
+  --  Autor    : Gabriel Marcos
+  --  Data     : Setembro/2019                 Ultima atualizacao:
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Objetivo  : Importar arquivo atraves da tela Importar arquivos - BRC.
+  --
+  -- Alteracoes: 18/09/2019 - Criado nova coluna separando o ddd.
+  --                          Gabriel Marcos (Mouts) - P484.2
+  --
+  ---------------------------------------------------------------------------
 
       CURSOR cr_crapadp(pr_progress_recid crapadp.progress_recid%TYPE) IS
         select 
@@ -588,17 +604,18 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
               when x =  2 then vr_idpessoasoc   := to_number(vr_tabtexto(x));
               when x =  3 then vr_nome          := vr_tabtexto(x);
               when x =  4 then vr_cpf           := to_number(vr_tabtexto(x));
-              when x =  5 then vr_telefone      := to_number(vr_tabtexto(x));
-              when x =  6 then vr_tptelefone    := to_number(vr_tabtexto(x));
-              when x =  7 then vr_tppessoa      := to_number(vr_tabtexto(x));
-              when x =  8 then vr_crianca       := vr_tabtexto(x);
-              when x =  9 then vr_idvoto        := vr_tabtexto(x);
-              when x = 10 then vr_keypad        := to_number(vr_tabtexto(x));
-              when x = 11 then vr_dhentrada     := vr_tabtexto(x);
-              when x = 12 then vr_dhsaida       := vr_tabtexto(x);
-              when x = 13 then vr_grupo         := vr_tabtexto(x);
-              when x = 14 then vr_PA            := to_number(vr_tabtexto(x));
-              when x = 15 then vr_tpcadastro    := to_number(vr_tabtexto(x));
+              when x =  5 then vr_ddd           := to_number(vr_tabtexto(x));
+              when x =  6 then vr_telefone      := to_number(vr_tabtexto(x));
+              when x =  7 then vr_tptelefone    := to_number(vr_tabtexto(x));
+              when x =  8 then vr_tppessoa      := to_number(vr_tabtexto(x));
+              when x =  9 then vr_crianca       := vr_tabtexto(x);
+              when x = 10 then vr_idvoto        := vr_tabtexto(x);
+              when x = 11 then vr_keypad        := to_number(vr_tabtexto(x));
+              when x = 12 then vr_dhentrada     := vr_tabtexto(x);
+              when x = 13 then vr_dhsaida       := vr_tabtexto(x);
+              when x = 14 then vr_grupo         := vr_tabtexto(x);
+              when x = 15 then vr_PA            := to_number(vr_tabtexto(x));
+              when x = 16 then vr_tpcadastro    := to_number(vr_tabtexto(x));
               else null;
             end case;
           end loop;
@@ -612,6 +629,11 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
         -- CPF/CNPJ
         IF length(vr_cpf) > 25 THEN
           vr_dscritic := 'CPF/CNPJ do inscrito não pode ser maior que 25 caracteres! Linha do Arquivo= '||vr_linha_arquivo||' CPF/CNPJ= '||vr_cpf;
+          RAISE vr_exc_saida;
+        END IF;
+        -- Nro do DDD
+        IF length(vr_ddd) > 5 THEN
+          vr_dscritic := 'Número do DDD não pode ser maior que 5 caracteres! Linha do Arquivo= '||vr_linha_arquivo||' DDD: '||vr_ddd;
           RAISE vr_exc_saida;
         END IF;
         -- Telefone
@@ -634,11 +656,14 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
           vr_dscritic := 'Data de Entrada não pode ser maior que 16 caracteres! Linha do Arquivo= '||vr_linha_arquivo||' Data = '||vr_dhentrada;
           RAISE vr_exc_saida;
         END IF;
-        vr_dhentrada := substr(vr_dhentrada,1,10);
-        IF substr(vr_dhentrada,5,1)||substr(vr_dhentrada,8,1) <> '--' THEN
-          vr_dscritic := 'Formato da Data de Entrada incorreto. Data de Entrada deve estar no formato (AAAA-MM-DD)! Linha do Arquivo = '||vr_linha_arquivo||' Data = '||vr_dhentrada;
-          RAISE vr_exc_saida;
-        END IF;
+        BEGIN 
+          -- Tratar campo data, forcar exception se vier como nulo
+          vr_dhentrada := to_date(substr(nvl(vr_dhentrada,'-'),1,10),'yyyy-mm-dd');
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Formato da Data de Entrada incorreto. Data de Entrada deve estar no formato (AAAA-MM-DD)! Linha do Arquivo = '||vr_linha_arquivo||' Data = '||nvl(vr_dhentrada,'-');
+            RAISE vr_exc_saida;
+        END;
         -- Data de Saída
         IF length(vr_dhsaida) > 16 THEN
           vr_dscritic := 'Data de Saída não pode ser maior que 16 caracteres! Linha do Arquivo= '||vr_linha_arquivo||' Data = '||vr_dhsaida;
@@ -765,7 +790,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
         ELSE
           vr_email := '';          
           vr_conta := 0;
-          vr_email := '';
+          --vr_email := '';
         END IF;
       
         BEGIN
@@ -823,8 +848,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
                       vr_email,                                          -- dsdemail       VARCHAR2(50) default ' ',
                       vr_ddd,                                            -- nrdddins       NUMBER(5) default 0,
                       vr_telefone,                                       -- nrtelins       NUMBER(10) default 0,
-                      trunc(to_date(vr_dhentrada,'yyyy/mm/dd')), -- dtpreins       DATE,
-                      trunc(to_date(vr_dhentrada,'yyyy/mm/dd')), -- dtconins       DATE,
+                      vr_dhentrada,                                      -- dtpreins       DATE,
+                      vr_dhentrada,                                      -- dtconins       DATE,
                       'Carga realizada a partir do programa WPGD0154 - Importação Incrições - BRC', --dsobsins       VARCHAR2(4000) default ' ',
                       vr_cdoperad,                                       -- cdoperad       VARCHAR2(10) default ' ',
                       decode(vr_tpcadastro,1,0,1),                       -- idseqttl       NUMBER(5) default 0,
@@ -841,12 +866,12 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0154 IS
                       1,                                                 -- flgimpor       NUMBER default 0,
                       vr_cdoperad,                                       -- cdopeori       VARCHAR2(10) default ' ' not null,
                       rw_crapadp.cdagenci,                               -- cdageori       NUMBER(5) default 0 not null,
-                      trunc(to_date(vr_dhentrada,'yyyy/mm/dd')), -- dtinsori       DATE,
+                      vr_dhentrada,                                      -- dtinsori       DATE,
                       decode(vr_tppessoa,1,rw_crapadp.cdcooper,0),       -- cdcopavl       NUMBER(10) default 0 not null,
                       decode(vr_tppessoa,1,rw_crapavt.tpctrato,0),       -- tpctrato       NUMBER(5) default 0 not null,
                       decode(vr_tppessoa,1,rw_crapavt.nrctremp,0),       -- nrctremp       NUMBER(10) default 0 not null,
                       decode(vr_tppessoa,1,rw_crapavt.nrcpfcgc,0),       -- nrcpfcgc       NUMBER(25) default 0 not null,
-                      trunc(to_date(vr_dhentrada,'yyyy/mm/dd')), -- dtrefatu       DATE,
+                      vr_dhentrada,                                      -- dtrefatu       DATE,
                       0,                                                 -- nrficpre       NUMBER(5) default 0,
                       decode(vr_idvoto,'Y',1,0)
                       );
