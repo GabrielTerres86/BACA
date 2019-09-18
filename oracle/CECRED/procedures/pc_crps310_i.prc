@@ -221,7 +221,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS310_I" (pr_cdcooper   IN crapcop.cdco
 
                  04/12/2014 - Ajuste no calculo de dias de atraso. (James)
 
-                         02/01/2014 - Ajuste para nao gravar nulo no campo vljura60 para
+                 02/01/2014 - Ajuste para nao gravar nulo no campo vljura60 para
                               o emprestimo tipo novo. (James)
 
                  19/01/2015 - Ajuste quanto a data de fim da vigencia de contratos, onde

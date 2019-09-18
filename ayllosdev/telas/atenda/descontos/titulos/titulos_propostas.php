@@ -426,3 +426,4 @@
 	}
 
 </script>
+<script type="text/javascript" src="descontos/desconto_rating.js?keyrand=<?php echo mt_rand(); ?>"></script>
