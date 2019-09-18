@@ -13,7 +13,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
 
     ..............................................................................*/
 
- 
+ -- teste git
 
 end EMPR0020;
 /
