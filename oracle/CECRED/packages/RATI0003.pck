@@ -6372,13 +6372,13 @@ END pc_valida_rat_expirado;
                              Efetivo (Situação 4); Remover atualização para 0 do Flag Integrar SAS.
                              (Weverton Otoni - AMcom)
 
-                  24/08/2019 - P450 - Estória 23342 - LOTE - Exclusão do Rating no Sistema
-                               Enviar apenas operações com Rating Vencido e que estão ativas;
-                               Limites de desconto de cheque e título que estiverem com a
-                               situação Cancelado e Vigente e tiverem borderôs ativos deverá
-                               ser enviado para o processo de atualização do Rating;
-                               Enviar apenas os Limites, os borderôs irão receber o Rating do Limite.
-                               (Weverton Otoni - AMcom)
+                24/08/2019 - P450 - Estória 23342 - LOTE - Exclusão do Rating no Sistema
+                             Enviar apenas operações com Rating Vencido e que estão ativas;
+                             Limites de desconto de cheque e título que estiverem com a
+                             situação Cancelado e Vigente e tiverem borderôs ativos deverá
+                             ser enviado para o processo de atualização do Rating;
+                             Enviar apenas os Limites, os borderôs irão receber o Rating do Limite.
+                             (Weverton Otoni - AMcom)
                                
                 30/08/2019 - P450 - Estória 25729 - Pré-Aprovado - Rating Contingência
                              cooperativas que não estiverem com o parâmetro de novo calculo habilitado
@@ -6391,11 +6391,15 @@ END pc_valida_rat_expirado;
 
   --> Buscar o Risco Operacoes
   CURSOR cr_tbrisco_operacoes (pr_cdcooper IN crapcop.cdcooper%TYPE
+                              ,pr_dtrating IN DATE
                               ,pr_dtmvtolt IN DATE
-                              ,pr_dtrating IN DATE) IS
+                              ,pr_dtmvtopr IN DATE
+                              ,pr_dtultdia IN DATE
+                              ) IS
     --
     -- 90 - Empréstimos
-    SELECT epr.cdcooper    cdcooper
+    SELECT /*+ INDEX(erp CRAPEPR##CRAPEPR2) */
+           epr.cdcooper    cdcooper
           ,epr.nrdconta    nrdconta
           ,epr.nrctremp    nrctrato
           ,opr.tpctrato    tpctrato
@@ -6404,42 +6408,38 @@ END pc_valida_rat_expirado;
       FROM crapepr epr
           ,tbrisco_operacoes opr
           ,tbrat_param_geral tpg
-          ,crapass ass
-          ,crapdat dat
      WHERE epr.cdcooper = pr_cdcooper
        AND epr.cdcooper = opr.cdcooper
        AND epr.nrdconta = opr.nrdconta
        AND epr.nrctremp = opr.nrctremp
-       AND epr.cdcooper = dat.cdcooper
-       AND dat.dtmvtolt = pr_dtmvtolt
+       AND opr.flintegrar_sas = 0 -- Se ja esta no lote nao pesquisar novamente
        AND epr.inliquid = 0   -- Nao pode estar liquidado
        AND epr.inprejuz = 0   -- Nao pode estar em prejuizo
-         AND ((epr.cdfinemp = 68 AND epr.dtmvtolt < pr_dtrating OR
+       AND ((epr.cdfinemp = 68 AND epr.dtmvtolt < pr_dtrating OR
              epr.cdfinemp <> 68)) -- Não pode trazer Empréstimo Pré-Aprovado (Finalidade 68) após a Data de Corte do Projeto Reformulação do Rating (23/08/2019 - Marcelo Gonçalves/AMcom)
-       AND epr.cdcooper = ass.cdcooper
-       AND epr.nrdconta = ass.nrdconta
        AND epr.cdcooper = tpg.cdcooper
-       AND ass.inpessoa = tpg.inpessoa
+       AND NVL(opr.inpessoa,1) = tpg.inpessoa  -- 16/09/2019 - Na falta considera como PF o parametro
        AND tpg.tpproduto = 90
        AND opr.inrisco_rating_autom IS NOT NULL
        AND opr.tpctrato = 90
        AND opr.flencerrado = 0 -- Contratos ativos
        AND ( (opr.insituacao_rating = 3)
-        or  ((opr.insituacao_rating = 4)
-        and  (opr.dtrisco_rating + DECODE(NVL(opr.innivel_rating,2)
+        OR  ((opr.insituacao_rating = 4)
+        AND  (opr.dtrisco_rating + DECODE(NVL(opr.innivel_rating,2)
                                          ,1, tpg.qtdias_atualizacao_autom_baixo
                                          ,2, tpg.qtdias_atualizacao_autom_medio
                                          ,3, tpg.qtdias_atualizacao_autom_alto) <= CASE
-              WHEN dat.dtmvtopr < to_date(tpg.qtdias_atencede_atualizacao+1||to_char(dat.dtmvtolt,'/MM/YYYY'),'DD/MM/YYYY')
-              THEN dat.dtmvtolt+1
-              ELSE dat.dtultdia END))
+              WHEN pr_dtmvtopr < to_date(tpg.qtdias_atencede_atualizacao+1||to_char(pr_dtmvtolt,'/MM/YYYY'),'DD/MM/YYYY')
+              THEN pr_dtmvtolt+1
+              ELSE pr_dtultdia END))
            )
-       AND to_char(dat.dtmvtolt,'DD') NOT BETWEEN tpg.qtdias_atencede_atualizacao+1 AND to_char(dat.dtultdia,'DD')
+       AND to_char(pr_dtmvtolt,'DD') NOT BETWEEN tpg.qtdias_atencede_atualizacao+1 AND to_char(pr_dtultdia,'DD')
     UNION ALL
     --  1-Limite de Credito
     --  2-Limite Desconto Cheque
     --  3-Desconto de Títulos
-    SELECT lim.cdcooper    cdcooper
+    SELECT /*+ INDEX(lim CRAPLIM##CRAPLIM1) */
+           lim.cdcooper    cdcooper
           ,lim.nrdconta    nrdconta
           ,lim.nrctrlim    nrctrato
           ,opr.tpctrato    tpctrato
@@ -6448,37 +6448,33 @@ END pc_valida_rat_expirado;
       FROM craplim lim
           ,tbrisco_operacoes opr
           ,tbrat_param_geral tpg
-          ,crapass ass
-          ,crapdat dat
      WHERE lim.cdcooper = pr_cdcooper
        AND lim.cdcooper = opr.cdcooper
        AND lim.nrdconta = opr.nrdconta
        AND lim.nrctrlim = opr.nrctremp
-       AND lim.cdcooper = ass.cdcooper
-       AND lim.nrdconta = ass.nrdconta
        AND lim.cdcooper = tpg.cdcooper
-       AND lim.cdcooper = dat.cdcooper
-       AND dat.dtmvtolt = pr_dtmvtolt
-       AND ass.inpessoa = tpg.inpessoa
+       AND opr.flintegrar_sas = 0 -- Se ja esta no lote nao pesquisar novamente
+       AND NVL(opr.inpessoa,1) = tpg.inpessoa  -- 16/09/2019 - Na falta considera como PF o parametro
        AND opr.tpctrato IN (1,2,3) -- 1-Limite de Credito, 2-Limite Desconto Cheque, 3-Limite Desconto Titulo
        AND opr.flencerrado = 0 -- Contratos ativos
        AND lim.tpctrlim =  opr.tpctrato
        AND tpg.tpproduto = opr.tpctrato
        AND opr.inrisco_rating_autom IS NOT NULL
        AND ( (opr.insituacao_rating = 3)
-        or  ((opr.insituacao_rating = 4)
-        and  (opr.dtrisco_rating + DECODE(NVL(opr.innivel_rating,2)
+        OR  ((opr.insituacao_rating = 4)
+        AND  (opr.dtrisco_rating + DECODE(NVL(opr.innivel_rating,2)
                                          ,1, tpg.qtdias_atualizacao_autom_baixo
                                          ,2, tpg.qtdias_atualizacao_autom_medio
                                          ,3, tpg.qtdias_atualizacao_autom_alto) <= CASE
-              WHEN dat.dtmvtopr < to_date(tpg.qtdias_atencede_atualizacao+1||to_char(dat.dtmvtolt,'/MM/YYYY'),'DD/MM/YYYY')
-              THEN dat.dtmvtolt+1
-              ELSE dat.dtultdia END))
+              WHEN pr_dtmvtopr < to_date(tpg.qtdias_atencede_atualizacao+1||to_char(pr_dtmvtolt,'/MM/YYYY'),'DD/MM/YYYY')
+              THEN pr_dtmvtolt+1
+              ELSE pr_dtultdia END))
            )
-       AND to_char(dat.dtmvtolt,'DD') NOT BETWEEN tpg.qtdias_atencede_atualizacao+1 AND to_char(dat.dtultdia,'DD')
+       AND to_char(pr_dtmvtolt,'DD') NOT BETWEEN tpg.qtdias_atencede_atualizacao+1 AND to_char(pr_dtultdia,'DD')
     UNION ALL
     -- 68 - Pré-Aprovado - (nrctremp = 0)
-      SELECT DISTINCT cpa.cdcooper cdcooper
+      SELECT /*+ INDEX(cpa CRAPCPA##CRAPCPA1) */
+           cpa.cdcooper cdcooper
           ,cpa.nrdconta    nrdconta
           ,0               nrctrato
           ,opr.tpctrato    tpctrato
@@ -6488,23 +6484,20 @@ END pc_valida_rat_expirado;
           ,tbepr_carga_pre_aprv pre
           ,tbrisco_operacoes opr
           ,tbrat_param_geral tpg
-          ,crapass ass
-          ,crapdat dat
      WHERE cpa.cdcooper = pr_cdcooper
        AND pre.cdcooper = cpa.cdcooper
        AND pre.idcarga  = cpa.iddcarga
-       AND pre.cdcooper = dat.cdcooper
-       AND dat.dtmvtolt = pr_dtmvtolt
+       AND pre.cdcooper = pr_cdcooper
+       AND opr.flintegrar_sas = 0 -- Se ja esta no lote nao pesquisar novamente
        AND pre.flgcarga_bloqueada = 0  -- 0-Nao bloqueada
        AND pre.indsituacao_carga = 2   -- 2-Liberada
+       AND NVL(pre.dtfinal_vigencia, trunc(pr_dtmvtolt)) >= trunc(pr_dtmvtolt) --Carga Vigente
        AND opr.cdcooper = cpa.cdcooper
        AND opr.nrcpfcnpj_base = cpa.nrcpfcnpj_base
        AND opr.nrctremp    = 0
-       AND cpa.cdcooper = ass.cdcooper
-       AND cpa.nrcpfcnpj_base = ass.nrcpfcnpj_base
        AND cpa.cdcooper = tpg.cdcooper
-       AND ass.inpessoa = tpg.inpessoa
-       AND tpg.tpproduto   = 90
+       AND NVL(cpa.tppessoa,1) = tpg.inpessoa  -- 16/09/2019 - Na falta considera como PF o parametro
+       AND tpg.tpproduto = 90
        AND opr.tpctrato = 68
        AND opr.flencerrado = 0 -- Contratos ativos
        AND ( (opr.insituacao_rating = 3)
@@ -6513,11 +6506,11 @@ END pc_valida_rat_expirado;
                                          ,1, tpg.qtdias_atualizacao_autom_baixo
                                          ,2, tpg.qtdias_atualizacao_autom_medio
                                          ,3, tpg.qtdias_atualizacao_autom_alto) <= CASE
-              WHEN dat.dtmvtopr < to_date(tpg.qtdias_atencede_atualizacao+1||to_char(dat.dtmvtolt,'/MM/YYYY'),'DD/MM/YYYY')
-              THEN dat.dtmvtolt+1
-              ELSE dat.dtultdia END))
+              WHEN pr_dtmvtopr < to_date(tpg.qtdias_atencede_atualizacao+1||to_char(pr_dtmvtolt,'/MM/YYYY'),'DD/MM/YYYY')
+              THEN pr_dtmvtolt+1
+              ELSE pr_dtultdia END))
            )
-       AND to_char(dat.dtmvtolt,'DD') NOT BETWEEN tpg.qtdias_atencede_atualizacao+1 AND to_char(dat.dtultdia,'DD');
+       AND to_char(pr_dtmvtolt,'DD') NOT BETWEEN tpg.qtdias_atencede_atualizacao+1 AND to_char(pr_dtultdia,'DD');
 
     rw_tbrisco_operacoes cr_tbrisco_operacoes%ROWTYPE;
 
@@ -6540,7 +6533,9 @@ END pc_valida_rat_expirado;
 
   CURSOR cr_ass (pr_cdcooper       IN craptab.cdcooper%TYPE
                 ,pr_nrcpfcnpj_base IN crapass.nrcpfcnpj_base%TYPE) IS
-    SELECT ass.nrdconta
+    SELECT /*+ INDEX(ass CRAPASS##CRAPASS9) */
+           ass.nrdconta
+          ,ass.inpessoa
       FROM crapass ass
      WHERE ass.cdcooper       = pr_cdcooper
        AND ass.nrcpfcnpj_base = pr_nrcpfcnpj_base
@@ -6611,11 +6606,11 @@ END pc_valida_rat_expirado;
           ,dat.qtdiaute
           ,dat.cdprgant
           ,dat.dtmvtocd
-          ,trunc(dat.dtmvtolt,'mm')               dtinimes -- Pri. Dia Mes Corr.
-            ,trunc(add_months(dat.dtmvtolt, 1), 'mm') dtpridms -- Pri. Dia mes Seguinte
-          ,last_day(add_months(dat.dtmvtolt,-1))  dtultdma -- Ult. Dia Mes Ant.
-          ,last_day(dat.dtmvtolt)                 dtultdia -- Utl. Dia Mes Corr.
-            ,ROWID
+          ,dat.dtultdia
+          ,trunc(dat.dtmvtolt,'mm')                 dtinimes -- Pri. Dia Mes Corr.
+          ,trunc(add_months(dat.dtmvtolt, 1), 'mm') dtpridms -- Pri. Dia mes Seguinte
+          ,last_day(add_months(dat.dtmvtolt,-1))    dtultdma -- Ult. Dia Mes Ant.
+          ,ROWID
       FROM crapdat dat
      WHERE dat.cdcooper = pr_cdcooper;
   rw_crapdat cr_crapdat%ROWTYPE;
@@ -6626,7 +6621,7 @@ END pc_valida_rat_expirado;
       FROM crapcop cop
      WHERE cop.flgativo = 1
        AND cop.cdcooper <> 3 -- Não deve rodar para a AILOS
-     ORDER BY cop.cdcooper;
+     ORDER BY cop.cdcooper DESC;
     rw_crapcop cr_crapcop%ROWTYPE;
 
   --> Buscar Risco Operações(tbrisco_operacoes) de Limites de Crédito Pré-Aprovado
@@ -6653,21 +6648,22 @@ END pc_valida_rat_expirado;
     rw_limite_pre_aprovado cr_limite_pre_aprovado%ROWTYPE;
 
   --> Buscar Empréstimos Pré-Aprovado
-  CURSOR cr_empr_pre_aprovado(p_cdfinemp       IN crapepr.cdfinemp%TYPE
-                             ,p_cdcooper       IN crapepr.cdcooper%TYPE
-                             ,p_nrcpfcnpj_base IN crapass.nrcpfcnpj_base%TYPE
-                             ,pr_dtrating      IN crapepr.dtmvtolt%TYPE) IS
+  CURSOR cr_empr_pre_aprovado(pr_cdfinemp       IN crapepr.cdfinemp%TYPE
+                             ,pr_cdcooper       IN crapepr.cdcooper%TYPE
+                             ,pr_nrcpfcnpj_base IN crapass.nrcpfcnpj_base%TYPE
+                             ,pr_dtrating       IN crapepr.dtmvtolt%TYPE) IS
     SELECT erp.cdcooper  cdcooper
           ,erp.nrdconta  nrdconta
           ,90            tpctrato
           ,erp.nrctremp  nrctrato
-        FROM crapepr erp, crapass ass
+    FROM crapepr erp, crapass ass
     WHERE  erp.cdcooper       = ass.cdcooper
     AND    erp.nrdconta       = ass.nrdconta
     AND   (erp.inliquid = 0 OR (erp.inliquid = 1 AND erp.vlsdprej > 0)) --Não Liquidados
-    AND    erp.cdfinemp       = p_cdfinemp
-    AND    erp.cdcooper       = p_cdcooper
-    AND    ass.nrcpfcnpj_base = p_nrcpfcnpj_base
+    AND    erp.cdfinemp       = pr_cdfinemp
+    AND    erp.cdcooper       = pr_cdcooper
+    AND    ass.nrcpfcnpj_base = pr_nrcpfcnpj_base
+    AND    erp.inprejuz       = 0 -- Nao pode estar em prejuizo
     AND    erp.dtmvtolt      >= pr_dtrating; --Buscar Somente Empréstimos Pré-Aprovado (Finalidade 68) com data maior/igual a Data de Corte do Projeto Reformulação do Rating (23/08/2019 - Marcelo Gonçalves/AMcom)
     rw_empr_pre_aprovado cr_empr_pre_aprovado%ROWTYPE;
 
@@ -6727,6 +6723,35 @@ END pc_valida_rat_expirado;
          AND bdc.nrctrlim = p_nrctremp
          AND p_tpctrato = 2; -- Lim.Desc.Cheque
     rw_borderos cr_borderos%ROWTYPE;
+
+  --> Buscar Pre-Aprovados para Atualizar no modelo Aimaro
+  CURSOR cr_pre_aprov_aimaro(pr_cdcooper  IN tbrisco_operacoes.cdcooper%TYPE
+                            ,pr_dtmvtolt IN DATE) IS
+    SELECT /*+ INDEX(crapcpa CRAPCPA##CRAPCPA1) */
+           opr.cdcooper    cdcooper
+          ,opr.nrdconta    nrdconta
+          ,opr.nrctremp    nrctrato
+          ,opr.tpctrato    tpctrato
+          ,opr.nrcpfcnpj_base nrcpfcnpj_base
+      FROM crapcpa cpa
+          ,tbepr_carga_pre_aprv pre
+          ,tbrisco_operacoes opr
+          ,tbrat_param_geral tpg
+     WHERE cpa.cdcooper = pr_cdcooper
+       AND pre.cdcooper = cpa.cdcooper
+       AND pre.idcarga  = cpa.iddcarga
+       AND pre.flgcarga_bloqueada = 0  -- 0-Nao bloqueada
+       AND pre.indsituacao_carga = 2   -- 2-Liberada
+       AND NVL(pre.dtfinal_vigencia, trunc(pr_dtmvtolt)) >= trunc(pr_dtmvtolt) --Carga Vigente
+       AND opr.cdcooper = cpa.cdcooper
+       AND opr.nrcpfcnpj_base = cpa.nrcpfcnpj_base
+       AND opr.nrctremp    = 0
+       AND cpa.cdcooper = tpg.cdcooper
+       AND NVL(cpa.tppessoa,1) = tpg.inpessoa  -- 16/09/2019 - Na falta considera como PF o parametro
+       AND tpg.tpproduto   = 90
+       AND opr.tpctrato = 68
+       AND opr.flencerrado = 0 -- Contratos ativos
+       AND opr.flintegrar_sas = 1;
 
   -- Parametros
   vr_dt_corte_refor_rating  DATE;
@@ -6797,9 +6822,11 @@ END pc_valida_rat_expirado;
 
 
       -- Buscar Risco Operacoes
-      FOR rw_tbrisco_operacoes IN cr_tbrisco_operacoes(pr_cdcooper => rw_crapcop.cdcooper,
-                                                       pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                                       pr_dtrating => vr_dt_corte_refor_rating) LOOP
+      FOR rw_tbrisco_operacoes IN cr_tbrisco_operacoes(pr_cdcooper => rw_crapcop.cdcooper
+                                                      ,pr_dtrating => vr_dt_corte_refor_rating
+                                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                      ,pr_dtmvtopr => rw_crapdat.dtmvtopr
+                                                      ,pr_dtultdia => rw_crapdat.dtultdia) LOOP
         BEGIN
           -- Para contratos de limite CHQ e TIT, deve ser verificado se
           -- esses contratos ainda estão ativos ou com borderos ativos,
@@ -6819,7 +6846,7 @@ END pc_valida_rat_expirado;
                    SET t.flencerrado = 1
                     ,t.flintegrar_sas = 0
                  WHERE ROWID = rw_tbrisco_operacoes.row_id;
-              COMMIT;
+                COMMIT;
 
                 CONTINUE; -- Passa para o próximo e nao vai pro lote
               END IF;
@@ -7052,10 +7079,10 @@ END pc_valida_rat_expirado;
           --23/08/2019 - Marcelo Gonçalves/AMcom
           --Alterado para Buscar os Empréstimos Pré-Aprovado (Finalidade 68) com Data Maior ou Igual a Data de Corte do Projeto Reformulação do Rating
           --Busca Empréstimos Pré-Aprovado
-          FOR rw_empr_pre_aprovado IN cr_empr_pre_aprovado(p_cdfinemp       => 68 --Pré-Aprovado
-                                                          ,p_cdcooper       => rw_limite_pre_aprovado.cdcooper
-                                                          ,p_nrcpfcnpj_base => rw_limite_pre_aprovado.nrcpfcnpj_base
-                                                          ,pr_dtrating      => vr_dt_corte_refor_rating) LOOP
+          FOR rw_empr_pre_aprovado IN cr_empr_pre_aprovado(pr_cdfinemp       => 68 --Pré-Aprovado
+                                                          ,pr_cdcooper       => rw_limite_pre_aprovado.cdcooper
+                                                          ,pr_nrcpfcnpj_base => rw_limite_pre_aprovado.nrcpfcnpj_base
+                                                          ,pr_dtrating       => vr_dt_corte_refor_rating) LOOP
 
             -- Atualiza as informações do rating na tabela de operações para os empréstimos pré-aprovados(Filhos)
             rati0003.pc_grava_rating_operacao(pr_cdcooper => rw_empr_pre_aprovado.cdcooper --> Código da Cooperativa
@@ -7197,60 +7224,98 @@ END pc_valida_rat_expirado;
         COMMIT; -- Grava os registros dos Borderos do Limite
         --
       ELSIF vr_modelo_rating = 1 THEN -- Modelo Cálculo Rating = 1 - Aimaro
-        -- LEITURA DOS RATINGS DA CARGA
-        FOR rw_tbrating_carga IN cr_tbrating_carga(pr_cdcooper => rw_crapcop.cdcooper) LOOP
-          -- Rating Contrato
-          FOR rw_tbrating_contrato IN cr_tbrating_contrato(pr_cdcooper => rw_crapcop.cdcooper,
-                                                           pr_idcarga  => rw_tbrating_carga.idcarga,
-                                                           pr_tpctrato => 68) LOOP                                            
-            pc_busca_rat_contigencia(pr_cdcooper => rw_tbrating_contrato.cdcooper,
-                                     pr_nrcpfcgc => rw_tbrating_contrato.nrcpfcnpj_base, --> CPFCNPJ BASE
-                                     pr_innivris => vr_innivris,                         --> risco contingencia
-                                     pr_cdcritic => vr_cdcritic,
-                                     pr_dscritic => vr_dscritic);
+        FOR rw_pre_aprov_aimaro IN cr_pre_aprov_aimaro(pr_cdcooper => rw_crapcop.cdcooper
+                                                      ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+          pc_busca_rat_contigencia(pr_cdcooper => rw_pre_aprov_aimaro.cdcooper,
+                                   pr_nrcpfcgc => rw_pre_aprov_aimaro.nrcpfcnpj_base, --> CPFCNPJ BASE
+                                   pr_innivris => vr_innivris,                         --> risco contingencia
+                                   pr_cdcritic => vr_cdcritic,
+                                   pr_dscritic => vr_dscritic);
                                      
-            IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-              --> Gerar informaçoes do log
-              gene0001.pc_gera_log(pr_cdcooper => rw_tbrating_contrato.cdcooper,
-                                   pr_cdoperad => 'MOTOR',
-                                   pr_dscritic => 'Erro ao buscar o Rating de Contingência do Pré-Aprovado. ' || 
-                                                  'CPF/CNPJ Base: ' || rw_tbrating_contrato.nrcpfcnpj_base,
-                                   pr_dsorigem => 'SAS',
-                                   pr_dstransa => 'Processa Rating Operações',
-                                   pr_dttransa => trunc(SYSDATE),
-                                   pr_flgtrans => 1, --> FALSE
-                                   pr_hrtransa => gene0002.fn_busca_time,
-                                   pr_idseqttl => 1,
-                                   pr_nmdatela => 'JOBRAT',
-                                   pr_nrdconta => rw_tbrating_contrato.nrdconta,
-                                   pr_nrdrowid => vr_nrdrowid);
-            END IF;
+          IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            --> Gerar informaçoes do log
+            gene0001.pc_gera_log(pr_cdcooper => rw_pre_aprov_aimaro.cdcooper,
+                                 pr_cdoperad => 'MOTOR',
+                                 pr_dscritic => 'Erro ao buscar o Rating de Contingência do Pré-Aprovado. ' || 
+                                                'CPF/CNPJ Base: ' || rw_tbrating_contrato.nrcpfcnpj_base,
+                                 pr_dsorigem => 'SAS',
+                                 pr_dstransa => 'Processa Rating Operações',
+                                 pr_dttransa => trunc(SYSDATE),
+                                 pr_flgtrans => 1, --> FALSE
+                                 pr_hrtransa => gene0002.fn_busca_time,
+                                 pr_idseqttl => 1,
+                                 pr_nmdatela => 'JOBRAT',
+                                 pr_nrdconta => rw_pre_aprov_aimaro.nrdconta,
+                                 pr_nrdrowid => vr_nrdrowid);
+          END IF;
           
-            -- grava o rating contingencia
-            RATI0003.pc_grava_rating_operacao(pr_cdcooper       => rw_tbrating_contrato.cdcooper  --> Código da Cooperativa
-                                                   ,pr_nrdconta       => rw_tbrating_contrato.nrdconta  --> Conta do associado
-                                                   ,pr_tpctrato       => rw_tbrating_contrato.tpctrato  --> Tipo do contrato de rating
-                                                   ,pr_nrctrato       => rw_tbrating_contrato.nrctrato  --> Número do contrato do rating
+          -- grava o rating contingencia
+          RATI0003.pc_grava_rating_operacao(pr_cdcooper       => rw_pre_aprov_aimaro.cdcooper  --> Código da Cooperativa
+                                           ,pr_nrdconta       => rw_pre_aprov_aimaro.nrdconta  --> Conta do associado
+                                           ,pr_tpctrato       => rw_pre_aprov_aimaro.tpctrato  --> Tipo do contrato de rating
+                                           ,pr_nrctrato       => rw_pre_aprov_aimaro.nrctrato  --> Número do contrato do rating
 
-                                                   ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
-                                                   ,pr_dtrataut       => rw_crapdat.dtmvtolt --> Data do Rating retornado do MOTOR
-                                                   ,pr_dtrating       => rw_crapdat.dtmvtolt --> Data de Efetivacao do Rating
+                                           ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
+                                           ,pr_dtrataut       => rw_crapdat.dtmvtolt --> Data do Rating retornado do MOTOR
+                                           ,pr_dtrating       => rw_crapdat.dtmvtolt --> Data de Efetivacao do Rating
                                                    
-                                                   ,pr_strating       => 5   --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
-                                                   ,pr_orrating       => 4   --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
-                                                   ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
-                                                   ,pr_nrcpfcnpj_base => rw_tbrating_contrato.nrcpfcnpj_base --> Numero do CPF/CNPJ Base do associado
-                                                   ,pr_cdoperad       => '1'
-                                                   ,pr_dtmvtolt       => rw_crapdat.dtmvtolt
-                                                   ,pr_cdcritic       => vr_cdcritic
-                                                   ,pr_dscritic       => vr_dscritic);
+                                           ,pr_strating       => 5   --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
+                                           ,pr_orrating       => 4   --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
+                                           ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
+                                           ,pr_nrcpfcnpj_base => rw_pre_aprov_aimaro.nrcpfcnpj_base --> Numero do CPF/CNPJ Base do associado
+                                           ,pr_cdoperad       => '1'
+                                           ,pr_dtmvtolt       => rw_crapdat.dtmvtolt
+                                           ,pr_cdcritic       => vr_cdcritic
+                                           ,pr_dscritic       => vr_dscritic);
             
+          IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            --> Gerar informaçoes do log
+            gene0001.pc_gera_log(pr_cdcooper => rw_pre_aprov_aimaro.cdcooper,
+                                 pr_cdoperad => 'MOTOR',
+                                 pr_dscritic => 'Erro ao gravar Rating modelo Aimaro do Pré-Aprovado. Conta: ' ||
+                                                rw_pre_aprov_aimaro.nrdconta || ', CPF/CNPJ Base: ' || rw_pre_aprov_aimaro.nrcpfcnpj_base,
+                                 pr_dsorigem => 'SAS',
+                                 pr_dstransa => 'Processa Rating Operações',
+                                 pr_dttransa => trunc(SYSDATE),
+                                 pr_flgtrans => 1, --> FALSE
+                                 pr_hrtransa => gene0002.fn_busca_time,
+                                 pr_idseqttl => 1,
+                                 pr_nmdatela => 'JOBRAT',
+                                 pr_nrdconta => rw_pre_aprov_aimaro.nrdconta,
+                                 pr_nrdrowid => vr_nrdrowid);
+          END IF;
+          
+          --Busca Empréstimos Pré-Aprovado
+          FOR rw_empr_pre_aprovado IN cr_empr_pre_aprovado(pr_cdfinemp       => 68 --Pré-Aprovado
+                                                          ,pr_cdcooper       => rw_pre_aprov_aimaro.cdcooper
+                                                          ,pr_nrcpfcnpj_base => rw_pre_aprov_aimaro.nrcpfcnpj_base
+                                                          ,pr_dtrating       => vr_dt_corte_refor_rating) LOOP
+
+            -- grava o rating contingencia
+            RATI0003.pc_grava_rating_operacao(pr_cdcooper       => rw_empr_pre_aprovado.cdcooper --> Código da Cooperativa
+                                             ,pr_nrdconta       => rw_empr_pre_aprovado.nrdconta --> Conta do associado
+                                             ,pr_tpctrato       => rw_empr_pre_aprovado.tpctrato --> Tipo do contrato de rating
+                                             ,pr_nrctrato       => rw_empr_pre_aprovado.nrctrato --> Número do contrato do rating
+
+                                             ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
+                                             ,pr_dtrataut       => rw_crapdat.dtmvtolt --> Data do Rating retornado do MOTOR
+                                             ,pr_dtrating       => rw_crapdat.dtmvtolt --> Data de Efetivacao do Rating
+
+                                             ,pr_strating       => 5 --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
+                                             ,pr_orrating       => 4 --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
+                                             ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
+                                             ,pr_nrcpfcnpj_base => rw_pre_aprov_aimaro.nrcpfcnpj_base --> Numero do CPF/CNPJ Base do associado
+                                             ,pr_cdoperad       => '1'
+                                             ,pr_dtmvtolt       => rw_crapdat.dtmvtolt
+                                             ,pr_cdcritic       => vr_cdcritic
+                                             ,pr_dscritic       => vr_dscritic);
+                                     
             IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               --> Gerar informaçoes do log
-              gene0001.pc_gera_log(pr_cdcooper => rw_tbrating_contrato.cdcooper,
+              gene0001.pc_gera_log(pr_cdcooper => rw_empr_pre_aprovado.cdcooper,
                                    pr_cdoperad => 'MOTOR',
-                                   pr_dscritic => 'Erro ao gravar Rating modelo Aimaro do Pré-Aprovado. Conta: ' ||
-                                                  rw_tbrating_contrato.nrdconta || ', CPF/CNPJ Base: ' || rw_tbrating_contrato.nrcpfcnpj_base,
+                                   pr_dscritic => 'Erro ao gravar Rating modelo Aimaro do Empréstimo Pré-Aprovado: ' ||
+                                                  rw_pre_aprov_aimaro.nrctrato || ', CPF/CNPJ Base: ' || rw_pre_aprov_aimaro.nrcpfcnpj_base,
                                    pr_dsorigem => 'SAS',
                                    pr_dstransa => 'Processa Rating Operações',
                                    pr_dttransa => trunc(SYSDATE),
@@ -7258,59 +7323,16 @@ END pc_valida_rat_expirado;
                                    pr_hrtransa => gene0002.fn_busca_time,
                                    pr_idseqttl => 1,
                                    pr_nmdatela => 'JOBRAT',
-                                   pr_nrdconta => rw_tbrating_contrato.nrdconta,
+                                   pr_nrdconta => rw_empr_pre_aprovado.nrdconta,
                                    pr_nrdrowid => vr_nrdrowid);
             END IF;
-          
-            --Busca Empréstimos Pré-Aprovado
-            FOR rw_empr_pre_aprovado IN cr_empr_pre_aprovado(p_cdfinemp       => 68 --Pré-Aprovado
-                                                            ,p_cdcooper       => rw_tbrating_contrato.cdcooper
-                                                            ,p_nrcpfcnpj_base => rw_tbrating_contrato.nrcpfcnpj_base
-                                                            ,pr_dtrating      => vr_dt_corte_refor_rating) LOOP
-
-              -- grava o rating contingencia
-              RATI0003.pc_grava_rating_operacao(pr_cdcooper       => rw_empr_pre_aprovado.cdcooper --> Código da Cooperativa
-                                                     ,pr_nrdconta       => rw_empr_pre_aprovado.nrdconta --> Conta do associado
-                                                     ,pr_tpctrato       => rw_empr_pre_aprovado.tpctrato --> Tipo do contrato de rating
-                                                     ,pr_nrctrato       => rw_empr_pre_aprovado.nrctrato --> Número do contrato do rating
-
-                                                     ,pr_ntrataut       => vr_innivris  --> Nivel de Risco Rating retornado do MOTOR
-                                                     ,pr_dtrataut       => rw_crapdat.dtmvtolt --> Data do Rating retornado do MOTOR
-                                                     ,pr_dtrating       => rw_crapdat.dtmvtolt --> Data de Efetivacao do Rating
-
-                                                     ,pr_strating       => 5 --> Identificador da Situacao Rating (Dominio: tbgen_dominio_campo)
-                                                     ,pr_orrating       => 4 --> Identificador da Origem do Rating Contingencia (Dominio: tbgen_dominio_campo)
-                                                     ,pr_cdoprrat       => '1' --> Codigo Operador que Efetivou o Rating
-                                                     ,pr_nrcpfcnpj_base => rw_tbrating_contrato.nrcpfcnpj_base --> Numero do CPF/CNPJ Base do associado
-                                                     ,pr_cdoperad       => '1'
-                                                     ,pr_dtmvtolt       => rw_crapdat.dtmvtolt
-                                                     ,pr_cdcritic       => vr_cdcritic
-                                                     ,pr_dscritic       => vr_dscritic);
-                                     
-              IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-                --> Gerar informaçoes do log
-                gene0001.pc_gera_log(pr_cdcooper => rw_empr_pre_aprovado.cdcooper,
-                                     pr_cdoperad => 'MOTOR',
-                                     pr_dscritic => 'Erro ao gravar Rating modelo Aimaro do Empréstimo Pré-Aprovado: ' ||
-                                                    rw_tbrating_contrato.nrctrato || ', CPF/CNPJ Base: ' || rw_tbrating_contrato.nrcpfcnpj_base,
-                                     pr_dsorigem => 'SAS',
-                                     pr_dstransa => 'Processa Rating Operações',
-                                     pr_dttransa => trunc(SYSDATE),
-                                     pr_flgtrans => 1, --> FALSE
-                                     pr_hrtransa => gene0002.fn_busca_time,
-                                     pr_idseqttl => 1,
-                                     pr_nmdatela => 'JOBRAT',
-                                     pr_nrdconta => rw_empr_pre_aprovado.nrdconta,
-                                     pr_nrdrowid => vr_nrdrowid);
-              END IF;
               
-              -- Commit parcial cada 1000 registros;
-              vr_cont_commit := vr_cont_commit + 1;
-              IF vr_cont_commit >= vr_qtde_commit THEN
-                vr_cont_commit := 0;
-                COMMIT;
-              END IF;
-            END LOOP;
+            -- Commit parcial cada 1000 registros;
+            vr_cont_commit := vr_cont_commit + 1;
+            IF vr_cont_commit >= vr_qtde_commit THEN
+              vr_cont_commit := 0;
+              COMMIT;
+            END IF;
           END LOOP;
         END LOOP;
       END IF;
