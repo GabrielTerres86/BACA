@@ -2745,6 +2745,7 @@ PROCEDURE gera_arquivo_cecred:
           aux_tprelato = 1
           aux_primeira = TRUE
           aux_contador = 0.
+   ASSIGN vr_gerou_arquivo = 0.
    
    FOR EACH crapdev WHERE crapdev.cdcooper = p-cdcooper        AND
                           crapdev.cdbanchq = crapcop.cdbcoctl  AND
@@ -2770,6 +2771,8 @@ PROCEDURE gera_arquivo_cecred:
            DO:
                IF  flg_devolbcb = TRUE THEN
                    DO:
+					   ASSIGN vr_gerou_arquivo = 1.
+					
                        PUT STREAM str_2 FILL("9",47)         FORMAT "x(47)"
                                      "CEL605"
                                      crapage.cdcomchq     FORMAT "999"
@@ -2808,7 +2811,7 @@ PROCEDURE gera_arquivo_cecred:
                                           " >> log/proc_message.log").
                    END.
            END.                     
-
+		   ASSIGN vr_gerou_arquivo = 1.
            ASSIGN flg_devolbcb = FALSE
                   aux_nmarquiv = STRING(aux_dssufarq,"X(1)") + 
                                  STRING(crapdev.cdagechq,"9999") + aux_mes +
@@ -2864,7 +2867,7 @@ PROCEDURE gera_arquivo_cecred:
                                     aux_totqtnot = aux_totqtnot + 1
                                     aux_totvlnot = aux_totvlnot +
                                                      crapdev.vllanmto
-                                      aux_totqtnot_age = aux_totqtdiu_age + 1
+                                      aux_totqtnot_age = aux_totqtnot_age + 1
                                       aux_totvlnot_age = aux_totvlnot_age +
                                                    crapdev.vllanmto.
            

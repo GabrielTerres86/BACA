@@ -4550,7 +4550,7 @@ begin
                RAISE vr_exec_erro;
        END;
                
-      vr_tab_linhacsv := gene0002.fn_quebra_string(vr_setlinha,',');
+      vr_tab_linhacsv := gene0002.fn_quebra_string(vr_setlinha,';');
          
       -- percorrer os campos do arquivo CSV
       FOR idx IN 1..vr_tab_linhacsv.count() LOOP
