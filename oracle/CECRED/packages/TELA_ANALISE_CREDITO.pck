@@ -6371,13 +6371,13 @@ SELECT CASE WHEN LENGTH(v.nrcpfcgc) > 11 then 'JURÍDICA' else 'FÍSICA' END inpes
     /*PRJ 438 - Sprint 15 - Story 23824*/
     --Somente PJ
     IF(r_pessoa.inpessoa > 1) THEN
-      OPEN c_busca_classe_risco_serasa (pr_nrconbir => vr_nrconbir
+      /*OPEN c_busca_classe_risco_serasa (pr_nrconbir => vr_nrconbir -- Retirado 18/09
                                        ,pr_nrseqdet => vr_nrseqdet);                                     
        FETCH c_busca_classe_risco_serasa INTO vr_dsclaris;
        IF c_busca_classe_risco_serasa%FOUND THEN
          vr_string := vr_string||fn_tag('Classe de risco do Serasa', vr_dsclaris);
        END IF;
-      CLOSE c_busca_classe_risco_serasa;
+      CLOSE c_busca_classe_risco_serasa;*/
 
       /*PRJ 438 - Sprint 15 - Story 23820*/
       OPEN c_busca_inadimplencia (pr_nrconbir => vr_nrconbir

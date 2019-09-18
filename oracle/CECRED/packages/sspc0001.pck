@@ -51,6 +51,10 @@ CREATE OR REPLACE PACKAGE CECRED.SSPC0001 AS
   --
   --              01/03/2019 - Incluso leitura da tabela crapcbc para ignorar operações de desconto na busca de dados
   --                           de consultas de orgao d eprotecao (Daniel)
+  --
+  --              05/08/2019 - Incluido leitura de classe de risco e probabilidade de inadimplencia para o SERASA
+  --                           PRJ 438 - Sprint 15 - Rubens Lima (Mouts)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
 -- Atualiza as tabelas de controle com as informacoes finais
@@ -621,6 +625,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --
   --             18/10/2018 - sctask0032817 Na rotina pc_solicita_retorno_req, desativada a criação do arquivo da 
   --                          consulta do biro (Carlos)
+  --
+  --             05/08/2019 - Incluido leitura de classe de risco e probabilidade de inadimplencia para o SERASA
+  --                           PRJ 438 - Sprint 15 - Rubens Lima (Mouts)  
   ---------------------------------------------------------------------------------------------------------------
 
     -- Cursor sobre as pendencias financeiras existentes
@@ -3007,7 +3014,41 @@ PROCEDURE pc_insere_crapesc(pr_nrconbir IN  crapesc.nrconbir%TYPE, --> Sequencia
        pr_dscritic := 'Erro ao inserir na CRAPESC: ' ||SQLERRM;
    END;
 
-
+-- Insere registro na tabela CRAPESC (escore)
+PROCEDURE pc_atualiza_classe_serasa(pr_nrconbir IN  crapesc.nrconbir%TYPE, --> Sequencial com o numero da consulta no biro 
+                                    pr_nrseqdet IN  crapesc.nrseqdet%TYPE, --> Sequencial da consulta
+                                    pr_dsclaris IN  crapesc.dsescore%TYPE, --> Descrição do escore
+                                    pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+  BEGIN
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_classe_serasa');  
+    UPDATE crapcbd c
+     SET c.dsclaris = NVL(pr_dsclaris,' ')
+     WHERE c.nrconbir = pr_nrconbir
+     AND   c.nrseqdet = pr_nrseqdet;
+   EXCEPTION
+    WHEN dup_val_on_index THEN
+      NULL; -- Nao faz nada, pois o resumo ja veio do arquivo
+     WHEN OTHERS THEN
+       CECRED.pc_internal_exception (pr_cdcooper => NULL);  
+       pr_dscritic := 'Erro ao atualizar classe de risco na CRAPCBD: ' ||SQLERRM;
+   END;
+PROCEDURE pc_atualiza_inadimplencia(pr_nrconbir IN  crapcbd.nrconbir%TYPE, --> Sequencial com o numero da consulta no biro 
+                                    pr_nrseqdet IN  crapcbd.nrseqdet%TYPE, --> Sequencial da consulta
+                                    pr_peinadim IN  crapcbd.peinadim%TYPE, --> Probabilidade de Inadimplência
+                                    pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+  BEGIN
+    GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_atualiza_inadimplencia');  
+    UPDATE crapcbd c
+     SET c.peinadim = NVL(pr_peinadim,0)
+     WHERE c.nrconbir = pr_nrconbir
+     AND   c.nrseqdet = pr_nrseqdet;
+   EXCEPTION
+    WHEN dup_val_on_index THEN
+      NULL; -- Nao faz nada, pois o resumo ja veio do arquivo
+     WHEN OTHERS THEN
+       CECRED.pc_internal_exception (pr_cdcooper => NULL);  
+       pr_dscritic := 'Erro ao atualizar probabilidade de inadimplencia na CRAPCBD: ' ||SQLERRM;
+   END;
 PROCEDURE pc_busca_escore(pr_nrconbir in  crapesc.nrconbir%type, --> Sequencial com o numero da consulta no biro 
                           pr_nrseqdet in  crapesc.nrseqdet%type, --> Sequencial da consulta
                           pr_nrseqesc in  crapesc.nrseqesc%type, --> Sequencial do escore
@@ -3588,6 +3629,7 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
     vr_craprfc craprfc%ROWTYPE;  --> Consulta de recuperacoes, falencias e concordatas
     vr_craprpf craprpf%ROWTYPE;  --> Consulta de pendencia financeira dos socios
     vr_crapesc crapesc%ROWTYPE;  --> Consulta de escore
+    vr_dsclaris VARCHAR2(100);    --> Classe de risco do Serasa
     
     -- Variaveis gerais
     vr_contador PLS_INTEGER;     --> Variavel contador de solicitacoes
@@ -4743,6 +4785,58 @@ PROCEDURE pc_processa_retorno_req(pr_cdcooper IN NUMBER,                 --> Cód
         vr_crapesc := NULL;
       END IF;
 
+      /* PRJ 438 - Sprint 15 BUSCA OS DADOS DA CRAPCDB (Classe de Risco) para o Serasa */
+      -- Monta a tag de classe de risco
+      vr_nmtagaux := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/RISCOS/MENSAGEM_ESCORE/';
+      -- Verifica se existe a mensagem da classe de risco pois não tem pontuação
+      IF pr_retxml.existsnode(vr_nmtagaux||'DESCRICAO') <> 0 THEN  
+        BEGIN
+          --Busca a descrição da classe de risco do SERASA
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'DESCRICAO','S',vr_dsclaris, vr_dscritic);
+          vr_dsclaris := SUBSTR(vr_dsclaris,-2);
+        EXCEPTION
+          WHEN OTHERS THEN
+            --Grava a tabela de erro
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
+            vr_dscritic := 'Erro classe de risco do Serasa'||vr_contador||': '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+        -- Atualiza a classificacao do risco
+        pc_atualiza_classe_serasa(pr_nrconbir => pr_nrconbir
+                                 ,pr_nrseqdet => vr_nrseqdet
+                                 ,pr_dsclaris => vr_dsclaris
+                                 ,pr_dscritic => vr_dscritic);
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        -- Limpa a tabela de memoria
+        vr_dsclaris := NULL;
+      END IF;
+      /* PRJ 438 - Sprint 15 BUSCA OS DADOS DA CRAPCDB (Probabilidade de Inadimplência) para o Serasa */
+      -- Monta a tag de classe de risco
+      vr_nmtagaux := '//LISTA_RESPOSTAS/RESPOSTA['||vr_contador||']/DADOS/RISCOS/PROBABILIDADE/';
+      -- Verifica se existe a mensagem de probabilidade de inadimplencia
+      IF pr_retxml.existsnode(vr_nmtagaux||'PONTUACAO') <> 0 THEN  
+        BEGIN
+          pc_busca_conteudo_campo(pr_retxml, vr_nmtagaux||'PONTUACAO','N',vr_crapesc.vlpontua, vr_dscritic);
+        EXCEPTION
+          WHEN OTHERS THEN
+            --Grava a tabela de erro
+            CECRED.pc_internal_exception (pr_cdcooper => vr_cdcooper);  
+            vr_dscritic := 'Erro classe de risco do Serasa'||vr_contador||': '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+        -- Atualiza a inadimplencia
+        pc_atualiza_inadimplencia(pr_nrconbir => pr_nrconbir
+                                 ,pr_nrseqdet => vr_nrseqdet
+                                 ,pr_peinadim => vr_crapesc.vlpontua
+                                 ,pr_dscritic => vr_dscritic);
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        -- Limpa a tabela de memoria
+        vr_dsclaris := NULL;
+      END IF;
 ------------- BUSCA OS DADOS DO CRAPCSF (Cheque sem fundos) para o SPC -------------
       -- Primeiro faz a busca de cheques estaduais
       vr_insitchq := 1; -- Cheque estadual
