@@ -25,7 +25,7 @@ insert into tbgen_debitador_param
   INEXEC_CADEIA_NOTURNA,
   INCONTROLE_EXEC_PROG) 
 values 
- ('PC_CRPS783',
+ ('PC_CRPS785',
   'PAGAMENTO DO EMPRÉSTIMO CONSIGNADO BOLETO',
   'N', 'S', NULL,2,'N',0)
 /  
@@ -51,13 +51,13 @@ insert into tbgen_debitador_horario_proc values ('PC_CRPS782',3)
 /
 insert into tbgen_debitador_horario_proc values ('PC_CRPS782',5)
 /
-insert into tbgen_debitador_horario_proc values ('PC_CRPS783',1)
+insert into tbgen_debitador_horario_proc values ('PC_CRPS785',1)
 /
-insert into tbgen_debitador_horario_proc values ('PC_CRPS783',2)
+insert into tbgen_debitador_horario_proc values ('PC_CRPS785',2)
 /
-insert into tbgen_debitador_horario_proc values ('PC_CRPS783',3)
+insert into tbgen_debitador_horario_proc values ('PC_CRPS785',3)
 /
-insert into tbgen_debitador_horario_proc values ('PC_CRPS783',5)
+insert into tbgen_debitador_horario_proc values ('PC_CRPS785',5)
 /
 insert into tbgen_debitador_horario_proc values ('PC_CRPS784',1)
 /
