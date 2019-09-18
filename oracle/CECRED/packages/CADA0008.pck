@@ -2104,7 +2104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     -- Cursor para verificar se o operador realiza saques parciais e desligamento diretamente pelo Aimaro.
     CURSOR cr_insaqdes (pr_cdcooper crapcop.cdcooper%TYPE,
                         pr_cdoperad crapope.cdoperad%TYPE) IS
-      SELECT insaqdes
+      SELECT insaqdes, inutlcrm
       FROM crapope
       WHERE cdcooper = pr_cdcooper
       AND   cdoperad = pr_cdoperad;
@@ -2123,7 +2123,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     vr_dstoken  VARCHAR2(1000);
     vr_string   VARCHAR2(1000);
     vr_dstexto  VARCHAR2(1000);
-    vr_indsaque NUMBER;
+    vr_indsaque NUMBER; 
+    vr_inutlcrm NUMBER;    
     vr_insaqdes NUMBER; --Indicador de saque parcial e desligamento (0-NAO, 1-SIM)
     vr_dsxmlret CLOB;
         
@@ -2170,73 +2171,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
                                         
     -- Se retornou algum erro
     IF TRIM(vr_dscritic) IS NOT NULL THEN
-      -- Retornar ambos os indicadores como NAO
-      vr_string := '<flgacesso>N</flgacesso>'||
-                   '<flgdemiss>N</flgdemiss>'||
-                   '<flgsaqprc>N</flgsaqprc>';
-                   
-      -- Verifica se o operador realiza saques parciais e desligamento pelo Aimaro
-      OPEN  cr_insaqdes(vr_cdcooper
-                       ,vr_cdoperad);
-      FETCH cr_insaqdes INTO vr_insaqdes;
-      
-      IF vr_insaqdes=1 THEN
-        vr_string := vr_string||'<insaqdes>1</insaqdes>';
-    ELSE
-        vr_string := vr_string||'<insaqdes>0</insaqdes>';
-      END IF;
-      
-      CLOSE cr_insaqdes; 
-                   
+      -- Indica Operador sem acesso
+      vr_string := '<flgacesso>N</flgacesso>';                   
     ELSE
       -- Indica Operador com acesso
       vr_string := '<flgacesso>S</flgacesso>';
+    END IF;                   
+      
     
-      -- Verificar se o botão Desligar será exibido
-      OPEN  cr_ctrl_saque(vr_cdcooper
-                         ,pr_nrdconta
-                         ,2); -- DESLIGAMENTO
-      FETCH cr_ctrl_saque INTO vr_indsaque;
+    -- Verificar se o botão Desligar será exibido
+    OPEN  cr_ctrl_saque(vr_cdcooper
+                       ,pr_nrdconta
+                       ,2); -- DESLIGAMENTO
+    FETCH cr_ctrl_saque INTO vr_indsaque;
       
-      -- Verifica se retornou registro
-      IF cr_ctrl_saque%FOUND THEN
-        vr_string := vr_string||'<flgdemiss>S</flgdemiss>';
-      ELSE
-        vr_string := vr_string||'<flgdemiss>N</flgdemiss>';
-      END IF;
+    -- Verifica se retornou registro
+    IF cr_ctrl_saque%FOUND THEN
+      vr_string := vr_string||'<flgdemiss>S</flgdemiss>';
+    ELSE
+      vr_string := vr_string||'<flgdemiss>N</flgdemiss>';
+    END IF;
       
-      CLOSE cr_ctrl_saque;
+    CLOSE cr_ctrl_saque;
       
-      -- Verificar se o botão Saque Parcial será exibido
-      OPEN  cr_ctrl_saque(vr_cdcooper
-                         ,pr_nrdconta
-                         ,1); -- SAQUE PARCIAL
-      FETCH cr_ctrl_saque INTO vr_indsaque;
+    -- Verificar se o botão Saque Parcial será exibido
+    OPEN  cr_ctrl_saque(vr_cdcooper
+                       ,pr_nrdconta
+                       ,1); -- SAQUE PARCIAL
+    FETCH cr_ctrl_saque INTO vr_indsaque;
       
-      -- Verifica se retornou registro
-      IF cr_ctrl_saque%FOUND THEN
-        vr_string := vr_string||'<flgsaqprc>S</flgsaqprc>';
-      ELSE
-        vr_string := vr_string||'<flgsaqprc>N</flgsaqprc>';
-      END IF;
+    -- Verifica se retornou registro
+    IF cr_ctrl_saque%FOUND THEN
+      vr_string := vr_string||'<flgsaqprc>S</flgsaqprc>';
+    ELSE
+      vr_string := vr_string||'<flgsaqprc>N</flgsaqprc>';
+    END IF;
       
-      CLOSE cr_ctrl_saque;
+    CLOSE cr_ctrl_saque;
     
-      -- Verifica se o operador realiza saques parciais e desligamento pelo Aimaro
-      OPEN  cr_insaqdes(vr_cdcooper
-                       ,vr_cdoperad);
-      FETCH cr_insaqdes INTO vr_insaqdes;
+    -- Verifica se o operador realiza saques parciais e desligamento pelo Aimaro
+    OPEN  cr_insaqdes(vr_cdcooper
+                     ,vr_cdoperad);
+    FETCH cr_insaqdes INTO vr_insaqdes, vr_inutlcrm;
       
-      IF vr_insaqdes=1 THEN
-        vr_string := vr_string||'<insaqdes>1</insaqdes>';
-      ELSE
-        vr_string := vr_string||'<insaqdes>0</insaqdes>';
+    -- Só deve considerar o valor do indicador de saque/desligamento se for opção de acesso for 2 (CRM + AIMARO)
+    -- Seguindo a mesma regra da tela OPERAD
+    IF (vr_insaqdes=1) and (vr_inutlcrm=2) THEN
+      vr_string := vr_string||'<insaqdes>1</insaqdes>';
+    ELSE
+      vr_string := vr_string||'<insaqdes>0</insaqdes>';
     END IF;  
-      
-      CLOSE cr_insaqdes;      
     
-    END IF;  
-		  
+    CLOSE cr_insaqdes;      
+      
     
     -- Escrever no XML
     gene0002.pc_escreve_xml(pr_xml            => vr_dsxmlret,

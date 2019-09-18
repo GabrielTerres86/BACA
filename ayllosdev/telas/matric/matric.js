@@ -502,7 +502,7 @@ function controlaPesquisasFiltro() {
 			
 			}
 	
-}); 
+	}); 
 
 	}
 
@@ -1116,6 +1116,7 @@ function controlaApresentacaoForms() {
 }
 
 function controlaBotoes() {
+	var possuiDataDemissao = false;
 
     $('#btLimparIni').css('display', 'none');
     $('#btProsseguirIni').css('display', 'none');
@@ -1130,14 +1131,14 @@ function controlaBotoes() {
     $('#btSalvarAltNome').css('display', 'none');
     $('#btVoltarCns').css('display', 'none');
 
-    // Ocultar o botão
-    $('#btDemissCRM').css('display', 'none');
-    // Troca a classe do botão e retira a chamada da função do OnClick
-    $('#btDemissCRM').trocaClass('botao', 'botaoDesativado').attr("onClick", "return false;");
  
     $('#btSaqueCRM').css('display', 'none');
     $('#btSaqueParcial').css('display', 'none');
     $('#btDesligarAlt').css('display', 'none');
+	$('#btDesligarAlt').trocaClass('botao', 'botaoDesativado').attr("onClick", "return false;");
+    $('#btDemissCRM').css('display', 'none');	
+    $('#btDemissCRM').trocaClass('botao', 'botaoDesativado').attr("onClick", "return false;");
+	
     $('#btProsseguirCns').css('display', 'none');
     $('#btVoltarDesvinc').css('display', 'none');
     $('#btSalvarDesvinc').css('display', 'none');
@@ -1156,14 +1157,25 @@ function controlaBotoes() {
 
             $('#btVoltarCns').css('display', 'inline');
 			
-            //PRJ339 - Se possui par?metro para efetuar saque e desligamento pelo AIMARO
-			if (inSaqDes == 1 || trim(crm_nrdconta) != '') {
-              
-                //Verifica se veio pelo AIMARO ou CRM atrav?s do n?mero da contaCRM
-                if (trim(crm_nrdconta) == '' ){
-
+			// Se for Pessoa Física
+			if ($('input[name="inpessoa"]:checked', '#frmFiltro').val() == 1) {
+				if ($('#dtdemiss', '#frmFisico').val()) {
+					possuiDataDemissao = true;
+				}
+			} else { // Se for Pessoa Jurídica				
+				
+				if ($('#dtdemiss', '#frmJuridico').val()) {
+					possuiDataDemissao = true;
+				}
+			}
+			
+            //Verifica se há acesso do Operador ao CRM. Caso negativo, pode liberar botao de saque parcial
+			if (flgAcessoCRM == 'N') {
+                        
+				// Se for Pessoa Física
                 if ($('input[name="inpessoa"]:checked', '#frmFiltro').val() == 1) {
 
+				
                     if (($('#inhabmen', '#frmFisico').val() == 0 && nrdeanos < 18) || $('#inhabmen', '#frmFisico').val() == 2) {
 
                         $('#btProsseguirCns').unbind("click").bind("click", (function () {
@@ -1174,14 +1186,10 @@ function controlaBotoes() {
 
                     }
 
-                    if (!$('#dtdemiss', '#frmFisico').val()) {
-                        $('#btDesligarAlt').css('display', 'inline');
-                    }
-
                     //$('#btVoltarCns', '#divBotoes').css('display', 'inline');
 
-                } else {
-
+                } else { // Se for Pessoa Jurídica
+					
                     $('#btProsseguirCns').unbind("click").bind("click", (function () {
                         rollBack();
                         abrirRotina('PROCURADORES', 'Representante/Procurador', 'procuradores', 'procuradores', 'FC');
@@ -1189,42 +1197,60 @@ function controlaBotoes() {
 
                     $('#btProsseguirCns').css('display', 'inline');
 
-                    if (!$('#dtdemiss', '#frmJuridico').val()) {
-                        $('#btDesligarAlt').css('display', 'inline');
-                    }
-
                 }
 
-                $('#btSaqueParcial').css('display', 'inline');
+				if (!possuiDataDemissao) {
+					$('#btDesligarAlt').css('display', 'inline');
+					$('#btDesligarAlt').trocaClass('botaoDesativado', 'botao').attr("onClick", "verificaProdutosAtivos(); return false;");							
+				}
+								
 
-                $('#btSaqueParcial').unbind("click").bind("click", (function () {
-                    abrirRotinaSaqueParcial();
-                }));
+				$('#btSaqueParcial').css('display', 'inline');
+				$('#btSaqueParcial').unbind("click").bind("click", (function () {
+					abrirRotinaSaqueParcial();
+				}));
 
-            } else {   // Caso operador possua acesso
-                // Se não tem data de demissão... exibe o botão
-                if (!$('#dtdemiss', '#frmFisico').val()) {
-                    $('#btDemissCRM').css('display', 'inline');
-                }
-				$('#btDemissCRM').trocaClass('botaoDesativado', 'botao').attr("onClick", "verificaProdutosAtivosCRM(); return false;");
 
-				/*
-                if (flgDesligarCRM == 'S') {
-                    // Troca a classe do botão e atribui a chamada da função do OnClick
-                    $('#btDemissCRM').trocaClass('botaoDesativado', 'botao').attr("onClick", "verificaProdutosAtivosCRM(); return false;");
-                }*/
+            } else {   // Caso operador possua acesso				
+				var inPodeSaqDes = false;			
+				
+				
+				// Se o Operador possuir acesso pelo CRM + Aimaro
+				// E estiver executando pelo Aimaro
+				// E se Operador possuir permissão de Saque Parcial / Desligamento pelo Aimaro				
+				// Então habilita os campos de Saque Parcial/Desligamento do Aimaro 
+				inPodeSaqDes = (inSaqDes == 1) && !possuiDataDemissao && (crm_inacesso != 1);
+				if(inPodeSaqDes) {
+					
+					if (!possuiDataDemissao) {
+						$('#btDesligarAlt').css('display', 'inline');
+						$('#btDesligarAlt').trocaClass('botaoDesativado', 'botao').attr("onClick", "verificaProdutosAtivos(); return false;");												
+					}
+					
+					$('#btSaqueParcial').css('display', 'inline');
+					$('#btSaqueParcial').unbind("click").bind("click", (function () {
+						abrirRotinaSaqueParcial();
+					}));
+					
+				} else {				
+					// Se não tem data de demissão... exibe o botão			
+					if (!possuiDataDemissao) {
+						if (flgDesligarCRM == 'S') {
+							$('#btDemissCRM').css('display', 'inline');
+							// Troca a classe do botão e atribui a chamada da função do OnClick						
+							$('#btDemissCRM').trocaClass('botaoDesativado', 'botao').attr("onClick", "verificaProdutosAtivosCRM(); return false;");
+						}
+					}
 
-				$('#btSaqueCRM').css('display', 'inline');
-                /*
-                if (flgSaldoPclCRM == 'S') {
-                    // Exibir o botão de saque parcial
-                    $('#btSaqueCRM').css('display', 'inline');
-                }
-				*/
+					if (flgSaldoPclCRM == 'S') {
+						// Exibir o botão de saque parcial
+						$('#btSaqueCRM').css('display', 'inline');
+					}
+				}
             }
             
             break;
-        }
+        
         case 'CI':
 
             if (isHabilitado($('#cdagepac', '#frmFiltro')) == false && $('#cdagepac', '#frmFiltro').val() == '') {
