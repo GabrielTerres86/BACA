@@ -54,6 +54,7 @@ CREATE OR REPLACE PACKAGE CECRED.SSPC0001 AS
   --
   --              05/08/2019 - Incluido leitura de classe de risco e probabilidade de inadimplencia para o SERASA
   --                           PRJ 438 - Sprint 15 - Rubens Lima (Mouts)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
 -- Atualiza as tabelas de controle com as informacoes finais

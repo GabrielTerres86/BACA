@@ -6,7 +6,6 @@
 *  fevereiro/março de 2019
 * 
 *  Classe principal, carrega configs, cabeçalho, rodapé e estrutura inicial do sistema
-* 
 */
 
 class Core {

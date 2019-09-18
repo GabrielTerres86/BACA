@@ -3,8 +3,7 @@
 *  Ailos - Projeto 438 - sprint 9 - Tela Única de Análise de Crédito
 *  fevereiro/março de 2019
 * 
-*  Scripts para gerenciar filtros de personas e categorias, 
-* 
+*  Scripts para gerenciar filtros de personas e categorias,
 */
 
 $(document).ready(function(){
