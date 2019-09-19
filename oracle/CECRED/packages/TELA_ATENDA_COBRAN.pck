@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE cecred.tela_atenda_cobran IS
+CREATE OR REPLACE PACKAGE CECRED.tela_atenda_cobran IS
 
 	PROCEDURE pc_grava_auxiliar_crapceb(pr_cdcooper IN  crapceb.cdcooper%TYPE
 																		 ,pr_nrdconta IN  crapceb.nrdconta%TYPE
@@ -379,9 +379,21 @@ CREATE OR REPLACE PACKAGE cecred.tela_atenda_cobran IS
                                   ,pr_des_erro            OUT VARCHAR2 --> Erros do processo
                                    );
     -- PRJ431
+    
+    -- Rafael Ferreira Mouts - INC0020100 - Situac 3
+    PROCEDURE pc_consulta_convenio(pr_cdcooper    IN crapcop.cdcooper%TYPE
+                                   ,pr_nrdconta   IN crapass.nrdconta%TYPE
+                                   ,pr_nrconven   IN crapceb.nrconven%TYPE
+                                   ,pr_xmllog     IN VARCHAR2 --> XML com informações de LOG
+                                   ,pr_cdcritic   OUT PLS_INTEGER --> Código da crítica
+                                   ,pr_dscritic   OUT VARCHAR2 --> Descrição da crítica
+                                   ,pr_retxml     IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo   OUT VARCHAR2 --> Nome do campo com erro
+                                   ,pr_des_erro   OUT VARCHAR2 --> Erros do processo
+                                    );
 END tela_atenda_cobran;
 /
-CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
+CREATE OR REPLACE PACKAGE BODY CECRED.tela_atenda_cobran IS
     ---------------------------------------------------------------------------
     --
     --  Programa : TELA_ATENDA_COBRAN
@@ -503,6 +515,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
               ,crapceb.inenvcob
               ,crapceb.cddemail
               ,crapceb.flgcebhm
+              ,crapceb.flgapihm
               ,(SELECT COUNT(1)
                   FROM crapcob
                  WHERE crapcob.cdcooper = pr_cdcooper
@@ -534,6 +547,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
               ,crapceb.inenvcob
               ,crapceb.cddemail
               ,crapceb.flgcebhm
+              ,crapceb.flgapihm
               ,(SELECT COUNT(1)
                   FROM crapcob
                  WHERE crapcob.cdcooper = pr_cdcooper
@@ -612,6 +626,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
               ,crapceb.cddemail
               ,crapceb.flgcruni
               ,crapceb.flgcebhm
+              ,crapceb.flgapihm
               ,crapceb.progress_recid
               ,crapceb.cdhomolo
               ,crapceb.flcooexp
@@ -637,6 +652,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
               ,crapceb.insrvprt
               ,crapceb.flgdigit
               ,crapceb.fltercan
+              ,crapceb.cdhomapi
+              ,crapceb.dhhomapi
               ,crapceb.rowid
 					FROM crapceb
 				 WHERE cdcooper = pr_cdcooper
@@ -681,6 +698,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 																			,cddemail
 																			,flgcruni
 																			,flgcebhm
+                                                                                                                                                        ,flgapihm
 																			,cdhomolo
 																			,flcooexp
 																			,flceeexp
@@ -705,6 +723,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 																			,insrvprt
 																			,flgdigit
 																			,fltercan
+															                                ,cdhomapi
+															                                ,dhhomapi
 																			)
 																VALUES(rw_crapceb.cdcooper -- cdcooper
 																			,rw_crapceb.nrdconta -- nrdconta
@@ -718,6 +738,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 																			,rw_crapceb.cddemail -- cddemail
 																			,rw_crapceb.flgcruni -- flgcruni
 																			,rw_crapceb.flgcebhm -- flgcebhm
+                                                                                                                                                        ,rw_crapceb.flgapihm -- flgapihm
 																			,rw_crapceb.cdhomolo -- cdhomolo
 																			,rw_crapceb.flcooexp -- flcooexp
 																			,rw_crapceb.flceeexp -- flceeexp
@@ -742,6 +763,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 																			,rw_crapceb.insrvprt -- insrvprt
 																			,rw_crapceb.flgdigit -- flgdigit
 																			,rw_crapceb.fltercan -- fltercan
+														                                        ,rw_crapceb.cdhomapi
+														                                        ,rw_crapceb.dhhomapi
 																			);
 					--
 				EXCEPTION
@@ -812,6 +835,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
               ,crapceb.cddemail
               ,crapceb.flgcruni
               ,crapceb.flgcebhm
+              ,crapceb.flgapihm
               ,NULL
               ,crapceb.cdhomolo
               ,crapceb.flcooexp
@@ -837,6 +861,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
               ,crapceb.insrvprt
               ,crapceb.flgdigit
               ,crapceb.fltercan
+              ,crapceb.cdhomapi
+              ,crapceb.dhhomapi
               ,crapceb.rowid
 					FROM tbcobran_crapceb crapceb
 				 WHERE cdcooper = pr_cdcooper
@@ -895,6 +921,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 														 ,cddemail
 														 ,flgcruni
 														 ,flgcebhm
+                                                                                                                 ,flgapihm
 														 ,cdhomolo
 														 ,flcooexp
 														 ,flceeexp
@@ -919,6 +946,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 														 ,insrvprt
 														 ,flgdigit
 														 ,fltercan
+											                         ,cdhomapi
+											                         ,dhhomapi
 														 )
 											 VALUES(rw_crapceb.cdcooper -- cdcooper
 														 ,rw_crapceb.nrdconta -- nrdconta
@@ -932,6 +961,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 														 ,rw_crapceb.cddemail -- cddemail
 														 ,rw_crapceb.flgcruni -- flgcruni
 														 ,rw_crapceb.flgcebhm -- flgcebhm
+                                                                                                                 ,rw_crapceb.flgapihm -- flgapihm
 														 ,rw_crapceb.cdhomolo -- cdhomolo
 														 ,rw_crapceb.flcooexp -- flcooexp
 														 ,rw_crapceb.flceeexp -- flceeexp
@@ -956,6 +986,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 														 ,rw_crapceb.insrvprt -- insrvprt
 														 ,rw_crapceb.flgdigit -- flgdigit
 														 ,rw_crapceb.fltercan -- fltercan
+											                         ,rw_crapceb.cdhomapi
+											                         ,rw_crapceb.dhhomapi
 														 );
 					--
 				EXCEPTION
@@ -1956,7 +1988,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                   ,pr_idreciprold IN crapceb.idrecipr%TYPE --> ID unico do calculo de reciprocidade atrelado a contratacao
                                   ,pr_perdesconto IN VARCHAR2 --> Categoria e valor do desconto
                                   ,pr_inenvcob    IN crapceb.inenvcob%TYPE --> Forma de envio de arquivo de cobrança
-								  ,pr_flgapihm    IN crapceb.flgapihm%TYPE --> Flag representando o uso da API
+				  ,pr_flgapihm    IN crapceb.flgapihm%TYPE --> Flag representando o uso da API
                                   ,pr_blnewreg    IN BOOLEAN --> Identifica se é um novo registro
                                   ,pr_retxml      IN xmltype --> Arquivo de retorno do XML
                                    -- OUT
@@ -1970,7 +2002,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
         Programa: pc_habilita_convenio           Antigo: b1wgen0082.p/habilita-convenio
         Sistema : Ayllos Web
         Autor   : Jaison Fernando
-        Data    : Fevereiro/2016                 Ultima atualizacao: 18/12/2018
+        Data    : Fevereiro/2016                 Ultima atualizacao: 08/08/2019
         
         Dados referentes ao programa:
         
@@ -2006,6 +2038,13 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                     
 					18/02/2019 - Novo campo tela ATENDA -> Cobranca (Homologado API)
 								 (Andrey Formigari - Supero)
+                 
+                    07/08/2019 - Correção na gravação do Flag Homologado API
+                                 (Rafael Ferreira - Mouts)
+                                 
+                    08/08/2019 - Tratamento de Nulos para INC0020100
+                                 (Rafael Ferreira - Mouts)
+                 
                     
         ..............................................................................*/
         DECLARE
@@ -2040,11 +2079,13 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                       ,crapcco.flgregis
                       ,crapcco.flgutceb
                       ,crapcco.flgativo
+                      ,crapcco.qtdfloat
+                      ,crapcco.qtdecini --Quantidade Inicial de Dias para Decurso de Prazo
                   FROM crapcco
                  WHERE crapcco.cdcooper = pr_cdcooper
                    AND crapcco.nrconven = pr_nrconven;
             rw_crapcco cr_crapcco%ROWTYPE;
-        
+            
             -- Busca o operador
             CURSOR cr_crapope(pr_cdcooper IN crapope.cdcooper%TYPE
                              ,pr_cdoperad IN crapope.cdoperad%TYPE) IS
@@ -2109,7 +2150,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                       ,crapceb.qtdecprz
                       ,crapceb.qtdfloat
                       ,crapceb.inenvcob
-					  ,crapceb.dhhomapi
+		      ,crapceb.dhhomapi
                       ,crapceb.cdhomapi
                       ,crapceb.flgapihm
                   FROM crapceb
@@ -2133,7 +2174,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                       ,crapceb.qtdecprz
                       ,crapceb.qtdfloat
                       ,crapceb.inenvcob
-					  ,crapceb.dhhomapi
+		      ,crapceb.dhhomapi
                       ,crapceb.cdhomapi
                       ,crapceb.flgapihm
                   FROM tbcobran_crapceb crapceb
@@ -2253,7 +2294,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
         
             -- Variaveis
             vr_blnfound      BOOLEAN;
-			vr_blnewreg_cip  BOOLEAN := FALSE;
+	    vr_blnewreg_cip  BOOLEAN := FALSE;
             vr_fldda_sit_ben BOOLEAN;
             vr_flgimpri      INTEGER;
             vr_qtccoceb      NUMBER;
@@ -2274,6 +2315,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
             vr_insitcip      VARCHAR2(10);
             vr_nrconven      VARCHAR2(10);
             vr_dtfimrel      VARCHAR2(10) := NULL;
+            vr_qtdfloat      cecred.crapcco.qtdfloat%type;
+            vr_qtdecini      cecred.crapcco.qtdecini%type;
         
             -- Variaveis de log
             vr_cdcooper INTEGER;
@@ -2354,6 +2397,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                 INTO rw_crapcco;
             -- Alimenta a booleana se achou ou nao
             vr_blnfound := cr_crapcco%FOUND;
+            vr_qtdfloat := rw_crapcco.qtdfloat;
+            vr_qtdecini := rw_crapcco.qtdecini;
+            
             -- Fecha cursor
             CLOSE cr_crapcco;
             -- Se NAO encontrou
@@ -2369,6 +2415,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                     vr_dscritic := 'Campo Cooperativa Emite e Expede ou Cooperado Emite e Expede devem ser preenchidos';
                     RAISE vr_exc_saida;
                 END IF;
+                
             END IF;
         
             -- Busca o operador
@@ -2998,21 +3045,34 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                       ,crapceb.flserasa = pr_flserasa
                       ,crapceb.insitceb = vr_insitceb
                       ,crapceb.cdhomolo = vr_cdoperad
-                      ,crapceb.qtdfloat = pr_qtdfloat
+                      ,crapceb.qtdfloat = nvl(pr_qtdfloat,0)
                       ,crapceb.flprotes = pr_flprotes
                       ,crapceb.insrvprt = pr_insrvprt
                       ,crapceb.qtlimaxp = pr_qtlimaxp
                       ,crapceb.qtlimmip = pr_qtlimmip
-                      ,crapceb.qtdecprz = pr_qtdecprz
+                      -- Rafael Ferreira (Mouts) -- INC0020100 - Se por algum motivo vier zero utiliza o Default da crapcco
+                      ,crapceb.qtdecprz = decode(nvl(pr_qtdecprz,0), 0, vr_qtdecini, pr_qtdecprz)
                       ,crapceb.inenvcob = pr_inenvcob
-					  ,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
-                      ,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
                       ,crapceb.flgapihm = pr_flgapihm
                  WHERE crapceb.cdcooper = vr_cdcooper
                    AND crapceb.nrdconta = pr_nrdconta
                    AND crapceb.nrconven = pr_nrconven
                    AND crapceb.idrecipr = pr_idrecipr;
+                   
+            -- Rafael Ferreira (Mouts) - INC0020100
+            -- Ajustada Logica da atualização de informações de homologação API
+            IF (trim(rw_crapceb.cdhomapi) is null) and (pr_flgapihm = 1) THEN
+              UPDATE crapceb crapceb
+								 SET crapceb.cdhomapi = vr_cdoperad
+                    ,crapceb.dhhomapi = SYSDATE
+               WHERE crapceb.cdcooper = vr_cdcooper
+								 AND crapceb.nrdconta = pr_nrdconta
+								 AND crapceb.nrconven = pr_nrconven
+								 AND crapceb.idrecipr = pr_idrecipr;
+            END IF;
+
               --
+                                     
             EXCEPTION
                 WHEN OTHERS THEN
                     vr_dscritic := 'Erro ao alterar o registro na CRAPCEB: ' || SQLERRM;
@@ -3034,20 +3094,31 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 										,crapceb.flserasa = pr_flserasa
 										,crapceb.insitceb = vr_insitceb
 										,crapceb.cdhomolo = vr_cdoperad
-										,crapceb.qtdfloat = pr_qtdfloat
+                    								,crapceb.qtdfloat = nvl(pr_qtdfloat,0)
 										,crapceb.flprotes = pr_flprotes
 										,crapceb.insrvprt = pr_insrvprt
 										,crapceb.qtlimaxp = pr_qtlimaxp
 										,crapceb.qtlimmip = pr_qtlimmip
-										,crapceb.qtdecprz = pr_qtdecprz
+                    -- Rafael Ferreira (Mouts) -- INC0020100 - Se por algum motivo vier zero utiliza o Default da crapcco
+										,crapceb.qtdecprz = decode(nvl(pr_qtdecprz,0), 0, vr_qtdecini, pr_qtdecprz)
 										,crapceb.inenvcob = pr_inenvcob
-										,crapceb.cdhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.cdhomapi, vr_cdoperad)
-										,crapceb.dhhomapi = decode(rw_crapceb.flgapihm, pr_flgapihm, rw_crapceb.dhhomapi, SYSDATE)
 										,crapceb.flgapihm = pr_flgapihm
 							 WHERE crapceb.cdcooper = vr_cdcooper
 								 AND crapceb.nrdconta = pr_nrdconta
 								 AND crapceb.nrconven = pr_nrconven
 								 AND crapceb.idrecipr = pr_idrecipr;
+            
+            -- Rafael Ferreira (Mouts) - INC0020100
+            -- Ajustada Logica da atualização de informações de homologação API
+            IF (trim(rw_crapceb.cdhomapi) is null) and (pr_flgapihm = 1) THEN
+              UPDATE tbcobran_crapceb crapceb
+								 SET crapceb.cdhomapi = vr_cdoperad
+                    ,crapceb.dhhomapi = SYSDATE
+               WHERE crapceb.cdcooper = vr_cdcooper
+								 AND crapceb.nrdconta = pr_nrdconta
+								 AND crapceb.nrconven = pr_nrconven
+								 AND crapceb.idrecipr = pr_idrecipr;
+            END IF;
 							--
 						EXCEPTION
 							WHEN OTHERS THEN
@@ -3668,7 +3739,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                 ,pr_idreciprold => pr_idreciprold
                                 ,pr_perdesconto => pr_perdesconto
                                 ,pr_inenvcob    => pr_inenvcob
-								,pr_flgapihm	=> pr_flgapihm
+				,pr_flgapihm	=> pr_flgapihm
                                 ,pr_blnewreg    => FALSE
                                 ,pr_retxml      => pr_retxml
                                  -- OUT
@@ -5895,13 +5966,13 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
     END pc_conv_recip_desc;
 
     -- PRJ431
-    FUNCTION fn_busca_data_corte RETURN crapprm.dsvlrprm%TYPE IS
+    FUNCTION fn_busca_data_corte(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN crapprm.dsvlrprm%TYPE IS
         /* .............................................................................
           Programa: pc_busca_data_corte
           Sistema : CECRED
           Sigla   : COBRAN
           Autor   : Augusto (Supero)
-          Data    : Agosto/18.                    Ultima atualizacao: --/--/----
+          Data    : Agosto/18.                    Ultima atualizacao: 03/09/2019
         
           Dados referentes ao programa:
         
@@ -5911,11 +5982,14 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
         
           Observacao: -----
         
-          Alteracoes:
+          Alteracoes: 03/09/2019 - Rafael Ferreira (Mouts) - Implementado parametro de Filial
         ..............................................................................*/
     BEGIN
+      
+        -- Tenta Retornar a Data de Inicio da Nova Reciprocidade para a Filial recebida no Parametro
+        -- Se receber Nullo retorna o Parametro Geral
         RETURN gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                        ,pr_cdcooper => 0
+                                        ,pr_cdcooper => nvl(pr_cdcooper,0)
                                         ,pr_cdacesso => 'DT_VIG_RECECIPR_V2');
     END fn_busca_data_corte;
 
@@ -6589,13 +6663,25 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                       ,pr_tag_nova => 'flgcebhm'
                                       ,pr_tag_cont => rw_convenios.flgcebhm
                                       ,pr_des_erro => vr_dscritic);
-            
+
+
                 gene0007.pc_insere_tag(pr_xml      => pr_retxml
                                       ,pr_tag_pai  => 'Convenio'
                                       ,pr_posicao  => vr_contador
                                       ,pr_tag_nova => 'qtbolcob'
                                       ,pr_tag_cont => rw_convenios.qtbolcob
                                       ,pr_des_erro => vr_dscritic);
+                                      
+
+                gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                      ,pr_tag_pai  => 'Convenio'
+                                      ,pr_posicao  => vr_contador
+                                      ,pr_tag_nova => 'flgapihm'
+                                      ,pr_tag_cont => rw_convenios.flgapihm
+                                      ,pr_des_erro => vr_dscritic);
+                                      
+                -- Não alterar a ordem que estas Tags são gravadas, pois isso vai para um Array no PHP
+                -- Se precisar adicionar Campos coloque no após este 
             
                 vr_contador := vr_contador + 1;
             
@@ -6707,12 +6793,14 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
         vr_qtdfloat           INTEGER;
         vr_flgimpri           INTEGER;
         vr_flgcebhm           INTEGER := 0;
+        vr_flgapihm           INTEGER := 0;
         vr_qtccoceb           NUMBER;
         vr_insitceb           INTEGER := 1; -- Ativo
         vr_perdesconto        VARCHAR2(1000);
         vr_total_cee          NUMBER;
         vr_total_coo          NUMBER;
         vr_qtalcadas_ativas   NUMBER;
+        
     
         vr_idcalculo_reciproci tbrecip_calculo.idcalculo_reciproci%TYPE;
     
@@ -6774,6 +6862,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
             pr_des_erro := 'Floating é obrigatório!';
             RAISE vr_exc_saida;
         END IF;
+        
     
         -- Efetiva a reciprocidade e retorna o ID gerado
         BEGIN
@@ -7005,7 +7094,8 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                 IF vr_total_coo > 0 AND vr_convenio(6) = 1 THEN
                     vr_perdesconto := fn_busca_perdesconto(0, vr_perdesconto, vr_total_coo);
                 END IF;
-            
+                
+                    
                 pc_habilita_convenio(pr_nrdconta    => pr_nrdconta
                                     ,pr_nrconven    => vr_convenio(1)
                                     ,pr_insitceb    => vr_insitceb
@@ -7029,13 +7119,14 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                     ,pr_idreciprold => NULL
                                     ,pr_perdesconto => vr_perdesconto
                                     ,pr_inenvcob    => vr_convenio(16)
-									,pr_flgapihm	=> 0
+                                    ,pr_flgapihm	=> nvl(vr_convenio(21), 0)
                                     ,pr_blnewreg    => TRUE
                                     ,pr_retxml      => pr_retxml
                                      -- OUT
                                     ,pr_flgimpri => vr_flgimpri
                                     ,pr_dsdmesag => vr_dsdmesag
                                     ,pr_des_erro => pr_des_erro);
+                                    
             
                 IF TRIM(pr_des_erro) IS NOT NULL THEN
                     RAISE vr_exc_saida;
@@ -8102,7 +8193,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                                     ,pr_idreciprold => NULL
                                     ,pr_perdesconto => vr_perdesconto
                                     ,pr_inenvcob    => vr_convenio(16)
-									,pr_flgapihm	=> 0
+                                    ,pr_flgapihm => nvl(vr_convenio(21), 0)
                                     ,pr_blnewreg    => FALSE
                                     ,pr_retxml      => pr_retxml
                                      -- OUT
@@ -8906,6 +8997,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 																	 ,trunc(crapceb.dtinsori)
 																	 ,crapceb.nrdconta
 																	 ,crapceb.cdcooper
+                           
 													 UNION ALL
 														 SELECT to_char(crapceb.nrconven)
 																	 ,crapceb.idrecipr
@@ -8961,13 +9053,13 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
 																	WHERE crapceb.nrdconta = pr_nrdconta
 																		AND crapceb.cdcooper = pr_cdcooper
 																		AND crapceb.idrecipr = 0
-																	 /**/
+																	 --
 																		AND crapceb.nrconven IN (SELECT nrconven
 																															FROM crapcco
 																														 WHERE cdcooper = pr_cdcooper
 																															 AND flgativo = 1
 																															 AND flrecipr = 1
-																															 AND dsorgarq <> 'PROTESTO') /*verificar se este bloco esta ok*/
+																															 AND dsorgarq <> 'PROTESTO') --verificar se este bloco esta ok
 													 UNION ALL
 														 SELECT to_char(crapceb.nrconven)
 																	 ,crapceb.idrecipr
@@ -9023,13 +9115,14 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                      WHERE crapceb.nrdconta = pr_nrdconta
                        AND crapceb.cdcooper = pr_cdcooper
                        AND crapceb.idrecipr = 0
-                          /**/
+                          --
                        AND crapceb.nrconven IN (SELECT nrconven
                                                   FROM crapcco
                                                  WHERE cdcooper = pr_cdcooper
                                                    AND flgativo = 1
                                                    AND flrecipr = 1
-                                                   AND dsorgarq <> 'PROTESTO') /*verificar se este bloco esta ok*/
+                                                   AND dsorgarq <> 'PROTESTO') --verificar se este bloco esta ok
+                                                   
                     ) ceb
                   ,tbrecip_aprovador_calculo tac
                   ,tbrecip_calculo cal
@@ -9109,7 +9202,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
         --
         FOR rw_lista_contratos IN cr_lista_contratos(pr_cdcooper   => pr_cdcooper
                                                     ,pr_nrdconta   => pr_nrdconta
-                                                    ,pr_data_corte => fn_busca_data_corte
+                                                    ,pr_data_corte => fn_busca_data_corte(pr_cdcooper)
                                                     ,pr_cdoperad   => vr_cdoperad) LOOP
             --
             pc_escreve_xml('<inf>' || '<list_cnv>' || rw_lista_contratos.list_cnv || '</list_cnv>' ||
@@ -9174,7 +9267,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
           Sistema : CECRED
           Sigla   : COBRAN
           Autor   : Augusto (Supero)
-          Data    : Agosto/18.                    Ultima atualizacao: --/--/----
+          Data    : Agosto/18.                    Ultima atualizacao: 27/08/2019
         
           Dados referentes ao programa:
         
@@ -9184,7 +9277,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
         
           Observacao: -----
         
-          Alteracoes:
+          Alteracoes: 27/08/2019 - Rafael Ferreira (Mouts) - INC0023442 - Alterada tabela crapass para tbcc_associados
         ..............................................................................*/
     
         -- Vinculação
@@ -9220,7 +9313,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
                   ,v.idvinculacao
               INTO vr_nmvinculacao
                   ,vr_idvinculacao
-              FROM crapass            s
+              FROM tbcc_associados    s
                   ,tbrecip_vinculacao v
              WHERE s.cdcooper = vr_cdcooper
                AND s.nrdconta = pr_nrdconta
@@ -9739,6 +9832,333 @@ CREATE OR REPLACE PACKAGE BODY cecred.tela_atenda_cobran IS
             --
     END pc_cancela_descontos;
     -- PRJ431
+
+    -- Rafael Ferreira Mouts - INC0020100 - Situac 3
+    PROCEDURE pc_consulta_convenio(pr_cdcooper    IN crapcop.cdcooper%TYPE
+                                   ,pr_nrdconta   IN crapass.nrdconta%TYPE
+                                   ,pr_nrconven   IN crapceb.nrconven%TYPE
+                                   ,pr_xmllog     IN VARCHAR2 --> XML com informações de LOG
+                                   ,pr_cdcritic   OUT PLS_INTEGER --> Código da crítica
+                                   ,pr_dscritic   OUT VARCHAR2 --> Descrição da crítica
+                                   ,pr_retxml     IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo   OUT VARCHAR2 --> Nome do campo com erro
+                                   ,pr_des_erro   OUT VARCHAR2 --> Erros do processo
+                                    ) IS
+        /* .............................................................................
+          Programa: pc_consulta_convenio
+          Sistema : CECRED
+          Sigla   : TELA_ATENDA_COBRAN
+          Autor   : Rafael Ferreira (Mouts)
+          Data    : Agosto/19.                    Ultima atualizacao: --/--/----
+        
+          Dados referentes ao programa:
+        
+          Frequencia: Sempre que for chamado
+        
+          Objetivo  : Retornar informações do convenio do Cooperado.
+        
+          Observacao: Esta procedure foi criada devido
+                      a necessidade de pesquisar o convenio existente do Cooperado no momento da INCLUSAO na nova
+                      tela de reciprocidade. Na estrutura atual o sistema usa o idrecipr para fazer a busca dos 
+                      convenios existentes, porém isso não atende para pesquisar convenios antigos. Neste sentido
+                      foi necessário criar esta procedure para pesquisar buscando pelo numero do convenio SOMENTE
+                      na INCLUSAO da tela de Cobrança.
+                      ServiceNow: INC0020100
+        
+          Alteracoes:
+        ..............................................................................*/
+    
+        -- Cursores
+        -- Busca o Convenio crapceb
+        CURSOR cr_convenio(pr_cdcooper   crapceb.cdcooper%TYPE
+                           ,pr_nrdconta  crapass.nrdconta%TYPE
+                           ,pr_nrconven  crapceb.nrconven%TYPE) IS
+        
+            SELECT crapceb.nrconven
+                  ,crapcco.dsorgarq
+                  ,crapceb.insitceb
+                  ,crapceb.flgregon
+                  ,crapceb.flgpgdiv
+                  ,crapceb.flcooexp
+                  ,crapceb.flceeexp
+                  ,crapceb.qtdfloat
+                  ,crapceb.flserasa
+                  ,crapceb.flprotes
+                  ,crapceb.insrvprt
+                  ,crapceb.qtlimmip
+                  ,crapceb.qtlimaxp
+                  ,crapceb.qtdecprz
+                  ,crapceb.inarqcbr
+                  ,crapceb.inenvcob
+                  ,crapceb.cddemail
+                  ,crapceb.flgcebhm
+                  ,crapceb.flgapihm
+                  ,(SELECT COUNT(1)
+                      FROM crapcob
+                     WHERE crapcob.cdcooper = pr_cdcooper
+                       AND crapcob.nrdconta = pr_nrdconta
+                       AND crapcob.nrcnvcob = crapceb.nrconven) AS qtbolcob
+              FROM crapceb
+                  ,crapcco
+             WHERE crapcco.cdcooper = crapceb.cdcooper
+               AND crapcco.nrconven = crapceb.nrconven
+               AND crapceb.cdcooper = pr_cdcooper
+               AND crapceb.nrdconta = pr_nrdconta
+               and crapceb.nrconven = pr_nrconven
+               /*Conforme alinhado com George, o Convenio antigo precisa ser desativado para incluir o novo
+               Nesse caso não deve filtrar situação do convenio*/
+               --and crapceb.insitceb = 1
+               ;
+        rw_convenio cr_convenio%ROWTYPE;
+    
+        -- Variável de críticas
+        vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+        vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+        -- Tratamento de erros
+        vr_exc_saida EXCEPTION;
+        vr_nrdrowid rowid;
+    
+        -- Variaveis de log
+        vr_cdcooper INTEGER;
+        vr_cdoperad VARCHAR2(100);
+        vr_nmdatela VARCHAR2(100);
+        vr_nmeacao  VARCHAR2(100);
+        vr_cdagenci VARCHAR2(100);
+        vr_nrdcaixa VARCHAR2(100);
+        vr_idorigem VARCHAR2(100);
+    
+        -- Variaveis internas
+        vr_convfound BOOLEAN;
+        
+
+    
+    BEGIN
+        -- Incluir nome do módulo logado
+        gene0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_COBRAN', pr_action => NULL);
+    
+        -- Extrai os dados vindos do XML
+        gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                                ,pr_cdcooper => vr_cdcooper
+                                ,pr_nmdatela => vr_nmdatela
+                                ,pr_nmeacao  => vr_nmeacao
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_idorigem => vr_idorigem
+                                ,pr_cdoperad => vr_cdoperad
+                                ,pr_dscritic => vr_dscritic);
+    
+        
+    
+        -- Criar cabecalho do XML
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
+    
+
+        -- Busca o cadastro de convenio
+        OPEN cr_convenio(pr_cdcooper => vr_cdcooper, pr_nrdconta => pr_nrdconta, pr_nrconven => pr_nrconven);
+        FETCH cr_convenio
+            INTO rw_convenio;
+            
+        -- Alimenta a booleana se achou ou nao
+        vr_convfound := cr_convenio%FOUND;
+        -- Fecha cursor
+        CLOSE cr_convenio;
+        
+        -- Se NAO encontrou
+        IF NOT vr_convfound THEN
+            vr_cdcritic := 563;
+            RAISE vr_exc_saida;
+        END IF;
+
+            
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Dados'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'Convenio'
+                                  ,pr_tag_cont => NULL
+                                  ,pr_des_erro => vr_dscritic);
+            
+                                  
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'convenio'
+                                  ,pr_tag_cont => rw_convenio.nrconven
+                                  ,pr_des_erro => vr_dscritic);
+                                  
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'tipo'
+                                  ,pr_tag_cont => rw_convenio.dsorgarq
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'insitceb'
+                                  ,pr_tag_cont => rw_convenio.insitceb
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'flgregon'
+                                  ,pr_tag_cont => rw_convenio.flgregon
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'flgpgdiv'
+                                  ,pr_tag_cont => rw_convenio.flgpgdiv
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'flcooexp'
+                                  ,pr_tag_cont => rw_convenio.flcooexp
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'flceeexp'
+                                  ,pr_tag_cont => rw_convenio.flceeexp
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'qtdfloat'
+                                  ,pr_tag_cont => rw_convenio.qtdfloat
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'flserasa'
+                                  ,pr_tag_cont => rw_convenio.flserasa
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'flprotes'
+                                  ,pr_tag_cont => rw_convenio.flprotes
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'insrvprt'
+                                  ,pr_tag_cont => rw_convenio.insrvprt
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'qtlimmip'
+                                  ,pr_tag_cont => rw_convenio.qtlimmip
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'qtlimaxp'
+                                  ,pr_tag_cont => rw_convenio.qtlimaxp
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'qtdecprz'
+                                  ,pr_tag_cont => rw_convenio.qtdecprz
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'inarqcbr'
+                                  ,pr_tag_cont => rw_convenio.inarqcbr
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'inenvcob'
+                                  ,pr_tag_cont => rw_convenio.inenvcob
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'cddemail'
+                                  ,pr_tag_cont => rw_convenio.cddemail
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'divCnvHomol'
+                                  ,pr_tag_cont => NULL
+                                  ,pr_des_erro => vr_dscritic);
+                
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'flgcebhm'
+                                  ,pr_tag_cont => rw_convenio.flgcebhm
+                                  ,pr_des_erro => vr_dscritic);
+
+
+            gene0007.pc_insere_tag(pr_xml       => pr_retxml
+                                   ,pr_tag_pai  => 'Convenio'
+                                   ,pr_posicao  => 0
+                                   ,pr_tag_nova => 'qtbolcob'
+                                   ,pr_tag_cont => rw_convenio.qtbolcob
+                                   ,pr_des_erro => vr_dscritic);
+                                   
+
+            gene0007.pc_insere_tag(pr_xml      => pr_retxml
+                                  ,pr_tag_pai  => 'Convenio'
+                                  ,pr_posicao  => 0
+                                  ,pr_tag_nova => 'flgapihm'
+                                  ,pr_tag_cont => rw_convenio.flgapihm
+                                  ,pr_des_erro => vr_dscritic);
+        
+    
+    EXCEPTION
+        WHEN vr_exc_saida THEN
+            IF vr_cdcritic <> 0 THEN
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+            ELSE
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := vr_dscritic;
+            END IF;
+            --
+            pr_des_erro := 'NOK';
+            -- Carregar XML padrão para variável de retorno.
+            pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+            --
+            ROLLBACK;
+        WHEN OTHERS THEN
+            --
+            pr_cdcritic := vr_cdcritic;
+            pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
+            pr_des_erro := 'NOK';
+
+            -- Carregar XML padrão para variável de retorno.
+            pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+            --
+            ROLLBACK;
+            --
+    END pc_consulta_convenio;
+
 
 END tela_atenda_cobran;
 /

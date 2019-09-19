@@ -691,7 +691,10 @@ PROCEDURE p_cria_titulo:
         ASSIGN aux_nrnosnum = STRING(crapcob.nrdconta,"99999999") +
                               STRING(crapcob.nrdocmto,"999999999").
         
-    FIND crappnp WHERE crappnp.nmextcid = crapsab.nmcidsac AND
+    /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validaçao nao é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
+    /*FIND crappnp WHERE crappnp.nmextcid = crapsab.nmcidsac AND
                        crappnp.cduflogr = crapsab.cdufsaca NO-LOCK NO-ERROR.
     
     IF  AVAILABLE crappnp THEN
@@ -709,7 +712,7 @@ PROCEDURE p_cria_titulo:
                crapcol.cdoperad = "1"
                crapcol.dtaltera = TODAY
                crapcol.hrtransa = TIME.
-    END.
+    END.*/
 
     ASSIGN  crapcob.idopeleg = NEXT-VALUE(seqcob_idopeleg)                              
             crapcob.idtitleg = NEXT-VALUE(seqcob_idtitleg).

@@ -5106,6 +5106,8 @@ END pc_gera_titulos_iptu_prog;
   --
   --			   03/01/2019 - Nova regra para bloquear bancos. (Andrey Formigari - #SCTASK0035990)
   --
+  --               12/08/2019 - Adicionada busca do cdctrlcs (Jefferson - MoutS)
+  --
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -5268,6 +5270,8 @@ END pc_gera_titulos_iptu_prog;
       vr_inestcri       INTEGER;
       vr_clobxmlc       CLOB;
 
+      vr_cdctrlcs tbcobran_consulta_titulo.cdctrlcs%TYPE;
+
       vr_nrdipatu VARCHAR2(1000);
       vr_nridetit       NUMBER;
       vr_tpdbaixa       INTEGER;
@@ -5287,6 +5291,28 @@ END pc_gera_titulos_iptu_prog;
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
       --Variaveis Excecao
       vr_exc_erro EXCEPTION;
+
+      PROCEDURE pc_busca_cdctrlcs(pr_dscodbar IN  craplau.dscodbar%TYPE
+                                 ,pr_cdctrlcs OUT craplau.cdctrlcs%TYPE) IS
+
+        CURSOR cr_cct(pr_dscodbar craplau.dscodbar%TYPE) IS
+          SELECT MAX(cct.cdctrlcs)
+            FROM tbcobran_consulta_titulo cct
+           WHERE cct.dscodbar = pr_dscodbar;
+        rw_cct cr_cct%ROWTYPE;
+        
+      BEGIN
+        
+        OPEN cr_cct(pr_dscodbar => pr_dscodbar);
+        FETCH cr_cct INTO pr_cdctrlcs;
+        CLOSE cr_cct;
+        
+      EXCEPTION
+       WHEN OTHERS THEN
+         CECRED.pc_internal_exception;
+         pr_cdctrlcs := NULL;
+      END pc_busca_cdctrlcs;
+
     BEGIN -- inicio pc_retorna_vlr_titulo_iptu
       --Inicializar variaveis retorno
       pr_cdcritic:= NULL;
@@ -6463,15 +6489,19 @@ END pc_gera_titulos_iptu_prog;
         END IF;
       END IF;
 
+      vr_cdctrlcs := TRIM(pr_cdctrlcs);
+      pc_busca_cdctrlcs(pr_dscodbar => pr_codigo_barras
+                       ,pr_cdctrlcs => vr_cdctrlcs);
+      
       --> Caso possua numero de consulta da Nova Plataforma de cobrança
       --> Deve efetuar as validações
-      IF TRIM(pr_cdctrlcs) IS NOT NULL THEN
+      IF TRIM(vr_cdctrlcs) IS NOT NULL THEN
 
         --> Validação do pagamento do boleto na Nova plataforma de cobrança
         NPCB0001.pc_valid_pagamento_npc
                           ( pr_cdcooper  => rw_crapcop.cdcooper --> Codigo da cooperativa
                            ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data de movimento
-                           ,pr_cdctrlcs  => pr_cdctrlcs         --> Numero de controle da consulta no NPC
+                           ,pr_cdctrlcs  => vr_cdctrlcs         --> Numero de controle da consulta no NPC
                            ,pr_dtagenda  => pr_dt_agendamento   --> Data agendada para pagmento do boleto
                            ,pr_vldpagto  => pr_valor_informado  --> Valor a ser pago
                            ,pr_vltitulo  => pr_vlfatura         --> Valor do titulo
@@ -6850,7 +6880,7 @@ END pc_gera_titulos_iptu_prog;
 
       /* se p-cod-operador <> "DDA" entao critica titulo vencido - Rafael */
       /* situacao temporaria ate o projeto do TED estar ok */
-      IF vr_critica_data AND pr_cod_operador <> 'DDA' AND TRIM(pr_cdctrlcs) IS NULL THEN
+      IF vr_critica_data AND pr_cod_operador <> 'DDA' AND TRIM(vr_cdctrlcs) IS NULL THEN
         --Mensagem de erro
         vr_des_erro:= ' = '||To_Char(vr_dt_dtvencto,'DD/MM/YYYY');
         --Criar erro
@@ -7605,6 +7635,30 @@ END pc_gera_titulos_iptu_prog;
         --Retornar data dias
         vr_dttolera:= CXON0014.fn_retorna_data_dias(pr_nrdedias => To_Number(SUBSTR(pr_codigo_barras,21,3)) --Numero de Dias
                                                    ,pr_inanocal => vr_inanocal); --Indicador do Ano
+                                                   
+        /* Criticar quantidade de dias inválidos no código de barras - INICIO */
+        -- Para a Data de Vencimento
+        IF SUBSTR(pr_codigo_barras,21,3) IS NOT NULL AND 
+           (To_Number(SUBSTR(pr_codigo_barras,21,3)) < 1 OR
+            To_Number(SUBSTR(pr_codigo_barras,21,3)) > 366) THEN
+          --Mensagem erro
+          pr_cdcritic:= 0;
+          pr_dscritic:= 'Data do vecimento invalida.';
+          RAISE vr_exc_erro;
+      END IF;
+        
+        -- Para o Período de Apuração
+        IF SUBSTR(pr_codigo_barras,42,3) IS NOT NULL AND 
+           (To_Number(SUBSTR(pr_codigo_barras,42,3)) < 1 OR
+            To_Number(SUBSTR(pr_codigo_barras,42,3)) > 366) THEN
+          --Mensagem erro
+          pr_cdcritic:= 0;
+          pr_dscritic:= 'Periodo de apuracao invalido.';
+          RAISE vr_exc_erro;
+        END IF;
+        
+        /* Criticar quantidade de dias inválidos no código de barras - FIM */
+                                                           
       END IF;
       /* DARF NUMERADO / DAS */
       IF pr_cdempcon IN (385,328) AND pr_cdsegmto = 5 THEN /* DARFC0385 ou DAS - SIMPLES NACIONAL */
@@ -11938,6 +11992,7 @@ END pc_gera_titulos_iptu_prog;
                                do boleto.
                              - Ajustado o tratamento de erro na chamada da pc_verifica_vencimento_titulo
                              (Douglas - Chamado 628306)
+                             
     ...........................................................................*/
     --Selecionar informacoes cobranca
     CURSOR cr_crapcob (pr_nrcnvcob IN crapcob.nrcnvcob%type
@@ -11995,6 +12050,7 @@ END pc_gera_titulos_iptu_prog;
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic   VARCHAR2(4000);
     vr_tab_erro GENE0001.typ_tab_erro;
+
 
   BEGIN
     vr_codigo_barras := pr_codigo_barras;
@@ -12198,6 +12254,7 @@ END pc_gera_titulos_iptu_prog;
       vr_tab_erro.DELETE;
 
       --Verificar vencimento do titulo
+           
       pc_verifica_vencimento_titulo (pr_cod_cooper      => pr_cdcooper          --Codigo Cooperativa
                                     ,pr_cod_agencia     => pr_cdagenci          --Codigo da Agencia
                                     ,pr_dt_agendamento  => NULL                 --Data Agendamento

@@ -45,6 +45,51 @@
     }
     ?>
 
+	<fieldset>
+		<legend><? echo utf8ToHtml('Pagamentos Divergentes') ?></legend>
+	
+        <label for="sit_pag_divergente"><? echo utf8ToHtml('Situa&ccedil;&atilde;o das Devolu&ccedil;&otilde;es:') ?></label>
+        <select name="sit_pag_divergente" id="sit_pag_divergente" >
+            <option value="1" > ATIVO        </option>
+            <option value="2" > INATIVO      </option>
+        </select>
+        <br />
+	
+        <label for="pag_a_menor"><? echo utf8ToHtml('Devolver pagamentos a menor:') ?></label>
+        <input name="pag_a_menor" id="pag_a_menor" type="checkbox" class="checkbox" readonly />
+        <br />
+	
+        <label for="pag_a_maior"><? echo utf8ToHtml('Devolver pagamentos a maior:') ?></label>
+        <input name="pag_a_maior" id="pag_a_maior" type="checkbox" class="checkbox" readonly />
+        <br />
+	
+        <label for="tip_tolerancia"><? echo utf8ToHtml('Tipo de Toler&acirc;ncia:') ?></label>
+        <select name="tip_tolerancia" id="tip_tolerancia" >
+            <option value="1" > VALOR        </option>
+            <option value="2" > PERCENTUAL   </option>
+        </select>
+        <br />
+	
+        <label for="vl_tolerancia"><? echo utf8ToHtml('Toler&acirc;ncia:') ?></label>
+        <input name="vl_tolerancia" id="vl_tolerancia" type="text" style="margin-right: 5px"/>
+        <label id="simbolo_percentual" class="rotulo-linha">% &nbsp;&nbsp; </label>
+        <br />
+	
+        <br style="clear:both" />
+	
+	</fieldset>
+	
+    <br style="clear:both" />
+    
+    <ul class="complemento">
+        <li><? echo utf8ToHtml('Última Alt.:') ?></li>
+        <li id="dtcadast"></li>
+        <li><? echo utf8ToHtml('Operador:') ?></li>
+        <li id="cdoperad"></li>
+    </ul>
+    
+    <br style="clear:both" />
+    
 </form>
 
 <script type="text/javascript">

@@ -125,6 +125,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
                             Incluido set de modulo
                             Incluidos códigos de critica 1027 e 9999 ( Belli Envolti ) - Ch 665812
 
+			   05/08/2019 - Verificação de agência inativa adicionar 1 dia ao prazo 
+				      		de bloqueio removida, de acordo com os ajustes do 'P367
+					  		Compe sessão única' e ocorrência RITM0014144.	
+
 ..............................................................................*/
 
   /* Busca dos dados da cooperativa */
@@ -841,12 +845,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCAF0001 AS
       END IF;
       /* Quando a agencia do cheque estiver INATIVA, acrescenta 1 dia ao bloqueio
        para minimizar o risco operacional */
-	  /* Verificação removida de acordo com os ajustes do 
+      /* Verificação removida de acordo com os ajustes do 
 	   P367 - Compe sessão única e ocorrência RITM0014144 
       IF upper(rw_crapagb.cdsitagb) <> 'S' THEN
-        vr_qtdiasut:= vr_qtdiasut + 1;
-      END IF;*/
-	  
+        vr_qtdiasut:= vr_qtdiasut + 1; 
+	  END IF;*/
+
       /* Calculo da data de liberacao */
       /* 1- Para pagamento no caixa, o lancamento ocorre on-line e comeca a contar os
           dias a partir do dia seguinte (dtmvtopr)

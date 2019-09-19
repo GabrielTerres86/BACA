@@ -101,7 +101,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPAC AS
   --
   --    Programa: TELA_MANPAC
   --    Autor   : Jean Michel
-  --    Data    : Marco/2016                   Ultima Atualizacao: 18/07/2018
+  --    Data    : Marco/2016                   Ultima Atualizacao: 03/04/2018
   --
   --    Dados referentes ao programa:
   --
@@ -109,8 +109,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPAC AS
   --
   --    Alteracoes: 03/04/2018 - Inserido noti0001.pc_cria_notificacao                            
   --    
-  --                18/07/2018 - Adicionar condicao a mais no cr_tbtarif_contas_pacote
-  --                             tar.dtcancelamento IS NULL (Lucas Ranghetti INC0018899)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Rotina para consultar dados gerais do pacote de tarifas
@@ -513,15 +511,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPAC AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Jean Michel
-    Data    : Marco/2016                       Ultima atualizacao: 18/07/2018
+    Data    : Marco/2016                       Ultima atualizacao: 
     
     Dados referentes ao programa:
     
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para listar tarifas de determinado pacote
     
-    Alteracoes: 18/07/2018 - Adicionar condicao a mais no cr_tbtarif_contas_pacote
-                             tar.dtcancelamento IS NULL (Lucas Ranghetti INC0018899)
+    Alteracoes: 
     ............................................................................. */
        
     -- CURSORES --
@@ -546,8 +543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANPAC AS
         FROM tbtarif_contas_pacote tar
        WHERE tar.cdcooper = pr_cdcooper
          AND tar.cdpacote = pr_cdpacote
-         AND tar.flgsituacao = 1
-         AND tar.dtcancelamento IS NULL;
+         AND tar.flgsituacao = 1;
         
     rw_tbtarif_contas_pacote cr_tbtarif_contas_pacote%ROWTYPE;
 

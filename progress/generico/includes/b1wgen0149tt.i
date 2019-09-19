@@ -28,6 +28,7 @@ DEF TEMP-TABLE tt-agencia                                          NO-UNDO
 DEF TEMP-TABLE tt-feriados                                        NO-UNDO
     FIELD nrdrowid AS ROWID                                     
     FIELD dtferiad LIKE crapfsf.dtferiad                        
+    FIELD flgbaixa AS INTE
     INDEX tt-feriados1 nrdrowid.                                
                                                                 
 DEF TEMP-TABLE tt-banco                                           NO-UNDO

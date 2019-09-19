@@ -65,6 +65,8 @@
                   
 				  13/06/2019 - Corrigido a entrada de caracteres especiais na entrada do nome do beneficiario (Tiago)
                   24/07/2019 - P519 - Bloqueio de contratacao de seguros CASA/VIDA para coop CIVIA (Darlei / Supero)
+				  
+				  14/08/2019 - P519 - Adição de Bloqueio de contratacao de seguros para outras coops [2-6-8-12]. (Darlei / Supero)
  * */
 
 //**************************************************
@@ -138,6 +140,25 @@ var dsMotcan	  = '';
 var vlplaseg    = null;
 var vlmorada    = null;
 var teclado     = 0;
+
+var bloqueios = [];
+bloqueios['1']  = false; // VIACREDI
+bloqueios['2']  = true;  // ACREDICOOP
+bloqueios['3']  = false; // AILOS
+bloqueios['4']  = false; // CONCREDI
+bloqueios['5']  = false; // ACENTRA
+bloqueios['6']  = true;  // UNILOS
+bloqueios['7']  = false; // CREDCREA
+bloqueios['8']  = true;  // CREDELESC
+bloqueios['9']  = false; // TRANSPOCRED
+bloqueios['10'] = false; // CREDICOMIN
+bloqueios['11'] = false; // CREDIFOZ
+bloqueios['12'] = true;  // CREVISC
+bloqueios['13'] = true;  // CIVIA
+bloqueios['14'] = false; // EVOLUA
+bloqueios['15'] = false; // CREDIMILSUL
+bloqueios['16'] = false; // VIACREDI AV
+bloqueios['17'] = false; // TRANSULCRED
 
 // Inicializando os seletores dos campos do cabeçalho
 var cTodos    = $('#cdsitdct,#nmresseg,#nmdsegur,#nrcpfcgc,'+
@@ -343,7 +364,7 @@ function controlaOperacao(operacao) {
                     cdprodut = 19;
                     break;
             }
-				if ((tpseguro == 11 || tpseguro == 3)&&(cdcooper == 13)) {   // se for casa ou vida e cooperativa civia
+				if ((tpseguro == 11 || tpseguro == 3)&&(bloqueios[cdcooper.toString()])) {   // se for casa ou vida e cooperativa civia
 					showError('error','Plano de seguro bloqueado para contratação, devido processo de migração para Nova Seguradora. Adesão deverá ser realizada via Sistema de Gestão de Seguros – SIGAS.','Alerta - Aimaro','bloqueiaFundo(divRotina)');
                 return false;
                 break;

@@ -2009,7 +2009,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
     --
     --               03/06/2019 - Adicionado tratamento para os historicos de credito de resgate de aplic. pcapta
     --                          - para resgates que ocorrem em dias não úteis. Projeto 411.2 (Anderson).
-    
+
     
     DECLARE
       -- Descrição e código da critica
@@ -3159,8 +3159,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                            (Fernanda Kelli de Oliveira - AMCom)
                                  
                     22/05/2019 - Cursor para considerar também o horário da operação ao buscar o nome do 
-                                 estabelecimento. (Edmar - INC0014177)            
+                                 estabelecimento. (Edmar - INC0014177)          
 
+                    24/05/2019 - Exibir informações de recebimento de TEDs. P475 - REQ40
+                                 Jose Dill (Mouts).  
                     12/06/2019 - SM 298.3 - Ajustar a apresentação de parcelas pagas no extrato da operação 
                                  e da conta corrente para os contratos migrados - Darlei (Supero)                                 
     */
@@ -3848,7 +3850,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           CLOSE cr_crappro;
         END IF;
         
-        IF rw_craplcm.cdhistor IN (519,555,578,799,958) THEN -- TED Recebida e Realizada
+        IF rw_craplcm.cdhistor IN (519,555,578,799,958, 600) THEN -- TED Recebida e Realizada
+           /*REQ40 - Inclusão do Histórico 600 para permitir a visualização do recibo de TEDs */
           OPEN cr_craplmt(pr_cdcooper => rw_craplcm.cdcooper
                          ,pr_nrdconta => rw_craplcm.nrdconta
                          ,pr_dtmvtolt => rw_craplcm.dtmvtolt

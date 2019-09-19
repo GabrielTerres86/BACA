@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-05-23T15:37:54 -->
+<!-- 2019-07-17T14:51:25 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_proposta" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -166,6 +166,9 @@
 	<field name="dsemsnot" class="java.lang.String">
 		<fieldDescription><![CDATA[dsemsnot]]></fieldDescription>
 	</field>
+  <field name="vlrencjg" class="java.lang.String">
+    <fieldDescription><![CDATA[vlrencjg]]></fieldDescription>
+  </field>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
@@ -397,7 +400,7 @@
 				<textFieldExpression><![CDATA[$F{vlsalari}]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="370" y="40" width="122" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="2f1e7593-6d2e-49f6-b3ff-5e0da3ae70cb"/>
+        <reportElement mode="Transparent" x="158" y="52" width="122" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="2f1e7593-6d2e-49f6-b3ff-5e0da3ae70cb"/>
 				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
@@ -413,7 +416,7 @@
 				<textFieldExpression><![CDATA["Salario: "]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="130" y="50" width="150" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="8c6d01a6-a0ce-4aee-9a5c-1830c41c1140"/>
+        <reportElement mode="Transparent" x="130" y="67" width="150" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="8c6d01a6-a0ce-4aee-9a5c-1830c41c1140"/>
 				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
@@ -421,7 +424,7 @@
 				<textFieldExpression><![CDATA["Faturamento Mensal: "]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="370" y="50" width="122" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="eddc4fbe-b533-442e-b557-92062584390e"/>
+        <reportElement mode="Transparent" x="370" y="40" width="122" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="eddc4fbe-b533-442e-b557-92062584390e"/>
 				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
@@ -429,7 +432,7 @@
 				<textFieldExpression><![CDATA["Outras: "]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="290" y="50" width="70" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="1f9383ca-76e4-40c9-b75d-36d89eaf763d"/>
+        <reportElement mode="Transparent" x="290" y="67" width="70" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="1f9383ca-76e4-40c9-b75d-36d89eaf763d"/>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
@@ -437,7 +440,7 @@
 				<textFieldExpression><![CDATA[$F{vlfatura}]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="492" y="50" width="58" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="ed990bb0-3836-494a-9201-c94d4b2ceee2"/>
+        <reportElement mode="Transparent" x="492" y="40" width="58" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="ed990bb0-3836-494a-9201-c94d4b2ceee2"/>
 				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
@@ -445,7 +448,7 @@
 				<textFieldExpression><![CDATA[$F{vloutras}]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="30" y="70" width="90" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="1bf5ed0f-e10a-40da-b494-715ee0ea9910"/>
+        <reportElement mode="Transparent" x="30" y="85" width="90" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="1bf5ed0f-e10a-40da-b494-715ee0ea9910"/>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
@@ -453,7 +456,7 @@
 				<textFieldExpression><![CDATA["LIMITES"]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="130" y="70" width="150" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="87f7addc-15a1-4301-a064-8da88fd8bd11"/>
+        <reportElement mode="Transparent" x="130" y="85" width="150" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="87f7addc-15a1-4301-a064-8da88fd8bd11"/>
 				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
@@ -461,7 +464,7 @@
 				<textFieldExpression><![CDATA["Cheque Especial: "]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="290" y="70" width="70" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="301f650a-5487-42ad-9a22-5aff84d1b6e5"/>
+        <reportElement mode="Transparent" x="290" y="85" width="70" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="301f650a-5487-42ad-9a22-5aff84d1b6e5"/>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
@@ -469,7 +472,7 @@
 				<textFieldExpression><![CDATA[$F{vllimcre}]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="370" y="70" width="122" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="87f0b7f4-1648-4097-b32d-7f157372f184"/>
+        <reportElement mode="Transparent" x="370" y="85" width="122" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="87f0b7f4-1648-4097-b32d-7f157372f184"/>
 				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
@@ -477,7 +480,7 @@
 				<textFieldExpression><![CDATA["Cartoes de Credito: "]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="492" y="70" width="58" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="3b80d0ed-6fd7-4be5-aa4a-feb4da458062"/>
+        <reportElement mode="Transparent" x="492" y="85" width="58" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="3b80d0ed-6fd7-4be5-aa4a-feb4da458062"/>
 				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
@@ -485,7 +488,7 @@
 				<textFieldExpression><![CDATA[$F{vltotccr}]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="30" y="110" width="90" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="7d4ca0bf-ced1-45c4-ad61-4c9fb54f28e4"/>
+        <reportElement mode="Transparent" x="30" y="119" width="90" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="7d4ca0bf-ced1-45c4-ad61-4c9fb54f28e4"/>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
@@ -593,7 +596,7 @@
 				<textFieldExpression><![CDATA[$F{vlmedtit}]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="130" y="90" width="150" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="a34adca5-4fce-4989-b9d9-4026823bcea7"/>
+        <reportElement mode="Transparent" x="130" y="98" width="150" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="a34adca5-4fce-4989-b9d9-4026823bcea7"/>
 				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
@@ -601,7 +604,7 @@
 				<textFieldExpression><![CDATA["Desconto de Cheques: "]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="290" y="90" width="70" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="a5011ef2-6be1-4a26-8d56-e39c866ed794"/>
+        <reportElement mode="Transparent" x="290" y="98" width="70" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="a5011ef2-6be1-4a26-8d56-e39c866ed794"/>
 				<textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
@@ -633,12 +636,28 @@
 				<textFieldExpression><![CDATA["Aplicacoes: "]]></textFieldExpression>
 			</textField>
 			<textField pattern="" isBlankWhenNull="false">
-				<reportElement mode="Transparent" x="492" y="40" width="58" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="9fc6a8c7-3071-445b-a544-61a8d5da9ae0"/>
-				<textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+        <reportElement mode="Transparent" x="290" y="52" width="70" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="9fc6a8c7-3071-445b-a544-61a8d5da9ae0"/>
+        <textElement textAlignment="Left" verticalAlignment="Top" rotation="None" markup="none">
 					<font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
 					<paragraph lineSpacing="Single"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vlsalcon}]]></textFieldExpression>
+      </textField>
+      <textField pattern="" isBlankWhenNull="false">
+        <reportElement mode="Transparent" x="370" y="52" width="122" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="289e4580-6c27-4257-8640-49e9da8bfab1"/>
+        <textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+          <font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+          <paragraph lineSpacing="Single"/>
+        </textElement>
+        <textFieldExpression><![CDATA["Outras: "]]></textFieldExpression>
+      </textField>
+      <textField pattern="" isBlankWhenNull="false">
+        <reportElement key="" mode="Transparent" x="492" y="52" width="58" height="11" isPrintWhenDetailOverflows="true" forecolor="#000000" backcolor="#FFFFFF" uuid="1ad8d747-7cac-47c3-8370-5edb0d27dd93"/>
+        <textElement textAlignment="Right" verticalAlignment="Top" rotation="None" markup="none">
+          <font fontName="Courier New" size="9" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Courier" pdfEncoding="Cp1252" isPdfEmbedded="false"/>
+          <paragraph lineSpacing="Single"/>
+        </textElement>
+        <textFieldExpression><![CDATA[$F{vlrencjg}]]></textFieldExpression>
 			</textField>
 		</band>
 		<band height="83">

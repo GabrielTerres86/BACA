@@ -1288,7 +1288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_fator_price_total   NUMBER(25,10);
       vr_saldo_projetado     NUMBER(25,2);
       vr_indice              VARCHAR2(10);      
-      --vr_qtdmes              number(2);
+      vr_qtdmes              number(2);
     BEGIN
       vr_tab_price.DELETE;
       vr_tab_total_juros.DELETE;
@@ -1355,9 +1355,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
           -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
           vr_nrparepr := NVL(vr_nrparepr,0) + 1;
           -- Avanca da data da carencia para o proximo mês
-          --PJ298_5
-          --vr_qtdmes := pr_qtdias_carencia / 30;
-          --vr_dtvencto := ADD_MONTHS(TO_DATE(vr_dtvencto,'DD/MM/RRRR'),vr_qtdmes) ;         
           vr_dtvencto := TO_DATE(TO_CHAR(vr_dtvencto,'DD')||'/'||TO_CHAR(vr_dtvencto + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
         END IF;
 
@@ -1504,7 +1501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       vr_saldo_projetado        NUMBER(25,10);
       vr_indice                 VARCHAR2(4000);
 			vr_vlrdtaxa               craptxi.vlrdtaxa%TYPE;
-      --vr_qtdmes                 number(2);
+      vr_qtdmes                 number(2);
 
       -- Variaveis tratamento de erros
       vr_cdcritic               crapcri.cdcritic%TYPE;
@@ -1543,26 +1540,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       -- se achou registro
       IF cr_craplcr%FOUND THEN
         CLOSE cr_craplcr;
-      ELSE
-        CLOSE cr_craplcr;
-        -- Gerar erro
-        vr_cdcritic := 363;
-        RAISE vr_exc_erro;
-      END IF;      
+        ELSE
+          CLOSE cr_craplcr;
+          -- Gerar erro
+          vr_cdcritic := 363;
+          RAISE vr_exc_erro;
+        END IF;   
 
-      -- Buscar a taxa acumulada do CDI
+          -- Buscar a taxa acumulada do CDI
       OPEN cr_craptxi (pr_cddindex => rw_craplcr.cddindex
-                      ,pr_dtiniper => vr_dtmvtoan);
-      FETCH cr_craptxi INTO rw_craptxi;
-      -- se achou registro
-      IF cr_craptxi%FOUND THEN
-        CLOSE cr_craptxi;
-      ELSE
-        CLOSE cr_craptxi;
-        -- Gerar erro
-        vr_dscritic := 'Taxa do CDI nao cadastrada. Data: ' || TO_CHAR(vr_dtmvtoan,'DD/MM/RRRR');
-        RAISE vr_exc_erro;
-      END IF;
+                          ,pr_dtiniper => vr_dtmvtoan);
+          FETCH cr_craptxi INTO rw_craptxi;
+          -- se achou registro
+          IF cr_craptxi%FOUND THEN
+            CLOSE cr_craptxi;
+          ELSE
+            CLOSE cr_craptxi;
+            -- Gerar erro
+            vr_dscritic := 'Taxa do CDI nao cadastrada. Data: ' || TO_CHAR(vr_dtmvtoan,'DD/MM/RRRR');
+            RAISE vr_exc_erro;
+      END IF;      
 
 			-- Aplica o percentual do indexador sobre o valor da taxa
 			vr_vlrdtaxa := (rw_craptxi.vlrdtaxa * rw_craplcr.vlperidx);
@@ -1640,9 +1637,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 		  -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
           vr_nrparepr := NVL(vr_nrparepr,0) + 1;
           -- Avanca da data da carencia para o proximo mês
-          --PJ298_5
-          --vr_qtdmes := pr_qtdias_carencia / 30;
-          --vr_dtcarenc := ADD_MONTHS(TO_DATE(vr_dtcarenc,'DD/MM/RRRR'),vr_qtdmes); -- Retirar
           vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
 		  --
                 END IF;
@@ -9198,10 +9192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 		     -- Grava o valor do Juros Correção/Juros Remuneratorio da Parcela
           vr_nrparepr := NVL(vr_nrparepr,0) + 1;
           -- Avanca da data da carencia para o proximo mês
-          --PJ298_5
-          vr_qtdmes := pr_qtdias_carencia / 30;
-          vr_dtcarenc := ADD_MONTHS(TO_DATE(vr_dtcarenc,'DD/MM/RRRR'),vr_qtdmes) ;         
-          --vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
+          vr_dtcarenc := TO_DATE(TO_CHAR(vr_dtcarenc,'DD')||'/'||TO_CHAR(vr_dtcarenc + pr_qtdias_carencia,'MM/RRRR'),'DD/MM/RRRR');
 		    --
         END IF;
              
@@ -9279,7 +9270,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
         pr_cdcritic := NVL(vr_cdcritic, 0);
         pr_dscritic := 'Erro na procedure pc_calcula_prest_principal_pos: ' || SQLERRM;
     END;
-
   END pc_calcula_prest_principal_pos;
   --
   PROCEDURE pc_busca_prest_principal_pos(pr_cdcooper         IN crapepr.cdcooper%TYPE     --> Codigo da Cooperativa

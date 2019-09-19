@@ -194,32 +194,37 @@
                             gerar_compel_custodia, gerar_compel, gerar_digita e 
                             gerar_compel_altoVale (Douglas - Chamado 445731) 
 
-			   20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
-							de truncagem com nomes("caixa-*", "desc-*" e "custodia-*"). 
-							SD 476097. Carlos Rafael Tanholi.
+                           20/07/2016 - Alteracao do caminho onde serao salvos os arquivos
+                                                        de truncagem com nomes("caixa-*", "desc-*" e "custodia-*"). 
+                                                        SD 476097. Carlos Rafael Tanholi.
 
                04/11/2016 - Cheques custodiados deverao ter o numero do bordero
-                            igual a zero. (Projeto 300 - Rafael) 							
+                            igual a zero. (Projeto 300 - Rafael)                                                         
 
                12/12/2016 - Ajuste gerar_titulo Nova Plataforma de Cobrana. PRJ340 - NPC (Odirlei-AMcom)
                
                23/01/2017 - Realizado merge com a PROD ref ao projeto 300 (Rafael)                            
                
                31/05/2017 - Ajustado código da agencia do PA ao enviar arquivo COB605. (Rafael)
-               	 
+                        
                17/08/2017 - #738442 Retiradas as mensagens informativas 
                             "Verificando registros para geracao de arquivo(s)" (Carlos)
 
-			   27/09/2017 - Ajuste na tratativa PG_CX, em casos especificos estava ficava na
-			                variavel aux_dschqctl o valor do cheque anterior. (Daniel - Chamado 753756) 
+                           27/09/2017 - Ajuste na tratativa PG_CX, em casos especificos estava ficava na
+                                        variavel aux_dschqctl o valor do cheque anterior. (Daniel - Chamado 753756) 
 
                24/11/2017 - Retirado (nrborder = 0) e feita validacao para verificar
                             se o cheque esta em bordero de desconto efetivado
                             antes de prosseguir com a custodia
                             Rotina gerar_digita (Tiago/Adriano #766582)      
-							
-			   13/04/2018 - Removidas validacoes de valor do cheque - COMPE SESSAO UNICA (Diego)          
-............................................................................. */
+                                                        
+                           13/04/2018 - Removidas validacoes de valor do cheque - COMPE SESSAO UNICA (Diego)          
+                                         
+               30/07/2019 - PJ565 - Validaçoes e gravaçao da estrutura tabema nossa remessa - Renato Cordeiro - AMcom
+               
+               ............................................................................. */
+
+{ sistema/generico/includes/var_oracle.i }
 
 DEF STREAM str_1.
 
@@ -359,6 +364,10 @@ DEF      VAR aux_dsdirmic     AS CHAR                                   NO-UNDO.
 DEF      VAR aux_retorno      AS CHAR                                   NO-UNDO.
 DEF      VAR aux_mes          AS CHAR                                   NO-UNDO.   
 DEF      VAR aux_contador2    AS INTE                                   NO-UNDO.
+
+DEF      VAR aux_cdcritic     AS INTEGER                                NO-UNDO.
+DEF      VAR aux_dscritic     AS CHARACTER                              NO-UNDO.
+DEF      VAR aux_dtmvtolt     AS DATE                                   NO-UNDO.
 
 
 /*............................................................................*/
@@ -755,6 +764,7 @@ PROCEDURE gerar_arquivos_cecred:
 
    ASSIGN aux_nmdatela = par_nmdatela
           aux_nmprgexe = par_nmprgexe
+          aux_dtmvtolt = par_dtmvtolt
           aux_nmarqlog = "/usr/coop/cecred/log/prcctl_" +
                          STRING(YEAR(par_dtmvtolt),"9999") +
                          STRING(MONTH(par_dtmvtolt),"99") +
@@ -1218,6 +1228,7 @@ PROCEDURE gerar_doctos:
                                                   INPUT  craptvl.cdagenci,
                                                   INPUT  "DOCTOS",
                                                   INPUT  1,
+                                                  INPUT  0,
                                                   OUTPUT ret_cdcritic).
        END.
 
@@ -1276,6 +1287,8 @@ PROCEDURE gerar_titulo:
    DEF VAR aux_nrispbif_rem AS INT                                    NO-UNDO.
    DEF VAR aux_nrispbif AS INT                                        NO-UNDO.   
    
+   DEF VAR vr_cdagenci  AS INT                                        NO-UNDO.
+   DEF BUFFER crabage   FOR crapage.
    
 
    ASSIGN aux_qttitcxa = 0
@@ -1314,7 +1327,6 @@ PROCEDURE gerar_titulo:
                           craptit.intitcop  = 0                  AND
                           craptit.flgenvio  = NO)                
                           NO-LOCK,
-
        EACH crapage WHERE crapage.cdcooper = craptit.cdcooper AND
                           crapage.cdagenci = craptit.cdagenci AND
                           crapage.cdbantit = crapcop.cdbcoctl
@@ -1325,6 +1337,7 @@ PROCEDURE gerar_titulo:
        IF FIRST-OF(craptit.cdagenci) THEN
           DO:
               ASSIGN aux_vltotarq = 0 
+                     aux_qtregarq = 0
                      aux_nrseqarq = 1
                      aux_nrsqarhd = aux_nrsqarhd + 1
                      ret_qtarquiv = ret_qtarquiv + 1.
@@ -1461,7 +1474,7 @@ PROCEDURE gerar_titulo:
        /* Atualiza campo cdbcoenv da TIT - Fim */
 
        ASSIGN aux_nrseqarq = aux_nrseqarq + 1
-              ret_totregis = ret_totregis + 1
+              aux_qtregarq = aux_qtregarq + 1
               aux_vltotarq = aux_vltotarq + craptit.vldpagto.
                      
        IF CAN-DO("0,2", STRING(craptit.insittit)) THEN       /*  Titulo programado  */
@@ -1648,6 +1661,7 @@ PROCEDURE gerar_titulo:
        IF LAST-OF(craptit.cdagenci) THEN
           DO:
               aux_nrseqarq = aux_nrseqarq + 1.
+              ret_totregis = ret_totregis + aux_qtregarq.
 
               PUT STREAM str_1
                   FILL("9",47)         FORMAT "x(47)" /* Constante de 9 */
@@ -1703,9 +1717,40 @@ PROCEDURE gerar_titulo:
                                                 INPUT  craptit.cdagenci,
                                                 INPUT  "TITULO",
                                                 INPUT  1,
+                                                INPUT  0,
                                                 OUTPUT ret_cdcritic).
 
-       END.
+              DO:
+
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                     /* Efetuar a chamada a rotina Oracle  */
+                     RUN STORED-PROCEDURE pc_checa_titulos
+                         aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper 
+                                                             ,INPUT aux_nmarquiv
+                                                             ,INPUT crapcop.cdagectl
+                                                             ,INPUT craptit.cdagenci
+                                                             ,INPUT par_dtmvtolt
+                                                             ,INPUT aux_qtregarq
+                                                             ,INPUT aux_vltotarq
+                                                             ,OUTPUT 0
+                                                             ,OUTPUT "").
+
+                     /* Fechar o procedimento para buscarmos o resultado */ 
+                     CLOSE STORED-PROC pc_checa_titulos
+                            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                    
+                     ASSIGN aux_dscritic = ""
+                            aux_dscritic = pc_checa_titulos.pr_dscritic
+                                           WHEN pc_checa_titulos.pr_dscritic <> ?
+                            aux_cdcritic = 0
+                            aux_cdcritic = pc_checa_titulos.pr_cdcritic
+                                           WHEN pc_checa_titulos.pr_cdcritic <> ?.
+
+              END. /* execuçao comp0001.pc_checa_titulos*/
+
+       END. /* last-of craptit.cdagenci*/
 
        HIDE MESSAGE NO-PAUSE.
 
@@ -2158,6 +2203,37 @@ PROCEDURE gerar_compel:
 
            ASSIGN aux_totqtchq = aux_totqtchq + 1
                   aux_totvlchq = aux_totvlchq + (crapchd.vlcheque * 100).
+
+           IF   ((crapchd.tpdmovto = 1)                       AND
+                 (DECIMAL(SUBSTR(craptab.dstextab,01,15)) > 
+                                           crapchd.vlcheque)) OR
+                ((crapchd.tpdmovto = 2)                       AND
+                 (DECIMAL(SUBSTR(craptab.dstextab,01,15)) < 
+                                           crapchd.vlcheque)) THEN
+                DO:
+                     ret_cdcritic = 711.
+                           
+                     IF aux_flgdepin THEN
+                        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + 
+                           " - Ref.: " + STRING(par_dtmvtolt,"99/99/9999") +
+                           " Parametro do cheque superior alterado" +
+                           " Cheque: " + STRING(crapchd.nrcheque,"999999") +
+                           " Agencia destino: " + STRING(crapchd.cdagedst) +
+                           " Conta: " + STRING(crapchd.nrctadst,
+                           "999999999999") + " >> " + aux_dscooper +
+                           "log/compel.log").
+                     ELSE                                                    
+                         UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                              " - Ref.: " + STRING(par_dtmvtolt,"99/99/9999") +
+                              " Parametro do cheque superior alterado" +
+                              " Cheque: " + STRING(crapchd.nrcheque,"999999") +
+                              " Conta: " + STRING(crapchd.nrdconta,
+                              "999999999999") + " >> " + aux_dscooper +
+                              "log/compel.log").
+
+                     aux_flgerror = TRUE.
+                     LEAVE.
+                END.
 
            IF   LAST-OF(crapchd.cdagenci) THEN
                 DO:
@@ -3919,6 +3995,7 @@ PROCEDURE gerar_compel_prcctl:
    DEF VAR          aux_nmarqdat AS CHAR   FORMAT "x(20)"             NO-UNDO.
    DEF VAR          aux_totqtchq AS INT                               NO-UNDO.
    DEF VAR          aux_totvlchq AS DECIMAL                           NO-UNDO.
+   DEF VAR          aux_totvlchq_valida AS DECIMAL                    NO-UNDO.
    DEF VAR          aux_cdsituac AS INT                               NO-UNDO.
    DEF VAR          aux_nrdahora AS INT                               NO-UNDO.
    DEF VAR          aux_cdcomchq AS INT                               NO-UNDO.
@@ -4028,7 +4105,8 @@ PROCEDURE gerar_compel_prcctl:
                                  SKIP.
 
                ASSIGN aux_totqtchq = 0
-                      aux_totvlchq = 0.
+                      aux_totvlchq = 0
+                      aux_totvlchq_valida = 0.
 
             END.  /*  Fim  do  FIRST-OF()  */
 
@@ -4080,8 +4158,8 @@ PROCEDURE gerar_compel_prcctl:
                                        /* Para nao receber arquivo de retorno 
                                        na VIACREDI */ 
                                        ASSIGN aux_dschqctl = "PG_CX ".
-							      ELSE
-								       ASSIGN aux_dschqctl = "      ".
+                                                              ELSE
+                                                                       ASSIGN aux_dschqctl = "      ".
 
                               END.
                          ELSE
@@ -4203,7 +4281,51 @@ PROCEDURE gerar_compel_prcctl:
        /* Atualiza campo cdbcoenv da CHD - Fim */
 
        ASSIGN aux_totqtchq = aux_totqtchq + 1
-              aux_totvlchq = aux_totvlchq + (crapchd.vlcheque * 100).
+              aux_totvlchq = aux_totvlchq + (crapchd.vlcheque * 100)
+              aux_totvlchq_valida = aux_totvlchq_valida + crapchd.vlcheque.
+
+       IF   ((crapchd.tpdmovto = 1) AND
+             (DECIMAL(SUBSTR(craptab.dstextab,01,15)) > crapchd.vlcheque)) OR
+            ((crapchd.tpdmovto = 2) AND
+             (DECIMAL(SUBSTR(craptab.dstextab,01,15)) < crapchd.vlcheque)) THEN
+             DO:
+                  ret_cdcritic = 711.
+
+                  IF aux_nmdatela = "PRCCTL" THEN
+                     DO:
+                         IF aux_flgdepin THEN
+                            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + 
+                               " - Coop:" + STRING(par_cdcooper,"99") +
+                               " - Processar:" + aux_nmprgexe +
+                               " - Ref.: " + STRING(par_dtmvtolt,"99/99/9999") +
+                               " Parametro do cheque superior alterado" +
+                               " Cheque: " + STRING(crapchd.nrcheque,"999999") +
+                               " Agencia destino: " + STRING(crapchd.cdagedst) +
+                               " Conta: " + STRING(crapchd.nrctadst,
+                               "999999999999") + 
+                               " >> " + aux_nmarqlog).
+                         ELSE
+                             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + 
+                                   " - Coop:" + STRING(par_cdcooper,"99") +
+                                   " - Processar:" + aux_nmprgexe +
+                                   " - Ref.: " + STRING(par_dtmvtolt,"99/99/9999") +
+                                   " Parametro do cheque superior alterado" +
+                                   " Cheque: " + STRING(crapchd.nrcheque,"999999") +
+                                   " Conta: " + STRING(crapchd.nrdconta,
+                                   "999999999999") + " >> " + aux_nmarqlog).
+                     END.
+                  ELSE
+                      UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                          " - Ref.: " + STRING(par_dtmvtolt,"99/99/9999") +
+                          " Parametro do cheque superior alterado" +
+                          " Cheque: " + STRING(crapchd.nrcheque,"999999") +
+                          " Conta: " + STRING(crapchd.nrdconta,
+                          "999999999999") + " >> " + aux_dscooper +
+                          "log/compel.log").
+
+                  aux_flgerror = TRUE.
+                  LEAVE.
+             END.
 
        IF   LAST-OF(crapchd.cdagenci) THEN
             DO:
@@ -4245,7 +4367,37 @@ PROCEDURE gerar_compel_prcctl:
                                                   INPUT  crapchd.cdagenci,
                                                   INPUT  "COMPEL",
                                                   INPUT  1,
+                                                  INPUT  0,
                                                   OUTPUT ret_cdcritic).
+                DO:
+
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   /* Efetuar a chamada a rotina Oracle  */
+                   RUN STORED-PROCEDURE pc_checa_compel
+                       aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper 
+                                                           ,INPUT aux_nmarqdat
+                                                           ,INPUT crapcop.cdagectl
+                                                           ,INPUT crapchd.cdagenci
+                                                           ,INPUT par_dtmvtolt
+                                                           ,INPUT aux_totqtchq
+                                                           ,INPUT aux_totvlchq_valida
+                                                           ,OUTPUT 0
+                                                           ,OUTPUT "").
+
+                   /* Fechar o procedimento para buscarmos o resultado */ 
+                   CLOSE STORED-PROC pc_checa_compel
+                          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+                  
+                   ASSIGN aux_dscritic = ""
+                          aux_dscritic = pc_checa_compel.pr_dscritic
+                                         WHEN pc_checa_compel.pr_dscritic <> ?
+                          aux_cdcritic = 0
+                          aux_cdcritic = pc_checa_compel.pr_cdcritic
+                                         WHEN pc_checa_compel.pr_cdcritic <> ?.
+
+                END. /* execuçao comp0001.pc_checa_compel*/
             END.  /*  Fim do LAST-OF()  */
 
        HIDE MESSAGE NO-PAUSE.
@@ -4584,6 +4736,24 @@ PROCEDURE gerar_compel_altoVale:
        ASSIGN aux_totqtchq = aux_totqtchq + 1
               aux_totvlchq = aux_totvlchq + (crapchd.vlcheque * 100).
 
+       IF   ((crapchd.tpdmovto = 1) AND
+             (DEC(SUBSTR(craptab.dstextab,01,15)) > crapchd.vlcheque)) OR
+            ((crapchd.tpdmovto = 2) AND
+             (DEC(SUBSTR(craptab.dstextab,01,15)) < crapchd.vlcheque)) THEN
+            DO:
+                ret_cdcritic = 711.
+
+                UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                           " - Ref.: " + STRING(par_dtmvtolt,"99/99/9999") +
+                           " Parametro do cheque superior alterado" +
+                           " Cheque: " + STRING(crapchd.nrcheque,"999999") +
+                           " Conta: " + STRING(crapchd.nrdconta,
+                           "999999999999") + " >> " + aux_dscooper +
+                           "log/compel.log").
+
+                aux_flgerror = TRUE.
+                LEAVE.
+            END.
         
    END.   /*  Fim do FOR EACH  */
 
@@ -5427,6 +5597,8 @@ PROCEDURE reativar_arquivos_cecred:
    DEF INPUT  PARAM par_nrprevia AS INT                               NO-UNDO.
    DEF INPUT  PARAM par_nrdcaixa AS INT                               NO-UNDO.           
    DEF INPUT  PARAM par_cdbccxlt AS CHAR                              NO-UNDO.    
+   DEF INPUT  PARAM par_tpdevolu AS CHAR                              NO-UNDO.
+
    DEF OUTPUT PARAM ret_cdcritic AS INTE                              NO-UNDO.
 
    DEF          VAR aux_cdagefim AS INT                               NO-UNDO.
@@ -5497,6 +5669,19 @@ PROCEDURE reativar_arquivos_cecred:
            RUN reativar_tic604(INPUT  par_cdcooper,
                                INPUT  par_dtmvtolt,
                                OUTPUT ret_cdcritic).
+
+           IF RETURN-VALUE <> "OK" THEN
+              RETURN "NOK".
+
+       END.
+
+       WHEN "DEVOLU" THEN DO:
+           RUN reativar_devolu_prcctl(INPUT  par_cdcooper,
+                                      INPUT  par_dtmvtolt,
+                                      INPUT  par_cdageini,
+                                      INPUT  aux_cdagefim,
+                                      INPUT  par_tpdevolu,
+                                      OUTPUT ret_cdcritic).
 
            IF RETURN-VALUE <> "OK" THEN
               RETURN "NOK".
@@ -5576,6 +5761,7 @@ PROCEDURE reativar_doctos:
                                              INPUT  craptvl.cdagenci,
                                              INPUT  "DOCTOS",
                                              INPUT  0,
+                                             INPUT  0,
                                              OUTPUT aux_cdcritic).
    END. /* Fim do For Each */
 
@@ -5614,6 +5800,41 @@ PROCEDURE reativar_titulos:
    DEF OUTPUT PARAM ret_cdcritic AS INTE                              NO-UNDO.
 
    DEF   VAR  aux_cdcritic       AS INT                               NO-UNDO.
+   DEF   VAR  aux_cdagenci       AS INT                               NO-UNDO.
+
+   ASSIGN aux_cdagenci = par_cdageini.
+   DO WHILE aux_cdagenci <= par_cdagefim:
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   /* Efetuar a chamada a rotina Oracle  */
+                   RUN STORED-PROCEDURE pc_checa_titulo
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                   ,INPUT " "
+                                                   ,INPUT 0
+                                                   ,INPUT aux_cdagenci
+                                                   ,INPUT par_dtmvtolt
+                                                   ,INPUT 0
+                                                   ,INPUT 0
+                                                   ,OUTPUT 0
+                                                   ,OUTPUT "").
+
+               /* Fechar o procedimento para buscarmos o resultado */ 
+               CLOSE STORED-PROC pc_checa_titulo
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+          
+               ASSIGN aux_dscritic = ""
+                  aux_dscritic = pc_checa_titulo.pr_dscritic
+                                 WHEN pc_checa_titulo.pr_dscritic <> ?
+                  aux_cdcritic = 0
+                  aux_cdcritic = pc_checa_titulo.pr_cdcritic
+                                 WHEN pc_checa_titulo.pr_cdcritic <> ?.
+
+               ASSIGN aux_cdagenci = aux_cdagenci + 1.
+
+          END.
+
+
 
    FOR EACH craptit WHERE craptit.cdcooper  = par_cdcooper        AND
                           craptit.dtdpagto  = par_dtmvtolt        AND
@@ -5661,11 +5882,14 @@ PROCEDURE reativar_titulos:
           RETURN "NOK".
 
        IF LAST-OF (craptit.cdagenci) THEN
+       DO:
            RUN pi_alterar_situacao_arquivos (INPUT  craptit.cdcooper,
                                              INPUT  craptit.cdagenci,
                                              INPUT  "TITULO",
                                              INPUT  0,
+                                             INPUT  4,
                                              OUTPUT aux_cdcritic).
+       END.
    END.
 
    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
@@ -5774,6 +5998,7 @@ PROCEDURE reativar_compel:
                                              INPUT  crapchd.cdagenci,
                                              INPUT  "COMPEL",
                                              INPUT  0,
+                                             INPUT  0,
                                              OUTPUT aux_cdcritic).
    END.  /* fim do FOR EACH */
     
@@ -5833,6 +6058,40 @@ PROCEDURE reativar_compel_prcctl:
    DEF OUTPUT PARAM ret_cdcritic AS INTE                              NO-UNDO.
 
    DEF   VAR  aux_cdcritic       AS INT                               NO-UNDO.
+   DEF   VAR  aux_cdagenci       AS INT                               NO-UNDO.
+   
+   ASSIGN aux_cdagenci = par_cdageini.
+   DO WHILE aux_cdagenci <= par_cdagefim:
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   /* Efetuar a chamada a rotina Oracle  */
+                   RUN STORED-PROCEDURE pc_checa_compel
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                                   ,INPUT " "
+                                                   ,INPUT 0
+                                                   ,INPUT aux_cdagenci
+                                                   ,INPUT par_dtmvtolt
+                                                   ,INPUT 0
+                                                   ,INPUT 0
+                                                   ,OUTPUT 0
+                                                   ,OUTPUT "").
+
+               /* Fechar o procedimento para buscarmos o resultado */ 
+               CLOSE STORED-PROC pc_checa_compel
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+          
+               ASSIGN aux_dscritic = ""
+                  aux_dscritic = pc_checa_compel.pr_dscritic
+                                 WHEN pc_checa_compel.pr_dscritic <> ?
+                  aux_cdcritic = 0
+                  aux_cdcritic = pc_checa_compel.pr_cdcritic
+                                 WHEN pc_checa_compel.pr_cdcritic <> ?.
+
+               ASSIGN aux_cdagenci = aux_cdagenci + 1.
+
+          END.
+
 
    FOR EACH crapchd WHERE crapchd.cdcooper = par_cdcooper     AND
                           crapchd.dtmvtolt = par_dtmvtolt     AND
@@ -5878,11 +6137,15 @@ PROCEDURE reativar_compel_prcctl:
           RETURN "NOK".
 
        IF LAST-OF (crapchd.cdagenci) THEN
+       DO:
            RUN pi_alterar_situacao_arquivos (INPUT  crapchd.cdcooper,
                                              INPUT  crapchd.cdagenci,
                                              INPUT  "COMPEL",
                                              INPUT  0,
+                                             INPUT  3,
                                              OUTPUT aux_cdcritic).
+
+       END.
    END.  /* fim do FOR EACH */
 
    FIND FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
@@ -5906,6 +6169,90 @@ PROCEDURE reativar_compel_prcctl:
                 " >> " + aux_dscooper + "log/compel.log").
 
    RETURN "OK".
+
+END PROCEDURE.
+
+PROCEDURE reativar_devolu_prcctl:
+
+   { sistema/generico/includes/var_oracle.i }
+
+   DEF INPUT  PARAM par_cdcooper AS INT                               NO-UNDO.
+   DEF INPUT  PARAM par_dtmvtolt AS DATE                              NO-UNDO.
+   DEF INPUT  PARAM par_cdageini AS INT                               NO-UNDO.
+   DEF INPUT  PARAM par_cdagefim AS INT                               NO-UNDO.
+   DEF INPUT  PARAM par_tpdevolu AS CHAR                              NO-UNDO.
+
+   DEF OUTPUT PARAM ret_cdcritic AS INTE                              NO-UNDO.
+
+   DEF   VAR  aux_cdcritic       AS INT                               NO-UNDO.
+   DEF   VAR  aux_nrseqsol       AS INT                               NO-UNDO.
+   DEF   VAR  aux_tparquiv       AS INT                               NO-UNDO.
+
+   IF par_tpdevolu = "Diurna" THEN
+      ASSIGN aux_nrseqsol = 5
+             aux_tparquiv = 1.
+   ELSE
+      ASSIGN aux_nrseqsol = 6
+             aux_tparquiv = 2.
+
+   FIND crapsol WHERE 
+        crapsol.cdcooper = par_cdcooper AND
+        crapsol.dtrefere = par_dtmvtolt AND
+        crapsol.nrsolici = 78           AND
+        crapsol.nrseqsol = aux_nrseqsol
+   EXCLUSIVE-LOCK NO-ERROR.
+
+   IF  AVAILABLE crapsol THEN
+       DELETE crapsol.
+
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+           /* Efetuar a chamada a rotina Oracle  */
+           RUN STORED-PROCEDURE pc_checa_devolu
+       aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper 
+                                           ,INPUT " "
+                                           ,INPUT 0
+                                           ,INPUT 0
+                                           ,INPUT par_dtmvtolt
+                                           ,INPUT 0
+                                           ,INPUT 0
+                                           ,INPUT aux_tparquiv
+                                           ,OUTPUT 0
+                                           ,OUTPUT "").
+
+   /* Fechar o procedimento para buscarmos o resultado */ 
+   CLOSE STORED-PROC pc_checa_devolu
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+  
+   ASSIGN aux_dscritic = ""
+          aux_dscritic = pc_checa_devolu.pr_dscritic
+                         WHEN pc_checa_devolu.pr_dscritic <> ?
+          aux_cdcritic = 0
+          aux_cdcritic = pc_checa_devolu.pr_cdcritic
+                         WHEN pc_checa_devolu.pr_cdcritic <> ?.
+
+/*
+   FIND FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+
+   ASSIGN aux_dscooper = "/usr/coop/" + crapcop.dsdircop + "/".
+
+   IF aux_nmdatela = "PRCCTL" THEN
+       UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + 
+                " - Coop:" + STRING(par_cdcooper,"99") +
+                " - Processar:" + aux_nmprgexe +
+                " DEVOLUCAO " + par_tpdevolu + " - Reativar DEVOLU (opcao X)",
+                " - Data: " + STRING(par_dtmvtolt,"99/99/9999") +
+                " >> " + aux_nmarqlog).
+   ELSE
+       UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                " - " + STRING(TODAY,"99/99/9999") +
+                " - CHEQUES REGERADOS -  PA de " + 
+                STRING(par_cdageini) + " ate " + STRING(par_cdagefim) +
+                " - Data: " + STRING(par_dtmvtolt,"99/99/9999") +
+                " >> " + aux_dscooper + "log/compel.log").
+*/
+
 
 END PROCEDURE.
 
@@ -6054,6 +6401,7 @@ PROCEDURE pi_alterar_situacao_arquivos:
    DEF INPUT  PARAM par_cdagenci    AS INT                              NO-UNDO.
    DEF INPUT  PARAM par_programa    AS CHAR                             NO-UNDO.
    DEF INPUT  PARAM par_cdsituac    AS INT                              NO-UNDO.
+   DEF INPUT  PARAM par_tparquiv    AS INT                              NO-UNDO.
    DEF OUTPUT PARAM ret_cdcritic    AS INT                              NO-UNDO.
 
    DEF VAR         aux_cdacesso     AS CHAR                             NO-UNDO.

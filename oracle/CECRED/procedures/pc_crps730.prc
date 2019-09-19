@@ -37,6 +37,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
    25/06/2019 - inc0018730 inclusão de logs para auditoria das contas integradas nos arquivos de
                 confirmação e retorno do ieptb (Carlos)
 
+   02/08/2019 - Comentada a proc cobr0011.pc_gera_movimento_pagamento, devido a alteração na forma e conciliar, que agora permite conciliar mais de uma ted.
+                Jose Dill - Mouts (RITM0013002)           
+
+   22/08/2019 - INC0021947 Inclusão do protesto por edital (Augusto - Supero)
+
+   22/08/2019 - INC0018848 Inclusão da sustação judicial (Augusto - Supero)              
   ............................................................................. */
   
   -- Declarações
@@ -2016,6 +2022,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
     vr_des_erro  VARCHAR2(4000);
     --
     vr_nrretcoo  NUMBER;
+		vr_flgedital BOOLEAN;
     vr_vltitulo  NUMBER;
     vr_vlsaldot  NUMBER;
     -- Variavel vr_vloutcre  NUMBER; não utilizada - 09/11/2018 - SCTASK0034650    
@@ -2024,6 +2031,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
     vr_vldemdes  NUMBER;
     vr_vlgraele  NUMBER;
     vr_cdocorre  NUMBER;
+    vr_cdocorre_ieptb NUMBER;
     vr_dsmotivo  VARCHAR2(2);
     --
     vr_tab_lcm_consolidada PAGA0001.typ_tab_lcm_consolidada;
@@ -2213,7 +2221,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
             -- 2: Protestado (9)
-            WHEN vr_tab_arquivo(vr_index_reg).campot33 = '2' THEN
+						WHEN vr_tab_arquivo(vr_index_reg).campot33 IN ('2', 'C') THEN
               -- Seta o motivo e ocorrência a serem utilizados no débito de custas e tarifas da conta do cooperado
               vr_cdocorre := 28;
               vr_dsmotivo := '08';
@@ -2238,6 +2246,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
                 -- Apenas fechar o cursor
                 CLOSE btch0001.cr_crapdat;
               END IF;
+
+              -- Protesto por edital
+							vr_flgedital := FALSE;
+							IF vr_tab_arquivo(vr_index_reg).campot33 = 'C' THEN
+								vr_flgedital := TRUE;
+							END IF;
+
               -- Gerar registro de Retorno = 09 - Baixa
               cobr0011.pc_proc_baixa(pr_cdcooper            => rw_crapcob.cdcooper    -- IN
                                     ,pr_idtabcob            => rw_crapcob.rowid       -- IN
@@ -2249,6 +2264,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
                                     ,pr_crapdat             => rw_crapdat             -- IN
                                     ,pr_cdoperad            => '1'                    -- IN
                                     ,pr_vltarifa            => 0                      -- IN
+																		,pr_flgedita            => vr_flgedital           -- IN
                                     ,pr_ret_nrremret        => vr_nrretcoo            -- OUT
                                     ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada -- IN OUT
                                     ,pr_cdcritic            => vr_cdcritic            -- OUT
@@ -2348,7 +2364,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
               -- Retorna módulo e ação logado
               GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
             -- 3: Retirado (24)
-            WHEN vr_tab_arquivo(vr_index_reg).campot33 = '3' THEN
+            WHEN vr_tab_arquivo(vr_index_reg).campot33 IN ('3', '4') THEN
               -- Seta o motivo e ocorrência a serem utilizados no débito de custas e tarifas da conta do cooperado
               vr_cdocorre := 28;
               vr_dsmotivo := '09';
@@ -2372,6 +2388,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
               ELSE
                 -- Apenas fechar o cursor
                 CLOSE btch0001.cr_crapdat;
+              END IF;
+              --
+              vr_cdocorre_ieptb := 24; -- Retirada de Cartorio e Manutencao em Carteira
+              IF vr_tab_arquivo(vr_index_reg).campot33 = '4' THEN
+                vr_cdocorre_ieptb := 63; -- Sustacao Judicial
               END IF;
               --
               cobr0011.pc_proc_retirada_cartorio(pr_cdcooper            => rw_crapcob.cdcooper    -- IN
@@ -2429,7 +2450,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
                              ,pr_nrdconta => rw_crapcob.nrdconta
                              ,pr_nrdocmto => rw_crapcob.nrdocmto
                              ,pr_dtocorre => rw_crapcob.dtmvtolt
-                             ,pr_cdocorre => 24
+                             ,pr_cdocorre => vr_cdocorre
                              ,pr_cdmotivo => NULL
                              );
               --
@@ -2474,61 +2495,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS730(pr_dscritic OUT VARCHAR2) IS
                                    ,pr_dscritic             => vr_dscritic                           -- OUT
                                    );
               IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-                RAISE vr_exc_erro;
-              END IF;
-              -- Retorna módulo e ação logado
-              GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
-              --
-            -- 4: Sustado (63)
-            WHEN vr_tab_arquivo(vr_index_reg).campot33 = '4' THEN
-              -- Seta o motivo e ocorrência a serem utilizados no débito de custas e tarifas da conta do cooperado
-              vr_cdocorre := 28;
-              vr_dsmotivo := '08';
-              vr_idtiparq := 'RET';
-              --
-              pc_gera_retorno_ieptb(pr_cdcooper            => rw_crapcob.cdcooper                   -- IN
-                                   ,pr_dtmvtolt            => rw_crapcob.dtmvtolt                   -- IN
-                                   ,pr_cdcomarc            => vr_tab_arquivo(vr_index_reg).campoh15 -- IN
-                                   ,pr_nrseqrem            => vr_tab_arquivo(vr_index_reg).campoh08 -- IN
-                                   ,pr_nrseqarq            => vr_tab_arquivo(vr_index_reg).campot52 -- IN
-                                   ,pr_nrdconta            => rw_crapcob.nrdconta                   -- IN
-                                   ,pr_nrcnvcob            => rw_crapcob.nrcnvcob                   -- IN
-                                   ,pr_nrdocmto            => rw_crapcob.nrdocmto                   -- IN
-                                   ,pr_nrremret            => NULL                                  -- IN
-                                   ,pr_nrseqreg            => NULL                                  -- IN
-                                   ,pr_cdcartorio          => vr_tab_arquivo(vr_index_reg).campot31 -- IN
-                                   ,pr_nrprotoc_cartorio   => vr_tab_arquivo(vr_index_reg).campot32 -- IN
-                                   ,pr_tpocorre            => vr_tab_arquivo(vr_index_reg).campot33 -- IN
-                                   ,pr_dtprotocolo         => to_date(vr_tab_arquivo(vr_index_reg).campot34, 'ddmmyyyy') -- IN
-                                   ,pr_vlcuscar            => vr_vlcuscar                           -- IN
-                                   ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- IN
-                                   ,pr_cdirregu            => vr_tab_arquivo(vr_index_reg).campot38 -- IN
-                                   ,pr_vlcustas_cartorio   => vr_vlcusdis                           -- IN
-                                   ,pr_vlgrava_eletronica  => vr_vlgraele                           -- IN
-                                   ,pr_cdcomplem_irregular => vr_tab_arquivo(vr_index_reg).campot47 -- IN
-                                   ,pr_vldemais_despes     => vr_vldemdes                           -- IN
-                                   ,pr_vltitulo            => vr_vltitulo                           -- IN
-                                   ,pr_vlsaldo_titulo      => vr_vlsaldot                           -- IN
-                                   ,pr_dsregist            => NULL                                  -- IN
-                                   ,pr_idretorno           => vr_idretorno                          -- OUT
-                                   ,pr_cdcritic            => vr_cdcritic                           -- OUT
-                                   ,pr_dscritic             => vr_dscritic                           -- OUT
-                                   );
-              IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-                RAISE vr_exc_erro;
-              END IF;
-              -- Retorna módulo e ação logado
-              GENE0001.pc_set_modulo(pr_module => vr_cdproint, pr_action => NULL);
-              --
-              paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-                                           ,pr_cdoperad => '1'
-                                           ,pr_dtmvtolt => rw_crapcob.dtmvtolt
-                                           ,pr_dsmensag => 'Sustação Judicial (IEPTB).'
-                                           ,pr_des_erro => vr_des_erro
-                                           ,pr_dscritic => vr_dscritic
-                                           );
-              IF vr_dscritic IS NOT NULL THEN
-                vr_cdcritic := 0;
                 RAISE vr_exc_erro;
               END IF;
               -- Retorna módulo e ação logado
@@ -4578,12 +4544,14 @@ BEGIN                          -- Inicio Bloco Principal
   GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
   
   -- Gera as movimentações
-  cobr0011.pc_gera_movimento_pagamento(pr_dscritic => vr_dscritic);
+  --RITM0013002
+  /*cobr0011.pc_gera_movimento_pagamento(pr_dscritic => vr_dscritic);
   IF vr_dscritic IS NOT NULL THEN
     -- Trata erro
     vr_cdcritic := 0;
     RAISE vr_exc_erro;
-  END IF;
+  END IF;*/
+  
   -- Retorno nome do módulo logado
   GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);  
   

@@ -2278,8 +2278,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
     pr_vliofpri := vr_vliofpritt;
     pr_vliofadi := vr_vliofaditt;
     
+    -- Se tem refinanciamento, descontamos o IOF já pago anteriormente
+    IF (trim(pr_dsctrliq) is not null
+      and lower(pr_dsctrliq) NOT IN('0','sem liquidacoes')) THEN
+    
+      pr_vliofpri := greatest(vr_vliofpritt - vr_vliofpri_ant,0); 
+      pr_vliofadi := greatest(vr_vliofaditt - vr_vliofadi_ant,0);
+      
+    END IF;
+    
     -- Enfim calcular o IOF a ser cobrado descontando IOFs anteriores
-    pr_valoriof := greatest(vr_vliofpritt + vr_vliofaditt - vr_vliofpri_ant - vr_vliofadi_ant,0);
+    -- Aqui não pode haver valor negativo quando descontado o IOF anterior. 
+    -- Não há previsão para tratar IOF negativo.
+    pr_valoriof := greatest( greatest(vr_vliofpritt - vr_vliofpri_ant,0) + greatest(vr_vliofaditt - vr_vliofadi_ant,0), 0);
     
     -- Descontar IOFs anteriores tambem para o IOF do primeiro calculo (Usado no Pós)
     vr_vliofpri := greatest(vr_vliofpri-vr_vliofpri_ant,0);
@@ -2436,8 +2447,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TIOF0001 AS
         -- Obs: O valor do IOF cobrado persiste o valor do calculo da 
         --      primeira chamada da rotina, ou seja, onde desconsideramos
         --      IOFs de contratos anteriores
-        pr_vliofpri := vr_vliofpritt;
-        pr_vliofadi := vr_vliofaditt;
+      --  pr_vliofpri := vr_vliofpritt;
+      --  pr_vliofadi := vr_vliofaditt;
       END IF;
       
       -- Se solicitado a gravação do IOF Completo nas Parcelas e o cálculo retornou IOF para a operação

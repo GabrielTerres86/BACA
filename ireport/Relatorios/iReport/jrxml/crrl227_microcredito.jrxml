@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2019-09-16T17:29:12 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel234" language="groovy" pageWidth="842" pageHeight="700" orientation="Landscape" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="394"/>
@@ -40,8 +42,11 @@
 	<field name="vlate90d" class="java.lang.Double">
 		<fieldDescription><![CDATA[vlate90d]]></fieldDescription>
 	</field>
-	<field name="vljur60d" class="java.lang.Double">
-        <fieldDescription><![CDATA[vljur60d]]></fieldDescription>
+	<field name="vlj60at90d" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlj60at90d]]></fieldDescription>
+	</field>
+	<field name="vlj60ac90d" class="java.lang.Double">
+		<fieldDescription><![CDATA[vlj60ac90d]]></fieldDescription>
 	</field>
 	<variable name="subtot_vlrepfis" class="java.lang.Double" resetType="Group" resetGroup="idgrumic" calculation="Sum">
 		<variableExpression><![CDATA[$F{vlrepfis}]]></variableExpression>
@@ -67,8 +72,8 @@
 	<variable name="subtot_vlaci90d" class="java.lang.Double" resetType="Group" resetGroup="idgrumic" calculation="Sum">
 		<variableExpression><![CDATA[$F{vlaci90d}]]></variableExpression>
 	</variable>
-	<variable name="subtot_vljur60d" class="java.lang.Double" resetType="Group" resetGroup="idgrumic" calculation="Sum">
-		<variableExpression><![CDATA[$F{vljur60d}]]></variableExpression>
+	<variable name="subtot_vljur60ate90d" class="java.lang.Double" resetType="Group" resetGroup="idgrumic" calculation="Sum">
+		<variableExpression><![CDATA[$F{vlj60at90d}]]></variableExpression>
 	</variable>
 	<variable name="subtot_vlempatr" class="java.lang.Double" resetType="Group" resetGroup="idgrumic" calculation="Sum">
 		<variableExpression><![CDATA[$F{vlempatr}]]></variableExpression>
@@ -79,198 +84,231 @@
 	<variable name="tot_vlaci90d" class="java.lang.Double" calculation="Sum">
 		<variableExpression><![CDATA[$F{vlaci90d}]]></variableExpression>
 	</variable>
-	<variable name="tot_vljur60d" class="java.lang.Double" calculation="Sum">
-		<variableExpression><![CDATA[$F{vljur60d}]]></variableExpression>
+	<variable name="tot_vljur60ate90d" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{vlj60at90d}]]></variableExpression>
 	</variable>
 	<variable name="tot_vlempatr" class="java.lang.Double" calculation="Sum">
 		<variableExpression><![CDATA[$F{vlempatr}]]></variableExpression>
+	</variable>
+	<variable name="subtot_vljur60aci90d" class="java.lang.Double" resetType="Group" resetGroup="idgrumic" calculation="Sum">
+		<variableExpression><![CDATA[$F{vlj60ac90d}]]></variableExpression>
+	</variable>
+	<variable name="tot_vljur60aci90d" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{vlj60ac90d}]]></variableExpression>
 	</variable>
 	<group name="idgrumic">
 		<groupExpression><![CDATA[$F{idgrumic}]]></groupExpression>
 		<groupFooter>
 			<band height="14">
 				<staticText>
-					<reportElement uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21" x="57" y="0" width="78" height="8"/>
+					<reportElement x="57" y="-4" width="78" height="8" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="6"/>
 					</textElement>
 					<text><![CDATA[TOTAIS]]></text>
 				</staticText>
 				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="49977389-b786-4c49-a030-068a84648ad5" x="135" y="0" width="67" height="8"/>
+					<reportElement x="135" y="-4" width="67" height="8" uuid="49977389-b786-4c49-a030-068a84648ad5"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="6"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$V{subtot_vlrepfis}]]></textFieldExpression>
 				</textField>
 				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="2d008017-696e-487d-870d-bc80a35d6d66" x="202" y="0" width="67" height="8"/>
+					<reportElement x="202" y="-4" width="67" height="8" uuid="2d008017-696e-487d-870d-bc80a35d6d66"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="6"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$V{subtot_vlrepjur}]]></textFieldExpression>
 				</textField>
 				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="79ee9265-1a3d-4fce-b3e6-77fdf5c9f20e" x="269" y="0" width="67" height="8"/>
+					<reportElement x="269" y="-4" width="67" height="8" uuid="79ee9265-1a3d-4fce-b3e6-77fdf5c9f20e"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="6"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$V{subtot_vlreprec}]]></textFieldExpression>
 				</textField>
 				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="1b9b5f7a-2315-45c3-ad28-9805edbeaf18" x="344" y="0" width="67" height="8"/>
+					<reportElement x="344" y="-4" width="67" height="8" uuid="1b9b5f7a-2315-45c3-ad28-9805edbeaf18"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="6"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$V{subtot_vlate90d}]]></textFieldExpression>
 				</textField>
 				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="3b87f0b5-1251-4ee1-8992-c4e01547b223" x="571" y="0" width="67" height="8"/>
+					<reportElement x="652" y="-4" width="67" height="8" uuid="3b87f0b5-1251-4ee1-8992-c4e01547b223"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="6"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$V{subtot_vlempatr}]]></textFieldExpression>
 				</textField>
 				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="591b6291-7ce0-4134-b95a-57ffd05b3360" x="411" y="0" width="67" height="8"/>
+					<reportElement x="411" y="-4" width="67" height="8" uuid="591b6291-7ce0-4134-b95a-57ffd05b3360"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="6"/>
 					</textElement>
 					<textFieldExpression><![CDATA[$V{subtot_vlaci90d}]]></textFieldExpression>
 				</textField>
 				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-					<reportElement uuid="591b6291-7ce0-4134-b95a-57ffd05b3360" x="478" y="0" width="67" height="8"/>
+					<reportElement x="478" y="-4" width="77" height="8" uuid="591b6291-7ce0-4134-b95a-57ffd05b3360"/>
 					<textElement textAlignment="Right">
 						<font fontName="Courier New" size="6"/>
 					</textElement>
-					<textFieldExpression><![CDATA[$V{subtot_vljur60d}]]></textFieldExpression>
+					<textFieldExpression><![CDATA[$V{subtot_vljur60ate90d}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+					<reportElement x="555" y="-4" width="77" height="8" uuid="a23a0d47-2d66-4f5e-aba5-2e65d589d74e">
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="6"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{subtot_vljur60aci90d}]]></textFieldExpression>
 				</textField>
 			</band>
 		</groupFooter>
 	</group>
 	<columnHeader>
-		<band height="48">
+		<band height="52">
 			<staticText>
-				<reportElement uuid="73b77e3d-7d50-4426-99de-171902beeaa0" x="0" y="39" width="135" height="8"/>
+				<reportElement x="0" y="39" width="135" height="8" uuid="73b77e3d-7d50-4426-99de-171902beeaa0"/>
 				<textElement>
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[-------------------------------------]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21" x="331" y="6" width="46" height="8"/>
+				<reportElement x="332" y="6" width="46" height="8" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
 				<textElement>
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[MICROCREDITO]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21" x="203" y="14" width="75" height="8"/>
+				<reportElement x="203" y="14" width="75" height="8" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
 				<textElement>
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[REPASSE DE RECURSOS]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21" x="409" y="14" width="79" height="8"/>
+				<reportElement x="409" y="14" width="79" height="8" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
 				<textElement>
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[EMPRESTIMOS ATRASADOS]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21" x="135" y="32" width="67" height="8"/>
+				<reportElement x="135" y="32" width="67" height="8" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[PESSOA FISICA]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="73b77e3d-7d50-4426-99de-171902beeaa0" x="135" y="39" width="67" height="8"/>
+				<reportElement x="135" y="39" width="67" height="8" uuid="73b77e3d-7d50-4426-99de-171902beeaa0"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[----------------]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21" x="202" y="32" width="67" height="8"/>
+				<reportElement x="202" y="32" width="67" height="8" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[PESSOA JURIDICA]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="73b77e3d-7d50-4426-99de-171902beeaa0" x="202" y="39" width="67" height="8"/>
+				<reportElement x="202" y="39" width="67" height="8" uuid="73b77e3d-7d50-4426-99de-171902beeaa0"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[-------------------]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="73b77e3d-7d50-4426-99de-171902beeaa0" x="269" y="39" width="67" height="8"/>
+				<reportElement x="269" y="39" width="67" height="8" uuid="73b77e3d-7d50-4426-99de-171902beeaa0"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[-------------------]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21" x="269" y="32" width="67" height="8"/>
+				<reportElement x="269" y="32" width="67" height="8" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[TOTAL]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21" x="344" y="32" width="67" height="8"/>
+				<reportElement x="344" y="32" width="67" height="8" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[ATE 90 DIAS]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="73b77e3d-7d50-4426-99de-171902beeaa0" x="344" y="39" width="67" height="8"/>
+				<reportElement x="344" y="39" width="67" height="8" uuid="73b77e3d-7d50-4426-99de-171902beeaa0"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[-------------------]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21" x="411" y="32" width="67" height="8"/>
+				<reportElement x="411" y="32" width="67" height="8" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[ACIMA 90 DIAS]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="73b77e3d-7d50-4426-99de-171902beeaa0" x="411" y="39" width="67" height="8"/>
+				<reportElement x="411" y="39" width="67" height="8" uuid="73b77e3d-7d50-4426-99de-171902beeaa0"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[-------------------]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21" x="571" y="32" width="67" height="8"/>
+				<reportElement x="652" y="32" width="67" height="8" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[TOTAL]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="73b77e3d-7d50-4426-99de-171902beeaa0" x="571" y="39" width="67" height="8"/>
+				<reportElement x="652" y="39" width="67" height="8" uuid="73b77e3d-7d50-4426-99de-171902beeaa0"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[-------------------]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21" x="478" y="32" width="67" height="8"/>
+				<reportElement x="478" y="32" width="77" height="8" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
-				<text><![CDATA[JUROS +60]]></text>
+				<text><![CDATA[JUROS +60 ATÉ 90D]]></text>
 			</staticText>
 			<staticText>
-				<reportElement uuid="73b77e3d-7d50-4426-99de-171902beeaa0" x="478" y="39" width="67" height="8"/>
+				<reportElement x="478" y="39" width="77" height="8" uuid="73b77e3d-7d50-4426-99de-171902beeaa0"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[-------------------]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="555" y="32" width="77" height="8" uuid="a1e974b8-6c34-4dcd-afd8-ee8770fe650d">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<text><![CDATA[JUROS +60 ACIMA 90D]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="555" y="39" width="77" height="8" uuid="3eae87e8-41bf-4bc5-b2e9-2a7be04e6124">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
@@ -279,122 +317,138 @@
 		</band>
 	</columnHeader>
 	<detail>
-		<band height="8" splitType="Prevent">
+		<band height="13" splitType="Prevent">
 			<textField>
-				<reportElement uuid="a863e1f8-6562-4e27-bbed-eeb2bc5b99cc" x="0" y="0" width="135" height="8"/>
+				<reportElement x="0" y="-4" width="135" height="8" uuid="a863e1f8-6562-4e27-bbed-eeb2bc5b99cc"/>
 				<textElement>
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{dsorgrec}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="false">
-				<reportElement uuid="dba9502e-d472-4da1-a309-ee8cd81e3485" x="135" y="0" width="67" height="8"/>
+				<reportElement x="135" y="-4" width="67" height="8" uuid="dba9502e-d472-4da1-a309-ee8cd81e3485"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vlrepfis}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="false">
-				<reportElement uuid="b9aa95d7-db82-4633-a0d9-6cbdcb90eb02" x="202" y="0" width="67" height="8"/>
+				<reportElement x="202" y="-4" width="67" height="8" uuid="b9aa95d7-db82-4633-a0d9-6cbdcb90eb02"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vlrepjur}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-				<reportElement uuid="652ae7a5-d179-4f29-9e92-2c6b61a6da75" x="269" y="0" width="67" height="8" isRemoveLineWhenBlank="true"/>
+				<reportElement x="269" y="-4" width="67" height="8" isRemoveLineWhenBlank="true" uuid="652ae7a5-d179-4f29-9e92-2c6b61a6da75"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vlreprec}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-				<reportElement uuid="401b9c76-25d6-4a56-b805-7c5948687e2e" x="344" y="0" width="67" height="8" isRemoveLineWhenBlank="true"/>
+				<reportElement x="344" y="-4" width="67" height="8" isRemoveLineWhenBlank="true" uuid="401b9c76-25d6-4a56-b805-7c5948687e2e"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vlate90d}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-				<reportElement uuid="3c23139d-4539-4e36-8633-30d000e284a0" x="411" y="0" width="67" height="8" isRemoveLineWhenBlank="true"/>
+				<reportElement x="411" y="-4" width="67" height="8" isRemoveLineWhenBlank="true" uuid="3c23139d-4539-4e36-8633-30d000e284a0"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vlaci90d}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-				<reportElement uuid="3c23139d-4539-4e36-8633-30d000e284a0" x="478" y="0" width="67" height="8" isRemoveLineWhenBlank="true"/>
+				<reportElement x="478" y="-4" width="77" height="8" isRemoveLineWhenBlank="true" uuid="3c23139d-4539-4e36-8633-30d000e284a0"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{vljur60d}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{vlj60at90d}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-				<reportElement uuid="c5dcc729-59e0-4c18-b03e-11eaa8323712" x="571" y="0" width="67" height="8" isRemoveLineWhenBlank="true"/>
+				<reportElement x="652" y="-4" width="67" height="8" isRemoveLineWhenBlank="true" uuid="c5dcc729-59e0-4c18-b03e-11eaa8323712"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{vlempatr}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement x="555" y="-4" width="77" height="8" isRemoveLineWhenBlank="true" uuid="64905069-bc31-4d5a-85ac-a47621c5a507">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vlj60ac90d}]]></textFieldExpression>
 			</textField>
 		</band>
 	</detail>
 	<summary>
 		<band height="17">
 			<staticText>
-				<reportElement uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21" x="57" y="5" width="78" height="8" isRemoveLineWhenBlank="true"/>
+				<reportElement x="57" y="1" width="78" height="8" isRemoveLineWhenBlank="true" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<text><![CDATA[TOTAIS GERAIS]]></text>
 			</staticText>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-				<reportElement uuid="867695d8-82b1-42ee-9237-5194c9d6da93" x="135" y="5" width="67" height="8" isRemoveLineWhenBlank="true"/>
+				<reportElement x="135" y="1" width="67" height="8" isRemoveLineWhenBlank="true" uuid="867695d8-82b1-42ee-9237-5194c9d6da93"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$V{tot_vlrepfis}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-				<reportElement uuid="e7735004-e788-494c-9efb-6cc9fb812de1" x="202" y="5" width="67" height="8" isRemoveLineWhenBlank="true"/>
+				<reportElement x="202" y="1" width="67" height="8" isRemoveLineWhenBlank="true" uuid="e7735004-e788-494c-9efb-6cc9fb812de1"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$V{tot_vlrepjur}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-				<reportElement uuid="a3c48c65-9f21-4842-8175-58aa1c3d194e" x="269" y="5" width="67" height="8" isRemoveLineWhenBlank="true"/>
+				<reportElement x="269" y="1" width="67" height="8" isRemoveLineWhenBlank="true" uuid="a3c48c65-9f21-4842-8175-58aa1c3d194e"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$V{tot_vlreprec}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-				<reportElement uuid="9f95dd3b-9fd4-44d2-8c17-615d1d4c2c9f" x="344" y="5" width="67" height="8" isRemoveLineWhenBlank="true"/>
+				<reportElement x="344" y="1" width="67" height="8" isRemoveLineWhenBlank="true" uuid="9f95dd3b-9fd4-44d2-8c17-615d1d4c2c9f"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$V{tot_vlate90d}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-				<reportElement uuid="96202655-dee3-43c0-9a9a-b0af13d1b766" x="411" y="5" width="67" height="8" isRemoveLineWhenBlank="true"/>
+				<reportElement x="411" y="1" width="67" height="8" isRemoveLineWhenBlank="true" uuid="96202655-dee3-43c0-9a9a-b0af13d1b766"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$V{tot_vlaci90d}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-				<reportElement uuid="04e8e26a-53e3-4fc5-b004-50ed9f74ea98" x="571" y="5" width="67" height="8" isRemoveLineWhenBlank="true"/>
+				<reportElement x="652" y="1" width="67" height="8" isRemoveLineWhenBlank="true" uuid="04e8e26a-53e3-4fc5-b004-50ed9f74ea98"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$V{tot_vlempatr}]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
-				<reportElement uuid="96202655-dee3-43c0-9a9a-b0af13d1b766" x="478" y="5" width="67" height="8" isRemoveLineWhenBlank="true"/>
+				<reportElement x="478" y="1" width="77" height="8" isRemoveLineWhenBlank="true" uuid="96202655-dee3-43c0-9a9a-b0af13d1b766"/>
 				<textElement textAlignment="Right">
 					<font fontName="Courier New" size="6"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$V{tot_vljur60d}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$V{tot_vljur60ate90d}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00;-#,##0.00" isBlankWhenNull="true">
+				<reportElement x="555" y="1" width="77" height="8" isRemoveLineWhenBlank="true" uuid="c9856c3b-fc5c-4227-8834-983e9d73c6ef"/>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="6"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{tot_vljur60aci90d}]]></textFieldExpression>
 			</textField>
 		</band>
 	</summary>

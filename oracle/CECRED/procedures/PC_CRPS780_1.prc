@@ -33,6 +33,8 @@ BEGIN
               
               09/11/2018 - Ajustes para nao debitar IOF em conta corrente para pagamentos de conta em prejuizo CC.
                            PRJ450 - Regulatorio(Odirlei-AMcom)
+			   
+              01/04/2019 - P410 SM - Inclusão do registro do pagamento do IOF para o BI (Douglas Pagel / AMcom)
               
 			  09/05/2019 - P298.2.2 Tratamento para juros +60 PosFixado (Rafael Faria - Supero)
 
@@ -147,6 +149,7 @@ BEGIN
     vr_vldpagto      NUMBER(18,6);           --> Valor de desconto das parcelas
     vr_vlPrincAbono NUMBER(18,6);           --> Valor de desconto das parcelas
     vr_inusatab     BOOLEAN;                --> Indicador S/N de utilização de tabela de juros
+    vr_nrseqdig_IOF INTEGER;                --> Sequencial do lançamento do IOF na CC
     
     -- Erro em chamadas da pc_gera_erro
     vr_des_reto VARCHAR2(3);
@@ -484,22 +487,23 @@ BEGIN
             -- Lança débito na conta corrente somente se não está em prejuízo
 					  IF PREJ0003.fn_verifica_preju_conta(pr_cdcooper, pr_nrdconta) = FALSE THEN
               -- Lançar em C/C o Pagamento
-              empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper 
-                                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                            ,pr_cdagenci => 1 --rw_craplot_8457.cdagenci
-                                            ,pr_cdbccxlt => 100
-                                            ,pr_cdoperad => '1'
-                                            ,pr_cdpactra => 1 --rw_craplot_8457.cdagenci
-                                            ,pr_nrdolote => 8457 --rw_craplot_8457.nrdolote
-                                            ,pr_nrdconta => rw_crapepr.nrdconta
-                                            ,pr_cdhistor => 2317
-                                            ,pr_vllanmto => vr_vlpiofpr
-                                            ,pr_nrparepr => 0
-                                            ,pr_nrctremp => rw_crapepr.nrctremp
-                                            ,pr_nrseqava => 0
-                                            ,pr_idlautom => 0 
-                                            ,pr_des_reto => vr_des_reto
-                                            ,pr_tab_erro => vr_tab_erro );
+              empr0001.pc_cria_lancamento_cc_chave(pr_cdcooper => pr_cdcooper 
+                                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                  ,pr_cdagenci => 1 --rw_craplot_8457.cdagenci
+                                                  ,pr_cdbccxlt => 100
+                                                  ,pr_cdoperad => '1'
+                                                  ,pr_cdpactra => 1 --rw_craplot_8457.cdagenci
+                                                  ,pr_nrdolote => 8457 --rw_craplot_8457.nrdolote
+                                                  ,pr_nrdconta => rw_crapepr.nrdconta
+                                                  ,pr_cdhistor => 2317
+                                                  ,pr_vllanmto => vr_vlpiofpr
+                                                  ,pr_nrparepr => 0
+                                                  ,pr_nrctremp => rw_crapepr.nrctremp
+                                                  ,pr_nrseqava => 0
+                                                  ,pr_idlautom => 0 
+                                                  ,pr_nrseqdig => vr_nrseqdig_IOF
+                                                  ,pr_des_reto => vr_des_reto
+                                                  ,pr_tab_erro => vr_tab_erro );
               IF vr_des_reto <> 'OK' THEN
                 IF vr_tab_erro.count() > 0 THEN -- RMM
                   -- Atribui críticas às variaveis
@@ -511,7 +515,30 @@ BEGIN
                   vr_dscritic := 'Falha ao inserir LCM IOF - '||sqlerrm;
                   raise vr_exc_erro;
                 END IF; 
-              END IF; 
+              END IF;              
+              --Registra lançamento do IOF na tabela para o BI
+              tiof0001.pc_insere_iof(pr_cdcooper    => pr_cdcooper
+                                    ,pr_nrdconta     => rw_crapepr.nrdconta
+                                    ,pr_dtmvtolt     => rw_crapdat.dtmvtolt
+                                    ,pr_tpproduto    => 1 -- Emprestimo
+                                    ,pr_nrcontrato   => rw_crapepr.nrctremp
+                                    ,pr_idlautom     => null
+                                    ,pr_dtmvtolt_lcm => rw_crapdat.dtmvtolt
+                                    ,pr_cdagenci_lcm => 1
+                                    ,pr_cdbccxlt_lcm => 100
+                                    ,pr_nrdolote_lcm => 8457
+                                    ,pr_nrseqdig_lcm => vr_nrseqdig_IOF
+									,pr_vliofpri     => 0
+                                    ,pr_vliofadi     => 0
+									,pr_vliofcpl     => vr_vlpiofpr
+                                    ,pr_flgimune     => 0
+                                    ,pr_cdcritic     => vr_cdcritic
+                                    ,pr_dscritic     => vr_dscritic);
+
+              if vr_dscritic is not null then
+                RAISE vr_exc_erro;
+              end if;
+              
             ELSE
               -- Lançar débito no do IOF no extrato do prejuízo, para contabilização 
               PREJ0003.pc_gera_lcto_extrato_prj(pr_cdcooper => pr_cdcooper

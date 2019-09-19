@@ -15,6 +15,9 @@
  * [16/01/2018] Lucas Reinert (CECRED)	 : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
  * [06/02/2018] Mateus Zimmermann (Mouts): Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia. ()
  * [19/06/2019] Daniel Lombardi (Mout'S) : Alterações referentes a RITM0022866 validação de data na opção C.
+ * [09/08/2019] Jefferson       (Mout'S) : Alteracao da busca_cheques_em_custodia para considerar
+                                           a data de custodia ao inves da data de liberacao.
+                                           INC0016418 (Jefferson - Mout'S)
  */
 
 //Formulários e Tabela
@@ -516,8 +519,8 @@ function controlaAssociado() {
         cCdbanchq.habilitaCampo().select();
 
     } else if (cddopcao == 'M') {
-        cDtlibini.habilitaCampo().select();
-        cDtlibfim.habilitaCampo();
+		cDtcusini.habilitaCampo().select();
+		cDtcusfim.habilitaCampo();
 
     } else if (cddopcao == 'T') {
         $('#' + frmOpcao + ' fieldset:eq(1)').css({'display': 'block'});
@@ -1092,33 +1095,28 @@ function formataOpcaoM() {
     // label
     rNrdconta = $('label[for="nrdconta"]', '#' + frmOpcao);
     rNmprimtl = $('label[for="nmprimtl"]', '#' + frmOpcao);
-    rDtlibini = $('label[for="dtlibini"]', '#' + frmOpcao);
-    rDtlibfim = $('label[for="dtlibfim"]', '#' + frmOpcao);
+    rDtcusini = $('label[for="dtcusini"]', '#' + frmOpcao);
+    rDtcusfim = $('label[for="dtcusfim"]', '#' + frmOpcao);
 
     rNrdconta.css({'width': '44px'}).addClass('rotulo');
     rNmprimtl.css({'width': '44px'}).addClass('rotulo');
-    rDtlibini.css({'width': '149px'}).addClass('rotulo-linha');
-    rDtlibfim.css({'width': '149px'}).addClass('rotulo-linha');
+    rDtcusini.css({'width': '273px'}).addClass('rotulo-linha');
+    rDtcusfim.css({'width': '25px'}).addClass('rotulo-linha');
 
     // input
     cNrdconta = $('#nrdconta', '#' + frmOpcao);
     cNmprimtl = $('#nmprimtl', '#' + frmOpcao);
-    cDtlibini = $('#dtlibini', '#' + frmOpcao);
-    cDtlibfim = $('#dtlibfim', '#' + frmOpcao);
+    cDtcusini = $('#dtcusini', '#' + frmOpcao);
+    cDtcusfim = $('#dtcusfim', '#' + frmOpcao);
 
     cNrdconta.css({'width': '75px'}).addClass('pesquisa conta');
     cNmprimtl.css({'width': '553px'});
-    cDtlibini.css({'width': '75px'}).addClass('data');
-    cDtlibfim.css({'width': '75px'}).addClass('data');
+    cDtcusini.css({'width': '75px'}).addClass('data');
+    cDtcusfim.css({'width': '75px'}).addClass('data');
 
     // Outros	
     cTodosOpcao.desabilitaCampo();
 
-    //
-    if ($.browser.msie) {
-        rDtlibini.css({'width': '152px'});
-        rDtlibfim.css({'width': '152px'});
-    }
 
     // conta
     cNrdconta.unbind('keydown').bind('keydown', function(e) {
@@ -1138,13 +1136,28 @@ function formataOpcaoM() {
 
     });
 
-    cDtlibfim.unbind('keydown').bind('keydown', function(e) {
+	// Data Inicio Custodia
+    cDtcusini.unbind('keydown').bind('keydown', function(e) {
         if (divError.css('display') == 'block') {
             return false;
         }
 
         // Se é a tecla TAB ou ENTER, 
-        if (e.keyCode == 9 || e.keyCode == 13) {
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            cDtcusfim.focus();
+            return false;
+        }
+
+    });
+
+	// Data Fim Custodia
+    cDtcusfim.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
             btnContinuar();
             return false;
         }
@@ -1155,8 +1168,8 @@ function formataOpcaoM() {
     layoutPadrao();
     controlaPesquisas();
 	
-	cDtlibini.attr('tabindex', 1);
-	cDtlibfim.attr('tabindex', 2);
+	cDtcusini.attr('tabindex', 1);
+	cDtcusfim.attr('tabindex', 2);
 	
     return false;
 
@@ -2199,11 +2212,11 @@ function btnVoltar() {
         cDtlibera.desabilitaCampo();
         trocaBotao('Prosseguir');
 
-    } else if (cddopcao == 'M' && !cDtlibini.hasClass('campoTelaSemBorda')) {
+    } else if (cddopcao == 'M' && !cDtcusini.hasClass('campoTelaSemBorda')) {
         cNrdconta.habilitaCampo().select();
         cNmprimtl.val('');
-        cDtlibini.desabilitaCampo().val('');
-        cDtlibfim.desabilitaCampo().val('');
+        cDtcusini.desabilitaCampo().val('');
+        cDtcusfim.desabilitaCampo().val('');
 
     } else if (cddopcao == 'P' && !cNrdconta.hasClass('campoTelaSemBorda')) {
         estadoInicial();
@@ -2356,7 +2369,7 @@ function btnContinuar() {
     } else if (cddopcao == 'M' && !cNrdconta.hasClass('campoTelaSemBorda')) {
         cNrdconta.keydown();
 
-    } else if (cddopcao == 'M' && !cDtlibini.hasClass('campoTelaSemBorda')) {
+    } else if (cddopcao == 'M' && !cDtcusini.hasClass('campoTelaSemBorda')) {
         showConfirmacao('Imprimir os cheques RESGATADOS E DESCONTADOS?', 'Confirma&ccedil;&atilde;o - Aimaro', 'Gera_Impressao(\'yes\');', 'Gera_Impressao(\'no\');', 'sim.gif', 'nao.gif');
 
     } else if (cddopcao == 'P' && !cNrdconta.hasClass('campoTelaSemBorda')) {

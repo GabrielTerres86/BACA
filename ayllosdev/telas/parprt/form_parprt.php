@@ -25,6 +25,17 @@
 	<input name="negufds" id="negufds" type="hidden" value="" />
     <br />
     <table width="100%">
+        <?php if ($cdcooper == 3) { ?>
+        <tr>
+            <td>
+                <label for="hrenvio_arquivo"><? echo utf8ToHtml('Hor&aacute;rio de envio do arquivo:') ?></label>
+                <input name="hrenvio_arquivo" id="hrenvio_arquivo" type="text" />
+            </td>
+            <td>
+                &nbsp;
+            </td>
+        </tr>
+        <?php } else { ?>
         <tr>
             <td width="50%">
                 <label for="qtlimitemin_tolerancia"><? echo utf8ToHtml('Limite toler&acirc;ncia m&iacute;nimo:') ?></label>					
@@ -48,21 +59,21 @@
                 <input name="qtdias_cancelamento" id="qtdias_cancelamento" type="text" />
             </td>
         </tr>
+        
         <tr>
             <td>
-                <label for="hrenvio_arquivo"><? echo utf8ToHtml('Hor&aacute;rio de envio do arquivo:') ?></label>
-                <input name="hrenvio_arquivo" id="hrenvio_arquivo" type="text" />
-            </td>
-            <td>
-                &nbsp;
+                <input name="hrenvio_arquivo" id="hrenvio_arquivo" type="hidden" />
             </td>
         </tr>
+        <?php } ?>
     </table>
 																				
 	<div id="divMsgAjuda" style="margin-top:5px; margin-bottom :20px; margin-right: 47px; display:none; text-align: center; height:30px;" >
 		<a href="#" class="botao" id="btVoltar"  onClick="btnVoltar();return false;" style="text-align: right; float: none;">Voltar</a>
 		<a href="#" class="botao" id="btAlterar" onClick="alterarDados();" style="text-align: right; float: none;">Alterar</a>
 	</div>
+
+    <?php if ($cddopcao == 'C' || ($cddopcao == 'A' && $cdcooper == 3)) { ?>
 
 	<fieldset id="fsetFormulario" name="fsetFormulario" style="padding:0px; margin:0px; padding-bottom:10px;">
 	<legend> <? echo utf8ToHtml('CNAEs n&atilde;o habilitados para protesto'); ?> </legend>
@@ -223,6 +234,8 @@
 		</div>
 
 	</fieldset>
+
+    <?php } ?>
 
 	<br style="clear:both" />	
 	

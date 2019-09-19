@@ -8,6 +8,8 @@
  * ALTERACOES   : 07/04/2015 - Consultas Automatizadas (Jonata-RKAM).
  *              : 05/12/2017 - Chamada para a tela GAROPC. Projeto 404 (Lombardi)
  *              : 18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+ *              : 05/09/2019 - P450 - Limite de credito adicionaram um passo observação
+ *                             e temos que pular o Rating (Luiz Otávio Olinger Momm - AMCOM)
  */	
 ?>
 	
@@ -21,7 +23,7 @@
 <div id="divBotoes">
 	<input type="image" id="btVoltarObservacoes" src="<? echo $UrlImagens; ?>botoes/voltar.gif">
   <!-- bruno - prj 438 - sprint 7 - novo limite -->
-  <input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="$('#divDadosObservacoes').hide();abrirRating();return false;">
+  <input type="image" id="btSalvar" src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="observacaoProximaEtapa();">
 	<!-- <input type="image" id="btSalvar" src="<? //echo $UrlImagens; ?>botoes/continuar.gif" onClick="setDadosRating(nrgarope, nrinfcad, nrliquid, nrpatlvr);informarRating('divDadosObservacoes' , metodoContinue , metodoCancel, metodoSucesso );return false;"> -->
 </div>
 
@@ -37,4 +39,15 @@
     }    
     return false;
 	}); 
+
+function observacaoProximaEtapa() {
+  if (aux_cdcooper == 3 || var_globais.habrat == 'N') {
+    $('#divDadosObservacoes').hide();
+    abrirRating();
+    return false;
+  } else {
+    $('#divDadosObservacoes').hide();
+    controlaOperacao('C_COMITE_APROV');
+  }
+}
 </script>

@@ -51,6 +51,7 @@ CREATE OR REPLACE PACKAGE CECRED.NPCB0002 is
 						                         ,pr_cdctrlcs      OUT VARCHAR2     -- Numero do controle da consulta
  	 			  		                       ,pr_flblq_valor   OUT NUMBER	      -- Flag para bloquear o valor de pagamento
                                      ,pr_fltitven      OUT NUMBER       -- Flag indicador de titulo vencido
+                                     ,pr_dtvencto      OUT VARCHAR2     -- Data de vencimento do titulo vencido                                     
 	  				                         ,pr_des_erro      OUT VARCHAR2     -- Indicador erro OK/NOK
                                      ,pr_cdcritic      OUT NUMBER       -- Código do erro 
 			  		                         ,pr_dscritic      OUT VARCHAR2);   -- Descricao do erro 
@@ -328,9 +329,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
 						                         ,pr_cdctrlcs      OUT VARCHAR2     -- Numero do controle da consulta
  	 			  		                       ,pr_flblq_valor   OUT NUMBER	      -- Flag para bloquear o valor de pagamento
                                      ,pr_fltitven      OUT NUMBER       -- Flag indicador de titulo vencido
+                                     ,pr_dtvencto      OUT VARCHAR2     -- Data de vencimento do titulo vencido                                     
 	  				                         ,pr_des_erro      OUT VARCHAR2     -- Indicador erro OK/NOK
                                      ,pr_cdcritic      OUT NUMBER       -- Código do erro 
 			  		                         ,pr_dscritic      OUT VARCHAR2) IS -- Descricao do erro 
+                                     
+/*
+Alterções:
+			   29/04/2019 - RITM0011951 - SCTASK0053162 Adicionar a data de vencimento da CIP
+			                no retorno do InternetBank186 (INC0033893) - Marcio (Mouts)
+*/                                     
                                      
    --Selecionar informacoes cobranca
   CURSOR cr_crapcob (pr_cdcooper IN crapcob.cdcooper%TYPE
@@ -735,6 +743,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       -- Truncar nome do beneficiário para ficar com mesma regra do front IB
       pr_dsbenefic := SUBSTR(pr_dsbenefic,1,15);
     END IF;
+    
+    pr_dtvencto:= to_char(rw_crapcob.dtvencto,'DD/MM/YYYY'); -- Márcio (Mouts)    
     
     -- Retornar o ok, informando sucesso na execução 
     pr_des_erro := 'OK';

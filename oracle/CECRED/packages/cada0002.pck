@@ -211,7 +211,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
 
 END CADA0002;
 /
- CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
   /*---------------------------------------------------------------------------------------------------------------
   
     Programa : CADA0002
@@ -274,6 +274,9 @@ END CADA0002;
                             pc_impressao_gps (André Bohn Mout's) - INC0021250
                             
                11/01/2019 - Criada rotina que gera Ficha-Proposta (Cássia de Oliveira - GFT)
+
+               04/04/2019 - Incluido novo parâmetro para a TED de deposito judicial.
+                            Jose Dill - Mouts (P475 - REQ39)
   ---------------------------------------------------------------------------------------------------------------------------*/
 
   /****************** OBJETOS COMUNS A SEREM UTILIZADOS PELAS ROTINAS DA PACKAGE *******************/
@@ -3031,6 +3034,8 @@ END CADA0002;
     --               22/07/2014 - Migrar a procedure para a package CADA0002 e ajustar 
     --                            a mesma. ( Renato - Supero )
     --               03/01/2018 - Incluir tratamento para os tipos 24-FGTS e 23-DAE
+    --
+    --               24/05/2019 - Tratamento para TED Judicial - REQ040
     -- .............................................................................
     
     /* Busca dados de planos de capitalização */
@@ -3207,7 +3212,14 @@ END CADA0002;
           vr_tab_dados(vr_index)('nmfavore') := TRIM(gene0002.fn_busca_entrada(1, vr_cratpro(vr_ind).dsinform##2, '#'));
           vr_tab_dados(vr_index)('nrcpffav') := TRIM(gene0002.fn_busca_entrada(2, vr_cratpro(vr_ind).dsinform##2, '#'));
           vr_tab_dados(vr_index)('dsfinali') := TRIM(gene0002.fn_busca_entrada(3, vr_cratpro(vr_ind).dsinform##2, '#'));
-          vr_tab_dados(vr_index)('dstransf') := TRIM(gene0002.fn_busca_entrada(4, vr_cratpro(vr_ind).dsinform##2, '#'));
+          --
+          --REQ40 - Busca o número do identificador do deposito judicial (TED)
+          IF UPPER(TRIM(gene0002.fn_busca_entrada(3, vr_cratpro(vr_ind).dsinform##3, '#'))) <> 'DEPOSITO JUDICIAL' THEN
+             vr_tab_dados(vr_index)('dstransf') := TRIM(gene0002.fn_busca_entrada(4, vr_cratpro(vr_ind).dsinform##2, '#'));
+          ELSE   
+             vr_tab_dados(vr_index)('dstransf') := gene0002.fn_busca_entrada(4,  vr_cratpro(vr_ind).dsinform##3, '#'); 
+          END IF;
+          --   
         END IF;
 
         -- Tratamento para codigo de barra, linha digitável e terminal

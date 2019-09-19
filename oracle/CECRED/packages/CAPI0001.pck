@@ -1,5 +1,5 @@
 CREATE OR REPLACE PACKAGE CECRED.CAPI0001 IS
- 
+
 ----------------------------------------------------------------------------------------------------------
 --
 --  Programa : CAPI0001
@@ -33,6 +33,8 @@ CREATE OR REPLACE PACKAGE CECRED.CAPI0001 IS
 --                13/12/2018 - Remoção da atualização da capa de lote de COTAS
 --                             Yuri - Mouts
 
+--                11/01/2019 - Criada rotina para adicionar credito para contas que foram criadas e não tiveram nenhuma operação de
+--                             credito até o final do mês (Luis Fernando -GFT)
 ---------------------------------------------------------------------------------------------------------
   -- Rotina para integralizar as cotas
   PROCEDURE pc_integraliza_cotas(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -62,6 +64,12 @@ CREATE OR REPLACE PACKAGE CECRED.CAPI0001 IS
                                      ,pr_nrdrowid IN VARCHAR2
                                      ,pr_cdcritic OUT PLS_INTEGER -- Código da crítica
                                      ,pr_dscritic OUT VARCHAR2); -- Descrição da crítica
+                                     
+  -- Inicio (Luis Fernando - GFT)
+  --Rotiva para integralizar automaticamente
+  PROCEDURE pc_integraliza_auto(pr_cdcritic OUT PLS_INTEGER
+                               ,pr_dscritic OUT VARCHAR2);
+  -- Fim (Luis Fernando - GFT)
 
 END CAPI0001;
 /
@@ -500,7 +508,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
 
   BEGIN
-
+    
     IF NVL(pr_vlintegr,0) <= 0 THEN
       vr_cdcritic := 0;
       vr_dscritic := 'Valor de integralização não pode ser negativo ou zero.';
@@ -597,8 +605,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
           
         --Levantar Excecao
         RAISE vr_exc_erro;
-              
-          END IF;
+          
+      END IF;
         ELSE
           CADA0006.pc_valor_min_capital(pr_cdcooper         => pr_cdcooper
                                        ,pr_inpessoa         => rw_crapass.inpessoa
@@ -994,6 +1002,229 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
 
   END pc_cancela_integralizacao;
+  
+  -- Inicio (Luis Fernando - GFT)
+  PROCEDURE pc_lancamento_coop_sem_credito(pr_cdcooper  IN crapbdt.cdcooper%TYPE
+                                           -- OUT --
+                                          ,pr_cdcritic OUT PLS_INTEGER
+                                          ,pr_dscritic OUT VARCHAR2
+                                          ) IS
+   /*---------------------------------------------------------------------------------------------------------------------
+      Programa : pc_lancamento_coop_sem_credito
+      Sistema  : 
+      Sigla    : CRED
+      Autor    : Luis Fernando (GFT)
+      Data     : 11/01/2019
+      Frequencia: Sempre que for chamado
+      Objetivo  : Lança creditos para cooperados que tiveram cadastro no mes corrente, porem nao efetuaram nenhum credito
+      
+      Alterações :  07/08/2019 
+    ---------------------------------------------------------------------------------------------------------------------*/
+    -- Tratamento de erro
+    vr_exc_erro EXCEPTION;
+    
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Código de Erro
+    vr_dscritic VARCHAR2(1000);        --> Descrição de Erro
+    vr_tab_retorno    LANC0001.typ_reg_retorno;
+    vr_incrineg       INTEGER;  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+      
+    -- Variável de Data
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    vr_dtultdia DATE;
+    
+    vr_vllanmto craplcm.vllanmto%TYPE := 1.0;
+    vr_cdhistor NUMBER := 2918;
+    -- variáves referentes ao Lote (craplot)
+    vr_qtinfoln craplot.qtinfoln%TYPE;
+    vr_qtcompln craplot.qtcompln%TYPE;
+    vr_nrseqdig craplot.nrseqdig%TYPE;
+    vr_cdpesqbb craplcm.cdpesqbb%TYPE;
+    
+    CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE, pr_dtmvtolt crapdat.dtmvtolt%TYPE)IS 
+      SELECT 
+        ass.nrdconta
+      FROM 
+        crapass ass
+      WHERE 
+        TRUNC(ass.dtadmiss,'MM') >= TRUNC(pr_dtmvtolt,'MM')
+        AND ass.cdcooper = pr_cdcooper
+        AND NOT EXISTS (SELECT 1 FROM craplcm lcm 
+                      WHERE 
+                        lcm.cdcooper = ass.cdcooper
+                        AND lcm.dtmvtolt >= TRUNC(ass.dtadmiss,'MM')
+                        AND lcm.nrdconta = ass.nrdconta
+                        AND (lcm.cdhistor,lcm.cdcooper) IN (SELECT his.cdhistor,his.cdcooper FROM craphis his WHERE (his.indebcre = 'C' OR his.cdhistor = cd_craplcm_cdhist) AND his.cdcooper = ass.cdcooper))
+      ;
+    
+    BEGIN
+      -- Leitura do calendário da cooperativa
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH btch0001.cr_crapdat into rw_crapdat;
+      IF (btch0001.cr_crapdat%NOTFOUND) THEN
+        CLOSE btch0001.cr_crapdat;
+        vr_cdcritic := 1; -- Cooperativa sem data de nmovimento
+        RAISE vr_exc_erro;
+      END IF;
+      CLOSE btch0001.cr_crapdat;
+      --Busca Ultimo dia util do mes
+      vr_dtultdia := gene0005.fn_valida_dia_util(pr_cdcooper, rw_crapdat.dtultdia, 'A');
+      IF rw_crapdat.dtmvtolt <> vr_dtultdia THEN
+        vr_dscritic := 'Não é o ultimo dia do mês.';
+        RAISE vr_exc_erro;
+      END IF;
+      
+      FOR rw_crapass IN cr_crapass (pr_cdcooper => pr_cdcooper ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
+        -- Buscar lote para lançamento de cotas
+        capi0001.pc_buscar_lote_credito(pr_cdcooper => pr_cdcooper
+                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                              ,pr_cdbccxlt => vc_cdbccxlt
+                              ,pr_nrdolote => vc_lote_cotas_capital
+                              ,pr_tplotmov => tp_lote_cotas_capital
+                              ,pr_vlintegr => vr_vllanmto
+                              ,pr_qtinfoln => vr_qtinfoln
+                              ,pr_qtcompln => vr_qtcompln
+                              ,pr_nrseqdig => vr_cdpesqbb);
+                              
+        vr_cdpesqbb := vr_nrseqdig;
+        -- Buscar lote para lançamento de deposito a vista
+        pc_buscar_lote_debito(pr_cdcooper => pr_cdcooper
+                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                              ,pr_cdbccxlt => vc_cdbccxlt
+                              ,pr_nrdolote => vc_lote_deposito_vista
+                              ,pr_tplotmov => tp_lote_deposito_vista
+                              ,pr_vlintegr => vr_vllanmto
+                              ,pr_qtinfoln => vr_qtinfoln
+                              ,pr_qtcompln => vr_qtcompln
+                              ,pr_nrseqdig => vr_nrseqdig);
+         lanc0001.pc_gerar_lancamento_conta(pr_cdcooper => pr_cdcooper
+                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                           ,pr_cdagenci => vc_cdagenci
+                                           ,pr_cdbccxlt => vc_cdbccxlt
+                                           ,pr_nrdolote => vc_lote_deposito_vista
+                                           ,pr_nrdconta => rw_crapass.nrdconta
+                                           ,pr_nrdctabb => rw_crapass.nrdconta
+                                           ,pr_nrdctitg => LPAD(rw_crapass.nrdconta, 9, 0)
+                                           ,pr_nrseqdig => vr_nrseqdig
+                                           ,pr_nrdocmto => vr_nrseqdig
+                                           ,pr_cdhistor => vr_cdhistor
+                                           ,pr_vllanmto => vr_vllanmto
+                                           ,pr_cdpesqbb => vr_cdpesqbb
+                                           ,pr_tab_retorno => vr_tab_retorno
+                                           ,pr_incrineg => vr_incrineg
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic);
+             
+        IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF; 
+        
+        pc_integraliza_cotas(pr_cdcooper => pr_cdcooper
+                            ,pr_cdagenci => vc_cdagenci
+                            ,pr_nrdcaixa => 1
+                            ,pr_cdoperad => '0'
+                            ,pr_nmdatela => 'pc_lancamento_coop_sem_credito'
+                            ,pr_idorigem => 7
+                            ,pr_nrdconta => rw_crapass.nrdconta
+                            ,pr_idseqttl => 1
+                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                            ,pr_vlintegr => vr_vllanmto
+                            ,pr_flgnegat => 0
+                            ,pr_cdcritic => vr_cdcritic
+                            ,pr_dscritic => vr_dscritic);
+                            
+        IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+        
+        -- Projeto Acelera Subscrição de capital - Cancela o lançamento futuro de capital inicial
+        BEGIN
+          UPDATE crapsdc
+             SET indebito = 2
+           WHERE cdcooper = pr_cdcooper
+             AND nrdconta = rw_crapass.nrdconta
+             AND tplanmto = 1
+             AND indebito = 0; 
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_cdcritic := 9999;
+            vr_dscritic := 'Erro ao cancelar lançamento futuro de capital inicial. '||sqlerrm;
+        END;   
+  
+      END LOOP;
+      COMMIT;
+       
+    EXCEPTION
+      WHEN vr_exc_erro THEN 
+        ROLLBACK;
+        IF NVL(vr_cdcritic,0) <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+      WHEN OTHERS THEN
+        ROLLBACK;
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral na rotina CAPI0001.pc_lancamento_coop_sem_credito: ' || SQLERRM;
+    
+  END pc_lancamento_coop_sem_credito;
+  
+  PROCEDURE pc_integraliza_auto (pr_cdcritic OUT PLS_INTEGER
+                                ,pr_dscritic OUT VARCHAR2)IS
+   /*---------------------------------------------------------------------------------------------------------------------
+      Programa : pc_integraliza_auto
+      Sistema  : 
+      Sigla    : CRED
+      Autor    : Luis Fernando (GFT)
+      Data     : 11/01/2019
+      Frequencia: Sempre que for chamado
+      Objetivo  : Lança creditos para cooperados que tiveram cadastro no mes corrente, porem nao efetuaram nenhum credito
+    ---------------------------------------------------------------------------------------------------------------------*/
+    
+    -- Tratamento de erro
+    vr_exc_erro EXCEPTION;
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Código de Erro
+    vr_dscritic VARCHAR2(1000);        --> Descrição de Erro
+       
+    CURSOR cr_crappco IS
+      SELECT cdcooper 
+        FROM crappco 
+       WHERE cdpartar = 72
+         AND dsconteu = 'SIM';
+    rw_crappco cr_crappco%ROWTYPE;
 
+  BEGIN
+
+    FOR rw_crappco IN cr_crappco LOOP
+      pc_lancamento_coop_sem_credito(pr_cdcooper => rw_crappco.cdcooper
+                                     -- OUT --
+                                    ,pr_cdcritic => vr_cdcritic
+                                    ,pr_dscritic => vr_dscritic
+                                    );
+      IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+    END LOOP;
+    
+    EXCEPTION
+      WHEN vr_exc_erro THEN 
+        ROLLBACK;
+        IF NVL(vr_cdcritic,0) <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+      WHEN OTHERS THEN
+        ROLLBACK;
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral na rotina CAPI0001.pc_integraliza_auto: ' || SQLERRM;    
+   
+  END pc_integraliza_auto;
+  -- Fim (Luis Fernando - GFT)
 END capi0001;
 /

@@ -651,6 +651,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
   --
   --              18/06/2019 - Removida instrução "NAO ACEITAR PAGAMENTO APOS O VENCIMENTO" - dslocpag
   --                           (P559 - Darlei Zillmer - Supero)
+  --
+	--              30/08/2019 - INC0020919 - Ajuste na validação da tarifa na pc_gera_tarifa_sms_enviados - Augusto (Supero)
   ---------------------------------------------------------------------------------------------------------------
     
   --Ch 839539
@@ -1152,12 +1154,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                 AND nrdconta = pr_nrdconta;
       rw_crapass cr_crapass%ROWTYPE;
       
-      CURSOR cr_crappnp ( pr_nmextcid IN crappnp.nmextcid%TYPE
+      /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validação não é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
+      /*CURSOR cr_crappnp ( pr_nmextcid IN crappnp.nmextcid%TYPE
                          ,pr_cduflogr IN crappnp.cduflogr%TYPE) IS 
              SELECT * FROM crappnp
               WHERE nmextcid = pr_nmextcid
                 AND cduflogr = pr_cduflogr;
-      rw_crappnp cr_crappnp%ROWTYPE;
+      rw_crappnp cr_crappnp%ROWTYPE;*/
       
       CURSOR cr_crapceb (pr_cdcooper IN crapceb.cdcooper%TYPE
                         ,pr_nrdconta IN crapceb.nrdconta%TYPE
@@ -1303,8 +1308,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
       vr_qtdiaprt := pr_qtdiaprt;
       vr_indiaprt := pr_indiaprt;
       
-      IF pr_flgregis = 1 THEN
-         /**** validação praça não executante de protesto ****/      
+      /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validação não é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
+      /*IF pr_flgregis = 1 THEN
+         \**** validação praça não executante de protesto ****\      
          OPEN cr_crappnp (pr_nmextcid => rw_crapsab.nmcidsac
                          ,pr_cduflogr => rw_crapsab.cdufsaca);
          FETCH cr_crappnp INTO rw_crappnp;
@@ -1315,9 +1323,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             vr_qtdiaprt := 0;
             vr_indiaprt := 3;
             
-            /* Obs.: cursor será fechado apos a inclusao na crapcob */
+            \* Obs.: cursor será fechado apos a inclusao na crapcob *\
           END IF;
-      END IF;         
+      END IF; */        
      
       /* se inst aut de protesto, cob registrada e banco 085 */
       /* Retirado mensagem de serviço de protesto pelo BB 16/08/2018 */
@@ -1439,7 +1447,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
             RAISE vr_exc_erro;
       END;
                     
-      IF pr_flgregis = 1 THEN
+      /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validação não é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
+      /*IF pr_flgregis = 1 THEN
          IF cr_crappnp%FOUND THEN
             CLOSE cr_crappnp;
             paga0001.pc_cria_log_cobranca(rw_cob.rowid
@@ -1460,7 +1471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           IF cr_crappnp%ISOPEN THEN
              CLOSE cr_crappnp;
           END IF;
-      END IF;         
+      END IF;*/
   
       /** Validacoes de Cobranca Registrada **/
       IF  pr_cdbandoc = 1 AND pr_flgregis = 1 THEN 
@@ -1618,7 +1629,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_critica THEN
-      IF cr_crappnp%ISOPEN THEN CLOSE cr_crappnp; END IF;
+      --IF cr_crappnp%ISOPEN THEN CLOSE cr_crappnp; END IF;
       IF cr_crapass%ISOPEN THEN CLOSE cr_crapass; END IF;
       IF cr_crapceb%ISOPEN THEN CLOSE cr_crapceb; END IF;
       IF cr_crapcob%ISOPEN THEN CLOSE cr_crapcob; END IF;
@@ -1638,7 +1649,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                   pr_ind_tipo_log  => 1);
 
     WHEN vr_exc_erro THEN
-      IF cr_crappnp%ISOPEN THEN CLOSE cr_crappnp; END IF;
+      --IF cr_crappnp%ISOPEN THEN CLOSE cr_crappnp; END IF;
       IF cr_crapass%ISOPEN THEN CLOSE cr_crapass; END IF;
       IF cr_crapceb%ISOPEN THEN CLOSE cr_crapceb; END IF;
       IF cr_crapcob%ISOPEN THEN CLOSE cr_crapcob; END IF;
@@ -1659,7 +1670,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
                   pr_ind_tipo_log  => 1);
 
     WHEN OTHERS THEN
-      IF cr_crappnp%ISOPEN THEN CLOSE cr_crappnp; END IF;
+      --IF cr_crappnp%ISOPEN THEN CLOSE cr_crappnp; END IF;
       IF cr_crapass%ISOPEN THEN CLOSE cr_crapass; END IF;
       IF cr_crapceb%ISOPEN THEN CLOSE cr_crapceb; END IF;
       IF cr_crapcob%ISOPEN THEN CLOSE cr_crapcob; END IF;
@@ -9953,8 +9964,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0005 IS
           
           vr_idxtar := rw_sms_cobran.cdtarifa;
           
-          --> Se ainda não foi buscada essa tarifa
-          IF NOT vr_tab_tarifa.exists(vr_idxtar) THEN
+          --> Se ainda não foi buscada essa tarifa ou se o historico esta vazio
+          IF NOT vr_tab_tarifa.exists(vr_idxtar) OR vr_tab_tarifa(vr_idxtar).cdhistor IS NULL OR vr_tab_tarifa(vr_idxtar).cdhistor = 0 OR vr_tab_tarifa(vr_idxtar).cdfvlcop IS NULL THEN
             vr_cdcritic := NULL;
             vr_dscritic := NULL;
             

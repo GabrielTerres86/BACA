@@ -42,6 +42,15 @@
 	$prz_baixa_cip 	= getByTagName($param->tags,'prz_baixa_cip');
 	$vlvrboleto 	= getByTagName($param->tags,'vlvrboleto'); //> 0 ? formataMoeda(getByTagName($param->tags,'vlvrboleto')) : '';
 
+	$sit_pag_divergente = getByTagName($param->tags,'sit_pag_divergente');
+	$pag_a_menor 	    = getByTagName($param->tags,'pag_a_menor');
+	$pag_a_maior 	    = getByTagName($param->tags,'pag_a_maior');
+	$tip_tolerancia     = getByTagName($param->tags,'tip_tolerancia');
+	$vl_tolerancia 	    = getByTagName($param->tags,'vl_tolerancia');
+	
+	$dtcadast   = getByTagName($param->tags,'dtcadast');
+	$cdoperad   = getByTagName($param->tags,'cdoperad');
+	
 	include('form_tab098.php');
 ?>
 
@@ -50,5 +59,14 @@
 	$('#vlcontig_cip','#frmTab098').val('<?php echo $vlcontig_cip; ?>');
 	$('#prz_baixa_cip','#frmTab098').val('<?php echo $prz_baixa_cip; ?>');
 	$('#vlvrboleto','#frmTab098').val('<?php echo $vlvrboleto; ?>');
+	
+	$('#sit_pag_divergente','#frmTab098').val('<?=$sit_pag_divergente;?>');
+	$('#pag_a_menor','#frmTab098').prop('checked', <?=$pag_a_menor;?>);
+	$('#pag_a_maior','#frmTab098').prop('checked', <?=$pag_a_maior;?>);
+	$('#tip_tolerancia','#frmTab098').val('<?=$tip_tolerancia;?>');
+	$('#vl_tolerancia','#frmTab098').val('<?=$vl_tolerancia;?>');
+	
+        $("#dtcadast", "#frmTab098").html('<?=$dtcadast;?>');
+        $("#cdoperad", "#frmTab098").html('<?=$cdoperad;?>');	
 		
 </script>

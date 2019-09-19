@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps554 (pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS554" (pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa solicitada
                                               ,pr_cdoperad  IN crapope.cdoperad%TYPE  --> Codigo do operador
                                               ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                                               ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
@@ -12,16 +12,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps554 (pr_cdcooper  IN crapcop.cdcooper%
      Sigla   : CRED
      Autor   : Gabriel
      Data    : Janeiro/2010                       Ultima Atualizacao: 13/04/2015
-         
+
      Dados referentes ao programa:
-         
+
      Frequencia: Mensal.
      Objetivo  : Realiza a desativaçao dos Ratings antigos (sem vinculaçao
                  a uma operaçao de credito) quando nao existir op. de credito
                  ativas.
-                  
+
      Alteracoes: 13/04/2015 - Conversão Progress -> Oracle (Odirlei-AMcom)
 
+                 02/04/2018 - Substituição da tabela crapnrc pela tbrisco_operacoes (Mário-AMcom)
+                 23/04/2018 - Ajuste na tratativa Cooper Central (cdcooper=3)nas 2 tabelas
+                              crapnrc e tbrisco_operacoes (Mário-AMcom)
   ............................................................................ */
 
 
@@ -47,7 +50,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps554 (pr_cdcooper  IN crapcop.cdcooper%
     rw_crapcop cr_crapcop%ROWTYPE;
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
-    
+
     CURSOR cr_crapnrc IS
       SELECT crapnrc.nrdconta
         FROM crapnrc
@@ -56,16 +59,34 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps554 (pr_cdcooper  IN crapcop.cdcooper%
          AND crapnrc.nrctrrat = 0
          AND crapnrc.flgativo = 1; --TRUE
 
+    --Informações do Rating
+    CURSOR cr_tbrisco_operacoes IS
+      SELECT tbrisco_operacoes.nrdconta
+        FROM tbrisco_operacoes
+       WHERE tbrisco_operacoes.cdcooper = pr_cdcooper
+       AND tbrisco_operacoes.cdcooper <> 3
+         AND tbrisco_operacoes.tpctrato = 0
+         AND tbrisco_operacoes.nrctremp = 0
+         AND tbrisco_operacoes.insituacao_rating = 2  --crapnrc.flgativo=1; --TRUE
+      UNION
+      SELECT crapnrc.nrdconta
+        FROM crapnrc
+       WHERE crapnrc.cdcooper = pr_cdcooper
+       AND crapnrc.cdcooper = 3
+         AND crapnrc.tpctrrat = 0
+         AND crapnrc.nrctrrat = 0
+         AND crapnrc.flgativo = 1; --TRUE
+
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     vr_tab_erro  gene0001.typ_tab_erro;
-     
+
     ------------------------------- VARIAVEIS -------------------------------
     -- Variáveis auxiliares ao processo
     vr_dstextab     craptab.dstextab%TYPE;  --> Busca na craptab
     vr_inusatab     BOOLEAN;
     vr_flgopera     NUMBER;
     vr_des_reto     VARCHAR2(100);
-    
+    vr_habrat VARCHAR2(1) := 'N'; -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
     --------------------------- SUBROTINAS INTERNAS --------------------------
 
   BEGIN
@@ -90,6 +111,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps554 (pr_cdcooper  IN crapcop.cdcooper%
       -- Apenas fechar o cursor
       CLOSE cr_crapcop;
     END IF;
+
+    -- Carrega Parametro
+    vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                           pr_cdcooper => pr_cdcooper,
+                                           pr_cdacesso => 'HABILITA_RATING_NOVO');
 
     -- Leitura do calendário da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -120,7 +146,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps554 (pr_cdcooper  IN crapcop.cdcooper%
     END IF;
 
     --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
-    
+
     -- Leitura do indicador de uso da tabela de taxa de juros
     vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                              ,pr_nmsistem => 'CRED'
@@ -143,84 +169,165 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps554 (pr_cdcooper  IN crapcop.cdcooper%
       -- Não existe
       vr_inusatab := FALSE;
     END IF;
-    
-    FOR rw_crapnrc IN cr_crapnrc LOOP
-     
-     /******************************************************************************
-        Verifica se alguma operacao de Credito esta ativa.
-        Limite de credito, descontos e emprestimo.
-        Usada para ver se o Rating antigo pode ser desativado.
-      ******************************************************************************/
-      RATI0001.pc_verifica_operacoes( pr_cdcooper    => pr_cdcooper       --> Codigo Cooperativa
-                                     ,pr_cdagenci    => 0                 --> Codigo Agencia
-                                     ,pr_nrdcaixa    => 0                 --> Numero Caixa
-                                     ,pr_cdoperad    => pr_cdoperad       --> Codigo Operador
-                                     ,pr_rw_crapdat  => rw_crapdat        --> Vetor com dados de parâmetro (CRAPDAT)                                 
-                                     ,pr_nrdconta    => rw_crapnrc.nrdconta  --> Numero da Conta
-                                     ,pr_idseqttl    => 1                 --> Sequencia de titularidade da conta
-                                     ,pr_idorigem    => 1                 --> Indicador da origem da chamada
-                                     ,pr_nmdatela    => vr_cdprogra       --> Nome da tela
-                                     ,pr_flgerlog    => 0 /* false */     --> Identificador de geração de log
-                                     ----- OUT ----
-                                     ,pr_flgopera    => vr_flgopera       --> Tabela com os registros processados
-                                     ,pr_tab_erro    => vr_tab_erro       --> Tabela de retorno de erro
-                                     ,pr_des_reto    => vr_des_reto       --> Ind. de retorno OK/NOK
-                                     ) ;
-      -- se retornou erro                               
-      IF vr_des_reto <> 'OK' THEN
-        
-        IF vr_tab_erro.exists(vr_tab_erro.first) THEN
-          -- Gravar critica no log
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+
+    -- P450 SPT13 - alteracao para habilitar rating novo
+    IF (pr_cdcooper = 3 OR vr_habrat = 'N') THEN
+        FOR rw_crapnrc IN cr_crapnrc LOOP
+
+       /******************************************************************************
+          Verifica se alguma operacao de Credito esta ativa.
+          Limite de credito, descontos e emprestimo.
+          Usada para ver se o Rating antigo pode ser desativado.
+        ******************************************************************************/
+        RATI0001.pc_verifica_operacoes( pr_cdcooper    => pr_cdcooper       --> Codigo Cooperativa
+                                       ,pr_cdagenci    => 0                 --> Codigo Agencia
+                                       ,pr_nrdcaixa    => 0                 --> Numero Caixa
+                                       ,pr_cdoperad    => pr_cdoperad       --> Codigo Operador
+                                       ,pr_rw_crapdat  => rw_crapdat        --> Vetor com dados de parâmetro (CRAPDAT)
+                                       ,pr_nrdconta    => rw_crapnrc.nrdconta  --> Numero da Conta
+                                       ,pr_idseqttl    => 1                 --> Sequencia de titularidade da conta
+                                       ,pr_idorigem    => 1                 --> Indicador da origem da chamada
+                                       ,pr_nmdatela    => vr_cdprogra       --> Nome da tela
+                                       ,pr_flgerlog    => 0 /* false */     --> Identificador de geração de log
+                                       ----- OUT ----
+                                       ,pr_flgopera    => vr_flgopera       --> Tabela com os registros processados
+                                       ,pr_tab_erro    => vr_tab_erro       --> Tabela de retorno de erro
+                                       ,pr_des_reto    => vr_des_reto       --> Ind. de retorno OK/NOK
+                                       ) ;
+        -- se retornou erro
+        IF vr_des_reto <> 'OK' THEN
+
+          IF vr_tab_erro.exists(vr_tab_erro.first) THEN
+            -- Gravar critica no log
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                                         ,pr_ind_tipo_log => 2 -- Erro tratato
+                                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                                             || vr_cdprogra || ' --> '
+                                                                             || vr_tab_erro(vr_tab_erro.first).dscritic );
+          END IF;
+          -- buscar proximo
+          continue;
+        END IF;
+
+
+        /* Se tiver operacoes ativas ... proximo */
+        IF vr_flgopera = 1  THEN
+          continue;
+        END IF;
+
+        /* Desativar Rating. Usada quando emprestimo é liquidado ou limite é cancelado. */
+        RATI0001.pc_desativa_rating( pr_cdcooper   => pr_cdcooper          --> Código da Cooperativa
+                                    ,pr_cdagenci   => 0                    --> Código da agência
+                                    ,pr_nrdcaixa   => 0                  --> Número do caixa
+                                    ,pr_cdoperad   => pr_cdoperad          --> Código do operador
+                                    ,pr_rw_crapdat => rw_crapdat           --> Vetor com dados de parâmetro (CRAPDAT)
+                                    ,pr_nrdconta   => rw_crapnrc.nrdconta  --> Conta do associado
+                                    ,pr_tpctrrat   => 0                    --> Tipo do Rating
+                                    ,pr_nrctrrat   => 0                    --> Número do contrato de Rating
+                                    ,pr_flgefeti   => 0 /*false*/          --> Flag para efetivação ou não do Rating
+                                    ,pr_idseqttl   => 1                    --> Sequencia de titularidade da conta
+                                    ,pr_idorigem   => 1                    --> Indicador da origem da chamada
+                                    ,pr_inusatab   => vr_inusatab          --> Indicador de utilização da tabela de juros
+                                    ,pr_nmdatela   => vr_cdprogra          --> Nome datela conectada
+                                    ,pr_flgerlog   => 'N'                  --> Gerar log S/N
+                                    ,pr_des_reto   => vr_des_reto          --> Retorno OK / NOK
+                                    ,pr_tab_erro   => vr_tab_erro);        --> Tabela com possíves erros
+
+        -- se retornou erro
+        IF vr_des_reto <> 'OK' THEN
+
+          IF vr_tab_erro.exists(vr_tab_erro.first) THEN
+            -- Gravar critica no log
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                       || vr_cdprogra || ' --> '
+                                                       || vr_tab_erro(vr_tab_erro.first).dscritic );
+          END IF;
+          -- buscar proximo
+          continue;
+        END IF;
+      END LOOP;
+    ELSE
+      FOR rw_tbrisco_operacoes IN cr_tbrisco_operacoes LOOP
+
+       /******************************************************************************
+          Verifica se alguma operacao de Credito esta ativa.
+          Limite de credito, descontos e emprestimo.
+          Usada para ver se o Rating antigo pode ser desativado.
+        ******************************************************************************/
+        RATI0001.pc_verifica_operacoes( pr_cdcooper    => pr_cdcooper       --> Codigo Cooperativa
+                                       ,pr_cdagenci    => 0                 --> Codigo Agencia
+                                       ,pr_nrdcaixa    => 0                 --> Numero Caixa
+                                       ,pr_cdoperad    => pr_cdoperad       --> Codigo Operador
+                                       ,pr_rw_crapdat  => rw_crapdat        --> Vetor com dados de parâmetro (CRAPDAT)
+                                       ,pr_nrdconta    => rw_tbrisco_operacoes.nrdconta  --> Numero da Conta
+                                       ,pr_idseqttl    => 1                 --> Sequencia de titularidade da conta
+                                       ,pr_idorigem    => 1                 --> Indicador da origem da chamada
+                                       ,pr_nmdatela    => vr_cdprogra       --> Nome da tela
+                                       ,pr_flgerlog    => 0 /* false */     --> Identificador de geração de log
+                                       ----- OUT ----
+                                       ,pr_flgopera    => vr_flgopera       --> Tabela com os registros processados
+                                       ,pr_tab_erro    => vr_tab_erro       --> Tabela de retorno de erro
+                                       ,pr_des_reto    => vr_des_reto       --> Ind. de retorno OK/NOK
+                                       ) ;
+        -- se retornou erro
+        IF vr_des_reto <> 'OK' THEN
+
+          IF vr_tab_erro.exists(vr_tab_erro.first) THEN
+            -- Gravar critica no log
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                                         ,pr_ind_tipo_log => 2 -- Erro tratato
+                                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                        || vr_cdprogra || ' --> '
+                                                        || vr_tab_erro(vr_tab_erro.first).dscritic );
+          END IF;
+          -- buscar proximo
+          continue;
+        END IF;
+
+
+        /* Se tiver operacoes ativas ... proximo */
+        IF vr_flgopera = 1  THEN
+          continue;
+        END IF;
+
+        /* Desativar Rating. Usada quando emprestimo é liquidado ou limite é cancelado. */
+        RATI0001.pc_desativa_rating( pr_cdcooper   => pr_cdcooper          --> Código da Cooperativa
+                                    ,pr_cdagenci   => 0                    --> Código da agência
+                                    ,pr_nrdcaixa   => 0                  --> Número do caixa
+                                    ,pr_cdoperad   => pr_cdoperad          --> Código do operador
+                                    ,pr_rw_crapdat => rw_crapdat           --> Vetor com dados de parâmetro (CRAPDAT)
+                                    ,pr_nrdconta   => rw_tbrisco_operacoes.nrdconta  --> Conta do associado
+                                    ,pr_tpctrrat   => 0                    --> Tipo do Rating
+                                    ,pr_nrctrrat   => 0                    --> Número do contrato de Rating
+                                    ,pr_flgefeti   => 0 /*false*/          --> Flag para efetivação ou não do Rating
+                                    ,pr_idseqttl   => 1                    --> Sequencia de titularidade da conta
+                                    ,pr_idorigem   => 1                    --> Indicador da origem da chamada
+                                    ,pr_inusatab   => vr_inusatab          --> Indicador de utilização da tabela de juros
+                                    ,pr_nmdatela   => vr_cdprogra          --> Nome datela conectada
+                                    ,pr_flgerlog   => 'N'                  --> Gerar log S/N
+                                    ,pr_des_reto   => vr_des_reto          --> Retorno OK / NOK
+                                    ,pr_tab_erro   => vr_tab_erro);        --> Tabela com possíves erros
+
+        -- se retornou erro
+        IF vr_des_reto <> 'OK' THEN
+
+          IF vr_tab_erro.exists(vr_tab_erro.first) THEN
+            -- Gravar critica no log
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_tab_erro(vr_tab_erro.first).dscritic );
+          END IF;
+          -- buscar proximo
+          continue;
         END IF;
-        -- buscar proximo
-        continue;
-      END IF;
-      
-      
-      /* Se tiver operacoes ativas ... proximo */
-      IF vr_flgopera = 1  THEN
-        continue;
-      END IF;  
-      
-      /* Desativar Rating. Usada quando emprestimo é liquidado ou limite é cancelado. */
-      RATI0001.pc_desativa_rating( pr_cdcooper   => pr_cdcooper          --> Código da Cooperativa
-                                  ,pr_cdagenci   => 0                    --> Código da agência
-                                  ,pr_nrdcaixa   => 0               	 --> Número do caixa
-                                  ,pr_cdoperad   => pr_cdoperad          --> Código do operador
-                                  ,pr_rw_crapdat => rw_crapdat           --> Vetor com dados de parâmetro (CRAPDAT)
-                                  ,pr_nrdconta   => rw_crapnrc.nrdconta  --> Conta do associado
-                                  ,pr_tpctrrat   => 0                    --> Tipo do Rating
-                                  ,pr_nrctrrat   => 0                    --> Número do contrato de Rating
-                                  ,pr_flgefeti   => 0 /*false*/          --> Flag para efetivação ou não do Rating
-                                  ,pr_idseqttl   => 1                    --> Sequencia de titularidade da conta
-                                  ,pr_idorigem   => 1                    --> Indicador da origem da chamada
-                                  ,pr_inusatab   => vr_inusatab          --> Indicador de utilização da tabela de juros
-                                  ,pr_nmdatela   => vr_cdprogra          --> Nome datela conectada
-                                  ,pr_flgerlog   => 'N'                  --> Gerar log S/N
-                                  ,pr_des_reto   => vr_des_reto          --> Retorno OK / NOK
-                                  ,pr_tab_erro   => vr_tab_erro);        --> Tabela com possíves erros
-    
-      -- se retornou erro                               
-      IF vr_des_reto <> 'OK' THEN
-        
-        IF vr_tab_erro.exists(vr_tab_erro.first) THEN
-          -- Gravar critica no log
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> '
-                                                     || vr_tab_erro(vr_tab_erro.first).dscritic );
-        END IF;
-        -- buscar proximo
-        continue;
-      END IF;
-      
-    END LOOP;
+
+      END LOOP;
+    END IF;
+    -- P450 SPT13 - alteracao para habilitar rating novo
 
     ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 
@@ -272,4 +379,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps554 (pr_cdcooper  IN crapcop.cdcooper%
       ROLLBACK;
   END pc_crps554;
 /
-

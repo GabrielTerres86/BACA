@@ -7,6 +7,8 @@
 
    Alteracoes   : 07/04/2018 - A tela de garantias deve ser apresentada bloqueada para o 
                                tipo PRICE TR, da mesma forma como é feito para CDC (Renato - Supero)
+				  19/04/2019 - Ajuste na tela garantia de operação, para salvar seus dados apenas no 
+                               final da inclusão, alteração de empréstimo - PRJ 438. (Mateus Z / Mouts)
  */
 
     session_start();
@@ -33,9 +35,6 @@
     $ret_voltfunc = (isset($_POST['ret_voltfunc'])) ? $_POST['ret_voltfunc'] : '';
     $ret_errofunc = (isset($_POST['ret_errofunc'])) ? $_POST['ret_errofunc'] : '';
     $divanterior  = (isset($_POST['divanterior']))  ? $_POST['divanterior']  : '';
-
-    //bruno - prj 438 - bug 14235
-    $ACAO  = (isset($_POST['ACAO']))  ? $_POST['ACAO']  : '';
 
     $xml  = "";
     $xml .= "<Root>";
@@ -231,6 +230,8 @@
                                                 } elseif ($gar_tipaber == 'C') {
 													?><a href="#" class="botao" id="btConfirmar" onClick="fechaRotina($('#divUsoGAROPC')); eval('<?php echo $ret_execfunc ?>');">Continuar</a><?php
 													
+												} else if ($gar_nmdatela == 'EMPRESTIMOS') {
+                                                    ?><a href="#" class="botao" id="btConfirmar" onClick="validarGAROPC('<?php echo $ret_execfunc; ?>', 'bloqueiaFundo($(\'#divUsoGAROPC\'))');">Continuar</a><?php
 												} else {
                                                     ?><a href="#" class="botao" id="btConfirmar" onClick="gravarGAROPC('<?php echo $ret_nomcampo; ?>','<?php echo $ret_nomformu; ?>','<?php echo $ret_execfunc; ?>', 'bloqueiaFundo($(\'#divUsoGAROPC\'))');">Continuar</a><?php
                                                 }
@@ -261,8 +262,4 @@
 
     mostraImagemGAROPC();
 
-    //bruno - prj 438 - bug 14235
-    if('<?php echo $ACAO; ?>' == "EMPRESTIMO"){
-        __aux_acao = '<?php echo $ACAO; ?>'
-    }
 </script>

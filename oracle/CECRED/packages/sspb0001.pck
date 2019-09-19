@@ -137,7 +137,17 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
               cdtiptra PLS_INTEGER,
               dstiptra VARCHAR2(100),
               nmevento craplmt.nmevento%TYPE,
-              nrctrlif craplmt.nrctrlif%TYPE);
+              nrctrlif craplmt.nrctrlif%TYPE,
+              --REQ40
+              tpctrem VARCHAR2(2),
+              tpesrem VARCHAR2(1),
+              tpctdst VARCHAR2(2),
+              tpesdst VARCHAR2(1),
+              nropecr VARCHAR2(40),
+              finalid VARCHAR2(5),
+              cdidtra VARCHAR2(25),
+              cddvtra VARCHAR2(100),
+              histori VARCHAR2(200) );
 
   TYPE typ_tab_logspb_detalhe IS
     TABLE OF typ_reg_logspb_detalhe
@@ -209,6 +219,7 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                                  ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
                                  ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF Da TED
                                  ,pr_vlrdated  IN NUMBER            -- Valor da TED
+                                 ,pr_cdhistor IN NUMBER DEFAULT 0       --> Historico
                                  ,pr_dscritic           OUT varchar2
                                  ,pr_tab_logspb         OUT nocopy SSPB0001.typ_tab_logspb         --> TempTable para armazenar o valor
                                  ,pr_tab_logspb_detalhe OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
@@ -316,6 +327,7 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                           ,pr_cdispbif IN INTEGER   --> ISPB Banco
                           ,pr_flvldhor IN INTEGER DEFAULT 1 --> Flag para verificar se deve validar o horario permitido para TED
                           ,pr_inenvio  IN INTEGER DEFAULT 1 --> Flag para indicar se envia TEC/TED para SBP
+                          ,pr_cdtiptra IN INTEGER DEFAULT NULL --> Tipo de transação --REQ39
                           --------- SAIDA --------
                           ,pr_cdcritic OUT INTEGER   --> Codigo do erro
                           ,pr_dscritic OUT VARCHAR2);--> Descricao do erro
@@ -515,7 +527,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --
   --              12/07/2019 - Ajuste na geracao do numero de documento utilizado no envio de TED para evitar
   --                           problema com duplicidade na tabela craptvl, devido inexistencia do campo data
-  --                           em chave unica - fn_nrdocmto_nrctrlif (Diego).  
+  --                           em chave unica - fn_nrdocmto_nrctrlif (Diego). 
+  --
+  --              16/08/2019 - Adicionado tratamento para Ted Judicial.
+  --                              (Jose Dill - Mouts  P475 - REQ39)  
+  --
+  --              16/08/2019 - Incluir novas infomações para o comprovante de TEDs recebidos.
+  --                            Jose Dill - Mouts (P475 - REQ40)
+    
+     
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -1346,6 +1366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                              ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF da TED
                              ,pr_vlrdated  IN NUMBER            -- Valor da TED
                              ,pr_nrispbif  IN crapban.nrispbif%TYPE -- ISPB da Cecred
+                             ,pr_cdhistor IN NUMBER DEFAULT 0       --> Historico
                              ,pr_dscritic OUT VARCHAR2 -- Descricao do erro
                              ,pr_tab_logspb_detalhe IN OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
                              ,pr_tab_logspb_totais  IN OUT nocopy SSPB0001.typ_tab_logspb_totais  --> TempTable para armazenar os totais
@@ -1373,6 +1394,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --
     --               26/09/2016 - M211 - Adicionado busca das TEDs Sicredi e correcao
     --                            de parametros faltantes (Jonata-RKAM)
+    --               29/03/2019 - Incluir novas infomações para o comprovante de TEDs recebidos.
+    --                            Jose Dill - Mouts (P475 - REQ40)
       ..............................................................................*/
 
     vr_nrseqlog PLS_INTEGER;
@@ -1381,21 +1404,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_qtsitlog NUMBER := 0;
     vr_vlsitlog NUMBER := 0;
     vr_idx      VARCHAR2(30);
+    
+    --REQ40
+    vr_Finalidade       varchar2(100):= null;
+    vr_Hist             varchar2(1000):= null;
+    vr_CodIdenTransf    varchar2(100):= null;
+    vr_CodDevTransf     varchar2(100):= null;
+    vr_NumContrOper     varchar2(100):= null;
+    vr_TpCtRem          varchar2(100):= null;
+    vr_TpCtDst          varchar2(100):= null;
+    vr_TpPessoaRem      varchar2(100):= null;
+    vr_TpPessoaDst      varchar2(100):= null;  
+
 
     --Ler Log de mensagens para transações ao SPB
     CURSOR cr_craplmt IS
       SELECT vldocmto,
              nrsequen,
              cdbandif,
-             cdagedif,
+             decode(cdagedif,0,null,cdagedif) cdagedif,
+             --cdagedif,
              decode(greatest(LENGTH(nrctadif),20),20,nrctadif,0) nrctadif,
              nmtitdif,
-             nrcpfdif,
+             decode(nrcpfdif,0,null,nrcpfdif) nrcpfdif,
+             --nrcpfdif,
              cdbanctl,
-             cdagectl,
-             nrdconta,
+             decode(cdagectl,0,null,cdagectl) cdagectl,
+             decode(nrdconta,0,null,nrdconta) nrdconta,
              nmcopcta,
-             nrcpfcop,
+             decode(nrcpfcop,0,null,nrcpfcop) nrcpfcop,
              hrtransa,
              dsmotivo,
              cdagenci,
@@ -1426,9 +1463,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
               OR
               pr_inestcri = 0)
          AND (pr_cdifconv = 3 OR (pr_cdifconv IN(0,1) AND cdifconv = pr_cdifconv))
-         AND craplmt.idsitmsg = pr_idsitmsg -- (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
+         --REQ40
+         AND  (craplmt.idsitmsg = pr_idsitmsg -- (1-Enviada-ok, 2-enviada-nok, 3-recebida-ok,4-Recebina-nok,)
+          or (craplmt.idsitmsg  = 2 and pr_cdhistor = 600))
        ORDER BY craplmt.hrtransa, craplmt.nrsequen;
+       
+       /*REQ40 - Buscar informações do arquivo XML*/ 
+        Cursor cr_infrec_spb (pr_nrcontrole_str_pag in Tbspb_Msg_Recebida.nrcontrole_str_pag%type) is
+        Select tmx.*
+        From Tbspb_Msg_Recebida tmr
+            ,Tbspb_Msg_Recebida_Fase tmrf
+            ,Tbspb_msg_xml tmx
+        Where tmr.nrcontrole_str_pag = pr_nrcontrole_str_pag
+        and   tmr.nrseq_mensagem = tmrf.nrseq_mensagem
+        and   tmrf.cdfase = 115
+        and   tmrf.nrseq_mensagem_xml = tmx.nrseq_mensagem_xml;    
+        rr_infrec_spb cr_infrec_spb%rowtype;       
 
+       /*REQ40 - Buscar informações do arquivo XML da mensagem enviada para TED devolvido */ 
+        Cursor cr_infenv_spb (pr_nrcontrole_str_pag in Tbspb_Msg_Recebida.nrcontrole_str_pag%type) is
+        Select tmx.dsxml_completo
+        From Tbspb_Msg_Enviada tme
+            ,Tbspb_Msg_Enviada_Fase tmef
+            ,Tbspb_Msg_Xml tmx
+        Where tme.nrcontrole_if = pr_nrcontrole_str_pag    
+        and   tme.nrseq_mensagem = tmef.nrseq_mensagem
+        and   tmef.cdfase in (10,15)
+        and   tmef.nrseq_mensagem_xml = tmx.nrseq_mensagem_xml;    
+        rr_infenv_spb cr_infenv_spb%rowtype;       
+   
+  
   BEGIN
 
     vr_nrregist := pr_nrregist;
@@ -1487,6 +1551,107 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            pr_tab_logspb_detalhe(vr_idx).dscpfdst := rw_craplmt.nrcpfcop;
            pr_tab_logspb_detalhe(vr_idx).cdisprem := rw_craplmt.nrispbif;
            pr_tab_logspb_detalhe(vr_idx).cdispdst := pr_nrispbif;
+           
+           --REQ40 - Busca o xml das mensagens recebidas para buscar as novas informações conforme suas TAGs
+           OPEN cr_infrec_spb (rw_craplmt.nrctrlif);
+           FETCH cr_infrec_spb INTO rr_infrec_spb;
+           IF cr_infrec_spb%FOUND THEN
+              vr_Finalidade  := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'FinlddCli','S'),1,5);
+              If vr_Finalidade is null Then 
+                 vr_Finalidade := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'FinlddIF','S'),1,5);
+                 If vr_Finalidade is null Then 
+                    vr_Finalidade := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'FinlddIFVarj','S'),1,5);
+                 End If;
+              End If;
+              vr_Hist          := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'Hist','S'),1,200);
+              vr_CodIdenTransf := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'CodIdentdTransf','S'),1,25);
+              vr_CodDevTransf  := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'CodDevTransf','S'),1,90);
+              vr_NumContrOper  := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'NumContrtoOpCred','S'),1,40);
+              vr_TpCtDst       := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'TpCtCredtd','S'),1,2);
+              vr_TpCtRem       := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'TpCtDebtd','S'),1,2);
+              vr_TpPessoaDst   := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'TpPessoaCredtd','S'),1,1);
+              If  vr_TpPessoaDst is null Then 
+                 vr_TpPessoaDst    := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'TpPessoaDestinatario','S'),1,1);
+              End If;                 
+              vr_TpPessoaRem       := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'TpPessoaDebtd','S'),1,1);
+              If vr_TpPessoaRem is null Then 
+                 vr_TpPessoaRem    := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'TpPessoaDebtd_Remet','S'),1,1);
+                 If vr_TpPessoaRem is null Then 
+                    vr_TpPessoaRem := substr(sspb0003.fn_busca_conteudo_campo(rr_infrec_spb.dsxml_completo,'TpPessoaRemet','S'),1,1);
+                 End If;
+              End If;                   
+              --
+              pr_tab_logspb_detalhe(vr_idx).tpctrem := vr_TpCtRem;
+              pr_tab_logspb_detalhe(vr_idx).tpesrem := vr_TpPessoaRem;
+              pr_tab_logspb_detalhe(vr_idx).tpctdst := vr_TpCtDst; 
+              pr_tab_logspb_detalhe(vr_idx).tpesdst := vr_TpPessoaDst;
+              pr_tab_logspb_detalhe(vr_idx).nropecr := vr_NumContrOper;
+              pr_tab_logspb_detalhe(vr_idx).finalid := vr_Finalidade;
+              pr_tab_logspb_detalhe(vr_idx).cdidtra := vr_CodIdenTransf;
+              pr_tab_logspb_detalhe(vr_idx).cddvtra := rw_craplmt.dsmotivo;
+              pr_tab_logspb_detalhe(vr_idx).histori := vr_Hist;
+              
+           ELSE
+              pr_tab_logspb_detalhe(vr_idx).tpctrem := null;
+              pr_tab_logspb_detalhe(vr_idx).tpesrem := null;
+              pr_tab_logspb_detalhe(vr_idx).tpctdst := null; 
+              pr_tab_logspb_detalhe(vr_idx).tpesdst := null;
+              pr_tab_logspb_detalhe(vr_idx).nropecr := null;
+              pr_tab_logspb_detalhe(vr_idx).finalid := null;
+              pr_tab_logspb_detalhe(vr_idx).cdidtra := null;
+              pr_tab_logspb_detalhe(vr_idx).histori := null;             
+             --
+           END IF;  
+           CLOSE cr_infrec_spb;
+         END IF;
+         --
+         --REQ40 - Busca o xml da mensagem enviada quando é referente a um TED Devolvido
+         IF NVL(pr_cdhistor,0) = 600 THEN   
+           OPEN cr_infenv_spb (rw_craplmt.nrctrlif);
+           FETCH cr_infenv_spb INTO rr_infenv_spb;
+           IF cr_infenv_spb%FOUND THEN
+              vr_Finalidade  := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'FinlddCli','S'),1,5);
+              If vr_Finalidade is null Then 
+                 vr_Finalidade := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'FinlddIF','S'),1,5);
+                 If vr_Finalidade is null Then 
+                    vr_Finalidade := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'FinlddIFVarj','S'),1,5);
+                 End If;
+              End If;
+              vr_Hist          := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'Hist','S'),1,200);
+              vr_CodIdenTransf := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'CodIdentdTransf','S'),1,25);
+              vr_CodDevTransf  := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'CodDevTransf','S'),1,90);
+              vr_NumContrOper  := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'NumContrtoOpCred','S'),1,40);
+              vr_TpCtRem       := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'TpCtCredtd','S'),1,2);
+              vr_TpCtDst       := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'TpCtDebtd','S'),1,2);
+              vr_TpPessoaRem   := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'TpPessoaCredtd','S'),1,1);
+              If  vr_TpPessoaRem is null Then 
+                 vr_TpPessoaRem    := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'TpPessoaDestinatario','S'),1,1);
+              End If;    
+              vr_TpPessoaDst       := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'TpPessoaDebtd','S'),1,1);
+              If vr_TpPessoaDst is null Then 
+                 vr_TpPessoaDst    := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'TpPessoaDebtd_Remet','S'),1,1);
+                 If vr_TpPessoaDst is null Then 
+                    vr_TpPessoaDst := substr(sspb0003.fn_busca_conteudo_campo(rr_infenv_spb.dsxml_completo,'TpPessoaRemet','S'),1,1);
+                 End If;
+              End If;                   
+              --
+              pr_tab_logspb_detalhe(vr_idx).dsnomrem := null;
+              pr_tab_logspb_detalhe(vr_idx).cddvtra := rw_craplmt.dsmotivo;
+              pr_tab_logspb_detalhe(vr_idx).histori := vr_Hist;   
+           
+           ELSE
+              pr_tab_logspb_detalhe(vr_idx).tpctrem := null;
+              pr_tab_logspb_detalhe(vr_idx).tpesrem := null;
+              pr_tab_logspb_detalhe(vr_idx).tpctdst := null; 
+              pr_tab_logspb_detalhe(vr_idx).tpesdst := null;
+              pr_tab_logspb_detalhe(vr_idx).nropecr := null;
+              pr_tab_logspb_detalhe(vr_idx).finalid := null;
+              pr_tab_logspb_detalhe(vr_idx).cdidtra := null;
+              pr_tab_logspb_detalhe(vr_idx).histori := null;             
+             --
+           END IF;  
+           CLOSE cr_infenv_spb;
+         END IF;
 
          END IF;
 
@@ -1527,8 +1692,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              pr_tab_logspb_detalhe(vr_idx).dstiptra := 'TED';
            END IF;
         END IF;
-      END IF;
-
+ 
       vr_nrregist := vr_nrregist - 1;
 
       /* Variaveis CHAR
@@ -2066,6 +2230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                  ,pr_inestcri  IN INTEGER DEFAULT 0 -- Estado Crise
                                  ,pr_cdifconv  IN INTEGER DEFAULT 3 -- IF Da TED
                                  ,pr_vlrdated  IN NUMBER            -- Valor da TED
+                                 ,pr_cdhistor IN NUMBER DEFAULT 0   --> Historico --REQ40
                                  ,pr_dscritic           OUT varchar2
                                  ,pr_tab_logspb         OUT nocopy SSPB0001.typ_tab_logspb         --> TempTable para armazenar o valor
                                  ,pr_tab_logspb_detalhe OUT nocopy SSPB0001.typ_tab_logspb_detalhe --> TempTable para armazenar o valor
@@ -2094,6 +2259,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
                    04/07/2017 - Melhoria na busca dos arquivos que irão ser processador, conforme
                                 solicitado no chamado 703589. (Kelvin)
+                                
+                   29/03/2019 - Incluir novas infomações para o comprovante de TEDs recebidos.
+                                Jose Dill - Mouts (P475 - REQ40)                                
       ..............................................................................*/
 
     vr_exc_erro EXCEPTION;
@@ -2282,6 +2450,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                 ,pr_cdifconv  => pr_cdifconv -- IF da TED
                                 ,pr_vlrdated  => pr_vlrdated -- Valor da TED
                                 ,pr_nrispbif  => rw_crapban.nrispbif -- ISPB da Cecred
+                                ,pr_cdhistor  => pr_cdhistor -- Historico REQ40
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
@@ -2305,6 +2474,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                 ,pr_cdifconv  => pr_cdifconv -- IF da TED
                                 ,pr_vlrdated  => pr_vlrdated -- Valor da TED
                                 ,pr_nrispbif  => rw_crapban.nrispbif -- ISPB da Cecred
+                                ,pr_cdhistor  => pr_cdhistor -- Historico REQ40
                                 ,pr_dscritic  => pr_dscritic -- Descricao do erro
                                 ,pr_tab_logspb_detalhe => pr_tab_logspb_detalhe --> TempTable para armazenar o valor
                                 ,pr_tab_logspb_totais  => pr_tab_logspb_totais
@@ -3022,6 +3192,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                ORA-01722: invalid number), dentro da pc_gera_xml (Oscar).
 
                   19/10/207 - Complementar o log o executa comando oracle chamado 706261 (Oscar).
+                 
+                  27/03/2019 - Adicionado tratamento para Ted Judicial.
+                               (Jose Dill - Mouts  P475 - REQ39)               
 
   ---------------------------------------------------------------------------------------------------------------*/
     -----------------> CURSORES <--------------------
@@ -3053,6 +3226,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     vr_des_log         VARCHAR2(4000);
     vr_typ_saida       VARCHAR2(3);
     vr_vldocmto        VARCHAR2(100);
+    vr_identdepjud     VARCHAR2(50); --REQ39
 
     -----------------> SubRotinas <------------------
     -- Subrotina para escrever texto na variável CLOB do XML
@@ -3184,6 +3358,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     /* Descricao: IF requisita Transferencia de IF para conta de deposito identificado (Bacenjud) */
     ELSIF vr_nmmsgenv = 'STR0025' THEN
+      /*REQ39 - Através da agência será indentificado se o tipo de TED Judicial é o realizado via BACENJUD
+                ou pelo IB, para selecionar o número do deposito judicial */
+      IF pr_cdagenci = 90 THEN
+        vr_identdepjud := pr_cdidtran;
+      ELSE
+        vr_identdepjud := lpad(pr_nrcctrcb,18,'0');
+      END IF;
+      --
       pc_escreve_xml('<STR0025>
                         <CodMsg>'||          vr_nmmsgenv ||'</CodMsg>
                         <NumCtrlIF>'||       pr_nrctrlif ||'</NumCtrlIF>
@@ -3197,7 +3379,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         <ISPBIFCredtd>'||    pr_ispbcred ||'</ISPBIFCredtd>
                         <VlrLanc>'||         vr_vldocmto ||'</VlrLanc>
                         <NivelPref></NivelPref>
-                        <IdentcDep>'||       lpad(pr_nrcctrcb,18,'0')||'</IdentcDep>
+                        <IdentcDep>'||     vr_identdepjud||'</IdentcDep>
                         <DtAgendt>'||        pr_dtagendt ||'</DtAgendt>
                         <HrAgendt></HrAgendt>
                         <DtMovto>'||         pr_dtmvtolt ||'</DtMovto>
@@ -3206,6 +3388,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     /* Descricao: IF requisita Transferencia de IF para conta de deposito identificado (Bacenjud) */
     ELSIF vr_nmmsgenv = 'PAG0121' THEN
+      /* REQ39 - Difere a origem para gravar o identificador de deposito Judicial corretamente no xml*/
+      IF pr_cdagenci = 90  THEN
+        vr_identdepjud := pr_cdidtran;
+      ELSE
+        vr_identdepjud := lpad(pr_nrcctrcb,18,'0');
+      END IF;    
       pc_escreve_xml('<PAG0121>
                         <CodMsg>'||          vr_nmmsgenv ||'</CodMsg>
                         <NumCtrlIF>'||       pr_nrctrlif ||'</NumCtrlIF>
@@ -3219,7 +3407,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         <ISPBIFCredtd>'||    pr_ispbcred ||'</ISPBIFCredtd>
                         <VlrLanc>'||         vr_vldocmto ||'</VlrLanc>
                         <NivelPrefPAG></NivelPrefPAG>
-                        <IdentcDep>'||       lpad(pr_nrcctrcb,18,'0')  ||'</IdentcDep>
+                        <IdentcDep>'||    vr_identdepjud ||'</IdentcDep>
                         <DtMovto>'||         pr_dtmvtolt ||'</DtMovto>
                         <DtAgendt>'||        pr_dtagendt ||'</DtAgendt>
                       </PAG0121>
@@ -3475,6 +3663,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                           ,pr_cdispbif IN INTEGER   --> ISPB Banco
                           ,pr_flvldhor IN INTEGER DEFAULT 1 --> Flag para verificar se deve validar o horario permitido para TED(1-valida,0-nao valida)
                           ,pr_inenvio  IN INTEGER DEFAULT 1 --> Flag para indicar se envia TEC/TED para SBP
+                          ,pr_cdtiptra IN INTEGER DEFAULT NULL --> Tipo de transação --REQ39
                           --------- SAIDA --------
                           ,pr_cdcritic OUT INTEGER      --> Codigo do erro
                           ,pr_dscritic OUT VARCHAR2) IS --> Descricao do erro
@@ -3509,6 +3698,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   27/06/2017 - Ajuste projeto 335 - OFSAA algumas situações na conversão do valor do documento
                                estava causando erro de conversão de valor. (Erro ao inserir na tabela gnmvcen.
                                ORA-01722: invalid number), dentro da pc_gera_xml (Oscar).
+                  
+                  27/03/2019 - Adicionado o parametro do tipo de transação para fazer o tratamento do 
+                               Ted Judicial.
+                               (Jose Dill - Mouts  P475 - REQ39)
 
                   01/03/2019 - Se o banco ainda não estiver operante no SPB (Data de inicio da operação), 
                                deve bloquear o envio da TED.
@@ -3987,7 +4180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     END IF;
 
     /*** MONTA O BODY ***/
-    IF pr_tpdctacr = 9 THEN
+    IF NVL(pr_tpdctacr,0) = 9  OR pr_cdtiptra = 22 THEN --REQ39
       -- Deposito Judicial. Enviar com STR0025 e PAG0121
 
       -- Se PAG Disponivel e se o Banco de destino estiver operando  com PAG
@@ -6998,6 +7191,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
     -- Gravar as informações necessárias para a geração do arquivo contabil.
     -- Sprint D - Req19
+    -- Alterações
+    --              12/06/2019 - Excluir lançamento contábil LTR0004.
+    --                           Jose Dill - Mouts (P475 - REQ67)
+    --
+    -------------------------------------------------------------------------
+    
+    
     vr_fggrava           boolean:= false;
     vr_cdhist            number(5):= null;
     vr_dsflexivel        varchar2(300):= null;
@@ -7036,11 +7236,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
             vr_fggrava:= True;
             vr_cdhist:= 2901;            
             vr_dsflexivel:= pr_nmmsg||'-'||pr_SubTpAtv;
-         ELSIF pr_SubTpAtv = 'UM' THEN
+         /*ELSIF pr_SubTpAtv = 'UM' THEN
             vr_fggrava:= True;
             vr_cdhist:= 2908;
             vr_nrcentrocusto := 125;
-            vr_dsflexivel:= pr_nmmsg;              
+            vr_dsflexivel:= pr_nmmsg;  */ /*REQ67*/            
          END IF;
       ELSIF pr_nmmsg = 'RDC0002' THEN
             vr_fggrava:= True;
@@ -7054,12 +7254,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
          IF pr_CtCed = '100007' THEN
             vr_fggrava:= True;
             vr_cdhist:= 2909;
-            vr_nrcentrocusto := 125;
+            vr_nrcentrocusto := 175;
             vr_dsflexivel:= pr_nmmsg ||'-'||pr_CtCed;
          ELSIF pr_CtCed = '103500300' THEN
             vr_fggrava:= True;
             vr_cdhist:= 2909;
-            vr_nrcentrocusto := 125;
+            vr_nrcentrocusto := 175;
             vr_dsflexivel:= pr_nmmsg ||'-'||pr_CtCed;
          END IF;
       ELSIF pr_nmmsg = 'SLB0002' THEN

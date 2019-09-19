@@ -4,6 +4,7 @@
  * CRIAÇÃO      : Jonata - Mouts
  * DATA CRIAÇÃO : Setembro/2018
  * OBJETIVO     : Form da opção "B"
+ * ALTERACOES   : 05/07/2019 - Alterações referente à segunda fase do projeto P484.2 (Gabriel Marcos - Mouts).
  */
  
  
@@ -33,8 +34,12 @@
 		<label for="nrdgrupo"><?php echo utf8ToHtml("Grupo:"); ?></label>
 		<input type="text" id="nrdgrupo" name="nrdgrupo" value="<?php echo getByTagName($registros->tags,'nrdgrupo');?>" >
 		<a style="padding: 3px 0 0 3px;" href="#" ><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>			
-		<br />
 		
+		<br />
+
+		<label style="margin: 1px 0px 0 12px;" for="flgvinculo" >V&iacute;nculo grupo:</label>
+		<input id="flgvinculo" type="checkbox" name="flgvinculo" <?php echo getByTagName($registros->tags,'flgvinculo') == 0 ? '' : 'checked'; ?> />
+
 		<label for="dsfuncao"><?php echo utf8ToHtml("Cargo:"); ?></label>
 		<input type="text" id="dsfuncao" name="dsfuncao" value="<?php echo getByTagName($registros->tags,'dsfuncao');?>" >
 		
@@ -71,8 +76,7 @@
 <script type="text/javascript">
 	
 	$('input, select','#frmFiltroBuscaGrupo').desabilitaCampo();
-    $('#divBotoesFiltroBuscaGrupo').css('display', 'none');
+	$('#divBotoesFiltroBuscaGrupo').css('display', 'none');
 	formataFormBuscaGrupo();	
-	
-				
+
 </script>

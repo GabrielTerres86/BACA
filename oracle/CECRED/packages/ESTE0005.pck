@@ -118,6 +118,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
                   06/06/2019 - incluido variavel vr_nrctrcrd_aux para passar na tela analise credito - PRJ438 - Paulo Martins
 
+                  14/08/2019 - P450 - Inclusão do modeloRating na pc_gera_json_motor para informar o tipo de calculo que
+                               Ibratan deve calcular e retornar do Rating definido na PARRAT
+                               Luiz Otavio Olinger Momm - AMCOM
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Cursor generico de calendario
@@ -3762,6 +3766,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
 
       Alteração :
+                  05/06/2019 - P450 - Adicionada a variavel BiroScore no JSON de envio 
+                               a Ibratan (Heckmann - AMcom)
+
+                  05/08/2019 - P438 - Inclusão do atributo canalOrigem no Json para identificar 
+                               a origem da operação de crédito no Motor. (Douglas Pagel / AMcom).
+
+                  14/08/2019 - P450 - Inclusão do modeloRating na pc_gera_json_motor para informar o tipo de calculo que
+                               Ibratan deve calcular e retornar do Rating definido na PARRAT
+                               Luiz Otavio Olinger Momm - AMCOM
 
     ..........................................................................*/
     -----------> CURSORES <-----------
@@ -4004,6 +4017,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
            ,crd.vllimcrd -- limite atual
            ,crd.cdadmcrd -- cod adminstradora atual
            ,adc.nmadmcrd -- nome adminstradora tual
+           ,crd.cdoperad
        FROM crawcrd crd
   LEFT JOIN crapadc adc
          ON adc.cdcooper = crd.cdcooper
@@ -4062,6 +4076,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 	vr_tpprodut      NUMBER(1) := 4; -- tipo produto 
 
     vr_vlpatref      tbcadast_cooperativa.vlpatrimonio_referencial%TYPE;
+    
+    vr_cdorigem      NUMBER := 0;
 
   BEGIN
 
@@ -4248,6 +4264,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       vr_obj_generico.put('bemEmGarantia', vr_lst_generic2);
     END IF;
 
+    vr_obj_generico.put('BiroScore',rati0003.fn_tipo_biro(pr_cdcooper => pr_cdcooper));
+
     -- Se for I - Inclusao (ou seja, solicitacao de cartao) enviaremos em branco.
     IF pr_tpproces = 'I' THEN        
       vr_obj_generico.put('limiteAtualCartaoCecred',0);
@@ -4311,7 +4329,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     CLOSE cr_tbcadast_cooperativa;    
     -- Incluir Patrimonio referencial da cooperativa
     vr_obj_generico.put('valorPatrimonioReferencial',ESTE0001.fn_decimal_ibra(vr_vlpatref));
+
+    vr_cdorigem := CASE WHEN rw_crawcrd.cdoperad = '996' THEN 3 ELSE 5 END;
     
+    vr_obj_generico.put('canalOrigem',vr_cdorigem);
+
+    /* P450 - Rating modelo calculo */
+    vr_obj_generico.put('modeloRating', RATI0003.fn_retorna_modelo_rating(pr_cdcooper));
+
     vr_obj_analise.put('indicadoresCliente', vr_obj_generico);
 
     este0002.pc_gera_json_pessoa_ass(pr_cdcooper => pr_cdcooper
@@ -5771,6 +5796,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
 
       Alteração : 01/11/2018 - PJ345 - Ajustes para erro no envio dos arquivos (Rafael Faria - Supero)
 
+                  05/08/2019 - P438 - Inclusão dos atributos canalCodigo e canalDescricao no Json para identificar 
+                                a origem da operação de crédito na Esteira. (Douglas Pagel / AMcom). 
+
     ..........................................................................*/
     -----------> CURSORES <-----------
     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
@@ -5989,7 +6017,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
     vr_vlsugmot     crawcrd.vllimdlr%TYPE;
     vr_nrctrcrd     crawcrd.nrctrcrd%TYPE;
     vr_tplimcrd     NUMERIC(1) := 0; -- 0=concessao, 1=alteracao
-    
+    vr_cdorigem     NUMBER := 0;
+
     -- Hora da impressao
     vr_hrimpres NUMBER;
     -- Quantidade de segundos de espera
@@ -6500,6 +6529,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0005 IS
       CLOSE cr_crapjfn;
       vr_obj_proposta.put('faturamentoAnual',este0001.fn_decimal_ibra(rw_crapjfn.vltotfat));
     END IF;
+
+    vr_cdorigem := CASE WHEN rw_crawcrd.cdoperad = '996' THEN 3 ELSE 5 END;
+   
+    vr_obj_proposta.put('canalCodigo', vr_cdorigem);
+    vr_obj_proposta.put('canalDescricao',gene0001.vr_vet_des_origens(vr_cdorigem));
 
     -- Devolver o objeto criado
     pr_proposta := vr_obj_proposta;

@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.RISC0004 IS
+CREATE OR REPLACE PACKAGE CECRED."RISC0004" IS
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : RISC0004
@@ -22,7 +22,7 @@ CREATE OR REPLACE PACKAGE CECRED.RISC0004 IS
   vr_tab_grupos typ_tab_grupos;
 
   --Tipo de Registro para PARAMETROS GERAIS DA CENTRAL DE RISCO
-  TYPE typ_reg_ctl_parametros IS 
+  TYPE typ_reg_ctl_parametros IS
     RECORD (cdcooper                    tbrisco_central_parametros.cdcooper%TYPE
            ,perc_liquid_sem_garantia    tbrisco_central_parametros.perc_liquid_sem_garantia%TYPE
            ,perc_cobert_aplic_bloqueada tbrisco_central_parametros.perc_cobert_aplic_bloqueada%TYPE
@@ -79,6 +79,23 @@ FUNCTION fn_busca_rating(pr_cdcooper NUMBER
 FUNCTION fn_busca_rating_conta(pr_cdcooper NUMBER
                              , pr_nrdconta NUMBER)
     RETURN crapnrc.indrisco%TYPE;
+
+
+FUNCTION fn_busca_rating_operacao(pr_cdcooper NUMBER
+                                , pr_nrdconta NUMBER
+                                , pr_nrctrato NUMBER)
+  RETURN tbrisco_operacoes.inrisco_rating%TYPE;
+  
+FUNCTION fn_busca_rating_operacao_efet(pr_cdcooper NUMBER
+                                     , pr_nrdconta NUMBER
+                                     , pr_nrctrato NUMBER)
+  RETURN tbrisco_operacoes.inrisco_rating%TYPE;
+
+FUNCTION fn_busca_rating_cpfcnpj(pr_cdcooper  NUMBER
+                                ,pr_nrcpfcnpj NUMBER)
+  RETURN tbrisco_operacoes.inrisco_rating%TYPE;
+
+
 
 -- Busca o risco agravado definido para uma conta
 FUNCTION fn_busca_risco_agravado(pr_cdcooper NUMBER, pr_nrdconta NUMBER, pr_dtmvtoan DATE)
@@ -175,8 +192,8 @@ FUNCTION fn_busca_risco_melhora(pr_cdcooper   NUMBER
                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                               )
     RETURN NUMBER;
-    
-  -- Grava saldo refinanciado na crapepr                                
+
+  -- Grava saldo refinanciado na crapepr
   PROCEDURE pc_gravar_saldo_refin(pr_cdcooper            NUMBER     --> Cooperativa
                                  ,pr_nrdconta            NUMBER     --> Conta
                                  ,pr_nrctremp            NUMBER     --> Contrato
@@ -210,7 +227,7 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
                                      ,pr_nrctremp IN NUMBER                  --> Contrato
                                      ,pr_qtdatref OUT NUMBER                 --> Qtde dias atraso refinanciamento
                                      ,pr_dscritic OUT VARCHAR2);
-  
+
   PROCEDURE pc_central_risco_grupo(pr_cdcooper IN NUMBER           --> Cooperativa
                                   ,pr_dtrefere IN DATE             -- Data do dia da Coop
                                   ,pr_dtmvtoan IN DATE             -- Data da central anterior
@@ -229,10 +246,26 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
                                  ,pr_tab_ctl_parametros OUT typ_tab_ctl_parametros  --Vetor para o retorno das informações
                                  ,pr_dscritic           OUT VARCHAR2);
 
+  -- Buscar o risco na inclusão e na efetivação  - P450 - Rating
+  PROCEDURE pc_busca_risco_inclusao(pr_cdcooper IN NUMBER            --> Cooperativa
+                                   ,pr_nrdconta IN NUMBER            --> Conta
+                                   ,pr_dsctrliq IN VARCHAR2          --> Lista de Contratos Liquidados
+                                   ,pr_rw_crapdat IN btch0001.cr_crapdat%ROWTYPE --> Data da cooperativa
+                                   ,pr_nrctremp  IN crawepr.nrctremp%TYPE DEFAULT NULL  --> Número do contrato de emprestimos
+                                   ,pr_innivris OUT NUMBER
+                                   ,pr_cdcritic OUT PLS_INTEGER
+                                   ,pr_dscritic OUT VARCHAR2);
 
+ PROCEDURE pc_grava_risco_inclusao( pr_cdcooper           IN NUMBER
+                                  , pr_nrdconta           IN NUMBER
+                                  , pr_nrctremp           IN NUMBER
+                                  , pr_tpctrato           IN NUMBER
+                                  , pr_nrcpfcnpj_base     IN NUMBER
+                                  , pr_inrisco_inclusao   IN NUMBER
+                                  , pr_dscritic           OUT VARCHAR2);
 END RISC0004;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
+CREATE OR REPLACE PACKAGE BODY CECRED."RISC0004" AS
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : RISC0004
@@ -247,14 +280,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0004 AS
   -- Alterado:
   --             26/06/2018 - Alterado a tabela CRAPGRP para TBCC_GRUPO_ECONOMICO. (Mario Bernat - AMcom)
   --             24/08/2018 - Inclusão da coluna quantidade de dias de atraso
-  --                          PJ 450 - Diego Simas - AMcom  
+  --                          PJ 450 - Diego Simas - AMcom
   --
-  --             30/10/2018 - P450 - Inclusão da function fn_busca_risco_melhora e atribuicao 
+  --             30/10/2018 - P450 - Inclusão da function fn_busca_risco_melhora e atribuicao
   --                          da variavel vr_inrisco_melhora (Douglas Pagel/AMcom)
   --                        - Inclusão da procedure pc_gravar_saldo_refinanciamento (Douglas Pagel/AMcom)
   --             05/12/2018 - Atualizar o nível de risco da conta conforme o maior risco do grupo (Heckmann/AMcom)
+  --             14/02/2018 - Inclusão do nível de risco (rating) 1 - AA (Heckmann/AMcom)
+  --             15/03/2019 - P450 - Rating, na pc_busca_risco_inclusao, busca risco da centralizadora risco
+  --                          das operações (Elton AMcom)
+  --             25/04/2019 - P450 - Rating, incluir a tabela craprnc quando a coopertativa for 3 - Ailos (Heckmann/AMcom)
   --
   ---------------------------------------------------------------------------------------------------------------
+
+ -- Busca do nr cpfcnpj base do associado
+CURSOR cr_crapass_ope (pr_cdcooper  IN crapass.cdcooper%TYPE     --> Coop. conectada
+                      ,pr_nrdconta  IN crapass.nrdconta%TYPE) IS --> Codigo Conta
+SELECT  ass.nrcpfcnpj_base
+  FROM crapass ass
+WHERE ass.cdcooper = pr_cdcooper
+  AND ass.nrdconta = pr_nrdconta;
+rw_crapass_ope   cr_crapass_ope%ROWTYPE;
 
 -- Retorna o dia útil anterior do calendário da cooperativa
 FUNCTION fn_dia_anterior(pr_cdcooper NUMBER)
@@ -274,16 +320,17 @@ END fn_dia_anterior;
 FUNCTION fn_traduz_nivel_risco(pr_dsnivris crawepr.dsnivris%TYPE, pr_default_value crapris.innivris%TYPE := NULL)
     RETURN crapris.innivris%TYPE AS nivel_risco crapris.innivris%TYPE;
 BEGIN
-    nivel_risco := CASE WHEN pr_dsnivris = 'A'  THEN 2
-                                        WHEN pr_dsnivris = 'B'  THEN 3
-                                        WHEN pr_dsnivris = 'C'  THEN 4
-                                        WHEN pr_dsnivris = 'D'  THEN 5
-                                        WHEN pr_dsnivris = 'E'  THEN 6
-                                        WHEN pr_dsnivris = 'F'  THEN 7
-                                        WHEN pr_dsnivris = 'G'  THEN 8
-                                        WHEN pr_dsnivris = 'H'  THEN 9
-                                        WHEN pr_dsnivris = 'HH' THEN 10
-                                 ELSE pr_default_value END;
+  nivel_risco := CASE WHEN pr_dsnivris = 'AA'  THEN 1
+                      WHEN pr_dsnivris = 'A'   THEN 2
+                      WHEN pr_dsnivris = 'B'   THEN 3
+                      WHEN pr_dsnivris = 'C'   THEN 4
+                      WHEN pr_dsnivris = 'D'   THEN 5
+                      WHEN pr_dsnivris = 'E'   THEN 6
+                      WHEN pr_dsnivris = 'F'   THEN 7
+                      WHEN pr_dsnivris = 'G'  THEN 8
+                      WHEN pr_dsnivris = 'H'  THEN 9
+                      WHEN pr_dsnivris = 'HH' THEN 10
+                      ELSE pr_default_value END;
 
     RETURN nivel_risco;
 END fn_traduz_nivel_risco;
@@ -342,6 +389,97 @@ BEGIN
 
    RETURN vr_rating;
 END fn_busca_rating_conta;
+
+
+
+FUNCTION fn_busca_rating_operacao(pr_cdcooper NUMBER
+                                , pr_nrdconta NUMBER
+                                , pr_nrctrato NUMBER)
+  RETURN tbrisco_operacoes.inrisco_rating%TYPE AS vr_rating tbrisco_operacoes.inrisco_rating%TYPE;
+  -- De acordo com as mudanças no Rating, o Risco Rating deve ser exibido
+  -- por operação, e não por CPF/CNPJ
+  -- Busca o rating da operação especifica
+    CURSOR cr_operacao IS
+      SELECT nvl(TRO.INRISCO_RATING_AUTOM,TRO.INRISCO_RATING) INRISCO_RATING
+        FROM TBRISCO_OPERACOES TRO
+       WHERE TRO.CDCOOPER = pr_cdcooper
+         AND tro.nrdconta = pr_nrdconta
+         AND tro.nrctremp = pr_nrctrato
+        ;
+    rw_operacao  cr_operacao%ROWTYPE;
+BEGIN
+   OPEN cr_operacao;
+   FETCH cr_operacao INTO rw_operacao;
+   CLOSE cr_operacao;
+   
+   vr_rating := rw_operacao.inrisco_rating;
+ 
+  RETURN vr_rating;
+END fn_busca_rating_operacao;
+
+FUNCTION fn_busca_rating_operacao_efet(pr_cdcooper NUMBER
+                                     , pr_nrdconta NUMBER
+                                     , pr_nrctrato NUMBER)
+  RETURN tbrisco_operacoes.inrisco_rating%TYPE AS vr_rating tbrisco_operacoes.inrisco_rating%TYPE;
+  /* BUSCA APENAS O RATING EFETIVO DA OPERAÇÃO - PARA CENTRAL DE RISCO */
+  
+  -- De acordo com as mudanças no Rating, o Risco Rating deve ser exibido
+  -- por operação, e não por CPF/CNPJ
+    CURSOR cr_operacao IS
+      SELECT TRO.INRISCO_RATING
+        FROM TBRISCO_OPERACOES TRO
+       WHERE TRO.CDCOOPER = pr_cdcooper
+         AND tro.nrdconta = pr_nrdconta
+         AND tro.nrctremp = pr_nrctrato
+         AND TRO.INRISCO_RATING_AUTOM IS NOT NULL
+         AND ( TRO.INSITUACAO_RATING = 4 --- efetivado
+              OR
+              (TRO.INSITUACAO_RATING = 3 AND --- vencido
+               TRO.Dtrisco_Rating IS NOT NULL)) -- Era Efetivo antes de mudar pra 3-Vencido
+        ;
+    rw_operacao  cr_operacao%ROWTYPE;
+BEGIN
+   OPEN cr_operacao;
+   FETCH cr_operacao INTO rw_operacao;
+   CLOSE cr_operacao;
+   
+   vr_rating := rw_operacao.inrisco_rating;
+ 
+  RETURN vr_rating;
+END fn_busca_rating_operacao_efet;
+
+FUNCTION fn_busca_rating_cpfcnpj(pr_cdcooper  NUMBER
+                                ,pr_nrcpfcnpj NUMBER)
+  RETURN tbrisco_operacoes.inrisco_rating%TYPE AS vr_rating tbrisco_operacoes.inrisco_rating%TYPE;
+
+    CURSOR cr_operacao IS
+      SELECT TRO.CDCOOPER,
+             TRO.nrdconta,
+             TRO.nrctremp,
+             TRO.INRISCO_RATING,
+             TRO.DTRISCO_RATING,
+             TRO.INSITUACAO_RATING
+        FROM TBRISCO_OPERACOES TRO
+       WHERE TRO.CDCOOPER       = pr_cdcooper
+         AND tro.nrcpfcnpj_base = pr_nrcpfcnpj
+         AND TRO.INRISCO_RATING_AUTOM IS NOT NULL
+         AND ( TRO.INSITUACAO_RATING = 4 --- efetivado
+              OR
+              (TRO.INSITUACAO_RATING = 3 AND --- vencido
+               TRO.Dtrisco_Rating IS NOT NULL)) -- Era Efetivo antes de mudar pra 3-Vencido
+        ;
+    rw_operacao  cr_operacao%ROWTYPE;
+
+BEGIN
+   OPEN cr_operacao;
+   FETCH cr_operacao INTO rw_operacao;
+   CLOSE cr_operacao;
+   
+   vr_rating := rw_operacao.inrisco_rating;  
+ 
+  RETURN vr_rating;
+END fn_busca_rating_cpfcnpj;
+
 
 FUNCTION fn_busca_risco_agravado(pr_cdcooper NUMBER, pr_nrdconta NUMBER, pr_dtmvtoan DATE)
   RETURN tbrisco_cadastro_conta.cdnivel_risco%TYPE AS vr_risco_agr tbrisco_cadastro_conta.cdnivel_risco%TYPE;
@@ -614,13 +752,13 @@ END fn_calcula_niv_risco_atraso;
 
 FUNCTION fn_calcula_risco_atraso_adp(qtdiaatr NUMBER)
   RETURN crawepr.dsnivris%TYPE AS risco_atraso crawepr.dsnivris%TYPE;
-  
+
   /* .............................................................................
 
    Programa: fn_calcula_risco_atraso_adp       (Antigo: NAO HA)
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : 
+   Autor   :
    Data    :                            Ultima atualizacao: 19/01/2018
 
    Dados referentes ao programa:
@@ -629,11 +767,11 @@ FUNCTION fn_calcula_risco_atraso_adp(qtdiaatr NUMBER)
    Objetivo  : Calcular nivel de risco atraso ADP
 
    Alteracoes: 19/01/2019 - P450 - Alterado para utilizar a mesma regra de calculo do emprestimo.(Odirlei-Ailos)
-   
+
   ............................................................................. */
-  
+
 BEGIN
-  
+
   --> Alterado para risco atraso do ADP utlizar o mesmo calculo de risco atraso de emprestimo
     /*risco_atraso :=  CASE WHEN qtdiaatr IS NULL THEN 'A'
                           WHEN qtdiaatr <   15  THEN 'A'
@@ -641,22 +779,22 @@ BEGIN
                           WHEN qtdiaatr <=  60  THEN 'D'
                           WHEN qtdiaatr <=  90  THEN 'F'
                           ELSE 'H' END; */
-  
+
   risco_atraso := fn_calcula_risco_atraso(qtdiaatr => qtdiaatr);
-                            
+
     RETURN risco_atraso;
 END fn_calcula_risco_atraso_adp;
 
 -- Callcula nível de risco atraso ADP
 FUNCTION fn_calc_niv_risco_atraso_adp(qtdiaatr NUMBER)
     RETURN crawepr.dsnivris%TYPE AS risco_atraso crawepr.dsnivris%TYPE;
-  
+
   /* .............................................................................
 
    Programa: fn_calc_niv_risco_atraso_adp       (Antigo: NAO HA)
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
-   Autor   : 
+   Autor   :
    Data    :                            Ultima atualizacao: 19/01/2018
 
    Dados referentes ao programa:
@@ -665,11 +803,11 @@ FUNCTION fn_calc_niv_risco_atraso_adp(qtdiaatr NUMBER)
    Objetivo  : Calcular nivel de risco atraso ADP
 
    Alteracoes: 19/01/2019 - P450 - Alterado para utilizar a mesma regra de calculo do emprestimo.(Odirlei-Ailos)
-   
+
   ............................................................................. */
-  
+
 BEGIN
-  
+
   --> Alterado para risco atraso do ADP utlizar o mesmo calculo de risco atraso de emprestimo
 
     /*risco_atraso :=  CASE WHEN qtdiaatr IS NULL THEN 2
@@ -678,16 +816,17 @@ BEGIN
                                                 WHEN qtdiaatr <=  60  THEN 5
                                                 WHEN qtdiaatr <=  90  THEN 7
                                                 ELSE 9 END;*/
-                          
+
   risco_atraso := fn_calcula_niv_risco_atraso(qtdiaatr => qtdiaatr);
-  
+
     RETURN risco_atraso;
 END fn_calc_niv_risco_atraso_adp;
 
 FUNCTION fn_traduz_risco(innivris NUMBER)
   RETURN crawepr.dsnivris%TYPE AS dsnivris crawepr.dsnivris%TYPE;
 BEGIN
-    dsnivris :=  CASE WHEN innivris = 2  THEN 'A'
+    dsnivris :=  CASE WHEN innivris = 1  THEN 'AA'
+                      WHEN innivris = 2  THEN 'A'
                       WHEN innivris = 3  THEN 'B'
                       WHEN innivris = 4  THEN 'C'
                       WHEN innivris = 5  THEN 'D'
@@ -749,14 +888,14 @@ FUNCTION fn_busca_risco_melhora(pr_cdcooper   NUMBER
 
     --- >>> CURSORES <<< ---
     CURSOR cr_tbrisco_operacoes IS
-    SELECT r.inrisco_melhora 
+    SELECT r.inrisco_melhora
       FROM tbrisco_operacoes r
      WHERE r.cdcooper = pr_cdcooper
        AND r.nrdconta = pr_nrdconta
        AND r.nrctremp = pr_nrctremp
        AND r.tpctrato = pr_tpctrato;
     rw_tbrisco_operacoes cr_tbrisco_operacoes%ROWTYPE;
-    
+
 BEGIN
   OPEN cr_tbrisco_operacoes;
 
@@ -765,7 +904,7 @@ BEGIN
   IF cr_tbrisco_operacoes%NOTFOUND THEN
      vr_risco_melhora := NULL;
   ELSE
-     vr_risco_melhora := rw_tbrisco_operacoes.inrisco_melhora; 
+     vr_risco_melhora := rw_tbrisco_operacoes.inrisco_melhora;
   END IF;
 
   CLOSE cr_tbrisco_operacoes;
@@ -784,19 +923,19 @@ END fn_busca_risco_melhora;
     RETURN BOOLEAN AS vr_tem_garantia BOOLEAN ;
 
     -- >>> CURSORES <<< ---
-    
-    
+
+
     -- >>> VARIAVEIS <<< ---
     vr_sld_bloq_garan    NUMBER(15,2):=0;     -- Valor da Aplicacao que está bloqueado
-    
+
   BEGIN
      -- ATENCAO: AS GARANTIAS SO SERAO VALIDADAS NA FASE 2 DO RISCO MELHORA
      -- FASE 1 TODOS SERÃO TRATADOS COMO "SEM GARANTIA"
      vr_tem_garantia := FALSE;
-  
+
 
      RETURN vr_tem_garantia;
-  
+
   END fn_verifica_garantias;
 
   -- VERIFICAR SE O CONTRATO POSSUI GARANTIAS --
@@ -840,7 +979,7 @@ END fn_busca_risco_melhora;
       vr_tem_garantia := FALSE;
     ELSE
       -- Verificar se respeita o % do Parametro
-      -- Verificar se o valor Bloqueado Garantia SUPERA o 
+      -- Verificar se o valor Bloqueado Garantia SUPERA o
       -- percentual de Cobertura do Parametro em relação ao Sld Deved. (% do vlsdeved)
       IF (NVL(vr_vlbloque_aplica,0) + NVL(vr_vlbloque_poupa,0)) >
          (pr_tab_contrato(1).vlsdeved * (pr_tab_ctl_param(1).perc_cobert_aplic_bloqueada / 100)) THEN
@@ -854,18 +993,18 @@ END fn_busca_risco_melhora;
     ELSE
        vr_ingarantia := 0;
     END IF;
-        
+
     -- Se, SEM GARANTIA, verificar aplicação modelo antigo.
     IF vr_tem_garantia = FALSE THEN
       -- Modelo ANTIGO de Garantia Aplicacao
       vr_vlaplicacoes := fn_saldo_aplicacao(pr_cdcooper => pr_tab_contrato(1).cdcooper
-                                           ,pr_nrdconta => pr_tab_contrato(1).nrdconta 
+                                           ,pr_nrdconta => pr_tab_contrato(1).nrdconta
                                            ,pr_dtmvtolt => pr_tab_contrato(1).dtmvtolt);
       -- Valor Aplicação  >= Saldo Devedor
       IF vr_vlaplicacoes  >= pr_tab_contrato(1).vlsdeved THEN
          vr_tem_garantia := TRUE;
       END IF;
-    END IF;       
+    END IF;
 
     IF vr_tem_garantia THEN
        vr_ingarantia := 1;
@@ -880,14 +1019,14 @@ END fn_busca_risco_melhora;
       -- Verificação se tem Garantia PESSOAL (Avalista)
       IF pr_tab_contrato(1).flgavali = 1 THEN
         vr_tem_garantia := TRUE;
-      END IF;      
+      END IF;
     END IF;
     IF vr_tem_garantia THEN
        vr_ingarantia := 1;
     ELSE
        vr_ingarantia := 0;
     END IF;
-                               
+
 
     -- Se, SEM GARANTIA, verificar Bens Imoveis/Veiculos
     IF vr_tem_garantia = FALSE THEN
@@ -906,7 +1045,7 @@ END fn_busca_risco_melhora;
 
 
     RETURN vr_tem_garantia;
-  
+
   END fn_verifica_garantias;
 
   FUNCTION fn_saldo_aplicacao (pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -914,19 +1053,19 @@ END fn_busca_risco_melhora;
                               ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                               )
     RETURN NUMBER AS vr_vlgarantia NUMBER ;
-  
+
     vr_ind              INTEGER:=0;
     vr_vlsldapl         NUMBER:=0;
     vr_vlsldtot         NUMBER:=0;
     vr_vlsldrgt         NUMBER:=0;
     vr_cdcritic         NUMBER:=0;
     vr_dscritic         VARCHAR2(2000);
-    vr_des_reto         VARCHAR2(100); 
+    vr_des_reto         VARCHAR2(100);
     vr_tab_saldo_rdca   APLI0001.typ_tab_saldo_rdca;
     vr_tab_erro         gene0001.typ_tab_erro;
-  
+
   BEGIN
-    
+
     vr_vlgarantia := 0;
 
     apli0002.pc_obtem_dados_aplicacoes(pr_cdcooper => pr_cdcooper,
@@ -1050,22 +1189,22 @@ PROCEDURE pc_busca_grupo_economico(pr_cdcooper     IN NUMBER
             ) dados
        WHERE dados.nrdconta = pr_nrdconta;
         rw_grupo cr_grupo%ROWTYPE;
-  
+
   -- variaveis
-  vr_indice  VARCHAR2(18);  
+  vr_indice  VARCHAR2(18);
   vr_dscritic VARCHAR2(500);
-    
+
 BEGIN
   rw_grupo := NULL;
-  
+
   vr_indice := LPAD(pr_cdcooper,3,'0') || LPAD(pr_nrdconta,15,'0');
-  
+
   -- Verifica se a conta está na VR_TAB (Desempenho) (Batch)
   IF  vr_tab_grupos.exists(vr_indice) THEN
     pr_numero_grupo := vr_tab_grupos(vr_indice).nrdgrupo;
     pr_risco_grupo  := vr_tab_grupos(vr_indice).inrisco_grupo;
   ELSE -- Se nao estiver, busca na tabela de Grupos (Tela)
-  
+
     IF vr_execucao = 0 THEN    -- Não é pela OCR
       OPEN cr_grupo;
       FETCH cr_grupo INTO rw_grupo;
@@ -1244,8 +1383,8 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
 
   -- Cursor de buscar o maior risco do borderô
   CURSOR cr_crapbdt_ris(pr_cdcooper crapbdt.cdcooper%TYPE
-                       ,pr_nrdconta crapbdt.nrdconta%TYPE) IS 
-    SELECT 
+                       ,pr_nrdconta crapbdt.nrdconta%TYPE) IS
+    SELECT
       MAX(bdt.nrinrisc) AS nrinrisc_max,
       bdt.qtdirisc
     FROM crapbdt bdt
@@ -1255,7 +1394,7 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
       AND bdt.insitbdt <> 4
     GROUP BY qtdirisc
     ORDER BY  max(nrinrisc) DESC, qtdirisc DESC;
-  rw_crapbdt_ris cr_crapbdt_ris%ROWTYPE;   
+  rw_crapbdt_ris cr_crapbdt_ris%ROWTYPE;
 
   --> Buscar cessao de cartão
   CURSOR cr_tbcessao (pr_cdcooper  tbcrd_cessao_credito.cdcooper%TYPE,
@@ -1266,50 +1405,58 @@ PROCEDURE pc_carrega_tabela_riscos(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cód
       FROM tbcrd_cessao_credito ces
      WHERE ces.cdcooper = pr_cdcooper
        AND ces.nrdconta = pr_nrdconta
-       AND ces.nrctremp = pr_nrctremp;  
-  rw_tbcessao cr_tbcessao%ROWTYPE; 
-     
+       AND ces.nrctremp = pr_nrctremp;
+  rw_tbcessao cr_tbcessao%ROWTYPE;
+
   ----------- VARIAVEIS ------------------
-  rw_crapdat cr_dat%ROWTYPE;     -- Calendário de datas da cooperativa
+  rw_crapdat             cr_dat%ROWTYPE;     -- Calendário de datas da cooperativa
 
-  vr_nrctremp crapris.nrctremp%TYPE;
-  vr_cdmodali crapris.cdmodali%TYPE;
-  vr_jaexiste INTEGER;
-  vr_nrdgrupo crapris.nrdgrupo%TYPE;
-  vr_chtabcpf VARCHAR2(14);           -- Chave para a tabela que armazena o risco CPF
-  vr_indrowid INTEGER;                -- Índice para a tabela de ROWIDs a atualizar para o risco CPF
-  vr_rowidocr ROWID;                  -- ROWID do registro inserido na TBRISCO_CENTRAL_OCR
-  vr_idx_grp  VARCHAR2(18);
-
-  vr_inrisco_inclusao tbrisco_central_ocr.inrisco_inclusao%TYPE;
-  vr_inrisco_rating   tbrisco_central_ocr.inrisco_rating%TYPE;
-  vr_inrisco_atraso   tbrisco_central_ocr.inrisco_atraso%TYPE;
-  vr_inrisco_agravado tbrisco_central_ocr.inrisco_agravado%TYPE;
-  vr_inrisco_melhora  tbrisco_central_ocr.inrisco_melhora%TYPE;
-  vr_inrisco_operacao tbrisco_central_ocr.inrisco_operacao%TYPE;
-  vr_inrisco_refin    tbrisco_central_ocr.inrisco_refin%TYPE;
-  vr_inrisco_grupo    tbrisco_central_ocr.inrisco_grupo%TYPE;
-  vr_inrisco_final    tbrisco_central_ocr.inrisco_final%TYPE;
+  vr_nrctremp            crapris.nrctremp%TYPE;
+  vr_cdmodali            crapris.cdmodali%TYPE;
+  vr_jaexiste            INTEGER;
+  vr_nrdgrupo            crapris.nrdgrupo%TYPE;
+  vr_chtabcpf            VARCHAR2(14);           -- Chave para a tabela que armazena o risco CPF
+  vr_indrowid            INTEGER;                -- Índice para a tabela de ROWIDs a atualizar para o risco CPF
+  vr_rowidocr            ROWID;                  -- ROWID do registro inserido na TBRISCO_CENTRAL_OCR
+  vr_idx_grp             VARCHAR2(18);
+                         
+  vr_inrisco_inclusao    tbrisco_central_ocr.inrisco_inclusao%TYPE;
+  vr_inrisco_rating      tbrisco_central_ocr.inrisco_rating%TYPE;
+  vr_inrisco_atraso      tbrisco_central_ocr.inrisco_atraso%TYPE;
+  vr_inrisco_agravado    tbrisco_central_ocr.inrisco_agravado%TYPE;
+  vr_inrisco_melhora     tbrisco_central_ocr.inrisco_melhora%TYPE;
+  vr_inrisco_operacao    tbrisco_central_ocr.inrisco_operacao%TYPE;
+  vr_inrisco_refin       tbrisco_central_ocr.inrisco_refin%TYPE;
+  vr_inrisco_grupo       tbrisco_central_ocr.inrisco_grupo%TYPE;
+  vr_inrisco_final       tbrisco_central_ocr.inrisco_final%TYPE;
 
   vr_qtdias_atraso_refin crapepr.qtdias_atraso_refin%TYPE;
   vr_qtddiatr_ces        INTEGER;
-  vr_dtcorte_cessao DATE := NULL;
-  
+  vr_dtcorte_cessao      DATE := NULL;
+  vr_dscritic            VARCHAR2(500);
+
+  vr_habrat              VARCHAR2(1) := 'N'; -- P450 - Paramentro para Habilitar Novo Ratin (S/N)
+
 BEGIN
+
+  vr_habrat := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                         pr_cdcooper => pr_cdcooper,
+                                         pr_cdacesso => 'HABILITA_RATING_NOVO');
+
   -- Carrega o calendário de datas da cooperativa
   OPEN cr_dat(pr_cdcooper);
   FETCH cr_dat INTO rw_crapdat;
   CLOSE cr_dat;
 
-  --> Buscar data de corte para 
+  --> Buscar data de corte para
   BEGIN
-    vr_dtcorte_cessao := to_date(gene0001.fn_param_sistema(pr_nmsistem => 'CRED', 
-                                                           pr_cdcooper => pr_cdcooper, 
+    vr_dtcorte_cessao := to_date(gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                           pr_cdcooper => pr_cdcooper,
                                                            pr_cdacesso => 'DTCESSAO_CORTE_ATRASO'),'DD/MM/RRRR');
-        
+
   EXCEPTION
     WHEN OTHERS THEN
-      vr_dtcorte_cessao := to_date('01/01/2000','DD/MM/RRRR');        
+      vr_dtcorte_cessao := to_date('01/01/2000','DD/MM/RRRR');
   END;
 
   vr_idx_grp  := NULL;
@@ -1317,7 +1464,7 @@ BEGIN
   -- Carregar Grupos da Cooperativa
   FOR rw_grupos IN cr_grupos (pr_cdcooper) LOOP
     vr_idx_grp := LPAD(pr_cdcooper,3,'0') || LPAD(rw_grupos.nrdconta,15,'0');
-    
+
     -- Evitar duplicados
     IF NOT vr_tab_grupos.exists(vr_idx_grp) THEN
       vr_tab_grupos(vr_idx_grp).nrdgrupo      := rw_grupos.idgrupo;
@@ -1330,7 +1477,7 @@ BEGIN
   -- Percorre os dados carregados da CRAPRIS
   FOR rw_crapris IN cr_crapris(pr_cdcooper, rw_crapdat.dtmvtoan) LOOP
 
-    vr_cdmodali := rw_crapris.cdmodali;
+    vr_cdmodali      := rw_crapris.cdmodali;
     vr_inrisco_final := rw_crapris.innivris;
 
     IF rw_crapris.cdmodali = 1901 THEN
@@ -1369,35 +1516,34 @@ BEGIN
 
     -- iniciar rowtype antes do IF para nao deixar sujeira
     rw_tbcessao := NULL;
-      
+
     IF vr_cdmodali = 299 THEN
-    
+
       --> Buscar cessao de cartão
       OPEN cr_tbcessao (pr_cdcooper  => pr_cdcooper,
                         pr_nrdconta  => rw_crapris.nrdconta,
                         pr_nrctremp  => rw_crapris.nrctremp);
       FETCH cr_tbcessao INTO rw_tbcessao;
       CLOSE cr_tbcessao;
-        
+
     END IF;
-    
+
     --> Se for cessão e que a data do contrato seja a partir da data de corte
-    IF rw_tbcessao.incessao = 'S' AND 
-       rw_crapris.dtinictr >= vr_dtcorte_cessao THEN
-       
+    IF rw_tbcessao.incessao = 'S' AND
+      rw_crapris.dtinictr >= vr_dtcorte_cessao THEN
+
       --> Calcular qtd dias de atraso a partir do do vencto
-      vr_qtddiatr_ces := rw_crapdat.dtmvtoan - rw_tbcessao.dtvencto;    
-    
-    -- Calcula o risco Atraso
+      vr_qtddiatr_ces := rw_crapdat.dtmvtoan - rw_tbcessao.dtvencto;
+
+      -- Calcula o risco Atraso
       vr_inrisco_atraso := fn_traduz_nivel_risco(CASE WHEN vr_cdmodali IN (101,201, 1901)
                                                       THEN fn_calcula_risco_atraso_adp(vr_qtddiatr_ces)
                                                       ELSE fn_calcula_risco_atraso(vr_qtddiatr_ces) END);
-    
-    ELSE 
+    ELSE
       -- Calcula o risco Atraso
-    vr_inrisco_atraso := fn_traduz_nivel_risco(CASE WHEN vr_cdmodali IN (101,201, 1901)
-                                                    THEN fn_calcula_risco_atraso_adp(rw_crapris.qtdiaatr)
-                                                    ELSE fn_calcula_risco_atraso(rw_crapris.qtdiaatr) END);
+      vr_inrisco_atraso := fn_traduz_nivel_risco(CASE WHEN vr_cdmodali IN (101,201, 1901)
+                                                      THEN fn_calcula_risco_atraso_adp(rw_crapris.qtdiaatr)
+                                                      ELSE fn_calcula_risco_atraso(rw_crapris.qtdiaatr) END);
 
     END IF;
     -- Calcula o risco Agravado
@@ -1406,14 +1552,17 @@ BEGIN
                                                  , rw_crapdat.dtmvtoan);
 
     -- Calula o risco Rating
-    vr_inrisco_rating := fn_traduz_nivel_risco(fn_busca_rating_conta(pr_cdcooper
-                                                                   , rw_crapris.nrdconta));
-/*
-    vr_inrisco_rating := fn_traduz_nivel_risco(fn_busca_rating(pr_cdcooper
-                                                             , rw_crapris.nrdconta
-                                                             , vr_nrctremp
-                                                             , rw_crapris.cdorigem));
-*/
+    -- P450 SPT13 - alteracao para habilitar rating novo
+    IF (pr_cdcooper = 3 OR vr_habrat = 'N') THEN
+      vr_inrisco_rating := fn_traduz_nivel_risco(fn_busca_rating_conta(pr_cdcooper
+                                                                      ,rw_crapris.nrdconta));
+    ELSE
+      -- P450 - Rating
+      vr_inrisco_rating  := fn_busca_rating_operacao_efet(pr_cdcooper
+                                                         ,rw_crapris.nrdconta
+                                                         ,vr_nrctremp);
+    END IF;
+    -- P450 SPT13 - alteracao para habilitar rating novo
 
     -- Calcula os riscos Inclusão, Melhora e Refin
     IF vr_cdmodali IN (299,499) THEN
@@ -1434,19 +1583,19 @@ BEGIN
                          ,rw_crapris.nrdconta);
       FETCH cr_crapbdt_ris INTO rw_crapbdt_ris;
       CLOSE cr_crapbdt_ris;
-      vr_inrisco_refin    := NULL;
-      vr_inrisco_inclusao := rw_crapbdt_ris.nrinrisc_max;
-      vr_inrisco_melhora  := NULL;
+      vr_inrisco_refin       := NULL;
+      vr_inrisco_inclusao    := rw_crapbdt_ris.nrinrisc_max;
+      vr_inrisco_melhora     := NULL;
       vr_qtdias_atraso_refin := 0;
-      vr_inrisco_atraso := rw_crapbdt_ris.nrinrisc_max;
+      vr_inrisco_atraso      := rw_crapbdt_ris.nrinrisc_max;
     ELSE
-      vr_inrisco_refin := NULL;
-      vr_inrisco_inclusao := 2;
-      vr_inrisco_melhora := NULL;
+      vr_inrisco_refin       := NULL;
+      vr_inrisco_inclusao    := 2;
+      vr_inrisco_melhora     := NULL;
       vr_qtdias_atraso_refin := 0;
     END IF;
 
-            
+
     -- CALCULA O RISCO OPERAÇÃO  -> O Risco da Operação é o PIOR entre os riscos
     IF vr_inrisco_melhora IS NULL THEN
       -- Sem MELHORA => PIOR ENTRE => INC/ATR/RAT/AGR/REF
@@ -1567,15 +1716,19 @@ BEGIN
                                                  , rw_crapass.nrdconta
                                                  , rw_crapdat.dtmvtoan);
 
+
     -- Calula o risco Rating
-    vr_inrisco_rating := fn_traduz_nivel_risco(fn_busca_rating_conta(pr_cdcooper
-                                                                   , rw_crapass.nrdconta));
-/*
-    vr_inrisco_rating := fn_traduz_nivel_risco(fn_busca_rating(pr_cdcooper
-                                                             , rw_crapass.nrdconta
-                                                             , rw_crapass.nrdconta
-                                                             , 1));
-*/
+    -- P450 SPT13 - alteracao para habilitar rating novo
+    IF (pr_cdcooper = 3 OR vr_habrat = 'N') THEN
+      vr_inrisco_rating := fn_traduz_nivel_risco(fn_busca_rating_conta(pr_cdcooper
+                                                                      ,rw_crapass.nrdconta));
+    ELSE
+      -- P450 - Rating
+      vr_inrisco_rating  := fn_busca_rating_operacao_efet(pr_cdcooper
+                                                         ,rw_crapass.nrdconta
+                                                         ,rw_crapass.nrdconta);
+    END IF;
+    -- P450 SPT13 - alteracao para habilitar rating novo
 
     -- Define o risco atraso como "A" (não há atraso)
     vr_inrisco_atraso := 2;
@@ -1658,7 +1811,7 @@ BEGIN
     ) RETURNING ROWID INTO vr_rowidocr;
 
     -- Calcula a raíz do CNPJ para uso como chave da tabela de riscos CPF
-    vr_chtabcpf := CASE WHEN rw_crapass.inpessoa = 2 THEN 
+    vr_chtabcpf := CASE WHEN rw_crapass.inpessoa = 2 THEN
                              substr(to_char(rw_crapass.nrcpfcgc, 'FM00000000000000'), 1, 8)
                         ELSE to_char(rw_crapass.nrcpfcgc, 'FM00000000000') END;
 
@@ -1815,12 +1968,12 @@ END pc_carrega_tabela_riscos;
                          AND ass.cdcooper = pr_cdcooper
                     ) dados
               ORDER BY 1,2,3,4
-        ) grp;     
+        ) grp;
     rw_grupo_cpf cr_grupo_cpf%ROWTYPE;
 
     CURSOR cr_ass_contas (pr_cdcooper IN crapcop.cdcooper%TYPE
                          ,pr_nrcpfcgc IN crapass.nrcpfcnpj_base%TYPE) IS
-      SELECT ass.nrdconta  
+      SELECT ass.nrdconta
             ,ass.cdcooper
             ,ass.nrcpfcgc
         FROM crapass ass
@@ -1865,7 +2018,7 @@ END pc_carrega_tabela_riscos;
                  AND ass.cdcooper = pr_cdcooper
                  AND pai.cdcooper = pr_cdcooper
             ) dados
-       WHERE dados.idgrupo = pr_idgrupo;    
+       WHERE dados.idgrupo = pr_idgrupo;
     rw_contas_grupo cr_contas_grupo%ROWTYPE;
 
     -- Cadastro de informacoes de central de riscos
@@ -1942,12 +2095,12 @@ END pc_carrega_tabela_riscos;
     vr_maxrisco             INTEGER:=-10;
     vr_dtdrisco             crapris.dtdrisco%TYPE; -- Data da atualização do risco
     vr_dttrfprj             DATE;
-      
+
     -- Variaveis de Erro
     vr_cdcritic             crapcri.cdcritic%TYPE;
     vr_dscritic             VARCHAR2(4000);
     vr_exc_erro             EXCEPTION;
-    
+
     vr_nrcpfcnpj_base       crapass.nrcpfcnpj_base%TYPE;
 
    BEGIN
@@ -1977,7 +2130,7 @@ END pc_carrega_tabela_riscos;
              vr_dscritic := 'RISC0004.pc_central_risco_grupo - '
                             || 'Erro ao definir G.E. na Central de Risco --> '
                             ||'Conta: '||rw_ass_contas.nrdconta
-                            ||'Grupo: '||rw_grupo_cpf.nrdgrupo                            
+                            ||'Grupo: '||rw_grupo_cpf.nrdgrupo
                             || '. Detalhes:'||SQLERRM;
               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                         ,pr_ind_tipo_log => 2 -- Erro tratado
@@ -2094,7 +2247,7 @@ END pc_carrega_tabela_riscos;
               END;
             END LOOP; -- FIM FOR rw_crapvri
           END LOOP; -- FIM FOR rw_crapris
-          
+
           -- Atualizar o nível de risco da conta conforme o maior risco do grupo (Heckmann/AMcom)
           BEGIN
             UPDATE crapass
@@ -2108,7 +2261,7 @@ END pc_carrega_tabela_riscos;
                            'Erro: '||SQLERRM;
             RAISE vr_exc_erro;
           END; -- Fim atualização do nível de risco do grupo
-          
+
         END LOOP; -- FIM FOR rw_contas_grupo
 
         -- Leitura de todos do grupo para atualizar o risco do grupo
@@ -2169,17 +2322,17 @@ END pc_carrega_tabela_riscos;
 
    Frequencia: Quando solicitado
    Objetivo  : Gravar da Data do Risco de cada operação
-   
+
    ------------------------------------------------------------------------
                ATENÇÃO: ESTE DEVE SER O UNICO PONTO DO SISTEMA ONDE GRAVA
                A dtdrisco DA CRAPRIS.
    ------------------------------------------------------------------------
 
-   Alteracoes: 
+   Alteracoes:
   ............................................................................. */
 
     -- CURSORES
-  
+
     -- VARIAVEIS LOCAIS
 
 
@@ -2189,13 +2342,13 @@ END pc_carrega_tabela_riscos;
     vr_dttrfprj             DATE;
     vr_des_msg              VARCHAR2(500);
     vr_nrcpfcnpj_base       crapass.nrcpfcnpj_base%TYPE;
-    
-      
+
+
     -- VARIAVEIS DE ERRO
     vr_cdcritic             crapcri.cdcritic%TYPE;
     vr_dscritic             VARCHAR2(4000);
     vr_exc_erro             EXCEPTION;
-  
+
     BEGIN
 
    /*------------------------------------------------------------------------
@@ -2205,9 +2358,9 @@ END pc_carrega_tabela_riscos;
 
 
         -- PROCESSAR TODA CENTRAL DE RISCO DA DTREFERE (HOJE)
-      
+
         -- PARA CADA crapRIS, VERIFICAR RISCO DA DATA DTMVTOAN (ONTEM)
-        
+
           -- VALIDAR CONFORME ESTRUTURADO NA ROTINA PC_CENTRAL_RISCO_GRUPO
             -- VERIFICAR SE EXISTE "ONTEM"
               -- SE NÃO EXISTE, GRAVAR DTDRISCO = HOJE
@@ -2217,7 +2370,7 @@ END pc_carrega_tabela_riscos;
                  -- SE NÃO, GRAVAR DTDRISCO = dtdrisco DE ONTEM
                  -- EFETUAR A VALIDACAO/BUSCA fn_regra_dtprevisao_prejuizo
                  -- GRAVAR DTDRISCO E DTtrfprj PARA CADA CONTRATO
-         
+
       NULL;
 
 
@@ -2236,30 +2389,30 @@ END pc_carrega_tabela_riscos;
         pr_dscritic := 'Erro nao tratado na RISC0004.pc_central_risco_grupo --> ' || SQLERRM;
 
   END pc_central_grava_dtdrisco;
-  
-  -- Grava saldo refinanciado na crapepr                                
+
+  -- Grava saldo refinanciado na crapepr
   PROCEDURE pc_gravar_saldo_refin(pr_cdcooper            NUMBER     --> Cooperativa
                                  ,pr_nrdconta            NUMBER     --> Conta
                                  ,pr_nrctremp            NUMBER     --> Contrato
                                  ,pr_devedor_calculado   NUMBER     --> Valor refinanciado
                                  ,pr_dscritic            OUT VARCHAR2) IS
   BEGIN
-    
+
     UPDATE crapepr r
        SET r.vlsaldo_refinanciado = pr_devedor_calculado
      WHERE r.cdcooper = pr_cdcooper
        AND r.nrdconta = pr_nrdconta
        AND r.nrctremp = pr_nrctremp;
-       
+
   EXCEPTION
     WHEN OTHERS THEN
        -- Descricao do erro
-       pr_dscritic := 'Erro nao tratado na RISC0004.pc_gravar_saldo_refin --> ' 
+       pr_dscritic := 'Erro nao tratado na RISC0004.pc_gravar_saldo_refin --> '
                       ||'Conta: ' || pr_nrdconta
-                      ||'. Contrato: ' || pr_nrctremp  
+                      ||'. Contrato: ' || pr_nrctremp
                       ||'. Detalhes: ' || SQLERRM;
-          
-  END pc_gravar_saldo_refin; 
+
+  END pc_gravar_saldo_refin;
 
 
 
@@ -2276,16 +2429,26 @@ END pc_carrega_tabela_riscos;
    Sistema : Credito
    Sigla   : CRED
    Autor   : Guilherme/AMcom
-   Data    : Novembro/2018.                        Ultima atualizacao:
+   Data    : Novembro/2018.                        Ultima atualizacao: 10.05.2019
 
    Dados referentes ao programa:
 
    Frequencia: Quando solicitado
    Objetivo  : Gravar a Critica para o não-cálculo do Risco Melhora
 
-   Alteracoes: 
+   Alteracoes: 10/05/2019  - P450 - Rating. pc_grava_risco_melhora, gravar cpfcnpj base 
+                             ao inserir tbrisco_operacoes (AMcom - Mario)
+
   ............................................................................. */
 
+ -- Busca do nr cpfcnpj base do associado
+CURSOR cr_crapass_ope (pr_cdcooper  IN crapass.cdcooper%TYPE     --> Coop. conectada
+                      ,pr_nrdconta  IN crapass.nrdconta%TYPE) IS --> Codigo Conta
+  SELECT  ass.nrcpfcnpj_base
+    FROM crapass ass
+  WHERE ass.cdcooper = pr_cdcooper
+    AND ass.nrdconta = pr_nrdconta;
+  rw_crapass_ope   cr_crapass_ope%ROWTYPE;
 
   vr_des_erro    VARCHAR2(2000);
   vr_exc_erro    EXCEPTION;
@@ -2306,6 +2469,8 @@ END pc_carrega_tabela_riscos;
    12) RISCO OPERACAO MENOR OU IGUAL AO MAIOR RISCO ENTRE RAT/ATR/AGR
    13) MELHORA MINIMO JA ATINGIDO (MEL)
    14) MELHORA MINIMO JA ATINGIDO (REF)
+   15) QUALIF.OPERAC. NÃO PERMITE "MELHORA"
+   16) RISCO INCLUSÃO ESTÁ NO VALOR MINIMO "A"
 ---------------------------------------*/
 
   BEGIN
@@ -2327,20 +2492,27 @@ END pc_carrega_tabela_riscos;
           pr_dscritic := ' Detalhes[2]:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
           RAISE vr_exc_erro;
       END;
-        
+
       -- Se igual a 0, nao encontrou. Fazer INSERT
       IF SQL%ROWCOUNT = 0 THEN
+        --Buscar o CPF CNPJ Base do Associado  - P450 - Rating
+        OPEN cr_crapass_ope(pr_cdcooper
+                           ,pr_nrdconta);
+        FETCH cr_crapass_ope INTO rw_crapass_ope;
+        CLOSE cr_crapass_ope;
         BEGIN
-          INSERT INTO TBRISCO_OPERACOES 
-                     (cdcooper, 
-                      nrdconta, 
-                      nrctremp, 
-                      tpctrato, 
-                      inrisco_inclusao, 
-                      inrisco_calculado, 
-                      inrisco_melhora, 
-                      dtrisco_melhora, 
-                      cdcritica_melhora)
+          INSERT INTO TBRISCO_OPERACOES
+                     (cdcooper,
+                      nrdconta,
+                      nrctremp,
+                      tpctrato,
+                      inrisco_inclusao,
+                      inrisco_calculado,
+                      inrisco_melhora,
+                      dtrisco_melhora,
+                      cdcritica_melhora,
+                      --p450 - rating
+                      nrcpfcnpj_base)
                 VALUES (pr_cdcooper,
                         pr_nrdconta,
                         pr_nrctremp,
@@ -2349,13 +2521,14 @@ END pc_carrega_tabela_riscos;
                         NULL,
                         NULL,
                         NULL,
-                        pr_cdcritic_melhora
+                        pr_cdcritic_melhora,
+                        rw_crapass_ope.nrcpfcnpj_base
                        );
         EXCEPTION
           WHEN OTHERS THEN
             pr_dscritic := ' Detalhes[1]:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
             RAISE vr_exc_erro;
-        END;            
+        END;
       END IF;
     END IF;
 
@@ -2391,7 +2564,8 @@ END pc_carrega_tabela_riscos;
    Frequencia: Quando solicitado
    Objetivo  : Gravar o resultado do cálculo do Risco Melhora
 
-   Alteracoes: 
+   Alteracoes: 14/03/2019  - P450 - Rating. pc_grava_risco_melhora, gravar cpfcnpj base 
+                             ao inserir tbrisco_operacoes
   ............................................................................. */
 
   CURSOR cr_operacao IS
@@ -2427,20 +2601,29 @@ END pc_carrega_tabela_riscos;
           pr_dscritic := ' Detalhes[1]:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
           RAISE vr_exc_erro;
       END;
-        
+
       -- Se igual a 0, nao encontrou. Fazer INSERT
       IF SQL%ROWCOUNT = 0 THEN
         BEGIN
-          INSERT INTO TBRISCO_OPERACOES 
-                     (cdcooper, 
-                      nrdconta, 
-                      nrctremp, 
-                      tpctrato, 
-                      inrisco_inclusao, 
-                      inrisco_calculado, 
-                      inrisco_melhora, 
-                      dtrisco_melhora, 
-                      cdcritica_melhora)
+
+          --Buscar o CPF CNPJ Base do Associado  - P450 - Rating
+          OPEN cr_crapass_ope(pr_cdcooper
+                             ,pr_nrdconta);
+          FETCH cr_crapass_ope INTO rw_crapass_ope;
+          CLOSE cr_crapass_ope;
+          ----
+          INSERT INTO TBRISCO_OPERACOES
+                     (cdcooper,
+                      nrdconta,
+                      nrctremp,
+                      tpctrato,
+                      inrisco_inclusao,
+                      inrisco_calculado,
+                      inrisco_melhora,
+                      dtrisco_melhora,
+                      cdcritica_melhora,
+                      --p450 - rating
+                      nrcpfcnpj_base)
                 VALUES (pr_cdcooper,
                         pr_nrdconta,
                         pr_nrctremp,
@@ -2449,16 +2632,17 @@ END pc_carrega_tabela_riscos;
                         NULL,
                         pr_inrisco_melhora,
                         pr_dtrisco_melhora,
-                        NULL
+                        NULL,
+                        rw_crapass_ope.nrcpfcnpj_base
                        );
         EXCEPTION
           WHEN OTHERS THEN
             pr_dscritic := ' Detalhes[2]:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
             RAISE vr_exc_erro;
-        END;            
+        END;
       END IF;
 
-    
+
       -- MANTER ATUALIZANDO O RISCO DSNIVRIS ENQUANTO NAO FOR REMOVIDO DEFINITIVO
       BEGIN
          UPDATE crawepr t
@@ -2512,7 +2696,8 @@ END pc_carrega_tabela_riscos;
    Objetivo  : Procedure responsável por fazer todas as validações pertinentes ao
                do Risco Melhora e, quando sucesso, indicar/retornar o nível ao final
 
-   Alteracoes: 
+   Alteracoes: 15/08/2019 - P450 - Ajuste para ser aplicado o Risco Melhora em operações com classificação 
+                            1-Normal e 2-Renovação que tenham o risco de inclusão diferente de A. (Heckmann - AMcom)
   ............................................................................. */
   -- CURSORES
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -2531,6 +2716,7 @@ END pc_carrega_tabela_riscos;
           ,t.dtrisco_melhora
           ,e.vlsaldo_refinanciado
           ,NVL(e.vlsdeved,0) vlsdeved
+          ,NVL(e.vlemprst,0) vlemprst
           ,l.tpctrato -- Tipo Contrato na Linha de Credito
           ,l.permingr
           ,TRIM(b.dscatbem) dscatbem
@@ -2544,6 +2730,8 @@ END pc_carrega_tabela_riscos;
                ELSE 0
              END ) flgavali          -- Se tem avalista
           ,w.idcobope          -- Cobertura Aplicacao
+          ,e.idquaprc          -- Qualificacao da operacao
+          ,w.dsnivori dsriscoinc  -- Risco Inclusao
       FROM crapepr e, crawepr w, crapbpr b
          , tbrisco_operacoes t, craplcr l
      WHERE e.rowid       = PR_ROWIDEPR  -- Rowid do Emprestimo
@@ -2565,7 +2753,7 @@ END pc_carrega_tabela_riscos;
        AND b.flcancel(+) = 0  -- Não pode ter sido Cancelado
      ORDER BY e.nrctremp;
   rw_crapepr   cr_emprest%ROWTYPE;
-  
+
   CURSOR cr_central (pr_cdcooper IN crapris.cdcooper%TYPE
                     ,pr_nrdconta IN crapris.nrdconta%TYPE
                     ,pr_nrctremp IN crapris.nrctremp%TYPE
@@ -2596,10 +2784,11 @@ END pc_carrega_tabela_riscos;
   vr_dtrefere             DATE;
   vr_tem_garantias        BOOLEAN:=FALSE;
   vr_melhora_novo         INTEGER;
-  
+  vr_risco_atual          INTEGER;
+
   vr_sucesso              BOOLEAN:=TRUE;
 
-  vr_tab_contrato         RISC0004.typ_tab_contrato;  
+  vr_tab_contrato         RISC0004.typ_tab_contrato;
 
   BEGIN
 
@@ -2628,10 +2817,10 @@ END pc_carrega_tabela_riscos;
     END IF;
     CLOSE cr_emprest;
 
-  
-    
+
+
     -- Montar a vr_tab de emprestimos (passar para o fn_verifica_garantias)
-    vr_tab_contrato.delete;        
+    vr_tab_contrato.delete;
     vr_tab_contrato(1).cdcooper := pr_cdcooper;
     vr_tab_contrato(1).nrdconta := rw_crapepr.nrdconta;
     vr_tab_contrato(1).nrctremp := rw_crapepr.nrctremp;
@@ -2656,7 +2845,7 @@ END pc_carrega_tabela_riscos;
     END IF;
 
     IF  rw_crapepr.dtrisco_melhora IS NOT NULL
-    AND to_char(rw_crapepr.dtrisco_melhora, 'MM') = to_char(rw_crapdat.dtmvtolt, 'MM') THEN     
+    AND to_char(rw_crapepr.dtrisco_melhora, 'MM') = to_char(rw_crapdat.dtmvtolt, 'MM') THEN
       -- 2) RISCO MELHORA JA CALCULADO NO MES
       vr_cdcritica_melhora := 2;
       RAISE vr_grava_log;
@@ -2666,12 +2855,6 @@ END pc_carrega_tabela_riscos;
     IF rw_crapepr.tpemprst NOT IN(1,2) THEN
     -- 3) EMPRESTIMO DIFERENTE DE PP E POS (EXCLUSIVO PARA ESSES)
       vr_cdcritica_melhora := 3;
-      RAISE vr_grava_log;
-    END IF;
-
-    IF rw_crapepr.inrisco_refin IS NULL THEN
-    -- 4) EMPRESTIMO NAO TEM RISCO REFIN CALCULADO
-      vr_cdcritica_melhora := 4;
       RAISE vr_grava_log;
     END IF;
 
@@ -2692,21 +2875,34 @@ END pc_carrega_tabela_riscos;
     -- VERIFICAR GARANTIAS
     vr_tem_garantias := RISC0004.fn_verifica_garantias(pr_tab_ctl_param => pr_tab_ctl_param
                                                       ,pr_tab_contrato  => vr_tab_contrato);
-    
+
 
     -- Se for Sem Garantia, deve liquidar % minimo do saldo refinanciado, conforme parametro
     IF NOT vr_tem_garantias THEN
-      IF rw_crapepr.vlsaldo_refinanciado IS NULL
-      OR rw_crapepr.vlsaldo_refinanciado = 0 THEN
+      
+      IF (rw_crapepr.vlsaldo_refinanciado IS NULL
+      OR rw_crapepr.vlsaldo_refinanciado = 0)
+      AND rw_crapepr.idquaprc IN(3,4) THEN
         -- 7) NAO FOI GRAVADO SALDO REFINANCIADO OU É ZERO
         vr_cdcritica_melhora := 7;
         RAISE vr_grava_log;
       ELSE
-        IF  (rw_crapepr.vlsdeved / rw_crapepr.vlsaldo_refinanciado) >
-            ((100 - pr_tab_ctl_param(1).perc_liquid_sem_garantia)/100) THEN
-          -- 8) SEM GARANTIA, PERC.MIN DE LIQUIDACAO SALDO REFINANCIADO NAO ALCANÇADO
-          vr_cdcritica_melhora := 8;--alterado (era 7)
-          RAISE vr_grava_log;       
+        IF rw_crapepr.idquaprc IN(3,4) THEN
+          IF  (rw_crapepr.vlsdeved / rw_crapepr.vlsaldo_refinanciado) >
+              ((100 - pr_tab_ctl_param(1).perc_liquid_sem_garantia)/100) THEN
+            -- 8) SEM GARANTIA, PERC.MIN DE LIQUIDACAO SALDO REFINANCIADO NAO ALCANÇADO
+            vr_cdcritica_melhora := 8;--alterado (era 7)
+            RAISE vr_grava_log;
+          END IF;
+        ELSE
+          -- Para rw_crapepr.idquaprc IN(1,2) deve-se utilizar
+          -- o Valor Emprestado e nao o Saldo Refinanciado
+          IF  (rw_crapepr.vlsdeved / rw_crapepr.vlemprst) >
+              ((100 - pr_tab_ctl_param(1).perc_liquid_sem_garantia)/100) THEN
+            -- 8) SEM GARANTIA, PERC.MIN DE LIQUIDACAO SALDO REFINANCIADO NAO ALCANÇADO
+            vr_cdcritica_melhora := 8;--alterado (era 7)
+            RAISE vr_grava_log;
+          END IF;          
         END IF;
       END IF;
     ELSE
@@ -2716,11 +2912,11 @@ END pc_carrega_tabela_riscos;
 
     -- VERIFICAR ADIMPLENCIA DO CONTRATO
     IF vr_tem_garantias THEN -- Com Garantia
-      IF NOT ((rw_crapepr.qtprepag >= rw_crapepr.qtmesdec)  AND 
+      IF NOT ((rw_crapepr.qtprepag >= rw_crapepr.qtmesdec)  AND
                rw_crapepr.qtprepag > 0) THEN
         -- 9) Adimplencia COM Garantia não atendida
         vr_cdcritica_melhora := 9;
-        RAISE vr_grava_log;       
+        RAISE vr_grava_log;
       END IF;
     ELSE -- Sem Garantia
       IF NOT (MOD(rw_crapepr.qtprepag, 2) = 0            AND
@@ -2728,7 +2924,7 @@ END pc_carrega_tabela_riscos;
                rw_crapepr.qtprepag > 0) THEN
         -- 10) Adimplencia SEM Garantia não atendida
         vr_cdcritica_melhora := 10;
-        RAISE vr_grava_log;       
+        RAISE vr_grava_log;
       END IF;
     END IF;
 
@@ -2739,7 +2935,7 @@ END pc_carrega_tabela_riscos;
                     ,pr_nrctremp => rw_crapepr.nrctremp
                     ,pr_dtrefere => vr_dtrefere);
     FETCH cr_central INTO rw_central;
-     
+
     IF cr_central%FOUND THEN
       CLOSE cr_central;
       IF rw_central.inrisco_operacao <= pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
@@ -2747,12 +2943,12 @@ END pc_carrega_tabela_riscos;
         vr_cdcritica_melhora := 11;
         RAISE vr_grava_log;
       ELSE
-        IF rw_central.inrisco_operacao < 
+        IF rw_central.inrisco_operacao <
            greatest(rw_central.inrisco_rating,rw_central.inrisco_atraso,rw_central.inrisco_agravado) THEN
           -- 12) Risco Operacao Menor ou Igual ao Maior risco entre RAT/ATR/AGR
           vr_cdcritica_melhora := 12;
           RAISE vr_grava_log;
-        END IF;        
+        END IF;
       END IF;
     ELSE
       CLOSE cr_central;
@@ -2771,20 +2967,38 @@ END pc_carrega_tabela_riscos;
       IF rw_crapepr.inrisco_melhora <= pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
         -- 13) Melhora Minimo ja atingido (MEL)
         vr_cdcritica_melhora := 13;
-        RAISE vr_grava_log;   
+        RAISE vr_grava_log;
       END IF;
 
       -- Novo Melhora deve respeitar o minimo parametrizado
       IF pr_inrisco_melhora < pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
-        pr_inrisco_melhora := pr_tab_ctl_param(1).inrisco_melhora_minimo;        
+        pr_inrisco_melhora := pr_tab_ctl_param(1).inrisco_melhora_minimo;
       END IF;
     ELSE
+      
+      -- P450 Inicio
       -- Risco MELHORA ainda não calculado
+      IF rw_crapepr.idquaprc IN (1,2) THEN -- pega risco do inclusao
+        IF rw_crapepr.dsriscoinc <> 'A' THEN
+          pr_inrisco_melhora := fn_traduz_nivel_risco(rw_crapepr.dsriscoinc) - 1;  -- traduz nivel risco
+          vr_risco_atual     := fn_traduz_nivel_risco(rw_crapepr.dsriscoinc);
+        ELSE
+          -- 16) Risco Inclusão está no valor minimo "A"
+          vr_cdcritica_melhora := 16;
+          RAISE vr_grava_log;
+        END IF;
+      ELSIF rw_crapepr.idquaprc IN (3, 4) THEN 
+        pr_inrisco_melhora := rw_crapepr.inrisco_refin - 1;
+        vr_risco_atual     := rw_crapepr.inrisco_refin;
+      ELSE
+        -- 15) Qualif.Operac. não permite "Melhora"
+        vr_cdcritica_melhora := 15;
+        RAISE vr_grava_log;
+      END IF;
+      -- P450 Fim
 
-      pr_inrisco_melhora := rw_crapepr.inrisco_refin - 1;
-
-      -- Se o REFIN Atual ja é menor ou igual ao parametro minimo, não faz nada.
-      IF rw_crapepr.inrisco_refin <= pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
+      -- Se o Risco Atual ja é menor ou igual ao parametro minimo, não faz nada.
+      IF vr_risco_atual  <= pr_tab_ctl_param(1).inrisco_melhora_minimo THEN
         -- 14) Melhora Minimo ja atingido (REF)
         vr_cdcritica_melhora := 14;
         RAISE vr_grava_log;   
@@ -2821,7 +3035,7 @@ END pc_carrega_tabela_riscos;
       -- Se nao encontrou o emprestimo do parametro (vr_cdcritica_melhora = 0)
       IF vr_cdcritica_melhora = 0 THEN
         pr_inrisco_melhora := NULL;
-        pr_dscritic        := NULL;    
+        pr_dscritic        := NULL;
       ELSE
         -- Busca o valor ja gravado para esse contrato
         pr_inrisco_melhora := RISC0004.fn_busca_risco_melhora(pr_cdcooper => rw_crapepr.cdcooper
@@ -2840,7 +3054,7 @@ END pc_carrega_tabela_riscos;
         END IF;
 
       END IF;
-   
+
     WHEN vr_exc_erro THEN
       ROLLBACK;
       vr_cdcritica_melhora := NULL;
@@ -2878,7 +3092,7 @@ END pc_carrega_tabela_riscos;
    Frequencia: Quando solicitado
    Objetivo  : Buscar os parametros da Central de Risco para utilização
 
-   Alteracoes: 
+   Alteracoes:
   ............................................................................. */
 
    -- CURSORES
@@ -2892,15 +3106,15 @@ END pc_carrega_tabela_riscos;
        FROM tbrisco_central_parametros t
       WHERE t.cdcooper = pr_cdcooper;
    rw_ctl_param cr_ctl_param%ROWTYPE;
-  
+
    -- VARIAVEIS LOCAIS
-    
-      
+
+
    -- VARIAVEIS DE ERRO
    vr_cdcritic             crapcri.cdcritic%TYPE;
    vr_dscritic             VARCHAR2(4000);
    vr_exc_erro             EXCEPTION;
-  
+
    BEGIN
 
      -- Limpar tabela de Parametros
@@ -2921,14 +3135,14 @@ END pc_carrega_tabela_riscos;
        pr_tab_ctl_parametros(1).cdoperador_alteracao        := '1';
      ELSE
        CLOSE cr_ctl_param;
-       -- Carrega dados cadastrados   
+       -- Carrega dados cadastrados
        pr_tab_ctl_parametros(1).cdcooper                    := rw_ctl_param.cdcooper;
        pr_tab_ctl_parametros(1).perc_liquid_sem_garantia    := rw_ctl_param.perc_liquid_sem_garantia;
        pr_tab_ctl_parametros(1).perc_cobert_aplic_bloqueada := rw_ctl_param.perc_cobert_aplic_bloqueada;
        pr_tab_ctl_parametros(1).inrisco_melhora_minimo      := rw_ctl_param.inrisco_melhora_minimo;
        pr_tab_ctl_parametros(1).dthr_alteracao              := rw_ctl_param.dthr_alteracao;
        pr_tab_ctl_parametros(1).cdoperador_alteracao        := rw_ctl_param.cdoperador_alteracao;
-     END IF;     
+     END IF;
 
     EXCEPTION
       WHEN vr_exc_erro THEN
@@ -2946,5 +3160,255 @@ END pc_carrega_tabela_riscos;
 
   END pc_central_parametros;
 
+
+-- Buscar o risco na inclusão e na efetivação  - P450 - Rating
+  PROCEDURE pc_busca_risco_inclusao(pr_cdcooper IN NUMBER            --> Cooperativa
+                                   ,pr_nrdconta IN NUMBER            --> Conta
+                                   ,pr_dsctrliq IN VARCHAR2          --> Lista de Contratos Liquidados
+                                   ,pr_rw_crapdat IN btch0001.cr_crapdat%ROWTYPE --> Data da cooperativa
+                                   ,pr_nrctremp  IN crawepr.nrctremp%TYPE DEFAULT NULL  --> Número do contrato de emprestimos
+                                   ,pr_innivris OUT NUMBER
+                                   ,pr_cdcritic OUT PLS_INTEGER
+                                   ,pr_dscritic OUT VARCHAR2) IS
+
+    /* .............................................................................
+
+    Programa: pc_busca_risco_inclusao
+    Sistema : CECRED
+    Sigla   : EMPR
+    Autor   : Heckmann/AMcom
+    Data    : Agostoo/2018                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para buscar o risco na inclusão e na efetivação
+    Observacao: -----
+
+    Alteracoes:  15/03/2019   - P450 - Rating, busca risco da centralizadora risco
+                                das operações (Elton AMcom)
+                 25/04/2019   - P450 - Rating, incluir a tabela craprnc quando a coopertativa for 3 - Ailos (Heckmann/AMcom)
+    ..............................................................................*/
+
+    ----------->>> VARIAVEIS <<<--------
+    -- Variáveis de críticas
+    vr_cdcritic         crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic         VARCHAR2(1000);        --> Desc. Erro
+    vr_exc_erro         EXCEPTION;
+
+    --Variáveis de uso comum
+    vr_innivris_central crapris.innivris%type;
+    vr_innivris_rating  crapris.innivris%type;
+    vr_indice           NUMBER(10);
+    vr_dtrefere_aux     DATE;                   --> Data de referência auxiliar do processo
+
+    vr_dsctrliq         VARCHAR2(500);
+
+    -- Variável para criar uma lista com os contratos
+    -- passados e com os separados nos contratos a liquidar
+    vr_split_pr_dsliquid GENE0002.typ_split;
+
+     --- >>> CURSORES <<< ---
+    CURSOR cr_crapris(pr_nrctremp IN NUMBER
+                     ,pr_dtrefere IN crapris.dtrefere%TYPE) IS    --> Contrato
+    SELECT ris.inrisco_operacao innivris
+        FROM tbrisco_central_ocr ris
+       WHERE ris.cdcooper = pr_cdcooper
+         AND ris.nrdconta = pr_nrdconta
+         AND ris.nrctremp = pr_nrctremp
+         AND ris.dtrefere = pr_dtrefere
+       ORDER BY ris.inrisco_operacao desc;       
+       
+    rw_crapris cr_crapris%ROWTYPE;
+
+  BEGIN
+    IF pr_cdcooper = 3 THEN
+      vr_innivris_rating  := NVL(fn_traduz_nivel_risco(fn_busca_rating_conta(pr_cdcooper,pr_nrdconta)),2);
+    ELSE
+    -- P450 - Rating
+      IF nvl(pr_nrctremp,0) = 0 THEN  
+        
+        OPEN cr_crapass_ope(pr_cdcooper
+                           ,pr_nrdconta);
+        FETCH cr_crapass_ope INTO rw_crapass_ope;
+        CLOSE cr_crapass_ope;
+         
+        vr_innivris_rating  := NVL(fn_busca_rating_cpfcnpj(pr_cdcooper,rw_crapass_ope.nrcpfcnpj_base),2);
+      ELSE
+        vr_innivris_rating  := NVL(fn_busca_rating_operacao(pr_cdcooper,pr_nrdconta,pr_nrctremp),2);
+      END IF;  
+    --
+    END IF;
+
+    IF ((nvl(pr_dsctrliq, '0') <> '0') OR (TRIM(pr_dsctrliq) <> '')) THEN
+
+      vr_innivris_central := 2;
+
+      vr_dsctrliq := replace(replace(pr_dsctrliq,'.',''),',',';');
+
+      --Verificar data
+      IF to_char(pr_rw_crapdat.dtmvtoan, 'MM') <> to_char(pr_rw_crapdat.dtmvtolt, 'MM') THEN
+        -- Utilizar o final do mês como data
+        vr_dtrefere_aux := pr_rw_crapdat.dtultdma;
+      ELSE
+        -- Utilizar a data atual
+        vr_dtrefere_aux := pr_rw_crapdat.dtmvtoan;
+      END IF;
+
+      -- Efetuar split dos contratos passados para facilitar os testes
+      vr_split_pr_dsliquid := gene0002.fn_quebra_string(replace(rtrim(vr_dsctrliq, ','),';',','),',');
+
+      vr_indice := 1;
+      LOOP
+        OPEN cr_crapris(vr_split_pr_dsliquid(vr_indice)
+                       ,vr_dtrefere_aux);
+        FETCH cr_crapris INTO rw_crapris;
+
+          IF cr_crapris%NOTFOUND THEN
+            vr_innivris_central := 2;
+          END IF;
+
+          IF nvl(vr_innivris_central,0) < nvl(rw_crapris.innivris, 0) THEN
+            vr_innivris_central := rw_crapris.innivris;
+          END IF;
+
+        CLOSE cr_crapris;
+        vr_indice   := vr_indice + 1;
+        EXIT WHEN (vr_split_pr_dsliquid.count = vr_indice - 1);
+      END LOOP;
+
+      -- verificar quem é o pior
+      pr_innivris := GREATEST(vr_innivris_central, vr_innivris_rating);
+    ELSE -- SE NAO LIQUIDA NENHUM CONTRATO, RISCO INCLUSÃO É RATING
+      pr_innivris := vr_innivris_rating;
+    END IF;
+
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      ROLLBACK;
+      -- Variavel de erro recebe erro ocorrido
+      IF nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+    pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      ROLLBACK;
+      -- Descricao do erro
+    pr_dscritic := 'Erro nao tratado na risc0003.pc_busca_risco_inclusao --> ' || SQLERRM;
+
+  END pc_busca_risco_inclusao;
+
+----
+ PROCEDURE pc_grava_risco_inclusao( pr_cdcooper           IN NUMBER
+                                  , pr_nrdconta           IN NUMBER
+                                  , pr_nrctremp           IN NUMBER
+                                  , pr_tpctrato           IN NUMBER
+                                  , pr_nrcpfcnpj_base     IN NUMBER
+                                  , pr_inrisco_inclusao   IN NUMBER
+                                  , pr_dscritic           OUT VARCHAR2) IS
+  /* .............................................................................
+
+   Programa: pc_grava_risco_inclusão       (Antigo: NAO HA)
+   Sistema : Credito
+   Sigla   : CRED
+   Autor   : Elton/AMcom
+   Data    : Março/2019.                        Ultima atualizacao:
+
+   Dados referentes ao programa:
+
+   Frequencia: Quando solicitado
+   Objetivo  : Gravar o resultado do cálculo do Risco Inclusão
+
+   Alteracoes:
+  ............................................................................. */
+
+
+  vr_des_erro   VARCHAR2(2000);
+  vr_exc_erro   EXCEPTION;
+  BEGIN
+    pr_dscritic := NULL;
+
+    -- Se a critica vier nula ou 0, não grava nada
+    IF pr_inrisco_inclusao > 0 THEN
+
+      -- Faz o UPDATE do registro
+      BEGIN
+        UPDATE TBRISCO_OPERACOES t
+           SET t.inrisco_inclusao = pr_inrisco_inclusao
+         WHERE t.cdcooper       = pr_cdcooper
+           AND t.nrdconta       = pr_nrdconta
+           AND t.nrctremp       = pr_nrctremp
+           AND t.tpctrato       = pr_tpctrato
+           AND t.nrcpfcnpj_base = pr_nrcpfcnpj_base;
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_dscritic := ' Detalhes[1]:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+          RAISE vr_exc_erro;
+      END;
+
+      -- Se igual a 0, nao encontrou. Fazer INSERT
+      IF SQL%ROWCOUNT = 0 THEN
+        BEGIN
+          ----
+          INSERT INTO TBRISCO_OPERACOES
+                     (cdcooper,
+                      nrdconta,
+                      nrctremp,
+                      tpctrato,
+                      inrisco_inclusao,
+                      inrisco_calculado,
+                      inrisco_melhora,
+                      dtrisco_melhora,
+                      cdcritica_melhora,
+                      --p450 - rating
+                      nrcpfcnpj_base)
+                VALUES (pr_cdcooper,
+                        pr_nrdconta,
+                        pr_nrctremp,
+                        pr_tpctrato,
+                        pr_inrisco_inclusao,
+                        NULL,
+                        NULL,
+                        NULL,
+                        NULL,
+                        pr_nrcpfcnpj_base
+                       );
+        EXCEPTION
+          WHEN OTHERS THEN
+            pr_dscritic := ' Detalhes[2]:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+            RAISE vr_exc_erro;
+        END;
+      END IF;
+
+      -- MANTER ATUALIZANDO O RISCO DSNIVRIS ENQUANTO NAO FOR REMOVIDO DEFINITIVO
+      BEGIN
+         UPDATE crawepr t
+            SET  t.dsnivris = fn_traduz_risco(pr_inrisco_inclusao)
+                ,t.dsnivori = fn_traduz_risco(pr_inrisco_inclusao)
+          WHERE t.cdcooper = pr_cdcooper
+            AND t.nrdconta = pr_nrdconta
+            AND t.nrctremp = pr_nrctremp;
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_dscritic := ' Detalhes[3]:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+          RAISE vr_exc_erro;
+      END;
+
+    END IF;
+
+
+   EXCEPTION
+     WHEN vr_exc_erro THEN
+       ROLLBACK;
+       pr_dscritic := 'Erro RISC0004.pc_grava_risco_inclusao --> ' ||pr_dscritic;
+
+
+     WHEN OTHERS THEN
+       ROLLBACK;
+       -- Descricao do erro
+       pr_dscritic := 'Erro nao tratado na RISC0004.pc_grava_risco_inclusao --> ' || SQLERRM;
+
+  END pc_grava_risco_inclusao;
 END RISC0004;
 /

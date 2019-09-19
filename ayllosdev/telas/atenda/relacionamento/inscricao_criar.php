@@ -10,8 +10,8 @@
 	 Alterações: 25/10/2010 - Adicionar validação de permissão (David).    
 	*			 
 	*			 19/06/2012 - Adicionado confirmacao para impressao (Jorge)
-				  17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
-
+	*			 17/06/2016 - M181 - Alterar o CDAGENCI para passar o CDPACTRA (Rafael Maciel - RKAM)
+	*			 05/07/2019 - Destacar evento do cooperado - P484.2 - Gabriel Marcos (Mouts).
 	*
 	************************************************************************/	
 	
@@ -62,6 +62,7 @@
  	$nminseve = $_POST["nminseve"];
 	$nrdddins = $_POST["nrdddins"];
 	$nrtelefo = $_POST["nrtelefo"];
+	$nrcpfcgc = $_POST["nrcpfcgc"];
 	
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
@@ -92,15 +93,16 @@
 	$xmlGetDadosNovaInscricao .= "	   <nrdddins>".$nrdddins."</nrdddins>";
 	$xmlGetDadosNovaInscricao .= "     <nrtelefo>".$nrtelefo."</nrtelefo>";
 	$xmlGetDadosNovaInscricao .= "	   <idseqttl>".$idseqttl."</idseqttl>";
-	$xmlGetDadosNovaInscricao .= "	   <idorigem>".$glbvars["idorigem"]."</idorigem>";  
+	$xmlGetDadosNovaInscricao .= "	   <nrcpfcgc>".$nrcpfcgc."</nrcpfcgc>";
+	$xmlGetDadosNovaInscricao .= "	   <idorigem>".$glbvars["idorigem"]."</idorigem>";
 	$xmlGetDadosNovaInscricao .= "     <nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
 	$xmlGetDadosNovaInscricao .= "     <flgerlog>NO</flgerlog>";
 	$xmlGetDadosNovaInscricao .= " </Dados>";
 	$xmlGetDadosNovaInscricao .= "</Root>";	
-
+	
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlGetDadosNovaInscricao);
-	
+
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjDadosNovaInscricao = getObjectXML($xmlResult);
 	

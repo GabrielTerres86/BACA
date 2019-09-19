@@ -7,6 +7,8 @@
 	 Objetivo  : Mostrar tela ATURAT.                                 
 	                                                                  
 	 Alterações: 
+	 --------------
+	 [24/04/2019] Luiz Otávio Olinger Momm - AMCOM: Correção de uma aspas a mais que gerava problema no JS
 	 
 	**********************************************************************/
 	
@@ -43,7 +45,7 @@
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
 		<script type="text/javascript" src="aturat.js?keyrand=<?php echo mt_rand(); ?>"></script>
 
-		<script type="text/javascript"">
+		<script type="text/javascript">
 			
 			var cdcooper = "<? echo $glbvars['cdcooper']; ?>";
 

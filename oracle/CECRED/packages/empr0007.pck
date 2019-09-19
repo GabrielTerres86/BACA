@@ -1162,7 +1162,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
     vr_dsparcel gene0002.typ_split;
 	vr_vldpagto crapepr.vlsdeved%TYPE;    
     vr_vldpagto_aux crapepr.vlsdeved%TYPE;	 
-    vr_vlpabono crapepr.vlsdeved%TYPE;
     vr_vltotpag craplcm.vllanmto%TYPE;
     vr_flgdel   BOOLEAN;
     vr_flgativo PLS_INTEGER;
@@ -1434,7 +1433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                  ,pr_vlrabono => rw_crapepr.vlsdprej
                                                ,pr_nmtelant => pr_nmtelant
                                  ,pr_vliofcpl => rw_crapepr.vliofcpl
-                                 ,pr_vltotpag => vr_vlpabono -- Ignora a saida do valor pago pq abono nao e considerado pagamento vr_vldpagto
+                                 ,pr_vltotpag => vr_vldpagto
                                                ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic);
                                
@@ -7618,7 +7617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-  BEGIN
+      BEGIN
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                  ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
@@ -7648,6 +7647,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       CLOSE cr_param_sms;
       
       vr_nmdireto := rw_param_sms.dsdirenv;
+      -- variavel para armazenar a data/hora de envio do arquivo
+      vr_dhenvio := SYSDATE;
       
       OPEN cr_cde_sms;
       
@@ -7669,9 +7670,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
           
            vr_cdcooper := rw_cde_sms.cdcooper;          
            
-           -- variavel para armazenar a data/hora de envio do arquivo
-           vr_dhenvio := SYSDATE;
-
            vr_nmarquiv := to_char(vr_dhenvio,'RRRRMMDD_HH24MISS')  || '_' ||
                           to_char(rw_cde_sms.cdagectl,'fm0000') || '_' ||
                           'COBEMP';

@@ -15,10 +15,13 @@
  * 003: [26/06/2017] Jonata             (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  * 004: [16/04/2018] Lombardi        (CECRED) : Incluida validacao se a adesao do produto é permitida
  *									            para o tipo de conta do coperado. PRJ366
+ * 005: [20/05/2019] Luiz Otávio OM (AMCOM)   : Retirado Etapa Rating
+ * 006: [29/05/2019] Luiz Otávio OM (AMCOM)   : Adicionado Etapa Rating para Cooperatova Ailos (3)
+ * 007: [17/07/2019] Jefferson G      (Mouts) : Ajustes referente a reformulação da tela avalista - PRJ 438 - Sprint 16
  */
-?>
 
-<? 
+	define('cooperativaCetralAilosEtapaRating', 3);
+
 	session_start();
 	require_once('../../../../includes/config.php');
 	require_once('../../../../includes/funcoes.php');		
@@ -140,8 +143,16 @@
 		exibirErro('error',$root->erro->registro->dscritic->cdata,'Alerta - Aimaro','bloqueiaFundo(divRotina)');
 		exit;
 	}
-	$flctgmot = $root->dados->flctgmot;
-	$flctgest = $root->dados->flctgest;
+
+	/* 006 */
+	if ($glbvars["cdcooper"] == cooperativaCetralAilosEtapaRating) {
+		$flctgmot = $root->dados->flctgmot;
+		$flctgest = $root->dados->flctgest;
+	} else {
+		$flctgmot = 0;
+		$flctgest = 0;
+	}
+	/* 006 */
 
 	// Variável que armazena código da opção para utilização na include titulos_limite_formulario.php
 	$cddopcao = "I";
@@ -151,7 +162,7 @@
 	
 ?>
 <script type="text/javascript">
-	habilitaAvalista(true);
+	habilitaAvalista(true, operacao);
 	/*Motor em contingencia*/
 	var flctgmot = <?=$flctgmot?$flctgmot:0?>;
 </script>
