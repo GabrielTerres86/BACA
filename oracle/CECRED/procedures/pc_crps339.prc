@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS339" (pr_cdcooper IN crapcop.cdcooper
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Margarete
-       Data    : Abril/2003.                     Ultima atualizacao: 02/03/2015.
+       Data    : Abril/2003.                     Ultima atualizacao: 09/09/2019.
 
        Dados referentes ao programa:
 
@@ -67,6 +67,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS339" (pr_cdcooper IN crapcop.cdcooper
                                 de crédito liberadas devido aos Termos de Cessão 
                                 de Crédito (Cartão Bancoob) (Tiago Castro - RKAM).
 
+                   09/09/2019 - P438 - Inclusão da origem 10 (MOBILE) no filtro dos cursores de emprestimos
+                                (Douglas Pagel/AMcom)
     ............................................................................ */
 
     DECLARE
@@ -134,7 +136,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS339" (pr_cdcooper IN crapcop.cdcooper
          WHERE crapepr.cdcooper = pr_cdcooper
            AND crapepr.nrdconta = pr_nrdconta
            AND crapepr.nrctremp = pr_nrctremp
-           AND crapepr.cdorigem NOT IN (3,4);
+           AND crapepr.cdorigem NOT IN (3,4,10);
       rw_crapepr cr_crapepr%ROWTYPE;
 
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------

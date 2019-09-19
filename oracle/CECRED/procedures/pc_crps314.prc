@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior.
-   Data    : Julho/2001                          Ultima atualizacao: 26/10/2017
+   Data    : Julho/2001                          Ultima atualizacao: 09/09/2019
 
    Dados referentes ao programa:
 
@@ -166,6 +166,9 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
 
                 31/10/2018 - Incluso a tratativa para não filtrar somente lotes 4.
                 			Relatorio 266 - Contratos de cheques.	            
+
+               09/09/2019 - P438 - Inclusão da origem 10 (MOBILE) no filtro dos cursores de emprestimos
+                            (Douglas Pagel/AMcom)	            
 
  ............................................................................ */
   --
@@ -788,7 +791,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
         from crapepr
        where crapepr.cdcooper = pr_cdcooper
          and crapepr.dtmvtolt = pr_dtmvtolt
-		 and crapepr.cdorigem not in (3,4) -- (3) Internet / (4) TAA
+		 and crapepr.cdorigem not in (3,4,10) -- (3) Internet / (4) TAA / (10) MOBILE
          and (   (    pr_tipo = 'MENOR'
                   and crapepr.vlemprst < pr_vlini)
               or (    pr_tipo = 'ENTRE'
