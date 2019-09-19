@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2019-09-06T11:05:21 -->
+<!-- 2018-07-11T15:57:20 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl100_25" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="17"/>
@@ -180,9 +180,6 @@
 	</field>
 	<field name="nmconjug" class="java.lang.String">
 		<fieldDescription><![CDATA[nmconjug]]></fieldDescription>
-	</field>
-	<field name="ind_valida_data" class="java.lang.Integer">
-		<fieldDescription><![CDATA[ind_valida_data]]></fieldDescription>
 	</field>
 	<variable name="vr_nrtopico" class="java.lang.Integer">
 		<variableExpression><![CDATA[$F{cob_inaddcob}.intValue() > 0 ?  $V{vr_nrtopico} + 1 : $V{vr_nrtopico}]]></variableExpression>
@@ -1285,9 +1282,7 @@
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA[($F{ind_valida_data} > 0  ?  
- "<b><u>7. Atraso no Pagamento e Multa</u></b> – Caso ocorra atraso no pagamento de qualquer parcela desta cédula ou vencimento antecipado, serão devidos os todos os encargos remuneratórios pós-fixado indicados no item 3.7 e subsequentes das Condições Específicas acima, acrescidos de juros moratórios sobre o valor em atraso e multa moratória sobre valor da parcela, nos percentuais informados nos subitens " + (3 + $F{ind_add_item}) + "."+ (17 + $V{vr_nrtopico}) + ".1 e " + (3 + $F{ind_add_item}) + "."+ (17 + $V{vr_nrtopico}) + ".2." :   "<b><u>7. Atraso no Pagamento e Multa</u></b> – Caso ocorra atraso no pagamento de qualquer parcela desta CCB ou vencimento antecipado, serão devidos os juros remuneratórios do período, acrescidos de juros moratórios sobre o valor em atraso e multa moratória sobre valor da parcela, nos percentuais informados nos subitens " + (3 + $F{ind_add_item}) + "."+ (17 + $V{vr_nrtopico}) + ".1 e " + (3 + $F{ind_add_item}) + "."+ (17 + $V{vr_nrtopico}) + ".2."
- )]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<b><u>7. Atraso no Pagamento e Multa</u></b> – Caso ocorra atraso no pagamento de qualquer parcela desta CCB ou vencimento antecipado, serão devidos os juros remuneratórios do período, acrescidos de juros moratórios sobre o valor em atraso e multa moratória sobre valor da parcela, nos percentuais informados nos subitens " + (3 + $F{ind_add_item}) + "."+ (17 + $V{vr_nrtopico}) + ".1 e " + (3 + $F{ind_add_item}) + "."+ (17 + $V{vr_nrtopico}) + ".2."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="7" y="12" width="466" height="11" uuid="795e7c94-93bc-4ef1-a802-0257f80b769e">
