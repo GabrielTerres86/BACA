@@ -38,6 +38,8 @@ BEGIN
               
 			  09/05/2019 - P298.2.2 Tratamento para juros +60 PosFixado (Rafael Faria - Supero)
 
+			  25/06/2019 - P298.3 - Ajustes para resolver diferenças contabeis (Nagasava - Supero)
+
               25/07/2019 - P637 - Passagem de parâmetro pr_vltotpgt utilizado na EMPR9999              
 
               
@@ -395,7 +397,7 @@ BEGIN
         END IF; 
         
         -- Inserir o valor de pagamento na conta corrente do cooperado 
-        IF vr_vldpagto + vr_vlpiofpr > 0  THEN
+        IF vr_vldpagto > 0  THEN -- PRJ298.3 -- Retirar soma do IOF, pois já faz parte do valor de pagto
           -- Descontar do valor total pago o que será destinado ao IOF
           vr_vldpagto := vr_vldpagto - vr_vlpiofpr;
           -- Se mesmo assim houver pagamento
@@ -696,9 +698,8 @@ BEGIN
           END IF;
         END IF;
               
-        -- Gerar craplem valor principal 2388 - Neste momento diminuiremos o total do IOF, 
-        -- pois ele é lançado em C/C e não altera saldo do empréstimo
-        IF vr_vlPrincAbono - vr_vlpiofpr > 0 THEN
+        -- Gerar craplem valor principal 2388
+        IF vr_vlPrincAbono > 0 THEN -- PRJ298.3 - Retirado desconto do IOF, pois já foi feito
           -- atualiza valor principal.
           empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -711,7 +712,7 @@ BEGIN
                                          ,pr_nrdconta => rw_crapepr.nrdconta
                                          ,pr_cdhistor => 2388 -- valor principal
                                          ,pr_nrctremp => rw_crapepr.nrctremp
-                                         ,pr_vllanmto => vr_vlPrincAbono - vr_vlpiofpr
+                                         ,pr_vllanmto => vr_vlPrincAbono -- PRJ298.3 - Retirado desconto do IOF, pois já foi feito
                                          ,pr_dtpagemp => rw_crapdat.dtmvtolt
                                          ,pr_txjurepr => 0
                                          ,pr_vlpreemp => 0
