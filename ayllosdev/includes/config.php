@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: config.php                                                ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Julho/2007                   Ultima Alteracao: 22/11/2016 ***//
+	//*** Data : Julho/2007                   Ãšltima AlteraÃ§Ã£o: 20/08/2018 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Variaveis globais de controle                        ***//
 	//***                                                                  ***//	 
@@ -20,77 +20,58 @@
 	//***                                                                  ***// 
 	//***             07/07/2016 - Correcao do erro de uso da constante    ***// 
 	//***                          $_ENV depreciada.SD 479874 (Carlos R.)  ***//	
+	//***                                                                  ***// 
+	//***             12/08/2016 - Criacao das constantes KEY e IV         ***// 
+	//***                          existentes apenas no desen impactou no  ***// 
+	//***						   SD 501778. (Carlos R.)				   ***//		
+	//***                                                                  ***//
+	//***             01/09/2016 - Correcao na forma de uso da string de   ***//
+	//***                          conexao com o banco Oracle, para SP e   ***//	
+	//***						   CURITIBA. SD 509174 (Carlos R.)         ***//	
+	//***                                                                  ***//	
 	//***																   ***//
-	//***			  14/09/2016 - Alteracao na armazenagem e leitura 	   ***//
-	//***						   das configuracoes, de forma unificada   ***//
-	//***						   para ambientes diferentes. SD 489051    ***//
-	//***						   (Carlos Rafael Tanholi)	 			   ***//		
-	//***																   ***//	
-	//***			  29/09/2016 - Correcao no carregamento das variaveis  ***//
-	//***						   $UrlSite e $UrlImagens que nao estavam  ***//
-	//***						   sendo carregados corretamente.SD 489051 ***//
-	//***						   (Carlos Rafael Tanholi)	 			   ***//	
-	//***																   ***//		
-	//***			  22/11/2016 - Feita nova consistencia para tratar as  ***//
-	//***						   configuracoes de producao criptografadas***//
-	//***						   (Carlos Rafael Tanholi) SD 489051       ***//	
-	//***																   ***//	
+	//***             20/08/2018 - Criacao de variaveis para conexao ao    ***//
+	//***                          servico FIPE (Marcos-Envolti)           ***//
+    //***                                                                  ***//	
+	//***             21/09/2018 - Atualizacao da descricao Ayllos para    ***//
+	//***                          Aimaro. Projeto 413 - MudanÃ§a de Marca  ***//
+	//***   					   (Elton)                                 ***//
 	//************************************************************************//
 	
-	// carrega o arquivo .cfg de dados do sistema Ayllos
-	$array_dados_ini = parse_ini_file("config.cfg", true);
-	
-	// Pega o nome do server
-	define("SERVERNAMEAPP",gethostname());  
-
-	// Array ( [0] => 0302dweb02 [1] => cecred [2] => coop [3] => br ) 
-	list($serverCFG, $dominioCFG, $tipoCFG, $paisCFG) = explode('.', SERVERNAMEAPP);
-
-	// torna unico o indice de configuracao para os servidores de PRODUCAO
-	if ( in_array($serverCFG, array('0303appweb02', '0303appweb03', '0302appweb02', '0302appweb03')) ) {
-		$serverCFG = 'PRODUCAO';
-	}
-
-	// valida a existencia do servidor e da configuracao para o mesmo no arquivo config.cfg
-	if ( trim($serverCFG) == '' || array_key_exists($serverCFG, $array_dados_ini) == false ) {
-		echo 'Configuração inexistente para o servidor ' . $serverCFG . ' no arquivo de configurações (config.cfg)';
-		exit();
-	}
-
-	// Pega o nome do server 
-	define("SERVERNAMECFG", $serverCFG);    
-
 	// Nome do servidor com banco de dados PROGRESS
-	$DataServer = ( SERVERNAMECFG == 'PRODUCAO' ) ? base64_decode($array_dados_ini[SERVERNAMECFG]['DATA_SERVER']) : $array_dados_ini[SERVERNAMECFG]['DATA_SERVER'];
+	$DataServer = "pkgprod";
 	
 	//URL do servico WebSpeed do Ayllos Web
 	if (isset($ServerMonitoracao) && trim($ServerMonitoracao) <> '') {
-		$url_webspeed_ayllosweb = 'http://'.$ServerMonitoracao.$array_dados_ini[SERVERNAMECFG]['URL_WEBSPEED_AYLLOS_WEB'];
+		$url_webspeed_ayllosweb = 'http://'.$ServerMonitoracao.'.cecred.coop.br/cgi-bin/cgiip.exe/WService=ws_ayllos/';
 	} else {		
-		if ( SERVERNAMECFG == 'PRODUCAO' ) {
-			$url_webspeed_ayllosweb = 'https://iayllos'.$array_dados_ini[SERVERNAMECFG]['URL_WEBSPEED_AYLLOS_WEB'];
-	} else {		
-			$url_webspeed_ayllosweb = $array_dados_ini[SERVERNAMECFG]['URL_WEBSPEED_AYLLOS_WEB'];
-		}
+		$url_webspeed_ayllosweb = "https://iayllos.cecred.coop.br/cgi-bin/cgiip.exe/WService=ws_ayllos/";
 	}	
 	
-	// Titulo do sistema
-	$TituloSistema = $array_dados_ini[SERVERNAMECFG]['TITULO_SISTEMA'];
+	// Tï¿½tulo do sistema
+	$TituloSistema = ":: Sistema Aimaro ::";
 	
-	// Titulo para pagina de login
-	$TituloLogin = $array_dados_ini[SERVERNAMECFG]['TITULO_LOGIN'];
+	// Tï¿½tulo para pï¿½gina de login
+	$TituloLogin = "SISTEMA AIMARO";
 	
 	// Url do site
-	$UrlSite = 'http://'.$_SERVER['SERVER_NAME'].'/';
+	$UrlSite = "https://ayllos.cecred.coop.br/";
 	
 	// Url para imagens
-	$UrlImagens = 'http://'.$_SERVER['SERVER_NAME'].'/imagens/';
+	$UrlImagens = "https://ayllos.cecred.coop.br/imagens/";
 	
 	// Url para Login 
-	$UrlLogin = $array_dados_ini[SERVERNAMECFG]['URL_LOGIN'];
+	$UrlLogin = "http://intranet.cecred.coop.br/login_sistemas.php";
 	
 	// Servidor do GED (Selbetti)
-	$GEDServidor = ( SERVERNAMECFG == 'PRODUCAO' ) ? base64_decode($array_dados_ini[SERVERNAMECFG]['GED_SERVIDOR']) : $array_dados_ini[SERVERNAMECFG]['GED_SERVIDOR'];
+	$GEDServidor = "ged.cecred.coop.br";	
+
+	// Variaveis para Fipe
+  // PROD
+  // $Url_SOA = "http://servicosinternos.cecred.coop.br";
+  // Homol 
+  $Url_SOA = "http://servicosinternosint.cecred.coop.br";
+  $Auth_SOA = "Basic aWJzdnJjb3JlOndlbGNvbWUx";
 	
 	// Identificador dos grupos de usuarios nas maquinas HP-UX
 	$gidNumbers[0] = 103; // Cecred
@@ -125,17 +106,21 @@
 		$glbvars["redirect"] = "html";
 	}
 	
+	// Pega o nome do server
+	define("SERVERNAMEAPP", gethostname());    
+
 	// Dados de acesso ao Oracle
-	if ( preg_match('/^0303/', trim(SERVERNAMEAPP)) ) { // verifica o servidor gravado na constante
-		// URL de conexao "SAO PAULO";
-		define("HOST" , $array_dados_ini[SERVERNAMECFG]['HOST_BD_SP']);		
+	if ( preg_match('/^0303/', trim(SERVERNAMEAPP)) ) { // verifica o servidor
+	// String para Sao Paulo
+	define("HOST", "(DESCRIPTION =(ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = dbprdayllos.cecred.coop.br)(PORT = 1521))) (CONNECT_DATA =(SERVICE_NAME = HA-AYLLOSP) ))");
 	} else {
-		// URL de conexao "CURITIBA";
-		define("HOST" , $array_dados_ini[SERVERNAMECFG]['HOST_BD_CT']);		
+	// String para Curitiba
+        define("HOST", "(DESCRIPTION =(ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)(HOST = dbprdayllos.cecred.coop.br)(PORT = 1521))) (CONNECT_DATA =(SERVICE_NAME = HA-AYLLOSP) ))");       
 	}
 		
-	define("USERE", $array_dados_ini[SERVERNAMECFG]['USERE']);
-	define("PASSE", $array_dados_ini[SERVERNAMECFG]['PASSE']);
-	define("KEY"  , ( SERVERNAMECFG == 'PRODUCAO' ) ? base64_decode($array_dados_ini[SERVERNAMECFG]['KEY'])   : $array_dados_ini[SERVERNAMECFG]['KEY']);
-	define("IV"   , ( SERVERNAMECFG == 'PRODUCAO' ) ? base64_decode($array_dados_ini[SERVERNAMECFG]['IV'])    : $array_dados_ini[SERVERNAMECFG]['IV']);
+	define("USERE", "YXlsbG9z");
+	define("PASSE", "cGFkc29sbHlhdXN1MjAxNQ==");
+    define("KEY"  , "50983417512346753284723840854609576043576094576059437609");
+	define("IV"   , "12345678");
+
 ?>
