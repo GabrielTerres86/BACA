@@ -45,7 +45,7 @@ BEGIN
   -- Seta as variaveis
   vr_nmarquiv := 'rating_carga.csv';
   -- diretorio do homol6 - TROCAR PARA O DE PROD
-  vr_dsdireto := '/micros/cecred/importa/';
+  vr_dsdireto := '/micros/cecred/equipe/jaison/';
   vr_vet_arqv := GENE0002.fn_quebra_string(pr_string  => vr_nmarquiv, pr_delimit => '.');
   vr_dsextens := LOWER(vr_vet_arqv(2));
   vr_nmarquiv := vr_vet_arqv(1) || '.' || vr_dsextens;
