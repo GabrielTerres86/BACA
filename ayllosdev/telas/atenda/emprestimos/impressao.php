@@ -20,6 +20,9 @@
                   31/01/2019 - Remover a impressão do Rating Atual conforme estória: Product Backlog Item 13986:
                                Rating - Ajustes em Telas Desabilitar impressão
                                P450 - Luiz Otávio Olinger Momm (AMCOM)
+                  30/08/2019 - Inclusão da origem 10 (MOBILE) na regra para não mostrar a opção de imprimir o contratos
+				                       P438 - Douglas Pagel / AMcom.
+
  */	
 ?>
  
@@ -150,8 +153,8 @@
                                         <div id="divBotoes">
                                         
                                             <?php
-                                                // Nao pode ser (3) Internet ou (4) TAA
-                                                if ($_POST['cdorigem'] != 3 && $_POST['cdorigem'] != 4) {
+                                                // Nao pode ser (3) Internet ou (4) TAA ou (10) MOBILE
+                                                if ($_POST['cdorigem'] != 3 && $_POST['cdorigem'] != 4 && $_POST['cdorigem'] != 10) {
                                                     echo '<a href="#" class="botao" onClick="verificaImpressao(2); return false;">Contrato</a>';
 													echo '<a href="#" class="botao" onClick="verificaImpressao(8); return false;">Contrato N&atilde;o Negoci&aacute;vel</a>';
                                                 }
