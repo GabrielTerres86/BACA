@@ -779,7 +779,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
          
          /* Montar Comando para eliminar arquivos do diretorio */
          vr_comando:= 'rm '||vr_endarqui||'/'||vr_nmtmparq||'/*.txt 1> /dev/null';
-
+/*  -- Comentado devido erro no processo da Central (ocorre todos os dias)
+    -- Está sendo verificado junto à área a real necessidade de processamento do arquivo, pois não está sendo 
+    -- processado há mais de um mês.
          --Executar o comando no unix
          GENE0001.pc_OScommand(pr_typ_comando => 'S'
                               ,pr_des_comando => vr_comando
@@ -795,7 +797,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
            RAISE vr_exc_saida;
          END IF;
          
-         /* Remover o diretorio caso exista */
+         -- Remover o diretorio caso exista
          vr_comando:= 'rmdir '||vr_endarqui||'/'||vr_nmtmparq||' 1> /dev/null';
 
          --Executar o comando no unix
@@ -812,7 +814,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS657 (pr_cdcooper IN crapcop.cdcooper%T
            vr_dsparame := vr_dsparame || ' (4) vr_comando:' || vr_comando;
            RAISE vr_exc_saida;
          END IF;
-         
+*/         
          /* Criar o diretorio com o nome do arquivo */
          vr_comando:= 'mkdir '||vr_endarqui||'/'||vr_nmtmparq||' 1> /dev/null';
 
