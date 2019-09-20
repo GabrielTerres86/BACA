@@ -144,6 +144,7 @@
 	$cdnvlcgo  = getByTagName($comercial,'cdnvlcgo');
 	$cdturnos  = getByTagName($comercial,'cdturnos');	
 	$nrdrowid  = getByTagName($comercial,'nrdrowid');
+	$tppesemp  = getByTagName($comercial,'tppesemp');
 				
 	$inpolexp  = getByTagName($comercial,'inpolexp');	
 				

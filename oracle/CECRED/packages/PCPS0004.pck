@@ -105,7 +105,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
   
       Frequencia: -----
       Objetivo  : Rotinas Retornar o texto do termo de portabilidade de salário
-      Alteracoes:
+      Alteracoes: 29/08/2019 PJ485.6 - Ajuste na rotina de cancelamento - Augusto (Supero)
+			            29/08/2019 PJ485.6 - Ajuste para contemplar empregador PF - Augusto (Supero)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -305,6 +306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
               ,tpe.ROWID dsrowid
               ,tpe.nrsolicitacao
               ,decode(tpe.dtassina_eletronica,null,1,2) idsolicitadoib
+							,tpe.tppessoa_empregador
           FROM tbcc_portabilidade_envia  tpe
               ,tbcc_dominio_campo       dom
               ,tbcc_dominio_campo       dcp
@@ -347,7 +349,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
 
       -- Variaveis para CADA0008.pc_busca_inf_emp
       vr_nrdocnpj tbcc_portabilidade_envia.nrcnpj_empregador%TYPE;
+			vr_tppesemp tbcc_portabilidade_envia.tppessoa_empregador%TYPE;
       vr_nmpessot tbcadast_pessoa.nmpessoa%TYPE;
+    
+			vr_nrdocnpj_aux VARCHAR2(200);
     
       -- Variaveis Gerais
       vr_nrcpfcgc     crapass.nrcpfcgc%TYPE;
@@ -410,9 +415,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
         RAISE vr_exc_erro;
       END IF;
       CLOSE cr_crapban_crapcop;
-      -- Se houver portabilidade pendente
+			--
       vr_cdbanco_bf := rw_portab_envia.cdbanco_folha;
-      -- Se for pessoa júridica
+      vr_tppesemp   := rw_portab_envia.tppessoa_empregador;
       vr_nrdocnpj   := rw_portab_envia.nrcnpj_empregador;
       vr_nmpessot   := rw_portab_envia.dsnome_empregador;
       -- seleciona o banco folha
@@ -459,12 +464,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
                              pr_tag_cont => trim(vr_nmresbcc),
                              pr_des_erro => vr_dscritic);
     
-      -- Empregador
+      -- Empregador PF
+			IF vr_tppesemp = 1 THEN
+			   vr_nrdocnpj_aux := LPAD(vr_nrdocnpj,11,0);
+			ELSE -- Empregador PJ
+				vr_nrdocnpj_aux := LPAD(vr_nrdocnpj,14,0);
+			END IF;
+
       gene0007.pc_insere_tag(pr_xml      => vr_dsxmlarq,
                              pr_tag_pai  => 'Portabilidade',
                              pr_posicao  => 0,
                              pr_tag_nova => 'nrcnpjempregagor',
-                             pr_tag_cont => LPAD(vr_nrdocnpj,14,0),
+                             pr_tag_cont => vr_nrdocnpj_aux,
                              pr_des_erro => vr_dscritic);
     
       gene0007.pc_insere_tag(pr_xml      => vr_dsxmlarq,
@@ -752,12 +763,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
         INTO rw_portab_envia;
       CLOSE cr_portab_envia;
     
-      IF rw_portab_envia.idsituacao = 1 THEN
-        -- A solicitar
-        vr_situacao := 7; -- Cancelada
-      ELSE 
-        -- Solicitada OU Aprovada
+      -- Solicitada
+      IF rw_portab_envia.idsituacao = 2 THEN        
         vr_situacao := 5; -- A cancelar
+      ELSE 
+        vr_situacao := 7; -- Cancelada
       END IF;
       -- O motivo de cancelamento será sempre “1 – Desistência do Cliente”, 
       --visto que no Internet Banking não há local para seleção de outro motivo especifico.
@@ -980,6 +990,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
                        ,pr_nrdconta IN crapenc.nrdconta%TYPE) IS
         SELECT crapttl.nrcpfemp
               ,crapttl.nmextemp
+							,crapttl.cdempres
           FROM crapttl
          WHERE crapttl.cdcooper = pr_cdcooper
            AND crapttl.nrdconta = pr_nrdconta
@@ -1032,6 +1043,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
       -- Variaveis locais
       vr_nrsolicitacao tbcc_portabilidade_envia.nrsolicitacao%TYPE;
       vr_contador PLS_INTEGER := 0;  
+			vr_tppesemp  tbcc_portabilidade_envia.tppessoa_empregador%TYPE;
+			vr_dstppese  VARCHAR2(200);
+			vr_dscpfcnpj VARCHAR2(200);
+
    BEGIN
       -- Incluir Nome do Módulo Logado
       gene0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_PORTAB', pr_action => NULL);
@@ -1107,7 +1122,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
         --
         IF NVL(pr_nrcnpjep,0) = 0 THEN
            vr_critica      :=  vr_critica + 1 ;
-           vr_tab_valida(vr_critica):= 'CNPJ do Empregador deve ser informado.';    
+           vr_tab_valida(vr_critica):= 'CPF/CNPJ do Empregador deve ser informado.';    
         ELSE
           -- Busca CNPJ e Nome da empresa do cooperado    
           OPEN cr_crapttl(pr_cdcooper, pr_nrdconta);
@@ -1117,6 +1132,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
              vr_critica      :=  vr_critica + 1 ;
              vr_tab_valida(vr_critica):= 'CPF/CNPJ do Empregador é diferente do cadastro.';    
           END IF;
+					
+					-- Tipo de pessoa do empregador
+					vr_tppesemp := 2; -- PJ
+					vr_dstppese := 'Pessoa Juridica';
+					vr_dscpfcnpj := gene0002.fn_mask_cpf_cnpj(rw_crapttl.nrcpfemp, 2);
+					IF rw_crapttl.cdempres = 9998 THEN
+					   vr_tppesemp := 1; -- PF
+						 vr_dstppese := 'Pessoa Fisica';
+						 vr_dscpfcnpj := gene0002.fn_mask_cpf_cnpj(rw_crapttl.nrcpfemp, 1);
+					END IF;
           CLOSE cr_crapttl;
         END IF;
 
@@ -1269,7 +1294,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
               ,cdagencia
               ,idsituacao
               ,cdoperador
-              ,dtassina_eletronica)
+              ,dtassina_eletronica
+							,tppessoa_empregador)
             VALUES
               (pr_cdcooper
               ,pr_nrdconta
@@ -1292,7 +1318,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
               ,rw_crapcop.cdagectl
               ,1 -- a solicitar
               ,nvl(pr_cdoperad,996)
-              ,SYSDATE);
+              ,SYSDATE
+							,vr_tppesemp);
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao criar solicitacao de portabilidade: ' || SQLERRM;
@@ -1379,11 +1406,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0004 IS
                                   pr_nmdcampo => 'CNPJ Banco Folha',
                                   pr_dsdadant => ' ',
                                   pr_dsdadatu => gene0002.fn_mask_cpf_cnpj(rw_crapban.nrcnpjif, 2));
-        -- Gera o log para o CNPJ Empregador
+        -- Gera o log para o Tipo de Pessoa do Empregador
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                                  pr_nmdcampo => 'CNPJ Empregador',
+                                  pr_nmdcampo => 'Tipo Pessoa Empregador',
                                   pr_dsdadant => ' ',
-                                  pr_dsdadatu => gene0002.fn_mask_cpf_cnpj(rw_crapttl.nrcpfemp, 2));
+                                  pr_dsdadatu => vr_dstppese);
+        -- Gera o log para o Documento do Empregador
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                  pr_nmdcampo => 'Documento Empregador',
+                                  pr_dsdadant => ' ',
+                                  pr_dsdadatu => vr_dscpfcnpj);																	
         -- Gera o log para o Nome Empregador
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                   pr_nmdcampo => 'Nome Empregador',

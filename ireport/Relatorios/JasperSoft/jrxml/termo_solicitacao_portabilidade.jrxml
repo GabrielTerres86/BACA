@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2019-05-17T10:10:31 -->
+<!-- 2019-08-28T22:27:06 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="termo_solicitacao_portabilidade" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -91,19 +91,14 @@
 	<field name="isass_eletronica" class="java.lang.Integer">
 		<fieldDescription><![CDATA[isass_eletronica]]></fieldDescription>
 	</field>
+	<field name="tppessoa_empregador" class="java.lang.Integer">
+		<fieldDescription><![CDATA[tppessoa_empregador]]></fieldDescription>
+	</field>
 	<background>
 		<band splitType="Stretch"/>
 	</background>
 	<title>
-		<band height="75">
-			<image>
-				<reportElement x="65" y="20" width="100" height="30" uuid="080caf32-372f-4766-89b2-ec5ec81bf73f">
-					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-				</reportElement>
-				<imageExpression><![CDATA[$F{img_cooperativa}]]></imageExpression>
-			</image>
-		</band>
+		<band height="75"/>
 	</title>
 	<pageHeader>
 		<band height="25">
@@ -327,6 +322,7 @@
 							<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
 							<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 							<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+							<printWhenExpression><![CDATA[$F{tppessoa_empregador}.equals(2)]]></printWhenExpression>
 						</reportElement>
 						<textElement verticalAlignment="Middle">
 							<paragraph firstLineIndent="5"/>
@@ -346,6 +342,16 @@
 						<textElement verticalAlignment="Middle"/>
 						<textFieldExpression><![CDATA[$F{nrcnpj_empregador}]]></textFieldExpression>
 					</textField>
+					<staticText>
+						<reportElement mode="Transparent" x="246" y="0" width="111" height="15" forecolor="#000000" uuid="18a49681-080a-4ec0-a2bc-49dcee3a922c">
+							<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+							<printWhenExpression><![CDATA[$F{tppessoa_empregador}.equals(1)]]></printWhenExpression>
+						</reportElement>
+						<textElement verticalAlignment="Middle">
+							<paragraph firstLineIndent="5"/>
+						</textElement>
+						<text><![CDATA[CPF EMPREGADOR:]]></text>
+					</staticText>
 				</frame>
 				<frame>
 					<reportElement mode="Transparent" x="0" y="90" width="465" height="15" forecolor="#000000" backcolor="#FFFFFF" uuid="8568a730-b56a-4697-9fb3-22b284e4a03b">

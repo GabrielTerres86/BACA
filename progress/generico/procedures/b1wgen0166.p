@@ -4,9 +4,9 @@
     Autor   : Oliver Fagionato (GATI)
     Data    : Agosto/2013                               Alteracao: 18/10/2018
 
-    Objetivo  : Alterar, consultar, incluir e gerar relat√≥rio de empresas.
+    Objetivo  : Alterar, consultar, incluir e gerar relatÛrio de empresas.
 
-    Alteracoes: 21/11/2013 - Altera√ß√£o para adequar o fonte no padr√£o CECRED
+    Alteracoes: 21/11/2013 - AlteraÁ„o para adequar o fonte no padr„o CECRED
     
                 05/03/2014 - Inclusao de VALIDATE crapemp e craptab (Carlos)
                 
@@ -22,9 +22,9 @@
                              
                 14/07/2014 - Melhoria da procedure Define_cdempres (Carlos)
                 
-                05/08/2014 - Inclus√£o da op√ß√£o de Pesquisa por Empresas (Vanessa)
+                05/08/2014 - Inclus„o da opÁ„o de Pesquisa por Empresas (Vanessa)
                 
-                13/01/2015 - Inclus√£o de validacao na rotina valida_empresa
+                13/01/2015 - Inclus„o de validacao na rotina valida_empresa
                              para obrigar informar o CNPJ (nrdocnpj) para 
                              empresas com emprestimo consignado (indescsg=2)
                              Ref Doc3040 - Ente Consignante - Marcos(Supero)
@@ -32,7 +32,7 @@
                 21/01/2015 - Alteracao na procedure Terceiro_quinto_dia_util. 
                              A data que deve ser verificada no find da crapfer existente 
                              no loop eh a dtavisos e nao o parametro par_dtferiad.
-                             Dessa forma o c√≥digo fica igual ao existente na crps659.
+                             Dessa forma o cÛdigo fica igual ao existente na crps659.
                              (Alisson - AMcom)             
                 
                 25/02/2015 - Inclusao do ano na validacao da exibicao da critica
@@ -58,7 +58,7 @@
                 15/02/2016 - Inclusao do parametro conta na chamada da
                              fn_valor_tarifa_folha. (Jaison/Marcos)
 
-        				15/03/2016 - Corre√ß√£o nos cadastros de empresas com & (e comercial)
+        				15/03/2016 - CorreÁ„o nos cadastros de empresas com & (e comercial)
 				              			 no nome, desta forma limpando este caracter do mesmo.
 							               (Carlos Rafael Tanholi - SD 413044)           
 							 
@@ -67,7 +67,7 @@
                                                                           
                 18/05/2016 - Inclusao do campo dtlimdeb. (Jaison/Marcos)							                                                
 
-                17/06/2016 - Inclus√£o de campos de controle de vendas - M181
+                17/06/2016 - Inclus„o de campos de controle de vendas - M181
                              ( Rafael Maciel - RKAM)
 
                 04/08/2016 - SD495726 - Folha: Correcao gravacao/alteracao
@@ -85,7 +85,7 @@
 							 (Adriano - P339).
 
                 04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
-                             tipo de conta permite a contrata√ßao do produto. PRJ366 (Lombardi).
+                             tipo de conta permite a contrataÁao do produto. PRJ366 (Lombardi).
 							 
                 05/10/2018 - Adicionada validacao de CNPJ nao existente na procedure Altera_inclui. PRJ437 (CIS).							 
 
@@ -96,6 +96,8 @@
 
                 12/04/2016 - Ajuste nas rotinas Altera_inclui, Gera_arquivo_log e Imprime_relacao para gravar/alterar, gerar log
 				             e imprimir o campo nrdddemp  da tabela crapemp - P437 - Consignado Josiane stiehler - AMcom.
+
+                29/08/2019 PJ485.6 - Ajuste na rotina de geraÁao do cÛdigo da empresa (9998 sempre sera empresa PF) - Augusto (Supero)                     
 
 .............................................................................*/
 
@@ -177,7 +179,7 @@ PROCEDURE Busca_empresas:
             RETURN "NOK".
         END.
 
-        IF par_cdpesqui = 0 THEN /*Pesquisa pela Raz√£o Social*/
+        IF par_cdpesqui = 0 THEN /*Pesquisa pela Raz„o Social*/
             FOR EACH crapemp NO-LOCK WHERE
                      crapemp.cdcooper = par_cdcooper
                      AND crapemp.nmextemp MATCHES("*" + par_nmdbusca + "*")   :
@@ -278,7 +280,7 @@ PROCEDURE Busca_tabela:
         END.
     ELSE 
         DO:
-            ASSIGN aux_dscritic = "Tabela n√£o encontrada.".
+            ASSIGN aux_dscritic = "Tabela n„o encontrada.".
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
                            INPUT par_nrdcaixa,
@@ -526,7 +528,7 @@ PROCEDURE Altera_inclui:
 			
 			IF  AVAIL crapemp THEN DO:
 				ASSIGN aux_cdcritic = 0
-					   aux_dscritic = "CNPJ j√° vinculado a empresa " + STRING(crapemp.cdempres) + "! N√£o √© possivel cadastrar".
+					   aux_dscritic = "CNPJ j· vinculado a empresa " + STRING(crapemp.cdempres) + "! N„o È possivel cadastrar".
 				
 				RUN gera_erro (INPUT par_cdcooper,
 							   INPUT par_cdagenci,
@@ -813,11 +815,22 @@ PROCEDURE Define_cdempres:
 
     EMPTY TEMP-TABLE tt-erro.
 
-    FIND LAST crapemp WHERE crapemp.cdcooper = par_cdcooper
-        NO-LOCK NO-ERROR.
+    /* ValidaÁao para empresa PF (9998) */
+    FIND LAST crapemp WHERE crapemp.cdcooper = par_cdcooper AND crapemp.cdempres <> 9998 NO-LOCK NO-ERROR.
     
     IF AVAIL crapemp THEN
+    DO:
         ASSIGN par_cdempres = crapemp.cdempres + 1.
+        
+        /* Se o proximo for 9998 (empresa PF) retorna a maior em filtrar os cÛdigos */
+        IF par_cdempres = 9998 THEN
+        DO:
+          /* Buscar o prÛximo ignorando demais cÛdigos */
+          FIND LAST crapemp WHERE crapemp.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+          
+          ASSIGN par_cdempres = crapemp.cdempres + 1.
+        END.
+    END.
     ELSE
         ASSIGN par_cdempres = 1.
 
@@ -1816,7 +1829,7 @@ PROCEDURE Busca_Convenios_Tarifarios:
             
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-            /*** Faz a busca do historico da transa√ß√£o ***/
+            /*** Faz a busca do historico da transaÁ„o ***/
             RUN STORED-PROC {&sc2_dboraayl}.send-sql-statement
                              aux_ponteiro = PROC-HANDLE
                

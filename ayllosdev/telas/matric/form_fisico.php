@@ -150,7 +150,7 @@
 		<input name="nmconjug" id="nmconjug" type="text" value="<? echo getByTagName($registro,'nmconjug') ?>" />
 		<br />
 		
-		<label for="cdempres">Empresa:</label>
+		<label for="cdempres">Empregador:</label>
 		<input name="cdempres" id="cdempres" type="text" value="<? echo getByTagName($registro,'cddempre') ?>" />	
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="nmresemp" id="nmresemp" type="text" value="<? echo getByTagName($registro,'nmresemp') ?>" />
