@@ -1461,7 +1461,8 @@ function controlaOperacao(operacao) {
             $('table > tbody > tr', 'div.divRegistros').each(function() {
                 if ($(this).hasClass('corSelecao')) {
                     portabil = $('#portabil', $(this)).val();
-                    err_efet = $('#err_efet', $(this)).val();
+                    err_efet = $('#err_efet', $(this)).val();	
+                    cdorigem = $('#cdorigem', $(this)).val();
                     // PRJ 438 - Sprint 13 - Pegar insitapr e tpemprst para validar seus valores (Mateus Z)
                     insitapr = $('#insitapr', $(this)).val();
                     tpemprst = $('#tpemprst', $(this)).val();
