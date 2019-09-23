@@ -124,6 +124,7 @@ create or replace package cecred.cobr0011 is
                          ,pr_crapdat  IN BTCH0001.cr_crapdat%rowtype -- Data movimento
                          ,pr_cdoperad IN VARCHAR2                 -- Codigo Operador
                          ,pr_vltarifa IN NUMBER                   -- Valor tarifa
+												 ,pr_flgedita IN BOOLEAN DEFAULT FALSE    -- Protesto por edital
                          ,pr_ret_nrremret OUT INTEGER             -- Numero remetente
                          ,pr_tab_lcm_consolidada IN OUT PAGA0001.typ_tab_lcm_consolidada -- Tabela lancamentos consolidada
                           /* parametros de erro */
@@ -1271,6 +1272,7 @@ create or replace package body cecred.cobr0011 IS
                            ,pr_crapdat  IN BTCH0001.cr_crapdat%rowtype -- Data movimento
                            ,pr_cdoperad IN VARCHAR2                 -- Codigo Operador
                            ,pr_vltarifa IN NUMBER                   -- Valor tarifa
+													 ,pr_flgedita IN BOOLEAN DEFAULT FALSE    -- Protesto por edital
                            ,pr_ret_nrremret OUT INTEGER             -- Numero remetente
                            ,pr_tab_lcm_consolidada IN OUT PAGA0001.typ_tab_lcm_consolidada -- Tabela lancamentos consolidada
                             /* parametros de erro */
@@ -1294,6 +1296,7 @@ create or replace package body cecred.cobr0011 IS
     --Variaveis de erro
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
+  	vr_des_erro VARCHAR2(4000);
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
     
@@ -1318,7 +1321,17 @@ create or replace package body cecred.cobr0011 IS
     END IF;
     -- Fechar Cursor
     CLOSE cr_crapcob;
-    -- Gerar motivos de ocorrencia
+    
+
+    -- Se for Protesto por edital gera o log
+		IF pr_flgedita THEN
+			paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
+																	 ,pr_cdoperad => '1'
+																	 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
+																	 ,pr_dsmensag => 'Protesto por edital (IEPTB).'
+																	 ,pr_des_erro => vr_des_erro
+																	 ,pr_dscritic => vr_dscritic);
+		ELSE -- Senão gera os motivos de ocorrencia
     paga0001.pc_proc_motivos_retorno (pr_idtabcob => pr_idtabcob   --Rowid da cobranca
                                      ,pr_cdocorre => pr_cdocorre   --Codigo Ocorrencia
                                      ,pr_dsmotivo => pr_dsmotivo   --Descricao Motivo
@@ -1326,8 +1339,10 @@ create or replace package body cecred.cobr0011 IS
                                      ,pr_cdoperad => pr_cdoperad   --Codigo Operador
                                      ,pr_cdcritic => vr_cdcritic   --Codigo Critica
                                      ,pr_dscritic => vr_dscritic); --Descricao Critica
+    END IF;
+
     --Se ocorreu erro
-    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL OR vr_des_erro = 'NOK' THEN
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
@@ -3362,13 +3377,11 @@ create or replace package body cecred.cobr0011 IS
 						,tri.vltitulo vlliquid
 						,tri.vlsaldo_titulo
 						,crapdat.dtmvtolt
-            ,trm.nrdconta nrdconta_trm
 						,crapcco.nrdolote
 						,crapcco.cdagenci
 						,crapcco.cdbccxlt
 						,crapcco.nrconven
 				FROM tbcobran_conciliacao_ieptb tci
-						,tbfin_recursos_movimento   trm
 						,tbcobran_retorno_ieptb     tri
 						,crapcob
 						,crapcop
@@ -3382,7 +3395,6 @@ create or replace package body cecred.cobr0011 IS
 				 AND crapcob.nrcnvcob    = tri.nrcnvcob
 				 AND crapcob.nrdocmto    = tri.nrdocmto
 				 --AND tci.idrecurso_movto = trm.idlancto
-         AND tci.idconciliacao   = trm.idconciliacao /*RITM0013002*/
 				 --AND tci.idretorno_ieptb = tri.idretorno
          AND tci.idconciliacao   = tri.idconciliacao /*RITM0013002*/
          AND tci.idconciliacao   = pr_idconciliacao  /*RITM0013002*/
@@ -3394,6 +3406,17 @@ create or replace package body cecred.cobr0011 IS
 				 AND tri.tpocorre        IN (1,7);
 		--
 		rw_conciliados cr_conciliados%ROWTYPE;
+                --
+	        CURSOR cr_tbfin_rec_mov IS
+	          SELECT DISTINCT trm.nrdconta
+	                ,tri.vlsaldo_titulo
+	                ,tri.cdcooper
+	            FROM tbfin_recursos_movimento trm
+	                ,tbcobran_retorno_ieptb   tri
+	           WHERE trm.idconciliacao = pr_idconciliacao
+	             AND trm.idconciliacao = tri.idconciliacao;
+	        --
+		rw_tbfin_rec_mov cr_tbfin_rec_mov%ROWTYPE;
 		--
 		CURSOR cr_crapret(pr_cdcooper crapret.cdcooper%TYPE
                      ,pr_nrcnvcob crapret.nrcnvcob%TYPE
@@ -3605,24 +3628,28 @@ create or replace package body cecred.cobr0011 IS
 					RAISE vr_exc_erro;
 			END;
 			--
-			IF nvl(rw_conciliados.vlsaldo_titulo, 0) > 0 THEN
-				--
-				pc_totaliza_cooperativa(pr_cdcooper => rw_conciliados.cdcooper         -- IN
-                               ,pr_nrdconta => rw_conciliados.nrdconta_trm     -- Conta Recurso movimento
-															 ,pr_vlpagmto => nvl(rw_conciliados.vlsaldo_titulo, 0) -- IN
-															 ,pr_dscritic => pr_dscritic                     -- OUT
-															 );
-				--
-				IF pr_dscritic IS NOT NULL THEN
-					--
-					RAISE vr_exc_erro;
-					--
-				END IF;
-				--
-			END IF;
-
 		END LOOP;
-			--
+                --
+                FOR rw_tbfin_rec_mov IN cr_tbfin_rec_mov LOOP    
+		    --
+		    IF nvl(rw_tbfin_rec_mov.vlsaldo_titulo, 0) > 0 THEN
+		        --
+			pc_totaliza_cooperativa(pr_cdcooper => rw_tbfin_rec_mov.cdcooper
+                                               ,pr_nrdconta => rw_tbfin_rec_mov.nrdconta
+                                               ,pr_vlpagmto => nvl(rw_tbfin_rec_mov.vlsaldo_titulo, 0)
+			                       ,pr_dscritic => pr_dscritic
+			                        );
+		        --
+		        IF pr_dscritic IS NOT NULL THEN
+		        --
+		            RAISE vr_exc_erro;
+		        --
+		        END IF;
+		        --
+		    END IF;
+                    --
+	        END LOOP;
+		--
     /*RITM0013002 - Retirado para fora a atualização, pois agora haverá somente um registro
       na tabela de conciliação, relacionada com as TEDs e Titulos*/
 			BEGIN

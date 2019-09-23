@@ -279,7 +279,8 @@ PROCEDURE busca-agencia:
                             CREATE tt-feriados.
                         
                             ASSIGN tt-feriados.nrdrowid = tt-agencia.nrdrowid
-                                   tt-feriados.dtferiad = crapfsf.dtferiad.
+                                   tt-feriados.dtferiad = crapfsf.dtferiad
+                                   tt-feriados.flgbaixa = IF crapfsf.dtdbaixa = ? THEN 0 ELSE 1.
                         
                         END.
 
@@ -385,7 +386,8 @@ PROCEDURE busca-agencia:
              CREATE tt-feriados.
              
              ASSIGN tt-feriados.nrdrowid = tt-agencia.nrdrowid
-                    tt-feriados.dtferiad = crapfsf.dtferiad.
+                    tt-feriados.dtferiad = crapfsf.dtferiad
+                    tt-feriados.flgbaixa = IF crapfsf.dtdbaixa = ? THEN 0 ELSE 1.
          
          END.
 
@@ -449,7 +451,8 @@ PROCEDURE busca-agencia:
 									CREATE tt-feriados.
 								
 									ASSIGN tt-feriados.nrdrowid = tt-agencia.nrdrowid
-										   tt-feriados.dtferiad = crapfsf.dtferiad.
+										   tt-feriados.dtferiad = crapfsf.dtferiad
+                       tt-feriados.flgbaixa = IF crapfsf.dtdbaixa = ? THEN 0 ELSE 1.
 								
 								END.
 

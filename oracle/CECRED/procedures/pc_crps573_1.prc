@@ -76,6 +76,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                      25/07/2019 - P450 - Ajuste Chave PJ nao preenchida
                                        - Ajuste Agrupamento CNPJ/Remover Duplicados
                                   (Guilherme/AMcom)
+
+                     22/08/2019 - P485.6 - Alterar a rotina pc_inf_ente_consignante, para enviar CPF caso o empregador for 
+                                  pessoa física. (Renato Darosci - Supero)
                      
     .............................................................................................................................*/
 
@@ -3927,7 +3930,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
         -- Testar se a linha de crédito do Empréstimo/Financiamento é 
         -- Consignação em Folha de Pagamento e já trazer a empresa
         CURSOR cr_consigna IS
-          SELECT decode(emp.nrdocnpj,0,ttl.nrcpfemp,emp.nrdocnpj) nrdocnpj
+          SELECT emp.nrdocnpj
+                ,ttl.nrcpfemp
                 ,epr.cdempres
                 ,epr.inprejuz
             FROM crapttl ttl
@@ -3946,6 +3950,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
              AND epr.nrctremp = pr_nrctremp 
              AND lcr.tpdescto = 2; --> 2-Consig. Folha
         rw_consigna cr_consigna%ROWTYPE;
+        
+        -- Variáveis
+        vr_nrcpfemp    VARCHAR2(20);
         
       BEGIN
         -- Empréstimos BNDES não são contemplados
@@ -3993,13 +4000,35 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                                        ,pr_texto_novo     => '            <Inf Tp="1502" Cd="1"/>'|| chr(10));  
               end if;            
             ELSE
+               
+               -- Se o CNPJ da empresa não foi informado
+               IF nvl(rw_consigna.nrdocnpj,0) = 0 THEN
+                 -- Se o documento do empregador não foi informado
+                 IF nvl(rw_consigna.nrcpfemp,0) = 0 THEN
+                   -- Deixa o documento em branco
+                   vr_nrcpfemp := NULL;
+                 ELSE 
+                   -- Verifica se o empregador é PF
+                   IF NVL(rw_consigna.cdempres,0) = 9998 THEN
+                     -- Tratar como CPF
+                     vr_nrcpfemp := LPAD(rw_consigna.nrcpfemp,11,'0');
+                   ELSE 
+                     -- TRatar como CNPJ
+                     vr_nrcpfemp := LPAD(rw_consigna.nrcpfemp,14,'0');
+                   END IF;
+                 END IF;
+               ELSE
+                 -- Tratar como CNPJ
+                 vr_nrcpfemp := LPAD(rw_consigna.nrcpfemp,14,'0');
+               END IF;
+                   
                If vr_tpexecucao = 2 Then
                   vr_seq_relato := vr_seq_relato + 1;
                 --SD#855059
-                if nvl(rw_consigna.nrdocnpj,0) = 0 then
+                IF vr_nrcpfemp IS NULL THEN
                   vr_texto := '            <Inf Tp="1502" Cd="1"/>';
                 else
-                  vr_texto := '            <Inf Tp="1502" Ident="' || SUBSTR(lpad(rw_consigna.nrdocnpj,14,'0'),1,14) || '"/>';
+                  vr_texto := '            <Inf Tp="1502" Ident="' || vr_nrcpfemp || '"/>';
                 end if;
                   -- Procedimento para gravar wrk, para posteriormente descarregar xml
                   pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
@@ -4020,7 +4049,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
               else
                 -- Devemos enviar a informação adicional com o CNPJ do Ente Consignante
                 --SD#855059
-                if nvl(rw_consigna.nrdocnpj,0) = 0 then
+                if vr_nrcpfemp IS NULL then
                   -- Enviamos a informação adicional com Cd=1, que significa que a operação foi desconsignada
                   gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                          ,pr_texto_completo => vr_xml_3040_temp
@@ -4028,8 +4057,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573_1(pr_cdcooper  IN crapcop.cdcooper
                 else
                   gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                          ,pr_texto_completo => vr_xml_3040_temp
-                                         ,pr_texto_novo     => '            <Inf Tp="1502" Ident="' 
-								                                            || SUBSTR(lpad(rw_consigna.nrdocnpj,14,'0'),1,14) || '"/>'|| chr(10));
+                                         ,pr_texto_novo     => '            <Inf Tp="1502" Ident="'||vr_nrcpfemp||'"/>'|| chr(10));
                 end if;
               end if;
             end if;

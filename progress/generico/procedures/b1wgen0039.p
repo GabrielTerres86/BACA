@@ -75,6 +75,9 @@
                             
                07/03/2018 - Alterado obtem-detalhe-evento para exibir o nome do facilitador
                             em eventos assembleares, SD840422 (Jean Michel).
+														
+               13/08/2019 - Vincular inscricao de pessoa juridica com socio
+                            Gabriel Marcos (Mouts) - P484.2
                             
 ..............................................................................*/
 
@@ -1127,6 +1130,7 @@ PROCEDURE grava-pre-inscricao:
     DEF  INPUT  PARAM par_nrdddins AS INTE                           NO-UNDO.
     DEF  INPUT  PARAM par_nrtelefo AS INTE                           NO-UNDO.
     DEF  INPUT  PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT  PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
     DEF  INPUT  PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT  PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT  PARAM par_flgerlog AS LOGI                           NO-UNDO.
@@ -1148,7 +1152,7 @@ PROCEDURE grava-pre-inscricao:
            aux_dscritic = ""
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Criar a pre-inscricao para o evento".
-    
+
 
     DO WHILE TRUE:
 
@@ -1237,6 +1241,7 @@ PROCEDURE grava-pre-inscricao:
               tt-crapidp.cdopeori = par_cdoperad
               tt-crapidp.cdageori = par_cdagenci
               tt-crapidp.dtinsori = TODAY
+              tt-crapidp.nrcpfcgc = par_nrcpfcgc
               /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
               tt-crapidp.tpinseve = IF   par_tpinseve   THEN 
                                          1  /* Propria */
@@ -1260,7 +1265,7 @@ PROCEDURE grava-pre-inscricao:
        LEAVE.
 
     END. /* Fim tratamento de criticas */
-    
+
     IF   aux_cdcritic <> 0   OR
          aux_dscritic <> ""  THEN
          DO:

@@ -7635,6 +7635,30 @@ END pc_gera_titulos_iptu_prog;
         --Retornar data dias
         vr_dttolera:= CXON0014.fn_retorna_data_dias(pr_nrdedias => To_Number(SUBSTR(pr_codigo_barras,21,3)) --Numero de Dias
                                                    ,pr_inanocal => vr_inanocal); --Indicador do Ano
+                                                   
+        /* Criticar quantidade de dias inválidos no código de barras - INICIO */
+        -- Para a Data de Vencimento
+        IF SUBSTR(pr_codigo_barras,21,3) IS NOT NULL AND 
+           (To_Number(SUBSTR(pr_codigo_barras,21,3)) < 1 OR
+            To_Number(SUBSTR(pr_codigo_barras,21,3)) > 366) THEN
+          --Mensagem erro
+          pr_cdcritic:= 0;
+          pr_dscritic:= 'Data do vecimento invalida.';
+          RAISE vr_exc_erro;
+      END IF;
+        
+        -- Para o Período de Apuração
+        IF SUBSTR(pr_codigo_barras,42,3) IS NOT NULL AND 
+           (To_Number(SUBSTR(pr_codigo_barras,42,3)) < 1 OR
+            To_Number(SUBSTR(pr_codigo_barras,42,3)) > 366) THEN
+          --Mensagem erro
+          pr_cdcritic:= 0;
+          pr_dscritic:= 'Periodo de apuracao invalido.';
+          RAISE vr_exc_erro;
+        END IF;
+        
+        /* Criticar quantidade de dias inválidos no código de barras - FIM */
+                                                           
       END IF;
       /* DARF NUMERADO / DAS */
       IF pr_cdempcon IN (385,328) AND pr_cdsegmto = 5 THEN /* DARFC0385 ou DAS - SIMPLES NACIONAL */
@@ -11968,6 +11992,7 @@ END pc_gera_titulos_iptu_prog;
                                do boleto.
                              - Ajustado o tratamento de erro na chamada da pc_verifica_vencimento_titulo
                              (Douglas - Chamado 628306)
+                             
     ...........................................................................*/
     --Selecionar informacoes cobranca
     CURSOR cr_crapcob (pr_nrcnvcob IN crapcob.nrcnvcob%type
@@ -12025,6 +12050,7 @@ END pc_gera_titulos_iptu_prog;
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic   VARCHAR2(4000);
     vr_tab_erro GENE0001.typ_tab_erro;
+
 
   BEGIN
     vr_codigo_barras := pr_codigo_barras;
@@ -12228,6 +12254,7 @@ END pc_gera_titulos_iptu_prog;
       vr_tab_erro.DELETE;
 
       --Verificar vencimento do titulo
+           
       pc_verifica_vencimento_titulo (pr_cod_cooper      => pr_cdcooper          --Codigo Cooperativa
                                     ,pr_cod_agencia     => pr_cdagenci          --Codigo da Agencia
                                     ,pr_dt_agendamento  => NULL                 --Data Agendamento

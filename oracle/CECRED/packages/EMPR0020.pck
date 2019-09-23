@@ -14,7 +14,6 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0020 IS
     ..............................................................................*/
 
  
-
 end EMPR0020;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0020 IS

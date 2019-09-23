@@ -11,6 +11,7 @@
 				 Altera&ccedil;&otilde;es: 
 						14/07/2011 - Alterado para layout padr?o (Rogerius - DB1). 
 						12/12/2018 - Alterada chamada do botão de pré-inscricao (Bruno Luiz Katzjarowski - Mout's)
+						05/07/2019 - Destacar evento do cooperado - P484.2 - Gabriel Marcos (Mouts).
 				 
 	************************************************************************/
 	session_start();
@@ -19,7 +20,7 @@
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");		
 	require_once("../../../includes/controla_secao.php");
-
+	
 	// Verifica se tela foi chamada pelo m&eacute;todo POST
 	isPostMethod();	
 		
@@ -32,6 +33,7 @@
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 
+	$nrcpfcgc = preg_replace( '/[^0-9]/', '', $_POST["nrcpfcgc"]);
 	$nrdconta = $_POST["nrdconta"];
 	$dsobserv = $_POST["dsobserv"];
 
@@ -59,7 +61,7 @@
 	$xmlGetDadosEventosAndamento .= "		<idseqttl>1</idseqttl>";
 	$xmlGetDadosEventosAndamento .= "	</Dados>";
 	$xmlGetDadosEventosAndamento .= "</Root>";
-	
+
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlGetDadosEventosAndamento);
 	
@@ -74,6 +76,28 @@
 		exibeErro($xmlObjDadosEventosAndamento->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
+    $xml  = "";
+    $xml .= "<Root>";
+    $xml .= "	<Dados>";
+    $xml .= "		<nrcpfcgc>".$nrcpfcgc."</nrcpfcgc>";
+    $xml .= "	</Dados>";
+    $xml .= "</Root>";
+    
+    // Executa script para envio do XML
+    $xmlResult = mensageria($xml, "CADA0003", "RETORNA_GRUPO_CPF",  //   LISTA_FORNECEDORES
+                            $glbvars["cdcooper"],
+                            $glbvars["cdagenci"], 
+                            $glbvars["nrdcaixa"], 
+                            $glbvars["idorigem"], 
+                            $glbvars["cdoperad"], 
+                            "</Root>");
+    
+    $xmlObj = new SimpleXMLElement($xmlResult);
+
+    if(isset($xmlObj->{'Erro'})){
+        exibeErro($retorno['erro'] = (string) $xmlObj->{'Erro'}->{'Registro'}->{'dscritic'});
+    }
+
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -82,13 +106,108 @@
 		echo '</script>';
 		exit();
 	}	
+
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "	<Dados>";
+	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "	</Dados>";
+	$xml .= "</Root>";
+	
+	// Executa script para envio do XML
+	$xmlRepresentante = mensageria($xml, "CADA0003", "RETORNA_EVENTOS_ASSEMB",  //   LISTA_FORNECEDORES
+																 $glbvars["cdcooper"],
+																 $glbvars["cdagenci"],
+																 $glbvars["nrdcaixa"],
+																 $glbvars["idorigem"],
+																 $glbvars["cdoperad"],
+																 "</Root>");
+															  
+	$xmlRepresentante = simplexml_load_string($xmlRepresentante);
+
+	if (!empty($xmlRepresentante)) {
+
+		$contentLinhas  = '';
+
+		foreach ($xmlRepresentante->inf as $linha) {
+
+			$contentLinhas .= '<tr>';
+			$contentLinhas .= '<td width=75>' . $linha->nmdgrupo . '</td>';
+			$contentLinhas .= '<td width=85>' . $linha->dtinieve . '</td>';
+			$contentLinhas .= '<td>' . $linha->nminseve . '</td>';
+			$contentLinhas .= '</tr>';
+
+		}
+
+		echo '<script>';
+		echo '
+			var texto  = "Atenção! Lista de pr&eacute;-inscri&ccedil;&otilde;es em eventos assembleares. <br><br>";
+				texto += "<table>";
+				texto += "  <tr>";
+				texto += "    <td>";
+				texto += "      PA/Grupo";
+				texto += "    </td>";
+				texto += "    <td>";
+				texto += "      Data";
+				texto += "    </td>";
+				texto += "    <td>";
+				texto += "      Nome";
+				texto += "    </td>";
+				texto += "  </tr>";
+
+				texto += "'.$contentLinhas.'";
+
+				texto += "</table>";
+
+			showError("inform", texto, "Alerta - Aimaro", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");
+		';
+		echo '</script>';
+	}
+
 ?>	
+
+<style>
+
+	/* estilos para personalizar a tabela de eventos */
+   .txtNegrito { font-weight:bold;}
+   .trDestaque { background:  #ffff80 !important;}
+   .highlight  { background:  #ffff50 !important;}
+
+</style>
+
+<script>
+
+	// cor de fundo quando o item estiver selecionado
+	$(".trDestaque").click(function() {
+	    $(this).toggleClass("highlight");
+	});
+
+
+	var texto  = "Atenção! Lista de pr&eacute;-inscri&ccedil;&otilde;es em eventos assembleares. <br><br>";
+		texto += "<table>";
+		texto += "  <tr>";
+		texto += "    <td>";
+		texto += "      PA/Grupo";
+		texto += "    </td>";
+		texto += "    <td>";
+		texto += "      Data";
+		texto += "    </td>";
+		texto += "    <td>";
+		texto += "      Nome";
+		texto += "    </td>";
+		texto += "  </tr>";
+		texto += "</table>";
+
+	//showError("inform", texto, "Alerta - Aimaro", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+			
+</script>
+
 <form id="frmEventosEmAndamentoBusca" onSubmit="return false" class="formulario">
 	<fieldset>
 		<legend>Eventos em Andamento</legend>
 	
 		<div class="divRegistros">	
-			<table>
+			<table id="tabelaEventos">
 				<thead>
 					<tr>
 						<th><? echo utf8ToHtml('Evento'); ?></th>
@@ -109,16 +228,20 @@
 					$seleciona = "selecionaEventoAndamento('". $aux ."','". $qtEAndamento ."','". $eventosAndamento[$i]->tags[1]->cdata ."','". $eventosAndamento[$i]->tags[0]->cdata ."','". $eventosAndamento[$i]->tags[13]->cdata ."','". $eventosAndamento[$i]->tags[14]->cdata ."','". $eventosAndamento[$i]->tags[9]->cdata ."','". $eventosAndamento[$i]->tags[12]->cdata ."','". $eventosAndamento[$i]->tags[2]->cdata ."','". $eventosAndamento[$i]->tags[10]->cdata ."');";		
 					?>
 						<!-- pre-inscricao -->
-						<tr id="trEvento<?php echo $i + 1; ?>" onFocus="<? echo $seleciona ?>" onClick="<? echo $seleciona ?>"
+						<tr class="<?=(strval($xmlObj->inf->nmdgrupo) === strval($eventosAndamento[$i]->tags[15]->cdata) ? "txtNegrito trDestaque" : "")?>" 
+						     id="trEvento<?php echo $i + 1; ?>" onFocus="<? echo $seleciona ?>" onClick="<? echo $seleciona ?>"
 						 data-nmdgrupo='<?php echo $eventosAndamento[$i]->tags[15]->cdata; ?>' 
 						 data-idevento='<?php echo $eventosAndamento[$i]->tags[0]->cdata; ?>'
+						 
 						>
 							<td><span><?php echo $eventosAndamento[$i]->tags[2]->cdata; ?></span>
 									<?php echo stringTabela($eventosAndamento[$i]->tags[2]->cdata, 32, 'palavra'); ?>
 							</td>
-							<td><span><?php echo $eventosAndamento[$i]->tags[15]->cdata; ?></span>
-									<?php echo $eventosAndamento[$i]->tags[15]->cdata; ?>
+							
+							<td>
+							    <?=$eventosAndamento[$i]->tags[15]->cdata;?>
 							</td>
+
 							<td><span><?php echo $eventosAndamento[$i]->tags[3]->cdata; ?></span>
 									<?php echo $eventosAndamento[$i]->tags[3]->cdata; ?>
 							</td>
@@ -137,7 +260,6 @@
 							<td><span><?php echo $eventosAndamento[$i]->tags[9]->cdata; ?></span>
 									<?php echo $eventosAndamento[$i]->tags[9]->cdata; ?>
 							</td>
-		
 						</tr>
 				<? } ?>	
 				</tbody>
@@ -150,7 +272,7 @@
 <div id="divBotoes">
 <input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="acessaOpcaoPrincipal();return false;">
 <input type="image" src="<?php echo $UrlImagens; ?>botoes/detalhes_do_evento.gif" onClick="mostraDetalhesEvento();return false;">
-<!-- pre inscricao - mout's -->
+<!--  pre inscricao  -->
 <input type="image" src="<?php echo $UrlImagens; ?>botoes/pre_inscricao.gif" <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default" onClick="return false;"'; } else { echo 'onClick="validaGrupo();return false;"'; } ?>>
 <input type="image" src="<?php echo $UrlImagens; ?>botoes/situacao_da_inscricao.gif" onClick="mostraSituacaoDaInscricaoEvento();return false;">
 <input type="image" src="<?php echo $UrlImagens; ?>botoes/historico.gif" onClick="mostraHistoricoEvento();return false;">

@@ -59,16 +59,16 @@
 			<option value="4" <?php if (getByTagName($comercial,'tpcttrab') == "4"){ echo " selected"; } ?>>4 - AUT&Ocirc;NOMO</option>
 		</select>
 		
-		<label for="cdempres"><?php echo utf8ToHtml('Empresa:') ?></label>
+		<label for="cdempres"><?php echo utf8ToHtml('Empregador:') ?></label>
 		<input name="cdempres" id="cdempres" type="text" value="<?php echo getByTagName($comercial,'cdempres') ?>" />
 		<a><img src="<?php echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 		<input name="nmresemp" id="nmresemp" type="text" value="<?php echo getByTagName($comercial,'nmresemp') ?>" />
 		<br />
 		
-		<label for="nrcpfemp">C.N.P.J.:</label>
+		<label for="nrcpfemp"><?=($tppesemp == 1 ? 'CPF' : 'CNPJ')?>:</label>
 		<input name="nrcpfemp" id="nrcpfemp" type="text"  value="<?php if ($operacao == 'CAE') { echo $nrcnpjot; } else {echo getByTagName($comercial,'nrcpfemp');} ?>" />
 		
-		<label for="nmextemp">Nome Empresa:</label>
+		<label for="nmextemp">Nome Empregador:</label>
 		<input name="nmextemp" id="nmextemp" disabled type="text" value="<?php if ($operacao == 'CAE') { echo $nmpessoa;} else {echo getByTagName($comercial,'nmextemp');} ?>" />		
 		<br />
 		 				

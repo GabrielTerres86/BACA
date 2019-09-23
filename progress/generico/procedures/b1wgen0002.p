@@ -831,7 +831,8 @@
               15/04/2019 - P438 - Alterada valida-dados-gerais para não permitir utilizar linha ou finalidade de credito
                            que esteja cadastrada em SubSegmento de contratacao Online. (Douglas Pagel / AMcom)
 
-              29/04/2019 - P450 - Nas rotinas altera-valor-proposta e recalcular-emprestimo, incluir para atualizar o campo dsnivori (Heckmann - AMcom)
+              29/04/2019 - P450 - Nas rotinas altera-valor-proposta e recalcular-emprestimo,
+                           incluir para atualizar o campo dsnivori (Heckmann - AMcom)
 
               11/05/2019 - P298.2.2 - Ajuste de valores de prejuizo (Rafael Faria - Supero)
 
@@ -6722,6 +6723,19 @@ PROCEDURE grava-proposta-completa:
 
     EMPTY TEMP-TABLE tt-erro.
 
+
+    FIND FIRST crapprm WHERE crapprm.nmsistem = "CRED" AND
+                             crapprm.cdacesso = "HABILITA_RATING_NOVO" AND
+                             crapprm.cdcooper = par_cdcooper
+                             NO-LOCK NO-ERROR.
+
+    ASSIGN aux_habrat = 'N'.
+    IF AVAIL crapprm THEN DO:
+      ASSIGN aux_habrat = crapprm.dsvlrprm.
+    END.
+
+
+
     /*
       P438 nova regra perda de aprovacao 
       aux_idpeapro: 0 = Nao Perde Aprovacao 
@@ -7818,7 +7832,8 @@ PROCEDURE grava-proposta-completa:
                   DO:
                      UNDO Gravar, LEAVE Gravar.
                   END.
-          /*Se teve perda e nas regras anteriores nao tiveram perda, realizar a perda pela alteracao imovel*/
+          /*Se teve perda e nas regras anteriores nao tiveram perda,
+            realizar a perda pela alteracao imovel*/
           IF aux_flperapr = "S" AND aux_idpeapro = 0 AND par_inresapr = 1 THEN
           DO:
             IF crawepr.hrenvest > 0 AND crawepr.insitest <> 0 THEN  
@@ -7865,7 +7880,58 @@ PROCEDURE grava-proposta-completa:
                  aux_idpeapro     = 1.
           CREATE tt-msg-confirma.
           ASSIGN tt-msg-confirma.inconfir = 1
-                 tt-msg-confirma.dsmensag = "Essa proposta deve ser " + " enviada para Analise de Credito".
+                 tt-msg-confirma.dsmensag = "Essa proposta deve ser " 
+                                    + " enviada para Analise de Credito(1)".
+
+          IF aux_habrat = 'S' AND par_cdcooper <> 3 THEN DO:
+
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            RUN STORED-PROCEDURE pc_grava_rating_operacao
+                  aux_handproc = PROC-HANDLE NO-ERROR
+                                    (INPUT par_cdcooper
+                                    ,INPUT par_nrdconta
+                                    ,INPUT 90           /* Tipo Contrato */
+                                    ,INPUT par_nrctremp
+                                    ,INPUT ? /*RISCO*/
+                                    ,INPUT ? /*RISCO*/
+                                    ,INPUT par_dtmvtolt  /* pr_dtrating */
+                                    ,INPUT 0         /* pr_strating => 0 -- Nao Enviado */
+                                    ,INPUT 0             /* pr_orrating =>  */
+                                    ,INPUT par_cdoperad
+                                    ,INPUT ?             /* null para pr_dtrataut */
+                                    ,INPUT ?             /* null pr_innivel_rating */
+                                    ,INPUT ?
+                                    ,INPUT ?             /* pr_inpontos_rating     */
+                                    ,INPUT ?             /* pr_insegmento_rating   */
+                                    ,INPUT ?             /* pr_inrisco_rat_inc     */
+                                    ,INPUT ?             /* pr_innivel_rat_inc     */
+                                    ,INPUT ?             /* pr_inpontos_rat_inc    */
+                                    ,INPUT ?             /* pr_insegmento_rat_inc  */
+                                    ,INPUT ?             /* pr_efetivacao_rating   */
+                                    ,INPUT par_cdoperad  /* pr_cdoperad*/
+                                    ,INPUT par_dtmvtolt
+                                    ,INPUT crawepr.vlemprst
+                                    ,INPUT ? /*sugerido*/
+                                    ,INPUT "" /*Justif*/
+                                    ,INPUT ?
+                                    ,OUTPUT 0            /* pr_cdcritic */
+                                    ,OUTPUT "").         /* pr_dscritic */  
+
+
+            /* Fechar o procedimento para buscarmos o resultado */ 
+            CLOSE STORED-PROC pc_grava_rating_operacao
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+            ASSIGN aux_cdcritic  = 0
+                   aux_dscritic  = ""
+                   aux_cdcritic = pc_grava_rating_operacao.pr_cdcritic
+                                     WHEN pc_grava_rating_operacao.pr_cdcritic <> ?
+                   aux_dscritic = pc_grava_rating_operacao.pr_dscritic
+                                     WHEN pc_grava_rating_operacao.pr_dscritic <> ?.
+          END.
+          /* Habilita novo rating */
                  
 
         END.
@@ -7917,6 +7983,9 @@ PROCEDURE grava-proposta-completa:
               END.
             END.
         END. /*IF aux_interrup THEN*/
+
+        
+        
         /*Se perde devido a garantia de aplicacao*/
         IF aux_reggaran = 1 AND aux_idpeapro = 1 THEN
         DO:
@@ -8009,16 +8078,70 @@ PROCEDURE grava-proposta-completa:
                                            " aprovada na tela CMAPRV"
                                            ELSE 
                                            "Essa proposta deve ser" +
-                                           " enviada para Analise de Credito".
+                                        " enviada para Analise de Credito(2)".
+
+        /***************************/
+        /* Habilita novo rating */
+        IF aux_habrat = 'S' AND par_cdcooper <> 3 THEN DO:
+     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+          RUN STORED-PROCEDURE pc_grava_rating_operacao
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT par_cdcooper
+                                  ,INPUT par_nrdconta
+                                  ,INPUT 90           /* Tipo Contrato */
+                                  ,INPUT par_nrctremp
+                                  ,INPUT ?
+                                  ,INPUT ?
+                                  ,INPUT par_dtmvtolt  /* pr_dtrating */
+                                  ,INPUT 0             /* pr_strating => 0 */                                ,INPUT 0             /* pr_orrating =>  */
+                                  ,INPUT par_cdoperad
+                                  ,INPUT ?    /* null para pr_dtrata~~ut */
+                                  ,INPUT ?     /* null pr_innivel_ratng */
+                                  ,INPUT ?
+                                  ,INPUT ?   /* pr_inpontos_rating ~~    */
+                                  ,INPUT ?   /* pr_insegmento_ratin~~g   */
+                                  ,INPUT ?   /* pr_inrisco_rat_inc ~~    */
+                                  ,INPUT ?  /* pr_innivel_rat_inc ~~    */
+                                  ,INPUT ?  /* pr_inpontos_rat_inc~~    */
+                                  ,INPUT ?  /* pr_insegmento_rat_i~~nc  */
+                                  ,INPUT ?  /* pr_efetivacao_ratin~~g   */
+                                  ,INPUT par_cdoperad  /* pr_cdoperad*/
+                                  ,INPUT par_dtmvtolt
+                                  ,INPUT crawepr.vlemprst
+                                  ,INPUT ? /*sugerido*/
+                                  ,INPUT "" /*Justif*/
+                                  ,INPUT ?
+                                  ,OUTPUT 0            /* pr_cdcritic */
+                                  ,OUTPUT "").         /* pr_dscritic */  
+
+
+          /* Fechar o procedimento para buscarmos o resultado */ 
+          CLOSE STORED-PROC pc_grava_rating_operacao
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+          ASSIGN aux_cdcritic  = 0
+                 aux_dscritic  = ""
+                 aux_cdcritic = pc_grava_rating_operacao.pr_cdcritic
+                                 WHEN pc_grava_rating_operacao.pr_cdcritic <> ?
+                 aux_dscritic = pc_grava_rating_operacao.pr_dscritic
+                                 WHEN pc_grava_rating_operacao.pr_dscritic <> ?.
+        END.
+       /* Habilita novo rating */
+       /***************************/
       END.
+
         
-      /*Para inclusão, caso a proposta não esteja aprovada no final, deve apresentar a mensagem -- PRJ438*/
+      /*Para inclusão, caso a proposta não esteja aprovada no final,
+        deve apresentar a mensagem -- PRJ438*/
       IF aux_idpeapro = 0 AND crawepr.insitapr = 0 AND par_cddopcao = "I" 
          AND par_cdcooper <> 3 THEN
       DO:
         CREATE tt-msg-confirma.
         ASSIGN tt-msg-confirma.inconfir = 1
-               tt-msg-confirma.dsmensag = "Essa proposta deve ser " + " enviada para Analise de Credito".
+               tt-msg-confirma.dsmensag = "Essa proposta deve ser " +
+                                          " enviada para Analise de Credito!".
       END.
       /* Quando inclusao*/
       IF par_cddopcao = "I" THEN
@@ -8752,6 +8875,7 @@ PROCEDURE altera-valor-proposta:
             aux_dscritic <> ""   THEN
             LEAVE.
 
+                        
     /* PJ438 Sprint 5 trecho movido para esse ponto par_dsdopcao SVP */
     /* Quando for apenas alteracao do valor */
     IF par_dsdopcao = "SVP" THEN
@@ -9039,7 +9163,7 @@ PROCEDURE altera-valor-proposta:
                                                                            " aprovada na tela CMAPRV"
                                                                         ELSE 
                                                                            "Essa proposta deve ser" +
-                                                             " enviada para Analise de Credito".
+                                                             " enviada para Analise de Credito(3)".
 
                                                     /* Se nao estiver em contigencia e a proposta estava na Esteira */
                                                     IF NOT aux_contigen AND crawepr.hrenvest > 0 AND aux_insitest <> 0 THEN  
@@ -9782,57 +9906,6 @@ PROCEDURE altera-valor-proposta:
           END.
     END.
     
-    /* Habilita novo rating */
-    IF aux_habrat = 'S' AND par_cdcooper <> 3 THEN DO:
-    
-      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-            
-      /* Efetuar a chamada da rotina Oracle, para limpar as informacoes do rating -P450 Rating */
-      RUN STORED-PROCEDURE pc_grava_rating_operacao
-            aux_handproc = PROC-HANDLE NO-ERROR
-                              (INPUT par_cdcooper
-                              ,INPUT par_nrdconta
-                              ,INPUT 90           /* Tipo Contrato */
-                              ,INPUT par_nrctremp
-                              ,INPUT ?
-                              ,INPUT ?             /* null para pr_ntrataut */
-                              ,INPUT par_dtmvtolt  /* pr_dtrating */
-                              ,INPUT 0             /* pr_strating => 0 -- Nao Enviado */
-                              ,INPUT 0             /* pr_orrating =>  */
-                              ,INPUT par_cdoperad
-                              ,INPUT ?             /* null para pr_dtrataut */
-                              ,INPUT ?             /* null pr_innivel_rating */
-                              ,INPUT ?
-                              ,INPUT ?             /* pr_inpontos_rating     */
-                              ,INPUT ?             /* pr_insegmento_rating   */
-                              ,INPUT ?             /* pr_inrisco_rat_inc     */
-                              ,INPUT ?             /* pr_innivel_rat_inc     */
-                              ,INPUT ?             /* pr_inpontos_rat_inc    */
-                              ,INPUT ?             /* pr_insegmento_rat_inc  */
-                              ,INPUT ?             /* pr_efetivacao_rating   */
-                              ,INPUT par_cdoperad  /* pr_cdoperad*/
-                              ,INPUT par_dtmvtolt
-                              ,INPUT crawepr.vlemprst
-                              ,INPUT ? /*sugerido*/
-                              ,INPUT "" /*Justif*/
-                              ,INPUT ?
-                              ,OUTPUT 0            /* pr_cdcritic */
-                              ,OUTPUT "").         /* pr_dscritic */  
-
-
-      /* Fechar o procedimento para buscarmos o resultado */ 
-      CLOSE STORED-PROC pc_grava_rating_operacao
-          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-
-      ASSIGN aux_cdcritic  = 0
-             aux_dscritic  = ""
-             aux_cdcritic = pc_grava_rating_operacao.pr_cdcritic
-                               WHEN pc_grava_rating_operacao.pr_cdcritic <> ?
-             aux_dscritic = pc_grava_rating_operacao.pr_dscritic
-                               WHEN pc_grava_rating_operacao.pr_dscritic <> ?.
-    END.
-    /* Habilita novo rating */
     
     IF   aux_cdcritic <> 0    OR
          aux_dscritic <> ""   THEN

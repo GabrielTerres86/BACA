@@ -300,7 +300,11 @@
 	           04/04/2019 - Ajuste na rotina cria_tt-consulta-blt para não incluir informação
 			                de titulos descontados liquidados (Daniel - Ailos)
       
-             26/08/2019 - Validar CEP do Sacado, permitir ate 8 posicoes (Lucas Ranghetti PRB004018)
+	           26/08/2019 - Validar CEP do Sacado, permitir ate 8 posicoes (Lucas Ranghetti PRB004018)
+			 
+	           03/09/2019 - Foi criado uma regra no backend para que caso as mesmas informações de boleto 
+							cheguem em um período menor que 1 minuto, será impedido a geração e apresentará 
+							erro para o cooperado. (Lucas - Diego Batista - PRB0041939)
 .............................................................................*/
 
 
@@ -1958,6 +1962,41 @@ PROCEDURE gravar-boleto:
                                                 (aux_vldescto * par_qttitulo),2)
                         aux_vlabatim_dif = TRUNC(par_vlabatim -
                                                 (aux_vlabatim * par_qttitulo),2).
+
+            END.
+			
+			
+            /*PRB0041939 - Validar se já foi gerado o mesmo boleto no prazo de 1 minuto */
+			FOR EACH crapcob NO-LOCK WHERE crapcob.cdcooper = par_cdcooper
+                                       AND crapcob.nrdconta = par_nrdconta
+                                       AND crapcob.dtmvtolt = par_dtmvtolt
+                                       AND crapcob.nrinssac = aux_nrinssac
+                                       AND crapcob.dtdocmto = par_dtdocmto
+                                       AND crapcob.dtvencto = par_dtvencto
+                                       AND crapcob.vltitulo = (aux_vltitulo + aux_vltitulo_dif),
+                EACH crapcol NO-LOCK WHERE crapcol.cdcooper = crapcob.cdcooper
+                                       AND crapcol.nrdconta = crapcob.nrdconta
+                                       AND crapcol.nrdocmto = crapcob.nrdocmto
+                                       AND crapcol.nrcnvcob = crapcob.nrcnvcob
+                                       AND (TIME - crapcol.hrtransa) <= 60:
+
+                FIND FIRST crapcri WHERE crapcri.cdcritic = 2100 NO-LOCK NO-ERROR.
+
+                IF  AVAILABLE crapcri  THEN
+                    DO: 
+                        ASSIGN  aux_cdcritic = crapcri.cdcritic
+                                aux_dscritic = crapcri.dscritic.
+    
+                        UNDO TRANSACAO, LEAVE TRANSACAO.
+                    END.
+                ELSE
+                    DO:
+                        ASSIGN  aux_cdcritic = 0
+                                aux_dscritic = "Você acabou de gerar um boleto com os mesmos dados (valor, pagador e vencimento)."+
+                                                "\nPara emitir novamente um boleto igual, aguarde um minuto.".
+												
+                        UNDO TRANSACAO, LEAVE TRANSACAO.
+                    END.
 
             END.
 
@@ -4834,7 +4873,10 @@ PROCEDURE p_cria_titulo:
         RETURN "NOK".
     END.
     
-    IF p-flgregis THEN
+    /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validaçao nao é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
+    /*IF p-flgregis THEN
     DO:
         FIND crappnp WHERE crappnp.nmextcid = crapsab.nmcidsac AND
                            crappnp.cduflogr = crapsab.cdufsaca NO-LOCK NO-ERROR.
@@ -4856,7 +4898,7 @@ PROCEDURE p_cria_titulo:
                    crapcol.hrtransa = TIME.
         END.
 
-    END.
+    END.*/
 
     /* se banco emite e expede, nosso num conv+ceb+doctmo -
        Rafael Cechet 29/03/11 */

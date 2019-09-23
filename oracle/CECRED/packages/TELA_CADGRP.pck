@@ -6,9 +6,16 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADGRP IS
                                    ,pr_retxml in out nocopy XMLType
                                    ,pr_nmdcampo  out varchar2    
                                    ,pr_des_erro  out varchar2);
-  
-  procedure pc_fracao_alterar_param (pr_frmaxima   in number
-                                    ,pr_fraideal   in number
+
+  procedure pc_fracao_alterar_param (pr_frmmaxim   in tbevento_param.frmmaxim%type
+                                    ,pr_frmideal   in tbevento_param.frmideal%type                                    
+                                    ,pr_antecedencia_envnot in tbevento_param.antecedencia_envnot%type
+                                    ,pr_hrenvio_mensagem    in varchar2
+                                    ,pr_dstitulo_banner     in tbevento_param.dstitulo_banner%type
+                                    ,pr_dtexibir_de         in varchar2                                    
+                                    ,pr_flgemail            in tbevento_param.flgemail%type
+                                    ,pr_dstitulo_email      in tbevento_param.dstitulo_email%type
+                                    ,pr_lstemail            in tbevento_param.lstemail%type                                    
                                     ,pr_xmllog     in varchar2
                                     ,pr_cdcritic  out pls_integer
                                     ,pr_dscritic  out varchar2
@@ -80,8 +87,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADGRP IS
                                 ,pr_dscritic  out varchar2
                                 ,pr_retxml in out nocopy XMLType
                                 ,pr_nmdcampo  out varchar2    
-                                ,pr_des_erro  out varchar2);	  
-			                  
+                                ,pr_des_erro  out varchar2);    
+                        
   procedure pc_grupo_disponivel(pr_nrdgrupo   in tbevento_pessoa_grupos.nrdgrupo%type
                                ,pr_cdagenci   in tbevento_pessoa_grupos.cdagenci%type
                                ,pr_nrregist   in integer                       
@@ -112,6 +119,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADGRP IS
                               ,pr_des_erro  out varchar2);
                               
   procedure pc_alterar_opcao_b (pr_nrdgrupo   in tbevento_pessoa_grupos.nrdgrupo%type
+                               ,pr_flgvinculo in tbevento_pessoa_grupos.flgvinculo%TYPE
                                ,pr_rowid      in rowid
                                ,pr_xmllog     in varchar2
                                ,pr_cdcritic  out pls_integer
@@ -119,7 +127,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADGRP IS
                                ,pr_retxml in out nocopy XMLType
                                ,pr_nmdcampo  out varchar2    
                                ,pr_des_erro  out varchar2);
-                               
+
   procedure pc_cursor_opcao_g (pr_cdagenci   in varchar2
                               ,pr_xmllog     in varchar2
                               ,pr_cdcritic  out pls_integer
@@ -160,7 +168,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADGRP IS
                                          ,pr_retxml in out nocopy XMLType
                                          ,pr_nmdcampo  out varchar2    
                                          ,pr_des_erro  out varchar2);
-
+  
 END TELA_CADGRP;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
@@ -180,14 +188,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
   --
   ---------------------------------------------------------------------------
 
-    -- Busca parametros cadastrados
-    cursor cr_dsvlrprm (pr_cdcooper crapprm.cdcooper%type) is
-    select prm.dsvlrprm
-      from crapprm prm
-     where prm.nmsistem = 'CRED'
-       and prm.cdcooper = pr_cdcooper
-       and prm.cdacesso = 'TELA_CADGRP_OPCAO_P'; 
-               
     -- Variaveis padrao                            
     vr_nmdatela varchar2(100);                                  
     vr_nmeacao  varchar2(100);                                  
@@ -208,14 +208,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
     vr_dtinicio_grupo      date;
     vr_dtfim_grupo         date;   
 
-    vr_frmaxima number := 0;                                         
-    vr_fraideal number := 0;      
-    vr_intermin number := 0;
-    vr_contador number := 0; 
-    vr_cdcritic number;              
+    vr_frmaxima   number := 0;                                         
+    vr_fraideal   number := 0;      
+    vr_intermin   number := 0;
+    vr_contador   number := 0; 
+    vr_tpsituacao number := 0;
+    vr_cdcritic   number;   
+    vr_idparale   integer;  
+    vr_dsplsql    varchar2(1000); 
+    vr_jobname    varchar2(1000);        
 
     -- Array para guardar o split dos dados contidos na dsvlrprm       
     vr_parametro  gene0002.typ_split; 
+ 
+    function fn_busca_dsfuncao (pr_cdfuncao in tbcadast_funcao_pessoa.cdfuncao%type) 
+      return varchar2 is  
+
+      cursor cr_busca_dsfuncao (pr_cdfuncao in tbcadast_funcao_pessoa.cdfuncao%type) is
+      select dsfuncao
+        from tbcadast_funcao_pessoa
+       where cdfuncao = pr_cdfuncao;
+      rw_busca_dsfuncao cr_busca_dsfuncao%rowtype;
+       
+    begin
+      
+      if pr_cdfuncao is null then
+        return '';
+      end if;
+    
+      open cr_busca_dsfuncao (pr_cdfuncao);
+      fetch cr_busca_dsfuncao into rw_busca_dsfuncao;
+      close cr_busca_dsfuncao;
+      
+      return rw_busca_dsfuncao.dsfuncao;
+ 
+    exception
+      when others then
+        return '';
+    end;
  
   procedure pc_fracao_mostra_param (pr_xmllog     in varchar2
                                    ,pr_cdcritic  out pls_integer
@@ -236,10 +266,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
   -- Objetivo  : Rotina para mostrar parametros cadastrados para a 
   --             cooperativa na tabela crapprm (Opcao P).
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Criado tabela tbevento_param para controle.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).   
   --
   ---------------------------------------------------------------------------
                
+    -- Busca parametros da cooperativa
+    cursor cr_tbevento_param (pr_cdcooper in tbevento_param.cdcooper%type) is
+    select par.frmmaxim
+         , par.frmideal
+         , par.intermin
+         , par.antecedencia_envnot
+         , par.hrenvio_mensagem
+         , par.dstitulo_banner
+         , par.dtexibir_de
+         , par.rowid
+         , par.flgemail
+         , par.dstitulo_email
+         , par.conteudo_email
+         , par.lstemail
+      from tbevento_param par
+     where par.cdcooper = pr_cdcooper;   
+    rw_tbevento_param cr_tbevento_param%rowtype;     
+    
   begin
         
     -- Incluir nome do módulo logado
@@ -261,34 +310,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
     if trim(vr_dscritic) is not null then
       raise vr_exc_saida;
     end if;
-
+    
     -- Verifica parametros cadastrados em base
-    open cr_dsvlrprm (vr_cdcooper);
-    fetch cr_dsvlrprm into rw_dsvlrprm;
-    close cr_dsvlrprm;
-        
-    vr_parametro := gene0002.fn_quebra_string(pr_string => rw_dsvlrprm
-                                             ,pr_delimit => ';');
-       
-    -- Se encontrou popula variaveis                                          
-    for i in 1..vr_parametro.count() loop
-      case
-        when i = 1 then vr_frmaxima := to_number(vr_parametro(i));
-        when i = 2 then vr_fraideal := to_number(vr_parametro(i));
-        when i = 3 then vr_intermin := to_number(vr_parametro(i));
-        else null;
-      end case;
-    end loop;
+    open cr_tbevento_param (vr_cdcooper);
+    fetch cr_tbevento_param into rw_tbevento_param;
+    close cr_tbevento_param;    
    
     -- Criar cabeçalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root',   pr_posicao => 0, pr_tag_nova => 'Dados',   pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
 
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'param',    pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'frmaxima', pr_tag_cont => to_char(nvl(vr_frmaxima,0),'fm9999999999','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'fraideal', pr_tag_cont => to_char(nvl(vr_fraideal,0),'fm9999999999','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'intermin', pr_tag_cont => to_char(nvl(vr_intermin,0),'fm9999999999','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);                           
-                
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'frmaxima', pr_tag_cont => to_char(nvl(rw_tbevento_param.frmmaxim,0),'fm9999999999','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'fraideal', pr_tag_cont => to_char(nvl(rw_tbevento_param.frmideal,0),'fm9999999999','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'intermin', pr_tag_cont => to_char(nvl(rw_tbevento_param.intermin,0),'fm9999999999','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);                           
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'antecedencia_envnot', pr_tag_cont => nvl(rw_tbevento_param.antecedencia_envnot,0), pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'hrenvio_mensagem', pr_tag_cont => to_char(to_date(rw_tbevento_param.hrenvio_mensagem,'SSSSS'),'HH24:MI'), pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'dstitulo_banner', pr_tag_cont => rw_tbevento_param.dstitulo_banner, pr_des_erro => vr_dscritic);                           
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'dtexibir_de', pr_tag_cont => to_char(rw_tbevento_param.dtexibir_de,'dd/mm/rrrr'), pr_des_erro => vr_dscritic); 
+    
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'flgemail', pr_tag_cont => rw_tbevento_param.flgemail, pr_des_erro => vr_dscritic); 
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'dstitulo_email', pr_tag_cont => rw_tbevento_param.dstitulo_email, pr_des_erro => vr_dscritic); 
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'conteudo_email', pr_tag_cont => rw_tbevento_param.conteudo_email, pr_des_erro => vr_dscritic); 
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'param', pr_posicao => 0, pr_tag_nova => 'lstemail', pr_tag_cont => rw_tbevento_param.lstemail, pr_des_erro => vr_dscritic); 
+          
     pr_des_erro := 'OK';
       
   exception
@@ -325,8 +370,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
 
   end pc_fracao_mostra_param;
 
-  procedure pc_fracao_alterar_param (pr_frmaxima   in number
-                                    ,pr_fraideal   in number
+  procedure pc_fracao_alterar_param (pr_frmmaxim   in tbevento_param.frmmaxim%type
+                                    ,pr_frmideal   in tbevento_param.frmideal%type                                    
+                                    ,pr_antecedencia_envnot in tbevento_param.antecedencia_envnot%type
+                                    ,pr_hrenvio_mensagem    in varchar2
+                                    ,pr_dstitulo_banner     in tbevento_param.dstitulo_banner%type
+                                    ,pr_dtexibir_de         in varchar2                                    
+                                    ,pr_flgemail            in tbevento_param.flgemail%type
+                                    ,pr_dstitulo_email      in tbevento_param.dstitulo_email%type
+                                    ,pr_lstemail            in tbevento_param.lstemail%type                                    
                                     ,pr_xmllog     in varchar2
                                     ,pr_cdcritic  out pls_integer
                                     ,pr_dscritic  out varchar2
@@ -346,9 +398,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
   -- Objetivo  : Rotina para alterar valores de fracoes maximas
   --             e fracoes ideais dos grupos (Opcao P).
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Criado tabela tbevento_param para controle.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).          
   --
   ---------------------------------------------------------------------------
+
+    vr_dtexibir_de         tbevento_param.dtexibir_de%type; 
+    vr_hrenvio_mensagem    tbevento_param.hrenvio_mensagem%type;
+    vr_tbevento_param      tbevento_param%rowtype;
 
   begin
 
@@ -373,91 +430,157 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
     end if;
     
     -- Parametro deve ser informado
-    if pr_frmaxima is null then
+    if pr_frmmaxim is null then
           
       vr_dscritic:= 'Fração máxima não informada.';
       pr_nmdcampo := 'frmmaxim';
       raise vr_exc_saida;  
         
-    end if;
-
     -- Parametro deve ser informado
-    if pr_fraideal is null then
+    elsif pr_frmideal is null then
           
       vr_dscritic:= 'Fração ideal não informada.';
       pr_nmdcampo := 'frmideal';
       raise vr_exc_saida;  
         
+    -- Parametro deve ser informado
+    elsif pr_antecedencia_envnot is null then
+          
+      vr_dscritic:= 'Dias de antecedência não informado.';
+      pr_nmdcampo := 'antecedencia_envnot';
+      raise vr_exc_saida;  
+
+    -- Parametro deve ser informado
+    elsif pr_hrenvio_mensagem is null then
+          
+      vr_dscritic:= 'Hora de envio não informado.';
+      pr_nmdcampo := 'hrenvio_mensagem';
+      raise vr_exc_saida;  
+      
+    -- Parametro deve ser informado
+    elsif pr_dstitulo_banner is null then
+          
+      vr_dscritic:= 'Título do banner não informada.';
+      pr_nmdcampo := 'dstitulo_banner';
+      raise vr_exc_saida;  
+
+    -- Parametro deve ser informado
+    elsif pr_flgemail is null then
+          
+      vr_dscritic:= 'Status de envio não informado.';
+      pr_nmdcampo := 'flgemail';
+      raise vr_exc_saida;  
+    
+    -- Parametro deve ser informado
+    elsif pr_dstitulo_email is null then
+          
+      vr_dscritic:= 'Título do e-mail não informado.';
+      pr_nmdcampo := 'dstitulo_email';
+      raise vr_exc_saida;  
+      
+    -- Parametro deve ser informado
+    elsif pr_lstemail is null then
+          
+      vr_dscritic:= 'Lista de e-mail não informada.';
+      pr_nmdcampo := 'lstemail';
+      raise vr_exc_saida;  
+    
+    end if;
+
+    -- Parametro deve ser informado
+    if pr_dtexibir_de is not null then  
+      begin
+        -- Tratamento de formato recebido
+        vr_dtexibir_de := to_date(pr_dtexibir_de,'dd/mm/yyyy');
+      exception
+        when others then
+          vr_dscritic:= 'Formato de data não permitido.';
+          raise vr_exc_saida;  
+      end;
+    else
+      begin
+        select c.dtinicio_grupo
+          into vr_dtexibir_de
+          from tbevento_exercicio c
+         where c.cdcooper = vr_cdcooper 
+           and c.flgativo = 1;
+      exception
+        when others then
+          vr_dscritic:= 'Erro não tratado - data de exibição.';
+          raise vr_exc_saida;  
+      end;
     end if;
         
-    -- Verifica parametros cadastrados em base
-    open cr_dsvlrprm (vr_cdcooper);
-    fetch cr_dsvlrprm into rw_dsvlrprm;
-    close cr_dsvlrprm;
-
-    vr_parametro := gene0002.fn_quebra_string(pr_string => rw_dsvlrprm
-                                             ,pr_delimit => ';');
-         
-    -- Se encontrou popula variaveis                                          
-    for i in 1..vr_parametro.count loop
-      case
-        when i = 1 then vr_frmaxima := to_number(vr_parametro(i));
-        when i = 2 then vr_fraideal := to_number(vr_parametro(i));
-        when i = 3 then vr_intermin := to_number(vr_parametro(i));
-        else null;
-      end case;
-    end loop;
-
-    -- Compara o que quer se cadastrar com o que ja esta cadastrado
-    if vr_fraideal = pr_fraideal and vr_frmaxima = pr_frmaxima then
-      vr_dscritic := 'Parâmetros devem ser diferentes dos já registrados.';
-      raise vr_exc_saida;
-    end if;
+    begin
+      -- Tratamento de formato recebido
+      vr_hrenvio_mensagem := to_number(to_char(to_date(pr_hrenvio_mensagem,'HH24:MI'),'SSSSS'));
+    exception
+      when others then
+        vr_dscritic:= 'Formato de hora não permitido.';
+        raise vr_exc_saida;  
+    end;
     
-    -- Fracao maxima deve ser 200 unidades maior que a ideal
-    if pr_frmaxima < (pr_fraideal + vr_intermin) then
-      vr_dscritic := 'A fracao máxima deve ter ' ||vr_intermin|| ' unidades ' ||
-                     'de diferença para a ideal.';
+    begin
+      select c.*
+        into vr_tbevento_param
+        from tbevento_param c
+       where c.cdcooper = vr_cdcooper;
+    exception
+      when others then
+        vr_dscritic:= 'Erro ao manipular tabela de parametros: '||sqlerrm;
+        raise vr_exc_saida;  
+    end;
+
+    -- Fracao maxima deve ser 50 unidades maior que a ideal
+    if pr_frmmaxim < (pr_frmideal + vr_tbevento_param.intermin) then
+      vr_dscritic := 'A fracao máxima deve ter ' || vr_tbevento_param.intermin || 
+                    ' unidades de diferença para a ideal.';
       raise vr_exc_saida;      
     end if;
 
     begin
 
-      update crapprm
-         set dsvlrprm = pr_frmaxima||';'||pr_fraideal||';'||vr_intermin
-       where nmsistem = 'CRED'
-         and cdcooper = vr_cdcooper
-         and cdacesso = 'TELA_CADGRP_OPCAO_P';
-         
-
-      -- Verifica operacoes realizadas acima
-      if sql%rowcount = 0 then
-        vr_dscritic := 'Operação não efetuada.';
-        raise vr_exc_saida;
-      end if;
-
-      -- Gera log
-      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                                ,pr_nmarqlog     => 'cadgrp.log'
-                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
-                                                    ' -->  Operador '|| vr_cdoperad || ' - ' ||
-                                                    'Efetuou a alteracao dos parametros de fracao de grupo.' || 
-                                                    ' Fracao Ideal de ' || to_char(vr_fraideal,'fm9999999999') || ' para ' || to_char(pr_fraideal,'fm9999999999') ||
-                                                    ' e Fracao Max.  de ' || to_char(vr_frmaxima,'fm9999999999') || ' para ' || to_char(pr_frmaxima,'fm9999999999') ||'.');
+      update tbevento_param c
+         set c.frmideal = pr_frmideal
+           , c.frmmaxim = pr_frmmaxim
+           , c.antecedencia_envnot = pr_antecedencia_envnot
+           , c.hrenvio_mensagem    = vr_hrenvio_mensagem
+           , c.dstitulo_banner     = pr_dstitulo_banner
+           , c.dtexibir_de         = vr_dtexibir_de
+           , c.flgemail            = pr_flgemail
+           , c.dstitulo_email      = pr_dstitulo_email
+           , c.lstemail            = pr_lstemail
+           , c.cdoperad_altera     = vr_cdoperad
+           , c.dhalteracao         = sysdate
+       where c.cdcooper            = vr_cdcooper;
 
     exception
-          
       when others then
-            
         vr_dscritic := 'Erro ao atualizar parametros da Cooperativa.';
         raise vr_exc_saida;
-            
     end;
-                    
+
+    -- Gera log
+    btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                              ,pr_ind_tipo_log => 2 -- Erro tratato
+                              ,pr_nmarqlog     => 'cadgrp.log'
+                              ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                  ' -->  Operador '|| to_char(vr_cdoperad) || ' -' ||
+                                                  ' Efetuou a alteracao dos parametros de eventos assembleares.' || 
+                                                  ' Fracao Ideal de '  || to_char(vr_tbevento_param.frmideal)                 || ' para ' || to_char(pr_frmideal) ||
+                                                  ' Fracao Max. de '   || to_char(vr_tbevento_param.frmmaxim)                 || ' para ' || to_char(pr_frmmaxim) ||
+                                                  ' Antecedência de '  || to_char(vr_tbevento_param.antecedencia_envnot)      || ' para ' || to_char(pr_antecedencia_envnot) ||
+                                                  ' Hora envio de '    || to_char(vr_tbevento_param.hrenvio_mensagem)         || ' para ' || to_char(vr_hrenvio_mensagem) ||
+                                                  ' Titulo banner de ' || to_char(vr_tbevento_param.dstitulo_banner)          || ' para ' || to_char(pr_dstitulo_banner) ||
+                                                  ' Dt Exibir de '     || to_char(vr_tbevento_param.dtexibir_de,'dd/mm/yyyy') || ' para ' || to_char(vr_dtexibir_de,'dd/mm/yyyy') ||
+                                                  ' Flag e-mail de '   || to_char(vr_tbevento_param.flgemail)                 || ' para ' || to_char(pr_flgemail) ||                                                  
+                                                  ' Titulo e-mail de ' || to_char(vr_tbevento_param.dstitulo_email)           || ' para ' || to_char(pr_dstitulo_email) ||                                                  
+                                                  ' Lista e-mail de '  || to_char(vr_tbevento_param.lstemail)                 || ' para ' || to_char(pr_lstemail) ||                                                  
+                                                  '.');
+                
     --Realiza commit das alterações
     commit;
-      
+
     pr_des_erro := 'OK';
       
   exception
@@ -1006,7 +1129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
                                                   'Efetuou a alteracao do periodo de edital de assembleias.' || 
                                                   ' Exercicio: ' || to_char(rw_busca_edital_rowid.nrano_exercicio,'RRRR') ||
                                                   ', Travamento de grupos com inicio de ' || to_char(rw_busca_edital_rowid.dtinicio_grupo,'DD/MM/RRRR') || ' para ' || to_char(vr_dtinicio_grupo,'DD/MM/RRRR') || 
-                                                  ', Travamento de grupos com fim de  ' || to_char(rw_busca_edital_rowid.dtfim_grupo,'DD/MM/RRRR') || ' para ' || to_char(vr_dtfim_grupo,'DD/MM/RRRR') ||  
+                                                  ', Travamento de grupos com fim de ' || to_char(rw_busca_edital_rowid.dtfim_grupo,'DD/MM/RRRR') || ' para ' || to_char(vr_dtfim_grupo,'DD/MM/RRRR') ||  
                                                   '.');
 
     --Realiza commit das alterações
@@ -1278,7 +1401,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
   -- Objetivo  : Ativar edital para o registro selecionado (Opcao E).
   --             
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Mascara na data para gerar log.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).
   --
   ---------------------------------------------------------------------------
 
@@ -1363,7 +1487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
                               ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                   ' -->  Operador '|| vr_cdoperad || ' - ' ||
                                                   'Efetuou a ativacao do periodo de edital de assembleias.' || 
-                                                  ' Exercicio: ' || rw_busca_edital_rowid.nrano_exercicio ||'.');
+                                                  ' Exercicio: ' || to_char(rw_busca_edital_rowid.nrano_exercicio,'yyyy') ||'.');
 
     --Realiza commit das alterações
     commit;
@@ -1426,7 +1550,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
   --
   -- Objetivo  : Apresenta informacoes do grupo para a agencia (Opcao C).
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Nao atualizamos mais tabela crapass.
+  --                          Cargo deve ser buscado de outra forma.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).   
   --
   ---------------------------------------------------------------------------
         
@@ -1435,34 +1561,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
                                ,pr_cdagenci in tbevento_pessoa_grupos.cdagenci%type
                                ,pr_nrdgrupo in tbevento_pessoa_grupos.nrdgrupo%type) is
     select distinct
-           pes.dsfuncao
-         , gru.nrdconta
+           gru.nrdconta
          , gru.nrcpfcgc
          , gru.nrdgrupo
          , ass.nmprimtl
          , ass.inpessoa
-         , case pes.cdfuncao when 'CD' then 6
-                             when 'DT' then 5
-                             when 'DS' then 4
-                             when 'CL' then 3
-                             when 'CS' then 2
-                             when 'CM' then 1
-                             else 0 end ordenado
+         , ' ' dsfuncao
+         , (select xxx.cdfuncao
+              from tbcadast_vig_funcao_pessoa xxx
+             where xxx.cdcooper = gru.cdcooper
+               and xxx.nrcpfcgc = gru.nrcpfcgc
+               and xxx.cdfuncao in ('DT','DS')
+               and xxx.dtfim_vigencia is null) funcao1
+         , (select xxx.cdfuncao
+              from tbcadast_vig_funcao_pessoa xxx
+             where xxx.cdcooper = gru.cdcooper
+               and xxx.nrcpfcgc = gru.nrcpfcgc
+               and xxx.cdfuncao in ('CL','CS','CM')
+               and xxx.dtfim_vigencia is null) funcao2
       from tbevento_pessoa_grupos gru
          , crapass                ass
-         , tbcadast_funcao_pessoa pes
      where gru.cdcooper = pr_cdcooper
        and gru.cdagenci = pr_cdagenci
        and gru.nrdgrupo = decode(pr_nrdgrupo,0,gru.nrdgrupo,pr_nrdgrupo)
        and ass.cdcooper = gru.cdcooper
        and ass.nrdconta = gru.nrdconta
-       and pes.cdfuncao = decode(length(trim(ass.tpvincul)),2,ass.tpvincul,' ')
      order
-        by ordenado desc
+        by decode(nvl(funcao1,nvl(funcao2,'')),'DT',1,'DS',2,'CL',3,'CS',4,'CM',5,6)
          , ass.nmprimtl;
            
     -- Verifica se agencia foi encontrada
     vr_flagenci boolean := false;
+    vr_dsfuncao varchar2(100);
 
   begin
 
@@ -1506,9 +1636,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
                                                   ,pr_cdagenci
                                                   ,nvl(pr_nrdgrupo,0)) loop                                                  
        
+      -- Busca descricao da funcao
+      vr_dsfuncao := null;
+      
+      if rw_busca_cooperados.funcao1 is not null and 
+         rw_busca_cooperados.funcao2 is not null then
+         vr_dsfuncao := fn_busca_dsfuncao('CD');
+      elsif rw_busca_cooperados.funcao1 is not null or
+            rw_busca_cooperados.funcao2 is not null then
+         vr_dsfuncao := fn_busca_dsfuncao(nvl(rw_busca_cooperados.funcao1,rw_busca_cooperados.funcao2));
+      end if;
+                          
       --Incrementar Quantidade Registros do Parametro
       vr_qtregist:= nvl(vr_qtregist,0) + 1;
-              
+
       -- Agencia existe na tabela de grupos
       vr_flagenci := true;
               
@@ -1524,7 +1665,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
           
         -- Popula as informacoes via XML
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'listas', pr_posicao => 0, pr_tag_nova => 'lista', pr_tag_cont => null, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lista',  pr_posicao => vr_contador, pr_tag_nova => 'dsfuncao', pr_tag_cont => rw_busca_cooperados.dsfuncao, pr_des_erro => vr_dscritic); 
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lista',  pr_posicao => vr_contador, pr_tag_nova => 'dsfuncao', pr_tag_cont => vr_dsfuncao, pr_des_erro => vr_dscritic); 
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lista',  pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => TRIM(gene0002.fn_mask_conta(rw_busca_cooperados.nrdconta)), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'lista',  pr_posicao => vr_contador, pr_tag_nova => 'nrcpfcgc', pr_tag_cont => gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_busca_cooperados.nrcpfcgc,
                                                                                                                                                                            pr_inpessoa => rw_busca_cooperados.inpessoa), pr_des_erro => vr_dscritic);
@@ -1535,7 +1676,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
       end if;
         
     end loop; 
-      
+
     -- Se nao encontrou agencia critica mensagem
     if not vr_flagenci then
       vr_dscritic := 'Agência não encontrada.';
@@ -1821,7 +1962,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
   -- Objetivo  : Apresenta informacoes do cooperado (Opcao B).
   --            
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Nao atualizamos mais tabela crapass.
+  --                          Cargo deve ser buscado de outra forma.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).   
   --
   ---------------------------------------------------------------------------
         
@@ -1861,19 +2004,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
     select distinct
            gru.cdagenci
          , gru.nrdgrupo
-         , pes.dsfuncao
+         , pes.cdfuncao tpvincul
+         , nvl(pes.dsfuncao,'Cooperado') dsfuncao
          , gru.nrdconta
          , gru.nrcpfcgc
          , ass.nmprimtl
          , gru.rowid
-      from crapass ass
-         , tbevento_pessoa_grupos gru
-         , tbcadast_funcao_pessoa pes
+         , nvl(gru.flgvinculo,0) flgvinculo
+         , case when pes.cdfuncao = 'DT' then 6
+                when pes.cdfuncao = 'DS' then 5
+                when pes.cdfuncao = 'CL' then 4
+                when pes.cdfuncao = 'CS' then 3
+                when pes.cdfuncao = 'CM' then 2 
+                else 1 end ordenado
+      from crapass                    ass
+         , tbevento_pessoa_grupos     gru
+         , (select pes.cdcooper
+                 , pes.nrcpfcgc
+                 , pes.cdfuncao
+                 , fun.dsfuncao
+              from tbcadast_vig_funcao_pessoa pes
+                 , tbcadast_funcao_pessoa     fun
+             where pes.dtfim_vigencia is null
+               and pes.cdfuncao = fun.cdfuncao) pes
      where gru.cdcooper = pr_cdcooper
        and gru.nrcpfcgc = pr_nrcpfcgc
        and ass.cdcooper = gru.cdcooper
        and ass.nrcpfcgc = gru.nrcpfcgc
-       and pes.cdfuncao = ass.tpvincul;
+       and pes.cdcooper (+) = gru.cdcooper
+       and pes.nrcpfcgc (+) = gru.nrcpfcgc
+     order
+        by ordenado desc;
     rw_grupo_assembleia cr_grupo_assembleia%rowtype;
 
     vr_nrcpfcgc crapass.nrcpfcgc%type;      
@@ -1973,16 +2134,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
 
     -- Criar cabeçalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0, pr_tag_nova => 'Dados', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-    
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0, pr_tag_nova => 'Dados', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);    
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados',      pr_posicao => 0, pr_tag_nova => 'cooperado', pr_tag_cont => NULL,                pr_des_erro => vr_dscritic); 
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperado',  pr_posicao => 0, pr_tag_nova => 'rowid',     pr_tag_cont => rw_grupo_assembleia.rowid,    pr_des_erro => vr_dscritic); 
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperado',  pr_posicao => 0, pr_tag_nova => 'cdagenci',  pr_tag_cont => rw_grupo_assembleia.cdagenci, pr_des_erro => vr_dscritic); 
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperado',  pr_posicao => 0, pr_tag_nova => 'nrdgrupo',  pr_tag_cont => rw_grupo_assembleia.nrdgrupo, pr_des_erro => vr_dscritic); 
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperado',  pr_posicao => 0, pr_tag_nova => 'nrdgrupo',  pr_tag_cont => rw_grupo_assembleia.nrdgrupo, pr_des_erro => vr_dscritic);     
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperado',  pr_posicao => 0, pr_tag_nova => 'flgvinculo',  pr_tag_cont => rw_grupo_assembleia.flgvinculo, pr_des_erro => vr_dscritic);     
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperado',  pr_posicao => 0, pr_tag_nova => 'tpvincul',  pr_tag_cont => rw_grupo_assembleia.tpvincul, pr_des_erro => vr_dscritic);    
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperado',  pr_posicao => 0, pr_tag_nova => 'dsfuncao',  pr_tag_cont => rw_grupo_assembleia.dsfuncao, pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperado',  pr_posicao => 0, pr_tag_nova => 'nrdconta',  pr_tag_cont => trim(gene0002.fn_mask_conta(rw_grupo_assembleia.nrdconta)), pr_des_erro => vr_dscritic);
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperado',  pr_posicao => 0, pr_tag_nova => 'nrcpfcgc',  pr_tag_cont => gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc,
-                                                                                                                                                                  pr_inpessoa => rw_crapass.inpessoa), pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperado',  pr_posicao => 0, pr_tag_nova => 'nrcpfcgc',  pr_tag_cont => gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc,                                                                                                                                                                  pr_inpessoa => rw_crapass.inpessoa), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'cooperado',  pr_posicao => 0, pr_tag_nova => 'nmprimtl',  pr_tag_cont => rw_grupo_assembleia.nmprimtl, pr_des_erro => vr_dscritic);
 
     pr_des_erro := 'OK';
@@ -2022,6 +2183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
   end pc_cursor_opcao_b;
 
   procedure pc_alterar_opcao_b (pr_nrdgrupo   in tbevento_pessoa_grupos.nrdgrupo%type
+                               ,pr_flgvinculo in tbevento_pessoa_grupos.flgvinculo%TYPE
                                ,pr_rowid      in rowid
                                ,pr_xmllog     in varchar2
                                ,pr_cdcritic  out pls_integer
@@ -2042,7 +2204,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
   -- Objetivo  : Altera grupo do cooperado atraves (Opcao B).
   --            
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Criado flag para vincular pessoa a grupo.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).   
   --
   ---------------------------------------------------------------------------
     
@@ -2064,6 +2227,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
          , ass.nmprimtl
          , ass.nrcpfcgc
          , gru.idpessoa
+         , nvl(gru.flgvinculo,0) flgvinculo
       from crapass                ass
          , tbevento_pessoa_grupos gru
      where gru.rowid = pr_rowid
@@ -2083,6 +2247,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
     rw_buscar_grupos cr_buscar_grupos%rowtype;
       
     vr_nrdrowid rowid;
+    vr_cdprogra varchar2(100) := 'TELA_CADGRP.PC_ALTERAR_OPCAO_B';
+    vr_idprglog number := 0;
       
   begin
 
@@ -2105,6 +2271,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
     if trim(vr_dscritic) is not null then
       raise vr_exc_saida;
     end if;
+                          
+    -- Gera log no início da execução
+    pc_log_programa(pr_dstiplog   => 'I'         
+                   ,pr_cdprograma => vr_cdprogra
+                   ,pr_cdcooper   => nvl(vr_cdcooper,0)
+                   ,pr_tpexecucao => 0     
+                   ,pr_idprglog   => vr_idprglog);
     
     -- Validacoes de parametros
     if nvl(pr_nrdgrupo,0) = 0 then
@@ -2163,6 +2336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
       -- Altera grupo do cooperado
       update tbevento_pessoa_grupos c
          set c.nrdgrupo        = pr_nrdgrupo
+           , c.flgvinculo      = nvl(pr_flgvinculo,0)
            , c.cdoperad_altera = vr_cdoperad
            , c.dhalteracao     = sysdate
        where c.cdcooper        = vr_cdcooper
@@ -2189,6 +2363,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
          and nrdconta   = rw_grupo_assembleia.nrdconta
          and tpsituacao = 0;
          
+      -- Verifica parametros cadastrados em base
+      -- Default zero, em periodos de implantacao
+      -- o parametro pode ser alterado para 1
+      -- para que o sistema nao seja sobrecarregado
+      begin
+        select nvl(c.flag_integra,0)
+          into vr_tpsituacao
+          from tbevento_param c
+         where c.cdcooper = vr_cdcooper;
+      exception
+        when others then
+          vr_dscritic := 'Erro ao manipular tbevento_param: '||sqlerrm;
+          raise vr_exc_saida;
+      end;  
+         
       -- Gerar informacao de alteracao ao SOA
       insert 
         into tbhistor_pessoa_grupos (cdcooper
@@ -2204,7 +2393,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
                                     ,rw_grupo_assembleia.idpessoa
                                     ,rw_grupo_assembleia.nrdconta
                                     ,sysdate
-                                    ,0
+                                    ,vr_tpsituacao
                                     ,null
                                     ,null
                                     ,null
@@ -2229,9 +2418,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
                         ,pr_cdoperad => vr_cdoperad
                         ,pr_dscritic => null
                         ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
-                        ,pr_dstransa => 'Mudança de grupo - Antigo: '  ||
-                                        rw_grupo_assembleia.nrdgrupo||
-                                        ' Novo: '||pr_nrdgrupo
+                        ,pr_dstransa => 'Alteracao dados assembleia'
                         ,pr_dttransa => TRUNC(SYSDATE)
                         ,pr_flgtrans => 1
                         ,pr_hrtransa => gene0002.fn_busca_time
@@ -2239,6 +2426,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
                         ,pr_nmdatela => 'CADGRP'
                         ,pr_nrdconta => rw_grupo_assembleia.nrdconta
                         ,pr_nrdrowid => vr_nrdrowid);
+
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Mudanca de Grupo'
+                             ,pr_dsdadant => rw_grupo_assembleia.nrdgrupo
+                             ,pr_dsdadatu => pr_nrdgrupo);
+
+    gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                             ,pr_nmdcampo => 'Flag Vinculo'
+                             ,pr_dsdadant => rw_grupo_assembleia.flgvinculo
+                             ,pr_dsdadatu => to_char(nvl(pr_flgvinculo,0)));
 
     -- Gera log
     btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
@@ -2248,8 +2445,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
                                                   ' -->  Operador '|| vr_cdoperad || ' - ' ||
                                                   'Efetuou a alteracao de grupo para o cooperado' || 
                                                   ' Conta: ' || trim(gene0002.fn_mask_conta(rw_grupo_assembleia.nrdconta)) ||
-                                                  ', Grupo de ' || to_char(rw_grupo_assembleia.nrdgrupo,'999') || ' para ' || to_char(pr_nrdgrupo,'999') ||
-                                                  '.');
+                                                  ', Grupo de ' || rw_grupo_assembleia.nrdgrupo || ' para ' || pr_nrdgrupo ||
+                                                  ', Flag Vinculo de '||rw_grupo_assembleia.flgvinculo||' para '||
+                                                  to_char(nvl(pr_flgvinculo,0))||'.');
 
     commit;
      
@@ -2313,7 +2511,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
   Frequencia: -----
   Objetivo   : Pesquisa grupos disponiveis
       
-  Alterações : 
+  -- Alteracoes: 13/08/2019 - Data do evento para auxiliar decisao.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts.   
   
   -------------------------------------------------------------------------------------------------------------*/     
                           
@@ -2322,6 +2521,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
                             ,pr_nrdgrupo in tbevento_pessoa_grupos.nrdgrupo%type
                             ,pr_cdagenci in tbevento_pessoa_grupos.cdagenci%type) is
     select  gru.nrdgrupo
+         ,  (select to_char(adp.dtinieve,'dd/mm/yyyy')
+               from crapldp ldp
+                  , crapadp adp
+                  , tbevento_exercicio exe
+                  , crapdat dat
+                  , tbevento_grupos grp
+              where ldp.cdcooper = gru.cdcooper
+                and ldp.cdagenci = gru.cdagenci
+                and adp.nrdgrupo = gru.nrdgrupo
+                and ldp.cdcooper = adp.cdcooper
+                and ldp.nrseqdig = adp.cdlocali
+                and adp.idevento = 2
+                and ldp.idevento = 1
+                and adp.nrdgrupo > 0
+                and dat.cdcooper = ldp.cdcooper
+                and adp.dtinieve > dat.dtmvtolt
+                and exe.cdcooper = ldp.cdcooper
+                and exe.flgativo = 1
+                and adp.dtanoage = to_char(exe.nrano_exercicio,'yyyy')
+                and grp.cdcooper = ldp.cdcooper
+                and grp.cdagenci = ldp.cdagenci
+                and grp.nrdgrupo = adp.nrdgrupo) dtinieve
       from  tbevento_grupos gru
      where  gru.cdcooper = pr_cdcooper
        and  gru.cdagenci = pr_cdagenci
@@ -2372,10 +2593,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
             
       --Numero Registros
       if vr_nrregist > 0 then 
-                      
+        
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'grupos', pr_posicao => 0, pr_tag_nova => 'grupo', pr_tag_cont => NULL, pr_des_erro => vr_dscritic); 
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'grupo', pr_posicao => vr_contador, pr_tag_nova => 'nrdgrupo', pr_tag_cont => rw_buscar_grupos.nrdgrupo, pr_des_erro => vr_dscritic);
-          
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'grupo', pr_posicao => vr_contador, pr_tag_nova => 'dtinieve', pr_tag_cont => rw_buscar_grupos.dtinieve, pr_des_erro => vr_dscritic);
         vr_contador := vr_contador + 1;
           
       end if;
@@ -2584,7 +2805,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
   --             todas as agencias. Opcao alterar chama esta mesma
   --             procedure porem passa apenas agencias desejadas
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Criado tabela tbevento_param para controle.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).
   --
   ---------------------------------------------------------------------------
 
@@ -2664,23 +2886,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
       raise vr_exc_saida;
     end if;
 
-    -- Verifica parametros cadastrados em base
-    open cr_dsvlrprm (vr_cdcooper);
-    fetch cr_dsvlrprm into rw_dsvlrprm;
-    close cr_dsvlrprm;
-            
-    vr_parametro := gene0002.fn_quebra_string(pr_string => rw_dsvlrprm
-                                             ,pr_delimit => ';');
-        
-    -- Se encontrou popula variaveis                                          
-    for i in 1..vr_parametro.count() loop
-      case
-        when i = 1 then vr_frmaxima := to_number(vr_parametro(i));
-        when i = 2 then vr_fraideal := to_number(vr_parametro(i));
-        when i = 3 then vr_intermin := to_number(vr_parametro(i));
-        else null;
-      end case;
-    end loop;
+    begin
+      select c.intermin
+           , c.frmmaxim
+           , c.frmideal
+        into vr_intermin
+           , vr_frmaxima
+           , vr_fraideal
+        from tbevento_param c
+       where c.cdcooper = vr_cdcooper;
+    exception
+      when others then
+        vr_dscritic:= 'Erro ao manipular tabela de parametros: '||sqlerrm;
+        raise vr_exc_saida;  
+    end;
 
     -- Criar cabeçalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -3058,7 +3277,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
   --
   -- Objetivo  : Recebe parametros da tela e faz verificacoes.
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Nao permite alterar grupos durante periodo assemblear.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).   
   --
   --------------------------------------------------------------------------  
 
@@ -3095,6 +3315,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
                                 a.nrdconta < ass.nrdconta)));
     rw_qtd_membros_agencia cr_qtd_membros_agencia%rowtype;
     
+    -- Periodo onde novos grupos nao podem ser criados
+    cursor cr_busca_travamento_grupos (pr_cdcooper in tbevento_exercicio.cdcooper%type) is
+    select exe.dtinicio_grupo
+         , exe.dtfim_grupo
+         , dat.dtmvtolt
+      from tbevento_exercicio exe
+         , crapdat dat
+     where exe.cdcooper = pr_cdcooper
+       and exe.flgativo = 1
+       and dat.cdcooper = exe.cdcooper;
+    rw_busca_travamento_grupos cr_busca_travamento_grupos%rowtype;
+
     vr_frefetiv   number := 0;
     vr_idprglog   number := 0;
 
@@ -3116,6 +3348,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
       raise vr_exc_saida;
     end if;
     
+    -- Validacoes de travamento de grupos
+    open cr_busca_travamento_grupos (vr_cdcooper);
+    fetch cr_busca_travamento_grupos into rw_busca_travamento_grupos;
+    close cr_busca_travamento_grupos;
+
+    -- Condicoes de critica
+    if rw_busca_travamento_grupos.dtinicio_grupo is null then
+      vr_dscritic := 'Edital de assembleia não encontrado.';
+      raise vr_exc_saida;
+    elsif rw_busca_travamento_grupos.dtinicio_grupo < rw_busca_travamento_grupos.dtmvtolt and
+      rw_busca_travamento_grupos.dtfim_grupo > rw_busca_travamento_grupos.dtmvtolt then
+      vr_dscritic := 'Período não permite criação de novos grupos.';
+      raise vr_exc_saida;
+    end if;
+
     vr_tab_cdagenci := gene0002.fn_quebra_string(pr_cdagenci,';');
     vr_tab_qtdgrupo := gene0002.fn_quebra_string(pr_qtdgrupo,';');
     
@@ -3124,24 +3371,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
       vr_tab_dados_grupo(i).cdagenci := vr_tab_cdagenci(i);
       vr_tab_dados_grupo(i).qtdgrupo := vr_tab_qtdgrupo(i);
     end loop;
-
-    -- Verifica parametros cadastrados em base
-    open cr_dsvlrprm (vr_cdcooper);
-    fetch cr_dsvlrprm into rw_dsvlrprm;
-    close cr_dsvlrprm;
-          
-    vr_parametro := gene0002.fn_quebra_string(pr_string => rw_dsvlrprm
-                                             ,pr_delimit => ';');
-      
-    -- Se encontrou popula variaveis                                          
-    for i in 1..vr_parametro.count() loop
-      case
-        when i = 1 then vr_frmaxima := to_number(vr_parametro(i));
-        when i = 2 then vr_fraideal := to_number(vr_parametro(i));
-        when i = 3 then vr_intermin := to_number(vr_parametro(i));
-        else null;
-      end case;
-    end loop;
+    
+    begin
+      select c.intermin
+           , c.frmmaxim
+           , c.frmideal
+        into vr_intermin
+           , vr_frmaxima
+           , vr_fraideal
+        from tbevento_param c
+       where c.cdcooper = vr_cdcooper;
+    exception
+      when others then
+        vr_dscritic:= 'Erro ao manipular tabela de parametros: '||sqlerrm;
+        raise vr_exc_saida;  
+    end;
 
     -- Analisa se parametros estao dentro da regra
     for i in vr_tab_dados_grupo.first..vr_tab_dados_grupo.last loop
@@ -3240,7 +3484,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
   -- Objetivo  : Recebe parametros da tela e faz um loop para distribuir
   --             grupos nas agencias recebidas
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Execucao em paralelo de rotinas.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).   
   --
   --------------------------------------------------------------------------  
 
@@ -3255,6 +3500,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
 
     vr_frefetiv   number := 0;
     vr_idprglog   number := 0;
+    vr_cdprogra   varchar2(400) := 'agrp0001.pc_distribui_conta_grupo_web';
 
   begin
 
@@ -3281,76 +3527,112 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
       vr_tab_dados_grupo(i).cdagenci := vr_tab_cdagenci(i);
       vr_tab_dados_grupo(i).qtdgrupo := vr_tab_qtdgrupo(i);
     end loop;
+    
+    -- Se houver algum erro, o id vira zerado              
+    vr_idparale := gene0001.fn_gera_id_paralelo;
+    
+    -- Levantar exceção
+    if vr_idparale = 0 then
+      vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_id_paral.';
+      raise vr_exc_saida;
+    end if;
 
     -- Faz a chamada da rotina principal
     for i in vr_tab_dados_grupo.first..vr_tab_dados_grupo.last loop
 
-      -- Limpeza de variaveis
-      vr_cdcritic := null;
-      vr_dscritic := null;
+      begin
+
+        -- Limpeza de variaveis
+        vr_cdcritic := null;
+        vr_dscritic := null;
       
-      -- Procedure de distribuicao
-      agrp0001.pc_distribui_conta_grupo (pr_cdcooper => vr_cdcooper
-                                        ,pr_cdagenci => vr_tab_dados_grupo(i).cdagenci
-                                        ,pr_cdoperad => vr_cdoperad
-                                        ,pr_qtdgrupo => vr_tab_dados_grupo(i).qtdgrupo
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-      
-      -- Se retornou erro atualiza informacoes da agencia                                  
-      if nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
+        gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
+                                  ,pr_idprogra => lpad(vr_tab_dados_grupo(i).cdagenci,3,'0')
+                                  ,pr_des_erro => vr_dscritic);
 
-        begin
-          
-          update tbevento_grupos
-             set flgsituacao = 2 -- Critica
-           where cdcooper    = vr_cdcooper
-             and cdagenci    = vr_tab_dados_grupo(i).cdagenci;
-           
-        exception
-          
-          when others then
-            
-            vr_dscritic := 'Erro ao atualizar Tabela de Resumo de Grupos (1).';
-            raise vr_exc_saida;
-            
-        end;
+        -- Testar saida com erro
+        if vr_dscritic is not null then
+          -- Levantar exceçao
+          raise vr_exc_saida;
+        end if;
 
-        vr_idprglog := 0;
+        -- Montar o bloco PLSQL que será executado
+        -- Ou seja, executaremos a geração dos dados
+        -- para a agência atual atraves de Job no banco
+        vr_dsplsql := 'declare'||chr(13)
+                   || '  vr_cdcritic number;'||chr(13)
+                   || '  vr_dscritic varchar2(4000);'||chr(13)
+                   || 'begin'||chr(13)
+                   || '  agrp0001.pc_distribui_conta_grupo('||vr_cdcooper
+                   ||                                    ','||vr_tab_dados_grupo(i).cdagenci
+                   ||                                    ','||vr_cdoperad
+                   ||                                    ','||vr_tab_dados_grupo(i).qtdgrupo
+                   ||                                    ','||vr_idparale
+                   ||                                    ',vr_cdcritic,vr_dscritic);'||chr(13)
+                   || 'end;';
+
+        vr_jobname := 'AGRP_PAR_'||
+                      trim(to_char(vr_cdcooper,'00'))||'_'||
+                      trim(to_char(vr_tab_dados_grupo(i).cdagenci,'000'))||'$';
+                       
+        -- Faz a chamada ao programa paralelo atraves de JOB
+        gene0001.pc_submit_job(pr_cdcooper  => vr_cdcooper 
+                              ,pr_cdprogra  => vr_cdprogra  
+                              ,pr_dsplsql   => vr_dsplsql   
+                              ,pr_dthrexe   => SYSTIMESTAMP 
+                              ,pr_interva   => NULL
+                              ,pr_jobname   => vr_jobname   
+                              ,pr_des_erro  => vr_dscritic);
+
+        -- Levantar exceçao                                
+        if vr_dscritic is not null then
+          raise vr_exc_saida;
+        end if;
+       
+        -- Chama rotina que irá pausar este processo controlador
+        -- caso tenhamos excedido a quantidade de JOBS em execuçao
+        gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                    ,pr_qtdproce => 10
+                                    ,pr_des_erro => vr_dscritic);
         
-        -- Logar fim de execução sem sucesso
-        cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                              ,pr_cdprograma    => 'TELA_CADGRP.pc_distribui_conta_grupo_web'
-                              ,pr_cdcooper      => vr_cdcooper
-                              ,pr_tpexecucao    => 3   -- Online
-                              ,pr_tpocorrencia  => 2   -- Erro nao tratado
-                              ,pr_cdcriticidade => 1   -- Media
-                              ,pr_cdmensagem    => 0
-                              ,pr_dsmensagem    => 'Agencia: ' || vr_tab_dados_grupo(i).cdagenci ||
-                                                   ' Module: AGRP0001 '|| vr_dscritic
-                              ,pr_idprglog      => vr_idprglog);
+        -- Testar saida com erro
+        if vr_dscritic is not null then
+          -- Levantar exceçao
+          raise vr_exc_saida;
+        end if;
         
-      else
+      exception
+        when others then                    
+          -- Encerrar o job do processamento paralelo dessa agência
+          gene0001.pc_encerra_paralelo(pr_idparale => vr_idparale
+                                      ,pr_idprogra => lpad(vr_tab_dados_grupo(i).cdagenci,3,'0')
+                                      ,pr_des_erro => vr_dscritic);
+          raise vr_exc_saida;
+      end;
 
-        begin
-          
-          update tbevento_grupos
-             set flgsituacao = 1 --Sucesso
-           where cdcooper    = vr_cdcooper
-             and cdagenci    = vr_tab_dados_grupo(i).cdagenci;
-             
-        exception
-          
-          when others then
-          
-            vr_dscritic := 'Erro ao atualizar Tabela de Resumo de Grupos (2).';
-            raise vr_exc_saida;
-
-        end;     
-        
-      end if;
-                              
+      -- Gera log
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_nmarqlog     => 'cadgrp.log'
+                                ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                                    ' -->  Operador '|| vr_cdoperad || ' - ' ||
+                                                    'Alterou/efetuou a distribuicao da agência ' || 
+                                                    lpad(vr_tab_dados_grupo(i).cdagenci,3,'0') ||
+                                                    ' para '||vr_tab_dados_grupo(i).qtdgrupo||' grupos.');
+   
     end loop;
+    
+    -- Chama rotina que irá pausar este processo controlador
+    -- caso tenhamos excedido a quantidade de JOBS em execuçao
+    gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale
+                                ,pr_qtdproce => 0
+                                ,pr_des_erro => vr_dscritic);
+    
+    -- Testar saida com erro
+    if vr_dscritic is not null then
+      -- Levantar exceçao
+      raise vr_exc_saida;
+    end if;
     
     commit;
 
@@ -3361,11 +3643,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADGRP IS
       rollback;
       
       pr_cdcritic := 0;
-      pr_dscritic := 'Erro não tratado TELA_CADGRP.pc_distribui_conta_grupo_web: ' || sqlerrm;
+      pr_dscritic := 'Erro não tratado '||vr_cdprogra||' '||sqlerrm;
 
       -- Logar fim de execução sem sucesso
       cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
-                            ,pr_cdprograma    => 'TELA_CADGRP.pc_distribui_conta_grupo_web'
+                            ,pr_cdprograma    => vr_cdprogra
                             ,pr_cdcooper      => vr_cdcooper
                             ,pr_tpexecucao    => 3   -- Online
                             ,pr_tpocorrencia  => 2   -- Erro nao tratado

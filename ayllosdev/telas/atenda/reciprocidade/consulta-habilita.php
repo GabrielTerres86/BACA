@@ -305,7 +305,7 @@ $cco_qtlimaxp = getByTagName($xmlDados->tags,"QTLIMITEMAX_TOLERANCIA");
 $cco_flgregis = getByTagName($xmlDados->tags,"FLGREGIS");
 	
 $insrvprt = $cco_insrvprt;
-if ($cddopcao == "A" && empty($qtdecprz)) {
+if (($cddopcao == "A" || $cddopcao == "I") && empty($qtdecprz)) {
     $qtdecprz = $cco_qtdecini;
     // Conforme solicitado no projeto 431 o campo passa a ser padrão SIM
     $flgregis = 'SIM';

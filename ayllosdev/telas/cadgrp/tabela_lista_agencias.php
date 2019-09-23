@@ -60,7 +60,7 @@
 <div id="divBotoesListaAgencias" style='text-align:center; margin-bottom: 10px; margin-top: 10px; display:block;' >
 
 	<a href="#" class="botao" id="btVoltar" onClick="consultaDistribuicaoGrupos(); return false;">Voltar</a>
-	<a href="#" class="botao" id="btConfirmar" onClick="validaDistribuiContaGrupo(); return false;">Confirmar</a>
+	<a href="#" class="botao" id="btConfirmar" onClick="confirmaValidaDistribui(); return false;">Confirmar</a>
 
 </div>
 

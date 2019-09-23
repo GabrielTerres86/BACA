@@ -4,8 +4,8 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   --  Programa : COBR0007
   --  Sistema  : Procedimentos gerais para execucao de inetrucoes de baixa
   --  Sigla    : CRED
-  --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao: 27/02/2019
+  --  Autor    : Douglas Quisinski 
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 09/09/2019
   --
   -- Dados referentes ao programa:
   --
@@ -21,12 +21,16 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   --    24/05/2019 - Configurado campo que enviava null na pc_inst_protestar. 
   --                 (Daniel Lombardi - Mout'S)
   --    25/06/2019 - Ajuste para não permitir baixar titulos em borderos que tenham saldo (Daniel - Ailos)
+  --    
+  --    09/09/2019 - Ajuste para permitir efetuar protesto de titulos descontados. (Daniel - Ailos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Validar se o título está no serasa
-  FUNCTION fn_flserasa (pr_flserasa NUMBER, 
-                        pr_qtdianeg NUMBER,
-                        pr_inserasa NUMBER) RETURN BOOLEAN;
+  FUNCTION fn_flserasa (pr_flserasa crapcob.flserasa%TYPE, 
+                        pr_qtdianeg crapcob.qtdianeg%TYPE,
+                        pr_inserasa crapcob.inserasa%TYPE,
+												pr_dtvencto crapcob.dtvencto%TYPE,
+												pr_dtmvtolt crapdat.dtmvtolt%TYPE) RETURN BOOLEAN;
                         
   -- Procedure para gerar o protesto do titulo
   PROCEDURE pc_inst_protestar (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Codigo Cooperativa
@@ -379,6 +383,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
                     pc_inst_aut_protesto 
 
   18/06/2019 - Alteração de código de motivo. Alcemir Jr./Roberto Holz  -  Mout´s(PRB0041653).   
+	
+	06/09/2019 - INC0015371 - Ajuste na função fn_flserasa para validar corretamente os títulos passiveis de negativação e 
+	                          considerar a data para negativação automatica - Augusto (Supero).
 
   -------------------------------------------------------------------------------------------------------------*/
   --Ch 839539
@@ -611,9 +618,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
        AND ret.cdocorre = pr_cdocorre
     ORDER BY ret.progress_recid ASC;
 
-  FUNCTION fn_flserasa (pr_flserasa NUMBER, 
-                        pr_qtdianeg NUMBER,
-                        pr_inserasa NUMBER) RETURN BOOLEAN IS 
+  FUNCTION fn_flserasa (pr_flserasa crapcob.flserasa%TYPE, 
+                        pr_qtdianeg crapcob.qtdianeg%TYPE,
+                        pr_inserasa crapcob.inserasa%TYPE,
+												pr_dtvencto crapcob.dtvencto%TYPE,
+												pr_dtmvtolt crapdat.dtmvtolt%TYPE) RETURN BOOLEAN IS 
   /* ............................................................................
 
     Programa: fn_flserasa
@@ -623,7 +632,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   ............................................................................ */   
            
   BEGIN
-    RETURN (pr_flserasa = 1 OR pr_qtdianeg <> 0 OR pr_inserasa <> 0);
+                                                                     
+	  -- Se estiver em processo de negativação ou negativado
+    IF pr_inserasa <> 0 THEN
+			RETURN TRUE;
+		END IF;
+
+    -- Se possuir negativação automatica e...
+		-- A data de vencimento + quantidade de dias para negativação for menor ou igual a data atual
+		-- O título ainda pode ser enviado ao Serasa
+		IF pr_flserasa = 1 AND pr_qtdianeg > 0 AND (pr_dtvencto + pr_qtdianeg) <= trunc(pr_dtmvtolt) THEN
+			RETURN TRUE;
+		END IF;
+
+    -- Caso contrario não está no Serasa
+		RETURN FALSE;
+
   EXCEPTION
     WHEN OTHERS THEN
       RETURN FALSE;
@@ -1327,7 +1351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
           vr_dtcalcul := rw_craptdb.dtvencto + vr_qtdiacar + 1;
           vr_dtcalcul := gene0005.fn_valida_dia_util(rw_crapcob.cdcooper,vr_dtcalcul,'P',TRUE,FALSE);
           
-          IF pr_cdinstru <> '95' THEN -- NÃO VALIDAR INSTRUCAO 95, POIS E ENVIO SMS
+          IF pr_cdinstru NOT IN ('95','09') THEN -- NÃO VALIDAR INSTRUCAO 95 ENVIO SMS E 09 PROTESTO
 
             -- e a situação é em estudo e não esta vencido
             IF ((rw_craptdb.insittit = 0 AND vr_dtcalcul >= pr_dtmvtolt) OR
@@ -3028,14 +3052,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   BEGIN
     DECLARE
       --Cursores Locais
+      /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validação não é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
       --Selecionar Pracas nao executantes Protesto
-      CURSOR cr_crappnp (pr_nmextcid IN crappnp.nmextcid%type
+      /*CURSOR cr_crappnp (pr_nmextcid IN crappnp.nmextcid%type
                         ,pr_cduflogr IN crappnp.cduflogr%type) IS
         SELECT pnp.nmextcid
           FROM crappnp pnp
          WHERE UPPER(pnp.nmextcid) = UPPER(pr_nmextcid)
            AND UPPER(pnp.cduflogr) = UPPER(pr_cduflogr);
-      rw_crappnp cr_crappnp%ROWTYPE;
+      rw_crappnp cr_crappnp%ROWTYPE;*/
       
       -- verificar se o CEP existe nos correios
       CURSOR cr_cep (pr_nrceplog IN crapdne.nrceplog%TYPE) IS
@@ -3233,7 +3260,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       --- Verificar se possui SERASA --- 
       IF COBR0007.fn_flserasa(rw_crapcob_ret.flserasa,
                               rw_crapcob_ret.qtdianeg,
-                              rw_crapcob_ret.inserasa) THEN
+                              rw_crapcob_ret.inserasa,
+															rw_crapcob_ret.dtvencto,
+															pr_dtmvtolt) THEN
         -- Verificar situacao no Serasa
         --Não existia o vr_cdcritic nesse caso, porem, setando vr_cdcritic segue a mesma
         --regra do retorno de uma chama de rotina, por exemplo, COBR0007.pc_efetua_val_recusa_padrao
@@ -3480,7 +3509,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       FETCH cr_crapcco INTO rw_crapcco;
       CLOSE cr_crapcco;      
       
-      IF rw_crapcco.insrvprt = 2 THEN -- BB
+      /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validação não é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
+      /*IF rw_crapcco.insrvprt = 2 THEN -- BB
       --Selecionar pracas nao executantes de processo
       OPEN cr_crappnp (pr_nmextcid => rw_crapsab.nmcidsac
                       ,pr_cduflogr => rw_crapsab.cdufsaca);
@@ -3521,7 +3553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       IF cr_crappnp%ISOPEN THEN
         CLOSE cr_crappnp;
       END IF;
-      END IF;
+      END IF;*/
       
       IF rw_crapcco.insrvprt = 1 THEN -- Serviço de Protesto IEPTB
         
@@ -4152,8 +4184,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     -- alterado if para utilizar a função fn_flserasa 
     -- PRB0041685  Roberto Holz - Mout´s / Alcemir Jr.  20/05/2019 
     IF COBR0007.fn_flserasa(rw_crapcob.flserasa,
-                                     rw_crapcob.qtdianeg,
-                                     rw_crapcob.inserasa) THEN       
+														rw_crapcob.qtdianeg,
+														rw_crapcob.inserasa,
+														rw_crapcob.dtvencto,
+														pr_dtmvtolt) THEN       
       -- Sera tratado como Negativacao Serasa
       vr_is_serasa := TRUE;
     ELSE 
@@ -10703,14 +10737,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
 
+    /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validação não é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
     --Selecionar Pracas nao executantes Protesto
-    CURSOR cr_crappnp (pr_nmextcid IN crappnp.nmextcid%type
+    /*CURSOR cr_crappnp (pr_nmextcid IN crappnp.nmextcid%type
                       ,pr_cduflogr IN crappnp.cduflogr%type) IS
       SELECT pnp.nmextcid
         FROM crappnp pnp
        WHERE UPPER(pnp.nmextcid) = UPPER(pr_nmextcid)
          AND UPPER(pnp.cduflogr) = UPPER(pr_cduflogr);
-    rw_crappnp cr_crappnp%ROWTYPE;
+    rw_crappnp cr_crappnp%ROWTYPE;*/
 
     ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
     
@@ -11092,8 +11129,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       CLOSE cr_crapsab;
     END IF;  
       
+    /*Rafael Ferreira (Mouts) - INC0022229
+      Conforme informado por Deise Carina Tonn da area de Negócio, esta validação não é mais necessária
+      pois agora Todas as cidades podem ter protesto*/
     --Selecionar pracas nao executantes de processo
-    OPEN cr_crappnp (pr_nmextcid => rw_crapsab.nmcidsac
+   /* OPEN cr_crappnp (pr_nmextcid => rw_crapsab.nmcidsac
                     ,pr_cduflogr => rw_crapsab.cdufsaca);
     --Posicionar no proximo registro
     FETCH cr_crappnp INTO rw_crappnp;
@@ -11128,7 +11168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --Fechar Cursor
     IF cr_crappnp%ISOPEN THEN
       CLOSE cr_crappnp;
-    END IF;
+    END IF;*/
     ------ FIM - VALIDACOES PARA RECUSAR ------
 
     IF rw_crapcob.cdbandoc = 85 THEN
@@ -12152,8 +12192,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     -- alterado if para utilizar a função fn_flserasa 
     -- PRB0041685  Roberto Holz - Mout´s / Alcemir Jr. 20/05/2019
     IF COBR0007.fn_flserasa(rw_crapcob.flserasa,
-                                     rw_crapcob.qtdianeg,
-                                     rw_crapcob.inserasa) THEN       
+														rw_crapcob.qtdianeg,
+														rw_crapcob.inserasa,
+														rw_crapcob.dtvencto,
+														pr_dtmvtolt) THEN       
       -- Sera tratado como Negativacao Serasa
       vr_is_serasa := TRUE;
     ELSE 
@@ -13525,8 +13567,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     -- PRB0041685  Roberto Holz - Mout´s  20/05/2019
     -- Verificar se já possui serviço do SERASA
     IF COBR0007.fn_flserasa(rw_crapcob.flserasa,
-                                     rw_crapcob.qtdianeg,
-                                     rw_crapcob.inserasa) THEN    
+														rw_crapcob.qtdianeg,
+														rw_crapcob.inserasa,
+														rw_crapcob.dtvencto,
+														pr_dtmvtolt) THEN    
 			-- Gerar o retorno para o cooperado 
 			COBR0006.pc_prep_retorno_cooper_90(pr_idregcob => rw_crapcob.rowid
 																				,pr_cdocorre => 26   -- Instrucao Rejeitada

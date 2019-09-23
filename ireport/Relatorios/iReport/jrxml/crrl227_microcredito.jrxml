@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2019-08-21T10:55:12 -->
+<!-- 2019-09-16T17:29:12 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="modrel234" language="groovy" pageWidth="842" pageHeight="700" orientation="Landscape" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="394"/>
@@ -178,7 +178,7 @@
 				<text><![CDATA[-------------------------------------]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="331" y="6" width="46" height="8" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
+				<reportElement x="332" y="6" width="46" height="8" uuid="58774c5d-0e44-410d-96f3-63d0e92b7c21"/>
 				<textElement>
 					<font fontName="Courier New" size="6"/>
 				</textElement>

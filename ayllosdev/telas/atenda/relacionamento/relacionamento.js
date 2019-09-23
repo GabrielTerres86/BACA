@@ -19,11 +19,16 @@
 	
 				 09/12/2015 - Ajustado posicionamento do form frmEventosEmAndamentoBusca (Lucas Ranghetti #369433)
                  
-                 28/06/2016 - Ajustado msgConfirmaStatus. PRJ229 - Melhorias OQS (Odirlei-AMcom)
+				 28/06/2016 - Ajustado msgConfirmaStatus. PRJ229 - Melhorias OQS (Odirlei-AMcom)
              
-             01/08/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
+				 01/08/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
 
-                 16/02/2017 - Alterei a rotina selecionaEventoAndamento para validar a exibicao da table.(SD 605275 Carlos Tanholi)
+				 16/02/2017 - Alterei a rotina selecionaEventoAndamento para validar a exibicao da table.(SD 605275 Carlos Tanholi)
+
+				 18/12/2018 - Alterações contingência Projeto 418  (Bruno - Mouts)
+						
+				 05/07/2019 - Destacar evento do cooperado - P484.2 - Gabriel Marcos (Mouts).
+				 
 	************************************************************************/
 
 var callafterRelacionamento = '';
@@ -40,7 +45,8 @@ var dsrestri = "";
 var cdgraupr = new Array(); // grau de parentesco quando selecionado opcao outra pessoa na pre inscricao
 var idseqttl = 1;           // Titular que estara fazendo a preinscricao
 var titular = new Array(); // Array que guardara os dados de cada titular que esta fazendo a inscricao
-var nrcpfcgc = ""; // pre-inscricao
+var nrcpfcgc = ""; //pre-inscricao
+
 	
 // Função para carregar dados da opção principal
 function acessaOpcaoPrincipal() {
@@ -346,6 +352,7 @@ function mostraEventosEmAndamento(dsobs) {
 		dataType: "html",
 		data: {
 			nrdconta: nrdconta,
+			nrcpfcgc: nrcpfcgc,
 			dsobserv: dsobs,
 			redirect: "html_ajax"
 		},		
@@ -357,7 +364,7 @@ function mostraEventosEmAndamento(dsobs) {
 			$("#divOpcoesDaOpcao1").html(response);
 		}				
 	});
-		
+	
 }
 
 // Mostra detalhes de um determinado evento
@@ -427,8 +434,7 @@ function mostraPreInscricao() {
 
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o pr&eacute;-inscri&ccedil;&atilde;o ...");
-	showMsgAguardo("Aguarde, carregando op&ccedil;&atilde;o pr&eacute;-inscri&ccedil;&atilde;o ...");
-	
+
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({		
 		type: "POST", 
@@ -519,7 +525,8 @@ function criaPreInscricao() {
             nminseve: $('#nminseve' + idseqttl, '#frmPreInscricao').val(),
             nrdddins: $('#nrdddins' + idseqttl, '#frmPreInscricao').val(),
             nrtelefo: $('#nrtelefo' + idseqttl, '#frmPreInscricao').val(),
-			redirect: "html_ajax"			
+            nrcpfcgc: $('#nrcpfcgcRepresen', '#frmPreInscricao').val(),
+			redirect: "html_ajax"
 		},
         error: function (objAjax, responseError, objExcept) {
 			
@@ -727,6 +734,7 @@ function formataPrincipal() {
     $('li:eq(7)', ul).css({ 'text-align': 'left' });
     $('li:eq(8)', ul).css({ 'float': 'left', 'width': '150px', 'text-align': 'right', 'margin-right': '7px', 'clear': 'both' });
     $('li:eq(9)', ul).css({ 'text-align': 'left' });
+    $('li:eq(10)', ul).css({ 'float': 'left', 'width': '150px', 'text-align': 'right', 'margin-right': '7px', 'clear': 'both' }); // Anderson
 
 	// campos
     cQtandame = $('#qtandame', '#' + nomeForm1);
@@ -744,7 +752,6 @@ function formataPrincipal() {
     cDtfimque.css({ 'width': '70px', 'text-align': 'center' });
 	
     $('input', '#' + nomeForm1).desabilitaCampo();
-
 	
 	// Questionario
 	var nomeForm2 = 'frmRelacionamentoQuestionario';
@@ -810,14 +817,14 @@ function formataEventosAndamentoBusca() {
 	
 	//relacionamentos
 	var arrayLargura = new Array();
-	arrayLargura[0] = '170px';
-	arrayLargura[1] = '45cpx';
-	arrayLargura[2] = '40px';
-	arrayLargura[3] = '45px';
-	arrayLargura[4] = '30px';
-	arrayLargura[5] = '56px';
-	arrayLargura[6] = '56px';
-	arrayLargura[7] = '60px';
+	arrayLargura[0] = '210px';
+	arrayLargura[1] = '90px';
+	arrayLargura[2] = '50px';
+	arrayLargura[3] = '50px';
+	arrayLargura[4] = '50px';
+	arrayLargura[5] = '65px';
+	arrayLargura[6] = '65px';
+	arrayLargura[7] = '45px';
 	
 	// relacionamentos
 	var arrayAlinha = new Array();
@@ -832,6 +839,34 @@ function formataEventosAndamentoBusca() {
 	
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
 	ajustarCentralizacao();	
+	return false;
+}
+
+// Função que formata a tabela dos eventos em andamento
+function formataCargos() {
+			
+    var divRegistro = $('div.divRegistros', '#frmCargos');
+    var tabela = $('table', divRegistro);
+    var linha = $('table > tbody > tr', divRegistro);
+	
+    divRegistro.css({ 'height': '150px', 'width': '625px' });
+	
+	var ordemInicial = new Array();
+	
+	var arrayLargura = new Array();
+	arrayLargura[0] = '225px';
+	arrayLargura[1] = '200px';
+	arrayLargura[2] = '100px';
+	arrayLargura[3] = '100px';
+	
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'left';
+	arrayAlinha[1] = 'left';
+	arrayAlinha[2] = 'center';
+	arrayAlinha[3] = 'center';
+	
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
+	ajustarCentralizacao();
 	return false;
 }
 
@@ -890,6 +925,7 @@ function formataPreInscricao() {
     rNrdddins = $('label[for="nrdddins"]', '#' + nomeForm);
     rDsobserv = $('label[for="dsobserv"]', '#' + nomeForm);
     rFlgdispe = $('label[for="flgdispe"]', '#' + nomeForm);
+    rRepresen = $('label[for="represen"]', '#' + nomeForm);
 
     rNmevento.addClass('rotulo').css({ 'width': '150px' });
     rDsrestri.addClass('rotulo').css({ 'width': '150px' });
@@ -901,6 +937,7 @@ function formataPreInscricao() {
     rNrdddins.addClass('rotulo').css({ 'width': '150px' });
     rDsobserv.addClass('rotulo').css({ 'width': '150px' });
     rFlgdispe.addClass('rotulo').css({ 'width': '150px' });
+    rRepresen.addClass('rotulo').css({ 'width': '150px' });
 	
 		
 }
@@ -1020,7 +1057,7 @@ function validaGrupo(){
 			nrcpfcgc: nrcpfcgc,
 			redirect: "script_ajax" // Tipo de retorno do ajax
 		}
-
+		
 		$.ajax({		
 			type: "POST", 
 			url: UrlSite + "telas/atenda/relacionamento/consulta_pre_inscricao.php",
@@ -1051,3 +1088,46 @@ function validaGrupo(){
 		mostraPreInscricao();
 	}
 }
+
+function mostraCargos() {
+
+	var nrdconta = normalizaNumero($('#nrdconta','#frmCabAtenda').val()); 
+	
+    showMsgAguardo('Aguarde, buscando cargos...');
+
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: 'POST', 
+		url: UrlSite + 'telas/atenda/relacionamento/busca_cargos.php',
+		data: {
+			nrdconta: nrdconta
+		},		
+		error: function(objAjax,responseError,objExcept) {
+
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message + ".","Alerta - Ayllos","estadoInicial();");							
+			console.log(response);
+		
+		},
+
+		success: function(response) {
+
+			hideMsgAguardo();
+
+			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
+				try {
+					$('#divOpcoesDaOpcao1').html(response);
+					return false;
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();estadoInicial();');
+				}
+			} else {
+				try {
+					eval( response );						
+				} catch(error) {						
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();estadoInicial();');
+				}
+			}
+		}				
+	});
+} 

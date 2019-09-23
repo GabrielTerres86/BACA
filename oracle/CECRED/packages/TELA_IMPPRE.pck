@@ -130,6 +130,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_IMPPRE AS
        WHEN 'A' THEN vr_retorno:= 'Aceita';
        WHEN 'B' THEN vr_retorno:= 'Bloqueada';
        WHEN 'R' THEN vr_retorno:= 'Recusada';
+       WHEN 'S' THEN vr_retorno:= 'Substituida';
+       ELSE vr_retorno:= pr_cdsituacao;
       END CASE;
      return vr_retorno;
     END;

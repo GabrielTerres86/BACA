@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0144tt.i
     Autor(a): Gabriel Capoia (DB1)
-    Data    : 17/12/2012                      Ultima atualizacao: 27/06/2014
+    Data    : 17/12/2012                      Ultima atualizacao: 30/05/2019
   
     Dados referentes ao programa:
   
@@ -11,6 +11,8 @@
     Alteracoes: 04/06/2014 - Adicionado campo cdagedst na tt-crapchd. (Reinert)
     
                 27/06/2014 - Adicionado temp-table tt-crapddi. (Reinert)
+    
+                30/05/2019 - Adicionado campo nrdocmto e nrddigc3 na tt-crapchd. (Jackson Barcellos - AMcom #P565)
     
 .............................................................................*/ 
 DEFINE TEMP-TABLE tt-crapchd NO-UNDO
@@ -30,7 +32,9 @@ DEFINE TEMP-TABLE tt-crapchd NO-UNDO
     FIELD dtmvtolt LIKE crapchd.dtmvtolt
     FIELD cdcmpchq LIKE crapchd.cdcmpchq
     FIELD cdbanchq LIKE crapchd.cdbanchq
-    FIELD cdagedst LIKE crapchd.cdagedst.
+    FIELD cdagedst LIKE crapchd.cdagedst
+    FIELD nrdocmto LIKE crapchd.nrdocmto
+    FIELD nrddigc3 LIKE crapchd.nrddigc3.
 
 DEF TEMP-TABLE tt-crapchd-aux NO-UNDO LIKE tt-crapchd.
 

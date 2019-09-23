@@ -3,34 +3,35 @@
 	/************************************************************************
 	 Fonte: eventos_em_andamento_pre_inscricao.php                                             
 	 Autor: Guilherme                                                 
-	 Data : Setembro/2009                    Última Alteração: 14/07/2011
+	 Data : Setembro/2009                    Ãšltima AlteraÃ§Ã£o: 14/07/2011
 
 	 Objetivo  : Buscar dados para a opcao de pre inscricao
 
-	 Alterações: 25/10/2010 - Adicionar validação de permissão (David).                                                      
-				 14/07/2011 - Alterado para layout padrão (Rogerius - DB1). 	
+	 AlteraÃ§Ãµes: 25/10/2010 - Adicionar validaÃ§Ã£o de permissÃ£o (David).                                                      
+				 14/07/2011 - Alterado para layout padrÃ£o (Rogerius - DB1). 	
 				 13/01/2017 - Alterado mascara do telefone para 9 digitos (Jean Michel). 
-
+				 05/07/2019 - Destacar evento do cooperado - P484.2 - Gabriel Marcos (Mouts).
+				     
 	 ************************************************************************/
 	session_start();
 
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
+	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");		
 	require_once("../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mÃ©todo POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");
 	
-	// Verifica permissão
+	// Verifica permissÃ£o
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"I")) <> "") {
 		exibeErro($msgError);		
 	}
 	
-	// Se parâmetros necessários não foram informados
+	// Se parÃ¢metros necessÃ¡rios nÃ£o foram informados
 	if (!isset($_POST["nrdconta"]) ||
 		!isset($_POST["rowidadp"])) {
 		exibeErro("Par&acirc;metros incorretos.");
@@ -39,12 +40,12 @@
 	$nrdconta = $_POST["nrdconta"];
 	$rowidadp = $_POST["rowidadp"];
 
-	// Verifica se número da conta é um inteiro válido
+	// Verifica se nÃºmero da conta Ã© um inteiro vÃ¡lido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
 	
-	// Monta o xml de requisição
+	// Monta o xml de requisiÃ§Ã£o
 	$xmlGetDadosPreInscricao  = "";
 	$xmlGetDadosPreInscricao .= "<Root>";
 	$xmlGetDadosPreInscricao .= "	<Cabecalho>";
@@ -77,7 +78,7 @@
 	$inscricoesConta = $xmlObjDadosPreInscricao->roottag->tags[2]->tags;
 	$qtInscricoes = count($inscricoesConta);
 	
-	/* Se é evento exclusivo a cooperados */
+	/* Se Ã© evento exclusivo a cooperados */
 	$flgcoope = $xmlObjDadosPreInscricao->roottag->tags[2]->attributes["FLGCOOPE"];
 
 	$listaInscricoes = "";
@@ -93,8 +94,40 @@
 							"</tr>";
 							
 	}
+
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "	<Dados>";
+	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "	</Dados>";
+	$xml .= "</Root>";
 	
-	
+	// Executa script para envio do XML
+	$xmlRepresentante = mensageria($xml, "CADA0003", "RETORNA_REPRESENTANTE",  //   LISTA_FORNECEDORES
+																 $glbvars["cdcooper"],
+																 $glbvars["cdagenci"],
+																 $glbvars["nrdcaixa"],
+																 $glbvars["idorigem"],
+																 $glbvars["cdoperad"],
+																 "</Root>");
+															  
+	$xmlRepresentante = simplexml_load_string($xmlRepresentante);
+
+	$montaSelectRepresentante  = '<select id="represen" name="selectRepresentante" class="campo">';
+	$montaSelectRepresentante .= '<option value="escolha">Selecionar representante</option>';
+
+	foreach ($xmlRepresentante as $vetor) {
+
+		$montaSelectRepresentante .= '<option 
+												value="'.$vetor->nrcpfcgc.'" 
+												parametronrddd="'.$vetor->nrddd.'" 
+												parametronrcpfcgc="'.$vetor->nrcpfcgc.'" 
+												parametronrtelefone="'.$vetor->nrtelefone.'">'.$vetor->nmpessoa.'</option>';
+
+	}
+
+	$montaSelectRepresentante .= '</select>';
+
 	?>
 	<script type="text/javascript">
 		var qtTTL = "<?php echo $qtTTL;?>";
@@ -109,12 +142,12 @@
 	</script>
 	<?php
 	
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjDadosPreInscricao->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjDadosPreInscricao->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
-	// Função para exibir erros na tela através de javascript
+	// FunÃ§Ã£o para exibir erros na tela atravÃ©s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
@@ -127,13 +160,13 @@
 <div id="divPreInscricao" style="overflow-y: hidden; overflow-x: hidden; width: 520px;">
 	<form action="" name="frmPreInscricao" id="frmPreInscricao" class="formulario" method="post">
 		<fieldset>
-			<legend>Pré-Inscrição</legend>
+			<legend> Pr&eacute;-inscri&ccedil;&atilde;o </legend>
 
 			<label for="nmevento">Evento:</label>
 			<input name="nmevento" type="text" class="campoTelaSemBorda" id="nmevento" style="width: 300px; " disabled>
 			<br />
 
-			<label for="dsrestri">Restrição:</label>
+			<label for="dsrestri">Restri&ccedil;&atilde;o</label>
 			<input name="dsrestri" type="text" class="campoTelaSemborda" id="dsrestri" style="width: 300px; " disabled>
 			<br /><br /><br />
 			
@@ -175,9 +208,17 @@
 				<option id="tpinseve" value="no">Outra pessoa</option>
 			</select>
 			<br />
+
+			<div id="conteudoRepresentante" style="display: none;">
+				<label for="represen">Representante:</label>
+
+					<?=$montaSelectRepresentante;?>
+
+				</label>
+			</div>
 			
 			<label for="cdgraupr">V&iacute;nculo com cooperado:</label>
-			<select name="cdgraupr<?php echo $i;?>" id="cdgraupr<?php echo $i;?>" class="campo" style="width: 150px;">													
+			<select name="cdgraupr<?php echo $i;?>" id="cdgraupr<?php echo $i;?>" class="campo" style="width: 150px;">									
 			</select>
 			<br />
 
@@ -193,7 +234,11 @@
 			<input name="nrdddins<?php echo $i;?>" type="text" class="campo" id="nrdddins<?php echo $i;?>" style="width: 30px; text-align: right;" value="<?php echo $infoCooperado[$i-1]->tags[5]->cdata; ?>">
 			<input name="nrtelefo<?php echo $i;?>" type="text" class="campo" id="nrtelefo<?php echo $i;?>" style="width: 80px; text-align: right;" value="<?php echo $infoCooperado[$i-1]->tags[6]->cdata; ?>">
 			<br />
-	
+
+			<input type="hidden" name="dddEI" value="estadoInicial" id="dddEI">
+			<input type="hidden" name="telefoneEI" value="estadoInicial" id="telefoneEI">
+			<input type="hidden" name="nrcpfcgcRepresen" value="estadoInicial" id="nrcpfcgcRepresen">
+
 			<label for="dsobserv">Observa&ccedil;&atilde;o:</label>
 			<input name="dsobserv<?php echo $i;?>" type="text" class="campo" id="dsobserv<?php echo $i;?>" style="width: 300px;" value="<?php echo $infoCooperado[$i-1]->tags[7]->cdata; ?>">
 			<br />
@@ -220,6 +265,30 @@
 
 <script type="text/javascript">
 
+var tipo_conta = $("#nrcpfcgc","#frmCabAtenda").val();
+
+// se a conta Ã© PJ
+if (tipo_conta.length == 18) {
+	tipo_conta = "pj";
+} else {
+	tipo_conta = "pf";
+}
+
+if (tipo_conta == "pj") {
+
+	// mostrar div onde vai aparecer o select de representantes
+	$('#conteudoRepresentante').show();
+
+	// alterar estado inicial do select
+	$('#represen', '#frmPreInscricao').val('escolha');
+
+} else {
+
+	// ocultar div onde vai aparecer o select de representantes
+	$('#conteudoRepresentante').hide();
+
+}
+
 // Formata layout
 formataPreInscricao();
 
@@ -243,11 +312,23 @@ function onChangeTpInsEve(value) {
 		$("#nrdddins"+idseqttl,"#frmPreInscricao").val(titular[idseqttl].nrdddins);
 		$("#nrtelefo"+idseqttl,"#frmPreInscricao").val(titular[idseqttl].nrtelefo);
 		$("#dsobserv"+idseqttl,"#frmPreInscricao").val(titular[idseqttl].dsobserv);
+
+		if (tipo_conta == "pj") {
+			$('#conteudoRepresentante').show();
+			$('#represen','#frmPreInscricao').val('escolha');
+			$('#nrcpfcgcRepresen','#frmPreInscricao').val("0");
+		}
+
 	} else {
+
 		removerOptions("cdgraupr"+idseqttl);
 		for (var i = 0; i < cdgraupr.length; i++){			
-			adicionarOption("cdgraupr"+idseqttl, i, cdgraupr[i].substring(0,1) , cdgraupr[i]);			
+			adicionarOption("cdgraupr"+idseqttl, i, cdgraupr[i].substring(0,1) , cdgraupr[i]);
 		}
+
+		$('#conteudoRepresentante').hide();
+		$('#nrcpfcgcRepresen','#frmPreInscricao').val("0");
+
 		$("#cdgraupr"+idseqttl,"#frmPreInscricao").removeProp("disabled");
 		$("#nminseve"+idseqttl,"#frmPreInscricao").attr("class","campo");
 		$("#nminseve"+idseqttl,"#frmPreInscricao").removeProp("disabled");
@@ -256,10 +337,55 @@ function onChangeTpInsEve(value) {
 		$("#nrdddins"+idseqttl,"#frmPreInscricao").val("");
 		$("#nrtelefo"+idseqttl,"#frmPreInscricao").val("");
 		$("#dsobserv"+idseqttl,"#frmPreInscricao").val("");		
-		
 	}
 }
 
+// captura troca de representante
+$('#represen').change(function(){
+
+	// pega o valor selecionado
+	var valorSelecionado = $(this).val();
+
+	// pega o valor dos campos de ddd e telefone de estado inicial
+	var dddEI 			 = $('#dddEI','#frmPreInscricao').val();
+	var telefoneEI 		 = $('#telefoneEI','#frmPreInscricao').val();
+	var nrcpfcgcRepresen = $('#nrcpfcgcRepresen','#frmPreInscricao').val();
+
+	// se o telefone esta no estado inicial, grava uma copia do ddd e telefone pra poder recuperar depois
+	if ( (dddEI == "estadoInicial") && (telefoneEI == "estadoInicial")){
+
+		// pega o ddd e o telefone atual pra salvar
+		dddEI			= $('#nrdddins1','#frmPreInscricao').val();
+		telefoneEI 		= $('#nrtelefo1','#frmPreInscricao').val();
+		nrcpfcgcEI 		= 0;
+
+		// grava o ddd e telefone no campo oculto pra poder recuperar depois
+		$('#dddEI','#frmPreInscricao').val(dddEI);
+		$('#telefoneEI','#frmPreInscricao').val(telefoneEI);
+		//$('#nrcpfcgcEI','#frmPreInscricao').val(nrcpfcgcEI);
+	}
+
+	// se o valor do select for o inicial
+	if (valorSelecionado == "escolha") {
+
+		// restaurar
+		$('#nrdddins1','#frmPreInscricao').val(dddEI);
+		$('#nrtelefo1','#frmPreInscricao').val(telefoneEI);
+		$('#nrcpfcgcRepresen','#frmPreInscricao').val("0");
+
+	} else {
+
+		// trocar
+		var ddd 			= $('option:selected', this).attr('parametronrddd');
+		var telefone 		= $('option:selected', this).attr('parametronrtelefone');
+		var nrcpfcgc 		= $('option:selected', this).attr('parametronrcpfcgc');
+		$('#nrdddins1','#frmPreInscricao').val(ddd);
+		$('#nrtelefo1','#frmPreInscricao').val(telefone);
+		$('#nrcpfcgcRepresen','#frmPreInscricao').val(nrcpfcgc);
+
+	}
+
+});
 
 $("#nmextttl","#frmPreInscricao").bind("change",function() {
 	// Titular em uso
@@ -275,6 +401,12 @@ $("#nmextttl","#frmPreInscricao").bind("change",function() {
 		
 	}
 	$("#tpinseve"+idseqttl,"#frmPreInscricao").trigger("change");
+
+	if (tipo_conta == "pf") {
+		// ocultar div onde vai aparecer o select de representantes
+		$('#conteudoRepresentante').hide();
+	}
+
 });
 
 $("#nmextttl","#frmPreInscricao").trigger("change");

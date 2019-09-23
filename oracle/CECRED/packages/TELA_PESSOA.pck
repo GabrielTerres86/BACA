@@ -130,6 +130,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
      and ace.nmdatela = 'PESSOA'
      and ace.cddopcao = 'A';
   rw_cdoperad cr_cdoperad%rowtype;
+
+  -- Busca contas do cooperado para gravar log
+  cursor cr_busca_cooperado (pr_cdcooper in crapass.cdcooper%type
+                            ,pr_nrcpfcgc in crapass.nrcpfcgc%type) is
+  select ass.cdcooper
+       , ass.nrdconta
+    from crapass ass
+   where ass.cdcooper = pr_cdcooper
+     and ass.nrcpfcgc = pr_nrcpfcgc
+     and ass.dtdemiss is null;
   
   -- Variaveis padrao
   vr_cdcooper integer;                               
@@ -146,6 +156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
   vr_nrregist integer;
   vr_exc_erro exception;
   vr_nrdrowid rowid;
+  vr_tpsituacao number := 0;
 
   procedure pc_buscar_cooperado (pr_nrdconta          in crapass.nrdconta%type
                                 ,pr_nrregist          in integer                              
@@ -467,7 +478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
          , fun.dsfuncao
          , fun.flgvigencia
       from tbcadast_funcao_pessoa fun
-     where fun.cdfuncao not in (' ','CD') -- Nao apresenta cooperado e acumulo 
+     where fun.cdfuncao in ('DT','DS','CL','CS','CM') -- Nao apresenta cooperado e acumulo 
      order
         by fun.dsfuncao;
 
@@ -491,8 +502,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     -- Se retornou alguma crítica
     if trim(pr_dscritic) is not null then
       raise vr_exc_erro;
-    end if;
-                                 
+    end if;       
+    
     -- Criar cabeçalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0, pr_tag_nova => 'Dados', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
@@ -651,20 +662,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
   --
   -- Objetivo  : Rotina para inserir cargo para o cooperado.
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Nova forma de buscar cargos. Tratamento super-usuario.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).   
   --
   ---------------------------------------------------------------------------
     
     -- Verifica funcoes que se acumulam
     cursor cr_acumula_cargos (pr_cdcooper in crapass.cdcooper%type
                              ,pr_nrcpfcgc in crapass.nrcpfcgc%type) is
-    select sum(decode(vig.cdfuncao,'DT',1,'DS',1,0))                      delegado
-         , sum(decode(vig.cdfuncao,'CL',1,'CS',1,'CM',1,0))               comitedu
-         , sum(decode(vig.cdfuncao,'DT',0,'DS',0,'CL',0,'CS',0,'CM',0,1)) outrafun
-      from tbcadast_vig_funcao_pessoa vig
-     where vig.cdcooper = pr_cdcooper
-       and vig.nrcpfcgc = pr_nrcpfcgc
-       and vig.dtfim_vigencia is null;
+    select (select vig.cdfuncao
+              from tbcadast_vig_funcao_pessoa vig
+             where vig.cdcooper = pr_cdcooper
+               and vig.nrcpfcgc = pr_nrcpfcgc
+               and vig.cdfuncao in ('DT','DS')
+               and vig.dtfim_vigencia is null) delegado
+         , (select vig.cdfuncao
+              from tbcadast_vig_funcao_pessoa vig
+             where vig.cdcooper = pr_cdcooper
+               and vig.nrcpfcgc = pr_nrcpfcgc
+               and vig.cdfuncao in ('CL','CS','CM')
+               and vig.dtfim_vigencia is null) comitedu
+         , (select vig.cdfuncao
+              from tbcadast_vig_funcao_pessoa vig
+             where vig.cdcooper = pr_cdcooper
+               and vig.nrcpfcgc = pr_nrcpfcgc
+               and vig.cdfuncao not in ('DT','DS','CL','CS','CM')
+               and vig.dtfim_vigencia is null) outrafun
+      from dual;
     rw_acumula_cargos cr_acumula_cargos%rowtype;
     
     -- Valida funcao recebida por parametro  
@@ -672,6 +696,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     select fun.cdfuncao
          , fun.dsfuncao
          , fun.flgvigencia
+         , nvl(fun.flgvinculo,0) flgvinculo
       from tbcadast_funcao_pessoa fun
      where fun.cdfuncao = pr_cdfuncao;
     rw_funcao cr_funcao%rowtype;
@@ -720,17 +745,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
        and vig.dtfim_vigencia is null
        and pes.cdfuncao = vig.cdfuncao;
     rw_busca_del_grupo cr_busca_del_grupo%rowtype;
-
-    -- Busca contas do cooperado para gravar log
-    cursor cr_busca_cooperado (pr_cdcooper in crapass.cdcooper%type
-                              ,pr_nrcpfcgc in crapass.nrcpfcgc%type) is
-    select ass.cdcooper
-         , ass.nrdconta
-      from crapass ass
-     where ass.cdcooper = pr_cdcooper
-       and ass.nrcpfcgc = pr_nrcpfcgc
-       and ass.dtdemiss is null;
-    rw_busca_cooperado cr_busca_cooperado%rowtype;
       
     -- Buscar dado para data de fim de vigencia
     cursor cr_crapdat (pr_cdcooper crapdat.cdcooper%type) is
@@ -740,7 +754,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     rw_crapdat cr_crapdat%rowtype;
 
     vr_dtinicio_vigencia date;
-    vr_cdfuncao varchar2(2) := pr_cdfuncao;
+    vr_cdfuncao varchar2(2) := ' ';
     
   begin
 
@@ -834,7 +848,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     fetch cr_cdoperad into rw_cdoperad;
 
     -- Caso nao tenha permissao retorna critica
-    if cr_cdoperad%notfound then
+    if cr_cdoperad%notfound and pr_cdoperad <> '1' then
       close cr_cdoperad;
       vr_dscritic := 'Operador sem permissão para inserir cargos.';
       raise vr_exc_erro;
@@ -842,12 +856,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
       
     close cr_cdoperad;  
 
-    -- Apenas contabilidade usam cargos antigos
+    /*-- Apenas contabilidade usam cargos antigos
     if pr_cdfuncao not in ('DT','DS','CL','CS','CM') and
        rw_cdoperad.cddepart <> 6 then
       vr_dscritic := 'Cargo de uso restrito da contabilidade.';
       raise vr_exc_erro;
-    end if;
+    end if;*/
 
     -- Analisa acumulo de cargos do cpf / cnpj
     open cr_acumula_cargos (pr_cdcooper
@@ -856,24 +870,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     close cr_acumula_cargos;
       
     -- Evita de inserir delegado se ja e delegado
-    if pr_cdfuncao in ('DT','DS') and rw_acumula_cargos.delegado > 0 then
+    if pr_cdfuncao in ('DT','DS') and rw_acumula_cargos.delegado is not null then
       vr_dscritic := 'Cooperado já possui cargo de Delegado ativo.';
       raise vr_exc_erro;
     -- Evita de inserir comite se ja e comite
-    elsif pr_cdfuncao in ('CL','CS','CM') and rw_acumula_cargos.comitedu > 0 then
+    elsif pr_cdfuncao in ('CL','CS','CM') and rw_acumula_cargos.comitedu is not null then
       vr_dscritic := 'Cooperado já possui cargo de Comite Educativo ativo.';
       raise vr_exc_erro;
     -- Tratamento para acumulo entre delegado e comite
-    elsif pr_cdfuncao in ('DT','DS') and rw_acumula_cargos.comitedu > 0 or
-          pr_cdfuncao in ('CL','CS','CM') and rw_acumula_cargos.delegado > 0 then
-      vr_cdfuncao := 'CD'; -- Para atualizar crapass
+    elsif pr_cdfuncao in ('DT','DS') and rw_acumula_cargos.comitedu is not null or
+          pr_cdfuncao in ('CL','CS','CM') and rw_acumula_cargos.delegado is not null then
+      --vr_cdfuncao := 'CD'; -- Para atualizar crapass
+      null;
     -- Tratamento para evitar acumulo entre quaisquer outras funcoes
-    elsif rw_acumula_cargos.outrafun > 0 or rw_acumula_cargos.comitedu > 0 or
-          rw_acumula_cargos.delegado > 0 then
+    elsif rw_acumula_cargos.outrafun is not null and 
+          pr_cdfuncao not in ('DT','DS','CL','CS','CM') then
       vr_dscritic := 'Cooperado já possui cargo ativo.';
       raise vr_exc_erro;
     end if;
     
+    if rw_acumula_cargos.outrafun is not null then
+      vr_cdfuncao := rw_acumula_cargos.outrafun;
+    elsif pr_cdfuncao not in ('DT','DS','CL','CS','CM') then
+      vr_cdfuncao := pr_cdfuncao;
+    end if;
+
     -- Funcoes de grupo exigem que cooperado
     -- esteja locado em um grupo
     if pr_cdfuncao in ('DT','DS') then
@@ -939,20 +960,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
         vr_dscritic := 'Erro ao inserir cargo/função: ' || sqlerrm;
         raise vr_exc_erro;
     end;
-  
-    begin 
-      -- Atualiza tabela de associados
-      update crapass c
-         set c.tpvincul = vr_cdfuncao
-       where c.cdcooper = pr_cdcooper
-         and c.nrcpfcgc = pr_nrcpfcgc;
-    exception
-      when others then
-        -- Montar mensagem de critica
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao tipo de vínculo: ' || sqlerrm;
-        raise vr_exc_erro;
-    end;
+    -- P484.2 - atualizar a necessidade ou nao do vinculo de grupo da pessoa,
+    -- atualizar a tabela que vincula pessoa a um grupo
+    BEGIN
+      UPDATE tbevento_pessoa_grupos tbe
+         SET tbe.flgvinculo = rw_funcao.flgvinculo
+       WHERE tbe.cdcooper = pr_cdcooper
+         AND tbe.nrcpfcgc = pr_nrcpfcgc;
+    EXCEPTION 
+      WHEN OTHERS THEN
+      -- Montar mensagem de critica
+      vr_cdcritic := 0;
+      vr_dscritic := 'Falha ao atualizar vinculo de pessoa / grupo: ' || sqlerrm;
+      raise vr_exc_erro;          
+    END;
     
     -- Controle de historico de vinculos
     pc_historico_tpvinculo (pr_cdcooper => pr_cdcooper
@@ -973,7 +994,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
       gene0001.pc_gera_log(pr_cdcooper => rw_busca_cooperado.cdcooper
                           ,pr_cdoperad => pr_cdoperad
                           ,pr_dscritic => null
-                          ,pr_dsorigem => 'AIMARO WEB'
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
                           ,pr_dstransa => 'Inserido funcao: '||rw_funcao.dsfuncao
                           ,pr_dttransa => trunc(sysdate)
                           ,pr_flgtrans => 1
@@ -1017,7 +1038,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
       pr_dscritic := 'Erro geral na rotina da tela TELA_PESSOA.pc_inserir_cargos: ' || SQLERRM;
 
   end pc_inserir_cargos;
-  
 
   procedure pc_excluir_cargos_web (pr_nrcpfcgc   in crapass.nrcpfcgc%type
                                   ,pr_cdfuncao   in crapass.tpvincul%type
@@ -1117,7 +1137,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
   --
   -- Objetivo  : Rotina para excluir cargos do cooperado.
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Nova forma de buscar cargos. Tratamento super-usuario.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).   
   --
   ---------------------------------------------------------------------------
  
@@ -1133,6 +1154,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
        and vig.cdfuncao in ('DT','DS','CL','CS','CM')
        and vig.dtfim_vigencia is null;
     rw_tratamento_ass cr_tratamento_ass%rowtype;
+    
+    -- Verifica funcoes que se acumulam
+    cursor cr_acumula_cargos (pr_cdcooper in crapass.cdcooper%type
+                             ,pr_nrcpfcgc in crapass.nrcpfcgc%type
+                             ,pr_cdfuncao in tbcadast_vig_funcao_pessoa.cdfuncao%type) is
+    select (select vig.cdfuncao
+              from tbcadast_vig_funcao_pessoa vig
+             where vig.cdcooper = pr_cdcooper
+               and vig.nrcpfcgc = pr_nrcpfcgc
+               and vig.cdfuncao in ('DT','DS')
+               and vig.dtfim_vigencia is null) delegado
+         , (select vig.cdfuncao
+              from tbcadast_vig_funcao_pessoa vig
+             where vig.cdcooper = pr_cdcooper
+               and vig.nrcpfcgc = pr_nrcpfcgc
+               and vig.cdfuncao in ('CL','CS','CM')
+               and vig.dtfim_vigencia is null) comitedu
+         , (select vig.cdfuncao
+              from tbcadast_vig_funcao_pessoa vig
+             where vig.cdcooper = pr_cdcooper
+               and vig.nrcpfcgc = pr_nrcpfcgc
+               and vig.cdfuncao not in ('DT','DS','CL','CS','CM',pr_cdfuncao)
+               and vig.dtfim_vigencia is null) outrafun
+      from dual;
+    rw_acumula_cargos cr_acumula_cargos%rowtype;
     
     -- Validar funcao passado por rowid
     cursor cr_busca_cargos (pr_nrdrowid in rowid) is
@@ -1164,17 +1210,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
      where fun.cdfuncao = pr_cdfuncao;
     rw_funcao cr_funcao%rowtype;
 
-    -- Busca contas do cooperado para gravar log
-    cursor cr_busca_cooperado (pr_cdcooper in crapass.cdcooper%type
-                              ,pr_nrcpfcgc in crapass.nrcpfcgc%type) is
-    select ass.cdcooper
-         , ass.nrdconta
-      from crapass ass
-     where ass.cdcooper = pr_cdcooper
-       and ass.nrcpfcgc = pr_nrcpfcgc
-       and ass.dtdemiss is null;
-    rw_busca_cooperado cr_busca_cooperado%rowtype;
-    
     vr_cdfuncao varchar2(2) := ' ';
       
   begin
@@ -1189,7 +1224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     fetch cr_cdoperad into rw_cdoperad;
 
     -- Caso nao tenha permissao retorna critica
-    if cr_cdoperad%notfound then
+    if cr_cdoperad%notfound and pr_cdoperad <> '1' then
       close cr_cdoperad;
       vr_dscritic := 'Operador sem permissão para excluir cargos.';
       raise vr_exc_erro;
@@ -1197,12 +1232,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
 
     close cr_cdoperad;  
 
-    -- Apenas contabilidade usam cargos antigos
+    /*-- Apenas contabilidade usam cargos antigos
     if pr_cdfuncao not in ('DT','DS','CL','CS','CM') and
        rw_cdoperad.cddepart <> 6 then
       vr_dscritic := 'Cargo de uso restrito da contabilidade.';
       raise vr_exc_erro;
-    end if;
+    end if;*/
 
     -- Busca funcao na base
     open cr_funcao (pr_cdfuncao => pr_cdfuncao);
@@ -1234,19 +1269,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     end if;
     
     close cr_crapass;
-
-    -- Tratamento para acumulo entre delegado e comite
-    open cr_tratamento_ass (pr_cdcooper
+    
+    -- Analisa acumulo de cargos do cpf / cnpj
+    open cr_acumula_cargos (pr_cdcooper
                            ,pr_nrcpfcgc
-                           ,pr_cdfuncao);
-    fetch cr_tratamento_ass into rw_tratamento_ass;
-      
-    -- Se encontrou acumulo att ass com cargo que continua ativo
-    if cr_tratamento_ass%found then
-      vr_cdfuncao := rw_tratamento_ass.cdfuncao;
+                           ,pr_cdfuncao);                     
+    fetch cr_acumula_cargos into rw_acumula_cargos;
+    close cr_acumula_cargos;
+
+    if rw_acumula_cargos.outrafun is not null then
+      vr_cdfuncao := rw_acumula_cargos.outrafun;
     end if;
-        
-    close cr_tratamento_ass;
     
     -- Busca registro que sera inativado
     open cr_busca_cargos(pr_nrdrowid => pr_nrdrowid);
@@ -1281,26 +1314,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
 
       end;
       
-	  if rw_busca_cargos.dtfim_vigencia is null then
+    if rw_busca_cargos.dtfim_vigencia is null then
         
-		begin
-
-          update crapass c
-             set c.tpvincul = vr_cdfuncao
-           where c.cdcooper = pr_cdcooper
-             and c.nrcpfcgc = pr_nrcpfcgc;
-        
-        exception
-          
-          when others then
-          
-            -- Montar mensagem de critica
-            vr_cdcritic := 0;
-            vr_dscritic := 'Erro ao atualizar tipo de vinculo: ' || sqlerrm;
-            raise vr_exc_erro;
-
-        end;
-
         -- Controle de historico de vinculos
         pc_historico_tpvinculo (pr_cdcooper => pr_cdcooper
                                ,pr_nrcpfcgc => pr_nrcpfcgc
@@ -1324,7 +1339,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
       gene0001.pc_gera_log(pr_cdcooper => rw_busca_cooperado.cdcooper
                           ,pr_cdoperad => pr_cdoperad
                           ,pr_dscritic => null
-                          ,pr_dsorigem => 'AIMARO WEB'
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
                           ,pr_dstransa => 'Excluido funcao: '||rw_funcao.dsfuncao
                           ,pr_dttransa => trunc(sysdate)
                           ,pr_flgtrans => 1
@@ -1524,7 +1539,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
   --
   -- Objetivo  : Rotina para inativar cargos do cooperado.
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Nova forma de buscar cargos. Tratamento super-usuario.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).   
   --
   ---------------------------------------------------------------------------
  
@@ -1535,19 +1551,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
       from tbcadast_funcao_pessoa fun
      where fun.cdfuncao = pr_cdfuncao;
     rw_vig_funcao cr_vig_funcao%rowtype;
-      
+     
     -- Verifica funcoes que se acumulam
-    cursor cr_tratamento_ass (pr_cdcooper in tbcadast_vig_funcao_pessoa.cdcooper%type
-                             ,pr_nrcpfcgc in tbcadast_vig_funcao_pessoa.nrcpfcgc%type
+    cursor cr_acumula_cargos (pr_cdcooper in crapass.cdcooper%type
+                             ,pr_nrcpfcgc in crapass.nrcpfcgc%type
                              ,pr_cdfuncao in tbcadast_vig_funcao_pessoa.cdfuncao%type) is
-    select vig.cdfuncao
-      from tbcadast_vig_funcao_pessoa vig
-     where vig.cdcooper  = pr_cdcooper
-       and vig.nrcpfcgc  = pr_nrcpfcgc
-       and vig.cdfuncao <> pr_cdfuncao
-       and vig.cdfuncao in ('DT','DS','CL','CS','CM')
-       and vig.dtfim_vigencia is null;
-     rw_tratamento_ass cr_tratamento_ass%rowtype;
+    select (select vig.cdfuncao
+              from tbcadast_vig_funcao_pessoa vig
+             where vig.cdcooper = pr_cdcooper
+               and vig.nrcpfcgc = pr_nrcpfcgc
+               and vig.cdfuncao in ('DT','DS')
+               and vig.dtfim_vigencia is null) delegado
+         , (select vig.cdfuncao
+              from tbcadast_vig_funcao_pessoa vig
+             where vig.cdcooper = pr_cdcooper
+               and vig.nrcpfcgc = pr_nrcpfcgc
+               and vig.cdfuncao in ('CL','CS','CM')
+               and vig.dtfim_vigencia is null) comitedu
+         , (select vig.cdfuncao
+              from tbcadast_vig_funcao_pessoa vig
+             where vig.cdcooper = pr_cdcooper
+               and vig.nrcpfcgc = pr_nrcpfcgc
+               and vig.cdfuncao not in ('DT','DS','CL','CS','CM',pr_cdfuncao)
+               and vig.dtfim_vigencia is null) outrafun
+      from dual;
+    rw_acumula_cargos cr_acumula_cargos%rowtype; 
      
     -- Busca cargos do cooperado
     cursor cr_busca_cargos (pr_nrdrowid in rowid) is
@@ -1577,17 +1605,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
       from crapdat dat
      where dat.cdcooper = pr_cdcooper;
     rw_crapdat cr_crapdat%rowtype;
-    
-    -- Busca contas do cooperado para gravar log
-    cursor cr_busca_cooperado (pr_cdcooper in crapass.cdcooper%type
-                              ,pr_nrcpfcgc in crapass.nrcpfcgc%type) is
-    select ass.cdcooper
-         , ass.nrdconta
-      from crapass ass
-     where ass.cdcooper = pr_cdcooper
-       and ass.nrcpfcgc = pr_nrcpfcgc
-       and ass.dtdemiss is null;
-    rw_busca_cooperado cr_busca_cooperado%rowtype;
     
     vr_cdfuncao varchar2(2) := ' ';
       
@@ -1660,7 +1677,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     elsif pr_dtinicio_vigencia > pr_dtfim_vigencia then
       vr_dscritic := 'Data de fim de vigência deve ser maior que a data de início.';
       raise vr_exc_erro;
-	end if;
+    end if;
 
     -- Analisa permissoes do operador
     open cr_cdoperad (pr_cdcooper
@@ -1668,7 +1685,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     fetch cr_cdoperad into rw_cdoperad;
 
     -- Caso nao tenha permissao retorna critica
-    if cr_cdoperad%notfound then
+    -- Autorizar rotinas automaticas que utilizam operador 1
+    if cr_cdoperad%notfound and pr_cdoperad <> '1' then
       close cr_cdoperad;
       vr_dscritic := 'Operador sem permissão para alterar cargos.';
       raise vr_exc_erro;
@@ -1698,20 +1716,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     
     close cr_busca_cargos;
 
-    -- Tratamento para acumulo entre delegado e comite
-    open cr_tratamento_ass (pr_cdcooper
+    -- Analisa acumulo de cargos do cpf / cnpj
+    open cr_acumula_cargos (pr_cdcooper
                            ,pr_nrcpfcgc
-                           ,pr_cdfuncao);
-    fetch cr_tratamento_ass into rw_tratamento_ass;
-        
-    -- Caso encontre atualiza crapass
-    -- com cargo que continua ativo
-    -- se nao encontrar atualiza para cooperado (default)
-    if cr_tratamento_ass%found then
-      vr_cdfuncao := rw_tratamento_ass.cdfuncao;
+                           ,pr_cdfuncao);                     
+    fetch cr_acumula_cargos into rw_acumula_cargos;
+    close cr_acumula_cargos;
+
+    if rw_acumula_cargos.outrafun is not null then
+      vr_cdfuncao := rw_acumula_cargos.outrafun;
     end if;
-        
-    close cr_tratamento_ass;
 
     -- Evita que cargo inativo tenha sua data de
     -- fim de vigencia atualizada
@@ -1737,24 +1751,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
         raise vr_exc_erro;
 
     end;
-
-    begin
-        
-      update crapass c
-         set c.tpvincul = vr_cdfuncao
-       where c.cdcooper = pr_cdcooper
-         and c.nrcpfcgc = pr_nrcpfcgc;     
-               
-    exception
-          
-      when others then
-        
-        -- Montar mensagem de critica
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao atualizar tipo de vinculo: ' || sqlerrm;
-        raise vr_exc_erro;
-
-    end;
     
     -- Controle de historico de vinculos
     pc_historico_tpvinculo (pr_cdcooper => pr_cdcooper
@@ -1775,7 +1771,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
       gene0001.pc_gera_log(pr_cdcooper => rw_busca_cooperado.cdcooper
                           ,pr_cdoperad => pr_cdoperad
                           ,pr_dscritic => null
-                          ,pr_dsorigem => 'AIMARO WEB'
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
                           ,pr_dstransa => 'Inativado funcao: '||rw_vig_funcao.dsfuncao
                           ,pr_dttransa => trunc(sysdate)
                           ,pr_flgtrans => 1
@@ -1793,7 +1789,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
                               ,pr_nmarqlog     => 'pessoa.log'
                               ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                   ' --> Operador '|| pr_cdoperad || ' - ' ||
-                                                  'Alterou a vigencia fim para ' || to_char(pr_dtfim_vigencia,'DD/MM/RRRR') ||
+                                                  'Inativou o cargo com a data de fim de vigencia para ' || 
+                                                  to_char(pr_dtfim_vigencia,'DD/MM/RRRR') ||
                                                   ', cargo/funcao ' || rw_busca_cargos.dsfuncao ||
                                                   ' para o CNPJ ' || gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc,
                                                                                                pr_inpessoa => rw_crapass.inpessoa) ||         
@@ -2253,7 +2250,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
   --
   -- Objetivo  : Fazer controle de historico de vinculos
   --
-  -- Alteracoes:
+  -- Alteracoes: 13/08/2019 - Adicionado flag de integracao com brc.
+  --                          Projeto 484.2 - Gabriel Marcos (Mouts).   
   --
   ---------------------------------------------------------------------------
 
@@ -2274,7 +2272,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
     select cop.flgrupos
       from crapcop cop
      where cop.cdcooper = pr_cdcooper
-	   and cop.flgrupos = 1; -- Evento assemblear ativo
+     and cop.flgrupos = 1; -- Evento assemblear ativo
     rw_crapcop cr_crapcop%rowtype;
 
     -- Limpeza de registros nao enviados
@@ -2370,12 +2368,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
          where vin.rowid = rw_limpeza_registros.rowid;                   
       exception
         when others then
+          close cr_limpeza_registros;
           vr_dscritic := 'Erro ao inserir dadosna tabela tbhistor_vinculo_coop: '||sqlerrm;
           raise vr_exc_erro;
       end;
     end if;
     
     close cr_limpeza_registros;
+
+    -- Verifica parametros cadastrados em base
+    -- Default zero, em periodos de implantacao
+    -- o parametro pode ser alterado para 1
+    -- para que o sistema nao seja sobrecarregado
+    begin
+      select nvl(c.flag_integra,0)
+        into vr_tpsituacao
+        from tbevento_param c
+       where c.cdcooper = pr_cdcooper;
+    exception
+      when others then
+        vr_dscritic := 'Erro ao manipular tbevento_param: '||sqlerrm;
+        raise vr_exc_saida;
+    end;  
     
     begin
         
@@ -2395,7 +2409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PESSOA IS
                                    ,rw_crapass.idpessoa
                                    ,0
                                    ,sysdate
-                                   ,0
+                                   ,vr_tpsituacao
                                    ,null
                                    ,null
                                    ,null

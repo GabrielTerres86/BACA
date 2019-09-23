@@ -177,9 +177,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
            AND crapfdc.nrcheque = pr_nrcheque;
       rw_crapfdc cr_crapfdc%ROWTYPE;
 
-      -- Seleciona Dados Custodia
-      CURSOR cr_crapcst (pr_cdcooper IN crapcst.cdcooper%TYPE
-                        ,pr_cdcmpchq IN crapcst.cdcmpchq%TYPE
+      -- Seleciona Dados Custodia em todas as cooperativas
+      CURSOR cr_crapcst (pr_cdcmpchq IN crapcst.cdcmpchq%TYPE
                         ,pr_cdbanchq IN crapcst.cdbanchq%TYPE
                         ,pr_cdagechq IN crapcst.cdagechq%TYPE
                         ,pr_nrctachq IN crapcst.nrctachq%TYPE
@@ -187,8 +186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
         -- Validar se o cheque está custodiado utilizando os campos do indice CRAPCST##CRAPCST5
         SELECT crapcst.nrcheque
           FROM crapcst crapcst
-         WHERE crapcst.cdcooper = pr_cdcooper 
-           AND crapcst.cdcmpchq = pr_cdcmpchq 
+         WHERE crapcst.cdcmpchq = pr_cdcmpchq 
            AND crapcst.cdbanchq = pr_cdbanchq 
            AND crapcst.cdagechq = pr_cdagechq 
            AND crapcst.nrctachq = pr_nrctachq 
@@ -425,8 +423,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
       END IF;
             
       -- Verificar se Cheque já Custodiado
-      OPEN cr_crapcst(pr_cdcooper => pr_cdcooper
-                     ,pr_cdcmpchq => pr_cdcmpchq
+      OPEN cr_crapcst(pr_cdcmpchq => pr_cdcmpchq
                      ,pr_cdbanchq => pr_cdbanchq
                      ,pr_cdagechq => pr_cdagechq
                      ,pr_nrctachq => pr_nrctachq
@@ -619,6 +616,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
            AND UPPER(crapocc.cdocorre) = UPPER(pr_cdocorre);
       rw_crapocc cr_crapocc%ROWTYPE;             
       
+      -- Busca Dados Custodia em todas as cooperativas
+      CURSOR cr_crapcst (pr_cdcmpchq IN crapcst.cdcmpchq%TYPE
+                        ,pr_cdbanchq IN crapcst.cdbanchq%TYPE
+                        ,pr_cdagechq IN crapcst.cdagechq%TYPE
+                        ,pr_nrctachq IN crapcst.nrctachq%TYPE
+                        ,pr_nrcheque IN crapcst.nrcheque%TYPE) IS
+        SELECT crapcst.nrcheque, crapcop.nmrescop, crapcst.nrdconta
+          FROM crapcst crapcst, crapcop crapcop
+         WHERE crapcst.cdcooper = crapcop.cdcooper
+           AND crapcst.cdcmpchq = pr_cdcmpchq
+           AND crapcst.cdbanchq = pr_cdbanchq
+           AND crapcst.cdagechq = pr_cdagechq
+           AND crapcst.nrctachq = pr_nrctachq
+           AND crapcst.nrcheque = pr_nrcheque
+           AND crapcst.dtdevolu IS NULL;
+      rw_crapcst cr_crapcst%ROWTYPE;
       -- Busca informações do emitente
       CURSOR cr_crapcec (pr_cdcooper IN crapcec.cdcooper%TYPE
                         ,pr_cdcmpchq IN crapcec.cdcmpchq%TYPE
@@ -775,6 +788,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CUST0002 IS
             -- Apenas fechar o cursor
             CLOSE cr_crapocc;
             vr_erro_custodia := rw_crapocc.dsocorre;
+            IF vr_cdtipmvt = 21 AND vr_cdocorre = '80' THEN -- Cheque já custodiado
+              -- Busca cheque já custodiado em todas as cooperativas
+              OPEN cr_crapcst(pr_cdcmpchq => vr_cdcmpchq
+                             ,pr_cdbanchq => vr_cdbanchq
+                             ,pr_cdagechq => vr_cdagechq
+                             ,pr_nrctachq => vr_nrctachq
+                             ,pr_nrcheque => vr_nrcheque);
+              FETCH cr_crapcst INTO rw_crapcst;
+              -- Se encontrar cheque já custodiado
+              IF cr_crapcst%FOUND THEN
+                -- Fechar o cursor
+                CLOSE cr_crapcst;
+                vr_erro_custodia := vr_erro_custodia ||
+                  '. ' || rw_crapcst.nmrescop || ' - Conta: '
+                  || gene0002.fn_mask_conta(rw_crapcst.nrdconta);
+              END IF;
+              IF cr_crapcst%ISOPEN THEN
+                CLOSE cr_crapcst;
+              END IF;
+            END IF;
           END IF;
           
           vr_index_erro := vr_tab_custodia_erro.count + 1;  

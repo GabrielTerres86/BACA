@@ -119,7 +119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
       Frequencia: -----
       Objetivo  : Rotinas genericas utilizadas na plataforma de portabilidade de salário
 
-      Alteracoes:
+      Alteracoes:	29/08/2019 PJ485.6 - Ajuste termo portabilidade (empregador PF) - Augusto (Supero)
 
   ---------------------------------------------------------------------------------------------------------------*/
 	
@@ -1210,7 +1210,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
             ,gene0002.fn_mask_cpf_cnpj(tpe.nrcpfcgc, 1) nrcpfcgc
             ,'(' || lpad(tpe.nrddd_telefone, 2, '0') || ')' || tpe.nrtelefone telefone
             ,tpe.nmprimtl
-            ,gene0002.fn_mask_cpf_cnpj(tpe.nrcnpj_empregador, 2) nrcnpj_empregador
+            ,gene0002.fn_mask_cpf_cnpj(tpe.nrcnpj_empregador, tpe.tppessoa_empregador) nrcnpj_empregador
             ,tpe.dsnome_empregador
             ,lpad(ban.cdbccxlt, 3, '0') || ' - ' || ban.nmresbcc banco
             ,tpe.nrispb_banco_folha
@@ -1224,6 +1224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
             ,TO_CHAR(tpe.dtassina_eletronica, 'DD/MM/YYYY') dtassina_eletronica 
             ,TO_CHAR(tpe.dtassina_eletronica, 'HH24:MI:SS') hrassina_eletronica
             ,decode(tpe.dtassina_eletronica, '', 0, 1) isass_eletronica
+						,tpe.tppessoa_empregador
         FROM tbcc_portabilidade_envia tpe
             ,crapban                  ban
             ,tbcc_dominio_campo       dom
@@ -1352,7 +1353,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PCPS0001 IS
                                                  '<hrassina_eletronica>' || 
                                                  rw_solicitacao.hrassina_eletronica ||
                                                  '</hrassina_eletronica>' ||
-                                                 '<isass_eletronica>' || rw_solicitacao.isass_eletronica || '</isass_eletronica>'
+                                                 '<isass_eletronica>' || rw_solicitacao.isass_eletronica || '</isass_eletronica>' ||
+																								 '<tppessoa_empregador>' || rw_solicitacao.tppessoa_empregador || '</tppessoa_empregador>'
                                                  );
   
     -- Encerrar a tag raiz

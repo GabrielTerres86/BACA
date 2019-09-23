@@ -5916,7 +5916,7 @@ PROCEDURE pc_retorna_cep(pr_cdcep              IN NUMBER -- Registro de cep
     CURSOR cr_emprega IS
       SELECT t.nrdconta
            , t.idseqttl
-           , 2          inpessoa -- PJ - Fixo
+           , decode(t.cdempres, 9998, 1, 2) inpessoa -- 9999: empresa PF senão PJ
            , t.nrcpfemp nrdocemp
            , t.nmextemp nmempreg
            , t.dsproftl dsfuncao
