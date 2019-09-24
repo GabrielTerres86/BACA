@@ -1,0 +1,4 @@
+*.~prc
+*.~pck
+*.bak
+ayllosdev/documentos/**/temp/**
