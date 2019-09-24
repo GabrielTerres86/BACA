@@ -159,6 +159,7 @@
 * 127: [06/02/2019] Inclusao de controle para botoes quando for origem 3. P438. (Douglas Pagel / AMcom)
 * 128: [08/05/2019] Incluido tratamentos para autorizacao de contratos. (P470 - Bruno Luiz Katzjarowski / Mouts)
 * 129: [27/05/2019] Ajuste do Erro 269 apresentado na tela atenda/emprestimos - Gabriel Marcos (Mouts).   
+* 130: [23/08/2019] Inclusao de controle para botoes quando for origem 10. P438. (Douglas Pagel / AMcom) 
 * 132: [03/06/2019] Empréstimo - verificação de "CPF/CNPJ interveniente" em veículo da proposta - verificaCadastroInterveniente() - Renato/Darlei (Supero)
 
 * 133: [28/06/2019] Adicionado validações no clique do botão Efetivar PRJ 438 - Sprint 13 (Mateus Z / Mouts)
@@ -170,6 +171,7 @@
 * 123: [25/02/2019] Inclusão do botão Alterar Rating P450 (Luiz Otávio Olinger Momm - AMCOM).
 * 126: [08/04/2019] P450 - Ajustes de interface conforme solicitação Ailos (Luiz Otávio Olinger Momm - AMCOM).
 * 127: [22/05/2019] P450/P441 - Coluna status taxas mostrar por configuração (Luiz Otávio Olinger Momm - AMCOM).
+
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -802,7 +804,7 @@ function controlaOperacao(operacao) {
         		return false;
         	}
 			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
-			if (cdorigem == 3) {
+			if (cdorigem == 3 || cdorigem == 10)) {
         	    showError('error', 'Não é permitido alterar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
         		return false;
         	}
@@ -844,7 +846,7 @@ function controlaOperacao(operacao) {
             break;
         case 'A_NUMERO' :
 			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
-			if (cdorigem == 3) {
+			if (cdorigem == 3 || cdorigem == 10)) {
         	    showError('error', 'Não é permitido alterar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
         		return false;
         	}
@@ -1459,7 +1461,8 @@ function controlaOperacao(operacao) {
             $('table > tbody > tr', 'div.divRegistros').each(function() {
                 if ($(this).hasClass('corSelecao')) {
                     portabil = $('#portabil', $(this)).val();
-                    err_efet = $('#err_efet', $(this)).val();
+                    err_efet = $('#err_efet', $(this)).val();	
+                    cdorigem = $('#cdorigem', $(this)).val();
                     // PRJ 438 - Sprint 13 - Pegar insitapr e tpemprst para validar seus valores (Mateus Z)
                     insitapr = $('#insitapr', $(this)).val();
                     tpemprst = $('#tpemprst', $(this)).val();
@@ -1484,7 +1487,7 @@ function controlaOperacao(operacao) {
                 return false;
             }
 			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
-			if (cdorigem == 3) {
+			if (cdorigem == 3 || cdorigem == 10)) {
         	    showError('error', 'Não é permitido efetivar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
         		return false;
         	}

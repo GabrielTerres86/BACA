@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/96.                       Ultima atualizacao: 31/10/2018
+   Data    : Marco/96.                       Ultima atualizacao: 09/09/2019
 
    Dados referentes ao programa:
 
@@ -252,6 +252,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                31/10/2018 - PJ450 RF04 - Gravando saldo refinanciado na crapepr através da 
                             RISC0004.pc_gravar_saldo_refinanciamento (Douglas Pagel/AMcom)
 
+               09/09/2019 - P438 - Inclusão da origem 10 (MOBILE) no filtro dos cursores de emprestimos
+                            (Douglas Pagel/AMcom)
+
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -309,7 +312,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
       WHERE epr.cdcooper = pr_cdcooper 
         AND epr.dtmvtolt = pr_dtmvtolt
         AND epr.inprejuz <> 1
-        AND epr.cdorigem NOT IN (3,4)
+        AND epr.cdorigem NOT IN (3,4,10)
         AND epr.nrdconta > pr_nrctares
         ORDER BY epr.nrdconta,epr.tpemprst,epr.nrctremp;
 
@@ -499,7 +502,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
          AND crapepr.cdcooper = pr_cdcooper
          AND crapepr.dtmvtolt = pr_dtmvtolt
          AND crapepr.inprejuz <> 1
-         AND crapepr.cdorigem NOT IN (3,4);
+         AND crapepr.cdorigem NOT IN (3,4,10);
          
     /* Cursor genérico e padrão para busca da craptab */
     CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
@@ -574,7 +577,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,tbsite_cooperado_cdc tcc 
      WHERE epr.dtmvtolt = pr_dtmvtolt 
        AND epr.inprejuz != 1
-       AND epr.cdorigem NOT IN(3,4) 
+       AND epr.cdorigem NOT IN(3,4,10) 
        AND DECODE(EMPR0001.fn_tipo_finalidade(pr_cdcooper => epr.cdcooper, pr_cdfinemp => epr.cdfinemp),3,1,0)=1 -- somente CDC
        AND epr.cdcooper=tce.cdcooper
        AND epr.nrdconta=tce.nrdconta

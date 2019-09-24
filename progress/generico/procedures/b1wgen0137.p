@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 01/03/2019
+    Data      : Abril/2012                      Ultima Atualizacao: 09/09/2019
     
     Dados referentes ao programa:
 
@@ -345,6 +345,9 @@
 				
 				08/01/2019 - Incluso tratativa para não gerar pendencia de borderos inclusos no IB com
 				             valor inferior ao parametro de assinatura (Daniel).				  
+				  
+                09/09/2019 - P438 - Inclusao da origem 10 (MOBILE) no filtro dos cursores de emprestimos
+                            (Douglas Pagel/AMcom)
 				  
 
 .............................................................................*/
@@ -2638,7 +2641,7 @@ PROCEDURE efetua_batimento_ged_credito:
         /* Emprestimo - Data de Liberacao */
         FOR EACH crapepr WHERE crapepr.cdcooper = par_cdcooper   AND
                                crapepr.dtmvtolt = aux_data       AND
-                     NOT CAN-DO("3,4", STRING(crapepr.cdorigem)) AND
+                     NOT CAN-DO("3,4,10", STRING(crapepr.cdorigem)) AND
                      NOT CAN-DO("100,800,850,900,6901,6902,6903,6904,6905", 
                                 STRING(crapepr.cdlcremp)) 
                      NO-LOCK:
@@ -4598,7 +4601,7 @@ PROCEDURE gera_dados_pendencias:
                                    crapepr.inliquid = 0                 AND
                                    crapepr.flgdigit = NO                AND
                                    crapepr.dtmvtolt = aux_data          AND
-                            NOT CAN-DO("3,4", STRING(crapepr.cdorigem)) AND
+                            NOT CAN-DO("3,4,10", STRING(crapepr.cdorigem)) AND
                             NOT CAN-DO("100,800,850,900,6901,6902,6903,6904,6905", 
                                        STRING(crapepr.cdlcremp)) 
                             NO-LOCK,
@@ -5096,7 +5099,7 @@ PROCEDURE retorna_docs_liberados:
             DO:    
                 FOR EACH crapepr WHERE crapepr.cdcooper = par_cdcooper      AND
                                        crapepr.dtmvtolt = par_dtlibera      AND
-                                NOT CAN-DO("3,4", STRING(crapepr.cdorigem)) AND
+                                NOT CAN-DO("3,4,10", STRING(crapepr.cdorigem)) AND
                                 NOT CAN-DO("100,800,850,900,6901,6902,6903,6904,6905", 
                                            STRING(crapepr.cdlcremp)) 
                                 NO-LOCK:

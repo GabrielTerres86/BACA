@@ -691,6 +691,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
 				   
                    Inclusão de GALPAO para garantia de imovel
                    05/12/2018 - Sprint 7 - Paulo Martins (Mouts)
+                   
+                   06/09/2019 - P438 Inclusão da origem 10 para considerar Canal Digital (Douglas Pagel / AMcom)
     ............................................................................. */
 
     DECLARE
@@ -923,7 +925,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
               vr_cdorigem := get_cdorigem(rw_crapcop.cdcooper,rw_crawepr.nrdconta,rw_crawepr.nrctremp); -- P438              
               vr_qtdibaut := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,93,3)),0);  -- automóvel -- P438
               vr_setibaut := FALSE; -- P438
-              IF vr_cdorigem = 3 AND vr_qtdibaut > 0 -- P438
+              IF vr_cdorigem in (3,10) AND vr_qtdibaut > 0 -- P438
                THEN                
                  IF vr_qtdibaut > vr_qtddiexp THEN   -- P438                  
                     vr_qtddiexp := vr_qtdibaut; -- P438
@@ -976,7 +978,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
               vr_cdorigem := get_cdorigem(rw_crapcop.cdcooper,rw_crawepr.nrdconta,rw_crawepr.nrctremp); -- P438
               vr_qtdibapl := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,97,3)),0);  -- aplicação oriunda conta online -- P438
               vr_setibapl := FALSE; -- P438
-              IF vr_cdorigem = 3 AND vr_qtdibaut > 0 -- P438
+              IF vr_cdorigem in (3,10) AND vr_qtdibaut > 0 -- P438
                THEN                
                  IF vr_qtdibapl > vr_qtddiexp THEN -- P438
                     vr_qtddiexp := vr_qtdibapl; -- P438
@@ -1010,7 +1012,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0015 IS
             vr_qtdibsem := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,101,3)),0); -- sem garantia oriunda conta online  -- P438
              
             vr_setibsem := FALSE; -- P438
-            IF vr_cdorigem = 3 AND vr_idencgar = 0 THEN -- P438
+            IF vr_cdorigem in (3,10) AND vr_idencgar = 0 THEN -- P438
               vr_qtddiexp := vr_qtdibsem; -- P438
               vr_setibsem := TRUE; -- P438
             END IF;  
