@@ -1,0 +1,10 @@
+
+
+UPDATE CRAPASS 
+   SET FLMAJORA = 1 
+ WHERE CDCOOPER = 7 
+   AND FLMAJORA = 0 ;
+   
+ 
+-- Efetuar commit
+COMMIT;
