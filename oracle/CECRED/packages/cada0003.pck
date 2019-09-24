@@ -14777,7 +14777,9 @@ exception
 
     Objetivo  : Retorna eventos assembleares com pre inscricao
 
-    Alteracoes: 
+    Alteracoes: 18/09/2019 - Ajuste no cursor que busca inscricoes.
+                             Gabriel Marcos (Mouts) - P484.2
+
     ..............................................................................*/                                     
 
     -- Busca cpf do cooperado
@@ -14796,42 +14798,32 @@ exception
     cursor cr_crapidp (pr_cdcooper in crapidp.cdcooper%type
                       ,pr_nrdconta in crapidp.nrdconta%type
                       ,pr_nrcpfcgc in crapidp.nrcpfcgc%type) is
-    SELECT adp.nmdgrupo
+    select adp.nmdgrupo
           ,to_char(adp.dtinieve,'dd/mm/yyyy') dtinieve
           ,idp.nminseve
-      FROM crapedp edp
-          ,crapadp adp
+      from crapadp adp
           ,crapidp idp
-          ,crapcdp cdp
-          ,gnappdp pdp
-          ,crapldp ldp
-     WHERE adp.idstaeve = 1
-       AND adp.nrdgrupo > 0
-       AND idp.idevento = 2
-       AND idp.cdcooper = pr_cdcooper
-       AND ((idp.nrdconta = pr_nrdconta) or
+         , tbevento_exercicio exe
+         , crapdat dat
+     where adp.cdcooper = pr_cdcooper
+       and exe.cdcooper = adp.cdcooper
+       and exe.flgativo = 1
+       and adp.idevento = 2
+       and adp.dtanoage = to_char(exe.nrano_exercicio,'yyyy')
+       and adp.nrdgrupo > 0
+       and idp.cdcooper = adp.cdcooper
+       and idp.cdevento = adp.cdevento
+       and idp.dtanoage = adp.dtanoage
+       and idp.cdagenci = adp.cdagenci
+       and idp.idevento = adp.idevento
+       and idp.nrseqeve = adp.nrseqdig
+       and ((idp.nrdconta = pr_nrdconta) or
             (idp.nrcpfcgc = pr_nrcpfcgc))
-       AND idp.idstains = 1
-       AND edp.cdevento = adp.cdevento                                                              
-       AND edp.idevento = adp.idevento                                                              
-       AND edp.cdcooper = adp.cdcooper                                                              
-       AND edp.dtanoage = adp.dtanoage                                                              
-       AND idp.idevento = edp.idevento                                                              
-       AND idp.cdevento = edp.cdevento                                                              
-       AND idp.idevento = adp.idevento                                                              
-       AND idp.cdevento = adp.cdevento                                                              
-       AND idp.nrseqeve = adp.nrseqdig                                                              
-       AND cdp.idevento(+) = adp.idevento                                                             
-       AND cdp.dtanoage(+) = adp.dtanoage                                                              
-       AND cdp.cdcooper(+) = adp.cdcooper                                                              
-       AND cdp.cdagenci(+) = adp.cdagenci                                                              
-       AND cdp.cdevento(+) = adp.cdevento                                                              
-       AND cdp.tpcuseve(+) = 1                                                                         
-       AND cdp.cdcuseve(+) = 1                                                                         
-       AND pdp.nrcpfcgc(+) = cdp.nrcpfcgc                                                              
-       AND pdp.nrpropos(+) = cdp.nrpropos                                                              
-       AND adp.cdlocali    = ldp.nrseqdig
-       and rownum < 6;
+       and dat.cdcooper = adp.cdcooper
+       and adp.dtinieve >= dat.dtmvtolt
+       and rownum < 6
+     order
+        by adp.dtinieve;
 
     -- Tratamento de erros
     vr_exc_saida  EXCEPTION;
