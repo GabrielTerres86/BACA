@@ -804,7 +804,7 @@ function controlaOperacao(operacao) {
         		return false;
         	}
 			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
-			if (cdorigem == 3 || cdorigem == 10)) {
+			if (cdorigem == 3 || cdorigem == 10) {
         	    showError('error', 'Não é permitido alterar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
         		return false;
         	}
@@ -846,7 +846,7 @@ function controlaOperacao(operacao) {
             break;
         case 'A_NUMERO' :
 			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
-			if (cdorigem == 3 || cdorigem == 10)) {
+			if (cdorigem == 3 || cdorigem == 10) {
         	    showError('error', 'Não é permitido alterar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
         		return false;
         	}
@@ -1487,7 +1487,7 @@ function controlaOperacao(operacao) {
                 return false;
             }
 			// PRJ 438 - Adicionado validação para origem Conta Online. (AMcom)
-			if (cdorigem == 3 || cdorigem == 10)) {
+			if (cdorigem == 3 || cdorigem == 10) {
         	    showError('error', 'Não é permitido efetivar proposta com origem na Internet!', 'Alerta - Aimaro', "hideMsgAguardo(); blockBackground(parseInt($('#divRotina').css('z-index')));");
         		return false;
         	}
