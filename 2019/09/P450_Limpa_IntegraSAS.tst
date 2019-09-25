@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-195
+206
 declare 
   vr_contador integer;
 
@@ -189,6 +189,17 @@ BEGIN
         COMMIT;
         vr_contador := vr_contador + 1;
       END IF;
+      
+      IF  rw_limpaSAS.tpctrato = 1        -- Limite de Credito
+      AND rw_limpaSAS.tpsituacao = 3 THEN -- Limite Cancelado
+        UPDATE tbrisco_operacoes t
+           SET t.flencerrado    = 1
+              ,t.flintegrar_sas = 0
+         WHERE ROWID = rw_limpaSAS.row_id;
+        COMMIT;
+        vr_contador := vr_contador + 1;
+      END IF;      
+      
     END LOOP;
     dbms_output.put_line('COP: ' || rw_crapcop.cdcooper || ' - QTD: ' || vr_contador);
     vr_contador := 0;
