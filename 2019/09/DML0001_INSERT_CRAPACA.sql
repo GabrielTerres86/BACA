@@ -1,0 +1,15 @@
+DELETE FROM CRAPACA
+ WHERE nrseqrdr =
+       (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONVEN')
+   AND NMDEACAO = 'BUSCAR_DADOS_LIBERACAO_CONV';
+  
+INSERT INTO cecred.crapaca
+  (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+VALUES
+  (SEQACA_NRSEQACA.NEXTVAL,
+   'BUSCAR_DADOS_LIBERACAO_CONV',
+   'TELA_CONVEN',
+   'pc_busca_liberacao_conve_web',
+   'pr_tparrecad,pr_cdempres,pr_cdconven,pr_cdempcon,pr_cdsegmto',
+   (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONVEN'));
+COMMIT;
