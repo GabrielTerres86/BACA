@@ -13,7 +13,7 @@ BEGIN
 		  ,flgchama)
 		VALUES
 		  (2101
-		  ,'2101 - Erro na conversão de valores tipo {P1}.'
+		  ,'2101 - Erro na conversão de valores Tipo: {P1} Valor: {P2} Local: {P3}.'
 		  ,4
 		  ,0);
 		  
