@@ -1,4 +1,4 @@
-DECLARE
+DECLARE 
   --Busca contas - Credcrea
   CURSOR cr_crapass IS
     SELECT cdcooper, nrdconta, nrdctitg, flgctitg

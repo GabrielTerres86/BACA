@@ -1,4 +1,4 @@
---REQ0037383 - Ana - 23/09/2019
+--REQ0037383 - Ana - 23/09/2019 
 DECLARE 
  
   vr_arq_path  VARCHAR2(1000):= gene0001.fn_diretorio(pr_tpdireto => 'M', 

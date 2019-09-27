@@ -1,4 +1,4 @@
---REQ0037383 - Ana - 23/09/2019
+--REQ0037383 - Ana - 23/09/2019 
 DECLARE
   --Busca contas - Unilos
   CURSOR cr_crapass IS
