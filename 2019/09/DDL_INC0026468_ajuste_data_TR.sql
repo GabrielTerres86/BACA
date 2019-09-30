@@ -7,6 +7,8 @@ BEGIN
   update crapepr e set e.dtdpagto = to_date('22/07/2019','DD/MM/YYYY') where cdcooper = 1 and nrdconta = 3672409  and  nrctremp = 473448;
   update crapepr e set e.dtdpagto = to_date('10/10/2019','DD/MM/YYYY') where cdcooper = 1 and nrdconta = 9679979  and  nrctremp = 1295667;
   update crapepr e set e.dtdpagto = to_date('10/10/2019','DD/MM/YYYY') where cdcooper = 1 and nrdconta = 80097197 and  nrctremp = 1503087;
+  update crapepr e set e.dtdpagto = to_date('20/07/2019','DD/MM/YYYY') where cdcooper = 1 and nrdconta = 1200046  and  nrctremp = 553548;
+  update crapepr e set e.dtdpagto = to_date('22/07/2019','DD/MM/YYYY') where cdcooper = 1 and nrdconta = 90054970 and  nrctremp = 284907;
 
   COMMIT;
 EXCEPTION
