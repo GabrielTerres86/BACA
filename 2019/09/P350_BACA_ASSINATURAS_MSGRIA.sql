@@ -37,7 +37,7 @@ BEGIN
         'IMPRIMIR_ASSINATURAS'
         , 'CADA0018'
         , 'pccc_imprimir_assinaturas_web'
-        , 'pr_dtmvtolt, pr_nrdconta, pr_nrdctato, pr_idseqttl, pr_tppessoa, pr_nrcpfcgc'
+        , 'pr_nrdconta, pr_nrdctato, pr_idseqttl, pr_tppessoa, pr_nrcpfcgc'
         , vr_nrseqrdr);
   
   COMMIT;
