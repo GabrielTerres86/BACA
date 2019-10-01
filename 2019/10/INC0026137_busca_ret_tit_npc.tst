@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-254
+306
 /*
   INC0026137  
   Script para atualizar no Aimaro os títulos que foram rejeitados e reprocessados
@@ -17,8 +17,19 @@ declare
     ,nrdident crapcob.nrdident%type
     ,nratutit crapcob.nratutit%type
     );
-  type typ_tab_titulo is table of typ_reg_titulo index by pls_integer;
+  type typ_tab_titulo is table of typ_reg_titulo index by pls_integer;  
   --
+  CURSOR cr_crapcob (pr_rowid IN ROWID) IS
+  SELECT cob.insitpro,
+         cob.flgcbdda,
+         cob.inenvcip,
+         cob.dhenvcip,
+         cob.nrdident,
+         cob.nratutit 
+    FROM crapcob cob
+   WHERE rowid = pr_rowid;
+   rw_crapcob cr_crapcob%ROWTYPE;
+  
 begin
   --
   declare
@@ -30,8 +41,25 @@ begin
     vr_cdcritic integer;
     vr_dscritic varchar2(2000);
     vr_des_erro varchar2(200);
+    
+    vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
+    vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/INC0026137';
+    vr_nmarqimp        VARCHAR2(100)  := 'INC0026137-rollback.sql';  
+    vr_ind_arquiv      utl_file.file_type;
+    vr_cobrowid ROWID;
     --
   begin
+
+    --Criar arquivo
+    gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto        --> Diretorio do arquivo
+                            ,pr_nmarquiv => vr_nmarqimp        --> Nome do arquivo
+                            ,pr_tipabert => 'W'                --> modo de abertura (r,w,a)
+                            ,pr_utlfileh => vr_ind_arquiv      --> handle do arquivo aberto
+                            ,pr_des_erro => vr_dscritic);      --> erro
+    -- em caso de crítica
+    IF vr_dscritic IS NOT NULL THEN        
+      dbms_output.put_line('Erro ao criar arquivo');
+    END IF;
     --
     --limpa tabela de memória para inicializar processamento
     vr_tab_titulo.delete;
@@ -176,6 +204,26 @@ begin
       --
       for i in vr_tab_titulo.first .. vr_tab_titulo.last
       loop
+
+        OPEN cr_crapcob(vr_tab_titulo(i).crapcob_rowid);
+        FETCH cr_crapcob INTO rw_crapcob;
+        
+        IF cr_crapcob%FOUND THEN
+          CLOSE cr_crapcob;
+           -- Gerar linha de rollback
+           gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 
+                                          'update crapcob cob '||
+                                              'set cob.insitpro = '''||rw_crapcob.insitpro||''''||
+                                                ' ,cob.flgcbdda = '''||rw_crapcob.flgcbdda||''''||
+                                                ' ,cob.inenvcip = '''||rw_crapcob.inenvcip||''''||
+                                                ' ,cob.dhenvcip = '''||rw_crapcob.dhenvcip||''''||
+                                                ' ,cob.nrdident = '''||null||''''||
+                                                ' ,cob.nratutit = '''||null||''''||
+                                               'where cob.rowid = '''||vr_tab_titulo(i).crapcob_rowid||
+                                               ''';' ||chr(13));
+        ELSE
+          CLOSE cr_crapcob;
+        END IF;       
         --
         vr_qtregistro := vr_qtregistro + 1;
         --
@@ -236,12 +284,16 @@ begin
       --
     end if;
     --
+    gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'commit;'); 
+    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;        
+    --
     commit;
     --
     dbms_output.put_line('vr_qtregistro:'||vr_qtregistro);
     --
   end;
   --
+
 exception
   when others then
     declare
