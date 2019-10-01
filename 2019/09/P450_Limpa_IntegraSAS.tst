@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-206
+215
 declare 
   vr_contador integer;
 
@@ -176,7 +176,10 @@ BEGIN
           UPDATE tbrisco_operacoes t
              SET t.flencerrado    = 1
                 ,t.flintegrar_sas = 0
-           WHERE ROWID = rw_limpaSAS.row_id;
+           WHERE t.cdcooper = rw_limpaSAS.cdcooper
+             AND t.nrdconta = rw_limpaSAS.nrdconta
+             AND t.nrctremp = rw_limpaSAS.nrctrato
+             AND t.tpctrato = rw_limpaSAS.tpctrato;
           COMMIT;
         END IF;
       END IF;
@@ -185,7 +188,10 @@ BEGIN
         UPDATE tbrisco_operacoes t
            SET t.flencerrado    = 1
               ,t.flintegrar_sas = 0
-         WHERE ROWID = rw_limpaSAS.row_id;
+         WHERE t.cdcooper = rw_limpaSAS.cdcooper
+           AND t.nrdconta = rw_limpaSAS.nrdconta
+           AND t.nrctremp = rw_limpaSAS.nrctrato
+           AND t.tpctrato = rw_limpaSAS.tpctrato;
         COMMIT;
         vr_contador := vr_contador + 1;
       END IF;
@@ -195,7 +201,10 @@ BEGIN
         UPDATE tbrisco_operacoes t
            SET t.flencerrado    = 1
               ,t.flintegrar_sas = 0
-         WHERE ROWID = rw_limpaSAS.row_id;
+         WHERE t.cdcooper = rw_limpaSAS.cdcooper
+           AND t.nrdconta = rw_limpaSAS.nrdconta
+           AND t.nrctremp = rw_limpaSAS.nrctrato
+           AND t.tpctrato = rw_limpaSAS.tpctrato;
         COMMIT;
         vr_contador := vr_contador + 1;
       END IF;      
