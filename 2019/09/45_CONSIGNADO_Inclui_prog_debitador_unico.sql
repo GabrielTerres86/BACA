@@ -1,5 +1,5 @@
---UPDATE tbgen_debitador_param
---  SET NRPRIORIDADE = NRPRIORIDADE + 3
+UPDATE tbgen_debitador_param
+ SET NRPRIORIDADE = NRPRIORIDADE + 3
 
 delete tbgen_debitador_param d
 where d.cdprocesso in ('PC_CRPS782','PC_CRPS783','PC_CRPS784','PC_CRPS785')
