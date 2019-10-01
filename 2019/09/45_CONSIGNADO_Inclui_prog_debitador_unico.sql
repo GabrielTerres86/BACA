@@ -6,7 +6,6 @@ delete tbgen_debitador_param d
 where d.cdprocesso in ('PC_CRPS782','PC_CRPS783','PC_CRPS784','PC_CRPS785')
 /
 
-/
 insert into tbgen_debitador_param 
  (CDPROCESSO,           
   DSPROCESSO,           
