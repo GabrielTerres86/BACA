@@ -19,8 +19,7 @@ COMMENT ON COLUMN cecred.tbconv_liberacao.flgautdb      IS 'Flag para indicar se
 --PK
 ALTER TABLE cecred.tbconv_liberacao  ADD CONSTRAINT tbconv_liberacao_pk primary key (idseqconvelib);
 -- Create/Recreate indexes 
-create unique index cecred.tbconv_liberacao_idx01 on cecred.tbconv_liberacao(tparrecadacao,cdcooper,cdconven);
-create unique index cecred.tbconv_liberacao_idx02 on cecred.tbconv_liberacao(tparrecadacao,cdcooper,cdempres);
+create unique index cecred.tbconv_liberacao_idx01 on cecred.tbconv_liberacao(tparrecadacao,cdcooper,cdempres,cdconven);
 -- Create sequence 
 create sequence cecred.tbconv_liberacao_seq
 minvalue 1
