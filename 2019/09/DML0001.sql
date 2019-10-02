@@ -116,7 +116,7 @@ DECLARE
   nome_da_acao VARCHAR2(40) := 'GRAVAR_DADOS_CONVEN_PARC';
   procedure_da_acao VARCHAR2(100) := 'pc_grava_conv_parceiros';
   package_da_acao VARCHAR2(100) := 'TELA_CONVEN';
-  parametros_da_acao VARCHAR2(4000):= 'pr_cddopcao,pr_tparrecd,pr_cdconven,pr_nmfantasia,pr_rzsocial,pr_cdhistor,pr_codfebraban,pr_cdsegmento,pr_nmrescon,pr_vltarint,pr_vltartaa,pr_vltarcxa,pr_vltardeb,pr_vltarcor,pr_vltararq,pr_nrrenorm,pr_nrtolera,pr_dsdianor,pr_dtcancel,pr_nrlayout,pr_flgaccec,pr_flgacsic,pr_flgacbcb,pr_flginter,pr_forma_arrecadacao';
+  parametros_da_acao VARCHAR2(4000):= 'pr_cddopcao,pr_tparrecd,pr_cdconven,pr_nmfantasia,pr_rzsocial,pr_cdhistor,pr_codfebraban,pr_cdsegmento,pr_vltarint,pr_vltartaa,pr_vltarcxa,pr_vltardeb,pr_vltarcor,pr_vltararq,pr_nrrenorm,pr_nrtolera,pr_dsdianor,pr_dtcancel,pr_nrlayout,pr_flgaccec,pr_flgacsic,pr_flgacbcb,pr_flginter,pr_forma_arrecadacao';
   -- fim alterar
 
   CURSOR cr_craprdr(pr_nmprogra in craprdr.nmprogra%TYPE) IS
