@@ -13,3 +13,19 @@ VALUES
    'pr_tparrecad,pr_cdempres,pr_cdconven,pr_cdempcon,pr_cdsegmto',
    (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONVEN'));
 COMMIT;
+
+DELETE FROM CRAPACA
+ WHERE nrseqrdr =
+       (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONVEN')
+   AND NMDEACAO = 'GRAVAR_DADOS_CONVEN_LIB';
+  
+INSERT INTO cecred.crapaca
+  (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+VALUES
+  (SEQACA_NRSEQACA.NEXTVAL,
+   'GRAVAR_DADOS_CONVEN_LIB',
+   'TELA_CONVEN',
+   'pc_gravar_liberacao_conve_web',
+   '',
+   (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONVEN'));
+COMMIT;
