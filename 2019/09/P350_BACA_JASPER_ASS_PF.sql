@@ -31,7 +31,7 @@ BEGIN
                 , dsdemail
                 , cdfilrel
                 , nrseqpri ) values (
-                782
+                788
                 , 1
                 , 1
                 , 'CADA ASSINATURA PF'
