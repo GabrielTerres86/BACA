@@ -1,7 +1,7 @@
 PL/SQL Developer Test script 3.0
-34
+33
 -- Created on 07/10/2019 by T0032420 
-declare
+declare 
   cursor cr_rating_efetivar is
     SELECT e.cdcooper, e.nrdconta, e.nrctremp, o.tpctrato, e.dtmvtolt, e.cdopeefe, d.dtmvtolt as dtcooper
       FROM crapepr e, tbrisco_operacoes o, crapdat d
@@ -17,7 +17,6 @@ declare
   rw_rating_efetivar cr_rating_efetivar%ROWTYPE;
   vr_cdcritic        pls_integer;
   vr_dscritic        varchar2(4000);
-
 begin
   for rw_rating_efetivar IN cr_rating_efetivar loop
     rati0003.pc_grava_rating_operacao(pr_cdcooper => rw_rating_efetivar.cdcooper
