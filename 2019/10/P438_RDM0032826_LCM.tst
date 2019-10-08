@@ -7,7 +7,7 @@ declare
     select x.rowid, x.*
       from craplcm x
      where x.cdcooper = 1
-       and x.nrdconta in (10754288 ,8832668)
+       and x.nrdconta in (10754288 ,8832668,3830063)
        and x.cdhistor = 15
        and x.dtmvtolt = '07/10/2019';
        
