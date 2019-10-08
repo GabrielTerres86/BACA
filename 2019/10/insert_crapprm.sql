@@ -6,7 +6,7 @@ BEGIN
   INSERT INTO crapprm
     (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
   VALUES
-    ('CRED', 0, 'DT_LIM_CNAB240_SEM_J52', 'Data limite para aceite de arquivos CNAB240 sem o J52.', '27/11/2019');
+    ('CRED', 0, 'DT_LIM_CNAB240_SEM_J52', 'Data limite para aceite de arquivos CNAB240 sem o J52.', '02/12/2019');
 
   COMMIT;
 END;
