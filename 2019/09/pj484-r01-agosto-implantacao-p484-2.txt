@@ -1,0 +1,322 @@
+declare
+
+vr_cdmensagem        tbgen_notif_msg_cadastro.cdmensagem%type;
+vr_cdorigem_mensagem tbgen_notif_msg_cadastro.cdorigem_mensagem%type;
+vr_frmaxima          number := 0;                                         
+vr_fraideal          number := 0;      
+vr_intermin          number := 0;
+
+-- Array para guardar o split dos dados contidos na dsvlrprm       
+vr_parametro  gene0002.typ_split; 
+    
+vr_cdprogra varchar2(40) := 'agrp0001.script-implantacao-484-2-1';
+vr_idprglog number := 0;
+vr_dscritic varchar2(4000);
+vr_exc_erro exception;
+
+-- Busca parametros cadastrados
+cursor cr_dsvlrprm is
+select prm.cdcooper
+     , prm.dsvlrprm
+  from crapprm prm
+ where prm.nmsistem = 'CRED'
+   and prm.cdacesso = 'TELA_CADGRP_OPCAO_P';
+   
+-- Busca delegados ativos
+CURSOR c1 IS
+SELECT grp.cdcooper
+     , grp.nrcpfcgc
+  FROM tbevento_pessoa_grupos     grp
+     , tbcadast_vig_funcao_pessoa vig
+ WHERE vig.cdcooper = grp.cdcooper
+   and vig.nrcpfcgc = grp.nrcpfcgc
+   and vig.cdfuncao in ('DT','DS')
+   and vig.dtfim_vigencia is NULL;
+
+begin
+
+-- Gera log no início da execução
+pc_log_programa(pr_dstiplog   => 'I'         
+               ,pr_cdprograma => vr_cdprogra 
+               ,pr_cdcooper   => 0
+               ,pr_tpexecucao => 0     
+               ,pr_idprglog   => vr_idprglog);
+               
+-- Verifica parametros cadastrados em base
+for rw_dsvlrprm in cr_dsvlrprm loop
+
+vr_parametro := gene0002.fn_quebra_string(pr_string => rw_dsvlrprm.dsvlrprm
+                                         ,pr_delimit => ';');
+
+-- Se encontrou popula variaveis                                          
+for i in 1..vr_parametro.count() loop
+case
+when i = 1 then vr_frmaxima := to_number(vr_parametro(i));
+when i = 2 then vr_fraideal := to_number(vr_parametro(i));
+when i = 3 then vr_intermin := to_number(vr_parametro(i));
+else null;
+end case;
+end loop;
+
+begin
+insert into tbevento_param (CDCOOPER, FRMIDEAL, FRMMAXIM, INTERMIN, ANTECEDENCIA_ENVNOT, HRENVIO_MENSAGEM, DSTITULO_BANNER, DTEXIBIR_DE, CDOPERAD_ALTERA, DHALTERACAO, FLAG_INTEGRA, FLGEMAIL, DSTITULO_EMAIL, CONTEUDO_EMAIL, LSTEMAIL)
+values (rw_dsvlrprm.cdcooper, vr_fraideal, vr_frmaxima, vr_intermin, 12, 49200, 'Eventos Assembleares - 2020', to_date('01-01-2019', 'dd-mm-yyyy'), '1', sysdate, 0, 0, 'Assembleias - inativacao de delegado', 'A conta #numero da cooperativa #cooper #operac e o grupo #grupos perdeu seu #cargos.', 'produto.nao.ativo@ailos.coop.br');
+exception
+when others then
+vr_dscritic := 'Erro ao manipular tbevento_param(1): coop - '||rw_dsvlrprm.cdcooper||' '||sqlerrm;
+raise vr_exc_erro;
+end;
+
+end loop;
+
+begin
+update tbevento_param
+   set lstemail = 'marcela@ailos.coop.br,amanda.duarte@viacredi.coop.br'
+ where cdcooper = 1;
+exception
+when others then
+vr_dscritic := 'Erro ao manipular tbevento_param(2): '||sqlerrm;
+raise vr_exc_erro;
+end;
+
+begin
+-- Apresentar Origem na Opcao A
+insert into tbgen_notif_msg_origem (CDORIGEM_MENSAGEM, DSORIGEM_MENSAGEM, CDTIPO_MENSAGEM, HRINICIO_PUSH, HRFIM_PUSH, HRTEMPO_VALIDADE_PUSH)
+values ((select max(cdorigem_mensagem) + 1 from tbgen_notif_msg_origem), 'Quadro Social por Delegados', 2, 32400, 79200, 86400)
+returning cdorigem_mensagem 
+     into vr_cdorigem_mensagem;
+exception
+when others then
+vr_dscritic := 'Erro ao manipular tbgen_notif_msg_origem: '||sqlerrm;
+raise vr_exc_erro;
+end;
+  
+/* ###################################### Enviar quando cooperado trocar de agencia ###################################### */
+
+begin
+insert into tbgen_notif_msg_cadastro (CDMENSAGEM, CDORIGEM_MENSAGEM, DSTITULO_MENSAGEM, DSTEXTO_MENSAGEM, DSHTML_MENSAGEM, CDICONE, INEXIBIR_BANNER, NMIMAGEM_BANNER, INEXIBE_BOTAO_ACAO_MOBILE, DSTEXTO_BOTAO_ACAO_MOBILE, CDMENU_ACAO_MOBILE, DSLINK_ACAO_MOBILE, DSMENSAGEM_ACAO_MOBILE, DSPARAM_ACAO_MOBILE, INENVIAR_PUSH)
+values ((select (max(cdmensagem)+1) from tbgen_notif_msg_cadastro), vr_cdorigem_mensagem, 'Assembleias 2020', 'Dia #data às #horario , #local , #endereco , #cidade', 
+'<p>Ficou mais f&aacute;cil votar nas nossas Assembleias: o evento realizado na sua regi&atilde;o agora tem poder de decis&atilde;o. Venha, conhe&ccedil;a os resultados de 2019 e decida os pr&oacute;ximos passos da sua Cooperativa. Juntos vamos sempre mais longe.</p>
+<p><strong>Como voc&ecirc; transferiu sua conta para outro Posto de Atendimento, a data do evento teve altera&ccedil;&atilde;o. Confira a nova data:</strong></p>
+<p><strong>Dia:</strong> #data<br />
+<strong>Hora:</strong> #horario<br />
+<strong>Local:</strong> #local<br />
+<strong>Endere&ccedil;o:</strong> #endereco - #cidade</p>
+<p>Essa &eacute; a data exclusiva para voce votar nas decis&otilde;es da Cooperativa.</p>
+<p><strong>Obs: </strong><strong>Se voc&ecirc; tiver alguma d&uacute;vida entre em contato conosco pelo SAC 0800 647 2200.</strong></p>
+<p>Aguardamos voc&ecirc; ;)</p>'
+, 11, 1, 'assembleias_2019_viacredi.jpg', 1, 'Saiba mais', null, 'http://www.aquivoceparticipa.coop.br/', 'Você será redirecionado para fora do app.', null, 1)
+returning cdmensagem  
+     into vr_cdmensagem;
+exception
+when others then
+vr_dscritic := 'Erro ao manipular tbgen_notif_msg_cadastro(1): '||sqlerrm;
+raise vr_exc_erro;
+end;
+
+begin
+insert into tbgen_notif_automatica_prm (CDORIGEM_MENSAGEM, CDMOTIVO_MENSAGEM, DSMOTIVO_MENSAGEM, CDMENSAGEM, DSVARIAVEIS_MENSAGEM, INMENSAGEM_ATIVA, INTIPO_REPETICAO, NRDIAS_SEMANA, NRSEMANAS_REPETICAO, NRDIAS_MES, NRMESES_REPETICAO, HRENVIO_MENSAGEM, NMFUNCAO_CONTAS, DHULTIMA_EXECUCAO)
+values (vr_cdorigem_mensagem, 1, 'Troca de Agência', vr_cdmensagem, '<br/>#data  - Data do evento (Ex: 20/02) <br/>#horario - Horário do evento (Ex: 19:00)<br/>#local - Local do evento (Ex: Vila Germânica)<br/>#endereco - Endereço do Evento (Ex: Rua XV de Novembro, 500)<br/>#cidade - Cidade do evento (Ex: Blumenau)', 1, 0, null, null, null, null, null, null, null);
+exception
+when others then
+vr_dscritic := 'Erro ao manipular tbgen_notif_automatica_prm(1): '||sqlerrm;
+raise vr_exc_erro;
+end;
+
+/* ###################################### Enviar quando cooperado trocar de agencia ###################################### */
+
+/* ###################################### Enviar quando cooperado for demitido      ###################################### */
+
+begin
+insert into tbgen_notif_msg_cadastro (CDMENSAGEM, CDORIGEM_MENSAGEM, DSTITULO_MENSAGEM, DSTEXTO_MENSAGEM, DSHTML_MENSAGEM, CDICONE, INEXIBIR_BANNER, NMIMAGEM_BANNER, INEXIBE_BOTAO_ACAO_MOBILE, DSTEXTO_BOTAO_ACAO_MOBILE, CDMENU_ACAO_MOBILE, DSLINK_ACAO_MOBILE, DSMENSAGEM_ACAO_MOBILE, DSPARAM_ACAO_MOBILE, INENVIAR_PUSH)
+values ((select (max(cdmensagem)+1) from tbgen_notif_msg_cadastro), vr_cdorigem_mensagem, 'Assembleias 2020', 'Dia #data às #horario , #local , #endereco , #cidade', 
+'<p>Ficou mais f&aacute;cil votar nas nossas Assembleias: o evento realizado na sua regi&atilde;o agora tem poder de decis&atilde;o. Venha, conhe&ccedil;a os resultados de 2019 e decida os pr&oacute;ximos passos da sua Cooperativa. Juntos vamos sempre mais longe.</p>
+<p><strong>Dia:</strong> #data<br />
+<strong>Hora:</strong> #horario<br />
+<strong>Local:</strong> #local<br />
+<strong>Endere&ccedil;o:</strong> #endereco - #cidade</p>
+<p>Essa &eacute; a data exclusiva para voc&ecirc; votar nas decis&otilde;es da Cooperativa.</p>
+<p><strong>Obs: </strong><strong>Se voc&ecirc; tiver alguma d&uacute;vida entre em contato conosco pelo SAC 0800 647 2200.</strong></p>
+<p>Aguardamos voc&ecirc; ;)</p>'
+, 11, 1, 'assembleias_2019_viacredi.jpg', 1, 'Saiba mais', null, 'http://www.aquivoceparticipa.coop.br/', 'Você será redirecionado para fora do app.', null, 1)
+returning cdmensagem  
+     into vr_cdmensagem;
+exception
+when others then
+vr_dscritic := 'Erro ao manipular tbgen_notif_msg_cadastro(2): '||sqlerrm;
+raise vr_exc_erro;
+end;
+
+begin
+insert into tbgen_notif_automatica_prm (CDORIGEM_MENSAGEM, CDMOTIVO_MENSAGEM, DSMOTIVO_MENSAGEM, CDMENSAGEM, DSVARIAVEIS_MENSAGEM, INMENSAGEM_ATIVA, INTIPO_REPETICAO, NRDIAS_SEMANA, NRSEMANAS_REPETICAO, NRDIAS_MES, NRMESES_REPETICAO, HRENVIO_MENSAGEM, NMFUNCAO_CONTAS, DHULTIMA_EXECUCAO)
+values (vr_cdorigem_mensagem, 2, 'Demissão de cooperado', vr_cdmensagem, '<br/>#data  - Data do evento (Ex: 20/02) <br/>#horario - Horário do evento (Ex: 19:00)<br/>#local - Local do evento (Ex: Vila Germânica)<br/>#endereco - Endereço do Evento (Ex: Rua XV de Novembro, 500)<br/>#cidade - Cidade do evento (Ex: Blumenau)', 1, 0, null, null, null, null, null, null, null);
+exception
+when others then
+vr_dscritic := 'Erro ao manipular tbgen_notif_automatica_prm(2): '||sqlerrm;
+raise vr_exc_erro;
+end;
+
+/* ###################################### Enviar quando cooperado for demitido      ###################################### */
+
+/* #################################### Ajustes referente a primeira fase do projeto ##################################### */
+
+begin
+delete crapace a where upper(a.nmdatela) = 'CADGRP' and a.cddopcao in (' C',' G',' P',' E');
+exception
+when others then
+vr_dscritic := 'Erro ao manipular crapace(1): '||sqlerrm;
+raise vr_exc_erro;
+end;
+
+/* #################################### Ajustes referente a primeira fase do projeto ##################################### */
+
+begin
+insert into crapaca (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+values ((select max(c.nrseqaca) + 1 from crapaca c), 'RETORNA_REPRESENTANTE', 'CADA0003', 'pc_retorna_representante', 'pr_nrdconta', 214);
+exception
+when others then
+vr_dscritic := 'Erro ao manipular crapaca(1): '||sqlerrm;
+raise vr_exc_erro;
+end;
+
+begin
+insert into crapaca (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+values ((select max(nrseqaca)+1 from crapaca), 'RETORNA_EVENTOS_ASSEMB', 'CADA0003', 'pc_retorna_eventos', 'pr_nrdconta', 214);
+exception
+when others then
+vr_dscritic := 'Erro ao manipular crapaca(2): '||sqlerrm;
+raise vr_exc_erro;
+end;
+
+begin
+update crapaca c
+   set c.lstparam = 'pr_nrdgrupo, pr_flgvinculo, pr_rowid'
+ where c.nmdeacao = 'ALTERAR_GRUPO_COOP';
+exception
+when others then
+vr_dscritic := 'Erro ao manipular crapaca(3): '||sqlerrm;
+raise vr_exc_erro;
+end;
+
+begin
+update crapaca c set c.lstparam = 'pr_frmmaxim,pr_frmideal,pr_antecedencia_envnot,pr_hrenvio_mensagem,pr_dstitulo_banner,pr_dtexibir_de,pr_flgemail,pr_dstitulo_email,pr_lstemail'
+ where c.nmdeacao = 'ALTERAR_PRM_FRACOES_GRP';
+exception
+when others then
+vr_dscritic := 'Erro ao manipular crapaca(4): '||sqlerrm;
+raise vr_exc_erro;
+end;
+
+/* #################################### Rafael ##################################### */
+
+-- Preencher a nova coluna de vinculo de funcao a um grupo
+BEGIN
+UPDATE tbcadast_funcao_pessoa t
+SET t.flgvinculo = 0;
+EXCEPTION 
+WHEN OTHERS THEN 
+vr_dscritic := 'Erro ao manipular tbcadast_funcao_pessoa(1): '||sqlerrm;
+raise vr_exc_erro;
+END;
+--
+-- flegar para os delegados 1
+BEGIN
+UPDATE tbcadast_funcao_pessoa t
+SET t.flgvinculo = 1
+WHERE t.cdfuncao IN ('DT','DS');   
+EXCEPTION
+WHEN OTHERS THEN
+vr_dscritic := 'Erro ao manipular tbcadast_funcao_pessoa(2): '||sqlerrm;
+raise vr_exc_erro;
+END;
+--
+-- Atualizar a nova coluna para os delegados dos grupos
+FOR r1 IN c1 LOOP
+BEGIN
+UPDATE tbevento_pessoa_grupos t
+SET t.flgvinculo = 1
+WHERE t.cdcooper = r1.cdcooper
+AND t.nrcpfcgc = r1.nrcpfcgc;
+EXCEPTION
+WHEN OTHERS THEN
+vr_dscritic := 'Erro ao manipular tbevento_pessoa_grupos(1): '||sqlerrm;
+raise vr_exc_erro;
+END;    
+END LOOP;
+-- Ajustar tabelas de associados
+BEGIN
+UPDATE crapass t
+SET t.tpvincul = ' '
+WHERE t.tpvincul IN ('DT','DS','CD','CL','CM','CS');   
+EXCEPTION
+WHEN OTHERS THEN
+vr_dscritic := 'Erro ao manipular crapass(1): '||sqlerrm;
+raise vr_exc_erro;
+END;
+/* #################################### Rafael ##################################### */
+
+-- Gera log no início da execução
+pc_log_programa(pr_dstiplog   => 'F'         
+               ,pr_cdprograma => vr_cdprogra 
+               ,pr_cdcooper   => 0
+               ,pr_tpexecucao => 0     
+               ,pr_flgsucesso => 1
+               ,pr_idprglog   => vr_idprglog);
+
+dbms_output.put_line('Sucesso!');
+
+commit;
+
+exception
+  
+when vr_exc_erro then
+
+rollback;
+
+dbms_output.put_line('Erro: '||vr_dscritic);
+  
+-- Gera log no início da execução
+pc_log_programa(pr_dstiplog   => 'F'         
+               ,pr_cdprograma => vr_cdprogra 
+               ,pr_cdcooper   => 0
+               ,pr_tpexecucao => 0     
+               ,pr_flgsucesso => 0
+               ,pr_idprglog   => vr_idprglog);
+               
+cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                      ,pr_cdprograma    => vr_cdprogra
+                      ,pr_cdcooper      => 0
+                      ,pr_tpexecucao    => 0
+                      ,pr_tpocorrencia  => 2
+                      ,pr_cdcriticidade => 3
+                      ,pr_cdmensagem    => 0
+                      ,pr_dsmensagem    => ' Module: AGRP0001 '||vr_dscritic
+                      ,pr_idprglog      => vr_idprglog); 
+                      
+when others then
+
+rollback;
+
+vr_dscritic := 'Erro não tratado: '||sqlerrm||' '||vr_dscritic;
+
+dbms_output.put_line('Erro: '||vr_dscritic);
+  
+-- Gera log no início da execução
+pc_log_programa(pr_dstiplog   => 'F'         
+               ,pr_cdprograma => vr_cdprogra 
+               ,pr_cdcooper   => 0
+               ,pr_tpexecucao => 0     
+               ,pr_flgsucesso => 0
+               ,pr_idprglog   => vr_idprglog);
+               
+cecred.pc_log_programa(pr_dstiplog      => 'E' -- Erro
+                      ,pr_cdprograma    => vr_cdprogra
+                      ,pr_cdcooper      => 0
+                      ,pr_tpexecucao    => 0
+                      ,pr_tpocorrencia  => 2
+                      ,pr_cdcriticidade => 3
+                      ,pr_cdmensagem    => 0
+                      ,pr_dsmensagem    => ' Module: AGRP0001 '||vr_dscritic
+                      ,pr_idprglog      => vr_idprglog);
+
+end;
