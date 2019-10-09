@@ -1,0 +1,57 @@
+ --RF022 - Permissão de Acesso. 
+ --Retirar a opção de Replicação da tela CONVEN e criar a opção de ALTERACAO REPASSE - TABELA CRAPTEL
+ --Liberar acesso para os usuários F0030503 e F0030642
+  
+ UPDATE CRAPTEL T
+    SET t.cdopptel = 'A,C,E,I,AR',
+        t.tldatela = 'Empresas Conveniadas',
+        t.tlrestel = 'EMPRESAS CONVENIADAS',
+        t.lsopptel = 'ALTERACAO,CONSULTA,EXCLUSAO,INCLUSAO,ALTERACAO REPASSE'
+  WHERE NMDATELA = 'CONVEN';
+
+commit; 
+
+ --'F0030503', 'F0030642'
+ DELETE  CRAPACE 
+  WHERE UPPER(NMDATELA) = 'CONVEN'
+    AND UPPER(CDDOPCAO) = 'AR'
+    AND UPPER(CDOPERAD) in('F0030503','F0030642')
+    AND IDAMBACE = 2
+    AND CDCOOPER = 3; 
+	
+commit;
+
+INSERT INTO CRAPACE
+      (NMDATELA,
+       CDDOPCAO,
+       CDOPERAD,
+       NMROTINA,
+       CDCOOPER,
+       NRMODULO,
+       IDEVENTO,
+       IDAMBACE)
+      SELECT 'CONVEN', 'AR', OPE.CDOPERAD, ' ', COP.CDCOOPER, 1, 0, 2
+        FROM CRAPCOP COP, CRAPOPE OPE
+       WHERE COP.CDCOOPER IN (/*PR_CDCOOPER*/3)
+         AND OPE.CDSITOPE = 1
+         AND COP.CDCOOPER = OPE.CDCOOPER
+         AND TRIM(UPPER(OPE.CDOPERAD)) = 'F0030503';
+
+commit;	
+	 
+INSERT INTO CRAPACE
+      (NMDATELA,
+       CDDOPCAO,
+       CDOPERAD,
+       NMROTINA,
+       CDCOOPER,
+       NRMODULO,
+       IDEVENTO,
+       IDAMBACE)
+      SELECT 'CONVEN', 'AR', OPE.CDOPERAD, ' ', COP.CDCOOPER, 1, 0, 2
+        FROM CRAPCOP COP, CRAPOPE OPE
+       WHERE COP.CDCOOPER IN (/*PR_CDCOOPER*/3)
+         AND OPE.CDSITOPE = 1
+         AND COP.CDCOOPER = OPE.CDCOOPER
+         AND TRIM(UPPER(OPE.CDOPERAD)) = 'F0030642';
+commit;		 
