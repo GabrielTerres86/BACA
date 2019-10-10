@@ -8,5 +8,7 @@ update crawepr w set w.flgdocdg = 1 where w.cdcooper = 1 and w.nrdconta = 720987
 update crawepr w set w.flgdocdg = 1 where w.cdcooper = 1 and w.nrdconta = 8165602 and w.nrctremp = 1722245;
 update crawepr w set w.flgdocdg = 1 where w.cdcooper = 11 and w.nrdconta = 562122 and w.nrctremp = 62436;
 update crawepr w set w.flgdocdg = 1 where w.cdcooper = 11 and w.nrdconta = 562440 and w.nrctremp = 62543;
+update crawepr w set w.flgdocdg = 1 where w.cdcooper = 13 and w.nrdconta = 297470 and w.nrctremp = 50188;
+update crawepr w set w.flgdocdg = 1 where w.cdcooper = 13 and w.nrdconta = 146285 and w.nrctremp = 50247;
 
 commit;
