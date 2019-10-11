@@ -29,3 +29,20 @@ VALUES
    '',
    (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONVEN'));
 COMMIT;
+
+DELETE CRAPACA
+ WHERE nrseqrdr =
+       (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONVEN')
+   AND NMDEACAO = 'BUSCA_COOP_CONVEN_AILOS';
+  
+INSERT INTO cecred.crapaca
+  (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+VALUES
+  (SEQACA_NRSEQACA.NEXTVAL,
+   'BUSCA_COOP_CONVEN_AILOS',
+   'TELA_CONVEN',
+   'pc_busca_coop_conven_web',
+   '',
+   (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONVEN'));
+COMMIT;
+
