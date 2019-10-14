@@ -5,7 +5,7 @@ BEGIN
     SELECT tbgen_grupo_municipal_coop_seq.nextval
           ,11 --CREDIFOZ
           ,idcidade
-          ,'NAO CONSTA'
+          ,'AGO 25.04.2019'
           ,SYSDATE
       FROM crapmun
      WHERE cdestado = 'SC'
@@ -23,7 +23,7 @@ INSERT INTO tbgen_grupo_municipal_coop
     SELECT tbgen_grupo_municipal_coop_seq.nextval
           ,5 --ACENTRA
           ,idcidade
-          ,'NAO CONSTA'
+          ,'AGO 03.04.2019'
           ,SYSDATE
       FROM crapmun
      WHERE cdestado = 'SC'
@@ -66,7 +66,7 @@ INSERT INTO tbgen_grupo_municipal_coop
     SELECT tbgen_grupo_municipal_coop_seq.nextval
           ,2 --ACREDICOOP
           ,idcidade
-          ,'NAO CONSTA'
+          ,'AGO 17.04.2019'
           ,SYSDATE
       FROM crapmun
      WHERE cdestado = 'SC'
@@ -84,7 +84,7 @@ INSERT INTO tbgen_grupo_municipal_coop
     SELECT tbgen_grupo_municipal_coop_seq.nextval
           ,14 --EVOLUA
           ,idcidade
-          ,'NAO CONSTA'
+          ,'AGO 05.04.2019'
           ,SYSDATE
       FROM crapmun
      WHERE cdestado = 'PR'
@@ -120,7 +120,7 @@ INSERT INTO tbgen_grupo_municipal_coop
     SELECT tbgen_grupo_municipal_coop_seq.nextval
           ,13 --CIVIA
           ,idcidade
-          ,'NAO CONSTA'
+          ,'AGO 11.04.2019'
           ,SYSDATE
       FROM crapmun
      WHERE cdestado = 'PR'
@@ -135,7 +135,7 @@ INSERT INTO tbgen_grupo_municipal_coop
     SELECT tbgen_grupo_municipal_coop_seq.nextval
           ,13 --CIVIA
           ,idcidade
-          ,'NAO CONSTA'
+          ,'AGO 11.04.2019'
           ,SYSDATE
       FROM crapmun
      WHERE cdestado = 'SC'
