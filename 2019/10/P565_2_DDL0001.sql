@@ -19,8 +19,6 @@ comment on column CECRED.TBCONV_DOMINIO_CAMPO.dscodigo
 alter table CECRED.TBCONV_DOMINIO_CAMPO
   add constraint TBCONV_DOMINIO_CAMPO_PK primary key (NMDOMINIO, CDDOMINIO);
 
------------------------------------------ Ainda nao aplicados -------------------------------------------------------------
----------------------------------------------------------------------------------------------------------------------------
 -- Add/modify columns 
 alter table CECRED.GNCONVE add flgrelmes number(1) default 0;
 alter table CECRED.GNCONVE add dsdemailmes VARCHAR2(4000);
