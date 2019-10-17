@@ -19,5 +19,41 @@ set gnconve.flgdebfacil = 1
 where gnconve.cdconven in (108,87,126)
   and gnconve.intpconvenio in(2,3) 
   and gnconve.inorigem_inclusao in (1,3) 
+
+ --Scrip para atualização campo 'flgenv_dt_repasse' PREVISC    
+	update cecred.gnconve 
+	  set  gnconve.flgenv_dt_repasse = 1
+	where gnconve.cdconven = 128;  	  
+
+  --Scrip para atualização campo 'qttamanho_optante'  	
+	update cecred.gnconve
+     set gnconve.qttamanho_optante = 8
+   where gnconve.cdconven = 101;
    
+   update cecred.gnconve
+     set gnconve.qttamanho_optante = 8
+   where gnconve.cdconven = 108;
    
+   update cecred.gnconve
+     set gnconve.qttamanho_optante = 22
+   where gnconve.cdconven = 127;
+      
+   update cecred.gnconve
+     set gnconve.qttamanho_optante = 22
+   where gnconve.cdconven = 128;
+   
+   update cecred.gnconve
+     set gnconve.qttamanho_optante = 10
+   where gnconve.cdconven = 41;
+   
+   update cecred.gnconve
+     set gnconve.qttamanho_optante = 9
+   where gnconve.cdconven = 51;
+   
+   update cecred.gnconve
+     set gnconve.qttamanho_optante = 12
+   where gnconve.cdconven = 66;
+   
+   update cecred.gnconve
+     set gnconve.qttamanho_optante = 10
+   where gnconve.cdconven = 87;
