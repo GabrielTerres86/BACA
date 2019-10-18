@@ -2,7 +2,8 @@ declare
 
   vr_idseqconvelib number := null;
   vr_idsequencia   number := null;
-  vr_ativo         number := null;   
+  vr_ativo         number := null;  
+  vr_flgliberado   number := null;   
   
   /*
 DELETE Tbconv_Canalcoop_Liberado;
@@ -180,7 +181,14 @@ begin
         
       --Inserir os canais   
       for rw_canais in cr_canal loop
-             
+        
+		--INTERNET
+        if rw_canais.cdcanal = 3 then
+          vr_flgliberado := 1;
+        else
+		  vr_flgliberado := 0;
+        end if;
+  		
         vr_idsequencia := null; 
         open cr_libcanal(vr_idseqconvelib,rw_conve.cdsegmto, rw_conve.cdempcon, rw_canais.cdcanal); 
         fetch cr_libcanal into vr_idsequencia;   
@@ -190,7 +198,7 @@ begin
             insert into tbconv_canalcoop_liberado
               (idsequencia, idseqconvelib, cdsegmto, cdempcon, cdcanal, flgliberado)
             values
-              (tbconv_canalcoop_liberado_seq.nextval, vr_idseqconvelib, rw_conve.cdsegmto, rw_conve.cdempcon, rw_canais.cdcanal, 1);
+              (tbconv_canalcoop_liberado_seq.nextval, vr_idseqconvelib, rw_conve.cdsegmto, rw_conve.cdempcon, rw_canais.cdcanal, vr_flgliberado);
           exception
             when others then
               dbms_output.put_line('Erro ao inserir na tabela tbconv_canalcoop_liberado - '          
@@ -204,7 +212,7 @@ begin
           --Atualizar tbconv_canalcoop_liberado
           begin
             update tbconv_canalcoop_liberado
-               set flgliberado = 1
+               set flgliberado = vr_flgliberado
              where idsequencia = vr_idsequencia; 
            
           exception
