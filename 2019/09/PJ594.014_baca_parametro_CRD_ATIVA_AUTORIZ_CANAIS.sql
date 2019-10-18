@@ -11,21 +11,15 @@ BEGIN
   
   -- Percorrer as cooperativas do cursor
   FOR rw_crapcop IN cr_crapcop LOOP
-
     BEGIN
-     INSERT INTO crapprm (
-        nmsistem
-        , cdcooper
-        , cdacesso
-        , dstexprm
-        , dsvlrprm
-        ) values (
-        'CRED'
-        , rw_crapcop.cdcooper
-        , 'BLOQCARGAPREAPROV'
-        , 'Parametro para informar o periodo do bloqueio da carga para o cooperado. M = Mensal, T = Trimestral, S = Semestral, A = Anual'
-        , 'S'
-        );
+      INSERT INTO crapprm
+	  (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
+	   values
+	  ('CRED',
+	   rw_crapcop.cdcooper,
+	   'CRD_ATIVA_AUTORIZ_CANAIS',
+	   'Parametro para informar se a funcionalidade de autorizacao de cartao de credito via canais esta ativa ou nao para a cooperativa',
+	   '0');
       
     EXCEPTION
       WHEN dup_val_on_index THEN
@@ -36,7 +30,7 @@ BEGIN
     
   END LOOP;
   
-  --COMMIT;
+  COMMIT;
   
   -- Apresenta uma mensagem de ok
   dbms_output.put_line('Parametrização criada com sucesso');
