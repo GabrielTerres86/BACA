@@ -1,3 +1,5 @@
+PL/SQL Developer Test script 3.0
+265
 DECLARE
 
   -- Busca cooperados demitidos
@@ -139,9 +141,9 @@ BEGIN
     ,INENVIAR_PUSH
     )VALUES(
     (SELECT (MAX(CDMENSAGEM)+1) FROM tbgen_notif_msg_cadastro)
-	,11
-	,'Assembleias 2020'
-	,'Dia #data √†s #horario , #local , #endereco , #cidade'
+  ,11
+  ,'Assembleias 2020'
+  ,'Dia #data ‡s #horario , #local , #endereco , #cidade'
     ,'<p>Ficou mais f&aacute;cil votar nas nossas Assembleias: o evento realizado na sua regi&atilde;o agora tem poder de decis&atilde;o. Venha, conhe&ccedil;a os resultados de 2019 e decida os pr&oacute;ximos passos da sua Cooperativa. Juntos vamos sempre mais longe.</p>
 <p><strong>Dia:</strong> #data<br />
 <strong>Hora:</strong> #horario<br />
@@ -157,7 +159,7 @@ BEGIN
     ,'Saiba mais'
     ,NULL
     ,'http://www.aquivoceparticipa.coop.br/'
-    ,'Voc√™ ser√° redirecionado para fora do app.'
+    ,'VocÍ ser· redirecionado para fora do app.'
     ,NULL
     ,1);
   EXCEPTION
@@ -183,20 +185,20 @@ BEGIN
     ,NMFUNCAO_CONTAS
     ,DHULTIMA_EXECUCAO
     )VALUES(
-	11
-	,3
-	,'Agendamento para envio autom√°tico'
-	,(SELECT MAX(CDMENSAGEM) FROM tbgen_notif_msg_cadastro)
-	,'<br/>#data  - Data do evento (Ex: 20/02) <br/>#horario - Hor√°rio do evento (Ex: 19:00)<br/>#local - Local do evento (Ex: Vila Germ√¢nica)<br/>#endereco - Endere√ßo do Evento (Ex: Rua XV de Novembro, 500)<br/>#cidade - Cidade do evento (Ex: Blumenau)'
-	,1
-	,1
-	,'1,2,3,4,5,6,7'
-	,'1,2,3,4,5,6'
-	,NULL
-	,NULL
-	,30000
-	,'AGRP0001.fn_busca_grupos_notifica'
-	,NULL);
+  11
+  ,3
+  ,'Agendamento para envio autom·tico'
+  ,(SELECT MAX(CDMENSAGEM) FROM tbgen_notif_msg_cadastro)
+  ,'<br/>#data  - Data do evento (Ex: 20/02) <br/>#horario - Hor·rio do evento (Ex: 19:00)<br/>#local - Local do evento (Ex: Vila Germ‚nica)<br/>#endereco - EndereÁo do Evento (Ex: Rua XV de Novembro, 500)<br/>#cidade - Cidade do evento (Ex: Blumenau)'
+  ,1
+  ,1
+  ,'1,2,3,4,5,6,7'
+  ,'1,2,3,4,5,6'
+  ,NULL
+  ,NULL
+  ,30000
+  ,'AGRP0001.fn_busca_grupos_notifica'
+  ,NULL);
   EXCEPTION
     WHEN OTHERS THEN
       ROLLBACK;
@@ -239,7 +241,7 @@ BEGIN
     ('CRED'
     ,0
     ,'CDORIGEM_MENSAGEM_484'
-    ,'C√≥digo de origem para envio de notificacoes e pushes.'
+    ,'CÛdigo de origem para envio de notificacoes e pushes.'
     ,11);
   EXCEPTION
     WHEN OTHERS THEN
@@ -263,3 +265,5 @@ BEGIN
 END;
  
 
+0
+0
