@@ -1,7 +1,7 @@
  --Script para atualização de Campo 'flgvalidavencto' para as empresas que estavam fixas 
- update cecred.gnconve gnconve
+  update cecred.gnconve gnconve
      set gnconve.flgvalidavencto= 1
-   where gnconve.cdhiscxa in (2258,2271,2275,2262,659,2268,2297,2295,2286,2273,692);
+   where gnconve.cdhiscxa in (2258,2271,2275,2262,659,2268,2297,2295,2286,2273,692,2549,2551)
    
  --Script para atualização de Campo 'nrdias_tolerancia' para empresa 'SANEPAR'
   update cecred.gnconve gnconve
