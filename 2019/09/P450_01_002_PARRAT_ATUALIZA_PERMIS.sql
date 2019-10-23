@@ -1,0 +1,2 @@
+UPDATE craptel x SET x.cdopptel = 'C,A,P,B,M', x.lsopptel = 'CONSULTA,ALTERACAO,HABILITAR ALTERACAO RATING,ALTERA BIRO,MODELO CALCULO' WHERE x.nmdatela='PARRAT' AND x.cdcooper = 3;
+COMMIT;
