@@ -46,7 +46,7 @@ BEGIN
        nmrotpai,
        idambtel)
       SELECT v_nmdatela,
-             3,
+             5,
              --'A,C,E,I,H',
        'C',
              v_desc,
