@@ -27,6 +27,8 @@ BEGIN
   -- Fechar o cursor
   CLOSE cr_craprdr;
   
+  DELETE FROM crapaca WHERE nmdeacao = 'SALVAR_PARAMETROS_CARTAO';
+	
   INSERT INTO crapaca (
          nmdeacao
          , nmpackag
@@ -37,7 +39,7 @@ BEGIN
         'SALVAR_PARAMETROS_CARTAO'
         , 'CCRD0009'
         , 'pccracrd_salvar_param_cartao'
-        , 'pr_cdcooper, pr_bancoobwscadconting, pr_bancoobwslimconting, pr_bloqcargapreaprov, pr_contigenciaesteiracrd, pr_crdaprovacaocanais, pr_senhasupervisorcrd, pr_crdresponsavel, pr_crdpzexpnoticanais'
+        , 'pr_cdcooper,pr_parametros'
         , vr_nrseqrdr);
   
   COMMIT;
@@ -46,4 +48,5 @@ BEGIN
   dbms_output.put_line('Referencia a CCRD0009 criado com sucesso!');
   
 END;
+
 
