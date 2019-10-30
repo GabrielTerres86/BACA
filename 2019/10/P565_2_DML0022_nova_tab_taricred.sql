@@ -1,10 +1,10 @@
 -- Create table
 create table CECRED.tbconv_historico_tarifa_cred
 (
-  cdcooper      number(10) not null,
-  dtvigencia    date not null,
-  tpmeiarr      varchar2(1) not null,
-  vltarifa      number(25,2) not null,
+  cdcooper      number(10) default 0 not null,
+  dtvigencia    date default sysdate not null,
+  tpmeiarr      varchar2(1) default 'X' not null,
+  vltarifa      number(25,2) default 0 not null,
   dtatualizacao date default sysdate not null
 )
 ;
