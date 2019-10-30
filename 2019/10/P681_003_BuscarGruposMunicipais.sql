@@ -5,7 +5,7 @@ DECLARE
   CURSOR cr_craprdr IS
     SELECT t.nrseqrdr
       FROM craprdr t
-     WHERE t.NMPROGRA = 'TELA_GRPMUN';
+     WHERE t.NMPROGRA = 'TELA_CADCOP';
   
   -- Variaveis
   vr_nrseqrdr craprdr.nrseqrdr%TYPE;
@@ -20,7 +20,7 @@ BEGIN
   IF cr_craprdr%NOTFOUND THEN
   
   INSERT INTO craprdr(nmprogra,dtsolici)
-       VALUES('TELA_GRPMUN', SYSDATE)
+       VALUES('TELA_CADCOP', SYSDATE)
        RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
   
   END IF;
@@ -36,7 +36,7 @@ BEGIN
          , nrseqrdr
   ) VALUES (
         'BUSCAR_GRUPOS_MUNICIPAIS'
-        , 'TELA_GRPMUN'
+        , 'TELA_CADCOP'
         , 'pc_buscar_grupos_municipais'
         , 'pr_pagina, pr_tamanho_pagina, pr_nome_municipio'
         , vr_nrseqrdr);
@@ -44,6 +44,6 @@ BEGIN
   COMMIT;
   
   -- Apresenta uma mensagem de ok
-  dbms_output.put_line('Referencia a TELA_GRPMUN criado com sucesso!');
+  dbms_output.put_line('Referencia a TELA_CADCOP criado com sucesso!');
   
 END;
