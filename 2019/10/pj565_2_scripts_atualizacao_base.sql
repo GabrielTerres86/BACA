@@ -23,8 +23,8 @@
  --Scrip para atualização campo 'flgenv_dt_repasse' PREVISC -    
 	update cecred.gnconve 
 	  set  gnconve.flgenv_dt_repasse = 1
-	where gnconve.cdconven in (128,127,085,68);  	  
-
+	where gnconve.cdconven in (128,127,112,085,47,48,50,55,57,58,66,68,22,32,38,46,64,1,25,26,33,39,41,43,62);  	  
+	
   --Scrip para atualização campo 'qttamanho_optante'  	
    update cecred.gnconve
 	set gnconve.qttamanho_optante = 6
