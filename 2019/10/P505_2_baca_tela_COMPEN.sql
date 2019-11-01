@@ -48,13 +48,13 @@ BEGIN
       SELECT v_nmdatela,
              5,
              --'A,C,E,I,H',
-       'C',
+             'C,L',
              v_desc,
              v_desc,
              0,
              1, -- bloqueio da tela 
              ' ',
-             'CONSULTA',
+             'CONSULTA,LOG',
              1,
              pr_cdcooper, -- cooperativa
              1,
@@ -94,12 +94,30 @@ BEGIN
        nrmodulo,
        idevento,
        idambace)
-      SELECT v_nmdatela, 'C', ope.cdoperad, ' ', cop.cdcooper, 1, 0, 2
+      SELECT v_nmdatela, 'C,L', ope.cdoperad, ' ', cop.cdcooper, 1, 0, 2
         FROM crapcop cop, crapope ope
        WHERE cop.cdcooper IN (pr_cdcooper)
          AND ope.cdsitope = 1
          AND cop.cdcooper = ope.cdcooper
          AND trim(upper(ope.cdoperad)) = '1';
+		 
+	-- Permissões de consulta para os usuários departamento COMP	 
+	 INSERT INTO crapace
+      (nmdatela,
+       cddopcao,
+       cdoperad,
+       nmrotina,
+       cdcooper,
+       nrmodulo,
+       idevento,
+       idambace)
+      SELECT v_nmdatela, 'C,L', ope.cdoperad, ' ', cop.cdcooper, 1, 0, 2
+        FROM crapcop cop, crapope ope
+       WHERE cop.cdcooper IN (pr_cdcooper)
+	     AND ope.cddepart = 4
+         AND ope.cdsitope = 1
+         AND cop.cdcooper = ope.cdcooper;
+		 
   /*
     -- Permissões de consulta para os usuários pré-definidos pela CECRED                       
     INSERT INTO crapace
