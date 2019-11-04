@@ -961,7 +961,13 @@ insert into CECRED.TBCONV_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
 values ('CDSEGMTO', '7', 'Multas de Trânsito');
 insert into CECRED.TBCONV_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
 values ('CDSEGMTO', '9', 'Uso interno do banco');
-
+-- forma cobranca
+insert into CECRED.TBCONV_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('INCOBRANCA', '1', 'Nenhum');
+insert into CECRED.TBCONV_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('INCOBRANCA', '2', 'Útil');
+insert into CECRED.TBCONV_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('INCOBRANCA', '3', 'Corrido');
 ------------------------------------------Criação de Paramentros------------------------------------------
 INSERT into cecred.crapprm
   (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
