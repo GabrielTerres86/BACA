@@ -38,7 +38,7 @@ BEGIN
         'ATUALIZA_GRUPO_MUNICIPAL'
         , 'CADA0006'
         , 'pc_atualiza_grupo_municipal'
-		, 'pr_nrdconta, pr_idgrupo_municipal'
+		, 'pr_nrdconta,pr_cdcidade'
         , vr_nrseqrdr);
   
   COMMIT;
