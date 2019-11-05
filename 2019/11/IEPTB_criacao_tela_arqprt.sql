@@ -12,6 +12,10 @@ BEGIN
     values ('CRED', 'ARQPRT', 'INFORMAÇÕES DO LOG DE ARQUIVOS IEPTB', ' ', ' ', ' ', 50, 10001, 1, 0, 0, 0, 0, 0, 1, 3, null);
     commit;
     
+    --ACA Reprocesso
+    insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+    values ('REPROCESSA_PROTESTO', 'TELA_MANPRT', 'pc_reprocessa_protesto', 'pr_tpreproc,pr_cdoperad', (SELECT NRSEQRDR FROM craprdr WHERE NMPROGRA = 'TELA_MANPRT'));
+    
     --ACA
     insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
     values ('BUSCA_LISTA_LOG', 'TELA_ARQPRT', 'pc_buscar_lista_log', 'pr_dtgeracao_ini,pr_dtgeracao_fim,pr_tipo_arquivo,pr_pagina,pr_tamanho_pagina', (SELECT NRSEQRDR FROM craprdr WHERE NMPROGRA = 'TELA_ARQPRT'));
