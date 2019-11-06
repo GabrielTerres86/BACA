@@ -31,6 +31,10 @@ commit;
 update tbrat_param_geral set qtdias_atualiz_autom_altissimo = 180; -- dias
 commit;
 
+-- P450 - CDC em Contingencia CDC sem integrasas = 0
+update tbrisco_operacoes set flintegrar_sas = 1 where inorigem_rating = 7 and flintegrar_sas = 0;
+commit;
+
 -- P450 - WEBSERVICE
 update crapaca set lstparam = lstparam || ',pr_scorerat,pr_segmento'
  where nmproced = 'pc_retorno_analise_aut'
