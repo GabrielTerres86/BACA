@@ -1,2 +1,0 @@
-COMMENT ON COLUMN CECRED.tbconv_canalcoop_liberado.cdempcon  IS 'Codigo da empresa a ser conveniada.';
-COMMENT ON COLUMN CECRED.tbconv_canalcoop_liberado.cdcanal  IS 'Codigo da empresa a ser cdcanal.';
