@@ -351,12 +351,12 @@ begin
 end;
 --#######################################################################################################################################
 --
--- Alteração de parâmetros na CRDPACA inserindo parâmetro pr_tipo_acao
+-- Alteração de parâmetros na CRAPACA inserindo parâmetro pr_tipo_acao
 --
 begin
   declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Alteração de parâmetros na CRDPACA inserindo parâmetro pr_tipo_acao';
+    wk_rotina varchar2(200) := 'Alteração de parâmetros na CRAPACA inserindo parâmetro pr_tipo_acao';
 	begin
 		-- incluir parametro para identificar o coordenador a assinar
 		UPDATE CRAPACA SET LSTPARAM = LSTPARAM || ',pr_tipo_acao' WHERE NMDEACAO = 'INSERE_APROVADOR_CRD' AND NMPACKAG = 'TELA_ATENDA_CARTAOCREDITO';
@@ -370,12 +370,12 @@ begin
 end;
 --#######################################################################################################################################
 --
--- Alteração de parâmetros na CRDPACA inserindo parâmetro pr_flgestei
+-- Alteração de parâmetros na CRAPACA inserindo parâmetro pr_flgestei
 --
 begin
   declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Alteração de parâmetros na CRDPACA inserindo parâmetro pr_flgestei';
+    wk_rotina varchar2(200) := 'Alteração de parâmetros na CRAPACA inserindo parâmetro pr_flgestei';
 	begin
 		-- incluir parametro para identificar o coordenador a assinar
 		UPDATE CRAPACA SET LSTPARAM = LSTPARAM || ',pr_flgestei' WHERE NMDEACAO = 'INSERE_APROVADOR_CRD' AND NMPACKAG = 'TELA_ATENDA_CARTAOCREDITO';
