@@ -242,4 +242,16 @@ commit;
                         'pr_dtinicio, pr_dtfim, pr_nriniseq, pr_nrregist',
                         (select nrseqrdr from craprdr where nmprogra = 'TELA_COMPEN'));
                         commit;
+	
+	INSERT INTO CRAPACA(NMDEACAO,
+                        NMPACKAG,
+                        NMPROCED,
+                        LSTPARAM,
+                        NRSEQRDR)
+                 VALUES('VALIDA_CDSEGURANCA',
+                        'TELA_COMPEN',
+                        'pc_valida_cdseguranca',
+                        'pr_cdseguranca',
+                        (select nrseqrdr from craprdr where nmprogra = 'TELA_COMPEN'));
+                        commit;
 END;     
