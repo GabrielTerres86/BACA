@@ -7,9 +7,6 @@ DECLARE
 		   
 BEGIN
   
-  --Limpa registros
-  DELETE FROM crapace ace WHERE ace.nmdatela = 'APRCAR';
-  
   FOR rw_crapcop IN cr_crapcop LOOP
       -- Op  o 'T' Taxa Cumulatividade Grupo Economico
       INSERT INTO crapace (
