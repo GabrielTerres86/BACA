@@ -1056,20 +1056,6 @@ values (789, 1, 1, 'EXTRADO DE TED', 5, ' ', '80col', 0, 16, 'Online', 1, 1, 1, 
 
 END pc_ins_craprel;
 
-
-PROCEDURE pc_rf24_numlote IS
--- P565_2_DML0007_RF24_NUMLOTE.sql
-BEGIN
-  begin
-  for creg in (select cdcooper from crapcop) loop
-     insert into crapprm (nmsistem, cdcooper, cdacesso,dstexprm,dsvlrprm)
-     values ('CRED',   creg.cdcooper,'NUMLOTEXTCONV','Nro lote para geracao historico 2996', 1);
-  end loop;
-  commit;
-end;
-END pc_rf24_numlote;
-
-
 PROCEDURE pc_dml0020_update_crapaca IS
  --P565_2_DML0020_UPDATE_CRAPACA.sql
 BEGIN
@@ -1651,7 +1637,6 @@ BEGIN
   pc_dml19_insert_crapaca();
   pc_ins_crapprg();
   pc_ins_craprel();
-  pc_rf24_numlote();
   pc_dml0020_update_crapaca();
   pc_upd_crapprg();
   pc_dml0005_insert_crapaca();
