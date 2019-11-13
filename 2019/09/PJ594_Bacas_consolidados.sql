@@ -134,7 +134,6 @@ begin
 		insert into tbcrd_dominio_campo (NMDOMINIO, CDDOMINIO, DSCODIGO, INATIVO)values ('MOTNAOAUTORIZACAO', '2', 'Modalidade do cartão divergente da solicitação', 1);
 		insert into tbcrd_dominio_campo (NMDOMINIO, CDDOMINIO, DSCODIGO, INATIVO)values ('MOTNAOAUTORIZACAO', '3', 'Desinteresse da solicitação do cartão', 1);
 		insert into tbcrd_dominio_campo (NMDOMINIO, CDDOMINIO, DSCODIGO, INATIVO)values ('MOTNAOAUTORIZACAO', '4', 'Endereço divergente do solicitado', 1);
-		insert into tbcrd_dominio_campo (NMDOMINIO, CDDOMINIO, DSCODIGO, INATIVO)values ('MOTNAOAUTORIZACAO', '5', 'Prazo de autorização excedido', 1);
 		
 		commit;
 		dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
