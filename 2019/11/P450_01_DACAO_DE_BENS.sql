@@ -1,4 +1,4 @@
---Criação do Tipo do Bem
+--CRIAÇÃO DE DOMÍNIO
 INSERT INTO tbgen_dominio_campo VALUES ('TPBENS_DACAO',1, 'IMÓVEL');
 INSERT INTO tbgen_dominio_campo VALUES ('TPBENS_DACAO',2, 'VEÍCULO');
 INSERT INTO tbgen_dominio_campo VALUES ('TPBENS_DACAO',3, 'MÁQUINA E EQUIPAMENTO');
@@ -27,3 +27,38 @@ INSERT INTO tbgen_dominio_campo VALUES ('TPCATBEM',0402, 'Outros Bens e Direitos
 INSERT INTO tbgen_dominio_campo VALUES ('TPCATBEM',0403, 'Instrumentos Financeiros');
 --
 COMMIT;
+--
+--CRIAÇÃO DE MENSAGEIRIA - GRAVAR_DACAO_BENS
+DELETE FROM CRAPACA
+ WHERE nrseqrdr = (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_PRESTACOES')
+   AND NMDEACAO = 'GRAVAR_DACAO_BENS';
+  
+INSERT INTO cecred.crapaca
+  (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+VALUES
+  (SEQACA_NRSEQACA.NEXTVAL,
+   'GRAVAR_DACAO_BENS',
+   'TELA_ATENDA_PRESTACOES',
+   'pc_gravar_dacao_bens',
+   'pr_cdcooper, pr_nrdconta, pr_ncrtremp,
+ pr_tpctrpro,
+ pr_tpbens_dacao,
+ pr_nrmatricula,
+ pr_nrregistro_imovel,
+ pr_cdnacional_serventia,
+ pr_dsmarbem,
+ pr_dsmodbem,
+ pr_nranobem,
+ pr_nrmodbem,
+ pr_dschassi,
+ pr_ufdplaca,
+ pr_dsdplaca,
+ pr_nrrenava,
+ pr_uflicenc,
+ pr_dsrelbem,
+ pr_nrnotanf,
+ pr_vlrdobem,
+ pr_tpcatbem',
+   (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_PRESTACOES'));
+COMMIT;
+
