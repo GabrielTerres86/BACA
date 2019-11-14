@@ -14,7 +14,7 @@ DECLARE
                   (instr(a.dsxml_mensagem, '<ISPBIFDebtd>') + 13)) ISPB
       FROM tbspb_msg_xml a
      WHERE trunc(a.dhmensagem) >= to_date('01112019', 'ddmmyyyy')
-       AND trunc(a.dhmensagem) <= to_date('30112019', 'ddmmyyyy')
+       AND trunc(a.dhmensagem) <= to_date('03122019', 'ddmmyyyy')
        AND a.nmmensagem     = 'STR0047R2'
        and a.dsxml_mensagem LIKE '%'||prm_nr_portabilidade||'%'
        and a.dsobservacao   IS NULL;
@@ -27,7 +27,7 @@ BEGIN
                      a.nrunico_portabilidade
                 FROM tbepr_portabilidade a
                WHERE trunc(a.dtaprov_portabilidade) >= to_date('01/11/2019','dd/mm/yyyy')
-                 AND trunc(a.dtaprov_portabilidade) <  to_date('30/11/2019','dd/mm/yyyy')
+                 AND trunc(a.dtaprov_portabilidade) <  to_date('04/12/2019','dd/mm/yyyy')
                  AND a.tpoperacao = 2 -- operações de venda
                ORDER BY a.nrunico_portabilidade) LOOP
 
