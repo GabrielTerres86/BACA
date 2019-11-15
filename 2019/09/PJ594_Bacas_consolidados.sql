@@ -403,7 +403,7 @@ begin
 		DELETE FROM crapprm prm WHERE prm.cdacesso = 'CRD_APROVACAO_CANAIS';
 		-- Percorrer as cooperativas do cursor
 		FOR rw_crapcop IN cr_crapcop LOOP
-			INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'Ativar/Desativar a autorização de solicitação de cartão de credito pelo cooperado por meio dos Canais. (o - desativada e 1 - ativada)', '0');
+			INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'CRD_APROVACAO_CANAIS', 'Ativar/Desativar a autorização de solicitação de cartão de credito pelo cooperado por meio dos Canais. (o - desativada e 1 - ativada)', '0');
 		END LOOP;
 		commit;
 		dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
