@@ -16,7 +16,7 @@ select a.cdcooper,
        a.dtfchfol
 from crapemp a
 where a.indescsg = 2 -- empresa consignado
-and a.cdcooper in (1,6,7,8,9,10,11,12,14,16)  -- cooperativas 
+and a.cdcooper in (1,6,7,8,9,10,12,14,16)  -- cooperativas 
 and a.dtfchfol > 8; ---Corrigir a regra para quem tem a data de fechamaento < 9
 
 vr_mes_novo_de        number;
