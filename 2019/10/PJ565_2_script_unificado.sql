@@ -180,7 +180,7 @@ BEGIN
       dbms_output.put_line('3-ARRECADAÇÃO/DEBITO AUTOMATICO - ERRO: '|| sqlerrm);
   END;
   --
-  COMMIT;
+  --
   --
 END;
 
@@ -193,7 +193,6 @@ BEGIN
 
 update gnconve a
 set a.dsagercb = substr(a.dsagercb, 1, length(a.dsagercb)-1);
-commit;
   
 END pc_update_agencia;
 
@@ -208,11 +207,16 @@ declare
 begin
   
   --Verificar se o script já foi executado, NÃO PODE RODAR DUAS VEZES
+  begin
   select distinct 1
     into vr_atualizado  
     from gnconve t
    where cdconven in(15,30,82)
-     and flgindeb = 3;
+     and inorigem_inclusao = 3;
+  exception
+    when no_data_found then
+      vr_atualizado := 0;
+  end;
      
   if vr_atualizado = 0 then
        
@@ -227,7 +231,7 @@ begin
         dbms_output.put_line('Erro ao atualizar o campo gnconve.flgindeb para 3 - Misto. '|| sqlerrm); 
     end; 
     --
-    commit;
+    --
     --2 - Empresa Conveniada
     begin      
       update gnconve t
@@ -239,7 +243,7 @@ begin
         dbms_output.put_line('Erro ao atualizar o campo gnconve.flgindeb para 2 - Empresa Conveniada. '|| sqlerrm); 
     end;
     --
-    commit;
+    --
     --1 - Cooperativa
     begin      
       update gnconve t
@@ -251,7 +255,7 @@ begin
         dbms_output.put_line('Erro ao atualizar o campo gnconve.flgindeb para 1 - Cooperativa . '|| sqlerrm); 
     end;
     --
-    commit;     
+    --     
     --*/ 
 	
 	--Popular campo novo INORIGEM_INCLUSAO
@@ -266,7 +270,7 @@ begin
         dbms_output.put_line('Erro ao atualizar o campo gnconve.flgindeb para 3 - Misto. '|| sqlerrm); 
     end; 
     --
-    commit;
+    --
     --2 - Empresa Conveniada
     begin      
       update gnconve t
@@ -278,7 +282,7 @@ begin
         dbms_output.put_line('Erro ao atualizar o campo gnconve.flgindeb para 2 - Empresa Conveniada. '|| sqlerrm); 
     end;
     --
-    commit;
+    --
     --1 - Cooperativa
     begin      
       update gnconve t
@@ -290,7 +294,7 @@ begin
         dbms_output.put_line('Erro ao atualizar o campo gnconve.flgindeb para 1 - Cooperativa no campo Origem de Inclusão. '|| sqlerrm); 
     end;
     --
-    commit; 
+    -- 
 	
   else
     dbms_output.put_line('Script já foi executado uma vez, não deve rodar novamente. '); 
@@ -303,7 +307,7 @@ begin
       when others then
         dbms_output.put_line('Erro ao atualizar o campo gnconve.flgindeb para 1 - Cooperativa . '|| sqlerrm); 
     end;
-	commit;
+	--
   end if;  
 end;     
 
@@ -325,7 +329,7 @@ BEGIN
         t.lsopptel = 'ALTERACAO,CONSULTA,EXCLUSAO,INCLUSAO,ALTERACAO REPASSE'
   WHERE NMDATELA = 'CONVEN';
 
-commit; 
+-- 
 
  --'F0030503', 'F0030642'
  DELETE  CRAPACE 
@@ -335,7 +339,7 @@ commit;
     AND IDAMBACE = 2
     AND CDCOOPER = 3; 
 	
-commit;
+--
 
 INSERT INTO CRAPACE
       (NMDATELA,
@@ -353,7 +357,7 @@ INSERT INTO CRAPACE
          AND COP.CDCOOPER = OPE.CDCOOPER
          AND TRIM(UPPER(OPE.CDOPERAD)) = 'F0030503';
 
-commit;	
+--	
 	 
 INSERT INTO CRAPACE
       (NMDATELA,
@@ -370,7 +374,7 @@ INSERT INTO CRAPACE
          AND OPE.CDSITOPE = 1
          AND COP.CDCOOPER = OPE.CDCOOPER
          AND TRIM(UPPER(OPE.CDOPERAD)) = 'F0030642';
-commit;		 
+--		 
 
 END pc_permissao_acesso;
 
@@ -974,7 +978,7 @@ INSERT into cecred.crapprm
 VALUES
   ('CONV', 0, 'CANAL_ENTRADA_CONVENIO', 'Canais de Entrada para Convenios', '2,3,4');
 END;
-  COMMIT;  
+  --  
 END;
 
 END pc_dml0001;
@@ -986,7 +990,7 @@ BEGIN
   -- crapaca tela_conven.pc_gera_extr_ted
   INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
   VALUES ('GERAR_EXTRATO_TED','TELA_CONVEN','pc_gera_extr_ted','pr_cdcooper,pr_cdconven,pr_datarepasse',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'TELA_CONVEN' AND ROWNUM = 1));
-  COMMIT;
+  --
 END pc_dml19_INSERT_CRAPACA;
 
 PROCEDURE pc_ins_crapprg IS
@@ -1092,7 +1096,7 @@ VALUES
    'pc_busca_liberacao_conve_web',
    'pr_tparrecad,pr_cdempres,pr_cdconven,pr_cdempcon,pr_cdsegmto',
    (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONVEN'));
-COMMIT;
+--
 
 DELETE FROM CRAPACA
  WHERE nrseqrdr =
@@ -1108,7 +1112,7 @@ VALUES
    'pc_gravar_liberacao_conve_web',
    '',
    (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONVEN'));
-COMMIT;
+--
 
 DELETE CRAPACA
  WHERE nrseqrdr =
@@ -1124,7 +1128,7 @@ VALUES
    'pc_busca_coop_conven_web',
    '',
    (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONVEN'));
-COMMIT;
+--
 
 DELETE CRAPACA
  WHERE nrseqrdr =
@@ -1140,7 +1144,7 @@ VALUES
    'pc_busca_forma_arrecad_web',
    'pr_cdcooper,pr_cdempcon,pr_cdsegmto',
    (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CONVEN'));
-COMMIT;
+--
 
 END pc_dml0005_insert_crapaca;
 
@@ -1247,7 +1251,7 @@ declare
   /*
 DELETE Tbconv_Canalcoop_Liberado;
 DELETE TBCONV_LIBERACAO;
-COMMIT;
+--
 */
 /*
 select * from TBCONV_LIBERACAO t;
@@ -1476,7 +1480,7 @@ begin
     end if;--Fim TipoConvênio for 1 - arrecadação OU 3-arrecadacao/deb.aut.              
   end loop;  --Fim Convênio
   --
-  commit;
+  --
   --------------------------------------------------------------------
   --Convênios AILOS
   --------------------------------------------------------------------
@@ -1622,7 +1626,7 @@ begin
       
     end loop;  --Fim Cooperativas ativas
   end loop; --Fim Convênio
-  commit;
+  --
 end;     
 
 END pc_canalcoop_liberado;
@@ -1642,5 +1646,7 @@ BEGIN
   pc_dml0005_insert_crapaca();
   pc_atualizacao_base();
   pc_canalcoop_liberado();
-
+  commit;
 END;
+/
+/
