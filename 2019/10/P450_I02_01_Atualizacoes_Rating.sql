@@ -1,5 +1,5 @@
 --p450 - Estoria 26431- Excluir Job, pois será substituido por 2 novos 
-sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBATUALIZARATING');
+dbms_scheduler.drop_job(job_name => 'CECRED.JBATUALIZARATING');
 commit;
 
 -- Dominios
@@ -72,7 +72,7 @@ update craptel
    set cdopptel = replace(cdopptel,',T',NULL)
       ,lsopptel = replace(lsopptel, ',ALTERAR RATING', NULL)
  where UPPER(NMDATELA) like UPPER('%ATENDA%')  --CDCOOPER, UPPER(NMDATELA), UPPER(NMROTINA)
-   and UPPER(NMROTINA) like UPPER('DSC CHQS - LIMITE')
+   and UPPER(NMROTINA) like UPPER('DSC CHQS - LIMITE');
 commit;
 
 -- OPÇÃO Z - DSC CHQS - LIMITE
