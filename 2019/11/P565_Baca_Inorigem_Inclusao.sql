@@ -13,6 +13,11 @@ DECLARE
 	update gnconve g
 		set g.dsccdrcb = REPLACE(g.dsccdrcb,' ')
 	WHERE g.cdconven IN (4,68);
+	
+	UPDATE gnconve g
+	SET g.intpconvenio = 2
+		,g.inorigem_inclusao = 2
+	WHERE g.cdconven in( 147,148,149,150);
 
    --/
    COMMIT;  
