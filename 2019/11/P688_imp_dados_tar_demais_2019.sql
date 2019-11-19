@@ -4,7 +4,8 @@ declare
   select crapcop.nmrescop
         ,crapcop.cdcooper
     from cecred.crapcop
-   where cdcooper <> 1
+   where cdcooper not in (1,3)
+     and flgativo = 1
   order by cdcooper;
   
   rw_coop        cr_coop%rowtype;  
