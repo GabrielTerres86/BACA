@@ -16,37 +16,6 @@ BEGIN
     END IF;
     CLOSE cr_crapcop;
 
-    INSERT INTO tbgen_notif_automatica_prm
-        (cdorigem_mensagem
-        ,cdmotivo_mensagem
-        ,dsmotivo_mensagem
-        ,cdmensagem
-        ,dsvariaveis_mensagem
-        ,inmensagem_ativa
-        ,intipo_repeticao
-        ,nrdias_semana
-        ,nrsemanas_repeticao
-        ,nrdias_mes
-        ,nrmeses_repeticao
-        ,hrenvio_mensagem
-        ,nmfuncao_contas
-        ,dhultima_execucao)
-    VALUES
-        (8
-        ,11
-        ,'AilosPag - Pagamento recebido'
-        ,vr_cdmensagem
-        ,'<br/>#nomepagador - Nome completo do pagador (Ex.: JOÃO DA SILVA) <br/>#valor - Valor do pagamento (Ex.: 45,00)'
-        ,1
-        ,0
-        ,NULL
-        ,NULL
-        ,NULL
-        ,NULL
-        ,NULL
-        ,NULL
-        ,NULL);
-
     INSERT INTO tbgen_notif_msg_cadastro
         (cdmensagem
         ,cdorigem_mensagem
@@ -79,6 +48,37 @@ BEGIN
         ,NULL
         ,NULL
         ,0);
+		
+		INSERT INTO tbgen_notif_automatica_prm
+        (cdorigem_mensagem
+        ,cdmotivo_mensagem
+        ,dsmotivo_mensagem
+        ,cdmensagem
+        ,dsvariaveis_mensagem
+        ,inmensagem_ativa
+        ,intipo_repeticao
+        ,nrdias_semana
+        ,nrsemanas_repeticao
+        ,nrdias_mes
+        ,nrmeses_repeticao
+        ,hrenvio_mensagem
+        ,nmfuncao_contas
+        ,dhultima_execucao)
+    VALUES
+        (8
+        ,11
+        ,'AilosPag - Pagamento recebido'
+        ,vr_cdmensagem
+        ,'<br/>#nomepagador - Nome completo do pagador (Ex.: JOÃO DA SILVA) <br/>#valor - Valor do pagamento (Ex.: 45,00)'
+        ,1
+        ,0
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL);		
 		
 		
 	COMMIT;
