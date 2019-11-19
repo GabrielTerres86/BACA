@@ -4,13 +4,18 @@ declare
   select crapcop.nmrescop
         ,crapcop.cdcooper
     from cecred.crapcop
-  order by crapcop.cdcooper;
+   where cdcooper <> 1
+  order by cdcooper;
   
   rw_coop        cr_coop%rowtype;  
   
-  vr_dataini     date := to_date('01/01/2018','dd/mm/yyyy');
-  vr_datafim     date := to_date('31/03/2018','dd/mm/yyyy');
+  vr_dataini     date := to_date('01/01/2019','dd/mm/yyyy');
+  vr_datafim     date := trunc(sysdate-1);
   vr_dataproc    date;
+  -- Variaveis de erro    
+  vr_cdcritic        crapcri.cdcritic%TYPE;
+  vr_dscritic        VARCHAR2(4000);
+  vr_exc_erro    EXCEPTION;
 
   PROCEDURE pc_apura_tarifas_financiadas(pr_cdcooper IN crapcop.cdcooper%TYPE    --> Cooperativa
                                         ,pr_dtmvtoan IN crapdat.dtmvtoan%TYPE) IS --> Data de movimento do dia anterior)        
@@ -22,16 +27,12 @@ declare
 
    Dados referentes ao programa:
 
-   Frequencia: Diário.
-   Objetivo  : Importar dados de tarifa financiadas - retirado o envio de e-mails e registro em log, para execução via script
+   Frequencia: N/A.
+   Objetivo  : Importar dados de tarifa financiadas - Copiada da TARI0003, pois foi retirado o envio de e-mails e registro em log, para execução BACA pelo DBA
 
    Alteracoes:
 
   ..........................................................................*/  
-  -- Variaveis de erro    
-  vr_cdcritic        crapcri.cdcritic%TYPE;
-  vr_dscritic        VARCHAR2(4000);
-  vr_exc_erro        EXCEPTION;
                                           
   vr_nrmesref   INTEGER;
   vr_nranoref   INTEGER;
@@ -214,15 +215,6 @@ declare
       END;                             
     END LOOP;
          
-  EXCEPTION
-    WHEN vr_exc_erro THEN
-      dbms_output.put_line('vr_dscritic: ' || vr_dscritic);
-      dbms_output.put_line('vr_dscritic: ' || vr_dscritic);
-      rollback;
-    WHEN OTHERS THEN
-      dbms_output.put_line('vr_dscritic: ' || vr_dscritic);
-      dbms_output.put_line('vr_dscritic: ' || vr_dscritic);
-      rollback;
   END pc_apura_tarifas_financiadas;
   
 begin
@@ -246,12 +238,19 @@ begin
     end loop;
   end loop;
 exception
+  when vr_exc_erro then
+    raise_application_error( -20001,'Erro na procedure pc_apura_tarifas_financiadas - '    ||
+                  'vr_dataproc: ' || to_char(vr_dataproc,'dd/mm/yyyy')  || ' / ' ||
+                  'vr_cdcritic: '  || vr_cdcritic               || ' / ' ||
+                  'vr_dscritic: ' || vr_dscritic               || ' / ' ||
+                  'erro: '        || sqlerrm);
+    rollback;
   when others then
-    dbms_output.put_line('Erro no script de Importação de Dados Tarifas - '    ||
-                         'vr_dataini : ' || to_char(vr_dataini,'dd/mm/yyyy')   || ' / ' ||
-                         'vr_datafim : ' || to_char(vr_datafim,'dd/mm/yyyy')   || ' / ' ||
-                         'vr_dataproc: ' || to_char(vr_dataproc,'dd/mm/yyyy')  || ' / ' ||
-                         'erro: '        || sqlerrm);
+    raise_application_error( -20002,'Erro não previsto no script de Importação de Dados Tarifas - '    ||
+                  'vr_dataini : ' || to_char(vr_dataini,'dd/mm/yyyy')   || ' / ' ||
+                  'vr_datafim : ' || to_char(vr_datafim,'dd/mm/yyyy')   || ' / ' ||
+                  'vr_dataproc: ' || to_char(vr_dataproc,'dd/mm/yyyy')  || ' / ' ||
+                  'erro: '        || sqlerrm);
     rollback;
 end;
-
+/
