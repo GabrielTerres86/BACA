@@ -22,6 +22,9 @@ BEGIN
 
     insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
     values ('BUSCA_ITEM_LOG', 'TELA_ARQPRT', 'pc_buscar_item_log', 'pr_cdidlog,pr_pagina_detalhe,pr_tamanho_pagina_detalhe', (SELECT NRSEQRDR FROM craprdr WHERE NMPROGRA = 'TELA_ARQPRT'));
+    
+    insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+    values ('BUSCA_LOG_REENVIO_REMESSA', 'TELA_MANPRT', 'pc_buscar_log_reenvio_remessa', null, (SELECT NRSEQRDR FROM craprdr WHERE NMPROGRA = 'TELA_MANPRT'));
 
     COMMIT;
 END;
