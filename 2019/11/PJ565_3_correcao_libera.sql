@@ -1,0 +1,11 @@
+DECLARE
+ --/
+ BEGIN
+   --/
+	-- CRAPACA CHEQ0001
+	UPDATE CRAPACA 
+		SET LSTPARAM = 'pr_cdcooper,pr_nrdconta,pr_nrdocmto'
+	WHERE NMDEACAO = 'BUSCAHISTCHEQ' AND  NMPACKAG = 'CHEQ0001'; 
+   --/
+   COMMIT;  
+END;
