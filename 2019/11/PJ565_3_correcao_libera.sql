@@ -6,6 +6,8 @@ DECLARE
 	UPDATE CRAPACA 
 		SET LSTPARAM = 'pr_cdcooper,pr_nrdconta,pr_nrdocmto'
 	WHERE NMDEACAO = 'BUSCAHISTCHEQ' AND  NMPACKAG = 'CHEQ0001'; 
-   --/
+    --/
+     UPDATE CRAPAGB SET IDCOMPENSACAO = 'S'; 
+	--/ 
    COMMIT;  
 END;
