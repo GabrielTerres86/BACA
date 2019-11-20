@@ -1,17 +1,17 @@
 begin
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_lista_motivos_recusa"
+  -- Criação de referência "CCRD0011.pccrd_lista_motivos_recusa"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_lista_motivos_recusa"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_lista_motivos_recusa"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -20,11 +20,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('LISTAR_MOTIVOS_REJEITAR', 'CCRD0009', 'pccrd_lista_motivos_recusa', '', vr_nrseqrdr);
+      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('LISTAR_MOTIVOS_REJEITAR', 'CCRD0011', 'pccrd_lista_motivos_recusa', '', vr_nrseqrdr);
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -35,17 +35,17 @@ begin
   end;
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_lista_motiv_bloqueio_web"
+  -- Criação de referência "CCRD0011.pccrd_lista_motiv_bloqueio_web"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_lista_motiv_bloqueio_web"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_lista_motiv_bloqueio_web"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -54,11 +54,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('LISTAR_MOTIVOS_BLOQUEIO', 'CCRD0009', 'pccrd_lista_motiv_bloqueio_web', '', vr_nrseqrdr);
+      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('LISTAR_MOTIVOS_BLOQUEIO', 'CCRD0011', 'pccrd_lista_motiv_bloqueio_web', '', vr_nrseqrdr);
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -69,17 +69,17 @@ begin
   end;
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_consulta_info_aprovado"
+  -- Criação de referência "CCRD0011.pccrd_consulta_info_aprovado"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_consulta_info_aprovado"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_consulta_info_aprovado"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -88,11 +88,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('CONSULTA_INFORMACAO_APROVADO', 'CCRD0009', 'pccrd_consulta_info_aprovado', 'pr_nrdconta', vr_nrseqrdr);
+      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('CONSULTA_INFORMACAO_APROVADO', 'CCRD0011', 'pccrd_consulta_info_aprovado', 'pr_nrdconta', vr_nrseqrdr);
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -103,17 +103,17 @@ begin
   end;
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_gravar_motivo_recusa"
+  -- Criação de referência "CCRD0011.pccrd_gravar_motivo_recusa"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_gravar_motivo_recusa"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_gravar_motivo_recusa"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -122,11 +122,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('GRAVAR_MOTIVOS_REJEITAR', 'CCRD0009', 'pccrd_gravar_motivo_recusa', 'pr_nrdconta,pr_coddominio', vr_nrseqrdr);
+      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('GRAVAR_MOTIVOS_REJEITAR', 'CCRD0011', 'pccrd_gravar_motivo_recusa', 'pr_nrdconta,pr_coddominio', vr_nrseqrdr);
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -137,17 +137,17 @@ begin
   end;
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_verifica_admcrd"
+  -- Criação de referência "CCRD0011.pccrd_verifica_admcrd"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_verifica_admcrd"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_verifica_admcrd"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -156,11 +156,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('VERIFICA_TPADMCRD', 'CCRD0009', 'pccrd_verifica_admcrd', 'pr_nrdconta, nrcrcard', vr_nrseqrdr);
+      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('VERIFICA_TPADMCRD', 'CCRD0011', 'pccrd_verifica_admcrd', 'pr_nrdconta, nrcrcard', vr_nrseqrdr);
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -475,17 +475,17 @@ begin
   end;
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_salvar_limites_ope"
+  -- Criação de referência "CCRD0011.pccrd_salvar_limites_ope"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_salvar_limites_ope"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_salvar_limites_ope"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -494,11 +494,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)VALUES ('SALVA_LIMITES_OPERACIONAIS', 'CCRD0009', 'pccrd_salvar_limites_ope', 'pr_cdcooperativa, pr_id, pr_vllimite_outo, pr_vllimite_cons, pr_vllimite_disp, pr_perseguranca, pr_perdisp_majo, pr_perdisp_prea, pr_perdisp_oper, pr_email_notif', vr_nrseqrdr);
+      INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)VALUES ('SALVA_LIMITES_OPERACIONAIS', 'CCRD0011', 'pccrd_salvar_limites_ope', 'pr_cdcooperativa, pr_id, pr_vllimite_outo, pr_vllimite_cons, pr_vllimite_disp, pr_perseguranca, pr_perdisp_majo, pr_perdisp_prea, pr_perdisp_oper, pr_email_notif', vr_nrseqrdr);
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -509,17 +509,17 @@ begin
   end;
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_buscar_limites_ope"
+  -- Criação de referência "CCRD0011.pccrd_buscar_limites_ope"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_buscar_limites_ope"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_buscar_limites_ope"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -528,11 +528,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)VALUES ('BUSCA_LIMITES_OPERACIONAIS', 'CCRD0009', 'pccrd_buscar_limites_ope', 'pr_cdcooperativa', vr_nrseqrdr);
+      INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)VALUES ('BUSCA_LIMITES_OPERACIONAIS', 'CCRD0011', 'pccrd_buscar_limites_ope', 'pr_cdcooperativa', vr_nrseqrdr);
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -543,17 +543,17 @@ begin
   end;
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_bloqdesbloq_carga"
+  -- Criação de referência "CCRD0011.pccrd_bloqdesbloq_carga"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_bloqdesbloq_carga"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_bloqdesbloq_carga"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -562,11 +562,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)  VALUES ('BLOQUEAR_DESBLOQUEAR_CARGA', 'CCRD0009', 'pccrd_bloqdesbloq_carga', 'pr_idcarga, pr_cdcooperativa', vr_nrseqrdr);
+      INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)  VALUES ('BLOQUEAR_DESBLOQUEAR_CARGA', 'CCRD0011', 'pccrd_bloqdesbloq_carga', 'pr_idcarga, pr_cdcooperativa', vr_nrseqrdr);
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -577,17 +577,17 @@ begin
   end;
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_buscar_historico"
+  -- Criação de referência "CCRD0011.pccrd_buscar_historico"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_buscar_historico"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_buscar_historico"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -596,11 +596,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)  VALUES ('BUSCA_HISTORICO', 'CCRD0009', 'pccrd_buscar_historico', 'pr_cdcooperativa, pr_idcarga, pr_pagina, pr_tamanho_pagina', vr_nrseqrdr);
+      INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)  VALUES ('BUSCA_HISTORICO', 'CCRD0011', 'pccrd_buscar_historico', 'pr_cdcooperativa, pr_idcarga, pr_pagina, pr_tamanho_pagina', vr_nrseqrdr);
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -711,17 +711,17 @@ begin
   end;
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_buscar_carga_coop_sas"
+  -- Criação de referência "CCRD0011.pccrd_buscar_carga_coop_sas"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_buscar_carga_coop_sas"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_buscar_carga_coop_sas"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -730,11 +730,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) VALUES ('BUSCAR_CARGA_COOPERATIVA_SAS', 'CCRD0009', 'pccrd_buscar_carga_coop_sas', 'pr_cdcooperativa, pr_pagina, pr_tamanho_pagina', vr_nrseqrdr);  
+      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) VALUES ('BUSCAR_CARGA_COOPERATIVA_SAS', 'CCRD0011', 'pccrd_buscar_carga_coop_sas', 'pr_cdcooperativa, pr_pagina, pr_tamanho_pagina', vr_nrseqrdr);  
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -949,17 +949,17 @@ begin
   end;  
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_consulta_info_bloq_web"
+  -- Criação de referência "CCRD0011.pccrd_consulta_info_bloq_web"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_consulta_info_bloq_web"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_consulta_info_bloq_web"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -968,11 +968,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('CONSULTA_INFORMACAO_EXCLUSAO', 'CCRD0009', 'pccrd_consulta_info_bloq_web', 'pr_nrdconta, pr_nrcpfcnpjgc', vr_nrseqrdr);
+      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('CONSULTA_INFORMACAO_EXCLUSAO', 'CCRD0011', 'pccrd_consulta_info_bloq_web', 'pr_nrdconta, pr_nrcpfcnpjgc', vr_nrseqrdr);
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -984,17 +984,17 @@ begin
   
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_consulta_bloqueio"
+  -- Criação de referência "CCRD0011.pccrd_consulta_bloqueio"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_consulta_bloqueio"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_consulta_bloqueio"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -1003,11 +1003,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('BUSCA_HISTORICO_BLOQUEIOS', 'CCRD0009', 'pccrd_consulta_bloqueio', 'pr_cdcooperativa, pr_nrdconta, pr_pagina, pr_tamanho_pagina', vr_nrseqrdr);
+      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('BUSCA_HISTORICO_BLOQUEIOS', 'CCRD0011', 'pccrd_consulta_bloqueio', 'pr_cdcooperativa, pr_nrdconta, pr_pagina, pr_tamanho_pagina', vr_nrseqrdr);
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -1018,17 +1018,17 @@ begin
   end;        
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_gravar_bloqueio_web"
+  -- Criação de referência "CCRD0011.pccrd_gravar_bloqueio_web"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_gravar_bloqueio_web"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_gravar_bloqueio_web"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -1037,11 +1037,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('GRAVAR_MOTIVOS_BLOQUEIO', 'CCRD0009', 'pccrd_gravar_bloqueio_web', 'pr_nrdconta, pr_coddominio, pr_indtbloq, pr_inacao', vr_nrseqrdr);
+      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('GRAVAR_MOTIVOS_BLOQUEIO', 'CCRD0011', 'pccrd_gravar_bloqueio_web', 'pr_nrdconta, pr_coddominio, pr_indtbloq, pr_inacao', vr_nrseqrdr);
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -1052,17 +1052,17 @@ begin
   end;        
   --#######################################################################################################################################
   --
-  -- Criação de referência "CCRD0009.pccrd_consulta_limite_web"
+  -- Criação de referência "CCRD0011.pccrd_consulta_limite_web"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccrd_consulta_limite_web"';
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_consulta_limite_web"';
     -- Buscar registro da RDR
     CURSOR cr_craprdr IS
       SELECT t.nrseqrdr
         FROM craprdr t
-       WHERE t.NMPROGRA = 'CCRD0009';
+       WHERE t.NMPROGRA = 'CCRD0011';
     -- Variaveis
     vr_nrseqrdr craprdr.nrseqrdr%TYPE;
     begin
@@ -1071,11 +1071,11 @@ begin
       FETCH cr_craprdr INTO vr_nrseqrdr;
       -- Se nao encontrar
       IF cr_craprdr%NOTFOUND THEN
-        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
       END IF;
       -- Fechar o cursor
       CLOSE cr_craprdr;
-      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('CONSULTA_CARTAO_APROVADO', 'CCRD0009', 'pccrd_consulta_limite_web', 'pr_cdcooperativa, pr_cdoperad, pr_nmdatela, pr_nrdconta, pr_flgerlog, pr_nrcpfcnpjgc', vr_nrseqrdr);
+      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('CONSULTA_CARTAO_APROVADO', 'CCRD0011', 'pccrd_consulta_limite_web', 'pr_cdcooperativa, pr_cdoperad, pr_nmdatela, pr_nrdconta, pr_flgerlog, pr_nrcpfcnpjgc', vr_nrseqrdr);
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
@@ -1509,17 +1509,17 @@ begin
 	end;  
 	--#######################################################################################################################################
 	--
-	-- Criação de referência "CCRD0009.pccracrd_salvar_param_cartao"
+	-- Criação de referência "CCRD0011.pccracrd_salvar_param_cartao"
 	--
 	begin
 	  declare 
 		-- nome da rotina
-		wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccracrd_salvar_param_cartao"';
+		wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccracrd_salvar_param_cartao"';
 		-- Buscar registro da RDR
 		CURSOR cr_craprdr IS
 			SELECT t.nrseqrdr
 			  FROM craprdr t
-			 WHERE t.NMPROGRA = 'CCRD0009';
+			 WHERE t.NMPROGRA = 'CCRD0011';
 		-- Variaveis
 		vr_nrseqrdr craprdr.nrseqrdr%TYPE;
 		begin
@@ -1528,12 +1528,12 @@ begin
 			FETCH cr_craprdr INTO vr_nrseqrdr;
 			-- Se nao encontrar
 			IF cr_craprdr%NOTFOUND THEN
-				INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+				INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
 			END IF;
 			-- Fechar o cursor
 			CLOSE cr_craprdr;
 			DELETE FROM crapaca WHERE nmdeacao = 'SALVAR_PARAMETROS_CARTAO';
-			INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)VALUES ('SALVAR_PARAMETROS_CARTAO', 'CCRD0009', 'pccracrd_salvar_param_cartao', 'pr_cdcooper,pr_parametros', vr_nrseqrdr);
+			INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)VALUES ('SALVAR_PARAMETROS_CARTAO', 'CCRD0011', 'pccracrd_salvar_param_cartao', 'pr_cdcooper,pr_parametros', vr_nrseqrdr);
 			commit;
 			dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
 		exception
@@ -1544,17 +1544,17 @@ begin
 	end;
 	--#######################################################################################################################################
 	--
-	-- Criação de referência "CCRD0009.pccracrd_obter_param_cartao"
+	-- Criação de referência "CCRD0011.pccracrd_obter_param_cartao"
 	--
 	begin
 	  declare 
 		-- nome da rotina
-		wk_rotina varchar2(200) := 'Criação de referência "CCRD0009.pccracrd_obter_param_cartao"';
+		wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccracrd_obter_param_cartao"';
 		-- Buscar registro da RDR
 		CURSOR cr_craprdr IS
 			SELECT t.nrseqrdr
 			  FROM craprdr t
-			 WHERE t.NMPROGRA = 'CCRD0009';
+			 WHERE t.NMPROGRA = 'CCRD0011';
 		-- Variaveis
 		vr_nrseqrdr craprdr.nrseqrdr%TYPE;
 		begin
@@ -1563,11 +1563,11 @@ begin
 			FETCH cr_craprdr INTO vr_nrseqrdr;
 			-- Se nao encontrar
 			IF cr_craprdr%NOTFOUND THEN
-				INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0009', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+				INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
 			END IF;
 			-- Fechar o cursor
 			CLOSE cr_craprdr;
-			INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)VALUES ('OBTER_PARAMETROS_CARTAO', 'CCRD0009', 'pccracrd_obter_param_cartao', 'pr_cdcooper', vr_nrseqrdr);
+			INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)VALUES ('OBTER_PARAMETROS_CARTAO', 'CCRD0011', 'pccracrd_obter_param_cartao', 'pr_cdcooper', vr_nrseqrdr);
 			commit;
 			dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
 		exception
