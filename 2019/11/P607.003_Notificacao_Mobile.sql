@@ -1,4 +1,4 @@
-DECLARE
+﻿DECLARE
     CURSOR cr_crapcop IS
         SELECT (nvl(MAX(cdmensagem), 0) + 1) cdmensagem FROM tbgen_notif_msg_cadastro;
     vr_cdmensagem tbgen_notif_msg_cadastro.cdmensagem%TYPE;
@@ -37,7 +37,7 @@ BEGIN
         ,8
         ,'AilosPag - Pagamento recebido'
         ,'Você recebeu um pagamento. Clique e saiba mais.'
-        ,'<p>#nomepagador pagou&nbsp;#valor para voc&ecirc;.</p>'
+        ,'<p>#nomepagador pagou #valor para você.</p>'
         ,14
         ,0
         ,NULL
