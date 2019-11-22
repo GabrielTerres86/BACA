@@ -1202,10 +1202,10 @@ begin
       -- Fim Noturno   
       -- Inicio Recusa Esteira
       INSERT INTO cecred.tbgen_notif_msg_cadastro(cdmensagem,cdorigem_mensagem,dstitulo_mensagem,dstexto_mensagem,dshtml_mensagem,cdicone,inexibir_banner,nmimagem_banner,inexibe_botao_acao_mobile,dstexto_botao_acao_mobile,cdmenu_acao_mobile,dslink_acao_mobile,dsmensagem_acao_mobile,dsparam_acao_mobile,inenviar_push)
-      VALUES(1070,8,'Recusa Esteira','Não aprovação/Recusa Esteira','<p>Comunicamos que ocorreu uma inconsist&ecirc;ncia na solicita&ccedil;&atilde;o do seu cart&atilde;o Ailos. Favor entre em contato com sua Cooperativa.</p>',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
+      VALUES(1070,8,'Erro na solicitação do cartão','Solicitação não aprovada','<p>Comunicamos que ocorreu uma inconsist&ecirc;ncia na solicita&ccedil;&atilde;o do seu cart&atilde;o Ailos. Favor entre em contato com sua Cooperativa.</p>',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
 
       INSERT INTO tbgen_notif_automatica_prm(cdorigem_mensagem,cdmotivo_mensagem,dsmotivo_mensagem,cdmensagem,dsvariaveis_mensagem,inmensagem_ativa,intipo_repeticao,nrdias_semana,nrsemanas_repeticao,nrdias_mes,nrmeses_repeticao,hrenvio_mensagem,nmfuncao_contas,dhultima_execucao)
-      VALUES(8,18,'ERRO ESTEIRA -  Não aprovação/rejeição da Esteira',1070,'<p>Inconsist&ecirc;ncia na aprova&ccedil;&atilde;o da proposta do cart&atilde;o</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+      VALUES(8,18,'Erro na solicitação do cartão',1070,'<p>Inconsist&ecirc;ncia na aprova&ccedil;&atilde;o da proposta do cart&atilde;o</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
       -- Fim Recusa Esteira
     
       commit;
