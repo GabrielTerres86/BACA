@@ -6,7 +6,7 @@ BEGIN
 
     -- Insere mensagem de emprestimo aprovado - INTERNET
     insert into TBGEN_MENSAGEM (CDCOOPER, CDPRODUTO, CDTIPO_MENSAGEM, DSMENSAGEM)
-    values (rw_crapcop.cdcooper, 31, 24, 'Cooperado, sua proposta de empréstimo número #Proposta# foi aprovada. Acesse sua conta online para contratação.');
+    values (rw_crapcop.cdcooper, 31, 24, 'Cooperado, sua proposta de empréstimo número #Proposta# foi aprovada. Para contratar acesse os canais digitais.');
 
   END LOOP;
   COMMIT;
