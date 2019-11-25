@@ -39,29 +39,26 @@ VALUES
   (SEQACA_NRSEQACA.NEXTVAL,
    'GRAVAR_DACAO_BENS',
    'TELA_ATENDA_PRESTACOES',
-   'pc_gravar_dacao_bens',
-   'pr_nrdconta, pr_ncrtremp,
- pr_tpctrpro,
- pr_tpbens_dacao,
- pr_nrmatricula,
- pr_nrregistro_imovel,
- pr_cdnacional_serventia,
- pr_dsmarbem,
- pr_dsmodbem,
- pr_nranobem,
- pr_nrmodbem,
- pr_dschassi,
- pr_ufdplaca,
- pr_dsdplaca,
- pr_nrrenava,
- pr_uflicenc,
- pr_dsrelbem,
- pr_nrnotanf,
- pr_vlrdobem,
- pr_tpcatbem',
+   'pc_gravar_dacao_bens_web',
+   'pr_nrdconta, pr_nrctremp, pr_tpctrpro',  
    (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_PRESTACOES'));
 COMMIT;
 --
+--CRIAÇÃO DE MENSAGEIRIA - VALIDAR_DACAO_BENS
+DELETE FROM CRAPACA
+ WHERE NRSEQRDR = (SELECT NRSEQRDR FROM CRAPRDR WHERE NMPROGRA = 'TELA_ATENDA_PRESTACOES')
+   AND NMDEACAO = 'VALIDAR_DACAO_BENS';
+  
+INSERT INTO cecred.crapaca
+  (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+VALUES
+  (SEQACA_NRSEQACA.NEXTVAL,
+   'VALIDAR_DACAO_BENS',
+   'TELA_ATENDA_PRESTACOES',
+   'pc_validar_dacao_bens_web',
+   'pr_nrdconta, pr_nrctremp, pr_tpctrpro', 
+   (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_PRESTACOES'));
+COMMIT;
 --PERMISSÕES DE ACESSO A OPÇÃO R 'RECEBIMENTO DE BENS'
 UPDATE CRAPTEL
    SET CDOPPTEL = CDOPPTEL || ',R', 
