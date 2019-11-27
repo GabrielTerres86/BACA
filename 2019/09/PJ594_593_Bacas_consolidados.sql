@@ -35,6 +35,40 @@ begin
   end;
   --#######################################################################################################################################
   --
+  -- Criação de referência "CCRD0011.pccrd_verifica_limop_web"
+  --
+  begin
+    declare 
+    -- nome da rotina
+    wk_rotina varchar2(200) := 'Criação de referência "CCRD0011.pccrd_verifica_limop_web"';
+    -- Buscar registro da RDR
+    CURSOR cr_craprdr IS
+      SELECT t.nrseqrdr
+        FROM craprdr t
+       WHERE t.NMPROGRA = 'CCRD0011';
+    -- Variaveis
+    vr_nrseqrdr craprdr.nrseqrdr%TYPE;
+    begin
+      -- Buscar RDR
+      OPEN  cr_craprdr;
+      FETCH cr_craprdr INTO vr_nrseqrdr;
+      -- Se nao encontrar
+      IF cr_craprdr%NOTFOUND THEN
+        INSERT INTO craprdr(nmprogra,dtsolici) VALUES('CCRD0011', SYSDATE) RETURNING craprdr.nrseqrdr INTO vr_nrseqrdr;
+      END IF;
+      -- Fechar o cursor
+      CLOSE cr_craprdr;
+      INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)VALUES('VERIFICA_LIMITE_OPERACIONAL', 'CCRD0011', 'pccrd_verifica_limop_web', 'pr_nrdconta, pr_valorlimite, pr_indlim', vr_nrseqrdr);
+      commit;
+      dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
+    exception
+      when others then
+      dbms_output.put_line('Erro ao executar: ' || wk_rotina ||' --- detalhes do erro: '|| SQLCODE || ': ' || SQLERRM);
+      ROLLBACK;
+    end;
+  end;
+  --#######################################################################################################################################
+  --
   -- Criação de referência "CCRD0011.pccrd_lista_motiv_bloqueio_web"
   --
   begin
