@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-483
+484
 declare 
   vr_tempo_parcial_i DATE;
   vr_tempo_parcial_f VARCHAR2(20);
@@ -345,7 +345,7 @@ BEGIN
                                      pr_cdprograma   => 'CARGA_UPD',
                                      pr_tpexecucao   => 2);
          END IF;
---          COMMIT;
+         COMMIT;
         END IF;
       ELSE
         -- Independente se tem bordero ativo, mas se o limite está ATIVO
@@ -391,7 +391,7 @@ BEGIN
                                      pr_cdprograma   => 'CARGA_UPD',
                                      pr_tpexecucao   => 2);
          END IF;
---        COMMIT;
+         COMMIT;
       END IF;
       vr_contador := vr_contador + 1;
     END LOOP;
@@ -463,7 +463,7 @@ BEGIN
                                      pr_tpexecucao   => 2);
          END IF;
       END IF;
---      COMMIT;
+      COMMIT;
       vr_contador := vr_contador + 1;
     END LOOP;
     vr_tempo_parcial_f := LPAD(TRUNC(((SYSDATE - vr_tempo_parcial_i) * 86400 / 3600)), 2, '0') || ':' ||
@@ -481,6 +481,7 @@ BEGIN
     dbms_output.put_line(rw_cop.cdcooper || ' TEMPO TOTAL: ' ||vr_tempo_total_f || ' QTD: ' || vr_contador);
     
   END LOOP;
+  COMMIT;
 
 end;
 0
