@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-484
+527
 declare 
   vr_tempo_parcial_i DATE;
   vr_tempo_parcial_f VARCHAR2(20);
@@ -15,7 +15,7 @@ declare
     SELECT c.cdcooper
       FROM crapcop c
      WHERE c.flgativo = 1
---       AND C.CDCOOPER = 16
+--       AND C.CDCOOPER = 2
        AND c.cdcooper <> 3
      ORDER BY c.cdcooper;
   RW_COP  CR_COP%ROWTYPE;
@@ -310,44 +310,87 @@ BEGIN
              AND t.nrdconta = rw_limites_sem_bordero.nrdconta
              AND t.nrctremp = rw_limites_sem_bordero.nrctremp
              AND t.tpctrato = rw_limites_sem_bordero.tpctrato;
-         vr_retorno := RATI0003.fn_registra_historico(pr_cdcooper    => rw_limites_sem_bordero.cdcooper
-                                                     ,pr_cdoperad    => '1'
-                                                     ,pr_nrdconta    => rw_limites_sem_bordero.nrdconta
-                                                     ,pr_nrctro      => rw_limites_sem_bordero.nrctremp
-                                                     ,pr_dtmvtolt    => rw_dat.dtmvtolt
-                                                     ,pr_valor       => NULL
-                                                     ,pr_tpctrato     => rw_limites_sem_bordero.Tpctrato
-                                                     ,pr_rating_sugerido      => NULL
-                                                     ,pr_justificativa        => 'Script LIM ATIVO sem BORDERO [1] [SAS=1 / Rating=Nulo]'
-                                                     ,pr_inrisco_rating       => NULL
-                                                     ,pr_inrisco_rating_autom => NULL
-                                                     ,pr_dtrisco_rating_autom => NULL
-                                                     ,pr_dtrisco_rating       => NULL
-                                                     ,pr_insituacao_rating    => 2
-                                                     ,pr_inorigem_rating      => 3
-                                                     ,pr_cdoperad_rating      => '1'
-                                                     ,pr_tpoperacao_rating    => NULL
-                                                     ,pr_retxml               => vr_retxml
-                                                     ,pr_cdcritic             => vr_cdcritic
-                                                     ,pr_dscritic             => vr_dscritic);
-
-         IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                     pr_ind_tipo_log => 1, 
-                                     pr_des_log      => 'Erro ao inserir/atualizar LOG Risco Operações: ' ||
-                                                         ' [' || rw_limites_sem_bordero.Cdcooper || '|'||
-                                                         rw_limites_sem_bordero.Nrdconta         || '|'||
-                                                         rw_limites_sem_bordero.nrctremp         || '|'||
-                                                         rw_limites_sem_bordero.Tpctrato         || '] => '||
-                                                         SQLERRM,
-                                     pr_dstiplog     => NULL,
-                                     pr_nmarqlog     => 'LOG_LIM ATIVO sem BORDERO[1]',
-                                     pr_cdprograma   => 'CARGA_UPD',
-                                     pr_tpexecucao   => 2);
-         END IF;
-         COMMIT;
+          vr_retorno := RATI0003.fn_registra_historico(pr_cdcooper    => rw_limites_sem_bordero.cdcooper
+                                                      ,pr_cdoperad    => '1'
+                                                      ,pr_nrdconta    => rw_limites_sem_bordero.nrdconta
+                                                      ,pr_nrctro      => rw_limites_sem_bordero.nrctremp
+                                                      ,pr_dtmvtolt    => rw_dat.dtmvtolt
+                                                      ,pr_valor       => NULL
+                                                      ,pr_tpctrato     => rw_limites_sem_bordero.Tpctrato
+                                                      ,pr_rating_sugerido      => NULL
+                                                      ,pr_justificativa        => 'Script LIM ATIVO sem BORDERO [1] [SAS=1 / Rating=Nulo]'
+                                                      ,pr_inrisco_rating       => NULL
+                                                      ,pr_inrisco_rating_autom => NULL
+                                                      ,pr_dtrisco_rating_autom => NULL
+                                                      ,pr_dtrisco_rating       => NULL
+                                                      ,pr_insituacao_rating    => 2
+                                                      ,pr_inorigem_rating      => 3
+                                                      ,pr_cdoperad_rating      => '1'
+                                                      ,pr_tpoperacao_rating    => NULL
+                                                      ,pr_retxml               => vr_retxml
+                                                      ,pr_cdcritic             => vr_cdcritic
+                                                      ,pr_dscritic             => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                       pr_ind_tipo_log => 1, 
+                                       pr_des_log      => 'Erro ao inserir/atualizar LOG Risco Operações: ' ||
+                                                           ' [' || rw_limites_sem_bordero.Cdcooper || '|'||
+                                                           rw_limites_sem_bordero.Nrdconta         || '|'||
+                                                           rw_limites_sem_bordero.nrctremp         || '|'||
+                                                           rw_limites_sem_bordero.Tpctrato         || '] => '||
+                                                           SQLERRM,
+                                       pr_dstiplog     => NULL,
+                                       pr_nmarqlog     => 'LOG_LIM ATIVO sem BORDERO[1]',
+                                       pr_cdprograma   => 'CARGA_UPD',
+                                       pr_tpexecucao   => 2);
+          END IF;
+        ELSE
+          -- Se Limite CANCELADO nao tem Bordero ATIVO
+          -- Marca contrato como Encerrado
+          UPDATE tbrisco_operacoes t
+             SET t.flintegrar_sas = 0
+                ,t.flencerrado    = 1
+           WHERE t.cdcooper = rw_limites_sem_bordero.cdcooper
+             AND t.nrdconta = rw_limites_sem_bordero.nrdconta
+             AND t.nrctremp = rw_limites_sem_bordero.nrctremp
+             AND t.tpctrato = rw_limites_sem_bordero.tpctrato;
+          vr_retorno := RATI0003.fn_registra_historico(pr_cdcooper    => rw_limites_sem_bordero.cdcooper
+                                                      ,pr_cdoperad    => '1'
+                                                      ,pr_nrdconta    => rw_limites_sem_bordero.nrdconta
+                                                      ,pr_nrctro      => rw_limites_sem_bordero.nrctremp
+                                                      ,pr_dtmvtolt    => rw_dat.dtmvtolt
+                                                      ,pr_valor       => NULL
+                                                      ,pr_tpctrato     => rw_limites_sem_bordero.Tpctrato
+                                                      ,pr_rating_sugerido      => NULL
+                                                      ,pr_justificativa        => 'Script LIM CANCELADO sem BORDERO [1] [SAS=0 / ENCERRADO=1]'
+                                                      ,pr_inrisco_rating       => NULL
+                                                      ,pr_inrisco_rating_autom => NULL
+                                                      ,pr_dtrisco_rating_autom => NULL
+                                                      ,pr_dtrisco_rating       => NULL
+                                                      ,pr_insituacao_rating    => 2
+                                                      ,pr_inorigem_rating      => 3
+                                                      ,pr_cdoperad_rating      => '1'
+                                                      ,pr_tpoperacao_rating    => NULL
+                                                      ,pr_retxml               => vr_retxml
+                                                      ,pr_cdcritic             => vr_cdcritic
+                                                      ,pr_dscritic             => vr_dscritic);
+          IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                       pr_ind_tipo_log => 1, 
+                                       pr_des_log      => 'Erro ao inserir/atualizar LOG Risco Operações: ' ||
+                                                           ' [' || rw_limites_sem_bordero.Cdcooper || '|'||
+                                                           rw_limites_sem_bordero.Nrdconta         || '|'||
+                                                           rw_limites_sem_bordero.nrctremp         || '|'||
+                                                           rw_limites_sem_bordero.Tpctrato         || '] => '||
+                                                           SQLERRM,
+                                       pr_dstiplog     => NULL,
+                                       pr_nmarqlog     => 'LOG_LIM ATIVO sem BORDERO[1]',
+                                       pr_cdprograma   => 'CARGA_UPD',
+                                       pr_tpexecucao   => 2);
+          END IF;
         END IF;
-      ELSE
+        COMMIT;
+      ELSE -- Limite situacao = 2
         -- Independente se tem bordero ativo, mas se o limite está ATIVO
         -- marca para IntegrarSAS
         UPDATE tbrisco_operacoes t
