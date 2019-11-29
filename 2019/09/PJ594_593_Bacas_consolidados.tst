@@ -1187,59 +1187,91 @@ begin
     declare 
     -- nome da rotina
     wk_rotina varchar2(200) := 'Criação de registros de notificações';
+	wk_cdmensagem number;
     begin
     
+	  
+	  
       -- Menu para o mobile abrir ao clicar no CADASTRAR
       INSERT INTO menumobile(menumobileid,menupaiid,nome,sequencia,habilitado,autorizacao,versaominimaapp,versaomaximaapp)VALUES (1006,900,'Cartões',1,1,1,'2.7.0.0',NULL);
-      -- Inicio Limite pre-aprovado disponivel
+      
+	  
+	  --busca último código existente;
+	  select max(mm.cdmensagem)+1 into wk_cdmensagem from tbgen_notif_msg_cadastro mm;
+	  -- Inicio Limite pre-aprovado disponivel
+	  
       INSERT INTO cecred.tbgen_notif_msg_cadastro(cdmensagem,cdorigem_mensagem,dstitulo_mensagem,dstexto_mensagem,dshtml_mensagem,cdicone,inexibir_banner,nmimagem_banner,inexibe_botao_acao_mobile,dstexto_botao_acao_mobile,cdmenu_acao_mobile,dslink_acao_mobile,dsmensagem_acao_mobile,dsparam_acao_mobile,inenviar_push)
-      VALUES(1064,8,'Oferta de cartão pré-aprovado','Tem um cartão Ailos esperando por você','<p>Voc&ecirc; possui um cart&atilde;o de cr&eacute;dito com limite pr&eacute;-aprovado. ConheÃ§a os benef&iacute;cios e solicite agora.</p>',3,0,NULL,1,'CONTRATAR',1006,NULL,NULL,NULL,1);
+      VALUES(wk_cdmensagem,8,'Oferta de cartão pré-aprovado','Tem um cartão Ailos esperando por você','<p>Voc&ecirc; possui um cart&atilde;o de cr&eacute;dito com limite pr&eacute;-aprovado. Conheça os benef&iacute;cios e solicite agora.</p>',3,0,NULL,1,'CONTRATAR',1006,NULL,NULL,NULL,1);
       -- Inserir na tbgen_notif_automatica_prm
       INSERT INTO tbgen_notif_automatica_prm(cdorigem_mensagem,cdmotivo_mensagem,dsmotivo_mensagem,cdmensagem,dsvariaveis_mensagem,inmensagem_ativa,intipo_repeticao,nrdias_semana,nrsemanas_repeticao,nrdias_mes,nrmeses_repeticao,hrenvio_mensagem,nmfuncao_contas,dhultima_execucao)
-      VALUES(8,12,'Oferta de cartão pré-aprovado',1064,'<p>Você possui um cartão de crédito com limite pré-aprovado. Conheça os benefícios e solicite agora.</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+      VALUES(8,12,'Oferta de cartão pré-aprovado',wk_cdmensagem,'<p>Você possui um cartão de crédito com limite pré-aprovado. Conheça os benefícios e solicite agora.</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
       -- Fim Limite pre-aprovado disponivel
-      -- Inicio solicitacao sem assinatura
+      
+	  --busca último código existente;
+	  select max(mm.cdmensagem)+1 into wk_cdmensagem from tbgen_notif_msg_cadastro mm;
+	  -- Inicio solicitacao sem assinatura
       INSERT INTO cecred.tbgen_notif_msg_cadastro(cdmensagem,cdorigem_mensagem,dstitulo_mensagem,dstexto_mensagem,dshtml_mensagem,cdicone,inexibir_banner,nmimagem_banner,inexibe_botao_acao_mobile,dstexto_botao_acao_mobile,cdmenu_acao_mobile,dslink_acao_mobile,dsmensagem_acao_mobile,dsparam_acao_mobile,inenviar_push)
-      VALUES(1065,8,'Solicitação de Cartão','Solicitação cartão - Pendente de autorização','<p>Solicita&ccedil;&atilde;o de Cart&atilde;o Ailos pendente de autoriza&ccedil;&atilde;o</p><p>Voc&ecirc; possui uma proposta de cart&atilde;o pendente para aprova&ccedil;&atilde;o.</p><p>Acesse o menu Cart&otilde;es &gt; Autoriza&ccedil;&atilde;o de solicita&ccedil;&atilde;o do Cart&atilde;o, verifique as informa&ccedil;&otilde;es e proceda com a aprova&ccedil;&atilde;o.</p><p>.</p>',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
+      VALUES(wk_cdmensagem,8,'Solicitação de Cartão','Solicitação cartão - Pendente de autorização','<p>Solicita&ccedil;&atilde;o de Cart&atilde;o Ailos pendente de autoriza&ccedil;&atilde;o</p><p>Voc&ecirc; possui uma proposta de cart&atilde;o pendente para aprova&ccedil;&atilde;o.</p><p>Acesse o menu Cart&otilde;es &gt; Autoriza&ccedil;&atilde;o de solicita&ccedil;&atilde;o do Cart&atilde;o, verifique as informa&ccedil;&otilde;es e proceda com a aprova&ccedil;&atilde;o.</p><p>.</p>',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
 
       INSERT INTO tbgen_notif_automatica_prm(cdorigem_mensagem,cdmotivo_mensagem,dsmotivo_mensagem,cdmensagem,dsvariaveis_mensagem,inmensagem_ativa,intipo_repeticao,nrdias_semana,nrsemanas_repeticao,nrdias_mes,nrmeses_repeticao,hrenvio_mensagem,nmfuncao_contas,dhultima_execucao)
-      VALUES(8,13,'CARTÃO DE CREDITO - Solicitação de Cartão - sem assinatura conjunta',1065,'<p>Solicita&ccedil;&atilde;o de Cart&atilde;o Ailos pendente de autoriza&ccedil;&atilde;o</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+      VALUES(8,13,'CARTÃO DE CREDITO - Solicitação de Cartão - sem assinatura conjunta',wk_cdmensagem,'<p>Solicita&ccedil;&atilde;o de Cart&atilde;o Ailos pendente de autoriza&ccedil;&atilde;o</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
       -- Fim solicitacao sem assinatura
+	  
+	  --busca último código existente;
+	  select max(mm.cdmensagem)+1 into wk_cdmensagem from tbgen_notif_msg_cadastro mm;
+	  
       -- Inicio solicitacao com assinatura
       INSERT INTO cecred.tbgen_notif_msg_cadastro(cdmensagem,cdorigem_mensagem,dstitulo_mensagem,dstexto_mensagem,dshtml_mensagem,cdicone,inexibir_banner,nmimagem_banner,inexibe_botao_acao_mobile,dstexto_botao_acao_mobile,cdmenu_acao_mobile,dslink_acao_mobile,dsmensagem_acao_mobile,dsparam_acao_mobile,inenviar_push)
-      VALUES(1066,8,'Solicitação de Cartão',' ','<p>Voc&ecirc; possui uma proposta de cart&atilde;o pendente para aprova&ccedil;&atilde;o.</p><p>Acesse o menu Cart&otilde;es &gt; Autoriza&ccedil;&atilde;o de solicita&ccedil;&atilde;o do Cart&atilde;o e/ou Transa&ccedil;&otilde;es Pendentes, verifique as informa&ccedil;&otilde;es e proceda com a aprova&ccedil;&atilde;o</p>',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
+      VALUES(wk_cdmensagem,8,'Solicitação de Cartão',' ','<p>Voc&ecirc; possui uma proposta de cart&atilde;o pendente para aprova&ccedil;&atilde;o.</p><p>Acesse o menu Cart&otilde;es &gt; Autoriza&ccedil;&atilde;o de solicita&ccedil;&atilde;o do Cart&atilde;o e/ou Transa&ccedil;&otilde;es Pendentes, verifique as informa&ccedil;&otilde;es e proceda com a aprova&ccedil;&atilde;o</p>',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
 
       INSERT INTO tbgen_notif_automatica_prm(cdorigem_mensagem,cdmotivo_mensagem,dsmotivo_mensagem,cdmensagem,dsvariaveis_mensagem,inmensagem_ativa,intipo_repeticao,nrdias_semana,nrsemanas_repeticao,nrdias_mes,nrmeses_repeticao,hrenvio_mensagem,nmfuncao_contas,dhultima_execucao)
-      VALUES(8,14,'CARTÃO DE CREDITO - Solicitação de Cartão - com assinatura conjunta',1066,'<p>Solicita&ccedil;&atilde;o de Cart&atilde;o Ailos pendente de autoriza&ccedil;&atilde;o</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+      VALUES(8,14,'CARTÃO DE CREDITO - Solicitação de Cartão - com assinatura conjunta',wk_cdmensagem,'<p>Solicita&ccedil;&atilde;o de Cart&atilde;o Ailos pendente de autoriza&ccedil;&atilde;o</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
       -- Fim solicitacao com assinatura   
+	  
+	  --busca último código existente;
+	  select max(mm.cdmensagem)+1 into wk_cdmensagem from tbgen_notif_msg_cadastro mm;
+	  
       -- Inicio Upgrade/Downgrade
       INSERT INTO cecred.tbgen_notif_msg_cadastro(cdmensagem,cdorigem_mensagem,dstitulo_mensagem,dstexto_mensagem,dshtml_mensagem,cdicone,inexibir_banner,nmimagem_banner,inexibe_botao_acao_mobile,dstexto_botao_acao_mobile,cdmenu_acao_mobile,dslink_acao_mobile,dsmensagem_acao_mobile,dsparam_acao_mobile,inenviar_push)
-      VALUES(1067,8,'Upgrade/Downgrade','Solicitação cartão - Pendente de autorização ','<p>Voc&ecirc; possui uma proposta de cart&atilde;o pendente para aprova&ccedil;&atilde;o.</p><p>Acesse o menu Cart&otilde;es &gt; Autoriza&ccedil;&atilde;o de solicita&ccedil;&atilde;o do Cart&atilde;o, verifique as informa&ccedil;&otilde;es e proceda com a aprova&ccedil;&atilde;o.</p><p>&nbsp;</p> ',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
+      VALUES(wk_cdmensagem,8,'Upgrade/Downgrade','Solicitação cartão - Pendente de autorização ','<p>Voc&ecirc; possui uma proposta de cart&atilde;o pendente para aprova&ccedil;&atilde;o.</p><p>Acesse o menu Cart&otilde;es &gt; Autoriza&ccedil;&atilde;o de solicita&ccedil;&atilde;o do Cart&atilde;o, verifique as informa&ccedil;&otilde;es e proceda com a aprova&ccedil;&atilde;o.</p><p>&nbsp;</p> ',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
 
       INSERT INTO tbgen_notif_automatica_prm(cdorigem_mensagem,cdmotivo_mensagem,dsmotivo_mensagem,cdmensagem,dsvariaveis_mensagem,inmensagem_ativa,intipo_repeticao,nrdias_semana,nrsemanas_repeticao,nrdias_mes,nrmeses_repeticao,hrenvio_mensagem,nmfuncao_contas,dhultima_execucao)
-      VALUES(8,15,'CARTÃO DE CREDITO - Upgrade/downgrade ',1067,'<p>Solicita&ccedil;&atilde;o de Cart&atilde;o Ailos pendente de autoriza&ccedil;&atilde;o</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+      VALUES(8,15,'CARTÃO DE CREDITO - Upgrade/downgrade ',wk_cdmensagem,'<p>Solicita&ccedil;&atilde;o de Cart&atilde;o Ailos pendente de autoriza&ccedil;&atilde;o</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
       -- Fim Upgrade/Downgrade
 
+	  --busca último código existente;
+	  select max(mm.cdmensagem)+1 into wk_cdmensagem from tbgen_notif_msg_cadastro mm;
+	  
       -- Inicio Alteracao de limite
       INSERT INTO cecred.tbgen_notif_msg_cadastro(cdmensagem,cdorigem_mensagem,dstitulo_mensagem,dstexto_mensagem,dshtml_mensagem,cdicone,inexibir_banner,nmimagem_banner,inexibe_botao_acao_mobile,dstexto_botao_acao_mobile,cdmenu_acao_mobile,dslink_acao_mobile,dsmensagem_acao_mobile,dsparam_acao_mobile,inenviar_push)
-      VALUES(1068,8,'Limite de Crédito','Alteração de Limite de Crédito','<p>Informamos que o limite do seu cart&atilde;o Ailos foi alterado. Para visualizar seu novo limite acesse o APP Ailos Cart&otilde;es ou entre em contato com sua Cooperativa.</p>',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
+      VALUES(wk_cdmensagem,8,'Limite de Crédito','Alteração de Limite de Crédito','<p>Informamos que o limite do seu cart&atilde;o Ailos foi alterado. Para visualizar seu novo limite acesse o APP Ailos Cart&otilde;es ou entre em contato com sua Cooperativa.</p>',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
 
       INSERT INTO tbgen_notif_automatica_prm(cdorigem_mensagem,cdmotivo_mensagem,dsmotivo_mensagem,cdmensagem,dsvariaveis_mensagem,inmensagem_ativa,intipo_repeticao,nrdias_semana,nrsemanas_repeticao,nrdias_mes,nrmeses_repeticao,hrenvio_mensagem,nmfuncao_contas,dhultima_execucao)
-      VALUES(8,16,'ALTERAÇÃO LIMITE',1068,'<p>Altera&ccedil;&atilde;o de Limite de Cr&eacute;dito</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+      VALUES(8,16,'ALTERAÇÃO LIMITE',wk_cdmensagem,'<p>Altera&ccedil;&atilde;o de Limite de Cr&eacute;dito</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
       -- Fim Alteracao Limite
+	  
+	  --busca último código existente;
+	  select max(mm.cdmensagem)+1 into wk_cdmensagem from tbgen_notif_msg_cadastro mm;
+	  
+	  
       -- Inicio Erros NOTURNO
       INSERT INTO cecred.tbgen_notif_msg_cadastro(cdmensagem,cdorigem_mensagem,dstitulo_mensagem,dstexto_mensagem,dshtml_mensagem,cdicone,inexibir_banner,nmimagem_banner,inexibe_botao_acao_mobile,dstexto_botao_acao_mobile,cdmenu_acao_mobile,dslink_acao_mobile,dsmensagem_acao_mobile,dsparam_acao_mobile,inenviar_push)
-      VALUES(1069,8,'Processos Noturnos','Erros noturnos processos Bancob','<p>Comunicamos que ocorreu uma inconsist&ecirc;ncia na solicita&ccedil;&atilde;o do seu cart&atilde;o Ailos. Favor entre em contato com sua Cooperativa.</p>',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
+      VALUES(wk_cdmensagem,8,'Processos Noturnos','Erros noturnos processos Bancob','<p>Comunicamos que ocorreu uma inconsist&ecirc;ncia na solicita&ccedil;&atilde;o do seu cart&atilde;o Ailos. Favor entre em contato com sua Cooperativa.</p>',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
 
       INSERT INTO tbgen_notif_automatica_prm(cdorigem_mensagem,cdmotivo_mensagem,dsmotivo_mensagem,cdmensagem,dsvariaveis_mensagem,inmensagem_ativa,intipo_repeticao,nrdias_semana,nrsemanas_repeticao,nrdias_mes,nrmeses_repeticao,hrenvio_mensagem,nmfuncao_contas,dhultima_execucao)
-      VALUES(8,17,'ERRO NOTURNO - Erros noturnos processos Bancob',1069,'<p>Inconsist&ecirc;ncia na aprova&ccedil;&atilde;o da proposta do cart&atilde;o</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+      VALUES(8,17,'ERRO NOTURNO - Erros noturnos processos Bancob',wk_cdmensagem,'<p>Inconsist&ecirc;ncia na aprova&ccedil;&atilde;o da proposta do cart&atilde;o</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
       -- Fim Noturno   
+	  
+	  --busca último código existente;
+	  select max(mm.cdmensagem)+1 into wk_cdmensagem from tbgen_notif_msg_cadastro mm;
+	  
+	  
       -- Inicio Recusa Esteira
       INSERT INTO cecred.tbgen_notif_msg_cadastro(cdmensagem,cdorigem_mensagem,dstitulo_mensagem,dstexto_mensagem,dshtml_mensagem,cdicone,inexibir_banner,nmimagem_banner,inexibe_botao_acao_mobile,dstexto_botao_acao_mobile,cdmenu_acao_mobile,dslink_acao_mobile,dsmensagem_acao_mobile,dsparam_acao_mobile,inenviar_push)
-      VALUES(1070,8,'Erro na solicitação do cartão','Solicitação não aprovada','<p>Comunicamos que ocorreu uma inconsist&ecirc;ncia na solicita&ccedil;&atilde;o do seu cart&atilde;o Ailos. Favor entre em contato com sua Cooperativa.</p>',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
+      VALUES(wk_cdmensagem,8,'Erro na solicitação do cartão','Solicitação não aprovada','<p>Comunicamos que ocorreu uma inconsist&ecirc;ncia na solicita&ccedil;&atilde;o do seu cart&atilde;o Ailos. Favor entre em contato com sua Cooperativa.</p>',3,0,NULL,0,NULL,NULL,NULL,NULL,NULL,1);
 
       INSERT INTO tbgen_notif_automatica_prm(cdorigem_mensagem,cdmotivo_mensagem,dsmotivo_mensagem,cdmensagem,dsvariaveis_mensagem,inmensagem_ativa,intipo_repeticao,nrdias_semana,nrsemanas_repeticao,nrdias_mes,nrmeses_repeticao,hrenvio_mensagem,nmfuncao_contas,dhultima_execucao)
-      VALUES(8,18,'Erro na solicitação do cartão',1070,'<p>Inconsist&ecirc;ncia na aprova&ccedil;&atilde;o da proposta do cart&atilde;o</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+      VALUES(8,18,'Erro na solicitação do cartão',wk_cdmensagem,'<p>Inconsist&ecirc;ncia na aprova&ccedil;&atilde;o da proposta do cart&atilde;o</p>',1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
       -- Fim Recusa Esteira
     
       commit;
