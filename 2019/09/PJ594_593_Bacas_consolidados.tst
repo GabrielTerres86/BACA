@@ -713,7 +713,7 @@ begin
     vr_qtderror      INTEGER := 0;
     begin
       --Limpa registros
-      DELETE FROM crapace ace WHERE ace.nmdatela = 'LOPCRD';
+      DELETE FROM crapace ace WHERE ace.nmdatela = 'CARCRD' and ace.nmrotina = 'LOPCRD'; 
       FOR rw_crapcop IN cr_crapcop LOOP
         -- Opção '@'
         INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE) values ('CARCRD', '@', 'f0030519', 'LOPCRD', rw_crapcop.cdcooper, 1, 1, 2);
@@ -857,7 +857,7 @@ begin
     vr_qtderror      INTEGER := 0;
     begin
       --Limpa registros
-      DELETE FROM crapace ace WHERE ace.nmdatela = 'CARCRD';
+      DELETE FROM crapace ace WHERE ace.nmdatela = 'CARCRD' and ace.nmrotina = ' '; 
       FOR rw_crapcop IN cr_crapcop LOOP
         -- Opção '@'
         INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE) values ('CARCRD', '@', 'f0030519', ' ', rw_crapcop.cdcooper, 1, 1, 2);
@@ -951,7 +951,7 @@ begin
     vr_qtderror      INTEGER := 0;
     begin
       --Limpa registros
-      DELETE FROM crapace ace WHERE ace.nmdatela = 'APRCAR';
+      DELETE FROM crapace ace WHERE ace.nmdatela = 'CARCRD' and ace.nmrotina = 'APRCAR'; 
       FOR rw_crapcop IN cr_crapcop LOOP
         -- Opção '@'
         INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE) values ('CARCRD', '@', 'f0030519', 'APRCAR', rw_crapcop.cdcooper, 1, 1, 2);
@@ -1714,7 +1714,7 @@ begin
     vr_qtderror      INTEGER := 0;
     begin
       --Limpa registros
-      DELETE FROM crapace ace WHERE ace.nmdatela = 'PRMCRD';
+      DELETE FROM crapace ace WHERE ace.nmdatela = 'CARCRD' and ace.nmrotina = 'PRMCRD'; 
       FOR rw_crapcop IN cr_crapcop LOOP
         -- Opção '@'
         INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE) values ('CARCRD', '@', 'f0030519', 'PRMCRD', rw_crapcop.cdcooper, 1, 1, 2);
