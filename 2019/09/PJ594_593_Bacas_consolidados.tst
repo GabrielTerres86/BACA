@@ -1,5 +1,5 @@
 ﻿PL/SQL Developer Test script 3.0
-1846
+1875
 begin
   --#######################################################################################################################################
   --
@@ -713,7 +713,7 @@ begin
     vr_qtderror      INTEGER := 0;
     begin
       --Limpa registros
-      DELETE FROM crapace ace WHERE ace.nmdatela = 'LOPCRD';
+      DELETE FROM crapace ace WHERE ace.nmdatela = 'CARCRD' and ace.nmrotina = 'LOPCRD'; 
       FOR rw_crapcop IN cr_crapcop LOOP
         -- Opção '@'
         INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE) values ('CARCRD', '@', 'f0030519', 'LOPCRD', rw_crapcop.cdcooper, 1, 1, 2);
@@ -857,7 +857,7 @@ begin
     vr_qtderror      INTEGER := 0;
     begin
       --Limpa registros
-      DELETE FROM crapace ace WHERE ace.nmdatela = 'CARCRD';
+      DELETE FROM crapace ace WHERE ace.nmdatela = 'CARCRD' and ace.nmrotina = ' '; 
       FOR rw_crapcop IN cr_crapcop LOOP
         -- Opção '@'
         INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE) values ('CARCRD', '@', 'f0030519', ' ', rw_crapcop.cdcooper, 1, 1, 2);
@@ -951,7 +951,7 @@ begin
     vr_qtderror      INTEGER := 0;
     begin
       --Limpa registros
-      DELETE FROM crapace ace WHERE ace.nmdatela = 'APRCAR';
+      DELETE FROM crapace ace WHERE ace.nmdatela = 'CARCRD' and ace.nmrotina = 'APRCAR'; 
       FOR rw_crapcop IN cr_crapcop LOOP
         -- Opção '@'
         INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE) values ('CARCRD', '@', 'f0030519', 'APRCAR', rw_crapcop.cdcooper, 1, 1, 2);
@@ -1714,7 +1714,7 @@ begin
     vr_qtderror      INTEGER := 0;
     begin
       --Limpa registros
-      DELETE FROM crapace ace WHERE ace.nmdatela = 'PRMCRD';
+      DELETE FROM crapace ace WHERE ace.nmdatela = 'CARCRD' and ace.nmrotina = 'PRMCRD'; 
       FOR rw_crapcop IN cr_crapcop LOOP
         -- Opção '@'
         INSERT INTO crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE) values ('CARCRD', '@', 'f0030519', 'PRMCRD', rw_crapcop.cdcooper, 1, 1, 2);
@@ -1837,6 +1837,35 @@ begin
       FOR rw_crapcop IN cr_crapcop LOOP
         INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'CRD_APROVACAO_CANAIS', 'Ativar/Desativar a autorização de solicitação de cartão de credito pelo cooperado por meio dos Canais. (o - desativada e 1 - ativada)', '0');
       END LOOP;
+      commit;
+      dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
+    exception
+      when others then
+      dbms_output.put_line('Erro ao executar: ' || wk_rotina ||' --- detalhes do erro: '|| SQLCODE || ': ' || SQLERRM);
+      ROLLBACK;
+    end;
+  end;
+end;  
+--#######################################################################################################################################
+  --
+  -- Atualizando parâmetros de administadora de cartões 
+  --
+  begin
+    declare 
+    -- nome da rotina
+    wk_rotina varchar2(200) := 'Atualizando parâmetros de administadora de cartões ';
+    CURSOR cr_crapcop IS
+    SELECT  *
+      FROM crapcop cop
+     WHERE cop.flgativo = 1;
+    begin
+      update crapadc set flgcchip =  1 , flgdebit = 1 , flgcrdit = 1 , flgsaqss = 1 , flgcrdad = 1 , flgcompi = 0 , flgrecop = 0 , flgccieg = 0 , flgppdif = 0 , vlanuidd = 33 where  cdadmcrd = 11;
+      update crapadc set flgcchip =  1 , flgdebit = 1 , flgcrdit = 1 , flgsaqss = 1 , flgcrdad = 1 , flgcompi = 1 , flgrecop = 1 , flgccieg = 0 , flgppdif = 0 , vlanuidd = 85 where  cdadmcrd = 12;
+      update crapadc set flgcchip =  1 , flgdebit = 1 , flgcrdit = 1 , flgsaqss = 1 , flgcrdad = 1 , flgcompi = 1 , flgrecop = 1 , flgccieg = 0 , flgppdif = 0 , vlanuidd = 140 where  cdadmcrd = 13;
+      update crapadc set flgcchip =  1 , flgdebit = 1 , flgcrdit = 1 , flgsaqss = 1 , flgcrdad = 1 , flgcompi = 1 , flgrecop = 1 , flgccieg = 1 , flgppdif = 1 , vlanuidd = 250 where  cdadmcrd = 14;
+      update crapadc set flgcchip =  1 , flgdebit = 1 , flgcrdit = 1 , flgsaqss = 1 , flgcrdad = 1 , flgcompi = 1 , flgrecop = 1 , flgccieg = 0 , flgppdif = 0 , vlanuidd = 116 where  cdadmcrd = 15;
+      update crapadc set flgcchip =  1 , flgdebit = 1 , flgcrdit = 0 , flgsaqss = 1 , flgcrdad = 1 , flgcompi = 0 , flgrecop = 0 , flgccieg = 0 , flgppdif = 0 , vlanuidd = 0 where  cdadmcrd = 16;
+      update crapadc set flgcchip =  1 , flgdebit = 1 , flgcrdit = 0 , flgsaqss = 1 , flgcrdad = 0 , flgcompi = 0 , flgrecop = 0 , flgccieg = 0 , flgppdif = 0 , vlanuidd = 0 where  cdadmcrd = 17;
       commit;
       dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
     exception
