@@ -6,7 +6,7 @@ insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
 values ('CRED', 0, 'IMP_ARQ_ENV_SINC_DIR', 'Diretorio do riversoft para envio sincronica ', '/usr/sistemas/Sincronica/envia');
 --Parametro do Nome do servidor FTP ABBC
 insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
-values ('CRED', 0, 'TRAN_BBC_SERV_FTP_CS', 'Nome do servidor FTP da ABBC codigo seguranca', '10.200.52.23');
+values ('CRED', 0, 'TRAN_BBC_SERV_FTP_CS', 'Nome do servidor FTP da ABBC codigo seguranca', '10.201.53.23');
 --Parametro do diretorio de armazenamento dos arquivos logicos e de imagem ABBC 
 insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
 values ('CRED', 0, 'DIR_ABBC_FTP_CS', 'Diretorio para recebimento de arquivo ABBC ', 'cecred/salvar');
