@@ -87,4 +87,12 @@ UPDATE crapbpr SET cdsitgrv = 3 WHERE cdcooper = 14 and nrdconta = 22462 and dsc
 UPDATE crapbpr SET cdsitgrv = 3 WHERE cdcooper = 14 and nrdconta = 67377 and dschassi = '9BG148FK0EC453296';
 
 
+
+UPDATE tbgar_cobertura_operacao
+   SET NRCONTRATO = 252753
+ WHERE CDCOOPER = 2
+   AND NRDCONTA = 129941
+   AND NRCONTRATO = 252794;
+
+
 commit;
