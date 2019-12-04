@@ -1,4 +1,4 @@
-// UPDATES CRAPATR CONVENIOS
+
 update crapatr set cdseqtel = LPAD(cdrefere,6,'0') where cdhistor =  149  ;
 update crapatr set cdseqtel = LPAD(cdrefere,19,'0') where cdhistor = 509;
 update crapatr set cdseqtel = LPAD(cdrefere,12,'0') where cdhistor = 553;
