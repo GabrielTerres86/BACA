@@ -204,7 +204,7 @@ DECLARE
           AND cr.nrctremp = e.nrctremp
           AND ( e.inliquid = 0 OR
                (e.inprejuz = 1 AND e.vlsdprej > 0) OR
-               (e.inliquid = 1 AND e.inprejuz = 0 AND e.dtliquid > '30/11/2019')
+               (e.inliquid = 1 AND e.inprejuz = 0 AND e.dtliquid > pr_dtrefere)
               )
           -- Contratos associados as linhas Cred da planilha
           AND l.cdcooper = e.cdcooper
