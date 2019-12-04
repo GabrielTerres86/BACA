@@ -150,12 +150,14 @@ PROCEDURE pc_crps388_renato(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperati
            tbconv_liberacao tbconv,
            crapcop
      where tbconv.tparrecadacao = 3
+     and inorigem_inclusao = 2
+     and gnconve.cdconven in (50,55,57,58,63,64,65,66,68,70,71,75,77,79,83,93,124,139,145)  
        and tbconv.cdcooper = pr_cdcooper
        and tbconv.cdconven = decode(pr_cdconven,0,tbconv.cdconven,pr_cdconven)
        and gnconve.cdconven = tbconv.cdconven
        and crapcop.cdcooper = gnconve.cdcooper
        and tbconv.flgautdb = 1;
-	  
+    
   
   -- Busca dos lançamentos efetivados no dia
   CURSOR cr_craplcm(pr_cdhisdeb gnconve.cdhisdeb%TYPE) IS
@@ -445,11 +447,11 @@ PROCEDURE pc_crps388_renato(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperati
     vr_typsaida VARCHAR2(3);    
   BEGIN 
     -- Caso não seja convênio unificado 
-    IF pr_rw_gnconve.flgcvuni = 0 THEN 
+   /* IF pr_rw_gnconve.flgcvuni = 0 THEN 
 
-	  -- Caso seja maior que zero
-	  -- esta em processo de homol de convenios
-    /*
+    -- Caso seja maior que zero
+    -- esta em processo de homol de convenios
+    
       IF pr_cdconven > 0 THEN
         -- Registra parametros para uso interno da rotina
         begin         
@@ -475,7 +477,7 @@ PROCEDURE pc_crps388_renato(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperati
             pr_dscritic := 'Erro ao inserir dados na tabela crapprm: '||sqlerrm;        
         end;
       END IF;
-*/
+
       -- Para Internet e E-Sales 
       IF pr_rw_gnconve.tpdenvio IN(1,2) THEN
         -- Vamos converter para DOS 
@@ -519,8 +521,8 @@ PROCEDURE pc_crps388_renato(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperati
         -- Chamar gravação do arquivo para retorno posterior via WebService
         conv0002.pc_armazena_arquivo_conven(pr_rw_gnconve.cdconven
                                            ,rw_crapdat.dtmvtolt
-                                           ,'F' /* Retorno a empresa */
-                                           ,0   /* Nao retornado ainda */
+                                           ,'F' 
+                                           ,0   
                                            ,pr_camicoop||'/salvar'
                                            ,pr_nmarqdat
                                            ,vr_cdcritic
@@ -531,14 +533,14 @@ PROCEDURE pc_crps388_renato(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperati
           vr_cdcritic := 0;
           vr_dscritic := NULL;
         END IF;
-      END IF;     
-    END IF;  
+      END IF;
+    END IF;  */
   
   
     -- Nao cria registro de controle se convenio for unificado e a 
     -- execucao for na Cecred, pois quando roda programa que faz a 
     -- unificacao nao atualiza a sequencia do convenio 
-    IF pr_cdcooper <> 3 OR pr_rw_gnconve.flgcvuni = 0 THEN
+   /* IF pr_cdcooper <> 3 OR pr_rw_gnconve.flgcvuni = 0 THEN
       -- Criaremos registro de controle 
       UPDATE gncontr        
          SET dtcredit = pr_dtmvtopr
@@ -552,7 +554,7 @@ PROCEDURE pc_crps388_renato(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperati
          AND cdconven = pr_rw_gnconve.cdconven
          AND dtmvtolt = rw_crapdat.dtmvtolt
          AND nrsequen = pr_nrseqarq;
-    END IF;
+    END IF;*/
     
     -- Gerar LOG se houve encontro de critica
     IF nvl(vr_cdcritic,0) <> 0 OR nvl(vr_typsaida,' ') = 'ERR' THEN 
@@ -1020,7 +1022,7 @@ dbms_output.put_line('passo 6');
         END IF; 
                                        
         IF rw_gnconve.nrlayout = 5 THEN
-    	
+      
           -- CERSAD e SANEPAR
           IF vr_qtdig <> 0 THEN
             vr_dslinreg := 'F' 
@@ -1038,7 +1040,7 @@ dbms_output.put_line('passo 6');
 
           /* Celesc Distribuicao */  
           /* Aguas Pres.Getulio  */
-          ELSIF rw_gnconve.cdconven IN (30,45) THEN       						
+          ELSIF rw_gnconve.cdconven IN (30,45) THEN                   
             vr_dslinreg := 'F' 
                     || vr_cdidenti 
                    -- || to_char(rw_crapatr.cdrefere,'fm000000000')
@@ -1060,7 +1062,7 @@ dbms_output.put_line('passo 6');
           /* SEMASA ITAJAI */           
           /* Foz do Brasil */           
           /* AGUAS DE MASSARANDUBA */ 
-		  /* 108 - AGUAS DE GUARAMIRIM */
+      /* 108 - AGUAS DE GUARAMIRIM */
           ELSIF rw_gnconve.cdconven IN (4,24,31,33,34,53,54,108) THEN  
 
             vr_dslinreg := 'F' 
@@ -1083,7 +1085,7 @@ dbms_output.put_line('passo 6');
           /* PORTO SEGURO */          
           /* PREVISUL */          
           ELSIF rw_gnconve.cdconven IN (48,50,55,58,66) THEN  
-    										 
+                         
             vr_dslinreg := 'F' 
                     || vr_cdidenti 
                   --  || to_char(rw_crapatr.cdrefere,'fm00000000000000000000')
@@ -1246,7 +1248,7 @@ dbms_output.put_line('passo 6');
           END IF;
        
        ELSE
-		
+    
           -- Enviar informações para o arquivo conforme especificidades do convênio
 
           IF vr_qtdig <> 0 THEN
@@ -1305,7 +1307,7 @@ dbms_output.put_line('passo 6');
           /* 34 - SEMASA ITAJAI */
           /* 53 - Foz do Brasil */
           /* 54 - AGUAS DE MASSARANDUBA */  
-		  /* 108 - AGUAS DE GUARAMIRIM */
+      /* 108 - AGUAS DE GUARAMIRIM */
           ELSIF rw_gnconve.cdconven IN(4,24,31,33,34,53,54,108) THEN
             -- Enviar linha ao arquivo 
             vr_dslinreg := 'F'
@@ -1470,7 +1472,7 @@ dbms_output.put_line('passo 6');
         IF rw_gnconve.flgcvuni = 1 THEN 
           BEGIN 
             null;
-/*            INSERT INTO gncvuni(cdcooper
+            INSERT INTO gncvuni(cdcooper
                                ,cdconven
                                ,dtmvtolt
                                ,flgproce
@@ -1480,15 +1482,15 @@ dbms_output.put_line('passo 6');
                          VALUES(pr_cdcooper
                                ,rw_gnconve.cdconven
                                ,rw_crapdat.dtmvtolt
-                               ,0 \*FALSE*\
+                               ,0 
                                ,vr_nrseqdig
                                ,vr_dslinreg
-                               ,2); \* DEB. AUTOMATICO *\
+                               ,2); 
           EXCEPTION 
             WHEN OTHERS THEN 
               vr_dscritic := 'Erro na gravacao da gncvuni --> '||sqlerrm;
               RAISE vr_excsaida;
-*/          END;
+          END;
         END IF;
       
       END LOOP; -- Loop lançamentos do dia 
@@ -1580,7 +1582,7 @@ dbms_output.put_line('passo 6');
 
               ELSE
                   IF rw_gnconve.cdconven IN (4,15,16,45,50,9,74,75) THEN
-    						
+                
                 -- Enviar linha ao arquivo 
                       vr_dslinreg := 'F'||RPAD(trim(substr(substr(rw_crapndb.dstexarq,1,25),2,instr(rw_crapndb.dstexarq,' ',-1))),25,' ')
                                || RPAD(SUBSTR(rw_crapndb.dstexarq,27,150),150,' ');
@@ -1596,8 +1598,8 @@ dbms_output.put_line('passo 6');
                    END IF; 
               END IF;
            END IF;
-			  ELSE
-			         
+        ELSE
+               
           /* Convenio 19 */ 
           IF rw_gnconve.cdconven = 19 THEN
             IF vr_qtdig <> 0 THEN
@@ -1641,7 +1643,7 @@ dbms_output.put_line('passo 6');
                                ,vr_dslinreg||CHR(10));   
         
         -- Criar registro unificado 
-/*
+
         IF rw_gnconve.flgcvuni = 1 THEN 
           -- INcrementar o contador 
           vr_nrsequni := vr_nrsequni + 1;          
@@ -1666,7 +1668,7 @@ dbms_output.put_line('passo 6');
               RAISE vr_excsaida;
           END;
         END IF;
-*/        
+        
         -- Acumular totalizadores
         vr_nrseqndb := vr_nrseqndb + 1;
         vr_vllanmto := nvl(to_number(TRIM(SUBSTR(rw_crapndb.dstexarq,53,15))),0);
@@ -1735,7 +1737,7 @@ dbms_output.put_line('passo 6');
                                 ||RPAD(' ',104,' ')
                                 ||CHR(10));              
           -- Atualizar o registro como retornado 
-          BEGIN 
+       /*   BEGIN 
             UPDATE gnarqrx
                SET flgretor = 1 -- TRUE 
              WHERE rowid = rw_gnarqrx.nrrowid;
@@ -1743,7 +1745,7 @@ dbms_output.put_line('passo 6');
             WHEN OTHERS THEN 
               vr_dscritic := 'Erro na atualizacao da tabela gnarqrx --> '||sqlerrm;
               RAISE vr_excsaida;
-          END;
+          END; */
           
           -- Incrementar o contador 
           vr_nrseqret := vr_nrseqret + 1;
@@ -1935,4 +1937,3 @@ begin
   dbms_output.put_line('Fim...');
 
 end;
-/

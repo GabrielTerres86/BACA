@@ -184,7 +184,7 @@ BEGIN
             END;
 
             -- INSERE REGISTRO PARA CONTROLE DE EXECUCOES
-            BEGIN
+          /*  BEGIN
               INSERT INTO gncontr
                 (cdcooper, tpdcontr, cdconven, dtmvtolt, nrsequen)
               VALUES
@@ -196,7 +196,7 @@ BEGIN
                 -- DESCRICAO DO ERRO NA INSERCAO DE REGISTROS
                 pr_dscritic := 'Problema ao inserir registro na tabela GNCONTR: ' || sqlerrm;
                 RAISE vr_exc_saida;
-            END;
+            END; */
 
           WHEN 2 THEN -- DEB AUTOMATICO
 
@@ -216,7 +216,7 @@ BEGIN
             END;
 
             -- INSERE REGISTRO PARA CONTROLE DE EXECUCOES
-            BEGIN
+          /*  BEGIN
               INSERT INTO gncontr
                 (cdcooper, tpdcontr, cdconven, dtmvtolt, nrsequen)
               VALUES
@@ -228,7 +228,7 @@ BEGIN
                 -- DESCRICAO DO ERRO NA INSERCAO DE REGISTROS
                 pr_dscritic := 'Problema ao inserir registro na tabela GNCONTR: ' || sqlerrm;
                 RAISE vr_exc_saida;
-            END;
+            END;*/
 
           WHEN 3 THEN -- AUTORIZACAO DE DEBITO
 
@@ -248,7 +248,7 @@ BEGIN
             END;
 
             -- INSERE REGISTRO PARA CONTROLE DE EXECUCOES
-            BEGIN
+          /*  BEGIN
               INSERT INTO gncontr
                 (cdcooper, tpdcontr, cdconven, dtmvtolt, nrsequen)
               VALUES
@@ -260,7 +260,7 @@ BEGIN
                 -- DESCRICAO DO ERRO NA INSERCAO DE REGISTROS
                 pr_dscritic := 'Problema ao inserir registro na tabela GNCONTR: ' || sqlerrm;
                 RAISE vr_exc_saida;
-            END;
+            END;*/
 
         END CASE;
 
@@ -564,7 +564,7 @@ BEGIN
         vr_cdcritic := 657; -- INTRANET - TPDENVIO = 1
 
         -- VERIFICA TIPO DE ENVIO DE ARQUIVO
-        IF pr_tpdenvio IN (3) THEN
+     /*   IF pr_tpdenvio IN (3) THEN
 
           vr_cdcritic := 748;
           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
@@ -576,7 +576,7 @@ BEGIN
           gene0001.pc_OScommand(pr_typ_comando => 'S',
                                 pr_des_comando => 'cp ' || pr_nmarqped || vr_dscdiren);
 
-        END IF;
+        END IF;*/
 
         IF pr_tpdenvio IN (2, 5) THEN -- 2 --> INTERCHANGE / 5 --> ACCESTAGE
 
@@ -994,13 +994,13 @@ BEGIN
                                   '<dtcredit>' || TO_CHAR(vr_dtproxim, 'dd/mm/yyyy') || '</dtcredit>');
 
           -- EFETUA O ENVIO DOS ARQUIVOS POR EMAIL
-          pc_atualiza_controle(pr_cdcooper => pr_cdcooper	  --> COOPERATIVA CONECTADA
-                              ,pr_tpdenvio => pr_tipenvio	  --> TIPO DE ENVIO
-                              ,pr_nmarqdat => pr_nmarqdat	  --> NOME DO ARQUIVO
-                              ,pr_nmarqped => pr_nmarqped	  --> NOME DO ARQUIVO
-                              ,pr_nmempres => pr_nmempres	  --> NOME DA EMPRESA
-                              ,pr_tpdcontr => pr_tpdcontr	  --> TIPO DE CONTROLE
-                              ,pr_dsendcxa => pr_dsendcxa	  --> E-MAIL PARA ARQ. ARREC
+          pc_atualiza_controle(pr_cdcooper => pr_cdcooper    --> COOPERATIVA CONECTADA
+                              ,pr_tpdenvio => pr_tipenvio    --> TIPO DE ENVIO
+                              ,pr_nmarqdat => pr_nmarqdat    --> NOME DO ARQUIVO
+                              ,pr_nmarqped => pr_nmarqped    --> NOME DO ARQUIVO
+                              ,pr_nmempres => pr_nmempres    --> NOME DA EMPRESA
+                              ,pr_tpdcontr => pr_tpdcontr    --> TIPO DE CONTROLE
+                              ,pr_dsendcxa => pr_dsendcxa    --> E-MAIL PARA ARQ. ARREC
                               ,pr_dsenddeb => pr_dsenddeb); --> E-MAIL PARA ARQ. DEBIT
 
           -- MONTA XML
@@ -1509,5 +1509,3 @@ begin
   dbms_output.put_line('Fim...');
 
 end;
-/
-
