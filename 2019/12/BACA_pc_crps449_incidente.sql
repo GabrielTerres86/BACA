@@ -30,6 +30,7 @@ PROCEDURE pc_crps449_renato(pr_cdcooper IN crapcop.cdcooper%TYPE     --> COOPERA
                                       ,pr_dscritic OUT VARCHAR2) IS             --> TEXTO DE ERRO/CRITICA ENCONTRADA
 BEGIN
 
+
   DECLARE
 
     -- CÓDIGO DO PROGRAMA
@@ -48,11 +49,8 @@ BEGIN
     vr_nmarqped VARCHAR(100);
     vr_nmarqdat VARCHAR(100);
     vr_nmarqrel VARCHAR(100);
-    vr_nmarqrel2 VARCHAR(100);
     vr_nomdiret VARCHAR2(200) := ''; -- NOME DIRETORIO
     vr_strtexto VARCHAR2(4000) := '';
-    vr_caminho_integra VARCHAR2(1000);
-    vr_nmarqpdf        VARCHAR2(4000);
 
     vr_nrbranco INTEGER;
     vr_verifpac INTEGER;
@@ -88,7 +86,6 @@ BEGIN
         FROM crapcop cop
        WHERE cop.cdcooper = pr_cdcooper; -- CODIGO DA COOPERATIVA
     rw_crapcop cr_crapcop%ROWTYPE;
-
 
     -- BUSCA DE MOVIMENTACAO DE CONVENIOS UNIFICADOS
     CURSOR cr_gncvuni(pr_tpdcontr IN gncvuni.tpdcontr%TYPE) IS
@@ -997,13 +994,13 @@ BEGIN
                                   '<dtcredit>' || TO_CHAR(vr_dtproxim, 'dd/mm/yyyy') || '</dtcredit>');
 
           -- EFETUA O ENVIO DOS ARQUIVOS POR EMAIL
-          pc_atualiza_controle(pr_cdcooper => pr_cdcooper    --> COOPERATIVA CONECTADA
-                              ,pr_tpdenvio => pr_tipenvio    --> TIPO DE ENVIO
-                              ,pr_nmarqdat => pr_nmarqdat    --> NOME DO ARQUIVO
-                              ,pr_nmarqped => pr_nmarqped    --> NOME DO ARQUIVO
-                              ,pr_nmempres => pr_nmempres    --> NOME DA EMPRESA
-                              ,pr_tpdcontr => pr_tpdcontr    --> TIPO DE CONTROLE
-                              ,pr_dsendcxa => pr_dsendcxa    --> E-MAIL PARA ARQ. ARREC
+          pc_atualiza_controle(pr_cdcooper => pr_cdcooper	  --> COOPERATIVA CONECTADA
+                              ,pr_tpdenvio => pr_tipenvio	  --> TIPO DE ENVIO
+                              ,pr_nmarqdat => pr_nmarqdat	  --> NOME DO ARQUIVO
+                              ,pr_nmarqped => pr_nmarqped	  --> NOME DO ARQUIVO
+                              ,pr_nmempres => pr_nmempres	  --> NOME DA EMPRESA
+                              ,pr_tpdcontr => pr_tpdcontr	  --> TIPO DE CONTROLE
+                              ,pr_dsendcxa => pr_dsendcxa	  --> E-MAIL PARA ARQ. ARREC
                               ,pr_dsenddeb => pr_dsenddeb); --> E-MAIL PARA ARQ. DEBIT
 
           -- MONTA XML
@@ -1028,31 +1025,6 @@ BEGIN
           -- VERIFICA SE OCORREU UMA CRITICA
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_saida;
-          END IF;
-
-                   -- busca caminho dos relatorios
-          vr_caminho_integra := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
-                                ,pr_cdcooper => pr_cdcooper
-                                ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-
-          vr_nmarqrel2 := 'crrl387_c' || gene0002.fn_mask(vr_cdconven, '9999') || '.lst';
-
-         -- imprime relatorio PDF                      
-         gene0002.pc_imprim(pr_cdcooper   => pr_cdcooper --> Cooperativa conectada
-                            ,pr_cdprogra   => vr_cdprogra --> Nome do programa que solicitou o rep
-                            ,pr_cdrelato   => 387 --> Código do relatório solicitado
-                            ,pr_dtmvtolt   => rw_crapdat.dtmvtolt --> Data movimento atual
-                             ,pr_caminho    => vr_caminho_integra --> Path arquivo origem
-                             ,pr_nmarqimp   => vr_nmarqrel2 --> Nome arquivo para impressao
-                            ,pr_nmformul   => '132col' --> Nome do formulário de impressão
-                            ,pr_nrcopias   => 1 --> Quantidade de Copias desejadas
-                             ,pr_dircop_pdf => vr_nmarqpdf --> Retorna o caminho do PDF gerado pela imprim.p
-                            ,pr_cdcritic   => vr_cdcritic --> Código do erro
-                            ,pr_dscritic   => vr_dscritic); --> Saída com erro
-                            
-          IF vr_dscritic is not null then
-           vr_cdcritic := 0;
-           vr_dscritic := 'Erro ao imprimir relatorio gene0002.pc_imprim : '||vr_dscritic;
           END IF;
 
           -- LIBERA A MEMORIA ALOCADA P/ VARIAVE CLOB
@@ -1228,12 +1200,14 @@ BEGIN
 
   BEGIN
 
-dbms_output.put_line('passo 1');
+    -- INCLUIR NOME DO MÓDULO LOGADO
+    GENE0001.pc_informa_acesso(pr_module => 'PC_' || vr_cdprogra,
+                               pr_action => NULL);
+
     -- VERIFICA SE A COOPERATIVA ESTA CADASTRADA
     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
     FETCH cr_crapcop
       INTO rw_crapcop;
-dbms_output.put_line('passo 2');
 
     -- SE NÃO ENCONTRAR
     IF cr_crapcop%NOTFOUND THEN
@@ -1247,13 +1221,11 @@ dbms_output.put_line('passo 2');
       CLOSE cr_crapcop;
     END IF;
 
-dbms_output.put_line('passo 3');
-
     -- LEITURA DO CALENDÁRIO DA COOPERATIVA
     OPEN cr_crapdat(pr_cdcooper => pr_cdcooper);
     FETCH cr_crapdat
       INTO rw_crapdat;
-    
+
     -- SE NÃO ENCONTRAR
     IF cr_crapdat%NOTFOUND THEN
       -- FECHAR O CURSOR POIS EFETUAREMOS RAISE
@@ -1266,7 +1238,18 @@ dbms_output.put_line('passo 3');
       CLOSE cr_crapdat;
     END IF;
 
-dbms_output.put_line('passo 4');
+    -- VALIDAÇÕES INICIAIS DO PROGRAMA
+    BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
+                             ,pr_flgbatch => 1
+                             ,pr_cdprogra => vr_cdprogra
+                             ,pr_infimsol => pr_infimsol
+                             ,pr_cdcritic => vr_cdcritic);
+
+    -- SE A VARIAVEL DE ERRO É <> 0
+    IF vr_cdcritic <> 0 THEN
+      -- ENVIO CENTRALIZADO DE LOG DE ERRO
+      RAISE vr_exc_saida;
+    END IF;
 
     -- PROXIDO DIA APÓS PRÓXIMO DIA ÚTIL
     vr_dtproxim := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
@@ -1449,8 +1432,14 @@ dbms_output.put_line('passo 4');
 
     END LOOP;
 
+    -- PROCESSO OK, DEVEMOS CHAMAR A FIMPRG
+    btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper,
+                              pr_cdprogra => vr_cdprogra,
+                              pr_infimsol => pr_infimsol,
+                              pr_stprogra => pr_stprogra);
+
     -- SALVAR INFORMAÇÕES ATUALIZADAS
-    --COMMIT;
+    COMMIT;
 
   EXCEPTION
     WHEN vr_exc_fimprg THEN
@@ -1468,8 +1457,13 @@ dbms_output.put_line('passo 4');
                                                     ' - ' || vr_cdprogra ||
                                                     ' --> ' || vr_dscritic);
 
+      -- CHAMAMOS A FIMPRG PARA ENCERRARMOS O PROCESSO SEM PARAR A CADEIA
+      btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper,
+                                pr_cdprogra => vr_cdprogra,
+                                pr_infimsol => pr_infimsol,
+                                pr_stprogra => pr_stprogra);
       -- EFETUAR COMMIT
-      --COMMIT;
+      COMMIT;
     WHEN vr_exc_saida THEN
       -- SE FOI RETORNADO APENAS CÓDIGO
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
@@ -1482,10 +1476,7 @@ dbms_output.put_line('passo 4');
       -- EFETUAR ROLLBACK
       ROLLBACK;
     WHEN OTHERS THEN
-      -- EFETUAR RETORNO DO ERRO NÃO TRATADO
-      pr_cdcritic := 0;
-      pr_dscritic := sqlerrm;
-      -- EFETUAR ROLLBACK
+null;
       ROLLBACK;
   END;
 
