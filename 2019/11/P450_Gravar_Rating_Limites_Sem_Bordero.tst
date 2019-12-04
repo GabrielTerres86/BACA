@@ -65,8 +65,8 @@ declare
        AND o.nrdconta(+) = l.nrdconta
        AND o.nrctremp(+) = l.nrctrlim
        AND o.tpctrato(+) = l.tpctrlim
-       AND o.inrisco_rating_autom IS NULL
-       AND o.flintegrar_sas = 0
+       AND o.inrisco_rating_autom(+) IS NULL
+       AND o.flintegrar_sas(+) = 0
     ;
 
   PROCEDURE pc_insere_rating (pr_cdcooper  IN crapcop.cdcooper%TYPE
