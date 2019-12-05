@@ -87,13 +87,7 @@ DECLARE
     SELECT cdoperad
       FROM crapope t
      WHERE cdcooper = pr_cdcooper
-       AND upper(t.cdoperad) IN (upper('F0020271')--USUÁRIOS DE TESTES E DEVEM SER SUBSTITUIDOS PELA LISTA QUE A  jOSI IRÁ PASSAR
-                                ,upper('F0020206')
-                                ,upper('F0020113')
-                                ,upper('F0020001') 
-                                ,upper('F0020048')
-                                ,upper('F0020295')
-                                );
+       AND upper(t.cdoperad) IN ('F0020295');
   rw_crapope cr_crapope%ROWTYPE;
   sigla_tela  VARCHAR2(400);
   rotina_tela VARCHAR2(400);
