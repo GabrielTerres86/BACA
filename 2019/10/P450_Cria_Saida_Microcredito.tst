@@ -1,4 +1,4 @@
-ï»¿PL/SQL Developer Test script 3.0
+PL/SQL Developer Test script 3.0
 526
 DECLARE
   -- Estrutura para PL Table de CRAPRIS
@@ -62,7 +62,7 @@ DECLARE
       INDEX BY VARCHAR2(100);
   vr_tab_craptco typ_tab_craptco;
 
-  /* Estrutura de PLTable para armazenar os Rowids de CRAPRIS para atualizaÃ§Ã£o */
+  /* Estrutura de PLTable para armazenar os Rowids de CRAPRIS para atualização */
   TYPE typ_tab_rowid
     IS TABLE OF ROWID
       INDEX BY PLS_INTEGER;
@@ -70,19 +70,19 @@ DECLARE
 
 
   ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
-  -- CÃ³digo do programa
+  -- Código do programa
   vr_fltemris       BOOLEAN;                                     --> Flag de risco
   vr_dtrefere       DATE;                                        --> Data de referencia
   vr_tab_craprispl  typ_tab_crapris;                             --> PL Table
-  vr_dsparame       crapsol.dsparame%type;                       --> ParÃ¢metro de execuÃ§Ã£o
+  vr_dsparame       crapsol.dsparame%type;                       --> Parâmetro de execução
   vr_cdcooper       crapcop.cdcooper%TYPE;                       --> Codigo da Cooperativa
 
 
   -- Tratamento de erros
-  vr_exc_saida  EXCEPTION;                                       --> Controle de saÃ­da para erros
-  vr_exc_fimprg EXCEPTION;                                       --> Controle de saÃ­da para erros
-  vr_cdcritic   PLS_INTEGER;                                     --> CÃ³digo da crÃ­tica
-  vr_dscritic   VARCHAR2(4000);                                  --> DescriÃ§Ã£o da crÃ­tica
+  vr_exc_saida  EXCEPTION;                                       --> Controle de saída para erros
+  vr_exc_fimprg EXCEPTION;                                       --> Controle de saída para erros
+  vr_cdcritic   PLS_INTEGER;                                     --> Código da crítica
+  vr_dscritic   VARCHAR2(4000);                                  --> Descrição da crítica
 
   ------------------------------- CURSORES ----------------------------------------------------------
   -- Busca dados da cooperativa
@@ -102,9 +102,9 @@ DECLARE
 
 
   ------------------------------- PROCEDURES INTERNAS ---------------------------------
-  /* Processar conta de migraÃ§Ã£o entre cooperativas */
+  /* Processar conta de migração entre cooperativas */
   FUNCTION fn_verifica_conta_migracao(pr_cdcooper  IN crapcop.cdcooper%TYPE
-                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE) --> NÃºmero da conta
+                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE) --> Número da conta
                                                                              RETURN BOOLEAN IS
   BEGIN
     -- Validamos Apenas Via, AV, SCR e Tranpocred
@@ -115,7 +115,7 @@ DECLARE
       IF vr_tab_craptco.exists(LPAD(pr_cdcooper,03,'0')||LPAD(pr_nrdconta,15,'0')) THEN
         RETURN FALSE;
       ELSE
-        -- Tudo OK atÃ© aqui, retornamos true
+        -- Tudo OK até aqui, retornamos true
         RETURN TRUE;
       END IF;
     END IF;
@@ -124,28 +124,28 @@ DECLARE
 
 
 
-  /* Processar saÃ­da da operaÃ§Ã£o */
-  PROCEDURE pc_cria_saida_operacao(pr_cdcooper    IN PLS_INTEGER                 --> CÃ³digo da cooperativa
+  /* Processar saída da operação */
+  PROCEDURE pc_cria_saida_operacao(pr_cdcooper    IN PLS_INTEGER                 --> Código da cooperativa
                                   ,pr_dtrefere    IN DATE                        --> Data de referencia
                                   ,pr_rw_crapdat  IN btch0001.cr_crapdat%ROWTYPE --> Dados da crapdat
-                                  ,pr_des_erro    OUT VARCHAR2) IS               --> SaÃ­da de erros
+                                  ,pr_des_erro    OUT VARCHAR2) IS               --> Saída de erros
   BEGIN
     DECLARE
 
       vr_tab_crapris typ_tab_crapris;          --> PL Table para os riscos
-      vr_nrseqctr    PLS_INTEGER;              --> NÃºmero de contrato
-      vr_cdinfadi    VARCHAR2(400);            --> DescriÃ§Ã£o do motivo
+      vr_nrseqctr    PLS_INTEGER;              --> Número de contrato
+      vr_cdinfadi    VARCHAR2(400);            --> Descrição do motivo
       vr_cdmodali    crapris.cdmodali%TYPE;    --> Modalidade
-      vr_dtultdma    DATE;                     --> Ãšltima data
-      vr_contareg    PLS_INTEGER := 1;         --> Contador para iteraÃ§Ã£o
-      vr_exc_erro    EXCEPTION;                --> Controle de saÃ­da de erros
-      vr_idxcrapris  VARCHAR2(31);             --> Ãndice para PL Table
+      vr_dtultdma    DATE;                     --> Última data
+      vr_contareg    PLS_INTEGER := 1;         --> Contador para iteração
+      vr_exc_erro    EXCEPTION;                --> Controle de saída de erros
+      vr_idxcrapris  VARCHAR2(31);             --> Índice para PL Table
       vr_contcraptis PLS_INTEGER := 0;         --> Contador para o indice vr_idxcrapris
       vr_tab_crapris_n typ_tab_crapris_n;      --> Variavel que contera a mesma informacao que a pr_tab_crapris, porem com indice numero
       vr_idxcrapris_n  PLS_INTEGER := 0;       --> Indice da pl/table vr_tab_crapris_n
 
       /* Buscar dados do risco */
-      CURSOR cr_crapris_microcredito(pr_cdcooper IN crapris.cdcooper%TYPE      --> CÃ³digo da cooperativa
+      CURSOR cr_crapris_microcredito(pr_cdcooper IN crapris.cdcooper%TYPE      --> Código da cooperativa
                                     ,pr_dtrefere IN crapris.dtrefere%TYPE) IS  --> Data de referencia
         SELECT cr.nrdconta          -- Mesmos campos do crps660 para criar o registro de saida
               ,cr.dtrefere
@@ -194,7 +194,6 @@ DECLARE
           AND cr.dtrefere = pr_dtrefere
           AND cr.inddocto = 1
           AND cr.cdmodali IN (299,499)     -- Apenas emprestimos
-          AND cr.flgindiv = 1 -- Registros individualizados
           AND cr.cdmodali <> 0301
           AND cr.inpessoa IN (1,2)
           AND cr.vldivida <> 0
@@ -203,9 +202,10 @@ DECLARE
           AND cr.cdcooper = e.cdcooper
           AND cr.nrdconta = e.nrdconta
           AND cr.nrctremp = e.nrctremp
-          AND ((e.inliquid  = 0) -- Emprestimos nÃ£o liquidados
-             OR (e.inliquid = 1 AND
-                 e.dtliquid > pr_dtrefere))               
+          AND ( e.inliquid = 0 OR
+               (e.inprejuz = 1 AND e.vlsdprej > 0) OR
+               (e.inliquid = 1 AND e.inprejuz = 0 AND e.dtliquid > pr_dtrefere)
+              )
           -- Contratos associados as linhas Cred da planilha
           AND l.cdcooper = e.cdcooper
           AND l.cdlcremp = e.cdlcremp
@@ -234,7 +234,7 @@ DECLARE
 
 
     BEGIN
-      -- Inicializar variÃ¡veis
+      -- Inicializar variáveis
       vr_dtultdma := pr_dtrefere - TO_NUMBER(TO_CHAR(pr_dtrefere, 'DD'));
       vr_cdinfadi := '';
       vr_nrseqctr := 0;
@@ -244,7 +244,7 @@ DECLARE
       -- Executar consulta de riscos
       FOR rw_crapris IN cr_crapris_microcredito(pr_cdcooper => pr_cdcooper
                                               , pr_dtrefere => pr_dtrefere) LOOP
-        -- Verifica migraÃ§Ã£o/incorporaÃ§Ã£o
+        -- Verifica migração/incorporação
         IF NOT fn_verifica_conta_migracao(pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => rw_crapris.nrdconta) THEN
           CONTINUE;
@@ -316,7 +316,7 @@ DECLARE
           vr_cdinfadi := '0307';  -- 0307 - Troca de Modalidade
 
 
-          -- Criar registros na PL Table com base na tabela fÃ­sica
+          -- Criar registros na PL Table com base na tabela física
           vr_contcraptis := vr_contcraptis + 1;
           vr_idxcrapris := lpad(rw_crapris.nrdconta,10,'0') ||   -- nrdconta
                            to_char(pr_dtrefere,'YYYYMMDD')  ||   -- dtrefere
@@ -484,11 +484,11 @@ BEGIN
   -- Carrega as tabelas de contas transferidas da Viacredi e do AltoVale e SCRCred
   FOR rw_crapcop IN cr_crapcop(0) LOOP
 
-    -- Leitura do calendÃ¡rio da cooperativa
+    -- Leitura do calendário da cooperativa
     OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop.cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
 
-    -- Se nÃ£o encontrar
+    -- Se não encontrar
     IF btch0001.cr_crapdat%NOTFOUND THEN
       -- Fechar o cursor pois efetuaremos raise
       CLOSE btch0001.cr_crapdat;
@@ -505,7 +505,7 @@ BEGIN
     vr_dtrefere := to_date(rw_crapdat.dtultdma, 'DD/MM/RRRR');
 
 
-    -- Executar procedimento de saÃ­da de operaÃ§Ã£o
+    -- Executar procedimento de saída de operação
     pc_cria_saida_operacao(pr_cdcooper    => rw_crapcop.cdcooper
                           ,pr_dtrefere    => vr_dtrefere
                           ,pr_rw_crapdat  => rw_crapdat
@@ -523,7 +523,7 @@ BEGIN
 
   ----------------- ENCERRAMENTO DO PROGRAMA -------------------
 
-  -- Salvar informaÃ§Ãµes atualizadas
+  -- Salvar informações atualizadas
   COMMIT;
 end;
 0
