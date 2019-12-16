@@ -38,7 +38,7 @@ BEGIN
         'BUSCAR_MUNICIPIO_POR_CODIGO'
         , 'TELA_CADCOP'
         , 'pc_buscar_municipio_por_codigo'
-		, 'pr_idcidade'
+		, 'pr_cdcidade'
         , vr_nrseqrdr);
   
   COMMIT;

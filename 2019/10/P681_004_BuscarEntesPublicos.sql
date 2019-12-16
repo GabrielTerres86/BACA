@@ -38,7 +38,7 @@ BEGIN
         'BUSCAR_ENTES_PUBLICOS'
         , 'TELA_CADCOP'
         , 'pc_buscar_entes_publicos'
-		, 'pr_pagina, pr_tamanho_pagina, pr_idgrupo_municipal'
+		, 'pr_pagina, pr_tamanho_pagina, pr_cdcidade'
         , vr_nrseqrdr);
   
   COMMIT;
