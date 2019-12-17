@@ -1,0 +1,7 @@
+insert into craplch (CDCOOPER, CDFINEMP, NRSEQLCH, CDLCRHAB, PROGRESS_RECID)
+values (16, 52, 1, 7002, 42852);
+
+insert into craplch (CDCOOPER, CDFINEMP, NRSEQLCH, CDLCRHAB, PROGRESS_RECID)
+values (1, 55, 2, 9859, 44813);
+
+  COMMIT; 

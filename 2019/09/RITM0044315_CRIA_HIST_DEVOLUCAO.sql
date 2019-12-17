@@ -1,0 +1,5 @@
+--Insert para criar o registro de devolução por alinea 12      
+insert into crapneg (NRDCONTA, NRSEQDIG, DTINIEST, CDHISEST, CDOBSERV, NRDCTABB, NRDOCMTO, VLESTOUR, QTDIAEST, VLLIMCRE, CDBANCHQ, CDTCTANT, CDAGECHQ, CDTCTATU, NRCTACHQ, DTFIMEST, CDOPERAD, CDCOOPER, FLGCTITG, DTECTITG, IDSEQTTL, DTIMPREG, CDOPEIMP)
+values (4061713, fn_sequence('CRAPNEG', 'NRSEQDIG', 1 || ';' || 4061713), to_date('26-09-2019', 'dd-mm-yyyy'), 1, 12, 4061713, 8753, 2087.5, 0, 0.00, 85, 0, 101, 0, 4061713, null, '1', 1, 0, null, 0, null, ' ');
+
+COMMIT;
