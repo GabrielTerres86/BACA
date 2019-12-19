@@ -1,5 +1,5 @@
 begin
-  for creg (select cdcooper, nrpedido 
+  for creg in (select cdcooper, nrpedido 
             from crapfdc a 
             where  a.dtconchq in ('04/12/2019' , '05/12/2019') and 
                    dtemschq is  null 
