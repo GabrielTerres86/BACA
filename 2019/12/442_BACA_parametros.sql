@@ -28,7 +28,20 @@ VALUES
   ('CRED',
    0,
    'URI_CONTRATO_GRAVAME',
-   'URI para Contrato do GRAVAME',
+   'URI para Registro Contrato do GRAVAME',
    '/osb-soa/GarantiaVeiculoRestService/v1/RegistrarContratoGravames');
+   
+INSERT INTO crapprm
+  (nmsistem,
+   cdcooper,
+   cdacesso,
+   dstexprm,
+   dsvlrprm)
+VALUES
+  ('CRED',
+   0,
+   'URI_IMAGEM_CONTRATO_GRAVAME',
+   'URI para Imagem Contrato do GRAVAME',
+   '/osb-soa/GarantiaVeiculoRestService/v1/EnviarImagemContratoGravames');
    
 commit;
