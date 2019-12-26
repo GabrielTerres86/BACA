@@ -40,7 +40,7 @@ INSERT INTO crapprm
 VALUES
   ('CRED',
    0,
-   'URI_IMAGEM_CONTRATO_GRAVAME',
+   'URI_IMG_CONTRATO_GRAVAME',
    'URI para Imagem Contrato do GRAVAME',
    '/osb-soa/GarantiaVeiculoRestService/v1/EnviarImagemContratoGravames');
    
