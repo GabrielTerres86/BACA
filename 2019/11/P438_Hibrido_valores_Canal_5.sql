@@ -1,18 +1,13 @@
--- Insere valores máximos para contratação hibrida
-BEGIN
-  FOR rw_crapcop IN (SELECT cdcooper FROM crapcop c WHERE c.flgativo = 1) LOOP   
+-- insere valores máximos para contratação hibrida
+begin
+  for RW_TSCP in (select * from TBEPR_SEGMENTO_CANAIS_PERM where CDCANAL=3) loop
     begin
-          
-      insert into TBEPR_SEGMENTO_CANAIS_PERM (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-      values (rw_crapcop.cdcooper, 2, 5, 2, 60000.00);
-
-      insert into TBEPR_SEGMENTO_CANAIS_PERM (CDCOOPER, IDSEGMENTO, CDCANAL, TPPERMISSAO, VLMAX_AUTORIZADO)
-      values (rw_crapcop.cdcooper, 1, 5, 2, 30000.00);
-    
+      RW_TSCP.CDCANAL := 5;
+      insert into TBEPR_SEGMENTO_CANAIS_PERM values RW_TSCP;
     exception
-      when DUP_VAL_ON_INDEX THEN
-        CONTINUE;
-    END;
-  END LOOP;
-  COMMIT;
-END;
+      when dup_val_on_index then
+        continue;
+    end;
+  end loop;
+  commit;
+end;
