@@ -3,7 +3,10 @@ insert into crapaca(nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
 values('PREP_REGIS_CONTRATO','GRVM0001','pc_prep_registro_contrato_web','pr_nrdconta, pr_nrctrpro',463);
 
 insert into crapaca(nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-values('GRAVA_RET_REGIS_CONTRATO','GRVM0002','pc_grava_ret_regis_contrat_web','pr_nrdconta, pr_nrctrpro ,pr_id_grvm ,pr_id_regis',463);
+values('GRAVA_RET_REGIS_CONTRATO','GRVM0002','pc_grava_ret_regis_contrat_web','pr_nrdconta, pr_nrctrpro,pd_idseqbem,pr_idgrvm ,pr_idregis',1845);
+
+insert into crapaca(nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+values('GRAVA_RET_IMG_CONTRATO','GRVM0002','pc_grava_ret_img_contrat_web','pr_nrdconta,pr_nrctrpro,pd_idseqbem,pr_idgrvm ,pr_idregis',1845);
 
 INSERT INTO crapprm
   (nmsistem,
