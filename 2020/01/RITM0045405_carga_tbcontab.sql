@@ -18,15 +18,6 @@ begin
                                values('0203',2,1625,1603,'1612010');
 
   insert into tbcontab_modali_ope_crd(cdmodalidade_bacen, tpemprst, nrctadeb, nrctacrd, nrconta_cosif)
-                               values('0212',0,1622,1621,'1612099');
-
-  insert into tbcontab_modali_ope_crd(cdmodalidade_bacen, tpemprst, nrctadeb, nrctacrd, nrconta_cosif)
-                               values('0212',1,1622,1664,'1612099');
-
-  insert into tbcontab_modali_ope_crd(cdmodalidade_bacen, tpemprst, nrctadeb, nrctacrd, nrconta_cosif)
-                               values('0212',2,1622,1603,'1612099');
-
-  insert into tbcontab_modali_ope_crd(cdmodalidade_bacen, tpemprst, nrctadeb, nrctacrd, nrconta_cosif)
                                values('0214',0,1659,1621,'1612050');
 
   insert into tbcontab_modali_ope_crd(cdmodalidade_bacen, tpemprst, nrctadeb, nrctacrd, nrconta_cosif)
