@@ -1,0 +1,6 @@
+
+insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+values ('VERIFICA_RECIPROCIDADE', 'CADA0003', 'pc_verificar_reciprocidade', null, (SELECT NRSEQRDR FROM craprdr WHERE NMPROGRA = 'CADA0003'));
+
+COMMIT
+
