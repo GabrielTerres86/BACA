@@ -308,7 +308,7 @@ BEGIN
              pr_cdcooper, -- cooperativa
              1,
              0,
-             58,
+             (SELECT max(nrordrot) + 1 FROM craptel),
              1,
              '',
              2
