@@ -264,7 +264,6 @@ COMMIT;
 ----------------------------------------------------------------------------------------
 -- FIM DML TELA CHQMOB
 
-
 ----------------------------------------------------------------------------------------
 -- INICIO Tela Atenda/Produtos Mobile
 
@@ -323,6 +322,13 @@ END;
 
 ----------------------------------------------------------------------------------------
 -- FIM Tela Atenda/Produtos Mobile
+
+/* INICIO TELA DEVOLU - BUSCA ORIGEM DO CHEQUE */
+INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+VALUES ('BUSCA_ORIGEM_DEP_MOBILE','CHEQ0004','pc_busca_origem_cheque_mob','pr_cdcooper,pr_nrdconta,pr_nrcheque,pr_nrdigchq,pr_cdbanchq',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'CHEQ0004' AND ROWNUM = 1));
+
+
+
 
 
 
