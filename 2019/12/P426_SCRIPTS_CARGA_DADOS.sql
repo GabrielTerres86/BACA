@@ -179,6 +179,7 @@ END;
 
 -- armazenar tela para interface web
 INSERT INTO CRAPRDR (NMPROGRA, DTSOLICI) values ('TELA_CHQMOB', sysdate);
+INSERT INTO CRAPRDR (NMPROGRA, DTSOLICI) values ('CHEQ0004', sysdate);
 COMMIT;
 
 -- Crapaca ------------------------------------------------------
@@ -211,6 +212,12 @@ VALUES ('ALTERA_EMAIL_NOTIF_MOB','TELA_CHQMOB','pc_altera_email_notif_mob','pr_c
 
 INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 VALUES ('BUSCA_CHQ_ESTORNO_MOBILE','TELA_CHQMOB','pc_busca_chq_estorno_mob','pr_cdcooper,pr_nrdconta,pr_vlvalor',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'TELA_CHQMOB' AND ROWNUM = 1));
+
+INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+VALUES ('BUSCA_ACEITE_DEP_MOBILE','CHEQ0004','pc_busca_aceite_cheque_mob','pr_cdcooper,pr_nrdconta',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'CHEQ0004' AND ROWNUM = 1));
+
+INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+VALUES ('ALTERA_ACEITE_DEP_MOBILE','CHEQ0004','pc_altera_aceite_cheque_mob','pr_cdcooper,pr_cdoperad,pr_nrdconta,pr_prmavali,pr_dtsolici',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'CHEQ0004' AND ROWNUM = 1));
 
 ------------------------------------------------------------------
 
@@ -258,7 +265,64 @@ COMMIT;
 -- FIM DML TELA CHQMOB
 
 
+----------------------------------------------------------------------------------------
+-- INICIO Tela Atenda/Produtos Mobile
 
+DECLARE
+  TYPE Cooperativas IS TABLE OF integer;
+  coop Cooperativas := Cooperativas(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17);
+
+  pr_cdcooper INTEGER;
+BEGIN
+
+  FOR i IN coop.FIRST .. coop.LAST LOOP
+    pr_cdcooper := coop(i);
+    -- Insere a tela
+    INSERT INTO craptel
+      (nmdatela,
+       nrmodulo,
+       cdopptel,
+       tldatela,
+       tlrestel,
+       flgteldf,
+       flgtelbl,
+       nmrotina,
+       lsopptel,
+       inacesso,
+       cdcooper,
+       idsistem,
+       idevento,
+       nrordrot,
+       nrdnivel,
+       nmrotpai,
+       idambtel)
+      SELECT 'ATENDA',
+             1,
+             '@',
+             'Produtos Mobile',
+             'Produtos Mobile',
+             0,
+             1, -- bloqueio da tela 
+             'PRODUTOS MOBILE',
+             'ACESSO',
+             2,
+             pr_cdcooper, -- cooperativa
+             1,
+             0,
+             58,
+             1,
+             '',
+             2
+        FROM crapcop
+       WHERE cdcooper = pr_cdcooper;
+      
+  END LOOP;
+
+  COMMIT;
+END;
+
+----------------------------------------------------------------------------------------
+-- FIM Tela Atenda/Produtos Mobile
 
 
 
