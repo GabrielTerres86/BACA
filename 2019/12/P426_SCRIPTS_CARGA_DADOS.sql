@@ -266,13 +266,21 @@ COMMIT;
 
 ----------------------------------------------------------------------------------------
 -- INICIO Tela Atenda/Produtos Mobile
-
 DECLARE
   TYPE Cooperativas IS TABLE OF integer;
   coop Cooperativas := Cooperativas(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17);
+  
+  CURSOR cr_craptel is
+    SELECT max(nrordrot) + 1 nrordrot FROM craptel;
+  rw_craptel cr_craptel%rowtype;
 
   pr_cdcooper INTEGER;
+  
 BEGIN
+  
+  open cr_craptel;
+  fetch cr_craptel into rw_craptel;
+  close cr_craptel;
 
   FOR i IN coop.FIRST .. coop.LAST LOOP
     pr_cdcooper := coop(i);
@@ -308,7 +316,7 @@ BEGIN
              pr_cdcooper, -- cooperativa
              1,
              0,
-             (SELECT max(nrordrot) + 1 FROM craptel),
+             rw_craptel.nrordrot,
              1,
              '',
              2
@@ -319,7 +327,6 @@ BEGIN
 
   COMMIT;
 END;
-
 ----------------------------------------------------------------------------------------
 -- FIM Tela Atenda/Produtos Mobile
 
