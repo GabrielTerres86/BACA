@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-527
+501
 declare 
   vr_tempo_parcial_i DATE;
   vr_tempo_parcial_f VARCHAR2(20);
@@ -54,19 +54,19 @@ declare
     SELECT l.cdcooper, l.nrdconta, l.nrctrlim nrctremp
           ,l.insitlim, l.tpctrlim tpctrato, o.inrisco_rating_autom, o.flintegrar_sas
           ,a.inpessoa, a.nrcpfcnpj_base
-      FROM craplim l, tbrisco_operacoes o, crapass a
+      FROM crapass a, craplim l
+      LEFT JOIN tbrisco_operacoes o ON (o.cdcooper = l.cdcooper
+                                    AND o.nrdconta = l.nrdconta
+                                    AND o.nrctremp = l.nrctrlim
+                                    AND o.tpctrato = l.tpctrlim)
      WHERE l.cdcooper = pr_cdcooper
        AND l.tpctrlim IN(2,3)
        AND l.insitlim = 2          -- Limites ATIVOS
        AND a.cdcooper = l.cdcooper
        AND a.nrdconta = l.nrdconta
        -- QUE NAO TENHAM RATING
-       AND o.cdcooper(+) = l.cdcooper
-       AND o.nrdconta(+) = l.nrdconta
-       AND o.nrctremp(+) = l.nrctrlim
-       AND o.tpctrato(+) = l.tpctrlim
-       AND o.inrisco_rating_autom(+) IS NULL
-       AND o.flintegrar_sas(+) = 0
+       AND ((o.inrisco_rating_autom IS NULL AND o.flintegrar_sas = 0) OR
+            (o.flintegrar_sas IS NULL ))
     ;
 
   PROCEDURE pc_insere_rating (pr_cdcooper  IN crapcop.cdcooper%TYPE
@@ -125,6 +125,7 @@ declare
                   ,180
                   ,1);
 
+       IF SQL%ROWCOUNT > 0 THEN
        --Deverá ser colocado o log aqui. Até o momento a tabela ainda não foi criada.
        vr_retorno := RATI0003.fn_registra_historico(pr_cdcooper    => pr_cdcooper
                                                    ,pr_cdoperad    => '1'
@@ -146,20 +147,15 @@ declare
                                                    ,pr_retxml               => vr_retxml
                                                    ,pr_cdcritic             => vr_cdcritic
                                                    ,pr_dscritic             => vr_dscritic);
-
+       END IF;
+       
        IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                   pr_ind_tipo_log => 1, 
-                                   pr_des_log      => 'Erro ao inserir/atualizar LOG Risco Operações: ' ||
+        dbms_output.put_line('Erro ao inserir/atualizar LOG Risco Operações: ' ||
                                                        ' [' || pr_Cdcooper || '|'||
                                                        pr_Nrdconta         || '|'||
                                                        pr_Nrctrato         || '|'||
                                                        pr_Tpctrato         || '] => '||
-                                                       SQLERRM,
-                                   pr_dstiplog     => NULL,
-                                   pr_nmarqlog     => 'LOG_LIM ATIVO sem BORDERO',
-                                   pr_cdprograma   => 'CARGA_UPD',
-                                   pr_tpexecucao   => 2);
+                                                       SQLERRM);
        END IF;
       -------------------------------------------------
     EXCEPTION
@@ -294,6 +290,7 @@ BEGIN
     vr_tempo_parcial_i := SYSDATE;
     vr_tempo_total_i   := SYSDATE;
 
+    dbms_output.put_line(rw_cop.cdcooper || ' Parte 1 - INICIO');
     FOR rw_limites_sem_bordero IN cr_limites_sem_bordero (pr_cdcooper => rw_cop.cdcooper) LOOP
 
       IF rw_limites_sem_bordero.insitlim = 3 THEN -- Limite Cancelado
@@ -331,18 +328,12 @@ BEGIN
                                                       ,pr_cdcritic             => vr_cdcritic
                                                       ,pr_dscritic             => vr_dscritic);
           IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                       pr_ind_tipo_log => 1, 
-                                       pr_des_log      => 'Erro ao inserir/atualizar LOG Risco Operações: ' ||
+            dbms_output.put_line('Erro ao inserir/atualizar LOG Risco Operações: ' ||
                                                            ' [' || rw_limites_sem_bordero.Cdcooper || '|'||
                                                            rw_limites_sem_bordero.Nrdconta         || '|'||
                                                            rw_limites_sem_bordero.nrctremp         || '|'||
                                                            rw_limites_sem_bordero.Tpctrato         || '] => '||
-                                                           SQLERRM,
-                                       pr_dstiplog     => NULL,
-                                       pr_nmarqlog     => 'LOG_LIM ATIVO sem BORDERO[1]',
-                                       pr_cdprograma   => 'CARGA_UPD',
-                                       pr_tpexecucao   => 2);
+                                                           SQLERRM);
           END IF;
         ELSE
           -- Se Limite CANCELADO nao tem Bordero ATIVO
@@ -375,18 +366,12 @@ BEGIN
                                                       ,pr_cdcritic             => vr_cdcritic
                                                       ,pr_dscritic             => vr_dscritic);
           IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-            btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                       pr_ind_tipo_log => 1, 
-                                       pr_des_log      => 'Erro ao inserir/atualizar LOG Risco Operações: ' ||
+            dbms_output.put_line('Erro ao inserir/atualizar LOG Risco Operações: ' ||
                                                            ' [' || rw_limites_sem_bordero.Cdcooper || '|'||
                                                            rw_limites_sem_bordero.Nrdconta         || '|'||
                                                            rw_limites_sem_bordero.nrctremp         || '|'||
                                                            rw_limites_sem_bordero.Tpctrato         || '] => '||
-                                                           SQLERRM,
-                                       pr_dstiplog     => NULL,
-                                       pr_nmarqlog     => 'LOG_LIM ATIVO sem BORDERO[1]',
-                                       pr_cdprograma   => 'CARGA_UPD',
-                                       pr_tpexecucao   => 2);
+                                                           SQLERRM);
           END IF;
         END IF;
         COMMIT;
@@ -421,18 +406,12 @@ BEGIN
                                                      ,pr_dscritic             => vr_dscritic);
 
          IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                     pr_ind_tipo_log => 1, 
-                                     pr_des_log      => 'Erro ao inserir/atualizar LOG Risco Operações: ' ||
+          dbms_output.put_line('Erro ao inserir/atualizar LOG Risco Operações: ' ||
                                                          ' [' || rw_limites_sem_bordero.Cdcooper || '|'||
                                                          rw_limites_sem_bordero.Nrdconta         || '|'||
                                                          rw_limites_sem_bordero.nrctremp         || '|'||
                                                          rw_limites_sem_bordero.Tpctrato         || '] => '||
-                                                         SQLERRM,
-                                     pr_dstiplog     => NULL,
-                                     pr_nmarqlog     => 'LOG_LIM ATIVO sem BORDERO[2]',
-                                     pr_cdprograma   => 'CARGA_UPD',
-                                     pr_tpexecucao   => 2);
+                                                         SQLERRM);
          END IF;
          COMMIT;
       END IF;
@@ -443,7 +422,7 @@ BEGIN
                          LPAD(TRUNC(MOD(MOD((SYSDATE - vr_tempo_parcial_i) * 86400, 3600), 60)),
                               2,
                               '0');
-    dbms_output.put_line(rw_cop.cdcooper || ' Parte 1: ' ||vr_tempo_parcial_f );
+    dbms_output.put_line(rw_cop.cdcooper || ' Parte 1 - FIM: ' ||vr_tempo_parcial_f );
 
 ---------------------------------------
 
@@ -451,6 +430,7 @@ BEGIN
 
 ---------------------------------------
     vr_tempo_parcial_i := SYSDATE;
+    dbms_output.put_line(rw_cop.cdcooper || ' Parte 2 - INICIO');
     FOR rw_limites_sem_rating IN cr_limites_sem_rating (pr_cdcooper => rw_cop.cdcooper) LOOP
 
       IF rw_limites_sem_rating.flintegrar_sas IS NULL THEN
@@ -492,18 +472,12 @@ BEGIN
                                                      ,pr_dscritic             => vr_dscritic);
 
          IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                     pr_ind_tipo_log => 1, 
-                                     pr_des_log      => 'Erro ao inserir/atualizar LOG Risco Operações: ' ||
+          dbms_output.put_line('Erro ao inserir/atualizar LOG Risco Operações: ' ||
                                                          ' [' || rw_limites_sem_rating.Cdcooper || '|'||
                                                          rw_limites_sem_rating.Nrdconta         || '|'||
                                                          rw_limites_sem_rating.Nrctremp         || '|'||
                                                          rw_limites_sem_rating.Tpctrato         || '] => '||
-                                                         SQLERRM,
-                                     pr_dstiplog     => NULL,
-                                     pr_nmarqlog     => 'LOG_LIM ATIVO sem BORDERO[3]',
-                                     pr_cdprograma   => 'CARGA_UPD',
-                                     pr_tpexecucao   => 2);
+                                                         SQLERRM);
          END IF;
       END IF;
       COMMIT;
@@ -514,7 +488,7 @@ BEGIN
                          LPAD(TRUNC(MOD(MOD((SYSDATE - vr_tempo_parcial_i) * 86400, 3600), 60)),
                               2,
                               '0');
-    dbms_output.put_line(rw_cop.cdcooper || ' Parte 2: ' ||vr_tempo_parcial_f );
+    dbms_output.put_line(rw_cop.cdcooper || ' Parte 2 - FIM: ' ||vr_tempo_parcial_f );
 
     vr_tempo_total_f := LPAD(TRUNC(((SYSDATE - vr_tempo_total_i) * 86400 / 3600)), 2, '0') || ':' ||
                          LPAD(TRUNC(MOD((SYSDATE - vr_tempo_total_i) * 86400, 3600) / 60), 2, '0') || ':' ||
@@ -528,4 +502,5 @@ BEGIN
 
 end;
 0
-0
+1
+rw_limites_sem_rating.flintegrar_sas
