@@ -72,10 +72,10 @@ BEGIN
             
             IF (vr_dtddutl != rw_tbcrd_fatura.dtvencimento AND vr_dtddutl = rw_tbcrd_fatura.dtpagamentopf)
                OR (rw_tbcrd_fatura.dtvencimento = rw_tbcrd_fatura.dtpagamentopf) THEN
-               dbms_output.put_line('Id fatura: ' || rw_tbcrd_fatura.idpagamento_fatura);
+               /*dbms_output.put_line('Id fatura: ' || rw_tbcrd_fatura.idpagamento_fatura);
                dbms_output.put_line('Vencimento: ' || rw_tbcrd_fatura.dtvencimento);
                dbms_output.put_line('Dia util: ' || vr_dtddutl);
-               dbms_output.put_line('Data pagamento fatura: ' || rw_tbcrd_fatura.dtvencimento);
+               dbms_output.put_line('Data pagamento fatura: ' || rw_tbcrd_fatura.dtvencimento);*/
                
                -- Alteramos o registo para a origem ser normal e não mais repique
                BEGIN
