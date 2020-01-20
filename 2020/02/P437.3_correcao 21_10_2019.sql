@@ -85,5 +85,8 @@ insert into tbepr_consig_movimento_tmp
 -- A procedure EMPR0006.pc_carrega_modalidades passou a ter 1 parametro (pr_cdlcremp)
 UPDATE CRAPACA aca SET aca.lstparam = 'pr_cdlcremp' WHERE aca.nmdeacao = 'CAR_MODALI';
 
+-- Alteracao no canal de gestão para o padrao PORTAL 
+UPDATE tbcadast_empresa_consig tbcadast SET tbcadast.cdcanalgestaopag = 1 WHERE tbcadast.cdcanalgestaopag = 0 OR tbcadast.cdcanalgestaopag IS NULL;
+
 --rollback;
 commit;
