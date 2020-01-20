@@ -18,7 +18,7 @@ BEGIN
     BEGIN
       
       INSERT INTO TBGEN_VERSAO_TERMO (CDCOOPER, DSCHAVE_VERSAO, DTINICIO_VIGENCIA, DTFIM_VIGENCIA, DSNOME_JASPER, DTCADASTRO, DSDESCRICAO)
-      VALUES (rw_crapcop.cdcooper, 'TERMO ABERTURA CONTA CORRENTE ENTE PUBLIO V1', to_date('12-12-2019', 'dd-mm-yyyy'), null, 'termo_abertura_conta_ente_publico.jasper', to_date('12-12-2019', 'dd-mm-yyyy'), 'Termo /Contrato de abertura de conta corrente para entes pÃºblicos');
+      VALUES (rw_crapcop.cdcooper, 'TERMO ABERTURA CONTA CORRENTE ENTE PUBLICO V1', to_date('12-12-2019', 'dd-mm-yyyy'), null, 'termo_abertura_conta_ente_publico.jasper', to_date('12-12-2019', 'dd-mm-yyyy'), 'Termo /Contrato de abertura de conta corrente para entes públicos');
 
       
     EXCEPTION

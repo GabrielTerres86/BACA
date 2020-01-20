@@ -27,7 +27,7 @@ BEGIN
   -- Fechar o cursor
   CLOSE cr_craprdr;
   
-  INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) VALUES ('IMP_TERMO_CONTA_EP', 'CADA0006', 'pc_imp_termo_conta_ep', 'pr_nrdconta', vr_nrseqrdr);
+  INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) VALUES ('IMP_TERMO_CONTA_EP', 'CADA0006', 'pc_imp_termo_conta_ep', 'pr_nrdconta,pr_tprelato', vr_nrseqrdr);
   
   COMMIT;
   
