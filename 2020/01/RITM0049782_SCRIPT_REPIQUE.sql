@@ -2,7 +2,7 @@ DECLARE
     -- Variaveis gerais
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
     vr_dtddutl crapdat.dtmvtolt%TYPE;
-    vr_committ BOOLEAN := FALSE;
+    vr_committ BOOLEAN := TRUE;
       
     -- Variaveis critica
     vr_dscritic crapcri.dscritic%TYPE;
@@ -90,6 +90,7 @@ BEGIN
                --
                IF vr_committ THEN
                   COMMIT;
+				  dbms_output.put_line('Repique da Cooperativa = ' || rw_cooperativas.cdcooper || ' ajustado com sucesso.');
                END IF;
                --
             END IF;
@@ -97,7 +98,7 @@ BEGIN
               
         END LOOP;
         -- end loop faturas
-        
+        dbms_output.put_line('Repique da Cooperativa = ' || rw_cooperativas.cdcooper || ' ajustado com sucesso.');
     END LOOP; 
     -- end loop cooperativas     
       
