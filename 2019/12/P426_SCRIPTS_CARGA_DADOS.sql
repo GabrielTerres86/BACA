@@ -333,10 +333,49 @@ END;
 /* INICIO TELA DEVOLU - BUSCA ORIGEM DO CHEQUE */
 INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 VALUES ('BUSCA_ORIGEM_DEP_MOBILE','CHEQ0004','pc_busca_origem_cheque_mob','pr_cdcooper,pr_nrdconta,pr_nrcheque,pr_nrdigchq,pr_cdbanchq',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'CHEQ0004' AND ROWNUM = 1));
+----------------------------------------------------------------------------------------
 
+-- Job JBCHQ_DESCARTE_CHEQUE_MOBILE
+BEGIN EXECUTE IMMEDIATE '
+  ALTER SESSION SET 
+    nls_calendar = ''GREGORIAN'' 
+    nls_comp = ''BINARY'' 
+    nls_date_format = ''DD-MON-RR'' 
+    nls_date_language = ''AMERICAN'' 
+    nls_iso_currency = ''AMERICA'' 
+    nls_language = ''AMERICAN'' 
+    nls_length_semantics = ''BYTE'' 
+    nls_nchar_conv_excp = ''FALSE'' 
+    nls_numeric_characters = ''.,'' 
+    nls_sort = ''BINARY'' 
+    nls_territory = ''AMERICA'' 
+    nls_time_format = ''HH.MI.SSXFF AM'' 
+    nls_time_tz_format = ''HH.MI.SSXFF AM TZR'' 
+    nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM'' 
+    nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
 
-
-
+  sys.dbms_scheduler.create_job(job_name    => 'CECRED.JBCHQ_DESCARTE_CHEQUE_MOBILE',
+                                job_type    => 'PLSQL_BLOCK',
+                                job_action  => 'DECLARE
+    vr_cdcritic PLS_INTEGER;
+    vr_dscritic VARCHAR2(4000);
+  BEGIN
+    cecred.cheq0004.pc_descarte_cheque_mobile(pr_cdcritic => vr_cdcritic,
+                                              pr_dscritic => vr_dscritic);
+    IF vr_dscritic IS NOT NULL THEN
+      raise_application_error(-20001, ''Erro job CECRED.JBCHQ_DESCARTE_CHEQUE_MOBILE ''|| sqlerrm);
+    END IF;
+  END;',
+  start_date          => to_date('20-01-2020 00:00:00', 'dd-mm-yyyy hh24:mi:ss'),
+  repeat_interval     => 'Freq=Minutely;Interval=15;ByDay=Mon, Tue, Wed, Thu, Fri;ByHour= 13',
+  end_date            => to_date(null),
+  job_class           => 'DEFAULT_JOB_CLASS',
+  enabled             => true,
+  auto_drop           => false,
+  comments            => 'Rodar rotina de descarte de cheque mobile compensado conforme parametrizacao.');
+end;
+/
+----------------------------------------------------------------------------------------
 
 
 
