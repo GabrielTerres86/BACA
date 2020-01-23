@@ -9,11 +9,15 @@ BEGIN
 	,1120 --Autarquia Municipal
 	,1155 --Fundação Pública de Direito Público Municipal (Fundacao Municipal )
 	,1180 --Órgão Público Autônomo Municipal
-	,1244 --Município
 	,1279 --Fundação Pública de Direito Privado Municipal
 	,1309 --Fundo Público da Administração Indireta Municipal
 	,1333 --Fundo Público da Administração Direta Municipal
 	);
+	
+	UPDATE gncdntj 
+	   SET flentpub = 1
+		  ,cdgrpnat = 1
+	WHERE cdnatjur = 1244; --Município
 	
 	-- Insere apenas se não existe
 	declare
