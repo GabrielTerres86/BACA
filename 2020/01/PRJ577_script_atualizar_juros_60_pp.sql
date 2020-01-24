@@ -41,31 +41,9 @@ DECLARE
   vr_exc_erro        EXCEPTION;
   vr_dscritic        VARCHAR2(2000);
   
-  -- Arquivo
-  vr_arqhandl    utl_file.file_type;
-  vr_linha       VARCHAR2(5000);
-  vr_nmdireto    VARCHAR2(3000);
-  
   vr_cdcooper    crapcop.cdcooper%TYPE := NULL; -- Informar NULL para todas as cooperativas
   
 BEGIN
-  
-  vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => 3, pr_nmsubdir => '/log');
-  
-  -- Abrir arquivo
-  GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto
-                          ,pr_nmarquiv => 'atualizacao_juros_60_pp.txt'
-                          ,pr_tipabert => 'A'
-                          ,pr_utlfileh => vr_arqhandl
-                          ,pr_des_erro => vr_dscritic
-                          );
-  IF vr_dscritic IS NOT NULL THEN
-    RAISE vr_exc_erro;
-  END IF; 
-  
-  vr_linha := 'Cooperativa;Conta;Contrato;Valor até 59 dias';
-  GENE0001.pc_escr_linha_arquivo(vr_arqhandl,vr_linha);
-  GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandl);
   
   FOR rw_crapcop IN cr_crapcop(vr_cdcooper) LOOP
                            
@@ -103,60 +81,16 @@ BEGIN
             
       END LOOP;
       
-      -- Abrir arquivo
-      GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto
-                              ,pr_nmarquiv => 'atualizacao_juros_60_pp.txt'
-                              ,pr_tipabert => 'A'
-                              ,pr_utlfileh => vr_arqhandl
-                              ,pr_des_erro => vr_dscritic
-                              );
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-      
-      vr_linha := rw_crapepr.cdcooper||';'||
-                  rw_crapepr.nrdconta||';'||
-                  rw_crapepr.nrctremp||';'||
-                  vr_vljura60;
-      
-      GENE0001.pc_escr_linha_arquivo(vr_arqhandl,vr_linha);
-      GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandl);
-      
     END LOOP;
     
-    vr_linha := 'Sucesso';
-    
-    dbms_output.put_line(vr_linha);
-    --COMMIT;
+    COMMIT;
     
   END LOOP;
 
 EXCEPTION
   WHEN vr_exc_erro THEN
-    vr_linha := 'ERRO Script PRJ577: ' || vr_dscritic;
-    -- Abrir arquivo
-    GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto
-                            ,pr_nmarquiv => 'atualizacao_juros_60_pp.txt'
-                            ,pr_tipabert => 'A'
-                            ,pr_utlfileh => vr_arqhandl
-                            ,pr_des_erro => vr_dscritic);
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
-    GENE0001.pc_escr_linha_arquivo(vr_arqhandl,vr_linha);
-    GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandl);
+    dbms_output.put_line('ERRO Script PRJ577: ' || vr_dscritic);
     
   WHEN OTHERS THEN
-    vr_linha := 'ERRO Script PRJ577: ' || SQLERRM;
-    -- Abrir arquivo
-    GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto
-                            ,pr_nmarquiv => 'atualizacao_juros_60_pp.txt'
-                            ,pr_tipabert => 'A'
-                            ,pr_utlfileh => vr_arqhandl
-                            ,pr_des_erro => vr_dscritic);
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
-    GENE0001.pc_escr_linha_arquivo(vr_arqhandl,vr_linha);
-    GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandl);
+    dbms_output.put_line('ERRO Script PRJ577: ' || SQLERRM);
 END;
