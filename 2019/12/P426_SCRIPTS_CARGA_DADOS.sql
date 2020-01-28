@@ -13,21 +13,6 @@ where  craptab.nmsistem = 'CRED' and
                             craptab.tpregist in (1,2); --  fisica e Juridica
 COMMIT;
 
---------------------------------------- 
--- INCLUSÃO DE PARAMETRO DE E-MAIL
----------------------------------------
--- select * from crapprm where upper(cdacesso) like '%EMAIL_CHEQUE_MOBILE%'
--- Script para cadastrar email utilizado no processo do termo de aceito do deposito de cheque mobile
--- ******* Deverá ser cadastrado para todas as cooperativas  ***********
-insert into crapprm 
-values ('CRED',1,'EMAIL_CHEQUE_MOBILE', 'Email utilizado processo de deposito de cheque Mobile','josiane.stiehler@amcom.com.br',null);
-
-COMMIT;
-
-
-
-
-
 ----------------------------------------------------------------------------------------
 -- INICIO DML TELA CHQMOB
 
@@ -240,7 +225,7 @@ BEGIN
     VALUES ('CRED', pr_cdcooper, 'TP_ENVIO_EMAIL_CHQ_MOB', 'Tipo de envio de email eliminação folha de cheque mobile. 1=PA, 2=Outros', '1');
     
     INSERT INTO CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
-    VALUES ('CRED', pr_cdcooper, 'EMAIL_NOTI_ELIM_CHEQ', 'E-mails notificação eliminação folha de cheque mobile', '');
+    VALUES ('CRED', pr_cdcooper, 'EMAIL_NOTI_DEPO_CHEQ_MOB', 'E-mails notificação cheque mobile', '');
  
   END LOOP;
   
