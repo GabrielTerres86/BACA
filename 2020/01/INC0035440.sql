@@ -46,6 +46,7 @@ BEGIN
   COMMIT;
 
   dbms_output.put_line('Término');
+  
 
 EXCEPTION
 
