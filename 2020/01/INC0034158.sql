@@ -1,18 +1,4 @@
 DECLARE
-  CURSOR cr_tbcc_prejuizo_detalhe(pr_cdcooper IN tbcc_prejuizo_detalhe.cdcooper%TYPE
-                                 ,pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE
-                                 ,pr_cdhistor IN tbcc_prejuizo_detalhe.cdhistor%TYPE
-                                 ,pr_dtmvtolt IN tbcc_prejuizo_detalhe.dtmvtolt%TYPE
-                                 ,pr_vllanmto IN tbcc_prejuizo_detalhe.vllanmto%TYPE) IS
-    SELECT cdcooper, nrdconta, idlancto, vllanmto
-      FROM tbcc_prejuizo_detalhe
-     WHERE cdcooper = pr_cdcooper
-       AND nrdconta = pr_nrdconta
-       AND cdhistor = pr_cdhistor
-       AND dtmvtolt = pr_dtmvtolt
-       AND vllanmto = pr_vllanmto;
-  rw_tbcc_prejuizo_detalhe cr_tbcc_prejuizo_detalhe%ROWTYPE;
-
   vr_cdcritic   NUMBER;
   vr_dscritic   VARCHAR2(10000);
   vr_exc_saida  EXCEPTION;
