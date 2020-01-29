@@ -1,0 +1,59 @@
+BEGIN
+
+  BEGIN
+    INSERT INTO CRAPPRM
+      (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+    VALUES
+      ('CRED',
+       0,
+       'BAIXA_OPERAC_COMMIT',
+       'Parametro do tempo entre execução de commits na baixa operacional (em segundos)',
+       '5');
+    COMMIT;
+  EXCEPTION
+    WHEN OTHERS THEN
+      PC_INTERNAL_EXCEPTION;
+      ROLLBACK;
+  END;
+
+  BEGIN
+    INSERT INTO CRAPPRM
+      (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+    VALUES
+      ('CRED',
+       0,
+       'BAIXA_OPERAC_PROG_HOR',
+       'Parametro dos programas (separados por ;) com horários que o job da baixa operacional não deve ser executado',
+       'ARQUIVOS NOTURNOS;TAA E INTERNET');
+    COMMIT;
+  EXCEPTION
+    WHEN OTHERS THEN
+      PC_INTERNAL_EXCEPTION;
+      ROLLBACK;
+  END;
+
+  BEGIN
+    UPDATE CRAPPRM
+       SET DSVLRPRM = '1'
+     WHERE CDACESSO = 'BAIXA_OPERAC_TEMP_LIM';
+    COMMIT;
+  EXCEPTION
+    WHEN OTHERS THEN
+      PC_INTERNAL_EXCEPTION;
+  END;
+
+  BEGIN
+    UPDATE CRAPPRM
+       SET DSVLRPRM = '500'
+     WHERE CDACESSO = 'BAIXA_OPERAC_BULK';
+    COMMIT;
+  EXCEPTION
+    WHEN OTHERS THEN
+      PC_INTERNAL_EXCEPTION;
+  END;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    PC_INTERNAL_EXCEPTION;
+    ROLLBACK;
+END;
