@@ -5,6 +5,7 @@ DECLARE
       FROM tbgen_debitador_param t;
 
   -- Variaveis
+  vr_cdprocesso     CONSTANT tbgen_debitador_param.cdprocesso%TYPE := 'COBR0011.PC_PROC_CUSTA_PENDENTE';
   vr_nrprioridade   tbgen_debitador_param.nrprioridade%TYPE;
 BEGIN 
   
@@ -22,7 +23,7 @@ BEGIN
                                    ,nrprioridade
                                    ,inexec_cadeia_noturna
                                    ,incontrole_exec_prog)
-                            VALUES ('COBR0011.PC_PROC_CUSTA_PENDENTE'
+                            VALUES (vr_cdprocesso
                                    ,'EFETUAR AS COBRANCAS DE CUSTAS PENDENTES DE ENTES PUBLICOS'
                                    ,'N'
                                    ,'N'
@@ -30,7 +31,17 @@ BEGIN
                                    ,vr_nrprioridade
                                    ,'N'
                                    ,0);
-                                   
+        
+  FOR ind IN 1..4 LOOP                            
+    -- Inserir os horários de execução
+    INSERT INTO tbgen_debitador_horario_proc
+                      (cdprocesso
+                      ,idhora_processamento)
+               VALUES (vr_cdprocesso
+                      ,ind);
+  END LOOP;
+  
+  
   COMMIT;
   
 END;
