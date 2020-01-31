@@ -10,15 +10,10 @@ BEGIN
   update crapepr e set e.dtdpagto = to_date('20/02/2020','DD/MM/YYYY') where cdcooper = 1 and nrdconta = 3794644 and  nrctremp = 1006620;
   update crapepr e set e.dtdpagto = to_date('20/02/2020','DD/MM/YYYY') where cdcooper = 1 and nrdconta = 3794644 and  nrctremp = 1006413;
   update crapepr e set e.dtdpagto = to_date('10/04/2019','DD/MM/YYYY') where cdcooper = 1 and nrdconta = 7546831 and  nrctremp = 1015650;
+  update crapepr e set e.dtdpagto = to_date('22/12/2019','DD/MM/YYYY') where cdcooper = 1 and nrdconta = 2214784 and  nrctremp = 1143666;
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
       ROLLBACK;
 END;
-
-
-
-
-
-
 
