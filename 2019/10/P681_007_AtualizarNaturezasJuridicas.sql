@@ -4,22 +4,22 @@ BEGIN
 	   SET flentpub = 1
 		  ,cdgrpnat = 2
 	WHERE cdnatjur IN (
-	1031 --Ã“rgÃ£o PÃºblico do Poder Executivo Municipal
-	,1066 --Ã“rgÃ£o PÃºblico do Poder Legislativo Municipal
+	1031 --Órgão Público do Poder Executivo Municipal
+	,1066 --Órgão Público do Poder Legislativo Municipal
 	,1120 --Autarquia Municipal
-	,1155 --FundaÃ§Ã£o PÃºblica de Direito PÃºblico Municipal (Fundacao Municipal )
-	,1180 --Ã“rgÃ£o PÃºblico AutÃ´nomo Municipal
-	,1279 --FundaÃ§Ã£o PÃºblica de Direito Privado Municipal
-	,1309 --Fundo PÃºblico da AdministraÃ§Ã£o Indireta Municipal
-	,1333 --Fundo PÃºblico da AdministraÃ§Ã£o Direta Municipal
+	,1155 --Fundação Pública de Direito Público Municipal (Fundacao Municipal )
+	,1180 --Órgão Público Autônomo Municipal
+	,1279 --Fundação Pública de Direito Privado Municipal
+	,1309 --Fundo Público da Administração Indireta Municipal
+	,1333 --Fundo Público da Administração Direta Municipal
 	);
 	
 	UPDATE gncdntj 
 	   SET flentpub = 1
 		  ,cdgrpnat = 1
-	WHERE cdnatjur = 1244; --MunicÃ­pio
+	WHERE cdnatjur = 1244; --Município
 	
-	-- Insere apenas se nÃ£o existe
+	-- Insere apenas se não existe
 	declare
 	  v_qtd  integer;
 	begin
@@ -62,5 +62,31 @@ BEGIN
 	end;
 
 	COMMIT;
+    
+  -- Incluir o dominio dos grupos de natureza jurídica
+  INSERT INTO tbcc_dominio_campo(nmdominio,
+                                 cddominio,
+                                 dscodigo)
+                          VALUES('GNCDNTJ.CDGRPNAT'
+                                ,'1'
+                                ,'ADMINISTRAÇÃO DIRETA');
+  
+  -- Incluir o dominio dos grupos de natureza jurídica
+  INSERT INTO tbcc_dominio_campo(nmdominio,
+                                 cddominio,
+                                 dscodigo)
+                          VALUES('GNCDNTJ.CDGRPNAT'
+                                ,'2'
+                                ,'ADMINISTRAÇÃO INDIRETA');
 
+  -- Incluir o dominio dos grupos de natureza jurídica
+  INSERT INTO tbcc_dominio_campo(nmdominio,
+                                 cddominio,
+                                 dscodigo)
+                          VALUES('GNCDNTJ.CDGRPNAT'
+                                ,'3'
+                                ,'ATIVIDADES EMPRESARIAIS');
+                                
+  COMMIT;
+                                
 END;
