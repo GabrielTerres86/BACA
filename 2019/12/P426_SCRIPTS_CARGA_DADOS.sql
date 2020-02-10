@@ -4,12 +4,12 @@
 -- **** Deverá ser feito o script para todas as cooperativas, verifica os valores para pessoa fisica e juridica
 -- **** Deverá ter o valor para o Operacional e para Ailos
 update craptab 
-set dstextab = dstextab||';000000002000,00;000000300000,00'
+set dstextab = dstextab||';000000000000,00;000000000000,00'
 where  craptab.nmsistem = 'CRED' and
                             craptab.tptabela = 'GENERI'     AND
                             craptab.cdempres = 0            AND
                             craptab.cdacesso = 'LIMINTERNT' and
-                            craptab.cdcooper = 1  and    -- coperativa
+                           -- craptab.cdcooper = 1  and    -- coperativa
                             craptab.tpregist in (1,2); --  fisica e Juridica
 COMMIT;
 
