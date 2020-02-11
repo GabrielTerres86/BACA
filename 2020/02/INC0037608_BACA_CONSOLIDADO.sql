@@ -65,6 +65,7 @@ BEGIN
     DELETE FROM TBCARTAO_LIMITE_OPERACIONAL prm WHERE prm.cdacesso = 'VLPROPCORRENTECRD';      --  normal
     DELETE FROM TBCARTAO_LIMITE_OPERACIONAL prm WHERE prm.cdacesso = 'VLPROPCORRENTEPREAPROV'; -- pre aprovado
     DELETE FROM crapprm prm WHERE prm.cdacesso = 'PRAZO_EXP_CRD';
+	DELETE FROM tbcrd_limoper lo WHERE lo.vllimconsumd IS NULL OR lo.vllimdisp IS NULL; -- limpa os registros errados 
 
     FOR rw_crapcop IN cr_crapcop LOOP
     
