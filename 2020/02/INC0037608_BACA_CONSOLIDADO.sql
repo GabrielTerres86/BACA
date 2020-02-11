@@ -64,7 +64,7 @@ BEGIN
     DELETE FROM TBCARTAO_LIMITE_OPERACIONAL prm WHERE prm.cdacesso = 'VLPROPCORRENTEMAJORADO'; --  majorado
     DELETE FROM TBCARTAO_LIMITE_OPERACIONAL prm WHERE prm.cdacesso = 'VLPROPCORRENTECRD';      --  normal
     DELETE FROM TBCARTAO_LIMITE_OPERACIONAL prm WHERE prm.cdacesso = 'VLPROPCORRENTEPREAPROV'; -- pre aprovado
-    DELETE FROM TBCARTAO_LIMITE_OPERACIONAL prm WHERE prm.cdacesso = 'PRAZO_EXP_CRD';
+    DELETE FROM crapprm prm WHERE prm.cdacesso = 'PRAZO_EXP_CRD';
 
     FOR rw_crapcop IN cr_crapcop LOOP
     
@@ -95,7 +95,7 @@ BEGIN
             ,'Guardar o valor total de propostas de pre aprovado geradas a partir da data de alteracao do limite operacional'
             ,'0');   
 
-        INSERT INTO TBCARTAO_LIMITE_OPERACIONAL 
+        INSERT INTO crapprm 
             (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) 
         values ('CRED', rw_crapcop.cdcooper, 'PRAZO_EXP_CRD', 'Prazo em quantidade de dias para que as propostas expirem', '10');                             
     
