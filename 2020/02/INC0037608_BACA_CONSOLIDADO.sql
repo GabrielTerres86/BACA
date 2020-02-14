@@ -53,7 +53,7 @@ DECLARE
    CURSOR cr_limitemajor(cpr_cdcooper crapcop.cdcooper%TYPE
                         , cpr_dtmvtolt crawcrd.dtmvtolt%TYPE) IS    
       SELECT sum(maj.vllimite) vltotal
-        FROM integradados.sasf_majoracaocartao@sasd1 maj
+        FROM integradados.sasf_majoracaocartao@sasp maj
        WHERE maj.cdcooper = cpr_cdcooper
          AND trunc(maj.dtmajoracaocartao) >= trunc(cpr_dtmvtolt); 
    rw_limitemajor cr_limitemajor%ROWTYPE;          
