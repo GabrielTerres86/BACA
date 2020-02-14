@@ -1,12 +1,12 @@
 begin
   --#######################################################################################################################################
   --
-  -- Script de execução da RITM0045673"
+  -- Script de execucao da RITM0045673"
   --
   begin
     declare 
     -- nome da rotina
-    wk_rotina varchar2(200) := 'Script de execução da RITM0045673';
+    wk_rotina varchar2(200) := 'Script de execucao da RITM0045673';
     begin
 		insert into crapprm (nmsistem,cdcooper,cdacesso,dstexprm,dsvlrprm) values
 		('CRED',0,'CRD_MONITORAMENTO','Email da area de negocio produto cartoes','cartoes@ailos.coop.br,gionei.correia@ailos.coop.br');
