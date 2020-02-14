@@ -9,3 +9,5 @@ INSERT INTO CRAPPRM (NMSISTEM,CDCOOPER,CDACESSO,DSTEXPRM,DSVLRPRM)
 
 INSERT INTO CRAPPRM (NMSISTEM,CDCOOPER,CDACESSO,DSTEXPRM,DSVLRPRM) 
      VALUES ('CRED',0,'REVT_OR_PC_GERA_DEV_CAPT','Parametro para ativar ou desativar a rotina pc_gera_devolucao_capital revitalizada', 'S');  
+     
+COMMIT;
