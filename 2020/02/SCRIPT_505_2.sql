@@ -3,14 +3,10 @@ begin
     insert into crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
     values ('CRED',0,'CARTAO_ASS_SINCRONICA','Diretorio de leitura dos cartoes de assinatura para envio a Sincronica',
             '/usr/sistemas/Sincronica/cartaoassinatura');
-  exception
-    when dup_val_on_index then null;
   end;
 
   begin
     delete craprel a where a.cdrelato=774;
-  exception 
-    when others then null;
   end;
 
   for creg in (select cdcooper from crapcop a
@@ -20,18 +16,15 @@ begin
                            NMFORMUL, INDAUDIT, CDCOOPER, PERIODIC, TPRELATO, INIMPREL, 
                            INGERPDF, DSDEMAIL, CDFILREL, NRSEQPRI)
       values (774, 1, 1, 'RETORNO PROCESSAMENTO SINCRONICA', 5, 'COMPE ', '132col', 0, creg.cdcooper, 'D', 1, 1, 1, ' ', null, null);
-    exception
-      when dup_val_on_index then null;
     end;
   end loop;
   
   declare
-    vr_nrordprg  number(10):=10842;
+    vr_nrordprg  number(10):=615;
   BEGIN
     FOR creg IN (SELECT a.cdcooper 
                  FROM crapcop a
                  WHERE a.flgativo=1) LOOP
-      begin
         insert into crapprg (
           nmsistem, cdprogra, dsprogra##1, 
           dsprogra##2, dsprogra##3, dsprogra##4, 
@@ -45,9 +38,6 @@ begin
                 774,0,0,
                 0,0,1,
                 creg.cdcooper,null);
-     exception 
-        when dup_val_on_index then null;
-     end;
     END LOOP;
   END;
   
