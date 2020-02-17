@@ -16,7 +16,7 @@ BEGIN
       
       
       insert into CECRED.CRAPREL (cdrelato, nrviadef, nrviamax, nmrelato, nrmodulo, nmdestin, nmformul, indaudit, cdcooper, periodic, tprelato, inimprel, ingerpdf, dsdemail, cdfilrel, nrseqpri)
-      values (790, 1, 1, 'TERMO ABERTURA CONTA ENTE PUBLICO', 5, ' ', '132col', 0, rw_crapcop.cdcooper, 'Online', 1, 1, 1, ' ', null, null);
+      values (795, 1, 1, 'TERMO ABERTURA CONTA ENTE PUBLICO', 5, ' ', '132col', 0, rw_crapcop.cdcooper, 'Online', 1, 1, 1, ' ', null, null);
       
     EXCEPTION
       WHEN dup_val_on_index THEN
