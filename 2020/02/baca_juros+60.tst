@@ -78,16 +78,5 @@ exception
     ROLLBACK;
     :result := sqlerrm;
 end;
-1
-result
-1
-Sucesso
-5
-7
-
-rw_crappep.nrparepr
-vr_valor_pmt_ate59
-vr_vljuros
-
-
-vr_valor_parcela
+0
+0
