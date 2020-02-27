@@ -410,37 +410,3 @@ ALTER TABLE CECRED.TBCHQ_DEPOSITO_CHEQUE_MOB ADD ORIGEM_RECUSA NUMBER(1);
 COMMENT ON COLUMN CECRED.TBCHQ_DEPOSITO_CHEQUE_MOB.ORIGEM_RECUSA IS 'Indica a origem da recusa do deposito do cheque (1-Sincronica, 2-Caixa On-line, 3-Compensação)';
 
 
--- Carga na tabela TBCHQ_DEVOLUCAO_ALINEAS
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (11, 'Cheque sem fundos - 1ª apresentação');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (12, 'Cheque sem fundos - 2ª apresentação');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (13, 'Conta encerrada');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (14, 'Prática espúria');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (20, 'Cheque sustado ou revogado em virtude de roubo, furto ou extravio de folhas de cheque em branco');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (21, 'Cheque sustado ou revogado');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (22, 'Divergência ou insuficiência de assinatura');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (23, 'Cheques emitidos por entidades e órgãos da administração pública federal direta e indireta, em desacordo com os requisitos constantes do art. 74, § 2º, do Decreto-lei nº 200, de 25 de fevereiro de 1967');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (24, 'Bloqueio judicial ou determinação do Bacen');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (25, 'Cancelamento de talonário pelo participante destinatário');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (27, 'Feriado municipal não previsto');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (28, 'Cheque sustado ou revogado em virtude de roubo, furto ou extravio');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (30, 'Furto ou roubo de cheque');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (70, 'Sustação ou revogação provisória');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (31, 'Erro formal (sem data de emissão, com o mês grafado numericamente, ausência de assinatura ou não registro do valor por extenso)');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (33, 'Divergência de endosso');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (34, 'Cheque apresentado por participante que não o indicado no cruzamento em preto, sem o endosso-mandato');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (35, 'Cheque fraudado, emitido sem prévio controle ou responsabilidade do participante ("cheque universal"), ou com adulteração da praça sacada, ou ainda com rasura no preenchimento');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (37, 'Registro inconsistente');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (38, 'Assinatura digital ausente ou inválida');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (39, 'Imagem fora do padrão');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (40, 'Moeda Inválida');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (41, 'Cheque apresentado a participante que não o destinatário');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (43, 'Cheque, devolvido anteriormente pelos motivos 21, 22, 23, 24, 31 e 34, não passível de reapresentação em virtude de persistir o motivo da devolução');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (44, 'Cheque prescrito');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (45, 'Cheque emitido por entidade obrigada a realizar movimentação e utilização de recursos financeiros do Tesouro Nacional mediante Ordem Bancária');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (48, 'Cheque de valor superior a R$100,00 (cem reais), emitido sem a identificação do beneficiário');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (49, 'Remessa nula, caracterizada pela reapresentação de cheque devolvido pelos motivos 12, 13, 14, 20, 25, 28, 30, 35, 43, 44 e 45.');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (59, 'Informação essencial faltante ou inconsistente não passível de verificação pelo participante remetente e não enquadrada no motivo 31');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (60, 'Instrumento inadequado para a finalidade');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (61, 'Papel não compensável diretamente pela instituição financeira contratada');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (71, 'Inadimplemento contratual da cooperativa de crédito no acordo de compensação');
-INSERT INTO TBCHQ_DEVOLUCAO_ALINEAS VALUES (72, 'Contrato de Compensação encerrado');
