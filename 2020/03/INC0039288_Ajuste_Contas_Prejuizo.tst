@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-415
+423
 DECLARE
 
   PROCEDURE prc_gera_acerto (prm_cdcooper IN craplcm.cdcooper%TYPE,
@@ -402,9 +402,17 @@ BEGIN
                    prm_vllanmto => 25.67,
                    prm_cdhistor => 2721);
   -- Acerto caso 10 (Fim).  
-    
+
   --Salva
   COMMIT;
+  
+  -- Acerto caso 11 INC0039398
+  insert into tbcc_prejuizo_lancamento ( DTMVTOLT, CDAGENCI, NRDCONTA, NRDOCMTO, CDHISTOR, VLLANMTO, DTHRTRAN, CDOPERAD, CDCOOPER, CDORIGEM, DSOPERAC)
+  values ( SYSDATE, 1, 9437967, 1, 2738, 177.00, SYSDATE, 'f0031800', 1, 0, null);
+  
+  COMMIT;
+    
+  
   dbms_output.put_line(' ');
   dbms_output.put_line('Script finalizado com Sucesso em '||To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'));
 
