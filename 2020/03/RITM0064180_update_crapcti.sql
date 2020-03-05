@@ -48,5 +48,8 @@ begin
 
 exception
   when others then
-    dbms_output.put_line('Erro: '||sqlerrm);
+    -- No caso de erro de programa gravar tabela especifica de log
+    CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);   
+    dbms_output.put_line('Erro: '||sqlerrm);                 
+    ROLLBACK;
 end;
