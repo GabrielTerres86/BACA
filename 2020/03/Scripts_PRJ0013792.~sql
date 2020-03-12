@@ -1,6 +1,0 @@
--- Scripts DML Projetos: PRJ0013792 - Inclusão do cheque especial na esteira de crédito
-
-
---------------------- Crapaca ---------------------
-INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-VALUES ('BUSCA_LIB_DEP_MOBILE','TELA_CHQMOB','pc_busca_lib_dep_mobile','',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'TELA_CHQMOB' AND ROWNUM = 1));
