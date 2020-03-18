@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-364
+376
 DECLARE
 
   PROCEDURE prc_gera_acerto (prm_cdcooper IN craplcm.cdcooper%TYPE,
@@ -351,6 +351,18 @@ BEGIN
                    prm_vllanmto => 1024.04,
                    prm_cdhistor => 2721,
                    prm_tipo_lanc=> 0); -- diminuir
+
+  --Salva
+  COMMIT;
+
+  /*INC0041728 - c/c 1005.055.8 - gerou 4x o histórico 2408, sendo que deveria ter sido gerado apenas uma vez. 
+  Excluir 3x o 2408, no valor de R$ 6.500,00 cada, total R$ 19.500,00.*/  
+ DELETE tbcc_prejuizo_detalhe a
+ WHERE a.cdcooper = 1
+   AND a.nrdconta = 10050558
+   AND a.cdhistor = 2408
+   AND a.vllanmto = 6500
+   AND a.idlancto IN (67177,67178,67179); 
 
   --Salva
   COMMIT;
