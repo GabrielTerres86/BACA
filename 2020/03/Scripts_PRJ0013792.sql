@@ -15,6 +15,12 @@ VALUES ('ENVIAR_ESTEIRA_LIMITE','LIMI0003','pc_analisar_proposta','pr_tpenvest,p
 INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 VALUES ('SENHA_ENVIAR_ESTEIRA_LIMITE','LIMI0003','pc_enviar_proposta_manual','pr_nrctrlim,pr_tpctrlim,pr_nrdconta,pr_dtmovito',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'LIMI0003' AND ROWNUM = 1));
 
+INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+VALUES ('BUSCA_MOTIVOS_ANULA_LIMITE','LIMI0003','pc_busca_moti_anula','pr_tpproduto,pr_nrdconta,pr_nrctrato,pr_tpctrlim',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'LIMI0003' AND ROWNUM = 1));
+
+INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+VALUES ('GRAVA_MOTIVO_ANULA_LIMITE','LIMI0003','pc_grava_moti_anula','pr_tpproduto,pr_nrdconta,pr_nrctrato,pr_tpctrlim,pr_cdmotivo,pr_dsmotivo,pr_dsobservacao',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'LIMI0003' AND ROWNUM = 1));
+
 COMMIT;
 
 --------------------- Permissoes ---------------------
@@ -28,7 +34,7 @@ BEGIN
   
   FOR i IN coop.FIRST .. coop.LAST LOOP
     pr_cdcooper := coop(i);
- 
+    
     ------ Inicio Realizar cadastro de permissoes para botão 'Analisar'(L) ------ 
     UPDATE craptel
        SET cdopptel = cdopptel || ',L',
@@ -104,7 +110,7 @@ BEGIN
                                               AND a.NMROTINA = 'LIMITE CRED'
                                               AND a.cdcooper = cop.cdcooper);                                            
   ------Fim Realizar cadastro de permissoes para botão 'Detalhes Propostas' (D) ------
-  
+
   END LOOP;
 
   COMMIT;
