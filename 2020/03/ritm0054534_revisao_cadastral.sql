@@ -151,7 +151,7 @@ BEGIN
           pc_escreve_xml_rollback('DELETE FROM crapalt '||
                        ' WHERE cdcooper = ' ||vr_cdcooper ||
                        '   AND nrdconta = ' || vr_nrdconta ||
-                       '   AND dtaltera = ''' || TRUNC(SYSDATE) || 
+                       '   AND dtaltera = ''' || to_char(SYSDATE, 'DD/MM/YYYY') || 
                        ''';'||chr(10));
           
         EXCEPTION
