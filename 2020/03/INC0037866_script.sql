@@ -12,7 +12,7 @@ begin
                  WHERE w.cdfinemp = 77
                    AND w.insitapr = 0
                    AND w.insitest in (0, 1)
-                   AND w.dtmvtolt > '01/02/2020'
+                   AND w.dtmvtolt > '12/01/2020'
                    AND w.dtmvtolt < d.dtmvtolt
                    AND w.cdcooper = d.cdcooper
                    and w.rowid = e.rowid); 
@@ -30,7 +30,7 @@ begin
                        WHERE w.cdfinemp = 77
                          AND w.insitapr = 0
                          AND w.insitest in (0,1)
-                         AND w.dtmvtolt > '01/02/2020'
+                         AND w.dtmvtolt > '12/01/2020'
                          AND w.dtmvtolt < d.dtmvtolt
                          AND w.cdcooper = d.cdcooper )
   LOOP
