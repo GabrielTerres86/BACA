@@ -1,5 +1,6 @@
 /*Atualização de número de contrato
 31/03/2020 - Paulo Martins*/
+begin
 update tbgar_cobertura_operacao o
    set nrcontrato = 257632
  where nrdconta = 165956 
@@ -13,5 +14,9 @@ update crawepr e
    and e.nrctremp = 255585
    and e.cdcooper = 2;
    commit;
+exception
+  when others then
+    rollback;
+end;   
    
    
