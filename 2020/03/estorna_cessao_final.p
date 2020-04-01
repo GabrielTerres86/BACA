@@ -1022,8 +1022,7 @@ PROCEDURE executa_programa:
    
   ASSIGN aux_contador = 0.
 
-  FOR EACH crapepr WHERE crapepr.dtmvtolt = crapdat.dtmvtolt AND
-                         crapepr.inliquid = 0  AND
+  FOR EACH crapepr WHERE crapepr.inliquid = 0  AND
                          crapepr.cdcooper = 14 AND
                          crapepr.nrctremp = 12753 AND
                          crapepr.nrdconta = 61140 
