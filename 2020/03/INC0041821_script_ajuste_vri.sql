@@ -8,6 +8,7 @@ DECLARE
        AND cop.cdcooper = nvl(pr_cdcooper, cop.cdcooper); -- Ativo
   
   CURSOR cr_contrato(pr_cdcooper crapepr.cdcooper%TYPE
+                    ,pr_dtrefere crapvri.dtrefere%TYPE
                     ) IS
     SELECT tab.cdcooper
           ,tab.nrdconta
@@ -17,10 +18,7 @@ DECLARE
           ,tab.vlempres/tab.vldivida vldifere
           ,MIN(pep.dtvencto) dtvencto
           ,MIN(pep.dtvencto) + 59 dt59dias
-          ,(SELECT MAX(vri.dtrefere)
-              FROM crapvri vri
-             WHERE vri.cdcooper = tab.cdcooper
-               AND vri.dtrefere >= '01/01/2020') - MIN(pep.dtvencto) qtdiavnc
+          ,pr_dtrefere - MIN(pep.dtvencto) qtdiavnc
       FROM( SELECT vri.cdcooper
                   ,vri.nrdconta
                   ,vri.nrctremp
@@ -33,10 +31,7 @@ DECLARE
                AND epr.nrctremp = vri.nrctremp
                AND epr.tpemprst = 2 -- Fixo
                AND vri.cdcooper = NVL(pr_cdcooper, vri.cdcooper)
-               AND vri.dtrefere = (SELECT MAX(vri.dtrefere)
-                                     FROM crapvri vri
-                                    WHERE vri.cdcooper = epr.cdcooper
-                                      AND vri.dtrefere >= '01/01/2020') -- Fixo
+               AND vri.dtrefere = pr_dtrefere
              GROUP BY vri.cdcooper
                      ,vri.nrdconta
                      ,vri.nrctremp
@@ -46,10 +41,7 @@ DECLARE
        AND pep.nrdconta = tab.nrdconta
        AND pep.nrctremp = tab.nrctremp
        AND (pep.inliquid = 0 OR pep.inprejuz = 1)
-       AND pep.dtvencto <= (SELECT MAX(vri.dtrefere)
-                              FROM crapvri vri
-                             WHERE vri.cdcooper = tab.cdcooper
-                               AND vri.dtrefere >= '01/01/2020')
+       AND pep.dtvencto <= pr_dtrefere
        AND tab.vldivida <> tab.vlempres
        AND tab.vlempres/tab.vldivida < 0.95
      GROUP BY tab.cdcooper
@@ -85,20 +77,20 @@ DECLARE
   CURSOR cr_crapris(pr_cdcooper crapris.cdcooper%TYPE
                    ,pr_nrdconta crapris.nrdconta%TYPE
                    ,pr_nrctremp crapris.nrctremp%TYPE
+                   ,pr_dtrefere crapris.dtrefere%TYPE
                    ) IS
     SELECT ris.vldivida
+          ,ris.vldivida - ris.vljura60 - ris.vljurantpp totempre
       FROM crapris ris
      WHERE ris.cdcooper = pr_cdcooper
        AND ris.nrdconta = pr_nrdconta
        AND ris.nrctremp = pr_nrctremp
-       AND ris.dtrefere = (SELECT MAX(vri2.dtrefere)
-                             FROM crapvri vri2
-                            WHERE vri2.cdcooper = ris.cdcooper
-                              AND vri2.dtrefere >= '01/01/2020');
+       AND ris.dtrefere = pr_dtrefere;
   --
   CURSOR cr_crapvri(pr_cdcooper crapvri.cdcooper%TYPE
                    ,pr_nrdconta crapvri.nrdconta%TYPE
                    ,pr_nrctremp crapvri.nrctremp%TYPE
+                   ,pr_dtrefere crapvri.dtrefere%TYPE
                    ) IS
     SELECT vri.nrdconta
           ,vri.dtrefere
@@ -110,13 +102,7 @@ DECLARE
      WHERE vri.cdcooper = pr_cdcooper
        AND vri.nrdconta = pr_nrdconta
        AND vri.nrctremp = pr_nrctremp
-       AND vri.dtrefere = (SELECT MAX(vri2.dtrefere)
-                             FROM crapvri vri2
-                            WHERE vri2.cdcooper = vri.cdcooper
-                              AND vri2.dtrefere >= '01/01/2020'); -- Fixo
-  --
-  vr_tab_parcelas  empr0011.typ_tab_parcelas;
-  vr_tab_calculado empr0011.typ_tab_calculado;
+       AND vri.dtrefere = pr_dtrefere;
   --
   vr_cdcritic crapcri.cdcritic%TYPE;
   vr_dscritic crapcri.dscritic%TYPE;
@@ -124,8 +110,9 @@ DECLARE
   rw_crapvri cr_crapvri%ROWTYPE;
   --
   vr_cdcooper NUMBER := NULL; -- Trocar para NULL se for executar para todas as cooperativas
-  vr_dtmvtoan DATE;
+  vr_dtrefere DATE   := '31/03/2020'; -- Trocar para a data desejada
   vr_vldivida NUMBER;
+  vr_totempre NUMBER;
   vr_vlempres NUMBER;
   vr_vleprtot NUMBER;
   --
@@ -135,6 +122,7 @@ BEGIN
                               ) LOOP
     --
     FOR rw_contrato IN cr_contrato(pr_cdcooper => rw_crapcop.cdcooper
+                                  ,pr_dtrefere => vr_dtrefere
                                   ) LOOP
       --
       FOR rw_crapepr IN cr_crapepr(pr_cdcooper => rw_contrato.cdcooper
@@ -142,37 +130,12 @@ BEGIN
                                   ,pr_nrctremp => rw_contrato.nrctremp
                                   ) LOOP
         --
-        vr_dtmvtoan := gene0005.fn_valida_dia_util(pr_cdcooper => rw_contrato.cdcooper
-                                                  ,pr_dtmvtolt => rw_contrato.dt59dias - 1
-                                                  ,pr_tipo     => 'A'
-                                                  );
-        -- Busca as parcelas para pagamento
-        EMPR0011.pc_busca_pagto_parc_pos(pr_cdcooper      => rw_crapepr.cdcooper
-                                        ,pr_cdprogra      => 'EMPR0011' -- Fixo
-                                        ,pr_dtmvtolt      => rw_contrato.dt59dias
-                                        ,pr_dtmvtoan      => vr_dtmvtoan
-                                        ,pr_nrdconta      => rw_crapepr.nrdconta
-                                        ,pr_nrctremp      => rw_crapepr.nrctremp
-                                        ,pr_dtefetiv      => rw_crapepr.dtmvtolt
-                                        ,pr_cdlcremp      => rw_crapepr.cdlcremp
-                                        ,pr_vlemprst      => rw_crapepr.vlemprst
-                                        ,pr_txmensal      => rw_crapepr.txmensal
-                                        ,pr_dtdpagto      => rw_crapepr.dtdpagto
-                                        ,pr_vlsprojt      => rw_crapepr.vlsprojt
-                                        ,pr_qttolatr      => rw_crapepr.qttolatr
-                                        ,pr_tab_parcelas  => vr_tab_parcelas
-                                        ,pr_tab_calculado => vr_tab_calculado
-                                        ,pr_cdcritic      => vr_cdcritic
-                                        ,pr_dscritic      => vr_dscritic
-                                        );
-        --
-        --dbms_output.put_line('vlsdeved: ' || vr_tab_calculado(1).vlsdeved);
-        --
         OPEN cr_crapris(rw_crapepr.cdcooper
                        ,rw_crapepr.nrdconta
                        ,rw_crapepr.nrctremp
+                       ,vr_dtrefere
                        );
-        FETCH cr_crapris INTO vr_vldivida;
+        FETCH cr_crapris INTO vr_vldivida, vr_totempre;
         CLOSE cr_crapris;
         --
         vr_vleprtot := 0;
@@ -180,13 +143,14 @@ BEGIN
         OPEN cr_crapvri(rw_crapepr.cdcooper
                        ,rw_crapepr.nrdconta
                        ,rw_crapepr.nrctremp
+                       ,vr_dtrefere
                        );
         LOOP
           --
           FETCH cr_crapvri INTO rw_crapvri;
           EXIT WHEN cr_crapvri%NOTFOUND;
           --
-          vr_vlempres := ROUND((rw_crapvri.vldivida / vr_vldivida) * vr_tab_calculado(1).vlsdeved, 2);
+          vr_vlempres := ROUND((rw_crapvri.vldivida / vr_vldivida) * vr_totempre, 2);
           vr_vleprtot := vr_vleprtot + vr_vlempres;
           --
           UPDATE crapvri vri
@@ -201,7 +165,7 @@ BEGIN
           --
         END LOOP;
         --
-        vr_vleprtot := vr_tab_calculado(1).vlsdeved - vr_vleprtot;
+        vr_vleprtot := vr_totempre - vr_vleprtot;
         --
         IF NVL(vr_vleprtot, 0) <> 0 THEN
           --
