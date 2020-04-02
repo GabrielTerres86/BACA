@@ -24,7 +24,10 @@ VALUES ('GRAVA_MOTIVO_ANULA_LIMITE','LIMI0003','pc_grava_moti_anula','pr_tpprodu
 INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 VALUES ('GERA_IMPRESSAO_LIMITE','LIMI0003','pc_gera_impressao','pr_nrdconta,pr_idseqttl,pr_idimpres,pr_tpctrlim,pr_nrctrlim,pr_dsiduser,pr_flgerlog',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'LIMI0003' AND ROWNUM = 1));
 
-COMMIT;
+INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+VALUES ('EFETIVA_PROPOSTA_LIMITE','LIMI0003','pc_confirmar_novo_limite_web','pr_nrdconta,pr_idseqttl,pr_inconfir,pr_nrctrlim,pr_flgerlog,pr_insitapr',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'LIMI0003' AND ROWNUM = 1));
+
+COMMIT; 
 
 --------------------- Permissoes ---------------------
 DECLARE
