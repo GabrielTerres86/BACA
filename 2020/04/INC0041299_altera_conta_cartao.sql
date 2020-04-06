@@ -15,7 +15,7 @@ begin
 		   and nrseqcrd = 152559
 		   and nrcctitg = 7563239145979;
 		commit;
-		dbms_output.put_line('Alteração efetuada com sucesso. Quantidade de registros alterados: ' || sql%rowcount);
+		dbms_output.put_line('Alteração efetuada com sucesso.');
     exception
       when others then
       dbms_output.put_line('Erro ao executar alteração --- detalhes do erro: '|| SQLCODE || ': ' || SQLERRM);
@@ -23,4 +23,3 @@ begin
     end;
   end;
 end;
-
