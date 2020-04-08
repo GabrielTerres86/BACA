@@ -512,7 +512,7 @@ SET   LSTPARAM = 'pr_cdlcremp,pr_dslcremp,pr_tpctrato,pr_txjurfix,pr_txjurvar,pr
 ,pr_qtcarenc,pr_vlmaxass,pr_vlmaxasj,pr_txminima,pr_txmaxima,pr_perjurmo,pr_tpdescto,pr_nrdevias,pr_cdusolcr,pr_flgtarif
 ,pr_flgtaiof,pr_vltrfesp,pr_flgcrcta,pr_dsoperac,pr_dsorgrec,pr_manterpo,pr_flgimpde,pr_flglispr,pr_tplcremp,pr_cdmodali
 ,pr_cdsubmod,pr_flgrefin,pr_flgreneg,pr_qtrecpro,pr_consaut,pr_flgdisap,pr_flgcobmu,pr_flgsegpr,pr_cdhistor,pr_flprapol
-,pr_tpprodut,pr_cddindex,pr_permingr,pr_vlperidx,pr_tpmodcon'
+,pr_tpprodut,pr_cddindex,pr_permingr,pr_vlperidx,pr_tpmodcon,pr_vlmaxopr'
 where NMDEACAO IN ('ALTLINHA');
 
 UPDATE crapaca -- tirar prm nrgrupo
@@ -520,7 +520,7 @@ SET   LSTPARAM = 'pr_cdlcremp,pr_dslcremp,pr_tpctrato,pr_txjurfix,pr_txjurvar,pr
 ,pr_qtcarenc,pr_vlmaxass,pr_vlmaxasj,pr_txminima,pr_txmaxima,pr_perjurmo,pr_tpdescto,pr_nrdevias,pr_cdusolcr,pr_flgtarif
 ,pr_flgtaiof,pr_vltrfesp,pr_flgcrcta,pr_dsoperac,pr_dsorgrec,pr_manterpo,pr_flgimpde,pr_flglispr,pr_tplcremp,pr_cdmodali
 ,pr_cdsubmod,pr_flgrefin,pr_flgreneg,pr_qtrecpro,pr_consaut,pr_flgdisap,pr_flgcobmu,pr_flgsegpr,pr_cdhistor,pr_flprapol
-,pr_cdfinali,pr_tpprodut,pr_cddindex,pr_permingr,pr_vlperidx,pr_tpmodcon'
+,pr_cdfinali,pr_tpprodut,pr_cddindex,pr_permingr,pr_vlperidx,pr_tpmodcon,pr_vlmaxopr'
 where NMDEACAO IN ('INCLINHA');
 
 UPDATE crapaca
