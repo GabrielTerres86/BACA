@@ -296,4 +296,6 @@ BEGIN
      'pr_cdcooper,pr_nrdconta,pr_nrctrpro',
      vr_nrseqrdr);
 
+  COMMIT;
 END;
+

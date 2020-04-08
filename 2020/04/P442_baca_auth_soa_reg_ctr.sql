@@ -87,5 +87,6 @@ BEGIN
        'SENHA_AUTH_REG_CTR_PR',
        'Senha SOA para registros de contratos pc_busca_autenticacao_reg_ctr',
        'ailos2019');
+  COMMIT;
   END;
 END;
