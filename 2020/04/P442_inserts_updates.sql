@@ -185,12 +185,10 @@ BEGIN
      '/osb-soa/GarantiaVeiculoRestService/v1/EnviarImagemContratoGravames');
 
   -- CRAPACA
-  UPDATE crapaca
-     SET lstparam =
-         (SELECT lstparam
-            FROM crapaca
-           WHERE nmdeacao = 'GRAVAM_GRAVA_PRM') || ',pr_nrdsemim,pr_flgenaut,pr_siglaufs'
-   WHERE nmdeacao = 'GRAVAM_GRAVA_PRM';
+   update crapaca aca 
+      set aca.lstparam = 'pr_qterrlot,pr_nrdiaenv,pr_hrenvi01,pr_hrenvi02,pr_hrenvi03,pr_aprvcord,pr_perccber,pr_tipcomun,pr_nrdnaoef,pr_emlnaoef,pr_nrdsemim,pr_flgenaut,pr_siglaufs'
+    where aca.nmdeacao = 'GRAVAM_GRAVA_PRM'
+      and aca.nmpackag = 'TELA_GRAVAM';
 
   --Dados para o BACA
   vr_nmprogra := 'GRVM0001';
