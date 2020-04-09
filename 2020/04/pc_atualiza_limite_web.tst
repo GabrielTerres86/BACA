@@ -1,6 +1,5 @@
 PL/SQL Developer Test script 3.0
-393
-
+416
 DECLARE
   vr_dscomando VARCHAR2(4000);
   
@@ -129,12 +128,18 @@ DECLARE
                            '   ,crapsnh.dtlimweb = '''||rw_crapsnh.dtlimweb||''' ' ||
                          'WHERE crapsnh.progress_recid = '''||rw_crapsnh.progress_recid||''';' || chr(10)); 
 
+         IF rw_crapsnh.vllimweb = 0 THEN
+           
          --Regulariza o saldo das aplicações
          BEGIN
 
            UPDATE crapsnh c
               SET c.vllimweb = vr_vllimweb
                  ,c.dtlimweb = trunc(SYSDATE)
+                   ,c.cdopepag = '1'
+                   ,c.cdagepag = 90
+                   ,c.vlpagini = vr_vllimweb
+                   ,c.dtinspag = trunc(SYSDATE)                    
             WHERE c.progress_recid = rw_crapsnh.progress_recid; 
           
          EXCEPTION
@@ -142,6 +147,23 @@ DECLARE
              pr_dscritic:=  'Erro ao atualizar o registro de limites ( '||rw_crapsnh.progress_recid ||' ):'|| SQLERRM;
               RAISE vr_exc_erro;
          END;
+           
+         ELSE 
+           --Regulariza o saldo das aplicações
+           BEGIN
+
+             UPDATE crapsnh c
+                SET c.vllimweb = vr_vllimweb
+                   ,c.dtlimweb = trunc(SYSDATE)
+              WHERE c.progress_recid = rw_crapsnh.progress_recid; 
+            
+           EXCEPTION
+             WHEN OTHERS THEN
+               pr_dscritic:=  'Erro ao atualizar o registro de limites ( '||rw_crapsnh.progress_recid ||' ):'|| SQLERRM;
+                RAISE vr_exc_erro;
+           END;
+         
+         END IF;
                   
         -- Se concluiu com sucesso 
         -- Gerar log do novo registro na CRAPLAU
@@ -393,5 +415,6 @@ EXCEPTION
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arqlog); --> Handle do arquivo aberto;  
     ROLLBACK; 
 END;
+
 0
 0
