@@ -77,31 +77,6 @@ BEGIN
     END;
     
     BEGIN
-      INSERT INTO crapace
-                  (nmdatela,
-                   cddopcao,
-                   cdoperad,
-                   nmrotina,
-                   cdcooper,
-                   nrmodulo,
-                   idevento,
-                   idambace)
-                  select nmdatela,
-                         'V' cddopcao,
-                         cdoperad,
-                         nmrotina,
-                         cdcooper,
-                         nrmodulo,
-                         0 idevento,
-                         idambace 
-                    from crapace where nmdatela = 'ATENDA' and crapace.cddopcao = 'P' and nmrotina = 'PRESTACOES' and idambace = 2;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := SQLERRM;
-        RAISE vr_exc_erro;
-    END;
-    
-    BEGIN
       UPDATE craptel SET
              cdopptel = cdopptel || ',' || 'V'
             ,lsopptel = lsopptel || ',' || 'ADIAR VENCIMENTOS'
@@ -115,6 +90,31 @@ BEGIN
     END;    
         
   END LOOP;
+  
+  BEGIN
+      INSERT INTO crapace
+                  (nmdatela,
+                   cddopcao,
+                   cdoperad,
+                   nmrotina,
+                   cdcooper,
+                   nrmodulo,
+                   idevento,
+                   idambace)
+                  select DISTINCT nmdatela,
+                         'V' cddopcao,
+                         UPPER(cdoperad),
+                         nmrotina,
+                         cdcooper,
+                         nrmodulo,
+                         0 idevento,
+                         idambace 
+                   from crapace where nmdatela = 'ATENDA' and crapace.cddopcao = 'P' and nmrotina = 'PRESTACOES' and idambace = 2;
+  EXCEPTION
+    WHEN OTHERS THEN
+      vr_dscritic := SQLERRM;
+      RAISE vr_exc_erro;
+  END;
 
   COMMIT;
 
