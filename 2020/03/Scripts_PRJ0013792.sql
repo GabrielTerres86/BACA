@@ -390,4 +390,25 @@ BEGIN
    COMMIT;
 END;
  
- 
+DECLARE 
+BEGIN
+  INSERT INTO crapprm (
+          NMSISTEM,
+          CDCOOPER,
+          CDACESSO,
+          DSTEXPRM,
+          DSVLRPRM)
+  VALUES('CRED'
+         ,0---indicando para todas
+         ,'DTVIGENCIA_NOVO_LIMITE'
+         ,'Inicio vigência análise automatica Limite Cred. '
+         ,TO_CHAR(TRUNC(SYSDATE),'dd/mm/yyyy'));
+         
+  commit;         
+EXCEPTION
+  WHEN OTHERS THEN
+
+    DBMS_OUTPUT.PUT_LINE ('Não inseriu data inicio vigencia na tab CRAPPRM');
+
+END;
+/
