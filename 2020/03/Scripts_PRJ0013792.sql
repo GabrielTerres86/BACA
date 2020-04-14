@@ -27,6 +27,10 @@ VALUES ('GERA_IMPRESSAO_LIMITE','LIMI0003','pc_gera_impressao','pr_nrdconta,pr_i
 INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 VALUES ('EFETIVA_PROPOSTA_LIMITE','LIMI0003','pc_confirmar_novo_limite_web','pr_nrdconta,pr_idseqttl,pr_inconfir,pr_nrctrlim,pr_flgerlog,pr_insitapr',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'LIMI0003' AND ROWNUM = 1));
 
+INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+VALUES ('VALIDA_PROPOSTA_LIMITE','LIMI0003','pc_verifica_impressao','pr_nrdconta,pr_nrctrlim',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'LIMI0003' AND ROWNUM = 1));
+
+
 COMMIT; 
 
 --------------------- Permissoes ---------------------
