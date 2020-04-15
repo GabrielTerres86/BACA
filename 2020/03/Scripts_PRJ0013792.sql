@@ -75,7 +75,7 @@ BEGIN
        WHERE cop.cdcooper IN (pr_cdcooper)
          AND ope.cdsitope = 1
          AND cop.cdcooper = ope.cdcooper
-         AND trim(upper(ope.cdoperad)) IN (SELECT a.cdoperad
+         AND trim(upper(ope.cdoperad)) IN (SELECT trim(upper(a.cdoperad))
                                              FROM crapace a
                                             WHERE a.NMDATELA = 'ATENDA'
                                               AND a.cddopcao = 'N' 
@@ -113,7 +113,7 @@ BEGIN
        WHERE cop.cdcooper IN (pr_cdcooper)
          AND ope.cdsitope = 1
          AND cop.cdcooper = ope.cdcooper
-         AND trim(upper(ope.cdoperad)) IN (SELECT a.cdoperad
+         AND trim(upper(ope.cdoperad)) IN (SELECT trim(upper(a.cdoperad))
                                              FROM crapace a
                                             WHERE a.NMDATELA = 'ATENDA'
                                               AND a.cddopcao = 'C' 
