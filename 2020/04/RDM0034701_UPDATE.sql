@@ -1,0 +1,38 @@
+--update
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769017';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769020';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769023';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769022';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769025';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769026';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769029';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769030';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769031';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769028';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769021';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769027';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769007';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769006';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769018';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769035';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769032';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769033';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769034';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769016';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769019';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769008';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769011';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769009';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769010';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769013';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769012';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769014';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769015';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769038';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769037';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769036';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769039';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769040';
+update craplau l set l.insitlau = 4, l.dtdebito = trunc(sysdate) where l.progress_recid = '31769024';
+
+COMMIT;
