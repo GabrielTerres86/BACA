@@ -11,16 +11,16 @@ DECLARE
   vr_nrdconta crapass.nrdconta%TYPE := 9041605;
   vr_totalest tbcc_prejuizo_detalhe.vllanmto%TYPE := 231.16;
   vr_dtdcorte DATE := to_date('28/02/2020', 'DD/MM/RRRR');
-  vr_justific VARCHAR2(500) := 'ESTORNO';
+  vr_justific VARCHAR2(500) := 'ESTORNO INC0043779';
   vr_idprej TBCC_PREJUIZO_LANCAMENTO.Idlancto_Prejuizo%TYPE;
   
-  PROCEDURE pc_grava_estorno_preju(pr_cdcooper IN tbcc_prejuizo_detalhe.cdcooper%TYPE --> C√≥digo da cooperativa
+  PROCEDURE pc_grava_estorno_preju(pr_cdcooper IN tbcc_prejuizo_detalhe.cdcooper%TYPE --> CÛdigo da cooperativa
                                   ,pr_nrdconta IN tbcc_prejuizo_detalhe.nrdconta%TYPE --> Conta do cooperado
                                   ,pr_totalest IN tbcc_prejuizo_detalhe.vllanmto%TYPE --> Total a estornar
                                   ,pr_dtdcorte IN DATE
-                                  ,pr_justific IN VARCHAR2 --> Descri√ß√£o da justificativa
-                                  ,pr_cdcritic OUT PLS_INTEGER --> C√≥digo da cr√≠tica
-                                  ,pr_dscritic OUT VARCHAR2 --> Descri√ß√£o da cr√≠tica
+                                  ,pr_justific IN VARCHAR2 --> DescriÁ„o da justificativa
+                                  ,pr_cdcritic OUT PLS_INTEGER --> CÛdigo da crÌtica
+                                  ,pr_dscritic OUT VARCHAR2 --> DescriÁ„o da crÌtica
                                    ) IS
   
     --> Consultar ultimo lancamento de prejuizo
@@ -40,13 +40,13 @@ DECLARE
                ,d.dthrtran DESC;
     rw_detalhe_ult_lanc cr_detalhe_ult_lanc%ROWTYPE;
   
-    --> Consultar todos os historicos para soma √† estornar
-    --> 2723 ‚Äì Abono de preju√≠zo
-    --> 2725 ‚Äì Pagamento do valor principal do preju√≠zo
-    --> 2727 ‚Äì Pagamento dos juros +60 da transfer√™ncia para preju√≠zo
-    --> 2729 ‚Äì Pagamento dos juros remunerat√≥rios do preju√≠zo
-    --> 2323 ‚Äì Pagamento de IOF provisionado
-    --> 2721 ‚Äì D√©bito para pagamento do preju√≠zo (para fins cont√°beis)
+    --> Consultar todos os historicos para soma ‡ estornar
+    --> 2723 ñ Abono de prejuÌzo
+    --> 2725 ñ Pagamento do valor principal do prejuÌzo
+    --> 2727 ñ Pagamento dos juros +60 da transferÍncia para prejuÌzo
+    --> 2729 ñ Pagamento dos juros remuneratÛrios do prejuÌzo
+    --> 2323 ñ Pagamento de IOF provisionado
+    --> 2721 ñ DÈbito para pagamento do prejuÌzo (para fins cont·beis)
     CURSOR cr_detalhe_tot_est(pr_cdcooper tbcc_prejuizo_detalhe.cdcooper%TYPE
                              ,pr_nrdconta tbcc_prejuizo_detalhe.nrdconta%TYPE
                              ,pr_dthrtran DATE) IS
@@ -57,19 +57,20 @@ DECLARE
        WHERE d.cdcooper = pr_cdcooper
          AND d.nrdconta = pr_nrdconta
          AND d.dthrtran > pr_dthrtran
-         AND (d.cdhistor = 2723 --> 2723 ‚Äì Abono de preju√≠zo
-             OR d.cdhistor = 2725 --> 2725 ‚Äì Pagamento do valor principal do preju√≠zo
-             OR d.cdhistor = 2727 --> 2727 ‚Äì Pagamento dos juros +60 da transfer√™ncia para preju√≠zo
-             OR d.cdhistor = 2729 --> 2729 ‚Äì Pagamento dos juros remunerat√≥rios do preju√≠zo
-             OR d.cdhistor = 2323 --> 2323 ‚Äì Pagamento do IOF
-             OR d.cdhistor = 2721 --> 2721 ‚Äì D√©bito para pagamento do preju√≠zo (para fins cont√°beis)
-             OR d.cdhistor = 2733) --> 2733 - D√©bito para pagamento do preju√≠zo (para fins cont√°beis)
+         AND d.dthrtran < pr_dthrtran + 1
+         AND (d.cdhistor = 2723 --> 2723 ñ Abono de prejuÌzo
+             OR d.cdhistor = 2725 --> 2725 ñ Pagamento do valor principal do prejuÌzo
+             OR d.cdhistor = 2727 --> 2727 ñ Pagamento dos juros +60 da transferÍncia para prejuÌzo
+             OR d.cdhistor = 2729 --> 2729 ñ Pagamento dos juros remuneratÛrios do prejuÌzo
+             OR d.cdhistor = 2323 --> 2323 ñ Pagamento do IOF
+             OR d.cdhistor = 2721 --> 2721 ñ DÈbito para pagamento do prejuÌzo (para fins cont·beis)
+             OR d.cdhistor = 2733) --> 2733 - DÈbito para pagamento do prejuÌzo (para fins cont·beis)
        ORDER BY d.dtmvtolt
                ,d.dthrtran DESC
                ,d.cdhistor ASC;
     rw_detalhe_tot_est cr_detalhe_tot_est%ROWTYPE;
   
-    -- Carrega o calend√°rio de datas da cooperativa
+    -- Carrega o calend·rio de datas da cooperativa
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
   
     -- Variaveis de log
@@ -113,7 +114,7 @@ DECLARE
   
     IF nvl(ltrim(pr_justific), 'VAZIO') = 'VAZIO' THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Obrigat√≥rio o preenchimento do campo justificativa';
+      vr_dscritic := 'ObrigatÛrio o preenchimento do campo justificativa';
       RAISE vr_exc_erro;
     END IF;
   
@@ -129,21 +130,21 @@ DECLARE
                                                    pr_dthrtran => pr_dtdcorte) LOOP
       
         IF rw_detalhe_tot_est.cdhistor = 2723 THEN
-          -- 2724 <- ESTORNO - > Abono de preju√≠zo
+          -- 2724 <- ESTORNO - > Abono de prejuÌzo
           vr_vlest_abono := rw_detalhe_tot_est.vllanmto;
           vr_cdhistor    := 2724;
         ELSIF rw_detalhe_tot_est.cdhistor = 2725 THEN
-          -- 2726 <- ESTORNO - > Pagamento do valor principal do preju√≠zo
+          -- 2726 <- ESTORNO - > Pagamento do valor principal do prejuÌzo
           vr_cdhistor    := 2726;
           vr_vldpagto    := nvl(vr_vldpagto, 0) + nvl(rw_detalhe_tot_est.vllanmto, 0);
           vr_vlest_saldo := nvl(rw_detalhe_tot_est.vllanmto, 0);
         ELSIF rw_detalhe_tot_est.cdhistor = 2727 THEN
-          -- 2728 <- ESTORNO - > Pagamento dos juros +60 da transfer√™ncia para preju√≠zo
+          -- 2728 <- ESTORNO - > Pagamento dos juros +60 da transferÍncia para prejuÌzo
           vr_vlest_jur60 := rw_detalhe_tot_est.vllanmto;
           vr_cdhistor    := 2728;
           vr_vldpagto    := nvl(vr_vldpagto, 0) + nvl(rw_detalhe_tot_est.vllanmto, 0);
         ELSIF rw_detalhe_tot_est.cdhistor = 2729 THEN
-          -- 2730 <- ESTORNO - > Pagamento dos juros remunerat√≥rios do preju√≠zo
+          -- 2730 <- ESTORNO - > Pagamento dos juros remuneratÛrios do prejuÌzo
           vr_vlest_jupre := rw_detalhe_tot_est.vllanmto;
           vr_cdhistor    := 2730;
           vr_vldpagto    := nvl(vr_vldpagto, 0) + nvl(rw_detalhe_tot_est.vllanmto, 0);
@@ -151,17 +152,17 @@ DECLARE
           -- 2323 <- ESTORNO - > Pagamento do IOF
           vr_vlest_IOF := rw_detalhe_tot_est.vllanmto;
         ELSIF rw_detalhe_tot_est.cdhistor = 2721 THEN
-          -- 2722 <- ESTORNO - > D√©bito para pagamento do preju√≠zo (para fins cont√°beis)
+          -- 2722 <- ESTORNO - > DÈbito para pagamento do prejuÌzo (para fins cont·beis)
           vr_cdhistor := 2722;
         ELSIF rw_detalhe_tot_est.cdhistor = 2733 THEN
-          -- 2732 <- ESTORNO - > D√©bito para pagamento do preju√≠zo
+          -- 2732 <- ESTORNO - > DÈbito para pagamento do prejuÌzo
           vr_cdhistor    := 2732;
           vr_vlest_princ := rw_detalhe_tot_est.vllanmto;
           vr_valordeb    := rw_detalhe_tot_est.vllanmto;
         END IF;
       
         IF rw_detalhe_tot_est.cdhistor NOT IN (2323, 2723) THEN
-          -- insere o estorno com novo hist√≥rico
+          -- insere o estorno com novo histÛrico
           BEGIN
             INSERT INTO tbcc_prejuizo_detalhe
               (dtmvtolt,
@@ -204,7 +205,7 @@ DECLARE
       END LOOP;
     
       IF vr_valordeb > 0 THEN
-        -- Insere lan√ßamento com hist√≥rico 2738
+        -- Insere lanÁamento com histÛrico 2738
         BEGIN
           INSERT INTO TBCC_PREJUIZO_LANCAMENTO
             (dtmvtolt,
@@ -261,7 +262,7 @@ DECLARE
                                     pr_nrseqdig    => vr_nrseqdig,
                                     pr_vllanmto    => vr_valordeb,
                                     pr_nrdctabb    => pr_nrdconta,
-                                    pr_cdpesqbb    => 'ESTORNO DE PAGAMENTO DE PREJU√çZO DE C/C',
+                                    pr_cdpesqbb    => 'ESTORNO DE PAGAMENTO DE PREJUÕZO DE C/C',
                                     pr_dtrefere    => rw_crapdat.dtmvtolt,
                                     pr_hrtransa    => gene0002.fn_busca_time,
                                     pr_cdoperad    => vr_cdoperad,
@@ -312,7 +313,7 @@ DECLARE
     IF vr_vldpagto > 0 AND vr_vlest_abono > 0 THEN
     
       IF vr_vlest_abono < vr_vldpagto THEN
-        vr_dscritic := 'N√£o possui valor de abono suficiente para estorno do pagamento.';
+        vr_dscritic := 'N„o possui valor de abono suficiente para estorno do pagamento.';
         RAISE vr_exc_erro;
       END IF;
     
@@ -331,7 +332,7 @@ DECLARE
         VALUES
           (rw_crapdat.dtmvtolt,
            pr_nrdconta,
-           2724 -- ESTORNO - > Abono de preju√≠zo
+           2724 -- ESTORNO - > Abono de prejuÌzo
           ,
            vr_vldpagto,
            SYSDATE,
@@ -376,7 +377,7 @@ DECLARE
                                   pr_nrseqdig    => vr_nrseqdig,
                                   pr_vllanmto    => vr_vldpagto,
                                   pr_nrdctabb    => pr_nrdconta,
-                                  pr_cdpesqbb    => 'ESTORNO DE ABONO DE PREJU√çZO DE C/C',
+                                  pr_cdpesqbb    => 'ESTORNO DE ABONO DE PREJUÕZO DE C/C',
                                   pr_dtrefere    => rw_crapdat.dtmvtolt,
                                   pr_hrtransa    => gene0002.fn_busca_time,
                                   pr_cdoperad    => vr_cdoperad,
@@ -485,7 +486,7 @@ DECLARE
       -- Primeiro garantimos que o diretorio exista
       IF NOT gene0001.fn_exis_diretorio(pr_nmdireto) THEN
       
-        -- Efetuar a cria√ß√£o do mesmo
+        -- Efetuar a criaÁ„o do mesmo
         gene0001.pc_OSCommand_Shell(pr_des_comando => 'mkdir ' || pr_nmdireto || ' 1> /dev/null',
                                     pr_typ_saida   => vr_typ_saida,
                                     pr_des_saida   => vr_des_saida);
@@ -497,7 +498,7 @@ DECLARE
           RAISE vr_exc_erro;
         END IF;
       
-        -- Adicionar permiss√£o total na pasta
+        -- Adicionar permiss„o total na pasta
         gene0001.pc_OSCommand_Shell(pr_des_comando => 'chmod 777 ' || pr_nmdireto ||
                                                       ' 1> /dev/null',
                                     pr_typ_saida   => vr_typ_saida,
@@ -518,14 +519,16 @@ DECLARE
   END;
 BEGIN
   vr_nmdireto := gene0001.fn_param_sistema('CRED', 0, 'ROOT_MICROS');
+  vr_nmdireto       := vr_nmdireto || '/cecred/odirlei/INC0043779/';
+  
   -- Primeiro criamos o diretorio da RITM, dentro de um diretorio ja existente
-  pc_valida_direto(pr_nmdireto => vr_nmdireto || 'INC0043779', pr_dscritic => vr_dscritic);
+  pc_valida_direto(pr_nmdireto => vr_nmdireto , pr_dscritic => vr_dscritic);
 
   IF TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exc_erro;
   END IF;
 
-  vr_nmdireto       := vr_nmdireto || 'INC0043779/';
+  
   vr_nmarqbkp       := 'ROLLBACK_INC0043779_' || to_char(SYSDATE, 'ddmmyyyy_hh24miss') || '.sql';
   vr_dados_rollback := NULL;
   dbms_lob.createtemporary(vr_dados_rollback, TRUE, dbms_lob.CALL);
@@ -567,9 +570,11 @@ BEGIN
     RAISE vr_exc_erro;
   END IF;
 
-  -- Liberando a mem√≥ria alocada pro CLOB
+  -- Liberando a memÛria alocada pro CLOB
   dbms_lob.close(vr_dados_rollback);
   dbms_lob.freetemporary(vr_dados_rollback);
+  
+  COMMIT;
 
 EXCEPTION
   WHEN vr_exc_erro THEN
