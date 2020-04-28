@@ -398,7 +398,6 @@ UPDATE crawlim w
    SET w.insitest = 3 -- 'Analise Finalizada'
       ,w.insitapr = 2 -- 'Aprovada Manual'
  WHERE w.tpctrlim = 1 -- Limite de Credito
-   AND w.dtpropos <= '15/03/2020'
    AND w.insitlim IN (2, 3); -- Ativo / Cancelado 
 COMMIT; 
  
