@@ -14,7 +14,7 @@ begin
   CLOSE btch0001.cr_crapdat;
 
   -- EFETUA O LANÇAMENTO NA CONTA TRANSITORIA
-  cecred.prej0003.pc_gera_cred_cta_prj(pr_cdcooper => rw_crapdat.cdcooper,
+  cecred.prej0003.pc_gera_cred_cta_prj(pr_cdcooper => 1,
                                        pr_nrdconta => 2467496,
                                        pr_cdoperad => '1',
                                        pr_vlrlanc => 6000,
