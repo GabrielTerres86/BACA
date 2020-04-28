@@ -16,7 +16,7 @@ begin
   -- EFETUA O LANÇAMENTO NA CONTA TRANSITORIA
   cecred.prej0003.pc_gera_cred_cta_prj(pr_cdcooper => rw_crapdat.cdcooper,
                                        pr_nrdconta => 2467496,
-                                       pr_cdoperad => '',
+                                       pr_cdoperad => '1',
                                        pr_vlrlanc => 6000,
                                        pr_dtmvtolt => rw_crapdat.Dtmvtolt,
                                        pr_nrdocmto => 6,
