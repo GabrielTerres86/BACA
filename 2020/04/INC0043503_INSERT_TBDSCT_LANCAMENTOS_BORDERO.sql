@@ -1,0 +1,36 @@
+INSERT INTO tbdsct_lancamento_bordero
+  (CDCOOPER,
+   NRDCONTA,
+   NRBORDER,
+   CDBANDOC,
+   NRDCTABB,
+   NRCNVCOB,
+   NRDOCMTO,
+   NRSEQDIG,
+   NRTITULO,
+   DTMVTOLT,
+   CDORIGEM,
+   CDHISTOR,
+   VLLANMTO,
+   DTHRTRAN,
+   DTREFATU,
+   DTESTORN)
+VALUES
+  (1,
+   9935320,
+   679642,
+   85,
+   101002,
+   101002,
+   790,
+   3,
+   13,
+   to_date('11-02-2020', 'dd-mm-yyyy'),
+   7,
+   2671,
+   96.50,
+   to_date('11-02-2020 07:03:06', 'dd-mm-yyyy hh24:mi:ss'),
+   to_date('11-02-2020 07:03:06', 'dd-mm-yyyy hh24:mi:ss'),
+   NULL);
+
+COMMIT;
