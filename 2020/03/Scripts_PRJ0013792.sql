@@ -128,6 +128,7 @@ BEGIN
 
   COMMIT;
 END;
+/
 ---------------------
 
 DECLARE
