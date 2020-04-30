@@ -6,7 +6,7 @@ BEGIN
   
   -- PARAMETRO DE EMAIL
   insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
-  values ('CRED', 0, 'CRPS714_1_EMAIL', 'Email para recebimento de erros no processamento dos estornos de cessao', 'teste@ailos.coop.br');
+  values ('CRED', 0, 'CRPS714_1_EMAIL', 'Email para recebimento de erros no processamento dos estornos de cessao', 'cristiane.dregoti@ailos.coop.br;eduardo.santos@ailos.coop.br;tainara.nunes@ailos.coop.br;adriane.nunes@ailos.coop.br');
 
   -- Insere o novo layout
   insert into tbgen_layout (IDLAYOUT, NMLAYOUT, DSLAYOUT, DSDELIMITADOR, DSOBSERVACAO)
