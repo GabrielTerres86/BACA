@@ -40,7 +40,7 @@ DECLARE
   values ('CRED', 0, 'ENVIA_SEG_PRST_EMAIL', 'Email para envio de avisos de erro ao processar pc_envia_arq_seg_prst', 'seguros@ailos.coop.br');
 
   update crapaca 
-  set lstparam = lstparam || ', pr_endereco, pr_login, pr_senha, pr_seqarquivo'
+  set lstparam = lstparam || ', pr_endereco, pr_login, pr_senha, pr_seqarquivo, pr_apolice'
   where nmdeacao = 'TAB049_ALTERAR';
     
   FOR rw_coops IN cr_coops LOOP
