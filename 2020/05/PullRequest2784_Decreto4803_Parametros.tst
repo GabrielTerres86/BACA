@@ -19,7 +19,7 @@ BEGIN
   values (aux_cdpartar, 17, '0');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 1, '1');
+  values (aux_cdpartar, 1, '0');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 15, '0');
@@ -58,10 +58,10 @@ BEGIN
   values (aux_cdpartar, 3, '0');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 2, '1');
+  values (aux_cdpartar, 2, '0');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 12, '1');
+  values (aux_cdpartar, 12, '0');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 16, '0');
@@ -179,7 +179,7 @@ BEGIN
   values (aux_cdpartar, 2, '');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 12, '158;1;58');
+  values (aux_cdpartar, 12, '');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 16, '');
