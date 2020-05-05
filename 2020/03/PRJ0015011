@@ -68,6 +68,7 @@ DECLARE
       vr_login    := SUBSTR(vr_dstextab,124,6);  
       vr_senha    := SUBSTR(vr_dstextab,131,7);    
       vr_seqarquivo := SUBSTR(vr_dstextab,139,5); 
+	  vr_apolice   := SUBSTR(vr_dstextab,146,7);
       */ 
       vr_endereco   := 'ftp.chubb.com.br';    
       vr_login      := 'cb3040';  
@@ -88,7 +89,8 @@ DECLARE
                    vr_endereco                                                              || ' ' ||      
                    vr_login                                                                 || ' ' ||      
                    vr_senha                                                                 || ' ' ||                                                                    
-                   lpad(vr_seqarquivo,5,'0')
+                   lpad(vr_seqarquivo,5,'0')												|| ' ' ||
+				   lpad(vr_apolice,7,'0')
                          ||'' ;  
      -- dbms_output.put_line(rw_coops.cdcooper || ' - Novo -   ' || vr_dstextab);
      BEGIN
