@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-194
+211
 DECLARE
 
   aux_cdpartar  crappat.cdpartar%TYPE;
@@ -190,6 +190,23 @@ BEGIN
 
   -- Atualização das finalidades para Coronavírus
   UPDATE crapprm SET dsvlrprm = '62,63,82' WHERE cdacesso = 'FINALI_CORONA';
+
+  INSERT ALL 
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 1, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 2, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 3, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 5, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 6, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 7, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 8, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 9, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 10, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 11, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 12, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 13, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 14, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 16, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
+  SELECT * FROM dual;
 
   COMMIT;
 
