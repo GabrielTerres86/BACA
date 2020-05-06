@@ -1,6 +1,6 @@
 begin
   insert into crapaca
-    (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+    (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
   values
     ('BUSCAR_TODAS_CONTAS_POR_CPF_CNPJ',
      'CADA0003',
