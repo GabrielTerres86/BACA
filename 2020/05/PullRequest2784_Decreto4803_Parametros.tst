@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-211
+253
 DECLARE
 
   aux_cdpartar  crappat.cdpartar%TYPE;
@@ -19,7 +19,7 @@ BEGIN
   values (aux_cdpartar, 17, '0');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 1, '0');
+  values (aux_cdpartar, 1, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 15, '0');
@@ -58,10 +58,10 @@ BEGIN
   values (aux_cdpartar, 3, '0');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 2, '0');
+  values (aux_cdpartar, 2, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 12, '0');
+  values (aux_cdpartar, 12, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 16, '0');
@@ -179,10 +179,69 @@ BEGIN
   values (aux_cdpartar, 2, '');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 12, '');
+  values (aux_cdpartar, 12, '158;1;58');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 16, '');
+
+  aux_cdpartar :=  aux_cdpartar + 1;
+  -- Email Padrão para Previa --
+  insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
+  values (aux_cdpartar, 'E-mail padrão para envio da finalização da prévia XML 3040 da opção P e Q', 2, 12);
+
+  insert into crapbat (CDBATTAR, NMIDENTI, CDPROGRA, TPCADAST, CDCADAST)
+  values ('PREVEMAIL3040', 'INFORMAR EMAIL PARA PRÉVIA 3040 TELA RISCO OPERACOES P E Q QUANDO EMAIL OPERADOR NÃO CADASTRADO', ' ', 2, aux_cdpartar);
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 17, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 1, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 15, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 14, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 13, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 11, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 10, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 9, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 8, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 7, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 6, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 5, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 4, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 3, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 2, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 12, 'creditosuporte@cecred.coop.br');
+
+  insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
+  values (aux_cdpartar, 16, 'creditosuporte@cecred.coop.br');
 
   -- Domínio da risco
   insert into tbgen_dominio_campo (NMDOMINIO, CDDOMINIO, DSCODIGO)
@@ -190,23 +249,6 @@ BEGIN
 
   -- Atualização das finalidades para Coronavírus
   UPDATE crapprm SET dsvlrprm = '62,63,82' WHERE cdacesso = 'FINALI_CORONA';
-
-  INSERT ALL 
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 1, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 2, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 3, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 5, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 6, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 7, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 8, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 9, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 10, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 11, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 12, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 13, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 14, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-    INTO CECRED.CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) VALUES ('CRED', 16, 'CORONA_SEM_COMPOSICAO', 'CREDITO - Finalidades que nao podem ser usadas para 4-Composicao', '82')
-  SELECT * FROM dual;
 
   COMMIT;
 
