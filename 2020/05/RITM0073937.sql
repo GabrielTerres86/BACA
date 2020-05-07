@@ -24,7 +24,7 @@
             )
          OR ( f.cdcooper = 10
                AND f.nrdconta = 1031
-               AND f.nrctremp = 12072
+               AND f.nrctremp = 12159
             )
          OR ( f.cdcooper = 10
                AND f.nrdconta  = 122947
