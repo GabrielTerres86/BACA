@@ -205,7 +205,7 @@ BEGIN
      nrseqrdr)
   VALUES
     ('PREP_REGIS_CONTRATO',
-     'GRVM0001',
+     'GRVM0002',
      'pc_prep_registro_contrato_web',
      'pr_nrdconta,pr_nrctrpro,pr_uflicenc',
      vr_nrseqrdr);
