@@ -10,9 +10,8 @@ declare
          tbgar_cobertura_operacao c
    where e.idcobope = c.idcobertura   
      and e.nrctremp <> c.nrcontrato     
-     and e.idcobope in (24114,24688,15011,801,21619,25187,26205,8723,23831,7870,
-                        6003,992,19803,18957,25455,19365,16092,7266,7360,22364,
-                        23735,18198,21726,22041) order by e.idcobope; 
+     and e.idcobope in (801,992,7870,21619,21726,23831,26680)
+   order by e.idcobope; 
                       
 begin
   for r1 in c1 loop
@@ -29,4 +28,3 @@ exception
     dbms_output.put_line('Erro Script PRB0043070 '||sqlerrm);
     rollback;
 end;
-/
