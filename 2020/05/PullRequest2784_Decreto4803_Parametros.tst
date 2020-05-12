@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-253
+266
 DECLARE
 
   aux_cdpartar  crappat.cdpartar%TYPE;
@@ -25,37 +25,37 @@ BEGIN
   values (aux_cdpartar, 15, '0');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 14, '0');
+  values (aux_cdpartar, 14, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 13, '0');
+  values (aux_cdpartar, 13, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 11, '0');
+  values (aux_cdpartar, 11, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 10, '0');
+  values (aux_cdpartar, 10, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 9, '0');
+  values (aux_cdpartar, 9, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 8, '0');
+  values (aux_cdpartar, 8, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 7, '0');
+  values (aux_cdpartar, 7, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 6, '0');
+  values (aux_cdpartar, 6, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 5, '0');
+  values (aux_cdpartar, 5, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 4, '0');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 3, '0');
+  values (aux_cdpartar, 3, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 2, '1');
@@ -64,7 +64,7 @@ BEGIN
   values (aux_cdpartar, 12, '1');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 16, '0');
+  values (aux_cdpartar, 16, '1');
 
   aux_cdpartar :=  aux_cdpartar + 1;
   -- ----- Ativação ----- --
@@ -136,51 +136,64 @@ BEGIN
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 17, '');
 
+  -- VIACREDI - 1
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 1, '');
+  values (aux_cdpartar, 1, '5504;9675;9677;9676;9660;9633;9632;9664;9654;9653;9679;9650;9651;9652;9655;9656;9657;43001;30000;14401;34401;14701;24401;44401;24701;42701;40000');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 15, '');
 
+  -- EVOLUA - 14
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 14, '');
 
+  -- CIVIA - 13
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 13, '');
+  values (aux_cdpartar, 13, '184;998;999;67;171;150;57;240;241;242;281;341;342;343;344;345');
 
+  -- CREDIFOZ - 11
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 11, '');
+  values (aux_cdpartar, 11, '51;204;205;206;207;208;209;210;211;212;213;214;215;382;383');
 
+  -- CREDICOMIN - 10
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 10, '');
+  values (aux_cdpartar, 10, '193;194;192;195;175;122;153;123;124;250;252;251;198;199;197;201;174;159;162;220;164;163;60;250;251;252');
 
+  -- TRANSPOCRED - 9
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 9, '');
+  values (aux_cdpartar, 9, '451;452;453;454;455;457;458;150;151;154;155;156;157;158;159;263;264');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 8, '');
 
+  -- CREDCREA - 7
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 7, '');
+  values (aux_cdpartar, 7, '220;221;130;131;3678;3710;3687;195;96;197;198');
 
+  -- UNILOS - 6
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 6, '');
+  values (aux_cdpartar, 6, '44;43;45;46;47;48;49;50;51;72;85;87');
 
+  -- ACENTRA - 5
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 5, '');
+  values (aux_cdpartar, 5, '46;89;90;91;92;93;652;712;713;714;733;734');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 4, '');
 
+  -- AILOS - 3
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 3, '');
 
+  -- ACREDICOOP - 2
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 2, '');
+  values (aux_cdpartar, 2, '840;841;978;979;985;1043;1044;350;351;352;1500');
 
+  -- CREVISC - 12
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 12, '158;1;58');
+  values (aux_cdpartar, 12, '25;26;245;246;1500;129;130;137;145;169;206;215;219;220;242;243;244');
 
+  -- VIACREDI AV - 16
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 16, '');
 
