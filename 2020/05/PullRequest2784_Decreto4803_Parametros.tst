@@ -172,7 +172,7 @@ BEGIN
 
   -- UNILOS - 6
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 6, '');
+  values (aux_cdpartar, 6, '44;43;45;46;47;48;49;50;51;72;85;87');
 
   -- ACENTRA - 5
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
