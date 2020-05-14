@@ -1,4 +1,4 @@
-INSERT INTO crapaca( nrseqaca
+﻿INSERT INTO crapaca( nrseqaca
                    , nmdeacao
                    , nmpackag 
                    , nmproced
