@@ -410,3 +410,17 @@ ALTER TABLE CECRED.TBCHQ_DEPOSITO_CHEQUE_MOB ADD ORIGEM_RECUSA NUMBER(1);
 COMMENT ON COLUMN CECRED.TBCHQ_DEPOSITO_CHEQUE_MOB.ORIGEM_RECUSA IS 'Indica a origem da recusa do deposito do cheque (1-Sincronica, 2-Caixa On-line, 3-Compensação)';
 
 
+------------------------------------------------------------------------------------------
+
+UPDATE CRAPTAB 
+SET DSTEXTAB = '1 64800' 
+where cdcooper = 9   
+AND craptab.nmsistem = 'CRED'        
+AND craptab.tptabela = 'GENERI'      
+AND craptab.cdempres = 00            
+AND craptab.cdacesso = 'HRTRCOMPEL'                              
+and craptab.tpregist = 90
+/
+
+COMMIT
+/
