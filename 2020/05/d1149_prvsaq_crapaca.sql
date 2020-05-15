@@ -1,5 +1,3 @@
-
-
 DECLARE
   --Buscar na craprdr
   CURSOR cr_craprdr(pr_nmprogra IN craprdr.nmprogra%TYPE) IS 
@@ -17,12 +15,6 @@ BEGIN
   CLOSE cr_craprdr;
   
   insert into crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-  values ('PRVSAQ_SACADORES','TELA_PRVSAQ','obterSacadoresTitular','pr_cdcooper, pr_nrdconta, pr_idseqttl', vr_nrseqrdr);  
-  
-END;  
-         
-		 
-		 
-		 
-
-     
+  values ('PRVSAQ_SACADORES','TELA_PRVSAQ','obterSacadoresTitular','pr_cdcooper,pr_nrconta,pr_idseqttl', vr_nrseqrdr);  
+  COMMIT;
+END;
