@@ -1,0 +1,19 @@
+--INC0041563 - INC0041562 - INC0037869 - Erro ao atualizar endereço pela tela CONTAS
+
+insert into crapenc (CDCOOPER, NRDCONTA, IDSEQTTL, TPENDASS, CDSEQINC, DSENDERE, NRENDERE, COMPLEND, NMBAIRRO, NMCIDADE, CDUFENDE, NRCEPEND, INCASPRP, NRANORES, VLALUGUE, NRCXAPST, DTALTENC, DTINIRES, NRDOAPTO, CDDBLOCO, PROGRESS_RECID, IDORIGEM)
+values (1, 888630, 1, 10, 1, 'RUA AMAZONAS ', 4040, 'APTO82', 'GARCIA', 'BLUMENAU', 'SC', 89022000, 1, 0, 400000.00, 0, null, to_date('01-01-2012', 'dd-mm-yyyy'), 0, ' ', NULL, 1);
+
+insert into crapenc (CDCOOPER, NRDCONTA, IDSEQTTL, TPENDASS, CDSEQINC, DSENDERE, NRENDERE, COMPLEND, NMBAIRRO, NMCIDADE, CDUFENDE, NRCEPEND, INCASPRP, NRANORES, VLALUGUE, NRCXAPST, DTALTENC, DTINIRES, NRDOAPTO, CDDBLOCO, PROGRESS_RECID, IDORIGEM)
+values (1, 2253194, 1, 10, 1, 'RUA FREDERICO KORTE', 167, ' ', 'VELHA CENTRAL', 'BLUMENAU', 'SC', 89046660, 4, 0, 0.00, 0, null, to_date('01-01-2017', 'dd-mm-yyyy'), 0, ' ', NULL, 1);
+
+update crapenc enc
+   set enc.dsendere = 'RUA MAL FLORIANO PEIXOTO',
+       enc.nrendere = 1510,
+       enc.nmbairro = 'PE MARTINHO STEIN',
+       enc.nmcidade = 'TIMBO'     ,
+       enc.dtinires = '01/09/2019'
+ where enc.cdcooper = 1
+   and enc.nrdconta = 10977244
+   and enc.tpendass = 10;
+
+COMMIT;

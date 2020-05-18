@@ -1,0 +1,24 @@
+--30/01/2020 inc0037043 Atualizar saldos das contas investimento que tiveram aplicações vencidas em 01/01/2020 (Carlos)
+UPDATE crapsli SET vlsddisp = 254.64 WHERE cdcooper = 1 AND nrdconta = 1998595 AND dtrefere = '31/01/2020';
+UPDATE crapsli SET vlsddisp = 0      WHERE cdcooper = 1 AND nrdconta = 1998595 AND dtrefere = '31/12/2019';
+UPDATE crapsli SET vlsddisp = 10.02 WHERE cdcooper = 1 AND nrdconta = 2273640 AND dtrefere = '31/01/2020';
+UPDATE crapsli SET vlsddisp = 0     WHERE cdcooper = 1 AND nrdconta = 2273640 AND dtrefere = '31/12/2019';
+UPDATE crapsli SET vlsddisp = 40.61 WHERE cdcooper = 1 AND nrdconta = 2319381 AND dtrefere = '31/01/2020';
+UPDATE crapsli SET vlsddisp = 0     WHERE cdcooper = 1 AND nrdconta = 2319381 AND dtrefere = '31/12/2019';
+UPDATE crapsli SET vlsddisp = 202.87 WHERE cdcooper = 1 AND nrdconta = 2451808 AND dtrefere = '31/01/2020';
+UPDATE crapsli SET vlsddisp = 0      WHERE cdcooper = 1 AND nrdconta = 2451808 AND dtrefere = '31/12/2019';
+UPDATE crapsli SET vlsddisp = 527.03 WHERE cdcooper = 1 AND nrdconta = 2513986 AND dtrefere = '31/01/2020';
+UPDATE crapsli SET vlsddisp = 0      WHERE cdcooper = 1 AND nrdconta = 2513986 AND dtrefere = '31/12/2019';
+UPDATE crapsli SET vlsddisp = 588.80 WHERE cdcooper = 1 AND nrdconta = 2546493 AND dtrefere = '31/01/2020';
+UPDATE crapsli SET vlsddisp = 0      WHERE cdcooper = 1 AND nrdconta = 2546493 AND dtrefere = '31/12/2019';
+INSERT INTO crapsli (nrdconta, dtrefere, vlsddisp, cdcooper) VALUES (2950723, '31/01/2020', 30.34, 1);
+UPDATE crapsli SET vlsddisp = 0    WHERE cdcooper = 1 AND nrdconta = 2950723 AND dtrefere = '31/12/2019';
+UPDATE crapsli SET vlsddisp = 161.16 WHERE cdcooper = 1 AND nrdconta = 2965569 AND dtrefere = '31/01/2020';
+UPDATE crapsli SET vlsddisp = 0      WHERE cdcooper = 1 AND nrdconta = 2965569 AND dtrefere = '31/12/2019';
+UPDATE crapsli SET vlsddisp = 1868.35 WHERE cdcooper = 1 AND nrdconta = 3018970 AND dtrefere = '31/01/2020';
+UPDATE crapsli SET vlsddisp = 0       WHERE cdcooper = 1 AND nrdconta = 3018970 AND dtrefere = '31/12/2019';
+INSERT INTO crapsli (nrdconta, dtrefere, vlsddisp, cdcooper) VALUES (3885720, '31/01/2020', 751.32, 1);
+UPDATE crapsli SET vlsddisp = 0    WHERE cdcooper = 1 AND nrdconta = 3885720 AND dtrefere = '31/12/2019';
+UPDATE crapsli SET vlsddisp = 936.11 WHERE cdcooper = 1 AND nrdconta = 5532400 AND dtrefere = '31/01/2020';
+UPDATE crapsli SET vlsddisp = 0      WHERE cdcooper = 1 AND nrdconta = 5532400 AND dtrefere = '31/12/2019';
+COMMIT;
