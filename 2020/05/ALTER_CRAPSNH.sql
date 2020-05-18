@@ -1,0 +1,1 @@
+alter table CECRED.crapsnh modify( vllimite_dep_cheq_mob NUMBER(25,2) default 2000 ); 
