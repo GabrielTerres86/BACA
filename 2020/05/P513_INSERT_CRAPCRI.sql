@@ -38,4 +38,9 @@ INSERT INTO crapcri
 VALUES
   (5024, '5024 - Data de cancelamento nao pode ser maior que a data atual.', null, 4, 0);
 
+INSERT INTO crapcri
+  (cdcritic, dscritic, progress_recid, tpcritic, flgchama)
+VALUES
+  (5025, 'Codigo de agencia invalido. Favor verificar o codigo da sua agencia e tentar novamente. Duvidas, ligue para SAC 0800 647 2200.', null, 4, 0);
+
 COMMIT;
