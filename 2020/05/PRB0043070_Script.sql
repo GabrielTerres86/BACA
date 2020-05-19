@@ -10,7 +10,7 @@ declare
          tbgar_cobertura_operacao c
    where e.idcobope = c.idcobertura   
      and e.nrctremp <> c.nrcontrato     
-     and e.idcobope in (801,992,21619,23831,26680)
+     and e.idcobope in (801,992,21619,23831,26680,26929)
    order by e.idcobope; 
                       
 begin
