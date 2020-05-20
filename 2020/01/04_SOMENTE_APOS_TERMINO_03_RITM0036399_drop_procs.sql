@@ -1,0 +1,2 @@
+DROP PROCEDURE cecred.pc_update_dtlipgto_crapcob_age;
+DROP PROCEDURE cecred.pc_baixa_decprz_dtlipgto;
