@@ -402,13 +402,6 @@ BEGIN EXECUTE IMMEDIATE '
   comments            => 'Rodar rotina de liberação de cheque mobile compensado conforme parametrizacao.');
 end;
 /
-----------------------------------------------------------------------------------------
-
--- US691 - Origem da recusa do deposito de cheque
-ALTER TABLE CECRED.TBCHQ_DEPOSITO_CHEQUE_MOB ADD ORIGEM_RECUSA NUMBER(1);
-
-COMMENT ON COLUMN CECRED.TBCHQ_DEPOSITO_CHEQUE_MOB.ORIGEM_RECUSA IS 'Indica a origem da recusa do deposito do cheque (1-Sincronica, 2-Caixa On-line, 3-Compensação)';
-
 
 ------------------------------------------------------------------------------------------
 
@@ -422,5 +415,15 @@ AND craptab.cdacesso = 'HRTRCOMPEL'
 and craptab.tpregist = 90
 /
 
-COMMIT
+COMMIT;
+/
+
+------------------------------------------------------------------------------------------
+
+UPDATE crapsnh snh
+   SET snh.vllimite_dep_cheq_mob = 2000
+ WHERE snh.vllimite_dep_cheq_mob = 0;
+/
+
+COMMIT;
 /
