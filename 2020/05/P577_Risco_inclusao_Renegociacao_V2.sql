@@ -6071,7 +6071,7 @@ BEGIN
       END IF; --Se o Novo Risco Inclusão Calculado é diferente do Risco Inclusão Atual (da Proposta) 
       --
       --Se tem Diferença
-      IF Nvl(vr_tem_dif_proposta,'N') = 'S' OR Nvl(vr_tem_dif_proposta,'N') = 'S' THEN
+      IF Nvl(vr_tem_dif_risco,'N') = 'S' OR Nvl(vr_tem_dif_proposta,'N') = 'S' THEN
         --Incrementa Qtde de Registros Diferentes
         vr_qt_reg_diferente := Nvl(vr_qt_reg_diferente,0) + 1;
             
