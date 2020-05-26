@@ -45,9 +45,6 @@ BEGIN
   --
   insert into tbgen_analise_fraude_interv (CDOPERACAO, TPOPERACAO, HRINICIO, HRFIM, QTDMINUTOS_RETENCAO)
   values (13, 1, 78600, 79200, 5);
-  --
-  insert into tbcc_produto (CDPRODUTO, DSPRODUTO, FLGITEM_SOA, FLGUTILIZA_INTERFACE_PADRAO, FLGENVIA_SMS, FLGCOBRA_TARIFA, IDFAIXA_VALOR, FLGPRODUTO_API)
-  values (50, 'TRI', 0, 0, 0, 0, 0, 0);
 
   /* Dados de transf. intercooperativas */
   cecred.pc_log_programa(pr_dstiplog => 'O', pr_cdprograma => vr_cdprogra, pr_cdcooper => 0, pr_dsmensagem => 'Dados de transf. intercooperativas', pr_idprglog => vr_idprglog);
@@ -63,9 +60,6 @@ BEGIN
   --
   insert into tbgen_analise_fraude_interv (CDOPERACAO, TPOPERACAO, HRINICIO, HRFIM, QTDMINUTOS_RETENCAO)
   values (14, 1, 78600, 79200, 5);
-  --
-  insert into tbcc_produto (CDPRODUTO, DSPRODUTO, FLGITEM_SOA, FLGUTILIZA_INTERFACE_PADRAO, FLGENVIA_SMS, FLGCOBRA_TARIFA, IDFAIXA_VALOR, FLGPRODUTO_API)
-  values (51, 'ICO', 0, 0, 0, 0, 0, 0);
 
   /* Dados de transf. ailos pag */
   cecred.pc_log_programa(pr_dstiplog => 'O', pr_cdprograma => vr_cdprogra, pr_cdcooper => 0, pr_dsmensagem => 'Dados de transf. ailos pag', pr_idprglog => vr_idprglog);
@@ -75,9 +69,6 @@ BEGIN
   --
   insert into tbgen_analise_fraude_interv (CDOPERACAO, TPOPERACAO, HRINICIO, HRFIM, QTDMINUTOS_RETENCAO)
   values (15, 1, 21600, 79200, 10);
-  --
-  insert into tbcc_produto (CDPRODUTO, DSPRODUTO, FLGITEM_SOA, FLGUTILIZA_INTERFACE_PADRAO, FLGENVIA_SMS, FLGCOBRA_TARIFA, IDFAIXA_VALOR, FLGPRODUTO_API)
-  values (52, 'AIP', 0, 0, 0, 0, 0, 0);
 
   /* Dados de parametrizacao */
   cecred.pc_log_programa(pr_dstiplog => 'O', pr_cdprograma => vr_cdprogra, pr_cdcooper => 0, pr_dsmensagem => 'Dados de parametrizacao', pr_idprglog => vr_idprglog);
