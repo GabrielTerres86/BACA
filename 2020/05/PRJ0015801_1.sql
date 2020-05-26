@@ -23,6 +23,17 @@ BEGIN
                         ,pr_tpexecucao => 0     
                         ,pr_idprglog   => vr_idprglog);
 
+  /* Dados dos produtos */
+  cecred.pc_log_programa(pr_dstiplog => 'O', pr_cdprograma => vr_cdprogra, pr_cdcooper => 0, pr_dsmensagem => 'Dados dos produtos', pr_idprglog => vr_idprglog);
+  --
+  insert into tbcc_produto (CDPRODUTO, DSPRODUTO, FLGITEM_SOA, FLGUTILIZA_INTERFACE_PADRAO, FLGENVIA_SMS, FLGCOBRA_TARIFA, IDFAIXA_VALOR, FLGPRODUTO_API)
+  values (50, 'TRI', 0, 0, 0, 0, 0, 0);
+  --
+  insert into tbcc_produto (CDPRODUTO, DSPRODUTO, FLGITEM_SOA, FLGUTILIZA_INTERFACE_PADRAO, FLGENVIA_SMS, FLGCOBRA_TARIFA, IDFAIXA_VALOR, FLGPRODUTO_API)
+  values (51, 'ICO', 0, 0, 0, 0, 0, 0);
+  --
+  insert into tbcc_produto (CDPRODUTO, DSPRODUTO, FLGITEM_SOA, FLGUTILIZA_INTERFACE_PADRAO, FLGENVIA_SMS, FLGCOBRA_TARIFA, IDFAIXA_VALOR, FLGPRODUTO_API)
+  values (52, 'AIP', 0, 0, 0, 0, 0, 0);
 
   /* Dados das notificacoes_1 */
   cecred.pc_log_programa(pr_dstiplog => 'O', pr_cdprograma => vr_cdprogra, pr_cdcooper => 0, pr_dsmensagem => 'Dados das notificacoes_1', pr_idprglog => vr_idprglog);
