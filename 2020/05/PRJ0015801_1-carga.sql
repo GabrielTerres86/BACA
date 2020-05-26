@@ -60,6 +60,7 @@ declare
        , crapcop cop
        , crapcti cti
    WHERE cti.cddbanco     = 85
+     AND cti.dttransa     = add_months(trunc(sysdate),-6)
      AND ass_dbt.cdcooper = cti.cdcooper
      AND ass_dbt.nrdconta = cti.nrdconta
      AND cop.cdagectl     = cti.cdageban
