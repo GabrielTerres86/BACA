@@ -22,18 +22,6 @@ BEGIN
          'Usuario SOA para registros de contratos pc_busca_autenticacao_reg_ctr',
          '07057169965');
     
-      INSERT INTO crapprm
-        (NMSISTEM,
-         CDCOOPER,
-         CDACESSO,
-         DSTEXPRM,
-         DSVLRPRM)
-      VALUES
-        ('CRED',
-         rw_crapcop.cdcooper,
-         'SENHA_AUTH_REG_CTR_SC',
-         'Senha SOA para registros de contratos pc_busca_autenticacao_reg_ctr',
-         'ailos2019sc');
     
       INSERT INTO crapprm
         (NMSISTEM,
@@ -44,49 +32,11 @@ BEGIN
       VALUES
         ('CRED',
          rw_crapcop.cdcooper,
-         'SENHA_AUTH_REG_CTR_PR',
+         'SENHA_AUTH_REG_CTR',
          'Senha SOA para registros de contratos pc_busca_autenticacao_reg_ctr',
          'ailos2019');
     
     END LOOP;
-    INSERT INTO crapprm
-      (NMSISTEM,
-       CDCOOPER,
-       CDACESSO,
-       DSTEXPRM,
-       DSVLRPRM)
-    VALUES
-      ('CRED',
-       0,
-       'USUARIO_AUTH_REG_CTR',
-       'Usuario SOA para registros de contratos pc_busca_autenticacao_reg_ctr',
-       '07057169965');
-  
-    INSERT INTO crapprm
-      (NMSISTEM,
-       CDCOOPER,
-       CDACESSO,
-       DSTEXPRM,
-       DSVLRPRM)
-    VALUES
-      ('CRED',
-       0,
-       'SENHA_AUTH_REG_CTR_SC',
-       'Senha SOA para registros de contratos pc_busca_autenticacao_reg_ctr',
-       'ailos2019sc');
-  
-    INSERT INTO crapprm
-      (NMSISTEM,
-       CDCOOPER,
-       CDACESSO,
-       DSTEXPRM,
-       DSVLRPRM)
-    VALUES
-      ('CRED',
-       0,
-       'SENHA_AUTH_REG_CTR_PR',
-       'Senha SOA para registros de contratos pc_busca_autenticacao_reg_ctr',
-       'ailos2019');
   COMMIT;
   END;
 END;
