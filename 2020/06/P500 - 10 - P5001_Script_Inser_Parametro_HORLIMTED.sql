@@ -1,0 +1,6 @@
+
+insert into craptab (NMSISTEM, TPTABELA, CDEMPRES, CDACESSO, TPREGIST, DSTEXTAB, CDCOOPER, PROGRESS_RECID)
+values ('CRED', 'GENERI', 0, 'HORLIMTED', 0, '54000', 3, null);
+
+commit;
+
