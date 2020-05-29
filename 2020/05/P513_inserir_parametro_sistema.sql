@@ -5,6 +5,6 @@ VALUES
    0,
    'CDPROC_DEP_VAR_SEP',
    'Codigo de processamento para deposito varejista',
-   069035);
+   068004);
 
 COMMIT;
