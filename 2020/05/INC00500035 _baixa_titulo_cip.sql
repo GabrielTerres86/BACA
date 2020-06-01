@@ -44,6 +44,7 @@ declare
            (           11,          85,      109002,      109002,     344397,       1411)   --11	85	109002	109002	344397	1411
 
          )
+     AND cob.incobran = 0    
      ORDER BY COB.CDCOOPER, COB.NRDCONTA, COB.DSDOCCOP, COB.NRDOCMTO;
 BEGIN
 
