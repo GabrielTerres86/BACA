@@ -189,7 +189,7 @@ BEGIN
   UPDATE crappco SET dsconteu = '1' WHERE cdpartar = 80 AND cdcooper = 6;
   COMMIT;
 
-  vr_incidente := 'RITM0071428';
+  vr_incidente := 'RITM0078184';
   vr_dsdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas';
   gene0001.pc_OScommand_Shell(pr_des_comando => 'mkdir ' || vr_dsdireto || '/' || vr_incidente
                              ,pr_typ_saida   => vr_typ_saida
