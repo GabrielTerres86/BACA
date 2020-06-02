@@ -1,10 +1,5 @@
+set define off
 DECLARE
-
-  /*******************************/
-  /*******************************/
-  /****Executar em test window****/
-  /*******************************/
-  /*******************************/
 
   -- Gravar execucao
   vr_cdprogra VARCHAR(40) := 'PRJ0015801_1';
@@ -208,3 +203,4 @@ EXCEPTION
                           ,pr_idprglog   => vr_idprglog);
 
 END;
+/
