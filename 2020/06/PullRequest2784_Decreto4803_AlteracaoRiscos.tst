@@ -179,7 +179,7 @@ DECLARE
   PROCEDURE pc_escreve_rollback(pr_des_dados IN VARCHAR2,
                                 pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
   BEGIN
-    dbms_output.put_line(pr_des_dados);
+    -- dbms_output.put_line(pr_des_dados);
     gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, pr_des_dados, pr_fecha_xml);
   END;
 
@@ -255,7 +255,7 @@ BEGIN
         END IF;
       END IF;
     END LOOP;
-    -- COMMIT;
+    COMMIT;
   END LOOP;
   pc_escreve_rollback('COMMIT;');
   pc_escreve_rollback(' ',TRUE);
@@ -270,8 +270,7 @@ END;
 vr_dsdireto
 0
 0
-4
+3
 rw_crapcop.cdcooper
-vr_piorrisco
-pr_risco_atual
-pr_nrdconta
+vr_risco_atualizado
+vr_risco_atualizado
