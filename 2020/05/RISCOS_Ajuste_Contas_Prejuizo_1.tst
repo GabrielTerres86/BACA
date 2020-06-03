@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-567
+569
 DECLARE
   CURSOR cr_his (pr_cdcooper IN crapcop.cdcooper%TYPE
                 ,pr_cdhistor IN craphis.cdhistor%TYPE)IS
@@ -349,13 +349,15 @@ DECLARE
       OPEN cr_his (pr_cdcooper => prm_cdcooper
                   ,pr_cdhistor => prm_cdhistor);
       FETCH cr_his INTO rw_his;
-      vr_found := cr_his%FOUND;
+      vr_found    := cr_his%FOUND;
+      vr_indebcre := rw_his.indebcre;
+      CLOSE cr_his;
+
       IF NOT vr_found THEN
         vr_dscritic := 'Erro ao Atualizar Valor Saldo Prejuízo. Erro: Historico não encontrato Cop/Hist (' ||prm_cdcooper || '/'||prm_cdhistor||')';
         RAISE vr_erro;  
       END IF;
-      vr_indebcre := rw_his.indebcre;
-      CLOSE cr_his;
+
 
       IF vr_indebcre = 'C' THEN
         -- Se for exclusão de um CREDITO, deve DIMINUIR ao saldo prej
