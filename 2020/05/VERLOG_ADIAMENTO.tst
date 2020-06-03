@@ -67,6 +67,19 @@ DECLARE
      where craplgm.dttransa = '15/04/2020'
        and craplgm.dstransa = 'Adiamento Vencimento Parcelas'
        and craplgi.nmdcampo = 'Vencimento'
+       and (select max(pep.dtvencto)
+              from crappep pep
+             where pep.cdcooper = crappep.cdcooper
+               and pep.nrdconta = crappep.nrdconta
+               and pep.nrctremp = crappep.nrctremp) = (select max(TO_DATE(lgi.dsdadatu,'MM/DD/RRRR'))
+                                                          from craplgi lgi
+                                                         where lgi.cdcooper = craplgm.cdcooper
+                                                           and lgi.nrdconta = craplgm.nrdconta
+                                                           and lgi.idseqttl = craplgm.idseqttl
+                                                           and lgi.DTTRANSA = craplgm.DTTRANSA
+                                                           and lgi.HRTRANSA = craplgm.HRTRANSA
+                                                           and lgi.NRSEQUEN = craplgm.NRSEQUEN
+                                                           and lgi.nmdcampo = 'Vencimento')
        and exists (select 1
                      from crawepr
                     where crawepr.cdcooper = crappep.cdcooper
@@ -98,7 +111,7 @@ DECLARE
        and craplgi.NRSEQUEN = pr_nrsequen
        and craplgi.nmdcampo = 'Vencimento';
        
-  -- Bucar número de parcelas pagas
+  -- Bucar nÃºmero de parcelas pagas
   CURSOR cr_crappep_pagas(pr_cdcooper IN crapepr.cdcooper%TYPE
                          ,pr_nrdconta IN crapepr.nrdconta%TYPE
                          ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
@@ -109,7 +122,7 @@ DECLARE
        AND p.nrctremp = pr_nrctremp
        AND p.inliquid = 1;
   
-  -- Busca valor da parcela específica
+  -- Busca valor da parcela especÃ­fica
   CURSOR cr_crappep(pr_cdcooper IN crapepr.cdcooper%TYPE
                    ,pr_nrdconta IN crapepr.nrdconta%TYPE
                    ,pr_nrctremp IN crapepr.nrctremp%TYPE
@@ -152,7 +165,7 @@ BEGIN
   
   --Percorre os logs apenas do dia 15
   FOR rw_craplgm IN cr_craplgm_15 LOOP
-    -- Se trocou a chave, faz novo lançamento na cecred.tbepr_adiamento_contrato
+    -- Se trocou a chave, faz novo lanÃ§amento na cecred.tbepr_adiamento_contrato
     IF vr_cdcooper <> rw_craplgm.cdcooper OR
        vr_nrdconta <> rw_craplgm.nrdconta OR    
        vr_nrctremp <> rw_craplgm.nrctremp OR 
@@ -172,7 +185,7 @@ BEGIN
       FETCH cr_crawepr INTO vr_dtdpagto;
       CLOSE cr_crawepr; 
       
-      -- Pula se não encontrou a proposta ou a data preenchida
+      -- Pula se nÃ£o encontrou a proposta ou a data preenchida
       IF vr_dtdpagto is null THEN
         CONTINUE;
       END IF;
@@ -182,7 +195,7 @@ BEGIN
                                                                        ,pr_cdcooper => rw_craplgm.cdcooper 
                                                                        ,pr_cdacesso => 'COVID_QTDE_PARCELA_ADIAR'),0));
                                                                       
-      -- Busca o número de parcelas pagas do contrato até o momento
+      -- Busca o nÃºmero de parcelas pagas do contrato atÃ© o momento
       OPEN cr_crappep_pagas(pr_cdcooper => rw_craplgm.cdcooper 
                            ,pr_nrdconta => rw_craplgm.nrdconta 
                            ,pr_nrctremp => rw_craplgm.nrctremp);
@@ -254,7 +267,7 @@ BEGIN
   FOR rw_craplgm IN cr_craplgm_16 LOOP
     vr_idadiamento := 0;
     
-    -- Pular o registro caso não tenha número do contrato no LOG
+    -- Pular o registro caso nÃ£o tenha nÃºmero do contrato no LOG
     IF rw_craplgm.nrctremp is null THEN
       CONTINUE;
     END IF;
@@ -268,7 +281,7 @@ BEGIN
     FETCH cr_crawepr INTO vr_dtdpagto;
     CLOSE cr_crawepr; 
    
-   -- Pula se não encontrou a proposta ou a data preenchida
+   -- Pula se nÃ£o encontrou a proposta ou a data preenchida
    IF vr_dtdpagto is null THEN
      CONTINUE;
    END IF;
@@ -278,7 +291,7 @@ BEGIN
                                                                     ,pr_cdcooper => rw_craplgm.cdcooper 
                                                                     ,pr_cdacesso => 'COVID_QTDE_PARCELA_ADIAR'),0));
                                                                       
-    -- Busca o número de parcelas pagas do contrato até o momento
+    -- Busca o nÃºmero de parcelas pagas do contrato atÃ© o momento
     OPEN cr_crappep_pagas(pr_cdcooper => rw_craplgm.cdcooper 
                          ,pr_nrdconta => rw_craplgm.nrdconta 
                          ,pr_nrctremp => rw_craplgm.nrctremp);
