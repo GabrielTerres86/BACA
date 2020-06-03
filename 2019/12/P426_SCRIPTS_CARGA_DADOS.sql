@@ -1,8 +1,8 @@
 --------------------------------------------------------------------------------
--- INCLUS√O DE PARAMETRO DO VALOR DO LIMITE/DIA DO DEPOSITO DE CHEQUE NA TB045
+-- INCLUS√ÉO DE PARAMETRO DO VALOR DO LIMITE/DIA DO DEPOSITO DE CHEQUE NA TB045
 --------------------------------------------------------------------------------
--- **** Dever· ser feito o script para todas as cooperativas, verifica os valores para pessoa fisica e juridica
--- **** Dever· ter o valor para o Operacional e para Ailos
+-- **** Dever√° ser feito o script para todas as cooperativas, verifica os valores para pessoa fisica e juridica
+-- **** Dever√° ter o valor para o Operacional e para Ailos
 update craptab 
 set dstextab = dstextab||';000000000000,00;000000000000,00'
 where  craptab.nmsistem = 'CRED' and
@@ -55,6 +55,10 @@ VALUES ('BUSCA_ACEITE_DEP_MOBILE','CHEQ0004','pc_busca_aceite_cheque_mob','pr_cd
 
 INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 VALUES ('ALTERA_ACEITE_DEP_MOBILE','CHEQ0004','pc_altera_aceite_cheque_mob','pr_cdcooper,pr_cdoperad,pr_nrdconta,pr_prmavali,pr_dtsolici',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'CHEQ0004' AND ROWNUM = 1));
+
+INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+VALUES ('BUSCA_LIM_DIA_CHQ_MOB', 'CHEQ0004', 'pc_busca_lim_dia_chq_mob_web', 'pr_cdcooper,pr_nrdconta,pr_vllimdcm',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'CHEQ0004' AND ROWNUM = 1));
+
 
 ------------------------------------------------------------------
 
@@ -144,7 +148,7 @@ BEGIN EXECUTE IMMEDIATE '
   job_class           => 'DEFAULT_JOB_CLASS',
   enabled             => true,
   auto_drop           => false,
-  comments            => 'Rodar rotina de liberaÁ„o de cheque mobile compensado conforme parametrizacao.');
+  comments            => 'Rodar rotina de libera√ß√£o de cheque mobile compensado conforme parametrizacao.');
 end;
 /
 */
@@ -179,7 +183,7 @@ INSERT INTO menumobile
    versaominimaapp,
    versaomaximaapp)
 VALUES
-  (1007, 30, 'Deposito de Cheques', 1, 1, 0, '2.8.0.0', NULL);
+  (1007, 30, 'Deposito de Cheques', 1, 1, 1, '2.8.0.0', NULL);
 /
 
 
