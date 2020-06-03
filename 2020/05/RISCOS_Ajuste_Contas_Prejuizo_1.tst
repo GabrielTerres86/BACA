@@ -548,7 +548,7 @@ BEGIN
                   prm_nrdconta => 154580,
                   prm_vllanmto => 1030,
                   prm_cdhistor => 2408,   -- [C] 2408 - TRF. PREJUIZO-> TBCC_PREJUIZO_DETALHE
-                  prm_idlancto => 97083); -- Excluido, altera Saldo Prejuizo
+                  prm_idlancto => 96662); -- Excluido, altera Saldo Prejuizo
   dbms_output.put_line('-------- INC0049097 - FIM --------');
   dbms_output.put_line('  ');
 ---------------------------------------------------
