@@ -54,8 +54,12 @@ DECLARE
   vr_dsmensag   crapcol.dslogtit%TYPE;
   vr_inregcip   crapcob.inregcip%TYPE;
   --
+  vr_cdcritic   INTEGER;
   vr_dscritic   VARCHAR2(2000);
   vr_des_erro   VARCHAR2(200);
+  --
+  vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
+  vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;
   --
 BEGIN
   --
@@ -74,52 +78,39 @@ BEGIN
       IF cr_crapcob%FOUND THEN
         --
         CLOSE cr_crapcob;
-        vr_insitpro := NULL;
-        vr_inenvcip := NULL;
-        vr_flgcbdda := NULL;
-        vr_dhenvcip := NULL;
-        vr_dsmensag := NULL;
-        vr_inregcip := NULL;
         --
-        IF rw_crapcob.incobran IN (0, 3) THEN
+        vr_insitpro := 3;
+        vr_inenvcip := 3;
+        vr_flgcbdda := 1;
+        vr_dhenvcip := SYSDATE;
+        vr_dsmensag := 'Boleto registrado no Sistema Financeiro Nacional';
+        vr_inregcip := 1;
+        --
+        BEGIN
           --
-          vr_insitpro := 3;
-          vr_inenvcip := 3;
-          vr_flgcbdda := 1;
-          vr_dhenvcip := SYSDATE;
-          vr_dsmensag := 'Boleto registrado no Sistema Financeiro Nacional';
-          vr_inregcip := 1;
+          UPDATE crapcob cob
+             SET cob.insitpro = NVL(vr_insitpro,cob.insitpro)
+                ,cob.flgcbdda = NVL(vr_flgcbdda,cob.flgcbdda)
+                ,cob.inenvcip = NVL(vr_inenvcip,cob.inenvcip)
+                ,cob.dhenvcip = NVL(vr_dhenvcip,cob.dhenvcip)
+                ,cob.inregcip = NVL(vr_inregcip,cob.inregcip)
+                ,cob.idtitleg = NVL(rw_boletos_npc.idtitleg,cob.idtitleg)
+                ,cob.idopeleg = NVL(rw_boletos_npc.idopeleg,cob.idopeleg)
+                ,cob.nrdident = NVL(rw_boletos_npc.idtitnpc,cob.nrdident)
+                ,cob.nratutit = NVL(rw_boletos_npc.nratutit,cob.nratutit)
+           WHERE cob.rowid    = rw_crapcob.rowidcob;
           --
-          BEGIN
-            --
-            UPDATE crapcob cob
-               SET cob.incobran = 0
-                  ,cob.dtdbaixa = NULL
-                  ,cob.insitpro = NVL(vr_insitpro,cob.insitpro)
-                  ,cob.flgcbdda = NVL(vr_flgcbdda,cob.flgcbdda)
-                  ,cob.inenvcip = NVL(vr_inenvcip,cob.inenvcip)
-                  ,cob.dhenvcip = NVL(vr_dhenvcip,cob.dhenvcip)
-                  ,cob.inregcip = NVL(vr_inregcip,cob.inregcip)
-                  ,cob.idtitleg = NVL(rw_boletos_npc.idtitleg,cob.idtitleg)
-                  ,cob.idopeleg = NVL(rw_boletos_npc.idopeleg,cob.idopeleg)
-                  ,cob.nrdident = NVL(rw_boletos_npc.idtitnpc,cob.nrdident)
-                  ,cob.nratutit = NVL(rw_boletos_npc.nratutit,cob.nratutit)
-             WHERE cob.rowid    = rw_crapcob.rowidcob;
-            --
-            PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowidcob
-                                         ,pr_cdoperad => '1'
-                                         ,pr_dtmvtolt => SYSDATE
-                                         ,pr_dsmensag => vr_dsmensag
-                                         ,pr_des_erro => vr_des_erro
-                                         ,pr_dscritic => vr_dscritic);
-            --
-          EXCEPTION
-            WHEN OTHERS THEN
-              pc_internal_exception(pr_compleme => 'INC0049593');
-            NULL;
-          END;
+          PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowidcob
+                                       ,pr_cdoperad => '1'
+                                       ,pr_dtmvtolt => SYSDATE
+                                       ,pr_dsmensag => vr_dsmensag
+                                       ,pr_des_erro => vr_des_erro
+                                       ,pr_dscritic => vr_dscritic);
           --
-        END IF;
+        EXCEPTION
+          WHEN OTHERS THEN
+            pc_internal_exception(pr_compleme => 'INC0049593');
+        END;
         --
         EXECUTE IMMEDIATE 'DELETE FROM CRAPRET RET'
                         ||' WHERE RET.CDCOOPER = '||rw_crapcob.cdcooper
@@ -127,8 +118,65 @@ BEGIN
                         ||' AND RET.NRCNVCOB = '||rw_crapcob.nrcnvcob
                         ||' AND RET.NRDOCMTO = '||rw_crapcob.nrdocmto
                         ||' AND RET.CDOCORRE = 2'
-                        ||q'[ AND RET.DTREFATU = '02/06/2020']'
+                        ||q'[ AND RET.DTREFATU = TO_DATE('02/06/2020','DD/MM/YYYY')]'
                         ||';';
+        --
+      ELSE
+        CLOSE cr_crapcob;
+        dbms_output.put_line( 'KO' );
+      END IF;
+    ELSE
+      CLOSE cr_quebra_barra;
+      dbms_output.put_line( 'KO' );
+    END IF;
+    --
+  END LOOP;
+  --
+  COMMIT;
+  --
+  FOR rw_boletos_npc IN cr_boletos_npc LOOP
+    --
+    OPEN cr_quebra_barra(pr_cdcodbar => rw_boletos_npc.cdcodbar);
+    FETCH cr_quebra_barra INTO rw_quebra_barra;
+    IF cr_quebra_barra%FOUND THEN
+      --
+      CLOSE cr_quebra_barra;
+      OPEN cr_crapcob(pr_cdcooper => rw_quebra_barra.cdcooper
+                     ,pr_nrdconta => rw_quebra_barra.nrdconta
+                     ,pr_nrcnvcob => rw_quebra_barra.nrcnvcob
+                     ,pr_nrdocmto => rw_quebra_barra.nrdocmto);
+      FETCH cr_crapcob INTO rw_crapcob;
+      IF cr_crapcob%FOUND THEN
+        --
+        CLOSE cr_crapcob;
+        --
+        IF rw_crapcob.incobran = 3 THEN
+          BEGIN
+            DDDA0001.pc_procedimentos_dda_jd (pr_rowid_cob => rw_crapcob.rowidcob --ROWID da Cobranca
+                                             ,pr_tpoperad => 'B'                   --Tipo Operacao
+                                             ,pr_tpdbaixa => '2'                   --Tipo de Baixa
+                                             ,pr_dtvencto => rw_crapcob.dtvencto   --Data Vencimento
+                                             ,pr_vldescto => rw_crapcob.vldescto   --Valor Desconto
+                                             ,pr_vlabatim => rw_crapcob.vlabatim   --Valor Abatimento
+                                             ,pr_flgdprot => rw_crapcob.flgdprot   --Flag Protesto
+                                             ,pr_tab_remessa_dda => vr_tab_remessa_dda --tabela remessa DDA
+                                             ,pr_tab_retorno_dda => vr_tab_retorno_dda --Tabela retorno DDA
+                                             ,pr_cdcritic => vr_cdcritic           --Codigo Critica
+                                             ,pr_dscritic => vr_dscritic);         --Descricao Critica
+          EXCEPTION
+            WHEN OTHERS THEN
+              pc_internal_exception(pr_compleme => 'INC0049593');
+          END;
+        ELSIF rw_crapcob.incobran = 5 THEN
+          BEGIN
+            DDDA0001.pc_baixa_efetiva_npc (pr_rowid_cob => rw_crapcob.rowidcob    -- ROWID da Cobranca
+                                          ,pr_cdcritic  => vr_cdcritic            -- Codigo de Erro
+                                          ,pr_dscritic  => vr_dscritic);          -- Descricao de Erro
+          EXCEPTION
+            WHEN OTHERS THEN
+              pc_internal_exception(pr_compleme => 'INC0049593');
+          END;
+        END IF;
         --
       ELSE
         CLOSE cr_crapcob;
