@@ -152,10 +152,10 @@ DECLARE
   vr_vlparepr crappep.vlparepr%TYPE;
   vr_dtdpagto crawepr.dtdpagto%TYPE;
   
-  vr_cdcooper cecred.tbepr_adiamento_contrato.cdcooper%TYPE;
-  vr_nrdconta cecred.tbepr_adiamento_contrato.nrdconta%TYPE;
-  vr_nrctremp cecred.tbepr_adiamento_contrato.nrctremp%TYPE;
-  vr_cdoperad cecred.tbepr_adiamento_contrato.idoperador%TYPE;
+  vr_cdcooper cecred.tbepr_adiamento_contrato.cdcooper%TYPE := 0;
+  vr_nrdconta cecred.tbepr_adiamento_contrato.nrdconta%TYPE := 0;
+  vr_nrctremp cecred.tbepr_adiamento_contrato.nrctremp%TYPE := 0;
+  vr_cdoperad cecred.tbepr_adiamento_contrato.idoperador%TYPE := '';
   
   vr_qtd_contrato INTEGER := 0;
   vr_qtd_parcelas INTEGER := 0;
