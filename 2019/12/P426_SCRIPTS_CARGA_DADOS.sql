@@ -1,8 +1,8 @@
 --------------------------------------------------------------------------------
--- INCLUS√O DE PARAMETRO DO VALOR DO LIMITE/DIA DO DEPOSITO DE CHEQUE NA TB045
+-- INCLUS√ÉO DE PARAMETRO DO VALOR DO LIMITE/DIA DO DEPOSITO DE CHEQUE NA TB045
 --------------------------------------------------------------------------------
--- **** Dever· ser feito o script para todas as cooperativas, verifica os valores para pessoa fisica e juridica
--- **** Dever· ter o valor para o Operacional e para Ailos
+-- **** Dever√° ser feito o script para todas as cooperativas, verifica os valores para pessoa fisica e juridica
+-- **** Dever√° ter o valor para o Operacional e para Ailos
 update craptab 
 set dstextab = dstextab||';000000000000,00;000000000000,00'
 where  craptab.nmsistem = 'CRED' and
@@ -149,7 +149,7 @@ BEGIN EXECUTE IMMEDIATE '
   job_class           => 'DEFAULT_JOB_CLASS',
   enabled             => true,
   auto_drop           => false,
-  comments            => 'Rodar rotina de liberaÁ„o de cheque mobile compensado conforme parametrizacao.');
+  comments            => 'Rodar rotina de libera√ß√£o de cheque mobile compensado conforme parametrizacao.');
 end;
 /
 */
@@ -184,7 +184,7 @@ INSERT INTO menumobile
    versaominimaapp,
    versaomaximaapp)
 VALUES
-  (1007, 30, 'Deposito de Cheques', 1, 1, 0, '2.8.0.0', NULL);
+  (1007, 30, 'Deposito de Cheques', 1, 1, 1, '2.8.0.0', NULL);
 /
 
 
