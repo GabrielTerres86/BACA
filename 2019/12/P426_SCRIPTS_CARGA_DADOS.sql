@@ -59,7 +59,8 @@ VALUES ('ALTERA_ACEITE_DEP_MOBILE','CHEQ0004','pc_altera_aceite_cheque_mob','pr_
 INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 VALUES ('BUSCA_LIM_DIA_CHQ_MOB', 'CHEQ0004', 'pc_busca_lim_dia_chq_mob_web', 'pr_cdcooper,pr_nrdconta,pr_vllimdcm',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'CHEQ0004' AND ROWNUM = 1));
 
-
+INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+VALUES ('VERIF_COOP_LIB_DEP_MOB','TELA_CHQMOB','pc_verif_coop_lib_dep_mob','pr_cdcooper',(SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'TELA_CHQMOB' AND ROWNUM = 1));
 ------------------------------------------------------------------
 
 
