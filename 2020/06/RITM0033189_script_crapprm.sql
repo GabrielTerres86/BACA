@@ -7,6 +7,6 @@ BEGIN
       0,
      'DATA_TARI_DOCMTO_BORDERO',
      'Data de início de tarifacao titulo liberado no bordero',
-     SYSDATE);
+     TO_CHAR(SYSDATE,'DD/MM/RRRR'));
   COMMIT;
 END;
