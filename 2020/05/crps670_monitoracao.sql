@@ -1,19 +1,20 @@
-BEGIN
-  INSERT INTO crapprm
-    (nmsistem
-    ,cdcooper
-    ,cdacesso
-    ,dstexprm
-    ,dsvlrprm)
-  VALUES
-    ('CRED'
-    ,0
-    ,'CRPS670_MONITORACAO'
-    ,'Controle com última data de execução do PC_CRPS670'
-    ,trunc(to_char(SYSDATE - 1
-                  ,'DD/MM/YYYY')));
-  COMMIT;
-EXCEPTION
-  WHEN OTHERS THEN
-    pc_internal_exception(pr_compleme => 'PC_CRPS670');
-END;
+begin  
+   begin
+    declare 
+    -- nome da rotina
+    wk_rotina varchar2(200) := 'Criação do parâmetros CRPS670_MONITORACAO';
+    begin
+      insert into tbcrd_dominio_campo
+		NMDOMINIO, CDDOMINIO, DSCODIGO, INATIVO)
+	  values
+		('CRPS670_MONITORACAO', '1', to_date('20/05/2020', 'DD/MM/RRRR'), 1);
+      commit;
+      dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
+    exception
+      when others then
+      dbms_output.put_line('Erro ao executar: ' || wk_rotina ||' --- detalhes do erro: '|| SQLCODE || ': ' || SQLERRM);
+      ROLLBACK;
+    end;
+  end;
+end;
+
