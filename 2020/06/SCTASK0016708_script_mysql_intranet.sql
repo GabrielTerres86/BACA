@@ -1,0 +1,3 @@
+ALTER TABLE usuario MODIFY DES_LOGIN varchar(50) NOT NULL Default '';
+ALTER TABLE usuario_acesso MODIFY DES_LOGIN_INFORMADO varchar(50) NOT NULL;
+COMMIT;
