@@ -61,7 +61,7 @@ BEGIN
   values (aux_cdpartar, 2, '0');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar, 12, '1');
+  values (aux_cdpartar, 12, '0');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 16, '0');
