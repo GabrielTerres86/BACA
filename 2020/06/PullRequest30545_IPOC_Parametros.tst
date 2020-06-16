@@ -10,10 +10,10 @@ BEGIN
   aux_cdpartar :=  aux_cdpartar + 1;
   -- ----- Ativação ----- --
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
-  values (aux_cdpartar, 'XML 3040 - Ativo (1) ou Desativado (0)', 1, 12);
+  values (aux_cdpartar, 'XML 3040 Adicionar Atributo IPOC - Ativo (1) ou Desativado (0)', 1, 12);
 
   insert into crapbat (CDBATTAR, NMIDENTI, CDPROGRA, TPCADAST, CDCADAST)
-  values ('TAGXMLIPOC', 'ATIVA TAG IPOC XML 3040', ' ', 2, aux_cdpartar);
+  values ('TAGXMLIPOC', 'ATIVA ATRIBUTO IPOC XML 3040', ' ', 2, aux_cdpartar);
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar, 17, '0');
