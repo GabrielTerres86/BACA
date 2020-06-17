@@ -17,6 +17,6 @@ BEGIN
   CLOSE cr_craprdr;
   
   insert into crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-  values ('LAUTOM_DEBITA_CARTAO','','debitarFaturaIndividual','pr_prorecid,pr_valor_pag_fatura,pr_autorizador', vr_nrseqrdr);  
+  values ('LAUTOM_DEBITA_CARTAO','','CARTAO.debitarFaturaIndividual','pr_prorecid,pr_valor_pag_fatura,pr_autorizador', vr_nrseqrdr);  
   COMMIT;
 END; 
