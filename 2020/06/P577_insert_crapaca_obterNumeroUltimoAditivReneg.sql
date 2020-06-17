@@ -18,7 +18,7 @@ insert into crapaca ( NRSEQACA
              values ( 4120
                      ,'OBTERNUMEROULTIMOADITIVRENEG'
                      ,null
-                     ,'CECRED.obterNumeroUltimoAditivReneg'
+                     ,'CREDITO.obterNumeroUltimoAditivReneg'
                      ,'pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_nraditiv,pr_dscritic'
                      ,2088
                      )
