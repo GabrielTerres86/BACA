@@ -1,4 +1,4 @@
-prompt Criação da view para domínio CREDITO conforme novas práticas de desenvolvimento
+-- prompt Criação da view para domínio CREDITO conforme novas práticas de desenvolvimento
 
 create or replace view CREDITO.tbepr_renegociacao_contrato as
 select  trc.cdcooper
