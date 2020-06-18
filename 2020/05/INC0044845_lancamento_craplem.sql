@@ -59,6 +59,7 @@ BEGIN
       IF NVL(vr_cdcritic,0) > 0 or NVL(vr_dscritic,'OK') <> 'OK' THEN
         raise_application_error(-20002,'Erro: Código: '||vr_cdcritic || ' Descrição: ' ||vr_dscritic);
       END IF;                                                    
-
+      
+      COMMIT;
 
 END;
