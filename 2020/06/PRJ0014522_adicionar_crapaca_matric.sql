@@ -27,7 +27,6 @@ BEGIN
       raise_application_error(-20004, 'Erro ao buscar CRAPRDR: '||SQLERRM);
   END;
   
-  
   BEGIN
     INSERT INTO crapaca(nrseqaca
                        ,nmdeacao
@@ -46,9 +45,29 @@ BEGIN
     WHEN dup_val_on_index THEN
       dbms_output.put_line('Registro LIST_ORGAO_EMISSOR, já cadastrado.');
     WHEN OTHERS THEN
-      raise_application_error(-20010, 'Erro ao inserir CRAPACA: '||SQLERRM);
+      raise_application_error(-20005, 'Erro ao inserir CRAPACA: '||SQLERRM);
   END;
   
+  BEGIN
+    INSERT INTO crapaca(nrseqaca
+                       ,nmdeacao
+                       ,nmpackag
+                       ,nmproced
+                       ,lstparam
+                       ,nrseqrdr)
+                VALUES ((SELECT NVL(MAX(a.nrseqaca),0)+1 FROM crapaca a)
+                       ,'BUSCA_CIDADE_UF'
+                       ,NULL
+                       ,'CADASTRO.listarCidadeUF'
+                       ,NULL
+                       ,vr_nrseqrdr);
+                
+  EXCEPTION
+    WHEN dup_val_on_index THEN
+      dbms_output.put_line('Registro BUSCA_CIDADE_UF, já cadastrado.');
+    WHEN OTHERS THEN
+      raise_application_error(-20006, 'Erro ao inserir CRAPACA: '||SQLERRM);
+  END;
   
   COMMIT;
  
