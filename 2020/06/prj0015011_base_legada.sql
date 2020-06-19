@@ -389,7 +389,7 @@ BEGIN
             (rw_crapcop.cdcooper,
              rw_contas.nrdconta,
              vr_nrctrseg,
-             1 -- tipo adesao
+             3 -- tipo endosso
             ,vr_nrapolic -- apolice
             ,rw_contas.nrcpfcgc -- cpf
             ,rw_contas.nmprimtl -- nome
