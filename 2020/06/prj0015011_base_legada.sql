@@ -447,7 +447,15 @@ BEGIN
       vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_crapenc.nmcidade)), 30, ' '); -- Cidade
       vr_linha_txt := vr_linha_txt || rw_crapenc.cdufresd; -- UF
       vr_linha_txt := vr_linha_txt || RPAD(rw_crapenc.nrcepend, 10, ' '); -- CEP
-      vr_linha_txt := vr_linha_txt || RPAD(gene0002.fn_mask(rw_craptfc.nrtelefo, '(99)99999-9999'), 15, ' '); -- Telefone Residencial
+
+      IF length(rw_craptfc.nrtelefo) = 11 THEN
+        vr_linha_txt := vr_linha_txt || RPAD(gene0002.fn_mask(rw_craptfc.nrtelefo, '(99)99999-9999'), 15, ' '); -- Telefone Residencial
+      ELSIF length(rw_craptfc.nrtelefo) = 10 THEN
+        vr_linha_txt := vr_linha_txt || RPAD(gene0002.fn_mask(rw_craptfc.nrtelefo, '(99)9999-9999'), 15, ' '); -- Telefone Residencial
+      ELSE
+        vr_linha_txt := vr_linha_txt || RPAD(gene0002.fn_mask(rw_craptfc.nrtelefo, '99999-9999'), 15, ' '); -- Telefone Residencial
+      END IF;
+      
       vr_linha_txt := vr_linha_txt || RPAD(' ', 15, ' '); -- Telefone Comercial
       vr_linha_txt := vr_linha_txt || RPAD(' ', 15, ' '); -- Telefone Celular
       IF rw_crapcem.dsdemail IS NOT NULL THEN
