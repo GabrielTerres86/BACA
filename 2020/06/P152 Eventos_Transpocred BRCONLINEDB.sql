@@ -1,0 +1,21 @@
+insert into assembleia (id,descricao, tipoassembleia, subtipoassembleia, possuivotacao,votaoutrosgrupos,status, pa, grupo, datahorainicio, idintegracao, empresa, local, exercicio )
+Values
+((SELECT MAX(ID) FROM Assembleia) + 1;'ASSEMBLEIA DE GRUPO PA 1 01/07/20';'1';'1';'X';'0';'0';'1';'1';'2020-06-24 19:00:00.000';'128279';'9';' PA 1 01/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 2;'ASSEMBLEIA DE GRUPO PA 1 01/07/20';'1';'1';'X';'0';'0';'1';'2';'2020-06-24 19:00:00.000';'128280';'9';' PA 1 01/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 3;'ASSEMBLEIA DE GRUPO PA 2 07/07/20';'1';'1';'X';'0';'0';'2';'1';'2020-06-30 17:00:00.000';'128283';'9';' PA 2 07/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 4;'ASSEMBLEIA DE GRUPO PA 3 07/07/20';'1';'1';'X';'0';'0';'3';'1';'2020-06-30 19:30:00.000';'128299';'9';' PA 3 07/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 5;'ASSEMBLEIA DE GRUPO PA 3 07/07/20';'1';'1';'X';'0';'0';'3';'2';'2020-06-30 19:30:00.000';'128300';'9';' PA 3 07/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 6;'ASSEMBLEIA DE GRUPO PA 3 07/07/20';'1';'1';'X';'0';'0';'3';'3';'2020-06-30 19:30:00.000';'128301';'9';' PA 3 07/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 7;'ASSEMBLEIA DE GRUPO PA 5 08/07/20';'1';'1';'X';'0';'0';'5';'1';'2020-07-01 17:00:00.000';'128302';'9';' PA 5 08/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 8;'ASSEMBLEIA DE GRUPO PA 5 08/07/20';'1';'1';'X';'0';'0';'5';'2';'2020-07-01 17:00:00.000';'128303';'9';' PA 5 08/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 9;'ASSEMBLEIA DE GRUPO PA 5 08/07/20';'1';'1';'X';'0';'0';'5';'3';'2020-07-01 17:00:00.000';'128304';'9';' PA 5 08/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 10;'ASSEMBLEIA DE GRUPO PA 5 08/07/20';'1';'1';'X';'0';'0';'5';'4';'2020-07-01 17:00:00.000';'128305';'9';' PA 5 08/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 11;'ASSEMBLEIA DE GRUPO PA 6 07/07/20';'1';'1';'X';'0';'0';'6';'1';'2020-06-30 19:30:00.000';'128306';'9';' PA 6 07/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 12;'ASSEMBLEIA DE GRUPO PA 6 07/07/20';'1';'1';'X';'0';'0';'6';'2';'2020-06-30 19:30:00.000';'128307';'9';' PA 6 07/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 13;'ASSEMBLEIA DE GRUPO PA 7 08/07/20';'1';'1';'X';'0';'0';'7';'1';'2020-07-01 19:30:00.000';'128308';'9';' PA 7 08/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 14;'ASSEMBLEIA DE GRUPO PA 7 08/07/20';'1';'1';'X';'0';'0';'7';'2';'2020-07-01 19:30:00.000';'128309';'9';' PA 7 08/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 15;'ASSEMBLEIA DE GRUPO PA 9 07/07/20';'1';'1';'X';'0';'0';'9';'1';'2020-06-30 17:00:00.000';'128285';'9';' PA 9 07/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 16;'ASSEMBLEIA DE GRUPO PA 9 07/07/20';'1';'1';'X';'0';'0';'9';'2';'2020-06-30 17:00:00.000';'128286';'9';' PA 9 07/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 17;'ASSEMBLEIA DE GRUPO PA 17 01/07/20';'1';'1';'X';'0';'0';'17';'1';'2020-06-24 19:00:00.000';'128282';'9';' PA 17 01/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 18;'ASSEMBLEIA DE GRUPO PA 19 08/07/20';'1';'1';'X';'0';'0';'19';'1';'2020-07-01 19:30:00.000';'128313';'9';' PA 19 08/07/20';'2'),
+((SELECT MAX(ID) FROM Assembleia) + 19;'ASSEMBLEIA DE GRUPO PA 21 01/07/20';'1';'1';'X';'0';'0';'21';'1';'2020-06-24 19:00:00.000';'128449';'9';' PA 21 01/07/20';'2')
