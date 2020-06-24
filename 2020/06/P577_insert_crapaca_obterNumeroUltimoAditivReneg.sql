@@ -23,3 +23,6 @@ insert into crapaca ( NRSEQACA
                      ,2088
                      )
 /
+
+commit
+/
