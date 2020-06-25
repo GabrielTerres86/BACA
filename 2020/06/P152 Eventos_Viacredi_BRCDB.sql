@@ -1,10 +1,5 @@
 insert into assembleia (id,descricao, tipoassembleia, subtipoassembleia, possuivotacao,votaoutrosgrupos,status, pa, grupo, datahorainicio, idintegracao, empresa, local, exercicio )
 Values
-((SELECT MAX(ID) FROM Assembleia) + 1,'ASSEMBLEIA DE GRUPO PA 28 30/06/20','2','1','X','0','0','28','5','2020-06-23 19:00:00.000','127905','1',' PA 28 30/06/20','7'),
-((SELECT MAX(ID) FROM Assembleia) + 2,'ASSEMBLEIA DE GRUPO PA 43 30/06/20','2','1','X','0','0','43','3','2020-06-23 19:00:00.000','127908','1',' PA 43 30/06/20','7'),
-((SELECT MAX(ID) FROM Assembleia) + 3,'ASSEMBLEIA DE GRUPO PA 67 30/06/20','2','1','X','0','0','67','2','2020-06-23 19:00:00.000','127909','1',' PA 67 30/06/20','7'),
-((SELECT MAX(ID) FROM Assembleia) + 4,'ASSEMBLEIA DE GRUPO PA 71 30/06/20','2','1','X','0','0','71','3','2020-06-23 19:00:00.000','127911','1',' PA 71 30/06/20','7'),
-((SELECT MAX(ID) FROM Assembleia) + 5,'ASSEMBLEIA DE GRUPO PA 193 30/06/20','2','1','X','0','0','193','2','2020-06-23 19:00:00.000','127915','1',' PA 193 30/06/20','7'),
 ((SELECT MAX(ID) FROM Assembleia) + 6,'ASSEMBLEIA DE GRUPO PA 8 01/07/20','2','1','X','0','0','8','4','2020-06-24 19:00:00.000','127945','1',' PA 8 01/07/20','7'),
 ((SELECT MAX(ID) FROM Assembleia) + 7,'ASSEMBLEIA DE GRUPO PA 51 01/07/20','2','1','X','0','0','51','3','2020-06-24 19:00:00.000','127996','1',' PA 51 01/07/20','7'),
 ((SELECT MAX(ID) FROM Assembleia) + 8,'ASSEMBLEIA DE GRUPO PA 55 01/07/20','2','1','X','0','0','55','3','2020-06-24 19:00:00.000','128007','1',' PA 55 01/07/20','7'),
