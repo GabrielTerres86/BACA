@@ -31,3 +31,4 @@ UPDATE tbcc_prejuizo  a
    AND a.nrdconta = 20036;
 -- CREDIFOZ CONTA 20036
 
+COMMIT;
