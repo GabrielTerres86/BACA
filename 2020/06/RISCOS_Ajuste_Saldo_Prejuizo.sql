@@ -1,6 +1,6 @@
 -- VIACREDI CONTA 10146091
 -- Exclui Lançamento
-DELETE FROM tbcc_prejuizo_lancamento t
+DELETE FROM tbcc_prejuizo_detalhe t
  WHERE t.cdcooper = 1
    AND t.nrdconta = 10146091
    AND t.vllanmto = 2500
@@ -17,7 +17,7 @@ UPDATE tbcc_prejuizo  a
 
 -- CREDIFOZ CONTA 20036
 -- Exclui Lançamento
-DELETE FROM tbcc_prejuizo_lancamento t
+DELETE FROM tbcc_prejuizo_detalhe t
  WHERE t.cdcooper = 1
    AND t.nrdconta = 20036
    AND t.vllanmto = 12000
