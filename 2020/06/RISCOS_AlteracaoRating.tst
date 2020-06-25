@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-391
+381
 DECLARE
   vr_dscritic        VARCHAR2(2000);
 
@@ -342,17 +342,6 @@ PJ  1201  3858  344 291 COMPOSICAO  0 C
 PJ  16500 2490  326 257 COMPOSICAO  0 D
 */
 BEGIN
-  pc_grava_rating_manual(pr_cdcooper => 10
-                        ,pr_nrdconta => 43
-                        ,pr_nrctrato => 9939
-                        ,pr_tpctrato => 90
-                        ,pr_rating_sugerido => 'A'
-                        ,pr_justificativa => '31354 - Solicitação de BACA [#INC0053197#]'
-                        ,pr_cdoperad_rat => 1
-                        ,pr_dsorigem => 5
-                        ,pr_nmdatela => 'RATMOV'
-                        ,pr_nmrotina => 'RATMOV'
-                        ,pr_dscritic => vr_dscritic);
 
   pc_grava_rating_manual(pr_cdcooper => 10
                         ,pr_nrdconta => 1201
@@ -365,7 +354,7 @@ BEGIN
                         ,pr_nmdatela => 'RATMOV'
                         ,pr_nmrotina => 'RATMOV'
                         ,pr_dscritic => vr_dscritic);
-
+  dbms_output.put_line('2: ' || vr_dscritic);
   pc_grava_rating_manual(pr_cdcooper => 10
                         ,pr_nrdconta => 1201
                         ,pr_nrctrato => 3858
@@ -377,7 +366,7 @@ BEGIN
                         ,pr_nmdatela => 'RATMOV'
                         ,pr_nmrotina => 'RATMOV'
                         ,pr_dscritic => vr_dscritic);
-
+dbms_output.put_line('3: ' || vr_dscritic);
   pc_grava_rating_manual(pr_cdcooper => 10
                         ,pr_nrdconta => 16500
                         ,pr_nrctrato => 2490
@@ -389,6 +378,7 @@ BEGIN
                         ,pr_nmdatela => 'RATMOV'
                         ,pr_nmrotina => 'RATMOV'
                         ,pr_dscritic => vr_dscritic);
+dbms_output.put_line('4: ' || vr_dscritic);
   COMMIT;
 END;
 0
