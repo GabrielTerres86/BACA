@@ -5,7 +5,7 @@ DELETE FROM tbcc_prejuizo_lancamento t
    AND t.nrdconta = 10146091
    AND t.vllanmto = 2500
    AND t.cdhistor = 2408
-   AND t.dtmvtolt >= '24-06-2020';
+   AND t.dtmvtolt = '24-06-2020';
 
 -- Reverte saldo dev. Prejuizo
 UPDATE tbcc_prejuizo  a
@@ -22,7 +22,7 @@ DELETE FROM tbcc_prejuizo_lancamento t
    AND t.nrdconta = 20036
    AND t.vllanmto = 12000
    AND t.cdhistor = 2408
-   AND t.dtmvtolt >= '24-06-2020';
+   AND t.dtmvtolt = '24-06-2020';
 
 -- Reverte saldo dev. Prejuizo
 UPDATE tbcc_prejuizo  a
