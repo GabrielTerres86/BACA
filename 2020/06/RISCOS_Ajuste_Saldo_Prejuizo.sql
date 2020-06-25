@@ -18,7 +18,7 @@ UPDATE tbcc_prejuizo  a
 -- CREDIFOZ CONTA 20036
 -- Exclui Lançamento
 DELETE FROM tbcc_prejuizo_detalhe t
- WHERE t.cdcooper = 1
+ WHERE t.cdcooper = 11
    AND t.nrdconta = 20036
    AND t.vllanmto = 12000
    AND t.cdhistor = 2408
@@ -27,7 +27,7 @@ DELETE FROM tbcc_prejuizo_detalhe t
 -- Reverte saldo dev. Prejuizo
 UPDATE tbcc_prejuizo  a
    SET a.vlsdprej = Nvl(vlsdprej,0) - 12000
- WHERE a.cdcooper = 1
+ WHERE a.cdcooper = 11
    AND a.nrdconta = 20036;
 -- CREDIFOZ CONTA 20036
 
