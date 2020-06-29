@@ -128,4 +128,6 @@ BEGIN
       DBMS_OUTPUT.PUT_LINE('Erro na inserção na tabela tbcrd_conta_cartao');
   END;
   
+  COMMIT;
+  
 END;
