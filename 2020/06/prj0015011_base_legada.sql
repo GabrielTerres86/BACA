@@ -446,7 +446,7 @@ BEGIN
       vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_crapenc.nmbairro)), 30, ' '); -- Bairro
       vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_crapenc.nmcidade)), 30, ' '); -- Cidade
       vr_linha_txt := vr_linha_txt || rw_crapenc.cdufresd; -- UF
-      vr_linha_txt := vr_linha_txt || RPAD(rw_crapenc.nrcepend, 10, ' '); -- CEP
+      vr_linha_txt := vr_linha_txt || RPAD(gene0002.fn_mask(rw_crapenc.nrcepend, 'zzzzz-zz9'), 10, ' '); -- CEP
 
       IF length(rw_craptfc.nrtelefo) = 11 THEN
         vr_linha_txt := vr_linha_txt || RPAD(gene0002.fn_mask(rw_craptfc.nrtelefo, '(99)99999-9999'), 15, ' '); -- Telefone Residencial
@@ -466,7 +466,7 @@ BEGIN
       vr_linha_txt := vr_linha_txt || RPAD(rw_crapcem.dsdemail, 50, ' '); -- E-mail
       vr_linha_txt := vr_linha_txt || RPAD(' ', 12, ' ');         -- Cód.Campanha
       vr_linha_txt := vr_linha_txt || RPAD(' ', 10, ' ');         -- Cód.Vendedor
-      vr_linha_txt := vr_linha_txt || LPAD(vr_nrctrseg, 30, ' '); -- Nº Proposta
+      vr_linha_txt := vr_linha_txt || RPAD(vr_nrctrseg, 30, ' '); -- Nº Proposta
       vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date(SYSDATE), 'RRRR-MM-DD'), 10, 0); -- Data Transação (Data da venda) / Data Cancelamento
       vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date(SYSDATE), 'RRRR-MM-DD'), 10, 0); -- Inicio Vigência
       vr_linha_txt := vr_linha_txt || LPAD(' ', 2, ' '); -- Razão Cancelam/Suspensão
@@ -479,8 +479,8 @@ BEGIN
       vr_linha_txt := vr_linha_txt || LPAD(' ', 10, ' '); -- nrctremp##4
       vr_linha_txt := vr_linha_txt || LPAD(' ', 10, ' '); -- nrctremp##5
     
-      vr_linha_txt := vr_linha_txt || LPAD(rw_crapcop.cdcooper, 50, 0); -- Referencia 7 - Cooperativa
-      vr_linha_txt := vr_linha_txt || LPAD('0', 50, 0);      -- Referencia 3 - Nº da Sorte
+      vr_linha_txt := vr_linha_txt || LPAD(rw_crapcop.cdcooper, 3, 0); -- Referencia 7 - Cooperativa
+      vr_linha_txt := vr_linha_txt || LPAD(' ', 50, ' ');      -- Referencia 3 - Nº da Sorte
       vr_linha_txt := vr_linha_txt || '10';                  -- Meio Cobrança
       vr_linha_txt := vr_linha_txt || RPAD(' ', 3, ' ');     -- Cód.Administr.Cobrança BY e BC
       vr_linha_txt := vr_linha_txt || RPAD(' ', 10, ' ');    -- Cód. Banco
