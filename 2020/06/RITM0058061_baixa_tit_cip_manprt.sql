@@ -308,18 +308,18 @@ BEGIN
 
    dbms_output.put_line(vr_dscritic);                             
 
-   COMMIT; 
-
  END LOOP; 
 
-  /* Retirar os Teds da conciliação na tela manprt*/
-  UPDATE tbfin_recursos_movimento t
-  SET t.dtconciliacao = (SELECT dtmvtolt FROM crapdat WHERE cdcooper = 3)
-  WHERE
-  idlancto = 22385 OR
-  idlancto = 23871 OR
-  idlancto = 22580;
-   
+ /* Retirar os Teds da conciliação na tela manprt*/
+ UPDATE tbfin_recursos_movimento t
+ SET t.dtconciliacao = (SELECT dtmvtolt FROM crapdat WHERE cdcooper = 3)
+ WHERE
+ idlancto = 22385 OR
+ idlancto = 23871 OR
+ idlancto = 22580;
+
+ COMMIT;    
+ 
  dbms_output.put_line(' '); 
  dbms_output.put_line('Apos atualizacao'); 
 
@@ -335,10 +335,9 @@ BEGIN
 
  END LOOP; 
 
- COMMIT; 
-
 EXCEPTION 
  WHEN OTHERS THEN 
    ROLLBACK; 
+   dbms_output.put_line('Erro no script: '||sqlerrm);                                
    RAISE; 
 END;
