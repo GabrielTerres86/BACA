@@ -10,13 +10,11 @@ DECLARE
   vr_nmparam crappat.nmpartar%TYPE;
   vr_cdpartar crappat.cdpartar%TYPE; 
 BEGIN
-  vr_nmparam := 'Rendas Automáticas na Atualização Cadastral';
+  vr_nmparam := 'Rendas Automticas na Atualizao Cadastral';
   select max(crappat.cdpartar) + 1 into vr_cdpartar from crappat;
   
   insert into crappat(cdpartar, nmpartar, tpdedado, cdprodut)
   values (vr_cdpartar, vr_nmparam, 1, 0);
-  
-  --select crappat.cdpartar into vr_cdpartar from crappat where nmpartar = 'Rendas Automáticas na Atualização Cadastral';
   
   OPEN cr_crapcop;
   LOOP
