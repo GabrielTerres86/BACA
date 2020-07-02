@@ -38,4 +38,9 @@ begin
 	dbms_output.put_line('crapret = ' || to_char(SQL%ROWCOUNT) || ' atualizados');		 		 
 
   COMMIT;
+	
+	EXCEPTION WHEN OTHERS THEN
+	
+	ROLLBACK;
+	dbms_output.put_line('Erro ao executar baca: ' || SQLERRM);
 end;
