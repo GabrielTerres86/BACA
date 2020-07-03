@@ -45,6 +45,14 @@ DECLARE
   where nmdeacao = 'TAB049_ALTERAR';
 
   FOR rw_coops IN cr_coops LOOP
+    insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+	values ('CRED', rw_coops.cdcooper, 'PRST_PERC_MORTE', 'Parâmetro que indica a porcentagem do valor para calculo de premio morte no prestamista', 
+	to_char(0.00878));
+    
+    insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+	values ('CRED', rw_coops.cdcooper, 'PRST_PERC_INVALIDEZ', 'Parâmetro que indica a porcentagem do valor para calculo de premio invalidez no prestamista', 
+	to_char(0.00877));
+    
     -- Buscar dados da TAB
     vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_coops.cdcooper
                                              ,pr_nmsistem => 'CRED'
