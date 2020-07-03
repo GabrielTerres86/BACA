@@ -1,4 +1,5 @@
 
+
 DECLARE
   --Buscar na craprdr
   CURSOR cr_craprdr(pr_nmprogra IN craprdr.nmprogra%TYPE) IS 
@@ -17,6 +18,6 @@ BEGIN
   CLOSE cr_craprdr;
   
   insert into crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-  values ('LAUTOM_DEBITA_CARTAO','','CARTAO.debitarFaturaIndividual','pr_prorecid,pr_valor_pag_fatura,pr_autorizador', vr_nrseqrdr);  
+  values ('LAUTOM_DEBITA_CARTAO','','CARTAO.debitarFaturaIndividual','pr_prorecid,pr_valor_pag_fatura,pr_autorizador,pr_representante', vr_nrseqrdr);  
   COMMIT;
 END; 
