@@ -6,7 +6,7 @@ begin
     begin
 
     UPDATE crapscb
-       SET nrseqarq = 832
+       SET nrseqarq = 833
          , dtultint = SYSDATE
      WHERE crapscb.tparquiv = 8; -- Arquivo DAUR - Debito em cota das faturas
            
