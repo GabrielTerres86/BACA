@@ -441,11 +441,11 @@ BEGIN
       vr_linha_txt := vr_linha_txt || LPAD(' ', 20, ' '); -- Cód.Empregado
       vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_contas.nmprimtl)), 70, ' '); -- Nome completo do cliente
       vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date(rw_contas.dtnasctl), 'RRRR-MM-DD'), 10, 0); -- Data Nascimento
-      vr_linha_txt := vr_linha_txt || LPAD(nvl(rw_contas.cdsexotl, ' '), 2, 0); -- Sexo
+      vr_linha_txt := vr_linha_txt || LPAD(rw_contas.cdsexotl, 2, 0); -- Sexo
       vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_crapenc.dsendres)), 60, ' '); -- Endereço
       vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_crapenc.nmbairro)), 30, ' '); -- Bairro
       vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_crapenc.nmcidade)), 30, ' '); -- Cidade
-      vr_linha_txt := vr_linha_txt || nvl(rw_crapenc.cdufresd, ' '); -- UF
+      vr_linha_txt := vr_linha_txt || rw_crapenc.cdufresd; -- UF
       vr_linha_txt := vr_linha_txt || RPAD(gene0002.fn_mask(rw_crapenc.nrcepend, 'zzzzz-zz9'), 10, ' '); -- CEP
 
       IF length(rw_craptfc.nrtelefo) = 11 THEN
@@ -463,7 +463,7 @@ BEGIN
       ELSE
         vr_linha_txt := vr_linha_txt || RPAD(' ', 1, ' '); -- E-mail Fulfillment
       END IF;
-      vr_linha_txt := vr_linha_txt || RPAD(nvl(rw_crapcem.dsdemail, ' '), 50, ' '); -- E-mail
+      vr_linha_txt := vr_linha_txt || RPAD(rw_crapcem.dsdemail, 50, ' '); -- E-mail
       vr_linha_txt := vr_linha_txt || RPAD(' ', 12, ' ');         -- Cód.Campanha
       vr_linha_txt := vr_linha_txt || RPAD(' ', 10, ' ');         -- Cód.Vendedor
       vr_linha_txt := vr_linha_txt || RPAD(vr_nrctrseg, 30, ' '); -- Nº Proposta
