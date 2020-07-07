@@ -24,4 +24,6 @@ values ('CRED',  -- nmsistem
         'Mensagem de informação do boleto - linha 5', --dstexprm    
         'Ao valor do boleto foi incluso #HONORARIO#% de honorários advocatícios'); -- dsvlrprm          
         
+update crapaca set lstparam = lstparam || ',pr_vlhonora' where nmdeacao = 'GERA_BOLETO';
+
 commit;        
