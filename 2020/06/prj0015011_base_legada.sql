@@ -441,11 +441,11 @@ BEGIN
       vr_linha_txt := vr_linha_txt || LPAD(' ', 20, ' '); -- Cód.Empregado
       vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_contas.nmprimtl)), 70, ' '); -- Nome completo do cliente
       vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date(rw_contas.dtnasctl), 'RRRR-MM-DD'), 10, 0); -- Data Nascimento
-      vr_linha_txt := vr_linha_txt || LPAD(nvl(rw_contas.cdsexotl, ' '), 2, 0); -- Sexo
+      vr_linha_txt := vr_linha_txt || LPAD(nvl(to_char(rw_contas.cdsexotl), ' '), 2, 0); -- Sexo
       vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_crapenc.dsendres)), 60, ' '); -- Endereço
       vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_crapenc.nmbairro)), 30, ' '); -- Bairro
       vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_crapenc.nmcidade)), 30, ' '); -- Cidade
-      vr_linha_txt := vr_linha_txt || nvl(rw_crapenc.cdufresd, ' '); -- UF
+      vr_linha_txt := vr_linha_txt || nvl(to_char(rw_crapenc.cdufresd), ' '); -- UF
       vr_linha_txt := vr_linha_txt || RPAD(gene0002.fn_mask(rw_crapenc.nrcepend, 'zzzzz-zz9'), 10, ' '); -- CEP
 
       IF length(rw_craptfc.nrtelefo) = 11 THEN
@@ -472,7 +472,7 @@ BEGIN
       vr_linha_txt := vr_linha_txt || LPAD(' ', 2, ' '); -- Razão Cancelam/Suspensão
       --  Referencia 1 50 pos - Contratos vinculados
     
-      vr_linha_txt := vr_linha_txt || LPAD(nvl(rw_contas.nrctremp, 0), 10, 0); -- Referencia 6 - nrctremp
+      vr_linha_txt := vr_linha_txt || LPAD(nvl(to_char(rw_contas.nrctremp), 0), 10, 0); -- Referencia 6 - nrctremp
     
       vr_linha_txt := vr_linha_txt || LPAD(' ', 10, ' '); -- nrctremp##2
       vr_linha_txt := vr_linha_txt || LPAD(' ', 10, ' '); -- nrctremp##3
