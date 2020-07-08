@@ -104,8 +104,76 @@ BEGIN
        rw_crapcop.cdcooper,
        NULL);
     vr_nrsolici := vr_nrsolici + 1;
-  
+    
+    -- Codigos para gestao documental
+    INSERT INTO craptab
+      (NMSISTEM, TPTABELA, CDEMPRES, CDACESSO,
+       TPREGIST,
+       DSTEXTAB,
+       CDCOOPER)
+    VALUES
+      ('CRED', 'GENERI', 0, 'DIGITALIZA',
+       98,
+       'CDC - FISICO - DIVERSOS;0,00;194;0,00',
+       rw_crapcop.cdcooper);
+      
+    INSERT INTO craptab
+      (NMSISTEM, TPTABELA, CDEMPRES, CDACESSO,
+       TPREGIST,
+       DSTEXTAB,
+       CDCOOPER)
+    VALUES
+      ('CRED', 'GENERI', 0, 'DIGITALIZA',
+       105,
+       'CDC – FISICO – NOVOS;0,00;195;0,00',
+       rw_crapcop.cdcooper);
+       
+    INSERT INTO craptab
+      (NMSISTEM, TPTABELA, CDEMPRES, CDACESSO,
+       TPREGIST,
+       DSTEXTAB,
+       CDCOOPER)
+    VALUES
+      ('CRED', 'GENERI', 0, 'DIGITALIZA',
+       107,
+       'CDC – FISICO – USADOS;0,00;202;0,00',
+       rw_crapcop.cdcooper);
+    
+    INSERT INTO craptab
+      (NMSISTEM, TPTABELA, CDEMPRES, CDACESSO,
+       TPREGIST,
+       DSTEXTAB,
+       CDCOOPER)
+    VALUES
+      ('CRED', 'GENERI', 0, 'DIGITALIZA',
+       109,
+       'CDC – DIGITAL – NOVOS;0,00;193;0,00',
+       rw_crapcop.cdcooper);
+      
+    INSERT INTO craptab
+      (NMSISTEM, TPTABELA, CDEMPRES, CDACESSO,
+       TPREGIST,
+       DSTEXTAB,
+       CDCOOPER)
+    VALUES
+      ('CRED', 'GENERI', 0, 'DIGITALIZA',
+       110,
+       'CDC – DIGITAL – USADOS;0,00;197;0,00',
+       rw_crapcop.cdcooper);
+       
+    INSERT INTO craptab
+      (NMSISTEM, TPTABELA, CDEMPRES, CDACESSO,
+       TPREGIST,
+       DSTEXTAB,
+       CDCOOPER)
+    VALUES
+      ('CRED', 'GENERI', 0, 'DIGITALIZA',
+       112,
+       'CDC - DIGITAL - DIVERSOS;0,00;192;0,00',
+       rw_crapcop.cdcooper);
+    
   END LOOP;
+  
   INSERT INTO crapprm
     (nmsistem,
      cdcooper,
