@@ -23,6 +23,7 @@ begin
              gene0005.pc_valida_cnpj (rw_sab.nrinssac,
                                      vr_stsnrcal);    
              if  vr_stsnrcal  then
+               dbms_output.put_line('Altera PF para PJ - '||rw_sab.cdcooper||' - '||rw_sab.nrdconta ||' - '||rw_sab.nmdsacad||' Ins - '||rw_sab.nrinssac ||' T - '||rw_sab.cdtpinsc);             
                update crapsab sab
                set sab.cdtpinsc = 2
                where sab.rowid = rw_sab.rowid;
@@ -48,6 +49,7 @@ begin
                  gene0005.pc_valida_cpf (rw_sab.nrinssac,
                                           vr_stsnrcal);    
                  if vr_stsnrcal then                
+                   dbms_output.put_line('Altera PJ para PF - '||rw_sab.cdcooper||' - '||rw_sab.nrdconta ||' - '||rw_sab.nmdsacad||' Ins - '||rw_sab.nrinssac ||' T - '||rw_sab.cdtpinsc);             
                    update crapsab sab
                    set sab.cdtpinsc = 1
                    where sab.rowid = rw_sab.rowid;
@@ -62,6 +64,7 @@ begin
           /*Trata os casos onde o tipo de inscrição gravado com valores diferentes do permitido*/
           /*Primeira chamada é do CPF. Se for verdadeiro ajusta para PF, senão par PJ*/
           if vr_stsnrcal then
+             dbms_output.put_line('Tipo indefinido alterado para PF - '||rw_sab.cdcooper||' - '||rw_sab.nrdconta ||' - '||rw_sab.nmdsacad||' Ins - '||rw_sab.nrinssac ||' Tipo - '||rw_sab.cdtpinsc);             
              update crapsab sab
              set sab.cdtpinsc = 1
              where sab.rowid = rw_sab.rowid;
@@ -71,6 +74,7 @@ begin
                                        vr_stsnrcal);    
                if  vr_stsnrcal  then
                  /*CNPJ válido e tipo de inscrição correta*/
+                 dbms_output.put_line('Tipo indefinido alterado para PJ - '||rw_sab.cdcooper||' - '||rw_sab.nrdconta ||' - '||rw_sab.nmdsacad||' Ins - '||rw_sab.nrinssac ||' Tipo - '||rw_sab.cdtpinsc);             
                  update crapsab sab
                  set sab.cdtpinsc = 2
                  where sab.rowid = rw_sab.rowid;
