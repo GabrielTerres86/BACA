@@ -11,12 +11,20 @@ DECLARE
   vr_xml_temp   VARCHAR2(32726) := ''; --> Temp xml/csv 
   vr_clob       CLOB; --> Clob buffer do xml gerado
 
-  vr_seqtran    INTEGER;
+  vr_idseqtra   tbseg_prestamista.idseqtra%TYPE;
   vr_dtfimvig   DATE;
   vr_cdcooper   crapcop.cdcooper%TYPE;
   vr_nrsequen   NUMBER(10);
   rw_crapdat    BTCH0001.cr_crapdat%ROWTYPE;
-
+  
+  vr_dados_er   CLOB; -- Grava informacoes no xls
+  vr_texto_er  VARCHAR2(32600);  
+  vr_dados_rollback CLOB; -- Grava update de rollback
+  vr_texto_rollback VARCHAR2(32600);
+  vr_nmarqimp   VARCHAR2(100);
+  vr_nmarqbkp   VARCHAR2(100);
+  vr_nmdireto   VARCHAR2(4000); 
+  
   -- Código do programa
   vr_cdprogra     CONSTANT crapprg.cdprogra%TYPE := 'JB_ARQPRST';
   
@@ -173,6 +181,47 @@ DECLARE
        AND p.tpseguro = 4;
    rw_crapseg cr_crapseg%ROWTYPE;
   
+  -- Validacao de diretorio
+  PROCEDURE pc_valida_direto(pr_nmdireto IN VARCHAR2
+                             ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
+  BEGIN
+    DECLARE
+      vr_dscritic crapcri.dscritic%TYPE;
+      vr_typ_saida VARCHAR2(3);
+      vr_des_saida VARCHAR2(1000);      
+    BEGIN
+        -- Primeiro garantimos que o diretorio exista
+        IF NOT gene0001.fn_exis_diretorio(pr_nmdireto) THEN
+
+          -- Efetuar a criação do mesmo
+          gene0001.pc_OSCommand_Shell(pr_des_comando => 'mkdir ' || pr_nmdireto || ' 1> /dev/null'
+                                      ,pr_typ_saida  => vr_typ_saida
+                                      ,pr_des_saida  => vr_des_saida);
+
+          --Se ocorreu erro dar RAISE
+          IF vr_typ_saida = 'ERR' THEN
+             vr_dscritic := 'CRIAR DIRETORIO ARQUIVO --> Nao foi possivel criar o diretorio para gerar os arquivos. ' || vr_des_saida;
+             RAISE vr_exc_erro;
+          END IF;
+
+          -- Adicionar permissão total na pasta
+          gene0001.pc_OSCommand_Shell(pr_des_comando => 'chmod 777 ' || pr_nmdireto || ' 1> /dev/null'
+                                      ,pr_typ_saida  => vr_typ_saida
+                                      ,pr_des_saida  => vr_des_saida);
+
+          --Se ocorreu erro dar RAISE
+          IF vr_typ_saida = 'ERR' THEN
+             vr_dscritic := 'PERMISSAO NO DIRETORIO --> Nao foi possivel adicionar permissao no diretorio dos arquivos. ' || vr_des_saida;
+             RAISE vr_exc_erro;
+          END IF;
+
+        END IF;
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_dscritic := vr_dscritic;
+    END;    
+  END;    
+  
 BEGIN
 
   vr_nrsequen := fn_sequence('TBSEG_PRESTAMISTA', 'SEQCERTIFICADO', 0);
@@ -180,6 +229,21 @@ BEGIN
   
   -- para cada cooperativa...
   FOR rw_crapcop IN cr_crapcop LOOP
+    
+    -- Dados para arquivo de rollback
+    vr_dados_rollback := NULL;
+    
+    dbms_lob.createtemporary(vr_dados_rollback, TRUE, dbms_lob.CALL);
+    dbms_lob.open(vr_dados_rollback, dbms_lob.lob_readwrite);    
+    gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, '-- Programa para rollback das informacoes'||chr(13), FALSE);
+    
+    -- dados para csv de contratos nao tratados (cdc, conta online..)
+    vr_dados_er := NULL;
+
+    dbms_lob.createtemporary(vr_dados_er, TRUE, dbms_lob.CALL);
+    dbms_lob.open(vr_dados_er, dbms_lob.lob_readwrite);
+    gene0002.pc_escreve_xml(vr_dados_er, vr_texto_er, 'Cooperativa; Conta; Emprestimo'||chr(13), FALSE);
+    
     vr_cdcooper := rw_crapcop.cdcooper; -- Para log em caso de exceção imprevista
   
     -- Calendario da cooperativa
@@ -223,8 +287,6 @@ BEGIN
       vr_inusatab := TRUE;
     END IF;
 
-    vr_seqtran := 1;
-    
     -- Inicializa CLOB
     dbms_lob.createtemporary(vr_clob, TRUE, dbms_lob.CALL);
     dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
@@ -344,9 +406,42 @@ BEGIN
         OPEN cr_crapseg(pr_cdcooper => rw_crapcop.cdcooper 
                        ,pr_nrdconta => rw_contas.nrdconta);
         FETCH cr_crapseg INTO rw_crapseg;
+        IF cr_crapseg%NOTFOUND THEN
+          CLOSE cr_crapseg;
+          CLOSE cr_crawseg;
+          -- listar no csv
+          gene0002.pc_escreve_xml(vr_dados_er, vr_texto_er, 
+                                  rw_crapcop.cdcooper  ||';' -- Cooperativa
+                                ||rw_contas.nrdconta   ||';' -- Conta
+                                ||rw_contas.nrctremp   ||';' -- Nr. Emprestimo
+                                ||chr(13), FALSE);  
+          CONTINUE; 
+        ELSE
+          IF rw_crapseg.nrctrseg IS NULL THEN
+            CLOSE cr_crapseg;
+            CLOSE cr_crawseg;
+            -- listar no csv
+            gene0002.pc_escreve_xml(vr_dados_er, vr_texto_er, 
+                                    rw_crapcop.cdcooper  ||';' -- Cooperativa
+                                  ||rw_contas.nrdconta   ||';' -- Conta
+                                  ||rw_contas.nrctremp   ||';' -- Nr. Emprestimo
+                                  ||chr(13), FALSE);  
+            CONTINUE; 
+          END IF;
+        END IF;
         CLOSE cr_crapseg;
         vr_nrctrseg := rw_crapseg.nrctrseg;
       ELSE
+        IF rw_crawseg.nrctrseg IS NULL THEN 
+          CLOSE cr_crawseg; 
+          -- listar no csv
+          gene0002.pc_escreve_xml(vr_dados_er, vr_texto_er, 
+                                  rw_crapcop.cdcooper  ||';' -- Cooperativa
+                                ||rw_contas.nrdconta   ||';' -- Conta
+                                ||rw_contas.nrctremp   ||';' -- Nr. Emprestimo
+                                ||chr(13), FALSE);  
+          CONTINUE;
+        END IF;
         vr_nrctrseg := rw_crawseg.nrctrseg;
       END IF;
       CLOSE cr_crawseg;
@@ -397,7 +492,7 @@ BEGIN
             ,rw_contas.cdsexotl -- sexo
             ,rw_crapenc.dsendres -- Endereço
             ,rw_crapcem.dsdemail -- email
-            ,rw_crapenc.nmbairro -- Bairro
+            ,substr(rw_crapenc.nmbairro, 1, 30) -- Bairro
             ,rw_crapenc.nmcidade -- Cidade
             ,rw_crapenc.cdufresd -- UF
             ,rw_crapenc.nrcepend -- CEP
@@ -418,7 +513,8 @@ BEGIN
             ,rw_contas.dtmvtolt -- Data referencia para cobranca
             ,vr_dtfimvig -- fim da vigencia
             ,rw_crapdat.dtmvtolt -- Envio mensal dos endossos
-             );
+             )
+            RETURNING idseqtra INTO vr_idseqtra;
         
       EXCEPTION
         WHEN OTHERS THEN
@@ -427,6 +523,14 @@ BEGIN
           vr_dscritic := 'Erro ao inserir tbseg_prestamista - Conta: ' || rw_contas.nrdconta || '' || '' || SQLERRM;
           RAISE vr_exc_saida;
       END;
+      
+      gene0002.pc_escreve_xml(vr_dados_rollback
+                            , vr_texto_rollback
+                            , 'DELETE FROM tbseg_prestamista ' || chr(13) || 
+                              ' WHERE idseqtra = ' || vr_idseqtra || chr(13) ||
+                              '   AND cdcooper = ' || rw_crapcop.cdcooper || chr(13) ||
+                              '   AND nrdconta = ' || rw_contas.nrdconta  || chr(13) ||
+                              '   AND nrctremp = ' || rw_contas.nrctremp  || '; ' ||chr(13)||chr(13), FALSE);     
 
       -------------------------------------------------------------------------------------------------------------------------------------------------------
       -- Geração das linhas do txt
@@ -434,7 +538,7 @@ BEGIN
       
       vr_linha_txt := '';
       -- informacoes para impressao
-      vr_linha_txt := vr_linha_txt || LPAD(vr_seqtran, 5, 0); -- Sequencial Transação
+      vr_linha_txt := vr_linha_txt || LPAD(vr_idseqtra, 5, 0); -- Sequencial Transação
       vr_linha_txt := vr_linha_txt || LPAD(1, 2, 0); -- Tipo Registro
       vr_linha_txt := vr_linha_txt || 'BZBCC' || LPAD(vr_nrapolic, 10, 0); -- Nº Apólice / Certificado
       vr_linha_txt := vr_linha_txt || RPAD(rw_contas.nrcpfcgc, 14, ' '); -- CPF / CNPJ - sem formatacao
@@ -533,8 +637,6 @@ BEGIN
                               pr_texto_completo => vr_xml_temp,
                               pr_texto_novo     => vr_linha_txt);
     
-      vr_seqtran := vr_seqtran + 1;
-    
     END LOOP;
   
     -- Encerrar o Clob
@@ -542,13 +644,33 @@ BEGIN
                             pr_texto_completo => vr_xml_temp,
                             pr_texto_novo     => chr(13),
                             pr_fecha_xml      => TRUE);
-  
+    
+    vr_nmdireto := gene0001.fn_param_sistema('CRED',vr_cdcooper,'ROOT_MICROS');
+    
+    -- Depois criamos o diretorio do projeto
+    pc_valida_direto(pr_nmdireto => vr_nmdireto || 'cpd/bacas/PRJ0015011'
+                    ,pr_dscritic => vr_dscritic);
+    
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+       RAISE vr_exc_erro;
+    END IF;  
+    
+    vr_nmdireto := vr_nmdireto||'cpd/bacas/PRJ0015011/'||rw_crapcop.dsdircop; 
+
+    -- Depois criamos o diretorio da coop
+    pc_valida_direto(pr_nmdireto => vr_nmdireto
+                    ,pr_dscritic => vr_dscritic);
+    
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;  
+    
     -- Grava arquivo de contas alteradas
     GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => vr_cdcooper, --> Cooperativa conectada
                                         pr_cdprogra  => 'ATENDA', --> Programa chamador - utilizamos apenas um existente 
                                         pr_dtmvtolt  => trunc(SYSDATE), --> Data do movimento atual
                                         pr_dsxml     => vr_clob, --> Arquivo XML de dados
-                                        pr_dsarqsaid => vr_nmdircop || '/arq/' || vr_nmarquiv, --> Path/Nome do arquivo PDF gerado
+                                        pr_dsarqsaid => vr_nmdireto || '/' || vr_nmarquiv, --> Path/Nome do arquivo PDF gerado
                                         pr_flg_impri => 'N', --> Chamar a impressão (Imprim.p)
                                         pr_flg_gerar => 'S', --> Gerar o arquivo na hora
                                         pr_flgremarq => 'N', --> remover arquivo apos geracao
@@ -559,35 +681,56 @@ BEGIN
       vr_dscritic := vr_dscritic || ' Cooperativa: ' || vr_cdcooper;
       RAISE vr_exc_saida;
     END IF;
-  
-    ESMS0001.pc_processa_arquivo_ftp(pr_nmarquiv => vr_nmarquiv, --> Nome arquivo a enviar
-                                     pr_idoperac => 'E', --> Envio de arquivo
-                                     pr_nmdireto => vr_nmdircop, --> Diretório do arquivo a enviar
-                                     pr_idenvseg => 'S', --> Indicador de utilizacao de protocolo seguro (SFTP)
-                                     pr_ftp_site => vr_endereco, --> Site de acesso ao FTP
-                                     pr_ftp_user => vr_login, --> Usuário para acesso ao FTP
-                                     pr_ftp_pass => vr_senha, --> Senha para acesso ao FTP
-                                     pr_ftp_path => 'prestamista', --> Pasta no FTP para envio do arquivo
-                                     pr_dscritic => vr_dscritic);
-  
-    IF vr_dscritic IS NOT NULL THEN
-      vr_dscritic := 'Erro ao processar arquivo via FTP - Cooperativa: ' || vr_cdcooper || ' - ' ||
-                     vr_dscritic;
-      RAISE vr_exc_saida;
+    
+    -- Adiciona TAG de commit rollback
+    gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, 'COMMIT;'||chr(13), FALSE);
+        
+    -- Fecha o arquivo rollback
+    gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, chr(13), TRUE);    
+
+    vr_nmarqimp  := 'EMPRESTIMOS_SEM_SEG_'||rw_crapcop.dsdircop||'.csv';
+    vr_nmarqbkp  := 'ROLLBACK_PRJ0015011_'||upper(rw_crapcop.dsdircop)||'_'||to_char(sysdate,'ddmmyyyy_hh24miss')||'.sql';
+    
+    gene0002.pc_escreve_xml(vr_dados_er, vr_texto_er, chr(13), TRUE);
+    
+    -- Grava arquivo de contas alteradas
+    GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => vr_cdcooper                   --> Cooperativa conectada
+                                       ,pr_cdprogra  => 'ATENDA'                      --> Programa chamador - utilizamos apenas um existente 
+                                       ,pr_dtmvtolt  => trunc(SYSDATE)                --> Data do movimento atual
+                                       ,pr_dsxml     => vr_dados_er                   --> Arquivo XML de dados
+                                       ,pr_dsarqsaid => vr_nmdireto||'/'||vr_nmarqimp --> Path/Nome do arquivo PDF gerado
+                                       ,pr_flg_impri => 'N'                           --> Chamar a impressão (Imprim.p)
+                                       ,pr_flg_gerar => 'S'                           --> Gerar o arquivo na hora
+                                       ,pr_flgremarq => 'N'                           --> remover arquivo apos geracao
+                                       ,pr_nrcopias  => 1                             --> Número de cópias para impressão
+                                       ,pr_des_erro  => vr_dscritic);                 --> Retorno de Erro
+    
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
     END IF;
-  
-    -- Mover o arquivo processado para a pasta "salvar" 
-    gene0001.pc_OScommand_Shell(pr_des_comando => 'mv ' || vr_nmdircop || '/arq/' || vr_nmarquiv || ' ' ||
-                                                  vr_nmdircop || '/salvar',
-                                pr_typ_saida   => vr_tipo_saida,
-                                pr_des_saida   => vr_dscritic);
-    -- Testa erro
-    IF vr_tipo_saida = 'ERR' THEN
-      vr_dscritic := 'Erro ao mover o arquivo - Cooperativa: ' || vr_cdcooper || ' - ' ||
-                     vr_dscritic;
-      RAISE vr_exc_saida;
-    END IF;
-  
+
+    -- Grava o arquivo de rollback
+    GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => vr_cdcooper                     --> Cooperativa conectada
+                                       ,pr_cdprogra  => 'ATENDA'                      --> Programa chamador - utilizamos apenas um existente 
+                                       ,pr_dtmvtolt  => trunc(SYSDATE)                --> Data do movimento atual
+                                       ,pr_dsxml     => vr_dados_rollback             --> Arquivo XML de dados
+                                       ,pr_dsarqsaid => vr_nmdireto||'/'||vr_nmarqbkp --> Path/Nome do arquivo PDF gerado
+                                       ,pr_flg_impri => 'N'                           --> Chamar a impressão (Imprim.p)
+                                       ,pr_flg_gerar => 'S'                           --> Gerar o arquivo na hora
+                                       ,pr_flgremarq => 'N'                           --> remover arquivo apos geracao
+                                       ,pr_nrcopias  => 1                             --> Número de cópias para impressão
+                                       ,pr_des_erro  => vr_dscritic);                 --> Retorno de Erro
+        
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;   
+    
+    dbms_lob.close(vr_dados_er);
+    dbms_lob.freetemporary(vr_dados_er);   
+    
+    dbms_lob.close(vr_dados_rollback);
+    dbms_lob.freetemporary(vr_dados_rollback);   
+    
     -- Libera a memoria do CLOB
     dbms_lob.close(vr_clob);
     dbms_lob.freetemporary(vr_clob);
