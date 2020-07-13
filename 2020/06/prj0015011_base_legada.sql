@@ -52,6 +52,7 @@ DECLARE
   vr_vltotpre       NUMBER := 0;
   vr_qtprecal       NUMBER := 0;
   vr_nrctrseg       crapseg.nrctrseg%TYPE;
+  vr_dtiniseg       crapepr.dtmvtolt%TYPE;
 
   -- Definicao do tipo de array para nome origem do módulo
   TYPE typ_tab_prefixo IS VARRAY(16) OF VARCHAR2(5);
@@ -133,7 +134,8 @@ DECLARE
   rw_craptfc cr_craptfc%ROWTYPE;
   
   -- Cursor principal de contas com contratos ativos em linhas de crédito com prestamista
-  CURSOR cr_contas(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+  CURSOR cr_contas(pr_cdcooper IN crapcop.cdcooper%TYPE
+                  ,pr_dtiniseg IN crapepr.dtmvtolt%TYPE) IS
     SELECT a.nrdconta
           ,e.nrctremp
           ,t.idseqttl
@@ -152,8 +154,10 @@ DECLARE
        AND a.inpessoa = 1 -- pessoa fisica
        AND e.inliquid = 0 -- nao liquidado
        AND e.inprejuz = 0 -- sem prejuizo
+       AND e.dtmvtolt >= pr_dtiniseg
        AND t.cdcooper = a.cdcooper
        AND t.nrdconta = a.nrdconta
+       AND t.idseqttl = 1
        AND NOT EXISTS (SELECT 1  -- garantir que nao existe na tbseg
                          FROM tbseg_prestamista p
                         WHERE p.cdcooper = e.cdcooper
@@ -224,7 +228,7 @@ DECLARE
   
 BEGIN
 
-  vr_nrsequen := fn_sequence('TBSEG_PRESTAMISTA', 'SEQCERTIFICADO', 0);
+  vr_nrsequen := 99999; --fn_sequence('TBSEG_PRESTAMISTA', 'SEQCERTIFICADO', 0);
   vr_destinatario_email := gene0001.fn_param_sistema('CRED', 0, 'ENVIA_SEG_PRST_EMAIL'); -- seguros@ailos.com.br
   
   -- para cada cooperativa...
@@ -272,6 +276,8 @@ BEGIN
     vr_login    := SUBSTR(vr_dstextab, 124, 6); 
     vr_senha    := SUBSTR(vr_dstextab, 131, 7); 
     vr_pgtosegu := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,51,7));
+    -- Data de inicio dos seguros da posição 40 a 50
+    vr_dtiniseg := to_date(SUBSTR(vr_dstextab,40,10),'dd/mm/yyyy');
     
     -- Verificar se usa tabela juros
     vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_crapcop.cdcooper,
@@ -291,27 +297,9 @@ BEGIN
     dbms_lob.createtemporary(vr_clob, TRUE, dbms_lob.CALL);
     dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
     
-    -- Atualiza sequencia (posições 139 a 144 do string)
-    BEGIN
-      UPDATE craptab
-         SET craptab.dstextab = substr(craptab.dstextab, 1, 138) ||
-                                gene0002.fn_mask(vr_nrsequen, '99999') ||
-                                substr(craptab.dstextab, 145)
-       WHERE craptab.cdcooper = rw_crapcop.cdcooper
-         AND craptab.nmsistem = 'CRED'
-         AND craptab.tptabela = 'USUARI'
-         AND craptab.cdempres = 11
-         AND craptab.cdacesso = 'SEGPRESTAM'
-         AND craptab.tpregist = 0;
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao atualizar sequencia da cooperativa: ' || rw_crapcop.cdcooper || ' - ' || SQLERRM;
-        RAISE vr_exc_saida;
-    END;
-
     --
-    FOR rw_contas IN cr_contas(pr_cdcooper => rw_crapcop.cdcooper) LOOP
+    FOR rw_contas IN cr_contas(pr_cdcooper => rw_crapcop.cdcooper
+                              ,pr_dtiniseg => vr_dtiniseg) LOOP
       
       -- Validar necessidade de adição na tabela - aqui já é validado o saldo devedor 
       SEGU0003.pc_validar_prestamista(pr_cdcooper        => rw_crapcop.cdcooper
