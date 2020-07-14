@@ -1,8 +1,5 @@
 DECLARE
   vr_tipo_saida VARCHAR2(100);
-  vr_endereco   VARCHAR2(100);
-  vr_login      VARCHAR2(100);
-  vr_senha      VARCHAR2(100);
   vr_nrapolic   VARCHAR2(100);
   vr_dsdircop   VARCHAR2(50);
   vr_nmdircop   VARCHAR2(100);
@@ -228,7 +225,7 @@ DECLARE
   
 BEGIN
 
-  vr_nrsequen := 99999; --fn_sequence('TBSEG_PRESTAMISTA', 'SEQCERTIFICADO', 0);
+  vr_nrsequen := fn_sequence('TBSEG_PRESTAMISTA', 'SEQCERTIFICADO', 0);
   vr_destinatario_email := gene0001.fn_param_sistema('CRED', 0, 'ENVIA_SEG_PRST_EMAIL'); -- seguros@ailos.com.br
   
   -- para cada cooperativa...
@@ -271,10 +268,6 @@ BEGIN
                                               pr_cdacesso => 'SEGPRESTAM',
                                               pr_tpregist => 0);
   
-    -- Dados da conexao FTP
-    vr_endereco := SUBSTR(vr_dstextab, 107, 16);
-    vr_login    := SUBSTR(vr_dstextab, 124, 6); 
-    vr_senha    := SUBSTR(vr_dstextab, 131, 7); 
     vr_pgtosegu := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,51,7));
     -- Data de inicio dos seguros da posição 40 a 50
     vr_dtiniseg := to_date(SUBSTR(vr_dstextab,40,10),'dd/mm/yyyy');
@@ -296,6 +289,25 @@ BEGIN
     -- Inicializa CLOB
     dbms_lob.createtemporary(vr_clob, TRUE, dbms_lob.CALL);
     dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+        
+    -- Atualiza sequencia (posições 139 a 144 do string)
+    BEGIN
+      UPDATE craptab
+         SET craptab.dstextab = substr(craptab.dstextab, 1, 138) ||
+                                gene0002.fn_mask(vr_nrsequen, '99999') ||
+                                substr(craptab.dstextab, 145)
+       WHERE craptab.cdcooper = rw_crapcop.cdcooper
+         AND craptab.nmsistem = 'CRED'
+         AND craptab.tptabela = 'USUARI'
+         AND craptab.cdempres = 11
+         AND craptab.cdacesso = 'SEGPRESTAM'
+         AND craptab.tpregist = 0;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao atualizar sequencia da cooperativa: ' || rw_crapcop.cdcooper || ' - ' || SQLERRM;
+        RAISE vr_exc_saida;
+    END;
     
     --
     FOR rw_contas IN cr_contas(pr_cdcooper => rw_crapcop.cdcooper
@@ -475,13 +487,13 @@ BEGIN
              3 -- tipo endosso
             ,vr_nrapolic -- apolice
             ,rw_contas.nrcpfcgc -- cpf
-            ,rw_contas.nmprimtl -- nome
+            ,gene0007.fn_caract_especial(rw_contas.nmprimtl) -- nome
             ,rw_contas.dtnasctl -- data de nasc
             ,rw_contas.cdsexotl -- sexo
-            ,rw_crapenc.dsendres -- Endereço
+            ,gene0007.fn_caract_especial(rw_crapenc.dsendres) -- Endereço
             ,rw_crapcem.dsdemail -- email
-            ,substr(rw_crapenc.nmbairro, 1, 30) -- Bairro
-            ,rw_crapenc.nmcidade -- Cidade
+            ,substr(gene0007.fn_caract_especial(rw_crapenc.nmbairro), 1, 30) -- Bairro
+            ,gene0007.fn_caract_especial(rw_crapenc.nmcidade) -- Cidade
             ,rw_crapenc.cdufresd -- UF
             ,rw_crapenc.nrcepend -- CEP
             ,rw_craptfc.nrtelefo -- Telefone Residencial --x
@@ -531,12 +543,12 @@ BEGIN
       vr_linha_txt := vr_linha_txt || 'BZBCC' || LPAD(vr_nrapolic, 10, 0); -- Nº Apólice / Certificado
       vr_linha_txt := vr_linha_txt || RPAD(rw_contas.nrcpfcgc, 14, ' '); -- CPF / CNPJ - sem formatacao
       vr_linha_txt := vr_linha_txt || LPAD(' ', 20, ' '); -- Cód.Empregado
-      vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_contas.nmprimtl)), 70, ' '); -- Nome completo do cliente
+      vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_especial(rw_contas.nmprimtl)), 70, ' '); -- Nome completo do cliente
       vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date(rw_contas.dtnasctl), 'RRRR-MM-DD'), 10, 0); -- Data Nascimento
       vr_linha_txt := vr_linha_txt || LPAD(nvl(to_char(rw_contas.cdsexotl), ' '), 2, 0); -- Sexo
-      vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_crapenc.dsendres)), 60, ' '); -- Endereço
-      vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_crapenc.nmbairro)), 30, ' '); -- Bairro
-      vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_acento(rw_crapenc.nmcidade)), 30, ' '); -- Cidade
+      vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_especial(rw_crapenc.dsendres)), 60, ' '); -- Endereço
+      vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_especial(rw_crapenc.nmbairro)), 30, ' '); -- Bairro
+      vr_linha_txt := vr_linha_txt || RPAD(UPPER(gene0007.fn_caract_especial(rw_crapenc.nmcidade)), 30, ' '); -- Cidade
       vr_linha_txt := vr_linha_txt || nvl(to_char(rw_crapenc.cdufresd), ' '); -- UF
       vr_linha_txt := vr_linha_txt || RPAD(gene0002.fn_mask(rw_crapenc.nrcepend, 'zzzzz-zz9'), 10, ' '); -- CEP
 
