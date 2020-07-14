@@ -225,6 +225,7 @@ DECLARE
   
 BEGIN
 
+  vr_nrsequen := fn_sequence('TBSEG_PRESTAMISTA', 'SEQCERTIFICADO', 0);
   vr_destinatario_email := gene0001.fn_param_sistema('CRED', 0, 'ENVIA_SEG_PRST_EMAIL'); -- seguros@ailos.com.br
   
   -- para cada cooperativa...
@@ -267,7 +268,6 @@ BEGIN
                                               pr_cdacesso => 'SEGPRESTAM',
                                               pr_tpregist => 0);
   
-    vr_nrsequen := to_number(substr(vr_dstextab, 139, 5)) + 1;
     vr_pgtosegu := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,51,7));
     -- Data de inicio dos seguros da posição 40 a 50
     vr_dtiniseg := to_date(SUBSTR(vr_dstextab,40,10),'dd/mm/yyyy');
