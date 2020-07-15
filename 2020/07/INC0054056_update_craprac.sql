@@ -35,7 +35,7 @@ WHERE  rac.cdcooper = 1 AND
        rac.nraplica = 11 ;  
        
  UPDATE craprac rac
-   SET rac.idsaqtot = 1select * from craprac rac
+   SET rac.idsaqtot = 1
 WHERE  rac.cdcooper = 1 AND
        rac.nrdconta = 7800070 AND
        rac.nraplica = 27;  
