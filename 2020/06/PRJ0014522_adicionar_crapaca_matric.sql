@@ -43,7 +43,7 @@ BEGIN
                 
   EXCEPTION
     WHEN dup_val_on_index THEN
-      dbms_output.put_line('Registro LIST_ORGAO_EMISSOR, já cadastrado.');
+      dbms_output.put_line('Registro GRAVAR_PRE_CADASTRO, já cadastrado.');
     WHEN OTHERS THEN
       raise_application_error(-20005, 'Erro ao inserir CRAPACA: '||SQLERRM);
   END;
@@ -64,7 +64,7 @@ BEGIN
                 
   EXCEPTION
     WHEN dup_val_on_index THEN
-      dbms_output.put_line('Registro BUSCA_CIDADE_UF, já cadastrado.');
+      dbms_output.put_line('Registro BUSCA_NATURALIDADE_UF, já cadastrado.');
     WHEN OTHERS THEN
       raise_application_error(-20006, 'Erro ao inserir CRAPACA: '||SQLERRM);
   END;
@@ -105,11 +105,32 @@ BEGIN
                        ,vr_nrseqrdr);
   EXCEPTION
     WHEN dup_val_on_index THEN
-      dbms_output.put_line('Registro BUSCA_EMPREGADOR, já cadastrado.');
+      dbms_output.put_line('Registro ADMITIR_COOPERADO, já cadastrado.');
     WHEN OTHERS THEN
       raise_application_error(-20017, 'Erro ao inserir CRAPACA: '||SQLERRM);
   END;
     
+  BEGIN
+    INSERT INTO crapaca(nrseqaca
+                       ,nmdeacao
+                       ,nmpackag
+                       ,nmproced
+                       ,lstparam
+                       ,nrseqrdr)
+                VALUES ((SELECT NVL(MAX(a.nrseqaca),0)+1 FROM crapaca a)
+                       ,'BUSCA_EMPREGADOR_PF_PJ'
+                       ,NULL
+                       ,'buscarEmpregadorPFPJ'
+                       ,'pr_inpesemp,pr_nrcpfcgc'
+                       ,vr_nrseqrdr);
+  EXCEPTION
+    WHEN dup_val_on_index THEN
+      dbms_output.put_line('Registro BUSCA_EMPREGADOR_PF_PJ, já cadastrado.');
+    WHEN OTHERS THEN
+      raise_application_error(-20018, 'Erro ao inserir CRAPACA: '||SQLERRM);
+  END;
+  
+  
   BEGIN
     SELECT t.nrseqrdr
       INTO vr_nrseqrdr
