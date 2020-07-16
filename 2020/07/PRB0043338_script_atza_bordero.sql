@@ -11,9 +11,7 @@ and a.nrborder = 548675;
 -- alterar insitit de 4-liberado para 2-processado 
 update  craptdb a
 set a.insittit = 2--processado  
-   ,a.vlsldtit = 0 -- 689,85
-   ,a.vlprejuz = 0 -- 723,47
-   ,a.vljraprj =54.31 -- 0 (era zero)   
+   ,a.vljraprj = 54.31 -- 0 (era zero)   
    ,a.vlmratit = 96.6  --128,64
    ,a.vliofcpl = 3.85  --5,23  
 where a.cdcooper = 1
