@@ -18,8 +18,7 @@ DECLARE
   CURSOR cr_crapcop IS 
     SELECT c.cdcooper
            ,c.dsdircop
-      FROM crapcop c
-     WHERE cdcooper = 12;
+      FROM crapcop c;
   rw_crapcop cr_crapcop%ROWTYPE;
   
   CURSOR cr_propostas_sem_titularidade(pr_cdcooper crapcop.cdcooper%TYPE) IS
