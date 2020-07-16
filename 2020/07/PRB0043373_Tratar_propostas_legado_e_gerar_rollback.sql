@@ -105,14 +105,14 @@ BEGIN
     vr_cdcooper  := rw_crapcop.cdcooper;
     
     -- Primeiro criamos o diretorio da INC, dentro de um diretorio ja existente
-    pc_valida_direto(pr_nmdireto => vr_nmdireto || '/INC0054961'
+    pc_valida_direto(pr_nmdireto => vr_nmdireto || '/PRB0043373'
                      ,pr_dscritic => vr_dscritic);
     
     IF TRIM(vr_dscritic) IS NOT NULL THEN
        RAISE vr_exc_erro;
     END IF;     
     
-    vr_nmdireto := vr_nmdireto || '/INC0054961';
+    vr_nmdireto := vr_nmdireto || '/PRB0043373';
     vr_nmarqbkp  := 'BKP_'||upper(rw_crapcop.dsdircop)||''||to_char(sysdate,'hh24miss')||'.sql';
                    
     -- Percorrer todas as contas para gerar o arquivo de rollback
