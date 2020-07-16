@@ -2,3 +2,4 @@
 update crapagp ca
 set ca.idstagen = 5
 where ca.progress_recid = 4992;
+commit;
