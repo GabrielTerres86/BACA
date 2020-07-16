@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-171
 DECLARE
   -- Local variables here
   vr_cdcooper   crapcop.cdcooper%TYPE;
@@ -91,7 +89,17 @@ BEGIN
 
   vr_nmdireto  := gene0001.fn_diretorio(pr_tpdireto => 'C' 
                                           ,pr_cdcooper => 3);
-                                             
+
+  -- Primeiro criamos o diretorio da INC, dentro de um diretorio ja existente
+  pc_valida_direto(pr_nmdireto => vr_nmdireto || '/PRB0043373'
+                   ,pr_dscritic => vr_dscritic);
+    
+  IF TRIM(vr_dscritic) IS NOT NULL THEN
+     RAISE vr_exc_erro;
+  END IF;   
+  
+  vr_nmdireto := vr_nmdireto || '/PRB0043373';
+                                                 
   FOR rw_crapcop IN cr_crapcop LOOP  
     vr_dados_rollback := NULL;
 
@@ -101,17 +109,7 @@ BEGIN
     gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, '-- Programa para rollback das informacoes'||chr(13), FALSE);
     gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, 'BEGIN'||chr(13), FALSE);
     
-    vr_cdcooper  := rw_crapcop.cdcooper;
-    
-    -- Primeiro criamos o diretorio da INC, dentro de um diretorio ja existente
-    pc_valida_direto(pr_nmdireto => vr_nmdireto || '/PRB0043373'
-                     ,pr_dscritic => vr_dscritic);
-    
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-       RAISE vr_exc_erro;
-    END IF;     
-    
-    vr_nmdireto := vr_nmdireto || '/PRB0043373';
+    vr_cdcooper  := rw_crapcop.cdcooper;         
     vr_nmarqbkp  := 'BKP_'||upper(rw_crapcop.dsdircop)||''||to_char(sysdate,'hh24miss')||'.sql';
                    
     -- Percorrer todas as contas para gerar o arquivo de rollback
@@ -170,5 +168,3 @@ EXCEPTION
   WHEN vr_exc_erro THEN
     raise_application_error(-20111, vr_dscritic);
 END;
-0
-0
