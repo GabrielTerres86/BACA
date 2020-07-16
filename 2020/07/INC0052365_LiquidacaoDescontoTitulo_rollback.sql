@@ -3,7 +3,8 @@ BEGIN
 		update crapbdt 
 		set DTLIQPRJ = null,
 		  VLABOPRJ = 0,
-		  DTULTPAG = null
+		  DTULTPAG = null,
+		  INSITBDT = 3
 		where nrdconta = 216194
 		and nrborder = 28247;
 
@@ -15,7 +16,8 @@ BEGIN
 		  VLSDPREJ = 4880,
 		  VLIOFPPR = 0,
 		  VLPGJRPR = 0,
-		  VLPGJM60= 0
+		  VLPGJM60= 0,
+		  INSITTIT = 4
 		where nrdconta = 216194
 		and nrborder = 28247;
 
@@ -27,8 +29,8 @@ BEGIN
 				and nrborder = 28247)
 		and dtmvtolt >= '16/07/2020';               
 
-		   
-      COMMIT;
+       
+    COMMIT;
     EXCEPTION
     WHEN OTHERS THEN
       ROLLBACK;   
