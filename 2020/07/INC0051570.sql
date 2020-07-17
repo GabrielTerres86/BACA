@@ -67,7 +67,3 @@ exception
   when others then
    rollback;
 end;
-
-
-
-
