@@ -35,6 +35,27 @@ BEGIN
                        ,lstparam
                        ,nrseqrdr)
                 VALUES ((SELECT NVL(MAX(a.nrseqaca),0)+1 FROM crapaca a)
+                       ,'BUSCA_DADOS_PRE_CADASTRO'
+                       ,NULL
+                       ,'ObterDadosAdmissaoPreCadastro'
+                       ,'pr_nrcpfcgc'
+                       ,vr_nrseqrdr);
+                
+  EXCEPTION
+    WHEN dup_val_on_index THEN
+      dbms_output.put_line('Registro BUSCA_DADOS_PRE_CADASTRO, já cadastrado.');
+    WHEN OTHERS THEN
+      raise_application_error(-20016, 'Erro ao inserir CRAPACA: '||SQLERRM);
+  END;
+  
+  BEGIN
+    INSERT INTO crapaca(nrseqaca
+                       ,nmdeacao
+                       ,nmpackag
+                       ,nmproced
+                       ,lstparam
+                       ,nrseqrdr)
+                VALUES ((SELECT NVL(MAX(a.nrseqaca),0)+1 FROM crapaca a)
                        ,'GRAVAR_PRE_CADASTRO'
                        ,NULL
                        ,'GravarPreCadastro'
