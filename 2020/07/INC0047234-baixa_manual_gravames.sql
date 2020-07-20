@@ -1,7 +1,7 @@
 /*INC0047234 - Baixa indevida do gravames.
 Script para fazer a baixa manual para quem tiver crítica no retorno da baixa automatica com os códigos:
   - 58'Não existe ocorrência para este chassi na base do SNG'
-  - 59'Não existe restrição financeira ativo cadastrado na base do sistema SNG'
+  - 59'Não existe restrição financeira ativo cadastrado na base do sistema SNG '
 */
 declare
   
