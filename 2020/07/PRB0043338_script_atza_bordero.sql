@@ -19,24 +19,47 @@ and a.nrdconta = 8791740
 and a.nrborder = 548675
 and a.nrdocmto = 705;
 
-declare
-  vr_nrseqdig tbdsct_lancamento_bordero.nrseqdig%TYPE;
-
-begin
-
-  SELECT nvl(MAX(nrseqdig),0)+1
-  INTO   vr_nrseqdig
-  FROM   tbdsct_lancamento_bordero
-  WHERE  nrtitulo = 6
-  AND    nrborder = 548675
-  AND    nrdconta = 8791740
-  AND    cdcooper = 1;
-
 -- Valor inserido para zerar o saldo do extrato.
-insert into TBDSCT_LANCAMENTO_BORDERO (CDCOOPER, NRDCONTA, NRBORDER, CDBANDOC, NRDCTABB, NRCNVCOB, NRDOCMTO, NRSEQDIG, NRTITULO, DTMVTOLT, CDORIGEM, CDHISTOR, VLLANMTO, DTHRTRAN, DTREFATU, PROGRESS_RECID, DTESTORN)
-values (1, 8791740, 548675, 0, 0, 0, 0, vr_nrseqdig, 6, to_date('30-06-2020', 'dd-mm-yyyy'), 7, 2798, 7.55, to_date('30-06-2020 08:43:50', 'dd-mm-yyyy hh24:mi:ss'), to_date('30-06-2020 08:43:50', 'dd-mm-yyyy hh24:mi:ss'), null, null);
-
-end;
-/
-
+INSERT INTO TBDSCT_LANCAMENTO_BORDERO
+  (CDCOOPER,
+   NRDCONTA,
+   NRBORDER,
+   CDBANDOC,
+   NRDCTABB,
+   NRCNVCOB,
+   NRDOCMTO,
+   NRSEQDIG,
+   NRTITULO,
+   DTMVTOLT,
+   CDORIGEM,
+   CDHISTOR,
+   VLLANMTO,
+   DTHRTRAN,
+   DTREFATU,
+   PROGRESS_RECID,
+   DTESTORN)
+VALUES
+  (1,
+   8791740,
+   548675,
+   0,
+   0,
+   0,
+   0,
+   (SELECT nvl(MAX(nrseqdig), 0) + 1
+      FROM tbdsct_lancamento_bordero
+     WHERE nrtitulo = 6
+       AND nrborder = 548675
+       AND nrdconta = 8791740
+       AND cdcooper = 1),
+   6,
+   to_date('30-06-2020', 'dd-mm-yyyy'),
+   7,
+   2798,
+   7.55,
+   to_date('30-06-2020 08:43:50', 'dd-mm-yyyy hh24:mi:ss'),
+   to_date('30-06-2020 08:43:50', 'dd-mm-yyyy hh24:mi:ss'),
+   NULL,
+   NULL);
+   
 commit;
