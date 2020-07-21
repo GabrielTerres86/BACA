@@ -2,15 +2,13 @@
 update crapbdt a
 set a.insitbdt = 4--liquidado  
  ,a.dtliqprj   = '30/06/2020'
- ,a.inprejuz   = 0 -- Não prejuizo
 where a.cdcooper = 1
 and a.nrdconta = 8791740
 and a.nrborder = 548675;
 
---Situacao do titulo: 0-nao proc,1-resgat,2-proc,3-baixado s/pagto,4-liberado
--- alterar insitit de 4-liberado para 2-processado 
+--situacao do titulo: de 4-liberado para 3-baixado s/pagto
 update  craptdb a
-set a.insittit = 2--processado  
+set a.insittit = 3
    ,a.vlsldtit = 0  --689,85
    ,a.vlprejuz = 0  --723,47
    ,a.vljraprj = 54.31 -- 0 (era zero)   
