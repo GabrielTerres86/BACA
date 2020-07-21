@@ -126,23 +126,6 @@ declare
     END LOOP rw_craplem;
     --
 
-    BEGIN
-      SELECT dtmvtolt
-        INTO pr_dtmvtolt
-        FROM crapdat
-       WHERE cdcooper = pr_cdcooper;
-    EXCEPTION
-    WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao buscar DTMVTOLT = '||SQLERRM;
-    END;
-    --
-      -- Gera valor do campo "nrseqdig" a partir da sequence (para não usar CRAPLOT)
-      vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
-                                ,pr_nmdcampo => 'NRSEQDIG'
-                                ,pr_dsdchave => to_char(pr_cdcooper)||';'||
-                                 to_char(pr_dtmvtolt, 'DD/MM/RRRR') ||';'||
-                                '1;100;650010');
-
     commit;
   EXCEPTION
   WHEN vr_exc_saida THEN
