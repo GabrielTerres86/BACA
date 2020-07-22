@@ -12,6 +12,7 @@ DECLARE
   vr_texto_rollback VARCHAR2(32600);
   aux_flgprcrd crawcrd.flgprcrd%type;
   vr_pasta varchar2(100) := 'INC0054267';
+  wk_rotina varchar2(200) := 'Inserir parâmetro para habilitar/desabilitar geração de log. Correção das titularidade de cartões PF.';
   
   -- Cursores
   
@@ -108,7 +109,10 @@ DECLARE
   END;                           
   
 BEGIN
-
+  --parâmetro para habilitar ou desabilitar a geração de log
+  INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
+    VALUES ('CRED', 3, 'HAB_LOG_CRPS672', 'Habilita geração de Log no programa CRPS672', 1);
+  
   vr_nmdireto  := gene0001.fn_diretorio(pr_tpdireto => 'C' 
                                           ,pr_cdcooper => 3);
 
@@ -121,6 +125,41 @@ BEGIN
   END IF;     
   
   vr_nmdireto := vr_nmdireto || '/'||vr_pasta;
+  
+  --script dinâmico para rollback do parâmetro
+  vr_dados_rollback := NULL;
+  vr_nmarqbkp  := 'BKP_CRAPPRM.sql';
+  dbms_lob.createtemporary(vr_dados_rollback, TRUE, dbms_lob.CALL);
+  dbms_lob.open(vr_dados_rollback, dbms_lob.lob_readwrite);       
+  gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, '-- Programa para rollback das informacoes'||chr(13), FALSE);
+  gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, 'BEGIN'||chr(13), FALSE);
+  gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, 'DELETE crapprm a WHERE a.NMSISTEM = ''CRED'' AND a.CDCOOPER = 3 AND a.CDACESSO = ''HAB_LOG_CRPS672'';'||chr(13), FALSE);
+  -- Adiciona TAG de commit 
+  gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, 'COMMIT;'||chr(13), FALSE);
+  gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, 'END;'||chr(13), FALSE);    
+    
+  -- Fecha o arquivo          
+  gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, chr(13), TRUE);      
+    
+  -- Grava o arquivo de rollback
+  GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => 3                               --> Cooperativa conectada
+                                       ,pr_cdprogra  => 'ATENDA'                      --> Programa chamador - utilizamos apenas um existente 
+                                       ,pr_dtmvtolt  => trunc(SYSDATE)                --> Data do movimento atual
+                                       ,pr_dsxml     => vr_dados_rollback             --> Arquivo XML de dados
+                                       ,pr_dsarqsaid => vr_nmdireto||'/'||vr_nmarqbkp --> Path/Nome do arquivo PDF gerado
+                                       ,pr_flg_impri => 'N'                           --> Chamar a impressão (Imprim.p)
+                                       ,pr_flg_gerar => 'S'                           --> Gerar o arquivo na hora
+                                       ,pr_flgremarq => 'N'                           --> remover arquivo apos geracao
+                                       ,pr_nrcopias  => 1                             --> Número de cópias para impressão
+                                       ,pr_des_erro  => vr_dscritic);                 --> Retorno de Erro
+        
+  IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+  END IF;    
+                                                     
+  -- Liberando a memória alocada pro CLOB    
+  dbms_lob.close(vr_dados_rollback);
+  dbms_lob.freetemporary(vr_dados_rollback);   
                                              
   FOR rw_crapcop IN cr_crapcop LOOP  
     vr_dados_rollback := NULL;
@@ -186,6 +225,7 @@ BEGIN
   
   -- Efetuamos a transação  
   COMMIT;
+  dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
   
 EXCEPTION
   WHEN vr_exc_erro THEN
