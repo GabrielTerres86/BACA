@@ -11,6 +11,7 @@ declare
      where epr.cdcooper = wpr.cdcooper
        and epr.nrdconta = wpr.nrdconta
        and epr.nrctremp = wpr.nrctremp
+       and epr.tpemprst = 0
        and epr.inliquid = 0
        and epr.txjuremp = 0
        and (epr.vlsdeved > 0
