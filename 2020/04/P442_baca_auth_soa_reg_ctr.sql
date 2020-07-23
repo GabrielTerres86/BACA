@@ -3,6 +3,7 @@ BEGIN
   DECLARE
     CURSOR cr_crapcop IS
       SELECT cdcooper
+           , LPAD(nrdocnpj,14,'0') nrdocnpj_str
         FROM crapcop
        WHERE flgativo = 1;
   
@@ -20,7 +21,7 @@ BEGIN
          rw_crapcop.cdcooper,
          'USUARIO_AUTH_REG_CTR',
          'Usuario SOA para registros de contratos pc_busca_autenticacao_reg_ctr',
-         '07057169965');
+         rw_crapcop.nrdocnpj_str);
     
     
       INSERT INTO crapprm
@@ -34,7 +35,7 @@ BEGIN
          rw_crapcop.cdcooper,
          'SENHA_AUTH_REG_CTR',
          'Senha SOA para registros de contratos pc_busca_autenticacao_reg_ctr',
-         'ailos2019');
+         'Ailos2020');
     
     END LOOP;
   COMMIT;
