@@ -1,23 +1,4 @@
 begin
- update crawepr e
-    set e.insitest = 0,
-        e.qttentreenv = 0
-  where exists (SELECT w.cdcooper,
-                       w.nrdconta,
-                       w.nrctremp,
-                       d.dtmvtolt,
-                       w.cdoperad,
-                       w.cdagenci
-                  FROM crawepr w, crapdat d
-                 WHERE w.cdfinemp = 77
-                   AND w.insitapr = 6
-                   AND w.insitest = 3
-                   AND w.dtmvtolt = '20/07/2020'
-                   AND w.dtmvtolt < d.dtmvtolt
-                   AND w.cdcooper = d.cdcooper
-                   and w.rowid = e.rowid); 
-           
-  dbms_output.put_line('Registros Atualizados Update: '||sql%rowcount);         
 
   FOR rw_crawepr IN ( SELECT w.cdcooper
                            , w.nrdconta
@@ -61,6 +42,26 @@ begin
     end;             
   END LOOP;
   dbms_output.put_line('Registros Inseridos : '||sql%rowcount);  
+  
+ update crawepr e
+    set e.insitest = 0,
+        e.qttentreenv = 0
+  where exists (SELECT w.cdcooper,
+                       w.nrdconta,
+                       w.nrctremp,
+                       d.dtmvtolt,
+                       w.cdoperad,
+                       w.cdagenci
+                  FROM crawepr w, crapdat d
+                 WHERE w.cdfinemp = 77
+                   AND w.insitapr = 6
+                   AND w.insitest = 3
+                   AND w.dtmvtolt = '20/07/2020'
+                   AND w.dtmvtolt < d.dtmvtolt
+                   AND w.cdcooper = d.cdcooper
+                   and w.rowid = e.rowid); 
+           
+  dbms_output.put_line('Registros Atualizados Update: '||sql%rowcount);  
   --
   commit;
 exception  
