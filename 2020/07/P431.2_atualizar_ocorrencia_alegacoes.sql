@@ -1,0 +1,18 @@
+BEGIN
+
+  UPDATE CRAPOCO
+     SET DSOCORRE = 'Titulo DDA reconhecido pelo Pagador'
+   WHERE CDOCORRE = 51
+     AND CDDBANCO = 85;
+
+  UPDATE CRAPOCO
+     SET DSOCORRE = 'Titulo DDA nao reconhecido pelo Pagador'
+   WHERE CDOCORRE = 52
+     AND CDDBANCO = 85;
+
+  COMMIT;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    CECRED.PC_INTERNAL_EXCEPTION;
+END;
