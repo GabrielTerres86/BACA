@@ -27,6 +27,20 @@ BEGIN
 
   -- PRM
   FOR rw_crapcop IN cr_crapcop LOOP
+    
+  INSERT INTO crapprm
+      (nmsistem,
+       cdcooper,
+       cdacesso,
+       dstexprm,
+       dsvlrprm)
+    VALUES
+      ('CRED',
+       rw_crapcop.cdcooper,
+       'GRAVAM_QTD_MAX_ERRO_LOTE',
+       'Parametro de tentativas para baixa de gravames em lote',
+       '999');
+  
     INSERT INTO crapprm
       (nmsistem,
        cdcooper,
@@ -38,7 +52,7 @@ BEGIN
        rw_crapcop.cdcooper,
        'GRAVAM_DIA_AVISO_SEM_IMG',
        'Parametro de dias para aviso de contrato sem imagem',
-       '0');
+       '15');
   
     INSERT INTO crapprm
       (nmsistem,
@@ -88,7 +102,7 @@ BEGIN
     VALUES
       ('CRED',
        'GRVM0002',
-       'DefiniÃ§Ãµes de contratos/imagens',
+       'Definições de contratos/imagens',
        ' ',
        ' ',
        ' ',
@@ -112,7 +126,7 @@ BEGIN
        DSTEXTAB,
        CDCOOPER)
     VALUES
-      ('CRED', 'GENERI', 0, 'DIGITALIZA',
+      ('CRED', 'GENERI', 0, 'GRAVAMES',
        98,
        'CDC - FISICO - DIVERSOS;0,00;194;0,00',
        rw_crapcop.cdcooper);
@@ -123,9 +137,9 @@ BEGIN
        DSTEXTAB,
        CDCOOPER)
     VALUES
-      ('CRED', 'GENERI', 0, 'DIGITALIZA',
+      ('CRED', 'GENERI', 0, 'GRAVAMES',
        105,
-       'CDC â€“ FISICO â€“ NOVOS;0,00;195;0,00',
+       'CDC – FISICO – NOVOS;0,00;195;0,00',
        rw_crapcop.cdcooper);
        
     INSERT INTO craptab
@@ -134,9 +148,9 @@ BEGIN
        DSTEXTAB,
        CDCOOPER)
     VALUES
-      ('CRED', 'GENERI', 0, 'DIGITALIZA',
+      ('CRED', 'GENERI', 0, 'GRAVAMES',
        107,
-       'CDC â€“ FISICO â€“ USADOS;0,00;202;0,00',
+       'CDC – FISICO – USADOS;0,00;202;0,00',
        rw_crapcop.cdcooper);
     
     INSERT INTO craptab
@@ -145,9 +159,9 @@ BEGIN
        DSTEXTAB,
        CDCOOPER)
     VALUES
-      ('CRED', 'GENERI', 0, 'DIGITALIZA',
+      ('CRED', 'GENERI', 0, 'GRAVAMES',
        109,
-       'CDC â€“ DIGITAL â€“ NOVOS;0,00;193;0,00',
+       'CDC – DIGITAL – NOVOS;0,00;193;0,00',
        rw_crapcop.cdcooper);
       
     INSERT INTO craptab
@@ -156,9 +170,9 @@ BEGIN
        DSTEXTAB,
        CDCOOPER)
     VALUES
-      ('CRED', 'GENERI', 0, 'DIGITALIZA',
+      ('CRED', 'GENERI', 0, 'GRAVAMES',
        110,
-       'CDC â€“ DIGITAL â€“ USADOS;0,00;197;0,00',
+       'CDC – DIGITAL – USADOS;0,00;197;0,00',
        rw_crapcop.cdcooper);
        
     INSERT INTO craptab
@@ -167,7 +181,7 @@ BEGIN
        DSTEXTAB,
        CDCOOPER)
     VALUES
-      ('CRED', 'GENERI', 0, 'DIGITALIZA',
+      ('CRED', 'GENERI', 0, 'GRAVAMES',
        112,
        'CDC - DIGITAL - DIVERSOS;0,00;192;0,00',
        rw_crapcop.cdcooper);
@@ -185,7 +199,7 @@ BEGIN
      0,
      'GRAVAM_DIA_AVISO_SEM_IMG',
      'Parametro de dias para aviso de contrato sem imagem',
-     '0');
+     '15');
 
   INSERT INTO crapprm
     (nmsistem,
