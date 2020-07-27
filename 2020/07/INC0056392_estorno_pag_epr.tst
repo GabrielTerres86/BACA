@@ -60,7 +60,7 @@ declare
 
 
 BEGIN
-  /*
+  
   vr_tab_linha(vr_tab_linha.count) := 'ACENTRA;132870;17193;593,95;baca;531,98;estorn';
   vr_tab_linha(vr_tab_linha.count) := 'CIVIA;68586;24546;204,45;baca;204,88;estorn';
   vr_tab_linha(vr_tab_linha.count) := 'CIVIA;296023;38633;588,6;baca;589,52;estorn';
@@ -69,12 +69,12 @@ BEGIN
   vr_tab_linha(vr_tab_linha.count) := 'CREVISC;122319;15690;277,44;baca;237,8;estorn';
   vr_tab_linha(vr_tab_linha.count) := 'CREVISC;70505;15826;160,31;baca;321,24;estorn';
   vr_tab_linha(vr_tab_linha.count) := 'EVOLUA;106267;13910;2.000,00;baca;159,69;estorn';
-  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;7717490;1134699;398,59;baca;399,07;estorn';*/
- -- vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;9479880;1042327;591,19;baca;96,02;estorn';
+  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;7717490;1134699;398,59;baca;399,07;estorn';
+  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;9479880;1042327;591,19;baca;96,02;estorn';
   vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6170790;789037;486,89;baca;486,89;estorn';
-  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6170790;789037;495;baca;495;estorn';
-  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6170790;789037;486,89;baca;490,23;estorn';
-  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;9375295;1156138;566,1;baca;566,58;estorn';/*
+--  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6170790;789037;495;baca;495;estorn';
+--  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6170790;789037;486,89;baca;490,23;estorn';
+  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;9375295;1156138;566,1;baca;566,58;estorn';
   vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6630740;1108936;773,21;baca;773,21;estorn';
   vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6882250;1921062;157,61;baca;160,71;estorn';
   vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;9452788;1682642;496,59;baca;496,59;estorn';
@@ -98,7 +98,7 @@ BEGIN
   vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;3827330;1510622;5.000,00;baca;5000;estorn';
   vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;8187118;958507;708;Baca;708;estorn';
   vr_tab_linha(vr_tab_linha.count) := 'VIACREDI AV;348511;61858;203,59;baca;203,59;estorn';
-  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI AV;431990;134784;171,5;baca;171,5;estorn';  */
+  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI AV;431990;134784;171,5;baca;171,5;estorn';  
 
   FOR i IN vr_tab_linha.first..vr_tab_linha.count-1 LOOP
   

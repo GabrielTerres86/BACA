@@ -46,17 +46,17 @@ declare
        AND e.nrctremp = pr_nrctremp; 
   rw_crapepr_2 cr_crapepr_2%ROWTYPE;
   
-  CURSOR cr_craplem (pr_nmrescop VARCHAR2,
+  CURSOR cr_craplem (pr_cdcooper NUMBER,
                      pr_nrdconta NUMBER,
                      pr_nrctremp NUMBER,
                      pr_dtmvtolt DATE) IS
-    SELECT e.*
+    SELECT l.*
       FROM craplem l
      WHERE l.cdcooper = pr_cdcooper
        AND l.dtmvtolt >= pr_dtmvtolt
        AND l.cdhistor = 2702
-       AND e.nrdconta = pr_nrdconta
-       AND e.nrctremp = pr_nrctremp; 
+       AND l.nrdconta = pr_nrdconta
+       AND l.nrctremp = pr_nrctremp; 
   rw_craplem cr_craplem%ROWTYPE;
   
   
@@ -307,7 +307,7 @@ declare
   END pc_estorno_pagamento_b;
 
 BEGIN
-  /*
+  
 vr_tab_linha(vr_tab_linha.count) := 'ACREDICOOP;208493;497567;329,43;Baca;329,43;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'ACREDICOOP;90069;224449;156,47;Baca;156,47;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'ACREDICOOP;454664;222629;208,31;Baca;208,31;Estorno prejuizo -2386';
@@ -340,12 +340,12 @@ vr_tab_linha(vr_tab_linha.count) := 'UNILOS;49476;222084;151,87;Baca;151,87;Esto
 vr_tab_linha(vr_tab_linha.count) := 'UNILOS;38369;210831;7.427,00;Baca;7.427,00;Estorno Prejuizo - 2386';
 vr_tab_linha(vr_tab_linha.count) := 'UNILOS;38369;283;1.000,00;Baca;1000;Estorno Prejuizo - 2386';
 vr_tab_linha(vr_tab_linha.count) := 'UNILOS;38369;211394;11.573,00;Baca;11.573,00;Não é possivel fazer estorno, tem lançamento de abono';
-vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;2444810;95215;375,97;baca;375,97;Estorno prejuizo -2386';*/
----> vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;7254563;548472;561,17;baca;561,17;Estorno prejuizo -2386';
----> vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;9175466;908768;102,37;baca;102,37;Estorno prejuizo -2386';
----> vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;9175466;908776;102,37;baca;102,37;Estorno prejuizo -2386';
----> vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;2617951;437218;215,1;baca;215,1;Estorno prejuizo -2386';
-/*
+vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;2444810;95215;375,97;baca;375,97;Estorno prejuizo -2386';
+vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;7254563;548472;561,17;baca;561,17;Estorno prejuizo -2386';
+vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;9175466;908768;102,37;baca;102,37;Estorno prejuizo -2386';
+vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;9175466;908776;102,37;baca;102,37;Estorno prejuizo -2386';
+vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;2617951;437218;215,1;baca;215,1;Estorno prejuizo -2386';
+
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6395376;718467;229,45;baca;229,45;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;7977336;1002517;443,02;baca;443,02;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;2444151;890825;152,54;baca;152,54;Estorno prejuizo -2386';
@@ -356,7 +356,7 @@ vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;831719;933386;1.346,54;baca;1.346,
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6869602;486628;275,9;baca;275,9;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;9456996;1390535;803,51;baca;803,51;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6301045;401383;334,87;baca;334,87;Estorno prejuizo -2386';
-vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6301045;401383;334,87;baca;334,87;Estorno prejuizo -2386';
+--vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6301045;401383;334,87;baca;334,87;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6590420;189480;565,46;baca;565,46;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6813461;80125;202,08;baca;202,08;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;2562200;1180447;903,82;baca;903,82;Estorno prejuizo -2386';
@@ -382,7 +382,7 @@ vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6939988;204507;752,38;baca;752,38;
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;9358137;1123101;349,13;baca;349,13;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;2379392;809694;401,88;baca;401,88;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;7513968;681775;253,09;baca;253,09;Estorno prejuizo -2386';
-vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;7513968;681775;253,09;baca;253,09;Estorno prejuizo -2386';
+--vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;7513968;681775;253,09;baca;253,09;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;8366349;854230;74,67;baca;42,73;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;8366349;854221;74,67;baca;31,94;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;2202026;894041;541,79;baca;541,79;Estorno prejuizo -2386';
@@ -415,7 +415,7 @@ vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;80035744;162781;452,88;baca;452,88
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;2065460;760607;110,81;baca;110,81;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;2065460;69018;110,81;baca;110,81;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;3964914;38344;502,29;baca;502,29;Estorno prejuizo -2386';
-vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;3964914;38344;482,7;baca;482,7;Estorno prejuizo -2386';
+--vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;3964914;38344;482,7;baca;482,7;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;6996302;333567;170,37;baca;170,37;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;7560044;232050;205,9;baca;205,9;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;3886891;774709;198,73;baca;198,73;Estorno prejuizo -2386';
@@ -489,7 +489,7 @@ vr_tab_linha(vr_tab_linha.count) := 'VIACREDI AV;3076245;58966;500;baca;500;Esto
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI AV;2958147;8713;730;baca;730;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI AV;125458;67240;261,87;baca;261,87;Estorno prejuizo -2386';
 vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;7286031;111532;749,76;baca;749,76;Estorno prejuizo -2386';
-*/
+
 FOR i IN vr_tab_linha.first..vr_tab_linha.count-1 LOOP
   
   vr_tab_campos := gene0002.fn_quebra_string(pr_string => vr_tab_linha(i), 
@@ -514,9 +514,9 @@ FOR i IN vr_tab_linha.first..vr_tab_linha.count-1 LOOP
       dbms_output.put_line(vr_tab_linha(i));   
       CLOSE cr_crapepr_2;
       
-      OPEN cr_craplem (pr_nmcooper => vr_nmcooper,
-                       pr_nrdconta => vr_nrdconta,
-                       pr_nrctremp => vr_nrctremp,
+      OPEN cr_craplem (pr_cdcooper => rw_crapepr_2.cdcooper,
+                       pr_nrdconta => rw_crapepr_2.nrdconta,
+                       pr_nrctremp => rw_crapepr_2.nrctremp,
                        pr_dtmvtolt => vr_dtlanct_estorno);
       FETCH cr_craplem INTO rw_craplem;
       IF cr_craplem%FOUND THEN
