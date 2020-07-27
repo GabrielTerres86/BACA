@@ -67,6 +67,8 @@ DECLARE
   vr_nrdmeses       PLS_INTEGER;
   vr_dsdidade       VARCHAR2(50);
   vr_flgenvem       INTEGER;
+  vr_tab_prst       segu0003.typ_tab_prestamista;   --> Tabela com totais calculados
+  vr_total_conta    NUMBER;
 
   -- Definicao do tipo de array para nome origem do módulo
   TYPE typ_tab_prefixo IS VARRAY(16) OF VARCHAR2(5);
@@ -432,6 +434,28 @@ BEGIN
         vr_contrcpf := rw_contas.nrcpfcgc; -- novo cpf do loop
         vr_vlenviad := rw_contas.vlsdeved; -- novo contrato 
         vr_vltotenv := rw_contas.vlsdeved; -- inicia novo totalizador
+        vr_tab_prst.delete;
+        vr_total_conta := 0;
+        -- Buscamos o saldo devedor dos emprestimos
+        SEGU0003.pc_verifica_saldo_imp(pr_cdcooper => rw_crapcop.cdcooper
+                                      ,pr_nrdconta => rw_contas.nrdconta
+                                      ,pr_nrctremp => 0
+                                      ,pr_cdagenci => 1
+                                      ,pr_nrdcaixa => 1
+                                      ,pr_cdoperad => 1
+                                      ,pr_nmdatela => 'ATENDA'
+                                      ,pr_idorigem => 7
+                                      ,pr_tab_prst => vr_tab_prst
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+        FOR idx IN vr_tab_prst.FIRST .. vr_tab_prst.LAST LOOP
+          vr_total_conta := nvl(vr_total_conta,0) + vr_tab_prst(idx).vlsdeved;
+        END LOOP;
+        -- Total da conta menor que o minimo
+        IF vr_total_conta < vr_tab_vlminimo THEN
+          CONTINUE;
+        END IF;
+        
         -- Rotina responsavel por calcular a quantidade de anos e meses entre as datas
         CADA0001.pc_busca_idade(pr_dtnasctl => rw_contas.dtnasctl -- Data de Nascimento
                                ,pr_dtmvtolt => rw_contas.dtmvtolt -- Data da utilizacao atual
