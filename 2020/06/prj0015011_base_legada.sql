@@ -66,7 +66,6 @@ DECLARE
   vr_nrdeanos       PLS_INTEGER;
   vr_nrdmeses       PLS_INTEGER;
   vr_dsdidade       VARCHAR2(50);
-  vr_flgenvem       INTEGER;
   vr_tab_prst       segu0003.typ_tab_prestamista;   --> Tabela com totais calculados
   vr_total_conta    NUMBER;
 
@@ -428,7 +427,6 @@ BEGIN
                               ,pr_dtiniseg => vr_dtiniseg) LOOP
       
       vr_flgnenvi := 0;
-      vr_flgenvem := 0;
       -- controla o cpf para agrupar os valores enviados
       IF vr_contrcpf IS NULL OR vr_contrcpf <> rw_contas.nrcpfcgc THEN 
         vr_contrcpf := rw_contas.nrcpfcgc; -- novo cpf do loop
@@ -468,8 +466,24 @@ BEGIN
         vr_vltotenv := vr_vltotenv + rw_contas.vlsdeved;
         IF vr_vltotenv > vr_tab_vlmaximo THEN
           vr_vlenviad := vr_tab_vlmaximo - (vr_vltotenv - rw_contas.vlsdeved); -- enviamos a diferença para preencher até o maximo
-          -- enviar email de maximo
-          vr_flgenvem := 1;
+          vr_dscorpem := 'Ola, o contrato de emprestimo abaixo ultrapassou o valor limite maximo coberto pela seguradora, segue dados:<br /><br />
+                          Cooperativa: ' || rw_crapcop.nmrescop || '<br />
+                          Conta: '       || rw_contas.nrdconta || '<br />
+                          Nome: '        || rw_contas.nmprimtl || '<br />
+                          Contrato Empréstimo: '|| rw_contas.nrctremp || '<br />
+                          Proposta seguro: '    || vr_nrctrseg || '<br />
+                          Valor Empréstimo: '   || rw_contas.vlsdeved || '<br />
+                          Valor saldo devedor total: '|| vr_total_conta || '<br />
+                          Valor Limite Máximo: ' || vr_tab_vlmaximo;
+                    
+          -- Por fim, envia o email
+          gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra,
+                                     pr_des_destino => vr_destinatario_email,
+                                     pr_des_assunto => 'Valor limite maximo excedido ',
+                                     pr_des_corpo   => vr_dscorpem,
+                                     pr_des_anexo   => NULL,
+                                     pr_flg_enviar  => 'S',
+                                     pr_des_erro    => vr_dscritic); 
           -- Contratos excedentes acima do maximo, nao serao enviados mas devem ser colocados na tabela
           IF vr_vlenviad <= 0 THEN
             vr_flgnenvi := 1; -- flag para nao enviar no arquivo mas para inserir na tabela
@@ -555,27 +569,6 @@ BEGIN
         vr_nrctrseg := rw_crawseg.nrctrseg;
       END IF;
       CLOSE cr_crawseg;
-      
-      vr_dscorpem := 'Ola, o contrato de emprestimo abaixo ultrapassou o valor limite maximo coberto pela seguradora, segue dados:<br /><br />
-                      Cooperativa: ' || rw_crapcop.nmrescop || '<br />
-                      Conta: '       || rw_contas.nrdconta || '<br />
-                      Nome: '        || rw_contas.nmprimtl || '<br />
-                      Contrato Empréstimo: '|| rw_contas.nrctremp || '<br />
-                      Proposta seguro: '    || vr_nrctrseg || '<br />
-                      Valor Empréstimo: '   || rw_contas.vlsdeved || '<br />
-                      Valor saldo devedor total: '|| vr_vltotenv || '<br />
-                      Valor Limite Máximo: ' || vr_tab_vlmaximo;
-                
-      -- Por fim, envia o email
-      gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra,
-                                 pr_des_destino => vr_destinatario_email,
-                                 pr_des_assunto => 'Valor limite maximo excedido ',
-                                 pr_des_corpo   => vr_dscorpem,
-                                 pr_des_anexo   => NULL,
-                                 pr_flg_enviar  => 'S',
-                                 pr_des_erro    => vr_dscritic); 
-      
-      
       
       BEGIN
         INSERT INTO tbseg_prestamista
