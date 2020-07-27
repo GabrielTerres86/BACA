@@ -21,6 +21,8 @@ DECLARE
   vr_nmarqimp   VARCHAR2(100);
   vr_nmarqbkp   VARCHAR2(100);
   vr_nmdireto   VARCHAR2(4000); 
+  -- Declarando handle do Arquivo
+  vr_ind_arquivo utl_file.file_type;
   
   -- Código do programa
   vr_cdprogra     CONSTANT crapprg.cdprogra%TYPE := 'JB_ARQPRST';
@@ -38,7 +40,8 @@ DECLARE
 
   vr_exc_erro  EXCEPTION;
   vr_exc_saida EXCEPTION;
-  
+  vr_typ_saida VARCHAR2(100);
+  vr_des_saida VARCHAR2(2000);
   
   vr_flgprestamista varchar2(1) := 'N';
   vr_flgdps         varchar2(1) := 'N';
@@ -50,6 +53,20 @@ DECLARE
   vr_qtprecal       NUMBER := 0;
   vr_nrctrseg       crapseg.nrctrseg%TYPE;
   vr_dtiniseg       crapepr.dtmvtolt%TYPE;
+  vr_tab_vlmaximo   NUMBER;
+  vr_tab_vlminimo   NUMBER;
+  vr_tab_nrdeanos   NUMBER;
+  vr_flgnenvi       INTEGER;
+  vr_contrcpf       tbseg_prestamista.nrcpfcgc%TYPE := NULL;
+  vr_vlenviad       NUMBER;
+  vr_vltotenv       NUMBER;
+  vr_vlmaximo       NUMBER;
+  vr_dscorpem       VARCHAR2(2000);
+  vr_nmrescop       crapcop.nmrescop%TYPE;
+  vr_nrdeanos       PLS_INTEGER;
+  vr_nrdmeses       PLS_INTEGER;
+  vr_dsdidade       VARCHAR2(50);
+  vr_flgenvem       INTEGER;
 
   -- Definicao do tipo de array para nome origem do módulo
   TYPE typ_tab_prefixo IS VARRAY(16) OF VARCHAR2(5);
@@ -86,6 +103,7 @@ DECLARE
   CURSOR cr_crapcop IS
     SELECT c.cdcooper
           ,c.dsdircop
+          ,c.nmrescop
       FROM crapcop c
      WHERE c.flgativo = 1 -- Somente ativas
        AND c.cdcooper <> 3 -- nao será gerado para central
@@ -130,36 +148,78 @@ DECLARE
      ORDER BY f.tptelefo ASC;
   rw_craptfc cr_craptfc%ROWTYPE;
   
-  -- Cursor principal de contas com contratos ativos em linhas de crédito com prestamista
+  -- Leitura dos associados e seus empréstimos em aberto
   CURSOR cr_contas(pr_cdcooper IN crapcop.cdcooper%TYPE
-                  ,pr_dtiniseg IN crapepr.dtmvtolt%TYPE) IS
-    SELECT a.nrdconta
-          ,e.nrctremp
-          ,t.idseqttl
-          ,DECODE(a.cdsexotl, 1, '2', 2, '1', '0') cdsexotl -- sexo
-          ,a.nrcpfcgc
-          ,a.nmprimtl
-          ,a.dtnasctl
-          ,e.dtmvtolt
-      FROM crapass a, crapepr e, craplcr l, crapttl t
-     WHERE a.cdcooper = pr_cdcooper
-       AND e.cdcooper = a.cdcooper
-       AND e.nrdconta = a.nrdconta
-       AND l.cdcooper = e.cdcooper
-       AND l.cdlcremp = e.cdlcremp
-       AND l.flgsegpr = 1 -- liha de credito que permite prestamista
-       AND a.inpessoa = 1 -- pessoa fisica
-       AND e.inliquid = 0 -- nao liquidado
-       AND e.inprejuz = 0 -- sem prejuizo
-       AND e.dtmvtolt >= pr_dtiniseg
-       AND t.cdcooper = a.cdcooper
-       AND t.nrdconta = a.nrdconta
-       AND t.idseqttl = 1
-       AND NOT EXISTS (SELECT 1  -- garantir que nao existe na tbseg
-                         FROM tbseg_prestamista p
-                        WHERE p.cdcooper = e.cdcooper
-                          AND p.nrdconta = e.nrdconta
-                          AND e.nrctremp IN (nrctremp));
+                  ,pr_dtiniseg DATE) IS
+      select a.nrcpfcgc
+            ,a.inmatric
+            ,a.nrdconta
+            ,a.nmprimtl
+            ,a.cdagenci
+            ,a.dtnasctl
+            ,a.nrctremp
+            ,a.vlsdeved
+            ,a.dtmvtolt
+            ,a.cdsexotl
+            ,ROW_NUMBER () OVER (PARTITION BY a.nrcpfcgc
+                                     ORDER BY a.nrcpfcgc
+                                             ,a.inmatric DESC
+                                             ,a.nrdconta) sqregcpf
+            ,COUNT (*) OVER (PARTITION BY a.nrcpfcgc)     qtregcpf
+        FROM ( SELECT ass.nrcpfcgc
+                      ,ass.inmatric
+                      ,ass.nrdconta
+                      ,ass.nmprimtl
+                      ,ass.cdagenci
+                      ,ass.dtnasctl
+                      ,epr.nrctremp
+                      ,epr.vlsdeved
+                      ,epr.dtmvtolt
+                      ,ass.cdsexotl
+                  FROM crapepr epr
+                      ,crapass ass
+                      ,craplcr lcr
+                 WHERE ass.cdcooper = pr_cdcooper
+                   AND ass.inpessoa = 1 --> Somente fisica
+                   AND ass.cdcooper = epr.cdcooper
+                   AND ass.nrdconta = epr.nrdconta
+                   AND epr.dtmvtolt >= pr_dtiniseg
+                   AND epr.inliquid = 0     --> Em aberto
+                   AND epr.inprejuz = 0
+                   AND lcr.cdcooper = epr.cdcooper
+                   AND lcr.cdlcremp = epr.cdlcremp
+                   AND lcr.flgsegpr = 1
+                UNION
+                SELECT ass.nrcpfcgc 
+                      ,ass.inmatric
+                      ,ass.nrdconta
+                      ,ass.nmprimtl
+                      ,ass.cdagenci
+                      ,ass.dtnasctl
+                      ,epr.nrctremp
+                      ,epr.vlsdeved
+                      ,epr.dtmvtolt
+                      ,ass.cdsexotl
+                       FROM crapepr epr
+                          ,crapass ass
+                          ,craplcr lcr
+                      WHERE ass.cdcooper = 9 -->cooperativa 9
+                        AND ass.inpessoa = 1 --> Somente fisica
+                        AND ass.cdcooper = epr.cdcooper
+                        AND ass.nrdconta = epr.nrdconta
+                        AND epr.dtmvtolt < '01/01/2017' --> todos os registros antes do dia primeiro
+                        AND epr.inliquid = 0 --> Em aberto
+                        AND epr.inprejuz = 0
+                        AND lcr.cdcooper = epr.cdcooper
+                        AND lcr.cdlcremp = epr.cdlcremp
+                        AND lcr.flgsegpr = 1
+                        AND ass.nrdconta BETWEEN 900001 and 912654 --> somente as contas que foram incorporadas (Incorporação Transulcred -> Transpocred)
+                        AND pr_cdcooper = 9 -- Apenas para Cooperativa 9, (Incorporação Transulcred -> Transpocred)
+                        ) a
+    ORDER BY a.nrcpfcgc
+            ,a.inmatric DESC
+            ,a.nrdconta
+            ,sqregcpf;
   rw_contas cr_contas%ROWTYPE;
   
   CURSOR cr_crawseg(pr_cdcooper IN crawseg.cdcooper%TYPE
@@ -182,6 +242,15 @@ DECLARE
        AND p.tpseguro = 4;
    rw_crapseg cr_crapseg%ROWTYPE;
   
+  -- Busca da idade limite
+  CURSOR cr_craptsg(pr_cdcooper IN crapseg.cdcooper%TYPE) IS
+    SELECT nrtabela
+      FROM craptsg
+     WHERE cdcooper = pr_cdcooper
+       AND tpseguro = 4
+       AND tpplaseg = 1
+       AND cdsegura = 5011; -- SEGURADORA CHUBB
+           
   -- Validacao de diretorio
   PROCEDURE pc_valida_direto(pr_nmdireto IN VARCHAR2
                              ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
@@ -255,10 +324,6 @@ BEGIN
     vr_nmdircop := gene0001.fn_diretorio(pr_tpdireto => 'C', --> /usr/coop
                                          pr_cdcooper => rw_crapcop.cdcooper);
   
-    vr_nmarquiv := vr_vet_prefixo(rw_crapcop.cdcooper) || '_' ||
-                   REPLACE(to_char(rw_crapdat.dtmvtolt, 'YYYY/MM/DD'), '/', '') || '_' ||
-                   gene0002.fn_mask(vr_nrsequen, '99999') || 'MOV.txt';
-  
     -- Leitura da sequencia na tab
     vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_crapcop.cdcooper,
                                               pr_nmsistem => 'CRED',
@@ -268,9 +333,13 @@ BEGIN
                                               pr_tpregist => 0);
   
     vr_nrsequen := to_number(substr(vr_dstextab, 139, 5)) + 1;
-    vr_pgtosegu := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,51,7));
+    -- Valor máximo da posição 14 a 26
+    vr_tab_vlmaximo := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,14,12));
+    -- Valor mínimo da posição 27 a 39
+    vr_tab_vlminimo := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,27,12));
     -- Data de inicio dos seguros da posição 40 a 50
     vr_dtiniseg := to_date(SUBSTR(vr_dstextab,40,10),'dd/mm/yyyy');
+    vr_pgtosegu := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,51,7));
     
     -- Verificar se usa tabela juros
     vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_crapcop.cdcooper,
@@ -285,10 +354,40 @@ BEGIN
     ELSE
       vr_inusatab := TRUE;
     END IF;
+    
+    vr_nmarquiv := vr_vet_prefixo(rw_crapcop.cdcooper) || '_' ||
+                   REPLACE(to_char(rw_crapdat.dtmvtolt, 'YYYY/MM/DD'), '/', '') || '_' ||
+                   gene0002.fn_mask(vr_nrsequen, '99999') || 'MOV.txt';
 
-    -- Inicializa CLOB
-    dbms_lob.createtemporary(vr_clob, TRUE, dbms_lob.CALL);
-    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+    vr_nmdireto := gene0001.fn_param_sistema('CRED',vr_cdcooper,'ROOT_MICROS');
+    
+    -- Depois criamos o diretorio do projeto
+    pc_valida_direto(pr_nmdireto => vr_nmdireto || 'cpd/bacas/PRJ0015011'
+                    ,pr_dscritic => vr_dscritic);
+    
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+       RAISE vr_exc_erro;
+    END IF;  
+    
+    vr_nmdireto := vr_nmdireto||'cpd/bacas/PRJ0015011/'||rw_crapcop.dsdircop; 
+
+    -- Depois criamos o diretorio da coop
+    pc_valida_direto(pr_nmdireto => vr_nmdireto
+                    ,pr_dscritic => vr_dscritic);
+    
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;  
+    -- Abre arquivo em modo de escrita (W)
+    GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdircop || '/arq/'       --> Diretório do arquivo
+                            ,pr_nmarquiv => vr_nmarquiv         --> Nome do arquivo
+                            ,pr_tipabert => 'W'                          --> Modo de abertura (R,W,A)
+                            ,pr_utlfileh => vr_ind_arquivo               --> Handle do arquivo aberto
+                            ,pr_des_erro => vr_dscritic);                --> Erro
+    IF vr_dscritic IS NOT NULL THEN
+      -- Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
         
     -- Atualiza sequencia (posições 139 a 144 do string)
     BEGIN
@@ -309,71 +408,58 @@ BEGIN
         RAISE vr_exc_saida;
     END;
     
+    -- Buscar idade limite
+    OPEN cr_craptsg(rw_crapcop.cdcooper);
+    FETCH cr_craptsg
+     INTO vr_tab_nrdeanos;
+    -- Se não tiver encontrado
+    IF cr_craptsg%NOTFOUND THEN
+      -- Usar 0
+      vr_tab_nrdeanos := 0;
+    END IF;
+    CLOSE cr_craptsg;
+    
+    vr_idseqtra := 0;
+    vr_contrcpf := NULL;
     --
     FOR rw_contas IN cr_contas(pr_cdcooper => rw_crapcop.cdcooper
                               ,pr_dtiniseg => vr_dtiniseg) LOOP
       
-      -- Validar necessidade de adição na tabela - aqui já é validado o saldo devedor 
-      SEGU0003.pc_validar_prestamista(pr_cdcooper        => rw_crapcop.cdcooper
-                                     ,pr_nrdconta        => rw_contas.nrdconta
-                                     ,pr_nrctremp        => rw_contas.nrctremp
-                                     ,pr_cdagenci        => 1
-                                     ,pr_nrdcaixa        => 1
-                                     ,pr_cdoperad        => 1
-                                     ,pr_nmdatela        => 'ATENDA'
-                                     ,pr_idorigem        => 7
-                                     ,pr_valida_proposta => 'N'
-                                     ,pr_sld_devedor     => vr_vlproposta
-                                     ,pr_flgprestamista  => vr_flgprestamista
-                                     ,pr_flgdps          => vr_flgdps
-                                     ,pr_dsmotcan        => vr_dsmotcan
-                                     ,pr_cdcritic        => vr_cdcritic
-                                     ,pr_dscritic        => vr_dscritic);
-      --Se ocorreu erro
-      IF vr_dscritic IS NOT NULL THEN
-        --Levantar Excecao
-        RAISE vr_exc_saida;
-      END IF;
+      vr_flgnenvi := 0;
+      vr_flgenvem := 0;
+      -- controla o cpf para agrupar os valores enviados
+      IF vr_contrcpf IS NULL OR vr_contrcpf <> rw_contas.nrcpfcgc THEN 
+        vr_contrcpf := rw_contas.nrcpfcgc; -- novo cpf do loop
+        vr_vlenviad := rw_contas.vlsdeved; -- novo contrato 
+        vr_vltotenv := rw_contas.vlsdeved; -- inicia novo totalizador
+        -- Rotina responsavel por calcular a quantidade de anos e meses entre as datas
+        CADA0001.pc_busca_idade(pr_dtnasctl => rw_contas.dtnasctl -- Data de Nascimento
+                               ,pr_dtmvtolt => rw_contas.dtmvtolt -- Data da utilizacao atual
+                               ,pr_nrdeanos => vr_nrdeanos         -- Numero de Anos
+                               ,pr_nrdmeses => vr_nrdmeses         -- Numero de meses
+                               ,pr_dsdidade => vr_dsdidade         -- Descricao da idade
+                               ,pr_des_erro => vr_dscritic);       -- Mensagem de Erro
 
-      -- Validamos se vamos criar o registro
-      IF vr_flgprestamista = 'N' THEN
-        CONTINUE;
+      ELSE
+        vr_vltotenv := vr_vltotenv + rw_contas.vlsdeved;
+        IF vr_vltotenv > vr_tab_vlmaximo THEN
+          vr_vlenviad := vr_tab_vlmaximo - (vr_vltotenv - rw_contas.vlsdeved); -- enviamos a diferença para preencher até o maximo
+          -- enviar email de maximo
+          vr_flgenvem := 1;
+          -- Contratos excedentes acima do maximo, nao serao enviados mas devem ser colocados na tabela
+          IF vr_vlenviad <= 0 THEN
+            vr_flgnenvi := 1; -- flag para nao enviar no arquivo mas para inserir na tabela
+          END IF;
+        ELSE 
+          vr_vlenviad := rw_contas.vlsdeved; -- envia o valor cheio
+        END IF;
+      END IF;
+      -- Se passar a idade limite parametrizada
+      IF vr_nrdeanos > vr_tab_nrdeanos THEN
+        continue;
       END IF;
       
-      /* Definir como zero para passar no in out */
-      vr_sld_devedor := 0;
-      vr_vltotpre    := 0;
-      vr_qtprecal    := 0;
-      
-      EMPR0001.pc_saldo_devedor_epr(pr_cdcooper   => rw_crapcop.cdcooper,    --> Cooperativa conectada
-                                    pr_cdagenci   => 1,                      --> Codigo da agencia
-                                    pr_nrdcaixa   => 1,                      --> Numero do caixa
-                                    pr_cdoperad   => 1,                      --> Codigo do operador
-                                    pr_nmdatela   => 'ATENDA',               --> Nome da tela conectada
-                                    pr_idorigem   => 7,                      --> Indicador da origem da chamada
-                                    pr_nrdconta   => rw_contas.nrdconta,     --> Conta do associado
-                                    pr_idseqttl   => rw_contas.idseqttl,     --> Sequencia de titularidade da conta
-                                    pr_rw_crapdat => rw_crapdat,             --> Vetor com dados de parametro (CRAPDAT)
-                                    pr_nrctremp   => rw_contas.nrctremp,     --> Numero contrato emprestimo
-                                    pr_cdprogra   => 'SEGU0003',             --> Programa conectado
-                                    pr_inusatab   => vr_inusatab,            --> Indicador de utilizacão da tabela
-                                    pr_flgerlog   => 'N',                    --> Gerar log S/N
-                                    pr_vlsdeved   => vr_sld_devedor,         --> Saldo devedor calculado
-                                    pr_vltotpre   => vr_vltotpre,            --> Valor total das prestacães
-                                    pr_qtprecal   => vr_qtprecal,            --> Parcelas calculadas
-                                    pr_des_reto   => vr_des_reto,            --> Retorno OK / NOK
-                                    pr_tab_erro   => vr_tab_erro);           --> Tabela com possives erros   
-      -- Se houve retorno de erro
-      IF vr_des_reto = 'NOK' THEN
-        -- Extrair o codigo e critica de erro da tabela de erro
-        vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
-        vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
-        -- Limpar tabela de erros
-        vr_tab_erro.DELETE;
-        RAISE vr_exc_saida; -- encerra programa
-      END IF;
-
-      vr_vlprodvl := vr_sld_devedor * (vr_pgtosegu/100); -- Produto – Valor
+      vr_vlprodvl := rw_contas.vlsdeved * (vr_pgtosegu/100); -- Produto – Valor
       vr_nrapolic := fn_sequence('TBSEG_PRESTAMISTA', 'SEQCERTIFICADO', 0);
       
       -- Dados do endereço
@@ -446,6 +532,27 @@ BEGIN
       END IF;
       CLOSE cr_crawseg;
       
+      vr_dscorpem := 'Ola, o contrato de emprestimo abaixo ultrapassou o valor limite maximo coberto pela seguradora, segue dados:<br /><br />
+                      Cooperativa: ' || rw_crapcop.nmrescop || '<br />
+                      Conta: '       || rw_contas.nrdconta || '<br />
+                      Nome: '        || rw_contas.nmprimtl || '<br />
+                      Contrato Empréstimo: '|| rw_contas.nrctremp || '<br />
+                      Proposta seguro: '    || vr_nrctrseg || '<br />
+                      Valor Empréstimo: '   || rw_contas.vlsdeved || '<br />
+                      Valor saldo devedor total: '|| vr_vltotenv || '<br />
+                      Valor Limite Máximo: ' || vr_tab_vlmaximo;
+                
+      -- Por fim, envia o email
+      gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra,
+                                 pr_des_destino => vr_destinatario_email,
+                                 pr_des_assunto => 'Valor limite maximo excedido ',
+                                 pr_des_corpo   => vr_dscorpem,
+                                 pr_des_anexo   => NULL,
+                                 pr_flg_enviar  => 'S',
+                                 pr_des_erro    => vr_dscritic); 
+      
+      
+      
       BEGIN
         INSERT INTO tbseg_prestamista
             (cdcooper,
@@ -513,8 +620,7 @@ BEGIN
             ,rw_contas.dtmvtolt -- Data referencia para cobranca
             ,vr_dtfimvig -- fim da vigencia
             ,rw_crapdat.dtmvtolt -- Envio mensal dos endossos
-             )
-            RETURNING idseqtra INTO vr_idseqtra;
+             );
         
       EXCEPTION
         WHEN OTHERS THEN
@@ -527,8 +633,7 @@ BEGIN
       gene0002.pc_escreve_xml(vr_dados_rollback
                             , vr_texto_rollback
                             , 'DELETE FROM tbseg_prestamista ' || chr(13) || 
-                              ' WHERE idseqtra = ' || vr_idseqtra || chr(13) ||
-                              '   AND cdcooper = ' || rw_crapcop.cdcooper || chr(13) ||
+                              ' WHERE cdcooper = ' || rw_crapcop.cdcooper || chr(13) ||
                               '   AND nrdconta = ' || rw_contas.nrdconta  || chr(13) ||
                               '   AND nrctremp = ' || rw_contas.nrctremp  || '; ' ||chr(13)||chr(13), FALSE);     
 
@@ -597,9 +702,9 @@ BEGIN
       vr_linha_txt := vr_linha_txt || RPAD('MI', 2, ' ');    -- Tipo Segurado
       vr_linha_txt := vr_linha_txt || 'BCV012';              -- Produto - Cód.Produto
       vr_linha_txt := vr_linha_txt || '1';                   -- Produto - Plano
-      vr_linha_txt := vr_linha_txt || LPAD(REPLACE(vr_vlprodvl, ',', '.'), 12, 0);                     -- Produto – Valor
+      vr_linha_txt := vr_linha_txt || LPAD(replace(to_char(vr_vlprodvl,'fm99999990d00'), ',', '.'), 12, 0); -- Produto – Valor
       vr_linha_txt := vr_linha_txt || LPAD('O', 1, ' ');                                               -- Tipo de Cobrança
-      vr_linha_txt := vr_linha_txt || LPAD(REPLACE(vr_sld_devedor, ',', '.'), 30, 0);                  -- Valor do Saldo Devedor Atualizado
+      vr_linha_txt := vr_linha_txt || LPAD(replace(to_char(vr_vlenviad,'fm999999999999990d00'), ',', '.'), 30, 0); -- Valor do Saldo Devedor Atualizado
       vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date(rw_contas.dtmvtolt), 'RRRR-MM-DD'), 10, 0); -- Data Referência para Cobrança
       vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date(vr_dtfimvig), 'RRRR-MM-DD'), 10, 0);        -- Data final de vigência contrato
     
@@ -631,55 +736,45 @@ BEGIN
       -- Opcionais nao enviados
     
       vr_linha_txt := vr_linha_txt || chr(13);
-    
-      -- escreve linha no arquivo xml
-      GENE0002.pc_escreve_xml(pr_xml            => vr_clob,
-                              pr_texto_completo => vr_xml_temp,
-                              pr_texto_novo     => vr_linha_txt);
-    
+      
+      IF vr_flgnenvi = 0 THEN
+        -- Escrever Linha do Arquivo 
+        GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_linha_txt);
+        vr_idseqtra := vr_idseqtra + 1;
+      END IF;
+      
     END LOOP;
   
-    -- Encerrar o Clob
-    GENE0002.pc_escreve_xml(pr_xml            => vr_clob,
-                            pr_texto_completo => vr_xml_temp,
-                            pr_texto_novo     => chr(13),
-                            pr_fecha_xml      => TRUE);
+    -- Fechar o arquivo
+    GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);
     
-    vr_nmdireto := gene0001.fn_param_sistema('CRED',vr_cdcooper,'ROOT_MICROS');
-    
-    -- Depois criamos o diretorio do projeto
-    pc_valida_direto(pr_nmdireto => vr_nmdireto || 'cpd/bacas/PRJ0015011'
-                    ,pr_dscritic => vr_dscritic);
-    
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-       RAISE vr_exc_erro;
-    END IF;  
-    
-    vr_nmdireto := vr_nmdireto||'cpd/bacas/PRJ0015011/'||rw_crapcop.dsdircop; 
+    -- UX2DOS
+    GENE0003.pc_converte_arquivo(pr_cdcooper => vr_cdcooper                   --> Cooperativa
+                                ,pr_nmarquiv => vr_nmdireto || '/arq/'||vr_nmarquiv        --> Caminho e nome do arquivo a ser convertido
+                                ,pr_nmarqenv => vr_nmarquiv           --> Nome desejado para o arquivo convertido
+                                ,pr_des_erro => vr_dscritic);                 --> Retorno da critica
 
-    -- Depois criamos o diretorio da coop
-    pc_valida_direto(pr_nmdireto => vr_nmdireto
-                    ,pr_dscritic => vr_dscritic);
-    
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;  
-    
-    -- Grava arquivo de contas alteradas
-    GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => vr_cdcooper, --> Cooperativa conectada
-                                        pr_cdprogra  => 'ATENDA', --> Programa chamador - utilizamos apenas um existente 
-                                        pr_dtmvtolt  => trunc(SYSDATE), --> Data do movimento atual
-                                        pr_dsxml     => vr_clob, --> Arquivo XML de dados
-                                        pr_dsarqsaid => vr_nmdireto || '/' || vr_nmarquiv, --> Path/Nome do arquivo PDF gerado
-                                        pr_flg_impri => 'N', --> Chamar a impressão (Imprim.p)
-                                        pr_flg_gerar => 'S', --> Gerar o arquivo na hora
-                                        pr_flgremarq => 'N', --> remover arquivo apos geracao
-                                        pr_nrcopias  => 1, --> Número de cópias para impressão
-                                        pr_des_erro  => vr_dscritic); --> Retorno de Erro
-  
+    --Se ocorreu erro
     IF vr_dscritic IS NOT NULL THEN
-      vr_dscritic := vr_dscritic || ' Cooperativa: ' || vr_cdcooper;
-      RAISE vr_exc_saida;
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;
+        
+    -- Apos converte o arquivo, vamos buscar o arquivo convertido e sobrescrever o 
+    -- arquivo que acabamos de gerar
+    -- Executar o comando no unix
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => 'mv '||vr_nmdircop||'/converte/'||vr_nmarquiv||' '||vr_nmdircop||'/arq/'||vr_nmarquiv||' 2> /dev/null'
+                         ,pr_typ_saida   => vr_typ_saida
+                         ,pr_des_saida   => vr_dscritic);
+    -- Se retornar algum erro
+    IF NVL(vr_typ_saida, 'OK') = 'ERR' THEN
+      -- Escreve log de erro, mas continua com o processo
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
+                                                    || vr_cdprogra || ' --> '
+                                                    || 'Comando ux2dos retornou erro: '||vr_typ_saida||' - '||vr_des_saida);
     END IF;
     
     -- Adiciona TAG de commit rollback
