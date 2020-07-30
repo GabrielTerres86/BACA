@@ -1,11 +1,12 @@
 PL/SQL Developer Test script 3.0
-660
+661
 -- Created on 24/07/2020 by F0032386 
 declare 
 
   vr_dtlanct_estorno DATE := to_date('22/07/2020','DD/MM/RRRR');
   vr_cdcritic             NUMBER(3);
   vr_dscritic             VARCHAR2(1000);
+  vr_dsdetcri             VARCHAR2(1000);
   vr_excerro              EXCEPTION;
   
   vr_nmcooper             VARCHAR2(2000);
@@ -593,7 +594,7 @@ FOR i IN vr_tab_linha.first..vr_tab_linha.count-1 LOOP
                      pr_nrctremp   => rw_crapepr_2.nrctremp);
     FETCH cr_acordo INTO rw_acordo;
     CLOSE cr_acordo;
-    /*
+    
     BEGIN
       UPDATE tbrecup_acordo a  
          SET a.cdsituacao = 3 -- mudar para cancelado temporariamente
@@ -618,7 +619,7 @@ FOR i IN vr_tab_linha.first..vr_tab_linha.count-1 LOOP
       UPDATE tbrecup_acordo a  
          SET a.cdsituacao = rw_acordo.cdsituacao -- voltar para o valor original
        WHERE a.nracordo = rw_acordo.nracordo;  
-    END;*/
+    END;
   
   ELSIF upper(vr_tipo) = 'DESBLOQUEIO' THEN
       dbms_output.put_line(vr_tab_linha(i));  
@@ -638,7 +639,7 @@ FOR i IN vr_tab_linha.first..vr_tab_linha.count-1 LOOP
         END IF;      
       
       END IF;   
-    /*
+    
       pc_desbloq_valor_acordo (pr_nracordo   => rw_acordo_2.nracordo, --> Numero do acordo                                             
                                pr_cdcritic   => vr_cdcritic,           --> Código da Crítica
                                pr_dscritic   => vr_dscritic,           --> Descrição da Crítica
@@ -646,7 +647,7 @@ FOR i IN vr_tab_linha.first..vr_tab_linha.count-1 LOOP
       IF nvl(vr_cdcritic,0) > 0 OR 
          TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_excerro;
-      END IF; */
+      END IF; 
       
   END IF;
       
