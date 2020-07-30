@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-661
+665
 -- Created on 24/07/2020 by F0032386 
 declare 
 
@@ -542,9 +542,13 @@ declare
   
 
 BEGIN
-  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;7230770;527707;;baca;360;Sai dinheiro da transitoria e recuperou prejuízo de cc';
-  vr_tab_linha(vr_tab_linha.count) := 'CREVISC;122319;122319;;Desbloqueio;360;Sai dinheiro da transitoria e recuperou prejuízo de cc';
+  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;7230770;527707;;baca;360;';
+  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;3964914;141604;;baca;502,29;';
+  vr_tab_linha(vr_tab_linha.count) := 'TRANSPOCRED;150738;10798;;baca;43,58;';
+  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI AV;184357;17184;;baca;43,58;';
 
+  vr_tab_linha(vr_tab_linha.count) := 'CREVISC;122319;122319;;Desbloqueio;360;';
+  
 FOR i IN vr_tab_linha.first..vr_tab_linha.count-1 LOOP
   
   vr_tab_campos := gene0002.fn_quebra_string(pr_string => vr_tab_linha(i), 
