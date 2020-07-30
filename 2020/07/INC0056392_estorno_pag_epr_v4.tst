@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-153
+172
 -- Created on 24/07/2020 by F0032386 
 declare 
 
@@ -146,7 +146,26 @@ BEGIN
   
 END LOOP;
 
-COMMIT;
+  /* Busca data de movimento */
+  open btch0001.cr_crapdat(6);
+  fetch btch0001.cr_crapdat into rw_crapdat;
+  close btch0001.cr_crapdat;
+    
+  -- Call the procedure
+  cecred.prej0003.pc_gera_cred_cta_prj(pr_cdcooper => 6,
+                                       pr_nrdconta => 113557,
+                                       pr_cdoperad => 1,
+                                       pr_vlrlanc => 1813.38,
+                                       pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                       pr_cdcritic => vr_cdcritic,
+                                       pr_dscritic => vr_dscritic);
+
+  IF nvl(vr_cdcritic,0) > 0 OR 
+     TRIM(vr_dscritic) IS NOT NULL THEN
+    RAISE vr_excerro;
+  END IF; 
+
+  COMMIT;
 
 EXCEPTION
    WHEN vr_excerro THEN    
