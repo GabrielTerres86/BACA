@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-172
+197
 -- Created on 24/07/2020 by F0032386 
 declare 
 
@@ -8,7 +8,9 @@ declare
   vr_dscritic             VARCHAR2(1000);
   vr_excerro              EXCEPTION;
   rw_crapdat              btch0001.cr_crapdat%rowtype;
-  
+  vr_tab_erro             GENE0001.typ_tab_erro;
+  vr_des_reto             VARCHAR2(1000);
+        
   vr_nmcooper             VARCHAR2(2000);
   vr_nrdconta             NUMBER;
   vr_nrctremp             NUMBER;
@@ -146,7 +148,7 @@ BEGIN
   
 END LOOP;
 
-  /* Busca data de movimento */
+  -- Busca data de movimento 
   open btch0001.cr_crapdat(6);
   fetch btch0001.cr_crapdat into rw_crapdat;
   close btch0001.cr_crapdat;
@@ -164,7 +166,30 @@ END LOOP;
      TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_excerro;
   END IF; 
+  
+  -- Lança crédito do abono na conta corrente
+   EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => 6                          --> Cooperativa conectada
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Movimento atual
+                                 ,pr_cdagenci => 1                          --> Código da agência
+                                 ,pr_cdbccxlt => 100                                          --> Número do caixa
+                                 ,pr_cdoperad => 1                                  --> Código do Operador
+                                 ,pr_cdpactra => 1                          --> P.A. da transação
+                                 ,pr_nrdolote => 650001                                       --> Numero do Lote
+                                 ,pr_nrdconta => 113557                          --> Número da conta
+                                 ,pr_cdhistor => 2919                                         --> Codigo historico
+                                 ,pr_vllanmto => 406.62                                  --> Valor do credito
+                                 ,pr_nrparepr => 0                                            --> Número do Acordo
+                                 ,pr_nrctremp => 277196                         --> Número do contrato de empréstimo
+                                 ,pr_des_reto => vr_des_reto                                  --> Retorno OK / NOK
+                                 ,pr_tab_erro => vr_tab_erro);                                --> Tabela com possíves erros
+  
 
+  IF nvl(vr_des_reto,0) <> 'OK' THEN
+    vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+    vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic; 
+    RAISE vr_excerro;
+  END IF;
+  
   COMMIT;
 
 EXCEPTION

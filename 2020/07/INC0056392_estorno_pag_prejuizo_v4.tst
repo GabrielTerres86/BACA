@@ -544,8 +544,8 @@ declare
 BEGIN
   vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;7230770;527707;;baca;360;';
   vr_tab_linha(vr_tab_linha.count) := 'VIACREDI;3964914;141604;;baca;502,29;';
-  vr_tab_linha(vr_tab_linha.count) := 'TRANSPOCRED;150738;10798;;baca;43,58;';
-  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI AV;184357;17184;;baca;43,58;';
+--  vr_tab_linha(vr_tab_linha.count) := 'TRANSPOCRED;150738;10798;;baca;43,58;';
+--  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI AV;184357;17184;;baca;43,58;';
 
   vr_tab_linha(vr_tab_linha.count) := 'CREVISC;122319;122319;;Desbloqueio;360;';
   
