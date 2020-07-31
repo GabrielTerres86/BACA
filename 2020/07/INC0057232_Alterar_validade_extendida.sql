@@ -1,0 +1,7 @@
+BEGIN
+  UPDATE crapprm p
+     SET p.dsvlrprm = '31/10/2019,30/06/2020,31/03/2020,30/04/2020,31/05/2020,30/06/2020,31/08/2020'
+   WHERE p.cdacesso = 'CRD_VALIDADE_EXTENDIDA';
+   
+   COMMIT;
+END; 
