@@ -159,7 +159,7 @@ BEGIN
 
     pc_escreve_rollback('UPDATE tbcrd_cessao_credito cc SET cc.dtvencto = to_date('''|| to_char(contrato.dtvencto, 'dd/mm/YYYY') ||''', ''dd/mm/YYYY'') WHERE cc.rowid = ''' || contrato.rowid || ''';');
 
-    UPDATE tbcrd_cessao_credito cc SET cc.dtvencto = to_date(contrato.dataatualizacao, 'dd/mm/YYYY') WHERE cc.rowid = contrato.rowid;
+    UPDATE tbcrd_cessao_credito cc SET cc.dtvencto = contrato.dataatualizacao WHERE cc.rowid = contrato.rowid;
   END LOOP;
 
   pc_escreve_rollback('UPDATE crapprm m SET m.dsvlrprm = ''22/11/2018'' WHERE m.cdacesso = ''DTCESSAO_CORTE_ATRASO'';');
