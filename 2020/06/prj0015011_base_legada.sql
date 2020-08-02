@@ -66,6 +66,7 @@ DECLARE
   vr_nrdmeses       PLS_INTEGER;
   vr_dsdidade       VARCHAR2(50);
   vr_total_conta    NUMBER;
+  vr_countcom       INTEGER;
 
   -- Definicao do tipo de array para nome origem do módulo
   TYPE typ_tab_prefixo IS VARRAY(16) OF VARCHAR2(5);
@@ -460,6 +461,7 @@ BEGIN
     
     vr_idseqtra := 1; -- Começa em 1
     vr_contrcpf := NULL;
+    vr_countcom := 0;
     --
     FOR rw_contas IN cr_contas(pr_cdcooper => rw_crapcop.cdcooper
                               ,pr_dtiniseg => vr_dtiniseg) LOOP
@@ -667,7 +669,8 @@ BEGIN
             ,vr_dtfimvig -- fim da vigencia
             ,rw_crapdat.dtmvtolt -- Envio mensal dos endossos
              );
-        
+
+        vr_countcom := vr_countcom + 1;
       EXCEPTION
         WHEN OTHERS THEN
           -- Erro não tratado
@@ -787,6 +790,11 @@ BEGIN
         -- Escrever Linha do Arquivo 
         GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_linha_txt);
         vr_idseqtra := vr_idseqtra + 1;
+      END IF;
+
+      -- commit a cada 10 mil registros
+      IF MOD(vr_countcom, 10000) = 0 THEN
+        COMMIT;
       END IF;
       
     END LOOP;
