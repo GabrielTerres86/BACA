@@ -161,6 +161,7 @@ DECLARE
             ,a.vlsdeved
             ,a.dtmvtolt
             ,a.cdsexotl
+            ,a.dtinipag
             ,add_months(a.dtinipag,a.qtpreemp) dtfimctr
             ,ROW_NUMBER () OVER (PARTITION BY a.nrcpfcgc
                                      ORDER BY a.nrcpfcgc
@@ -652,8 +653,8 @@ BEGIN
             ,rw_crapenc.cdufresd -- UF
             ,rw_crapenc.nrcepend -- CEP
             ,rw_craptfc.nrtelefo -- Telefone Residencial --x
-            ,SYSDATE -- data da venda
-            ,SYSDATE -- inicio da vigencia
+            ,rw_contas.dtinipag -- data da venda
+            ,rw_contas.dtinipag -- inicio da vigencia
             ,rw_contas.nrctremp -- Emprestimo vinculado
             ,10 -- Meio de cobranca (fixo 10 - Software Express)
             ,'' --BY ou BC -- Cód.Administr.Cobrança
