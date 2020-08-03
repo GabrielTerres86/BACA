@@ -30,7 +30,8 @@ BEGIN
 		flgdebit,
 		nmempcrd,
 		cdgraupr,
-		insitcrd)
+		insitcrd,
+		dtlibera)
 	VALUES
 	   (66150,
 		6393500145053493, 
@@ -60,7 +61,8 @@ BEGIN
 		1,
 		'FIVE STAR T E TURISMO',
 		5,
-		3);	 
+		3,
+		trunc(sysdate));	 
      
      BEGIN
            -- Insere o cartao
