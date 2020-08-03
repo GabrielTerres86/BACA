@@ -102,7 +102,7 @@ BEGIN
                        ,'BUSCA_EMPREGADOR'
                        ,NULL
                        ,'listarEmpregador'
-                       ,'pr_nrdocnpj,pr_cdempres,pr_nmextemp,pr_nrregist,pr_nriniseq'
+                       ,'pr_nrdocnpj,pr_cdempres,pr_nmextemp,pr_nmresemp,pr_nrregist,pr_nriniseq'
                        ,vr_nrseqrdr);
   EXCEPTION
     WHEN dup_val_on_index THEN
