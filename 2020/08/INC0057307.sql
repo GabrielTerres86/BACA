@@ -3,7 +3,7 @@
 */
 
 update crapprm p
-   SET p.dsvlrprm = '03/08/2019#2' 
+   SET p.dsvlrprm = '03/08/2020#2' 
  WHERE p.cdcooper = 1
    AND p.cdacesso IN (
                       'CTRL_CRPS663_EXEC',
