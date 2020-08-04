@@ -35,7 +35,7 @@ DECLARE
 
   insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
 	values ('CRED', 0, 'DATA_CORTE_PRESTAMISTA', 'Parâmetro que indica a quantidade de dias para corte prestamista', 
-	to_char(SYSDATE, 'DD/MM/RRRR') );
+	to_date('19-08-2020', 'DD/MM/RRRR') );
 	
   insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
   values ('CRED', 0, 'ENVIA_SEG_PRST_EMAIL', 'Email para envio de avisos de erro ao processar pc_envia_arq_seg_prst', 'seguros@ailos.coop.br');
