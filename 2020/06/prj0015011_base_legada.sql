@@ -728,8 +728,8 @@ BEGIN
       vr_linha_txt := vr_linha_txt || RPAD(' ', 12, ' ');         -- Cód.Campanha
       vr_linha_txt := vr_linha_txt || RPAD(' ', 10, ' ');         -- Cód.Vendedor
       vr_linha_txt := vr_linha_txt || RPAD(vr_nrctrseg, 30, ' '); -- Nº Proposta
-      vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date(SYSDATE), 'RRRR-MM-DD'), 10, 0); -- Data Transação (Data da venda) / Data Cancelamento
-      vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date(SYSDATE), 'RRRR-MM-DD'), 10, 0); -- Inicio Vigência
+      vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date(rw_contas.dtinipag), 'RRRR-MM-DD'), 10, 0); -- Data Transação (Data da venda) / Data Cancelamento
+      vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date(rw_contas.dtinipag), 'RRRR-MM-DD'), 10, 0); -- Inicio Vigência
       vr_linha_txt := vr_linha_txt || LPAD(' ', 2, ' '); -- Razão Cancelam/Suspensão
       --  Referencia 1 50 pos - Contratos vinculados
     
