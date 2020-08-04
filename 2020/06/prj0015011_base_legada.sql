@@ -666,7 +666,7 @@ BEGIN
             ,'O' -- Tipo de cobranca (fixo O - Online)
             ,rw_contas.vlsdeved -- Saldo Devedor
             ,rw_contas.vlsdeved -- Saldo devedor atualizado, atualizar o valor a cada endosso
-            ,rw_contas.dtmvtolt -- Data referencia para cobranca
+            ,to_date('31-07-2020', 'dd-mm-yyyy') -- Data referencia para cobranca
             ,vr_dtfimvig -- fim da vigencia
             ,rw_crapdat.dtmvtolt -- Envio mensal dos endossos
              );
