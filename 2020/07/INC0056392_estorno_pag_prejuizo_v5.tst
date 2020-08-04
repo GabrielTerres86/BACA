@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-675
+696
 -- Created on 24/07/2020 by F0032386 
 declare 
 
@@ -47,6 +47,14 @@ declare
        AND e.nrdconta = pr_nrdconta
        AND e.nrctremp = pr_nrctremp; 
   rw_crapepr_2 cr_crapepr_2%ROWTYPE;
+  
+  CURSOR cr_prejuizo(pr_cdcooper   NUMBER,
+                     pr_nrdconta   NUMBER)  IS
+    SELECT p.*
+      FROM tbcc_prejuizo p
+     WHERE p.cdcooper = pr_cdcooper
+       AND p.nrdconta = pr_nrdconta;
+  rw_prejuizo cr_prejuizo%ROWTYPE;       
   
  CURSOR cr_acordo_epr  (pr_nmrescop   VARCHAR2,
                        pr_nrdconta   NUMBER,
@@ -209,12 +217,12 @@ declare
        vr_inprejuz := rw_crapepr.inprejuz;
     end if;
     close cr_crapepr;
-
+    /*
     if to_char(pr_dtmvtolt,'yyyymm') < to_char(rw_crapdat.dtmvtolt,'yyyymm') then
        pr_dscritic := 'Impossivel fazer estorno do contrato, pois este pagamento/abono foi feito antes do mes vigente';
        raise vr_exc_erro;
     end if;
-
+    */
     /* Verifica se possui abono ativo, não pode efetuar o estorno do pagamento */
     open c_busca_abono;
     fetch c_busca_abono into vr_existe_abono;
@@ -545,7 +553,7 @@ declare
 BEGIN
   
   vr_tab_linha(vr_tab_linha.count) := 'TRANSPOCRED;150738;10798;;baca;43,58;';
-  --vr_tab_linha(vr_tab_linha.count) := 'VIACREDI AV;184357;17184;;baca;43,58;';
+  vr_tab_linha(vr_tab_linha.count) := 'VIACREDI AV;184357;17184;;baca;43,58;';
   
 FOR i IN vr_tab_linha.first..vr_tab_linha.count-1 LOOP
   
@@ -589,6 +597,18 @@ FOR i IN vr_tab_linha.first..vr_tab_linha.count-1 LOOP
         CLOSE cr_craplem;
       END IF;  
     END IF;
+    
+    OPEN cr_prejuizo(pr_cdcooper  => rw_crapepr_2.cdcooper,
+                     pr_nrdconta  => rw_crapepr_2.nrdconta);
+    FETCH cr_prejuizo INTO rw_prejuizo;
+    IF cr_prejuizo%NOTFOUND THEN
+      CLOSE cr_prejuizo;
+      dbms_output.put_line('Prejuizo não encontrado -->'||vr_tab_linha(i));  
+      continue; 
+    ELSE
+      CLOSE cr_prejuizo;
+    END IF;  
+      
     
     prej0003.pc_grava_prejuizo_cc(pr_cdcooper      => rw_crapepr_2.cdcooper
                                  ,pr_nrdconta      => rw_crapepr_2.nrdconta 
@@ -667,7 +687,8 @@ FOR i IN vr_tab_linha.first..vr_tab_linha.count-1 LOOP
       
   
 END LOOP;
-  --COMMIT;
+
+COMMIT;
   
   
 EXCEPTION
