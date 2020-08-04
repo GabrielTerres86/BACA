@@ -67,6 +67,8 @@ DECLARE
   vr_dsdidade       VARCHAR2(50);
   vr_total_conta    NUMBER;
   vr_countcom       INTEGER;
+  vr_pref_adesao    VARCHAR2(20);
+  vr_pref_endoss    VARCHAR2(20);
 
   -- Definicao do tipo de array para nome origem do módulo
   TYPE typ_tab_prefixo IS VARRAY(16) OF VARCHAR2(5);
@@ -692,9 +694,9 @@ BEGIN
       -- Vamos fazer a inserção e geração ao mesmo tempo
       
       vr_linha_txt := '';
+      vr_pref_adesao := '';
+      vr_pref_endoss := '';
       -- informacoes para impressao
-      vr_linha_txt := vr_linha_txt || LPAD(vr_idseqtra, 5, 0); -- Sequencial Transação
-      vr_linha_txt := vr_linha_txt || LPAD(1, 2, 0); -- Tipo Registro - 01 Adesao
       vr_linha_txt := vr_linha_txt || 'BZBCC' || LPAD(vr_nrapolic, 10, 0); -- Nº Apólice / Certificado
       vr_linha_txt := vr_linha_txt || RPAD(to_char(rw_contas.nrcpfcgc,'fm00000000000'), 14, ' '); -- CPF / CNPJ - sem formatacao
       vr_linha_txt := vr_linha_txt || LPAD(' ', 20, ' '); -- Cód.Empregado
@@ -788,9 +790,19 @@ BEGIN
       vr_linha_txt := vr_linha_txt || chr(13);
       
       IF vr_flgnenvi = 0 THEN
-        -- Escrever Linha do Arquivo 
-        GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_linha_txt);
+        -- prefixo para linha de adesao
+        vr_pref_adesao := vr_pref_adesao || LPAD(vr_idseqtra, 5, 0); -- Sequencial Transação
+        vr_pref_adesao := vr_pref_adesao || LPAD(1, 2, 0); -- Tipo Registro - 01 Adesao
         vr_idseqtra := vr_idseqtra + 1;
+        -- prefixo para linha de endosso
+        vr_pref_endoss := vr_pref_endoss || LPAD(vr_idseqtra, 5, 0); -- Sequencial Transação
+        vr_pref_endoss := vr_pref_endoss || LPAD(3, 2, 0); -- Tipo Registro - 03 Endosso
+        vr_idseqtra := vr_idseqtra + 1;
+        
+        -- Escrever Linha do Arquivo 
+        GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo, vr_pref_adesao || vr_linha_txt); -- adesao
+        GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo, vr_pref_endoss || vr_linha_txt); -- endosso
+        
       END IF;
 
       -- commit a cada 10 mil registros
