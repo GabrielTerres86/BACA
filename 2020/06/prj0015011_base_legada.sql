@@ -670,7 +670,7 @@ BEGIN
             ,rw_contas.vlsdeved -- Saldo devedor atualizado, atualizar o valor a cada endosso
             ,to_date('31-07-2020', 'dd-mm-yyyy') -- Data referencia para cobranca
             ,vr_dtfimvig -- fim da vigencia
-            ,rw_crapdat.dtmvtolt -- Envio mensal dos endossos
+            ,to_date('31-07-2020', 'dd-mm-yyyy') -- Envio mensal dos endossos
              );
 
         vr_countcom := vr_countcom + 1;
@@ -757,7 +757,7 @@ BEGIN
       vr_linha_txt := vr_linha_txt || LPAD(replace(to_char(vr_vlprodvl,'fm99999990d00'), ',', '.'), 12, 0); -- Produto – Valor
       vr_linha_txt := vr_linha_txt || LPAD('O', 1, ' ');                                               -- Tipo de Cobrança
       vr_linha_txt := vr_linha_txt || LPAD(replace(to_char(vr_vlenviad,'fm999999999999990d00'), ',', '.'), 30, 0); -- Valor do Saldo Devedor Atualizado
-      vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date(rw_contas.dtmvtolt), 'RRRR-MM-DD'), 10, 0); -- Data Referência para Cobrança
+      vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date('31-07-2020', 'dd-mm-yyyy'), 'RRRR-MM-DD'), 10, 0); -- Data Referência para Cobrança
       vr_linha_txt := vr_linha_txt || LPAD(to_char(to_date(vr_dtfimvig), 'RRRR-MM-DD'), 10, 0);        -- Data final de vigência contrato
     
       -- Opcionais nao enviados
