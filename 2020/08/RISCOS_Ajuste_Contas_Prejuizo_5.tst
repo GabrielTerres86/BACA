@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-677
+698
 DECLARE
   CURSOR cr_his (pr_cdcooper IN crapcop.cdcooper%TYPE
                 ,pr_cdhistor IN craphis.cdhistor%TYPE)IS
@@ -636,6 +636,7 @@ BEGIN
 
 
 
+
 ---------------------------------------------------
   -- INC0056800 - Viacredi - Conta: 9582843 
   -- => Solução: gerar um 2721 de R$ 4,24 para zerar a transitória.
@@ -655,6 +656,26 @@ BEGIN
                    ,prm_vllanmto => vr_vllanmto
                    ,prm_cdhistor => vr_cdhistor
                    ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
+
+
+
+---------------------------------------------------
+  -- INC0056798 - Transpocred: 9 - Conta: 176150
+  -- => Solução: Lancar 172,96 - Conta Transitoria
+  vr_incidente := 'INC0056798';
+  vr_cdcooper  := 9;
+  vr_nrdconta  := 176150;
+  vr_vllanmto  := 172.96;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+
+  prc_gera_acerto_transit (prm_cdcooper => vr_cdcooper
+                          ,prm_nrdconta => vr_nrdconta
+                          ,prm_vllanmto => vr_vllanmto);
+
   dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
   dbms_output.put_line('  ');
 ---------------------------------------------------
