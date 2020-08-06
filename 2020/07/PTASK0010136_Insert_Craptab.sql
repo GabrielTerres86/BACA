@@ -12,7 +12,7 @@ INSERT INTO craptab (craptab.cdcooper
                    ,0
                    ,'SITBLQINST'
                    ,0
-                   ,'1;7'); 
+                   ,'7'); 
 
 commit;
                    
