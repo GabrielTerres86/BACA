@@ -21,7 +21,7 @@ declare
        AND cob.nrdconta = 850004
        AND COB.INCOBRAN = 0
        AND COB.DTVENCTO > '30/09/2020'
-       AND COB.DTVENCTO < '31/03/2020'
+       AND COB.DTVENCTO < '31/03/2021'
        AND cco.cddbanco = 85
        AND (cob.dtlipgto - cob.dtvencto) < cco.qtdecate
        AND cco.nrconven = pr_nrconven
@@ -54,8 +54,8 @@ BEGIN
        AND cob.cdbandoc = 85
        AND cob.nrdconta = 850004
        AND COB.INCOBRAN = 0
-       AND COB.DTVENCTO > '31/07/2020'
-       AND COB.DTVENCTO < '30/09/2020'
+       AND COB.DTVENCTO > '30/09/2020'
+       AND COB.DTVENCTO < '31/03/2021'
        AND cco.cddbanco = 85
        AND (cob.dtlipgto - cob.dtvencto) < cco.qtdecate
        AND cco.nrconven = rw_crapcco.nrconven
