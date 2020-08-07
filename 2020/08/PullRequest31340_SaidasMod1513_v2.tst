@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-486
+487
 DECLARE
   -- Estrutura para PL Table de CRAPRIS
   TYPE typ_reg_crapris IS
@@ -436,10 +436,11 @@ DECLARE
 
 BEGIN
 
-  DELETE FROM crapris r
-   WHERE r.dtrefere = '30/06/2020'
-     AND r.inddocto = 2
-     AND r.cdmodali = 1513;
+  DELETE crapris  cr
+   WHERE cr.dtrefere >= to_date('30/06/2020','dd/mm/yyyy')
+     AND cr.inddocto = 2
+     AND cr.cdmodali = 1513
+     AND cr.cdinfadi = '0399';
   COMMIT;
 
   --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
