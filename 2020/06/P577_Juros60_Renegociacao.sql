@@ -1,5 +1,5 @@
 /*****************************************************************
-05/08/2020 - P577 - INC0049010 - Contas Juros60 Negativo. 
+10/08/2020 - P577 - INC0049010 - Contas Juros60 Negativo. 
              Corrigir Valores de Juros Negativos na Renegociação.
              (E seus pagamentos).
              Somente para Contratos PP.
@@ -41,9 +41,9 @@ DECLARE
                    AND    epr.tpemprst = 1  --PP  
                    AND    epr.inliquid = 0) --Atendendo a solicitação da contabilidade (Somente Contratos não Liquidados) 
     ---
-    --AND trs.cdcooper = 10   --????? Somente para Testes (Caso passado pela Helo que não considera os pagamentos)
-    --AND trs.nrdconta = 1201 --????? Somente para Testes (Caso passado pela Helo que não considera os pagamentos)
-    --AND trs.nrctremp = 2762 --????? Somente para Testes (Caso passado pela Helo que não considera os pagamentos)
+    --AND trs.cdcooper = 10     --????? Somente para Testes (Caso passado pela Helo que não considera os pagamentos)
+    --AND trs.nrdconta = 102857 --????? Somente para Testes (Caso passado pela Helo que não considera os pagamentos)
+    --AND trs.nrctremp = 9830   --????? Somente para Testes (Caso passado pela Helo que não considera os pagamentos)
     ---                              
     ORDER BY trs.cdcooper
             ,trs.nrdconta
@@ -89,7 +89,7 @@ DECLARE
   CURSOR cr_pagamentos(pr_cdcooper IN NUMBER
                       ,pr_nrdconta IN NUMBER
                       ,pr_nrctremp IN NUMBER) IS 
-    select dtmvtolt, dtpagemp, cdcooper, nrdconta, nrctremp
+    select dtmvtolt, dtpagemp, cdcooper, nrdconta, nrctremp, nrparepr
           ,cdhistor, vllanmto
     from   craplem
     where  cdcooper = pr_cdcooper
@@ -122,6 +122,9 @@ DECLARE
   vr_qt_pagtos    NUMBER := 0;
   vr_vlpgjr60     NUMBER := 0;
   vr_vlpgjrem     NUMBER := 0;
+  --
+  vr_vlpagjin     NUMBER := 0;
+  vr_dtvencto     DATE;
   -- (Fim New)
   --
   vr_tab_pgto_parcel  empr0001.typ_tab_pgto_parcel;
@@ -1827,7 +1830,41 @@ BEGIN
                 vr_ds_erro := 'Erro ao Excluir Lançamentos de Pagto Juros na Renegociação Saldo (tbepr_renegociacao_saldo). Cooper: '||rw_reneg_saldo_jurneg.cdcooper||' | Conta: '||rw_reneg_saldo_jurneg.nrdconta||' | Contrato: '||rw_reneg_saldo_jurneg.nrctremp||'. Erro: '||SubStr(SQLERRM,1,255);
                 RAISE vr_erro;
             END;
-          END IF;         
+          
+            
+            --Busca Valor dos Juros de Atraso da Parcela para Descontar do Valor do Pagamento
+            vr_vlpagjin := 0;
+            vr_dtvencto := NULL;
+            BEGIN
+              SELECT a.vlpagjin
+                    ,a.dtvencto
+              INTO   vr_vlpagjin
+                    ,vr_dtvencto
+              FROM   crappep a 
+              WHERE  a.cdcooper = rw_pagamentos.cdcooper
+              AND    a.nrdconta = rw_pagamentos.nrdconta
+              AND    a.nrctremp = rw_pagamentos.nrctremp   
+              AND    a.nrparepr = rw_pagamentos.nrparepr;   
+            EXCEPTION
+              WHEN NO_DATA_FOUND THEN
+                vr_vlpagjin := 0;
+                vr_dtvencto := NULL;
+              WHEN OTHERS THEN
+                vr_ds_erro := 'Erro ao Buscar Valor Pagamento Juros Atraso da Parcela. Cooper: '||rw_pagamentos.cdcooper||' | Conta: '||rw_pagamentos.nrdconta||' | Contrato: '||rw_pagamentos.nrctremp||' | '||rw_pagamentos.nrparepr||'. Erro: '||SubStr(SQLERRM,1,255);
+                RAISE vr_erro;  
+            END; 
+            
+            --Se pago em atraso 
+            IF rw_pagamentos.dtpagemp IS NOT NULL AND vr_dtvencto IS NOT NULL THEN      
+              IF rw_pagamentos.dtpagemp > vr_dtvencto THEN
+                IF Nvl(vr_vlpagjin,0) > Nvl(rw_pagamentos.vllanmto,0) THEN 
+                  rw_pagamentos.vllanmto := 0;
+                ELSE
+                  rw_pagamentos.vllanmto := Nvl(rw_pagamentos.vllanmto,0) - Nvl(vr_vlpagjin,0);
+                END IF;
+              END IF;   
+            END IF;
+          END IF;  
                                                           
           --Atualiza Valor Pago Juros e Gera lançamentos na  tbepr_renegociacao_lancto                              
           pc_paga_sld_ctr_renegociado1(pr_cdcooper => rw_pagamentos.cdcooper
