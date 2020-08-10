@@ -60,55 +60,280 @@ VALUES ('CRED', 0, 'HR_ENVIO_MSG_INADIMPLENT', 'Horário do envio da notificação 
 
 ----------- Notificações
 
+
 -- Assembleia de consorcio
-INSERT INTO tbgen_notif_msg_cadastro (cdmensagem, cdorigem_mensagem, dstitulo_mensagem, dstexto_mensagem, dshtml_mensagem, cdicone, inexibir_banner, nmimagem_banner, inexibe_botao_acao_mobile, dstexto_botao_acao_mobile, cdmenu_acao_mobile, dslink_acao_mobile, dsmensagem_acao_mobile, dsparam_acao_mobile, inenviar_push)
-VALUES (1137, 8, 'Assembleia de consórcio', 'A sua assembleia de consórcio está chegando!',
-'<p>Olá <b>#nmprimtl</b>!</p>
+INSERT INTO tbgen_notif_msg_cadastro
+  (cdmensagem,
+   cdorigem_mensagem,
+   dstitulo_mensagem,
+   dstexto_mensagem,
+   dshtml_mensagem,
+   cdicone,
+   inexibir_banner,
+   nmimagem_banner,
+   inexibe_botao_acao_mobile,
+   dstexto_botao_acao_mobile,
+   cdmenu_acao_mobile,
+   dslink_acao_mobile,
+   dsmensagem_acao_mobile,
+   dsparam_acao_mobile,
+   inenviar_push)
+VALUES
+  (5180,
+   8,
+   'Assembleia de consórcio',
+   'A sua assembleia de consórcio está chegando!',
+   '<p>Olá <b>#nmprimtl</b>!</p>
 
 <p>A sua assembleia de consórcio está chegando. Que tal você ofertar um lance? Desta forma, suas chances de contemplação aumentam :). Basta acessar o canal do consorciado ou conversar diretamente com seu posto de atendimento.</p>',
-2, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0);
+   2,
+   0,
+   NULL,
+   0,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   0);
 
-INSERT INTO tbgen_notif_automatica_prm (cdorigem_mensagem, cdmotivo_mensagem, dsmotivo_mensagem, cdmensagem, dsvariaveis_mensagem, inmensagem_ativa, intipo_repeticao, nrdias_semana, nrsemanas_repeticao, nrdias_mes, nrmeses_repeticao, hrenvio_mensagem, nmfuncao_contas, dhultima_execucao)
-VALUES (8, 19, 'CONSÓRCIO - Assembléia de consórcio', 1137, '<br/>#nmprimtl - Nome do cooperado', 1, 1, '1,2,3,4,5,6,7', '1,2,3,4,5,6', NULL, NULL, 30000, 'CNSO0001.fn_busca_contas_assembleia', NULL);
+INSERT INTO tbgen_notif_automatica_prm
+  (cdorigem_mensagem,
+   cdmotivo_mensagem,
+   dsmotivo_mensagem,
+   cdmensagem,
+   dsvariaveis_mensagem,
+   inmensagem_ativa,
+   intipo_repeticao,
+   nrdias_semana,
+   nrsemanas_repeticao,
+   nrdias_mes,
+   nrmeses_repeticao,
+   hrenvio_mensagem,
+   nmfuncao_contas,
+   dhultima_execucao)
+VALUES
+  (8,
+   25,
+   'CONSÓRCIO - Assembléia de consórcio',
+   5180,
+   '<br/>#nmprimtl - Nome do cooperado',
+   1,
+   1,
+   '1,2,3,4,5,6,7',
+   '1,2,3,4,5,6',
+   NULL,
+   NULL,
+   30000,
+   'CNSO0001.fn_busca_contas_assembleia',
+   NULL);
 
 -- Contemplado por sorteio
-INSERT INTO tbgen_notif_msg_cadastro (cdmensagem, cdorigem_mensagem, dstitulo_mensagem, dstexto_mensagem, dshtml_mensagem, cdicone, inexibir_banner, nmimagem_banner, inexibe_botao_acao_mobile, dstexto_botao_acao_mobile, cdmenu_acao_mobile, dslink_acao_mobile, dsmensagem_acao_mobile, dsparam_acao_mobile, inenviar_push)
-VALUES (1138, 8, 'Parabéns consorciado!', 'Você foi contemplado em seu consórcio.',
-'<p>Parabéns <b>#nmprimtl</b>!</p>
+INSERT INTO tbgen_notif_msg_cadastro
+  (cdmensagem,
+   cdorigem_mensagem,
+   dstitulo_mensagem,
+   dstexto_mensagem,
+   dshtml_mensagem,
+   cdicone,
+   inexibir_banner,
+   nmimagem_banner,
+   inexibe_botao_acao_mobile,
+   dstexto_botao_acao_mobile,
+   cdmenu_acao_mobile,
+   dslink_acao_mobile,
+   dsmensagem_acao_mobile,
+   dsparam_acao_mobile,
+   inenviar_push)
+VALUES
+  (5181,
+   8,
+   'Parabéns consorciado!',
+   'Você foi contemplado em seu consórcio.',
+   '<p>Parabéns <b>#nmprimtl</b>!</p>
 
 <p>Você foi contemplado através de sorteio em sua assembleia de consórcio! Para iniciar o processo de contemplação, basta comparecer em seu posto de atendimento e conversar com um atendente :).</p>',
-2, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0);
+   2,
+   0,
+   NULL,
+   0,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   0);
 
-INSERT INTO tbgen_notif_automatica_prm (cdorigem_mensagem, cdmotivo_mensagem, dsmotivo_mensagem, cdmensagem, dsvariaveis_mensagem, inmensagem_ativa, intipo_repeticao, nrdias_semana, nrsemanas_repeticao, nrdias_mes, nrmeses_repeticao, hrenvio_mensagem, nmfuncao_contas, dhultima_execucao)
-VALUES (8, 20, 'CONSÓRCIO - Contemplados por Sorteio', 1138, '<br/>#nmprimtl - Nome do cooperado', 1, 1, '1,2,3,4,5,6,7', '1,2,3,4,5,6', NULL, NULL, 30000, 'CNSO0001.fn_busca_contemplado_sorteio', NULL);
+INSERT INTO tbgen_notif_automatica_prm
+  (cdorigem_mensagem,
+   cdmotivo_mensagem,
+   dsmotivo_mensagem,
+   cdmensagem,
+   dsvariaveis_mensagem,
+   inmensagem_ativa,
+   intipo_repeticao,
+   nrdias_semana,
+   nrsemanas_repeticao,
+   nrdias_mes,
+   nrmeses_repeticao,
+   hrenvio_mensagem,
+   nmfuncao_contas,
+   dhultima_execucao)
+VALUES
+  (8,
+   26,
+   'CONSÓRCIO - Contemplados por Sorteio',
+   5181,
+   '<br/>#nmprimtl - Nome do cooperado',
+   1,
+   1,
+   '1,2,3,4,5,6,7',
+   '1,2,3,4,5,6',
+   NULL,
+   NULL,
+   30000,
+   'CNSO0001.fn_busca_contemplado_sorteio',
+   NULL);
 
 -- Contemplado por lance
-INSERT INTO tbgen_notif_msg_cadastro (cdmensagem, cdorigem_mensagem, dstitulo_mensagem, dstexto_mensagem, dshtml_mensagem, cdicone, inexibir_banner, nmimagem_banner, inexibe_botao_acao_mobile, dstexto_botao_acao_mobile, cdmenu_acao_mobile, dslink_acao_mobile, dsmensagem_acao_mobile, dsparam_acao_mobile, inenviar_push)
-VALUES (1139, 8, 'Parabéns consorciado!', 'Você foi contemplado em seu consórcio.',
-'<p>Parabéns <b>#nmprimtl</b>!</p>
+INSERT INTO tbgen_notif_msg_cadastro
+  (cdmensagem,
+   cdorigem_mensagem,
+   dstitulo_mensagem,
+   dstexto_mensagem,
+   dshtml_mensagem,
+   cdicone,
+   inexibir_banner,
+   nmimagem_banner,
+   inexibe_botao_acao_mobile,
+   dstexto_botao_acao_mobile,
+   cdmenu_acao_mobile,
+   dslink_acao_mobile,
+   dsmensagem_acao_mobile,
+   dsparam_acao_mobile,
+   inenviar_push)
+VALUES
+  (5182,
+   8,
+   'Parabéns consorciado!',
+   'Você foi contemplado em seu consórcio.',
+   '<p>Parabéns <b>#nmprimtl</b>!</p>
 
 <p>Você foi contemplado através de lance em sua assembleia de consórcio! Para realizar o pagamento do lance e iniciar o processo de contemplação, basta comparecer em seu posto de atendimento e conversar com um atendente :).</p>',
-2, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0);
+   2,
+   0,
+   NULL,
+   0,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   0);
 
-INSERT INTO tbgen_notif_automatica_prm (cdorigem_mensagem, cdmotivo_mensagem, dsmotivo_mensagem, cdmensagem, dsvariaveis_mensagem, inmensagem_ativa, intipo_repeticao, nrdias_semana, nrsemanas_repeticao, nrdias_mes, nrmeses_repeticao, hrenvio_mensagem, nmfuncao_contas, dhultima_execucao)
-VALUES (8, 21, 'CONSÓRCIO - Contemplados por Lance', 1139, '<br/>#nmprimtl - Nome do cooperado', 1, 1, '1,2,3,4,5,6,7', '1,2,3,4,5,6', NULL, NULL, 30000, 'CNSO0001.fn_busca_contemplado_lance', NULL);
+INSERT INTO tbgen_notif_automatica_prm
+  (cdorigem_mensagem,
+   cdmotivo_mensagem,
+   dsmotivo_mensagem,
+   cdmensagem,
+   dsvariaveis_mensagem,
+   inmensagem_ativa,
+   intipo_repeticao,
+   nrdias_semana,
+   nrsemanas_repeticao,
+   nrdias_mes,
+   nrmeses_repeticao,
+   hrenvio_mensagem,
+   nmfuncao_contas,
+   dhultima_execucao)
+VALUES
+  (8,
+   27,
+   'CONSÓRCIO - Contemplados por Lance',
+   5182,
+   '<br/>#nmprimtl - Nome do cooperado',
+   1,
+   1,
+   '1,2,3,4,5,6,7',
+   '1,2,3,4,5,6',
+   NULL,
+   NULL,
+   30000,
+   'CNSO0001.fn_busca_contemplado_lance',
+   NULL);
 
 -- Parcela de consorcio
-INSERT INTO tbgen_notif_msg_cadastro (cdmensagem, cdorigem_mensagem, dstitulo_mensagem, dstexto_mensagem, dshtml_mensagem, cdicone, inexibir_banner, nmimagem_banner, inexibe_botao_acao_mobile, dstexto_botao_acao_mobile, cdmenu_acao_mobile, dslink_acao_mobile, dsmensagem_acao_mobile, dsparam_acao_mobile, inenviar_push)
-VALUES (1140, 8, 'Parcela de consórcio.', 'Sua parcela de consórcio está programada.',
-'<p>Olá <b>#nmprimtl</b>!</p>
+INSERT INTO tbgen_notif_msg_cadastro
+  (cdmensagem,
+   cdorigem_mensagem,
+   dstitulo_mensagem,
+   dstexto_mensagem,
+   dshtml_mensagem,
+   cdicone,
+   inexibir_banner,
+   nmimagem_banner,
+   inexibe_botao_acao_mobile,
+   dstexto_botao_acao_mobile,
+   cdmenu_acao_mobile,
+   dslink_acao_mobile,
+   dsmensagem_acao_mobile,
+   dsparam_acao_mobile,
+   inenviar_push)
+VALUES
+  (5183,
+   8,
+   'Parcela de consórcio.',
+   'Sua parcela de consórcio está programada.',
+   '<p>Olá <b>#nmprimtl</b>!</p>
 
 <p>Sua parcela de consórcio vencerá no dia #dtvencpv. Não perca está data, ela lhe dará direito a participar da assembleia deste mês.</p>
 
 <p>Caso tenha alguma dúvida, converse conosco :)!</p>',
-2, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0);
+   2,
+   0,
+   NULL,
+   0,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   0);
 
 -- Falta pagamento
-INSERT INTO tbgen_notif_msg_cadastro (cdmensagem, cdorigem_mensagem, dstitulo_mensagem, dstexto_mensagem, dshtml_mensagem, cdicone, inexibir_banner, nmimagem_banner, inexibe_botao_acao_mobile, dstexto_botao_acao_mobile, cdmenu_acao_mobile, dslink_acao_mobile, dsmensagem_acao_mobile, dsparam_acao_mobile, inenviar_push)
-VALUES (1141, 8, 'Atenção Consorciado.', 'Não identificamos o pagamento de sua parcela.',
-'<p>Olá <b>#nmprimtl</b>!</p>
+INSERT INTO tbgen_notif_msg_cadastro
+  (cdmensagem,
+   cdorigem_mensagem,
+   dstitulo_mensagem,
+   dstexto_mensagem,
+   dshtml_mensagem,
+   cdicone,
+   inexibir_banner,
+   nmimagem_banner,
+   inexibe_botao_acao_mobile,
+   dstexto_botao_acao_mobile,
+   cdmenu_acao_mobile,
+   dslink_acao_mobile,
+   dsmensagem_acao_mobile,
+   dsparam_acao_mobile,
+   inenviar_push)
+VALUES
+  (5184,
+   8,
+   'Atenção Consorciado.',
+   'Não identificamos o pagamento de sua parcela.',
+   '<p>Olá <b>#nmprimtl</b>!</p>
 
 <p>Não identificamos o pagamento de sua parcela de consórcio. Para regularizá-la, basta gerar o boleto no canal do consorciado, no seu posto de atendimento ou até mesmo pelo SAC (0800 647 22 00). Caso você já tenha realizado o pagamento favor desconsiderar esta mensagem.</p>',
-2, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0);
+   2,
+   0,
+   NULL,
+   0,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   0);
 
-COMMIT;
+--COMMIT;
