@@ -1,3 +1,4 @@
+--Daniel Filomena 16/07/2020
 --INC0054474
 --Alguns cooperados estão recebendo o push de aprovação da proposta do CDC com a mensagem incorreta, conforme anexo.
 --Exemplo proposta 15233137 Viacredi.
