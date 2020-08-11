@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-698
+677
 DECLARE
   CURSOR cr_his (pr_cdcooper IN crapcop.cdcooper%TYPE
                 ,pr_cdhistor IN craphis.cdhistor%TYPE)IS
@@ -590,49 +590,6 @@ BEGIN
 -- 2408 - Quando LANÇA, Diminui o Saldo Prejuizo      [C] 2408 - TRF. PREJUIZO-> TBCC_PREJUIZO_DETALHE
 
 
----------------------------------------------------
-  -- INC0055348 - AltoVale: 16 - Conta: 184357 
-  -- => Solução: Lancar 1219.41 - Conta Transitoria
-  vr_incidente := 'INC0056380';
-  vr_cdcooper  := 16;
-  vr_nrdconta  := 184357;
-  vr_vllanmto  := 500;
-  dbms_output.put_line('  ');
-  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
-
-  prc_gera_acerto_transit (prm_cdcooper => vr_cdcooper
-                          ,prm_nrdconta => vr_nrdconta
-                          ,prm_vllanmto => vr_vllanmto);
-
-  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
-  dbms_output.put_line('  ');
----------------------------------------------------
-
-
-
-
----------------------------------------------------
-  -- INC0056797 - Altovale - Conta: 61450 
-  -- => Solução: gerar um 2721 de R$ 4,24 para zerar a transitória.
-  vr_incidente := 'INC0056378';
-  vr_cdcooper  := 16;
-  vr_nrdconta  := 61450;
-  vr_vllanmto  := 4.24;
-  vr_cdhistor  := 2721;
-  dbms_output.put_line('  ');
-  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
-  prc_gera_acerto (prm_cdcooper => vr_cdcooper,
-                   prm_nrdconta => vr_nrdconta,
-                   prm_vllanmto => vr_vllanmto,
-                   prm_cdhistor => vr_cdhistor);
-  prc_atlz_prejuizo(prm_cdcooper => vr_cdcooper
-                   ,prm_nrdconta => vr_nrdconta
-                   ,prm_vllanmto => vr_vllanmto
-                   ,prm_cdhistor => vr_cdhistor
-                   ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
-  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
-  dbms_output.put_line('  ');
----------------------------------------------------
 
 
 
@@ -661,11 +618,10 @@ BEGIN
 ---------------------------------------------------
 
 
-
 ---------------------------------------------------
   -- INC0056798 - Transpocred: 9 - Conta: 176150
-  -- => Solução: Lancar 172,96 - Conta Transitoria
-  vr_incidente := 'INC0056798';
+  -- => Solução: Lancar 172.96 - Conta Transitoria
+  vr_incidente := 'INC0056380';
   vr_cdcooper  := 9;
   vr_nrdconta  := 176150;
   vr_vllanmto  := 172.96;
@@ -680,6 +636,29 @@ BEGIN
   dbms_output.put_line('  ');
 ---------------------------------------------------
 
+
+---------------------------------------------------
+  -- INC0057262 - Viacredi - Conta: 8885079 
+  -- => Solução: gerar um 2721 de R$ 0,23
+  vr_incidente := 'INC0057262';
+  vr_cdcooper  := 1;
+  vr_nrdconta  := 8885079;
+  vr_vllanmto  := 0.23;
+  vr_cdhistor  := 2721;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+  prc_gera_acerto (prm_cdcooper => vr_cdcooper,
+                   prm_nrdconta => vr_nrdconta,
+                   prm_vllanmto => vr_vllanmto,
+                   prm_cdhistor => vr_cdhistor);
+  prc_atlz_prejuizo(prm_cdcooper => vr_cdcooper
+                   ,prm_nrdconta => vr_nrdconta
+                   ,prm_vllanmto => vr_vllanmto
+                   ,prm_cdhistor => vr_cdhistor
+                   ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
 
 
 
