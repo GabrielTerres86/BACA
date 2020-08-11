@@ -1,3 +1,6 @@
+PL/SQL Developer Test script 3.0
+1827
+
 
 DECLARE
 
@@ -1801,10 +1804,10 @@ BEGIN
       --Fim lançamento poupanca programada
 ------------------------------------------------------------------------------------------------------------------------
                
-          UPDATE craprpp
+         UPDATE craprpp
              SET craprpp.vlsdrdpp = 0,
                  craprpp.cdsitrpp = 5 -- 5-vencido.
-           WHERE craprpp.rowid = rw_craprpp.rowid;
+            WHERE craprpp.rowid = rw_craprpp.rowid;
             
             
    END LOOP; --cr_aplica
@@ -1824,3 +1827,8 @@ BEGIN
        fecha_arquivos; 
        ROLLBACK;       
 END;
+1
+vr_dscritic
+0
+5
+0
