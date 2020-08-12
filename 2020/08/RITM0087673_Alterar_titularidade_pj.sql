@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-171
 DECLARE
   -- Local variables here
   vr_cdcooper   crapcop.cdcooper%TYPE;
@@ -171,5 +169,3 @@ EXCEPTION
   WHEN vr_exc_erro THEN
     raise_application_error(-20111, vr_dscritic);
 END;
-0
-0
