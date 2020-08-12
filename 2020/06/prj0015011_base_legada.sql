@@ -179,7 +179,7 @@ DECLARE
                       ,epr.nrctremp
                       ,epr.vlsdeved
                       ,epr.dtmvtolt
-                      ,epr.dtinipag
+                      ,nvl(epr.dtinipag, epr.dtmvtolt) dtinipag
                       ,epr.qtpreemp
                       ,ass.cdsexotl
                   FROM crapepr epr
@@ -205,7 +205,7 @@ DECLARE
                       ,epr.nrctremp
                       ,epr.vlsdeved
                       ,epr.dtmvtolt
-                      ,epr.dtinipag
+                      ,nvl(epr.dtinipag, epr.dtmvtolt) dtinipag
                       ,epr.qtpreemp
                       ,ass.cdsexotl
                        FROM crapepr epr
