@@ -149,6 +149,7 @@ DECLARE
   vr_qt_pagtos    NUMBER := 0;
   vr_vlpgjr60     NUMBER := 0;
   vr_vlpgjrem     NUMBER := 0;
+  vr_iddescontou  VARCHAR2(1) := 'N';
   --
   vr_vlpagjin     NUMBER := 0;
   vr_dtvencto     DATE;
@@ -1842,6 +1843,7 @@ BEGIN
         vr_qt_pagtos := 0;
         vr_vlpgjr60  := 0;
         vr_vlpgjrem  := 0;
+        vr_iddescontou := 'N';
         --
         --Para cada Pagamento (lançado na craplem)
         FOR rw_pagamentos IN cr_pagamentos(pr_cdcooper => rw_reneg_saldo_jurneg.cdcooper
@@ -1882,8 +1884,9 @@ BEGIN
                 vr_ds_erro := 'Erro ao Excluir Lançamentos de Pagto Juros na Renegociação Saldo (tbepr_renegociacao_saldo). Cooper: '||rw_reneg_saldo_jurneg.cdcooper||' | Conta: '||rw_reneg_saldo_jurneg.nrdconta||' | Contrato: '||rw_reneg_saldo_jurneg.nrctremp||'. Erro: '||SubStr(SQLERRM,1,255);
                 RAISE vr_erro;
             END;
+          END IF;
           
-            
+          IF Nvl(vr_iddescontou,'N') = 'N' THEN  
             --Busca Valor dos Juros de Atraso da Parcela para Descontar do Valor do Pagamento
             vr_vlpagjin := 0;
             vr_dtvencto := NULL;
@@ -1914,6 +1917,7 @@ BEGIN
                 ELSE
                   rw_pagamentos.vllanmto := Nvl(rw_pagamentos.vllanmto,0) - Nvl(vr_vlpagjin,0);
                 END IF;
+                vr_iddescontou := 'S';
               END IF;   
             END IF;
           END IF;  
