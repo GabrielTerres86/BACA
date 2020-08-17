@@ -1,8 +1,12 @@
 /*****************************************************************
-10/08/2020 - P577 - INC0049010 - Contas Juros60 Negativo. 
+17/08/2020 - P577 - INC0049010 - Contas Juros60 Negativo. 
              Corrigir Valores de Juros Negativos na Renegociação.
              (E seus pagamentos).
              Somente para Contratos PP.
+ 
+            
+17/08/2020 - Inclusão da atualização dos valores VLEMPRES na 
+             CRAPVRI e VLJURA60 na CRAPRIS             
 *****************************************************************/
 
 /*
@@ -96,7 +100,30 @@ DECLARE
     and    nrdconta = pr_nrdconta
     and    nrctremp = pr_nrctremp
     and    cdhistor in (1039,1044,1045,1057) ---Historico levantado atraves da empr0021 (pagamentos LEM) com apoio do James
-    order by dtmvtolt, progress_recid;         
+    order by dtmvtolt, progress_recid;   
+    
+  --Busca dados CRPVRI (Vencimentos Central Riscos)
+  CURSOR cr_vri(pr_cdcooper IN crapvri.cdcooper%TYPE
+               ,pr_nrdconta IN crapvri.nrdconta%TYPE
+               ,pr_nrctremp IN crapvri.nrctremp%TYPE
+               ,pr_dtrefere IN crapvri.dtrefere%TYPE) IS
+    SELECT vri.cdcooper
+          ,vri.dtrefere
+          ,vri.nrdconta
+          ,vri.innivris
+          ,vri.cdmodali
+          ,vri.nrctremp
+          ,vri.nrseqctr
+          ,vri.cdvencto
+          ,vri.vldivida
+          ,vri.vlempres
+    FROM   crapvri  vri
+    WHERE  vri.cdcooper = pr_cdcooper
+    AND    vri.nrdconta = pr_nrdconta
+    AND    vri.nrctremp = pr_nrctremp
+    AND    vri.dtrefere = pr_dtrefere
+    AND    vri.cdmodali IN (299,499) --Empréstimo/Financiamento
+    ORDER BY vri.cdvencto;        
              
   --Variáveis de Erro
   vr_erro         EXCEPTION; 
@@ -127,6 +154,19 @@ DECLARE
   vr_dtvencto     DATE;
   -- (Fim New)
   --
+  -- (New2)
+  vr_era_neg_zerado   VARCHAR2(1) := 'N';
+  rw_crapdat          btch0001.cr_crapdat%ROWTYPE;
+  vr_vljuracu         NUMBER := 0;
+  vr_vljuro_lem       NUMBER := 0;
+  vr_vldivida         NUMBER := 0;
+  vr_dtrefere         DATE;
+  vr_vljurantpp       NUMBER := 0;
+  vr_vlempres         NUMBER := 0;
+  vr_vlempres_rateio  NUMBER := 0;
+  vr_vlempres_vencto  NUMBER := 0;
+  vr_vljura60         NUMBER := 0;
+  -- (Fim New2)
   vr_tab_pgto_parcel  empr0001.typ_tab_pgto_parcel;
   vr_tab_calculado    empr0001.typ_tab_calculado;
   vr_indice           PLS_INTEGER;
@@ -1638,7 +1678,8 @@ BEGIN
   dbms_output.put_line('Início Execução: '||To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'));
   
   --Para Registro com Valor Negativo
-  FOR rw_reneg_saldo_jurneg IN cr_reneg_saldo_jurneg LOOP         
+  FOR rw_reneg_saldo_jurneg IN cr_reneg_saldo_jurneg LOOP 
+              
     --Incrementa a Qtde de Registros Lidos
     vr_qt_lido := Nvl(vr_qt_lido,0) + 1;
     
@@ -1762,6 +1803,15 @@ BEGIN
     IF (Nvl(vr_vljuremutt,0) <> Nvl(rw_reneg_saldo_jurneg.vljura60,0)) 
       OR (Nvl(vr_vljuremutt,0) <> Nvl(rw_reneg_saldo_jurneg.vljuremu,0)) THEN
       
+        --Marca se o juros estava negativo ou zerado e no novo cálculo é maior que zero
+        --Para recalcular valores na Central de Riscos (Pois deve recalcular somente quando ainda havia juros a pagar)
+        IF (Nvl(rw_reneg_saldo_jurneg.vljura60,0) <= 0 OR Nvl(rw_reneg_saldo_jurneg.vljuremu,0) <=0)
+          AND Nvl(vr_vljuremutt,0) > 0 THEN
+            vr_era_neg_zerado := 'S';
+        ELSE
+          vr_era_neg_zerado := 'N';
+        END IF;
+      
         --Incrementa Qtde Diferentes
         vr_qt_diferente := Nvl(vr_qt_diferente,0) + 1;                    
                              
@@ -1784,6 +1834,8 @@ BEGIN
           vr_qt_alterado := Nvl(vr_qt_alterado,0) + SQL%ROWCOUNT;
         END IF;
 
+        ----------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------
         ----------------------------------------------------------------------------------------------
         --Atualizar Pagamentos Juros (New)
         --A tabela tbepr_renegociacao_lancto só é utlizada para fazer o estorno da renegociação.
@@ -1915,7 +1967,212 @@ BEGIN
         END IF;  
         --Fim Atualizar Pagamentos (New) 
         ----------------------------------------------------------------------------------------------
- 
+        ----------------------------------------------------------------------------------------------
+        ----------------------------------------------------------------------------------------------
+
+        /********************************************************************************************************/
+        /********************************************************************************************************/
+        /********************************************************************************************************/
+        --Atuaização CRAPVRI e CRPRIS (Somente para contratos que estavam com Juros60 Negativos ou Zerados)
+        IF Nvl(vr_era_neg_zerado,'N') = 'S' THEN
+          --
+          -- Leitura do calendário da cooperativa
+          OPEN btch0001.cr_crapdat(pr_cdcooper => rw_reneg_saldo_jurneg.cdcooper); 
+          FETCH btch0001.cr_crapdat
+          INTO rw_crapdat;
+          -- Se não encontrar
+          IF btch0001.cr_crapdat%NOTFOUND THEN
+             -- Fechar o cursor pois efetuaremos raise
+             CLOSE btch0001.cr_crapdat;
+             -- Montar mensagem de critica
+             vr_ds_erro := 'Erro ao buscar data da Cooperativa. Coop.:'||rw_reneg_saldo_jurneg.cdcooper;
+             RAISE vr_erro;
+          ELSE
+             -- Apenas fechar o cursor
+             CLOSE btch0001.cr_crapdat;
+          END IF;
+          
+          --Busca Valor Juros60 (novo)
+          vr_vljuracu := 0;
+          BEGIN
+            SELECT epr.vljuracu --É igual a Soma dos Juros Remuneratórios (Hist: 1037,1038) no Extrato do Contrato (novo) 
+            INTO   vr_vljuracu
+            FROM   crapepr  epr
+            WHERE  epr.cdcooper = rw_reneg_saldo_jurneg.cdcooper
+            AND    epr.nrdconta = rw_reneg_saldo_jurneg.nrdconta
+            AND    epr.nrctremp = rw_reneg_saldo_jurneg.nrctremp;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_ds_erro := 'Erro ao Buscar Valor Juros60 (novo) na vr_vljuracu. Cooperativa:'||rw_reneg_saldo_jurneg.cdcooper||' | Conta: '||rw_reneg_saldo_jurneg.nrdconta||' | Contrato: '||rw_reneg_saldo_jurneg.nrctremp||'.Erro: '||SubStr(SQLERRM,1,255);
+              RAISE vr_erro;
+          END;
+          -- 
+          IF Nvl(vr_vljuracu,0) < 0 THEN
+            vr_ds_erro := 'Erro. Valor Juros60 (novo) na crapepr está Negativo. Valor: '||Nvl(vr_vljuracu,0);
+            RAISE vr_erro;
+          END IF; 
+          --
+          --
+          --Busca Soma dos Lançamentos de Juros Remuneratórios no Extrato do Contrato (novo)
+          vr_vljuro_lem := 0;
+          BEGIN
+            SELECT Nvl(Sum(Nvl(vllanmto,0)),0) --É igual ao vljuracu da crapepr
+            INTO   vr_vljuro_lem
+            FROM   craplem  lem
+            WHERE  lem.cdcooper = rw_reneg_saldo_jurneg.cdcooper
+            AND    lem.nrdconta = rw_reneg_saldo_jurneg.nrdconta
+            AND    lem.nrctremp = rw_reneg_saldo_jurneg.nrctremp
+            AND    lem.cdhistor IN (1037,1038); --Históricos de Juros Remuneratórios (PP) Empréstimo/Financiamento
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_ds_erro := 'Erro ao Buscar Soma dos Lançamentos de Juros Remuneratórios (novo) na craplem. Cooperativa:'||rw_reneg_saldo_jurneg.cdcooper||' | Conta: '||rw_reneg_saldo_jurneg.nrdconta||' | Contrato: '||rw_reneg_saldo_jurneg.nrctremp||'.Erro: '||SubStr(SQLERRM,1,255);
+              RAISE vr_erro;
+          END;
+          -- 
+          IF Nvl(vr_vljuro_lem,0) < 0 THEN
+            vr_ds_erro := 'Erro. Soma dos Lançamentos de Juros (novo) na craplem está Negativo. Valor: '||Nvl(vr_vljuro_lem,0);
+            RAISE vr_erro;
+          END IF;  
+          --
+          IF Nvl(vr_vljuracu,0) <> Nvl(vr_vljuro_lem,0) THEN
+            vr_ds_erro := 'Erro. Valor dos Juros na crapepr é diferente da soma dos lançamentos de juros na craplem. Valores: '||Nvl(vr_vljuracu,0)||' X '||Nvl(vr_vljuro_lem,0);
+            RAISE vr_erro;
+          END IF;
+          --
+          --
+          --Busca Valor da Divida na Central de Risco
+          vr_vldivida := 0;
+          vr_dtrefere := NULL;
+          BEGIN
+            SELECT ris.vldivida --É igual a soma das dividas da crpvri
+                  ,ris.dtrefere
+            INTO   vr_vldivida  
+                  ,vr_dtrefere
+            FROM   crapris  ris
+            WHERE  ris.cdcooper = rw_reneg_saldo_jurneg.cdcooper
+            AND    ris.nrdconta = rw_reneg_saldo_jurneg.nrdconta
+            AND    ris.nrctremp = rw_reneg_saldo_jurneg.nrctremp
+            AND    ris.dtrefere < rw_crapdat.dtmvtolt
+            AND    ris.dtrefere = (SELECT Max(ris2.dtrefere)
+                                   FROM   crapris  ris2
+                                   WHERE  ris2.cdcooper = ris.cdcooper
+                                   AND    ris2.nrdconta = ris.nrdconta
+                                   AND    ris2.nrctremp = ris.nrctremp
+                                   AND    ris2.dtrefere < rw_crapdat.dtmvtolt --Menor que a data atual da Coop (para funcionar em Homol e Prod)
+                                   AND    ris2.cdmodali IN (299,499))
+            AND    ris.cdmodali IN (299,499);
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_ds_erro := 'Erro ao buscar Valor da Divida na CRAPRIS. Cooperativa: '||rw_reneg_saldo_jurneg.cdcooper||' | Conta: '||rw_reneg_saldo_jurneg.nrdconta||' | Contrato: '||rw_reneg_saldo_jurneg.nrctremp||' | Data Referencia <: '||rw_crapdat.dtmvtolt||'.Erro: '||SubStr(SQLERRM,1,255);
+              RAISE vr_erro;
+          END;  
+          -- 
+          IF Nvl(vr_vldivida,0) < 0 THEN
+            vr_ds_erro := 'Erro. Valor da Divida na crpris está Negativo. Valor: '||Nvl(vr_vldivida,0);
+            RAISE vr_erro;
+          END IF; 
+          --
+          --
+          --Busca Valor Juros60 (Anterior)
+          vr_vljurantpp := 0;
+          BEGIN
+            SELECT (Nvl(trs.vljura60,0) - Nvl(trs.vlpgjr60,0)) +    
+                   (Nvl(trs.vlmultap,0) - Nvl(trs.vlpgmult,0)) + 
+                   (Nvl(trs.vljurmor,0) - Nvl(trs.vlpgjrmr,0))  vljurantpp             
+            INTO   vr_vljurantpp  
+            FROM   tbepr_renegociacao_saldo  trs
+            WHERE  trs.cdcooper = rw_reneg_saldo_jurneg.cdcooper
+            AND    trs.nrdconta = rw_reneg_saldo_jurneg.nrdconta
+            AND    trs.nrctremp = rw_reneg_saldo_jurneg.nrctremp;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_ds_erro := 'Erro ao Buscar Valor Juros60 (Anterior). Cooperativa:'||rw_reneg_saldo_jurneg.cdcooper||' | Conta: '||rw_reneg_saldo_jurneg.nrdconta||' | Contrato: '||rw_reneg_saldo_jurneg.nrctremp||'.Erro: '||SubStr(SQLERRM,1,255);
+              RAISE vr_erro;
+          END;
+          --
+          IF Nvl(vr_vljurantpp,0) < 0 THEN
+            vr_ds_erro := 'Erro. Valor Juros (anterior) na tbepr_renegociacao_saldo está Negativo. Valor: '||Nvl(vr_vljurantpp,0);
+            RAISE vr_erro;
+          END IF; 
+          --
+          --
+          vr_vlempres := 0;
+          vr_vlempres := Nvl(vr_vldivida,0) - Nvl(vr_vljuracu,0) - Nvl(vr_vljurantpp,0);
+          --
+          --
+          --Distribui Valor Total do VLEMPRES nos Vencimentos da VRI
+          vr_vlempres_rateio := vr_vlempres;
+          FOR rw_vri IN cr_vri(pr_cdcooper => rw_reneg_saldo_jurneg.cdcooper
+                              ,pr_nrdconta => rw_reneg_saldo_jurneg.nrdconta
+                              ,pr_nrctremp => rw_reneg_saldo_jurneg.nrctremp
+                              ,pr_dtrefere => vr_dtrefere) LOOP
+            vr_vlempres_vencto := 0; 
+            IF Nvl(vr_vlempres_rateio,0) > Nvl(rw_vri.vldivida,0) THEN
+              vr_vlempres_vencto := Nvl(rw_vri.vldivida,0);
+            ELSE
+              vr_vlempres_vencto := Nvl(vr_vlempres_rateio,0);
+            END IF;
+            --
+            vr_vlempres_rateio := Nvl(vr_vlempres_rateio,0) - Nvl(vr_vlempres_vencto,0);
+            --
+            IF Nvl(vr_vlempres_vencto,0) < 0 THEN
+              vr_ds_erro := 'Erro. Calculado Valor Negativo Valor Empréstimo para Vencimento na CRAPVRI. Valor: '||Nvl(vr_vlempres_vencto,0);
+              RAISE vr_erro;
+            END IF;
+            --
+            --Atualiza VLEMPRES dos Vencimentos da Central de Riscos                   
+            BEGIN  
+              UPDATE crapvri  vri
+              SET    vlempres = Nvl(vr_vlempres_vencto,0)
+              WHERE  vri.cdcooper = rw_vri.cdcooper
+              AND    vri.dtrefere = rw_vri.dtrefere
+              AND    vri.nrdconta = rw_vri.nrdconta
+              AND    vri.innivris = rw_vri.innivris
+              AND    vri.cdmodali = rw_vri.cdmodali
+              AND    vri.nrctremp = rw_vri.nrctremp
+              AND    vri.nrseqctr = rw_vri.nrseqctr
+              AND    vri.cdvencto = rw_vri.cdvencto;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_ds_erro := 'Erro ao Atualizar CRAPVRI. Cooperativa:'||rw_vri.cdcooper||' | Conta: '||rw_vri.nrdconta||' | Contrato: '||rw_vri.nrctremp||' | Data Referencia: '||rw_vri.dtrefere||'.Erro: '||SubStr(SQLERRM,1,255);
+                RAISE vr_erro;
+            END;       
+          END LOOP;
+          -- 
+          --
+          --
+          --Atualiza Valor Juros60 (novo) na Central de Riscos  
+          vr_vljura60 := 0;
+          vr_vljura60 := Nvl(vr_vldivida,0) - Nvl(vr_vlempres,0) - Nvl(vr_vljurantpp,0); --Conforme feito no pc_crps310_i 
+          --
+          IF Nvl(vr_vljura60,0) < 0 THEN
+            vr_ds_erro := 'Erro. Calculado Valor Negativo de Juros60 para atualizar CRAPRIS. Valor: '||Nvl(vr_vljura60,0);
+            RAISE vr_erro;
+          END IF;
+          --
+          IF Nvl(vr_vljura60,0) <> Nvl(vr_vljuracu,0) THEN  
+            vr_ds_erro := 'Erro. Divergencia no Valor dos Juros (crapepr.vr_vljuracu) X Valor Juros Calculado (crapris.vljura60). Valores: '||Nvl(vr_vljuracu,0)||' X '||Nvl(vr_vljura60,0);
+            RAISE vr_erro;
+          END IF;   
+          --                  
+          BEGIN  
+            UPDATE crapris  ris
+            SET    ris.vljura60 = Nvl(vr_vljura60,0)
+            WHERE  ris.cdcooper = rw_reneg_saldo_jurneg.cdcooper
+            AND    ris.nrdconta = rw_reneg_saldo_jurneg.nrdconta
+            AND    ris.nrctremp = rw_reneg_saldo_jurneg.nrctremp
+            AND    ris.dtrefere = vr_dtrefere
+            AND    ris.cdmodali IN (299,499);
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_ds_erro := 'Erro ao Atualizar Juros60 (novo) na CRAPRIS. Cooperativa:'||rw_reneg_saldo_jurneg.cdcooper||' | Conta: '||rw_reneg_saldo_jurneg.nrdconta||' | Contrato: '||rw_reneg_saldo_jurneg.nrctremp||' | Data Referencia: '||vr_dtrefere||'.Erro: '||SubStr(SQLERRM,1,255);
+              RAISE vr_erro;
+          END;   
+        END IF; --Se juros negativos ou zerados  
+        /********************************************************************************************************/
+        /********************************************************************************************************/
+        /********************************************************************************************************/
+        
         --Mensagens ????? Comentar depois as mensagens
         /*
         dbms_output.put_line('Diferente'||';'||
