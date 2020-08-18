@@ -57,20 +57,6 @@ BEGIN
                                   , pr_dsmensag => 'Alterado sit. cobranca de Em Aberto para Liquidado manualmente'
                                   , pr_des_erro => vr_dserro
                                   , pr_dscritic => vr_dscritic );
-                                  
-      paga0001.pc_cria_log_cobranca(pr_idtabcob => rw.rowid
-                                  , pr_cdoperad => '1'
-                                  , pr_dtmvtolt => trunc(SYSDATE)
-                                  , pr_dsmensag => 'Alterado sit. cartoraria de Em Cartorio para Sem Protesto manualmente'
-                                  , pr_des_erro => vr_dserro
-                                  , pr_dscritic => vr_dscritic );
-                      
-      paga0001.pc_cria_log_cobranca(pr_idtabcob => rw.rowid
-                                  , pr_cdoperad => '1'
-                                  , pr_dtmvtolt => trunc(SYSDATE)
-                                  , pr_dsmensag => 'Alterado data cartoraria de 29/04/2020 para NULL manualmente'
-                                  , pr_des_erro => vr_dserro
-                                  , pr_dscritic => vr_dscritic );
 
     COMMIT;
     
