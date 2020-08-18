@@ -86,7 +86,10 @@ insert into tbepr_consig_movimento_tmp
 UPDATE CRAPACA aca SET aca.lstparam = 'pr_cdlcremp' WHERE aca.nmdeacao = 'CAR_MODALI';
 
 -- Alteracao no canal de gestão para o padrao PORTAL 
-UPDATE tbcadast_empresa_consig tbcadast SET tbcadast.cdcanalgestaopag = 1 WHERE tbcadast.cdcanalgestaopag = 0 OR tbcadast.cdcanalgestaopag IS NULL;
+UPDATE tbcadast_empresa_consig tbcadast SET tbcadast.cdcanalgestaopag = 2 WHERE tbcadast.cdcanalgestaopag = 0 OR tbcadast.cdcanalgestaopag IS NULL;
+
+-- Ajuste no histórico de estorno 
+UPDATE craphis his SET his.cdhisest = 3191 WHERE his.cdhistor = 3190;
 
 --rollback;
 commit;
