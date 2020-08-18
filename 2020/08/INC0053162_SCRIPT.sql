@@ -23,7 +23,7 @@ declare
       FROM crapcob cob
      WHERE (cob.cdcooper,cob.cdbandoc,cob.nrdctabb,cob.nrcnvcob,cob.nrdconta,cob.nrdocmto)
       IN (
-           (           6,           85,      105003,       105003,      502545,          424)
+           (           6,          85,      105003,      105003,      502545,         424)
          )
      ORDER BY COB.CDCOOPER, COB.NRDCONTA, COB.DSDOCCOP, COB.NRDOCMTO;
 
