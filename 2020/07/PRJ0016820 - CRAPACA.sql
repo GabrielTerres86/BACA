@@ -15,14 +15,5 @@ values (SEQACA_NRSEQACA.NEXTVAL, 'CONSULTAMOVCMP_P5', 'TELA_MOVCMP', 'pc_lotes_c
 insert into crapaca (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 values (SEQACA_NRSEQACA.NEXTVAL, 'CONSULTAMOVCMP_P4', 'TELA_MOVCMP', 'pc_protocolos_cob_detalhes', 'pr_tparquiv,pr_cdocorrencia', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_MOVCMP'));
 
-
-insert into crapaca (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-values (SEQACA_NRSEQACA.NEXTVAL, 'CONSULTAMOVCMP_TESTE', 'TELA_MOVCMP', 'pc_protocolos_cob_detalhes', 'pr_tparquiv,pr_cdocorrencia', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_MOVCMP'));
-
-
-INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'LISTAR_HIST_ALT_LIMITE', 'TELA_ATENDA_DSCTO_TIT', 'pc_busca_hist_alt_limite_web', 'pr_nrdconta,pr_tpctrlim,pr_nrctrlim', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_MOVCMP'));
-
-
 COMMIT;
 
