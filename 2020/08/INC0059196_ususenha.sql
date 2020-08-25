@@ -1,6 +1,4 @@
-select * from crapprm p
-where p.cdacesso = 'USUARIO_AUTH_REG_CTR' or p.cdacesso = 'SENHA_AUTH_REG_CTR' and cdcooper = 1
-
+--USUARIO_AUTH_REG_CTR
 
 UPDATE crapprm p
 SET p.dsvlrprm = '49540953014'
@@ -9,10 +7,6 @@ WHERE p.cdacesso = 'USUARIO_AUTH_REG_CTR' AND p.cdcooper = 1;
 UPDATE crapprm p
 SET p.dsvlrprm = '18677819053'
 WHERE p.cdacesso = 'USUARIO_AUTH_REG_CTR' AND p.cdcooper = 2;
-
-UPDATE crapprm p
-SET p.dsvlrprm = 
-WHERE p.cdacesso = 'USUARIO_AUTH_REG_CTR' AND p.cdcooper = 3;
 
 UPDATE crapprm p
 SET p.dsvlrprm = '30358386071'
@@ -34,9 +28,9 @@ UPDATE crapprm p
 SET p.dsvlrprm = '20860636011' 
 WHERE p.cdacesso = 'USUARIO_AUTH_REG_CTR' AND p.cdcooper = 9;
 
-UPDATE crapprm p
-SET p.dsvlrprm = 
-WHERE p.cdacesso = 'USUARIO_AUTH_REG_CTR' AND p.cdcooper = 10;
+--UPDATE crapprm p
+--SET p.dsvlrprm = 
+--WHERE p.cdacesso = 'USUARIO_AUTH_REG_CTR' AND p.cdcooper = 10;
 
 UPDATE crapprm p
 SET p.dsvlrprm = '08244865016'
@@ -50,9 +44,9 @@ UPDATE crapprm p
 SET p.dsvlrprm = '57343225049'
 WHERE p.cdacesso = 'USUARIO_AUTH_REG_CTR' AND p.cdcooper = 13;
 
-UPDATE crapprm p
-SET p.dsvlrprm = 
-WHERE p.cdacesso = 'USUARIO_AUTH_REG_CTR' AND p.cdcooper = 14;
+--UPDATE crapprm p
+--SET p.dsvlrprm = 
+--WHERE p.cdacesso = 'USUARIO_AUTH_REG_CTR' AND p.cdcooper = 14;
 
 UPDATE crapprm p
 SET p.dsvlrprm = '01055854088'
@@ -67,10 +61,6 @@ WHERE p.cdacesso = 'SENHA_AUTH_REG_CTR' AND p.cdcooper = 1;
 UPDATE crapprm p
 SET p.dsvlrprm = 'Ailos@2020'
 WHERE p.cdacesso = 'SENHA_AUTH_REG_CTR' AND p.cdcooper = 2;
-
-UPDATE crapprm p
-SET p.dsvlrprm = 
-WHERE p.cdacesso = 'SENHA_AUTH_REG_CTR' AND p.cdcooper = 3;
 
 UPDATE crapprm p
 SET p.dsvlrprm = 'Ailos@2020'
@@ -92,9 +82,9 @@ UPDATE crapprm p
 SET p.dsvlrprm = 'Ailos@2020' 
 WHERE p.cdacesso = 'SENHA_AUTH_REG_CTR' AND p.cdcooper = 9;
 
-UPDATE crapprm p
-SET p.dsvlrprm = 
-WHERE p.cdacesso = 'SENHA_AUTH_REG_CTR' AND p.cdcooper = 10;
+--UPDATE crapprm p
+--SET p.dsvlrprm = 
+--WHERE p.cdacesso = 'SENHA_AUTH_REG_CTR' AND p.cdcooper = 10;
 
 UPDATE crapprm p
 SET p.dsvlrprm = 'Ailos@2020'
@@ -108,21 +98,10 @@ UPDATE crapprm p
 SET p.dsvlrprm = 'Ailos@2020'
 WHERE p.cdacesso = 'SENHA_AUTH_REG_CTR' AND p.cdcooper = 13;
 
-UPDATE crapprm p
-SET p.dsvlrprm = 
-WHERE p.cdacesso = 'SENHA_AUTH_REG_CTR' AND p.cdcooper = 14;
+--UPDATE crapprm p
+--SET p.dsvlrprm = 
+--WHERE p.cdacesso = 'SENHA_AUTH_REG_CTR' AND p.cdcooper = 14;
 
 UPDATE crapprm p
 SET p.dsvlrprm = 'Ailos@2020'
 WHERE p.cdacesso = 'SENHA_AUTH_REG_CTR' AND p.cdcooper = 16;
-
-
-NMRESCOP	CDCOOPER
-AILOS	3
-UNILOS	6
-EVOLUA	14
-CREDIMILSUL	15
-CREDICOMIN	10
-TRANSULCRED	17
-CONCREDI	4
-
