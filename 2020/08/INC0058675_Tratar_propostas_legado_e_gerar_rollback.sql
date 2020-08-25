@@ -46,7 +46,7 @@ DECLARE
 
   -- Validacao de diretorio
   PROCEDURE pc_valida_direto(pr_nmdireto IN VARCHAR2
-                             ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
+                            ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
   BEGIN
     DECLARE
       vr_dscritic crapcri.dscritic%TYPE;
@@ -88,7 +88,9 @@ DECLARE
 BEGIN
 
   vr_nmdireto  := gene0001.fn_diretorio(pr_tpdireto => 'C' 
-                                          ,pr_cdcooper => 3);
+                                       ,pr_cdcooper => 3);
+  
+  vr_nmdireto := vr_nmdireto || '/INC0058675';
                                              
   FOR rw_crapcop IN cr_crapcop LOOP  
     vr_dados_rollback := NULL;
@@ -102,14 +104,13 @@ BEGIN
     vr_cdcooper  := rw_crapcop.cdcooper;
     
     -- Primeiro criamos o diretorio da INC, dentro de um diretorio ja existente
-    pc_valida_direto(pr_nmdireto => vr_nmdireto || '/INC0058675'
+    pc_valida_direto(pr_nmdireto => vr_nmdireto 
                      ,pr_dscritic => vr_dscritic);
     
     IF TRIM(vr_dscritic) IS NOT NULL THEN
        RAISE vr_exc_erro;
     END IF;     
     
-    vr_nmdireto := vr_nmdireto || '/INC0058675';
     vr_nmarqbkp  := 'BKP_'||upper(rw_crapcop.dsdircop)||''||to_char(sysdate,'hh24miss')||'.sql';
                    
     -- Percorrer todas as contas para gerar o arquivo de rollback
