@@ -32,8 +32,7 @@
            AND crawepr.nrctremp = crapepr.nrctremp
          WHERE crapepr.inliquid = 0
            AND crapepr.dtdpagto > pr_dtmvtoan
-           -- AND crapepr.nrdconta in (2996243,2905329)
-           ;
+           and crapepr.cdcooper IN (5,10,11);
       
       -- Variável genérica de calendário com base no cursor da btch0001
       rw_crapdat         btch0001.cr_crapdat%ROWTYPE;
@@ -257,7 +256,7 @@
                                                              rw_tbepr_adiamento_contrato.vlpreemp||';'||
                                                              vr_residuo ||';'|| 
                                                              vr_vlparepr || chr(10));
-        ROLLBACK;                                                     
+        COMMIT;
         
       END LOOP;
     
@@ -265,13 +264,12 @@
       gene0002.pc_escreve_xml(vr_des_log,vr_texto_completo,' ' || chr(10),TRUE);
     
       vr_dsdireto := gene0001.fn_param_sistema('CRED', 3, 'ROOT_MICROS') ||'cecred/james';
-      vr_dsdireto := '/progress/f0030481/usr/coop/viacredi/log';
       DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_log,vr_dsdireto,'contratos_residuo.csv',NLS_CHARSET_ID('UTF8'));
     
       dbms_lob.close(vr_des_log);
       dbms_lob.freetemporary(vr_des_log);
     
-      ROLLBACK;
+      COMMIT;
       dbms_output.put_line('sucesso');
     
     EXCEPTION
