@@ -342,13 +342,14 @@ BEGIN
      IF vr_bkp_cotas_3 IS NOT NULL THEN 
           gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, vr_bkp_cotas_3); 
      END IF;  
-   
-     gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'COMMIT;');          
+          
    
   END LOOP;
   
   commit; 
-                            
+  
+  gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'COMMIT;');                            
+  
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;      
   
   EXCEPTION 
