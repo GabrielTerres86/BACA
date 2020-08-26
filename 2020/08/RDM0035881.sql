@@ -57,6 +57,7 @@ declare
              AND sld.vlsddisp(+) > 0
              AND cotas.cdcooper(+) = ass.cdcooper
              AND cotas.nrdconta(+) = ass.nrdconta
+
          ) DADOS
      WHERE ( SALDO_COTAS > 0
         OR saldo_deposito_a_vista > 0 )
@@ -119,7 +120,7 @@ BEGIN
                    WHERE CDCOOPER = RW_CONTAS.COOPERATIVA
                      AND NRDCONTA = RW_CONTAS.CONTA
                      AND TPDEVOLUCAO = 4;
-                     
+                   
                  vr_bkp_dep_vista_1 := 'UPDATE TBCOTAS_DEVOLUCAO SET VLCAPITAL = VLCAPITAL - ' || replace( RW_CONTAS.SALDO_DEPOSITO_A_VISTA,',','.')  || ' WHERE CDCOOPER = ' || RW_CONTAS.COOPERATIVA || ' AND NRDCONTA = ' || RW_CONTAS.CONTA || ' AND TPDEVOLUCAO = 4 ;';                         
 
                      
@@ -214,20 +215,33 @@ BEGIN
     
         BEGIN
       
-                                                      
-              INSERT INTO TBCOTAS_DEVOLUCAO(cdcooper
-                                           ,nrdconta
-                                           ,tpdevolucao
-                                           ,vlcapital)
-                                    VALUES (rw_contas.cooperativa
-                                           ,rw_contas.conta
-                                           ,3
-                                           ,rw_contas.saldo_cotas);                                                
-                                                                                                       
-                UPDATE crapcot
-                   SET vldcotas = vldcotas - RW_CONTAS.SALDO_COTAS
-                 WHERE cdcooper = RW_CONTAS.Cooperativa
-                   AND nrdconta = rw_contas.conta ;   
+             BEGIN                                          
+                  INSERT INTO TBCOTAS_DEVOLUCAO(cdcooper
+                                               ,nrdconta
+                                               ,tpdevolucao
+                                               ,vlcapital)
+                                        VALUES (rw_contas.cooperativa
+                                               ,rw_contas.conta
+                                               ,3
+                                               ,rw_contas.saldo_cotas);   
+                                               
+             EXCEPTION
+                 WHEN DUP_VAL_ON_INDEX THEN
+                  
+                      UPDATE TBCOTAS_DEVOLUCAO
+                         SET VLCAPITAL = VLCAPITAL + RW_CONTAS.saldo_cotas
+                       WHERE CDCOOPER = RW_CONTAS.COOPERATIVA
+                         AND NRDCONTA = RW_CONTAS.CONTA
+                         AND TPDEVOLUCAO = 3;
+  
+              END;                                
+                                                                                           
+                                                                                                           
+                    UPDATE crapcot
+                       SET vldcotas = vldcotas - RW_CONTAS.SALDO_COTAS
+                     WHERE cdcooper = RW_CONTAS.Cooperativa
+                       AND nrdconta = rw_contas.conta ;   
+                
                    
                    
             vr_nrdolote := 600040;
@@ -298,7 +312,7 @@ BEGIN
                                                       
         EXCEPTION
           WHEN OTHERS THEN
-           DBMS_OUTPUT.PUT_LINE( 'ERRO LANCAMENTO DE COTA CAPITAL - ' || RW_CONTAS.COOPERATIVA || '/' || RW_CONTAS.CONTA || ' ' || vr_dscritic );                                         
+           DBMS_OUTPUT.PUT_LINE( 'ERRO LANCAMENTO DE COTA CAPITAL - ' || RW_CONTAS.COOPERATIVA || '/' || RW_CONTAS.CONTA || ' ' || sqlerrm );                                         
            rollback;
            continue;
        
@@ -328,10 +342,12 @@ BEGIN
      IF vr_bkp_cotas_3 IS NOT NULL THEN 
           gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, vr_bkp_cotas_3); 
      END IF;  
-     
-     commit;        
+   
+     gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'COMMIT;');          
    
   END LOOP;
+  
+  commit; 
                             
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;      
   
