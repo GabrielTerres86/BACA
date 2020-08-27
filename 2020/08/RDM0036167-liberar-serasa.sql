@@ -1,5 +1,5 @@
 /*
-(Luiz Cherpers(Mouts) - INC0058971)
+(Luiz Cherpers(Mouts) - RDM0036167)
 ajuste no campo INSERASA = 0
 */
 declare
