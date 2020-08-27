@@ -134,15 +134,19 @@ DECLARE
   vr_nrrefere VARCHAR2(20);
   vr_dtcompet VARCHAR2(7);
   vr_nrtelefo VARCHAR2(100);  
+  vr_qtlinhas NUMBER;
+  vr_nrseqrbk NUMBER;
   
   vr_exc_erro EXCEPTION;
   vr_dscritic VARCHAR2(4000);
                                      
 BEGIN     
   
-  vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'M', pr_cdcooper => 3, pr_nmsubdir => 'david');
-  vr_nmarqrbk := 'RDM0036155_rollback_baca_bloqueio_agendamentos.sql';
-  vr_dtlimite := TO_DATE('16/09/2030','DD/MM/RRRR'); 
+  vr_dsdireto := gene0001.fn_diretorio(pr_tpdireto => 'M', pr_cdcooper => 3, pr_nmsubdir => 'david');  
+  vr_dtlimite := TO_DATE('16/09/2030','DD/MM/RRRR');   
+  vr_qtlinhas := 0;
+  vr_nrseqrbk := 1;
+  vr_nmarqrbk := 'RDM0036155_rollback_baca_bloqueio_agendamentos_' || TO_CHAR(vr_nrseqrbk) || '.sql';
   
   gene0001.pc_abre_arquivo(pr_nmdireto => vr_dsdireto || '/'
                           ,pr_nmarquiv => vr_nmarqrbk   
@@ -229,16 +233,43 @@ BEGIN
                        rw_darf.vlmulta     || ';' ||
                        rw_darf.vljuros     || ';' ||
                        rw_darf.vllanaut;        
-        gene0001.pc_escr_linha_arquivo(vr_hutlrdar, vr_dslinreg);                               
-                                      
+        gene0001.pc_escr_linha_arquivo(vr_hutlrdar, vr_dslinreg);      
+        
         UPDATE craplau l 
            SET l.insitlau = 4, 
                l.dtdebito = TRUNC(SYSDATE), 
                l.dscritic = 'Convênio bloqueado para pagamento' 
-         WHERE l.rowid = rw_darf.rowid;
+         WHERE l.rowid = rw_darf.rowid;        
+        
+        IF vr_qtlinhas = 1000 THEN
+          vr_dslinreg := 'COMMIT;';
+          gene0001.pc_escr_linha_arquivo(vr_hutlfile, vr_dslinreg);          
+          
+          IF utl_file.IS_OPEN(vr_hutlfile) THEN
+            -- Fechar arquivo
+            gene0001.pc_fecha_arquivo(pr_utlfileh => vr_hutlfile);
+          END IF;           
+        
+          vr_qtlinhas := 0;
+          vr_nrseqrbk := vr_nrseqrbk + 1;
+          vr_nmarqrbk := 'RDM0036155_rollback_baca_bloqueio_agendamentos_' || TO_CHAR(vr_nrseqrbk) || '.sql';
+          
+          gene0001.pc_abre_arquivo(pr_nmdireto => vr_dsdireto || '/'
+                                  ,pr_nmarquiv => vr_nmarqrbk   
+                                  ,pr_tipabert => 'W'           
+                                  ,pr_utlfileh => vr_hutlfile   
+                                  ,pr_des_erro => vr_dscritic); 
+                                  
+          IF vr_dscritic IS NOT NULL THEN
+            vr_dscritic := 'Erro ao criar script de rollback';
+            RAISE vr_exc_erro;
+          END IF;          
+        END IF;                         
          
         vr_dslinreg := 'UPDATE craplau l SET l.insitlau = 1, l.dtdebito = NULL, l.dscritic = '''' WHERE l.rowid = ''' || rw_darf.rowid || ''';' ;         
-        gene0001.pc_escr_linha_arquivo(vr_hutlfile, vr_dslinreg);          
+        gene0001.pc_escr_linha_arquivo(vr_hutlfile, vr_dslinreg);     
+        
+        vr_qtlinhas := vr_qtlinhas + 1;     
          
       END LOOP;
       
@@ -283,9 +314,36 @@ BEGIN
                l.dtdebito = TRUNC(SYSDATE), 
                l.dscritic = 'Convênio bloqueado para pagamento' 
          WHERE l.rowid = rw_gps.rowid;    
+        
+        IF vr_qtlinhas = 1000 THEN
+          vr_dslinreg := 'COMMIT;';
+          gene0001.pc_escr_linha_arquivo(vr_hutlfile, vr_dslinreg);          
+                    
+          IF utl_file.IS_OPEN(vr_hutlfile) THEN
+            -- Fechar arquivo
+            gene0001.pc_fecha_arquivo(pr_utlfileh => vr_hutlfile);
+          END IF;           
+        
+          vr_qtlinhas := 0;
+          vr_nrseqrbk := vr_nrseqrbk + 1;
+          vr_nmarqrbk := 'RDM0036155_rollback_baca_bloqueio_agendamentos_' || TO_CHAR(vr_nrseqrbk) || '.sql';
+          
+          gene0001.pc_abre_arquivo(pr_nmdireto => vr_dsdireto || '/'
+                                  ,pr_nmarquiv => vr_nmarqrbk   
+                                  ,pr_tipabert => 'W'           
+                                  ,pr_utlfileh => vr_hutlfile   
+                                  ,pr_des_erro => vr_dscritic); 
+                                  
+          IF vr_dscritic IS NOT NULL THEN
+            vr_dscritic := 'Erro ao criar script de rollback';
+            RAISE vr_exc_erro;
+          END IF;          
+        END IF;          
          
         vr_dslinreg := 'UPDATE craplau l SET l.insitlau = 1, l.dtdebito = NULL, l.dscritic = '''' WHERE l.rowid = ''' || rw_gps.rowid || ''';' ;         
         gene0001.pc_escr_linha_arquivo(vr_hutlfile, vr_dslinreg);     
+        
+        vr_qtlinhas := vr_qtlinhas + 1;
         
         vr_cdcooper := NULL;    
          
@@ -296,8 +354,33 @@ BEGIN
            AND g.flgpagto = 0
         RETURNING g.cdcooper,g.dtmvtolt,g.cdagenci,g.cdbccxlt,g.nrdolote,g.cdidenti,g.mmaacomp,g.vlrdinss,g.vlrouent,g.vlrjuros,g.vlrtotal,g.cdopecxa,g.nrdcaixa,g.nrdmaqui,g.nrautdoc,g.nrseqdig,g.flgenvio,g.hrtransa,g.cddpagto,g.idsicred,g.cdbarras,g.nrctapag,g.nrseqagp,g.inpesgps,g.tpdpagto,g.dslindig,g.dtvencto,g.nrsequni,g.dstiparr,g.flgpagto,g.tpleitur,g.flgativo,g.nrautsic,g.idanafrd,g.idseqttl,g.tppagmto,g.cdidenti2
         INTO vr_cdcooper,vr_dtmvtolt,vr_cdagenci,vr_cdbccxlt,vr_nrdolote,vr_cdidenti,vr_mmaacomp,vr_vlrdinss,vr_vlrouent,vr_vlrjuros,vr_vlrtotal,vr_cdopecxa,vr_nrdcaixa,vr_nrdmaqui,vr_nrautdoc,vr_nrseqdig,vr_flgenvio,vr_hrtransa,vr_cddpagto,vr_idsicred,vr_cdbarras,vr_nrctapag,vr_nrseqagp,vr_inpesgps,vr_tpdpagto,vr_dslindig,vr_dtvencto,vr_nrsequni,vr_dstiparr,vr_flgpagto,vr_tpleitur,vr_flgativo,vr_nrautsic,vr_idanafrd,vr_idseqttl,vr_tppagmto,vr_cdidenti2;
+        
+        IF vr_qtlinhas = 1000 THEN
+          vr_dslinreg := 'COMMIT;';
+          gene0001.pc_escr_linha_arquivo(vr_hutlfile, vr_dslinreg);          
+                    
+          IF utl_file.IS_OPEN(vr_hutlfile) THEN
+            -- Fechar arquivo
+            gene0001.pc_fecha_arquivo(pr_utlfileh => vr_hutlfile);
+          END IF;           
+        
+          vr_qtlinhas := 0;
+          vr_nrseqrbk := vr_nrseqrbk + 1;
+          vr_nmarqrbk := 'RDM0036155_rollback_baca_bloqueio_agendamentos_' || TO_CHAR(vr_nrseqrbk) || '.sql';
+          
+          gene0001.pc_abre_arquivo(pr_nmdireto => vr_dsdireto || '/'
+                                  ,pr_nmarquiv => vr_nmarqrbk   
+                                  ,pr_tipabert => 'W'           
+                                  ,pr_utlfileh => vr_hutlfile   
+                                  ,pr_des_erro => vr_dscritic); 
+                                  
+          IF vr_dscritic IS NOT NULL THEN
+            vr_dscritic := 'Erro ao criar script de rollback';
+            RAISE vr_exc_erro;
+          END IF;          
+        END IF;         
            
-        IF vr_cdcooper IS NOT NULL THEN
+        IF NVL(vr_cdcooper,0) > 0 THEN
           IF vr_idanafrd IS NULL THEN
             vr_dslinreg := 'INSERT INTO craplgp(cdcooper,dtmvtolt,cdagenci,cdbccxlt,nrdolote,cdidenti,mmaacomp,vlrdinss,vlrouent,vlrjuros,vlrtotal,cdopecxa,nrdcaixa,nrdmaqui,nrautdoc,nrseqdig,flgenvio,hrtransa,cddpagto,idsicred,cdbarras,nrctapag,nrseqagp,inpesgps,tpdpagto,dslindig,dtvencto,nrsequni,dstiparr,flgpagto,tpleitur,flgativo,nrautsic,idseqttl,tppagmto,cdidenti2) ' ||
                            'VALUES('||vr_cdcooper||',to_date('''||to_char(vr_dtmvtolt,'dd/mm/rrrr')||''',''dd/mm/rrrr''),'||vr_cdagenci||','||vr_cdbccxlt||','||vr_nrdolote||','||vr_cdidenti||','||vr_mmaacomp||','||REPLACE(TO_CHAR(vr_vlrdinss,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=,.'),',','.')||','||REPLACE(TO_CHAR(vr_vlrouent,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=,.'),',','.')||','||REPLACE(TO_CHAR(vr_vlrjuros,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=,.'),',','.')||','||REPLACE(TO_CHAR(vr_vlrtotal,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=,.'),',','.')||','''||vr_cdopecxa||''','||vr_nrdcaixa||','||vr_nrdmaqui||','||vr_nrautdoc||','||vr_nrseqdig||','||vr_flgenvio||','||vr_hrtransa||','||vr_cddpagto||','||vr_idsicred||','''||vr_cdbarras||''','||vr_nrctapag||','||vr_nrseqagp||','||vr_inpesgps||','||vr_tpdpagto||','''||vr_dslindig||''',to_date('''||to_char(vr_dtvencto,'dd/mm/rrrr')||''',''dd/mm/rrrr''),'||vr_nrsequni||','''||vr_dstiparr||''','||vr_flgpagto||','||vr_tpleitur||','||vr_flgativo||','||vr_nrautsic||','||vr_idseqttl||','||vr_tppagmto||','''||vr_cdidenti2||''''|| ');' ;
@@ -307,6 +390,8 @@ BEGIN
                            'VALUES('||vr_cdcooper||',to_date('''||to_char(vr_dtmvtolt,'dd/mm/rrrr')||''',''dd/mm/rrrr''),'||vr_cdagenci||','||vr_cdbccxlt||','||vr_nrdolote||','||vr_cdidenti||','||vr_mmaacomp||','||REPLACE(TO_CHAR(vr_vlrdinss,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=,.'),',','.')||','||REPLACE(TO_CHAR(vr_vlrouent,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=,.'),',','.')||','||REPLACE(TO_CHAR(vr_vlrjuros,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=,.'),',','.')||','||REPLACE(TO_CHAR(vr_vlrtotal,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=,.'),',','.')||','''||vr_cdopecxa||''','||vr_nrdcaixa||','||vr_nrdmaqui||','||vr_nrautdoc||','||vr_nrseqdig||','||vr_flgenvio||','||vr_hrtransa||','||vr_cddpagto||','||vr_idsicred||','''||vr_cdbarras||''','||vr_nrctapag||','||vr_nrseqagp||','||vr_inpesgps||','||vr_tpdpagto||','''||vr_dslindig||''',to_date('''||to_char(vr_dtvencto,'dd/mm/rrrr')||''',''dd/mm/rrrr''),'||vr_nrsequni||','''||vr_dstiparr||''','||vr_flgpagto||','||vr_tpleitur||','||vr_flgativo||','||vr_nrautsic||','||vr_idanafrd||','||vr_idseqttl||','||vr_tppagmto||','''||vr_cdidenti2||''''|| ');' ;
             gene0001.pc_escr_linha_arquivo(vr_hutlfile, vr_dslinreg); 
           END IF;
+          
+          vr_qtlinhas := vr_qtlinhas + 1;
         END IF;
          
         vr_cdcooper := NULL;
@@ -321,11 +406,38 @@ BEGIN
         RETURNING a.cdcooper INTO vr_cdcooper;
         
         IF vr_cdcooper IS NOT NULL THEN   
-          vr_dslinreg := 'UPDATE tbinss_agendamento_gps a SET a.insituacao = 0, a.dtcancelamento = NULL, a.cdoperador_cancel = ''''' ||
+          IF vr_qtlinhas = 1000 THEN
+            vr_dslinreg := 'COMMIT;';
+            gene0001.pc_escr_linha_arquivo(vr_hutlfile, vr_dslinreg);          
+                      
+            IF utl_file.IS_OPEN(vr_hutlfile) THEN
+              -- Fechar arquivo
+              gene0001.pc_fecha_arquivo(pr_utlfileh => vr_hutlfile);
+            END IF;           
+          
+            vr_qtlinhas := 0;
+            vr_nrseqrbk := vr_nrseqrbk + 1;
+            vr_nmarqrbk := 'RDM0036155_rollback_baca_bloqueio_agendamentos_' || TO_CHAR(vr_nrseqrbk) || '.sql';
+            
+            gene0001.pc_abre_arquivo(pr_nmdireto => vr_dsdireto || '/'
+                                    ,pr_nmarquiv => vr_nmarqrbk   
+                                    ,pr_tipabert => 'W'           
+                                    ,pr_utlfileh => vr_hutlfile   
+                                    ,pr_des_erro => vr_dscritic); 
+                                    
+            IF vr_dscritic IS NOT NULL THEN
+              vr_dscritic := 'Erro ao criar script de rollback';
+              RAISE vr_exc_erro;
+            END IF;          
+          END IF;           
+          
+          vr_dslinreg := 'UPDATE tbinss_agendamento_gps a SET a.insituacao = 0, a.dtcancelamento = NULL, a.cdoperador_cancel = '' ''' ||
                          ' WHERE a.cdcooper = ' || rw_gps.cdcooper || 
                            ' AND a.nrdconta = ' || rw_gps.nrdconta || 
                            ' AND a.nrseqagp = ' || rw_gps.nrseqagp || ';' ;         
           gene0001.pc_escr_linha_arquivo(vr_hutlfile, vr_dslinreg);            
+          
+          vr_qtlinhas := vr_qtlinhas + 1;
         END IF;
            
       END LOOP;      
