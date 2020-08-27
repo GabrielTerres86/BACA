@@ -1703,31 +1703,31 @@ BEGIN
   END LOOP;
 	-- Fecha o arquivo
 	gene0002.pc_escreve_xml(vr_des_log, vr_texto_log, ' ' || chr(10),TRUE);
-	vr_dsdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/james';
+	vr_dsdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
 	DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_log, vr_dsdireto, 'log_ocorrencias.csv', NLS_CHARSET_ID('UTF8'));
 	dbms_lob.close(vr_des_log);
 	dbms_lob.freetemporary(vr_des_log);
 	
 	gene0002.pc_escreve_xml(vr_des_crapepr, vr_texto_crapepr, ' ' || chr(10),TRUE);
-	vr_dsdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/james';
+	vr_dsdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
 	DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_crapepr, vr_dsdireto, 'log_crapepr.csv', NLS_CHARSET_ID('UTF8'));
 	dbms_lob.close(vr_des_crapepr);
 	dbms_lob.freetemporary(vr_des_crapepr);
 	
 	gene0002.pc_escreve_xml(vr_des_craplem, vr_texto_craplem, ' ' || chr(10),TRUE);
-	vr_dsdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/james';
+	vr_dsdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
 	DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_craplem, vr_dsdireto, 'log_craplem.csv', NLS_CHARSET_ID('UTF8'));
 	dbms_lob.close(vr_des_craplem);
 	dbms_lob.freetemporary(vr_des_craplem);
 	
 	gene0002.pc_escreve_xml(vr_des_crapcot, vr_texto_crapcot, ' ' || chr(10),TRUE);
-	vr_dsdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/james';
+	vr_dsdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
 	DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_crapcot, vr_dsdireto, 'log_crapcot.csv', NLS_CHARSET_ID('UTF8'));
 	dbms_lob.close(vr_des_crapcot);
 	dbms_lob.freetemporary(vr_des_crapcot);
 	
 	gene0002.pc_escreve_xml(vr_des_craplot, vr_texto_craplot, ' ' || chr(10),TRUE);
-	vr_dsdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/james';
+	vr_dsdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
 	DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_craplot, vr_dsdireto, 'log_craplot.csv', NLS_CHARSET_ID('UTF8'));
 	dbms_lob.close(vr_des_craplot);
 	dbms_lob.freetemporary(vr_des_craplot);
