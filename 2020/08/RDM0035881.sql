@@ -57,7 +57,7 @@ declare
              AND sld.vlsddisp(+) > 0
              AND cotas.cdcooper(+) = ass.cdcooper
              AND cotas.nrdconta(+) = ass.nrdconta
-
+             and ass.cdcooper in ( 7,6,12,5,16,8,1,2,14,13,10,15,11,9)
          ) DADOS
      WHERE ( SALDO_COTAS > 0
         OR saldo_deposito_a_vista > 0 )
