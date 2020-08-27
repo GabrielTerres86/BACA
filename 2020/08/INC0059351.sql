@@ -5,6 +5,11 @@ BEGIN
         ,insitcrd = 6
    WHERE cdcooper = 1
      AND nrdconta = 11387181;
+  
+  UPDATE tbcrd_conta_cartao 
+     SET nrconta_cartao = 0
+   WHERE cdcooper = 1
+     AND nrdconta = 11387181;   
   COMMIT;   
 EXCEPTION
   WHEN OTHERS THEN
