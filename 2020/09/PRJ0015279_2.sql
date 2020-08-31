@@ -38,4 +38,31 @@ VALUES
    'URL para download informação da Ibratan',
    'https://ibraflow.capacitor.digital/ibracred-workflow/api/process'); 
    
-COMMIT;   
+-- Chaves para busca do PDF
+
+-- Secret Key Cloud PDF
+INSERT INTO crapprm
+  (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+VALUES
+  ('CRED',
+   0,
+   'SECRET_KEY_IBRATAN_PDF',
+   'Secret Key Acesso Motor Ibratan',
+   'cec0d7baca134e92b0db46e2a17ce561e1241da047b3440da21bc9c038518eab42f9d8df01be4a5a9c82ac2ab657fdfe5f94d254b76d41568bb4df0313ed0263'); 
+
+-- Access Key Cloud PDF
+INSERT INTO crapprm
+  (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+VALUES
+  ('CRED',
+   0,
+   'ACCESS_KEY_IBRATAN_PDF',
+   'Access Key Acesso Motor Ibratan',
+   'e1ce4f39c5ad465393c12461e2708496'); 
+   
+UPDATE crapprm p
+   SET p.dsvlrprm = 'curl [header] -k --noproxy ''*'' --max-time 30 -o [local-name] -f [remote-name]'
+ WHERE p.cdacesso = 'SCRIPT_DOWNLOAD_PDF_ANL';   
+   
+COMMIT;      
+ 
