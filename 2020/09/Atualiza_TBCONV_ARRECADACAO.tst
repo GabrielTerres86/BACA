@@ -1,6 +1,6 @@
 PL/SQL Developer Test script 3.0
 380
--- Created on 31/08/2020 by T0032500 
+-- Created on 31/08/2020 
 declare
   arq_csv CLOB := '8261219;1219;2;2;0;4
 8261493;1493;2;2;10;4
@@ -311,12 +311,12 @@ begin
 	FOR i IN 1 .. vr_linhascsv.COUNT
 	LOOP
 		vr_linhacsv := fn_quebra_string(vr_linhascsv(i), ';');
-		vr_cdempres := vr_linhascsv(1); --tbconv_arrecadacao.cdempres
-		vr_cdempcon := to_number(vr_linhascsv(2)); --tbconv_arrecadacao.cdempcon
-		vr_cdsegmto := to_number(vr_linhascsv(3)); --tbconv_arrecadacao.cdsegmto
-		vr_cdmodalidade := to_number(vr_linhascsv(4)); --tbconv_arrecadacao.cdmodalidade
-		vr_qttamanho_optante := to_number(vr_linhascsv(5)); --tbconv_arrecadacao.qttamanho_optante
-		vr_nrlayout_debaut := to_number(vr_linhascsv(6)); --tbconv_arrecadacao.nrlayout_debaut
+		vr_cdempres := vr_linhacsv(1); --tbconv_arrecadacao.cdempres
+        vr_cdempcon := to_number(vr_linhacsv(2)); --tbconv_arrecadacao.cdempcon
+        vr_cdsegmto := to_number(vr_linhacsv(3)); --tbconv_arrecadacao.cdsegmto
+        vr_cdmodalidade := to_number(vr_linhacsv(4)); --tbconv_arrecadacao.cdmodalidade
+        vr_qttamanho_optante := to_number(vr_linhacsv(5)); --tbconv_arrecadacao.qttamanho_optante
+        vr_nrlayout_debaut := to_number(vr_linhacsv(6)); --tbconv_arrecadacao.nrlayout_debaut
 
 
       
@@ -375,10 +375,8 @@ begin
       END LOOP;	
 
                              
---    commit;
+    commit;
 EXCEPTION
 	WHEN OTHERS THEN
 		dbms_output.put_line('Erro geral no script -> ' ||SQLERRM);								
 end;
-0
-0
