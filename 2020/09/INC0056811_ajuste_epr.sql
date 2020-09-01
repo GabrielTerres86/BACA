@@ -15,6 +15,7 @@ BEGIN
 
   UPDATE crappep t
     SET t.vlparepr = 4566.12
+       ,t.vlsdvpar = 4566.12
     WHERE t.cdcooper = 1
     AND t.nrdconta = 6908179
     AND t.nrctremp = 2460485
@@ -22,6 +23,7 @@ BEGIN
 
   UPDATE crappep t
     SET t.vlparepr = 4564.77
+       ,t.vlsdvpar = 4564.77
     WHERE t.cdcooper = 1
     AND t.nrdconta = 6908179
     AND t.nrctremp = 2460485
@@ -29,6 +31,7 @@ BEGIN
 
   UPDATE crappep t
     SET t.vlparepr = 4564.77
+       ,t.vlsdvpar = 4564.77
     WHERE t.cdcooper = 1
     AND t.nrdconta = 6908179
     AND t.nrctremp = 2460485
