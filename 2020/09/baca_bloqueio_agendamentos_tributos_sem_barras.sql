@@ -236,7 +236,7 @@ BEGIN
         gene0001.pc_escr_linha_arquivo(vr_hutlrdar, vr_dslinreg);      
         
         UPDATE craplau l 
-           SET l.insitlau = 4, 
+           SET l.insitlau = 3, 
                l.dtdebito = TRUNC(SYSDATE), 
                l.dscritic = 'Convênio bloqueado para pagamento' 
          WHERE l.rowid = rw_darf.rowid;        
@@ -310,7 +310,7 @@ BEGIN
         gene0001.pc_escr_linha_arquivo(vr_hutlrgps, vr_dslinreg);                             
                             
         UPDATE craplau l 
-           SET l.insitlau = 4, 
+           SET l.insitlau = 3, 
                l.dtdebito = TRUNC(SYSDATE), 
                l.dscritic = 'Convênio bloqueado para pagamento' 
          WHERE l.rowid = rw_gps.rowid;    
