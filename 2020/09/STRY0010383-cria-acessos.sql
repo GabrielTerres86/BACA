@@ -16,8 +16,13 @@ begin
 
     insert into crapace (nmdatela,   cddopcao,cdoperad    ,nmrotina,cdcooper    ,nrmodulo,idevento,idambace)
     select               'MANPLD',vr_cddopcao,ope.cdoperad,' '     ,ope.cdcooper,1       ,0       ,2       
-      from crapope ope
-     where ope.cdsitope = 1;
+     where ope.cdsitope = 1
+       and not exists (select 1 
+                         from crapace ace
+                        where ace.cdcooper = ope.cdcooper
+                          and ace.cdoperad = ope.cdoperad
+                          and ace.cddopcao = vr_cddopcao
+                          and ace.nmdatela = 'MANPLD');
        
     commit;
 
