@@ -282,7 +282,6 @@ DECLARE
          AND a.nrcpfcgc = prc_nrcpfcgc
          AND w.cdcooper = prc_cdcooper
          AND w.nrcctitg = prc_nrcctitg
-         AND w.insitcrd = 6
          AND (substr(w.nrcrcard,0,6) || '-' || substr(w.nrcrcard,13)) = prc_nrcrcard;      
     rw_crawcrd cr_crawcrd%ROWTYPE;
 
@@ -296,7 +295,6 @@ DECLARE
        WHERE w.nrcpftit = prd_nrcpfcgc
          AND w.cdcooper = prd_cdcooper
          AND w.nrcctitg = prd_nrcctitg
-         AND w.insitcrd = 6
          AND w.nrcrcard LIKE prd_nrcrcard;  -- (substr(w.nrcrcard,0,6) || '-' || substr(w.nrcrcard,13)) LIKE prd_nrcrcard||'%';      
     rw_crawcrd_documento cr_crawcrd_documento%ROWTYPE;    
 
