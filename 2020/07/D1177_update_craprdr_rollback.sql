@@ -1,5 +1,0 @@
-UPDATE craprdr 
-SET nmprogra = 'LIMITE_SAQUE_TAA'
-WHERE UPPER(nmprogra) = 'LIMITES_TAA';
-
-COMMIT;
