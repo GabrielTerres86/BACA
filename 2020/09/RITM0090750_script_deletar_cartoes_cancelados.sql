@@ -895,6 +895,8 @@ BEGIN
                          ,pr_tpocorrencia  => 4             --> tp ocorrencia (1-erro de negocio/ 2-erro nao tratado/ 3-alerta/ 4-mensagem)
                          ,pr_dsmensagem    => 'Fim do processamento dos arquivos para cancelamento de cartoes'    --> dscritic    
                          ,pr_idprglog      => vr_idprglog);  
+						 
+	COMMIT;
 EXCEPTION
   WHEN vr_exc_saida THEN
     raise_application_error(-20111,vr_dscritic);
