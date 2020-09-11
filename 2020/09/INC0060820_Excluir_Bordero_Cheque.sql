@@ -9,12 +9,6 @@ DELETE FROM crapbdc bdc
            AND cdb.nrdconta = bdc.nrdconta
            AND cdb.nrborder = bdc.nrborder);
 
-UPDATE crapdcc
-   SET nrborder = 0
- WHERE cdcooper = 1
-   AND nrdconta = 8383316
-   AND nrborder = 2016803;
-
 UPDATE crapcst
    SET nrborder = 0
  WHERE cdcooper = 1
