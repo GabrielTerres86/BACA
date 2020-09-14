@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-871
+869
 -- Created on 20/08/2020 by T0031546 
 DECLARE
   --
@@ -46,9 +46,9 @@ DECLARE
        AND epr.nrctremp = wpr.nrctremp
        AND epr.cdcooper = pr_cdcooper
        --
-       -- AND epr.cdcooper = 1
-       -- AND epr.nrdconta = 7769342
-       -- AND epr.nrctremp = 2552976
+       --AND epr.cdcooper = 12
+       --AND epr.nrdconta = 28800
+       --AND epr.nrctremp = 14806
        --
        AND epr.tpemprst = 2
        AND epr.inliquid = 0
@@ -357,8 +357,7 @@ DECLARE
       SELECT cdcooper
             ,cdlcremp
             ,cddindex
-        FROM craplcr
-       WHERE cddindex = 1;
+        FROM craplcr;
         
     -- Buscar a taxa acumulada do CDI
     CURSOR cr_craptxi(pr_dtiniper IN craptxi.dtiniper%TYPE
@@ -366,8 +365,7 @@ DECLARE
       SELECT cddindex
             ,vlrdtaxa
         FROM craptxi
-       WHERE dtiniper = pr_dtiniper
-         AND cddindex = 1;
+       WHERE dtiniper = pr_dtiniper;
 
     -- Registro para armazenar informacoes do contrato
     TYPE typ_parc_atu IS RECORD(cdcooper crappep.cdcooper%TYPE
@@ -560,7 +558,7 @@ DECLARE
     
     -- Carregar tabela de linha de credito
     FOR rw_craplcr IN cr_craplcr LOOP
-      vr_tab_craplcr(rw_craplcr.cdcooper || rw_craplcr.cdlcremp):= rw_craplcr.cddindex;
+      vr_tab_craplcr(to_number(rpad(to_char(rw_craplcr.cdcooper), 2, '9') || lpad(to_char(rw_craplcr.cdlcremp), 5, '0'))):= rw_craplcr.cddindex;
     END LOOP;
     --
     vr_indice_registro := vr_tab_registro.first;
@@ -620,7 +618,7 @@ DECLARE
         END IF;
 
         -- Se NAO achou linha de credito
-        IF NOT vr_tab_craplcr.EXISTS(vr_tab_registro(vr_indice_registro).cdcooper || vr_tab_registro(vr_indice_registro).cdlcremp) THEN
+        IF NOT vr_tab_craplcr.EXISTS(to_number(rpad(to_char(vr_tab_registro(vr_indice_registro).cdcooper), 2, '9') || lpad(to_char(vr_tab_registro(vr_indice_registro).cdlcremp), 5, '0'))) THEN
           --
           vr_cdcritic := 363;
           vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
@@ -630,7 +628,7 @@ DECLARE
         END IF;
         
         -- Se NAO achou taxa
-        IF NOT vr_tab_craptxi.EXISTS(vr_tab_craplcr(vr_tab_registro(vr_indice_registro).cdcooper || vr_tab_registro(vr_indice_registro).cdlcremp)) THEN
+        IF NOT vr_tab_craptxi.EXISTS(vr_tab_craplcr(to_number(rpad(to_char(vr_tab_registro(vr_indice_registro).cdcooper), 2, '9') || lpad(to_char(vr_tab_registro(vr_indice_registro).cdlcremp), 5, '0')))) THEN
           vr_dscritic := 'Taxa do CDI nao cadastrada. Data: ' || TO_CHAR(vr_dtmvtoan,'DD/MM/RRRR');
           gene0002.pc_escreve_xml(vr_des_log, vr_texto_log, 'Erro: ' || vr_tab_registro(vr_indice_registro).cdcooper || ', ' || vr_tab_registro(vr_indice_registro).nrdconta || ', ' || vr_tab_registro(vr_indice_registro).nrctremp || ' - ' || vr_cdcritic || ' - ' || vr_dscritic || chr(10));
           RAISE vr_exc_proximo;
@@ -645,7 +643,7 @@ DECLARE
                                             ,pr_dtefetiv        => vr_tab_registro(vr_indice_registro).dtmvtolt
                                             ,pr_dtdpagto        => vr_tab_registro(vr_indice_registro).dtdpagto
                                             ,pr_txmensal        => vr_tab_registro(vr_indice_registro).txmensal
-                                            ,pr_vlrdtaxa        => vr_tab_craptxi(vr_tab_craplcr(vr_tab_registro(vr_indice_registro).cdcooper || vr_tab_registro(vr_indice_registro).cdlcremp))
+                                            ,pr_vlrdtaxa        => vr_tab_craptxi(vr_tab_craplcr(to_number(rpad(to_char(vr_tab_registro(vr_indice_registro).cdcooper), 2, '9') || lpad(to_char(vr_tab_registro(vr_indice_registro).cdlcremp), 5, '0'))))
                                             ,pr_qtpreemp        => vr_tab_registro(vr_indice_registro).qtpreemp
                                             ,pr_vlsprojt        => vr_tab_registro(vr_indice_registro).vlsprojt
                                             ,pr_vlemprst        => vr_tab_registro(vr_indice_registro).vlemprst
@@ -867,8 +865,8 @@ BEGIN
   DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_crappep_prox, vr_dsdireto, 'crappep_prox_parc.csv', NLS_CHARSET_ID('UTF8'));
   dbms_lob.close(vr_des_crappep_prox);
   dbms_lob.freetemporary(vr_des_crappep_prox);
-	--
-  COMMIT;
+  --
+	COMMIT;
   --
 END;
 0
