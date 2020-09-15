@@ -1,9 +1,3 @@
-rem PL/SQL Developer Test Script
-
-set feedback off
-set autoprint off
-
-rem Execute PL/SQL Block
 begin
   FOR RW_OPERACAO IN (
 select w.rowid id_proposta, p.rowid id_contrato 
@@ -124,4 +118,3 @@ or
   COMMIT;                 
                
 end;
-/
