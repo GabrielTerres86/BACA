@@ -320,8 +320,8 @@ values (805, 1, 1, 'RESUMO DEBITO CONTA CONV.AUTOM.', 5, 'CONTABILIDADE', '80col
 
 
 
-insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM, PROGRESS_RECID)
-values ('CRED', 0, 'CRPS788_EMAIL', 'Email para as criticas no programa CRPS788', 'convenios@ailos.coop.br', 21);
+insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+values ('CRED', 0, 'CRPS788_EMAIL', 'Email para as criticas no programa CRPS788', 'convenios@ailos.coop.br');
 
 
 
