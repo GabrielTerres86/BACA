@@ -12,3 +12,5 @@ and   idusuario = (select  i.idusuario
                    AND   v.idvendedor    = i.idvendedor
                    AND i.idusuario     = u.idusuario
                   );
+
+commit;
