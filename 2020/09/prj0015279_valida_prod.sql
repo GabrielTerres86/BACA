@@ -10,8 +10,8 @@ vr_dsmensag varchar2(2000);
 begin
   --Parametros
   vr_cdcooper := 1;
-  vr_nrdconta := 000;
-  vr_nrctremp := 000;
+  vr_nrdconta := 10827056;
+  vr_nrctremp := 2960176;
   
   -- Busca a data atual
   select dtmvtolt into vr_dtmvtolt from crapdat where cdcooper = vr_cdcooper;
