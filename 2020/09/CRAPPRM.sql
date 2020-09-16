@@ -6,7 +6,7 @@ BEGIN
      0,
      'CONSOR_SEQ_REMESSA',
      'Sequancial de remessa do arquivo enviado pela Administradora',
-     '6733');
+     '6796');
      
   INSERT INTO crapprm
     (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
