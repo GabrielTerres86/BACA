@@ -15,7 +15,7 @@ BEGIN
      0,
      'CONSOR_SEQ_RETORNO',
      'Sequancial de retorno do arquivo que vamos enviar para Administradora',
-     '3405');
+     '1');
 	 
   INSERT INTO crapprm
     (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
