@@ -34,9 +34,9 @@ UPDATE craptdb tdb
 
 UPDATE crapbdt bdt
    SET bdt.dtlibbdt = NULL -- 09/10/2019
- WHERE tdb.cdcooper = 1
-   AND tdb.nrdconta = 10345000
-   AND tdb.nrborder = 629444;
+ WHERE bdt.cdcooper = 1
+   AND bdt.nrdconta = 10345000
+   AND bdt.nrborder = 629444;
    
    
 COMMIT;
