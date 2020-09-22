@@ -1,6 +1,6 @@
 DECLARE
   CURSOR cr_parcelas IS
-    SELECT p.cdcooper,p.nrdconta,p.nrctremp,p.nrparepr,p.vlsdvpar,e.vlsprojt,e.vlsdeved
+    SELECT p.cdcooper,p.nrdconta,p.nrctremp,p.nrparepr,p.vlsdvpar,e.vlsprojt,e.vlsdeved,e.vlpreemp
       FROM crappep p
       JOIN crapepr e
         ON e.cdcooper = p.cdcooper
@@ -23,7 +23,7 @@ BEGIN
   dbms_lob.createtemporary(vr_des_log, TRUE);
   dbms_lob.open(vr_des_log, dbms_lob.lob_readwrite);
 
-  GENE0002.pc_escreve_xml(vr_des_log, vr_texto_completo, 'Coop.;Conta;Contrato;Parcela;Saldo Antes Quitacao;Saldo Projetado;Saldo Devedor' || chr(10));
+  GENE0002.pc_escreve_xml(vr_des_log, vr_texto_completo, 'Coop.;Conta;Contrato;Parcela;Saldo Antes Quitacao;Saldo Projetado;Saldo Devedor;Parcela Atual' || chr(10));
 
   FOR rw_parcelas IN cr_parcelas LOOP
 
@@ -59,7 +59,10 @@ BEGIN
                                                                   ,'NLS_NUMERIC_CHARACTERS = '',.''') || ';' ||
                                                            to_char(rw_parcelas.vlsdeved
                                                                   ,'999999990D90'
-                                                                  ,'NLS_NUMERIC_CHARACTERS = '',.''') || 
+                                                                  ,'NLS_NUMERIC_CHARACTERS = '',.''') || ';' ||
+                                                           to_char(rw_parcelas.vlpreemp
+                                                                  ,'999999990D90'
+                                                                  ,'NLS_NUMERIC_CHARACTERS = '',.''') ||
                                                            chr(10));
   END LOOP;
   
