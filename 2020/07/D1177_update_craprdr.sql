@@ -1,0 +1,5 @@
+UPDATE craprdr 
+SET nmprogra = 'LIMITES_TAA'
+WHERE UPPER(nmprogra) = 'LIMITE_SAQUE_TAA';
+
+COMMIT;

@@ -320,8 +320,8 @@ values (805, 1, 1, 'RESUMO DEBITO CONTA CONV.AUTOM.', 5, 'CONTABILIDADE', '80col
 
 
 
-insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM, PROGRESS_RECID)
-values ('CRED', 0, 'CRPS788_EMAIL', 'Email para as criticas no programa CRPS788', 'convenios@ailos.coop.br', 21);
+insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+values ('CRED', 0, 'CRPS788_EMAIL', 'Email para as criticas no programa CRPS788', 'convenios@ailos.coop.br');
 
 
 
@@ -474,6 +474,9 @@ values (16, '789', 'RET.DEB.AUT. BANCOOB', 68400, 70200, 0, null, '1', 1, 36);
 insert into craPhec (CDCOOPER, CDPROGRA, DSPROGRA, HRINIEXE, HRFIMEXE, HRULTEXC, DTULTEXC, CDOPERAD, FLGATIVO, NRSEQEXE)
 values (17, '789', 'RET.DEB.AUT. BANCOOB', 68400, 70200, 0, null, '1', 1, 36);
 
+
+insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+values ('CRED', 'CRPS790', 'IMPORTACAO DE ARQUIVO DE RETORNO DEB.AUT. BANCOOB', 'Executado pela JOB', ' ', ' ', 998, 145, 1, 0, 0, 0, 0, 0, 1, 3, null);
 
 
 commit;

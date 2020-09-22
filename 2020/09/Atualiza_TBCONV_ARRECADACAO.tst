@@ -1,6 +1,5 @@
 PL/SQL Developer Test script 3.0
-380
--- Created on 31/08/2020 
+431
 declare
   arq_csv CLOB := '8261219;1219;2;2;0;4
 8261493;1493;2;2;10;4
@@ -75,15 +74,15 @@ declare
 8360031;31;3;2;11;4
 8260018;18;2;2;0;4
 8261128;1128;2;2;0;4
-8261116;1116;2;2;0;4
-8260019;19;2;2;0;3
+8261116;1116;2;2;25;4
+8260019;19;2;2;25;3
 8360111;111;3;2;13;3
 8460106;106;4;2;10;4
 8261100;1100;2;2;11;4
 8260798;798;2;2;11;4
 8360038;38;3;2;0;3
-8360040;40;3;2;0;3
-83690110;110;3;2;0;3
+8360040;40;3;2;25;3
+83690110;110;3;2;25;3
 8360052;52;3;2;12;4
 8480284;284;4;2;0;4
 8460004;4;4;2;12;3
@@ -128,7 +127,7 @@ declare
 8261149;1149;2;2;0;4
 8260477;477;2;2;8;4
 8460296;296;4;2;0;4
-8480089;89;4;2;0;4
+8480089;89;4;2;25;4
 8460313;313;4;2;0;4
 8460014;14;4;2;0;3
 8460113;113;4;2;0;3
@@ -229,7 +228,6 @@ declare
 8460082;82;4;2;0;3
 8460466;466;4;2;12;5';
 
-
   vr_arquivo      UTL_FILE.file_type;
   vr_dserro       varchar2(1000);
   vr_texto        varchar2(1000);
@@ -247,8 +245,6 @@ declare
   
   --
   vr_linha        number(6) := 0;
-  vr_diretorio    varchar2(100) := '/usr/coopd1/viacredi';
-  vr_nmarquivo    varchar2(50) := 'DA.csv';
   vr_delimitador  varchar2(1) := ';';
   vr_dtcancel     tbconv_arrecadacao.dtencemp%type;
   --
@@ -267,8 +263,16 @@ declare
            where cop.flgativo = 1
      ORDER BY cop.cdcooper;
   rw_cr_crapcop   cr_crapcop%ROWTYPE;
+
+     CURSOR cr_crapcop2 IS
+    SELECT cop.cdcooper
+      FROM crapcop cop
+           where cop.flgativo = 1
+         and cop.cdcooper <> 3
+     ORDER BY cop.cdcooper;
+  rw_cr_crapcop2   cr_crapcop2%ROWTYPE;
   
-	FUNCTION fn_quebra_string(pr_string   IN CLOB
+  FUNCTION fn_quebra_string(pr_string   IN CLOB
                            ,pr_delimit  IN CHAR DEFAULT ',') RETURN gene0002.typ_split IS
 
     vr_vlret    gene0002.typ_split := gene0002.typ_split();
@@ -276,7 +280,7 @@ declare
     vr_idx      NUMBER;
 
   BEGIN
-	  -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
+    -- Incluir nome do módulo logado - Chamado 660322 18/07/2017
     -- Alterado pc_set_modulo da procedure - Chamado 776896 - 18/10/2017
     GENE0001.pc_set_modulo(pr_module =>  NULL, pr_action => 'GENE0002.fn_quebra_string');
     --Se a string estiver nula retorna count = 0 no vetor
@@ -307,16 +311,16 @@ declare
 
  
 begin
-	vr_linhascsv := fn_quebra_string(arq_csv, CHR(10));
-	FOR i IN 1 .. vr_linhascsv.COUNT
-	LOOP
-		vr_linhacsv := fn_quebra_string(vr_linhascsv(i), ';');
-		vr_cdempres := vr_linhacsv(1); --tbconv_arrecadacao.cdempres
-        vr_cdempcon := to_number(vr_linhacsv(2)); --tbconv_arrecadacao.cdempcon
-        vr_cdsegmto := to_number(vr_linhacsv(3)); --tbconv_arrecadacao.cdsegmto
-        vr_cdmodalidade := to_number(vr_linhacsv(4)); --tbconv_arrecadacao.cdmodalidade
-        vr_qttamanho_optante := to_number(vr_linhacsv(5)); --tbconv_arrecadacao.qttamanho_optante
-        vr_nrlayout_debaut := to_number(vr_linhacsv(6)); --tbconv_arrecadacao.nrlayout_debaut
+  vr_linhascsv := fn_quebra_string(arq_csv,CHR(10));
+  FOR i IN 1 .. vr_linhascsv.COUNT
+  LOOP
+    vr_linhacsv := fn_quebra_string(vr_linhascsv(i), ';');
+    vr_cdempres := vr_linhacsv(1); --tbconv_arrecadacao.cdempres
+    vr_cdempcon := to_number(vr_linhacsv(2)); --tbconv_arrecadacao.cdempcon
+    vr_cdsegmto := to_number(vr_linhacsv(3)); --tbconv_arrecadacao.cdsegmto
+    vr_cdmodalidade := to_number(vr_linhacsv(4)); --tbconv_arrecadacao.cdmodalidade
+    vr_qttamanho_optante := to_number(vr_linhacsv(5)); --tbconv_arrecadacao.qttamanho_optante
+    vr_nrlayout_debaut := to_number(vr_linhacsv(6)); --tbconv_arrecadacao.nrlayout_debaut
 
 
       
@@ -325,20 +329,22 @@ begin
       begin
 
         UPDATE tbconv_arrecadacao SET tbconv_arrecadacao.cdmodalidade = vr_cdmodalidade,
-									  tbconv_arrecadacao.qttamanho_optante = vr_qttamanho_optante,
-									  tbconv_arrecadacao.nrlayout_debaut = vr_nrlayout_debaut
-		          WHERE tbconv_arrecadacao.cdempres = vr_cdempres
-		            AND tbconv_arrecadacao.cdsegmto = vr_cdsegmto
-					AND tbconv_arrecadacao.tparrecadacao = 2;
+                    tbconv_arrecadacao.qttamanho_optante = vr_qttamanho_optante,
+                    tbconv_arrecadacao.nrlayout_debaut = vr_nrlayout_debaut
+              WHERE tbconv_arrecadacao.cdempcon = vr_cdempcon
+                AND tbconv_arrecadacao.cdsegmto = vr_cdsegmto
+          AND tbconv_arrecadacao.tparrecadacao = 2;
    
         EXCEPTION
             WHEN others THEN
-			    dbms_output.put_line('Nao foi possivel incluir convenio (tbconv_arrecadacao): '||vr_cdempres||'->'||SQLERRM);
+          dbms_output.put_line('Nao foi possivel incluir convenio (tbconv_arrecadacao): '||vr_cdempres||'->'||SQLERRM);
                 RAISE;
       end;
 
     END LOOP;
 
+     dbms_output.put_line('importando: -> 52 2');
+    
      INSERT INTO tbconv_arrecadacao
              (cdempres ,tparrecadacao,cdempcon,cdsegmto,tpdias_repasse,nrdias_float,nrdias_tolerancia,dtencemp,nrlayout,vltarifa_caixa,vltarifa_debaut,vltarifa_internet ,vltarifa_taa ,nrlayout_debaut ,qttamanho_optante,cdmodalidade)
       VALUES (8260052,2,52,2 ,'U',0 ,0 ,'',0,0,'0,51',0,0,4,7,2);
@@ -347,36 +353,83 @@ begin
 
 
              INSERT INTO crapcon(cdempcon,cdsegmto,nmrescon,nmextcon,cdhistor,nrdolote,tparrecd,flgaccec,flgacsic,flgacbcb,cdcooper) VALUES
-                                (52,2,'SAAE ARACRUZ', 'SAAE ARACRUZ - ES',3292,15000, 2,0,0,1,rw_cr_crapcop.cdcooper);
+                                (52,2,'SAAE ARACRUZ', 'SAAE ARACRUZ - ES',2515,15000, 2,0,0,1,rw_cr_crapcop.cdcooper);
 
       END LOOP;
 
 
-     INSERT INTO tbconv_arrecadacao
-            (cdempres ,tparrecadacao,cdempcon,cdsegmto,tpdias_repasse,nrdias_float,nrdias_tolerancia,dtencemp,nrlayout,vltarifa_caixa,vltarifa_debaut,vltarifa_internet ,vltarifa_taa ,nrlayout_debaut ,qttamanho_optante,cdmodalidade)
-     VALUES (8261223,2,1223,2 ,'U',0 ,0 ,'',0,0,'0,42',0,0,4,0,2);                  
+      dbms_output.put_line('importando: -> 1223 2');  
+      begin
 
-      FOR rw_cr_crapcop IN cr_crapcop LOOP
+        UPDATE tbconv_arrecadacao SET tbconv_arrecadacao.tparrecadacao = 2,
+                                    tbconv_arrecadacao.vltarifa_debaut = '0,42',
+                    tbconv_arrecadacao.cdmodalidade = 2,
+                    tbconv_arrecadacao.qttamanho_optante = 0,
+                    tbconv_arrecadacao.nrlayout_debaut = 4,
+                    tbconv_arrecadacao.vltarifa_caixa = 0,
+                    tbconv_arrecadacao.vltarifa_internet = 0,
+                    tbconv_arrecadacao.vltarifa_taa = 0,
+                    tbconv_arrecadacao.nrdias_tolerancia = 0
+              WHERE tbconv_arrecadacao.cdempcon = 1223
+                AND tbconv_arrecadacao.cdsegmto = 2;
+   
+        EXCEPTION
+            WHEN others THEN
+          dbms_output.put_line('Nao foi possivel incluir convenio (tbconv_arrecadacao): '||1223||'->'||SQLERRM);
+                RAISE;
+      end;
 
-             INSERT INTO crapcon(cdempcon,cdsegmto,nmrescon,nmextcon,cdhistor,nrdolote,tparrecd,flgaccec,flgacsic,flgacbcb,cdcooper) VALUES
-                                (1223,2,'SAE PEDRA BRANC', 'SAE PEDRA BRANCA SC',3292,15000, 2,0,0,1,rw_cr_crapcop.cdcooper);
+      begin
+        UPDATE crapcon SET crapcon.tparrecd = 2,
+                       crapcon.cdhistor = 2515,
+                 crapcon.flgacbcb = 1, 
+               crapcon.flgaccec = 0,
+               crapcon.flgacsic = 0
+                   WHERE crapcon.cdempcon = 1223
+                   AND crapcon.cdsegmto = 2;
+        EXCEPTION
+            WHEN others THEN
+          dbms_output.put_line('Nao foi possivel incluir convenio (crapcon): '||1223||'->'||SQLERRM);
+                RAISE;
+      end;
 
-      END LOOP;
 
-     INSERT INTO tbconv_arrecadacao
-            (cdempres ,tparrecadacao,cdempcon,cdsegmto,tpdias_repasse,nrdias_float,nrdias_tolerancia,dtencemp,nrlayout,vltarifa_caixa,vltarifa_debaut,vltarifa_internet ,vltarifa_taa ,nrlayout_debaut ,qttamanho_optante,cdmodalidade)
-     VALUES (8360075,2,75,3 ,'U',0 ,0 ,'',0,0,'0,25',0,0,4,0,2);                  
-		
-      FOR rw_cr_crapcop IN cr_crapcop LOOP
 
-             INSERT INTO crapcon(cdempcon,cdsegmto,nmrescon,nmextcon,cdhistor,nrdolote,tparrecd,flgaccec,flgacsic,flgacbcb,cdcooper) VALUES
-                                (75,3,'RORAIMA ENERGIA', 'RORAIMA ENERGIA RR',3292,15000, 2,0,0,1,rw_cr_crapcop.cdcooper);
+      dbms_output.put_line('importando: -> 75 3');
+      
+      begin
 
-      END LOOP;	
+        UPDATE tbconv_arrecadacao SET tbconv_arrecadacao.tparrecadacao = 2,
+                                    tbconv_arrecadacao.vltarifa_debaut = '0,25',
+                    tbconv_arrecadacao.cdmodalidade = 2,
+                    tbconv_arrecadacao.qttamanho_optante = 0,
+                    tbconv_arrecadacao.nrlayout_debaut = 4,
+                    tbconv_arrecadacao.vltarifa_caixa = 0,
+                    tbconv_arrecadacao.vltarifa_internet = 0,
+                    tbconv_arrecadacao.vltarifa_taa = 0,
+                    tbconv_arrecadacao.nrdias_tolerancia = 0
+              WHERE tbconv_arrecadacao.cdempcon = 75
+                AND tbconv_arrecadacao.cdsegmto = 3;
+   
+        EXCEPTION
+            WHEN others THEN
+          dbms_output.put_line('Nao foi possivel incluir convenio (tbconv_arrecadacao): '||75||'->'||SQLERRM);
+                RAISE;
+      end;
+
+     
+      FOR rw_cr_crapcop2 IN cr_crapcop2 LOOP
+
+             INSERT INTO crapcon(cdempcon,cdsegmto,nmrescon,nmextcon,cdhistor,nrdolote,tparrecd,flgaccec,flgacsic,flgacbcb,cdcooper,flginter) VALUES
+                                (75,3,'RORAIMA ENERGIA', 'RORAIMA ENERGIA RR',2515,15000, 2,0,0,1,rw_cr_crapcop2.cdcooper,1);
+
+      END LOOP; 
 
                              
     commit;
 EXCEPTION
-	WHEN OTHERS THEN
-		dbms_output.put_line('Erro geral no script -> ' ||SQLERRM);								
+  WHEN OTHERS THEN
+    dbms_output.put_line('Erro geral no script -> ' ||SQLERRM);               
 end;
+0
+0

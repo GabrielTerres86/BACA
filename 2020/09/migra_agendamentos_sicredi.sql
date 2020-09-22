@@ -100,7 +100,7 @@ begin
 																														 || ', dtmvtopg: ' || to_char(rw_craplau.dtmvtopg,'DD/MM/RRRR')
 																														 || ', dscodbar: ' || rw_craplau.dscodbar || chr(10));
 				END;
-      ELSIF rw_crapcon.tparrecd = 1 THEN
+/*      ELSIF rw_crapcon.tparrecd = 1 THEN
 				
 				-- Cancelar agendamento
 				PAGA0002.pc_cancelar_agendamento
@@ -154,7 +154,7 @@ begin
 														 to_char(rw_craplau.dtmvtopg,'DD/MM/RRRR') || ';' ||
 														 rw_craplau.vllanaut || ';' ||
 														 rw_crapcon.nmrescon || ';' ||
-														 rw_craplau.dscodbar || ';' || chr(10));
+														 rw_craplau.dscodbar || ';' || chr(10));*/
 			END IF;
 		END IF;
 		
