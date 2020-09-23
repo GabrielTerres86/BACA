@@ -6,7 +6,7 @@ begin
     wk_rotina varchar2(200) := 'Script de BACA ';
     begin
 		
-		--criação dos registros de limite para a modalidade
+		--criação dos registros de limite para a modalidade 18
 		--TPLIMCRD : 0 = concessão
 		--TPLIMCRD : 1 = alteração de limite 
 		--TPLIMCRD : 2 = pré-aprovado
@@ -145,6 +145,144 @@ begin
 		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
 		values (17, 18, 500, 100000, '3,7,11,19,22', 2);
 
+		--criação dos registros de limite para a modalidade 19
+		--TPLIMCRD : 0 = concessão
+		--TPLIMCRD : 1 = alteração de limite 
+		--TPLIMCRD : 2 = pré-aprovado
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (1, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (1, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (1, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (2, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (2, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (2, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (3, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (3, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (3, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (5, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (5, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (5, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (6, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (6, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (6, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (7, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (7, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (7, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (8, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (8, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (8, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (9, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (9, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (9, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (10, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (10, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (10, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (11, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (11, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (11, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (12, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (12, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (12, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (13, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (13, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (13, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (14, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (14, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (14, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (16, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (16, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (16, 19, 500, 100000, '3,7,11,19,22', 2);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (17, 19, 500, 100000, '3,7,11,19,22', 0);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (17, 19, 0, 100000, '3,7,11,19,22', 1);
+
+		insert into tbcrd_config_categoria (CDCOOPER, CDADMCRD, VLLIMITE_MINIMO, VLLIMITE_MAXIMO, DSDIAS_DEBITO, TPLIMCRD)
+		values (17, 19, 500, 100000, '3,7,11,19,22', 2);
 		   
       commit;
 	  
