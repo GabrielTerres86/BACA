@@ -1,5 +1,5 @@
 DECLARE
-  vr_plsql_block varchar2(4000);
+  vr_plsql_block varchar2(4000); 
 BEGIN
   EXECUTE IMMEDIATE 'ALTER SESSION SET
     nls_calendar = ''GREGORIAN''
