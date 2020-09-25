@@ -1026,9 +1026,8 @@ PROCEDURE executa_programa:
                          crapepr.inliquid = 0  AND 
                          crapepr.cdfinemp = 69 AND
                          crapepr.cdlcremp = 6901 AND                          
-                         LOOKUP(STRING(crapepr.nrdconta), "307025,449997,830364") = 0 AND
-                         LOOKUP(STRING(crapepr.nrdconta), "2349299, 6138047,7393555,8681660,9350934,9492305,9719288,11281995,175560,409898,503029,11264233,172278") = 0 AND
-                         (crapepr.nrdconta <> 307025 AND crapepr.nrdconta <> 449997 AND crapepr.nrdconta <> 830364 AND crapepr.nrdconta <> 2349299 AND crapepr.nrdconta <>  6138047 AND crapepr.nrdconta <> 7393555 AND crapepr.nrdconta <> 8681660 AND crapepr.nrdconta <> 9350934 AND crapepr.nrdconta <> 9492305 AND crapepr.nrdconta <> 9719288 AND crapepr.nrdconta <> 11281995 AND crapepr.nrdconta <> 175560 AND crapepr.nrdconta <> 409898 AND crapepr.nrdconta <> 503029 AND crapepr.nrdconta <> 11264233 AND crapepr.nrdconta <> 172278)
+                         LOOKUP(STRING(crapepr.nrdconta), "307025,449997,830364") = 0 AND                         
+                         (crapepr.nrdconta <> 307025 AND crapepr.nrdconta <> 449997 AND crapepr.nrdconta <> 830364)
                          NO-LOCK,
 	
       FIRST tbcrd_cessao_credito WHERE tbcrd_cessao_credito.cdcooper = crapepr.cdcooper     AND
