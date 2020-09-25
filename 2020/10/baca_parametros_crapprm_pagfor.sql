@@ -21,13 +21,7 @@ UPDATE crapprm prm
    SET prm.dsvlrprm = '25200' 
  WHERE prm.cdcooper = 0 
    AND prm.nmsistem = 'CRED' 
-   AND prm.cdacesso = 'HRINI_ENV_REM_PAGFOR';
-
-UPDATE crapprm prm 
-   SET prm.dsvlrprm = '67500' 
- WHERE prm.cdcooper = 0 
-   AND prm.nmsistem = 'CRED' 
-   AND prm.cdacesso = 'HRFIM_ENV_REM_PAGFOR';   
+   AND prm.cdacesso = 'HRINI_ENV_REM_PAGFOR'; 
    
 INSERT INTO crapprm (NMSISTEM, 
                      CDCOOPER, 
