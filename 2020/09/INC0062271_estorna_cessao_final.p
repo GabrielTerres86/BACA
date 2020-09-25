@@ -1022,12 +1022,15 @@ PROCEDURE executa_programa:
    
   ASSIGN aux_contador = 0.
 
-  FOR EACH crapepr WHERE crapepr.inliquid = 0  AND
-                         crapepr.cdcooper = 14 AND
-                         crapepr.nrctremp = 12753 AND
-                         crapepr.nrdconta = 61140 
+    FOR EACH crapepr WHERE crapepr.dtmvtolt = 09/23/2020 AND
+                         crapepr.inliquid = 0  AND 
+                         crapepr.cdfinemp = 69 AND
+                         crapepr.cdlcremp = 6901 AND                          
+                         LOOKUP(STRING(crapepr.nrdconta), "307025,449997,830364") = 0 AND
+                         LOOKUP(STRING(crapepr.nrdconta), "2349299, 6138047,7393555,8681660,9350934,9492305,9719288,11281995,175560,409898,503029,11264233,172278") = 0 AND
+                         (crapepr.nrdconta <> 307025 AND crapepr.nrdconta <> 449997 AND crapepr.nrdconta <> 830364 AND crapepr.nrdconta <> 2349299 AND crapepr.nrdconta <>  6138047 AND crapepr.nrdconta <> 7393555 AND crapepr.nrdconta <> 8681660 AND crapepr.nrdconta <> 9350934 AND crapepr.nrdconta <> 9492305 AND crapepr.nrdconta <> 9719288 AND crapepr.nrdconta <> 11281995 AND crapepr.nrdconta <> 175560 AND crapepr.nrdconta <> 409898 AND crapepr.nrdconta <> 503029 AND crapepr.nrdconta <> 11264233 AND crapepr.nrdconta <> 172278)
                          NO-LOCK,
-
+	
       FIRST tbcrd_cessao_credito WHERE tbcrd_cessao_credito.cdcooper = crapepr.cdcooper     AND
                                        tbcrd_cessao_credito.nrdconta = crapepr.nrdconta     AND
                                        tbcrd_cessao_credito.nrctremp = crapepr.nrctremp     
@@ -1035,13 +1038,22 @@ PROCEDURE executa_programa:
   
       FIND FIRST b-crapepr_cessao WHERE b-crapepr_cessao.cdcooper = crapepr.cdcooper AND
                                         b-crapepr_cessao.nrdconta = crapepr.nrdconta AND
-                                        b-crapepr_cessao.dtmvtolt = 03/31/2020       AND
+                                        b-crapepr_cessao.dtmvtolt = 09/23/2020       AND
                                         b-crapepr_cessao.vlemprst = crapepr.vlemprst AND
                                         b-crapepr_cessao.qtpreemp = crapepr.qtpreemp
                                         NO-LOCK NO-ERROR.
                                        
       IF NOT AVAIL b-crapepr_cessao THEN
-         NEXT.
+         NEXT.         
+         
+      FIND FIRST crawepr WHERE crawepr.cdcooper = crapepr.cdcooper AND
+                                     crawepr.nrdconta = crapepr.nrdconta AND
+                                     crawepr.nrctremp = crapepr.nrctremp AND
+                                     crawepr.flgreneg = 0
+                                     NO-LOCK NO-ERROR.		
+
+      IF  NOT AVAIL crawepr THEN
+        NEXT.           
   
       ASSIGN aux_contador = aux_contador + 1.
   
