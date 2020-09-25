@@ -1,13 +1,14 @@
 DECLARE
 --
-  vr_cdcooper   craplem.cdcooper%type := 13; -- Civia
-  vr_nrdconta   craplem.nrdconta%type := 148407; -- Alterar aqui
-  vr_dtmvtolt   craplem.dtmvtolt%type := to_date('04/09/2020', 'dd/mm/yyyy'); -- Alterar aqui
-  vr_nrctremp   craplem.nrctremp%type := 62768; -- Alterar aqui
-  vr_vlpreemp   craplem.vlpreemp%type := 186.9; -- Alterar aqui
-  vr_nrparepr   craplem.nrparepr%type;
-  vr_cdcritic   number;
-  vr_dscritic   varchar2(2000);
+  vr_cdcooper    craplem.cdcooper%type := 13; -- Civia
+  vr_nrdconta    craplem.nrdconta%type := 148407; -- Alterar aqui
+  vr_dtmvtolt    craplem.dtmvtolt%type := to_date('04/09/2020', 'dd/mm/yyyy'); -- Alterar aqui
+  vr_dtmvtolt2   craplem.dtmvtolt%type := to_date('08/09/2020', 'dd/mm/yyyy'); -- Alterar aqui
+  vr_nrctremp    craplem.nrctremp%type := 62768; -- Alterar aqui
+  vr_vlpreemp    craplem.vlpreemp%type := 186.9; -- Alterar aqui
+  vr_nrparepr    craplem.nrparepr%type;
+  vr_cdcritic    number;
+  vr_dscritic    varchar2(2000);
 --
   CURSOR cr_crapdat ( pr_cdcooper in craplcm.cdcooper%type ) is
      select  dat.*
@@ -16,34 +17,36 @@ DECLARE
 --
   rw_crapdat   cr_crapdat%rowtype;
 --
-  CURSOR cr_craplcm ( pr_cdcooper in craplcm.cdcooper%type
-                     ,pr_nrdconta in craplcm.nrdconta%type
-                     ,pr_dtmvtolt in craplcm.dtmvtolt%type
+  CURSOR cr_craplcm ( pr_cdcooper  in craplcm.cdcooper%type
+                     ,pr_nrdconta  in craplcm.nrdconta%type
+                     ,pr_dtmvtolt  in craplcm.dtmvtolt%type
+                     ,pr_dtmvtolt2 in craplcm.dtmvtolt%type
                     ) is
      select  lcm.*
      from    craplcm   lcm
-     where lcm.cdcooper = pr_cdcooper
-     and   lcm.nrdconta = pr_nrdconta
-     and   lcm.dtmvtolt = pr_dtmvtolt
-     and   lcm.cdhistor = 108
+     where lcm.cdcooper  = pr_cdcooper
+     and   lcm.nrdconta  = pr_nrdconta
+     and   lcm.dtmvtolt in (pr_dtmvtolt, pr_dtmvtolt2)
+     and   lcm.cdhistor  = 108
      order by  lcm.dtmvtolt desc
               ,lcm.nrdconta
               ,lcm.nrparepr;
 --
-  CURSOR cr_craplem_pagto ( pr_cdcooper in craplem.cdcooper%type
-                           ,pr_nrdconta in craplem.nrdconta%type
-                           ,pr_nrctremp in craplem.nrctremp%type
-                           ,pr_dtmvtolt in craplem.dtmvtolt%type
-                           ,pr_nrparepr in craplem.nrparepr%type
+  CURSOR cr_craplem_pagto ( pr_cdcooper  in craplem.cdcooper%type
+                           ,pr_nrdconta  in craplem.nrdconta%type
+                           ,pr_nrctremp  in craplem.nrctremp%type
+                           ,pr_dtmvtolt  in craplem.dtmvtolt%type
+                           ,pr_dtmvtolt2 in craplem.dtmvtolt%type
+                           ,pr_nrparepr  in craplem.nrparepr%type
                            ) is
      select  lem.*
      from    craplem   lem
      where lem.cdcooper  = pr_cdcooper
      and   lem.nrdconta  = pr_nrdconta
      and   lem.nrctremp  = pr_nrctremp
-     and   lem.dtmvtolt in (pr_dtmvtolt, rw_crapdat.dtmvtolt)
+     and   lem.dtmvtolt in (pr_dtmvtolt, pr_dtmvtolt2, rw_crapdat.dtmvtolt)
      and   lem.nrparepr  = pr_nrparepr
-     and   lem.cdhistor  = 1044
+     and   lem.cdhistor in (1044, 3027)
      order by  lem.dtmvtolt desc
               ,lem.nrdconta
               ,lem.nrctremp
@@ -51,18 +54,19 @@ DECLARE
 --
   rw_craplem_pagto   cr_craplem_pagto%rowtype;
 --
-  CURSOR cr_craplem_explo ( pr_cdcooper in craplem.cdcooper%type
-                           ,pr_nrdconta in craplem.nrdconta%type
-                           ,pr_nrctremp in craplem.nrctremp%type
-                           ,pr_dtmvtolt in craplem.dtmvtolt%type
-                           ,pr_nrparepr in craplem.nrparepr%type
+  CURSOR cr_craplem_explo ( pr_cdcooper  in craplem.cdcooper%type
+                           ,pr_nrdconta  in craplem.nrdconta%type
+                           ,pr_nrctremp  in craplem.nrctremp%type
+                           ,pr_dtmvtolt  in craplem.dtmvtolt%type
+                           ,pr_dtmvtolt2 in craplem.dtmvtolt%type
+                           ,pr_nrparepr  in craplem.nrparepr%type
                            ) is
      select  lem.*
      from    craplem   lem
      where lem.cdcooper  = pr_cdcooper
      and   lem.nrdconta  = pr_nrdconta
      and   lem.nrctremp  = pr_nrctremp
-     and   lem.dtmvtolt in (pr_dtmvtolt, rw_crapdat.dtmvtolt)
+     and   lem.dtmvtolt in (pr_dtmvtolt, pr_dtmvtolt2, rw_crapdat.dtmvtolt)
      and   lem.nrparepr  = pr_nrparepr
      and   lem.cdhistor  = 1044
      order by  lem.dtmvtolt desc
@@ -72,18 +76,19 @@ DECLARE
 --
   rw_craplem_explo   cr_craplem_explo%rowtype;
 --
-  CURSOR cr_craplem_desco ( pr_cdcooper in craplem.cdcooper%type
-                           ,pr_nrdconta in craplem.nrdconta%type
-                           ,pr_nrctremp in craplem.nrctremp%type
-                           ,pr_dtmvtolt in craplem.dtmvtolt%type
-                           ,pr_nrparepr in craplem.nrparepr%type
+  CURSOR cr_craplem_desco ( pr_cdcooper  in craplem.cdcooper%type
+                           ,pr_nrdconta  in craplem.nrdconta%type
+                           ,pr_nrctremp  in craplem.nrctremp%type
+                           ,pr_dtmvtolt  in craplem.dtmvtolt%type
+                           ,pr_dtmvtolt2 in craplem.dtmvtolt%type
+                           ,pr_nrparepr  in craplem.nrparepr%type
                            ) is
      select  lem.*
      from    craplem   lem
      where lem.cdcooper  = pr_cdcooper
      and   lem.nrdconta  = pr_nrdconta
      and   lem.nrctremp  = pr_nrctremp
-     and   lem.dtmvtolt in (pr_dtmvtolt, rw_crapdat.dtmvtolt)
+     and   lem.dtmvtolt in (pr_dtmvtolt, pr_dtmvtolt2, rw_crapdat.dtmvtolt)
      and   lem.nrparepr  = pr_nrparepr
      and   lem.cdhistor  = 1048
      order by  lem.dtmvtolt desc
@@ -112,6 +117,7 @@ DECLARE
   CURSOR cr_tcpt ( pr_cdcooper in craplem.cdcooper%type
                   ,pr_nrdconta in craplem.nrdconta%type
                   ,pr_nrctremp in craplem.nrctremp%type
+                  ,pr_dtmvtolt2  in craplem.dtmvtolt%type
                  ) is
     SELECT  tcpt.*
            ,tcpt.rowid
@@ -119,7 +125,7 @@ DECLARE
     WHERE tcpt.cdcooper = pr_cdcooper
     AND   tcpt.nrdconta = pr_nrdconta
     AND   tcpt.nrctremp = pr_nrctremp
-    AND   tcpt.dtmovimento = '08/09/2020';
+    AND   tcpt.dtmovimento = pr_dtmvtolt2;
 
 --
 BEGIN
@@ -129,9 +135,10 @@ BEGIN
   INTO  rw_crapdat;
   CLOSE cr_crapdat;
 --
-  FOR rw_craplcm IN cr_craplcm ( pr_cdcooper => vr_cdcooper
-                                ,pr_nrdconta => vr_nrdconta
-                                ,pr_dtmvtolt => vr_dtmvtolt
+  FOR rw_craplcm IN cr_craplcm ( pr_cdcooper  => vr_cdcooper
+                                ,pr_nrdconta  => vr_nrdconta
+                                ,pr_dtmvtolt  => vr_dtmvtolt
+                                ,pr_dtmvtolt2 => vr_dtmvtolt2
                                ) LOOP
 --
     if rw_craplcm.nrparepr = 4 then
@@ -142,21 +149,23 @@ BEGIN
       vr_nrparepr := rw_craplcm.nrparepr - 1;
     end if;
 --
-    OPEN cr_craplem_explo ( pr_cdcooper => rw_craplcm.cdcooper
-                           ,pr_nrdconta => rw_craplcm.nrdconta
-                           ,pr_nrctremp => vr_nrctremp
-                           ,pr_dtmvtolt => rw_craplcm.dtmvtolt
-                           ,pr_nrparepr => vr_nrparepr
+    OPEN cr_craplem_explo ( pr_cdcooper  => rw_craplcm.cdcooper
+                           ,pr_nrdconta  => rw_craplcm.nrdconta
+                           ,pr_nrctremp  => vr_nrctremp
+                           ,pr_dtmvtolt  => rw_craplcm.dtmvtolt
+                           ,pr_dtmvtolt2 => vr_dtmvtolt2
+                           ,pr_nrparepr  => vr_nrparepr
                            );
     FETCH cr_craplem_explo
     INTO  rw_craplem_explo;
     CLOSE cr_craplem_explo;
 --
-    OPEN cr_craplem_pagto ( pr_cdcooper => rw_craplcm.cdcooper
-                           ,pr_nrdconta => rw_craplcm.nrdconta
-                           ,pr_nrctremp => vr_nrctremp
-                           ,pr_dtmvtolt => rw_craplcm.dtmvtolt
-                           ,pr_nrparepr => rw_craplcm.nrparepr
+    OPEN cr_craplem_pagto ( pr_cdcooper  => rw_craplcm.cdcooper
+                           ,pr_nrdconta  => rw_craplcm.nrdconta
+                           ,pr_nrctremp  => vr_nrctremp
+                           ,pr_dtmvtolt  => rw_craplcm.dtmvtolt
+                           ,pr_dtmvtolt2 => vr_dtmvtolt2
+                           ,pr_nrparepr  => rw_craplcm.nrparepr
                            );
     FETCH cr_craplem_pagto
     INTO  rw_craplem_pagto;
@@ -202,11 +211,12 @@ BEGIN
     CLOSE cr_craplem_pagto;
 --
 --
-    OPEN cr_craplem_desco ( pr_cdcooper => rw_craplcm.cdcooper
-                           ,pr_nrdconta => rw_craplcm.nrdconta
-                           ,pr_nrctremp => vr_nrctremp
-                           ,pr_dtmvtolt => rw_craplcm.dtmvtolt
-                           ,pr_nrparepr => rw_craplcm.nrparepr
+    OPEN cr_craplem_desco ( pr_cdcooper  => rw_craplcm.cdcooper
+                           ,pr_nrdconta  => rw_craplcm.nrdconta
+                           ,pr_nrctremp  => vr_nrctremp
+                           ,pr_dtmvtolt  => rw_craplcm.dtmvtolt
+                           ,pr_dtmvtolt2 => vr_dtmvtolt2
+                           ,pr_nrparepr  => rw_craplcm.nrparepr
                            );
     FETCH cr_craplem_desco
     INTO  rw_craplem_desco;
@@ -249,17 +259,21 @@ BEGIN
                                   ,pr_nrctremp => vr_nrctremp
                                   ,pr_nrparepr => rw_craplcm.nrparepr
                                   ) LOOP
+       if rw_crappep.dtultpag is null THEN
+          UPDATE crappep
+             set  dtultpag = rw_crapdat.dtmvtolt
+          where rowid = rw_crappep.rowid;
+       END IF;
+--
        if rw_crappep.inliquid  = 0
        or rw_crappep.vlpagpar  = 0
        or rw_crappep.vlsdvsji  = 0
-       or rw_crappep.vlsdvatu <> 0
-       or rw_crappep.dtultpag is null THEN
+       or rw_crappep.vlsdvatu <> 0THEN
           UPDATE crappep
              set  inliquid = 1
                  ,vlpagpar = vr_vlpreemp
                  ,vlsdvsji = vr_vlpreemp
                  ,vlsdvatu = 0
-                 ,dtultpag = rw_crapdat.dtmvtolt
                  ,vlsdvpar = 0
                  ,vldespar = 0
                  ,vlmtapar = 0
@@ -269,9 +283,10 @@ BEGIN
        END IF;
     END LOOP;
 --
-    FOR rw_tcpt in cr_tcpt ( pr_cdcooper => rw_craplcm.cdcooper
-                            ,pr_nrdconta => rw_craplcm.nrdconta
-                            ,pr_nrctremp => vr_nrctremp
+    FOR rw_tcpt in cr_tcpt ( pr_cdcooper  => rw_craplcm.cdcooper
+                            ,pr_nrdconta  => rw_craplcm.nrdconta
+                            ,pr_nrctremp  => vr_nrctremp
+                            ,pr_dtmvtolt2 => vr_dtmvtolt2
                            ) LOOP
       IF nvl(rw_tcpt.instatusproces, 'N') <> 'P' THEN
         UPDATE tbepr_consig_parcelas_tmp
