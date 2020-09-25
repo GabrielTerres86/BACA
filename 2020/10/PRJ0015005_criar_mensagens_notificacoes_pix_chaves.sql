@@ -1,5 +1,3 @@
-﻿PL/SQL Developer Test script 3.0
-157
 -- Created on 27/08/2020 by E0030208 
 declare 
   -- Local variables here
@@ -157,5 +155,3 @@ EXCEPTION
        dbms_output.put_line('Erro: ' || SQLERRM);
        
 end;
-0
-0
