@@ -8,7 +8,7 @@ begin
                          ,flgcobra_tarifa
                          ,idfaixa_valor
                          ,flgproduto_api)
-                   values(49
+                   values((select max(cdproduto)+1 from tbcc_produto)
                          ,'Pix - PAGAMENTOS INSTANTANEOS'
                          ,0
                          ,1
@@ -37,6 +37,43 @@ begin
     insert into CRAPPRG (nmsistem,cdprogra,dsprogra##1,dsprogra##2,dsprogra##3,dsprogra##4,nrsolici,nrordprg,inctrprg,cdrelato##1,cdrelato##2,cdrelato##3,cdrelato##4,cdrelato##5,inlibprg,cdcooper)
     values ('CRED','CADPIX', 'Consulta e Gerenciamento de Chaves PIX',NULL,NULL,NULL,990,999,1,0,0,0,0,0,0,RW_CRAPCOP.CDCOOPER);
   END LOOP;
+  
+  -- Copiar todos que tem acesso na LOGSPB para os acessos de @-Acesso, C-Consultar, D-Detalhar Chave e S-Salvar como CSV
+  insert into crapace (nmdatela,cddopcao,cdoperad,nmrotina,cdcooper,nrmodulo,idevento,idambace)
+  select 'CADPIX','@',crapace.cdoperad,crapace.nmrotina,crapace.cdcooper,crapace.nrmodulo,crapace.idevento,crapace.idambace
+  from crapace 
+      ,crapope 
+  where crapace.nmdatela = 'LOGSPB' AND crapace.CDDOPCAO = 'C' 
+    and crapace.cdcooper = crapope.cdcooper
+    and crapace.cdoperad = crapope.cdoperad
+    and crapope.cdsitope = 1;
+
+  insert into crapace (nmdatela,cddopcao,cdoperad,nmrotina,cdcooper,nrmodulo,idevento,idambace)
+  select 'CADPIX','C',crapace.cdoperad,crapace.nmrotina,crapace.cdcooper,crapace.nrmodulo,crapace.idevento,crapace.idambace
+  from crapace 
+      ,crapope 
+  where crapace.nmdatela = 'LOGSPB' AND crapace.CDDOPCAO = 'C' 
+    and crapace.cdcooper = crapope.cdcooper
+    and crapace.cdoperad = crapope.cdoperad
+    and crapope.cdsitope = 1;
+
+  insert into crapace (nmdatela,cddopcao,cdoperad,nmrotina,cdcooper,nrmodulo,idevento,idambace)
+  select 'CADPIX','D',crapace.cdoperad,crapace.nmrotina,crapace.cdcooper,crapace.nrmodulo,crapace.idevento,crapace.idambace
+  from crapace 
+      ,crapope 
+  where crapace.nmdatela = 'LOGSPB' AND crapace.CDDOPCAO = 'C' 
+    and crapace.cdcooper = crapope.cdcooper
+    and crapace.cdoperad = crapope.cdoperad
+    and crapope.cdsitope = 1;
+
+  insert into crapace (nmdatela,cddopcao,cdoperad,nmrotina,cdcooper,nrmodulo,idevento,idambace)
+  select 'CADPIX','S',crapace.cdoperad,crapace.nmrotina,crapace.cdcooper,crapace.nrmodulo,crapace.idevento,crapace.idambace
+  from crapace 
+      ,crapope 
+  where crapace.nmdatela = 'LOGSPB' AND crapace.CDDOPCAO = 'C' 
+    and crapace.cdcooper = crapope.cdcooper
+    and crapace.cdoperad = crapope.cdoperad
+    and crapope.cdsitope = 1;
   
   -- Opções de Menu Mobile 
   INSERT INTO menumobile(menumobileid,menupaiid,nome,sequencia,habilitado,autorizacao,versaominimaapp,versaomaximaapp)
