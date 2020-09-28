@@ -26,6 +26,6 @@ INSERT INTO crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 
 -- NRSEQRDR já existente na craprdr
 INSERT INTO crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-     VALUES ('CONSULTA_SIT_DESCT_TIT', 'TELA_ATENDA_DEPOSVIS', 'pc_consulta_sit_empr', 'pr_cdcooper, pr_nrdconta, pr_nrctrlim', 1166);
+     VALUES ('CONSULTA_SIT_DESCT_TIT', 'TELA_ATENDA_DEPOSVIS', 'pc_consulta_sit_desct_tit', 'pr_cdcooper,pr_nrdconta,pr_nrctrlim,pr_nrborder', 1166);
 
 COMMIT;
