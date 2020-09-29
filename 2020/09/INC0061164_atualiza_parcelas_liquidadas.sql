@@ -78,6 +78,10 @@ BEGIN
   and   nrdconta = vr_nrdconta
   and   nrctremp = vr_nrctremp;
 --
-  commit;
+  COMMIT;
+exception
+  WHEN others THEN
+    ROLLBACK;
+    raise_application_error(-20599, SQLERRM);
 END;
 /
