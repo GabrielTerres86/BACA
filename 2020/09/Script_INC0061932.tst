@@ -556,7 +556,7 @@ BEGIN
 
 
   --Salva
---  COMMIT;
+  COMMIT;
 
   dbms_output.put_line(' ');
   dbms_output.put_line('Script finalizado com Sucesso em '||To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'));
