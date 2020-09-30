@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-127
+129
 -- Created on 25/09/2020 by T0032500 
 declare 
   -- Local variables here
@@ -104,6 +104,8 @@ begin
                     EXCEPTION
                        WHEN others THEN
                           dbms_output.put_line('Nao foi possivel criar o ATR : '||rw_crapcop.cdcooper||'->'||rw_crapatr.nrdconta||'->'||SQLERRM);
+                          ROLLBACK;
+                          RAISE vr_exc_erro; 
                     END;
 
                 END IF;
