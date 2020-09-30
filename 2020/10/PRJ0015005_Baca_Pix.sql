@@ -38,6 +38,9 @@ begin
     values ('CRED','CADPIX', 'Consulta e Gerenciamento de Chaves PIX',NULL,NULL,NULL,990,999,1,0,0,0,0,0,0,RW_CRAPCOP.CDCOOPER);
   END LOOP;
   
+  -- Limpar para evitar erro de dup_val_on_index
+  DELETE FROM CRAPACE WHERE crapace.nmdatela = 'CADPIX';
+  
   -- Copiar todos que tem acesso na LOGSPB para os acessos de @-Acesso, C-Consultar, D-Detalhar Chave e S-Salvar como CSV
   insert into crapace (nmdatela,cddopcao,cdoperad,nmrotina,cdcooper,nrmodulo,idevento,idambace)
   select 'CADPIX','@',crapace.cdoperad,crapace.nmrotina,crapace.cdcooper,crapace.nrmodulo,crapace.idevento,crapace.idambace
@@ -45,7 +48,7 @@ begin
       ,crapope 
   where crapace.nmdatela = 'LOGSPB' AND crapace.CDDOPCAO = 'C' 
     and crapace.cdcooper = crapope.cdcooper
-    and crapace.cdoperad = crapope.cdoperad
+    and upper(crapace.cdoperad) = upper(crapope.cdoperad)
     and crapope.cdsitope = 1;
 
   insert into crapace (nmdatela,cddopcao,cdoperad,nmrotina,cdcooper,nrmodulo,idevento,idambace)
@@ -54,7 +57,7 @@ begin
       ,crapope 
   where crapace.nmdatela = 'LOGSPB' AND crapace.CDDOPCAO = 'C' 
     and crapace.cdcooper = crapope.cdcooper
-    and crapace.cdoperad = crapope.cdoperad
+    and upper(crapace.cdoperad) = upper(crapope.cdoperad)
     and crapope.cdsitope = 1;
 
   insert into crapace (nmdatela,cddopcao,cdoperad,nmrotina,cdcooper,nrmodulo,idevento,idambace)
@@ -63,7 +66,7 @@ begin
       ,crapope 
   where crapace.nmdatela = 'LOGSPB' AND crapace.CDDOPCAO = 'C' 
     and crapace.cdcooper = crapope.cdcooper
-    and crapace.cdoperad = crapope.cdoperad
+    and upper(crapace.cdoperad) = upper(crapope.cdoperad)
     and crapope.cdsitope = 1;
 
   insert into crapace (nmdatela,cddopcao,cdoperad,nmrotina,cdcooper,nrmodulo,idevento,idambace)
@@ -72,7 +75,7 @@ begin
       ,crapope 
   where crapace.nmdatela = 'LOGSPB' AND crapace.CDDOPCAO = 'C' 
     and crapace.cdcooper = crapope.cdcooper
-    and crapace.cdoperad = crapope.cdoperad
+    and upper(crapace.cdoperad) = upper(crapope.cdoperad)
     and crapope.cdsitope = 1;
   
   -- Opções de Menu Mobile 
