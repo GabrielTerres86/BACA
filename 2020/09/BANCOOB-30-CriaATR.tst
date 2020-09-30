@@ -1,11 +1,11 @@
 PL/SQL Developer Test script 3.0
-128
+127
 -- Created on 25/09/2020 by T0032500 
 declare 
   -- Local variables here
   i integer;
   
-  -- CURSOR GEN√âRICO DE CALEND√ÅRIO
+  -- CURSOR GEN…RICO DE CALEND¡RIO
   rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 
   CURSOR cr_crapcop  IS
@@ -16,7 +16,7 @@ declare
           WHERE crapcop.cdcooper <> 3;
   rw_crapcop cr_crapcop%ROWTYPE;
 
-  -- Cursor de lan√ßamentos autom√°ticos
+  -- Cursor de lanÁamentos autom·ticos
   CURSOR cr_crapatr (pr_cdcooper IN crapatr.cdcooper%TYPE) IS
         SELECT crapatr.*
         FROM   crapatr, crapass
@@ -35,7 +35,6 @@ declare
 
   CURSOR cr_crapatr2 (pr_cdcooper IN crapatr.cdcooper%TYPE,
                       pr_nrdconta IN crapatr.nrdconta%TYPE,
-                      pr_cdhistor IN crapatr.cdhistor%TYPE,
                       pr_cdrefere IN crapatr.cdrefere%TYPE) IS
         SELECT crapatr.nrdconta
         FROM   crapatr
@@ -62,7 +61,7 @@ begin
     OPEN btch0001.cr_crapdat(pr_cdcooper => 3);
          FETCH btch0001.cr_crapdat
          INTO rw_crapdat;
-    -- SE N√ÉO ENCONTRAR
+    -- SE N√O ENCONTRAR
     IF btch0001.cr_crapdat%NOTFOUND THEN
         -- FECHAR O CURSOR POIS EFETUAREMOS RAISE
        CLOSE btch0001.cr_crapdat;
@@ -85,7 +84,7 @@ begin
                
               IF cr_tbconv_arrecadacao%FOUND THEN
 
-                 OPEN cr_crapatr2 (rw_crapatr.cdcooper, rw_crapatr.nrdconta, rw_crapatr.cdhistor, rw_crapatr.cdrefere);
+                 OPEN cr_crapatr2 (rw_crapatr.cdcooper, rw_crapatr.nrdconta, rw_crapatr.cdrefere);
                
                  FETCH cr_crapatr2 INTO rw_crapatr2;
                
@@ -107,8 +106,6 @@ begin
                           dbms_output.put_line('Nao foi possivel criar o ATR : '||rw_crapcop.cdcooper||'->'||rw_crapatr.nrdconta||'->'||SQLERRM);
                     END;
 
-                    commit;
-                     
                 END IF;
 
                 CLOSE cr_crapatr2;
@@ -119,14 +116,16 @@ begin
               
            END LOOP;   
 
+          COMMIT;
+          
       END LOOP; -- Crapcop
 
     EXCEPTION
 
       WHEN vr_exc_erro THEN
-        dbms_output.put_line('Alertas na execu√ß√£o : vr_exc_erro '||SQLERRM);
+        dbms_output.put_line('Alertas na execuÁ„o : vr_exc_erro '||SQLERRM);
       WHEN OTHERS THEN
-        dbms_output.put_line('Alteras na execu√ß√£o : '||SQLERRM);
+        dbms_output.put_line('Alteras na execuÁ„o : '||SQLERRM);
 end;
 0
 0
