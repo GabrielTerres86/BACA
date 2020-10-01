@@ -5,7 +5,7 @@ BEGIN
   -- Atualizar para sequancia correta e commitar o ajusta da sequencia
   begin
     UPDATE CRAPPRM PRM
-           SET PRM.DSVLRPRM = 6796
+           SET PRM.DSVLRPRM = 6816
          WHERE PRM.CDCOOPER = 0
            AND PRM.NMSISTEM = 'CRED'
            AND PRM.CDACESSO = 'CONSOR_SEQ_REMESSA' ;
@@ -20,4 +20,15 @@ BEGIN
   if TRIM(vr_dscritic) IS NOT NULL then
      DBMS_OUTPUT.PUT(vr_dscritic);     
   end if; 
+  
+   -- Atualizar para sequancia correta e commitar o ajusta da sequencia
+  begin
+    UPDATE CRAPPRM PRM
+           SET PRM.DSVLRPRM = 6820		   
+		 WHERE PRM.CDCOOPER = 0
+           AND PRM.NMSISTEM = 'CRED'
+           AND PRM.CDACESSO = 'CONSOR_SEQ_REMESSA' ;
+    commit;       
+  end;
+  
 end;
