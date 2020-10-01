@@ -30,10 +30,10 @@ BEGIN
   aux_cdpartar_add :=  aux_cdpartar_add + 1;
   -- ----- Ativação ----- --
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
-  values (aux_cdpartar_add, 'Qtd dias atraso cessão cartão (1 - Sem Bancoob, 0 - Com Bancoob) e Data Corte', 2, 12);
+  values (aux_cdpartar_add, 'Qtd dias atraso cessao cartao (1 - Sem Bancoob, 0 - Com Bancoob) e Data Corte', 2, 12);
 
   insert into crapbat (CDBATTAR, NMIDENTI, CDPROGRA, TPCADAST, CDCADAST)
-  values ('DIAATRCESS', 'Informa se quantidade de dias em atraso para cessão de cartão utiliza ou não dias do BANCOOB', ' ', 2, aux_cdpartar_add);
+  values ('DIAATRCESS', 'Informa se quantidade de dias em atraso para cessão de cartao utiliza ou nao dias do BANCOOB', ' ', 2, aux_cdpartar_add);
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar_add, 17, '1;' || aux_data_libera);
