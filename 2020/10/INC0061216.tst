@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-169
+165
 -- Created on 02/10/2020 by T0032717 
 DECLARE 
 
@@ -15,11 +15,7 @@ DECLARE
        AND c.cdcooper = e.cdcooper
        AND c.nrdconta = e.nrdconta
        AND c.nrctremp = e.nrctremp
-       AND c.dtdbaixa IS NULL
-       AND e.cdcooper = 7 
-       AND e.nrdconta = 312410
-       AND e.nrctremp = 15258
-       ;
+       AND c.dtdbaixa IS NULL;
   rw_principal cr_principal%ROWTYPE;
 
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
