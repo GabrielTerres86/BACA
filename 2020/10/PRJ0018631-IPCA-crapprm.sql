@@ -20,7 +20,7 @@ values
 insert into crapprm 
 (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
 values
-('CRED',1, 'CONTAS_PILOTO_IPCA', 'Indica as contas piltos para o produto IPCA', '8431213,6686230,2196476,8519064');
+('CRED',1, 'CONTAS_PILOTO_IPCA', 'Indica as contas piltos para o produto IPCA', '8431213,6686230,2196476,8519064,2096099,3522857,10059423,6139310');
 
 
   insert into crapprm (nmsistem,cdcooper,cdacesso,dstexprm,dsvlrprm)
