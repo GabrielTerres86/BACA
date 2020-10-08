@@ -1,0 +1,16 @@
+BEGIN
+  BEGIN
+    DELETE CRAWCRD
+     WHERE CDCOOPER = 1
+       AND NRDCONTA = 11750731
+       AND NRCTRCRD = 1865688;
+  
+    DBMS_OUTPUT.PUT_LINE('Delete efetuado com sucesso.');
+    
+    COMMIT;
+  
+  EXCEPTION
+    WHEN OTHERS THEN
+      DBMS_OUTPUT.PUT_LINE('ERRO => ' || SQLERRM);
+  END;
+END;
