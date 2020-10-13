@@ -24,17 +24,37 @@ BEGIN
   
   CLOSE cr_craprdr;
   
-
-  INSERT INTO CECRED.CRAPACA
-    (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-  VALUES
-    ((SELECT NVL(MAX(nrseqaca),0)+1 FROM crapaca)
-    ,'BUSCAR_DADOS_REVISAO_CADASTRAL'
-    ,NULL
-    ,'buscarDadosRevisaoCadastral'
-    ,'pr_nrdconta'
-    ,vr_nrseqrdr);
-
+  BEGIN
+      
+    INSERT INTO CECRED.CRAPACA
+      (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+    VALUES
+      ((SELECT NVL(MAX(nrseqaca),0)+1 FROM crapaca)
+      ,'BUSCAR_DADOS_REVISAO_CADASTRAL'
+      ,NULL
+      ,'buscarDadosRevisaoCadastral'
+      ,'pr_nrdconta'
+      ,vr_nrseqrdr);
+  EXCEPTION
+    WHEN dup_val_on_index THEN
+      NULL; -- ignora caso já esteja cadastrado
+  END;
+  
+  BEGIN
+    INSERT INTO CECRED.CRAPACA
+      (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+    VALUES
+      ((SELECT NVL(MAX(nrseqaca),0)+1 FROM crapaca)
+      ,'GRAVAR_REVISAO_CADASTRAL'
+      ,NULL
+      ,'registrarRevisaoCadastral'
+      ,'pr_nrdconta,pr_dsxmldat'
+      ,vr_nrseqrdr);
+  EXCEPTION
+    WHEN dup_val_on_index THEN
+      NULL; -- ignora caso já esteja cadastrado
+  END;
+  
   COMMIT;
 
 END;
