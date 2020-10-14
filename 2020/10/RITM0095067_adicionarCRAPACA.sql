@@ -47,7 +47,7 @@ BEGIN
       ((SELECT NVL(MAX(nrseqaca),0)+1 FROM crapaca)
       ,'GRAVAR_REVISAO_CADASTRAL'
       ,NULL
-      ,'registrarRevisaoCadastral'
+      ,'gravarRevisaoCadastral'
       ,'pr_nrdconta,pr_dsxmldat'
       ,vr_nrseqrdr);
   EXCEPTION
