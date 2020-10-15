@@ -1,5 +1,6 @@
 /*
-Gerar carga de TEDs para o OFSAA ultimos 24 meses
+    Proxima execucao: 22/10/2020
+    Gerar carga de TEDs para o OFSAA ultimos 24 meses
 */
 declare 
   -- Local variables here
