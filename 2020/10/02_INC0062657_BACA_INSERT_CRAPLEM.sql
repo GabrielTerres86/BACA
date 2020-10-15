@@ -8,7 +8,8 @@ DECLARE
            , L.NRDOLOTE
            , L.ROWID
         FROM CECRED.CRAPLOT L
-       WHERE DTMVTOLT >= '01/04/2020'
+       WHERE DTMVTOLT >= to_date('01/04/2020','dd/mm/rrrr')
+         AND DTMVTOLT < to_date('01/10/2020','dd/mm/rrrr')
          AND CDAGENCI = 1
          AND CDBCCXLT = 100
          AND NRDOLOTE = 8361
