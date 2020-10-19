@@ -63,8 +63,8 @@ begin
                                                  pr_cdcooper => rw_crapcop.cdcooper,
                                                  pr_cdacesso => 'PRST_FTP_SENHA');
         vr_seqarquivo := SUBSTR(vr_dstextab,139,5);
-        vr_apolice  := SUBSTR(vr_dstextab,144,13);
-        vr_fimvigen := SUBSTR(vr_dstextab,158,10);
+        vr_apolice  := SUBSTR(vr_dstextab,144,11);
+        vr_fimvigen := SUBSTR(vr_dstextab,156,10);
         vr_taxpermor := vr_vlpercmo;
         vr_taxperinv := vr_vlpercin;
       END IF;
