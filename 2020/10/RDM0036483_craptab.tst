@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-102
+122
 -- Created on 15/10/2020 by F0030367 
 declare 
   -- Local variables here
@@ -33,6 +33,26 @@ declare
 begin
   -- Test statements here
   
+  -- crapaca 
+  BEGIN
+    UPDATE crapaca aca
+       SET aca.lstparam = aca.lstparam || ', pr_fimvigen, pr_taxpermor, pr_taxperinv'
+     WHERE aca.nmdeacao = 'TAB049_ALTERAR';
+    COMMIT;
+  END;
+  
+  -- Craptab
+  BEGIN
+    UPDATE craptab tab
+       SET tab.dstextab = tab.dstextab || ' 31/01/2021'
+     WHERE upper(tab.nmsistem) = 'CRED'
+       AND upper(tab.tptabela) = 'USUARI'
+       AND tab.cdempres        = 11
+       AND upper(tab.cdacesso) = 'SEGPRESTAM'
+       AND tab.tpregist        = 0;
+    COMMIT;
+  END;
+  
   for rw_crapcop in cr_crapcop loop
   
     vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => rw_crapcop.cdcooper
@@ -63,8 +83,8 @@ begin
                                                  pr_cdcooper => rw_crapcop.cdcooper,
                                                  pr_cdacesso => 'PRST_FTP_SENHA');
         vr_seqarquivo := SUBSTR(vr_dstextab,139,5);
-        vr_apolice  := SUBSTR(vr_dstextab,144,13);
-        vr_fimvigen := SUBSTR(vr_dstextab,158,10);
+        vr_apolice  := SUBSTR(vr_dstextab,144,11);
+        vr_fimvigen := SUBSTR(vr_dstextab,156,10);
         vr_taxpermor := vr_vlpercmo;
         vr_taxperinv := vr_vlpercin;
       END IF;
