@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-102
+122
 -- Created on 15/10/2020 by F0030367 
 declare 
   -- Local variables here
@@ -32,6 +32,26 @@ declare
   select cdcooper from crapcop where flgativo = 1;
 begin
   -- Test statements here
+  
+  -- crapaca 
+  BEGIN
+    UPDATE crapaca aca
+       SET aca.lstparam = aca.lstparam || ', pr_fimvigen, pr_taxpermor, pr_taxperinv'
+     WHERE aca.nmdeacao = 'TAB049_ALTERAR';
+    COMMIT;
+  END;
+  
+  -- Craptab
+  BEGIN
+    UPDATE craptab tab
+       SET tab.dstextab = tab.dstextab || ' 31/01/2021'
+     WHERE upper(tab.nmsistem) = 'CRED'
+       AND upper(tab.tptabela) = 'USUARI'
+       AND tab.cdempres        = 11
+       AND upper(tab.cdacesso) = 'SEGPRESTAM'
+       AND tab.tpregist        = 0;
+    COMMIT;
+  END;
   
   for rw_crapcop in cr_crapcop loop
   
