@@ -8,6 +8,9 @@ SET a.lstparam = a.lstparam||',pr_flgrepro'
 where a.nmdeacao = 'ALTLINHA'
 AND a.nmpackag = 'TELA_LCREDI';
 
+-- armazenar tela para interface web
+INSERT INTO CRAPRDR (NMPROGRA, DTSOLICI) values ('TELA_RECCRD', sysdate);
+
 INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 VALUES ('BUSCA_FAIXA_RECIPRO_TAXA', 'TELA_RECCRD', 'pc_busca_faixa_recipro_web', 'pr_tpproduto,pr_cdcatego,pr_inpessoa ',
                       NVL((SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'TELA_RECCRD' AND ROWNUM = 1),1));                                                                 
