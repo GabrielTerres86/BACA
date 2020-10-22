@@ -44,6 +44,8 @@ begin
   insert into tbpix_tipo_fase (idfase,nmfase,idsituacao) values (15,'Situação final cabine JDPI','A');
   insert into tbpix_tipo_fase (idfase,nmfase,idsituacao) values (16, 'Confirmação Lançamento em Conta', 'A');
   insert into tbpix_tipo_fase (idfase,nmfase,idsituacao) values (17, 'Validação de Recebimentos', 'A');
+  insert into tbpix_tipo_fase (idfase,nmfase,idsituacao) values (18, 'Efetivação INTER/INTRA cooperativa', 'A');
+
   
   --- Vinculo Fases a Transação de Recebimento 
   insert into tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
@@ -96,6 +98,10 @@ begin
                   values (29,'D',16,22,'S',null);   	
   insert into tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
                   values (49,'D',16,25,'S',null);	
+  insert into tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
+                  values (50,'D',18,22,'S',null);	
+	
+				  
 
   --- Vinculo Fases a Transação de Pagamento 
   insert into tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
@@ -129,7 +135,9 @@ begin
   insert into tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
                   values (45,'P',16,41,'S',null);					  
   insert into tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
-                  values (46,'P',16,42,'S',null);		
+                  values (46,'P',16,42,'S',null);	
+  insert into tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
+                  values (47,'P',18,32,'S',null);					  
   
   -- Dominios com caracteres invalidos
   UPDATE tbpix_dominio_campo SET DSCODIGO = 'Em inclusão' WHERE NMDOMINIO = 'PIX_SITUACAO_CHAVE' AND CDDOMINIO = 'I';
