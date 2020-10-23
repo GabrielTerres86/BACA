@@ -1,0 +1,1 @@
+drop PROCEDURE CREDITO.obterNumeroUltimoAditivReneg;
