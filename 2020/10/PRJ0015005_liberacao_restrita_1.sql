@@ -1,6 +1,3 @@
-PL/SQL Developer Test script 3.0
-5041
--- Created on 30/09/2020 by E0030208 
 declare 
   -- Local variables here
   i integer;
@@ -5041,5 +5038,3 @@ begin
    commit;
    
 end;
-0
-0

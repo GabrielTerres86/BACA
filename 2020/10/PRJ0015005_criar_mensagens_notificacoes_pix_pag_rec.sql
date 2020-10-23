@@ -1,6 +1,4 @@
-﻿PL/SQL Developer Test script 3.0
-892
-declare 
+﻿declare 
   -- Local variables here
   V_CODIGO TBGEN_NOTIF_MSG_CADASTRO.cdmensagem%TYPE;
   
@@ -892,5 +890,3 @@ EXCEPTION
        dbms_output.put_line('Erro: ' || SQLERRM);
        
 end;
-0
-0
