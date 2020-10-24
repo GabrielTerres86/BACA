@@ -5002,7 +5002,8 @@ select 1 CodCop, 'VIACREDI' NomeCop, 11186585 Conta from dual union all
 select 1 CodCop, 'VIACREDI' NomeCop, 11187093 Conta from dual union all
 select 1 CodCop, 'VIACREDI' NomeCop, 11187387 Conta from dual union all
 select 1 CodCop, 'VIACREDI' NomeCop, 11190043 Conta from dual union all
-select 1 CodCop, 'VIACREDI' NomeCop, 11192640 Conta from dual
+select 1 CodCop, 'VIACREDI' NomeCop, 11192640 Conta from dual 
+
 )
 select a.CodCop, a.Conta
   from dados a;
