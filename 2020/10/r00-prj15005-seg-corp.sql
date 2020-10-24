@@ -43,10 +43,10 @@ begin
   values (17, 1, 21600, 57540, 10);
   --
   insert into tbcc_produto (CDPRODUTO, DSPRODUTO, FLGITEM_SOA, FLGUTILIZA_INTERFACE_PADRAO, FLGENVIA_SMS, FLGCOBRA_TARIFA, IDFAIXA_VALOR, FLGPRODUTO_API)
-  values (53, 'PXI', 0, 0, 0, 0, 0, 0);
+  values (54, 'PXI', 0, 0, 0, 0, 0, 0);
   --
   insert into tbcc_produto (CDPRODUTO, DSPRODUTO, FLGITEM_SOA, FLGUTILIZA_INTERFACE_PADRAO, FLGENVIA_SMS, FLGCOBRA_TARIFA, IDFAIXA_VALOR, FLGPRODUTO_API)
-  values (54, 'PXE', 0, 0, 0, 0, 0, 0);
+  values (55, 'PXE', 0, 0, 0, 0, 0, 0);
   --
   insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
   values ('CRED', 0, 'BLQJ_AUTOMATICO_PIX', 'Faixa de horario para bloqueio automatico entre horarios de indisponibilidade do AIMARO. ATIVO;HRINICIO;HRFIM', '1;79200;28800');
