@@ -4058,11 +4058,11 @@ select 16 CodCop, 'VIACREDI AV' NomeCop, 9865 Conta from dual
 select a.CodCop, a.Conta
   from dados a;
  
- cursor cr_contas (pr_cdcooper in tbpix_crapass.cdcooper%TYPE
-                  ,pr_nrdconta in tbpix_crapass.nrdconta%TYPE) is
+ cursor cr_contas (pr_cdcooper in aimaro.tbpix_crapass.cdcooper%TYPE
+                  ,pr_nrdconta in aimaro.tbpix_crapass.nrdconta%TYPE) is
  select a.cdcooper
        ,a.nrdconta
-  from tbpix_crapass a
+  from aimaro.tbpix_crapass a
  where a.cdcooper = pr_cdcooper
    and a.nrdconta = pr_nrdconta;
   rw_contas cr_contas%ROWTYPE;
@@ -4079,7 +4079,7 @@ begin
       if cr_contas%found then
         
          begin
-           update tbpix_crapass ass
+           update aimaro.tbpix_crapass ass
               set ass.flliberacao_restrita = 1
             where ass.cdcooper = rw_contas.cdcooper
               and ass.nrdconta = rw_contas.nrdconta;
