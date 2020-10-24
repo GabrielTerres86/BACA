@@ -37,7 +37,7 @@ DECLARE
   
   BEGIN
 
-    OPEN c_craplem(10, '06/10/2020', 1, 100, 600005, 2, 2); 
+    OPEN c_craplem(10, to_date('06/10/2020','dd/mm/rrrr'), 1, 100, 600005, 2, 2); 
     FETCH c_craplem INTO r_craplem;
       IF c_craplem%FOUND THEN
         
@@ -57,7 +57,7 @@ DECLARE
                                    ,pr_txjurepr => r_craplem.txjurepr
                                    ,pr_vlpreemp => 0
                                    ,pr_nrsequni => 0
-                                   ,pr_nrparepr => r_craplem.nrdocmto
+                                   ,pr_nrparepr => 0
                                    ,pr_flgincre => true
                                    ,pr_flgcredi => true
                                    ,pr_nrseqava => r_craplem.nrseqava
