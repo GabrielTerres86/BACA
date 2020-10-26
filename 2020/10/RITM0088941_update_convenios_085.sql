@@ -3,7 +3,7 @@
 
 UPDATE gnconve SET cdbccrcb = 85, dsagercb = 0101, dsccdrcb = 9284273 where cdconven = 22;   -- UNIMED
 UPDATE gnconve SET cdbccrcb = 85, dsagercb = 0101, dsccdrcb = 942650 where cdconven = 32;    -- UNIODONTO
-UPDATE gnconve SET cdbccrcb = 85, dsagercb = 0101, dsccdrcb = 435449 where cdconven = 38;    -- UNIMED PLANALTO NORT
+UPDATE gnconve SET cdbccrcb = 85, dsagercb = 0112, dsccdrcb = 435449 where cdconven = 38;    -- UNIMED PLANALTO NORT
 UPDATE gnconve SET cdbccrcb = 85, dsagercb = 0101, dsccdrcb = 2844400 where cdconven = 46;   --UNIODONTO FEDERACAO
 UPDATE gnconve SET cdbccrcb = 85, dsagercb = 0106, dsccdrcb = 32719 where cdconven = 47;     --UNIMED JOINVILLE
 UPDATE gnconve SET cdbccrcb = 85, dsagercb = 0101, dsccdrcb = 3790010 where cdconven = 51;   --CERSAD
