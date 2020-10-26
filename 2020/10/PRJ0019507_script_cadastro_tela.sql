@@ -34,7 +34,7 @@ BEGIN
       ,0
       ,1
       ,' '
-      ,'ACESSO,ALTERACAO,CONSULTA'
+      ,'ACESSO,CONSULTA,ALTERACAO'
       ,1
       ,rw_crapcop.cdcooper
       ,1
