@@ -4,7 +4,7 @@ BEGIN
                        cdacesso,
                        dstexprm,
                        dsvlrprm)
-    VALUES ('CRED', 3, 'HABILITA_LOG_CARTAO', 'Habilita LOG Cartão via trigger - TBCRD_LOG_CARTAO (1 - Ativado / 2 - Desativado)', 0);
+    VALUES ('CRED', 3, 'HABILITA_LOG_CARTAO', 'Habilita LOG Cartão via trigger - TBCRD_LOG_CARTAO (1 - Ativado / 0 - Desativado)', 0);
 
   INSERT INTO TBCRD_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO, INATIVO)  VALUES ('OPERACAO_ADM_CDACAO', '1', 'Ignorar', 1);
   INSERT INTO TBCRD_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO, INATIVO)  VALUES ('OPERACAO_ADM_CDACAO', '2', 'Criticar', 1);
