@@ -39,5 +39,5 @@ UPDATE gnconve SET cdbccrcb = 85, dsagercb = 0101, dsccdrcb = 9436812 where cdco
 UPDATE gnconve SET cdbccrcb = 85, dsagercb = 0101, dsccdrcb = 11087595 where cdconven = 159; --AMO GESTAO
 UPDATE gnconve SET cdbccrcb = 85, dsagercb = 0106, dsccdrcb = 279307 where cdconven = 147;   --UNIMED ODONTO
 
-
+Commit;
 
