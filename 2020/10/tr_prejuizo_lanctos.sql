@@ -39,7 +39,6 @@ DECLARE
   vr_bi_nrctremp     crapepr.nrctremp%TYPE;
   vr_bi_vlsdprej     crapepr.vlsdprej%TYPE;
   vr_bi_vljraprj     crapepr.vlsdprej%TYPE;
-  vr_bi_vljrmprj     crapepr.vlsdprej%TYPE;
   vr_bi_vlsprjat     crapepr.vlsdprej%TYPE;
   vr_vljurmes        crapepr.vljurmes%TYPE;
   vr_tot_vljurmes    crapepr.vljurmes%TYPE;
@@ -93,7 +92,6 @@ BEGIN
           vr_bi_nrctremp := GENE0002.fn_char_para_number(vr_campo(3));
           vr_bi_vlsdprej := GENE0002.fn_char_para_number(vr_campo(4));
           vr_bi_vljraprj := GENE0002.fn_char_para_number(vr_campo(5));
-          vr_bi_vljrmprj := GENE0002.fn_char_para_number(vr_campo(6));
 
           -- Este contrato ja foi executado
           IF vr_bi_cdcooper = 1 AND vr_bi_nrdconta = 2615690 AND vr_bi_nrctremp = 794105 THEN
@@ -130,7 +128,7 @@ BEGIN
               UPDATE crapepr
                  SET vlsprjat = vr_bi_vlsprjat
                    , vlsdprej = vr_bi_vlsdprej
-                   , vljraprj = vr_tab_lancto(vr_indice).vljraprj + vr_tot_vljurmes
+                   , vljraprj = vr_bi_vljraprj + vr_tot_vljurmes
                    , vljrmprj = vr_tot_vljurmes
                WHERE ROWID = vr_tab_lancto(vr_indice).epr_rowid;
             
