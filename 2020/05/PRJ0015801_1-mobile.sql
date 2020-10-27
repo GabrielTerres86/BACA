@@ -1,5 +1,6 @@
 /*
-Gerar carga de dispositivos para o OFSAA ativos do ultimo ano ou sem data de ultimo acesso
+    Proxima execucao: 22/10/2020
+    Gerar carga de dispositivos para o OFSAA ativos do ultimo ano ou sem data de ultimo acesso
 */
 declare 
   -- Local variables here
