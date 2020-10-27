@@ -25,15 +25,7 @@ DECLARE
                           AND lem.nrdconta = e.nrdconta
                           AND lem.nrctremp = e.nrctremp
                           AND lem.cdhistor = 2701 -- REC.PREJUIZO
-                          AND lem.dtmvtolt >= to_date('21/10/2020','dd/mm/rrrr'))
-       AND NOT EXISTS (SELECT 1
-                         FROM tbrecup_acordo a
-                         JOIN tbrecup_acordo_contrato ac
-                           ON ac.nracordo = a.nracordo
-                        WHERE a.cdcooper  = e.cdcooper
-                          AND a.nrdconta  = e.nrdconta
-                          AND ac.nrctremp = e.nrctremp
-                          AND a.cdsituacao = 1); -- ATIVO
+                          AND lem.dtmvtolt >= to_date('21/10/2020','dd/mm/rrrr'));
 
   vr_dsdireto        VARCHAR2(1000);
   vr_texto_completo  CLOB;
