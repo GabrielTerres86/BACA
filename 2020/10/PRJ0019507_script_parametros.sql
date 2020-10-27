@@ -15,14 +15,12 @@ INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 VALUES ('BUSCA_FAIXA_RECIPRO_TAXA', 'TELA_RECCRD', 'pc_busca_faixa_recipro_web', 'pr_tpproduto,pr_cdcatego,pr_inpessoa ',
                       (SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'TELA_RECCRD' AND ROWNUM = 1));                                                                 
             
-
 INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-VALUES ('EXEC_ACAO_FAIXA_RECIPRO_TAXA', 'TELA_RECCRD', 'pc_executa_acao_web', 'pr_tpproduto,pr_cdcatego,pr_inpessoa,pr_cdfaixa_recipro,pr_tpdeacao
-            ,pr_peinicial,pr_pefinal,pr_dtinicio_vigencia,pr_dtfim_vigencia,pr_pedesconto',
+VALUES ('EXEC_ACAO_FAIXA_RECIPRO_TAXA', 'TELA_RECCRD', 'pc_executa_acao_web', 'pr_tpproduto,pr_cdcatego,pr_inpessoa,pr_cdfaixa_recipro,pr_tpdeacao,pr_peinicial,pr_pefinal,pr_dtinicio_vigencia,pr_dtfim_vigencia,pr_pedesconto',
                (SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'TELA_RECCRD' AND ROWNUM = 1));
 			   
 INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-VALUES ('BUSCA_HIST_RECIPRO', 'TELA_RECCRD', 'pc_busca_hist_recipro_web', 'pr_tpproduto,pr_cdcatego,pr_inpessoa,pr_dtinihis,pr_dtfimhis,pr_cdoperacao',
+VALUES ('BUSCA_HIST_RECIPRO', 'TELA_RECCRD', 'pc_busca_hist_recipro_web', 'pr_tpproduto,pr_cdcatego,pr_inpessoa,pr_dtinihis,pr_dtfimhis,pr_cdoperacao,pr_nriniseq,pr_nrregist',
                (SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'TELA_RECCRD' AND ROWNUM = 1));			   
 			   
 commit;
