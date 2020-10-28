@@ -27,7 +27,6 @@ SELECT
  ,0 --cdcatego
  ,2 -- inpessoa juridica
  ,'1' --cdoperad
-)
 FROM crapcop b
 WHERE b.flgativo = 1;   
 			   
