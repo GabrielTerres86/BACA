@@ -34,7 +34,7 @@ DECLARE
   
   CURSOR cr_crappro(pr_cdcooper crappro.cdcooper%TYPE
                    ,pr_dsprotoc crappro.dsprotoc%TYPE) IS
-    SELECT SUBSTR(p.dsprotoc, 1, INSTR(p.dsprotoc,' ',1,1)) dsprotoc
+    SELECT SUBSTR(p.dsprotoc, 1, INSTR(p.dsprotoc,' ',1,1) - 1) dsprotoc
           ,p.rowid
       FROM crappro p
      WHERE p.cdcooper = pr_cdcooper
@@ -69,17 +69,17 @@ BEGIN
     END IF;
     
     CLOSE cr_crappro;
-                         
+
     BEGIN
       UPDATE crappro
          SET crappro.dsprotoc = rw_crappro.dsprotoc
-       WHERE crappro.rowid = rw_crappro.rowid_comprovante;
+       WHERE crappro.rowid = rw_crappro.rowid;
     EXCEPTION
       WHEN OTHERS THEN
         dbms_output.put_line('Erro ao atualizar registro da crappro. Erro -> '|| SQLERRM);
         RAISE vr_exc_erro;
     END;        
-
+    
   END LOOP;
   
   COMMIT;

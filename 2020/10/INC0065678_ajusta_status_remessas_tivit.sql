@@ -8,13 +8,14 @@ DECLARE
   vr_flgocorrencia    tbconv_remessa_pagfor.flgocorrencia%TYPE;
   vr_cdstatus_retorno tbconv_remessa_pagfor.cdstatus_retorno%TYPE;  
   
-  CURSOR cr_remessas IS
-    SELECT *
+  CURSOR cr_remessa IS
+    SELECT p.flgocorrencia,
+           p.idremessa
       FROM tbconv_remessa_pagfor p
-     WHERE p.dtmovimento BETWEEN TO_DATE('21/10/2020','dd/mm/rrrr') AND TO_DATE('27/10/2020','dd/mm/rrrr')
-       AND p.cdstatus_remessa     = 1 -- Enviada
-       AND p.cdagente_arrecadacao = 3 -- TIVIT;
-  rw_remessas cr_remessas %ROWTYPE;
+     WHERE p.dtmovimento BETWEEN TO_DATE('22/10/2020','dd/mm/rrrr') AND TO_DATE('27/10/2020','dd/mm/rrrr')
+       AND p.cdstatus_remessa     = 1  -- Enviada
+       AND p.cdagente_arrecadacao = 3; -- TIVIT
+  rw_remessa cr_remessa %ROWTYPE;
   
   CURSOR cr_reg_remessa (pr_idremessa tbconv_registro_remessa_pagfor.idremessa%TYPE) IS
     SELECT reg.cdstatus_processamento,
