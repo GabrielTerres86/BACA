@@ -1,9 +1,9 @@
 DECLARE
- 
-  vr_exc_erro EXCEPTION;
-  vr_dsprotoc crappro.dsprotoc%TYPE;
 
-  -- Tratar 1.134 pagamentos rejeitados indevidamente, 866 comprovantes estornados indevidamente
+  -- Tratar 1.134 pagamentos rejeitados indevidamente, 866 comprovantes estornados indevidamente 
+  
+  vr_exc_erro EXCEPTION;
+
   CURSOR cr_pagto IS
     SELECT a.cdcooper
           ,a.dsprotoc
@@ -35,20 +35,11 @@ DECLARE
   CURSOR cr_crappro(pr_cdcooper crappro.cdcooper%TYPE
                    ,pr_dsprotoc crappro.dsprotoc%TYPE) IS
     SELECT SUBSTR(p.dsprotoc, 1, INSTR(p.dsprotoc,' ',1,1)) dsprotoc
-          ,p.dsprotoc dsprotoc_ori
           ,p.rowid
       FROM crappro p
      WHERE p.cdcooper = pr_cdcooper
        AND UPPER(p.dsprotoc) LIKE pr_dsprotoc || '%';
   rw_crappro cr_crappro%ROWTYPE;
-  
-  CURSOR cr_remessas IS
-    SELECT *
-      FROM tbconv_remessa_pagfor p
-     WHERE p.dtmovimento BETWEEN TO_DATE('21/10/2020','dd/mm/rrrr') AND TO_DATE('27/10/2020','dd/mm/rrrr')
-       AND p.cdstatus_remessa     = 1 -- Enviada
-       AND p.cdagente_arrecadacao = 3 -- TIVIT;
-  rw_remessas cr_remessas %ROWTYPE;
    
 BEGIN
   
@@ -81,8 +72,8 @@ BEGIN
                          
     BEGIN
       UPDATE crappro
-         SET crappro.dsprotoc = rw_pagto.dsprotoc
-       WHERE crappro.rowid = rw_pagto.rowid_comprovante;
+         SET crappro.dsprotoc = rw_crappro.dsprotoc
+       WHERE crappro.rowid = rw_crappro.rowid_comprovante;
     EXCEPTION
       WHEN OTHERS THEN
         dbms_output.put_line('Erro ao atualizar registro da crappro. Erro -> '|| SQLERRM);
@@ -90,6 +81,8 @@ BEGIN
     END;        
 
   END LOOP;
+  
+  COMMIT;
   
   EXCEPTION
     WHEN vr_exc_erro THEN
