@@ -141,6 +141,5 @@ BEGIN
          AND ope.cdsitope = 1;
   
   END LOOP;
+  commit;
 END;
-
-commit;
