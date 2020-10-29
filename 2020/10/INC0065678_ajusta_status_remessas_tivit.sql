@@ -12,7 +12,7 @@ DECLARE
     SELECT p.flgocorrencia,
            p.idremessa
       FROM tbconv_remessa_pagfor p
-     WHERE p.dtmovimento BETWEEN TO_DATE('22/10/2020','dd/mm/rrrr') AND TO_DATE('27/10/2020','dd/mm/rrrr')
+     WHERE p.dtmovimento BETWEEN TO_DATE('22/10/2020','dd/mm/rrrr') AND TO_DATE('28/10/2020','dd/mm/rrrr')
        AND p.cdstatus_remessa     = 1  -- Enviada
        AND p.cdagente_arrecadacao = 3; -- TIVIT
   rw_remessa cr_remessa %ROWTYPE;
