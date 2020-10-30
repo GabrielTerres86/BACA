@@ -579,7 +579,7 @@ begin
      'Instituição: #psppagador </br>' || 
      'Identificação: #identificacao </br>' || 
      'Descrição: #descricao </br></br>' || 
-     'Acesse o comprovante abaixo ou confira o extrato da sua conta corrente.</br></br>'     
+     'Acesse o comprovante no App Ailos ou confira o extrato da sua conta corrente</br></br>'     
     ,16
     ,0
     ,1
@@ -634,7 +634,7 @@ begin
     ,'Você recebeu a devolução de um Pix que realizou.'
     ,'O Pix que você realizou em #datatransacao no valor de #valorpix para #chave/#beneficiario foi devolvido #parcialtotalmente.</br></br>' || 
      '<b>O valor está novamente disponível em sua conta corrente.</b></br></br>' ||
-     'Acessoe o comprovante para mais detalhes da devolução.'
+     'Acesse o comprovante para mais detalhes da devolução.'
     ,16
     ,0
     ,1
@@ -691,7 +691,7 @@ begin
      'Valor: #valorpix </br>' || 
      'Beneficiário: #beneficiario </br>' || 
      'Instituição: #instituicao </br></br>' || 
-     'Acesse o comprovante ou confira o extrato da sua conta corrente.</br></br>' 
+     'Acesse o comprovante no App Ailos ou confira o extrato da sua conta corrente</br></br>' 
     ,16
     ,0
     ,1
@@ -797,7 +797,7 @@ begin
      'Valor: #valorpix </br>' || 
      'Beneficiário: #beneficiario </br>' || 
      'Instituição: #instituicao </br></br>' || 
-     'Acesse o comprovante ou confira o extrato da sua conta corrente.'
+     'Acesse o comprovante no App Ailos ou confira o extrato da sua conta corrente.</br></br>'
     ,16
     ,0
     ,1
