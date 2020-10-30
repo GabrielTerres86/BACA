@@ -14,17 +14,17 @@ begin
    where idanalise_fraude = 0;
   
   -- Tabela de tipos de transação --
-  insert into pix.tbpix_tipo_transacao (IDTIPO_TRANSACAO, NMTIPO_TRANSACAO, IDSITUACAO, NRDOLOTE, CDHISTOR, CDHISTOR_ESTORNO, NRDOLOTE_ESTORNO, CDTIPO_PROTOCOLO, CDHISTOR_ESTORNO_OFSAA, NRDOLOTE_ESTORNO_OFSAA, CDHISTOR_COOP, NRDOLOTE_COOP, CDHISTOR_ESTORNO_OFSAA_COOP, NRDOLOTE_ESTORNO_OFSAA_COOP)
-  values ('P', 'Pagamento', 'A', 700001, 3320, 3323, 700002, 34, 3322, 700006, 3371, 700007, 3379, 700008);
+  insert into pix.tbpix_tipo_transacao (IDTIPO_TRANSACAO, NMTIPO_TRANSACAO, IDSITUACAO, NRDOLOTE, CDHISTOR, CDHISTOR_ESTORNO, NRDOLOTE_ESTORNO, CDTIPO_PROTOCOLO, CDHISTOR_ESTORNO_OFSAA, NRDOLOTE_ESTORNO_OFSAA, CDHISTOR_COOP, NRDOLOTE_COOP, CDHISTOR_ESTORNO_OFSAA_COOP, NRDOLOTE_ESTORNO_OFSAA_COOP,NRDOLOTE_ESTORNO_COOP,CDHISTOR_ESTORNO_COOP)
+  values ('P', 'Pagamento', 'A', 700001, 3320, 3323, 700002, 34, 3322, 700006, 3371, 700007, 3379, 700008,700012,3380);
 
-  insert into pix.tbpix_tipo_transacao (IDTIPO_TRANSACAO, NMTIPO_TRANSACAO, IDSITUACAO, NRDOLOTE, CDHISTOR, CDHISTOR_ESTORNO, NRDOLOTE_ESTORNO, CDTIPO_PROTOCOLO, CDHISTOR_ESTORNO_OFSAA, NRDOLOTE_ESTORNO_OFSAA, CDHISTOR_COOP, NRDOLOTE_COOP, CDHISTOR_ESTORNO_OFSAA_COOP, NRDOLOTE_ESTORNO_OFSAA_COOP)
-  values ('R', 'Recebimento', 'A', 700004, 3318, null, null, null, 0, null, 3373, 700009, null, null);
+  insert into pix.tbpix_tipo_transacao (IDTIPO_TRANSACAO, NMTIPO_TRANSACAO, IDSITUACAO, NRDOLOTE, CDHISTOR, CDHISTOR_ESTORNO, NRDOLOTE_ESTORNO, CDTIPO_PROTOCOLO, CDHISTOR_ESTORNO_OFSAA, NRDOLOTE_ESTORNO_OFSAA, CDHISTOR_COOP, NRDOLOTE_COOP, CDHISTOR_ESTORNO_OFSAA_COOP, NRDOLOTE_ESTORNO_OFSAA_COOP,NRDOLOTE_ESTORNO_COOP,CDHISTOR_ESTORNO_COOP)
+  values ('R', 'Recebimento', 'A', 700004, 3318, null, null, null, null, null, 3373, 700009, null, null,null,null);
 
-  insert into pix.tbpix_tipo_transacao (IDTIPO_TRANSACAO, NMTIPO_TRANSACAO, IDSITUACAO, NRDOLOTE, CDHISTOR, CDHISTOR_ESTORNO, NRDOLOTE_ESTORNO, CDTIPO_PROTOCOLO, CDHISTOR_ESTORNO_OFSAA, NRDOLOTE_ESTORNO_OFSAA, CDHISTOR_COOP, NRDOLOTE_COOP, CDHISTOR_ESTORNO_OFSAA_COOP, NRDOLOTE_ESTORNO_OFSAA_COOP)
-  values ('D', 'Devolução Enviada', 'A', 700005, 3319, 3323, 700002, 35, 0, null, 3375, 700010, null, null);
+  insert into pix.tbpix_tipo_transacao (IDTIPO_TRANSACAO, NMTIPO_TRANSACAO, IDSITUACAO, NRDOLOTE, CDHISTOR, CDHISTOR_ESTORNO, NRDOLOTE_ESTORNO, CDTIPO_PROTOCOLO, CDHISTOR_ESTORNO_OFSAA, NRDOLOTE_ESTORNO_OFSAA, CDHISTOR_COOP, NRDOLOTE_COOP, CDHISTOR_ESTORNO_OFSAA_COOP, NRDOLOTE_ESTORNO_OFSAA_COOP,NRDOLOTE_ESTORNO_COOP,CDHISTOR_ESTORNO_COOP)
+  values ('D', 'Devolução Enviada', 'A', 700005, 3319, 3323, 700002, 35, null, null, 3375, 700010, null, null,700012,3380);
 
-  insert into pix.tbpix_tipo_transacao (IDTIPO_TRANSACAO, NMTIPO_TRANSACAO, IDSITUACAO, NRDOLOTE, CDHISTOR, CDHISTOR_ESTORNO, NRDOLOTE_ESTORNO, CDTIPO_PROTOCOLO, CDHISTOR_ESTORNO_OFSAA, NRDOLOTE_ESTORNO_OFSAA, CDHISTOR_COOP, NRDOLOTE_COOP, CDHISTOR_ESTORNO_OFSAA_COOP, NRDOLOTE_ESTORNO_OFSAA_COOP)
-  values ('E', 'Devolução Recebida', 'A', 700003, 3321, null, null, null, 0, null, 3377, 700011, null, null);
+  insert into pix.tbpix_tipo_transacao (IDTIPO_TRANSACAO, NMTIPO_TRANSACAO, IDSITUACAO, NRDOLOTE, CDHISTOR, CDHISTOR_ESTORNO, NRDOLOTE_ESTORNO, CDTIPO_PROTOCOLO, CDHISTOR_ESTORNO_OFSAA, NRDOLOTE_ESTORNO_OFSAA, CDHISTOR_COOP, NRDOLOTE_COOP, CDHISTOR_ESTORNO_OFSAA_COOP, NRDOLOTE_ESTORNO_OFSAA_COOP,NRDOLOTE_ESTORNO_COOP,CDHISTOR_ESTORNO_COOP)
+  values ('E', 'Devolução Recebida', 'A', 700003, 3321, null, null, null, null, null, 3377, 700011, null, null,null,null);
 
   ------------------------------------------------- Fases ------------------------------------------------------------------------------
   insert into pix.tbpix_tipo_fase (idfase,nmfase,idsituacao) values (01,'Registro PSP Pagador','A'); 
@@ -98,8 +98,6 @@ begin
   insert into pix.tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
                   values (29,'D',16,22,'S',null);   	
   insert into pix.tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
-                  values (49,'D',16,25,'S',null);	
-  insert into pix.tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
                   values (50,'D',18,22,'S',null);	
 	
 				  
@@ -126,17 +124,11 @@ begin
   insert into pix.tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
                   values (38,'P',8,37,'N',null);
   insert into pix.tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
-                  values (42,'P',11,38,'S',null);  
-  insert into pix.tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
                   values (39,'P',14,38,'S',null);
   insert into pix.tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
                   values (40,'P',15,39,'N',null);
   insert into pix.tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
                   values (44,'P',16,32,'S',null);   	
-  insert into pix.tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
-                  values (45,'P',16,41,'S',null);					  
-  insert into pix.tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
-                  values (46,'P',16,42,'S',null);	
   insert into pix.tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
                   values (47,'P',18,32,'S',null);					  
   insert into pix.tbpix_tipo_fase_transacao(idsequen,idtipo_transacao,idfase,idsequen_anterior,flfase_auditada,qtsegundo_maximo) 
