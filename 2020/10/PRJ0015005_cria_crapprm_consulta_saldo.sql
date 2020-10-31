@@ -38,7 +38,7 @@ insert into crapprm
 values
   ('CRED',
    0,
-   'HISTORICOTRANFERENCIA',
+   'HISTORICOTRANSFERENCIA',
    'Historicos de transferencia agendada para não serem considerados na composição do saldo',
    '375,376,377,537,538,539,771,772'); 
  
@@ -47,7 +47,7 @@ values
             FROM crapprm prm
            WHERE prm.nmsistem = 'CRED'
              AND prm.cdcooper = 0 
-             AND prm.cdacesso = 'HISTORICOTRANFERENCIA'
+             AND prm.cdacesso = 'HISTORICOTRANSFERENCIA'
            ORDER BY prm.cdcooper DESC; -->
  */ 
  
