@@ -31,8 +31,6 @@ BEGIN
         RAISE vr_exc_erro;
     END;
     
-    dbms_output.put_line(rw_pagto.rowid);
-    
   END LOOP;
   
   COMMIT;
