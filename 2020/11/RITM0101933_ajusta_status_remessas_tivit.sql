@@ -30,7 +30,7 @@ BEGIN
   
   FOR rw_remessa IN cr_remessa LOOP
 
-    vr_flgocorrencia    := rw_remessa.flgocorrencia;
+    vr_flgocorrencia    := 0;
     vr_cdstatus_retorno := 0;
 
     FOR rw_reg_remessa IN cr_reg_remessa (pr_idremessa => rw_remessa.idremessa) LOOP
