@@ -11,5 +11,12 @@ update crapcon c
    and c.cdsegmto = 4
    and c.cdcooper in (2, 5, 6, 9, 12, 13)
 /
+-- Claro Móvel
+update crapcon c
+   set c.nrseqint = 2
+ where c.cdempcon = 162
+   and c.cdsegmto = 4
+   and c.cdcooper = 8
+/
 commit
 /
