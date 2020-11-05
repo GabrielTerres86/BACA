@@ -9,6 +9,14 @@ UPDATE crapbdt bdt
    AND bdt.nrborder = 819328
    AND bdt.nrdconta = 10890424;
    
+ UPDATE craptdb
+      SET insittit = 4
+         ,insitapr = 1
+    WHERE nrborder = 819328
+      AND cdcooper = 1
+      AND nrdconta = 10890424;   
+   
+   
 -- Evolua  
 UPDATE crapbdt bdt
    SET bdt.insitbdt = 3 -- 2 
