@@ -28,4 +28,6 @@ VALUES
    7,         to_date('30-09-2020 16:58:36', 'dd-mm-yyyy hh24:mi:ss'),
    0,         0.00000000,
    0.00000000);
+   
+UPDATE tbepr_renegociacao SET dtlibera = '28/09/2020' WHERE cdcooper = 1 AND nrdconta = 3674100 AND nrctremp = 2989170;
 commit;
