@@ -1,6 +1,6 @@
 ﻿-- INC0066790 - Ajustar o sequencial dos convênios que tiveram arquivos gerados manualmente.
 -- Primeira parte, referente a arquivos do dia 06/11
-insert into gncontr (cdcooper, tpdcontr, cdconven, dtmvtolt, nrsequen, cdsitret, nmarquiv, qtdoctos, vldoctos, qtdoctos, vldoctos)
+insert into gncontr (cdcooper, tpdcontr, cdconven, dtmvtolt, nrsequen, cdsitret, nmarquiv, qtdoctos, vldoctos)
 values (6, 7, 8460464, '06/11/2020', 1, 2, '3232-EF00000100000000846046420201106.CNV', 1, 1081.68)
 /
 insert into gncontr (cdcooper, tpdcontr, cdconven, dtmvtolt, nrsequen, cdsitret, nmarquiv, qtdoctos, vldoctos)
