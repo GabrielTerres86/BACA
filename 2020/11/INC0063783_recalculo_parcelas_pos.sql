@@ -355,7 +355,7 @@ DECLARE
        WHERE crappep.cdcooper = pr_cdcooper
          AND crappep.nrdconta = pr_nrdconta
          AND crappep.nrctremp = pr_nrctremp
-         AND crappep.inliquid = 0        
+         AND crappep.inliquid = 0
          AND crappep.dtvencto > pr_dtmvtolt
          AND EXISTS(SELECT 1
                       FROM crappep pep                       
@@ -653,7 +653,10 @@ DECLARE
                                                     ,pr_tipo     => 'P'
                                                     );
           -- Se a parcela não venceu, não recalcula
-          IF vr_dtmvtolt >= vr_data_atual THEN
+          IF vr_dtmvtolt >= vr_data_atual OR
+          -- Se a data do recalculo é anterior a data de liberação, não recalcula
+             vr_dtmvtolt < vr_tab_registro(vr_indice_registro).dtlibera
+            THEN
             RAISE vr_exc_proximo;
           END IF;
           
