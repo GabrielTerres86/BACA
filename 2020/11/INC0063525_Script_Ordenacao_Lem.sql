@@ -1,4 +1,4 @@
-/*CorreÁ„o da OrdenaÁ„o dos LanÁamentos da LEM*/
+/*Corre√ß√£o da Ordena√ß√£o dos Lan√ßamentos da LEM*/
 
 begin
  
@@ -10,7 +10,7 @@ update cecred.craplem l
                        and l.nrdconta = 82317
                        and l.dtmvtolt = '06/10/2020' 
                        and l.cdhistor = 2306
-                       and l.nrctremp = 16361) -- Atualizar hora conforme lanÁamento da taxa, necess·rio para ordenaÁ„o correta.
+                       and l.nrctremp = 16361) -- Atualizar hora conforme lan√ßamento da taxa, necess√°rio para ordena√ß√£o correta.
  where l.cdcooper = 10
    and l.nrdconta = 82317
    and l.dtmvtolt = '06/10/2020' 
@@ -32,6 +32,9 @@ for r1 in (select rowid from (
    
 end loop;
    commit;
+exception
+  when others then
+    rollback;
 end;
 
    
