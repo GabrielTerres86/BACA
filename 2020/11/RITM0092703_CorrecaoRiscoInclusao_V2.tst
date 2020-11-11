@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-94
+109
 DECLARE
   CURSOR cr_risco_inclusao IS
     SELECT  w.cdcooper
@@ -13,19 +13,20 @@ DECLARE
           , o.inrisco_inclusao
           , o.inrisco_rating
       FROM crawepr w
-          ,craplcr l
           ,crapepr e
           ,tbrisco_operacoes o
      WHERE w.cdcooper = e.cdcooper
        AND w.nrdconta = e.nrdconta
        AND w.nrctremp = e.nrctremp
-       AND l.cdcooper = e.cdcooper
-       AND l.cdlcremp = e.cdlcremp
        AND o.cdcooper = e.cdcooper
        AND o.nrdconta = e.nrdconta
        AND o.nrctremp = e.nrctremp
+       AND EXISTS (SELECT DISTINCT 1
+                     FROM craplcr l
+                    WHERE l.cdcooper = e.cdcooper
+                      AND l.cdlcremp = e.cdlcremp
+                      AND l.flgdisap = 0)
        AND o.tpctrato = 90
-       AND l.flgdisap = 0
        AND e.cdfinemp NOT IN (68)
        AND e.inliquid = 0
        AND e.cdcooper NOT IN (3)
@@ -84,6 +85,20 @@ BEGIN
                          ''' WHERE w.progress_recid = '''
                          || rw_risco_inclusao.progress_recid ||''';');
   END LOOP;
+  COMMIT;
+
+  UPDATE CRAPTAB CT
+     SET CT.DSTEXTAB = REPLACE(SUBSTR(CT.DSTEXTAB, 1, 1),
+                               SUBSTR(CT.DSTEXTAB, 1, 1),
+                               0) ||
+                       SUBSTR(CT.DSTEXTAB, 2, LENGTH(CT.DSTEXTAB))
+   WHERE CT.CDCOOPER = 13
+     AND UPPER(CT.NMSISTEM) = 'CRED'
+     AND UPPER(CT.TPTABELA) = 'USUARI'
+     AND UPPER(CT.CDACESSO) = 'RISCOBACEN'
+     AND CT.CDEMPRES = 11
+     AND CT.TPREGIST = 0
+     AND SUBSTR(CT.DSTEXTAB, 1, 1) <> 1;
   COMMIT;
 
   pc_escreve_rollback('COMMIT;',TRUE);
