@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-109
+108
 DECLARE
   CURSOR cr_risco_inclusao IS
     SELECT  w.cdcooper
@@ -97,8 +97,7 @@ BEGIN
      AND UPPER(CT.TPTABELA) = 'USUARI'
      AND UPPER(CT.CDACESSO) = 'RISCOBACEN'
      AND CT.CDEMPRES = 11
-     AND CT.TPREGIST = 0
-     AND SUBSTR(CT.DSTEXTAB, 1, 1) <> 1;
+     AND CT.TPREGIST = 0;
   COMMIT;
 
   pc_escreve_rollback('COMMIT;',TRUE);
