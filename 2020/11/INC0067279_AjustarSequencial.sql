@@ -80,7 +80,7 @@ update crapcon c
 /
 -- Para integração de arquivo recebido e não integrado
 update crapcon c
-   set c.nrseqatu = 1
+   set c.nrseqatu = 2
  where c.cdempcon = 51
    and c.cdsegmto = 3
    and c.cdcooper = 1
