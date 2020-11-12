@@ -287,10 +287,6 @@ DECLARE
                               ,prc_nrctremp => pr_nrctremp
                               ,prc_dtmvtolt => pr_dtmvtolt) LOOP
                 
-    IF r_craplem.cdhistor in (2701, 2388) THEN -- Valor Principal             
-    r_craplem.vllanmto := 931.72;
-    END IF;
-                
       -- Estorno na data corrente
       IF r_craplem.dtmvtolt = rw_crapdat.dtmvtolt THEN
         IF r_craplem.cdhistor = 2388 THEN -- Valor Principal
@@ -640,5 +636,3 @@ DECLARE
         -- Commit do LOG
         COMMIT;
   END pc_estorno_pagamento;
-0
-0
