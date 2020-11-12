@@ -1618,7 +1618,7 @@ begin
         set    t.dsprotocolo = t.dsprotocolo||'_NOVO'
         where  t.rowid       = RW_TWA.rowid;
         --
-        COMMIT; 
+        --COMMIT; 
         --
         /*   
         dbms_output.put_line('NOVO - '||
@@ -1634,7 +1634,7 @@ begin
         set    t.dsprotocolo = t.dsprotocolo||'_MIGRADO'
         where  t.rowid       = RW_TWA.rowid;
         --
-        COMMIT; 
+        --COMMIT; 
         -- 
         /*
         dbms_output.put_line('MIGRADO - '||
@@ -1645,4 +1645,5 @@ begin
                      */
      end if;
   END LOOP;
+  COMMIT;
 end;
