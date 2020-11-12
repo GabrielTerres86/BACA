@@ -21,9 +21,11 @@ BEGIN
      WHERE cdacesso = 'COVID_QTDE_PARCELA_ADIAR'
        AND cdcooper = rw_cooper.cdcooper;
   
-    COMMIT;
     dbms_output.put_line(rw_cooper.cdcooper || ' - ' || rw_cooper.nmrescop);
   END LOOP;
+
+  COMMIT;
+  
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
