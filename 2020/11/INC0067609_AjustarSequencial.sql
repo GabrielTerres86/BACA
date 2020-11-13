@@ -38,6 +38,11 @@ values (12, 7, 8480162, '13/11/2020', 11, 2, '4449-EF000011000000008480162202011
 insert into gncontr (cdcooper, tpdcontr, cdconven, dtmvtolt, nrsequen, cdsitret, nmarquiv, qtdoctos, vldoctos)
 values (13, 7, 8480162, '13/11/2020', 22, 2, '4457-EF00002200000000848016220201113.CNV', 4, 454.95)
 /
+update gncontr g
+   set g.nmarquiv = '4457-EF00002100000000848016220201113.CNV',
+       g.cdsitret = 2
+ where g.nmarquiv = '4457-EF00002100000000848016220201112.CNV'
+/
 update crapcon c
    set c.nrseqatu = c.nrseqatu + 1
  where (c.cdempcon, c.cdsegmto, c.cdcooper) in ((162, 4, 6),
