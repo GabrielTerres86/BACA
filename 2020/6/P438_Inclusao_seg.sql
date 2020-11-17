@@ -1,8 +1,5 @@
 --> Criação da SEGEMPR para Automovei e Imoveis
 declare
-
-  vr_cdlincrd number;
-
   cursor cr_crapcop is
     select *
       from crapcop e
@@ -17,7 +14,9 @@ declare
        and s.cdcooper = pr_cdcooper;   
   rw_segmento cr_segmento%rowtype;
   
-  
+  vr_cdlincrd VARCHAR2(30);
+  vr_tab_lscmdmod gene0002.typ_split;  
+
 begin
   
   for rw_crapcop in cr_crapcop loop
@@ -171,38 +170,47 @@ begin
          null; 
     end;  
     
-    select case rw_crapcop.cdcooper 
-      when 1 then 112
-      when 2 then 7080
-      when 3 then 7080
-      when 4 then 7080
-      when 5 then 7081
-      when 6 then 1105
-      when 7 then 1105
-      when 8 then 7081
-      when 9 then 1105
-      when 10 then 7081
-      when 11 then 7002
-      when 12 then 7081
-      when 13 then 1105
-      when 14 then 1105
-      when 15 then 7080
-      when 16 then 7080
-      when 17 then 7080
-      else 0 end
-      into  vr_cdlincrd 
-    from dual;   
+     select case rw_crapcop.cdcooper 
+        when 1 then '15201;15301;15401'
+        when 2 then '818;819;0'
+        when 3 then '0;0;0'
+        when 4 then '0;0;0'
+        when 5 then '333;334;335'
+        when 6 then '132;133;134'
+        when 7 then '0;0;0'
+        when 8 then '0;0;0;'
+        when 9 then '0;0;0'
+        when 10 then '62;63;64'
+        when 11 then '379;380;381'
+        when 12 then '285;286;287'
+        when 13 then '372;373;374'
+        when 14 then '1107;1108;1109'
+        when 15 then '0;0;0'
+        when 16 then '7050;7060;0'
+        when 17 then '0;0;0'
+        else '0;0;0' end
+        into  vr_cdlincrd 
+      from dual;   
     
-    Begin
-      insert into tbepr_subsegmento (CDCOOPER, IDSEGMENTO, IDSUBSEGMENTO, DSSUBSEGMENTO, CDLINHA_CREDITO, FLGGARANTIA, TPGARANTIA, PEMAX_AUTORIZADO, PEEXCEDENTE, VLMAX_PROPOSTA, CDFINALIDADE)
-          values (rw_crapcop.cdcooper, 3, 31, 'Novo', vr_cdlincrd, 1, 0, 30.00, 5.00, 0.00, 77);
+    BEGIN
+      
+      vr_tab_lscmdmod := gene0002.fn_quebra_string(pr_string => vr_cdlincrd ,pr_delimit => ';');
+      
+      IF vr_tab_lscmdmod(1) > 0 THEN
+        insert into tbepr_subsegmento (CDCOOPER, IDSEGMENTO, IDSUBSEGMENTO, DSSUBSEGMENTO, CDLINHA_CREDITO, FLGGARANTIA, TPGARANTIA, PEMAX_AUTORIZADO, PEEXCEDENTE, VLMAX_PROPOSTA, CDFINALIDADE)
+          values (rw_crapcop.cdcooper, 3, 31, 'Novo', vr_tab_lscmdmod(1), 1, 0, 30.00, 5.00, 0.00, 77);
+      END IF;
+      
+      IF vr_tab_lscmdmod(2) > 0 THEN 
+        insert into tbepr_subsegmento (CDCOOPER, IDSEGMENTO, IDSUBSEGMENTO, DSSUBSEGMENTO, CDLINHA_CREDITO, FLGGARANTIA, TPGARANTIA, PEMAX_AUTORIZADO, PEEXCEDENTE, VLMAX_PROPOSTA, CDFINALIDADE)
+          values (rw_crapcop.cdcooper, 3, 32, 'Usado', vr_tab_lscmdmod(2), 1, 1, 90.00, 10.00, 0.00, 77);
+      END IF;
+      
+      IF vr_tab_lscmdmod(3) > 0 THEN 
+        insert into tbepr_subsegmento (CDCOOPER, IDSEGMENTO, IDSUBSEGMENTO, DSSUBSEGMENTO, CDLINHA_CREDITO, FLGGARANTIA, TPGARANTIA, PEMAX_AUTORIZADO, PEEXCEDENTE, VLMAX_PROPOSTA, CDFINALIDADE)
+          values (rw_crapcop.cdcooper, 4, 41, 'Imovel', vr_tab_lscmdmod(3), 1, 0, 90.00, 10.00, 0.00, 77);
+      END IF;
 
-      insert into tbepr_subsegmento (CDCOOPER, IDSEGMENTO, IDSUBSEGMENTO, DSSUBSEGMENTO, CDLINHA_CREDITO, FLGGARANTIA, TPGARANTIA, PEMAX_AUTORIZADO, PEEXCEDENTE, VLMAX_PROPOSTA, CDFINALIDADE)
-          values (rw_crapcop.cdcooper, 3, 32, 'Usado', vr_cdlincrd, 1, 1, 90.00, 10.00, 0.00, 77);
-
-      insert into tbepr_subsegmento (CDCOOPER, IDSEGMENTO, IDSUBSEGMENTO, DSSUBSEGMENTO, CDLINHA_CREDITO, FLGGARANTIA, TPGARANTIA, PEMAX_AUTORIZADO, PEEXCEDENTE, VLMAX_PROPOSTA, CDFINALIDADE)
-          values (rw_crapcop.cdcooper, 4, 41, 'Imovel', vr_cdlincrd, 1, 0, 90.00, 10.00, 0.00, 77);
-    
     exception
        when dup_val_on_index then
          null; 
