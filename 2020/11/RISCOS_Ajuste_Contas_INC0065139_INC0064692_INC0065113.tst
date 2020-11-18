@@ -623,9 +623,9 @@ BEGIN
 ---------------------------------------------------
 
 ---------------------------------------------------
-  -- INC0056798 - EVOLUA: 14 - Conta: 81019
+  -- INC0064692 - EVOLUA: 14 - Conta: 81019
   -- => Solução: Lancar 2.513,38 - Conta Transitoria
-  vr_incidente := 'INC0056798';
+  vr_incidente := 'INC0064692';
   vr_cdcooper  := 14;
   vr_nrdconta  := 81019;
   vr_vllanmto  := 2513.38;
