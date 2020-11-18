@@ -15,6 +15,3 @@ BEGIN
       DBMS_OUTPUT.PUT_LINE('Erro = '||SQLERRM);
   END;
 END;
-
--- Log de liquidacao das transacoes de cartoes, recebidos pelo SILOC
--- Status das transacoes de cartoes pendentes de processamento no domicilio bancario
