@@ -1,6 +1,6 @@
 PL/SQL Developer Test script 3.0
 285
--- Created on 20/11/2020 by T0032500 
+-- Created on 24/11/2020 by T0032500 
 declare 
   -- Local variables here
   i integer;
@@ -9,7 +9,7 @@ begin
       BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 402065842476
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 2268760
@@ -26,7 +26,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 9104040891010
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 3073360
@@ -45,7 +45,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 49935035852972
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 3998819
@@ -62,7 +62,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 402032867457
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 6412327
@@ -79,7 +79,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 402065007895
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 7045328
@@ -96,7 +96,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 402036153904
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 7049170
@@ -113,7 +113,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 123456789100
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 7384351
@@ -130,7 +130,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 402053156119
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 7537913
@@ -148,7 +148,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 2002647
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 7841175
@@ -165,7 +165,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 5097519946101
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 8299595
@@ -182,7 +182,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 11147434233
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 8851000
@@ -199,7 +199,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 402085062396
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 8892725
@@ -217,7 +217,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 9126945636015
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 9069224
@@ -234,7 +234,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 7101207171
           WHERE crapatr.cdcooper = 1
             AND crapatr.nrdconta = 11799552
@@ -251,7 +251,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 8211095180
           WHERE crapatr.cdcooper = 14
             AND crapatr.nrdconta = 60682
@@ -268,7 +268,7 @@ begin
     BEGIN
          UPDATE crapatr
             SET crapatr.cdopeexc = '1',
-                crapatr.dtiniatr = '20/11/2020',
+                crapatr.dtiniatr = '24/11/2020',
                 crapatr.cdrefere = 522789007
           WHERE crapatr.cdcooper = 16
             AND crapatr.nrdconta = 461326
