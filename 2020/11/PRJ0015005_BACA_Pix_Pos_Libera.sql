@@ -23,7 +23,7 @@ begin
 					from tbpix_crapass a
 				   where a.cdcooper = ce.cdcooper
 					 and a.nrdconta = ce.nrdconta
-					 and a.INPESSOA > 1)
+					 and a.INPESSOA > 1);
 
 
       commit;
