@@ -27,7 +27,7 @@ BEGIN
            nrseqrdr
     ) VALUES (
            'ARQCCB_MANTER_ROTINA', 
-           'MONITORAMENTO_ARQCCB', 
+           'CRD_MONITORAMENTO_ARQCCB', 
            'pc_manter_rotina_web', 
            'pr_operacao, pr_dtini, pr_dtfin, pr_contacartao', 
            vr_nrseqrdr
@@ -36,7 +36,7 @@ BEGIN
     
   EXCEPTION 
     WHEN OTHERS THEN
-    dbms_output.put_line('Erro ao executar: MONITORAMENTO_ARQCCB --- detalhes do erro: '|| SQLCODE || ': ' || SQLERRM);
+    dbms_output.put_line('Erro ao executar: CRD_MONITORAMENTO_ARQCCB --- detalhes do erro: '|| SQLCODE || ': ' || SQLERRM);
     ROLLBACK;
   END;
 END;
