@@ -51,7 +51,7 @@ BEGIN
     CURSOR cr_crapope IS
       SELECT o.cdoperad
         FROM crapope o
-       WHERE LOWER(o.cdoperad) IN ('f0030519')
+       WHERE LOWER(o.cdoperad) IN ('f0030519', 'f0033054', 'f0032094')
        GROUP BY o.cdoperad;
   BEGIN
       FOR coop IN cr_crapcop LOOP
