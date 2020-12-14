@@ -6,6 +6,13 @@ DECLARE
   vr_nrctremp   craplem.nrctremp%type := 3215651; -- Alterar aqui
   vr_vlpreemp   craplem.vlpreemp%type := 853.84; -- Alterar aqui
 --
+  CURSOR cr_crapdat ( pr_cdcooper in craplcm.cdcooper%type ) is
+     select  dat.*
+     from    crapdat   dat
+     where dat.cdcooper = pr_cdcooper;
+--
+  rw_crapdat   cr_crapdat%rowtype;
+--
   CURSOR cr_crappep ( pr_cdcooper in craplem.cdcooper%type
                      ,pr_nrdconta in craplem.nrdconta%type
                      ,pr_nrctremp in craplem.nrctremp%type
@@ -35,6 +42,30 @@ DECLARE
 
 --
 BEGIN
+--
+  cecred.EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => 1,
+                                         pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                         pr_cdagenci => rw_craplcm.cdagenci,
+                                         pr_cdbccxlt => rw_craplcm.cdbccxlt,
+                                         pr_cdoperad => 1,
+                                         pr_cdpactra => rw_craplcm.cdagenci,
+                                         pr_tplotmov => 5,
+                                         pr_nrdolote => rw_craplcm.nrdolote,
+                                         pr_nrdconta => rw_craplcm.nrdconta,
+                                         pr_cdhistor => 1048, -- DESC.ANT.EMP
+                                         pr_nrctremp => vr_nrctremp,
+                                         pr_vllanmto => vr_vlpreemp - rw_craplcm.vllanmto,
+                                         pr_dtpagemp => rw_crapdat.dtmvtolt,
+                                         pr_txjurepr => rw_craplem_explo.txjurepr,
+                                         pr_vlpreemp => vr_vlpreemp,
+                                         pr_nrsequni => rw_craplcm.nrparepr,
+                                         pr_nrparepr => rw_craplcm.nrparepr,
+                                         pr_flgincre => true,
+                                         pr_flgcredi => true,
+                                         pr_nrseqava => rw_craplcm.nrseqava,
+                                         pr_cdorigem => rw_craplem_explo.cdorigem,
+                                         pr_cdcritic => vr_cdcritic,
+                                         pr_dscritic => vr_dscritic);
 --
   FOR rw_crappep in cr_crappep ( pr_cdcooper => vr_cdcooper
                                 ,pr_nrdconta => vr_nrdconta
