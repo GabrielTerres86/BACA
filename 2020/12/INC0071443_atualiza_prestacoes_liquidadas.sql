@@ -58,7 +58,7 @@ BEGIN
                                          pr_cdoperad => 1,
                                          pr_cdpactra => 214, -- rw_craplcm.cdagenci,
                                          pr_tplotmov => 5,
-                                         pr_nrdolote => null, -- rw_craplcm.nrdolote,
+                                         pr_nrdolote => 600031, -- rw_craplcm.nrdolote,
                                          pr_nrdconta => vr_nrdconta,
                                          pr_cdhistor => 3272, -- EST.JUROS REM
                                          pr_nrctremp => vr_nrctremp,
