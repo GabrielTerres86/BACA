@@ -1,4 +1,4 @@
--- INC00xxxxx
+-- INC0071554
 update crapcon c set c.nrseqint = 9
  where (c.cdempcon, c.cdsegmto, c.cdcooper) in ((79, 4, 1));
 update crapcon c set c.nrseqint = 3
