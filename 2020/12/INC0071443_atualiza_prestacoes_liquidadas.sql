@@ -6,6 +6,9 @@ DECLARE
   vr_nrctremp   craplem.nrctremp%type := 3215651; -- Alterar aqui
   vr_vlpreemp   craplem.vlpreemp%type := 853.84; -- Alterar aqui
 --
+  vr_cdcritic    number;
+  vr_dscritic    varchar2(2000);
+--
   CURSOR cr_crapdat ( pr_cdcooper in craplcm.cdcooper%type ) is
      select  dat.*
      from    crapdat   dat
@@ -43,29 +46,39 @@ DECLARE
 --
 BEGIN
 --
-  cecred.EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => 1,
+  OPEN cr_crapdat ( pr_cdcooper => vr_cdcooper );
+  FETCH  cr_crapdat
+  INTO  rw_crapdat;
+  CLOSE cr_crapdat;
+--
+  cecred.EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                          pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                         pr_cdagenci => rw_craplcm.cdagenci,
-                                         pr_cdbccxlt => rw_craplcm.cdbccxlt,
+                                         pr_cdagenci => 214,
+                                         pr_cdbccxlt => 100,
                                          pr_cdoperad => 1,
-                                         pr_cdpactra => rw_craplcm.cdagenci,
+                                         pr_cdpactra => 214, -- rw_craplcm.cdagenci,
                                          pr_tplotmov => 5,
-                                         pr_nrdolote => rw_craplcm.nrdolote,
-                                         pr_nrdconta => rw_craplcm.nrdconta,
-                                         pr_cdhistor => 1048, -- DESC.ANT.EMP
+                                         pr_nrdolote => 600031, -- rw_craplcm.nrdolote,
+                                         pr_nrdconta => vr_nrdconta,
+                                         pr_cdhistor => 3272, -- EST.JUROS REM
                                          pr_nrctremp => vr_nrctremp,
-                                         pr_vllanmto => vr_vlpreemp - rw_craplcm.vllanmto,
+                                         pr_vllanmto => 83.76,
                                          pr_dtpagemp => rw_crapdat.dtmvtolt,
-                                         pr_txjurepr => rw_craplem_explo.txjurepr,
-                                         pr_vlpreemp => vr_vlpreemp,
-                                         pr_nrsequni => rw_craplcm.nrparepr,
-                                         pr_nrparepr => rw_craplcm.nrparepr,
+                                         pr_txjurepr => 0.0265641,
+                                         pr_vlpreemp => null, -- vr_vlpreemp,
+                                         pr_nrsequni => 0,
+                                         pr_nrparepr => 0,
                                          pr_flgincre => true,
                                          pr_flgcredi => true,
-                                         pr_nrseqava => rw_craplcm.nrseqava,
-                                         pr_cdorigem => rw_craplem_explo.cdorigem,
+                                         pr_nrseqava => 0,
+                                         pr_cdorigem => 7,
                                          pr_cdcritic => vr_cdcritic,
                                          pr_dscritic => vr_dscritic);
+--
+  IF vr_cdcritic > 0
+  OR vr_dscritic is not null then
+     raise_application_error(-20501, 'Erro : ' || vr_cdcritic || ' - ' || vr_dscritic);
+  END IF;
 --
   FOR rw_crappep in cr_crappep ( pr_cdcooper => vr_cdcooper
                                 ,pr_nrdconta => vr_nrdconta
