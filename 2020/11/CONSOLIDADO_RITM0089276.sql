@@ -106,15 +106,7 @@ BEGIN
     
     COMMIT;
   END; 
-END;  
-
-  BEGIN
-    UPDATE tbgen_versao_termo t
-       SET t.dtinicio_vigencia = to_date('26/01/2021', 'DD/MM/RRRR')
-     WHERE t.dschave_versao = 'TERMO ADESAO CDC PF V2';
-     
-     COMMIT;
-  END;  
+END;    
 
   BEGIN
     INSERT INTO expurgo.tbhst_controle (
