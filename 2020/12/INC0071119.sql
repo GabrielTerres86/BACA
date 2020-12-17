@@ -27,6 +27,9 @@ DECLARE
 
                                     -- 14/12/2020: cdcooper = 1 AND nrdconta = 10743677 AND nrctremp = 3286042
                                    ,196314164
+
+                                    -- 17/12/2020: cdcooper = 1 AND nrdconta = 9820558 AND nrctremp = 3040749
+                                   ,196829581,196829582,196829583
                                   );
 
     COMMIT;
