@@ -110,6 +110,7 @@ END;
 
   BEGIN
     INSERT INTO expurgo.tbhst_controle (
+	   idcontrole,
        nmowner,
        nmtabela,
        nmcampo_refere,
@@ -119,6 +120,7 @@ END;
        dtinicio,
        tpoperacao
     ) VALUES (
+	   (SELECT NVL(MAX(idcontrole),0) + 1 FROM expurgo.tbhst_controle),
        'CARTAO',
        'TBCRD_LOG_CARTAO',
        'DHLOG',
