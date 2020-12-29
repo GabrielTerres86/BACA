@@ -10,7 +10,7 @@ BEGIN
   update crapepr e set e.dtdpagto = to_date('05/03/2020','DD/MM/YYYY') where e.cdcooper = 1 and e.nrdconta = 3869237  and e.nrctremp = 997429;
   update crapepr e set e.dtdpagto = to_date('20/12/2020','DD/MM/YYYY') where e.cdcooper = 1 and e.nrdconta = 2356848  and e.nrctremp = 277548;
   update crapepr e set e.dtdpagto = to_date('15/10/2020','DD/MM/YYYY') where e.cdcooper = 1 and e.nrdconta = 1833464  and e.nrctremp = 256597;
-  update crapepr e set e.dtdpagto = to_date('25/01/2020','DD/MM/YYYY') where e.cdcooper = 1 and e.nrdconta = 80005608 and e.nrctremp = 288560;
+  update crapepr e set e.dtdpagto = to_date('25/01/2021','DD/MM/YYYY') where e.cdcooper = 1 and e.nrdconta = 80005608 and e.nrctremp = 288560;
   update crapepr e set e.dtdpagto = to_date('20/01/2021','DD/MM/YYYY') where e.cdcooper = 1 and e.nrdconta = 7659300  and e.nrctremp = 495587;
   update crapepr e set e.dtdpagto = to_date('10/12/2020','DD/MM/YYYY') where e.cdcooper = 1 and e.nrdconta = 3086887  and e.nrctremp = 915123;
   update crapepr e set e.dtdpagto = to_date('20/01/2021','DD/MM/YYYY') where e.cdcooper = 1 and e.nrdconta = 3794644  and e.nrctremp = 1006620;
