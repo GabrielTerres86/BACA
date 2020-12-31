@@ -1,5 +1,4 @@
 declare 
-
   vr_cdcritic   crapcri.cdcritic%TYPE;
   vr_dscritic   varchar2(5000) := ' ';
   vr_excsaida EXCEPTION;
@@ -17,8 +16,9 @@ declare
   vr_ind_arquiv4     utl_file.file_type;
   
   cursor cr_crapcar IS
-    SELECT crd.rowid, crd.nrconta_cartao, crd.dtmvtolt, crd.cdcooper, crd.nrdconta, 
-           (select car.nrdconta from tbcrd_conta_cartao car where crd.cdcooper = car.cdcooper and crd.nrconta_cartao = car.nrconta_cartao) conta_certa,
+     SELECT crd.rowid, crd.nrconta_cartao, crd.dtmvtolt, crd.cdcooper, crd.nrdconta, 
+           (select car.cdcooper from tbcrd_conta_cartao car where  crd.nrconta_cartao = car.nrconta_cartao) coop_certa,
+           (select car.nrdconta from tbcrd_conta_cartao car where crd.nrconta_cartao = car.nrconta_cartao) conta_certa,
            crd.qttransa_debito, crd.qttransa_credito, crd.vltransa_debito, crd.vltransa_credito 
     from tbcrd_utilizacao_cartao crd
     where not exists(Select 1 from tbcrd_conta_cartao car where crd.cdcooper = car.cdcooper and crd.nrdconta = car.nrdconta and crd.nrconta_cartao = car.nrconta_cartao)
@@ -56,7 +56,7 @@ BEGIN
                           ,pr_tipabert => 'W'                --> modo de abertura (r,w,a)
                           ,pr_utlfileh => vr_ind_arquiv      --> handle do arquivo aberto
                           ,pr_des_erro => vr_dscritic);      --> erro
-  -- em caso de cr√≠tica
+  -- em caso de crÌtica
   IF vr_dscritic IS NOT NULL THEN        
      RAISE vr_excsaida;
   END IF;
@@ -67,7 +67,7 @@ BEGIN
                           ,pr_tipabert => 'W'                --> modo de abertura (r,w,a)
                           ,pr_utlfileh => vr_ind_arquiv2     --> handle do arquivo aberto
                           ,pr_des_erro => vr_dscritic);      --> erro
-  -- em caso de cr√≠tica
+  -- em caso de crÌtica
   IF vr_dscritic IS NOT NULL THEN        
      RAISE vr_excsaida;
   END IF;
@@ -78,7 +78,7 @@ BEGIN
                           ,pr_tipabert => 'W'                --> modo de abertura (r,w,a)
                           ,pr_utlfileh => vr_ind_arquiv3     --> handle do arquivo aberto
                           ,pr_des_erro => vr_dscritic);      --> erro
-  -- em caso de cr√≠tica
+  -- em caso de crÌtica
   IF vr_dscritic IS NOT NULL THEN        
      RAISE vr_excsaida;
   END IF;
@@ -89,40 +89,41 @@ BEGIN
                           ,pr_tipabert => 'W'                --> modo de abertura (r,w,a)
                           ,pr_utlfileh => vr_ind_arquiv4     --> handle do arquivo aberto
                           ,pr_des_erro => vr_dscritic);      --> erro
-  -- em caso de cr√≠tica
+  -- em caso de crÌtica
   IF vr_dscritic IS NOT NULL THEN        
      RAISE vr_excsaida;
   END IF;
   
-  loga('Inicio Processo');
-    
-  FOR rw_crapcar IN cr_crapcar LOOP
- 
-    loga('Ajustando a conta ao cart√£o: Cooper: '|| rw_crapcar.cdcooper || 
-                                     ' Conta Associada: ' ||rw_crapcar.nrdconta ||
-                                     ' Conta Correta: ' || rw_crapcar.conta_certa);
+  loga('Ajustando a conta ao cart„o: Cooper Associada: '  || rw_crapcar.cdcooper || 
+                                     ' Cooper Correta: '  || rw_crapcar.coop_certa ||
+                                     ' Conta Associada: ' || rw_crapcar.nrdconta ||
+                                     ' Conta Correta: '   || rw_crapcar.conta_certa);
  
     -- Gera backup com valor atual do campo - script de rollback
-    backup('update tbcrd_utilizacao_cartao set nrdconta = '|| rw_crapcar.nrdconta ||
+    backup('update tbcrd_utilizacao_cartao set nrdconta = '|| rw_crapcar.nrdconta || ', cdcooper = ' || rw_crapcar.cdcooper ||
            ' where tbcrd_utilizacao_cartao.rowid = '''|| rw_crapcar.rowid ||''';');    
     
     BEGIN
       UPDATE tbcrd_utilizacao_cartao
-         SET nrdconta      = rw_crapcar.conta_certa
+         SET nrdconta      = rw_crapcar.conta_certa,
+             cdCooper      = rw_crapcar.coop_certa
        WHERE tbcrd_utilizacao_cartao.rowid = rw_crapcar.rowid;
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := ' Erro atualizando tbcrd_utilizacao_cartao!' || 
-                       ' Cooper: '|| rw_crapcar.cdcooper || 
-                       ' Conta Associada: ' ||rw_crapcar.nrdconta ||
-                       ' Conta Correta: ' || rw_crapcar.conta_certa || ' SQLERRM: ' || SQLERRM;
+                       ' Cooper Associada: '|| rw_crapcar.cdcooper || 
+                       ' Cooper Correta: '  || rw_crapcar.coop_certa ||
+                       ' Conta Associada: ' || rw_crapcar.nrdconta ||
+                       ' Conta Correta: '   || rw_crapcar.conta_certa || ' SQLERRM: ' || SQLERRM;
         loga(vr_dscritic);
         falha(vr_dscritic);
         RAISE vr_excsaida;
     END;
 
-    sucesso('Cart√£o associado a conta correta: Cooper: '|| rw_crapcar.cdcooper || 
-            ' Cart√£o: ' ||rw_crapcar.nrconta_cartao || 
+    sucesso('Cart„o associado a conta correta: Cooper: '|| rw_crapcar.cdcooper || 
+            ' Cart„o: ' ||rw_crapcar.nrconta_cartao || 
+            ' Cooper Errada: '|| rw_crapcar.cdcooper || 
+            ' Cooper Correta: '  || rw_crapcar.coop_certa ||
             ' Conta Errada: ' ||rw_crapcar.nrdconta || 
             ' Conta Certa: ' || rw_crapcar.Conta_certa);
   END LOOP;
