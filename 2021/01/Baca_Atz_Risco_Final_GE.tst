@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-596
+585
 declare 
 
   wpr_cdcooper     NUMBER := 2; -- Será rodado para 2 - Acredicoop e 1 - Viacredi(somente após validarmos para a 2 - Acredicoop).
@@ -582,17 +582,6 @@ BEGIN
   ELSE
     dbms_output.put_line('Sucesso na execução da pc_risco_central_ocr '||wpr_cdcooper||'.');
   END IF;
-
-  UPDATE craptab
-     SET dstextab = '2'||SUBSTR(dstextab,2,4000)
-   WHERE craptab.cdcooper = wpr_cdcooper
-     AND upper(craptab.nmsistem) = 'CRED'
-     AND upper(craptab.tptabela) = 'USUARI'
-     AND craptab.cdempres = 11
-     AND upper(craptab.cdacesso) = 'RISCOBACEN'
-     AND craptab.tpregist = 000;
-
-  COMMIT;
 
 END;
 -- CHAMADA PRINCIPAL
