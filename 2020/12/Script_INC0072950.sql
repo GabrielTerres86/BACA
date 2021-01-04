@@ -1,3 +1,4 @@
+BEGIN
 --Liberar Contrato 1502282 pois esta liquidado.
 UPDATE tbgar_cobertura_operacao
    SET insituacao = 2
@@ -16,4 +17,7 @@ UPDATE tbgar_cobertura_operacao o
    SET o.nrcontrato = 3180685 
  WHERE idcobertura = 32614; 
  COMMIT;
- 
+ EXCEPTION
+  WHEN OTHERS THEN
+   NULL;
+END;
