@@ -3,8 +3,8 @@ PL/SQL Developer Test script 3.0
 declare 
 
   wpr_cdcooper     NUMBER := 2; -- Será rodado para 2 - Acredicoop e 1 - Viacredi(somente após validarmos para a 2 - Acredicoop).
-  wpr_dtrefere     VARCHAR(8) := '04012021'; -- 31122020
-  wpr_dtrefere_aux VARCHAR(8) := '31122020'; -- 30122020
+  wpr_dtrefere     VARCHAR(8) := '31122020';
+  wpr_dtrefere_aux VARCHAR(8) := '30122020';
   wpr_stprogra     PLS_INTEGER;
   wpr_infimsol     PLS_INTEGER;
   wpr_cdcritic     crapcri.cdcritic%TYPE;
@@ -473,7 +473,7 @@ declare
 
     BEGIN
 
-          vr_dtrefere_aux := to_date('30122020','ddmmyyyy');
+          vr_dtrefere_aux := to_date(wpr_dtrefere_aux,'ddmmyyyy');
 
           FOR rw_crapris IN cr_crapris (vr_dtrefere_aux) LOOP
             vr_dttrfprj := NULL;
@@ -521,7 +521,7 @@ declare
       -- risc0004.pc_central_risco_grupo
       pc_central_risco_grupo_wag(pr_cdcooper => pr_cdcooper,
                                  pr_dtrefere => pr_dtrefere,     -- Data do dia da Coop
-                                 pr_dtmvtoan => to_date('30122020','ddmmyyyy'), -- Data da central anterior
+                                 pr_dtmvtoan => to_date(wpr_dtrefere_aux,'ddmmyyyy'), -- Data da central anterior
                                  pr_dscritic => vr_dscritic);
       -- Se retornou derro
       IF vr_dscritic IS NOT NULL THEN
