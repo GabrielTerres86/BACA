@@ -1,0 +1,1 @@
+exec sys.dbms_scheduler.disable('CECRED.JBLIMCRE_MAJORACAO');
