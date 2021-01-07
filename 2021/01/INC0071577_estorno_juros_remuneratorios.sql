@@ -24,7 +24,7 @@ BEGIN
 --
   cecred.EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                          pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                         pr_cdagenci => 214,
+                                         pr_cdagenci => 2,
                                          pr_cdbccxlt => 100,
                                          pr_cdoperad => 1,
                                          pr_cdpactra => 2, -- rw_craplem.cdagenci,
