@@ -1,0 +1,17 @@
+/* Drop Procedure */
+BEGIN
+EXECUTE IMMEDIATE 'DROP PROCEDURE CECRED.PC_CRPS339';
+EXCEPTION
+  WHEN OTHERS THEN
+   NULL;
+END;
+/
+BEGIN
+/*Registros crapprg*/
+delete from crapprg where CDPROGRA = 'CRPS339';
+commit;
+EXCEPTION
+  WHEN OTHERS THEN
+   NULL;
+END;
+/
