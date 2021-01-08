@@ -1,6 +1,6 @@
 -- Atualizacao da flag pra reenvio dos registros para a API do bancoob - 4 - GPS
 
-update craplgp lgp set lgp.flgpagto = 0 where lgp.dtmvtolt = trunc(sysdate) and lgp.idsicredi in (
+update craplgp lgp set lgp.flgpagto = 0 where lgp.dtmvtolt = trunc(sysdate) and lgp.idsicred in (
 	2633947,2634236,2634219,2634226,2634233,2634234,2634217,2634230,2634218,2634228
 	,2634237,2634235,2634231,2634222,2634224,2634229,2634223,2634202,2634227,2634241
 	,2634232,2634215,2634207,2634206,2634214,2634204,2634239,2634213,2634220,2634216
