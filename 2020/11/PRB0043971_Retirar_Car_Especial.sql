@@ -130,8 +130,9 @@ DECLARE
 BEGIN
 
   VR_NOME_BACA := 'BACA_SACADO_INV_PRB0043989';
---  VR_NMDIRETO  := '/progress/t0032120/micros'; -- Ambiente Individual
-  VR_NMDIRETO  := '/micros/cpd/bacas/PRB0043989'; --Produção
+  VR_NMDIRETO  := GENE0001.fn_diretorio(pr_tpdireto => 'M' --> /micros
+                            ,pr_cdcooper => 0);                            
+  VR_NMDIRETO  := VR_NMDIRETO||'cpd/bacas/PRB0043989'; 
   VR_NMARQBKP  := 'ROLLBACK_ENDERECOS_PRB0043989.txt';
   VR_NMARQLOG  := 'LOG_' || VR_NOME_BACA || '_' ||
                   TO_CHAR(SYSDATE, 'ddmmyyyy_hh24miss') || '.txt';
