@@ -19,28 +19,31 @@ BEGIN
 
   -- Seleciona os títulos que necessitam ser reprocessados
   FOR rw_npc_reproc IN (
-    WITH BoletosComErro AS
-     (SELECT idtitleg
-            ,idopeleg
-        FROM tbcobran_remessa_npc rem
-       WHERE rem.DHOPERAD >= 20210111220000
-         AND rem.DHOPERAD < 20210112104000
-         AND rem.idtitleg > 0
-      MINUS
-      SELECT TO_NUMBER(ret.idtitleg)
-            ,ret.idopeleg
-        FROM tbcobran_retorno_npc ret
-       WHERE ret.dhoperjd >= 20210111220000
-         AND ret.cdsitope IN ('RC', 'RA', 'RB'))
-    SELECT cob.idtitleg
-          ,cob.idopeleg
-      FROM crapcob cob
-     INNER JOIN BoletosComErro err
-        ON cob.idtitleg = err.idtitleg
-       AND cob.idopeleg = err.idopeleg
-     INNER JOIN crapcop cop
-        ON cob.cdcooper = cop.cdcooper
-     WHERE (cob.incobran,cob.inenvcip) IN ((0,2),(0,3),(0,4),(3,2),(3,3))
+    SELECT trn.*
+    FROM tbcobran_remessa_npc trn
+    WHERE (trn.idtitleg, trn.idopeleg) IN
+      (WITH BoletosComErro AS
+       (SELECT idtitleg
+              ,idopeleg
+          FROM tbcobran_remessa_npc rem
+         WHERE rem.DHOPERAD >= 20210111220000
+           AND rem.DHOPERAD < 20210112104000
+           AND rem.idtitleg > 0
+        MINUS
+        SELECT TO_NUMBER(ret.idtitleg)
+              ,ret.idopeleg
+          FROM tbcobran_retorno_npc ret
+         WHERE ret.dhoperjd >= 20210111220000
+           AND ret.cdsitope IN ('RC', 'RA', 'RB'))
+      SELECT cob.idtitleg
+            ,cob.idopeleg
+        FROM crapcob cob
+       INNER JOIN BoletosComErro err
+          ON cob.idtitleg = err.idtitleg
+         AND cob.idopeleg = err.idopeleg
+       INNER JOIN crapcop cop
+          ON cob.cdcooper = cop.cdcooper
+       WHERE (cob.incobran,cob.inenvcip) IN ((0,2),(0,3),(0,4),(3,2),(3,3)))
      ) LOOP
     -- Gera um novo idopeleg e cria o registro na tabela responsável pelo processamentos
     --
@@ -275,6 +278,6 @@ BEGIN
   END LOOP;
   
   --
-  COMMIT;
+--  COMMIT;
   
 END;
