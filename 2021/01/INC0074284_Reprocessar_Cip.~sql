@@ -255,7 +255,7 @@ BEGIN
         vr_dscritic := 'Erro ao inserir na tabela TBCOBRAN_REMESSA_NPC. ' ||
                        sqlerrm;
                        
---        DBMS_OUTPUT.put_line(vr_dscritic);                       
+        DBMS_OUTPUT.put_line(vr_dscritic);                       
 
         --> Gerar log para facilitar identificação de erros SD#769996
         BEGIN
