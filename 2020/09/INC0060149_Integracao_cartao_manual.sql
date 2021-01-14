@@ -1,0 +1,91 @@
+BEGIN
+
+  UPDATE crawcrd w
+     SET w.insitcrd = 3,
+         w.nrcrcard = 5474080172491696,
+         w.nrcctitg = 7563239611981
+   WHERE w.cdcooper = 1
+     AND w.nrdconta = 11568046
+     AND w.insitcrd = 1
+     AND w.nrcpftit = 8893229960;
+     
+  INSERT INTO crapcrd (
+         NRDCONTA,
+         NRCRCARD,
+         NRCPFTIT,
+         NMTITCRD,
+         DDDEBITO,
+         CDLIMCRD,
+         DTVALIDA,
+         NRCTRCRD,
+         DTCANCEL,
+         CDMOTIVO,
+         NRPROTOC,
+         DTANUCRD,
+         VLANUCRD,
+         INANUCRD,
+         CDADMCRD,
+         TPCARTAO,
+         DTULTVAL,
+         VLLIMDLR,
+         CDCOOPER,
+         DTALTVAL,
+         DTALTLIM,
+         DTALTLDL,
+         DTALTDDB,
+         INACETAA,
+         QTSENERR,
+         CDOPETAA,
+         DTACETAA,
+         DSSENTAA,
+         FLGDEBIT,
+         DSSENPIN,
+         CDOPEORI,
+         CDAGEORI,
+         DTINSORI,
+         DTREFATU,
+         FLGPROVI,
+         DTASSELE,
+         DTASSSUP)
+  VALUES (11568046,
+      5474080172491696.00,
+      8893229960.00,
+      'KETRIN M F ALVES',
+      19,
+      0,
+      null,
+      1847260,
+      null,
+      0,
+      0,
+      null,
+      0,
+      0,
+      15,
+      2,
+      null,
+      0,
+      1,
+      null,
+      null,
+      null,
+      null,
+      0,
+      0,
+      ' ',
+      null,
+      ' ',
+      0,
+      ' ',
+      ' ',
+      0,
+      null,
+      to_date('10/08/2020', 'dd/mm/yyyy'), 
+      0, 
+      null, 
+      null
+  );       
+     
+       
+  COMMIT;
+END;
