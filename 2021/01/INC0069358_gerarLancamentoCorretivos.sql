@@ -137,7 +137,7 @@ BEGIN
                                 ,pr_nrdolote => 600038        -- Numero Lote
                                 ,pr_tplotmov => 1             -- Tipo movimento
                                 ,pr_cdoperad => '1'           -- Operador
-                                ,pr_cdhistor => vc_hsdebcot   -- Codigo Historico
+                                ,pr_cdhistor => vc_hscrecap   -- Codigo Historico
                                 ,pr_dtmvtopg => NULL          -- Data Pagamento Emprestimo
                                 ,pr_vllanmto => vc_vldcotas   -- Valor Lancamento
                                 ,pr_flgincre => TRUE          -- Incremento
@@ -177,6 +177,7 @@ BEGIN
   IF TRIM(vr_dscritic) IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
     RAISE vr_exc_erro;
   END IF;
+  
   
   
   -- Manter o lote do lançamento
