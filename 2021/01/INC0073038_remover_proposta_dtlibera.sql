@@ -22,25 +22,14 @@
               ,crawepr.cdoperad --Usuario de criacao da proposta
               ,crawepr.rowid    --id do registro
         FROM  crawepr
-        WHERE (crawepr.cdcooper = 1 AND crawepr.nrdconta = 6863833 AND   crawepr.nrctremp = 3339219)
-		OR	  (crawepr.cdcooper = 1 AND crawepr.nrdconta = 89060 AND   crawepr.nrctremp = 20412)
-		OR	  (crawepr.cdcooper = 1 AND crawepr.nrdconta = 128899 AND   crawepr.nrctremp = 19995)
-		OR	  (crawepr.cdcooper = 1 AND crawepr.nrdconta = 10232630 AND   crawepr.nrctremp = 40389)
-		OR	  (crawepr.cdcooper = 1 AND crawepr.nrdconta = 11017708 AND   crawepr.nrctremp = 3406454);
+        WHERE crawepr.tpemprst = 3
+		AND	  ((crawepr.cdcooper = 1 AND crawepr.nrdconta = 6863833 AND   crawepr.nrctremp = 3339219)
+		OR	  (crawepr.cdcooper = 10 AND crawepr.nrdconta = 89060 AND   crawepr.nrctremp = 20412)
+		OR	  (crawepr.cdcooper = 10 AND crawepr.nrdconta = 128899 AND   crawepr.nrctremp = 19995)
+		OR	  (crawepr.cdcooper = 1 AND crawepr.nrdconta = 10232630 AND   crawepr.nrctremp = 3395345)
+		OR	  (crawepr.cdcooper = 1 AND crawepr.nrdconta = 11017708 AND   crawepr.nrctremp = 3406454)
+		OR	  (crawepr.cdcooper = 10 AND crawepr.nrdconta = 77941 AND   crawepr.nrctremp = 12966));
 		
-		 /*
-		 cdcooper: 1, nrdconta: 6863833, nrctremp: 3339219
-		 
-		 CSN reportou novos casos:
-Contas: 89060 e proposta 20412
-Conta 128899 e proposta 19995
-
-Cooperativa Viacredi - Conta: 1023.263-0 Proposta: 3395345/2
-
-Cooperativa Viacredi
-Conta 1101770-8
-Proposta 3406454
-*/
       -- renegociados nao efetivados somente
       CURSOR cr_renegociacao(pr_cdcooper IN tbepr_renegociacao.cdcooper%TYPE,
                              pr_nrdconta IN tbepr_renegociacao.nrdconta%TYPE,
