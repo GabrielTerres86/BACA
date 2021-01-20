@@ -101,7 +101,7 @@ BEGIN
       ,1
       ,'cdsitdct'
       ,rg_crapass.cdsitdct
-      ,'8');
+      ,'4');
     --
   END LOOP;
   CLOSE cr_crapass;
