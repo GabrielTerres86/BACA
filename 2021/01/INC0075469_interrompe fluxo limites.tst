@@ -15,6 +15,7 @@ BEGIN
     vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 5);
   END IF;
   */
+  dbms_output.enable(1000000);
   -- Test statements here
   FOR rw_crawlim IN (SELECT w.rowid, w.*
                        FROM crawlim w
