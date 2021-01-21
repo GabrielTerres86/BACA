@@ -12,7 +12,7 @@
       ------------------------------- CURSORES ---------------------------------
       -- Cadastro auxiliar dos emprestimos com movimento a mais de 4 meses
       -- que não estejam cadastrados na crapepr
-      /*CURSOR cr_crawepr IS
+      CURSOR cr_crawepr IS
         SELECT crawepr.cdcooper
               ,crawepr.nrdconta --Numero da conta/dv do associado
               ,crawepr.nrctremp --Numero do contrato de emprestimo
@@ -22,49 +22,11 @@
               ,crawepr.cdoperad --Usuario de criacao da proposta
               ,crawepr.rowid    --id do registro
         FROM  crawepr
-        WHERE crawepr.tpemprst = 3*/
-		
-		CURSOR cr_crawepr IS
-		SELECT wr.cdcooper
-              ,wr.nrdconta --Numero da conta/dv do associado
-              ,wr.nrctremp --Numero do contrato de emprestimo
-              ,wr.tpemprst --Tipo do emprestimo (0 - atual, 1 - pre-fixada)
-              ,wr.idcobope --Cobertura
-              ,wr.cdfinemp --Finalidade de emprestimo
-              ,wr.cdoperad --Usuario de criacao da proposta
-              ,wr.rowid    --id do registro
-		FROM crapepr e
-			  ,crawepr w
-			  ,crawepr wr --crawepr capa
-			  ,tbepr_renegociacao r
-			  ,tbepr_renegociacao_contrato c
-		WHERE e.cdfinemp IN (62,63) 
-			AND e.cdcooper = w.cdcooper
-			AND e.nrdconta = w.nrdconta
-			AND e.nrctremp = w.nrctremp
-			AND c.cdcooper = e.cdcooper
-			AND c.nrdconta = e.nrdconta
-			AND c.nrctrepr = e.nrctremp
-			AND r.cdcooper = c.cdcooper
-			AND r.nrdconta = c.nrdconta
-			AND r.nrctremp = c.nrctremp
-			AND r.cdcooper = wr.cdcooper
-			AND r.nrdconta = wr.nrdconta
-			AND r.nrctremp = wr.nrctremp
-			AND NOT EXISTS (SELECT 1 FROM tbepr_renegociacao_crapepr re
-									WHERE c.cdcooper = re.cdcooper
-									AND c.nrdconta = re.nrdconta
-									AND c.nrctrepr = re.nrctremp
-									AND c.nrversao = re.nrversao)
-			AND Nvl(w.flgreneg,0) = 1
-			AND r.dtlibera >= '15/12/2020'
-			AND wr.tpemprst = 3
-			GROUP BY r.cdcooper
-				,r.nrdconta
-				,r.nrctremp
-				,r.dtlibera
-				,wr.insitapr
-				,wr.insitest		
+        WHERE crawepr.tpemprst = 3
+		AND	  ((crawepr.cdcooper = 1 AND crawepr.nrdconta = 3629708 AND   crawepr.nrctremp = 3399520)
+		OR	  (crawepr.cdcooper = 1 AND crawepr.nrdconta = 6706231 AND   crawepr.nrctremp = 3400332)
+		OR	  (crawepr.cdcooper = 1 AND crawepr.nrdconta = 10360417 AND   crawepr.nrctremp = 3412685)
+		OR	  (crawepr.cdcooper = 1 AND crawepr.nrdconta = 10360417 AND   crawepr.nrctremp = 3400353));
 		
       -- renegociados nao efetivados somente
       CURSOR cr_renegociacao(pr_cdcooper IN tbepr_renegociacao.cdcooper%TYPE,
