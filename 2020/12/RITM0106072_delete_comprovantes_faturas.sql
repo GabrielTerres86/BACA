@@ -38,7 +38,7 @@ where pro.cdcooper = 1
   and pro.nrdconta = 6904890
   and pro.dtmvtolt = '25/11/2020'
   and pro.cdtippro = 16
-  and pro.nrseqaut = 21471
+  and pro.nrseqaut = 21471;
   
 delete from crappro pro
 where pro.cdcooper = 1
