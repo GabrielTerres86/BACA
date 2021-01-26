@@ -1,13 +1,15 @@
---   executar update na TBSEG_PRESTAMISTA
+--   executar update na TBSEG_PRESTAMISTA E crawseg
 Declare 
   vr_contador number;
   vr_dscritic varchar2(500);
   VR_NRPROPOSTA varchar2(15);
   vr_excsaida EXCEPTION;  
-  cursor cr_curs  is
-  SELECT IDSEQTRA, CDAPOLIC  ,CDCOOPER, NRDCONTA, NRCTRSEG, NRCTREMP, a.rowid   FROM  tbseg_prestamista a     
-   where  NRPROPOSTA is null 
+  cursor cr_curs is
+  SELECT a.rowid , IDSEQTRA, CDAPOLIC, CDCOOPER, NRDCONTA, NRCTRSEG, NRCTREMP, NRPROPOSTA  
+   FROM  tbseg_prestamista a     
+   where NRPROPOSTA is null 
   order by 1,2,3;  
+  RW_CURS cr_curs%ROWTYPE;
 begin
   vr_contador:=0;
 
@@ -15,14 +17,25 @@ begin
     vr_contador:= vr_contador + 1;         
     BEGIN
       SELECT SEGU0003.FN_NRPROPOSTA() INTO VR_NRPROPOSTA  FROM DUAL;
-      UPDATE tbseg_prestamista set nrproposta = VR_NRPROPOSTA --vr_contador
+      UPDATE tbseg_prestamista set nrproposta = VR_NRPROPOSTA 
        ,dtdenvio = null
        , tpregist = case when tpregist = 3 then 1 else tpregist end        
        WHERE ROWID = rw_curs.rowid;
-       UPDATE CECRED.TBSEG_NRPROPOSTA SET  DTSEGURO = SYSDATE  WHERE NRPROPOSTA  = VR_NRPROPOSTA ; 
+       
+       update crawseg set nrproposta = VR_NRPROPOSTA   
+       where CDCOOPER = rw_curs.CDCOOPER 
+        and  NRDCONTA = rw_curs.NRDCONTA 
+        and  NRCTRSEG = rw_curs.NRCTRSEG 
+        and  TPSEGURO = 4 ;
+           
+       UPDATE CECRED.TBSEG_NRPROPOSTA SET DTSEGURO = SYSDATE WHERE NRPROPOSTA = VR_NRPROPOSTA ; 
+       
+       if (trunc(vr_contador/ 1000) ) = (vr_contador/ 1000)  then
+         commit;
+       end if;
     EXCEPTION
       WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao atualizar crapseg! rowid: '||
+        vr_dscritic := 'Erro ao atualizar seguro! rowid: '||
                        rw_curs.rowid; 
         RAISE vr_excsaida;
     END;   
