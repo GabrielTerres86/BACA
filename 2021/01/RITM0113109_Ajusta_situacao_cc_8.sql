@@ -5,24 +5,29 @@ DECLARE
       , cdcooper
       , cdsitdct
     FROM CECRED.CRAPASS
-    WHERE cdcooper = 16
-      and nrdconta   IN ( 165522,
-                          184373,
-                          447897,
-                          323713,
-                          408590,
-                          585904,
-                          2886278,
-                          584592,
-                          383732,
-                          510840,
-                          494550 );
+    WHERE ( cdcooper = 1
+            and nrdconta = 10601392
+          )
+      OR
+      ( cdcooper = 16
+        and nrdconta   IN ( 165522,
+                            184373,
+                            447897,
+                            323713,
+                            408590,
+                            585904,
+                            2886278,
+                            584592,
+                            383732,
+                            510840,
+                            494550 )
+      );
   --
   rg_crapass cr_crapass%rowtype;
   --
   vr_dttransa   DATE;
   vr_hrtransa   VARCHAR2(5);
-  vr_log_script VARCHAR2(1000);
+  vr_log_script VARCHAR2(8000);
   --
 BEGIN
   --
@@ -34,11 +39,12 @@ BEGIN
     EXIT WHEN cr_crapass%NOTFOUND;
     --
     vr_log_script := vr_log_script || chr(10) || 'Atualização da conta: (' 
-                     || rg_crapass.nrdconta || ') da situação (' || rg_crapass.cdsitdct
+                     || rg_crapass.cdcooper || ' - ' || rg_crapass.nrdconta 
+                     || ') da situação (' || rg_crapass.cdsitdct
                      || ') para (8)';
     --
     -- Atualiza crapass
-    UPDATE CRAPASS
+    UPDATE CECRED.CRAPASS
       -- Em processo de demissão BACEN
       SET cdsitdct = 8
     WHERE nrdconta = rg_crapass.nrdconta
@@ -48,7 +54,7 @@ BEGIN
     vr_dttransa := trunc(sysdate);
     vr_hrtransa := to_char(sysdate,'SSSSS');
 
-    INSERT INTO craplgm(cdcooper
+    INSERT INTO CECRED.craplgm(cdcooper
       ,nrdconta
       ,idseqttl
       ,nrsequen
@@ -77,7 +83,7 @@ BEGIN
       ,' ');
     --
     -- Insere log com valores de antes x depois.
-    INSERT INTO craplgi(cdcooper
+    INSERT INTO CECRED.craplgi(cdcooper
       ,nrdconta
       ,idseqttl
       ,nrsequen
