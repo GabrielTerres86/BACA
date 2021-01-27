@@ -7,6 +7,8 @@ DECLARE
   VR_NMDIRETO   VARCHAR2(4000);
   VR_DSCRITIC   VARCHAR2(4000);
   VR_EXC_ERRO EXCEPTION;
+  vr_des_erro         varchar2(4000);
+
 
   -- Criacao do diretorio de arquivos
   VR_TYP_SAIDA VARCHAR2(100);
@@ -22,108 +24,94 @@ DECLARE
     VR_TEXTO_COMPLETO VARCHAR2(32600);
     VR_EXC_ERRO EXCEPTION;
   
-    NOVO_nmpessoa_contato VARCHAR2(60);
-    NOVO_dsbem VARCHAR2(58);
-    CN_REGEXSTR CONSTANT VARCHAR2(200) := '[ÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ\.\,\/\:\(\)\;\=\\+\°\º\ª\*\_\>\<\$\#\"\!\@\%\{\}\?\&\-]';
+    QT_REG_ALT INTEGER := 0; 
+    FL_ALTERA BOOLEAN:= TRUE;    
+    VR_STRING     VARCHAR2(1000):= '@#$&%¹²³ªº°*!?|€§‡‹Æµ“¿½¦©¨¡‰•¾£ƒ†™¢”';
+    VR_STRING_ESP VARCHAR2(1000):= '                                     ';
   
-    CURSOR CR_nmpessoa_contato IS
-      SELECT C.*
-        FROM TBCADAST_PESSOA_TELEFONE C
-       WHERE REGEXP_LIKE( nmpessoa_contato , CN_REGEXSTR);
-
-  
-    CURSOR CR_dsbem IS
-      SELECT C.*
-        FROM TBCADAST_PESSOA_BEM C
-       WHERE REGEXP_LIKE( dsbem, CN_REGEXSTR);
-
-
+    -- Subrotina para escrever texto na variável CLOB do XML
+    PROCEDURE PC_ESCREVE_XML(PR_DES_DADOS IN VARCHAR2,
+                             PR_FECHA_XML IN BOOLEAN DEFAULT FALSE) IS
+    BEGIN
+      GENE0002.PC_ESCREVE_XML(VR_DES_XML,
+                              VR_TEXTO_COMPLETO,
+                              PR_DES_DADOS,
+                              PR_FECHA_XML);
+    END;
   
   BEGIN
   
     -- Inicializar o CLOB
     VR_DES_XML := NULL;
+    DBMS_LOB.CREATETEMPORARY(VR_DES_XML, TRUE);
+    DBMS_LOB.OPEN(VR_DES_XML, DBMS_LOB.LOB_READWRITE);
     VR_TEXTO_COMPLETO := NULL;
-  
-    -- Faz o loop dos endereços com caracteres invalidos
-    FOR RW_nmpessoa_contato IN CR_nmpessoa_contato LOOP
+    -- 
+    FOR RW_CRAPSAB IN 
+        (
+        SELECT * FROM CRAPSAB
+         ) LOOP
     
-           
-      GENE0001.PC_ESCR_LINHA_ARQUIVO(VR_IND_ARQLOG,'UPDATE TBCADAST_PESSOA_TELEFONE ' || 'SET TBCADAST_PESSOA_TELEFONE.nmpessoa_contato = q''[' ||
-                   RW_nmpessoa_contato.nmpessoa_contato || ']'' ' ||
-                   'WHERE TBCADAST_PESSOA_TELEFONE.idpessoa = ''' || RW_nmpessoa_contato.idpessoa || '''
-                      AND TBCADAST_PESSOA_TELEFONE.nrseq_telefone = ''' || RW_nmpessoa_contato.nrseq_telefone || ''';' || CHR(10));           
-           
-      GENE0001.PC_ESCR_LINHA_ARQUIVO(VR_IND_ARQLOG,
-                                     'COMMIT;');         
-           
-    
-      -- Update para atualizar o endereço
       BEGIN
-      
-        -- Remove caracteres especiais do campo RW_nmpessoa_contato.nmpessoa_contato
-        NOVO_nmpessoa_contato := RW_nmpessoa_contato.nmpessoa_contato;
-        NOVO_nmpessoa_contato := REGEXP_REPLACE(NOVO_nmpessoa_contato, 'Ã§{1,}', 'ç');
-        NOVO_nmpessoa_contato := REGEXP_REPLACE(NOVO_nmpessoa_contato, CN_REGEXSTR, '');
-        NOVO_nmpessoa_contato := TRIM(NOVO_nmpessoa_contato);
-      
-        IF NOVO_nmpessoa_contato = '' THEN
-          NOVO_nmpessoa_contato := '-';
-        END IF;
-      
-        UPDATE TBCADAST_PESSOA_TELEFONE
-           SET TBCADAST_PESSOA_TELEFONE.nmpessoa_contato = NOVO_nmpessoa_contato -- Saida somente com caracteres validos
-         WHERE TBCADAST_PESSOA_TELEFONE.idpessoa = RW_nmpessoa_contato.idpessoa
-           and TBCADAST_PESSOA_TELEFONE.nrseq_telefone = RW_nmpessoa_contato.nrseq_telefone;
+        FL_ALTERA:= FALSE;    
+        --
+        IF    gene0007.fn_caract_acento(RW_CRAPSAB.DSENDSAC, 1, VR_STRING, VR_STRING_ESP) <> RW_CRAPSAB.DSENDSAC THEN
+          FL_ALTERA:= TRUE;  
+          QT_REG_ALT := QT_REG_ALT + 1;
+        ELSIF gene0007.fn_caract_acento(RW_CRAPSAB.NMDSACAD, 1, VR_STRING, VR_STRING_ESP) <>  RW_CRAPSAB.NMDSACAD THEN
+          QT_REG_ALT := QT_REG_ALT + 1;         
+          FL_ALTERA:= TRUE;            
+        ELSIF gene0007.fn_caract_acento(RW_CRAPSAB.NMCIDSAC, 1, VR_STRING, VR_STRING_ESP) <>  RW_CRAPSAB.NMCIDSAC THEN
+          QT_REG_ALT := QT_REG_ALT + 1;         
+          FL_ALTERA:= TRUE;      
+        ELSIF gene0007.fn_caract_acento(RW_CRAPSAB.NMBAISAC, 1, VR_STRING, VR_STRING_ESP) <>  RW_CRAPSAB.NMBAISAC THEN
+          QT_REG_ALT := QT_REG_ALT + 1;         
+          FL_ALTERA:= TRUE;            
+        END IF;    
+        
+        IF FL_ALTERA THEN 
+          UPDATE CRAPSAB
+           SET CRAPSAB.DSENDSAC = TRIM(GENE0007.FN_CARACT_ACENTO(RW_CRAPSAB.DSENDSAC, 1, VR_STRING, VR_STRING_ESP))
+              ,CRAPSAB.NMDSACAD = TRIM(GENE0007.FN_CARACT_ACENTO(RW_CRAPSAB.NMDSACAD, 1, VR_STRING, VR_STRING_ESP))
+              ,CRAPSAB.NMCIDSAC = TRIM(GENE0007.FN_CARACT_ACENTO(RW_CRAPSAB.NMCIDSAC, 1, VR_STRING, VR_STRING_ESP))
+              ,CRAPSAB.NMBAISAC = TRIM(GENE0007.FN_CARACT_ACENTO(RW_CRAPSAB.NMBAISAC, 1, VR_STRING, VR_STRING_ESP))           
+          WHERE CRAPSAB.PROGRESS_RECID = RW_CRAPSAB.PROGRESS_RECID;
+          --          
+          PC_ESCREVE_XML('UPDATE CRAPSAB ' || 
+                         'SET CRAPSAB.DSENDSAC = q''[' ||RW_CRAPSAB.DSENDSAC || ']'' ' ||
+                         '   ,CRAPSAB.NMDSACAD = q''[' ||RW_CRAPSAB.NMDSACAD || ']'' ' ||          
+                         '   ,CRAPSAB.NMCIDSAC = q''[' ||RW_CRAPSAB.NMCIDSAC || ']'' ' ||          
+                         '   ,CRAPSAB.NMBAISAC = q''[' ||RW_CRAPSAB.NMBAISAC || ']'' ' ||                                                            
+                         'WHERE CRAPSAB.PROGRESS_RECID = ''' ||
+                         RW_CRAPSAB.PROGRESS_RECID || ''';' || CHR(10));    
+        END IF; 
+          
       
       EXCEPTION
         WHEN OTHERS THEN
-          PR_DSCRITIC := 'Erro ao atualizar o registro de TELEFONE ( ' ||
-                         RW_nmpessoa_contato.idpessoa || ' ):' || SQLERRM;
+          PR_DSCRITIC := 'Erro ao atualizar o registro de endereço ( ' ||
+                         RW_CRAPSAB.PROGRESS_RECID || ' ):' || SQLERRM;
           RAISE VR_EXC_ERRO;
       END;
     
     END LOOP;
-  
-    -- Faz o loop dos endereços com caracteres invalidos
-    FOR RW_dsbem IN CR_dsbem LOOP
     
-
-      GENE0001.PC_ESCR_LINHA_ARQUIVO(VR_IND_ARQLOG,'UPDATE TBCADAST_PESSOA_BEM ' || 'SET TBCADAST_PESSOA_BEM.dsbem = q''[' ||
-                  RW_dsbem.dsbem || ']'' ' ||
-                  'WHERE TBCADAST_PESSOA_BEM.idpessoa = ''' || RW_dsbem.idpessoa || '''
-                     AND TBCADAST_PESSOA_BEM.nrseq_bem = ''' || RW_dsbem.nrseq_bem || ''';' || CHR(10));
-
-      BEGIN
-      
-        -- Remove caracteres especiais do campo RW_dsbem.dsbem
-        NOVO_dsbem := RW_dsbem.dsbem;
-        NOVO_dsbem := REGEXP_REPLACE(NOVO_dsbem, 'Ã§{1,}', 'ç');
-        NOVO_dsbem := REGEXP_REPLACE(NOVO_dsbem, CN_REGEXSTR, '');
-        NOVO_dsbem := REGEXP_REPLACE(NOVO_dsbem, ' {2,}', ' ');
-        NOVO_dsbem := TRIM(NOVO_dsbem);
-      
-        IF NOVO_dsbem = '' THEN
-          NOVO_dsbem := '-';
-        END IF;
-      
-        UPDATE TBCADAST_PESSOA_BEM
-           SET TBCADAST_PESSOA_BEM.dsbem = NOVO_dsbem -- Saida somente com caracteres validos
-         WHERE TBCADAST_PESSOA_BEM.idpessoa = RW_dsbem.idpessoa
-           AND TBCADAST_PESSOA_BEM.nrseq_bem = RW_dsbem.nrseq_bem;
-      
-      EXCEPTION
-        WHEN OTHERS THEN
-          PR_DSCRITIC := 'Erro ao atualizar o registro de bem ( ' ||
-                         RW_dsbem.idpessoa || ' ):' || SQLERRM;
-          RAISE VR_EXC_ERRO;
-      END;
+    COMMIT;  
     
-    END LOOP;
-  
-  
-      GENE0001.PC_ESCR_LINHA_ARQUIVO(VR_IND_ARQLOG,
-                                     'COMMIT;');  
+    PC_ESCREVE_XML('COMMIT;');
+    PC_ESCREVE_XML(' ', TRUE);    
+    --
+    gene0002.pc_clob_para_arquivo(pr_clob => VR_DES_XML, 
+                                  pr_caminho => PR_DSDIRETO, 
+                                  pr_arquivo => PR_NMARQBKP,  
+                                  pr_des_erro => vr_des_erro);
+    --
+    IF vr_des_erro IS NOT NULL THEN
+      RAISE VR_EXC_ERRO;
+    END IF; 
+    -- Liberando a memória alocada pro CLOB
+    DBMS_LOB.CLOSE(VR_DES_XML);
+    DBMS_LOB.FREETEMPORARY(VR_DES_XML);      
   
   EXCEPTION
     WHEN VR_EXC_ERRO THEN
@@ -141,10 +129,11 @@ DECLARE
 
 BEGIN
 
-  VR_NOME_BACA := 'BACA_cadast_INV';
-  VR_NMDIRETO  := '/micros/cpd/bacas/PRB0043799';
-  --VR_NMDIRETO  := '/micros/cpd/bacas';
-  VR_NMARQBKP  := 'ROLLBACK_cadast_INV.txt';
+  VR_NOME_BACA := 'BACA_SACADO_INV_PRB0043989';
+  VR_NMDIRETO  := GENE0001.fn_diretorio(pr_tpdireto => 'M' --> /micros
+                            ,pr_cdcooper => 0);                            
+  VR_NMDIRETO  := VR_NMDIRETO||'cpd/bacas/PRB0043989'; 
+  VR_NMARQBKP  := 'ROLLBACK_ENDERECOS_PRB0043989.txt';
   VR_NMARQLOG  := 'LOG_' || VR_NOME_BACA || '_' ||
                   TO_CHAR(SYSDATE, 'ddmmyyyy_hh24miss') || '.txt';
 
@@ -192,7 +181,6 @@ BEGIN
                            PR_DES_ERRO => VR_DSCRITIC); --> erro
   -- em caso de crítica
   IF VR_DSCRITIC IS NOT NULL THEN
-    --null;
     RAISE VR_EXC_ERRO;
   END IF;
 
@@ -223,6 +211,7 @@ BEGIN
   GENE0001.PC_FECHA_ARQUIVO(PR_UTLFILEH => VR_IND_ARQLOG); --> Handle do arquivo aberto;  
 
   COMMIT;
+
 
 EXCEPTION
   WHEN VR_EXC_ERRO THEN
