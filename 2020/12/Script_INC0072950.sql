@@ -9,7 +9,8 @@ UPDATE tbgar_cobertura_operacao
  
 --Retirar idcobope 32614 Conta 15270 e Contrato 3183512
 update crawepr e 
-   set idcobope = 0
+   set idcobope = 0,
+       idcobefe = 0
  where e.cdcooper = 1 and e.nrdconta = 15270 and e.nrctremp = 3183512;
  
 --Atualizar idcobope 32614 de contrato 3183512 para 3180685
