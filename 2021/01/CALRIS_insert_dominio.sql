@@ -77,6 +77,12 @@ values ('CALRIS_STATUS_TANQUE', '8', 'Kn1 com erro');
 insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
 values ('CALRIS_STATUS_TANQUE', '9', 'Cálculo finalizado');
 
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_TPRELACIONAMENTO', '1', 'Titular');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_TPRELACIONAMENTO', '2', 'Relacionamento');
+
 commit;
 end;
 /

@@ -556,6 +556,19 @@ values ('LISTA_VERSAO_PESSOA', 'TELA_CALRIS', 'pc_lista_versao_pessoa', 'pr_nrcp
 insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 values ('BUSCA_VERSAO_CALCULO', 'TELA_CALRIS', 'pc_busca_versao_calculo', 'pr_idcalris_pessoa', l_sequ);
 
+
+insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO)
+values (180, 379, 1, 1);
+
+insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO)
+values (380, 449, 2, 1);
+
+insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO)
+values (450, 599, 3, 1);
+
+insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO)
+values (600, 680, 4, 1);
+
 commit;
 end;
 /
