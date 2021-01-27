@@ -8,3 +8,4 @@ update tbcc_lancamentos_pendentes l set l.idsituacao = 'A', l.DSCRITICA = '', l.
 update tbcc_lancamentos_pendentes l set l.idsituacao = 'A', l.DSCRITICA = '', l.qtexecucoes = 1 where l.idseq_lancamento = 1857346;
 update tbcc_lancamentos_pendentes l set l.idsituacao = 'A', l.DSCRITICA = '', l.qtexecucoes = 1 where l.idseq_lancamento = 1857347;
 update tbcc_lancamentos_pendentes l set l.idsituacao = 'A', l.DSCRITICA = '', l.qtexecucoes = 1 where l.idseq_lancamento = 1857348;
+commit;
