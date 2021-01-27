@@ -17,7 +17,7 @@ UPDATE tbgar_cobertura_operacao o
    SET o.nrcontrato = 3180685 
  WHERE idcobertura = 32614; 
  COMMIT;
- EXCEPTION
+EXCEPTION
   WHEN OTHERS THEN
-   NULL;
+   ROLLBACK;
 END;
