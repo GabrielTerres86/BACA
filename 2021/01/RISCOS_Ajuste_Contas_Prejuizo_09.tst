@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-808
+981
 DECLARE
   CURSOR cr_his (pr_cdcooper IN crapcop.cdcooper%TYPE
                 ,pr_cdhistor IN craphis.cdhistor%TYPE)IS
@@ -790,6 +790,179 @@ BEGIN
 ---------------------------------------------------
 
 
+-- ## 05
+---------------------------------------------------
+  -- INC0072772 - ACENTRA - Conta: 125458
+---------------------------------------------------
+
+  vr_incidente := 'INC0072772';
+  vr_cdcooper  := 5;
+  vr_nrdconta  := 125458;
+  vr_vllanmto  := 996.03;
+  vr_cdhistor  := 2408;
+--  vr_idlancto  := 154103;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+
+  prc_gera_lct(prm_cdcooper => vr_cdcooper,
+               prm_nrdconta => vr_nrdconta,
+               prm_vllanmto => vr_vllanmto,
+               prm_cdhistor => vr_cdhistor);
+
+  prc_atlz_prejuizo(prm_cdcooper => vr_cdcooper
+                   ,prm_nrdconta => vr_nrdconta
+                   ,prm_vllanmto => vr_vllanmto
+                   ,prm_cdhistor => vr_cdhistor
+                   ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
+
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
+
+
+-- ## 06
+---------------------------------------------------
+-- INC0073119 - Únilos - 6 - Conta 179230 - R$ 4.739,31
+---------------------------------------------------
+
+  vr_incidente := 'INC0073119';
+  vr_cdcooper  := 6;
+  vr_nrdconta  := 179230;
+  vr_vllanmto  := 4739.31;
+  vr_cdhistor  := 2408;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+
+  prc_gera_lct(prm_cdcooper => vr_cdcooper,
+               prm_nrdconta => vr_nrdconta,
+               prm_vllanmto => vr_vllanmto,
+               prm_cdhistor => vr_cdhistor);
+
+  prc_atlz_prejuizo(prm_cdcooper => vr_cdcooper
+                   ,prm_nrdconta => vr_nrdconta
+                   ,prm_vllanmto => vr_vllanmto
+                   ,prm_cdhistor => vr_cdhistor
+                   ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
+
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
+
+
+-- ## 07
+---------------------------------------------------
+  -- INC0073118 - TRANSPOCRED : 9 - Conta: 216569 
+  -- => Solução: Efetuar a exclusão do 2408 no valor de R$ 25.000,00.
+---------------------------------------------------
+  vr_incidente := 'INC0073118';
+  vr_cdcooper  := 9;
+  vr_nrdconta  := 216569;
+  vr_vllanmto  := 25000;
+  vr_cdhistor  := 2408;
+  vr_idlancto  := 157794;  -- PROD tbcc_prejuizo_detalhe.idlancto
+
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+
+  prc_exclui_lct (prm_cdcooper => vr_cdcooper,
+                  prm_nrdconta => vr_nrdconta,
+                  prm_vllanmto => vr_vllanmto,
+                  prm_cdhistor => vr_cdhistor,
+                  prm_idlancto => vr_idlancto);
+
+  prc_atlz_prejuizo(prm_cdcooper => vr_cdcooper
+                   ,prm_nrdconta => vr_nrdconta
+                   ,prm_vllanmto => vr_vllanmto
+                   ,prm_cdhistor => vr_cdhistor
+                   ,prm_tipoajus => 'E'); --[I] Inclusao / [E] Exclusao
+
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
+
+
+-- ## 08
+---------------------------------------------------
+-- INC0075268 - Viacredi - 1 - Conta 10530630 - R$ 1.677,48
+---------------------------------------------------
+  vr_incidente := 'INC0075268';
+  vr_cdcooper  := 1;
+  vr_nrdconta  := 10530630;
+  vr_vllanmto  := 1677.48;
+  vr_cdhistor  := 2408;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+
+  prc_gera_lct(prm_cdcooper => vr_cdcooper,
+               prm_nrdconta => vr_nrdconta,
+               prm_vllanmto => vr_vllanmto,
+               prm_cdhistor => vr_cdhistor);
+
+  prc_atlz_prejuizo(prm_cdcooper => vr_cdcooper
+                   ,prm_nrdconta => vr_nrdconta
+                   ,prm_vllanmto => vr_vllanmto
+                   ,prm_cdhistor => vr_cdhistor
+                   ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
+
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
+
+
+-- ## 09
+---------------------------------------------------
+-- INC0074855 - Civia - 13 - Conta 255092 - R$ 4297,13
+---------------------------------------------------
+  vr_incidente := 'INC0074855';
+  vr_cdcooper  := 13;
+  vr_nrdconta  := 255092;
+  vr_vllanmto  := 4297.13;
+  vr_cdhistor  := 2408;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+
+  prc_gera_lct(prm_cdcooper => vr_cdcooper,
+               prm_nrdconta => vr_nrdconta,
+               prm_vllanmto => vr_vllanmto,
+               prm_cdhistor => vr_cdhistor);
+
+  prc_atlz_prejuizo(prm_cdcooper => vr_cdcooper
+                   ,prm_nrdconta => vr_nrdconta
+                   ,prm_vllanmto => vr_vllanmto
+                   ,prm_cdhistor => vr_cdhistor
+                   ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
+
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
+
+
+-- ## 10
+---------------------------------------------------
+-- INC0073116 - Civia - 13 - Conta 329851 - R$ 2.124,10
+---------------------------------------------------
+  vr_incidente := 'INC0073116';
+  vr_cdcooper  := 13;
+  vr_nrdconta  := 329851;
+  vr_vllanmto  := 2124.10;
+  vr_cdhistor  := 2408;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+
+  prc_gera_lct(prm_cdcooper => vr_cdcooper,
+               prm_nrdconta => vr_nrdconta,
+               prm_vllanmto => vr_vllanmto,
+               prm_cdhistor => vr_cdhistor);
+
+  prc_atlz_prejuizo(prm_cdcooper => vr_cdcooper
+                   ,prm_nrdconta => vr_nrdconta
+                   ,prm_vllanmto => vr_vllanmto
+                   ,prm_cdhistor => vr_cdhistor
+                   ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
+
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
 
 
 
