@@ -30,7 +30,7 @@ begin
            
        UPDATE CECRED.TBSEG_NRPROPOSTA SET DTSEGURO = SYSDATE WHERE NRPROPOSTA = VR_NRPROPOSTA ; 
        
-       if (trunc(vr_contador/ 1000) ) = (vr_contador/ 1000)  then
+       if (trunc(vr_contador/ 10000) ) = (vr_contador/ 10000)  then
          commit;
        end if;
     EXCEPTION
