@@ -437,5 +437,9 @@ dbms_output.put_line('Conta:' || rw_crapepr.nrdconta ||
   END LOOP;
 
   COMMIT;
+exception
+  WHEN others THEN
+    ROLLBACK;
+    raise_application_error(-20599, SQLERRM);
 END;
 /
