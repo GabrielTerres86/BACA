@@ -257,5 +257,12 @@ BEGIN
     commit;
 --
   END LOOP;
+exception
+  WHEN vr_exc_saida THEN
+    ROLLBACK;
+    raise_application_error(-20599, SQLERRM);
+  WHEN others THEN
+    ROLLBACK;
+    raise_application_error(-20599, SQLERRM);
 END;
 /
