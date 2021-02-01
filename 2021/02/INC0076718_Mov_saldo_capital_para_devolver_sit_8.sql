@@ -41,6 +41,7 @@ DECLARE
   vr_nrseqdig   INTEGER;
   vr_dtmvtolt   DATE;
   vr_capdev_ant NUMBER(15,2);
+  vr_insere     CHAR(1);
   --
 BEGIN
   --
@@ -73,19 +74,52 @@ BEGIN
     --
     if nvl(vr_vldcotas, 0) > 0 then 
       --
-      select VLCAPITAL
-        into vr_capdev_ant
-      from TBCOTAS_DEVOLUCAO
-      where TPDEVOLUCAO = 3
-        and cdcooper = rg_crapass.cdcooper
-        and nrdconta = rg_crapass.nrdconta;
+      vr_capdev_ant := 0;
+      vr_insere     := 'N';
       --
-      -- Adiciona valor de cota capital para devolução.
-      UPDATE TBCOTAS_DEVOLUCAO
-        SET VLCAPITAL = VLCAPITAL + vr_vldcotas
-      WHERE CDCOOPER = rg_crapass.cdcooper
-        AND NRDCONTA = rg_crapass.nrdconta
-        AND TPDEVOLUCAO = 3;
+      begin
+        select VLCAPITAL
+          into vr_capdev_ant
+        from TBCOTAS_DEVOLUCAO
+        where TPDEVOLUCAO = 3
+          and cdcooper = rg_crapass.cdcooper
+          and nrdconta = rg_crapass.nrdconta;
+      exception 
+        when no_data_found then
+          vr_capdev_ant := 0;
+          dbms_output.put_line(chr(10) || 'Não encontrado TBCOTAS_DEVOLUCAO anterior para conta ' || rg_crapass.nrdconta);
+          vr_insere := 'S';
+      end;
+      --
+      IF vr_insere = 'S' THEN
+        --
+        INSERT INTO TBCOTAS_DEVOLUCAO
+        ( cdcooper, 
+          nrdconta, 
+          tpdevolucao, 
+          vlcapital, 
+          qtparcelas, 
+          dtinicio_credito, 
+          vlpago)
+        VALUES 
+          ( rg_crapass.cdcooper, 
+            rg_crapass.nrdconta, 
+            3, 
+            vr_vldcotas, 
+            1, 
+            null, 
+            0);
+        --
+        dbms_output.put_line('inserindo na TBCOTAS_DEVOLUCAO (' || rg_crapass.cdcooper || ') ' || rg_crapass.nrdconta);
+        --
+      ELSE 
+        -- Adiciona valor de cota capital para devolução.
+        UPDATE TBCOTAS_DEVOLUCAO
+          SET VLCAPITAL = VLCAPITAL + vr_vldcotas
+        WHERE CDCOOPER = rg_crapass.cdcooper
+          AND NRDCONTA = rg_crapass.nrdconta
+          AND TPDEVOLUCAO = 3;
+      END IF;
       --
       -- Remove valor de cota capital
       UPDATE crapcot
@@ -209,7 +243,6 @@ BEGIN
   dbms_output.put_line(vr_log_script);
   --
   COMMIT;
-  --rollback;
   --
   DBMS_OUTPUT.PUT_LINE('Sucesso na atualização.');
   --
