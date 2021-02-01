@@ -1,0 +1,21 @@
+BEGIN
+  -- Atualiza dois registros.
+  UPDATE CRAPOBS
+   set dsobserv = '** DEVOLUCAO DE CHEQUE ALINEA 12.
+
+PROCEDIMENTO PARA ENTREGA DE TALO: NO POSSUIR  DEVOLUO DE CHEQUES PELA 12 NOS LTIMOS 12 MESES MESMO QUE REGULARIZADOS. EM CASO DE CCF DEVE ESTAR REGULARIZADO.'
+  WHERE nrdconta     = 624802
+    and cdcooper     = 16;
+  --
+  COMMIT;
+  --
+  DBMS_OUTPUT.PUT_LINE('Sucesso na atualização.');
+  --
+EXCEPTION
+  WHEN OTHERS THEN
+    --
+    ROLLBACK;
+    --
+    RAISE_APPLICATION_ERROR(-20000, 'Erro ao executar script: ' || SQLERRM);
+    --
+END;
