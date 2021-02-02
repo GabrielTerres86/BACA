@@ -160,17 +160,17 @@ values ('Possui', 'FATURAMENTO_SETOR_PUBLICO', 3, 'S');
 insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
 values ('Não possui', 'FATURAMENTO_SETOR_PUBLICO', 1, 'N');
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('Fornecido pelo Cliente - Fatur. Declarado', 'CONFIABILIDADE_FAT', 4);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Fornecido pelo Cliente - Fatur. Declarado', 'CONFIABILIDADE_FAT', 4, 1);
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('Coletado em Bureau', 'CONFIABILIDADE_FAT', 3);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Coletado em Bureau', 'CONFIABILIDADE_FAT', 3, 2);
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('Declaração do Contador', 'CONFIABILIDADE_FAT', 2);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Declaração do Contador', 'CONFIABILIDADE_FAT', 2, 3);
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('Demonstrações Financeiras', 'CONFIABILIDADE_FAT', 1);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Demonstrações Financeiras', 'CONFIABILIDADE_FAT', 1, 4);
 
 insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
 values ('Sim', 'IMPORTADOR_EXPORTADOR', 3, 'S');
