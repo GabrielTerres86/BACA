@@ -6,7 +6,6 @@ UPDATE tbcc_prejuizo t SET t.vlsdprej = t.vlsdprej - 7.64 WHERE t.cdcooper = 11 
 UPDATE tbcc_prejuizo t SET t.vlsdprej = t.vlsdprej - 4.70 WHERE t.cdcooper = 11 AND t.nrdconta = 277142;
 UPDATE tbcc_prejuizo t SET t.vlsdprej = t.vlsdprej - 17.04 WHERE t.cdcooper = 11 AND t.nrdconta = 278670;
 UPDATE tbcc_prejuizo t SET t.vlsdprej = t.vlsdprej - 5.81 WHERE t.cdcooper = 11 AND t.nrdconta = 289540;
-UPDATE tbcc_prejuizo t SET t.vlsdprej = t.vlsdprej - 0.77 WHERE t.cdcooper = 11 AND t.nrdconta = 292079;
 UPDATE tbcc_prejuizo t SET t.vlsdprej = t.vlsdprej - 22.29 WHERE t.cdcooper = 11 AND t.nrdconta = 294802;
 UPDATE tbcc_prejuizo t SET t.vlsdprej = t.vlsdprej - 7.65 WHERE t.cdcooper = 11 AND t.nrdconta = 306118;
 UPDATE tbcc_prejuizo t SET t.vlsdprej = t.vlsdprej - 3.80 WHERE t.cdcooper = 11 AND t.nrdconta = 310921;
