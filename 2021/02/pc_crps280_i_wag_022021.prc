@@ -2302,7 +2302,7 @@ BEGIN
                       ' wpr_vltotdiv  crapbnd.vltotdiv%TYPE; ' || chr(13) ||
                       ' rw_crapdat    btch0001.cr_crapdat%ROWTYPE;' || chr(13) ||
                       'begin ' || chr(13) ||
-                      '   cecred.PC_CRPS280_I(' || pr_cdcooper || ',' || chr(13) ||
+                      '   cecred.PC_CRPS280_I_WAG(' || pr_cdcooper || ',' || chr(13) ||
                       'rw_crapdat,' || chr(13) ||
                       '''' || pr_dtrefere || '''' || ',' || chr(13) ||
                       '''' || pr_cdprogra || '''' || ',' || chr(13) ||
@@ -3428,7 +3428,7 @@ BEGIN
     END pc_grava_tab_men_dados_tdb;
 
     ---------------------------------------
-    -- Inicio Bloco Principal PC_CRPS280_I
+    -- Inicio Bloco Principal PC_CRPS280_I_WAG
     ---------------------------------------
 
   BEGIN
