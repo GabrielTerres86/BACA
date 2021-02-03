@@ -703,7 +703,7 @@ BEGIN
             ,SUM(DECODE(greatest(cdvencto,205),cdvencto,DECODE(LEAST(cdvencto,290),cdvencto, vldivida,0),0)) vltotatr
             ,COUNT(DISTINCT DECODE(greatest(cdvencto,205),cdvencto,DECODE(LEAST(cdvencto,290),cdvencto, 1,NULL),NULL)) qtpreatr
             ,SUM(DECODE(cdvencto, 310, vldivida, 320, vldivida, 330, vldivida, 0) ) vlprejuz
-        FROM stage.stg_crapvri@bidw_temp
+        FROM crapvri
        WHERE cdcooper = pr_cdcooper
          AND dtrefere = pr_dtrefere
     GROUP BY nrdconta,innivris,cdmodali,nrctremp,nrseqctr;
