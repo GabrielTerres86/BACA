@@ -16,7 +16,7 @@ INSERT INTO crapprm ( NMSISTEM
                      ,0
                      ,'SOAFIS_ENDERECO_CALCULO'
                      ,'Endereço de serviço do webservice do FIS via SOA'
-                     ,'https://servicosinternostest.ailos.coop.br/osb-soa/TransacaoCreditoRestService/v1/CalcularCreditoConsignado'
+                     ,'http://servicosinternostst2.cecred.coop.br/osb-soa/TransacaoCreditoRestService/v1/CalcularCreditoConsignado'
                      ,NULL
                     );
 
@@ -31,7 +31,7 @@ INSERT INTO crapprm ( NMSISTEM
                      ,0
                      ,'AUTHORIZATION_SOAFIS'
                      ,'Authorization para cálculo do empréstimo no FIS via SOA'
-                     ,'Basic aWJzdnJjb3JlOjMrRlJFRStzdGF5'
+                     ,'Basic aWJzdnJjb3JlOndlbGNvbWUx'
                      ,NULL
                     );
 
