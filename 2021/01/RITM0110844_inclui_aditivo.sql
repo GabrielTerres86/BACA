@@ -3,7 +3,7 @@ DECLARE
 -- Valores fixos para a execução que seriam informados na tela
 --
   vr_cdcooper       crapepr.cdcooper%TYPE := 5; -- Acentra
-  vr_flgpagto       crapepr.flgpagto%TYPE := 1; -- Progress usa TRUE para desconto em folha de pagamento. Oracle é number. 0=sim   1=não ?
+  vr_flgpagto       crapepr.flgpagto%TYPE := 0; -- Progress usa TRUE para desconto em folha de pagamento. Oracle é number. 0=não   1=sim ?
   vr_cdoperad       crapope.cdoperad%TYPE := 1; -- Operador. Usar superusuário ?
 --
 -- Variáveis de trabalho do script
