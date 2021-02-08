@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-283
+244
 -- Created on 13/01/2021 by T0032717 
 DECLARE
   
@@ -10,14 +10,21 @@ DECLARE
   rw_crapcop cr_crapcop%ROWTYPE;
   
   CURSOR cr_principal(pr_cdcooper craplem.cdcooper%TYPE) IS
-    SELECT nrdconta, nrctremp, inprejuz, vlsdprej, vlttmupr, vlpgmupr, vlttjmpr, vlpgjmpr, vltiofpr, vlpiofpr, dtprejuz
-      FROM crapepr
-     WHERE cdcooper = pr_cdcooper
-       AND inprejuz = 1
-       AND tpemprst = 1
---       AND dtprejuz >= '28/12/2020'  -- tentar com prejuizos maiores que 28/12 para poder validar no qa1 que tem a data proxima
---       AND dtprejuz <= '31/12/2020'
-       AND vlsdprej > 0;
+    SELECT e.nrdconta, e.nrctremp, e.inprejuz, e.vlsdprej, e.vlttmupr, e.vlpgmupr, e.vlttjmpr, e.vlpgjmpr, e.vltiofpr, e.vlpiofpr, e.dtprejuz
+      FROM crapepr e
+     WHERE e.cdcooper = pr_cdcooper
+       AND e.inprejuz = 1
+       AND e.tpemprst = 1
+       AND e.dtprejuz >= '01/01/2016'
+       AND e.dtprejuz <= '31/12/2020'
+       AND e.vlsdprej > 0
+       AND NOT EXISTS (SELECT 1 
+                         FROM tbrecup_acordo_contrato tbac
+                            , tbrecup_acordo tba 
+                        WHERE tba.nracordo = tbac.nracordo
+                          AND tba.cdcooper  = e.cdcooper
+                          AND tba.nrdconta  = e.nrdconta
+                          AND tbac.nrctremp = e.nrctremp);
   rw_principal cr_principal%ROWTYPE;
 
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -100,7 +107,7 @@ BEGIN
       pr_tab_extrato_epr_aux.DELETE;
       vr_vlsaldo1 := 0;
       --Obter Extrato do Emprestimo
-      cecred.extr0002.pc_obtem_extrato_emprest (pr_cdcooper    => 1                              --Codigo Cooperativa
+      cecred.extr0002.pc_obtem_extrato_emprest (pr_cdcooper    => rw_crapcop.cdcooper            --Codigo Cooperativa
                                                ,pr_cdagenci    => 0                              --Codigo Agencia
                                                ,pr_nrdcaixa    => 0                              --Numero do Caixa
                                                ,pr_cdoperad    => 1                              --Codigo Operador
@@ -110,7 +117,7 @@ BEGIN
                                                ,pr_idseqttl    => 1                              --Sequencial do Titular
                                                ,pr_nrctremp    => rw_principal.nrctremp          --Numero Contrato Emprestimo           
                                                ,pr_dtiniper    => NULL                           --Inicio periodo Extrato
-                                               ,pr_dtfimper    => rw_crapdat.dtmvtolt            --Final periodo Extrato
+                                               ,pr_dtfimper    => to_date('05/01/2021')          --Final periodo Extrato
                                                ,pr_flgerlog    => FALSE                          --Imprimir log
                                                ,pr_extrato_epr => vr_tab_extrato_epr             --Tipo de tabela com extrato emprestimo
                                                ,pr_des_reto    => vr_des_reto                    --Retorno OK ou NOK
@@ -121,78 +128,32 @@ BEGIN
         RETURN;
       END IF; 
       
-      --Preparar a tabela conforme break-by dtmvtolt/nrparepr/dsextrat/flglista:
-      vr_tab_extrato_epr_novo.DELETE;
-      vr_index_extrato:= vr_tab_extrato_epr.FIRST;
-      WHILE vr_index_extrato IS NOT NULL LOOP
-            
-        IF vr_tab_extrato_epr(vr_index_extrato).dthrtran IS NULL THEN
-        --Montar novo indice conforme break-by
-        vr_index_novo:= TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dtmvtolt,'YYYYMMDD')|| 
-                        LPAD(NVL(vr_tab_extrato_epr(vr_index_extrato).nrparepr,0),10,'0')||
-                        RPAD(vr_tab_extrato_epr(vr_index_extrato).dsextrat,50,'#')||
-                        CASE vr_tab_extrato_epr(vr_index_extrato).flglista WHEN TRUE THEN '1' ELSE '0' END||
-                        LPAD(vr_index_extrato,10,'0');
-        ELSE 
-         --Montar novo indice conforme break-by
-          vr_index_novo:= TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dthrtran,'yyyymmddHH24MISS')|| 
-                          LPAD(NVL(vr_tab_extrato_epr(vr_index_extrato).nrparepr,0),10,'0')||
-                          RPAD(vr_tab_extrato_epr(vr_index_extrato).dsextrat,50,'#')||
-                          CASE vr_tab_extrato_epr(vr_index_extrato).flglista WHEN TRUE THEN '1' ELSE '0' END||
-                          LPAD(vr_index_extrato,10,'0');            
-        END IF;
-              
-        --Copiar de uma tabela para outra
-        vr_tab_extrato_epr_novo(vr_index_novo):= vr_tab_extrato_epr(vr_index_extrato);
-        --Proximo Registro Extrato
-        vr_index_extrato:= vr_tab_extrato_epr.NEXT(vr_index_extrato);
-      END LOOP; 
-      
       --Percorrer todo o extrato emprestimo para carregar tabela auxiliar
-      vr_index_novo:= vr_tab_extrato_epr_novo.FIRST;
+      vr_index_novo:= vr_tab_extrato_epr.FIRST;
       WHILE vr_index_novo IS NOT NULL LOOP
         BEGIN
-          --Buscar Proximo registro extrato
-          vr_index_epr_aux:= pr_tab_extrato_epr_aux.COUNT+1;
-          --Popular Informacoes
-          pr_tab_extrato_epr_aux(vr_index_epr_aux).indebcre:= vr_tab_extrato_epr_novo(vr_index_novo).indebcre;
-          pr_tab_extrato_epr_aux(vr_index_epr_aux).vllanmto:= vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
-          pr_tab_extrato_epr_aux(vr_index_epr_aux).dsextrat:= vr_tab_extrato_epr_novo(vr_index_novo).dsextrat;
-
           --Primeira Ocorrencia
           IF vr_flgloop = FALSE THEN
             /* Saldo Inicial */
-            pr_tab_extrato_epr_aux(vr_index_epr_aux).vlsaldo:= vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
-            pr_tab_extrato_epr_aux(vr_index_epr_aux).vldebito:= vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
-            --Saldo Inicial
-            vr_vlsaldo1:= vr_tab_extrato_epr_novo(vr_index_novo).vllanmto; 
+            vr_vlsaldo1:= vr_tab_extrato_epr(vr_index_novo).vllanmto; 
             vr_flgloop := TRUE;
             --Proximo Registro
             RAISE vr_exc_proximo;            
           END IF; 
           --Se for Credito
-          IF pr_tab_extrato_epr_aux(vr_index_epr_aux).indebcre = 'C' THEN
-            --Valor Credito
-            pr_tab_extrato_epr_aux(vr_index_epr_aux).vlcredit:= vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
+          IF vr_tab_extrato_epr(vr_index_novo).indebcre = 'C' THEN
             --Se possuir Saldo
-            IF vr_tab_extrato_epr_novo(vr_index_novo).flgsaldo THEN
-              vr_vlsaldo1:= nvl(vr_vlsaldo1,0) - vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
-              pr_tab_extrato_epr_aux(vr_index_epr_aux).vlsaldo:= vr_vlsaldo1;
-            ELSE
-              pr_tab_extrato_epr_aux(vr_index_epr_aux).vlsaldo:= vr_vlsaldo1;
+            IF vr_tab_extrato_epr(vr_index_novo).flgsaldo THEN
+              vr_vlsaldo1:= nvl(vr_vlsaldo1,0) - vr_tab_extrato_epr(vr_index_novo).vllanmto;
             END IF;    
-          ELSIF pr_tab_extrato_epr_aux(vr_index_epr_aux).indebcre = 'D' THEN 
+          ELSIF vr_tab_extrato_epr(vr_index_novo).indebcre = 'D' THEN 
             --Valor Debito
-            pr_tab_extrato_epr_aux(vr_index_epr_aux).vldebito:= vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
             --Se possuir Saldo
-            IF vr_tab_extrato_epr_novo(vr_index_novo).flgsaldo THEN
-              vr_vlsaldo1:= nvl(vr_vlsaldo1,0) + vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
-              pr_tab_extrato_epr_aux(vr_index_epr_aux).vlsaldo:= vr_vlsaldo1;
-            ELSE
-              pr_tab_extrato_epr_aux(vr_index_epr_aux).vlsaldo:= vr_vlsaldo1;
+            IF vr_tab_extrato_epr(vr_index_novo).flgsaldo THEN
+              vr_vlsaldo1:= nvl(vr_vlsaldo1,0) + vr_tab_extrato_epr(vr_index_novo).vllanmto;
             END IF;    
           END IF;
-          IF to_char(vr_tab_extrato_epr_novo(vr_index_novo).dtmvtolt, 'DD/MM/YYYY') IN ('30/12/2020', '31/12/2020') THEN
+          IF to_char(vr_tab_extrato_epr(vr_index_novo).dtmvtolt, 'DD/MM/YYYY') IN ('30/12/2020', '31/12/2020') THEN
             vr_vldezemb := vr_vlsaldo1;
           END IF;
         EXCEPTION
@@ -200,7 +161,7 @@ BEGIN
             NULL;
         END;       
         --Proximo Registro Extrato
-        vr_index_novo:= vr_tab_extrato_epr_novo.NEXT(vr_index_novo);
+        vr_index_novo:= vr_tab_extrato_epr.NEXT(vr_index_novo);
       END LOOP; 
       
       IF rw_principal.inprejuz = 1 AND extr0002.fn_extrato_prejuizo_ativo(pr_cdcooper => rw_crapcop.cdcooper
@@ -273,7 +234,7 @@ BEGIN
           WHEN OTHERS THEN
             dbms_output.put_line('Erro crapdir na Conta: ' || rw_principal.nrdconta || ' Contrato: ' || rw_principal.nrctremp || ' - ' || SQLERRM);
         END;
-        dbms_output.put_line('Atualizado na Conta: ' || rw_principal.nrdconta || ' Contrato: ' || rw_principal.nrctremp || ' - ' || vr_vlsdprej || '/' || vr_vlsaldo1 || ' - ' || SQLERRM);
+        dbms_output.put_line('Atualizado na Conta: ' || rw_principal.nrdconta || ' Contrato: ' || rw_principal.nrctremp || ' - ' || vr_vlsdprej || '/' || vr_vlsaldo1);
       END IF;
     END LOOP;
     COMMIT;
@@ -283,8 +244,5 @@ EXCEPTION
     ROLLBACK;
     raise_application_error(-20010, 'Erro: '||SQLERRM);
 END;
-1
-pr_cdcooper
 0
--5
 0
