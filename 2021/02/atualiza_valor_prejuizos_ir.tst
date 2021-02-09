@@ -17,14 +17,7 @@ DECLARE
        AND e.tpemprst = 1
        AND e.dtprejuz >= '01/01/2016'
        AND e.dtprejuz <= '31/12/2020'
-       AND e.vlsdprej > 0
-       AND NOT EXISTS (SELECT 1 
-                         FROM tbrecup_acordo_contrato tbac
-                            , tbrecup_acordo tba 
-                        WHERE tba.nracordo = tbac.nracordo
-                          AND tba.cdcooper  = e.cdcooper
-                          AND tba.nrdconta  = e.nrdconta
-                          AND tbac.nrctremp = e.nrctremp);
+       AND e.vlsdprej > 0;
   rw_principal cr_principal%ROWTYPE;
 
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
