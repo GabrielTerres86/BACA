@@ -1,4 +1,4 @@
-DECLARE
+﻿DECLARE
   CURSOR cr_boletos_pagos_acordos IS
     SELECT acp.nracordo
           ,acp.nrparcela
@@ -49,9 +49,11 @@ BEGIN
                                       pr_cdcritic => vr_cdcritic,
                                       pr_dscritic => vr_dscritic);
     IF vr_dscritic IS NOT NULL THEN
-      dbms_output.put_line('Erro ao pagar acordo ' || rw_boletos_pagos_acordos.nracordo || ': ' || vr_dscritic);
+       dbms_output.put_line('Erro ao pagar acordo ' || rw_boletos_pagos_acordos.nracordo || ': ' || vr_dscritic);
+       ROLLBACK;
     ELSE
        dbms_output.put_line('Acordo: '|| rw_boletos_pagos_acordos.nracordo||' valor total pago: '||vr_vltotpag);
+       COMMIT;
     END IF;
   END LOOP;
 END;
