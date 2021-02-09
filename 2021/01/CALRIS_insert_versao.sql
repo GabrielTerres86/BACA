@@ -481,81 +481,85 @@ values ('t0030855', to_date('23-11-2020 20:42:19', 'dd-mm-yyyy hh24:mi:ss'), '1'
 insert into TBCALRIS_ALCADA (CDUSUARIO, DHALTERACAO, CDACAO, IDCALRIS)
 values ('f0031251', to_date('23-11-2020 20:42:19', 'dd-mm-yyyy hh24:mi:ss'), '1', 4);
 
-insert into craptel (NMDATELA, NRMODULO, CDOPPTEL, TLDATELA, TLRESTEL, FLGTELDF, FLGTELBL, NMROTINA, LSOPPTEL, INACESSO, CDCOOPER, IDSISTEM, IDEVENTO, NRORDROT, NRDNIVEL, NMROTPAI, IDAMBTEL)
-values ('CALRIS', 5, 'C,A', 'CALCULO RISCO', 'CALCULO RISCO', 0, 1, ' ', 'CONSULTAR,ALTERAR', 1, 3, 1, 0, 1, 1, ' ', 2);
+begin
+	insert into craptel (NMDATELA, NRMODULO, CDOPPTEL, TLDATELA, TLRESTEL, FLGTELDF, FLGTELBL, NMROTINA, LSOPPTEL, INACESSO, CDCOOPER, IDSISTEM, IDEVENTO, NRORDROT, NRDNIVEL, NMROTPAI, IDAMBTEL)
+	values ('CALRIS', 5, 'C,A', 'CALCULO RISCO', 'CALCULO RISCO', 0, 1, ' ', 'CONSULTAR,ALTERAR', 1, 3, 1, 0, 1, 1, ' ', 2);
 
-insert into craptel (NMDATELA, NRMODULO, CDOPPTEL, TLDATELA, TLRESTEL, FLGTELDF, FLGTELBL, NMROTINA, LSOPPTEL, INACESSO, CDCOOPER, IDSISTEM, IDEVENTO, NRORDROT, NRDNIVEL, NMROTPAI, IDAMBTEL)
-values ('RISPAR', 5, 'C,A,D', 'Consulta e Gerenciamento dos Parâmetros de Risco', 'Controle de Chaves PIX', 0, 1, ' ', 'ACESSO,CONSULTA,ALTERACAO,DEFERIR', 2, 3, 1, 0, 0, 0, ' ', 0);
+	insert into craptel (NMDATELA, NRMODULO, CDOPPTEL, TLDATELA, TLRESTEL, FLGTELDF, FLGTELBL, NMROTINA, LSOPPTEL, INACESSO, CDCOOPER, IDSISTEM, IDEVENTO, NRORDROT, NRDNIVEL, NMROTPAI, IDAMBTEL)
+	values ('RISPAR', 5, 'C,A,D', 'Consulta e Gerenciamento dos Parâmetros de Risco', 'Controle de Chaves PIX', 0, 1, ' ', 'ACESSO,CONSULTA,ALTERACAO,DEFERIR', 2, 3, 1, 0, 0, 0, ' ', 0);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 2, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 2, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 3, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 3, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 5, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 5, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 6, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 6, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 7, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 7, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 8, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 8, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 14, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 14, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 16, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 16, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 10, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 10, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 11, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 11, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 12, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 12, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 9, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 9, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 13, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 13, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 1, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 1, null);
 
-insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
-values ('CRED', 'RISPAR', 'Consulta e Gerenciamento dos Parâmetros de Risco', null, null, null, 990, 998, 1, 0, 0, 0, 0, 0, 0, 3, null);
+	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
+	values ('CRED', 'RISPAR', 'Consulta e Gerenciamento dos Parâmetros de Risco', null, null, null, 990, 998, 1, 0, 0, 0, 0, 0, 0, 3, null);
 
-insert into craprdr (NMPROGRA, DTSOLICI)
-values ('TELA_CALRIS', to_date('03-12-2020', 'dd-mm-yyyy')) RETURNING NRSEQRDR INTO l_sequ;
+	insert into craprdr (NMPROGRA, DTSOLICI)
+	values ('TELA_CALRIS', to_date('03-12-2020', 'dd-mm-yyyy')) RETURNING NRSEQRDR INTO l_sequ;
 
-insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-values ('LISTA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_lista_versao', 'pr_inpessoa,pr_tpcooperado,pr_cdsituacao', l_sequ);
+	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+	values ('LISTA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_lista_versao', 'pr_inpessoa,pr_tpcooperado,pr_cdsituacao', l_sequ);
 
-insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-values ('BUSCA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_busca_versao', 'pr_idcalris', l_sequ);
+	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+	values ('BUSCA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_busca_versao', 'pr_idcalris', l_sequ);
 
-insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-values ('GRAVA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_grava_versao', 'pr_dsversao,pr_inpessoa,pr_tpcooperado,pr_risco1,pr_risco2,pr_risco3,pr_risco4,pr_risco5,pr_risco6,pr_risco7,pr_risco8,pr_risco9,pr_risco10,pr_risco11,pr_risco12,pr_risco13,pr_risco14,pr_risco15,pr_risco16,pr_risco17,pr_risco18,pr_risco19,pr_risco20,pr_risco21,pr_risco22', l_sequ);
+	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+	values ('GRAVA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_grava_versao', 'pr_dsversao,pr_inpessoa,pr_tpcooperado,pr_risco1,pr_risco2,pr_risco3,pr_risco4,pr_risco5,pr_risco6,pr_risco7,pr_risco8,pr_risco9,pr_risco10,pr_risco11,pr_risco12,pr_risco13,pr_risco14,pr_risco15,pr_risco16,pr_risco17,pr_risco18,pr_risco19,pr_risco20,pr_risco21,pr_risco22', l_sequ);
 
-insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-values ('APROVA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_grava_acao', 'pr_idcalris,pr_acao,pr_dsjustificativa', l_sequ);
+	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+	values ('APROVA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_grava_acao', 'pr_idcalris,pr_acao,pr_dsjustificativa', l_sequ);
 
-insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-values ('ALTERA_CLASSIF_RISCO', 'TELA_CALRIS', 'pc_altera_classif_risco', 'pr_idcalris_pessoa,pr_dsjustificativa,pr_cdclasrisco_espe_aten,pr_cdclasrisco_list_rest,pr_cdclasrisco_final', l_sequ);
+	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+	values ('ALTERA_CLASSIF_RISCO', 'TELA_CALRIS', 'pc_altera_classif_risco', 'pr_idcalris_pessoa,pr_dsjustificativa,pr_cdclasrisco_espe_aten,pr_cdclasrisco_list_rest,pr_cdclasrisco_final', l_sequ);
 
-insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-values ('LISTA_VERSAO_PESSOA', 'TELA_CALRIS', 'pc_lista_versao_pessoa', 'pr_nrcpfcgc,pr_nriniseq,pr_nrregist', l_sequ);
+	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+	values ('LISTA_VERSAO_PESSOA', 'TELA_CALRIS', 'pc_lista_versao_pessoa', 'pr_nrcpfcgc,pr_nriniseq,pr_nrregist', l_sequ);
 
-insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-values ('BUSCA_VERSAO_CALCULO', 'TELA_CALRIS', 'pc_busca_versao_calculo', 'pr_idcalris_pessoa', l_sequ);
-
+	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+	values ('BUSCA_VERSAO_CALCULO', 'TELA_CALRIS', 'pc_busca_versao_calculo', 'pr_idcalris_pessoa', l_sequ);
+exception
+	when others then
+		null;
+end;
 
 insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO)
 values (180, 379, 1, 1);
