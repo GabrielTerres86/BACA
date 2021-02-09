@@ -1,6 +1,6 @@
 BEGIN
-  update crapepr -- Saldo será atualizado na data de liberação.
-   set vlsdeved = 90000
+  update crapepr -- Saldo serÃ¡ atualizado na data de liberaÃ§Ã£o.
+   set vlsdeved = 93857.56
  where cdcooper = 16 
    and nrdconta = 204021 
    and nrctremp = 132106;
