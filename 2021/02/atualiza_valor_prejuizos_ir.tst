@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-244
+238
 -- Created on 13/01/2021 by T0032717 
 DECLARE
   
@@ -222,7 +222,8 @@ BEGIN
           UPDATE crapdir
              SET vlsddvem = vr_vlsddvem + vr_vldezemb
            WHERE cdcooper = rw_crapcop.cdcooper
-             AND nrdconta = rw_principal.nrdconta;
+             AND nrdconta = rw_principal.nrdconta
+             AND dtmvtolt = '31/12/2020';
         EXCEPTION
           WHEN OTHERS THEN
             dbms_output.put_line('Erro crapdir na Conta: ' || rw_principal.nrdconta || ' Contrato: ' || rw_principal.nrctremp || ' - ' || SQLERRM);
