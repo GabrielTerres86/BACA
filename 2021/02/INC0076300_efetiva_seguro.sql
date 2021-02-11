@@ -36,7 +36,7 @@ begin
                               1,  --> Código da agencia
                               1,  --> Numero do caixa do operador
                               1,  --> Código do Operador
-                             'teste', --> Nome da Tela
+                             'BACA', --> Nome da Tela
                               1, --> Identificador de Origem
                               vr_cdcritic,
                               vr_dscritic
@@ -51,7 +51,7 @@ begin
   /**********************************************/
   ------------------------------------------------------------------------------------------------------------------------------------------------------------------
   /*********************************************/
-  /* Inicio Conta: 6587917 / Contrato: 2987345 */
+  /*** FIM Conta: 2075261 / Contrato: 3234248 ***/
   /*********************************************/
 
   -- Buscar numero de proposta disponivel
@@ -80,7 +80,7 @@ begin
                               1,  --> Código da agencia
                               1,  --> Numero do caixa do operador
                               1,  --> Código do Operador
-                             'teste', --> Nome da Tela
+                             'BACA', --> Nome da Tela
                               1, --> Identificador de Origem
                               vr_cdcritic,
                               vr_dscritic
