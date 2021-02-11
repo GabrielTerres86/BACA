@@ -1,0 +1,9 @@
+BEGIN
+  UPDATE tbcadast_pessoa_atualiza
+  SET INSIT_aTUALIZA = 3
+  WHERE CDCOOPER = 1 
+  AND NRDCONTA = 9636951 
+  AND INSIT_aTUALIZA = 1;
+
+  COMMIT;
+END;
