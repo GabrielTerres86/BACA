@@ -16,7 +16,7 @@ begin
     
     -- Atualizar o numero da proposta icatu na crawseg para que dentro do efetiva_proposta_sp busca da crawseg e grave na tbseg_prestamista
     update crawseg g 
-       set g.nrproposta = VR_NRPROPOSTA 
+       set g.nrproposta = VR_NRPROPOSTA, cdsegura = 514 
      where g.cdcooper = 1 
        and g.nrdconta = 6587917 
        and g.nrctrseg = 573541;
@@ -60,7 +60,7 @@ begin
     
     -- Atualizar o numero da proposta icatu na crawseg para que dentro do efetiva_proposta_sp busca da crawseg e grave na tbseg_prestamista
     update crawseg g 
-       set g.nrproposta = VR_NRPROPOSTA 
+       set g.nrproposta = VR_NRPROPOSTA, cdsegura = 514
      where g.cdcooper = 1 
        and g.nrdconta = 2075261 
        and g.nrctrseg = 578089;
