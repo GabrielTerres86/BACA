@@ -33,8 +33,11 @@ BEGIN
                     AND crapcco.cddbanco = 85
                     AND crapcre.cdcooper = crapcco.cdcooper
                     AND crapcre.nrcnvcob = crapcco.nrconven
-                    AND crapcob.dtsitcrt <= TRUNC(SYSDATE - 7)
-                    AND crapcob.dtsitcrt >= '01-01-2021'                    
+                    --
+                    AND crapcre.dtmvtolt >= to_date('01-01-2021','DD-MM-RRRR')
+                    AND crapcob.dtsitcrt <= to_date('10-02-2021','DD-MM-RRRR')
+                    AND crapcob.dtsitcrt >= to_date('01-01-2021','DD-MM-RRRR')                    
+                    --
                     AND crapcre.intipmvt = 1
                     AND craprem.cdcooper = crapcre.cdcooper
                     AND craprem.nrcnvcob = crapcre.nrcnvcob
