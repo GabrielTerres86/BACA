@@ -11,7 +11,7 @@ BEGIN
 	
 	update tbgen_inconsist_email_grp
 	set dsendereco_email = 'luis.feltrin@ailos.coop.br; ramon.silva@ailos.coop.br'
-	where idinconsist_grp = 3	
+	where idinconsist_grp = 3;
   
   COMMIT;
 END;  
