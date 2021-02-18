@@ -1,15 +1,15 @@
-update cecred.craplcm set cdpesqbb = "Desconto do Bordero 14747" where progress_recid = 897405538;
+update cecred.craplcm set cdpesqbb = 'Desconto do Bordero 14747' where progress_recid = 897405538;
 
-update cecred.craplcm set cdpesqbb = "Desconto do Bordero 14805" where progress_recid = 906099115;
+update cecred.craplcm set cdpesqbb = 'Desconto do Bordero 14805' where progress_recid = 906099115;
 
-update cecred.craplcm set cdpesqbb = "Desconto do Bordero 14815" where progress_recid = 908059405;
+update cecred.craplcm set cdpesqbb = 'Desconto do Bordero 14815' where progress_recid = 908059405;
 
-update cecred.craplcm set cdpesqbb = "Desconto do Bordero 14837" where progress_recid = 909411257;
+update cecred.craplcm set cdpesqbb = 'Desconto do Bordero 14837' where progress_recid = 909411257;
 
-update cecred.craplcm set cdpesqbb = "Desconto do Bordero 14922" where progress_recid = 919656167;
+update cecred.craplcm set cdpesqbb = 'Desconto do Bordero 14922' where progress_recid = 919656167;
 
-update cecred.craplcm set cdpesqbb = "Desconto do Bordero 15030" where progress_recid = 930125409;
+update cecred.craplcm set cdpesqbb = 'Desconto do Bordero 15030' where progress_recid = 930125409;
 
-update cecred.craplcm set cdpesqbb = "Desconto do Bordero 15149" where progress_recid = 944061111;
+update cecred.craplcm set cdpesqbb = 'Desconto do Bordero 15149' where progress_recid = 944061111;
 
 commit;
