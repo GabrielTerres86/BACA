@@ -19,9 +19,12 @@ BEGIN
       INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'TP_CONVERSAOTR_RENCAN', 'Padrão para contratos TR/CC', '1');
       INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'CD_FINANCIAIOF_RENCAN', 'Financiar Tarifa/IOF', '1');
       INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'CD_CANCLIMITE_RENCAN', 'Cancelar Limite de Crédito', '1');
+      INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'CD_CORESPONSAVEL_RENCAN', 'Cancelar Limite de Crédito', '0');
+      INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'QT_NRMXRECA_RENCAN', 'Cancelar Limite de Crédito', '1');
+      INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'QT_NRMXCOCA_RENCAN', 'Cancelar Limite de Crédito', '1');
     END LOOP;
 
-    UPDATE crapaca SET lstparam = lstparam || ',pr_qtdiamin,pr_qtdiamax,pr_cdlcrcpp,pr_cdlcrpos,pr_cdfincan,pr_idcarenc,pr_tptrrene,pr_flgfinta,pr_flglimcr' WHERE nmdeacao = 'TAB089_ALTERAR';
+    UPDATE crapaca SET lstparam = lstparam || ',pr_qtdiamin,pr_qtdiamax,pr_cdlcrcpp,pr_cdlcrpos,pr_cdfincan,pr_idcarenc,pr_tptrrene,pr_flgfinta,pr_flglimcr,pr_flgcores,pr_nrmxreca,pr_nrmxcoca' WHERE nmdeacao = 'TAB089_ALTERAR';
 
     COMMIT;
     dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
