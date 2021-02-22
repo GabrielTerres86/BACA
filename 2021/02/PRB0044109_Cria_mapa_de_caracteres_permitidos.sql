@@ -5,7 +5,7 @@ DECLARE
   --
 BEGIN
   -- Lista de caracteres permitidos
-  vr_permitidos := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ¡…Õ”⁄¿»Ã“Ÿ«√’¬ Œ‘€0123456789:;.,@?_ ' || chr(10);
+  vr_permitidos := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:;.,@?_ ' || chr(10);
   --
   FOR i in 1..length(vr_permitidos)
   LOOP
