@@ -223,9 +223,6 @@ INSERT INTO craprbi
      FROM craprbi r
     WHERE r.inprodut = 7);
 
-COMMIT;
-
-
 -- Novas Restrições / Travas análise
 INSERT INTO tbdscc_ocorrencias
   (cdocorre
