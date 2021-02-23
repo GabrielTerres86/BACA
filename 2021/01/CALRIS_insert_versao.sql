@@ -5,16 +5,16 @@ l_sequ  craprdr.NRSEQRDR%type;
 begin
 
 insert into TBCALRIS_PARAMETROS (DSCALRIS, INPESSOA, TPCOOPERADO, DHCADASTRO, DHLIBERACAO, CDSITUACAO, CDUSUARIO, DHFIMVIGENCIA, QTLIBERACOES)
-values ('PF Novo', 1, 'N', to_date('23-11-2020 20:40:46', 'dd-mm-yyyy hh24:mi:ss'), to_date('23-11-2020 20:40:46', 'dd-mm-yyyy hh24:mi:ss'), 2, 't0030855', null, 2);
+values ('PF Novo', 1, 'N', SYSDATE, SYSDATE, 2, '1', null, 2);
 
 insert into TBCALRIS_PARAMETROS (DSCALRIS, INPESSOA, TPCOOPERADO, DHCADASTRO, DHLIBERACAO, CDSITUACAO, CDUSUARIO, DHFIMVIGENCIA, QTLIBERACOES)
-values ('PJ Novo', 2, 'N', to_date('23-11-2020 20:40:46', 'dd-mm-yyyy hh24:mi:ss'), to_date('23-11-2020 20:40:46', 'dd-mm-yyyy hh24:mi:ss'), 2, 't0030855', null, 2);
+values ('PJ Novo', 2, 'N', SYSDATE, SYSDATE, 2, '1', null, 2);
 
 insert into TBCALRIS_PARAMETROS (DSCALRIS, INPESSOA, TPCOOPERADO, DHCADASTRO, DHLIBERACAO, CDSITUACAO, CDUSUARIO, DHFIMVIGENCIA, QTLIBERACOES)
-values ('PF Legado', 1, 'L', to_date('23-11-2020 20:40:46', 'dd-mm-yyyy hh24:mi:ss'), to_date('23-11-2020 20:40:46', 'dd-mm-yyyy hh24:mi:ss'), 2, 't0030855', null, 2);
+values ('PF Legado', 1, 'L', SYSDATE, SYSDATE, 2, '1', null, 2);
 
 insert into TBCALRIS_PARAMETROS (DSCALRIS, INPESSOA, TPCOOPERADO, DHCADASTRO, DHLIBERACAO, CDSITUACAO, CDUSUARIO, DHFIMVIGENCIA, QTLIBERACOES)
-values ('PJ Legado', 2, 'L', to_date('23-11-2020 20:40:46', 'dd-mm-yyyy hh24:mi:ss'), to_date('23-11-2020 20:40:46', 'dd-mm-yyyy hh24:mi:ss'), 2, 't0030855', null, 2);
+values ('PJ Legado', 2, 'L', SYSDATE, SYSDATE, 2, '1', null, 2);
 
 insert into TBCALRIS_RISCOS (CDRISCO, DSABREV, INPESSOA, TPCRITERIO, DSRISCO)
 values ('DATA_NASCIMENTO', 'Risco atribuído por faixa de idade', 1, 0, 'Somente considerar se a IF entender que nos casos comunicados ao COAF este item tem representatividade');
@@ -61,32 +61,32 @@ values ('ABERTURA_RELACIONAMENT_PJ', 'Risco atribuído pela origem do canal de a
 insert into TBCALRIS_RISCOS (CDRISCO, DSABREV, INPESSOA, TPCRITERIO, DSRISCO)
 values ('CEP_PJ', 'Risco atribuído conforme localização', 2, 1, null);
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('Menor que [MIN]', 'DATA_NASCIMENTO', 4);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Menor que [MIN]', 'DATA_NASCIMENTO', 4, '<');
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('De [MIN] a [MAX]', 'DATA_NASCIMENTO', 3);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('De [MIN] a [MAX]', 'DATA_NASCIMENTO', 3, 'BETWEEN');
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('De [MIN] a [MAX]', 'DATA_NASCIMENTO', 2);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('De [MIN] a [MAX]', 'DATA_NASCIMENTO', 2, 'BETWEEN');
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('Maior que [MAX]', 'DATA_NASCIMENTO', 1);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Maior que [MAX]', 'DATA_NASCIMENTO', 1, '>');
 
 insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
 values ('De acordo com a tabela Ocupação', 'OCUPACAO', 0);
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('Maior que [MAX]', 'RENDA', 4);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Maior que [MAX]', 'RENDA', 4, '>');
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('De [MIN] a [MAX]', 'RENDA', 3);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('De [MIN] a [MAX]', 'RENDA', 3, 'BETWEEN');
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('De [MIN] a [MAX]', 'RENDA', 2);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('De [MIN] a [MAX]', 'RENDA', 2, 'BETWEEN');
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('Menor que [MIN]', 'RENDA', 1);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Menor que [MIN]', 'RENDA', 1, '<');
 
 insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
 values ('Fornecido pelo Cliente - Renda Declarada', 'CONFIABILIDADE_RENDA', 4, 1);
@@ -127,32 +127,32 @@ values ('Representado Absolutamente Incapaz', 'ABERTURA_PROCURADOR', 2, 4);
 insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
 values ('Sem representante', 'ABERTURA_PROCURADOR', 1, 1);
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('Menor que [MIN]', 'DATA_CONSTITUICAO', 4);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Menor que [MIN]', 'DATA_CONSTITUICAO', 4, '<');
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('De [MIN] a [MAX]', 'DATA_CONSTITUICAO', 3);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('De [MIN] a [MAX]', 'DATA_CONSTITUICAO', 3, 'BETWEEN');
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('De [MIN] a [MAX]', 'DATA_CONSTITUICAO', 2);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('De [MIN] a [MAX]', 'DATA_CONSTITUICAO', 2, 'BETWEEN');
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('Maior que [MAX]', 'DATA_CONSTITUICAO', 1);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Maior que [MAX]', 'DATA_CONSTITUICAO', 1, '>');
 
 insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
 values ('De acordo com a tabela Ocupação', 'ATIVIDADE', 0);
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('Maior que [MAX]', 'FATURAMENTO_BRUTO', 4);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Maior que [MAX]', 'FATURAMENTO_BRUTO', 4, '>');
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('De [MIN] a [MAX]', 'FATURAMENTO_BRUTO', 3);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('De [MIN] a [MAX]', 'FATURAMENTO_BRUTO', 3, 'BETWEEN');
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('De [MIN] a [MAX]', 'FATURAMENTO_BRUTO', 2);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('De [MIN] a [MAX]', 'FATURAMENTO_BRUTO', 2, 'BETWEEN');
 
-insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO)
-values ('Menor que [MIN]', 'FATURAMENTO_BRUTO', 1);
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Menor que [MIN]', 'FATURAMENTO_BRUTO', 1, '<');
 
 insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
 values ('Possui', 'FATURAMENTO_SETOR_PUBLICO', 3, 'S');
@@ -458,35 +458,35 @@ insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, F
 values (15, 30, 0, 0, 1, 44, 0, 4);
 
 insert into TBCALRIS_ALCADA (CDUSUARIO, DHALTERACAO, CDACAO, IDCALRIS)
-values ('t0030855', to_date('23-11-2020 20:42:19', 'dd-mm-yyyy hh24:mi:ss'), '1', 1);
+values ('1', SYSDATE, '1', 1);
 
 insert into TBCALRIS_ALCADA (CDUSUARIO, DHALTERACAO, CDACAO, IDCALRIS)
-values ('f0031251', to_date('23-11-2020 20:42:19', 'dd-mm-yyyy hh24:mi:ss'), '1', 1);
+values ('1', SYSDATE, '1', 1);
 
 insert into TBCALRIS_ALCADA (CDUSUARIO, DHALTERACAO, CDACAO, IDCALRIS)
-values ('t0030855', to_date('23-11-2020 20:42:19', 'dd-mm-yyyy hh24:mi:ss'), '1', 2);
+values ('1', SYSDATE, '1', 2);
 
 insert into TBCALRIS_ALCADA (CDUSUARIO, DHALTERACAO, CDACAO, IDCALRIS)
-values ('f0031251', to_date('23-11-2020 20:42:19', 'dd-mm-yyyy hh24:mi:ss'), '1', 2);
+values ('1', SYSDATE, '1', 2);
 
 insert into TBCALRIS_ALCADA (CDUSUARIO, DHALTERACAO, CDACAO, IDCALRIS)
-values ('t0030855', to_date('23-11-2020 20:42:19', 'dd-mm-yyyy hh24:mi:ss'), '1', 3);
+values ('1', SYSDATE, '1', 3);
 
 insert into TBCALRIS_ALCADA (CDUSUARIO, DHALTERACAO, CDACAO, IDCALRIS)
-values ('f0031251', to_date('23-11-2020 20:42:19', 'dd-mm-yyyy hh24:mi:ss'), '1', 3);
+values ('1', SYSDATE, '1', 3);
 
 insert into TBCALRIS_ALCADA (CDUSUARIO, DHALTERACAO, CDACAO, IDCALRIS)
-values ('t0030855', to_date('23-11-2020 20:42:19', 'dd-mm-yyyy hh24:mi:ss'), '1', 4);
+values ('1', SYSDATE, '1', 4);
 
 insert into TBCALRIS_ALCADA (CDUSUARIO, DHALTERACAO, CDACAO, IDCALRIS)
-values ('f0031251', to_date('23-11-2020 20:42:19', 'dd-mm-yyyy hh24:mi:ss'), '1', 4);
+values ('1', SYSDATE, '1', 4);
 
 begin
 	insert into craptel (NMDATELA, NRMODULO, CDOPPTEL, TLDATELA, TLRESTEL, FLGTELDF, FLGTELBL, NMROTINA, LSOPPTEL, INACESSO, CDCOOPER, IDSISTEM, IDEVENTO, NRORDROT, NRDNIVEL, NMROTPAI, IDAMBTEL)
-	values ('CALRIS', 5, 'C,A', 'CALCULO RISCO', 'CALCULO RISCO', 0, 1, ' ', 'CONSULTAR,ALTERAR', 1, 3, 1, 0, 1, 1, ' ', 2);
+	values ('CALRIS', 5, 'C,A,M', 'CALCULO RISCO', 'CALCULO RISCO', 0, 1, ' ', 'CONSULTAR,ALTERAR,MANUTENCAO', 1, 3, 1, 0, 1, 1, ' ', 2);
 
 	insert into craptel (NMDATELA, NRMODULO, CDOPPTEL, TLDATELA, TLRESTEL, FLGTELDF, FLGTELBL, NMROTINA, LSOPPTEL, INACESSO, CDCOOPER, IDSISTEM, IDEVENTO, NRORDROT, NRDNIVEL, NMROTPAI, IDAMBTEL)
-	values ('RISPAR', 5, 'C,A,D', 'Consulta e Gerenciamento dos Parâmetros de Risco', 'Controle de Chaves PIX', 0, 1, ' ', 'ACESSO,CONSULTA,ALTERACAO,DEFERIR', 2, 3, 1, 0, 0, 0, ' ', 0);
+	values ('RISPAR', 5, '@,C,A,D', 'Consulta e Gerenciamento dos Parâmetros de Risco', 'Parâmetros de Risco', 0, 1, ' ', 'ACESSO,CONSULTA,ALTERACAO,DEFERIR', 2, 3, 1, 0, 0, 0, ' ', 0);
 
 	insert into crapprg (NMSISTEM, CDPROGRA, DSPROGRA##1, DSPROGRA##2, DSPROGRA##3, DSPROGRA##4, NRSOLICI, NRORDPRG, INCTRPRG, CDRELATO##1, CDRELATO##2, CDRELATO##3, CDRELATO##4, CDRELATO##5, INLIBPRG, CDCOOPER, QTMINMED)
 	values ('CRED', 'CALRIS', 'CALCULO RISCO', '.', '.', '.', 10014, 0, 1, 0, 0, 0, 0, 0, 1, 2, null);
@@ -534,7 +534,7 @@ begin
 	values ('CRED', 'RISPAR', 'Consulta e Gerenciamento dos Parâmetros de Risco', null, null, null, 990, 998, 1, 0, 0, 0, 0, 0, 0, 3, null);
 
 	insert into craprdr (NMPROGRA, DTSOLICI)
-	values ('TELA_CALRIS', to_date('03-12-2020', 'dd-mm-yyyy')) RETURNING NRSEQRDR INTO l_sequ;
+	values ('TELA_CALRIS', TRUNC(SYSDATE)) RETURNING NRSEQRDR INTO l_sequ;
 
 	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 	values ('LISTA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_lista_versao', 'pr_inpessoa,pr_tpcooperado,pr_cdsituacao', l_sequ);
@@ -549,13 +549,60 @@ begin
 	values ('APROVA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_grava_acao', 'pr_idcalris,pr_acao,pr_dsjustificativa', l_sequ);
 
 	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-	values ('ALTERA_CLASSIF_RISCO', 'TELA_CALRIS', 'pc_altera_classif_risco', 'pr_idcalris_pessoa,pr_dsjustificativa,pr_cdclasrisco_espe_aten,pr_cdclasrisco_list_rest,pr_cdclasrisco_final', l_sequ);
+	values ('ALTERA_CLASSIF_RISCO', 'TELA_CALRIS', 'pr_idcalris_pessoa,pr_dsjustificativa,pr_cdclasrisco_espe_aten,pr_cdclasrisco_list_rest,pr_cdclasrisco_final,pr_tprelacionamento,pr_dtproxcalculo', l_sequ);
 
 	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 	values ('LISTA_VERSAO_PESSOA', 'TELA_CALRIS', 'pc_lista_versao_pessoa', 'pr_nrcpfcgc,pr_nriniseq,pr_nrregist', l_sequ);
 
 	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 	values ('BUSCA_VERSAO_CALCULO', 'TELA_CALRIS', 'pc_busca_versao_calculo', 'pr_idcalris_pessoa', l_sequ);
+
+	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+	values ('BUSCA_TANQUE', 'TELA_CALRIS', 'pc_busca_tanque', 'pr_dtinicio,pr_dtfim,pr_status,pr_tppessoa,pr_nriniseq,pr_nrregist', l_sequ);
+	
+	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+	values ('BUSCA_STATUS_TANQUE', 'TELA_CALRIS', 'pc_busca_status_tanque', null, l_sequ);
+	
+	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+	values ('MANUTENCAO_TANQUE', 'TELA_CALRIS', 'pc_manutencao_tanque', 'pr_cdopcao,pr_listaids', l_sequ);
+
+	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+	values ('MANUTENCAO_TANQUE_TODOS', 'TELA_CALRIS', 'pc_manutencao_tanque_todos', 'pr_dtinicio,pr_dtfim,pr_status,pr_tppessoa,pr_cdopcao', l_sequ);
+
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('RISPAR', 'C', 'f0030503', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('RISPAR', 'C', 'f0030464', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('RISPAR', 'C', 'f0031053', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('RISPAR', 'C', 'f0030588', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('RISPAR', 'C', 'f0030438', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('RISPAR', 'C', 'f0031251', ' ', 3, 1, 0, 2);
+
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('RISPAR', 'A', 'f0030464', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('RISPAR', 'A', 'f0031053', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('RISPAR', 'A', 'f0030588', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('RISPAR', 'A', 'f0030438', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('RISPAR', 'A', 'f0031251', ' ', 3, 1, 0, 2);
+
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('RISPAR', 'D', 'f0030503', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('RISPAR', 'D', 'f0030464', ' ', 3, 1, 0, 2);
+
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'C', 'f0030464', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'C', 'f0031053', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'C', 'f0030588', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'C', 'f0030438', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'C', 'f0031251', ' ', 3, 1, 0, 2);
+
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'A', 'f0030464', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'A', 'f0031053', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'A', 'f0030588', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'A', 'f0030438', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'A', 'f0031251', ' ', 3, 1, 0, 2);
+
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'M', 'f0030464', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'M', 'f0031053', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'M', 'f0030588', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'M', 'f0030438', ' ', 3, 1, 0, 2);
+	INSERT INTO crapace(nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) VALUES ('CALRIS', 'M', 'f0031251', ' ', 3, 1, 0, 2);
+
 exception
 	when others then
 		null;
