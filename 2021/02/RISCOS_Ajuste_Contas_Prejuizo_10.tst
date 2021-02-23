@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-766
+897
 DECLARE
   CURSOR cr_his (pr_cdcooper IN crapcop.cdcooper%TYPE
                 ,pr_cdhistor IN craphis.cdhistor%TYPE)IS
@@ -675,15 +675,16 @@ BEGIN
 -- 2408 - Quando EXCLUI, Diminui o Saldo Prejuizo      [C] 2408 - TRF. PREJUIZO-> TBCC_PREJUIZO_DETALHE
 
 
+
 -- ## 01
 ---------------------------------------------------
-  -- INC0076714 - Credcrea - C/C 229245  - R$ 0,02
-  -- -> Solução: Incluir um 2408 no valor de R$ 0,02
+  -- INC0078064 - Viacredi - C/C 10999000  - R$ 237,33
+  -- -> Solução: Incluir um 2408 no valor de R$ 237,33
 ---------------------------------------------------
-  vr_incidente := 'INC0076714';
-  vr_cdcooper  := 7;
-  vr_nrdconta  := 229245;
-  vr_vllanmto  := 0.02;
+  vr_incidente := 'INC0078064';
+  vr_cdcooper  := 1;
+  vr_nrdconta  := 10999000;
+  vr_vllanmto  := 237.33;
   vr_cdhistor  := 2408;
   dbms_output.put_line('  ');
   dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
@@ -702,15 +703,18 @@ BEGIN
   dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
   dbms_output.put_line('  ');
 ---------------------------------------------------
+
+
 
 -- ## 02
 ---------------------------------------------------
--- INC0076303 - Viacredi - 1 - Conta 8504849 - R$ 1,16
+  -- INC0078006 - Viacredi - C/C 10278249  - R$ 486,09
+  -- -> Solução: Incluir um 2408 no valor de R$ 486,09
 ---------------------------------------------------
-  vr_incidente := 'INC0076303';
+  vr_incidente := 'INC0078006';
   vr_cdcooper  := 1;
-  vr_nrdconta  := 8504849;
-  vr_vllanmto  := 1.16;
+  vr_nrdconta  := 10278249;
+  vr_vllanmto  := 486.09;
   vr_cdhistor  := 2408;
   dbms_output.put_line('  ');
   dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
@@ -729,15 +733,18 @@ BEGIN
   dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
   dbms_output.put_line('  ');
 ---------------------------------------------------
+
+
 
 -- ## 03
 ---------------------------------------------------
--- INC0074854 - Viacredi - 1 - Conta 10553649 - R$ 9,61
+  -- INC0078008 - Viacredi - C/C 10744509  - R$ 186,00
+  -- -> Solução: Incluir um 2408 no valor de R$ 186,00
 ---------------------------------------------------
-  vr_incidente := 'INC0074854';
+  vr_incidente := 'INC0078008';
   vr_cdcooper  := 1;
-  vr_nrdconta  := 10553649;
-  vr_vllanmto  := 9.61;
+  vr_nrdconta  := 10744509;
+  vr_vllanmto  := 186.00;
   vr_cdhistor  := 2408;
   dbms_output.put_line('  ');
   dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
@@ -756,15 +763,148 @@ BEGIN
   dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
   dbms_output.put_line('  ');
 ---------------------------------------------------
-delete from tbcc_prejuizo_detalhe det
- where det.VLLANMTO = 9.61
-   and det.nrdconta = 10553649
-   and det.vllanmto = 9.61
-   and det.dtmvtolt = '12/01/2021';
+
+
+-- ## 04
+---------------------------------------------------
+  -- INC0076266 - ACENTRA - C/C 176869  - R$ 3794,22
+  -- -> Solução: Incluir um 2408 no valor de R$ 3794,22
+---------------------------------------------------
+  vr_incidente := 'INC0076266';
+  vr_cdcooper  := 5;
+  vr_nrdconta  := 176869;
+  vr_vllanmto  := 3794.22;
+  vr_cdhistor  := 2408;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+
+  prc_gera_acerto(prm_cdcooper => vr_cdcooper
+                 ,prm_nrdconta => vr_nrdconta
+                 ,prm_vllanmto => vr_vllanmto
+                 ,prm_cdhistor => vr_cdhistor);
+
+  prc_atlz_prejuizo(prm_cdcooper => vr_cdcooper
+                   ,prm_nrdconta => vr_nrdconta
+                   ,prm_vllanmto => vr_vllanmto
+                   ,prm_cdhistor => vr_cdhistor
+                   ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
+
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
 ---------------------------------------------------
 
-COMMIT;
+-- ## 05
+---------------------------------------------------
+  -- INC0076268 - CREDIFOZ - C/C 515515  - R$ 1087,58
+  -- -> Solução: Incluir um 2408 no valor de R$ 1087,58
+---------------------------------------------------
+  vr_incidente := 'INC0076268';
+  vr_cdcooper  := 11;
+  vr_nrdconta  := 515515;
+  vr_vllanmto  := 1087.58;
+  vr_cdhistor  := 2408;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
 
+  prc_gera_acerto(prm_cdcooper => vr_cdcooper
+                 ,prm_nrdconta => vr_nrdconta
+                 ,prm_vllanmto => vr_vllanmto
+                 ,prm_cdhistor => vr_cdhistor);
+
+  prc_atlz_prejuizo(prm_cdcooper => vr_cdcooper
+                   ,prm_nrdconta => vr_nrdconta
+                   ,prm_vllanmto => vr_vllanmto
+                   ,prm_cdhistor => vr_cdhistor
+                   ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
+
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
+
+
+-- ## 06
+---------------------------------------------------
+  -- INC0077767 - EVOLUA - C/C 80977  - R$ 450
+  -- -> Solução: Incluir um 2408 no valor de R$ 450
+---------------------------------------------------
+  vr_incidente := 'INC0077767';
+  vr_cdcooper  := 14;
+  vr_nrdconta  := 80977;
+  vr_vllanmto  := 450;
+  vr_cdhistor  := 2408;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+
+  prc_gera_acerto(prm_cdcooper => vr_cdcooper
+                 ,prm_nrdconta => vr_nrdconta
+                 ,prm_vllanmto => vr_vllanmto
+                 ,prm_cdhistor => vr_cdhistor);
+
+  prc_atlz_prejuizo(prm_cdcooper => vr_cdcooper
+                   ,prm_nrdconta => vr_nrdconta
+                   ,prm_vllanmto => vr_vllanmto
+                   ,prm_cdhistor => vr_cdhistor
+                   ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
+
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
+
+
+-- ## 07
+---------------------------------------------------
+  -- INC0076109 - ALTOVALE - C/C 224308  - R$ 300
+  -- -> Solução: Incluir um 2408 no valor de R$ 300
+---------------------------------------------------
+  vr_incidente := 'INC0076109';
+  vr_cdcooper  := 16;
+  vr_nrdconta  := 224308;
+  vr_vllanmto  := 300;
+  vr_cdhistor  := 2408;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+
+  prc_gera_acerto(prm_cdcooper => vr_cdcooper
+                 ,prm_nrdconta => vr_nrdconta
+                 ,prm_vllanmto => vr_vllanmto
+                 ,prm_cdhistor => vr_cdhistor);
+
+  prc_atlz_prejuizo(prm_cdcooper => vr_cdcooper
+                   ,prm_nrdconta => vr_nrdconta
+                   ,prm_vllanmto => vr_vllanmto
+                   ,prm_cdhistor => vr_cdhistor
+                   ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
+
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
+
+
+
+
+  --Salva
+  COMMIT;
+
+  dbms_output.put_line(' ');
+  dbms_output.put_line('Script finalizado com Sucesso em '||To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'));
+------------ BLOCO PRINCIPAL - FIM ---------------------
+
+
+EXCEPTION    
+  WHEN OTHERS THEN
+    dbms_output.put_line('Erro Geral no Script. Erro: '||SubStr(SQLERRM,1,255));
+    ROLLBACK;
+    dbms_output.put_line('Efetuado Rollback.');
+    Raise_Application_Error(-20002,'Erro Geral no Script. Erro: '||SubStr(SQLERRM,1,255));    
 END;
 0
-0
+9
+prm_cdcooper
+prm_nrdconta
+prm_vllanmto
+prm_cdhistor
+vr_dtmvtolt
+vr_vlsdprej
+vr_found
+vr_idprejuizo
+prm_idlancto
