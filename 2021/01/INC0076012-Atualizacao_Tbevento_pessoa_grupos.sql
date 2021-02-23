@@ -1,23 +1,26 @@
--- Atualizacao da tbevento_pessoa_grupos enquanto o job de automacao não está pronto
+-- Atualizacao da tbevento_pessoa_grupos enquanto o job de automacao não está em uso - 6
 declare
 
   -- Busca cooperados sem grupo
   cursor cr_admissoes is
-  select c.cdcooper
-       , c.nrdconta
-    from crapass c
-       , crapcop e
-       , tbcadast_pessoa f
-   where c.cdcooper  in  (1,9,13,14)
-     and c.dtdemiss is null
-     and c.inpessoa <> 3
-     and e.cdcooper  = c.cdcooper
-     and e.nrdocnpj <> c.nrcpfcgc
-     and f.nrcpfcgc  = c.nrcpfcgc 
-     and not exists (select 1
-                       from tbevento_pessoa_grupos d
-                      where d.cdcooper = c.cdcooper
-                        and d.nrcpfcgc = c.nrcpfcgc);
+  SELECT c.cdcooper
+      ,c.nrdconta
+  FROM crapass         c
+      ,crapcop         e
+      ,tbcadast_pessoa f
+      ,crapage         a
+ WHERE c.cdcooper IN (1, 9, 13, 14)
+   AND c.cdagenci = a.cdagenci
+   AND c.dtdemiss IS NULL
+   AND c.inpessoa <> 3
+   AND e.cdcooper = c.cdcooper
+   AND e.nrdocnpj <> c.nrcpfcgc
+   AND f.nrcpfcgc = c.nrcpfcgc
+   AND a.cdcooper = e.cdcooper
+   AND NOT EXISTS (SELECT 1
+          FROM tbevento_pessoa_grupos d
+         WHERE d.cdcooper = c.cdcooper
+           AND d.nrcpfcgc = c.nrcpfcgc); 
 
   -- Busca cooperados em agencias diferentes               
   cursor cr_agencias is
