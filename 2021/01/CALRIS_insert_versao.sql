@@ -543,7 +543,7 @@ begin
 	values ('BUSCA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_busca_versao', 'pr_idcalris', l_sequ);
 
 	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-	values ('GRAVA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_grava_versao', 'pr_dsversao,pr_inpessoa,pr_tpcooperado,pr_risco1,pr_risco2,pr_risco3,pr_risco4,pr_risco5,pr_risco6,pr_risco7,pr_risco8,pr_risco9,pr_risco10,pr_risco11,pr_risco12,pr_risco13,pr_risco14,pr_risco15,pr_risco16,pr_risco17,pr_risco18,pr_risco19,pr_risco20,pr_risco21,pr_risco22', l_sequ);
+	values ('GRAVA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_grava_versao', 'pr_dsversao,pr_inpessoa,pr_tpcooperado,pr_dsjustificativa,pr_risco1,pr_risco2,pr_risco3,pr_risco4,pr_risco5,pr_risco6,pr_risco7,pr_risco8,pr_risco9,pr_risco10,pr_risco11,pr_risco12,pr_risco13,pr_risco14,pr_risco15,pr_risco16,pr_risco17,pr_risco18,pr_risco19,pr_risco20,pr_risco21,pr_risco22', l_sequ);
 
 	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 	values ('APROVA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_grava_acao', 'pr_idcalris,pr_acao,pr_dsjustificativa', l_sequ);
