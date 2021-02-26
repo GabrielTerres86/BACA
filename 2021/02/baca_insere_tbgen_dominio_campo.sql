@@ -197,6 +197,56 @@ BEGIN
 																 ,'18'
 																 ,'Recebimento Salário'
 																 );
+  
+	-- tpCategCartaoCred         CONSTANT NUMBER := 19;
+	INSERT INTO tbgen_dominio_campo(nmdominio
+																 ,cddominio
+																 ,dscodigo
+																 )
+													 VALUES('TPCATEG_RECIPROCIDADE'
+																 ,'19'
+																 ,'Cartão Crédito Cabal'
+																 );
+
+	-- tpCategCartaoCred         CONSTANT NUMBER := 20;
+	INSERT INTO tbgen_dominio_campo(nmdominio
+																 ,cddominio
+																 ,dscodigo
+																 )
+													 VALUES('TPCATEG_RECIPROCIDADE'
+																 ,'20'
+																 ,'Cartão Crédito Clássico'
+																 );																 
+
+	-- tpCategCartaoCred         CONSTANT NUMBER := 21;
+	INSERT INTO tbgen_dominio_campo(nmdominio
+																 ,cddominio
+																 ,dscodigo
+																 )
+													 VALUES('TPCATEG_RECIPROCIDADE'
+																 ,'21'
+																 ,'Cartão Crédito Gold'
+																 );		
+
+	-- tpCategCartaoCred         CONSTANT NUMBER := 22;
+	INSERT INTO tbgen_dominio_campo(nmdominio
+																 ,cddominio
+																 ,dscodigo
+																 )
+													 VALUES('TPCATEG_RECIPROCIDADE'
+																 ,'22'
+																 ,'Cartão Crédito Platinum'
+																 );
+
+	-- tpCategCartaoCred         CONSTANT NUMBER := 23;
+	INSERT INTO tbgen_dominio_campo(nmdominio
+																 ,cddominio
+																 ,dscodigo
+																 )
+													 VALUES('TPCATEG_RECIPROCIDADE'
+																 ,'23'
+																 ,'Cartão Crédito Empresárial'
+																 );
   COMMIT;
 EXCEPTION
 	WHEN OTHERS THEN
