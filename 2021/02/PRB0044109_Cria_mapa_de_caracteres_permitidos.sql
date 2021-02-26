@@ -12,16 +12,18 @@ BEGIN
     dbms_output.put_line(i || ': ' || substr(vr_permitidos, i, 1) || chr(10));
     INSERT INTO cecred.tbcc_dominio_campo (
       nmdominio, 
-      cddominio
+      cddominio,
+      dscodigo
     )
     VALUES (
       'MAPA_CARACTERES_VALIDOS',          -- nmdominio, 
-      substr(vr_permitidos, i, 1)         -- cddominio
+      substr(vr_permitidos, i, 1),        -- cddominio
+	  " "
     );
   end loop;
   --
   -- Lista de caracteres que geram erro no xml
-  vr_bloqueados := 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ!#$%*()-=+[]{}/\°ºª';
+  vr_bloqueados := 'ÀÁÂÃÄÅàáâãäåÒÓÔÕÖØòóôõöøÈÉÊËèéêëÇçÌÍÎÏìíîïÙÚÛÜùúûüÿÑñ!#$%*()-=+[]{}/\°ºª^~¨´`';
   --
   FOR i in 1..length(vr_bloqueados)
   LOOP
