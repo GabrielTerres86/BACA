@@ -549,7 +549,7 @@ begin
 	values ('APROVA_RISCO_CALRIS', 'TELA_CALRIS', 'pc_grava_acao', 'pr_idcalris,pr_acao,pr_dsjustificativa', l_sequ);
 
 	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-	values ('ALTERA_CLASSIF_RISCO', 'TELA_CALRIS', 'pr_idcalris_pessoa,pr_dsjustificativa,pr_cdclasrisco_espe_aten,pr_cdclasrisco_list_rest,pr_cdclasrisco_final,pr_tprelacionamento,pr_dtproxcalculo', l_sequ);
+	values ('ALTERA_CLASSIF_RISCO', 'TELA_CALRIS', 'pc_altera_classif_risco', 'pr_idcalris_pessoa,pr_dsjustificativa,pr_cdclasrisco_espe_aten,pr_cdclasrisco_list_rest,pr_cdclasrisco_final,pr_tprelacionamento,pr_dtproxcalculo', l_sequ);
 
 	insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 	values ('LISTA_VERSAO_PESSOA', 'TELA_CALRIS', 'pc_lista_versao_pessoa', 'pr_nrcpfcgc,pr_nriniseq,pr_nrregist', l_sequ);
