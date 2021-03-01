@@ -1,0 +1,88 @@
+begin
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_SITUACAO', '0', 'Pendente de aprovação');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_SITUACAO', '1', 'Aprovação parcial');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_SITUACAO', '2', 'Ativa');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_SITUACAO', '3', 'Inativa');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_CLASSIF_RISCO', '1', 'Baixo');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_CLASSIF_RISCO', '2', 'Médio');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_CLASSIF_RISCO', '3', 'Alto');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_CLASSIF_RISCO', '4', 'Muito alto');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRISPES_SITUACAO', '1', 'Processando cálculo');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRISPES_SITUACAO', '2', 'Aguardando Especial Atenção');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRISPES_SITUACAO', '3', 'Aguardando Lista restrição');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRISPES_SITUACAO', '4', 'Aguardando KN1');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRISPES_SITUACAO', '5', 'Cálculo finalizado');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRISPES_SITUACAO', '6', 'Erro ao realizar o cálculo');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRISPES_ORIGEM', '1', 'Automática - Gatilho');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRISPES_ORIGEM', '2', 'Manual');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRISPES_ORIGEM', '3', 'Cadastro');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_STATUS_TANQUE', '1', 'Aguardando cálculo do PLD');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_STATUS_TANQUE', '2', 'Erro ao realizar o cálculo');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_STATUS_TANQUE', '3', 'Aguardando Especial Atenção');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_STATUS_TANQUE', '4', 'Especial atenção com erro');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_STATUS_TANQUE', '5', 'Aguardando Lista restritiva');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_STATUS_TANQUE', '6', 'Lista restritiva com erro');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_STATUS_TANQUE', '7', 'Aguardando KN1');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_STATUS_TANQUE', '8', 'Kn1 com erro');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_STATUS_TANQUE', '9', 'Cálculo finalizado');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_TPRELACIONAMENTO', '1', 'Titular');
+
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRIS_TPRELACIONAMENTO', '2', 'Relacionamento');
+
+commit;
+end;
+/
