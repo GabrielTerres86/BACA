@@ -31,5 +31,6 @@ begin
   commit;
 exception
   when others then
+    rollback;
     raise_application_error(-20001,'Erro ao ajustar parâmetros SLIP. Erro: '||sqlerrm);
 end;
