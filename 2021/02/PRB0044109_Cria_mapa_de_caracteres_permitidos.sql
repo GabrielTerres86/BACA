@@ -18,7 +18,7 @@ BEGIN
     VALUES (
       'MAPA_CARACTERES_VALIDOS',          -- nmdominio, 
       substr(vr_permitidos, i, 1),        -- cddominio
-	  " "
+	    ' '
     );
   end loop;
   --
