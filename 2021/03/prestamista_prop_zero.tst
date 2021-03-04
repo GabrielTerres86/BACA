@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-1213
+1387
 /*
 Preencher numero da proposta Icatu dos registros que não possuem
 */
@@ -27,19 +27,34 @@ declare
                epr.dtmvtolt,
                g.nrproposta prop_wseg,
                g.progress_recid rec_id_wseg
-          FROM crapepr epr, crapass ass, craplcr lcr, crawseg g
+              ,substr((SELECT dstextab
+                        from craptab b
+                       where b.cdcooper = epr.cdcooper
+                         and b.cdempres = 11
+                         and b.cdacesso = 'SEGPRESTAM'
+                         and b.tpregist = 0),
+                      27,
+                      12) vlminimo
+            ,SUM( epr.vlsdeved) OVER(PARTITION BY epr.nrdconta )  Saldo_Devedor
+          FROM crapepr epr, crapass ass, craplcr lcr, crawseg g, crapseg seg
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.cdcooper = epr.cdcooper
            AND ass.nrdconta = epr.nrdconta
            AND lcr.cdcooper = epr.cdcooper
            AND lcr.cdlcremp = epr.cdlcremp
            AND ass.inpessoa = 1 --> Somente fisica          
-           AND epr.dtmvtolt >= to_date('01/07/2020', 'DD/MM/YYYY')
+           AND epr.dtmvtolt >= to_date('31/01/2000', 'DD/MM/YYYY') -- Data da tab049
+           and epr.inliquid = 0
            AND lcr.flgsegpr = 1
            and g.cdcooper = epr.cdcooper
            and g.nrdconta = epr.nrdconta
            and g.nrctrato = epr.nrctremp                      
-           and nvl(g.nrproposta,0) = 0) EPR
+           and nvl(g.nrproposta,0) = 0
+           and seg.cdcooper = g.cdcooper
+           and seg.nrdconta = g.nrdconta
+           and seg.nrctrseg = g.nrctrseg
+           and seg.cdsitseg = 1) EPR
+       where Saldo_Devedor > vlminimo
  order by epr.cdcooper, epr.nrdconta;
  
    -- tbseg = 0 e wseg > 0
@@ -50,7 +65,16 @@ declare
                ass.cdcooper,
                epr.dtmvtolt,
                g.nrproposta,
-               g.idseqtra
+               g.idseqtra,
+               substr((SELECT dstextab
+                        from craptab b
+                       where b.cdcooper = epr.cdcooper
+                         and b.cdempres = 11
+                         and b.cdacesso = 'SEGPRESTAM'
+                         and b.tpregist = 0),
+                      27,
+                      12) vlminimo
+            ,SUM( epr.vlsdeved) OVER(PARTITION BY epr.nrdconta )  Saldo_Devedor
           FROM crapepr epr, crapass ass, craplcr lcr, tbseg_prestamista g
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.cdcooper = epr.cdcooper
@@ -58,12 +82,13 @@ declare
            AND lcr.cdcooper = epr.cdcooper
            AND lcr.cdlcremp = epr.cdlcremp
            AND ass.inpessoa = 1 --> Somente fisica           
-           AND epr.dtmvtolt >= to_date('01/07/2020', 'DD/MM/YYYY')
+           AND epr.dtmvtolt >=  to_date('31/01/2000', 'DD/MM/YYYY') -- Data da tab049
            AND lcr.flgsegpr = 1           
            and g.cdcooper = epr.cdcooper
            and g.nrdconta = epr.nrdconta
            and g.nrctremp = epr.nrctremp                      
            and nvl(g.nrproposta,0) = 0) EPR
+   where Saldo_Devedor > vlminimo
  order by epr.cdcooper, epr.nrdconta;
   -- wseg = 0 e tbseg = 0
   cursor cr_registros_todos(pr_cdcooper in number) is 
@@ -77,7 +102,16 @@ declare
                epr.dtmvtolt,
                g.nrproposta,
                g.idseqtra,
-               wseg.progress_recid
+               wseg.progress_recid,
+               substr((SELECT dstextab
+                        from craptab b
+                       where b.cdcooper = epr.cdcooper
+                         and b.cdempres = 11
+                         and b.cdacesso = 'SEGPRESTAM'
+                         and b.tpregist = 0),
+                      27,
+                      12) vlminimo
+            ,SUM( epr.vlsdeved) OVER(PARTITION BY epr.nrdconta )  Saldo_Devedor
           FROM crapepr epr, crapass ass, craplcr lcr, tbseg_prestamista g, crawseg wseg
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.cdcooper = epr.cdcooper
@@ -85,7 +119,7 @@ declare
            AND lcr.cdcooper = epr.cdcooper
            AND lcr.cdlcremp = epr.cdlcremp
            AND ass.inpessoa = 1 --> Somente fisica         
-           AND epr.dtmvtolt >= to_date('01/07/2020', 'DD/MM/YYYY')
+           AND epr.dtmvtolt >=  to_date('31/01/2000', 'DD/MM/YYYY') -- Data da tab049
            AND lcr.flgsegpr = 1
            and g.cdcooper = epr.cdcooper
            and g.nrdconta = epr.nrdconta
@@ -95,6 +129,7 @@ declare
            and wseg.nrdconta = epr.nrdconta
            and wseg.nrctrato = epr.nrctremp                      
            and nvl(wseg.nrproposta,0) = 0) EPR
+      where Saldo_Devedor > vlminimo
  order by epr.cdcooper, epr.nrdconta; 
   
     CURSOR cr_prestamista(pr_cdcooper IN tbseg_prestamista.cdcooper%TYPE
@@ -157,7 +192,7 @@ declare
            AND ass.inpessoa = 1 --> Somente fisica
            AND epr.inliquid = 0 --> Em aberto
            AND epr.inprejuz = 0 --> Sem prejuizo
-           AND epr.dtmvtolt >= '01/07/2020'
+           AND epr.dtmvtolt >=  to_date('31/01/2000', 'DD/MM/YYYY') -- Data da tab049
            AND lcr.flgsegpr = 1
       ) EPR WHERE Saldo_Devedor > vlminimo and                                                        
            NOT EXISTS (SELECT seg.idseqtra
@@ -169,10 +204,10 @@ declare
   vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
   vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/INC0080242';
   -- Arquivo de rollback
-  vr_nmarqimp        VARCHAR2(100)  := 'INC0080242_ROLLBACK.txt';   
+  vr_nmarqimp        VARCHAR2(100)  := 'INC0080242_ROLLBACK_0403.txt';   
   vr_ind_arquiv      utl_file.file_type;
   -- Relacao de registros criados
-  vr_nmarqimp2        VARCHAR2(100)  := 'INC0080242_relacao.csv';   
+  vr_nmarqimp2        VARCHAR2(100)  := 'INC0080242_relacao_0403.csv';   
   vr_ind_arquiv2      utl_file.file_type;
   vr_destinatario_email varchar2(500):= gene0001.fn_param_sistema('CRED', 0, 'ENVIA_SEG_PRST_EMAIL'); -- seguros@ailos.com.br
  
@@ -263,6 +298,125 @@ declare
       dbms_lob.writeappend(vr_des_xml,length(pr_des_dados),pr_des_dados);
  END pc_escreve_xml;
  
+ PROCEDURE pc_atualiza_tabela(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                ,pr_cdcritic OUT PLS_INTEGER
+                                ,pr_dscritic OUT VARCHAR2) IS
+    BEGIN
+      DECLARE
+        -- cursor principal da tabela
+        CURSOR cr_prestamista(pr_cdcooper IN tbseg_prestamista.cdcooper%TYPE) IS
+        Select a.* from 
+         (SELECT p.cdcooper, p.nrdconta
+               , p.nrctremp, p.nrctrseg
+               , t.idseqttl, p.tpregist
+               , nvl(p.dtnasctl
+               , ( SELECT a.dtnasctl 
+                     FROM crapass a 
+                    WHERE a.cdcooper = p.cdcooper  
+                      AND a.nrdconta = p.nrdconta)) dtnasctl             
+               ,e.inliquid, CASE WHEN e.inliquid = 1 THEN 0 ELSE e.vlsdeved END vlsdeved    
+               , p.vldevatu ,p.dtnasctl dtnasctl1
+            FROM tbseg_prestamista p
+                ,crapepr e
+                ,crapttl t
+           WHERE p.cdcooper = pr_cdcooper
+             AND e.cdcooper = p.cdcooper
+             AND e.nrdconta = p.nrdconta
+             AND e.nrctremp = p.nrctremp
+             AND t.cdcooper = p.cdcooper
+             AND t.nrdconta = p.nrdconta
+             AND p.vldevatu <> 0 -- garantimos que nao vamos rodar um contrato já liquidado mais de uma vez             
+         ) a WHERE NOT (ROUND(vldevatu,2) = ROUND(vlsdeved,2));             
+                 
+        rw_prestamista cr_prestamista%ROWTYPE; 
+        -- Variaveis
+        vr_exc_saida           EXCEPTION;
+        vr_inusatab            BOOLEAN := FALSE;
+        vr_dstextab            VARCHAR2(400);
+        vr_total_saldo_devedor NUMBER := 0;
+        vr_dtnasctl            crapass.dtnasctl%TYPE;
+      BEGIN
+        --Verificar se usa tabela juros
+        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper,
+                                                  pr_nmsistem => 'CRED',
+                                                  pr_tptabela => 'USUARI',
+                                                  pr_cdempres => 11,
+                                                  pr_cdacesso => 'TAXATABELA',
+                                                  pr_tpregist => 0);
+        -- Se a primeira posição do campo dstextab for diferente de zero
+        IF vr_dstextab IS NOT NULL AND substr(vr_dstextab, 1, 1) = 0 THEN
+          vr_inusatab := FALSE;
+        ELSE
+          vr_inusatab := TRUE;
+        END IF;
+        
+        FOR rw_prestamista IN cr_prestamista(pr_cdcooper => pr_cdcooper) LOOP
+
+          vr_total_saldo_devedor := rw_prestamista.vlsdeved;     
+          vr_dtnasctl := rw_prestamista.dtnasctl;     
+          BEGIN 
+            UPDATE tbseg_prestamista p
+               SET p.vldevatu = rw_prestamista.vlsdeved
+                 , p.dtnasctl = rw_prestamista.dtnasctl
+             WHERE p.cdcooper = pr_cdcooper
+               AND p.nrdconta = rw_prestamista.nrdconta
+               AND p.nrctrseg = rw_prestamista.nrctrseg
+               AND p.nrctremp = rw_prestamista.nrctremp;
+
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao atualizar saldo do contrato: ' || pr_cdcooper || ' - nrdconta' || rw_prestamista.nrdconta || ' - ' || SQLERRM;
+              RAISE vr_exc_saida;
+          END; 
+          
+          COMMIT;         -- commitamos a atualizacao a cada registro para evitar demasiadas cargas de memoria  e evitar longos locks
+        END LOOP;
+      EXCEPTION 
+        WHEN vr_exc_saida THEN
+          -- Se foi retornado apenas código
+          IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+            -- Buscar a descrição
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          END IF;
+        
+          pr_dscritic := vr_dscritic || SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+          
+          ROLLBACK;                  -- Efetuar rollback
+                                                             -- Envio centralizado de log de erro
+          cecred.pc_log_programa(pr_dstiplog           => 'E',         -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                                 pr_cdprograma         => vr_cdprogra, -- tbgen_prglog
+                                 pr_cdcooper           => pr_cdcooper, -- tbgen_prglog
+                                 pr_tpexecucao         => 2,           -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                                 pr_tpocorrencia       => 0,           -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                                 pr_cdcriticidade      => 2,           -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                                 pr_dsmensagem         => vr_dscritic, -- tbgen_prglog_ocorrencia
+                                 pr_flgsucesso         => 0,           -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                                 pr_nmarqlog           => NULL,
+                                 pr_idprglog           => vr_idprglog);
+
+        WHEN OTHERS THEN
+          -- Efetuar retorno do erro não tratado
+          vr_dscritic := SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+          --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
+          pr_dscritic := vr_dscritic;
+          
+          ROLLBACK;                    -- Efetuar rollback
+                                                             -- Envio centralizado de log de erro
+          cecred.pc_log_programa(pr_dstiplog           => 'E',         -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                                 pr_cdprograma         => vr_cdprogra, -- tbgen_prglog
+                                 pr_cdcooper           => pr_cdcooper, -- tbgen_prglog
+                                 pr_tpexecucao         => 2,           -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                                 pr_tpocorrencia       => 0,           -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
+                                 pr_cdcriticidade      => 2,           -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                                 pr_dsmensagem         => vr_dscritic, -- tbgen_prglog_ocorrencia
+                                 pr_flgsucesso         => 0,           -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
+                                 pr_nmarqlog           => NULL,
+                                 pr_destinatario_email => vr_destinatario_email,
+                                 pr_idprglog           => vr_idprglog);
+      END;
+    END pc_atualiza_tabela;
+ 
  PROCEDURE pc_gera_arquivo_coop(pr_cdcooper IN crapcop.cdcooper%TYPE
                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
                                   ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada)
@@ -305,6 +459,9 @@ declare
         vr_xml_temp  VARCHAR2(32726) := ''; --> Temp xml/csv 
         vr_clob      CLOB; --> Clob buffer do xml gerado
         vr_ultimoDia DATE;
+        vr_pgtosegu  NUMBER;
+        vr_vlprodvl  NUMBER;
+        
         -- Declarando handle do Arquivo
         vr_ind_arquivo utl_file.file_type;
 
@@ -409,6 +566,10 @@ declare
         vr_senha    := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                  pr_cdcooper => pr_cdcooper,
                                                  pr_cdacesso => 'PRST_FTP_SENHA');
+                                                 
+        vr_pgtosegu := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,51,7));
+        
+        
       
       
         -- diretorio da cooperativa
@@ -551,6 +712,9 @@ declare
               vr_vlenviad := vr_vlsdatua; -- envia o valor cheio
             END IF;
           END IF;
+          
+          vr_vlprodvl := vr_vlsdeved * (vr_pgtosegu/100); -- Produto – Valor 
+          
           vr_ultimoDia := trunc(sysdate,'MONTH')-1;
           vr_linha_txt := '';
           -- informacoes para impressao
@@ -619,7 +783,7 @@ declare
           vr_linha_txt := vr_linha_txt || nvl(to_char(rw_prestamista.cdcooperativa), ' '); -- Produto - Cód.Produto
           vr_linha_txt := vr_linha_txt || nvl(to_char(rw_prestamista.cdplapro), ' '); -- Produto - Plano
           
-          vr_linha_txt := vr_linha_txt || LPAD(replace(to_char(rw_prestamista.vlprodut,'fm99999990d00'), ',', '.'), 12, 0); -- Produto ¿ Valor
+          vr_linha_txt := vr_linha_txt || LPAD(replace(to_char(vr_vlprodvl,'fm99999990d00'), ',', '.'), 12, 0); -- Produto ¿ Valor
           vr_linha_txt := vr_linha_txt || LPAD(nvl(to_char(rw_prestamista.tpcobran), ' '), 1, ' '); -- Tipo de Cobrança
           vr_linha_txt := vr_linha_txt || LPAD(replace(to_char(vr_vlenviad,'fm999999999999990d00'), ',', '.'), 30, 0); -- Valor do Saldo Devedor Atualizado
           vr_linha_txt := vr_linha_txt || LPAD(to_char(vr_ultimoDia, 'YYYY-MM-DD'), 10, 0); -- Data Referência para Cobrança
@@ -663,7 +827,7 @@ declare
           vr_tab_crrl815(vr_index_815).nrctrseg := vr_NRPROPOSTA;
           vr_tab_crrl815(vr_index_815).nrctremp := rw_prestamista.nrctremp;
           vr_tab_crrl815(vr_index_815).nrcpfcgc := rw_prestamista.nrcpfcgc;
-          vr_tab_crrl815(vr_index_815).vlprodut := rw_prestamista.vlprodut;
+          vr_tab_crrl815(vr_index_815).vlprodut := vr_vlprodvl;
           vr_tab_crrl815(vr_index_815).vlenviad := vr_vlenviad;
           vr_tab_crrl815(vr_index_815).vlsdeved := vr_vlsdeved;
           vr_tab_crrl815(vr_index_815).dtinivig := rw_prestamista.dtinivig;
@@ -684,6 +848,7 @@ declare
                SET tpregist = vr_tpregist
                   ,dtdenvio = vr_dtmvtolt  --rw_crapcop.dtmvtolt
                   ,dtrefcob = vr_ultimoDia
+                  ,vlprodut = vr_vlprodvl
              WHERE cdcooper = pr_cdcooper
                AND nrdconta = rw_prestamista.nrdconta
                AND nrctrseg = rw_prestamista.nrctrseg
@@ -1088,6 +1253,15 @@ begin
           vr_dscritic:= 'Erro ao atualizar numero de TBSEG_NRPROPOSTA: '||vr_nrproposta||' - '||sqlerrm;
           raise vr_excsaida;              
       end;
+      
+     -- primeiro atualizamos o saldo devedor de todos contratos da tabela
+     pc_atualiza_tabela( pr_cdcooper => rw_crapcop.cdcooper
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+                        
+      IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_excsaida;
+      END IF; 
       
      vr_dtmvtolt := rw_crapcop.dtmvtolt;    
      vr_index_815 := 0;        
