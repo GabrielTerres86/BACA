@@ -1,4 +1,4 @@
--- Atualizacao da tbevento_pessoa_grupos enquanto o job de automacao não está em uso - 5
+-- Atualizacao da tbevento_pessoa_grupos enquanto o job de automacao não está em uso - 7
 declare
 
   -- Busca cooperados sem grupo
