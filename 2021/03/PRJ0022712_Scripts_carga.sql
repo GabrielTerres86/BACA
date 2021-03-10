@@ -1,6 +1,6 @@
 -- PRJ0022712
 
--- Carga crapre tipo de produto limite de credito(2)
+-- Carga crapre tipo de produto limite de credito(1)
 DECLARE
 BEGIN
 
@@ -111,7 +111,7 @@ BEGIN
             ,0 --VLLIMMAN
             ,pre.VLLIMAUT
             ,pre.VLEPRATR
-            ,2 --TPPRODUT
+            ,1 --TPPRODUT
         FROM crappre pre
        WHERE pre.cdcooper = rw_crapcop.cdcooper
          AND pre.inpessoa = 1; --Fisica
@@ -219,7 +219,7 @@ BEGIN
             ,0 --VLLIMMAN
             ,pre.VLLIMAUT
             ,pre.VLEPRATR
-            ,2 --TPPRODUT
+            ,1 --TPPRODUT
         FROM crappre pre
        WHERE pre.cdcooper = rw_crapcop.cdcooper
          AND pre.inpessoa = 2; --Juridica
