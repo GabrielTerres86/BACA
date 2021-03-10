@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-3027
 DECLARE
 
 
@@ -2893,8 +2891,8 @@ begin
       CLOSE BTCH0001.cr_crapdat;  
 
 -- Banco individual
-     --     vr_nmarq_rollback := '/progress/t0031664/micros/cpd/bacas/RITM0121279_ROLLBACK.sql';
-     --     vr_nmarq_log      := '/progress/t0031664/micros/cpd/bacas/LOG_RITM0121279.txt';
+       --   vr_nmarq_rollback := '/progress/t0031664/micros/cpd/bacas/RITM0121279_ROLLBACK.sql';
+        --  vr_nmarq_log      := '/progress/t0031664/micros/cpd/bacas/LOG_RITM0121279.txt';
 
 -- Banco Test      
 -- \\pkgtest\micros---  /microstst/cecred/Elton/
@@ -2904,10 +2902,12 @@ begin
  
 
 -- caminho para produção:
-          vr_dsdireto       := SISTEMA.obternomedirectory(GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/jaison/');
-          vr_nmarq_rollback := vr_dsdireto||'RITM0121279_ROLLBACK.sql';
-          vr_nmarq_log      := vr_dsdireto||'LOG_RITM0121279.txt';
+       --   vr_dsdireto       := SISTEMA.obternomedirectory(GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/jaison/');
+       --   vr_nmarq_rollback := vr_dsdireto||'RITM0121279_ROLLBACK.sql';
+       --   vr_nmarq_log      := vr_dsdireto||'LOG_RITM0121279.txt';
 
+      vr_nmarq_rollback := '/usr/coop/sistema/equipe/zimmermann/RITM0121279_ROLLBACK.sql';
+      vr_nmarq_log      := '/usr/coop/sistema/equipe/zimmermann/LOG_RITM0121279.txt';
 
          /* Abrir o arquivo de rollback */
           gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_rollback
@@ -3027,6 +3027,3 @@ begin
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);
       ROLLBACK;
 END;
-0
-1
-
