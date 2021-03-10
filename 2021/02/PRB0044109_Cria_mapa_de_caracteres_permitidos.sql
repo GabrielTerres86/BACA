@@ -23,7 +23,7 @@ BEGIN
   end loop;
   --
   -- Lista de caracteres que geram erro no xml
-  vr_bloqueados := 'ְֱֲֳִֵאבגדהוׂ׃װױײ״עףפץצרָֹÊֻטיךכַחּֽ־ֿלםמןÙÚÛÜשתûüÿׁס!#$%*()-=+[]{}/\°÷×^~¨´`';
+  vr_bloqueados := 'ְֱֲֳִֵאבגדהוׂ׃װױײ״עףפץצרָֹÊֻטיךכַחּֽ־ֿלםמןÙÚÛÜשתûüÿׁס!#*-=+[]{}\°÷×^~¨´`';
   --
   FOR i in 1..length(vr_bloqueados)
   LOOP
