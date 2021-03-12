@@ -174,42 +174,42 @@ BEGIN
     INSERT INTO craphcb
       (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
     VALUES
-      (203, 'COMPRA MAESTRO NACIONAL DMC (ONLINE)', 3482, 1);
+      (203, 'COMPRA MASTERCARD DEBITO', 3482, 1);
     --
     INSERT INTO craphcb
       (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
     VALUES
-      (204, 'COMPRA MAESTRO INTERNACIONAL DMC (ONLINE)', 3481, 1);
+      (204, 'COMPRA MASTERCARD DEBITO INTERN.', 3481, 1);
     --
     INSERT INTO craphcb
       (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
     VALUES
-      (263, 'ESTORNO COMPRA MAESTRO NACIONAL DMC (ONLINE)', 3486, 1);
+      (263, 'EST. COMPRA MASTERCARD DEBITO', 3486, 1);
     --
     INSERT INTO craphcb
       (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
     VALUES
-      (264, 'ESTORNO COMPRA MAESTRO INTERNACIONAL DMC (ONLINE)', 3485, 1);
+      (264, 'EST. COMPRA MASTERCARD DEBITO INTERN.', 3485, 1);
     --
     INSERT INTO craphcb
       (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
     VALUES
-      (206, 'SAQUE CIRRUS INTERNACIONAL DMC (ONLINE)', 3489, 1);
+      (206, 'SAQUE CIRRUS INTERN.', 3489, 1);
     --
     INSERT INTO craphcb
       (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
     VALUES
-      (205, 'SAQUE CIRRUS NACIONAL DMC (ONLINE)', 3490, 1);
+      (205, 'SAQUE CIRRUS', 3490, 1);
     --
     INSERT INTO craphcb
       (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
     VALUES
-      (266, 'ESTORNO SAQUE CIRRUS INTERNACIONAL DMC (ONLINE)', 3493, 1);
+      (266, 'EST. SAQUE CIRRUS INTERN.', 3493, 1);
     --
     INSERT INTO craphcb
       (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
     VALUES
-      (265, 'ESTORNO SAQUE CIRRUS NACIONAL DMC (ONLINE)', 3494, 1);
+      (265, 'EST. SAQUE CIRRUS', 3494, 1);
       
     -- Criar códigos para tabela de cartões (tbcrd_his_vinculo_bancoob)
     -- 
