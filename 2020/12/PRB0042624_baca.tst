@@ -118,6 +118,8 @@ BEGIN
   dbms_lob.open(vr_dados_rollback, dbms_lob.lob_readwrite);    
     
   gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, '-- Programa para rollback das informacoes'||chr(13), FALSE);
+  
+  vr_nmdireto  := gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS');
   vr_nmdireto  := vr_nmdireto||'cpd/bacas/PRB0042624'; 
   vr_nmarqbkp  := 'ROLLBACK_PRB0042624_'||to_char(sysdate,'ddmmyyyy_hh24miss')||'.sql';
   -- Primeiro criamos o diretorio da RITM, dentro de um diretorio ja existente

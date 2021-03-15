@@ -1,0 +1,2 @@
+delete from TBCHQ_TERMO_ACEITE_MOB where CDCOOPER = 1 and INSITUACAO = 1;
+COMMIT;

@@ -1,0 +1,21 @@
+-- INC0077157 - Ajuste de grupos assembleares removidos.
+insert into tbevento_grupos (CDCOOPER, CDAGENCI, NRDGRUPO, NMDGRUPO, CDOPERAD, DHCRIACAO, QTD_MEMBROS, FLGSITUACAO, DSCRITICA, FLGNOTIFICACAO, DHNOTIFICACAO, CDBANNER)
+values (1, 18, 6, 'PA018-06', 'f0013488', to_date('15-12-2020 13:15:59', 'dd-mm-yyyy hh24:mi:ss'), 1955, 1, null, null, null, 0);
+insert into tbevento_grupos (CDCOOPER, CDAGENCI, NRDGRUPO, NMDGRUPO, CDOPERAD, DHCRIACAO, QTD_MEMBROS, FLGSITUACAO, DSCRITICA, FLGNOTIFICACAO, DHNOTIFICACAO, CDBANNER)
+values (1, 20, 5, 'PA020-05', 'f0031577', to_date('23-12-2019 09:08:21', 'dd-mm-yyyy hh24:mi:ss'), 1956, 1, null, 0, null, 0);
+insert into tbevento_grupos (CDCOOPER, CDAGENCI, NRDGRUPO, NMDGRUPO, CDOPERAD, DHCRIACAO, QTD_MEMBROS, FLGSITUACAO, DSCRITICA, FLGNOTIFICACAO, DHNOTIFICACAO, CDBANNER)
+values (1, 22, 6, 'PA022-06', 'f0013488', to_date('15-12-2020 13:17:04', 'dd-mm-yyyy hh24:mi:ss'), 1837, 1, null, null, null, null);
+insert into tbevento_grupos (CDCOOPER, CDAGENCI, NRDGRUPO, NMDGRUPO, CDOPERAD, DHCRIACAO, QTD_MEMBROS, FLGSITUACAO, DSCRITICA, FLGNOTIFICACAO, DHNOTIFICACAO, CDBANNER)
+values (1, 23, 5, 'PA023-05', 'f0013488', to_date('15-12-2020 13:17:46', 'dd-mm-yyyy hh24:mi:ss'), 1906, 1, null, null, null, null);
+insert into tbevento_grupos (CDCOOPER, CDAGENCI, NRDGRUPO, NMDGRUPO, CDOPERAD, DHCRIACAO, QTD_MEMBROS, FLGSITUACAO, DSCRITICA, FLGNOTIFICACAO, DHNOTIFICACAO, CDBANNER)
+values (1, 31, 6, 'PA031-06', 'f0013488', to_date('15-12-2020 13:20:37', 'dd-mm-yyyy hh24:mi:ss'), 2026, 1, null, null, null, null);
+insert into tbevento_grupos (CDCOOPER, CDAGENCI, NRDGRUPO, NMDGRUPO, CDOPERAD, DHCRIACAO, QTD_MEMBROS, FLGSITUACAO, DSCRITICA, FLGNOTIFICACAO, DHNOTIFICACAO, CDBANNER)
+values (1, 49, 5, 'PA049-05', 'f0013488', to_date('15-12-2020 13:59:42', 'dd-mm-yyyy hh24:mi:ss'), 1869, 1, null, null, null, null);
+insert into tbevento_grupos (CDCOOPER, CDAGENCI, NRDGRUPO, NMDGRUPO, CDOPERAD, DHCRIACAO, QTD_MEMBROS, FLGSITUACAO, DSCRITICA, FLGNOTIFICACAO, DHNOTIFICACAO, CDBANNER)
+values (1, 53, 5, 'PA053-05', 'f0013488', to_date('15-12-2020 14:01:30', 'dd-mm-yyyy hh24:mi:ss'), 1922, 1, null, null, null, null);
+insert into tbevento_grupos (CDCOOPER, CDAGENCI, NRDGRUPO, NMDGRUPO, CDOPERAD, DHCRIACAO, QTD_MEMBROS, FLGSITUACAO, DSCRITICA, FLGNOTIFICACAO, DHNOTIFICACAO, CDBANNER)
+values (1, 65, 4, 'PA065-04', 'f0013488', to_date('15-12-2020 14:03:18', 'dd-mm-yyyy hh24:mi:ss'), 1792, 1, null, null, null, null);
+insert into tbevento_grupos (CDCOOPER, CDAGENCI, NRDGRUPO, NMDGRUPO, CDOPERAD, DHCRIACAO, QTD_MEMBROS, FLGSITUACAO, DSCRITICA, FLGNOTIFICACAO, DHNOTIFICACAO, CDBANNER)
+values (1, 201, 6, 'PA201-06', 'f0013488', to_date('15-12-2020 14:11:49', 'dd-mm-yyyy hh24:mi:ss'), 2045, 1, null, null, null, null);
+commit;
+/
