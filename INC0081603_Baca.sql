@@ -9,6 +9,9 @@ begin
   AND    bpr.nrctrpro = 188
   AND    bpr.flgalien = 1;
   commit;
+exception
+  when others then
+    null; 
 end;
 
 
