@@ -224,7 +224,7 @@ BEGIN
        WHERE pre.cdcooper = rw_crapcop.cdcooper
          AND pre.inpessoa = 2; --Juridica
   END LOOP;
+  COMMIT;
 END;
-/
 
-COMMIT;
+
