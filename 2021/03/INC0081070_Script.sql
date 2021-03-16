@@ -8,9 +8,7 @@ declare
  vr_aux_NUPortdd1      VARCHAR2(300);
  vr_aux_NUPortdd2      VARCHAR2(300);
  vr_aux_nrispbif       NUMBER;
- vr_aux_vllanmto	   NUMBER;
  vr_aux_nrdconta	   NUMBER(10);
- vr_nrseqdig    	   craplot.nrseqdig%type;
  
  vr_tab_retorno  	   lanc0001.typ_reg_retorno;
  vr_aux_flgrespo       NUMBER;
@@ -30,41 +28,7 @@ begin
  vr_aux_NUPortdd2 := '202102230000178312158';
  vr_aux_nrispbif := '5463212';
  vr_aux_nrdconta := 180084;
- vr_aux_vllanmto := 14574.84;
- 
- vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT'
-                              ,pr_nmdcampo => 'NRSEQDIG'
-                              ,pr_dsdchave => to_char(13)||';'||
-                                              to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR')||';'||
-                                             '1;100;650012');
- 
- LANC0001.pc_gerar_lancamento_conta
-               ( pr_cdcooper => 13
-                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                ,pr_cdagenci => 1
-                ,pr_cdbccxlt => 100
-                ,pr_nrdolote => 650012
-                ,pr_nrdconta => vr_aux_nrdconta
-                ,pr_nrdctabb => vr_aux_nrdconta
-                ,pr_nrdocmto => 44492
-                ,pr_cdhistor => 1918 --> CRED TED PORT
-                ,pr_vllanmto => vr_aux_vllanmto
-                ,pr_nrseqdig => vr_nrseqdig
-                ,pr_cdpesqbb => 'CRED TED PORT'
-                ,pr_cdoperad => '1'
-                ,pr_hrtransa => gene0002.fn_busca_time
-                --> OUT <--
-                ,pr_tab_retorno => vr_tab_retorno
-                ,pr_incrineg => vr_incrineg           -- Indicador de crítica de negócio
-                ,pr_cdcritic => vr_cdcritic
-                ,pr_dscritic => vr_dscritic);
-				
- -- Se apresentou erro na geração do lançamento
-  IF TRIM(vr_dscritic) IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
-    RAISE vr_exc_erro;
-  END IF;				
- 
-   
+  
    -- Atualiza situacao da portabilidade para Concluida no JDCTC
    UPDATE tbepr_portabilidade
       SET dtliquidacao          = rw_crapdat.dtmvtolt,           -- Data da Liquidação
