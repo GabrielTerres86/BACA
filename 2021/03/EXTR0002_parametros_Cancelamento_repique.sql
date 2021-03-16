@@ -1,5 +1,6 @@
+BEGIN
 
-update crappco set dsconteu = dsconteu|| ',1230,1231,1232,1233,1234,2027'      where cdpartar = 31;
+ update crappco set dsconteu = dsconteu|| ',1230,1231,1232,1233,1234,2027'      where cdpartar = 31;
 
  INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)  VALUES('CRED', 1,'HORALIMITE_CNS_CANCEL', 'Horário limite Cancelamento Repique', '1170'); 
  INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)  VALUES('CRED',10,'HORALIMITE_CNS_CANCEL', 'Horário limite Cancelamento Repique', '1170');  
@@ -37,8 +38,9 @@ update crappco set dsconteu = dsconteu|| ',1230,1231,1232,1233,1234,2027'      w
  INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)  VALUES('CRED', 8,'HIST_CNS_CANCEL', 'Históricos de Cancelamento de Consórcio', ',1230,1231,1232,1233,1234,2027,');  
  INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)  VALUES('CRED', 9,'HIST_CNS_CANCEL', 'Históricos de Cancelamento de Consórcio', ',1230,1231,1232,1233,1234,2027,');  
 
-commit;
-
-
-
+ COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    dbms_output.put_line('Erro ao inserir registros na crapprm - '||sqlerrm);
+END;
 
