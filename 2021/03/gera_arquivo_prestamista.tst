@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-1039
+1075
 /*
 Preencher numero da proposta Icatu dos registros que não possuem
 */
@@ -262,6 +262,7 @@ declare
         vr_ultimoDia DATE;
         vr_pgtosegu  NUMBER;
         vr_vlprodvl  NUMBER;
+        vr_dtfimvig date;
         
         -- Declarando handle do Arquivo
         vr_ind_arquivo utl_file.file_type;
@@ -312,6 +313,7 @@ declare
                 ,p.dtdenvio
                 ,c.inprejuz
                 ,c.inliquid
+                ,ADD_MONTHS(c.dtmvtolt, c.qtpreemp)  dtfimctr
                 ,p.nrproposta
                 ,lpad(decode(p.cdcooper , 5,1, 7,2, 10,3,  11,4, 14,5, 9,6, 16,7, 2,8, 8,9, 6,10, 12,11, 13,12, 1,13  )   ,6,'0') cdcooperativa
                 ,SUM(p.vldevatu) over(partition by  p.cdcooper, p.nrcpfcgc ) saldo_cpf
@@ -452,16 +454,48 @@ declare
           vr_tpregist := rw_prestamista.tpregist;
           vr_cdapolic := rw_prestamista.cdapolic;
           vr_NRPROPOSTA := rw_prestamista.NRPROPOSTA;
-          vr_dtinivig := rw_prestamista.dtinivig;
+          vr_dtfimvig := rw_prestamista.dtfimvig;
           
           -- Se data de criacao do tbseg foi acima da data do ultimo emprestimo quer dizer que foi atraves de script 
           -- e a data de adesão deve estar com a data do emprestimo
-          if trunc(rw_prestamista.dtdevend) > rw_prestamista.data_emp and 
-             trunc(rw_prestamista.dtdevend) > to_date('01/03/2021','dd/mm/rrrr') then
+          if trunc(rw_prestamista.dtdevend) >= rw_prestamista.data_emp and 
+             trunc(rw_prestamista.dtdevend) >= to_date('01/03/2021','dd/mm/rrrr') then
             vr_dtdevend:= rw_prestamista.data_emp;
+            vr_dtinivig:= rw_prestamista.data_emp;
           else 
             vr_dtdevend := rw_prestamista.dtdevend;
+            if trunc(rw_prestamista.dtinivig) >= to_date('01/03/2021','dd/mm/rrrr') then
+              vr_dtinivig := rw_prestamista.data_emp;
+            else
+              vr_dtinivig := rw_prestamista.dtinivig;            
+            end if;
           end if;          
+          
+          -- verificar se foi nova adesao em marco, vamos mudar pra tipo de registro 1 e enviar somente em março
+          if trunc(vr_dtdevend) >= to_date('01/03/2021','dd/mm/rrrr') or nvl(vr_NRPROPOSTA,0) = 0 then
+            BEGIN
+            gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'update tbseg_prestamista set' ||
+                                                         ' tpregist = '||rw_prestamista.tpregist||
+                                                         ' where cdapolic = '||vr_cdapolic||';'); 
+              UPDATE tbseg_prestamista
+                 SET tpregist = 1
+               WHERE cdcooper = pr_cdcooper
+                 AND nrdconta = rw_prestamista.nrdconta
+                 AND nrctrseg = rw_prestamista.nrctrseg
+                 AND nrctremp = rw_prestamista.nrctremp
+                 AND cdapolic = vr_cdapolic;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_cdcritic := 0;
+                vr_dscritic := 'Erro ao atualizar tipo de registro(marco): ' || pr_cdcooper || ' - nrdconta' || rw_prestamista.nrdconta || ' - ' || SQLERRM;
+                RAISE vr_exc_saida;
+            END;                  
+            continue;
+          end if;          
+          
+          if rw_prestamista.dtfimvig is null then
+            vr_dtfimvig := rw_prestamista.dtfimctr;
+          end if;
           
           -- Validar Idade minima e Maxima
           -- Rotina responsavel por calcular a quantidade de anos e meses entre as datas
@@ -506,7 +540,6 @@ declare
             gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'update tbseg_prestamista set' ||
                                                          ' tpregist = '||rw_prestamista.tpregist||
                                                          ' where cdapolic = '||vr_cdapolic||';'); 
-
             -- cancelamento            
             vr_tpregist := 2;
             BEGIN 
@@ -559,7 +592,7 @@ declare
             vr_vltotenv := vr_vlsdatua; -- inicia novo totalizador
             
             -- Tratamento de valor maximo para quem tiver apenas 1 emprestimo acima do valor maximo
-            IF vr_vlenviad > vr_vlmaximo AND rw_prestamista.qtd_emp_cpf = 1 THEN
+            IF vr_vlenviad > vr_vlmaximo THEN
               vr_vlenviad := vr_vlmaximo; -- ate que o saldo fique abaixo do valor maximo enviamos o valor maximo   
                            
               vr_dscorpem := 'Ola, o contrato de emprestimo abaixo ultrapassou o valor limite maximo coberto pela seguradora, segue dados:<br /><br />
@@ -587,7 +620,7 @@ declare
           ELSE
             vr_vltotenv := vr_vltotenv + vr_vlsdatua;
             -- Tratamento de valor maximo para quem tiver mais que 1 emprestimo e o total deles ficam acima do valor maximo
-            IF vr_vltotenv > vr_vlmaximo and rw_prestamista.qtd_emp_cpf > 1 THEN
+            IF vr_vltotenv > vr_vlmaximo THEN
               vr_vlenviad := vr_vlmaximo - (vr_vltotenv - vr_vlsdatua); -- enviamos a diferença para preencher até o maximo
               
               vr_dscorpem := 'Ola, o contrato de emprestimo abaixo ultrapassou o valor limite maximo coberto pela seguradora, segue dados:<br /><br />
@@ -696,7 +729,7 @@ declare
           vr_linha_txt := vr_linha_txt || LPAD(nvl(to_char(rw_prestamista.tpcobran), ' '), 1, ' '); -- Tipo de Cobrança
           vr_linha_txt := vr_linha_txt || LPAD(replace(to_char(vr_vlenviad,'fm999999999999990d00'), ',', '.'), 30, 0); -- Valor do Saldo Devedor Atualizado
           vr_linha_txt := vr_linha_txt || LPAD(to_char(vr_ultimoDia, 'YYYY-MM-DD'), 10, 0); -- Data Referência para Cobrança
-          vr_linha_txt := vr_linha_txt || LPAD(to_char(rw_prestamista.dtfimvig, 'YYYY-MM-DD'), 10, 0); -- Data final de vigência contrato
+          vr_linha_txt := vr_linha_txt || LPAD(to_char(vr_dtfimvig, 'YYYY-MM-DD'), 10, 0); -- Data final de vigência contrato
           
           -- Opcionais nao enviados
           vr_linha_txt := vr_linha_txt || RPAD(' ', 20, ' '); -- Data/Hora Autorização ¿ SITEF
@@ -739,7 +772,7 @@ declare
           vr_tab_crrl815(vr_index_815).vlprodut := vr_vlprodvl;
           vr_tab_crrl815(vr_index_815).vlenviad := vr_vlenviad;
           vr_tab_crrl815(vr_index_815).vlsdeved := vr_vlsdeved;
-          vr_tab_crrl815(vr_index_815).dtinivig := rw_prestamista.dtinivig;
+          vr_tab_crrl815(vr_index_815).dtinivig := vr_dtinivig;
           vr_tab_crrl815(vr_index_815).dtrefcob := vr_ultimoDia;
           vr_tab_crrl815(vr_index_815).tpregist := rw_prestamista.tpregist;
           vr_tab_crrl815(vr_index_815).dsregist := vr_tipo_registro(vr_tpregist).tpregist;
@@ -754,6 +787,8 @@ declare
                                                        ',dtdevend = '||rw_prestamista.dtdevend||
                                                        ',dtrefcob = '||rw_prestamista.dtrefcob||
                                                        ',vlprodut = '||rw_prestamista.vlprodut||                                                                                                                                                                     
+                                                       ',dtfimvig = '||rw_prestamista.dtfimvig||        
+                                                       ',dtinivig = '||rw_prestamista.dtinivig||                                                                                                                      
                                                        ' where cdapolic = '||vr_cdapolic||';'); 
           
           BEGIN 
@@ -763,6 +798,8 @@ declare
                   ,dtdevend = vr_dtdevend
                   ,dtrefcob = vr_ultimoDia
                   ,vlprodut = vr_vlprodvl
+                  ,dtfimvig = vr_dtfimvig
+                  ,dtinivig = vr_dtinivig
              WHERE cdcooper = pr_cdcooper
                AND nrdconta = rw_prestamista.nrdconta
                AND nrctrseg = rw_prestamista.nrctrseg
@@ -1032,7 +1069,6 @@ begin
 
   :vr_dscritic := 'SUCESSO';
 
-
 EXCEPTION
   WHEN vr_excsaida then 
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;  
@@ -1044,7 +1080,7 @@ vr_dscritic
 1
 SUCESSO
 5
-7
+9
 vr_vlsdatua
 vr_vlsdeved
 rw_prestamista.nrdconta
@@ -1052,3 +1088,5 @@ vr_vlprodvl
 vr_vlenviad
 vr_vltotenv
 vr_nrdeanos
+rw_prestamista.dtfimvig
+rw_prestamista.dtfimctr
