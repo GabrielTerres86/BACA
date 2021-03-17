@@ -117,7 +117,7 @@ BEGIN
   -- caminho lab: '/progress/t0033567/usr/coop/cecred/log'
   -- caminho prd: '/usr/coop/cecred/log'
   gene0002.pc_clob_para_arquivo(pr_clob        => vr_clob
-                                , pr_caminho   => '/progress/t0033567/usr/coop/cecred/log'
+                                , pr_caminho   => '/usr/coop/cecred/log'
                                 , pr_arquivo   => 'bkp_inc0078210.craplau'
                                 , pr_des_erro  => vr_des_erro);
   --
