@@ -27,6 +27,8 @@ BEGIN
     END LOOP;
 
     UPDATE crapaca SET lstparam = lstparam || ',pr_qtdiamin,pr_qtdiamax,pr_cdlcrcpp,pr_cdlcrpos,pr_cdfincan,pr_idcarenc,pr_tptrrene,pr_flgfinta,pr_flglimcr,pr_flgcores,pr_nrmxreca,pr_nrmxcoca,pr_qtvalsim' WHERE nmdeacao = 'TAB089_ALTERAR';
+	
+	INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', 0, 'QT_COEFIC_PARC_RENCAN', 'Valor max para cálculo de Qtde Contratos x Opções de Parcelas', '66');
 
     COMMIT;
     dbms_output.put_line('Sucesso ao executar: ' || wk_rotina);
