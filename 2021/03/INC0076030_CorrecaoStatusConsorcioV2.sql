@@ -3,6 +3,7 @@ declare
   vr_texto_rollback VARCHAR2(32600);
   vr_nmarqbkp       VARCHAR2(100);
   vr_nmdireto       VARCHAR2(4000);
+  vr_rootmicros    VARCHAR2(5000);
   vr_qtd            INTEGER;
   vr_dscritic       crapcri.dscritic%TYPE;
   vr_exc_erro EXCEPTION;
@@ -69,7 +70,9 @@ declare
 
 BEGIN
 
-  vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => 3);
+  --vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => 3);
+  vr_rootmicros     := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
+  vr_nmdireto       := vr_rootmicros|| 'cpd/bacas';
   pc_valida_direto(pr_nmdireto => vr_nmdireto || '/INC0076030',
                    pr_dscritic => vr_dscritic);
 
