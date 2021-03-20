@@ -1,5 +1,5 @@
 declare
-  vr_nrseqrdr number/* := 2184*/;
+  vr_nrseqrdr number;
 BEGIN
 
   -- Criação dos acessos de novas telas
@@ -15,6 +15,11 @@ BEGIN
   insert into craprdr(nmprogra,dtsolici) 
                values('LIMITE',sysdate)
             returning nrseqrdr into vr_nrseqrdr;
+
+ INSERT INTO crapaca
+    (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+  VALUES
+    ('LISTAR_PRODUTOS','TELA_LIMITE','pc_lista_produtos','',vr_nrseqrdr);
 
   INSERT INTO crapaca
     (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
