@@ -18,6 +18,7 @@ declare
       (select count(*) from tbinss_agendamento_gps t where t.cdcooper = 1 and t.nrdconta = a.nrdconta and t.vltotal_gps = a.vllanaut and t.dtagendamento = a.dtmvtolt and t.dtdebito = a.dtdebito and t.dtpagamento is null) as inss
     from 
       craplau a 
+      join crapcop c on (a.cdcooper = c.cdcooper)
       join crapass b on (a.cdcooper = b.cdcooper and a.nrdconta = b.nrdconta) 
     where 
       a.cdhistor = 540 -- GPS
