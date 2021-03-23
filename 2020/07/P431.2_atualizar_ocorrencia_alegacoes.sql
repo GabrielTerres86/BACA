@@ -1,12 +1,12 @@
 BEGIN
 
   UPDATE CRAPOCO
-     SET DSOCORRE = 'Titulo DDA reconhecido pelo Pagador'
+     SET DSOCORRE = 'Titulo DDA reconhecido pelo pagador'
    WHERE CDOCORRE = 51
      AND CDDBANCO = 85;
 
   UPDATE CRAPOCO
-     SET DSOCORRE = 'Titulo DDA nao reconhecido pelo Pagador'
+     SET DSOCORRE = 'Titulo DDA nao reconhecido pelo pagador'
    WHERE CDOCORRE = 52
      AND CDDBANCO = 85;
 
