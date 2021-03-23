@@ -237,6 +237,7 @@ BEGIN
   COMMIT;
 EXCEPTION
   WHEN others THEN
-    ROLLBACk;
+    ROLLBACK;
+    raise_application_error(-20501, SQLERRM);
 END;
 /
