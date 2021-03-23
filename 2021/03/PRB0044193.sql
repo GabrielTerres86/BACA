@@ -235,5 +235,8 @@ BEGIN
   GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arqhandl_multa);
 
   COMMIT;
+EXCEPTION
+  WHEN others THEN
+    ROLLBACk;
 END;
 /
