@@ -1,5 +1,5 @@
 declare
-  vr_nrseqrdr number;
+  vr_nrseqrdr number/* := 2184*/;
 BEGIN
 
   -- Criação dos acessos de novas telas

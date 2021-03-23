@@ -30,10 +30,10 @@ begin
                                       values(V_IDPRM_LIMITE,2000000,100000);                                                                            
 
   insert into tbcc_parametriza_faixa_limite (idprm_limite,vlfaixa_ate,vlaumento_permitido)
-                                      values(V_IDPRM_LIMITE,999999999,150000);                                                                            
+                                      values(V_IDPRM_LIMITE,999999999,150000);        
 
   commit;
-
+									  
 end;  
 
 
