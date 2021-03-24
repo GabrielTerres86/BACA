@@ -2,9 +2,7 @@ declare
   vr_nrseqrdr number/* := 2184*/;
 BEGIN
 
-  insert into craprdr(nmprogra,dtsolici) 
-               values('ATENDA_LIMITE',sysdate)
-            returning nrseqrdr into vr_nrseqrdr;
+  select nrseqrdr into vr_nrseqrdr from craprdr where nmprogra = 'ATENDA';
 
  INSERT INTO crapaca
     (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
