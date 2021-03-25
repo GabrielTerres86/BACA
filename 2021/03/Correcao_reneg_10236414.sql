@@ -44,14 +44,3 @@ UPDATE crapepr SET cdlcremp = 15503 WHERE cdcooper = 1 AND nrdconta = 10236414 A
 COMMIT;
 END;
 
-/* Rollback 
-
-DELETE FROM tbepr_renegociacao_contrato WHERE cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 2836528 AND nrctrepr IN (1410231,1626777,2088639,2401396,2944170,2944175,2944200,2944205,3124455,3124463,3124475,3124479);
-
-UPDATE crapepr SET cdlcremp = 45503 WHERE cdcooper = 1 AND nrdconta = 10236414 AND nrctremp IN (2944170,2944175,2944200,2944205,3124455,3124463,3124475,3124479);
-UPDATE crapepr SET cdlcremp = 25503 WHERE cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 1410231;
-UPDATE crapepr SET cdlcremp = 25503 WHERE cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 1626777;
-UPDATE crapepr SET cdlcremp = 25503 WHERE cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 2088639;
-UPDATE crapepr SET cdlcremp = 25503 WHERE cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 2401396;
-
-*/
