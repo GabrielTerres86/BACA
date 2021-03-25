@@ -275,8 +275,6 @@ BEGIN
         vr_dscritic := 'Erro ao inserir na tabela TBCOBRAN_REMESSA_NPC. ' ||
                        sqlerrm;
                        
-        DBMS_OUTPUT.put_line(vr_dscritic);                       
-
         --> Gerar log para facilitar identificação de erros SD#769996
         BEGIN
           NPCB0001.pc_gera_log_npc( pr_cdcooper => rw_npc_reproc.cdcooper,
@@ -326,6 +324,14 @@ BEGIN
       UPDATE crapcob cob
       SET cob.inenvcip = 3
       WHERE ROWID = rw_crapcob.rowid;
+      
+      PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
+                                   ,pr_cdoperad => '1'
+                                   ,pr_dtmvtolt => SYSDATE
+                                   ,pr_dsmensag => 'Boleto registrado no Sistema Financeiro Nacional - Manual'
+                                   ,pr_des_erro => vr_des_erro
+                                   ,pr_dscritic => vr_dscritic);
+      
 
     EXCEPTION
       WHEN Others THEN
@@ -334,7 +340,6 @@ BEGIN
         vr_dscritic := 'Erro ao atualizar na tabela CRAPCOB. ' ||
                        sqlerrm;
                        
-        DBMS_OUTPUT.put_line(vr_dscritic);                       
 
         --> Gerar log para facilitar identificação de erros SD#769996
         BEGIN
