@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-1075
+1133
 /*
 Preencher numero da proposta Icatu dos registros que não possuem
 */
@@ -112,6 +112,107 @@ declare
       --Escrever no arquivo CLOB
       dbms_lob.writeappend(vr_des_xml,length(pr_des_dados),pr_des_dados);
  END pc_escreve_xml;
+ 
+ procedure pc_verifica_proposta(pr_cdcritic out pls_integer
+                               ,pr_dscritic out varchar2) is
+ begin
+   declare
+     -- verificar propsotas duplicadas
+     cursor cr_proposta is
+     select a.nrproposta, count(a.nrproposta) qtd
+       from tbseg_prestamista a 
+      where a.tpregist in(1, 3)
+         group by a.nrproposta
+      having count(1) > 1;
+      
+      -- percorrer as propsota duplicadas
+      cursor cr_tbseg_prestamista (pr_nrproposta varchar2) is
+      select *
+        from tbseg_prestamista a
+       where a.nrproposta = pr_nrproposta;
+       
+     vr_nrproposta varchar2(15);        
+     -- Variaveis
+     vr_exc_saida           EXCEPTION;
+   begin
+   
+     for rw_proposta in cr_proposta loop
+        
+       FOR rw_tbseg_prestamista IN cr_tbseg_prestamista(pr_nrproposta => rw_proposta.nrproposta) LOOP
+
+         SELECT SEGU0003.FN_NRPROPOSTA() INTO vr_nrproposta  FROM DUAL; 
+               
+           gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'update tbseg_prestamista set nrproposta = '||vr_nrproposta 
+                                                      ||' where cdcooper = '||rw_tbseg_prestamista.cdcooper
+                                                      ||' and nrdconta = ' ||rw_tbseg_prestamista.nrdconta
+                                                      ||' and nrctremp = ' ||rw_tbseg_prestamista.nrctremp||';');
+         
+          begin            
+            update tbseg_prestamista g 
+               set g.nrproposta = vr_nrproposta
+             where g.cdcooper = rw_tbseg_prestamista.cdcooper
+               and g.nrdconta = rw_tbseg_prestamista.nrdconta
+               and g.nrctremp = rw_tbseg_prestamista.nrctremp;
+          exception
+            when others then
+              vr_dscritic:= 'Erro ao gravar numero de proposta 1: '||vr_nrproposta||' - '||sqlerrm;
+              raise vr_excsaida;              
+          end;
+          
+           gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'update crawseg set nrproposta = '||vr_nrproposta 
+                                                      ||' where cdcooper = '||rw_tbseg_prestamista.cdcooper
+                                                      ||' and nrdconta = ' ||rw_tbseg_prestamista.nrdconta
+                                                      ||' and nrctremp = ' ||rw_tbseg_prestamista.nrctremp||';');
+           
+          begin            
+            update crawseg g 
+               set g.nrproposta = vr_nrproposta
+             where g.cdcooper = rw_tbseg_prestamista.cdcooper
+               and g.nrdconta = rw_tbseg_prestamista.nrdconta
+               and g.nrctrato = rw_tbseg_prestamista.nrctremp;      
+          exception
+            when others then
+              vr_dscritic:= 'Erro ao gravar numero de proposta 2: '||vr_nrproposta||' - '||sqlerrm;
+              raise vr_exc_saida;                
+          end;
+          
+          -- Gravar data da utilização da proposta para que nao utilize mais o mesmo numero
+          begin
+            UPDATE TBSEG_NRPROPOSTA 
+               SET DTSEGURO = SYSDATE 
+             WHERE NRPROPOSTA = vr_nrproposta; 
+          exception
+            when others then
+              vr_dscritic:= 'Erro ao atualizar numero de TBSEG_NRPROPOSTA: '||vr_nrproposta||' - '||sqlerrm;
+              raise vr_exc_saida;              
+          end;
+         commit;
+       end loop;
+     end loop;
+   exception
+     WHEN vr_exc_saida THEN
+        -- Se foi retornado apenas código
+        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+          -- Buscar a descrição
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        
+        pr_dscritic := vr_dscritic || SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+          
+        ROLLBACK;
+     when others then
+        -- Se foi retornado apenas código
+        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+          -- Buscar a descrição
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+        
+        pr_dscritic := vr_dscritic || SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+          
+        ROLLBACK;
+   end;  
+   
+ end pc_verifica_proposta;
  
  PROCEDURE pc_atualiza_tabela(pr_cdcooper IN crapcop.cdcooper%TYPE
                                 ,pr_cdcritic OUT PLS_INTEGER
@@ -488,8 +589,8 @@ declare
               WHEN OTHERS THEN
                 vr_cdcritic := 0;
                 vr_dscritic := 'Erro ao atualizar tipo de registro(marco): ' || pr_cdcooper || ' - nrdconta' || rw_prestamista.nrdconta || ' - ' || SQLERRM;
-                RAISE vr_exc_saida;
-            END;                  
+                RAISE vr_exc_saida; 
+            END;               
             continue;
           end if;          
           
@@ -529,7 +630,7 @@ declare
               WHEN OTHERS THEN
                 vr_cdcritic := 0;
                 vr_dscritic := 'Erro ao atualizar tipo de registro(idade): ' || pr_cdcooper || ' - nrdconta' || rw_prestamista.nrdconta || ' - ' || SQLERRM;
-                RAISE vr_exc_saida;
+                RAISE vr_exc_saida; 
             END;                  
             continue;
           end if;
@@ -593,26 +694,8 @@ declare
             
             -- Tratamento de valor maximo para quem tiver apenas 1 emprestimo acima do valor maximo
             IF vr_vlenviad > vr_vlmaximo THEN
-              vr_vlenviad := vr_vlmaximo; -- ate que o saldo fique abaixo do valor maximo enviamos o valor maximo   
-                           
-              vr_dscorpem := 'Ola, o contrato de emprestimo abaixo ultrapassou o valor limite maximo coberto pela seguradora, segue dados:<br /><br />
-                              Cooperativa: ' || vr_nmrescop || '<br />
-                              Conta: '       || rw_prestamista.nrdconta || '<br />
-                              Nome: '        || rw_prestamista.nmprimtl || '<br />
-                              Contrato Empréstimo: '|| rw_prestamista.nrctremp || '<br />
-                              Proposta seguro: '    || rw_prestamista.nrctrseg || '<br />
-                              Valor Empréstimo: '   || rw_prestamista.vldevatu || '<br />
-                              Valor saldo devedor total: '|| vr_vlsdeved || '<br />
-                              Valor Limite Máximo: ' || vr_vlmaximo;
-              
-              -- Envia email
-              gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra,
-                                         pr_des_destino => vr_destinatario_email,
-                                         pr_des_assunto => 'Valor limite maximo excedido ',
-                                         pr_des_corpo   => vr_dscorpem,
-                                         pr_des_anexo   => NULL,
-                                         pr_flg_enviar  => 'S',
-                                         pr_des_erro    => vr_dscritic); 
+              vr_vlenviad := vr_vlmaximo; -- ate que o saldo fique abaixo do valor maximo enviamos o valor maximo                            
+  
               IF vr_vlenviad <= 0 THEN
                 continue;
               END IF;                         
@@ -623,24 +706,6 @@ declare
             IF vr_vltotenv > vr_vlmaximo THEN
               vr_vlenviad := vr_vlmaximo - (vr_vltotenv - vr_vlsdatua); -- enviamos a diferença para preencher até o maximo
               
-              vr_dscorpem := 'Ola, o contrato de emprestimo abaixo ultrapassou o valor limite maximo coberto pela seguradora, segue dados:<br /><br />
-                              Cooperativa: ' || vr_nmrescop || '<br />
-                              Conta: '       || rw_prestamista.nrdconta || '<br />
-                              Nome: '        || rw_prestamista.nmprimtl || '<br />
-                              Contrato Empréstimo: '|| rw_prestamista.nrctremp || '<br />
-                              Proposta seguro: '    || rw_prestamista.nrctrseg || '<br />
-                              Valor Empréstimo: '   || rw_prestamista.vldevatu || '<br />
-                              Valor saldo devedor total: '|| vr_vlsdeved || '<br />
-                              Valor Limite Máximo: ' || vr_vlmaximo;
-              
-              -- Envia email
-              gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra,
-                                         pr_des_destino => vr_destinatario_email,
-                                         pr_des_assunto => 'Valor limite maximo excedido ',
-                                         pr_des_corpo   => vr_dscorpem,
-                                         pr_des_anexo   => NULL,
-                                         pr_flg_enviar  => 'S',
-                                         pr_des_erro    => vr_dscritic); 
               IF vr_vlenviad <= 0 THEN
                 continue;
               END IF;
@@ -671,11 +736,11 @@ declare
                           LPAD(to_char(rw_prestamista.dtnasctl, 'YYYY-MM-DD'), 10, 0); -- Data Nascimento
           vr_linha_txt := vr_linha_txt || LPAD(rw_prestamista.cdsexotl, 2, 0); -- Sexo
           vr_linha_txt := vr_linha_txt ||
-                          RPAD(UPPER(gene0007.fn_caract_especial(rw_prestamista.dsendres)), 60, ' '); -- Endereço
+                          RPAD(UPPER(gene0007.fn_caract_especial(nvl(rw_prestamista.dsendres,' '))), 60, ' '); -- Endereço
           vr_linha_txt := vr_linha_txt ||
-                          RPAD(UPPER(gene0007.fn_caract_especial(rw_prestamista.nmbairro)), 30, ' '); -- Bairro
+                          RPAD(UPPER(gene0007.fn_caract_especial(nvl(rw_prestamista.nmbairro,' '))), 30, ' '); -- Bairro
           vr_linha_txt := vr_linha_txt ||
-                          RPAD(UPPER(gene0007.fn_caract_especial(rw_prestamista.nmcidade)), 30, ' '); -- Cidade
+                          RPAD(UPPER(gene0007.fn_caract_especial(nvl(rw_prestamista.nmcidade,' '))), 30, ' '); -- Cidade
           vr_linha_txt := vr_linha_txt || RPAD(nvl(to_char(rw_prestamista.cdufresd), ' '),2,' '); -- UF
           vr_linha_txt := vr_linha_txt || RPAD(gene0002.fn_mask(rw_prestamista.nrcepend, 'zzzzz-zz9'), 10, ' '); -- CEP
           
@@ -774,7 +839,7 @@ declare
           vr_tab_crrl815(vr_index_815).vlsdeved := vr_vlsdeved;
           vr_tab_crrl815(vr_index_815).dtinivig := vr_dtinivig;
           vr_tab_crrl815(vr_index_815).dtrefcob := vr_ultimoDia;
-          vr_tab_crrl815(vr_index_815).tpregist := rw_prestamista.tpregist;
+          vr_tab_crrl815(vr_index_815).tpregist := vr_tpregist;
           vr_tab_crrl815(vr_index_815).dsregist := vr_tipo_registro(vr_tpregist).tpregist;
           -- adesao seta o proximo como endosso e a proxima execucao trata se sera cancelamento
           IF vr_tpregist = 1 THEN 
@@ -882,14 +947,6 @@ declare
                                  pr_nmarqlog           => NULL,
                                  pr_idprglog           => vr_idprglog);
 
-          -- Por fim, envia o email
-          gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra,
-                                     pr_des_destino => vr_destinatario_email,
-                                     pr_des_assunto => 'ERRO NA EXECUCAO DO PROGRAMA '|| vr_cdprogra,
-                                     pr_des_corpo   => pr_dscritic,
-                                     pr_des_anexo   => NULL,
-                                     pr_flg_enviar  => 'S',
-                                     pr_des_erro    => vr_dscritic); 
         WHEN OTHERS THEN
           -- Efetuar retorno do erro não tratado
           vr_dscritic := SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
@@ -909,14 +966,6 @@ declare
                                  pr_nmarqlog           => NULL,
                                  pr_destinatario_email => vr_destinatario_email,
                                  pr_idprglog           => vr_idprglog);
-          -- Por fim, envia o email
-          gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra,
-                                     pr_des_destino => vr_destinatario_email,
-                                     pr_des_assunto => 'ERRO NA EXECUCAO DO PROGRAMA '|| vr_cdprogra,
-                                     pr_des_corpo   => pr_dscritic,
-                                     pr_des_anexo   => NULL,
-                                     pr_flg_enviar  => 'S',
-                                     pr_des_erro    => vr_dscritic); 
       END;
     END pc_gera_arquivo_coop;
  
@@ -932,6 +981,15 @@ begin
   IF vr_dscritic IS NOT NULL THEN        
     RAISE vr_excsaida;
   END IF;
+  
+  --- Verificar propostas duplicadas
+  pc_verifica_proposta(pr_cdcritic => vr_cdcritic
+                      ,pr_dscritic => vr_dscritic);
+                         
+  if trim(vr_dscritic) is not null then
+     vr_dscritic:= 'Erro pc_verifica_proposta: '||vr_dscritic;
+     raise vr_excsaida;           
+  end if;   
   
   for rw_crapcop in cr_crapcop loop
        
@@ -1061,7 +1119,7 @@ begin
         dbms_lob.freetemporary(vr_des_xml);
      
      -- Commit a cada cooperativa
-     commit;
+     commit; 
   end loop;  
   
   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'commit;');
@@ -1080,7 +1138,7 @@ vr_dscritic
 1
 SUCESSO
 5
-9
+11
 vr_vlsdatua
 vr_vlsdeved
 rw_prestamista.nrdconta
@@ -1090,3 +1148,5 @@ vr_vltotenv
 vr_nrdeanos
 rw_prestamista.dtfimvig
 rw_prestamista.dtfimctr
+vr_NRPROPOSTA
+vr_linha_txt
