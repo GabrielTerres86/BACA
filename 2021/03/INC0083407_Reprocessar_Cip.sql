@@ -42,7 +42,6 @@ BEGIN
          AND (cob.idtitleg, cob.idopeleg) IN
              ((50014761, 90293421)
 			,(50013495,	90648358)
-			,(50014761,	90293421)
 			,(50047737,	90333183)
 			,(50047735,	90333181)
 			,(50047786,	90333233)
@@ -55,6 +54,7 @@ BEGIN
 			,(50047788,	90333235)
 			,(50047784,	90333231)
 			,(50047785,	90333232)			 
+      ,(50314024, 90757427)          
              )  )  )   LOOP
     /* Gera um novo idopeleg e cria o registro na tabela responsável pelo processamentos*/                      
     --
