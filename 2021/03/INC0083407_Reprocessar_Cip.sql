@@ -40,21 +40,8 @@ BEGIN
          AND cob.inenvcip = 2 -- enviado
          AND cob.dtvencto >= TO_DATE(SYSDATE, 'DD/MM/YYYY')
          AND (cob.idtitleg, cob.idopeleg) IN
-             ((50014761, 90293421)
-			,(50013495,	90648358)
-			,(50047737,	90333183)
-			,(50047735,	90333181)
-			,(50047786,	90333233)
-			,(50047736,	90333182)
-			,(50047787,	90333234)
-			,(50047734,	90333180)
-			,(50047738,	90333184)
-			,(50047739,	90333185)
-			,(50047789,	90333236)
-			,(50047788,	90333235)
-			,(50047784,	90333231)
-			,(50047785,	90333232)			 
-      ,(50314024, 90757427)          
+            ((50014761, 90293421)
+            ,(50314024, 90757427)         
              )  )  )   LOOP
     /* Gera um novo idopeleg e cria o registro na tabela responsável pelo processamentos*/                      
     --
@@ -310,6 +297,58 @@ BEGIN
   END LOOP;
   
   --
+  COMMIT;
+  --
+  /*Seleciona os títulos que necessitam atualizar somente a situação de atualização no legado, pois ja estão registrados na CIP */ 
+  FOR rw_crapcob IN (
+                  SELECT cob.rowid
+                  ,cob.*
+                  FROM crapcob cob
+                  WHERE 1=1
+                  AND cob.incobran = 0 -- aberto
+                  AND cob.inenvcip = 2 -- enviado
+                  AND cob.dtvencto >= TO_DATE(SYSDATE, 'DD/MM/YYYY')
+                  AND (cob.idtitleg, cob.idopeleg) IN
+                  ((50047735, 90333181)
+                  ,(50047736, 90333182)
+                  ,(50047737, 90333183)
+                  ,(50047738, 90333184)
+                  ,(50047739, 90333185)
+                  ,(50047784, 90333231)
+                  ,(50047785, 90333232)
+                  ,(50047786, 90333233)
+                  ,(50047787, 90333234)
+                  ,(50047789, 90333236)
+             )  )     LOOP
+    --
+    BEGIN
+      /*Atualiza crapcob com o novo idopeleg*/
+      UPDATE crapcob cob
+      SET cob.inenvcip = 3
+      WHERE ROWID = rw_crapcob.rowid;
+
+    EXCEPTION
+      WHEN Others THEN
+
+        vr_cdcritic := 0;
+        vr_dscritic := 'Erro ao atualizar na tabela CRAPCOB. ' ||
+                       sqlerrm;
+                       
+        DBMS_OUTPUT.put_line(vr_dscritic);                       
+
+        --> Gerar log para facilitar identificação de erros SD#769996
+        BEGIN
+          NPCB0001.pc_gera_log_npc( pr_cdcooper => rw_crapcob.cdcooper,
+                                    pr_nmrotina => 'Baca - Update CRAPCOB',
+                                    pr_dsdolog  => 'IdTitleg:'||rw_crapcob.idtitleg||'-'||vr_dscritic);
+        EXCEPTION
+          WHEN OTHERS THEN
+            NULL;
+        END; 
+        --        
+    END;
+  END LOOP;
+    
   COMMIT;
   
 END;
