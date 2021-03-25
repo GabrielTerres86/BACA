@@ -1109,6 +1109,11 @@ BEGIN
 
   END;
   
+  BEGIN
+	insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+	values ('CRED', 3, 'DT_VIGENCIA_BINS_AFINS', 'Data de vigência de inicio das atividades com os novos BINS e Grupos Afinidade', '01/05/2021');
+  END;
+  
   COMMIT;
 
 END;
