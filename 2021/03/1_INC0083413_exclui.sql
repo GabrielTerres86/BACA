@@ -13,17 +13,7 @@ BEGIN
     DELETE tbepr_consig_movimento_tmp
     WHERE  idseqmov = rw_tcmt.idseqmov;
 
-/*
-    dbms_output.put_line('idseqmov:'       || rw_tcmt.idseqmov       || ' ' ||
-                         'cdcooper:'       || rw_tcmt.CDCOOPER       || ' ' ||
-                         'nrdconta:'       || rw_tcmt.NRDCONTA       || ' ' ||
-                         'nrctremp:'       || rw_tcmt.NRCTREMP       || ' ' ||
-                         'nrparcela:'      || rw_tcmt.NRPARCELA      || ' ' ||
-                         'vldebito:'       || rw_tcmt.VLDEBITO       || ' ' ||
-                         'vlcredito:'      || rw_tcmt.VLCREDITO      || ' ' ||
-                         'intplancamento:' || rw_tcmt.INTPLANCAMENTO || ' ' ||
-                         'instatusproces:' || rw_tcmt.INSTATUSPROCES);
-*/                       
+    commit;
   END LOOP;
 EXCEPTION
   WHEN others THEN
