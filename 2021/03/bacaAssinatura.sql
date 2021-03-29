@@ -29,6 +29,8 @@ insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 values ('EXCL_PROPOSTA_ASSELE', 'TELA_ASSELE', 'pc_excluir_proposta', 'pr_idenvass', v_nrseqrdr);
 insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
 values ('GRAVA_CODIGO_DOCUMENTO', 'TELA_ASSELE', 'pc_grava_codigo_documento', 'pr_idenvass,pr_cddoc', v_nrseqrdr);
+insert into ged.tbged_assina_conf (CDTOKEN, CDKEY, CDCOOPER, CDCONFIG, CDHMAC, CDUUIDCOF)
+values ('live_3f5ba0c1db00863b1840d02fee83969839fc00de69829b2b5105d88174af5a9e', 'live_crypt_s8dm2Ebq59Lcf4LkHSYxKaazCS1Y6BxO', 1, 1, '34e54a8acdcbc8476178e5a92da7b12ffec2beaa7824106790cd15e316758d6f', 'fa8d0de5-3003-497c-abc0-2b444b749053');
 
 commit;
 end;
