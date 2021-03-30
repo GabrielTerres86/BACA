@@ -12,7 +12,7 @@ begin
                                       values(V_IDPRM_LIMITE,10000,5000);
                                       
   insert into tbcc_parametriza_faixa_limite (idprm_limite,vlfaixa_ate,vlaumento_permitido)
-                                      values(V_IDPRM_LIMITE,50000,10000);
+                                      values(V_IDPRM_LIMITE,50000,15000);
                                       
   insert into tbcc_parametriza_faixa_limite (idprm_limite,vlfaixa_ate,vlaumento_permitido)
                                       values(V_IDPRM_LIMITE,100000,20000);
@@ -30,10 +30,9 @@ begin
                                       values(V_IDPRM_LIMITE,2000000,100000);                                                                            
 
   insert into tbcc_parametriza_faixa_limite (idprm_limite,vlfaixa_ate,vlaumento_permitido)
-                                      values(V_IDPRM_LIMITE,999999999,150000);        
+                                      values(V_IDPRM_LIMITE,999999999,200000);     
 
-  commit;
-									  
+  COMMIT;									  
 end;  
 
 
