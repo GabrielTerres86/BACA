@@ -25,7 +25,9 @@ DECLARE
                 ON l.cdcooper = e.cdcooper
                AND l.nrdconta = e.nrdconta
                AND l.nrctremp = e.nrctremp
-and (e.cdcooper, e.nrdconta, e.nrctremp) in ( (1, 9194371, 1864021)
+and (e.cdcooper, e.nrdconta, e.nrctremp) in ( ( 1, 9194371, 1864021)
+                                             ,(13,  294209,   66954)
+                                             ,(13,  349267,   81219)
                                             )
               JOIN craphis   h
                 ON h.cdcooper = l.cdcooper
