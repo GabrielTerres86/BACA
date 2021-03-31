@@ -89,12 +89,12 @@ DECLARE
 BEGIN
   vr_nmdireto := gene0001.fn_param_sistema('CRED', 0, 'ROOT_MICROS');
   -- Primeiro criamos o diretorio da RITM, dentro de um diretorio ja existente
-  pc_valida_direto(pr_nmdireto => vr_nmdireto || 'INC0084761_GRV', pr_dscritic => vr_dscritic);
+  pc_valida_direto(pr_nmdireto => vr_nmdireto || 'cpd/bacas/INC0084761_GRV', pr_dscritic => vr_dscritic);
 
   IF TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exc_erro;
   END IF;
-  vr_nmdireto       := vr_nmdireto || 'INC0084761_GRV/';
+  vr_nmdireto       := vr_nmdireto || 'cpd/bacas/INC0084761_GRV';
   vr_nmarqbkp       := 'ROLLBACK_INC0084761_GRV_' || to_char(SYSDATE, 'ddmmyyyy_hh24miss') || '.sql';
   vr_dados_rollback := NULL;
   dbms_lob.createtemporary(vr_dados_rollback, TRUE, dbms_lob.CALL);
