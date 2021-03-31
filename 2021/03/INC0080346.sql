@@ -2,21 +2,14 @@
 declare
 
 cursor cr_cntrs_jrem is
-select distinct epr.*
-  from craplem lem
-      ,crapepr epr
-      ,craphis his
-      ,crapcop coop
- where lem.cdcooper = epr.cdcooper
-   and lem.nrdconta = epr.nrdconta
-   and lem.nrctremp = epr.nrctremp
-   and lem.cdcooper = his.cdcooper
-   and lem.cdhistor = his.cdhistor
-   and lem.cdcooper = coop.cdcooper
-   and epr.vlsdeved > 0
-   and epr.inliquid = 1
-   and epr.inprejuz = 0
-   and lem.dtmvtolt > epr.dtliquid;
+select epr.cdcooper
+       ,epr.nrdconta
+       ,epr.nrctremp
+  from crapepr epr
+ where epr.tpemprst = 1
+   AND epr.inliquid = 1
+   AND epr.inprejuz = 0
+   AND epr.vlsdeved > 0;
    
    cts_jrem cr_cntrs_jrem%rowtype;
    linhas number;  
