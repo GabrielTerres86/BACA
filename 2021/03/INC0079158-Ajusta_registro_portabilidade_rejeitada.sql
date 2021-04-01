@@ -3,7 +3,7 @@ BEGIN
   UPDATE tbcc_portabilidade_recebe
      SET idsituacao         = 5 -- Cancelada
         , cdoperador        = 1
-        , dtavaliacao       = to_date('31/03/2021', 'dd/mm/rrrr')
+        , dtavaliacao       = to_date('06/02/2019', 'dd/mm/rrrr')
   WHERE nrnu_portabilidade = 201812210000078066701;
   -- 
   -- Eliminar o log do erro.
