@@ -35,7 +35,13 @@ and (e.cdcooper, e.nrdconta, e.nrctremp) in ( ( 1, 9194371, 1864021)
              WHERE e.tpemprst = 1
                AND e.tpdescto = 2
 --               AND e.dtliquid is not null
-               AND l.cdhistor  IN (1040, 1041 )   -- IOF
+               AND l.cdhistor NOT IN (
+                       1047, 1076     -- Multa
+                      ,1540, 1618     -- Multa Aval
+                      ,1077, 1078     -- Juros de Mora
+                      ,1619, 1620     -- Juros de Mora Aval
+                      ,1048           -- Desconto
+                      ,2311, 2312 )   -- IOF
     HAVING SUM(CASE WHEN h.indebcre = 'C' THEN -l.vllanmto
                             WHEN h.indebcre = 'D' THEN l.vllanmto
                        END) <> 0
