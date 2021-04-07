@@ -192,7 +192,7 @@ declare
      cursor cr_proposta is
      select a.nrproposta, count(a.nrproposta) qtd
        from tbseg_prestamista a 
-      where a.tpregist in(1, 3)
+      where a.tpregist in(1,2,3)
          group by a.nrproposta
       having count(1) > 1;
       
