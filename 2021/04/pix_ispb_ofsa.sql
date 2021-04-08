@@ -42,6 +42,13 @@ CURSOR cr_teds IS
        AND a.CDBCCXLT_RECEBEDOR = 0
        AND a.IDISPB_RECEBEDOR != 0;
 
+CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
+			   ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+	SELECT ass.nrcpfcgc
+	  FROM crapass ass
+	 WHERE ass.cdcooper = pr_cdcooper
+	   AND ass.nrdconta = pr_nrdconta;
+
   rw_crapass cr_crapass%ROWTYPE;
   
 BEGIN
@@ -141,5 +148,5 @@ BEGIN
   -- Liberando a memória alocada pro CLOB
   dbms_lob.close(vr_texto_carga);
   dbms_lob.freetemporary(vr_texto_carga);
-
+  commit;
 end;
