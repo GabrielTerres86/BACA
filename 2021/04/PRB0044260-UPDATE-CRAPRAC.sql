@@ -1,3 +1,9 @@
+UPDATE craprac 
+SET idsaqtot = 1
+ WHERE cdcooper = 7 
+   and nrdconta = 214299
+   and nraplica = 31;
+
 UPDATE craprac
 SET idsaqtot = 1
 WHERE cdcooper = 1
@@ -199,13 +205,6 @@ SET idsaqtot = 1
 WHERE cdcooper = 5
   AND nrdconta = 201804
   AND nraplica = 9 ;
-
-
-UPDATE craprac
-SET idsaqtot = 1
-WHERE cdcooper = 7
-  AND nrdconta = 214299
-  AND nraplica = 31 ;
 
 
 UPDATE craprac
