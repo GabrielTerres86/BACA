@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-1247
+1301
 declare 
   vr_nrproposta varchar2(30);
   vr_excsaida EXCEPTION;  
@@ -576,7 +576,56 @@ declare
              AND c.nrctremp = p.nrctremp
              and p.dtdenvio = to_date('01/04/2021','DD/MM/RRRR')
              AND p.tpregist in(2, 3)
-             ORDER BY p.nrcpfcgc ASC, p.cdapolic;
+             union all
+             SELECT p.idseqtra
+                ,p.cdcooper
+                ,p.nrdconta
+                ,p.nrctrseg
+                ,p.tpregist
+                ,p.cdapolic
+                ,p.nrcpfcgc
+                ,p.nmprimtl
+                ,p.dtnasctl
+                ,p.cdsexotl
+                ,p.dsendres
+                ,p.dsdemail
+                ,p.nmbairro
+                ,p.nmcidade
+                ,p.cdufresd
+                ,p.nrcepend
+                ,p.nrtelefo
+                ,p.dtdevend
+                ,p.dtinivig
+                ,p.nrctremp
+                ,p.cdcobran
+                ,p.cdadmcob
+                ,p.tpfrecob
+                ,p.tpsegura
+                ,p.cdprodut
+                ,p.cdplapro
+                ,p.vlprodut
+                ,p.tpcobran
+                ,p.vlsdeved
+                ,p.vldevatu
+                ,p.dtrefcob
+                ,p.dtfimvig
+                ,p.dtdenvio
+                ,c.inprejuz
+                ,c.inliquid
+                ,ADD_MONTHS(c.dtmvtolt, c.qtpreemp)  dtfimctr
+                ,p.nrproposta
+                ,lpad(decode(p.cdcooper , 5,1, 7,2, 10,3,  11,4, 14,5, 9,6, 16,7, 2,8, 8,9, 6,10, 12,11, 13,12, 1,13  )   ,6,'0') cdcooperativa
+                ,SUM(p.vldevatu) over(partition by  p.cdcooper, p.nrcpfcgc ) saldo_cpf
+                ,count(p.nrcpfcgc) over(partition by  p.cdcooper, p.nrcpfcgc ) qtd_emp_cpf
+                ,(select max(e.dtmvtolt) from crapepr e where e.cdcooper = p.cdcooper and e.nrdconta = p.nrdconta and e.inliquid = 0) data_emp
+            FROM tbseg_prestamista p, crapepr c
+           WHERE p.cdcooper = pr_cdcooper
+             and p.cdcooper = 16
+             and p.nrcpfcgc = 91849110930
+             AND c.cdcooper = p.cdcooper
+             AND c.nrdconta = p.nrdconta
+             AND c.nrctremp = p.nrctremp
+             ORDER BY nrcpfcgc ASC, cdapolic;
         rw_prestamista cr_prestamista%ROWTYPE;
                 
       BEGIN
@@ -793,6 +842,11 @@ declare
              end if;
           end if;        
           
+          if rw_prestamista.nrcpfcgc = 91849110930 then
+            vr_vlsdatua:= rw_prestamista.vlsdeved;
+            vr_tpregist:= 1;
+          end if;
+          
           -- controla o cpf para agrupar os valores enviados
           IF vr_contrcpf IS NULL OR vr_contrcpf <> rw_prestamista.nrcpfcgc THEN 
             vr_contrcpf := rw_prestamista.nrcpfcgc; -- novo cpf do loop
@@ -973,7 +1027,7 @@ declare
           BEGIN 
             UPDATE tbseg_prestamista
                SET tpregist = vr_tpregist
-                --  ,dtdenvio = vr_dtmvtolt
+                  ,dtdenvio = to_date('01/04/2021','DD/MM/RRRR')
                   ,dtdevend = vr_dtdevend
                   ,dtrefcob = vr_ultimoDia
                   ,vlprodut = vr_vlprodvl
