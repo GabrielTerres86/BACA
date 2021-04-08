@@ -23,24 +23,23 @@ declare
 
 CURSOR cr_teds IS
   SELECT DISTINCT decode(a.TPPESSOA_PAGADOR,1,lpad(a.NRCPF_CNPJ_PAGADOR,11,'0'),lpad(a.NRCPF_CNPJ_PAGADOR,14,'0')) CNPJ_CPFCLIDEBTD
-         , decode(a.TPPESSOA_RECEBEDOR,1,lpad(a.NRCPF_CNPJ_RECEBEDOR,11,'0'),lpad(a.NRCPF_CNPJ_RECEBEDOR,14,'0')) CNPJ_CPFCLICREDTD
-         , a.IDISPB_RECEBEDOR ISPBFICREDTD
-         , TO_CHAR(a.NRAGENCIA_RECEBEDOR) AGCREDTD
-         , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') START_DT
-         , to_char(to_date('31/12/2999', 'DD/MM/RRRR'), 'RRRR-MM-DD"T"HH24:MI:SS') END_DT
-         , 0 SCORE
-         , 'Carga sistema' CMMNTS
-         , 'Approved' STATUS
-         , 'OFSADMN' MODIFIED_BY
-         , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') MODIFIED_DT
-         , 'OFSADMN' APPROVED_BY
-         , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') APPROVED_DT
-      FROM tbpix_transacao a
-     WHERE a.IDTIPO_TRANSACAO = 'P'
-       AND a.IDSITUACAO = 'P'
-       AND a.DHTRANSACAO BETWEEN ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -18) AND SYSDATE
-       AND a.CDBCCXLT_RECEBEDOR = 0
-       AND a.IDISPB_RECEBEDOR != 0;
+	   , decode(a.TPPESSOA_RECEBEDOR,1,lpad(a.NRCPF_CNPJ_RECEBEDOR,11,'0'),lpad(a.NRCPF_CNPJ_RECEBEDOR,14,'0')) CNPJ_CPFCLICREDTD
+	   , a.IDISPB_RECEBEDOR CDT_ISPB_ID
+	   , TO_CHAR(a.NRCONTA_RECEBEDOR) CTCREDTD
+	   , 'Approved' STATUS
+	   , 'OFSADMN' MODIFIED_BY
+	   , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') MODIFIED_DT
+	   , 'OFSADMN' APPROVED_BY
+	   , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') APPROVED_DT
+	   , 'Carga sistema' CMMNTS
+	   , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') START_DT
+	   , to_char(to_date('31/12/2999', 'DD/MM/RRRR'), 'RRRR-MM-DD"T"HH24:MI:SS') END_DT
+	FROM tbpix_transacao a
+   WHERE a.IDTIPO_TRANSACAO = 'P'
+	 AND a.IDSITUACAO = 'P'
+	 AND a.DHTRANSACAO BETWEEN ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -18) AND SYSDATE
+	 AND a.CDBCCXLT_RECEBEDOR = 0
+	 AND a.IDISPB_RECEBEDOR != 0;
 
 CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
 			   ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -103,17 +102,16 @@ BEGIN
 
   gene0002.pc_escreve_xml(vr_texto_carga,vr_texto_carga_aux, 'CNPJ_CPFCLIDEBTD;' ||
                                                              'CNPJ_CPFCLICREDTD;' ||
-                                                             'ISPBFICREDTD;' ||
-                                                             'AGCREDTD;' ||
-                                                             'START_DT;' ||
-                                                             'END_DT;' ||
-                                                             'SCORE;' ||
-                                                             'CMMNTS;' ||
+                                                             'CDT_ISPB_ID;' ||
+                                                             'CTCREDTD;' ||
                                                              'STATUS;' ||
                                                              'MODIFIED_BY;' ||
                                                              'MODIFIED_DT;' ||
                                                              'APPROVED_BY;' ||
-                                                             'APPROVED_DT'  || CHR(10));
+                                                             'APPROVED_DT;' ||
+                                                             'CMMNTS;' ||
+                                                             'START_DT;' ||
+                                                             'END_DT'  || CHR(10));
 
   -- Test statements here
   FOR rw_teds IN cr_teds LOOP
@@ -124,19 +122,18 @@ BEGIN
        CONTINUE;
     END IF;
 
-    gene0002.pc_escreve_xml(vr_texto_carga,vr_texto_carga_aux, rw_teds.cnpj_cpfclidebtd  || ';' ||
-                                                               rw_teds.cnpj_cpfclicredtd || ';' ||
-                                                               rw_teds.ispbficredtd      || ';' ||
-                                                               rw_teds.agcredtd          || ';' ||
-                                                               rw_teds.start_dt          || ';' ||
-                                                               rw_teds.end_dt            || ';' ||
-                                                               rw_teds.score             || ';' ||
-                                                               rw_teds.cmmnts            || ';' ||
-                                                               rw_teds.status            || ';' ||
-                                                               rw_teds.modified_by       || ';' ||
-                                                               rw_teds.modified_dt       || ';' ||
-                                                               rw_teds.approved_by       || ';' ||
-                                                               rw_teds.approved_dt       || CHR(10));
+    gene0002.pc_escreve_xml(vr_texto_carga,vr_texto_carga_aux, rw_teds.CNPJ_CPFCLIDEBTD || ';' ||
+                                                               rw_teds.CNPJ_CPFCLICREDTD || ';' ||
+                                                               rw_teds.CDT_ISPB_ID || ';' ||
+                                                               rw_teds.CTCREDTD || ';' ||
+                                                               rw_teds.STATUS || ';' ||
+                                                               rw_teds.MODIFIED_BY || ';' ||
+                                                               rw_teds.MODIFIED_DT || ';' ||
+                                                               rw_teds.APPROVED_BY || ';' ||
+                                                               rw_teds.APPROVED_DT || ';' ||
+                                                               rw_teds.CMMNTS || ';' ||
+                                                               rw_teds.START_DT || ';' ||
+                                                               rw_teds.END_DT || CHR(10));
   END LOOP;
   
   gene0002.pc_escreve_xml(vr_texto_carga,vr_texto_carga_aux,'',true);
