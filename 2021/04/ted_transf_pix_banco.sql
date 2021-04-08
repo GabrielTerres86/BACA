@@ -23,18 +23,18 @@ declare
 
 CURSOR cr_teds IS
   SELECT DISTINCT decode(tvl.flgpesdb,1,lpad(tvl.cpfcgemi,11,'0'),lpad(tvl.cpfcgemi,14,'0')) CNPJ_CPFCLIDEBTD
-                , decode(tvl.flgpescr,1,lpad(tvl.cpfcgrcb,11,'0'),lpad(tvl.cpfcgrcb,14,'0')) CNPJ_CPFCLICREDTD
-                , tvl.cdbccrcb ISPBFICREDTD
-                , tvl.cdagercb AGCREDTD
-                , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') START_DT
-                , to_char(to_date('31/12/2999', 'DD/MM/RRRR'), 'RRRR-MM-DD"T"HH24:MI:SS') END_DT
-                , 0 SCORE
-                , 'Carga sistema' CMMNTS
-                , 'Approved' STATUS
-                , 'OFSADMN' MODIFIED_BY
-                , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') MODIFIED_DT
-                , 'OFSADMN' APPROVED_BY
-                , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') APPROVED_DT
+		, decode(tvl.flgpescr,1,lpad(tvl.cpfcgrcb,11,'0'),lpad(tvl.cpfcgrcb,14,'0')) CNPJ_CPFCLICREDTD
+		, tvl.cdbccrcb ISPBFICREDTD
+		, TO_CHAR(tvl.cdagercb) AGCREDTD
+		, to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') START_DT
+		, to_char(to_date('31/12/2999', 'DD/MM/RRRR'), 'RRRR-MM-DD"T"HH24:MI:SS') END_DT
+		, 0 SCORE
+		, 'Carga sistema' CMMNTS
+		, 'Approved' STATUS
+		, 'OFSADMN' MODIFIED_BY
+		, to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') MODIFIED_DT
+		, 'OFSADMN' APPROVED_BY
+		, to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') APPROVED_DT
     FROM craptvl tvl
    WHERE tvl.tpdoctrf = 3 -- TED
      AND tvl.dtmvtolt >= add_months(trunc(sysdate),-18)
@@ -44,7 +44,7 @@ CURSOR cr_teds IS
          decode(ass_dbt.inpessoa,1,lpad(ass_dbt.nrcpfcgc,11,'0'),lpad(ass_dbt.nrcpfcgc,14,'0')) CNPJ_CPFCLIDEBTD
        , decode(ass_cdt.inpessoa,1,lpad(ass_cdt.nrcpfcgc,11,'0'),lpad(ass_cdt.nrcpfcgc,14,'0')) CNPJ_CPFCLICREDTD
        , cti.cddbanco ISPBFICREDTD
-       , cti.cdageban AGCREDTD
+       , TO_CHAR(cti.cdageban) AGCREDTD
        , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') START_DT
        , to_char(to_date('31/12/2999', 'DD/MM/RRRR'), 'RRRR-MM-DD"T"HH24:MI:SS') END_DT
        , 0 SCORE
@@ -69,7 +69,7 @@ CURSOR cr_teds IS
   SELECT DISTINCT decode(a.TPPESSOA_PAGADOR,1,lpad(a.NRCPF_CNPJ_PAGADOR,11,'0'),lpad(a.NRCPF_CNPJ_PAGADOR,14,'0')) CNPJ_CPFCLIDEBTD
        , decode(a.TPPESSOA_RECEBEDOR,1,lpad(a.NRCPF_CNPJ_RECEBEDOR,11,'0'),lpad(a.NRCPF_CNPJ_RECEBEDOR,14,'0')) CNPJ_CPFCLICREDTD
        , a.CDBCCXLT_RECEBEDOR ISPBFICREDTD
-       , a.NRAGENCIA_RECEBEDOR AGCREDTD
+       , TO_CHAR(a.NRAGENCIA_RECEBEDOR) AGCREDTD
        , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') START_DT
        , to_char(to_date('31/12/2999', 'DD/MM/RRRR'), 'RRRR-MM-DD"T"HH24:MI:SS') END_DT
        , 0 SCORE
