@@ -27,7 +27,7 @@ declare
 		   crapass ass
 	 WHERE dis.cooperativaid = ass.cdcooper
 	   AND dis.numeroconta = ass.nrdconta
-	   AND ((dis.dataultimoacesso IS NOT NULL AND dis.dataultimoacesso >= add_months(trunc(sysdate),-12)) OR dis.dataultimoacesso IS NULL);
+	   AND ((dis.dataultimoacesso IS NOT NULL AND dis.dataultimoacesso >= add_months(trunc(sysdate),-18)) OR dis.dataultimoacesso IS NULL);
 
 BEGIN
   

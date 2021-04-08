@@ -37,7 +37,7 @@ CURSOR cr_teds IS
                 , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') APPROVED_DT
     FROM craptvl tvl
    WHERE tvl.tpdoctrf = 3 -- TED
-     AND tvl.dtmvtolt >= add_months(trunc(sysdate),-24)
+     AND tvl.dtmvtolt >= add_months(trunc(sysdate),-18)
      AND tvl.flgopfin = 1
   UNION
   SELECT DISTINCT 
@@ -59,7 +59,7 @@ CURSOR cr_teds IS
        , crapcop cop
        , crapcti cti
    WHERE cti.cddbanco     = 85
-     AND cti.dttransa    >= add_months(trunc(sysdate),-24)
+     AND cti.dttransa    >= add_months(trunc(sysdate),-18)
      AND ass_dbt.cdcooper = cti.cdcooper
      AND ass_dbt.nrdconta = cti.nrdconta
      AND cop.cdagectl     = cti.cdageban
@@ -82,7 +82,7 @@ CURSOR cr_teds IS
     FROM tbpix_transacao a
    WHERE a.IDTIPO_TRANSACAO = 'P'
      AND a.IDSITUACAO = 'P'
-     AND a.DHTRANSACAO BETWEEN ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -24) AND SYSDATE
+     AND a.DHTRANSACAO BETWEEN ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -18) AND SYSDATE
      AND a.CDBCCXLT_RECEBEDOR <> 0;
 
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
