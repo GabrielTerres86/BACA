@@ -8,6 +8,7 @@ UPDATE cecred.crapaca
    AND nmpackag = 'TELA_CALRIS'
    AND nmproced = 'pc_busca_tanque';
 COMMIT;
+EXCEPTION
 WHEN OTHERS THEN
 	NULL;
 END;
