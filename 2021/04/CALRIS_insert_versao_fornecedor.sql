@@ -151,6 +151,16 @@ values (v_idrisco, 30, 0, 0, 1, v_idcriterio, 0, v_idcalris_n);
 insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
 values (v_idrisco, 30, 0, 0, 1, v_idcriterio, 0, v_idcalris_l);
 
+insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO, TPCALCULADORA)
+values (210, 349, 1, 1, 2);
+
+insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO, TPCALCULADORA)
+values (350, 469, 2, 1, 2);
+
+insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO, TPCALCULADORA)
+values (470, 630, 3, 1, 2);
+
+
 COMMIT;
 
 exception
