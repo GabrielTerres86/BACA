@@ -285,6 +285,161 @@ BEGIN
       (cdtrnbcb, cdhistor, tphistorico)
     VALUES
       (265, 3496, 1);
+	  
+	   --novos codigos
+	   -- Cria codigos tabela de historico (craphcb)
+    --
+    INSERT INTO craphcb
+      (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
+    VALUES
+      (303, 'TARIFA SAQUE CIRRUS', 1593, 0);
+    --
+    INSERT INTO craphcb
+      (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
+    VALUES
+      (305, 'TARIFA CONSULTA SALDO CIRRUS', 1604, 0);
+    --
+    INSERT INTO craphcb
+      (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
+    VALUES
+      (307, 'TARIFA SAQUE REJEITADO - REDE CIRRUS', 1610, 0);
+    --
+    INSERT INTO craphcb
+      (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
+    VALUES
+      (323, 'TARIFA TRANSACAO REJEITADA - REDE CIRRUS', 1614, 0);
+    --
+    INSERT INTO craphcb
+      (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
+    VALUES
+      (332, 'EST. TARIFA SAQUE CIRRUS', 1597, 0);
+    --
+    INSERT INTO craphcb
+      (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
+    VALUES
+      (304, 'TARIFA SAQUE CIRRUS MAESTRO INTERN.', 1592, 0);
+    --
+    INSERT INTO craphcb
+      (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
+    VALUES
+      (306, 'TAR. CONS. SALDO CIRRUS MAESTRO INTERN.', 1605, 0);
+    --
+    INSERT INTO craphcb
+      (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
+    VALUES
+      (308, 'TARIFA CONS INTERN REJ - REDE CIRRUS', 1617, 0);
+    --
+    INSERT INTO craphcb
+      (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
+    VALUES
+      (324, 'TARIFA SAQUE INTERN REJ - REDE CIRRUS', 1611, 0);  
+    --
+    INSERT INTO craphcb
+      (cdtrnbcb, dstrnbcb, cdhistor, flgdebcc)
+    VALUES
+      (333, 'EST. TAR. SAQUE CIRRUS MAESTRO INTERN.', 1596, 0);			  
+			
+    -- Criar codigos para tabela de cartoes (tbcrd_his_vinculo_bancoob)
+    -- 
+		
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (303, 1593, 0);
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (303, 1593, 1);
+    --
+								
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (304, 1592, 0);
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (304, 1592, 1);			
+    -- 
+		
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (305, 1604, 0);
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (305, 1604, 1);
+    -- 
+		
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (306, 1605, 0);
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (306, 1605, 1);
+    -- 
+		
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (307, 1610, 0);
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (307, 1610, 1);
+    -- 
+		
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (308, 1617, 0);
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (308, 1617, 1);
+    -- 
+		
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (323, 1614, 0);
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (323, 1614, 1);
+    -- 
+		
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (324, 1611, 0);
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (324, 1611, 1);
+    -- 
+		
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (332, 1597, 0);
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (332, 1597, 1);
+		--
+
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (333, 1596, 0);
+    INSERT INTO tbcrd_his_vinculo_bancoob
+      (cdtrnbcb, cdhistor, tphistorico)
+    VALUES
+      (333, 1596, 1);
 
   END;
   
