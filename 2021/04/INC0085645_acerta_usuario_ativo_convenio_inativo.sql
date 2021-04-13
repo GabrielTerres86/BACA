@@ -16,3 +16,7 @@ AND   u.flgativo = 1
 AND   cdr.flgconve = 0
 )
 /
+
+commit
+/
+
