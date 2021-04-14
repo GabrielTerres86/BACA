@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-1301
+1332
 declare 
   vr_nrproposta varchar2(30);
   vr_excsaida EXCEPTION;  
@@ -12,7 +12,7 @@ declare
    from crapcop p where p.flgativo = 1 and p.cdcooper <> 3;
    
   vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
-  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros|| 'cpd/bacas/INC0085130';
+  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros|| 'cecred';--'cpd/bacas/INC0085130';
   -- Arquivo de rollback
   vr_nmarqimp        VARCHAR2(100)  := 'INC0085130_ROLLBACK_032021.txt';   
   vr_ind_arquiv      utl_file.file_type; 
@@ -222,28 +222,24 @@ declare
 
          SELECT SEGU0003.FN_NRPROPOSTA() INTO vr_nrproposta  FROM DUAL; 
                
-           gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'update tbseg_prestamista set nrproposta = '||vr_nrproposta 
-                                                      ||' where cdcooper = '||rw_tbseg_prestamista.cdcooper
-                                                      ||' and nrdconta = ' ||rw_tbseg_prestamista.nrdconta
-                                                      ||' and nrctremp = ' ||rw_tbseg_prestamista.nrctremp||';');
+          gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'update tbseg_prestamista set nrproposta = '||vr_nrproposta 
+                                                     ||' where cdapolic = '||rw_tbseg_prestamista.cdapolic||';');
          
           begin            
             update tbseg_prestamista g 
                set g.nrproposta = vr_nrproposta
-             where g.cdcooper = rw_tbseg_prestamista.cdcooper
-               and g.nrdconta = rw_tbseg_prestamista.nrdconta
-               and g.nrctremp = rw_tbseg_prestamista.nrctremp
-               and g.tpregist = rw_tbseg_prestamista.tpregist;
+             where g.cdapolic = rw_tbseg_prestamista.cdapolic;
           exception
             when others then
               vr_dscritic:= 'Erro ao gravar numero de proposta 1: '||vr_nrproposta||' - '||sqlerrm;
               raise vr_excsaida;              
           end;
           
-           gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'update crawseg set nrproposta = '||vr_nrproposta 
-                                                      ||' where cdcooper = '||rw_tbseg_prestamista.cdcooper
-                                                      ||' and nrdconta = ' ||rw_tbseg_prestamista.nrdconta
-                                                      ||' and nrctremp = ' ||rw_tbseg_prestamista.nrctremp||';');
+          gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'update crawseg set nrproposta = '||vr_nrproposta 
+                                                     ||' where cdcooper = '||rw_tbseg_prestamista.cdcooper
+                                                     ||' and nrdconta = ' ||rw_tbseg_prestamista.nrdconta
+                                                     ||' and nrctrseg = ' ||rw_tbseg_prestamista.nrctrseg
+                                                     ||' and nrctrato = ' ||rw_tbseg_prestamista.nrctremp||';');
            
           begin            
             update crawseg g 
@@ -568,7 +564,7 @@ declare
                 ,lpad(decode(p.cdcooper , 5,1, 7,2, 10,3,  11,4, 14,5, 9,6, 16,7, 2,8, 8,9, 6,10, 12,11, 13,12, 1,13  )   ,6,'0') cdcooperativa
                 ,SUM(p.vldevatu) over(partition by  p.cdcooper, p.nrcpfcgc ) saldo_cpf
                 ,count(p.nrcpfcgc) over(partition by  p.cdcooper, p.nrcpfcgc ) qtd_emp_cpf
-                ,(select max(e.dtmvtolt) from crapepr e where e.cdcooper = p.cdcooper and e.nrdconta = p.nrdconta and e.inliquid = 0) data_emp
+                ,(select max(e.dtmvtolt) from crapepr e where e.cdcooper = p.cdcooper and e.nrdconta = p.nrdconta) data_emp
             FROM tbseg_prestamista p, crapepr c
            WHERE p.cdcooper = pr_cdcooper
              AND c.cdcooper = p.cdcooper
@@ -617,7 +613,7 @@ declare
                 ,lpad(decode(p.cdcooper , 5,1, 7,2, 10,3,  11,4, 14,5, 9,6, 16,7, 2,8, 8,9, 6,10, 12,11, 13,12, 1,13  )   ,6,'0') cdcooperativa
                 ,SUM(p.vldevatu) over(partition by  p.cdcooper, p.nrcpfcgc ) saldo_cpf
                 ,count(p.nrcpfcgc) over(partition by  p.cdcooper, p.nrcpfcgc ) qtd_emp_cpf
-                ,(select max(e.dtmvtolt) from crapepr e where e.cdcooper = p.cdcooper and e.nrdconta = p.nrdconta and e.inliquid = 0) data_emp
+                ,(select max(e.dtmvtolt) from crapepr e where e.cdcooper = p.cdcooper and e.nrdconta = p.nrdconta) data_emp
             FROM tbseg_prestamista p, crapepr c
            WHERE p.cdcooper = pr_cdcooper
              and p.cdcooper = 16
@@ -887,10 +883,45 @@ declare
           end if;
           
           -- Se foi vendido de marco pra frente e uma adesao
-          if to_date(vr_dtdevend,'DD/MM/RRRR') > to_date('01/03/2021','DD/MM/RRRR') and vr_tpregist = 3 then
+          if to_date(vr_dtdevend,'DD/MM/RRRR') >= to_date('01/03/2021','DD/MM/RRRR') and
+             to_date(vr_dtdevend,'DD/MM/RRRR') < to_date('01/04/2021','DD/MM/RRRR')  and
+             vr_tpregist = 3 and 
+             rw_prestamista.inliquid = 0 then
             vr_tpregist:= 1; -- somente para o script enviamos adesao
           end if;
           
+          -- endossos liquidados apos dia 01/04 devemos enviar como cancelamento
+          if rw_prestamista.inliquid = 1 and 
+             rw_prestamista.tpregist = 3 and  
+             to_date(vr_dtdevend,'DD/MM/RRRR') < to_date('01/03/2021','DD/MM/RRRR')  then
+            vr_tpregist:= 2;
+            -- Adesoes liquidadas ainda nao enviadas nao devemos enviar
+          elsif rw_prestamista.inliquid = 1 and 
+                rw_prestamista.tpregist = 3 and  
+                to_date(vr_dtdevend,'DD/MM/RRRR') >= to_date('01/03/2021','DD/MM/RRRR') and
+                to_date(vr_dtdevend,'DD/MM/RRRR') < to_date('01/04/2021','DD/MM/RRRR') then
+                vr_tpregist:= 0; -- mudamos pra 0 pois nem chegou a enviar a adesao ainda
+             BEGIN                
+                UPDATE tbseg_prestamista
+                   SET tpregist = vr_tpregist
+                 WHERE cdcooper = pr_cdcooper
+                   AND nrdconta = rw_prestamista.nrdconta
+                   AND nrctrseg = rw_prestamista.nrctrseg
+                   AND nrctremp = rw_prestamista.nrctremp
+                   AND cdapolic = vr_cdapolic;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_cdcritic := 0;
+                  vr_dscritic := 'Erro ao atualizar tipo de registro(liquidado): ' || pr_cdcooper || ' - nrdconta' || rw_prestamista.nrdconta || ' - ' || SQLERRM;
+                  RAISE vr_exc_saida;
+              END;                  
+            continue;
+          end if;
+          
+          if rw_prestamista.nrcpfcgc = 91849110930 then
+            vr_tpregist:= 1;
+          end if;
+                    
           vr_linha_txt := '';
           -- informacoes para impressao
           vr_linha_txt := vr_linha_txt || LPAD(vr_seqtran, 5, 0); -- Sequencial Transação
@@ -1306,7 +1337,7 @@ vr_dscritic
 1
 SUCESSO
 5
-11
+12
 vr_vlsdatua
 vr_vlsdeved
 rw_prestamista.nrdconta
@@ -1318,3 +1349,4 @@ rw_prestamista.dtfimvig
 rw_prestamista.dtfimctr
 vr_NRPROPOSTA
 vr_linha_txt
+rw_proposta.nrproposta
