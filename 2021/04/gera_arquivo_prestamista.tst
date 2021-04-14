@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-1332
+1338
 declare 
   vr_nrproposta varchar2(30);
   vr_excsaida EXCEPTION;  
@@ -12,7 +12,7 @@ declare
    from crapcop p where p.flgativo = 1 and p.cdcooper <> 3;
    
   vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
-  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros|| 'cecred';--'cpd/bacas/INC0085130';
+  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros|| 'cpd/bacas/INC0085130';
   -- Arquivo de rollback
   vr_nmarqimp        VARCHAR2(100)  := 'INC0085130_ROLLBACK_032021.txt';   
   vr_ind_arquiv      utl_file.file_type; 
@@ -572,6 +572,7 @@ declare
              AND c.nrctremp = p.nrctremp
              and p.dtdenvio = to_date('01/04/2021','DD/MM/RRRR')
              AND p.tpregist in(2, 3)
+             and p.nrcpfcgc <> 91849110930
              union all
              SELECT p.idseqtra
                 ,p.cdcooper
@@ -887,14 +888,14 @@ declare
              to_date(vr_dtdevend,'DD/MM/RRRR') < to_date('01/04/2021','DD/MM/RRRR')  and
              vr_tpregist = 3 and 
              rw_prestamista.inliquid = 0 then
-            vr_tpregist:= 1; -- somente para o script enviamos adesao
-          end if;
+            vr_tpregist:= 1; -- somente para o script enviamos adesao          
           
           -- endossos liquidados apos dia 01/04 devemos enviar como cancelamento
-          if rw_prestamista.inliquid = 1 and 
+          elsif rw_prestamista.inliquid = 1 and 
              rw_prestamista.tpregist = 3 and  
              to_date(vr_dtdevend,'DD/MM/RRRR') < to_date('01/03/2021','DD/MM/RRRR')  then
             vr_tpregist:= 2;
+            
             -- Adesoes liquidadas ainda nao enviadas nao devemos enviar
           elsif rw_prestamista.inliquid = 1 and 
                 rw_prestamista.tpregist = 3 and  
@@ -916,6 +917,11 @@ declare
                   RAISE vr_exc_saida;
               END;                  
             continue;
+            
+          -- saldo devedor menor que o parametrizado e o cancelamento ainda nao foi feito            
+          elsIF vr_vlsdeved < vr_vlminimo AND vr_tpregist = 3 THEN
+            -- cancelamento
+            vr_tpregist := 2;
           end if;
           
           if rw_prestamista.nrcpfcgc = 91849110930 then
