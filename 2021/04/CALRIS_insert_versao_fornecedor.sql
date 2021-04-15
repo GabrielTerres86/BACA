@@ -160,6 +160,17 @@ values (350, 469, 2, 1, 2);
 insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO, TPCALCULADORA)
 values (470, 630, 3, 1, 2);
 
+insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO, TPCALCULADORA)
+values (80, 139, 1, 1, 3);
+
+insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO, TPCALCULADORA)
+values (140, 199, 2, 1, 3);
+
+insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO, TPCALCULADORA)
+values (200, 259, 3, 1, 3);
+
+insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO, TPCALCULADORA)
+values (260, 320, 4, 1, 3);
 
 COMMIT;
 
