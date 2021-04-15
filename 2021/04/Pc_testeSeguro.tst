@@ -1,6 +1,5 @@
 PL/SQL Developer Test script 3.0
-330
-
+329
 declare
   vr_contador number;  
   vr_excsaida EXCEPTION;
@@ -331,13 +330,4 @@ end;
 
 end;
 0
-9
-rw_seguros.nrdconta
-rw_seguros.nrctrato
-rw_seguros.tipo
-rw_seguros.vlproposta
-vr_dscritic
-vr_nrctrseg
-vr_contador
-pr_vlslddev
-rw_seguros.nrctrseg
+0
