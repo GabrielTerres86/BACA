@@ -12,9 +12,9 @@ declare
    from crapcop p where p.flgativo = 1 and p.cdcooper <> 3;
    
   vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
-  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros|| 'cpd/bacas/INC0085130';
+  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros|| 'cpd/bacas/INC0086101';
   -- Arquivo de rollback
-  vr_nmarqimp        VARCHAR2(100)  := 'INC0085130_ROLLBACK_032021.txt';   
+  vr_nmarqimp        VARCHAR2(100)  := 'INC0086101_ROLLBACK_032021.txt';   
   vr_ind_arquiv      utl_file.file_type; 
   vr_destinatario_email varchar2(500):= gene0001.fn_param_sistema('CRED', 0, 'ENVIA_SEG_PRST_EMAIL'); -- seguros@ailos.com.br
   
