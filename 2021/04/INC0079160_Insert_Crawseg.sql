@@ -1,5 +1,4 @@
-PL/SQL Developer Test script 3.0
-329
+
 declare
   vr_contador number;  
   vr_excsaida EXCEPTION;
@@ -329,5 +328,4 @@ EXCEPTION
 end;
 
 end;
-0
-0
+
