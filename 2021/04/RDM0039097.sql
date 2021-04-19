@@ -5,6 +5,11 @@ begin
          tbcc.idsituacao = 'A',
          tbcc.qtexecucoes = 0
    where tbcc.IDSITUACAO = 'E'
+     and tbcc.cdproduto = 53
+     and tbcc.cdcooper in 
+     (
+     16,14,13,12,11,10,9,8,7,6,5,2,1
+     )
      and tbcc.idtransacao in (
   5546449,5546446,5546447,5546506,5546507,5546551,5546553,5546508,5546552,5546505,5546450,5546510,5546554,5546555,5546556,5546509,5546511,
   5546513,5546557,5546516,5546512,5546558,5546517,5546518,5546559,5546560,5546514,5546561,7751082,7751083,7751084,7751085,7751086,7751087,
@@ -41,42 +46,6 @@ begin
   7751628,7751629,7751630,7751631,7751632,7751633,7751634,7751636,7751637,7751638,7751639,7751640,7751641,7751642,7751643,7751644,7751645,
   7751646,7751647,7751648,7751649,7751650,7751651,7751653,7751652,7751654,7751655,7751656,7751657,7751658,7751659,7751660,7751661,7751662,
   7751663,7751664,7751665,7751666,7751667,7751668,7751669,7751670,7751671,7751672,7751673,7751674,7751675,7751676,7751677);
-
-  update tbcc_lancamentos_pendentes tbcc
-     set tbcc.idsituacao = 'M',
-         tbcc.dscritica  = 'Ajuste para corrigir o extrato do cooperado, dia 19-04, emergencial'
-   where tbcc.idsituacao = 'E'
-     and tbcc.idseq_lancamento = 5769506;
-  
-  update tbcc_lancamentos_pendentes tbcc
-     set tbcc.idsituacao = 'M',
-         tbcc.dscritica  = 'Ajuste para corrigir o extrato do cooperado, dia 19-04, emergencial'
-   where tbcc.idsituacao = 'E'
-     and tbcc.idseq_lancamento = 5319872;
-  
-  update tbcc_lancamentos_pendentes tbcc
-     set tbcc.idsituacao = 'M',
-         tbcc.dscritica  = 'Ajuste para corrigir o extrato do cooperado, dia 19-04, emergencial'
-   where tbcc.idsituacao = 'E'
-     and tbcc.idseq_lancamento = 5319838;
-
-  update tbcc_lancamentos_pendentes tbcc
-     set tbcc.idsituacao = 'M',
-         tbcc.dscritica  = 'Ajuste para corrigir o extrato do cooperado, dia 19-04, emergencial'
-   where tbcc.idsituacao = 'E'
-     and tbcc.idseq_lancamento = 5319841;
-  
-  update tbcc_lancamentos_pendentes tbcc
-     set tbcc.idsituacao = 'M',
-         tbcc.dscritica  = 'Ajuste para corrigir o extrato do cooperado, dia 19-04, emergencial'
-   where tbcc.idsituacao = 'E'
-     and tbcc.idseq_lancamento = 7278499;
-  
-  update tbcc_lancamentos_pendentes tbcc
-     set tbcc.idsituacao = 'M',
-         tbcc.dscritica  = 'Ajuste para corrigir o extrato do cooperado, dia 19-04, emergencial'
-   where tbcc.idsituacao = 'E'
-     and tbcc.idseq_lancamento = 7336286;
 
   commit;
   
