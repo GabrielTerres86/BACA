@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-702
+732
 DECLARE
   CURSOR cr_his (pr_cdcooper IN crapcop.cdcooper%TYPE
                 ,pr_cdhistor IN craphis.cdhistor%TYPE)IS
@@ -661,6 +661,36 @@ BEGIN
                    ,prm_cdhistor => vr_cdhistor
                    ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
  
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
+
+-- ## 02
+---------------------------------------------------
+  -- INC0078516 - Viacredi - C/C 10553649  - R$ 9.61
+  -- -> Solução: Excluir um 2408 no valor de R$ 9.61
+---------------------------------------------------
+  vr_incidente := 'INC0078516';
+  vr_cdcooper  := 1;
+  vr_nrdconta  := 10553649;
+  vr_vllanmto  := 9.61;
+  vr_cdhistor  := 2408;
+  vr_idlancto  := NULL;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+
+  -- Exclui da Prejuizo_Detalhe
+  prc_exclui_lct (prm_cdcooper => vr_cdcooper 
+                 ,prm_nrdconta => vr_nrdconta 
+                 ,prm_vllanmto => vr_vllanmto 
+                 ,prm_cdhistor => vr_cdhistor 
+                 ,prm_idlancto => vr_idlancto);
+
+  prc_atlz_prejuizo(prm_cdcooper => vr_cdcooper
+                   ,prm_nrdconta => vr_nrdconta
+                   ,prm_vllanmto => vr_vllanmto
+                   ,prm_cdhistor => vr_cdhistor
+                   ,prm_tipoajus => 'E'); --[I] Inclusao / [E] Exclusao
   dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
   dbms_output.put_line('  ');
 ---------------------------------------------------
