@@ -151,6 +151,168 @@ values (v_idrisco, 30, 0, 0, 1, v_idcriterio, 0, v_idcalris_n);
 insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
 values (v_idrisco, 30, 0, 0, 1, v_idcriterio, 0, v_idcalris_l);
 
+insert into TBCALRIS_PARAMETROS (DSCALRIS, INPESSOA, TPCOOPERADO, DHCADASTRO, DHLIBERACAO, CDSITUACAO, CDUSUARIO, DHFIMVIGENCIA, QTLIBERACOES)
+values ('Candidato', 4, 'N', SYSDATE, SYSDATE, 2, '1', null, 2) RETURNING idcalris INTO v_idcalris_n;
+
+insert into TBCALRIS_PARAMETROS (DSCALRIS, INPESSOA, TPCOOPERADO, DHCADASTRO, DHLIBERACAO, CDSITUACAO, CDUSUARIO, DHFIMVIGENCIA, QTLIBERACOES)
+values ('Colaborador', 4, 'L', SYSDATE, SYSDATE, 2, '1', null, 2) RETURNING idcalris INTO v_idcalris_l;
+
+insert into TBCALRIS_RISCOS (CDRISCO, DSABREV, INPESSOA, TPCRITERIO, DSRISCO)
+values ('RELACIONAMENTO_COLAB', 'Risco atribuído por tipo de relacionamento do colaborador/candidato', 4, 2, NULL) RETURNING idrisco INTO v_idrisco;
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('RELACIONAMENTO DIRETO COM O CLIENTE  - COM MIGRAÇÃO DE CARTEIRA', 'RELACIONAMENTO_COLAB', 4, '1') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 30, 0, 0, 1, v_idcriterio, 4, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 30, 0, 0, 1, v_idcriterio, 4, v_idcalris_l);
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('RELACIONAMENTO DIRETO COM O CLIENTE  - SEM MIGRAÇÃO DE CARTEIRA', 'RELACIONAMENTO_COLAB', 3, '2') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 30, 0, 0, 1, v_idcriterio, 3, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 30, 0, 0, 1, v_idcriterio, 3, v_idcalris_l);
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('TEM RELACIONAMENTO INDIRETO COM O CLIENTE', 'RELACIONAMENTO_COLAB', 2, '3') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 30, 0, 0, 1, v_idcriterio, 2, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 30, 0, 0, 1, v_idcriterio, 2, v_idcalris_l);
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('RELACIONAMENTO DIRETO COM O CLIENTE  - COM MIGRAÇÃO DE CARTEIRA', 'RELACIONAMENTO_COLAB', 1, '4') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 30, 0, 0, 1, v_idcriterio, 1, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 30, 0, 0, 1, v_idcriterio, 1, v_idcalris_l);
+
+insert into TBCALRIS_RISCOS (CDRISCO, DSABREV, INPESSOA, TPCRITERIO, DSRISCO)
+values ('REGIAO_ATUACAO_COLAB', 'Risco atribuído pela região de atuação do colaborador/candidato', 4, 2, NULL) RETURNING idrisco INTO v_idrisco;
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('MUNICIPIO DE FRONTEIRA', 'REGIAO_ATUACAO_COLAB', 4, '1') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 0, 0, 1, v_idcriterio, 4, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 0, 0, 1, v_idcriterio, 4, v_idcalris_l);
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('REGIÃO DE FRONTEIRA', 'REGIAO_ATUACAO_COLAB', 3, '2') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 0, 0, 1, v_idcriterio, 3, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 0, 0, 1, v_idcriterio, 3, v_idcalris_l);
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('CAPITAIS', 'REGIAO_ATUACAO_COLAB', 2, '3') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 0, 0, 1, v_idcriterio, 2, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 0, 0, 1, v_idcriterio, 2, v_idcalris_l);
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('DEMAIS MUNICIPIOS', 'REGIAO_ATUACAO_COLAB', 1, '4') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 0, 0, 1, v_idcriterio, 1, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 0, 0, 1, v_idcriterio, 1, v_idcalris_l);
+
+insert into TBCALRIS_RISCOS (CDRISCO, DSABREV, INPESSOA, TPCRITERIO, DSRISCO)
+values ('PENDENCIA_FINAN_COLAB', 'Risco atribuído pelas pendências financeiras do colaborador/candidato', 4, 0, NULL) RETURNING idrisco INTO v_idrisco;
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Maior que [MAX]', 'PENDENCIA_FINAN_COLAB', 4, '>') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 10, 0, 50, 1, v_idcriterio, 4, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 10, 0, 50, 1, v_idcriterio, 4, v_idcalris_l);
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('De [MIN] a [MAX]', 'PENDENCIA_FINAN_COLAB', 3, 'BETWEEN') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 10, 35, 50, 1, v_idcriterio, 3, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 10, 35, 50, 1, v_idcriterio, 3, v_idcalris_l);
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('De [MIN] a [MAX]', 'PENDENCIA_FINAN_COLAB', 2, 'BETWEEN') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 10, 20, 35, 1, v_idcriterio, 2, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 10, 20, 35, 1, v_idcriterio, 2, v_idcalris_l);
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Menor que [MIN]', 'PENDENCIA_FINAN_COLAB', 1, '<') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 10, 20, 0, 1, v_idcriterio, 1, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 10, 20, 0, 1, v_idcriterio, 1, v_idcalris_l);
+
+insert into TBCALRIS_RISCOS (CDRISCO, DSABREV, INPESSOA, TPCRITERIO, DSRISCO)
+values ('GRAU_ENDIVIDAMENTO_COLAB', 'Risco atribuído pelo grau de endividamento do colaborador/candidato', 4, 0, NULL) RETURNING idrisco INTO v_idrisco;
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Maior que [MAX]', 'GRAU_ENDIVIDAMENTO_COLAB', 4, '>') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 0, 50, 1, v_idcriterio, 4, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 0, 50, 1, v_idcriterio, 4, v_idcalris_l);
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('De [MIN] a [MAX]', 'GRAU_ENDIVIDAMENTO_COLAB', 3, 'BETWEEN') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 35, 50, 1, v_idcriterio, 3, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 35, 50, 1, v_idcriterio, 3, v_idcalris_l);
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('De [MIN] a [MAX]', 'GRAU_ENDIVIDAMENTO_COLAB', 2, 'BETWEEN') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 20, 35, 1, v_idcriterio, 2, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 20, 35, 1, v_idcriterio, 2, v_idcalris_l);
+
+insert into tbcalris_criterios (DSCRITERIO, CDRISCO, CDCLASRISCO, CDCRITERIO)
+values ('Menor que [MIN]', 'GRAU_ENDIVIDAMENTO_COLAB', 1, '<') RETURNING idcriterio INTO v_idcriterio;
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 20, 0, 1, v_idcriterio, 1, v_idcalris_n);
+
+insert into tbcalris_param_dados (IDRISCO, VLPESO, VLCRITINICIAL, VLCRITFINAL, FLGATIVO, IDCRITERIO, VLRISCO, IDCALRIS)
+values (v_idrisco, 20, 20, 0, 1, v_idcriterio, 1, v_idcalris_l);
+
 insert into tbcalris_faixa_risco (VLMIN, VLMAX, CDCLASRISCO, CDSITUACAO, TPCALCULADORA)
 values (210, 349, 1, 1, 2);
 
