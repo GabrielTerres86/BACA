@@ -89,4 +89,4 @@ UPDATE CRAPTTL
    AND NRDCONTA = 2043629
  and IDSEQTTL = 1;  
  
- 
+ commit;
