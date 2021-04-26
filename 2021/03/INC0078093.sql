@@ -19,7 +19,7 @@ BEGIN
   UPDATE crapepr SET vlpgjmpr = 68.95 WHERE cdcooper = 1 AND nrdconta = 80041167 AND nrctremp = 2192605;
   UPDATE crapepr SET vlpgjmpr = 73.59 WHERE cdcooper = 6 AND nrdconta = 169145 AND nrctremp = 230103;
   /* contratos liquidados */
-  UPDATE crapepr SET vlpgjmpr = 14.5 , vlpiofpr = 2.28 WHERE cdcooper = 1 AND nrdconta = 10023526 AND nrctremp = 1842858;
+  UPDATE crapepr SET vlpgjmpr = 7.25 , vlpiofpr = 2.28 WHERE cdcooper = 1 AND nrdconta = 10023526 AND nrctremp = 1842858;
   UPDATE crapepr SET vlpgjmpr = 9.11 , vlpiofpr = 1.9 WHERE cdcooper = 1 AND nrdconta = 7769938 AND nrctremp = 2512245;
   UPDATE crapepr SET vlpgjmpr = 47.59 , vlpiofpr = 4.72 WHERE cdcooper = 1 AND nrdconta = 10290834 AND nrctremp = 1712576;
   UPDATE crapepr SET vlpgjmpr = 7.1 , vlpiofpr = 1.34 WHERE cdcooper = 1 AND nrdconta = 7769938 AND nrctremp = 1910330;
