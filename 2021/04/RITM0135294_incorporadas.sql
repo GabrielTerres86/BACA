@@ -1,0 +1,48 @@
+BEGIN
+
+declare 
+  i integer;
+  cursor cr_contas is
+     SELECT TCO.CDCOPANT  AS COOP_ORIG
+       , TCO.NRCTAANT  AS CTA_ORIG
+       , TCO.CDCOOPER  AS COOP_DESTINO
+       , TCO.NRDCONTA  AS CTA_DESTINO
+       , ORIG.DTADMISS AS ADMISSAO_ORIG
+       , DEST.DTADMISS AS ADMISSAO_DEST
+       , ORIG.DTABTCCT AS ABERTURA_CTA_ORIG
+       , DEST.DTABTCCT AS ABERTURA_CTA_DEST
+	   , ORIG.DTMVTOLT AS DTMVTOLT_CTA_ORIG
+	   , DEST.DTMVTOLT AS DTMVTOLT_CTA_DEST
+    FROM CRAPASS ORIG
+       , CRAPASS DEST
+       , CRAPTCO TCO
+   WHERE TCO.CDCOOPER = DEST.CDCOOPER
+     AND TCO.NRDCONTA = DEST.NRDCONTA
+     AND TCO.CDCOPANT = ORIG.CDCOOPER
+     AND TCO.NRCTAANT = ORIG.NRDCONTA
+     AND DEST.DTABTCCT IS NULL
+   ORDER BY 1;
+   
+   rw_contas cr_contas%rowtype;
+
+
+begin
+
+  
+   FOR rw_contas IN cr_contas LOOP
+      
+      UPDATE CRAPASS ASS
+         SET ASS.DTADMISS = rw_contas.DTMVTOLT_CTA_ORIG 
+		   , ASS.DTABTCCT = rw_contas.DTMVTOLT_CTA_ORIG 
+       WHERE ASS.CDCOOPER = rw_contas.coop_destino
+         AND ASS.NRDCONTA = rw_contas.cta_destino;
+     
+         
+   END LOOP;
+   
+   commit;
+  
+end;
+
+end;
+  
