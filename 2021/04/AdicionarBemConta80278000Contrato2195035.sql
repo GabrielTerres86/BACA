@@ -161,6 +161,7 @@ begin
                            and nrdconta = 80278000 
                            and flgalien = 1 
                            and nrctrpro = 1033671;
+COMMIT;                           
 exception
   when others then 
     null;
