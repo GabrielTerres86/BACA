@@ -106,7 +106,7 @@ BEGIN
            RAISE VR_EXCSAIDA;
       END;
       DBMS_OUTPUT.PUT_LINE('Exclusão de contrato realizada com sucesso do contrato: '||R1.PR_NRCTRATO||' e conta: '||R1.PR_NRDCONTA);
-      --COMMIT;
+      COMMIT;
     END LOOP;
 EXCEPTION
   WHEN VR_EXCSAIDA THEN
