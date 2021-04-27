@@ -27,7 +27,7 @@ declare
       and ope.cdoperacao in (18, 19)
       AND ope.dtoperacao > '31/12/2019' 
       AND ope.dtoperacao < '01/01/2021'
-      AND ope.cdcooper = 1
+      AND ope.cdcooper = pr_cdcooper
       AND (CASE when ope.cdoperacao = 18 then 90
                when ope.cdoperacao = 19 then 91
                else 99999999
