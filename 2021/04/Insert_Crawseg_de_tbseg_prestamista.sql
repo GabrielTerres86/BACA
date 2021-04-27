@@ -24,22 +24,26 @@ Declare
                                           from craptab b
                                          where b.cdcooper = a.cdcooper
                                            and b.cdempres = 11
-                                           and b.nmsistem = 'CRED'
-                                           AND b.tptabela = 'USUARI'
-                                           and b.cdacesso = 'SEGPRESTAM'
+                                           and UPPER(b.nmsistem) = 'CRED'
+                                           AND UPPER(b.tptabela) = 'USUARI'
+                                           and UPPER(b.cdacesso) = 'SEGPRESTAM'
                                            and b.tpregist = 0),
                                         94,
                                         12)) vlmaximo
-        from tbseg_prestamista a
-        where tpregist in (1,3) and not exists (select 1 from crapseg pseg, crawseg wseg 
-                                               where wseg.tpseguro = 4
-                                                 and pseg.cdcooper = wseg.cdcooper
-                                                 AND pseg.nrdconta = wseg.nrdconta
-                                                 AND pseg.nrctrseg = wseg.nrctrseg                                            
-                                                 and a.cdcooper = wseg.cdcooper
-                                                 AND a.nrdconta = wseg.nrdconta
-                                                 and a.nrctremp =  wseg.nrctrato )                                              
-  order by cdcooper, nrdconta desc, 1 desc;
+        from tbseg_prestamista a, crapcop p
+        where p.flgativo = 1
+          and a.cdcooper = p.cdcooper
+          and a.tpregist in (1,3) 
+          and not exists (select 1 
+                            from crapseg pseg, crawseg wseg 
+                           where wseg.tpseguro = 4
+                             and pseg.cdcooper = wseg.cdcooper
+                             AND pseg.nrdconta = wseg.nrdconta
+                             AND pseg.nrctrseg = wseg.nrctrseg                                            
+                             and a.cdcooper = wseg.cdcooper
+                             AND a.nrdconta = wseg.nrdconta
+                             and a.nrctremp =  wseg.nrctrato )
+  order by a.cdcooper, a.nrdconta desc, 1 desc;
    rw_seguros cr_seguros%rowtype;
   
   vr_existeDir number := 0;
@@ -478,7 +482,7 @@ begin
          RAISE vr_excsaida;
      END;
   END LOOP;
-   
+  commit;   
   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'commit;');
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;
   vr_dscritic := 'SUCESSO -> Registros inseridos: '|| vr_contador;
