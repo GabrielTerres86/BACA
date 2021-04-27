@@ -12,17 +12,26 @@ declare
           and lcm_est.nrdconta = ope.nrdconta
           and lcm_est.cdhistor in (570, 857)
           and lcm_est.nrdctabb = 0
-          and lcm_est.cdcooper = ope.cdcooper) total_estorno
+          and lcm_est.cdcooper = ope.cdcooper
+          and (case when ope.cdoperacao = 18 then 90
+               when ope.cdoperacao = 19 then 91
+               else 99999999
+               END) = lcm_est.cdagenci
+          ) total_estorno
       FROM tbcc_operacoes_diarias ope
            ,craplcm lcm 
       WHERE lcm.dtmvtolt = ope.dtoperacao
       AND lcm.nrdconta = ope.nrdconta
       AND lcm.cdhistor in (570, 857)
       AND lcm.cdcooper = ope.cdcooper
-      and ope.cdoperacao in (18, 19, 20)
+      and ope.cdoperacao in (18, 19)
       AND ope.dtoperacao > '31/12/2019' 
       AND ope.dtoperacao < '01/01/2021'
-      AND ope.cdcooper = pr_cdcooper
+      AND ope.cdcooper = 1
+      AND (CASE when ope.cdoperacao = 18 then 90
+               when ope.cdoperacao = 19 then 91
+               else 99999999
+               END) = lcm.cdagenci
     ) WHERE total_estorno > 0
     ORDER BY dtoperacao;
   
