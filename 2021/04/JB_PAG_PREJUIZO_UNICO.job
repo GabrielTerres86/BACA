@@ -1,0 +1,63 @@
+begin
+  EXECUTE IMMEDIATE 'ALTER SESSION SET
+    nls_calendar = ''GREGORIAN''
+    nls_comp = ''BINARY''
+    nls_date_format = ''DD-MON-RR''
+    nls_date_language = ''AMERICAN''
+    nls_iso_currency = ''AMERICA''
+    nls_language = ''AMERICAN''
+    nls_length_semantics = ''BYTE''
+    nls_nchar_conv_excp = ''FALSE''
+    nls_numeric_characters = ''.,''
+    nls_sort = ''BINARY''
+    nls_territory = ''AMERICA''
+    nls_time_format = ''HH.MI.SSXFF AM''
+    nls_time_tz_format = ''HH.MI.SSXFF AM TZR''
+    nls_timestamp_format = ''DD-MON-RR HH.MI.SSXFF AM''
+    nls_timestamp_tz_format = ''DD-MON-RR HH.MI.SSXFF AM TZR''';
+
+  BEGIN
+    sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBPAG_PREJUNI');
+  EXCEPTION
+    WHEN OTHERS THEN
+      NULL;
+  END;
+
+  sys.dbms_scheduler.create_job(job_name            => 'CECRED.JBPAG_PREJUNI',
+                                job_type            => 'PLSQL_BLOCK',
+                                job_action          => 'declare
+                                                          vr_cdcritic PLS_INTEGER;
+                                                          vr_dscritic VARCHAR2(4000);
+                                                          vr_infimsol INTEGER;
+                                                          vr_intipmsg INTEGER := 1;
+                                                        begin 
+                                                          gene0004.pc_trata_exec_job(pr_cdcooper => 1   --> Codigo da cooperativa
+                                                                                    ,pr_fldiautl => 1             --> Flag se deve validar dia util
+                                                                                    ,pr_flproces => 1             --> Flag se deve validar se esta no processo 
+                                                                                    ,pr_flrepjob => 1             --> Flag para reprogramar o job
+                                                                                    ,pr_flgerlog => 1             --> indicador se deve gerar log
+                                                                                    ,pr_nmprogra => ''JBPAG_PREJUNI''   --> Nome do programa que esta sendo executado no job
+                                                                                    ,pr_intipmsg => vr_intipmsg
+                                                                                    ,pr_cdcritic => vr_cdcritic
+                                                                                    ,pr_dscritic => vr_dscritic);
+                                                          if vr_intipmsg = 1 then
+                                                            pc_crps770(pr_cdcooper => 1
+                                                                     , pr_cdagenci => 0
+                                                                     , pr_nmdatela => ''crps770''
+                                                                     , pr_infimsol => vr_infimsol
+                                                                     , pr_cdcritic => vr_cdcritic 
+                                                                     , pr_dscritic => vr_dscritic);
+                                                            if vr_dscritic is not null then
+                                                              RAISE_application_error(-20500,''Erro rotina pc_crps770: ''||vr_dscritic);
+                                                            end if;
+                                                          end if;
+                                                        end;',
+                                start_date          => to_date('28-04-2021 09:00:00', 'dd-mm-yyyy hh24:mi:ss'),
+                                repeat_interval     => NULL,
+                                end_date            => to_date(NULL),
+                                job_class           => 'DEFAULT_JOB_CLASS',
+                                enabled             => true,
+                                auto_drop           => true,
+                                comments            => 'Antecipacao do horario de debito das contas em prejuizo. Hoje ocorre sempre as 14:30hs.');
+end;
+/
