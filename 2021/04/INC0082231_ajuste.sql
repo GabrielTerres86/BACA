@@ -1,0 +1,8 @@
+BEGIN 
+       UPDATE TBCC_LANCAMENTOS_PENDENTES
+       SET    IDSITUACAO = 'M',
+              DSCRITICA =  'INC0082231 - Ajustado manualmente, Contas se encontravam em Prejuizo.'
+       WHERE  IDTRANSACAO IN (605280, 605187, 2314091, 2314404, 2314306, 4224239, 4080266, 2312628)
+       AND    IDSITUACAO = 'E';
+COMMIT;
+END;
