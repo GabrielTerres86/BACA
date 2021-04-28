@@ -66,7 +66,7 @@ BEGIN
                                 ' AND nrdconta = ' || rw_propostas.nrdconta || 
                                 ' AND nrctremp = ' ||rw_propostas.nrctremp || ';' || chr(13),
                                 FALSE);
-        UPDATE crawepr SET dtlibera = rw_crapdat.dtmvtocd WHERE cdcooper = rw_coop.cdcooper AND nrdconta = rw_propostas.nrdconta AND nrctremp = rw_propostas.nrctremp;
+        UPDATE crawepr SET dtlibera = rw_crawepr.dtmvtolt WHERE cdcooper = rw_coop.cdcooper AND nrdconta = rw_propostas.nrdconta AND nrctremp = rw_propostas.nrctremp;
       END IF;
       CLOSE cr_crawepr; 
       
