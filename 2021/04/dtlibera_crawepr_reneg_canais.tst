@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-102
+119
 -- Created on 27/04/2021 by T0032717 
 declare 
   vr_dados_rollback CLOB; -- Grava update de rollback
@@ -8,7 +8,9 @@ declare
   vr_nmdireto       VARCHAR2(4000);
   vr_exc_erro       EXCEPTION;
   vr_dscritic       crapcri.dscritic%TYPE;
-  vr_cdcritic       crapcri.cdcritic%TYPE;  
+  vr_cdcritic       crapcri.cdcritic%TYPE; 
+  vr_txmensal_r     craplrt.txmensal%TYPE := 0; -- Taxa mensal
+  vr_txdiaria_r     craplrt.txmensal%TYPE := 0; -- Taxa mensal 
 
   CURSOR cr_coop IS
     SELECT * FROM crapcop WHERE flgativo = 1;
@@ -28,7 +30,7 @@ declare
      WHERE cdcooper = pr_cdcooper
        AND nrdconta = pr_nrdconta 
        AND nrctremp = pr_nrctremp
-       AND dtlibera IS NULL
+       AND (dtlibera IS NULL OR txmensal = 0)
        AND tpemprst = 3;
   rw_crawepr cr_crawepr%ROWTYPE;
   
@@ -60,13 +62,28 @@ BEGIN
                      ,pr_nrctremp => rw_propostas.nrctremp);
       FETCH cr_crawepr INTO rw_crawepr;
       IF cr_crawepr%FOUND THEN 
+        lcre0001.pc_busca_taxa_risco(pr_cdcooper       => rw_coop.cdcooper
+                                    ,pr_cdlcremp       => rw_crawepr.cdlcremp
+                                    ,pr_dsfaixa_risco  => GENE0001.fn_param_sistema('CRED', 0, 'PEFAIXA_RISCO_TAXA')
+                                    -- OUT
+                                    ,pr_perisco_mensal => vr_txmensal_r
+                                    ,pr_perisco_diaria => vr_txdiaria_r
+                                    ,pr_cdcritic       => vr_cdcritic
+                                    ,pr_dscritic       => vr_dscritic); 
+        
         gene0002.pc_escreve_xml(vr_dados_rollback,
                                 vr_texto_rollback,
-                                'UPDATE crawepr SET dtlibera = NULL WHERE cdcooper = ' || rw_coop.cdcooper || 
+                                'UPDATE crawepr SET dtlibera = NULL, txmensal = 0 WHERE cdcooper = ' || rw_coop.cdcooper || 
                                 ' AND nrdconta = ' || rw_propostas.nrdconta || 
                                 ' AND nrctremp = ' ||rw_propostas.nrctremp || ';' || chr(13),
                                 FALSE);
-        UPDATE crawepr SET dtlibera = rw_crawepr.dtmvtolt WHERE cdcooper = rw_coop.cdcooper AND nrdconta = rw_propostas.nrdconta AND nrctremp = rw_propostas.nrctremp;
+        UPDATE crawepr 
+           SET dtlibera = rw_crapdat.dtmvtocd 
+              ,txmensal = vr_txmensal_r
+         WHERE cdcooper = rw_coop.cdcooper 
+           AND nrdconta = rw_propostas.nrdconta 
+           AND nrctremp = rw_propostas.nrctremp;
+           
       END IF;
       CLOSE cr_crawepr; 
       
