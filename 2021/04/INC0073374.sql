@@ -1,0 +1,76 @@
+BEGIN
+    -- 31/12/2020
+    UPDATE crapvri SET vldivida = 1021.08 WHERE cdcooper = 1   AND nrdconta = 4061713   AND nrctremp = 4061713   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 636.44 WHERE cdcooper = 1   AND nrdconta = 6786405   AND nrctremp = 6786405   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 2351.41 WHERE cdcooper = 1   AND nrdconta = 7658249   AND nrctremp = 7658249   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 896.55 WHERE cdcooper = 1   AND nrdconta = 7978324   AND nrctremp = 7978324   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 362.86 WHERE cdcooper = 1   AND nrdconta = 8214956   AND nrctremp = 8214956   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 6524.73 WHERE cdcooper = 1   AND nrdconta = 9049630   AND nrctremp = 9049630   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 3969.98 WHERE cdcooper = 1   AND nrdconta = 9610251   AND nrctremp = 9610251   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 1283.9 WHERE cdcooper = 1   AND nrdconta = 9809635   AND nrctremp = 9809635   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 1151.27 WHERE cdcooper = 1   AND nrdconta = 9820680   AND nrctremp = 9820680   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 4896.99 WHERE cdcooper = 1   AND nrdconta = 10050558   AND nrctremp = 10050558   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 52.98 WHERE cdcooper = 1   AND nrdconta = 10208232   AND nrctremp = 10208232   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 292.04 WHERE cdcooper = 1   AND nrdconta = 10220054   AND nrctremp = 10220054   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 144.29 WHERE cdcooper = 1   AND nrdconta = 10347445   AND nrctremp = 10347445   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 1452.57 WHERE cdcooper = 1   AND nrdconta = 10658980   AND nrctremp = 10658980   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 874.57 WHERE cdcooper = 1   AND nrdconta = 10712372   AND nrctremp = 10712372   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 150.83 WHERE cdcooper = 2   AND nrdconta = 645168   AND nrctremp = 645168   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 843.99 WHERE cdcooper = 5   AND nrdconta = 140457   AND nrctremp = 140457   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 1120.99 WHERE cdcooper = 5   AND nrdconta = 140490   AND nrctremp = 140490   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 1120.99 WHERE cdcooper = 5   AND nrdconta = 156965   AND nrctremp = 156965   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 12335.76 WHERE cdcooper = 5   AND nrdconta = 181706   AND nrctremp = 181706   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 12335.76 WHERE cdcooper = 6   AND nrdconta = 179230   AND nrctremp = 179230   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 1047.62 WHERE cdcooper = 7   AND nrdconta = 135119   AND nrctremp = 135119   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 10820.16 WHERE cdcooper = 13   AND nrdconta = 192899   AND nrctremp = 192899   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 7157.91 WHERE cdcooper = 13   AND nrdconta = 245542   AND nrctremp = 245542   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 2030.72 WHERE cdcooper = 13   AND nrdconta = 327522   AND nrctremp = 327522   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 2030.72 WHERE cdcooper = 13   AND nrdconta = 329851   AND nrctremp = 329851   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 4437.75 WHERE cdcooper = 9   AND nrdconta = 148180   AND nrctremp = 148180   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 3081.04 WHERE cdcooper = 11   AND nrdconta = 7544   AND nrctremp = 7544   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 3081.04 WHERE cdcooper = 11   AND nrdconta = 397270   AND nrctremp = 397270   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 1703.4 WHERE cdcooper = 14   AND nrdconta = 25011   AND nrctremp = 25011   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 381.17 WHERE cdcooper = 16   AND nrdconta = 352616   AND nrctremp = 352616   AND dtrefere = '31/12/2020';
+    UPDATE crapvri SET vldivida = 997.63 WHERE cdcooper = 16   AND nrdconta = 440124   AND nrctremp = 440124   AND dtrefere = '31/12/2020';
+
+    --31/01/2021
+
+    UPDATE crapvri SET vldivida = 1021.08 WHERE cdcooper = 1   AND nrdconta = 4061713   AND nrctremp = 4061713   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 636.44 WHERE cdcooper = 1   AND nrdconta = 6786405   AND nrctremp = 6786405   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 2351.41 WHERE cdcooper = 1   AND nrdconta = 7658249   AND nrctremp = 7658249   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 896.55 WHERE cdcooper = 1   AND nrdconta = 7978324   AND nrctremp = 7978324   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 362.86 WHERE cdcooper = 1   AND nrdconta = 8214956   AND nrctremp = 8214956   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 6524.73 WHERE cdcooper = 1   AND nrdconta = 9049630   AND nrctremp = 9049630   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 3969.98 WHERE cdcooper = 1   AND nrdconta = 9610251   AND nrctremp = 9610251   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 1283.9 WHERE cdcooper = 1   AND nrdconta = 9809635   AND nrctremp = 9809635   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 1151.27 WHERE cdcooper = 1   AND nrdconta = 9820680   AND nrctremp = 9820680   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 4896.99 WHERE cdcooper = 1   AND nrdconta = 10050558   AND nrctremp = 10050558   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 52.98 WHERE cdcooper = 1   AND nrdconta = 10208232   AND nrctremp = 10208232   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 292.04 WHERE cdcooper = 1   AND nrdconta = 10220054   AND nrctremp = 10220054   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 144.29 WHERE cdcooper = 1   AND nrdconta = 10347445   AND nrctremp = 10347445   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 144.29 WHERE cdcooper = 1   AND nrdconta = 10530630   AND nrctremp = 10530630   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 1452.57 WHERE cdcooper = 1   AND nrdconta = 10658980   AND nrctremp = 10658980   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 874.57 WHERE cdcooper = 1   AND nrdconta = 10712372   AND nrctremp = 10712372   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 150.83 WHERE cdcooper = 2   AND nrdconta = 645168   AND nrctremp = 645168   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 843.99 WHERE cdcooper = 5   AND nrdconta = 140457   AND nrctremp = 140457   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 1120.99 WHERE cdcooper = 5   AND nrdconta = 140490   AND nrctremp = 140490   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 1120.99 WHERE cdcooper = 5   AND nrdconta = 156965   AND nrctremp = 156965   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 1120.99 WHERE cdcooper = 5   AND nrdconta = 176869   AND nrctremp = 176869   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 12335.76 WHERE cdcooper = 5   AND nrdconta = 181706   AND nrctremp = 181706   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 12335.76 WHERE cdcooper = 6   AND nrdconta = 179230   AND nrctremp = 179230   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 1047.62 WHERE cdcooper = 7   AND nrdconta = 135119   AND nrctremp = 135119   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 10820.16 WHERE cdcooper = 13   AND nrdconta = 192899   AND nrctremp = 192899   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 7157.91 WHERE cdcooper = 13   AND nrdconta = 245542   AND nrctremp = 245542   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 7157.91 WHERE cdcooper = 13   AND nrdconta = 255092   AND nrctremp = 255092   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 2030.72 WHERE cdcooper = 13   AND nrdconta = 327522   AND nrctremp = 327522   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 2030.72 WHERE cdcooper = 13   AND nrdconta = 329851   AND nrctremp = 329851   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 4437.75 WHERE cdcooper = 9   AND nrdconta = 148180   AND nrctremp = 148180   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 3081.04 WHERE cdcooper = 11   AND nrdconta = 7544   AND nrctremp = 7544   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 3081.04 WHERE cdcooper = 11   AND nrdconta = 397270   AND nrctremp = 397270   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 3081.04 WHERE cdcooper = 11   AND nrdconta = 515515   AND nrctremp = 515515   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 1703.4 WHERE cdcooper = 14   AND nrdconta = 25011   AND nrctremp = 25011   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 381.17 WHERE cdcooper = 16   AND nrdconta = 352616   AND nrctremp = 352616   AND dtrefere = '31/01/2021';
+    UPDATE crapvri SET vldivida = 997.63 WHERE cdcooper = 16   AND nrdconta = 440124   AND nrctremp = 440124   AND dtrefere = '31/01/2021';
+
+    COMMIT;
+END;
