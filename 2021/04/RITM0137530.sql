@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-22
 DECLARE 
   i integer;
 BEGIN
@@ -22,5 +20,3 @@ EXCEPTION
     WHEN OTHERS THEN
       ROLLBACK;
 END;
-0
-0
