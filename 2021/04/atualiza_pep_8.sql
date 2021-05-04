@@ -67,7 +67,7 @@ BEGIN
                                                             'PEP;' ||
                                                             'CPF PEP;' ||
                                                             'Nome PEP;' ||
-                                                            'Tipo Exposto; ' ||
+                                                            'Tipo Exposto;' ||
                                                             'Ocupacao;' ||
                                                             'Cod Ocupacao;' ||
                                                             'Dsc Ocupacao;' ||
@@ -76,9 +76,7 @@ BEGIN
                                                             'Dsc Relacionamento;' ||
                                                             'Data Inicio;' ||
                                                             'Data Termino;' ||
-                                                            'Log Execucao;' ||
-                                                            'XML Consulta;' ||
-                                                            'XML Retorno' || CHR(10));
+                                                            'Log Execucao' || CHR(10));
   FOR rw_crapass IN cr_crapass LOOP
     vr_req := utl_http.begin_request(vr_req_url, 'POST', ' HTTP/1.1');
     utl_http.set_header(vr_req, 'Content-Type', 'text/xml');
@@ -258,11 +256,9 @@ BEGIN
                                                                   vr_pep.vr_relacmnto || ';' ||
                                                                   vr_pep.vr_dtinicio || ';' ||
                                                                   vr_pep.vr_dttermino || ';' ||
-                                                                  vr_pep.vr_log || ';' ||
-                                                                  vr_req_body || ';' ||
-                                                                  vr_res_body || CHR(10));
+                                                                  vr_pep.vr_log || CHR(10));
       ELSE
-        gene0002.pc_escreve_xml(vr_texto_carga,vr_texto_carga_aux,rw_crapass.nrcpfcgc || ';' || rw_crapass.nmextttl || ';' || CASE WHEN vr_pep.vr_flgpep THEN 'Sim' ELSE 'Não' END || ';;;;;;;;;;;;;' || vr_req_body || ';');
+        gene0002.pc_escreve_xml(vr_texto_carga,vr_texto_carga_aux,rw_crapass.nrcpfcgc || ';' || rw_crapass.nmextttl || ';' || CASE WHEN vr_pep.vr_flgpep THEN 'Sim' ELSE 'Não' END || ';;;;;;;;;;;;;' || CHR(10));
       END IF;
     EXCEPTION
       WHEN utl_http.end_of_body THEN
