@@ -28,10 +28,10 @@ begin
   FOR RW_EMPRESTIMO IN cr_emprestimos LOOP
     i := i + 1;
 
-    ESTE0001.pc_incluir_proposta_est(pr_cdcooper => RW_EMPRESTIMO.cdcooper--> Codigo da cooperativa
-                                    ,pr_cdagenci => RW_EMPRESTIMO.cdagenci--> Codigo da agencia
-                                    ,pr_cdoperad => RW_EMPRESTIMO.cdopeste--> codigo do operador
-                                    ,pr_cdorigem => 5 --> Origem da operacao
+    ESTE0001.pc_incluir_proposta_est(pr_cdcooper => RW_EMPRESTIMO.cdcooper --> Codigo da cooperativa
+                                    ,pr_cdagenci => RW_EMPRESTIMO.cdagenci --> Codigo da agencia
+                                    ,pr_cdoperad => RW_EMPRESTIMO.cdopeste --> codigo do operador
+                                    ,pr_cdorigem => RW_EMPRESTIMO.Cdorigem --> Origem da operacao
                                     ,pr_nrdconta => RW_EMPRESTIMO.nrdconta --> Numero da conta do cooperado
                                     ,pr_nrctremp => RW_EMPRESTIMO.nrctremp --> Numero da proposta de emprestimo atual/antigo
                                     ,pr_dtmvtolt => trunc(sysdate) --> Data do movimento
