@@ -6,29 +6,17 @@ DECLARE
       , cdsitdct
     FROM CECRED.CRAPASS
     WHERE ( cdcooper = 1
-        and nrdconta IN (8179107,8943877,9846271,9307621,9634711,10397370,8186812,7997345)
+        and nrdconta   IN (8179107,8943877,9846271,9307621,9634711,10397370,8186812,7997345)  -- VIACREID
       )
       OR ( cdcooper = 10
-        and nrdconta IN (33090)
-
-      )
-      OR ( cdcooper = 13
-        and nrdconta IN (279510)
-
-      )
-      OR ( cdcooper = 16
-        and nrdconta IN (584592,317055)
-
-      )
-      OR ( cdcooper = 7
-        and nrdconta IN (158097)
+        and nrdconta   IN (33090)  -- CREDICOMIN
 
       );
   --
   rg_crapass cr_crapass%rowtype;
   --
   cursor cr_crapcot (p_nrdconta   NUMBER
-                     , p_cdcooper NUMBER) is
+                     , p_cdcooper number) is
     select vldcotas
     from CECRED.crapcot
     where cdcooper = p_cdcooper
@@ -44,7 +32,6 @@ DECLARE
   vr_dtmvtolt   DATE;
   vr_capdev_ant NUMBER(15,2);
   vr_insere     CHAR(1);
-  vr_novasit    NUMBER(1);
   --
 BEGIN
   --
@@ -58,7 +45,7 @@ BEGIN
     vr_log_script := vr_log_script || chr(10) || 'Atualização da conta: (' 
                      || '[ ' || LPAD(rg_crapass.cdcooper, 2, ' ') || ' ] '
                      || LPAD(rg_crapass.nrdconta, 9, ' ') || ') da situação (' || rg_crapass.cdsitdct
-                     || ') para (4) e (8)';
+                     || ') para (4)';
     --
     vr_dstransa := 'Alterada situacao de conta por script. INC0086792.';
     --
@@ -166,34 +153,18 @@ BEGIN
     
     --
     -- Atualiza crapass
-    if rg_crapass.cdcooper in (1,10) then
-      begin
-       UPDATE cecred.CRAPASS
-         -- Em processo de demissão BACEN
-       SET cdsitdct = 4
-         , dtdemiss = vr_dtmvtolt
-       WHERE nrdconta = rg_crapass.nrdconta
-         AND cdcooper = rg_crapass.cdcooper;
-       vr_novasit:=4;  
-      end;   
-    elsif rg_crapass.cdcooper in (7,13,16) then
-        begin
-          UPDATE cecred.CRAPASS
-           -- Em processo de demissão BACEN
-          SET cdsitdct = 8
-            , dtdemiss = vr_dtmvtolt
-          WHERE nrdconta = rg_crapass.nrdconta
-            AND cdcooper = rg_crapass.cdcooper;     
-          vr_novasit:=8;  
-        end;
-    end if;  
+    UPDATE cecred.CRAPASS
+      -- Em processo de demissão BACEN
+      SET cdsitdct = 4
+        , dtdemiss = vr_dtmvtolt
+    WHERE nrdconta = rg_crapass.nrdconta
+      AND cdcooper = rg_crapass.cdcooper;
     --
     -- Insere log de atualização para a VERLOG. Ex: CADA0003 (6708)
     vr_dttransa := trunc(sysdate);
     vr_hrtransa := to_char(sysdate,'SSSSS');
 
-    INSERT INTO cecred.craplgm(
-       cdcooper
+    INSERT INTO cecred.craplgm(cdcooper
       ,nrdconta
       ,idseqttl
       ,nrsequen
@@ -222,8 +193,7 @@ BEGIN
       ,' ');
     --
     -- Insere log com valores de antes x depois da crapass.
-    INSERT INTO cecred.craplgi(
-       cdcooper
+    INSERT INTO cecred.craplgi(cdcooper
       ,nrdconta
       ,idseqttl
       ,nrsequen
@@ -243,7 +213,7 @@ BEGIN
       ,1
       ,'crapass.cdsitdct'
       ,rg_crapass.cdsitdct
-      ,vr_novasit);
+      ,'4');
     --
     -- Insere log com valores de antes x depois da crapass.
     INSERT INTO cecred.craplgi(cdcooper
