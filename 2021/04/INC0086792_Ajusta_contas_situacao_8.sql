@@ -6,12 +6,7 @@ DECLARE
       , cdsitdct
     FROM CECRED.CRAPASS
     WHERE 
-      -- CIVIA
-      ( cdcooper = 13
-        and nrdconta   IN (279510)
-      ) 
-      -- VC AV
-      OR ( cdcooper = 16
+      ( cdcooper = 16
         and nrdconta   IN (584592,317055)
       )
       -- CREDCREA
