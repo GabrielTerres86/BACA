@@ -27,7 +27,7 @@ Declare
        , a.cdapolic
        , to_date(a.dtinivig,'DD/MM/RRRR') dtinivig
        , SUM( a.vldevatu) OVER(PARTITION BY a.cdcooper, a.nrdconta )  Saldo_Devedor
-        ,to_date(a.dtdevend,'DD/MM/RRRR') dtmvtolt
+        ,to_date(sysdate,'DD/MM/RRRR') dtmvtolt
         ,4 tpseguro 
         ,514 cdsegura 
         ,a.nrcpfcgc 
