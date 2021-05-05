@@ -28,7 +28,7 @@ declare
         AND e.cdcooper = p.cdcooper
         AND e.nrdconta = p.nrdconta 
         AND e.nrctremp = p.nrctremp
-        AND r.dtrefere = '30/04/2021';
+        AND r.dtrefere = to_date('30/04/2021', 'DD/MM/YYYY');
 begin
    
    -- Ajustes dos contratos POS, que tiveram o seu juros +60 maior que saldo devedor do contrato.     
@@ -39,7 +39,7 @@ begin
         WHERE r.cdcooper = rw_cravri.cdcooper
           AND r.nrdconta = rw_cravri.nrdconta
           AND r.nrctremp = rw_cravri.nrctremp
-          AND r.dtrefere = '30/04/2021';
+          AND r.dtrefere = to_date('30/04/2021', 'DD/MM/YYYY');
      END;
    END LOOP;
    
@@ -51,7 +51,7 @@ begin
       WHERE ris.cdcooper = 1
         AND ris.nrdconta = 2328933
         AND ris.nrctremp = 1136856
-        AND ris.dtrefere = '30/04/2021';
+        AND ris.dtrefere = to_date('30/04/2021', 'DD/MM/YYYY');
    END;
    COMMIT;
    
