@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-531
+530
 Declare
   vr_contador number;  
   vr_excsaida EXCEPTION;
@@ -68,17 +68,17 @@ Declare
      
   cursor cr_crawseq(pr_cdcooper1 crapseg.cdcooper%type,
                     pr_nrdconta1 crapseg.nrdconta%type,
-                    pr_nrctrseg1 crapseg.nrctrseg%type) is 
+                    pr_nrctrato1 crawseg.nrctrato%type) is 
       select 1
             from crapseg pseg, 
                  crawseg wseg
-           where wseg.tpseguro = 4
-             and pseg.cdcooper = wseg.cdcooper
+           where pseg.cdcooper = wseg.cdcooper
              AND pseg.nrdconta = wseg.nrdconta
              AND pseg.nrctrseg = wseg.nrctrseg                                            
-             and pseg.cdcooper = pr_cdcooper1 
-             and pseg.nrdconta = pr_nrdconta1
-             and pseg.nrctrseg <> pr_nrctrseg1;
+             and wseg.cdcooper = pr_cdcooper1 
+             and wseg.nrdconta = pr_nrdconta1
+             and wseg.nrctrato = pr_nrctrato1
+             and wseg.tpseguro = 4;  
         rw_crawseq cr_crawseq%rowtype;     
 
    
@@ -339,7 +339,7 @@ Declare
       -- ROLLBACK;     
     END pc_efetiva_proposta_seguro_p;                                
 
-BEGIN
+
 
 begin
   vr_contador:=0;
@@ -390,7 +390,7 @@ begin
        ---'Incluir  crawseg' 
        open cr_crawseq(pr_cdcooper1 => rw_seguros.cdcooper,
                        pr_nrdconta1 => rw_seguros.nrdconta,
-                       pr_nrctrseg1 => rw_seguros.nrctrseg);
+                       pr_nrctrato1 => rw_seguros.nrctrato);
        fetch cr_crawseq into rw_crawseq;
          
        if cr_crawseq%found then 
@@ -530,6 +530,6 @@ EXCEPTION
     rollback;
 end;
 
-end;
 0
-0
+1
+rw_seguros.nrdconta
