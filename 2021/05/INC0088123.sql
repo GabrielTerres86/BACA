@@ -1,6 +1,6 @@
 BEGIN
   UPDATE crapprm
-  SET dsvlrprm = 'temp@123'
+  SET dsvlrprm = 'ZQEPxcBqU9c3i7'
   WHERE cdacesso = 'SPC_BRASIL_PASSPHR';
 
   COMMIT;
