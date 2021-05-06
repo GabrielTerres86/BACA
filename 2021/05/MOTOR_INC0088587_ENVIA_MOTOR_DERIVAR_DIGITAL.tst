@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-128
+127
 
 declare
   CURSOR cr_emprestimos IS
@@ -84,7 +84,6 @@ declare
   vr_cdcritic INTEGER;
   
 begin
-  dbms_output.enable(1000000);
   FOR RW_EMPRESTIMO IN cr_emprestimos LOOP
     i := i + 1;
 
