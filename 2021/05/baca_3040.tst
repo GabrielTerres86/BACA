@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-59
+61
 -- Created on 05/05/2021 by F0032990 
 declare 
    CURSOR cr_crapvri IS 
@@ -39,6 +39,7 @@ begin
         WHERE r.cdcooper = rw_cravri.cdcooper
           AND r.nrdconta = rw_cravri.nrdconta
           AND r.nrctremp = rw_cravri.nrctremp
+          AND r.cdmodali IN (299,499)
           AND r.dtrefere = to_date('30/04/2021', 'DD/MM/YYYY');
      END;
    END LOOP;
@@ -51,6 +52,7 @@ begin
       WHERE ris.cdcooper = 1
         AND ris.nrdconta = 2328933
         AND ris.nrctremp = 1136856
+        AND ris.cdmodali IN (299,499)
         AND ris.dtrefere = to_date('30/04/2021', 'DD/MM/YYYY');
    END;
    COMMIT;
