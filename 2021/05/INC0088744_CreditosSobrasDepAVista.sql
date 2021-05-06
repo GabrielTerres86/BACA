@@ -99,52 +99,55 @@ BEGIN
     
     SAVEPOINT lancar_valores_conta;
     
-    -- Buscar os lançamentos de conta, para serem creditados
-    FOR lancto IN cr_craplcm(dados.cdcooper, dados.nrdconta) LOOP
-  
-      -- Realizar o lançamento de crédito na conta
-      lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt    => datascooperativa(dados.cdcooper).dtmvtolt
-                                        ,pr_cdagenci    => 1
-                                        ,pr_cdbccxlt    => 100  
-                                        ,pr_nrdolote    => 8005
-                                        ,pr_nrdconta    => dados.nrdconta
-                                        ,pr_nrdocmto    => '8005'||lancto.cdhistor
-                                        ,pr_cdhistor    => lancto.cdhistor 
-                                        ,pr_vllanmto    => lancto.vllanmto
-                                        ,pr_nrdctabb    => dados.nrdconta
-                                        ,pr_cdpesqbb    => 'REVERCAO DE VALORES A DEVOLVER - CONTAS SIT. 8'
-                                        ,pr_hrtransa    => gene0002.fn_busca_time
-                                        ,pr_cdoperad    => '1' -- Super Usuário
-                                        ,pr_dsidenti    => ' '
-                                        ,pr_cdcooper    => dados.cdcooper
-                                        ,pr_nrdctitg    => LPAD(dados.nrdconta,8,'0')
-                                        ,pr_inprolot    => 1 -- A rotina irá processar os dados do lote
-                                        ,pr_tplotmov    => 2
-                                        ,pr_tab_retorno => vr_rgretorno
-                                        ,pr_incrineg    => vr_incrineg
-                                        ,pr_cdcritic    => vr_cdcritic
-                                        ,pr_dscritic    => vr_dscritic);
-             
-      -- Em caso de erro                           
-      IF vr_dscritic IS NOT NULL THEN
-        vr_dslog := vr_dslog||'  ### ERRO: '||vr_dscritic||CHR(10);
-        
-        -- Desfaz os lançamentos da conta
-        ROLLBACK TO lancar_valores_conta;
-        
-        -- Escrever arquivo de log
-        gene0002.pc_clob_para_arquivo(pr_clob     => vr_dslog
-                                     ,pr_caminho  => vr_dsdirlog
-                                     ,pr_arquivo  => 'logSobras.txt'
-                                     ,pr_flappend => 'S'
-                                     ,pr_des_erro => vr_dscritic);
-        
-        -- Encerra lançamentos para a conta
-        EXIT; 
-      END IF;
-                                     
-    END LOOP;
-  
+    -- Se o valor debitado for maior que zero - NÃO DEVE LANÇAR VALOR DE ESTORNO
+    IF NVL(dados.vldebitado,0) > 0 THEN
+      -- Buscar os lançamentos de conta, para serem creditados
+      FOR lancto IN cr_craplcm(dados.cdcooper, dados.nrdconta) LOOP
+    
+        -- Realizar o lançamento de crédito na conta
+        lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt    => datascooperativa(dados.cdcooper).dtmvtolt
+                                          ,pr_cdagenci    => 1
+                                          ,pr_cdbccxlt    => 100  
+                                          ,pr_nrdolote    => 8005
+                                          ,pr_nrdconta    => dados.nrdconta
+                                          ,pr_nrdocmto    => '8005'||lancto.cdhistor
+                                          ,pr_cdhistor    => lancto.cdhistor 
+                                          ,pr_vllanmto    => lancto.vllanmto
+                                          ,pr_nrdctabb    => dados.nrdconta
+                                          ,pr_cdpesqbb    => 'REVERCAO DE VALORES A DEVOLVER - CONTAS SIT. 8'
+                                          ,pr_hrtransa    => gene0002.fn_busca_time
+                                          ,pr_cdoperad    => '1' -- Super Usuário
+                                          ,pr_dsidenti    => ' '
+                                          ,pr_cdcooper    => dados.cdcooper
+                                          ,pr_nrdctitg    => LPAD(dados.nrdconta,8,'0')
+                                          ,pr_inprolot    => 1 -- A rotina irá processar os dados do lote
+                                          ,pr_tplotmov    => 2
+                                          ,pr_tab_retorno => vr_rgretorno
+                                          ,pr_incrineg    => vr_incrineg
+                                          ,pr_cdcritic    => vr_cdcritic
+                                          ,pr_dscritic    => vr_dscritic);
+               
+        -- Em caso de erro                           
+        IF vr_dscritic IS NOT NULL THEN
+          vr_dslog := vr_dslog||'  ### ERRO: '||vr_dscritic||CHR(10);
+          
+          -- Desfaz os lançamentos da conta
+          ROLLBACK TO lancar_valores_conta;
+          
+          -- Escrever arquivo de log
+          gene0002.pc_clob_para_arquivo(pr_clob     => vr_dslog
+                                       ,pr_caminho  => vr_dsdirlog
+                                       ,pr_arquivo  => 'logSobras.txt'
+                                       ,pr_flappend => 'S'
+                                       ,pr_des_erro => vr_dscritic);
+          
+          -- Encerra lançamentos para a conta
+          EXIT; 
+        END IF;
+                                       
+      END LOOP;
+    END IF;
+    
     -- Se ocorreu erro ao inserir lançamentos
     IF vr_dscritic IS NOT NULL THEN
       -- Limpar erros
