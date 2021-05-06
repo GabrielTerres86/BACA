@@ -61,7 +61,7 @@ DECLARE
   vr_dscritic       VARCHAR2(2000);
   vr_vlcapital      tbcotas_devolucao.vlcapital%TYPE;
   vr_dsrowid        VARCHAR2(50);
-  vr_dsdirlog       VARCHAR2(100) := '/progress/f0030617/usr/coop/cecred/log';
+  vr_dsdirlog       VARCHAR2(100) := '/usr/coop/cecred/log';
   
 BEGIN
   
