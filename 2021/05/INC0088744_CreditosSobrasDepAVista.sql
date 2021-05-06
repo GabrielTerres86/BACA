@@ -197,6 +197,8 @@ BEGIN
                                  ,pr_flappend => 'S'
                                  ,pr_des_erro => vr_dscritic);
     
+    COMMIT;
+  
   END LOOP;
   
   COMMIT;
