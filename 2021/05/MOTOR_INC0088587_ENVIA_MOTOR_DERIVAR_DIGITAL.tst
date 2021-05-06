@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-127
+128
 
 declare
   CURSOR cr_emprestimos IS
@@ -71,6 +71,7 @@ declare
             (t.cdcooper = 16 AND t.nrdconta = 3541517 AND t.nrctremp = 271566) OR
             (t.cdcooper = 16 AND t.nrdconta = 3987680 AND t.nrctremp = 271593) 
             )
+          AND t.insitest = 5
        AND NOT EXISTS (SELECT 1
                          FROM crapepr p
                         WHERE p.cdcooper = t.cdcooper
