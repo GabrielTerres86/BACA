@@ -36,7 +36,6 @@ begin
     -- Copiar o valor PIX Cooperativa para Cooperado e garantir que valor limite web não fique inferior
     update CRAPSNH S
        set s.vllimite_pix_cooperado = s.vllimite_pix
-          ,s.vllimweb = greatest(nvl(s.vllimweb,0),s.vllimite_pix)
      WHERE s.cdcooper = rw_coop.cdcooper
        AND S.TPDSENHA = 1 -- TIPO DE SENHA = INTERNET
        AND S.CDSITSNH = 1;-- SITUAÇÃO DA SENHA = ATIVO
