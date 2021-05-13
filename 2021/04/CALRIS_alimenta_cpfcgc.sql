@@ -2,10 +2,12 @@ DECLARE
 
 CURSOR crPessoa IS
   SELECT a.idcalris_pessoa
+	   , b.tppessoa
        , b.nrcpfcgc
     FROM tbcalris_pessoa a
        , tbcadast_pessoa b
-   WHERE b.idpessoa = a.idpessoa;
+   WHERE b.idpessoa = a.idpessoa
+     AND a.tpcalculadora NOT IN (3, 4);
 
 TYPE tbCursor IS TABLE OF crPessoa%ROWTYPE INDEX BY PLS_INTEGER;
 tbPessoa tbCursor;
@@ -20,7 +22,14 @@ LOOP
   FORALL i IN tbPessoa.FIRST..tbPessoa.LAST
     UPDATE tbcalris_pessoa
        SET nrcpfcgc = tbPessoa(i).nrcpfcgc
+	     , tpcalculadora = tbPessoa(i).tppessoa
      WHERE idcalris_pessoa = tbPessoa(i).idcalris_pessoa;
+  COMMIT;
+
+  FORALL i IN tbPessoa.FIRST..tbPessoa.LAST
+    UPDATE tbcalris_tanque
+       SET tpcalculadora = tbPessoa(i).tppessoa
+     WHERE nrcpfcgc = tbPessoa(i).nrcpfcgc;
   COMMIT;
 END LOOP;
 CLOSE crPessoa;
