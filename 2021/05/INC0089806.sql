@@ -14,7 +14,7 @@ begin
        SET DTINICIO_PROCESSO = NULL,
            DTFIM_PROCESSO    = NULL,
            INSTATUS          = 1,
-           INEMAIL           = NULL
+           INEMAIL           = 0
      WHERE IDARQUIVO = 1;
   
     UPDATE TBCRD_LINHA_ARQUIVO
@@ -25,6 +25,11 @@ begin
        SET DSFUNC_CONV = 'to_date(%VALOR%, ''DDMMRRRR'')'
      WHERE NMCAMPO LIKE 'DT%'
        AND DSFUNC_CONV IS NULL;
+    
+    UPDATE TBCRD_LAYOUT_ARQUIVO_ITEM
+       SET DSFUNC_CONV = 'to_date(%VALOR%, ''DDMMRRRR'')'
+     WHERE IDLAYOUT = 1
+       AND NMCAMPO IN ('DTARQUIVO','DTDONASC','DTOPERACAO','DTOPERACAO','DTVENCIMENTO_CONTRATO');
   
     COMMIT;
   END;
