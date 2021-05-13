@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-199
+198
 DECLARE
   vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
   vr_nmdireto        VARCHAR2(4000) := vr_rootmicros|| 'cpd/bacas/RITM0130655';
@@ -49,14 +49,13 @@ DECLARE
      where s.cdcooper = pr_cdcooper
        and s.nrdconta = pr_nrdconta
        and s.nrctrato = pr_nrctrato
-       and s.nrproposta = pr_nrproposta;
-    and exists(
-      select 1
-        from crapseg g
-       where g.cdcooper = s.cdcooper
-         and g.nrdconta = s.nrdconta
-         and g.nrctrseg = s.nrctrseg
-         and g.tpseguro = 4)
+       and s.nrproposta = pr_nrproposta
+       and exists(select 1
+                    from crapseg g
+                   where g.cdcooper = s.cdcooper
+                     and g.nrdconta = s.nrdconta
+                     and g.nrctrseg = s.nrctrseg
+                     and g.tpseguro = 4);
     rw_crawseg cr_crawseg%rowtype;
 BEGIN  
  
