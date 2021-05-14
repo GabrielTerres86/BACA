@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-82
+81
 DECLARE
   CURSOR cr_crapbat(pr_cdbattar IN crapbat.cdbattar%TYPE) IS
     SELECT cdcadast
@@ -82,5 +82,4 @@ BEGIN
 
 END;
 0
-1
-aux_cdpartar_add
+0
