@@ -22,7 +22,6 @@ declare
        where  cdsegura = 5011
 --          AND cdsitseg IN (1,3) -- Ativo
           and tpseguro = 4
-          and dtiniseg >= trunc(sysdate)  - 134  
           ;
   rw_pseg cr_pseg%rowtype;
 
