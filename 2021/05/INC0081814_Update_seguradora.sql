@@ -79,8 +79,6 @@ begin
 
 
    FOR rw_pseg IN cr_pseg(rw_coop.cdcooper) LOOP
-      vr_linha := ' -- coperativa '||rw_coop.cdcooper;
-      gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,  vr_linha);
       
       vr_contador:= vr_contador + 1;
       vr_linha := 'update crapseg set  cdsegura = 5011 where rowid = '''|| rw_pseg.rowid ||''';';
