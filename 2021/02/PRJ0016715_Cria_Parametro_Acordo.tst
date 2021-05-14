@@ -28,7 +28,7 @@ BEGIN
   SELECT MAX(cdpartar) INTO aux_cdpartar_add FROM crappat;
   aux_cdpartar_add :=  aux_cdpartar_add + 1;
 
-  -- ----- Ativação ----- --
+  -- ----- AtivaÃ§Ã£o ----- --
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
   values (aux_cdpartar_add, 'Regra ACORDO Recuperacao Ativa (1) ou Desativada (0)', 1, 12);
 
@@ -77,7 +77,6 @@ BEGIN
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar_add, 1, '0');
 -----------------------------
-
 
   COMMIT;
 
