@@ -14,6 +14,11 @@ BEGIN
      AND t.nrdconta = 80276180
      AND t.dtmvtolt BETWEEN to_date('07/05/2021','dd/mm/yyyy') AND TRUNC(SYSDATE);
   
+  UPDATE crapsld t
+     SET t.vlsddisp = t.vlsddisp + 814
+   WHERE t.cdcooper = 1
+     AND t.nrdconta = 80276180;
+  
   COMMIT;
   
 END;
