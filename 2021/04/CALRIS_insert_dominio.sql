@@ -30,6 +30,6 @@ commit;
 
 exception
 	when others then
-		null;
+		ROLLBACK;
 end;
 /
