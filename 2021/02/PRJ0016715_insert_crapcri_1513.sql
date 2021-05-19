@@ -8,6 +8,7 @@ BEGIN
     ,'1513 - Sistema não permite acordos com mais de 1 operação'
     ,1);
   COMMIT;
+  
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
