@@ -4,6 +4,7 @@ CURSOR crPessoa IS
   SELECT a.idcalris_pessoa
 	   , b.tppessoa
        , b.nrcpfcgc
+	   , b.nmpessoa
     FROM tbcalris_pessoa a
        , tbcadast_pessoa b
    WHERE b.idpessoa = a.idpessoa
@@ -23,6 +24,7 @@ LOOP
     UPDATE tbcalris_pessoa
        SET nrcpfcgc = tbPessoa(i).nrcpfcgc
 	     , tpcalculadora = tbPessoa(i).tppessoa
+		 , nmpessoa = tbPessoa(i).nmpessoa
      WHERE idcalris_pessoa = tbPessoa(i).idcalris_pessoa;
   COMMIT;
 
