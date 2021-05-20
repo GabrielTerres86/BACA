@@ -27,6 +27,7 @@ SELECT a.cdcooper
    AND c.nrdconta = x.nrdconta_cob
    AND c.nrcnvcob = x.nrconvenio
    AND c.nrdocmto = x.nrboleto
+   AND a.cdsituacao = 1
    AND x.nrparcela = 0
    AND c.dtdpagto >= '30/04/2021'
    AND c.dtdpagto <= '06/05/2021'
