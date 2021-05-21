@@ -31,9 +31,11 @@ BEGIN
       -- 
       delete crapprm where nmsistem = 'CRED' and cdcooper = rw_crapcop.cdcooper and cdacesso = 'QT_VALIDADE_PRO_RENCAN';
       INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'QT_VALIDADE_PRO_RENCAN', 'Quantidade de dias para validade da proposta.', '1');    
+      
+      INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'VL_DESC_ASSAVAL_RENCAN', 'Valor máximo para desconsiderar assinatura aval e sócios (PJ).', '10000');
     END LOOP;
     
-    UPDATE crapaca SET lstparam = lstparam || ',pr_flatmobi,pr_flatconl,pr_vlmxremo,pr_vlmxreon,pr_vlmxreca,pr_vlmxcohi,pr_qtvalpro'
+    UPDATE crapaca SET lstparam = lstparam || ',pr_flatmobi,pr_flatconl,pr_vlmxremo,pr_vlmxreon,pr_vlmxreca,pr_vlmxcohi,pr_qtvalpro,pr_vlmxassi'
     WHERE  nmdeacao             = 'TAB089_ALTERAR';
 	
     COMMIT;
