@@ -49,7 +49,7 @@ DECLARE
   rw_crawcrd cr_crawcrd%ROWTYPE;
   
   CURSOR cr_crapcrd(pr_cdcooper crapcop.cdcooper%TYPE) IS
-    SELECT c1.nrcctitg, c1.nrcrcard, c1.rowid
+    SELECT w.nrcctitg, c1.nrcrcard, c1.rowid
       FROM CRAPCRD C1
           ,CRAWCRD W
      WHERE C1.CDCOOPER = pr_cdcooper
