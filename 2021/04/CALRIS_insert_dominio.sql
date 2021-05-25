@@ -26,6 +26,9 @@ values ('CALRIS_STATUS_TANQUE', '11', 'Lista interna com erro');
 insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
 values ('CALRIS_STATUS_TANQUE', '12', 'Dados desatualizados');
 
+insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+values ('CALRISPES_SITUACAO', '7', 'Aguardando lista interna');
+
 commit;
 
 exception
