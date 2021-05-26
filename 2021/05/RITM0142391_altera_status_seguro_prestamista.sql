@@ -1,0 +1,1 @@
+update crapseg set CDSITSEG = 1 where PROGRESS_RECID = 934783;
