@@ -48,7 +48,7 @@ BEGIN
     --
     -- Atualiza crapcrm
     UPDATE cecred.CRAPCRM
-      SET cdsitcar = 4,
+      SET cdsitcar = 3,
 	      dtcancel = vr_dttransa
     WHERE nrcartao = rg_crapcrm.nrcartao
 	  AND nrdconta = rg_crapcrm.nrdconta
