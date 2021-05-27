@@ -215,7 +215,7 @@ BEGIN
   -- Sucesso
   dbms_output.put_line('Quantidade de contratos analisados: '|| vr_contador_cursor_contratos);
   dbms_output.put_line('Quantidade de contratos atualizados: '|| vr_contador_atualizados);
- -- COMMIT;
+  COMMIT;
 EXCEPTION
   WHEN vr_exc_erro THEN
     dbms_output.put_line(vr_dscritic);
