@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-46
+118
 -- Created on 02/10/2020 by T0032717 
 DECLARE 
  
@@ -40,6 +40,78 @@ BEGIN
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
        
+  -- credcrea
+  empr0001.pc_cria_lancamento_lem(pr_cdcooper => 
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                 ,pr_cdagenci => 1
+                                 ,pr_cdbccxlt => 100
+                                 ,pr_cdoperad => 1
+                                 ,pr_cdpactra => 1
+                                 ,pr_tplotmov => 5
+                                 ,pr_nrdolote => 600029
+                                 ,pr_nrdconta => 108650	
+                                 ,pr_cdhistor => 2391 -- abono
+                                 ,pr_nrctremp => 31450
+                                 ,pr_vllanmto => 39.32
+                                 ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                 ,pr_txjurepr => 0
+                                 ,pr_vlpreemp => 0
+                                 ,pr_nrsequni => 0
+                                 ,pr_nrparepr => 0
+                                 ,pr_flgincre => TRUE 
+                                 ,pr_flgcredi => FALSE  
+                                 ,pr_nrseqava => 0
+                                 ,pr_cdorigem => 7 -- batch
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic);
+  
+  empr0001.pc_cria_lancamento_lem(pr_cdcooper => 
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                 ,pr_cdagenci => 1
+                                 ,pr_cdbccxlt => 100
+                                 ,pr_cdoperad => 1
+                                 ,pr_cdpactra => 1
+                                 ,pr_tplotmov => 5
+                                 ,pr_nrdolote => 600029
+                                 ,pr_nrdconta => 108650	
+                                 ,pr_cdhistor => 2391 -- abono
+                                 ,pr_nrctremp => 30373
+                                 ,pr_vllanmto => 482.29
+                                 ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                 ,pr_txjurepr => 0
+                                 ,pr_vlpreemp => 0
+                                 ,pr_nrsequni => 0
+                                 ,pr_nrparepr => 0
+                                 ,pr_flgincre => TRUE 
+                                 ,pr_flgcredi => FALSE  
+                                 ,pr_nrseqava => 0
+                                 ,pr_cdorigem => 7 -- batch
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic);
+  
+  empr0001.pc_cria_lancamento_lem(pr_cdcooper => 
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                 ,pr_cdagenci => 1
+                                 ,pr_cdbccxlt => 100
+                                 ,pr_cdoperad => 1
+                                 ,pr_cdpactra => 1
+                                 ,pr_tplotmov => 5
+                                 ,pr_nrdolote => 600029
+                                 ,pr_nrdconta => 239798	
+                                 ,pr_cdhistor => 2391 -- abono
+                                 ,pr_nrctremp => 22604
+                                 ,pr_vllanmto => 21.92
+                                 ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                 ,pr_txjurepr => 0
+                                 ,pr_vlpreemp => 0
+                                 ,pr_nrsequni => 0
+                                 ,pr_nrparepr => 0
+                                 ,pr_flgincre => TRUE 
+                                 ,pr_flgcredi => FALSE  
+                                 ,pr_nrseqava => 0
+                                 ,pr_cdorigem => 7 -- batch
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic);
   COMMIT;
   
 EXCEPTION
