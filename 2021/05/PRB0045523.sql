@@ -5,8 +5,7 @@ set
 where 
 	p.cdcooper >= 1 
 	and p.cdtippro = 16 
-	and p.dtmvtolt 
-	between '06/05/2021' and '27/05/2021' 
+	and p.dtmvtolt between '06/05/2021' and '27/05/2021' 
 	and p.dsinform##3 like '%#Agente Arrecadador: #Agência: %';
 
 commit;
