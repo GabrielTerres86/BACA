@@ -12,36 +12,12 @@ DECLARE
   
 BEGIN
   
-  OPEN btch0001.cr_crapdat(pr_cdcooper => 1);
+  OPEN btch0001.cr_crapdat(pr_cdcooper => 7);
   FETCH btch0001.cr_crapdat  INTO rw_crapdat;
   CLOSE btch0001.cr_crapdat;
   
-  empr0001.pc_cria_lancamento_lem(pr_cdcooper => 1
-                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                 ,pr_cdagenci => 1
-                                 ,pr_cdbccxlt => 100
-                                 ,pr_cdoperad => 1
-                                 ,pr_cdpactra => 1
-                                 ,pr_tplotmov => 5
-                                 ,pr_nrdolote => 600029
-                                 ,pr_nrdconta => 7719620
-                                 ,pr_cdhistor => 2471 --
-                                 ,pr_nrctremp => 2491598
-                                 ,pr_vllanmto => 76.32
-                                 ,pr_dtpagemp => rw_crapdat.dtmvtolt
-                                 ,pr_txjurepr => 0
-                                 ,pr_vlpreemp => 0
-                                 ,pr_nrsequni => 0
-                                 ,pr_nrparepr => 0
-                                 ,pr_flgincre => TRUE 
-                                 ,pr_flgcredi => FALSE  
-                                 ,pr_nrseqava => 0
-                                 ,pr_cdorigem => 7 -- batch
-                                 ,pr_cdcritic => vr_cdcritic
-                                 ,pr_dscritic => vr_dscritic);
-       
   -- credcrea
-  empr0001.pc_cria_lancamento_lem(pr_cdcooper => 
+  empr0001.pc_cria_lancamento_lem(pr_cdcooper => 7
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                  ,pr_cdagenci => 1
                                  ,pr_cdbccxlt => 100
@@ -65,7 +41,7 @@ BEGIN
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
   
-  empr0001.pc_cria_lancamento_lem(pr_cdcooper => 
+  empr0001.pc_cria_lancamento_lem(pr_cdcooper => 7
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                  ,pr_cdagenci => 1
                                  ,pr_cdbccxlt => 100
@@ -89,7 +65,7 @@ BEGIN
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
   
-  empr0001.pc_cria_lancamento_lem(pr_cdcooper => 
+  empr0001.pc_cria_lancamento_lem(pr_cdcooper => 7
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                  ,pr_cdagenci => 1
                                  ,pr_cdbccxlt => 100
