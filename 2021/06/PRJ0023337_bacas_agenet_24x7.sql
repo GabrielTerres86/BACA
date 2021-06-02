@@ -2,19 +2,19 @@ begin
   
   /* Criar cada cddopcao como nmrotina */
   insert into craptel (nmdatela,nrmodulo,cdopptel,tldatela,tlrestel,flgteldf,flgtelbl,nmrotina,lsopptel,inacesso,cdcooper,idsistem,idevento,nrordrot,nrdnivel,nmrotpai,idambtel)
-  select nmdatela,nrmodulo,'@',tldatela,tlrestel,flgteldf,flgtelbl,'IMPRESSAO','IMPRESSAO',0,cdcooper,idsistem,idevento,nrordrot,nrdnivel,nmrotpai,idambtel
+  select nmdatela,nrmodulo,'@',tldatela,tlrestel,flgteldf,flgtelbl,'IMPRESSAO','IMPRESSAO',2,cdcooper,idsistem,idevento,nrordrot,nrdnivel,nmrotpai,idambtel
     from craptel
    where nmdatela = 'AGENET'
    and nmrotina = ' ';
 
   insert into craptel (nmdatela,nrmodulo,cdopptel,tldatela,tlrestel,flgteldf,flgtelbl,nmrotina,lsopptel,inacesso,cdcooper,idsistem,idevento,nrordrot,nrdnivel,nmrotpai,idambtel)
-  select nmdatela,nrmodulo,'@',tldatela,tlrestel,flgteldf,flgtelbl,'VISUALIZAR','VISUALIZAR',0,cdcooper,idsistem,idevento,nrordrot,nrdnivel,nmrotpai,idambtel
+  select nmdatela,nrmodulo,'@',tldatela,tlrestel,flgteldf,flgtelbl,'VISUALIZAR','VISUALIZAR',2,cdcooper,idsistem,idevento,nrordrot,nrdnivel,nmrotpai,idambtel
     from craptel
    where nmdatela = 'AGENET'
    and nmrotina = ' ';
    
   insert into craptel (nmdatela,nrmodulo,cdopptel,tldatela,tlrestel,flgteldf,flgtelbl,nmrotina,lsopptel,inacesso,cdcooper,idsistem,idevento,nrordrot,nrdnivel,nmrotpai,idambtel)
-  select nmdatela,nrmodulo,'@',tldatela,tlrestel,flgteldf,flgtelbl,'CANCELAR','CANCELAR',2,cdcooper,idsistem,idevento,nrordrot,nrdnivel,nmrotpai,idambtel
+  select nmdatela,nrmodulo,'@',tldatela,tlrestel,flgteldf,flgtelbl,'CANCELAR','CANCELAR',0,cdcooper,idsistem,idevento,nrordrot,nrdnivel,nmrotpai,idambtel
     from craptel
    where nmdatela = 'AGENET'
    and nmrotina = ' '; 
