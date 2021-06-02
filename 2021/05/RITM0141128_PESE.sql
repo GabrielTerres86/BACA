@@ -80,6 +80,8 @@ BEGIN
    dbms_lob.open(vr_des_log, dbms_lob.lob_readwrite);
   --Cabeçalho para geração do arquivo de log
   gene0002.pc_escreve_xml(vr_des_log,vr_texto_completo,'Cooperativa;Conta;Contrato;Parcela atual;Parcela nova;Saldo devedor atual;Novo saldo devedor'|| chr(10));
+  --set serveroutput on size unlimited
+  DBMS_OUTPUT.ENABLE (buffer_size => NULL);
   -- Loop no cursor de 222 contratos apontados com necessidade de atualização 
   FOR ret_contrato_atualizacao IN cr_coop_conta_contrato_atualizar LOOP   
     vr_contador_cursor_contratos := vr_contador_cursor_contratos + 1;
@@ -175,9 +177,9 @@ BEGIN
       --------------------------------------------------------------------------------------------------
       BEGIN
         UPDATE crappep SET 
-          vlparepr = NVL(vlparepr,0) + NVL(vr_nova_prestacao,0), --> Valor da parcela
-          vlsdvpar = NVL(vlsdvpar,0) + NVL(vr_nova_prestacao,0), --> Contem o valor do saldo devedor da parcela.
-          vlsdvsji = NVL(vlsdvsji,0) + NVL(vr_nova_prestacao,0)  --> Contem o saldo devedor da parcela sem juros de inadimplencia.
+          vlparepr = NVL(vr_nova_prestacao,rw_tbepr_adiamento_contrato.vlpreemp), --> Valor da parcela
+          vlsdvpar = NVL(vr_nova_prestacao,rw_tbepr_adiamento_contrato.vlpreemp), --> Contem o valor do saldo devedor da parcela.
+          vlsdvsji = NVL(vr_nova_prestacao,rw_tbepr_adiamento_contrato.vlpreemp)  --> Contem o saldo devedor da parcela sem juros de inadimplencia.
         WHERE crappep.cdcooper = rw_tbepr_adiamento_contrato.cdcooper
           AND crappep.nrdconta = rw_tbepr_adiamento_contrato.nrdconta
           AND crappep.nrctremp = rw_tbepr_adiamento_contrato.nrctremp
