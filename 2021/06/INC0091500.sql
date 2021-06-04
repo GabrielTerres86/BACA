@@ -69,6 +69,6 @@ BEGIN
     AND NRCTRCRD = 2113863;
   END;
   
-  COMMIT;
+  COMMIT; 
   
 END;
