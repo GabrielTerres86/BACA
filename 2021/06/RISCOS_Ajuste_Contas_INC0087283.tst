@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-628
+622
 DECLARE
   CURSOR cr_his (pr_cdcooper IN crapcop.cdcooper%TYPE
                 ,pr_cdhistor IN craphis.cdhistor%TYPE)IS
@@ -597,12 +597,6 @@ BEGIN
   vr_cdhistor  := 2721;
   dbms_output.put_line('  ');
   dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
-
-  prc_exclui_lct (prm_cdcooper => vr_cdcooper,
-                  prm_nrdconta => vr_nrdconta,
-                  prm_vllanmto => vr_vllanmto,
-                  prm_cdhistor => vr_cdhistor,
-                  prm_idlancto => NULL);
 
   prc_gera_acerto_transit(prm_cdcooper => vr_cdcooper,
                           prm_nrdconta => vr_nrdconta,
