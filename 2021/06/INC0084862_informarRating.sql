@@ -1,14 +1,14 @@
 UPDATE crawepr e
-   SET e.dsnivris = 'A',
-       e.dsnivori = 'A'
+   SET e.dsnivris = 'B',
+       e.dsnivori = 'B'
  WHERE e.cdcooper = 1
    AND e.nrdconta = 7600518
    AND e.nrctremp IN (3555624,3573233);
 
 UPDATE tbrisco_operacoes o
-   SET o.inrisco_inclusao     = 2,
-       o.inrisco_rating       = 2,
-       o.inrisco_rating_autom = 1,
+   SET o.inrisco_inclusao     = 3,
+       o.inrisco_rating       = 3,
+       o.inrisco_rating_autom = 3,
        o.dtrisco_rating_autom = TO_DATE('01/06/2021'),
        o.dtrisco_rating       = TO_DATE('01/06/2021'),
        o.inorigem_rating      = 1,
