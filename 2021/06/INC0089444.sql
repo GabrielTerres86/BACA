@@ -6,5 +6,7 @@ BEGIN
   UPDATE crapris SET cdmodali = 499 WHERE cdcooper = 2 AND nrdconta = 766909 AND nrctremp = 291866 AND cdmodali = 299;
   UPDATE crapepr SET cdlcremp = 955 WHERE cdcooper = 2 AND nrdconta = 766909 AND nrctremp = 291866;
   
+  UPDATE crapris SET cdmodali = 499 WHERE cdcooper = 13 AND nrdconta = 141739 AND nrctremp = 49713 AND cdmodali = 299;
+  UPDATE crapepr SET cdlcremp = 171 WHERE cdcooper = 13 AND nrdconta = 141739 AND nrctremp = 49713;  
   COMMIT;
 END;
