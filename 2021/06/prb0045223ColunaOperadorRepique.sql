@@ -27,7 +27,7 @@ DECLARE
                                                       ' 1> /dev/null',
                                     pr_typ_saida   => vr_typ_saida,
                                     pr_des_saida   => vr_des_saida);
-        --Se ocorreu erro dar RAISE
+        ---Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic := 'CRIAR DIRETORIO ARQUIVO --> Nao foi possivel criar o diretorio para gerar os arquivos. ' ||
                          vr_des_saida;
