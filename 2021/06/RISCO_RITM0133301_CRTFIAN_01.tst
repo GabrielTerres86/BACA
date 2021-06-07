@@ -35,46 +35,46 @@ BEGIN
   values ('CARTAFIANCA', 'INFORMA CARTA FIANCA', ' ', 2, aux_cdpartar_add);
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 16, '1513');
+  values (aux_cdpartar_add, 16, '100');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 14, '1513');
+  values (aux_cdpartar_add, 14, '100');
   
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 13, '1513');
+  values (aux_cdpartar_add, 13, '100');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 12, '1513');
+  values (aux_cdpartar_add, 12, '100');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 11, '1513');
+  values (aux_cdpartar_add, 11, '100');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 10, '1513');
+  values (aux_cdpartar_add, 10, '100');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 9, '1513');
+  values (aux_cdpartar_add, 9, '100');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 8, '1513');
+  values (aux_cdpartar_add, 8, '100');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 7, '1513');
+  values (aux_cdpartar_add, 7, '100');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 6, '1513');
+  values (aux_cdpartar_add, 6, '100');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 5, '1513');
+  values (aux_cdpartar_add, 5, '100');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 3, '1513');
+  values (aux_cdpartar_add, 3, '100');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 2, '1513');
+  values (aux_cdpartar_add, 2, '100');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 1, '1513');
+  values (aux_cdpartar_add, 1, '100');
 
 COMMIT;
 
