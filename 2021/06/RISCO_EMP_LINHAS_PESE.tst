@@ -32,7 +32,7 @@ BEGIN
 
   -- ----- Ativação ----- --
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
-  values (aux_cdpartar_add, 'Linhas Emprestimos PESE', 4, 12);
+  values (aux_cdpartar_add, 'Linhas Emprestimos PESE', 2, 12);
 
   insert into crapbat (CDBATTAR, NMIDENTI, CDPROGRA, TPCADAST, CDCADAST)
   values ('3040_EMP_PESE', 'Linhas Emprestimos PESE', ' ', 2, aux_cdpartar_add);
