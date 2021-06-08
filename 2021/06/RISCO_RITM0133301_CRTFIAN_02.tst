@@ -13,7 +13,7 @@ DECLARE
 BEGIN
 
   -- VERIFICAR SE JA EXISTE, E APAGAR
-  OPEN cr_crapbat('MODCARTAFIANCA');
+  OPEN cr_crapbat('3040_M_CARTAFIN');
   FETCH cr_crapbat INTO rw_crapbat;
   CLOSE cr_crapbat;
   IF rw_crapbat.cdcadast IS NOT NULL THEN
@@ -29,10 +29,10 @@ BEGIN
   aux_cdpartar_add :=  aux_cdpartar_add + 1;
 
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
-  values (aux_cdpartar_add, 'Modalidade Carta Fianca Limite de Credito', 2, 12);
+  values (aux_cdpartar_add, '3040 Modalidade Carta Fianca do Limite de Credito', 2, 12);
 
   insert into crapbat (CDBATTAR, NMIDENTI, CDPROGRA, TPCADAST, CDCADAST)
-  values ('MODCARTAFIANCA', 'INFORMA MODALIDADE PARA CARTA FIANCA', ' ', 2, aux_cdpartar_add);
+  values ('3040_M_CARTAFIN', '3040 Modalidade Carta Fianca do Limite de Credito', ' ', 2, aux_cdpartar_add);
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar_add, 16, '1513');

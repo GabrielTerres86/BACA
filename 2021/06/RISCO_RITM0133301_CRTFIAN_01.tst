@@ -13,7 +13,7 @@ DECLARE
 BEGIN
 
   -- VERIFICAR SE JA EXISTE, E APAGAR
-  OPEN cr_crapbat('CARTAFIANCA');
+  OPEN cr_crapbat('3040_L_CARTAFIN');
   FETCH cr_crapbat INTO rw_crapbat;
   CLOSE cr_crapbat;
   IF rw_crapbat.cdcadast IS NOT NULL THEN
@@ -29,10 +29,10 @@ BEGIN
   aux_cdpartar_add :=  aux_cdpartar_add + 1;
 
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
-  values (aux_cdpartar_add, 'Carta Fianca Limite de Credito', 2, 12);
+  values (aux_cdpartar_add, '3040 Linha Carta Fianca do Limite de Credito', 2, 12);
 
   insert into crapbat (CDBATTAR, NMIDENTI, CDPROGRA, TPCADAST, CDCADAST)
-  values ('CARTAFIANCA', 'INFORMA CARTA FIANCA', ' ', 2, aux_cdpartar_add);
+  values ('3040_L_CARTAFIN', '3040 Linha Carta Fianca do Limite de Credito', ' ', 2, aux_cdpartar_add);
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar_add, 16, '100');
