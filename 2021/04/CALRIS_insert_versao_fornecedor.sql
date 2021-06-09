@@ -372,6 +372,300 @@ UPDATE crapaca x
  WHERE x.nmdeacao = 'MANUTENCAO_TANQUE_TODOS'
    AND x.nmpackag = 'TELA_CALRIS';
 
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (1, 'CASCAVEL', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (1, 'CHAPECO', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (1, 'DOIS VIZINHOS', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (1, 'FRANCISCO BELTRAO', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (1, 'MARMELEIRO', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (1, 'PATO BRANCO', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (1, 'PELOTAS', 'RS');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (1, 'REALEZA', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (1, 'FOZ DO IGUACU', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (1, 'RIO GRANDE', 'RS');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (1, 'XANXERE', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'AGROLANDIA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'APIUNA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'ARAQUARI', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'ARARANGUA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'ASCURRA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'ATALANTA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'BALNEARIO CAMBORIU', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'BALNEARIO DE PICARRAS', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'BARRA VELHA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'BENEDITO NOVO', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'BENTO GONCALVES', 'RS');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'BLUMENAU', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'BOTUVERA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'BRUSQUE', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'CACADOR', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'CAMBORIU', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'CANELINHA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'CANOAS', 'RS');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'CANOINHAS', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'CAXIAS DO SUL', 'RS');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'CORUPA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'CRICIUMA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (3, 'CURITIBA', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'DONA EMMA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'DOUTOR PEDRINHO', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (3, 'FLORIANOPOLIS', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'GARUVA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'GASPAR', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'GENERAL CARNEIRO', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'GUABIRUBA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'GUARAMIRIM', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'GUARAPUAVA', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'IBIRAMA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'ICARA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'ILHOTA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'INDAIAL', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'ITAJAI', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'ITAPEMA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'ITAPOA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'ITUPORANGA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'JARAGUA DO SUL', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'JOACABA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'JOINVILLE', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'LAGES', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'LAJEADO', 'RS');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'LAURENTINO', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'LONDRINA', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'LONTRAS', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'LUIZ ALVES', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'MAFRA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'MARINGA', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'MASSARANDUBA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'NAVEGANTES', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'NOVA TRENTO', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'OTACILIO COSTA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'PALHOCA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'PASSO FUNDO', 'RS');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'PENHA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'PIEN', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'PINHAIS', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'POMERODE', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'PONTA GROSSA', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (3, 'PORTO ALEGRE', 'RS');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'PORTO UNIAO', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'POUSO REDONDO', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'PRESIDENTE GETULIO', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'RIO DO OESTE', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'RIO DO SUL', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'RIO DOS CEDROS', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'RIO NEGRINHO', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'RODEIO', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'SALETE', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'SANTA MARIA', 'RS');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'SAO BENTO DO SUL', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'SAO FRANCISCO DO SUL', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'SAO JOAO BATISTA', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'SAO JOSE', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'SAO JOSE DOS PINHAIS', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'SAO MATEUS DO SUL', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'SCHROEDER', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'TAIO', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'TIJUCAS', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'TIMBO', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'TROMBUDO CENTRAL', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'TUBARAO', 'SC');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'UNIAO DA VITORIA', 'PR');
+
+insert into tbcalris_regiao (CDREGIAO, DSCIDADE, DSUF)
+values (4, 'VIDEIRA', 'SC');
+
 COMMIT;
 
 exception
