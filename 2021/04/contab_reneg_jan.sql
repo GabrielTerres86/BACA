@@ -16,16 +16,30 @@ UPDATE crapepr SET cdlcremp = 31000 WHERE cdcooper = 1   AND nrdconta = 8093911 
 UPDATE crapepr SET cdlcremp = 15103 WHERE cdcooper = 1   AND nrdconta = 10257659   AND nrctremp = 1958447;
 UPDATE crapepr SET cdlcremp = 15103 WHERE cdcooper = 1   AND nrdconta = 10257659   AND nrctremp = 2859425;
 
-UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 2088639 AND dtrefere = '31/01/2021'; --fin
+UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 2088639 AND dtrefere = '31/01/2021';
 UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 2088639 AND dtrefere = '28/02/2021';
-UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 1626777 AND dtrefere = '31/01/2021'; --fin
+UPDATE crapvri SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 2088639 AND dtrefere = '31/01/2021';
+UPDATE crapvri SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 2088639 AND dtrefere = '28/02/2021';
+UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 1626777 AND dtrefere = '31/01/2021';
 UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 1626777 AND dtrefere = '28/02/2021';
-UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 1410231 AND dtrefere = '31/01/2021'; --fin
+UPDATE crapvri SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 1626777 AND dtrefere = '31/01/2021';
+UPDATE crapvri SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 1626777 AND dtrefere = '28/02/2021';
+UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 1410231 AND dtrefere = '31/01/2021';
 UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 1410231 AND dtrefere = '28/02/2021';
+UPDATE crapvri SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 1410231 AND dtrefere = '31/01/2021';
+UPDATE crapvri SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 10236414 AND nrctremp = 1410231 AND dtrefere = '28/02/2021';
 
-UPDATE crapris SET cdmodali = 299 WHERE  cdcooper = 1 AND nrdconta = 8093911 AND nrctremp = 1465541 AND dtrefere = '31/01/2021'; --empr
-UPDATE crapris SET cdmodali = 299 WHERE  cdcooper = 1 AND nrdconta = 8093911 AND nrctremp = 1465541 AND dtrefere = '28/02/2021';
-UPDATE crapris SET cdmodali = 299 WHERE  cdcooper = 1 AND nrdconta = 8093911 AND nrctremp = 1465541 AND dtrefere = '31/03/2021';
+UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 8093911 AND nrctremp = 1465541 AND dtrefere = '31/01/2021';
+UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 8093911 AND nrctremp = 1465541 AND dtrefere = '28/02/2021';
+UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 8093911 AND nrctremp = 1465541 AND dtrefere = '31/03/2021';
+UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 8093911 AND nrctremp = 1465541 AND dtrefere = '30/04/2021';
+UPDATE crapris SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 8093911 AND nrctremp = 1465541 AND dtrefere = '31/05/2021';
+UPDATE crapvri SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 8093911 AND nrctremp = 1465541 AND dtrefere = '31/01/2021';
+UPDATE crapvri SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 8093911 AND nrctremp = 1465541 AND dtrefere = '28/02/2021';
+UPDATE crapvri SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 8093911 AND nrctremp = 1465541 AND dtrefere = '31/03/2021';
+UPDATE crapvri SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 8093911 AND nrctremp = 1465541 AND dtrefere = '30/04/2021';
+UPDATE crapvri SET cdmodali = 499 WHERE  cdcooper = 1 AND nrdconta = 8093911 AND nrctremp = 1465541 AND dtrefere = '31/05/2021';
+
 
 COMMIT;
 END;
