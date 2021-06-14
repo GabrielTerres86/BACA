@@ -29,6 +29,7 @@ BEGIN
   aux_cdpartar_add :=  aux_cdpartar_add + 1;
 
   -- ----- Ativação ----- --
+  
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
   values (aux_cdpartar_add, 'Regra ACORDO Recuperacao Ativa (1) ou Desativada (0)', 1, 12);
 
