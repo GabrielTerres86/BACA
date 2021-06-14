@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-17
 -- Habilitacao de JOBS de COMPEFORA
 declare 
   begin
@@ -17,5 +15,3 @@ declare
     dbms_scheduler.enable(name => 'JBBTCH_COMPEFORABB_14');
     dbms_scheduler.enable(name => 'JBBTCH_COMPEFORABB_16');
   end;
-0
-0
