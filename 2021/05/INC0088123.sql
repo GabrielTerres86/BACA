@@ -1,0 +1,10 @@
+BEGIN
+  UPDATE crapprm
+  SET dsvlrprm = 'ZQEPxcBqU9c3i7'
+  WHERE cdacesso = 'SPC_BRASIL_PASSPHR';
+
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+END;

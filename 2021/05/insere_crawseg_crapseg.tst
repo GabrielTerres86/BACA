@@ -1,49 +1,66 @@
+PL/SQL Developer Test script 3.0
+550
 Declare
   vr_contador number;  
   vr_excsaida EXCEPTION;
   vr_cdcritic number;
   vr_dscritic varchar2(2000);
   vr_linha varchar2(2000);
+  vr_cdcooper number;
+  vr_vlmaximo number;
   vr_nrctrseg number;
   vr_rootmicros      VARCHAR2(4000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
   vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/INC0079160';
-  vr_nmarqimp        VARCHAR2(100)  := 'INC0079160_ROLLBACK.txt';
+  vr_nmarqimp        VARCHAR2(100)  := 'INC0079160_2_ROLLBACK.txt';
+  vr_nmarqcsv        VARCHAR2(100)  := 'INC0079160_2_inseridos.csv';
   vr_ind_arquiv utl_file.file_type;  
+  vr_ind_arquiv2 utl_file.file_type;  
+  
   cursor cr_seguros is
-      Select a.cdcooper
-           , a.nrdconta
-           , a.nrctrseg
-           , a.nrctremp  
-           , a.nrctremp nrctrato 
-           , a.vlsdeved vlproposta 
-           , a.nrproposta   
-           , a.cdapolic
-           , to_date(a.dtinivig,'DD/MM/RRRR') dtinivig
-           , SUM( a.vldevatu) OVER(PARTITION BY a.cdcooper, a.nrdconta )  Saldo_Devedor
-           , to_number(substr(( SELECT dstextab
-                                          from craptab b
-                                         where b.cdcooper = a.cdcooper
-                                           and b.cdempres = 11
-                                           and UPPER(b.nmsistem) = 'CRED'
-                                           AND UPPER(b.tptabela) = 'USUARI'
-                                           and UPPER(b.cdacesso) = 'SEGPRESTAM'
-                                           and b.tpregist = 0),
-                                        94,
-                                        12)) vlmaximo
-        from tbseg_prestamista a, crapcop p
-        where p.flgativo = 1
-          and a.cdcooper = p.cdcooper
-          and a.tpregist in (1,3) 
-          and not exists (select 1 
-                            from crapseg pseg, crawseg wseg 
-                           where wseg.tpseguro = 4
-                             and pseg.cdcooper = wseg.cdcooper
-                             AND pseg.nrdconta = wseg.nrdconta
-                             AND pseg.nrctrseg = wseg.nrctrseg                                            
-                             and a.cdcooper = wseg.cdcooper
-                             AND a.nrdconta = wseg.nrdconta
-                             and a.nrctremp =  wseg.nrctrato )
-  order by a.cdcooper, a.nrdconta desc, 1 desc;
+  Select a.cdcooper
+       , a.nrdconta
+       , a.nrctrseg
+       , a.nrctremp  
+       , a.nrctremp nrctrato 
+       , a.vlsdeved vlproposta 
+       , a.nrproposta   
+       , a.cdapolic
+       , to_date(a.dtinivig,'DD/MM/RRRR') dtinivig
+       , SUM( a.vldevatu) OVER(PARTITION BY a.cdcooper, a.nrdconta )  Saldo_Devedor
+        ,to_date(sysdate,'DD/MM/RRRR') dtmvtolt
+        ,4 tpseguro 
+        ,514 cdsegura 
+        ,a.nrcpfcgc 
+        ,a.nmprimtl
+        ,TO_DATE(a.dtfimvig,'DD/MM/RRRR') dtfimvig
+        ,a.vlprodut 
+        ,a.vldevatu
+        ,0 cdcalcul 
+        ,nvl((select max(g.tpplaseg) from crawseg g where g.cdcooper = a.cdcooper and g.nrdconta = a.nrdconta and g.tpseguro = 4 ),0) tpplaseg 
+        ,0 flgunica 
+        ,a.dsendres
+        ,0 nrendres 
+        ,a.nmbairro 
+        ,a.nmcidade 
+        ,a.cdufresd 
+        ,a.nrcepend 
+        ,' ' complend
+    from tbseg_prestamista a, 
+         crapcop p
+    where p.flgativo = 1 
+      and a.cdcooper = p.cdcooper
+      and a.tpregist in (1,3) 
+      and not exists (select 1 
+                        from crapseg pseg, 
+                             crawseg wseg 
+                       where wseg.tpseguro = 4
+                         and wseg.cdcooper = a.cdcooper
+                         AND wseg.nrdconta = a.nrdconta
+                         and wseg.nrctrato = a.nrctremp
+                         and pseg.cdcooper = wseg.cdcooper
+                         AND pseg.nrdconta = wseg.nrdconta
+                         and pseg.nrctrseg = wseg.nrctrseg )
+    order by a.cdcooper, a.nrdconta;
    rw_seguros cr_seguros%rowtype;
   
   vr_existeDir number := 0;
@@ -51,44 +68,29 @@ Declare
      
   cursor cr_crawseq(pr_cdcooper1 crapseg.cdcooper%type,
                     pr_nrdconta1 crapseg.nrdconta%type,
-                    pr_nrctrseg1 crapseg.nrctrseg%type ) is 
-      select wseg.nrdconta
-            ,wseg.nrctrseg 
-            ,wseg.dtmvtolt 
-            ,wseg.dtdebito 
-            ,wseg.tpseguro 
-            ,wseg.cdsegura 
-            ,wseg.nrcpfcgc 
-            ,wseg.nmdsegur 
-            ,wseg.dtinivig 
-            ,wseg.dtiniseg 
-            ,wseg.dtfimvig 
-            ,wseg.vlpremio 
-            ,wseg.vlpreseg 
-            ,wseg.cdcalcul 
-            ,wseg.tpplaseg 
-            ,wseg.vlseguro 
-            ,wseg.dtprideb 
-            ,wseg.flgunica 
-            ,wseg.dsendres 
-            ,wseg.nrendres 
-            ,wseg.nmbairro 
-            ,wseg.nmcidade 
-            ,wseg.cdufresd 
-            ,wseg.nrcepend 
-            ,wseg.complend
-            ,pseg.cdoperad
-            ,pseg.cdagenci 
-            from crapseg pseg, crawseg wseg 
-           where wseg.tpseguro = 4
-             and pseg.cdcooper = wseg.cdcooper
+                    pr_nrctrato1 crawseg.nrctrato%type) is 
+      select 1
+            from crapseg pseg, 
+                 crawseg wseg
+           where pseg.cdcooper = wseg.cdcooper
              AND pseg.nrdconta = wseg.nrdconta
              AND pseg.nrctrseg = wseg.nrctrseg                                            
-             and pseg.cdcooper = pr_cdcooper1 
-             and pseg.nrdconta = pr_nrdconta1
-             and pseg.nrctrseg <> pr_nrctrseg1;
+             and wseg.cdcooper = pr_cdcooper1 
+             and wseg.nrdconta = pr_nrdconta1
+             and wseg.nrctrato = pr_nrctrato1
+             and wseg.tpseguro = 4;  
         rw_crawseq cr_crawseq%rowtype;     
-
+        
+   cursor c_crawseg_prop (pr_cdcooper crapseg.cdcooper%type,
+                          pr_nrdconta crapseg.nrdconta%type,
+                          pr_nrctrato crawseg.nrctrato%type) is 
+    select s.nrctrseg
+      from crawseg s
+     where s.tpseguro = 4
+       and s.cdcooper = pr_cdcooper
+       and s.nrdconta = pr_nrdconta
+       and s.nrctrato = pr_nrctrato;   
+    r_crawseg_prop c_crawseg_prop%rowtype;
    
    procedure pc_inserir_crawseg( pr_cdcooper IN crawseg.cdcooper%type
                                 ,pr_nrdconta IN crawseg.nrdconta%type                                
@@ -115,15 +117,12 @@ Declare
                                 ,pr_nmcidade crawseg.nmcidade%type
                                 ,pr_cdufresd crawseg.cdufresd%type
                                 ,pr_nrcepend crawseg.nrcepend%type
-                                ,pr_complend crawseg.complend%type                                                                 
-                               ) is                               
-                               
-            
+                                ,pr_complend crawseg.complend%type) is
      begin            
         BEGIN
          vr_nrctrseg := 0;
                       
-        -- Buscar a proxima sequencia crapmat.nrctrseg 
+           -- Buscar a proxima sequencia crapmat.nrctrseg 
            pc_sequence_progress(pr_nmtabela => 'CRAPMAT'
                                ,pr_nmdcampo => 'NRCTRSEG'
                                ,pr_dsdchave => pr_cdcooper
@@ -184,8 +183,8 @@ Declare
               pr_nrcepend ,
               pr_cdcooper ,
               pr_nrctrato ,
-              pr_complend 
-              );
+              pr_complend );
+              
             pr_nrctrseg := vr_nrctrseg ;
       
         EXCEPTION
@@ -219,7 +218,7 @@ Declare
      where s.tpseguro = 4
        and s.cdcooper = pr_cdcooper
        and s.nrdconta = pr_nrdconta
-       and s.nrctrato = pr_nrctrato
+       and s.nrctrato = pr_nrctrato       
        and not exists (select 1 
                          from crapseg p
                         where s.cdcooper = p.cdcooper
@@ -350,7 +349,7 @@ Declare
       -- ROLLBACK;     
     END pc_efetiva_proposta_seguro_p;                                
 
-BEGIN
+
 
 begin
   vr_contador:=0;
@@ -364,67 +363,91 @@ begin
   IF vr_dscritic IS NOT NULL THEN
     RAISE vr_excsaida;
   END IF;
+  
+  --Criar arquivo
+  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto        --> Diretorio do arquivo
+                          ,pr_nmarquiv => vr_nmarqcsv        --> Nome do arquivo
+                          ,pr_tipabert => 'W'                --> modo de abertura (r,w,a)
+                          ,pr_utlfileh => vr_ind_arquiv2     --> handle do arquivo aberto
+                          ,pr_des_erro => vr_dscritic);      --> erro
+  -- em caso de crítica---*
+  IF vr_dscritic IS NOT NULL THEN
+    RAISE vr_excsaida;
+  END IF;
+
+  vr_cdcooper:= 0;
+  
+  -- Cabecalho csv
+  gene0001.pc_escr_linha_arquivo(vr_ind_arquiv2,  'Coop;Conta;Contrato_Emp;Contrato_Seg');  
 
   FOR rw_seguros IN cr_seguros LOOP
-    vr_contador:= vr_contador + 1;
+    
+      -- Se mudou cooperativa vamos buscar o valor maximo 
+      if vr_cdcooper <> rw_seguros.cdcooper then
+        
+        vr_cdcooper:= rw_seguros.cdcooper;
+         
+        -- Leitura dos valores de mínimo e máximo
+        vr_vlmaximo := substr(tabe0001.fn_busca_dstextab(pr_cdcooper => rw_seguros.cdcooper,
+                                                         pr_nmsistem => 'CRED',
+                                                         pr_tptabela => 'USUARI',
+                                                         pr_cdempres => 11,
+                                                         pr_cdacesso => 'SEGPRESTAM',
+                                                         pr_tpregist => 0),94,12);
+      end if;
+
       BEGIN
        ---'Incluir  crawseg' 
        open cr_crawseq(pr_cdcooper1 => rw_seguros.cdcooper,
                        pr_nrdconta1 => rw_seguros.nrdconta,
-                       pr_nrctrseg1 => rw_seguros.nrctrseg);
+                       pr_nrctrato1 => rw_seguros.nrctrato);
        fetch cr_crawseq into rw_crawseq;
          
-       if cr_crawseq%notfound then 
+       if cr_crawseq%found then 
          close cr_crawseq;
        else                
-         close cr_crawseq;
-                                         
-               pc_inserir_crawseg(pr_cdcooper => rw_seguros.cdcooper,
-                                  pr_nrdconta => rw_seguros.nrdconta,
-                                  pr_nrctrseg1 => rw_seguros.nrctrseg,
-                                  pr_nrctrato => rw_seguros.nrctrato,
-                                  pr_vlseguro => rw_seguros.vlproposta,
-                                  pr_nrctrseg => vr_nrctrseg,                                  
-                                  pr_dtmvtolt => rw_crawseq.dtmvtolt ,
-                                  pr_dtdebito => rw_crawseq.dtdebito ,
-                                  pr_tpseguro => rw_crawseq.tpseguro , 
-                                  pr_cdsegura => 514,
-                                  pr_nrcpfcgc => rw_crawseq.nrcpfcgc ,
-                                  pr_nmdsegur => rw_crawseq.nmdsegur ,
-                                  pr_dtinivig => rw_seguros.dtinivig ,
-                                  pr_dtiniseg => rw_crawseq.dtiniseg ,
-                                  pr_dtfimvig => rw_crawseq.dtfimvig ,
-                                  pr_cdcalcul => rw_crawseq.cdcalcul ,
-                                  pr_tpplaseg => rw_crawseq.tpplaseg ,
-                                  pr_dtprideb => rw_crawseq.dtprideb ,
-                                  pr_flgunica => rw_crawseq.flgunica ,
-                                  pr_dsendres => rw_crawseq.dsendres ,
-                                  pr_nrendres => rw_crawseq.nrendres ,
-                                  pr_nmbairro => rw_crawseq.nmbairro ,
-                                  pr_nmcidade => rw_crawseq.nmcidade ,
-                                  pr_cdufresd => rw_crawseq.cdufresd ,
-                                  pr_nrcepend => rw_crawseq.nrcepend ,
-                                  pr_complend => rw_crawseq.complend ); 
+         close cr_crawseq; 
+         vr_contador:= vr_contador + 1;
+                
+         open c_crawseg_prop(pr_cdcooper => rw_seguros.cdcooper,
+                             pr_nrdconta => rw_seguros.nrdconta,
+                             pr_nrctrato => rw_seguros.nrctrato);
+         fetch c_crawseg_prop into r_crawseg_prop;
+         
+         if c_crawseg_prop%notfound then
+           close c_crawseg_prop;
+           pc_inserir_crawseg(pr_cdcooper => rw_seguros.cdcooper,
+                            pr_nrdconta => rw_seguros.nrdconta,
+                            pr_nrctrseg1 => rw_seguros.nrctrseg,
+                            pr_nrctrato => rw_seguros.nrctrato,
+                            pr_vlseguro => rw_seguros.vlproposta,
+                            pr_nrctrseg => vr_nrctrseg,                                  
+                            pr_dtmvtolt => rw_seguros.dtmvtolt ,
+                            pr_dtdebito => rw_seguros.dtmvtolt ,
+                            pr_tpseguro => rw_seguros.tpseguro , 
+                            pr_cdsegura => 514,
+                            pr_nrcpfcgc => rw_seguros.nrcpfcgc ,
+                            pr_nmdsegur => rw_seguros.nmprimtl ,
+                            pr_dtinivig => rw_seguros.dtinivig ,
+                            pr_dtiniseg => rw_seguros.dtinivig ,
+                            pr_dtfimvig => rw_seguros.dtfimvig ,
+                            pr_cdcalcul => rw_seguros.cdcalcul ,
+                            pr_tpplaseg => rw_seguros.tpplaseg + 1,
+                            pr_dtprideb => rw_seguros.dtmvtolt ,
+                            pr_flgunica => rw_seguros.flgunica ,
+                            pr_dsendres => rw_seguros.dsendres ,
+                            pr_nrendres => rw_seguros.nrendres ,
+                            pr_nmbairro => rw_seguros.nmbairro ,
+                            pr_nmcidade => rw_seguros.nmcidade ,
+                            pr_cdufresd => rw_seguros.cdufresd ,
+                            pr_nrcepend => rw_seguros.nrcepend ,
+                            pr_complend => rw_seguros.complend ); 
                                   
                IF vr_dscritic IS NOT NULL THEN
                   RAISE vr_excsaida;
-               END IF;
-                 
-              BEGIN 
-                 UPDATE tbseg_prestamista 
-                    set nrctrseg = vr_nrctrseg
-                  where cdapolic = rw_seguros.cdapolic;        
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Erro ao atualizar numero contrato na tbseg_prestamista : '||
-                                 rw_seguros.nrctrato;
-                RAISE vr_excsaida;
-              END;                
-              vr_linha := ' UPDATE tbseg_prestamista set nrctrseg = '||rw_seguros.nrctrseg ||
-                                        ' where cdapolic = ' ||rw_seguros.cdapolic ||';';        
-              gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,  vr_linha);    
-                       
-              BEGIN                  
+               END IF;            
+               
+               BEGIN                  
                  UPDATE crawseg 
                     set nrproposta = rw_seguros.nrproposta 
                   where cdcooper = rw_seguros.cdcooper 
@@ -436,44 +459,72 @@ begin
                                        rw_seguros.nrctrato;
                       RAISE vr_excsaida;
               END;
+
+              -- Gerar rollback                     
+              vr_linha := 'delete crawseg where cdcooper = '||rw_seguros.cdcooper ||
+                                          ' and nrdconta = '||rw_seguros.nrdconta ||
+                                          ' and nrctrseg = '||vr_nrctrseg   ||';';        
+              gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,  vr_linha);        
+         else
+           close c_crawseg_prop;
+           vr_nrctrseg:= r_crawseg_prop.nrctrseg;
+         end if;
+           
+            -- Gerar linha arquivo csv                 
+            gene0001.pc_escr_linha_arquivo(vr_ind_arquiv2, rw_seguros.cdcooper ||';'||
+                                                           rw_seguros.nrdconta ||';'||
+                                                           rw_seguros.nrctrato ||';'||
+                                                           vr_nrctrseg );
+            BEGIN 
+               UPDATE tbseg_prestamista 
+                  set nrctrseg = vr_nrctrseg
+                where cdapolic = rw_seguros.cdapolic;        
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao atualizar numero contrato na tbseg_prestamista : '||
+                               rw_seguros.nrctrato;
+              RAISE vr_excsaida;
+            END;           
+
+            -- Gerar rollback     
+            vr_linha := ' UPDATE tbseg_prestamista set nrctrseg = '||rw_seguros.nrctrseg ||
+                                      ' where cdapolic = ' ||rw_seguros.cdapolic ||';';        
+            gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,  vr_linha);    
+                   
+            -- Verificar se deve imprimir dps
+            if rw_seguros.saldo_devedor > vr_vlmaximo then
+              vr_gerdps := 'S';
+            else
+              vr_gerdps:= 'N';
+            end if; 
+                  
+           --Incluir na crapseg              
+           pc_efetiva_proposta_seguro_p(pr_cdcooper => rw_seguros.cdcooper
+                                      , pr_nrdconta => rw_seguros.nrdconta
+                                      , pr_nrctrato => rw_seguros.nrctrato
+                                      , pr_cdoperad => '1'
+                                      , pr_cdagenci => 1
+                                      , pr_vlslddev => rw_seguros.vlproposta
+                                      , pr_idimpdps => vr_gerdps
+                                      , pr_dtinivig => rw_seguros.dtinivig
+                                      , pr_nrctrseg => vr_nrctrseg 
+                                      , pr_cdcritic => vr_cdcritic
+                                      , pr_dscritic => vr_dscritic);
+                                           
+           --Se ocorreu erro                     
+           IF vr_dscritic IS NOT NULL THEN      
+             RAISE vr_excsaida;
+           END IF;
                 
-              vr_linha := 'delete crawseg where cdcooper = '||rw_seguros.cdcooper  ||
-                                          ' and nrdconta = '||rw_seguros.nrdconta   ||
-                                          ' and nrctrato = '||rw_seguros.nrctrato   ||';';        
-              gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,  vr_linha);                                                             
-                 
-              if rw_seguros.saldo_devedor > rw_seguros.vlmaximo then
-                vr_gerdps := 'S';
-              else
-                vr_gerdps:= 'N';
-              end if; 
+          -- Gerar rollback                  
+          vr_linha := 'delete crapseg where cdcooper = '||rw_seguros.cdcooper  ||
+                                      ' and nrdconta = '||rw_seguros.nrdconta   ||
+                                      ' and nrctrseg = '||vr_nrctrseg   ||
+                                      ' and tpseguro = 4' ||';'; 
+                                                   
+          gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,  vr_linha);                 
                 
-             --Incluir na crapseg              
-             pc_efetiva_proposta_seguro_p(pr_cdcooper => rw_seguros.cdcooper
-                                        , pr_nrdconta => rw_seguros.nrdconta
-                                        , pr_nrctrato => rw_seguros.nrctrato
-                                        , pr_cdoperad => rw_crawseq.cdoperad
-                                        , pr_cdagenci => rw_crawseq.cdagenci
-                                        , pr_vlslddev => rw_seguros.vlproposta
-                                        , pr_idimpdps => vr_gerdps
-                                        , pr_dtinivig => rw_seguros.dtinivig
-                                        , pr_nrctrseg => vr_nrctrseg 
-                                        , pr_cdcritic => vr_cdcritic
-                                        , pr_dscritic => vr_dscritic);
-                                         
-             --Se ocorreu erro                     
-             IF vr_dscritic IS NOT NULL THEN      
-               RAISE vr_excsaida;
-             END IF;
-              
-            vr_linha := 'delete crapseg where cdcooper = '||rw_seguros.cdcooper  ||
-                                        ' and nrdconta = '||rw_seguros.nrdconta   ||
-                                        ' and nrctrseg = '||vr_nrctrseg   ||
-                                        ' and tpseguro = '||rw_crawseq.tpseguro   ||';'; 
-                                                 
-            gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,  vr_linha);                 
-              
-            commit;            
+          commit;         
        end if;         
      EXCEPTION
        WHEN OTHERS THEN
@@ -482,15 +533,23 @@ begin
          RAISE vr_excsaida;
      END;
   END LOOP;
+  
   commit;   
+  -- Gerar commit no arquivo de rollback
   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'commit;');
-  gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;
+  -- Fechar handle dos arquivos abetos
+  gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo de rollback aberto
+  gene0001.pc_escr_linha_arquivo(vr_ind_arquiv2,  vr_linha); --> Handle do arquivo csv aberto  
+
   vr_dscritic := 'SUCESSO -> Registros inseridos: '|| vr_contador;
 EXCEPTION
   WHEN vr_excsaida then
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv); --> Handle do arquivo aberto;
+    gene0001.pc_escr_linha_arquivo(vr_ind_arquiv2,  vr_linha); --> Handle do arquivo csv aberto
     vr_dscritic := 'ERRO ' || vr_dscritic;
     rollback;
 end;
 
-end;
+0
+1
+rw_seguros.nrdconta
