@@ -29,8 +29,6 @@ begin
      set cddopcao = '@'
         ,nmrotina = DECODE(CDDOPCAO,'C','CANCELAR','I','IMPRESSAO','T','VISUALIZAR',CDDOPCAO)
    where upper(nmdatela) = 'AGENET' 
-/*     and upper(cdoperad) = 'F0030734' */
-     and CDCOOPER = 1
      and cddopcao <> '@';     
   
   /* Ajustar crapaca */
