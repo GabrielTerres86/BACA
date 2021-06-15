@@ -1,5 +1,6 @@
 begin
-  delete from crapaca c
+  delete 
+	  from crapaca c
    where c.nmpackag = 'TELA_SEGPRE'
      and c.nmdeacao = 'SEGPRE_ALTERAR';
   insert into crapaca
