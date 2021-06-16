@@ -1,6 +1,6 @@
 begin 
 
-UPDATE crapfin SET tpfinali = 4 WHERE cdcooper = 1 AND cdfinemp = 96;
+UPDATE crapfin SET tpfinali = 4 WHERE cdfinemp = 96;
 commit;
 
 end;
