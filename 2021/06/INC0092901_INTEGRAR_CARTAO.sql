@@ -1,0 +1,106 @@
+BEGIN
+  
+  DECLARE
+    vr_nrctrcrd crawcrd.nrctrcrd%TYPE := fn_sequence('CRAPMAT','NRCTRCRD', 1);
+    vr_nrseqcrd crawcrd.nrseqcrd%TYPE := CCRD0003.fn_sequence_nrseqcrd(pr_cdcooper => 1);
+  BEGIN
+		  DELETE FROM crapcrd w WHERE w.cdcooper = 1 AND w.nrdconta = 80426280 AND w.nrcrcard = 5127070350307013;
+			
+      INSERT INTO crawcrd
+         (nrdconta,
+          nrcrcard,
+          nrcctitg,
+          nrcpftit,
+          vllimcrd,
+          flgctitg,
+          dtmvtolt,
+          nmextttl,
+          flgprcrd,
+          tpdpagto,
+          flgdebcc,
+          tpenvcrd,
+          vlsalari,
+          dddebito,
+          cdlimcrd,
+          tpcartao,
+          dtnasccr,
+          nrdoccrd,
+          nmtitcrd,
+          nrctrcrd,
+          cdadmcrd,
+          cdcooper,
+          nrseqcrd,
+          dtpropos,
+          dtsolici,
+          flgdebit,
+          cdgraupr,
+          insitcrd,
+      flgimpnp)
+      VALUES
+         (80426280, 
+          5127070350307013, 
+          7563239447656, 
+          925911917,
+          2000,   
+          3,  
+          to_date('14/05/2021', 'DD/MM/RRRR'),
+          'JOCEMIR DE C RAMOS',
+          1,
+          1,
+          1,
+          0,
+          0,
+          11,
+          20,
+          2,
+          to_date('10/04/1983', 'DD/MM/RRRR'),
+          463483,
+          'JOCEMIR DE C RAMOS',
+          vr_nrctrcrd,
+          12, 
+          1,
+          vr_nrseqcrd,
+          to_date('14/05/2021', 'DD/MM/RRRR'),
+          to_date('14/05/2021', 'DD/MM/RRRR'),
+          1, 
+          5,
+          3,
+          0); 
+
+      INSERT INTO crapcrd
+         (cdcooper,
+          nrdconta,
+          nrcrcard,
+          nrcpftit,
+          nmtitcrd,
+          dddebito,
+          cdlimcrd,
+          dtvalida,
+          nrctrcrd,
+          cdmotivo,
+          nrprotoc,
+          cdadmcrd,
+          tpcartao,
+          dtcancel,
+          flgdebit,
+          flgprovi)
+      VALUES
+         (1,
+          80426280,
+          5127070350307013,
+          925911917,
+          'JOCEMIR DE C RAMOS',
+          11,
+          20,
+          NULL,
+          vr_nrctrcrd,
+          0,
+          0,
+          12,
+          2,
+          NULL,
+          1,
+          0);   
+    COMMIT;
+  END;  
+END;  
