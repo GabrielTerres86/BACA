@@ -9,6 +9,8 @@ begin
     set lstparam = lstparam || ',pr_indconta_menor'
   where nmdeacao = 'ALTERAR_TIPO_DE_CONTA';
 
+  commit;
+
 end;
 /
 
