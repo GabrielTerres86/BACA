@@ -100,7 +100,111 @@ BEGIN
           2,
           NULL,
           1,
+          0); 
+  END;  
+
+BEGIN
+  
+  DECLARE
+    vr_nrctrcrd crawcrd.nrctrcrd%TYPE := fn_sequence('CRAPMAT','NRCTRCRD', 1);
+    vr_nrseqcrd crawcrd.nrseqcrd%TYPE := CCRD0003.fn_sequence_nrseqcrd(pr_cdcooper => 1);
+  BEGIN
+      
+      INSERT INTO crawcrd
+         (nrdconta,
+          nrcrcard,
+          nrcctitg,
+          nrcpftit,
+          vllimcrd,
+          flgctitg,
+          dtmvtolt,
+          nmextttl,
+          flgprcrd,
+          tpdpagto,
+          flgdebcc,
+          tpenvcrd,
+          vlsalari,
+          dddebito,
+          cdlimcrd,
+          tpcartao,
+          dtnasccr,
+          nrdoccrd,
+          nmtitcrd,
+          nrctrcrd,
+          cdadmcrd,
+          cdcooper,
+          nrseqcrd,
+          dtpropos,
+          dtsolici,
+          flgdebit,
+          cdgraupr,
+          insitcrd)
+      VALUES
+         (7650019, 
+          5474080205911488, 
+          7563239006231, 
+          628391951,
+          21000,   
+          3,  
+          to_date('06/01/2021', 'DD/MM/RRRR'),
+          'FABIO JOST',
+          0,
+          1,
+          1,
+          0,
+          1,
+          7,
+          55,
+          2,
+          to_date('04/04/1983', 'DD/MM/RRRR'),
+          0,
+          'FABIO JOST',
+          vr_nrctrcrd,
+          15, 
+          1,
+          vr_nrseqcrd,
+          to_date('06/01/2021', 'DD/MM/RRRR'),
+          to_date('06/01/2021', 'DD/MM/RRRR'),
+          1, 
+          0,
+          3); 
+
+      INSERT INTO crapcrd
+         (cdcooper,
+          nrdconta,
+          nrcrcard,
+          nrcpftit,
+          nmtitcrd,
+          dddebito,
+          cdlimcrd,
+          dtvalida,
+          nrctrcrd,
+          cdmotivo,
+          nrprotoc,
+          cdadmcrd,
+          tpcartao,
+          dtcancel,
+          flgdebit,
+          flgprovi)
+      VALUES
+         (1,
+          7650019,
+          5474080205911488,
+          628391951,
+          'FABIO JOST',
+          7,
+          55,
+          NULL,
+          vr_nrctrcrd,
+          0,
+          0,
+          15,
+          2,
+          NULL,
+          1,
           0);   
     COMMIT;
   END;  
+END;  
+  
 END;  
