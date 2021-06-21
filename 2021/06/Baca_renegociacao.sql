@@ -26,14 +26,10 @@ BEGIN
     FETCH cr_crawepr INTO rw_crawepr;
     IF cr_crawepr%NOTFOUND THEN
       --
-      --dbms_output.put_line('apagou');
-      --
       delete tbepr_renegociacao          where cdcooper = rw_ren.cdcooper and nrdconta = rw_ren.nrdconta and nrctremp = 0;
       delete tbepr_renegociacao_contrato where cdcooper = rw_ren.cdcooper and nrdconta = rw_ren.nrdconta and nrctremp = 0; 
       --       
     ELSE
-      --
-      --dbms_output.put_line('alterou');
       --
       update tbepr_renegociacao
       set    nrctremp = rw_crawepr.nrctremp
