@@ -27,7 +27,7 @@ DECLARE
           ,crapope
           ,crawlim
      WHERE craplim.cdcooper = pr_cdcooper
-       AND craplim.dtinivig >= '01/01/2020'
+       AND craplim.dtinivig >= '01/01/2021'
        AND craplim.tpctrlim = 1  -- limite crédito
        AND craplim.insitlim = 2
        AND crapope.cdcooper = craplim.cdcooper

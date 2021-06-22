@@ -27,7 +27,7 @@ DECLARE
           ,crapope
           ,crawlim
      WHERE craplim.cdcooper = pr_cdcooper
-       AND craplim.dtinivig >= '01/01/2020'
+       AND craplim.dtinivig >= '01/01/2021'
        AND craplim.tpctrlim = 3  -- limite desconto titulo
        AND craplim.insitlim = 2
        AND crapope.cdcooper = craplim.cdcooper
@@ -53,7 +53,7 @@ DECLARE
       FROM crapbdt a
           ,crapope
      WHERE a.cdcooper = pr_cdcooper
-       AND a.dtlibbdt >= '01/01/2020'
+       AND a.dtlibbdt >= '01/01/2021'
        AND NVL(a.cdageimp, 0) = 0
        AND crapope.cdcooper = a.cdcooper
        AND UPPER(crapope.cdoperad) = UPPER(a.cdopelib);        
