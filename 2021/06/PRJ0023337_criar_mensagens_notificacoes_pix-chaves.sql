@@ -46,8 +46,8 @@ SELECT MAX(CDMENSAGEM)
   VALUES
     (13
     ,19
-    ,'Confirmação de pagamento agendado Pix'
     ,(V_CODIGO + 1)
+    ,'PIX - Confirmação de pagamento agendado Pix'
     ,'<br/>#nomeresumido,</br> Seu pagamento Pix que estava agendado para hoje foi realizado com sucesso.</br> Beneficiário: #beneficiario</br> Valor: #valorpix </br></br>Para consultar mais informações acesse a opção ver comprovante.</br></br>' 
     ,1
     ,0);
@@ -95,7 +95,7 @@ SELECT MAX(CDMENSAGEM)
   VALUES
     (13
     ,20
-    ,'Pagamento agendado Pix não realizado'
+    ,'PIX - Pagamento agendado Pix não realizado'
     ,(V_CODIGO + 1)
     ,'</br>#nomeresumido,</br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido ao limite diário ou saldo insuficiente em sua conta corrente.</br> Beneficiário: #beneficiario </br> Valor: #valorpix </br></br> Verifique seu limite diário Pix ou o saldo em conta corrente.</br></br>' 
     ,1
@@ -143,7 +143,7 @@ SELECT MAX(CDMENSAGEM)
   VALUES
     (13
     ,21
-    ,'Pagamento agendado Pix não realizado'
+    ,'PIX - Pagamento agendado Pix não realizado'
     ,(V_CODIGO + 1)
     ,'</br>#nomeresumido, </br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido a uma falha no processamento. </br> Beneficiário: #beneficiario </br> Valor: #valorpix </br></br>  Por favor, refaça o pagamento ou agendamento.</br></br>'
     ,1
@@ -191,7 +191,7 @@ SELECT MAX(CDMENSAGEM)
   VALUES
     (13
     ,22
-    ,'Pagamento agendado Pix não realizado'
+    ,'PIX - Pagamento agendado Pix não realizado'
     ,(V_CODIGO + 1)
     ,'</br>#nomeresumido, </br> Infelizmente, seu pagamento Pix que estava agendado para hoje foi reprovado. </br> Valor: #valorpix </br> Beneficiário: #beneficiario </br></br> Para mais informações, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).</br></br>'
     ,1
@@ -239,7 +239,7 @@ SELECT MAX(CDMENSAGEM)
   VALUES
     (13
     ,23
-    ,'Agendamento Pix cancelado'
+    ,'PIX - Agendamento Pix cancelado'
     ,(V_CODIGO + 1)
     ,'</br>#nomeresumido, </br> Realizado o cancelamento de #quantidade transações agendadas Pix, para verificar seus agendamentos clique em Ver agendamentos Pix. </br></br> Em caso de dúvidas, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).</br></br>' 
     ,1
