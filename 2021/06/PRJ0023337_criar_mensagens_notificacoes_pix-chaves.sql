@@ -218,8 +218,8 @@ SELECT MAX(CDMENSAGEM)
     ((V_CODIGO + 1)
     ,13
     ,'Agendamento Pix cancelado'
-    ,'Realizado o cancelamento de #quantidade transações agendadas Pix.'
-    ,'</br>#nomeresumido, </br> Realizado o cancelamento de #quantidade transações agendadas Pix, para verificar seus agendamentos clique em Ver agendamentos Pix. </br></br> Em caso de dúvidas, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).</br></br>' 
+    ,'O pagamento no valor de #valorpix que estava agendado para hoje foi cancelado.'
+    ,'</br>#nomeresumido, </br>Seu pagamento Pix que estava agendado para hoje foi cancelado.</br> Valor: #valorpix </br> Beneficiário: #beneficiario </br></br>Em caso de dúvidas, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).</br></br>'
     ,16
     ,0
     ,1
@@ -241,7 +241,7 @@ SELECT MAX(CDMENSAGEM)
     ,23
     ,'PIX - Agendamento Pix cancelado'
     ,(V_CODIGO + 1)
-    ,'</br>#nomeresumido, </br> Realizado o cancelamento de #quantidade transações agendadas Pix, para verificar seus agendamentos clique em Ver agendamentos Pix. </br></br> Em caso de dúvidas, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).</br></br>' 
+    ,'</br>#nomeresumido, </br>Seu pagamento Pix que estava agendado para hoje foi cancelado.</br> Valor: #valorpix </br> Beneficiário: #beneficiario </br></br>Em caso de dúvidas, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).</br></br>'
     ,1
     ,0);
   
