@@ -14,7 +14,7 @@ SELECT MAX(CDMENSAGEM)
     ,DSTITULO_MENSAGEM
     ,DSTEXTO_MENSAGEM
     ,DSHTML_MENSAGEM
-    ,CDICONE	
+    ,CDICONE  
     ,INEXIBIR_BANNER
     ,INEXIBE_BOTAO_ACAO_MOBILE  
     ,CDMENU_ACAO_MOBILE 
@@ -46,8 +46,8 @@ SELECT MAX(CDMENSAGEM)
   VALUES
     (13
     ,19
-    ,(V_CODIGO + 1)
     ,'PIX - Confirmação de pagamento agendado Pix'
+  ,(V_CODIGO + 1)
     ,'<br/>#nomeresumido,</br> Seu pagamento Pix que estava agendado para hoje foi realizado com sucesso.</br> Beneficiário: #beneficiario</br> Valor: #valorpix </br></br>Para consultar mais informações acesse a opção ver comprovante.</br></br>' 
     ,1
     ,0);
@@ -56,7 +56,7 @@ SELECT MAX(CDMENSAGEM)
 SELECT MAX(CDMENSAGEM)
     INTO V_CODIGO
     FROM TBGEN_NOTIF_MSG_CADASTRO;
-		 
+     
   INSERT INTO TBGEN_NOTIF_MSG_CADASTRO
     (CDMENSAGEM
     ,CDORIGEM_MENSAGEM
@@ -100,8 +100,8 @@ SELECT MAX(CDMENSAGEM)
     ,'</br>#nomeresumido,</br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido ao limite diário ou saldo insuficiente em sua conta corrente.</br> Beneficiário: #beneficiario </br> Valor: #valorpix </br></br> Verifique seu limite diário Pix ou o saldo em conta corrente.</br></br>' 
     ,1
     ,0);
-	
-	SELECT MAX(CDMENSAGEM)
+  
+  SELECT MAX(CDMENSAGEM)
     INTO V_CODIGO
     FROM TBGEN_NOTIF_MSG_CADASTRO;
   
@@ -148,8 +148,8 @@ SELECT MAX(CDMENSAGEM)
     ,'</br>#nomeresumido, </br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido a uma falha no processamento. </br> Beneficiário: #beneficiario </br> Valor: #valorpix </br></br>  Por favor, refaça o pagamento ou agendamento.</br></br>'
     ,1
     ,0);
-	
-	SELECT MAX(CDMENSAGEM)
+  
+  SELECT MAX(CDMENSAGEM)
     INTO V_CODIGO
     FROM TBGEN_NOTIF_MSG_CADASTRO;
   
