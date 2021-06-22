@@ -1,5 +1,5 @@
 -- Created on 27/08/2020 by E0030208 
-declare  
+declare 
   -- Local variables here
   V_CODIGO TBGEN_NOTIF_MSG_CADASTRO.cdmensagem%TYPE;
   

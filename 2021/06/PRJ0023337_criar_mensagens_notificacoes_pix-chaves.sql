@@ -1,11 +1,20 @@
+declare 
+  -- Local variables here
+  V_CODIGO TBGEN_NOTIF_MSG_CADASTRO.cdmensagem%TYPE;
+  
 begin
+
+SELECT MAX(CDMENSAGEM)
+    INTO V_CODIGO
+    FROM TBGEN_NOTIF_MSG_CADASTRO;
+
   INSERT INTO TBGEN_NOTIF_MSG_CADASTRO
     (CDMENSAGEM
     ,CDORIGEM_MENSAGEM
     ,DSTITULO_MENSAGEM
     ,DSTEXTO_MENSAGEM
     ,DSHTML_MENSAGEM
-    ,CDICONE
+    ,CDICONE	
     ,INEXIBIR_BANNER
     ,INEXIBE_BOTAO_ACAO_MOBILE  
     ,CDMENU_ACAO_MOBILE 
@@ -13,7 +22,7 @@ begin
     ,DSMENSAGEM_ACAO_MOBILE
     ,Dstexto_Botao_Acao_Mobile )
   VALUES
-    (6528
+    ((V_CODIGO + 1)
     ,13
     ,'Confirmação de pagamento agendado Pix'
     ,'Seu pagamento Pix agendado no valor de #valorpix foi realizado com sucesso.'
@@ -38,11 +47,16 @@ begin
     (13
     ,19
     ,'Confirmação de pagamento agendado Pix'
-    ,6528
+    ,(V_CODIGO + 1)
     ,'<br/>#nomeresumido,</br> Seu pagamento Pix que estava agendado para hoje foi realizado com sucesso.</br> Beneficiário: #beneficiario</br> Valor: #valorpix </br></br>Para consultar mais informações acesse a opção ver comprovante.</br></br>' 
     ,1
     ,0);
-                                            
+         
+
+SELECT MAX(CDMENSAGEM)
+    INTO V_CODIGO
+    FROM TBGEN_NOTIF_MSG_CADASTRO;
+		 
   INSERT INTO TBGEN_NOTIF_MSG_CADASTRO
     (CDMENSAGEM
     ,CDORIGEM_MENSAGEM
@@ -57,7 +71,7 @@ begin
     ,DSMENSAGEM_ACAO_MOBILE
     ,Dstexto_Botao_Acao_Mobile )
   VALUES
-    (6529
+    ((V_CODIGO + 1)
     ,13
     ,'Pagamento agendado Pix não realizado'
     ,'O pagamento de Pix no valor de #valorpix que estava agendado para hoje não foi realizado devido ao limite/saldo insuficiente em sua conta.'
@@ -82,10 +96,14 @@ begin
     (13
     ,20
     ,'Pagamento agendado Pix não realizado'
-    ,6529
+    ,(V_CODIGO + 1)
     ,'</br>#nomeresumido,</br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido ao limite diário ou saldo insuficiente em sua conta corrente.</br> Beneficiário: #beneficiario </br> Valor: #valorpix </br></br> Verifique seu limite diário Pix ou o saldo em conta corrente.</br></br>' 
     ,1
     ,0);
+	
+	SELECT MAX(CDMENSAGEM)
+    INTO V_CODIGO
+    FROM TBGEN_NOTIF_MSG_CADASTRO;
   
   INSERT INTO TBGEN_NOTIF_MSG_CADASTRO
     (CDMENSAGEM
@@ -101,7 +119,7 @@ begin
     ,DSMENSAGEM_ACAO_MOBILE
     ,Dstexto_Botao_Acao_Mobile )
   VALUES
-    (6530
+    ((V_CODIGO + 1)
     ,13
     ,'Pagamento agendado Pix não realizado'
     ,'O pagamento no valor de #valorpix que estava agendado para hoje não foi realizado devido a uma falha no processamento.'
@@ -126,10 +144,14 @@ begin
     (13
     ,21
     ,'Pagamento agendado Pix não realizado'
-    ,6530
+    ,(V_CODIGO + 1)
     ,'</br>#nomeresumido, </br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido a uma falha no processamento. </br> Beneficiário: #beneficiario </br> Valor: #valorpix </br></br>  Por favor, refaça o pagamento ou agendamento.</br></br>'
     ,1
     ,0);
+	
+	SELECT MAX(CDMENSAGEM)
+    INTO V_CODIGO
+    FROM TBGEN_NOTIF_MSG_CADASTRO;
   
   INSERT INTO TBGEN_NOTIF_MSG_CADASTRO
     (CDMENSAGEM
@@ -145,7 +167,7 @@ begin
     ,DSMENSAGEM_ACAO_MOBILE
     ,Dstexto_Botao_Acao_Mobile )
   VALUES
-    (6531
+    ((V_CODIGO + 1)
     ,13
     ,'Pagamento agendado Pix não realizado'
     ,'O pagamento no valor de #valorpix que estava agendado para hoje foi reprovado por medidas de segurança.'
@@ -170,10 +192,14 @@ begin
     (13
     ,22
     ,'Pagamento agendado Pix não realizado'
-    ,6531
+    ,(V_CODIGO + 1)
     ,'</br>#nomeresumido, </br> Infelizmente, seu pagamento Pix que estava agendado para hoje foi reprovado. </br> Valor: #valorpix </br> Beneficiário: #beneficiario </br></br> Para mais informações, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).</br></br>'
     ,1
     ,0);
+  
+  SELECT MAX(CDMENSAGEM)
+    INTO V_CODIGO
+    FROM TBGEN_NOTIF_MSG_CADASTRO;
   
   INSERT INTO TBGEN_NOTIF_MSG_CADASTRO
     (CDMENSAGEM
@@ -189,11 +215,11 @@ begin
     ,DSMENSAGEM_ACAO_MOBILE
     ,Dstexto_Botao_Acao_Mobile )
   VALUES
-    (6532
+    ((V_CODIGO + 1)
     ,13
     ,'Agendamento Pix cancelado'
-    ,'O pagamento no valor de #valorpix que estava agendado para hoje foi cancelado.'
-    ,'</br>#nomeresumido, </br>Seu pagamento Pix que estava agendado para hoje foi cancelado.</br> Valor: #valorpix </br> Beneficiário: #beneficiario </br></br>Em caso de dúvidas, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).</br></br>' 
+    ,'Realizado o cancelamento de #quantidade transações agendadas Pix.'
+    ,'</br>#nomeresumido, </br> Realizado o cancelamento de #quantidade transações agendadas Pix, para verificar seus agendamentos clique em Ver agendamentos Pix. </br></br> Em caso de dúvidas, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).</br></br>' 
     ,16
     ,0
     ,1
@@ -214,8 +240,8 @@ begin
     (13
     ,23
     ,'Agendamento Pix cancelado'
-    ,6532
-    ,'</br>#nomeresumido, </br>Seu pagamento Pix que estava agendado para hoje foi cancelado.</br> Valor: #valorpix </br> Beneficiário: #beneficiario </br></br>Em caso de dúvidas, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).</br></br>' 
+    ,(V_CODIGO + 1)
+    ,'</br>#nomeresumido, </br> Realizado o cancelamento de #quantidade transações agendadas Pix, para verificar seus agendamentos clique em Ver agendamentos Pix. </br></br> Em caso de dúvidas, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).</br></br>' 
     ,1
     ,0);
   
