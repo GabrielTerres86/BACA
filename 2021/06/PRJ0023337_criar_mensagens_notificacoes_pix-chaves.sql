@@ -26,7 +26,7 @@ SELECT MAX(CDMENSAGEM)
     ,13
     ,'Confirmação de pagamento agendado Pix'
     ,'Seu pagamento Pix agendado no valor de #valorpix foi realizado com sucesso.'
-    ,'#nomeresumido,<br><br> Seu pagamento Pix que estava agendado para hoje foi realizado com sucesso.<br><br> Beneficiário: #beneficiario<br> Valor: #valorpix <br><br>Para consultar mais informações acesse a opção ver comprovante.<br><br>' 
+    ,'#nomeresumido,<br><br> Seu pagamento Pix que estava agendado para hoje foi realizado com sucesso.<br><br> Beneficiário: #beneficiario<br> Valor: #valorpix <br><br>Para consultar mais informações acesse a opção ver comprovante.' 
     ,16
     ,0
     ,1
@@ -48,7 +48,7 @@ SELECT MAX(CDMENSAGEM)
     ,19
     ,'PIX - Confirmação de pagamento agendado Pix'
   ,(V_CODIGO + 1)
-    ,'#nomeresumido,<br><br> Seu pagamento Pix que estava agendado para hoje foi realizado com sucesso.<br><br> Beneficiário: #beneficiario<br> Valor: #valorpix <br><br>Para consultar mais informações acesse a opção ver comprovante.<br><br>' 
+    ,'#nomeresumido,<br><br> Seu pagamento Pix que estava agendado para hoje foi realizado com sucesso.<br><br> Beneficiário: #beneficiario<br> Valor: #valorpix <br><br>Para consultar mais informações acesse a opção ver comprovante.' 
     ,1
     ,0);
          
@@ -75,7 +75,7 @@ SELECT MAX(CDMENSAGEM)
     ,13
     ,'Pagamento agendado Pix não realizado'
     ,'O pagamento de Pix no valor de #valorpix que estava agendado para hoje não foi realizado devido ao limite/saldo insuficiente em sua conta.'
-    ,'#nomeresumido,<br><br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido ao limite diário ou saldo insuficiente em sua conta corrente.<br><br> Beneficiário: #beneficiario <br> Valor: #valorpix <br><br> Verifique seu limite diário Pix ou o saldo em conta corrente.<br><br>' 
+    ,'#nomeresumido,<br><br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido ao limite diário ou saldo insuficiente em sua conta corrente.<br><br> Beneficiário: #beneficiario <br> Valor: #valorpix <br><br> Verifique seu limite diário Pix ou o saldo em conta corrente.' 
     ,16
     ,0
     ,1
@@ -97,7 +97,7 @@ SELECT MAX(CDMENSAGEM)
     ,20
     ,'PIX - Pagamento agendado Pix não realizado'
     ,(V_CODIGO + 1)
-    ,'#nomeresumido,<br><br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido ao limite diário ou saldo insuficiente em sua conta corrente.<br><br> Beneficiário: #beneficiario <br> Valor: #valorpix <br><br> Verifique seu limite diário Pix ou o saldo em conta corrente.<br><br>' 
+    ,'#nomeresumido,<br><br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido ao limite diário ou saldo insuficiente em sua conta corrente.<br><br> Beneficiário: #beneficiario <br> Valor: #valorpix <br><br> Verifique seu limite diário Pix ou o saldo em conta corrente.' 
     ,1
     ,0);
   
@@ -123,7 +123,7 @@ SELECT MAX(CDMENSAGEM)
     ,13
     ,'Pagamento agendado Pix não realizado'
     ,'O pagamento no valor de #valorpix que estava agendado para hoje não foi realizado devido a uma falha no processamento.'
-    ,'#nomeresumido, <br><br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido a uma falha no processamento. <br><br> Beneficiário: #beneficiario <br> Valor: #valorpix <br><br>  Por favor, refaça o pagamento ou agendamento.<br><br>'
+    ,'#nomeresumido, <br><br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido a uma falha no processamento. <br><br> Beneficiário: #beneficiario <br> Valor: #valorpix <br><br>  Por favor, refaça o pagamento ou agendamento.'
     ,16
     ,0
     ,1
@@ -145,7 +145,7 @@ SELECT MAX(CDMENSAGEM)
     ,21
     ,'PIX - Pagamento agendado Pix não realizado'
     ,(V_CODIGO + 1)
-    ,'#nomeresumido, <br><br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido a uma falha no processamento. <br><br> Beneficiário: #beneficiario <br> Valor: #valorpix <br><br>  Por favor, refaça o pagamento ou agendamento.<br><br>'
+    ,'#nomeresumido, <br><br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido a uma falha no processamento. <br><br> Beneficiário: #beneficiario <br> Valor: #valorpix <br><br>  Por favor, refaça o pagamento ou agendamento.'
     ,1
     ,0);
   
@@ -171,7 +171,7 @@ SELECT MAX(CDMENSAGEM)
     ,13
     ,'Pagamento agendado Pix não realizado'
     ,'O pagamento no valor de #valorpix que estava agendado para hoje foi reprovado por medidas de segurança.'
-    ,'#nomeresumido, <br><br> Infelizmente, seu pagamento Pix que estava agendado para hoje foi reprovado. <br><br> Valor: #valorpix <br> Beneficiário: #beneficiario <br><br> Para mais informações, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).<br><br>'
+    ,'#nomeresumido, <br><br> Infelizmente, seu pagamento Pix que estava agendado para hoje foi reprovado. <br><br> Valor: #valorpix <br> Beneficiário: #beneficiario <br><br> Para mais informações, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).'
     ,16
     ,0
     ,1
@@ -193,7 +193,7 @@ SELECT MAX(CDMENSAGEM)
     ,23
     ,'PIX - Pagamento agendado Pix não realizado'
     ,(V_CODIGO + 1)
-    ,'#nomeresumido, <br><br> Infelizmente, seu pagamento Pix que estava agendado para hoje foi reprovado. <br><br> Valor: #valorpix <br> Beneficiário: #beneficiario <br><br> Para mais informações, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).<br><br>'
+    ,'#nomeresumido, <br><br> Infelizmente, seu pagamento Pix que estava agendado para hoje foi reprovado. <br><br> Valor: #valorpix <br> Beneficiário: #beneficiario <br><br> Para mais informações, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).'
     ,1
     ,0);
   
@@ -219,7 +219,7 @@ SELECT MAX(CDMENSAGEM)
     ,13
     ,'Agendamento Pix cancelado'
     ,'O pagamento no valor de #valorpix que estava agendado para hoje foi cancelado.'
-    ,'#nomeresumido, <br><br> Seu pagamento Pix que estava agendado para hoje foi cancelado.<br><br> Valor: #valorpix <br> Beneficiário: #beneficiario <br><br>Em caso de dúvidas, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).<br><br>'
+    ,'#nomeresumido, <br><br> Seu pagamento Pix que estava agendado para hoje foi cancelado.<br><br> Valor: #valorpix <br> Beneficiário: #beneficiario <br><br>Em caso de dúvidas, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).'
     ,16
     ,0
     ,1
@@ -241,7 +241,7 @@ SELECT MAX(CDMENSAGEM)
     ,22
     ,'PIX - Agendamento Pix cancelado'
     ,(V_CODIGO + 1)
-    ,'#nomeresumido, <br><br> Seu pagamento Pix que estava agendado para hoje foi cancelado.<br><br> Valor: #valorpix <br> Beneficiário: #beneficiario <br><br>Em caso de dúvidas, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).<br><br>'
+    ,'#nomeresumido, <br><br> Seu pagamento Pix que estava agendado para hoje foi cancelado.<br><br> Valor: #valorpix <br> Beneficiário: #beneficiario <br><br>Em caso de dúvidas, entre em contato com a sua cooperativa no Posto de Atendimento mais próximo ou ligue para o SAC (0800 647 2200).'
     ,1
     ,0);
   
