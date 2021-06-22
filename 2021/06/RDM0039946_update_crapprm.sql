@@ -1,0 +1,17 @@
+begin
+ update crapprm
+    set DSVLRPRM = ',01457538911,04804487956,38212544915,88945103953,05017352910,84580879953,'
+  where NMSISTEM = 'CRED'
+    and CDACESSO = 'PESSOA_LIGADA_CNSLH_FSCL'
+    and cdcooper = 1;
+
+
+  update crapprm
+    set DSVLRPRM = ',00607319909,03281320988,50183516915,41931530963,34957162034,75103990920,'
+  where NMSISTEM = 'CRED'
+    and CDACESSO = 'PESSOA_LIGADA_CNSLH_FSCL'
+    and cdcooper = 16; 
+  
+  commit;  
+
+end;    
