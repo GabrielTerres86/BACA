@@ -12,7 +12,8 @@ declare
          tbrecup_acordo_contrato c
    WHERE a.nracordo = c.nracordo
 --     AND a.nracordo IN (1)
-     AND a.cdcooper = 5
+     AND c.cdorigem <> 6
+     AND c.inrisco_acordo IS NULL
      AND a.dhacordo > to_date('15/06/2021','DD/MM/RRRR');      
     
   cursor cr_risco(pr_cdcooper tbrisco_central_ocr.cdcooper%TYPE,
@@ -21,7 +22,8 @@ declare
                     pr_cdorigem tbrisco_central_ocr.cdorigem%TYPE,
                     pr_dtmvtoan crapdat.dtmvtoan%TYPE) is
     select inrisco_operacao
-      from tbrisco_central_ocr r
+      from tbrisco_central_ocr r,
+           crapdat d
      where r.cdcooper = pr_cdcooper
        and r.nrdconta = pr_nrdconta
        and r.nrctremp = pr_nrctremp
@@ -36,16 +38,11 @@ declare
                            WHEN 3 THEN 499
                          END
            )
-       and r.dtrefere = pr_dtmvtoan;
+       and r.dtrefere = d.dtmvtoan
+       AND d.cdcooper = r.cdcooper;
 
     rw_risco cr_risco%ROWTYPE;
 BEGIN 
-  
-  UPDATE crapprm x
-     SET x.dsvlrprm = '01/06/2021'
-   WHERE x.cdacesso = 'INIC_GERA_ACOR_3040_MOD2'; 
-   
-  COMMIT;
   
   FOR rw_acordo IN cr_acordo LOOP
     vr_inrisco_acordo := 0;  
