@@ -82,6 +82,9 @@ begin
 
     insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
     values ('CRED', 16, 'QT_ATRASO_MINIMO_RENCAN', 'Dias em atraso do contrato disponivel para renegociar(min).', '1');
-
+    
+    UPDATE crapaca SET lstparam = lstparam || ',pr_qtminatr,pr_qtmaxatr'
+    WHERE  nmdeacao             = 'TAB089_ALTERAR';
+    
     commit;
 end;
