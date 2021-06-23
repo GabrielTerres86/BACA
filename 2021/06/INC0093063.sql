@@ -4,7 +4,7 @@ BEGIN
 	 WHERE lem.cdcooper = 16
 	   AND lem.nrdconta = 350052
 	   AND lem.nrctremp = 132801
-	   AND lem.dtmvtolt = '02/06/2021'
+	   AND lem.dtmvtolt = to_date('02/06/2021')
 	   AND lem.vllanmto = 160.48;
 
 	COMMIT;
