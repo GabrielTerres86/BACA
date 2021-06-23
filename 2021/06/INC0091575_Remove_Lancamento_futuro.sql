@@ -6,7 +6,7 @@ BEGIN
    WHERE cdcooper = 5 -- ACENTRA
      AND nrdconta = 177199
      AND nrdocmto IN (166,167,168)
-     AND dtmvtolt = to_date('31-10-2019', 'dd-mm-yyyy');
+     AND dtmvtopg = to_date('31/10/2019', 'dd/mm/yyyy');
   
   COMMIT;
   
