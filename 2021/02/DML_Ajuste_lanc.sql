@@ -18,6 +18,7 @@ BEGIN
   AND x.dtmvtolt = to_date('24/06/2021','DD/MM/RRRR')
   AND x.dtrefatu >= to_date('24/06/2021','DD/MM/RRRR');
 
+
   COMMIT;
 
 END;
