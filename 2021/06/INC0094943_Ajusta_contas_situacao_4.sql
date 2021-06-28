@@ -12,7 +12,7 @@ DECLARE
       OR ( cdcooper = 9
         and nrdconta   IN (31380)  -- TRANSPOCRED
 
-      );
+      );  
   --
   rg_crapass cr_crapass%rowtype;
   --
