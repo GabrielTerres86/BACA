@@ -1,3 +1,4 @@
+begin 
 insert into tbconsor_tipotaxa values (1, 'Taxa Administrativa');
 insert into tbconsor_tipotaxa values (2, 'Fundo de Reserva');
 commit;
@@ -365,3 +366,4 @@ insert into TBCONSOR_PLANO_TIPOBEM values (134,19,(select id from TBCONSOR_TIPOB
 insert into TBCONSOR_PLANO_TIPOBEM values (135,19,(select id from TBCONSOR_TIPOBEM where trim(nmtipobem) = 'Carta de R$ 590.000,00')); -- imoveis
 insert into TBCONSOR_PLANO_TIPOBEM values (136,19,(select id from TBCONSOR_TIPOBEM where trim(nmtipobem) = 'Carta de R$ 600.000,00')); -- imoveis
 commit;
+end;
