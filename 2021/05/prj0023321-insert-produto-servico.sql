@@ -8,7 +8,7 @@
     ) VALUES (
         3,
         53,
-        'API PIX',
+        'API Pix',
         1,
         'api-ailos-cobranca-pix'
     );
