@@ -15,3 +15,5 @@ VALUES
      FROM craprdr a
     WHERE a.nmprogra = 'LIMI0004'
       AND ROWNUM = 1)); 
+
+ COMMIT;
