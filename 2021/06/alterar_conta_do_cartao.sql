@@ -65,4 +65,23 @@ begin
 
   COMMIT;
 
+-- Gislon
+  UPDATE crapcrd
+     SET crapcrd.cdcooper = 16
+        ,crapcrd.nrdconta = 262277
+        ,crapcrd.nrcpftit = 95150994987
+        ,crapcrd.cdadmcrd = 15
+   WHERE crapcrd.nrcrcard = 5127070320149719;
+ 
+
+  UPDATE crawcrd
+     SET crawcrd.cdcooper = 16
+        ,crawcrd.nrdconta = 262277
+        ,crawcrd.nrcpftit = 95150994987
+        ,crawcrd.cdadmcrd = 15
+   WHERE crawcrd.nrcrcard = 5127070320149719;
+ 
+   COMMIT;
+
+
 end;
