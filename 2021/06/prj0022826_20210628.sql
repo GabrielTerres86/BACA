@@ -1,5 +1,5 @@
 begin
-    UPDATE crapprm SET dsvlrprm = '1' WHERE cdacesso = 'QT_VLMXRECA_RENCAN' AND cdcooper = 1;
+    UPDATE crapprm SET dsvlrprm = '1' WHERE cdacesso = 'QT_VLMXRECA_RENCAN';
   
     COMMIT;
 end;    
