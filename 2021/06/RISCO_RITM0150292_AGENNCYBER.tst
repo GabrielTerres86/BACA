@@ -53,7 +53,7 @@ BEGIN
   values (aux_cdpartar_add, 10, NULL);
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 9, '90,1,4');
+  values (aux_cdpartar_add, 9, NULL);
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar_add, 8, NULL);
