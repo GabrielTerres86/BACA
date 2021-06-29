@@ -29,7 +29,7 @@ BEGIN
   aux_cdpartar_add :=  aux_cdpartar_add + 1;
 
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
-  values (aux_cdpartar_add, 'Agencias que nao vao para o CYBER', 2, 12);
+  values (aux_cdpartar_add, 'Agencias que nao irao ao CYBER', 2, 12);
 
   insert into crapbat (CDBATTAR, NMIDENTI, CDPROGRA, TPCADAST, CDCADAST)
   values ('AG_NAOENV_CYBER', 'INFORMA AGENCIA NAO ENVIO CYBER', ' ', 2, aux_cdpartar_add);
