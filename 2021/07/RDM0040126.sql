@@ -1,0 +1,3 @@
+insert into menumobile (MENUMOBILEID, MENUPAIID, NOME, SEQUENCIA, HABILITADO, AUTORIZACAO, VERSAOMINIMAAPP, VERSAOMAXIMAAPP)
+values (1025, 1019, 'Acompanhamento de Proposta', 1, 1, 1, '2.30.0', null);
+COMMIT;
