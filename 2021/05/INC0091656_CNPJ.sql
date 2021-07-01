@@ -1,7 +1,7 @@
 declare 
   
   vr_nmdireto    VARCHAR2(100);
-  vr_nmarquiv    VARCHAR2(50) := 'CNPJ.csv'; 
+  vr_nmarquiv    VARCHAR2(50) := 'CNPJ.csv';  
   vr_nmarqbkp    VARCHAR2(50) := 'ROLLBACK_cnpj.sql';
   vr_input_file  UTL_FILE.FILE_TYPE;
   vr_texto_completo  VARCHAR2(32600) := NULL;

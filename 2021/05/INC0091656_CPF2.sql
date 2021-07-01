@@ -1,7 +1,7 @@
 declare 
   
   vr_nmdireto    VARCHAR2(100);
-  vr_nmarquiv    VARCHAR2(50) := 'CPF2.csv'; 
+  vr_nmarquiv    VARCHAR2(50) := 'CPF2.csv';  
   vr_nmarqbkp    VARCHAR2(50) := 'ROLLBACK_cpf2.sql';
   vr_input_file  UTL_FILE.FILE_TYPE;
   vr_texto_completo  VARCHAR2(32600) := NULL;
