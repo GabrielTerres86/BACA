@@ -1,10 +1,10 @@
 declare
 begin
-  insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-  values ('BUSCA_NOME_FORNECEDOR', 'TELA_CALRIS', 'pc_busca_nome_fornecedor', 'pr_nrcpfcgc', 2184);
+  insert into crapaca (nrseqaca, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+  values (9999999, 'BUSCA_NOME_FORNECEDOR', 'TELA_CALRIS', 'pc_busca_nome_fornecedor', 'pr_nrcpfcgc', 2184);
 
-  insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-  values ('BUSCA_NOME_CANDIDATO', 'TELA_CALRIS', 'pc_busca_nome_candidato', 'pr_nrcpfcgc', 2184);
+  insert into crapaca (nrseqaca, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+  values (9999998, 'BUSCA_NOME_CANDIDATO', 'TELA_CALRIS', 'pc_busca_nome_candidato', 'pr_nrcpfcgc', 2184);
 
   UPDATE crapaca x
     SET x.lstparam = 'pr_idcalris_pessoa,pr_dsjustificativa,pr_cdclasrisco_espe_aten,pr_cdclasrisco_list_rest,pr_cdclasrisco_list_inte,pr_cdclasrisco_final,pr_tprelacionamento,pr_dtproxcalculo,pr_cdstatus'
