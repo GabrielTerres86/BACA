@@ -9,11 +9,12 @@ update tbseg_prestamista set   tpregist = 3 where cdcooper = 1 and
               ,585429,714972,714971,174228,174228
               ,707628,707628,707628,711288,760635,405061,409986,698570,644791,653291,664288);
 
-update crapass set dtnasctl = '01/06/1950' where  cdcooper = 1 and nrdconta = 2552787;
-update tbseg_prestamista set dtnasctl = '01/06/1950' where  cdcooper = 1 and nrdconta = 2552787;
+update crapass set dtnasctl = to_date('01/06/1950','DD/MM/YYYY') where  cdcooper = 1 and nrdconta = 2552787;
+update tbseg_prestamista set dtnasctl = to_date('01/06/1950','DD/MM/YYYY') where  cdcooper = 1 and nrdconta = 2552787;
 
-update crapass set dtnasctl = '01/07/1950' where  cdcooper = 1 and nrdconta = 8380279;
-update tbseg_prestamista set dtnasctl = '01/07/1950' where  cdcooper = 1 and nrdconta = 8380279;
+update crapass set dtnasctl = to_date('01/07/1950','DD/MM/YYYY') where  cdcooper = 1 and nrdconta = 8380279;
+update tbseg_prestamista set dtnasctl = to_date('01/07/1950','DD/MM/YYYY') where  cdcooper = 1 and nrdconta = 8380279;
 
 commit;
 end;
+/
