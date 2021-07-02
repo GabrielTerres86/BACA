@@ -356,7 +356,7 @@ DECLARE
 
 BEGIN
   vr_contador:=0;
-  vr_nmdireto := gene0001.fn_diretorio( pr_tpdireto => 'C',  pr_cdcooper => 1 )||'/arq';
+  
   --Criar arquivo
   gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto        --> Diretorio do arquivo
                           ,pr_nmarquiv => vr_nmarqimp        --> Nome do arquivo
