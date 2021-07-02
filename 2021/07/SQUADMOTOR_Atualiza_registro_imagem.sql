@@ -1,0 +1,36 @@
+BEGIN
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 955515 AND t.nrctrpro = 297895 AND t.dschassi = 'VF7UDRFJWDJ501234' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 837318 AND t.nrctrpro = 308013 AND t.dschassi = 'WVGSV65NXCW580405' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 728870 AND t.nrctrpro = 291884 AND t.dschassi = '3FA6P0HT0ER302258' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 557633 AND t.nrctrpro = 293981 AND t.dschassi = '3N1BC1CD2CL359834' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 864803 AND t.nrctrpro = 294654 AND t.dschassi = '8AC906633EE086010' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 639362 AND t.nrctrpro = 298242 AND t.dschassi = '8AD4DRFJYEG032642' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 871311 AND t.nrctrpro = 306966 AND t.dschassi = '8AJBA3CD1G1564958' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 790478 AND t.nrctrpro = 303923 AND t.dschassi = '8BCNDRFJYFG506318' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 670731 AND t.nrctrpro = 290741 AND t.dschassi = '9BG138HU08C435226' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 571636 AND t.nrctrpro = 298915 AND t.dschassi = '9BHCN51AAMP180460' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 892033 AND t.nrctrpro = 288459 AND t.dschassi = '9BM9790466B461507' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 162990 AND t.nrctrpro = 245737 AND t.dschassi = '9BRB29BT9L2241460' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 640590 AND t.nrctrpro = 293191 AND t.dschassi = '9BRB29BT9L2241460' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 940577 AND t.nrctrpro = 297339 AND t.dschassi = '9BSR6X200F3868347' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 313076 AND t.nrctrpro = 300661 AND t.dschassi = '9C2KC2200LR146439' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 707589 AND t.nrctrpro = 299614 AND t.dschassi = '9C2MC4400JR006254' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 795020 AND t.nrctrpro = 288776 AND t.dschassi = '93HGH6830DZ103447' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 429619 AND t.nrctrpro = 290410 AND t.dschassi = '93HRV2890JZ262316' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 795020 AND t.nrctrpro = 288776 AND t.dschassi = '93XTYKL1THCG01706' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 795526 AND t.nrctrpro = 294074 AND t.dschassi = '93YBSR7RHCJ896022' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 772674 AND t.nrctrpro = 300114 AND t.dschassi = '935FCKFVYBB582347' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 772674 AND t.nrctrpro = 299925 AND t.dschassi = '935FCKFVYBB582347' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 772674 AND t.nrctrpro = 298872 AND t.dschassi = '935FCKFVYBB582347' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 772674 AND t.nrctrpro = 297534 AND t.dschassi = '935FCKFVYBB582347' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 640794 AND t.nrctrpro = 298366 AND t.dschassi = '94BJ1243CDV037229' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 712922 AND t.nrctrpro = 310026 AND t.dschassi = '94DBFAN17GB102327' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 942308 AND t.nrctrpro = 292097 AND t.dschassi = '94DFCAP15KB141742' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 847160 AND t.nrctrpro = 290481 AND t.dschassi = '95PJN81BPBB010429' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 498246 AND t.nrctrpro = 286285 AND t.dschassi = '95PJ3812GJB004671' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 949566 AND t.nrctrpro = 294148 AND t.dschassi = '97T0AN663MC009455' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 704156 AND t.nrctrpro = 304557 AND t.dschassi = '98MXW300XJ4A44048' AND t.cdsitgrv IN(0,1,3);
+  UPDATE crapbpr t SET t.flgregct = 1 , t.flgregim = 0 WHERE t.cdcooper = 2 AND t.nrdconta = 566276 AND t.nrctrpro = 287652 AND t.dschassi = '98RDB21B6MA002126' AND t.cdsitgrv IN(0,1,3);
+
+COMMIT;
+END;
