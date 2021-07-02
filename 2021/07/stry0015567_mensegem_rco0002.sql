@@ -1,6 +1,4 @@
 begin
-  /*Inclusao de parametros para mensagens RCO*/
-  /*RCO0002*/
   insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
   values ('CRED', 3, 'RCO02_CODITEM_7001', 'Codigo Item Base Incidencia', '7001');
 
