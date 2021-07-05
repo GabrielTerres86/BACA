@@ -392,12 +392,12 @@ BEGIN
         vr_cdcooper:= rw_seguros.cdcooper;
          
         -- Leitura dos valores de mínimo e máximo
-        vr_vlmaximo := SUBSTR(tabe0001.fn_busca_dstextab(pr_cdcooper => rw_seguros.cdcooper,
+        vr_vlmaximo := TO_NUMBER(SUBSTR(tabe0001.fn_busca_dstextab(pr_cdcooper => rw_seguros.cdcooper,
                                                          pr_nmsistem => 'CRED',
                                                          pr_tptabela => 'USUARI',
                                                          pr_cdempres => 11,
                                                          pr_cdacesso => 'SEGPRESTAM',
-                                                         pr_tpregist => 0),94,12);
+                                                         pr_tpregist => 0),94,12),'fm999999999990d00',  'nls_numeric_characters = '',.''');
       END if;
       
       --Validar necessidade de criação
