@@ -21,5 +21,4 @@ exception
     rollback;
     raise_application_error(-20501, sqlerrm);
 end;
-end;
 /
