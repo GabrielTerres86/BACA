@@ -15,5 +15,11 @@ where idusuario in (
 );
 
 commit;
+
+exception
+  when others then
+    rollback;
+    raise_application_error(-20501, sqlerrm);
+end;
 end;
 /
