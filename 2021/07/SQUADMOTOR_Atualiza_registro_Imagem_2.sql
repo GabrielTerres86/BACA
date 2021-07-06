@@ -706,8 +706,7 @@ VALUES(1,7862172,3546255,3,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:
 
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(1,11552093,3295996,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100141,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100141,2021002610014120210026100141);
-INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
-VALUES(1,8229961,3307072,,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026101026,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026101026,2021002610102620210026101026);
+
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(1,9870091,3523343,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026101026,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026101026,2021002610102620210026101026);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
@@ -1196,8 +1195,7 @@ INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregist
 VALUES(1,9688188,2440886,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20200035101668,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20200035101668,2020003510166820200035101668);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(1,9688188,3421949,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20200035101668,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20200035101668,2020003510166820200035101668);
-INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
-VALUES(1,10430717,3282725,,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100159,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100159,2021002610015920210026100159);
+
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(1,10430890,3282754,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100159,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100159,2021002610015920210026100159);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
@@ -1994,8 +1992,7 @@ INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregist
 VALUES(1,9948015,3501954,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100818,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100818,2021002610081820210026100818);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(1,9984631,3288857,3,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100089,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100089,2021002610008920210026100089);
-INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
-VALUES(1,9984631,3354159,,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100089,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100089,2021002610008920210026100089);
+
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(1,9065946,3394721,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100227,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100227,2021002610022720210026100227);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
@@ -2022,8 +2019,7 @@ INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregist
 VALUES(1,2224330,3503554,3,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100928,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100928,2021002610092820210026100928);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(1,2369273,3526666,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026101080,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026101080,2021002610108020210026101080);
-INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
-VALUES(1,2703998,3288013,,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100684,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100684,2021002610068420210026100684);
+
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(1,10262954,3354844,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100684,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100684,2021002610068420210026100684);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
@@ -2938,8 +2934,7 @@ INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregist
 VALUES(1,10538054,3525475,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100980,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100980,2021002610098020210026100980);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(1,10209360,3391639,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100211,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100211,2021002610021120210026100211);
-INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
-VALUES(1,11683589,3293197,,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100211,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100211,2021002610021120210026100211);
+
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(1,11654880,3358663,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100093,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100093,2021002610009320210026100093);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
@@ -3142,8 +3137,7 @@ INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregist
 VALUES(1,7140630,3284096,2,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20200026104198,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20200026104198,2020002610419820200026104198);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(1,7140630,3290225,2,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20200026104198,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20200026104198,2020002610419820200026104198);
-INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
-VALUES(1,7140630,3320754,,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20200026104198,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20200026104198,2020002610419820200026104198);
+
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(1,10968512,3470043,2,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210026100783,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210026100783,2021002610078320210026100783);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
@@ -3584,8 +3578,7 @@ INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregist
 VALUES(7,371971,48898,2,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210057100024,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210057100024,2021005710002420210057100024);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(7,245232,47601,3,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210057100008,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210057100008,2021005710000820210057100008);
-INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
-VALUES(7,322644,46322,,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210057100013,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210057100013,2021005710001320210057100013);
+
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(7,54739,47605,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210057100028,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210057100028,2021005710002820210057100028);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
@@ -4519,10 +4512,7 @@ INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregist
 VALUES(14,111600,20097,9,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210495100003,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210495100003,2021049510000320210495100003);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(14,111600,21939,10,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210495100003,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210495100003,2021049510000320210495100003);
-INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
-VALUES(14,111600,20097,,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210495100001,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210495100001,2021049510000120210495100001);
-INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
-VALUES(14,111600,21939,,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210495100001,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210495100001,2021049510000120210495100001);
+
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(14,13927,10143,19,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210495300130,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210495300130,2021049530013020210495300130);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
@@ -4955,8 +4945,7 @@ INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregist
 VALUES(16,261661,225238,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210055100022,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210055100022,2021005510002220210055100022);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(16,464023,224943,2,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210055100005,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210055100005,2021005510000520210055100005);
-INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
-VALUES(16,323764,219552,,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210055100120,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210055100120,2021005510012020210055100120);
+
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
 VALUES(16,808504,230597,1,1,to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),2,20210055100120,'1',to_date('06-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'),NULL,20210055100120,2021005510012020210055100120);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro)
