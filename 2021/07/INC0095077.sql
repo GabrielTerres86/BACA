@@ -1,104 +1,174 @@
+DECLARE
+
+  vr_incidente VARCHAR2(15);
+  vr_cdcooper  crapcop.cdcooper%TYPE;
+  vr_nrdconta  crapass.nrdconta%TYPE;
+  vr_vllanmto  tbcc_prejuizo.vlsdprej%TYPE;
+  vr_cdhistor  craphis.cdhistor%TYPE;
+  vr_idlancto  tbcc_prejuizo_detalhe.idlancto%TYPE;
+
+  PROCEDURE registrarVERLOG(pr_cdcooper            IN crawepr.cdcooper%TYPE
+                           ,pr_nrdconta            IN crawepr.nrdconta%TYPE
+                           ,pr_dstransa            IN VARCHAR2      -- Operacao que foi efetuada
+                           ,pr_dsCampo             IN VARCHAR       -- ITEM - Campo alterado
+                           ,pr_antes               IN VARCHAR2
+                           ,pr_depois              IN VARCHAR2) IS
+
+ 
+
+    vr_dstransa             craplgm.dstransa%TYPE;
+    vr_descitem             craplgi.nmdcampo%TYPE;
+    vr_nrdrowid             ROWID;
+    vr_risco_anterior       VARCHAR2(10);
+
+ 
+
+  BEGIN
+
+    vr_dstransa := pr_dstransa;
+
+    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_dstransa => vr_dstransa
+                        ,pr_dscritic => ''
+                        ,pr_cdoperad => '1'
+                        ,pr_dsorigem => 'SCRIPT'
+                        ,pr_dttransa => TRUNC(SYSDATE)
+                        ,pr_flgtrans => 0
+                        ,pr_hrtransa => gene0002.fn_busca_time
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => ''
+                        ,pr_nrdrowid => vr_nrdrowid);
+
+    IF trim(pr_dsCampo) IS NOT NULL THEN
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                               ,pr_nmdcampo => pr_dsCampo
+                               ,pr_dsdadant => pr_antes
+                               ,pr_dsdadatu => pr_depois);
+    END IF;
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+  END registrarVERLOG;
 
 
-dtmvtolt	date	y	sysdate	data do movimento atual.
-cdagenci	number(5)	y	0	numero do pa.
-cdbccxlt	number(5)	y	0	codigo do banco/caixa.
-nrdolote	number(10)	y	0	numero do lote.
-nrdconta	number(10)	y	0	numero da conta/dv do associado.
-nrctremp	number(10)	y	0	numero do contrato de emprestimo.
-cdfinemp	number(5)	y	0	codigo da finalidade do emprestimo.
-cdlcremp	number(5)	y	0	codigo da linha de credito do emprestimo.
-dtultpag	date	y		data do ultimo pagamento.
-nrctaav1	number(10)	y	0	numero da conta do primeiro avalista.
-nrctaav2	number(10)	y	0	numero da conta do segundo avalista.
-qtpreemp	number(5)	y	0	quantidade de prestacoes do emprestimo.
-qtprepag	number(5)	y	0	quantidade de prestacoes pagas.
-txjuremp	number(25,7)	y	0	taxa de juros do emprestimo.
-vljuracu	number(25,2)	y	0	valor dos juros acumulados para o emprestimo.
-vljurmes	number(25,2)	y	0	valor dos juros acumulados no mes anterior.
-vlpagmes	number(25,2)	y	0	valor que foi pago no mes corrente.
-vlpreemp	number(25,2)	y	0	valor da prestacao do emprestimo.
-vlsdeved	number(35,10)	y	0	valor do saldo devedor do emprestimo.
-vlemprst	number(25,2)	y	0	valor do emprestimo.
-cdempres	number(10)	y	0	codigo da empresa onde o associado trabalha.
-inliquid	number(5)	y	0	indicador de liquidacao do emprestimo.
-nrcadast	number(10)	y	0	numero do cadastro/dv do associado.
-qtprecal	number(25,4)	y	0	quantidade de prestacoes calculadas.
-qtmesdec	number(10)	y	0	quantidade de meses decorridos.
-dtinipag	date	y		data de inicio do pagamento do emprestimo.
-flgpagto	number	y	1	"f" para debitar no dia da folha ou "c" para debitar em c/c.
-dtdpagto	date	y		data do pagamento da primeira prestacao.
-indpagto	number(5)	y	0	indica se foi efetuado pagamento no mes (0-nao pagou; 1-pago).
-vliofepr	number(25,2)	y	0	valor do iof cobrado no contrato.
-vlprejuz	number(25,2)	y	0	valor do prejuizo.
-vlsdprej	number(25,2)	y	0	saldo em prejuizo.
-inprejuz	number(5)	y	0	indicador do0 prejuizo (1 - em prejuizo).
-vljraprj	number(25,2)	y	0	juros acumulados no prejuizo.
-vljrmprj	number(25,2)	y	0	valor dos juros calculados no mes em prejuizo.
-dtprejuz	date	y		data em que foi lancado em prejuizo.
-tpdescto	number(5)	y	1	tipo de desconto do emprestimo
-cdcooper	number(10)	y	0	codigo que identifica a cooperativa.
-tpemprst	number(5)	y	0	contem o tipo do emprestimo.
-txmensal	number(25,6)	y	0	taxa mensal.
-vlservtx	number(25,2)	y	0	contem o valor de servicos e taxas extras.
-vlpagstx	number(25,2)	y	0	contem o valor pago de servicos e taxas extras.
-vljuratu	number(25,2)	y	0	contem o valor dos juros acumulados no mes atual.
-vlajsdev	number(25,2)	y	0	valor de ajuste do saldo devedor do emprestimo.
-dtrefjur	date	y		data de referencia da ultima vez que foi calculado juros para o saldo devedor do contrato.
-diarefju	number(2)	y	0	dia de referencia da ultima vez que foi calculado juros para o saldo devedor do contrato.
-flliqmen	number	y	0	indica se o emprestimo foi liquidado no mensal.
-mesrefju	number(2)	y	0	mes de referencia da ultima vez que foi calculado juros para o saldo devedor do contrato.
-anorefju	number(4)	y	0	ano  de referencia da ultima vez que foi calculado juros para o saldo devedor do contrato.
-flgdigit	number	y	0	contem o indicador de digitalizacao do documento.
-vlsdvctr	number(19,2)	y	0	valor do saldo devedor contratado.
-qtlcalat	number(13,4)	y	0	quantidade de lancamentos atualizados.
-qtpcalat	number(13,4)	y	0	quantidade de prestacoes calculadas atualizadas
-vlsdevat	number(35,10)	y	0	valor do saldo devedor do emprestimo atualizado.
-vlpapgat	number(19,2)	y	0	valor das prestacoes a pagar atualizadas.
-vlppagat	number(19,2)	y	0	valor das prestacoes pagas atualizadas.
-qtmdecat	number(8)	y	0	quantidade de meses decorridos atualizados.
-progress_recid	number	y		
-qttolatr	number(5)	y	0	prazo de tolerancia para cobranca de multa e mora parcelas em atraso.
-cdorigem	number(3)	y	0	"/** -> origem = 1 - ayllos                               **/
-/** -> origem = 2 - caixa                                **/
-/** -> origem = 3 - internet                             **/
-/** -> origem = 4 - cash                                 **/
-/** -> origem = 5 - intranet (ayllos web)                **/
-/** -> origem = 6 - ura                                  **/"
-vltarifa	number(25,2)	y	0	valor total da tarifa de contratacao.
-vltariof	number(25,2)	y	0	valor total da tarifa de  iof.
-vltaxiof	number(25,8)		0	taxa de iof. 
-nrconbir	number(10)	y	0	numero do cgc da empresa que o socio / acionista possui participacao
-inconcje	number(1)	y	0	consulta conjuge no biro de consultas automaticas
-vlttmupr	number(25,2)	y	0	valor total da multa em prejuizo.
-vlttjmpr	number(25,2)	y	0	valor total da mora em prejuizo.
-vlpgmupr	number(25,2)	y	0	valor total pago da multa em prejuizo.
-vlpgjmpr	number(25,2)	y	0	valor total pago dos juros de mora em prejuizo.
-qtimpctr	number(3)		0	quantidade de vezes que o contrato foi impresso
-dtliquid	date	y		data da liquidacao do contrato
-dtultest	date	y		data do ultimo estorno
-dtapgoib	date	y		data do aceite de pagamento via internet bank
-iddcarga	number(6)		0	id da carga do pre-aprovado que originou o emprestimo
-cdopeori	varchar2(10)		' '	codigo do operador original do registro
-cdageori	number(5)		0	codigo da agencia original do registro
-dtinsori	date	y		data  de criação do registro
-cdopeefe	varchar2(10)		' '	operador de efetivacao da proposta
-dtliqprj	date	y		data de liquidacao do prejuizo
-vlsprjat	number(25,2)		0	saldo em prejuizo do dia anterior.
-dtrefatu	date	y		data de referencia da criacao ou ultima atualizacao do registro (alimentado via trigger)
-idfiniof	number(1)		0	indicador de financiamento de iof junto ao emprestimo (0-nao financia/ 1-financia)
-vliofcpl	number(25,2)		0	valor do iof complementar de atraso
-vliofadc	number(25,2)		0	valor do iof adicional na contratacao
-vlsprojt	number(25,2)		0	saldo devedor projetado
-dtrefcor	date	y		data de referencia da ultima vez que foi calculado o juros de correcao.
-idquaprc	number(5)		1	identificacao da qualificacao da operacao - controle (proposta)
-vlpagiof	number(25,2)		0	valor total pago do iof
-vlaqiofc	number(25,8)		0	valor da aliquota complementar para cobranca do iof
-inrisco_refin	number(5)	y		nivel de risco do refinanciamento(aceleracao)
-dtinicio_atraso_refin	date	y		data de inicio do pior atraso dos contratos refinanciados
-qtdias_atraso_refin	number(5)		0	quantidade dias atraso utilizado para calculo risco refinanciamento
-vliofpri	number(25,2)	y		valor do iof principal na contratacao
-vltiofpr	number(25,2)	y		valor total do iof em prejuizo.
-vlpiofpr	number(25,2)	y		valor total pago do iof em prejuizo
-vlsaldo_refinanciado	number(25,2)	y		valor do saldo refinanciado para melhora
-iddacao_bens	number(10)	y		identificacao do bem no cadastro de emprestimos(crapepr).
+  PROCEDURE prc_gera_acerto_transit (prm_cdcooper IN craplcm.cdcooper%TYPE,
+                                     prm_nrdconta IN craplcm.nrdconta%TYPE,
+                                     prm_vllanmto IN craplcm.vllanmto%TYPE,
+                                     prm_idaument IN NUMBER DEFAULT 0) IS
+  
+    -- Variáveis negócio
+    vr_dtmvtolt    craplcm.dtmvtolt%TYPE;
+    vr_idprejuizo  tbcc_prejuizo.idprejuizo%TYPE;
+    vr_cdhistor    tbcc_prejuizo_detalhe.cdhistor%TYPE;
+
+    -- Variáveis Tratamento Erro
+    vr_erro        EXCEPTION;
+    vr_cdcritic    NUMBER;
+    vr_dscritic    VARCHAR2(1000);
+
+  BEGIN
+
+    --Busca Data Atual da Cooperativa
+    BEGIN
+      SELECT dtmvtolt
+      INTO   vr_dtmvtolt
+      FROM   crapdat
+      WHERE  cdcooper = prm_cdcooper;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao Buscar Data da Cooperatriva. Erro: '||SubStr(SQLERRM,1,255);
+        RAISE vr_erro; 
+    END;
+    
+    dbms_output.put_line(' ');
+    dbms_output.put_line('   Parâmetros (ATZ TRANSIT):');
+    dbms_output.put_line('     Cooperativa....: '||prm_cdcooper);
+    dbms_output.put_line('     Conta..........: '||prm_nrdconta);
+    dbms_output.put_line('     Data...........: '||To_Char(vr_dtmvtolt,'dd/mm/yyyy'));
+    dbms_output.put_line('     Valor..........: '||prm_vllanmto);
+    dbms_output.put_line(' ');
+
+
+    -- Cria lançamento (Tabela tbcc_prejuizo_lancamento)
+    prej0003.pc_gera_cred_cta_prj(pr_cdcooper => prm_cdcooper,
+                                  pr_nrdconta => prm_nrdconta,
+                                  pr_vlrlanc  => prm_vllanmto,
+                                  pr_dtmvtolt => vr_dtmvtolt,
+                                  pr_dsoperac => 'Ajuste Contabil - ' || To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'),
+                                  pr_cdcritic => vr_cdcritic,
+                                  pr_dscritic => vr_dscritic);
+
+    IF Nvl(vr_cdcritic,0) > 0 OR Trim(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_erro; 
+    ELSE
+      dbms_output.put_line('   Lançamento Credito Conta Transitoria efetuado com Sucesso na Coop/Conta '||prm_cdcooper||'/'||prm_nrdconta||'.');  
+    END IF;
+
+    registrarVERLOG(pr_cdcooper  => prm_cdcooper
+                   ,pr_nrdconta  => prm_nrdconta
+                   ,pr_dstransa  => 'Ajuste Contabil - ' || To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss')
+                   ,pr_dsCampo   => 'pc_gera_cred_cta_prj'
+                   ,pr_antes     => 0
+                   ,pr_depois    => prm_vllanmto);
+
+  EXCEPTION
+    WHEN vr_erro THEN
+      dbms_output.put_line('prc_gera_acerto_transit: '||vr_dscritic);
+      ROLLBACK;
+      dbms_output.put_line('Efetuado Rollback.');
+      Raise_Application_Error(-20001,vr_dscritic);
+    WHEN OTHERS THEN
+      dbms_output.put_line('prc_gera_acerto_transit: Erro: '||SubStr(SQLERRM,1,255));
+      ROLLBACK;
+      dbms_output.put_line('Efetuado Rollback.');
+      Raise_Application_Error(-20002,'Erro Geral no prc_gera_acerto_transit. Erro: '||SubStr(SQLERRM,1,255));    
+  END prc_gera_acerto_transit;
+     
+
+BEGIN
+  
+
+------------ BLOCO PRINCIPAL ---------------------
+  dbms_output.put_line('Script iniciado em '||To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'));
+
+-- 2739 - Quando lança, Diminui o Saldo Prejuizo      [D] 2739 - REC. PREJUIZO-> TBCC_PREJUIZO_DETALHE
+-- 2738 - Quando lança, Aumenta o Saldo Prejuizo      [C] 2738 - TRF. PREJUIZO-> TBCC_PREJUIZO_DETALHE
+
+---------------------------------------------------
+  -- INC0095077 - Únilos - C/C 107956 lançar R$ 3.440,54
+  vr_incidente := 'INC0095077';
+  vr_cdcooper  := 6;
+  vr_nrdconta  := 107956;
+  vr_vllanmto  := 3440.54;
+  vr_cdhistor  := 2738;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+  
+  --realizar um credito na transitoria (tbcc_prejuizo_lancamento)
+  prc_gera_acerto_transit(prm_cdcooper => vr_cdcooper,
+                          prm_nrdconta => vr_nrdconta,
+                          prm_vllanmto => vr_vllanmto);
+
+  
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
+
+
+  --Salva
+  COMMIT;
+
+  dbms_output.put_line(' ');
+  dbms_output.put_line('Script finalizado com Sucesso em '||To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'));
+------------ BLOCO PRINCIPAL - FIM ---------------------
+
+
+EXCEPTION    
+  WHEN OTHERS THEN
+    dbms_output.put_line('Erro Geral no Script. Erro: '||SubStr(SQLERRM,1,255));
+    ROLLBACK;
+    dbms_output.put_line('Efetuado Rollback.');
+    Raise_Application_Error(-20002,'Erro Geral no Script. Erro: '||SubStr(SQLERRM,1,255));    
+END;
