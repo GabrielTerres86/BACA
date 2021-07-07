@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-224
+247
 DECLARE
   CURSOR cr_lem_mensal(pr_cdcooper IN craplem.cdcooper%TYPE
                       ,pr_nrdconta IN craplem.nrdconta%TYPE
@@ -66,7 +66,7 @@ DECLARE
 begin
   vr_dsdireto := GENE0001.fn_diretorio('M',3,'jaison');
 
-  GENE0001.pc_abre_arquivo(pr_nmcaminh => vr_dsdireto || '/teste_base.csv'
+  GENE0001.pc_abre_arquivo(pr_nmcaminh => vr_dsdireto || '/craplem_3006.csv'
                           ,pr_tipabert => 'R'                --> Modo de abertura (R,W,A)
                           ,pr_utlfileh => vr_input_file      --> Handle do arquivo aberto
                           ,pr_des_erro => vr_des_erro);
@@ -174,7 +174,7 @@ begin
                                , vr_arq_nrseqava
                                , vr_arq_dtestorn
                                , vr_arq_cdorigem
-                               , vr_arq_dthrtran
+                               , SYSDATE
                                , vr_arq_qtdiacal
                                , vr_arq_vltaxper
                                , vr_arq_vltaxprd
@@ -189,11 +189,34 @@ begin
             CLOSE cr_apos_mensal;
 
             IF vr_achou THEN
+              IF vr_arq_cdhistor NOT IN (2346,2347) THEN
+                UPDATE craplem l
+                   SET l.vllanmto = l.vllanmto - vr_arq_vllanmto
+                      ,l.dthrtran = SYSDATE
+                 WHERE l.rowid = rw_apos_mensal.rowid;
+              END IF;
+            ELSE
+              
+              UPDATE crapcot 
+               SET crapcot.qtjurmfx = NVL(crapcot.qtjurmfx,0) + ROUND(vr_arq_vllanmto / 0.82870000, 4)
+             WHERE crapcot.cdcooper = vr_arq_cdcooper
+               AND crapcot.nrdconta = vr_arq_nrdconta;  
 
-              UPDATE craplem l
-                 SET l.vllanmto = l.vllanmto - vr_arq_vllanmto
-               WHERE l.rowid = rw_apos_mensal.rowid;
-
+              UPDATE crapepr
+                 SET crapepr.dtrefjur = to_date('30/06/2021', 'DD/MM/YYYY')
+                    ,crapepr.diarefju = 30
+                    ,crapepr.mesrefju = 6
+                    ,crapepr.anorefju = 2021
+                    ,crapepr.dtrefcor = to_date('30/06/2021', 'DD/MM/YYYY')
+                    ,crapepr.vlsdeved = NVL(crapepr.vlsdeved,0) + vr_arq_vllanmto
+                    ,crapepr.vljuracu = NVL(crapepr.vljuracu,0) + (CASE WHEN vr_arq_cdhistor IN (2346,2347) THEN 0 ELSE vr_arq_vllanmto END)
+                    ,crapepr.vljurmes = NVL(crapepr.vljurmes,0) + (CASE WHEN vr_arq_cdhistor IN (2346,2347) THEN 0 ELSE vr_arq_vllanmto END)
+                    ,crapepr.vljuratu = 0
+                    ,crapepr.indpagto = 0
+               WHERE crapepr.cdcooper = vr_arq_cdcooper
+                 AND crapepr.nrdconta = vr_arq_nrdconta
+                 AND crapepr.nrctremp = vr_arq_nrctremp;
+            
             END IF;
 
           END IF;
