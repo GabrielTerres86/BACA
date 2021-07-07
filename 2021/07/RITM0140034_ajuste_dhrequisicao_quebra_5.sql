@@ -1,0 +1,9 @@
+BEGIN
+
+UPDATE tbqbrsig_solicita_quebra
+   SET dhrequisicao = dhrequisicao - 1
+ WHERE nrcontrole in ('CCS20210707500000000', 'CCS20210707600000000', 'CCS20210707400000000', 'CCS20210707300000000');
+ 
+COMMIT;
+
+END;
