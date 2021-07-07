@@ -11,8 +11,8 @@ BEGIN
     -- Percorrer as cooperativas do cursor
     FOR rw_crapcop IN cr_crapcop LOOP
 
-      INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'CD_VISUALIZAR_CNT_RENCAN'  , 'Ativar Mobile - Renegociação.'      , '3');
-      INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'CD_ATIVAR_CNT_HIB_RENCAN', 'Ativar Conta Online - Renegociação.', '1');
+      INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'CD_VISUALIZAR_CNT_RENCAN'  , 'Visualizar Contratos nos Canais - Renegociação.'      , '3');
+      INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', rw_crapcop.cdcooper, 'CD_ATIVAR_CNT_HIB_RENCAN', 'Ativar Contrato Híbrido - Renegociação.', '1');
       
     END LOOP;
     
