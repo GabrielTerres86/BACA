@@ -5,11 +5,14 @@ BEGIN
 										 ,lstparam
 										 ,nrseqrdr
 										 ) 
-							 VALUES('BUSCA_C_HIST_FORMA_PAGTO'
+							 VALUES('BUSCA_C_HIST_FORMA_TESTV'
 										 ,NULL
 										 ,'CREDITO.obterHitoricoFormaPagtoWeb'
 										 ,'pr_nrdconta,pr_nrcontrato'
-										 ,1045);
-										 
+										 ,1045
+										 );
   COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
 END;

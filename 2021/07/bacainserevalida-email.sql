@@ -5,11 +5,14 @@ BEGIN
 										 ,lstparam
 										 ,nrseqrdr
 										 ) 
-							 VALUES('VALIDA_EMAIL'
+							 VALUES('VALIDA_EMAIL_TESTV'
 										 ,NULL
 										 ,'CREDITO.validaEmailContasWeb'
 										 ,'pr_nrdconta'
-										 ,1045);
-										 
+										 ,1045
+										 );
   COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
 END;
