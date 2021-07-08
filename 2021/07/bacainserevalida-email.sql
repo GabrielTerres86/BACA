@@ -9,10 +9,7 @@ BEGIN
 										 ,NULL
 										 ,'CREDITO.validaEmailContasWeb'
 										 ,'pr_nrdconta'
-										 ,1045
-										 );
+										 ,1045);
+										 
   COMMIT;
-EXCEPTION
-  WHEN OTHERS THEN
-    ROLLBACK;
 END;

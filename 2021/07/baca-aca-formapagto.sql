@@ -9,10 +9,7 @@ BEGIN
 										 ,NULL
 										 ,'CREDITO.obterHitoricoFormaPagtoWeb'
 										 ,'pr_nrdconta,pr_nrcontrato'
-										 ,1045
-										 );
+										 ,1045);
+										 
   COMMIT;
-EXCEPTION
-  WHEN OTHERS THEN
-    ROLLBACK;
 END;
