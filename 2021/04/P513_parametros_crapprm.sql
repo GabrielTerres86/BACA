@@ -1,12 +1,6 @@
 ﻿INSERT INTO CRAPPRM
  (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) 
 VALUES
- ('CRED', 0 , 'SAQPAG_HORARIO_CORTE', 'Hora de corte utilizado na integracao do Saque e Pague.','78300' );
-
-UPDATE crapprm prm
-   SET prm.dsvlrprm = '00410;1'
- WHERE NMSISTEM = 'CRED'
-   AND CDCOOPER = 0
-   AND CDACESSO = 'SAQUE_PAGUE_ITENS_MENU8';
+ ('CRED', 0 , 'SAQPAG_HORARIO_CORTE', 'Hora de corte utilizado na integracao do Saque e Pague - 21:45:59','78359' );
 
 COMMIT;
