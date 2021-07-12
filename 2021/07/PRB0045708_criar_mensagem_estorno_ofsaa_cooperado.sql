@@ -23,7 +23,7 @@ SELECT MAX(CDMENSAGEM)
     ,13
     ,'PIX - Pagamento Pix: OFSAA (cancelado cooperado)'
     ,'O valor foi estornado para a sua conta. Saiba Mais.'
-    ,'Abortamos o processo de análise da sua operação realizada via Pix.</br></br>A sua solicitação de cancelamento foi atendida.</br></br>Valor: #valorpix </br>Beneficiário: #beneficiario </br>Instituição: #instituicao </br></br><b>O valor foi estornado e está disponível em sua conta corrente.</b></br></br>Em caso de dúvidas, entre em contato com a Cooperativa.</br></br>'
+    ,'<b>A sua transação foi cancelada.</b></br></br>Valor: #valorpix </br>Beneficiário: #beneficiario </br>Instituição: #instituicao </br></br><b>O valor foi estornado e está disponível em sua conta corrente.</b></br></br>Em caso de dúvidas, entre em contato com a Cooperativa.</br></br>'
     ,16
     ,0
     ,0
