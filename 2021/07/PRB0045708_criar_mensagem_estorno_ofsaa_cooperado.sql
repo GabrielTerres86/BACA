@@ -39,7 +39,7 @@ SELECT MAX(CDMENSAGEM)
     ,INTIPO_REPETICAO)
   VALUES
     (13
-    ,23
+    ,24
     ,'PIX - Pagamento Pix: OFSAA (cancelamento cooperado)'
     ,(V_CODIGO + 1)
     ,'</br>#valorpix - Valor do Pix (Ex.: 45,00)</br>#instituicao - PSP do beneficiário</br>#beneficiario - Nome do beneficiário.'
