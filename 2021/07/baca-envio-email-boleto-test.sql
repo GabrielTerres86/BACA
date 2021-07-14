@@ -13,7 +13,11 @@ BEGIN
        SET flenviad = 'S'
      WHERE nrseqsol = i.nrseqsol;
   
-    COMMIT;
-  
   END LOOP;
+
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+  
 END;
