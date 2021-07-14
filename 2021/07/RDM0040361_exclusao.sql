@@ -1,6 +1,6 @@
 DELETE crapscn
  WHERE cdempcon = 12
-   AND cdsegmto = 5
-   AND cdempres IN ('07');
-COMMIT; 
+   AND UPPER(cdsegmto) = '5'
+   AND UPPER(cdempres) = '07';
+COMMIT;
 /
