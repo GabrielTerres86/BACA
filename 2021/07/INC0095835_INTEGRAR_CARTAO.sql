@@ -1,0 +1,106 @@
+BEGIN
+  
+  DECLARE
+    vr_nrctrcrd crawcrd.nrctrcrd%TYPE := fn_sequence('CRAPMAT','NRCTRCRD', 1);
+    vr_nrseqcrd crawcrd.nrseqcrd%TYPE := CCRD0003.fn_sequence_nrseqcrd(pr_cdcooper => 1);
+  BEGIN
+     
+      INSERT INTO crawcrd
+         (nrdconta,
+          nrcrcard,
+          nrcctitg,
+          nrcpftit,
+          vllimcrd,
+          flgctitg,
+          dtmvtolt,
+          nmextttl,
+          flgprcrd,
+          tpdpagto,
+          flgdebcc,
+          tpenvcrd,
+          vlsalari,
+          dddebito,
+          cdlimcrd,
+          tpcartao,
+          dtnasccr,
+          nrdoccrd,
+          nmtitcrd,
+          nrctrcrd,
+          cdadmcrd,
+          cdcooper,
+          nrseqcrd,
+          dtpropos,
+          dtsolici,
+          flgdebit,
+          cdgraupr,
+          insitcrd,
+      flgimpnp)
+      VALUES
+         (37494, 
+          5474080210481188, 
+          7564449010819, 
+          76168352953,
+          3000,   
+          3,  
+          to_date('18/05/2021', 'DD/MM/RRRR'),
+          'EDIANE BRESOLIN',
+          1,
+          1,
+          1,
+          0,
+          0,
+          11,
+          23,
+          2,
+          to_date('16/05/1957', 'DD/MM/RRRR'),
+          2521861,
+          'EDIANE BRESOLIN',
+          vr_nrctrcrd,
+          15, 
+          12,
+          vr_nrseqcrd,
+          to_date('18/05/2021', 'DD/MM/RRRR'),
+          to_date('18/05/2021', 'DD/MM/RRRR'),
+          1, 
+          5,
+          3,
+          0); 
+
+      INSERT INTO crapcrd
+         (cdcooper,
+          nrdconta,
+          nrcrcard,
+          nrcpftit,
+          nmtitcrd,
+          dddebito,
+          cdlimcrd,
+          dtvalida,
+          nrctrcrd,
+          cdmotivo,
+          nrprotoc,
+          cdadmcrd,
+          tpcartao,
+          dtcancel,
+          flgdebit,
+          flgprovi)
+      SELECT w.cdcooper, 
+			       w.nrdconta,
+						 w.nrcrcard,
+						 w.nrcpftit,
+						 w.nmtitcrd,
+						 w.dddebito,
+						 w.cdlimcrd,
+						 w.dtvalida,
+						 w.nrctrcrd,
+						 w.cdmotivo,
+						 w.nrprotoc,
+						 w.cdadmcrd,
+						 w.tpcartao,
+						 w.dtcancel,
+						 w.flgdebit,
+						 0
+				FROM crawcrd w WHERE w.cdcooper = 12 AND w.nrdconta = 37494 AND w.nrctrcrd = vr_nrctrcrd; 
+  END;  
+
+  COMMIT;
+END;  
