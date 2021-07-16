@@ -1,8 +1,5 @@
 BEGIN
-    DELETE FROM crapcrd WHERE cdcooper = 11 AND nrdconta = 772437 AND nrctrcrd = 148570;
-		DELETE FROM crawcrd WHERE cdcooper = 11 AND nrdconta = 772437 AND nrctrcrd = 148570;
-		
-		
+    		
     UPDATE crawcrd
        SET nrcctitg = 7564438062018,
            nrcrcard = 5127070349721183,
