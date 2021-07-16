@@ -150,8 +150,8 @@ BEGIN
               ,'.'
               ,'.'
               ,'.'
-              ,406
-              ,NULL
+              ,990
+              ,(SELECT MAX(g.nrordprg)+1 FROM crapprg g WHERE g.cdcooper = rw_coop.cdcooper AND g.nrsolici = 990)
               ,1
               ,0
               ,0
