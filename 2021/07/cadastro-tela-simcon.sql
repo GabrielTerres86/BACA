@@ -49,6 +49,7 @@ BEGIN
         ,1
         ,''
         ,2);
+      COMMIT;
     END LOOP;
   END;
 
@@ -78,7 +79,7 @@ BEGIN
         ,1
         ,1
         ,2);
-    
+      COMMIT;
       INSERT INTO crapace
         (nmdatela
         ,cddopcao
@@ -97,7 +98,7 @@ BEGIN
         ,1
         ,1
         ,2);
-    
+      COMMIT;
       INSERT INTO crapace
         (nmdatela
         ,cddopcao
@@ -116,9 +117,10 @@ BEGIN
         ,1
         ,1
         ,2);
+      COMMIT;
     END LOOP;
   END;
-  
+
   DECLARE
     CURSOR cr_coop IS
       SELECT UNIQUE CDCOOPER
@@ -160,6 +162,7 @@ BEGIN
               ,cdcooper
           FROM crapcop
          WHERE cdcooper IN (rw_coop.cdcooper);
+      COMMIT;
     END LOOP;
   END;
   COMMIT;
