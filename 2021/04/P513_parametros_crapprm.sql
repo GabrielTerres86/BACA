@@ -1,0 +1,6 @@
+﻿INSERT INTO CRAPPRM
+ (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) 
+VALUES
+ ('CRED', 0 , 'SAQPAG_HORARIO_CORTE', 'Hora de corte utilizado na integracao do Saque e Pague - 21:45:59','78359' );
+
+COMMIT;
