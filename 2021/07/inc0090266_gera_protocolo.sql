@@ -53,6 +53,7 @@ BEGIN
        AND NRDCONTA = 10122133
        and VLDOCMTO = 800
        AND NRDOCMTO = 4224239;   
+    UPDATE tbpix_transacao SET dsprotocolo = vr_dsprotoc WHERE idtransacao = 4224239;
   END;
   
   COMMIT;
