@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-2044
+2043
 DECLARE
 
 --variaveis arquivos
@@ -2017,8 +2017,7 @@ begin
                                 ,pr_des_text => 'COMMIT;');
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle);
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);
-  
- -- ROLLBACK;
+
   COMMIT;
 
   EXCEPTION
