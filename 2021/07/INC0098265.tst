@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-287
+288
 -- Created on 19/07/2021 by T0032717 
 DECLARE 
   CURSOR cr_principal IS
@@ -52,6 +52,7 @@ DECLARE
   vr_cdcritic  PLS_INTEGER;
   vr_dscritic  VARCHAR2(4000);
   vr_exc_erro  EXCEPTION;
+  vr_exc_err2  EXCEPTION;
   vr_retxml    XMLType;
   --
   vr_dados_rollback CLOB; -- Grava update de rollback
@@ -271,7 +272,7 @@ BEGIN
                                      ,pr_des_erro  => vr_dscritic);                 --> Retorno de Erro
         
   IF TRIM(vr_dscritic) IS NOT NULL THEN
-    RAISE vr_exc_erro;
+    RAISE vr_exc_err2;
   END IF;   
   
   COMMIT;
@@ -280,7 +281,7 @@ BEGIN
   dbms_lob.freetemporary(vr_dados_rollback); 
   
 EXCEPTION
-  WHEN vr_exc_erro THEN
+  WHEN vr_exc_err2 THEN
     ROLLBACK;
     raise_application_error(-20100, 'Erro ao apagar contratos - ' || vr_dscritic);
   WHEN OTHERS THEN
