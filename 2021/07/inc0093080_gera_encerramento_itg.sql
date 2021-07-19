@@ -44,7 +44,7 @@ DECLARE
   vr_nrdconta crapass.nrdconta%TYPE;
 
  -- Variaveis de excessao
-  vr_dscritic crapcri.dscritic%TYPE;
+  vr_dscritic VARCHAR(2000);
   vr_exc_erro EXCEPTION;
 
 
@@ -109,7 +109,7 @@ BEGIN
                                     ,pr_des_text => vr_dstxtlid); --> Texto lido
        
         -- Ignorar linhas vazias
-        IF length(vr_dstxtlid) <= 1 THEN 
+        IF NVL(length(vr_dstxtlid),0) <= 1 THEN 
           continue;
         END IF;
         
@@ -228,9 +228,29 @@ BEGIN
         gene0001.pc_fecha_arquivo(pr_utlfileh => vr_hutlfile);
         
         -- Tansforma em arquivo de bkp
-        DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_rollback_xml, vr_arq_path, vr_nmarqbkp, NLS_CHARSET_ID('UTF8'));
-        DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_critic_xml, vr_arq_path, vr_nmarqcri, NLS_CHARSET_ID('UTF8'));        
-
+        --DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_rollback_xml, vr_arq_path, vr_nmarqbkp, NLS_CHARSET_ID('UTF8'));
+        --DBMS_XSLPROCESSOR.CLOB2FILE(vr_des_critic_xml, vr_arq_path, vr_nmarqcri, NLS_CHARSET_ID('UTF8'));        
+        
+        gene0002.pc_clob_para_arquivo(pr_clob     => vr_des_rollback_xml,
+                                      pr_caminho  => vr_arq_path,
+                                      pr_arquivo  => vr_nmarqbkp,
+                                      pr_des_erro => vr_dscritic);
+                                      
+        IF vr_dscritic IS NOT NULL THEN
+          dbms_output.put_line('Erro ao gravar arquivo de rollback: '||vr_dscritic); 
+          RAISE vr_exc_erro;
+        END IF;
+        
+        gene0002.pc_clob_para_arquivo(pr_clob     => vr_des_critic_xml,
+                                      pr_caminho  => vr_arq_path,
+                                      pr_arquivo  => vr_nmarqcri,
+                                      pr_des_erro => vr_dscritic);
+                                      
+        IF vr_dscritic IS NOT NULL THEN
+          dbms_output.put_line('Erro ao gravar arquivo de criticas: '||vr_dscritic); 
+          RAISE vr_exc_erro;
+        END IF;
+        
         -- Liberando a memória alocada pro CLOB
         dbms_lob.close(vr_des_rollback_xml);
         dbms_lob.freetemporary(vr_des_rollback_xml);
