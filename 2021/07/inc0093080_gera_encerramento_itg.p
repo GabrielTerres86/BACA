@@ -273,22 +273,6 @@ DO:
         PUT STREAM str_1  aux_nrregist FORMAT "99999" "01".
         PUT STREAM str_1  aux_dsdlinha FORMAT "x(63)" SKIP.
 		
-		ASSIGN aux_nrdconta = "2850796".
-
-        ASSIGN aux_nrregist = aux_nrregist + 1
-               aux_dsdlinha = STRING(INT(SUBSTRING(aux_nrdconta,1,(LENGTH(aux_nrdconta) - 1))),"9999999") +
-                              STRING(SUBSTRING(aux_nrdconta,LENGTH(aux_nrdconta),1),"x(1)")
-                         
-               aux_dsdlinha = aux_dsdlinha                  +
-                              STRING(1)   +
-                              aux_nrcpfcgc                  +
-                              aux_nrcpfcg2                  +
-                              "0120"                        +
-                              "        ".
-
-        PUT STREAM str_1  aux_nrregist FORMAT "99999" "01".
-        PUT STREAM str_1  aux_dsdlinha FORMAT "x(63)" SKIP.
-		
 		ASSIGN aux_nrdconta = "0089818X".
 
         ASSIGN aux_nrregist = aux_nrregist + 1
@@ -305,6 +289,23 @@ DO:
         PUT STREAM str_1  aux_nrregist FORMAT "99999" "01".
         PUT STREAM str_1  aux_dsdlinha FORMAT "x(63)" SKIP.
 		
+    ASSIGN aux_nrdconta = "1038176".
+
+        ASSIGN aux_nrregist = aux_nrregist + 1
+               aux_dsdlinha = STRING(INT(SUBSTRING(aux_nrdconta,1,(LENGTH(aux_nrdconta) - 1))),"9999999") +
+                              STRING(SUBSTRING(aux_nrdconta,LENGTH(aux_nrdconta),1),"x(1)")
+                         
+               aux_dsdlinha = aux_dsdlinha                  +
+                              STRING(1)   +
+                              aux_nrcpfcgc                  +
+                              aux_nrcpfcg2                  +
+                              "0120"                        +
+                              "        ".
+
+        PUT STREAM str_1  aux_nrregist FORMAT "99999" "01".
+        PUT STREAM str_1  aux_dsdlinha FORMAT "x(63)" SKIP.
+
+    
 		ASSIGN aux_nrdconta = "0065390X".
 
         ASSIGN aux_nrregist = aux_nrregist + 1
