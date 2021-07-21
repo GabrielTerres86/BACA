@@ -1,3 +1,4 @@
+BEGIN
 	UPDATE crapcrd
 	SET crapcrd.cdcooper = 16
 	,crapcrd.nrdconta = 205001
@@ -14,3 +15,4 @@
 	WHERE crawcrd.nrcrcard = 5161620000587872;
 
 	COMMIT;
+END;
