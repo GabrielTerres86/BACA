@@ -17,7 +17,7 @@ begin
   --vr_cartao := 5127070161674411; Luis
   --vr_cartao := 5161620000587872; Djonata
   --vr_cartao := 5588190184171591; Ailos
-  vr_cartao := 5127070162667935; XV 
+  vr_cartao := 5127070162667935; --XV 
 
   -- Verificar se a conta possui algum outro cartão para buscar o CPF do Titular
   FOR cartao IN (select distinct a.nrcpftit
