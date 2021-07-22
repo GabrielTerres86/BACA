@@ -37,9 +37,17 @@ UPDATE tbcalris_pessoa
    SET dhkn1 = null
      , cdclasrisco_kn1 = null
 	 , cdclasrisco_final = 4
-	 , cdclasrisco_list_inte = 4
+	 , cdclasrisco = 4
  WHERE idcalris_pessoa IN (
-    2134,2108,3324,4060,7679,7054,7578,7612,11600,14261);
+    2134,3324,4060,7679,7054,7578,7612,11600,14261);
+ COMMIT;
+ 
+ UPDATE tbcalris_pessoa
+   SET dhkn1 = null
+     , cdclasrisco_kn1 = null
+	 , cdclasrisco_final = 4
+	 , cdclasrisco_list_inte = 4
+ WHERE idcalris_pessoa IN (2108);
  COMMIT;
 
 END;
