@@ -1,6 +1,6 @@
 BEGIN
   UPDATE CRAPACA
-  SET LSTPARAM = 'pr_cdCoopDistribuiFundos, pr_dsUrlPortalAcionista'
+  SET LSTPARAM = 'pr_cdCoopDistribuiFundos, pr_dsUrlPortalCotista'
   WHERE NMDEACAO = 'PARINV_ALTERAR_PARAMETROS';
   
   UPDATE CRAPACA
