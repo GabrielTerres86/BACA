@@ -125,97 +125,7 @@ DECLARE
       dbms_output.put_line('Efetuado Rollback.');
       Raise_Application_Error(-20002,'Erro Geral no prc_gera_acerto_transit. Erro: '||SubStr(SQLERRM,1,255));    
   END prc_gera_acerto_transit;
-  
-  
-PROCEDURE prc_exclui_lct_transit (prm_cdcooper IN craplcm.cdcooper%TYPE,
-                                  prm_nrdconta IN craplcm.nrdconta%TYPE,
-                                  prm_cdhistor IN tbcc_prejuizo_detalhe.cdhistor%TYPE)IS
-                                  
-    -- Variáveis Tratamento Erro
-    vr_erro        EXCEPTION;
-    vr_cdcritic    NUMBER;
-    vr_dscritic    VARCHAR2(1000);
-                                  
-BEGIN
-    
-   BEGIN
-      DELETE FROM tbcc_prejuizo_detalhe a
-       WHERE a.cdcooper = prm_cdcooper
-         AND a.nrdconta = prm_nrdconta
-         AND a.cdhistor = prm_cdhistor
-         AND a.vllanmto = 16.40
-         AND a.dtmvtolt = '15/06/2021';
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao DELETAR v. Erro: '||SubStr(SQLERRM,1,255);
-        RAISE vr_erro;  
-    END; 
-    --
-    IF Nvl(SQL%RowCount,0) > 0 THEN 
-      dbms_output.put_line('   Registro(s) removido(s): '||Nvl(SQL%RowCount,0)||' registro(s).');
-    ELSE
-      vr_dscritic := 'Registro não encontrado. Cooperativa(3): '||prm_cdcooper||' | Conta: '||prm_nrdconta;
-      RAISE vr_erro;  
-    END IF;
-    
-    ----------------------------------------
-    
-    BEGIN
-      DELETE FROM tbcc_prejuizo_detalhe a
-       WHERE a.cdcooper = prm_cdcooper
-         AND a.nrdconta = prm_nrdconta
-         AND a.cdhistor = prm_cdhistor
-         AND a.vllanmto = 2.10
-         AND a.dtmvtolt = '15/06/2021';
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao DELETAR v. Erro: '||SubStr(SQLERRM,1,255);
-        RAISE vr_erro;  
-    END; 
-    --
-    IF Nvl(SQL%RowCount,0) > 0 THEN 
-      dbms_output.put_line('   Registro(s) removido(s): '||Nvl(SQL%RowCount,0)||' registro(s).');
-    ELSE
-      vr_dscritic := 'Registro não encontrado. Cooperativa: '||prm_cdcooper||' | Conta: '||prm_nrdconta;
-      RAISE vr_erro;  
-    END IF;
-    -----------------------------------------
-    
-    BEGIN
-      DELETE FROM tbcc_prejuizo_detalhe a
-       WHERE a.cdcooper = prm_cdcooper
-         AND a.nrdconta = prm_nrdconta
-         AND a.cdhistor = prm_cdhistor
-         AND a.vllanmto = 819.84
-         AND a.dtmvtolt = '15/06/2021';
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Erro ao DELETAR v. Erro: '||SubStr(SQLERRM,1,255);
-        RAISE vr_erro;  
-    END; 
-    --
-    IF Nvl(SQL%RowCount,0) > 0 THEN 
-      dbms_output.put_line('   Registro(s) removido(s): '||Nvl(SQL%RowCount,0)||' registro(s).');
-    ELSE
-      vr_dscritic := 'Registro não encontrado. Cooperativa: '||prm_cdcooper||' | Conta: '||prm_nrdconta;
-      RAISE vr_erro;  
-    END IF;
-    
-   EXCEPTION
-    WHEN vr_erro THEN
-      dbms_output.put_line('prc_exclui_lct_transit: '||vr_dscritic);
-      ROLLBACK;
-      dbms_output.put_line('Efetuado Rollback.');
-      Raise_Application_Error(-20001,vr_dscritic);
-    WHEN OTHERS THEN
-      dbms_output.put_line('prc_exclui_lct_transit: Erro: '||SubStr(SQLERRM,1,255));
-      ROLLBACK;
-      dbms_output.put_line('Efetuado Rollback.');
-      Raise_Application_Error(-20002,'Erro Geral no prc_exclui_lct_transit. Erro: '||SubStr(SQLERRM,1,255));                                    
- 
-END prc_exclui_lct_transit;
-  
-        
+       
 
 BEGIN
   
@@ -231,21 +141,17 @@ BEGIN
   vr_incidente := 'INC0094969';
   vr_cdcooper  := 1;
   vr_nrdconta  := 7905106;
-  vr_vllanmto  := 838.34;
-  vr_cdhistor  := 2720;
+  vr_vllanmto  := 819.84;
+  vr_cdhistor  := 2738;
   dbms_output.put_line('  ');
   dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
   
-  --realizar um credito na transitoria
+  --realizar um credito na transitoria (tbcc_prejuizo_lancamento)
   prc_gera_acerto_transit(prm_cdcooper => vr_cdcooper,
                           prm_nrdconta => vr_nrdconta,
                           prm_vllanmto => vr_vllanmto);
-  
-  --removendo lancamentos da transitoria                       
-  prc_exclui_lct_transit (prm_cdcooper => vr_cdcooper,
-                          prm_nrdconta => vr_nrdconta,
-                          prm_cdhistor => 2408);
-
+						  
+ 
   dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
   dbms_output.put_line('  ');
 ---------------------------------------------------
