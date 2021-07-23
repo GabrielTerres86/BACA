@@ -1,7 +1,3 @@
-/*
-    Ajustes nos parâmetros da tabela crapaca referente a tela CONBLQ
-                        (Daniel Lombardi - Mout'S)
-*/
 BEGIN
   
   UPDATE crapaca
