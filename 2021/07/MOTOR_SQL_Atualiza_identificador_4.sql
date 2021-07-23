@@ -1,4 +1,5 @@
-INSERT INTO tbgrv_registro_imagem
+BEGIN
+  INSERT INTO tbgrv_registro_imagem
   (cdcooper
   ,nrdconta
   ,nrctrpro
@@ -152,3 +153,6 @@ VALUES
   ,'1'
   ,to_date('23-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss')
   ,to_date('23-07-2021 17:17:17', 'dd-mm-yyyy hh24:mi:ss'));
+  
+  COMMIT;
+  END;
