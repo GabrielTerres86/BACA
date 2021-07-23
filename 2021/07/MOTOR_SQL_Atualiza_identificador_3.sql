@@ -1,3 +1,5 @@
+BEGIN
+  
 INSERT INTO tbgrv_registro_contrato
   (cdcooper
   ,nrdconta
@@ -181,3 +183,4 @@ VALUES
   ;
 
 COMMIT;
+END;
