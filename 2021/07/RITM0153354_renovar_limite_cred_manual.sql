@@ -1,3 +1,4 @@
+BEGIN
 DECLARE
 
   --variaveis arquivos
@@ -1333,7 +1334,6 @@ DECLARE
                                     );
 
 
-  -- Local variables here
   PROCEDURE pc_renovar_limite_cred_manual(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                          ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
                                          ,pr_nmdatela IN craptel.nmdatela%TYPE  --> Nome da Tela
@@ -1597,7 +1597,6 @@ DECLARE
                   RAISE vr_exc_saida;
                 END;
                                                 
-                --tbrating_historicos
                 vr_retorno := rati0003.fn_registra_historico(pr_cdcooper             => pr_cdcooper
                                                             ,pr_cdoperad             => pr_cdoperad
                                                             ,pr_nrdconta             => pr_nrdconta
@@ -1615,7 +1614,6 @@ DECLARE
                                                             ,pr_inorigem_rating      => NULL
                                                             ,pr_cdoperad_rating      => pr_cdoperad
                                                             ,pr_tpoperacao_rating    => NULL
-                                                            -- ,pr_retxml               => vr_xml
                                                             ,pr_cdcritic             => vr_cdcritic
                                                             ,pr_dscritic             => vr_dscritic);
                                         
@@ -1662,7 +1660,7 @@ DECLARE
             IF vr_flgrating = 0 THEN
               vr_dscritic := 'Contrato não pode ser efetivado porque não há Rating válido.';
               RAISE vr_exc_saida;
-            ELSE -- Status do rating válido
+            ELSE
               -- Se Endividamento + Contrato atual > Parametro Rating (TAB056)
               IF ((vr_vlendivid) > vr_vllimrating) THEN
 
@@ -1762,7 +1760,6 @@ DECLARE
     
       --Verificar se encontrou
       IF cr_crapalt%FOUND THEN
-        --Fechar Cursor
         CLOSE cr_crapalt;
 
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
@@ -1774,7 +1771,6 @@ DECLARE
                                                      ||';'
                                       );          
 
-        -- Altera o registro
         BEGIN
           UPDATE crapalt SET
                  crapalt.dsaltera = rw_crapalt.dsaltera || vr_dsaltera,
@@ -1784,14 +1780,11 @@ DECLARE
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic:= 'Erro ao atualizar crapalt. '||SQLERRM;
-            --Sair
             RAISE vr_exc_saida;
         END;
       ELSE
-        --Fechar Cursor
         CLOSE cr_crapalt;
 
-        --Inserir Alteracao
         BEGIN
           INSERT INTO crapalt
             (crapalt.nrdconta
@@ -1862,22 +1855,10 @@ BEGIN
     OPEN BTCH0001.cr_crapdat(pr_cdcooper => 11);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
     CLOSE BTCH0001.cr_crapdat;  
-         
- -- Banco individual
-    --vr_nmarq_rollback := '/progress/t0031664/micros/cpd/bacas/RITM0153354_ROLLBACK.sql';
-    --vr_nmarq_log      := '/progress/t0031664/micros/cpd/bacas/LOG_RITM0153354.txt';
 
-  -- Banco Test      
-  --\\pkgtest\micros---  /microstst/cecred/Elton/
-    vr_nmarq_rollback := '/microstst/cecred/Elton/RITM0153354_ROLLBACK.sql';
-    vr_nmarq_log      := '/microstst/cecred/Elton/LOG_RITM0153354.txt';  
-
-    -- caminho para produção:
-    /*
     vr_dsdireto       := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/naiara/';
     vr_nmarq_rollback := vr_dsdireto||'RITM0153354_ROLLBACK.sql';
     vr_nmarq_log      := vr_dsdireto||'LOG_RITM0153354.txt';
-    */
 
 
     /* Abrir o arquivo de rollback */
@@ -2001,4 +1982,5 @@ BEGIN
       
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle);
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);
+END;
 END;
