@@ -77,8 +77,8 @@ BEGIN
             ,pre.VLLIMCRH
             ,pre.VLMAXLEG
             ,pre.VLLIMCTR
-            ,0 --VLMULPLI
-            ,0 --CDFINEMP
+            ,pre.vlmulpli
+            ,pre.cdfinemp
             ,pre.INPESSOA
             ,pre.VLPERCOM
             ,pre.CDLCREMP
@@ -100,7 +100,7 @@ BEGIN
             ,pre.QTCJGOPE
             ,pre.QTDIAVER
             ,pre.QTMESBLQ
-            ,0 --QTDIAVIG
+            ,pre.qtdiavig
             ,pre.QTDTITUL
             ,pre.VLTITULO
             ,pre.QTCARCRE
@@ -108,14 +108,14 @@ BEGIN
             ,pre.VLCTAATR
             ,pre.VLDIAEST
             ,pre.VLDIADEV
-            ,0 --VLLIMMAN
+            ,pre.vllimman
             ,pre.VLLIMAUT
             ,pre.VLEPRATR
             ,4 --TPPRODUT
         FROM crappre pre
        WHERE pre.cdcooper = rw_crapcop.cdcooper
          AND pre.inpessoa = 1  --Fisica
-         AND pre.tpprodut = 1; -- copia do emprestimo
+         AND pre.tpprodut = 0; -- copia do emprestimo
   
     -- Pessoa Juridica
     INSERT INTO crappre
@@ -186,8 +186,8 @@ BEGIN
             ,pre.VLLIMCRH
             ,pre.VLMAXLEG
             ,pre.VLLIMCTR
-            ,0 --VLMULPLI
-            ,0 --CDFINEMP
+             ,pre.vlmulpli
+            ,pre.cdfinemp
             ,pre.INPESSOA
             ,pre.VLPERCOM
             ,pre.CDLCREMP
@@ -209,7 +209,7 @@ BEGIN
             ,pre.QTCJGOPE
             ,pre.QTDIAVER
             ,pre.QTMESBLQ
-            ,0 --QTDIAVIG
+            ,pre.qtdiavig
             ,pre.QTDTITUL
             ,pre.VLTITULO
             ,pre.QTCARCRE
@@ -217,14 +217,14 @@ BEGIN
             ,pre.VLCTAATR
             ,pre.VLDIAEST
             ,pre.VLDIADEV
-            ,0 --VLLIMMAN
+            ,pre.vllimman
             ,pre.VLLIMAUT
             ,pre.VLEPRATR
             ,4 --TPPRODUT
         FROM crappre pre
        WHERE pre.cdcooper = rw_crapcop.cdcooper
          AND pre.inpessoa = 2 --Juridica
-         AND pre.tpprodut = 1; -- copia do emprestimo
+         AND pre.tpprodut = 0; -- copia do emprestimo
   END LOOP;
 END;
 /
