@@ -1,3 +1,4 @@
+BEGIN
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro) VALUES(1,2607,791688,1,1,to_date('27-07-2021 12:12:12','dd-mm-yyyy hh24:mi:ss'),2,20210010300007,'1',to_date('27-07-2021 12:12:12','dd-mm-yyyy hh24:mi:ss'),NULL,20210010300007,2021001030000720210010300007);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro) VALUES(1,3956,586324,1,1,to_date('27-07-2021 12:12:12','dd-mm-yyyy hh24:mi:ss'),2,20210010300008,'1',to_date('27-07-2021 12:12:12','dd-mm-yyyy hh24:mi:ss'),NULL,20210010300008,2021001030000820210010300008);
 INSERT INTO tbgrv_registro_contrato(cdcooper,nrdconta,nrctrpro,idseqbem,tpregistro_contrato,dtregistro_contrato,cdsituacao_contrato,dsretorno_contrato,cdopereg,dtinsori,dtrefatu,dsc_identificador,dsc_identificador_registro) VALUES(1,4642,815162,3,1,to_date('27-07-2021 12:12:12','dd-mm-yyyy hh24:mi:ss'),2,20210010100001,'1',to_date('27-07-2021 12:12:12','dd-mm-yyyy hh24:mi:ss'),NULL,20210010100001,2021001010000120210010100001);
@@ -380,3 +381,4 @@ UPDATE crapbpr x SET flgregim = 0, flgregct = 1 WHERE  x.cdcooper = 1 AND x.nrdc
 UPDATE crapbpr x SET flgregim = 0, flgregct = 1 WHERE  x.cdcooper = 1 AND x.nrdconta = 2202107 AND x.NRCTRPRO = 956767 AND x.idseqbem = 1;
 
 commit;
+END;
