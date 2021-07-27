@@ -8,10 +8,6 @@ SELECT REGEXP_SUBSTR('148776,259195,154725,35165,79022,78883,401129','[^,]+', 1,
   FROM DUAL 
 CONNECT BY REGEXP_SUBSTR('148776,259195,154725,35165,79022,78883,401129','[^,]+', 1, LEVEL) IS NOT NULL;
 
-  -- Local variables here
-VR_EXCSAIDA EXCEPTION;
-VR_MSGSAIDA VARCHAR2(200);
-PR_DSCRITIC VARCHAR2(200);
 BEGIN
    
     FOR R1 IN C1 LOOP           
@@ -24,8 +20,7 @@ BEGIN
           AND NRCTRATO = R1.PR_NRCTRATO;
        EXCEPTION
          WHEN OTHERS THEN
-           VR_MSGSAIDA := 'Erro ao limpar a tabela CRAPPRP -->'||SQLERRM;
-           RAISE VR_EXCSAIDA;
+           ROLLBACK;
       END;
 
       --Exclusão do rendimento
@@ -37,8 +32,7 @@ BEGIN
           AND NRCTRATO = R1.PR_NRCTRATO;
       EXCEPTION
          WHEN OTHERS THEN
-           VR_MSGSAIDA := 'Erro ao limpar a tabela CRAPRPR -->'||SQLERRM;
-           RAISE VR_EXCSAIDA;
+           ROLLBACK;
       END;
 
       --Exclusão do bem da proposta
@@ -50,8 +44,7 @@ BEGIN
           AND NRCTRPRO = R1.PR_NRCTRATO;
       EXCEPTION
          WHEN OTHERS THEN
-           VR_MSGSAIDA := 'Erro ao limpar a tabela CRAPBPR -->'||SQLERRM;
-           RAISE VR_EXCSAIDA;
+           ROLLBACK;
       END;
 
       --Exclusão do SCR para do aval
@@ -63,8 +56,7 @@ BEGIN
           AND NRCTREMP = R1.PR_NRCTRATO;
       EXCEPTION
          WHEN OTHERS THEN
-           VR_MSGSAIDA := 'Erro ao limpar a tabela CRAPAVT -->'||SQLERRM;
-           RAISE VR_EXCSAIDA;
+           ROLLBACK;
       END;
 
       --Exclusão das notas do rating por contrato
@@ -76,8 +68,7 @@ BEGIN
           AND NRCTRRAT = R1.PR_NRCTRATO;
       EXCEPTION
          WHEN OTHERS THEN
-           VR_MSGSAIDA := 'Erro ao limpar a tabela CRAPNRC -->'||SQLERRM;
-           RAISE VR_EXCSAIDA;
+           ROLLBACK;
       END;
 
       --Exclusão do historico das notas por contrato
@@ -89,8 +80,7 @@ BEGIN
           AND NRCTRRAT = R1.PR_NRCTRATO;
       EXCEPTION
          WHEN OTHERS THEN
-           VR_MSGSAIDA := 'Erro ao limpar a tabela TBRAT_HIST_NOTA_CONTRATO -->'||SQLERRM;
-           RAISE VR_EXCSAIDA;
+           ROLLBACK;
       END;
 
       --Exclusão das informações do rating por contrato
@@ -102,14 +92,11 @@ BEGIN
           AND NRCTRRAT = R1.PR_NRCTRATO;
       EXCEPTION
          WHEN OTHERS THEN
-           VR_MSGSAIDA := 'Erro ao limpar a tabela TBRAT_INFORMACAO_RATING -->'||SQLERRM;
-           RAISE VR_EXCSAIDA;
+           ROLLBACK;
       END;
-      --COMMIT;
+      COMMIT;
     END LOOP;
 EXCEPTION
-  WHEN VR_EXCSAIDA THEN
-    ROLLBACK;
   WHEN OTHERS THEN
     ROLLBACK;
 END;
