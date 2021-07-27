@@ -3,7 +3,8 @@ DECLARE
 BEGIN
   FOR i IN (SELECT *
               FROM crapsle e
-             WHERE e.cdcooper = 8
+             WHERE 1=1
+			   --AND e.cdcooper = 8
                AND e.dsendere = 'fabiola.castro@ailos.coop.br'
                AND e.flenviad = 'N') LOOP
   
