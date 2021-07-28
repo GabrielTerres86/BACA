@@ -32,3 +32,9 @@ values
 /
 commit;
 /
+
+insert into tbgen_dominio_campo (NMDOMINIO,CDDOMINIO,DSCODIGO)
+values ('TP_PRE_APROVADO'	,1,	'Pre-Aprovado CDC');
+/
+commit;
+/
