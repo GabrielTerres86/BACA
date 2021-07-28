@@ -247,5 +247,6 @@ BEGIN
 	UPDATE crapbpr SET flgregim = 1 WHERE rowid = 'AAFv6qAABAAOeE3AAC';
 	UPDATE crapbpr SET flgregim = 1 WHERE rowid = 'AAFv6qAABAAOEy+ABg';
 
+commit;
    
 END;
