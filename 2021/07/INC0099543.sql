@@ -142,7 +142,7 @@ BEGIN
   vr_cdcooper  := 10;
   vr_nrdconta  := 53554;
   vr_vllanmto  := 10.39;
-  vr_cdhistor  := 2739;
+  vr_cdhistor  := 2738;
   dbms_output.put_line('  ');
   dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
   
