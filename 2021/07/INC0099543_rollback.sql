@@ -5,7 +5,7 @@ BEGIN
 	and nrdconta = 53554
 	and cdhistor = 2738
 	and vllanmto = 10.39
-	and dtmvtolt = '27/07/2021';
+	and dtmvtolt = to_date('27/07/2021', 'dd/mm/rrrr');
 	
 	COMMIT;
 
