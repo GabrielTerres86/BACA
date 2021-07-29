@@ -137,6 +137,26 @@ BEGIN
 -- 2738 - Quando lança, Aumenta o Saldo Prejuizo      [C] 2738 - TRF. PREJUIZO-> TBCC_PREJUIZO_DETALHE
 
 ---------------------------------------------------
+  -- INC0099543 - Credicomin - C/C 53554 lançar R$ 10,39
+  vr_incidente := 'INC0099543';
+  vr_cdcooper  := 10;
+  vr_nrdconta  := 53554;
+  vr_vllanmto  := 10.39;
+  vr_cdhistor  := 2739;
+  dbms_output.put_line('  ');
+  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+  
+  --realizar um credito na transitoria (tbcc_prejuizo_lancamento)
+  prc_gera_acerto_transit(prm_cdcooper => vr_cdcooper,
+                          prm_nrdconta => vr_nrdconta,
+                          prm_vllanmto => vr_vllanmto);
+
+  
+  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('  ');
+---------------------------------------------------
+
+---------------------------------------------------
   -- INC0099526 - Credifoz - C/C 503061 lançar R$ 15,96
   vr_incidente := 'INC0099526';
   vr_cdcooper  := 11;
