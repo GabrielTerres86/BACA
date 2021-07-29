@@ -42,7 +42,7 @@ BEGIN
        'EDUARDO DOS REIS',
        11,
        20,
-       '30/04/2027',
+       to_date('30/04/2027', 'DD/MM/RRRR'),
        91041,
        0,
        0,
