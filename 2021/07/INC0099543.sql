@@ -92,7 +92,7 @@ DECLARE
 
 
     -- Cria lançamento (Tabela tbcc_prejuizo_lancamento)
-    prej0003.pc_gera_cred_cta_prj(pr_cdcooper => prm_cdcooper,
+    prej0003.pc_gera_debt_cta_prj(pr_cdcooper => prm_cdcooper,
                                   pr_nrdconta => prm_nrdconta,
                                   pr_vlrlanc  => prm_vllanmto,
                                   pr_dtmvtolt => vr_dtmvtolt,
@@ -142,7 +142,7 @@ BEGIN
   vr_cdcooper  := 10;
   vr_nrdconta  := 53554;
   vr_vllanmto  := 10.39;
-  vr_cdhistor  := 2738;
+  vr_cdhistor  := 2739;
   dbms_output.put_line('  ');
   dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
   
