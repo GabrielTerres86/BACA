@@ -6,8 +6,7 @@ declare
   vr_des_reto      varchar(3);
   vr_tab_erro      GENE0001.typ_tab_erro;
   
-  --3689 - para creditar o extrato da conta corrente (histórico da LCM) e 3273 - para estornar da operação (histórico da LEM)
-  
+ 
   vr_cdcooper      crapcop.cdcooper%TYPE := 3;
   vr_nrdconta      crapass.nrdconta%TYPE := 94;
   vr_nrctremp      craplem.nrctremp%TYPE := 211409;
@@ -57,7 +56,6 @@ BEGIN
       RAISE vr_exc_saida;
   END;
   
-  -- Cria o lancamento de estorno
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                  ,pr_cdagenci => rw_crapass.cdagenci
@@ -240,7 +238,21 @@ BEGIN
      WHERE c.cdcooper = vr_cdcooper
        AND c.nrdconta = vr_nrdconta
        AND c.nrctremp = vr_nrctremp
-       and c.nrparepr between 13 and 52;
+       and c.nrparepr between 13 and 51;
+  EXCEPTION
+    WHEN OTHERS THEN
+      RAISE vr_exc_saida;
+  END;
+  
+  BEGIN
+    UPDATE crappep c
+       SET vlparepr = 669253.86  
+          ,vlsdvpar = 160150.85
+          ,vlsdvatu = 160150.85
+     WHERE c.cdcooper = vr_cdcooper
+       AND c.nrdconta = vr_nrdconta
+       AND c.nrctremp = vr_nrctremp
+       and c.nrparepr = 52;
   EXCEPTION
     WHEN OTHERS THEN
       RAISE vr_exc_saida;
