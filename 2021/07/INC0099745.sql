@@ -1,5 +1,5 @@
 DECLARE
-    CURSOR cr_1 IS
+    CURSOR cr_principal IS
       select y.idsimula
             ,x.cdcooper
             ,x.nrdconta
@@ -22,12 +22,12 @@ DECLARE
     vr_exc_saida EXCEPTION;
     --      
 BEGIN
-  FOR rw_1 IN cr_1 LOOP
+  FOR rw_principal IN cr_principal LOOP
     begin
-      CREDITO.cancelarSimulacaoRenegociacao(pr_cdcooper => rw_1.cdcooper
-                                           ,pr_nrdconta => rw_1.nrdconta
-                                           ,pr_idsimula => rw_1.idsimula
-                                           ,pr_idorigem => rw_1.idorigem
+      CREDITO.cancelarSimulacaoRenegociacao(pr_cdcooper => rw_principal.cdcooper
+                                           ,pr_nrdconta => rw_principal.nrdconta
+                                           ,pr_idsimula => rw_principal.idsimula
+                                           ,pr_idorigem => rw_principal.idorigem
                                            -- OUT
                                            ,pr_cdcritic => vr_cdcritic
                                            ,pr_dscritic => vr_dscritic
