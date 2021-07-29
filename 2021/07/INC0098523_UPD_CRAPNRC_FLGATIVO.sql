@@ -6,6 +6,6 @@ REF............: INC0098523
 */
 
 BEGIN
-    update crapnrc a set a.flgativo = 1 where nrdconta = 86 and nrctrrat = 211025;
+    update crapnrc a set a.flgativo = 1 where a.cdcooper=3 and a.nrdconta = 86 and a.nrctrrat = 211025;
     commit;
 END;
