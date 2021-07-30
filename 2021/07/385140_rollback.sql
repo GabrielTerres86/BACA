@@ -1,5 +1,4 @@
 BEGIN
-
 	/*
 	 Cooperativa....: 13
      Conta..........: 385140
@@ -12,8 +11,7 @@ BEGIN
 	and nrdconta = 385140
 	and cdhistor = 2739
 	and vllanmto = 10
-	and dtmvtolt = to_date('23/07/2021', 'dd/mm/rrrr');
-   
+	and dtmvtolt = to_date('23/07/2021', 'dd/mm/rrrr');   
    
     /*
      Cooperativa....: 11
@@ -28,9 +26,7 @@ BEGIN
     and cdhistor = 2739
     and vllanmto = 15.58
     and nrdocmto = 2
-    and dtmvtolt = to_date('19/07/2021', 'dd/mm/rrrr');
-	  
-	  
+    and dtmvtolt = to_date('19/07/2021', 'dd/mm/rrrr');	  	  
 	  
    /*
     Cooperativa....: 11
