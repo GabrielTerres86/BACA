@@ -45,7 +45,7 @@ SELECT MAX(CDMENSAGEM)
     ,INTIPO_REPETICAO)
   VALUES
     (13
-    ,24
+    ,31
     ,'PIX - Sua chave Pix foi cancelada'
     ,(V_CODIGO + 1)
     ,'Sua chave pix #chave foi cancelada por falta de uso' 
