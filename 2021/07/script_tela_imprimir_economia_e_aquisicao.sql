@@ -1,4 +1,7 @@
 begin
+
+delete from crapaca where NMDEACAO in ('GRAVA_SIMU_ECONOMIA','IMP_SIMU_ECO','GRAVA_SIMU_AQUISICAO','IMP_SIMU_AQUI');
+
 ----realiza o insert na tabela TBCONSOR_SIMUECONOMIA dos dados da simulacao de economia
 insert into crapaca
   (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
