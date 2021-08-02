@@ -21,9 +21,9 @@ SELECT MAX(CDMENSAGEM)
   VALUES
     ((V_CODIGO + 1)
     ,13
-    ,'PIX - Pagamento Pix: OFSAA (cancelado cooperado)'
+    ,'PIX - Transação não concluída'
     ,'O valor foi estornado para a sua conta. Saiba Mais.'
-    ,'<b>A sua transação foi cancelada.</b></br></br>Valor: #valorpix </br>Beneficiário: #beneficiario </br>Instituição: #instituicao </br></br><b>O valor foi estornado e está disponível em sua conta corrente.</b></br></br>Em caso de dúvidas, entre em contato com a Cooperativa.</br></br>'
+    ,'<b>A sua transação foi cancelada.</b><br><br>Valor: #valorpix <br>Beneficiário: #beneficiario <br>Instituição: #instituicao <br><br><b>O valor foi estornado e está disponível em sua conta corrente.</b><br><br>Em caso de dúvidas, entre em contato com a Cooperativa.<br><br>'
     ,16
     ,0
     ,0
@@ -39,10 +39,10 @@ SELECT MAX(CDMENSAGEM)
     ,INTIPO_REPETICAO)
   VALUES
     (13
-    ,24
-    ,'PIX - Pagamento Pix: OFSAA (cancelamento cooperado)'
+    ,30
+    ,'PIX - Transação não concluída'
     ,(V_CODIGO + 1)
-    ,'</br>#valorpix - Valor do Pix (Ex.: 45,00)</br>#instituicao - PSP do beneficiário</br>#beneficiario - Nome do beneficiário.'
+    ,'<br>#valorpix - Valor do Pix (Ex.: 45,00)<br>#instituicao - PSP do beneficiário<br>#beneficiario - Nome do beneficiário.'
     ,1
     ,0);
   
