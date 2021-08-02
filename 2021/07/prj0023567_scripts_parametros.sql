@@ -38,3 +38,11 @@ values ('TP_PRE_APROVADO'	,1,	'Pre-Aprovado CDC');
 /
 commit;
 /
+
+insert into crappre
+  (cdcooper, tpprodut, inpessoa, cdfinemp)
+values
+  (1, 2, 1, 2);
+/ 
+commit
+/
