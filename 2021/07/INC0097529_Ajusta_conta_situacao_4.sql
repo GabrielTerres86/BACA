@@ -41,17 +41,10 @@ BEGIN
 
   vr_log_script := ' ** Início script' || chr(10);
   
-  OPEN cr_crapass_cop;
-  LOOP
-    FETCH cr_crapass_cop INTO rg_crapass_cop;
-    EXIT WHEN cr_crapass_cop%NOTFOUND;
+  FOR cr_crapass_cop IN rg_crapass_cop LOOP
   
-  
-	OPEN cr_crapass(rg_crapass_cop.cdcooper);
-	LOOP
-	  FETCH cr_crapass INTO rg_crapass;
-	  EXIT WHEN cr_crapass%NOTFOUND;
-	  
+	FOR rg_crapass IN cr_crapass(rg_crapass_cop.cdcooper) LOOP
+	  	  
 	  vr_log_script := 'Atualizacao da situacao da conta : (' 
 						 || '[ ' || LPAD(rg_crapass.cdcooper, 2, ' ') || ' ] '
 						 || LPAD(rg_crapass.nrdconta, 9, ' ') || ') da situacao (' || rg_crapass.cdsitdct
@@ -127,17 +120,14 @@ BEGIN
 		--
     
     END LOOP;
-
-    CLOSE cr_crapass; 	
-    
+	
+	COMMIT;
+   	    
   END LOOP;
   
-  CLOSE cr_crapass_cop;  
   
   --dbms_output.put_line(vr_log_script);
-  
-  --
-  COMMIT;
+
   --
   --DBMS_OUTPUT.PUT_LINE('Sucesso na atualização.');
   --
