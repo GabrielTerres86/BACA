@@ -419,137 +419,6 @@ begin
       end;     
     end pc_verifica_proposta;
 
-    -- Procedure para buscar resquicios na base, assim criamos prestamistas para 
-    -- formas de criacao de emprestimos que nao estejam com tratamento correto
-    PROCEDURE pc_confere_base_emprest(pr_cdcooper IN crapcop.cdcooper%TYPE
-                                     ,pr_cdcritic OUT PLS_INTEGER
-                                     ,pr_dscritic OUT VARCHAR2) IS
-    PRAGMA AUTONOMOUS_TRANSACTION; 
-    BEGIN
-      DECLARE
-        vr_exc_saida EXCEPTION;
-        
-        CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE) IS
-                      SELECT EPR.*              
-                      FROM (
-                        SELECT epr.nrctremp
-                              ,epr.nrdconta
-                              ,epr.vlsdeved
-                              ,SUM( epr.vlsdeved) OVER(PARTITION BY epr.cdcooper, epr.nrdconta )  Saldo_Devedor
-                              ,ass.nrcpfcgc
-                              ,ass.nmprimtl
-                              ,ass.cdagenci
-                              ,ass.cdcooper
-                              ,epr.dtmvtolt
-                              ,to_number(substr(( SELECT dstextab
-                                          from craptab b
-                                         where b.cdcooper = epr.cdcooper
-                                           and b.cdempres = 11
-                                           and b.nmsistem = 'CRED'
-                                           AND b.tptabela = 'USUARI'
-                                           and b.cdacesso = 'SEGPRESTAM'
-                                           and b.tpregist = 0),
-                                        27,
-                                        12),'fm999999999990d00',  'nls_numeric_characters = '',.''') vlminimo
-                          FROM crapepr epr
-                              ,crapass ass
-                              ,craplcr lcr
-                         WHERE ass.cdcooper = pr_cdcooper
-                           AND ass.cdcooper = epr.cdcooper
-                           AND ass.nrdconta = epr.nrdconta
-                           AND lcr.cdcooper = epr.cdcooper
-                           AND lcr.cdlcremp = epr.cdlcremp
-                           AND ass.inpessoa = 1 --> Somente fisica
-                           AND epr.inliquid = 0 --> Em aberto
-                           AND epr.inprejuz = 0 --> Sem prejuizo
-                           AND epr.dtmvtolt >= to_date('31/01/2000', 'DD/MM/RRRR') --> Data da tab049
-                           AND lcr.flgsegpr = 1
-                      ) EPR WHERE Saldo_Devedor > vlminimo --> Para evitar buscar registros desnecessarios
-                              AND NOT EXISTS ( SELECT seg.idseqtra
-                                                 FROM tbseg_prestamista seg
-                                                WHERE seg.cdcooper = epr.cdcooper
-                                                  AND seg.nrdconta = epr.nrdconta
-                                                  AND seg.nrctremp = epr.nrctremp);                         
-        rw_crapepr cr_crapepr%ROWTYPE;                                
-                    
-    BEGIN
-      vr_tab_prst.delete;
-        
-      FOR rw_crapepr IN cr_crapepr(pr_cdcooper => pr_cdcooper) LOOP 
-
-        SEGU0003.pc_efetiva_proposta_sp(pr_cdcooper => pr_cdcooper
-                                       ,pr_nrdconta => rw_crapepr.nrdconta
-                                       ,pr_nrctrato => rw_crapepr.nrctremp
-                                       ,pr_cdagenci => rw_crapepr.cdagenci
-                                       ,pr_nrdcaixa => 0
-                                       ,pr_cdoperad => 1
-                                       ,pr_nmdatela => 'ENV_PRST'
-                                       ,pr_idorigem => 7
-                                       ,pr_cdcritic => vr_cdcritic
-                                       ,pr_dscritic => vr_dscritic);
-
-        IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) <> '' THEN
-          -- Envio centralizado de log de erro
-          RAISE vr_exc_saida;
-        END IF;
-        vr_saldo_devedor := rw_crapepr.Saldo_Devedor ;        
-        vr_index:= rw_crapepr.nrdconta ||rw_crapepr.nrctremp;
-        vr_tab_prst(vr_index).cdcooper:= rw_crapepr.cdcooper;
-        vr_tab_prst(vr_index).nrdconta:= rw_crapepr.nrdconta;
-        vr_tab_prst(vr_index).cdagenci:= rw_crapepr.cdagenci;        
-        vr_tab_prst(vr_index).nmprimtl:= rw_crapepr.nmprimtl;
-        vr_tab_prst(vr_index).nrcpfcgc:= rw_crapepr.nrcpfcgc;
-        vr_tab_prst(vr_index).nrctremp:= rw_crapepr.nrctremp;
-        vr_tab_prst(vr_index).vlemprst:= rw_crapepr.vlsdeved;
-        vr_tab_prst(vr_index).vlsdeved:= rw_crapepr.Saldo_Devedor;
-        vr_tab_prst(vr_index).dtmvtolt:= vr_dtmvtolt ; 
-        vr_tab_prst(vr_index).dtempres:= rw_crapepr.dtmvtolt;
-        
-        COMMIT;                                      -- Commit a cada registro
-      END LOOP;
-      EXCEPTION
-        WHEN vr_exc_saida THEN
-          -- Se foi retornado apenas código
-          IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-            -- Buscar a descrição
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-          END IF;
-        
-          pr_dscritic := vr_dscritic || SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
-          ROLLBACK;                  -- Efetuar rollback
-                                                                  -- Envio centralizado de log de erro
-          cecred.pc_log_programa(pr_dstiplog           => 'E',         -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
-                                 pr_cdprograma         => vr_cdprogra, -- tbgen_prglog
-                                 pr_cdcooper           => pr_cdcooper, -- tbgen_prglog
-                                 pr_tpexecucao         => 2,           -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                                 pr_tpocorrencia       => 0,           -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
-                                 pr_cdcriticidade      => 2,           -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
-                                 pr_dsmensagem         => vr_dscritic, -- tbgen_prglog_ocorrencia
-                                 pr_flgsucesso         => 0,           -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
-                                 pr_nmarqlog           => NULL,
-                                 pr_idprglog           => vr_idprglog);
-
-        WHEN OTHERS THEN
-          -- Efetuar retorno do erro não tratado
-          vr_dscritic := SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
-          --> Controla log proc_batch, para apensa exibir qnd realmente processar informação
-          pr_dscritic := vr_dscritic;
-          
-          ROLLBACK;        -- Efetuar rollback
-                                                                    -- Envio centralizado de log de erro
-          cecred.pc_log_programa(pr_dstiplog           => 'E',         -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
-                                 pr_cdprograma         => vr_cdprogra, -- tbgen_prglog
-                                 pr_cdcooper           => pr_cdcooper, -- tbgen_prglog
-                                 pr_tpexecucao         => 2,           -- tbgen_prglog  DEFAULT 1 - Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                                 pr_tpocorrencia       => 0,           -- tbgen_prglog_ocorrencia - 1 Erro TRATADO
-                                 pr_cdcriticidade      => 2,           -- tbgen_prglog_ocorrencia DEFAULT 0 - Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
-                                 pr_dsmensagem         => vr_dscritic, -- tbgen_prglog_ocorrencia
-                                 pr_flgsucesso         => 0,           -- tbgen_prglog  DEFAULT 1 - Indicador de sucesso da execução
-                                 pr_nmarqlog           => NULL,
-                                 pr_destinatario_email => vr_destinatario_email,
-                                 pr_idprglog           => vr_idprglog);
-      END;
-    END pc_confere_base_emprest;
     ------------------------- PROCEDIMENTOS INTERNOS -----------------------------   
     PROCEDURE pc_atualiza_tabela(pr_cdcooper IN crapcop.cdcooper%TYPE
                                 ,pr_cdcritic OUT PLS_INTEGER
@@ -894,6 +763,7 @@ begin
              AND ass.cdcooper = c.cdcooper
              AND ass.nrdconta = c.nrdconta             
              AND p.tpregist <> 0      -- ignorar os tratamentos de cancelamento primario reenviado e adesao de liquidados
+             and TRUNC(p.dtdevend) <= to_date('31/07/2021','DD/MM/RRRR')
              ORDER BY p.nrcpfcgc ASC , p.cdapolic;
         rw_prestamista cr_prestamista%ROWTYPE;
                 
@@ -1021,7 +891,7 @@ begin
           end if;
           
           -- Se data da venda for o proximo mês devemos enviar somente no proximo mês
-          if trunc(vr_dtdevend) >= trunc(sysdate) and vr_tpregist = 1 then                          
+          if trunc(vr_dtdevend) >= TO_DATE('01/08/2021','DD/MM/RRRR') and vr_tpregist = 1 then                          
             continue;
           end if;
           
@@ -1170,7 +1040,6 @@ begin
               vr_vlenviad := vr_vlsdatua; -- envia o valor cheio
             END IF;
           END IF;                 
-          
 
           -- Se idade for acima do limite 70 anos ou for abaixo do minino 14 nao devemos enviar
           if vr_nrdeanos > vr_tab_nrdeanos or
@@ -1544,181 +1413,6 @@ begin
         dbms_lob.writeappend(vr_des_xml,length(pr_des_dados),pr_des_dados);
     END pc_escreve_xml;
 
-    procedure pc_gera_arq_previa(pr_cdcooper  IN tbseg_prestamista.cdcooper%TYPE) is 
-      -- gerar arquivo csv 
-         vr_nmarqcsv  VARCHAR2(100);
-         vr_linha_csv VARCHAR2(32600);
-         vr_dscorpem VARCHAR2(2000);
-         vr_endereco  VARCHAR2(100);    
-         vr_login     VARCHAR2(100);
-         vr_senha     VARCHAR2(100);         
-         vr_tipo_saida VARCHAR2(100);
-         vr_geroucsv  numeric(1);
-         vr_nmrescop crapcop.nmrescop%TYPE;
-         vr_ultimoDia DATE;
-         vr_ind_arqcsv  utl_file.file_type;
-         CURSOR cr_prestamista(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
-          SELECT p.idseqtra
-                ,p.cdcooper
-                ,p.nrdconta
-                ,p.nrctrseg
-                ,p.tpregist
-                ,p.cdapolic
-                ,p.nrcpfcgc
-                ,p.nmprimtl
-                ,p.dtnasctl
-                ,p.cdsexotl
-                ,p.dsendres
-                ,p.dsdemail
-                ,p.nmbairro
-                ,p.nmcidade
-                ,p.cdufresd
-                ,p.nrcepend
-                ,p.nrtelefo
-                ,p.dtdevend
-                ,p.dtinivig
-                ,p.nrctremp
-                ,p.cdcobran
-                ,p.cdadmcob
-                ,p.tpfrecob
-                ,p.tpsegura
-                ,p.cdprodut
-                ,p.cdplapro
-                ,p.vlprodut
-                ,p.tpcobran
-                ,p.vlsdeved
-                ,p.vldevatu
-                ,p.dtrefcob
-                ,p.dtfimvig
-                ,p.dtdenvio
-                ,c.inprejuz
-                ,c.inliquid
-                ,p.nrproposta
-                , lpad(decode(p.cdcooper , 5,1, 7,2, 10,3,  11,4, 14,5, 9,6, 16,7, 2,8, 8,9, 6,10, 12,11, 13,12, 1,13  )   ,6,'0') cdcooperativa
-                ,  SUM(p.vldevatu) over(partition by  p.cdcooper, p.nrcpfcgc ) saldo_cpf
-                ,ADD_MONTHS(c.dtmvtolt, c.qtpreemp)  dtfimctr
-                ,(select max(e.dtmvtolt) from crapepr e where e.cdcooper = p.cdcooper and e.nrdconta = p.nrdconta and e.inliquid = 0) data_emp
-            FROM tbseg_prestamista p, crapepr c
-           WHERE p.cdcooper = pr_cdcooper    
-             AND c.cdcooper = p.cdcooper
-             AND c.nrdconta = p.nrdconta
-             AND c.nrctremp = p.nrctremp
-             AND p.dtdevend >= trunc(sysdate) - 7 
-             AND p.tpregist <> 0      -- ignorar os tratamentos de cancelamento primario reenviado e adesao de liquidados
-             ORDER BY p.nrcpfcgc ASC, p.cdapolic;
-         rw_prestamista cr_prestamista%ROWTYPE;      
-      BEGIN        
-        SELECT nmrescop INTO vr_nmrescop FROM crapcop  WHERE cdcooper = pr_cdcooper;       
-         
-        vr_nmdircop := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => pr_cdcooper);
-     
-        --   Abre Arquivo CSV   . 
-        vr_ultimoDia := trunc(sysdate); ---,'MONTH'
-        vr_nmarqcsv := 'Previa_'||REPLACE(to_char(vr_ultimoDia , 'DD/MM/YY'), '/', '')
-                                 ||'_'||vr_nmrescop ||'.csv';                          
-                                   
-        GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdircop || '/arq/'       --> Diretório do arquivo
-                              ,pr_nmarquiv => vr_nmarqcsv                  --> Nome do arquivo
-                              ,pr_tipabert => 'W'                          --> Modo de abertura (R,W,A)
-                              ,pr_utlfileh => vr_ind_arqcsv               --> Handle do arquivo aberto
-                              ,pr_des_erro => vr_dscritic);                --> Erro                              
-        IF vr_dscritic IS NOT NULL THEN         
-          RAISE vr_exc_erro;       -- Levantar Excecao
-        END IF;
-        vr_geroucsv := 0;                        
-        vr_linha_csv := 'Tip.Reg;Data.Env;Coop.;Nome;CPF/CNPJ;CONTA/DV;Ctr.Seguro;Ctr.Emp;Premio;Sld.Devedor;Dat.Inicio;Sld.Dev.CPF; '|| chr(13);
-        GENE0001.pc_escr_linha_arquivo(vr_ind_arqcsv,vr_linha_csv);               
-        FOR rw_prestamista IN cr_prestamista(pr_cdcooper => pr_cdcooper) LOOP
-            vr_linha_csv := ''; 
-          --- gerar linha para arquivo CSV           ---   STRY0014505            
-          
-            vr_linha_csv :=             rw_prestamista.tpregist|| ';'||                                                     ---•  “Tip.Reg”
-                                        to_char(sysdate,'DD/MM/YYYY')|| ';'||                                   ---•  “Data.Env”     
-                                        vr_nmrescop|| ';'||                                                     ---•  “Coop.“           
-                                        UPPER(gene0007.fn_caract_especial(rw_prestamista.nmprimtl))|| ';'||     ---•  “Nome“
-                                        RPAD(to_char(rw_prestamista.nrcpfcgc,'fm00000000000'), 14, ' ') || ';'||---•  “CPF/CNPJ“
-                                        rw_prestamista.nrdconta             || ';'||                                        ---•  “CONTA/DV“
-                                        rw_prestamista.NRPROPOSTA           || ';'||                                        ---•  “Ctr.Seguro “    vr_NRPROPOSTA      
-                                        rw_prestamista.nrctremp             || ';'||                                        ---•  “Ctr.Emp “
-                                        rw_prestamista.vlprodut             || ';'||                                        ---•  “Premio “        vr_vlprodvl
-                                        rw_prestamista.vldevatu             || ';'||                                        ---•  “Sld.Devedor “   vr_vlsdatua
-                                        rw_prestamista.dtinivig             || ';'||                                        ---•  “Dat.Inicio “    vr_dtinivig
-                                        rw_prestamista.saldo_cpf            || ';'||                                        ---•  “Sld.Dev.CPF”    vr_vlsdeved                                                     
-                                        chr(13);
-          GENE0001.pc_escr_linha_arquivo(vr_ind_arqcsv,vr_linha_csv);               
-          vr_geroucsv := 1;
-        end loop;   
-        GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arqcsv ); 
-               
-        vr_dscorpem := 'Arquivo CSV de Prévia com <br /><br /> '||
-                             ' Cooperativa: ' || vr_nmrescop || '<br />';
-                      
-        if vr_geroucsv = 1 then
-            gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra,           -- Envia o email
-                                       pr_des_destino => vr_destinatario_email2, -- seguros.vida@ailos.coop.br    ---parametro ENVIA_SEG_PRST_MAIL_CSV
-
-                                       pr_des_assunto => 'Seguros prestamistas gerados na semana ',
-                                       pr_des_corpo   => vr_dscorpem,
-                                       pr_des_anexo   => vr_nmdircop || '/arq/' || vr_nmarqcsv,
-                                       pr_flg_enviar  => 'S',
-                                       pr_des_erro    => vr_dscritic);
-            IF vr_dscritic IS NOT NULL THEN    --Se ocorreu erro          
-              RAISE vr_exc_erro;               --Levantar Excecao
-            END IF;          
-        end if;
-        
-        -- Dados da conexao FTP
-        vr_endereco := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                                 pr_cdcooper => pr_cdcooper,
-                                                 pr_cdacesso => 'PRST_FTP_ENDERECO');
-        vr_login    := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                                 pr_cdcooper => pr_cdcooper,
-                                                 pr_cdacesso => 'PRST_FTP_LOGIN');
-        vr_senha    := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                                 pr_cdcooper => pr_cdcooper,
-                                                 pr_cdacesso => 'PRST_FTP_SENHA');
-
-        -- Enviamos para o ftp parametrizado na tela tab049
-        SEGU0003.pc_processa_arq_ftp_prest(pr_nmarquiv => vr_nmarqcsv,         --> Nome arquivo a enviar
-                                           pr_idoperac => 'E',                 --> Envio de arquivo
-                                           pr_nmdireto => vr_nmdircop || '/arq/', --> Diretório do arquivo a enviar
-                                           pr_idenvseg => 'S',                 --> Indicador de utilizacao de protocolo seguro (SFTP)
-                                           pr_ftp_site => vr_endereco,         --> Site de acesso ao FTP
-                                           pr_ftp_user => vr_login,            --> Usuário para acesso ao FTP
-                                           pr_ftp_pass => vr_senha,            --> Senha para acesso ao FTP
-                                           pr_ftp_path => 'Envio', --> Pasta no FTP para envio do arquivo
-                                           pr_dscritic => vr_dscritic);      --> Retorno descricao da critica
-
-        IF vr_dscritic IS NOT NULL THEN
-          vr_dscritic := 'Erro ao processar arquivo via FTP - Cooperativa: ' || pr_cdcooper || ' - ' || vr_dscritic;
-          -- Escreve log de erro, mas continua com o processo
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                        || vr_cdprogra || ' --> '
-                                                        || 'Processamento de ftp retornou erro: '||vr_dscritic);
-        END IF;
-
-        -- Mover o arquivo processado para a pasta "salvar" 
-        if nvl(vr_nmarqcsv,' ') <> ' ' then                    
-           gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_nmdircop||'/arq/'||vr_nmarqcsv||' '||vr_nmdircop||'/salvar',
-                                       pr_typ_saida   => vr_tipo_saida,
-                                       pr_des_saida   => vr_dscritic);
-        end if;                            
-        -- Testa erro
-        IF vr_tipo_saida = 'ERR' THEN
-          vr_dscritic := 'Erro ao mover o arquivo - Cooperativa: ' || pr_cdcooper || ' - ' ||vr_dscritic;
-          -- Escreve log de erro, mas continua com o processo
-          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                    ,pr_ind_tipo_log => 2 -- Erro tratato
-                                    ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                        || vr_cdprogra || ' --> '
-                                                        || 'Movimentacao de diretorio retornou erro: '||vr_dscritic);
-        END IF;                                           
-                
-    end;
-
-
   BEGIN
     ---INICIO 
   vr_destinatario_email := gene0001.fn_param_sistema('CRED', 0, 'ENVIA_SEG_PRST_EMAIL'); -- seguros@ailos.com.br
@@ -1778,103 +1472,8 @@ begin
     vr_tipo_registro(0).tpregist := 'NOT FOUND';
     vr_tipo_registro(1).tpregist := 'ADESAO';
     vr_tipo_registro(2).tpregist := 'CANCELAMENTO';
-    vr_tipo_registro(3).tpregist := 'ENDOSSO';    
-    
-    -- Todo sabado deve verificar os prestamsitas a serem criados
-    vr_diasem := TO_CHAR(SYSDATE,'D'); ---7;
-    IF TO_CHAR(SYSDATE,'D') = vr_diasem THEN 
-      
-        vr_dtmvtolt := rw_crapcop.dtmvtolt;
-        vr_cdcooper := rw_crapcop.cdcooper; -- Para log em caso de exceção imprevista
+    vr_tipo_registro(3).tpregist := 'ENDOSSO';       
    
-
-
-        
-        
-        -- Validamos/vinculamos contratos que ainda não foram adicionados na base
-        pc_confere_base_emprest(pr_cdcooper => rw_crapcop.cdcooper
-                               ,pr_cdcritic => vr_cdcritic
-                               ,pr_dscritic => vr_dscritic);
-        
-        IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-         
-        dbms_lob.createtemporary(vr_des_xml, TRUE);
-        dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
-
-        pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><crrl816><dados>');
-        vr_index := vr_tab_prst.first;
-        WHILE vr_index IS NOT NULL LOOP
-           OPEN cr_tbseg_prestamista(pr_cdcooper => vr_tab_prst(vr_index).cdcooper
-                                    ,pr_nrdconta => vr_tab_prst(vr_index).nrdconta
-                                    ,pr_nrctrato => vr_tab_prst(vr_index).nrctremp);
-            FETCH cr_tbseg_prestamista INTO rw_tbseg_prestamista;
-            IF cr_tbseg_prestamista%NOTFOUND THEN
-              CLOSE cr_tbseg_prestamista;
-              vr_index := vr_tab_prst.next(vr_index);
-              CONTINUE;
-            ELSE
-              CLOSE cr_tbseg_prestamista;
-            END IF;
-            
-            IF cr_tbseg_prestamista%ISOPEN THEN
-              CLOSE cr_tbseg_prestamista;
-            END IF;
-            
-            pc_escreve_xml('<registro>'
-            ||'<nmrescop>' || rw_crapcop.nmrescop || '</nmrescop>' ||
-                           '<nrdconta>' || gene0002.fn_mask_conta(vr_tab_prst(vr_index).nrdconta) || '</nrdconta>' ||
-                           '<nrcpfcgc>' || gene0002.fn_mask_cpf_cnpj(vr_tab_prst(vr_index).nrcpfcgc, 1) || '</nrcpfcgc>' ||
-                           '<nmprimtl>' || vr_tab_prst(vr_index).nmprimtl || '</nmprimtl>' ||
-                           '<nrctremp>' || TRIM(gene0002.fn_mask_contrato(vr_tab_prst(vr_index).nrctremp)) || '</nrctremp>' ||
-                           '<nrctrseg>' || TRIM(gene0002.fn_mask_contrato(rw_tbseg_prestamista.nrctrseg)) || '</nrctrseg>' ||
-                           '<dtmvtolt>' || TO_CHAR(vr_tab_prst(vr_index).dtmvtolt , 'DD/MM/RRRR') || '</dtmvtolt>' ||
-                           '<dtempres>' || TO_CHAR(vr_tab_prst(vr_index).dtempres  , 'DD/MM/RRRR') || '</dtempres>' ||
-                           '<vlemprst>' || to_char(vr_tab_prst(vr_index).vlemprst,'fm99999999999990d00') || '</vlemprst>' ||
-                           '<vlsdeved>' || to_char(vr_tab_prst(vr_index).vlsdeved,'fm99999999999990d00') || '</vlsdeved>'
-            ||'</registro>');
-            
-            vr_index := vr_tab_prst.next(vr_index);
-         END LOOP;
-       
-         pc_escreve_xml(  '</dados>'||
-                        '</crrl816>');
-         gene0001.pc_fecha_arquivo(vr_arqhandle);
-          
-         vr_dir_relatorio_816 := gene0001.fn_diretorio('C', rw_crapcop.cdcooper, 'rl') || '/crrl816.lst';
-         
-         gene0002.pc_solicita_relato(pr_cdcooper  => rw_crapcop.cdcooper         --> Cooperativa conectada
-                                    ,pr_cdprogra  => vr_cdprogra                 --> Programa chamador
-                                    ,pr_dtmvtolt  => rw_crapcop.dtmvtolt         --> Data do movimento atual
-                                    ,pr_dsxml     => vr_des_xml                  --> Arquivo XML de dados
-                                    ,pr_dsxmlnode => '/crrl816'                  --> Nó base do XML para leitura dos dados
-                                    ,pr_dsjasper  => 'crrl816.jasper'            --> Arquivo de layout do iReport
-                                    ,pr_dsparams  => NULL                        --> Nao tem parametros
-                                    ,pr_dsarqsaid => vr_dir_relatorio_816        --> Arquivo final
-                                    ,pr_cdrelato  => 816
-                                    ,pr_flg_gerar => 'S'
-                                    ,pr_qtcoluna  => 234
-                                    ,pr_sqcabrel  => 1
-                                    ,pr_nmformul  => '234col'
-                                    ,pr_flg_impri => 'S'
-                                    ,pr_nrcopias  => 1
-                                    ,pr_nrvergrl  => 1
-                                    ,pr_des_erro  => pr_dscritic);
-        IF pr_dscritic IS NOT NULL THEN
-          -- Gerar exceção
-          RAISE vr_exc_erro;
-        END IF;
-
-        pc_gera_arq_previa(rw_crapcop.cdcooper );
-      END IF;  
-           
-      vr_diames := '01';
-      -- so deve seguir se for o primeiro dia do mes
-      IF TO_CHAR(trunc(SYSDATE),'DD') <> vr_diames THEN 
-        RETURN; -- Nao deve seguir com o programa
-      END IF; 
-      
       -- primeiro atualizamos o saldo devedor de todos contratos da tabela
      pc_atualiza_tabela( pr_cdcooper => rw_crapcop.cdcooper
                         ,pr_cdcritic => vr_cdcritic
@@ -2182,9 +1781,9 @@ begin
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
           
---          IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN
-  --          RAISE exception;
-    --      END IF;
+          IF vr_cdcritic <> 0 OR vr_dscritic IS NOT NULL THEN
+            dbms_output.put_line('Erro na coop '||rw_crapcop.cdcooper||' - '||vr_dscritic);
+          END IF;
        EXCEPTION         
          WHEN OTHERS THEN
                                                    -- Efetuar retorno do erro não tratado
@@ -2208,6 +1807,5 @@ begin
     END LOOP;
     
 end;
-
 
 end;
