@@ -9,5 +9,8 @@ BEGIN
   AND   prm.cdacesso = 'QT_ENVIOCNSJD';                         
  
   COMMIT;
+EXCEPTION   
+  WHEN OTHERS THEN
+    sistema.excecaoInterna(pr_compleme => 'PRB0045505');  
 END;
   
