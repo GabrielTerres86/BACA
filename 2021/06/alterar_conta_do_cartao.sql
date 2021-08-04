@@ -8,14 +8,13 @@ declare
 begin
 
   -- Cooperativa de destino do cartão
-  vr_cooperativa := 6;
+  vr_cooperativa := 7;
   -- Conta de destino do cartão
-  vr_conta := 590;
+  vr_conta := 26700;
 
   -- Numero do cartão que precisamos ajustar
-  --vr_cartao := 5127070161674411; -- Luis
-  vr_cartao := 5127070320149719;
-
+  vr_cartao := 6393500069948041; -- Dudu
+  
   -- Verificar se a conta possui algum outro cartão para buscar o CPF do Titular
   FOR cartao IN (select distinct a.nrcpftit
                   from crawcrd a
