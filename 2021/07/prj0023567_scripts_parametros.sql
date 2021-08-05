@@ -39,4 +39,5 @@ BEGIN
     ,'Pre-Aprovado CDC');
 
   COMMIT;
+  
 END;
