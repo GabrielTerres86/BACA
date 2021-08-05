@@ -1,4 +1,4 @@
 INSERT INTO craplgm (CDCOOPER, NRDCONTA, IDSEQTTL, NRSEQUEN, DTTRANSA, HRTRANSA, DSTRANSA, DSORIGEM, NMDATELA, FLGTRANS, DSCRITIC, CDOPERAD, NMENDTER)
-VALUES (1, 9091734, 1, 1, to_date('03/07/2021', 'dd/mm/yyyy'), 60000, 'Reativação débito autorizado (RITM0156631)', 'AIMARO WEB', 'CONTAS', 1, ' ', '1', ' '); 
+VALUES (1, 9091734, 1, 1, to_date('03/08/2021', 'dd/mm/yyyy'), 60000, 'Reativação débito autorizado (RITM0156631)', 'AIMARO WEB', 'CONTAS', 1, ' ', '1', ' '); 
 
 COMMIT;
