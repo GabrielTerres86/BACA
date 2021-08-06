@@ -1,3 +1,5 @@
+--Parametro de ativação de assembleias digitais
+
 INSERT INTO crappat (
 CDPARTAR,
 NMPARTAR,
