@@ -1,10 +1,16 @@
 begin
 
-update crapbpr
-set  UFLICENC= 'RN'
-where cdcooper = 1
-and   nrdconta = 6814190
-and   nrctrpro = 4259627;
+update crawepr    epr
+set epr.flgdocdg=1
+where epr.cdcooper=1
+and   epr.nrdconta = 6814190
+and   epr.nrctrpro = 4259627;
+
+update crawepr    epr
+set epr.flgdocdg=1
+where epr.cdcooper=1
+and   epr.nrdconta = 11187387
+and   epr.nrctrpro = 4259631;
                             
 commit;
 end;
