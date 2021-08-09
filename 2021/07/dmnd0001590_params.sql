@@ -1,4 +1,4 @@
---Parametro de ativação de assembleias digitais
+--Parametro de ativação de assembleias digitais v1.1
 
 INSERT INTO crappat (
 CDPARTAR,
