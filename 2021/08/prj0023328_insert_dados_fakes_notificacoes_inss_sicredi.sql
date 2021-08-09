@@ -1,4 +1,5 @@
-﻿INSERT INTO tbinss_notif_benef_sicredi (cdcooper, 
+﻿BEGIN
+INSERT INTO tbinss_notif_benef_sicredi (cdcooper, 
                                         nrdconta, 
                                         dhrequisicaoapi, 
                                         dsdispositivo, 
@@ -28,3 +29,5 @@
                                     AND dcb.cdcooper = ass.cdcooper
                                     AND dcb.nrrecben = dbi.nrrecben
                                   WHERE ROWNUM <= 10000;
+COMMIT;
+END;
