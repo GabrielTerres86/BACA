@@ -1,9 +1,12 @@
 declare 
   vr_ind_arq  utl_file.file_type;
   vr_linha VARCHAR2(32767);
-  vr_nmarq VARCHAR2(400);
   vr_dscritic VARCHAR2(2000);
-  vr_nmdir   VARCHAR2(4000);   
+  vr_nmdir   VARCHAR2(4000);
+  vr_rootmicros   VARCHAR2(4000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
+  vr_nmdir        VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/INC0100137';
+  vr_nmarq VARCHAR2(100)  := 'INC0100137_ROLLBACK.sql';   
+
   vr_exc_saida  EXCEPTION;  
 cursor cr_tbseg_prst is 
   Select nrproposta, cdcooper, nrctrseg, nrdconta, dtrecusa, situacao, tprecusa, CdMotrec, tpregist
@@ -35,8 +38,6 @@ cursor cr_tbseg_prst is
      and crapseg.tpseguro = 4 ; 
   rw_crapseg cr_crapseg%rowtype;
 begin 
-      vr_nmarq := 'ROLLBACK_INC0100137.sql';
-      vr_nmdir := '/mircros/cpd/bacas/INC0100137/';
       GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdir 
                               ,pr_nmarquiv => vr_nmarq                
                               ,pr_tipabert => 'W'                    
