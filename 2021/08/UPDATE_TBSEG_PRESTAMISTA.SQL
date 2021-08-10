@@ -493,7 +493,7 @@ begin
     update crapseg  set crapseg.dtfimvig = to_date('15/05/2021','DD/MM/YYYY' ) ,      crapseg.dtcancel = to_date('23/07/2021','DD/MM/YYYY' ) ,   crapseg.cdsitseg = 5,   crapseg.cdopeexc = 1,   crapseg.cdageexc = 1,   crapseg.dtinsexc = to_date('23/07/2021','DD/MM/YYYY' ) ,   crapseg.cdopecnl = 1   where crapseg.nrctrseg = 30160  and crapseg.nrdconta = 582  and crapseg.cdcooper = 10  and crapseg.tpseguro = 4 ; 
     UPDATE TBSEG_PRESTAMISTA set situacao = 0 , dtrecusa = to_date('01/08/2021','DD/MM/YYYY' ) , tprecusa = 8, CdMotrec = 193, tpregist = 0  WHERE nrproposta = 770353233521; 
     update crapseg  set crapseg.dtfimvig = to_date('15/05/2021','DD/MM/YYYY' ) ,      crapseg.dtcancel = to_date('23/07/2021','DD/MM/YYYY' ) ,   crapseg.cdsitseg = 5,   crapseg.cdopeexc = 1,   crapseg.cdageexc = 1,   crapseg.dtinsexc = to_date('23/07/2021','DD/MM/YYYY' ) ,   crapseg.cdopecnl = 1   where crapseg.nrctrseg = 30160  and crapseg.nrdconta = 582  and crapseg.cdcooper = 10  and crapseg.tpseguro = 4 ; 
-commit; 
+  Commit; 
   EXCEPTION 
      WHEN vr_exc_saida THEN
           vr_dscritic := vr_dscritic || SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
@@ -505,3 +505,4 @@ commit;
           ROLLBACK;
   END;      
 END ;        
+/
