@@ -221,8 +221,8 @@ BEGIN
           --
      END;
 		
-	vr_nrdocmto := fn_sequence('CRAPLAU','NRDOCMTO', rg_crapass.cdcooper || ';' || TRIM(to_char( vr_dtmvtolt,'DD/MM/YYYY')) ||';16;100;600040');
-  vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG', rg_crapass.cdcooper || ';' ||to_char(vr_dtmvtolt,'DD/MM/YYYY') || ';16;100;600040');   
+	vr_nrdocmto := fn_sequence('CRAPLAU','NRDOCMTO', rg_crapass.cdcooper || ';' || TRIM(to_char( vr_dtmvtolt,'DD/MM/YYYY')) ||';28;100;600040');
+  vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG', rg_crapass.cdcooper || ';' ||to_char(vr_dtmvtolt,'DD/MM/YYYY') || ';28;100;600040');   
 	
 	
 	INSERT INTO CECRED.craplct(cdcooper
@@ -239,7 +239,7 @@ BEGIN
         ,CDOPEORI
         ,DTINSORI)
       VALUES (rg_crapass.cdcooper
-        ,16
+        ,28
         ,100
         ,600040
         ,vr_dtmvtolt
