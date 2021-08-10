@@ -44,15 +44,15 @@ DECLARE
   --
 BEGIN
   --
-  vr_log_script := ' ** InÃ­cio script' || chr(10);
+  vr_log_script := ' ** Início script' || chr(10);
   --
    
   
   FOR rg_crapass IN cr_crapass LOOP
     --
-    vr_log_script := vr_log_script || chr(10) || 'AtualizaÃ§Ã£o da conta: (' 
+    vr_log_script := vr_log_script || chr(10) || 'Atualização da conta: (' 
                      || '[ ' || LPAD(rg_crapass.cdcooper, 2, ' ') || ' ] '
-                     || LPAD(rg_crapass.nrdconta, 9, ' ') || ') da situaÃ§Ã£o (' || rg_crapass.cdsitdct
+                     || LPAD(rg_crapass.nrdconta, 9, ' ') || ') da situação (' || rg_crapass.cdsitdct
                      || ') para (1)';
     --
     vr_dstransa := 'Alterada situacao de conta por script. INC0100990.';
@@ -62,9 +62,9 @@ BEGIN
     --
 	vr_qtde_tb_devolucao:=0;
 	--
-	-- Insere log de atualizaÃ§Ã£o para a VERLOG. Ex: CADA0003 (6708)
+	-- Insere log de atualização para a VERLOG. Ex: CADA0003 (6708)
     vr_dttransa := trunc(sysdate);
-    vr_hrtransa := substr(to_char(systimestamp,'FF'),1,10);
+    vr_hrtransa := GENE0002.fn_busca_time;
 	
     -- Atualiza crapass
     UPDATE CECRED.CRAPASS
@@ -183,26 +183,9 @@ BEGIN
         EXCEPTION 
           WHEN NO_DATA_FOUND THEN 
          
-          dbms_output.put_line(chr(10) || 'NÃ£o encontrado registro em crapcot para conta ' || rg_crapass.nrdconta);
+          dbms_output.put_line(chr(10) || 'Não encontrado registro em crapcot para conta ' || rg_crapass.nrdconta);
           --
      END;
-
-	
-	-- Buscar o valor das cotas em TBCOTAS_DEVOLUCAO
-	 BEGIN
-        SELECT VLCAPITAL
-          INTO vr_vldcotas
-        FROM CECRED.TBCOTAS_DEVOLUCAO
-        WHERE nrdconta = rg_crapass.nrdconta
-          AND cdcooper = rg_crapass.cdcooper;
-        EXCEPTION 
-         WHEN NO_DATA_FOUND THEN 
-          --
-         
-          dbms_output.put_line(chr(10) || 'NÃ£o encontrado TBCOTAS_DEVOLUCAO anterior para conta ' || rg_crapass.nrdconta);
-          --
-     END;
-	
 	
 	--Buscar data de movimento da cooperativa
 	 BEGIN
@@ -214,7 +197,7 @@ BEGIN
          WHEN NO_DATA_FOUND THEN 
           --
           
-          dbms_output.put_line(chr(10) || 'NÃ£o encontrado crapdat para cooperativa ' || rg_crapass.cdcooper);
+          dbms_output.put_line(chr(10) || 'Não encontrado crapdat para cooperativa ' || rg_crapass.cdcooper);
           --
      END;
 	
@@ -228,17 +211,18 @@ BEGIN
                vr_tbcotas_dev_vlcapital, vr_tbcotas_dev_qtparcelas, vr_tbcotas_dev_dtinicio_credito, vr_tbcotas_dev_vlpago
 	    FROM TBCOTAS_DEVOLUCAO
 	    WHERE nrdconta = rg_crapass.nrdconta
-          AND cdcooper = rg_crapass.cdcooper;
+          AND cdcooper = rg_crapass.cdcooper
+          AND TPDEVOLUCAO = 3;
 	    EXCEPTION 
           WHEN NO_DATA_FOUND THEN 
           --
-          dbms_output.put_line(chr(10) || 'NÃ£o encontrado TBCOTAS_DEVOLUCAO para cooperativa e conta ' || rg_crapass.cdcooper||' '||rg_crapass.nrdconta);
+          dbms_output.put_line(chr(10) || 'Não encontrado TBCOTAS_DEVOLUCAO para cooperativa e conta ' || rg_crapass.cdcooper||' '||rg_crapass.nrdconta);
+          Continue;
           --
      END;
 		
 	vr_nrdocmto := fn_sequence('CRAPLAU','NRDOCMTO', rg_crapass.cdcooper || ';' || TRIM(to_char( vr_dtmvtolt,'DD/MM/YYYY')) ||';16;100;600040');
-    vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG', rg_crapass.cdcooper || ';' ||to_char(vr_dtmvtolt,'DD/MM/YYYY') || ';16;100;600040');
-    
+  vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG', rg_crapass.cdcooper || ';' ||to_char(vr_dtmvtolt,'DD/MM/YYYY') || ';16;100;600040');   
 	
 	
 	INSERT INTO CECRED.craplct(cdcooper
@@ -251,19 +235,22 @@ BEGIN
         ,nrdconta
         ,nrdocmto
         ,nrseqdig
-        ,vllanmto)
+        ,vllanmto
+        ,CDOPEORI
+        ,DTINSORI)
       VALUES (rg_crapass.cdcooper
         ,16
         ,100
         ,600040
         ,vr_dtmvtolt
-        ,2080
+        ,61
         ,0
         ,rg_crapass.nrdconta 
         ,vr_nrdocmto
         ,vr_nrseqdig
-        ,vr_vldcotas); 
-	
+        ,vr_tbcotas_dev_vlcapital
+        ,1
+        ,sysdate); 
 	  
 	
 	
@@ -311,12 +298,12 @@ BEGIN
       ,5
       ,'craplct.vllanmto'
       ,null
-      ,vr_vldcotas);  
+      ,vr_tbcotas_dev_vlcapital);  
 	
 		
 	
 	UPDATE CECRED.crapcot
-        SET vldcotas = ( vldcotas + vr_vldcotas )
+        SET vldcotas = ( vldcotas + vr_tbcotas_dev_vlcapital )
       WHERE cdcooper = rg_crapass.cdcooper
         AND nrdconta = rg_crapass.nrdconta;
 	
@@ -343,36 +330,14 @@ BEGIN
       ,6
       ,'crapcot.vldcotas'
       ,vr_vldcotas_crapcot
-      ,(vr_vldcotas_crapcot + vr_vldcotas) );
-	
-	
-	-- Verificar se existe registro na TBCOTAS_DEVOLUCAO
-	BEGIN
-	
-	  SELECT COUNT(*) INTO vr_qtde_tb_devolucao
-	  FROM CECRED.TBCOTAS_DEVOLUCAO
-      WHERE CDCOOPER = rg_crapass.cdcooper
-        AND NRDCONTA = rg_crapass.nrdconta; 
-	  EXCEPTION 
-          WHEN NO_DATA_FOUND THEN 
-           BEGIN
-		     vr_qtde_tb_devolucao:=0;
-             dbms_output.put_line(chr(10) || 'NÃ£o encontrado TBCOTAS_DEVOLUCAO para cooperativa e conta ' || rg_crapass.cdcooper||' '||rg_crapass.nrdconta);
-           END;
-		  WHEN OTHERS THEN 
-           BEGIN
-             dbms_output.put_line(chr(10) || 'Erro ao consultar registro na TBCOTAS_DEVOLUCAO para cooperativa e conta ' || rg_crapass.cdcooper||' '||rg_crapass.nrdconta);
-           END;
-	END;
-	
-	
-	IF vr_qtde_tb_devolucao > 0 THEN
-	
+      ,(vr_vldcotas_crapcot + vr_tbcotas_dev_vlcapital) );
+		
 		-- Excluir registro conforme cooperativa e conta
 		DELETE 
 		FROM CECRED.TBCOTAS_DEVOLUCAO
 		WHERE CDCOOPER = rg_crapass.cdcooper
-		  AND NRDCONTA = rg_crapass.nrdconta;
+		  AND NRDCONTA = rg_crapass.nrdconta
+      AND TPDEVOLUCAO = 3;
 		 
 			
 		-- Insere log com valores de antes x depois da tbcotas_devolucao.
@@ -517,7 +482,7 @@ BEGIN
 		  ,12
 		  ,'tbcotas_devolucao.dtinicio_credito'
 		  ,vr_tbcotas_dev_dtinicio_credito
-		  ,NULL );
+		  ,NULL);
 		
 		
 		-- Insere log com valores de antes x depois da tbcotas_devolucao.
@@ -541,10 +506,8 @@ BEGIN
 		  ,13
 		  ,'tbcotas_devolucao.vlpago'
 		  ,vr_tbcotas_dev_vlpago
-		  ,NULL );
-		  
-	END IF;
-		
+		  ,NULL);
+		  	
   END LOOP;
   
   COMMIT;
@@ -552,7 +515,7 @@ BEGIN
   --dbms_output.put_line(vr_log_script);
   --
   --
-  --DBMS_OUTPUT.PUT_LINE('Sucesso na atualizaÃ§Ã£o.');
+  --DBMS_OUTPUT.PUT_LINE('Sucesso na atualização.');
   --
 EXCEPTION
   WHEN vr_exception THEN
