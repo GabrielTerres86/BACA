@@ -1,12 +1,10 @@
+
 declare 
   vr_ind_arq  utl_file.file_type;
   vr_linha VARCHAR2(32767);
   vr_dscritic VARCHAR2(2000);
-  vr_nmdir   VARCHAR2(4000);
-  vr_rootmicros   VARCHAR2(4000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
-  vr_nmdir        VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/INC0100137';
-  vr_nmarq VARCHAR2(100)  := 'INC0100137_ROLLBACK.sql';   
-
+  vr_nmdir        VARCHAR2(4000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS')||'cpd/bacas/INC0100137';  
+  vr_nmarq VARCHAR2(100)  := 'ROLLBACK_INC0100137.sql';   
   vr_exc_saida  EXCEPTION;  
 cursor cr_tbseg_prst is 
   Select nrproposta, cdcooper, nrctrseg, nrdconta, dtrecusa, situacao, tprecusa, CdMotrec, tpregist
@@ -37,77 +35,92 @@ cursor cr_tbseg_prst is
      and crapseg.cdcooper = pr_cdcooper  
      and crapseg.tpseguro = 4 ; 
   rw_crapseg cr_crapseg%rowtype;
-begin 
+  begin 
+    begin
       GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdir 
-                              ,pr_nmarquiv => vr_nmarq                
-                              ,pr_tipabert => 'W'                    
-                              ,pr_utlfileh => vr_ind_arq             
-                              ,pr_des_erro => vr_dscritic);          
-      IF vr_dscritic IS NOT NULL THEN         
-         vr_dscritic := vr_dscritic ||'  Não pode abrir arquivo '||vr_nmdir || vr_nmarq;     
-         RAISE vr_exc_saida;
-      END IF;
-   GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'BEGIN');                      
-   for  rw_tbseg in cr_tbseg_prst loop 
-     vr_linha :='';
-     Open cr_crapseg(rw_tbseg.cdcooper, rw_tbseg.nrdconta, rw_tbseg.nrctrseg);
-     fetch cr_crapseg INTO rw_crapseg;
-     if cr_crapseg%NOTFOUND THEN  
-        close cr_crapseg;      
-        continue; 
-     else 
-       vr_linha :=           'update crapseg '
-                           ||' set crapseg.dtfimvig = to_date('''||rw_crapseg.dtfimvig||''',''DD/MM/YYYY'' ) , '
-                           ||'     crapseg.dtcancel = to_date('''||rw_crapseg.dtcancel||''',''DD/MM/YYYY'' ) , ' 
-                           ||'  crapseg.cdsitseg = '||nvl(trim(TO_CHAR( rw_crapseg.cdsitseg)),'NULL')  ||', '
-                           ||'  crapseg.cdageexc = '||nvl(trim(TO_CHAR( rw_crapseg.cdageexc)),' ')  ||', '
-                           ||'  crapseg.dtinsexc = to_date('''||rw_crapseg.dtinsexc||''',''DD/MM/YYYY'' ) , ' 
-                           ||'  crapseg.cdopecnl = '||nvl(trim(TO_CHAR(  rw_crapseg.cdopecnl)),'NULL') 
-                           ||'  where crapseg.nrctrseg = '||rw_crapseg.nrctrseg  
-                           ||'  and crapseg.nrdconta = '||rw_crapseg.nrdconta  
-                           ||'  and crapseg.cdcooper = '||rw_crapseg.cdcooper  
-                           ||'  and crapseg.tpseguro = '||rw_crapseg.tpseguro||' ; ';        
-       GENE0001.pc_escr_linha_arquivo(vr_ind_arq,vr_linha);               
-     end if; 
-     vr_linha :='';
-     close cr_crapseg;         
-     vr_linha :=  ' UPDATE TBSEG_PRESTAMISTA set situacao = '|| nvl(TO_CHAR(rw_tbseg.situacao),'NULL')
-                ||', dtrecusa = to_date('''|| rw_tbseg.dtrecusa ||''',''DD/MM/YYYY'' ) '
-                ||', tprecusa = '||nvl(trim(TO_CHAR(rw_tbseg.tprecusa)),'NULL')
-                ||', CdMotrec = '||nvl(trim(TO_CHAR(rw_tbseg.CdMotrec)),'NULL')
-                ||', tpregist = '||nvl(trim(TO_CHAR(rw_tbseg.tpregist)),'NULL')
-                ||' WHERE nrproposta = '||rw_tbseg.nrproposta||'; ';
-     GENE0001.pc_escr_linha_arquivo(vr_ind_arq,vr_linha);                    
-     
-     
-       UPDATE TBSEG_PRESTAMISTA set situacao = 0 
-       , dtrecusa = to_date('01/08/2021','DD/MM/YYYY' )
-       , tprecusa = 8
-       , CdMotrec = 193
-       , tpregist = 0    
-       WHERE nrproposta = rw_tbseg.nrproposta; 
+                                ,pr_nmarquiv => vr_nmarq                
+                                ,pr_tipabert => 'W'                    
+                                ,pr_utlfileh => vr_ind_arq             
+                                ,pr_des_erro => vr_dscritic);          
+        IF vr_dscritic IS NOT NULL THEN         
+           vr_dscritic := vr_dscritic ||'  Não pode abrir arquivo '||vr_nmdir || vr_nmarq;     
+           RAISE vr_exc_saida;
+        END IF;
+     GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'BEGIN');                      
+     for  rw_tbseg in cr_tbseg_prst loop 
+       vr_linha :='';
+       Open cr_crapseg(rw_tbseg.cdcooper, rw_tbseg.nrdconta, rw_tbseg.nrctrseg);
+       fetch cr_crapseg INTO rw_crapseg;
+       if cr_crapseg%NOTFOUND THEN  
+          close cr_crapseg;      
+          continue; 
+       else 
+         vr_linha :=           'update crapseg '
+                             ||' set dtfimvig = to_date('''||rw_crapseg.dtfimvig||''',''DD/MM/YYYY'' ) , '
+                             ||'     dtcancel = to_date('''||rw_crapseg.dtcancel||''',''DD/MM/YYYY'' ) , ' 
+                             ||'  cdsitseg = '||nvl(trim(TO_CHAR( rw_crapseg.cdsitseg)),'NULL')  ||', '
+                             ||'  cdageexc = '||nvl(trim(TO_CHAR( rw_crapseg.cdageexc)),' ')  ||', '
+                             ||'  dtinsexc = to_date('''||rw_crapseg.dtinsexc||''',''DD/MM/YYYY'' ) , ' 
+                             ||'  cdopecnl = '||nvl(trim(TO_CHAR(  rw_crapseg.cdopecnl)),'NULL') 
+                             ||'  where nrctrseg = '||rw_crapseg.nrctrseg  
+                             ||'  and nrdconta = '||rw_crapseg.nrdconta  
+                             ||'  and cdcooper = '||rw_crapseg.cdcooper  
+                             ||'  and tpseguro = '||rw_crapseg.tpseguro||' ; ';        
+         GENE0001.pc_escr_linha_arquivo(vr_ind_arq,vr_linha);               
+       end if; 
+       vr_linha :='';
+       close cr_crapseg;         
+       vr_linha :=  ' UPDATE TBSEG_PRESTAMISTA set situacao = '|| nvl(TO_CHAR(rw_tbseg.situacao),'NULL')
+                  ||', dtrecusa = to_date('''|| rw_tbseg.dtrecusa ||''',''DD/MM/YYYY'' ) '
+                  ||', tprecusa = '||nvl(trim(TO_CHAR(rw_tbseg.tprecusa)),'NULL')
+                  ||', CdMotrec = '||nvl(trim(TO_CHAR(rw_tbseg.CdMotrec)),'NULL')
+                  ||', tpregist = '||nvl(trim(TO_CHAR(rw_tbseg.tpregist)),'NULL')
+                  ||' WHERE nrproposta = '||rw_tbseg.nrproposta||'; ';
+       GENE0001.pc_escr_linha_arquivo(vr_ind_arq,vr_linha);                    
        
-       UPDATE crapseg
-         set crapseg.dtfimvig = rw_tbseg.dtmvtolt
-         ,   crapseg.dtcancel = rw_tbseg.dtmvtolt
-         ,   crapseg.cdsitseg = 5
-         ,   crapseg.cdopeexc = 1
-         ,   crapseg.cdageexc = 1
-         ,   crapseg.dtinsexc = rw_tbseg.dtmvtolt 
-         ,   crapseg.cdopecnl = 1  
-         where crapseg.nrctrseg = rw_crapseg.nrctrseg  
-          and crapseg.nrdconta = rw_crapseg.nrdconta   
-          and crapseg.cdcooper = rw_crapseg.cdcooper   
-           and crapseg.tpseguro = 4 ;   
-   commit;       
-     
-  end loop;
-  GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' commit;');                 
-  GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' EXCEPTION ');                    
-  GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'  WHEN OTHERS THEN ');                 
-  GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'   ROLLBACK;');                    
-  GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' END; ');                 
-  GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arq );      
-  
+       
+         UPDATE TBSEG_PRESTAMISTA set situacao = 0 
+         , dtrecusa = to_date('01/08/2021','DD/MM/YYYY' )
+         , tprecusa = 8
+         , CdMotrec = 193
+         , tpregist = 0    
+         WHERE nrproposta = rw_tbseg.nrproposta; 
+         
+         UPDATE crapseg
+           set crapseg.dtfimvig = rw_tbseg.dtmvtolt
+           ,   crapseg.dtcancel = rw_tbseg.dtmvtolt
+           ,   crapseg.cdsitseg = 5
+           ,   crapseg.cdopeexc = 1
+           ,   crapseg.cdageexc = 1
+           ,   crapseg.dtinsexc = rw_tbseg.dtmvtolt 
+           ,   crapseg.cdopecnl = 1  
+           where crapseg.nrctrseg = rw_crapseg.nrctrseg  
+            and crapseg.nrdconta = rw_crapseg.nrdconta   
+            and crapseg.cdcooper = rw_crapseg.cdcooper   
+             and crapseg.tpseguro = 4 ;   
+     commit;       
+    
+    end loop;
+    GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' commit;');                 
+    GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' EXCEPTION ');                    
+    GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'  WHEN OTHERS THEN ');                 
+    GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'   ROLLBACK;');                    
+    GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' END; ');                 
+    GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'/ ');                 
+                    
+    GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arq );      
+   
+    
+    EXCEPTION 
+       WHEN vr_exc_saida THEN
+            vr_dscritic := vr_dscritic || SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+            dbms_output.put_line(vr_dscritic);  
+            ROLLBACK;
+       when others then
+            vr_dscritic := vr_dscritic || SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+            dbms_output.put_line(vr_dscritic);              
+            ROLLBACK;
+    END;      
+
 END ;        
 /
