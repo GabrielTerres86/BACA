@@ -39,11 +39,15 @@ DECLARE
   vr_vldcotas_movtda     NUMBER;
   vr_vldcotas_crapcot    NUMBER;
   vr_exception           exception;
+  
+  vr_qtde_tb_devolucao   NUMBER;
   --
 BEGIN
   --
   vr_log_script := ' ** Início script' || chr(10);
   --
+   
+  
   FOR rg_crapass IN cr_crapass LOOP
     --
     vr_log_script := vr_log_script || chr(10) || 'Atualização da conta: (' 
@@ -56,7 +60,8 @@ BEGIN
     -- Verificar o valor de cotas a devolver ao cooperado.
     vr_vldcotas := 0;
     --
-	
+	vr_qtde_tb_devolucao:=0;
+	--
 	-- Insere log de atualização para a VERLOG. Ex: CADA0003 (6708)
     vr_dttransa := trunc(sysdate);
     vr_hrtransa := substr(to_char(systimestamp,'FF'),1,10);
@@ -259,39 +264,6 @@ BEGIN
         ,vr_nrseqdig
         ,vr_vldcotas); 
 	
-	
-    -- Insere log de atualização para a VERLOG. Ex: CADA0003 (6708)
-    vr_dttransa := trunc(sysdate);
-    vr_hrtransa := substr(to_char(systimestamp,'FF'),1,10);
-	
-	
-	INSERT INTO cecred.craplgm(cdcooper
-      ,nrdconta
-      ,idseqttl
-      ,nrsequen
-      ,dttransa
-      ,hrtransa
-      ,dstransa
-      ,dsorigem
-      ,nmdatela
-      ,flgtrans
-      ,dscritic
-      ,cdoperad
-      ,nmendter)
-    VALUES
-      (rg_crapass.cdcooper
-      ,rg_crapass.nrdconta
-      ,1
-      ,1
-      ,vr_dttransa
-      ,vr_hrtransa
-      ,vr_dstransa
-      ,'AIMARO'
-      ,''
-      ,1
-      ,' '
-      ,1
-      ,' ');
 	  
 	
 	
@@ -313,7 +285,7 @@ BEGIN
       ,1
       ,vr_dttransa
       ,vr_hrtransa
-      ,1
+      ,4
       ,'craplct.dtmvtolt'
       ,null
       ,vr_dtmvtolt);
@@ -336,7 +308,7 @@ BEGIN
       ,1
       ,vr_dttransa
       ,vr_hrtransa
-      ,2
+      ,5
       ,'craplct.vllanmto'
       ,null
       ,vr_vldcotas);  
@@ -348,40 +320,7 @@ BEGIN
       WHERE cdcooper = rg_crapass.cdcooper
         AND nrdconta = rg_crapass.nrdconta;
 	
-	
-	-- Insere log de atualização para a VERLOG. Ex: CADA0003 (6708)
-    vr_dttransa := trunc(sysdate);
-    vr_hrtransa := substr(to_char(systimestamp,'FF'),1,10);
-	
-	
-	INSERT INTO cecred.craplgm(cdcooper
-      ,nrdconta
-      ,idseqttl
-      ,nrsequen
-      ,dttransa
-      ,hrtransa
-      ,dstransa
-      ,dsorigem
-      ,nmdatela
-      ,flgtrans
-      ,dscritic
-      ,cdoperad
-      ,nmendter)
-    VALUES
-      (rg_crapass.cdcooper
-      ,rg_crapass.nrdconta
-      ,1
-      ,1
-      ,vr_dttransa
-      ,vr_hrtransa
-      ,vr_dstransa
-      ,'AIMARO'
-      ,''
-      ,1
-      ,' '
-      ,1
-      ,' ');
-	  
+		  
 		
 	-- Insere log com valores de antes x depois da crapcot.
     INSERT INTO cecred.craplgi(cdcooper
@@ -401,223 +340,210 @@ BEGIN
       ,1
       ,vr_dttransa
       ,vr_hrtransa
-      ,1
+      ,6
       ,'crapcot.vldcotas'
       ,vr_vldcotas_crapcot
       ,(vr_vldcotas_crapcot + vr_vldcotas) );
 	
 	
+	-- Verificar se existe registro na TBCOTAS_DEVOLUCAO
+	BEGIN
 	
-	-- Excluir registro conforme cooperativa e conta
-	DELETE 
-	FROM CECRED.TBCOTAS_DEVOLUCAO
-    WHERE CDCOOPER = rg_crapass.cdcooper
-      AND NRDCONTA = rg_crapass.nrdconta;
-
+	  SELECT COUNT(*) INTO vr_qtde_tb_devolucao
+	  FROM CECRED.TBCOTAS_DEVOLUCAO
+      WHERE CDCOOPER = rg_crapass.cdcooper
+        AND NRDCONTA = rg_crapass.nrdconta; 
+	  EXCEPTION 
+          WHEN NO_DATA_FOUND THEN 
+           BEGIN
+		     vr_qtde_tb_devolucao:=0;
+             dbms_output.put_line(chr(10) || 'Não encontrado TBCOTAS_DEVOLUCAO para cooperativa e conta ' || rg_crapass.cdcooper||' '||rg_crapass.nrdconta);
+           END;
+		  WHEN OTHERS THEN 
+           BEGIN
+             dbms_output.put_line(chr(10) || 'Erro ao consultar registro na TBCOTAS_DEVOLUCAO para cooperativa e conta ' || rg_crapass.cdcooper||' '||rg_crapass.nrdconta);
+           END;
+	END;
 	
-	-- Insere log de atualização para a VERLOG. Ex: CADA0003 (6708)
-    vr_dttransa := trunc(sysdate);
-    vr_hrtransa := substr(to_char(systimestamp,'FF'),1,10);
 	
+	IF vr_qtde_tb_devolucao > 0 THEN
 	
-    
-    INSERT INTO cecred.craplgm(cdcooper
-      ,nrdconta
-      ,idseqttl
-      ,nrsequen
-      ,dttransa
-      ,hrtransa
-      ,dstransa
-      ,dsorigem
-      ,nmdatela
-      ,flgtrans
-      ,dscritic
-      ,cdoperad
-      ,nmendter)
-    VALUES
-      (rg_crapass.cdcooper
-      ,rg_crapass.nrdconta
-      ,1
-      ,1
-      ,vr_dttransa
-      ,vr_hrtransa
-      ,vr_dstransa
-      ,'AIMARO'
-      ,''
-      ,1
-      ,' '
-      ,1
-      ,' ');
-	  
+		-- Excluir registro conforme cooperativa e conta
+		DELETE 
+		FROM CECRED.TBCOTAS_DEVOLUCAO
+		WHERE CDCOOPER = rg_crapass.cdcooper
+		  AND NRDCONTA = rg_crapass.nrdconta;
+		 
+			
+		-- Insere log com valores de antes x depois da tbcotas_devolucao.
+		INSERT INTO cecred.craplgi(cdcooper
+		  ,nrdconta
+		  ,idseqttl
+		  ,nrsequen
+		  ,dttransa
+		  ,hrtransa
+		  ,nrseqcmp
+		  ,nmdcampo
+		  ,dsdadant
+		  ,dsdadatu)
+		VALUES
+		  (rg_crapass.cdcooper
+		  ,rg_crapass.nrdconta
+		  ,1
+		  ,1
+		  ,vr_dttransa
+		  ,vr_hrtransa
+		  ,7
+		  ,'tbcotas_devolucao.cdcooper'
+		  ,vr_tbcotas_dev_cdcooper
+		  ,NULL );
 		
-	-- Insere log com valores de antes x depois da tbcotas_devolucao.
-    INSERT INTO cecred.craplgi(cdcooper
-      ,nrdconta
-      ,idseqttl
-      ,nrsequen
-      ,dttransa
-      ,hrtransa
-      ,nrseqcmp
-      ,nmdcampo
-      ,dsdadant
-      ,dsdadatu)
-    VALUES
-      (rg_crapass.cdcooper
-      ,rg_crapass.nrdconta
-      ,1
-      ,1
-      ,vr_dttransa
-      ,vr_hrtransa
-      ,1
-      ,'tbcotas_devolucao.cdcooper'
-      ,vr_tbcotas_dev_cdcooper
-      ,NULL );
-    
-	
-	-- Insere log com valores de antes x depois da tbcotas_devolucao.
-    INSERT INTO cecred.craplgi(cdcooper
-      ,nrdconta
-      ,idseqttl
-      ,nrsequen
-      ,dttransa
-      ,hrtransa
-      ,nrseqcmp
-      ,nmdcampo
-      ,dsdadant
-      ,dsdadatu)
-    VALUES
-      (rg_crapass.cdcooper
-      ,rg_crapass.nrdconta
-      ,1
-      ,1
-      ,vr_dttransa
-      ,vr_hrtransa
-      ,2
-      ,'tbcotas_devolucao.nrdconta'
-      ,vr_tbcotas_dev_nrdconta
-      ,NULL );
-	
-	
-	-- Insere log com valores de antes x depois da tbcotas_devolucao.
-    INSERT INTO cecred.craplgi(cdcooper
-      ,nrdconta
-      ,idseqttl
-      ,nrsequen
-      ,dttransa
-      ,hrtransa
-      ,nrseqcmp
-      ,nmdcampo
-      ,dsdadant
-      ,dsdadatu)
-    VALUES
-      (rg_crapass.cdcooper
-      ,rg_crapass.nrdconta
-      ,1
-      ,1
-      ,vr_dttransa
-      ,vr_hrtransa
-      ,3
-      ,'tbcotas_devolucao.tpdevolucao'
-      ,vr_tbcotas_dev_tpdevolucao
-      ,NULL );
-	
-	
-	
-	-- Insere log com valores de antes x depois da tbcotas_devolucao.
-    INSERT INTO cecred.craplgi(cdcooper
-      ,nrdconta
-      ,idseqttl
-      ,nrsequen
-      ,dttransa
-      ,hrtransa
-      ,nrseqcmp
-      ,nmdcampo
-      ,dsdadant
-      ,dsdadatu)
-    VALUES
-      (rg_crapass.cdcooper
-      ,rg_crapass.nrdconta
-      ,1
-      ,1
-      ,vr_dttransa
-      ,vr_hrtransa
-      ,4
-      ,'tbcotas_devolucao.vlcapital'
-      ,vr_tbcotas_dev_vlcapital
-      ,NULL );
-	
-	
-	-- Insere log com valores de antes x depois da tbcotas_devolucao.
-    INSERT INTO cecred.craplgi(cdcooper
-      ,nrdconta
-      ,idseqttl
-      ,nrsequen
-      ,dttransa
-      ,hrtransa
-      ,nrseqcmp
-      ,nmdcampo
-      ,dsdadant
-      ,dsdadatu)
-    VALUES
-      (rg_crapass.cdcooper
-      ,rg_crapass.nrdconta
-      ,1
-      ,1
-      ,vr_dttransa
-      ,vr_hrtransa
-      ,5
-      ,'tbcotas_devolucao.qtparcelas'
-      ,vr_tbcotas_dev_qtparcelas
-      ,NULL );
-	
-	
-	-- Insere log com valores de antes x depois da tbcotas_devolucao.
-    INSERT INTO cecred.craplgi(cdcooper
-      ,nrdconta
-      ,idseqttl
-      ,nrsequen
-      ,dttransa
-      ,hrtransa
-      ,nrseqcmp
-      ,nmdcampo
-      ,dsdadant
-      ,dsdadatu)
-    VALUES
-      (rg_crapass.cdcooper
-      ,rg_crapass.nrdconta
-      ,1
-      ,1
-      ,vr_dttransa
-      ,vr_hrtransa
-      ,6
-      ,'tbcotas_devolucao.dtinicio_credito'
-      ,vr_tbcotas_dev_dtinicio_credito
-      ,NULL );
-	
-	
-	-- Insere log com valores de antes x depois da tbcotas_devolucao.
-    INSERT INTO cecred.craplgi(cdcooper
-      ,nrdconta
-      ,idseqttl
-      ,nrsequen
-      ,dttransa
-      ,hrtransa
-      ,nrseqcmp
-      ,nmdcampo
-      ,dsdadant
-      ,dsdadatu)
-    VALUES
-      (rg_crapass.cdcooper
-      ,rg_crapass.nrdconta
-      ,1
-      ,1
-      ,vr_dttransa
-      ,vr_hrtransa
-      ,7
-      ,'tbcotas_devolucao.vlpago'
-      ,vr_tbcotas_dev_vlpago
-      ,NULL );
-	
+		
+		-- Insere log com valores de antes x depois da tbcotas_devolucao.
+		INSERT INTO cecred.craplgi(cdcooper
+		  ,nrdconta
+		  ,idseqttl
+		  ,nrsequen
+		  ,dttransa
+		  ,hrtransa
+		  ,nrseqcmp
+		  ,nmdcampo
+		  ,dsdadant
+		  ,dsdadatu)
+		VALUES
+		  (rg_crapass.cdcooper
+		  ,rg_crapass.nrdconta
+		  ,1
+		  ,1
+		  ,vr_dttransa
+		  ,vr_hrtransa
+		  ,8
+		  ,'tbcotas_devolucao.nrdconta'
+		  ,vr_tbcotas_dev_nrdconta
+		  ,NULL );
+		
+		
+		-- Insere log com valores de antes x depois da tbcotas_devolucao.
+		INSERT INTO cecred.craplgi(cdcooper
+		  ,nrdconta
+		  ,idseqttl
+		  ,nrsequen
+		  ,dttransa
+		  ,hrtransa
+		  ,nrseqcmp
+		  ,nmdcampo
+		  ,dsdadant
+		  ,dsdadatu)
+		VALUES
+		  (rg_crapass.cdcooper
+		  ,rg_crapass.nrdconta
+		  ,1
+		  ,1
+		  ,vr_dttransa
+		  ,vr_hrtransa
+		  ,9
+		  ,'tbcotas_devolucao.tpdevolucao'
+		  ,vr_tbcotas_dev_tpdevolucao
+		  ,NULL );
+		
+		
+		
+		-- Insere log com valores de antes x depois da tbcotas_devolucao.
+		INSERT INTO cecred.craplgi(cdcooper
+		  ,nrdconta
+		  ,idseqttl
+		  ,nrsequen
+		  ,dttransa
+		  ,hrtransa
+		  ,nrseqcmp
+		  ,nmdcampo
+		  ,dsdadant
+		  ,dsdadatu)
+		VALUES
+		  (rg_crapass.cdcooper
+		  ,rg_crapass.nrdconta
+		  ,1
+		  ,1
+		  ,vr_dttransa
+		  ,vr_hrtransa
+		  ,10
+		  ,'tbcotas_devolucao.vlcapital'
+		  ,vr_tbcotas_dev_vlcapital
+		  ,NULL );
+		
+		
+		-- Insere log com valores de antes x depois da tbcotas_devolucao.
+		INSERT INTO cecred.craplgi(cdcooper
+		  ,nrdconta
+		  ,idseqttl
+		  ,nrsequen
+		  ,dttransa
+		  ,hrtransa
+		  ,nrseqcmp
+		  ,nmdcampo
+		  ,dsdadant
+		  ,dsdadatu)
+		VALUES
+		  (rg_crapass.cdcooper
+		  ,rg_crapass.nrdconta
+		  ,1
+		  ,1
+		  ,vr_dttransa
+		  ,vr_hrtransa
+		  ,11
+		  ,'tbcotas_devolucao.qtparcelas'
+		  ,vr_tbcotas_dev_qtparcelas
+		  ,NULL );
+		
+		
+		-- Insere log com valores de antes x depois da tbcotas_devolucao.
+		INSERT INTO cecred.craplgi(cdcooper
+		  ,nrdconta
+		  ,idseqttl
+		  ,nrsequen
+		  ,dttransa
+		  ,hrtransa
+		  ,nrseqcmp
+		  ,nmdcampo
+		  ,dsdadant
+		  ,dsdadatu)
+		VALUES
+		  (rg_crapass.cdcooper
+		  ,rg_crapass.nrdconta
+		  ,1
+		  ,1
+		  ,vr_dttransa
+		  ,vr_hrtransa
+		  ,12
+		  ,'tbcotas_devolucao.dtinicio_credito'
+		  ,vr_tbcotas_dev_dtinicio_credito
+		  ,NULL );
+		
+		
+		-- Insere log com valores de antes x depois da tbcotas_devolucao.
+		INSERT INTO cecred.craplgi(cdcooper
+		  ,nrdconta
+		  ,idseqttl
+		  ,nrsequen
+		  ,dttransa
+		  ,hrtransa
+		  ,nrseqcmp
+		  ,nmdcampo
+		  ,dsdadant
+		  ,dsdadatu)
+		VALUES
+		  (rg_crapass.cdcooper
+		  ,rg_crapass.nrdconta
+		  ,1
+		  ,1
+		  ,vr_dttransa
+		  ,vr_hrtransa
+		  ,13
+		  ,'tbcotas_devolucao.vlpago'
+		  ,vr_tbcotas_dev_vlpago
+		  ,NULL );
+		  
+	END IF;
 		
   END LOOP;
   
