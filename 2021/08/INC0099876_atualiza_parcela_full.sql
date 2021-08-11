@@ -42,17 +42,28 @@ DECLARE
 
 BEGIN
 
-  UPDATE crawepr w
+  UPDATE crawepr
      SET vlpreemp = 108.00
    WHERE cdcooper = 1
      AND nrdconta = 3236609
      AND nrctremp = 2954120;
 
-  UPDATE crappep w
-     SET vlparepr = 108.00
+  UPDATE crapepr
+     SET dtdpagto = to_date('10/02/2021', 'dd/mm/yyyy')
    WHERE cdcooper = 1
      AND nrdconta = 3236609
      AND nrctremp = 2954120;
+
+  UPDATE crappep
+     SET vlparepr = 108.00
+        ,vlsdvpar = 108.00
+        ,vlsdvsji = 108.00
+        ,vlsdvatu = 108.00
+        ,vljura60 = 108.00
+   WHERE cdcooper = 1
+     AND nrdconta = 3236609
+     AND nrctremp = 2954120
+     AND nrparepr > 5;
 
   FOR empr IN (SELECT a.cdcooper
                      ,a.nrdconta
@@ -105,6 +116,8 @@ BEGIN
             ,vlpagmta = nvl(rw_multa.vllanmto, 0)
             ,vlpagmra = nvl(rw_mora.vllanmto, 0)
             ,vlpagiof = nvl(rw_iof.vllanmto, 0)
+            ,vlsdvsji = 0.00
+            ,vlsdvatu = 0.00
        WHERE cdcooper = empr.cdcooper
          AND nrdconta = empr.nrdconta
          AND nrctremp = empr.nrctremp
@@ -123,6 +136,9 @@ BEGIN
             ,vlpagmta = nvl(rw_multa.vllanmto, 0)
             ,vlpagmra = nvl(rw_mora.vllanmto, 0)
             ,vlpagiof = nvl(rw_iof.vllanmto, 0)
+            ,vlsdvsji = 108.00
+            ,vlsdvatu = 108.00
+            ,vljura60 = 108.00
        WHERE cdcooper = empr.cdcooper
          AND nrdconta = empr.nrdconta
          AND nrctremp = empr.nrctremp
