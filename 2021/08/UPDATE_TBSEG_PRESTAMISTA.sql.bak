@@ -8,6 +8,7 @@ declare
   vr_exc_saida  EXCEPTION;  
 cursor cr_tbseg_prst is 
   Select nrproposta, cdcooper, nrctrseg, nrdconta, dtrecusa, situacao, tprecusa, CdMotrec, tpregist
+   , (SELECT dat.dtmvtolt FROM crapdat dat WHERE dat.cdcooper = a.cdcooper) dtmvtolt 
   From tbseg_prestamista a where nrproposta in
       (770353134345 ,770352595837 ,770351134720 ,770351954582 ,770351006846 ,770352188581 ,770351758961 ,770351322314 
       ,770352362565 ,770352039861 ,770351324228 ,770352022020 ,770352390852 ,770352149500 ,770351891556 ,770353082108 
@@ -86,12 +87,12 @@ cursor cr_tbseg_prst is
          WHERE nrproposta = rw_tbseg.nrproposta; 
          
          UPDATE crapseg
-           set crapseg.dtfimvig = sysdate
-           ,   crapseg.dtcancel = sysdate
+           set crapseg.dtfimvig = rw_tbseg.dtmvtolt
+           ,   crapseg.dtcancel = rw_tbseg.dtmvtolt
            ,   crapseg.cdsitseg = 5
            ,   crapseg.cdopeexc = 1
            ,   crapseg.cdageexc = 1
-           ,   crapseg.dtinsexc = sysdate
+           ,   crapseg.dtinsexc = rw_tbseg.dtmvtolt 
            ,   crapseg.cdopecnl = 1  
            where crapseg.nrctrseg = rw_crapseg.nrctrseg  
             and crapseg.nrdconta = rw_crapseg.nrdconta   
