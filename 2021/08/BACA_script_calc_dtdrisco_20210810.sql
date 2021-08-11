@@ -24,7 +24,7 @@ BEGIN
              WHERE ris.cdcooper = 9
                AND ris.cdagenci = 28
                AND ris.nrctremp IN (SELECT prop.nrctremp
-                                        FROM gestaoderisco.credcorreios_proposta prop WHERE TRUNC(prop.dth_registro) = '10/08/2021')
+                                        FROM gestaoderisco.credcorreios_proposta prop WHERE TRUNC(prop.dth_registro) = TO_DATE('10/08/2021', 'dd/mm/YYYY'))
                AND ris.dtrefere = rw_crapdat.dtmvtoan
                AND ris.cdmodali IN (299,499)) LOOP
 
@@ -55,7 +55,7 @@ BEGIN
                AND tbris.cdcooper = 9
                AND tbris.cdmodali IN (299,499)
                AND tbris.nrctremp IN (SELECT prop.nrctremp
-                                        FROM gestaoderisco.credcorreios_proposta prop WHERE TRUNC(prop.dth_registro) = '10/08/2021')
+                                        FROM gestaoderisco.credcorreios_proposta prop WHERE TRUNC(prop.dth_registro) = TO_DATE('10/08/2021', 'dd/mm/YYYY'))
                AND EXISTS (SELECT 1
                              FROM crapris ris
                             WHERE ris.cdcooper = 9
