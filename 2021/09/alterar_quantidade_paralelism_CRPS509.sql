@@ -1,8 +1,12 @@
--- Altera a quantidade de paralelismo da CRPS509 para 07
-
-UPDATE tbgen_batch_param
-   SET QTPARALELO = 7
- WHERE CDPROGRAMA = 'CRPS509'
-   AND CDCOOPER = 1;
-   
-COMMIT;
+BEGIN
+	UPDATE tbgen_batch_param
+	   SET QTPARALELO = 7
+	 WHERE CDPROGRAMA = 'CRPS509'
+	   AND CDCOOPER = 1;
+    
+	COMMIT;
+	
+  EXCEPTION
+  WHEN OTHERS THEN
+    NULL;
+END;
