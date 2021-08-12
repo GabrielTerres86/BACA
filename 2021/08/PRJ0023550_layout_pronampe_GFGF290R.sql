@@ -9,8 +9,8 @@ BEGIN
   values (vr_idcampo, 'GFGF290R', 'Pronampe - Eventos do Administrador', null, '3º Retorno');
 
   -- Insere nome do programa para rastreabilidade
-  --  insert into tbgen_layout_programa (IDLAYOUT, CDPROGRA)
-  --  values (vr_idcampo, '');
+    insert into tbgen_layout_programa (IDLAYOUT, CDPROGRA)
+    values (vr_idcampo, 'incluirPronampeGFGF290R');
 
   -- Header
   insert into tbgen_layout_campo (IDLAYOUT, TPREGISTRO, NRSEQUENCIA_CAMPO, NMCAMPO, TPDADO, DSFORMATO, NRPOSICAO_INICIAL, QTDPOSICOES, QTDDECIMAIS, DSOBSERVACAO, DSIDENTIFICADOR_REGISTRO)
