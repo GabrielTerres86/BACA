@@ -26,7 +26,7 @@ conta_13137433_4275802 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><con
                           <codigo>4</codigo>
                         </tipoLiquidacao> 
                         <tributoIOFValor>400.58</tributoIOFValor>
-                        <valor>12328.04</valor><valorBase>12328.04</valorBase><dataProposta>2021-08-09T19:31:15</dataProposta>
+                        <valor>12328.04</valor><valorBase>12328.04</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
                         <emitente> 
                           <dataNascOuConstituicao>1996-05-13T00:00:00</dataNascOuConstituicao>
                           <identificadorReceitaFederal>9474084955</identificadorReceitaFederal>
@@ -554,7 +554,7 @@ conta_13132504_4272854 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><con
                           <codigo>4</codigo>
                         </tipoLiquidacao> 
                         <tributoIOFValor>1156.57</tributoIOFValor>
-                        <valor>35521.76</valor><valorBase>35521.76</valorBase><dataProposta>2021-08-06T10:00:00</dataProposta>
+                        <valor>35521.76</valor><valorBase>35521.76</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
                         <emitente> 
                           <dataNascOuConstituicao>1978-09-08T00:00:00</dataNascOuConstituicao>
                           <identificadorReceitaFederal>2361284936</identificadorReceitaFederal>
@@ -792,6 +792,3975 @@ conta_13126288_44269245 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><co
                          <dataCalculoLegado>2021-08-04T00:00:00</dataCalculoLegado>
                       </parametroConsignado> </Root>';
 
+conta_13119478_4267328 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>26</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.03</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>95</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>332.88</tributoIOFValor>
+                        <valor>10304.02</valor><valorBase>10304.02</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1977-12-20T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>2379675961</identificadorReceitaFederal>
+                          <razaoSocialOuNome>LUIZ CLAUDIO LEONEL</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13119478</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83321210</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>VARGEM GRANDE</nomeBairro>
+                            <numeroLogradouro>790</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA CASIMIRO DE ABRE</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4267328</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>63991341</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>1</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>155.10</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>CURITIBA</naturalidade>
+                         <dataCalculoLegado>2021-08-06T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13116967_4266902 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>27</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.05</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>33</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>148.23</tributoIOFValor>
+                        <valor>5122.74</valor><valorBase>5122.74</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1986-09-26T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>8324483624</identificadorReceitaFederal>
+                          <razaoSocialOuNome>PAULA CRISTINA DA SILVA FRANCA</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13116967</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83407330</CEP>
+                            <cidade>
+                              <descricao>COLOMBO</descricao>
+                            </cidade>
+                            <nomeBairro>GUARAITUBA</nomeBairro>
+                            <numeroLogradouro>316</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA ALFREDO TOMACHES</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4266902</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>06857376823</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>263870300</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>177.10</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>UBERLANDIA</naturalidade>
+                         <dataCalculoLegado>2021-08-05T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13110519_4257688 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>27</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.04</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>62</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>804.63</tributoIOFValor>
+                        <valor>25644.76</valor><valorBase>25644.76</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1981-01-02T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>2619194903</identificadorReceitaFederal>
+                          <razaoSocialOuNome>CARLOS AFONSO JACOMASSI JUNIOR</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13110519</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83331280</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>MARIA ANTONIETA</nomeBairro>
+                            <numeroLogradouro>195</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA ERNESTO WANDEMBR</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4257688</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>02347376750</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>1</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>151970000</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>525.85</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>NAZARE</naturalidade>
+                         <dataCalculoLegado>2021-08-05T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13110519_4257664 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>27</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.04</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>58</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>112.83</tributoIOFValor>
+                        <valor>3617.34</valor><valorBase>3617.34</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1981-01-02T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>2619194903</identificadorReceitaFederal>
+                          <razaoSocialOuNome>CARLOS AFONSO JACOMASSI JUNIOR</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13110519</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83331280</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>MARIA ANTONIETA</nomeBairro>
+                            <numeroLogradouro>195</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA ERNESTO WANDEMBR</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4257664</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>02347376750</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>1</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>151970000</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>78.13</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>NAZARE</naturalidade>
+                         <dataCalculoLegado>2021-08-05T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13110519_4257645 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>27</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.04</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>54</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>205.17</tributoIOFValor>
+                        <valor>6625.33</valor><valorBase>6625.33</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1981-01-02T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>2619194903</identificadorReceitaFederal>
+                          <razaoSocialOuNome>CARLOS AFONSO JACOMASSI JUNIOR</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13110519</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83331280</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>MARIA ANTONIETA</nomeBairro>
+                            <numeroLogradouro>195</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA ERNESTO WANDEMBR</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4257645</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>02347376750</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>1</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>151970000</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>151.46</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>NAZARE</naturalidade>
+                         <dataCalculoLegado>2021-08-05T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13009389_4254532 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>33</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.03</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>114</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>2342.4</tributoIOFValor>
+                        <valor>71655.90</valor><valorBase>71655.90</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1964-09-14T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>65539818920</identificadorReceitaFederal>
+                          <razaoSocialOuNome>ANDREA DE CARVALHO CONTIN POLE</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13009389</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83320290</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>10</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA ZAMBIA</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4254532</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>03478941305</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>961.27</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>CURITIBA</naturalidade>
+                         <dataCalculoLegado>2021-07-30T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13101820_4252853 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>28</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.04</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>67</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>435.37</tributoIOFValor>
+                        <valor>13777.00</valor><valorBase>13777.00</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1988-04-23T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>6091220969</identificadorReceitaFederal>
+                          <razaoSocialOuNome>JESSICA DANIELE ADORNES</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13101820</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83403518</CEP>
+                            <cidade>
+                              <descricao>COLOMBO</descricao>
+                            </cidade>
+                            <nomeBairro>SAO GABRIEL</nomeBairro>
+                            <numeroLogradouro>2927</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>AVENIDA SANTOS DUMON</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4252853</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>05651047880</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>1</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>124903701</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>266.30</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>CURITIBA</naturalidade>
+                         <dataCalculoLegado>2021-08-04T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13028243_4252218 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>34</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.06</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>22</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>93.93</tributoIOFValor>
+                        <valor>3523.32</valor><valorBase>3523.32</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1982-02-21T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>3227078970</identificadorReceitaFederal>
+                          <razaoSocialOuNome>JEAN MERLEI MACHADO</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13028243</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83408220</CEP>
+                            <cidade>
+                              <descricao>COLOMBO</descricao>
+                            </cidade>
+                            <nomeBairro>ATUBA</nomeBairro>
+                            <numeroLogradouro>831</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA FARADAY</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4252218</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>78832088</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>1</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>175.48</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>CURITIBA</naturalidade>
+                         <dataCalculoLegado>2021-07-29T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13096702_4250019 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>34</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.05</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>38</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>190.19</tributoIOFValor>
+                        <valor>6375.18</valor><valorBase>6375.18</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1981-11-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>2984811976</identificadorReceitaFederal>
+                          <razaoSocialOuNome>ANDERSON JOSE OLIVEIRA DA LUZ</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13096702</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83311220</CEP>
+                            <cidade>
+                              <descricao>PIRAQUARA</descricao>
+                            </cidade>
+                            <nomeBairro>PLANTA BELVEDERE</nomeBairro>
+                            <numeroLogradouro>133</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA UBIRATA</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4250019</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>02820115799</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>1</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>195.43</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>SAO LEOPOLDO</naturalidade>
+                         <dataCalculoLegado>2021-07-29T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13032127_4248868 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>34</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.09</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>8</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>23.78</tributoIOFValor>
+                        <valor>1541.16</valor><valorBase>1541.16</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1970-08-17T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>78650313949</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MARCIA ALVES DA SILVA CAIADO</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13032127</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83331090</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>MARIA ANTONIETA</nomeBairro>
+                            <numeroLogradouro>9259</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA CARLOS POULHMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4248868</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>53411045</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>199.86</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>CURITIBA</naturalidade>
+                         <dataCalculoLegado>2021-07-29T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13087525_4248682 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>34</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.03</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>53</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>48.46</tributoIOFValor>
+                        <valor>1559.86</valor><valorBase>1559.86</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1968-10-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>67764550906</identificadorReceitaFederal>
+                          <razaoSocialOuNome>TAIZA APARECIDA PINHEIRO SOREN</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13087525</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328140</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>400</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA MANACA</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4248682</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>47956650</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>68691302</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>36.26</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>ANTONINA</naturalidade>
+                         <dataCalculoLegado>2021-07-29T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13087525_4248676 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>34</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.04</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>65</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>537.27</tributoIOFValor>
+                        <valor>16982.26</valor><valorBase>16982.26</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1968-10-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>67764550906</identificadorReceitaFederal>
+                          <razaoSocialOuNome>TAIZA APARECIDA PINHEIRO SOREN</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13087525</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328140</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>400</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA MANACA</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4248676</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>47956650</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>68691302</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>336.43</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>ANTONINA</naturalidade>
+                         <dataCalculoLegado>2021-07-29T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13087525_4248670 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>34</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.03</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>53</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>27.27</tributoIOFValor>
+                        <valor>877.65</valor><valorBase>877.65</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1968-10-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>67764550906</identificadorReceitaFederal>
+                          <razaoSocialOuNome>TAIZA APARECIDA PINHEIRO SOREN</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13087525</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328140</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>400</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA MANACA</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4248670</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>47956650</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>68691302</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>20.40</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>ANTONINA</naturalidade>
+                         <dataCalculoLegado>2021-07-29T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13087525_4248654 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>34</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.04</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>53</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>49.42</tributoIOFValor>
+                        <valor>1590.77</valor><valorBase>1590.77</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1968-10-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>67764550906</identificadorReceitaFederal>
+                          <razaoSocialOuNome>TAIZA APARECIDA PINHEIRO SOREN</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13087525</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328140</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>400</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA MANACA</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4248654</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>47956650</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>68691302</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>36.98</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>ANTONINA</naturalidade>
+                         <dataCalculoLegado>2021-07-29T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13087525_4248639 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>34</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.05</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>53</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>27.4</tributoIOFValor>
+                        <valor>882.47</valor><valorBase>882.47</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1968-10-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>67764550906</identificadorReceitaFederal>
+                          <razaoSocialOuNome>TAIZA APARECIDA PINHEIRO SOREN</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13087525</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328140</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>400</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA MANACA</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4248639</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>47956650</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>68691302</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>20.52</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>ANTONINA</naturalidade>
+                         <dataCalculoLegado>2021-07-29T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';  
+
+conta_13087525_4248623 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>34</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.04</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>53</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>60.42</tributoIOFValor>
+                        <valor>1945.47</valor><valorBase>1945.47</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1968-10-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>67764550906</identificadorReceitaFederal>
+                          <razaoSocialOuNome>TAIZA APARECIDA PINHEIRO SOREN</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13087525</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328140</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>400</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA MANACA</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4248623</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>47956650</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>68691302</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>45.23</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>ANTONINA</naturalidade>
+                         <dataCalculoLegado>2021-07-29T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13087525_4248607 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>34</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.04</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>53</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>55.42</tributoIOFValor>
+                        <valor>1784.64</valor><valorBase>1784.64</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1968-10-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>67764550906</identificadorReceitaFederal>
+                          <razaoSocialOuNome>TAIZA APARECIDA PINHEIRO SOREN</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13087525</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328140</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>400</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA MANACA</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4248607</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>47956650</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>68691302</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>41.49</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>ANTONINA</naturalidade>
+                         <dataCalculoLegado>2021-07-29T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13087525_4248585 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>35</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.04</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>31</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>26.95</tributoIOFValor>
+                        <valor>932.88</valor><valorBase>932.88</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1968-10-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>67764550906</identificadorReceitaFederal>
+                          <razaoSocialOuNome>TAIZA APARECIDA PINHEIRO SOREN</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13087525</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328140</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>400</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA MANACA</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4248585</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>47956650</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>68691302</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>34.14</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>ANTONINA</naturalidade>
+                         <dataCalculoLegado>2021-07-28T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13087525_4248578 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>35</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.06</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>25</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>30.32</tributoIOFValor>
+                        <valor>1097.17</valor><valorBase>1097.17</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1968-10-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>67764550906</identificadorReceitaFederal>
+                          <razaoSocialOuNome>TAIZA APARECIDA PINHEIRO SOREN</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13087525</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328140</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>400</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA MANACA</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4248578</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>47956650</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>68691302</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>48.66</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>ANTONINA</naturalidade>
+                         <dataCalculoLegado>2021-07-28T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13087525_4248567 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>35</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.04</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>43</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>135.18</tributoIOFValor>
+                        <valor>4452.21</valor><valorBase>4452.21</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1968-10-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>67764550906</identificadorReceitaFederal>
+                          <razaoSocialOuNome>TAIZA APARECIDA PINHEIRO SOREN</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13087525</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328140</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>400</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA MANACA</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4248567</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>47956650</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>68691302</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>122.94</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>ANTONINA</naturalidade>
+                         <dataCalculoLegado>2021-07-28T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13087525_4248554 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>35</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.04</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>47</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>56.85</tributoIOFValor>
+                        <valor>1853.02</valor><valorBase>1853.02</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1968-10-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>67764550906</identificadorReceitaFederal>
+                          <razaoSocialOuNome>TAIZA APARECIDA PINHEIRO SOREN</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13087525</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328140</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>400</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA MANACA</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4248554</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>47956650</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>68691302</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>47.52</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>ANTONINA</naturalidade>
+                         <dataCalculoLegado>2021-07-28T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>'; 
+
+conta_12790079_4248056 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>34</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.05</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>32</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>220.42</tributoIOFValor>
+                        <valor>7597.43</valor><valorBase>7597.43</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1982-07-24T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>3918507920</identificadorReceitaFederal>
+                          <razaoSocialOuNome>AMANDA DE PAULA ASSUNCAO</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>12790079</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83306054</CEP>
+                            <cidade>
+                              <descricao>PIRAQUARA</descricao>
+                            </cidade>
+                            <nomeBairro>PLANTA CHAUNE</nomeBairro>
+                            <numeroLogradouro>255</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA ANGELO JACOMEL</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4248056</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>03261421815</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>1</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>119634000</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>270.33</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>CURITIBA</naturalidade>
+                         <dataCalculoLegado>2021-07-29T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_12281220_4244779 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>21</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.04</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>63</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>239.66</tributoIOFValor>
+                        <valor>7656.96</valor><valorBase>7656.96</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1976-07-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>2833124910</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MARIA JOCEANE RIBEIRO</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>12281220</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83326480</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM CLAUDIA</nomeBairro>
+                            <numeroLogradouro>195</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA TIZIU</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4244779</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>05537719459</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>70802000</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>154.83</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>RIO NEGRO</naturalidade>
+                         <dataCalculoLegado>2021-08-11T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_12281220_4244769 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>21</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.03</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>70</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>63.24</tributoIOFValor>
+                        <valor>2001.97</valor><valorBase>2001.97</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1976-07-07T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>2833124910</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MARIA JOCEANE RIBEIRO</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>12281220</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83326480</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM CLAUDIA</nomeBairro>
+                            <numeroLogradouro>195</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA TIZIU</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4244769</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>05537719459</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>70802000</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>37.37</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>RIO NEGRO</naturalidade>
+                         <dataCalculoLegado>2021-08-11T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13063928_4229100 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>30</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.03</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>111</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>291.64</tributoIOFValor>
+                        <valor>8942.67</valor><valorBase>8942.67</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1976-06-20T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>2767054913</identificadorReceitaFederal>
+                          <razaoSocialOuNome>LINCOL ANTONIO SANTANA DA SILV</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13063928</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328260</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>303</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA FLORDELOTUS</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4229100</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>01528638452</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>1</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>121.86</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>PIRAQUARA</naturalidade>
+                         <dataCalculoLegado>2021-08-02T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13063928_4229086 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>30</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.03</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>111</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>178.87</tributoIOFValor>
+                        <valor>5486.04</valor><valorBase>5486.04</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1976-06-20T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>2767054913</identificadorReceitaFederal>
+                          <razaoSocialOuNome>LINCOL ANTONIO SANTANA DA SILV</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13063928</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328260</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>303</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA FLORDELOTUS</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4229086</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>01528638452</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>1</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>74.76</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>PIRAQUARA</naturalidade>
+                         <dataCalculoLegado>2021-08-02T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13063928_4229064 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>30</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.03</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>111</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>849.82</tributoIOFValor>
+                        <valor>26059.01</valor><valorBase>26059.01</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1976-06-20T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>2767054913</identificadorReceitaFederal>
+                          <razaoSocialOuNome>LINCOL ANTONIO SANTANA DA SILV</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13063928</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328260</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>303</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA FLORDELOTUS</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4229064</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>01528638452</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>1</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>355.11</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>PIRAQUARA</naturalidade>
+                         <dataCalculoLegado>2021-08-02T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_13063928_4229022 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>30</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.03</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>111</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>588.45</tributoIOFValor>
+                        <valor>18043.22</valor><valorBase>18043.22</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1976-06-20T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>2767054913</identificadorReceitaFederal>
+                          <razaoSocialOuNome>LINCOL ANTONIO SANTANA DA SILV</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>13063928</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>83328260</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>JARDIM KARLA</nomeBairro>
+                            <numeroLogradouro>303</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA FLORDELOTUS</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4229022</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>01528638452</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>1</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>245.88</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>PIRAQUARA</naturalidade>
+                         <dataCalculoLegado>2021-08-02T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+conta_12998052_4224840 clob := '<?xml version="1.0" encoding="WINDOWS-1252"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>6502</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <financiaIOF>false</financiaIOF>
+    <financiaTarifa>false</financiaTarifa>
+    <diasCarencia>36</diasCarencia>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>10.04</CETPercentAoAno>
+    <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+    <produto>
+      <codigo>162</codigo>
+    </produto>
+    <quantidadeParcelas>64</quantidadeParcelas>
+    <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>630.5</tributoIOFValor>
+    <valor>19932.70</valor>
+    <valorBase>19932.70</valorBase>
+    <dataProposta>2021-08-12T10:00:00</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1985-04-22T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>4312342997</identificadorReceitaFederal>
+      <razaoSocialOuNome>ANDRE FRANCISCO GRETER</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>12998052</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>83322280</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>WEISSOPOLIS</nomeBairro>
+        <numeroLogradouro>188</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA RIO TROMBETAS</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>4224840</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>02969559370</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>6</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>1</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>60921801</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+      <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>83323400</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>CENTRO</nomeBairro>
+        <numeroLogradouro>536</numeroLogradouro>
+        <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>399.81</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>CURITIBA</naturalidade>
+    <dataCalculoLegado>2021-07-27T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>
+';
+
+conta_12875023_4097368 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>1</codigo>
+                        </cooperativa>
+                        <numeroContrato>6502</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>34</diasCarencia>
+                        <financiaIOF>false</financiaIOF>
+                        <financiaTarifa>false</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>10.03</CETPercentAoAno>
+                        <dataPrimeiraParcela>2021-09-01</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>162</codigo>
+                        </produto>
+                        <quantidadeParcelas>115</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>0.80</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>10.03</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>848.96</tributoIOFValor>
+                        <valor>25951.65</valor><valorBase>25951.65</valorBase><dataProposta>2021-08-12T10:00:00</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1980-07-28T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>3179253932</identificadorReceitaFederal>
+                          <razaoSocialOuNome>PATRICIA PEREIRA DA SILVA</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>101</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>12875023</codigoConta>
+                            <cooperativa>
+                              <codigo>1</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>82820260</CEP>
+                            <cidade>
+                              <descricao>CURITIBA</descricao>
+                            </cidade>
+                            <nomeBairro>BAIRRO ALTO</nomeBairro>
+                            <numeroLogradouro>912</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA MARCO POLO</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>4097368</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>04020564803</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>6</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>2</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>142611704</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+                          <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>83323400</CEP>
+                            <cidade>
+                              <descricao>PINHAIS</descricao>
+                            </cidade>
+                            <nomeBairro>CENTRO</nomeBairro>
+                            <numeroLogradouro>536</numeroLogradouro>
+                            <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+                            <UF>PR</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>346.38</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>CURITIBA</naturalidade>
+                         <dataCalculoLegado>2021-07-29T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
 begin
 
     insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
@@ -811,6 +4780,96 @@ begin
 
     insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
     values (1, 13126288, 4269245, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13126288_44269245);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13119478, 4267328, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13119478_4267328);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13116967, 4266902, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13116967_4266902);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13110519, 4257688, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13110519_4257688);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13110519, 4257664, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13110519_4257664);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13110519, 4257645, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13110519_4257645);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13009389, 4254532, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13009389_4254532);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13101820, 4252853, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13101820_4252853);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13028243, 4252218, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13028243_4252218);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13096702, 4250019, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13096702_4250019);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13032127, 4248868, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13032127_4248868);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13087525, 4248682, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13087525_4248682);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13087525, 4248676, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13087525_4248676);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13087525, 4248670, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13087525_4248670);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13087525, 4248654, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13087525_4248654);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13087525, 4248639, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13087525_4248639);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13087525, 4248623, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13087525_4248623);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13087525, 4248607, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13087525_4248607);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13087525, 4248585, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13087525_4248585);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13087525, 4248578, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13087525_4248578);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13087525, 4248567, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13087525_4248567);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13087525, 4248554, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13087525_4248554);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 12790079, 4248056, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_12790079_4248056);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 12281220, 4244779, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_12281220_4244779);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 12281220, 4244769, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_12281220_4244769);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13063928, 4229100, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13063928_4229100);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13063928, 4229086, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13063928_4229086);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13063928, 4229064, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13063928_4229064);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13063928, 4229022, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13063928_4229022);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 12998052, 4224840, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_12998052_4224840);
+
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 12875023, 4097368, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_12875023_4097368);
 
 commit;
 
