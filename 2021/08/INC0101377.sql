@@ -69,7 +69,6 @@ update craprac
    and cdprodut = 1007
    and nrdconta = 8894370
    and nraplica = 54;
-   
    commit;
    
-end
+end;
