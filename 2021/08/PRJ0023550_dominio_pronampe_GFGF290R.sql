@@ -1,9 +1,10 @@
 BEGIN
 
-  DELETE FROM cecred.tbepr_dominio_campo WHERE nmdominio = 'PRONAMPE_REJEICAOREG';  -- 15.2 CÓDIGOS DE REJEIÇÃO DOS REGISTROS DA REMESSA OU PRÉ-VALIDAÇÃO
-  DELETE FROM cecred.tbepr_dominio_campo WHERE nmdominio = 'PRONAMPE_PENDENCIAOP';  -- 15.11 TIPO DE PENDÊNCIA DA OPERAÇÃO / 15.12 MOTIVO DE ENCERRAMENTO DA OPERAÇÃO PELO ADMINISTRADOR
-  DELETE FROM cecred.tbepr_dominio_campo WHERE nmdominio = 'PRONAMPE_SITUACAOOP';   -- 15.13 SITUAÇÃO DA OPERAÇÃO
-  DELETE FROM cecred.tbepr_dominio_campo WHERE nmdominio = 'PRONAMPE_IMPUGNACAOOP'; -- 15.14 MOTIVO DE IMPUGNAÇÃO DA OPERAÇÃO
+  DELETE FROM cecred.tbepr_dominio_campo WHERE nmdominio = 'PRONAMPE_REJEICAOREG';    -- 15.2 CÓDIGOS DE REJEIÇÃO DOS REGISTROS DA REMESSA OU PRÉ-VALIDAÇÃO
+  DELETE FROM cecred.tbepr_dominio_campo WHERE nmdominio = 'PRONAMPE_PENDENCIAOP';    -- 15.11 TIPO DE PENDÊNCIA DA OPERAÇÃO
+  DELETE FROM cecred.tbepr_dominio_campo WHERE nmdominio = 'PRONAMPE_SITUACAOOP';     -- 15.13 SITUAÇÃO DA OPERAÇÃO
+  DELETE FROM cecred.tbepr_dominio_campo WHERE nmdominio = 'PRONAMPE_ENCERRAMENTOOP'; -- 15.12 MOTIVO DE ENCERRAMENTO DA OPERAÇÃO PELO ADMINISTRADOR
+  DELETE FROM cecred.tbepr_dominio_campo WHERE nmdominio = 'PRONAMPE_IMPUGNACAOOP';   -- 15.14 MOTIVO DE IMPUGNAÇÃO DA OPERAÇÃO
   
 /* 
   15.2 CÓDIGOS DE REJEIÇÃO DOS REGISTROS DA REMESSA OU PRÉ-VALIDAÇÃO
@@ -626,7 +627,6 @@ BEGIN
 
 /*
   15.11 TIPO DE PENDÊNCIA DA OPERAÇÃO
-  15.12 MOTIVO DE ENCERRAMENTO DA OPERAÇÃO PELO ADMINISTRADOR
 */
 
   INSERT INTO cecred.tbepr_dominio_campo (nmdominio, cddominio, dscodigo)
@@ -646,6 +646,20 @@ BEGIN
 
   INSERT INTO cecred.tbepr_dominio_campo (nmdominio, cddominio, dscodigo)
     VALUES ('PRONAMPE_PENDENCIAOP', '6', 'Após alterar FBA, a operação excedeu o valor máximo financiável mutuário');
+
+
+/*
+  15.12 MOTIVO DE ENCERRAMENTO DA OPERAÇÃO PELO ADMINISTRADOR
+*/
+
+  INSERT INTO cecred.tbepr_dominio_campo (nmdominio, cddominio, dscodigo)
+    VALUES ('PRONAMPE_ENCERRAMENTOOP', '1', 'Saldo devedor não informado pelo Agente');
+
+  INSERT INTO cecred.tbepr_dominio_campo (nmdominio, cddominio, dscodigo)
+    VALUES ('PRONAMPE_ENCERRAMENTOOP', '2', 'Operação de crédito fixo com saldo devedor zero');
+
+  INSERT INTO cecred.tbepr_dominio_campo (nmdominio, cddominio, dscodigo)
+    VALUES ('PRONAMPE_ENCERRAMENTOOP', '3', 'Operação vencida e com saldo em normalidade');
 
 
 /*
