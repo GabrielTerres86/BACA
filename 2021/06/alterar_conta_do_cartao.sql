@@ -9,7 +9,7 @@ DECLARE
 BEGIN
 
   -- Cooperativa de destino do cartão
-  vr_cooperativa := 11;
+  vr_cooperativa := 9;
   -- Conta de destino do cartão
   vr_conta :=  19  ;
 
@@ -24,7 +24,7 @@ BEGIN
   vr_cartao := 6393500069948041; -- Dudu
 --  vr_cartao := 5161620000587872; -- Djonata
   
-  vr_cpf_titular := 24675857949;
+  vr_cpf_titular := 06173020904;
 
   -- Atualizar os dados do cartão
   UPDATE crapcrd card
@@ -40,6 +40,8 @@ BEGIN
         ,card.nrdconta = vr_conta
         ,card.nrcpftit = vr_cpf_titular
    WHERE card.nrcrcard = vr_cartao;
+
+
 
   COMMIT;
 
