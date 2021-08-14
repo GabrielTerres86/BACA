@@ -9,9 +9,9 @@ DECLARE
 BEGIN
 
   -- Cooperativa de destino do cartão
-  vr_cooperativa := 6;
+  vr_cooperativa := 11;
   -- Conta de destino do cartão
-  vr_conta :=  28886  ;
+  vr_conta :=  19  ;
 
   -- Numero do cartão que precisamos ajustar
 --  vr_cartao := 5127070162667067; -- Jeff
@@ -21,10 +21,10 @@ BEGIN
 --  vr_cartao := 5156010019676523; -- SeP - PF
 --  vr_cartao := 5127070340534221; -- Paty
 --  vr_cartao := 5588190184171591; -- Topaz
---  vr_cartao := 6393500069948041; -- Dudu
-  vr_cartao := 5161620000587872; -- Djonata
+  vr_cartao := 6393500069948041; -- Dudu
+--  vr_cartao := 5161620000587872; -- Djonata
   
-  vr_cpf_titular := 29053854991;
+  vr_cpf_titular := 24675857949;
 
   -- Atualizar os dados do cartão
   UPDATE crapcrd card
