@@ -384,7 +384,7 @@ begin
 
     end loop;
      
---    commit;
+    commit;
 
   exception
     when others then
