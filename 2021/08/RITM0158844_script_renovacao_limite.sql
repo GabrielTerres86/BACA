@@ -16,19 +16,22 @@ DECLARE
   vr_input_file UTL_FILE.FILE_TYPE; 
   vr_handle     UTL_FILE.FILE_TYPE; 
   vr_handle_log UTL_FILE.FILE_TYPE; 
-  vr_dsdireto   VARCHAR2(5000);
   vr_nrcontad   PLS_INTEGER := 0;
   vr_idx_carga  PLS_INTEGER;                            
   vr_setlinha   VARCHAR2(5000);                  
   vr_vet_campos gene0002.typ_split; 
-  vr_vet_linatu gene0002.typ_split;
-  vr_vet_linnov gene0002.typ_split;            
-  vr_dscribas   VARCHAR2(5000);  
   
   -- Variaveis de controle
   rw_crapdat        BTCH0001.cr_crapdat%ROWTYPE;
   vr_des_erro       VARCHAR2(10000); 
   vr_aux_cddlinha   craplim.cddlinha%TYPE;
+    
+  vr_aux_cdcooper   NUMBER;
+  vr_aux_nrdconta   NUMBER;
+  vr_aux_nrctrlim   NUMBER;
+  vr_aux_linhaold   NUMBER;
+  vr_aux_linhanew   NUMBER;
+  
     
   -- Arquivo utilizados
   /* 
@@ -40,9 +43,9 @@ DECLARE
   
   /*  
   --TEST
-  vr_nmarq_carga    VARCHAR2(200) := '/microstst/cecred/daniel/RITM0158844/renovar_civia.csv';           -- Arquivo a ser lido
-  vr_nmarq_log      VARCHAR2(200) := '/microstst/cecred/daniel/RITM0158844/renovar_civia_LOG.txt';       -- Arquivo de Log
-  vr_nmarq_rollback VARCHAR2(200) := '/microstst/cecred/daniel/RITM0158844/renovar_civia_ROLLBACK.sql';  -- Arquivo de Rollback   
+  vr_nmarq_carga    VARCHAR2(200) := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS')||'cecred/daniel/RITM0158844/renovar_civia.csv';           -- Arquivo a ser lido
+  vr_nmarq_log      VARCHAR2(200) := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS')||'cecred/daniel/RITM0158844/renovar_civia_LOG.txt';       -- Arquivo de Log
+  vr_nmarq_rollback VARCHAR2(200) := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS')||'cecred/daniel/RITM0158844/renovar_civia_ROLLBACK.sql';  -- Arquivo de Rollback   
   */
   
   --PRODUCAO
@@ -63,7 +66,7 @@ DECLARE
                               ,nrdconta  craplim.nrdconta%TYPE
                               ,nrctrlim  craplim.nrctrlim%TYPE
                               ,linhaold  craplim.cddlinha%TYPE
-                              ,linhanew  VARCHAR2(10));
+                              ,linhanew  craplim.cddlinha%TYPE);
   TYPE typ_tab_carga IS TABLE OF typ_reg_carga INDEX BY PLS_INTEGER;
   vr_tab_carga typ_tab_carga;
   
@@ -630,6 +633,16 @@ BEGIN
          RAISE vr_exc_erro;
       END IF;
              
+      -- Abrir o arquivo de LOG
+      gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_log
+                              ,pr_tipabert => 'W'              
+                              ,pr_utlfileh => vr_handle_log   
+                              ,pr_des_erro => vr_des_erro);
+      if vr_des_erro is not null then
+        vr_dscritic := 'Erro ao abrir arquivo de LOG: ' || vr_des_erro;
+        RAISE vr_exc_erro;
+      end if;
+             
       LOOP -- Inicio loop de leitura do arquivo
         BEGIN
           gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
@@ -641,6 +654,8 @@ BEGIN
             continue;
           END IF;
 
+          vr_setlinha := REPLACE(REPLACE(vr_setlinha,chr(13),''),chr(10),''); -- Remover caracteres quebra de linha "\r\n"
+
           vr_vet_campos := gene0002.fn_quebra_string(TRIM(vr_setlinha),';');  -- Separar os campos da linha
           
           IF vr_nrcontad = 2 THEN -- Na leitura do primeiro registro busca data da cooperativa
@@ -650,12 +665,27 @@ BEGIN
             CLOSE BTCH0001.cr_crapdat;
           END IF;
 
+          -- Converter valores da linha para numeral
+          BEGIN
+            vr_aux_cdcooper := TO_NUMBER(vr_vet_campos(1));
+            vr_aux_nrdconta := TO_NUMBER(vr_vet_campos(2));
+            vr_aux_nrctrlim := TO_NUMBER(vr_vet_campos(3));
+            vr_aux_linhaold := TO_NUMBER(vr_vet_campos(4));
+            vr_aux_linhanew := TO_NUMBER(vr_vet_campos(5));
+          EXCEPTION
+            WHEN OTHERS THEN
+              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
+                                            ,pr_des_text => 'Erro na leitura da linha: ' || vr_nrcontad || ' --> ' || SQLERRM);
+              
+            CONTINUE;
+          END;     
+
           -- Alimentar vetor com dados do arquivo
-          vr_tab_carga(vr_nrcontad).cdcooper := vr_vet_campos(1);
-          vr_tab_carga(vr_nrcontad).nrdconta := vr_vet_campos(2);
-          vr_tab_carga(vr_nrcontad).nrctrlim := vr_vet_campos(3);
-          vr_tab_carga(vr_nrcontad).linhaold := vr_vet_campos(4);
-          vr_tab_carga(vr_nrcontad).linhanew := vr_vet_campos(5);
+          vr_tab_carga(vr_nrcontad).cdcooper := vr_aux_cdcooper;
+          vr_tab_carga(vr_nrcontad).nrdconta := vr_aux_nrdconta;
+          vr_tab_carga(vr_nrcontad).nrctrlim := vr_aux_nrctrlim;
+          vr_tab_carga(vr_nrcontad).linhaold := vr_aux_linhaold;
+          vr_tab_carga(vr_nrcontad).linhanew := vr_aux_linhanew;
 
         EXCEPTION
           WHEN no_data_found THEN
@@ -673,16 +703,7 @@ BEGIN
  
 
 --#####################################################################################     
-      -- Abrir o arquivo de LOG
-      gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_log
-                              ,pr_tipabert => 'W'              
-                              ,pr_utlfileh => vr_handle_log   
-                              ,pr_des_erro => vr_des_erro);
-      if vr_des_erro is not null then
-        vr_dscritic := 'Erro ao abrir arquivo de LOG: ' || vr_des_erro;
-        RAISE vr_exc_erro;
-      end if;
-          
+      -- Escrever cabecalho do arquivo de LOG 
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                     ,pr_des_text => 'Coop;Conta;Contrato;Critica');
    
@@ -701,6 +722,7 @@ BEGIN
       
       FOR vr_idx1 IN vr_tab_carga.first .. vr_tab_carga.last LOOP
           IF vr_tab_carga.exists(vr_idx1) THEN         
+            
             
              pc_renovar_limite_cred_manual(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper
                                           ,pr_cdoperad => '1'
