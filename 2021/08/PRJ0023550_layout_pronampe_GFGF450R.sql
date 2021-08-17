@@ -12,7 +12,7 @@ BEGIN
 
   -- Insere o novo layout
   INSERT INTO tbgen_layout (IDLAYOUT, NMLAYOUT, DSLAYOUT, DSDELIMITADOR, DSOBSERVACAO)
-  VALUES (vr_idcampo, 'GFGF450R', 'Pronampe - MOVIMENTACAO FINANCEIRA', null, '4º Retorno');
+  VALUES (vr_idcampo, 'GFGF450R', 'Pronampe - Movimentacao Financeira', null, '4º Retorno');
 
   -- Insere nome do programa para rastreabilidade
     INSERT INTO tbgen_layout_programa (IDLAYOUT, CDPROGRA)
