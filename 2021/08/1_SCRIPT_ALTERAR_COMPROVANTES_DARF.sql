@@ -112,7 +112,7 @@ BEGIN
       
       -- LOG DA OPERAÇÃO
       gene0001.pc_gera_log(pr_cdcooper => rw_registros_lft.cdcooper
-                          ,pr_cdoperad => 't0031357'
+                          ,pr_cdoperad => '1'
                           ,pr_dscritic => ''
                           ,pr_dsorigem => ''
                           ,pr_dstransa => 'Alteração no Comprovante: Alterado o Agente Arrecador de 093 - Polocred para 341 - Itaú'
@@ -145,7 +145,7 @@ BEGIN
       WHEN vr_exc_erro THEN
         -- LOG DA OPERAÇÃO
         gene0001.pc_gera_log(pr_cdcooper => rw_registros_lft.cdcooper
-                            ,pr_cdoperad => 't0031357'
+                            ,pr_cdoperad => '1'
                             ,pr_dscritic => ''
                             ,pr_dsorigem => ''
                             ,pr_dstransa => 'Alteração no Comprovante: Alterado o Agente Arrecador de 093 - Polocred para 341 - Itaú'
