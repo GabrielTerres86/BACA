@@ -764,14 +764,14 @@ BEGIN
 
                   BEGIN
                     UPDATE craplim lim
-                       SET lim.cddlinha = vr_tab_carga(vr_nrcontad).linhanew
+                       SET lim.cddlinha = vr_tab_carga(vr_idx1).linhanew
                      WHERE lim.nrctrlim = vr_tab_carga(vr_idx1).nrctrlim
                        AND lim.nrdconta = vr_tab_carga(vr_idx1).nrdconta
                        AND lim.cdcooper = vr_tab_carga(vr_idx1).cdcooper
                        AND lim.tpctrlim = 1;
                     
                     UPDATE crawlim lim
-                       SET lim.cddlinha = vr_tab_carga(vr_nrcontad).linhanew
+                       SET lim.cddlinha = vr_tab_carga(vr_idx1).linhanew
                      WHERE lim.nrctrlim = vr_tab_carga(vr_idx1).nrctrlim
                        AND lim.nrdconta = vr_tab_carga(vr_idx1).nrdconta
                        AND lim.cdcooper = vr_tab_carga(vr_idx1).cdcooper
