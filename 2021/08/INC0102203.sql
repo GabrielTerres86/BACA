@@ -19,7 +19,7 @@ begin
      and nrseqdig = 1474;
 
   update crapsqu
-     set nrseqatu = 28
+     set nrseqatu = 27
    where nmdcampo = 'NRAPLICA'
      and nmtabela = 'CRAPRAC'
      and dsdchave = '1;9324712';
