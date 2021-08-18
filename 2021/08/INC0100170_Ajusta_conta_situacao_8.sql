@@ -6,7 +6,7 @@ DECLARE
 	   , cdsitdct
     FROM cecred.crapass
     WHERE nrdconta = 88943
-      AND cdcooper = 13; -- CIVIA
+      AND cdcooper = 13;
   --
   rg_crapass cr_crapass%rowtype;
    
@@ -26,7 +26,7 @@ DECLARE
    
 BEGIN
 
-  vr_log_script := ' ** InÃ­cio script' || chr(10);
+  vr_log_script := ' ** Início script' || chr(10);
   
   FOR rg_crapass IN cr_crapass LOOP
 	  	  
@@ -40,14 +40,14 @@ BEGIN
 	  
 	  
 	  -- Atualizar apenas um registro
-	  -- Realiza atualizaÃ§Ã£o da situaÃ§Ã£o da conta.
+	  -- Realiza atualização da situação da conta.
 	  UPDATE cecred.crapass t 
 	    SET t.cdsitdct = 8 
 	  WHERE t.nrdconta = rg_crapass.nrdconta
 		AND t.cdcooper = rg_crapass.cdcooper;
 	  
 	  	  
-	  -- Insere log de atualizaÃ§Ã£o para a VERLOG. Ex: CADA0003 (6708)
+	  -- Insere log de atualização para a VERLOG. Ex: CADA0003 (6708)
 		vr_dttransa := trunc(sysdate);
 		vr_hrtransa := to_char(sysdate,'SSSSS');
 
@@ -111,7 +111,7 @@ BEGIN
   --DBMS_OUTPUT.PUT_LINE(vr_log_script);
 
   --
-  --DBMS_OUTPUT.PUT_LINE('Sucesso na atualizaÃ§Ã£o.');
+  --DBMS_OUTPUT.PUT_LINE('Sucesso na atualização.');
   --
 EXCEPTION
   WHEN OTHERS THEN
