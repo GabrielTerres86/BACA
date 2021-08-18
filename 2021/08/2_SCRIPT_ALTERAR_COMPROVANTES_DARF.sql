@@ -141,8 +141,6 @@ BEGIN
         COMMIT;
       END IF;
       
-      dbms_output.put_line(rw_registros_lft.idsicred);
-      
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- LOG DA OPERAÇÃO
