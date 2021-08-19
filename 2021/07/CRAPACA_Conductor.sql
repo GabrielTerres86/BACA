@@ -12,9 +12,6 @@ begin
          null, 1884);         
          
   INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR) VALUES('HISTOR_SALVA_TRANSACAO_CDT', 'TELA_HISTOR', 'pc_salva_transacao_conductor', 
-         'pr_cdtransacao,pr_dstransacao,pr_nrdctadeb,pr_nrdctacred,pr_flgerdeb,pr_flgercred,pr_operacao', 1884);      
-
-  INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR) VALUES('HISTOR_SALVA_TRANSACAO_CDT', 'TELA_HISTOR', 'pc_salva_transacao_conductor', 
          'pr_cdtransacao,pr_dstransacao,pr_nrdctadeb,pr_nrdctacred,pr_flgerdeb,pr_flgercred,pr_operacao', 1884);
                   
   INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR) VALUES('HISTOR_SALVA_EMPRESA', 'TELA_HISTOR', 'pc_salva_empresa', 
