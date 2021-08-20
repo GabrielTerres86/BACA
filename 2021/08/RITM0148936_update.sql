@@ -1,6 +1,6 @@
 BEGIN
   UPDATE gnsbmod
-     SET dssubmod = 'Empréstimo Garantido'
+     SET dssubmod = 'Imobiliario Garantido'
    WHERE cdmodali = '02'
      AND cdsubmod = '99';
   COMMIT;
