@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-339
+365
 -- Created on 19/08/2021 by T0032717 
 DECLARE
   vr_exc_erro EXCEPTION;
@@ -29,7 +29,7 @@ DECLARE
             ') VALUES (' || UTL_I18N.UNESCAPE_REFERENCE(RTRIM(XMLQUERY('for $i in ROW/* return concat("''", $i, "''",",")' PASSING
                            t.column_value.EXTRACT('ROW') RETURNING content),
             ',')) || ');' query_insert
-      FROM user_tables,
+      FROM all_tables,
            XMLTABLE('ROW' PASSING DBMS_XMLGEN.GETXMLTYPE('SELECT * FROM ' || table_name || ' ' || pr_condicao).EXTRACT('ROWSET/ROW')) t
      WHERE UPPER(table_name) = UPPER(pr_tabela);
   rw_rollback cr_rollback%ROWTYPE;
@@ -209,13 +209,39 @@ BEGIN
                           , rw_rollback.query_insert || chr(13), FALSE); 
     END LOOP;
     
+    -- grava rollback tbepr_renegociacao  
+    vr_condicao := 'WHERE cdcooper = ' || vr_dadosctr(1) || ' AND nrdconta = ' || vr_dadosctr(2) || ' AND nrctremp = ' || vr_dadosctr(3);
+    vr_tabela   := 'TBEPR_RENEGOCIACAO_SIMULA';
+    FOR rw_rollback IN cr_rollback(pr_condicao => vr_condicao
+                                  ,pr_tabela   => vr_tabela) LOOP
+      -- grava rollback
+      gene0002.pc_escreve_xml(vr_dados_rollback
+                          , vr_texto_rollback
+                          , rw_rollback.query_insert || chr(13), FALSE); 
+    END LOOP;
+    
+    -- grava rollback tbepr_renegociacao_contrato  
+    vr_condicao := 'WHERE cdcooper = ' || vr_dadosctr(1) || ' AND nrdconta = ' || vr_dadosctr(2) || ' AND nrctremp = ' || vr_dadosctr(3);
+    vr_tabela   := 'TBEPR_RENEGOCIACAO_CONTRATO_SIMULA';
+    FOR rw_rollback IN cr_rollback(pr_condicao => vr_condicao
+                                  ,pr_tabela   => vr_tabela) LOOP
+      -- grava rollback
+      gene0002.pc_escreve_xml(vr_dados_rollback
+                          , vr_texto_rollback
+                          , rw_rollback.query_insert || chr(13), FALSE); 
+    END LOOP;
+    
     -- Limpa o conteudo da capa - deve ser apagado antes devido a FK
     DELETE FROM tbepr_renegociacao_contrato WHERE cdcooper = vr_dadosctr(1) AND nrdconta = vr_dadosctr(2) AND nrctremp = vr_dadosctr(3);
     -- Limpa a capa
     DELETE FROM tbepr_renegociacao WHERE cdcooper = vr_dadosctr(1) AND nrdconta = vr_dadosctr(2) AND nrctremp = vr_dadosctr(3);
+    -- Limpa o conteudo da capa da simulacao - deve ser apagado antes devido a FK
+    DELETE FROM tbepr_renegociacao_contrato_simula WHERE cdcooper = vr_dadosctr(1) AND nrdconta = vr_dadosctr(2) AND nrctremp = vr_dadosctr(3);
+    -- Limpa a capa da simulacao
+    DELETE FROM tbepr_renegociacao_simula WHERE cdcooper = vr_dadosctr(1) AND nrdconta = vr_dadosctr(2) AND nrctremp = vr_dadosctr(3);
     
   END LOOP;
-  
+
   -- Lancamento para INC0102308
   OPEN cr_crapepr(pr_cdcooper => 12
                  ,pr_nrdconta => 94617
@@ -299,7 +325,7 @@ BEGIN
      --Sair do programa
      RAISE vr_exc_erro;
   END;
-  
+
   -- grava rollback
   gene0002.pc_escreve_xml(vr_dados_rollback
                         , vr_texto_rollback
