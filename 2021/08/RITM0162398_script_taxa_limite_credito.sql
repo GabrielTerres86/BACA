@@ -21,21 +21,16 @@ DECLARE
   vr_vet_campos gene0002.typ_split;  
   
   -- Variaveis de controle
-  vr_aux_cdcooper  crapcop.cdcooper%TYPE := 5;  -- Acentra
-  vr_aux_dtlancam  crapdat.dtmvtolt%TYPE := '01/06/2021'; -- Data do lancamento
+  vr_aux_cdcooper  crapcop.cdcooper%TYPE := 5;  -- Acentra 
+  vr_aux_dtlancam  crapdat.dtmvtolt%TYPE := TO_DATE('01/06/2021','DD/MM/RRRR'); -- Data do lancamento
   rw_crapdat       BTCH0001.cr_crapdat%ROWTYPE;
   vr_des_erro      VARCHAR2(10000); 
   vr_aux_nrconta   NUMBER;
-  vr_aux_vlrtaxa   NUMBER;            
-  vr_aux_diff      VARCHAR2(100); 
-  vr_aux_antes     VARCHAR2(100); 
-  vr_aux_depois    VARCHAR2(100); 
-  vr_aux_dtmvtolt  crapdat.dtmvtolt%TYPE;
-  vr_aux_nrdconta  crapass.nrdconta%TYPE;
+  vr_aux_vlrtaxa   NUMBER;
   vr_nrseqdig      craplot.nrseqdig%TYPE;
   vr_incrineg      INTEGER;
   vr_tab_retorno   LANC0001.typ_reg_retorno; 
-  
+    
   -- Contadores
   vr_total_regis   INTEGER;
   vr_regis_encon   INTEGER;
@@ -44,14 +39,14 @@ DECLARE
   vr_regis_lanc    INTEGER;
     
   -- Arquivo utilizados
-   /*
+/*   
   --LOCAL
   vr_nmarq_carga    VARCHAR2(200) := '/progress/t0032597/micros/script_ajuste_taxa/RITM0162398/Limites_Acentra.csv';           -- Arquivo a ser lido
   vr_nmarq_log      VARCHAR2(200) := '/progress/t0032597/micros/script_ajuste_taxa/RITM0162398/Limites_Acentra_LOG.txt';       -- Arquivo de Log
   vr_nmarq_rollback VARCHAR2(200) := '/progress/t0032597/micros/script_ajuste_taxa/RITM0162398/Limites_Acentra_ROLLBACK.sql';  -- Arquivo de Rollback
-  */
+ */ 
   
-  /*    
+/*      
   --TEST
   vr_nmarq_carga    VARCHAR2(200) := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/daniel/RITM0162398/Limites_Acentra.csv';          -- Arquivo a ser lido
   vr_nmarq_log      VARCHAR2(200) := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/daniel/RITM0162398/Limites_Acentra_LOG.txt';      -- Arquivo de Log
@@ -73,6 +68,25 @@ DECLARE
                               ,vlrtaxa   crapldc.txmensal%TYPE);
   TYPE typ_tab_carga IS TABLE OF typ_reg_carga INDEX BY PLS_INTEGER;
   vr_tab_carga typ_tab_carga;
+  
+  -- Obter valor da taxa aplicada e calcular diferenca a ser estornada
+  CURSOR cr_craplcm(pr_nrdconta IN craplcm.nrdconta%TYPE
+                   ,pr_txmensal IN NUMBER) IS
+         SELECT (antes - depois) diff_lanc_320_craplcm
+                ,antes
+                ,depois
+                ,dtmvtolt
+                ,nrdconta
+            FROM (SELECT ROUND(((l.vllanmto * 7.99) / pr_txmensal), 2) depois
+                        ,l.vllanmto antes
+                        ,l.dtmvtolt
+                        ,l.nrdconta
+                    FROM craplcm l
+                   WHERE l.cdcooper = vr_aux_cdcooper
+                     AND l.cdhistor = 38 -- JUROS LIM CRD
+                     AND l.dtmvtolt = vr_aux_dtlancam
+                     AND l.nrdconta = pr_nrdconta) x;
+         rw_craplcm cr_craplcm%ROWTYPE;
    
 BEGIN 
       -- Busca data cooperativa
@@ -169,90 +183,72 @@ BEGIN
 
           --##################################################################################### 
           --INICIO Ajuste da taxa limite de credito
- 
-            BEGIN -- Obter valor da taxa aplicada e calcular diferenca a ser estornada
-                  SELECT (antes - depois) diff_lanc_320_craplcm
-                        ,antes
-                        ,depois
-                        ,dtmvtolt
-                        ,nrdconta
-                    INTO vr_aux_diff
-                        ,vr_aux_antes
-                        ,vr_aux_depois
-                        ,vr_aux_dtmvtolt
-                        ,vr_aux_nrdconta
-                    FROM (SELECT ROUND(((l.vllanmto * 7.99) / 8.99), 2) depois
-                                ,l.vllanmto antes
-                                ,l.dtmvtolt
-                                ,l.nrdconta
-                            FROM craplcm l
-                           WHERE l.cdcooper = vr_aux_cdcooper
-                             AND l.cdhistor = 38 -- JUROS LIM CRD
-                             AND l.dtmvtolt = vr_aux_dtlancam
-                             AND l.nrdconta = vr_tab_carga(vr_idx1).nrdconta) x;
-                             
-                 vr_regis_encon := NVL(vr_regis_encon,0) + 1;
-            EXCEPTION
-              WHEN OTHERS THEN
-                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
-                                              ,pr_des_text => vr_aux_cdcooper                || ';' || 
-                                                              vr_tab_carga(vr_idx1).nrdconta || ';' || 
-                                                              vr_tab_carga(vr_idx1).vlrtaxa  || ';' || 
-                                                              'Erro ao buscar dados: '||sqlerrm);                                    
-            END;
+          
+          -- Obter valor da taxa aplicada e calcular diferenca a ser estornada
+          OPEN cr_craplcm(pr_nrdconta => vr_tab_carga(vr_idx1).nrdconta,
+                          pr_txmensal => vr_tab_carga(vr_idx1).vlrtaxa);
+          FETCH cr_craplcm INTO rw_craplcm;
+       
+          IF cr_craplcm%FOUND THEN
+             vr_regis_encon := NVL(vr_regis_encon,0) + 1;
 
-            
-            -- Se encontrar o registro 
-            IF vr_aux_nrdconta IS NOT NULL THEN
-
-               vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT',
+             vr_nrseqdig := FN_SEQUENCE(pr_nmtabela => 'CRAPLOT',
                                           pr_nmdcampo => 'NRSEQDIG',
                                           pr_dsdchave => to_char(vr_aux_cdcooper) || ';' || to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR') || ';' || '1;100;8450');
    
-               -- Rotina centralizada para incluir um novo lançamento na CRAPLCM e aplica as devidas regras de negócio
-               LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt    => rw_crapdat.dtmvtolt,
-                                                  pr_cdagenci    => 1,
-                                                  pr_cdbccxlt    => 100,
-                                                  pr_nrdolote    => 8450,
-                                                  pr_nrdconta    => vr_aux_nrdconta,
-                                                  pr_nrdocmto    => 99999320,
-                                                  pr_cdhistor    => 320,
-                                                  pr_nrseqdig    => vr_nrseqdig,
-                                                  pr_vllanmto    => TO_NUMBER(vr_aux_diff),
-                                                  pr_nrdctabb    => vr_aux_nrdconta,
-                                                  pr_cdpesqbb    => 'ESTORNO DE JUROS LIMITE DE CREDITO',
-                                                  pr_dtrefere    => rw_crapdat.dtmvtolt,
-                                                  pr_hrtransa    => gene0002.fn_busca_time,
-                                                  pr_cdoperad    => '1',
-                                                  pr_cdcooper    => vr_aux_cdcooper,
-                                                  pr_cdorigem    => 5,
-                                                  pr_incrineg    => vr_incrineg,
-                                                  pr_tab_retorno => vr_tab_retorno,
-                                                  pr_cdcritic    => vr_cdcritic,
-                                                  pr_dscritic    => vr_dscritic);
+             -- Rotina centralizada para incluir um novo lançamento na CRAPLCM e aplica as devidas regras de negócio
+             LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt    => rw_crapdat.dtmvtolt,
+                                                pr_cdagenci    => 1,
+                                                pr_cdbccxlt    => 100,
+                                                pr_nrdolote    => 8450,
+                                                pr_nrdconta    => rw_craplcm.nrdconta,
+                                                pr_nrdocmto    => 99999320,
+                                                pr_cdhistor    => 320,
+                                                pr_nrseqdig    => vr_nrseqdig,
+                                                pr_vllanmto    => TO_NUMBER(rw_craplcm.diff_lanc_320_craplcm),
+                                                pr_nrdctabb    => rw_craplcm.nrdconta,
+                                                pr_cdpesqbb    => 'ESTORNO DE JUROS LIMITE DE CREDITO',
+                                                pr_dtrefere    => rw_crapdat.dtmvtolt,
+                                                pr_hrtransa    => gene0002.fn_busca_time,
+                                                pr_cdoperad    => '1',
+                                                pr_cdcooper    => vr_aux_cdcooper,
+                                                pr_cdorigem    => 5,
+                                                pr_incrineg    => vr_incrineg,
+                                                pr_tab_retorno => vr_tab_retorno,
+                                                pr_cdcritic    => vr_cdcritic,
+                                                pr_dscritic    => vr_dscritic);
                                             
-               IF (NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL) THEN
-                   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
-                                                 ,pr_des_text => vr_aux_cdcooper                || ';' || 
-                                                                 vr_aux_nrdconta                || ';' || 
-                                                                 vr_tab_carga(vr_idx1).vlrtaxa  || ';' || 
-                                                                 'Erro ao inserir Lancamento:  '|| vr_dscritic || ' - ' || SQLERRM);
-               ELSE             
+             IF (NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL) THEN
+                 gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
+                                               ,pr_des_text => vr_aux_cdcooper                || ';' || 
+                                                               rw_craplcm.nrdconta            || ';' || 
+                                                               vr_tab_carga(vr_idx1).vlrtaxa  || ';' || 
+                                                               'Erro ao inserir Lancamento:  '|| vr_dscritic || ' - ' || SQLERRM);
+             ELSE             
                                     
-                   IF vr_tab_retorno.rowidlct IS NOT NULL THEN
-                      -- Grava script de rollback 
-                      gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                                    ,pr_des_text => 'DELETE FROM craplcm WHERE rowid = ' || vr_tab_retorno.rowidlct || ';');
+                 IF vr_tab_retorno.rowidlct IS NOT NULL THEN
+                    -- Grava script de rollback 
+                    gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
+                                                  ,pr_des_text => 'DELETE FROM craplcm WHERE rowid = ' || vr_tab_retorno.rowidlct || ';');
                                                                                   
-                      vr_total_final :=  NVL(vr_total_final,0) +  NVL(vr_aux_diff,0);
-                      vr_regis_lanc := NVL(vr_regis_lanc,0) + 1;
-                   END IF;                                                   
-               END IF;
-            
-            END IF;
-            
-            vr_total_regis := NVL(vr_total_regis,0) + 1;
-
+                    vr_total_final :=  NVL(vr_total_final,0) +  NVL(rw_craplcm.diff_lanc_320_craplcm,0);
+                    vr_regis_lanc := NVL(vr_regis_lanc,0) + 1;
+                 END IF;                                                   
+             END IF;
+               
+              
+             CLOSE cr_craplcm;
+          ELSE
+             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
+                                           ,pr_des_text => vr_aux_cdcooper                || ';' || 
+                                                           vr_tab_carga(vr_idx1).nrdconta || ';' || 
+                                                           vr_tab_carga(vr_idx1).vlrtaxa  || ';' || 
+                                                           'Erro ao buscar dados: '||sqlerrm);
+            CLOSE cr_craplcm;
+          END IF;
+          
+          vr_total_regis := NVL(vr_total_regis,0) + 1;
+ 
           --FIM Ajuste da taxa limite de credito                
           --##################################################################################### 
           END IF;
@@ -265,7 +261,7 @@ BEGIN
                                     ,pr_des_text => '#####################################################################################');
                                     
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
-                                    ,pr_des_text => 'Data da movimentacao ajustada: ' || vr_aux_dtmvtolt);
+                                    ,pr_des_text => 'Data da movimentacao ajustada: ' || vr_aux_dtlancam);
                                       
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                     ,pr_des_text => 'Total de registros encontrados - base de dados X planilha: ' || vr_regis_encon || '/' || vr_total_regis);
