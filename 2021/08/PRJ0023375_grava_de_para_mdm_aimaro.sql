@@ -23,12 +23,13 @@ BEGIN
   INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_SEXO'               , NULL                      , 999   , 0);
   INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_TELEFONE'           , 'TPTELEFONE'              , 999   , 0);
   INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_TURNO'              , 'CDTURNO'                 , 999   , 0);
-  INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_ENDERECO'            , 'TPENDERECO'             , 1     , 10);
-  INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_ENDERECO'            , 'TPENDERECO'             , 2     , 12);
-  INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_ENDERECO'            , 'TPENDERECO'             , 3     , 13);
-  INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_ENDERECO'            , 'TPENDERECO'             , 4     , 14);
-  INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_ENDERECO'            , 'TPENDERECO'             , 5     , 9);
-  INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_ACEITA_WHATS'           , NULL                     , 999   , 0);
+  INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_ENDERECO'           , 'TPENDERECO'             , 1     , 10);
+  INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_ENDERECO'           , 'TPENDERECO'             , 2     , 12);
+  INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_ENDERECO'           , 'TPENDERECO'             , 3     , 13);
+  INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_ENDERECO'           , 'TPENDERECO'             , 4     , 14);
+  INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_ENDERECO'           , 'TPENDERECO'             , 5     , 9);
+  INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_ACEITA_WHATS'          , NULL                     , 999   , 0);
+  INSERT INTO CADASTRO.TBCADAST_PRECADASTRO_DEPARA_MDM (nmlookup_mdm, nmlookup_aimaro, cdmdm, cdaimaro) VALUES ('LKP_TP_COMPROVACAO'        , 'TPCOMPROVACAORENDAPF'   , 999   , 0);
   --
   COMMIT;
   --
