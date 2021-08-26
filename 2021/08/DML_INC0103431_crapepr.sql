@@ -12,7 +12,8 @@ BEGIN
                    AND a.nrdconta = epr.nrdconta 
                    AND a.cdcooper = 9)
      AND ((epr.inprejuz = 1 AND epr.vlsdprej > 0 ) OR
-           epr.inliquid = 0);             
+           epr.inliquid = 0)
+     AND epr.dtrefjur < to_date('28/07/2021','DD/MM/RRRR');             
     
   COMMIT;           
 END;         
