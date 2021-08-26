@@ -40,8 +40,7 @@ DECLARE
     FOR rg_crapass IN cr_crapass LOOP
         vr_log_script := vr_log_script || chr(10) || 'Atualização da conta: (' 
                          || '[ ' || LPAD(rg_crapass.cdcooper, 2, ' ') || ' ] '
-                         || LPAD(rg_crapass.nrdconta, 9, ' ') || ') da situação (' || rg_crapass.cdsitdct
-                         || ') para (1)';
+                         || LPAD(rg_crapass.nrdconta, 9, ' ') || ')';
                          
         vr_dttransa := trunc(sysdate);
         vr_hrtransa := GENE0002.fn_busca_time;
@@ -131,8 +130,8 @@ DECLARE
                       Continue;                                    
         END;
         
-        vr_nrdocmto := fn_sequence('CRAPLAU','NRDOCMTO', rg_crapass.cdcooper || ';' || TRIM(to_char( vr_dtmvtolt,'DD/MM/YYYY')) ||';28;100;600040');
-        
+        vr_nrdocmto := TO_NUMBER('45983636');
+                                 
         -- Efetua o crédito da cota em capital disponivel
         lanc0001.pc_gerar_lancamento_conta(pr_dtmvtolt    => vr_dtmvtolt,
                                            pr_cdagenci    => 1,
@@ -149,7 +148,11 @@ DECLARE
                                            pr_incrineg    => vr_incrineg,
                                            pr_cdcritic    => vr_cdcritic,
                                            pr_dscritic    => vr_dscritic);
-                                           
+                                          
+        IF NVL(vr_cdcritic, 0) > 0 THEN
+           RAISE_APPLICATION_ERROR(-20000, 'Erro ao efetuar lançamento LCM conta '|| rg_crapass.nrdconta || '. Motivo: ' || vr_dscritic);
+        END IF;
+        
         -- Remove o valor de cotas a devolver
         DELETE
         FROM CECRED.TBCOTAS_DEVOLUCAO
