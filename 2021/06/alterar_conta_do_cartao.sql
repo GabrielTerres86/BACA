@@ -8,9 +8,9 @@ DECLARE
 BEGIN
 
   -- Cooperativa de destino do cartão
-  vr_cooperativa := 6;
+  vr_cooperativa := 9;
   -- Conta de destino do cartão
-  vr_conta :=  248;
+  vr_conta :=  19;
 
   -- Numero do cartão que precisamos ajustar
 --  vr_cartao := 5127070162667067; -- Jeff
