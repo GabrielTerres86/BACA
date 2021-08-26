@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-130
+131
 declare 
   procedure ReenviarEfetivacaoFIS(pr_idevento IN tbgen_evento_soa.idevento%type) is
     cursor cr_soa is
@@ -34,6 +34,7 @@ declare
     close cr_soa;
     if rw_soa.idevento is null then
       dbms_output.put_line('Não encontrado: ' || pr_idevento);
+      return;
     end if;
     vr_pos1 := INSTR(rw_soa.dsconteudo_requisicao, '                        <valor>') + 31;
     vr_pos2 := INSTR(rw_soa.dsconteudo_requisicao, '</valor><valorBase>');
@@ -50,8 +51,8 @@ declare
     vr_pos2 := vr_pos1 + 19;
     vr_dataatual := SUBSTR(rw_soa.dsconteudo_requisicao, vr_pos1, vr_pos2-vr_pos1);
 
-    vr_xmlcontent := REPLACE(rw_soa.dsconteudo_requisicao, '</valorBase><dataProposta>' || vr_dataatual || '</dataProposta>'
-                                                          ,'</valorBase><dataProposta>' || vr_data      || '</dataProposta>');
+    vr_xmlcontent := REPLACE(vr_xmlcontent, '</valorBase><dataProposta>' || vr_dataatual || '</dataProposta>'
+                                           ,'</valorBase><dataProposta>' || vr_data      || '</dataProposta>');
 
     -- dbms_output.put_line(vr_xmlcontent);
     INSERT INTO tbgen_evento_soa
