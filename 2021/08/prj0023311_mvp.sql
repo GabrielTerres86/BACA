@@ -5,39 +5,33 @@
 begin
     INSERT INTO crapaca
       (NMDEACAO
-      ,NMPACKAG
       ,NMPROCED
       ,LSTPARAM
       ,NRSEQRDR)
     VALUES
       ('BUSCA_EMP_IMOB_CAPA'
-      ,'null'
       ,'CREDITO.pc_busca_imob_capa'
       ,'pr_cdcooper, pr_nrdconta'
       ,71);
 
     INSERT INTO crapaca
       (NMDEACAO
-      ,NMPACKAG
       ,NMPROCED
       ,LSTPARAM
       ,NRSEQRDR)
     VALUES
       ('BUSCA_EMPRESTIMOS_IMOB'
-      ,'null'
       ,'CREDITO.pc_consulta_emprestimo_imobiliario'
       ,'pr_cdcooper, pr_nrdconta, pr_nrctremp'
       ,71);
       
     INSERT INTO crapaca
       (NMDEACAO
-      ,NMPACKAG
       ,NMPROCED
       ,LSTPARAM
       ,NRSEQRDR)
     VALUES
       ('BUSCA_LOG_CONTRATO_IMOB'
-      ,'null'
       ,'CREDITO.pc_busca_log_contrato_imob'
       ,'pr_cdcooper, pr_nrdconta ,pr_nrctremp, pr_nriniseq, pr_nrregist'
       ,71);  
