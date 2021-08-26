@@ -1,0 +1,8 @@
+begin
+  UPDATE CRAPACA SET LSTPARAM = 'pr_agenci,pr_cdfilial' WHERE NMPACKAG = 'TELA_HISTOR' AND NMDEACAO = 'HISTOR_SALVA_CENTROCUSTO'
+
+  commit;
+end;               
+
+
+
