@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-131
+133
 declare 
   procedure ReenviarEfetivacaoFIS(pr_idevento IN tbgen_evento_soa.idevento%type) is
     cursor cr_soa is
@@ -129,6 +129,8 @@ begin
   ReenviarEfetivacaoFIS(4494848);
   ReenviarEfetivacaoFIS(4359347);
   ReenviarEfetivacaoFIS(4359349);
+  ReenviarEfetivacaoFIS(4497670);
+  ReenviarEfetivacaoFIS(4497718);
   COMMIT;
 end;
 0
