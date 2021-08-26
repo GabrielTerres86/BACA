@@ -20,9 +20,9 @@ begin
 
   update crapsqu
      set nrseqatu = 27
-   where nmdcampo = 'NRAPLICA'
-     and nmtabela = 'CRAPRAC'
-     and dsdchave = '1;9324712';
+   where UPPER(nmdcampo) = 'NRAPLICA'
+     and UPPER(nmtabela) = 'CRAPRAC'
+     and UPPER(dsdchave) = '1;9324712';
 
   commit;
 
