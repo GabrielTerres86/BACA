@@ -1,6 +1,6 @@
 BEGIN
   UPDATE crapprm P
-     SET p.dsvlrprm = 'S'
+     SET p.dsvlrprm = 'N'
    WHERE p.cdacesso = 'UTILIZA_REGRAS_SEGPRE';
   COMMIT;
 EXCEPTION
