@@ -324,7 +324,7 @@ DECLARE
          
     END LOOP;
     
---    COMMIT;    
+    COMMIT;    
 EXCEPTION
   WHEN vr_exception THEN
     --
