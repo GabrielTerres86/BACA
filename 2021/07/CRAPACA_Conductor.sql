@@ -1,6 +1,6 @@
 begin
   INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR) VALUES('HISTOR_SALVA_CENTROCUSTO', 'TELA_HISTOR', 'pc_salva_centrocusto', 
-         'pr_agenci,pr_nrctrcusto', 1884);
+         'pr_agenci,pr_cdfilial', 1884);
   
   INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR) VALUES('HISTOR_CONSULTA_AGENCIAS', 'TELA_HISTOR', 'pc_consulta_agencias', 
          null, 1884); 
