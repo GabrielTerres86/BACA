@@ -1,0 +1,10 @@
+BEGIN
+  UPDATE crapprm P
+     SET p.dsvlrprm = 'N'
+   WHERE p.cdacesso = 'UTILIZA_REGRAS_SEGPRE';
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+END;
+/
