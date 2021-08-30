@@ -11,11 +11,11 @@ DECLARE
 
   vr_nmdatela craptel.nmdatela%TYPE := 'PRONAM';
   vr_nrmodulo craptel.nrmodulo%TYPE := 3; --Empréstimos
-  vr_cdopptel craptel.cdopptel%TYPE := '@,C';
+  vr_cdopptel craptel.cdopptel%TYPE := '@,C,B';
   vr_tldatela craptel.tldatela%TYPE := 'Acompanhamento Operacoes Pronampe';
   vr_tlrestel craptel.tlrestel%TYPE := 'Acompanhamento Operacoes Pronampe';
-  vr_lsopptel craptel.lsopptel%TYPE := 'ACESSO,CONSULTA';
-  VR_NRSEQRDR  NUMBER;
+  vr_lsopptel craptel.lsopptel%TYPE := 'ACESSO,CONSULTA,BLOQUEIO HONRA';
+  vr_nrseqrdr NUMBER;
 BEGIN
   --Para cada cooperativa insere a tela
   FOR rw_crapcop IN cr_crapcop(vr_nmdatela) LOOP
@@ -36,19 +36,88 @@ BEGIN
       ,vr_lsopptel
       ,rw_crapcop.cdcooper);
   END LOOP;
-  
-  insert into CRAPRDR (NMPROGRA, DTSOLICI)
-  values ( 'TELA_PRONAM', TRUNC(SYSDATE))
-  RETURNING NRSEQRDR INTO VR_NRSEQRDR;
 
-  insert into crapaca ( NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-  values ( 'CONSULTA_CONTRATOS', 'TELA_PRONAM', 'pc_consultar_contratos_web', 'pr_cdcooper,pr_nrdconta,pr_nrcontrato,pr_nriniseq,pr_nrregist,pr_datrini,pr_datrfim', VR_NRSEQRDR);
-  insert into crapaca ( NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-  values ( 'GRAVA_HONRAPRONAMP', 'TELA_PRONAM', 'pc_atualizar_innaohonrar_web', 'pr_contratos', VR_NRSEQRDR);
+  INSERT INTO crapace
+    (nmdatela
+    ,cddopcao
+    ,cdoperad
+    ,cdcooper
+    ,nrmodulo
+    ,idevento
+    ,idambace)
+    SELECT DISTINCT 'PRONAM' nmdatela
+                   ,CASE
+                      WHEN upper(ace.cdoperad) LIKE upper('f003%') THEN
+                       '@,C,B'
+                      ELSE
+                       'C'
+                    END cddopcao
+                   ,upper(ace.cdoperad) cdoperad
+                   ,ace.cdcooper cdcooper
+                   ,3 nrmodulo
+                   ,0 idevento
+                   ,ace.idambace idambace
+      FROM crapace ace
+          ,crapope ope
+          ,crapcop cop
+     WHERE ace.cdcooper = cop.cdcooper
+       AND ace.cdcooper = ope.cdcooper
+       AND UPPER(ope.cdoperad) = UPPER(ace.cdoperad)
+       AND UPPER(ace.nmdatela) = 'CADCYB'
+       AND UPPER(ace.cddopcao) = 'C'
+       AND ace.idambace = 2
+       AND ope.cdsitope = 1
+       AND cop.flgativo = 1
+       AND NOT EXISTS (SELECT 1
+              FROM crapace c
+             WHERE c.cdcooper = ope.cdcooper
+               AND c.idambace = ace.idambace
+               AND UPPER(c.nmdatela) = 'PRONAM'
+               AND UPPER(c.cdoperad) = UPPER(ope.cdoperad)
+               AND UPPER(c.cddopcao) = CASE
+                     WHEN upper(ace.cdoperad) LIKE upper('f003%') THEN
+                      '@,C,B'
+                     ELSE
+                      'C'
+                   END);
+
+  INSERT INTO craprdr
+    (nmprogra
+    ,dtsolici)
+  VALUES
+    ('TELA_PRONAM'
+    ,TRUNC(SYSDATE))
+  RETURNING nrseqrdr INTO vr_nrseqrdr;
+
+  INSERT INTO crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('CONSULTA_CONTRATOS'
+    ,'TELA_PRONAM'
+    ,'pc_consultar_contratos_web'
+    ,'pr_cdcooper,pr_nrdconta,pr_nrcontrato,pr_nriniseq,pr_nrregist,pr_datrini,pr_datrfim'
+    ,vr_nrseqrdr);
+
+  INSERT INTO crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('GRAVA_HONRAPRONAMP'
+    ,'TELA_PRONAM'
+    ,'pc_atualizar_innaohonrar_web'
+    ,'pr_contratos'
+    ,vr_nrseqrdr);
 
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
-    RAISE_APPLICATION_ERROR(-20500, SQLERRM);
     ROLLBACK;
+    RAISE_APPLICATION_ERROR(-20500, SQLERRM);
 END;
