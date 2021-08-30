@@ -20,10 +20,10 @@ BEGIN
 --  vr_cartao := 5158940000000188; -- Matheus(saque & pague)
 --  vr_cartao := 5156010019676523; -- SeP - PF
 --  vr_cartao := 5127070340534221; -- Paty
-vr_cartao := 5588190184171591; -- Topaz
 --  vr_cartao := 6393500069948041; -- Dudu
 --  vr_cartao := 5161620000587872; -- Djonata
 --  vr_cartao := 5127070162666663; -- Matheus barros
+vr_cartao := 5588190184171591; -- Topaz
   
   -- Verificar se a conta possui algum outro cartão para buscar o CPF do Titular
   FOR cartao IN (select distinct a.nrcpftit
