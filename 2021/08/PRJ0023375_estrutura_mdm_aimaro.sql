@@ -38,6 +38,115 @@
   --
   SELECT 1 FROM DUAL;
   
+  
+  
+  -- pai e mãe - Atualização por bloco
+  -- 1) cadastro do bloco
+  INSERT INTO CADASTRO.TBCADAST_CONFIG_BLOCO (dsbloco)
+    VALUES ('DECLARE
+  --
+  vr_idprecadastro     TBCADAST_PESSOA.IDPESSOA%TYPE;
+  vr_nrseqrelacao      TBCADAST_PESSOA_RELACAO.NRSEQ_RELACAO%TYPE;
+  --
+  vr_dscritic          VARCHAR(1000);
+  vr_cdcritic          PLS_INTEGER;
+  vr_exception         EXCEPTION;
+  --
+BEGIN
+  --
+  -- FAZER O UPDATE
+  UPDATE TBCADAST_PESSOA 
+    SET nmpessoa = ''##VLCAMPO##''
+  WHERE idpessoa = (SELECT idpessoa_relacao
+                    FROM tbcadast_pessoa_relacao
+                    WHERE tprelacao = :3
+                      AND idpessoa = :1 );
+  --
+  IF SQL%ROWCOUNT > 1 THEN
+    --
+    vr_dscritic := ''Update do nome do Pai alterando mais de um registro na TBCADAST_PESSOA no bloco update Onboarding PF.'';
+    vr_cdcritic := 0;
+    RAISE vr_exception;
+    --
+  END IF;
+  --
+  IF SQL%ROWCOUNT = 0 THEN
+    -- 
+    BEGIN
+      SELECT ( MAX(nrseq_relacao) + 1 )
+        INTO vr_nrseqrelacao
+      FROM TBCADAST_PESSOA_RELACAO
+      WHERE idpessoa = :1;
+    EXCEPTION 
+      WHEN OTHERS THEN
+        vr_nrseqrelacao := 1;
+    END;
+    --
+    INSERT INTO TBCADAST_PESSOA (
+      nmpessoa
+      , tppessoa
+      , tpcadastro
+      , cdoperad_altera
+      , dtalteracao
+    ) VALUES (
+      ''##VLCAMPO##''
+      , 1
+      , 1
+      , 1
+      , SYSDATE
+    ) RETURNING idpessoa INTO vr_idprecadastro;
+    --
+    INSERT INTO TBCADAST_PESSOA_RELACAO (
+      idpessoa,
+      nrseq_relacao,
+      tprelacao,
+      cdoperad_altera,
+      idpessoa_relacao
+    ) VALUES (
+      :1,
+      vr_nrseqrelacao,
+      :3,
+      1,
+      vr_idprecadastro
+    );
+    --
+  END IF;
+  --
+EXCEPTION
+  WHEN vr_exception THEN
+    --
+  WHEN OTHERS THEN
+    --
+END;');
+  
+  -- 2) cadastro do parâmetro do filtro OU PARÂMETROS DO BLOCO cadastro.tbcadast_config_bloco_param
+  /*INSERT ALL
+  INTO CADASTRO.TBCADAST_CONFIG_FILTRO_PARAM (nrseq_param, nmcampo, idtipo_campo, dscampos_ref )
+  VALUES (2, 'nmpessoa', 1, '???' )
+  --
+  INTO CADASTRO.TBCADAST_CONFIG_FILTRO_PARAM (nrseq_param, nmcampo, idtipo_campo, dscampos_ref )
+  VALUES (3, 'tprelacao', 2, '???' )
+  --
+  SELECT 1 FROM DUAL;*/
+  
+  
+  
+  -- 2) estrutura para execução do bloco
+  INSERT ALL 
+  INTO CADASTRO.TBCADAST_CONFIG_ESTRUTURA 
+  (dsidentificador, dsinformacao, nrseq_execucao, idtipo_processo_upd, nmestrutura_upd, nmcampo_upd, idfiltro_upd, idtipo_campo, idbloco_upd )
+  VALUES ('identificacao', 'nomePai', 10, 3, 'tbcadast_pessoa', 'nmpessoa', NULL, 1, 1 )
+  --
+  INTO CADASTRO.TBCADAST_CONFIG_ESTRUTURA 
+  (dsidentificador, dsinformacao, nrseq_execucao, idtipo_processo_upd, nmestrutura_upd, nmcampo_upd, idfiltro_upd, idtipo_campo, idbloco_upd )
+  VALUES ('identificacao', 'nomeMae', 10, 3, 'tbcadast_pessoa', 'nmpessoa', NULL, 1, 1 )
+  --
+  SELECT 1 FROM DUAL;
+  
+  
+  
+  
+  
   -- pessoa física
   INSERT INTO CADASTRO.TBCADAST_CONFIG_ESTRUTURA VALUES ('identificacao', 'nomeChamado', 10, 1, 'tbcadast_pessoa_fisica', 'nmsocial', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
   INSERT INTO CADASTRO.TBCADAST_CONFIG_ESTRUTURA VALUES ('identificacao', 'genero', 10, 1, 'tbcadast_pessoa_fisica', 'tpsexo', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
