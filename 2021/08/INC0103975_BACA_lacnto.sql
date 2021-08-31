@@ -1,257 +1,238 @@
-UPDATE crapsld
-   SET vlsmnmes = 0, vliofmes = 0
- WHERE cdcooper = 9
-   AND (cdcooper, nrdconta) IN (
-  (9,500003),
-  (9,500410),
-  (9,500666),
-  (9,500895),
-  (9,500917),
-  (9,500992),
-  (9,501000),
-  (9,501166),
-  (9,501239),
-  (9,501255),
-  (9,501280),
-  (9,501573),
-  (9,501700),
-  (9,501948),
-  (9,502243),
-  (9,502308),
-  (9,502405),
-  (9,502430),
-  (9,502944),
-  (9,502952),
-  (9,502987),
-  (9,502995),
-  (9,503045),
-  (9,503134),
-  (9,503169),
-  (9,503185),
-  (9,503207),
-  (9,503550),
-  (9,504289),
-  (9,504300),
-  (9,504467),
-  (9,504521),
-  (9,504610),
-  (9,504726),
-  (9,504769),
-  (9,504955),
-  (9,504971),
-  (9,505102),
-  (9,505129),
-  (9,505226),
-  (9,505285),
-  (9,505358),
-  (9,505552),
-  (9,505757),
-  (9,505803),
-  (9,505897),
-  (9,505927),
-  (9,505935),
-  (9,506001),
-  (9,506087),
-  (9,506117),
-  (9,506125),
-  (9,506133),
-  (9,506206),
-  (9,506230),
-  (9,506311),
-  (9,506320),
-  (9,506354),
-  (9,506486),
-  (9,506524),
-  (9,506613),
-  (9,506648),
-  (9,507350),
-  (9,507806),
-  (9,511099),
-  (9,511510),
-  (9,511951),
-  (9,512591),
-  (9,512605),
-  (9,514373),
-  (9,514420),
-  (9,514500),
-  (9,514543),
-  (9,514640),
-  (9,514683),
-  (9,515558),
-  (9,515639),
-  (9,516040),
-  (9,516201),
-  (9,517305),
-  (9,517984),
-  (9,518360),
-  (9,518425),
-  (9,518441),
-  (9,518476),
-  (9,518514),
-  (9,518719),
-  (9,519324),
-  (9,519936),
-  (9,519952),
-  (9,520772),
-  (9,521345),
-  (9,521434),
-  (9,521574),
-  (9,521841),
-  (9,522023),
-  (9,522198),
-  (9,522457),
-  (9,522830),
-  (9,522988),
-  (9,523925),
-  (9,524174),
-  (9,524310),
-  (9,524913),
-  (9,525014),
-  (9,525448),
-  (9,525715),
-  (9,525820),
-  (9,525979),
-  (9,526096),
-  (9,526223),
-  (9,526355),
-  (9,526401),
-  (9,526827),
-  (9,526983),
-  (9,526991),
-  (9,527130),
-  (9,527394),
-  (9,527610),
-  (9,528072),
-  (9,528706),
-  (9,528889),
-  (9,528986),
-  (9,529133),
-  (9,529290),
-  (9,529524),
-  (9,529656),
-  (9,529958),
-  (9,530026),
-  (9,530042),
-  (9,530069),
-  (9,530263),
-  (9,530689),
-  (9,530786),
-  (9,531022),
-  (9,531065),
-  (9,531111),
-  (9,531243),
-  (9,532037),
-  (9,532088),
-  (9,532142),
-  (9,532177),
-  (9,533203),
-  (9,533513),
-  (9,533530)
-);
-
-DELETE FROM craplat l
-WHERE l.cdcooper = 9
-  AND l.insitlat = 1
-  AND (l.cdcooper, l.nrdconta) IN (
-  (9,500666),
-  (9,500917),
-  (9,500992),
-  (9,501000),
-  (9,501166),
-  (9,501239),
-  (9,501255),
-  (9,501280),
-  (9,501573),
-  (9,501700),
-  (9,501948),
-  (9,502243),
-  (9,502308),
-  (9,502952),
-  (9,503045),
-  (9,503134),
-  (9,503169),
-  (9,503185),
-  (9,503207),
-  (9,503550),
-  (9,504289),
-  (9,504467),
-  (9,504521),
-  (9,504610),
-  (9,504955),
-  (9,504971),
-  (9,505102),
-  (9,505129),
-  (9,505226),
-  (9,505285),
-  (9,505552),
-  (9,505757),
-  (9,505897),
-  (9,505927),
-  (9,506117),
-  (9,506125),
-  (9,506320),
-  (9,506354),
-  (9,506486),
-  (9,506524),
-  (9,506613),
-  (9,507350),
-  (9,511510),
-  (9,511951),
-  (9,512591),
-  (9,514373),
-  (9,514543),
-  (9,514640),
-  (9,515558),
-  (9,516040),
-  (9,518360),
-  (9,518425),
-  (9,518441),
-  (9,518476),
-  (9,518514),
-  (9,519324),
-  (9,519936),
-  (9,519952),
-  (9,520772),
-  (9,521345),
-  (9,521574),
-  (9,521841),
-  (9,522198),
-  (9,522457),
-  (9,522830),
-  (9,522988),
-  (9,523925),
-  (9,524310),
-  (9,524913),
-  (9,525448),
-  (9,525715),
-  (9,525820),
-  (9,525979),
-  (9,526096),
-  (9,526355),
-  (9,526401),
-  (9,526827),
-  (9,526991),
-  (9,527130),
-  (9,527610),
-  (9,528072),
-  (9,528706),
-  (9,528889),
-  (9,528986),
-  (9,529290),
-  (9,529524),
-  (9,529656),
-  (9,529958),
-  (9,530026),
-  (9,530689),
-  (9,530786),
-  (9,531022),
-  (9,532037),
-  (9,532088),
-  (9,532142),
-  (9,532177),
-  (9,533203),
-  (9,533513),
-  (9,533530)
-);
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 500410 AND progress_recid = 1547512;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 501000 AND progress_recid = 1547572;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 501646 AND progress_recid = 1547636;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 503045 AND progress_recid = 1547777;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 503207 AND progress_recid = 1547793;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506087 AND progress_recid = 1548542;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506486 AND progress_recid = 1548582;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506524 AND progress_recid = 1548586;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 512591 AND progress_recid = 1548168;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 514420 AND progress_recid = 1548353;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 516201 AND progress_recid = 1549330;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 517984 AND progress_recid = 1549510;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 518360 AND progress_recid = 1549549;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 518425 AND progress_recid = 1549555;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 519324 AND progress_recid = 1548856;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 522457 AND progress_recid = 1549173;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 524174 AND progress_recid = 1550369;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 529885 AND progress_recid = 1549919;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 531022 AND progress_recid = 1550034;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 531065 AND progress_recid = 1550038;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 500003 AND progress_recid = 1547471;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 501573 AND progress_recid = 1547629;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 502944 AND progress_recid = 1547767;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 502987 AND progress_recid = 1547771;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 503169 AND progress_recid = 1547789;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 504289 AND progress_recid = 1547901;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 504726 AND progress_recid = 1547373;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 505358 AND progress_recid = 1547436;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 505803 AND progress_recid = 1548513;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506001 AND progress_recid = 1548534;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506133 AND progress_recid = 1548547;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506206 AND progress_recid = 1548554;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506230 AND progress_recid = 1548557;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506320 AND progress_recid = 1548566;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506613 AND progress_recid = 1548595;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 517305 AND progress_recid = 1549441;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 518514 AND progress_recid = 1549564;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 519936 AND progress_recid = 1548919;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 519952 AND progress_recid = 1548921;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 521574 AND progress_recid = 1549084;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 526223 AND progress_recid = 1549665;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 526355 AND progress_recid = 1549678;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 529290 AND progress_recid = 1549860;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 532177 AND progress_recid = 1550604;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 500666 AND progress_recid = 1547538;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 500895 AND progress_recid = 1547561;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 500917 AND progress_recid = 1547563;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 501239 AND progress_recid = 1547595;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 501999 AND progress_recid = 1547671;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 505102 AND progress_recid = 1547411;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 505277 AND progress_recid = 1547428;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 505927 AND progress_recid = 1548525;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506125 AND progress_recid = 1548546;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506354 AND progress_recid = 1548569;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 511951 AND progress_recid = 1548103;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 521434 AND progress_recid = 1549070;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 521841 AND progress_recid = 1549112;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 522023 AND progress_recid = 1549130;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 525448 AND progress_recid = 1550496;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 527610 AND progress_recid = 1550146;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 529133 AND progress_recid = 1549844;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 532088 AND progress_recid = 1550595;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 533530 AND progress_recid = 1550742;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 501166 AND progress_recid = 1547588;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 501255 AND progress_recid = 1547597;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 504955 AND progress_recid = 1547396;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 505935 AND progress_recid = 1548526;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506311 AND progress_recid = 1548565;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 514543 AND progress_recid = 1548365;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 518441 AND progress_recid = 1549557;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 518476 AND progress_recid = 1549560;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 526401 AND progress_recid = 1549683;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 526983 AND progress_recid = 1549741;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 528706 AND progress_recid = 1549801;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 528889 AND progress_recid = 1549819;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 530263 AND progress_recid = 1549958;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 530689 AND progress_recid = 1550000;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 500992 AND progress_recid = 1547571;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 501700 AND progress_recid = 1547642;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 502243 AND progress_recid = 1547696;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 502405 AND progress_recid = 1547712;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 502430 AND progress_recid = 1547715;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 503185 AND progress_recid = 1547791;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 504971 AND progress_recid = 1547398;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 505129 AND progress_recid = 1547413;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 507350 AND progress_recid = 1548669;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 514683 AND progress_recid = 1548379;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 522988 AND progress_recid = 1550248;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 526991 AND progress_recid = 1549742;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 530786 AND progress_recid = 1550010;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 531243 AND progress_recid = 1550056;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 533203 AND progress_recid = 1550709;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 501948 AND progress_recid = 1547666;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 503550 AND progress_recid = 1547828;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 504300 AND progress_recid = 1547903;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 504521 AND progress_recid = 1547925;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 504769 AND progress_recid = 1547377;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506648 AND progress_recid = 1548598;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 512605 AND progress_recid = 1548169;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 515558 AND progress_recid = 1549264;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 516040 AND progress_recid = 1549314;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 520772 AND progress_recid = 1549004;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 524913 AND progress_recid = 1550443;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 525014 AND progress_recid = 1550453;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 526827 AND progress_recid = 1549725;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 527130 AND progress_recid = 1550097;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 528072 AND progress_recid = 1550192;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 528986 AND progress_recid = 1549829;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 529656 AND progress_recid = 1549896;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 530026 AND progress_recid = 1549934;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 530042 AND progress_recid = 1549936;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 532037 AND progress_recid = 1550590;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 533513 AND progress_recid = 1550740;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 501280 AND progress_recid = 1547600;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 502995 AND progress_recid = 1547772;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 504610 AND progress_recid = 1547362;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 505552 AND progress_recid = 1547456;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 505897 AND progress_recid = 1548522;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 506117 AND progress_recid = 1548545;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 514500 AND progress_recid = 1548361;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 514640 AND progress_recid = 1548375;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 515639 AND progress_recid = 1549273;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 522830 AND progress_recid = 1550233;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 523925 AND progress_recid = 1550343;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 525774 AND progress_recid = 1550530;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 527394 AND progress_recid = 1550124;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 529958 AND progress_recid = 1549927;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 502952 AND progress_recid = 1547768;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 504467 AND progress_recid = 1547919;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 505285 AND progress_recid = 1547429;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 505757 AND progress_recid = 1548508;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 507806 AND progress_recid = 1548715;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 511099 AND progress_recid = 1548473;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 514373 AND progress_recid = 1548348;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 518719 AND progress_recid = 1549584;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 521345 AND progress_recid = 1549061;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 524310 AND progress_recid = 1550383;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 525715 AND progress_recid = 1550524;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 525820 AND progress_recid = 1550535;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 526096 AND progress_recid = 1549652;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 529524 AND progress_recid = 1549883;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 531111 AND progress_recid = 1550043;
+UPDATE crapsld SET vliofmes = 0, vlsmnmes = 0 WHERE cdcooper = 9 AND nrdconta = 532142 AND progress_recid = 1550601;
 COMMIT;
 
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 502243 AND progress_recid = 72675398;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 504971 AND progress_recid = 72675416;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 506613 AND progress_recid = 72675438;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 522988 AND progress_recid = 72675475;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 527610 AND progress_recid = 72675493;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 529524 AND progress_recid = 72675499;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 529656 AND progress_recid = 72675500;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 530026 AND progress_recid = 72675502;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 532037 AND progress_recid = 72675510;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 532177 AND progress_recid = 72675513;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 501573 AND progress_recid = 72675396;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 505285 AND progress_recid = 72675419;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 505552 AND progress_recid = 72675420;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 506125 AND progress_recid = 72675429;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 518476 AND progress_recid = 72675461;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 518514 AND progress_recid = 72675462;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 519952 AND progress_recid = 72675466;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 520772 AND progress_recid = 72675467;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 526355 AND progress_recid = 72675486;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 530689 AND progress_recid = 72675505;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 531022 AND progress_recid = 72675507;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 532088 AND progress_recid = 72675511;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 533513 AND progress_recid = 72675515;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 501280 AND progress_recid = 72675395;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 502952 AND progress_recid = 72675400;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 503185 AND progress_recid = 72675405;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 503550 AND progress_recid = 72675407;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 504289 AND progress_recid = 72675408;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 505129 AND progress_recid = 72675418;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 505927 AND progress_recid = 72675424;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 506486 AND progress_recid = 72675436;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 516040 AND progress_recid = 72675454;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 519936 AND progress_recid = 72675465;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 522457 AND progress_recid = 72675473;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 522830 AND progress_recid = 72675474;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 523925 AND progress_recid = 72675476;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 526401 AND progress_recid = 72675487;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 528072 AND progress_recid = 72675494;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 528889 AND progress_recid = 72675496;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 533203 AND progress_recid = 72675514;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 501000 AND progress_recid = 72675391;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 501700 AND progress_recid = 72919806;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 504521 AND progress_recid = 72675411;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 504955 AND progress_recid = 72675415;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 505102 AND progress_recid = 72675417;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 507350 AND progress_recid = 72675440;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 521841 AND progress_recid = 72675471;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 525448 AND progress_recid = 72675481;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 525715 AND progress_recid = 72675482;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 527130 AND progress_recid = 72675491;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 528986 AND progress_recid = 72675497;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 504467 AND progress_recid = 72675410;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 504610 AND progress_recid = 72675412;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 505757 AND progress_recid = 72675421;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 514373 AND progress_recid = 72675446;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 514640 AND progress_recid = 72675450;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 518441 AND progress_recid = 72675460;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 524310 AND progress_recid = 72675478;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 525820 AND progress_recid = 72675483;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 526827 AND progress_recid = 72675488;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 526991 AND progress_recid = 72675490;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 500992 AND progress_recid = 72675390;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 501166 AND progress_recid = 72675392;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 501239 AND progress_recid = 72675393;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 501255 AND progress_recid = 72675394;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 503207 AND progress_recid = 72675406;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 506524 AND progress_recid = 72675437;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 519324 AND progress_recid = 72675464;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 521345 AND progress_recid = 72675468;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 521574 AND progress_recid = 72675470;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 529290 AND progress_recid = 72675498;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 500917 AND progress_recid = 72919805;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 503169 AND progress_recid = 72675404;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 506320 AND progress_recid = 72675434;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 506354 AND progress_recid = 72675435;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 511951 AND progress_recid = 72675443;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 514543 AND progress_recid = 72675449;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 526096 AND progress_recid = 72675484;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 529958 AND progress_recid = 72675501;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 532142 AND progress_recid = 72675512;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 533530 AND progress_recid = 72675516;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 500666 AND progress_recid = 72675388;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 501948 AND progress_recid = 72675397;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 505897 AND progress_recid = 72675423;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 506117 AND progress_recid = 72675428;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 512591 AND progress_recid = 72675444;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 515558 AND progress_recid = 72675452;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 518360 AND progress_recid = 72675458;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 518425 AND progress_recid = 72675459;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 524913 AND progress_recid = 72675479;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 528706 AND progress_recid = 72675495;
+DELETE FROM craplat WHERE cdcooper = 9 AND nrdconta = 530786 AND progress_recid = 72675506;
+COMMIT;
