@@ -250,3 +250,4 @@ begin
        DBMS_OUTPUT.PUT_line(vr_dscritic);
     end if;  
 end;
+/
