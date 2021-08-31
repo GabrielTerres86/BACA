@@ -10,7 +10,7 @@ BEGIN
   -- Cooperativa de destino do cartão
   vr_cooperativa := 1;
   -- Conta de destino do cartão
-  vr_conta := 2023610;
+  vr_conta := 9094806;
   -- Numero do cartão 
   vr_cartao := 6393500069948041; -- Dudu 
 
