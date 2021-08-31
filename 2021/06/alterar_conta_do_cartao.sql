@@ -8,19 +8,20 @@ DECLARE
 BEGIN
 
   -- Cooperativa de destino do cartão
-  vr_cooperativa := 6;
+  vr_cooperativa := 1;
   -- Conta de destino do cartão
-  vr_conta := 1120;
+  vr_conta := 2023610;
+  -- Numero do cartão 
+  vr_cartao := 6393500069948041; -- Dudu 
 
   -- Numero do cartão que precisamos ajustar
 --  vr_cartao := 5127070162667067; -- Jeff
 --  vr_cartao := 5127070162667935; -- XV
-  vr_cartao := 5127070161674411; -- Luis
+--  vr_cartao := 5127070161674411; -- Luis
 --  vr_cartao := 5127070320149719; -- Luis 2
 --  vr_cartao := 5158940000000188; -- Matheus(saque & pague)
 --  vr_cartao := 5156010019676523; -- SeP - PF
 --  vr_cartao := 5127070340534221; -- Paty
---  vr_cartao := 6393500069948041; -- Dudu
 --  vr_cartao := 5161620000587872; -- Djonata
 --  vr_cartao := 5127070162666663; -- Matheus barros
 --  vr_cartao := 5588190184171591; -- Topaz
