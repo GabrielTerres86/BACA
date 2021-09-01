@@ -5,11 +5,11 @@ BEGIN
   SELECT NVL(MAX(nrseqaca),0)+1 INTO vr_nrseqaca
     FROM crapaca;
   
-  DELETE crapaca 
+  DELETE CECRED.crapaca 
    WHERE nmdeacao = 'DESOPE_BUSCA_HIST_BLOQUEIO_DIGITAL' 
      AND nmpackag = 'TELA_CONTAS_DESAB';
      
-  INSERT INTO crapaca(nrseqaca
+  INSERT INTO CECRED.crapaca(nrseqaca
                      ,nmdeacao
                      ,nmpackag
                      ,nmproced
@@ -34,11 +34,11 @@ BEGIN
   SELECT NVL(MAX(nrseqaca),0)+1 INTO vr_nrseqaca
     FROM crapaca;
   
-  DELETE crapaca 
+  DELETE CECRED.crapaca 
    WHERE nmdeacao = 'DESOPE_COMBO_MOTIVOS_BLOQUEIO_DIGITAL' 
      AND nmpackag = 'TELA_CONTAS_DESAB';
      
-  INSERT INTO crapaca(nrseqaca
+  INSERT INTO CECRED.crapaca(nrseqaca
                      ,nmdeacao
                      ,nmpackag
                      ,nmproced
@@ -57,7 +57,7 @@ EXCEPTION
 END;
 /
 BEGIN
-   UPDATE crapaca set lstparam = 'pr_nrdconta,pr_flgrenli,pr_flmajora,pr_dsmotmaj,pr_flcnaulc,pr_flcredigi,pr_idmotivobd'
+   UPDATE CECRED.crapaca set lstparam = 'pr_nrdconta,pr_flgrenli,pr_flmajora,pr_dsmotmaj,pr_flcnaulc,pr_flcredigi,pr_idmotivobd'
     WHERE UPPER(nmdeacao) = 'DESOPE_GRAVA_CONTA'
       AND UPPER(nmpackag) = 'TELA_CONTAS_DESAB'
       AND LOWER(nmproced) = 'pc_grava_dados_conta';
@@ -68,8 +68,8 @@ EXCEPTION
 END;
 /
 BEGIN
-   DELETE tbgen_dominio_campo WHERE nmdominio = 'TPPRODUTO' AND cddominio = 1;
-   INSERT INTO tbgen_dominio_campo(nmdominio
+   DELETE CECRED.tbgen_dominio_campo WHERE nmdominio = 'TPPRODUTO' AND cddominio = 1;
+   INSERT INTO CECRED.tbgen_dominio_campo(nmdominio
                                   ,cddominio
                                   ,dscodigo)
                             VALUES('TPPRODUTO'
