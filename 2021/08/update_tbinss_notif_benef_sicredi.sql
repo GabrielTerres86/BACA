@@ -1,6 +1,6 @@
 ﻿BEGIN
   
-UPDATE tbinss_notif_benef_sicredi a SET a.inaceitenotif = 0, a.inconfleitusic = 0, a.dhaceitenotif = NULL, a.dhconfleitusic = NULL
- WHERE a.inaceitenotif = 1 OR a.inaceitenotif <> 0;
+UPDATE tbinss_notif_benef_sicredi a SET a.inconfleitusic = -1, a.dhconfleitusic = NULL, a.DSMSGRETCONFLEITU = 'FALHA_COM_SERVICO - Parâmetro(s) não informado(s). - 2021-09-01 11:19:11 - Status HTTP:422'
+ WHERE a.IDNOTIFICACAO = 109863;
 COMMIT;
 END;
