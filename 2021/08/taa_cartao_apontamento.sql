@@ -11,7 +11,7 @@ begin
   -- Cooperativa de destino do cartão
   vr_cooperativa := 1;
   -- Conta de destino do cartão
-  vr_conta := 90168070;
+  vr_conta := 90267702;
 
   -- Numero do cartão que precisamos ajustar
   vr_cartao := 5161620000264183; -- Luis
