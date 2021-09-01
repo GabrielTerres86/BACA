@@ -13,9 +13,6 @@ BEGIN
   vr_conta := 90169042;
 
   -- Numero do cartão que precisamos ajustar
-  vr_cartao := 5161620000264183; -- Poliane
-
-  -- Numero do cartão que precisamos ajustar
 --  vr_cartao := 5127070162667067; -- Jeff
 --  vr_cartao := 5127070162667935; -- XV
 --  vr_cartao := 5127070161674411; -- Luis
@@ -26,6 +23,8 @@ BEGIN
 --  vr_cartao := 5161620000587872; -- Djonata
 --  vr_cartao := 5127070162666663; -- Matheus barros
 --  vr_cartao := 5588190184171591; -- Topaz
+  vr_cartao := 5161620000264183; -- Poliane 
+
   
   -- Verificar se a conta possui algum outro cartão para buscar o CPF do Titular
   FOR cartao IN (select distinct a.nrcpftit
