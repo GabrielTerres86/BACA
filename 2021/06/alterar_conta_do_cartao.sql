@@ -13,7 +13,7 @@ BEGIN
   vr_conta := 90169042;
 
   -- Numero do cartão que precisamos ajustar
-  vr_cartao := 5161620000264183; 
+  vr_cartao := 5161620000264183; -- Poliane
 
   -- Numero do cartão que precisamos ajustar
 --  vr_cartao := 5127070162667067; -- Jeff
