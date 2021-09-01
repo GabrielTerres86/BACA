@@ -53,7 +53,8 @@ declare
        nrctrseg   tbseg_prestamista.nrctrseg%type,  
        cdapolic   tbseg_prestamista.cdapolic%type,  
        idseqtra   tbseg_prestamista.idseqtra%type,
-       tpseguro   varchar2(1)        
+       tpseguro   varchar2(1),        
+       PROGRESS_RECID CRAWSEG.PROGRESS_RECID%TYPE
       );
     --Definicao dos tipos de tabelas
     TYPE typ_tab_arquiv IS TABLE OF typ_reg_arq INDEX BY PLS_INTEGER;
@@ -100,21 +101,22 @@ begin
               vr_datastr := replace(vr_datastr,'/','');
               vr_datastr := replace(vr_datastr,'-','');
               begin
-                 vr_dtinivig  := to_date(vr_datastr,'ddmmrrrr');
+                 vr_dtdvenda  := to_date(vr_datastr,'ddmmrrrr');
               exception
                 when others then
-                 vr_dtinivig  := null;
-              end;
+                 vr_dtdvenda  := null;
+              end;   
               vr_datastr    := gene0002.fn_busca_entrada(8,vr_dslinhaarq,';');
               vr_datastr    := TRIM(vr_datastr);
               vr_datastr := replace(vr_datastr,'/','');
               vr_datastr := replace(vr_datastr,'-','');
               begin
-                 vr_dtdvenda  := to_date(vr_datastr,'ddmmrrrr');
+                 vr_dtinivig  := to_date(vr_datastr,'ddmmrrrr');
               exception
                 when others then
-                 vr_dtdvenda  := null;
-              end;                                   
+                 vr_dtinivig  := null;
+              end;
+                                              
               vr_produto   := gene0002.fn_busca_entrada(9,vr_dslinhaarq,';');             
               vr_premio    := gene0002.fn_busca_entrada(10,vr_dslinhaarq,';');             
               vr_capital   := gene0002.fn_busca_entrada(11,vr_dslinhaarq,';');             
@@ -124,27 +126,68 @@ begin
               select lpad(decode(vr_produto , 1,5,  2,7,  3,10,  4,11,  5,14, 6 ,9, 7,16
                                                      , 8,2  ,9,8 ,10, 6, 11,12, 12,13, 13,1      )   ,6,'0')
                       into vr_cdcooper  from dual ;
-              
-              begin
-                vr_nrpropost2 := null;
-                vr_nrdconta   := null;
-                vr_nrctrseg   := null;                
-                IF vr_dtinivig < to_date('01/08/2021','DD/MM/YYYY') then
-                    select    nrdconta,    nrctrseg,    nrproposta,    cdapolic,    idseqtra,    dtinivig ,   dtdevend  into 
-                           vr_nrdconta, vr_nrctrseg, vr_nrpropost2, vr_cdapolic, vr_idseqtra, vr_dtinivi2 ,vr_dtdeven2
-                     from tbseg_prestamista 
-                    where nrctremp = vr_nrcontrato 
-                      and cdcooper = vr_cdcooper
-                      and dtinivig >= to_date('01/08/2021','DD/MM/YYYY')
-                      and nrproposta <> vr_nrproposta;            
-                end if;  
+                      
+              vr_nrpropost2 := null;
+              vr_nrdconta   := null;
+              vr_nrctrseg   := null;                
+              vr_PROGRESS_RECID := null;                
+               begin
+                    select     PROGRESS_RECID,    nrdconta ,   nrctrseg
+                    into    vr_PROGRESS_RECID, vr_nrdconta, vr_nrctrseg from crawseg
+                     where nrproposta = vr_nrproposta        --nrproposta = vr_tabarquiv(I).nrpropost2
+                      and  cdcooper   = vr_cdcooper
+                      and  nrctrato   = vr_nrcontrato
+                  --    and dtinivig >= to_date('01/08/2021','DD/MM/YYYY')
+                      and tpseguro    = 4;
               exception
-                when others then
-                 vr_dscritic := 'Erro Geral: ' || SQLERRM;
-                 vr_nrpropost2 := null;
-                 vr_nrdconta   := null;
-                 vr_nrctrseg   := null;
-              end;                                        
+                    when others then
+                     vr_dscritic := 'nao econtrado: ' || SQLERRM;
+                     vr_nrpropost2 := null;
+                     vr_nrdconta   := null;
+                     vr_nrctrseg   := null;
+              end;                  
+              begin
+                  select      cdapolic,    idseqtra  into 
+                           vr_cdapolic, vr_idseqtra
+                   from tbseg_prestamista 
+                  where nrctremp = vr_nrcontrato 
+                    and cdcooper = vr_cdcooper
+                    and nrproposta = vr_nrproposta;            
+              exception
+                  when others then
+                   vr_dscritic := 'nao econtrado: ' || SQLERRM;
+                   vr_nrpropost2 := null;
+                   vr_nrdconta   := null;
+                   vr_nrctrseg   := null;
+              end;              
+              if (vr_nrlinha > 1) THEN
+                if vr_nrcontrato = vr_tabarquiv(vr_nrlinha-1).nrcontrato  then
+                   IF vr_dtinivig >= to_date('01/08/2021','DD/MM/YYYY')  then                            
+                      if vr_tabarquiv(vr_nrlinha-1).dtinivig < to_date('01/08/2021','DD/MM/YYYY') then 
+                         vr_nrpropost2 := vr_nrproposta;
+                         vr_nrproposta := vr_tabarquiv(vr_nrlinha-1).nrproposta;
+                         vr_dtinivi2   := vr_dtinivig ;
+                         vr_dtdeven2   := vr_dtdvenda ; 
+                         vr_dtinivig   := vr_tabarquiv(vr_nrlinha-1).dtinivig;
+                         vr_dtdvenda   := vr_tabarquiv(vr_nrlinha-1).dtdvenda;
+                      end if;                                
+                   ELSE 
+                      if vr_tabarquiv(vr_nrlinha-1).dtinivig >= to_date('01/08/2021','DD/MM/YYYY') then 
+                      --corrige var2 para data p/ rollbak 
+                         vr_tabarquiv(vr_nrlinha-1).dtinivi2   := vr_tabarquiv(vr_nrlinha-1).dtinivig;
+                         vr_tabarquiv(vr_nrlinha-1).dtdvend2   := vr_tabarquiv(vr_nrlinha-1).dtdvenda;
+                         vr_tabarquiv(vr_nrlinha-1).nrpropost2 := vr_tabarquiv(vr_nrlinha-1).nrproposta;
+                       --troca var2 para data p/ rollbak 
+                         vr_tabarquiv(vr_nrlinha-1).dtinivig   := vr_dtinivig;
+                         vr_tabarquiv(vr_nrlinha-1).dtdvenda   := vr_dtdvenda  ;
+                         vr_tabarquiv(vr_nrlinha-1).nrproposta := vr_nrproposta;
+                         vr_nrpropost2 := null;
+                      end if;                                       
+                   END IF;
+                   
+                end if;  
+              end if;  
+                             
               vr_tabarquiv(vr_nrlinha).cpf          := vr_cpf       ;
               vr_tabarquiv(vr_nrlinha).nrcontrato   := vr_nrcontrato;
               vr_tabarquiv(vr_nrlinha).apolice      := vr_apolice   ;  
@@ -163,8 +206,9 @@ begin
               vr_tabarquiv(vr_nrlinha).cdcooper     := vr_cdcooper;                
               vr_tabarquiv(vr_nrlinha).nrdconta     := vr_nrdconta;
               vr_tabarquiv(vr_nrlinha).nrctrseg     := vr_nrctrseg;
-              vr_tabarquiv(vr_nrlinha).cdapolic     := vr_cdapolic;---apolice agosto
+              vr_tabarquiv(vr_nrlinha).cdapolic     := vr_cdapolic;
               vr_tabarquiv(vr_nrlinha).idseqtra     := vr_idseqtra; 
+              vr_tabarquiv(vr_nrlinha).PROGRESS_RECID := vr_PROGRESS_RECID;
           end loop;
 
       GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdirrec 
@@ -180,54 +224,40 @@ begin
       GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'BEGIN');
           
       FOR I IN vr_tabarquiv.first .. vr_tabarquiv.last LOOP                               
-        vr_dscritic := '';
-          begin
-            select  dtinivig,    PROGRESS_RECID
-            into vr_dtinivig, vr_PROGRESS_RECID from crawseg
-             where nrproposta = vr_tabarquiv(I).nrpropost2
-              and  cdcooper   = vr_tabarquiv(I).cdcooper 
-              and  nrctrseg   = vr_tabarquiv(I).nrctrseg 
-              and tpseguro    = 4;
-          exception
-            when others then
-             vr_dscritic := 'Erro Geral: ' || SQLERRM;
-             vr_nrpropost2 := null;
-             vr_nrdconta   := null;
-             vr_nrctrseg   := null;
-          end;                        
-        
+         vr_dscritic := '';       
          IF (vr_tabarquiv(I).nrpropost2 is not null )
-           and (vr_PROGRESS_RECID is not null) 
+           and (vr_tabarquiv(I).PROGRESS_RECID is not null) 
            and  (vr_tabarquiv(I).dtinivig < to_date('01/08/2021','DD/MM/YYYY')) then
-            
+                   
              update tbseg_prestamista 
               set nrproposta   = vr_tabarquiv(I).nrproposta 
                  , DTDEVEND    = vr_tabarquiv(I).dtdvenda
                  , DTINIVIG    = vr_tabarquiv(I).dtinivig
               where nrproposta = vr_tabarquiv(I).nrpropost2  
-               and  cdcooper   = vr_tabarquiv(I).cdcooper;
-              
-
+               and  cdcooper   = vr_tabarquiv(I).cdcooper;              
+                    
               update crawseg set nrproposta =  vr_tabarquiv(I).nrproposta
-                              , dtinivig   =  vr_tabarquiv(I).dtinivig 
-              where PROGRESS_RECID = vr_PROGRESS_RECID ;
-
-              vr_linha := 
-               '  update tbseg_prestamista '||
-               ' set nrproposta = '          ||vr_tabarquiv(I).nrpropost2|| 
-               '    , DTDEVEND  = to_date('''||vr_tabarquiv(I).dtdvend2||''',''DD/MM/YYYY'')'||
-               '    , DTINIVIG  = to_date('''||vr_tabarquiv(I).dtinivi2||''',''DD/MM/YYYY'')'||
-               ' where idseqtra    = '||vr_tabarquiv(I).idseqtra||' ;'; 
-             GENE0001.pc_escr_linha_arquivo(vr_ind_arq,vr_linha);  
-                         
+                               , dtinivig   =  vr_tabarquiv(I).dtinivig 
+              where PROGRESS_RECID = vr_tabarquiv(I).PROGRESS_RECID ;
+              if vr_tabarquiv(I).idseqtra is not null then
+                vr_linha := 
+                 '  update tbseg_prestamista '||
+                 ' set nrproposta = '          ||vr_tabarquiv(I).nrpropost2|| 
+                 '    , DTDEVEND  = to_date('''||vr_tabarquiv(I).dtdvend2||''',''DD/MM/YYYY'')'||
+                 '    , DTINIVIG  = to_date('''||vr_tabarquiv(I).dtinivi2||''',''DD/MM/YYYY'')'||
+                 ' where idseqtra    = '||vr_tabarquiv(I).idseqtra||' ;'; 
+                GENE0001.pc_escr_linha_arquivo(vr_ind_arq,vr_linha);  
+              end if;
+                     
              vr_linha := 
-               '  update crawseg set nrproposta = '||vr_tabarquiv(I).nrproposta||
-               '                     , dtinivig = to_date('''||vr_dtinivig||''',''DD/MM/YYYY'')'||
-               ' where PROGRESS_RECID = '||vr_PROGRESS_RECID ||';  ';
+               '  update crawseg set nrproposta = '||vr_tabarquiv(I).nrpropost2||
+               '                     , dtinivig = to_date('''||vr_tabarquiv(I).dtinivi2||''',''DD/MM/YYYY'')'||
+               ' where PROGRESS_RECID = '||vr_tabarquiv(I).PROGRESS_RECID ||';  ';
              GENE0001.pc_escr_linha_arquivo(vr_ind_arq,vr_linha);
-                                 
+                 
          END IF;   
       END LOOP;
+
       commit;
       
       GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' COMMIT;');                 
