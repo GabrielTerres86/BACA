@@ -1,5 +1,5 @@
 BEGIN
-  INSERT INTO crapprm
+  INSERT INTO CECRED.crapprm
     (NMSISTEM
     ,CDCOOPER
     ,CDACESSO
