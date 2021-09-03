@@ -4,7 +4,8 @@ DECLARE
     SELECT cdcooper, nrdconta, cdcoptfn, vllanmto, dtmvtolt
     FROM cecred.craplcm
     WHERE dtmvtolt BETWEEN to_date('14/06/2021','DD/MM/YYYY') AND to_date('15/06/2021','DD/MM/YYYY')
-      AND nrdconta = 243361
+      AND vllanmto IN (40,900)
+	  AND nrdconta = 243361
       AND cdcooper = 16
     ORDER BY cdcooper, nrdconta, cdcoptfn, vllanmto, dtmvtolt;
   
