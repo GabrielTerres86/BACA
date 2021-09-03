@@ -1,55 +1,41 @@
-DECLARE
-  vr_nrseqaca NUMBER;
 BEGIN
-    
-  SELECT NVL(MAX(nrseqaca),0)+1 INTO vr_nrseqaca
-    FROM crapaca;
-  
+   
   DELETE CECRED.crapaca 
    WHERE nmdeacao = 'DESOPE_BUSCA_HIST_BLOQUEIO_DIGITAL' 
      AND nmpackag = 'TELA_CONTAS_DESAB';
      
-  INSERT INTO CECRED.crapaca(nrseqaca
-                     ,nmdeacao
-                     ,nmpackag
-                     ,nmproced
-                     ,lstparam
-                     ,nrseqrdr)
-               VALUES(vr_nrseqaca
-                     ,'DESOPE_BUSCA_HIST_BLOQUEIO_DIGITAL'
-                     ,'TELA_CONTAS_DESAB'
-                     ,'pc_busca_hist_bloqueio_digital'
-                     ,'pr_nrdconta,pr_tpproduto'
-                     ,71);
+  INSERT INTO CECRED.crapaca(nmdeacao
+                            ,nmpackag
+                            ,nmproced
+                            ,lstparam
+                            ,nrseqrdr)
+                     VALUES('DESOPE_BUSCA_HIST_BLOQUEIO_DIGITAL'
+                            ,'TELA_CONTAS_DESAB'
+                            ,'pc_busca_hist_bloqueio_digital'
+                            ,'pr_nrdconta,pr_tpproduto'
+                            ,71);
   COMMIT;                     
 EXCEPTION         
    WHEN OTHERS THEN
         ROLLBACK;  
 END;
 /
-DECLARE
-  vr_nrseqaca NUMBER;
 BEGIN
     
-  SELECT NVL(MAX(nrseqaca),0)+1 INTO vr_nrseqaca
-    FROM crapaca;
-  
   DELETE CECRED.crapaca 
    WHERE nmdeacao = 'DESOPE_COMBO_MOTIVOS_BLOQUEIO_DIGITAL' 
      AND nmpackag = 'TELA_CONTAS_DESAB';
      
-  INSERT INTO CECRED.crapaca(nrseqaca
-                     ,nmdeacao
-                     ,nmpackag
-                     ,nmproced
-                     ,lstparam
-                     ,nrseqrdr)
-               VALUES(vr_nrseqaca
-                     ,'DESOPE_COMBO_MOTIVOS_BLOQUEIO_DIGITAL'
-                     ,'TELA_CONTAS_DESAB'
-                     ,'pc_combo_motivos_bloqueio_digital'
-                     ,'pr_flgtipo,pr_cdproduto'
-                     ,71);
+  INSERT INTO CECRED.crapaca(nmdeacao
+                            ,nmpackag
+                            ,nmproced
+                            ,lstparam
+                            ,nrseqrdr)
+                     VALUES('DESOPE_COMBO_MOTIVOS_BLOQUEIO_DIGITAL'
+                            ,'TELA_CONTAS_DESAB'
+                            ,'pc_combo_motivos_bloqueio_digital'
+                            ,'pr_flgtipo,pr_cdproduto'
+                            ,71);
   COMMIT;                     
 EXCEPTION         
    WHEN OTHERS THEN
@@ -57,7 +43,7 @@ EXCEPTION
 END;
 /
 BEGIN
-   UPDATE CECRED.crapaca set lstparam = 'pr_nrdconta,pr_flgrenli,pr_flmajora,pr_dsmotmaj,pr_flcnaulc,pr_flcredigi,pr_idmotivobd'
+   UPDATE CECRED.crapaca SET lstparam = 'pr_nrdconta,pr_flgrenli,pr_flmajora,pr_dsmotmaj,pr_flcnaulc,pr_flcredigi,pr_idmotivobd'
     WHERE UPPER(nmdeacao) = 'DESOPE_GRAVA_CONTA'
       AND UPPER(nmpackag) = 'TELA_CONTAS_DESAB'
       AND LOWER(nmproced) = 'pc_grava_dados_conta';
