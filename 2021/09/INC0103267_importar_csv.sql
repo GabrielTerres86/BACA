@@ -131,24 +131,10 @@ begin
               vr_nrdconta   := null;
               vr_nrctrseg   := null;                
               vr_PROGRESS_RECID := null;                
-               begin
-                    select     PROGRESS_RECID,    nrdconta ,   nrctrseg
-                    into    vr_PROGRESS_RECID, vr_nrdconta, vr_nrctrseg from crawseg
-                     where nrproposta = vr_nrproposta        --nrproposta = vr_tabarquiv(I).nrpropost2
-                      and  cdcooper   = vr_cdcooper
-                      and  nrctrato   = vr_nrcontrato
-                  --    and dtinivig >= to_date('01/08/2021','DD/MM/YYYY')
-                      and tpseguro    = 4;
-              exception
-                    when others then
-                     vr_dscritic := 'nao econtrado: ' || SQLERRM;
-                     vr_nrpropost2 := null;
-                     vr_nrdconta   := null;
-                     vr_nrctrseg   := null;
-              end;                  
+                                
               begin
-                  select      cdapolic,    idseqtra  into 
-                           vr_cdapolic, vr_idseqtra
+                  select   cdapolic,       idseqtra,    nrdconta,    nrctrseg  into 
+                           vr_cdapolic, vr_idseqtra, vr_nrdconta, vr_nrctrseg
                    from tbseg_prestamista 
                   where nrctremp = vr_nrcontrato 
                     and cdcooper = vr_cdcooper
@@ -159,7 +145,25 @@ begin
                    vr_nrpropost2 := null;
                    vr_nrdconta   := null;
                    vr_nrctrseg   := null;
-              end;              
+              end;        
+              
+              begin
+                select     PROGRESS_RECID 
+                into    vr_PROGRESS_RECID from crawseg
+                 where nrproposta = vr_nrproposta        
+                  and cdcooper   = vr_cdcooper
+                  and nrctrseg   = vr_nrctrseg
+                  and nrctrato   = vr_nrcontrato
+                  and nrdconta    = vr_nrdconta
+                  and tpseguro    = 4;
+              exception
+                    when others then
+                     vr_dscritic := 'nao econtrado: ' || SQLERRM;
+                     vr_nrpropost2 := null;
+                     vr_nrdconta   := null;
+                     vr_nrctrseg   := null;
+              end; 
+                    
               if (vr_nrlinha > 1) THEN
                 if vr_nrcontrato = vr_tabarquiv(vr_nrlinha-1).nrcontrato  then
                    IF vr_dtinivig >= to_date('01/08/2021','DD/MM/YYYY')  then                            
