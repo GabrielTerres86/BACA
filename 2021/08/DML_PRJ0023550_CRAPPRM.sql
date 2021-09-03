@@ -1,4 +1,4 @@
-BEGIN
+﻿BEGIN
   INSERT INTO crapprm
     (nmsistem
     ,cdcooper
@@ -10,6 +10,6 @@ BEGIN
     ,0
     ,'EMAIL_RECEB_TED_PRONAMPE'
     ,'Email das pessoas que recebem as divergências dos TED recebidos do FGO Pronampe'
-    ,'pronampeted@ailos.coop.br');
+    ,'estrategiadecobranca@ailos.coop.br');
   COMMIT;
 END;
