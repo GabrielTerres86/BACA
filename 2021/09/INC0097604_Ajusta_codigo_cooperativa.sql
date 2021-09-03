@@ -2,8 +2,8 @@ DECLARE
 
   CURSOR cr_craplcm is 
     SELECT cdcooper, nrdconta, cdcoptfn, vllanmto, dtmvtolt
-    FROM craplcm
-    WHERE dtmvtolt BETWEEN '14/06/2021' AND '15/06/2021'
+    FROM cecred.craplcm
+    WHERE dtmvtolt BETWEEN to_date('14/06/2021','DD/MM/YYYY') AND to_date('15/06/2021','DD/MM/YYYY')
       AND nrdconta = 243361
       AND cdcooper = 16
     ORDER BY cdcooper, nrdconta, cdcoptfn, vllanmto, dtmvtolt;
