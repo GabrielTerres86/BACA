@@ -53,8 +53,6 @@ BEGIN
 
   END IF;
 
-  vr_cpf_titular := 30924138904;
-
   IF vr_cpf_titular IS NULL THEN
     -- Se não tem CPF para o processo
     RETURN;
