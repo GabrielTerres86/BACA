@@ -53,11 +53,45 @@ BEGIN
     RAISE vr_exc_erro;
   END IF;
   CLOSE cr_parcelas;
+	
+	INSERT INTO TBGEN_EVENTO_SOA(IDEVENTO
+	                            ,CDCOOPER
+															,NRDCONTA
+															,NRCTRPRP
+															,TPEVENTO
+															,TPRODUTO_EVENTO
+															,TPOPERACAO
+															,DHOPERACAO
+															,DSPROCESSAMENTO
+															,DSSTATUS
+															,DHEVENTO
+															,DSERRO
+															,NRTENTATIVAS
+															,DSCONTEUDO_REQUISICAO
+															) VALUES(
+															 NULL
+															,rw_parcelas.cdcooper
+															,rw_parcelas.nrdconta
+															,rw_parcelas.nrctremp
+															,'PAGTO_PAGAR'
+															,'CONSIGNADO'
+															,'INSERT'
+															,SYSDATE
+															,NULL
+															,NULL
+															,NULL
+															,NULL
+															,NULL
+															,vr_dsxmlali.getClobVal()
+															);
   
-  dbms_output.put_line(vr_dsxmlali.getClobVal());
+  --dbms_output.put_line(vr_dsxmlali.getClobVal());
+	COMMIT;
 EXCEPTION
   WHEN vr_exc_erro THEN
+		ROLLBACK;
     dbms_output.put_line('Erro: ' || vr_dscritic);
   WHEN OTHERS THEN
+		ROLLBACK;
     dbms_output.put_line('Erro 2: ' || SQLERRM);
 END;  
