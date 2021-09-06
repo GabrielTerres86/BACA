@@ -36,7 +36,7 @@ BEGIN
   UPDATE crappep pep
      SET pep.dtvencto = to_date('28/' || to_char(pep.dtvencto, 'MM/RRRR'), 'DD/MM/RRRR')
    WHERE pep.progress_recid IN
-         (SELECT e.progress_recid
+         (SELECT p.progress_recid
             FROM crapepr x
                 ,crapass a
                 ,crawepr e
@@ -52,6 +52,7 @@ BEGIN
              AND p.nrctremp = e.nrctremp
              AND p.inliquid = 0
              AND a.cdagenci = 28
+             AND a.cdcooper = 9
              AND to_char(p.dtvencto, 'DD') > 28);
 
   COMMIT;
