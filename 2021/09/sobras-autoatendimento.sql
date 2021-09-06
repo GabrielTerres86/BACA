@@ -25,8 +25,8 @@ declare
       AND lcm.cdhistor in (570, 857)
       AND lcm.cdcooper = ope.cdcooper
       and ope.cdoperacao in (18, 19)
-      AND ope.dtoperacao > '31/12/2020' 
-      AND ope.dtoperacao < '01/01/2022'
+      AND ope.dtoperacao > to_date('31/12/2020' ,'dd/mm/yyyy')
+      AND ope.dtoperacao < to_date('01/01/2022' ,'dd/mm/yyyy')
       AND ope.cdcooper = pr_cdcooper
       AND (CASE when ope.cdoperacao = 18 then 90
                when ope.cdoperacao = 19 then 91
