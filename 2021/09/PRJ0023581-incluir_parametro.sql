@@ -30,7 +30,7 @@ SELECT MAX(CDMENSAGEM)
     ,16
     ,0
     ,1
-    ,1009 --Ver agendamentos
+    ,1009
     ,1
     ,'Minhas chaves'
     ,'Minhas chaves');
