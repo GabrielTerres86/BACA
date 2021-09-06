@@ -54,9 +54,5 @@ begin
   
   COMMIT;
   
-  EXCEPTION
-  WHEN OTHERS THEN
-    DBMS_OUTPUT.PUT_LINE('Erro ao atualizar operações: ' || sqlerrm);
-    ROLLBACK;
   
 end;
