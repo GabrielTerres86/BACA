@@ -24,7 +24,7 @@ declare
     vr_pos2        number;
     vr_valorbase   varchar2(200);
     vr_valorrefin  varchar2(200);
-    vr_data        varchar2(200) := '2021-08-26T17:05:00';
+    vr_data        varchar2(200) := '2021-08-27T17:05:00';
     vr_dataatual   varchar2(200);
     vr_xmlcontent  varchar2(30000);
 
@@ -77,7 +77,7 @@ declare
              , rw_soa.tproduto_evento
              , rw_soa.tpoperacao
              , SYSDATE
-             , rw_soa.dsprocessamento
+             , NULL
              , NULL
              , NULL
              , NULL
