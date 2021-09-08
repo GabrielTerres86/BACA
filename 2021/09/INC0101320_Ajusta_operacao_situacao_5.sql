@@ -115,11 +115,11 @@ BEGIN
   
   CLOSE cr_recarga_operacao;
   --
-  DBMS_OUTPUT.PUT_LINE(vr_log_script);
+  -- DBMS_OUTPUT.PUT_LINE(vr_log_script);
   --
   COMMIT;
   --
-  DBMS_OUTPUT.PUT_LINE('Sucesso na atualização.');
+  -- DBMS_OUTPUT.PUT_LINE('Sucesso na atualização.');
   --
 EXCEPTION
   WHEN OTHERS THEN
