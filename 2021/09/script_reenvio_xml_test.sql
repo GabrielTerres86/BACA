@@ -16,6 +16,7 @@ DECLARE
   vr_dscritic     crapcri.dscritic%TYPE;
   vr_exc_erro     EXCEPTION;
 BEGIN
+  -- teste
   OPEN cr_parcelas;
   LOOP
     FETCH cr_parcelas INTO rw_parcelas;
