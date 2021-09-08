@@ -16,7 +16,6 @@ DECLARE
   vr_dscritic     crapcri.dscritic%TYPE;
   vr_exc_erro     EXCEPTION;
 BEGIN
-  -- teste
   OPEN cr_parcelas;
   LOOP
     FETCH cr_parcelas INTO rw_parcelas;
@@ -33,7 +32,7 @@ BEGIN
                      ' <parcela>
                          <dataEfetivacao>'||to_char(/*pr_dtmvtolt*/rw_parcelas.dtmvtolt,'yyyy-mm-dd')||'T'||to_char(sysdate,'hh24:mi:ss')||'</dataEfetivacao> 
                          <dataVencimento>'||to_char(rw_parcelas.dtvencto,'yyyy-mm-dd')||'</dataVencimento>
-                         <identificador>'||vr_idpagamento||'</identificador>'||
+                         <identificador>'||rw_parcelas.idseqpagamento||'</identificador>'||
                          vr_tipo_pagto|| 
                       '</parcela>';
   END LOOP;
