@@ -1,5 +1,5 @@
 UPDATE crapprm p 
-SET p.dsvlrprm = '06/09/2021#2'
+SET p.dsvlrprm = '10/09/2021#2'
 WHERE 
    (p.cdacesso LIKE 'CTRL%CRPS663%'
 OR cdacesso LIKE 'CTRL%CRPS674%' 
