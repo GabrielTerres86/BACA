@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-137
 -- Created on 05/04/2021 by T0032717 
 DECLARE
   vr_exc_erro EXCEPTION;
@@ -137,8 +135,4 @@ EXCEPTION
     ROLLBACK;
     raise_application_error(-20100, 'Erro ao atualizar contratos - ' || SQLERRM);
 END;
-0
-3
-rw_crapepr.vlsdprej
-rw_craplem.lancamento
-vr_nmdireto
+
