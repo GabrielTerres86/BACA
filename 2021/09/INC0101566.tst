@@ -39,10 +39,20 @@ BEGIN
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
        
+  --Se ocorreu erro
+  IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+    --Levantar Excecao
+    RAISE vr_exc_erro;
+  END IF;
+  
   COMMIT;
   
 EXCEPTION
   WHEN vr_exc_erro THEN
+    ROLLBACK;
+    raise_application_error(-20111, vr_dscritic);
+  WHEN OTHERS THEN
+    ROLLBACK;
     raise_application_error(-20111, vr_dscritic);
 END;
 0
