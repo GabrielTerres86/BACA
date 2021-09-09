@@ -2,11 +2,13 @@
     Atualização parcelas efetivadas Aimaro e FIS em tempos distintos causando diferença na parcela.
 */
 UPDATE crappep SET vlsdvpar = vlsdvpar -0.05, vlparepr = vlparepr -0.05 WHERE cdcooper = 9 AND nrdconta = 500100 AND nrctremp = 2020025;
-UPDATE crappep SET vlsdvpar = vlsdvpar -0.01, vlparepr = vlparepr -0.01 WHERE cdcooper = 9 AND nrdconta = 500690 AND nrctremp = 20100302;
+UPDATE crappep SET                            vlparepr = vlparepr -0.01 WHERE cdcooper = 9 AND nrdconta = 500690 AND nrctremp = 20100302 AND nrparepr = 1; -- Para primeira parcela
+UPDATE crappep SET vlsdvpar = vlsdvpar -0.01, vlparepr = vlparepr -0.01 WHERE cdcooper = 9 AND nrdconta = 500690 AND nrctremp = 20100302 AND nrparepr > 1; -- Não fazer primeira parcela
 UPDATE crappep SET vlsdvpar = vlsdvpar -0.01, vlparepr = vlparepr -0.01 WHERE cdcooper = 9 AND nrdconta = 500917 AND nrctremp = 20200019;
 UPDATE crappep SET vlsdvpar = vlsdvpar -0.03, vlparepr = vlparepr -0.03 WHERE cdcooper = 9 AND nrdconta = 501646 AND nrctremp = 20100441;
 UPDATE crappep SET vlsdvpar = vlsdvpar -0.13, vlparepr = vlparepr -0.13 WHERE cdcooper = 9 AND nrdconta = 501999 AND nrctremp = 20100370;
 UPDATE crappep SET vlsdvpar = vlsdvpar -0.02, vlparepr = vlparepr -0.02 WHERE cdcooper = 9 AND nrdconta = 501999 AND nrctremp = 21100050;
+UPDATE crappep SET                            vlparepr = vlparepr -0.02 WHERE cdcooper = 9 AND nrdconta = 502928 AND nrctremp = 21300035 AND nrparepr = 1; -- Para primeira parcela
 UPDATE crappep SET vlsdvpar = vlsdvpar -0.02, vlparepr = vlparepr -0.02 WHERE cdcooper = 9 AND nrdconta = 502928 AND nrctremp = 21300035 AND nrparepr > 1; -- Não fazer primeira parcela
 UPDATE crappep SET vlsdvpar = vlsdvpar +0.02, vlparepr = vlparepr +0.02 WHERE cdcooper = 9 AND nrdconta = 503061 AND nrctremp = 20300036;
 UPDATE crappep SET vlsdvpar = vlsdvpar -0.01, vlparepr = vlparepr -0.01 WHERE cdcooper = 9 AND nrdconta = 503614 AND nrctremp = 20100037;
