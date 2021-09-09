@@ -32,11 +32,11 @@ BEGIN
 		vr_xml_parcela:= ' <parcela>
 												 <dataEfetivacao>'||to_char(/*pr_dtmvtolt*/rw_parcelas.dtmvtolt,'yyyy-mm-dd')||'T'||to_char(sysdate,'hh24:mi:ss')||'</dataEfetivacao> 
 												 <dataVencimento>'||to_char(rw_parcelas.dtvencto,'yyyy-mm-dd')||'</dataVencimento>
-												 <identificador>'||rw_parcelas.idseqpagamento||'</identificador>'||
+												 <identificador>'||rw_parcelas.idsequencia||'</identificador>'||
 												 vr_tipo_pagto|| 
 											'</parcela>';
 	
-		vr_motenvio := NULL;
+		vr_motenvio := 'REENVIARPAGTO'; -- NULL
 		-- Gera o XML do pagamento a ser gravado no evento SOA
 		empr0020.pc_gera_xml_pagamento_consig(pr_cdcooper     => rw_parcelas.cdcooper, -- código da cooperativa
 																					pr_nrdconta     => rw_parcelas.nrdconta, -- Número da conta
