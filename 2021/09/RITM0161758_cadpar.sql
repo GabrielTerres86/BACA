@@ -26,9 +26,9 @@ BEGIN
   aux_cdpartar_add :=  aux_cdpartar_add + 1;
   --
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
-  values (aux_cdpartar_add, 'Renegociação Facilitada - Bloqueio das operações de PRONAMPE para as Linhas de crédito do parâmetro(Separadas por vírgula).', 2, 12);
+  values (aux_cdpartar_add, 'Renegociação Facilitada - Linhas de crédito bloqueadas para renegociação (Separadas por vírgula)', 2, 12);
   insert into crapbat (CDBATTAR, NMIDENTI, CDPROGRA, TPCADAST, CDCADAST)
-  values ('LCR_BLQ_RENEG', 'Renegociação Facilitada - Bloqueio das operações de PRONAMPE para as Linhas de crédito do parâmetro(Separadas por vírgula).', ' ', 2, aux_cdpartar_add);
+  values ('LCR_BLQ_RENEG', 'Renegociação Facilitada - Linhas de crédito bloqueadas para renegociação (Separadas por vírgula)', ' ', 2, aux_cdpartar_add);
   --        
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar_add, 17, '2600,4600,5600');
