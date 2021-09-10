@@ -22,10 +22,10 @@ BEGIN
   aux_cdpartar_add :=  aux_cdpartar_add + 1;
  
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
-  values (aux_cdpartar_add, 'Estados que enviam data da efetivacao - Gravames', 2, 13);
+  values (aux_cdpartar_add, 'Estados que enviam data efetivacao - Gravames', 2, 13);
 
   insert into crapbat (CDBATTAR, NMIDENTI, CDPROGRA, TPCADAST, CDCADAST)
-  values ('UFENVIADTEFETI', 'Estados que enviam data da efetivacao - Gravames', ' ', 2, aux_cdpartar_add);
+  values ('UFENVIADTEFETI', 'Estados que enviam data efetivacao - Gravames', ' ', 2, aux_cdpartar_add);
            
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar_add, 1,  'AC,AL,AM,AP,BA,CE,DF,ES,GO,MA,MG,MS,MT,PA,PB,PE,PI,PR,RJ,RN,RO,RR,RS,SC,SE,SP,TO');
