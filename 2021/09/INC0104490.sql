@@ -1,0 +1,12 @@
+begin
+
+DELETE FROM CRAPAVT 
+ WHERE CDCOOPER = 2
+   AND NRDCONTA = 1043803
+   AND NRCPFCGC = 947432906;
+
+  commit;
+
+end;
+
+
