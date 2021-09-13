@@ -45,7 +45,7 @@ BEGIN
       --     
       --
 	    delete crapprm where nmsistem = 'CRED' and cdcooper = rw_crapcop.cdcooper and cdacesso = 'QT_MAXMESENVAN_RENCAN';
-      INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED', rw_crapcop.cdcooper, 'QT_MAXMESENVAN_RENCAN', 'Meses decorridos para controle de maximo de envios para analise',6);
+      INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED', rw_crapcop.cdcooper, 'QT_MAXMESENVAN_RENCAN', 'Meses decorridos para controle de maximo de envios para analise',1);
 	  --
     END LOOP;
     --
