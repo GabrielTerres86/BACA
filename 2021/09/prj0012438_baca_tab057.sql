@@ -1,7 +1,7 @@
 Begin 
+
   insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-  values ('TAB057_REPROCESSA_ARQ_FGTS', 'TELA_TAB057', 'pc_reproc_arq_fgts', 
-  pr_cdcooper,pr_idprogre,pr_cdconven,pr_dtmvtolt,pr_nrseqpag, 1184);
+  values ('TAB057_REPROCESSA_ARQ_FGTS', 'TELA_TAB057', 'pc_reproc_arq_fgts', 'pr_cdcooper,pr_idprogre,pr_cdconven,pr_dtmvtolt,pr_nrseqpag', 1184);
 
   insert into crapaca
   (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
