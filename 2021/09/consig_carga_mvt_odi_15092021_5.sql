@@ -63,3 +63,4 @@ BEGIN
 	values (2, 866547, 316785, 0, to_date('15-09-2021', 'dd-mm-yyyy'), to_date('15-09-2021', 'dd-mm-yyyy'), 0.00, 13.06, 13.06, 8, null, null, 1, null);
   COMMIT;
 END;
+ 

@@ -21,3 +21,4 @@ BEGIN
 	values (2, 867314, 316783, to_date('16-09-2021', 'dd-mm-yyyy'), to_date('15-09-2021', 'dd-mm-yyyy'), 'N', 32.75, 8.10, 0, 1.30, 0.00, 2132.15, 2133.43, 1.30, '1', null, null);
   COMMIT;
 END;
+ 
