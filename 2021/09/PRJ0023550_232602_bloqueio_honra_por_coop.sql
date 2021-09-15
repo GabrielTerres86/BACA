@@ -27,10 +27,10 @@ BEGIN
   aux_cdpartar_add :=  aux_cdpartar_add + 1;
 
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
-  values (aux_cdpartar_add, 'Bloqueio da solicitação de honra por Cooperativa', 2, 12);
+  values (aux_cdpartar_add, 'Solicitar Honra Pronampe por Cooperativa', 2, 12);
 
   insert into crapbat (CDBATTAR, NMIDENTI, CDPROGRA, TPCADAST, CDCADAST)
-  values ('BLOQ_HONRA_COOP', 'BLOQUEIO COOPERATIVA NAO SOLICITA HONRA', ' ', 2, aux_cdpartar_add);
+  values ('BLOQ_HONRA_COOP', 'LIBERAR COOPERATIVA SOLICITAR HONRA PRONAM', ' ', 2, aux_cdpartar_add);
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar_add, 16, 'NAO');
