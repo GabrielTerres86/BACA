@@ -402,3 +402,4 @@ BEGIN
 	values (2, 890499, 316789, 7, to_date('16-09-2021', 'dd-mm-yyyy'), to_date('15-09-2021', 'dd-mm-yyyy'), 94.19, 0.00, 0.00, 0.00, 14.51, null, '0', null, null);
   COMMIT;
 END;
+ 
