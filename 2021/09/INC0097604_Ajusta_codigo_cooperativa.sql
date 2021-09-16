@@ -44,6 +44,9 @@ BEGIN
     
     vr_dstransa := 'Alteracao codigo da cooperativa cash para 7 - INC0097604.';  
     
+	-- Insere log de atualização para a VERLOG. Ex: CADA0003 (6708)
+    vr_dttransa := trunc(sysdate);
+    vr_hrtransa := to_char(sysdate,'SSSSS');
     
     -- Atualizar apenas um registro
     -- Realiza atualização da situação da conta.
@@ -54,10 +57,7 @@ BEGIN
       AND t.dtmvtolt = rg_craplcm.dtmvtolt
       AND t.nrdconta = rg_craplcm.nrdconta
       AND t.cdcooper = rg_craplcm.cdcooper;
-    
-    -- Insere log de atualização para a VERLOG. Ex: CADA0003 (6708)
-    vr_dttransa := trunc(sysdate);
-    vr_hrtransa := substr(to_char(systimestamp,'FF'),1,10);  -- to_char(sysdate,'SSSSS');
+        
    
     INSERT INTO cecred.craplgm(cdcooper
       ,nrdconta
@@ -97,8 +97,7 @@ BEGIN
       ,nrseqcmp
       ,nmdcampo
       ,dsdadant
-      ,dsdadatu
-      ,progress_recid)
+      ,dsdadatu)
     VALUES
       (rg_craplcm.cdcooper
       ,rg_craplcm.nrdconta
@@ -106,11 +105,10 @@ BEGIN
       ,1
       ,vr_dttransa
       ,vr_hrtransa
-      ,1
+      ,rg_craplcm.vllanmto
       ,'craplcm.cdcoptfn'
       ,rg_craplcm.cdcoptfn
-      ,'7'
-      ,rg_craplcm.vllanmto);
+      ,'7');
     --
     
   END LOOP;
