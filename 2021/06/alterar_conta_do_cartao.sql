@@ -22,7 +22,7 @@ BEGIN
 --  vr_cartao := 5127070340534221; -- Paty
 --  vr_cartao := 5161620000587872; -- Djonata
 --  vr_cartao := 5127070162666663; -- Matheus barros
-  vr_cartao := 5756323907327153; -- Matheus barros 2
+  vr_cartao := 5158940000000188; -- Matheus barros 2
 --  vr_cartao := 5588190184171591; -- Topaz
 --  vr_cartao := 5161620000264183; -- Poliane 
 
