@@ -1,0 +1,15 @@
+UPDATE crapprm p 
+SET p.dsvlrprm = '16/09/2021#3'
+WHERE 
+   (p.cdacesso LIKE 'CTRL%CRPS663%'
+OR cdacesso LIKE 'CTRL%CRPS674%' 
+or CDACESSO LIKE 'CTRL%DEBBAN%' 
+or CDACESSO LIKE 'CTRL%DEBNET%'
+or CDACESSO LIKE 'CTRL%DEBSIC%'
+or CDACESSO LIKE 'CTRL%DEBUNITAR%' 
+or CDACESSO LIKE 'CTRL%JOBAGERCEL%')
+AND cdcooper <> 1;
+
+UPDATE tbgen_batch_param SET qtparalelo = 10 WHERE cdcooper > 1 AND cdprograma = 'CRPS735';
+
+COMMIT;
