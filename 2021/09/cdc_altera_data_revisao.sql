@@ -1,6 +1,6 @@
 begin
    update crapalt
-      set dtaltera = dtaltera - 275
+      set dtaltera = dtaltera - 80
       WHERE cdcooper = 1
         AND   nrdconta = 10780424
         AND   tpaltera = 1;
