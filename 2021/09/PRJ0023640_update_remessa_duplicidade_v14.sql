@@ -1,0 +1,4 @@
+BEGIN
+   UPDATE tbconv_registro_remessa_pagfor reg SET reg.cdstatus_processamento = 2 where reg.idsicredi IN (3553009, 3553008);
+   COMMIT;
+END;
