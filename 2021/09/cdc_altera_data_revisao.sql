@@ -1,6 +1,6 @@
 begin
    update crapalt
-      set dtaltera = '10/07/2020'
+      set dtaltera = dtaltera - 390
       WHERE cdcooper = 1
         AND   nrdconta = 10780424
         AND   tpaltera = 1;
