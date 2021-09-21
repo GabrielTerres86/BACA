@@ -1,3 +1,5 @@
+PL/SQL Developer Test script 3.0
+302
 -- RITM0168579 - Script Alteração Status proposta - cancelado
 /*
 -- Verificar antes de executar
@@ -33,19 +35,19 @@ DECLARE
   vr_aux_insitest   NUMBER;
     
   -- Arquivo utilizados
-     
+  /*   
   --LOCAL
   vr_nmarq_carga    VARCHAR2(200) := '/progress/t0032597/micros/script_cancela_proposta/RITM0168579/RITM0168579_csv.csv';       -- Arquivo a ser lido
   vr_nmarq_log      VARCHAR2(200) := '/progress/t0032597/micros/script_cancela_proposta/RITM0168579/RITM0168579_LOG.txt';       -- Arquivo de Log
   vr_nmarq_rollback VARCHAR2(200) := '/progress/t0032597/micros/script_cancela_proposta/RITM0168579/RITM0168579_ROLLBACK.sql';  -- Arquivo de Rollback 
-
+  */
    
-  /* 
+   
   --TEST
-  vr_nmarq_carga    VARCHAR2(200) := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS')||'cecred/jaison/RITM0168579/RITM0168579_csv.csv;        -- Arquivo a ser lido
+  vr_nmarq_carga    VARCHAR2(200) := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS')||'cecred/jaison/RITM0168579/RITM0168579_csv.csv';        -- Arquivo a ser lido
   vr_nmarq_log      VARCHAR2(200) := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS')||'cecred/jaison/RITM0168579/RITM0168579_LOG.txt';       -- Arquivo de Log
   vr_nmarq_rollback VARCHAR2(200) := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS')||'cecred/jaison/RITM0168579/RITM0168579_ROLLBACK.sql';  -- Arquivo de Rollback   
-  */
+  
   
 /*  
   --PRODUCAO
@@ -300,3 +302,5 @@ EXCEPTION
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);
     ROLLBACK;
 END;
+0
+0
