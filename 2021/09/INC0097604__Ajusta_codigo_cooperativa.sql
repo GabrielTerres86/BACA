@@ -8,6 +8,7 @@ DECLARE
 	  AND nrdconta = 243361
       AND cdcooper = 16
     ORDER BY cdcooper, nrdconta, cdcoptfn, vllanmto, dtmvtolt;
+	
   
   
   --
