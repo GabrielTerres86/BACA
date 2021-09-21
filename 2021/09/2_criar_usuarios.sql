@@ -12,7 +12,7 @@ declare
     SELECT  idcooperado_cdc
     FROM    tbsite_cooperado_cdc
     WHERE cdcooper = 6 -- Unilos
-    AND   nrdconta = 213713 -- Alfama -- 243493; -- Lojas Colombo
+    AND   nrdconta = 243493; -- Lojas Colombo
     and   idmatriz is null;
   vr_idcooperado_cdc      number;
 
