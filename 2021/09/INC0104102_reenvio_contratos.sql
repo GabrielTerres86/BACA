@@ -2910,4 +2910,10 @@ values (1, 10115218, 4275578, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdat
 
 --não portabilidades
 
+commit;
+
+EXCEPTION
+        WHEN OTHERS THEN
+        ROLLBACK;
+
 end;
