@@ -8,7 +8,8 @@ DECLARE
 	  AND nrdconta = 243361
       AND cdcooper = 16
     ORDER BY cdcooper, nrdconta, cdcoptfn, vllanmto, dtmvtolt;
-	
+  
+  
   --
   rg_craplcm cr_craplcm%rowtype;
        
@@ -18,7 +19,6 @@ DECLARE
   vr_log_script VARCHAR2(3000);
   vr_dstransa   VARCHAR2(1000);
   vr_vldcotas   NUMBER(25,2);
-  vr_nrsequen   NUMBER(2);
   vr_nrdocmto   INTEGER;
   vr_nrseqdig   INTEGER;
   vr_data       DATE;
@@ -30,7 +30,6 @@ BEGIN
 
   vr_log_script := ' ** Início script' || chr(10);
   
-  vr_nrsequen:=0;
       
   OPEN cr_craplcm;
   LOOP
@@ -45,17 +44,6 @@ BEGIN
     
     vr_dstransa := 'Alteracao codigo da cooperativa cash para 7 - INC0097604.';  
     
-	-- Insere log de atualização para a VERLOG. Ex: CADA0003 (6708)
-    vr_dttransa := trunc(sysdate);
-    vr_hrtransa := to_char(sysdate,'SSSSS');
-	
-	
-	IF vr_nrsequen = 0 THEN
-	   vr_nrsequen :=1;
-	ELSE
-	   vr_nrsequen:= vr_nrsequen + 1;
-	END IF;
-	
     
     -- Atualizar apenas um registro
     -- Realiza atualização da situação da conta.
@@ -66,7 +54,10 @@ BEGIN
       AND t.dtmvtolt = rg_craplcm.dtmvtolt
       AND t.nrdconta = rg_craplcm.nrdconta
       AND t.cdcooper = rg_craplcm.cdcooper;
-        
+    
+    -- Insere log de atualização para a VERLOG. Ex: CADA0003 (6708)
+    vr_dttransa := trunc(sysdate);
+    vr_hrtransa := substr(to_char(systimestamp,'FF'),1,10);  -- to_char(sysdate,'SSSSS');
    
     INSERT INTO cecred.craplgm(cdcooper
       ,nrdconta
@@ -85,7 +76,7 @@ BEGIN
       (rg_craplcm.cdcooper
       ,rg_craplcm.nrdconta
       ,1
-      ,vr_nrsequen
+      ,1
       ,vr_dttransa
       ,vr_hrtransa
       ,vr_dstransa
@@ -106,18 +97,20 @@ BEGIN
       ,nrseqcmp
       ,nmdcampo
       ,dsdadant
-      ,dsdadatu)
+      ,dsdadatu
+      ,progress_recid)
     VALUES
       (rg_craplcm.cdcooper
       ,rg_craplcm.nrdconta
       ,1
-      ,vr_nrsequen
+      ,1
       ,vr_dttransa
       ,vr_hrtransa
-      ,rg_craplcm.vllanmto
+      ,1
       ,'craplcm.cdcoptfn'
       ,rg_craplcm.cdcoptfn
-      ,'7');
+      ,'7'
+      ,rg_craplcm.vllanmto);
     --
     
   END LOOP;
