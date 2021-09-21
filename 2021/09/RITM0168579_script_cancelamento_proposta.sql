@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-302
 -- RITM0168579 - Script Alteração Status proposta - cancelado
 /*
 -- Verificar antes de executar
@@ -302,5 +300,3 @@ EXCEPTION
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);
     ROLLBACK;
 END;
-0
-0
