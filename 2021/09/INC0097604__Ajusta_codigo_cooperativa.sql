@@ -9,8 +9,6 @@ DECLARE
       AND cdcooper = 16
     ORDER BY cdcooper, nrdconta, cdcoptfn, vllanmto, dtmvtolt;
 	
-  
-  
   --
   rg_craplcm cr_craplcm%rowtype;
        
