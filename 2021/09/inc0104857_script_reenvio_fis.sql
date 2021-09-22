@@ -33,7 +33,7 @@ DECLARE
   </parcela>
   <motivoEnvio>REENVIARPAGTO</motivoEnvio>
   <interacaoGrafica>
-    <dataAcaoUsuario>' || SYSDATE || '</dataAcaoUsuario>
+    <dataAcaoUsuario>2021-09-23T00:00:00</dataAcaoUsuario>
   </interacaoGrafica>
 </Root>';
 
