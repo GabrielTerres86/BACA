@@ -1,0 +1,11 @@
+BEGIN
+
+insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+values ('CRED', 0, 'QTD_PARALE_CRPS724_DIA', 'Quantidade de execuções paralelas no CRPS724', '30');
+
+COMMIT;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+END;
