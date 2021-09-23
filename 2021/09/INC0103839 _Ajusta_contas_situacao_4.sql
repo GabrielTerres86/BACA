@@ -62,13 +62,13 @@ DECLARE
   --
 BEGIN
   --
-  vr_log_script := ' ** InÃ­cio script' || chr(10);
+  vr_log_script := ' ** Início script' || chr(10);
   --
   
   -- TRANSPORCRED
   vr_cdcooper:=9;
   
-  -- Insere log de atualizaÃ§Ã£o para a VERLOG. Ex: CADA0003 (6708)
+  -- Insere log de atualização para a VERLOG. Ex: CADA0003 (6708)
   vr_dttransa := trunc(sysdate);
   vr_hrtransa := gene0002.fn_busca_time;
   
@@ -79,15 +79,12 @@ vr_clob := '509558;27/12/2012
 514217;18/12/2014
 516562;16/02/2005
 520420;29/11/2012
-505633;29/12/2016
 500038;12/01/2021
 517089;06/07/2017
 520888;11/11/2014
 525642;01/12/2012
 528528;22/03/2017
 531570;04/06/2021
-502839;23/03/2016
-502863;23/03/2016
 520918;23/02/2015
 510076;29/12/2016
 509523;20/10/2016
@@ -115,7 +112,6 @@ vr_clob := '509558;27/12/2012
 520047;17/03/2011
 507512;05/04/2016
 510637;30/11/2011
-521396;26/12/2016
 523488;26/07/2016
 528102;07/08/2015
 517887;18/11/2012
@@ -145,7 +141,6 @@ vr_clob := '509558;27/12/2012
 506974;13/02/2015
 522805;09/01/2017
 532614;18/11/2012
-505641;11/11/2016
 505420;04/06/2021
 509264;10/10/2016
 512249;11/08/2017
@@ -154,7 +149,6 @@ vr_clob := '509558;27/12/2012
 530743;03/12/2020
 508179;01/12/2001
 517925;30/06/2015
-505340;30/04/2020
 528420;08/02/2019
 500267;04/06/2021
 521981;15/01/2021
@@ -194,7 +188,6 @@ vr_clob := '509558;27/12/2012
 509256;27/11/2014
 517208;30/03/2012
 530999;06/08/2021
-531014;29/12/2016
 526800;17/04/2017
 528803;15/07/2019
 518662;17/04/2016
@@ -297,7 +290,6 @@ vr_clob := '509558;27/12/2012
 527726;06/12/2012
 524549;22/12/2015
 507148;30/11/2015
-505650;25/05/2017
 509825;08/05/2003
 531286;04/06/2021
 505307;25/05/2020
@@ -312,7 +304,6 @@ vr_clob := '509558;27/12/2012
 510386;30/03/2017
 508667;28/10/2016
 529710;30/01/2021
-505668;19/11/2020
 524387;30/11/2017
 511315;15/07/2011
 511617;15/10/2013
@@ -356,7 +347,6 @@ vr_clob := '509558;27/12/2012
 506826;31/01/2006
 524433;07/12/2016
 517143;14/06/2017
-505676;12/11/2019
 506346;28/04/2019
 525235;31/08/2012
 511340;29/01/2015
@@ -373,7 +363,6 @@ vr_clob := '509558;27/12/2012
 518972;20/07/2016
 520560;05/06/2014
 521825;08/12/2012
-530972;19/08/2017
 512168;31/10/2016
 521280;29/04/2016
 523720;10/12/2014
@@ -615,16 +604,11 @@ vr_clob := '509558;27/12/2012
 509639;01/10/2001
 531855;10/10/2016
 503967;12/01/2021
-502790;17/08/2018
 528935;27/05/2016
 521680;15/10/2015
 517577;26/12/2013
 533262;30/11/2016
-502804;17/08/2018
-502812;17/08/2018
 521493;10/12/2014
-502553;20/12/2018
-502561;20/12/2018
 509213;31/12/2009
 510769;31/01/2006
 521124;10/12/2015
@@ -730,7 +714,6 @@ vr_clob := '509558;27/12/2012
 507440;06/06/2002
 522554;18/01/2012
 515191;21/09/2015
-503380;18/11/2012
 509248;18/05/2011
 504017;27/12/2019
 532533;11/05/2016
@@ -773,7 +756,6 @@ vr_clob := '509558;27/12/2012
 513954;17/03/2014
 508918;30/11/2011
 514713;04/06/2020
-502480;22/12/2017
 522279;08/12/2016
 518743;28/10/2015
 523097;05/11/2015
@@ -784,7 +766,6 @@ vr_clob := '509558;27/12/2012
 524212;01/06/2016
 514225;01/12/2001
 510181;01/08/2014
-533475;01/02/2016
 528005;18/12/2014
 525219;18/11/2011
 527076;04/06/2021
@@ -805,7 +786,6 @@ vr_clob := '509558;27/12/2012
 532118;22/04/2016
 520934;03/03/2017
 533467;22/05/2018
-533343;09/09/2015
 518492;18/11/2012
 509370;30/11/2011
 508691;31/12/2009
@@ -911,7 +891,7 @@ vr_clob := '509558;27/12/2012
  
  vr_clob_line_count := length(vr_clob) - nvl(length(replace(vr_clob,chr(10))),0) + 1;
  
- -- buscar a data de movimentaÃ§Ã£o da cooperativa
+ -- buscar a data de movimentação da cooperativa
  OPEN cecred.btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
     FETCH cecred.btch0001.cr_crapdat INTO rw_crapdat;
 
@@ -950,7 +930,7 @@ vr_clob := '509558;27/12/2012
   vr_dtelimin_ant:=NULL;
   vr_dtasitct_ant:=NULL;
   
-  -- Verificando a situaÃ§Ã£o da conta
+  -- Verificando a situação da conta
     
   BEGIN 
     
@@ -1006,7 +986,7 @@ vr_clob := '509558;27/12/2012
         END IF;
       
       
-      -- verifica se a conta Ã© PF E PJ, e define o cÃ³digos dos histÃ³ricos
+      -- verifica se a conta é PF E PJ, e define o códigos dos históricos
          
       IF vr_tppessoa = 1 THEN
         BEGIN
@@ -1064,7 +1044,7 @@ vr_clob := '509558;27/12/2012
                 WHEN no_data_found THEN
                BEGIN
                      vr_capdev_ant := 0;
-                     dbms_output.put_line(chr(10) || 'NÃ£o encontrado TBCOTAS_DEVOLUCAO anterior para conta ' || vr_nrdconta);
+                     dbms_output.put_line(chr(10) || 'Não encontrado TBCOTAS_DEVOLUCAO anterior para conta ' || vr_nrdconta);
                      vr_insere := 'S';
                END;
               END;  
@@ -1091,7 +1071,7 @@ vr_clob := '509558;27/12/2012
              dbms_output.put_line('inserindo na TBCOTAS_DEVOLUCAO (' || vr_cdcooper || ') ' || vr_nrdconta);
             --
               ELSE 
-              -- Adiciona valor de cota capital para devoluÃ§Ã£o.
+              -- Adiciona valor de cota capital para devolução.
               UPDATE CECRED.TBCOTAS_DEVOLUCAO
                 SET VLCAPITAL = VLCAPITAL + vr_vlsddisp
               WHERE CDCOOPER = vr_cdcooper
@@ -1129,7 +1109,7 @@ vr_clob := '509558;27/12/2012
         EXCEPTION 
         WHEN no_data_found THEN
           vr_capdev_ant := 0;
-          dbms_output.put_line(chr(10) || 'NÃ£o encontrado TBCOTAS_DEVOLUCAO anterior para conta ' || vr_nrdconta);
+          dbms_output.put_line(chr(10) || 'Não encontrado TBCOTAS_DEVOLUCAO anterior para conta ' || vr_nrdconta);
           vr_insere := 'S';
         END;
         
@@ -1156,7 +1136,7 @@ vr_clob := '509558;27/12/2012
         dbms_output.put_line('inserindo na TBCOTAS_DEVOLUCAO (' || vr_cdcooper || ') ' || vr_nrdconta);
         --
         ELSE 
-        -- Adiciona valor de cota capital para devoluÃ§Ã£o.
+        -- Adiciona valor de cota capital para devolução.
         UPDATE CECRED.TBCOTAS_DEVOLUCAO
           SET VLCAPITAL = VLCAPITAL + vr_vldcotas
         WHERE CDCOOPER = vr_cdcooper
@@ -1176,7 +1156,7 @@ vr_clob := '509558;27/12/2012
         vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG', vr_cdcooper || ';' ||to_char(vr_dtmvtolt,'DD/MM/YYYY') || ';16;100;600040');
         --
                  
-        -- efetua o lanÃ§amento do extrato
+        -- efetua o lançamento do extrato
         INSERT INTO cecred.craplct(cdcooper
         ,cdagenci
         ,cdbccxlt
@@ -1426,7 +1406,7 @@ vr_clob := '509558;27/12/2012
   --DBMS_OUTPUT.PUT_LINE(vr_log_script);
   --
   --
-  DBMS_OUTPUT.PUT_LINE('Sucesso na atualizaÃ§Ã£o.');
+  DBMS_OUTPUT.PUT_LINE('Sucesso na atualização.');
   --
 EXCEPTION
   WHEN vr_exc_lanc_conta THEN
@@ -1436,18 +1416,18 @@ EXCEPTION
          IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
             vr_dscritic := cecred.GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
          END IF;
-         RAISE_APPLICATION_ERROR(-20000, 'AtenÃ§Ã£o: ' || vr_dscritic);
+         RAISE_APPLICATION_ERROR(-20000, 'Atenção: ' || vr_dscritic);
       END;
   WHEN vr_exc_saldo THEN
      BEGIN
        vr_dscritic := cecred.GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-     RAISE_APPLICATION_ERROR(-20000, 'AtenÃ§Ã£o: ' || vr_dscritic);
+     RAISE_APPLICATION_ERROR(-20000, 'Atenção: ' || vr_dscritic);
      END;
   WHEN vr_exc_sem_data_cooperativa THEN
      BEGIN
         vr_cdcritic := 1;
         vr_dscritic := cecred.GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-    RAISE_APPLICATION_ERROR(-20000, 'AtenÃ§Ã£o: ' || vr_dscritic);
+    RAISE_APPLICATION_ERROR(-20000, 'Atenção: ' || vr_dscritic);
      END;
   WHEN vr_exc_associados THEN
      BEGIN
