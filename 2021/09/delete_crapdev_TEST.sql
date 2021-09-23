@@ -1,6 +1,7 @@
 begin
    
-  delete from crapdev where cdcooper = 14; 
+  delete from crapdev v
+    where v.cdcooper = 14; 
 commit;
 
 end;
