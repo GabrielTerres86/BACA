@@ -47,8 +47,7 @@ DECLARE
   CURSOR cr_crapcop IS
     SELECT cdcooper
       FROM crapcop
-     WHERE flgativo = 1
-	   AND cdcooper <> 3;
+     WHERE flgativo = 1;
      rw_crapcop cr_crapcop%ROWTYPE;
    
   CURSOR cr_craplemll (pr_cdcooper IN craplem.cdcooper%TYPE,
@@ -67,7 +66,7 @@ DECLARE
        AND ll.cdhistor IN (1037, 1038, 2342, 2344);
        rw_craplemll cr_craplemll%ROWTYPE;
              
-  CURSOR cr_craplem (pr_cdcooper IN craplem.cdcooper%TYPE
+  CURSOR cr_craplem (pr_cdcooper IN craplem.cdcooper%TYPE,
                      pr_dtmvtolt IN craplem.dtmvtolt%TYPE) IS
     SELECT sum(vllanmto) vllanmto,           
            epr.cdcooper,
@@ -86,7 +85,7 @@ DECLARE
        AND epr.nrdconta = lem.nrdconta
        AND epr.nrctremp = lem.nrctremp
        AND lem.dtmvtolt BETWEEN to_date('01/01/2021','dd/mm/yyyy') 
-       AND (case when epr.inprejuz = 0 then last_day(add_months(dat.dtmvtolt,-1))
+       AND (case when epr.inprejuz = 0 then last_day(add_months(pr_dtmvtolt,-1))
             else last_day(add_months(epr.dtprejuz,-1)) end)
        AND lem.cdhistor in (98, 1037, 1038, 2342, 2344)
      GROUP BY epr.cdcooper,
@@ -128,7 +127,7 @@ BEGIN
     FETCH cr_crapdat INTO rw_crapdat;
     CLOSE cr_crapdat;
       
-    OPEN cr_craplem(pr_cdcooper => rw_crapcop.cdcooper
+    OPEN cr_craplem(pr_cdcooper => rw_crapcop.cdcooper,
                     pr_dtmvtolt => rw_crapdat.dtmvtolt);
     vr_nmarqimp1 := rw_crapcop.cdcooper || vr_nmarqimp11 ||to_char(sysdate,'HH24:MI:SS');
       vr_nmarqimp2 := rw_crapcop.cdcooper || vr_nmarqimp22 ||to_char(sysdate,'HH24:MI:SS');
