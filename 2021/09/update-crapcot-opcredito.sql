@@ -47,7 +47,8 @@ DECLARE
   CURSOR cr_crapcop IS
     SELECT cdcooper
       FROM crapcop
-     WHERE flgativo = 1;
+     WHERE flgativo = 1
+	   AND cdcooper <> 3;
      rw_crapcop cr_crapcop%ROWTYPE;
    
   CURSOR cr_craplemll (pr_cdcooper IN craplem.cdcooper%TYPE,
