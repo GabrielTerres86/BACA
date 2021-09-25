@@ -63,7 +63,8 @@ DECLARE
     SELECT cdcooper
       FROM crapcop
      WHERE flgativo = 1
-     AND cdcooper <> 3;
+     AND cdcooper <> 3
+	 and cdcooper = 13;
      rw_crapcop cr_crapcop%ROWTYPE;
    
   CURSOR cr_craplemll (pr_cdcooper IN craplem.cdcooper%TYPE,
@@ -101,8 +102,10 @@ DECLARE
        AND epr.nrdconta = lem.nrdconta
        AND epr.nrctremp = lem.nrctremp
        AND lem.dtmvtolt BETWEEN to_date('01/01/2021','dd/mm/yyyy') 
-       AND (case when epr.inprejuz = 0 then last_day(add_months(pr_dtmvtolt,-1))
-            else last_day(add_months(epr.dtprejuz,-1)) end)
+       AND (case when epr.inprejuz = 0 AND epr.tpdescto <> 2 then last_day(add_months(dat.dtmvtolt,-1))
+                 WHEN epr.inprejuz = 0 AND epr.tpdescto = 2 then dat.dtmvtolt
+                 WHEN epr.inprejuz = 1 AND epr.tpdescto = 2 THEN epr.dtprejuz
+                 else last_day(add_months(epr.dtprejuz,-1)) end)
        AND lem.cdhistor in (98, 1037, 1038, 2342, 2344)
      GROUP BY epr.cdcooper,
               epr.nrdconta,
