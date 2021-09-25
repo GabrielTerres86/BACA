@@ -102,8 +102,8 @@ DECLARE
        AND epr.nrdconta = lem.nrdconta
        AND epr.nrctremp = lem.nrctremp
        AND lem.dtmvtolt BETWEEN to_date('01/01/2021','dd/mm/yyyy') 
-       AND (case when epr.inprejuz = 0 AND epr.tpdescto <> 2 then last_day(add_months(dat.dtmvtolt,-1))
-                 WHEN epr.inprejuz = 0 AND epr.tpdescto = 2 then dat.dtmvtolt
+       AND (case when epr.inprejuz = 0 AND epr.tpdescto <> 2 then last_day(add_months(pr_dtmvtolt,-1))
+                 WHEN epr.inprejuz = 0 AND epr.tpdescto = 2 then pr_dtmvtolt
                  WHEN epr.inprejuz = 1 AND epr.tpdescto = 2 THEN epr.dtprejuz
                  else last_day(add_months(epr.dtprejuz,-1)) end)
        AND lem.cdhistor in (98, 1037, 1038, 2342, 2344)
