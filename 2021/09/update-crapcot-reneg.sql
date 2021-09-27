@@ -80,7 +80,7 @@ DECLARE
            AND tblem.nrdconta = pr_nrdconta
            AND tblem.nrctremp = pr_nrctremp
            AND tblem.dtmvtolt BETWEEN to_date('01/01/2021','dd/mm/yyyy') AND tbepr.dtultpag + 59
-           AND tblem.cdhistor IN (1037, 1038, 2342, 2344))vl;
+           AND tblem.cdhistor IN (1037, 1038, 2342, 2344);
          rw_craplemll cr_craplemll%ROWTYPE;
              
   CURSOR cr_craplem (pr_cdcooper IN craplem.cdcooper%TYPE,
@@ -95,7 +95,7 @@ DECLARE
                epr.dtmvtolt,
                epr.inprejuz        
           FROM tbepr_renegociacao_craplem tblem,
-               tbepr_renegociacao_crapepr tbepr
+               tbepr_renegociacao_crapepr tbepr,
                crapepr epr
          WHERE tblem.nrdconta > 0
            AND tblem.cdagenci > 0
@@ -292,7 +292,7 @@ BEGIN
           
           loga(vr_tab_craplem_bulk(idx).cdcooper||';'||vr_tab_craplem_bulk(idx).nrdconta||';'||vr_tab_craplem_bulk(idx).nrctremp||';'||vr_tab_craplem_bulk(idx).cdlcremp||';'||vr_tab_craplem_bulk(idx).inprejuz||';'||vr_tab_craplem_bulk(idx).dtultpag||';'||vr_vllanmto);
           
-          --BEGIN
+          
             IF NOT vr_tab_crapcot.exists(vr_tab_craplem_bulk(idx).nrdconta) THEN
               backup('update crapcot set qtjurmfx = ' || replace(rw_crapcot.qtjurmfx,',','.') || ' where cdcooper = ' || rw_crapcot.cdcooper ||' and nrdconta =  '||rw_crapcot.nrdconta||';');
               vr_tab_crapcot(vr_tab_craplem_bulk(idx).nrdconta).cdcooper := vr_tab_craplem_bulk(idx).cdcooper;
@@ -302,31 +302,10 @@ BEGIN
             
             vr_tab_crapcot(vr_tab_craplem_bulk(idx).nrdconta).qtjurmfx := NVL(vr_tab_crapcot(vr_tab_craplem_bulk(idx).nrdconta).qtjurmfx,0) - vr_vllanmto;         
             
-          /*UPDATE crapcot 
-             SET qtjurmfx = qtjurmfx - vr_vllanmto
-           WHERE cdcooper = vr_tab_craplem_bulk(idx).cdcooper
-             AND nrdconta = vr_tab_craplem_bulk(idx).nrdconta
-              RETURNING qtjurmfx INTO vr_qtjurmfx;
-          EXCEPTION
-           WHEN OTHERS THEN
-            pr_dscritic := 'Erro ao atualizar CRAPCOT1. cdcooper: ' ||rw_crapcot.cdcooper || ' - Conta: '||rw_crapcot.nrdconta;
-           RAISE vr_excsaida;*/
-           --NULL;
-           --END;  
            
           IF vr_tab_crapcot(vr_tab_craplem_bulk(idx).nrdconta).qtjurmfx  < 0 THEN
-          --BEGIN
-             vr_tab_crapcot(vr_tab_craplem_bulk(idx).nrdconta).qtjurmfx := 0;
-            /*UPDATE crapcot 
-              SET qtjurmfx = 0 
-             WHERE cdcooper = rw_crapcot.cdcooper
-              AND nrdconta = rw_crapcot.nrdconta;
-           EXCEPTION
-           WHEN OTHERS THEN
-            pr_dscritic := 'Erro ao atualizar CRAPCOT2. cdcooper: ' ||rw_crapcot.cdcooper || ' - Conta: '||rw_crapcot.nrdconta;
-           RAISE vr_excsaida;
-           END;  */
-           --NULL;
+          
+             vr_tab_crapcot(vr_tab_craplem_bulk(idx).nrdconta).qtjurmfx := 0;                                
           END IF;
 
         END IF; 
