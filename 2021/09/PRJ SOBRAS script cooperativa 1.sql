@@ -172,13 +172,13 @@ EXCEPTION
   WHEN vr_excsaida then
     pr_dscritic := 'ERRO ' || pr_dscritic;
     loga3('ERRO ' || to_char(sysdate, 'DD/MM/YYYY HH:MI:SS'));
-    erro3(pr_dscritic);
+    erro3(pr_dscritic ||SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
     fecha_arquivos;
     ROLLBACK;
   WHEN OTHERS then
     pr_dscritic := 'ERRO ' || pr_dscritic || sqlerrm;
     loga3('ERRO ' || to_char(sysdate, 'DD/MM/YYYY HH:MI:SS'));
-    erro3(pr_dscritic);
+	erro3(pr_dscritic ||SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
     fecha_arquivos;
     ROLLBACK;
   
