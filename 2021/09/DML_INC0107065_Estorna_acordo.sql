@@ -1,6 +1,4 @@
-PL/SQL Developer Test script 3.0
-1183
--- Created on 27/09/2021 by F0032386 
+
 DECLARE  
 
   vr_cdcritic NUMBER;
@@ -1180,8 +1178,7 @@ BEGIN
 
 EXCEPTION 
   WHEN vr_exc_erro THEN
+    ROLLBACK;
     raise_application_error(-20500,vr_cdcritic||'-'||vr_dscritic); 
   
 END;
-0
-0
