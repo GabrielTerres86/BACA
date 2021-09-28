@@ -1,5 +1,5 @@
--- INC0100233
--- Tempo Estimado: 17 min
+-- PRB0046085
+-- Tempo Estimado: 4 min
 declare 
   cursor cr_craplim is
     select l.cdcooper
