@@ -31,7 +31,7 @@ conta_12825212_4477224 clob := '<?xml version="1.0"?>
     <tributoIOFValor>196.9</tributoIOFValor>
     <valor>4989.63</valor>
     <valorBase>4989.63</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1966-03-31T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>60503920991</identificadorReceitaFederal>
@@ -171,7 +171,7 @@ conta_13147110_4439926 clob := '<?xml version="1.0"?>
     <tributoIOFValor>559.36</tributoIOFValor>
     <valor>17080.51</valor>
     <valorBase>17080.51</valorBase>
-    <dataProposta>2021-09-22T08:18:21</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1977-01-14T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>2370380993</identificadorReceitaFederal>
@@ -311,7 +311,7 @@ conta_13198424_4466176 clob := '<?xml version="1.0"?>
     <tributoIOFValor>302.26</tributoIOFValor>
     <valor>7646.47</valor>
     <valorBase>7646.47</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1980-08-31T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>3522131916</identificadorReceitaFederal>
@@ -451,7 +451,7 @@ conta_13198424_4466205 clob := '<?xml version="1.0"?>
     <tributoIOFValor>370.13</tributoIOFValor>
     <valor>10461.50</valor>
     <valorBase>10461.50</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1980-08-31T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>3522131916</identificadorReceitaFederal>
@@ -591,7 +591,7 @@ conta_13269518_4497791 clob := '<?xml version="1.0"?>
     <tributoIOFValor>59.79</tributoIOFValor>
     <valor>2594.23</valor>
     <valorBase>2594.23</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1976-09-28T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>2869844905</identificadorReceitaFederal>
@@ -731,7 +731,7 @@ conta_13413775_4501734 clob := '<?xml version="1.0"?>
     <tributoIOFValor>687.95</tributoIOFValor>
     <valor>17435.67</valor>
     <valorBase>17435.67</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1967-01-22T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>70857326953</identificadorReceitaFederal>
@@ -871,7 +871,7 @@ conta_301965_61477 clob := '<?xml version="1.0"?>
     <tributoIOFValor>75.00</tributoIOFValor>
     <valor>2675.00</valor>
     <valorBase>2600.00</valorBase>
-    <dataProposta>2021-09-21T16:16:16</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1979-05-21T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>609037919</identificadorReceitaFederal>
@@ -1011,7 +1011,7 @@ conta_13251201_4497692 clob := '<?xml version="1.0"?>
     <tributoIOFValor>820.33</tributoIOFValor>
     <valor>21349.98</valor>
     <valorBase>21349.98</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1984-11-02T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>4174602956</identificadorReceitaFederal>
@@ -1151,7 +1151,7 @@ conta_13306138_4493551 clob := '<?xml version="1.0"?>
     <tributoIOFValor>353.07</tributoIOFValor>
     <valor>10851.99</valor>
     <valorBase>10851.99</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1990-06-17T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>6810766901</identificadorReceitaFederal>
@@ -1291,7 +1291,7 @@ conta_13335464_4427495 clob := '<?xml version="1.0"?>
     <tributoIOFValor>302.89</tributoIOFValor>
     <valor>9633.11</valor>
     <valorBase>9633.11</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1974-12-31T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>1733627960</identificadorReceitaFederal>
@@ -1431,7 +1431,7 @@ conta_13352881_4440763 clob := '<?xml version="1.0"?>
     <tributoIOFValor>354.69</tributoIOFValor>
     <valor>11771.34</valor>
     <valorBase>11771.34</valorBase>
-    <dataProposta>2021-09-22T08:18:21</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1984-02-27T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>4361160902</identificadorReceitaFederal>
@@ -1571,7 +1571,7 @@ conta_13389408_4470553 clob := '<?xml version="1.0"?>
     <tributoIOFValor>1036.01</tributoIOFValor>
     <valor>26181.46</valor>
     <valorBase>26181.46</valorBase>
-    <dataProposta>2021-09-23T08:14:13</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1976-01-28T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>2002909911</identificadorReceitaFederal>
@@ -1711,7 +1711,7 @@ conta_13413775_4501578 clob := '<?xml version="1.0"?>
     <tributoIOFValor>225.19</tributoIOFValor>
     <valor>5708.15</valor>
     <valorBase>5708.15</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1967-01-22T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>70857326953</identificadorReceitaFederal>
@@ -1851,7 +1851,7 @@ conta_13413775_4501671 clob := '<?xml version="1.0"?>
     <tributoIOFValor>473.86</tributoIOFValor>
     <valor>12010.64</valor>
     <valorBase>12010.64</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1967-01-22T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>70857326953</identificadorReceitaFederal>
@@ -1991,7 +1991,7 @@ conta_13432109_4500267 clob := '<?xml version="1.0"?>
     <tributoIOFValor>363.54</tributoIOFValor>
     <valor>9254.54</valor>
     <valorBase>9254.54</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1977-07-22T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>2504350988</identificadorReceitaFederal>
@@ -2131,7 +2131,7 @@ conta_13437275_4502990 clob := '<?xml version="1.0"?>
     <tributoIOFValor>463.6</tributoIOFValor>
     <valor>12349.65</valor>
     <valorBase>12349.65</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1989-05-20T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>6320744936</identificadorReceitaFederal>
@@ -2272,7 +2272,7 @@ conta_12825212_4477195 clob := '<?xml version="1.0"?>
     <tributoIOFValor>274.08</tributoIOFValor>
     <valor>6945.26</valor>
     <valorBase>6945.26</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1966-03-31T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>60503920991</identificadorReceitaFederal>
@@ -2412,7 +2412,7 @@ conta_13198424_4466200 clob := '<?xml version="1.0"?>
     <tributoIOFValor>425.99</tributoIOFValor>
     <valor>10798.42</valor>
     <valorBase>10798.42</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1980-08-31T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>3522131916</identificadorReceitaFederal>
@@ -2552,7 +2552,7 @@ conta_13316419_4414551 clob := '<?xml version="1.0"?>
     <tributoIOFValor>605.88</tributoIOFValor>
     <valor>18519.60</valor>
     <valorBase>18519.60</valorBase>
-    <dataProposta>2021-09-22T08:18:21</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1994-05-24T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>8000148986</identificadorReceitaFederal>
@@ -2692,7 +2692,7 @@ conta_13389408_4470567 clob := '<?xml version="1.0"?>
     <tributoIOFValor>393.35</tributoIOFValor>
     <valor>9940.41</valor>
     <valorBase>9940.41</valorBase>
-    <dataProposta>2021-09-23T08:14:13</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1976-01-28T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>2002909911</identificadorReceitaFederal>
@@ -2832,7 +2832,7 @@ conta_12825212_4477338 clob := '<?xml version="1.0"?>
     <tributoIOFValor>205.04</tributoIOFValor>
     <valor>5185.65</valor>
     <valorBase>5185.65</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1966-03-31T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>60503920991</identificadorReceitaFederal>
@@ -2972,7 +2972,7 @@ conta_13198424_4466185 clob := '<?xml version="1.0"?>
     <tributoIOFValor>1401.57</tributoIOFValor>
     <valor>35562.96</valor>
     <valorBase>35562.96</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1980-08-31T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>3522131916</identificadorReceitaFederal>
@@ -3112,7 +3112,7 @@ conta_13335464_4492873 clob := '<?xml version="1.0"?>
     <tributoIOFValor>325.58</tributoIOFValor>
     <valor>9306.41</valor>
     <valorBase>9306.41</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1974-12-31T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>1733627960</identificadorReceitaFederal>
@@ -3252,7 +3252,7 @@ conta_13352881_4440750 clob := '<?xml version="1.0"?>
     <tributoIOFValor>698.69</tributoIOFValor>
     <valor>21478.27</valor>
     <valorBase>21478.27</valorBase>
-    <dataProposta>2021-09-22T08:18:21</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1984-02-27T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>4361160902</identificadorReceitaFederal>
@@ -3392,7 +3392,7 @@ conta_13413775_4501633 clob := '<?xml version="1.0"?>
     <tributoIOFValor>742.71</tributoIOFValor>
     <valor>18822.88</valor>
     <valorBase>18822.88</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1967-01-22T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>70857326953</identificadorReceitaFederal>
@@ -3532,7 +3532,7 @@ conta_274860_50147 clob := '<?xml version="1.0"?>
     <tributoIOFValor>213.79</tributoIOFValor>
     <valor>10000.00</valor>
     <valorBase>10000.00</valorBase>
-    <dataProposta>2021-09-21T16:16:16</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1985-03-22T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>4841062955</identificadorReceitaFederal>
@@ -3678,7 +3678,7 @@ conta_10115218_4275578 clob := '<?xml version="1.0"?>
     <tributoIOFValor>29.53</tributoIOFValor>
     <valor>4553.59</valor>
     <valorBase>4527.00</valorBase>
-    <dataProposta>2021-09-21T16:16:16</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1985-04-25T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>4872210956</identificadorReceitaFederal>
@@ -3824,7 +3824,7 @@ conta_13413341_4488103 clob := '<?xml version="1.0"?>
     <tributoIOFValor>148.64</tributoIOFValor>
     <valor>4326.24</valor>
     <valorBase>4326.24</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1984-02-11T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>5581329958</identificadorReceitaFederal>
@@ -3964,7 +3964,7 @@ conta_12825212_4477165 clob := '<?xml version="1.0"?>
     <tributoIOFValor>533.75</tributoIOFValor>
     <valor>13536.34</valor>
     <valorBase>13536.34</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1966-03-31T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>60503920991</identificadorReceitaFederal>
@@ -4104,7 +4104,7 @@ conta_12825212_4477253 clob := '<?xml version="1.0"?>
     <tributoIOFValor>579.39</tributoIOFValor>
     <valor>14682.94</valor>
     <valorBase>14682.94</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1966-03-31T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>60503920991</identificadorReceitaFederal>
@@ -4244,7 +4244,7 @@ conta_12825212_4477348 clob := '<?xml version="1.0"?>
     <tributoIOFValor>233.12</tributoIOFValor>
     <valor>5893.08</valor>
     <valorBase>5893.08</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1966-03-31T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>60503920991</identificadorReceitaFederal>
@@ -4384,7 +4384,7 @@ conta_13147110_4439943 clob := '<?xml version="1.0"?>
     <tributoIOFValor>851.82</tributoIOFValor>
     <valor>26027.85</valor>
     <valorBase>26027.85</valorBase>
-    <dataProposta>2021-09-22T08:18:21</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1977-01-14T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>2370380993</identificadorReceitaFederal>
@@ -4524,7 +4524,7 @@ conta_13198424_4466162 clob := '<?xml version="1.0"?>
     <tributoIOFValor>158.25</tributoIOFValor>
     <valor>5185.76</valor>
     <valorBase>5185.76</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1980-08-31T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>3522131916</identificadorReceitaFederal>
@@ -4633,8 +4633,288 @@ conta_13198424_4466162 clob := '<?xml version="1.0"?>
   </parametroConsignado>
 </Root>
 ';
-conta_13413775_4501653 clob := '';
-conta_13432109_4500315 clob := '';
+conta_13413775_4501653 clob := '<?xml version="1.0"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>6502</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <financiaIOF>false</financiaIOF>
+    <financiaTarifa>false</financiaTarifa>
+    <diasCarencia>39</diasCarencia>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>11.09</CETPercentAoAno>
+    <dataPrimeiraParcela>2021-11-01</dataPrimeiraParcela>
+    <produto>
+      <codigo>162</codigo>
+    </produto>
+    <quantidadeParcelas>114</quantidadeParcelas>
+    <taxaJurosRemuneratorios>0.88</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>11.09</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>166.72</tributoIOFValor>
+    <valor>4225.61</valor>
+    <valorBase>4225.61</valorBase>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1967-01-22T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>70857326953</identificadorReceitaFederal>
+      <razaoSocialOuNome>MARIA DE FATIMA DA SILVA CARNE</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>13413775</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>83320250</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>PINEVILLE</nomeBairro>
+        <numeroLogradouro>116</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA TUNISIA</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>4501653</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>47012201</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>6</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>2</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+      <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>83323400</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>CENTRO</nomeBairro>
+        <numeroLogradouro>536</numeroLogradouro>
+        <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>59.02</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>JAPIRA</naturalidade>
+    <dataCalculoLegado>2021-09-23T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>
+';
+
+conta_13432109_4500315 clob := '<?xml version="1.0"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>6502</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <financiaIOF>false</financiaIOF>
+    <financiaTarifa>false</financiaTarifa>
+    <diasCarencia>39</diasCarencia>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>11.09</CETPercentAoAno>
+    <dataPrimeiraParcela>2021-11-01</dataPrimeiraParcela>
+    <produto>
+      <codigo>162</codigo>
+    </produto>
+    <quantidadeParcelas>104</quantidadeParcelas>
+    <taxaJurosRemuneratorios>0.88</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>11.09</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>328.41</tributoIOFValor>
+    <valor>8359.33</valor>
+    <valorBase>8359.33</valorBase>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1977-07-22T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>2504350988</identificadorReceitaFederal>
+      <razaoSocialOuNome>CAROLINA LEFFER DE ALENCAR HER</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>13432109</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>82940090</CEP>
+        <cidade>
+          <descricao>CURITIBA</descricao>
+        </cidade>
+        <nomeBairro>CAJURU</nomeBairro>
+        <numeroLogradouro>1656</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA LUIZ FRANCA</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>4500315</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>69178170</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>6</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>2</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>128060000</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+      <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>83323400</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>CENTRO</nomeBairro>
+        <numeroLogradouro>536</numeroLogradouro>
+        <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>123.35</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>CURITIBA</naturalidade>
+    <dataCalculoLegado>2021-09-23T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>
+';
+
 conta_8079625_4366220 clob := '<?xml version="1.0"?>
 <Root>
   <convenioCredito>
@@ -4666,7 +4946,7 @@ conta_8079625_4366220 clob := '<?xml version="1.0"?>
     <tributoIOFValor>77.24</tributoIOFValor>
     <valor>15779.33</valor>
     <valorBase>15743.90</valorBase>
-    <dataProposta>2021-09-21T16:16:16</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1997-02-21T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>9701846974</identificadorReceitaFederal>
@@ -4781,8 +5061,287 @@ conta_8079625_4366220 clob := '<?xml version="1.0"?>
   </parametroConsignado>
 </Root>
 ';
-conta_13306138_4493590 clob := '';
-conta_13413341_4488084 clob := '';
+conta_13306138_4493590 clob := '<?xml version="1.0"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>6502</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <financiaIOF>false</financiaIOF>
+    <financiaTarifa>false</financiaTarifa>
+    <diasCarencia>38</diasCarencia>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>11.12</CETPercentAoAno>
+    <dataPrimeiraParcela>2021-11-01</dataPrimeiraParcela>
+    <produto>
+      <codigo>162</codigo>
+    </produto>
+    <quantidadeParcelas>25</quantidadeParcelas>
+    <taxaJurosRemuneratorios>0.88</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>11.09</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>77.51</tributoIOFValor>
+    <valor>2381.88</valor>
+    <valorBase>2381.88</valorBase>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1990-06-17T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>6810766901</identificadorReceitaFederal>
+      <razaoSocialOuNome>ANA PAULA MARTINS DE ARAUJO</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>13306138</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>83330250</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>JARDIM AMELIA</nomeBairro>
+        <numeroLogradouro>469</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA ANTONIO JOSE PER</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>4493590</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>85444387</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>6</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>2</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>85653301</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+      <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>83323400</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>CENTRO</nomeBairro>
+        <numeroLogradouro>536</numeroLogradouro>
+        <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>106.81</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>PINHAIS</naturalidade>
+    <dataCalculoLegado>2021-09-24T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>
+';
+
+conta_13413341_4488084 clob := '<?xml version="1.0"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>6502</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <financiaIOF>false</financiaIOF>
+    <financiaTarifa>false</financiaTarifa>
+    <diasCarencia>40</diasCarencia>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>11.10</CETPercentAoAno>
+    <dataPrimeiraParcela>2021-11-01</dataPrimeiraParcela>
+    <produto>
+      <codigo>162</codigo>
+    </produto>
+    <quantidadeParcelas>41</quantidadeParcelas>
+    <taxaJurosRemuneratorios>0.88</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>11.09</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>306.99</tributoIOFValor>
+    <valor>8507.29</valor>
+    <valorBase>8507.29</valorBase>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1984-02-11T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>5581329958</identificadorReceitaFederal>
+      <razaoSocialOuNome>DAVID ESQUITINI</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>13413341</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>83321060</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>VARGEM GRANDE</nomeBairro>
+        <numeroLogradouro>215</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA OSORIO DUQUEESTR</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>4488084</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>04592650274</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>6</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>1</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>70687600</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+      <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>83323400</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>CENTRO</nomeBairro>
+        <numeroLogradouro>536</numeroLogradouro>
+        <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>248.80</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>APUCARANA</naturalidade>
+    <dataCalculoLegado>2021-09-22T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>
+';
 conta_13413341_4488120 clob := '<?xml version="1.0"?>
 <Root>
   <convenioCredito>
@@ -4814,7 +5373,7 @@ conta_13413341_4488120 clob := '<?xml version="1.0"?>
     <tributoIOFValor>274.36</tributoIOFValor>
     <valor>6992.04</valor>
     <valorBase>6992.04</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1984-02-11T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>5581329958</identificadorReceitaFederal>
@@ -4954,7 +5513,7 @@ conta_13413341_4488129 clob := '<?xml version="1.0"?>
     <tributoIOFValor>348.22</tributoIOFValor>
     <valor>9148.64</valor>
     <valorBase>9148.64</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1984-02-11T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>5581329958</identificadorReceitaFederal>
@@ -5063,8 +5622,287 @@ conta_13413341_4488129 clob := '<?xml version="1.0"?>
   </parametroConsignado>
 </Root>
 ';
-conta_13413775_4501703 clob := '';
-conta_13430980_4499810 clob := '';
+conta_13413775_4501703 clob := '<?xml version="1.0"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>6502</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <financiaIOF>false</financiaIOF>
+    <financiaTarifa>false</financiaTarifa>
+    <diasCarencia>39</diasCarencia>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>11.09</CETPercentAoAno>
+    <dataPrimeiraParcela>2021-11-01</dataPrimeiraParcela>
+    <produto>
+      <codigo>162</codigo>
+    </produto>
+    <quantidadeParcelas>114</quantidadeParcelas>
+    <taxaJurosRemuneratorios>0.88</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>11.09</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>372.26</tributoIOFValor>
+    <valor>9433.17</valor>
+    <valorBase>9433.17</valorBase>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1967-01-22T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>70857326953</identificadorReceitaFederal>
+      <razaoSocialOuNome>MARIA DE FATIMA DA SILVA CARNE</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>13413775</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>83320250</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>PINEVILLE</nomeBairro>
+        <numeroLogradouro>116</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA TUNISIA</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>4501703</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>47012201</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>6</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>2</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+      <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>83323400</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>CENTRO</nomeBairro>
+        <numeroLogradouro>536</numeroLogradouro>
+        <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>131.76</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>JAPIRA</naturalidade>
+    <dataCalculoLegado>2021-09-23T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>
+';
+
+conta_13430980_4499810 clob := '<?xml version="1.0"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>6502</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <financiaIOF>false</financiaIOF>
+    <financiaTarifa>false</financiaTarifa>
+    <diasCarencia>35</diasCarencia>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>11.10</CETPercentAoAno>
+    <dataPrimeiraParcela>2021-11-01</dataPrimeiraParcela>
+    <produto>
+      <codigo>162</codigo>
+    </produto>
+    <quantidadeParcelas>56</quantidadeParcelas>
+    <taxaJurosRemuneratorios>0.88</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>11.09</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>890.48</tributoIOFValor>
+    <valor>23819.35</valor>
+    <valorBase>23819.35</valorBase>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1988-12-02T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>6625451924</identificadorReceitaFederal>
+      <razaoSocialOuNome>JULIANE LUCIA DA SILVA SILVEIR</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>13430980</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>83430000</CEP>
+        <cidade>
+          <descricao>CAMPINA GRANDE DO SU</descricao>
+        </cidade>
+        <nomeBairro>BONANCAS SITIOS DE R</nomeBairro>
+        <numeroLogradouro>1524</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA DARVIL JOSE CARO</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>4499810</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>04656859453</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>6</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>2</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>240880500</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+      <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>83323400</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>CENTRO</nomeBairro>
+        <numeroLogradouro>536</numeroLogradouro>
+        <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>541.35</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>CAMPINA GRANDE DO SU</naturalidade>
+    <dataCalculoLegado>2021-09-27T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>
+';
 conta_479276_135085 clob := '<?xml version="1.0"?>
 <Root>
   <convenioCredito>
@@ -5096,7 +5934,7 @@ conta_479276_135085 clob := '<?xml version="1.0"?>
     <tributoIOFValor>1.27</tributoIOFValor>
     <valor>3245.27</valor>
     <valorBase>3244.00</valorBase>
-    <dataProposta>2021-09-21T16:16:16</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1961-11-14T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>56377223900</identificadorReceitaFederal>
@@ -5243,7 +6081,7 @@ conta_9942831_4445492 clob := '<?xml version="1.0"?>
     <tributoIOFValor>724.91</tributoIOFValor>
     <valor>23862.91</valor>
     <valorBase>23138.00</valorBase>
-    <dataProposta>2021-09-28T08:26:35</dataProposta>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1992-07-21T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>1026085985</identificadorReceitaFederal>
@@ -5352,17 +6190,449 @@ conta_9942831_4445492 clob := '<?xml version="1.0"?>
   </parametroConsignado>
 </Root>
 ';
-conta_13389408_4470589 clob := '';
-conta_13413341_4488146 clob := '';
-conta_13432109_4500293 clob := '';
+conta_13389408_4470589 clob := '<?xml version="1.0"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>6502</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <financiaIOF>false</financiaIOF>
+    <financiaTarifa>false</financiaTarifa>
+    <diasCarencia>42</diasCarencia>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>11.09</CETPercentAoAno>
+    <dataPrimeiraParcela>2021-11-01</dataPrimeiraParcela>
+    <produto>
+      <codigo>162</codigo>
+    </produto>
+    <quantidadeParcelas>118</quantidadeParcelas>
+    <taxaJurosRemuneratorios>0.88</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>11.09</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>518.13</tributoIOFValor>
+    <valor>13093.84</valor>
+    <valorBase>13093.84</valorBase>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1976-01-28T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>2002909911</identificadorReceitaFederal>
+      <razaoSocialOuNome>PRISCILA ANGEL DE LARA DA SILV</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>13389408</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>82950270</CEP>
+        <cidade>
+          <descricao>CURITIBA</descricao>
+        </cidade>
+        <nomeBairro>CAJURU</nomeBairro>
+        <numeroLogradouro>29</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA MANOEL DA ROCHA </tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>4470589</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>61334351</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>6</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>2</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>1317000</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+      <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>83323400</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>CENTRO</nomeBairro>
+        <numeroLogradouro>536</numeroLogradouro>
+        <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>179.45</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>CURITIBA</naturalidade>
+    <dataCalculoLegado>2021-09-20T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>
+';
+conta_13413341_4488146 clob := '<?xml version="1.0"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>6502</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <financiaIOF>false</financiaIOF>
+    <financiaTarifa>false</financiaTarifa>
+    <diasCarencia>40</diasCarencia>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>11.10</CETPercentAoAno>
+    <dataPrimeiraParcela>2021-11-01</dataPrimeiraParcela>
+    <produto>
+      <codigo>162</codigo>
+    </produto>
+    <quantidadeParcelas>41</quantidadeParcelas>
+    <taxaJurosRemuneratorios>0.88</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>11.09</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>221.07</tributoIOFValor>
+    <valor>6125.42</valor>
+    <valorBase>6125.42</valorBase>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1984-02-11T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>5581329958</identificadorReceitaFederal>
+      <razaoSocialOuNome>DAVID ESQUITINI</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>13413341</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>83321060</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>VARGEM GRANDE</nomeBairro>
+        <numeroLogradouro>215</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA OSORIO DUQUEESTR</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>4488146</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>04592650274</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>6</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>1</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>70687600</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+      <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>83323400</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>CENTRO</nomeBairro>
+        <numeroLogradouro>536</numeroLogradouro>
+        <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>179.14</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>APUCARANA</naturalidade>
+    <dataCalculoLegado>2021-09-22T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>
+';
+conta_13432109_4500293 clob := '<?xml version="1.0"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>6502</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <financiaIOF>false</financiaIOF>
+    <financiaTarifa>false</financiaTarifa>
+    <diasCarencia>39</diasCarencia>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>11.09</CETPercentAoAno>
+    <dataPrimeiraParcela>2021-11-01</dataPrimeiraParcela>
+    <produto>
+      <codigo>162</codigo>
+    </produto>
+    <quantidadeParcelas>104</quantidadeParcelas>
+    <taxaJurosRemuneratorios>0.88</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>11.09</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>1111.47</tributoIOFValor>
+    <valor>28293.86</valor>
+    <valorBase>28293.86</valorBase>
+    <dataProposta>2021-09-28T16:16:16</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1977-07-22T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>2504350988</identificadorReceitaFederal>
+      <razaoSocialOuNome>CAROLINA LEFFER DE ALENCAR HER</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>13432109</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>82940090</CEP>
+        <cidade>
+          <descricao>CURITIBA</descricao>
+        </cidade>
+        <nomeBairro>CAJURU</nomeBairro>
+        <numeroLogradouro>1656</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA LUIZ FRANCA</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>4500293</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>69178170</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>6</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>2</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>128060000</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+      <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>83323400</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>CENTRO</nomeBairro>
+        <numeroLogradouro>536</numeroLogradouro>
+        <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>417.49</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>CURITIBA</naturalidade>
+    <dataCalculoLegado>2021-09-23T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>
+';
 
 begin
-  
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13413775,  4501671, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413775_4501671);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 12825212,  4477195, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_12825212_4477195);
+
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
 values (5, 274860,  50147, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_274860_50147);
 
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
 values (7, 301965,  61477, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_301965_61477);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13432109,  4500315, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13432109_4500315);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 12825212,  4477165, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_12825212_4477165);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13198424,  4466176, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13198424_4466176);
 
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
 values (13,  479276,  135085,  'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_479276_135085);
@@ -5377,90 +6647,118 @@ insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_E
 values (1, 10115218,  4275578, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_10115218_4275578);
 
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 12825212,  4477165, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_12825212_4477165);
+values (1, 12825212,  4477224, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_12825212_4477224);
 
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 12825212,  4477195, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_12825212_4477195);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 12825212,  4477224, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_12825212_4477224);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 12825212,  4477253, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_12825212_4477253);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 12825212,  4477338, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_12825212_4477338);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 12825212,  4477348, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_12825212_4477348);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
 values (1, 13147110,  4439926, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13147110_4439926);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13147110,  4439943, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13147110_4439943);
+
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
 values (1, 13198424,  4466162, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13198424_4466162);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13198424,  4466176, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13198424_4466176);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13198424,  4466185, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13198424_4466185);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13198424,  4466200, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13198424_4466200);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13198424,  4466205, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13198424_4466205);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13251201,  4497692, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13251201_4497692);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13269518,  4497791, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13269518_4497791);
+
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
 values (1, 13306138,  4493551, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13306138_4493551);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13147110,  4439943, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13147110_4439943);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13251201,  4497692, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13251201_4497692);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13198424,  4466200, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13198424_4466200);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 12825212,  4477253, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_12825212_4477253);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13269518,  4497791, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13269518_4497791);
+
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
 values (1, 13306138,  4493590, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13306138_4493590);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13316419,  4414551, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13316419_4414551);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13335464,  4427495, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13335464_4427495);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13335464,  4492873, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13335464_4492873);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13352881,  4440750, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13352881_4440750);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13352881,  4440763, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13352881_4440763);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13389408,  4470553, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13389408_4470553);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13389408,  4470567, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13389408_4470567);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13389408,  4470589, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13389408_4470589);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13413341,  4488084, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413341_4488084);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13413341,  4488103, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413341_4488103);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13413341,  4488120, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413341_4488120);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13413341,  4488129, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413341_4488129);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13413341,  4488146, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413341_4488146);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13413775,  4501578, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413775_4501578);
+
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
 values (1, 13413775,  4501633, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413775_4501633);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13316419,  4414551, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13316419_4414551);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13389408,  4470567, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13389408_4470567);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13335464,  4427495, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13335464_4427495);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13198424,  4466185, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13198424_4466185);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13352881,  4440750, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13352881_4440750);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13413341,  4488120, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413341_4488120);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13335464,  4492873, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13335464_4492873);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 12825212,  4477338, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_12825212_4477338);
+
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
 values (1, 13413775,  4501653, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413775_4501653);
+
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13413775,  4501671, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413775_4501671);
+values (1, 13389408,  4470553, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13389408_4470553);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13352881,  4440763, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13352881_4440763);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13198424,  4466205, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13198424_4466205);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13413341,  4488084, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413341_4488084);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13389408,  4470589, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13389408_4470589);
+
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
 values (1, 13413775,  4501703, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413775_4501703);
+
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13413775,  4501734, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413775_4501734);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13430980,  4499810, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13430980_4499810);
+values (1, 13413341,  4488129, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413341_4488129);
+
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
 values (1, 13432109,  4500267, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13432109_4500267);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13413775,  4501734, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413775_4501734);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13413341,  4488146, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413341_4488146);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13430980,  4499810, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13430980_4499810);
+
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
 values (1, 13432109,  4500293, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13432109_4500293);
-insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
-values (1, 13432109,  4500315, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13432109_4500315);
+
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
 values (1, 13437275,  4502990, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13437275_4502990);
 
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13413341,  4488103, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413341_4488103);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 12825212,  4477348, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_12825212_4477348);
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO,  DSCONTEUDO_REQUISICAO)
+values (1, 13413775,  4501578, 'EFETIVA_PROPOSTA',  'CONSIGNADO',  'INSERT',  sysdate, conta_13413775_4501578);
+
 commit;
+
+EXCEPTION
+        WHEN OTHERS THEN
+        ROLLBACK;
 
 
 end;
