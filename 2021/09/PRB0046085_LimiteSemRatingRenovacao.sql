@@ -61,6 +61,6 @@ begin
       commit;
     end if;
 
-  end loop
+  end loop;
   commit;
 end;
