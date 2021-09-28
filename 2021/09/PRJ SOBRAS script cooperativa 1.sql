@@ -100,7 +100,7 @@ BEGIN
                            pr_utlfileh => vr_ind_arquiv1 --> handle do arquivo aberto
                           ,
                            pr_des_erro => pr_dscritic); --> erro
-  -- em caso de crítica
+  -- em caso de crï¿½tica
   IF pr_dscritic IS NOT NULL THEN
     RAISE vr_excsaida;
   END IF;
@@ -115,7 +115,7 @@ BEGIN
                            pr_utlfileh => vr_ind_arquiv2 --> handle do arquivo aberto
                           ,
                            pr_des_erro => pr_dscritic); --> erro
-  -- em caso de crítica
+  -- em caso de crï¿½tica
   IF pr_dscritic IS NOT NULL THEN
     RAISE vr_excsaida;
   END IF;
@@ -130,7 +130,7 @@ BEGIN
                            pr_utlfileh => vr_ind_arquiv3 --> handle do arquivo aberto
                           ,
                            pr_des_erro => pr_dscritic); --> erro
-  -- em caso de crítica
+  -- em caso de crï¿½tica
   IF pr_dscritic IS NOT NULL THEN
     RAISE vr_excsaida;
   END IF;
@@ -172,13 +172,13 @@ EXCEPTION
   WHEN vr_excsaida then
     pr_dscritic := 'ERRO ' || pr_dscritic;
     loga3('ERRO ' || to_char(sysdate, 'DD/MM/YYYY HH:MI:SS'));
-    erro3(pr_dscritic ||SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
+    erro3(pr_dscritic || SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
     fecha_arquivos;
     ROLLBACK;
   WHEN OTHERS then
     pr_dscritic := 'ERRO ' || pr_dscritic || sqlerrm;
     loga3('ERRO ' || to_char(sysdate, 'DD/MM/YYYY HH:MI:SS'));
-	erro3(pr_dscritic ||SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
+	  erro3(pr_dscritic || SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
     fecha_arquivos;
     ROLLBACK;
   
