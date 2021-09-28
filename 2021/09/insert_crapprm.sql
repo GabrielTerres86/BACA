@@ -1,7 +1,7 @@
 BEGIN
 
 insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
-values ('CRED', 0, 'QTD_PARALE_CRPS724_DIA', 'Quantidade de execuções paralelas no CRPS724', '30');
+values ('CRED', 1, 'QTD_PARALE_CRPS724_DIA', 'Quantidade de execuções paralelas no CRPS724', '30');
 
 COMMIT;
 
