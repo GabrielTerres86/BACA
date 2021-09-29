@@ -12,13 +12,13 @@ declare
     SELECT  idcooperado_cdc
     FROM    tbsite_cooperado_cdc
     WHERE cdcooper = 6 -- Unilos
-    AND   nrdconta = 202681 -- Feirão de Móveis
+    AND   nrdconta = 202681 -- Feirï¿½o de Mï¿½veis
     and   idmatriz is null;
   vr_idcooperado_cdc      number;
 
   tb_usuario              tp_usuario;
   vr_nrcpf                VARCHAR2(200);
-  vr_fladmin              NUMBER(01);
+  vr_isadmin              NUMBER(01);
   vr_dscritic             VARCHAR2(200);
 
   vr_cdcritic             NUMBER;
@@ -354,7 +354,7 @@ tb_usuario( 305 ) := t_usuario('123.686.979-69','GUSTAVO FERNANDES NASCIMENTO','
 tb_usuario( 306 ) := t_usuario('056.136.085-55','HEVERTON SILVA SOUZA','colombo@colombo.com.br','Vendedor');
 tb_usuario( 307 ) := t_usuario('031.248.442-97','MARCELINHO SOUZA DE ALMEIDA','colombo@colombo.com.br','Vendedor');
 tb_usuario( 308 ) := t_usuario('091.644.279-94','DOUGLAS DE SA','colombo@colombo.com.br','Vendedor');
-tb_usuario( 309 ) := t_usuario('921.271.939-20','ANDRÉ LUIZ DA SILVA','andre.silva@colombo.com.br','Administrador');
+tb_usuario( 309 ) := t_usuario('921.271.939-20','ANDRï¿½ LUIZ DA SILVA','andre.silva@colombo.com.br','Administrador');
 
   for ind_usuario in 1..nvl(tb_usuario.last, 0) loop
     tb_usuario(ind_usuario).nrcpf := ltrim(translate(tb_usuario(ind_usuario).nrcpf, ' .-', ' '));
@@ -367,10 +367,19 @@ tb_usuario( 309 ) := t_usuario('921.271.939-20','ANDRÉ LUIZ DA SILVA','andre.sil
     END IF;
 
     IF substr(tb_usuario(ind_usuario).admin, 1, 1) = 'A' THEN
-      vr_fladmin := 1;
+      vr_isadmin := 1;
     ELSE
-      vr_fladmin := 0;
+      vr_isadmin := 0;
     END IF;
+
+
+
+
+
+
+
+
+
 
     FOR rw_usuario IN cr_usuario ( pr_idcooperado_cdc => vr_idcooperado_cdc
                                   ,pr_nrcpf           => to_number(tb_usuario(ind_usuario).nrcpf) ) LOOP
@@ -378,9 +387,9 @@ tb_usuario( 309 ) := t_usuario('921.271.939-20','ANDRÉ LUIZ DA SILVA','andre.sil
       TELA_ATENDA_CVNCDC.pc_manter_usuarios(pr_cddopcao  => 'A'
                                            ,pr_cdusuario => rw_usuario.idusuario
                                            ,pr_senha     => lower(RAWTOHEX(DBMS_OBFUSCATION_TOOLKIT.md5(input => UTL_RAW.cast_to_raw(vr_nrcpf))))
-                                           ,pr_tipo      => vr_fladmin
+                                           ,pr_tipo      => vr_isadmin
                                            ,pr_vinculo   => rw_usuario.idvendedor
-                                           ,pr_ativo     => 0 -- Inativar usuário
+                                           ,pr_ativo     => 0 -- Inativar usuï¿½rio
                                            ,pr_bloqueio  => 0
                                            ,pr_xmllog    => null
                                            ,pr_cdcritic  => vr_cdcritic
