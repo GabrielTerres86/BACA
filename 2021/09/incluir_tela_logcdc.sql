@@ -35,7 +35,7 @@ BEGIN
                         )
                  VALUES ( 'CRED'
                          ,'LOGCDC'
-                         ,'Log Requisi��es API CDC'
+                         ,'Log Requisições API CDC'
                          ,null
                          ,null
                          ,null
@@ -78,8 +78,8 @@ BEGIN
                  VALUES ( 'LOGCDC'
                          ,1
                          ,'C'
-                         ,'Log Requisi��es API CDC'
-                         ,'Log Requisi��es API CDC'
+                         ,'Log Requisições API CDC'
+                         ,'Log Requisições API CDC'
                          ,0
                          ,1
                          ,' '
