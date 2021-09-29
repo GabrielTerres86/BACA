@@ -12,13 +12,13 @@ declare
     SELECT  idcooperado_cdc
     FROM    tbsite_cooperado_cdc
     WHERE cdcooper = 6 -- Unilos
-    AND   nrdconta = 243493; -- Lojas Colombo
+    AND   nrdconta = 243493 -- Lojas Colombo
     and   idmatriz is null;
   vr_idcooperado_cdc      number;
 
   tb_usuario              tp_usuario;
   vr_nrcpf                VARCHAR2(200);
-  vr_fladmin              NUMBER(01);
+  vr_isadmin              NUMBER(01);
   vr_dscritic             VARCHAR2(200);
 begin
   OPEN cr_loja;
@@ -348,7 +348,7 @@ tb_usuario( 318 ) := t_usuario('012.685.070-40','KETLIN LUANDA ZINN','ketlin.zin
 tb_usuario( 319 ) := t_usuario('012.502.831.83','PAULO TAIRA','paulod@colombo.com.br','Administrador');
 tb_usuario( 320 ) := t_usuario('034.760.750-01','DANIELE LIS GEHLEN','daniele@colombo.com.br','Administrador');
 tb_usuario( 321 ) := t_usuario('832.421.550-68','MICHELI BORSATO','contasfornecedores@colombo.com.br','Administrador');
-tb_usuario( 322 ) := t_usuario('921.271.939-20','ANDRÉ LUIZ DA SILVA','andre.silva@colombo.com.br','Administrador');
+tb_usuario( 322 ) := t_usuario('921.271.939-20','ANDRï¿½ LUIZ DA SILVA','andre.silva@colombo.com.br','Administrador');
 
   for ind_usuario in 1..nvl(tb_usuario.last, 0) loop
     tb_usuario(ind_usuario).nrcpf := ltrim(translate(tb_usuario(ind_usuario).nrcpf, ' .-', ' '));
@@ -361,17 +361,27 @@ tb_usuario( 322 ) := t_usuario('921.271.939-20','ANDRÉ LUIZ DA SILVA','andre.sil
     END IF;
 
     IF substr(tb_usuario(ind_usuario).admin, 1, 1) = 'A' THEN
-      vr_fladmin := 1;
+      vr_isadmin := 1;
     ELSE
-      vr_fladmin := 0;
+      vr_isadmin := 0;
     END IF;
+
+
+
+
+
+
+
+
+
+
 
     EMPR0012.pc_cadastra_usuario(pr_idusuario        => null
                                 ,pr_dslogin          => vr_nrcpf
                                 ,pr_dssenha          => lower(RAWTOHEX(DBMS_OBFUSCATION_TOOLKIT.md5(input => UTL_RAW.cast_to_raw(vr_nrcpf))))
                                 ,pr_dtinsori         => null
                                 ,pr_flgativo         => 1
-                                ,pr_fladmin          => vr_fladmin
+                                ,pr_fladmin          => vr_isadmin
                                 ,pr_idcooperado_cdc  => vr_idcooperado_cdc
                                 ,pr_nmvendedor       => tb_usuario(ind_usuario).nmvendedor
                                 ,pr_nrcpf            => to_number(tb_usuario(ind_usuario).nrcpf)
