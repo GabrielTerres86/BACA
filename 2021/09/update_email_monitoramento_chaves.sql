@@ -2,7 +2,7 @@ declare
 begin 
   
 UPDATE cecred.crapprm
-   SET dsvlrprm = 'zuleica.arnese@auditeste.com.br'
+   SET dsvlrprm = 'monitoracaodefraudes@ailos.coop.br'
 WHERE cdacesso = 'MONIT_EMAIL_CHAVES';
 commit;
 end;
