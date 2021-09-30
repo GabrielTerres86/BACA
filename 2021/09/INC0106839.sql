@@ -1,0 +1,109 @@
+begin
+/* Corrigir conta cartão que não registrou no Aimaro */
+declare
+	vr_nrctrcrd	crawcrd.nrctrcrd%TYPE := fn_sequence('CRAPMAT','NRCTRCRD', 7);
+BEGIN
+
+  BEGIN
+         INSERT INTO crawcrd
+                       (nrdconta,
+                        nrcrcard,
+                        nrcctitg,
+                        nrcpftit,
+                        vllimcrd,
+                        flgctitg,
+                        dtmvtolt,
+                        nmextttl,
+                        flgprcrd,
+                        tpdpagto,
+                        flgdebcc,
+                        tpenvcrd,
+                        vlsalari,
+                        dddebito,
+                        cdlimcrd,
+                        tpcartao,
+                        dtnasccr,
+                        nrdoccrd,
+                        nmtitcrd,
+                        nrctrcrd,
+                        cdadmcrd,
+                        cdcooper,
+                        nrseqcrd,
+                        dtpropos,
+                        dtsolici,
+                        flgdebit,
+                        cdgraupr,
+			insitcrd,
+			dtlibera,
+			insitdec)
+                    VALUES
+                       (133434,
+                        6393500219084804,
+                        7564416011691,
+                        52643360915,
+                        0,
+                        3,
+                        trunc(sysdate),
+                        'FABIANO DRESCH',
+                        1,
+                        1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        2,
+                        to_date('01/07/1963','dd/mm/yyyy'),
+                        vr_nrctrcrd,
+                        'FABIANO DRESCH',
+                        vr_nrctrcrd,
+                        15,
+                        7,
+                        CCRD0003.fn_sequence_nrseqcrd(7),
+                        to_date('20/09/2021','dd/mm/rrrr'),
+                        to_date('20/09/2021','dd/mm/rrrr'),
+                        1,
+                        5,
+			3,
+			trunc(sysdate),
+			2);
+  END;
+  BEGIN
+    INSERT INTO crapcrd
+           (cdcooper
+           ,nrdconta
+           ,nrcrcard
+           ,nrcpftit
+           ,nmtitcrd
+           ,dddebito
+           ,cdlimcrd
+           ,dtvalida
+           ,nrctrcrd
+           ,cdmotivo
+           ,nrprotoc
+           ,cdadmcrd
+           ,tpcartao
+           ,dtcancel
+           ,flgdebit
+           ,flgprovi)
+        VALUES
+           (7
+           ,133434
+           ,6393500219084804
+           ,52643360915
+           ,'FABIANO DRESCH'
+           ,0
+           ,0
+           ,NULL
+           ,vr_nrctrcrd
+           ,0
+           ,0
+           ,15
+           ,2
+           ,NULL
+           ,1
+           ,0);
+  END;  
+  COMMIT;
+END;
+end;
