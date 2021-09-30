@@ -1,6 +1,6 @@
 declare
 
-conta_502464_21100155 := '<?xml version="1.0"?>
+conta_502464_21100155 clob := '<?xml version="1.0"?>
 <Root>
   <convenioCredito>
     <cooperativa>
@@ -146,7 +146,7 @@ conta_502464_21100155 := '<?xml version="1.0"?>
   </parametroConsignado>
 </Root>';
 
-conta_502464_21200155 := '<?xml version="1.0"?>
+conta_502464_21200155 clob := '<?xml version="1.0"?>
 <Root>
   <convenioCredito>
     <cooperativa>
