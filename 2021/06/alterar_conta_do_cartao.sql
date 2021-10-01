@@ -26,7 +26,7 @@ BEGIN
 --  vr_cartao := 5158940000000188; -- Matheus barros 2
 --  vr_cartao := 5756323907327153; -- Matheus barros 3
 --  vr_cartao := 5161620000264183; -- Poliane 
-  vr_cartao := 6393500069948041; -- Dudu 
+  vr_cartao := 6393500069948041; -- Dudu card.cdadmcrd = 15
   
   -- Verificar se a conta possui algum outro cartão para buscar o CPF do Titular
   FOR cartao IN (select distinct a.nrcpftit
@@ -67,14 +67,12 @@ BEGIN
         ,card.nrcpftit = vr_cpf_titular
         ,card.qtsenerr = 0
         ,card.inacetaa = 1
-        ,card.cdadmcrd = 15
    WHERE card.nrcrcard = vr_cartao;
 
   UPDATE crawcrd card
      SET card.cdcooper = vr_cooperativa
         ,card.nrdconta = vr_conta
         ,card.nrcpftit = vr_cpf_titular
-        ,card.cdadmcrd = 15
    WHERE card.nrcrcard = vr_cartao;
 
   COMMIT;
