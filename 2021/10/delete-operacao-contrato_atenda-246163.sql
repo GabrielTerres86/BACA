@@ -4,4 +4,8 @@ begin
      and nrdconta = 17833
      and nrctremp = 7602521;
   commit;
+
+exception
+  when others then
+    rollback;
 end;
