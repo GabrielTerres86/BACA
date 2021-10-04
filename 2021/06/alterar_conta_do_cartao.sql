@@ -10,23 +10,17 @@ BEGIN
   -- Cooperativa de destino do cartão
   vr_cooperativa := 1;
   -- Conta de destino do cartão
-  vr_conta := 9559582;
+  vr_conta := 14010;
 
 -- Numero do cartão que precisamos ajustar
-  vr_cartao := 6393500069948041;
---  vr_cartao := 5588190184171591; -- Topaz
---  vr_cartao := 5127070162667067; -- Jeff
---  vr_cartao := 5127070162667935; -- XV
---  vr_cartao := 5127070161674411; -- Luis
---  vr_cartao := 5127070320149719; -- Luis 2
+
+  vr_cartao := 6393500065179583; -- Messi
+--  vr_cartao := 5158940000199642; -- Terry Crews
 --  vr_cartao := 5156010019676523; -- SeP - PF
---  vr_cartao := 5127070340534221; -- Paty
---  vr_cartao := 5161620000587872; -- Djonata
---  vr_cartao := 5127070162666663; -- Matheus barros
---  vr_cartao := 5158940000000188; -- Matheus barros 2
---  vr_cartao := 5756323907327153; -- Matheus barros 3
---  vr_cartao := 5161620000264183; -- Poliane 
-  vr_cartao := 6393500069948041; -- Dudu card.cdadmcrd = 15
+--  vr_cartao := 5588190184171591; -- Topaz
+--  vr_cartao := 5127070162666663; -- Matheus barros TOPAZ
+--  vr_cartao := 5158940000000188; -- Matheus barros 2 TOPAZ
+--  vr_cartao := 5756323907327153; -- Matheus barros 3 TOPAZ
   
   -- Verificar se a conta possui algum outro cartão para buscar o CPF do Titular
   FOR cartao IN (select distinct a.nrcpftit
