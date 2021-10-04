@@ -156,7 +156,7 @@ vr_clob := '502480;30/11/2018
     
   IF (vr_cdsitdct is not null) and (vr_cdsitdct != 4) THEN  
   
-      vr_dstransa := 'Alteradas contas para situacao 4 INC0103839.%';
+      vr_dstransa := 'Alteradas contas para situacao 4 INC0103839.';
       
       -- Obter saldo do dia
         cecred.EXTR0001.pc_obtem_saldo_dia(pr_cdcooper   => vr_cdcooper
