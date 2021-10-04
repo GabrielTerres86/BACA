@@ -60,7 +60,7 @@ BEGIN
 
   BEGIN
     INSERT INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-    VALUES ('IMP_DIARIO_RET_PRONAM', 'TELA_PRONAM', 'pc_rel_diario_retorno', 'pr_nrremessa, pr_tprelato', (SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'TELA_PRONAM' AND ROWNUM = 1));
+    VALUES ('IMP_DIARIO_RET_PRONAM', 'TELA_PRONAM', 'pc_rel_diario_retorno', 'pr_dtinfdiario', (SELECT a.nrseqrdr FROM CRAPRDR a WHERE a.nmprogra = 'TELA_PRONAM' AND ROWNUM = 1));
   EXCEPTION
       WHEN OTHERS THEN
         RAISE_APPLICATION_ERROR(-20002,'Erro ao inserir acao para o relatorio: '||SQLERRM);
