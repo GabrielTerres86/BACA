@@ -4,4 +4,5 @@ declare
   
 begin
   CECRED.PC_CNS_RETORNO_ARQ(3,prcdcritic, prdscritic);
+  commit;
 end;
