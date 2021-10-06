@@ -7,8 +7,7 @@ DECLARE
        AND cdacesso = 'SHELL_PROGRESS');
   rw_crapprm cr_crapprm%ROWTYPE;
 BEGIN
-  dbms_output.put_line('SCRIPT INICIADO EM ' ||
-                       to_char(SYSDATE, 'dd/mm/yyyy hh24:mi:ss'));
+  dbms_output.put_line('SCRIPT INICIADO EM ' || to_char(SYSDATE, 'dd/mm/yyyy hh24:mi:ss'));
 
   OPEN cr_crapprm;
   FETCH cr_crapprm
