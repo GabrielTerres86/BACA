@@ -1,3 +1,4 @@
+BEGIN
 INSERT INTO craptel (nmdatela, nrmodulo, cdopptel, tldatela, tlrestel, flgteldf, flgtelbl, nmrotina, lsopptel, inacesso, cdcooper, idsistem, idevento, nrordrot, nrdnivel, nmrotpai, idambtel)
    SELECT 'REINFR', 5, '@,C,L', 'Relatos de Infração PIX', 'Relatos de Infração PIX', 0, 1, ' ', 'ACESSO,CONCILIACAO,LISTAGEM', 2, cdcooper, 1, 0, 0, 0, ' ', 0 FROM crapcop cop;
 
@@ -13,3 +14,4 @@ select 'REINFR', opc.cddopcao, ope.cdoperad, null, 3, 1, 1, 2
    and lower(ope.cdoperad) in ( 'f0030640', 'f0033467', 'f0030614', 'f0033559', 'f0030614', 'f0030191', 'f0031264', 'f0030588', 'f0033116', 'f0031976', 'f0033322','f0032563','f0030606','f0033550');
  
 commit;
+END;
