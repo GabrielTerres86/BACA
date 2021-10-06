@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-135
 DECLARE
   vr_exc_erro EXCEPTION;
   vr_dscritic crapcri.dscritic%TYPE;
@@ -135,6 +133,3 @@ EXCEPTION
     ROLLBACK;
     raise_application_error(-20100, 'Erro ao atualizar contratos - ' || SQLERRM);
 END;
-0
-1
-rw_craplem.LANCAMENTO
