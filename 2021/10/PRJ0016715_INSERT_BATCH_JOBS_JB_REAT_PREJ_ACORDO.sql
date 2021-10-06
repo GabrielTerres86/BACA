@@ -6,8 +6,7 @@ DECLARE
     SELECT 1 FROM tbgen_batch_jobs WHERE nmjob = 'JB_REAT_PREJ_ACORDO';
   vr_job cr_job%ROWTYPE;
 BEGIN
-  dbms_output.put_line('SCRIPT INICIADO EM ' ||
-                       to_char(SYSDATE, 'dd/mm/yyyy hh24:mi:ss'));
+  dbms_output.put_line('SCRIPT INICIADO EM ' || to_char(SYSDATE, 'dd/mm/yyyy hh24:mi:ss'));
 
   OPEN cr_job;
   FETCH cr_job

@@ -2,7 +2,7 @@ DECLARE
   CURSOR cr_crapcop IS
     SELECT cdcooper FROM crapcop WHERE flgativo = 1;
   vr_idinconsist_grp NUMBER;
-  vr_emails          VARCHAR2(1000) := 'juliana.ottersbach@ailos.coop.br;beatriz.weege@ailos.coop.br;juliana@ailos.coop.br;sandro.kistner@ailos.coop.br;rene.santos@ailos.coop.br;rafael.macagnani@ailos.coop.br';
+  vr_emails          VARCHAR2(1000) := 'juliana.ottersbach@ailos.coop.br;beatriz.weege@ailos.coop.br;juliana@ailos.coop.br';
 BEGIN
   dbms_output.put_line('SCRIPT INICIADO EM ' ||
                        to_char(SYSDATE, 'dd/mm/yyyy hh24:mi:ss'));
