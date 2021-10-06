@@ -1,0 +1,6 @@
+begin
+  UPDATE CECRED.CRAPPRM
+     SET DSVLRPRM = '74'
+   WHERE CDACESSO = 'PERC_ALTO_FRAUDE_ADM';
+  commit;
+end;
