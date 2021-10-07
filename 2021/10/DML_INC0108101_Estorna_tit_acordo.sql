@@ -605,5 +605,8 @@ EXCEPTION
   WHEN vr_exc_erro THEN
     ROLLBACK;
     raise_application_error(-20500,vr_cdcritic||'-'||vr_dscritic); 
-  
+  WHEN OTHERS THEN
+    ROLLBACK;
+    raise_application_error(-20500,'Erro ao estornar '||SQLERRM);  
+    
 END;
