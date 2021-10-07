@@ -2,10 +2,12 @@ BEGIN
   INSERT INTO credito.tbcred_pronampe_contrato
     (cdcooper
     ,nrdconta
-    ,nrcontrato)
+    ,nrcontrato
+    ,idcontrato)
     (SELECT epr.cdcooper
            ,epr.nrdconta
            ,epr.nrctremp
+           ,epr.progress_recid
        FROM cecred.crapepr epr
       WHERE epr.cdlcremp = 2600
         AND NOT EXISTS (SELECT 1
