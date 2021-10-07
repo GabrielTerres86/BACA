@@ -1,3 +1,4 @@
+begin
 UPDATE crapris a
 SET a.vljura60 = 0
 WHERE a.cdcooper = 1
@@ -7,4 +8,5 @@ AND a.nrctremp IN (3930543,3969605,2103837,2956154)
 AND a.vljura60 IS NULL;
 
 COMMIT;
+end;
   
