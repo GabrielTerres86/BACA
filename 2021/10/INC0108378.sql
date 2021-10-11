@@ -1,0 +1,73 @@
+DECLARE
+  conta_8456445_0710 CLOB := '<?xml version="1.0"?>
+	<Root>
+	  <convenioCredito>
+		<cooperativa>
+		  <codigo>1</codigo>
+		</cooperativa>
+		<numeroContrato>4438913</numeroContrato>
+	  </convenioCredito>
+	  <propostaContratoCredito>
+		<emitente>
+		  <contaCorrente>
+			<codigoContaSemDigito>8456445</codigoContaSemDigito>
+		  </contaCorrente>
+		</emitente>
+	  </propostaContratoCredito>
+	  <lote>
+		<tipoInteracao>
+		  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+		</tipoInteracao>
+	  </lote>
+	  <transacaoContaCorrente>
+		<tipoInteracao>
+		  <codigo>DEBITO</codigo>
+		</tipoInteracao>
+	  </transacaoContaCorrente>
+	  <parcela>
+		<dataEfetivacao>2021-10-05T12:00:00</dataEfetivacao> 
+		<dataVencimento>2021-10-05</dataVencimento>
+		<identificador>725615</identificador>
+		<valor>272.65</valor>
+	  </parcela>
+	  <motivoEnvio>REENVIARPAGTO</motivoEnvio>
+	  <interacaoGrafica>
+		<dataAcaoUsuario>2021-10-07T16:30:00</dataAcaoUsuario>
+	  </interacaoGrafica>
+	</Root>';
+	
+	BEGIN
+	  INSERT INTO TBGEN_EVENTO_SOA
+		(CDCOOPER
+		,NRDCONTA
+		,NRCTRPRP
+		,TPEVENTO
+		,TPRODUTO_EVENTO
+		,TPOPERACAO
+		,DHOPERACAO
+		,DSPROCESSAMENTO
+		,DSSTATUS
+		,DHEVENTO
+		,DSERRO
+		,NRTENTATIVAS
+		,DSCONTEUDO_REQUISICAO)
+	  VALUES
+		(1
+		,8456445
+		,4438913
+		,'PAGTO_PAGAR'
+		,'CONSIGNADO'
+		,'INSERT'
+		,SYSDATE
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,NULL
+		,conta_8456445_0710);
+		
+	EXCEPTION
+	  WHEN OTHERS THEN
+		ROLLBACK;
+END;		
+/
