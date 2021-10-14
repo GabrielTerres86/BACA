@@ -32,7 +32,7 @@ BEGIN
 
         i := i + 1;
 
-        IF i = 1000 THEN
+        IF i = 5000 THEN
           i := 0;
           COMMIT;
         END IF;
