@@ -145,7 +145,17 @@ BEGIN
         ,vlpapgat = 0
    WHERE cdcooper = 13
      AND nrdconta = 242470
-     AND nrctremp = 53912;       
+     AND nrctremp = 53912;
+
+  UPDATE crapepr
+     SET inliquid = 1
+        ,vlsdeved = 0
+        ,vlsdvctr = 0
+        ,vlsdevat = 0
+        ,vlpapgat = 0
+   WHERE cdcooper = 13
+     AND nrdconta = 500100
+     AND nrctremp = 129765;
 
   COMMIT;
 
