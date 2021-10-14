@@ -1,0 +1,2167 @@
+DECLARE
+  -- Transpocred
+  -- 528889  21100057   -> 06/10 -> 74,58 -> parcela 2
+  conta_528889_06_10 CLOB := '<?xml version="1.0"?>
+                        <Root>
+                          <convenioCredito>
+                            <cooperativa>
+                              <codigo>9</codigo>
+                            </cooperativa>
+                            <numeroContrato>21100057</numeroContrato>
+                          </convenioCredito>
+                          <propostaContratoCredito>
+                            <emitente>
+                              <contaCorrente>
+                                <codigoContaSemDigito>528889</codigoContaSemDigito>
+                              </contaCorrente>
+                            </emitente>
+                          </propostaContratoCredito>
+                          <lote>
+                            <tipoInteracao>
+                              <codigo>INSTALLMENT_SETTLEMENT</codigo>
+                            </tipoInteracao>
+                          </lote>
+                          <transacaoContaCorrente>
+                            <tipoInteracao>
+                              <codigo>DEBITO</codigo>
+                            </tipoInteracao>
+                          </transacaoContaCorrente>
+                          <motivoEnvio>REENVIARPAGTO</motivoEnvio>
+                          <interacaoGrafica>
+                            <dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+                          </interacaoGrafica>
+                          <parcela>
+                            <dataEfetivacao>2021-10-06T14:52:14</dataEfetivacao>
+                            <dataVencimento>2021-09-10</dataVencimento>
+                            <identificador>725611</identificador>
+                            <valor>74.58</valor>
+                          </parcela>
+                        </Root>';
+
+  -- 515558 20100495   -> 05/10 -> 175,61 -> Parcela 2 
+  conta_515558_05_10 CLOB := '<?xml version="1.0"?>
+                        <Root>
+                          <convenioCredito>
+                            <cooperativa>
+                              <codigo>9</codigo>
+                            </cooperativa>
+                            <numeroContrato>20100495</numeroContrato>
+                          </convenioCredito>
+                          <propostaContratoCredito>
+                            <emitente>
+                              <contaCorrente>
+                                <codigoContaSemDigito>515558</codigoContaSemDigito>
+                              </contaCorrente>
+                            </emitente>
+                          </propostaContratoCredito>
+                          <lote>
+                            <tipoInteracao>
+                              <codigo>INSTALLMENT_SETTLEMENT</codigo>
+                            </tipoInteracao>
+                          </lote>
+                          <transacaoContaCorrente>
+                            <tipoInteracao>
+                              <codigo>DEBITO</codigo>
+                            </tipoInteracao>
+                          </transacaoContaCorrente>
+                          <motivoEnvio>REENVIARPAGTO</motivoEnvio>
+                          <interacaoGrafica>
+                            <dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+                          </interacaoGrafica>
+                          <parcela>
+                            <dataEfetivacao>2021-10-05T09:50:34</dataEfetivacao>
+                            <dataVencimento>2021-09-10</dataVencimento>
+                            <identificador>724045</identificador>
+                            <valor>175.61</valor>
+                          </parcela>
+                        </Root>';
+
+  -- 500003 20200023   -> 05/10  -> 213,68 -> parcela 2 
+  conta_500003_05_10 CLOB := '<?xml version="1.0"?>
+                        <Root>
+                          <convenioCredito>
+                            <cooperativa>
+                              <codigo>9</codigo>
+                            </cooperativa>
+                            <numeroContrato>20200023</numeroContrato>
+                          </convenioCredito>
+                          <propostaContratoCredito>
+                            <emitente>
+                              <contaCorrente>
+                                <codigoContaSemDigito>500003</codigoContaSemDigito>
+                              </contaCorrente>
+                            </emitente>
+                          </propostaContratoCredito>
+                          <lote>
+                            <tipoInteracao>
+                              <codigo>INSTALLMENT_SETTLEMENT</codigo>
+                            </tipoInteracao>
+                          </lote>
+                          <transacaoContaCorrente>
+                            <tipoInteracao>
+                              <codigo>DEBITO</codigo>
+                            </tipoInteracao>
+                          </transacaoContaCorrente>
+                          <parcela>
+                            <dataEfetivacao>2021-10-04T07:00:10</dataEfetivacao>
+                            <dataVencimento>2021-09-10</dataVencimento>
+                            <identificador>723805</identificador>
+                            <valor>213.68</valor>
+                          </parcela>
+                          <motivoEnvio>REENVIARPAGTO</motivoEnvio>
+                          <interacaoGrafica>
+                            <dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+                          </interacaoGrafica>
+                        </Root>';
+
+  -- Civia
+  --282936   109758    -> 01/10 -> 139,02 -> parcela 6
+  conta_282936_01_10 CLOB := '<?xml version="1.0"?>
+                        <Root>
+                          <convenioCredito>
+                            <cooperativa>
+                              <codigo>13</codigo>
+                            </cooperativa>
+                            <numeroContrato>109758</numeroContrato>
+                          </convenioCredito>
+                          <propostaContratoCredito>
+                            <emitente>
+                              <contaCorrente>
+                                <codigoContaSemDigito>282936</codigoContaSemDigito>
+                              </contaCorrente>
+                            </emitente>
+                          </propostaContratoCredito>
+                          <lote>
+                            <tipoInteracao>
+                              <codigo>INSTALLMENT_SETTLEMENT</codigo>
+                            </tipoInteracao>
+                          </lote>
+                          <transacaoContaCorrente>
+                            <tipoInteracao>
+                              <codigo>DEBITO</codigo>
+                            </tipoInteracao>
+                          </transacaoContaCorrente>
+                          <motivoEnvio>REENVIARPAGTO</motivoEnvio>
+                          <interacaoGrafica>
+                            <dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+                          </interacaoGrafica>
+                          <parcela>
+                            <dataEfetivacao>2021-10-01T11:28:45</dataEfetivacao>
+                            <dataVencimento>2021-10-10</dataVencimento>
+                            <identificador>723650</identificador>
+                            <valor>193.02</valor>
+                          </parcela>
+                        </Root>';
+
+BEGIN
+
+  -- Transpocred
+  -- 528889  21100057   -> 06/10 -> 74,58 -> parcela 2
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (9
+    ,528889
+    ,21100057
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,conta_528889_06_10);
+
+  -- 515558 20100495   -> 05/10 -> 175,61 -> Parcela 2 
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (9
+    ,515558
+    ,20100495
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,conta_515558_05_10);
+
+  -- 500003 20200023   -> 05/10  -> 213,68 -> parcela 2 
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (9
+    ,500003
+    ,20200023
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,conta_500003_05_10);
+
+  -- Civia
+  --282936   109758    -> 01/10 -> 139,02 -> parcela 6
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (13
+    ,282936
+    ,109758
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,conta_282936_01_10);
+
+  -- Viacredi
+  -- 9652620 2955850 - Ajuste de 14 parcelas (13 à 26)
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2021-11-10</dataVencimento>
+<identificador>361615</identificador>
+<valor>434.78</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2021-12-10</dataVencimento>
+<identificador>361614</identificador>
+<valor>427.39</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2022-01-10</dataVencimento>
+<identificador>361613</identificador>
+<valor>419.88</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2022-02-10</dataVencimento>
+<identificador>361612</identificador>
+<valor>412.50</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2022-03-10</dataVencimento>
+<identificador>361611</identificador>
+<valor>405.95</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2022-04-10</dataVencimento>
+<identificador>361610</identificador>
+<valor>398.82</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2022-05-10</dataVencimento>
+<identificador>361609</identificador>
+<valor>392.03</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2022-06-10</dataVencimento>
+<identificador>361608</identificador>
+<valor>385.15</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2022-07-10</dataVencimento>
+<identificador>361607</identificador>
+<valor>378.59</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2022-08-10</dataVencimento>
+<identificador>361606</identificador>
+<valor>371.94</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2022-09-10</dataVencimento>
+<identificador>361605</identificador>
+<valor>365.41</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2022-10-10</dataVencimento>
+<identificador>361604</identificador>
+<valor>359.19</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2022-11-10</dataVencimento>
+<identificador>361603</identificador>
+<valor>352.88</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (1
+    ,9652620
+    ,2955850
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    , '<?xml version="1.0"?>
+<Root>
+<convenioCredito>
+<cooperativa>
+  <codigo>1</codigo>
+</cooperativa>
+<numeroContrato>2955850</numeroContrato>
+</convenioCredito>
+<propostaContratoCredito>
+<emitente>
+  <contaCorrente>
+    <codigoContaSemDigito>9652620</codigoContaSemDigito>
+  </contaCorrente>
+</emitente>
+</propostaContratoCredito>
+<lote>
+<tipoInteracao>
+  <codigo>INSTALLMENT_SETTLEMENT</codigo>
+</tipoInteracao>
+</lote>
+<transacaoContaCorrente>
+<tipoInteracao>
+  <codigo>DEBITO</codigo>
+</tipoInteracao>
+</transacaoContaCorrente>
+<parcela>
+<dataEfetivacao>2021-09-08T10:48:25</dataEfetivacao>
+<dataVencimento>2022-12-10</dataVencimento>
+<identificador>361602</identificador>
+<valor>346.88</valor>
+</parcela>
+<motivoEnvio>REENVIARPAGTO</motivoEnvio>
+<interacaoGrafica>
+<dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario>
+</interacaoGrafica>
+</Root>
+');
+
+  -- 850721  267733     -> 06/10 -> ajuste de 35 parcelas (20 à 54)
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:17</dataEfetivacao><dataVencimento>2022-03-10</dataVencimento><identificador>725566</identificador><valor>347.78</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:25</dataEfetivacao><dataVencimento>2025-01-10</dataVencimento><identificador>725600</identificador><valor>203.08</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:25</dataEfetivacao><dataVencimento>2024-12-10</dataVencimento><identificador>725599</identificador><valor>206.37</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:19</dataEfetivacao><dataVencimento>2023-07-10</dataVencimento><identificador>725582</identificador><valor>270.14</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:20</dataEfetivacao><dataVencimento>2023-09-10</dataVencimento><identificador>725584</identificador><valor>261.59</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:17</dataEfetivacao><dataVencimento>2022-06-10</dataVencimento><identificador>725569</identificador><valor>331.57</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:18</dataEfetivacao><dataVencimento>2022-12-10</dataVencimento><identificador>725575</identificador><valor>301.54</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:19</dataEfetivacao><dataVencimento>2023-04-10</dataVencimento><identificador>725579</identificador><valor>283.20</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:19</dataEfetivacao><dataVencimento>2023-05-10</dataVencimento><identificador>725580</identificador><valor>278.82</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:19</dataEfetivacao><dataVencimento>2023-06-10</dataVencimento><identificador>725581</identificador><valor>274.38</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:17</dataEfetivacao><dataVencimento>2022-07-10</dataVencimento><identificador>725570</identificador><valor>326.45</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:21</dataEfetivacao><dataVencimento>2023-12-10</dataVencimento><identificador>725587</identificador><valor>249.53</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:21</dataEfetivacao><dataVencimento>2024-01-10</dataVencimento><identificador>725588</identificador><valor>245.54</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:23</dataEfetivacao><dataVencimento>2024-08-10</dataVencimento><identificador>725595</identificador><valor>219.86</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:24</dataEfetivacao><dataVencimento>2024-10-10</dataVencimento><identificador>725597</identificador><valor>213.01</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:21</dataEfetivacao><dataVencimento>2024-02-10</dataVencimento><identificador>725589</identificador><valor>241.63</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:18</dataEfetivacao><dataVencimento>2023-01-10</dataVencimento><identificador>725576</identificador><valor>296.73</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:18</dataEfetivacao><dataVencimento>2022-10-10</dataVencimento><identificador>725573</identificador><valor>311.24</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:22</dataEfetivacao><dataVencimento>2024-04-10</dataVencimento><identificador>725591</identificador><valor>234.22</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:20</dataEfetivacao><dataVencimento>2023-11-10</dataVencimento><identificador>725586</identificador><valor>253.44</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:17</dataEfetivacao><dataVencimento>2022-08-10</dataVencimento><identificador>725571</identificador><valor>321.25</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:18</dataEfetivacao><dataVencimento>2022-09-10</dataVencimento><identificador>725572</identificador><valor>316.12</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:18</dataEfetivacao><dataVencimento>2022-11-10</dataVencimento><identificador>725574</identificador><valor>306.27</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:18</dataEfetivacao><dataVencimento>2023-02-10</dataVencimento><identificador>725577</identificador><valor>292.00</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:17</dataEfetivacao><dataVencimento>2022-05-10</dataVencimento><identificador>725568</identificador><valor>336.95</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:20</dataEfetivacao><dataVencimento>2023-08-10</dataVencimento><identificador>725583</identificador><valor>265.83</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:21</dataEfetivacao><dataVencimento>2024-03-10</dataVencimento><identificador>725590</identificador><valor>238.02</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:24</dataEfetivacao><dataVencimento>2024-09-10</dataVencimento><identificador>725596</identificador><valor>216.35</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:17</dataEfetivacao><dataVencimento>2022-04-10</dataVencimento><identificador>725567</identificador><valor>342.24</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:22</dataEfetivacao><dataVencimento>2024-05-10</dataVencimento><identificador>725592</identificador><valor>230.60</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:24</dataEfetivacao><dataVencimento>2024-11-10</dataVencimento><identificador>725598</identificador><valor>209.61</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:20</dataEfetivacao><dataVencimento>2023-10-10</dataVencimento><identificador>725585</identificador><valor>257.55</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:18</dataEfetivacao><dataVencimento>2023-03-10</dataVencimento><identificador>725578</identificador><valor>287.79</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:22</dataEfetivacao><dataVencimento>2024-06-10</dataVencimento><identificador>725593</identificador><valor>226.93</valor></parcela></Root>');
+  INSERT INTO TBGEN_EVENTO_SOA
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCTRPRP
+    ,TPEVENTO
+    ,TPRODUTO_EVENTO
+    ,TPOPERACAO
+    ,DHOPERACAO
+    ,DSPROCESSAMENTO
+    ,DSSTATUS
+    ,DHEVENTO
+    ,DSERRO
+    ,NRTENTATIVAS
+    ,DSCONTEUDO_REQUISICAO)
+  VALUES
+    (2
+    ,850721
+    ,267733
+    ,'PAGTO_PAGAR'
+    ,'CONSIGNADO'
+    ,'INSERT'
+    ,SYSDATE
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,NULL
+    ,'<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><convenioCredito><cooperativa><codigo>2</codigo></cooperativa><numeroContrato>267733</numeroContrato></convenioCredito><propostaContratoCredito><emitente><contaCorrente><codigoContaSemDigito>850721</codigoContaSemDigito></contaCorrente></emitente></propostaContratoCredito><lote><tipoInteracao><codigo>INSTALLMENT_SETTLEMENT</codigo></tipoInteracao></lote><transacaoContaCorrente><tipoInteracao><codigo>DEBITO</codigo></tipoInteracao></transacaoContaCorrente><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica><dataAcaoUsuario>2021-10-14T00:00:00</dataAcaoUsuario></interacaoGrafica><parcela><dataEfetivacao>2021-10-06T11:43:23</dataEfetivacao><dataVencimento>2024-07-10</dataVencimento><identificador>725594</identificador><valor>223.42</valor></parcela></Root>');
+
+  COMMIT;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+  
+END;
