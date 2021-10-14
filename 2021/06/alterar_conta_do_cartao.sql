@@ -10,13 +10,13 @@ BEGIN
   -- Cooperativa de destino do cartão
   vr_cooperativa := 1;
   -- Conta de destino do cartão
-  vr_conta := 329;
+  vr_conta := 2550;
 
 -- Numero do cartão que precisamos ajustar
 
 --  vr_cartao := 6393500065179583; -- Messi
---  vr_cartao := 5158940000199642; -- Terry Crews
-  vr_cartao := 5156010019676523; -- SeP - PF
+  vr_cartao := 5158940000199642; -- Terry Crews
+--  vr_cartao := 5156010019676523; -- SeP - PF
 --  vr_cartao := 5588190184171591; -- Topaz
 --  vr_cartao := 5127070162666663; -- Matheus barros TOPAZ
 --  vr_cartao := 5158940000000188; -- Matheus barros 2 TOPAZ
