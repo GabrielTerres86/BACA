@@ -15,7 +15,7 @@ BEGIN
                       AND s.nrdconta = a.nrdconta
                       AND s.tpdsenha = 1
                       AND s.vllimite_pix IS NOT NULL
-                      AND a.dtadmiss >= to_date('15/10/2021 00:00', 'dd/mm/YYYY hh24:mi')) LOOP
+                      AND trunc(a.dtadmiss) >= to_date('15/10/2021', 'dd/mm/YYYY')) LOOP
         BEGIN
           INSERT INTO pix.tbpix_limite
                       (cdcooper,
