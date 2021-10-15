@@ -293,10 +293,10 @@ BEGIN
   dbms_output.put_line('Bloquear valor Acordo');
 
   vr_tab_acordos.delete;
-  vr_idx := vr_tab_acordos.count;
+  /*vr_idx := vr_tab_acordos.count;
   vr_tab_acordos(vr_idx).nracordo := 305825;
   vr_tab_acordos(vr_idx).vlbloque := 133.18;
-  
+  */
   vr_idx := vr_tab_acordos.count;
   vr_tab_acordos(vr_idx).nracordo := 305909;
   vr_tab_acordos(vr_idx).vlbloque := 90.68;
