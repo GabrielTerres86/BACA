@@ -16,20 +16,24 @@ BEGIN
                       AND s.tpdsenha = 1
                       AND s.vllimite_pix IS NOT NULL
                       AND a.dtadmiss >= to_date('15/10/2021 00:00', 'dd/mm/YYYY hh24:mi')) LOOP
-
-        INSERT INTO pix.tbpix_limite
-                    (cdcooper,
-                     nrdconta,
-                     idseqttl,
-                     dhcadastro,
-                     vllimite_noturno,
-                     vllim_not_cooperado)
-        VALUES      ( rw.cdcooper,
-                     rw.nrdconta,
-                     rw.idseqttl,
-                     SYSDATE,
-                     Least(rw.vllimite_pix_cooperado, 1000),
-                     Least(rw.vllimite_pix_cooperado, 1000) );
+        BEGIN
+          INSERT INTO pix.tbpix_limite
+                      (cdcooper,
+                       nrdconta,
+                       idseqttl,
+                       dhcadastro,
+                       vllimite_noturno,
+                       vllim_not_cooperado)
+          VALUES      ( rw.cdcooper,
+                       rw.nrdconta,
+                       rw.idseqttl,
+                       SYSDATE,
+                       Least(rw.vllimite_pix_cooperado, 1000),
+                       Least(rw.vllimite_pix_cooperado, 1000) );
+         EXCEPTION
+         WHEN dup_val_on_index THEN
+           null;
+         END;
 
         i := i + 1;
 
