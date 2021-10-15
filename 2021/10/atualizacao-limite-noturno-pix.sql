@@ -30,12 +30,13 @@ BEGIN
                        SYSDATE,
                        Least(rw.vllimite_pix_cooperado, 1000),
                        Least(rw.vllimite_pix_cooperado, 1000) );
+
+          i := i + 1;
+
          EXCEPTION
          WHEN dup_val_on_index THEN
            null;
          END;
-
-        i := i + 1;
 
         IF i = 5000 THEN
           i := 0;
