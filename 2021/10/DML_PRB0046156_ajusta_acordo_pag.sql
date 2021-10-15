@@ -383,6 +383,7 @@ BEGIN
     
     IF nvl(vr_cdcritic,0) > 0 OR 
        TRIM(vr_dscritic) IS NOT NULL THEN
+      ROLLBACK; 
       raise_application_error(-20500,'Erro '||vr_cdcritic||vr_dscritic);
     END IF; 
   
@@ -476,6 +477,7 @@ BEGIN
     
     IF nvl(vr_cdcritic,0) > 0 OR 
        TRIM(vr_dscritic) IS NOT NULL THEN
+      ROLLBACK;
       raise_application_error(-20500,'Erro '||vr_cdcritic||vr_dscritic);
     END IF;
     
@@ -491,6 +493,7 @@ BEGIN
       
       IF nvl(vr_cdcritic,0) > 0 OR 
          TRIM(vr_dscritic) IS NOT NULL THEN
+        ROLLBACK; 
         raise_application_error(-20500,'Erro '||vr_cdcritic||vr_dscritic);
       END IF;  
     
@@ -525,11 +528,12 @@ BEGIN
     
     IF nvl(vr_cdcritic,0) > 0 OR 
        TRIM(vr_dscritic) IS NOT NULL THEN
+      ROLLBACK; 
       raise_application_error(-20500,'Erro '||vr_cdcritic||vr_dscritic);
     END IF; 
   
   END LOOP; 
   
-  --COMMIT;
+  COMMIT;
 
 END;
