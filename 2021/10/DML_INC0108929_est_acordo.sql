@@ -1568,6 +1568,11 @@ DECLARE
         END IF;
       END IF;
             
+      IF vr_tab_lancto_parcelas.count = 0 THEN
+        vr_dscritic := 'A data do ultimo pagamento deve estar dentro do mes';
+        RAISE vr_exc_saida;
+      END IF;  
+            
       --Cria o registro do Estorno
       BEGIN
         INSERT INTO tbepr_estorno
@@ -2046,7 +2051,6 @@ DECLARE
     EXCEPTION
       WHEN vr_exc_saida THEN
         -- Desfaz a Transacao
-        ROLLBACK;
         -- Se foi retornado apenas código
         IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
           -- Buscar a descrição
@@ -2057,7 +2061,6 @@ DECLARE
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
         -- Desfaz a Transacao
-        ROLLBACK;        
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em EMPR0008.pc_tela_estornar_pagamentos: ' || SQLERRM;
     END;  
@@ -3096,7 +3099,15 @@ BEGIN
                                            ,pr_dsjustificativa => 'Estorno acordo '||rw_tbrecup_acordo.nracordo ||', INC - pagamento em duplicidade'
                                            ,pr_cdcritic => vr_cdcritic         --> Codigo da Critica
                                            ,pr_dscritic => vr_dscritic);         --> Erros do processo
-            IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+                                           
+            IF upper(vr_dscritic) = upper('A data do ultimo pagamento deve estar dentro do mes') THEN
+              vr_dscritic := NULL;
+              pc_gera_log(pr_nracordo => rw_tbrecup_acordo.nracordo ,
+                          pr_cdorigem => rw_tbrecup_acordo.cdorigem ,
+                          pr_nrctremp => rw_tbrecup_acordo.nrctremp ,
+                          pr_log      => 'Epr PP NAO Estornado');
+              CONTINUE;
+            ELSIF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
               RAISE vr_exc_erro;
             END IF;
             
@@ -3156,6 +3167,11 @@ BEGIN
             END IF;  
             
             IF rw_crapbdt.inprejuz = 1 THEN  
+              pc_gera_log(pr_nracordo => rw_tbrecup_acordo.nracordo ,
+                        pr_cdorigem => rw_tbrecup_acordo.cdorigem ,
+                        pr_nrctremp => rw_tbrecup_acordo.nrctremp ,
+                        pr_log      => 'Tit prej, estorno nao tratado');
+                        /* 
               pc_realiza_estorno_prejuizo_tit(pr_cdcooper  => rw_tbrecup_acordo.cdcooper
                                              ,pr_nrdconta  => rw_tbrecup_acordo.nrdconta
                                              ,pr_nrborder  => rw_crapbdt.nrborder
@@ -3177,6 +3193,7 @@ BEGIN
               
               vr_tab_bordero_estornado(lpad(rw_tbrecup_acordo.nracordo,10,0)||
                                        lpad(rw_crapbdt.nrborder,10,0)) := rw_crapbdt.nrborder; 
+                                       */
             ELSE
               pc_gera_log(pr_nracordo => rw_tbrecup_acordo.nracordo ,
                         pr_cdorigem => rw_tbrecup_acordo.cdorigem ,

@@ -1,0 +1,12 @@
+BEGIN
+	insert into craptel (NMDATELA, NRMODULO, CDOPPTEL, TLDATELA, TLRESTEL, 
+					FLGTELDF, FLGTELBL, NMROTINA, LSOPPTEL, INACESSO,
+					CDCOOPER, IDSISTEM, IDEVENTO, NRORDROT, NRDNIVEL, NMROTPAI, IDAMBTEL)
+	values ('TCARGA', 5, '@,T', 'Teste de carga TED/TEC', 'Teste de carga', 0, 1, ' ', 'Acesso,Teste de carga', 1, 3, 1, 0, 1, 1, ' ', 2);
+	
+	COMMIT;
+	
+EXCEPTION
+	WHEN OTHERS THEN
+	NULL;
+END;
