@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-306
 DECLARE
   CURSOR CR_CRAPLOT IS
       SELECT L.CDCOOPER
@@ -306,12 +304,3 @@ DECLARE
     ROLLBACK;
     raise_application_error(-20100, 'Erro ao inserir lancamentos - ' || SQLERRM);
   END;
-0
-7
-vr_texto_completo
-V_VLJURMES
-RW_CRAPLOT.DTMVTOLT
-RW_CRAPEPR.DTMVTOLT
-vr_dsdireto
-RW_CRAPEPR.TXMENSAL
-RW_CRAPEPR.VLSDPREJ
