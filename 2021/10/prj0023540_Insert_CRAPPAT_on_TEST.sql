@@ -1,0 +1,11 @@
+BEGIN
+    insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO,  CDPRODUT)
+    values (117, 'EXIBE MENU ASSEMBLEIA DIGITAL (S/N)', 2,  0);
+    
+    COMMIT;
+
+EXCEPTION
+ WHEN OTHERS THEN
+  RAISE_application_error(-20500,SQLERRM);
+  ROLLBACK;
+END;
