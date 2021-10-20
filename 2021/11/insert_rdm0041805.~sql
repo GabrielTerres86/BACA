@@ -1,3 +1,4 @@
+select gene0001.fn_param_sistema('CRED',1,'QTD_GRUPOS_CRPS008') from dual;
 -- Insert de parametro referente ao grupo do CRPS008
 INSERT into crapprm(nmsistem,
                     cdcooper,
