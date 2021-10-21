@@ -68,7 +68,7 @@ DECLARE
       FROM crapcop
      WHERE flgativo = 1
      AND cdcooper <> 3
-     AND cdcooper = 8;
+     AND cdcooper = 13;
      rw_crapcop cr_crapcop%ROWTYPE;
      
   CURSOR cr_lem_pagto (pr_cdcooper IN craplem.cdcooper%TYPE,
