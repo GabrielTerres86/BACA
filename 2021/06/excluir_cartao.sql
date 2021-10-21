@@ -1,0 +1,4 @@
+BEGIN
+  delete from crapcrd WHERE NRCRCARD = 6393500012985783;
+  COMMIT;
+END;
