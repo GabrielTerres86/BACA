@@ -1,4 +1,5 @@
 BEGIN
-  delete from crapcrd WHERE NRCRCARD = 6393500012985783;
+  delete from crapcrd WHERE NRCRCARD = 5158940000000188;
+  delete from crawcrd WHERE NRCRCARD = 5158940000000188;
   COMMIT;
 END;
