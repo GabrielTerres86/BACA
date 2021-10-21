@@ -23,7 +23,6 @@ BEGIN
                        ,1345
                       );
 
-  vr_nrseqaca := vr_nrseqaca + 1;
   insert into crapaca ( nmdeacao
                        ,nmpackag
                        ,nmproced
@@ -37,7 +36,6 @@ BEGIN
                        ,1345
                       );
 
-  vr_nrseqaca := vr_nrseqaca + 1;
   insert into crapaca ( nmdeacao
                        ,nmpackag
                        ,nmproced
@@ -51,7 +49,6 @@ BEGIN
                        ,1345
                       );
 
-  vr_nrseqaca := vr_nrseqaca + 1;
   insert into crapaca ( nmdeacao
                        ,nmpackag
                        ,nmproced
