@@ -2,7 +2,6 @@
 -- ver parcdc.js manterRotinaPrazosSegmento
 --
 DECLARE
-  vr_nrseqaca      crapaca.nrseqaca%TYPE;
 BEGIN
   DELETE crapaca
   WHERE nmdeacao in ( 'INCLUIR_PRAZO_MAX_SEGMENTO_CDC'
@@ -11,19 +10,13 @@ BEGIN
                      ,'OBTER_PRAZO_MAX_SEGMENTO_CDC'
                     );
 
-  SELECT  max(nrseqaca) + 1
-  INTO    vr_nrseqaca
-  FROM    crapaca;
-
-  insert into crapaca ( nrseqaca
-                       ,nmdeacao
+  insert into crapaca ( nmdeacao
                        ,nmpackag
                        ,nmproced
                        ,lstparam
                        ,nrseqrdr
                       )
-              values  ( vr_nrseqaca
-                       ,'INCLUIR_PRAZO_MAX_SEGMENTO_CDC'
+              values  ( 'INCLUIR_PRAZO_MAX_SEGMENTO_CDC'
                        ,'CREDITO'
                        ,'incluirPrazoMaxSegmentoCDC'
                        ,'pr_cdcooper,pr_cdsegmento,pr_nrinitempo_modelo,pr_nrfimtempo_modelo,pr_qtmaxpar'
@@ -31,15 +24,13 @@ BEGIN
                       );
 
   vr_nrseqaca := vr_nrseqaca + 1;
-  insert into crapaca ( nrseqaca
-                       ,nmdeacao
+  insert into crapaca ( nmdeacao
                        ,nmpackag
                        ,nmproced
                        ,lstparam
                        ,nrseqrdr
                       )
-              values  ( vr_nrseqaca
-                       ,'ALTERAR_PRAZO_MAX_SEGMENTO_CDC'
+              values  ( 'ALTERAR_PRAZO_MAX_SEGMENTO_CDC'
                        ,NULL
                        ,'CREDITO.alterarPrazoMaxSegmentoCDC'
                        ,'pr_cdcooper,pr_cdsegmento,pr_nrseqprazo,pr_nrinitempo_modelo,pr_nrfimtempo_modelo,pr_qtmaxpar'
@@ -47,15 +38,13 @@ BEGIN
                       );
 
   vr_nrseqaca := vr_nrseqaca + 1;
-  insert into crapaca ( nrseqaca
-                       ,nmdeacao
+  insert into crapaca ( nmdeacao
                        ,nmpackag
                        ,nmproced
                        ,lstparam
                        ,nrseqrdr
                       )
-              values  ( vr_nrseqaca
-                       ,'EXCLUIR_PRAZO_MAX_SEGMENTO_CDC'
+              values  ( 'EXCLUIR_PRAZO_MAX_SEGMENTO_CDC'
                        ,NULL
                        ,'CREDITO.excluirPrazoMaxSegmentoCDC'
                        ,'pr_cdcooper,pr_cdsegmento,pr_nrseqprazo'
@@ -63,15 +52,13 @@ BEGIN
                       );
 
   vr_nrseqaca := vr_nrseqaca + 1;
-  insert into crapaca ( nrseqaca
-                       ,nmdeacao
+  insert into crapaca ( nmdeacao
                        ,nmpackag
                        ,nmproced
                        ,lstparam
                        ,nrseqrdr
                       )
-              values  ( vr_nrseqaca
-                       ,'OBTER_PRAZO_MAX_SEGMENTO_CDC'
+              values  ( 'OBTER_PRAZO_MAX_SEGMENTO_CDC'
                        ,NULL
                        ,'CREDITO.obterPrazoMaxSegmentoCDC'
                        ,'pr_cdcooper,pr_cdsegmento,pr_nrseqprazo'
