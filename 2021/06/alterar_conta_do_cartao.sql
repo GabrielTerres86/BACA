@@ -13,15 +13,8 @@ BEGIN
   vr_conta := 7399359;
 
 -- Numero do cartão que precisamos ajustar
-
---  vr_cartao := 6393500065179583; -- Messi
 vr_cartao := 5588190184171591; -- Topaz
---  vr_cartao := 5156010019676523; -- SeP - PF
---  vr_cartao := 5588190184171591; -- Topaz
---  vr_cartao := 5127070162666663; -- Matheus barros TOPAZ
---  vr_cartao := 5158940000000188; -- Matheus barros 2 TOPAZ
---  vr_cartao := 5756323907327153; -- Matheus barros 3 TOPAZ 5756323907574347
---  vr_cartao := 5756323907574347; -- Matheus barros
+
   
   -- Verificar se a conta possui algum outro cartão para buscar o CPF do Titular
   FOR cartao IN (select distinct a.nrcpftit
