@@ -30,21 +30,23 @@ DECLARE
   vr_dtdemiss_ant                 DATE;
   vr_nrdocmto                     INTEGER;
   vr_nrseqdig                     INTEGER;
+  vr_nrsequenlgi                  INTEGER;
+  vr_nrsequenlgm                  INTEGER;
   vr_vldcotas                     NUMBER;
   vr_vldcotas_movtda              NUMBER;
   vr_vldcotas_crapcot             NUMBER;
   vr_exception exception;
   vr_qtde_tb_devolucao NUMBER;
-
-  vr_tab_retorno LANC0001.typ_reg_retorno;
-  vr_incrineg    INTEGER;
-  vr_cdcritic    PLS_INTEGER;
-  vr_dscritic    VARCHAR2;
+  vr_tab_retorno       LANC0001.typ_reg_retorno;
+  vr_incrineg          INTEGER;
+  vr_cdcritic          PLS_INTEGER;
+  vr_dscritic          varchar2(4000);
+  vr_exc_lanc_conta EXCEPTION;
 
 BEGIN
 
-  vr_log_script := ' ** Início script' || chr(10);
-
+  vr_log_script  := ' ** Início script' || chr(10);
+  vr_nrsequenlgi := 1;
   FOR rg_crapass IN cr_crapass LOOP
     vr_log_script := vr_log_script || chr(10) || 'Atualização da conta: (' || '[ ' ||
                      LPAD(rg_crapass.cdcooper, 2, ' ') || ' ] ' ||
@@ -54,6 +56,7 @@ BEGIN
     vr_dstransa          := 'Alterada situacao de conta por script. INC0108069.';
     vr_vldcotas          := 0;
     vr_qtde_tb_devolucao := 0;
+    vr_nrsequenlgi       := 1;
     vr_dttransa          := trunc(sysdate);
     vr_hrtransa          := GENE0002.fn_busca_time;
   
@@ -80,7 +83,7 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
-       1,
+       vr_nrsequenlgm,
        vr_dttransa,
        vr_hrtransa,
        vr_dstransa,
@@ -91,6 +94,8 @@ BEGIN
        1,
        ' ');
   
+    vr_nrsequenlgm := vr_nrsequenlgm + 1;
+  
     INSERT INTO cecred.craplgi
       (cdcooper,
        nrdconta,
@@ -106,7 +111,7 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
-       1,
+       vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
        1,
@@ -114,6 +119,8 @@ BEGIN
        rg_crapass.cdsitdct,
        '1');
   
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
+  
     INSERT INTO cecred.craplgi
       (cdcooper,
        nrdconta,
@@ -129,7 +136,7 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
-       1,
+       vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
        2,
@@ -137,6 +144,8 @@ BEGIN
        rg_crapass.dtdemiss,
        null);
   
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
+  
     INSERT INTO cecred.craplgi
       (cdcooper,
        nrdconta,
@@ -152,7 +161,7 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
-       1,
+       vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
        2,
@@ -160,6 +169,7 @@ BEGIN
        rg_crapass.dtelimin,
        null);
   
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
     INSERT INTO cecred.craplgi
       (cdcooper,
        nrdconta,
@@ -175,14 +185,14 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
-       1,
+       vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
        3,
        'crapass.cdmotdem',
        rg_crapass.cdmotdem,
        '0');
-  
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
     -- Buscar o valor das cotas em CRAPCOT
     BEGIN
       SELECT vldcotas
@@ -243,16 +253,14 @@ BEGIN
         Continue;
     END;
   
-    vr_nrdocmto := fn_sequence('TBCOTAS_DEVOLUCAO',
+    vr_nrdocmto := fn_sequence('CRAPLCT',
                                'NRDOCMTO',
                                rg_crapass.cdcooper || ';' ||
-                               rg_crapass.nrdconta || ';' ||
-                               TRIM(to_char(vr_dtmvtolt, 'DD/MM/YYYY')) || ';' || 2520);
-    vr_nrseqdig := fn_sequence('TBCOTAS_DEVOLUCAO',
+                               TRIM(to_char(vr_dtmvtolt, 'DD/MM/YYYY')) || ';' || 61);
+    vr_nrseqdig := fn_sequence('CRAPLCT',
                                'NRSEQDIG',
                                rg_crapass.cdcooper || ';' ||
-                               rg_crapass.nrdconta || ';' ||
-                               TRIM(to_char(vr_dtmvtolt, 'DD/MM/YYYY')) || ';' || 2520);
+                               TRIM(to_char(vr_dtmvtolt, 'DD/MM/YYYY')) || ';' || 61);
   
     INSERT INTO CECRED.craplct
       (cdcooper,
@@ -270,9 +278,9 @@ BEGIN
        DTINSORI)
     VALUES
       (rg_crapass.cdcooper,
-       28,
+       rg_crapass.cdagenci,
        100,
-       600040,
+       10102,
        vr_dtmvtolt,
        61,
        0,
@@ -283,6 +291,7 @@ BEGIN
        1,
        sysdate);
   
+    -- Insere log com valores de antes x depois da craplct.
     INSERT INTO cecred.craplgi
       (cdcooper,
        nrdconta,
@@ -298,13 +307,15 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
-       1,
+       vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
        4,
        'craplct.dtmvtolt',
        null,
        vr_dtmvtolt);
+  
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
   
     INSERT INTO cecred.craplgi
       (cdcooper,
@@ -321,13 +332,15 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
-       1,
+       vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
        5,
        'craplct.vllanmto',
        null,
        vr_tbcotas_dev_vlcapital);
+  
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
   
     UPDATE CECRED.crapcot
        SET vldcotas =
@@ -350,13 +363,15 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
-       1,
+       vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
        6,
        'crapcot.vldcotas',
        vr_vldcotas_crapcot,
        (vr_vldcotas_crapcot + vr_tbcotas_dev_vlcapital));
+  
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
   
     -- Excluir registro conforme cooperativa e conta
     DELETE FROM CECRED.TBCOTAS_DEVOLUCAO
@@ -379,7 +394,7 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
-       1,
+       vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
        7,
@@ -387,6 +402,8 @@ BEGIN
        vr_tbcotas_dev_cdcooper,
        NULL);
   
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
+  
     INSERT INTO cecred.craplgi
       (cdcooper,
        nrdconta,
@@ -402,7 +419,7 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
-       1,
+       vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
        8,
@@ -410,6 +427,8 @@ BEGIN
        vr_tbcotas_dev_nrdconta,
        NULL);
   
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
+  
     INSERT INTO cecred.craplgi
       (cdcooper,
        nrdconta,
@@ -425,7 +444,7 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
-       1,
+       vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
        9,
@@ -433,6 +452,8 @@ BEGIN
        vr_tbcotas_dev_tpdevolucao,
        NULL);
   
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
+  
     INSERT INTO cecred.craplgi
       (cdcooper,
        nrdconta,
@@ -448,7 +469,7 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
-       1,
+       vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
        10,
@@ -456,6 +477,8 @@ BEGIN
        vr_tbcotas_dev_vlcapital,
        NULL);
   
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
+  
     INSERT INTO cecred.craplgi
       (cdcooper,
        nrdconta,
@@ -471,7 +494,7 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
-       1,
+       vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
        11,
@@ -479,28 +502,7 @@ BEGIN
        vr_tbcotas_dev_qtparcelas,
        NULL);
   
-    INSERT INTO cecred.craplgi
-      (cdcooper,
-       nrdconta,
-       idseqttl,
-       nrsequen,
-       dttransa,
-       hrtransa,
-       nrseqcmp,
-       nmdcampo,
-       dsdadant,
-       dsdadatu)
-    VALUES
-      (rg_crapass.cdcooper,
-       rg_crapass.nrdconta,
-       1,
-       1,
-       vr_dttransa,
-       vr_hrtransa,
-       12,
-       'tbcotas_devolucao.dtinicio_credito',
-       vr_tbcotas_dev_dtinicio_credito,
-       NULL);
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
   
     INSERT INTO cecred.craplgi
       (cdcooper,
@@ -517,13 +519,40 @@ BEGIN
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
        1,
+       vr_nrsequenlgi,
+       vr_dttransa,
+       vr_hrtransa,
+       12,
+       'tbcotas_devolucao.dtinicio_credito',
+       vr_tbcotas_dev_dtinicio_credito,
+       NULL);
+  
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
+  
+    INSERT INTO cecred.craplgi
+      (cdcooper,
+       nrdconta,
+       idseqttl,
+       nrsequen,
+       dttransa,
+       hrtransa,
+       nrseqcmp,
+       nmdcampo,
+       dsdadant,
+       dsdadatu)
+    VALUES
+      (rg_crapass.cdcooper,
+       rg_crapass.nrdconta,
        1,
+       vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
        13,
        'tbcotas_devolucao.vlpago',
        vr_tbcotas_dev_vlpago,
        NULL);
+  
+    vr_nrsequenlgi := vr_nrsequenlgi + 1;
   
     BEGIN
       SELECT cdcooper,
@@ -555,16 +584,16 @@ BEGIN
     END;
   
     IF vr_tbcotas_dev_vlcapital > 0 THEN
-      cecred.Lanc0001.pc_gerar_lancamento_conta(pr_cdcooper    => cdcooper,
+      cecred.Lanc0001.pc_gerar_lancamento_conta(pr_cdcooper    => rg_crapass.cdcooper,
                                                 pr_dtmvtolt    => vr_dtmvtolt,
-                                                pr_cdagenci    => rw_crapass.cdagenci,
+                                                pr_cdagenci    => rg_crapass.cdagenci,
                                                 pr_cdbccxlt    => 1,
                                                 pr_nrdolote    => 600040,
-                                                pr_nrdctabb    => rw_crapass.nrdconta,
+                                                pr_nrdctabb    => rg_crapass.nrdconta,
                                                 pr_nrdocmto    => vr_nrdocmto,
                                                 pr_cdhistor    => 2520,
                                                 pr_vllanmto    => vr_tbcotas_dev_vlcapital,
-                                                pr_nrdconta    => rw_crapass.nrdconta,
+                                                pr_nrdconta    => rg_crapass.nrdconta,
                                                 pr_hrtransa    => vr_hrtransa,
                                                 pr_cdorigem    => 0,
                                                 pr_inprolot    => 1,
@@ -598,7 +627,7 @@ BEGIN
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
          1,
-         1,
+         vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
          7,
@@ -606,6 +635,8 @@ BEGIN
          vr_tbcotas_dev_cdcooper,
          NULL);
     
+      vr_nrsequenlgi := vr_nrsequenlgi + 1;
+    
       INSERT INTO cecred.craplgi
         (cdcooper,
          nrdconta,
@@ -621,7 +652,7 @@ BEGIN
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
          1,
-         1,
+         vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
          8,
@@ -629,6 +660,8 @@ BEGIN
          vr_tbcotas_dev_nrdconta,
          NULL);
     
+      vr_nrsequenlgi := vr_nrsequenlgi + 1;
+    
       INSERT INTO cecred.craplgi
         (cdcooper,
          nrdconta,
@@ -644,7 +677,7 @@ BEGIN
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
          1,
-         1,
+         vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
          9,
@@ -652,6 +685,8 @@ BEGIN
          vr_tbcotas_dev_tpdevolucao,
          NULL);
     
+      vr_nrsequenlgi := vr_nrsequenlgi + 1;
+    
       INSERT INTO cecred.craplgi
         (cdcooper,
          nrdconta,
@@ -667,7 +702,7 @@ BEGIN
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
          1,
-         1,
+         vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
          10,
@@ -675,6 +710,8 @@ BEGIN
          vr_tbcotas_dev_vlcapital,
          NULL);
     
+      vr_nrsequenlgi := vr_nrsequenlgi + 1;
+    
       INSERT INTO cecred.craplgi
         (cdcooper,
          nrdconta,
@@ -690,7 +727,7 @@ BEGIN
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
          1,
-         1,
+         vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
          11,
@@ -698,6 +735,8 @@ BEGIN
          vr_tbcotas_dev_qtparcelas,
          NULL);
     
+      vr_nrsequenlgi := vr_nrsequenlgi + 1;
+    
       INSERT INTO cecred.craplgi
         (cdcooper,
          nrdconta,
@@ -713,7 +752,7 @@ BEGIN
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
          1,
-         1,
+         vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
          12,
@@ -721,6 +760,8 @@ BEGIN
          vr_tbcotas_dev_dtinicio_credito,
          NULL);
     
+      vr_nrsequenlgi := vr_nrsequenlgi + 1;
+    
       INSERT INTO cecred.craplgi
         (cdcooper,
          nrdconta,
@@ -736,24 +777,38 @@ BEGIN
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
          1,
-         1,
+         vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
          13,
          'tbcotas_devolucao.vlpago',
          vr_tbcotas_dev_vlpago,
          NULL);
-    END IF
     
-    END LOOP;
+      vr_nrsequenlgi := vr_nrsequenlgi + 1;
+    END IF;
   
-    COMMIT;
+  END LOOP;
+
+  COMMIT;
+
+EXCEPTION
+  WHEN vr_exception THEN
+    ROLLBACK;
+    RAISE_APPLICATION_ERROR(-20000, vr_log_script || CHR(10) || SQLERRM);
+  WHEN vr_exc_lanc_conta THEN
+    BEGIN
+      vr_cdcritic := NVL(vr_cdcritic, 0);
+    
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        vr_dscritic := cecred.GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+      RAISE_APPLICATION_ERROR(-20000,
+                              'Atenção: ' || vr_dscritic || CHR(10) ||
+                              vr_log_script);
+    END;
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE_APPLICATION_ERROR(-20000, 'Erro ao executar script: ' || SQLERRM);
   
-  EXCEPTION
-WHEN
-vr_exception THEN ROLLBACK;
-RAISE_APPLICATION_ERROR(-20000, vr_log_script || CHR(10) || SQLERRM);
-
-WHEN OTHERS THEN ROLLBACK; RAISE_APPLICATION_ERROR(-20000, 'Erro ao executar script: ' || SQLERRM);
-
 END;
