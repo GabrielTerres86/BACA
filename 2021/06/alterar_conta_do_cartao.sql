@@ -14,8 +14,8 @@ BEGIN
 
 -- Numero do cartão que precisamos ajustar
 vr_cartao := 5158940000000188; -- Topaz - Lab Demandas
---vr_cartao := 6393500012985783; -- Saque & Pague
---  vr_cartao := 5156010019676523; -- Saque & Pague
+-- vr_cartao := 6393500012985783; -- Saque & Pague
+-- vr_cartao := 5156010019676523; -- Saque & Pague
   
   -- Verificar se a conta possui algum outro cartão para buscar o CPF do Titular
   FOR cartao IN (select distinct a.nrcpftit
