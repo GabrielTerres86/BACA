@@ -99,7 +99,7 @@ DECLARE
      WHERE lem.cdcooper = pr_cdcooper
        AND lem.nrdconta > 0
        AND lem.nrctremp > 0
-       AND lem.dtmvtolt BETWEEN '01/01/2021' AND '31/12/2021'
+       AND lem.dtmvtolt BETWEEN to_date('01/01/2021','DD/MM/RRRR') AND to_date('31/12/2021','DD/MM/RRRR')
        GROUP BY lem.cdcooper, lem.nrdconta, lem.nrctremp
        ;
        
@@ -124,7 +124,7 @@ DECLARE
        AND lem.nrctremp = pr_nrctremp
        AND lem.cdagenci > 0       
        AND lem.cdhistor IN (98,1037,1038,2342,2343,2344,2345) -- juros remuneratorios       
-       AND lem.dtmvtolt BETWEEN '01/01/2021'
+       AND lem.dtmvtolt BETWEEN to_date('01/01/2021','DD/MM/RRRR')
           AND  (case when epr.inprejuz = 0 AND epr.tpemprst <> 2 then last_day(add_months(dat.dtmvtolt,-1))
                      WHEN epr.inprejuz = 0 AND epr.tpemprst = 2 then last_day(add_months(dat.dtmvtolt,-1))
                      WHEN epr.inprejuz = 1 AND epr.tpemprst = 2 THEN epr.dtprejuz
@@ -144,7 +144,7 @@ DECLARE
        AND lem.nrversao = epr.nrversao
        AND lem.cdagenci > 0       
        AND lem.cdhistor IN (98,1037,1038,2342,2343,2344,2345) -- juros remuneratorios       
-       AND lem.dtmvtolt BETWEEN '01/01/2021'
+       AND lem.dtmvtolt BETWEEN to_date('01/01/2021','DD/MM/RRRR')
           AND  (case when epr.inprejuz = 0 AND epr.tpemprst <> 2 then last_day(add_months(dat.dtmvtolt,-1))
                      WHEN epr.inprejuz = 0 AND epr.tpemprst = 2 then last_day(add_months(dat.dtmvtolt,-1))
                      WHEN epr.inprejuz = 1 AND epr.tpemprst = 2 THEN epr.dtprejuz
@@ -196,7 +196,7 @@ DECLARE
           AND lem.nrdconta = epr.nrdconta
           AND lem.nrctremp = epr.nrctremp
           AND lem.cdhistor IN (98,1037,1038,2342,2343,2344,2345) -- juros remuneratorios          
-          AND lem.dtmvtolt BETWEEN '01/01/2021'
+          AND lem.dtmvtolt BETWEEN to_date('01/01/2021','DD/MM/RRRR')
               AND  (case when epr.inprejuz = 0 AND epr.tpemprst <> 2 then last_day(add_months(dat.dtmvtolt,-1))
                          WHEN epr.inprejuz = 0 AND epr.tpemprst = 2 then last_day(add_months(dat.dtmvtolt,-1))
                          WHEN epr.inprejuz = 1 AND epr.tpemprst = 2 THEN epr.dtprejuz
@@ -235,7 +235,7 @@ DECLARE
           AND eee.nrdconta = lem.nrdconta
           AND eee.nrctremp = lem.nrctremp
           AND lem.cdhistor IN (98,1037,1038,2342,2343,2344,2345) -- juros remuneratorios          
-          AND lem.dtmvtolt BETWEEN '01/01/2021'
+          AND lem.dtmvtolt BETWEEN to_date('01/01/2021','DD/MM/RRRR')
               AND  (case when epr.inprejuz = 0 AND epr.tpemprst <> 2 then last_day(add_months(eee.dtmvtolt,-1))
                          WHEN epr.inprejuz = 0 AND epr.tpemprst = 2 then last_day(add_months(eee.dtmvtolt,-1))
                          WHEN epr.inprejuz = 1 AND epr.tpemprst = 2 THEN epr.dtprejuz
