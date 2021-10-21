@@ -10,7 +10,7 @@ BEGIN
   -- Cooperativa de destino do cartão
   vr_cooperativa := 1;
   -- Conta de destino do cartão
-  vr_conta := 396;
+  vr_conta := 7399359;
 
 -- Numero do cartão que precisamos ajustar
 vr_cartao := 5588190184171591; -- Topaz
