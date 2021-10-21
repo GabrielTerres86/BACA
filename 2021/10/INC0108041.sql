@@ -1,6 +1,6 @@
 begin
   
-  update craprac
+  update craprac 
    set idsaqtot = 1
  where cdcooper = 1
    and cdprodut = 1007
