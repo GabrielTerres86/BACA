@@ -1,0 +1,310 @@
+declare 
+conta_9942831_4445492 clob := '<?xml version="1.0"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>2461</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <diasCarencia>47</diasCarencia>
+    <financiaIOF>true</financiaIOF>
+    <financiaTarifa>true</financiaTarifa>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>19.47</CETPercentAoAno>
+    <dataPrimeiraParcela>2021-11-10</dataPrimeiraParcela>
+    <produto>
+      <codigo>161</codigo>
+    </produto>
+    <quantidadeParcelas>48</quantidadeParcelas>
+    <taxaJurosRemuneratorios>1.35</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>17.46</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>734.9</tributoIOFValor>
+    <valor>23862.91</valor>
+    <valorBase>23138.00</valorBase>
+    <dataProposta>2021-10-21T16:16:16</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1992-07-21T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>1026085985</identificadorReceitaFederal>
+      <razaoSocialOuNome>HELINTON AMARILDO SIQUEIRA</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>9942831</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>89066300</CEP>
+        <cidade>
+          <descricao>BLUMENAU</descricao>
+        </cidade>
+        <nomeBairro>ITOUPAVAZINHA</nomeBairro>
+        <numeroLogradouro>3001</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA FREDERICO JENSEN</tipoENomeLogradouro>
+        <UF>SC</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>4445492</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>11079169</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>1</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>1</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>78855830000198</identificadorReceitaFederal>
+      <razaoSocialOuNome>KYLY INDUSTRIA TEXTIL LTDA</razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>89107000</CEP>
+        <cidade>
+          <descricao>POMERODE</descricao>
+        </cidade>
+        <nomeBairro>CENTRO</nomeBairro>
+        <numeroLogradouro>3155</numeroLogradouro>
+        <tipoENomeLogradouro>RODOVIA SC 418</tipoENomeLogradouro>
+        <UF>SC</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>684.19</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <posicao>
+    <produtoCategoria>
+      <codigo>32</codigo>
+    </produtoCategoria>
+    <saldo>3063.61</saldo>
+  </posicao>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>GUARANIACU</naturalidade>
+    <dataCalculoLegado>2021-09-24T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>';
+
+conta_11934425_4573086 clob := '<?xml version="1.0"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>7922</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <financiaIOF>false</financiaIOF>
+    <financiaTarifa>false</financiaTarifa>
+    <diasCarencia>22</diasCarencia>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>11.09</CETPercentAoAno>
+    <dataPrimeiraParcela>2021-11-05</dataPrimeiraParcela>
+    <produto>
+      <codigo>162</codigo>
+    </produto>
+    <quantidadeParcelas>91</quantidadeParcelas>
+    <taxaJurosRemuneratorios>0.88</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>11.09</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>0.0</tributoIOFValor>
+    <valor>17049.02</valor>
+    <valorBase>17049.02</valorBase>
+    <dataProposta>2021-10-21T16:16:16</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1956-10-02T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>30454700920</identificadorReceitaFederal>
+      <razaoSocialOuNome>WALDIR PASSOS LEMOS</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>11934425</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>89116700</CEP>
+        <cidade>
+          <descricao>GASPAR</descricao>
+        </cidade>
+        <nomeBairro>MARGEM ESQUERDA</nomeBairro>
+        <numeroLogradouro>11</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA FRANCISCO LENFER</tipoENomeLogradouro>
+        <UF>SC</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>4573086</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>719963</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>6</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>1</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>82636028000184</identificadorReceitaFederal>
+      <razaoSocialOuNome>SERVICO AUTONOMO MUNICIPAL DE AGUA </razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>89114320</CEP>
+        <cidade>
+          <descricao>GASPAR</descricao>
+        </cidade>
+        <nomeBairro>SANTA TEREZINHA</nomeBairro>
+        <numeroLogradouro>189</numeroLogradouro>
+        <tipoENomeLogradouro>RUA JOAO VIEIRA</tipoENomeLogradouro>
+        <UF>SC</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>272.42</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <posicao>
+    <produtoCategoria>
+      <codigo>32</codigo>
+    </produtoCategoria>
+    <saldo>17049.02</saldo>
+  </posicao>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>PONTA GROSSA</naturalidade>
+    <dataCalculoLegado>2021-10-14T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>
+';
+
+begin
+
+    insert into tbgen_evento_soa(cdcooper, nrdconta, nrctrprp, tpevento, tproduto_evento, tpoperacao, dhoperacao, dsprocessamento, dsstatus, dhevento, dserro, nrtentativas, dsconteudo_requisicao) 
+    values  (1, 9942831, 4445492, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_9942831_4445492);
+
+    insert into tbgen_evento_soa(cdcooper, nrdconta, nrctrprp, tpevento, tproduto_evento, tpoperacao, dhoperacao, dsprocessamento, dsstatus, dhevento, dserro, nrtentativas, dsconteudo_requisicao) 
+    values  (1, 11934425, 4573086, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_11934425_4573086);
+
+    commit;
+
+EXCEPTION
+        WHEN OTHERS THEN
+        ROLLBACK;
+
+end;
+
