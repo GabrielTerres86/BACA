@@ -1,5 +1,4 @@
-PL/SQL Developer Test script 3.0
-498
+-- PL/SQL Developer Test script 3.0
 -- Created on 22/09/2021 by F0032999 
 DECLARE 
 
@@ -498,7 +497,3 @@ BEGIN
       fecha_arquivos; 
       ROLLBACK;       
 END;
-0
-2
-vr_tab_bpk(6181).qtjurcalc
-vr_tab_crapcot(6181).qtjurmfx
