@@ -65,7 +65,7 @@ DECLARE texto CLOB := '{
         "conteudo":"12. O COOPERADO  está ciente e concorda que a COOPERATIVA e o SISTEMA AILOS realizam o tratamento de meus dados pessoais de acordo com a Declaração de Privacidade disponibilizada no site da Cooperativa, assim como autoriza que: (i) a Cooperativa realize consultas de informações em seu nome, conforme disposto na Cláusulas e Condições Gerais Aplicáveis à Conta Corrente (disponíveis no site da Cooperativa); (ii) compartilhe seus dados de acordo com as bases legais previstas na LGPD, principalmente com a(s) seguradora(s) contratadas e vinculadas a esta proposta."
       },
       {
-        "conteudo":"13. Assinado eletronicamente pelo #NOME#, inscrito no CPF de nº #CPF# no dia #DT_CONTRATO#, as #HR_CONTRATO#, através do Aplicativo Ailos ou Conta Online, IP nº #IP# mediante senha digitada."
+        "conteudo":"13. Assinado eletronicamente pelo {NOME}, inscrito no CPF de nº {CPF} no dia {DT_CONTRATO}, as {HR_CONTRATO}, através do Aplicativo Ailos ou Conta Online, IP nº {IP} mediante senha digitada."
       }
     ]
   }
