@@ -74,15 +74,6 @@ update crapaca set crapaca.lstparam = 'pr_cddopcao,pr_tparrecd,pr_cdempres,pr_cd
 UPDATE CRAPACA SET LSTPARAM='pr_cddopcao,pr_tparrecd,pr_cdempres,pr_cdempcon,pr_cdsegmto,pr_nmrescon,pr_nmextcon,pr_cdhistor,pr_dsdianor,pr_nrrenorm,pr_nrtolera,pr_dtcancel,pr_nrlayout,pr_vltarcxa,pr_vltardeb,pr_vltarint,pr_vltartaa,pr_flgaccec,pr_flgacsic,pr_flgacbcb,pr_flgacrfb,pr_forma_arrecadacao,pr_seq_arrecadacao,pr_repasse_banco,pr_repasse_agencia,pr_repasse_conta,pr_repasse_cnpj,pr_repasse_dia,pr_repasse_tipo,pr_arqRFB,pr_dirArqRetorno,pr_dirArqEnvio,pr_dirArqRetorno2,pr_num_ISPB,pr_agenciaRecargaCelular,pr_contaRecargaCelular,pr_cnpjRecargaCelular,pr_repasseRecargaCelular,pr_nmArqRFBTIVIT,pr_situacaoRFB,pr_hrInicioEnvioRemessa,pr_hrFinalEnvioRemessa,pr_intervaloEnvioRemessa,pr_dtUltExecucaoRemessa'
 WHERE NMDEACAO='GRAVAR_DADOS_CONVEN_RECEITA';
 
-insert into crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-values ('TELA_PESQTI_BUSCA_ARRECADACOES','TELA_PESQTI','pc_busca_registros_arrecadacoes_receita','pr_vldpagto,pr_cdagenci,pr_cdempcon,pr_cdsegmto,pr_dtipagto,pr_dtfpagto,pr_nrdconta,pr_nrautdoc,pr_enviadaRemessa,pr_nriniseq,pr_nrregist', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_PESQTI'));
-
-
-insert into craprdr (NMPROGRA,DTSOLICI)
-values ('TELA_PESQTI',SYSDATE);
-
-
-
 update crapscn set crapscn.dsnomres = 'DARF64' where crapscn.cdempres = 'D0064';       
 update crapscn set crapscn.dsnomres = 'DAS' where crapscn.cdempres = 'D0328';  
 update crapscn set crapscn.dsnomres = 'DARF385' where crapscn.cdempres = 'D0385';  
