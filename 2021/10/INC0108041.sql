@@ -49,6 +49,13 @@ update craprac
    and nrdconta = 22039
    and nraplica = 28;
    
+update craprda
+   set insaqtot = 0
+ where cdcooper = 1
+   and nraplica = 1
+   and nrdconta = 8469539
+   and tpaplica = 8;
+   
 commit;
    
 end;
