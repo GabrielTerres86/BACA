@@ -50,7 +50,7 @@ update craprac
    and nraplica = 28;
    
 update craprda
-   set insaqtot = 0
+   set insaqtot = 1
  where cdcooper = 1
    and nraplica = 1
    and nrdconta = 8469539
