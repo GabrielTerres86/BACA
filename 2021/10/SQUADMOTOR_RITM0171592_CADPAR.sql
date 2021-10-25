@@ -29,7 +29,7 @@ BEGIN
   values ('ERRMOTOREMAIL', 'Job erros do motor - E-mail para envio', ' ', 2, aux_cdpartar_add);
            
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 3,  'cmo@ailos.coop.br');
+  values (aux_cdpartar_add, 3,  'cmo-alertas@ailos.coop.br');
   
   COMMIT;
  
