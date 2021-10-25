@@ -1,0 +1,19 @@
+BEGIN
+    
+  UPDATE CECRED.CRAPPEP
+     SET INLIQUID = 1,
+         VLJURA60 = 163.39,
+         VLSDVPAR = 0
+  WHERE CDCOOPER = 1
+    AND NRDCONTA = 7321686
+    AND NRCTREMP = 4525726
+    AND NRPAREPR = 34;
+    
+  COMMIT;
+  
+  EXCEPTION
+    WHEN OTHERS THEN
+     RAISE_application_error(-20500,SQLERRM);
+     ROLLBACK;
+END;
+       
