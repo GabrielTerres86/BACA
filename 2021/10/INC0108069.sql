@@ -46,8 +46,7 @@ DECLARE
 BEGIN
 
   vr_log_script  := ' ** Início script' || chr(10);
-  vr_nrsequenlgi := 1;
-  FOR rg_crapass IN cr_crapass LOOP
+    FOR rg_crapass IN cr_crapass LOOP
     vr_log_script := vr_log_script || chr(10) || 'Atualização da conta: (' || '[ ' ||
                      LPAD(rg_crapass.cdcooper, 2, ' ') || ' ] ' ||
                      LPAD(rg_crapass.nrdconta, 9, ' ') || ') da situação (' ||
@@ -57,6 +56,7 @@ BEGIN
     vr_vldcotas          := 0;
     vr_qtde_tb_devolucao := 0;
     vr_nrsequenlgi       := 1;
+    vr_nrsequenlgm       := 1;
     vr_dttransa          := trunc(sysdate);
     vr_hrtransa          := GENE0002.fn_busca_time;
   
@@ -306,7 +306,7 @@ BEGIN
     VALUES
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
-       1,
+       2,
        vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
@@ -331,7 +331,7 @@ BEGIN
     VALUES
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
-       1,
+       2,
        vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
@@ -362,7 +362,7 @@ BEGIN
     VALUES
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
-       1,
+       3,
        vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
@@ -393,7 +393,7 @@ BEGIN
     VALUES
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
-       1,
+       4,
        vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
@@ -418,7 +418,7 @@ BEGIN
     VALUES
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
-       1,
+       4,
        vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
@@ -443,7 +443,7 @@ BEGIN
     VALUES
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
-       1,
+       4,
        vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
@@ -468,7 +468,7 @@ BEGIN
     VALUES
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
-       1,
+       4,
        vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
@@ -493,7 +493,7 @@ BEGIN
     VALUES
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
-       1,
+       4,
        vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
@@ -518,7 +518,7 @@ BEGIN
     VALUES
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
-       1,
+       4,
        vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
@@ -543,7 +543,7 @@ BEGIN
     VALUES
       (rg_crapass.cdcooper,
        rg_crapass.nrdconta,
-       1,
+       4,
        vr_nrsequenlgi,
        vr_dttransa,
        vr_hrtransa,
@@ -626,7 +626,7 @@ BEGIN
       VALUES
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
-         1,
+         5,
          vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
@@ -651,7 +651,7 @@ BEGIN
       VALUES
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
-         1,
+         5,
          vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
@@ -676,7 +676,7 @@ BEGIN
       VALUES
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
-         1,
+         5,
          vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
@@ -701,7 +701,7 @@ BEGIN
       VALUES
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
-         1,
+         5,
          vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
@@ -726,7 +726,7 @@ BEGIN
       VALUES
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
-         1,
+         5,
          vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
@@ -751,7 +751,7 @@ BEGIN
       VALUES
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
-         1,
+         5,
          vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
@@ -776,7 +776,7 @@ BEGIN
       VALUES
         (rg_crapass.cdcooper,
          rg_crapass.nrdconta,
-         1,
+         5,
          vr_nrsequenlgi,
          vr_dttransa,
          vr_hrtransa,
@@ -812,3 +812,8 @@ EXCEPTION
     RAISE_APPLICATION_ERROR(-20000, 'Erro ao executar script: ' || SQLERRM);
   
 END;
+
+
+select * from craplgm a where a.cdcooper = 9 and a.nrdconta = 503886
+select * from craplgi a where a.cdcooper = 9 and a.nrdconta = 503886
+
