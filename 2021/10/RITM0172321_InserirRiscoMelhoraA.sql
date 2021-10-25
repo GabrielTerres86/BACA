@@ -1,4 +1,5 @@
 -- Inclui risco Melhora "A" para as operações abaixo
+-- Commit a cada 2 mil linhas
 BEGIN
 
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 6138489 AND t.nrctremp = 2382429;
@@ -1998,6 +1999,7 @@ BEGIN
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 7040121 AND t.nrctremp = 2948380;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 2165430 AND t.nrctremp = 2272939;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 7987595 AND t.nrctremp = 2265068;
+  COMMIT;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 7987595 AND t.nrctremp = 2265141;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 7987595 AND t.nrctremp = 2911604;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 7987595 AND t.nrctremp = 2911622;
@@ -3997,6 +3999,7 @@ BEGIN
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 8807434 AND t.nrctremp = 2253951;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 8807434 AND t.nrctremp = 2798468;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 8807434 AND t.nrctremp = 2798472;
+  COMMIT;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 8807434 AND t.nrctremp = 2798478;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 7390327 AND t.nrctremp = 2235759;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 7390327 AND t.nrctremp = 2235835;
@@ -7114,6 +7117,7 @@ BEGIN
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 9720901 AND t.nrctremp = 2709265;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 9720901 AND t.nrctremp = 2709278;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 9206000 AND t.nrctremp = 2278987;
+  COMMIT;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 9206000 AND t.nrctremp = 2279055;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 10020381 AND t.nrctremp = 2223929;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND  t.nrdconta = 10020381 AND t.nrctremp = 2223939;
@@ -7995,6 +7999,7 @@ BEGIN
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 16 AND  t.nrdconta = 603287 AND t.nrctremp = 170755;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 16 AND  t.nrdconta = 545988 AND t.nrctremp = 152171;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 16 AND  t.nrdconta = 23361 AND t.nrctremp = 149830;
+  COMMIT;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 16 AND  t.nrdconta = 341878 AND t.nrctremp = 156195;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 16 AND  t.nrdconta = 571105 AND t.nrctremp = 164446;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 16 AND  t.nrdconta = 481203 AND t.nrctremp = 182640;
@@ -8305,6 +8310,7 @@ BEGIN
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 16 AND  t.nrdconta = 562262 AND t.nrctremp = 150011;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 16 AND  t.nrdconta = 590207 AND t.nrctremp = 155090;
   UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2,t.dtrisco_melhora = TO_DATE('26/10/2021', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 16 AND  t.nrdconta = 599239 AND t.nrctremp = 150730;
+  COMMIT;
 
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  6138489 AND t.nrctremp = 2382429;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  6138489 AND t.nrctremp = 2483254;
@@ -11623,6 +11629,7 @@ BEGIN
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  80346103 AND t.nrctremp = 2256998;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  80346103 AND t.nrctremp = 2257051;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  7410000 AND t.nrctremp = 2273305;
+  COMMIT;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  7410000 AND t.nrctremp = 2273425;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  7410000 AND t.nrctremp = 2273548;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  7410000 AND t.nrctremp = 2273665;
@@ -11992,6 +11999,7 @@ BEGIN
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  9704868 AND t.nrctremp = 2767820;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  3195546 AND t.nrctremp = 2556486;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  7234937 AND t.nrctremp = 2681213;
+  COMMIT;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  7234937 AND t.nrctremp = 2681227;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  7234937 AND t.nrctremp = 2681233;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  9176608 AND t.nrctremp = 2491742;
@@ -13991,6 +13999,7 @@ BEGIN
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  1846981 AND t.nrctremp = 2292055;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  1846981 AND t.nrctremp = 2806851;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  1846981 AND t.nrctremp = 2806862;
+  COMMIT;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  1846981 AND t.nrctremp = 2940880;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  1846981 AND t.nrctremp = 2940890;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 1 AND t.nrdconta =  7847106 AND t.nrctremp = 2340656;
@@ -15990,6 +15999,7 @@ BEGIN
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 13 AND t.nrdconta =  103950 AND t.nrctremp = 61512;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 13 AND t.nrdconta =  172472 AND t.nrctremp = 71860;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 13 AND t.nrdconta =  218510 AND t.nrctremp = 69684;
+  COMMIT;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 13 AND t.nrdconta =  234648 AND t.nrctremp = 66522;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 13 AND t.nrdconta =  272850 AND t.nrctremp = 66338;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 13 AND t.nrdconta =  355321 AND t.nrctremp = 67910;
@@ -16610,7 +16620,6 @@ BEGIN
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 16 AND t.nrdconta =  562262 AND t.nrctremp = 150011;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 16 AND t.nrdconta =  590207 AND t.nrctremp = 155090;
   UPDATE crawepr t SET t.dsnivris = fn_traduz_risco(innivris => 2) WHERE t.cdcooper = 16 AND t.nrdconta =  599239 AND t.nrctremp = 150730;
-
   COMMIT;
 
 EXCEPTION
