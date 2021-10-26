@@ -108,12 +108,12 @@ BEGIN
   
     vr_dtdemiss_ant      := null;
     vr_dtmvtolt_aplicada := null;
-    
+  
     if rg_craplgi.dsdadatu is not null then
       vr_dtmvtolt_aplicada := to_date(rg_craplgi.dsdadatu, 'dd/mm/rrrr');
     end if;
-      
-    if rg_craplgi.dsdadant is not null then    
+  
+    if rg_craplgi.dsdadant is not null then
       vr_dtdemiss_ant := to_date(rg_craplgi.dsdadant, 'dd/mm/rrrr');
     end if;
   
@@ -135,11 +135,11 @@ BEGIN
     FETCH cr_craplgi
       INTO rg_craplgi;
     CLOSE cr_craplgi;
-    
+  
     vr_log_script := vr_log_script || chr(10) ||
                      'Restaurando cdmotdem anterior (' ||
                      rg_craplgi.dsdadant || ').';
-                       
+  
     -- Atualiza crapass
     UPDATE CECRED.CRAPASS
     -- Em processo de demissão BACEN
@@ -147,7 +147,7 @@ BEGIN
      WHERE nrdconta = rg_craplgm.nrdconta
        AND cdcooper = rg_craplgm.cdcooper;
   
-  OPEN cr_craplgi(pr_cdcooper => rg_craplgm.cdcooper,
+    OPEN cr_craplgi(pr_cdcooper => rg_craplgm.cdcooper,
                     pr_nrdconta => rg_craplgm.nrdconta,
                     pr_idseqttl => rg_craplgm.idseqttl,
                     pr_nrsequen => rg_craplgm.nrsequen,
@@ -167,8 +167,8 @@ BEGIN
     -- Em processo de demissão BACEN
        SET dtelimin = rg_craplgi.dsdadant
      WHERE nrdconta = rg_craplgm.nrdconta
-       AND cdcooper = rg_craplgm.cdcooper;    
-    
+       AND cdcooper = rg_craplgm.cdcooper;
+  
     -- Volta o valor de cota capital - crapcot
     OPEN cr_craplgi(pr_cdcooper => rg_craplgm.cdcooper,
                     pr_nrdconta => rg_craplgm.nrdconta,
@@ -180,11 +180,11 @@ BEGIN
     FETCH cr_craplgi
       INTO rg_craplgi;
     CLOSE cr_craplgi;
-    
+  
     -- Pega o valor de cota movimentado para fazer a transação oposta.
     vr_vldcotas_movtda := to_number(rg_craplgi.dsdadant);
-    
-      -- Busca e insere o valor de cota capital dos valores a devolver - TBCOTAS_DEVOLUCAO
+  
+    -- Busca e insere o valor de cota capital dos valores a devolver - TBCOTAS_DEVOLUCAO
   
     vr_tbcotas_dev_qtparcelas       := NULL;
     vr_tbcotas_dev_dtinicio_credito := NULL;
@@ -242,7 +242,7 @@ BEGIN
                  and lgi.dttransa = rg_craplgm.dttransa
                  and cdcooper = rg_craplgm.cdcooper
                  and nrdconta = rg_craplgm.nrdconta
-                 -- Código definido no script para poder separar os valores a devolver
+                    -- Código definido no script para poder separar os valores a devolver
                  and IDSEQTTL = 4);
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
@@ -275,9 +275,9 @@ BEGIN
           dbms_output.put_line(chr(10) ||
                                'Erro ao inserir registro na TBCOTAS_DEVOLUCAO para cooperativa e conta ' ||
                                rg_craplgm.cdcooper || ' ' ||
-                               rg_craplgm.nrdconta || sqlerrm);      
+                               rg_craplgm.nrdconta || sqlerrm);
       END;
-      
+    END IF;
     vr_tbcotas_dev_qtparcelas       := NULL;
     vr_tbcotas_dev_dtinicio_credito := NULL;
     vr_tbcotas_dev_vlcapital        := NULL;
@@ -329,12 +329,12 @@ BEGIN
                      lgi.nmdcampo = 'tbcotas_devolucao.vlpago' or
                      lgi.nmdcampo = 'tbcotas_devolucao.tpdevolucao' or
                      lgi.nmdcampo = 'tbcotas_devolucao.nrdconta' or
-                     lgi.nmdcampo = 'tbcotas_devolucao.cdcooper')                    
+                     lgi.nmdcampo = 'tbcotas_devolucao.cdcooper')
                  and lgi.hrtransa = rg_craplgm.hrtransa
                  and lgi.dttransa = rg_craplgm.dttransa
                  and cdcooper = rg_craplgm.cdcooper
                  and nrdconta = rg_craplgm.nrdconta
-                 -- Código definido no script para poder separar os valores a devolver
+                    -- Código definido no script para poder separar os valores a devolver
                  and IDSEQTTL = 5);
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
@@ -367,17 +367,30 @@ BEGIN
           dbms_output.put_line(chr(10) ||
                                'Erro ao inserir registro na TBCOTAS_DEVOLUCAO para cooperativa e conta ' ||
                                rg_craplgm.cdcooper || ' ' ||
-                               rg_craplgm.nrdconta || sqlerrm);      
+                               rg_craplgm.nrdconta || sqlerrm);
       END;
-                       
-     
-
-        vr_log_script := vr_log_script || chr(10) ||
-                         'Total de Linhas removidas da CRAPLCT: ' ||
-                         SQL%ROWCOUNT;
-
-      END IF;
+    
+      -- Remove lançamento 2520 gerado no script.
+      DELETE CRAPLCM A
+       WHERE A.CDCOOPER = rg_craplgm.cdcooper
+         and A.NRDCONTA = rg_craplgm.nrdconta
+         and A.HRTRANSA = rg_craplgm.hrtransa
+         and A.CDHISTOR = 2520
+         and A.Nrdolote = 600040;
+    
+      vr_log_script := vr_log_script || chr(10) ||
+                       'Total de Linhas removidas da CRAPLCT: ' ||
+                       SQL%ROWCOUNT;
+    
     END IF;
+    
+    
+    -- Volta o valor de cotas para zero, pois a conta está encerrada.
+    UPDATE CECRED.crapcot
+       SET vldcotas = 0
+     WHERE cdcooper = rg_craplgm.cdcooper
+       AND nrdconta = rg_craplgm.nrdconta;
+  
     -- Deleta log de atualização.
     DELETE CECRED.craplgm lgm
      WHERE lgm.cdcooper = rg_craplgm.cdcooper
@@ -391,15 +404,14 @@ BEGIN
       vr_log_script := vr_log_script || chr(10) ||
                        'ERRO AO DELETAR CRAPLGM. Total de Linhas para DELETE: ' ||
                        SQL%ROWCOUNT || ' onde deveria ser apenas uma.';
-
+    
       RAISE vr_exception;
-
+    
     END IF;
-
+  
     vr_log_script := vr_log_script || chr(10) ||
                      'Total de Linhas removidas da CRAPLGM: ' ||
                      SQL%ROWCOUNT;
-
   
     vr_qtatremvlgi := 0;
   
@@ -427,12 +439,12 @@ BEGIN
        and lgi.dttransa = rg_craplgm.dttransa
        and lgi.hrtransa = rg_craplgm.hrtransa
     -- and lgi.nmdcampo = rg_craplgi.nmdcampo
-    ;    
-
+    ;
+  
     vr_log_script := vr_log_script || chr(10) ||
                      'Total de Linhas removidas da CRAPLGI: ' ||
                      SQL%ROWCOUNT;
-
+  
   END LOOP;
 
   CLOSE cr_craplgm;
@@ -442,18 +454,17 @@ BEGIN
 
 EXCEPTION
   WHEN vr_exception THEN
-    
+  
     ROLLBACK;
-    
+  
     RAISE_APPLICATION_ERROR(-20001,
                             vr_log_script || chr(10) || SQLCODE || ' ' ||
                             SQLERRM);
   
-
   WHEN OTHERS THEN
-
+  
     ROLLBACK;
-
+  
     RAISE_APPLICATION_ERROR(-20000, 'Erro ao executar script: ' || SQLERRM);
-
+  
 END;

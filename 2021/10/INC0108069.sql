@@ -790,7 +790,7 @@ BEGIN
   
   END LOOP;
 
-  COMMIT;
+ COMMIT;
 
 EXCEPTION
   WHEN vr_exception THEN
@@ -812,4 +812,3 @@ EXCEPTION
     RAISE_APPLICATION_ERROR(-20000, 'Erro ao executar script: ' || SQLERRM);
   
 END;
-
