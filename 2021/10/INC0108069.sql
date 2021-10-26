@@ -813,7 +813,3 @@ EXCEPTION
   
 END;
 
-
-select * from craplgm a where a.cdcooper = 9 and a.nrdconta = 503886
-select * from craplgi a where a.cdcooper = 9 and a.nrdconta = 503886
-

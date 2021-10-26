@@ -424,21 +424,10 @@ BEGIN
     DELETE CECRED.craplgi lgi
      WHERE lgi.cdcooper = rg_craplgm.cdcooper
        and lgi.nrdconta = rg_craplgm.nrdconta
-       and lgi.idseqttl = rg_craplgm.idseqttl
-       and lgi.nrsequen = rg_craplgm.nrsequen
        and lgi.dttransa = rg_craplgm.dttransa
        and lgi.hrtransa = rg_craplgm.hrtransa
     -- and lgi.nmdcampo = rg_craplgi.nmdcampo
-    ;
-
-    IF SQL%ROWCOUNT > vr_qtatremvlgi THEN
-
-      vr_log_script := vr_log_script || chr(10) ||
-                       'ERRO AO DELETAR CRAPLGI. Total de Linhas para DELETE: ' ||
-                       SQL%ROWCOUNT || ' onde deveria ser apenas uma.';
-      RAISE vr_exception;
-
-    END IF;
+    ;    
 
     vr_log_script := vr_log_script || chr(10) ||
                      'Total de Linhas removidas da CRAPLGI: ' ||
