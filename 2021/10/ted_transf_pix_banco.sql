@@ -191,5 +191,5 @@ BEGIN
   -- Liberando a memória alocada pro CLOB
   dbms_lob.close(vr_texto_carga);
   dbms_lob.freetemporary(vr_texto_carga);
-  commit;
+  
 end;
