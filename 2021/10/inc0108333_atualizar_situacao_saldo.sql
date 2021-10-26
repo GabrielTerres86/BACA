@@ -1,7 +1,6 @@
 BEGIN
   update crapepr a
-     set a.inliquid = 0
-        ,a.vlsdeved = 126.95
+     set a.vlsdeved = 300.08
    where 1=1
      and a.cdcooper = 9
      and a.nrdconta = 502600
@@ -10,8 +9,8 @@ BEGIN
   --
   update crappep a
      set a.inliquid = 0
-        ,a.vlsdvpar = 126.95
-        ,a.vlsdvatu = 126.95
+        ,a.vlsdvpar = 300.08
+        ,a.vlsdvatu = 300.08
         ,a.vljura60 = 0
    where 1=1
      and a.cdcooper = 9
