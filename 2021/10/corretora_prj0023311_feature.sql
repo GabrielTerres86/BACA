@@ -2,7 +2,7 @@ BEGIN
   INSERT INTO crapprm(nmsistem,cdcooper,cdacesso,dstexprm,dsvlrprm) VALUES ('CRED',0,'DIR_SCCI_SEGUROS_RECEBE','Diretorio que recebe os arquivos da Prognum','/usr/sistemas/SCCI/Seguros');
   INSERT INTO crapprm(nmsistem,cdcooper,cdacesso,dstexprm,dsvlrprm) VALUES ('CRED',0,'DIR_SCCI_SEGUROS_RECEBID','Diretorio que possui os arquivos recebidos e processados da Prognum','/usr/sistemas/SCCI/Seguros/Sucesso');
   INSERT INTO crapprm(nmsistem,cdcooper,cdacesso,dstexprm,dsvlrprm) VALUES ('CRED',0,'DIR_SCCI_SEGUROS_ERRO', 'Diretorio que possui os arquivos recebidos e processados com erro da Prognum','/usr/sistemas/SCCI/Seguros/Erro');
-  INSERT INTO crapprm(nmsistem,cdcooper,cdacesso,dstexprm,dsvlrprm) VALUES ('CRED',0,'EMAIL_INTEGRA_PROGNUM','Email para envio de avisos de erro ao importar arquivo crédtio imobiliário PROGNUM','verificar@ailos.coop.br');
+  INSERT INTO crapprm(nmsistem,cdcooper,cdacesso,dstexprm,dsvlrprm) VALUES ('CRED',0,'EMAIL_INTEGRA_PROGNUM','Email para envio de avisos de erro ao importar arquivo crédtio imobiliário PROGNUM','seguros.projetos@ailos.coop.br');
  COMMIT;
 EXCEPTION WHEN OTHERS THEN
   ROLLBACK;
