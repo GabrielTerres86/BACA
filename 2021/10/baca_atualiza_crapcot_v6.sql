@@ -68,7 +68,7 @@ DECLARE
       FROM crapcop
      WHERE flgativo = 1
      AND cdcooper <> 3
-     AND cdcooper = 2;
+     AND cdcooper >= 2;
      rw_crapcop cr_crapcop%ROWTYPE;
        
   CURSOR cr_contratos (pr_cdcooper IN craplem.cdcooper%TYPE) IS
@@ -216,7 +216,6 @@ DECLARE
                
   procedure backup (pr_msg VARCHAR2) IS
     BEGIN
---      GENE0001.pc_escr_linha_arquivo(vr_ind_arquiv1, pr_msg);
       gene0002.pc_escreve_xml(pr_xml => vr_des_xml_1, 
                               pr_texto_completo => vr_texto_completo_1,
                               pr_texto_novo => pr_msg || chr(10),
@@ -225,7 +224,6 @@ DECLARE
   
   procedure loga (pr_msg VARCHAR2) IS
     BEGIN
---      GENE0001.pc_escr_linha_arquivo(vr_ind_arquiv2, pr_msg);
       gene0002.pc_escreve_xml(pr_xml => vr_des_xml_2, 
                               pr_texto_completo => vr_texto_completo_2,
                               pr_texto_novo => pr_msg || chr(10),
@@ -235,7 +233,6 @@ DECLARE
   
   procedure erro (pr_msg VARCHAR2) IS
     BEGIN
---      GENE0001.pc_escr_linha_arquivo(vr_ind_arquiv3, pr_msg);
       gene0002.pc_escreve_xml(pr_xml => vr_des_xml_3, 
                               pr_texto_completo => vr_texto_completo_3,
                               pr_texto_novo => pr_msg || chr(10),
@@ -318,8 +315,6 @@ BEGIN
       FETCH cr_contratos BULK COLLECT INTO vr_tab_contratos_bulk LIMIT 1000;
       EXIT WHEN vr_tab_contratos_bulk.count = 0;
       
-      --loga('CONTRATOS - LIMIT 1000 - ' || to_char(vr_tab_contratos_bulk.COUNT) || ' - ' || to_char(vr_tab_crapcot.count) || ' - ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));      
-
       FOR idx2 IN vr_tab_contratos_bulk.first..vr_tab_contratos_bulk.last LOOP
       
         IF cr_craplem%ISOPEN THEN
