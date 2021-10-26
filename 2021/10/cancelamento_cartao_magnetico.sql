@@ -1,9 +1,3 @@
-rem PL/SQL Developer Test Script
-
-set feedback off
-set autoprint off
-
-rem Execute PL/SQL Block
 DECLARE
   TYPE typ_des_cartoes IS VARRAY(1151) OF NUMBER(25, 0);
   vr_typ_des_cartoes typ_des_cartoes := typ_des_cartoes(9000003000010001,9000004000000021,9000005000010021,9000006000005031,9000007000010041,9000008000010051,9000009000010061,9000012000005011,
@@ -225,4 +219,3 @@ BEGIN
     END LOOP;
   END LOOP;
 END;
-/
