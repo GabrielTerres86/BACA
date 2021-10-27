@@ -453,17 +453,11 @@ BEGIN
                      prm_nrdconta => vr_nrdconta,
                      prm_vllanmto => 26.83,
                      prm_cdhistor => 2721,
-                     prm_tipoajus => 'E');
+                     prm_tipoajus => 'I');
                          
   prc_gera_acerto_transit(prm_cdcooper => vr_cdcooper,
                           prm_nrdconta => vr_nrdconta,
                           prm_vllanmto => 3.17);
-                          
-  prc_atlz_prejuizo (prm_cdcooper => vr_cdcooper,
-                     prm_nrdconta => vr_nrdconta,
-                     prm_vllanmto => 3.17,
-                     prm_cdhistor => 2738,
-                     prm_tipoajus => 'I');
                      
  ---------------------------------------------------
 --05 Viacredi 10525394, 2721 = R$4,62, 2738 = R$7.38
@@ -480,17 +474,11 @@ BEGIN
                      prm_nrdconta => vr_nrdconta,
                      prm_vllanmto => 4.62,
                      prm_cdhistor => 2721,
-                     prm_tipoajus => 'E');
+                     prm_tipoajus => 'I');
                          
   prc_gera_acerto_transit(prm_cdcooper => vr_cdcooper,
                           prm_nrdconta => vr_nrdconta,
-                          prm_vllanmto => 7.38); 
-                                                    
-  prc_atlz_prejuizo (prm_cdcooper => vr_cdcooper,
-                     prm_nrdconta => vr_nrdconta,
-                     prm_vllanmto => 7.38,
-                     prm_cdhistor => 2738,
-                     prm_tipoajus => 'I');                        
+                          prm_vllanmto => 7.38);                        
                           
 -----------------------------------------------------
  --06 Viacredi AV 388602, 2408, R$152,20
