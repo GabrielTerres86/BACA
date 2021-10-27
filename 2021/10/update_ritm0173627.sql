@@ -13,7 +13,7 @@ update craptab
                   '#F0014249|0 0101_digit_11.cecred.coop.br;'||
                   '#F0015055|0 0101_digit_9.cecred.coop.br;'||
                   '#F0013938|0 0101_digit_9.cecred.coop.br;' ||
-                  '#F0015462|0 0101_digit_9.cecred.coop.br;'    -- NOVO OPERADOR
+                  '#F0015462|0 0101_digit_9.cecred.coop.br;'    
  where nmsistem = 'CRED'
    and tptabela = 'GENERI'
    and cdempres = 0
