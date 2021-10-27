@@ -102,3 +102,12 @@ EXCEPTION
     ROLLBACK;
 END;
 /
+BEGIN
+  UPDATE crapprm m
+     SET m.dsvlrprm = 'DpH@2022_!'
+   WHERE m.cdacesso = 'DELPHOS_FTP_SENHA';
+  COMMIT;
+EXCEPTION WHEN OTHERS THEN   
+  ROLLBACK;
+END;
+/
