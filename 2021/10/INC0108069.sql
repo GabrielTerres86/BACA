@@ -10,7 +10,7 @@ DECLARE
       FROM CECRED.CRAPASS a
      inner join CONTACORRENTE.Tbcc_Conta_Incorporacao t
         on (t.cdcooper = a.cdcooper and t.nrdconta = a.nrdconta)
-     WHERE (a.cdcooper = 9 and a.nrdconta IN (503886, 513130));
+     WHERE (a.cdcooper = 9 and a.nrdconta = 513130);
 
   rg_crapass cr_crapass%rowtype;
 
@@ -812,3 +812,4 @@ EXCEPTION
     RAISE_APPLICATION_ERROR(-20000, 'Erro ao executar script: ' || SQLERRM);
   
 END;
+
