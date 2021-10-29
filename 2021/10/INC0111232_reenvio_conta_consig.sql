@@ -15,7 +15,7 @@ declare
   </configuracaoCredito>
   <propostaContratoCredito>
     <CETPercentAoAno>24.77</CETPercentAoAno>
-    <dataPrimeiraParcela>2021-09-10</dataPrimeiraParcela>
+    <dataPrimeiraParcela>2021-12-10</dataPrimeiraParcela>
     <produto>
       <codigo>161</codigo>
     </produto>
@@ -160,9 +160,9 @@ begin
 
     commit;
     
-EXCEPTION
+/*EXCEPTION
     WHEN OTHERS THEN
     ROLLBACK;
-
+*/
 
 end;    
