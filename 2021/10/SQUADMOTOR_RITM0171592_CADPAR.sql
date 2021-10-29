@@ -29,7 +29,7 @@ BEGIN
   values ('ERRMOTOREMAIL', 'Job erros do motor - E-mail para envio', ' ', 2, aux_cdpartar_add);
            
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 3,  'cmo-alertas@ailos.coop.br');
+  values (aux_cdpartar_add, 3,  'luciana.cabreira@ailos.coop.br');
   
   COMMIT;
  
@@ -140,7 +140,7 @@ BEGIN
   values ('ERRMOTORNOITE', 'Job erros do motor - Tempo para verificação de erros (entre 18h e 06h)', ' ', 2, aux_cdpartar_add);
            
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 3,  '45');
+  values (aux_cdpartar_add, 3,  '30');
   
   COMMIT;
  
@@ -214,7 +214,7 @@ BEGIN
   values ('ERRMOTORATIVADO', 'Job erros do motor - Configuração de execução do job (S=Ativado N=Desativado)', ' ', 2, aux_cdpartar_add);
            
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 3,  'N');
+  values (aux_cdpartar_add, 3,  'S');
   
   COMMIT;
  
