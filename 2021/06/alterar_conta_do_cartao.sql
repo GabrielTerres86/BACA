@@ -63,12 +63,14 @@ vr_cartao := 5158940000199642; -- AILOS 2
         ,card.nrcpftit = vr_cpf_titular
         ,card.qtsenerr = 0
         ,card.inacetaa = 1
+        ,card.nrctrcrd = 1
    WHERE card.nrcrcard = vr_cartao;
 
   UPDATE crawcrd card
      SET card.cdcooper = vr_cooperativa
         ,card.nrdconta = vr_conta
         ,card.nrcpftit = vr_cpf_titular
+        ,card.nrctrcrd = 1
    WHERE card.nrcrcard = vr_cartao;
 
   COMMIT;
