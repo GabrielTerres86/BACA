@@ -1,0 +1,10 @@
+BEGIN
+  UPDATE craptel
+     SET craptel.cdopptel = '@,C,B,R,I',
+         craptel.lsopptel = 'ACESSO,CONSULTA,ALTERAR CONTRATO,CONSULTAR REMESSA,CONSULTAR INF DIARIO'
+   WHERE nmdatela = 'PRONAM';
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+  ROLLBACK;
+END;
