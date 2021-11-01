@@ -1,4 +1,4 @@
-declare
+declare 
   vr_nrsequenlgi INTEGER;
   vr_nrsequenlgm INTEGER;
 
