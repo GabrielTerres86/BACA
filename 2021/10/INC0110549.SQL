@@ -41,8 +41,7 @@ begin
      and a.nrdconta = 6212034
      and a.cdhistor = 1545
      and a.nrseqdig = 22648298
-     and a.vllanmto = 764.69;
-
+     and a.vllanmto = 764.96;
   INSERT INTO cecred.craplgm
     (cdcooper,
      nrdconta,
