@@ -1,6 +1,6 @@
 BEGIN
   UPDATE CRAPACA
-     SET LSTPARAM = 'pr_cdcooper,pr_cdcoptel,pr_intiprel,pr_dtrefere,pr_cddolote'
+     SET LSTPARAM = 'pr_cdcooper,pr_cdcoptel,pr_intiprel,pr_dtrefere,pr_cddolote,pr_dtinclusao'
    WHERE NMPACKAG = 'TELA_IMOVEL'
      AND NMDEACAO = 'RELATO_IMOVEL'
      AND NMPROCED = 'pc_imprime_relatorio_imovel';
