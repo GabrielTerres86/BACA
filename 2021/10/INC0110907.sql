@@ -3,7 +3,7 @@ declare
   vr_nrsequenlgm INTEGER;
 
   CURSOR cr_tbrecarga_operacao is
-    SELECT *
+    SELECT a.*
       from CECRED.tbrecarga_operacao a
      WHERE a.cdcooper = 1
        AND a.idoperacao = 1254903
@@ -32,6 +32,7 @@ begin
      idseqttl,
      nrsequen,
      dttransa,
+     hrtransa,
      dstransa,
      dsorigem,
      nmdatela,
@@ -44,7 +45,8 @@ begin
      rg_tbrecarga_operacao.nrdconta,
      1,
      vr_nrsequenlgm,
-     rg_tbrecarga_operacao.dtrecarga,
+     rg_tbrecarga_operacao.dttransa,
+     1,
      'INC0110907 - Lançamento futuro de recarga da TIM não está sendo possível a exclusão.',
      'AIMARO',
      '',
@@ -69,7 +71,7 @@ begin
      rg_tbrecarga_operacao.nrdconta,
      1,
      rg_tbrecarga_operacao.idoperacao,
-     rg_tbrecarga_operacao.dtrecarga,
+     rg_tbrecarga_operacao.dttransa,
      'tbrecarga_operacao.insit_operacao',
      rg_tbrecarga_operacao.insit_operacao,
      null);
@@ -78,7 +80,7 @@ begin
 
   close cr_tbrecarga_operacao;
 
-  --COMMIT;
+  COMMIT;
 
 EXCEPTION
   WHEN OTHERS THEN
