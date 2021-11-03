@@ -1,257 +1,672 @@
-begin
-
+-- Created on 01/11/2021 by T0032613 
 DECLARE
   vr_cdcritic crapcri.cdcritic%TYPE;
 	vr_dscritic crapcri.dscritic%TYPE;
 
-begin
+  PROCEDURE pc_efetiva_reg_pendentes(pr_dtprocesso IN DATE,
+                                     pr_cdcritic   OUT crapcri.cdcritic%TYPE,
+                                     pr_dscritic   OUT VARCHAR2) IS 
+  
+    vr_tab_retorno LANC0001.typ_reg_retorno;
+    vr_incrineg    INTEGER; --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+  
+    -- Registro de data
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+  
+    -- Cursor sobre os registros pendentes
+  
+    CURSOR cr_lancamento IS
+       SELECT arq.idarquivo,
+             arq.nmarquivo_origem,
+             lct.nrcnpj_credenciador,
+             lct.nrcnpjbase_principal,
+             arq.tparquivo,
+             to_date(arq.dtreferencia, 'YYYY-MM-DD') dtreferencia,
+             lct.dhprocessamento,
+             lct.idlancto,
+             pdv.dtpagamento,
+             pdv.tpforma_transf,
+             sum(pdv.vlpagamento) vlpagamento
+        FROM tbdomic_liqtrans_lancto     lct,
+             tbdomic_liqtrans_arquivo    arq,
+             tbdomic_liqtrans_centraliza ctz,
+             tbdomic_liqtrans_pdv        pdv
+       WHERE lct.idarquivo = arq.idarquivo
+         AND ctz.idlancto = lct.idlancto
+		 and to_date(pdv.dtpagamento, 'RRRR-MM-DD') = to_date('01/11/2021', 'DD/MM/RRRR')
+         AND pdv.idcentraliza = ctz.idcentraliza
+		 and arq.nmarquivo_gerado in
+			 ('ASLC033_05463212_20211101_00057',
+			'ASLC033_05463212_20211101_00058',
+			'ASLC033_05463212_20211101_00049',
+			'ASLC033_05463212_20211101_00050',
+			'ASLC033_05463212_20211101_00051',
+			'ASLC033_05463212_20211101_00052',
+			'ASLC025_05463212_20211101_00048',
+			'ASLC025_05463212_20211101_00049',
+			'ASLC025_05463212_20211101_00050',
+			'ASLC025_05463212_20211101_00051',
+			'ASLC025_05463212_20211101_00052',
+			'ASLC025_05463212_20211101_00053',
+			'ASLC025_05463212_20211101_00054',
+			'ASLC025_05463212_20211101_00055',
+			'ASLC025_05463212_20211101_00056')
+       GROUP BY arq.idarquivo,
+                arq.nmarquivo_origem,
+                lct.nrcnpj_credenciador,
+                lct.nrcnpjbase_principal,
+                arq.tparquivo,
+                to_date(arq.dtreferencia, 'YYYY-MM-DD'),
+                lct.dhprocessamento,
+                lct.idlancto,
+                pdv.dtpagamento,
+                pdv.tpforma_transf
+       ORDER BY arq.tparquivo,
+                lct.nrcnpj_credenciador,
+                lct.nrcnpjbase_principal,
+                to_date(arq.dtreferencia, 'YYYY-MM-DD');
+  
+    -- Cursor para informações dos lançamentos
+    CURSOR cr_tabela(pr_idlancto       tbdomic_liqtrans_lancto.idlancto%TYPE,
+                     pr_tpforma_transf tbdomic_liqtrans_pdv.tpforma_transf%TYPE) IS
+      SELECT pdv.nrliquidacao,
+             ctz.nrcnpjcpf_centraliza,
+             ctz.tppessoa_centraliza,
+             ctz.cdagencia_centraliza,
+             ctz.nrcta_centraliza,
+             pdv.vlpagamento,
+             to_date(pdv.dtpagamento, 'YYYY-MM-DD') dtpagamento,
+             pdv.idpdv,
+             pdv.cdocorrencia,
+             pdv.cdocorrencia_retorno,
+             pdv.dserro,
+             pdv.dsocorrencia_retorno
+        FROM tbdomic_liqtrans_centraliza ctz,
+             tbdomic_liqtrans_pdv        pdv,
+             tbdomic_liqtrans_lancto     lct,
+             tbdomic_liqtrans_arquivo    arq
+       WHERE ctz.idlancto = pr_idlancto
+         AND pdv.idcentraliza = ctz.idcentraliza
+         AND lct.idarquivo = arq.idarquivo
+         AND ctz.idlancto = lct.idlancto
+         AND pdv.tpforma_transf = pr_tpforma_transf
+		and to_date(pdv.dtpagamento, 'RRRR-MM-DD') = to_date('01/11/2021', 'DD/MM/RRRR')
+		AND NVL(pdv.cdocorrencia, '00') = '00'
+       ORDER BY ctz.cdagencia_centraliza,
+                ctz.nrcta_centraliza,
+                to_date(pdv.dtpagamento, 'YYYY-MM-DD');
+  
+    -- Cursor sobre as agencias
+    CURSOR cr_crapcop IS
+      SELECT cdcooper, cdagectl, nmrescop, flgativo FROM crapcop;
+  
+    CURSOR cr_craptco(pr_cdcopant IN crapcop.cdcooper%TYPE,
+                      pr_nrctaant IN craptco.nrctaant%TYPE) IS
+      SELECT tco.nrdconta, tco.cdcooper
+        FROM craptco tco
+       WHERE tco.cdcopant = pr_cdcopant
+         AND tco.nrctaant = pr_nrctaant;
+    rw_craptco cr_craptco%ROWTYPE;
+  
+    -- PL/Table para armazenar as agencias
+    type typ_crapcop IS RECORD(
+      cdcooper crapcop.cdcooper%TYPE,
+      nmrescop crapcop.nmrescop%TYPE,
+      flgativo crapcop.flgativo%TYPE);
+    type typ_tab_crapcop IS TABLE OF typ_crapcop INDEX BY PLS_INTEGER;
+    vr_crapcop typ_tab_crapcop;
+  
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(32000);
+  
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    vr_erro      EXCEPTION;
+  
+    -- Variaveis gerais
+    vr_nrseqdiglcm   craplcm.nrseqdig%TYPE;
+    vr_nrseqdiglau   craplau.nrseqdig%TYPE;
+    vr_dserro        VARCHAR2(100); --> Variavel de erro
+    vr_dserro_arq    VARCHAR2(100); --> Variavel de erro do reg arquivo
+    vr_cdocorr       VARCHAR2(2) := NULL; --> Código de ocorrencia do pdv
+    vr_cdocorr_arq   VARCHAR2(2) := NULL; --> Código de ocorrencia do reg arquivo
+    vr_inpessoa      crapass.inpessoa%TYPE; --> Indicador de tipo de pessoa
+    vr_cdcooper      crapcop.cdcooper%TYPE; --> Codigo da cooperativa
+    vr_cdhistor      craphis.cdhistor%TYPE; --> Codigo do historico do lancamento
+    vr_nrdolote      craplcm.nrdolote%TYPE; --> Numero do lote
+    vr_qterros       PLS_INTEGER := 0; --> Quantidade de registros com erro
+    vr_qtprocessados PLS_INTEGER := 0; --> Quantidade de registros processados
+    vr_qtfuturos     PLS_INTEGER := 0; --> Quantidade de lancamentos futuros processados
+    vr_inlctfut      VARCHAR2(01); --> Indicador de lancamento futuro
+  
+    vr_coopdest     crapcop.cdcooper%TYPE; --> coop destino (incorporacao/migracao)
+    vr_nrdconta     NUMBER(25);
+    vr_cdcooper_lcm craplcm.cdcooper%TYPE; --> Variável para controle de quebra na gravacao da craplcm
+    vr_cdcooper_lau craplau.cdcooper%TYPE; --> Variável para controle de quebra na gravacao da craplcm
+    vr_dtprocesso   crapdat.dtmvtolt%TYPE; --> Data da cooperativa
+    vr_qtproclancto PLS_INTEGER := 0; --> Quantidade de registros lidos do lancamento
+  
+    -- Variáveis email
+    vr_para     varchar2(300);
+    vr_assunto  varchar2(300);
+    vr_mensagem varchar2(32767);
+  BEGIN
+  
+    -- Popula a pl/table de agencia
+    FOR rw_crapcop IN cr_crapcop LOOP
+      vr_crapcop(rw_crapcop.cdagectl).cdcooper := rw_crapcop.cdcooper;
+      vr_crapcop(rw_crapcop.cdagectl).nmrescop := rw_crapcop.nmrescop;
+      vr_crapcop(rw_crapcop.cdagectl).flgativo := rw_crapcop.flgativo;
+    END LOOP;
+  
+    -- Efetua loop sobre os registros pendentes
+    FOR rw_lancamento IN cr_lancamento LOOP
+    
+      -- Limpa variaveis de controle de quebra para gravacao da craplcm e craplau
+      -- Como trata-se de um novo tipo de arquivo precisa-se limpar pois o numero
+      -- do lote será alterado.
+      vr_cdcooper_lcm := 0;
+      vr_cdcooper_lau := 0;
+    
+      -- Limpa a variavel de erro
+      vr_dserro_arq  := NULL;
+      vr_cdocorr_arq := NULL;
+      -- Criticar tipo de arquivo.
+      IF rw_lancamento.tparquivo NOT in (1, 2, 3) THEN
+        vr_dserro_arq  := 'Tipo de arquivo (' || rw_lancamento.tparquivo ||
+                          ') nao previsto.';
+        vr_cdocorr_arq := '99';
+      END IF;
+    
+      vr_qtproclancto := 0;
+    
+      FOR rw_tabela IN cr_tabela(rw_lancamento.idlancto,
+                                 rw_lancamento.tpforma_transf) LOOP
+        -- Limpa a variavel de erro
+        vr_dserro       := NULL;
+        vr_cdocorr      := NULL;
+        vr_qtproclancto := vr_qtproclancto + 1;
+      
+        -- Efetua todas as consistencias dentro deste BEGIN
+        BEGIN
+                
+          IF vr_crapcop(rw_tabela.cdagencia_centraliza).flgativo = 0 THEN
+          
+            OPEN cr_craptco(pr_cdcopant => vr_crapcop(rw_tabela.cdagencia_centraliza).cdcooper,
+                            pr_nrctaant => rw_tabela.nrcta_centraliza);
+            FETCH cr_craptco
+              INTO rw_craptco;
+          
+            IF cr_craptco%FOUND THEN
+              vr_nrdconta := rw_craptco.nrdconta;
+              vr_coopdest := rw_craptco.cdcooper;
+            ELSE
+              vr_nrdconta := 0;
+              vr_coopdest := 0;
+            END IF;
+          
+            CLOSE cr_craptco;
+          
+          ELSE
+            vr_nrdconta := rw_tabela.nrcta_centraliza;
+            vr_coopdest := vr_crapcop(rw_tabela.cdagencia_centraliza).cdcooper;
+          END IF;
+        
+          -- Busca a data da cooperativa
+          -- foi incluido aqui pois pode existir contas transferidas
+          OPEN btch0001.cr_crapdat(vr_coopdest);
+          FETCH btch0001.cr_crapdat
+            INTO rw_crapdat;
+          CLOSE btch0001.cr_crapdat;
+        
+          --Alterado para utilizar a data do parâmetro, se for diferente de NULL
+          --IF vr_database_name = 'AYLLOSD' THEN
+          IF pr_dtprocesso IS NULL THEN
+            IF rw_crapdat.inproces > 1 THEN
+              -- Está executando cadeia
+              vr_dtprocesso := rw_crapdat.dtmvtopr;
+            ELSE
+              vr_dtprocesso := rw_crapdat.dtmvtolt;
+            END IF;
+          ELSE
+            vr_dtprocesso := trunc(nvl(pr_dtprocesso, sysdate));
+          END IF;
+        
+        EXCEPTION
+          WHEN vr_erro THEN
+            NULL;
+        END;
+      
+        vr_nrdolote := 9666; -- Conforme validado em 22/11/2017
+      
+        -- Atualiza os historicos de lancamento
+        IF rw_lancamento.tparquivo = 1 THEN
+          -- crédito
+          IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN
+            -- BRADESCO
+            vr_cdhistor := 2444;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 01027058000191 THEN
+            -- CIELO
+            vr_cdhistor := 2546;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 02038232000164 THEN
+            -- SIPAG
+            vr_cdhistor := 2443;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 01425787000104 THEN
+            -- REDECARD
+            vr_cdhistor := 2442;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 16501555000157 THEN
+            -- STONE
+            vr_cdhistor := 2450;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 12592831000189 THEN
+            -- ELAVON
+            vr_cdhistor := 2453;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN
+            -- VERO
+            vr_cdhistor := 2478;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 28127603000178 THEN
+            -- BANESCARD
+            vr_cdhistor := 2484;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 60114865000100 THEN
+            -- SOROCRED
+            vr_cdhistor := 2485;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 01722480000167 THEN
+            -- VERDECARD
+            vr_cdhistor := 2486;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 04670195000138 THEN
+            -- CREDSYSTEM
+            vr_cdhistor := 2487;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 08561701000101 THEN
+            -- PAGSEGURO
+            vr_cdhistor := 2488;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 10440482000154 THEN
+            -- GETNET
+            vr_cdhistor := 2489;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 17887874000105 THEN
+            -- GLOBAL PAYMENTS
+            vr_cdhistor := 2490;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 20520298000178 THEN
+            -- ADYEN
+            vr_cdhistor := 2491;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN
+            -- SAFRAPAY
+            vr_cdhistor := 2492;
+            -- Inicio1 RITM0013845
+          ELSIF rw_lancamento.nrcnpj_credenciador = 19250003000101 THEN
+            --  PAGO  
+            vr_cdhistor := 2843;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 08965639000113 THEN
+            --  PAYU  
+            vr_cdhistor := 2844;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 17768068000118 THEN
+            --  PINPAG  
+            vr_cdhistor := 2845;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 18577728000146 THEN
+            --  ESFERA 5  
+            vr_cdhistor := 2846;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 22121209000146 THEN
+            --  STRIPE BRASIL 
+            vr_cdhistor := 2847;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 16668076000120 THEN
+            --  SUMUP 
+            vr_cdhistor := 2848;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 20250105000106 THEN
+            --  LISTO TECNOLOGIA  
+            vr_cdhistor := 2849;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 14380200000121 THEN
+            --  IFOOD 
+            vr_cdhistor := 2850;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 14625224000101 THEN
+            --  STELO 
+            vr_cdhistor := 2851;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 20551972000181 THEN
+            --  BEBLUE  
+            vr_cdhistor := 2852;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 01425787003383 THEN
+            --  CREDICARD 
+            vr_cdhistor := 2853;
+            -- Fim1 RITM0013845
+          ELSE
+            -- OUTROS CREDENCIADORES
+            vr_cdhistor := 2445;
+          END IF;
+        ELSIF rw_lancamento.tparquivo = 2 THEN
+          -- débito
+          IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN
+            -- BRADESCO
+            vr_cdhistor := 2448;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 01027058000191 THEN
+            -- CIELO
+            vr_cdhistor := 2547;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 02038232000164 THEN
+            -- SIPAG
+            vr_cdhistor := 2447;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 01425787000104 THEN
+            -- REDECARD
+            vr_cdhistor := 2446;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 16501555000157 THEN
+            -- STONE
+            vr_cdhistor := 2451;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 12592831000189 THEN
+            -- ELAVON
+            vr_cdhistor := 2413;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN
+            -- BANRISUL
+            vr_cdhistor := 2479;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 28127603000178 THEN
+            -- BANESCARD
+            vr_cdhistor := 2493;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 60114865000100 THEN
+            -- SOROCRED
+            vr_cdhistor := 2494;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 01722480000167 THEN
+            -- VERDECARD
+            vr_cdhistor := 2495;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 04670195000138 THEN
+            -- CREDSYSTEM
+            vr_cdhistor := 2496;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 08561701000101 THEN
+            -- PAGSEGURO
+            vr_cdhistor := 2497;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 10440482000154 THEN
+            -- GETNET
+            vr_cdhistor := 2498;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 17887874000105 THEN
+            -- GLOBAL PAYMENTS
+            vr_cdhistor := 2499;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 20520298000178 THEN
+            -- ADYEN
+            vr_cdhistor := 2500;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN
+            -- ADYEN
+            vr_cdhistor := 2501;
+            -- Inicio2 RITM0013845
+          ELSIF rw_lancamento.nrcnpj_credenciador = 19250003000101 THEN
+            --  PAGO  
+            vr_cdhistor := 2854;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 08965639000113 THEN
+            --  PAYU  
+            vr_cdhistor := 2855;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 17768068000118 THEN
+            --  PINPAG  
+            vr_cdhistor := 2856;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 18577728000146 THEN
+            --  ESFERA 5  
+            vr_cdhistor := 2857;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 22121209000146 THEN
+            --  STRIPE BRASIL 
+            vr_cdhistor := 2858;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 16668076000120 THEN
+            --  SUMUP 
+            vr_cdhistor := 2859;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 20250105000106 THEN
+            --  LISTO TECNOLOGIA  
+            vr_cdhistor := 2860;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 14380200000121 THEN
+            --  IFOOD 
+            vr_cdhistor := 2861;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 14625224000101 THEN
+            --  STELO 
+            vr_cdhistor := 2862;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 20551972000181 THEN
+            --  BEBLUE  
+            vr_cdhistor := 2863;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 01425787003383 THEN
+            --  CREDICARD 
+            vr_cdhistor := 2864;
+            -- Fim2 RITM0013845
+          ELSE
+            -- OUTROS CREDENCIADORES
+            vr_cdhistor := 2449;
+          END IF;
+        ELSE
+          -- antecipação
+          IF rw_lancamento.nrcnpj_credenciador = 59438325000101 THEN
+            -- BRADESCO
+            vr_cdhistor := 2456;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 01027058000191 THEN
+            -- CIELO
+            vr_cdhistor := 2548;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 02038232000164 THEN
+            -- SIPAG
+            vr_cdhistor := 2455;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 01425787000104 THEN
+            -- REDECARD
+            vr_cdhistor := 2454;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 16501555000157 THEN
+            -- STONE
+            vr_cdhistor := 2452;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 12592831000189 THEN
+            -- ELAVON
+            vr_cdhistor := 2414;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 92934215000106 THEN
+            -- BANRISUL / VERO
+            vr_cdhistor := 2480;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 28127603000178 THEN
+            -- BANESCARD
+            vr_cdhistor := 2502;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 60114865000100 THEN
+            -- SOROCRED
+            vr_cdhistor := 2503;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 01722480000167 THEN
+            -- VERDECARD
+            vr_cdhistor := 2504;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 04670195000138 THEN
+            -- CREDSYSTEM
+            vr_cdhistor := 2505;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 08561701000101 THEN
+            -- PAGSEGURO
+            vr_cdhistor := 2506;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 10440482000154 THEN
+            -- GETNET
+            vr_cdhistor := 2507;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 17887874000105 THEN
+            -- GLOBAL PAYMENTS
+            vr_cdhistor := 2508;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 20520298000178 THEN
+            -- ADYEN
+            vr_cdhistor := 2509;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 58160789000128 THEN
+            -- ADYEN
+            vr_cdhistor := 2510;
+            -- Inicio3 RITM0013845
+          ELSIF rw_lancamento.nrcnpj_credenciador = 19250003000101 THEN
+            --  PAGO  
+            vr_cdhistor := 2865;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 08965639000113 THEN
+            --  PAYU  
+            vr_cdhistor := 2866;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 17768068000118 THEN
+            --  PINPAG  
+            vr_cdhistor := 2867;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 18577728000146 THEN
+            --  ESFERA 5  
+            vr_cdhistor := 2868;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 22121209000146 THEN
+            --  STRIPE BRASIL 
+            vr_cdhistor := 2869;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 16668076000120 THEN
+            --  SUMUP 
+            vr_cdhistor := 2870;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 20250105000106 THEN
+            --  LISTO TECNOLOGIA  
+            vr_cdhistor := 2871;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 14380200000121 THEN
+            --  IFOOD 
+            vr_cdhistor := 2872;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 14625224000101 THEN
+            --  STELO 
+            vr_cdhistor := 2873;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 20551972000181 THEN
+            --  BEBLUE  
+            vr_cdhistor := 2874;
+          ELSIF rw_lancamento.nrcnpj_credenciador = 01425787003383 THEN
+            --  CREDICARD 
+            vr_cdhistor := 2875;
+            -- Fim3 RITM0013845
+          ELSE
+            -- OUTROS CREDENCIADORES
+            vr_cdhistor := 2457;
+          END IF;
+        END IF;
+      
+        -- Se nao existir erro, insere o lancamento
+        IF vr_cdocorr IS NULL THEN
+          -- Integrar na craplcm e atualizar
+          -- dtdebito se existir na craplau
+        
+          -- Atualiza a cooperativa
+          vr_cdcooper := vr_coopdest;
+        
+          -- procura ultima sequencia do lote pra jogar em vr_nrseqdiglcm
+          pr_cdcritic     := null;
+          vr_dscritic     := null;
+          vr_cdcooper_lcm := vr_cdcooper; -- salva a nova cooperativa para a quebra
+          ccrd0006.pc_procura_ultseq_craplcm(pr_cdcooper    => vr_cdcooper,
+                                    pr_dtmvtolt    => vr_dtprocesso,
+                                    pr_cdagenci    => 1,
+                                    pr_cdbccxlt    => 100,
+                                    pr_nrdolote    => vr_nrdolote,
+                                    pr_nrseqdiglcm => vr_nrseqdiglcm,
+                                    pr_cdcritic    => vr_cdcritic,
+                                    pr_dscritic    => vr_dscritic);
+        
+          IF vr_dscritic is not null then
+            RAISE vr_exc_saida;
+          END IF;
+        
+          BEGIN
+            -- insere o registro na tabela de lancamentos
+            LANC0001.pc_gerar_lancamento_conta(pr_dtmvtolt => trunc(vr_dtprocesso) -- dtmvtolt
+                                              ,
+                                               pr_cdagenci => 1 -- cdagenci
+                                              ,
+                                               pr_cdbccxlt => 100 -- cdbccxlt
+                                              ,
+                                               pr_nrdolote => vr_nrdolote -- nrdolote 
+                                              ,
+                                               pr_nrdconta => vr_nrdconta -- nrdconta 
+                                              ,
+                                               pr_nrdocmto => vr_nrseqdiglcm -- nrdocmto 
+                                              ,
+                                               pr_cdhistor => vr_cdhistor -- cdhistor
+                                              ,
+                                               pr_nrseqdig => vr_nrseqdiglcm -- nrseqdig
+                                              ,
+                                               pr_vllanmto => rw_tabela.vlpagamento -- vllanmto 
+                                              ,
+                                               pr_nrdctabb => vr_nrdconta -- nrdctabb
+                                              ,
+                                               pr_nrdctitg => GENE0002.fn_mask(vr_nrdconta,
+                                                                               '99999999') -- nrdctitg 
+                                              ,
+                                               pr_cdcooper => vr_cdcooper -- cdcooper
+                                              ,
+                                               pr_dtrefere => rw_tabela.dtpagamento -- dtrefere
+                                              ,
+                                               pr_cdoperad => 1 -- cdoperad
+                                              ,
+                                               pr_cdpesqbb => rw_tabela.nrliquidacao -- cdpesqbb                                                                                                
+                                               -- OUTPUT --
+                                              ,
+                                               pr_tab_retorno => vr_tab_retorno,
+                                               pr_incrineg    => vr_incrineg,
+                                               pr_cdcritic    => vr_cdcritic,
+                                               pr_dscritic    => vr_dscritic);
+						
+            IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+            END IF;
+          EXCEPTION
+            WHEN vr_exc_saida THEN
+              raise vr_exc_saida; -- Apenas passar a critica 
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao inserir CRAPLCM: ' || SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+        
+          -- Atualiza data de débito na craplau
+          BEGIN
+            UPDATE craplau
+               SET dtdebito = trunc(vr_dtprocesso)
+             WHERE cdcooper = vr_cdcooper
+               AND dtmvtopg = rw_tabela.dtpagamento
+               AND nrdconta = vr_nrdconta
+               AND cdseqtel = rw_tabela.nrliquidacao;
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao atualizar tabela CRAPLAU - dtdebito : ' ||
+                             SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+        
+          vr_qtprocessados := vr_qtprocessados + 1;
 
-update	TBDOMIC_LIQTRANS_LANCTO a
-set		a.insituacao	= 0
-where	a.idarquivo		in 
-		(select	x.idarquivo
-		from	TBDOMIC_LIQTRANS_ARQUIVO x
-		where	x.nmarquivo_gerado in 
-				('ASLC023_05463212_20211101_00301',
-				'ASLC023_05463212_20211101_00302',
-				'ASLC023_05463212_20211101_00303',
-				'ASLC023_05463212_20211101_00304',
-				'ASLC023_05463212_20211101_00305',
-				'ASLC023_05463212_20211101_00306',
-				'ASLC023_05463212_20211101_00307',
-				'ASLC023_05463212_20211101_00308',
-				'ASLC023_05463212_20211101_00309',
-				'ASLC023_05463212_20211101_00310',
-				'ASLC023_05463212_20211101_00311',
-				'ASLC023_05463212_20211101_00312',
-				'ASLC023_05463212_20211101_00313',
-				'ASLC023_05463212_20211101_00314',
-				'ASLC023_05463212_20211101_00315',
-				'ASLC023_05463212_20211101_00316',
-				'ASLC023_05463212_20211101_00317',
-				'ASLC023_05463212_20211101_00318',
-				'ASLC023_05463212_20211101_00319',
-				'ASLC023_05463212_20211101_00320',
-				'ASLC023_05463212_20211101_00321',
-				'ASLC023_05463212_20211101_00322',
-				'ASLC023_05463212_20211101_00323',
-				'ASLC023_05463212_20211101_00324',
-				'ASLC023_05463212_20211101_00325',
-				'ASLC023_05463212_20211101_00326',
-				'ASLC023_05463212_20211101_00327',
-				'ASLC023_05463212_20211101_00328',
-				'ASLC023_05463212_20211101_00329',
-				'ASLC023_05463212_20211101_00330',
-				'ASLC023_05463212_20211101_00331',
-				'ASLC023_05463212_20211101_00332',
-				'ASLC023_05463212_20211101_00333',
-				'ASLC023_05463212_20211101_00334',
-				'ASLC023_05463212_20211101_00335',
-				'ASLC023_05463212_20211101_00336',
-				'ASLC023_05463212_20211101_00337',
-				'ASLC023_05463212_20211101_00338',
-				'ASLC023_05463212_20211101_00339',
-				'ASLC023_05463212_20211101_00340',
-				'ASLC023_05463212_20211101_00341',
-				'ASLC023_05463212_20211101_00342',
-				'ASLC023_05463212_20211101_00343',
-				'ASLC023_05463212_20211101_00344',
-				'ASLC023_05463212_20211101_00345',
-				'ASLC023_05463212_20211101_00346',
-				'ASLC023_05463212_20211101_00347',
-				'ASLC023_05463212_20211101_00348',
-				'ASLC023_05463212_20211101_00349',
-				'ASLC023_05463212_20211101_00350',
-				'ASLC023_05463212_20211101_00351',
-				'ASLC023_05463212_20211101_00352',
-				'ASLC023_05463212_20211101_00353',
-				'ASLC023_05463212_20211101_00354',
-				'ASLC023_05463212_20211101_00355',
-				'ASLC023_05463212_20211101_00356',
-				'ASLC025_05463212_20211101_00048',
-				'ASLC025_05463212_20211101_00049',
-				'ASLC025_05463212_20211101_00050',
-				'ASLC025_05463212_20211101_00051',
-				'ASLC025_05463212_20211101_00052',
-				'ASLC025_05463212_20211101_00053',
-				'ASLC025_05463212_20211101_00054',
-				'ASLC025_05463212_20211101_00055',
-				'ASLC025_05463212_20211101_00056',
-				'ASLC033_05463212_20211101_00057',
-				'ASLC033_05463212_20211101_00058',
-				'ASLC033_05463212_20211101_00049',
-				'ASLC033_05463212_20211101_00050',
-				'ASLC033_05463212_20211101_00051',
-				'ASLC033_05463212_20211101_00052'
-				)
-		);
+          vr_dscritic := NULL;        
+        END IF;
+      END LOOP; -- loop cr_tabela
+    
+    --END IF;
+    END LOOP; -- loop cr_lancamento
+  
+    COMMIT;
+  
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      -- Se foi retornado apenas código
+      IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
+        -- Buscar a descrição
+        pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      ELSE
+        pr_dscritic := vr_dscritic;
+      END IF;
+      -- Efetuar rollback
+      ROLLBACK;
+      raise_application_error(-20001,
+                              'pc_efetiva_reg_pendentes vr_exc_saida' || ' ' ||
+                              pr_cdcritic || ' ' || sqlerrm);
+    
+    WHEN OTHERS THEN
+      raise_application_error(-20001,
+                              'pc_efetiva_reg_pendentes ' || sqlerrm);
+    
+      -- Efetuar retorno do erro não tratado
+      pr_cdcritic := 0;
+      pr_dscritic := sqlerrm;
+      -- Efetuar rollback
+      ROLLBACK;
+    
+  END; -- pc_efetiva_reg_pendentes --
+
+BEGIN
+  -- Test statements here
+  pc_efetiva_reg_pendentes(trunc(SYSDATE), vr_cdcritic, vr_dscritic);
+
+update	tbdomic_liqtrans_lancto x
+set	x.insituacao	= 1
+where	x.rowid in
+	(select	b.rowid
+	from	tbdomic_liqtrans_lancto b,
+		tbdomic_liqtrans_arquivo a
+	where	a.idarquivo		= b.idarquivo
+	and	a.nmarquivo_gerado	in
+		('ASLC033_05463212_20211101_00057',
+      'ASLC033_05463212_20211101_00058',
+      'ASLC033_05463212_20211101_00049',
+      'ASLC033_05463212_20211101_00050',
+      'ASLC033_05463212_20211101_00051',
+      'ASLC033_05463212_20211101_00052',
+      'ASLC025_05463212_20211101_00048',
+      'ASLC025_05463212_20211101_00049',
+      'ASLC025_05463212_20211101_00050',
+      'ASLC025_05463212_20211101_00051',
+      'ASLC025_05463212_20211101_00052',
+      'ASLC025_05463212_20211101_00053',
+      'ASLC025_05463212_20211101_00054',
+      'ASLC025_05463212_20211101_00055',
+      'ASLC025_05463212_20211101_00056')
+        );
 		
-update	TBDOMIC_LIQTRANS_PDV a
-set		a.dserro				= null,
-		a.dsocorrencia_retorno	= null
-where	a.idcentraliza in
-		(select	z.idcentraliza
-		from	TBDOMIC_LIQTRANS_CENTRALIZA z,
-				TBDOMIC_LIQTRANS_LANCTO y,
-				TBDOMIC_LIQTRANS_ARQUIVO x
-		where	y.idlancto	= z.idlancto
-		and		x.idarquivo	= y.idarquivo
-		and		x.nmarquivo_gerado in 
-				('ASLC023_05463212_20211101_00301',
-				'ASLC023_05463212_20211101_00302',
-				'ASLC023_05463212_20211101_00303',
-				'ASLC023_05463212_20211101_00304',
-				'ASLC023_05463212_20211101_00305',
-				'ASLC023_05463212_20211101_00306',
-				'ASLC023_05463212_20211101_00307',
-				'ASLC023_05463212_20211101_00308',
-				'ASLC023_05463212_20211101_00309',
-				'ASLC023_05463212_20211101_00310',
-				'ASLC023_05463212_20211101_00311',
-				'ASLC023_05463212_20211101_00312',
-				'ASLC023_05463212_20211101_00313',
-				'ASLC023_05463212_20211101_00314',
-				'ASLC023_05463212_20211101_00315',
-				'ASLC023_05463212_20211101_00316',
-				'ASLC023_05463212_20211101_00317',
-				'ASLC023_05463212_20211101_00318',
-				'ASLC023_05463212_20211101_00319',
-				'ASLC023_05463212_20211101_00320',
-				'ASLC023_05463212_20211101_00321',
-				'ASLC023_05463212_20211101_00322',
-				'ASLC023_05463212_20211101_00323',
-				'ASLC023_05463212_20211101_00324',
-				'ASLC023_05463212_20211101_00325',
-				'ASLC023_05463212_20211101_00326',
-				'ASLC023_05463212_20211101_00327',
-				'ASLC023_05463212_20211101_00328',
-				'ASLC023_05463212_20211101_00329',
-				'ASLC023_05463212_20211101_00330',
-				'ASLC023_05463212_20211101_00331',
-				'ASLC023_05463212_20211101_00332',
-				'ASLC023_05463212_20211101_00333',
-				'ASLC023_05463212_20211101_00334',
-				'ASLC023_05463212_20211101_00335',
-				'ASLC023_05463212_20211101_00336',
-				'ASLC023_05463212_20211101_00337',
-				'ASLC023_05463212_20211101_00338',
-				'ASLC023_05463212_20211101_00339',
-				'ASLC023_05463212_20211101_00340',
-				'ASLC023_05463212_20211101_00341',
-				'ASLC023_05463212_20211101_00342',
-				'ASLC023_05463212_20211101_00343',
-				'ASLC023_05463212_20211101_00344',
-				'ASLC023_05463212_20211101_00345',
-				'ASLC023_05463212_20211101_00346',
-				'ASLC023_05463212_20211101_00347',
-				'ASLC023_05463212_20211101_00348',
-				'ASLC023_05463212_20211101_00349',
-				'ASLC023_05463212_20211101_00350',
-				'ASLC023_05463212_20211101_00351',
-				'ASLC023_05463212_20211101_00352',
-				'ASLC023_05463212_20211101_00353',
-				'ASLC023_05463212_20211101_00354',
-				'ASLC023_05463212_20211101_00355',
-				'ASLC023_05463212_20211101_00356',
-				'ASLC025_05463212_20211101_00048',
-				'ASLC025_05463212_20211101_00049',
-				'ASLC025_05463212_20211101_00050',
-				'ASLC025_05463212_20211101_00051',
-				'ASLC025_05463212_20211101_00052',
-				'ASLC025_05463212_20211101_00053',
-				'ASLC025_05463212_20211101_00054',
-				'ASLC025_05463212_20211101_00055',
-				'ASLC025_05463212_20211101_00056',
-				'ASLC033_05463212_20211101_00057',
-				'ASLC033_05463212_20211101_00058',
-				'ASLC033_05463212_20211101_00049',
-				'ASLC033_05463212_20211101_00050',
-				'ASLC033_05463212_20211101_00051',
-				'ASLC033_05463212_20211101_00052'
-				)
-		);
-
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00357_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00357';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00301_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00301';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00302_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00302';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00303_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00303';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00304_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00304';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00305_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00305';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00306_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00306';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00307_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00307';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00308_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00308';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00309_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00309';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00310_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00310';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00311_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00311';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00312_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00312';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00313_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00313';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00314_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00314';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00315_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00315';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00316_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00316';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00317_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00317';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00318_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00318';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00319_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00319';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00320_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00320';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00321_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00321';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00322_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00322';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00323_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00323';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00324_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00324';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00325_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00325';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00326_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00326';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00327_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00327';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00328_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00328';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00329_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00329';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00330_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00330';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00331_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00331';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00332_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00332';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00333_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00333';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00334_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00334';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00335_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00335';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00336_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00336';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00337_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00337';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00338_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00338';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00339_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00339';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00340_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00340';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00341_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00341';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00342_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00342';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00343_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00343';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00344_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00344';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00345_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00345';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00346_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00346';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00347_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00347';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00348_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00348';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00349_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00349';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00350_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00350';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00351_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00351';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00352_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00352';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00353_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00353';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00354_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00354';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00355_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00355';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC023_05463212_20211101_00356_RET' where nmarquivo_gerado = 'ASLC023_05463212_20211101_00356';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC025_05463212_20211101_00048_RET' where nmarquivo_gerado = 'ASLC025_05463212_20211101_00048';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC025_05463212_20211101_00049_RET' where nmarquivo_gerado = 'ASLC025_05463212_20211101_00049';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC025_05463212_20211101_00050_RET' where nmarquivo_gerado = 'ASLC025_05463212_20211101_00050';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC025_05463212_20211101_00051_RET' where nmarquivo_gerado = 'ASLC025_05463212_20211101_00051';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC025_05463212_20211101_00052_RET' where nmarquivo_gerado = 'ASLC025_05463212_20211101_00052';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC025_05463212_20211101_00053_RET' where nmarquivo_gerado = 'ASLC025_05463212_20211101_00053';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC025_05463212_20211101_00054_RET' where nmarquivo_gerado = 'ASLC025_05463212_20211101_00054';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC025_05463212_20211101_00055_RET' where nmarquivo_gerado = 'ASLC025_05463212_20211101_00055';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC025_05463212_20211101_00056_RET' where nmarquivo_gerado = 'ASLC025_05463212_20211101_00056';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC033_05463212_20211101_00057_RET' where nmarquivo_gerado = 'ASLC033_05463212_20211101_00057';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC033_05463212_20211101_00058_RET' where nmarquivo_gerado = 'ASLC033_05463212_20211101_00058';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC033_05463212_20211101_00049_RET' where nmarquivo_gerado = 'ASLC033_05463212_20211101_00049';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC033_05463212_20211101_00050_RET' where nmarquivo_gerado = 'ASLC033_05463212_20211101_00050';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC033_05463212_20211101_00051_RET' where nmarquivo_gerado = 'ASLC033_05463212_20211101_00051';
-update TBDOMIC_LIQTRANS_ARQUIVO set nmarquivo_retorno = 'ASLC033_05463212_20211101_00052_RET' where nmarquivo_gerado = 'ASLC033_05463212_20211101_00052';
-
 commit;
 
-CCRD0006.pc_processa_reg_pendentes(trunc(SYSDATE), vr_cdcritic, vr_dscritic);
-
-CCRD0006.pc_efetiva_reg_pendentes(trunc(SYSDATE), vr_cdcritic, vr_dscritic);
-
-commit;
-
-end;
-
-end;
+END;
