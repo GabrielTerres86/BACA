@@ -65,7 +65,8 @@ BEGIN
                               pr_nmdcampo => 'crapsda.VLSDDISP',
                               pr_dsdadant => rg_crapass.vlsddisp,
                               pr_dsdadatu => rg_crapass.vlsddisp + 691.47);
-  
+   end loop;
+   
     UPDATE crapsda a
        SET a.VLSDDISP = a.vlsddisp + 691.47
      WHERE a.nrdconta = 12405850
@@ -73,7 +74,7 @@ BEGIN
        AND a.dtmvtolt BETWEEN to_date('01/11/2021', 'dd/mm/yyyy') AND
            TRUNC(SYSDATE);
   
-  end loop;
+ 
   close cr_crapsld;
   commit;
 EXCEPTION
