@@ -1,6 +1,6 @@
 DECLARE
 
-  dataAcaoUsuario VARCHAR(100) := to_char(SYSDATE, 'DD/MM/YYYY hh24:mi:ss');
+  dataAcaoUsuario VARCHAR(100) := to_char( sysdate, 'yyyy-mm-dd' ) || 'T' || to_char(SYSDATE, 'hh:mi:ss');
 
   conta_292770_13_19 CLOB := '<?xml version="1.0"?>
                               <Root>
