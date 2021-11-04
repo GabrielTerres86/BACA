@@ -41,6 +41,11 @@ BEGIN
          AND ace.cdcooper = rw_crapcop.cdcooper;
   
   END LOOP;
+  
+  UPDATE crapaca a
+     SET a.lstparam = a.lstparam || ',pr_tpctrlim'
+   WHERE a.nmpackag = 'TELA_IMPPRE'
+     AND a.nmdeacao = 'EXEC_CARGA_MANUAL';
 
   COMMIT;
 
