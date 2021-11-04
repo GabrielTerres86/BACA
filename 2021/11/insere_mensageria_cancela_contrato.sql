@@ -1,0 +1,10 @@
+BEGIN
+  INSERT 
+    INTO CRAPACA (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+   VALUES ('CANCELA_CONTRATOS', 'TELA_PRONAM', 'pc_cancela_contratos_web', 'pr_cdcooper,pr_nrdconta,pr_nrcontrato', 2304);
+COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+END;    
+
