@@ -13,7 +13,7 @@ DECLARE
                                 <propostaContratoCredito>
                                   <emitente>
                                     <contaCorrente>
-                                      <codigoContaSemDigito>29277</codigoContaSemDigito>
+                                      <codigoContaSemDigito>292770</codigoContaSemDigito>
                                     </contaCorrente>
                                   </emitente>
                                 </propostaContratoCredito>
