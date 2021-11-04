@@ -5,10 +5,33 @@ DECLARE
   vr_cdcooper cecred.crapcop.cdcooper%type;
   vr_cdoperad cecred.craplgm.cdoperad%TYPE;
   vr_dscritic cecred.craplgm.dscritic%TYPE;
-  
+
   vr_nrdrowid ROWID;
 
+  CURSOR cr_crapsld is
+    SELECT *
+      from CECRED.crapsld a
+     WHERE a.nrdconta = 12405850
+       AND a.cdcooper = 1;
+
+  rg_crapsld crapsld%rowtype;
+
+  CURSOR cr_crapsda is
+    SELECT *
+      from CECRED.crapsda a
+     WHERE a.nrdconta = 12405850
+       AND a.cdcooper = 1
+       AND a.dtmvtolt BETWEEN to_date('01/11/2021', 'dd/mm/yyyy') AND
+           TRUNC(SYSDATE);
+
+  rg_crapsda crapsda%rowtype;
+
 BEGIN
+
+  open cr_crapsld;
+  fetch cr_crapsld
+    into rg_crapsld;
+
   vr_dttransa := trunc(sysdate);
   vr_hrtransa := GENE0002.fn_busca_time;
   vr_cdcooper := 1;
@@ -29,25 +52,29 @@ BEGIN
 
   GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                             pr_nmdcampo => 'crapsld.VLSDDISP',
-                            pr_dsdadant => 253.03,
-                            pr_dsdadatu => 691.47);
-
+                            pr_dsdadant => rg_crapsld.vlsddisp,
+                            pr_dsdadatu => rg_crapsld.vlsddisp + 691.47);
   UPDATE crapsld a
-     SET a.VLSDDISP = 691.47
+     SET a.VLSDDISP = a.vlsddisp + 691.47
    WHERE a.nrdconta = 12405850
-     AND a.cdcooper = 1;    
+     AND a.cdcooper = 1;
 
-   GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                                   pr_nmdcampo => 'crapsda.VLSDDISP',
-                                   pr_dsdadant => 20.00,
-                                   pr_dsdadatu => 691.47);
-  UPDATE crapsda a
-     SET a.VLSDDISP = 691.47
-   WHERE a.nrdconta = 12405850
-     AND a.cdcooper = 1
-     AND a.dtmvtolt BETWEEN to_date('01/11/2021', 'dd/mm/yyyy') AND
-         TRUNC(SYSDATE);
- 
+  FOR rg_crapass IN cr_crapsda LOOP
+  
+    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                              pr_nmdcampo => 'crapsda.VLSDDISP',
+                              pr_dsdadant => rg_crapass.vlsddisp,
+                              pr_dsdadatu => rg_crapass.vlsddisp + 691.47);
+  
+    UPDATE crapsda a
+       SET a.VLSDDISP = a.vlsddisp + 691.47
+     WHERE a.nrdconta = 12405850
+       AND a.cdcooper = 1
+       AND a.dtmvtolt BETWEEN to_date('01/11/2021', 'dd/mm/yyyy') AND
+           TRUNC(SYSDATE);
+  
+  end loop;
+  close cr_crapsld;
   commit;
 EXCEPTION
   WHEN OTHERS THEN
