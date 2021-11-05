@@ -1,6 +1,10 @@
 declare
   vr_nrsequenlgi INTEGER;
   vr_nrsequenlgm INTEGER;
+  vr_nrdrowid    ROWID;
+  vr_dttransa    cecred.craplgm.dttransa%type;
+  vr_hrtransa    cecred.craplgm.hrtransa%type;
+  vr_dscritic cecred.craplgm.dscritic%TYPE;
 
   CURSOR cr_tbrecarga_operacao is
     SELECT a.*
@@ -12,7 +16,8 @@ declare
   rg_tbrecarga_operacao cr_tbrecarga_operacao%rowtype;
 
 begin
-
+  vr_dttransa    := trunc(sysdate);
+  vr_hrtransa    := GENE0002.fn_busca_time;
   vr_nrsequenlgi := 1;
   vr_nrsequenlgm := 1;
 
@@ -26,57 +31,23 @@ begin
      AND idoperacao = rg_tbrecarga_operacao.idoperacao
      AND nrdconta = rg_tbrecarga_operacao.nrdconta;
 
-  INSERT INTO cecred.craplgm
-    (cdcooper,
-     nrdconta,
-     idseqttl,
-     nrsequen,
-     dttransa,
-     hrtransa,
-     dstransa,
-     dsorigem,
-     nmdatela,
-     flgtrans,
-     dscritic,
-     cdoperad,
-     nmendter)
-  VALUES
-    (rg_tbrecarga_operacao.cdcooper,
-     rg_tbrecarga_operacao.nrdconta,
-     1,
-     vr_nrsequenlgm,
-     rg_tbrecarga_operacao.dttransa,
-     1,
-     'INC0110907 - Lançamento futuro de recarga da TIM não está sendo possível a exclusão.',
-     'AIMARO',
-     '',
-     1,
-     ' ',
-     1,
-     ' ');
+  GENE0001.pc_gera_log(pr_cdcooper => rg_tbrecarga_operacao.cdcooper,
+                       pr_cdoperad => Null,
+                       pr_dscritic => vr_dscritic,
+                       pr_dsorigem => 'AIMARO',
+                       pr_dstransa => 'INC0110907 - Lançamento futuro de recarga da TIM não está sendo possível a exclusão.',
+                       pr_dttransa => vr_dttransa,
+                       pr_flgtrans => 1,
+                       pr_hrtransa => vr_hrtransa,
+                       pr_idseqttl => 0,
+                       pr_nmdatela => NULL,
+                       pr_nrdconta => rg_tbrecarga_operacao.nrdconta,
+                       pr_nrdrowid => vr_nrdrowid);
 
-  vr_nrsequenlgm := vr_nrsequenlgm + 1;
-
-  INSERT INTO cecred.craplgi
-    (cdcooper,
-     nrdconta,
-     idseqttl,
-     nrsequen,
-     dttransa,
-     nmdcampo,
-     dsdadant,
-     dsdadatu)
-  VALUES
-    (rg_tbrecarga_operacao.cdcooper,
-     rg_tbrecarga_operacao.nrdconta,
-     1,
-     rg_tbrecarga_operacao.idoperacao,
-     rg_tbrecarga_operacao.dttransa,
-     'tbrecarga_operacao.insit_operacao',
-     rg_tbrecarga_operacao.insit_operacao,
-     null);
-
-  vr_nrsequenlgi := vr_nrsequenlgi + 1;
+  GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                            pr_nmdcampo => 'tbrecarga_operacao.insit_operacao',
+                            pr_dsdadant => rg_tbrecarga_operacao.insit_operacao,
+                            pr_dsdadatu => null);
 
   close cr_tbrecarga_operacao;
 
