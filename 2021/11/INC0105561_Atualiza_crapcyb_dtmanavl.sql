@@ -5,11 +5,11 @@ DECLARE
   vr_nrctremp    crapcyb.nrctremp%TYPE;
   vr_dtmvtolt    crapdat.dtmvtolt%TYPE;
   vr_dscritic    crapcri.dscritic%TYPE;
-  vr_dtmanavl    VARCHAR2(200)  := '';
-  vr_diretorio   VARCHAR2(200)  := '/micros/cpd/bacas/INC0105561';  
-  vr_setlinha    VARCHAR2(4000) := '';
-  vr_rollback    VARCHAR2(4000) := '';
-  vr_log         VARCHAR2(4000) := '';  
+  vr_dtmanavl    VARCHAR2(200);
+  vr_diretorio   VARCHAR2(200);  
+  vr_setlinha    VARCHAR2(4000);
+  vr_rollback    VARCHAR2(4000);
+  vr_log         VARCHAR2(4000);  
   vr_arqupdate   UTL_FILE.file_type;
   vr_arqrollback UTL_FILE.file_type;
   vr_arqlog      UTL_FILE.file_type;  
@@ -28,6 +28,9 @@ DECLARE
        AND dtdbaixa IS NULL;
   rw_crapcyb cr_crapcyb%ROWTYPE;
 BEGIN
+  vr_diretorio := obterParametroSistema(pr_nmsistem => 'CRED'
+                                       ,pr_cdacesso => 'ROOT_MICROS') || 'cpd/bacas/INC0105561';
+
   abrirArquivo(pr_nmdireto => vr_diretorio,
                pr_nmarquiv => 'contas.txt',
                pr_tipabert => 'R',
