@@ -58,6 +58,9 @@ BEGIN
     RAISE vr_exec_erro;
   END IF;      
 
+  escreveLinhaArquivo(pr_utlfileh => vr_arqrollback
+                     ,pr_des_text => 'BEGIN');
+
   LOOP
     BEGIN
       vr_cdcooper := NULL;
@@ -67,8 +70,8 @@ BEGIN
     
       IF utl_file.IS_OPEN(vr_arqupdate) THEN
         BEGIN
-          gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_arqupdate
-                                      ,pr_des_text => vr_setlinha);
+          leituraLinhaArquivo(pr_utlfileh => vr_arqupdate
+                             ,pr_des_text => vr_setlinha);
         EXCEPTION
           WHEN NO_DATA_FOUND THEN
             EXIT;
@@ -145,18 +148,15 @@ BEGIN
                            ,pr_des_text => vr_log);                 
     END;
   END LOOP;
-
-  IF utl_file.IS_OPEN(vr_arqupdate) THEN
-    fecharArquivo(pr_utlfileh => vr_arqupdate);
-  END IF;
-
-  IF utl_file.IS_OPEN(vr_arqrollback) THEN
-    fecharArquivo(pr_utlfileh => vr_arqrollback);
-  END IF;
   
-  IF utl_file.IS_OPEN(vr_arqlog) THEN
-    fecharArquivo(pr_utlfileh => vr_arqlog);
-  END IF;  
+  escreveLinhaArquivo(pr_utlfileh => vr_arqrollback
+                     ,pr_des_text => 'COMMIT;');  
+  escreveLinhaArquivo(pr_utlfileh => vr_arqrollback
+                     ,pr_des_text => 'END;');                     
+
+  fecharArquivo(pr_utlfileh => vr_arqupdate);
+  fecharArquivo(pr_utlfileh => vr_arqrollback);
+  fecharArquivo(pr_utlfileh => vr_arqlog);
 EXCEPTION
   WHEN vr_exec_erro THEN
     raise_application_error(-20500, 'Erro ao abrir arquivo: ' || vr_dscritic);
