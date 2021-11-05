@@ -5,65 +5,7 @@ DECLARE
   vr_nrseqcmp            cecred.craplgi.nrseqcmp%type;
   vr_nrdconta            cecred.crapass.nrdconta%type;
   vr_cdcooper            cecred.crapcop.cdcooper%type;
-  
-  procedure insere_lgm(pr_cdcooper   in cecred.crapcop.cdcooper%type,
-                       pr_nrdconta   in cecred.crapass.nrdconta%type,
-                       pr_nrsequen   in cecred.craplgm.nrsequen%type,
-                       pr_dttransa   in cecred.craplgm.dttransa%type,
-                       pr_hrtransa   in cecred.craplgm.hrtransa%type,
-                       pr_dstransa   in cecred.craplgm.dstransa%type,
-                       pr_dsorigem   in cecred.craplgm.dsorigem%type) IS
-    
-  begin
-    INSERT INTO CECRED.CRAPLGM 
-      (CDCOOPER,
-       NRDCONTA,
-       NRSEQUEN,
-       DTTRANSA,
-       HRTRANSA,
-       DSTRANSA,
-       DSORIGEM)
-    VALUES
-      (pr_cdcooper,
-       pr_nrdconta,
-       pr_nrsequen,
-       pr_dttransa,
-       pr_hrtransa,
-       pr_dstransa,
-       pr_dsorigem);
-  end;
-  
-  procedure insere_lgi(pr_cdcooper   in cecred.craplgi.cdcooper%type,
-                       pr_nrdconta   in cecred.craplgi.nrdconta%type,
-                       pr_nrsequen   in cecred.craplgi.nrsequen%type,
-                       pr_dttransa   in cecred.craplgi.dttransa%type,
-                       pr_hrtransa   in cecred.craplgi.hrtransa%type,
-                       pr_nrseqcmp   in cecred.craplgi.nrseqcmp%type,
-                       pr_nmdcampo   in cecred.craplgi.nmdcampo%type,
-                       pr_dsdadant   in cecred.craplgi.dsdadant%type,
-                       pr_dsdadatu   in cecred.craplgi.dsdadatu%type) IS
-  begin
-    INSERT INTO CECRED.CRAPLGI
-     (CDCOOPER,
-      NRDCONTA,
-      NRSEQUEN,
-      DTTRANSA,
-      HRTRANSA,
-      NRSEQCMP,
-      NMDCAMPO,
-      DSDADANT,
-      DSDADATU)
-    VALUES
-     (pr_cdcooper,
-      pr_nrdconta,
-      pr_nrsequen,
-      pr_dttransa,
-      pr_hrtransa,
-      pr_nrseqcmp,
-      pr_nmdcampo,
-      pr_dsdadant,
-      pr_dsdadatu);
-  end;
+  vr_nrdrowid            rowid;
   
 BEGIN
   -- Inicialização de variáveis globais utilizadas no script
@@ -81,24 +23,28 @@ BEGIN
      SET a.cdsitdct = 8
    WHERE a.cdcooper = vr_cdcooper
      AND a.nrdconta = vr_nrdconta;
+
+  -- Limpo o rowid
+  vr_nrdrowid := null;
   
-  insere_lgm(vr_cdcooper,
-             vr_nrdconta,
-             vr_nrsequen,
-             vr_dttransa,
-             vr_hrtransa,
-             'Alteracao da situacao de conta por script - INC0110455',
-             'AIMARO');
-               
-  insere_lgi(vr_cdcooper,
-             vr_nrdconta,
-             vr_nrsequen,
-             vr_dttransa,
-             vr_hrtransa,
-             vr_nrseqcmp,
-             'cdsitdct',
-             '2',
-             '8');
+  CECRED.GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                              pr_cdoperad => NULL,
+                              pr_dscritic => NULL,
+                              pr_dsorigem => 'AIMARO',
+                              pr_dstransa => 'Alteracao da situacao de conta por script - INC0110455',
+                              pr_dttransa => vr_dttransa,
+                              pr_flgtrans => 1,
+                              pr_hrtransa => vr_hrtransa,
+                              pr_idseqttl => 0,
+                              pr_nmdatela => NULL,
+                              pr_nrdconta => vr_nrdconta,
+                              pr_nrdrowid => vr_nrdrowid);
+  
+  CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                   pr_nmdcampo => 'cdsitdct',
+                                   pr_dsdadant => '2',
+                                   pr_dsdadatu => '8');
+
   -- Fim Chamado INC0110455 - Conta 167010 - Unilos
   -- #########################################################
 
@@ -113,24 +59,27 @@ BEGIN
      SET a.cdsitdct = 8
    WHERE a.cdcooper = vr_cdcooper
      AND a.nrdconta = vr_nrdconta;
-
-  insere_lgm(vr_cdcooper,
-             vr_nrdconta,
-             vr_nrsequen,
-             vr_dttransa,
-             vr_hrtransa,
-             'Alteracao da situacao de conta por script - INC0110960',
-             'AIMARO');
+  
+  -- Limpo o rowid
+  vr_nrdrowid := null;
+  
+  CECRED.GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                              pr_cdoperad => NULL,
+                              pr_dscritic => NULL,
+                              pr_dsorigem => 'AIMARO',
+                              pr_dstransa => 'Alteracao da situacao de conta por script - INC0110960',
+                              pr_dttransa => vr_dttransa,
+                              pr_flgtrans => 1,
+                              pr_hrtransa => vr_hrtransa,
+                              pr_idseqttl => 0,
+                              pr_nmdatela => NULL,
+                              pr_nrdconta => vr_nrdconta,
+                              pr_nrdrowid => vr_nrdrowid);
              
-  insere_lgi(vr_cdcooper,
-             vr_nrdconta,
-             vr_nrsequen,
-             vr_dttransa,
-             vr_hrtransa,
-             vr_nrseqcmp,
-             'cdsitdct',
-             '2',
-             '8');             
+  CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                   pr_nmdcampo => 'cdsitdct',
+                                   pr_dsdadant => '2',
+                                   pr_dsdadatu => '8');
   -- Fim Chamado INC0110960 - Conta 312410 - Credcrea           
   -- #########################################################
 
