@@ -27,6 +27,21 @@ DECLARE
        AND nrctremp = pr_nrctremp
        AND dtdbaixa IS NULL;
   rw_crapcyb cr_crapcyb%ROWTYPE;
+  
+  PROCEDURE fecharArquivos IS
+  BEGIN
+    IF utl_file.IS_OPEN(vr_arqupdate) THEN
+      fecharArquivo(pr_utlfileh => vr_arqupdate);
+    END IF;  
+    
+    IF utl_file.IS_OPEN(vr_arqrollback) THEN  
+      fecharArquivo(pr_utlfileh => vr_arqrollback);
+    END IF;   
+       
+    IF utl_file.IS_OPEN(vr_arqlog) THEN  
+      fecharArquivo(pr_utlfileh => vr_arqlog);
+    END IF;       
+  END;
 BEGIN
   vr_diretorio := obterParametroSistema(pr_nmsistem => 'CRED'
                                        ,pr_cdacesso => 'ROOT_MICROS') || 'cpd/bacas/INC0105561';
@@ -93,7 +108,7 @@ BEGIN
           IF rw_crapcyb.dtmanavl IS NULL THEN
             vr_dtmanavl := 'NULL';
           ELSE
-            vr_dtmanavl := 'to_date(''' || rw_crapcyb.dtmanavl || ''', ''DD/MM/RRRR'')';
+            vr_dtmanavl := 'to_date(''' || to_char(rw_crapcyb.dtmanavl, 'DD/MM/RRRR') || ''', ''DD/MM/RRRR'')';
           END IF;
         
           vr_rollback := 'UPDATE crapcyb cyb SET cyb.dtmanavl = ' || vr_dtmanavl ||
@@ -154,10 +169,12 @@ BEGIN
   escreveLinhaArquivo(pr_utlfileh => vr_arqrollback
                      ,pr_des_text => 'END;');                     
 
-  fecharArquivo(pr_utlfileh => vr_arqupdate);
-  fecharArquivo(pr_utlfileh => vr_arqrollback);
-  fecharArquivo(pr_utlfileh => vr_arqlog);
-EXCEPTION
+  fecharArquivos;   
+EXCEPTION       
   WHEN vr_exec_erro THEN
+    fecharArquivos;   
     raise_application_error(-20500, 'Erro ao abrir arquivo: ' || vr_dscritic);
+  WHEN OTHERS THEN
+    fecharArquivos;       
+    raise_application_error(-20500, 'Erro: ' || SQLERRM);    
 END;
