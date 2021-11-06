@@ -8,13 +8,14 @@ DECLARE
 BEGIN
 
   -- Cooperativa de destino do cartão
-  vr_cooperativa := 9;
+  vr_cooperativa := 6;
   -- Conta de destino do cartão
-  vr_conta := 908932;
+  vr_conta := 144193;
 
 -- Numero do cartão que precisamos ajustar
 --vr_cartao := 5127070162666663; -- VERIFICAR QUEM E
-  vr_cartao := 5158940000199642; -- AILOS 1
+--vr_cartao := 5158940000199642; -- AILOS 1
+  vr_cartao := 6393500065179583; --AILOS 1
 --vr_cartao := 5588190184171591; -- AILOS 2
 
 -- vr_cartao := 5127070161674411; -- GISLON
