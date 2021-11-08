@@ -59,9 +59,9 @@ BEGIN
   )
   VALUES
   (
-	  13,
-	  292770,
-	  51071,
+	  10,
+	  121720,
+	  17476,
 	  'PAGTO_PAGAR',
 	  'CONSIGNADO',
 	  'INSERT',
