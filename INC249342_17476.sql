@@ -10,14 +10,14 @@ DECLARE
                               <Root>
                                 <convenioCredito>
                                   <cooperativa>
-                                    <codigo>' || to_char(v_cdcooper)  || '</codigo>
+                                    <codigo>' ||to_char(v_cdcooper)|| '</codigo>
                                   </cooperativa>
-                                  <numeroContrato>' || to_char(v_nrctrprp) || '</numeroContrato>
+                                  <numeroContrato>' ||to_char(v_nrctrprp)|| '</numeroContrato>
                                 </convenioCredito>
                                 <propostaContratoCredito>
                                   <emitente>
                                     <contaCorrente>
-                                      <codigoContaSemDigito>' || to_char(v_nrdconta) || '</codigoContaSemDigito>
+                                      <codigoContaSemDigito>' ||to_char(v_nrdconta)|| '</codigoContaSemDigito>
                                     </contaCorrente>
                                   </emitente>
                                 </propostaContratoCredito>
