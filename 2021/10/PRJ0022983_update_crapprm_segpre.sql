@@ -1,7 +1,7 @@
 begin
 
  update crapprm 
-    set dsvlrprm = 'N'
+    set dsvlrprm = 'S'
   where cdacesso = 'UTILIZA_REGRAS_SEGPRE';
   
 commit;
