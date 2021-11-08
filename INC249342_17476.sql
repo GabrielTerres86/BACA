@@ -2,18 +2,22 @@ DECLARE
 
   dataAcaoUsuario VARCHAR(100) := to_char( sysdate, 'yyyy-mm-dd' ) || 'T' || to_char(SYSDATE, 'hh:mi:ss');
 
+  v_nrdconta tbgen_evento_soa.NRDCONTA%type := 121720;
+  v_cdcooper tbgen_evento_soa.CDCOOPER%type := 10;
+  v_nrctrprp tbgen_evento_soa.NRCTRPRP%type := 17476;
+  
   conta_121720_10_19 CLOB := '<?xml version="1.0"?>
                               <Root>
                                 <convenioCredito>
                                   <cooperativa>
-                                    <codigo>10</codigo>
+                                    <codigo>' || to_char(v_cdcooper)  || '</codigo>
                                   </cooperativa>
-                                  <numeroContrato>17476</numeroContrato>
+                                  <numeroContrato>' || to_char(v_nrctrprp) || '</numeroContrato>
                                 </convenioCredito>
                                 <propostaContratoCredito>
                                   <emitente>
                                     <contaCorrente>
-                                      <codigoContaSemDigito>121720</codigoContaSemDigito>
+                                      <codigoContaSemDigito>' || to_char(v_nrdconta) || '</codigoContaSemDigito>
                                     </contaCorrente>
                                   </emitente>
                                 </propostaContratoCredito>
@@ -59,9 +63,9 @@ BEGIN
   )
   VALUES
   (
-	  10,
-	  121720,
-	  17476,
+	  v_cdcooper,
+	  v_nrdconta,
+	  v_nrctrprp,
 	  'PAGTO_PAGAR',
 	  'CONSIGNADO',
 	  'INSERT',
