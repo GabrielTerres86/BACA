@@ -31,7 +31,7 @@ declare
     <tributoIOFValor>77.22</tributoIOFValor>
     <valor>15821.12</valor>
     <valorBase>15743.90</valorBase>
-    <dataProposta>2021-11-05T08:16:16</dataProposta>
+    <dataProposta>2021-11-08T08:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1997-02-21T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>9701846974</identificadorReceitaFederal>
@@ -178,7 +178,7 @@ conta_13582933_4605327 clob := '<?xml version="1.0" encoding="WINDOWS1252"?>
 		<tributoIOFValor>0.0</tributoIOFValor>
 		<valor>49146.78</valor>
 		<valorBase>49146.78</valorBase>
-		<dataProposta>2021-11-05T08:16:16</dataProposta>
+		<dataProposta>2021-11-08T08:16:16</dataProposta>
 		<emitente>
 			<dataNascOuConstituicao>19760313T00:00:00</dataNascOuConstituicao>
 			<identificadorReceitaFederal>1850874930</identificadorReceitaFederal>
@@ -324,7 +324,7 @@ conta_8060266_4604992 clob := '<?xml version="1.0" encoding="WINDOWS1252"?>
 		<tributoIOFValor>0.0</tributoIOFValor>
 		<valor>48489.32</valor>
 		<valorBase>48489.32</valorBase>
-		<dataProposta>2021-11-05T08:16:16</dataProposta>
+		<dataProposta>2021-11-08T08:16:16</dataProposta>
 		<emitente>
 			<dataNascOuConstituicao>19840709T00:00:00</dataNascOuConstituicao>
 			<identificadorReceitaFederal>4051652939</identificadorReceitaFederal>
@@ -470,7 +470,7 @@ conta_8060266_4605029 clob := '<?xml version="1.0" encoding="WINDOWS1252"?>
 		<tributoIOFValor>0.0</tributoIOFValor>
 		<valor>36433.52</valor>
 		<valorBase>36433.52</valorBase>
-		<dataProposta>2021-11-05T08:16:16</dataProposta>
+		<dataProposta>2021-11-08T08:16:16</dataProposta>
 		<emitente>
 			<dataNascOuConstituicao>19840709T00:00:00</dataNascOuConstituicao>
 			<identificadorReceitaFederal>4051652939</identificadorReceitaFederal>
@@ -616,7 +616,7 @@ conta_13584715_4606375 clob := '<?xml version="1.0" encoding="WINDOWS1252"?>
 		<tributoIOFValor>0.0</tributoIOFValor>
 		<valor>19950.96</valor>
 		<valorBase>19950.96</valorBase>
-		<dataProposta>2021-11-05T08:16:16</dataProposta>
+		<dataProposta>2021-11-08T08:16:16</dataProposta>
 		<emitente>
 			<dataNascOuConstituicao>19781029T00:00:00</dataNascOuConstituicao>
 			<identificadorReceitaFederal>831376961</identificadorReceitaFederal>
@@ -762,7 +762,7 @@ conta_13581155_4644042 clob := '<?xml version="1.0" encoding="WINDOWS1252"?>
 		<tributoIOFValor>0.0</tributoIOFValor>
 		<valor>2777.40</valor>
 		<valorBase>2777.40</valorBase>
-		<dataProposta>2021-11-05T08:16:16</dataProposta>
+		<dataProposta>2021-11-08T08:16:16</dataProposta>
 		<emitente>
 			<dataNascOuConstituicao>19660926T00:00:00</dataNascOuConstituicao>
 			<identificadorReceitaFederal>61042951934</identificadorReceitaFederal>
@@ -908,7 +908,7 @@ conta_13520563_4639950 clob := '<?xml version="1.0" encoding="WINDOWS1252"?>
 		<tributoIOFValor>0.0</tributoIOFValor>
 		<valor>28339.16</valor>
 		<valorBase>28339.16</valorBase>
-		<dataProposta>2021-11-05T08:16:16</dataProposta>
+		<dataProposta>2021-11-08T08:16:16</dataProposta>
 		<emitente>
 			<dataNascOuConstituicao>19760216T00:00:00</dataNascOuConstituicao>
 			<identificadorReceitaFederal>97827827934</identificadorReceitaFederal>
