@@ -120,18 +120,6 @@ BEGIN
     values (3813, 'INTERNET', 0.00, 16);
 
     insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
-    values (3813, 'AIMARO', 0.00, 10);
-
-    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
-    values (3813, 'CAIXA', 0.00, 10);
-
-    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
-    values (3813, 'CASH', 0.00, 10);
-
-    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
-    values (3813, 'INTERNET', 0.00, 10);
-
-    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
     values (3813, 'AIMARO', 0.00, 11);
 
     insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
