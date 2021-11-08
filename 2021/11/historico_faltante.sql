@@ -1,207 +1,206 @@
 BEGIN 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 1, 267038);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 1);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 1, 267039);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 1);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 1, 267040);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 1);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 1, 267041);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 1);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 2, 267042);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 2);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 2, 267043);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 2);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 2, 267044);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 2);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 2, 267045);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 2);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 3, 267046);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 3);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 3, 267047);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 3);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 3, 267048);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 3);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 3, 267049);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 3);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 5, 267050);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 5);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 5, 267051);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 5);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 5, 267052);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 5);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 5, 267053);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 5);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 6, 267054);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 6);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 6, 267055);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 6);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 6, 267056);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 6);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 6, 267057);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 6);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 7, 267058);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 7);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 7, 267059);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 7);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 7, 267060);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 7);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 7, 267061);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 7);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 8, 267062);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 8);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 8, 267063);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 8);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 8, 267064);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 8);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 8, 267065);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 8);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 14, 267066);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 14);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 14, 267067);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 14);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 14, 267068);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 14);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 14, 267069);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 14);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 15, 267070);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 15);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 15, 267071);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 15);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 15, 267072);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 15);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 15, 267073);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 15);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 16, 267074);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 16);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 16, 267075);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 16);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 16, 267076);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 16);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 16, 267077);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 16);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 10, 267078);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 10);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 10, 267079);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 10);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 10, 267080);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 10);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 10, 267081);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 10);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 11, 267082);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 11);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 11, 267083);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 11);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 11, 267084);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 11);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 11, 267085);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 11);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 12, 267086);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 12);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 12, 267087);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 12);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 12, 267088);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 12);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 12, 267089);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 12);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 9, 267090);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 9);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 9, 267091);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 9);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 9, 267092);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 9);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 9, 267093);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 9);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 13, 267094);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 13);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 13, 267095);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 13);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 13, 267096);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 13);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 13, 267097);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 13);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 17, 267098);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 17);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 17, 267099);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 17);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 17, 267100);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 17);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 17, 267101);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 17);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'AIMARO', 0.00, 4, 267102);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'AIMARO', 0.00, 4);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CAIXA', 0.00, 4, 267103);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CAIXA', 0.00, 4);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'CASH', 0.00, 4, 267104);
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'CASH', 0.00, 4);
 
-  insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER, PROGRESS_RECID)
-  values (3813, 'INTERNET', 0.00, 4, 267105);
-
+    insert into crapthi (CDHISTOR, DSORIGEM, VLTARIFA, CDCOOPER)
+    values (3813, 'INTERNET', 0.00, 4);
   COMMIT;
 END;
