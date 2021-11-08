@@ -1,12 +1,33 @@
 DECLARE
 
+    CURSOR cr_crappre(pr_cdcooper IN crappre.cdcooper%TYPE) IS
+    SELECT pre.vllimman
+          ,pre.qtdiavig
+          ,pre.inpessoa
+          ,pre.cdcooper
+      FROM crappre pre
+     WHERE pre.cdcooper = pr_cdcooper
+       AND pre.tpprodut = 0;
+   
 BEGIN
 
   FOR rw_crapcop IN (SELECT cdcooper
                        FROM crapcop c
                       WHERE c.flgativo = 1) LOOP
+                      
+    
+    -- Replicar parametros de pre-aprovado de emprestimo para pre-aprovado de limites                  
+    FOR rw_crappre IN cr_crappre(pr_cdcooper => rw_crapcop.cdcooper) LOOP       
+      UPDATE crappre a
+         SET a.vllimman = rw_crappre.vllimman,
+             a.qtdiavig = rw_crappre.qtdiavig
+       WHERE a.cdcooper = rw_crappre.cdcooper
+         AND a.inpessoa = rw_crappre.inpessoa
+         AND a.tpprodut = 1;        
+    END LOOP;                
+                      
   
-    --Adicionar novo tipo de permissao - importacao manual Limite de credito
+    -- Adicionar novo tipo de permissao - importacao manual Limite de credito
     UPDATE craptel t
        SET t.cdopptel = t.cdopptel || ',X'
           ,t.lsopptel = t.lsopptel || ',IMP. MAN LIM'
