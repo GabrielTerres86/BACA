@@ -1,3 +1,5 @@
+begin
+
 update tbseg_prestamista p
 set p.tpcustei = 0
 where idseqtra in (SELECT p.idseqtra
@@ -11,7 +13,7 @@ AND ass.nrdconta = c.nrdconta
 AND p.tpregist <> 0
 and c.cdcooper = 1
 and idseqtra > 409221);
-
+commit;
 
 INSERT INTO craplau (craplau.cdcooper
 ,craplau.nrdconta
@@ -87,3 +89,7 @@ AND ass.nrdconta = c.nrdconta
 AND p.tpregist <> 0
 and c.cdcooper = 1
 and idseqtra > 409221;
+
+commit;
+
+end;
