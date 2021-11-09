@@ -13,7 +13,6 @@ AND ass.nrdconta = c.nrdconta
 AND p.tpregist <> 0
 and c.cdcooper = 1
 and idseqtra > 409221);
-commit;
 
 INSERT INTO craplau (craplau.cdcooper
 ,craplau.nrdconta
