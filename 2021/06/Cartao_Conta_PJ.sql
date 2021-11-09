@@ -17,7 +17,7 @@ BEGIN
 	SET crapcrd.cdcooper = vr_cooperativa
 	,crapcrd.nrdconta = vr_conta
 	,crapcrd.nrcpftit = 00904280993
-	,cdadmcrd = 15
+	,crapcrd.cdadmcrd = 15
 	WHERE crapcrd.nrcrcard = vr_cartao;
 
 	 
@@ -25,7 +25,7 @@ BEGIN
 	SET crawcrd.cdcooper = vr_cooperativa
 	,crawcrd.nrdconta = vr_conta
 	,crawcrd.nrcpftit = 00904280993
-	,cdadmcrd = 15
+	,crawcrd.cdadmcrd = 15
 	WHERE crawcrd.nrcrcard = vr_cartao;
 
 	COMMIT;
