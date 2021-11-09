@@ -51,7 +51,7 @@ select p.cdcooper
 ,1
 ,SYSDATE
 ,gene0002.fn_busca_time
-,c.dtmvtolt
+,sysdate+CRAPLAU_seq.nextval
 ,1
 ,100
 ,11910
