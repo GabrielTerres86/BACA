@@ -51,12 +51,12 @@ select p.cdcooper
 ,1
 ,SYSDATE
 ,gene0002.fn_busca_time
-,sysdate+CRAPLAU_seq.nextval
+,p.dtfimvig
 ,1
 ,100
 ,11910
 ,CRAPLAU_seq.nextval
-,p.nrctrseg
+,p.nrctrseg+CRAPLAU_seq.nextval
 ,3651
 ,'SEGU0001'
 ,1
