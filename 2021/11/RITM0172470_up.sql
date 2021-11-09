@@ -131,6 +131,8 @@ begin
     
     end loop rr_qbrsigilo;
     
+    commit;
+
  end;
 end;
 /
