@@ -9,94 +9,104 @@ DECLARE
   vr_nrdrowid    ROWID;
 
   CURSOR cr_crapass is
-    SELECT t.cdsitdct, t.cdcooper, t.nrdconta
-      FROM CRAPASS t
-     WHERE t.cdsitdct <> 8 and
-     ((t.cdcooper = 9 AND t.nrdconta IN (89559)) OR
-           (t.cdcooper = 6 AND t.nrdconta IN (167010)) OR
-           (t.cdcooper = 8 AND t.nrdconta IN (40800)) OR
-           (t.cdcooper = 10 AND t.nrdconta IN (27715)) OR
-           (t.cdcooper = 11 AND
-           t.nrdconta IN (63789,
-                            250112,
-                            558443,
-                            594032,
-                            468622,
-                            533300,
-                            412791,
-                            654221,
-                            405965,
-                            553190)) OR
-           (t.cdcooper = 7 AND t.nrdconta IN (312410, 173703, 301353)) OR
-           (t.cdcooper = 13 AND
-           t.nrdconta IN (240915,
-                            352292,
-                            266884,
-                            367150,
-                            170844,
-                            332330,
-                            339946,
-                            404527,
-                            327409,
-                            420875)) OR
-           (t.cdcooper = 5 AND
-           t.nrdconta IN (90883, 174599, 136310, 240010)) OR
-           (t.cdcooper = 16 AND
-           t.nrdconta IN
-           (615293, 11207, 580511, 597953, 653845, 654116, 509574, 572497)) OR
-           (t.cdcooper = 1 AND
-           t.nrdconta IN (9082700,
-                            11296496,
-                            7916604,
-                            11228270,
-                            26786,
-                            10978593,
-                            10956565,
-                            8365628,
-                            9329412,
-                            11004622,
-                            11347406,
-                            8449538,
-                            11373636,
-                            10749900,
-                            10866612,
-                            11242671,
-                            6413722,
-                            7784775,
-                            10764364,
-                            9399399,
-                            10776176,
-                            3524175,
-                            8426783,
-                            9899073,
-                            10027521,
-                            10139184,
-                            11438061,
-                            10571280,
-                            11064064,
-                            11116838,
-                            9373098,
-                            9794506,
-                            11278005,
-                            11139781,
-                            11102543,
-                            10949771,
-                            10925023,
-                            11198397,
-                            11820926,
-                            8854149,
-                            6939660,
-                            10911901,
-                            7753829,
-                            8861676,
-                            6345999,
-                            10282971,
-                            8607729,
-                            10219161,
-                            7726600,
-                            7726090)));
-
-  rg_crapass cr_crapass%rowtype;
+    SELECT a.cdsitdct, a.cdcooper, a.nrdconta
+      FROM CRAPASS a
+     WHERE a.cdsitdct <> 8
+       and ((a.cdcooper = 5 and a.nrdconta = 90883) or
+           (a.cdcooper = 5 and a.nrdconta = 174599) or
+           (a.cdcooper = 5 and a.nrdconta = 136310) or
+           (a.cdcooper = 5 and a.nrdconta = 240010) or
+           (a.cdcooper = 2 and a.nrdconta = 791865) or
+           (a.cdcooper = 2 and a.nrdconta = 834955) or
+           (a.cdcooper = 2 and a.nrdconta = 331376) or
+           (a.cdcooper = 2 and a.nrdconta = 641294) or
+           (a.cdcooper = 13 and a.nrdconta = 240915) or
+           (a.cdcooper = 13 and a.nrdconta = 352292) or
+           (a.cdcooper = 13 and a.nrdconta = 266884) or
+           (a.cdcooper = 13 and a.nrdconta = 367150) or
+           (a.cdcooper = 13 and a.nrdconta = 170844) or
+           (a.cdcooper = 13 and a.nrdconta = 332330) or
+           (a.cdcooper = 13 and a.nrdconta = 339946) or
+           (a.cdcooper = 13 and a.nrdconta = 404527) or
+           (a.cdcooper = 13 and a.nrdconta = 327409) or
+           (a.cdcooper = 13 and a.nrdconta = 420875) or
+           (a.cdcooper = 7 and a.nrdconta = 312410) or
+           (a.cdcooper = 7 and a.nrdconta = 173703) or
+           (a.cdcooper = 7 and a.nrdconta = 301353) or
+           (a.cdcooper = 8 and a.nrdconta = 40800) or
+           (a.cdcooper = 10 and a.nrdconta = 27715) or
+           (a.cdcooper = 11 and a.nrdconta = 63789) or
+           (a.cdcooper = 11 and a.nrdconta = 250112) or
+           (a.cdcooper = 11 and a.nrdconta = 558443) or
+           (a.cdcooper = 11 and a.nrdconta = 594032) or
+           (a.cdcooper = 11 and a.nrdconta = 468622) or
+           (a.cdcooper = 11 and a.nrdconta = 533300) or
+           (a.cdcooper = 11 and a.nrdconta = 412791) or
+           (a.cdcooper = 11 and a.nrdconta = 654221) or
+           (a.cdcooper = 11 and a.nrdconta = 405965) or
+           (a.cdcooper = 11 and a.nrdconta = 553190) or
+           (a.cdcooper = 9 and a.nrdconta = 89559) or
+           (a.cdcooper = 6 and a.nrdconta = 167010) or
+           (a.cdcooper = 1 and a.nrdconta = 9082700) or
+           (a.cdcooper = 1 and a.nrdconta = 11296496) or
+           (a.cdcooper = 1 and a.nrdconta = 7916604) or
+           (a.cdcooper = 1 and a.nrdconta = 11228270) or
+           (a.cdcooper = 1 and a.nrdconta = 26786) or
+           (a.cdcooper = 1 and a.nrdconta = 10978593) or
+           (a.cdcooper = 1 and a.nrdconta = 10956565) or
+           (a.cdcooper = 1 and a.nrdconta = 8365628) or
+           (a.cdcooper = 1 and a.nrdconta = 9329412) or
+           (a.cdcooper = 1 and a.nrdconta = 11004622) or
+           (a.cdcooper = 1 and a.nrdconta = 11347406) or
+           (a.cdcooper = 1 and a.nrdconta = 8449538) or
+           (a.cdcooper = 1 and a.nrdconta = 11373636) or
+           (a.cdcooper = 1 and a.nrdconta = 10749900) or
+           (a.cdcooper = 1 and a.nrdconta = 10866612) or
+           (a.cdcooper = 1 and a.nrdconta = 11242671) or
+           (a.cdcooper = 1 and a.nrdconta = 6413722) or
+           (a.cdcooper = 1 and a.nrdconta = 7784775) or
+           (a.cdcooper = 1 and a.nrdconta = 10764364) or
+           (a.cdcooper = 1 and a.nrdconta = 9399399) or
+           (a.cdcooper = 1 and a.nrdconta = 10776176) or
+           (a.cdcooper = 1 and a.nrdconta = 3524175) or
+           (a.cdcooper = 1 and a.nrdconta = 8426783) or
+           (a.cdcooper = 1 and a.nrdconta = 9899073) or
+           (a.cdcooper = 1 and a.nrdconta = 10027521) or
+           (a.cdcooper = 1 and a.nrdconta = 10139184) or
+           (a.cdcooper = 1 and a.nrdconta = 11438061) or
+           (a.cdcooper = 1 and a.nrdconta = 10571280) or
+           (a.cdcooper = 1 and a.nrdconta = 11064064) or
+           (a.cdcooper = 1 and a.nrdconta = 11116838) or
+           (a.cdcooper = 1 and a.nrdconta = 9373098) or
+           (a.cdcooper = 1 and a.nrdconta = 9794506) or
+           (a.cdcooper = 1 and a.nrdconta = 11278005) or
+           (a.cdcooper = 1 and a.nrdconta = 11139781) or
+           (a.cdcooper = 1 and a.nrdconta = 11102543) or
+           (a.cdcooper = 1 and a.nrdconta = 10949771) or
+           (a.cdcooper = 1 and a.nrdconta = 10925023) or
+           (a.cdcooper = 1 and a.nrdconta = 11198397) or
+           (a.cdcooper = 1 and a.nrdconta = 11820926) or
+           (a.cdcooper = 1 and a.nrdconta = 8854149) or
+           (a.cdcooper = 1 and a.nrdconta = 6939660) or
+           (a.cdcooper = 1 and a.nrdconta = 10911901) or
+           (a.cdcooper = 1 and a.nrdconta = 7753829) or
+           (a.cdcooper = 1 and a.nrdconta = 8861676) or
+           (a.cdcooper = 1 and a.nrdconta = 6345999) or
+           (a.cdcooper = 1 and a.nrdconta = 10282971) or
+           (a.cdcooper = 1 and a.nrdconta = 8607729) or
+           (a.cdcooper = 1 and a.nrdconta = 10219161) or
+           (a.cdcooper = 1 and a.nrdconta = 7726600) or
+           (a.cdcooper = 1 and a.nrdconta = 7726090) or
+           (a.cdcooper = 16 and a.nrdconta = 615293) or
+           (a.cdcooper = 16 and a.nrdconta = 11207) or
+           (a.cdcooper = 16 and a.nrdconta = 580511) or
+           (a.cdcooper = 16 and a.nrdconta = 597953) or
+           (a.cdcooper = 16 and a.nrdconta = 653845) or
+           (a.cdcooper = 16 and a.nrdconta = 654116) or
+           (a.cdcooper = 16 and a.nrdconta = 509574) or
+           (a.cdcooper = 16 and a.nrdconta = 572497));
+    
+     rg_crapass cr_crapass%rowtype;
 
 BEGIN
   vr_cdcooperold := null;
