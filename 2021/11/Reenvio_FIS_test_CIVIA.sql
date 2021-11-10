@@ -83,4 +83,5 @@ begin
                                     ,pr_dscritic               => vr_dscritic);
     END LOOP;                                
 
+    commit;
 end;
