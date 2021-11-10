@@ -1,18 +1,32 @@
+DECLARE
+
+  vr_cooperativa INTEGER;
+  vr_conta       INTEGER;
+  vr_cartao      NUMBER(25);
+
 BEGIN
+
+  -- Cooperativa de destino do cartão
+  vr_cooperativa := 6;
+  -- Conta de destino do cartão
+  vr_conta := 508632;
+  -- Numero do cartão que precisamos ajustar
+  vr_cartao := 5127070161674411;
+
 	UPDATE crapcrd
-	SET crapcrd.cdcooper = 16
-	,crapcrd.nrdconta = 205001
+	SET crapcrd.cdcooper = vr_cooperativa
+	,crapcrd.nrdconta = vr_conta
 	,crapcrd.nrcpftit = 00904280993
-	,cdadmcrd = 15
-	WHERE crapcrd.nrcrcard = 5161620000587872; --Djonata
+	,crapcrd.cdadmcrd = 15
+	WHERE crapcrd.nrcrcard = vr_cartao;
 
 	 
 	UPDATE crawcrd
-	SET crawcrd.cdcooper = 16
-	,crawcrd.nrdconta = 205001
+	SET crawcrd.cdcooper = vr_cooperativa
+	,crawcrd.nrdconta = vr_conta
 	,crawcrd.nrcpftit = 00904280993
-	,cdadmcrd = 15
-	WHERE crawcrd.nrcrcard = 5161620000587872;
+	,crawcrd.cdadmcrd = 15
+	WHERE crawcrd.nrcrcard = vr_cartao;
 
 	COMMIT;
 END;
