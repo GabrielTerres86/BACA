@@ -68,7 +68,7 @@ begin
                                     pr_dsxmlali     => vr_dsxmlali, -- XML de saida do pagamento
                                     pr_dscritic     => vr_dscritic); 
 
-        IF vr_dscritic IS NOT NULL THEN
+        IF vr_dscritic IS NOT NULL  THEN
             RAISE vr_exc_saida;
         END IF;
                                     
