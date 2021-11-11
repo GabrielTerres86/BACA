@@ -1,0 +1,10 @@
+begin
+   
+UPDATE TBCADAST_PESSOA_ATUALIZA
+   SET INSIT_ATUALIZA = 2
+ WHERE INSIT_ATUALIZA = 1
+   AND cdcooper = 7
+   and nrdconta = 397431;
+
+COMMIT;
+end;
