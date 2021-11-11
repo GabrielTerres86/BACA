@@ -1,0 +1,3928 @@
+--testar em ambiente individual
+
+begin
+
+delete tbepr_consignado_pagamento 
+where nrdconta = 180556
+and nrctremp = 54036
+and cdcooper = 13;
+
+delete crappep
+where nrdconta = 180556
+and nrctremp = 54036
+and cdcooper = 13;
+
+delete craplcm
+where nrdconta = 180556
+and cdcooper = 13
+and nrparepr > 0;
+
+delete tbepr_consig_parcelas_tmp a
+where nrdconta = 180556
+and cdcooper = 13
+and nrctremp = 54036
+and dtmovimento > sysdate -18;
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829116, 13, 180556, 54036, 23, 2, 302.15, 302.15, to_date('10-11-2021', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:47', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:14:57', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829117, 13, 180556, 54036, 24, 2, 297.75, 297.75, to_date('10-12-2021', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:47', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:14:57', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829118, 13, 180556, 54036, 25, 2, 293.27, 293.27, to_date('10-01-2022', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:47', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:01', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829119, 13, 180556, 54036, 26, 2, 288.86, 288.86, to_date('10-02-2022', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:47', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:02', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829120, 13, 180556, 54036, 27, 2, 284.93, 284.93, to_date('10-03-2022', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:47', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:02', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829121, 13, 180556, 54036, 28, 2, 280.64, 280.64, to_date('10-04-2022', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:47', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:04', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829122, 13, 180556, 54036, 29, 2, 276.56, 276.56, to_date('10-05-2022', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:47', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:08', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829123, 13, 180556, 54036, 30, 2, 272.40, 272.40, to_date('10-06-2022', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:47', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:07', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829124, 13, 180556, 54036, 31, 2, 268.43, 268.43, to_date('10-07-2022', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:47', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:09', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829125, 13, 180556, 54036, 32, 2, 264.39, 264.39, to_date('10-08-2022', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:47', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:09', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829126, 13, 180556, 54036, 33, 2, 260.41, 260.41, to_date('10-09-2022', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:48', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:14', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829127, 13, 180556, 54036, 34, 2, 256.62, 256.62, to_date('10-10-2022', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:48', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:15', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829128, 13, 180556, 54036, 35, 2, 252.76, 252.76, to_date('10-11-2022', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:48', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:21', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829129, 13, 180556, 54036, 36, 2, 249.08, 249.08, to_date('10-12-2022', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:48', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:21', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829130, 13, 180556, 54036, 37, 2, 245.33, 245.33, to_date('10-01-2023', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:48', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:25', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829131, 13, 180556, 54036, 38, 2, 241.64, 241.64, to_date('10-02-2023', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:48', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:27', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829132, 13, 180556, 54036, 39, 2, 238.36, 238.36, to_date('10-03-2023', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:49', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:32', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829133, 13, 180556, 54036, 40, 2, 234.77, 234.77, to_date('10-04-2023', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:49', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:31', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829134, 13, 180556, 54036, 41, 2, 231.35, 231.35, to_date('10-05-2023', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:49', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:32', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829135, 13, 180556, 54036, 42, 2, 227.87, 227.87, to_date('10-06-2023', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:49', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:37', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829136, 13, 180556, 54036, 43, 2, 224.55, 224.55, to_date('10-07-2023', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:49', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:37', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829137, 13, 180556, 54036, 44, 2, 221.17, 221.17, to_date('10-08-2023', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:50', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:38', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829138, 13, 180556, 54036, 45, 2, 217.85, 217.85, to_date('10-09-2023', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:50', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:17', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 1, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829139, 13, 180556, 54036, 46, 2, 214.67, 214.67, to_date('10-10-2023', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:50', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:39', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829140, 13, 180556, 54036, 47, 2, 211.44, 211.44, to_date('10-11-2023', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:50', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:49', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829141, 13, 180556, 54036, 48, 2, 208.36, 208.36, to_date('10-12-2023', 'dd-mm-yyyy'), 3, to_date('22-10-2021 11:25:51', 'dd-mm-yyyy hh24:mi:ss'), to_date('28-10-2021 09:15:49', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, null, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829142, 13, 180556, 54036, 49, 2, 205.23, 205.23, to_date('10-01-2024', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:51', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:20', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 2, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829143, 13, 180556, 54036, 50, 2, 202.14, 202.14, to_date('10-02-2024', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:51', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:21', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 3, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829144, 13, 180556, 54036, 51, 2, 199.30, 199.30, to_date('10-03-2024', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:52', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:22', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 4, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829145, 13, 180556, 54036, 52, 2, 196.30, 196.30, to_date('10-04-2024', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:52', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:23', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 5, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829146, 13, 180556, 54036, 53, 2, 193.44, 193.44, to_date('10-05-2024', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:52', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:24', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 6, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829147, 13, 180556, 54036, 54, 2, 190.53, 190.53, to_date('10-06-2024', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:53', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:26', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 7, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829148, 13, 180556, 54036, 55, 2, 187.75, 187.75, to_date('10-07-2024', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:53', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:27', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 8, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829149, 13, 180556, 54036, 56, 2, 184.93, 184.93, to_date('10-08-2024', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:53', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:28', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 9, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829150, 13, 180556, 54036, 57, 2, 182.15, 182.15, to_date('10-09-2024', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:54', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:29', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 10, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829151, 13, 180556, 54036, 58, 2, 179.49, 179.49, to_date('10-10-2024', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:54', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:30', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 11, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829152, 13, 180556, 54036, 59, 2, 176.79, 176.79, to_date('10-11-2024', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:55', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:31', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 12, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829153, 13, 180556, 54036, 60, 2, 174.22, 174.22, to_date('10-12-2024', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:55', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:32', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 13, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829154, 13, 180556, 54036, 61, 2, 171.60, 171.60, to_date('10-01-2025', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:55', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:33', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 14, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829155, 13, 180556, 54036, 62, 2, 169.02, 169.02, to_date('10-02-2025', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:56', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:34', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 15, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829156, 13, 180556, 54036, 63, 2, 166.72, 166.72, to_date('10-03-2025', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:56', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:35', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 16, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829157, 13, 180556, 54036, 64, 2, 164.21, 164.21, to_date('10-04-2025', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:57', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:36', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 17, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829158, 13, 180556, 54036, 65, 2, 161.82, 161.82, to_date('10-05-2025', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:57', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:37', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 18, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829159, 13, 180556, 54036, 66, 2, 159.38, 159.38, to_date('10-06-2025', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:58', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:38', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 19, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829160, 13, 180556, 54036, 67, 2, 157.06, 157.06, to_date('10-07-2025', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:58', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:39', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 20, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829161, 13, 180556, 54036, 68, 2, 154.70, 154.70, to_date('10-08-2025', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:59', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:40', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 21, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829162, 13, 180556, 54036, 69, 2, 152.37, 152.37, to_date('10-09-2025', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:25:59', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:41', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 22, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829163, 13, 180556, 54036, 70, 2, 150.15, 150.15, to_date('10-10-2025', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:00', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:42', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 23, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829164, 13, 180556, 54036, 71, 2, 147.90, 147.90, to_date('10-11-2025', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:00', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:43', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 24, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829165, 13, 180556, 54036, 72, 2, 145.74, 145.74, to_date('10-12-2025', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:01', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:44', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 25, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829166, 13, 180556, 54036, 73, 2, 143.55, 143.55, to_date('10-01-2026', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:01', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:45', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 26, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829167, 13, 180556, 54036, 74, 2, 141.39, 141.39, to_date('10-02-2026', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:02', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:45', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 27, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829168, 13, 180556, 54036, 75, 2, 139.47, 139.47, to_date('10-03-2026', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:02', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:46', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 28, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829169, 13, 180556, 54036, 76, 2, 137.37, 137.37, to_date('10-04-2026', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:03', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:47', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 29, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829170, 13, 180556, 54036, 77, 2, 135.37, 135.37, to_date('10-05-2026', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:03', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:48', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 30, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829171, 13, 180556, 54036, 78, 2, 133.33, 133.33, to_date('10-06-2026', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:04', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:50', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 31, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829172, 13, 180556, 54036, 79, 2, 131.39, 131.39, to_date('10-07-2026', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:04', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:51', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 32, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829173, 13, 180556, 54036, 80, 2, 129.41, 129.41, to_date('10-08-2026', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:05', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:52', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 33, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829174, 13, 180556, 54036, 81, 2, 127.47, 127.47, to_date('10-09-2026', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:06', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:53', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 34, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829175, 13, 180556, 54036, 82, 2, 125.61, 125.61, to_date('10-10-2026', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:06', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:54', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 35, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829176, 13, 180556, 54036, 83, 2, 123.72, 123.72, to_date('10-11-2026', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:07', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:54', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 36, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (829177, 13, 180556, 54036, 84, 2, 121.92, 121.92, to_date('10-12-2026', 'dd-mm-yyyy'), 2, to_date('22-10-2021 11:26:07', 'dd-mm-yyyy hh24:mi:ss'), to_date('22-10-2021 11:26:55', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130466', null, null, 37, to_date('22-10-2021', 'dd-mm-yyyy'));
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 1, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), to_date('10-01-2020', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340451, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 2, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), to_date('10-02-2020', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340452, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 3, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2020', 'dd-mm-yyyy'), to_date('09-03-2020', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340453, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 4, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2020', 'dd-mm-yyyy'), to_date('13-04-2020', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340454, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 5, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2020', 'dd-mm-yyyy'), to_date('11-05-2020', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340455, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 6, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), to_date('10-06-2020', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340456, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 7, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), to_date('10-07-2020', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340457, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 8, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), to_date('10-08-2020', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340458, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 9, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), to_date('10-09-2020', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340459, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 10, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), to_date('10-10-2020', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340460, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 11, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), to_date('10-11-2020', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340461, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 12, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), to_date('10-12-2020', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340462, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 13, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), to_date('10-01-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340463, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 14, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), to_date('10-02-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340464, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 15, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), to_date('10-03-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340465, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 16, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), to_date('10-04-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340466, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 20, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), to_date('10-08-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340470, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 17, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), to_date('10-05-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340467, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 18, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), to_date('10-06-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340468, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 19, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), to_date('10-07-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340469, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 21, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), to_date('10-09-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340471, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 22, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), to_date('10-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 305.12, 0.00, 0.00, 0.0000000000, 0.00, 305.1200000000, 150340472, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 23, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2021', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 0.00, 305.12, 0.00, 0.00, 305.1200000000, 0.00, 305.1200000000, 150340473, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 24, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2021', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 4.44, 305.12, 0.00, 0.00, 300.6800000000, 0.00, 305.1200000000, 150340474, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 25, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2022', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 8.97, 305.12, 0.00, 0.00, 296.1500000000, 0.00, 305.1200000000, 150340475, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 26, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2022', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 13.42, 305.12, 0.00, 0.00, 291.7000000000, 0.00, 305.1200000000, 150340476, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 27, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2022', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 17.39, 305.12, 0.00, 0.00, 287.7300000000, 0.00, 305.1200000000, 150340477, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 28, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2022', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 21.72, 305.12, 0.00, 0.00, 283.4000000000, 0.00, 305.1200000000, 150340478, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 32, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2022', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 38.13, 305.12, 0.00, 0.00, 266.9900000000, 0.00, 305.1200000000, 150340482, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 29, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2022', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 25.84, 305.12, 0.00, 0.00, 279.2800000000, 0.00, 305.1200000000, 150340479, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 30, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2022', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 30.05, 305.12, 0.00, 0.00, 275.0700000000, 0.00, 305.1200000000, 150340480, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 31, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2022', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 34.05, 305.12, 0.00, 0.00, 271.0700000000, 0.00, 305.1200000000, 150340481, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 33, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2022', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 42.15, 305.12, 0.00, 0.00, 262.9700000000, 0.00, 305.1200000000, 150340483, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 34, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2022', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 45.98, 305.12, 0.00, 0.00, 259.1400000000, 0.00, 305.1200000000, 150340484, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 35, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2022', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 49.88, 305.12, 0.00, 0.00, 255.2400000000, 0.00, 305.1200000000, 150340485, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 36, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2022', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 53.59, 305.12, 0.00, 0.00, 251.5300000000, 0.00, 305.1200000000, 150340486, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 37, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2023', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 57.38, 305.12, 0.00, 0.00, 247.7400000000, 0.00, 305.1200000000, 150340487, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 41, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2023', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 71.50, 305.12, 0.00, 0.00, 233.6200000000, 0.00, 305.1200000000, 150340491, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 38, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2023', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 61.10, 305.12, 0.00, 0.00, 244.0200000000, 0.00, 305.1200000000, 150340488, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 39, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2023', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 64.42, 305.12, 0.00, 0.00, 240.7000000000, 0.00, 305.1200000000, 150340489, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 40, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2023', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 68.04, 305.12, 0.00, 0.00, 237.0800000000, 0.00, 305.1200000000, 150340490, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 42, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2023', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 75.01, 305.12, 0.00, 0.00, 230.1100000000, 0.00, 305.1200000000, 150340492, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 43, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2023', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 78.36, 305.12, 0.00, 0.00, 226.7600000000, 0.00, 305.1200000000, 150340493, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 44, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2023', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 81.77, 305.12, 0.00, 0.00, 223.3500000000, 0.00, 305.1200000000, 150340494, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 45, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2023', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340495, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 46, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2023', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 88.34, 305.12, 0.00, 0.00, 216.7800000000, 0.00, 305.1200000000, 150340496, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 47, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2023', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 91.60, 305.12, 0.00, 0.00, 213.5200000000, 0.00, 305.1200000000, 150340497, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 48, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2023', 'dd-mm-yyyy'), null, 0.00, 0.00, 0.00, 0, 94.71, 305.12, 0.00, 0.00, 210.4100000000, 0.00, 305.1200000000, 150340498, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 49, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2024', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340499, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 50, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2024', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340500, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 51, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2024', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340501, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 52, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2024', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340502, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 53, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2024', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340503, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 54, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2024', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340504, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 55, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2024', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340505, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 56, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2024', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340506, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 57, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2024', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340507, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 58, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2024', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340508, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 59, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2024', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340509, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 60, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2024', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340510, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 64, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2025', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340514, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 61, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2025', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340511, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 62, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2025', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340512, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 63, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2025', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340513, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 65, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2025', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340515, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 66, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2025', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340516, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 67, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2025', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340517, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 68, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2025', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340518, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 69, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2025', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340519, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 70, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2025', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340520, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 71, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2025', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340521, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 72, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2025', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340522, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 73, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2026', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340523, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 74, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2026', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340524, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 75, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2026', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340525, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 76, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2026', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340526, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 77, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2026', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340527, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 78, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2026', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340528, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 79, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2026', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340529, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 80, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2026', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340530, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 81, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2026', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340531, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 82, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2026', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340532, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 83, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2026', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340533, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into crappep (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, VLPAREPR, VLJURPAR, VLMTAPAR, VLMRAPAR, VLMTZPAR, DTVENCTO, DTULTPAG, VLPAGPAR, VLPAGMTA, VLPAGMRA, INLIQUID, VLDESPAR, VLSDVPAR, VLJINPAR, VLPAGJIN, VLSDVATU, VLJURA60, VLSDVSJI, PROGRESS_RECID, INPREJUZ, DTREFATU, VLIOFCPL, VLIOFADC, VLTAXATU, VLPAGIOF, VLTARIOF, VLIOFPRI, DTDSTJUR, VLDSTCOR, VLDSTREM, INLQDREFIN)
+values (13, 180556, 54036, 84, 305.12, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2026', 'dd-mm-yyyy'), to_date('22-10-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 1, 0.00, 0.00, 0.00, 0.00, 0.0000000000, 0.00, 0.0000000000, 150340534, 0, to_date('10-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00000000, 0.00, 0.00, 0.00, null, null, null, null);
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 8, 108, 8, 302.15, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41147, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 23, 1251343603, 0, 0, 0, 0, '22/10/21 11:25:47,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 9, 108, 9, 297.75, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41147, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 24, 1251343604, 0, 0, 0, 0, '22/10/21 11:25:47,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 10, 108, 10, 293.27, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41147, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 25, 1251343605, 0, 0, 0, 0, '22/10/21 11:25:47,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 11, 108, 11, 288.86, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41147, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 26, 1251343606, 0, 0, 0, 0, '22/10/21 11:25:47,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 12, 108, 12, 284.93, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41147, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 27, 1251343607, 0, 0, 0, 0, '22/10/21 11:25:47,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 13, 108, 13, 280.64, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41147, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 28, 1251343608, 0, 0, 0, 0, '22/10/21 11:25:47,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 14, 108, 14, 276.56, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41147, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 29, 1251343609, 0, 0, 0, 0, '22/10/21 11:25:47,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 15, 108, 15, 272.40, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41147, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 30, 1251343610, 0, 0, 0, 0, '22/10/21 11:25:47,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 16, 108, 16, 268.43, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41147, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 31, 1251343611, 0, 0, 0, 0, '22/10/21 11:25:47,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 17, 108, 17, 264.39, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41147, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 32, 1251343612, 0, 0, 0, 0, '22/10/21 11:25:47,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 18, 108, 18, 260.41, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41148, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 33, 1251343613, 0, 0, 0, 0, '22/10/21 11:25:48,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 19, 108, 19, 256.62, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41148, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 34, 1251343614, 0, 0, 0, 0, '22/10/21 11:25:48,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 20, 108, 20, 252.76, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41148, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 35, 1251343615, 0, 0, 0, 0, '22/10/21 11:25:48,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 21, 108, 21, 249.08, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41148, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 36, 1251343616, 0, 0, 0, 0, '22/10/21 11:25:48,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 22, 108, 22, 245.33, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41148, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 37, 1251343617, 0, 0, 0, 0, '22/10/21 11:25:48,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 23, 108, 23, 241.64, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41148, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 38, 1251343618, 0, 0, 0, 0, '22/10/21 11:25:48,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 24, 108, 24, 238.36, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41149, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 39, 1251343619, 0, 0, 0, 0, '22/10/21 11:25:49,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 25, 108, 25, 234.77, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41149, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 40, 1251343620, 0, 0, 0, 0, '22/10/21 11:25:49,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 26, 108, 26, 231.35, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41149, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 41, 1251343621, 0, 0, 0, 0, '22/10/21 11:25:49,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 27, 108, 27, 227.87, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41149, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 42, 1251343622, 0, 0, 0, 0, '22/10/21 11:25:49,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 28, 108, 28, 224.55, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41149, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 43, 1251343623, 0, 0, 0, 0, '22/10/21 11:25:49,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 29, 108, 29, 221.17, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41150, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 44, 1251343626, 0, 0, 0, 0, '22/10/21 11:25:50,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 30, 108, 30, 217.85, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41150, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 45, 1251343629, 0, 0, 0, 0, '22/10/21 11:25:50,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 31, 108, 31, 214.67, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41150, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 46, 1251343630, 0, 0, 0, 0, '22/10/21 11:25:50,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 32, 108, 32, 211.44, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41150, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 47, 1251343631, 0, 0, 0, 0, '22/10/21 11:25:50,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 33, 108, 33, 208.36, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41151, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 48, 1251343632, 0, 0, 0, 0, '22/10/21 11:25:51,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 34, 108, 34, 205.23, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41151, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 49, 1251343633, 0, 0, 0, 0, '22/10/21 11:25:51,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 35, 108, 35, 202.14, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41151, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 50, 1251343634, 0, 0, 0, 0, '22/10/21 11:25:51,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 36, 108, 36, 199.30, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41152, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 51, 1251343635, 0, 0, 0, 0, '22/10/21 11:25:52,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 37, 108, 37, 196.30, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41152, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 52, 1251343636, 0, 0, 0, 0, '22/10/21 11:25:52,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 38, 108, 38, 193.44, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41152, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 53, 1251343637, 0, 0, 0, 0, '22/10/21 11:25:52,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 39, 108, 39, 190.53, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41153, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 54, 1251343638, 0, 0, 0, 0, '22/10/21 11:25:53,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 40, 108, 40, 187.75, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41153, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 55, 1251343639, 0, 0, 0, 0, '22/10/21 11:25:53,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 41, 108, 41, 184.93, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41153, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 56, 1251343640, 0, 0, 0, 0, '22/10/21 11:25:53,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 42, 108, 42, 182.15, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41154, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 57, 1251343641, 0, 0, 0, 0, '22/10/21 11:25:54,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 43, 108, 43, 179.49, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41154, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 58, 1251343644, 0, 0, 0, 0, '22/10/21 11:25:54,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 44, 108, 44, 176.79, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41155, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 59, 1251343645, 0, 0, 0, 0, '22/10/21 11:25:55,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 45, 108, 45, 174.22, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41155, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 60, 1251343646, 0, 0, 0, 0, '22/10/21 11:25:55,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 46, 108, 46, 171.60, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41155, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 61, 1251343647, 0, 0, 0, 0, '22/10/21 11:25:55,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 47, 108, 47, 169.02, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41156, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 62, 1251343648, 0, 0, 0, 0, '22/10/21 11:25:56,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 48, 108, 48, 166.72, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41156, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 63, 1251343649, 0, 0, 0, 0, '22/10/21 11:25:56,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 49, 108, 49, 164.21, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41157, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 64, 1251343650, 0, 0, 0, 0, '22/10/21 11:25:57,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 50, 108, 50, 161.82, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41157, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 65, 1251343651, 0, 0, 0, 0, '22/10/21 11:25:57,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 51, 108, 51, 159.38, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41158, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 66, 1251343674, 0, 0, 0, 0, '22/10/21 11:25:58,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 52, 108, 52, 157.06, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41158, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 67, 1251343675, 0, 0, 0, 0, '22/10/21 11:25:58,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 53, 108, 53, 154.70, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41159, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 68, 1251343676, 0, 0, 0, 0, '22/10/21 11:25:59,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 54, 108, 54, 152.37, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41159, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 69, 1251343677, 0, 0, 0, 0, '22/10/21 11:25:59,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 55, 108, 55, 150.15, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41160, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 70, 1251343679, 0, 0, 0, 0, '22/10/21 11:26:00,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 56, 108, 56, 147.90, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41160, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 71, 1251343681, 0, 0, 0, 0, '22/10/21 11:26:00,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 57, 108, 57, 145.74, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41161, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 72, 1251343682, 0, 0, 0, 0, '22/10/21 11:26:01,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 58, 108, 58, 143.55, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41161, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 73, 1251343683, 0, 0, 0, 0, '22/10/21 11:26:01,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 59, 108, 59, 141.39, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41162, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 74, 1251343684, 0, 0, 0, 0, '22/10/21 11:26:02,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 60, 108, 60, 139.47, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41162, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 75, 1251343685, 0, 0, 0, 0, '22/10/21 11:26:02,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 61, 108, 61, 137.37, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41163, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 76, 1251343686, 0, 0, 0, 0, '22/10/21 11:26:03,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 62, 108, 62, 135.37, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41163, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 77, 1251343688, 0, 0, 0, 0, '22/10/21 11:26:03,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 63, 108, 63, 133.33, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41164, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 78, 1251343689, 0, 0, 0, 0, '22/10/21 11:26:04,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 64, 108, 64, 131.39, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41164, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 79, 1251343690, 0, 0, 0, 0, '22/10/21 11:26:04,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 65, 108, 65, 129.41, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41165, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 80, 1251343712, 0, 0, 0, 0, '22/10/21 11:26:05,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 66, 108, 66, 127.47, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41166, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 81, 1251343713, 0, 0, 0, 0, '22/10/21 11:26:06,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 67, 108, 67, 125.61, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41166, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 82, 1251343714, 0, 0, 0, 0, '22/10/21 11:26:06,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 68, 108, 68, 123.72, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41167, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 83, 1251343715, 0, 0, 0, 0, '22/10/21 11:26:07,000000');
+
+insert into craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
+values (to_date('22-10-2021', 'dd-mm-yyyy'), 8, 100, 600014, 180556, 69, 108, 69, 121.92, 180556, '    54.036', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 41167, 'f0130466', ' ', 13, '00180556', ' ', 0, 0, 0, 84, 1251343716, 0, 0, 0, 0, '22/10/21 11:26:07,000000');
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 1, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 1, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 1, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 1, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 1, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 1, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 1, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 1, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 1, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 1, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 1, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 1, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 1, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 2, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 2, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 2, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 2, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 2, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 2, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 2, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 2, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 2, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 2, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 2, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 2, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 2, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 3, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('09-03-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 3, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('09-03-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 3, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('09-03-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 3, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('09-03-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 3, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('09-03-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 3, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('09-03-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 3, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('09-03-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 3, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('09-03-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 3, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('09-03-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 3, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('09-03-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 3, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('09-03-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 3, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('09-03-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 3, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('09-03-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 4, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('13-04-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 4, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('13-04-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 4, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('13-04-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 4, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('13-04-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 4, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('13-04-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 4, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('13-04-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 4, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('13-04-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 4, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('13-04-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 4, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('13-04-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 4, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('13-04-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 4, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('13-04-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 4, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('13-04-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 4, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('13-04-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 5, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('11-05-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 5, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('11-05-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 5, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('11-05-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 5, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('11-05-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 5, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('11-05-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 5, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('11-05-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 5, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('11-05-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 5, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('11-05-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 5, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('11-05-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 5, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('11-05-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 5, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('11-05-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 5, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('11-05-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 5, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('11-05-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 6, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 6, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 6, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 6, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 6, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 6, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 6, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 6, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 6, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 6, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 6, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 6, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 6, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 7, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 7, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 7, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 7, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 7, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 7, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 7, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 7, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 7, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 7, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 7, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 7, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 7, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 8, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 8, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 8, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 8, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 8, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 8, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 8, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 8, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 8, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 8, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 8, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 8, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 8, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 9, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 9, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 9, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 9, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 9, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 9, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 9, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 9, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 9, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 9, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 9, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 9, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 9, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 10, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 10, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 10, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 10, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 10, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 10, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 10, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 10, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 10, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 10, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 10, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 10, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 10, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 11, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 11, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 11, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 11, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 11, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 11, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 11, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 11, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 11, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 11, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 11, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 11, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 11, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-11-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 12, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 12, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 12, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 12, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 12, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 12, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 12, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 12, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 12, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 12, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 12, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 12, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 12, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-12-2020', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 13, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 13, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 13, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 13, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 13, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 13, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 13, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 13, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 13, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 13, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 13, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 13, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 13, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-01-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 14, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 14, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 14, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 14, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 14, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 14, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 14, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 14, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 14, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 14, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 14, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 14, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 14, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-02-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 15, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 15, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 15, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 15, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 15, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 15, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 15, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 15, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 15, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 15, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 15, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 15, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 15, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-03-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 16, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 16, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 16, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 16, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 16, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 16, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 16, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 16, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 16, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 16, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 16, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 16, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 16, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-04-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 17, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 17, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 17, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 17, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 17, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 17, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 17, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 17, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 17, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 17, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 17, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 17, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 17, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-05-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 18, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 18, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 18, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 18, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 18, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 18, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 18, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 18, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 18, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 18, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 18, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 18, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 18, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-06-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 19, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 19, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 19, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 19, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 19, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 19, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 19, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 19, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 19, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 19, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 19, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 19, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 19, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-07-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 20, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 20, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 20, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 20, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 20, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 20, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 20, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 20, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 20, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 20, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 20, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 20, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 20, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-08-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 21, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 21, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 21, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 21, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 21, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 21, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 21, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 21, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 21, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 21, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 21, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 21, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 21, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-09-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 22, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 22, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 22, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 22, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 22, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 22, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 22, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 22, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 22, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 22, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 22, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 22, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 22, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('10-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 23, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 302.74, 0.00, 0.00, 0.00, 2.38, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 23, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 302.89, 0.00, 0.00, 0.00, 2.23, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 23, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 303.04, 0.00, 0.00, 0.00, 2.08, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 23, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 303.19, 0.00, 0.00, 0.00, 1.93, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 23, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 303.33, 0.00, 0.00, 0.00, 1.79, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 23, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 303.78, 0.00, 0.00, 0.00, 1.34, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 23, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 303.93, 0.00, 0.00, 0.00, 1.19, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 23, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 304.08, 0.00, 0.00, 0.00, 1.04, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 23, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 304.23, 0.00, 0.00, 0.00, 0.89, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 23, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 304.37, 0.00, 0.00, 0.00, 0.75, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 23, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 304.82, 0.00, 0.00, 0.00, 0.30, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 23, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 304.97, 0.00, 0.00, 0.00, 0.15, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 23, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 305.12, 0.00, 0.00, 0.00, 0.00, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 24, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 298.33, 0.00, 0.00, 0.00, 6.79, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 24, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 298.48, 0.00, 0.00, 0.00, 6.64, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 24, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 298.63, 0.00, 0.00, 0.00, 6.49, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 24, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 298.77, 0.00, 0.00, 0.00, 6.35, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 24, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 298.92, 0.00, 0.00, 0.00, 6.20, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 24, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 299.36, 0.00, 0.00, 0.00, 5.76, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 24, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 299.50, 0.00, 0.00, 0.00, 5.62, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 24, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 299.65, 0.00, 0.00, 0.00, 5.47, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 24, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 299.80, 0.00, 0.00, 0.00, 5.32, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 24, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 299.94, 0.00, 0.00, 0.00, 5.18, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 24, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 300.38, 0.00, 0.00, 0.00, 4.74, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 24, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 300.53, 0.00, 0.00, 0.00, 4.59, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 24, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 300.68, 0.00, 0.00, 0.00, 4.44, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 25, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 293.85, 0.00, 0.00, 0.00, 11.27, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 25, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 293.99, 0.00, 0.00, 0.00, 11.13, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 25, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 294.13, 0.00, 0.00, 0.00, 10.99, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 25, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 294.28, 0.00, 0.00, 0.00, 10.84, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 25, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 294.42, 0.00, 0.00, 0.00, 10.70, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 25, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 294.85, 0.00, 0.00, 0.00, 10.27, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 25, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 295.00, 0.00, 0.00, 0.00, 10.12, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 25, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 295.14, 0.00, 0.00, 0.00, 9.98, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 25, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 295.29, 0.00, 0.00, 0.00, 9.83, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 25, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 295.43, 0.00, 0.00, 0.00, 9.69, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 25, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 295.86, 0.00, 0.00, 0.00, 9.26, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 25, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 296.01, 0.00, 0.00, 0.00, 9.11, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 25, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 296.15, 0.00, 0.00, 0.00, 8.97, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 26, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 289.42, 0.00, 0.00, 0.00, 15.70, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 26, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 289.57, 0.00, 0.00, 0.00, 15.55, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 26, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 289.71, 0.00, 0.00, 0.00, 15.41, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 26, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 289.85, 0.00, 0.00, 0.00, 15.27, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 26, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 289.99, 0.00, 0.00, 0.00, 15.13, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 26, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 290.42, 0.00, 0.00, 0.00, 14.70, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 26, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 290.56, 0.00, 0.00, 0.00, 14.56, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 26, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 290.70, 0.00, 0.00, 0.00, 14.42, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 26, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 290.84, 0.00, 0.00, 0.00, 14.28, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 26, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 290.99, 0.00, 0.00, 0.00, 14.13, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 26, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 291.41, 0.00, 0.00, 0.00, 13.71, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 26, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 291.55, 0.00, 0.00, 0.00, 13.57, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 26, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 291.70, 0.00, 0.00, 0.00, 13.42, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 27, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 285.49, 0.00, 0.00, 0.00, 19.63, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 27, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 285.63, 0.00, 0.00, 0.00, 19.49, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 27, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 285.77, 0.00, 0.00, 0.00, 19.35, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 27, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 285.91, 0.00, 0.00, 0.00, 19.21, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 27, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 286.05, 0.00, 0.00, 0.00, 19.07, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 27, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 286.47, 0.00, 0.00, 0.00, 18.65, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 27, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 286.61, 0.00, 0.00, 0.00, 18.51, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 27, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 286.75, 0.00, 0.00, 0.00, 18.37, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 27, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 286.89, 0.00, 0.00, 0.00, 18.23, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 27, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 287.03, 0.00, 0.00, 0.00, 18.09, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 27, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 287.45, 0.00, 0.00, 0.00, 17.67, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 27, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 287.59, 0.00, 0.00, 0.00, 17.53, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 27, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 287.73, 0.00, 0.00, 0.00, 17.39, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 28, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 281.19, 0.00, 0.00, 0.00, 23.93, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 28, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 281.33, 0.00, 0.00, 0.00, 23.79, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 28, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 281.47, 0.00, 0.00, 0.00, 23.65, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 28, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 281.61, 0.00, 0.00, 0.00, 23.51, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 28, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 281.74, 0.00, 0.00, 0.00, 23.38, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 28, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 282.16, 0.00, 0.00, 0.00, 22.96, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 28, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 282.30, 0.00, 0.00, 0.00, 22.82, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 28, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 282.43, 0.00, 0.00, 0.00, 22.69, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 28, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 282.57, 0.00, 0.00, 0.00, 22.55, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 28, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 282.71, 0.00, 0.00, 0.00, 22.41, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 28, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 283.13, 0.00, 0.00, 0.00, 21.99, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 28, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 283.26, 0.00, 0.00, 0.00, 21.86, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 28, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 283.40, 0.00, 0.00, 0.00, 21.72, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 29, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 277.10, 0.00, 0.00, 0.00, 28.02, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 29, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 277.23, 0.00, 0.00, 0.00, 27.89, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 29, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 277.37, 0.00, 0.00, 0.00, 27.75, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 29, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 277.51, 0.00, 0.00, 0.00, 27.61, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 29, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 277.64, 0.00, 0.00, 0.00, 27.48, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 29, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 278.05, 0.00, 0.00, 0.00, 27.07, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 29, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 278.18, 0.00, 0.00, 0.00, 26.94, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 29, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 278.32, 0.00, 0.00, 0.00, 26.80, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 29, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 278.46, 0.00, 0.00, 0.00, 26.66, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 29, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 278.59, 0.00, 0.00, 0.00, 26.53, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 29, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 279.00, 0.00, 0.00, 0.00, 26.12, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 29, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 279.14, 0.00, 0.00, 0.00, 25.98, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 29, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 279.28, 0.00, 0.00, 0.00, 25.84, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 30, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 272.93, 0.00, 0.00, 0.00, 32.19, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 30, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 273.06, 0.00, 0.00, 0.00, 32.06, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 30, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 273.20, 0.00, 0.00, 0.00, 31.92, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 30, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 273.33, 0.00, 0.00, 0.00, 31.79, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 30, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 273.46, 0.00, 0.00, 0.00, 31.66, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 30, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 273.87, 0.00, 0.00, 0.00, 31.25, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 30, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 274.00, 0.00, 0.00, 0.00, 31.12, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 30, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 274.13, 0.00, 0.00, 0.00, 30.99, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 30, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 274.27, 0.00, 0.00, 0.00, 30.85, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 30, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 274.40, 0.00, 0.00, 0.00, 30.72, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 30, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 274.80, 0.00, 0.00, 0.00, 30.32, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 30, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 274.94, 0.00, 0.00, 0.00, 30.18, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 30, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 275.07, 0.00, 0.00, 0.00, 30.05, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 31, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 268.96, 0.00, 0.00, 0.00, 36.16, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 31, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 269.09, 0.00, 0.00, 0.00, 36.03, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 31, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 269.22, 0.00, 0.00, 0.00, 35.90, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 31, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 269.35, 0.00, 0.00, 0.00, 35.77, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 31, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 269.48, 0.00, 0.00, 0.00, 35.64, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 31, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 269.88, 0.00, 0.00, 0.00, 35.24, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 31, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 270.01, 0.00, 0.00, 0.00, 35.11, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 31, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 270.14, 0.00, 0.00, 0.00, 34.98, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 31, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 270.27, 0.00, 0.00, 0.00, 34.85, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 31, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 270.41, 0.00, 0.00, 0.00, 34.71, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 31, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 270.80, 0.00, 0.00, 0.00, 34.32, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 31, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 270.94, 0.00, 0.00, 0.00, 34.18, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 31, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 271.07, 0.00, 0.00, 0.00, 34.05, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 32, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 264.91, 0.00, 0.00, 0.00, 40.21, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 32, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 265.04, 0.00, 0.00, 0.00, 40.08, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 32, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 265.17, 0.00, 0.00, 0.00, 39.95, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 32, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 265.30, 0.00, 0.00, 0.00, 39.82, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 32, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 265.43, 0.00, 0.00, 0.00, 39.69, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 32, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 265.82, 0.00, 0.00, 0.00, 39.30, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 32, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 265.95, 0.00, 0.00, 0.00, 39.17, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 32, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 266.08, 0.00, 0.00, 0.00, 39.04, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 32, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 266.21, 0.00, 0.00, 0.00, 38.91, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 32, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 266.34, 0.00, 0.00, 0.00, 38.78, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 32, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 266.73, 0.00, 0.00, 0.00, 38.39, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 32, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 266.86, 0.00, 0.00, 0.00, 38.26, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 32, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 266.99, 0.00, 0.00, 0.00, 38.13, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 33, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 260.92, 0.00, 0.00, 0.00, 44.20, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 33, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 261.05, 0.00, 0.00, 0.00, 44.07, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 33, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 261.18, 0.00, 0.00, 0.00, 43.94, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 33, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 261.31, 0.00, 0.00, 0.00, 43.81, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 33, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 261.43, 0.00, 0.00, 0.00, 43.69, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 33, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 261.82, 0.00, 0.00, 0.00, 43.30, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 33, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 261.95, 0.00, 0.00, 0.00, 43.17, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 33, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 262.07, 0.00, 0.00, 0.00, 43.05, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 33, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 262.20, 0.00, 0.00, 0.00, 42.92, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 33, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 262.33, 0.00, 0.00, 0.00, 42.79, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 33, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 262.72, 0.00, 0.00, 0.00, 42.40, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 33, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 262.84, 0.00, 0.00, 0.00, 42.28, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 33, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 262.97, 0.00, 0.00, 0.00, 42.15, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 34, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 257.12, 0.00, 0.00, 0.00, 48.00, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 34, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 257.25, 0.00, 0.00, 0.00, 47.87, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 34, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 257.38, 0.00, 0.00, 0.00, 47.74, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 34, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 257.50, 0.00, 0.00, 0.00, 47.62, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 34, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 257.63, 0.00, 0.00, 0.00, 47.49, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 34, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 258.01, 0.00, 0.00, 0.00, 47.11, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 34, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 258.13, 0.00, 0.00, 0.00, 46.99, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 34, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 258.26, 0.00, 0.00, 0.00, 46.86, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 34, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 258.38, 0.00, 0.00, 0.00, 46.74, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 34, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 258.51, 0.00, 0.00, 0.00, 46.61, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 34, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 258.89, 0.00, 0.00, 0.00, 46.23, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 34, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 259.02, 0.00, 0.00, 0.00, 46.10, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 34, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 259.14, 0.00, 0.00, 0.00, 45.98, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 35, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 253.26, 0.00, 0.00, 0.00, 51.86, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 35, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 253.38, 0.00, 0.00, 0.00, 51.74, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 35, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 253.50, 0.00, 0.00, 0.00, 51.62, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 35, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 253.63, 0.00, 0.00, 0.00, 51.49, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 35, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 253.75, 0.00, 0.00, 0.00, 51.37, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 35, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 254.12, 0.00, 0.00, 0.00, 51.00, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 35, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 254.25, 0.00, 0.00, 0.00, 50.87, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 35, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 254.37, 0.00, 0.00, 0.00, 50.75, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 35, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 254.50, 0.00, 0.00, 0.00, 50.62, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 35, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 254.62, 0.00, 0.00, 0.00, 50.50, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 35, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 255.00, 0.00, 0.00, 0.00, 50.12, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 35, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 255.12, 0.00, 0.00, 0.00, 50.00, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 35, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 255.24, 0.00, 0.00, 0.00, 49.88, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 36, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 249.57, 0.00, 0.00, 0.00, 55.55, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 36, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 249.69, 0.00, 0.00, 0.00, 55.43, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 36, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 249.81, 0.00, 0.00, 0.00, 55.31, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 36, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 249.93, 0.00, 0.00, 0.00, 55.19, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 36, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 250.06, 0.00, 0.00, 0.00, 55.06, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 36, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 250.42, 0.00, 0.00, 0.00, 54.70, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 36, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 250.55, 0.00, 0.00, 0.00, 54.57, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 36, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 250.67, 0.00, 0.00, 0.00, 54.45, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 36, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 250.79, 0.00, 0.00, 0.00, 54.33, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 36, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 250.91, 0.00, 0.00, 0.00, 54.21, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 36, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 251.28, 0.00, 0.00, 0.00, 53.84, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 36, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 251.40, 0.00, 0.00, 0.00, 53.72, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 36, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 251.53, 0.00, 0.00, 0.00, 53.59, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 37, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 245.81, 0.00, 0.00, 0.00, 59.31, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 37, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 245.93, 0.00, 0.00, 0.00, 59.19, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 37, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 246.05, 0.00, 0.00, 0.00, 59.07, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 37, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 246.17, 0.00, 0.00, 0.00, 58.95, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 37, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 246.29, 0.00, 0.00, 0.00, 58.83, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 37, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 246.66, 0.00, 0.00, 0.00, 58.46, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 37, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 246.78, 0.00, 0.00, 0.00, 58.34, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 37, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 246.90, 0.00, 0.00, 0.00, 58.22, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 37, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 247.02, 0.00, 0.00, 0.00, 58.10, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 37, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 247.14, 0.00, 0.00, 0.00, 57.98, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 37, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 247.50, 0.00, 0.00, 0.00, 57.62, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 37, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 247.62, 0.00, 0.00, 0.00, 57.50, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 37, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 247.74, 0.00, 0.00, 0.00, 57.38, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 38, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 242.11, 0.00, 0.00, 0.00, 63.01, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 38, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 242.23, 0.00, 0.00, 0.00, 62.89, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 38, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 242.35, 0.00, 0.00, 0.00, 62.77, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 38, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 242.47, 0.00, 0.00, 0.00, 62.65, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 38, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 242.59, 0.00, 0.00, 0.00, 62.53, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 38, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 242.94, 0.00, 0.00, 0.00, 62.18, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 38, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 243.06, 0.00, 0.00, 0.00, 62.06, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 38, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 243.18, 0.00, 0.00, 0.00, 61.94, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 38, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 243.30, 0.00, 0.00, 0.00, 61.82, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 38, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 243.42, 0.00, 0.00, 0.00, 61.70, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 38, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 243.78, 0.00, 0.00, 0.00, 61.34, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 38, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 243.90, 0.00, 0.00, 0.00, 61.22, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 38, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 244.02, 0.00, 0.00, 0.00, 61.10, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 39, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 238.82, 0.00, 0.00, 0.00, 66.30, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 39, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 238.94, 0.00, 0.00, 0.00, 66.18, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 39, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 239.06, 0.00, 0.00, 0.00, 66.06, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 39, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 239.17, 0.00, 0.00, 0.00, 65.95, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 39, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 239.29, 0.00, 0.00, 0.00, 65.83, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 39, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 239.64, 0.00, 0.00, 0.00, 65.48, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 39, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 239.76, 0.00, 0.00, 0.00, 65.36, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 39, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 239.88, 0.00, 0.00, 0.00, 65.24, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 39, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 239.99, 0.00, 0.00, 0.00, 65.13, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 39, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 240.11, 0.00, 0.00, 0.00, 65.01, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 39, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 240.46, 0.00, 0.00, 0.00, 64.66, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 39, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 240.58, 0.00, 0.00, 0.00, 64.54, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 39, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 240.70, 0.00, 0.00, 0.00, 64.42, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 40, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 235.23, 0.00, 0.00, 0.00, 69.89, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 40, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 235.34, 0.00, 0.00, 0.00, 69.78, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 40, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 235.46, 0.00, 0.00, 0.00, 69.66, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 40, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 235.57, 0.00, 0.00, 0.00, 69.55, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 40, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 235.69, 0.00, 0.00, 0.00, 69.43, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 40, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 236.04, 0.00, 0.00, 0.00, 69.08, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 40, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 236.15, 0.00, 0.00, 0.00, 68.97, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 40, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 236.27, 0.00, 0.00, 0.00, 68.85, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 40, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 236.38, 0.00, 0.00, 0.00, 68.74, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 40, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 236.50, 0.00, 0.00, 0.00, 68.62, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 40, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 236.85, 0.00, 0.00, 0.00, 68.27, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 40, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 236.96, 0.00, 0.00, 0.00, 68.16, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 40, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 237.08, 0.00, 0.00, 0.00, 68.04, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 41, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 231.80, 0.00, 0.00, 0.00, 73.32, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 41, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 231.92, 0.00, 0.00, 0.00, 73.20, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 41, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 232.03, 0.00, 0.00, 0.00, 73.09, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 41, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 232.14, 0.00, 0.00, 0.00, 72.98, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 41, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 232.26, 0.00, 0.00, 0.00, 72.86, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 41, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 232.60, 0.00, 0.00, 0.00, 72.52, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 41, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 232.71, 0.00, 0.00, 0.00, 72.41, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 41, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 232.83, 0.00, 0.00, 0.00, 72.29, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 41, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 232.94, 0.00, 0.00, 0.00, 72.18, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 41, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 233.05, 0.00, 0.00, 0.00, 72.07, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 41, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 233.40, 0.00, 0.00, 0.00, 71.72, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 41, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 233.51, 0.00, 0.00, 0.00, 71.61, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 41, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 233.62, 0.00, 0.00, 0.00, 71.50, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 42, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 228.32, 0.00, 0.00, 0.00, 76.80, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 42, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 228.43, 0.00, 0.00, 0.00, 76.69, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 42, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 228.54, 0.00, 0.00, 0.00, 76.58, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 42, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 228.65, 0.00, 0.00, 0.00, 76.47, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 42, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 228.76, 0.00, 0.00, 0.00, 76.36, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 42, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 229.10, 0.00, 0.00, 0.00, 76.02, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 42, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 229.21, 0.00, 0.00, 0.00, 75.91, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 42, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 229.32, 0.00, 0.00, 0.00, 75.80, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 42, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 229.44, 0.00, 0.00, 0.00, 75.68, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 42, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 229.55, 0.00, 0.00, 0.00, 75.57, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 42, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 229.88, 0.00, 0.00, 0.00, 75.24, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 42, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 230.00, 0.00, 0.00, 0.00, 75.12, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 42, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 230.11, 0.00, 0.00, 0.00, 75.01, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 43, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 224.99, 0.00, 0.00, 0.00, 80.13, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 43, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 225.10, 0.00, 0.00, 0.00, 80.02, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 43, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 225.21, 0.00, 0.00, 0.00, 79.91, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 43, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 225.32, 0.00, 0.00, 0.00, 79.80, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 43, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 225.43, 0.00, 0.00, 0.00, 79.69, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 43, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 225.76, 0.00, 0.00, 0.00, 79.36, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 43, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 225.87, 0.00, 0.00, 0.00, 79.25, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 43, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 225.98, 0.00, 0.00, 0.00, 79.14, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 43, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 226.09, 0.00, 0.00, 0.00, 79.03, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 43, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 226.20, 0.00, 0.00, 0.00, 78.92, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 43, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 226.54, 0.00, 0.00, 0.00, 78.58, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 43, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 226.65, 0.00, 0.00, 0.00, 78.47, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 43, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 226.76, 0.00, 0.00, 0.00, 78.36, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 44, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 221.61, 0.00, 0.00, 0.00, 83.51, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 44, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 221.71, 0.00, 0.00, 0.00, 83.41, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 44, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 221.82, 0.00, 0.00, 0.00, 83.30, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 44, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 221.93, 0.00, 0.00, 0.00, 83.19, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 44, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 222.04, 0.00, 0.00, 0.00, 83.08, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 44, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 222.37, 0.00, 0.00, 0.00, 82.75, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 44, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 222.47, 0.00, 0.00, 0.00, 82.65, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 44, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 222.58, 0.00, 0.00, 0.00, 82.54, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 44, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 222.69, 0.00, 0.00, 0.00, 82.43, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 44, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 222.80, 0.00, 0.00, 0.00, 82.32, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 44, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 223.13, 0.00, 0.00, 0.00, 81.99, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 44, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 223.24, 0.00, 0.00, 0.00, 81.88, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 44, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 223.35, 0.00, 0.00, 0.00, 81.77, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 45, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 45, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 45, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 45, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 45, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 45, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 45, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 45, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 45, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 45, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 45, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 45, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 45, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 46, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 215.09, 0.00, 0.00, 0.00, 90.03, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 46, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 215.20, 0.00, 0.00, 0.00, 89.92, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 46, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 215.30, 0.00, 0.00, 0.00, 89.82, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 46, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 215.41, 0.00, 0.00, 0.00, 89.71, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 46, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 215.51, 0.00, 0.00, 0.00, 89.61, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 46, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 215.83, 0.00, 0.00, 0.00, 89.29, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 46, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 215.94, 0.00, 0.00, 0.00, 89.18, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 46, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 216.04, 0.00, 0.00, 0.00, 89.08, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 46, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 216.15, 0.00, 0.00, 0.00, 88.97, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 46, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 216.25, 0.00, 0.00, 0.00, 88.87, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 46, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 216.57, 0.00, 0.00, 0.00, 88.55, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 46, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 216.68, 0.00, 0.00, 0.00, 88.44, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 46, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 216.78, 0.00, 0.00, 0.00, 88.34, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 47, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 211.86, 0.00, 0.00, 0.00, 93.26, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 47, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 211.96, 0.00, 0.00, 0.00, 93.16, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 47, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 212.07, 0.00, 0.00, 0.00, 93.05, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 47, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 212.17, 0.00, 0.00, 0.00, 92.95, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 47, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 212.27, 0.00, 0.00, 0.00, 92.85, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 47, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 212.58, 0.00, 0.00, 0.00, 92.54, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 47, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 212.69, 0.00, 0.00, 0.00, 92.43, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 47, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 212.79, 0.00, 0.00, 0.00, 92.33, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 47, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 212.90, 0.00, 0.00, 0.00, 92.22, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 47, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 213.00, 0.00, 0.00, 0.00, 92.12, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 47, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 213.31, 0.00, 0.00, 0.00, 91.81, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 47, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 213.42, 0.00, 0.00, 0.00, 91.70, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 47, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 213.52, 0.00, 0.00, 0.00, 91.60, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 48, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 208.77, 0.00, 0.00, 0.00, 96.35, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 48, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 208.87, 0.00, 0.00, 0.00, 96.25, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 48, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 208.98, 0.00, 0.00, 0.00, 96.14, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 48, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 209.08, 0.00, 0.00, 0.00, 96.04, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 48, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 209.18, 0.00, 0.00, 0.00, 95.94, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 48, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 209.49, 0.00, 0.00, 0.00, 95.63, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 48, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 209.59, 0.00, 0.00, 0.00, 95.53, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 48, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 209.69, 0.00, 0.00, 0.00, 95.43, null, '0', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 48, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 209.80, 0.00, 0.00, 0.00, 95.32, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 48, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 209.90, 0.00, 0.00, 0.00, 95.22, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 48, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 210.21, 0.00, 0.00, 0.00, 94.91, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 48, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 210.31, 0.00, 0.00, 0.00, 94.81, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 48, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 210.41, 0.00, 0.00, 0.00, 94.71, null, '0', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 49, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 49, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 49, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 49, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 49, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 49, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 49, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 49, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 49, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 49, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 49, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 49, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 49, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 50, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 50, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 50, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 50, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 50, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 50, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 50, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 50, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 50, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 50, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 50, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 50, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 50, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 51, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 51, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 51, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 51, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 51, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 51, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 51, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 51, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 51, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 51, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 51, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 51, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 51, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 52, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 52, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 52, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 52, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 52, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 52, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 52, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 52, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 52, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 52, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 52, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 52, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 52, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 53, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 53, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 53, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 53, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 53, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 53, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 53, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 53, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 53, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 53, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 53, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 53, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 53, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 54, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 54, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 54, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 54, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 54, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 54, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 54, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 54, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 54, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 54, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 54, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 54, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 54, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 55, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 55, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 55, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 55, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 55, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 55, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 55, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 55, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 55, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 55, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 55, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 55, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 55, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 56, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 56, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 56, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 56, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 56, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 56, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 56, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 56, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 56, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 56, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 56, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 56, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 56, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 57, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 57, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 57, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 57, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 57, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 57, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 57, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 57, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 57, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 57, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 57, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 57, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 57, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 58, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 58, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 58, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 58, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 58, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 58, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 58, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 58, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 58, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 58, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 58, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 58, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 58, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 59, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 59, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 59, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 59, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 59, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 59, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 59, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 59, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 59, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 59, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 59, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 59, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 59, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 60, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 60, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 60, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 60, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 60, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 60, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 60, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 60, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 60, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 60, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 60, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 60, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 60, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 61, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 61, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 61, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 61, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 61, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 61, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 61, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 61, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 61, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 61, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 61, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 61, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 61, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 62, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 62, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 62, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 62, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 62, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 62, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 62, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 62, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 62, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 62, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 62, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 62, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 62, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 63, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 63, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 63, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 63, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 63, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 63, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 63, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 63, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 63, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 63, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 63, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 63, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 63, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 64, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 64, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 64, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 64, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 64, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 64, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 64, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 64, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 64, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 64, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 64, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 64, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 64, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 65, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 65, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 65, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 65, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 65, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 65, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 65, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 65, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 65, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 65, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 65, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 65, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 65, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 66, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 66, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 66, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 66, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 66, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 66, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 66, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 66, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 66, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 66, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 66, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 66, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 66, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 67, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 67, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 67, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 67, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 67, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 67, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 67, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 67, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 67, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 67, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 67, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 67, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 67, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 68, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 68, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 68, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 68, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 68, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 68, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 68, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 68, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 68, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 68, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 68, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 68, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 68, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 69, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 69, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 69, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 69, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 69, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 69, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 69, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 69, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 69, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 69, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 69, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 69, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 69, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 70, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 70, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 70, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 70, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 70, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 70, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 70, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 70, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 70, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 70, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 70, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 70, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 70, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 71, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 71, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 71, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 71, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 71, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 71, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 71, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 71, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 71, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 71, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 71, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 71, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 71, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 72, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 72, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 72, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 72, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 72, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 72, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 72, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 72, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 72, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 72, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 72, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 72, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 72, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 73, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 73, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 73, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 73, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 73, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 73, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 73, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 73, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 73, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 73, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 73, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 73, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 73, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 74, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 74, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 74, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 74, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 74, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 74, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 74, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 74, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 74, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 74, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 74, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 74, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 74, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 75, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 75, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 75, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 75, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 75, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 75, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 75, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 75, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 75, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 75, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 75, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 75, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 75, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 76, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 76, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 76, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 76, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 76, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 76, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 76, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 76, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 76, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 76, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 76, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 76, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 76, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 77, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 77, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 77, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 77, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 77, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 77, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 77, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 77, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 77, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 77, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 77, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 77, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 77, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 78, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 78, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 78, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 78, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 78, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 78, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 78, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 78, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 78, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 78, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 78, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 78, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 78, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 79, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 79, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 79, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 79, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 79, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 79, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 79, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 79, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 79, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 79, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 79, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 79, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 79, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 80, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 80, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 80, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 80, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 80, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 80, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 80, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 80, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 80, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 80, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 80, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 80, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 80, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 81, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 81, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 81, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 81, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 81, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 81, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 81, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 81, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 81, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 81, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 81, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 81, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 81, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 82, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 82, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 82, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 82, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 82, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 82, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 82, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 82, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 82, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 82, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 82, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 82, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 82, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 83, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 83, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 83, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 83, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 83, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 83, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 83, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 83, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 83, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 83, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 83, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 83, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 83, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 84, to_date('25-10-2021', 'dd-mm-yyyy'), to_date('25-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 84, to_date('26-10-2021', 'dd-mm-yyyy'), to_date('26-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 84, to_date('27-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 84, to_date('28-10-2021', 'dd-mm-yyyy'), to_date('28-10-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 84, to_date('29-10-2021', 'dd-mm-yyyy'), to_date('01-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 84, to_date('01-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 84, to_date('02-11-2021', 'dd-mm-yyyy'), to_date('02-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 84, to_date('03-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', null, null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 84, to_date('04-11-2021', 'dd-mm-yyyy'), to_date('04-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 84, to_date('05-11-2021', 'dd-mm-yyyy'), to_date('05-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 84, to_date('08-11-2021', 'dd-mm-yyyy'), to_date('08-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 84, to_date('09-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+insert into tbepr_consig_parcelas_tmp (CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
+values (13, 180556, 54036, 84, to_date('10-11-2021', 'dd-mm-yyyy'), to_date('09-11-2021', 'dd-mm-yyyy'), 0.00, 0.00, 0.00, 0.00, 0.00, to_date('22-10-2021', 'dd-mm-yyyy'), '1', 'P', null);
+
+commit;
+
+end;
