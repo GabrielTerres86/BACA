@@ -1,2 +1,0 @@
-drop table CREDITO.TBCRED_CDC_VEICULO_PRAZO
-/
