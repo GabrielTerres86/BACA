@@ -26,7 +26,7 @@ declare
                           <codigo>4</codigo>
                         </tipoLiquidacao> 
                         <tributoIOFValor>0.0</tributoIOFValor>
-                        <valor>57456.61</valor><valorBase>57456.61</valorBase><dataProposta>2021-11-12T09:30:56</dataProposta>
+                        <valor>57456.61</valor><valorBase>57456.61</valorBase><dataProposta>2021-11-16T09:30:56</dataProposta>
                         <emitente> 
                           <dataNascOuConstituicao>1994-07-11T00:00:00</dataNascOuConstituicao>
                           <identificadorReceitaFederal>8508951973</identificadorReceitaFederal>
