@@ -8,11 +8,11 @@ DECLARE
 BEGIN
 
   -- Cooperativa de destino do cartão
-  vr_cooperativa := 6;
+  vr_cooperativa := 1;
   -- Conta de destino do cartão
-  vr_conta :=  107131;
+  vr_conta :=  2836084;
 -- Numero do cartão que precisamos ajustar
-  vr_cartao := 5127070320149719;
+  vr_cartao := 5588190184171591;
 
   
   -- Verificar se a conta possui algum outro cartão para buscar o CPF do Titular
