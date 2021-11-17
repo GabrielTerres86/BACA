@@ -1,3 +1,5 @@
+begin
+
 insert into tbgen_evento_soa (IDEVENTO, CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
 values (5025287, 10, 134090, 16316, 'PAGTO_PAGAR', 'CONSIGNADO', 'INSERT', '16/11/21 16:21:25,288231', null, null, null, null, null, '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
                     <cooperativa>
@@ -57,3 +59,6 @@ values (5025288, 10, 134090, 16316, 'PAGTO_PAGAR', 'CONSIGNADO', 'INSERT', '16/1
                             <identificador>829107</identificador> <valor>272.91</valor></parcela><motivoEnvio>REENVIARPAGTO</motivoEnvio><interacaoGrafica>
                     <dataAcaoUsuario>2021-11-12T16:21:25</dataAcaoUsuario>
                   </interacaoGrafica></Root>');
+				  
+commit;
+end;
