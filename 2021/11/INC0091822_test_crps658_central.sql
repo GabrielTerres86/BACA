@@ -16,5 +16,6 @@ begin
                     vr_infimsol,
                     vr_cdcritic,
                     vr_dscritic);
+commit;
 end;
 /
