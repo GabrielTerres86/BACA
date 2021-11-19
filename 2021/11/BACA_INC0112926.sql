@@ -1,23 +1,13 @@
 BEGIN
-  UPDATE crapepr
+  UPDATE crapepr pr
      SET inliquid = 1, vlsdeved = 0
-   WHERE (cdcooper, nrdconta, nrctremp) IN ((1,  13481622, 4536566),
-                                            (1,  13481622, 4536586),
-                                            (1,  13481622, 4536601),
-                                            (1,  13569449, 4593694),
-                                            (1,  10044043, 3071591),
-                                            (1,  10858768, 3845287),
-                                            (1,  12601730, 4499715),
-                                            (1,  80236987, 4617505),
-                                            (5,  84891,  26038),
-                                            (13, 187429, 102556),
-                                            (13, 105627, 71544),
-                                            (13, 187860, 68050),
-                                            (13, 150550, 74480),
-                                            (13, 150550, 79189),
-                                            (13, 92070,  131368),
-                                            (13, 490695, 95603),
-                                            (13, 490695, 111008),
-                                            (16, 245399, 251657));
+   WHERE pr.tpemprst = 1
+   AND pr.tpdescto = 2
+   AND pr.inliquid = 0
+   AND NOT EXISTS (SELECT 1 FROM crappep p
+                    WHERE p.cdcooper = pr.cdcooper
+                      AND p.nrdconta = pr.nrdconta
+                      AND p.nrctremp = pr.nrctremp
+                      AND p.inliquid = 0);
   COMMIT;
 END;
