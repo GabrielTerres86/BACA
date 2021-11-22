@@ -35,6 +35,7 @@ begin
 
 exception
   when others then
+    sistema.excecaointerna(pr_compleme => 'prj0023837');
     v_erro := sqlerrm;
     rollback;
     dbms_output.put_line(v_erro);
