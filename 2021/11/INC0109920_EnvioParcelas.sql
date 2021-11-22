@@ -41,8 +41,8 @@ DECLARE
        AND pep.nrctremp = b.nrctremp
        AND pep.cdcooper = b.cdcooper
        AND pep.nrparepr = b.nrparepr
-       AND b.instatus <> 2
-       AND idsequencia NOT IN (1069880)
+       AND idsequencia <> 1069880
+	   AND b.instatus <> 2       
     GROUP BY b.dtvencto,
              b.vlpagpar,
              b.nrdconta,
