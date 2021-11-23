@@ -1,0 +1,9 @@
+BEGIN
+  UPDATE cecred.craprel c
+     SET c.nmrelato = 'ARQUIVO PRESTAMISTA INADIMPLENTES'
+   WHERE c.cdrelato = 820;
+  COMMIT;
+EXCEPTION WHEN OTHERS THEN
+  ROLLBACK;
+END;
+/
