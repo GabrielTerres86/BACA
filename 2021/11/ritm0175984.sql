@@ -76,8 +76,8 @@ exception
   
   when others then
     rollback;
+	vr_dscritic := 'Erro ao fazer lançamentos :' || SQLERRM;
     dbms_output.put_line(vr_dscritic);
-    cecred.pc_internal_exception(pr_compleme => vr_cdcritic || ': ' ||
-                                                vr_dscritic);
-    raise_application_error(-20500, vr_cdcritic || ': ' || vr_dscritic);
+    cecred.pc_internal_exception(pr_compleme => vr_dscritic);
+    raise_application_error(-20500, vr_dscritic);
 end;
