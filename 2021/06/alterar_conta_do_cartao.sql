@@ -12,7 +12,7 @@ BEGIN
   -- Conta de destino do cartão
   vr_conta :=  2143;
 -- Numero do cartão que precisamos ajustar
-  vr_cartao := 158940000000188;
+  vr_cartao := 5158940000000188;
 
   
   -- Verificar se a conta possui algum outro cartão para buscar o CPF do Titular
