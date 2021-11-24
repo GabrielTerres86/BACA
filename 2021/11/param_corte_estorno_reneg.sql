@@ -2,7 +2,7 @@ BEGIN
   INSERT INTO crapprm
     (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
   VALUES 
-    ('CRED', 0, 'DTCORTE_ESTORN_RENEG', 'Data de corte para liberação de estornos de renegociações PP', '19/12/2021');
+    ('CRED', 0, 'DTCORTE_ESTORN_RENEG', 'Data de corte para liberação de estornos de renegociações PP', '30/11/2021');
 
   COMMIT;
 EXCEPTION
