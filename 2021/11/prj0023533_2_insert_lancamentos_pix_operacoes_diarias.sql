@@ -1,4 +1,13 @@
 DECLARE 
+  ------------------------------- VARIAVEIS ---------------------------------
+  vr_nomearquivo VARCHAR2(100) := 'ErroInclusaoLancamentoPIXTabOperacaoDiarias.txt';
+  vr_rootmicros  VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS');
+  vr_nomedireto  VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/prj0023533';
+  vr_cdcritic    PLS_INTEGER;
+  vr_dscritic    VARCHAR(250);
+  vr_erroarquivo VARCHAR(250);
+  vr_ind_arquivo utl_file.file_type;
+
   ------------------------------- CURSORES ---------------------------------
   CURSOR cr_obterAutoAtendimentoPix(pr_dataIni DATE,
                                     pr_dataFim DATE) IS
@@ -8,7 +17,7 @@ DECLARE
            autoatendimento_pix.dtmvtolt datalancamento, 
            NVL(SUM(autoatendimento_pix.qtd), 0) quantidade_autoatendimento_ano
     FROM
-    (--OBTEM LANÇAMENTOS DE CREDITO, DEBITO E DEVOLUÇÕES DE ESTORNO PIX
+    (--OBTEM LANÃ‡AMENTOS DE CREDITO, DEBITO E DEVOLUÃ‡Ã•ES DE ESTORNO PIX
      SELECT craplcm.nrdconta, craplcm.cdcooper, 24 tipo, craplcm.dtmvtolt, COUNT(craplcm.nrdconta) qtd
        FROM craplcm
             INNER JOIN crapcop on (crapcop.cdcooper = craplcm.cdcooper)
@@ -18,7 +27,7 @@ DECLARE
         AND crapcop.flgativo = 1 
         AND crapcop.cdcooper <> 3
       GROUP BY craplcm.nrdconta, craplcm.cdcooper, craplcm.dtmvtolt
-      UNION --OBTEM LANÇAMENTOS DE ESTORNO PIX
+      UNION --OBTEM LANÃ‡AMENTOS DE ESTORNO PIX
      SELECT craplcm.nrdconta, craplcm.cdcooper, 25 tipo, craplcm.dtmvtolt, COUNT(craplcm.nrdconta) qtd
        FROM craplcm
             INNER JOIN crapcop on (crapcop.cdcooper = craplcm.cdcooper)
@@ -32,13 +41,12 @@ DECLARE
     GROUP BY autoatendimento_pix.nrdconta, autoatendimento_pix.cdcooper, autoatendimento_pix.tipo, autoatendimento_pix.dtmvtolt
     ORDER BY autoatendimento_pix.nrdconta ASC;
   
-  vr_cdcritic PLS_INTEGER;
-  vr_dscritic VARCHAR(250);
+
   
 BEGIN
 
-  delete from tbcc_operacoes_diarias
-  where cdoperacao in (24, 25);
+  DELETE FROM tbcc_operacoes_diarias
+  WHERE cdoperacao in (24, 25);
   
   FOR rw_autoAtendimentoPix IN cr_obterAutoAtendimentoPix('01/01/2021', '31/12/2021') LOOP
   BEGIN
@@ -52,7 +60,8 @@ BEGIN
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 1034;
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+        vr_dscritic := '['||TO_CHAR(SYSDATE, 'dd/mm/yyyy hh24:mi:ss')||'] - ' ||
+                 gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
                  'TBCC_OPERACOES_DIARIAS(1):' ||
                  ' cdcooper:'  || rw_autoAtendimentoPix.cdcooper ||
                  ', nrdconta:' || rw_autoAtendimentoPix.nrdconta ||
@@ -61,6 +70,16 @@ BEGIN
                  ', nrsequen:' || rw_autoAtendimentoPix.quantidade_autoatendimento_ano ||
                  ', flgisenc:' || '0' ||
                  '. ' || SQLERRM;
+                 
+        gene0001.pc_abre_arquivo(pr_nmdireto => vr_nomedireto   --> Diretorio do arquivo
+                                ,pr_nmarquiv => vr_nomearquivo  --> Nome do arquivo
+                                ,pr_tipabert => 'W'             --> modo de abertura (r,w,a)
+                                ,pr_utlfileh => vr_ind_arquivo  --> handle do arquivo aberto
+                                ,pr_des_erro => vr_erroarquivo);--> erro
+        IF (vr_erroarquivo IS NULL) THEN
+           gene0001.pc_escr_linha_arquivo(vr_ind_arquivo, vr_dscritic);
+           gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);        
+        END IF;
         RAISE;
     END;
   END LOOP;
@@ -70,4 +89,5 @@ BEGIN
   EXCEPTION
       WHEN OTHERS THEN
         ROLLBACK;
+
 END;
