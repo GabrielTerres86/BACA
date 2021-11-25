@@ -1,6 +1,7 @@
 DECLARE 
   ------------------------------- VARIAVEIS ---------------------------------
   vr_nomearquivo VARCHAR2(100) := 'ErroInclusaoLancamentoPIXTabOperacaoDiarias.txt';
+  vr_nomearquivosucesso VARCHAR2(100) := 'Sucesso.txt';
   vr_rootmicros  VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS');
   vr_nomedireto  VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/prj0023533';
   vr_cdcritic    PLS_INTEGER;
@@ -44,6 +45,9 @@ DECLARE
 
   
 BEGIN
+  DELETE FROM cecred.tbcc_operacoes_diarias
+  WHERE cdoperacao in (24, 25);
+  
   FOR rw_autoAtendimentoPix IN cr_obterAutoAtendimentoPix('01/01/2021', '31/12/2021') LOOP
   BEGIN
     INSERT INTO cecred.tbcc_operacoes_diarias(cdcooper, nrdconta, cdoperacao, dtoperacao, nrsequen, flgisencao_tarifa)
@@ -80,6 +84,15 @@ BEGIN
     END;
   END LOOP;
 
+  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nomedireto   --> Diretorio do arquivo
+                          ,pr_nmarquiv => vr_nomearquivosucesso  --> Nome do arquivo
+                          ,pr_tipabert => 'W'             --> modo de abertura (r,w,a)
+                          ,pr_utlfileh => vr_ind_arquivo  --> handle do arquivo aberto
+                          ,pr_des_erro => vr_erroarquivo);--> erro
+  IF (vr_erroarquivo IS NULL) THEN
+        gene0001.pc_escr_linha_arquivo(vr_ind_arquivo, 'Gerado com sucesso');
+        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);        
+  END IF;
   COMMIT;
   
   EXCEPTION
