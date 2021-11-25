@@ -1,4 +1,3 @@
---PL/SQL Developer Test script 3.0
 -- Created on 25/10/2021 by F0030248 
 declare 
   -- Local variables here
