@@ -35,5 +35,6 @@ begin
                             
     dbms_output.put_line(vr_dscritic);                          
  END LOOP;       
-  
+ 
+ COMMIT;
 end;
