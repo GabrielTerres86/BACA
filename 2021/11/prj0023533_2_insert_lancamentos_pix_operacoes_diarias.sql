@@ -19,8 +19,8 @@ DECLARE
     FROM
     (--OBTEM LANÇAMENTOS DE CREDITO, DEBITO E DEVOLUÇÕES DE ESTORNO PIX
      SELECT craplcm.nrdconta, craplcm.cdcooper, 24 tipo, craplcm.dtmvtolt, COUNT(craplcm.nrdconta) qtd
-       FROM craplcm
-            INNER JOIN crapcop on (crapcop.cdcooper = craplcm.cdcooper)
+       FROM cecred.craplcm
+            INNER JOIN cecred.crapcop on (crapcop.cdcooper = craplcm.cdcooper)
       WHERE craplcm.cdhistor IN (3318, 3320, 3371, 3373, 3450, 3671, 3677, 3675, 3396, 3397, 3437, 3438, 3468)
         AND craplcm.dtmvtolt BETWEEN pr_dataini AND pr_datafim
         AND craplcm.cdcooper IN (7)
@@ -29,8 +29,8 @@ DECLARE
       GROUP BY craplcm.nrdconta, craplcm.cdcooper, craplcm.dtmvtolt
       UNION --OBTEM LANÇAMENTOS DE ESTORNO PIX
      SELECT craplcm.nrdconta, craplcm.cdcooper, 25 tipo, craplcm.dtmvtolt, COUNT(craplcm.nrdconta) qtd
-       FROM craplcm
-            INNER JOIN crapcop on (crapcop.cdcooper = craplcm.cdcooper)
+       FROM cecred.craplcm
+            INNER JOIN cecred.crapcop on (crapcop.cdcooper = craplcm.cdcooper)
       WHERE craplcm.cdhistor IN (3319, 3321, 3322, 3323, 3377, 3375, 3379, 3380, 3451, 3452, 3453, 3673, 3681, 3684, 3683, 3679, 3435, 3436, 3469, 3470)
         AND craplcm.dtmvtolt BETWEEN pr_dataini AND pr_datafim
         AND craplcm.cdcooper IN (7)
@@ -44,13 +44,9 @@ DECLARE
 
   
 BEGIN
-
-  DELETE FROM tbcc_operacoes_diarias
-  WHERE cdoperacao in (24, 25);
-  
   FOR rw_autoAtendimentoPix IN cr_obterAutoAtendimentoPix('01/01/2021', '31/12/2021') LOOP
   BEGIN
-    INSERT INTO tbcc_operacoes_diarias(cdcooper, nrdconta, cdoperacao, dtoperacao, nrsequen, flgisencao_tarifa)
+    INSERT INTO cecred.tbcc_operacoes_diarias(cdcooper, nrdconta, cdoperacao, dtoperacao, nrsequen, flgisencao_tarifa)
     VALUES(rw_autoAtendimentoPix.cdcooper,
            rw_autoAtendimentoPix.nrdconta,
            rw_autoAtendimentoPix.tipo,
