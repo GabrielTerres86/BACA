@@ -1,5 +1,5 @@
-CREATE OR REPLACE PROCEDURE pc_atualizar_qtjurmfx(pr_cdcooper IN crapcop.cdcooper%TYPE
-                                                 ,pr_cdagenci IN crapage.cdagenci%TYPE ) IS
+CREATE OR REPLACE PROCEDURE CECRED.pc_atualizar_qtjurmfx(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                                        ,pr_cdagenci IN crapage.cdagenci%TYPE ) IS
 
 
   pr_dscritic          VARCHAR2(5000) := ' ';
