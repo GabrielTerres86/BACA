@@ -19,6 +19,8 @@ declare
   vr_texto_completo_1  VARCHAR2(32600);
   vr_texto_completo_2  VARCHAR2(32600);
   vr_texto_completo_3  VARCHAR2(32600);    
+  vr_mesmovto          INTEGER;
+  vr_vlsmpmes             crapsld.vlsmpmes%TYPE;
   
   TYPE typ_reg_crapsld IS
      RECORD (nrdconta     crapsld.nrdconta%type
@@ -34,7 +36,14 @@ declare
             ,smposano##9  crapsld.smposano##1%TYPE
             ,smposano##10 crapsld.smposano##1%TYPE
             ,smposano##11 crapsld.smposano##1%TYPE
-            ,smposano##12 crapsld.smposano##1%TYPE);
+            ,smposano##12 crapsld.smposano##1%TYPE
+            ,vlsmstre##1  crapsld.vlsmstre##1%TYPE
+            ,vlsmstre##2  crapsld.vlsmstre##1%TYPE
+            ,vlsmstre##3  crapsld.vlsmstre##1%TYPE
+            ,vlsmstre##4  crapsld.vlsmstre##1%TYPE
+            ,vlsmstre##5  crapsld.vlsmstre##1%TYPE
+            ,vlsmstre##6  crapsld.vlsmstre##1%TYPE                                                            
+            );
               
   TYPE typ_tab_crapsld IS TABLE OF typ_reg_crapsld INDEX BY PLS_INTEGER; 
   vr_tab_sld typ_tab_crapsld;
@@ -72,7 +81,13 @@ declare
            sld.smposano##9,
            sld.smposano##10,
            sld.smposano##11,
-           sld.smposano##12               
+           sld.smposano##12,
+           sld.vlsmstre##1,
+           sld.vlsmstre##2,
+           sld.vlsmstre##3,
+           sld.vlsmstre##4,
+           sld.vlsmstre##5,
+           sld.vlsmstre##6                                                       
       FROM crapass ass, crapsld sld, crapage age
     WHERE age.cdcooper = pr_cdcooper
       AND age.cdagenci NOT IN (90,91)
@@ -205,8 +220,14 @@ BEGIN
              ' smposano##9 = ' || replace(rw_smposano.smposano##9,',','.') || ',' ||
              ' smposano##10 = ' || replace(rw_smposano.smposano##10,',','.') || ',' ||
              ' smposano##11 = ' || replace(rw_smposano.smposano##11,',','.') || ',' ||
-             ' smposano##12 = ' || replace(rw_smposano.smposano##12,',','.') 
-             || ' where cdcooper = ' || rw_smposano.cdcooper ||' and nrdconta =  '||rw_smposano.nrdconta||';'); 
+             ' smposano##12 = ' || replace(rw_smposano.smposano##12,',','.') || ',' ||
+             ' vlsmstre##1 = ' || replace(rw_smposano.vlsmstre##1,',','.') || ',' ||
+             ' vlsmstre##2 = ' || replace(rw_smposano.vlsmstre##2,',','.') || ',' ||
+             ' vlsmstre##3 = ' || replace(rw_smposano.vlsmstre##3,',','.') || ',' ||
+             ' vlsmstre##4 = ' || replace(rw_smposano.vlsmstre##4,',','.') || ',' ||
+             ' vlsmstre##5 = ' || replace(rw_smposano.vlsmstre##5,',','.') || ',' ||
+             ' vlsmstre##6 = ' || replace(rw_smposano.vlsmstre##6,',','.')                                                                 
+             || ' where cdcooper = ' || rw_smposano.cdcooper ||' and nrdconta = '||rw_smposano.nrdconta||';'); 
       
       vr_tab_sld(rw_smposano.nrdconta).cdcooper := rw_smposano.cdcooper;
       vr_tab_sld(rw_smposano.nrdconta).nrdconta := rw_smposano.nrdconta;
@@ -223,6 +244,52 @@ BEGIN
       vr_tab_sld(rw_smposano.nrdconta).smposano##10 := CASE WHEN to_char(rw_smposano.dtdemiss,'MM') = '10' THEN rw_smposano.saldo_medio ELSE rw_smposano.smposano##10 END;
       vr_tab_sld(rw_smposano.nrdconta).smposano##11 := CASE WHEN to_char(rw_smposano.dtdemiss,'MM') = '11' THEN rw_smposano.saldo_medio ELSE rw_smposano.smposano##11 END;
       vr_tab_sld(rw_smposano.nrdconta).smposano##12 := CASE WHEN to_char(rw_smposano.dtdemiss,'MM') = '12' THEN rw_smposano.saldo_medio ELSE rw_smposano.smposano##12 END;
+      
+      vr_tab_sld(rw_smposano.nrdconta).vlsmstre##1 := rw_smposano.vlsmstre##1;
+      vr_tab_sld(rw_smposano.nrdconta).vlsmstre##2 := rw_smposano.vlsmstre##2;
+      vr_tab_sld(rw_smposano.nrdconta).vlsmstre##3 := rw_smposano.vlsmstre##3;
+      vr_tab_sld(rw_smposano.nrdconta).vlsmstre##4 := rw_smposano.vlsmstre##4;
+      vr_tab_sld(rw_smposano.nrdconta).vlsmstre##5 := rw_smposano.vlsmstre##5;
+      vr_tab_sld(rw_smposano.nrdconta).vlsmstre##6 := rw_smposano.vlsmstre##6;                              
+            
+      CASE to_number(To_Char(rw_smposano.dtdemiss,'MM'))
+			  WHEN  1 THEN vr_vlsmpmes := vr_tab_sld(rw_smposano.nrdconta).smposano##1;
+			  WHEN  2 THEN vr_vlsmpmes := vr_tab_sld(rw_smposano.nrdconta).smposano##2;
+			  WHEN  3 THEN vr_vlsmpmes := vr_tab_sld(rw_smposano.nrdconta).smposano##3;
+			  WHEN  4 THEN vr_vlsmpmes := vr_tab_sld(rw_smposano.nrdconta).smposano##4;
+			  WHEN  5 THEN vr_vlsmpmes := vr_tab_sld(rw_smposano.nrdconta).smposano##5;
+			  WHEN  6 THEN vr_vlsmpmes := vr_tab_sld(rw_smposano.nrdconta).smposano##6;
+			  WHEN  7 THEN vr_vlsmpmes := vr_tab_sld(rw_smposano.nrdconta).smposano##7;
+			  WHEN  8 THEN vr_vlsmpmes := vr_tab_sld(rw_smposano.nrdconta).smposano##8;
+			  WHEN  9 THEN vr_vlsmpmes := vr_tab_sld(rw_smposano.nrdconta).smposano##9;
+			  WHEN 10 THEN vr_vlsmpmes := vr_tab_sld(rw_smposano.nrdconta).smposano##10;
+			  WHEN 11 THEN vr_vlsmpmes := vr_tab_sld(rw_smposano.nrdconta).smposano##11;
+			  WHEN 12 THEN vr_vlsmpmes := vr_tab_sld(rw_smposano.nrdconta).smposano##12;
+      END CASE;                                                                                        
+      
+      --Variavel recebe o mes do movimento 1..12
+      vr_mesmovto:= to_number(To_Char(rw_smposano.dtdemiss,'MM'));
+      --Se passou da metade do ano
+      IF vr_mesmovto > 6 THEN
+        --Diminuir 6 do mes encontrado
+        vr_mesmovto:= vr_mesmovto-6;
+      END IF;      
+
+      --Valor do saldo medio mensal recebe o valor positivo no mes
+      CASE vr_mesmovto
+        WHEN 1 THEN
+          vr_tab_sld(rw_smposano.nrdconta).vlsmstre##1:= Nvl(vr_vlsmpmes,0);
+        WHEN 2 THEN
+          vr_tab_sld(rw_smposano.nrdconta).vlsmstre##2:= Nvl(vr_vlsmpmes,0);
+        WHEN 3 THEN
+          vr_tab_sld(rw_smposano.nrdconta).vlsmstre##3:= Nvl(vr_vlsmpmes,0);
+        WHEN 4 THEN
+          vr_tab_sld(rw_smposano.nrdconta).vlsmstre##4:= Nvl(vr_vlsmpmes,0);
+        WHEN 5 THEN
+          vr_tab_sld(rw_smposano.nrdconta).vlsmstre##5:= Nvl(vr_vlsmpmes,0);
+        WHEN 6 THEN
+          vr_tab_sld(rw_smposano.nrdconta).vlsmstre##6:= Nvl(vr_vlsmpmes,0);
+      END CASE;      
     END LOOP;
        
     log('TOTAL CONTAS - ' || to_char(vr_tab_sld.count) || ' - ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
@@ -247,7 +314,13 @@ BEGIN
                smposano##9 = vr_tab_sld(idx).smposano##9,
                smposano##10 = vr_tab_sld(idx).smposano##10,
                smposano##11 = vr_tab_sld(idx).smposano##11,
-               smposano##12 = vr_tab_sld(idx).smposano##12
+               smposano##12 = vr_tab_sld(idx).smposano##12,
+               vlsmstre##1  = vr_tab_sld(idx).vlsmstre##1,
+               vlsmstre##2  = vr_tab_sld(idx).vlsmstre##2,
+               vlsmstre##3  = vr_tab_sld(idx).vlsmstre##3,
+               vlsmstre##4  = vr_tab_sld(idx).vlsmstre##4,
+               vlsmstre##5  = vr_tab_sld(idx).vlsmstre##5,
+               vlsmstre##6  = vr_tab_sld(idx).vlsmstre##6                                                            
          WHERE cdcooper = vr_tab_sld(idx).cdcooper
            AND nrdconta = vr_tab_sld(idx).nrdconta;                     
     EXCEPTION
