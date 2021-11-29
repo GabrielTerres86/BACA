@@ -1,0 +1,4 @@
+﻿BEGIN
+  DELETE FROM craplft l WHERE l.progress_recid IN (52946777,52946833,52946885);
+  COMMIT;
+END;
