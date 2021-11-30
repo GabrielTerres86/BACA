@@ -88,6 +88,7 @@ BEGIN
 	 WHERE cdcooper = v_cdcooper
 	   AND nrdconta = v_nrdconta
 	   AND nrctremp = v_nrctrprp
+	   AND nrparepr = 1
 	   AND inliquid = 0;
 	 
 	/*
