@@ -5,6 +5,7 @@ declare
     where idsaqtot = 0
       and vlsldatl = 0
       and cdprodut = 1007;
+
 begin
   for x in cSaldo loop
   -- Atualizando os registros encontrados.
