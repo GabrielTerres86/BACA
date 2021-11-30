@@ -1,0 +1,9 @@
+begin
+
+UPDATE CRAPENC
+   SET COMPLEND = REPLACE( COMPLEND, CHR(26 ) )
+ WHERE INSTR( COMPLEND, CHR(26) ) > 0;  
+
+  commit;
+
+end;
