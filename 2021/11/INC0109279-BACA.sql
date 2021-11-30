@@ -90,6 +90,7 @@ BEGIN
 	   AND nrctremp = v_nrctrprp
 	   AND inliquid = 0;
 	 
+	/*
 	UPDATE crapepr pr
 	   SET inliquid = 1,
 	       vlsdeved = 0
@@ -101,6 +102,7 @@ BEGIN
                           AND p.nrdconta = pr.nrdconta
                           AND p.nrctremp = pr.nrctremp
                           AND p.inliquid = 0);
+	*/
   
 	COMMIT;
   
