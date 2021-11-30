@@ -1,13 +1,13 @@
 begin
 
-delete from tbepr_consig_contrato_tmp where cdcooper= 2 and nrdconta = 833983 and nrctremp = 265725 and dtmovimento >= '01/12/2021';
-delete from tbepr_consig_parcelas_tmp where cdcooper= 2 and nrdconta = 833983 and nrctremp = 265725 and dtmovimento >= '01/12/2021';
+delete from tbepr_consig_contrato_tmp where cdcooper= 2 and nrdconta = 833983 and nrctremp = 265725 and dtmovimento >= to_date('01-12-2021', 'dd-mm-yyyy');
+delete from tbepr_consig_parcelas_tmp where cdcooper= 2 and nrdconta = 833983 and nrctremp = 265725 and dtmovimento >= to_date('01-12-2021', 'dd-mm-yyyy');
 
-delete from tbepr_consig_contrato_tmp where cdcooper= 2 and nrdconta = 932167 and nrctremp = 289034 and dtmovimento >= '01/12/2021';
-delete from tbepr_consig_parcelas_tmp where cdcooper= 2 and nrdconta = 932167 and nrctremp = 289034 and dtmovimento >= '01/12/2021';
+delete from tbepr_consig_contrato_tmp where cdcooper= 2 and nrdconta = 932167 and nrctremp = 289034 and dtmovimento >= to_date('01-12-2021', 'dd-mm-yyyy');
+delete from tbepr_consig_parcelas_tmp where cdcooper= 2 and nrdconta = 932167 and nrctremp = 289034 and dtmovimento >= to_date('01-12-2021', 'dd-mm-yyyy');
 
-delete from tbepr_consig_contrato_tmp where cdcooper= 2 and nrdconta = 774693 and nrctremp = 307007 and dtmovimento >= '01/12/2021';
-delete from tbepr_consig_parcelas_tmp where cdcooper= 2 and nrdconta = 774693 and nrctremp = 307007 and dtmovimento >= '01/12/2021';
+delete from tbepr_consig_contrato_tmp where cdcooper= 2 and nrdconta = 774693 and nrctremp = 307007 and dtmovimento >= to_date('01-12-2021', 'dd-mm-yyyy');
+delete from tbepr_consig_parcelas_tmp where cdcooper= 2 and nrdconta = 774693 and nrctremp = 307007 and dtmovimento >= to_date('01-12-2021', 'dd-mm-yyyy');
 
 insert into tbepr_consig_contrato_tmp (IDSEQCONTR, CDCOOPER, NRDCONTA, NRCTREMP, DTMOVIMENTO, DTGRAVACAO, INCLIDESLIGADO, VLIOFEPR, VLIOFADIC, QTPRESTPAGAS, VLJURAMESATU, VLJURAMESANT, VLSDEV_EMPRATU_D0, VLSDEV_EMPRATU_D1, VLJURA60DIAS, INSTATUSCONTR, INSTATUSPROCES, DSERROPROCES)
 values (779722, 2, 833983, 265725, to_date('01-12-2021', 'dd-mm-yyyy'), to_date('01-12-2021', 'dd-mm-yyyy'), 'S', -0.46, 0.46, 15, 0.00, 10.82, 1849.83, 1850.85, 934.32, '1', null, null);
@@ -881,6 +881,12 @@ values (77853699, 2, 774693, 307007, 48, to_date('01-12-2021', 'dd-mm-yyyy'), to
 
 insert into tbepr_consig_parcelas_tmp (IDSEQPARC, CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
 values (78149090, 2, 774693, 307007, 48, to_date('02-12-2021', 'dd-mm-yyyy'), to_date('01-12-2021', 'dd-mm-yyyy'), 198.08, 0.00, 0.00, 0.00, 170.34, null, '0', null, null);
+
+update crapepr set inliquid = 1, vlsdeved = 200 where cdcooper = 1 and nrdconta = 3875369 and nrctremp = 2955658;
+
+update crapepr set inliquid = 1, vlsdeved = 450 where cdcooper = 13 and nrdconta = 211524 and nrctremp = 54533;
+
+update crapepr set inliquid = 1, vlsdeved = 555 where cdcooper = 13 and nrdconta = 171069 and nrctremp = 54283;
 
 commit;
 
