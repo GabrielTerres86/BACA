@@ -882,6 +882,12 @@ values (77853699, 2, 774693, 307007, 48, to_date('01-12-2021', 'dd-mm-yyyy'), to
 insert into tbepr_consig_parcelas_tmp (IDSEQPARC, CDCOOPER, NRDCONTA, NRCTREMP, NRPARCELA, DTMOVIMENTO, DTGRAVACAO, VLSALDOPARC, VLMORAATRASO, VLMULTAATRASO, VLIOFATRASO, VLDESCANTEC, DTPAGTOPARC, INPARCELALIQ, INSTATUSPROCES, DSERROPROCES)
 values (78149090, 2, 774693, 307007, 48, to_date('02-12-2021', 'dd-mm-yyyy'), to_date('01-12-2021', 'dd-mm-yyyy'), 198.08, 0.00, 0.00, 0.00, 170.34, null, '0', null, null);
 
+update crapepr set inliquid = 1, vlsdeved = 200 where cdcooper = 1 and nrdconta = 3875369 and nrctremp = 2955658;
+
+update crapepr set inliquid = 1, vlsdeved = 450 where cdcooper = 13 and nrdconta = 211524 and nrctremp = 54533;
+
+update crapepr set inliquid = 1, vlsdeved = 555 where cdcooper = 13 and nrdconta = 171069 and nrctremp = 54283;
+
 commit;
 
 end;
