@@ -5,7 +5,7 @@ DECLARE
 	v_nrdconta tbgen_evento_soa.NRDCONTA%type := 525774;
 	v_cdcooper tbgen_evento_soa.CDCOOPER%type := 9;
 	v_nrctrprp tbgen_evento_soa.NRCTRPRP%type := 20100533;
-	v_vlparpag crappep.VLPAREPR%type := 60.11;
+	v_vlparpag VARCHAR2(10) := 60.11;
   
   						  
 	conta_525774_09_21 CLOB := '<?xml version="1.0"?>
