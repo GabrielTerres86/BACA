@@ -80,8 +80,7 @@ BEGIN
                           'BEGIN' || chr(13),
                           FALSE);
 
-  vr_nmarqbkp := 'ROLLBACK_INC0114579' || to_char(sysdate, 'hh24miss') ||
-                 '.sql';
+  vr_nmarqbkp := 'ROLLBACK_INC0114579' || '.sql';
   ----------------------------------------------------------------------
   for rw_cons in cr_consor loop
               update cecred.crapdoc d set flgdigit = 1, dtbxapen = to_date(SYSDATE)
@@ -121,7 +120,7 @@ BEGIN
                                      ,
                                       pr_cdprogra  => 'ATENDA' --> Programa chamador - utilizamos apenas um existente 
                                      ,
-                                      pr_dtmvtolt  => to_date(SYSDATE) --> Data do movimento atual
+                                      pr_dtmvtolt  => to_dat(SYSDATE) --> Data do movimento atual
                                      ,
                                       pr_dsxml     => vr_dados_rollback --> Arquivo XML de dados
                                      ,
