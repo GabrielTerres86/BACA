@@ -54,9 +54,9 @@ DECLARE
 
 BEGIN
 
---  vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => 3);
-  vr_rootmicros     := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
-  vr_nmdireto       := vr_rootmicros|| 'cpd/bacas';  
+  vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => 3);
+--  vr_rootmicros     := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
+--  vr_nmdireto       := vr_rootmicros|| 'cpd/bacas';  
   pc_valida_direto(pr_nmdireto => vr_nmdireto || '/INC0114579',
                    pr_dscritic => vr_dscritic);
 
