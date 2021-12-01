@@ -80,7 +80,7 @@ BEGIN
                           'BEGIN' || chr(13),
                           FALSE);
 
-  vr_nmarqbkp := 'ROLLBACK_INC0114579' || to_char(sysdate, 'hh24miss') ||
+  vr_nmarqbkp := 'ROLLBACK_INC0114579' ||
                  '.sql';
   ----------------------------------------------------------------------
   for rw_cons in cr_consor loop
