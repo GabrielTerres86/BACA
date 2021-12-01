@@ -8,7 +8,7 @@ DECLARE
   vr_exc_erro EXCEPTION;
   --Buscar os consórcios inadimplentes inativos.
   CURSOR cr_consor IS
-    select * from cecred.crapdoc a where a.tpdocmto in (42,43) and a.flgdigit = 0 and a.dtmvtolt <= '27/08/2021';
+    select * from cecred.crapdoc a where a.tpdocmto in (42,43) and a.flgdigit = 0 and a.dtmvtolt <= to_date('27/08/2021');
 
   -- Validacao de diretorio
   PROCEDURE pc_valida_direto(pr_nmdireto IN VARCHAR2,
@@ -121,7 +121,7 @@ BEGIN
                                      ,
                                       pr_cdprogra  => 'ATENDA' --> Programa chamador - utilizamos apenas um existente 
                                      ,
-                                      pr_dtmvtolt  => trunc(SYSDATE) --> Data do movimento atual
+                                      pr_dtmvtolt  => to_date(SYSDATE) --> Data do movimento atual
                                      ,
                                       pr_dsxml     => vr_dados_rollback --> Arquivo XML de dados
                                      ,
