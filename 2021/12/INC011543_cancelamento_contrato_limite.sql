@@ -164,7 +164,7 @@ BEGIN
       RAISE vr_exc_erro;
   END;
 
-  incluirHistoricoLimite(pr_cdcooper => vr_cdcooper,
+  CREDITO.incluirHistoricoLimite(pr_cdcooper => vr_cdcooper,
                          pr_nrdconta => vr_nrdconta,
                          pr_nrctrlim => vr_nrctrlim,
                          pr_tpctrlim => vr_tpctrlim,
@@ -175,23 +175,23 @@ BEGIN
     RAISE vr_exc_erro;
   END IF;
 
-  geraLog(pr_cdcooper => vr_cdcooper,
-          pr_cdoperad => vr_cdoperad,
-          pr_dscritic => '',
-          pr_dsorigem => canalEntrada(vr_idorigem).dscanal,
-          pr_dstransa => vr_dstransa || vr_dsproduto,
-          pr_dttransa => trunc(SYSDATE),
-          pr_flgtrans => 1,
-          pr_hrtransa => buscarTime,
-          pr_idseqttl => 1,
-          pr_nmdatela => 'ATENDA',
-          pr_nrdconta => vr_nrdconta,
-          pr_nrdrowid => vr_rowid_log);
+  SISTEMA.geraLog(pr_cdcooper => vr_cdcooper,
+                  pr_cdoperad => vr_cdoperad,
+                  pr_dscritic => '',
+                  pr_dsorigem => canalEntrada(vr_idorigem).dscanal,
+                  pr_dstransa => vr_dstransa || vr_dsproduto,
+                  pr_dttransa => trunc(SYSDATE),
+                  pr_flgtrans => 1,
+                  pr_hrtransa => buscarTime,
+                  pr_idseqttl => 1,
+                  pr_nmdatela => 'ATENDA',
+                  pr_nrdconta => vr_nrdconta,
+                  pr_nrdrowid => vr_rowid_log);
   
-  geraLogItem(pr_nrdrowid => vr_rowid_log,
-              pr_nmdcampo => 'nrctrlim',
-              pr_dsdadant => '',
-              pr_dsdadatu => vr_nrctrlim);
+  SISTEMA.geraLogItem(pr_nrdrowid => vr_rowid_log,
+                      pr_nmdcampo => 'nrctrlim',
+                      pr_dsdadant => '',
+                      pr_dsdadatu => vr_nrctrlim);
               
   COMMIT;
 
