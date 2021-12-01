@@ -46,6 +46,7 @@ DECLARE
     SELECT lim.insitlim
           ,lim.idcobope
           ,lim.nrctrlim
+          ,lim.inbaslim
       FROM craplim lim
      WHERE lim.cdcooper = pr_cdcooper
        AND lim.nrdconta = pr_nrdconta
@@ -165,15 +166,30 @@ BEGIN
   END;
 
   CREDITO.incluirHistoricoLimite(pr_cdcooper => vr_cdcooper,
-                         pr_nrdconta => vr_nrdconta,
-                         pr_nrctrlim => vr_nrctrlim,
-                         pr_tpctrlim => vr_tpctrlim,
-                         pr_dsmotivo => 'CANCELAMENTO',
-                         pr_cdcritic => vr_cdcritic,
-                         pr_dscritic => vr_dscritic);
+                                 pr_nrdconta => vr_nrdconta,
+                                 pr_nrctrlim => vr_nrctrlim,
+                                 pr_tpctrlim => vr_tpctrlim,
+                                 pr_dsmotivo => 'CANCELAMENTO',
+                                 pr_cdcritic => vr_cdcritic,
+                                 pr_dscritic => vr_dscritic);
   IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exc_erro;
   END IF;
+  
+  
+  BEGIN
+    UPDATE CECRED.crapass ass
+       SET ass.vllimcre = 0
+          ,ass.tplimcre = rw_craplim.inbaslim
+          ,ass.dtultlcr = rw_crapdat.dtmvtolt
+     WHERE ass.cdcooper = vr_cdcooper
+       AND ass.nrdconta = vr_nrdconta;
+  EXCEPTION
+    WHEN OTHERS THEN
+      vr_dscritic := 'Erro ao atualizar crapass. ' || SQLERRM;
+      RAISE vr_exc_erro;
+  END;
+
 
   SISTEMA.geraLog(pr_cdcooper => vr_cdcooper,
                   pr_cdoperad => vr_cdoperad,
