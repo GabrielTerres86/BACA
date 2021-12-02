@@ -31,12 +31,11 @@ DECLARE
        AND p.nrdconta = w.nrdconta
        AND p.nrctrseg = w.nrctrseg
        AND p.nrctremp = w.nrctrato
-       AND p.cdcooper = w.cdcooper
-       AND w.tpseguro = 4
+       AND w.tpseguro = 4       
+       AND s.cdcooper = w.cdcooper
        AND s.nrdconta = w.nrdconta
        AND s.nrctrseg = w.nrctrseg
-       AND s.cdcooper = w.cdcooper
-       AND s.cdsitseg = 1
+       AND s.cdsitseg = 1 
        AND p.nrproposta <> w.nrproposta
        AND p.tpregist NOT IN (0, 2);
   
@@ -246,7 +245,8 @@ BEGIN
          DELETE 
            FROM crawseg 
           WHERE progress_recid = rw_crawseg.progress_recid;  
-      END LOOP;             
+      END LOOP;
+        -- ROLLBACK Prestamista
         gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'UPDATE crawseg SET nrproposta = '||rw_prestamista.nrproposta_crawseg
                                                      ||' WHERE progress_recid = '||rw_prestamista.progress_recid||';');
              
