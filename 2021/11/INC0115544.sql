@@ -162,7 +162,7 @@ BEGIN
 	 'P',
 	 v_gravar_prop);
 	 
-	commit;
+	COMMIT;
   
 ---EXCEPTION
 ---	WHEN OTHERS THEN
