@@ -21,7 +21,7 @@ begin
       AND pr.inliquid = 0
       AND pr.cdcooper = 1 
       and pr.nrdconta = 7430671 
-      and pr.nrctremp = 2955290
+      and pr.nrctremp = 2955290;
 commit;
 
 end;
