@@ -4,7 +4,7 @@ DECLARE
   vr_exc_saida       EXCEPTION;  
   
   vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
-  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros|| 'cpd/bacas/INC0110769 ';
+  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros|| 'cpd/bacas/INC0110769';
 
   -- Arquivo de rollback
   vr_nmarqimp        VARCHAR2(100)  := 'INC0110769_ROLLBACK.txt';     
