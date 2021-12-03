@@ -3,6 +3,7 @@ DECLARE
 
   vr_dsINC    VARCHAR2(200) := 'PRB0046139';
   
+  
   CURSOR cr_craptdb IS
     SELECT DISTINCT t.cdcooper
                    ,t.nrborder
