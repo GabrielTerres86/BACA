@@ -15,7 +15,6 @@ BEGIN
 -- Numero do cartão que precisamos ajustar
  --vr_cartao := 5158940000199642; -- AILOS 1
 -- vr_cartao := 6393500065179583; -- AILOS 1
--- vr_cartao := 5588190184171591; -- AILOS 2
 -- vr_cartao := 5127070161674411; -- GISLON
 -- vr_cartao := 5127070320149719; -- GISLON 2
 vr_cartao := 5588190184171591; -- Topaz
