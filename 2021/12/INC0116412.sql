@@ -87,12 +87,12 @@ BEGIN
 
   CorrigeConta(pr_nrdcontacc => 11368764,
                pr_cdcoopercc => 1,
-               pr_sldadd   => 250.00,
+               pr_sldadd   => 1975.00,
                pr_dtmvtoltcc => TO_DATE('01/12/2021', 'dd/mm/yyyy'));
 
   CorrigeConta(pr_nrdcontacc => 7026773,
                pr_cdcoopercc => 1,
-               pr_sldadd   => 1975.00,
+               pr_sldadd   => 250.00,
                pr_dtmvtoltcc => TO_DATE('30/11/2021', 'dd/mm/yyyy'));
 
   CorrigeConta(pr_nrdcontacc => 10778276,
