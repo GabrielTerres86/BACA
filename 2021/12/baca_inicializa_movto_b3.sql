@@ -333,7 +333,7 @@ declare
   
 begin
 
-  FOR rw_cop IN (SELECT cdcooper FROM crapcop WHERE cdcooper = 11) LOOP
+  FOR rw_cop IN (SELECT cdcooper FROM crapcop WHERE cdcooper = 13) LOOP
 	 
     abre_arquivos(pr_cdcooper => rw_cop.cdcooper);
     
