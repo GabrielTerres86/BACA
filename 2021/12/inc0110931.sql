@@ -8,11 +8,17 @@ DECLARE
   vr_dscritic crapcri.dscritic%TYPE;
   vr_cdcritic crapcri.cdcritic%TYPE;
   
-  vr_idcobert tbgar_cobertura_operacao.idcobertura%TYPE;
-  vr_idcobope crawepr.idcobope%TYPE;
+  vr_idcobert  tbgar_cobertura_operacao.idcobertura%TYPE;
+  vr_idcobope  crawepr.idcobope%TYPE;
+  vr_vlresgat  NUMBER;
+  vr_nrcpfcnpj NUMBER;
+  vr_qtdiaatr  NUMBER;
   
+  --Registro tipo Data
+  rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+      
   CURSOR cr_principal IS
-    SELECT c.cdcooper, c.nrdconta, c.nrctrepr
+    SELECT c.cdcooper, c.nrdconta, c.nrctrepr, x.vlsdeved
       FROM tbepr_renegociacao r, tbepr_renegociacao_contrato c, tbepr_renegociacao_crawepr w, crapepr x
      WHERE c.cdcooper = r.cdcooper
        AND c.nrdconta = r.nrdconta
@@ -50,6 +56,11 @@ BEGIN
   vr_nmarqbkp := 'ROLLBACK_INC0110931_'||to_char(sysdate,'ddmmyyyy_hh24miss')||'.sql';
   
   FOR rw_principal IN cr_principal LOOP
+    
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_principal.cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;
+  
     INSERT INTO tbgar_cobertura_operacao
          (cdcooper
          ,nrdconta
@@ -97,6 +108,53 @@ BEGIN
                           , vr_texto_rollback
                           , 'UPDATE crawepr SET idcobope = '||vr_idcobope||' WHERE cdcooper = '||rw_principal.cdcooper||' AND nrdconta = '||rw_principal.nrdconta||' AND nrctremp = '||rw_principal.nrctrepr||';' || chr(13), FALSE);     
   
+    
+    -- Acionar rotina de calculo de dias em atraso
+    vr_qtdiaatr := empr0001.fn_busca_dias_atraso_epr(pr_cdcooper => rw_principal.cdcooper
+                                                    ,pr_nrdconta => rw_principal.nrdconta
+                                                    ,pr_nrctremp => rw_principal.nrctrepr
+                                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                    ,pr_dtmvtoan => rw_crapdat.dtmvtoan);
+                                                    
+    vr_vlresgat := rw_principal.vlsdeved;
+
+    -- Devolver o valor simulado de resgate
+    BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => vr_idcobope
+                                         ,pr_flgerlog => 1
+                                         ,pr_cdoperad => '1'
+                                         ,pr_idorigem => 7
+                                         ,pr_cdprogra => 'ATENDA'
+                                         ,pr_qtdiaatr => vr_qtdiaatr
+                                         ,pr_vlresgat => vr_vlresgat
+                                         ,pr_flefetiv => 'N' --retornar os valores para resgate
+                                         ,pr_dscritic => vr_dscritic);
+
+    -- Em caso de erro, deve prosseguir normalmente, considerando que não há valores para resgate
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      -- Limpar a variável de crítica
+      vr_dscritic := NULL;
+      -- Zerar a variável de valor de resgate
+      vr_vlresgat := 0;
+    END IF;
+    
+    -- Consulta o saldo atualizado para desbloqueio da cobertura parcial ou completa
+    BLOQ0001.pc_bloqueio_garantia_atualizad(pr_idcobert => vr_idcobope
+                                           ,pr_vlroriginal => rw_principal.vlsdeved
+                                           ,pr_vlratualizado => vr_vlresgat
+                                           ,pr_nrcpfcnpj_cobertura => vr_nrcpfcnpj
+                                           ,pr_dscritic => vr_dscritic);
+
+    -- Se o valor de desbloqueio for maior ou igual ao valor atualizado, efetua o desblqueio total
+    IF rw_principal.vlsdeved >= vr_vlresgat THEN                                
+       BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_idcobertura    => vr_idcobope
+                                            ,pr_inbloq_desbloq => 'D'
+                                            ,pr_cdoperador     => '1'
+                                            ,pr_cdcoordenador_desbloq => '1'
+                                            ,pr_vldesbloq      => vr_vlresgat
+                                            ,pr_flgerar_log    => 'S'
+                                            ,pr_atualizar_rating => 0
+                                            ,pr_dscritic       => vr_dscritic);
+    END IF;
     
   END LOOP;
   
