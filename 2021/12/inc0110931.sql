@@ -32,7 +32,7 @@ DECLARE
        AND x.nrctremp = w.nrctremp
        AND c.nrctremp_novo = 0
        AND w.idcobope > 0 
-       AND idcobefe > 0
+       AND w.idcobefe > 0
        AND x.inliquid = 0 
        AND x.inprejuz = 0
        AND NOT EXISTS (SELECT 1 
