@@ -14,7 +14,7 @@ begin
   vr_conta := 198676;
 
   -- Numero do cartão que precisamos ajustar
-  vr_cartao := 5161620000264183; -- Luis
+  vr_cartao := 5158940000199642; -- Luis
 
   -- Verificar se a conta possui algum outro cartão para buscar o CPF do Titular
   FOR cartao IN (select distinct a.nrcpftit
