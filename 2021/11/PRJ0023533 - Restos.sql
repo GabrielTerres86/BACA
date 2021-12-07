@@ -9,7 +9,6 @@ EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
     RAISE_APPLICATION_ERROR(-20000,
-                            'Erro ao executar alteração dos programas (' ||
-                            vr_cdcooper || '/' || vr_nrdconta || ') - ' ||
+                            'Erro ao executar alteração dos programas'  || ' - ' ||
                             SQLERRM);
 END;
