@@ -13,12 +13,6 @@ BEGIN
    WHERE ass.cdcooper = 16
      AND ass.nrdconta = 730513;
 
-  UPDATE crapsda sda
-     SET sda.vllimcre = 1000
-   WHERE sda.cdcooper = 16
-     AND sda.nrdconta = 730513
-     AND sda.dtmvtolt >= '07/12/2021';
-
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
