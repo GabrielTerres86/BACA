@@ -2,7 +2,7 @@ DECLARE
   CURSOR c01 IS
     SELECT a.idcalris_tanque
           ,a.tpcalculadora
-      FROM tbcalris_tanque a
+      FROM cecred.tbcalris_tanque a
      WHERE a.nrcpfcgc IN (6668197930
                          ,10651574951
                          ,3480719309
@@ -8559,7 +8559,7 @@ BEGIN
     FETCH c01 BULK COLLECT
       INTO tb_c01;
     FORALL i IN tb_c01.first .. tb_c01.last
-      DELETE FROM tbcalris_tanque
+      DELETE FROM cecred.tbcalris_tanque
        WHERE idcalris_tanque = tb_c01(i).idcalris_tanque
          AND tpcalculadora = tb_c01(i).tpcalculadora;
     COMMIT;
