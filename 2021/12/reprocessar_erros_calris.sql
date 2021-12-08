@@ -1,3 +1,4 @@
+DECLARE
 cursor c01 is
     SELECT a.idcalris_tanque,
            decode(a.cdstatus, 2, 1, 4, 3, 6, 5, 8, 7) cdstatus
@@ -18,3 +19,4 @@ BEGIN
     EXIT;
   END LOOP;
   CLOSE C01;
+END;
