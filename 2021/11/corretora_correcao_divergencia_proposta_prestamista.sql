@@ -10,6 +10,7 @@ DECLARE
   vr_nmarqimp        VARCHAR2(100)  := 'INC0110769_ROLLBACK.txt';     
   vr_ind_arquiv      utl_file.file_type;
   
+
   CURSOR cr_crapop IS
     SELECT cop.cdcooper
       FROM crapcop cop
