@@ -1,12 +1,13 @@
-DECLARE
+BEGIN
+
 
 UPDATE CRAPEPA
-   SET NMFANSIA = 'HIGH SECURITY'
-     , NATJURID = 2305
-     , CDSETECO = 2
-     , CDRMATIV = 64
+   SET NMFANSIA = ''
+     , NATJURID = null
+     , CDSETECO = null
+     , CDRMATIV = null
  where cdcooper = 6
-   and nrdconta = 501840;   
+   and nrdconta = 501840; 
    
    commit;
 
