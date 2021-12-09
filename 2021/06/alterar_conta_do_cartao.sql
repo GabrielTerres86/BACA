@@ -66,7 +66,7 @@ vr_cartao := 5127070162666663; -- Topaz
      SET card.cdcooper = vr_cooperativa
         ,card.nrdconta = vr_conta
         ,card.nrcpftit = vr_cpf_titular
-        ,card.NRCTRCRD = 1
+        ,card.nrctrcrd = card.nrctrcrd + 1
    WHERE card.nrcrcard = vr_cartao;
 
   COMMIT;
