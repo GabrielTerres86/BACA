@@ -16,6 +16,7 @@ DECLARE
 		 WHERE cop.flgativo = 1
        AND cop.cdcooper <> 3;
   
+  
   CURSOR cr_prestamista(pr_cdcooper tbseg_prestamista.cdcooper%TYPE) IS
     SELECT p.dtinivig,
            p.cdcooper,
