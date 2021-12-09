@@ -7,9 +7,9 @@ declare
   vr_nmarqimp1         VARCHAR2(100) := ' ';
   vr_nmarqimp2         VARCHAR2(100) := ' ';
   vr_nmarqimp3         VARCHAR2(100) := ' ';
-  vr_nmarqimp11        VARCHAR2(100)  := 'backup_';
-  vr_nmarqimp22        VARCHAR2(100)  := 'log_';
-  vr_nmarqimp33        VARCHAR2(100)  := 'erro_';  
+  vr_nmarqimp11        VARCHAR2(100)  := 'SM_backup_';
+  vr_nmarqimp22        VARCHAR2(100)  := 'SM_log_';
+  vr_nmarqimp33        VARCHAR2(100)  := 'SM_erro_';  
   vr_rootmicros        VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS'); -- '/progress/f0030248/micros/'; -- 
   vr_nmdireto          VARCHAR2(4000) := vr_rootmicros || 'cpd/bacas/prj0023533'; 
   vr_excsaida          EXCEPTION;  
@@ -66,10 +66,16 @@ declare
              WHEN '11' THEN sld.smposano##11
              WHEN '12' THEN sld.smposano##12
             END) SMPOSANO,
-           (SELECT NVL(ROUND(AVG(CASE WHEN sda.vlsddisp > 0 THEN sda.vlsddisp ELSE 0 END),2),0) FROM crapsda sda
+           (SELECT 
+              CASE WHEN to_char(ass.dtdemiss,'MM') = '12' AND sld.vlsmpmes > 0 THEN 
+                sld.vlsmpmes 
+              ELSE NVL(ROUND(AVG(CASE WHEN sda.vlsddisp > 0 THEN 
+ 		  			    sda.vlsddisp ELSE 0 END),2),0) 
+              END FROM crapsda sda
              WHERE sda.cdcooper = ass.cdcooper
                AND sda.nrdconta = ass.nrdconta
-               AND sda.dtmvtolt BETWEEN TRUNC(ass.dtdemiss,'MM') AND last_day(TRUNC(ass.dtdemiss,'MM'))) saldo_medio,               
+               AND sda.dtmvtolt BETWEEN TRUNC(ass.dtdemiss,'MM') AND last_day(TRUNC(ass.dtdemiss,'MM'))) saldo_medio, 
+           sld.vlsmpmes,               
            sld.smposano##1,
            sld.smposano##2,
            sld.smposano##3,
@@ -194,11 +200,13 @@ declare
   
 BEGIN
  
-  FOR rw IN (SELECT cdcooper FROM crapcop WHERE cdcooper = 6) LOOP
+  FOR rw IN (SELECT cdcooper FROM crapcop WHERE cdcooper > 0 AND cdcooper <> 3 AND flgativo = 1) LOOP
 	 
     abre_arquivos(pr_cdcooper => rw.cdcooper);
     
     log('INICIO - ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));    
+    
+    vr_tab_sld.delete();
   
     FOR rw_smposano IN cr_smposano (pr_cdcooper => rw.cdcooper) LOOP
 		 
@@ -290,7 +298,7 @@ BEGIN
         WHEN 6 THEN
           vr_tab_sld(rw_smposano.nrdconta).vlsmstre##6:= Nvl(vr_vlsmpmes,0);
       END CASE;      
-    END LOOP;
+    END LOOP; -- cr_smposano
        
     log('TOTAL CONTAS - ' || to_char(vr_tab_sld.count) || ' - ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
            
@@ -298,38 +306,40 @@ BEGIN
     
     fecha_arquivos;   
     
-  END LOOP;
-  
-  BEGIN
-    FORALL idx IN INDICES OF vr_tab_sld SAVE EXCEPTIONS
-        UPDATE crapsld
-           SET smposano##1 = vr_tab_sld(idx).smposano##1,
-               smposano##2 = vr_tab_sld(idx).smposano##2,
-               smposano##3 = vr_tab_sld(idx).smposano##3,
-               smposano##4 = vr_tab_sld(idx).smposano##4,
-               smposano##5 = vr_tab_sld(idx).smposano##5,
-               smposano##6 = vr_tab_sld(idx).smposano##6,
-               smposano##7 = vr_tab_sld(idx).smposano##7,
-               smposano##8 = vr_tab_sld(idx).smposano##8,
-               smposano##9 = vr_tab_sld(idx).smposano##9,
-               smposano##10 = vr_tab_sld(idx).smposano##10,
-               smposano##11 = vr_tab_sld(idx).smposano##11,
-               smposano##12 = vr_tab_sld(idx).smposano##12,
-               vlsmstre##1  = vr_tab_sld(idx).vlsmstre##1,
-               vlsmstre##2  = vr_tab_sld(idx).vlsmstre##2,
-               vlsmstre##3  = vr_tab_sld(idx).vlsmstre##3,
-               vlsmstre##4  = vr_tab_sld(idx).vlsmstre##4,
-               vlsmstre##5  = vr_tab_sld(idx).vlsmstre##5,
-               vlsmstre##6  = vr_tab_sld(idx).vlsmstre##6                                                            
-         WHERE cdcooper = vr_tab_sld(idx).cdcooper
-           AND nrdconta = vr_tab_sld(idx).nrdconta;                     
-    EXCEPTION
-      WHEN OTHERS THEN
-        erro('Erro ao atualizar tabela crapsld. '||
-                 SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
-        --Levantar Exceção
-        RAISE vr_excsaida;
-  END;
+    BEGIN
+      FORALL idx IN INDICES OF vr_tab_sld SAVE EXCEPTIONS
+          UPDATE crapsld
+             SET smposano##1 = vr_tab_sld(idx).smposano##1,
+                 smposano##2 = vr_tab_sld(idx).smposano##2,
+                 smposano##3 = vr_tab_sld(idx).smposano##3,
+                 smposano##4 = vr_tab_sld(idx).smposano##4,
+                 smposano##5 = vr_tab_sld(idx).smposano##5,
+                 smposano##6 = vr_tab_sld(idx).smposano##6,
+                 smposano##7 = vr_tab_sld(idx).smposano##7,
+                 smposano##8 = vr_tab_sld(idx).smposano##8,
+                 smposano##9 = vr_tab_sld(idx).smposano##9,
+                 smposano##10 = vr_tab_sld(idx).smposano##10,
+                 smposano##11 = vr_tab_sld(idx).smposano##11,
+                 smposano##12 = vr_tab_sld(idx).smposano##12,
+                 vlsmstre##1  = vr_tab_sld(idx).vlsmstre##1,
+                 vlsmstre##2  = vr_tab_sld(idx).vlsmstre##2,
+                 vlsmstre##3  = vr_tab_sld(idx).vlsmstre##3,
+                 vlsmstre##4  = vr_tab_sld(idx).vlsmstre##4,
+                 vlsmstre##5  = vr_tab_sld(idx).vlsmstre##5,
+                 vlsmstre##6  = vr_tab_sld(idx).vlsmstre##6                                                            
+           WHERE cdcooper = vr_tab_sld(idx).cdcooper
+             AND nrdconta = vr_tab_sld(idx).nrdconta;                     
+      EXCEPTION
+        WHEN OTHERS THEN
+          erro('Erro ao atualizar tabela crapsld. '||
+                   SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
+          --Levantar Exceção
+          RAISE vr_excsaida;
+    END;
+    
+    COMMIT;    
+    
+  END LOOP; -- loop por cooperativa
    
   COMMIT;
    
