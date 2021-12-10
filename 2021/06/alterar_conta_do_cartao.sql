@@ -8,12 +8,12 @@ DECLARE
 BEGIN
 
   -- Cooperativa de destino do cartão
-  vr_cooperativa := 6;
+  vr_cooperativa := 1;
   -- Conta de destino do cartão
-  vr_conta := 194646;
+  vr_conta := 6024041;
 
 -- Numero do cartão que precisamos ajustar
-vr_cartao := 5588190184171591; -- Topaz
+vr_cartao := 5127070162666663; -- Topaz
   
   -- Verificar se a conta possui algum outro cartão para buscar o CPF do Titular
   FOR cartao IN (select distinct a.nrcpftit
@@ -54,13 +54,14 @@ vr_cartao := 5588190184171591; -- Topaz
         ,card.nrcpftit = vr_cpf_titular
         ,card.qtsenerr = 0
         ,card.inacetaa = 1
+		,card.nrctrcrd = 999
    WHERE card.nrcrcard = vr_cartao;
 
   UPDATE crawcrd card
      SET card.cdcooper = vr_cooperativa
         ,card.nrdconta = vr_conta
         ,card.nrcpftit = vr_cpf_titular
-        ,card.nrctrcrd = card.nrctrcrd + 1
+        ,card.nrctrcrd = 999
    WHERE card.nrcrcard = vr_cartao;
 
   COMMIT;
