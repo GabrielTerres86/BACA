@@ -402,7 +402,7 @@ begin
         END IF;
       END IF;
     
-      /*IF rw.nraplica_lac IS NOT NULL THEN
+      IF rw.nraplica_lac IS NOT NULL THEN
          UPDATE craplac lac 
             SET lac.idlctcus = 0
           WHERE lac.idlctcus = rw.idlancamento;
@@ -423,7 +423,7 @@ begin
             WHERE rda.idaplcus = rw.idaplicacao;			 
         END IF;
               
-      END IF;*/
+      END IF;
       
       log(
         rw.idaplicacao || ' - ' ||
