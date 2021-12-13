@@ -342,6 +342,9 @@ begin
     vr_vlinictd := to_number(gene0001.fn_param_sistema('CRED',rw_cop.cdcooper,'VLMIN_CUSTOD_APLICA_B3'),'FM999999990D00');
     
     FOR rw_crapdat IN (SELECT * FROM crapdat WHERE cdcooper = rw_cop.cdcooper) LOOP
+		 
+      rw_crapdat.dtmvtolt := to_date('15/10/2021','DD/MM/RRRR');
+      rw_crapdat.dtmvtoan := to_date('14/10/2021','DD/MM/RRRR');      
     
       vr_dtmvtolt_dat := rw_crapdat.dtmvtolt;
       vr_dtmvtoan_dat := rw_crapdat.dtmvtoan;       
@@ -355,6 +358,7 @@ begin
 
     log(to_char(SYSDATE,'HH24:MI:SS'));
     
+    log('--------------- INICIALIZACAO ---------------');      
     FOR rw IN (
         SELECT cst.nmarquivo, 
                cst.idtipo_arquivo, 
@@ -382,7 +386,7 @@ begin
                craplac lac,
                craplap lap
         WHERE arq.idarquivo = cst.idarquivo
-          AND TRUNC(cst.dtcriacao) = to_date('15/10/2021','DD/MM/RRRR')
+          AND TRUNC(cst.dtcriacao) = to_date('08/12/2021','DD/MM/RRRR')
           AND lct.idlancamento = arq.idlancamento
           AND lac.idlctcus(+) = arq.idlancamento
           AND lap.idlctcus(+) = arq.idlancamento
@@ -420,6 +424,12 @@ begin
         END IF;
               
       END IF;
+      
+      log(
+        rw.idaplicacao || ' - ' ||
+        rw.idlancamento || ' - ' ||
+        rw.dslinha             
+      );      
                         
     END LOOP;
     
