@@ -8,7 +8,7 @@ DECLARE
   vr_exc_erro      EXCEPTION;
   
 BEGIN
-  UPDATE crapepr SET vlprejuz = 1066.38, vljraprj = 1762.05 WHERE cdcooper = 9 AND nrdconta = 502049 AND nrctremp = 10014825;
+  UPDATE crapepr SET vlprejuz = 1066.38, vljraprj = 1762.05, vlsdprej = 1066.38 WHERE cdcooper = 9 AND nrdconta = 502049 AND nrctremp = 10014825;
   
   OPEN btch0001.cr_crapdat(pr_cdcooper => 9);
   FETCH btch0001.cr_crapdat  INTO rw_crapdat;
