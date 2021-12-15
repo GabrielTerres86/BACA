@@ -4,4 +4,5 @@ BEGIN
      SET lgp.cdidenti = 65316475396
    WHERE lgp.progress_recid = 3506488;
  
-COMMIT;
+  COMMIT;
+END;
