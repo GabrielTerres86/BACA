@@ -61,7 +61,7 @@ using (--cooper 2
          WHERE lct.idtipo_arquivo <> 9 -- Não trazer COnciliação
            -- Se este possui registros de origem, os registros de origem devem
            -- ter gerado Numero CETIP e estarem OK
---                      and lct.IDTIPO_LANCTO = 2
+and lct.IDTIPO_LANCTO = 2
 and ((lct.nrdconta = 653411  and  lct.nraplica = 2       )
 or (lct.nrdconta = 647047  and  lct.nraplica = 2       )
 or (lct.nrdconta = 467162  and  lct.nraplica = 6       )
@@ -598,7 +598,7 @@ or (lct.nrdconta = 882453 and  lct.nraplica = 3        ))
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))
                 ) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;
 
@@ -644,7 +644,7 @@ using ( select lct.*,
                  and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                ) lct
          WHERE lct.idtipo_arquivo <> 9 -- Não trazer COnciliação
-                   -- and lct.IDTIPO_LANCTO = 2
+                   and lct.IDTIPO_LANCTO = 2
            -- Se este possui registros de origem, os registros de origem devem
            -- ter gerado Numero CETIP e estarem OK
     
@@ -836,7 +836,7 @@ using ( select lct.*,
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null)) ) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;		
 	
@@ -885,7 +885,7 @@ using (select lct.*, --COOPER 6
          WHERE lct.idtipo_arquivo <> 9 -- Não trazer COnciliação
            -- Se este possui registros de origem, os registros de origem devem
            -- ter gerado Numero CETIP e estarem OK
-           --and lct.IDTIPO_LANCTO = 2
+           and lct.IDTIPO_LANCTO = 2
            and (( lct.nrdconta = 108740   and lct.nraplica = 2    )
           or ( lct.nrdconta = 50555   and lct.nraplica = 28     )
           or ( lct.nrdconta = 152757    and lct.nraplica = 1      )
@@ -976,7 +976,7 @@ using (select lct.*, --COOPER 6
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;
 	
@@ -1020,13 +1020,13 @@ using (--COOPER 7
                    and apl.idaplicacao = lct.idaplicacao
                    and apl.tpaplicacao in (3, 4) -- PCAPTA Pré e Pós
                    and rac.idaplcus = apl.idaplicacao
-                      and rac.cdcooper = 7
+                      and rac.cdcooper = 7					  
                  and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                ) lct
          WHERE lct.idtipo_arquivo <> 9 -- Não trazer COnciliação
            -- Se este possui registros de origem, os registros de origem devem
            -- ter gerado Numero CETIP e estarem OK
-                  --    and lct.IDTIPO_LANCTO = 2
+		and lct.IDTIPO_LANCTO = 2
            and (( lct.nrdconta =  330264  and lct.nraplica =  15   )
 or ( lct.nrdconta =  113000   and lct.nraplica =  10   )
 or ( lct.nrdconta =  330264   and lct.nraplica =  16   )
@@ -1231,7 +1231,7 @@ or ( lct.nrdconta =  149195   and lct.nraplica =  80   ))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null)) ) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;
 
@@ -1279,7 +1279,7 @@ using ( select lct.*, ---cooper 8
          WHERE lct.idtipo_arquivo <> 9 -- Não trazer COnciliação
            -- Se este possui registros de origem, os registros de origem devem
            -- ter gerado Numero CETIP e estarem OK
-        --   and lct.IDTIPO_LANCTO = 2
+        and lct.IDTIPO_LANCTO = 2
         and (( lct.nrdconta =  28517   and lct.nraplica = 17)
 or ( lct.nrdconta =  28517   and lct.nraplica = 18    )
 or ( lct.nrdconta =  18619   and lct.nraplica = 33    )
@@ -1310,13 +1310,10 @@ or ( lct.nrdconta =  43087   and lct.nraplica = 1478))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;
 	
-	
---UP
-
 merge into tbcapt_custodia_lanctos t1
 using (--cooper 2
  select lct.*, 
@@ -1737,13 +1734,12 @@ or (lct.nrdconta = 892335			 and  lct.nraplica =  11      ))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;
 	
 merge into tbcapt_custodia_lanctos t1
 using (--cooper 5        
-union         
  select lct.*,
                count(1) over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) qtregis,
                row_number() over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro order by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) nrseqreg
@@ -1916,7 +1912,7 @@ or (lct.nrdconta =  209996		and  lct.nraplica =   20    ))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;
 	
@@ -2023,7 +2019,7 @@ or (lct.nrdconta =  227137		and lct.nraplica =   9 ) )
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;
 	
@@ -2265,7 +2261,7 @@ or 	(lct.nrdconta =  116165		and lct.nraplica =    26      ))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;
 	
@@ -2341,7 +2337,7 @@ or 	(lct.nrdconta =  15989	and lct.nraplica =  24   ))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;
 	
@@ -2701,7 +2697,7 @@ or (lct.nrdconta = 354899		and  lct.nraplica = 7     ))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;		
 	
@@ -2709,3 +2705,4 @@ WHEN MATCHED THEN
 commit;	
 
 end;
+	
