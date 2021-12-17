@@ -8,7 +8,7 @@ BEGIN
 
     UPDATE craptel t
        SET t.cdopptel = t.cdopptel || ',F'
-          ,t.lsopptel = t.lsopptel || ',INCL. MUNUAL'
+          ,t.lsopptel = t.lsopptel || ',INCL. MANUAL'
      WHERE t.cdcooper = rw_crapcop.cdcooper
        AND UPPER(t.nmdatela) = 'IMOVEL';                   
   END LOOP;
