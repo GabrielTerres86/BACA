@@ -109,7 +109,7 @@ BEGIN
     ('TELA_PEAC'
     ,TRUNC(SYSDATE))
   RETURNING nrseqrdr INTO vr_nrseqrdr;
-/*
+
   INSERT INTO crapaca
     (nmdeacao
     ,nmpackag
@@ -117,7 +117,7 @@ BEGIN
     ,lstparam
     ,nrseqrdr)
   VALUES
-    ('CONSULTA_CONTRATOS'
+    ('CONSULTA_CONTRATOS_PEAC'
     ,'TELA_PEAC'
     ,'pc_consultar_contratos_web'
     ,'pr_cdcooper,pr_nrdconta,pr_nrcontrato,pr_nriniseq,pr_nrregist,pr_datrini,pr_datrfim'
@@ -130,12 +130,12 @@ BEGIN
     ,lstparam
     ,nrseqrdr)
   VALUES
-    ('GRAVA_HONRAPEACP'
+    ('GRAVA_HONRAPEAC'
     ,'TELA_PEAC'
     ,'pc_atualizar_innaohonrar_web'
     ,'pr_contratos'
     ,vr_nrseqrdr);
-*/
+
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
