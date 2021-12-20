@@ -21,7 +21,7 @@ DECLARE
       from CECRED.crapsda a
      WHERE a.nrdconta = 13635778
        AND a.cdcooper = 1
-       AND a.dtmvtolt BETWEEN to_date('13/12/2021', 'dd/mm/yyyy') AND
+       AND a.dtmvtolt BETWEEN to_date('14/12/2021', 'dd/mm/yyyy') AND
            TRUNC(SYSDATE);
 
   rg_crapsda crapsda%rowtype;
@@ -71,7 +71,7 @@ BEGIN
        SET a.VLSDDISP = (a.vlsddisp + 831.83)
      WHERE a.nrdconta = 13635778
        AND a.cdcooper = 1
-       AND a.dtmvtolt BETWEEN to_date('13/12/2021', 'dd/mm/yyyy') AND
+       AND a.dtmvtolt BETWEEN to_date('14/12/2021', 'dd/mm/yyyy') AND
            TRUNC(SYSDATE);
   
  
