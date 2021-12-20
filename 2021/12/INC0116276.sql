@@ -1,0 +1,18 @@
+BEGIN
+
+UPDATE CRAPJUR
+   SET NMEXTTTL = 'SETA EMPREENDIMENTOS LTDA'
+     , NMTALTTL = 'SETA EMPREENDIMENTOS LTDA'
+ where cdcooper = 1
+   and nrdconta = 11600497;
+   
+
+UPDATE CRAPASS
+   SET NMPRIMTL = 'SETA EMPREENDIMENTOS LTDA'
+ where cdcooper = 1
+   and nrdconta = 11600497;  
+   
+   commit;
+
+END;
+
