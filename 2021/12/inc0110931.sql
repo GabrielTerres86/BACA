@@ -81,17 +81,17 @@ BEGIN
          ,90 -- tipo: emprestimo
          ,rw_principal.nrctrepr
          ,1 -- insituacao
-         ,0 -- perminimo
+         ,100 -- perminimo
          ,1 -- inaplicacao_propria
          ,0 -- inpoupanca_propria
          ,0 -- nrconta_terceiro
          ,0 -- inaplicacao_terceiro
          ,0 -- inpoupanca_terceiro
-         ,0 -- inresgate_automatico
+         ,1 -- inresgate_automatico
          ,0)-- qtdias_atraso_permitido
     RETURNING idcobertura
          INTO vr_idcobert;
-    
+    COMMIT;
     -- grava rollback
     gene0002.pc_escreve_xml(vr_dados_rollback
                           , vr_texto_rollback
@@ -119,7 +119,7 @@ BEGIN
     vr_vlresgat := rw_principal.vlsdeved;
 
     -- Devolver o valor simulado de resgate
-    BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => vr_idcobope
+    BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => vr_idcobert
                                          ,pr_flgerlog => 1
                                          ,pr_cdoperad => '1'
                                          ,pr_idorigem => 7
@@ -138,7 +138,7 @@ BEGIN
     END IF;
     
     -- Consulta o saldo atualizado para desbloqueio da cobertura parcial ou completa
-    BLOQ0001.pc_bloqueio_garantia_atualizad(pr_idcobert => vr_idcobope
+    BLOQ0001.pc_bloqueio_garantia_atualizad(pr_idcobert => vr_idcobert
                                            ,pr_vlroriginal => rw_principal.vlsdeved
                                            ,pr_vlratualizado => vr_vlresgat
                                            ,pr_nrcpfcnpj_cobertura => vr_nrcpfcnpj
@@ -146,7 +146,7 @@ BEGIN
 
     -- Se o valor de desbloqueio for maior ou igual ao valor atualizado, efetua o desblqueio total
     IF rw_principal.vlsdeved >= vr_vlresgat THEN                                
-       BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_idcobertura    => vr_idcobope
+       BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_idcobertura    => vr_idcobert
                                             ,pr_inbloq_desbloq => 'D'
                                             ,pr_cdoperador     => '1'
                                             ,pr_cdcoordenador_desbloq => '1'
