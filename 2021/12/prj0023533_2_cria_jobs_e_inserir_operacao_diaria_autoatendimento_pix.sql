@@ -34,9 +34,9 @@ begin
   END IF;   
   
   FOR rw IN (SELECT cop.cdcooper
-                     FROM crapcop cop
-                     WHERE cop.cdcooper <> 3
-                     AND cop.flgativo = 1) LOOP
+						 FROM crapcop cop
+						 WHERE cop.cdcooper <> 3
+						 AND cop.flgativo = 1) LOOP
 
     vr_plsql1 := 'begin cecred.pc_operacoa_diaria_pix_retro(' || rw.cdcooper || ',' || vr_idparale || ',' || (LPAD(rw.cdcooper,3,'0')) || '); end;';
                          
