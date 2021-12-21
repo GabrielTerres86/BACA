@@ -10,9 +10,8 @@ DECLARE
   
   vr_idcobert  tbgar_cobertura_operacao.idcobertura%TYPE;
   vr_idcobope  crawepr.idcobope%TYPE;
-  vr_vlresgat  NUMBER;
-  vr_nrcpfcnpj NUMBER;
-  vr_qtdiaatr  NUMBER;
+  vr_vlsaldo_aplica  NUMBER;
+  vr_vlsaldo_poupa   NUMBER;
   
   --Registro tipo Data
   rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -60,100 +59,64 @@ BEGIN
     OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_principal.cdcooper);
     FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
     CLOSE BTCH0001.cr_crapdat;
-  
-    INSERT INTO tbgar_cobertura_operacao
-         (cdcooper
-         ,nrdconta
-         ,tpcontrato
-         ,nrcontrato
-         ,insituacao
-         ,perminimo
-         ,inaplicacao_propria
-         ,inpoupanca_propria
-         ,nrconta_terceiro
-         ,inaplicacao_terceiro
-         ,inpoupanca_terceiro
-         ,inresgate_automatico
-         ,qtdias_atraso_permitido)
-    VALUES
-         (rw_principal.cdcooper
-         ,rw_principal.nrdconta
-         ,90 -- tipo: emprestimo
-         ,rw_principal.nrctrepr
-         ,1 -- insituacao
-         ,100 -- perminimo
-         ,1 -- inaplicacao_propria
-         ,0 -- inpoupanca_propria
-         ,0 -- nrconta_terceiro
-         ,0 -- inaplicacao_terceiro
-         ,0 -- inpoupanca_terceiro
-         ,1 -- inresgate_automatico
-         ,0)-- qtdias_atraso_permitido
-    RETURNING idcobertura
-         INTO vr_idcobert;
-    COMMIT;
-    -- grava rollback
-    gene0002.pc_escreve_xml(vr_dados_rollback
-                          , vr_texto_rollback
-                          , 'DELETE FROM tbgar_cobertura_operacao WHERE cdcooper = '||rw_principal.cdcooper||' AND nrdconta = '||rw_principal.nrdconta||' AND nrcontrato = '||rw_principal.nrctrepr||';' || chr(13), FALSE); 
     
-    -- valor anterior para usar no rollback
-    SELECT idcobope INTO vr_idcobope FROM crawepr WHERE cdcooper = rw_principal.cdcooper AND nrdconta = rw_principal.nrdconta AND nrctremp = rw_principal.nrctrepr;
+    BLOQ0001.pc_retorna_saldos_conta(pr_cdcooper => rw_principal.cdcooper,
+                                     pr_nrdconta => rw_principal.nrdconta,
+                                     pr_tpctrato => 90,
+                                     pr_nrctaliq => NULL,
+                                     pr_dsctrliq => NULL,
+                                     pr_vlsaldo_aplica => vr_vlsaldo_aplica,
+                                     pr_vlsaldo_poupa => vr_vlsaldo_poupa,
+                                     pr_dscritic => vr_dscritic);
     
-    -- Atualiza idcobope
-    UPDATE crawepr w SET w.idcobope = vr_idcobert WHERE w.cdcooper = rw_principal.cdcooper AND w.nrdconta = rw_principal.nrdconta AND w.nrctremp = rw_principal.nrctrepr;
+    IF rw_principal.vlsdeved < vr_vlsaldo_aplica THEN
     
-    -- grava rollback idcobope
-    gene0002.pc_escreve_xml(vr_dados_rollback
-                          , vr_texto_rollback
-                          , 'UPDATE crawepr SET idcobope = '||vr_idcobope||' WHERE cdcooper = '||rw_principal.cdcooper||' AND nrdconta = '||rw_principal.nrdconta||' AND nrctremp = '||rw_principal.nrctrepr||';' || chr(13), FALSE);     
-  
-    
-    -- Acionar rotina de calculo de dias em atraso
-    vr_qtdiaatr := empr0001.fn_busca_dias_atraso_epr(pr_cdcooper => rw_principal.cdcooper
-                                                    ,pr_nrdconta => rw_principal.nrdconta
-                                                    ,pr_nrctremp => rw_principal.nrctrepr
-                                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                                    ,pr_dtmvtoan => rw_crapdat.dtmvtoan);
-                                                    
-    vr_vlresgat := rw_principal.vlsdeved;
+      INSERT INTO tbgar_cobertura_operacao
+           (cdcooper
+           ,nrdconta
+           ,tpcontrato
+           ,nrcontrato
+           ,insituacao
+           ,perminimo
+           ,inaplicacao_propria
+           ,inpoupanca_propria
+           ,nrconta_terceiro
+           ,inaplicacao_terceiro
+           ,inpoupanca_terceiro
+           ,inresgate_automatico
+           ,qtdias_atraso_permitido)
+      VALUES
+           (rw_principal.cdcooper
+           ,rw_principal.nrdconta
+           ,90 -- tipo: emprestimo
+           ,rw_principal.nrctrepr
+           ,1 -- insituacao
+           ,100 -- perminimo
+           ,1 -- inaplicacao_propria
+           ,0 -- inpoupanca_propria
+           ,0 -- nrconta_terceiro
+           ,0 -- inaplicacao_terceiro
+           ,0 -- inpoupanca_terceiro
+           ,0 -- inresgate_automatico
+           ,0)-- qtdias_atraso_permitido
+      RETURNING idcobertura
+           INTO vr_idcobert;
 
-    -- Devolver o valor simulado de resgate
-    BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => vr_idcobert
-                                         ,pr_flgerlog => 1
-                                         ,pr_cdoperad => '1'
-                                         ,pr_idorigem => 7
-                                         ,pr_cdprogra => 'ATENDA'
-                                         ,pr_qtdiaatr => vr_qtdiaatr
-                                         ,pr_vlresgat => vr_vlresgat
-                                         ,pr_flefetiv => 'N' --retornar os valores para resgate
-                                         ,pr_dscritic => vr_dscritic);
-
-    -- Em caso de erro, deve prosseguir normalmente, considerando que não há valores para resgate
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-      -- Limpar a variável de crítica
-      vr_dscritic := NULL;
-      -- Zerar a variável de valor de resgate
-      vr_vlresgat := 0;
-    END IF;
-    
-    -- Consulta o saldo atualizado para desbloqueio da cobertura parcial ou completa
-    BLOQ0001.pc_bloqueio_garantia_atualizad(pr_idcobert => vr_idcobert
-                                           ,pr_vlroriginal => rw_principal.vlsdeved
-                                           ,pr_vlratualizado => vr_vlresgat
-                                           ,pr_nrcpfcnpj_cobertura => vr_nrcpfcnpj
-                                           ,pr_dscritic => vr_dscritic);
-
-    -- Se o valor de desbloqueio for maior ou igual ao valor atualizado, efetua o desblqueio total
-    IF rw_principal.vlsdeved >= vr_vlresgat THEN                                
-       BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_idcobertura    => vr_idcobert
-                                            ,pr_inbloq_desbloq => 'D'
-                                            ,pr_cdoperador     => '1'
-                                            ,pr_cdcoordenador_desbloq => '1'
-                                            ,pr_vldesbloq      => vr_vlresgat
-                                            ,pr_flgerar_log    => 'S'
-                                            ,pr_atualizar_rating => 0
-                                            ,pr_dscritic       => vr_dscritic);
+      -- grava rollback
+      gene0002.pc_escreve_xml(vr_dados_rollback
+                            , vr_texto_rollback
+                            , 'DELETE FROM tbgar_cobertura_operacao WHERE cdcooper = '||rw_principal.cdcooper||' AND nrdconta = '||rw_principal.nrdconta||' AND nrcontrato = '||rw_principal.nrctrepr||';' || chr(13), FALSE); 
+      
+      -- valor anterior para usar no rollback
+      SELECT idcobope INTO vr_idcobope FROM crawepr WHERE cdcooper = rw_principal.cdcooper AND nrdconta = rw_principal.nrdconta AND nrctremp = rw_principal.nrctrepr;
+      
+      -- Atualiza idcobope
+      UPDATE crawepr w SET w.idcobope = vr_idcobert WHERE w.cdcooper = rw_principal.cdcooper AND w.nrdconta = rw_principal.nrdconta AND w.nrctremp = rw_principal.nrctrepr;
+      
+      -- grava rollback idcobope
+      gene0002.pc_escreve_xml(vr_dados_rollback
+                            , vr_texto_rollback
+                            , 'UPDATE crawepr SET idcobope = '||vr_idcobope||' WHERE cdcooper = '||rw_principal.cdcooper||' AND nrdconta = '||rw_principal.nrdconta||' AND nrctremp = '||rw_principal.nrctrepr||';' || chr(13), FALSE);     
     END IF;
     
   END LOOP;
