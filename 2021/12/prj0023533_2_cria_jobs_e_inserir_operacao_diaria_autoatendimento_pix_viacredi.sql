@@ -1,10 +1,10 @@
 -- Created on 20/12/2021 by F0033330
 declare 
   -- Local variables here
-  i integer;
+  vr_cdcooper integer := 1;
   vr_dscritic  VARCHAR2(1000);
   vr_plsql1    VARCHAR2(4000);
-  vr_cdprogra  VARCHAR2(100) := 'JBSOBRPIX_';
+  vr_cdprogra  VARCHAR2(100) := 'JBSOBRPIX_1_';
   vr_jobname   VARCHAR2(100);
   vr_exc_saida EXCEPTION;
   
@@ -33,17 +33,14 @@ begin
      RAISE vr_exc_saida;
   END IF;   
   
-  FOR rw IN (SELECT cop.cdcooper
-						 FROM crapcop cop
-						 WHERE cop.cdcooper NOT IN (1, 3)
-						 AND cop.flgativo = 1) LOOP
+  FOR mes IN 1..12 LOOP
 
-    vr_plsql1 := 'begin cecred.pc_operacoa_diaria_pix_retro(' || rw.cdcooper || ',' || vr_idparale || ',' || (LPAD(rw.cdcooper,3,'0')) || '); end;';
-    vr_jobname := vr_cdprogra || 'CO' || rw.cdcooper || '_$';
+    vr_plsql1 := 'begin cecred.pc_operacoa_diaria_pix_retro_viacredi(' || vr_cdcooper || ',' || vr_idparale || ',' || mes || ',' || mes || '); end;';
+    vr_jobname := vr_cdprogra || mes || '_$';
     
     -- Cadastra o programa paralelo
     gene0001.pc_ativa_paralelo(pr_idparale => vr_idparale
-                              ,pr_idprogra => (LPAD(rw.cdcooper,3,'0'))
+                              ,pr_idprogra => mes
                               ,pr_des_erro => vr_dscritic);
                               
     -- Testar saida com erro
@@ -79,7 +76,7 @@ begin
                               ,pr_qtdproce => 0 --> Aguardar a finalização de todos os jobs
                               ,pr_des_erro => vr_dscritic);
   
-  exec_sql('drop procedure cecred.pc_operacoa_diaria_pix_retro');
+  exec_sql('drop procedure cecred.pc_operacoa_diaria_pix_retro_viacredi');
   
   COMMIT;
   

@@ -1,10 +1,9 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_operacoa_diaria_pix_retro(pr_cdcooper IN crapcop.cdcooper%TYPE
-                                                               ,pr_idparale IN crappar.idparale%TYPE
-                                                               ,pr_idprogra IN crappar.idprogra%TYPE ) IS
+CREATE OR REPLACE PROCEDURE CECRED.pc_operacoa_diaria_pix_retro_viacredi(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                                                        ,pr_idparale IN crappar.idparale%TYPE
+                                                                        ,pr_idprogra IN crappar.idprogra%TYPE
+                                                                        ,pr_cdmes IN INTEGER ) IS
 
   ------------------------------- VARIAVEIS ---------------------------------
-  vr_dataini DATE := TO_DATE('01/01/2021', 'DD/MM/RRRR');
-  vr_datafim DATE := TO_DATE('19/12/2021', 'DD/MM/RRRR');
   pr_dscritic          VARCHAR2(5000) := ' ';
   vr_dscritic          VARCHAR2(5000) := ' ';
   vr_nmarqimp2         VARCHAR2(100) := ' ';
@@ -22,7 +21,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_operacoa_diaria_pix_retro(pr_cdcooper IN c
   vr_texto_completo_2  VARCHAR2(32600);
   vr_texto_completo_3  VARCHAR2(32600);
   
-  vr_datainiproc       DATE;
+  vr_dataini           DATE;
+  vr_dtini             DATE := to_date('01/' || to_char(pr_cdmes,'fm00') || '/2021');
+  vr_dtfim             DATE := last_day(vr_dtini);
 
   PROCEDURE loga (pr_msg VARCHAR2) IS
   BEGIN
@@ -46,8 +47,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_operacoa_diaria_pix_retro(pr_cdcooper IN c
 
   PROCEDURE abre_arquivos IS
   BEGIN
-    vr_nmarqimp2 := pr_cdcooper || '_' || vr_nmarqimp22 ||to_char(sysdate,'HH24MISS');
-    vr_nmarqimp3 := pr_cdcooper || '_' || vr_nmarqimp33 ||to_char(sysdate,'HH24MISS');
+    vr_nmarqimp2 := pr_cdcooper || '_' || pr_cdmes || '_' || vr_nmarqimp22 ||to_char(sysdate,'HH24MISS');
+    vr_nmarqimp3 := pr_cdcooper || '_' || pr_cdmes || '_' || vr_nmarqimp33 ||to_char(sysdate,'HH24MISS');
 
     vr_des_xml_1 := NULL;
     dbms_lob.createtemporary(vr_des_xml_1, TRUE);
@@ -108,9 +109,13 @@ BEGIN
   /* ############              INICIO               ######################## */
   /* ####################################################################### */
   abre_arquivos;
-  loga('Inicio do processo de inserção de operações diaria retroativas para cooperativa ' || pr_cdcooper || ': ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
-  vr_datainiproc := sysdate;
-  loga('Inicio do insert da operação 24: ' || to_char(vr_datainiproc,'DD/MM/YYYY HH24:MI:SS'));
+  loga('Inicio do processo de inserção de operações diaria retroativas para cooperativa ' || pr_cdcooper || ' e mes ' || pr_cdmes || ': ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
+  vr_dataini := sysdate;
+  loga('Inicio do insert para o mês ' || pr_cdmes || ' da operação 24: ' || to_char(vr_dataini,'DD/MM/YYYY HH24:MI:SS'));
+  
+  IF pr_cdmes = 12 THEN
+    vr_dtfim := TO_DATE('19/12/2021', 'DD/MM/RRRR');
+  END IF;
 
   BEGIN
     INSERT INTO cecred.tbcc_operacoes_diarias
@@ -140,23 +145,23 @@ BEGIN
                            3437,
                            3438,
                            3468)
-      AND lcm.dtmvtolt BETWEEN vr_dataini AND vr_datafim
+      AND lcm.dtmvtolt BETWEEN vr_dtini AND vr_dtfim
       AND lcm.cdcooper = pr_cdcooper
     GROUP BY lcm.cdcooper, lcm.nrdconta, lcm.dtmvtolt);
 
     EXCEPTION
       WHEN OTHERS THEN
-        erro('Erro ao inserir registros na tabela tbcc_operacoes_diarias para operação 24. '||SQLERRM);
-        loga('Insert da operação 24 finalizado com erro: ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
+        erro('Erro ao inserir registros na tabela tbcc_operacoes_diarias para o mês ' || pr_cdmes || ' da operação 24. '||SQLERRM);
+        loga('Insert da operação 24 para o mês ' || pr_cdmes || ' finalizado com erro: ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
         --Levantar Exceção
         RAISE vr_excsaida;
     END;
 
-    loga('Insert da operação 24 finalizado com sucesso: ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
+    loga('Insert da operação 24 para o mês ' || pr_cdmes || ' finalizado com sucesso: ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
     loga('Linhas afetadas: ' || TO_CHAR(SQL%ROWCOUNT));
-    loga('Tempo estimado em segundo: ' || TO_CHAR(((sysdate - vr_datainiproc)*1440)*60));
-    vr_datainiproc := sysdate;
-    loga('Inicio do insert da operação 25: ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
+    loga('Tempo estimado em segundo: ' || TO_CHAR(((sysdate - vr_dataini)*1440)*60));
+    vr_dataini := sysdate;
+    loga('Inicio do insert para o mês ' || pr_cdmes || ' da operação 25: ' || to_char(vr_dataini,'DD/MM/YYYY HH24:MI:SS'));
 
     BEGIN
       INSERT INTO cecred.tbcc_operacoes_diarias
@@ -193,20 +198,20 @@ BEGIN
                              3436,
                              3469,
                              3470)
-       AND lcm.dtmvtolt BETWEEN vr_dataini AND vr_datafim
-       AND lcm.cdcooper = pr_cdcooper
+        AND lcm.dtmvtolt BETWEEN vr_dtini AND vr_dtfim
+        AND lcm.cdcooper = pr_cdcooper
       GROUP BY lcm.cdcooper, lcm.nrdconta, lcm.dtmvtolt);
 
     EXCEPTION
       WHEN OTHERS THEN
-        erro('Erro ao inserir registros na tabela tbcc_operacoes_diarias para operação 25. '||SQLERRM);
-        loga('Insert da operação 25 finalizado com erro: ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
+        erro('Erro ao inserir registros na tabela tbcc_operacoes_diarias para o mês ' || pr_cdmes || ' da operação 25. '||SQLERRM);
+        loga('Insert da operação 25 para o mês ' || pr_cdmes || ' finalizado com erro: ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
         --Levantar Exceção
         RAISE vr_excsaida;
     END;
 
-    loga('Insert da operação 25 finalizado com sucesso: ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
-    loga('Tempo estimado em segundo: ' || TO_CHAR(((sysdate - vr_datainiproc)*1440)*60));
+    loga('Insert da operação 25 para o mês ' || pr_cdmes || ' finalizado com sucesso: ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
+    loga('Tempo estimado em segundo: ' || TO_CHAR(((sysdate - vr_dataini)*1440)*60));
     loga('Linhas afetadas: ' || TO_CHAR(SQL%ROWCOUNT));
     
     COMMIT;
