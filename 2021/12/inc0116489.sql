@@ -44,8 +44,6 @@ declare
            pep1.vlsdvpar,
            pep1.nrparepr
       FROM crapepr
-      JOIN crapdat dat
-        ON crapepr.cdcooper = dat.cdcooper
       JOIN crawepr
         ON crawepr.cdcooper = crapepr.cdcooper
        AND crawepr.nrdconta = crapepr.nrdconta
@@ -55,13 +53,13 @@ declare
        AND pep1.nrdconta = crapepr.nrdconta
        AND pep1.nrctremp = crapepr.nrctremp
        AND pep1.inliquid = 0
-       AND pep1.dtvencto BETWEEN to_date('01/01/2022', 'dd/mm/yyyy') AND add_months(dat.dtmvtoan,1)
+       AND pep1.dtvencto BETWEEN to_date('01/01/2022', 'dd/mm/yyyy') AND to_date('17/01/2022', 'dd/mm/yyyy')
       JOIN crappep pep2
         ON pep2.cdcooper = crapepr.cdcooper
        AND pep2.nrdconta = crapepr.nrdconta
        AND pep2.nrctremp = crapepr.nrctremp
        AND (pep2.vlmtapar > 0 OR pep2.vlpagmta > 0)
-       AND pep2.dtvencto BETWEEN to_date('01/12/2021', 'dd/mm/yyyy') AND dat.dtmvtoan
+       AND pep2.dtvencto BETWEEN to_date('01/12/2021', 'dd/mm/yyyy') AND to_date('17/12/2021', 'dd/mm/yyyy')
      WHERE crapepr.tpemprst = 2 -- Pos-Fixado
        AND crapepr.inliquid = 0
        AND crawepr.dtdpagto < to_date('01/12/2021', 'dd/mm/yyyy')
@@ -70,16 +68,15 @@ declare
   -- Busca os dados dos contratos e parcelas
   CURSOR cr_crappep(vr_cdcooper IN crappep.cdcooper%TYPE,
                     pr_nrdconta IN crappep.nrdconta%TYPE,
-                    pr_nrctremp IN crappep.nrctremp%TYPE) IS
+                    pr_nrctremp IN crappep.nrctremp%TYPE,
+                    pr_dtaniver IN crappep.Dtvencto%TYPE) IS
     SELECT crappep.nrparepr, crappep.dtvencto, crappep.vltaxatu
       FROM crappep
-      JOIN crapdat dat
-        ON crappep.cdcooper = dat.cdcooper
      WHERE crappep.cdcooper = vr_cdcooper
        and crappep.nrdconta = pr_nrdconta
        and crappep.nrctremp = pr_nrctremp
        and crappep.inliquid = 0
-       and crappep.dtvencto >= to_date('01/12/2021', 'dd/mm/yyyy')
+       and crappep.dtvencto > pr_dtaniver
        and exists
      (select 1
               from crappep pep
@@ -87,7 +84,7 @@ declare
                and pep.nrdconta = crappep.nrdconta
                and pep.nrctremp = crappep.nrctremp
                AND pep.dtvencto >= to_date('01/01/2022', 'dd/mm/yyyy')
-               AND pep.dtvencto <= add_months(dat.dtmvtoan ,1)) 
+               AND pep.dtvencto <= to_date('17/01/2022', 'dd/mm/yyyy')) 
        and rownum = 1
      order by crappep.nrparepr asc;
   rw_crappep cr_crappep%ROWTYPE;
@@ -276,7 +273,8 @@ BEGIN
     -- 4) O recalculo somente ocorre no dia do aniversario da parcela
     OPEN cr_crappep(vr_cdcooper => rw_epr_pep.cdcooper,
                     pr_nrdconta => rw_epr_pep.nrdconta,
-                    pr_nrctremp => rw_epr_pep.nrctremp);
+                    pr_nrctremp => rw_epr_pep.nrctremp,
+                    pr_dtaniver => rw_epr_pep.dtaniversario);
     FETCH cr_crappep
       INTO rw_crappep;
 
