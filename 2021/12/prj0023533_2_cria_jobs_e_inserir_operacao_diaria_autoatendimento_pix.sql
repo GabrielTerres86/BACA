@@ -15,9 +15,9 @@ declare
   
   PROCEDURE exec_sql(vr_comando IN VARCHAR2) IS
     BEGIN
-     EXECUTE IMMEDIATE vr_comando;
+        EXECUTE IMMEDIATE vr_comando;
     EXCEPTION
-      WHEN OTHERS THEN
+        WHEN OTHERS THEN
         cecred.pc_internal_exception;
     END;
       
@@ -31,7 +31,7 @@ begin
      -- Levantar exceção
      vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_ID_paral.';
      RAISE vr_exc_saida;
-  END IF;   
+  END IF;
   
   FOR rw IN (SELECT cop.cdcooper
 						 FROM crapcop cop

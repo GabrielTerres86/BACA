@@ -68,8 +68,7 @@ begin
     if  vr_dscritic is not null then
       -- Levantar exceçao
       raise vr_exc_saida;
-    end if;                 
-                                
+    end if;                                
   END LOOP;
   
   gene0001.pc_aguarda_paralelo(pr_idparale => vr_idparale

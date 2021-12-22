@@ -41,7 +41,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_operacoa_diaria_pix_retro(pr_cdcooper IN c
                             pr_texto_completo => vr_texto_completo_3,
                             pr_texto_novo => pr_msg || chr(10),
                             pr_fecha_xml => FALSE);
-
   END;
 
   PROCEDURE abre_arquivos IS

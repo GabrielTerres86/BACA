@@ -100,7 +100,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_operacoa_diaria_pix_retro_viacredi(pr_cdco
                                  ,pr_des_erro => vr_dscritic);
     dbms_lob.close(vr_des_xml_3);
     dbms_lob.freetemporary(vr_des_xml_3);
-
   END;
 
 BEGIN
