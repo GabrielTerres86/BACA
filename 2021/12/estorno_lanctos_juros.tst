@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-138
+137
 DECLARE
     vr_ind_arquiv utl_file.file_type;     --> Handle do arquivo
     vr_ind_arqlog utl_file.file_type;     --> Handle do arquivo
@@ -27,8 +27,8 @@ BEGIN
 
     gene0001.pc_abre_arquivo(pr_nmdireto => GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                                      ,pr_cdcooper => '0'
-                                                                     ,pr_cdacesso => 'ROOT_DIRCOOP') || '/arquivos' --> Diretório do arquivo
-                            ,pr_nmarquiv => 'lancamentos_indevidos.csv'  --> Nome do arquivo
+                                                                     ,pr_cdacesso => 'ROOT_DIRCOOP') || '/cecred/arquivos' --> Diretório do arquivo
+                            ,pr_nmarquiv => 'lanctos_indevidos.csv'  --> Nome do arquivo
                             ,pr_tipabert => 'R'               --> Modo de abertura (R,W,A)
                             ,pr_utlfileh => vr_ind_arquiv     --> Handle do arquivo aberto
                             ,pr_des_erro => vr_dscritic);     --> Erro
@@ -39,7 +39,7 @@ BEGIN
     --Criar arquivo de log
     gene0001.pc_abre_arquivo(pr_nmdireto => GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                                      ,pr_cdcooper => '0'
-                                                                     ,pr_cdacesso => 'ROOT_DIRCOOP') || '/arquivos' --> Diretorio do arquivo
+                                                                     ,pr_cdacesso => 'ROOT_DIRCOOP') || '/cecred/arquivos' --> Diretorio do arquivo
                             ,pr_nmarquiv => 'lancamentos_log.txt'             --> Nome do arquivo
                             ,pr_tipabert => 'W'                        --> modo de abertura (r,w,a)
                             ,pr_utlfileh => vr_ind_arqlog              --> handle do arquivo aberto
@@ -85,7 +85,6 @@ BEGIN
 
            --CDCOOPER, DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCTABB, NRDOCMTO
            --CDCOOPER, DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRSEQDIG
-/*
            LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => 1             -- cdcooper
                                              ,pr_dtmvtolt => to_date('22/12/2021','dd/mm/rrrr')     -- dtmvtolt
                                              ,pr_cdagenci => vr_cdagenci    -- cdagenci
@@ -109,7 +108,7 @@ BEGIN
       
           IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
              RAISE vr_exc_saida;
-          END IF; */
+          END IF;
 
         EXCEPTION
           WHEN NO_DATA_FOUND THEN -- não encontrar mais linhas
