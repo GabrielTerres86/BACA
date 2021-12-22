@@ -1,6 +1,6 @@
 BEGIN
   UPDATE crapass c
-     SET c.dtnasctl = '01/01/1945'
+     SET c.dtnasctl = '01/01/1930'
    WHERE c.cdcooper = 1
      AND c.nrdconta =  11931205;
      
@@ -9,7 +9,5 @@ BEGIN
    WHERE c.cdcooper = 1
      AND c.nrdconta =  11931205;     
 COMMIT;
-EXCEPTION WHEN OTHERS THEN
-  ROLLBACK;
 END;
 /
