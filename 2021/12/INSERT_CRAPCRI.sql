@@ -2,13 +2,11 @@ BEGIN
   INSERT INTO CECRED.CRAPCRI
     (CDCRITIC,
     DSCRITIC,
-    PROGRESS_RECID,
     TPCRITIC,
     FLGCHAMA)
   VALUES
     (10603,
     '10603 - Bloqueio já finalizado',
-    10603,
     2,
     0);
     
