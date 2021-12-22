@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-137
+138
 DECLARE
     vr_ind_arquiv utl_file.file_type;     --> Handle do arquivo
     vr_ind_arqlog utl_file.file_type;     --> Handle do arquivo
@@ -49,7 +49,7 @@ BEGIN
        RAISE vr_exc_saida;
     END IF;
     
-    gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, to_char(sysdate,'ddmmyyyy_hh24miss')||' - Inicio Processo');  
+    --gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, to_char(sysdate,'ddmmyyyy_hh24miss')||' - Inicio Processo');  
     
     
     -- Se o arquivo estiver aberto, percorre o mesmo e guarda todas as linhas
@@ -73,18 +73,19 @@ BEGIN
                                                   ,pr_delimit => ';');
 
           -- inserir lancto
-          gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, 
-          'conta = ' || vr_registro(2) ||
-          ' valor = ' || replace(vr_registro(11),',' , '.'));
-
            vr_contador := vr_contador + 1;
            
            vr_cdagenci := to_number(vr_registro(3));
            vr_nrdconta := to_number(vr_registro(2));
            vr_vllanmto := GENE0002.fn_char_para_number(vr_registro(11));-- (replace(vr_registro(11),',' , '.')); --to_number(vr_registro(11));
 
+          gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, 
+          'delete from craplcm where cdcooper = 1 and nrdconta = ' || vr_nrdconta ||
+          ' and cdhistor = 3871 and dtmvtolt = ''22/12/2021'';');
+
            --CDCOOPER, DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCTABB, NRDOCMTO
            --CDCOOPER, DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRSEQDIG
+/*
            LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => 1             -- cdcooper
                                              ,pr_dtmvtolt => to_date('22/12/2021','dd/mm/rrrr')     -- dtmvtolt
                                              ,pr_cdagenci => vr_cdagenci    -- cdagenci
@@ -108,7 +109,7 @@ BEGIN
       
           IF nvl(vr_cdcritic, 0) > 0 OR trim(vr_dscritic) IS NOT NULL THEN
              RAISE vr_exc_saida;
-          END IF;
+          END IF; */
 
         EXCEPTION
           WHEN NO_DATA_FOUND THEN -- não encontrar mais linhas
@@ -119,7 +120,7 @@ BEGIN
       END LOOP;
     END IF;        
 
-    gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, to_char(sysdate,'ddmmyyyy_hh24miss')||' - Fim Processo com sucesso');  
+    gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, 'commit;');  
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arqlog); --> Handle do arquivo aberto;  
 
     COMMIT;    
@@ -138,5 +139,8 @@ EXCEPTION
     ROLLBACK; 
 END;
 0
-1
+4
 vr_registro
+vr_nrdconta
+vr_cdagenci
+vr_vllanmto
