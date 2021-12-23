@@ -9,7 +9,7 @@ declare
   vr_cdcooper      crapcop.cdcooper%TYPE := 9;
   vr_nrdconta      crapass.nrdconta%TYPE := 516201;
   vr_nrctremp      craplem.nrctremp%TYPE := 20100662;
-  vr_vllanmto      craplem.vllanmto%TYPE := 0.15;
+  vr_vllanmto      craplem.vllanmto%TYPE := 182.17;
   vr_cdhistor      craplem.cdhistor%TYPE := 1044;
   
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
