@@ -6,7 +6,9 @@ BEGIN
      AND UPPER(e.nmdatela) = 'ATENDA'
      AND UPPER(e.nmrotina) = 'LIMITE CRED';
 
-  FOR rw_crapace IN (SELECT e.cddopcao
+  FOR rw_crapace IN (SELECT e.cddopcao,
+                            e.idambace,
+                            e.idevento
                        FROM crapace e
                       WHERE UPPER(cdoperad) = 'F0033402'
                         AND cdcooper = 16
@@ -29,8 +31,8 @@ BEGIN
       ,'LIMITE CRED'
       ,1
       ,1
-      ,1
-      ,2);
+      ,rw_crapace.idevento
+      ,rw_crapace.idambace);
   
   END LOOP;
   
