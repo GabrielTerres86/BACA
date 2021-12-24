@@ -8,7 +8,7 @@ BEGIN
                WHERE cop.cdcooper <> 3
                AND cop.flgativo = 1) LOOP
       FOR mes IN 1..12 LOOP
-        vr_dtini := to_date('01/' || to_char(mes,'fm00') || '/2021');
+        vr_dtini := to_date('01/' || to_char(mes,'fm00') || '/2021', 'DD/MM/RRRR');
         vr_dtfim := last_day(vr_dtini);
         
         IF mes = 12 THEN
