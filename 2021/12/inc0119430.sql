@@ -28,6 +28,7 @@ BEGIN
 
   EXCEPTION
     WHEN OTHERS THEN
+      ROLLBACK;
       dbms_output.put_line('Erro ao atualizar crapepr. Coop: 6 Conta: 153656 Contrato: 250026');
   END;
 
@@ -55,6 +56,7 @@ BEGIN
 
   EXCEPTION
     WHEN OTHERS THEN
+      ROLLBACK;
       dbms_output.put_line('Erro ao atualizar crapepr. Coop: 8 Conta: 47554 Contrato: 10254');
   END;
 
