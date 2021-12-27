@@ -120,7 +120,7 @@ BEGIN
     ('CONSULTA_CONTRATOS_PEAC'
     ,'TELA_PEAC'
     ,'pc_consultar_contratos_web'
-    ,'pr_cdcooper,pr_nrdconta,pr_nrcontrato,pr_nriniseq,pr_nrregist,pr_datrini,pr_datrfim'
+    ,'pr_cdcooper,pr_nrdconta,pr_nrcontrato,pr_nriniseq,pr_nrregist,pr_datrini,pr_datrfim,pr_sthonra'
     ,vr_nrseqrdr);
 
   INSERT INTO crapaca
@@ -133,6 +133,19 @@ BEGIN
     ('GRAVA_HONRAPEAC'
     ,'TELA_PEAC'
     ,'pc_atualizar_innaohonrar_web'
+    ,'pr_contratos'
+    ,vr_nrseqrdr);
+
+  INSERT INTO crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('REPROCESS_CONTRATOPEAC'
+    ,'TELA_PEAC'
+    ,'pc_atualizar_reprocess_web'
     ,'pr_contratos'
     ,vr_nrseqrdr);
 
