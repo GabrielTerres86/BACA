@@ -5,11 +5,11 @@ BEGIN
                      ,lstparam
                      ,nrseqrdr
                      ) 
-               VALUES('GERAR_ARQ'
-                     ,'TELA_IMOVEL'
-                     ,'pc_gera_arquivo'
-                     ,'pr_cdcooper, pr_dtinclusao, pr_dtgeracao'
-                     ,625
+               VALUES('VALIDA_HOME_EQUITY'
+                     ,NULL
+                     ,'CREDITO.validarHomeEquity'
+                     ,'pr_cdlcremp,pr_flgtpimovel,pr_dsclassi,pr_dscatbem'
+                     ,1045
                      );
   COMMIT;
 EXCEPTION
