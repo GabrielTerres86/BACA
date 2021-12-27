@@ -1,32 +1,22 @@
 declare
   --leitura arquivo
   vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
-  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'/cpd/bacas';
+  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'/cpd/bacas/inc117237';
   vr_nmarqimp        VARCHAR2(100)  := 'liquidados_errados.csv';   
   vr_ind_arquiv      utl_file.file_type;
   vr_linha           varchar2(5000);
-  vr_pos1            number;
-  vr_pos2            number;
-  vr_pos3            number;
-  vr_pos4            number;
-  vr_pos6            number;
-  vr_pos7            number;
-  vr_pos15           number;
-  vr_tot_lem         craplem.vllanmto%type;
-  vr_tot_ris         crapris.vldivida%type;
-  
+  vr_campo           GENE0002.typ_split;
+
+  vr_cdcooper        crapepr.cdcooper%type;  
   vr_nrdconta        crapepr.nrdconta%type;
   vr_nrctremp        crapepr.nrctremp%type;
-  vr_cdcooper        crapepr.cdcooper%type;
   vr_lanctoaj        crapepr.vlsdevat%type;
-  vr_modalida        craplcr.dsoperac%type;
   vr_cdhistor        craplcm.cdhistor%type;
-  
+  vr_modalida        NUMBER;
+    
   vr_des_reto      varchar(3);
   vr_tab_erro      GENE0001.typ_tab_erro;
-  
   vr_dscritic VARCHAR2(32767);
-  
   vr_exc_saida EXCEPTION;
   
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
@@ -35,9 +25,17 @@ declare
       FROM crapass ass
      WHERE ass.cdcooper = pr_cdcooper
        AND ass.nrdconta = pr_nrdconta;
-  rw_crapass cr_crapass%ROWTYPE;
+  rw_crapass       cr_crapass%ROWTYPE;
+  
   rw_crapdat       BTCH0001.cr_crapdat%ROWTYPE;
+  
 BEGIN
+
+  -- Com base na data da central
+  OPEN  btch0001.cr_crapdat(pr_cdcooper => 3);
+  FETCH btch0001.cr_crapdat INTO rw_crapdat;
+  CLOSE btch0001.cr_crapdat;  
+
   --ABRIR arquivo
   gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto        --> Diretorio do arquivo
                           ,pr_nmarquiv => vr_nmarqimp        --> Nome do arquivo
@@ -63,30 +61,20 @@ BEGIN
               EXIT;
       END;
       
-      vr_pos1  := instr(vr_linha,';',1,1);
-      vr_pos2  := instr(vr_linha,';',1,2);
-      vr_pos3  := instr(vr_linha,';',1,3);
-      vr_pos4  := instr(vr_linha,';',1,4);
-      vr_pos6  := instr(vr_linha,';',1,6);
-      vr_pos7  := instr(vr_linha,';',1,7);
-      vr_pos15 := instr(vr_linha,';',1,16);
+      vr_campo := GENE0002.fn_quebra_string(pr_string => vr_linha, pr_delimit => ';');
+
+      vr_cdcooper := GENE0002.fn_char_para_number(vr_campo(2));
+      vr_nrdconta := GENE0002.fn_char_para_number(vr_campo(3));
+      vr_nrctremp := GENE0002.fn_char_para_number(vr_campo(4));
+      vr_lanctoaj := GENE0002.fn_char_para_number(vr_campo(7));
+      vr_modalida := GENE0002.fn_char_para_number(vr_campo(17));
       
-      vr_cdcooper := gene0002.fn_char_para_number(TRIM(substr(vr_linha,vr_pos1+1,(vr_pos2-vr_pos1)-1)));
-      vr_nrdconta := gene0002.fn_char_para_number(TRIM(substr(vr_linha,vr_pos2+1,(vr_pos3-vr_pos2)-1)));
-      vr_nrctremp := gene0002.fn_char_para_number(TRIM(substr(vr_linha,vr_pos3+1,(vr_pos4-vr_pos3)-1)));
-      vr_lanctoaj := gene0002.fn_char_para_number(TRIM(substr(vr_linha,vr_pos6+1,(vr_pos7-vr_pos6)-1)));
-      vr_modalida := TRIM(substr(vr_linha,vr_pos15+1));
-      
-      IF vr_modalida = 'EMPRESTIMO' THEN 
+      IF vr_modalida = 1 THEN 
         vr_cdhistor := 2350;
       ELSE
          vr_cdhistor := 2351;
       END IF;
-      
-      OPEN  btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
-      FETCH btch0001.cr_crapdat INTO rw_crapdat;
-      CLOSE btch0001.cr_crapdat;
-  
+
       OPEN cr_crapass(pr_cdcooper => vr_cdcooper
                  ,pr_nrdconta => vr_nrdconta);
       FETCH cr_crapass INTO rw_crapass;
@@ -121,4 +109,5 @@ EXCEPTION
   WHEN OTHERS THEN
     dbms_output.put_line( sqlerrm);
     dbms_output.put_line( sqlcode);
+    ROLLBACK;
 END;
