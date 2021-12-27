@@ -20,6 +20,8 @@ values ('INSITIMOVEL', '5', 'Baixado via arquivo');
 insert into TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
 values ('INSITIMOVEL', '6', 'Baixado manual');
 
+INSERT INTO TBGEN_DOMINIO_CAMPO (NMDOMINIO, CDDOMINIO, DSCODIGO)
+VALUES ('INSITIMOVEL', '7', 'Em processamento');
  
 commit;
 

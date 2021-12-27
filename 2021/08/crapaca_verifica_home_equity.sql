@@ -8,7 +8,7 @@ BEGIN
                VALUES('VALIDA_HOME_EQUITY'
                      ,NULL
                      ,'CREDITO.validarHomeEquity'
-                     ,'pr_cdlcremp,pr_flgtpimovel,pr_dsclassi,pr_dscatbem'
+                     ,'pr_cdlcremp,pr_cdzonaimovel,pr_dsclassi,pr_dscatbem'
                      ,1045
                      );
   COMMIT;
