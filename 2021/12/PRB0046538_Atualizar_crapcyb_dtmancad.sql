@@ -8,12 +8,14 @@ DECLARE
   vr_diretorio   VARCHAR2(200);
   vr_rollback    VARCHAR2(4000);
   vr_log         VARCHAR2(4000);
+  vr_listarq     VARCHAR2(200);
   vr_dsarquivo   CLOB;
   vr_arqrollback UTL_FILE.file_type;
   vr_arqlog      UTL_FILE.file_type;
   vr_exec_erro   EXCEPTION;
 
-  CURSOR cr_crapcyb(pr_dsxmlarq CLOB) IS
+  CURSOR cr_crapcyb(pr_cdcooper crapcop.cdcooper%TYPE
+                   ,pr_dsxmlarq CLOB) IS
     SELECT cyb.cdcooper
           ,cyb.cdorigem
           ,cyb.nrdconta
@@ -25,7 +27,7 @@ DECLARE
              COLUMNS 
                nrdconta NUMBER(10) PATH 'conta') cta
      WHERE cyb.nrdconta = cta.nrdconta
-       AND cyb.cdcooper = 1
+       AND cyb.cdcooper = pr_cdcooper
        AND cyb.dtdbaixa IS NULL;
 
   TYPE typ_crapcyb IS TABLE OF cr_crapcyb%ROWTYPE INDEX BY PLS_INTEGER;
@@ -54,7 +56,8 @@ DECLARE
          AND dtferiad = pr_dtferiad;
     rw_crapfer cr_crapfer%ROWTYPE;
   BEGIN
-    OPEN cr_crapfer(pr_cdcooper => vr_cdcooper, pr_dtferiad => vr_dtmvtolt);
+    OPEN cr_crapfer(pr_cdcooper => vr_cdcooper
+                   ,pr_dtferiad => vr_dtmvtolt);
     FETCH cr_crapfer
       INTO rw_crapfer;
     vr_blnachou := cr_crapfer%FOUND;
@@ -128,28 +131,41 @@ DECLARE
   END;
 BEGIN
   vr_diretorio := obterParametroSistema(pr_nmsistem => 'CRED'
-                                       ,pr_cdacesso => 'ROOT_MICROS') || 'cpd/bacas/PRB0046538';
+                                       ,pr_cdacesso => 'ROOT_MICROS') || 'cpd/bacas/PRB0046538'; 
+                                       
+  listarArquivo(pr_path     => vr_diretorio
+               ,pr_pesq     => 'contas.xml'
+               ,pr_listarq  => vr_listarq
+               ,pr_dscritic => vr_dscritic);
+  IF TRIM(vr_dscritic) IS NOT NULL THEN
+    RAISE vr_exec_erro;
+  END IF;     
+  
+  IF TRIM(vr_listarq) IS NULL THEN
+    vr_dscritic := 'Arquivo contas.xml não encontrado.';
+    RAISE vr_exec_erro;
+  END IF;              
                                        
   vr_dsarquivo := gene0002.fn_arq_para_clob(pr_caminho => vr_diretorio
-                                           ,pr_arquivo => 'contas.xml');
+                                           ,pr_arquivo => vr_listarq);                                                                                
 
-  abrirArquivo(pr_nmdireto => vr_diretorio,
-               pr_nmarquiv => 'rollback.sql',
-               pr_tipabert => 'W',
-               pr_utlfileh => vr_arqrollback,
-               pr_dscritic => vr_dscritic);
+  abrirArquivo(pr_nmdireto => vr_diretorio
+              ,pr_nmarquiv => 'rollback.sql'
+              ,pr_tipabert => 'W'
+              ,pr_utlfileh => vr_arqrollback
+              ,pr_dscritic => vr_dscritic);
   IF TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exec_erro;
   END IF;
 
-  abrirArquivo(pr_nmdireto => vr_diretorio,
-               pr_nmarquiv => 'log.txt',
-               pr_tipabert => 'W',
-               pr_utlfileh => vr_arqlog,
-               pr_dscritic => vr_dscritic);
+  abrirArquivo(pr_nmdireto => vr_diretorio
+              ,pr_nmarquiv => 'log.txt'
+              ,pr_tipabert => 'W'
+              ,pr_utlfileh => vr_arqlog
+              ,pr_dscritic => vr_dscritic);
   IF TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exec_erro;
-  END IF;
+  END IF;                 
 
   escreveLinhaArquivo(pr_utlfileh => vr_arqrollback
                      ,pr_des_text => 'BEGIN');
@@ -161,17 +177,18 @@ BEGIN
 
   vr_dtmvtolt := btch0001.rw_crapdat.dtmvtoan;
 
-  OPEN cr_crapcyb(pr_dsxmlarq => vr_dsarquivo);
+  OPEN cr_crapcyb(pr_cdcooper => vr_cdcooper
+                 ,pr_dsxmlarq => vr_dsarquivo);
   LOOP
     FETCH cr_crapcyb BULK COLLECT
       INTO vr_crapcyb LIMIT 15000;
     EXIT WHEN vr_crapcyb.count = 0;
   
-    obterProximaData(pr_cdcooper => vr_cdcooper,
-                     pr_dtmvtolt => vr_dtmvtolt,
-                     pr_dtmvtopr => vr_dtmvtolt,
-                     pr_cdcritic => vr_cdcritic,
-                     pr_dscritic => vr_dscritic);
+    obterProximaData(pr_cdcooper => vr_cdcooper
+                    ,pr_dtmvtolt => vr_dtmvtolt
+                    ,pr_dtmvtopr => vr_dtmvtolt
+                    ,pr_cdcritic => vr_cdcritic
+                    ,pr_dscritic => vr_dscritic);
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exec_erro;
     END IF;
