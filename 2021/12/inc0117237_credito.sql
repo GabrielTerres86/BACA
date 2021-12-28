@@ -1,12 +1,12 @@
 declare
   --leitura arquivo
   vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
-  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'/cpd/bacas/inc117237';
+  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'/cpd/bacas/inc0117237';
   vr_nmarqimp        VARCHAR2(100)  := 'liquidados_errados.csv';   
   vr_ind_arquiv      utl_file.file_type;
   vr_linha           varchar2(5000);
   vr_campo           GENE0002.typ_split;
-
+  vr_sucesso         NUMBER := 0;
   vr_cdcooper        crapepr.cdcooper%type;  
   vr_nrdconta        crapepr.nrdconta%type;
   vr_nrctremp        crapepr.nrctremp%type;
@@ -102,8 +102,9 @@ BEGIN
      IF vr_des_reto <> 'OK' THEN
         RAISE vr_exc_saida;
      END IF;
-
+     vr_sucesso := vr_sucesso + 1;
    END LOOP;
+   dbms_output.put_line(vr_sucesso);
    COMMIT;
 EXCEPTION 
   WHEN OTHERS THEN
