@@ -82,7 +82,7 @@ BEGIN
                RAISE vr_exc_saida;
             END IF;
             
-   --COMMIT;         
+   COMMIT;         
  EXCEPTION
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
