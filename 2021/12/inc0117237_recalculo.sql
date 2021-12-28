@@ -35,8 +35,6 @@ declare
            crawepr.txmensal,
            crawepr.idcarenc,
            crawepr.cddindex,
-           ROW_NUMBER() OVER(PARTITION BY crapepr.nrdconta ORDER BY crapepr.cdcooper, crapepr.nrdconta) AS numconta,
-           COUNT(1) OVER(PARTITION BY crapepr.nrdconta) qtdconta,
            crawepr.cdcooper,
            pep2.dtvencto dtaniversario,
            crapepr.vlpreemp,
