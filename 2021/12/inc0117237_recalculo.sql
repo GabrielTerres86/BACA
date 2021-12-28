@@ -62,7 +62,7 @@ declare
        AND pep2.dtvencto BETWEEN to_date('01/12/2021', 'dd/mm/yyyy') AND to_date('17/12/2021', 'dd/mm/yyyy')
      WHERE crapepr.tpemprst = 2 -- Pos-Fixado
        AND crapepr.inliquid = 0
-       AND crawepr.dtdpagto < to_date('01/12/2021', 'dd/mm/yyyy')
+       AND crawepr.dtdpagto BETWEEN to_date('01/12/2021', 'dd/mm/yyyy') AND to_date('27/12/2021', 'dd/mm/yyyy')
        AND pep1.vlparepr > pep2.vlparepr;
 
   -- Busca os dados dos contratos e parcelas
