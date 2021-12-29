@@ -16,6 +16,7 @@ DECLARE
   vr_tbcotas_dev_nrdconta         NUMBER(10);
   vr_tbcotas_dev_tpdevolucao      NUMBER(1);
   vr_tbcotas_dev_vlcapital        NUMBER(15, 2);
+  vr_tbcotas_dev_vldepvista       NUMBER(15, 2);
   vr_tbcotas_dev_qtparcelas       NUMBER(2);
   vr_tbcotas_dev_dtinicio_credito DATE;
   vr_tbcotas_dev_vlpago           NUMBER(15, 2);
@@ -28,7 +29,6 @@ DECLARE
   vr_dtdemiss_ant                 DATE;
   vr_nrdocmto                     INTEGER;
   vr_nrseqdig                     INTEGER;
-  vr_nrsequenlgi                  INTEGER;
   vr_nrsequenlgm                  INTEGER;
   vr_vldcotas                     NUMBER;
   vr_vldcotas_movtda              NUMBER;
@@ -44,10 +44,9 @@ DECLARE
   vr_nrdrowid ROWID;
 BEGIN
     FOR rg_crapass IN cr_crapass LOOP  
-    vr_dstransa          := 'Alterada situacao de conta por script. INC0119902.';
+    vr_dstransa          := 'Alteracao da situacao de conta por script - INC0119902';
     vr_vldcotas          := 0;
     vr_qtde_tb_devolucao := 0;
-    vr_nrsequenlgi       := 1;
     vr_nrsequenlgm       := 1;
     vr_dttransa          := trunc(sysdate);
     vr_hrtransa          := GENE0002.fn_busca_time;
@@ -61,11 +60,11 @@ BEGIN
                        pr_cdoperad => vr_cdoperad,
                        pr_dscritic => vr_dscritic,
                        pr_dsorigem => 'AIMARO',
-                       pr_dstransa => 'Alteracao da situacao de conta por script - INC0119902',
+                       pr_dstransa => vr_dstransa,
                        pr_dttransa => vr_dttransa,
                        pr_flgtrans => 1,
                        pr_hrtransa => vr_hrtransa,
-                       pr_idseqttl => 1,
+                       pr_idseqttl => vr_nrsequenlgm,
                        pr_nmdatela => 'Atenda',
                        pr_nrdconta => rg_crapass.nrdconta,
                        pr_nrdrowid => vr_nrdrowid);                      
@@ -140,7 +139,7 @@ BEGIN
         FROM TBCOTAS_DEVOLUCAO
        WHERE nrdconta = rg_crapass.nrdconta
          AND cdcooper = rg_crapass.cdcooper
-         AND TPDEVOLUCAO = 3;
+         AND TPDEVOLUCAO = 1;
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
         dbms_output.put_line(chr(10) ||
@@ -189,15 +188,15 @@ BEGIN
        sysdate);
   
     -- Insere log com valores de antes x depois da craplct.
-        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                              pr_nmdcampo => 'craplct.dtmvtolt',
-                              pr_dsdadant => null,
-                              pr_dsdadatu => vr_dtmvtolt);  
+    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                          pr_nmdcampo => 'craplct.dtmvtolt',
+                          pr_dsdadant => null,
+                          pr_dsdadatu => vr_dtmvtolt);  
                               
-        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                              pr_nmdcampo => 'craplct.vllanmto',
-                              pr_dsdadant => null,
-                              pr_dsdadatu => vr_tbcotas_dev_vlcapital);                                
+    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                          pr_nmdcampo => 'craplct.vllanmto',
+                          pr_dsdadant => null,
+                          pr_dsdadatu => vr_tbcotas_dev_vlcapital);                                
   
     UPDATE CECRED.crapcot
        SET vldcotas =
@@ -205,51 +204,51 @@ BEGIN
      WHERE cdcooper = rg_crapass.cdcooper
        AND nrdconta = rg_crapass.nrdconta;
   
-        GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                              pr_nmdcampo => 'crapcot.vldcotas',
-                              pr_dsdadant => vr_vldcotas_crapcot,
-                              pr_dsdadatu => (vr_vldcotas_crapcot + vr_tbcotas_dev_vlcapital));    
+    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                          pr_nmdcampo => 'crapcot.vldcotas',
+                          pr_dsdadant => vr_vldcotas_crapcot,
+                          pr_dsdadatu => (vr_vldcotas_crapcot + vr_tbcotas_dev_vlcapital));    
                               
     -- Excluir registro conforme cooperativa e conta
     DELETE FROM CECRED.TBCOTAS_DEVOLUCAO
      WHERE CDCOOPER = rg_crapass.cdcooper
        AND NRDCONTA = rg_crapass.nrdconta
-       AND TPDEVOLUCAO = 3;
+       AND TPDEVOLUCAO = 1;
   
         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                              pr_nmdcampo => 'tbcotas_devolucao.cdcooper',
+                              pr_nmdcampo => 'tbcotas_devolucao_1.cdcooper',
                               pr_dsdadant => vr_tbcotas_dev_cdcooper,
                               pr_dsdadatu => null);    
                               
         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                              pr_nmdcampo => 'tbcotas_devolucao.nrdconta',
+                              pr_nmdcampo => 'tbcotas_devolucao_1.nrdconta',
                               pr_dsdadant => vr_tbcotas_dev_nrdconta,
                               pr_dsdadatu => null);                                                                
   
         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                          pr_nmdcampo => 'tbcotas_devolucao.tpdevolucao',
+                          pr_nmdcampo => 'tbcotas_devolucao_1.tpdevolucao',
                           pr_dsdadant => vr_tbcotas_dev_tpdevolucao,
                           pr_dsdadatu => null);   
                               
 
         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                          pr_nmdcampo => 'tbcotas_devolucao.vlcapital',
+                          pr_nmdcampo => 'tbcotas_devolucao_1.vlcapital',
                           pr_dsdadant => vr_tbcotas_dev_vlcapital,
                           pr_dsdadatu => null);   
   
         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                          pr_nmdcampo => 'tbcotas_devolucao.qtparcelas',
+                          pr_nmdcampo => 'tbcotas_devolucao_1.qtparcelas',
                           pr_dsdadant => vr_tbcotas_dev_qtparcelas,
                           pr_dsdadatu => null);   
   
         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                          pr_nmdcampo => 'tbcotas_devolucao.dtinicio_credito',
+                          pr_nmdcampo => 'tbcotas_devolucao_1.dtinicio_credito',
                           pr_dsdadant => vr_tbcotas_dev_dtinicio_credito,
                           pr_dsdadatu => null);   
 
   
         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                          pr_nmdcampo => 'tbcotas_devolucao.vlpago',
+                          pr_nmdcampo => 'tbcotas_devolucao_1.vlpago',
                           pr_dsdadant => vr_tbcotas_dev_vlpago,
                           pr_dsdadatu => null);       
   
@@ -264,7 +263,7 @@ BEGIN
         INTO vr_tbcotas_dev_cdcooper,
              vr_tbcotas_dev_nrdconta,
              vr_tbcotas_dev_tpdevolucao,
-             vr_tbcotas_dev_vlcapital,
+             vr_tbcotas_dev_vldepvista,
              vr_tbcotas_dev_qtparcelas,
              vr_tbcotas_dev_dtinicio_credito,
              vr_tbcotas_dev_vlpago
@@ -282,7 +281,7 @@ BEGIN
         Continue;
     END;
   
-    IF vr_tbcotas_dev_vlcapital > 0 THEN
+    IF vr_tbcotas_dev_vldepvista > 0 THEN
       cecred.Lanc0001.pc_gerar_lancamento_conta(pr_cdcooper    => rg_crapass.cdcooper,
                                                 pr_dtmvtolt    => vr_dtmvtolt,
                                                 pr_cdagenci    => rg_crapass.cdagenci,
@@ -291,7 +290,7 @@ BEGIN
                                                 pr_nrdctabb    => rg_crapass.nrdconta,
                                                 pr_nrdocmto    => vr_nrdocmto,
                                                 pr_cdhistor    => 2520,
-                                                pr_vllanmto    => vr_tbcotas_dev_vlcapital,
+                                                pr_vllanmto    => vr_tbcotas_dev_vldepvista - vr_tbcotas_dev_vlcapital,
                                                 pr_nrdconta    => rg_crapass.nrdconta,
                                                 pr_hrtransa    => vr_hrtransa,
                                                 pr_cdorigem    => 0,
@@ -312,39 +311,39 @@ BEGIN
          AND TPDEVOLUCAO = 4;
     
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                            pr_nmdcampo => 'tbcotas_devolucao.cdcooper',
+                            pr_nmdcampo => 'tbcotas_devolucao_4.cdcooper',
                             pr_dsdadant => vr_tbcotas_dev_cdcooper,
                             pr_dsdadatu => null);    
                               
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                            pr_nmdcampo => 'tbcotas_devolucao.nrdconta',
+                            pr_nmdcampo => 'tbcotas_devolucao_4.nrdconta',
                             pr_dsdadant => vr_tbcotas_dev_nrdconta,
                             pr_dsdadatu => null);                                                                
   
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                        pr_nmdcampo => 'tbcotas_devolucao.tpdevolucao',
+                        pr_nmdcampo => 'tbcotas_devolucao_4.tpdevolucao',
                         pr_dsdadant => vr_tbcotas_dev_tpdevolucao,
                         pr_dsdadatu => null);   
                               
 
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                        pr_nmdcampo => 'tbcotas_devolucao.vlcapital',
-                        pr_dsdadant => vr_tbcotas_dev_vlcapital,
+                        pr_nmdcampo => 'tbcotas_devolucao_4.vldepvista',
+                        pr_dsdadant => vr_tbcotas_dev_vldepvista - vr_tbcotas_dev_vlcapital,
                         pr_dsdadatu => null);   
   
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                        pr_nmdcampo => 'tbcotas_devolucao.qtparcelas',
+                        pr_nmdcampo => 'tbcotas_devolucao_4.qtparcelas',
                         pr_dsdadant => vr_tbcotas_dev_qtparcelas,
                         pr_dsdadatu => null);   
   
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                        pr_nmdcampo => 'tbcotas_devolucao.dtinicio_credito',
+                        pr_nmdcampo => 'tbcotas_devolucao_4.dtinicio_credito',
                         pr_dsdadant => vr_tbcotas_dev_dtinicio_credito,
                         pr_dsdadatu => null);   
 
   
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                        pr_nmdcampo => 'tbcotas_devolucao.vlpago',
+                        pr_nmdcampo => 'tbcotas_devolucao_4.vlpago',
                         pr_dsdadant => vr_tbcotas_dev_vlpago,
                         pr_dsdadatu => null);       
               
