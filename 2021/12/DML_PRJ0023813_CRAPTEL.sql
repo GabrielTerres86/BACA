@@ -23,7 +23,7 @@ DECLARE
      WHERE ace.cdcooper = cop.cdcooper
        AND ace.cdcooper = ope.cdcooper
        AND UPPER(ope.cdoperad) = UPPER(ace.cdoperad)
-       AND UPPER(ace.nmdatela) = 'CADCYB'
+       AND UPPER(ace.nmdatela) = 'PRONAM'
        AND UPPER(ace.cddopcao) = 'C'
        AND ace.idambace = 2
        AND ope.cdsitope = 1
