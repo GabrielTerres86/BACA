@@ -8,9 +8,4 @@ begin
   
 commit;
 
-exception
-
-    WHEN others THEN
-        rollback;
-        raise_application_error(-20501, SQLERRM);
 end;
