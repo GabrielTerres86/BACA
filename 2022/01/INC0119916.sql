@@ -10,8 +10,8 @@ declare
     SELECT a.*
       from CECRED.tbrecarga_operacao a
      WHERE a.cdcooper = 1
-       AND a.idoperacao = 1254903
-       AND a.nrdconta = 10115030;
+       AND a.idoperacao = 1326682
+       AND a.nrdconta = 8454396;
 
   rg_tbrecarga_operacao cr_tbrecarga_operacao%rowtype;
 
@@ -35,7 +35,7 @@ begin
                        pr_cdoperad => Null,
                        pr_dscritic => vr_dscritic,
                        pr_dsorigem => 'AIMARO',
-                       pr_dstransa => 'INC0110907 - Lançamento futuro de recarga da TIM não está sendo possível a exclusão.',
+                       pr_dstransa => 'INC0119916 - Lançamento futuro de recarga da TIM não está sendo possível a exclusão.',
                        pr_dttransa => vr_dttransa,
                        pr_flgtrans => 1,
                        pr_hrtransa => vr_hrtransa,
@@ -47,7 +47,7 @@ begin
   GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                             pr_nmdcampo => 'tbrecarga_operacao.insit_operacao',
                             pr_dsdadant => rg_tbrecarga_operacao.insit_operacao,
-                            pr_dsdadatu => null);
+                            pr_dsdadatu => 5);
 
   close cr_tbrecarga_operacao;
 
