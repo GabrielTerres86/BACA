@@ -49,7 +49,8 @@ declare
        AND epr.nrctremp = wpr.nrctremp
        AND epr.cdcooper = pr_cdcooper
        AND epr.nrdconta = pr_nrdconta
-       AND epr.nrctremp = pr_nrctremp;
+       AND epr.nrctremp = pr_nrctremp
+       and epr.inliquid = 0;
 
   rw_crapepr cr_crapepr%ROWTYPE;
   
@@ -110,6 +111,17 @@ BEGIN
         CONTINUE;
       end if;
       
+      -- Verificar contrato se estiver liquidado não virá no cursor e passaremos para o próximo registro
+      OPEN cr_crapepr(vr_cdcooper
+                     ,vr_nrdconta
+                     ,vr_nrctremp
+                     );
+      FETCH cr_crapepr INTO rw_crapepr;
+      IF cr_crapepr%NOTFOUND THEN
+        CONTINUE;
+      END IF;
+      CLOSE cr_crapepr;
+      
       --Nas operações de empréstimos liquidadas, realizar o histórico 2350 na conta do Cooperado;
       --Nas operações de financiamentos liquidadas, realizar o histórico 2351 na conta do Cooperado;
                                                                  
@@ -129,50 +141,38 @@ BEGIN
                                     ,pr_des_reto => vr_des_reto   --> Retorno OK / NOK
                                     ,pr_tab_erro => vr_tab_erro); --> Tabela com possives erros
                                         
-     IF vr_des_reto <> 'OK' THEN
+      IF vr_des_reto <> 'OK' THEN
         RAISE vr_exc_saida;
-     END IF;
+      END IF;
+
+      credito.gerarPagamentoParcialPOS(pr_cdcooper => vr_cdcooper,
+                                       pr_cdagenci => rw_crapass.cdagenci,
+                                       pr_nrdcaixa => 1,
+                                       pr_cdoperad => 1,
+                                       pr_idorigem => 1,
+                                       pr_nmdatela => 'INTERNETBANK',
+                                       pr_nrdconta => vr_nrdconta,
+                                       pr_idseqttl => 1,
+                                       pr_nrctremp => vr_nrctremp,
+                                       pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                       pr_dtmvtoan => rw_crapdat.dtmvtoan,
+                                       pr_cdlcremp => rw_crapepr.cdlcremp,
+                                       pr_vlemprst => rw_crapepr.vlemprst,
+                                       pr_txmensal => rw_crapepr.txmensal,
+                                       pr_dtprivct => rw_crapepr.dtprivct,
+                                       pr_vlsprojt => rw_crapepr.vlsprojt,
+                                       pr_qttolar  => rw_crapepr.qttolatr,
+                                       pr_dtefetiv => rw_crapepr.dtefetiv,
+                                       pr_ordempgo => 1,
+                                       pr_totpagto => vr_lanctoaj,
+                                       pr_cdcritic => vr_cdcritic,
+                                       pr_dscritic => vr_dscritic);
+                                       
+      IF nvl(vr_cdcritic, 0) <> 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
      
-     -- Verificar contrato
-     OPEN cr_crapepr(vr_cdcooper
-                 ,vr_nrdconta
-                 ,vr_nrctremp
-                 );
-     FETCH cr_crapepr INTO rw_crapepr;
-     IF cr_crapepr%NOTFOUND THEN
-       vr_dscritic := 'Contrato não encontrado.';
-       RAISE vr_exc_saida;
-     END IF;
-     CLOSE cr_crapepr;
-     
-     credito.gerarPagamentoParcialPOS(pr_cdcooper => vr_cdcooper,
-                                      pr_cdagenci => rw_crapass.cdagenci,
-                                      pr_nrdcaixa => 1,
-                                      pr_cdoperad => 1,
-                                      pr_idorigem => 1,
-                                      pr_nmdatela => 'INTERNETBANK',
-                                      pr_nrdconta => vr_nrdconta,
-                                      pr_idseqttl => 1,
-                                      pr_nrctremp => vr_nrctremp,
-                                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                      pr_dtmvtoan => rw_crapdat.dtmvtoan,
-                                      pr_cdlcremp => rw_crapepr.cdlcremp,
-                                      pr_vlemprst => rw_crapepr.vlemprst,
-                                      pr_txmensal => rw_crapepr.txmensal,
-                                      pr_dtprivct => rw_crapepr.dtprivct,
-                                      pr_vlsprojt => rw_crapepr.vlsprojt,
-                                      pr_qttolar  => rw_crapepr.qttolatr,
-                                      pr_dtefetiv => rw_crapepr.dtefetiv,
-                                      pr_ordempgo => 1,
-                                      pr_totpagto => vr_lanctoaj,
-                                      pr_cdcritic => vr_cdcritic,
-                                      pr_dscritic => vr_dscritic);
-                                      
-     IF nvl(vr_cdcritic, 0) <> 0 OR vr_dscritic IS NOT NULL THEN
-       RAISE vr_exc_saida;
-     END IF;
-     
-     vr_sucesso := vr_sucesso + 1;
+      vr_sucesso := vr_sucesso + 1;
    END LOOP;
    dbms_output.put_line(vr_sucesso);
    COMMIT;
