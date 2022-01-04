@@ -73,7 +73,7 @@ BEGIN
    end loop;
    
     UPDATE crapsda a
-       SET a.VLSDDISP = (a.vlsddisp + 1402.00), a.vllimutl = 0
+       SET a.VLSDDISP = (a.vlsddisp + 1402.00) --, a.vllimutl = 0
      WHERE a.nrdconta = 9737448
        AND a.cdcooper = 1
        AND a.dtmvtolt BETWEEN to_date('22/11/2021', 'dd/mm/yyyy') AND
