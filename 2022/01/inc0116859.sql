@@ -3,16 +3,19 @@ declare
   vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
   vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'/cpd/bacas/inc0116859';
   vr_nmarqimp        VARCHAR2(100)  := 'contratos_manutencao.csv';   
+  vr_nmarqlog        VARCHAR2(100)  := 'inc0116859_log.csv';   
   vr_ind_arquiv      utl_file.file_type;
+  vr_ind_arqlog      utl_file.file_type;
+  
   vr_linha           varchar2(5000);
   vr_campo           GENE0002.typ_split;
-  vr_sucesso         NUMBER := 0;
   vr_cdcooper        crapepr.cdcooper%type;  
   vr_nrdconta        crapepr.nrdconta%type;
   vr_nrctremp        crapepr.nrctremp%type;
   vr_lanctoaj        crapepr.vlsdevat%type;
   vr_cdhistor        craplcm.cdhistor%type;
   vr_modalida        NUMBER;
+  vr_linhaarq        varchar2(1000);
     
   vr_des_reto      varchar(3);
   vr_tab_erro      GENE0001.typ_tab_erro;
@@ -71,13 +74,26 @@ BEGIN
                           ,pr_des_erro => vr_dscritic);      --> erro
   -- em caso de crítica
   IF vr_dscritic IS NOT NULL THEN  
-    dbms_output.put_line( vr_dscritic);    
     RAISE vr_exc_saida;
   END IF;   
+  
+   --Criar arquivo
+  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto        --> Diretorio do arquivo
+                          ,pr_nmarquiv => vr_nmarqlog        --> Nome do arquivo
+                          ,pr_tipabert => 'W'                --> modo de abertura (r,w,a)
+                          ,pr_utlfileh => vr_ind_arqlog      --> handle do arquivo aberto
+                          ,pr_des_erro => vr_dscritic);      --> erro
+  -- em caso de crítica
+  IF vr_dscritic IS NOT NULL THEN        
+    RAISE vr_exc_saida;
+  END IF;    
   
   /*leitura do cabeçalho*/
   gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv --> Handle do arquivo aberto
                               ,pr_des_text => vr_linha);
+                              
+  /*Escrita do cabeçalho de log*/
+  gene0001.pc_escr_linha_arquivo(vr_ind_arqlog,'cdcooper;nrdconta;nrctremp;ajusteCC;pagamentoparcela;obs;');
   LOOP
       BEGIN
         -- loop para ler a linha do arquivo
@@ -102,26 +118,19 @@ BEGIN
          vr_cdhistor := 2351;
       END IF;
 
+      vr_linhaarq := vr_cdcooper || ';' || vr_nrdconta || ';' || vr_nrctremp || ';';
+
       OPEN cr_crapass(pr_cdcooper => vr_cdcooper
                  ,pr_nrdconta => vr_nrdconta);
       FETCH cr_crapass INTO rw_crapass;
       CLOSE cr_crapass;
       
       if rw_crapass.inprejuz = 1 then
+        vr_linhaarq := vr_linhaarq || ';;Conta em prejuizo;';
+        gene0001.pc_escr_linha_arquivo(vr_ind_arqlog,vr_linhaarq);
         CONTINUE;
       end if;
-      
-      -- Verificar contrato se estiver liquidado não virá no cursor e passaremos para o próximo registro
-      OPEN cr_crapepr(vr_cdcooper
-                     ,vr_nrdconta
-                     ,vr_nrctremp
-                     );
-      FETCH cr_crapepr INTO rw_crapepr;
-      IF cr_crapepr%NOTFOUND THEN
-        CONTINUE;
-      END IF;
-      CLOSE cr_crapepr;
-      
+
       --Nas operações de empréstimos liquidadas, realizar o histórico 2350 na conta do Cooperado;
       --Nas operações de financiamentos liquidadas, realizar o histórico 2351 na conta do Cooperado;
                                                                  
@@ -144,6 +153,21 @@ BEGIN
       IF vr_des_reto <> 'OK' THEN
         RAISE vr_exc_saida;
       END IF;
+      
+       vr_linhaarq := vr_linhaarq || 'SIM;';
+      
+      -- Verificar contrato se estiver liquidado não virá no cursor e passaremos para o próximo registro
+      OPEN cr_crapepr(vr_cdcooper
+                     ,vr_nrdconta
+                     ,vr_nrctremp
+                     );
+      FETCH cr_crapepr INTO rw_crapepr;
+      IF cr_crapepr%NOTFOUND THEN
+         vr_linhaarq := vr_linhaarq || ';Contrato liquidado;';
+         gene0001.pc_escr_linha_arquivo(vr_ind_arqlog,vr_linhaarq);
+        CONTINUE;
+      END IF;
+      CLOSE cr_crapepr;
 
       credito.gerarPagamentoParcialPOS(pr_cdcooper => vr_cdcooper,
                                        pr_cdagenci => rw_crapass.cdagenci,
@@ -171,10 +195,13 @@ BEGIN
       IF nvl(vr_cdcritic, 0) <> 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-     
-      vr_sucesso := vr_sucesso + 1;
+      
+      vr_linhaarq := vr_linhaarq || 'SIM;';
+      gene0001.pc_escr_linha_arquivo(vr_ind_arqlog,vr_linhaarq);
    END LOOP;
-   dbms_output.put_line(vr_sucesso);
+   
+   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arqlog); 
+   
    COMMIT;
 EXCEPTION 
   WHEN OTHERS THEN
