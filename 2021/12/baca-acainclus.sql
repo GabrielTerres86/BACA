@@ -1,0 +1,12 @@
+BEGIN
+  UPDATE CRAPACA
+     SET LSTPARAM = LSTPARAM ||',pr_insitimovel'
+   WHERE NMPACKAG = 'TELA_IMOVEL'
+     AND NMDEACAO = 'SALVA_IMOVEL'
+     AND NMPROCED = 'pc_grava_dados_imovel';
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+  ROLLBACK;
+  RAISE_application_error(-20500, SQLERRM);   
+END;
