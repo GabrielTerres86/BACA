@@ -78,6 +78,15 @@ BEGIN
        AND a.cdcooper = 1
        AND a.dtmvtolt BETWEEN to_date('09/12/2021', 'dd/mm/yyyy') AND
            TRUNC(SYSDATE);
+           
+    UPDATE crapdir a
+    SET a.VLSDCCDP = 171.25
+    WHERE a.nrdconta = 9737448 AND a.cdcooper = 1 AND a.dtmvtolt = '31/12/2021';
+    
+    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                              pr_nmdcampo => 'crapdir.VLSDCCDP',
+                              pr_dsdadant => -1230.75l,
+                              pr_dsdadatu => 171.25);
   
  
   close cr_crapsld;
