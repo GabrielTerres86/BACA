@@ -14,7 +14,7 @@ DECLARE
            t.nrdconta
       FROM CRAPASS t
      WHERE (t.nrdconta = 3904997 and t.cdcooper = 1) or
-     (t.nrdconta = 118079 and t.cdcooper = 13);
+     (t.nrdconta = 118079 and t.cdcooper = 9);
 --     (t.nrdconta = 136654 and t.cdcooper = 5) 
 
   rg_crapass cr_crapass%rowtype;
