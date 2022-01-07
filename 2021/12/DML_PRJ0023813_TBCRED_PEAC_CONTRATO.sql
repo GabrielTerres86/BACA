@@ -3,10 +3,12 @@ BEGIN
     (cdcooper
     ,nrdconta
     ,nrcontrato
+	,vlcontrato
     ,idcontrato)
     (SELECT epr.cdcooper
            ,epr.nrdconta
            ,epr.nrctremp
+		   ,vlemprst
            ,epr.progress_recid
        FROM cecred.crapepr epr
       WHERE epr.cdlcremp in (5600, 4600, 508)
