@@ -56,7 +56,7 @@ BEGIN
                               pr_dsdadatu => 8);
   
     update crapass a
-       set a.cdsitdct = 8
+       set a.cdsitdct = 4
      where a.cdcooper = vr_cdcooper
        and a.nrdconta = vr_nrdconta;
   
