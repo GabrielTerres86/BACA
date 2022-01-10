@@ -53,10 +53,10 @@ BEGIN
     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'crapass.cdsitdct',
                               pr_dsdadant => rg_crapass.cdsitdct,
-                              pr_dsdadatu => 8);
+                              pr_dsdadatu => 4);
   
     update crapass a
-       set a.cdsitdct = 8
+       set a.cdsitdct = 4
      where a.cdcooper = vr_cdcooper
        and a.nrdconta = vr_nrdconta;
   
