@@ -12,19 +12,23 @@ BEGIN
   -- PRM
   FOR rw_crapcop IN cr_crapcop LOOP
     
-    INSERT INTO crapprm
-      (nmsistem,
-       cdcooper,
-       cdacesso,
-       dstexprm,
-       dsvlrprm)
-    VALUES
-      ('CRED',
-       rw_crapcop.cdcooper,
-       'PREJUIZO_EXCECAO',
-       'Contas com excecoes exclusivas a serem tratadas em fontes especificos EMPR0001 e EXTR0002',
-       CASE rw_crapcop.cdcooper WHEN 9 THEN vr_dstratar ELSE '' END);
-       
+    BEGIN
+        INSERT INTO crapprm
+          (nmsistem,
+           cdcooper,
+           cdacesso,
+           dstexprm,
+           dsvlrprm)
+        VALUES
+          ('CRED',
+           rw_crapcop.cdcooper,
+           'PREJUIZO_EXCECAO',
+           'Contas com excecoes exclusivas a serem tratadas em fontes especificos EMPR0001 e EXTR0002',
+           CASE rw_crapcop.cdcooper WHEN 9 THEN vr_dstratar ELSE '' END);
+    EXCEPTION
+        WHEN OTHERS THEN
+            NULL;
+    END;
   END LOOP;
   
   COMMIT;
