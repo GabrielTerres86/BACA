@@ -51,7 +51,7 @@ BEGIN
                                      ,pr_tplotmov => 5
                                      ,pr_nrdolote => 600029
                                      ,pr_nrdconta => vr_nrdconta
-                                     ,pr_cdhistor => 2409 -- abono
+                                     ,pr_cdhistor => 2388 -- abono
                                      ,pr_nrctremp => vr_nrctremp
                                      ,pr_vllanmto => vr_vllanmto
                                      ,pr_dtpagemp => rw_crapdat.dtmvtolt
