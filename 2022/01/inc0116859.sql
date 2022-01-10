@@ -61,6 +61,10 @@ declare
   
 BEGIN
 
+  IF btch0001.cr_crapdat%ISOPEN THEN
+    CLOSE btch0001.cr_crapdat;
+  END IF;
+    
   -- Com base na data da central
   OPEN  btch0001.cr_crapdat(pr_cdcooper => 3);
   FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -163,6 +167,7 @@ BEGIN
                      );
       FETCH cr_crapepr INTO rw_crapepr;
       IF cr_crapepr%NOTFOUND THEN
+         CLOSE cr_crapepr;
          vr_linhaarq := vr_linhaarq || ';Contrato liquidado;';
          gene0001.pc_escr_linha_arquivo(vr_ind_arqlog,vr_linhaarq);
         CONTINUE;
