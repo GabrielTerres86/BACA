@@ -374,6 +374,28 @@ BEGIN
                      prm_tipoajus => 'I');                     
  
 
+---------------------------------------------------
+  -- c/c: 10376836, 2721 D valor R$ 55.62   viacredi
+---------------------------------------------------
+  vr_incidente := 'INC0115751';
+  vr_cdcooper  := 1;
+  vr_nrdconta  := 10376836;
+  prc_gera_lct(prm_cdcooper => vr_cdcooper,
+               prm_nrdconta => vr_nrdconta,
+               prm_vllanmto => 55.62,
+               prm_cdhistor => 2721);
+                         
+  prc_atlz_prejuizo (prm_cdcooper => vr_cdcooper,
+                     prm_nrdconta => vr_nrdconta,
+                     prm_vllanmto => 55.62,
+                     prm_cdhistor => 2721,
+                     prm_tipoajus => 'I');
+  --Atualiza conta
+  UPDATE crapass a 
+     SET a.inprejuz = 0 
+   WHERE a.cdcooper = 1 
+     AND a.nrdconta = vr_nrdconta;
+--------------------------------------------------
 
   dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
   dbms_output.put_line('  ');
