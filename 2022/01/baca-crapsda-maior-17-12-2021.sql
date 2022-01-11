@@ -1,7 +1,7 @@
 BEGIN
 
   DELETE FROM crapsda a
-   WHERE a.dtmvtolt >= to_date('17/12/2021', 'dd/mm/yyyy')
+   WHERE a.dtmvtolt >= to_date('18/12/2021', 'dd/mm/yyyy')
      AND cdcooper = 1;
 
   COMMIT;
