@@ -59,7 +59,7 @@ BEGIN
   END IF;
 
   vr_vllanmto := 28.75;
-  vr_cdhistor := 1041;
+  vr_cdhistor := 1040;
 
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
