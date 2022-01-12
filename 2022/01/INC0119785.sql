@@ -6,24 +6,28 @@ DECLARE
   vr_cdoperad    cecred.craplgm.cdoperad%TYPE;
   vr_dscritic    cecred.craplgm.dscritic%TYPE;
   vr_cdcooperold cecred.crapcop.cdcooper%type;
+  vr_dtmvtolt    CECRED.crapdat.dtmvtolt%type;
   vr_nrdrowid    ROWID;
 
   CURSOR cr_crapass is
     SELECT t.cdsitdct,
            t.cdcooper,
-           t.nrdconta
+           t.nrdconta,
+           t.dtdemiss,
+           t.dtelimin,
+           t.cdmotdem
       FROM CRAPASS t
-     WHERE (t.nrdconta = 3904997 and t.cdcooper = 1) or
-     (t.nrdconta = 118079 and t.cdcooper = 9);
---     (t.nrdconta = 136654 and t.cdcooper = 5) 
+     WHERE (t.nrdconta = 3904997 and t.cdcooper = 1)
+        or (t.nrdconta = 118079 and t.cdcooper = 9);
+  --     (t.nrdconta = 136654 and t.cdcooper = 5) 
 
   rg_crapass cr_crapass%rowtype;
 
 BEGIN
   vr_cdcooperold := null;
-  vr_dttransa := trunc(sysdate);
-  vr_hrtransa := GENE0002.fn_busca_time;    
-  
+  vr_dttransa    := trunc(sysdate);
+  vr_hrtransa    := GENE0002.fn_busca_time;
+
   FOR rg_crapass IN cr_crapass LOOP
   
     if vr_cdcooperold is null then
@@ -32,9 +36,14 @@ BEGIN
   
     vr_cdcooper := rg_crapass.cdcooper;
     vr_nrdconta := rg_crapass.nrdconta;
-    
+  
+    SELECT dtmvtolt
+      INTO vr_dtmvtolt
+      FROM CECRED.crapdat
+     WHERE cdcooper = vr_cdcooper;
+  
     if vr_cdcooperold != vr_cdcooper then
-      commit;      
+      commit;
     end if;
   
     GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
@@ -55,14 +64,32 @@ BEGIN
                               pr_dsdadant => rg_crapass.cdsitdct,
                               pr_dsdadatu => 4);
   
+    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                              pr_nmdcampo => 'crapass.cdmotdem',
+                              pr_dsdadant => rg_crapass.cdmotdem,
+                              pr_dsdadatu => 4);
+  
+    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                              pr_nmdcampo => 'crapass.dtelimin',
+                              pr_dsdadant => rg_crapass.dtelimin,
+                              pr_dsdadatu => vr_dtmvtolt);
+  
+    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                              pr_nmdcampo => 'crapass.dtdemiss',
+                              pr_dsdadant => rg_crapass.dtdemiss,
+                              pr_dsdadatu => vr_dtmvtolt);
+  
     update crapass a
-       set a.cdsitdct = 4
+       set a.cdsitdct = 4,
+           a.dtelimin = vr_dtmvtolt,
+           a.dtdemiss = vr_dtmvtolt,
+           a.cdmotdem = 4
      where a.cdcooper = vr_cdcooper
        and a.nrdconta = vr_nrdconta;
   
   end loop;
 
-  commit;  
+  commit;
 
 EXCEPTION
   WHEN OTHERS THEN
