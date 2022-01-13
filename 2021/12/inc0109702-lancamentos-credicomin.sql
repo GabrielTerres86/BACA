@@ -46,7 +46,7 @@ BEGIN
                                  ,pr_txjurepr => 0
                                  ,pr_vlpreemp => 0
                                  ,pr_nrsequni => 0
-                                 ,pr_nrparepr => 0
+                                 ,pr_nrparepr => 10
                                  ,pr_flgincre => FALSE
                                  ,pr_flgcredi => FALSE
                                  ,pr_nrseqava => 0
