@@ -10,7 +10,8 @@ DECLARE
   vr_numctacns   crapcns.nrcotcns%TYPE;
   --Buscar os consórcios inadimplentes inativos.
   CURSOR cr_consor IS
-      select p.* from craplau p where p.cdhistor in (1230, 1231, 1232, 1233, 1234, 2027)
+      select p.cdcooper,p.nrdconta,p.nrdocmto,p.cdhistor,p.vllanaut, p.dtmvtopg,p.IDLANCTO, p.CDSEQTEL,p.NRCRCARD 
+         from craplau p where p.cdhistor in (1230, 1231, 1232, 1233, 1234, 2027)
          and p.dtmvtopg between to_date('01/01/2022','dd/mm/yyyy') and to_date('12/01/2022','dd/mm/yyyy')
          and p.dtdebito is null and p.insitlau=1
          and  not exists (select 1 from tbcns_repique r where r.idlancto = p.idlancto) ;
