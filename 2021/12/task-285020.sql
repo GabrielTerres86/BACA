@@ -46,7 +46,7 @@ BEGIN
                                  ,pr_txjurepr => 0
                                  ,pr_vlpreemp => 0
                                  ,pr_nrsequni => 0
-                                 ,pr_nrparepr => 0
+                                 ,pr_nrparepr => 9
                                  ,pr_flgincre => FALSE
                                  ,pr_flgcredi => FALSE
                                  ,pr_nrseqava => 0
@@ -58,7 +58,7 @@ BEGIN
   END IF;
   
   vr_vllanmto := 2.32;
-  vr_cdhistor := 1041;
+  vr_cdhistor := 1040;
   
     -- Cria o lancamento de estorno
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper
