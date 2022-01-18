@@ -16,11 +16,7 @@ BEGIN
                            ,ROWID
                        FROM crapcob cob
                       WHERE cob.incobran = 0
-                        AND cob.insitpro = 3
-                        AND cob.ininscip = 2
-                        AND cob.cdcooper IN (9, 11)
-                        AND cob.nrdconta IN (83399, 448184, 531472)
-                        AND cob.nrdocmto IN (3085, 3, 526))
+                        AND (cdcooper, nrdconta, nrcnvcob, nrdocmto) IN ((9, 448184, 108002, 3), (11, 531472, 109002, 526), (9, 83399, 10860, 3085)))
   LOOP
   
     BEGIN
