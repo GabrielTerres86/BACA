@@ -15,7 +15,7 @@ declare
   vr_lanctoaj        crapepr.vlsdevat%type;
   vr_cdhistor        craplcm.cdhistor%type;
   vr_modalida        NUMBER;
-  vr_linhaarq        varchar2(1000);
+  vr_linhaarq        varchar2(5000);
     
   vr_des_reto      varchar(3);
   vr_tab_erro      GENE0001.typ_tab_erro;
@@ -160,8 +160,8 @@ BEGIN
          ROLLBACK;
          CONTINUE;
       END IF;
-      
-       vr_linhaarq := vr_linhaarq || 'SIM;';
+       
+      vr_linhaarq := vr_linhaarq || 'SIM;';
       
       -- Verificar contrato se estiver liquidado não virá no cursor e passaremos para o próximo registro
       OPEN cr_crapepr(vr_cdcooper
@@ -173,6 +173,7 @@ BEGIN
          CLOSE cr_crapepr;
          vr_linhaarq := vr_linhaarq || ';Contrato liquidado;';
          gene0001.pc_escr_linha_arquivo(vr_ind_arqlog,vr_linhaarq);
+         COMMIT;
         CONTINUE;
       END IF;
       CLOSE cr_crapepr;
