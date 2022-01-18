@@ -4,7 +4,7 @@ BEGIN
   SET    vlsdbloq = -1
   WHERE  cdcooper = 1 
   AND    nrdconta = 11037 
-  AND    dtmvtolt = '11/01/2022';
+  AND    dtmvtolt = to_date('11/01/2022','dd/mm/yyyy');
   
   COMMIT;
 
