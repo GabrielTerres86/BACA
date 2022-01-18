@@ -19,5 +19,5 @@ BEGIN
 		VALUES(14, 'Evolua', 2650000.00, 2120000.00, 2976000.00, 2380800.00,  5626000.00,  4500800.00);
 	INSERT INTO CREDITO.TBCRED_PEAC_LIMITES (cdcooper, nmcooper, vllibmedgde, vlgarantmed, vllibpeq , vlgarantpeq , vlcontratado , vlgarantcontr)
 		VALUES(16, 'ViacrediAV', 0.00,0.00,1783000.00, 1426400.00,  1783000.00,  1426400.00);
-
+	COMMIT;
 END;
