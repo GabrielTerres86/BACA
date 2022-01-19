@@ -1,0 +1,8 @@
+BEGIN
+	UPDATE craptel
+		   SET CDOPPTEL = '@,C,B,L'
+		   ,LSOPPTEL = 'ACESSO,CONSULTA,BLOQUEIO HONRA,LIMITES'
+	where nmdatela = 'PEAC';
+
+	COMMIT;
+END;
