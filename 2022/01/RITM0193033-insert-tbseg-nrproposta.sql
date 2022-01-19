@@ -23,8 +23,7 @@ DECLARE
       FROM tbseg_nrproposta 
      WHERE nrproposta = pr_nrproposta;
     rw_tbseg_nrproposta cr_tbseg_nrproposta%ROWTYPE;
-	
-	
+  
 BEGIN
 
     gene0001.pc_lista_arquivos(pr_path     => vr_diretorio  --Listar arquivos no diretorio
@@ -118,6 +117,12 @@ BEGIN
     END LOOP;
     COMMIT;
 
-EXCEPTION
-  WHEN OTHERS THEN NULL;
+EXCEPTION  
+  when vr_exc_saida then
+    dbms_output.put_line('Erro '||vr_dscritic);
+    Rollback;
+  WHEN OTHERS THEN 
+    dbms_output.put_line('Erro Geral: '||sqlerrm);
+    Rollback;
 END;
+/
