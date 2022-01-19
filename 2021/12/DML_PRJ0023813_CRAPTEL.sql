@@ -38,10 +38,10 @@ DECLARE
 
   vr_nmdatela craptel.nmdatela%TYPE := 'PEAC';
   vr_nrmodulo craptel.nrmodulo%TYPE := 3; --Empréstimos
-  vr_cdopptel craptel.cdopptel%TYPE := '@,C,B';
+  vr_cdopptel craptel.cdopptel%TYPE := '@,C,B,L';
   vr_tldatela craptel.tldatela%TYPE := 'Acompanhamento Operacoes PEAC';
   vr_tlrestel craptel.tlrestel%TYPE := 'Acompanhamento Operacoes PEAC';
-  vr_lsopptel craptel.lsopptel%TYPE := 'ACESSO,CONSULTA,BLOQUEIO HONRA';
+  vr_lsopptel craptel.lsopptel%TYPE := 'ACESSO,CONSULTA,BLOQUEIO HONRA,LIMITES';
   vr_nrseqrdr NUMBER;
   rw_crapcop crapcop%ROWTYPE;
   rw_crapope crapope%ROWTYPE;
@@ -160,7 +160,7 @@ BEGIN
   VALUES
     ('CONSULTA_LIMITES_PEAC'
     ,'TELA_PEAC'
-    ,'pc_atualizar_limites_web'
+    ,'pc_consultar_limites_web'
     ,''
     ,vr_nrseqrdr);
 
