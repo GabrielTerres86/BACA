@@ -66,6 +66,8 @@ BEGIN
 	AND CDCOOPER = 3;
 
 	COMMIT;	
+	
+	
 
   INSERT INTO crapaca
     (nmdeacao
@@ -73,12 +75,13 @@ BEGIN
     ,nmproced
     ,lstparam
     ,nrseqrdr)
-  VALUES
-    ('CONSULTA_LIMITES_PEAC'
-    ,'TELA_PEAC'
-    ,'pc_atualizar_limites_web'
-    ,''
-    ,vr_nrseqrdr);
+  SELECT 'CONSULTA_LIMITES_PEAC'
+		,'TELA_PEAC'
+		,'pc_atualizar_limites_web'
+		,''
+		,rdr.nrseqrdr
+	FROM	craprdr rdr
+    WHERE rdr.nmprogra = 'TELA_PEAC';
 
 	COMMIT;
 END;
