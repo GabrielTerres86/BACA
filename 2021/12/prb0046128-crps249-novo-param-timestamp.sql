@@ -1,0 +1,7 @@
+BEGIN
+  INSERT INTO CECRED.CRAPPRM
+    (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+  VALUES
+    ('CRED', 0, 'CRPS249_USAR_TIMESTAMP', 'CRPS249 - Parametro para definir se o programa deve usar recurso TIMESTAMP.', 0);
+  COMMIT;
+END;
