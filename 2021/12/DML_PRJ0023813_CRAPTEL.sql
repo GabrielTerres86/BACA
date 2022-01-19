@@ -43,6 +43,8 @@ DECLARE
   vr_tlrestel craptel.tlrestel%TYPE := 'Acompanhamento Operacoes PEAC';
   vr_lsopptel craptel.lsopptel%TYPE := 'ACESSO,CONSULTA,BLOQUEIO HONRA';
   vr_nrseqrdr NUMBER;
+  rw_crapcop crapcop%ROWTYPE;
+  rw_crapope crapope%ROWTYPE;
 BEGIN
   --Para cada cooperativa insere a tela
   FOR rw_crapcop IN cr_crapcop(vr_nmdatela) LOOP
@@ -147,6 +149,19 @@ BEGIN
     ,'TELA_PEAC'
     ,'pc_atualizar_reprocess_web'
     ,'pr_contratos'
+    ,vr_nrseqrdr);
+
+  INSERT INTO crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('CONSULTA_LIMITES_PEAC'
+    ,'TELA_PEAC'
+    ,'pc_atualizar_limites_web'
+    ,''
     ,vr_nrseqrdr);
 
   COMMIT;
