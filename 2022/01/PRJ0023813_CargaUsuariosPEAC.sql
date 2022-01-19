@@ -65,7 +65,20 @@ BEGIN
 	AND CDCOOPER = 3;
 
 	COMMIT;
+	
 
+  INSERT INTO crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('CONSULTA_LIMITES_PEAC'
+    ,'TELA_PEAC'
+    ,'pc_atualizar_limites_web'
+    ,''
+    ,vr_nrseqrdr);
 
-	SELECT * FROM CRAPACE WHERE NMDATELA = 'PEAC'
+	COMMIT;
 END;

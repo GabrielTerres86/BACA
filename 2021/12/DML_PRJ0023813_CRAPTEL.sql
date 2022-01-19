@@ -151,19 +151,6 @@ BEGIN
     ,'pr_contratos'
     ,vr_nrseqrdr);
 
-  INSERT INTO crapaca
-    (nmdeacao
-    ,nmpackag
-    ,nmproced
-    ,lstparam
-    ,nrseqrdr)
-  VALUES
-    ('CONSULTA_LIMITES_PEAC'
-    ,'TELA_PEAC'
-    ,'pc_atualizar_limites_web'
-    ,''
-    ,vr_nrseqrdr);
-
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
