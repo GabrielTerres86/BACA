@@ -43,6 +43,8 @@ DECLARE
   vr_tlrestel craptel.tlrestel%TYPE := 'Acompanhamento Operacoes PEAC';
   vr_lsopptel craptel.lsopptel%TYPE := 'ACESSO,CONSULTA,BLOQUEIO HONRA';
   vr_nrseqrdr NUMBER;
+  rw_crapcop crapcop%ROWTYPE;
+  rw_crapope crapope%ROWTYPE;
 BEGIN
   --Para cada cooperativa insere a tela
   FOR rw_crapcop IN cr_crapcop(vr_nmdatela) LOOP
