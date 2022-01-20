@@ -173,6 +173,22 @@ and	a.nrctrcrd	= 178105;
 
 end;
 
+/* Conta 871290, Credifoz */
+
+begin
+
+delete	from crawcrd a
+where	a.nrdconta	= 871290
+and	a.cdcooper	= 11
+and	a.nrctrcrd	= 171035;
+
+delete	from crawcrd a
+where	a.nrdconta	= 871290
+and	a.cdcooper	= 11
+and	a.nrctrcrd	= 177178;
+
+end;
+
 commit;
 
 end;
