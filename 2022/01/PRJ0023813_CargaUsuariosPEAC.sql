@@ -77,7 +77,7 @@ BEGIN
     ,nrseqrdr)
   SELECT 'CONSULTA_LIMITES_PEAC'
 		,'TELA_PEAC'
-		,'pc_atualizar_limites_web'
+		,'pc_consultar_limites_web'
 		,''
 		,rdr.nrseqrdr
 	FROM	craprdr rdr
