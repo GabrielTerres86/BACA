@@ -112,7 +112,7 @@ BEGIN
         BACKUP('UPDATE CRAPRAC SET DTANIVER = ''01/02/2022'' WHERE CDCOOPER = '||rw_craprac.cdcooper ||' AND '||' NRDCONTA = '||rw_craprac.nrdconta|| ' AND NRAPLICA = '||rw_craprac.nraplica||';'); 
                                     
         UPDATE craprac craprac 
-           SET craprac.dtaniver = '01/01/2022' 
+           SET craprac.dtaniver = to_date('01/01/2022','dd/mm/yyyy') 
          WHERE craprac.cdcooper = rw_craprac.cdcooper
            AND craprac.nrdconta = rw_craprac.nrdconta
            AND craprac.nraplica = rw_craprac.nraplica;  
