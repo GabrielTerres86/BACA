@@ -5,7 +5,7 @@ DECLARE
    vr_nmarqimp1   VARCHAR2(100)  := 'backup.txt';
    vr_ind_arquiv1 utl_file.file_type;   
    vr_rootmicros  VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
-   vr_nmdireto    VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/inc114752';  
+   vr_nmdireto    VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/INC0120603';  
    
    CURSOR cr_craprac IS
      SELECT rac.cdcooper, 
@@ -15,8 +15,8 @@ DECLARE
             rac.cdprodut,
             rac.dtmvtolt           
        FROM craprac rac
-      WHERE rac.dtaniver = '01/02/2022' --Aniversário errado
-        AND rac.dtmvtolt >= '29/11/2021' AND rac.dtmvtolt <= '30/11/2021' -- Data de movimento do aporte        
+      WHERE rac.dtaniver = to_date('01/02/2022','dd/mm/yyyy') --Aniversário errado
+        AND rac.dtmvtolt >= to_date('29/11/2021','dd/mm/yyyy') AND rac.dtmvtolt <= to_date('30/11/2021','dd/mm/yyyy') -- Data de movimento do aporte        
         AND rac.cdcooper in (1, 16) -- cooperativas Viacredi e Alto Vale        
         AND rac.idsaqtot = 0 -- Saque parcial        
         AND rac.cdprodut = 1109; -- Produto poupança
@@ -51,7 +51,7 @@ BEGIN
     BACKUP('UPDATE CRAPRAC SET DTANIVER = ''01/02/2022'' WHERE CDCOOPER = '||rw_craprac.cdcooper ||' AND '||' NRDCONTA = '||rw_craprac.nrdconta||' AND NRAPLICA = '||rw_craprac.nraplica||';');
     
     UPDATE craprac craprac 
-       SET craprac.dtaniver = '01/01/2022' 
+       SET craprac.dtaniver = to_date('01/01/2022','dd/mm/yyyy') 
      WHERE craprac.cdcooper = rw_craprac.cdcooper
        AND craprac.nrdconta = rw_craprac.nrdconta
        AND craprac.nraplica = rw_craprac.nraplica;

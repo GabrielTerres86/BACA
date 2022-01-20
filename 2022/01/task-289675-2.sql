@@ -58,9 +58,9 @@ DECLARE
          AND rac.nrdconta = lac.nrdconta
          AND rac.nraplica = lac.nraplica
          AND rac.cdprodut = cpc.cdprodut 
-         AND rac.dtaniver = '01/02/2022' --Aniversário errado
-         AND rac.dtmvtolt >= '29/11/2021' AND rac.dtmvtolt <= '30/11/2021' -- Data de movimento do aporte
-         AND lac.dtmvtolt >= '01/01/2022'
+         AND rac.dtaniver = to_date('01/02/2022','dd/mm/yyyy') --Aniversário errado
+         AND rac.dtmvtolt >= to_date('29/11/2021','dd/mm/yyyy') AND rac.dtmvtolt <= to_date('30/11/2021','dd/mm/yyyy') -- Data de movimento do aporte
+         AND lac.dtmvtolt >= to_date('01/01/2022','dd/mm/yyyy')
          AND rac.cdcooper in (1, 16) -- cooperativas Viacredi e Alto Vale
          AND rac.idsaqtot = 1 
          AND lac.cdhistor = 3528      
@@ -109,10 +109,7 @@ BEGIN
   
       FOR rw_craprac in cr_craprac(rw_crapdat.cdcooper) LOOP
        
-        BACKUP('UPDATE CRAPRAC SET DTANIVER = ''01/02/2022'' 
-                 WHERE CDCOOPER = '||rw_craprac.cdcooper ||
-                 ' AND '||' NRDCONTA = '||rw_craprac.nrdconta|| 
-                 ' AND NRAPLICA = '||rw_craprac.nraplica||';'); 
+        BACKUP('UPDATE CRAPRAC SET DTANIVER = ''01/02/2022'' WHERE CDCOOPER = '||rw_craprac.cdcooper ||' AND '||' NRDCONTA = '||rw_craprac.nrdconta|| ' AND NRAPLICA = '||rw_craprac.nraplica||';'); 
                                     
         UPDATE craprac craprac 
            SET craprac.dtaniver = '01/01/2022' 
@@ -131,8 +128,8 @@ BEGIN
                                                                   pr_idgravir => vr_idgravir,
                                                                   pr_flgcaren => 2, -- IMPORTANTE: O valor 2 indica que deve ser calculada a rentabilidade da poupança
                                                                   pr_idaplpgm => 0,                   -- Aplicação Programada  (0-Não/1-Sim)
-                                                                  pr_dtinical => '01/01/2022',
-                                                                  pr_dtfimcal => '01/01/2022',
+                                                                  pr_dtinical => to_date('01/01/2022','dd/mm/yyyy'),
+                                                                  pr_dtfimcal => to_date('01/01/2022','dd/mm/yyyy'),
                                                                   pr_idtipbas => vr_idtipbas,
                                                                   pr_incalliq => 0,                   --> Nao calcula saldo liquido
                                                                   -- OUT
@@ -187,9 +184,7 @@ BEGIN
                   vr_cdcritic := 0;
                   vr_dscritic := 'Erro ao inserir registro de lancamento de credito. Erro: ' || SQLERRM;
                   RAISE vr_excsaida;
-                END IF;                                                
-                                               
-                                                                  
+            END IF;                                                                                                                                                                 
 
       END LOOP;
       
