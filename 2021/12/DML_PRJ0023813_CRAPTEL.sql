@@ -9,32 +9,27 @@ DECLARE
              WHERE tel.nmdatela = pr_nmdatela
                AND tel.cdcooper = cop.cdcooper);
 
-  CURSOR cr_crapope(pr_nmdatela IN craptel.nmdatela%TYPE) IS
-    SELECT DISTINCT pr_nmdatela nmdatela
-                   ,ace.cddopcao
-                   ,upper(TRIM(ace.cdoperad)) cdoperad
-                   ,ace.cdcooper cdcooper
-                   ,3 nrmodulo
-                   ,0 idevento
-                   ,ace.idambace idambace
-      FROM crapace ace
-          ,crapope ope
-          ,crapcop cop
-     WHERE ace.cdcooper = cop.cdcooper
-       AND ace.cdcooper = ope.cdcooper
-       AND UPPER(ope.cdoperad) = UPPER(ace.cdoperad)
-       AND UPPER(ace.nmdatela) = 'PRONAM'
-       AND UPPER(ace.cddopcao) = 'C'
-       AND ace.idambace = 2
-       AND ope.cdsitope = 1
-       AND cop.flgativo = 1
+  CURSOR cr_crapope(pr_cddopcao IN craptel.cddopcao%TYPE,
+					pr_cdcooper IN craptel.cdcooper%TYPE) IS
+		SELECT 'PEAC',
+				CDDOPCAO,
+				CDOPERAD,
+				NMROTINA,
+				CDCOOPER,
+				NRMODULO,
+				IDEVENTO,
+				IDAMBACE 
+		FROM CRAPACE ace
+		WHERE NMDATELA = 'PRONAM'
+		AND CDDOPCAO = pr_cddopcao
+		AND cdcooper = nvl(pr_cdcooper, ace.cdcooper)
        AND NOT EXISTS (SELECT 1
               FROM crapace c
-             WHERE c.cdcooper = ope.cdcooper
+             WHERE c.cdcooper = ace.cdcooper
                AND c.idambace = ace.idambace
-               AND UPPER(c.nmdatela) = pr_nmdatela
-               AND UPPER(TRIM(c.cdoperad)) = UPPER(TRIM(ope.cdoperad))
-               AND c.cddopcao IN ('C', 'B'));
+               AND UPPER(c.nmdatela) = 'PEAC'
+               AND UPPER(TRIM(c.cdoperad)) = UPPER(TRIM(ace.cdoperad))
+               AND c.cddopcao = ace.cddopcao);
 
   vr_nmdatela craptel.nmdatela%TYPE := 'PEAC';
   vr_nrmodulo craptel.nrmodulo%TYPE := 3; --Empréstimos
@@ -66,7 +61,7 @@ BEGIN
       ,rw_crapcop.cdcooper);
   END LOOP;
 
-  FOR rw_crapope IN cr_crapope(vr_nmdatela) LOOP
+  FOR rw_crapope IN cr_crapope('@', NULL) LOOP
     INSERT INTO crapace
       (nmdatela
       ,cddopcao
@@ -83,25 +78,61 @@ BEGIN
       ,rw_crapope.nrmodulo
       ,rw_crapope.idevento
       ,rw_crapope.idambace);
+  END LOOP;
+
+  FOR rw_crapope IN cr_crapope('C', NULL) LOOP
+    INSERT INTO crapace
+      (nmdatela
+      ,cddopcao
+      ,cdoperad
+      ,cdcooper
+      ,nrmodulo
+      ,idevento
+      ,idambace)
+    VALUES
+      (rw_crapope.nmdatela
+      ,rw_crapope.cddopcao
+      ,rw_crapope.cdoperad
+      ,rw_crapope.cdcooper
+      ,rw_crapope.nrmodulo
+      ,rw_crapope.idevento
+      ,rw_crapope.idambace);
+  END LOOP;
   
-    IF (rw_crapope.cdoperad LIKE 'F003%') THEN
-      INSERT INTO crapace
-        (nmdatela
-        ,cddopcao
-        ,cdoperad
-        ,cdcooper
-        ,nrmodulo
-        ,idevento
-        ,idambace)
-      VALUES
-        (rw_crapope.nmdatela
-        ,'B'
-        ,rw_crapope.cdoperad
-        ,rw_crapope.cdcooper
-        ,rw_crapope.nrmodulo
-        ,rw_crapope.idevento
-        ,rw_crapope.idambace);
-    END IF;
+  FOR rw_crapope IN cr_crapope('B', 3) LOOP
+    INSERT INTO crapace
+      (nmdatela
+      ,cddopcao
+      ,cdoperad
+      ,cdcooper
+      ,nrmodulo
+      ,idevento
+      ,idambace)
+    VALUES
+      (rw_crapope.nmdatela
+      ,rw_crapope.cddopcao
+      ,rw_crapope.cdoperad
+      ,rw_crapope.cdcooper
+      ,rw_crapope.nrmodulo
+      ,rw_crapope.idevento
+      ,rw_crapope.idambace);
+	  
+	  INSERT INTO crapace
+      (nmdatela
+      ,cddopcao
+      ,cdoperad
+      ,cdcooper
+      ,nrmodulo
+      ,idevento
+      ,idambace)
+    VALUES
+      (rw_crapope.nmdatela
+      ,'L'
+      ,rw_crapope.cdoperad
+      ,rw_crapope.cdcooper
+      ,rw_crapope.nrmodulo
+      ,rw_crapope.idevento
+      ,rw_crapope.idambace);
   END LOOP;
 
   INSERT INTO craprdr
