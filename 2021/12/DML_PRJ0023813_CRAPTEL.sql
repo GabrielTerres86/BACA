@@ -9,8 +9,8 @@ DECLARE
              WHERE tel.nmdatela = pr_nmdatela
                AND tel.cdcooper = cop.cdcooper);
 
-  CURSOR cr_crapope(pr_cddopcao IN craptel.cddopcao%TYPE,
-					pr_cdcooper IN craptel.cdcooper%TYPE) IS
+  CURSOR cr_crapope(pr_cddopcao IN crapace.cddopcao%TYPE,
+					pr_cdcooper IN crapace.cdcooper%TYPE) IS
 		SELECT 'PEAC',
 				CDDOPCAO,
 				CDOPERAD,

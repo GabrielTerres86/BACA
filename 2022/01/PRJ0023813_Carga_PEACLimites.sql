@@ -2,9 +2,9 @@ BEGIN
 	INSERT INTO CREDITO.TBCRED_PEAC_LIMITES (cdcooper, nmcooper, vllibmedgde, vlgarantmed, vllibpeq , vlgarantpeq , vlcontratado , vlgarantcontr)
 		VALUES(1, 'Viacredi', 4630000.00, 3704000.00, 87338860.33, 69871088.27,  91968860.33,  73575088.27);
 	INSERT INTO CREDITO.TBCRED_PEAC_LIMITES (cdcooper, nmcooper, vllibmedgde, vlgarantmed, vllibpeq , vlgarantpeq , vlcontratado , vlgarantcontr)
-		VALUES(5, 'Unilos', 0.00,0.00,140000.00, 112000.00,  140000.00,  112000.00);
+		VALUES(5, 'Acentra', 0.00,0.00,712000.00, 569600.00,  712000.00,  569600.00);
 	INSERT INTO CREDITO.TBCRED_PEAC_LIMITES (cdcooper, nmcooper, vllibmedgde, vlgarantmed, vllibpeq , vlgarantpeq , vlcontratado , vlgarantcontr)
-		VALUES(6, 'Acentra', 0.00,0.00,712000.00, 569600.00,  712000.00,  569600.00);
+		VALUES(6, 'Unilos', 0.00,0.00,140000.00, 112000.00,  140000.00,  112000.00);
 	INSERT INTO CREDITO.TBCRED_PEAC_LIMITES (cdcooper, nmcooper, vllibmedgde, vlgarantmed, vllibpeq , vlgarantpeq , vlcontratado , vlgarantcontr)
 		VALUES(7, 'Credcrea', 1319500.00, 1055600.00, 6019500.00, 4815600.00,  7339000.00,  5871200.00);
 	INSERT INTO CREDITO.TBCRED_PEAC_LIMITES (cdcooper, nmcooper, vllibmedgde, vlgarantmed, vllibpeq , vlgarantpeq , vlcontratado , vlgarantcontr)
