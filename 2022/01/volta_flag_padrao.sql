@@ -1,0 +1,9 @@
+BEGIN
+UPDATE TBEPR_SEGMENTO_TPPESSOA_PERM
+   SET FLGPADRAO = 1
+ WHERE idsegmento = 1 
+   AND tppessoa = 1
+   AND CDCOOPER = 1;   
+   
+  COMMIT;
+END;
