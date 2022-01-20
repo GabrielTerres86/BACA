@@ -16,26 +16,6 @@ DECLARE
        AND cop.cdcooper <> 3;
 ---------------------------------------------------------
 -- Criar crawseg e crapseg de seguro prestamista ativo
-  CURSOR cr_registros0(pr_cdcooper IN tbseg_prestamista.cdcooper%TYPE) IS
-    SELECT p.nrdconta
-          ,p.nrctremp
-          ,p.nrctrseg
-          ,s.cdagenci
-      FROM crapass s
-          ,tbseg_prestamista p
-     WHERE p.cdcooper = pr_cdcooper
-       AND p.cdcooper = s.cdcooper
-       AND p.nrdconta = s.nrdconta
-       AND p.tpregist = 3
-       AND NOT EXISTS (SELECT 'X'
-                         FROM crapseg w
-                        WHERE w.cdcooper = p.cdcooper
-                          AND w.nrdconta = p.nrdconta
-                          AND w.nrctrseg = p.nrctrseg
-                          AND w.tpseguro = 4);
-  rw_registro0 cr_registros0%ROWTYPE;
----------------------------------------------------------
--- Criar crawseg e crapseg de seguro prestamista ativo
   CURSOR cr_registros1(pr_cdcooper IN tbseg_prestamista.cdcooper%TYPE) IS
     SELECT p.nrdconta
           ,p.nrctremp
@@ -51,12 +31,23 @@ DECLARE
                         FROM crawseg w, crapseg s
                        WHERE w.cdcooper = p.cdcooper
                          AND w.nrdconta = p.nrdconta
+                         AND w.nrctrseg = p.nrctrseg
                          AND w.nrctrato = p.nrctremp
                          AND w.cdcooper = s.cdcooper
                          AND w.nrdconta = s.nrdconta
                          AND w.nrctrseg = s.nrctrseg
                          AND w.tpseguro = 4);
   rw_registro1 cr_registros1%ROWTYPE;
+  
+  CURSOR cr_nrctrseg(pr_cdcooper crawseg.cdcooper%TYPE,
+                     pr_nrdconta crawseg.nrdconta%TYPE,
+                     pr_nrctrato crawseg.nrctrato%TYPE) IS
+    SELECT w.nrctrseg
+      FROM crawseg w
+     WHERE w.cdcooper = pr_cdcooper
+       AND w.nrdconta = pr_nrdconta
+       AND w.nrctrato = pr_nrctrato;
+    rw_nrctrseg cr_nrctrseg%ROWTYPE;
 ---------------------------------------------------------
 -- Registros que estão na crapseg e não estão na tbseg_prestamista
   CURSOR cr_registros2(pr_cdcooper IN tbseg_prestamista.cdcooper%TYPE) IS
@@ -175,7 +166,7 @@ BEGIN
   vr_rootmicros     := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
   vr_nmdireto       := vr_rootmicros|| 'cpd/bacas/PRB0046116';
 
-  vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => 3);
+  --vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => 3);
   pc_valida_direto(pr_nmdireto => vr_nmdireto,
                    pr_dscritic => vr_dscritic);
 
@@ -197,54 +188,40 @@ BEGIN
   END IF;
   ----------------------------------------------------------------------
   FOR rw_crapop IN cr_crapop LOOP
-    FOR rw_registro0 IN cr_registros0(pr_cdcooper => rw_crapop.cdcooper) LOOP
-      vr_qntd_reg := 0;
-      -- Gera rollback
-      -- crapseg
-      gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'DELETE crapseg p WHERE p.cdcooper = ' || rw_crapop.cdcooper   ||
-                                                                     ' AND p.nrdconta = ' || rw_registro0.nrdconta ||
-                                                                     ' AND p.nrctrseg = ' || rw_registro0.nrctrseg || ';');
-
-      -- crawseg
-      gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'DELETE crawseg p WHERE p.cdcooper = ' || rw_crapop.cdcooper   ||
-                                                                     ' AND p.nrdconta = ' || rw_registro0.nrdconta ||
-                                                                     ' AND p.nrctrseg = ' || rw_registro0.nrctrseg ||
-                                                                     ' AND p.tpseguro = 4;');
-
-      -- Gera crawseg e crapseg
-      SEGU0003.pc_efetiva_proposta_sp(pr_cdcooper => rw_crapop.cdcooper
-                                     ,pr_nrdconta => rw_registro0.nrdconta
-                                     ,pr_nrctrato => rw_registro0.nrctremp
-                                     ,pr_cdagenci => rw_registro0.cdagenci
-                                     ,pr_nrdcaixa => 0
-                                     ,pr_cdoperad => 1
-                                     ,pr_nmdatela => 'SCP_PRST'
-                                     ,pr_idorigem => 7
-                                     ,pr_cdcritic => vr_cdcritic
-                                     ,pr_dscritic => vr_dscritic);
-      
-      IF vr_qntd_reg = 500 THEN
-        vr_qntd_reg := 0;
-        COMMIT;
-      ELSE
-        vr_qntd_reg := vr_qntd_reg + 1;
-      END IF;
-    END LOOP;
-    COMMIT;
-    ------------------------------------------------------------------------------------------------------------------------------
     FOR rw_registro1 IN cr_registros1(pr_cdcooper => rw_crapop.cdcooper) LOOP
-      vr_qntd_reg := 0;
-      -- Gera rollback
-      -- crapseg
-      gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'DELETE crapseg p WHERE p.cdcooper = ' || rw_crapop.cdcooper   ||
-                                                                     ' AND p.nrdconta = ' || rw_registro1.nrdconta ||
-                                                                     ' AND p.nrctrseg = ' || rw_registro1.nrctrseg || ';');
+      OPEN cr_nrctrseg(pr_cdcooper => rw_crapop.cdcooper,
+                       pr_nrdconta => rw_registro1.nrdconta,
+                       pr_nrctrato => rw_registro1.nrctremp);
+        FETCH cr_nrctrseg INTO rw_nrctrseg;
+        IF cr_nrctrseg%FOUND THEN
+          IF rw_nrctrseg.nrctrseg <> rw_registro1.nrctrseg THEN
+            -- Gera rollback
+            -- Corrige o número da apólice
+            gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'UPDATE tbseg_prestamista p 
+                                                             SET p.nrctrseg = ' || rw_registro1.nrctrseg ||
+                                                          'WHERE p.cdcooper = ' || rw_crapop.cdcooper    ||
+                                                          '  AND p.nrdconta = ' || rw_registro1.nrdconta ||
+                                                          '  AND p.nrctremp = ' || rw_registro1.nrctremp || ';');
+           UPDATE tbseg_prestamista p 
+              SET p.nrctrseg = rw_nrctrseg.nrctrseg
+            WHERE p.cdcooper = rw_crapop.cdcooper
+              AND p.nrdconta = rw_registro1.nrdconta
+              AND p.nrctremp = rw_registro1.nrctremp;
+          END IF;
+        ELSE
+          -- crapseg
+          gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'DELETE crapseg p WHERE p.cdcooper = ' || rw_crapop.cdcooper   ||
+                                                                         ' AND p.nrdconta = ' || rw_registro1.nrdconta ||
+                                                                         ' AND p.nrctrseg = ' || rw_registro1.nrctrseg || ';');
 
-      -- crawseg
-      gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'DELETE crawseg p WHERE p.cdcooper = ' || rw_crapop.cdcooper   ||
-                                                                     ' AND p.nrdconta = ' || rw_registro1.nrdconta ||
-                                                                     ' AND p.nrctrseg = ' || rw_registro1.nrctrseg ||
-                                                                     ' AND p.tpseguro = 4;');
+          -- crawseg
+          gene0001.pc_escr_linha_arquivo(vr_ind_arquiv,'DELETE crawseg p WHERE p.cdcooper = ' || rw_crapop.cdcooper   ||
+                                                                         ' AND p.nrdconta = ' || rw_registro1.nrdconta ||
+                                                                         ' AND p.nrctrseg = ' || rw_registro1.nrctrseg ||
+                                                                         ' AND p.tpseguro = 4;');
+        END IF;
+      CLOSE cr_nrctrseg;
+      vr_qntd_reg := 0;
 
       -- Gera crawseg e crapseg
       SEGU0003.pc_efetiva_proposta_sp(pr_cdcooper => rw_crapop.cdcooper
@@ -628,7 +605,16 @@ BEGIN
         BEGIN
           UPDATE crawseg w
              SET w.nrproposta = rw_prestamista.nrproposta
-           WHERE w.progress_recid = rw_prestamista.progress_recid;
+           WHERE w.cdcooper = rw_prestamista.cdcooper
+             AND w.nrdconta = rw_prestamista.nrdconta
+             AND w.nrctrseg = rw_prestamista.nrctrseg;
+           
+            UPDATE tbseg_prestamista p
+             SET p.nrproposta = rw_prestamista.nrproposta
+           WHERE p.cdcooper = rw_prestamista.cdcooper
+             AND p.nrdconta = rw_prestamista.nrdconta
+             AND p.nrctrseg = rw_prestamista.nrctrseg
+             AND p.nrctremp = rw_prestamista.nrctremp;
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic:= 'Erro ao gravar numero de proposta 1: '||rw_prestamista.nrproposta || ' progress_recid: ' || rw_prestamista.progress_recid ||' - '||SQLERRM;
