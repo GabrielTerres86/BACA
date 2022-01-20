@@ -20,9 +20,9 @@ DECLARE
 				ace.IDEVENTO,
 				ace.IDAMBACE 
 		FROM CRAPACE ace
-		WHERE ace.NMDATELA = 'PRONAM'
+		WHERE UPPER(ace.NMDATELA) = 'PRONAM'
 		AND ace.CDDOPCAO = pr_cddopcao
-		AND ace.cdcooper = nvl(pr_cdcooper, ace.cdcooper)
+		AND ace.cdcooper = pr_cdcooper
        AND NOT EXISTS (SELECT 1
               FROM crapace c
              WHERE c.cdcooper = ace.cdcooper
@@ -59,81 +59,85 @@ BEGIN
       ,vr_tlrestel
       ,vr_lsopptel
       ,rw_crapcop.cdcooper);
-  END LOOP;
-
-  FOR rw_crapope IN cr_crapope('@', NULL) LOOP
-    INSERT INTO crapace
-      (nmdatela
-      ,cddopcao
-      ,cdoperad
-      ,cdcooper
-      ,nrmodulo
-      ,idevento
-      ,idambace)
-    VALUES
-      (rw_crapope.nmdatela
-      ,rw_crapope.cddopcao
-      ,rw_crapope.cdoperad
-      ,rw_crapope.cdcooper
-      ,rw_crapope.nrmodulo
-      ,rw_crapope.idevento
-      ,rw_crapope.idambace);
-  END LOOP;
-
-  FOR rw_crapope IN cr_crapope('C', NULL) LOOP
-    INSERT INTO crapace
-      (nmdatela
-      ,cddopcao
-      ,cdoperad
-      ,cdcooper
-      ,nrmodulo
-      ,idevento
-      ,idambace)
-    VALUES
-      (rw_crapope.nmdatela
-      ,rw_crapope.cddopcao
-      ,rw_crapope.cdoperad
-      ,rw_crapope.cdcooper
-      ,rw_crapope.nrmodulo
-      ,rw_crapope.idevento
-      ,rw_crapope.idambace);
-  END LOOP;
-  
-  FOR rw_crapope IN cr_crapope('B', 3) LOOP
-    INSERT INTO crapace
-      (nmdatela
-      ,cddopcao
-      ,cdoperad
-      ,cdcooper
-      ,nrmodulo
-      ,idevento
-      ,idambace)
-    VALUES
-      (rw_crapope.nmdatela
-      ,rw_crapope.cddopcao
-      ,rw_crapope.cdoperad
-      ,rw_crapope.cdcooper
-      ,rw_crapope.nrmodulo
-      ,rw_crapope.idevento
-      ,rw_crapope.idambace);
 	  
-	  INSERT INTO crapace
-      (nmdatela
-      ,cddopcao
-      ,cdoperad
-      ,cdcooper
-      ,nrmodulo
-      ,idevento
-      ,idambace)
-    VALUES
-      (rw_crapope.nmdatela
-      ,'L'
-      ,rw_crapope.cdoperad
-      ,rw_crapope.cdcooper
-      ,rw_crapope.nrmodulo
-      ,rw_crapope.idevento
-      ,rw_crapope.idambace);
+	  FOR rw_crapope IN cr_crapope('@', rw_crapcop.cdcooper) LOOP
+		INSERT INTO crapace
+		  (nmdatela
+		  ,cddopcao
+		  ,cdoperad
+		  ,cdcooper
+		  ,nrmodulo
+		  ,idevento
+		  ,idambace)
+		VALUES
+		  (rw_crapope.nmdatela
+		  ,rw_crapope.cddopcao
+		  ,rw_crapope.cdoperad
+		  ,rw_crapope.cdcooper
+		  ,rw_crapope.nrmodulo
+		  ,rw_crapope.idevento
+		  ,rw_crapope.idambace);
+	  END LOOP;
+
+	  FOR rw_crapope IN cr_crapope('C', rw_crapcop.cdcooper) LOOP
+		INSERT INTO crapace
+		  (nmdatela
+		  ,cddopcao
+		  ,cdoperad
+		  ,cdcooper
+		  ,nrmodulo
+		  ,idevento
+		  ,idambace)
+		VALUES
+		  (rw_crapope.nmdatela
+		  ,rw_crapope.cddopcao
+		  ,rw_crapope.cdoperad
+		  ,rw_crapope.cdcooper
+		  ,rw_crapope.nrmodulo
+		  ,rw_crapope.idevento
+		  ,rw_crapope.idambace);
+	  END LOOP;
+	  
+	    IF(rw_crapcop.cdcooper = 3) THEN
+			  FOR rw_crapope IN cr_crapope('B', 3) LOOP
+				INSERT INTO crapace
+				  (nmdatela
+				  ,cddopcao
+				  ,cdoperad
+				  ,cdcooper
+				  ,nrmodulo
+				  ,idevento
+				  ,idambace)
+				VALUES
+				  (rw_crapope.nmdatela
+				  ,rw_crapope.cddopcao
+				  ,rw_crapope.cdoperad
+				  ,rw_crapope.cdcooper
+				  ,rw_crapope.nrmodulo
+				  ,rw_crapope.idevento
+				  ,rw_crapope.idambace);
+				  
+				  INSERT INTO crapace
+				  (nmdatela
+				  ,cddopcao
+				  ,cdoperad
+				  ,cdcooper
+				  ,nrmodulo
+				  ,idevento
+				  ,idambace)
+				VALUES
+				  (rw_crapope.nmdatela
+				  ,'L'
+				  ,rw_crapope.cdoperad
+				  ,rw_crapope.cdcooper
+				  ,rw_crapope.nrmodulo
+				  ,rw_crapope.idevento
+				  ,rw_crapope.idambace);
+			  END LOOP;
+		END IF;
   END LOOP;
+
+  
 
   INSERT INTO craprdr
     (nmprogra
