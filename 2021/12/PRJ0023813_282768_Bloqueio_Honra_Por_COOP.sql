@@ -48,7 +48,7 @@ BEGIN
   values (aux_cdpartar_add, 11, 'NAO');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 10, 'SIM');
+  values (aux_cdpartar_add, 10, 'NAO');
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar_add, 9, 'NAO');
