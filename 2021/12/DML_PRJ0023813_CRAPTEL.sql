@@ -11,18 +11,18 @@ DECLARE
 
   CURSOR cr_crapope(pr_cddopcao IN crapace.cddopcao%TYPE,
 					pr_cdcooper IN crapace.cdcooper%TYPE) IS
-		SELECT 'PEAC',
-				CDDOPCAO,
-				CDOPERAD,
-				NMROTINA,
-				CDCOOPER,
-				NRMODULO,
-				IDEVENTO,
-				IDAMBACE 
+		SELECT 'PEAC' NMDATELA,
+				ace.CDDOPCAO,
+				ace.CDOPERAD,
+				ace.NMROTINA,
+				ace.CDCOOPER,
+				ace.NRMODULO,
+				ace.IDEVENTO,
+				ace.IDAMBACE 
 		FROM CRAPACE ace
-		WHERE NMDATELA = 'PRONAM'
-		AND CDDOPCAO = pr_cddopcao
-		AND cdcooper = nvl(pr_cdcooper, ace.cdcooper)
+		WHERE ace.NMDATELA = 'PRONAM'
+		AND ace.CDDOPCAO = pr_cddopcao
+		AND ace.cdcooper = nvl(pr_cdcooper, ace.cdcooper)
        AND NOT EXISTS (SELECT 1
               FROM crapace c
              WHERE c.cdcooper = ace.cdcooper
