@@ -4981,16 +4981,6 @@ values (16, 971685, 2, 1109, 552, to_date('30-11-2021', 'dd-mm-yyyy'), to_date('
 insert into craprac (CDCOOPER, NRDCONTA, NRAPLICA, CDPRODUT, CDNOMENC, DTMVTOLT, DTVENCTO, DTATLSLD, VLAPLICA, VLBASAPL, VLSLDATL, VLSLFMES, VLSLDACU, QTDIACAR, QTDIAPRZ, QTDIAAPL, TXAPLICA, IDSAQTOT, IDBLQRGT, IDCALORC, CDOPERAD, IDDEBCTI, VLBASANT, VLSLDANT, DTSLDANT, IDAPLCUS, NRCTRRPP, DTANIVER)
 values (16, 1835718, 3, 1109, 552, to_date('30-11-2021', 'dd-mm-yyyy'), to_date('16-04-2049', 'dd-mm-yyyy'), to_date('30-11-2021', 'dd-mm-yyyy'), 490.00, 490.00, 490.00, 490.00, 490.00, 30, 9999, 9999, 0.00000100, 0, 0, 0, '996', 0, 0.00, 0.00, null, null, 0, to_date('01-02-2022', 'dd-mm-yyyy'));
 
-prompt Done.
-
-
-
-
-
-
-prompt Importing table craplac...
-set feedback off
-set define off
 
 insert into craplac (CDCOOPER, NRDCONTA, NRAPLICA, CDAGENCI, CDBCCXLT, DTMVTOLT, NRDOLOTE, NRDOCMTO, NRSEQDIG, VLLANMTO, CDHISTOR, VLRENDIM, VLBASREN, NRSEQRGT, IDLCTCUS, CDCANAL)
 values (1, 9264582, 37, 1, 100, to_date('29-11-2021', 'dd-mm-yyyy'), 8500, 37, 1, 1000.00, 3527, 0.00, 0.00, 0, null, 10);
