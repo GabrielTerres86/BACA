@@ -13,7 +13,7 @@ DECLARE
    vr_incrineg             INTEGER;
    vidtxfixa               NUMBER;
    vcddindex               NUMBER;
-   vr_nrseqdig             NUMBER := 0;
+   vr_nrseqdig             NUMBER := 0;  
    -- Variáveis de retorno
    vr_idtipbas NUMBER := 2;
    vr_idgravir NUMBER := 0;
@@ -154,7 +154,9 @@ BEGIN
                     
                   -- se rendimento for negativo
                   IF vr_vlultren <= 0 THEN
-                    continue;
+                    -- remove o sinal e usa o historico de reversao de provisao
+                    
+                    CONTINUE;
                   END IF;
            
             -- LANÇA A RENTABILIDADE EM CONTA CORRENTE 
@@ -166,7 +168,7 @@ BEGIN
                                                    ,pr_nrdconta => rw_craprac.nrdconta
                                                    ,pr_nrdctabb => rw_craprac.nrdconta
                                                    ,pr_nrdocmto => rw_craprac.nraplica --nraplica
-                                                   ,pr_nrseqdig => vr_nrseqdig             --rw_craplot.nrseqdig ---?????
+                                                   ,pr_nrseqdig => vr_nrseqdig
                                                    ,pr_dtrefere => rw_crapdat.dtmvtolt
                                                    ,pr_vllanmto => vr_vlultren         -- Valor do resgate
                                                    ,pr_cdhistor => 362
@@ -181,8 +183,10 @@ BEGIN
                   vr_cdcritic := 0;
                   vr_dscritic := 'Erro ao inserir registro de lancamento de credito. Erro: ' || SQLERRM;
                   RAISE vr_excsaida;
-            END IF;                                                                                                                                                                 
-      vr_nrseqdig := vr_nrseqdig + 1;
+            END IF; 
+            
+            vr_nrseqdig := vr_nrseqdig + 1;                                                                                                                                                                
+
       END LOOP;
       
   END LOOP;
@@ -203,6 +207,3 @@ BEGIN
          ROLLBACK; 
 
 END;
-0
-1
-rw_craprac.nrdconta
