@@ -13,7 +13,7 @@ DECLARE
    vr_incrineg             INTEGER;
    vidtxfixa               NUMBER;
    vcddindex               NUMBER;
-   
+   vr_nrseqdig             NUMBER := 0;  
    -- Variáveis de retorno
    vr_idtipbas NUMBER := 2;
    vr_idgravir NUMBER := 0;
@@ -61,7 +61,7 @@ DECLARE
          AND rac.dtaniver = to_date('01/02/2022','dd/mm/yyyy') --Aniversário errado
          AND rac.dtmvtolt >= to_date('29/11/2021','dd/mm/yyyy') AND rac.dtmvtolt <= to_date('30/11/2021','dd/mm/yyyy') -- Data de movimento do aporte
          AND lac.dtmvtolt >= to_date('01/01/2022','dd/mm/yyyy')
-         AND rac.cdcooper in (1, 16) -- cooperativas Viacredi e Alto Vale
+         AND rac.cdcooper = pr_cdcooper -- cooperativas Viacredi e Alto Vale
          AND rac.idsaqtot = 1 
          AND lac.cdhistor = 3528      
          AND rac.cdprodut = 1109;        
@@ -153,11 +153,10 @@ BEGIN
                   vr_cdhistor := rw_crapcpc.cdhsprap;
                     
                   -- se rendimento for negativo
-                  IF vr_vlultren < 0 THEN
+                  IF vr_vlultren <= 0 THEN
                     -- remove o sinal e usa o historico de reversao de provisao
-                    vr_vlultren := vr_vlultren * -1;
-                    vr_cdhistor := rw_crapcpc.cdhsrvap;
-                    vr_negativo := true;
+                    
+                    CONTINUE;
                   END IF;
            
             -- LANÇA A RENTABILIDADE EM CONTA CORRENTE 
@@ -169,7 +168,7 @@ BEGIN
                                                    ,pr_nrdconta => rw_craprac.nrdconta
                                                    ,pr_nrdctabb => rw_craprac.nrdconta
                                                    ,pr_nrdocmto => rw_craprac.nraplica --nraplica
-                                                   ,pr_nrseqdig => 0             --rw_craplot.nrseqdig ---?????
+                                                   ,pr_nrseqdig => vr_nrseqdig
                                                    ,pr_dtrefere => rw_crapdat.dtmvtolt
                                                    ,pr_vllanmto => vr_vlultren         -- Valor do resgate
                                                    ,pr_cdhistor => 362
@@ -184,7 +183,9 @@ BEGIN
                   vr_cdcritic := 0;
                   vr_dscritic := 'Erro ao inserir registro de lancamento de credito. Erro: ' || SQLERRM;
                   RAISE vr_excsaida;
-            END IF;                                                                                                                                                                 
+            END IF; 
+            
+            vr_nrseqdig := vr_nrseqdig + 1;                                                                                                                                                                
 
       END LOOP;
       

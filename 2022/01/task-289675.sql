@@ -17,7 +17,7 @@ DECLARE
        FROM craprac rac
       WHERE rac.dtaniver = to_date('01/02/2022','dd/mm/yyyy') --Aniversário errado
         AND rac.dtmvtolt >= to_date('29/11/2021','dd/mm/yyyy') AND rac.dtmvtolt <= to_date('30/11/2021','dd/mm/yyyy') -- Data de movimento do aporte        
-        AND rac.cdcooper in (1, 16) -- cooperativas Viacredi e Alto Vale        
+        AND rac.cdcooper in (1, 16) -- cooperativas Viacredi e Alto Vale.        
         AND rac.idsaqtot = 0 -- Saque parcial        
         AND rac.cdprodut = 1109; -- Produto poupança
    
