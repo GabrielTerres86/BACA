@@ -1,5 +1,5 @@
 DECLARE 
-  vr_dados_rollback CLOB; -- Grava update de rollback
+  vr_dados_rollback CLOB; --Grava update de rollback
   vr_texto_rollback VARCHAR2(32600);
   vr_nmarqbkp       VARCHAR2(100);
   vr_nmdireto       VARCHAR2(4000);
