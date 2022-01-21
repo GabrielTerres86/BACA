@@ -25,7 +25,8 @@ DECLARE
     CURSOR cr_seg_prestamista(pr_cdcooper   IN tbseg_prestamista.cdcooper%TYPE
                              ,pr_nrproposta IN tbseg_prestamista.nrproposta%TYPE) IS
      SELECT p.idseqtra,
-            p.nrproposta
+            p.nrproposta,
+            p.tpregist
        FROM tbseg_prestamista p
       WHERE p.cdcooper   = pr_cdcooper
         AND p.nrproposta = pr_nrproposta;
@@ -141,12 +142,14 @@ BEGIN
                    vr_linha :=
                       '  UPDATE tbseg_prestamista '||
                       '     SET nrproposta = ' || rw_seg_prestamista.nrproposta ||
+                      '        ,tpregist   = ' || rw_seg_prestamista.tpregist ||
                       '   WHERE idseqtra   = '|| rw_seg_prestamista.idseqtra||' ;';
                    gene0001.pc_escr_linha_arquivo(vr_ind_arq,vr_linha);
 
                    -- Atualizando tbseg_prestamista
                    UPDATE tbseg_prestamista
-                      SET nrproposta  = vr_nrproposta
+                      SET nrproposta  = vr_nrproposta,
+                          tpregist    = 1
                     WHERE idseqtra = rw_seg_prestamista.idseqtra;
                  ELSE
                    vr_dscritic := 'Crawseg não localizado! cdcooper = ' || vr_typ_tab_arquiv(vr_index).cdcooper
