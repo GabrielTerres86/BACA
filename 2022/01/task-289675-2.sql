@@ -14,7 +14,7 @@ DECLARE
    vidtxfixa               NUMBER;
    vcddindex               NUMBER;
    vr_nrseqdig             NUMBER := 0;  
-   -- Variáveis de retorno
+   -- Variáveis de retorno.
    vr_idtipbas NUMBER := 2;
    vr_idgravir NUMBER := 0;
    vr_vlbascal NUMBER := 0; 
