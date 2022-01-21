@@ -33,7 +33,7 @@ delete
  where cdcooper = 16
    and cdhistor = 362
    and dtmvtolt = (select dtmvtolt
-                     from crapdat
+                    from crapdat
                     where cdcooper = 16);
 
 
