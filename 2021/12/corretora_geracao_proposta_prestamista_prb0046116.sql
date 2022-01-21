@@ -608,13 +608,6 @@ BEGIN
            WHERE w.cdcooper = rw_prestamista.cdcooper
              AND w.nrdconta = rw_prestamista.nrdconta
              AND w.nrctrseg = rw_prestamista.nrctrseg;
-           
-            UPDATE tbseg_prestamista p
-             SET p.nrproposta = rw_prestamista.nrproposta
-           WHERE p.cdcooper = rw_prestamista.cdcooper
-             AND p.nrdconta = rw_prestamista.nrdconta
-             AND p.nrctrseg = rw_prestamista.nrctrseg
-             AND p.nrctremp = rw_prestamista.nrctremp;
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic:= 'Erro ao gravar numero de proposta 1: '||rw_prestamista.nrproposta || ' progress_recid: ' || rw_prestamista.progress_recid ||' - '||SQLERRM;
