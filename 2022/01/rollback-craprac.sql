@@ -8,8 +8,8 @@ where (cdcooper, nrdconta, nraplica) in (
   where cdcooper in (1, 16)
 --    and idsaqtot = 1
     and cdprodut = 1109
-    and dtmvtolt >= '29/11/2021' and dtmvtolt <= '30/11/2021'
-    and dtaniver = '01/02/2022'
+    and dtmvtolt >= to_date('29/11/2021','dd/mm/yyyy') and dtmvtolt <= to_date('30/11/2021','dd/mm/yyyy')
+    and dtaniver = to_date('01/02/2022','dd/mm/yyyy')
 );
 
 delete 
@@ -17,8 +17,8 @@ from craprac
 where cdcooper in (1, 16)
 --  and idsaqtot = 1
   and cdprodut = 1109
-  and dtmvtolt >= '29/11/2021' and dtmvtolt <= '30/11/2021'
-  and dtaniver = '01/02/2022';
+  and dtmvtolt >= to_date('29/11/2021','dd/mm/yyyy') and dtmvtolt <= to_date('30/11/2021','dd/mm/yyyy')
+  and dtaniver = to_date('01/02/2022','dd/mm/yyyy');
   
 delete
   from craplcm
