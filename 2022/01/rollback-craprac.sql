@@ -25,7 +25,6 @@ delete
                      from crapdat
                     where cdcooper = 1);
                     
-
 delete
   from craplcm
  where cdcooper = 16
