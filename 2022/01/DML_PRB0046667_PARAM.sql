@@ -39,7 +39,7 @@ BEGIN
   values ('RISCOJUR60ADP', 'Calculo de risco - Define se deve realizar calculo de juros 60 usando tabela de hist. ou lançamentos', ' ', 2, aux_cdpartar_add);
 
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
-  values (aux_cdpartar_add, 0, '0');
+  values (aux_cdpartar_add, 0, '1');
   
 -----------------------------
 
