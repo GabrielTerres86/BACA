@@ -1,5 +1,4 @@
-PL/SQL Developer Test script 3.0
-216
+
 DECLARE
    vr_excsaida             EXCEPTION;
    vr_cdcritic             crapcri.cdcritic%TYPE;
@@ -216,5 +215,3 @@ BEGIN
          ROLLBACK; 
 
 END;
-0
-0
