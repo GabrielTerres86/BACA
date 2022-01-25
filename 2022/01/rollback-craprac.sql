@@ -24,7 +24,8 @@ delete
    and dtmvtolt = (select dtmvtolt
                      from crapdat
                     where cdcooper = 1);
-                    
+      
+	  
 delete
   from craplcm
  where cdcooper = 16
