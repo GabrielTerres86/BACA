@@ -60,8 +60,12 @@ using (
                           from cecred.tbcapt_custodia_lanctos lctori
                          where lctori.idlancamento = lct.idlancto_origem
                            and lctori.idsituacao = 8
-                           and lctori.cdoperac_cetip is not null))
- order by cdcooper, lct.idtipo_lancto, lct.idaplicacao, lct.nrdconta  	
+                           and lctori.cdoperac_cetip is not null))) t2
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
+WHEN MATCHED THEN
+UPDATE SET T1.IDSITUACAO = 0;
+ 
+
 	
 	
 COMMIT;	
