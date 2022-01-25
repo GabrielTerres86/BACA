@@ -15,7 +15,9 @@ DECLARE
    vr_incrineg             INTEGER;
    vidtxfixa               NUMBER;
    vcddindex               NUMBER;
-   vr_nrseqdig             NUMBER := 0;  
+   vr_nrseqdig             NUMBER := 0; 
+   vrcdhsrdap              NUMBER;
+   vrcdhsrvap              NUMBER ;
    -- Variáveis de retorno
    vr_idtipbas NUMBER := 2;
    vr_idgravir NUMBER := 0;
@@ -736,7 +738,9 @@ BEGIN
                          
   FOR rw_crapcpc IN cr_crapcpc LOOP                        
       vidtxfixa := rw_crapcpc.idtxfixa;  
-      vcddindex := rw_crapcpc.cddindex;  
+      vcddindex := rw_crapcpc.cddindex; 
+      vrcdhsrdap := rw_crapcpc.cdhsrdap;
+      vrcdhsrvap := rw_crapcpc.cdhsrvap; 
   END LOOP;
   
   FOR  rw_crapdat in cr_crapdat LOOP 
@@ -800,8 +804,8 @@ BEGIN
                                           ,pr_nraplica => rw_craprac.nraplica
                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                           ,pr_dtaniver => to_date('01/01/2022','dd/mm/yyyy')
-                                          ,pr_cdhsrdap => rw_crapcpc.cdhsrdap
-                                          ,pr_cdhsrvap => rw_crapcpc.cdhsrvap
+                                          ,pr_cdhsrdap => vrcdhsrdap
+                                          ,pr_cdhsrvap => vrcdhsrvap
                                           ,pr_vlultren => vr_vlultren --> Valor último rendimento
                                           ,pr_vlrevers => vr_vlrevers --> Valor de reversão
                                           ,pr_dtatlsld => rw_craprac.dtatlsld
