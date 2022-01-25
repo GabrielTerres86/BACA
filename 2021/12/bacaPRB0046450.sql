@@ -1,23 +1,21 @@
-begin
+BEGIN
 
---arquivo baca
 
-delete from   cecred.tbcapt_custodia_arquivo e			--Deletar arquivos de monitoramento, pois serao reenviados
+delete from   cecred.tbcapt_custodia_arquivo e			
 where  e.idtipo_operacao = 'E'         
-and    e.idsituacao      <> 0                         -- processamento
-and    e.idtipo_arquivo  <> 9                         -- ignorar arquivos de concilia√ß√£o
-and    e.dtprocesso      is not null                  -- com data de processo
+and    e.idsituacao      <> 0                         
+and    e.idtipo_arquivo  <> 9                         
+and    e.dtprocesso      is not null                  
 and    e.dtprocesso      > to_date('01/01/2019')
-and    e.dtregistro between to_date('25/06/2021') and to_date('28/06/2021')
+and    e.dtregistro      = to_date('25/06/2021')
 and    not exists 
             ( select  1 from cecred.tbcapt_custodia_arquivo r 
               where   r.idarquivo_origem = e.idarquivo );
 
-update cecred.tbcapt_custodia_lanctos  --Lan√ßamento com cota negativa que ocorre erro, porem ja foi resgatado na B3
+update cecred.tbcapt_custodia_lanctos  
 set idsituacao = 8
 where idlancamento = 30395124;
 			  
---UP
 
 merge into cecred.tbcapt_custodia_lanctos t1
 using (--cooper 2
@@ -25,7 +23,7 @@ using (--cooper 2
                count(1) over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) qtregis,
                row_number() over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro order by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) nrseqreg
           from (
-                -- Registros ligados a RDC PR√© e P√≥s
+                -- Registros ligados a RDC PRÈ e PÛs
                 select /*+ index (lct cecred.tbcapt_custodia_lanctos_idx01) */
                        rda.cdcooper,
                        rda.nrdconta,
@@ -38,14 +36,14 @@ using (--cooper 2
                  where 1=1
                   and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (1, 2) -- RDC PR√© e P√≥s
+                   and apl.tpaplicacao in (1, 2) -- RDC PRÈ e PÛs
                    and rda.idaplcus = apl.idaplicacao
 				 and rda.cdcooper = 2
-				  and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
+				  and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o
                   and lct.IDTIPO_LANCTO = 2					 
                                     and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                 union
-                -- Registros ligados a novo produto de Capta√ß√£o
+                -- Registros ligados a novo produto de CaptaÁ„o
                 select /*+ index (lct cecred.tbcapt_custodia_lanctos_idx01) */
                        rac.cdcooper,
                        rac.nrdconta,
@@ -58,16 +56,14 @@ using (--cooper 2
                    where 1=1
                    and lct.idsituacao =1  
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (3, 4) -- PCAPTA Pr√© e P√≥s
+                   and apl.tpaplicacao in (3, 4) -- PCAPTA PrÈ e PÛs
                    and rac.idaplcus = apl.idaplicacao
 				   and rac.cdcooper = 2
-				  and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
+				  and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o
                   and lct.IDTIPO_LANCTO = 2				   
                  and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                ) lct
-         WHERE lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
-           -- Se este possui registros de origem, os registros de origem devem
-           -- ter gerado Numero CETIP e estarem OK
+         WHERE 1=1
 and lct.IDTIPO_LANCTO = 2
 and ((lct.nrdconta = 653411  and  lct.nraplica = 2       )
 or (lct.nrdconta = 647047  and  lct.nraplica = 2       )
@@ -605,7 +601,7 @@ or (lct.nrdconta = 882453 and  lct.nraplica = 3        ))
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))
                 ) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;
 
@@ -614,7 +610,7 @@ using ( select lct.*,
                count(1) over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) qtregis,
                row_number() over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro order by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) nrseqreg
           from (
-                -- Registros ligados a RDC PR√© e P√≥s
+                -- Registros ligados a RDC PRÈ e PÛs
                 select /*+ index (lct cecred.tbcapt_custodia_lanctos_idx01) */
                        rda.cdcooper,
                        rda.nrdconta,
@@ -627,14 +623,14 @@ using ( select lct.*,
                  where 1=1
                  and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (1, 2) -- RDC PR√© e P√≥s
+                   and apl.tpaplicacao in (1, 2) -- RDC PRÈ e PÛs
                    and rda.idaplcus = apl.idaplicacao
                       and rda.cdcooper = 5
-				  and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
+				  and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o
                   and lct.IDTIPO_LANCTO = 2							  
                                     and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                 union
-                -- Registros ligados a novo produto de Capta√ß√£o
+                -- Registros ligados a novo produto de CaptaÁ„o
                 select /*+ index (lct cecred.tbcapt_custodia_lanctos_idx01) */
                        rac.cdcooper,
                        rac.nrdconta,
@@ -647,18 +643,14 @@ using ( select lct.*,
                    where 1=1
                    and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (3, 4) -- PCAPTA Pr√© e P√≥s
+                   and apl.tpaplicacao in (3, 4) -- PCAPTA PrÈ e PÛs
                    and rac.idaplcus = apl.idaplicacao
                       and rac.cdcooper = 5
-				  and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
+				  and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o
                   and lct.IDTIPO_LANCTO = 2							  
                  and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                ) lct
-         WHERE lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
-                   and lct.IDTIPO_LANCTO = 2
-           -- Se este possui registros de origem, os registros de origem devem
-           -- ter gerado Numero CETIP e estarem OK
-    
+         WHERE 1=1
     and ((lct.nrdconta = 172383 and lct.nraplica = 1      )
     or (lct.nrdconta = 87572    and lct.nraplica = 67     )
     or (lct.nrdconta = 120650   and lct.nraplica = 13     )
@@ -847,7 +839,7 @@ using ( select lct.*,
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null)) ) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;		
 	
@@ -857,7 +849,7 @@ using (select lct.*, --COOPER 6
                count(1) over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) qtregis,
                row_number() over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro order by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) nrseqreg
           from (
-                -- Registros ligados a RDC PR√© e P√≥s
+                -- Registros ligados a RDC PRÈ e PÛs
                 select /*+ index (lct cecred.tbcapt_custodia_lanctos_idx01) */
                        rda.cdcooper,
                        rda.nrdconta,
@@ -870,14 +862,14 @@ using (select lct.*, --COOPER 6
                  where 1=1
                   and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (1, 2) -- RDC PR√© e P√≥s
+                   and apl.tpaplicacao in (1, 2) -- RDC PRÈ e PÛs
                    and rda.idaplcus = apl.idaplicacao
                       and rda.cdcooper = 6
-				  and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
+				  and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o
                   and lct.IDTIPO_LANCTO = 2							  
                                     and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                 union
-                -- Registros ligados a novo produto de Capta√ß√£o
+                -- Registros ligados a novo produto de CaptaÁ„o
                 select /*+ index (lct cecred.tbcapt_custodia_lanctos_idx01) */
                        rac.cdcooper,
                        rac.nrdconta,
@@ -890,17 +882,14 @@ using (select lct.*, --COOPER 6
                    where 1=1
                    and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (3, 4) -- PCAPTA Pr√© e P√≥s
+                   and apl.tpaplicacao in (3, 4) -- PCAPTA PrÈ e PÛs
                    and rac.idaplcus = apl.idaplicacao
                       and rac.cdcooper = 6
-				  and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
+				  and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o
                   and lct.IDTIPO_LANCTO = 2							  
                  and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                ) lct
-         WHERE lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
-           -- Se este possui registros de origem, os registros de origem devem
-           -- ter gerado Numero CETIP e estarem OK
-           and lct.IDTIPO_LANCTO = 2
+         WHERE 1=1
            and (( lct.nrdconta = 108740   and lct.nraplica = 2    )
           or ( lct.nrdconta = 50555   and lct.nraplica = 28     )
           or ( lct.nrdconta = 152757    and lct.nraplica = 1      )
@@ -991,7 +980,7 @@ using (select lct.*, --COOPER 6
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;
 	
@@ -1002,7 +991,7 @@ using (--COOPER 7
                count(1) over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) qtregis,
                row_number() over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro order by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) nrseqreg
           from (
-                -- Registros ligados a RDC PR√© e P√≥s
+                -- Registros ligados a RDC PRÈ e PÛs
                 select /*+ index (lct cecred.tbcapt_custodia_lanctos_idx01) */
                        rda.cdcooper,
                        rda.nrdconta,
@@ -1015,14 +1004,14 @@ using (--COOPER 7
                  where 1=1
                    and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (1, 2) -- RDC PR√© e P√≥s
+                   and apl.tpaplicacao in (1, 2) -- RDC PRÈ e PÛs
                    and rda.idaplcus = apl.idaplicacao
                       and rda.cdcooper = 7
-				  and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
+				  and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o
                   and lct.IDTIPO_LANCTO = 2							  
                                     and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                 union
-                -- Registros ligados a novo produto de Capta√ß√£o
+                -- Registros ligados a novo produto de CaptaÁ„o
                 select /*+ index (lct cecred.tbcapt_custodia_lanctos_idx01) */
                        rac.cdcooper,
                        rac.nrdconta,
@@ -1035,15 +1024,14 @@ using (--COOPER 7
                    where 1=1
                    and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (3, 4) -- PCAPTA Pr√© e P√≥s
+                   and apl.tpaplicacao in (3, 4) -- PCAPTA PrÈ e PÛs
                    and rac.idaplcus = apl.idaplicacao
                       and rac.cdcooper = 7					  
+				  and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o
+                  and lct.IDTIPO_LANCTO = 2							  
                  and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                ) lct
-         WHERE lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
-           -- Se este possui registros de origem, os registros de origem devem
-           -- ter gerado Numero CETIP e estarem OK
-		and lct.IDTIPO_LANCTO = 2
+         WHERE 1=1
            and (( lct.nrdconta =  330264  and lct.nraplica =  15   )
 or ( lct.nrdconta =  113000   and lct.nraplica =  10   )
 or ( lct.nrdconta =  330264   and lct.nraplica =  16   )
@@ -1248,7 +1236,7 @@ or ( lct.nrdconta =  149195   and lct.nraplica =  80   ))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null)) ) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;
 
@@ -1257,7 +1245,7 @@ using ( select lct.*, ---cooper 8
                count(1) over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) qtregis,
                row_number() over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro order by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) nrseqreg
           from (
-                -- Registros ligados a RDC PR√© e P√≥s
+                -- Registros ligados a RDC PRÈ e PÛs
                 select /*+ index (lct cecred.tbcapt_custodia_lanctos_idx01) */
                        rda.cdcooper,
                        rda.nrdconta,
@@ -1270,14 +1258,14 @@ using ( select lct.*, ---cooper 8
                  where 1=1
                    and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (1, 2) -- RDC PR√© e P√≥s
+                   and apl.tpaplicacao in (1, 2) -- RDC PRÈ e PÛs
                    and rda.idaplcus = apl.idaplicacao
                       and rda.cdcooper = 8
-				  and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
+				  and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o
                   and lct.IDTIPO_LANCTO = 2							  
                                     and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                 union
-                -- Registros ligados a novo produto de Capta√ß√£o
+                -- Registros ligados a novo produto de CaptaÁ„o
                 select /*+ index (lct cecred.tbcapt_custodia_lanctos_idx01) */
                        rac.cdcooper,
                        rac.nrdconta,
@@ -1290,17 +1278,14 @@ using ( select lct.*, ---cooper 8
                    where 1=1
                    and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (3, 4) -- PCAPTA Pr√© e P√≥s
+                   and apl.tpaplicacao in (3, 4) -- PCAPTA PrÈ e PÛs
                    and rac.idaplcus = apl.idaplicacao
                       and rac.cdcooper = 8
-				  and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
+				  and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o
                   and lct.IDTIPO_LANCTO = 2							  
                  and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                ) lct
-         WHERE lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
-           -- Se este possui registros de origem, os registros de origem devem
-           -- ter gerado Numero CETIP e estarem OK
-        and lct.IDTIPO_LANCTO = 2
+         WHERE 1=1
         and (( lct.nrdconta =  28517   and lct.nraplica = 17)
 or ( lct.nrdconta =  28517   and lct.nraplica = 18    )
 or ( lct.nrdconta =  18619   and lct.nraplica = 33    )
@@ -1331,17 +1316,18 @@ or ( lct.nrdconta =  43087   and lct.nraplica = 1478))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
 	UPDATE SET T1.IDSITUACAO = 0;
 	
-merge into tbcapt_custodia_lanctos t1
+	
+merge into cecred.tbcapt_custodia_lanctos t1
 using (--cooper 2
  select lct.*, 
                count(1) over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) qtregis,
                row_number() over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro order by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) nrseqreg
           from (
-                -- Registros ligados a RDC PR√© e P√≥s
+                -- Registros ligados a RDC PRÈ e PÛs
                 select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
                        rda.cdcooper,
                        rda.nrdconta,
@@ -1354,15 +1340,15 @@ using (--cooper 2
                  where 1=1
                    and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (1, 2) -- RDC PR√© e P√≥s
+                   and apl.tpaplicacao in (1, 2) -- RDC PRÈ e PÛs
                    and rda.idaplcus = apl.idaplicacao
              and rda.cdcooper = 2
        and nvl(rda.INSAQTOT,0) =0
             and lct.IDTIPO_LANCTO = 1
-        and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o
+        and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o
                                     and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')               
                 union
-                -- Registros ligados a novo produto de Capta√ß√£o
+                -- Registros ligados a novo produto de CaptaÁ„o
                 select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
                        rac.cdcooper,
                        rac.nrdconta,
@@ -1375,12 +1361,12 @@ using (--cooper 2
                    where 1=1
                     and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (3, 4) -- PCAPTA Pr√© e P√≥s
+                   and apl.tpaplicacao in (3, 4) -- PCAPTA PrÈ e PÛs
                    and rac.idaplcus = apl.idaplicacao
           and rac.cdcooper = 2
         and nvl(rac.IDSAQTOT,0) =0          
         and lct.IDTIPO_LANCTO = 1
-        and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o      
+        and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o      
                  and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                ) lct
          WHERE 1=1
@@ -1759,18 +1745,17 @@ or (lct.nrdconta = 892335      and  lct.nraplica =  11      ))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
   UPDATE SET T1.IDSITUACAO = 0;
   
 merge into cecred.tbcapt_custodia_lanctos t1
 using (--cooper 5        
-union         
  select lct.*,
                count(1) over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) qtregis,
                row_number() over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro order by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) nrseqreg
           from (
-                -- Registros ligados a RDC PR√© e P√≥s
+                -- Registros ligados a RDC PRÈ e PÛs
                 select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
                        rda.cdcooper,
                        rda.nrdconta,
@@ -1783,15 +1768,15 @@ union
                  where 1=1
                    and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (1, 2) -- RDC PR√© e P√≥s
+                   and apl.tpaplicacao in (1, 2) -- RDC PRÈ e PÛs
                    and rda.idaplcus = apl.idaplicacao
                       and rda.cdcooper = 5
             and nvl(rda.INSAQTOT,0) =0
         and lct.IDTIPO_LANCTO = 1
-        and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o           
+        and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o           
                                     and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                 union
-                -- Registros ligados a novo produto de Capta√ß√£o
+                -- Registros ligados a novo produto de CaptaÁ„o
                 select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
                        rac.cdcooper,
                        rac.nrdconta,
@@ -1804,15 +1789,15 @@ union
                    where 1=1
                    and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (3, 4) -- PCAPTA Pr√© e P√≥s
+                   and apl.tpaplicacao in (3, 4) -- PCAPTA PrÈ e PÛs
                    and rac.idaplcus = apl.idaplicacao
                       and rac.cdcooper = 5
             and nvl(rac.IDSAQTOT,0) =0
         and lct.IDTIPO_LANCTO = 1
-        and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o           
+        and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o           
                  and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                ) lct
-         WHERE 1=1 -- N√£o trazer COncilia√ß√£o
+         WHERE 1=1 -- N„o trazer COnciliaÁ„o
            -- Se este possui registros de origem, os registros de origem devem
            -- ter gerado Numero CETIP e estarem OK
          and ((lct.nrdconta =  53619    and  lct.nraplica =   27    )
@@ -1942,7 +1927,7 @@ or (lct.nrdconta =  209996    and  lct.nraplica =   20    ))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
   UPDATE SET T1.IDSITUACAO = 0;
   
@@ -1951,7 +1936,7 @@ using (select lct.*, --cooper 6
                count(1) over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) qtregis,
                row_number() over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro order by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) nrseqreg
           from (
-                -- Registros ligados a RDC PR√© e P√≥s
+                -- Registros ligados a RDC PRÈ e PÛs
                 select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
                        rda.cdcooper,
                        rda.nrdconta,
@@ -1964,15 +1949,15 @@ using (select lct.*, --cooper 6
                  where 1=1
               and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (1, 2) -- RDC PR√© e P√≥s
+                   and apl.tpaplicacao in (1, 2) -- RDC PRÈ e PÛs
                    and rda.idaplcus = apl.idaplicacao
                       and rda.cdcooper = 6
             and nvl(rda.INSAQTOT,0) =0
         and lct.IDTIPO_LANCTO = 1
-        and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o                 
+        and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o                 
                                     and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                 union
-                -- Registros ligados a novo produto de Capta√ß√£o
+                -- Registros ligados a novo produto de CaptaÁ„o
                 select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
                        rac.cdcooper,
                        rac.nrdconta,
@@ -1985,12 +1970,12 @@ using (select lct.*, --cooper 6
                    where 1=1
                 and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (3, 4) -- PCAPTA Pr√© e P√≥s
+                   and apl.tpaplicacao in (3, 4) -- PCAPTA PrÈ e PÛs
                    and rac.idaplcus = apl.idaplicacao
                       and rac.cdcooper = 6
             and nvl(rac.IDSAQTOT,0) =0
         and lct.IDTIPO_LANCTO = 1
-        and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o                 
+        and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o                 
                  and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                ) lct
          WHERE 1=1
@@ -2054,7 +2039,7 @@ or (lct.nrdconta =  227137    and lct.nraplica =   9 ) )
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
   UPDATE SET T1.IDSITUACAO = 0;
   
@@ -2064,7 +2049,7 @@ using (--cooper 7
                count(1) over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) qtregis,
                row_number() over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro order by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) nrseqreg
           from (
-                -- Registros ligados a RDC PR√© e P√≥s
+                -- Registros ligados a RDC PRÈ e PÛs
                 select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
                        rda.cdcooper,
                        rda.nrdconta,
@@ -2077,15 +2062,15 @@ using (--cooper 7
                  where 1=1
                     and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (1, 2) -- RDC PR√© e P√≥s
+                   and apl.tpaplicacao in (1, 2) -- RDC PRÈ e PÛs
                    and rda.idaplcus = apl.idaplicacao
                       and rda.cdcooper = 7
             and nvl(rda.INSAQTOT,0) =0
               and lct.IDTIPO_LANCTO = 1
-        and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o           
+        and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o           
                                     and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                 union
-                -- Registros ligados a novo produto de Capta√ß√£o
+                -- Registros ligados a novo produto de CaptaÁ„o
                 select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
                        rac.cdcooper,
                        rac.nrdconta,
@@ -2098,15 +2083,15 @@ using (--cooper 7
                    where 1=1
                    and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (3, 4) -- PCAPTA Pr√© e P√≥s
+                   and apl.tpaplicacao in (3, 4) -- PCAPTA PrÈ e PÛs
                    and rac.idaplcus = apl.idaplicacao
                       and rac.cdcooper = 7
             and nvl(rac.IDSAQTOT,0) =0
               and lct.IDTIPO_LANCTO = 1
-        and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o           
+        and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o           
                  and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                ) lct
-         WHERE 1=1 -- N√£o trazer COncilia√ß√£o
+         WHERE 1=1 -- N„o trazer COnciliaÁ„o
            -- Se este possui registros de origem, os registros de origem devem
            -- ter gerado Numero CETIP e estarem OK
          and  ((lct.nrdconta =  332607  and lct.nraplica =    5   )
@@ -2300,7 +2285,7 @@ or  (lct.nrdconta =  116165   and lct.nraplica =    26      ))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
   UPDATE SET T1.IDSITUACAO = 0;
   
@@ -2310,7 +2295,7 @@ using (---cooper 8
                count(1) over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) qtregis,
                row_number() over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro order by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) nrseqreg
           from (
-                -- Registros ligados a RDC PR√© e P√≥s
+                -- Registros ligados a RDC PRÈ e PÛs
                 select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
                        rda.cdcooper,
                        rda.nrdconta,
@@ -2323,15 +2308,15 @@ using (---cooper 8
                  where 1=1
                    and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (1, 2) -- RDC PR√© e P√≥s
+                   and apl.tpaplicacao in (1, 2) -- RDC PRÈ e PÛs
                    and rda.idaplcus = apl.idaplicacao
                       and rda.cdcooper = 8
             and nvl(rda.INSAQTOT,0) =0
               and lct.IDTIPO_LANCTO = 1
-        and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o           
+        and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o           
                                     and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                 union
-                -- Registros ligados a novo produto de Capta√ß√£o
+                -- Registros ligados a novo produto de CaptaÁ„o
                 select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
                        rac.cdcooper,
                        rac.nrdconta,
@@ -2344,15 +2329,15 @@ using (---cooper 8
                    where 1=1
                    and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (3, 4) -- PCAPTA Pr√© e P√≥s
+                   and apl.tpaplicacao in (3, 4) -- PCAPTA PrÈ e PÛs
                    and rac.idaplcus = apl.idaplicacao
                       and rac.cdcooper = 8
             and nvl(rac.IDSAQTOT,0) =0
         and lct.IDTIPO_LANCTO = 1
-        and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o                 
+        and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o                 
                  and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                ) lct
-         WHERE 1=1 -- N√£o trazer COncilia√ß√£o
+         WHERE 1=1 -- N„o trazer COnciliaÁ„o
            -- Se este possui registros de origem, os registros de origem devem
            -- ter gerado Numero CETIP e estarem OK
            and  ((lct.nrdconta =  5894  and lct.nraplica =  119 )
@@ -2380,7 +2365,7 @@ or  (lct.nrdconta =  15989  and lct.nraplica =  24   ))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
   UPDATE SET T1.IDSITUACAO = 0;
   
@@ -2390,7 +2375,7 @@ using (--cooper 9
                count(1) over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) qtregis,
                row_number() over(partition by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro order by lct.cdcooper, lct.idtipo_arquivo, lct.dtregistro) nrseqreg
           from (
-                -- Registros ligados a RDC PR√© e P√≥s
+                -- Registros ligados a RDC PRÈ e PÛs
                 select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
                        rda.cdcooper,
                        rda.nrdconta,
@@ -2403,15 +2388,15 @@ using (--cooper 9
                  where 1=1
                   and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (1, 2) -- RDC PR√© e P√≥s
+                   and apl.tpaplicacao in (1, 2) -- RDC PRÈ e PÛs
                    and rda.idaplcus = apl.idaplicacao
                    and rda.cdcooper = 9
           and nvl(rda.INSAQTOT,0) =0
           and lct.IDTIPO_LANCTO = 1
-          and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o           
+          and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o           
           and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                 union
-                -- Registros ligados a novo produto de Capta√ß√£o
+                -- Registros ligados a novo produto de CaptaÁ„o
                 select /*+ index (lct tbcapt_custodia_lanctos_idx01) */
                        rac.cdcooper,
                        rac.nrdconta,
@@ -2424,15 +2409,15 @@ using (--cooper 9
                    where 1=1
                and lct.idsituacao =1
                    and apl.idaplicacao = lct.idaplicacao
-                   and apl.tpaplicacao in (3, 4) -- PCAPTA Pr√© e P√≥s
+                   and apl.tpaplicacao in (3, 4) -- PCAPTA PrÈ e PÛs
                    and rac.idaplcus = apl.idaplicacao
                     and rac.cdcooper = 9
           and nvl(rac.IDSAQTOT,0) =0
           and lct.IDTIPO_LANCTO = 1
-        and lct.idtipo_arquivo <> 9 -- N√£o trazer COncilia√ß√£o           
+        and lct.idtipo_arquivo <> 9 -- N„o trazer COnciliaÁ„o           
                  and trunc(lct.dtregistro) between to_date('25/06/2021','dd/mm/yyyy') and to_date('25/06/2021','dd/mm/yyyy')
                ) lct
-         WHERE 1=1 -- N√£o trazer COncilia√ß√£o
+         WHERE 1=1 -- N„o trazer COnciliaÁ„o
            -- Se este possui registros de origem, os registros de origem devem
            -- ter gerado Numero CETIP e estarem OK
            and ((lct.nrdconta = 406066    and  lct.nraplica = 3 )
@@ -2744,7 +2729,7 @@ or (lct.nrdconta = 354899   and  lct.nraplica = 7     ))
                             where lctori.idlancamento = lct.idlancto_origem
                               and lctori.idsituacao = 8
                               and lctori.cdoperac_cetip is not null))) t2
-ON (t1.idaplicacao = t2.idaplicacao)
+ON (t1.idaplicacao = t2.idaplicacao and t1.idlancamento = t2.idlancamento)
 WHEN MATCHED THEN 
   UPDATE SET T1.IDSITUACAO = 0; 
   	
