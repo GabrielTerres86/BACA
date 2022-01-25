@@ -21,6 +21,7 @@ BEGIN
  
   aux_cdpartar_add :=  aux_cdpartar_add + 1;
  
+ 
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
   values (aux_cdpartar_add, 'RITM0189167 - Variaveis JSON (1-Ligado/0-Desligado)', 2, 13);
 
