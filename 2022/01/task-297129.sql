@@ -157,7 +157,7 @@ begin
         NULL;
    END;                                         
                                      
-   --Corrige o nome de alguns orgaos expeditores
+   --Corrige o nome de alguns orgaos expeditores 
    --DETRAN
    UPDATE TBGEN_ORGAO_EXPEDIDOR
       SET CDORGAO_EXPEDIDOR = 'DETRAN'
