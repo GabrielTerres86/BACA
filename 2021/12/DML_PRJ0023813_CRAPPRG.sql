@@ -42,8 +42,8 @@ BEGIN
       ,vr_nrsolici
       ,vr_nrordprg
       ,rw_crapcop.cdcooper);
+    COMMIT;      
   END LOOP;
-  COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;

@@ -135,6 +135,7 @@ BEGIN
 				  ,rw_crapope.idambace);
 			  END LOOP;
 		END IF;
+    COMMIT;
   END LOOP;
 
   
