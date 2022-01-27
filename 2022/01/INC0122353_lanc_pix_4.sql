@@ -94,7 +94,7 @@ DECLARE
          FROM crapsda sda
         WHERE sda.cdcooper = pr_cdcooper
           AND sda.nrdconta = pr_nrdconta
-          AND sda.dtmvtolt = '07/01/2022'
+          AND sda.dtmvtolt = to_date('07/01/2022', 'dd/mm/RRRR')
         ORDER BY sda.dtmvtolt;
     rw_crapsda cr_crapsda%ROWTYPE;
        
@@ -140,7 +140,7 @@ DECLARE
         AND a.nrdconta = pr_nrdconta
         AND a.tpproduto = 5
         AND a.tpiof IN (1, 2)
-        AND a.dtmvtolt = '07/01/2022';
+        AND a.dtmvtolt = to_date('07/01/2022', 'dd/mm/RRRR');
     rw_ioflanc cr_ioflanc%ROWTYPE;
     
     
@@ -364,7 +364,7 @@ BEGIN
                    AND nrdconta = vr_tab_carga(vr_idx1).nrdconta
                    AND a.tpproduto = 5
                    AND a.tpiof IN (1,2)
-                   AND a.dtmvtolt = '07/01/2022';
+                   AND a.dtmvtolt = to_date('07/01/2022', 'dd/mm/RRRR');
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao deletar o lancamento: (tbgen_iof_lancamento)' || SQLERRM;
