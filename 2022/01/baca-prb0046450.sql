@@ -7,8 +7,8 @@ begin
                               and e.idsituacao <> 0
                               and e.idtipo_arquivo <> 9
                               and e.dtprocesso is not null
-                              and e.dtprocesso > to_date('01/01/2019')
-                              and e.dtregistro = to_date('25/06/2021')
+                              and e.dtprocesso > to_date('01/01/2019','dd/mm/yyyy')
+                              and e.dtregistro = to_date('25/06/2021','dd/mm/yyyy')
                               and not exists (select 1 from cecred.tbcapt_custodia_arquivo r
                                                where r.idarquivo_origem = e.idarquivo));
 
@@ -17,8 +17,8 @@ begin
      and e.idsituacao <> 0
      and e.idtipo_arquivo <> 9
      and e.dtprocesso is not null
-     and e.dtprocesso > to_date('01/01/2019')
-     and e.dtregistro = to_date('25/06/2021')
+     and e.dtprocesso > to_date('01/01/2019','dd/mm/yyyy')
+     and e.dtregistro = to_date('25/06/2021','dd/mm/yyyy')
      and not exists (select 1 from cecred.tbcapt_custodia_arquivo r
                       where r.idarquivo_origem = e.idarquivo);
 
