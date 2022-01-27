@@ -257,7 +257,8 @@ BEGIN
 --#####################################################################################     
       -- Escrever cabecalho do arquivo de LOG 
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
-                                    ,pr_des_text => 'Coop;Conta;Critica - ' || SYSDATE);
+                                    ,pr_des_text => 'Coop;Conta;Critica - ' ||  to_char(SYSDATE, 'HH24:MI:SS'));
+
    
       -- Abrir o arquivo de ROLLBACK
       gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_rollback
@@ -397,7 +398,7 @@ BEGIN
       
       -- Escrever horario de fim 
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
-                                    ,pr_des_text => 'Horario de fim da execucao - ' || SYSDATE);
+                                    ,pr_des_text => 'Horario de fim da execucao - ' ||  to_char(SYSDATE, 'HH24:MI:SS'));
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle);
           
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);              
