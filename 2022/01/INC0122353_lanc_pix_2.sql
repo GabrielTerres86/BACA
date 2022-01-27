@@ -257,7 +257,8 @@ BEGIN
 --#####################################################################################     
       -- Escrever cabecalho do arquivo de LOG 
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
-                                    ,pr_des_text => 'Coop;Conta;Critica - ' || SYSDATE);
+                                    ,pr_des_text => 'Coop;Conta;Critica - ' ||  to_char(SYSDATE, 'HH24:MI:SS'));
+
    
       -- Abrir o arquivo de ROLLBACK
       gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_rollback
@@ -380,7 +381,7 @@ BEGIN
                                                         VALUES('|| rw_ioflanc.idlancto ||',' || rw_ioflanc.cdcooper ||',' || rw_ioflanc.nrdconta ||',' || ''''||rw_ioflanc.dtmvtolt||''''||',' || rw_ioflanc.tpproduto ||',' || rw_ioflanc.tpiof ||',' || rw_ioflanc.nrcontrato || ',' || ''''||rw_ioflanc.idlautom||''''||',' || ''''||rw_ioflanc.dtmvtolt_lcm||''''||',' || ''''||rw_ioflanc.cdagenci_lcm||''''||',' || ''''||rw_ioflanc.cdbccxlt_lcm||''''||',' || ''''||rw_ioflanc.nrdolote_lcm||''''||',' || ''''||rw_ioflanc.nrseqdig_lcm||''''|| ',' || ''''||rw_ioflanc.inimunidade||''''||
                                                             ',' || ''''||rw_ioflanc.vliof||''''||',' || ''''||rw_ioflanc.nrparcela_epr||''''||',' || ''''||rw_ioflanc.vliof_principal||''''||',' || ''''||rw_ioflanc.vliof_adicional||''''|| ',' || ''''||rw_ioflanc.vliof_complementar||''''||',' || ''''||rw_ioflanc.vltaxaiof_principal||''''||',' || ''''||rw_ioflanc.vliof_adicional||''''|| ',' || ''''||rw_ioflanc.nracordo||''''|| ',' || ''''||rw_ioflanc.idlancto_prejuizo||''''|| ');');  
                                
-          COMMIT;
+         -- COMMIT;
 
           END IF;
           
@@ -397,7 +398,7 @@ BEGIN
       
       -- Escrever horario de fim 
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
-                                    ,pr_des_text => 'Horario de fim da execucao - ' || SYSDATE);
+                                    ,pr_des_text => 'Horario de fim da execucao - ' ||  to_char(SYSDATE, 'HH24:MI:SS'));
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle);
           
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);              
