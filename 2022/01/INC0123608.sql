@@ -9,19 +9,22 @@ DECLARE
   vr_nrdrowid    ROWID;
 
   CURSOR cr_crapass is
-    SELECT t.flgctitg,
-           t.cdcooper,
-           t.nrdconta
-      FROM CRAPASS t
-     WHERE ((t.cdcooper = 7 and t.nrdconta = 42803) or
-(t.cdcooper = 6 and t.nrdconta = 38830) or
-(t.cdcooper = 1 and t.nrdconta = 9736735) or
-(t.cdcooper = 16 and t.nrdconta = 50750) or
-(t.cdcooper = 16 and t.nrdconta = 2004968) or
-(t.cdcooper = 16 and t.nrdconta = 6437664) or
-(t.cdcooper = 16 and t.nrdconta = 14567) or
-(t.cdcooper = 16 and t.nrdconta = 10561) or
-(t.cdcooper = 16 and t.nrdconta = 2735342) );
+SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
+  FROM CRAPASS t
+ WHERE ((t.cdcooper = 7 and t.nrdconta = 42803) or
+       (t.cdcooper = 6 and t.nrdconta = 38830) or
+       (t.cdcooper = 1 and t.nrdconta = 9736735) or
+       (t.cdcooper = 16 and t.nrdconta = 50750) or
+       (t.cdcooper = 16 and t.nrdconta = 2004968) or
+       (t.cdcooper = 16 and t.nrdconta = 6437664) or
+       (t.cdcooper = 16 and t.nrdconta = 82325) or
+       (t.cdcooper = 16 and t.nrdconta = 14567))
+union
+SELECT t.flgctitg, t.cdcooper, t.nrdconta, 2 newsit
+  FROM CRAPASS t
+ WHERE ((t.cdcooper = 16 and t.nrdconta = 10561) or
+       (t.cdcooper = 16 and t.nrdconta = 2735342));
+
 
   rg_crapass cr_crapass%rowtype;
 
@@ -59,10 +62,10 @@ BEGIN
     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'crapass.flgctitg',
                               pr_dsdadant => rg_crapass.flgctitg,
-                              pr_dsdadatu => 3);
+                              pr_dsdadatu => rg_crapass.newsit);
   
     update crapass a
-       set a.flgctitg = 3
+       set a.flgctitg = rg_crapass.newsit
      where a.cdcooper = vr_cdcooper
        and a.nrdconta = vr_nrdconta;
   
