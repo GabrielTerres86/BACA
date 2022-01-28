@@ -9,30 +9,29 @@ DECLARE
   vr_nrdrowid    ROWID;
 
   CURSOR cr_crapass is
-SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-  FROM CRAPASS t
- WHERE ((t.cdcooper = 7 and t.nrdconta = 42803) or
-       (t.cdcooper = 6 and t.nrdconta = 38830) or
-       (t.cdcooper = 1 and t.nrdconta = 9736735) or
-       (t.cdcooper = 16 and t.nrdconta = 50750) or
-       (t.cdcooper = 16 and t.nrdconta = 2004968) or
-       (t.cdcooper = 16 and t.nrdconta = 6437664) or
-       (t.cdcooper = 16 and t.nrdconta = 82325) or
-       (t.cdcooper = 16 and t.nrdconta = 14567))
-union
-SELECT t.flgctitg, t.cdcooper, t.nrdconta, 2 newsit
-  FROM CRAPASS t
- WHERE ((t.cdcooper = 16 and t.nrdconta = 10561) or
-       (t.cdcooper = 16 and t.nrdconta = 2735342));
-
+    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 2 newsit
+      FROM CRAPASS t
+     WHERE ((t.cdcooper = 6 and t.nrdconta = 38830) or
+           (t.cdcooper = 1 and t.nrdconta = 9736735) or
+           (t.cdcooper = 16 and t.nrdconta = 50750) or
+           (t.cdcooper = 16 and t.nrdconta = 2004968) or
+           (t.cdcooper = 16 and t.nrdconta = 6437664) or
+           (t.cdcooper = 16 and t.nrdconta = 82325) or
+           (t.cdcooper = 16 and t.nrdconta = 14567))
+    union
+    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
+      FROM CRAPASS t
+     WHERE ((t.cdcooper = 7 and t.nrdconta = 42803) or
+           (t.cdcooper = 16 and t.nrdconta = 10561) or
+           (t.cdcooper = 16 and t.nrdconta = 2735342));
 
   rg_crapass cr_crapass%rowtype;
 
 BEGIN
   vr_cdcooperold := null;
-  vr_dttransa := trunc(sysdate);
-  vr_hrtransa := GENE0002.fn_busca_time;    
-  
+  vr_dttransa    := trunc(sysdate);
+  vr_hrtransa    := GENE0002.fn_busca_time;
+
   FOR rg_crapass IN cr_crapass LOOP
   
     if vr_cdcooperold is null then
@@ -41,9 +40,9 @@ BEGIN
   
     vr_cdcooper := rg_crapass.cdcooper;
     vr_nrdconta := rg_crapass.nrdconta;
-    
+  
     if vr_cdcooperold != vr_cdcooper then
-      commit;      
+      commit;
     end if;
   
     GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
@@ -69,11 +68,9 @@ BEGIN
      where a.cdcooper = vr_cdcooper
        and a.nrdconta = vr_nrdconta;
   
-  
-
   end loop;
 
-  commit;  
+  commit;
 
 EXCEPTION
   WHEN OTHERS THEN
