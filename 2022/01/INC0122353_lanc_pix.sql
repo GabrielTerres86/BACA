@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-430
 -- Script ajustes lancamentos de pix
 /*
 -- Verificar antes de executar
@@ -430,6 +428,3 @@ EXCEPTION
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);
     ROLLBACK;
 END;
-0
-2
-vr_nrcontad
