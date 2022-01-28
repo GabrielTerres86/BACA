@@ -1,5 +1,13 @@
 -- project/prj0023567 / parametros
 BEGIN
+  INSERT INTO craprdr
+    (NMPROGRA
+    ,DTSOLICI)
+  VALUES
+    ('LPRV0001'
+    ,TRUNC(SYSDATE));
+  
+  COMMIT;  
 
   UPDATE crapaca a
      SET a.lstparam = a.lstparam || ',pr_tpctrlim'
