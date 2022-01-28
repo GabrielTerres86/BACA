@@ -4,7 +4,7 @@ DECLARE
       SELECT dtmvtolt, 
              nrconta_cartao
         FROM tbcrd_intermed_utlz_cartao a --AIMARO
-       WHERE dtmvtolt > '01/01/2021'
+       WHERE dtmvtolt between to_date('01/01/2021','dd/mm/yyyy') and to_date('31/12/2021','dd/mm/yyyy')
          AND NOT EXISTS (SELECT nrconta_cartao FROM tbcrd_utilizacao_cartao b WHERE a.nrconta_cartao = b.nrconta_cartao AND a.dtmvtolt = b.dtmvtolt)
        ORDER BY a.nrconta_cartao;  
        rw_tbcrd_intermed_utlz_cartao cr_tbcrd_intermed_utlz_cartao%ROWTYPE;                       
