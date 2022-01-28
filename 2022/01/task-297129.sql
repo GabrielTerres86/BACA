@@ -1,3 +1,4 @@
+
 declare 
    i integer;
    
@@ -25,6 +26,7 @@ declare
  
 begin
   
+  
   -- Cadastra os novos orgaos expeditores
   --67 - OUTROS
   BEGIN     
@@ -39,7 +41,8 @@ begin
         NULL;
    END;                                          
                                          
-                                         
+          
+		  
    --68 - CGPI/DIREX/PF
    BEGIN
        INSERT INTO TBGEN_ORGAO_EXPEDIDOR ( IDORGAO_EXPEDIDOR
@@ -52,7 +55,8 @@ begin
      WHEN OTHERS THEN
         NULL;
    END;                                            
-                                         
+               
+			   
     --69 - CRC
     BEGIN
        INSERT INTO TBGEN_ORGAO_EXPEDIDOR ( IDORGAO_EXPEDIDOR
@@ -66,6 +70,7 @@ begin
         NULL;
    END;                                                                                                          
       
+	  
    --70 - MD
    BEGIN
        INSERT INTO TBGEN_ORGAO_EXPEDIDOR ( IDORGAO_EXPEDIDOR
@@ -78,6 +83,7 @@ begin
      WHEN OTHERS THEN
         NULL;
    END;                                          
+
 
    --71 - SSDS
    BEGIN
@@ -245,6 +251,7 @@ begin
      UPDATE CRAPCJE CJE
         SET CJE.IDORGEXP = rw_outros.destino
       WHERE CJE.IDORGEXP = rw_outros.origem; 
+
 
     UPDATE TBCADAST_PESSOA_FISICA FIS
        SET FIS.IDORGAO_EXPEDIDOR = rw_outros.destino
