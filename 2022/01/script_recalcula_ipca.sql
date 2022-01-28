@@ -74,7 +74,7 @@ DECLARE
        FROM craprac rac,
             crapcpc cpc
       WHERE rac.cdprodut = cpc.cdprodut 
-        AND rac.cdcooper = 1 -- cooperativas Viacredi e Alto Vale
+       -- AND rac.cdcooper = 1 -- cooperativas Viacredi e Alto Vale
         AND rac.idsaqtot = 0
         AND rac.cdprodut = 1057
         AND NOT EXISTS (SELECT 1 FROM craplac l
@@ -146,7 +146,8 @@ BEGIN
        
      -- tratamento para possiveis erros gerados pelas rotinas anteriores
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
+        vr_dslog := 'Erro pc_posicao_saldo_aplicacao_pos. ' || vr_dscritic;
+        RAISE vr_excsaida;
       END IF;
                 
       vr_negativo := false;
@@ -181,7 +182,8 @@ BEGIN
                                               pr_dscritic => vr_dscritic);
                                                 
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-           RAISE vr_exc_erro;
+           vr_dslog := 'Erro pc_credita_aniversario_lctos. ' || vr_dscritic;
+           RAISE vr_excsaida;
         END IF;
       END IF;
                                                                          
@@ -207,7 +209,7 @@ BEGIN
                            ,pr_tpocorrencia  => 4 -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
                            ,pr_cdcriticidade => 0 -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
                            ,pr_tpexecucao    => 3 -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
-                           ,pr_dsmensagem    => vr_dslog
+                           ,pr_dsmensagem    => vr_dslog '. ' || vr_dscritic
                            ,pr_cdmensagem    => 0
                            ,pr_cdprograma    => 'INC0109631_IPCA_ERRO'
                            ,pr_cdcooper      => 3 
