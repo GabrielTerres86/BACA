@@ -23,7 +23,10 @@ DECLARE
       FROM CRAPASS t
      WHERE ((t.cdcooper = 7 and t.nrdconta = 42803) or
            (t.cdcooper = 16 and t.nrdconta = 10561) or
+           (t.cdcooper = 6 and t.nrdconta = 67172) or
            (t.cdcooper = 16 and t.nrdconta = 2735342));
+           
+           
 
   rg_crapass cr_crapass%rowtype;
 
