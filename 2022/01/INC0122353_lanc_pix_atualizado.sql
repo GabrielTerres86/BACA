@@ -64,13 +64,7 @@ DECLARE
   
   -- Vetor da carga do arquivo
   TYPE typ_reg_carga IS RECORD(cdcooper  crapass.cdcooper%TYPE
-                              ,nrdconta  crapass.nrdconta%TYPE
-                              ,inpessoa  VARCHAR2(10)
-                              ,slddisd6  NUMBER
-                              ,ttlcredi  NUMBER
-                              ,somamvt7  NUMBER
-                              ,slddisd7  NUMBER
-                              ,sldprvd7  NUMBER);
+                              ,nrdconta  crapass.nrdconta%TYPE);
   TYPE typ_tab_carga IS TABLE OF typ_reg_carga INDEX BY PLS_INTEGER;
   vr_tab_carga typ_tab_carga;
   
@@ -214,12 +208,6 @@ BEGIN
           BEGIN
             vr_aux_cdcooper := TO_NUMBER(vr_vet_campos(1));
             vr_aux_nrdconta := TO_NUMBER(vr_vet_campos(2));
-            vr_aux_inpessoa := TO_CHAR(vr_vet_campos(3));
-            vr_aux_slddisd6 := TO_NUMBER(vr_vet_campos(4));
-            vr_aux_ttlcredi := TO_NUMBER(vr_vet_campos(5));
-            vr_aux_somamvt7 := TO_NUMBER(vr_vet_campos(6));
-            vr_aux_slddisd7 := TO_NUMBER(vr_vet_campos(7));
-            vr_aux_sldprvd7 := TO_NUMBER(vr_vet_campos(8));
   
           EXCEPTION
             WHEN OTHERS THEN
@@ -232,12 +220,7 @@ BEGIN
           -- Alimentar vetor com dados do arquivo
           vr_tab_carga(vr_nrcontad).cdcooper := vr_aux_cdcooper;
           vr_tab_carga(vr_nrcontad).nrdconta := vr_aux_nrdconta;
-          vr_tab_carga(vr_nrcontad).inpessoa := vr_aux_inpessoa;       
-          vr_tab_carga(vr_nrcontad).slddisd6 := vr_aux_slddisd6;
-          vr_tab_carga(vr_nrcontad).ttlcredi := vr_aux_ttlcredi;
-          vr_tab_carga(vr_nrcontad).somamvt7 := vr_aux_somamvt7;
-          vr_tab_carga(vr_nrcontad).slddisd7 := vr_aux_slddisd7;
-          vr_tab_carga(vr_nrcontad).sldprvd7 := vr_aux_sldprvd7;
+
           
         EXCEPTION
           WHEN no_data_found THEN
