@@ -45,8 +45,10 @@ DECLARE
   vr_aux_somamvt7   NUMBER;
   vr_aux_slddisd7   NUMBER;
   vr_aux_sldprvd7   NUMBER;
-  vr_aux_vlsmnmes   crapsld.vlsmnmes%TYPE;
-  vr_aux_vlsmnesp   crapsld.vlsmnesp%TYPE;
+  vr_aux_adp7       crapsld.vlsmnmes%TYPE;
+  vr_ttl_vlsmnmes   crapsld.vlsmnmes%TYPE;
+  vr_aux_lim7       crapsld.vlsmnesp%TYPE;
+  vr_ttl_vlsmnesp   crapsld.vlsmnesp%TYPE;
   vr_aux_vliofmes   NUMBER;
   vr_aux_ttliof     NUMBER;
   
@@ -143,9 +145,9 @@ BEGIN
 --##################################################################################### 
   -- Definir em qual ambiente ira buscar os arquivos para leitura/escrita
   IF vr_aux_ambiente = 1 THEN --LOCAL      
-    vr_nmarq_carga    := '/progress/f0030250/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'.csv';           -- Arquivo a ser lido
-    vr_nmarq_log      := '/progress/f0030250/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';       -- Arquivo de Log
-    vr_nmarq_rollback := '/progress/f0030250/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql';  -- Arquivo de Rollback 
+    vr_nmarq_carga    := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'.csv';           -- Arquivo a ser lido
+    vr_nmarq_log      := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';       -- Arquivo de Log
+    vr_nmarq_rollback := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql';  -- Arquivo de Rollback 
   ELSIF vr_aux_ambiente = 2 THEN --TEST        
     vr_nmarq_carga    := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'.csv';          -- Arquivo a ser lido
     vr_nmarq_log      := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';      -- Arquivo de Log
@@ -258,8 +260,10 @@ BEGIN
       
       FOR vr_idx1 IN vr_tab_carga.first .. vr_tab_carga.last LOOP
           IF vr_tab_carga.exists(vr_idx1) THEN
-             vr_aux_vlsmnmes := 0;          
-             vr_aux_vlsmnesp := 0; 
+             vr_aux_adp7 := 0;          
+             vr_aux_lim7 := 0; 
+             vr_ttl_vlsmnmes := 0;
+             vr_ttl_vlsmnesp := 0;
              vr_aux_vliofmes := 0;
              vr_aux_ttliof   := 0;
           
@@ -283,7 +287,7 @@ BEGIN
             IF NVL(vr_tab_carga_sda(vr_idx1).vladdutl7,0) > 0  THEN 
                --Se vlsmnmes possui valor lancado, o campo deve ser atualizado, valor atual(negativo) mais o valor calculado de ADP para o dia 07/01
                IF NVL(rw_crapsld.vlsmnmes,0) < 0 THEN
-                  vr_aux_vlsmnmes := NVL(rw_crapsld.vlsmnmes,0) + (round(NVL(vr_tab_carga_sda(vr_idx1).vladdutl7,0) / rw_crapdat.qtdiaute,2));
+                 vr_aux_adp7 := round(NVL(vr_tab_carga_sda(vr_idx1).vladdutl7,0) / rw_crapdat.qtdiaute,2);
                END IF;
  
             END IF;  
@@ -293,9 +297,8 @@ BEGIN
             /*### Limite de credito ###*/
             --Se conta tinha limite de credito utilizado no dia 07/01
             IF NVL(vr_tab_carga_sda(vr_idx1).vllimutl7,0) > 0  THEN 
-               --Se vlsmnesp possui valor lancado, o campo deve ser atualizado, valor atual(negativo) mais o valor calculado de Limite para o dia 07/01
                IF NVL(rw_crapsld.vlsmnesp,0) < 0 THEN
-                  vr_aux_vlsmnesp := NVL(rw_crapsld.vlsmnesp,0) + (round(NVL(vr_tab_carga_sda(vr_idx1).vllimutl7,0) / rw_crapdat.qtdiaute,2));
+                  vr_aux_lim7 := round(NVL(vr_tab_carga_sda(vr_idx1).vllimutl7,0) / rw_crapdat.qtdiaute,2);
                END IF;
             END IF;  
             /*### FIM Limite de credito ###*/
@@ -330,8 +333,14 @@ BEGIN
                                                         VALUES('|| rw_ioflanc.idlancto ||',' || rw_ioflanc.cdcooper ||',' || rw_ioflanc.nrdconta ||',' || 'to_date('|| ''''|| rw_ioflanc.dtmvtolt ||'''' ||',' || '''dd/mm/RRRR''' || ')' ||',' || rw_ioflanc.tpproduto ||',' || rw_ioflanc.tpiof ||',' || rw_ioflanc.nrcontrato || ',' || ''''||rw_ioflanc.idlautom||''''||','|| '''' || rw_ioflanc.dtmvtolt_lcm || ''''||',' || ''''||rw_ioflanc.cdagenci_lcm||''''||',' || ''''||rw_ioflanc.cdbccxlt_lcm||''''||',' || ''''||rw_ioflanc.nrdolote_lcm||''''||',' || ''''||rw_ioflanc.nrseqdig_lcm||''''|| ',' || ''''||rw_ioflanc.inimunidade||''''||
                                                             ',' || REPLACE(rw_ioflanc.vliof,',','.')||',' || ''''||rw_ioflanc.nrparcela_epr||''''||',' || ''''||rw_ioflanc.vliof_principal||''''||',' || ''''||rw_ioflanc.vliof_adicional||''''|| ',' || ''''||rw_ioflanc.vliof_complementar||''''||',' || ''''||rw_ioflanc.vltaxaiof_principal||''''|| ',' || ''''||rw_ioflanc.vltaxaiof_adicional||'''' || ',' || ''''||rw_ioflanc.nracordo||''''|| ',' || ''''||rw_ioflanc.idlancto_prejuizo||''''|| ');'); 
             END LOOP;
-            
-            
+           
+            /*### Calculo ADP ###*/
+            vr_ttl_vlsmnmes := NVL(rw_crapsld.vlsmnmes,0) + NVL(vr_aux_adp7,0);
+           
+          
+           /*### Calculo Limite ###*/
+            vr_ttl_vlsmnesp := NVL(rw_crapsld.vlsmnesp,0) + NVL(vr_aux_lim7,0);
+
             
             /*### IOF ###*/
             --Abater o valor de IOF calculado para o lancamento do PIX no dia 07/01
@@ -342,8 +351,8 @@ BEGIN
             --#######   
             BEGIN
               UPDATE crapsld SET
-                     vlsmnmes = vr_aux_vlsmnmes,
-                     vlsmnesp = vr_aux_vlsmnesp,
+                     vlsmnmes = vr_ttl_vlsmnmes,
+                     vlsmnesp = vr_ttl_vlsmnesp,
                      vliofmes = vr_aux_vliofmes
                WHERE cdcooper = vr_tab_carga(vr_idx1).cdcooper
                  AND nrdconta = vr_tab_carga(vr_idx1).nrdconta;
