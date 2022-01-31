@@ -43,7 +43,7 @@ BEGIN
   vr_vllanmto := 10.57;
   vr_cdhistor := 2311;
   
-  -- Cria o lancamento
+  
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                   pr_cdagenci => rw_crapass.cdagenci,
