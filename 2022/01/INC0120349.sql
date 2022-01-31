@@ -248,6 +248,31 @@ begin
 
 end;
 
+begin
+
+	/* Conta: 7414900 - Viacredi */
+
+	update	crawcrd
+	set	cdadmcrd	= 11
+	where	cdcooper	= 1
+	and	nrdconta	= 7414900
+	and	nrctrcrd	= 2538534;
+
+	update	tbcrd_conta_cartao
+	set	cdadmcrd	= 11,
+		vllimite_global	= 0
+	where	cdcooper	= 1
+	and	nrdconta	= 7414900
+	and	nrconta_cartao	= 7563239167514;
+
+	update	crapcrd
+	set	cdadmcrd	= 11
+	where	cdcooper	= 1
+	and	nrdconta	= 7414900
+	and	nrctrcrd	= 2538534;
+
+end;
+
 commit;
 
 end;
