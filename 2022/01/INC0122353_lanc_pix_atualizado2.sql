@@ -145,9 +145,9 @@ BEGIN
 --##################################################################################### 
   -- Definir em qual ambiente ira buscar os arquivos para leitura/escrita
   IF vr_aux_ambiente = 1 THEN --LOCAL      
-    vr_nmarq_carga    := '/progress/f0030250/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'.csv';           -- Arquivo a ser lido
-    vr_nmarq_log      := '/progress/f0030250/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';       -- Arquivo de Log
-    vr_nmarq_rollback := '/progress/f0030250/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql';  -- Arquivo de Rollback 
+    vr_nmarq_carga    := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'.csv';           -- Arquivo a ser lido
+    vr_nmarq_log      := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';       -- Arquivo de Log
+    vr_nmarq_rollback := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql';  -- Arquivo de Rollback 
   ELSIF vr_aux_ambiente = 2 THEN --TEST        
     vr_nmarq_carga    := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'.csv';          -- Arquivo a ser lido
     vr_nmarq_log      := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';      -- Arquivo de Log
@@ -298,7 +298,7 @@ BEGIN
             --Se conta tinha limite de credito utilizado no dia 07/01
             IF NVL(vr_tab_carga_sda(vr_idx1).vllimutl7,0) > 0  THEN 
                IF NVL(rw_crapsld.vlsmnesp,0) < 0 THEN
-                  vr_aux_lim7 := round(NVL(vr_tab_carga_sda(vr_idx1).vllimutl7,0) / rw_crapdat.qtdiaute,2)
+                  vr_aux_lim7 := round(NVL(vr_tab_carga_sda(vr_idx1).vllimutl7,0) / rw_crapdat.qtdiaute,2);
                END IF;
             END IF;  
             /*### FIM Limite de credito ###*/
