@@ -23,7 +23,7 @@ DECLARE
 
 BEGIN
 
-  -- Define informacoes da cooperativa - conta - contrato
+  
   vr_cdcooper := 1;
   vr_nrdconta := 2515938;
   vr_nrctremp := 3969605;
@@ -38,12 +38,12 @@ BEGIN
     INTO rw_crapass;
   CLOSE cr_crapass;
   
-  -- Define os parametros para o lancamento
+  
   vr_nrparepr := 2;
   vr_vllanmto := 10.57;
   vr_cdhistor := 2311;
   
-  -- Cria o lancamento
+  
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                   pr_cdagenci => rw_crapass.cdagenci,
@@ -71,11 +71,11 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   
-  -- Define os parametros para o lancamento
+  
   vr_vllanmto := 28.64;
   vr_cdhistor := 1047;
   
-  -- Cria o lancamento
+  
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                   pr_cdagenci => rw_crapass.cdagenci,
@@ -103,11 +103,11 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   
-  -- Define os parametros para o lancamento
+  
   vr_vllanmto := 32.17;
   vr_cdhistor := 1077;
   
-  -- Cria o lancamento
+  
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                   pr_cdagenci => rw_crapass.cdagenci,
@@ -135,11 +135,11 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   
-  -- Define os parametros para o lancamento
+  
   vr_vllanmto := 1431.83;
   vr_cdhistor := 1044;
   
-  -- Cria o lancamento
+  
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                   pr_cdagenci => rw_crapass.cdagenci,
@@ -167,7 +167,7 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   
-  -- Define informacoes da cooperativa - conta - contrato
+  
   vr_cdcooper := 1;
   vr_nrdconta := 7430671;
   vr_nrctremp := 2955290;
@@ -182,12 +182,12 @@ BEGIN
     INTO rw_crapass;
   CLOSE cr_crapass;
   
-  -- Define os parametros para o lancamento
+  
   vr_nrparepr := 0;
   vr_vllanmto := 2993.81;
   vr_cdhistor := 1044;
   
-  -- Cria o lancamento
+  
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                   pr_cdagenci => rw_crapass.cdagenci,
@@ -215,11 +215,11 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   
-  -- Define os parametros para o lancamento
+  
   vr_vllanmto := 226.59;
   vr_cdhistor := 1048;
   
-  -- Cria o lancamento
+  
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                   pr_cdagenci => rw_crapass.cdagenci,
@@ -247,11 +247,11 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   
-  -- Define os parametros para o lancamento
+  
   vr_vllanmto := 66.33;
   vr_cdhistor := 1041;
   
-  -- Cria o lancamento
+  
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                   pr_cdagenci => rw_crapass.cdagenci,
@@ -279,7 +279,7 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   
-  -- Define informacoes da cooperativa - conta - contrato
+  
   vr_cdcooper := 1;
   vr_nrdconta := 4050061;
   vr_nrctremp := 2595397;
@@ -294,12 +294,12 @@ BEGIN
     INTO rw_crapass;
   CLOSE cr_crapass;
   
-  -- Define os parametros para o lancamento
+  
   vr_nrparepr := 17;
   vr_vllanmto := 4.89;
   vr_cdhistor := 1044;
   
-  -- Cria o lancamento
+  
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                   pr_cdagenci => rw_crapass.cdagenci,
@@ -327,11 +327,11 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   
-  -- Define os parametros para o lancamento
+  
   vr_vllanmto := 0.10;
   vr_cdhistor := 1047;
   
-  -- Cria o lancamento
+  
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                   pr_cdagenci => rw_crapass.cdagenci,
@@ -359,11 +359,11 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   
-  -- Define os parametros para o lancamento
+  
   vr_vllanmto := 0.01;
   vr_cdhistor := 1077;
   
-  -- Cria o lancamento
+  
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                   pr_cdagenci => rw_crapass.cdagenci,
