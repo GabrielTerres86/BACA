@@ -76,7 +76,7 @@ BEGIN
       vr_cdcooper := GENE0002.fn_char_para_number(vr_campo(1));
       vr_nrdconta := GENE0002.fn_char_para_number(vr_campo(2));
       vr_nrctremp := GENE0002.fn_char_para_number(vr_campo(3));
-      vr_cdhistor := GENE0002.fn_char_para_number(vr_campo(4));
+      vr_cdhistor := 3883; --GENE0002.fn_char_para_number(vr_campo(4));
       vr_cdagenci := GENE0002.fn_char_para_number(vr_campo(5));
       vr_vlpreemp := GENE0002.fn_char_para_number(vr_campo(6));
       vr_txjuremp := GENE0002.fn_char_para_number(vr_campo(7));
