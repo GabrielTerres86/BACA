@@ -13,13 +13,13 @@ BEGIN
   vr_conta := 329;
 
 -- Numero do cartão que precisamos ajustar
--- vr_cartao := 5158940000199642; -- AILOS 1
+ vr_cartao := 5158940000199642; -- AILOS 1
 -- vr_cartao := 6393500065179583; -- AILOS 2
 
 -- vr_cartao := 5127070161674411; -- GISLON 1
 -- vr_cartao := 5127070320149719; -- GISLON 2
 
-vr_cartao := 5588190184171591; -- Topaz
+-- vr_cartao := 5588190184171591; -- Topaz
 -- vr_cartao := 5158940000000188; -- Topaz - Lab Demandas
 
 -- vr_cartao := 5156010019676523; -- Saque & Pague
