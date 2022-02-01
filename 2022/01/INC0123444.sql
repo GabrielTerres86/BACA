@@ -14,7 +14,7 @@ DECLARE
 			 WHERE (cdcooper, nrdconta, nrctremp) IN ((13, 701564, 159245))
 			   AND t.nrparcela BETWEEN 82 AND 86
 			   AND t.nrparcela = b.nrparepr
-			   AND dtmovimento = '18/01/2022') AS vlpagpar,
+			   AND dtmovimento = to_date('18/01/2022', 'DD/MM/YYYY')) AS vlpagpar,
 		   b.nrdconta,
 		   b.nrctremp,
 		   b.cdcooper,
