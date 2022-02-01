@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-66
 declare
   vr_aux_ambiente INTEGER       := 2;                
   vr_aux_diretor  VARCHAR2(100) := 'PRB0046605';     
@@ -66,8 +64,3 @@ begin
      ROLLBACK;   
      gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log); 
  end;
-0
-3
-vr_nmarq_carga
-vr_dscritic
-vr_update
