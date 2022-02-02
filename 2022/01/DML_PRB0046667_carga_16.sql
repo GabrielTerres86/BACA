@@ -8,6 +8,7 @@ DECLARE
            crapdat d
      WHERE c.cdcooper = d.cdcooper
        AND c.flgativo = 1
+       AND c.cdcooper = 16
      ORDER BY c.cdcooper DESC;
 
   PROCEDURE cargaHistoricoJuros60 (pr_cdcooper IN NUMBER,
@@ -613,7 +614,7 @@ DECLARE
                                pr_dscritic => vr_dscritic);
         
         
-        IF MOD(vr_contador,10000) = 0 THEN
+        IF MOD(vr_contador,500) = 0 THEN
           COMMIT;      
         END IF;
           
