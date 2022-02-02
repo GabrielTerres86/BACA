@@ -33,10 +33,10 @@ DECLARE
 
   vr_nmdatela craptel.nmdatela%TYPE := 'PEAC';
   vr_nrmodulo craptel.nrmodulo%TYPE := 3; --Empréstimos
-  vr_cdopptel craptel.cdopptel%TYPE := '@,C,B,L';
+  vr_cdopptel craptel.cdopptel%TYPE := '@,C,B,L,A,R';
   vr_tldatela craptel.tldatela%TYPE := 'Acompanhamento Operacoes PEAC';
   vr_tlrestel craptel.tlrestel%TYPE := 'Acompanhamento Operacoes PEAC';
-  vr_lsopptel craptel.lsopptel%TYPE := 'ACESSO,CONSULTA,BLOQUEIO HONRA,LIMITES';
+  vr_lsopptel craptel.lsopptel%TYPE := 'ACESSO,CONSULTA,BLOQUEIO HONRA,LIMITES,AMORTIZACAO,RETORNOS';
   vr_nrseqrdr NUMBER;
   rw_crapcop crapcop%ROWTYPE;
   rw_crapope crapope%ROWTYPE;
@@ -96,7 +96,43 @@ BEGIN
 		  ,rw_crapope.nrmodulo
 		  ,rw_crapope.idevento
 		  ,rw_crapope.idambace);
-	  END LOOP;
+		
+		-- A - AMORTIZACAO	
+		INSERT INTO crapace
+			(nmdatela
+			,cddopcao
+			,cdoperad
+			,cdcooper
+			,nrmodulo
+			,idevento
+			,idambace)
+		VALUES
+			(rw_crapope.nmdatela
+			,'A'
+			,rw_crapope.cdoperad
+			,rw_crapope.cdcooper
+			,rw_crapope.nrmodulo
+			,rw_crapope.idevento
+			,rw_crapope.idambace);
+		
+		-- R - RETORNOS	
+		INSERT INTO crapace
+			(nmdatela
+			,cddopcao
+			,cdoperad
+			,cdcooper
+			,nrmodulo
+			,idevento
+			,idambace)
+		VALUES
+			(rw_crapope.nmdatela
+			,'R'
+			,rw_crapope.cdoperad
+			,rw_crapope.cdcooper
+			,rw_crapope.nrmodulo
+			,rw_crapope.idevento
+			,rw_crapope.idambace);
+		END LOOP;
 	  
 	    IF(rw_crapcop.cdcooper = 3) THEN
 			  FOR rw_crapope IN cr_crapope('B', 3) LOOP
@@ -198,6 +234,32 @@ BEGIN
     ,'TELA_PEAC'
     ,'pc_consultar_limites_web'
     ,''
+    ,vr_nrseqrdr);
+
+  INSERT INTO crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('CONSULTA_AMORTIZ_PEAC'
+    ,'TELA_PEAC'
+    ,'pc_consultar_amortizacao_web'
+    ,'pr_cdcooper,pr_nrdconta,pr_nriniseq,pr_nrregist,pr_datrini,pr_datrfim'
+    ,vr_nrseqrdr);
+
+  INSERT INTO crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('CONSULTA_RETORNOS_PEAC'
+    ,'TELA_PEAC'
+    ,'pc_consultar_retornos_web'
+    ,'pr_cdcooper,pr_tipooperacao,pr_nrdconta,pr_nrcontrato,pr_datasolicitacao,pr_status'
     ,vr_nrseqrdr);
 
   COMMIT;
