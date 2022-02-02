@@ -82,7 +82,8 @@ DECLARE
                           AND l.nrdconta = rac.nrdconta
                           AND l.nraplica = rac.nraplica
                           AND l.cdhistor = 3333)
-        AND rac.dtmvtolt IN ('31/03/2021','31/05/2021','31/08/2021');
+        AND EXTRACT(DAY FROM rac.dtmvtolt) IN (27,28,29,30,31) 
+        AND EXTRACT(YEAR FROM rac.dtmvtolt) = 2021;
    
         rw_craprac cr_craprac%ROWTYPE;
    
@@ -163,7 +164,7 @@ BEGIN
       -- calcular a diferença do saldo da aplicação para então efetuar o lançamento
       vr_vllanmto := vr_vlsldtot - rw_craprac.vlsldatl; 
         
-      IF vr_vllanmto > 0 THEN
+      IF vr_vllanmto >= 1 THEN
         apli0010.pc_credita_aniversario_lctos(pr_cdcooper => rw_craprac.cdcooper,
                                               pr_nrdconta => rw_craprac.nrdconta,
                                               pr_nraplica => rw_craprac.nraplica,
@@ -209,7 +210,7 @@ BEGIN
                            ,pr_tpocorrencia  => 4 -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
                            ,pr_cdcriticidade => 0 -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
                            ,pr_tpexecucao    => 3 -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
-                           ,pr_dsmensagem    => vr_dslog '. ' || vr_dscritic
+                           ,pr_dsmensagem    => vr_dslog || '. ' || vr_dscritic
                            ,pr_cdmensagem    => 0
                            ,pr_cdprograma    => 'INC0109631_IPCA_ERRO'
                            ,pr_cdcooper      => 3 
