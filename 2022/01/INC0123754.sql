@@ -147,7 +147,7 @@ BEGIN
 ------------ BLOCO PRINCIPAL ---------------------
  dbms_output.put_line('Script iniciado em '||To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'));
  vr_incidente := 'INC0123754';
- vr_cdhistor  := 2727;
+ vr_cdhistor  := 2721;
  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
  dbms_output.put_line('  ');
  
