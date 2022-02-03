@@ -14,7 +14,7 @@ declare
                       </configuracaoCredito>
                       <propostaContratoCredito>
                         <CETPercentAoAno>0.12</CETPercentAoAno>
-                        <dataPrimeiraParcela>2022-01-10</dataPrimeiraParcela>
+                        <dataPrimeiraParcela>2022-02-10</dataPrimeiraParcela>
                         <produto> 
                           <codigo>162</codigo>
                         </produto>
@@ -139,7 +139,17 @@ BEGIN
   
     insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
     values (9, 502464, 21200155, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_502464_21200155);
+
+    UPDATE crappep
+    SET DTVENCTO = ADD_MONTHS(DTVENCTO, 4)
+    WHERE NRDCONTA = 502464
+    AND CDCOOPER = 9
+    AND NRCTREMP = 21200155;
+
   
   COMMIT;
-  
-END;  
+  EXCEPTION
+    WHEN OTHERS THEN
+    ROLLBACK;
+
+end;  
