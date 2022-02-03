@@ -1,0 +1,149 @@
+declare
+
+conta_11035528_4777035 clob := '<?xml version="1.0"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>7922</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <diasCarencia>34</diasCarencia>
+    <financiaIOF>true</financiaIOF>
+    <financiaTarifa>true</financiaTarifa>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>15.36</CETPercentAoAno>
+    <dataPrimeiraParcela>2022-03-05</dataPrimeiraParcela>
+    <produto>
+      <codigo>162</codigo>
+    </produto>
+    <quantidadeParcelas>36</quantidadeParcelas>
+    <taxaJurosRemuneratorios>1.0</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>12.68</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>141.02</tributoIOFValor>
+    <valor>4165.02</valor>
+    <valorBase>4024.00</valorBase>
+    <dataProposta>2022-02-01T12:12:12</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1967-05-28T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>62136585991</identificadorReceitaFederal>
+      <razaoSocialOuNome>JOAO BASILIO SCHRAMM</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>11035528</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>89112066</CEP>
+        <cidade>
+          <descricao>GASPAR</descricao>
+        </cidade>
+        <nomeBairro>GASPARINHO</nomeBairro>
+        <numeroLogradouro>40</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA SAO CRISTOVAO</tipoENomeLogradouro>
+        <UF>SC</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>4777035</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>2174360</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>1</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>1</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>82636028000184</identificadorReceitaFederal>
+      <razaoSocialOuNome>SERVICO AUTONOMO MUNICIPAL DE AGUA </razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>89114320</CEP>
+        <cidade>
+          <descricao>GASPAR</descricao>
+        </cidade>
+        <nomeBairro>SANTA TEREZINHA</nomeBairro>
+        <numeroLogradouro>189</numeroLogradouro>
+        <tipoENomeLogradouro>RUA JOAO VIEIRA</tipoENomeLogradouro>
+        <UF>SC</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>138.52</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>GASPAR</naturalidade>
+    <dataCalculoLegado>2021-11-10T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>
+';
+
+begin
+
+insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+values (1, 11035528, 4777035, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_11035528_4777035);
+commit;
+end;
