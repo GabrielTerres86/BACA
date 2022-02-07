@@ -9,5 +9,3 @@ begin
   
   commit;
 end;
-
-
