@@ -31,7 +31,7 @@ contaX clob := '<?xml version="1.0"?>
     <tributoIOFValor>0.0</tributoIOFValor>
     <valor>3167.04</valor>
     <valorBase>3167.04</valorBase>
-    <dataProposta>2022-01-18T17:00:03</dataProposta>
+    <dataProposta>2022-02-08T17:00:03</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1988-03-29T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>1017404925</identificadorReceitaFederal>
