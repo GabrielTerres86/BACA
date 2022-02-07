@@ -15,7 +15,7 @@ declare
   </configuracaoCredito>
   <propostaContratoCredito>
     <CETPercentAoAno>17.44</CETPercentAoAno>
-    <dataPrimeiraParcela>2022-01-10</dataPrimeiraParcela>
+    <dataPrimeiraParcela>2022-03-10</dataPrimeiraParcela>
     <produto>
       <codigo>161</codigo>
     </produto>
