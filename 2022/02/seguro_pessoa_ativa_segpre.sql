@@ -1,0 +1,10 @@
+BEGIN
+  UPDATE crapprm c
+     SET c.dsvlrprm = 'S'
+   WHERE c.cdacesso = 'UTILIZA_REGRAS_SEGPRE';
+  COMMIT;   
+EXCEPTION WHEN OTHERS THEN
+  ROLLBACK;
+  DBMS_OUTPUT.PUT_LINE('ERRO: ' || SQLERRM);
+END;
+/
