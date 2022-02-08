@@ -1,0 +1,25 @@
+DECLARE
+
+BEGIN
+
+  UPDATE CRAPPEP PEP
+     SET PEP.VLSDVPAR = 0,
+         PEP.VLSDVATU = 0,
+         PEP.INLIQUID = 1,
+         PEP.VLPAGPAR = 84.81
+   WHERE CDCOOPER = 10
+     AND NRDCONTA = 210153
+     AND PEP.NRCTREMP = 35037;
+
+  UPDATE crapepr epr
+     SET epr.inliquid = 1, epr.vlsdeved = 0
+   WHERE epr.cdcooper = 10
+     AND epr.NRDCONTA = 210153
+     AND epr.Nrctremp = 35037;
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE_APPLICATION_ERROR(-20500, SQLERRM);
+    ROLLBACK;
+  
+END;
