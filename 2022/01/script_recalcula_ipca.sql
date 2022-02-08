@@ -165,6 +165,19 @@ BEGIN
       vr_vllanmto := vr_vlsldtot - rw_craprac.vlsldatl; 
         
       IF vr_vllanmto >= 1 THEN
+        
+        vr_dslog := rw_craprac.cdcooper || ';'||rw_craprac.nrdconta||';'||rw_craprac.nraplica||';'|| vr_vllanmto || ' ';
+         
+        CECRED.pc_log_programa(pr_dstiplog      => 'O' -- I-início/ F-fim/ O-ocorrência/ E-erro 
+                              ,pr_tpocorrencia  => 4 -- 1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem
+                              ,pr_cdcriticidade => 0 -- 0-Baixa/ 1-Media/ 2-Alta/ 3-Critica
+                              ,pr_tpexecucao    => 3 -- 0-Outro/ 1-Batch/ 2-Job/ 3-Online
+                              ,pr_dsmensagem    => vr_dslog
+                              ,pr_cdmensagem    => 0
+                              ,pr_cdprograma    => 'INC0109631_IPCA_LANC'
+                              ,pr_cdcooper      => 3 
+                              ,pr_idprglog      => vr_idprglog); 
+                               
         apli0010.pc_credita_aniversario_lctos(pr_cdcooper => rw_craprac.cdcooper,
                                               pr_nrdconta => rw_craprac.nrdconta,
                                               pr_nraplica => rw_craprac.nraplica,
