@@ -4,9 +4,9 @@ UPDATE cecred.crapblj
 SET dtblqfim =  to_date('08/02/2022','dd/mm/yyyy'), cdopddes = 1,
 nrofides = 1, dtenvdes = to_date('08/02/2022','dd/mm/yyyy'),
 dsinfdes = 'Desbloqueio de valor zerado'
-WHERE cdcooper = 1 AND nrdconta = 6427952 AND vlbloque = 0 AND dtblqfim IS NULL
+WHERE cdcooper = 1 AND nrdconta = 6427952 AND vlbloque = 0 AND dtblqfim IS NULL;
 
 
-COMMIT
+COMMIT;
 
-END
+END;
