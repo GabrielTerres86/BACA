@@ -78,11 +78,11 @@ BEGIN
              30,
              5,
              10000,
-             0,
+             2.40597,
              15,
              5,
              10000,
-             0.25326,
+             0.12663,
              0,
              0,
              30,
@@ -108,8 +108,8 @@ BEGIN
       VALUES(vr_idseqpar
             ,18
             ,65
-            ,0.04641
-            ,0.00259); 
+            ,0.04641030
+            ,0.00258970); 
       
       INSERT INTO tbseg_param_prst_tax_cob(idseqpar,
                                            gbidamin,
@@ -119,8 +119,8 @@ BEGIN
       VALUES(vr_idseqpar
             ,66
             ,80
-            ,0.28024
-            ,0.00198);
+            ,0.28023630
+            ,0.00198370);
        
       IF rw_crapop.cdcooper = 1 THEN
         vr_min_faixa := 40000;
