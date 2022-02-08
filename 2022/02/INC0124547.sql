@@ -1711,12 +1711,7 @@ where
 (t.cdcooper = 14  and t.nrdconta = 14613) or (t.cdcooper = 14 and t.nrdconta = 14672) or
 (t.cdcooper = 14  and t.nrdconta = 26751) or (t.cdcooper = 14 and t.nrdconta = 35173) or
 (t.cdcooper = 14  and t.nrdconta = 18635) or (t.cdcooper = 14 and t.nrdconta = 20001) or
-(t.cdcooper = 14  and t.nrdconta = 81426) or (t.cdcooper = 15 and t.nrdconta = 3816) or
-(t.cdcooper = 15  and t.nrdconta = 5916) or (t.cdcooper = 15  and t.nrdconta = 8630) or
-(t.cdcooper = 15  and t.nrdconta = 12670) or (t.cdcooper = 15 and t.nrdconta = 13510) or
-(t.cdcooper = 15  and t.nrdconta = 6564) or (t.cdcooper = 15  and t.nrdconta = 8664) or
-(t.cdcooper = 15  and t.nrdconta = 12289) or (t.cdcooper = 15 and t.nrdconta = 11851) or
-(t.cdcooper = 15  and t.nrdconta = 15113) or (t.cdcooper = 16 and t.nrdconta = 6076238) or
+(t.cdcooper = 14  and t.nrdconta = 81426) or (t.cdcooper = 16 and t.nrdconta = 6076238) or
 (t.cdcooper = 16  and t.nrdconta = 6468390) or (t.cdcooper = 16 and t.nrdconta = 6553346) or
 (t.cdcooper = 16  and t.nrdconta = 6555403) or (t.cdcooper = 16 and t.nrdconta = 2321335) or
 (t.cdcooper = 16  and t.nrdconta = 2705893) or (t.cdcooper = 16 and t.nrdconta = 3675670) or
@@ -1759,14 +1754,7 @@ where
 (t.cdcooper = 16  and t.nrdconta = 617679) or (t.cdcooper = 16  and t.nrdconta = 2178583) or
 (t.cdcooper = 16  and t.nrdconta = 2402335) or (t.cdcooper = 16 and t.nrdconta = 3611140) or
 (t.cdcooper = 16  and t.nrdconta = 6255442) or (t.cdcooper = 16 and t.nrdconta = 2853574) or
-(t.cdcooper = 16  and t.nrdconta = 2950) or (t.cdcooper = 17  and t.nrdconta = 6408) or
-(t.cdcooper = 17  and t.nrdconta = 1643) or (t.cdcooper = 17  and t.nrdconta = 6610) or
-(t.cdcooper = 17  and t.nrdconta = 9946) or (t.cdcooper = 17  and t.nrdconta = 8435) or
-(t.cdcooper = 17  and t.nrdconta = 12033) or (t.cdcooper = 17 and t.nrdconta = 4065) or
-(t.cdcooper = 17  and t.nrdconta = 4871) or (t.cdcooper = 17  and t.nrdconta = 7056) or
-(t.cdcooper = 17  and t.nrdconta = 4685) or (t.cdcooper = 17  and t.nrdconta = 5746) or
-(t.cdcooper = 17  and t.nrdconta = 6858) or (t.cdcooper = 17  and t.nrdconta = 6696) or
-(t.cdcooper = 17  and t.nrdconta = 3131) or (t.cdcooper = 17  and t.nrdconta = 12270))
+(t.cdcooper = 16  and t.nrdconta = 2950))
 union
 SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
       FROM CRAPASS t
@@ -1868,7 +1856,6 @@ where
 (t.cdcooper = 14  and t.nrdconta = 83151) or (t.cdcooper = 14 and t.nrdconta = 83003) or
 (t.cdcooper = 14  and t.nrdconta = 83275) or (t.cdcooper = 14 and t.nrdconta = 135178) or
 (t.cdcooper = 14  and t.nrdconta = 133698) or (t.cdcooper = 14  and t.nrdconta = 132209) or
-(t.cdcooper = 15  and t.nrdconta = 2330) or (t.cdcooper = 15  and t.nrdconta = 12130) or
 (t.cdcooper = 16  and t.nrdconta = 417572) or (t.cdcooper = 16  and t.nrdconta = 417394) or
 (t.cdcooper = 16  and t.nrdconta = 411353) or (t.cdcooper = 16  and t.nrdconta = 379751) or
 (t.cdcooper = 16  and t.nrdconta = 410403) or (t.cdcooper = 16  and t.nrdconta = 410845) or
