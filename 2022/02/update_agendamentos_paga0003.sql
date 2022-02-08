@@ -1,6 +1,6 @@
 ﻿BEGIN
   UPDATE craplau
-        SET craplau.dtmvtopg = '01/02/2022'
+        SET craplau.dtmvtopg = to_date('01/02/2022', 'DD/MM/YYYY')
       WHERE craplau.cdcooper = 1
         AND craplau.insitlau = 1
         AND craplau.tpdvalor = 2
