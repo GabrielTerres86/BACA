@@ -10,8 +10,7 @@ DECLARE
   CURSOR cr_crapop IS
     SELECT cop.cdcooper
       FROM crapcop cop
-     WHERE cop.flgativo = 1
-       AND cop.cdcooper <> 3;
+     WHERE cop.flgativo = 1;
 BEGIN
   FOR rw_idseqpar IN (SELECT p.idseqpar
                         FROM tbseg_parametros_prst p
@@ -108,8 +107,8 @@ BEGIN
       VALUES(vr_idseqpar
             ,18
             ,65
-            ,0.04641
-            ,0.00259); 
+            ,0.04641030
+            ,0.00258970); 
       
       INSERT INTO tbseg_param_prst_tax_cob(idseqpar,
                                            gbidamin,
@@ -119,8 +118,8 @@ BEGIN
       VALUES(vr_idseqpar
             ,66
             ,80
-            ,0.28024
-            ,0.00198);
+            ,0.28023630
+            ,0.00198370);
        
       IF rw_crapop.cdcooper = 1 THEN
         vr_min_faixa := 40000;
