@@ -56,12 +56,12 @@ BEGIN
       -- EFETUA OS PROCEDIMENTOS COM O DADO RETORNADO DA CRAPTAB
       vr_valormin   := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,1,12));
       vr_valormax   := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,14,12));
-      vr_datadvig   := SUBSTR(vr_dstextab,40,10);
+      vr_datadvig   := TO_DATE(SUBSTR(vr_dstextab,40,10),'DD/MM/RRRR');
       vr_pgtosegu   := to_char(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,51,7)),'FM0D00000');            
       vr_vallidps   := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,94,12));
       vr_seqarquivo := SUBSTR(vr_dstextab,139,5);
       vr_apolice    := SUBSTR(vr_dstextab,145,16);
-      vr_fimvigen   := SUBSTR(vr_dstextab,162,10);
+      vr_fimvigen   := TO_DATE(SUBSTR(vr_dstextab,162,10),'DD/MM/RRRR');
       vr_endereco   := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                  pr_cdcooper => rw_crapop.cdcooper,
                                                  pr_cdacesso => 'PRST_FTP_ENDERECO');
