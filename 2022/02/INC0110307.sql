@@ -68,7 +68,7 @@ declare
 											<UF>SC</UF>
 										  </pessoaContatoEndereco>
 										</emitente>
-										<identificadorProposta>358297</identificadorProposta>
+										<identificadorProposta>358297100</identificadorProposta>
 										<statusProposta>
 										  <codigo>26</codigo>
 										</statusProposta>
@@ -142,7 +142,7 @@ declare
 BEGIN
   
     insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
-    values (16, 369403, 358297, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, envio_contrato_t302669);
+    values (16, 369403, 358297100, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, envio_contrato_t302669);
     
 	UPDATE crappep
     SET DTVENCTO = ADD_MONTHS(DTVENCTO, 3)
