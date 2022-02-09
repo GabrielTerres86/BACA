@@ -1,5 +1,5 @@
 DECLARE
-  /* INC306470 - Retirar o status de remessa de cartório do boleto para poder realizar a baixa */
+  /* INC0125365 - Retirar o situacao em cartório do boleto para poder realizar a baixa */
 
   --Tabelas de Memoria de Remessa
   vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
@@ -12,10 +12,10 @@ DECLARE
 
 BEGIN
 
-  FOR rw_crapcob IN (SELECT cob.*
-                           ,ROWID
+  FOR rw_crapcob IN (SELECT cob.dtvencto, cob.vldescto, cob.vlabatim, cob.flgdprot, ROWID
                        FROM crapcob cob
                       WHERE cob.incobran = 0
+                        AND cob.insitcrt = 3
                         AND (cdcooper, nrdconta, nrcnvcob, nrdocmto) IN ((1, 12690970, 101004, 918398)))
   LOOP
   
@@ -39,7 +39,7 @@ BEGIN
     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
                                  ,pr_cdoperad => '1'
                                  ,pr_dtmvtolt => SYSDATE
-                                 ,pr_dsmensag => 'Retirar boleto da situacao Remessa em Cartorio - Manual'
+                                 ,pr_dsmensag => 'Retirar boleto da situacao em Cartorio - Manual'
                                  ,pr_des_erro => vr_des_erro
                                  ,pr_dscritic => vr_dscritic);
   
