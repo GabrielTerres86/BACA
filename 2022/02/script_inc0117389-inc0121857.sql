@@ -507,17 +507,17 @@ BEGIN
         IF vr_aux_arrtemdiff(2) = 1 THEN --tem Novembro
 
            pc_diferenca_contabil(pr_cdcooper     => vr_aux_arrtemdiff(1)   --> Cooperativa
-                                ,pr_dtrefere     => to_date('30/11/2021')  --> Data de referencia
-                                ,pr_dtmvtolt_ini => to_date('01/11/2021')  --> Data de inicio
-                                ,pr_dtmvtolt_fim => to_date('30/11/2021'));--> Data de fim 
+                                ,pr_dtrefere     => to_date('30/11/2021', 'dd/mm/RRRR')  --> Data de referencia
+                                ,pr_dtmvtolt_ini => to_date('01/11/2021', 'dd/mm/RRRR')  --> Data de inicio
+                                ,pr_dtmvtolt_fim => to_date('30/11/2021', 'dd/mm/RRRR'));--> Data de fim 
         END IF;
             
         IF vr_aux_arrtemdiff(3) = 1 THEN --tem Dezembro
            
            pc_diferenca_contabil(pr_cdcooper     => vr_aux_arrtemdiff(1)   --> Cooperativa
-                                ,pr_dtrefere     => to_date('31/12/2021')  --> Data de referencia
-                                ,pr_dtmvtolt_ini => to_date('01/12/2021')  --> Data de inicio
-                                ,pr_dtmvtolt_fim => to_date('31/12/2021'));--> Data de fim 
+                                ,pr_dtrefere     => to_date('31/12/2021', 'dd/mm/RRRR')  --> Data de referencia
+                                ,pr_dtmvtolt_ini => to_date('01/12/2021', 'dd/mm/RRRR')  --> Data de inicio
+                                ,pr_dtmvtolt_fim => to_date('31/12/2021', 'dd/mm/RRRR'));--> Data de fim 
         END IF;
            
     END LOOP;
