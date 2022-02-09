@@ -30,7 +30,7 @@ declare
 										<tributoIOFValor>218.55</tributoIOFValor>
 										<valor>8267.29</valor>
 										<valorBase>8048.00</valorBase>
-										<dataProposta>2022-01-21T08:26:11</dataProposta>
+										<dataProposta>2022-02-09T08:26:11</dataProposta>
 										<emitente>
 										  <dataNascOuConstituicao>1980-11-22T00:00:00</dataNascOuConstituicao>
 										  <identificadorReceitaFederal>3342515910</identificadorReceitaFederal>
