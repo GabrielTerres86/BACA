@@ -9,4 +9,4 @@ begin
     tptermo_adesao = 1;
   
   commit;
-end;a
+end;
