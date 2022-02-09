@@ -10,7 +10,7 @@ declare
 									  <configuracaoCredito>
 										<financiaIOF>true</financiaIOF>
 										<financiaTarifa>true</financiaTarifa>
-										<diasCarencia>79</diasCarencia>
+										<diasCarencia>60</diasCarencia>
 									  </configuracaoCredito>
 									  <propostaContratoCredito>
 										<CETPercentAoAno>20.92</CETPercentAoAno>
