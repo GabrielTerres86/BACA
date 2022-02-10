@@ -14,17 +14,6 @@ DECLARE
   RW_CRAPASS CR_CRAPASS%ROWTYPE;
 
 BEGIN
-
-  /*
-Cooperativa: Civia
-Conta: 92070
-Contrato: 131368
-
-Excluir os registros da CRAPLEM e importar o que está em anexo. APós isso, realizar os lançamentos:
-
-Histórico 1044 - Valor R$7856,74
-Histórico 1048 - Valor R$3.380,66
-  */
   
   OPEN BTCH0001.CR_CRAPDAT(PR_CDCOOPER => 13);
   FETCH BTCH0001.CR_CRAPDAT INTO RW_CRAPDAT;

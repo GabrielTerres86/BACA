@@ -14,18 +14,6 @@ DECLARE
   RW_CRAPASS CR_CRAPASS%ROWTYPE;
 
 BEGIN
-
-  /*
-  Cooperativa: 5
-  Conta: 84891
-  Contrato: 26038
-
-  Excluir os lançamentos da CRAPLEM e importar os que estão em anexo. Após isso realizar os lançamentos:
-
-  Histórico 1044 - Valor R$161,47 - Referente parcela 13
-  Histórico 1047 - Valor R$3,23 - Referente parcela 13
-  Histórico 1077 - Valor R$0,59 - Referente parcela 13
-  */
   
   OPEN BTCH0001.CR_CRAPDAT(PR_CDCOOPER => 5);
   FETCH BTCH0001.CR_CRAPDAT INTO RW_CRAPDAT;

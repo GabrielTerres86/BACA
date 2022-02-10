@@ -15,14 +15,6 @@ DECLARE
   RW_CRAPASS CR_CRAPASS%ROWTYPE;
 
 BEGIN
-  /*Cooperativa: 9
-    Conta: 504300
-    Contrato: 19100665
-
-    Importar na base local os lançamentos em anexo da CRAPLEM e após isso, realizar o lançamento abaixo. Verificar para zerar o saldo também, dúvidas me chamar.
-
-    Histórico 1044 - Referente a parcela 3 no valor de R$0,30
-  */
   
   OPEN BTCH0001.CR_CRAPDAT(PR_CDCOOPER => 9);
   FETCH BTCH0001.CR_CRAPDAT INTO RW_CRAPDAT;
