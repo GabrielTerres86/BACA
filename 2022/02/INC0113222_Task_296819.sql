@@ -6,7 +6,6 @@ DECLARE
   vr_dscritic    VARCHAR2(4000);
   vr_idevento    tbgen_evento_soa.idevento%type;
   vr_tipo_pagto  VARCHAR2(500);
-  
   vr_exc_saida   exception;
 
   CURSOR cr_craplcm IS       
