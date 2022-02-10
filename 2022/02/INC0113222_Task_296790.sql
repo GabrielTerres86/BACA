@@ -1,116 +1,83 @@
 DECLARE
-  VR_CDCRITIC CRAPCRI.CDCRITIC%TYPE;
-  VR_DSCRITIC VARCHAR2(10000);
-  VR_EXC_SAIDA EXCEPTION;
-  RW_CRAPDAT BTCH0001.CR_CRAPDAT%ROWTYPE;
+ 
+  vr_xml_parcela VARCHAR2(1000);
+  vr_motenvio    VARCHAR2(50);
+  vr_dsxmlali    XMLType;
+  vr_dscritic    VARCHAR2(4000);
+  vr_idevento    tbgen_evento_soa.idevento%type;
+  vr_tipo_pagto  VARCHAR2(500);
+  vr_exc_saida   exception;
 
-  CURSOR CR_CRAPASS(PR_CDCOOPER IN CRAPASS.CDCOOPER%TYPE,
-                    PR_NRDCONTA IN CRAPASS.NRDCONTA%TYPE) IS
-    SELECT ASS.CDAGENCI
-      FROM CRAPASS ASS
-     WHERE ASS.CDCOOPER = PR_CDCOOPER
-       AND ASS.NRDCONTA = PR_NRDCONTA;
-
-  RW_CRAPASS CR_CRAPASS%ROWTYPE;
-
-  CURSOR CR_OBTVALPARC IS
-    SELECT NRPAREPR, PAG.VLPAGPAR
-      FROM TBEPR_CONSIGNADO_PAGAMENTO PAG
-     WHERE NRCTREMP = 114729
-       AND CDCOOPER = 13
-       AND NRDCONTA = 66605
-       AND NRPAREPR BETWEEN 28 AND 36;
-
-  RW_OBTVALPARC CR_OBTVALPARC%ROWTYPE;
-
+  CURSOR cr_craplcm IS       
+    SELECT b.dtvencto,
+           b.vlpagpar,
+           b.nrdconta,
+           b.nrctremp,
+           b.cdcooper,
+           b.nrparepr,
+           b.dtmvtolt,
+           min(b.idsequencia) idsequencia
+      FROM tbepr_consignado_pagamento b,
+          (SELECT cdcooper, nrdconta, nrctremp, nrparepr
+             FROM crappep
+            WHERE (cdcooper, nrdconta, nrctremp) IN ((13, 66605, 114729))
+              AND nrparepr BETWEEN 28 AND 36
+              AND inliquid = 0
+           ) pep
+     WHERE pep.nrdconta = b.nrdconta
+       AND pep.nrctremp = b.nrctremp
+       AND pep.cdcooper = b.cdcooper
+       AND pep.nrparepr = b.nrparepr
+    GROUP BY b.dtvencto,
+             b.vlpagpar,
+             b.nrdconta,
+             b.nrctremp,
+             b.cdcooper,
+             b.nrparepr,
+             b.dtmvtolt
+    ORDER BY b.cdcooper, b.nrdconta, b.nrctremp, b.nrparepr;
+                
+  rw_craplcm cr_craplcm%ROWTYPE;
 BEGIN
-
-  OPEN BTCH0001.CR_CRAPDAT(PR_CDCOOPER => 13);
-  FETCH BTCH0001.CR_CRAPDAT
-    INTO RW_CRAPDAT;
-  CLOSE BTCH0001.CR_CRAPDAT;
-
-  OPEN CR_CRAPASS(PR_CDCOOPER => 13, PR_NRDCONTA => 66605);
-  FETCH CR_CRAPASS
-    INTO RW_CRAPASS;
-  CLOSE CR_CRAPASS;
-
-  EMPR0001.PC_CRIA_LANCAMENTO_LEM(PR_CDCOOPER => 13,
-                                  PR_DTMVTOLT => RW_CRAPDAT.DTMVTOLT,
-                                  PR_CDAGENCI => RW_CRAPASS.CDAGENCI,
-                                  PR_CDBCCXLT => 100,
-                                  PR_CDOPERAD => 1,
-                                  PR_CDPACTRA => RW_CRAPASS.CDAGENCI,
-                                  PR_TPLOTMOV => 5,
-                                  PR_NRDOLOTE => 600031,
-                                  PR_NRDCONTA => 66605,
-                                  PR_CDHISTOR => 1044,
-                                  PR_NRCTREMP => 114729,
-                                  PR_VLLANMTO => 27412.10,
-                                  PR_DTPAGEMP => RW_CRAPDAT.DTMVTOLT,
-                                  PR_TXJUREPR => 0,
-                                  PR_VLPREEMP => 0,
-                                  PR_NRSEQUNI => 0,
-                                  PR_NRPAREPR => 0,
-                                  PR_FLGINCRE => FALSE,
-                                  PR_FLGCREDI => FALSE,
-                                  PR_NRSEQAVA => 0,
-                                  PR_CDORIGEM => 5,
-                                  PR_CDCRITIC => VR_CDCRITIC,
-                                  PR_DSCRITIC => VR_DSCRITIC);
-
-  IF VR_CDCRITIC IS NOT NULL OR VR_DSCRITIC IS NOT NULL THEN
-    RAISE VR_EXC_SAIDA;
-  END IF;
-
-  EMPR0001.PC_CRIA_LANCAMENTO_LEM(PR_CDCOOPER => 13,
-                                  PR_DTMVTOLT => RW_CRAPDAT.DTMVTOLT,
-                                  PR_CDAGENCI => RW_CRAPASS.CDAGENCI,
-                                  PR_CDBCCXLT => 100,
-                                  PR_CDOPERAD => 1,
-                                  PR_CDPACTRA => RW_CRAPASS.CDAGENCI,
-                                  PR_TPLOTMOV => 5,
-                                  PR_NRDOLOTE => 600031,
-                                  PR_NRDCONTA => 66605,
-                                  PR_CDHISTOR => 1048,
-                                  PR_NRCTREMP => 114729,
-                                  PR_VLLANMTO => 6415.10,
-                                  PR_DTPAGEMP => RW_CRAPDAT.DTMVTOLT,
-                                  PR_TXJUREPR => 0,
-                                  PR_VLPREEMP => 0,
-                                  PR_NRSEQUNI => 0,
-                                  PR_NRPAREPR => 7,
-                                  PR_FLGINCRE => FALSE,
-                                  PR_FLGCREDI => FALSE,
-                                  PR_NRSEQAVA => 0,
-                                  PR_CDORIGEM => 5,
-                                  PR_CDCRITIC => VR_CDCRITIC,
-                                  PR_DSCRITIC => VR_DSCRITIC);
-
-  IF VR_CDCRITIC IS NOT NULL OR VR_DSCRITIC IS NOT NULL THEN
-    RAISE VR_EXC_SAIDA;
-  END IF;
-
-  FOR RW_OBTVALPARC IN CR_OBTVALPARC
-  LOOP
-    UPDATE CRAPPEP PEP
-       SET PEP.VLSDVPAR = 0,
-           PEP.VLSDVATU = 0,
-           INLIQUID = 1,
-           VLPAGPAR = RW_OBTVALPARC.VLPAGPAR
-     WHERE CDCOOPER = 13
-       AND NRDCONTA = 66605
-       AND PEP.NRCTREMP = 114729
-       AND NRPAREPR = RW_OBTVALPARC.NRPAREPR;
-  END LOOP;
-
+  
+  FOR rw_craplcm IN cr_craplcm LOOP
+      vr_motenvio := 'REENVIARPAGTO';
+      vr_tipo_pagto := ' <valor>'||trim(to_char(rw_craplcm.vlpagpar,'999999990.00'))||'</valor>' ;
+      vr_xml_parcela := ' <parcela>
+                          <dataEfetivacao>'||to_char(rw_craplcm.dtmvtolt,'yyyy-mm-dd')||'T'||to_char(sysdate,'hh24:mi:ss')||'</dataEfetivacao> 
+                          <dataVencimento>'||to_char(rw_craplcm.dtvencto,'yyyy-mm-dd')||'</dataVencimento>
+                          <identificador>'||rw_craplcm.idsequencia||'</identificador>'||
+                          vr_tipo_pagto|| 
+                      '</parcela>';
+      CECRED.EMPR0020.pc_gera_xml_pagamento_consig(pr_cdcooper    => rw_craplcm.cdcooper,
+												   pr_nrdconta     => rw_craplcm.nrdconta,
+												   pr_nrctremp     => rw_craplcm.nrctremp,
+												   pr_xml_parcelas => vr_xml_parcela,
+												   pr_tpenvio      => 1,
+												   pr_tptransa     =>'DEBITO',
+												   pr_motenvio     => vr_motenvio,
+												   pr_dsxmlali     => vr_dsxmlali,
+												   pr_dscritic     => vr_dscritic); 
+      IF vr_dscritic IS NOT NULL  THEN
+          RAISE vr_exc_saida;
+      END IF;
+                                      
+      soap0003.pc_gerar_evento_soa(pr_cdcooper               => rw_craplcm.cdcooper
+                                  ,pr_nrdconta               => rw_craplcm.nrdconta
+                                  ,pr_nrctrprp               => rw_craplcm.nrctremp
+                                  ,pr_tpevento               => 'PAGTO_PAGAR'
+                                  ,pr_tproduto_evento        => 'CONSIGNADO'
+                                  ,pr_tpoperacao             => 'INSERT'
+                                  ,pr_dsconteudo_requisicao  => vr_dsxmlali.getClobVal()
+                                  ,pr_idevento               => vr_idevento
+                                  ,pr_dscritic               => vr_dscritic);
+  END LOOP;    
+                                  
   COMMIT;
-
+    
 EXCEPTION
-  WHEN VR_EXC_SAIDA THEN
-    RAISE_APPLICATION_ERROR(-20500, VR_DSCRITIC);
-    ROLLBACK;
-  WHEN OTHERS THEN
-    RAISE_APPLICATION_ERROR(-20500, SQLERRM);
-    ROLLBACK;
-END;
+    WHEN OTHERS THEN
+		RAISE_application_error(-20500, SQLERRM);
+        ROLLBACK;
+    
+end;
