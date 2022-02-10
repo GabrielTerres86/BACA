@@ -15,16 +15,6 @@ DECLARE
 
 BEGIN
 
-/*
-
-Cooperativa: Credicomin 10
-Conta: 141674
-Contrato: 18679
-
-Histórico 3027 - Valor R$14,32 - Referente parcela 7
-Histórico 1040 - Valor R$167,03
-
-*/
 
   OPEN BTCH0001.CR_CRAPDAT(PR_CDCOOPER => 10);
   FETCH BTCH0001.CR_CRAPDAT INTO RW_CRAPDAT;

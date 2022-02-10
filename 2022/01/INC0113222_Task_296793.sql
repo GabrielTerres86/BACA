@@ -15,22 +15,6 @@ DECLARE
 
 BEGIN
 
-/*
-Cooperativa: Civia
-Conta: 150304
-Contrato: 59164
-
-Realizar os seguintes lançamentos
-
-Histórico 1044 - Valor R$225,51 - Referente parcela 18
-Histórico 1047 - Valor R$4,51 - Referente parcela 18
-Histórico 1077 - Valor R$3,09 - Referente parcela 18
-
-Histórico 1044 - Valor R$548,68 - Referente parcela 19
-Histórico 1047 - Valor R$10,97 - Referente parcela 19
-Histórico 1077 - Valor R$2,01 - Referente parcela 19
-*/
-
   OPEN BTCH0001.CR_CRAPDAT(PR_CDCOOPER => 13);
   FETCH BTCH0001.CR_CRAPDAT INTO RW_CRAPDAT;
   CLOSE BTCH0001.CR_CRAPDAT;
