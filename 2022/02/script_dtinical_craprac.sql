@@ -1,9 +1,3 @@
-rem PL/SQL Developer Test Script
-
-set feedback off
-set autoprint off
-
-rem Execute PL/SQL Block
 declare 
    vr_nmarqimp1            VARCHAR2(100)  := 'backup.txt';
    vr_ind_arquiv1          utl_file.file_type;   
@@ -74,4 +68,4 @@ EXCEPTION
          ROLLBACK;     
   
 end;
-/
+
