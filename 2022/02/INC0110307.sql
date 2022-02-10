@@ -19,8 +19,8 @@ declare
 										  <codigo>161</codigo>
 										</produto>
 										<quantidadeParcelas>12</quantidadeParcelas>
-										<taxaJurosRemuneratorios>1.75</taxaJurosRemuneratorios>
-										<taxaJurosRemuneratoriosAnual>23.14</taxaJurosRemuneratoriosAnual>
+										<taxaJurosRemuneratorios>1.25</taxaJurosRemuneratorios>
+										<taxaJurosRemuneratoriosAnual>16.08</taxaJurosRemuneratoriosAnual>
 										<tipoLiberacao>
 										  <codigo>6</codigo>
 										</tipoLiberacao>
