@@ -10,11 +10,11 @@ declare
 									  <configuracaoCredito>
 										<financiaIOF>true</financiaIOF>
 										<financiaTarifa>true</financiaTarifa>
-										<diasCarencia>60</diasCarencia>
+										<diasCarencia>79</diasCarencia>
 									  </configuracaoCredito>
 									  <propostaContratoCredito>
 										<CETPercentAoAno>20.92</CETPercentAoAno>
-										<dataPrimeiraParcela>2022-04-14</dataPrimeiraParcela>
+										<dataPrimeiraParcela>2022-04-10</dataPrimeiraParcela>
 										<produto>
 										  <codigo>161</codigo>
 										</produto>
@@ -30,7 +30,7 @@ declare
 										<tributoIOFValor>218.55</tributoIOFValor>
 										<valor>8267.29</valor>
 										<valorBase>8048.00</valorBase>
-										<dataProposta>2022-02-09T08:26:11</dataProposta>
+										<dataProposta>2022-02-10T08:26:11</dataProposta>
 										<emitente>
 										  <dataNascOuConstituicao>1980-11-22T00:00:00</dataNascOuConstituicao>
 										  <identificadorReceitaFederal>3342515910</identificadorReceitaFederal>
@@ -146,7 +146,7 @@ BEGIN
     
 	UPDATE crappep
     SET DTVENCTO = ADD_MONTHS(DTVENCTO, 3)
-    WHERE (CDCOOPER, NRDCONTA, NRCTREMP) IN ((116, 369403, 358297));
+    WHERE (CDCOOPER, NRDCONTA, NRCTREMP) IN ((16, 369403, 358297));
 	
 	COMMIT;
   
