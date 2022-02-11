@@ -9,8 +9,8 @@ BEGIN
        AND ace.idambace = 2;
   
     UPDATE craptel t
-       SET t.cdopptel = 'A,B,C,G,I,N,R,X,F,L',
-           t.lsopptel = 'ALTERAR,BAIXA.MANUAL,CONSULTAR,GERAR,RELATÓRIO,INCLUIR,RECEBER,ALT.POS.ENVIO,INCL. MANUAL,GERA.ARQUIVO'
+       SET t.cdopptel = 'A,B,C,G,I,N,R,X,F,L,P',
+           t.lsopptel = 'ALTERAR,BAIXA.MANUAL,CONSULTAR,GERAR,RELATÓRIO,INCLUIR,RECEBER,ALT.POS.ENVIO,INCL. MANUAL,GERA.ARQUIVO,IMPORTACAO.RET.B3'
      WHERE t.cdcooper = rw_crapcop.cdcooper
        AND UPPER(t.nmdatela) = 'IMOVEL';
   END LOOP;
