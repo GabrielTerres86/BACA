@@ -5,7 +5,7 @@ DECLARE
  CURSOR cr_srw IS
    SELECT s.xmldadrq.getclobval() xmldadrq
      FROM crapsrw s
-    WHERE s.nrseqsol = 2041412879-- 2053488231--id prod
+    WHERE s.nrseqsol = 2053488231--id prod
                      -- 2041412879 -- teste
     ;
   rw_srw   cr_srw%ROWTYPE;
