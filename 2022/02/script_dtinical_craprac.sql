@@ -2,7 +2,7 @@ declare
    vr_nmarqimp1            VARCHAR2(100)  := 'backup.txt';
    vr_ind_arquiv1          utl_file.file_type;   
    vr_rootmicros           VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
-   vr_nmdireto             VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/prb0046751';        
+   vr_nmdireto             VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/prb0046751_2';        
    vr_dscritic             VARCHAR2(4000);
    vr_excsaida             EXCEPTION;
      
