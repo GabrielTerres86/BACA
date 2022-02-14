@@ -2,7 +2,7 @@ declare
    vr_nmarqimp1            VARCHAR2(100)  := 'backup.txt';
    vr_ind_arquiv1          utl_file.file_type;   
    vr_rootmicros           VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
-   vr_nmdireto             VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/prb0046751';        
+   vr_nmdireto             VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/prb0046751_2';        
    vr_dscritic             VARCHAR2(4000);
    vr_excsaida             EXCEPTION;
      
@@ -24,14 +24,14 @@ declare
    
 BEGIN
   
-   -- Criar arquivo
-  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto        --> Diretorio do arquivo
-                          ,pr_nmarquiv => vr_nmarqimp1       --> Nome do arquivo
-                          ,pr_tipabert => 'W'                --> modo de abertura (r,w,a)
-                          ,pr_utlfileh => vr_ind_arquiv1     --> handle do arquivo aberto
-                          ,pr_des_erro => vr_dscritic);      --> erro  
   
-  -- Em caso de crítica
+  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto       
+                          ,pr_nmarquiv => vr_nmarqimp1      
+                          ,pr_tipabert => 'W'               
+                          ,pr_utlfileh => vr_ind_arquiv1    
+                          ,pr_des_erro => vr_dscritic);     
+  
+  
   IF vr_dscritic IS NOT NULL THEN             
      RAISE vr_excsaida;
   END IF;
