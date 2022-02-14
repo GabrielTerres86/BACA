@@ -1,35 +1,35 @@
 BEGIN
   UPDATE tbcred_pronampe_contrato
      SET dtsolicitacaohonra = TRUNC(SYSDATE)
-        ,vlsolicitacaohonra = 23955.89
+        ,vlsolicitacaohonra = 23965.51
         ,tpsituacaohonra    = 1
    WHERE cdcooper = 9
      AND nrdconta = 185272
      AND nrcontrato = 35014;
   UPDATE tbcred_pronampe_contrato
      SET dtsolicitacaohonra = TRUNC(SYSDATE)
-        ,vlsolicitacaohonra = 16045.93
+        ,vlsolicitacaohonra = 16052.38
         ,tpsituacaohonra    = 1
    WHERE cdcooper = 10
      AND nrdconta = 105490
      AND nrcontrato = 15652;
   UPDATE tbcred_pronampe_contrato
      SET dtsolicitacaohonra = TRUNC(SYSDATE)
-        ,vlsolicitacaohonra = 11363.81
+        ,vlsolicitacaohonra = 11368.37
         ,tpsituacaohonra    = 1
    WHERE cdcooper = 10
      AND nrdconta = 121223
      AND nrcontrato = 15258;
   UPDATE tbcred_pronampe_contrato
      SET dtsolicitacaohonra = TRUNC(SYSDATE)
-        ,vlsolicitacaohonra = 29885.33
+        ,vlsolicitacaohonra = 29897.33
         ,tpsituacaohonra    = 1
    WHERE cdcooper = 10
      AND nrdconta = 151009
      AND nrcontrato = 15323;
   UPDATE tbcred_pronampe_contrato
      SET dtsolicitacaohonra = TRUNC(SYSDATE)
-        ,vlsolicitacaohonra = 11549.72
+        ,vlsolicitacaohonra = 11554.36
         ,tpsituacaohonra    = 1
    WHERE cdcooper = 16
      AND nrdconta = 269115
