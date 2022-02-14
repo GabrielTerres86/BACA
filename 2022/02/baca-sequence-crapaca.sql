@@ -12,8 +12,10 @@ BEGIN
   
   END LOOP;
 
+COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
+    ROLLBACK;
     RAISE_application_error(-20500, SQLERRM);
   
 END;
