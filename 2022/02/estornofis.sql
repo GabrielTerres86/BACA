@@ -27,7 +27,6 @@ and pep.cdcooper = 1
 and pep.nrdconta = 8276412
 and pep.nrctremp = 2956155
 and b.instatus = 2
---and pep.inliquid = 0
 order by b.cdcooper, b.nrdconta, b.nrctremp, b.nrparepr;
                 
     rw_craplcm cr_craplcm%ROWTYPE;
