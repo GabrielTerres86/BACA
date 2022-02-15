@@ -23,15 +23,28 @@ and pep.nrdconta = b.nrdconta
 and pep.nrctremp = b.nrctremp
 and pep.nrparepr = b.nrparepr
 and pep.cdcooper = b.cdcooper
-and pep.cdcooper in (11,5)
-and pep.nrdconta = 278920
-and pep.nrctremp = 32677
+and pep.cdcooper in (10)
+and pep.nrdconta = 142786
+and pep.nrctremp = 27174
 and b.instatus = 2
-order by b.cdcooper, b.nrdconta, b.nrctremp, b.nrparepr;
+order by b.cdcooper, b.nrdconta, b.nrctremp, b.nrparepr,b.dtmvtolt, b.idintegracao ;
     rw_craplcm cr_craplcm%ROWTYPE;
 BEGIN
+insert into tbepr_consignado_pagamento (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (10, 142786, 27174, 8, 1, 499.76, 68.22, to_date('10-02-2022', 'dd-mm-yyyy'), 2, to_date('11-02-2022 07:00:35', 'dd-mm-yyyy hh24:mi:ss'), to_date('11-02-2022 07:34:06', 'dd-mm-yyyy hh24:mi:ss'), 2, 0, '1', null, null, 1, to_date('11-02-2022', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (10, 142786, 27174, 8, 1, 441.73, 68.22, to_date('10-02-2022', 'dd-mm-yyyy'), 2, to_date('11-02-2022 17:30:47', 'dd-mm-yyyy hh24:mi:ss'), to_date('11-02-2022 17:36:43', 'dd-mm-yyyy hh24:mi:ss'), 2, 0, '1', null, null, 2, to_date('11-02-2022', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (10, 142786, 27174, 8, 1, 373.51, 8.22, to_date('10-02-2022', 'dd-mm-yyyy'), 2, to_date('11-02-2022 21:00:51', 'dd-mm-yyyy hh24:mi:ss'), to_date('11-02-2022 21:04:01', 'dd-mm-yyyy hh24:mi:ss'), 2, 0, '1', null, null, 3, to_date('11-02-2022', 'dd-mm-yyyy'));
+
+insert into tbepr_consignado_pagamento (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+values (10, 142786, 27174, 8, 1, 305.64, 68.22, to_date('10-02-2022', 'dd-mm-yyyy'), 2, to_date('14-02-2022 17:30:59', 'dd-mm-yyyy hh24:mi:ss'), to_date('14-02-2022 17:31:52', 'dd-mm-yyyy hh24:mi:ss'), 2, 0, '1', null, null, 1, to_date('14-02-2022', 'dd-mm-yyyy'));
+
 
   
+  commit;
     FOR rw_craplcm IN cr_craplcm LOOP
         vr_tipo_pagto := ' <valor>'||trim(to_char(rw_craplcm.vlpagpar,'999999990.00'))||'</valor>' ;
         vr_xml_parcela := ' <parcela>
