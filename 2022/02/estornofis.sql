@@ -107,7 +107,7 @@ and (pep.cdcooper, pep.nrdconta, pep.nrctremp) NOT in
 (1,7519796,2955918),
 (13,670324,167935))
 
-order by b.cdcooper, b.nrdconta, b.nrctremp, b.nrparepr, b.idintegracao desc;
+order by b.cdcooper, b.nrdconta, b.nrctremp, b.nrparepr, b.idintegracao ;
 
     rw_craplcm cr_craplcm%ROWTYPE;
 BEGIN
