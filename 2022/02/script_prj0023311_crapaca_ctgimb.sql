@@ -1,10 +1,10 @@
 BEGIN
-  INSERT INTO craprdr ( nmprogra, dtsolici) VALUES ('IMOBILIARIO',SYSDATE);  
+  INSERT INTO cecred.craprdr ( nmprogra, dtsolici) VALUES ('IMOBILIARIO',SYSDATE);  
   
-  INSERT INTO crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-  VALUES ('IMPORTAR_ARQ_IMB', '', 'CREDITO.importarArqImobiliario', 'pr_tipo_arq',(SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'IMOBILIARIO'));
+  INSERT INTO cecred.crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+  VALUES ('IMPORTAR_ARQ_IMB', '', 'CREDITO.importarArqImobiliario', 'pr_tipo_arq',(SELECT nrseqrdr FROM cecred.craprdr WHERE nmprogra = 'IMOBILIARIO'));
 
-INSERT INTO craptel
+  INSERT INTO cecred.craptel 
   (nmdatela,
    nrmodulo,
    cdopptel,
@@ -23,7 +23,7 @@ INSERT INTO craptel
    nmrotpai,
    idambtel)
   SELECT 'CTGIMB',
-		 5,
+		 6,
 		 '@,I,C',
 		 'CONTINGENCIA DE ARQUIVOS DO IMOBILIARIO',
 		 'CTG. IMOBILIA.',
@@ -39,10 +39,10 @@ INSERT INTO craptel
 		 1,
 		 '',
 		 2
-	FROM crapcop
+	FROM cecred.crapcop
    WHERE cdcooper = 3;
 
-   INSERT INTO crapprg
+  INSERT INTO cecred.crapprg
   (nmsistem,
    cdprogra,
    dsprogra##1,
@@ -66,7 +66,7 @@ INSERT INTO craptel
 		 '.',
 		 '.',
 		 50,
-		 (SELECT MAX(g.nrordprg)+1 FROM crapprg g WHERE g.cdcooper = c.cdcooper AND g.nrsolici = 50),
+		 (SELECT MAX(g.nrordprg)+1 FROM cecred.crapprg g WHERE g.cdcooper = c.cdcooper AND g.nrsolici = 50),
 		 1,
 		 0,
 		 0,
@@ -75,8 +75,26 @@ INSERT INTO craptel
 		 0,
 		 1,
 		 c.cdcooper
-	FROM crapcop c
+	FROM cecred.crapcop c
    WHERE c.cdcooper IN 3;
+   
+  INSERT INTO cecred.crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+  VALUES ('BUSCAR_LOGS_ARQ_IMB', '', 'CREDITO.buscarLogImpArqImobiliario', 'pr_tipo_arq, pr_dtleitura, pr_pagina',(SELECT nrseqrdr FROM cecred.craprdr WHERE nmprogra = 'IMOBILIARIO'));
+   
+  INSERT INTO cecred.crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+  VALUES ('BUSCAR_DETALHES_LOG_ARQ_IMB', '', 'CREDITO.buscarDetalhesErroLogImobiliario', 'pr_tipo_arq, pr_dtleitura, pr_hrleitura, pr_nmarquivo',(SELECT nrseqrdr FROM cecred.craprdr WHERE nmprogra = 'IMOBILIARIO'));
+
+  insert into cecred.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('CTGIMB', 'C', 'f0032951', ' ', 3, 1, 0, 2);   -- Elaine
+  
+  insert into cecred.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('CTGIMB', 'I', 'f0032951', ' ', 3, 1, 0, 2);   -- Elaine  
+  
+  insert into cecred.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('CTGIMB', 'C', 'f0033100', ' ', 3, 1, 0, 2);  --Amanda
+  
+  insert into cecred.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('CTGIMB', 'I', 'f0033100', ' ', 3, 1, 0, 2);  --Amanda  
 
   COMMIT;
 EXCEPTION
