@@ -1,4 +1,3 @@
--- Created on 10/02/2022 by T0032717 
 DECLARE
 
   CURSOR cr_crapcop IS
@@ -32,14 +31,13 @@ DECLARE
      ORDER BY o.cdcooper, o.nrdconta ASC;
   rw_principal cr_principal%ROWTYPE;
   
-  --Variaveis para retorno de erro
   vr_cdcritic      INTEGER:= 0;
   vr_dscritic      VARCHAR2(4000);
   vr_exc_erro      EXCEPTION;
   
   vr_nmarqrbk       VARCHAR2(100);
   vr_nmdireto       VARCHAR2(400); 
-  vr_dados_rollback CLOB; -- Grava update de rollback
+  vr_dados_rollback CLOB;
   vr_texto_rollback VARCHAR2(32600);
 
 BEGIN
@@ -53,7 +51,7 @@ BEGIN
     dbms_lob.createtemporary(vr_dados_rollback, TRUE, dbms_lob.CALL);
     dbms_lob.open(vr_dados_rollback, dbms_lob.lob_readwrite);     
 
-    gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, '-- Programa para rollback das informacoes'||chr(13), FALSE);
+    gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, 'Programa para rollback das informacoes'||chr(13), FALSE);
   
     FOR rw_principal IN cr_principal(pr_cdcooper => rw_crapcop.cdcooper) LOOP
     
@@ -91,28 +89,24 @@ BEGIN
                               '   AND e.nrctremp = ' || rw_principal.nrctremp  || ';' ||chr(13)||chr(13), FALSE);    
     END LOOP;
     
-    -- Adiciona TAG de commit 
     gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, 'COMMIT;'||chr(13), FALSE);
-          
-    -- Fecha o arquivo          
+
     gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, chr(13), TRUE);    
     
-    -- Grava o arquivo de rollback
-    GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => 3                     --> Cooperativa conectada
-                                       ,pr_cdprogra  => 'ATENDA'                      --> Programa chamador - utilizamos apenas um existente 
-                                       ,pr_dtmvtolt  => trunc(SYSDATE)                --> Data do movimento atual
-                                       ,pr_dsxml     => vr_dados_rollback             --> Arquivo XML de dados
-                                       ,pr_dsarqsaid => vr_nmdireto||'/'||vr_nmarqrbk --> Path/Nome do arquivo PDF gerado
-                                       ,pr_flg_impri => 'N'                           --> Chamar a impressão (Imprim.p)
-                                       ,pr_flg_gerar => 'S'                           --> Gerar o arquivo na hora
-                                       ,pr_flgremarq => 'N'                           --> remover arquivo apos geracao
-                                       ,pr_nrcopias  => 1                             --> Número de cópias para impressão
-                                       ,pr_des_erro  => vr_dscritic);                 --> Retorno de Erro
+    GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => 3                     
+                                       ,pr_cdprogra  => 'ATENDA'                      
+                                       ,pr_dtmvtolt  => trunc(SYSDATE)                
+                                       ,pr_dsxml     => vr_dados_rollback             
+                                       ,pr_dsarqsaid => vr_nmdireto||'/'||vr_nmarqrbk 
+                                       ,pr_flg_impri => 'N'                           
+                                       ,pr_flg_gerar => 'S'                           
+                                       ,pr_flgremarq => 'N'                           
+                                       ,pr_nrcopias  => 1                             
+                                       ,pr_des_erro  => vr_dscritic);                 
           
     IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
     END IF;  
-    -- Liberando a memória alocada pro CLOB
     dbms_lob.close(vr_dados_rollback);
     dbms_lob.freetemporary(vr_dados_rollback);  
   END LOOP;
