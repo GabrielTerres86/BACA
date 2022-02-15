@@ -5,8 +5,8 @@ begin
 update	tbseg_prestamista
 set	situacao	= 0,
 	dtrecusa	= trunc(sysdate),
-	tprecusa	= 8,		/* Recusa técnica */
-	cdmotrec	= 193,		/* DPS não enviada */
+	tprecusa	= 8,
+	cdmotrec	= 193,
 	tpregist	= 0
 where	cdcooper	= 1
 and	nrdconta	= 8057672
@@ -15,8 +15,8 @@ and	nrproposta	= '770358283454';
 update	tbseg_prestamista
 set	situacao	= 0,
 	dtrecusa	= trunc(sysdate),
-	tprecusa	= 8,		/* Recusa técnica */
-	cdmotrec	= 193,		/* DPS não enviada */
+	tprecusa	= 8,
+	cdmotrec	= 193,
 	tpregist	= 0
 where	cdcooper	= 1
 and	nrdconta	= 1936697
@@ -25,8 +25,8 @@ and	nrproposta	= '770354534290';
 update	tbseg_prestamista
 set	situacao	= 0,
 	dtrecusa	= trunc(sysdate),
-	tprecusa	= 8,		/* Recusa técnica */
-	cdmotrec	= 193,		/* DPS não enviada */
+	tprecusa	= 8,
+	cdmotrec	= 193,
 	tpregist	= 0
 where	cdcooper	= 1
 and	nrdconta	= 3663124
