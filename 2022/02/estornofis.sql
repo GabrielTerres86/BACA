@@ -9,8 +9,8 @@ vr_tipo_pagto  VARCHAR2(500);
 vr_exc_saida   exception;
 
 CURSOR cr_craplcm IS       
-
-SELECT b.dtvencto,
+SELECT 
+b.dtvencto,
 b.vlpagpar,
 b.nrdconta,
 b.nrctremp,
@@ -18,14 +18,20 @@ b.cdcooper,
 b.nrparepr,
 b.dtmvtolt,
 b.idintegracao 
-from crappep pep, tbepr_consignado_pagamento b
+from crappep pep, tbepr_consignado_pagamento b, tbepr_consig_contrato_tmp c
 where trunc(b.dtincreg) >= TO_DATE('11/02/2022','DD/MM/YYYY')
 and pep.nrdconta = b.nrdconta
 and pep.nrctremp = b.nrctremp
 and pep.nrparepr = b.nrparepr
 and pep.cdcooper = b.cdcooper
+and pep.cdcooper = c.cdcooper
+and pep.nrdconta = c.nrdconta
+and pep.nrctremp = c.nrctremp
+and c.inclidesligado = 'N'
 and b.instatus = 2
 and pep.inliquid = 0
+and c.dtmovimento = TO_DATE('14/02/2022','DD/MM/YYYY')
+and pep.dtvencto = TO_DATE('10/02/2022','DD/MM/YYYY')
 and (pep.cdcooper, pep.nrdconta, pep.nrctremp) NOT in  
 ((1,80346790,2502227),
 (1,6683045,3919366),
@@ -100,6 +106,7 @@ and (pep.cdcooper, pep.nrdconta, pep.nrctremp) NOT in
 (1,80476260,2816090),
 (1,7519796,2955918),
 (13,670324,167935))
+
 order by b.cdcooper, b.nrdconta, b.nrctremp, b.nrparepr, b.idintegracao desc;
 
     rw_craplcm cr_craplcm%ROWTYPE;
