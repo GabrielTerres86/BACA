@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-93
 DECLARE
 
  CURSOR cr_srw IS
@@ -13,6 +11,7 @@ DECLARE
   vr_excsaida EXCEPTION;
   vr_excsair  EXCEPTION;
   vr_dscritic VARCHAR2(500);
+  pr_xml_res  CLOB;
 BEGIN
 
     btch0001.pc_gera_log_batch(pr_cdcooper     => 10
@@ -49,10 +48,10 @@ BEGIN
     cecred.gene0004.pc_xml_web(pr_xml_req => REPLACE(SRCSTR => rw_srw.xmldadrq,
                                                      OLDSUB => '<vlrdobem> 99572.00</vlrdobem>',
                                                      NEWSUB => '<vlrdobem> 99572,00</vlrdobem>'),
-                               pr_xml_res => :pr_xml_res);
+                               pr_xml_res => pr_xml_res);
 
-    IF :pr_xml_res LIKE '%<Erro>%' THEN
-      vr_dscritic := 'Erro na rotina: ' || :pr_xml_res;
+    IF pr_xml_res LIKE '%<Erro>%' THEN
+      vr_dscritic := 'Erro na rotina: ' || pr_xml_res;
       RAISE vr_excsair;
     END IF;
   EXCEPTION
@@ -93,19 +92,3 @@ EXCEPTION
                               ,pr_nmarqlog     => 'proc_message'); 
     ROLLBACK;
 END;
-1
-pr_xml_res
-1
-<?xml version="1.0" encoding="ISO-8859-1" ?> <Root><Dados NRADITIV="4" IDSEQBEM="5"/></Root>
-5
-10
-vr_sql
-v_crapbpr.cdsitgrv
-v_crapbpr.dsbemfin
-par_cdcooper
-par_nrdconta
-par_tpctrato
-par_nrctremp
-par_idseqbem
-par_dscritic
-vr_dscritic
