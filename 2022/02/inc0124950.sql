@@ -39,6 +39,7 @@ DECLARE
   vr_nmdireto       VARCHAR2(400); 
   vr_dados_rollback CLOB;
   vr_texto_rollback VARCHAR2(32600);
+  vr_nr_regs        INTEGER := 0;
 
 BEGIN
   vr_nmdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/INC0124950';
@@ -54,7 +55,7 @@ BEGIN
     gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, 'Programa para rollback das informacoes'||chr(13), FALSE);
   
     FOR rw_principal IN cr_principal(pr_cdcooper => rw_crapcop.cdcooper) LOOP
-    
+     vr_nr_regs:= vr_nr_regs + 1;
      UPDATE tbrisco_operacoes a 
          SET a.flintegrar_sas = 1,
              a.inrisco_rating = a.inrisco_rating_autom,
@@ -87,7 +88,11 @@ BEGIN
                               ' WHERE e.cdcooper = ' || rw_principal.cdcooper  || chr(13) ||
                               '   AND e.nrdconta = ' || rw_principal.nrdconta  || chr(13) ||
                               '   AND e.nrctremp = ' || rw_principal.nrctremp  || ';' ||chr(13)||chr(13), FALSE);    
-    END LOOP;
+
+        IF MOD(vr_nr_regs, 300) = 0 THEN
+          COMMIT;
+        END IF; 
+      END LOOP;
     
     gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, 'COMMIT;'||chr(13), FALSE);
 
