@@ -30,22 +30,13 @@ and b.instatus = 2
 order by b.cdcooper, b.nrdconta, b.nrctremp, b.nrparepr;
     rw_craplcm cr_craplcm%ROWTYPE;
 BEGIN
-  
-insert into tbepr_consignado_pagamento (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
-values (5, 278920, 32677, 14, 1, 278.12, 8.01, to_date('10-02-2022', 'dd-mm-yyyy'), 2, to_date('11-02-2022 17:30:49', 'dd-mm-yyyy hh24:mi:ss'), to_date('11-02-2022 17:31:02', 'dd-mm-yyyy hh24:mi:ss'), 14, 0, '1', null, null, 2, to_date('11-02-2022', 'dd-mm-yyyy'));
 
-insert into tbepr_consignado_pagamento (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
-values (5, 278920, 32677, 14, 1, 270.11, 8.01, to_date('10-02-2022', 'dd-mm-yyyy'), 2, to_date('11-02-2022 21:00:49', 'dd-mm-yyyy hh24:mi:ss'), to_date('11-02-2022 21:13:49', 'dd-mm-yyyy hh24:mi:ss'), 14, 0, '1', null, null, 1, to_date('14-02-2022', 'dd-mm-yyyy'));
-
-insert into tbepr_consignado_pagamento (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
-values (5, 278920, 32677, 14, 1, 280.43, 8.01, to_date('10-02-2022', 'dd-mm-yyyy'), 2, to_date('11-02-2022 07:00:42', 'dd-mm-yyyy hh24:mi:ss'), to_date('11-02-2022 07:24:11', 'dd-mm-yyyy hh24:mi:ss'), 14, 0, '1', null, null, 1, to_date('11-02-2022', 'dd-mm-yyyy'));
-commit;
   
     FOR rw_craplcm IN cr_craplcm LOOP
         vr_tipo_pagto := ' <valor>'||trim(to_char(rw_craplcm.vlpagpar,'999999990.00'))||'</valor>' ;
         vr_xml_parcela := ' <parcela>
-                            <dataEfetivacao>'||to_char(rw_craplcm.dtmvtolt,'yyyy-mm-dd')||'T'||to_char(sysdate,'hh24:mi:ss')||'</dataEfetivacao> 
-                            <dataVencimento>'||to_char(rw_craplcm.dtmvtolt,'yyyy-mm-dd')||'</dataVencimento>
+                            <dataEfetivacao>'||to_char(rw_craplcm.dtvencto,'yyyy-mm-dd')||'T'||to_char(sysdate,'hh24:mi:ss')||'</dataEfetivacao> 
+                            <dataVencimento>'||to_char(rw_craplcm.dtvencto,'yyyy-mm-dd')||'</dataVencimento>
                             <identificador>'||rw_craplcm.idintegracao||'</identificador>'||
                             vr_tipo_pagto|| 
                         '</parcela>';
