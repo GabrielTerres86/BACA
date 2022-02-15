@@ -28,8 +28,8 @@ DECLARE
 
   PROCEDURE registrarVERLOG(pr_cdcooper            IN crawepr.cdcooper%TYPE
                            ,pr_nrdconta            IN crawepr.nrdconta%TYPE
-                           ,pr_dstransa            IN VARCHAR2      -- Operacao que foi efetuada
-                           ,pr_dsCampo             IN VARCHAR       -- ITEM - Campo alterado
+                           ,pr_dstransa            IN VARCHAR2      
+                           ,pr_dsCampo             IN VARCHAR       
                            ,pr_antes               IN VARCHAR2
                            ,pr_depois              IN VARCHAR2) IS
 
@@ -74,19 +74,16 @@ DECLARE
                          prm_vllanmto IN craplcm.vllanmto%TYPE,
                          prm_cdhistor IN craplcm.cdhistor%TYPE) IS
   
-    -- Variáveis negócio
     vr_dtmvtolt    craplcm.dtmvtolt%TYPE;
     vr_idprejuizo  tbcc_prejuizo.idprejuizo%TYPE;
     vr_cdhistor    tbcc_prejuizo_detalhe.cdhistor%TYPE;
 
-    -- Variáveis Tratamento Erro
     vr_erro        EXCEPTION;
     vr_cdcritic    NUMBER;
     vr_dscritic    VARCHAR2(1000);
 
   BEGIN
 
-    --Busca Data Atual da Cooperativa
     BEGIN
       SELECT dtmvtolt
       INTO   vr_dtmvtolt
@@ -106,7 +103,6 @@ DECLARE
     dbms_output.put_line('     Valor..........: '||prm_vllanmto);
     dbms_output.put_line(' ');
     
-    --Busca id do saldo da conta em prejuizo
     BEGIN
       SELECT a.idprejuizo
         INTO vr_idprejuizo
@@ -119,7 +115,6 @@ DECLARE
         RAISE vr_erro; 
     END;
 
-    -- Cria lançamento (Tabela tbcc_prejuizo_detalhe)
     prej0003.pc_gera_lcto_extrato_prj(pr_cdcooper   => prm_cdcooper
                                      ,pr_nrdconta   => prm_nrdconta
                                      ,pr_dtmvtolt   => vr_dtmvtolt
@@ -160,19 +155,16 @@ DECLARE
                                      prm_vllanmto IN craplcm.vllanmto%TYPE,
                                      prm_idaument IN NUMBER DEFAULT 0) IS
   
-    -- Variáveis negócio
     vr_dtmvtolt    craplcm.dtmvtolt%TYPE;
     vr_idprejuizo  tbcc_prejuizo.idprejuizo%TYPE;
     vr_cdhistor    tbcc_prejuizo_detalhe.cdhistor%TYPE;
 
-    -- Variáveis Tratamento Erro
     vr_erro        EXCEPTION;
     vr_cdcritic    NUMBER;
     vr_dscritic    VARCHAR2(1000);
 
   BEGIN
 
-    --Busca Data Atual da Cooperativa
     BEGIN
       SELECT dtmvtolt
       INTO   vr_dtmvtolt
@@ -193,7 +185,6 @@ DECLARE
     dbms_output.put_line(' ');
 
 
-    -- Cria lançamento (Tabela tbcc_prejuizo_lancamento)
     PREJ0003.pc_gera_debt_cta_prj(pr_cdcooper => prm_cdcooper                
                                  ,pr_nrdconta => prm_nrdconta        
                                  ,pr_cdoperad => '1'
@@ -234,11 +225,9 @@ PROCEDURE prc_gera_crd_cc (prm_cdcooper IN craplcm.cdcooper%TYPE,
                            prm_nrdconta IN craplcm.nrdconta%TYPE,
                            prm_vllanmto IN craplcm.vllanmto%TYPE) IS
 
-    -- Variáveis negócio
     vr_dtmvtolt    craplcm.dtmvtolt%TYPE;
 
 
-    -- Variáveis Tratamento Erro
     vr_des_erro    VARCHAR2(1000);
     vr_tab_erro    GENE0001.typ_tab_erro;
     vr_erro        EXCEPTION;
@@ -247,7 +236,7 @@ PROCEDURE prc_gera_crd_cc (prm_cdcooper IN craplcm.cdcooper%TYPE,
     
 BEGIN
   
-    --Busca Data Atual da Cooperativa
+    
     BEGIN
       SELECT dtmvtolt
       INTO   vr_dtmvtolt
@@ -275,7 +264,7 @@ BEGIN
                                         ,pr_cdpactra => 0
                                         ,pr_nrdolote => 9900010106
                                         ,pr_nrdconta => prm_nrdconta
-                                        ,pr_cdhistor => 2387 -- EST.RECUP.PREJUIZO
+                                        ,pr_cdhistor => 2387
                                         ,pr_vllanmto => prm_vllanmto
                                         ,pr_nrparepr => 0
                                         ,pr_nrctremp => 0
@@ -286,7 +275,6 @@ BEGIN
 
           IF vr_des_reto <> 'OK' THEN
             IF vr_tab_erro.count() > 0 THEN
-              -- Atribui críticas às variaveis
               vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
               vr_dscritic := 'Falha estorno Pagamento '||vr_tab_erro(vr_tab_erro.first).dscritic;
               RAISE vr_erro;
@@ -308,12 +296,10 @@ PROCEDURE prc_atlz_prejuizo (prm_cdcooper IN craplcm.cdcooper%TYPE,
                                prm_cdhistor IN craplcm.cdhistor%TYPE,
                                prm_tipoajus IN VARCHAR2) IS
   
-    -- Variáveis negócio
     vr_idprejuizo  tbcc_prejuizo.idprejuizo%TYPE;
     vr_tipoacao    BOOLEAN;
     vr_vlsdprej    tbcc_prejuizo.vlsdprej%TYPE;
 
-    -- Variáveis Tratamento Erro
     vr_erro        EXCEPTION;
     vr_cdcritic    NUMBER;
     vr_dscritic    VARCHAR2(1000);
@@ -348,7 +334,7 @@ PROCEDURE prc_atlz_prejuizo (prm_cdcooper IN craplcm.cdcooper%TYPE,
       RAISE vr_erro;  
     END IF;
 
-    -- Verificar o historico a ser deletado
+    
     OPEN cr_his (pr_cdcooper => prm_cdcooper
                 ,pr_cdhistor => prm_cdhistor);
     FETCH cr_his INTO rw_his;
@@ -361,27 +347,23 @@ PROCEDURE prc_atlz_prejuizo (prm_cdcooper IN craplcm.cdcooper%TYPE,
       RAISE vr_erro;  
     END IF;
 
-    IF prm_tipoajus = 'E' THEN --Exclusão
+    IF prm_tipoajus = 'E' THEN 
       IF vr_indebcre = 'C' THEN
-         -- Exclusão de CREDITO, diminui Saldo Prejuizo
          vr_tipoacao := TRUE;
-      ELSE -- D - debito
-         -- Exclusão de DEBITO, aumenta Saldo Prejuizo
+      ELSE 
          vr_tipoacao := FALSE;
       END IF;
-    ELSE -- I - Inclusão
+    ELSE 
       IF vr_indebcre = 'C' THEN
-         -- Inclusao de CREDITO, aumenta Saldo Prejuizo
          vr_tipoacao := FALSE;
-      ELSE -- D - debito
-         -- Inclusao de DEBITO, diminui Saldo Prejuizo
+      ELSE 
          vr_tipoacao := TRUE;
       END IF;
     END IF;
 
 
 
-    IF vr_tipoacao THEN -- TRUE - diminui Saldo Prejuizo
+    IF vr_tipoacao THEN 
       BEGIN
         UPDATE tbcc_prejuizo  a
            SET a.vlsdprej = Nvl(vlsdprej,0) - Nvl(prm_vllanmto,0)
@@ -392,7 +374,7 @@ PROCEDURE prc_atlz_prejuizo (prm_cdcooper IN craplcm.cdcooper%TYPE,
           vr_dscritic := 'Erro ao Atualizar Valor Saldo Prejuízo. Erro: '||SubStr(SQLERRM,1,255);
           RAISE vr_erro;  
       END; 
-    ELSE  -- FALSE - aumenta Saldo Prejuizo
+    ELSE  
       BEGIN
         UPDATE tbcc_prejuizo  a
            SET a.vlsdprej = Nvl(vlsdprej,0) + Nvl(prm_vllanmto,0)
@@ -404,7 +386,6 @@ PROCEDURE prc_atlz_prejuizo (prm_cdcooper IN craplcm.cdcooper%TYPE,
           RAISE vr_erro;  
       END; 
     END IF;  
-    --
     IF Nvl(SQL%RowCount,0) > 0 THEN 
       dbms_output.put_line('   Atualizado Saldo Devedor Prejuízo: '||Nvl(SQL%RowCount,0)||' registro(s).');
     ELSE
@@ -446,13 +427,12 @@ PROCEDURE prc_atlz_prejuizo (prm_cdcooper IN craplcm.cdcooper%TYPE,
 
 BEGIN  
 
------------- BLOCO PRINCIPAL ---------------------
+
   dbms_output.put_line('Script iniciado em '||To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'));
   vr_incidente := 'INC0123741';
-  dbms_output.put_line('-------- '|| vr_incidente || ' - INICIO --------');
+  dbms_output.put_line('******** '|| vr_incidente || ' - INICIO ********');
   
   
- ---#1 Rodar o hist 2721 na cc 37.633.7 cooperativa civia no valor de R$ 6,92
   
   vr_cdcooper  := 13;
   vr_nrdconta  := 376337;
@@ -465,7 +445,7 @@ BEGIN
                prm_vllanmto => vr_vllanmto,
                prm_cdhistor => vr_cdhistor);
                
- ---#2 Rodar o hist 2721 na cc 53.420-0  cooperativa Credifoz no valor de R$ 0,20
+
  
   vr_cdcooper  := 11;
   vr_nrdconta  := 534200;
@@ -478,7 +458,7 @@ BEGIN
                prm_vllanmto => vr_vllanmto,
                prm_cdhistor => vr_cdhistor);
                
----#3 Rodar o hist 2721 na cc 810.543-0 cooperativa Viacredi no valor de R$ 3,99
+
  
   vr_cdcooper  := 1;
   vr_nrdconta  := 8105430;
@@ -491,20 +471,18 @@ BEGIN
                prm_vllanmto => vr_vllanmto,
                prm_cdhistor => vr_cdhistor);
   
----------------------------------------------------
-  -- Viacredi - 804.720-0 (2408, 2387, 2721 e 2739) R$1.089,11
+
   
   vr_cdcooper  := 1;
   vr_nrdconta  := 8047200;
   vr_vllanmto  := 1089.11;
   dbms_output.put_line('  ');  
   
-  --realizar lancamentos na conta corrente 2387
   prc_gera_crd_cc(prm_cdcooper => vr_cdcooper,
                   prm_nrdconta => vr_nrdconta,
                   prm_vllanmto => vr_vllanmto);
                   
-   --historico de 2408 e 2721               
+             
    prc_gera_lct(prm_cdcooper => vr_cdcooper,
                prm_nrdconta => vr_nrdconta,
                prm_vllanmto => vr_vllanmto,
@@ -514,32 +492,28 @@ BEGIN
                      ,prm_nrdconta => vr_nrdconta
                      ,prm_vllanmto => vr_vllanmto
                      ,prm_cdhistor => 2408
-                     ,prm_tipoajus => 'I'); --[I] Inclusao / [E] Exclusao
+                     ,prm_tipoajus => 'I'); 
                
    prc_gera_lct(prm_cdcooper => vr_cdcooper,
                prm_nrdconta => vr_nrdconta,
                prm_vllanmto => vr_vllanmto,
                prm_cdhistor => 2721);
   
-  --realizar um credito na transitoria (tbcc_prejuizo_lancamento) 2739
+
   prc_gera_acerto_transit(prm_cdcooper => vr_cdcooper,
                           prm_nrdconta => vr_nrdconta,
                           prm_vllanmto => vr_vllanmto);
   
   
   
-  dbms_output.put_line('-------- '|| vr_incidente || ' - FIM --------');
+  dbms_output.put_line('******** '|| vr_incidente || ' - FIM ********');
   dbms_output.put_line('  ');
----------------------------------------------------
 
 
-  --Salva
   COMMIT;
 
   dbms_output.put_line(' ');
   dbms_output.put_line('Script finalizado com Sucesso em '||To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'));
------------- BLOCO PRINCIPAL - FIM ---------------------
-
 
 EXCEPTION    
   WHEN OTHERS THEN
