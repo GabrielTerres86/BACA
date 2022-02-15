@@ -14,9 +14,9 @@ DECLARE
 BEGIN
 
     btch0001.pc_gera_log_batch(pr_cdcooper     => 10
-                              ,pr_ind_tipo_log => 2 -- Erro tratato
+                              ,pr_ind_tipo_log => 2
                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                               || 'SCRITP/BACA: ' || ' --> '
+                                               || 'SCRITP/BACA: ' || ' ==> '
                                                || 'INICIO' 
                               ,pr_nmarqlog     => 'proc_message');
 
@@ -27,7 +27,6 @@ BEGIN
     RAISE vr_excsaida;
   END IF;
 
-  -- UPDATE para que dê erro novamente pelo mesmo motivo - integraSAS/rating
   BEGIN
     UPDATE gestaoderisco.risco_tbrisco_operacoes o
        SET o.flintegrar_sas = 0
@@ -42,7 +41,6 @@ BEGIN
       RAISE vr_excsaida;
   END;
 
-  -- Executar a rotina que falhou, com os dados já trafegados naquele momento do erro.
   BEGIN
     cecred.gene0004.pc_xml_web(pr_xml_req => REPLACE(SRCSTR => rw_srw.xmldadrq,
                                                      OLDSUB => '<vlrdobem> 99572.00</vlrdobem>',
@@ -64,9 +62,9 @@ BEGIN
 
 
   btch0001.pc_gera_log_batch(pr_cdcooper     => 10
-                            ,pr_ind_tipo_log => 2 -- Erro tratato
+                            ,pr_ind_tipo_log => 2
                             ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                               || 'SCRITP/BACA: ' || ' --> '
+                                               || 'SCRITP/BACA: ' || ' ==> '
                                                || 'FIM - SUCESSO' 
                             ,pr_nmarqlog     => 'proc_message');
 
@@ -76,17 +74,17 @@ BEGIN
 EXCEPTION
   WHEN vr_excsaida THEN
     btch0001.pc_gera_log_batch(pr_cdcooper     => 10
-                              ,pr_ind_tipo_log => 2 -- Erro tratato
+                              ,pr_ind_tipo_log => 2 
                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                               || 'SCRITP/BACA: ' || ' --> FIM - ERRO -> '
+                                               || 'SCRITP/BACA: ' || ' ==> FIM - ERRO -> '
                                                || vr_dscritic 
                               ,pr_nmarqlog     => 'proc_message');
     ROLLBACK;
   WHEN OTHERS THEN
     btch0001.pc_gera_log_batch(pr_cdcooper     => 10
-                              ,pr_ind_tipo_log => 2 -- Erro tratato
+                              ,pr_ind_tipo_log => 2 
                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                               || 'SCRITP/BACA: ' || ' --> FIM - ERRO -> '
+                                               || 'SCRITP/BACA: ' || ' ==> FIM - ERRO -> '
                                                || SQLERRM
                               ,pr_nmarqlog     => 'proc_message'); 
     ROLLBACK;
