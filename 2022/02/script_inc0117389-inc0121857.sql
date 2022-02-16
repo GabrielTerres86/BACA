@@ -430,7 +430,8 @@ DECLARE
              END IF;
                  
           END IF ;
-               
+          
+          COMMIT;     
        END LOOP;                                          
     END pc_diferenca_contabil;    
 
@@ -504,8 +505,7 @@ BEGIN
                                     ,pr_des_text => 'Fim da execucao - ' ||  to_char(SYSDATE, 'HH24:MI:SS'));
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle);          
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);                
-  
-    COMMIT;
+      
 EXCEPTION  
   WHEN vr_exc_erro THEN
     dbms_output.put_line('Erro arquivos: ' || vr_dscritic);
