@@ -1,13 +1,9 @@
 DECLARE
 
-   -- Variaveis auxiliares
-  /*########################*/
-  vr_aux_ambiente INTEGER       := 3;                       -- Em qual ambiente rodar: 1=Local, 2=Test, 3=Producao
-  vr_aux_diretor  VARCHAR2(100) := 'INC0117389_INC0121857'; -- Usar numero do chamado para nomear diretorio
-  vr_aux_arquivo  VARCHAR2(100) := 'difcontab';             -- Nome do arquivo
-  /*########################*/
-  
-  -- Manipulação de arquivos log/rollback
+  vr_aux_ambiente INTEGER       := 3;                       
+  vr_aux_diretor  VARCHAR2(100) := 'INC0117389_INC0121857'; 
+  vr_aux_arquivo  VARCHAR2(100) := 'difcontab';            
+
   vr_handle     UTL_FILE.FILE_TYPE; 
   vr_handle_log UTL_FILE.FILE_TYPE; 
   vr_nmarq_carga    VARCHAR2(200);
@@ -15,16 +11,10 @@ DECLARE
   vr_nmarq_rollback VARCHAR2(200);
   vr_des_erro       VARCHAR2(10000);  
   
-  -- Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE;
   vr_dscritic crapcri.dscritic%TYPE;
   vr_exc_erro EXCEPTION;
-  
-  --Array vr_aux_cdcoop - [Cod cooperativa
-  --                      Verificar diferença em Novembro[0 = Não - 1 = Sim]
-  --                      Verificar diferença em Dezembro[0 = Não - 1 = Sim]
-  -- Novembro/2021 = ACREDICOOP 2, TRANSPOCRED 9, CREDICOMIN 10, CREDIFOZ 11
-  -- Dezembro/2021 = ACREDICOOP 2,  ACENTRA 5, UNILOS 6, CREDCREA 7, CREDIFOZ 11, CIVIA 13, EVOLUA 14, VIACREDI ALTO VALE 16
+
   vr_aux_cdcoop   VARCHAR2(300) := '2;1;1|' ||
                                    '5;0;1|' ||
                                    '6;0;1|' ||
@@ -161,7 +151,6 @@ DECLARE
        AND c.cdhistor = 2679;
    
   
-   -- bordero titulo
    CURSOR cr_crapbdt(pr_cdcooper IN crapbdt.cdcooper%TYPE
                     ,pr_nrdconta IN crapbdt.nrdconta%TYPE
                     ,pr_nrborder IN crapbdt.nrborder%TYPE) IS
@@ -175,8 +164,7 @@ DECLARE
           AND crapbdt.nrborder = pr_nrborder;
        rw_crapbdt cr_crapbdt%ROWTYPE; 
        
- 
-   -- Buscar valores de mora e prejuizos
+
    CURSOR cr_prejuizos(pr_cdcooper IN crapbdt.cdcooper%TYPE
                       ,pr_nrdconta IN crapbdt.nrdconta%TYPE
                       ,pr_nrborder IN crapbdt.nrborder%TYPE) IS 
@@ -186,8 +174,8 @@ DECLARE
               ,bor.nrdocmto
               ,bor.nrtitulo
               ,SUM(bor.vllanmto) AS vllanmtotal
-              ,tdb.vlmratit -- Valor mora
-              ,tdb.vlsdprej -- Valor do saldo Prejuizo 
+              ,tdb.vlmratit
+              ,tdb.vlsdprej 
               ,NVL(SUM(bor.vllanmto),0) - NVL(tdb.vlmratit,0) AS vlprejdiff
               ,NVL(tdb.vlsdprej,0) + NVL(SUM(bor.vllanmto),0) - NVL(tdb.vlmratit,0) AS vlprejtotal       
           FROM crapbdt                   bdt
@@ -210,7 +198,7 @@ DECLARE
            AND h.cdhistor = bor.cdhistor
            AND (h.nrctacrd = 1630 OR h.nrctadeb = 1630)
            AND bor.cdhistor <> 2679
-           AND bor.cdhistor = 2668 -- 2668 JUROS MORA
+           AND bor.cdhistor = 2668 
          GROUP BY bor.cdcooper
                  ,bor.nrdconta
                  ,bor.nrborder
@@ -221,11 +209,10 @@ DECLARE
       rw_prejuizos cr_prejuizos%ROWTYPE; 
        
        
-    -- Procedure diferencas contabeis
-    PROCEDURE pc_diferenca_contabil(pr_cdcooper     IN crapcop.cdcooper%TYPE, --> Cooperativa
-                                    pr_dtrefere     IN crapris.dtrefere%TYPE, --> Data de referencia
-                                    pr_dtmvtolt_ini IN tbdsct_lancamento_bordero.dtmvtolt%TYPE,   --> Data de inicio    
-                                    pr_dtmvtolt_fim IN tbdsct_lancamento_bordero.dtmvtolt%TYPE)IS --> Data de fim 
+    PROCEDURE pc_diferenca_contabil(pr_cdcooper     IN crapcop.cdcooper%TYPE, 
+                                    pr_dtrefere     IN crapris.dtrefere%TYPE, 
+                                    pr_dtmvtolt_ini IN tbdsct_lancamento_bordero.dtmvtolt%TYPE,      
+                                    pr_dtmvtolt_fim IN tbdsct_lancamento_bordero.dtmvtolt%TYPE)IS 
       BEGIN 
           
       OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -236,7 +223,7 @@ DECLARE
       FOR rw_lanctos IN cr_lanctos(pr_cdcooper => pr_cdcooper,
                                    pr_dtmvtolt_ini => pr_dtmvtolt_ini,
                                    pr_dtmvtolt_fim => pr_dtmvtolt_fim) LOOP
-          -- Zera as variaveis
+
           vlr_lanc_mes_ris := 0;
           vlr_mes_ant_ris  := 0;
           vr_renda        := 0;
@@ -257,8 +244,7 @@ DECLARE
           FOR C2 IN renda_s_resgate(rw_lanctos.cdcooper, rw_lanctos.nrdconta, rw_lanctos.nrborder, pr_dtmvtolt_ini, pr_dtmvtolt_fim) LOOP
             vr_renda := nvl(C2.vllanmto, 0);
           END LOOP; 
-
-          -- Calcula a diff      
+    
           vlr_diff := nvl(vlr_mes_ant, 0) + nvl(rw_lanctos.lanc, 0) - nvl(vlr_lanc_mes, 0) - vr_renda; 
           vlr_diff_real := nvl(vlr_mes_ant_ris, 0) + nvl(rw_lanctos.lanc, 0) - nvl(vlr_lanc_mes_ris, 0) - vr_renda;
             
@@ -272,7 +258,7 @@ DECLARE
                
              IF cr_crapbdt%NOTFOUND THEN
                 CLOSE cr_crapbdt;
-                --Gera log
+
                 vr_dscritic := 'Bordero nao encontrado. ' || SQLERRM;
                 gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                               ,pr_des_text => rw_lanctos.cdcooper || ';' || 
@@ -284,7 +270,6 @@ DECLARE
               
                IF rw_crapbdt.inprejuz = 0 THEN
   
-                  -- Inserir registros de lancamento 2686(MORA DESC.TIT - Credito)
                   DSCT0003.pc_inserir_lancamento_bordero(pr_cdcooper => rw_lanctos.cdcooper, 
                                                          pr_nrdconta => rw_lanctos.nrdconta, 
                                                          pr_nrborder => rw_lanctos.nrborder,
@@ -299,7 +284,7 @@ DECLARE
                                                          pr_nrtitulo => 0, 
                                                          pr_dscritic => vr_dscritic);
                    IF vr_dscritic IS NOT NULL THEN
-                      --Gera log
+       
                       vr_dscritic := 'Erro ao fazer lancamento(pc_inserir_lancamento_bordero) - cdhistor 2686. ' || SQLERRM;
                       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                                     ,pr_des_text => rw_lanctos.cdcooper || ';' || 
@@ -308,7 +293,7 @@ DECLARE
                                                                     vlr_diff || ';' ||
                                                                     vr_dscritic);
                    ELSE 
-                     -- Grava script de rollback
+
                      gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
                                                    ,pr_des_text => 'DELETE tbdsct_lancamento_bordero'
                                                                  ||' WHERE cdcooper = '||rw_lanctos.cdcooper
@@ -321,9 +306,9 @@ DECLARE
                                                    ,pr_des_text => 'COMMIT;');                                                                                               
                    END IF;
                                                                     
-               ELSE -- Se estiver em prejuizo
+               ELSE 
                
-                  -- Inserir registros de lancamento 2761(REVERSAO JUROS MORA+60 DESCONTO DE TITULO PREJUIZO - Credito)
+
                   DSCT0003.pc_inserir_lancamento_bordero(pr_cdcooper => rw_lanctos.cdcooper, 
                                                          pr_nrdconta => rw_lanctos.nrdconta, 
                                                          pr_nrborder => rw_lanctos.nrborder,
@@ -338,7 +323,7 @@ DECLARE
                                                          pr_nrtitulo => 0, 
                                                          pr_dscritic => vr_dscritic);
                    IF vr_dscritic IS NOT NULL THEN
-                      --Gera log
+
                       vr_dscritic := 'Erro ao fazer lancamento(pc_inserir_lancamento_bordero) - cdhistor 2761. ' || vr_dscritic || SQLERRM;
                       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                                     ,pr_des_text => rw_lanctos.cdcooper || ';' || 
@@ -347,7 +332,7 @@ DECLARE
                                                                     vlr_diff || ';' ||
                                                                     vr_dscritic);
                    ELSE 
-                     -- Grava script de rollback
+ 
                      gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
                                                    ,pr_des_text => 'DELETE tbdsct_lancamento_bordero'
                                                                  ||' WHERE cdcooper = '||rw_lanctos.cdcooper
@@ -360,9 +345,7 @@ DECLARE
                                                    ,pr_des_text => 'COMMIT;');
                    END IF;
                
-               
-               
-                   -- Inserir registros de lancamento 2765(JUROS MORA SOBRE PREJUIZO DE DESCONTO DE TITULO - Debito)
+
                    DSCT0003.pc_inserir_lancamento_bordero(pr_cdcooper => rw_lanctos.cdcooper, 
                                                           pr_nrdconta => rw_lanctos.nrdconta, 
                                                           pr_nrborder => rw_lanctos.nrborder,
@@ -377,7 +360,7 @@ DECLARE
                                                           pr_nrtitulo => 0, 
                                                           pr_dscritic => vr_dscritic);
                    IF vr_dscritic IS NOT NULL THEN
-                      --Gera log
+           
                       vr_dscritic := 'Erro ao fazer lancamento(pc_inserir_lancamento_bordero) - cdhistor 2765. ' || vr_dscritic || SQLERRM;
                       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                                     ,pr_des_text => rw_lanctos.cdcooper || ';' || 
@@ -386,7 +369,7 @@ DECLARE
                                                                     vlr_diff || ';' ||
                                                                     vr_dscritic);
                    ELSE 
-                     -- Grava script de rollback
+ 
                      gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
                                                    ,pr_des_text => 'DELETE tbdsct_lancamento_bordero'
                                                                  ||' WHERE cdcooper = '||rw_lanctos.cdcooper
@@ -416,7 +399,7 @@ DECLARE
                              AND nrdocmto = rw_prejuizos.nrdocmto
                              AND nrtitulo = rw_prejuizos.nrtitulo; 
                              
-                           -- Grava script de rollback
+        
                             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
                                                          ,pr_des_text => 'UPDATE craptdb SET vlsdprej = '|| REPLACE(vl_aux_preju, ',','.')
                                                                        ||' WHERE cdcooper = '||rw_prejuizos.cdcooper
@@ -428,7 +411,7 @@ DECLARE
                                                          ,pr_des_text => 'COMMIT;');
                        EXCEPTION
                           WHEN OTHERS THEN
-                          --Gera log
+ 
                           vr_dscritic := 'Erro ao gravar registro na tabela craptdb. ' || SQLERRM;
                           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                                         ,pr_des_text => rw_prejuizos.cdcooper || ';' || 
@@ -452,27 +435,22 @@ DECLARE
     END pc_diferenca_contabil;    
 
 BEGIN
-    --##################################################################################### 
-    -- Definir em qual ambiente ira buscar os arquivos para leitura/escrita
-    IF vr_aux_ambiente = 1 THEN --LOCAL      
-      vr_nmarq_log      := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';       -- Arquivo de Log
-      vr_nmarq_rollback := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql';  -- Arquivo de Rollback 
-    ELSIF vr_aux_ambiente = 2 THEN --TEST        
-      vr_nmarq_log      := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';      -- Arquivo de Log
-      vr_nmarq_rollback := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql'; -- Arquivo de Rollback   
-    ELSIF vr_aux_ambiente = 3 THEN --PRODUCAO
-      vr_nmarq_log      := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';      -- Arquivo de Log
-      vr_nmarq_rollback := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql'; -- Arquivo de Rollback
+
+    IF vr_aux_ambiente = 1 THEN     
+      vr_nmarq_log      := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';      
+      vr_nmarq_rollback := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql';  
+    ELSIF vr_aux_ambiente = 2 THEN        
+      vr_nmarq_log      := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';     
+      vr_nmarq_rollback := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql';    
+    ELSIF vr_aux_ambiente = 3 THEN 
+      vr_nmarq_log      := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';      
+      vr_nmarq_rollback := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql'; 
     ELSE
       vr_dscritic := 'Erro ao apontar ambiente de execucao.';
       RAISE vr_exc_erro;
     END IF;
-    --##################################################################################### 
+ 
   
-     
-    
-    --#####################################################################################  
-      -- Abrir o arquivo de LOG
       gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_log
                               ,pr_tipabert => 'W'              
                               ,pr_utlfileh => vr_handle_log   
@@ -482,7 +460,7 @@ BEGIN
         RAISE vr_exc_erro;
       end if;
 
-      -- Abrir o arquivo de ROLLBACK
+
       gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_rollback
                               ,pr_tipabert => 'W'              
                               ,pr_utlfileh => vr_handle   
@@ -492,45 +470,40 @@ BEGIN
         RAISE vr_exc_erro;
       end if;  
       
-      -- Escrever cabecalho do arquivo de LOG 
+
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                     ,pr_des_text => 'Inicio da execucao - ' ||  to_char(SYSDATE, 'HH24:MI:SS'));
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                     ,pr_des_text => 'Cooperativa;Conta;Bordero;Diferenca;prejuizo');        
-   --#####################################################################################  
+
 
     vr_aux_arrcoop := gene0002.fn_quebra_string(vr_aux_cdcoop,'|');
     FOR vr_indexcoop IN 1..vr_aux_arrcoop.COUNT LOOP
       
         vr_aux_arrtemdiff := gene0002.fn_quebra_string(vr_aux_arrcoop(vr_indexcoop),';');
         
-        IF vr_aux_arrtemdiff(2) = 1 THEN --tem Novembro
+        IF vr_aux_arrtemdiff(2) = 1 THEN 
 
-           pc_diferenca_contabil(pr_cdcooper     => vr_aux_arrtemdiff(1)   --> Cooperativa
-                                ,pr_dtrefere     => to_date('30/11/2021')  --> Data de referencia
-                                ,pr_dtmvtolt_ini => to_date('01/11/2021')  --> Data de inicio
-                                ,pr_dtmvtolt_fim => to_date('30/11/2021'));--> Data de fim 
+           pc_diferenca_contabil(pr_cdcooper     => vr_aux_arrtemdiff(1)   
+                                ,pr_dtrefere     => to_date('30/11/2021') 
+                                ,pr_dtmvtolt_ini => to_date('01/11/2021')  
+                                ,pr_dtmvtolt_fim => to_date('30/11/2021'));
         END IF;
             
-        IF vr_aux_arrtemdiff(3) = 1 THEN --tem Dezembro
+        IF vr_aux_arrtemdiff(3) = 1 THEN 
            
-           pc_diferenca_contabil(pr_cdcooper     => vr_aux_arrtemdiff(1)   --> Cooperativa
-                                ,pr_dtrefere     => to_date('31/12/2021')  --> Data de referencia
-                                ,pr_dtmvtolt_ini => to_date('01/12/2021')  --> Data de inicio
-                                ,pr_dtmvtolt_fim => to_date('31/12/2021'));--> Data de fim 
+           pc_diferenca_contabil(pr_cdcooper     => vr_aux_arrtemdiff(1)   
+                                ,pr_dtrefere     => to_date('31/12/2021')  
+                                ,pr_dtmvtolt_ini => to_date('01/12/2021')  
+                                ,pr_dtmvtolt_fim => to_date('31/12/2021'));
         END IF;
            
     END LOOP;
-    
-    
-    --#####################################################################################
-      -- Fechar arquivo de Rollback e log  
-      -- Escrever horario de fim 
+
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                     ,pr_des_text => 'Fim da execucao - ' ||  to_char(SYSDATE, 'HH24:MI:SS'));
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle);          
-      gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);              
-    --#####################################################################################   
+      gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);                
   
     COMMIT;
 EXCEPTION  
