@@ -1,4 +1,3 @@
-/* Objetivo: lançar os rendimentos que foram calculados errado em conta corrente, das poupanças que foram encerradas. */
 DECLARE
    vr_excsaida             EXCEPTION;
    vr_cdcritic             crapcri.cdcritic%TYPE;
@@ -16,8 +15,8 @@ DECLARE
    vr_incrineg             INTEGER;
    vidtxfixa               NUMBER;
    vcddindex               NUMBER;
-   vr_nrseqdig             NUMBER := 0;  
-   -- Variáveis de retorno
+   vr_nrseqdig             NUMBER := 0;   
+   -- Variáveis de  retorno
    vr_idtipbas NUMBER := 2;
    vr_idgravir NUMBER := 0;
    vr_vlbascal NUMBER := 0; 
@@ -251,8 +250,8 @@ DECLARE
                                       ,pr_nraplica                  craprac.nraplica%TYPE
                                       ,pr_dtaporte                  craprac.dtmvtolt%TYPE
                                       ,pr_dtaniversario             craprac.dtaniver%TYPE
-                                      ,pr_cdhsnrap                  crapcpc.cdhsnrap%TYPE --historico de aporte
-                                      ,pr_cdhsrgap                  crapcpc.cdhsrgap%TYPE --historico de resgate
+                                      ,pr_cdhsnrap                  crapcpc.cdhsnrap%TYPE 
+                                      ,pr_cdhsrgap                  crapcpc.cdhsrgap%TYPE 
                                       ,pr_vlrentabilidade_acumulada OUT NUMBER
                                       ,pr_cdcritic                  OUT PLS_INTEGER
                                       ,pr_dscritic                  OUT VARCHAR2) IS
@@ -291,15 +290,7 @@ DECLARE
       --calcula o inicio do período de rentabilidade com base no aniversário atual,
       --diminuindo a quantidad de meses decorridos
       vr_dtinicioperiodorentab := add_months(pr_dtaniversario, (-i));
-      --
-      /*
-         Exemplo das datas de inicio e fim de periodo de rentabilidade
-           Aniversário = 20/02/2020
-           Periodo de rentabilidade:
-           Inicio      = 20/01/2020
-           Fim         = 19/02/2020
-      */
-      --
+      --        
       IF i = vr_qtaniversariosdecorridos THEN
         --
         --para o primeiro vencimento da aplicação o inicio do periodo eh a data de aporte
@@ -416,13 +407,6 @@ DECLARE
 
     BEGIN
 
-      /*
-      O cálculo da rentabilidade pode acontecer:
-      - No próprio dia do aniversário;
-      - No primeiro dia útil após o aniversário, quando o próximo dia útil é dentro do mesmo mês;
-      - Em um dia anterior ao aniversário, quando próximo dia útil é no mês seguinte;
-      */
-
       -- Se a data de movimento é maior ou igual a data do aniversário
       IF vr_dtmvtolt >= vr_dtaniver THEN
         RETURN 1;
@@ -451,9 +435,9 @@ DECLARE
 
   END fn_pode_rentabilizar_poupanca;
   
-   --  Retorna a soma dos lançamentos encontrados para a cooperativa, conta, aplicação e histórico informados nos parâmetros
+  --  Retorna a soma dos lançamentos encontrados para a cooperativa, conta, aplicação e histórico informados nos parâmetros
   --  Quando não forem encontrados lançamentos,será retornado o valor ZERO
-  --
+ 
   PROCEDURE pc_lanctos_historicos(pr_cdcooper  IN  craplac.cdcooper%TYPE
                                  ,pr_nrdconta  IN  craplac.nrdconta%TYPE
                                  ,pr_nraplica  IN  craplac.nraplica%TYPE

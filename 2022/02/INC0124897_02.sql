@@ -1,4 +1,3 @@
-/* Objetivo: Correção da rentabilidade das contas poupança do periodo 01/01 a 01/02
 DECLARE
    vr_excsaida             EXCEPTION;
    vr_cdcritic             crapcri.cdcritic%TYPE;
@@ -68,10 +67,10 @@ DECLARE
             rac.rowid      
        FROM craprac rac
       WHERE rac.dtaniver = to_date('01/03/2022','dd/mm/yyyy') --Aniversário errado
-        AND rac.dtmvtolt >= to_date('29/11/2021','dd/mm/yyyy') AND rac.dtmvtolt <= to_date('30/11/2021','dd/mm/yyyy') -- Data de movimento do aporte        
+        AND rac.dtmvtolt >= to_date('29/11/2021','dd/mm/yyyy') AND rac.dtmvtolt <= to_date('30/11/2021','dd/mm/yyyy') 
         AND rac.cdcooper = pr_cdcooper -- cooperativas Viacredi e Alto Vale        
         AND rac.idsaqtot = 0 -- Saque parcial        
-        AND rac.cdprodut = 1109; -- Produto poupança       
+        AND rac.cdprodut = 1109; -- Produtos poupança        
      
          rw_craprac cr_craprac%ROWTYPE;        
    
@@ -91,12 +90,7 @@ DECLARE
   PROCEDURE loga(pr_msg VARCHAR2) IS
   BEGIN
     gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, pr_msg);
-  END;
-  
-  /* PROCEDURE fecha_arquivos IS
-   BEGIN
-      gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv1); 
-   END;*/  
+  END;  
    
    FUNCTION fn_proximo_aniv_poupanca(pr_dtaplica IN craprac.dtaniver%TYPE) return craprac.dtaniver%TYPE IS
      vr_dia integer;
@@ -291,14 +285,7 @@ DECLARE
       --calcula o inicio do período de rentabilidade com base no aniversário atual,
       --diminuindo a quantidad de meses decorridos
       vr_dtinicioperiodorentab := add_months(pr_dtaniversario, (-i));
-      --
-      /*
-         Exemplo das datas de inicio e fim de periodo de rentabilidade
-           Aniversário = 20/02/2020
-           Periodo de rentabilidade:
-           Inicio      = 20/01/2020
-           Fim         = 19/02/2020
-      */
+      --     
       --
       IF i = vr_qtaniversariosdecorridos THEN
         --
@@ -396,7 +383,7 @@ DECLARE
       vr_dscritic := 'Erro geral em pc_poupanca_clc_rendimento: ' || SQLERRM;
   END pc_poupanca_clc_rendimento;
   
-     --  Função para verificar se a poupança está habilitada a ser rentabilizada, ou seja, se a poupança completou novo aniversário (+30 dias) desde sua última rentabilização
+  --  Função para verificar se a poupança está habilitada a ser rentabilizada, ou seja, se a poupança completou novo aniversário (+30 dias) desde sua última rentabilização
   --
   -- Retorna:
   --   0 => Não habilitada para rentabilizar
@@ -415,13 +402,6 @@ DECLARE
   BEGIN
 
     BEGIN
-
-      /*
-      O cálculo da rentabilidade pode acontecer:
-      - No próprio dia do aniversário;
-      - No primeiro dia útil após o aniversário, quando o próximo dia útil é dentro do mesmo mês;
-      - Em um dia anterior ao aniversário, quando próximo dia útil é no mês seguinte;
-      */
 
       -- Se a data de movimento é maior ou igual a data do aniversário
       IF vr_dtmvtolt >= vr_dtaniver THEN
