@@ -121,9 +121,11 @@ BEGIN
                              'Não encontrado crapdat para cooperativa ' ||
                              rg_crapass.cdcooper);
     END;
-  
+    
+    vr_vldcotas_crapcot := 0;
+    
     BEGIN
-      SELECT vldcotas
+      SELECT nvl(vldcotas,0)
         INTO vr_vldcotas_crapcot
         FROM CECRED.crapcot
        WHERE nrdconta = rg_crapass.nrdconta
@@ -134,94 +136,100 @@ BEGIN
         dbms_output.put_line(chr(10) ||
                              'Não encontrado registro em crapcot para conta ' ||
                              rg_crapass.nrdconta);
+        vr_vldcotas_crapcot := 0;
       
     END;
     
-    vr_nrdolote := 600040;
+    IF vr_vldcotas_crapcot > 0 THEN
+      -- Se possui valor de cota, deve devolver.
+      
+      vr_nrdolote := 600040;
+      
+      vr_busca := TRIM(to_char(rg_crapass.cdcooper)) || ';' ||
+                          TRIM(to_char(vr_dtmvtolt,'DD/MM/RRRR')) || ';' ||
+                          TRIM(to_char(rg_crapass.cdagenci)) || ';' ||
+                          '100;' || --cdbccxlt
+                          vr_nrdolote;
+                          
+      vr_nrdocmto := fn_sequence('CRAPLCT','NRDOCMTO', vr_busca);
+                                 
+      vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||rg_crapass.cdcooper||';'||
+                                                                  TRIM(to_char(vr_dtmvtolt, 'DD/MM/RRRR'))||';'||
+                                                                  rg_crapass.cdagenci||
+                                                                  ';100;'|| --cdbccxlt
+                                                                  vr_nrdolote);
     
-    vr_busca := TRIM(to_char(rg_crapass.cdcooper)) || ';' ||
-                        TRIM(to_char(vr_dtmvtolt,'DD/MM/RRRR')) || ';' ||
-                        TRIM(to_char(rg_crapass.cdagenci)) || ';' ||
-                        '100;' || --cdbccxlt
-                        vr_nrdolote;
-                        
-    vr_nrdocmto := fn_sequence('CRAPLCT','NRDOCMTO', vr_busca);
-                               
-    vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||rg_crapass.cdcooper||';'||
-                                                                TRIM(to_char(vr_dtmvtolt, 'DD/MM/RRRR'))||';'||
-                                                                rg_crapass.cdagenci||
-                                                                ';100;'|| --cdbccxlt
-                                                                vr_nrdolote);
-  
-    INSERT INTO CECRED.craplct
-      (cdcooper,
-       cdagenci,
-       cdbccxlt,
-       nrdolote,
-       dtmvtolt,
-       cdhistor,
-       nrctrpla,
-       nrdconta,
-       nrdocmto,
-       nrseqdig,
-       vllanmto,
-       CDOPEORI,
-       DTINSORI)
-    VALUES
-      (vr_cdcooper,
-       rg_crapass.cdagenci,
-       100,
-       vr_nrdolote,
-       vr_dtmvtolt,
-       decode(rg_crapass.inpessoa,1,2079,2080),
-       0,
-       vr_nrdconta,
-       vr_nrdocmto,
-       vr_nrseqdig,
-       vr_vldcotas_crapcot,
-       1,
-       sysdate);
-  
-    GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
-                         pr_cdoperad => vr_cdoperad,
-                         pr_dscritic => vr_dscritic,
-                         pr_dsorigem => 'AIMARO',
-                         pr_dstransa => 'Alteração de Cotas e devolução - INC0126492',
-                         pr_dttransa => vr_dttransa,
-                         pr_flgtrans => 1,
-                         pr_hrtransa => vr_hrtransa,
-                         pr_idseqttl => 0,
-                         pr_nmdatela => NULL,
-                         pr_nrdconta => vr_nrdconta,
-                         pr_nrdrowid => vr_nrdrowid);
-  
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                              pr_nmdcampo => 'craplct.dtmvtolt',
-                              pr_dsdadant => null,
-                              pr_dsdadatu => vr_dtmvtolt);
-  
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                              pr_nmdcampo => 'craplct.vllanmto',
-                              pr_dsdadant => null,
-                              pr_dsdadatu => vr_vldcotas_crapcot);
-  
-    UPDATE CECRED.crapcot
-       SET vldcotas = 0
-     WHERE cdcooper = rg_crapass.cdcooper
-       AND nrdconta = rg_crapass.nrdconta;
-  
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                              pr_nmdcampo => 'crapcot.vldcotas',
-                              pr_dsdadant => vr_vldcotas_crapcot,
-                              pr_dsdadatu => 0);
-  
-    UPDATE CECRED.TBCOTAS_DEVOLUCAO a
-       SET a.vlcapital =
-           (a.vlcapital + vr_vldcotas_crapcot)
-     WHERE CDCOOPER = rg_crapass.cdcooper
-       AND NRDCONTA = rg_crapass.nrdconta
-       AND TPDEVOLUCAO = 3;
-  
+      INSERT INTO CECRED.craplct
+        (cdcooper,
+         cdagenci,
+         cdbccxlt,
+         nrdolote,
+         dtmvtolt,
+         cdhistor,
+         nrctrpla,
+         nrdconta,
+         nrdocmto,
+         nrseqdig,
+         vllanmto,
+         CDOPEORI,
+         DTINSORI)
+      VALUES
+        (vr_cdcooper,
+         rg_crapass.cdagenci,
+         100,
+         vr_nrdolote,
+         vr_dtmvtolt,
+         decode(rg_crapass.inpessoa,1,2079,2080),
+         0,
+         vr_nrdconta,
+         vr_nrdocmto,
+         vr_nrseqdig,
+         vr_vldcotas_crapcot,
+         1,
+         sysdate);
+    
+      GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                           pr_cdoperad => vr_cdoperad,
+                           pr_dscritic => vr_dscritic,
+                           pr_dsorigem => 'AIMARO',
+                           pr_dstransa => 'Alteração de Cotas e devolução - INC0126492',
+                           pr_dttransa => vr_dttransa,
+                           pr_flgtrans => 1,
+                           pr_hrtransa => vr_hrtransa,
+                           pr_idseqttl => 0,
+                           pr_nmdatela => NULL,
+                           pr_nrdconta => vr_nrdconta,
+                           pr_nrdrowid => vr_nrdrowid);
+    
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'craplct.dtmvtolt',
+                                pr_dsdadant => null,
+                                pr_dsdadatu => vr_dtmvtolt);
+    
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'craplct.vllanmto',
+                                pr_dsdadant => null,
+                                pr_dsdadatu => vr_vldcotas_crapcot);
+    
+      UPDATE CECRED.crapcot
+         SET vldcotas = 0
+       WHERE cdcooper = rg_crapass.cdcooper
+         AND nrdconta = rg_crapass.nrdconta;
+    
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'crapcot.vldcotas',
+                                pr_dsdadant => vr_vldcotas_crapcot,
+                                pr_dsdadatu => 0);
+    
+      UPDATE CECRED.TBCOTAS_DEVOLUCAO a
+         SET a.vlcapital =
+             (a.vlcapital + vr_vldcotas_crapcot)
+       WHERE CDCOOPER = rg_crapass.cdcooper
+         AND NRDCONTA = rg_crapass.nrdconta
+         AND TPDEVOLUCAO = 3;
+         
+    END IF;
+    
   end loop;
 
   commit;
