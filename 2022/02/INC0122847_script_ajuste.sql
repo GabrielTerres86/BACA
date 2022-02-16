@@ -6,10 +6,10 @@ DECLARE
     vr_exc_erro    EXCEPTION;
     vr_incrineg    INTEGER;
     vr_tab_retorno LANC0001.typ_reg_retorno;
+    rw_crapdat     btch0001.cr_crapdat%rowtype;
                                   
     CURSOR cr_lanc_border IS                     
        SELECT a.cdcooper
-             ,a.dtmvtolt
              ,a.nrdconta
              ,a.nrdocmto
              ,a.nrborder
@@ -31,19 +31,23 @@ DECLARE
       rw_lanc_border cr_lanc_border%ROWTYPE;
      
 BEGIN
-  
+
        OPEN cr_lanc_border;
        FETCH cr_lanc_border INTO rw_lanc_border;
+       
+       OPEN  btch0001.cr_crapdat(pr_cdcooper => rw_lanc_border.cdcooper);
+       FETCH btch0001.cr_crapdat into rw_crapdat;
+       CLOSE btch0001.cr_crapdat;
        
        vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
                                  ,pr_nmdcampo => 'NRDOLOTE'
                                  ,pr_dsdchave => TO_CHAR(rw_lanc_border.cdcooper)|| ';'
-                                              || TO_CHAR(rw_lanc_border.dtmvtolt, 'DD/MM/RRRR') || ';'
+                                              || TO_CHAR(rw_crapdat.dtmvtolt, 'DD/MM/RRRR') || ';'
                                               || TO_CHAR('1')|| ';'
                                               || '100');
    
        LANC0001.pc_gerar_lancamento_conta(pr_cdcooper =>rw_lanc_border.cdcooper          
-                                         ,pr_dtmvtolt =>rw_lanc_border.dtmvtolt   
+                                         ,pr_dtmvtolt =>rw_crapdat.dtmvtolt   
                                          ,pr_cdagenci =>1     
                                          ,pr_cdbccxlt =>100 
                                          ,pr_nrdolote =>vr_nrdolote   
