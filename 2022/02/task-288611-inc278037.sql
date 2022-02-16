@@ -57,6 +57,21 @@ BEGIN
   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
     RAISE vr_exc_saida;
   END IF;
+  
+  
+  UPDATE CRAPPEP PEP
+     SET PEP.VLSDVPAR = 0,
+         PEP.VLSDVATU = 0,
+         PEP.INLIQUID = 1,
+         PEP.VLPAGPAR = 84.81
+   WHERE CDCOOPER = 10
+     AND NRDCONTA = 210153
+     AND PEP.NRCTREMP = 35037;
+  UPDATE crapepr epr
+     SET epr.inliquid = 1, epr.vlsdeved = 0
+   WHERE epr.cdcooper = 10
+     AND epr.NRDCONTA = 210153
+     AND epr.Nrctremp = 35037;
 
   COMMIT;
 EXCEPTION
