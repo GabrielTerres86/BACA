@@ -5,17 +5,8 @@ DECLARE
   vr_cdcooper    cecred.crapcop.cdcooper%type;
   vr_cdoperad    cecred.craplgm.cdoperad%TYPE;
   vr_dscritic    cecred.craplgm.dscritic%TYPE;
-  vr_cdcooperold cecred.crapcop.cdcooper%type;
   vr_nrdrowid    ROWID;
 
-  vr_tbcotas_dev_cdcooper         NUMBER(5);
-  vr_tbcotas_dev_nrdconta         NUMBER(10);
-  vr_tbcotas_dev_tpdevolucao      NUMBER(1);
-  vr_tbcotas_dev_vlcapital        NUMBER(15, 2);
-  vr_tbcotas_dev_qtparcelas       NUMBER(2);
-  vr_tbcotas_dev_dtinicio_credito DATE;
-  vr_tbcotas_dev_vlpago           NUMBER(15, 2);
-  vr_log_script                   VARCHAR2(8000);
   vr_dtmvtolt                     DATE;
   vr_nrdolote                     cecred.craplct.nrdolote%type;
   vr_busca                        VARCHAR2(100);
@@ -23,10 +14,6 @@ DECLARE
   vr_nrseqdig                     INTEGER;
   vr_vldcotas                     NUMBER;
   vr_vldcotas_crapcot             NUMBER;
-  vr_exception exception;
-  vr_tab_retorno LANC0001.typ_reg_retorno;
-  vr_cdcritic    PLS_INTEGER;
-  vr_exc_lanc_conta EXCEPTION;
 
   CURSOR cr_crapass is
     SELECT t.cdagenci, t.cdsitdct, t.cdcooper, t.nrdconta, t.inpessoa
@@ -64,29 +51,23 @@ DECLARE
                                        (1,11614609),
                                        (1,11636955),
                                        (1,11907231),
-                                       (1,11948990));
+                                       (1,11948990))
+  order by t.cdcooper, t.nrdconta;
 
   rg_crapass cr_crapass%rowtype;
 
 BEGIN
-  vr_cdcooperold := null;
   vr_dttransa    := trunc(sysdate);
   vr_hrtransa    := GENE0002.fn_busca_time;
 
   FOR rg_crapass IN cr_crapass LOOP
-  
-    if vr_cdcooperold is null then
-      vr_cdcooperold := rg_crapass.cdcooper;
-    end if;
-  
+    
     vr_cdcooper := rg_crapass.cdcooper;
     vr_nrdconta := rg_crapass.nrdconta;
   
-    if vr_cdcooperold != vr_cdcooper then
-      commit;
-    end if;
-  
-    GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+    vr_nrdrowid := null;
+    
+    GENE0001.pc_gera_log(pr_cdcooper => rg_crapass.cdcooper,
                          pr_cdoperad => vr_cdoperad,
                          pr_dscritic => vr_dscritic,
                          pr_dsorigem => 'AIMARO',
@@ -96,7 +77,7 @@ BEGIN
                          pr_hrtransa => vr_hrtransa,
                          pr_idseqttl => 0,
                          pr_nmdatela => NULL,
-                         pr_nrdconta => vr_nrdconta,
+                         pr_nrdconta => rg_crapass.nrdconta,
                          pr_nrdrowid => vr_nrdrowid);
   
     GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -174,21 +155,23 @@ BEGIN
          CDOPEORI,
          DTINSORI)
       VALUES
-        (vr_cdcooper,
+        (rg_crapass.cdcooper,
          rg_crapass.cdagenci,
          100,
          vr_nrdolote,
          vr_dtmvtolt,
          decode(rg_crapass.inpessoa,1,2079,2080),
          0,
-         vr_nrdconta,
+         rg_crapass.nrdconta,
          vr_nrdocmto,
          vr_nrseqdig,
          vr_vldcotas_crapcot,
          1,
          sysdate);
-    
-      GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+      
+      vr_nrdrowid := null;
+      
+      GENE0001.pc_gera_log(pr_cdcooper => rg_crapass.cdcooper,
                            pr_cdoperad => vr_cdoperad,
                            pr_dscritic => vr_dscritic,
                            pr_dsorigem => 'AIMARO',
@@ -198,7 +181,7 @@ BEGIN
                            pr_hrtransa => vr_hrtransa,
                            pr_idseqttl => 0,
                            pr_nmdatela => NULL,
-                           pr_nrdconta => vr_nrdconta,
+                           pr_nrdconta => rg_crapass.nrdconta,
                            pr_nrdrowid => vr_nrdrowid);
     
       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -232,7 +215,7 @@ BEGIN
     
   end loop;
 
-  commit;
+  COMMIT;
 
 EXCEPTION
   WHEN OTHERS THEN
