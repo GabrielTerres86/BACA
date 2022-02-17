@@ -122,14 +122,13 @@ BEGIN
     END;
     
     IF vr_vldcotas_crapcot > 0 THEN
-      -- Se possui valor de cota, deve devolver.
       
       vr_nrdolote := 600040;
       
       vr_busca := TRIM(to_char(rg_crapass.cdcooper)) || ';' ||
                           TRIM(to_char(vr_dtmvtolt,'DD/MM/RRRR')) || ';' ||
                           TRIM(to_char(rg_crapass.cdagenci)) || ';' ||
-                          '100;' || --cdbccxlt
+                          '100;' || 
                           vr_nrdolote;
                           
       vr_nrdocmto := fn_sequence('CRAPLCT','NRDOCMTO', vr_busca);
@@ -137,7 +136,7 @@ BEGIN
       vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||rg_crapass.cdcooper||';'||
                                                                   TRIM(to_char(vr_dtmvtolt, 'DD/MM/RRRR'))||';'||
                                                                   rg_crapass.cdagenci||
-                                                                  ';100;'|| --cdbccxlt
+                                                                  ';100;'|| 
                                                                   vr_nrdolote);
     
       INSERT INTO CECRED.craplct
