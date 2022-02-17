@@ -11,7 +11,7 @@ BEGIN
     , NULL
     , 'validarAdmissaoPeloAimaro'
     , NULL
-    , 211 -- matric
+    , 211
   );
   
   COMMIT;
