@@ -1,5 +1,5 @@
 BEGIN
-  --
+  
   INSERT INTO CECRED.crapaca (
     nmdeacao
     , nmpackag
@@ -13,9 +13,9 @@ BEGIN
     , NULL
     , 211 -- matric
   );
-  --
+  
   COMMIT;
-  --
+  
 EXCEPTION
   WHEN OTHERS THEN
     RAISE_APPLICATION_ERROR(-20000, 'ERRO: ' || SQLERRM);
