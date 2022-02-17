@@ -19,8 +19,6 @@ BEGIN
 	FROM craprdr
 	WHERE nmprogra = 'TELA_PEAC';
 
-
-
 	INSERT INTO crapaca
 	(nmdeacao
 	,nmpackag
@@ -36,9 +34,6 @@ BEGIN
 
 	COMMIT;
   
-  
-		
-	-- A - AMORTIZACAO	
 	INSERT INTO crapace
 		(nmdatela
 		,cddopcao
