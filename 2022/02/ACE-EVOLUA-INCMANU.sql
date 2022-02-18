@@ -8,7 +8,7 @@ BEGIN
    WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
      AND UPPER(crapace.cddopcao) = 'F'
      AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 13
+     AND crapace.cdcooper = 14
      AND crapace.idambace = 2;
   COMMIT;
   FOR i IN 1 .. vr_user.count LOOP
@@ -16,7 +16,7 @@ BEGIN
       INSERT INTO crapace
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
-        ('IMOVEL', 'F', vr_user(i), ' ', 13, 1, 0, 2);
+        ('IMOVEL', 'F', vr_user(i), ' ', 14, 1, 0, 2);
       COMMIT;
     EXCEPTION
       WHEN OTHERS THEN	    
