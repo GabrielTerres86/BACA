@@ -123,7 +123,7 @@ BEGIN
           EXCEPTION
             WHEN OTHERS THEN
               gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
-                                            ,pr_des_text => 'Erro na leitura da linha: ' || vr_nrcontad || ' --> ' || SQLERRM);
+                                            ,pr_des_text => 'Erro na leitura da linha: ' || vr_nrcontad || ' -> ' || SQLERRM);
               
             CONTINUE;
           END;             
@@ -139,7 +139,7 @@ BEGIN
           WHEN vr_exc_erro THEN
             RAISE vr_exc_erro;
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro na leitura da linha '||vr_nrcontad||' --> '||SQLERRM;
+            vr_dscritic := 'Erro na leitura da linha '||vr_nrcontad||' -> '||SQLERRM;
             RAISE vr_exc_erro;
         END;
       END LOOP;     
