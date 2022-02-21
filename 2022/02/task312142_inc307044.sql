@@ -59,6 +59,7 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   COMMIT;
+  
 EXCEPTION
   WHEN vr_exc_saida THEN
     RAISE_application_error(-20500, vr_dscritic);
