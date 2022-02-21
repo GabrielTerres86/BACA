@@ -1,5 +1,5 @@
 DECLARE
-   vr_excsaida             EXCEPTION;
+   vr_excsaida             EXCEPTION; 
    vr_cdcritic             crapcri.cdcritic%TYPE;
    vr_dscritic             VARCHAR2(5000) := ' ';  
    vr_nmarqimp1            VARCHAR2(100)  := 'backup2.txt';
