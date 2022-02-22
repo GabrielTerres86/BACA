@@ -35,7 +35,7 @@ DECLARE
 						<tributoIOFValor>76.04</tributoIOFValor>
 						<valor>3076.04</valor>
 						<valorBase>3000.00</valorBase>
-						<dataProposta>2022-01-28T15:08:42</dataProposta>
+						<dataProposta>2022-02-22T15:08:42</dataProposta>
 						<emitente> 
 						  <dataNascOuConstituicao>1986-01-14T00:00:00</dataNascOuConstituicao>
 						  <identificadorReceitaFederal>35918436871</identificadorReceitaFederal>
@@ -60,7 +60,7 @@ DECLARE
 						  </contaCorrente>
 						  <numeroTitularidade>1</numeroTitularidade>
 						  <pessoaContatoEndereco>
-							<CEP>098437400</CEP>
+							<CEP>09843740</CEP>
 							<cidade>
 							  <descricao>SAO BERNARDO DO CAMP</descricao>
 							</cidade>
