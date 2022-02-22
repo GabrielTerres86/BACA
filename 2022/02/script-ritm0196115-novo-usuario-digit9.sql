@@ -1,6 +1,6 @@
 BEGIN
 update craptab
-   set dstextab = dstextab ||'#F0015551|0 0101_digit_9.cecred.coop.br;'
+   set dstextab = dstextab ||'#F0015551|0 0101_digit_9.ailos.coop.br;'
  where nmsistem = 'CRED'
    and tptabela = 'GENERI'
    and cdempres = 0
