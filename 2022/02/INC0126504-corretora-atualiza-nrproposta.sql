@@ -51,6 +51,7 @@ DECLARE
      rw_crawseg cr_crawseg%ROWTYPE;
 BEGIN
    BEGIN
+   
      vr_nmdirrec := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS')||'cpd/bacas/INC0126504';
      vr_nmarqmov := 'INC0126504_centralizada.csv';
      vr_nmarq    := 'ROLLBACK_INC0126504.sql';
