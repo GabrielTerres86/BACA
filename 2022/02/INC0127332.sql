@@ -648,12 +648,7 @@ DECLARE
 (t.cdcooper = 1 and t.nrdconta = 970425) or (t.cdcooper = 1 and t.nrdconta = 1889028) or (t.cdcooper = 1 and t.nrdconta = 960365) or
 (t.cdcooper = 1 and t.nrdconta = 970450) or (t.cdcooper = 1 and t.nrdconta = 970514) or (t.cdcooper = 1 and t.nrdconta = 1862944) or
 (t.cdcooper = 1 and t.nrdconta = 1899988) or (t.cdcooper = 1 and t.nrdconta = 1904914) or (t.cdcooper = 1 and t.nrdconta = 1905066) or
-(t.cdcooper = 1 and t.nrdconta = 1913093) or (t.cdcooper = 1 and t.nrdconta = 3129586) 
-           )
-union
-    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-      FROM CRAPASS t
-     where (
+(t.cdcooper = 1 and t.nrdconta = 1913093) or (t.cdcooper = 1 and t.nrdconta = 3129586) or
 (t.cdcooper = 2 and t.nrdconta = 196053) or (t.cdcooper = 2 and t.nrdconta = 375730) or (t.cdcooper = 2 and t.nrdconta = 449504) or
 (t.cdcooper = 2 and t.nrdconta = 458937) or (t.cdcooper = 2 and t.nrdconta = 460745) or (t.cdcooper = 2 and t.nrdconta = 40290) or
 (t.cdcooper = 2 and t.nrdconta = 20745) or (t.cdcooper = 2 and t.nrdconta = 71005) or (t.cdcooper = 2 and t.nrdconta = 110736) or
@@ -791,12 +786,7 @@ union
 (t.cdcooper = 2 and t.nrdconta = 52850) or (t.cdcooper = 2 and t.nrdconta = 52884) or (t.cdcooper = 2 and t.nrdconta = 32336) or
 (t.cdcooper = 2 and t.nrdconta = 40541) or (t.cdcooper = 2 and t.nrdconta = 36412) or (t.cdcooper = 2 and t.nrdconta = 48178) or
 (t.cdcooper = 2 and t.nrdconta = 55794) or (t.cdcooper = 2 and t.nrdconta = 33766) or (t.cdcooper = 2 and t.nrdconta = 34789) or
-(t.cdcooper = 2 and t.nrdconta = 56154)
-           )
-union
-    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-      FROM CRAPASS t
-     where (
+(t.cdcooper = 2 and t.nrdconta = 56154) or
 (t.cdcooper = 5 and t.nrdconta = 6343) or (t.cdcooper = 5 and t.nrdconta = 99961) or (t.cdcooper = 5 and t.nrdconta = 147044) or
 (t.cdcooper = 5 and t.nrdconta = 148334) or (t.cdcooper = 5 and t.nrdconta = 106283) or (t.cdcooper = 5 and t.nrdconta = 86908) or
 (t.cdcooper = 5 and t.nrdconta = 148571) or (t.cdcooper = 5 and t.nrdconta = 148202) or (t.cdcooper = 5 and t.nrdconta = 94110) or
@@ -821,12 +811,7 @@ union
 (t.cdcooper = 5 and t.nrdconta = 37931) or (t.cdcooper = 5 and t.nrdconta = 39381) or (t.cdcooper = 5 and t.nrdconta = 39403) or
 (t.cdcooper = 5 and t.nrdconta = 39535) or (t.cdcooper = 5 and t.nrdconta = 44237) or (t.cdcooper = 5 and t.nrdconta = 40525) or
 (t.cdcooper = 5 and t.nrdconta = 31119) or (t.cdcooper = 5 and t.nrdconta = 28789) or (t.cdcooper = 5 and t.nrdconta = 37206) or
-(t.cdcooper = 5 and t.nrdconta = 35009) or (t.cdcooper = 5 and t.nrdconta = 21261)
-           )
-union
-    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-      FROM CRAPASS t
-     where (
+(t.cdcooper = 5 and t.nrdconta = 35009) or (t.cdcooper = 5 and t.nrdconta = 21261) or
 (t.cdcooper = 6 and t.nrdconta = 149551) or (t.cdcooper = 6 and t.nrdconta = 73725) or (t.cdcooper = 6 and t.nrdconta = 104604) or
 (t.cdcooper = 6 and t.nrdconta = 78395) or (t.cdcooper = 6 and t.nrdconta = 128384) or (t.cdcooper = 6 and t.nrdconta = 122190) or
 (t.cdcooper = 6 and t.nrdconta = 122980) or (t.cdcooper = 6 and t.nrdconta = 57401) or (t.cdcooper = 6 and t.nrdconta = 59358) or
@@ -849,12 +834,7 @@ union
 (t.cdcooper = 6 and t.nrdconta = 43397) or (t.cdcooper = 6 and t.nrdconta = 52590) or (t.cdcooper = 6 and t.nrdconta = 53031) or
 (t.cdcooper = 6 and t.nrdconta = 14168) or (t.cdcooper = 6 and t.nrdconta = 43087) or (t.cdcooper = 6 and t.nrdconta = 13145) or
 (t.cdcooper = 6 and t.nrdconta = 40347) or (t.cdcooper = 6 and t.nrdconta = 9156) or (t.cdcooper = 6 and t.nrdconta = 31801) or
-(t.cdcooper = 6 and t.nrdconta = 6009) or (t.cdcooper = 6 and t.nrdconta = 2356) or (t.cdcooper = 6 and t.nrdconta = 4359)
-           )
-union
-    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-      FROM CRAPASS t
-     where (
+(t.cdcooper = 6 and t.nrdconta = 6009) or (t.cdcooper = 6 and t.nrdconta = 2356) or (t.cdcooper = 6 and t.nrdconta = 4359) or
 (t.cdcooper = 7 and t.nrdconta = 92800) or (t.cdcooper = 7 and t.nrdconta = 231274) or (t.cdcooper = 7 and t.nrdconta = 235954) or
 (t.cdcooper = 7 and t.nrdconta = 218901) or (t.cdcooper = 7 and t.nrdconta = 320439) or (t.cdcooper = 7 and t.nrdconta = 312100) or
 (t.cdcooper = 7 and t.nrdconta = 55662) or (t.cdcooper = 7 and t.nrdconta = 104809) or (t.cdcooper = 7 and t.nrdconta = 118729) or
@@ -918,12 +898,7 @@ union
 (t.cdcooper = 7 and t.nrdconta = 29122) or (t.cdcooper = 7 and t.nrdconta = 43346) or (t.cdcooper = 7 and t.nrdconta = 39055) or
 (t.cdcooper = 7 and t.nrdconta = 43117) or (t.cdcooper = 7 and t.nrdconta = 28215) or (t.cdcooper = 7 and t.nrdconta = 13200) or
 (t.cdcooper = 7 and t.nrdconta = 34444) or (t.cdcooper = 7 and t.nrdconta = 23000) or (t.cdcooper = 7 and t.nrdconta = 7927) or
-(t.cdcooper = 7 and t.nrdconta = 17876)
-           )
-union
-    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-      FROM CRAPASS t
-     where (
+(t.cdcooper = 7 and t.nrdconta = 17876) or
 (t.cdcooper = 8 and t.nrdconta = 6297) or (t.cdcooper = 8 and t.nrdconta = 17590) or (t.cdcooper = 8 and t.nrdconta = 20842) or
 (t.cdcooper = 8 and t.nrdconta = 21539) or (t.cdcooper = 8 and t.nrdconta = 23582) or (t.cdcooper = 8 and t.nrdconta = 36366) or
 (t.cdcooper = 8 and t.nrdconta = 11002) or (t.cdcooper = 8 and t.nrdconta = 25976) or (t.cdcooper = 8 and t.nrdconta = 28002) or
@@ -931,12 +906,7 @@ union
 (t.cdcooper = 8 and t.nrdconta = 27235) or (t.cdcooper = 8 and t.nrdconta = 23710) or (t.cdcooper = 8 and t.nrdconta = 24422) or
 (t.cdcooper = 8 and t.nrdconta = 16268) or (t.cdcooper = 8 and t.nrdconta = 4472) or (t.cdcooper = 8 and t.nrdconta = 15962) or
 (t.cdcooper = 8 and t.nrdconta = 14001) or (t.cdcooper = 8 and t.nrdconta = 2020) or (t.cdcooper = 8 and t.nrdconta = 7994) or
-(t.cdcooper = 8 and t.nrdconta = 140)
-           )
-union
-    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-      FROM CRAPASS t
-     where (
+(t.cdcooper = 8 and t.nrdconta = 140) or
 (t.cdcooper = 9 and t.nrdconta = 263214) or (t.cdcooper = 9 and t.nrdconta = 29904) or (t.cdcooper = 9 and t.nrdconta = 906042) or
 (t.cdcooper = 9 and t.nrdconta = 126403) or (t.cdcooper = 9 and t.nrdconta = 190608) or (t.cdcooper = 9 and t.nrdconta = 5126) or
 (t.cdcooper = 9 and t.nrdconta = 30848) or (t.cdcooper = 9 and t.nrdconta = 34207) or (t.cdcooper = 9 and t.nrdconta = 53031) or
@@ -982,12 +952,7 @@ union
 (t.cdcooper = 9 and t.nrdconta = 5274) or (t.cdcooper = 9 and t.nrdconta = 10448) or (t.cdcooper = 9 and t.nrdconta = 12637) or
 (t.cdcooper = 9 and t.nrdconta = 11258) or (t.cdcooper = 9 and t.nrdconta = 11274) or (t.cdcooper = 9 and t.nrdconta = 11479) or
 (t.cdcooper = 9 and t.nrdconta = 11584) or (t.cdcooper = 9 and t.nrdconta = 12866) or (t.cdcooper = 9 and t.nrdconta = 8940) or
-(t.cdcooper = 9 and t.nrdconta = 6700) or (t.cdcooper = 9 and t.nrdconta = 5754) 
-           )
-union
-    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-      FROM CRAPASS t
-     where (
+(t.cdcooper = 9 and t.nrdconta = 6700) or (t.cdcooper = 9 and t.nrdconta = 5754) or
 (t.cdcooper = 10 and t.nrdconta = 15407) or (t.cdcooper = 10 and t.nrdconta = 199656) or (t.cdcooper = 10 and t.nrdconta = 16187) or
 (t.cdcooper = 10 and t.nrdconta = 18384) or (t.cdcooper = 10 and t.nrdconta = 62219) or (t.cdcooper = 10 and t.nrdconta = 92690) or
 (t.cdcooper = 10 and t.nrdconta = 63266) or (t.cdcooper = 10 and t.nrdconta = 22136) or (t.cdcooper = 10 and t.nrdconta = 18350) or
@@ -1000,12 +965,7 @@ union
 (t.cdcooper = 10 and t.nrdconta = 14559) or (t.cdcooper = 10 and t.nrdconta = 14176) or (t.cdcooper = 10 and t.nrdconta = 14320) or
 (t.cdcooper = 10 and t.nrdconta = 12963) or (t.cdcooper = 10 and t.nrdconta = 12998) or (t.cdcooper = 10 and t.nrdconta = 12076) or
 (t.cdcooper = 10 and t.nrdconta = 12165) or (t.cdcooper = 10 and t.nrdconta = 2968) or (t.cdcooper = 10 and t.nrdconta = 4090) or
-(t.cdcooper = 10 and t.nrdconta = 5975) or (t.cdcooper = 10 and t.nrdconta = 6386)
-           )
-union
-    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-      FROM CRAPASS t
-     where (
+(t.cdcooper = 10 and t.nrdconta = 5975) or (t.cdcooper = 10 and t.nrdconta = 6386) or
 (t.cdcooper = 11 and t.nrdconta = 78441) or (t.cdcooper = 11 and t.nrdconta = 96938) or (t.cdcooper = 11 and t.nrdconta = 105066) or
 (t.cdcooper = 11 and t.nrdconta = 108588) or (t.cdcooper = 11 and t.nrdconta = 205478) or (t.cdcooper = 11 and t.nrdconta = 221422) or
 (t.cdcooper = 11 and t.nrdconta = 328421) or (t.cdcooper = 11 and t.nrdconta = 433292) or (t.cdcooper = 11 and t.nrdconta = 435252) or
@@ -1054,12 +1014,7 @@ union
 (t.cdcooper = 11 and t.nrdconta = 12548) or (t.cdcooper = 11 and t.nrdconta = 16667) or (t.cdcooper = 11 and t.nrdconta = 16713) or
 (t.cdcooper = 11 and t.nrdconta = 17728) or (t.cdcooper = 11 and t.nrdconta = 14770) or (t.cdcooper = 11 and t.nrdconta = 1996) or
 (t.cdcooper = 11 and t.nrdconta = 1988) or (t.cdcooper = 11 and t.nrdconta = 2909) or (t.cdcooper = 11 and t.nrdconta = 604) or
-(t.cdcooper = 11 and t.nrdconta = 1384)
-           )
-union
-    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-      FROM CRAPASS t
-     where (
+(t.cdcooper = 11 and t.nrdconta = 1384) or
 (t.cdcooper = 12 and t.nrdconta = 14460) or (t.cdcooper = 12 and t.nrdconta = 30732) or (t.cdcooper = 12 and t.nrdconta = 12998) or
 (t.cdcooper = 12 and t.nrdconta = 113794) or (t.cdcooper = 12 and t.nrdconta = 112968) or (t.cdcooper = 12 and t.nrdconta = 49964) or
 (t.cdcooper = 12 and t.nrdconta = 49620) or (t.cdcooper = 12 and t.nrdconta = 17329) or (t.cdcooper = 12 and t.nrdconta = 12017) or
@@ -1068,12 +1023,7 @@ union
 (t.cdcooper = 12 and t.nrdconta = 16551) or (t.cdcooper = 12 and t.nrdconta = 11983) or (t.cdcooper = 12 and t.nrdconta = 3271) or
 (t.cdcooper = 12 and t.nrdconta = 20354) or (t.cdcooper = 12 and t.nrdconta = 15598) or (t.cdcooper = 12 and t.nrdconta = 15610) or
 (t.cdcooper = 12 and t.nrdconta = 2925) or (t.cdcooper = 12 and t.nrdconta = 3468) or (t.cdcooper = 12 and t.nrdconta = 3972) or
-(t.cdcooper = 12 and t.nrdconta = 6157)
-           )
-union
-    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-      FROM CRAPASS t
-     where (
+(t.cdcooper = 12 and t.nrdconta = 6157) or
 (t.cdcooper = 13 and t.nrdconta = 409707) or (t.cdcooper = 13 and t.nrdconta = 204056) or (t.cdcooper = 13 and t.nrdconta = 191400) or
 (t.cdcooper = 13 and t.nrdconta = 73130) or (t.cdcooper = 13 and t.nrdconta = 412899) or (t.cdcooper = 13 and t.nrdconta = 38300) or
 (t.cdcooper = 13 and t.nrdconta = 713511) or (t.cdcooper = 13 and t.nrdconta = 708666) or (t.cdcooper = 13 and t.nrdconta = 200751) or
@@ -1083,12 +1033,7 @@ union
 (t.cdcooper = 13 and t.nrdconta = 303089) or (t.cdcooper = 13 and t.nrdconta = 94412) or (t.cdcooper = 13 and t.nrdconta = 302309) or
 (t.cdcooper = 13 and t.nrdconta = 26255) or (t.cdcooper = 13 and t.nrdconta = 91537) or (t.cdcooper = 13 and t.nrdconta = 19518) or
 (t.cdcooper = 13 and t.nrdconta = 19720) or (t.cdcooper = 13 and t.nrdconta = 19895) or (t.cdcooper = 13 and t.nrdconta = 22675) or
-(t.cdcooper = 13 and t.nrdconta = 8834) or (t.cdcooper = 13 and t.nrdconta = 10863) or (t.cdcooper = 13 and t.nrdconta = 2348)
-           )
-union
-    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-      FROM CRAPASS t
-     where (
+(t.cdcooper = 13 and t.nrdconta = 8834) or (t.cdcooper = 13 and t.nrdconta = 10863) or (t.cdcooper = 13 and t.nrdconta = 2348) or
 (t.cdcooper = 14 and t.nrdconta = 83011) or (t.cdcooper = 14 and t.nrdconta = 15288) or (t.cdcooper = 14 and t.nrdconta = 82422) or
 (t.cdcooper = 14 and t.nrdconta = 56758) or (t.cdcooper = 14 and t.nrdconta = 114340) or (t.cdcooper = 14 and t.nrdconta = 36102) or
 (t.cdcooper = 14 and t.nrdconta = 16420) or (t.cdcooper = 14 and t.nrdconta = 19941) or (t.cdcooper = 14 and t.nrdconta = 82627) or
@@ -1097,12 +1042,7 @@ union
 (t.cdcooper = 14 and t.nrdconta = 30180) or (t.cdcooper = 14 and t.nrdconta = 16829) or (t.cdcooper = 14 and t.nrdconta = 18619) or
 (t.cdcooper = 14 and t.nrdconta = 13129) or (t.cdcooper = 14 and t.nrdconta = 17248) or (t.cdcooper = 14 and t.nrdconta = 3980) or
 (t.cdcooper = 14 and t.nrdconta = 9024) or (t.cdcooper = 14 and t.nrdconta = 1210) or (t.cdcooper = 14 and t.nrdconta = 4600) or
-(t.cdcooper = 14 and t.nrdconta = 4383) 
-           )
-union
-    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-      FROM CRAPASS t
-     where (
+(t.cdcooper = 14 and t.nrdconta = 4383) or
 (t.cdcooper = 16 and t.nrdconta = 655) or (t.cdcooper = 16 and t.nrdconta = 15180) or (t.cdcooper = 16 and t.nrdconta = 69450) or
 (t.cdcooper = 16 and t.nrdconta = 6554431) or (t.cdcooper = 16 and t.nrdconta = 6554962) or (t.cdcooper = 16 and t.nrdconta = 163031) or
 (t.cdcooper = 16 and t.nrdconta = 207446) or (t.cdcooper = 16 and t.nrdconta = 240389) or (t.cdcooper = 16 and t.nrdconta = 412023) or
@@ -1126,12 +1066,7 @@ union
 (t.cdcooper = 16 and t.nrdconta = 1835890) or (t.cdcooper = 16 and t.nrdconta = 2207532) or (t.cdcooper = 16 and t.nrdconta = 2767325) or
 (t.cdcooper = 16 and t.nrdconta = 2599449) or (t.cdcooper = 16 and t.nrdconta = 963437) or (t.cdcooper = 16 and t.nrdconta = 965138) or
 (t.cdcooper = 16 and t.nrdconta = 612944) or (t.cdcooper = 16 and t.nrdconta = 951463) or (t.cdcooper = 16 and t.nrdconta = 3131548) or
-(t.cdcooper = 16 and t.nrdconta = 964794)
-           )
-union
-    SELECT t.flgctitg, t.cdcooper, t.nrdconta, 3 newsit
-      FROM CRAPASS t
-     where (
+(t.cdcooper = 16 and t.nrdconta = 964794) or
 (t.cdcooper = 1 and t.nrdconta = 906697) or (t.cdcooper = 1 and t.nrdconta = 3123910) or (t.cdcooper = 2 and t.nrdconta = 3115) or
 (t.cdcooper = 2 and t.nrdconta = 4464) or (t.cdcooper = 2 and t.nrdconta = 20826) or (t.cdcooper = 2 and t.nrdconta = 23540) or
 (t.cdcooper = 2 and t.nrdconta = 31038) or (t.cdcooper = 2 and t.nrdconta = 32794) or (t.cdcooper = 2 and t.nrdconta = 39454) or
@@ -1259,42 +1194,52 @@ union
            )           
 ;
 
- 
-rg_crapass cr_crapass%rowtype;
+  type rg_crapass_type is table of cr_crapass%rowtype;
+  rg_crapass rg_crapass_type;
+  vr_int BINARY_INTEGER;
 
 BEGIN
   vr_dttransa    := trunc(sysdate);
   vr_hrtransa    := GENE0002.fn_busca_time;
-
-  FOR rg_crapass IN cr_crapass LOOP
   
-    vr_cdcooper := rg_crapass.cdcooper;
-    vr_nrdconta := rg_crapass.nrdconta;
-  
-    GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
-                         pr_cdoperad => vr_cdoperad,
-                         pr_dscritic => vr_dscritic,
-                         pr_dsorigem => 'AIMARO',
-                         pr_dstransa => 'Alteracao do ITG de conta por script - INC0127332',
-                         pr_dttransa => vr_dttransa,
-                         pr_flgtrans => 1,
-                         pr_hrtransa => vr_hrtransa,
-                         pr_idseqttl => 0,
-                         pr_nmdatela => NULL,
-                         pr_nrdconta => vr_nrdconta,
-                         pr_nrdrowid => vr_nrdrowid);
-  
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                              pr_nmdcampo => 'crapass.flgctitg',
-                              pr_dsdadant => rg_crapass.flgctitg,
-                              pr_dsdadatu => rg_crapass.newsit);
-  
-    update crapass a
-       set a.flgctitg = rg_crapass.newsit
-     where a.cdcooper = vr_cdcooper
-       and a.nrdconta = vr_nrdconta;
-  
+  Open cr_crapass;
+  LOOP
+    FETCH cr_crapass BULK COLLECT INTO rg_crapass LIMIT 300;
+    EXIT WHEN rg_crapass.count = 0;
+    
+    FOR vr_int IN 1 .. rg_crapass.count LOOP
+    
+      vr_cdcooper := rg_crapass(vr_int).cdcooper;
+      vr_nrdconta := rg_crapass(vr_int).nrdconta;
+    
+      GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                           pr_cdoperad => vr_cdoperad,
+                           pr_dscritic => vr_dscritic,
+                           pr_dsorigem => 'AIMARO',
+                           pr_dstransa => 'Alteracao do ITG de conta por script - INC0127332',
+                           pr_dttransa => vr_dttransa,
+                           pr_flgtrans => 1,
+                           pr_hrtransa => vr_hrtransa,
+                           pr_idseqttl => 0,
+                           pr_nmdatela => NULL,
+                           pr_nrdconta => vr_nrdconta,
+                           pr_nrdrowid => vr_nrdrowid);
+    
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'crapass.flgctitg',
+                                pr_dsdadant => rg_crapass(vr_int).flgctitg,
+                                pr_dsdadatu => rg_crapass(vr_int).newsit);
+    
+      update crapass a
+         set a.flgctitg = rg_crapass(vr_int).newsit
+       where a.cdcooper = vr_cdcooper
+         and a.nrdconta = vr_nrdconta;
+    
+    end loop;
+    
   end loop;
+  
+  CLOSE cr_crapass;
 
   commit;
 
