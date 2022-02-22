@@ -1,0 +1,8 @@
+﻿--CRPS541 - INTEGRAR ARQUIVOS DE DEV. DE DOC AILOS - NR
+--16 rows affected
+UPDATE crapprg p
+   SET p.NRSOLICI = 9999
+     , p.INLIBPRG = 2
+ WHERE p.CDPROGRA = 'CRPS541';
+
+COMMIT;     
