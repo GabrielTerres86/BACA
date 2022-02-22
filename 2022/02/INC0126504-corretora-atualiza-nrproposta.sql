@@ -16,7 +16,7 @@ DECLARE
     vr_linha          VARCHAR2(32767);
     TYPE typ_reg_arq IS RECORD(nrproposta tbseg_prestamista.nrproposta%TYPE,
                                cdcooper   tbseg_prestamista.cdcooper%TYPE);
-    --Definicao dos tipos de tabelas
+
     TYPE typ_tab_arquiv IS TABLE OF typ_reg_arq INDEX BY VARCHAR2(50);
     vr_typ_tab_arquiv typ_tab_arquiv;   
     CURSOR cr_seg_prestamista(pr_cdcooper   IN tbseg_prestamista.cdcooper%TYPE
@@ -79,7 +79,7 @@ BEGIN
          vr_dslinhaarq := replace (vr_dslinhaarq,'"','');
          vr_nrproposta := TRIM(gene0002.fn_busca_entrada(1,vr_dslinhaarq,';'));
          vr_cdproduto  := TRIM(gene0002.fn_busca_entrada(2,vr_dslinhaarq,';'));
-         -- Localizando cdcooper
+
          OPEN cr_crapcop(pr_cdproduto => vr_cdproduto);
            FETCH cr_crapcop INTO vr_cdcooper;
            IF cr_crapcop%NOTFOUND THEN
@@ -87,7 +87,7 @@ BEGIN
              CONTINUE;
            END IF;
          CLOSE cr_crapcop;
-         -- Gravando na tabela temporário os registros da planilha
+
          vr_typ_tab_arquiv(vr_index).nrproposta := vr_nrproposta;
          vr_typ_tab_arquiv(vr_index).cdcooper   := vr_cdcooper;
          vr_index := vr_index + 1;
@@ -102,27 +102,25 @@ BEGIN
         RAISE vr_exc_saida;
      END IF;
      GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'BEGIN');
-     -- Pecorrendo os recusados para atualizar
+
      vr_index := vr_typ_tab_arquiv.FIRST;
      WHILE (vr_index IS NOT NULL) LOOP
-       -- Localizndo seguro prestamista
+
        OPEN cr_seg_prestamista(pr_cdcooper   => vr_typ_tab_arquiv(vr_index).cdcooper
                               ,pr_nrproposta => vr_typ_tab_arquiv(vr_index).nrproposta);
          FETCH cr_seg_prestamista INTO rw_seg_prestamista;
          
-           -- Gerando um novo numero de proposta
            vr_nrproposta := segu0003.FN_NRPROPOSTA;
          
            IF cr_seg_prestamista%FOUND THEN
            
-             -- Gerando Arquivo de Rollback tbseg_prestamista
              vr_linha :=
                 '  UPDATE tbseg_prestamista '||
                 '     SET nrproposta = ' || rw_seg_prestamista.nrproposta ||
                 '        ,tpregist   = ' || rw_seg_prestamista.tpregist ||
                 '   WHERE idseqtra   = '|| rw_seg_prestamista.idseqtra||' ;';
              gene0001.pc_escr_linha_arquivo(vr_ind_arq,vr_linha);
-             -- Atualizando tbseg_prestamista
+
              UPDATE tbseg_prestamista
                 SET nrproposta  = vr_nrproposta,
                     tpregist    = 1
@@ -134,13 +132,13 @@ BEGIN
                             ,pr_nrctrseg   => rw_seg_prestamista.nrctrseg);
                FETCH cr_crawseg INTO rw_crawseg;
                  IF cr_crawseg%FOUND THEN
-                   -- Gerando Arquivo de Rollback crawseg
+
                    vr_linha :=
                        '  UPDATE crawseg ' ||
                        '     SET nrproposta = ' || rw_crawseg.nrproposta ||
                        '   WHERE progress_recid = '|| rw_crawseg.progress_recid ||';  ';
                    gene0001.pc_escr_linha_arquivo(vr_ind_arq,vr_linha);
-                   -- Atualizando crawseg
+
                    UPDATE crawseg
                       SET nrproposta =  vr_nrproposta
                     WHERE progress_recid = rw_crawseg.progress_recid;                   
