@@ -1,5 +1,5 @@
 DECLARE
-  TYPE tp_varray IS VARRAY(10) OF VARCHAR2(10);
+  TYPE tp_varray IS VARRAY(16) OF VARCHAR2(10);
   vr_user tp_varray := tp_varray('f0130197',
 								 'f0130474',
 								 'f0130372',
@@ -9,7 +9,13 @@ DECLARE
 								 'f0130538',
 								 'f0130479',
 								 'f0130245',
-								 'f0130405');
+								 'f0130405',
+								 'f0033715',
+								 'f0033379',
+								 'f0033210',
+								 'f0033304',
+								 'f0033328',
+								 'f0033406');								 
 					 
 BEGIN
   DELETE FROM crapace
