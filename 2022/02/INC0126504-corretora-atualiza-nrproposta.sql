@@ -1,4 +1,4 @@
-DECLARE 
+DECLARE
     vr_dslinhaarq     VARCHAR2(2000);
     vr_nrproposta     tbseg_prestamista.nrproposta%TYPE;
     vr_nmrescop       VARCHAR2(20);
