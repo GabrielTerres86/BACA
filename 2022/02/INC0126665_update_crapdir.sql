@@ -23,5 +23,10 @@ begin
   update crapdir set vlsdapli = 56245.77  where progress_recid = 9519518;
   update crapdir set vlsdapli = 15714.58  where progress_recid = 9518661;
   update crapdir set vlsdapli = 167302.36 where progress_recid = 9592256;
+  update crapdir set vlsdapli = 503245.38  where progress_recid = 9518896;
+  update crapdir set vlsdapli = 282195.88  where progress_recid = 9595043;
+  update crapdir set vlsdapli = 1103057.38 where progress_recid = 9535398;
+  update crapdir set vlsdapli = 2085.10    where progress_recid = 8969605;
+  update crapdir set vlsdapli = 312505.66  where progress_recid = 8941543;
   commit;
 end;
