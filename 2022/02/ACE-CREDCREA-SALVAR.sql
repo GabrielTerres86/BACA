@@ -1,5 +1,5 @@
 DECLARE
-  TYPE tp_varray IS VARRAY(8) OF VARCHAR2(10);
+  TYPE tp_varray IS VARRAY(14) OF VARCHAR2(10);
   vr_user tp_varray := tp_varray('f0070618',
 								 'f0070686',
 								 'f0070631',
@@ -7,7 +7,13 @@ DECLARE
 								 'f0070397',
 								 'f0070079',
 								 'f0070681',
-								 'f0070001');
+								 'f0070001',
+								 'f0033715',
+								 'f0033379',
+								 'f0033210',
+								 'f0033304',
+								 'f0033328',
+								 'f0033406');
 BEGIN
   DELETE FROM crapace
    WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
