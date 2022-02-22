@@ -30,7 +30,7 @@ declare
     <tributoIOFValor>0.0</tributoIOFValor>
     <valor>4949.25</valor>
     <valorBase>4949.25</valorBase>
-    <dataProposta>2022-02-02T16:57:38</dataProposta>
+    <dataProposta>2022-02-22T16:57:38</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1983-07-06T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>4209238961</identificadorReceitaFederal>
@@ -177,7 +177,7 @@ declare
     <tributoIOFValor>0.0</tributoIOFValor>
     <valor>23240.57</valor>
     <valorBase>23240.57</valorBase>
-    <dataProposta>2022-01-31T13:22:07</dataProposta>
+    <dataProposta>2022-02-22T13:22:07</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1983-07-06T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>4209238961</identificadorReceitaFederal>
