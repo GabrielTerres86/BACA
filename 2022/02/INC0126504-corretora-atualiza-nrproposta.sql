@@ -60,7 +60,7 @@ BEGIN
                              ,pr_utlfileh => vr_arqhandle
                              ,pr_des_erro => vr_dscritic );
      IF vr_dscritic IS NOT NULL THEN
-         vr_dscritic  := 'Erro na abertura do arquivo --> '|| vr_nmdirrec||'/' ||vr_nmarqmov ||' --> '||vr_dscritic ;
+         vr_dscritic  := vr_dscritic ||'  Não pode abrir arquivo '||vr_nmdirrec || '/' || vr_nmarq ;
          RAISE vr_exc_saida;
      END IF;
      vr_nrlinha := 0;
