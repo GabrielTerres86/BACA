@@ -317,7 +317,7 @@ BEGIN
                btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                          ,pr_ind_tipo_log => 2
                                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                            || vr_cdprogra || ' --> '
+                                                            || vr_cdprogra || ' >>> '
                                                             || vr_dscritic );
               RAISE vr_exc_saida;
             ELSE
@@ -340,7 +340,7 @@ BEGIN
                btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                          ,pr_ind_tipo_log => 2 
                                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                            || vr_cdprogra || ' --> '
+                                                            || vr_cdprogra || ' >>> '
                                                             || vr_dscritic );
 
                RAISE vr_exc_saida;
@@ -365,7 +365,7 @@ BEGIN
                btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                          ,pr_ind_tipo_log => 2 
                                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                            || vr_cdprogra || ' --> '
+                                                            || vr_cdprogra || ' >>> '
                                                             || vr_dscritic );
                RAISE vr_exc_saida;
             END IF;
@@ -505,7 +505,7 @@ BEGIN
                        btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                                  ,pr_ind_tipo_log => 2 
                                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                     || vr_cdprogra || ' --> '
+                                                                     || vr_cdprogra || ' >>> '
                                                                       || vr_dscritic );
                        RAISE vr_exc_saida;
                     END IF;
@@ -546,7 +546,7 @@ BEGIN
                         btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                                   ,pr_ind_tipo_log => 2 
                                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                     || vr_cdprogra || ' --> '
+                                                                     || vr_cdprogra || ' >>> '
                                                                      || vr_dscritic );
                         RAISE vr_exc_saida;
                     END;
@@ -573,7 +573,7 @@ BEGIN
                         btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                                   ,pr_ind_tipo_log => 2 
                                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                      || vr_cdprogra || ' --> '
+                                                                      || vr_cdprogra || ' >>> '
                                                                       || vr_dscritic );
                         RAISE vr_exc_saida;
                    END;
@@ -593,7 +593,7 @@ BEGIN
                        btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                                  ,pr_ind_tipo_log => 2 
                                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                     || vr_cdprogra || ' --> '
+                                                                     || vr_cdprogra || ' >>> '
                                                                      || vr_dscritic );
 
                        RAISE vr_exc_saida;
@@ -617,7 +617,7 @@ BEGIN
                            btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                                      ,pr_ind_tipo_log => 2 
                                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                        || vr_cdprogra || ' --> '
+                                                                        || vr_cdprogra || ' >>> '
                                                                         || vr_dscritic );
                            RAISE vr_exc_saida;
                        END;
@@ -649,7 +649,7 @@ BEGIN
                     btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                               ,pr_ind_tipo_log => 2 
                                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                  || vr_cdprogra || ' --> '
+                                                                  || vr_cdprogra || ' >>> '
                                                                   || vr_dscritic );
                     RAISE vr_exc_saida;
                  END;
@@ -724,7 +724,7 @@ BEGIN
                   btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                             ,pr_ind_tipo_log => 2 
                                             ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                               || vr_cdprogra || ' --> '
+                                                               || vr_cdprogra || ' >>> '
                                                                || vr_dscritic );
                   RAISE vr_exc_saida;
                END IF;
@@ -751,7 +751,7 @@ BEGIN
                     btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                               ,pr_ind_tipo_log => 2 
                                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                                  || vr_cdprogra || ' --> '
+                                                                  || vr_cdprogra || ' >>> '
                                                                   || vr_dscritic );
                     RAISE vr_exc_saida;
                END;
@@ -773,7 +773,7 @@ BEGIN
          btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                    ,pr_ind_tipo_log => 2
                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> '
+                                                     || vr_cdprogra || ' >>> '
                                                      || vr_dscritic );
       END IF;
     WHEN OTHERS THEN
