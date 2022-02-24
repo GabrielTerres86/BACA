@@ -32,7 +32,7 @@ DECLARE
                         <tributoIOFValor>1229.21</tributoIOFValor>
                         <valor>41229.21</valor>
 						<valorBase>40000.00</valorBase>
-						<dataProposta>2022-02-23T17:35:11</dataProposta>
+						<dataProposta>2022-02-24T17:35:11</dataProposta>
                         <emitente> 
                           <dataNascOuConstituicao>1986-04-11T00:00:00</dataNascOuConstituicao>
                           <identificadorReceitaFederal>11246176718</identificadorReceitaFederal>
@@ -173,9 +173,11 @@ BEGIN
     COMMIT;
   
   EXCEPTION
+  
     WHEN OTHERS THEN
       raise_application_error(-20500, SQLERRM);
       ROLLBACK;
+  
   END;
 
 END;
