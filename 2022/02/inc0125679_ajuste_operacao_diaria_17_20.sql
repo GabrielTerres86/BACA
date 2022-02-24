@@ -1,5 +1,4 @@
 DECLARE
-  -- Arrays a serem usados com o cursor.
   TYPE typ_lancamentos_a_portar IS RECORD 
   (
     nrdconta   tbcc_operacoes_diarias.nrdconta%TYPE,
@@ -20,19 +19,18 @@ DECLARE
   
   vr_idx_insert PLS_INTEGER NOT NULL := 0;
   vr_idx_update PLS_INTEGER NOT NULL := 0;
-  --
   
-  -- Limite de registros pro bulk collect.
+  
   vr_lim_reg NUMBER(5) NOT NULL := 0;
   
-  -- Tratamento de excessões.
+  
   BULK_DML_EXCEPTION EXCEPTION;
   vr_exc_saida EXCEPTION;
   
   PRAGMA EXCEPTION_INIT(BULK_DML_EXCEPTION, -24381);
   
   vr_dscritic VARCHAR2(5000) := ' ';
-  --
+  
   
   CURSOR cr_lancamentos_a_portar (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
     SELECT AUTOATENDIMENTO_PIX.NRDCONTA AS NRDCONTA
@@ -125,7 +123,6 @@ BEGIN
       FETCH cr_lancamentos_a_portar BULK COLLECT INTO vr_tab_lancamentos_a_portar LIMIT vr_lim_reg;
       EXIT WHEN vr_tab_lancamentos_a_portar.COUNT = 0;
       
-      -- Varrer os resultados para determinar quais são as operações de insert e update.
       FOR idx IN 1 .. vr_tab_lancamentos_a_portar.COUNT LOOP
         IF
           vr_tab_lancamentos_a_portar(idx).nrsequen IS NULL
@@ -153,7 +150,6 @@ BEGIN
         END IF;
       END LOOP;
       
-      -- Quando atingir o valor da janela do bulk collect, realizar os inserts/updates.
       IF vr_tab_insert.COUNT > 0 THEN
         FORALL idx_ins IN INDICES OF vr_tab_insert SAVE EXCEPTIONS
           INSERT INTO TBCC_OPERACOES_DIARIAS 
@@ -182,7 +178,6 @@ BEGIN
         vr_tab_update.Delete();
       END IF;
       
-      -- Um commit a cada batch.
       COMMIT;
     END LOOP;
     CLOSE cr_lancamentos_a_portar;
