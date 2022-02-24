@@ -1,6 +1,4 @@
-PL/SQL Developer Test script 3.0
-54
-declare 
+declare
   cursor op_adps is
     select o.rowid 
       from crapdat d, tbrisco_operacoes o
@@ -54,5 +52,3 @@ begin
 
   dbms_output.put_line('Removeu da tabela produto inválido.');
 end;
-0
-0
