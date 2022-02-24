@@ -1,0 +1,9 @@
+BEGIN
+	DELETE
+	FROM credito.tbcred_peac_retorno;
+	COMMIT;
+	EXCEPTION
+	WHEN OTHERS THEN
+	ROLLBACK;
+END;
+
