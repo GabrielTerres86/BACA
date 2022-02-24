@@ -1,8 +1,4 @@
-/*
-Gerar carga de TEDs e PIX (banco) para o OFSAA ultimos 24 meses
-*/
 declare 
-  -- Local variables here
   vr_dsdireto   VARCHAR2(4000) := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                            ,pr_cdcooper => 0
                                                            ,pr_cdacesso => 'ROOT_DIRCOOP')||'cecred/arq/';
@@ -14,7 +10,6 @@ declare
   vr_texto_carga_aux VARCHAR2(32767);
   vr_dscritic VARCHAR2(4000);
 
-  --Definicao do tipo de tabela para contas bloqueadas
   TYPE typ_tab_cpf_cnpj IS
     TABLE OF NUMBER
     INDEX BY VARCHAR2(14);
@@ -36,7 +31,7 @@ CURSOR cr_teds IS
 		, 'OFSADMN' APPROVED_BY
 		, to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') APPROVED_DT
     FROM craptvl tvl
-   WHERE tvl.tpdoctrf = 3 -- TED
+   WHERE tvl.tpdoctrf = 3 
      AND tvl.dtmvtolt >= add_months(trunc(sysdate),-24)
      AND tvl.flgopfin = 1
   UNION
@@ -98,11 +93,11 @@ BEGIN
   
   dbms_output.enable(null);
 
-  gene0001.pc_abre_arquivo(pr_nmdireto => vr_dsdireto    --> Diretório do arquivo
-                          ,pr_nmarquiv => vr_nmarquiv   --> Nome do arquivo
-                          ,pr_tipabert => 'R'            --> Modo de abertura (R,W,A)
-                          ,pr_utlfileh => vr_handle_arq  --> Handle do arquivo aberto
-                          ,pr_des_erro => vr_dscritic);  --> Erro
+  gene0001.pc_abre_arquivo(pr_nmdireto => vr_dsdireto    
+                          ,pr_nmarquiv => vr_nmarquiv   
+                          ,pr_tipabert => 'R'            
+                          ,pr_utlfileh => vr_handle_arq  
+                          ,pr_des_erro => vr_dscritic);  
 
   IF utl_file.IS_OPEN(vr_handle_arq) then
     BEGIN
@@ -131,7 +126,7 @@ BEGIN
       END LOOP;
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
-        -- Fim das linhas do arquivo
+        
         NULL;      
       WHEN OTHERS THEN
         cecred.pc_internal_exception(pr_cdcooper => 3, pr_compleme => vr_linha_arq);
@@ -140,7 +135,7 @@ BEGIN
 
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_arq);
   
-  -- Montar o início da tabela (Num clob para evitar estouro)
+  
   dbms_lob.createtemporary(vr_texto_carga, TRUE, dbms_lob.CALL);
   dbms_lob.open(vr_texto_carga,dbms_lob.lob_readwrite);
 
@@ -158,7 +153,7 @@ BEGIN
                                                              'APPROVED_BY;' ||
                                                              'APPROVED_DT'  || CHR(10));
 
-  -- Test statements here
+  
   FOR rw_teds IN cr_teds LOOP
     
     IF vr_list_cpf_cnpj.EXISTS(rw_teds.cnpj_cpfclidebtd)  OR
@@ -183,13 +178,14 @@ BEGIN
   END LOOP;
   
   gene0002.pc_escreve_xml(vr_texto_carga,vr_texto_carga_aux,'',true);
-  -- Gerar o arquivo na pasta converte
+  
   gene0002.pc_clob_para_arquivo(pr_clob     => vr_texto_carga
                                ,pr_caminho  => gene0001.fn_diretorio('C',3,'arq')
                                ,pr_arquivo  => 'carga_ted.csv'
                                ,pr_des_erro => vr_dscritic);
-  -- Liberando a memória alocada pro CLOB
+  
   dbms_lob.close(vr_texto_carga);
   dbms_lob.freetemporary(vr_texto_carga);
   rollback;
+  commit;
 end;

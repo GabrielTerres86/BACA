@@ -1,8 +1,4 @@
-/*
-Gerar carga de dispositivos para o OFSAA ativos do ultimo ano ou sem data de ultimo acesso
-*/
 declare 
-  -- Local variables here
   vr_dsdireto   VARCHAR2(4000) := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                            ,pr_cdcooper => 0
                                                            ,pr_cdacesso => 'ROOT_DIRCOOP')||'cecred/arq/';
@@ -31,7 +27,6 @@ declare
 
 BEGIN
   
-  -- Montar o início da tabela (Num clob para evitar estouro)
   dbms_lob.createtemporary(vr_texto_carga, TRUE, dbms_lob.CALL);
   dbms_lob.open(vr_texto_carga,dbms_lob.lob_readwrite);
 
@@ -47,7 +42,7 @@ BEGIN
                                                              'APPROVED_BY;' ||
                                                              'APPROVED_DT' || CHR(10));    
 
-  -- Test statements here
+
   FOR rw_dispositivos IN cr_dispositivos LOOP
       
     gene0002.pc_escreve_xml(vr_texto_carga,vr_texto_carga_aux, '"' || rw_dispositivos.mobile_dev_id     || '";"' ||
@@ -65,14 +60,15 @@ BEGIN
   
   gene0002.pc_escreve_xml(vr_texto_carga,vr_texto_carga_aux,'',true);
 
-  -- Gerar o arquivo na pasta converte
+
   gene0002.pc_clob_para_arquivo(pr_clob     => vr_texto_carga
                                ,pr_caminho  => vr_dsdireto
                                ,pr_arquivo  => vr_nmarquiv
                                ,pr_des_erro => vr_dscritic);
 
-  -- Liberando a memória alocada pro CLOB
+
   dbms_lob.close(vr_texto_carga);
   dbms_lob.freetemporary(vr_texto_carga);
   rollback;
+  commit;
 end;
