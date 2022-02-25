@@ -53,8 +53,7 @@ BEGIN
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
         ('IMOVEL', 'L', vr_user(i), ' ', 5, 1, 0, 2);		
-		
-      COMMIT;
+		      
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -98,8 +97,7 @@ BEGIN
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
         ('IMOVEL', 'A', vr_user(i), ' ', 13, 1, 0, 2);
-		
-      COMMIT;
+		      
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -165,8 +163,7 @@ BEGIN
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
         ('IMOVEL', 'L', vr_user(i), ' ', 13, 1, 0, 2);
-		
-      COMMIT;
+		      
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -207,8 +204,7 @@ BEGIN
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
         ('IMOVEL', 'A', vr_user(i), ' ', 7, 1, 0, 2);
-		
-      COMMIT;
+		      
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -268,8 +264,7 @@ BEGIN
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
         ('IMOVEL', 'L', vr_user(i), ' ', 7, 1, 0, 2);
-		
-      COMMIT;
+		      
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -305,8 +300,7 @@ BEGIN
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
         ('IMOVEL', 'A', vr_user(i), ' ', 8, 1, 0, 2);
-		
-      COMMIT;
+		      
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -361,8 +355,7 @@ BEGIN
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
         ('IMOVEL', 'L', vr_user(i), ' ', 8, 1, 0, 2);
-		
-      COMMIT;
+		      
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -408,7 +401,6 @@ BEGIN
       VALUES
         ('IMOVEL', 'A', vr_user(i), ' ', 11, 1, 0, 2);
 		
-      COMMIT;
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -475,7 +467,6 @@ BEGIN
       VALUES
         ('IMOVEL', 'L', vr_user(i), ' ', 11, 1, 0, 2);
 		
-      COMMIT;
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -521,7 +512,6 @@ BEGIN
       VALUES
         ('IMOVEL', 'A', vr_user(i), ' ', 9, 1, 0, 2);
 		
-      COMMIT;
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -593,7 +583,6 @@ BEGIN
       VALUES
         ('IMOVEL', 'L', vr_user(i), ' ', 9, 1, 0, 2);
 		
-      COMMIT;
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -671,7 +660,6 @@ BEGIN
       VALUES
         ('IMOVEL', 'A', vr_user(i), ' ', 16, 1, 0, 2);	
 		
-      COMMIT;
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -735,7 +723,6 @@ BEGIN
       VALUES
         ('IMOVEL', 'A', vr_user(i), ' ', 6, 1, 0, 2);	
 		
-      COMMIT;
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -800,7 +787,6 @@ BEGIN
       VALUES
         ('IMOVEL', 'A', vr_user(i), ' ', 14, 1, 0, 2);	
 		
-      COMMIT;
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -865,7 +851,6 @@ BEGIN
       VALUES
         ('IMOVEL', 'A', vr_user(i), ' ', 12, 1, 0, 2);	
 		
-      COMMIT;
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -931,7 +916,6 @@ BEGIN
       VALUES
         ('IMOVEL', 'A', vr_user(i), ' ', 10, 1, 0, 2);	
 		
-      COMMIT;
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
@@ -1002,14 +986,14 @@ BEGIN
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
         ('IMOVEL', 'A', vr_user(i), ' ', 2, 1, 0, 2);	
-		
-      COMMIT;
+		     
     EXCEPTION
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
   END LOOP;
-
+  
+  COMMIT; 
   
 EXCEPTION
   WHEN OTHERS THEN
