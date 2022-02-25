@@ -6,10 +6,12 @@ DECLARE
 
   vr_handle     UTL_FILE.FILE_TYPE; 
   vr_handle_log UTL_FILE.FILE_TYPE; 
+  vr_handle_contab  UTL_FILE.FILE_TYPE;
   vr_nmarq_carga    VARCHAR2(200);
   vr_nmarq_log      VARCHAR2(200);
   vr_nmarq_rollback VARCHAR2(200);
   vr_des_erro       VARCHAR2(10000);  
+  vr_nmarq_contab   VARCHAR2(200);
   
   vr_cdcritic crapcri.cdcritic%TYPE;
   vr_dscritic crapcri.dscritic%TYPE;
@@ -154,14 +156,21 @@ DECLARE
    CURSOR cr_crapbdt(pr_cdcooper IN crapbdt.cdcooper%TYPE
                     ,pr_nrdconta IN crapbdt.nrdconta%TYPE
                     ,pr_nrborder IN crapbdt.nrborder%TYPE) IS
-       SELECT crapbdt.cdcooper
-             ,crapbdt.nrborder
-             ,crapbdt.nrdconta
-             ,crapbdt.inprejuz
-         FROM crapbdt
-        WHERE crapbdt.cdcooper = pr_cdcooper
-          AND crapbdt.nrdconta = pr_nrdconta
-          AND crapbdt.nrborder = pr_nrborder;
+       SELECT a.cdcooper
+             ,a.nrborder
+             ,a.nrdconta
+             ,a.inprejuz
+             ,c.nmpasite
+         FROM crapbdt a,
+              crapass b,
+              crapage c
+        WHERE a.cdcooper = b.cdcooper
+          AND a.nrdconta = b.nrdconta
+          AND a.cdcooper = c.cdcooper
+          AND b.cdagenci = c.cdagenci
+          AND a.cdcooper = pr_cdcooper
+          AND a.nrdconta = pr_nrdconta
+          AND a.nrborder = pr_nrborder;
        rw_crapbdt cr_crapbdt%ROWTYPE; 
        
 
@@ -176,6 +185,7 @@ DECLARE
               ,SUM(bor.vllanmto) AS vllanmtotal
               ,tdb.vlmratit
               ,tdb.vlsdprej 
+              ,tdb.vlprejuz
               ,NVL(SUM(bor.vllanmto),0) - NVL(tdb.vlmratit,0) AS vlprejdiff
               ,NVL(tdb.vlsdprej,0) + NVL(SUM(bor.vllanmto),0) - NVL(tdb.vlmratit,0) AS vlprejtotal       
           FROM crapbdt                   bdt
@@ -205,7 +215,8 @@ DECLARE
                  ,bor.nrdocmto
                  ,bor.nrtitulo
                  ,tdb.vlmratit
-                 ,tdb.vlsdprej;     
+                 ,tdb.vlsdprej
+                 ,tdb.vlprejuz;     
       rw_prejuizos cr_prejuizos%ROWTYPE; 
        
        
@@ -293,7 +304,6 @@ DECLARE
                                                                     vlr_diff || ';' ||
                                                                     vr_dscritic);
                    ELSE 
-
                      gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
                                                    ,pr_des_text => 'DELETE tbdsct_lancamento_bordero'
                                                                  ||' WHERE cdcooper = '||rw_lanctos.cdcooper
@@ -304,6 +314,15 @@ DECLARE
                                                                  ||'   AND cdhistor = 2686' ||';');  
                      gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
                                                    ,pr_des_text => 'COMMIT;');                                                                                               
+                                                   
+
+                     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_contab
+                                                   ,pr_des_text => rw_lanctos.cdcooper || ';' || 
+                                                                   rw_lanctos.nrdconta || ';' || 
+                                                                   rw_lanctos.nrborder||  ';' || 
+                                                                   '2686' || ';' || 
+                                                                   rw_crapbdt.nmpasite);                             
+                                                                                                                                                
                    END IF;
                                                                     
                ELSE 
@@ -342,7 +361,7 @@ DECLARE
                                                                  ||'   AND nrdocmto = 0'
                                                                  ||'   AND cdhistor = 2761' ||';');  
                      gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                                   ,pr_des_text => 'COMMIT;');
+                                                   ,pr_des_text => 'COMMIT;');                            
                    END IF;
                
 
@@ -380,7 +399,6 @@ DECLARE
                                                                  ||'   AND cdhistor = 2765' ||';');  
                      gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
                                                    ,pr_des_text => 'COMMIT;');
-               
                    END IF;
                 
                    
@@ -392,7 +410,7 @@ DECLARE
                                                          
                        BEGIN
                           UPDATE craptdb 
-                             SET vlsdprej = rw_prejuizos.vlprejtotal
+                             SET vlprejuz = rw_prejuizos.vlprejtotal
                            WHERE cdcooper = rw_prejuizos.cdcooper
                              AND nrdconta = rw_prejuizos.nrdconta
                              AND nrborder = rw_prejuizos.nrborder
@@ -436,16 +454,18 @@ DECLARE
     END pc_diferenca_contabil;    
 
 BEGIN
-
-    IF vr_aux_ambiente = 1 THEN     
-      vr_nmarq_log      := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';      
-      vr_nmarq_rollback := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql';  
-    ELSIF vr_aux_ambiente = 2 THEN        
+    IF vr_aux_ambiente = 1 THEN   
+      vr_nmarq_log      := '/progress/f0030250/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';      
+      vr_nmarq_rollback := '/progress/f0030250/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql'; 
+      vr_nmarq_contab   := '/progress/f0030250/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOGCONTABILIDADE.txt';       
+    ELSIF vr_aux_ambiente = 2 THEN      
       vr_nmarq_log      := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';     
-      vr_nmarq_rollback := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql';    
-    ELSIF vr_aux_ambiente = 3 THEN 
-      vr_nmarq_log      := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';      
+      vr_nmarq_rollback := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql';
+      vr_nmarq_contab   := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOGCONTABILIDADE.txt'; 
+ ELSIF vr_aux_ambiente = 3 THEN 
+      vr_nmarq_log      := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';    
       vr_nmarq_rollback := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql'; 
+      vr_nmarq_contab   := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOGCONTABILIDADE.txt'; 
     ELSE
       vr_dscritic := 'Erro ao apontar ambiente de execucao.';
       RAISE vr_exc_erro;
@@ -470,7 +490,15 @@ BEGIN
         vr_dscritic := 'Erro ao abrir arquivo de ROLLBACK: ' || vr_des_erro;
         RAISE vr_exc_erro;
       end if;  
-      
+
+      gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_contab
+                              ,pr_tipabert => 'W'              
+                              ,pr_utlfileh => vr_handle_contab   
+                              ,pr_des_erro => vr_des_erro);
+      if vr_des_erro is not null then
+        vr_dscritic := 'Erro ao abrir arquivo da contabilidade: ' || vr_des_erro;
+        RAISE vr_exc_erro;
+      end if; 
 
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                     ,pr_des_text => 'Inicio da execucao - ' ||  to_char(SYSDATE, 'HH24:MI:SS'));
@@ -505,7 +533,7 @@ BEGIN
                                     ,pr_des_text => 'Fim da execucao - ' ||  to_char(SYSDATE, 'HH24:MI:SS'));
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle);          
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);                
-      
+      gene0001.pc_fecha_arquivo(pr_utlfileh=>vr_handle_contab);      
 EXCEPTION  
   WHEN vr_exc_erro THEN
     dbms_output.put_line('Erro arquivos: ' || vr_dscritic);
