@@ -20,7 +20,7 @@ BEGIN
      AND UPPER(crapace.nmrotina) = ' '
      AND crapace.cdcooper = 1
      AND crapace.idambace = 2;
-  COMMIT;
+  
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -2095,7 +2095,7 @@ BEGIN
      AND UPPER(crapace.nmrotina) = ' '
      AND crapace.cdcooper = 1
      AND crapace.idambace = 2;
-  COMMIT;
+  
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
