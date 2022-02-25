@@ -27,12 +27,12 @@ BEGIN
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
         ('IMOVEL', 'F', vr_user(i), ' ', 1, 1, 0, 2);
-      COMMIT;
 	  
 	  INSERT INTO crapace
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
         ('IMOVEL', 'A', vr_user(i), ' ', 1, 1, 0, 2);
+		
       COMMIT;
     EXCEPTION
       WHEN OTHERS THEN	    
@@ -2102,31 +2102,28 @@ BEGIN
       INSERT INTO crapace
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
-        ('IMOVEL', 'N', vr_user(i), ' ', 1, 1, 0, 2);
-      COMMIT;
+        ('IMOVEL', 'N', vr_user(i), ' ', 1, 1, 0, 2);      
 	  
 	  INSERT INTO crapace
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
-        ('IMOVEL', 'C', vr_user(i), ' ', 1, 1, 0, 2);
-      COMMIT;
+        ('IMOVEL', 'C', vr_user(i), ' ', 1, 1, 0, 2);      
 	  
 	  	  INSERT INTO crapace
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
-        ('IMOVEL', 'I', vr_user(i), ' ', 1, 1, 0, 2);
-      COMMIT;
+        ('IMOVEL', 'I', vr_user(i), ' ', 1, 1, 0, 2);      
 	  
 	  INSERT INTO crapace
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
-        ('IMOVEL', 'P', vr_user(i), ' ', 1, 1, 0, 2);
-      COMMIT;
+        ('IMOVEL', 'P', vr_user(i), ' ', 1, 1, 0, 2);      
 	  
 	  INSERT INTO crapace
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
         ('IMOVEL', 'L', vr_user(i), ' ', 1, 1, 0, 2);
+		
       COMMIT;
     EXCEPTION
       WHEN OTHERS THEN	    
