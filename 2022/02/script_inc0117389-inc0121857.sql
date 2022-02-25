@@ -280,7 +280,7 @@ DECLARE
              ELSE
               
                IF rw_crapbdt.inprejuz = 0 THEN
-  
+
                   DSCT0003.pc_inserir_lancamento_bordero(pr_cdcooper => rw_lanctos.cdcooper, 
                                                          pr_nrdconta => rw_lanctos.nrdconta, 
                                                          pr_nrborder => rw_lanctos.nrborder,
@@ -419,7 +419,7 @@ DECLARE
                              
         
                             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                                         ,pr_des_text => 'UPDATE craptdb SET vlsdprej = '|| REPLACE(vl_aux_preju, ',','.')
+                                                         ,pr_des_text => 'UPDATE craptdb SET vlprejuz = '|| REPLACE(vl_aux_preju, ',','.')
                                                                        ||' WHERE cdcooper = '||rw_prejuizos.cdcooper
                                                                        ||'   AND nrdconta = '||rw_prejuizos.nrdconta
                                                                        ||'   AND nrborder = '||rw_prejuizos.nrborder
