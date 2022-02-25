@@ -1,3 +1,4 @@
+SET DEFINE OFF;
 begin
   update 
     juridico.tbjur_termos_adesao 
