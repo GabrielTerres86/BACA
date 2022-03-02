@@ -1,6 +1,6 @@
 DECLARE
 
-	v_nr_conta    tbgen_evento_soa.NRDCONTA%TYPE := 14235480s;
+	v_nr_conta    tbgen_evento_soa.NRDCONTA%TYPE := 14235480;
 	v_nr_contrato tbgen_evento_soa.NRCTRPRP%TYPE := 5200098;
 	v_cd_coopr    tbgen_evento_soa.CDCOOPER%TYPE := 1;
 
