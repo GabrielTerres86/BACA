@@ -1,6 +1,6 @@
 begin
 
-update crapfdc f 
+update cecred.crapfdc f 
   set f.incheque = 8,
       f.dtliqchq = trunc(sysdate) 
 where  f.cdcooper = 1
