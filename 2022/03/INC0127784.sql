@@ -187,7 +187,7 @@ BEGIN
   
   end loop;
 
-  --COMMIT;
+  COMMIT;
 
 EXCEPTION
   WHEN OTHERS THEN
