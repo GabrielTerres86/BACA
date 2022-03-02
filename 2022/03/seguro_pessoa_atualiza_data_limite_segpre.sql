@@ -1,0 +1,10 @@
+BEGIN
+  UPDATE crapprm c
+     SET c.dsvlrprm = TO_CHAR('31/12/2022', 'DD/MM/RRRR')
+   WHERE c.cdacesso = 'DATA_LIMITE_SEGPRE';
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('ERRO: ' || SQLERRM);
+END;
+/
