@@ -61,7 +61,7 @@ DECLARE
                    END OPERACAO
                   ,COUNT(LCM.NRDCONTA) QTD 
                   ,LCM.DTMVTOLT
-              FROM CRAPLCM LCM
+              FROM CECRED.CRAPLCM LCM
              WHERE LCM.CDHISTOR IN (3318, 3320, 3371, 3373, 3450, 3671, 3677, 3675, 3396, 3397,
                                     3437, 3438, 3468, 3319, 3321, 3322, 3323, 3377, 3375, 3379,
                                     3380, 3451, 3452, 3453, 3673, 3681, 3684, 3683, 3679, 3435,
@@ -78,7 +78,7 @@ DECLARE
                   ,APURACAO_AUTOATENDIMENTO.CDOPERACAO
                   ,APURACAO_AUTOATENDIMENTO.NRDCONTA
                   ,APURACAO_AUTOATENDIMENTO.CDCOOPER
-              FROM TBCC_OPERACOES_DIARIAS APURACAO_AUTOATENDIMENTO
+              FROM CECRED.TBCC_OPERACOES_DIARIAS APURACAO_AUTOATENDIMENTO
              WHERE APURACAO_AUTOATENDIMENTO.CDCOOPER = pr_cdcooper
                AND APURACAO_AUTOATENDIMENTO.DTOPERACAO IN ('17/12/2021', '20/12/2021')
                AND APURACAO_AUTOATENDIMENTO.CDOPERACAO IN (18, 19, 24, 25)
@@ -109,7 +109,7 @@ DECLARE
              ,AUTOATENDIMENTO_PIX.DTMVTOLT ASC;
 BEGIN
   FOR rw IN (SELECT cop.cdcooper
-             FROM crapcop cop
+             FROM CECRED.crapcop cop
              WHERE cop.flgativo = 1) 
   LOOP
     IF rw.cdcooper = 1 THEN
@@ -152,7 +152,7 @@ BEGIN
       
       IF vr_tab_insert.COUNT > 0 THEN
         FORALL idx_ins IN INDICES OF vr_tab_insert SAVE EXCEPTIONS
-          INSERT INTO TBCC_OPERACOES_DIARIAS 
+          INSERT INTO CECRED.TBCC_OPERACOES_DIARIAS 
           (CDCOOPER, NRDCONTA, 
            CDOPERACAO, DTOPERACAO, 
            NRSEQUEN)
@@ -167,7 +167,7 @@ BEGIN
           
       IF vr_tab_update.COUNT > 0 THEN
         FORALL idx_updt IN INDICES OF vr_tab_update SAVE EXCEPTIONS
-          UPDATE TBCC_OPERACOES_DIARIAS OPER
+          UPDATE CECRED.TBCC_OPERACOES_DIARIAS OPER
              SET OPER.NRSEQUEN = vr_tab_update(idx_updt).nrsequen + vr_tab_update(idx_updt).qtddif
            WHERE OPER.CDCOOPER = vr_tab_update(idx_updt).cdcooper
              AND OPER.NRDCONTA = vr_tab_update(idx_updt).nrdconta
