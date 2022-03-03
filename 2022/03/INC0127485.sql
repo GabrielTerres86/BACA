@@ -36,6 +36,8 @@ DECLARE
   vc_inpessoaPJ                   CONSTANT NUMBER := 2; 
   vc_cdsitcta_encerrada           CONSTANT NUMBER := 4;
   vc_cdmotdem                     CONSTANT NUMBER := 11;
+  vc_nrdolote                     CONSTANT NUMBER := 37000;
+  vc_cdbccxlt                     CONSTANT NUMBER := 1;
   
   CURSOR cr_crapass is
     SELECT t.cdagenci
@@ -297,8 +299,8 @@ BEGIN
        cecred.Lanc0001.pc_gerar_lancamento_conta(pr_cdcooper => rg_crapass.cdcooper
                                                 ,pr_dtmvtolt => vr_dtmvtolt
                                                 ,pr_cdagenci => rg_crapass.cdagenci
-                                                ,pr_cdbccxlt => 1
-                                                ,pr_nrdolote => 37000
+                                                ,pr_cdbccxlt => vc_cdbccxlt
+                                                ,pr_nrdolote => vc_nrdolote
                                                 ,pr_nrdctabb => rg_crapass.nrdconta
                                                 ,pr_nrdocmto => vr_nrdocmto
                                                 ,pr_cdhistor => vr_cdhistor
@@ -339,11 +341,43 @@ BEGIN
                             pr_nmdatela => NULL,
                             pr_nrdconta => rg_crapass.nrdconta,
                             pr_nrdrowid => vr_nrdrowid);
+                            
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'craplcm.cdagenci',
+                                pr_dsdadant => null,
+                                pr_dsdadatu => rg_crapass.cdagenci);
                                 
-       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                                 pr_nmdcampo => 'crapsld.vlsddisp',
-                                 pr_dsdadant => vr_vlsddisp,
-                                 pr_dsdadatu => 0);
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'craplcm.cdbccxlt',
+                                pr_dsdadant => null,
+                                pr_dsdadatu => vc_cdbccxlt);
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'craplcm.nrdolote',
+                                pr_dsdadant => null,
+                                pr_dsdadatu => vc_nrdolote);
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'craplcm.nrdctabb',
+                                pr_dsdadant => null,
+                                pr_dsdadatu => rg_crapass.nrdconta);
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'craplcm.nrdocmto',
+                                pr_dsdadant => null,
+                                pr_dsdadatu => vr_nrdocmto);
+
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'craplcm.dtmvtolt',
+                                pr_dsdadant => null,
+                                pr_dsdadatu => vr_dtmvtolt);
+    
+      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'craplcm.vllanmto',
+                                pr_dsdadant => null,
+                                pr_dsdadatu => vr_vlsddisp);
+                                
     END IF;
   end loop;
 
