@@ -11,10 +11,8 @@ DECLARE
 								 'f0033406');								 
 BEGIN
   DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'     
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper <> 1
-     AND crapace.idambace = 2;  
+   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'          
+     AND crapace.cdcooper <> 1;  
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
