@@ -1,7 +1,7 @@
 BEGIN
 
   UPDATE crapprm
-     SET dsvlrprm = 0
+     SET dsvlrprm = '0'
    WHERE cdcooper = 0
      AND cdacesso = 'RATING_RENOVACAO_ATIVO';
 
