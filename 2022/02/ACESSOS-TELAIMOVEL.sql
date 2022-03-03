@@ -11,10 +11,9 @@ DECLARE
 								 'f0033406');								 
 BEGIN
   DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('F','A','N','C','I','P','L')
+   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'     
      AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 5
+     AND crapace.cdcooper <> 1
      AND crapace.idambace = 2;  
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
@@ -76,13 +75,7 @@ BEGIN
 					   'f0033304',
 					   'f0033328',
 					   'f0033406');								   
-  
-   DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('F','A')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 13
-     AND crapace.idambace = 2;  
+    
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -124,12 +117,6 @@ BEGIN
 			    	   'f0033328',
 			    	   'f0033406');								   
   
-  DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('N','C','I','P','L')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 13
-     AND crapace.idambace = 2;  
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -182,12 +169,6 @@ BEGIN
 					   'f0033328',
 					   'f0033406');								   
   
-   DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('F','A')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 7
-     AND crapace.idambace = 2;  
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -223,12 +204,6 @@ BEGIN
 					   'f0033328',
 					   'f0033406');								   
   
-  DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('N','C','I','P','L')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 7
-     AND crapace.idambace = 2;  
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -276,12 +251,6 @@ BEGIN
 					   'f0033328',
 					   'f0033406');								   
   
-   DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('F','A')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 8
-     AND crapace.idambace = 2;  
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -312,12 +281,6 @@ BEGIN
 					   'f0033328',
 					   'f0033406');							   
   
-  DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('N','C','I','P','L')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 8
-     AND crapace.idambace = 2;  
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -374,12 +337,6 @@ BEGIN
 					   'f0033328',
 					   'f0033406');								   
   
-   DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('F','A')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 11
-     AND crapace.idambace = 2;  
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -421,12 +378,6 @@ BEGIN
 					   'f0033328',
 					   'f0033406');							   
   
-  DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('N','C','I','P','L')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 11
-     AND crapace.idambace = 2;  
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -483,12 +434,6 @@ BEGIN
 					   'f0033328',
 					   'f0033406');								   
   
-   DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('F','A')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 9
-     AND crapace.idambace = 2;  
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -535,12 +480,7 @@ BEGIN
 					   'f0033304',
 					   'f0033328',
 					   'f0033406');
-  DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('N','C','I','P','L')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 9
-     AND crapace.idambace = 2;  
+					   
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -601,12 +541,7 @@ BEGIN
 					   'f0033304',
 					   'f0033328',
                        'f0033406');
-  DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('F','A','N','C','I','P','L')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 16
-     AND crapace.idambace = 2;  
+					   
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -663,12 +598,7 @@ BEGIN
 					   'f0033304',
 					   'f0033328',
 					   'f0033406');
-  DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('F','A','N','C','I','P','L')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 6
-     AND crapace.idambace = 2;  
+ 
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -726,12 +656,7 @@ BEGIN
 					   'f0033304',
 					   'f0033328',
 					   'f0033406');
-  DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('F','A','N','C','I','P','L')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 14
-     AND crapace.idambace = 2;  
+
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -789,12 +714,7 @@ BEGIN
 					   'f0033304',
 					   'f0033328',
 					   'f0033406');
-  DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('F','A','N','C','I','P','L')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 12
-     AND crapace.idambace = 2;  
+ 
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -853,12 +773,7 @@ BEGIN
 					   'f0033304',
 					   'f0033328',
 					   'f0033406');
-  DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('F','A','N','C','I','P','L')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 10
-     AND crapace.idambace = 2;  
+
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
@@ -923,12 +838,7 @@ BEGIN
 					   'f0033304',
 					   'f0033328',
 					   'f0033406');
-  DELETE FROM crapace
-   WHERE UPPER(crapace.nmdatela) = 'IMOVEL'
-     AND UPPER(crapace.cddopcao) IN('F','A','N','C','I','P','L')
-     AND UPPER(crapace.nmrotina) = ' '
-     AND crapace.cdcooper = 2
-     AND crapace.idambace = 2;  
+
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
