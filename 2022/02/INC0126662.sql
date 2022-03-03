@@ -1,0 +1,10 @@
+begin
+
+	UPDATE CRAPTTL
+	   SET CDESTCVL = 1
+	 WHERE CDCOOPER = 1
+	   AND NRDCONTA = 14289547;	
+	
+	commit;
+ 	
+end; 
