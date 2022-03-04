@@ -29,6 +29,17 @@ BEGIN
         (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
       VALUES
         ('IMOVEL', 'A', vr_user(i), ' ', 1, 1, 0, 2);
+		
+	  INSERT INTO crapace
+        (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
+      VALUES
+        ('IMOVEL', 'P', vr_user(i), ' ', 1, 1, 0, 2);      
+	  
+	  INSERT INTO crapace
+        (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
+      VALUES
+        ('IMOVEL', 'L', vr_user(i), ' ', 1, 1, 0, 2);		
+		
 		      
     EXCEPTION
       WHEN OTHERS THEN	    
@@ -2103,15 +2114,6 @@ BEGIN
       VALUES
         ('IMOVEL', 'I', vr_user(i), ' ', 1, 1, 0, 2);      
 	  
-	  INSERT INTO crapace
-        (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
-      VALUES
-        ('IMOVEL', 'P', vr_user(i), ' ', 1, 1, 0, 2);      
-	  
-	  INSERT INTO crapace
-        (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace)
-      VALUES
-        ('IMOVEL', 'L', vr_user(i), ' ', 1, 1, 0, 2);
 		
     EXCEPTION
       WHEN OTHERS THEN	    
