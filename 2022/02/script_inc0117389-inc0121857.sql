@@ -182,8 +182,8 @@ DECLARE
               ,bor.nrborder
               ,bor.nrdocmto
               ,bor.nrtitulo
-              ,SUM(bor.vllanmto) AS vllanmtotal
               ,tdb.vlmratit
+              ,tdb.vlttjmpr
               ,tdb.vlsdprej 
               ,tdb.vlprejuz
               ,NVL(SUM(bor.vllanmto),0) - NVL(tdb.vlmratit,0) AS vlprejdiff
@@ -216,7 +216,9 @@ DECLARE
                  ,bor.nrtitulo
                  ,tdb.vlmratit
                  ,tdb.vlsdprej
-                 ,tdb.vlprejuz;     
+                 ,tdb.vlprejuz
+                 ,tdb.vlttjmpr
+                 ,tdb.vlpgjmpr;
       rw_prejuizos cr_prejuizos%ROWTYPE; 
        
        
@@ -406,11 +408,11 @@ DECLARE
                                                     pr_nrdconta => rw_lanctos.nrdconta,
                                                     pr_nrborder => rw_lanctos.nrborder) LOOP
                                                     
-                       vl_aux_preju := rw_prejuizos.vlsdprej;                            
+                       vl_aux_preju := rw_prejuizos.vlttjmpr;                          
                                                          
                        BEGIN
-                          UPDATE craptdb 
-                             SET vlprejuz = rw_prejuizos.vlprejtotal
+                          UPDATE craptdb
+                             SET vlttjmpr = NVL(vlttjmpr,0) + rw_prejuizos.vlprejdiff
                            WHERE cdcooper = rw_prejuizos.cdcooper
                              AND nrdconta = rw_prejuizos.nrdconta
                              AND nrborder = rw_prejuizos.nrborder
@@ -419,7 +421,7 @@ DECLARE
                              
         
                             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                                         ,pr_des_text => 'UPDATE craptdb SET vlprejuz = '|| REPLACE(vl_aux_preju, ',','.')
+                                                         ,pr_des_text => 'UPDATE craptdb SET vlttjmpr = '|| REPLACE(vl_aux_preju, ',','.')
                                                                        ||' WHERE cdcooper = '||rw_prejuizos.cdcooper
                                                                        ||'   AND nrdconta = '||rw_prejuizos.nrdconta
                                                                        ||'   AND nrborder = '||rw_prejuizos.nrborder
@@ -455,9 +457,9 @@ DECLARE
 
 BEGIN
     IF vr_aux_ambiente = 1 THEN   
-      vr_nmarq_log      := '/progress/f0030250/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';      
-      vr_nmarq_rollback := '/progress/f0030250/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql'; 
-      vr_nmarq_contab   := '/progress/f0030250/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOGCONTABILIDADE.txt';       
+      vr_nmarq_log      := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';      
+      vr_nmarq_rollback := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql'; 
+      vr_nmarq_contab   := '/progress/t0032597/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOGCONTABILIDADE.txt';       
     ELSIF vr_aux_ambiente = 2 THEN      
       vr_nmarq_log      := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_LOG.txt';     
       vr_nmarq_rollback := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'_ROLLBACK.sql';
