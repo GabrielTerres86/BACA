@@ -1,7 +1,7 @@
 BEGIN
 
   UPDATE crapprm
-     SET dsvlrprm = 'https://ailoshmlincident.powerappsportals.com/inscricoes/'
+     SET dsvlrprm = 'https://ailosincident.powerappsportals.com/inscricoes/'
    WHERE NMSISTEM = 'CRED' 
 	AND CDACESSO = 'URL_NOVO_SGE' 	
 	AND PROGRESS_RECID = 253720 ; 
