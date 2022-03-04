@@ -17,18 +17,14 @@ DECLARE
   
 BEGIN 
 
-  -- Percorrer os registros de responsável
   FOR reg IN cr_respon LOOP
     
-    -- Buscar o nome no cadastro
     OPEN  cr_pessoa(reg.nrcpfcgc);
     FETCH cr_pessoa INTO rg_pessoa;
     CLOSE cr_pessoa;
   
-    -- Se o nome está diferente
     IF reg.nmrespon <> rg_pessoa.nmpessoa THEN
       
-      -- Realizar o update
       UPDATE crapcrl t
          SET t.nmrespon = rg_pessoa.nmpessoa
        WHERE ROWID = reg.dsdrowid;
