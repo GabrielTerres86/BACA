@@ -32,7 +32,7 @@ DECLARE
                         <tributoIOFValor>0.00</tributoIOFValor>
                         <valor>5524.99</valor>
 						<valorBase>5524.99</valorBase>
-						<dataProposta>2022-02-25T19:31:07</dataProposta>
+						<dataProposta>2022-03-04T19:31:07</dataProposta>
                         <emitente> 
                           <dataNascOuConstituicao>1965-05-16T00:00:00</dataNascOuConstituicao>
                           <identificadorReceitaFederal>74476122949</identificadorReceitaFederal>
