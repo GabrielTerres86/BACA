@@ -54,6 +54,7 @@ BEGIN
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
+	COMMIT;
   END LOOP;
   
   vr_user.delete;
@@ -150,6 +151,7 @@ BEGIN
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
+	COMMIT;
   END LOOP;
   
    
@@ -237,6 +239,7 @@ BEGIN
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
+	COMMIT;
   END LOOP;
   
   vr_user.delete;
@@ -314,6 +317,7 @@ BEGIN
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
+	COMMIT;
   END LOOP;
   
   vr_user.delete;
@@ -411,6 +415,7 @@ BEGIN
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
+	COMMIT;
   END LOOP;
   
   vr_user.delete;
@@ -449,6 +454,7 @@ BEGIN
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
+	COMMIT;
   END LOOP;
   
   vr_user.delete;
@@ -514,6 +520,7 @@ BEGIN
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
+	COMMIT;
   END LOOP;
     
   vr_user.delete;
@@ -585,6 +592,7 @@ BEGIN
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
+	COMMIT;
   END LOOP;
   
   vr_user.delete;
@@ -642,6 +650,7 @@ BEGIN
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
+	COMMIT;
   END LOOP;  
    
   vr_user.delete;
@@ -700,6 +709,7 @@ BEGIN
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
+	COMMIT;
   END LOOP;
   
   vr_user.delete;
@@ -758,6 +768,7 @@ BEGIN
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
+	COMMIT;
   END LOOP;
     
   vr_user.delete;
@@ -817,6 +828,7 @@ BEGIN
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
+	COMMIT;
   END LOOP;
   
     
@@ -882,10 +894,9 @@ BEGIN
       WHEN OTHERS THEN	    
         ROLLBACK;	
     END;
+	COMMIT;
   END LOOP;
-  
-  COMMIT; 
-  
+      
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
