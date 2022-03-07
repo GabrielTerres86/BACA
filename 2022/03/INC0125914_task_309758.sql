@@ -1,11 +1,13 @@
 DECLARE
   
-  vr_xml_parcela VARCHAR2(1000);
-  vr_motenvio    VARCHAR2(50);
-  vr_dsxmlali    XMLType;
-  vr_dscritic    VARCHAR2(4000);
   vr_idevento    tbgen_evento_soa.idevento%type;
-  vr_tipo_pagto  VARCHAR2(500);  
+  
+  vr_xml_parcela VARCHAR2(1000);
+  vr_motenvio    VARCHAR2(50);  
+  vr_dscritic    VARCHAR2(4000);  
+  vr_tipo_pagto  VARCHAR2(500); 
+  
+  vr_dsxmlali    XMLType;
   vr_exc_saida   exception;
 
   CURSOR cr_craplcm IS       
