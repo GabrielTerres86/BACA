@@ -5,9 +5,7 @@ DECLARE
          , t.nmrespon
          , ROWID dsdrowid
       from crapcrl t
-     WHERE t.cdcooper = 1
-       AND t.nrctamen = 9659307
-       AND t.idseqmen = 1;
+     WHERE t.cdcooper = 1 AND t.nrctamen = 7245181;
   
   CURSOR cr_pessoa(pr_nrcpfcgc IN NUMBER) IS
     SELECT t.nmpessoa
