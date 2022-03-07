@@ -13,6 +13,7 @@ BEGIN
   DELETE FROM crapace
    WHERE UPPER(crapace.nmdatela) = 'IMOVEL'          
      AND crapace.cdcooper <> 1;  
+  COMMIT; 	 
   FOR i IN 1 .. vr_user.count LOOP
     BEGIN
       INSERT INTO crapace
