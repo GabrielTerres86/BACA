@@ -1,5 +1,5 @@
 
-DECLARE--257.04
+DECLARE
   vr_altera      BOOLEAN := TRUE;
   vr_count       NUMBER;
   vr_inpolexp    NUMBER;
@@ -56,9 +56,9 @@ DECLARE--257.04
     ,vr_tpexposto    tbcadast_politico_exposto.tpexposto%TYPE
     ,vr_dsocupacao   VARCHAR2(4000)
     ,vr_ocupacao     gncdocp.dsdocupa%TYPE
-    ,vr_cdocupacao   gncdocp.cdocupa%TYPE --gncdocp
-    ,vr_dsrelacmnto  VARCHAR2(4000) --CONJUGE,1,PAI/MAE,2,FILHO(A),3,COMPANHEIRO(A),4,OUTROS,5,COLABORADOR(A),6,ENTEADO(A),7,ASSESSOR (A),8,PARENTE,9,REPRESENTANTE PEP,10,PROCURADOR PEP,11,SOCIO (A) PEP,12
-    ,vr_relacmnto    VARCHAR2(4000) --craptab WHERE cdacesso = 'VINCULOTTL'
+    ,vr_cdocupacao   gncdocp.cdocupa%TYPE 
+    ,vr_dsrelacmnto  VARCHAR2(4000) 
+    ,vr_relacmnto    VARCHAR2(4000) 
     ,vr_cdrelacmnto  NUMBER(2)
     ,vr_dsinicio     VARCHAR2(100)
     ,vr_dtinicio     tbcadast_politico_exposto.dttermino%TYPE
@@ -327,7 +327,6 @@ BEGIN
   gene0002.pc_escreve_xml(vr_texto_carga,vr_texto_carga_aux,'',true);
   gene0002.pc_escreve_xml(vr_script,vr_script_retorno,'', true);
 
-  -- Gerar o arquivo na pasta converte
   gene0002.pc_clob_para_arquivo(pr_clob     => vr_texto_carga
                                ,pr_caminho  => vr_dsdireto
                                ,pr_arquivo  => vr_nmarquiv
@@ -338,7 +337,6 @@ BEGIN
    ,pr_arquivo  => vr_nmarquivrollback
    ,pr_des_erro => vr_dscritic);
 
-  -- Liberando a memória alocada pro CLOB
   dbms_lob.close(vr_texto_carga);
   dbms_lob.freetemporary(vr_texto_carga);
   dbms_lob.close(vr_script);
