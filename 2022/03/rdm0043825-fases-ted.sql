@@ -1,0 +1,41 @@
+BEGIN
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019665, 43, 'CABInfCancelamento', to_date('23-02-2022 12:01:58', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019668, 43, 'CABInfCancelamento', to_date('23-02-2022 12:02:55', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019696, 43, 'CABInfCancelamento', to_date('23-02-2022 12:06:59', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019719, 43, 'CABInfCancelamento', to_date('23-02-2022 12:09:54', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019771, 43, 'CABInfCancelamento', to_date('23-02-2022 12:20:54', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019793, 43, 'CABInfCancelamento', to_date('23-02-2022 12:24:01', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019800, 43, 'CABInfCancelamento', to_date('23-02-2022 12:25:56', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019817, 43, 'CABInfCancelamento', to_date('23-02-2022 12:27:56', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019819, 43, 'CABInfCancelamento', to_date('23-02-2022 12:27:56', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019877, 43, 'CABInfCancelamento', to_date('23-02-2022 12:40:00', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019895, 43, 'CABInfCancelamento', to_date('23-02-2022 12:46:01', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019898, 43, 'CABInfCancelamento', to_date('23-02-2022 12:46:01', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019927, 43, 'CABInfCancelamento', to_date('23-02-2022 12:50:58', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213019928, 43, 'CABInfCancelamento', to_date('23-02-2022 12:50:58', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020008, 43, 'CABInfCancelamento', to_date('23-02-2022 13:07:04', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020009, 43, 'CABInfCancelamento', to_date('23-02-2022 13:07:04', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020010, 43, 'CABInfCancelamento', to_date('23-02-2022 13:07:05', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020011, 43, 'CABInfCancelamento', to_date('23-02-2022 13:07:04', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020015, 43, 'CABInfCancelamento', to_date('23-02-2022 13:07:04', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020018, 43, 'CABInfCancelamento', to_date('23-02-2022 13:07:57', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020019, 43, 'CABInfCancelamento', to_date('23-02-2022 13:07:58', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020021, 43, 'CABInfCancelamento', to_date('23-02-2022 13:07:57', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020022, 43, 'CABInfCancelamento', to_date('23-02-2022 13:07:57', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020035, 43, 'CABInfCancelamento', to_date('23-02-2022 13:09:57', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020103, 43, 'CABInfCancelamento', to_date('23-02-2022 13:21:56', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020129, 43, 'CABInfCancelamento', to_date('23-02-2022 13:25:57', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020165, 43, 'CABInfCancelamento', to_date('23-02-2022 13:33:00', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020166, 43, 'CABInfCancelamento', to_date('23-02-2022 13:33:00', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020175, 43, 'CABInfCancelamento', to_date('23-02-2022 13:34:03', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020225, 43, 'CABInfCancelamento', to_date('23-02-2022 13:41:02', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020312, 43, 'CABInfCancelamento', to_date('23-02-2022 13:50:05', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020313, 43, 'CABInfCancelamento', to_date('23-02-2022 13:50:05', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020412, 43, 'CABInfCancelamento', to_date('23-02-2022 14:01:06', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220213020419, 43, 'CABInfCancelamento', to_date('23-02-2022 14:02:03', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  insert into tbspb_msg_enviada_fase (NRSEQ_MENSAGEM, CDFASE, NMMENSAGEM, DHMENSAGEM, INSITUACAO) values (220313059871, 55, 'STR0037R1', to_date('04-03-2022 09:59:19', 'dd-mm-yyyy hh24:mi:ss'), 'OK');
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+END;
