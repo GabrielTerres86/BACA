@@ -79,7 +79,7 @@ BEGIN
    WHERE c.cdcooper IN 3;
    
   INSERT INTO cecred.crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-  VALUES ('BUSCAR_LOGS_ARQ_IMB', '', 'CREDITO.buscarLogImpArqImobiliario', 'pr_tipo_arq, pr_dtleitura, pr_pagina',(SELECT nrseqrdr FROM cecred.craprdr WHERE nmprogra = 'IMOBILIARIO'));
+  VALUES ('BUSCAR_LOGS_ARQ_IMB', '', 'CREDITO.buscarLogImpArqImobiliario', 'pr_tipo_arq, pr_dtleitura',(SELECT nrseqrdr FROM cecred.craprdr WHERE nmprogra = 'IMOBILIARIO'));
    
   INSERT INTO cecred.crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
   VALUES ('BUSCAR_DETALHES_LOG_ARQ_IMB', '', 'CREDITO.buscarDetalhesErroLogImobiliario', 'pr_tipo_arq, pr_dtleitura, pr_hrleitura, pr_nmarquivo',(SELECT nrseqrdr FROM cecred.craprdr WHERE nmprogra = 'IMOBILIARIO'));
