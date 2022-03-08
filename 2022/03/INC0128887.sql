@@ -33,7 +33,7 @@ DECLARE
        WHERE lct.idarquivo = arq.idarquivo
          AND ctz.idlancto = lct.idlancto
          AND pdv.idcentraliza = ctz.idcentraliza
-         AND arq.idarquivo IN (521090)
+         AND arq.idarquivo IN (529561)
        GROUP BY arq.idarquivo
                ,arq.nmarquivo_origem
                ,lct.nrcnpj_credenciador
@@ -73,7 +73,7 @@ DECLARE
          AND lct.idarquivo = arq.idarquivo
          AND ctz.idlancto = lct.idlancto
          AND pdv.tpforma_transf = pr_tpforma_transf
-         AND arq.idarquivo IN (521090)
+         AND arq.idarquivo IN (529561)
          AND NVL(pdv.cdocorrencia, '00') = '00'
        ORDER BY ctz.cdagencia_centraliza
                ,ctz.nrcta_centraliza
@@ -626,13 +626,13 @@ BEGIN
 
   UPDATE tbdomic_liqtrans_lancto
      SET insituacao = 1
-   WHERE idarquivo IN (521090);
+   WHERE idarquivo IN (529561);
 
   pc_efetiva_reg_pendentes(trunc(SYSDATE), vr_cdcritic, vr_dscritic);
 
   UPDATE tbdomic_liqtrans_lancto
      SET insituacao = 2
-   WHERE idarquivo IN (521090,521091);
+   WHERE idarquivo IN (529561,529564);
    
   UPDATE TBDOMIC_LIQTRANS_PDV
      SET DSERRO = 'ARQUIVO DUPLICADO'
@@ -640,7 +640,7 @@ BEGIN
                             FROM TBDOMIC_LIQTRANS_CENTRALIZA
                            WHERE IDLANCTO IN (SELECT IDLANCTO
                                                 FROM TBDOMIC_LIQTRANS_LANCTO
-                                               WHERE IDARQUIVO IN (521091)));
+                                               WHERE IDARQUIVO IN (529564)));
 
   COMMIT;
 
