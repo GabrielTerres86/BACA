@@ -4,7 +4,7 @@ DECLARE
 	v_nr_contrato tbgen_evento_soa.NRCTRPRP%TYPE := 71979;
 	v_cd_coopr    tbgen_evento_soa.CDCOOPER%TYPE := 7;
 
-	v_xml_envio_contrato CLOB :='<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+	v_xml_envio_contrato CLOB := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
                         <cooperativa>
                           <codigo>7</codigo>
                         </cooperativa>
