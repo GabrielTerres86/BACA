@@ -4,8 +4,7 @@ DECLARE
 	v_nr_contrato tbgen_evento_soa.NRCTRPRP%TYPE := 71978;
 	v_cd_coopr    tbgen_evento_soa.CDCOOPER%TYPE := 7;
 
-	v_xml_envio_contrato CLOB := '
-<?xml version="1.0" encoding="UTF-8"?>
+	v_xml_envio_contrato CLOB := '<?xml version="1.0" encoding="UTF-8"?>
 	<Root>
 		<convenioCredito>
             <cooperativa>
@@ -149,8 +148,7 @@ DECLARE
 			<naturalidade>ASTORGA</naturalidade>
 			<dataCalculoLegado>2022-02-09T00:00:00</dataCalculoLegado>
 		</parametroConsignado>
-	</Root>
-';
+	</Root>';
 
 BEGIN
 
