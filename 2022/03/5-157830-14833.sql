@@ -4,11 +4,11 @@ DECLARE
   vr_exc_saida EXCEPTION;
   rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 
-  vr_cdcooper crapcop.cdcooper%TYPE := 5; -- cooperativa
-  vr_nrdconta crapass.nrdconta%TYPE := 157830; -- conta
-  vr_nrctremp craplem.nrctremp%TYPE := 14833; -- contrato
-  vr_vllanmto craplem.vllanmto%TYPE := 390.36; -- valor do lancamento
-  vr_cdhistor craplem.cdhistor%TYPE := 2397; -- historico de lancamento
+  vr_cdcooper crapcop.cdcooper%TYPE := 5; 
+  vr_nrdconta crapass.nrdconta%TYPE := 157830; 
+  vr_nrctremp craplem.nrctremp%TYPE := 14833; 
+  vr_vllanmto craplem.vllanmto%TYPE := 390.36; 
+  vr_cdhistor craplem.cdhistor%TYPE := 2397; 
 
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                    ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -38,7 +38,7 @@ BEGIN
                                  ,pr_cdoperad => 1
                                  ,pr_cdpactra => rw_crapass.cdagenci
                                  ,pr_tplotmov => 5
-                                 ,pr_nrdolote => 600029 -- verificar qual numero vai ser lancado
+                                 ,pr_nrdolote => 600031
                                  ,pr_nrdconta => vr_nrdconta
                                  ,pr_cdhistor => vr_cdhistor
                                  ,pr_nrctremp => vr_nrctremp
