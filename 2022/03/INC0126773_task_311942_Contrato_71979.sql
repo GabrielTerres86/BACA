@@ -30,7 +30,9 @@ DECLARE
                           <codigo>4</codigo>
                         </tipoLiquidacao> 
                         <tributoIOFValor>0.00</tributoIOFValor>
-                        <valor>868.74</valor><valorBase>868.74</valorBase><dataProposta>2022-03-08T08:37:37</dataProposta>
+                        <valor>868.74</valor>
+						<valorBase>868.74</valorBase>
+						<dataProposta>2022-03-10T08:37:37</dataProposta>
                         <emitente> 
                           <dataNascOuConstituicao>1963-03-19T00:00:00</dataNascOuConstituicao>
                           <identificadorReceitaFederal>83479112900</identificadorReceitaFederal>
