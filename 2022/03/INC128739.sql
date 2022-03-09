@@ -315,7 +315,7 @@ BEGIN
     OPEN cr_vltotal_parcela(pr_cdcooper => rw_epr_pep.cdcooper
                            ,pr_nrdconta => rw_epr_pep.nrdconta
                            ,pr_nrctremp => rw_epr_pep.nrctremp
-                           ,pr_dtvencto => to_date('26/02/2022','dd/mm/yyyy'));
+                           ,pr_dtvencto => to_date('27/02/2022','dd/mm/yyyy'));
     FETCH cr_vltotal_parcela INTO vr_vltotal_parcela;
     CLOSE cr_vltotal_parcela;
         
