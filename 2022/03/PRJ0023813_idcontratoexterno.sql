@@ -1,5 +1,5 @@
 BEGIN
-update credito.tbcred_peac_contrato set idcontratoexterno =0;
+update credito.tbcred_peac_contrato set idcontratoexterno = 0;
 update credito.tbcred_peac_contrato set idcontratoexterno = 19852 WHERE CDCOOPER = 0014 AND NRDCONTA = 000000000190942 AND NRCONTRATO = 000000000019852;
 update credito.tbcred_peac_contrato set idcontratoexterno = 19861 WHERE CDCOOPER = 0014 AND NRDCONTA = 000000000149853 AND NRCONTRATO = 000000000019861;
 update credito.tbcred_peac_contrato set idcontratoexterno = 19714 WHERE CDCOOPER = 0014 AND NRDCONTA = 000000000050202 AND NRCONTRATO = 000000000019714;
