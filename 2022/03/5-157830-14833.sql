@@ -4,11 +4,11 @@ DECLARE
   vr_exc_saida EXCEPTION;
   rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 
-  vr_cdcooper crapcop.cdcooper%TYPE := 5; 
-  vr_nrdconta crapass.nrdconta%TYPE := 157830; 
-  vr_nrctremp craplem.nrctremp%TYPE := 14833; 
-  vr_vllanmto craplem.vllanmto%TYPE := 390.36; 
-  vr_cdhistor craplem.cdhistor%TYPE := 2397; 
+  vr_cdcooper crapcop.cdcooper%TYPE := 5;
+  vr_nrdconta crapass.nrdconta%TYPE := 157830;
+  vr_nrctremp craplem.nrctremp%TYPE := 14833;
+  vr_vllanmto craplem.vllanmto%TYPE := 390.36;
+  vr_cdhistor craplem.cdhistor%TYPE := 2397;
 
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                    ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -29,7 +29,6 @@ BEGIN
   FETCH cr_crapass
     INTO rw_crapass;
   CLOSE cr_crapass;
-
 
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
