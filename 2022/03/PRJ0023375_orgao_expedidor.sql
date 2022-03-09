@@ -1,7 +1,6 @@
 declare 
    i integer;
    
-   -- cria cursor para substituicao De-PARA
    CURSOR cr_outros is
    select org.idorgao_expedidor origem
         , 67 destino
@@ -25,8 +24,7 @@ declare
  
 begin
   
-  -- Cadastra os novos orgaos expeditores
-  --67 - OUTROS
+
   BEGIN     
        INSERT INTO TBGEN_ORGAO_EXPEDIDOR ( IDORGAO_EXPEDIDOR
                                          , CDORGAO_EXPEDIDOR
@@ -40,7 +38,7 @@ begin
    END;                                          
                                          
                                          
-   --68 - CGPI/DIREX/PF
+
    BEGIN
        INSERT INTO TBGEN_ORGAO_EXPEDIDOR ( IDORGAO_EXPEDIDOR
                                          , CDORGAO_EXPEDIDOR
@@ -53,7 +51,7 @@ begin
         NULL;
    END;                                            
                                          
-    --69 - CRC
+
     BEGIN
        INSERT INTO TBGEN_ORGAO_EXPEDIDOR ( IDORGAO_EXPEDIDOR
                                          , CDORGAO_EXPEDIDOR
@@ -66,7 +64,7 @@ begin
         NULL;
    END;                                                                                                          
       
-   --70 - MD
+  
    BEGIN
        INSERT INTO TBGEN_ORGAO_EXPEDIDOR ( IDORGAO_EXPEDIDOR
                                          , CDORGAO_EXPEDIDOR
@@ -79,7 +77,7 @@ begin
         NULL;
    END;                                          
 
-   --71 - SSDS
+ 
    BEGIN
        INSERT INTO TBGEN_ORGAO_EXPEDIDOR ( IDORGAO_EXPEDIDOR
                                          , CDORGAO_EXPEDIDOR
@@ -92,7 +90,7 @@ begin
         NULL;
    END;                                          
                                          
-   --72 - SEDS
+  
    BEGIN
        INSERT INTO TBGEN_ORGAO_EXPEDIDOR ( IDORGAO_EXPEDIDOR
                                          , CDORGAO_EXPEDIDOR
@@ -105,7 +103,7 @@ begin
         NULL;
    END;                                           
 
-   --73 - PC
+  
    BEGIN
        INSERT INTO TBGEN_ORGAO_EXPEDIDOR ( IDORGAO_EXPEDIDOR
                                          , CDORGAO_EXPEDIDOR
@@ -118,7 +116,7 @@ begin
         NULL;
    END;                                          
 
-   --74 - PTC
+
    BEGIN
        INSERT INTO TBGEN_ORGAO_EXPEDIDOR ( IDORGAO_EXPEDIDOR
                                          , CDORGAO_EXPEDIDOR
@@ -131,7 +129,7 @@ begin
         NULL;
    END;                                          
 
-    --75 - SESDC
+ 
     BEGIN
        INSERT INTO TBGEN_ORGAO_EXPEDIDOR ( IDORGAO_EXPEDIDOR
                                          , CDORGAO_EXPEDIDOR
@@ -144,7 +142,7 @@ begin
         NULL;
    END;                                          
 
-   --76 - SPTC
+ 
    Begin
        INSERT INTO TBGEN_ORGAO_EXPEDIDOR ( IDORGAO_EXPEDIDOR
                                          , CDORGAO_EXPEDIDOR
@@ -157,72 +155,71 @@ begin
         NULL;
    END;                                         
                                      
-   --Corrige o nome de alguns orgaos expeditores
-   --DETRAN
+ 
    UPDATE TBGEN_ORGAO_EXPEDIDOR
       SET CDORGAO_EXPEDIDOR = 'DETRAN'
         , NMORGAO_EXPEDIDOR = 'Departamento Estadual De Transito'
     WHERE IDORGAO_EXPEDIDOR = 6;                                  
 
-   --CRESS
+ 
    UPDATE TBGEN_ORGAO_EXPEDIDOR
       SET CDORGAO_EXPEDIDOR = 'CRESS'
         , NMORGAO_EXPEDIDOR = 'Conselho Regional De Servico Social'
     WHERE IDORGAO_EXPEDIDOR = 10;  
     
-   --MTE
+ 
    UPDATE TBGEN_ORGAO_EXPEDIDOR
       SET CDORGAO_EXPEDIDOR = 'MTE'
         , NMORGAO_EXPEDIDOR = 'Ministerio Do Trabalho E Emprego'
     WHERE IDORGAO_EXPEDIDOR = 27;   
      
      
-   --MAER
+
    UPDATE TBGEN_ORGAO_EXPEDIDOR
       SET CDORGAO_EXPEDIDOR = 'MAER'
     WHERE IDORGAO_EXPEDIDOR = 45;       
     
-   --PF
+ 
    UPDATE TBGEN_ORGAO_EXPEDIDOR
       SET CDORGAO_EXPEDIDOR = 'PF'
     WHERE IDORGAO_EXPEDIDOR = 52;     
     
-   --PM
+   
    UPDATE TBGEN_ORGAO_EXPEDIDOR
       SET CDORGAO_EXPEDIDOR = 'PM'
     WHERE IDORGAO_EXPEDIDOR = 54;     
     
-   --SEJUSP
+  
    UPDATE TBGEN_ORGAO_EXPEDIDOR
       SET NMORGAO_EXPEDIDOR = 'Secretaria De Estado De Justica E Seguranca Publica'
     WHERE IDORGAO_EXPEDIDOR = 58;    
     
-   --SESP
+   
    UPDATE TBGEN_ORGAO_EXPEDIDOR
       SET NMORGAO_EXPEDIDOR = 'Secretaria De Estado De Seguranca Publica'
     WHERE IDORGAO_EXPEDIDOR = 61;      
     
-   --CONRE
+  
    UPDATE TBGEN_ORGAO_EXPEDIDOR
       SET CDORGAO_EXPEDIDOR = 'CONRE'
     WHERE IDORGAO_EXPEDIDOR = 13;     
 
-   --CREFITO
+   
    UPDATE TBGEN_ORGAO_EXPEDIDOR
       SET CDORGAO_EXPEDIDOR = 'CREFITO'
     WHERE IDORGAO_EXPEDIDOR = 16;      
     
-   --CONRERP
+ 
    UPDATE TBGEN_ORGAO_EXPEDIDOR
       SET CDORGAO_EXPEDIDOR = 'CONRERP'
     WHERE IDORGAO_EXPEDIDOR = 22;     
     
-   --CORE
+   
    UPDATE TBGEN_ORGAO_EXPEDIDOR
       SET CDORGAO_EXPEDIDOR = 'CORE'
     WHERE IDORGAO_EXPEDIDOR = 24;        
 
-   -- Efetua a substituicao de diversos orgaos conforme De-PARA
+ 
    FOR rw_outros IN cr_outros LOOP
      begin  
        
