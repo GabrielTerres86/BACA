@@ -1,7 +1,11 @@
-begin
+BEGIN
 
--- Altera todos operadores para acessarem apenas pelo Aimaro via Browser
-UPDATE crapope set INUTLCRM = 0;
+	-- Altera todos operadores para acessarem apenas pelo Aimaro via Browser
+	UPDATE crapope set INUTLCRM = 0;
   
-commit;
-end;
+	COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE_application_error(-20500, SQLERRM);
+    ROLLBACK;
+END;
