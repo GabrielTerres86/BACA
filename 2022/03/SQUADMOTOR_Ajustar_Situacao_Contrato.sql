@@ -1,0 +1,30 @@
+INSERT INTO tbgrv_registro_contrato
+  (cdcooper
+  ,nrdconta
+  ,nrctrpro
+  ,idseqbem
+  ,tpregistro_contrato
+  ,dtregistro_contrato
+  ,cdsituacao_contrato
+  ,dsretorno_contrato
+  ,cdopereg
+  ,dtinsori
+  ,dtrefatu
+  ,dsc_identificador
+  ,dsc_identificador_registro)
+VALUES
+  (1
+  ,1522280
+  ,5301601
+  ,1
+  ,1
+  ,to_date('10-03-2022 16:45:00', 'dd-mm-yyyy hh24:mi:ss')
+  ,2
+  ,'REGISTRADA'
+  ,'1'
+  ,to_date('10-03-2022 16:45:00', 'dd-mm-yyyy hh24:mi:ss')
+  ,to_date('10-03-2022 16:45:00', 'dd-mm-yyyy hh24:mi:ss')
+  ,'20220026001281'
+  ,'2022002600128120220026001281');
+
+COMMIT;
