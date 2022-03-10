@@ -1,8 +1,8 @@
 DECLARE 
-   vr_nmarqimp1            VARCHAR2(100)  := 'backup.txt';
+   vr_nmarqimp1            VARCHAR2(100)  := 'RITM0204488_backup.txt';
    vr_ind_arquiv1          utl_file.file_type;   
    vr_rootmicros           VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
-   vr_nmdireto             VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/RITM0204488'; 
+   vr_nmdireto             VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/RITM0199878'; 
    vr_dscritic             VARCHAR2(4000);
    vr_excsaida             EXCEPTION;
    vr_param_backup         VARCHAR2(1);
