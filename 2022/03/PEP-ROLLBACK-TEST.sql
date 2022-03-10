@@ -34,6 +34,7 @@ DECLARE
      WHERE crapass.nrdconta = crapttl.nrdconta
        AND crapass.cdcooper = crapttl.cdcooper
 	   AND calris.nrcpfcgc = crapass.nrcpfcgc
+	   AND crapass.nrcpfcgc IN (376518979, 1005022968, 961685956, 71092730915)
 	   AND calris.tpcalculadora IN (1, 2)
        AND calris.cdclasrisco_espe_aten > 1
 	   AND calris.cdstatus = 1
