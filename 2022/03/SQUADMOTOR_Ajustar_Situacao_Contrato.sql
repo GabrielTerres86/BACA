@@ -28,3 +28,31 @@ VALUES
   ,'2022002600128120220026001281');
 
 COMMIT;
+
+INSERT INTO tbgrv_registro_imagem
+  (cdcooper
+  ,nrdconta
+  ,nrctrpro
+  ,idseqbem
+  ,tpregistro_imagem
+  ,dtregistro_imagem
+  ,cdsituacao_imagem
+  ,dsretorno_imagem
+  ,cdopereg
+  ,dtinsori
+  ,dtrefatu)
+VALUES
+  (1
+  ,1522280
+  ,5301601
+  ,1
+  ,1
+  ,to_date('10-03-2022 16:45:00', 'dd-mm-yyyy hh24:mi:ss')
+  ,0
+  ,NULL
+  ,'1'
+  ,to_date('10-03-2022 16:45:00', 'dd-mm-yyyy hh24:mi:ss')
+  ,to_date('10-03-2022 16:45:00', 'dd-mm-yyyy hh24:mi:ss')
+  );
+  
+commit;
