@@ -40,49 +40,6 @@ DECLARE
                 
   rw_craplcm cr_craplcm%ROWTYPE;
 BEGIN
-/*
-  insert into tbepr_consignado_pagamento
-	(idsequencia,
-	cdcooper,
-	nrdconta,
-	nrctremp,
-	nrparepr,
-	inorgpgt,
-	vlparepr,
-	vlpagpar,
-	dtvencto,
-	instatus,
-	dtincreg,
-	dtupdreg,
-	cdagenci,
-	cdbccxlt,
-	cdoperad,
-	inconciliado,
-	idseqpagamento,
-	idintegracao,
-	dtmvtolt)
-  values
-	(1176142,
-	1,
-	11618191,
-	4244536,
-	6,
-	1,
-	181.67,
-	181.67,
-	to_date('10-02-2022', 'dd-mm-yyyy'),
-	3,
-	to_date('11-02-2022 07:04:15', 'dd-mm-yyyy hh24:mi:ss'),
-	to_date('18-02-2022 08:43:56', 'dd-mm-yyyy hh24:mi:ss'),
-	71,
-	0,
-	'1',
-	NULL,
-	NULL,
-	NULL,
-	to_date('11-02-2022', 'dd-mm-yyyy'));
-
-  commit;*/
 
   FOR rw_craplcm IN cr_craplcm LOOP
       vr_motenvio := 'REENVIARPAGTO';
