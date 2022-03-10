@@ -1,6 +1,4 @@
-BEGIN
-
-	-- Altera todos operadores para acessarem apenas pelo Aimaro via Browser
+BEGIN	
 	UPDATE crapope set INUTLCRM = 0;
   
 	COMMIT;
