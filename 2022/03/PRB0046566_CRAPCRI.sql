@@ -14,6 +14,7 @@ BEGIN
     1,
     0);
     
+    
   INSERT INTO CECRED.CRAPCRI
     (CDCRITIC,
     DSCRITIC,
@@ -21,29 +22,7 @@ BEGIN
     FLGCHAMA)
   VALUES
     (10607,
-    '10607 - Erro ao criar o controle/farol no processo de criação da Solicitação de Bloqueio Pix',
-    1,
-    0);  
-    
-  INSERT INTO CECRED.CRAPCRI
-    (CDCRITIC,
-    DSCRITIC,
-    TPCRITIC,
-    FLGCHAMA)
-  VALUES
-    (10608,
-    '10608 - Erro ao remover o controle/farol no processo de criação da Solicitação de Bloqueio Pix',
-    1,
-    0);
-    
-  INSERT INTO CECRED.CRAPCRI
-    (CDCRITIC,
-    DSCRITIC,
-    TPCRITIC,
-    FLGCHAMA)
-  VALUES
-    (10609,
-    '10609 - Parâmetros de entrada não informados.',
+    '10607 - Parâmetros de entrada não informados.',
     1,
     0);          
     
