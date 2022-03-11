@@ -85,16 +85,16 @@ BEGIN
   VALUES ('BUSCAR_DETALHES_LOG_ARQ_IMB', '', 'CREDITO.buscarDetalhesErroLogImobiliario', 'pr_tipo_arq, pr_dtleitura, pr_hrleitura, pr_nmarquivo',(SELECT nrseqrdr FROM cecred.craprdr WHERE nmprogra = 'IMOBILIARIO'));
 
   insert into cecred.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
-  values ('CTGIMB', 'C', 'f0032951', ' ', 3, 1, 0, 2);   -- Elaine
+  values ('CTGIMB', 'C', 'f0032951', ' ', 3, 1, 0, 2);
   
   insert into cecred.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
-  values ('CTGIMB', 'I', 'f0032951', ' ', 3, 1, 0, 2);   -- Elaine  
+  values ('CTGIMB', 'I', 'f0032951', ' ', 3, 1, 0, 2);
   
   insert into cecred.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
-  values ('CTGIMB', 'C', 'f0033100', ' ', 3, 1, 0, 2);  --Amanda
+  values ('CTGIMB', 'C', 'f0033100', ' ', 3, 1, 0, 2);
   
   insert into cecred.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
-  values ('CTGIMB', 'I', 'f0033100', ' ', 3, 1, 0, 2);  --Amanda  
+  values ('CTGIMB', 'I', 'f0033100', ' ', 3, 1, 0, 2);
 
   COMMIT;
 EXCEPTION
