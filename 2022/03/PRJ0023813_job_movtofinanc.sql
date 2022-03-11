@@ -52,7 +52,7 @@ END;'
   COMMIT;
 EXCEPTION
   WHEN DUP_VAL_ON_INDEX THEN
-    ROLLBACK;--NÃO FAZ NADA
+    ROLLBACK;
   WHEN OTHERS THEN
     RAISE_APPLICATION_ERROR(-20000,
                             'Erro ao gravar job peac. Erro: ' || SQLERRM);
