@@ -37,7 +37,6 @@ DECLARE
 
   rw_craplcm cr_craplcm%ROWTYPE;
 begin
-  
   FOR rw_craplcm IN cr_craplcm LOOP
     vr_motenvio    := 'REENVIARPAGTO';
     vr_tipo_pagto  := ' <valor>' || trim(to_char(rw_craplcm.vlpagpar, '999999990.00')) ||
@@ -77,10 +76,8 @@ begin
   END LOOP;
 
   COMMIT;
-
 EXCEPTION
   WHEN OTHERS THEN
     RAISE_application_error(-20500, vr_dscritic);
-    ROLLBACK;
-  
+    ROLLBACK; 
 end;
