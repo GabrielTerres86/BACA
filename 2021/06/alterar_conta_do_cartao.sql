@@ -53,5 +53,4 @@ BEGIN
    WHERE card.nrcrcard = vr_cartao;
 
   COMMIT;
-
 END;
