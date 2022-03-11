@@ -49,6 +49,7 @@ END;'
     ,NULL
     ,'S'
     ,0);
+
   COMMIT;
 EXCEPTION
   WHEN DUP_VAL_ON_INDEX THEN

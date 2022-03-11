@@ -62,7 +62,6 @@ BEGIN
       vr_dscritic := SQLERRM;
       RAISE vr_exc_erro;
   END;
-
   COMMIT;
 EXCEPTION
   WHEN vr_exc_erro THEN

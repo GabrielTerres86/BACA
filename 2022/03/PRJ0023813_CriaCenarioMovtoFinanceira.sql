@@ -66,7 +66,7 @@ BEGIN
     ,cd_identificador_transf
     ,ds_finalidade_if
     ,ds_historico
-    ,dt_movimentot)
+    ,dt_movimento)
   VALUES
     ('STR20220307033189025'
     ,3
