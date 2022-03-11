@@ -1,4 +1,3 @@
-
 DECLARE
   vr_altera      BOOLEAN := TRUE;
   vr_count       NUMBER;
