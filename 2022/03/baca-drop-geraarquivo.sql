@@ -6,7 +6,7 @@ BEGIN
     WHEN OTHERS THEN
       NULL;
   END;
-
+  COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
     RAISE_application_error(-20500, SQLERRM);
