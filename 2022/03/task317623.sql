@@ -1,5 +1,4 @@
 DECLARE
-
   vr_xml_parcela VARCHAR2(1000);
   vr_motenvio    VARCHAR2(50);
   vr_dsxmlali    XMLType;
@@ -37,7 +36,6 @@ DECLARE
              ,b.nrparepr;
 
   rw_craplcm cr_craplcm%ROWTYPE;
-
 begin
   
   insert into tbepr_consignado_pagamento (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
