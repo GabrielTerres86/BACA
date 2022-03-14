@@ -1,4 +1,3 @@
-
 BEGIN 
 UPDATE crapttl
                        SET inpolexp = 1
