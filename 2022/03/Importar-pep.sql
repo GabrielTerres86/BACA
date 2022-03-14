@@ -1,4 +1,3 @@
-
 DECLARE
   vr_altera      BOOLEAN := TRUE;
   vr_count       NUMBER;
@@ -185,10 +184,10 @@ BEGIN
             vr_pep.vr_cdocupacao := NULL;
         END;
         BEGIN
-          IF instr(upper(vr_pep.vr_dsrelacmnto), ' CONJUGE ') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' CÃ”NJUGE/') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' EX-CÃ”NJUGE') > 0 THEN
+          IF instr(upper(vr_pep.vr_dsrelacmnto), ' CONJUGE ') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' CÔNJUGE/') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' EX-CÔNJUGE') > 0 THEN
             vr_pep.vr_cdrelacmnto := 1;
             vr_pep.vr_relacmnto   := 'Conjuge';
-          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'PAI/MÃƒE') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' PAI ') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' MÃƒE ') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' MAE ') > 0 THEN
+          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'PAI/MÃE') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' PAI ') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' MÃE ') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' MAE ') > 0 THEN
             vr_pep.vr_cdrelacmnto := 2;
             vr_pep.vr_relacmnto   := 'Pai/Mae';
           ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'FILHA(O)') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), 'FILHO(A)') > 0 THEN
@@ -203,10 +202,10 @@ BEGIN
           ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'ENTEADA(O)') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), 'ENTEADO(A)') > 0 THEN
             vr_pep.vr_cdrelacmnto := 7;
             vr_pep.vr_relacmnto   := 'Enteada(o) - Parente';
-          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), ' SÃ“CIO ') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' SÃ“CIA ') > 0 THEN
+          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), ' SÓCIO ') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' SÓCIA ') > 0 THEN
             vr_pep.vr_cdrelacmnto := 12;
-            vr_pep.vr_relacmnto   := 'SÃ³cio(a)';
-          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'IRMÃƒ(O)') > 0 THEN
+            vr_pep.vr_relacmnto   := 'Sócio(a)';
+          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'IRMÃ(O)') > 0 THEN
             vr_pep.vr_cdrelacmnto := 9;
             vr_pep.vr_relacmnto   := 'IRMA(O) - Parente';
           ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'SOBRINHO(A)') > 0 THEN
