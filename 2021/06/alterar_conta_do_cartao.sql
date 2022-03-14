@@ -7,9 +7,9 @@ DECLARE
 
 BEGIN
 
-  vr_cooperativa := 6;
-  vr_conta := 14010;
-  vr_cartao := 6393500012985783;
+  vr_cooperativa := 7;
+  vr_conta := 19;
+  vr_cartao := 5158940000000188;
 
   FOR cartao IN (select distinct a.nrcpftit
                   from crawcrd a
