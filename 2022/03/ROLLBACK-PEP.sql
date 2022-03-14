@@ -44,6 +44,7 @@ UPDATE crapttl
                        AND cdcooper = 2
                        AND nrdconta = 43; 
 DELETE FROM tbcadast_politico_exposto WHERE cdcooper = 2 AND nrdconta = 43 AND idseqttl = 1;
-
+DELETE FROM tbcadast_politico_exposto WHERE cdcooper = 1 AND nrdconta = 591718 AND idseqttl = 1;
+DELETE FROM tbcadast_politico_exposto WHERE cdcooper = 1 AND nrdconta = 624349 AND idseqttl = 1;
 COMMIT; 
 END; 
