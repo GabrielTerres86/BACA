@@ -20,11 +20,7 @@ DECLARE
       FROM CRAPASS t
      WHERE 1 = 1
        AND (t.cdcooper, t.nrdconta) in
-           ((1, 11269669),
-            (1, 9992545),
-            (1, 7943083),
-            (1, 10545107),
-            (1, 10389385))
+           ((5, 159727))
      order by t.cdcooper, t.nrdconta;
 
   rg_crapass cr_crapass%rowtype;
@@ -44,7 +40,7 @@ BEGIN
                          pr_cdoperad => vr_cdoperad,
                          pr_dscritic => vr_dscritic,
                          pr_dsorigem => 'AIMARO',
-                         pr_dstransa => 'Alteracao da situacao de conta por script - INC0127784',
+                         pr_dstransa => 'Alteracao da situacao de conta por script - INC0129837',
                          pr_dttransa => vr_dttransa,
                          pr_flgtrans => 1,
                          pr_hrtransa => vr_hrtransa,
@@ -147,7 +143,7 @@ BEGIN
                            pr_cdoperad => vr_cdoperad,
                            pr_dscritic => vr_dscritic,
                            pr_dsorigem => 'AIMARO',
-                           pr_dstransa => 'Alteração de Cotas e devolução - INC0127784',
+                           pr_dstransa => 'Alteração de Cotas e devolução - INC0129837',
                            pr_dttransa => vr_dttransa,
                            pr_flgtrans => 1,
                            pr_hrtransa => vr_hrtransa,
