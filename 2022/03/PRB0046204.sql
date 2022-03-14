@@ -6,7 +6,7 @@ declare
      WHERE A.DTDEMISS IS NOT NULL
        AND A.CDCOOPER = 1
        AND A.DTDEMISS <= TO_DATE('01/01/2000','DD/MM/YYYY')
-       AND ROWNUM <= 1000;
+       AND ROWNUM <= 1000; 
           
 begin
 
