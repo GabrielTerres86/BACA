@@ -34,7 +34,7 @@ DECLARE
      WHERE crapass.nrdconta = crapttl.nrdconta
        AND crapass.cdcooper = crapttl.cdcooper
      AND calris.nrcpfcgc = crapass.nrcpfcgc
-     AND crapass.nrcpfcgc IN (376518979, 1005022968, 961685956, 71092730915)
+     AND crapass.nrcpfcgc = 376518979
      AND calris.tpcalculadora IN (1, 2)
        AND calris.cdclasrisco_espe_aten > 1
      AND calris.cdstatus = 1
@@ -165,8 +165,8 @@ BEGIN
         vr_pep.vr_dtinicio     := to_date(vr_pep.vr_dsinicio, 'yyyy-mm-dd');
         vr_pep.vr_dttermino    := to_date(vr_pep.vr_dstermino, 'yyyy-mm-dd');
         BEGIN
-          IF instr(vr_pep.vr_dsocupacao, 'CARGO:') > 0 THEN
-            vr_pep.vr_ocupacao := TRIM(substr(vr_pep.vr_dsocupacao,instr(vr_pep.vr_dsocupacao, 'CARGO:') +length('CARGO:'), instr(substr(vr_pep.vr_dsocupacao,instr(vr_pep.vr_dsocupacao, 'CARGO:') +length('CARGO:')),',')-1));
+          IF instr(upper(vr_pep.vr_dsocupacao), 'CARGO:') > 0 THEN
+            vr_pep.vr_ocupacao := TRIM(substr(vr_pep.vr_dsocupacao,instr(upper(vr_pep.vr_dsocupacao), 'CARGO:') +length('CARGO:'), instr(substr(vr_pep.vr_dsocupacao,instr(upper(vr_pep.vr_dsocupacao), 'CARGO:') +length('CARGO:')),',')-1));
           ELSIF instr(vr_pep.vr_dsocupacao, '/') > 0 THEN
             vr_pep.vr_ocupacao := TRIM(substr(vr_pep.vr_dsocupacao,0,instr(vr_pep.vr_dsocupacao, '/')-1));
           END IF;  
@@ -184,25 +184,25 @@ BEGIN
             vr_pep.vr_cdocupacao := NULL;
         END;
         BEGIN
-          IF instr(upper(vr_pep.vr_dsrelacmnto), ' CONJUGE ') > 0 OR instr(vr_pep.vr_dsrelacmnto, ' CÔNJUGE/') > 0 OR instr(vr_pep.vr_dsrelacmnto, ' EX-CÔNJUGE') > 0 THEN
+          IF instr(upper(vr_pep.vr_dsrelacmnto), ' CONJUGE ') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' CÔNJUGE/') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' EX-CÔNJUGE') > 0 THEN
             vr_pep.vr_cdrelacmnto := 1;
             vr_pep.vr_relacmnto   := 'Conjuge';
-          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'PAI/MÃE') > 0 OR instr(vr_pep.vr_dsrelacmnto, ' PAI ') > 0 OR instr(vr_pep.vr_dsrelacmnto, ' MÃE ') > 0 OR instr(vr_pep.vr_dsrelacmnto, ' MAE ') > 0 THEN
+          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'PAI/MÃE') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' PAI ') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' MÃE ') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' MAE ') > 0 THEN
             vr_pep.vr_cdrelacmnto := 2;
             vr_pep.vr_relacmnto   := 'Pai/Mae';
-          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'FILHA(O)') > 0 OR instr(vr_pep.vr_dsrelacmnto, 'FILHO(A)') > 0 THEN
+          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'FILHA(O)') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), 'FILHO(A)') > 0 THEN
             vr_pep.vr_cdrelacmnto := 3;
             vr_pep.vr_relacmnto   := 'Filha(o)';
-          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'TIO/TIA') > 0 OR instr(vr_pep.vr_dsrelacmnto, 'TIA/TIO') > 0 OR instr(vr_pep.vr_dsrelacmnto, 'TIO(A)') > 0 OR instr(vr_pep.vr_dsrelacmnto, 'TIA(O)') > 0 THEN
+          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'TIO/TIA') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), 'TIA/TIO') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), 'TIO(A)') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), 'TIA(O)') > 0 THEN
             vr_pep.vr_cdrelacmnto := 9;
             vr_pep.vr_relacmnto   := 'Tio/tia - Parente';
-          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'PRIMO(A)') > 0 OR instr(vr_pep.vr_dsrelacmnto, 'PRIMA(O)') > 0 THEN
+          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'PRIMO(A)') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), 'PRIMA(O)') > 0 THEN
             vr_pep.vr_cdrelacmnto := 9;
             vr_pep.vr_relacmnto   := 'Primo(a) - Parente';
-          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'ENTEADA(O)') > 0 OR instr(vr_pep.vr_dsrelacmnto, 'ENTEADO(A)') > 0 THEN
+          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'ENTEADA(O)') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), 'ENTEADO(A)') > 0 THEN
             vr_pep.vr_cdrelacmnto := 7;
             vr_pep.vr_relacmnto   := 'Enteada(o) - Parente';
-          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), ' SÓCIO ') > 0 OR instr(vr_pep.vr_dsrelacmnto, ' SÓCIA ') > 0 THEN
+          ELSIF instr(upper(vr_pep.vr_dsrelacmnto), ' SÓCIO ') > 0 OR instr(upper(vr_pep.vr_dsrelacmnto), ' SÓCIA ') > 0 THEN
             vr_pep.vr_cdrelacmnto := 12;
             vr_pep.vr_relacmnto   := 'Sócio(a)';
           ELSIF instr(upper(vr_pep.vr_dsrelacmnto), 'IRMÃ(O)') > 0 THEN
@@ -216,7 +216,7 @@ BEGIN
           WHEN OTHERS THEN
             vr_pep.vr_cdocupacao := NULL;
         END;
-        IF instr(vr_pep.vr_dsocupacao, 'SUPLENTE') > 0 THEN
+        IF instr(upper(vr_pep.vr_dsocupacao), 'SUPLENTE') > 0 THEN
           vr_pep.vr_log := vr_pep.vr_log || 'Suplente, nao altera dados|';
           CONTINUE;
         END IF;
