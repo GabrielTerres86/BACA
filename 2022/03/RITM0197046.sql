@@ -6,6 +6,8 @@ declare
 begin
   cecred.pc_envia_arq_seg_prst(pr_cdcritic => vr_cdcritic,
                                pr_dscritic => vr_dscritic);
+
+  commit;
 end;
 
 end;
