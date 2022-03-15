@@ -9,7 +9,7 @@ BEGIN
 	(SELECT nrseqrdr from CRAPRDR WHERE nmprogra = 'TELA_ATENDA_SEGURO')); 
 
   INSERT INTO crapaca (NRSEQACA, NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-	VALUES ((select max(NRSEQACA) + 1 from crapaca), 'ATUALIZA_PROPOSTA_PREST', 'TELA_ATENDA_SEGURO','pc_retorna_tpcuspr','pr_cdcooper,pr_nrdconta,pr_nrctrato,pr_flggarad,pr_flgassum,pr_tpcustei',
+	VALUES ((select max(NRSEQACA) + 1 from crapaca), 'ATUALIZA_PROPOSTA_PREST', 'TELA_ATENDA_SEGURO','pc_atualiza_dados_prest','pr_cdcooper,pr_nrdconta,pr_nrctrato,pr_flggarad,pr_flgassum,pr_tpcustei',
 	(SELECT nrseqrdr from CRAPRDR WHERE nmprogra = 'TELA_ATENDA_SEGURO')); 
 	 
   INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
