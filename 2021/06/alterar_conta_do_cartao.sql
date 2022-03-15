@@ -7,7 +7,7 @@ DECLARE
 
 BEGIN
 
-  vr_cooperativa := 11;
+  vr_cooperativa := 12;
   vr_conta := 14010;
   vr_cartao := 5158940000000188;
 
