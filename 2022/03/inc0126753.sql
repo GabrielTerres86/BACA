@@ -150,7 +150,6 @@ BEGIN
       
       IF vr_cdhistor IN (2408, 2721, 2722) THEN
 		
-		-- criar lancamento na lislot (TBCC_PREJUIZO_DETALHE)
 		BEGIN
           SELECT a.idprejuizo
             INTO vr_idprejuizo
@@ -188,7 +187,6 @@ BEGIN
                     
       ELSIF vr_cdhistor IN (2738) THEN
         
-        -- lançar credito (Tabela tbcc_prejuizo_lancamento)
         prej0003.pc_gera_cred_cta_prj(pr_cdcooper => vr_cdcooper,
                                       pr_nrdconta => vr_nrdconta,
                                       pr_vlrlanc  => vr_vllanmto,
@@ -203,7 +201,6 @@ BEGIN
         
       ELSIF vr_cdhistor IN (2739) THEN
         
-        -- lancar debito (Tabela tbcc_prejuizo_lancamento)
         prej0003.pc_gera_debt_cta_prj(pr_cdcooper => vr_cdcooper,
                                       pr_nrdconta => vr_nrdconta,
                                       pr_vlrlanc  => vr_vllanmto,
@@ -217,26 +214,24 @@ BEGIN
         END IF;
       
       ELSE
-          -- Cria lancamento na CC CRAPLCM   
+ 
           IF vr_cdhistor IN (2720) THEN
           
-            EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => vr_cdcooper --> Cooperativa conectada
-                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Movimento atual
-                                          ,pr_cdagenci => 0 --> Código da agência
-                                          ,pr_cdbccxlt => 100 --> Número do caixa
-                                          ,pr_cdoperad => '1' --> Código do Operador
-                                          ,pr_cdpactra => 0 --> P.A. da transação
-                                          ,pr_nrdolote => 650001 --> Numero do Lote
-                                          ,pr_nrdconta => vr_nrdconta --> Número da conta
-                                          ,pr_cdhistor => vr_cdhistor --> Codigo historico 2182 - PAGAMENTO DAS DESPESAS ACORDO
-                                          ,pr_vllanmto => vr_vllanmto --> Valor da parcela emprestimo
-                                          ,pr_nrparepr => 0 --> Número parcelas empréstimo
-                                          ,pr_nrctremp => 0 --> Número do contrato de empréstimo
-                                          ,pr_des_reto => vr_des_erro --> Retorno OK / NOK
-                                          ,pr_tab_erro => vr_tab_erro); --> Tabela com possíves erros
-            -- Se ocorreu erro
+            EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => vr_cdcooper 
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt 
+                                          ,pr_cdagenci => 0 
+                                          ,pr_cdbccxlt => 100 
+                                          ,pr_cdoperad => '1' 
+                                          ,pr_cdpactra => 0 
+                                          ,pr_nrdolote => 650001 
+                                          ,pr_nrdconta => vr_nrdconta 
+                                          ,pr_cdhistor => vr_cdhistor 
+                                          ,pr_vllanmto => vr_vllanmto 
+                                          ,pr_nrparepr => 0 
+                                          ,pr_nrctremp => 0 
+                                          ,pr_des_reto => vr_des_erro 
+                                          ,pr_tab_erro => vr_tab_erro); 
             IF vr_des_erro <> 'OK' THEN
-              -- Se possui algum erro na tabela de erros
               IF vr_tab_erro.COUNT() > 0 THEN
                 vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
                 vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
