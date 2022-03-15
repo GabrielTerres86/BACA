@@ -1,7 +1,8 @@
 BEGIN
-  UPDATE crapaca a
-     SET a.lstparam = 'pr_cdcooper,pr_tipooperacao,pr_nrdconta,pr_nrcontrato,pr_dtinicio,pr_dtfim,pr_status'
-   WHERE a.nmdeacao = 'CONSULTA_RETORNOS_PEAC';
+  UPDATE crapaca
+     SET lstparam = 'pr_cdcooper,pr_tipooperacao,pr_nrdconta,pr_nrcontrato,pr_dtinicio,pr_dtfim,pr_status,pr_nriniseq,pr_nrregist'
+   WHERE nmpackag = 'TELA_PEAC'
+     AND nmdeacao = 'CONSULTA_RETORNOS_PEAC';
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
