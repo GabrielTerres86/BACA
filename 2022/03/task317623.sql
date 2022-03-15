@@ -22,8 +22,9 @@ DECLARE
        and pep.nrctremp = b.nrctremp
        and pep.nrparepr = b.nrparepr
        and pep.cdcooper = b.cdcooper
-       and b.instatus <> 2
-       and pep.inliquid = 0
+       AND PEP.Vlparepr = b.vlpagpar
+       AND PEP.NRPAREPR = 4
+       and pep.inliquid = 1
      group by b.dtvencto
              ,b.vlpagpar
              ,b.nrdconta
