@@ -6,6 +6,7 @@ BEGIN
      and S.NMDCAMPO = 'NRDCONTA'
      and S.DSDCHAVE = 9;
      
+     
   COMMIT;
   
 EXCEPTION
