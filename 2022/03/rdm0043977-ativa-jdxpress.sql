@@ -1,4 +1,3 @@
---Ativar monitoramento JD Express
 DECLARE
 BEGIN
   UPDATE crapprm p
