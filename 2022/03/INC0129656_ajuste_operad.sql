@@ -1,13 +1,13 @@
 BEGIN
 
-	create unique index CRAPOPE_RDM0043934_PK on CRAPOPE_RDM0043934 (cdcooper, cdoperad) nologging;
+	create unique index cecred.CRAPOPE_RDM0043934_PK on CRAPOPE_RDM0043934 (cdcooper, cdoperad) nologging;
 	
-	update crapope set inutlcrm = 
+	update cecred.crapope set inutlcrm = 
 	  (select CRAPOPE_RDM0043934.Inutlcrm from cecred.CRAPOPE_RDM0043934
-	where CRAPOPE_RDM0043934.Cdcooper = crapope.cdcooper
-	and CRAPOPE_RDM0043934.Cdoperad = crapope.cdoperad);
+	where cecred.CRAPOPE_RDM0043934.Cdcooper = cecred.crapope.cdcooper
+	and cecred.CRAPOPE_RDM0043934.Cdoperad = cecred.crapope.cdoperad);
 	
-	drop index CRAPOPE_RDM0043934_PK;
+	drop index cecred.CRAPOPE_RDM0043934_PK;
 
   
 	COMMIT;
