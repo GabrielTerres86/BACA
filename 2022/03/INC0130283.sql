@@ -30,7 +30,6 @@ BEGIN
   FETCH cr_crapass INTO rw_crapass;
   CLOSE cr_crapass;
 
-  -- Cria o lancamento de estorno
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                  ,pr_cdagenci => rw_crapass.cdagenci
@@ -62,7 +61,6 @@ BEGIN
   vr_nrctremp := 175711;
   vr_vllanmto := 162.66;
 
-  -- Cria o lancamento de estorno
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                  ,pr_cdagenci => rw_crapass.cdagenci
