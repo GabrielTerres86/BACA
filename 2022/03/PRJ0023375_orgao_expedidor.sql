@@ -242,10 +242,7 @@ begin
      UPDATE CRAPCJE CJE
         SET CJE.IDORGEXP = rw_outros.destino
       WHERE CJE.IDORGEXP = rw_outros.origem; 
-
-    UPDATE TBCADAST_PESSOA_FISICA FIS
-       SET FIS.IDORGAO_EXPEDIDOR = rw_outros.destino
-     WHERE FIS.IDORGAO_EXPEDIDOR = rw_outros.origem;         
+       
   
      exception
        when others then
@@ -255,8 +252,6 @@ begin
    
    commit;
    
-   DELETE FROM TBGEN_ORGAO_EXPEDIDOR WHERE IDORGAO_EXPEDIDOR IN (1,3,4,5,29,30,31,34,35,36,37,38,39,40,42,44,56,57,59,60,62,63,64,65,26,32,33,41,43 );
 
-   COMMIT;
   
 end;
