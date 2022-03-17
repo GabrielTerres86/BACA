@@ -1,0 +1,123 @@
+BEGIN
+  INSERT INTO crapris
+    (nrdconta
+    ,dtrefere
+    ,innivris
+    ,qtdiaatr
+    ,vldivida
+    ,vlvec180
+    ,vlvec360
+    ,vlvec999
+    ,vldiv060
+    ,vldiv180
+    ,vldiv360
+    ,vldiv999
+    ,vlprjano
+    ,vlprjaan
+    ,inpessoa
+    ,nrcpfcgc
+    ,vlprjant
+    ,inddocto
+    ,cdmodali
+    ,nrctremp
+    ,nrseqctr
+    ,dtinictr
+    ,cdorigem
+    ,cdagenci
+    ,innivori
+    ,cdcooper
+    ,vlprjm60
+    ,dtdrisco
+    ,qtdriclq
+    ,nrdgrupo
+    ,vljura60
+    ,inindris
+    ,cdinfadi
+    ,nrctrnov
+    ,flgindiv
+    ,dsinfaux
+    ,dtprxpar
+    ,vlprxpar
+    ,qtparcel
+    ,dtvencop
+    ,dttrfprj
+    ,vlsld59d
+    ,flindbndes
+    ,vlmrapar60
+    ,vljuremu60
+    ,vljurcor60
+    ,vljurantpp
+    ,vljurparpp
+    ,vljurmorpp
+    ,vljurmulpp
+    ,vljuriofpp
+    ,vljurcorpp
+    ,inespecie
+    ,qtdiaatr_ori
+    ,nracordo)
+    (SELECT r.nrdconta
+           ,to_date('02/02/2022', 'DD/MM/RRRR') dtrefere
+           ,r.innivris
+           ,95 qtdiaatr
+           ,r.vldivida
+           ,r.vlvec180
+           ,r.vlvec360
+           ,r.vlvec999
+           ,r.vldiv060
+           ,r.vldiv180
+           ,r.vldiv360
+           ,r.vldiv999
+           ,r.vlprjano
+           ,r.vlprjaan
+           ,r.inpessoa
+           ,r.nrcpfcgc
+           ,r.vlprjant
+           ,r.inddocto
+           ,r.cdmodali
+           ,r.nrctremp
+           ,r.nrseqctr
+           ,r.dtinictr
+           ,r.cdorigem
+           ,r.cdagenci
+           ,r.innivori
+           ,r.cdcooper
+           ,r.vlprjm60
+           ,r.dtdrisco
+           ,r.qtdriclq
+           ,r.nrdgrupo
+           ,r.vljura60
+           ,r.inindris
+           ,r.cdinfadi
+           ,r.nrctrnov
+           ,r.flgindiv
+           ,r.dsinfaux
+           ,r.dtprxpar
+           ,r.vlprxpar
+           ,r.qtparcel
+           ,r.dtvencop
+           ,r.dttrfprj
+           ,r.vlsld59d
+           ,r.flindbndes
+           ,r.vlmrapar60
+           ,r.vljuremu60
+           ,r.vljurcor60
+           ,r.vljurantpp
+           ,r.vljurparpp
+           ,r.vljurmorpp
+           ,r.vljurmulpp
+           ,r.vljuriofpp
+           ,r.vljurcorpp
+           ,r.inespecie
+           ,r.qtdiaatr_ori
+           ,r.nracordo
+       FROM crapris r
+      WHERE r.cdcooper = 1
+        AND r.nrdconta = 6653740
+        AND r.nrctremp = 2979852
+        AND r.dtrefere = to_date('21/01/2022', 'DD/MM/RRRR'));
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    raise_application_error(-20500, SQLERRM);
+END;
