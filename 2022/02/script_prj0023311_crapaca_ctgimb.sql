@@ -91,10 +91,16 @@ BEGIN
   values ('CTGIMB', 'I', 'f0032951', ' ', 3, 1, 0, 2);  
   
   insert into cecred.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('CTGIMB', '@', 'f0032951', ' ', 3, 1, 0, 2); 
+  
+  insert into cecred.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
   values ('CTGIMB', 'C', 'f0033100', ' ', 3, 1, 0, 2);
   
   insert into cecred.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
   values ('CTGIMB', 'I', 'f0033100', ' ', 3, 1, 0, 2); 
+
+  insert into cecred.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('CTGIMB', '@', 'f0033100', ' ', 3, 1, 0, 2); 
 
   COMMIT;
 EXCEPTION
