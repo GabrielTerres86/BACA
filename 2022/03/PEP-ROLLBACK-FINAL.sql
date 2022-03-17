@@ -11,7 +11,7 @@ DECLARE
                                                            ,pr_cdacesso => 'ROOT_DIRCOOP')||'cecred/arq/';
   vr_nmarquiv   VARCHAR2(100)  := 'atualizacao_pep.csv';
   vr_dscritic   VARCHAR2(4000);
-  vr_nmarquivrollback   VARCHAR2(100)  := 'rollback_pep.txt';
+  vr_nmarquivrollback   VARCHAR2(100)  := 'rollback_pep.sql';
   vr_req      utl_http.req;
   vr_res      utl_http.resp;
   vr_req_url  VARCHAR2(4000) := 'http://api.advicetech.com.br/apipepadvice/ws/AdviceListaPEP.asmx?op=Consulta';
