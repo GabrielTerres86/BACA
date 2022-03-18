@@ -1,5 +1,5 @@
 
-
+begin
 insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
 values (1179394, 13, 246190, 110103, 11, 4, 59.05, 59.05, to_date('10-03-2022', 'dd-mm-yyyy'), 3, to_date('03-03-2022 07:00:08', 'dd-mm-yyyy hh24:mi:ss'), to_date('07-03-2022 15:02:53', 'dd-mm-yyyy hh24:mi:ss'), 12, 0, '1', null, null, null, to_date('02-03-2022', 'dd-mm-yyyy'));
 
@@ -177,5 +177,6 @@ values (1179548, 13, 246190, 78969, 62, 4, 52.17, 52.17, to_date('10-11-2025', '
 insert into tbepr_consignado_pagamento (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
 values (1179553, 13, 246190, 78969, 67, 4, 48.95, 48.95, to_date('10-04-2026', 'dd-mm-yyyy'), 3, to_date('03-03-2022 07:00:09', 'dd-mm-yyyy hh24:mi:ss'), to_date('07-03-2022 15:02:50', 'dd-mm-yyyy hh24:mi:ss'), 12, 0, '1', null, null, null, to_date('02-03-2022', 'dd-mm-yyyy'));
 
-
+commit;
+end;
 
