@@ -322,7 +322,6 @@ BEGIN
       WHEN utl_http.too_many_requests THEN
         utl_http.end_response(vr_res);
       WHEN OTHERS THEN
-        dbms_output.put_line(SQLERRM);
         ROLLBACK;
     END;
     utl_http.end_response(vr_res);
