@@ -3,8 +3,7 @@
           set cdtipmvt = 7 
           select nrseqaut from crapdpt              
         where cdcooper = 1 
-          and nrdconta = 830968 
-          and trunc(dtmvtopg) = '10/01/2022' 
+          and nrdconta = 830968          
           and trunc(dtmvtopg) = To_Date('10/01/2022','DD/MM/YYYY')
           and dscodbar = '00196886100002319900000003280036000001311717'
           and nrremret = 253;
