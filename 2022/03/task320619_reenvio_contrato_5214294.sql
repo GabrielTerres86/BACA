@@ -1,0 +1,157 @@
+declare
+
+  conta_13934007_5214294 clob := '<?xml version="1.0" encoding="WINDOWS-1252"?>
+<Root>
+  <convenioCredito>
+    <cooperativa>
+      <codigo>1</codigo>
+    </cooperativa>
+    <numeroContrato>6502</numeroContrato>
+  </convenioCredito>
+  <configuracaoCredito>
+    <financiaIOF>false</financiaIOF>
+    <financiaTarifa>false</financiaTarifa>
+    <diasCarencia>24</diasCarencia>
+  </configuracaoCredito>
+  <propostaContratoCredito>
+    <CETPercentAoAno>14.56</CETPercentAoAno>
+    <dataPrimeiraParcela>2022-04-01</dataPrimeiraParcela>
+    <produto>
+      <codigo>162</codigo>
+    </produto>
+    <quantidadeParcelas>101</quantidadeParcelas>
+    <taxaJurosRemuneratorios>1.14</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>14.57</taxaJurosRemuneratoriosAnual>
+    <tipoLiberacao>
+      <codigo>6</codigo>
+    </tipoLiberacao>
+    <tipoLiquidacao>
+      <codigo>4</codigo>
+    </tipoLiquidacao>
+    <tributoIOFValor>0.00</tributoIOFValor>
+    <valor>7039.86</valor>
+    <valorBase>7039.86</valorBase>
+    <dataProposta>2022-03-17T16:57:29</dataProposta>
+    <emitente>
+      <dataNascOuConstituicao>1987-10-02T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>6105037902</identificadorReceitaFederal>
+      <razaoSocialOuNome>RITA DE CASSIA RAMOS</razaoSocialOuNome>
+      <nacionalidade>
+        <codigo>42</codigo>
+      </nacionalidade>
+      <tipo>
+        <codigo>1</codigo>
+      </tipo>
+      <contaCorrente>
+        <agencia>
+          <codigo>101</codigo>
+        </agencia>
+        <banco>
+          <codigo>85</codigo>
+        </banco>
+        <codigoConta>13934007</codigoConta>
+        <cooperativa>
+          <codigo>1</codigo>
+        </cooperativa>
+      </contaCorrente>
+      <numeroTitularidade>1</numeroTitularidade>
+      <pessoaContatoEndereco>
+        <CEP>83330140</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>JARDIM AMELIA</nomeBairro>
+        <numeroLogradouro>102</numeroLogradouro>
+        <tipoEndereco>
+          <codigo>13</codigo>
+        </tipoEndereco>
+        <tipoENomeLogradouro>RUA MARECHAL DEODORO</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </emitente>
+    <identificadorProposta>5214294</identificadorProposta>
+    <statusProposta>
+      <codigo>26</codigo>
+    </statusProposta>
+  </propostaContratoCredito>
+  <pessoaDocumento>
+    <identificador>05405555942</identificador>
+    <tipo>
+      <sigla>CI</sigla>
+    </tipo>
+  </pessoaDocumento>
+  <pessoaFisicaOcupacao>
+    <naturezaOcupacao>
+      <codigo>6</codigo>
+    </naturezaOcupacao>
+  </pessoaFisicaOcupacao>
+  <pessoaFisicaDetalhamento>
+    <estadoCivil>
+      <codigo>4</codigo>
+    </estadoCivil>
+    <sexo>
+      <codigo>2</codigo>
+    </sexo>
+  </pessoaFisicaDetalhamento>
+  <pessoaFisicaRendimento>
+    <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+  </pessoaFisicaRendimento>
+  <remuneracaoColaborador>
+    <empregador>
+      <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+      <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
+    </empregador>
+  </remuneracaoColaborador>
+  <beneficio/>
+  <listaPessoasEndereco>
+    <pessoaEndereco>
+      <parametroConsignado>
+        <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+      </parametroConsignado>
+      <pessoaContatoEndereco>
+        <CEP>83323400</CEP>
+        <cidade>
+          <descricao>PINHAIS</descricao>
+        </cidade>
+        <nomeBairro>CENTRO</nomeBairro>
+        <numeroLogradouro>536</numeroLogradouro>
+        <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
+        <UF>PR</UF>
+      </pessoaContatoEndereco>
+    </pessoaEndereco>
+  </listaPessoasEndereco>
+  <parcela>
+    <valor>117.45</valor>
+  </parcela>
+  <tarifa>
+    <valor>0.0</valor>
+  </tarifa>
+  <inadimplencia>
+    <despesasCartorarias>0.0</despesasCartorarias>
+  </inadimplencia>
+  <posicao>
+    <produtoCategoria>
+      <codigo>32</codigo>
+    </produtoCategoria>
+    <saldo>7039.86</saldo>
+  </posicao>
+  <usuarioDominioCecred>
+    <codigo/>
+  </usuarioDominioCecred>
+  <parametroConsignado>
+    <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+    <indicadorContaPrincipal>true</indicadorContaPrincipal>
+    <naturalidade>RIO NEGRO</naturalidade>
+    <dataCalculoLegado>2022-03-08T00:00:00</dataCalculoLegado>
+  </parametroConsignado>
+</Root>
+'; 
+
+BEGIN
+  
+    insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
+    values (1, 13934007, 5214294, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13934007_5214294);
+
+  COMMIT;
+  
+END;  
