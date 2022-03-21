@@ -1,6 +1,5 @@
 BEGIN
 
---Cobrança Bancaria > Pagadores > Cadastrar
   INSERT INTO INTERNETBANKING.tbib_itens_menu_multcontas (
           iditem_menu_multcontas
          ,cditem_menu
@@ -11,7 +10,6 @@ BEGIN
     ,sysdate
   );
 
---Cobrança Bancaria > Pagadores > Gerenciar Pagadores
   INSERT INTO INTERNETBANKING.tbib_itens_menu_multcontas (
           iditem_menu_multcontas
          ,cditem_menu
@@ -22,7 +20,6 @@ BEGIN
     ,sysdate
   );
 
---Cobrança Bancaria > Relatorios > Relatorios do Movimento
   INSERT INTO INTERNETBANKING.tbib_itens_menu_multcontas (
           iditem_menu_multcontas
          ,cditem_menu
@@ -33,7 +30,6 @@ BEGIN
     ,sysdate
   );
 
---Cobrança Bancaria > Relatorios > Relatorios de Beneficiario
   INSERT INTO INTERNETBANKING.tbib_itens_menu_multcontas (
           iditem_menu_multcontas
          ,cditem_menu
