@@ -465,7 +465,7 @@ DECLARE
              END IF;
                  
           END IF ;
-               
+       COMMIT;     
        END LOOP;                                          
     END pc_diferenca_contabil;    
 
@@ -551,8 +551,7 @@ BEGIN
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle);          
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log); 
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_contab);                 
-  
-    COMMIT;
+
 EXCEPTION  
   WHEN vr_exc_erro THEN
     dbms_output.put_line('Erro arquivos: ' || vr_dscritic);
