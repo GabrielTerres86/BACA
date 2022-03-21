@@ -20,7 +20,6 @@ begin
                             'vr_dscritic: ' || vr_dscritic);
   END IF;
 
-  COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
     RAISE_APPLICATION_ERROR(-20000,
