@@ -82,7 +82,7 @@ BEGIN
 
 EXCEPTION
   WHEN OTHERS THEN
- raise_application_error(-20500, SQLERRM);
+ 
     ROLLBACK;
   
 END;
