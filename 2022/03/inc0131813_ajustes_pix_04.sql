@@ -19,6 +19,7 @@ begin
                             'vr_cdcritic: ' || vr_cdcritic || ' / ' ||
                             'vr_dscritic: ' || vr_dscritic);
   END IF;
+  commit;
 
 EXCEPTION
   WHEN OTHERS THEN
