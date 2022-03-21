@@ -9,7 +9,7 @@ BEGIN
 
   vr_cooperativa := 1;
   vr_conta := 2581639;
-  vr_cartao := 5158940000199642;
+  vr_cartao := 5588190184171591;
 
   FOR cartao IN (select distinct a.nrcpftit
                   from crawcrd a
