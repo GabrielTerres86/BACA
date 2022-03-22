@@ -97,7 +97,7 @@ DECLARE
      WHERE l.cdcooper = pr_cdcooper
        AND l.nrdconta = pr_nrdconta
        AND l.nraplica = pr_nraplica
-       AND l.dtmvtolt BETWEEN '01/03/2022' AND '31/03/2022'
+       AND l.dtmvtolt BETWEEN to_date('01/03/2022','dd/mm/yyyy') AND to_date('31/03/2022','dd/mm/yyyy')
        AND l.cdhistor = 3333;
    rw_resgate cr_resgate%ROWTYPE;
 
