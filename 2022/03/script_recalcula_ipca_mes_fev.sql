@@ -29,6 +29,7 @@ DECLARE
    vr_split  gene0002.typ_split;
    vr_dslog VARCHAR2(4000) := '';
    
+   
    CURSOR cr_crapcpc IS
       SELECT cdprodut
             ,cddindex
