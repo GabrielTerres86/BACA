@@ -4,6 +4,7 @@ DECLARE
   vr_limite_opleg     NUMBER(20);
   vr_number           NUMBER(20);
 
+
 BEGIN
 
   SELECT MAX(to_number("IdTituloLeg"))
@@ -13,6 +14,7 @@ BEGIN
     FROM tbjdnpcdstleg_jd2lg_optit@jdnpcbisql
    WHERE "CdLeg" = 'LEG'
      AND "ISPBAdministrado" = 5463212;
+	 
 
   vr_limite_opleg := vr_limite_opleg + 10000;
 
