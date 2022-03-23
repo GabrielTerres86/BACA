@@ -5,5 +5,9 @@ BEGIN
          AND crapprm.cdcooper = 3
          AND crapprm.cdacesso = 'CONTA_IEPTB'
          AND crapprm.dsvlrprm = '237;0099;002836;INSTITUTO DE PROTESTOS DE TÍTULOS;03.656.766/0003-89;CC;2';
-	commit;
+  commit;
+
+EXCEPTION  WHEN OTHERS THEN    SISTEMA.excecaoInterna(pr_compleme => 'RITM0206203');
+ROLLBACK;
+
 END;
