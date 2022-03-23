@@ -59,7 +59,7 @@ BEGIN
     (vr_max_orig_mensagem,
      28,
      'Oferta de Limite de Crédito Pré-aprovado CDC',
-     7070,
+     vr_max_cdmensagem,
      '<br/>#valordisponivelcdc - Valor disponível ao cooperado (Ex.: 3.500,00)',
      1,
      2,
