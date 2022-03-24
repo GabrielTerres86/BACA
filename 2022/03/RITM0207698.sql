@@ -233,6 +233,8 @@ begin
 
 						if	(qt_registro_v	>= 10000) then
 
+							commit;
+
 							gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, chr(13) || 'commit;' || chr(13) || chr(13), FALSE);
 
 							qt_registro_v	:= 0;
@@ -259,6 +261,8 @@ begin
 		end if;
 
 		if	(nvl(qt_registro_v,0)	<> 0) then
+
+			commit;
 
 			gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, chr(13) || 'commit;' || chr(13) || chr(13), FALSE);
 
