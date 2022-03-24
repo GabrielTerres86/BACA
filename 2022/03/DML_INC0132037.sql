@@ -1,4 +1,3 @@
---INC0132037
 DECLARE  
   CURSOR cr_crapcop IS
     SELECT c.cdcooper
@@ -34,7 +33,6 @@ BEGIN
   FOR rw_crapcop IN cr_crapcop LOOP
     FOR rw_crapris IN cr_crapris(pr_cdcooper => rw_crapcop.cdcooper) LOOP
         
-    --dbms_output.put_line(rw_crapris.cdcooper||','||rw_crapris.nrdconta);
     DELETE gestaoderisco.tbcc_historico_juros_lanc l
       WHERE EXISTS(SELECT 1 
                      FROM gestaoderisco.tbcc_historico_juros_adp h
