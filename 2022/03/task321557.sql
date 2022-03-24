@@ -4,7 +4,7 @@ DECLARE
   v_nr_conta    tbgen_evento_soa.NRDCONTA%TYPE := 14204118;
   v_nr_contrato tbgen_evento_soa.NRCTRPRP%TYPE := 72923;
 
-  v_dh_envioproposta VARCHAR2(20) := to_char(SYSDATE, 'yyyy-mm-dd') || 'T' ||
+  v_dh_envioproposta VARCHAR2(20) := to_char((SYSDATE + 5), 'yyyy-mm-dd') || 'T' ||
                                      to_char(SYSDATE, 'hh24:mi:ss');
 
   v_xml_envio_contrato CLOB := '<?xml version="1.0"?>
