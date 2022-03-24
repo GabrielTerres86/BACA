@@ -55,28 +55,28 @@ BEGIN
                       '</dataVencimento>
                             <identificador>' || rw_crappep.idsequencia ||
                       '</identificador>' || vr_tipo_pagto || '</parcela>';
-    CECRED.EMPR0020.pc_gera_xml_pagamento_consig(pr_cdcooper     => rw_crappep.cdcooper,
-                                                 pr_nrdconta     => rw_crappep.nrdconta,
-                                                 pr_nrctremp     => rw_crappep.nrctremp,
-                                                 pr_xml_parcelas => vr_xml_parcela,
-                                                 pr_tpenvio      => 1,
-                                                 pr_tptransa     => 'DEBITO',
-                                                 pr_motenvio     => vr_motenvio,
-                                                 pr_dsxmlali     => vr_dsxmlali,
-                                                 pr_dscritic     => vr_dscritic);
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_saida;
-    END IF;
-  
-    soap0003.pc_gerar_evento_soa(pr_cdcooper              => rw_crappep.cdcooper,
-                                 pr_nrdconta              => rw_crappep.nrdconta,
-                                 pr_nrctrprp              => rw_crappep.nrctremp,
-                                 pr_tpevento              => 'PAGTO_PAGAR',
-                                 pr_tproduto_evento       => 'CONSIGNADO',
-                                 pr_tpoperacao            => 'INSERT',
-                                 pr_dsconteudo_requisicao => vr_dsxmlali.getClobVal(),
-                                 pr_idevento              => vr_idevento,
-                                 pr_dscritic              => vr_dscritic);
+    CECRED.EMPR0020.pc_gera_xml_pagamento_consig(pr_cdcooper    => rw_crappep.cdcooper, 
+                                    pr_nrdconta     => rw_crappep.nrdconta, 
+                                    pr_nrctremp     => rw_crappep.nrctremp, 
+                                    pr_xml_parcelas => vr_xml_parcela, 
+                                    pr_tpenvio      => 2,           
+                                    pr_tptransa     =>'ESTORNO DEBITO',     
+                                    pr_motenvio     => '', 
+                                    pr_dsxmlali     => vr_dsxmlali, 
+                                    pr_dscritic     => vr_dscritic); 
+        IF vr_dscritic IS NOT NULL  THEN
+            RAISE vr_exc_saida;
+        END IF;
+                                    
+        soap0003.pc_gerar_evento_soa(pr_cdcooper               => rw_crappep.cdcooper
+                                    ,pr_nrdconta               => rw_crappep.nrdconta
+                                    ,pr_nrctrprp               => rw_crappep.nrctremp
+                                    ,pr_tpevento               => 'ESTORNO_ESTORN'
+                                    ,pr_tproduto_evento        => 'CONSIGNADO'
+                                    ,pr_tpoperacao             => 'INSERT'
+                                    ,pr_dsconteudo_requisicao  => vr_dsxmlali.getClobVal()
+                                    ,pr_idevento               => vr_idevento
+                                    ,pr_dscritic               => vr_dscritic);
   END LOOP;
   COMMIT;
 EXCEPTION
