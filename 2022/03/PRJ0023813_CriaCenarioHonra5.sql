@@ -1,30 +1,7 @@
 BEGIN
-  UPDATE credito.tbcred_peac_contrato a
-     SET a.cdsituacaohonra    = 2
-        ,a.vlsolicitacaohonra =
-         (SELECT CASE
-                   WHEN epr.idfiniof = 1 THEN
-                    (epr.vlemprst - epr.vltarifa) * 0.8
-                   ELSE
-                    epr.vlemprst * 0.8
-                 END vlhonra
-            FROM crapepr epr
-           WHERE epr.cdcooper = a.cdcooper
-             AND epr.nrdconta = a.nrdconta
-             AND epr.nrctremp = a.nrcontrato)
-        ,a.dtsolicitacaohonra = SYSDATE
-        ,a.vlsaldorecuperar  =
-         (SELECT CASE
-                   WHEN epr.idfiniof = 1 THEN
-                    (epr.vlemprst - epr.vltarifa) * 0.8
-                   ELSE
-                    epr.vlemprst * 0.8
-                 END vlhonra
-            FROM crapepr epr
-           WHERE epr.cdcooper = a.cdcooper
-             AND epr.nrdconta = a.nrdconta
-             AND epr.nrctremp = a.nrcontrato)
-   WHERE a.idpeac_contrato = 2032;
+  UPDATE craplcm a
+     SET a.dtmvtolt = to_date('07/02/2022', 'dd/mm/rrrr')
+   WHERE a.progress_recid = 1352347040;
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
