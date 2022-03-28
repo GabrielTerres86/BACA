@@ -63,6 +63,7 @@ BEGIN
       RAISE vr_exc_saida;
     END IF;
   
+  
     soap0003.pc_gerar_evento_soa(pr_cdcooper              => rw_crappep.cdcooper,
                                  pr_nrdconta              => rw_crappep.nrdconta,
                                  pr_nrctrprp              => rw_crappep.nrctremp,
