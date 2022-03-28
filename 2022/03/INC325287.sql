@@ -246,23 +246,7 @@ BEGIN
 END;
 
 
-select dtatlsld,vlsldatl,vlsldant,dtsldant 
-  from craprac 
- where nrdconta = 107824 
-   and nraplica = 9 
-   and cdcooper= 16
-/   
-select dtatlsld,vlsldatl,vlsldant,dtsldant 
-  from craprac 
- where nrdconta = 129321 
-   and nraplica = 28 
-   and cdcooper= 16
-   
-select *
-  from craplac 
- where nrdconta = 107824 
-   and nraplica = 9 
-   and cdcooper= 16   
+ 
 
 
 
