@@ -128,13 +128,7 @@ DECLARE
   END prc_atlz_prejuizo;
 
 BEGIN
-  /*cooper
-  conta
-  historico
-  valor
-  atualiza tbcc_prejuizo (Y/N) yes, no
-  tipo de ajuste (E/I) (exclui ou inclui) --se o atualiza for Y, tem que passar o tipo de ajuste i aumenta o valor
-  */
+  
   vr_conta := GENE0002.fn_quebra_string(pr_string  => '16;433896;2721;4,95;N;I|'||
                                                       '1;10376836;2721;10,00;N;I|'||
                                                       '11;441198;2721;2,74;N;I|'||
