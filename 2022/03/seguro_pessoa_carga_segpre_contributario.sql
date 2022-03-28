@@ -28,7 +28,9 @@ BEGIN
       FROM tbseg_parametros_prst p
      WHERE p.idseqpar = rw_idseqpar.idseqpar;
   END LOOP;
-
+  
+	COMMIT;
+	
   FOR rw_crapop IN cr_crapop LOOP  
     BEGIN
       SELECT NVL(MAX(idseqpar)+1,1)
@@ -80,7 +82,7 @@ BEGIN
              15,
              5,
              10000,
-             0.25326,
+             2.5326,
              0,
              0,
              30,
@@ -97,7 +99,9 @@ BEGIN
              1,
              TO_DATE('01/09/2021','DD/MM/RRRR'),
              TO_DATE('31/08/2041','DD/MM/RRRR'));
-              
+      
+      COMMIT;
+			
       INSERT INTO tbseg_param_prst_tax_cob(idseqpar,
                                            gbidamin,
                                            gbidamax,
@@ -106,9 +110,11 @@ BEGIN
       VALUES(vr_idseqpar
             ,18
             ,65
-            ,0.04641030
-            ,0.00258970); 
-      
+            ,0.4641030
+            ,0.0258970);
+						
+      COMMIT;
+			
       INSERT INTO tbseg_param_prst_tax_cob(idseqpar,
                                            gbidamin,
                                            gbidamax,
@@ -117,9 +123,11 @@ BEGIN
       VALUES(vr_idseqpar
             ,66
             ,80
-            ,0.28023630
-            ,0.00198370);
-       
+            ,2.8023630
+            ,0.0198370);
+						
+      COMMIT;
+			
       IF rw_crapop.cdcooper = 1 THEN
         vr_min_faixa := 40000;
       ELSIF rw_crapop.cdcooper = 5 THEN
@@ -132,13 +140,19 @@ BEGIN
       
       INSERT INTO tbseg_param_prst_cap_seg (idseqpar, idademin, idademax, capitmin, capitmax)
       VALUES (vr_idseqpar, 18, 65, vr_min_faixa, vr_max_faixa1);
-  
-      INSERT INTO tbseg_param_prst_cap_seg (idseqpar, idademin, idademax, capitmin, capitmax)
+      
+			COMMIT;
+      
+			INSERT INTO tbseg_param_prst_cap_seg (idseqpar, idademin, idademax, capitmin, capitmax)
       VALUES (vr_idseqpar, 66, 70, vr_min_faixa, vr_max_faixa2);
-  
-      INSERT INTO tbseg_param_prst_cap_seg (idseqpar, idademin, idademax, capitmin, capitmax)
+      
+			COMMIT;
+      
+			INSERT INTO tbseg_param_prst_cap_seg (idseqpar, idademin, idademax, capitmin, capitmax)
       VALUES (vr_idseqpar, 71, 75, vr_min_faixa, vr_max_faixa3);
-  
+      
+			COMMIT;
+			
       INSERT INTO tbseg_param_prst_cap_seg (idseqpar, idademin, idademax, capitmin, capitmax)
       VALUES (vr_idseqpar, 76, 80, vr_min_faixa, vr_max_faixa4);
            
