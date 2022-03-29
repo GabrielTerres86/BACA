@@ -31,7 +31,7 @@ conta_662569_160854 clob := '<?xml version="1.0"?>
     <tributoIOFValor>74.23</tributoIOFValor>
     <valor>2708.23</valor>
     <valorBase>2634.00</valorBase>
-    <dataProposta>2022-03-24T17:39:13</dataProposta>
+    <dataProposta>2022-03-29T17:39:13</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1987-06-07T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>6203326976</identificadorReceitaFederal>
