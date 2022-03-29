@@ -55,13 +55,18 @@ begin
   
      exception
        when others then
-         null; 
+         rollback; 
      end;
    End loop;
    
    commit;
    
-   DELETE FROM cecred.TBGEN_ORGAO_EXPEDIDOR WHERE IDORGAO_EXPEDIDOR IN  (1,3,4,5,29,30,31,33,34,35,36,37,38,39,40,42,44,51,53,56,57,59,60,62,63,64,65,26,32,33,41,43 );
+   begin
+      DELETE FROM cecred.TBGEN_ORGAO_EXPEDIDOR WHERE IDORGAO_EXPEDIDOR IN  (1,3,4,5,29,30,31,33,34,35,36,37,38,39,40,42,44,51,53,56,57,59,60,62,63,64,65,26,32,33,41,43 );
+   exception
+       when others then
+         rollback; 
+    end;   
 
    COMMIT;
   
