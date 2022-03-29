@@ -9,7 +9,6 @@ DECLARE
     vr_nmdireto    VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/inc114752'; 
     vr_dtcdcoop1   DATE;
     vr_dtcdcoop16  DATE;
-
     CURSOR cr_crapdat is
        SELECT cdcooper,
               dtmvtolt 
@@ -21,7 +20,7 @@ DECLARE
        SELECT 16 cdcooper, 
               107824 nrdconta, 
               9 nraplica,  
-              304.24 vllanmto            
+              306.06 vllanmto            
          FROM dual
         
         UNION ALL
@@ -29,7 +28,7 @@ DECLARE
        SELECT 16 cdcooper, 
               129321 nrdconta, 
               28 nraplica,  
-              14.16 vllanmto            
+              14.24 vllanmto            
          FROM dual
          
         UNION ALL
@@ -37,7 +36,7 @@ DECLARE
        SELECT 1 cdcooper, 
               2061090 nrdconta, 
               8 nraplica,  
-              19.84 vllanmto            
+              19.96 vllanmto            
          FROM dual 
          
         UNION ALL
@@ -45,7 +44,7 @@ DECLARE
        SELECT 1 cdcooper, 
               2592851 nrdconta, 
               195 nraplica,  
-              2.84 vllanmto            
+              2.86 vllanmto            
          FROM dual 
         
         UNION ALL
@@ -53,7 +52,7 @@ DECLARE
        SELECT 1 cdcooper, 
               3849856 nrdconta, 
               23 nraplica,  
-              29.15 vllanmto            
+              29.32 vllanmto            
          FROM dual 
        
         UNION ALL
@@ -69,7 +68,7 @@ DECLARE
        SELECT 1 cdcooper, 
               8488037 nrdconta, 
               43 nraplica,  
-              229.38 vllanmto            
+              230.75 vllanmto            
          FROM dual 
         
         UNION ALL
@@ -77,7 +76,7 @@ DECLARE
        SELECT 1 cdcooper, 
               8754837 nrdconta, 
               95 nraplica,  
-              8.77 vllanmto            
+              8.82 vllanmto            
          FROM dual
         
         UNION ALL 
@@ -85,7 +84,7 @@ DECLARE
        SELECT 1 cdcooper, 
               8868433 nrdconta, 
               11 nraplica,  
-              2.17 vllanmto            
+              2.18 vllanmto            
          FROM dual 
          
         UNION ALL
@@ -93,7 +92,7 @@ DECLARE
        SELECT 1 cdcooper, 
               10291598 nrdconta, 
               37 nraplica,  
-              6.78 vllanmto            
+              6.82 vllanmto            
          FROM dual   
          
         UNION ALL
@@ -101,7 +100,7 @@ DECLARE
        SELECT 1 cdcooper, 
               10470794 nrdconta, 
               39 nraplica,  
-              6.77 vllanmto            
+              6.81 vllanmto            
          FROM dual
          
         UNION ALL
@@ -109,7 +108,7 @@ DECLARE
        SELECT 1 cdcooper, 
               11349115 nrdconta, 
               10 nraplica,  
-              2.83 vllanmto            
+              2.84 vllanmto            
          FROM dual
        
         UNION ALL
@@ -117,7 +116,7 @@ DECLARE
        SELECT 1 cdcooper, 
               12268127 nrdconta, 
               3 nraplica,  
-              3.83 vllanmto            
+              3.85 vllanmto            
          FROM dual  
          
         UNION ALL
@@ -125,7 +124,7 @@ DECLARE
        SELECT 1 cdcooper, 
               12651966 nrdconta, 
               8 nraplica,  
-              3.93 vllanmto            
+              3.98 vllanmto            
          FROM dual  
          
         UNION ALL
@@ -141,7 +140,7 @@ DECLARE
        SELECT 1 cdcooper, 
               13596578 nrdconta, 
               4 nraplica,  
-              5.46 vllanmto            
+              5.49 vllanmto            
          FROM dual 
         
         UNION ALL
@@ -149,7 +148,7 @@ DECLARE
        SELECT 1 cdcooper, 
               13864882 nrdconta, 
               4 nraplica,  
-              2.53 vllanmto            
+              2.55 vllanmto            
          FROM dual;       
        rw_craprac cr_craprac%ROWTYPE;
         
@@ -189,11 +188,9 @@ BEGIN
                                 ,pr_tipabert => 'W'                
                                 ,pr_utlfileh => vr_ind_arquiv1     
                                 ,pr_des_erro => vr_dscritic);      
-
          IF vr_dscritic IS NOT NULL THEN 
             RAISE vr_excsaida; 
          END IF;
-
       END;
       
       FOR rw_crapdat IN cr_crapdat LOOP
@@ -205,7 +202,6 @@ BEGIN
          END IF;
       
       END LOOP;
-
       FOR rw_craprac IN cr_craprac LOOP
                      
               FOR rw_backup in cr_backup(rw_craprac.cdcooper,rw_craprac.nrdconta, rw_craprac.nraplica) LOOP
@@ -244,17 +240,3 @@ BEGIN
    COMMIT;
            
 END;
-
-
- 
-
-
-
-
-
-
-
-
-
-
-
