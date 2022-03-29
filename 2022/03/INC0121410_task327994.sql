@@ -146,11 +146,6 @@ begin
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
 values (13, 662569, 160854, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_662569_160854);
 
-UPDATE crappep
-     SET dtvencto = ADD_MONTHS(dtvencto, 4)
-   WHERE nrdconta = 662569
-     AND cdcooper = 13
-     AND nrctremp = 160854;
 commit;
 EXCEPTION
   WHEN OTHERS THEN
