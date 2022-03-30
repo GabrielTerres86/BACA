@@ -1,41 +1,41 @@
 declare
 
-conta_662569_160854 clob := '<?xml version="1.0"?>
+conta_13897500_4934686 clob := '<?xml version="1.0" encoding="WINDOWS-1252"?>
 <Root>
   <convenioCredito>
     <cooperativa>
-      <codigo>13</codigo>
+      <codigo>1</codigo>
     </cooperativa>
-    <numeroContrato>539</numeroContrato>
+    <numeroContrato>6502</numeroContrato>
   </convenioCredito>
   <configuracaoCredito>
-    <diasCarencia>65</diasCarencia>
-    <financiaIOF>true</financiaIOF>
-    <financiaTarifa>true</financiaTarifa>
+    <financiaIOF>false</financiaIOF>
+    <financiaTarifa>false</financiaTarifa>
+    <diasCarencia>49</diasCarencia>
   </configuracaoCredito>
   <propostaContratoCredito>
-    <CETPercentAoAno>24.90</CETPercentAoAno>
-    <dataPrimeiraParcela>2022-05-10</dataPrimeiraParcela>
+    <CETPercentAoAno>12.54</CETPercentAoAno>
+    <dataPrimeiraParcela>2022-05-01</dataPrimeiraParcela>
     <produto>
-      <codigo>161</codigo>
+      <codigo>162</codigo>
     </produto>
-    <quantidadeParcelas>24</quantidadeParcelas>
-    <taxaJurosRemuneratorios>1.65</taxaJurosRemuneratorios>
-    <taxaJurosRemuneratoriosAnual>21.70</taxaJurosRemuneratoriosAnual>
+    <quantidadeParcelas>34</quantidadeParcelas>
+    <taxaJurosRemuneratorios>0.99</taxaJurosRemuneratorios>
+    <taxaJurosRemuneratoriosAnual>12.55</taxaJurosRemuneratoriosAnual>
     <tipoLiberacao>
       <codigo>6</codigo>
     </tipoLiberacao>
     <tipoLiquidacao>
       <codigo>4</codigo>
     </tipoLiquidacao>
-    <tributoIOFValor>74.23</tributoIOFValor>
-    <valor>2708.23</valor>
-    <valorBase>2634.00</valorBase>
-    <dataProposta>2022-03-29T17:39:13</dataProposta>
+    <tributoIOFValor>0.0</tributoIOFValor>
+    <valor>2530.10</valor>
+    <valorBase>2530.10</valorBase>
+    <dataProposta>2022-03-29T16:56:50</dataProposta>
     <emitente>
-      <dataNascOuConstituicao>1987-06-07T00:00:00</dataNascOuConstituicao>
-      <identificadorReceitaFederal>6203326976</identificadorReceitaFederal>
-      <razaoSocialOuNome>VALDEVINO BATISTA</razaoSocialOuNome>
+      <dataNascOuConstituicao>1963-06-11T00:00:00</dataNascOuConstituicao>
+      <identificadorReceitaFederal>68020155953</identificadorReceitaFederal>
+      <razaoSocialOuNome>PEDRO GIOVANI SCHLIZINSKI</razaoSocialOuNome>
       <nacionalidade>
         <codigo>42</codigo>
       </nacionalidade>
@@ -44,45 +44,45 @@ conta_662569_160854 clob := '<?xml version="1.0"?>
       </tipo>
       <contaCorrente>
         <agencia>
-          <codigo>112</codigo>
+          <codigo>101</codigo>
         </agencia>
         <banco>
           <codigo>85</codigo>
         </banco>
-        <codigoConta>662569</codigoConta>
+        <codigoConta>13897500</codigoConta>
         <cooperativa>
-          <codigo>13</codigo>
+          <codigo>1</codigo>
         </cooperativa>
       </contaCorrente>
       <numeroTitularidade>1</numeroTitularidade>
       <pessoaContatoEndereco>
-        <CEP>84500004</CEP>
+        <CEP>83303000</CEP>
         <cidade>
-          <descricao>IRATI</descricao>
+          <descricao>PIRAQUARA</descricao>
         </cidade>
-        <nomeBairro>CENTRO</nomeBairro>
-        <numeroLogradouro>1000</numeroLogradouro>
+        <nomeBairro>VILA VICENTE MACEDO</nomeBairro>
+        <numeroLogradouro>190</numeroLogradouro>
         <tipoEndereco>
           <codigo>13</codigo>
         </tipoEndereco>
-        <tipoENomeLogradouro>RUA JOAO CANDIDO FER</tipoENomeLogradouro>
+        <tipoENomeLogradouro>RUA MACEIO</tipoENomeLogradouro>
         <UF>PR</UF>
       </pessoaContatoEndereco>
     </emitente>
-    <identificadorProposta>160854</identificadorProposta>
+    <identificadorProposta>4934686</identificadorProposta>
     <statusProposta>
       <codigo>26</codigo>
     </statusProposta>
   </propostaContratoCredito>
   <pessoaDocumento>
-    <identificador>05735763630</identificador>
+    <identificador>04725377992</identificador>
     <tipo>
       <sigla>CI</sigla>
     </tipo>
   </pessoaDocumento>
   <pessoaFisicaOcupacao>
     <naturezaOcupacao>
-      <codigo>1</codigo>
+      <codigo>6</codigo>
     </naturezaOcupacao>
   </pessoaFisicaOcupacao>
   <pessoaFisicaDetalhamento>
@@ -94,12 +94,12 @@ conta_662569_160854 clob := '<?xml version="1.0"?>
     </sexo>
   </pessoaFisicaDetalhamento>
   <pessoaFisicaRendimento>
-    <identificadorRegistroFuncionario>0</identificadorRegistroFuncionario>
+    <identificadorRegistroFuncionario>119602200</identificadorRegistroFuncionario>
   </pessoaFisicaRendimento>
   <remuneracaoColaborador>
     <empregador>
-      <identificadorReceitaFederal>13103895000131</identificadorReceitaFederal>
-      <razaoSocialOuNome>LUAR COMERCIO DE ARTIGOS DE COLCHOA</razaoSocialOuNome>
+      <identificadorReceitaFederal>95423000000100</identificadorReceitaFederal>
+      <razaoSocialOuNome>MUNICIPIO DE PINHAIS</razaoSocialOuNome>
     </empregador>
   </remuneracaoColaborador>
   <beneficio/>
@@ -109,19 +109,19 @@ conta_662569_160854 clob := '<?xml version="1.0"?>
         <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
       </parametroConsignado>
       <pessoaContatoEndereco>
-        <CEP>84500069</CEP>
+        <CEP>83323400</CEP>
         <cidade>
-          <descricao>IRATI</descricao>
+          <descricao>PINHAIS</descricao>
         </cidade>
         <nomeBairro>CENTRO</nomeBairro>
-        <numeroLogradouro>436</numeroLogradouro>
-        <tipoENomeLogradouro>RUA XV DE NOVEMBRO</tipoENomeLogradouro>
+        <numeroLogradouro>536</numeroLogradouro>
+        <tipoENomeLogradouro>RUA WANDA DOS SANTOS MALLMANN</tipoENomeLogradouro>
         <UF>PR</UF>
       </pessoaContatoEndereco>
     </pessoaEndereco>
   </listaPessoasEndereco>
   <parcela>
-    <valor>140.22</valor>
+    <valor>88.56</valor>
   </parcela>
   <tarifa>
     <valor>0.0</valor>
@@ -129,14 +129,20 @@ conta_662569_160854 clob := '<?xml version="1.0"?>
   <inadimplencia>
     <despesasCartorarias>0.0</despesasCartorarias>
   </inadimplencia>
+  <posicao>
+    <produtoCategoria>
+      <codigo>32</codigo>
+    </produtoCategoria>
+    <saldo>2530.10</saldo>
+  </posicao>
   <usuarioDominioCecred>
     <codigo/>
   </usuarioDominioCecred>
   <parametroConsignado>
     <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
     <indicadorContaPrincipal>true</indicadorContaPrincipal>
-    <naturalidade>IRATI</naturalidade>
-    <dataCalculoLegado>2022-03-06T00:00:00</dataCalculoLegado>
+    <naturalidade>CURITIBA</naturalidade>
+    <dataCalculoLegado>2022-03-13T00:00:00</dataCalculoLegado>
   </parametroConsignado>
 </Root>
 ';
@@ -144,7 +150,8 @@ conta_662569_160854 clob := '<?xml version="1.0"?>
 begin
 
 insert into tbgen_evento_soa (CDCOOPER, NRDCONTA, NRCTRPRP, TPEVENTO, TPRODUTO_EVENTO, TPOPERACAO, DHOPERACAO, DSPROCESSAMENTO, DSSTATUS, DHEVENTO, DSERRO, NRTENTATIVAS, DSCONTEUDO_REQUISICAO)
-values (13, 662569, 160854, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_662569_160854);
+values (1, 13897500, 4934686, 'EFETIVA_PROPOSTA', 'CONSIGNADO', 'INSERT', sysdate, null, null, null, null, null, conta_13897500_4934686);
+
 
 commit;
 EXCEPTION
