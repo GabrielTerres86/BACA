@@ -25,7 +25,12 @@ DECLARE
        AND ret.cdocorre IN (6, 17, 76, 77);
 BEGIN
   FOR rw_crapret IN cr_crapret LOOP
-    UPDATE crapret SET crapret.dtcredit = TO_DATE('30/03/2022','DD/MM/YYYY') WHERE crapret.rowid = rw_crapret.rowid;
-    COMMIT;
+    BEGIN
+      UPDATE crapret SET crapret.dtcredit = TO_DATE('30/03/2022','DD/MM/YYYY') WHERE crapret.rowid = rw_crapret.rowid;
+      COMMIT;
+    EXCEPTION
+      SISTEMA.excecaoInterna(pr_compleme => 'INC0132829');
+      ROLLBACK;
+    END;
   END LOOP;
 END;
