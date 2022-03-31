@@ -13,7 +13,7 @@ DECLARE
           ,b.nrctremp
           ,b.cdcooper
           ,b.nrparepr
-          ,to_date('03/03/2022','DD/MM/RRRR') dtmvtolt
+          ,to_date('25/02/2022','DD/MM/RRRR') dtmvtolt
           ,min(b.idsequencia) idsequencia
       from crappep                    pep
           ,tbepr_consignado_pagamento b
