@@ -1,6 +1,6 @@
--- Created on 20/11/2021 by F0030248 
+
 declare 
-  -- Local variables here
+  
   i integer;
   
   pr_dscritic          VARCHAR2(5000) := ' ';
@@ -10,7 +10,7 @@ declare
   vr_nmarqimp11        VARCHAR2(100)  := 'SM_backup_';
   vr_nmarqimp22        VARCHAR2(100)  := 'SM_log_';
   vr_nmarqimp33        VARCHAR2(100)  := 'SM_erro_';  
-  vr_rootmicros        VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS'); -- '/progress/f0030248/micros/'; -- 
+  vr_rootmicros        VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS'); 
   vr_nmdireto          VARCHAR2(4000) := vr_rootmicros || 'cpd/bacas/prj0023533'; 
   vr_excsaida          EXCEPTION;  
   vr_des_xml_1         CLOB;  
@@ -131,7 +131,7 @@ declare
       vr_dscritic VARCHAR2(1000);
     BEGIN
         
-      --- arq 1
+      
       gene0002.pc_escreve_xml(pr_xml            => vr_des_xml_1,
                               pr_texto_completo => vr_texto_completo_1,
                               pr_texto_novo     => ' ',
@@ -144,7 +144,7 @@ declare
       dbms_lob.freetemporary(vr_des_xml_1);     
                                    
                
-      --- arq 2                        
+      
       gene0002.pc_escreve_xml(pr_xml            => vr_des_xml_2,
                               pr_texto_completo => vr_texto_completo_2,
                               pr_texto_novo     => ' ',
@@ -156,7 +156,7 @@ declare
       dbms_lob.close(vr_des_xml_2);
       dbms_lob.freetemporary(vr_des_xml_2);                                      
                
-      --- arq 3                        
+                             
       gene0002.pc_escreve_xml(pr_xml            => vr_des_xml_3,
                               pr_texto_completo => vr_texto_completo_3,
                               pr_texto_novo     => ' ',
@@ -275,15 +275,15 @@ BEGIN
 			  WHEN 12 THEN vr_vlsmpmes := vr_tab_sld(rw_smposano.nrdconta).smposano##12;
       END CASE;                                                                                        
       
-      --Variavel recebe o mes do movimento 1..12
+      
       vr_mesmovto:= to_number(To_Char(rw_smposano.dtdemiss,'MM'));
-      --Se passou da metade do ano
+
       IF vr_mesmovto > 6 THEN
-        --Diminuir 6 do mes encontrado
+
         vr_mesmovto:= vr_mesmovto-6;
       END IF;      
 
-      --Valor do saldo medio mensal recebe o valor positivo no mes
+      
       CASE vr_mesmovto
         WHEN 1 THEN
           vr_tab_sld(rw_smposano.nrdconta).vlsmstre##1:= Nvl(vr_vlsmpmes,0);
@@ -298,7 +298,7 @@ BEGIN
         WHEN 6 THEN
           vr_tab_sld(rw_smposano.nrdconta).vlsmstre##6:= Nvl(vr_vlsmpmes,0);
       END CASE;      
-    END LOOP; -- cr_smposano
+    END LOOP; 
        
     log('TOTAL CONTAS - ' || to_char(vr_tab_sld.count) || ' - ' || to_char(sysdate,'DD/MM/YYYY HH24:MI:SS'));
            
@@ -333,13 +333,13 @@ BEGIN
         WHEN OTHERS THEN
           erro('Erro ao atualizar tabela crapsld. '||
                    SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
-          --Levantar Exceção
+          
           RAISE vr_excsaida;
     END;
     
     COMMIT;    
     
-  END LOOP; -- loop por cooperativa
+  END LOOP; 
    
   COMMIT;
    
