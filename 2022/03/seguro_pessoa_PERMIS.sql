@@ -61,7 +61,9 @@ DECLARE
     union all
     select 'F9010016' operador, '@' acesso1, 'C' acesso2 from dual
     union all
-    select 'F9010035' operador, '@' acesso1, 'C' acesso2 from dual;
+    select 'F9010035' operador, '@' acesso1, 'C' acesso2 from dual
+	union all
+    select 'F0031993' operador, '@' acesso1, 'C' acesso2 from dual;
   rw_consulta cr_consulta%ROWTYPE;
 
 BEGIN
