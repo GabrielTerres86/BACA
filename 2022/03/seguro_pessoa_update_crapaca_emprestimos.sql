@@ -37,7 +37,7 @@ BEGIN
        '1');
   END LOOP;
   
-  UPDATE CRAPLCR SET TPCUSPR = 0;	
+  UPDATE craplcr SET tpcuspr = 0 WHERE cdcooper IN (9,13);	
 	
   COMMIT;
 EXCEPTION WHEN OTHERS THEN
