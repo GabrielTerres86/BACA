@@ -88,7 +88,7 @@ BEGIN
              30,
              0,
              200000,
-             '77000799',
+						 '77001060',
              'filetransfer.icatuseguros.com.br',
              'Producao-Ailos',
              '@Ailos2019@',
@@ -97,7 +97,7 @@ BEGIN
              66,
              0,
              1,
-             TO_DATE('01/09/2021','DD/MM/RRRR'),
+             TO_DATE('25/04/2022','DD/MM/RRRR'),
              TO_DATE('31/08/2041','DD/MM/RRRR'));
       
       COMMIT;
