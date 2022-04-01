@@ -30,6 +30,7 @@ DECLARE
 
 BEGIN 
   
+  
   FOR rw_crapcop IN cr_crapcop LOOP
     FOR rw_crapris IN cr_crapris(pr_cdcooper => rw_crapcop.cdcooper) LOOP
         
