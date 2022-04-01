@@ -61,7 +61,7 @@ BEGIN
      0,
      'DATA_LIMITE_SEGPRE',
      'Data limite de geração de rotinas de seguro prestamista não contributário',
-     '31/12/2022');
+     '31/12/2024');
      COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
