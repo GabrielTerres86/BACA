@@ -214,6 +214,6 @@ BEGIN
     INSERT INTO TAA.TBTAA_SEP_OPERACAO (DSOPERACAO, DSGRUPO) VALUES ('380001 - Reimpressão de Comprovante de Pagamento','Reimpressão de Comprovante');
     INSERT INTO TAA.TBTAA_SEP_OPERACAO (DSOPERACAO, DSGRUPO) VALUES ('380002 - Reimpressão de Comprovante de Transferência','Reimpressão de Comprovante');
     INSERT INTO TAA.TBTAA_SEP_OPERACAO (DSOPERACAO, DSGRUPO) VALUES ('920800 - Recarga Cartão Transporte','Pessoa Física');
-    INSERT INTO TAA.TBTAA_SEP_OPERACAO (DSOPERACAO, DSGRUPO) VALUES ('311070 - Consulta Acerto de Contas Dinheiro (ATMD)','Consulta');
+    INSERT INTO TAA.TBTAA_SEP_OPERACAO (DSOPERACAO, DSGRUPO) VALUES ('311070 - Consulta Acerto de Contas Dinheiro (ATMD)','Consulta'); 
     COMMIT;
 END;
