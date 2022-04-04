@@ -1,0 +1,10 @@
+BEGIN
+    INSERT INTO TAA.TBTAA_SEP_OCORRENCIA_STATUS VALUES ('6','Ocorrência Desfeita','S');
+    INSERT INTO TAA.TBTAA_SEP_OCORRENCIA_STATUS VALUES ('7','Ocorrência Desfeita','S');
+    INSERT INTO TAA.TBTAA_SEP_OCORRENCIA_STATUS VALUES ('9','Ocorrência de Identificação','S');
+    INSERT INTO TAA.TBTAA_SEP_OCORRENCIA_STATUS VALUES ('10','Ocorrência Negada Emissor','S');
+    INSERT INTO TAA.TBTAA_SEP_OCORRENCIA_STATUS VALUES ('12','Ocorrência Falha Comunicação','S');
+    INSERT INTO TAA.TBTAA_SEP_OCORRENCIA_STATUS VALUES ('13','Ocorrência Desfeita Internamente','N');
+
+    COMMIT;
+END;
