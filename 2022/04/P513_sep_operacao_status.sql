@@ -19,6 +19,5 @@ BEGIN
     INSERT INTO TAA.TBTAA_SEP_OPERACAO_STATUS (DSSTATUS, CDGRUPO, DSGRUPO) VALUES('14 - Transacao Pendente de Processamento',7,'Processamento');
     INSERT INTO TAA.TBTAA_SEP_OPERACAO_STATUS (DSSTATUS, CDGRUPO, DSGRUPO) VALUES('15 - Transacao Processada',7,'Processamento');
     INSERT INTO TAA.TBTAA_SEP_OPERACAO_STATUS (DSSTATUS, CDGRUPO, DSGRUPO) VALUES('16 - Transacao em Processamento',7,'Processamento');
-
     COMMIT;
 END;
