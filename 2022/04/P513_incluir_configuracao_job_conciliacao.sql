@@ -40,5 +40,4 @@ BEGIN
     ,'5');
 
   COMMIT;
-
 END;

@@ -276,5 +276,4 @@ BEGIN
     ,NULL);
 
   COMMIT;
-
 END;
