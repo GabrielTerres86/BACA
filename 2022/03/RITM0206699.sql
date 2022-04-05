@@ -5,21 +5,17 @@ DECLARE
   vr_des_reto VARCHAR(100);
   vr_tab_erro GENE0001.typ_tab_erro;
   rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
-
   vr_cdcooper NUMBER := 1;
   vr_nrdconta NUMBER := 2050706;
   vr_nrctremp NUMBER := 250253;
   vr_cdagenci NUMBER := 51;
-  vr_vllanmto craplem.vllanmto%TYPE := 277695.26;
-
+  vr_vllanmto craplem.vllanmto%TYPE := 282775.07;
   vr_txmensal crapepr.txmensal%TYPE := 1.8;
   vr_cdhistor craplem.cdhistor%TYPE := 2403;
-
 BEGIN
-   OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+  OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
   FETCH btch0001.cr_crapdat INTO rw_crapdat;
   CLOSE btch0001.cr_crapdat;
-
   UPDATE crapepr e
      SET e.inliquid = 0
         ,e.vlsdeved = vr_vllanmto
@@ -29,7 +25,7 @@ BEGIN
    WHERE e.cdcooper = vr_cdcooper
      AND e.nrdconta = vr_nrdconta 
      AND e.nrctremp = vr_nrctremp;
-
+     
   PREJ0001.pc_transfere_epr_prejuizo_TR(pr_cdcooper => vr_cdcooper
                                        ,pr_cdagenci => vr_cdagenci
                                        ,pr_nrdcaixa => 100
@@ -44,10 +40,9 @@ BEGIN
     vr_dscritic := 'Erro na transferencia para prejuizo: ' || vr_tab_erro(vr_tab_erro.first).dscritic;
     RAISE vr_exc_said;
   END IF;
-
+  
   vr_nrctremp := 230031;
-  vr_vllanmto := 239385.25;
-
+  vr_vllanmto := 243694.18;
   EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                  ,pr_cdagenci => vr_cdagenci
@@ -71,11 +66,11 @@ BEGIN
                                  ,pr_cdorigem => 5
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
-
+                                 
   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
     RAISE vr_exc_said;
   END IF;
-
+  
   UPDATE crapepr e
      SET e.vlsdeved = 0
         ,e.vlsdprej = 0
@@ -84,9 +79,8 @@ BEGIN
    WHERE e.cdcooper = vr_cdcooper
      AND e.nrdconta = vr_nrdconta 
      AND e.nrctremp = vr_nrctremp;
-
+     
   COMMIT;
-
 EXCEPTION
   WHEN vr_exc_said THEN
     RAISE_application_error(-20500,vr_dscritic);
