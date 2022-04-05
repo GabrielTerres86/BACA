@@ -98,8 +98,3 @@ EXCEPTION
 END;
 
 
-SELECT * FROM CRAPEPR R
-       WHERE R.CDCOOPER = 1
-       AND R.NRDCONTA = 14134489
-       AND R.NRCTREMP = 5076228;
-observar a coluna crlcremp
