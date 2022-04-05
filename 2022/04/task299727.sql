@@ -133,6 +133,12 @@ DECLARE
   <inadimplencia>
     <despesasCartorarias>0.0</despesasCartorarias>
   </inadimplencia>
+  <posicao>
+    <produtoCategoria>
+      <codigo>32</codigo>
+    </produtoCategoria>
+    <saldo>43317.91</saldo>
+  </posicao>
   <usuarioDominioCecred>
     <codigo/>
   </usuarioDominioCecred>
