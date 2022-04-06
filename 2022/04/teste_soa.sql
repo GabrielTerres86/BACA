@@ -63,9 +63,9 @@ BEGIN
                       '</identificador>' || vr_tipo_pagto || '</parcela>';
 					  
 					  
-    CECRED.EMPR0020.pc_gera_xml_pagamento_consig(pr_cdcooper     => rw_craplcm.cdcooper,
-                                                 pr_nrdconta     => rw_craplcm.nrdconta,
-                                                 pr_nrctremp     => rw_craplcm.nrctremp,
+    CECRED.EMPR0020.pc_gera_xml_pagamento_consig(pr_cdcooper     => rw_crappep.cdcooper,
+                                                 pr_nrdconta     => rw_crappep.nrdconta,
+                                                 pr_nrctremp     => rw_crappep.nrctremp,
                                                  pr_xml_parcelas => vr_xml_parcela,
                                                  pr_tpenvio      => 1,
                                                  pr_tptransa     => 'DEBITO',
@@ -76,9 +76,9 @@ BEGIN
             RAISE vr_exc_saida;
         END IF;
                                     
-    soap0003.pc_gerar_evento_soa(pr_cdcooper              => rw_craplcm.cdcooper,
-                                 pr_nrdconta              => rw_craplcm.nrdconta,
-                                 pr_nrctrprp              => rw_craplcm.nrctremp,
+    soap0003.pc_gerar_evento_soa(pr_cdcooper              => rw_crappep.cdcooper,
+                                 pr_nrdconta              => rw_crappep.nrdconta,
+                                 pr_nrctrprp              => rw_crappep.nrctremp,
                                  pr_tpevento              => 'PAGTO_PAGAR',
                                  pr_tproduto_evento       => 'CONSIGNADO',
                                  pr_tpoperacao            => 'INSERT',
