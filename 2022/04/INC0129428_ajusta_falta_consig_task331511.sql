@@ -1,5 +1,4 @@
 declare
-  --variaveis dos arquivo arquivos
   vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
   vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'/cpd/bacas/inc0129428';
   vr_nmarqimp        VARCHAR2(100)  := 'diff_consig_fev_1.csv';
@@ -9,7 +8,6 @@ declare
   vr_linha           varchar2(5000);
   vr_campo           GENE0002.typ_split;
 
-  --variaveis para o programa
   rw_crapdat         BTCH0001.cr_crapdat%ROWTYPE;
   vr_texto_padrao    VARCHAR2(200);     
   vr_cdcooper        crapepr.cdcooper%type;  
@@ -21,7 +19,6 @@ declare
   vr_vlpreemp        craplem.vlpreemp%type;
   vr_txjuremp        craplem.txjurepr%TYPE;
 
-  --variaveis de exception
   vr_cdcritic        crapcri.cdcritic%TYPE;
   vr_des_reto        varchar(3);
   vr_tab_erro        GENE0001.typ_tab_erro;
@@ -30,29 +27,26 @@ declare
 
 BEGIN
 
-  -- Com base na data da central
   OPEN  btch0001.cr_crapdat(pr_cdcooper => 3);
   FETCH btch0001.cr_crapdat INTO rw_crapdat;
   CLOSE btch0001.cr_crapdat;  
 
-  -- Abre arquivo de ajuste
-  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto        --> Diretorio do arquivo
-                          ,pr_nmarquiv => vr_nmarqimp        --> Nome do arquivo
-                          ,pr_tipabert => 'R'                --> modo de abertura (r,w,a)
-                          ,pr_utlfileh => vr_ind_arquiv      --> handle do arquivo aberto
-                          ,pr_des_erro => vr_dscritic);      --> erro
+  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto        
+                          ,pr_nmarquiv => vr_nmarqimp        
+                          ,pr_tipabert => 'R'                
+                          ,pr_utlfileh => vr_ind_arquiv      
+                          ,pr_des_erro => vr_dscritic);      
 
   IF vr_dscritic IS NOT NULL THEN  
     dbms_output.put_line( vr_dscritic);    
     RAISE vr_exc_saida;
   END IF;   
 
-  --Abre arquivo de RollBack
-  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto        --> Diretorio do arquivo
-                          ,pr_nmarquiv => vr_nmarqimpr       --> Nome do arquivo
-                          ,pr_tipabert => 'W'                --> modo de abertura (r,w,a)
-                          ,pr_utlfileh => vr_ind_arquivr     --> handle do arquivo aberto
-                          ,pr_des_erro => vr_dscritic);      --> erro
+  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto        
+                          ,pr_nmarquiv => vr_nmarqimpr       
+                          ,pr_tipabert => 'W'                
+                          ,pr_utlfileh => vr_ind_arquivr     
+                          ,pr_des_erro => vr_dscritic);      
 
   IF vr_dscritic IS NOT NULL THEN        
     RAISE vr_exc_saida;
@@ -60,7 +54,6 @@ BEGIN
 
   gene0001.pc_escr_linha_arquivo(vr_ind_arquivr,'COOP;CONTA;CONTRATO;HISTORICO;AGENCIA;VALOR;RESULTADO;OBSERVACAO');
   
-  /*leitura do cabeçalho*/
   gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv,pr_des_text => vr_linha);
 
   LOOP
@@ -124,7 +117,7 @@ BEGIN
    END LOOP;
 
    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivr); 
-   --COMMIT;
+   COMMIT;
    
 EXCEPTION 
   WHEN OTHERS THEN
