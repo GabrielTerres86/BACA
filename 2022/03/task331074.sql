@@ -14,7 +14,7 @@ DECLARE
       ,b.nrctremp
       ,b.cdcooper
       ,b.nrparepr
-      ,to_date('03/03/2022','dd/mm/yyyy') dtmvtolt
+      ,to_date('25/02/2022','dd/mm/yyyy') dtmvtolt
       ,MIN(b.idsequencia) idsequencia
     FROM tbepr_consignado_pagamento b
       ,(SELECT cdcooper
@@ -44,14 +44,6 @@ DECLARE
        ,b.nrparepr;
   rw_craplcm cr_craplcm%ROWTYPE;
 BEGIN
-
-insert into CECRED.TBEPR_CONSIGNADO_PAGAMENTO (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
-values (13, 524123, 94749, 12, 2, 562.18, 562.18, to_date('10-01-2022', 'dd-mm-yyyy'), 3, to_date('03-03-2022 09:17:01', 'dd-mm-yyyy hh24:mi:ss'), to_date('07-03-2022 15:05:19', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130253', null, null, null, to_date('03-03-2022', 'dd-mm-yyyy'));
-
-insert into CECRED.TBEPR_CONSIGNADO_PAGAMENTO (IDSEQUENCIA, CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
-values (1180256, 13, 524123, 94749, 13, 2, 1261.00, 1261.00, to_date('10-02-2022', 'dd-mm-yyyy'), 3, to_date('03-03-2022 09:17:29', 'dd-mm-yyyy hh24:mi:ss'), to_date('07-03-2022 15:05:21', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0130253', null, null, null, to_date('03-03-2022', 'dd-mm-yyyy'));
-
-commit; 
 
   FOR rw_craplcm IN cr_craplcm LOOP
     vr_motenvio    := 'REENVIARPAGTO';
