@@ -19,7 +19,7 @@ declare
   CURSOR cr_lancamento IS
     SELECT REGEXP_SUBSTR('1041,1705,1708,1711,3027','[^,]+', 1, LEVEL) as vr_cdhistor,
            REGEXP_SUBSTR('36.90,411.36,8.23,0.14,411.36','[^,]+', 1, LEVEL) as vr_vllanmto,
-           REGEXP_SUBSTR('0,11,11,11,11','[^,]+', 1, LEVEL) as vr_nrparepr           
+           REGEXP_SUBSTR('0,13,13,13,13','[^,]+', 1, LEVEL) as vr_nrparepr           
       FROM DUAL
    CONNECT BY REGEXP_SUBSTR('1041,1705,1708,1711,3027','[^,]+', 1, LEVEL) IS NOT NULL;     
   
