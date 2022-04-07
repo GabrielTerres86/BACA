@@ -47,7 +47,7 @@ DECLARE
           ,cp.vlpagpar
           ,cp.idintegracao
           ,cp.idsequencia
-          ,to_date('24/02/2022') as dataefetivacao
+          ,to_date('24/02/2022', 'dd/mm/yyyy') as dataefetivacao
           ,733.76 as valorapagar
           ,cp.cdagenci
       from crappep                    pep
@@ -111,9 +111,6 @@ BEGIN
   
   END LOOP;
 
-  COMMIT;
-
-
   FOR rw_crappep IN cr_crappep LOOP
   
     vr_motenvio    := 'REENVIARPAGTO';
@@ -155,8 +152,6 @@ BEGIN
                                  pr_dsconteudo_requisicao => vr_dsxmlali.getClobVal(),
                                  pr_idevento              => vr_idevento,
                                  pr_dscritic              => vr_dscritic);
-  
-    COMMIT;
   
     OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crappep.cdcooper);
     FETCH btch0001.cr_crapdat
