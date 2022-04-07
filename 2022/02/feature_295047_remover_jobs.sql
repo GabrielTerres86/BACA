@@ -1,8 +1,3 @@
-PL/SQL Developer Test script 3.0
-19
-/*
-  Remover jobs JBCONV_BANCOOB_CONTABIL e JBCAPT_CONTAB_APLPROG
-*/
 BEGIN
   BEGIN
     sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBCONV_BANCOOB_CONTABIL');
@@ -18,6 +13,5 @@ BEGIN
       cecred.pc_internal_exception;
       DBMS_OUTPUT.PUT_LINE(SQLERRM);
   END;
+  COMMIT;
 END;
-0
-0
