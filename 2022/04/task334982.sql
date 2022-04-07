@@ -113,6 +113,7 @@ BEGIN
 
   COMMIT;
 
+
   FOR rw_crappep IN cr_crappep LOOP
   
     vr_motenvio    := 'REENVIARPAGTO';
