@@ -13,7 +13,7 @@ BEGIN
     FROM tbjdnpcdstleg_jd2lg_optit@jdnpcbisql
    WHERE "CdLeg" = 'LEG'
      AND "ISPBAdministrado" = 5463212;
-
+	 
   vr_limite_opleg := vr_limite_opleg + 10000;
 
   vr_number := 0;
