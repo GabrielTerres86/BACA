@@ -17,10 +17,8 @@ DECLARE
       FROM tbseg_nrproposta p
      WHERE p.nrproposta = pr_nrproposta;
 BEGIN
-  vr_nmdirrec := gene0001.fn_diretorio(pr_tpdireto => 'C',
-                                        pr_cdcooper => 3);
-
-  vr_nmdirrec := vr_nmdirrec || '/arq/prj0022983'; 
+  vr_nmdirrec := gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS');
+  vr_nmdirrec := vr_nmdirrec||'cpd/bacas/prj0022983';
   
   gene0001.pc_lista_Arquivos(pr_path     => vr_nmdirrec 
                             ,pr_pesq     => vr_nmarqmov
