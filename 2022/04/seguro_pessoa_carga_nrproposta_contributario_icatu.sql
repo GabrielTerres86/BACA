@@ -17,7 +17,7 @@ DECLARE
       FROM tbseg_nrproposta p
      WHERE p.nrproposta = pr_nrproposta;
 BEGIN
-  vr_nmdirrec := gene0001.fn_diretorio(pr_tpdireto => 'C', --/usr/coop
+  vr_nmdirrec := gene0001.fn_diretorio(pr_tpdireto => 'C',
                                         pr_cdcooper => 3);
 
   vr_nmdirrec := vr_nmdirrec || '/arq/prj0022983'; 
