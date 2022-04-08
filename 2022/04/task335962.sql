@@ -26,7 +26,7 @@ declare
                           <codigo>4</codigo>
                         </tipoLiquidacao> 
                         <tributoIOFValor>1232.41</tributoIOFValor>
-                        <valor>42216.23</valor><valorBase>41000.00</valorBase><dataProposta>2022-04-12T14:48:17</dataProposta>
+                        <valor>42216.23</valor><valorBase>41000.00</valorBase><dataProposta>2022-05-03T14:48:17</dataProposta>
                         <emitente> 
                           <dataNascOuConstituicao>1987-05-08T00:00:00</dataNascOuConstituicao>
                           <identificadorReceitaFederal>996030980</identificadorReceitaFederal>
@@ -129,7 +129,7 @@ declare
                         <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
                         <indicadorContaPrincipal>true</indicadorContaPrincipal> 
                         <naturalidade>PRESIDENTE GETULIO</naturalidade>
-                         <dataCalculoLegado>2022-01-28T00:00:00</dataCalculoLegado>
+                         <dataCalculoLegado>2022-04-30T00:00:00</dataCalculoLegado>
                       </parametroConsignado> </Root>';
 
 begin
@@ -163,18 +163,7 @@ begin
      null,
      conta_1927337_5139328);
 
-  UPDATE crappep
-     SET DTVENCTO = ADD_MONTHS(DTVENCTO, 3)
-   WHERE NRDCONTA = 1927337
-     AND CDCOOPER = 1
-     AND NRCTREMP = 5139328;
-
-  update w.VLPREEMP,
-         w.VLPREORI,
-         w.TXMINIMA,
-         w.TXBASPRE,
-         w.TXMENSAL,
-         w.TXORIGIN from CRAWEPR w
+  update CRAWEPR w
      set w.vlpreemp = 1271.25,
          w.vlpreori = 1271.25,
          w.txminima = 1.61,
@@ -185,13 +174,13 @@ begin
      and w.nrdconta = 1927337
      and w.nrctremp = 5139328;
 
-  update epr.vlpreemp, epr.txmensal from crapepr epr
+  update crapepr epr
      set epr.vlpreemp = 1271.25, epr.txmensal = 1.61
    where epr.cdcooper = 1
      and epr.nrdconta = 1927337
      and epr.nrctremp = 5139328;
 
-  update pep.vlparepr, pep.vlsdvpar, pep.vlsdvsji, pep.dtvencto from crappep pep
+  update crappep pep
      set pep.vlparepr = 1271.25,
          pep.vlsdvpar = 1271.25,
          pep.vlsdvsji = 1271.25,
