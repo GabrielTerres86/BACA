@@ -8,14 +8,14 @@ DECLARE
   vr_exc_saida exception;
   CURSOR cr_crappep is
     SELECT x.*
-          ,REGEXP_SUBSTR('2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30','[^,]+', 1, LEVEL) as idsequencia
+          ,REGEXP_SUBSTR('2,3,4,5,6,7,8,9,10,11,12,13,14,15','[^,]+', 1, LEVEL) as idsequencia
      FROM(SELECT b.dtvencto
                 ,b.vlpagpar
                 ,b.nrdconta
                 ,b.nrctremp
                 ,b.cdcooper
                 ,b.nrparepr
-                ,to_date('03/03/2022','DD/MM/RRRR') dtmvtolt          
+                ,to_date('01/04/2022','DD/MM/RRRR') dtmvtolt          
             from crappep                    pep
                 ,tbepr_consignado_pagamento b
            where pep.cdcooper = 7 
@@ -38,14 +38,9 @@ DECLARE
                    ,b.nrdconta
                    ,b.nrctremp
                    ,b.nrparepr) x  
-      CONNECT BY REGEXP_SUBSTR('2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30','[^,]+', 1, LEVEL) IS NOT NULL;
+      CONNECT BY REGEXP_SUBSTR('2,3,4,5,6,7,8,9,10,11,12,13,14,15','[^,]+', 1, LEVEL) IS NOT NULL;
   rw_crappep cr_crappep%rowtype;
 BEGIN  
-
-  insert into tbepr_consignado_pagamento (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
-  values (7, 294284, 60161, 7, 1, 5.72, 5.72, to_date('01-03-2022', 'dd-mm-yyyy'), 1, to_date('03-03-2022 12:30:49', 'dd-mm-yyyy hh24:mi:ss'), null, 1, 0, '1', null, null, null, to_date('03-03-2022', 'dd-mm-yyyy'));
-
-  commit;
   
   FOR rw_crappep IN cr_crappep LOOP
     vr_motenvio    := 'REENVIARPAGTO';
