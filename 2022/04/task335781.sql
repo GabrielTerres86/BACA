@@ -5,7 +5,6 @@ DECLARE
   vr_dsxmlali    XMLType;
   vr_dscritic    VARCHAR2(4000);
   vr_idevento    tbgen_evento_soa.idevento%type;
-  vr_tipo_pagto  VARCHAR2(500);
   vr_exc_saida exception;
 
   CURSOR cr_crappep is
@@ -18,6 +17,7 @@ DECLARE
           ,cp.vlpagpar
           ,cp.idintegracao
           ,cp.idsequencia
+          ,to_date('01/04/2022', 'dd/mm/yyyy') as dataefetivacao
       from crappep pep
      inner join tbepr_consignado_pagamento cp
         on cp.cdcooper = pep.cdcooper
@@ -38,7 +38,7 @@ BEGIN
     vr_motenvio    := 'REENVIARPAGTO';
     vr_xml_parcela := ' <parcela>
                             <dataEfetivacao>' ||
-                      to_char(rw_crappep.dtmvtolt, 'yyyy-mm-dd') || 'T' ||
+                      to_char(rw_crappep.dataefetivacao, 'yyyy-mm-dd') || 'T' ||
                       to_char(sysdate, 'hh24:mi:ss') ||
                       '</dataEfetivacao> 
                             <dataVencimento>' ||
