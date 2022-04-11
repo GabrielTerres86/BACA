@@ -44,8 +44,8 @@ BEGIN
   
   FOR rw_crappep IN cr_crappep LOOP
     vr_motenvio    := 'REENVIARPAGTO';
-    vr_tipo_pagto  := ' <valor>' || trim(to_char(rw_crappep.vlpagpar, '999999990.00')) ||
-                      '</valor>';
+    vr_tipo_pagto  := ' <valorParcial>' || trim(to_char(rw_crappep.vlpagpar, '999999990.00')) ||
+                      '</valorParcial>';
     vr_xml_parcela := ' <parcela>
                             <dataEfetivacao>' ||
                       to_char(rw_crappep.dtmvtolt, 'yyyy-mm-dd') || 'T' ||
