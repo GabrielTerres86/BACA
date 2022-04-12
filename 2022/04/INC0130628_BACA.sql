@@ -954,7 +954,7 @@ for	r01 in c01 loop
 
 		dbms_lob.createtemporary(ds_dados_rollback_v, true, dbms_lob.CALL);
 		dbms_lob.open(ds_dados_rollback_v, dbms_lob.lob_readwrite);
-		gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, '-- LOGS E ROLLBACK ' || chr(13) || chr(13), false);
+		gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, '-> LOGS E ROLLBACK ' || chr(13) || chr(13), false);
 		gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'begin ' || chr(13) || chr(13), false);  
 		nm_arquivo_rollback_v	:= 'ROLLBACK_INC0130628_' || nr_arquivo || '.sql';
 
@@ -1190,9 +1190,9 @@ for	r01 in c01 loop
 
 		gene0002.pc_escreve_xml(ds_dados_rollback_v,
 					ds_texto_rollback_v,
-					'/* LOG: falha mapeada ao atualizar registro:' || chr(13) ||
-					'Proposta: ' || r01.nrproposta || chr(13) ||
-					'Crítica: ' || ds_critica_v || '*/' || chr(13) || chr(13), false);
+					'-> LOG: falha mapeada ao atualizar registro:' || chr(13) ||
+					'-> Proposta: ' || r01.nrproposta || chr(13) ||
+					'-> Crítica: ' || ds_critica_v || chr(13) || chr(13), false);
 
 	when	others then
 
@@ -1200,9 +1200,9 @@ for	r01 in c01 loop
 
 		gene0002.pc_escreve_xml(ds_dados_rollback_v,
 					ds_texto_rollback_v,
-					'/* LOG: erro de sistema ao atualizar registro:' || chr(13) ||
-					'Proposta: ' || r01.nrproposta || chr(13) ||
-					'Erro: ' || sqlerrm || '*/' || chr(13) || chr(13), false);
+					'-> LOG: erro de sistema ao atualizar registro:' || chr(13) ||
+					'-> Proposta: ' || r01.nrproposta || chr(13) ||
+					'-> Erro: ' || sqlerrm || chr(13) || chr(13), false);
 
 		exit;
 
