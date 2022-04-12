@@ -1242,6 +1242,8 @@ end if;
 
 for	r05 in c05 loop
 
+	ds_critica_v	:= null;
+
 	if	(vr_tab_ctrl_coop.exists(trim(to_char(r05.cdcooper)))) then
 
 		pc_gera_arquivo_coop(	pr_cdcooper	=> r05.cdcooper,
