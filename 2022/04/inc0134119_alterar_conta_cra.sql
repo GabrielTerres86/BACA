@@ -6,7 +6,7 @@ BEGIN
          AND crapprm.cdacesso = 'CONTA_IEPTB';
   commit;
 
-EXCEPTION  WHEN OTHERS THEN    SISTEMA.excecaoInterna(pr_compleme => 'RITM0206203');
+EXCEPTION  WHEN OTHERS THEN    SISTEMA.excecaoInterna(pr_compleme => 'INC0134119');
 ROLLBACK;
 
 END;
