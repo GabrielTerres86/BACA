@@ -18,15 +18,14 @@ DECLARE
                 ,to_date('01/04/2022','DD/MM/RRRR') dtmvtolt          
             from crappep                    pep
                 ,tbepr_consignado_pagamento b
-           where pep.cdcooper = 7 
-             and pep.nrdconta = 294284  
-             and pep.nrctremp = 60161 
-             and pep.nrparepr = 7
+           where pep.cdcooper = 1
+             and pep.nrdconta = 4038142  
+             and pep.nrctremp = 5108831 
+             and pep.nrparepr = 12 
              and pep.nrdconta = b.nrdconta
              and pep.nrctremp = b.nrctremp
              and pep.nrparepr = b.nrparepr
              and pep.cdcooper = b.cdcooper
-             and b.instatus = 1
            group by b.dtvencto
                    ,b.vlpagpar
                    ,b.nrdconta
@@ -41,7 +40,12 @@ DECLARE
       CONNECT BY REGEXP_SUBSTR('2,3,4,5,6,7,8,9,10,11,12,13,14,15','[^,]+', 1, LEVEL) IS NOT NULL;
   rw_crappep cr_crappep%rowtype;
 BEGIN  
-  
+
+  insert into tbepr_consignado_pagamento (CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
+  values (1, 4038142, 5108831, 12, 2, 20.04, 20.04, to_date('01-02-2023', 'dd-mm-yyyy'), 3, to_date('04-03-2022 10:38:42', 'dd-mm-yyyy hh24:mi:ss'), to_date('04-03-2022 10:39:18', 'dd-mm-yyyy hh24:mi:ss'), 0, 0, 'f0014914', null, null, null, to_date('04-03-2022', 'dd-mm-yyyy'));
+
+  commit;
+
   FOR rw_crappep IN cr_crappep LOOP
     vr_motenvio    := 'REENVIARPAGTO';
     vr_tipo_pagto  := ' <valorParcial>' || trim(to_char(rw_crappep.vlpagpar, '999999990.00')) ||
