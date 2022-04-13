@@ -82,7 +82,7 @@ declare
   </pessoaDocumento>
   <pessoaFisicaOcupacao>
     <naturezaOcupacao>
-      <codigo>0</codigo>
+      <codigo>1</codigo>
     </naturezaOcupacao>
   </pessoaFisicaOcupacao>
   <pessoaFisicaDetalhamento>
