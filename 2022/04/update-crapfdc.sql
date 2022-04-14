@@ -1,7 +1,7 @@
 begin
   
 update cecred.crapfdc f 
-  set f.incheque = 8, f.nrpedido = null, f.dtretchq = trunc(sysdate), f.dtliqchq = trunc(sysdate), f.dtemschq = trunc(sysdate)
+  set f.incheque = 8, f.dtretchq = trunc(sysdate), f.dtliqchq = trunc(sysdate), f.dtemschq = trunc(sysdate)
 where  f.cdcooper = 14
   and  f.nrdconta in (47724,63142)
   and  f.nrpedido = 123024
