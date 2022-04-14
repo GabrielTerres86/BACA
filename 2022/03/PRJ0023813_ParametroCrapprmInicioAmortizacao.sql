@@ -2,7 +2,7 @@ DECLARE
   vr_nmsistem crapprm.nmsistem%TYPE := 'CRED';
   vr_cdcooper crapprm.cdcooper%TYPE := 0;
   vr_cdacesso crapprm.cdacesso%TYPE := 'DATA_INICIO_AMORT_PEAC';
-  vr_dstexprm crapprm.dstexprm%TYPE := 'PEAC - Data de Inicio da Amortizacao Antecipada em Producao';
+  vr_dstexprm crapprm.dstexprm%TYPE := 'PEAC - Data de Inicio da Amortizacao Antecipada';
   vr_dsvlrprm crapprm.dsvlrprm%TYPE := '01/02/2022';
   vr_dscritic crapcri.dscritic%TYPE;
   vr_exc_erro EXCEPTION;
