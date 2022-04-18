@@ -54,6 +54,71 @@ BEGIN
                                  ,pr_dscritic => vr_dscritic);
   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
     RAISE vr_exc_saida;
+  END IF;
+  
+  vr_nrdconta := 10894829;
+  vr_nrctremp := 5153302;
+  vr_vllanmto := 463.80;
+  vr_cdhistor := 1041;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_nrdconta => vr_nrdconta);
+  FETCH cr_crapass INTO rw_crapass;
+  CLOSE cr_crapass;
+  EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                 ,pr_cdagenci => rw_crapass.cdagenci
+                                 ,pr_cdbccxlt => 100
+                                 ,pr_cdoperad => 1
+                                 ,pr_cdpactra => rw_crapass.cdagenci
+                                 ,pr_tplotmov => 5
+                                 ,pr_nrdolote => 600031
+                                 ,pr_nrdconta => vr_nrdconta
+                                 ,pr_cdhistor => vr_cdhistor
+                                 ,pr_nrctremp => vr_nrctremp
+                                 ,pr_vllanmto => vr_vllanmto
+                                 ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                 ,pr_txjurepr => 0
+                                 ,pr_vlpreemp => 0
+                                 ,pr_nrsequni => 0
+                                 ,pr_nrparepr => 0
+                                 ,pr_flgincre => FALSE
+                                 ,pr_flgcredi => FALSE
+                                 ,pr_nrseqava => 0
+                                 ,pr_cdorigem => 5
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic);
+  IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+    RAISE vr_exc_saida;
+  END IF;
+  
+  vr_cdhistor := 1705;
+  vr_vllanmto := 329.91;
+  EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper
+                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                 ,pr_cdagenci => rw_crapass.cdagenci
+                                 ,pr_cdbccxlt => 100
+                                 ,pr_cdoperad => 1
+                                 ,pr_cdpactra => rw_crapass.cdagenci
+                                 ,pr_tplotmov => 5
+                                 ,pr_nrdolote => 600031
+                                 ,pr_nrdconta => vr_nrdconta
+                                 ,pr_cdhistor => vr_cdhistor
+                                 ,pr_nrctremp => vr_nrctremp
+                                 ,pr_vllanmto => vr_vllanmto
+                                 ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                 ,pr_txjurepr => 0
+                                 ,pr_vlpreemp => 0
+                                 ,pr_nrsequni => 0
+                                 ,pr_nrparepr => 0
+                                 ,pr_flgincre => FALSE
+                                 ,pr_flgcredi => FALSE
+                                 ,pr_nrseqava => 0
+                                 ,pr_cdorigem => 5
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic);
+  IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+    RAISE vr_exc_saida;
   END IF;  
   
   COMMIT;
