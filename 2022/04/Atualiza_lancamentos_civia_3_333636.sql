@@ -59,7 +59,6 @@ DECLARE
              ,b.nrparepr;
   rw_crappep_1 cr_crappep_1%rowtype;
 BEGIN  
-  --ESTORNO
   FOR rw_crappep IN cr_crappep LOOP
     vr_motenvio    := 'REENVIARPAGTO';
     vr_tipo_pagto  := ' <valor>' || trim(to_char(rw_crappep.vlpagpar, '999999990.00')) ||
@@ -96,7 +95,7 @@ BEGIN
                                     ,pr_idevento               => vr_idevento
                                     ,pr_dscritic               => vr_dscritic);
   END LOOP;
-  --PAGAMENTO
+
   FOR rw_crappep_1 IN cr_crappep_1 LOOP
     vr_motenvio    := 'REENVIARPAGTO';
     vr_tipo_pagto  := ' <valor>' || trim(to_char(rw_crappep_1.vlpagpar, '999999990.00')) ||
@@ -137,6 +136,5 @@ BEGIN
 EXCEPTION
   WHEN OTHERS THEN
     RAISE_application_error(-20500, SQLERRM);
-    ROLLBACK;
-  
+    ROLLBACK;  
 END;
