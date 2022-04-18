@@ -5,7 +5,7 @@ BEGIN
    WHERE dev.cdcooper = 1
      AND dev.dtmvtolt = TO_DATE('12/04/2022', 'DD/MM/YYYY');
   
-  IF SQL%ROWCOUNT = 12 THEN
+  IF SQL%ROWCOUNT = 69 THEN
     COMMIT;
   ELSE
     ROLLBACK;
