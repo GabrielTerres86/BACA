@@ -1,6 +1,6 @@
 DECLARE
-  CURSOR cr_his(pr_cdcooper IN crapcop.cdcooper%TYPE
-               ,pr_cdhistor IN craphis.cdhistor%TYPE) IS
+  CURSOR cr_his(pr_cdcooper IN cecred.crapcop.cdcooper%TYPE
+               ,pr_cdhistor IN cecred.craphis.cdhistor%TYPE) IS
     SELECT t.cdhistor
           ,t.dshistor
           ,t.indebcre
@@ -9,8 +9,8 @@ DECLARE
        AND t.cdhistor = pr_cdhistor;
   rw_his cr_his%ROWTYPE;
 
-  CURSOR cr_sld_prj(pr_cdcooper IN crapcop.cdcooper%TYPE
-                   ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+  CURSOR cr_sld_prj(pr_cdcooper IN cecred.crapcop.cdcooper%TYPE
+                   ,pr_nrdconta IN cecred.crapass.nrdconta%TYPE) IS
     SELECT t.vlsdprej
           ,t.idprejuizo
       FROM cecred.tbcc_prejuizo t
