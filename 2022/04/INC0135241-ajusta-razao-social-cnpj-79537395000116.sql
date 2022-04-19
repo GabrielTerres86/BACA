@@ -1,0 +1,18 @@
+BEGIN
+  
+  UPDATE CECRED.CRAPJUR t
+    SET t.nmextttl = 'AORELIO ANGELO ESMANHOTTO'
+  WHERE t.nrdconta = 14648911
+    AND t.cdcooper = 1;
+  
+  UPDATE CECRED.CRAPASS a
+    SET a.nmprimtl = 'AORELIO ANGELO ESMANHOTTO'
+  WHERE a.nrdconta = 14648911
+    and a.cdcooper = 1;
+    
+  COMMIT;
+  
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE_APPLICATION_ERROR(-20000, 'ERRO: ' || SQLERRM);
+END;
