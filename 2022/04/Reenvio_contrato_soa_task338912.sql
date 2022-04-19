@@ -29,7 +29,7 @@ v_xml_envio_contrato CLOB := '<?xml version="1.0" encoding="UTF-8"?><Root><conve
                           <codigo>4</codigo>
                         </tipoLiquidacao> 
                         <tributoIOFValor>130.66</tributoIOFValor>
-                        <valor>5130.66</valor><valorBase>5000.00</valorBase><dataProposta>2022-04-18T11:38:15</dataProposta>
+                        <valor>5130.66</valor><valorBase>5000.00</valorBase><dataProposta>2022-04-19T11:38:15</dataProposta>
                         <emitente> 
                           <dataNascOuConstituicao>1988-12-19T00:00:00</dataNascOuConstituicao>
                           <identificadorReceitaFederal>2061176046</identificadorReceitaFederal>
