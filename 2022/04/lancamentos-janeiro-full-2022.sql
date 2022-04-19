@@ -773,7 +773,7 @@ BEGIN
 EXCEPTION
   WHEN vr_exc_saida THEN
     ROLLBACK;
-    RAISE_application_error(-20500, vr_dscritic || 'contrato: ' || vr_nrctremp);
+    RAISE_application_error(-20500, vr_dscritic);
   WHEN OTHERS THEN
     ROLLBACK;
     RAISE_application_error(-20500, SQLERRM);
