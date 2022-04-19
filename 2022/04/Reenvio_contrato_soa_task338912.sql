@@ -1,0 +1,170 @@
+DECLARE
+v_cd_coopr tbgen_evento_soa.CDCOOPER%TYPE := 12;
+v_nr_conta tbgen_evento_soa.NRDCONTA%TYPE := 197394;
+v_nr_contrato tbgen_evento_soa.NRCTRPRP%TYPE := 51358;
+
+v_xml_envio_contrato CLOB := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCredito>
+                        <cooperativa>
+                          <codigo>12</codigo>
+                        </cooperativa>
+                        <numeroContrato>277</numeroContrato>
+                      </convenioCredito>
+                      <configuracaoCredito>
+                        <diasCarencia>26</diasCarencia>
+                        <financiaIOF>true</financiaIOF>
+                        <financiaTarifa>true</financiaTarifa>
+                      </configuracaoCredito>
+                      <propostaContratoCredito>
+                        <CETPercentAoAno>33.39</CETPercentAoAno>
+                        <dataPrimeiraParcela>2022-05-10</dataPrimeiraParcela>
+                        <produto> 
+                          <codigo>161</codigo>
+                        </produto>
+                        <quantidadeParcelas>24</quantidadeParcelas>
+                        <taxaJurosRemuneratorios>2.20</taxaJurosRemuneratorios>
+                        <taxaJurosRemuneratoriosAnual>29.84</taxaJurosRemuneratoriosAnual>
+                        <tipoLiberacao>
+                           <codigo>6</codigo></tipoLiberacao>
+                        <tipoLiquidacao>
+                          <codigo>4</codigo>
+                        </tipoLiquidacao> 
+                        <tributoIOFValor>130.66</tributoIOFValor>
+                        <valor>5130.66</valor><valorBase>5000.00</valorBase><dataProposta>2022-04-19T11:38:15</dataProposta>
+                        <emitente> 
+                          <dataNascOuConstituicao>1988-12-19T00:00:00</dataNascOuConstituicao>
+                          <identificadorReceitaFederal>2061176046</identificadorReceitaFederal>
+                          <razaoSocialOuNome>ROBSON LISBOA DE ALMEIDA</razaoSocialOuNome>
+                          <nacionalidade>
+                            <codigo>42</codigo>
+                          </nacionalidade>
+                          <tipo> 
+                            <codigo>1</codigo>
+                          </tipo>
+                          <contaCorrente>
+                            <agencia>
+                              <codigo>111</codigo>
+                            </agencia>
+                            <banco>
+                              <codigo>85</codigo>
+                            </banco>
+                            <codigoConta>197394</codigoConta>
+                            <cooperativa>
+                              <codigo>12</codigo>
+                            </cooperativa>
+                          </contaCorrente>
+                          <numeroTitularidade>1</numeroTitularidade>
+                          <pessoaContatoEndereco>
+                            <CEP>89270000</CEP>
+                            <cidade>
+                              <descricao>GUARAMIRIM</descricao>
+                            </cidade>
+                            <nomeBairro>ESCOLINHA</nomeBairro>
+                            <numeroLogradouro>70</numeroLogradouro>
+                            <tipoEndereco>
+                              <codigo>13</codigo> 
+                            </tipoEndereco>
+                            <tipoENomeLogradouro>RUA 633 HONORATO STO</tipoENomeLogradouro>
+                            <UF>SC</UF>
+                          </pessoaContatoEndereco>
+                        </emitente>
+                        <identificadorProposta>51358</identificadorProposta>
+                        <statusProposta>
+                          <codigo>26</codigo>
+                        </statusProposta>
+                      </propostaContratoCredito>
+                      <pessoaDocumento>
+                        <identificador>8089866365</identificador>
+                        <tipo>
+                          <sigla>CI</sigla>
+                        </tipo>
+                      </pessoaDocumento>
+                      <pessoaFisicaOcupacao>
+                        <naturezaOcupacao>
+                          <codigo>1</codigo>
+                        </naturezaOcupacao>
+                      </pessoaFisicaOcupacao>
+                      <pessoaFisicaDetalhamento>
+                        <estadoCivil>
+                          <codigo>4</codigo>  </estadoCivil>
+                        <sexo>
+                          <codigo>1</codigo>
+                        </sexo> 
+                      </pessoaFisicaDetalhamento>
+                      <pessoaFisicaRendimento>
+                        <identificadorRegistroFuncionario>13</identificadorRegistroFuncionario>
+                      </pessoaFisicaRendimento>
+                      <remuneracaoColaborador>
+                        <empregador>
+                          <identificadorReceitaFederal>19041203000154</identificadorReceitaFederal>
+                          <razaoSocialOuNome>ZINK OFICINA E COMERCIO DE PECAS LT</razaoSocialOuNome>
+                        </empregador>
+                      </remuneracaoColaborador>
+                      <beneficio />
+                      <listaPessoasEndereco>
+                        <pessoaEndereco>
+                          <parametroConsignado>
+                            <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+                          </parametroConsignado>
+                          <pessoaContatoEndereco>
+                            <CEP>89270000</CEP>
+                            <cidade>
+                              <descricao>GUARAMIRIM</descricao>
+                            </cidade>
+                            <nomeBairro>ESCOLINHA</nomeBairro>
+                            <numeroLogradouro>1060</numeroLogradouro>
+                            <tipoENomeLogradouro>R LAURO ZIMMERMANN</tipoENomeLogradouro>
+                            <UF>SC</UF>
+                          </pessoaContatoEndereco>
+                        </pessoaEndereco>
+                      </listaPessoasEndereco>
+                      <parcela>
+                        <valor>276.64</valor>
+                      </parcela>
+                      <tarifa>
+                        <valor>0.0</valor>
+                      </tarifa>
+                      <inadimplencia>
+                        <despesasCartorarias>0.0</despesasCartorarias>
+                      </inadimplencia><usuarioDominioCecred>
+                        <codigo></codigo>
+                      </usuarioDominioCecred>
+                      <parametroConsignado> 
+                        <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+                        <indicadorContaPrincipal>true</indicadorContaPrincipal> 
+                        <naturalidade>LAGOA VERMELHA</naturalidade>
+                         <dataCalculoLegado>2022-04-14T00:00:00</dataCalculoLegado>
+                      </parametroConsignado> </Root>';
+
+BEGIN
+  INSERT 
+    INTO tbgen_evento_soa(CDCOOPER
+                         ,NRDCONTA
+                         ,NRCTRPRP
+                         ,TPEVENTO
+                         ,TPRODUTO_EVENTO
+                         ,TPOPERACAO
+                         ,DHOPERACAO
+                         ,DSPROCESSAMENTO
+                         ,DSSTATUS
+                         ,DHEVENTO
+                         ,DSERRO
+                         ,NRTENTATIVAS
+                         ,DSCONTEUDO_REQUISICAO)
+                  VALUES(v_cd_coopr
+                        ,v_nr_conta
+                        ,v_nr_contrato
+                        ,'EFETIVA_PROPOSTA'
+                        ,'CONSIGNADO'
+                        ,'INSERT'
+                        ,SYSDATE
+                        ,NULL
+                        ,NULL
+                        ,NULL
+                        ,NULL
+                        ,NULL
+                        ,v_xml_envio_contrato);
+COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+END;
