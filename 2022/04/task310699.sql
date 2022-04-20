@@ -190,6 +190,28 @@ begin
    where epr.cdcooper = 11
      and epr.nrdconta = 13988492
      and epr.nrctremp = 192396;
+	 
+  update crappep pep
+     set pep.vlparepr = 1030.94,
+         pep.vlsdvpar = 1030.94,
+         pep.vlsdvsji = 1030.94
+   where pep.cdcooper = 14
+     and pep.nrdconta = 195189
+     and pep.nrctremp = 57208;
+     
+  update CRAWEPR w
+     set w.vlpreemp = 1030.94,
+         w.vlpreori = 1030.94
+   where w.cdcooper = 14
+     and w.nrdconta = 195189
+     and w.nrctremp = 57208;
+
+  update crapepr epr
+     set epr.vlpreemp = 1030.94
+   where epr.cdcooper = 14
+     and epr.nrdconta = 195189
+     and epr.nrctremp = 57208;	 
+	 
 
   commit;
 
