@@ -7,7 +7,7 @@ declare
   vr_tab_erro GENE0001.typ_tab_erro;
   vr_cdcooper crapcop.cdcooper%TYPE := 10;
   vr_nrdconta crapass.nrdconta%TYPE := 152978;
-  vr_nrctremp craplem.nrctremp%TYPE := 152978;
+  vr_nrctremp craplem.nrctremp%TYPE := 34887;
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE,
                     pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT ass.cdagenci
