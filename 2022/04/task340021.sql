@@ -44,13 +44,6 @@ DECLARE
   rw_craplcm cr_craplcm%ROWTYPE;
 BEGIN
 
-insert into tbepr_consignado_pagamento ( CDCOOPER, NRDCONTA, NRCTREMP, NRPAREPR, INORGPGT, VLPAREPR, VLPAGPAR, DTVENCTO, INSTATUS, DTINCREG, DTUPDREG, CDAGENCI, CDBCCXLT, CDOPERAD, INCONCILIADO, IDSEQPAGAMENTO, IDINTEGRACAO, DTMVTOLT)
-values ( 10, 78883, 15763, 17, 1, 976.28, 976.28, to_date('10-02-2022', 'dd-mm-yyyy'), 3, to_date('11-02-2022 07:00:35', 'dd-mm-yyyy hh24:mi:ss'), to_date('11-02-2022 07:29:41', 'dd-mm-yyyy hh24:mi:ss'), 2, 0, '1', null, null, null, to_date('11-02-2022', 'dd-mm-yyyy'));
-
-COMMIT;
-
-
-
   FOR rw_craplcm IN cr_craplcm LOOP
     vr_motenvio    := 'REENVIARPAGTO';
     vr_tipo_pagto  := ' <valor>' || TRIM(to_char(rw_craplcm.vlpagpar, '999999990.00')) || '</valor>';
@@ -88,6 +81,7 @@ COMMIT;
   COMMIT;
 
 EXCEPTION
+
   WHEN OTHERS THEN
  raise_application_error(-20500, SQLERRM);
     ROLLBACK;
