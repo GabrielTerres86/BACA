@@ -157,6 +157,38 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   
+  vr_vllanmto := 201.92;
+  vr_cdhistor := 3026;
+  EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
+                                  pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                  pr_cdagenci => rw_crapass.cdagenci,
+                                  pr_cdbccxlt => 100,
+                                  pr_cdoperad => 1,
+                                  pr_cdpactra => rw_crapass.cdagenci,
+                                  pr_tplotmov => 5,
+                                  pr_nrdolote => 600031,
+                                  pr_nrdconta => vr_nrdconta,
+                                  pr_cdhistor => vr_cdhistor,
+                                  pr_nrctremp => vr_nrctremp,
+                                  pr_vllanmto => vr_vllanmto,
+                                  pr_dtpagemp => rw_crapdat.dtmvtolt,
+                                  pr_txjurepr => 0,
+                                  pr_vlpreemp => 0,
+                                  pr_nrsequni => 0,
+                                  pr_nrparepr => case when vr_cdhistor = 1041
+                                                     then 0 
+                                                     else vr_nrparepr
+                                                 end,
+                                  pr_flgincre => FALSE,
+                                  pr_flgcredi => FALSE,
+                                  pr_nrseqava => 0,
+                                  pr_cdorigem => 5,
+                                  pr_cdcritic => vr_cdcritic,
+                                  pr_dscritic => vr_dscritic);
+  IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+    RAISE vr_exc_saida;
+  END IF;
+  
   COMMIT;
 EXCEPTION
   WHEN vr_exc_saida THEN
