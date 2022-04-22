@@ -62,6 +62,9 @@ BEGIN
                                     ,pr_nrdconta => vr_nrdconta
                                     ,pr_nrctremp => vr_nrctremp
                                     ,pr_nrparepr => vr_nrparepr) LOOP
+    IF rw_lancamento.nrparepr = 0 THEN
+       rw_lancamento.nrparepr := NULL;
+    END IF;                                    
     EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                     pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                     pr_cdagenci => rw_crapass.cdagenci,
