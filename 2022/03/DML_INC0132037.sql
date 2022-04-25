@@ -1,4 +1,5 @@
-DECLARE  
+DECLARE 
+ 
   CURSOR cr_crapcop IS
     SELECT c.cdcooper
       FROM crapcop c
