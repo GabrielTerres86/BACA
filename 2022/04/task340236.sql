@@ -14,7 +14,7 @@ DECLARE
       ,b.nrctremp
       ,b.cdcooper
       ,b.nrparepr
-      ,to_date('25/02/2022','dd/mm/yyyy') dtmvtolt
+      ,to_date('01/03/2022','dd/mm/yyyy') dtmvtolt
       ,MIN(b.idsequencia) idsequencia
     FROM tbepr_consignado_pagamento b
       ,(SELECT cdcooper
@@ -24,7 +24,7 @@ DECLARE
         FROM crappep
        WHERE (cdcooper, nrdconta, nrctremp, nrparepr) IN
            ((11, 454788 , 129483 , 11))
-         AND inliquid = 0) pep
+         AND inliquid = 1) pep
    WHERE pep.nrdconta = b.nrdconta
      AND pep.nrctremp = b.nrctremp
      AND pep.cdcooper = b.cdcooper
