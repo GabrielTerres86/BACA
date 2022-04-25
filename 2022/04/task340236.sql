@@ -14,7 +14,7 @@ DECLARE
       ,b.nrctremp
       ,b.cdcooper
       ,b.nrparepr
-      ,to_date('25/02/2022','dd/mm/yyyy') dtmvtolt
+      ,to_date('03/01/2022','dd/mm/yyyy') dtmvtolt
       ,MIN(b.idsequencia) idsequencia
     FROM tbepr_consignado_pagamento b
       ,(SELECT cdcooper
