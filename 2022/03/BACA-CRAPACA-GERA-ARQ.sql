@@ -1,0 +1,16 @@
+BEGIN
+
+  UPDATE CRAPACA A
+     SET NMPROCED = 'credito.gerararquivohomeequityweb'
+        ,NMPACKAG = ''
+   WHERE UPPER(NMDEACAO) = 'GERAR_ARQ'
+     AND UPPER(NMPACKAG) = 'TELA_IMOVEL'
+     AND UPPER(NMPROCED) = 'PC_GERA_ARQUIVO';
+
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE_application_error(-20500, SQLERRM);
+    ROLLBACK;
+  
+END;

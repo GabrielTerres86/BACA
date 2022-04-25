@@ -1,0 +1,5 @@
+BEGIN
+    update CRAPPRM set DSVLRPRM = '1' where CDACESSO = 'SNINTEGRA_CONVENIO_CDC';
+    COMMIT;
+END;
+/
