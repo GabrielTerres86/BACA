@@ -29,5 +29,5 @@ BEGIN
                                     ,'REG CIVIL PJ');
 
   COMMIT;
-
+  
 END;
