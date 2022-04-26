@@ -23,7 +23,7 @@ DECLARE
           ,nrparepr
         FROM crappep
        WHERE (cdcooper, nrdconta, nrctremp, nrparepr) IN
-           ((9 , 500917, 20300019 , 6))
+           ((14, 100862,  45034, 5))
          AND inliquid = 0) pep
    WHERE pep.nrdconta = b.nrdconta
      AND pep.nrctremp = b.nrctremp
