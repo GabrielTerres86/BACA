@@ -3,5 +3,4 @@ BEGIN
      SET a.cdstatus = 'PROCESSANDO'
    WHERE a.idpeac_operacao IN (167, 168, 169);
   COMMIT;
-
 END;
