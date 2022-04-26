@@ -1,5 +1,5 @@
 PL/SQL Developer Test script 3.0
-6777
+6776
 DECLARE
   --
   vr_cdprogra VARCHAR2(100) := 'crps538_compefora_20220425';
@@ -6716,7 +6716,6 @@ BEGIN
                       WHERE 1 = 1
                         AND cop.cdcooper <> 3
                         AND cop.flgativo = 1
-                        AND cop.cdcooper = 14
                         ORDER BY cop.cdcooper DESC) LOOP
     --
     pc_log_programa(pr_dstiplog      => 'O' -- Ocorrência
