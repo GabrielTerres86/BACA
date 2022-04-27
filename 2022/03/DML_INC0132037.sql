@@ -1,7 +1,8 @@
-DECLARE  
+DECLARE 
+ 
   CURSOR cr_crapcop IS
     SELECT c.cdcooper
-      FROM crapcop c
+      FROM cecred.crapcop c
      WHERE c.flgativo = 1
        AND c.cdcooper <> 3; 
        
@@ -14,8 +15,8 @@ DECLARE
           ,r.vldivida
           ,r.DTREFERE
           ,r.CDMODALI
-      FROM crapris r
-          ,crapdat d
+      FROM cecred.crapris r
+          ,cecred.crapdat d
      WHERE r.cdcooper = d.cdcooper
        AND r.cdcooper = pr_cdcooper
        AND r.dtrefere = d.dtmvtoan
