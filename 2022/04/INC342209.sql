@@ -11,6 +11,7 @@ BEGIN
      WHEN OTHERS THEN 
        ROLLBACK;
        RAISE_APPLICATION_ERROR(-20001,'Ocorreu um problema ao atualizar o registro da tabela crapsli.'||SQLERRM);
+	   
   END;     
     
   COMMIT;
