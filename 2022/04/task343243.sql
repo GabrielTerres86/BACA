@@ -28,7 +28,7 @@ v_xml_envio_contrato CLOB := '<?xml version="1.0" encoding="UTF-8"?><Root><conve
                         <tipoLiquidacao>
                           <codigo>4</codigo>
                         </tipoLiquidacao> 
-                        <tributoIOFValor>37.14</tributoIOFValor>
+                        <tributoIOFValor>38.14</tributoIOFValor>
                         <valor>1837.38</valor><valorBase>1800.00</valorBase><dataProposta>2022-04-28T14:59:14</dataProposta>
                         <emitente> 
                           <dataNascOuConstituicao>1971-01-12T00:00:00</dataNascOuConstituicao>
