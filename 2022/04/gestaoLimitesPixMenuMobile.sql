@@ -9,4 +9,5 @@ BEGIN
 	insert into menumobile (MENUMOBILEID, MENUPAIID, NOME, SEQUENCIA, HABILITADO, AUTORIZACAO, VERSAOMINIMAAPP, VERSAOMAXIMAAPP)
 	values (1042, 1021, 'Dúvidas', 1, 1, 1, '2.37.0', null);
 	
+	commit;
 END;

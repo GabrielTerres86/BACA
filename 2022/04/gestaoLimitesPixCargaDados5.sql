@@ -43,4 +43,6 @@ BEGIN
  	INSERT INTO tbgen_notif_automatica_prm (cdorigem_mensagem, cdmotivo_mensagem, dsmotivo_mensagem, cdmensagem, inmensagem_ativa, intipo_repeticao, dsvariaveis_mensagem) VALUES
 	(13, 49, 'PIX - Efetivação de novo horário noturno', codigoMensagem, 1, 0, '<br>#nomeCooperado - Nome do cooperado<br>#horarioInicio - Horário de inicio do periodo noturno. Ex: 21:00<br>#horarioFim - Horário de fim do periodo noturno Ex: 06:00');
 
+	commit;
+
 END;
