@@ -1,0 +1,23 @@
+BEGIN
+ 
+  UPDATE credito.tbepr_contrato_imobiliario a
+  SET  a.conjuge_coresponsavel = 1
+  WHERE a.cdcooper = 16
+  AND a.nrctremp IN (381139, 381106,381134,364929, 364977, 364915, 364913
+,381140
+,414967
+,414986
+,347895
+,364894
+,364951
+,381106
+,364897
+,364900
+,364907
+,364931);
+    
+  COMMIT;
+EXCEPTION WHEN OTHERS THEN
+  ROLLBACK;
+END;
+/

@@ -1,0 +1,21 @@
+DECLARE
+
+  SEQ NUMBER;
+
+BEGIN
+
+  FOR i IN 1 .. 30 LOOP
+  
+    SELECT SEQACA_NRSEQACA.NEXTVAL
+      INTO SEQ
+      FROM dual;
+  
+  END LOOP;
+
+COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE_application_error(-20500, SQLERRM);
+  
+END;

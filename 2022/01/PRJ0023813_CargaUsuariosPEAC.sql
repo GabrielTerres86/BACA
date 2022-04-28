@@ -1,0 +1,87 @@
+BEGIN
+	DELETE CRAPACE WHERE NMDATELA = 'PEAC';
+	
+	COMMIT;
+
+	INSERT INTO CRAPACE(NMDATELA,
+						CDDOPCAO,
+						CDOPERAD,
+						NMROTINA,
+						CDCOOPER,
+						NRMODULO,
+						IDEVENTO,
+						IDAMBACE)
+	SELECT 'PEAC',
+			CDDOPCAO,
+			CDOPERAD,
+			NMROTINA,
+			CDCOOPER,
+			NRMODULO,
+			IDEVENTO,
+			IDAMBACE 
+	FROM CRAPACE
+	WHERE NMDATELA = 'PRONAM'
+	AND CDDOPCAO IN ('@', 'C');
+
+	INSERT INTO CRAPACE(NMDATELA,
+						CDDOPCAO,
+						CDOPERAD,
+						NMROTINA,
+						CDCOOPER,
+						NRMODULO,
+						IDEVENTO,
+						IDAMBACE)
+	SELECT 'PEAC',
+			CDDOPCAO,
+			CDOPERAD,
+			NMROTINA,
+			CDCOOPER,
+			NRMODULO,
+			IDEVENTO,
+			IDAMBACE 
+	FROM CRAPACE
+	WHERE NMDATELA = 'PRONAM'
+	AND CDDOPCAO = 'B'
+	AND CDCOOPER = 3;
+
+	INSERT INTO CRAPACE(NMDATELA,
+						CDDOPCAO,
+						CDOPERAD,
+						NMROTINA,
+						CDCOOPER,
+						NRMODULO,
+						IDEVENTO,
+						IDAMBACE)
+	SELECT 'PEAC',
+			'L',
+			CDOPERAD,
+			NMROTINA,
+			CDCOOPER,
+			NRMODULO,
+			IDEVENTO,
+			IDAMBACE 
+	FROM CRAPACE
+	WHERE NMDATELA = 'PRONAM'
+	AND CDDOPCAO = 'B'
+	AND CDCOOPER = 3;
+
+	COMMIT;	
+	
+	
+
+  INSERT INTO crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  SELECT 'CONSULTA_LIMITES_PEAC'
+		,'TELA_PEAC'
+		,'pc_consultar_limites_web'
+		,''
+		,rdr.nrseqrdr
+	FROM	craprdr rdr
+    WHERE rdr.nmprogra = 'TELA_PEAC';
+
+	COMMIT;
+END;

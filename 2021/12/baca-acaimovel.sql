@@ -8,7 +8,7 @@ BEGIN
                VALUES('GERAR_ARQ'
                      ,'TELA_IMOVEL'
                      ,'pc_gera_arquivo'
-                     ,'pr_cdcooper, pr_dtinclusao, pr_dt_geracao'
+                     ,'pr_cdcooper, pr_dtinclusao, pr_dtgeracao'
                      ,625
                      );
   COMMIT;

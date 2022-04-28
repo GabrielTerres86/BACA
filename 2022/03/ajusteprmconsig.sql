@@ -1,0 +1,11 @@
+begin
+
+UPDATE  crapprm
+SET DSVLRPRM = 0
+WHERE NMSISTEM = 'CRED'
+AND CDCOOPER = 0
+AND CDACESSO =  'BLOQ_DESC_EMPR_CONSIG';
+
+commit;
+
+end;
