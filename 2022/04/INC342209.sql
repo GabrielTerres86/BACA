@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-25
 BEGIN
   
   BEGIN
@@ -13,17 +11,10 @@ BEGIN
      WHEN OTHERS THEN 
        ROLLBACK;
        RAISE_APPLICATION_ERROR(-20001,'Ocorreu um problema ao atualizar o registro da tabela crapsli.'||SQLERRM);
+	   
   END;     
     
   COMMIT;
+  
    
 END;
-
-
-
-
-
-
-
-0
-0
