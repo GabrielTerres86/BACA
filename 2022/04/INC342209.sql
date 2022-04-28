@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-25
 BEGIN
   
   BEGIN
@@ -16,14 +14,6 @@ BEGIN
   END;     
     
   COMMIT;
+  
    
 END;
-
-
-
-
-
-
-
-0
-0
