@@ -1,6 +1,3 @@
--- Inclui risco Melhora conforme enviado por planilha
--- Commit a cada 4 mil linhas
-
 BEGIN
 
 UPDATE crawepr t SET t.dsnivris = 'A' WHERE t.cdcooper = 1 AND t.nrdconta =2224 AND t.nrctremp = 1527677;

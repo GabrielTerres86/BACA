@@ -1,6 +1,3 @@
--- Inclui risco Melhora conforme enviado por planilha
--- Commit a cada 4 mil linhas
-
 BEGIN
 
 UPDATE TBRISCO_OPERACOES t SET t.inrisco_melhora = 2 ,t.dtrisco_melhora = TO_DATE('28/04/2022', 'dd/mm/yyyy'), t.cdcritica_melhora = NULL WHERE t.tpctrato = 90 AND t.cdcooper = 1 AND t.nrdconta = 2224 AND t.nrctremp = 1527677;
