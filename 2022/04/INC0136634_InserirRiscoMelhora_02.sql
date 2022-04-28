@@ -8165,6 +8165,7 @@ UPDATE crawepr t SET t.dsnivris = 'A' WHERE t.cdcooper = 16 AND t.nrdconta =6609
 UPDATE crawepr t SET t.dsnivris = 'A' WHERE t.cdcooper = 16 AND t.nrdconta =6642349 AND t.nrctremp = 78119;
 UPDATE crawepr t SET t.dsnivris = 'A' WHERE t.cdcooper = 16 AND t.nrdconta =6648185 AND t.nrctremp = 137203;
 UPDATE crawepr t SET t.dsnivris = 'A' WHERE t.cdcooper = 16 AND t.nrdconta =6648339 AND t.nrctremp = 381322;
+COMMIT;
 
 EXCEPTION
 WHEN OTHERS THEN
