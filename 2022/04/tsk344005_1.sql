@@ -4,7 +4,7 @@ update craplem
  where cdcooper = 13
    and nrdconta = 10766
    and nrctremp =  91572
-   and dtmvtolt = '25/04/2022' 
+   and dtmvtolt = to_date('25/04/2022' , 'dd/mm/yyyy')
    and cdhistor = 3027;
    
    commit;
