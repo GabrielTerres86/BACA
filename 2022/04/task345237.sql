@@ -31,7 +31,7 @@ conta_13352881_4602620 clob := '<?xml version="1.0"?>
     <tributoIOFValor>839.59</tributoIOFValor>
     <valor>59200.00</valor>
     <valorBase>59200.00</valorBase>
-    <dataProposta>2022-04-20T16:16:16</dataProposta>
+    <dataProposta>2022-04-25T16:16:16</dataProposta>
     <emitente>
       <dataNascOuConstituicao>1984-02-27T00:00:00</dataNascOuConstituicao>
       <identificadorReceitaFederal>4361160902</identificadorReceitaFederal>
