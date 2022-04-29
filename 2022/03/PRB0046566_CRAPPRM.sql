@@ -13,7 +13,7 @@ BEGIN
       INSERT INTO CECRED.CRAPPRM
       (NMSISTEM, CDCOOPER, CDACESSO,DSTEXPRM, DSVLRPRM)
       VALUES
-      ('CRED', vr_cdcooper, 'QTD_MAX_ESPERA_BLQPIX', 'Quantidade maxima de espera do farol da criacao da solicitacao de Bloqueio Pix', 10);
+      ('CRED', vr_cdcooper, 'QTD_MAX_ESPERA_BLQPIX', 'Quantidade maxima de espera do farol da criacao da solicitacao de Bloqueio Pix', 30);
     
       COMMIT;
       
