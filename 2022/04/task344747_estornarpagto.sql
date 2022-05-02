@@ -76,7 +76,8 @@ BEGIN
      and c.nrparepr = 14;
      
    UPDATE crapepr
-       SET crapepr.vlsdevat = crapepr.vlsdevat + vr_vllanmto + vr_vlmtapar + vr_vlmrapar
+       SET crapepr.vlsdevat = crapepr.vlsdevat + vr_vllanmto + vr_vlmtapar + vr_vlmrapar,
+           crapepr.vlsdeved = crapepr.vlsdeved + vr_vllanmto
      WHERE crapepr.cdcooper = vr_cdcooper
        AND crapepr.nrdconta = vr_nrdconta
        AND crapepr.nrctremp = vr_nrctremp;
