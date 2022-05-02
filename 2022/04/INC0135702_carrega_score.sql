@@ -374,7 +374,7 @@ DECLARE
                        WHERE ROWID = vr_tab_score_bulk(vr_idx).rowid;
                     EXCEPTION
                       WHEN OTHERS THEN
-                        vr_dscritic := 'Erro ao remover vigencias de scores antigos --> '
+                        vr_dscritic := 'Erro ao remover vigencias de scores antigos -> '
                                       || '. Detalhes:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
                         vr_tab_score_bulk.DELETE; 
                         CLOSE cr_score_vigente;
@@ -401,7 +401,7 @@ DECLARE
                        WHERE ROWID = vr_tab_score_bulk(vr_idx).rowid;
                     EXCEPTION
                       WHEN OTHERS THEN
-                        vr_dscritic := 'Erro ao  marcar vigencias de scores --> '
+                        vr_dscritic := 'Erro ao  marcar vigencias de scores -> '
                                       || '. Detalhes:'|| SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
                         vr_tab_score_bulk.DELETE; 
                         CLOSE cr_score_dtbase;
@@ -520,7 +520,7 @@ DECLARE
                               ,pr_nmarqlog     => 'SCORE'
                               ,pr_flfinmsg     => 'N'
                               ,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') 
-                                               || ' --> ' || vr_deslog);
+                                               || ' -> ' || vr_deslog);
 
 
     COMMIT;
