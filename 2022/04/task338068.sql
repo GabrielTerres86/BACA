@@ -26,11 +26,11 @@ conta_700347_209166 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><conven
                           <codigo>4</codigo>
                         </tipoLiquidacao> 
                         <tributoIOFValor>310.13</tributoIOFValor>
-                        <valor>10310.13</valor><valorBase>10000.00</valorBase><dataProposta>2022-04-25T17:11:28</dataProposta>
+                        <valor>10310.13</valor><valorBase>10000.00</valorBase><dataProposta>2022-05-05T17:11:28</dataProposta>
                         <emitente> 
                           <dataNascOuConstituicao>2000-09-01T00:00:00</dataNascOuConstituicao>
                           <identificadorReceitaFederal>70943683483</identificadorReceitaFederal>
-                          <razaoSocialOuNome>BRUNA BEATRIZ DA SILVA NUNES</razaoSocialOuNome>
+                          <razaoSocialOuNome>BRUNA BEATRIZ DA SILVA NUNES</razaoSocialOuNome>
                           <nacionalidade>
                             <codigo>42</codigo>
                           </nacionalidade>
