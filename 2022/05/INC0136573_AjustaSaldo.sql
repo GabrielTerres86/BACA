@@ -46,25 +46,25 @@ DECLARE
   
     vr_nrdrowid := null;
     
-    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
-                         pr_cdoperad => gr_cdoperad,
-                         pr_dscritic => pr_dscritic,
-                         pr_dsorigem => 'AIMARO',
-                         pr_dstransa => vc_dstransaSensbCRAPSLD,
-                         pr_dttransa => gr_dttransa,
-                         pr_flgtrans => 1,
-                         pr_hrtransa => gr_hrtransa,
-                         pr_idseqttl => 0,
-                         pr_nmdatela => NULL,
-                         pr_nrdconta => pr_nrdconta,
-                         pr_nrdrowid => vr_nrdrowid);
+    CECRED.GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                                pr_cdoperad => gr_cdoperad,
+                                pr_dscritic => pr_dscritic,
+                                pr_dsorigem => 'AIMARO',
+                                pr_dstransa => vc_dstransaSensbCRAPSLD,
+                                pr_dttransa => gr_dttransa,
+                                pr_flgtrans => 1,
+                                pr_hrtransa => gr_hrtransa,
+                                pr_idseqttl => 0,
+                                pr_nmdatela => NULL,
+                                pr_nrdconta => pr_nrdconta,
+                                pr_nrdrowid => vr_nrdrowid);
                          
     IF pr_dscritic is NULL THEN
-      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
-                                pr_nmdcampo => 'crapsld.VLSDDISP',
-                                pr_dsdadant => pr_vlsddisp,
-                                pr_dsdadatu => pr_vlsddisp + pr_valor);
-      UPDATE crapsld a
+      CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                       pr_nmdcampo => 'crapsld.VLSDDISP',
+                                       pr_dsdadant => pr_vlsddisp,
+                                       pr_dsdadatu => pr_vlsddisp + pr_valor);
+      UPDATE CECRED.crapsld a
          SET a.VLSDDISP = a.vlsddisp + pr_valor
        WHERE a.nrdconta = pr_nrdconta
          AND a.cdcooper = pr_cdcooper;
@@ -84,31 +84,31 @@ DECLARE
   
     vr_nrdrowid := null;
     
-    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
-                         pr_cdoperad => gr_cdoperad,
-                         pr_dscritic => pr_dscritic,
-                         pr_dsorigem => 'AIMARO',
-                         pr_dstransa => vc_dstransaSensbCRAPSDA,
-                         pr_dttransa => gr_dttransa,
-                         pr_flgtrans => 1,
-                         pr_hrtransa => gr_hrtransa,
-                         pr_idseqttl => 0,
-                         pr_nmdatela => NULL,
-                         pr_nrdconta => pr_nrdconta,
-                         pr_nrdrowid => vr_nrdrowid);
+    CECRED.GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                                pr_cdoperad => gr_cdoperad,
+                                pr_dscritic => pr_dscritic,
+                                pr_dsorigem => 'AIMARO',
+                                pr_dstransa => vc_dstransaSensbCRAPSDA,
+                                pr_dttransa => gr_dttransa,
+                                pr_flgtrans => 1,
+                                pr_hrtransa => gr_hrtransa,
+                                pr_idseqttl => 0,
+                                pr_nmdatela => NULL,
+                                pr_nrdconta => pr_nrdconta,
+                                pr_nrdrowid => vr_nrdrowid);
                          
     IF pr_dscritic is NULL THEN
-      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+      CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'crapsda.DTMVTOLT',
                                 pr_dsdadant => pr_dtmvtolt,
                                 pr_dsdadatu => pr_dtmvtolt);
       
-      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+      CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                 pr_nmdcampo => 'crapsda.VLSDDISP',
                                 pr_dsdadant => pr_vlsddisp,
                                 pr_dsdadatu => pr_vlsddisp + pr_valor);
 
-        UPDATE crapsda a
+        UPDATE CECRED.crapsda a
            SET a.VLSDDISP = a.vlsddisp + pr_valor
          WHERE a.nrdconta = pr_nrdconta
            AND a.cdcooper = pr_cdcooper
