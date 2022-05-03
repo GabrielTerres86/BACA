@@ -18,7 +18,7 @@ declare
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                    ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT ass.cdagenci
-      FROM crapass ass
+      FROM cecred.crapass ass
      WHERE ass.cdcooper = pr_cdcooper
        AND ass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%ROWTYPE;
@@ -33,7 +33,7 @@ BEGIN
   FETCH cr_crapass INTO rw_crapass;
   CLOSE cr_crapass;
 
-  EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper
+  cecred.EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                  ,pr_cdagenci => rw_crapass.cdagenci
                                  ,pr_cdbccxlt => 100
@@ -61,7 +61,7 @@ BEGIN
     RAISE vr_exc_saida;
   END IF;
   
-  UPDATE crappep c
+  UPDATE cecred.crappep c
      SET vlparepr = vr_vllanmto,
          vlsdvatu = vr_vllanmto,
          vlsdvpar = vr_vllanmto,
@@ -75,7 +75,7 @@ BEGIN
      AND c.nrctremp = vr_nrctremp
      and c.nrparepr = 14;
      
-   UPDATE crapepr
+   UPDATE cecred.crapepr
        SET crapepr.vlsdevat = crapepr.vlsdevat + vr_vllanmto + vr_vlmtapar + vr_vlmrapar,
            crapepr.vlsdeved = crapepr.vlsdeved + vr_vllanmto
      WHERE crapepr.cdcooper = vr_cdcooper
