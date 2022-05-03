@@ -26,7 +26,7 @@ conta_893870_430933 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><conven
                           <codigo>4</codigo>
                         </tipoLiquidacao> 
                         <tributoIOFValor>2.32</tributoIOFValor>
-                        <valor>13800.00</valor><valorBase>13800.00</valorBase><dataProposta>2022-04-26T15:25:36</dataProposta>
+                        <valor>13802.32</valor><valorBase>13800.00</valorBase><dataProposta>2022-04-26T15:25:36</dataProposta>
                         <emitente> 
                           <dataNascOuConstituicao>1983-02-01T00:00:00</dataNascOuConstituicao>
                           <identificadorReceitaFederal>3781147940</identificadorReceitaFederal>
@@ -122,7 +122,7 @@ conta_893870_430933 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><conven
                       </tarifa>
                       <inadimplencia>
                         <despesasCartorarias>0.0</despesasCartorarias>
-                      </inadimplencia><posicao><produtoCategoria> <codigo>32</codigo></produtoCategoria><saldo>9202.24</saldo></posicao><usuarioDominioCecred>
+                      </inadimplencia><posicao><produtoCategoria> <codigo>32</codigo></produtoCategoria><saldo>13721.40</saldo></posicao><usuarioDominioCecred>
                         <codigo></codigo>
                       </usuarioDominioCecred>
                       <parametroConsignado> 
