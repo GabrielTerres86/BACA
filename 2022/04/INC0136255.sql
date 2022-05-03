@@ -10,7 +10,7 @@ DECLARE
 
   CURSOR cr_crapass is
     SELECT t.flgctitg, t.cdcooper, t.nrdconta, 2 newsit
-      FROM CRAPASS t
+      FROM CECRED.CRAPASS t
      WHERE 1=1
        and cdcooper = 11
        and nrdconta in (337
@@ -134,7 +134,7 @@ BEGIN
       continue;
     END IF;
     
-    GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+    CECRED.GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
                          pr_cdoperad => vr_cdoperad,
                          pr_dscritic => vr_dscritic,
                          pr_dsorigem => 'AIMARO',
@@ -147,12 +147,12 @@ BEGIN
                          pr_nrdconta => vr_nrdconta,
                          pr_nrdrowid => vr_nrdrowid);
   
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'crapass.flgctitg',
                               pr_dsdadant => rg_crapass.flgctitg,
                               pr_dsdadatu => rg_crapass.newsit);
   
-    update crapass a
+    update CECRED.crapass a
        set a.flgctitg = rg_crapass.newsit
      where a.cdcooper = vr_cdcooper
        and a.nrdconta = vr_nrdconta;
