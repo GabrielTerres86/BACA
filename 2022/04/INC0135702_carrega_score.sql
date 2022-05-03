@@ -9,8 +9,8 @@ DECLARE
     SELECT ope.nmoperad
           ,age.nmcidade
           ,age.cdufdcop
-      FROM crapope ope
-          ,crapage age
+      FROM cecred.crapope ope
+          ,cecred.crapage age
      WHERE ope.cdcooper = age.cdcooper
        AND ope.cdagenci = age.cdagenci
        AND ope.cdcooper = pr_cdcooper
@@ -57,13 +57,13 @@ DECLARE
 
     CURSOR cr_crapcop IS
       SELECT cop.cdcooper
-        FROM crapcop cop
+        FROM cecred.crapcop cop
        WHERE cop.flgativo = 1;
         
     
     CURSOR cr_Ult_carga IS
       SELECT car.dtbase
-        FROM tbcrd_carga_score car
+        FROM cecred.tbcrd_carga_score car
        WHERE car.cdmodelo = pr_cdmodelo
          AND car.cdopcao = 'A'
        ORDER BY car.dtbase DESC;
@@ -72,7 +72,7 @@ DECLARE
     CURSOR cr_score_vigente(pr_cdmodelo NUMBER,
                             pr_cdcooper NUMBER) IS
       SELECT ROWID
-        FROM tbcrd_score
+        FROM cecred.tbcrd_score
        WHERE cdmodelo = pr_cdmodelo
          AND cdcooper = pr_cdcooper
          AND flvigente = 1;
@@ -81,7 +81,7 @@ DECLARE
                             pr_cdcooper NUMBER,
                             pr_dtbase   DATE) IS
       SELECT ROWID
-        FROM tbcrd_score
+        FROM cecred.tbcrd_score
        WHERE cdmodelo = pr_cdmodelo
          AND cdcooper = pr_cdcooper
          AND dtbase   = pr_dtbase
@@ -248,7 +248,7 @@ DECLARE
           
           IF vr_rowidcarga IS NULL THEN
             BEGIN
-              INSERT INTO tbcrd_carga_score(cdmodelo
+              INSERT INTO cecred.tbcrd_carga_score(cdmodelo
                                            ,dtbase
                                            ,dsmodelo 
                                            ,dtinicio 
@@ -279,7 +279,7 @@ DECLARE
           IF pr_cddopcao = 'A' THEN
           
             BEGIN          
-              vr_sql_cursor_int := 'INSERT INTO tbcrd_score(cdmodelo '
+              vr_sql_cursor_int := 'INSERT INTO cecred.tbcrd_score(cdmodelo '
                             || '                       ,dtbase '
                             || '                       ,tppessoa '
                             || '                       ,cdcooper '
@@ -322,7 +322,7 @@ DECLARE
 
             
             BEGIN
-              vr_sql_cursor_int := 'INSERT INTO tbcrd_score_exclusao '
+              vr_sql_cursor_int := 'INSERT INTO cecred.tbcrd_score_exclusao '
                             || '                       (cdmodelo '
                             || '                       ,dtbase '
                             || '                       ,tppessoa '
@@ -369,7 +369,7 @@ DECLARE
                 IF vr_tab_score_bulk.count > 0 THEN  
                   BEGIN
                     FORALL vr_idx IN 1..vr_tab_score_bulk.count SAVE EXCEPTIONS
-                      UPDATE tbcrd_score
+                      UPDATE cecred.tbcrd_score
                          SET flvigente = 0
                        WHERE ROWID = vr_tab_score_bulk(vr_idx).rowid;
                     EXCEPTION
@@ -396,7 +396,7 @@ DECLARE
                 IF vr_tab_score_bulk.count > 0 THEN  
                   BEGIN
                     FORALL vr_idx IN 1..vr_tab_score_bulk.count SAVE EXCEPTIONS
-                      UPDATE tbcrd_score
+                      UPDATE cecred.tbcrd_score
                          SET flvigente = 1
                        WHERE ROWID = vr_tab_score_bulk(vr_idx).rowid;
                     EXCEPTION
@@ -472,7 +472,7 @@ DECLARE
 
           
           BEGIN
-            UPDATE tbcrd_carga_score car
+            UPDATE cecred.tbcrd_carga_score car
                SET car.dttermino = vr_dtfinali
                   ,car.qtregis_fisica = car.qtregis_fisica + vr_qtregis_fisica
                   ,car.qtregis_juridi = car.qtregis_juridi + vr_qtregis_juridi
@@ -571,6 +571,8 @@ begin
   
   IF vr_dscritic IS NOT NULL THEN
     raise_application_error(-20500,vr_dscritic);  
-  END IF;                                       
+  END IF; 
+  
+  COMMIT;                                      
    
 END;
