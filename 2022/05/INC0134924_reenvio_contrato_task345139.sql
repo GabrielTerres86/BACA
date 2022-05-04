@@ -26,7 +26,7 @@ declare
                           <codigo>4</codigo>
                         </tipoLiquidacao> 
                         <tributoIOFValor>0.00</tributoIOFValor>
-                        <valor>1597.49</valor><valorBase>1597.49</valorBase><dataProposta>2022-05-03T19:31:21</dataProposta>
+                        <valor>1597.49</valor><valorBase>1597.49</valorBase><dataProposta>2022-05-05T19:31:21</dataProposta>
                         <emitente> 
                           <dataNascOuConstituicao>1975-02-19T00:00:00</dataNascOuConstituicao>
                           <identificadorReceitaFederal>17638634845</identificadorReceitaFederal>
@@ -159,7 +159,7 @@ declare
                           <codigo>4</codigo>
                         </tipoLiquidacao> 
                         <tributoIOFValor>0.00</tributoIOFValor>
-                        <valor>1225.86</valor><valorBase>1225.86</valorBase><dataProposta>2022-05-03T19:31:31</dataProposta>
+                        <valor>1225.86</valor><valorBase>1225.86</valorBase><dataProposta>2022-05-05T19:31:31</dataProposta>
                         <emitente> 
                           <dataNascOuConstituicao>1998-04-27T00:00:00</dataNascOuConstituicao>
                           <identificadorReceitaFederal>12775394647</identificadorReceitaFederal>
