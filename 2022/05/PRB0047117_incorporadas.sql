@@ -71,7 +71,7 @@ BEGIN
   END IF;
   
   FOR rw_contas IN cr_contas LOOP
-    
+     gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'entrou no for');
        vr_bkp_dep_vista_1 := '';
        begin
          UPDATE cecred.CRAPASS
@@ -79,6 +79,8 @@ BEGIN
           WHERE CDCOOPER = rw_contas.COOP_DESTINO
             AND NRDCONTA = rw_contas.CTA_DESTINO;
             
+             gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'atualizou');
+             
             commit;
         exception
           when others then
