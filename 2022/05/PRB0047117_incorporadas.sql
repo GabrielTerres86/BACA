@@ -103,10 +103,11 @@ BEGIN
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv);       
   
   EXCEPTION 
-     WHEN vr_excsaida then
+     WHEN others then
           ROLLBACK;
-          raise_application_error( -20001,vr_dscritic);         
-          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv);  
+          raise_application_error( -20001,vr_dscritic);     
+          gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'Erro: ' || sqlerrm);		  
+          gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv);  	  
   
                            
 end;
