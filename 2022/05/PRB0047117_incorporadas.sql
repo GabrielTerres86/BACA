@@ -1,7 +1,7 @@
 declare 
   vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
   vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'cpd/bacas/PRB0047117';
-  vr_nmarqimp        VARCHAR2(100)  := 'rollback_PRB0047117_incorporadas.sql';
+  vr_nmarqimp        VARCHAR2(100)  := 'rollback_PRB0047117_incorp.sql';
   vr_ind_arquiv      utl_file.file_type;
   vr_excsaida        EXCEPTION;
   vr_dscritic        varchar2(5000) := ' ';
@@ -69,7 +69,7 @@ BEGIN
   IF vr_dscritic IS NOT NULL THEN        
      RAISE vr_excsaida;
   END IF;
-  
+   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'antes do for');
   FOR rw_contas IN cr_contas LOOP
      gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'entrou no for');
        vr_bkp_dep_vista_1 := '';
