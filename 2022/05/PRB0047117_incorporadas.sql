@@ -73,13 +73,18 @@ BEGIN
   FOR rw_contas IN cr_contas LOOP
     
        vr_bkp_dep_vista_1 := '';
-       
-       UPDATE cecred.CRAPASS
-          SET DTADMISS = rw_contas.ADMISSAO_ORIG
-        WHERE CDCOOPER = rw_contas.COOP_DESTINO
-          AND NRDCONTA = rw_contas.CTA_DESTINO;
+       begin
+         UPDATE cecred.CRAPASS
+            SET DTADMISS = rw_contas.ADMISSAO_ORIG
+          WHERE CDCOOPER = rw_contas.COOP_DESTINO
+            AND NRDCONTA = rw_contas.CTA_DESTINO;
+            
+            commit;
+        exception
+          when others then
+             gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'Erro: ' || sqlerrm);
           
-          commit;
+        end;
              
         vr_bkp_dep_vista_1 := 'UPDATE cecred.CRAPASS SET DTADMISS = TO_DATE( ''' || RW_CONTAS.ADMISSAO_DEST || ''',''DD/MM/YYYY'') WHERE CDCOOPER = ' || RW_CONTAS.COOP_DESTINO || ' AND NRDCONTA = ' || RW_CONTAS.CTA_DESTINO ||';';                         
      
