@@ -30,7 +30,7 @@ conta_3761240_4898751 clob := '<?xml version="1.0" encoding="WINDOWS-1252"?>
                                   <tributoIOFValor>804.46</tributoIOFValor>
                                   <valor>31990.46</valor>
                                   <valorBase>31186.00</valorBase>
-                                  <dataProposta>2021-12-14T16:32:01</dataProposta>
+                                  <dataProposta>2022-05-05T16:32:01</dataProposta>
                                   <emitente>
                                     <dataNascOuConstituicao>1988-08-04T00:00:00</dataNascOuConstituicao>
                                     <identificadorReceitaFederal>6666295951</identificadorReceitaFederal>
