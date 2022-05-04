@@ -42,7 +42,7 @@ declare
 			   , ( select r.cdcooper, r.nrdconta, r.nrctremp, r.dtinictr, a.dtadmiss
 					from CECRED.crapass a
                        , CECRED.crapris r
-					where r.dtrefere = '31/03/2022'
+					where r.dtrefere = to_date('31/03/2022', 'DD/MM/YYYY')
 					and r.cdcooper = a.cdcooper
 					and r.nrdconta = a.nrdconta
 					and r.dtinictr < a.dtadmiss ) OPER    
@@ -69,17 +69,15 @@ BEGIN
   IF vr_dscritic IS NOT NULL THEN        
      RAISE vr_excsaida;
   END IF;
-   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'antes do for');
+
   FOR rw_contas IN cr_contas LOOP
-     gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'entrou no for');
+   
        vr_bkp_dep_vista_1 := '';
        begin
          UPDATE CECRED.CRAPASS
             SET DTADMISS = rw_contas.ADMISSAO_ORIG
           WHERE CDCOOPER = rw_contas.COOP_DESTINO
             AND NRDCONTA = rw_contas.CTA_DESTINO;
-            
-             gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'atualizou');
              
             commit;
         exception
@@ -104,8 +102,7 @@ BEGIN
   
   EXCEPTION 
      WHEN others then
-  
-          
+
           gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'Erro: ' || sqlerrm);		  
           gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv);  	  
   
