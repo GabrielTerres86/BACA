@@ -36,12 +36,12 @@ declare
 			   , DEST.DTABTCCT AS ABERTURA_CTA_DEST
 			 , ORIG.DTMVTOLT AS DTMVTOLT_CTA_ORIG
 			 , DEST.DTMVTOLT AS DTMVTOLT_CTA_DEST
-			FROM cecred.CRAPASS ORIG
-			   , cecred.CRAPASS DEST
-			   , cecred.CRAPTCO TCO
+			FROM CRAPASS ORIG
+			   , CRAPASS DEST
+			   , CRAPTCO TCO
 			   , ( select r.cdcooper, r.nrdconta, r.nrctremp, r.dtinictr, a.dtadmiss, a.nrcpfcnpj_base
-					from cecred.crapass a
-            , cecred.crapris r
+					from crapass a
+            , crapris r
 					where r.dtrefere = '31/03/2022'
 					and r.cdcooper = a.cdcooper
 					and r.nrdconta = a.nrdconta
@@ -74,7 +74,7 @@ BEGIN
      gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'entrou no for');
        vr_bkp_dep_vista_1 := '';
        begin
-         UPDATE cecred.CRAPASS
+         UPDATE CRAPASS
             SET DTADMISS = rw_contas.ADMISSAO_ORIG
           WHERE CDCOOPER = rw_contas.COOP_DESTINO
             AND NRDCONTA = rw_contas.CTA_DESTINO;
@@ -88,7 +88,7 @@ BEGIN
           
         end;
              
-        vr_bkp_dep_vista_1 := 'UPDATE cecred.CRAPASS SET DTADMISS = TO_DATE( ''' || RW_CONTAS.ADMISSAO_DEST || ''',''DD/MM/YYYY'') WHERE CDCOOPER = ' || RW_CONTAS.COOP_DESTINO || ' AND NRDCONTA = ' || RW_CONTAS.CTA_DESTINO ||';';                         
+        vr_bkp_dep_vista_1 := 'UPDATE CRAPASS SET DTADMISS = TO_DATE( ''' || RW_CONTAS.ADMISSAO_DEST || ''',''DD/MM/YYYY'') WHERE CDCOOPER = ' || RW_CONTAS.COOP_DESTINO || ' AND NRDCONTA = ' || RW_CONTAS.CTA_DESTINO ||';';                         
      
      IF vr_bkp_dep_vista_1 IS NOT NULL THEN 
           gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, vr_bkp_dep_vista_1); 
