@@ -82,7 +82,7 @@ BEGIN
           commit;
              
         vr_bkp_dep_vista_1 := 'UPDATE cecred.CRAPASS SET DTADMISS = TO_DATE( ''' || RW_CONTAS.ADMISSAO_DEST || ''',''DD/MM/YYYY'') WHERE CDCOOPER = ' || RW_CONTAS.COOP_DESTINO || ' AND NRDCONTA = ' || RW_CONTAS.CTA_DESTINO ||';';                         
-     commit;
+     
      IF vr_bkp_dep_vista_1 IS NOT NULL THEN 
           gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, vr_bkp_dep_vista_1); 
      END IF;
