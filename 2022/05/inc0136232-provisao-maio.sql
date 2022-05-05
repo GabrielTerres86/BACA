@@ -154,7 +154,7 @@ PROCEDURE pc_credita_aniversario_lctos(pr_cdcooper IN craprac.cdcooper%TYPE
 
       IF pr_vllanmto <> 0 THEN
         BEGIN
-          INSERT INTO craplac(cdcooper
+          INSERT INTO cecred.craplac(cdcooper
                              ,dtmvtolt
                              ,cdagenci
                              ,cdbccxlt
@@ -200,7 +200,7 @@ PROCEDURE pc_credita_aniversario_lctos(pr_cdcooper IN craprac.cdcooper%TYPE
 
 
       BEGIN
-        UPDATE craprac SET vlsldatl = vlsldatl + vr_vllanmto
+        UPDATE cecred.craprac SET vlsldatl = vlsldatl + vr_vllanmto
                           ,dtatlsld = pr_dtmvtolt
 
                           ,vlsldant = vr_vlsldant
@@ -292,7 +292,7 @@ BEGIN
      vr_vlbascal := rw_craprac.vlaplica;
      
      BEGIN
-        UPDATE craprac SET dtinical = to_date(EXTRACT(DAY FROM rw_craprac.dtmvtolt) || '/04/2022','dd/mm/yyyy')
+        UPDATE cecred.craprac SET dtinical = to_date(EXTRACT(DAY FROM rw_craprac.dtmvtolt) || '/04/2022','dd/mm/yyyy')
                      WHERE craprac.rowid = rw_craprac.rowid;
       EXCEPTION
         WHEN OTHERS THEN
@@ -383,7 +383,7 @@ BEGIN
       END IF;
       
       BEGIN
-        UPDATE craprac SET dtinical = add_months(rw_craprac.dtaniver,-1)
+        UPDATE cecred.craprac SET dtinical = add_months(rw_craprac.dtaniver,-1)
                      WHERE craprac.rowid = rw_craprac.rowid;
       EXCEPTION
         WHEN OTHERS THEN
