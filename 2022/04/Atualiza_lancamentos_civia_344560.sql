@@ -1,4 +1,6 @@
 declare
+  vr_log_dstransa varchar2(1000);
+  vr_nrdrowid     ROWID;
   vr_cdcritic crapcri.cdcritic%TYPE;
   vr_dscritic VARCHAR2(10000);
   vr_exc_saida EXCEPTION;
@@ -69,9 +71,36 @@ BEGIN
                                       ,pr_nrdconta => rw_contas.nrdconta
                                       ,pr_nrctremp => rw_contas.nrctremp
                                       ,pr_nrparepr => rw_contas.nrparepr) LOOP
+      
       IF rw_lancamento.nrparepr = 0 THEN
          rw_lancamento.nrparepr := NULL;
-      END IF;                                    
+      END IF;
+      
+      IF rw_lancamento.cdhistor IS NULL THEN    
+        vr_log_dstransa := 'dtmvtolt = ' || rw_crapdat.dtmvtolt || ', ' || 'cdcooper = ' ||
+                           vr_cdcooper || ', ' || 'nrdconta = ' ||
+                           rw_contas.nrdconta || ', ' || 'nrctremp = ' ||
+                           rw_contas.nrctremp || ', ' || 'nrparepr = ' ||
+                           rw_lancamento.nrparepr || ', ' || 'cdhistor = ' ||
+                           rw_lancamento.cdhistor || ', ' || 'vllanmto = ' ||
+                           rw_lancamento.vllanmto;
+      
+        GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                             pr_cdoperad => '1',
+                             pr_dscritic => 'Não foi possível determinar o código do histórico para realizar o lançamento.',
+                             pr_dsorigem => 'PL/SQL SCRIPT',
+                             pr_dstransa => vr_log_dstransa,
+                             pr_dttransa => TRUNC(SYSDATE),
+                             pr_flgtrans => 0,
+                             pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
+                             pr_idseqttl => 1,
+                             pr_nmdatela => NULL,
+                             pr_nrdconta => rw_contas.nrdconta,
+                             pr_nrdrowid => vr_nrdrowid);
+      
+        CONTINUE;      
+      END IF;     
+                                       
       EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                       pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                       pr_cdagenci => rw_crapass.cdagenci,
