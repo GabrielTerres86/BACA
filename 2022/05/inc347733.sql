@@ -1,6 +1,6 @@
 BEGIN
   
-  UPDATE crapsli 
+  UPDATE cecred.crapsli 
      SET dtrefere = to_date('31/05/2022','dd/mm/yyyy') 
    WHERE nrdconta = 191051 
      AND cdcooper = 9
