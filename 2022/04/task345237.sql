@@ -143,7 +143,7 @@ conta_13352881_4602620 clob := '<?xml version="1.0"?>
 
 begin
 
-  insert into tbgen_evento_soa
+  insert into cecred.tbgen_evento_soa
     (CDCOOPER,
      NRDCONTA,
      NRCTRPRP,
