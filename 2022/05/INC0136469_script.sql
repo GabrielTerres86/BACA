@@ -254,7 +254,6 @@ BEGIN
       UPDATE crapcob cob
       SET cob.idopeleg = vr_idopelegnovo
       WHERE ROWID = rw_crapcob.rowidcob;
-      DBMS_OUTPUT.put_line('Sucesso - '||rw_npc_reproc.idtitleg||'  / '||vr_idopelegnovo);
       
     EXCEPTION
       WHEN Others THEN
@@ -263,8 +262,6 @@ BEGIN
         vr_dscritic := 'Erro ao inserir na tabela TBCOBRAN_REMESSA_NPC. ' ||
                        sqlerrm;
                        
-        DBMS_OUTPUT.put_line(vr_dscritic);                       
-
         BEGIN
           NPCB0001.pc_gera_log_npc( pr_cdcooper => rw_npc_reproc.cdcooper,
                                     pr_nmrotina => 'Baca - Insere TBCOBRAN_REMESSA_NPC',
