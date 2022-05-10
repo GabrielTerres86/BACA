@@ -15,7 +15,7 @@ declare
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE,
                     pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT ass.cdagenci
-      FROM crapass ass
+      FROM cecred.crapass ass
      WHERE ass.cdcooper = pr_cdcooper
        AND ass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%ROWTYPE;
@@ -27,7 +27,7 @@ declare
     SELECT SUM(VLLANMTO) VLLANMTO,
            DECODE(CDHISTOR,1037,1041,1044,1705,1047,1708,1077,1711,CDHISTOR) CDHISTOR,
            NRPAREPR 
-      FROM CRAPLEM
+      FROM CECRED.CRAPLEM
      WHERE CDCOOPER = PR_CDCOOPER
        AND NRDCONTA = PR_NRDCONTA
        AND NRCTREMP = PR_NRCTREMP
@@ -39,15 +39,15 @@ declare
     UNION ALL
     SELECT PEP.VLPAREPR AS VLLANMTO,
            (SELECT DECODE(INDAUTREPASSECC, 1, 3026, 3027)
-              FROM TBCADAST_EMPRESA_CONSIG
+              FROM CECRED.TBCADAST_EMPRESA_CONSIG
              WHERE CDCOOPER = PR_CDCOOPER
                AND CDEMPRES = (SELECT CDEMPRES
-                                 FROM CRAPEPR
+                                 FROM CECRED.CRAPEPR
                                 WHERE CDCOOPER = PR_CDCOOPER
                                   AND NRDCONTA = PR_NRDCONTA
                                   AND NRCTREMP = PR_NRCTREMP)) CDHISTOR,
            PEP.NRPAREPR                                  
-      FROM CRAPPEP PEP
+      FROM CECRED.CRAPPEP PEP
      WHERE CDCOOPER = PR_CDCOOPER
        AND NRDCONTA = PR_NRDCONTA
        AND NRCTREMP = PR_NRCTREMP
@@ -82,7 +82,7 @@ BEGIN
                          rw_lancamento.cdhistor || ', ' || 'vllanmto = ' ||
                          rw_lancamento.vllanmto;
       
-      GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+      CECRED.GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
                            pr_cdoperad => '1',
                            pr_dscritic => 'Não foi possível determinar o código do histórico para realizar o lançamento.',
                            pr_dsorigem => 'PL/SQL SCRIPT',
@@ -98,7 +98,7 @@ BEGIN
       CONTINUE;      
     END IF;     
                                        
-    EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
+    CECRED.EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                     pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                     pr_cdagenci => rw_crapass.cdagenci,
                                     pr_cdbccxlt => 100,
