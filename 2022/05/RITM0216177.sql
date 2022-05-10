@@ -10,7 +10,8 @@ UPDATE CECRED.crapprm
    SET DSVLRPRM = 't0033471@ailos.coop.br'
  WHERE nmsistem = 'CRED'
    AND cdcooper = 0
-   AND cdacesso = 'MONIT_EMAIL_FRAUDE_INT';
+   AND cdacesso = 'EMAIL_RISCOFRAUDE_ADM';
+
 COMMIT;
 END;
 /
