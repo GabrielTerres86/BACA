@@ -2,7 +2,7 @@ DECLARE
   
   CURSOR cr_crapcob (pr_idtitleg IN crapcob.idtitleg%type) IS
     SELECT  cob.rowid rowidcob
-      FROM crapcob cob
+      FROM cecred.crapcob cob
      WHERE cob.idtitleg = pr_idtitleg;
   rw_crapcob cr_crapcob%ROWTYPE;   
 
@@ -16,7 +16,7 @@ BEGIN
 
   FOR rw_npc_reproc IN (
  SELECT trn.*
-    FROM tbcobran_remessa_npc trn
+    FROM cecred.tbcobran_remessa_npc trn
     WHERE (trn.idtitleg, trn.idopeleg) IN
      ((46220130, 134518994),
 (61448886,  134485874),
@@ -251,7 +251,7 @@ BEGIN
       FETCH cr_crapcob INTO rw_crapcob;
       CLOSE cr_crapcob;
 
-      UPDATE crapcob cob
+      UPDATE cecred.crapcob cob
       SET cob.idopeleg = vr_idopelegnovo
       WHERE ROWID = rw_crapcob.rowidcob;
       
