@@ -147,7 +147,7 @@ declare
 
 begin
 
-  insert into tbgen_evento_soa
+  insert into cecred.tbgen_evento_soa
     (CDCOOPER,
      NRDCONTA,
      NRCTRPRP,
