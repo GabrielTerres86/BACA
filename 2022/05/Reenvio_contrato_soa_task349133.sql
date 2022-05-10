@@ -141,7 +141,7 @@ v_xml_envio_contrato := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCr
 
 
 INSERT 
-  INTO tbgen_evento_soa(CDCOOPER
+  INTO cecred.tbgen_evento_soa(CDCOOPER
                        ,NRDCONTA
                        ,NRCTRPRP
                        ,TPEVENTO
@@ -304,7 +304,7 @@ v_xml_envio_contrato := '<?xml version="1.0" encoding="UTF-8"?><Root><convenioCr
 
 
 INSERT 
-  INTO tbgen_evento_soa(CDCOOPER
+  INTO cecred.tbgen_evento_soa(CDCOOPER
                        ,NRDCONTA
                        ,NRCTRPRP
                        ,TPEVENTO
