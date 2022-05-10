@@ -131,7 +131,7 @@ conta_493341_193908 clob := '<?xml version="1.0" encoding="UTF-8"?><Root><conven
                          <dataCalculoLegado>2022-05-09T00:00:00</dataCalculoLegado>
                       </parametroConsignado> </Root>';
 begin
-  insert into tbgen_evento_soa
+  insert into cecred.tbgen_evento_soa
     (CDCOOPER,
      NRDCONTA,
      NRCTRPRP,
@@ -160,7 +160,7 @@ begin
      null,
      conta_493341_193908);
      
-     update crappep pep
+     update cecred.crappep pep
      set pep.vlparepr = 1218.02,
          pep.vlsdvpar = 1218.02,
          pep.vlsdvsji = 1218.02
@@ -168,7 +168,7 @@ begin
      and pep.nrdconta = 493341
      and pep.nrctremp = 193908;
      
-     update CRAWEPR w
+     update cecred.CRAWEPR w
      set w.vlpreemp = 1218.02,
          w.vlpreori = 1218.02,
          w.txminima = 1.58,
@@ -179,7 +179,7 @@ begin
      and w.nrdconta = 493341
      and w.nrctremp = 193908;
      
-  update crapepr epr
+  update cecred.crapepr epr
      set epr.vlpreemp = 1218.02,
          epr.txmensal = 1.58
    where epr.cdcooper = 13
