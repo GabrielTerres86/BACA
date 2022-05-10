@@ -30,7 +30,7 @@ DECLARE
    vr_cdmensagem NUMBER :=0;
    vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
    vr_split  gene0002.typ_split;
-   vr_dslog VARCHAR2(4000) := '';
+   vr_dslog VARCHAR2(4000) := ' ';
    vr_dtinical DATE;
    
    rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
@@ -53,7 +53,7 @@ DECLARE
             ,cdhsirap
             ,cdhsrgap
             ,cdhsvtap
-        FROM crapcpc cpc
+        FROM cecred.crapcpc cpc
        WHERE cpc.cddindex = 5
          AND cpc.indanive = 1
          AND cpc.idsitpro = 1
@@ -80,9 +80,9 @@ DECLARE
             rac.rowid,
             cpc.cdhsvrcc,
             ass.cdagenci
-       FROM craprac rac,
-            crapcpc cpc,
-            crapass ass
+       FROM cecred.craprac rac,
+            cecred.crapcpc cpc,
+            cecred.crapass ass
       WHERE rac.cdcooper = ass.cdcooper
         AND rac.nrdconta = ass.nrdconta
         AND rac.cdprodut = cpc.cdprodut        
@@ -104,7 +104,7 @@ DECLARE
     SELECT cdcooper,
            nrdconta,
            nraplica
-      FROM craplac l
+      FROM cecred.craplac l
      WHERE l.cdcooper = pr_cdcooper
        AND l.nrdconta = pr_nrdconta
        AND l.nraplica = pr_nraplica
@@ -121,7 +121,7 @@ DECLARE
     SELECT cdcooper,
            nrdconta,
            nraplica
-      FROM craplac l
+      FROM cecred.craplac l
      WHERE l.cdcooper = pr_cdcooper
        AND l.nrdconta = pr_nrdconta
        AND l.nraplica = pr_nraplica
@@ -139,8 +139,8 @@ DECLARE
                           lac.vllanmto,
                           lac.vllanmto * -1)),
                0) saldo
-    from craplac lac,
-         craphis his
+    from cecred.craplac lac,
+         cecred.craphis his
    where lac.cdcooper = his.cdcooper
      and lac.cdhistor = his.cdhistor
      and lac.cdcooper = pr_cdcooper
@@ -198,7 +198,7 @@ PROCEDURE pc_credita_aniversario_lctos(pr_cdcooper IN craprac.cdcooper%TYPE
       END IF;
       IF pr_vllanmto <> 0 THEN
         BEGIN
-          INSERT INTO craplac(cdcooper
+          INSERT INTO cecred.craplac(cdcooper
                              ,dtmvtolt
                              ,cdagenci
                              ,cdbccxlt
@@ -244,7 +244,7 @@ PROCEDURE pc_credita_aniversario_lctos(pr_cdcooper IN craprac.cdcooper%TYPE
 
 
       BEGIN
-        UPDATE craprac SET vlsldatl = vlsldatl + vr_vllanmto
+        UPDATE cecred.craprac SET vlsldatl = vlsldatl + vr_vllanmto
                           ,dtatlsld = pr_dtmvtolt
                           ,vlsldant = vr_vlsldant
                           ,dtsldant = vr_dtsldant
@@ -324,7 +324,7 @@ BEGIN
        CLOSE cr_aporte;   
      END IF; 
      
-     vr_dslog := 'UPDATE CRAPRAC SET vlsldatl = '|| REPLACE(rw_craprac.vlsldatl,',','.') ||
+     vr_dslog := 'UPDATE cecred.CRAPRAC SET vlsldatl = '|| REPLACE(rw_craprac.vlsldatl,',','.') ||
                                   ', dtatlsld = '''|| to_date(rw_craprac.dtatlsld,'dd/mm/yyyy') || ''' '|| 
                                   ', vlsldant = '|| REPLACE(rw_craprac.vlsldant,',','.') ||
                                   ', dtsldant = '''|| to_date(rw_craprac.dtsldant,'dd/mm/yyyy') ||''' '||  
