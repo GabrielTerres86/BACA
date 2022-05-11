@@ -1,0 +1,13 @@
+BEGIN
+  UPDATE CECRED.tbepr_consignado_pagamento
+   SET INSTATUS = 2
+ WHERE CDCOOPER = 13
+   AND NRDCONTA = 199974
+   AND NRCTREMP = 191853
+   AND INSTATUS = 1;  
+COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    raise_application_error(-20500, SQLERRM);
+END;       
