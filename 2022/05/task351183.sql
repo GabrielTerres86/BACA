@@ -15,7 +15,7 @@ declare
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE,
                     pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT ass.cdagenci
-      FROM crapass ass
+      FROM cecred.crapass ass
      WHERE ass.cdcooper = pr_cdcooper
        AND ass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%ROWTYPE;
