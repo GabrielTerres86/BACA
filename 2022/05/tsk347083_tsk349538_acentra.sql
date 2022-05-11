@@ -218,6 +218,13 @@ BEGIN
   v_dados(v_dados.last()).vr_nrctremp := 62203;
   v_dados(v_dados.last()).vr_vllanmto := 322.31;
   v_dados(v_dados.last()).vr_cdhistor := 3917;
+  
+  v_dados.extend();
+  v_dados(v_dados.last()).vr_cdcooper := 5;
+  v_dados(v_dados.last()).vr_nrdconta := 160520;
+  v_dados(v_dados.last()).vr_nrctremp := 21681;
+  v_dados(v_dados.last()).vr_vllanmto := 2605.65;
+  v_dados(v_dados.last()).vr_cdhistor := 1040;
 
   
   FOR x IN NVL(v_dados.first(),1)..nvl(v_dados.last(),0) LOOP
