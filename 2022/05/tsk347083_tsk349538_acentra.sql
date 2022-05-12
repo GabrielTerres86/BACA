@@ -2,9 +2,9 @@ declare
   vr_cdcritic cecred.crapcri.cdcritic%TYPE;
   vr_dscritic VARCHAR2(10000);
   vr_exc_saida EXCEPTION;
-  rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+  rw_crapdat  cecred.BTCH0001.cr_crapdat%ROWTYPE;
   vr_des_reto varchar(3);
-  vr_tab_erro GENE0001.typ_tab_erro;
+  vr_tab_erro cecred.GENE0001.typ_tab_erro;
   
   TYPE dados_typ IS RECORD(
       vr_cdcooper cecred.crapcop.cdcooper%TYPE,
@@ -228,16 +228,16 @@ BEGIN
 
   
   FOR x IN NVL(v_dados.first(),1)..nvl(v_dados.last(),0) LOOP
-      OPEN btch0001.cr_crapdat(pr_cdcooper => v_dados(x).vr_cdcooper);
-      FETCH btch0001.cr_crapdat
+      OPEN cecred.btch0001.cr_crapdat(pr_cdcooper => v_dados(x).vr_cdcooper);
+      FETCH cecred.btch0001.cr_crapdat
         INTO rw_crapdat;
-      CLOSE btch0001.cr_crapdat;
+      CLOSE cecred.btch0001.cr_crapdat;
       OPEN cr_crapass(pr_cdcooper => v_dados(x).vr_cdcooper, pr_nrdconta => v_dados(x).vr_nrdconta);
       FETCH cr_crapass
         INTO rw_crapass;
       CLOSE cr_crapass;
   
-      EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => v_dados(x).vr_cdcooper,
+      cecred.EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => v_dados(x).vr_cdcooper,
                                       pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                       pr_cdagenci => rw_crapass.cdagenci,
                                       pr_cdbccxlt => 100,
