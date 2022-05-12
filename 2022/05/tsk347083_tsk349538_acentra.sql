@@ -1,5 +1,5 @@
 declare
-  vr_cdcritic crapcri.cdcritic%TYPE;
+  vr_cdcritic cecred.crapcri.cdcritic%TYPE;
   vr_dscritic VARCHAR2(10000);
   vr_exc_saida EXCEPTION;
   rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
@@ -7,19 +7,19 @@ declare
   vr_tab_erro GENE0001.typ_tab_erro;
   
   TYPE dados_typ IS RECORD(
-      vr_cdcooper crapcop.cdcooper%TYPE,
-      vr_nrdconta crapass.nrdconta%TYPE,
-      vr_nrctremp craplem.nrctremp%TYPE,
-      vr_vllanmto craplem.vllanmto%TYPE,
-      vr_cdhistor craplem.cdhistor%TYPE);
+      vr_cdcooper cecred.crapcop.cdcooper%TYPE,
+      vr_nrdconta cecred.crapass.nrdconta%TYPE,
+      vr_nrctremp cecred.craplem.nrctremp%TYPE,
+      vr_vllanmto cecred.craplem.vllanmto%TYPE,
+      vr_cdhistor cecred.craplem.cdhistor%TYPE);
   
   TYPE t_dados_tab IS TABLE OF dados_typ;
   v_dados        t_dados_tab := t_dados_tab();
 
-  CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE,
-                    pr_nrdconta IN crapass.nrdconta%TYPE) IS
+  CURSOR cr_crapass(pr_cdcooper IN cecred.crapass.cdcooper%TYPE,
+                    pr_nrdconta IN cecred.crapass.nrdconta%TYPE) IS
     SELECT ass.cdagenci
-      FROM crapass ass
+      FROM cecred.crapass ass
      WHERE ass.cdcooper = pr_cdcooper
        AND ass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%ROWTYPE;
