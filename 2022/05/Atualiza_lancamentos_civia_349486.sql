@@ -1,21 +1,21 @@
 declare
   vr_log_dstransa varchar2(1000);
   vr_nrdrowid     ROWID;
-  vr_cdcritic crapcri.cdcritic%TYPE;
+  vr_cdcritic cecred.crapcri.cdcritic%TYPE;
   vr_dscritic VARCHAR2(10000);
   vr_exc_saida EXCEPTION;
-  rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+  rw_crapdat  cecred.BTCH0001.cr_crapdat%ROWTYPE;
   vr_des_reto varchar(3);
-  vr_tab_erro GENE0001.typ_tab_erro;
-  vr_cdcooper crapcop.cdcooper%TYPE := 13;
-  vr_nrdconta crapass.nrdconta%TYPE := 608203;
-  vr_nrctremp craplem.nrctremp%type := 172851;
-  vr_nrparepr craplem.nrparepr%type := 1;  
+  vr_tab_erro cecred.GENE0001.typ_tab_erro;
+  vr_cdcooper cecred.crapcop.cdcooper%TYPE := 13;
+  vr_nrdconta cecred.crapass.nrdconta%TYPE := 608203;
+  vr_nrctremp cecred.craplem.nrctremp%type := 172851;
+  vr_nrparepr cecred.craplem.nrparepr%type := 1;  
   
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE,
                     pr_nrdconta IN crapass.nrdconta%TYPE) IS
     SELECT ass.cdagenci
-      FROM crapass ass
+      FROM cecred.crapass ass
      WHERE ass.cdcooper = pr_cdcooper
        AND ass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%ROWTYPE;
@@ -27,7 +27,7 @@ declare
     SELECT SUM(VLLANMTO) VLLANMTO,
            DECODE(CDHISTOR,1037,1041,1044,1705,1047,1708,1077,1711,CDHISTOR) CDHISTOR,
            NRPAREPR 
-      FROM CRAPLEM
+      FROM cecred.CRAPLEM
      WHERE CDCOOPER = PR_CDCOOPER
        AND NRDCONTA = PR_NRDCONTA
        AND NRCTREMP = PR_NRCTREMP
@@ -47,17 +47,17 @@ declare
                                   AND NRDCONTA = PR_NRDCONTA
                                   AND NRCTREMP = PR_NRCTREMP)) CDHISTOR,
            PEP.NRPAREPR                                  
-      FROM CRAPPEP PEP
+      FROM cecred.CRAPPEP PEP
      WHERE CDCOOPER = PR_CDCOOPER
        AND NRDCONTA = PR_NRDCONTA
        AND NRCTREMP = PR_NRCTREMP
        AND NRPAREPR = PR_NRPAREPR 
      ORDER BY CDHISTOR;     
 BEGIN
-  OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
-  FETCH btch0001.cr_crapdat
+  OPEN cecred.btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+  FETCH cecred.btch0001.cr_crapdat
     INTO rw_crapdat;
-  CLOSE btch0001.cr_crapdat;
+  CLOSE cecred.btch0001.cr_crapdat;
   
   OPEN cr_crapass(pr_cdcooper => vr_cdcooper, pr_nrdconta => vr_nrdconta);
   FETCH cr_crapass
@@ -82,7 +82,7 @@ BEGIN
                          rw_lancamento.cdhistor || ', ' || 'vllanmto = ' ||
                          rw_lancamento.vllanmto;
       
-      GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+      cecred.GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
                            pr_cdoperad => '1',
                            pr_dscritic => 'Não foi possível determinar o código do histórico para realizar o lançamento.',
                            pr_dsorigem => 'PL/SQL SCRIPT',
@@ -98,7 +98,7 @@ BEGIN
       CONTINUE;      
     END IF;     
                                        
-    EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
+    cecred.EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                     pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                     pr_cdagenci => rw_crapass.cdagenci,
                                     pr_cdbccxlt => 100,
