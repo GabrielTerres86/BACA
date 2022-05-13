@@ -1,10 +1,10 @@
 declare
 begin 
 INSERT INTO cecred.crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', 0, 'VLCORTE_DICT_BLQ_CAUT', 
-'Valor de corte das transaÁıes para determinar a DICT deve ser consultada ou n„o no bloqueio cautelar.', '30,00');
+'Valor de corte das transa√ß√µes para determinar a DICT deve ser consultada ou n√£o no bloqueio cautelar.', '30,00');
 
 INSERT INTO cecred.crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', 0, 'HRDESAB_DICT_BLQ_CAUT', 
-'Quantidade de horas apÛs a ultima atualizaÁ„o que determinar· se o registro com informaÁıes da DICT estar· desatualizado.', '2');
+'Quantidade de horas ap√≥s a ultima atualiza√ß√£o que determinar√° se o registro com informa√ß√µes da DICT estar√° desatualizado.', '2');
 
 INSERT INTO cecred.crapaca (nmdeacao, nmpackag, nmproced, nrseqrdr) values ('CADFRA_BUSCA_PARAM_BLQ_CAUTELAR', 'TELA_CADFRA', 'pc_busca_parametros_bloqueio_cautelar', 704);
 
