@@ -1,0 +1,185 @@
+declare
+
+  conta_187348_199528 clob := '<?xml version="1.0" encoding="UTF-8"?>
+              <Root>
+              <convenioCredito>
+              <cooperativa>
+              <codigo>13</codigo>
+              </cooperativa>
+              <numeroContrato>216</numeroContrato>
+              </convenioCredito>
+              <configuracaoCredito>
+              <diasCarencia>36</diasCarencia>
+              <financiaIOF>true</financiaIOF>
+              <financiaTarifa>true</financiaTarifa>
+              </configuracaoCredito>
+              <propostaContratoCredito>
+              <CETPercentAoAno>30.25</CETPercentAoAno>
+              <dataPrimeiraParcela>2022-06-10</dataPrimeiraParcela>
+              <produto>
+              <codigo>161</codigo>
+              </produto>
+              <quantidadeParcelas>48</quantidadeParcelas>
+              <taxaJurosRemuneratorios>2.18</taxaJurosRemuneratorios>
+              <taxaJurosRemuneratoriosAnual>29.54</taxaJurosRemuneratoriosAnual>
+              <tipoLiberacao>
+              <codigo>6</codigo>
+              </tipoLiberacao>
+              <tipoLiquidacao>
+              <codigo>4</codigo>
+              </tipoLiquidacao>
+              <tributoIOFValor>134.60</tributoIOFValor>
+              <valor>14134.60</valor>
+              <valorBase>14000.00</valorBase>
+              <dataProposta>2022-05-12T15:32:02</dataProposta>
+              <emitente>
+              <dataNascOuConstituicao>1974-09-01T00:00:00</dataNascOuConstituicao>
+              <identificadorReceitaFederal>39992977</identificadorReceitaFederal>
+              <razaoSocialOuNome>MARISA MULLER DE SOUZA</razaoSocialOuNome>
+              <nacionalidade>
+              <codigo>42</codigo>
+              </nacionalidade>
+              <tipo>
+              <codigo>1</codigo>
+              </tipo>
+              <contaCorrente>
+              <agencia>
+              <codigo>112</codigo>
+              </agencia>
+              <banco>
+              <codigo>85</codigo>
+              </banco>
+              <codigoConta>187348</codigoConta>
+              <cooperativa>
+              <codigo>13</codigo>
+              </cooperativa>
+              </contaCorrente>
+              <numeroTitularidade>1</numeroTitularidade>
+              <pessoaContatoEndereco>
+              <CEP>89295000</CEP>
+              <cidade>
+              <descricao>RIO NEGRINHO</descricao>
+              </cidade>
+              <nomeBairro>SAO RAFAEL</nomeBairro>
+              <numeroLogradouro>174</numeroLogradouro>
+              <tipoEndereco>
+              <codigo>13</codigo>
+              </tipoEndereco>
+              <tipoENomeLogradouro>RUA ANDRE MUHLBAUER</tipoENomeLogradouro>
+              <UF>SC</UF>
+              </pessoaContatoEndereco>
+              </emitente>
+              <identificadorProposta>199528</identificadorProposta>
+              <statusProposta>
+              <codigo>26</codigo>
+              </statusProposta>
+              </propostaContratoCredito>
+              <pessoaDocumento>
+              <identificador>3610550</identificador>
+              <tipo>
+              <sigla>CI</sigla>
+              </tipo>
+              </pessoaDocumento>
+              <pessoaFisicaOcupacao>
+              <naturezaOcupacao>
+              <codigo>1</codigo>
+              </naturezaOcupacao>
+              </pessoaFisicaOcupacao>
+              <pessoaFisicaDetalhamento>
+              <estadoCivil>
+              <codigo>4</codigo>
+              </estadoCivil>
+              <sexo>
+              <codigo>2</codigo>
+              </sexo>
+              </pessoaFisicaDetalhamento>
+              <pessoaFisicaRendimento>
+              <identificadorRegistroFuncionario>1836</identificadorRegistroFuncionario>
+              </pessoaFisicaRendimento>
+              <remuneracaoColaborador>
+              <empregador>
+              <identificadorReceitaFederal>85907251000107</identificadorReceitaFederal>
+              <razaoSocialOuNome>FUNDACAO HOSPITALAR RIO NEGRINHO</razaoSocialOuNome>
+              </empregador>
+              </remuneracaoColaborador>
+              <beneficio/>
+              <listaPessoasEndereco>
+              <pessoaEndereco>
+              <parametroConsignado>
+              <tipoPessoaEndereco>EMPREGADOR</tipoPessoaEndereco>
+              </parametroConsignado>
+              <pessoaContatoEndereco>
+              <CEP>89295000</CEP>
+              <cidade>
+              <descricao>RIO NEGRINHO</descricao>
+              </cidade>
+              <nomeBairro>ALEGRE</nomeBairro>
+              <numeroLogradouro>403</numeroLogradouro>
+              <tipoENomeLogradouro>RUA FRITZ KLOSTERMANN</tipoENomeLogradouro>
+              <UF>SC</UF>
+              </pessoaContatoEndereco>
+              </pessoaEndereco>
+              </listaPessoasEndereco>
+              <parcela>
+              <valor>479.92</valor>
+              </parcela>
+              <tarifa>
+              <valor>0.0</valor>
+              </tarifa>
+              <inadimplencia>
+              <despesasCartorarias>0.0</despesasCartorarias>
+              </inadimplencia>
+              <posicao>
+              <produtoCategoria>
+              <codigo>32</codigo>
+              </produtoCategoria>
+              <saldo>9467.21</saldo>
+              </posicao>
+              <usuarioDominioCecred>
+              <codigo/>
+              </usuarioDominioCecred>
+              <parametroConsignado>
+              <codigoFisTabelaJuros>1</codigoFisTabelaJuros>
+              <indicadorContaPrincipal>true</indicadorContaPrincipal>
+              <naturalidade>RIO NEGRINHO</naturalidade>
+              <dataCalculoLegado>2022-05-05T00:00:00</dataCalculoLegado>
+              </parametroConsignado>
+              </Root>';
+
+begin
+
+  insert into cecred.tbgen_evento_soa
+    (CDCOOPER,
+     NRDCONTA,
+     NRCTRPRP,
+     TPEVENTO,
+     TPRODUTO_EVENTO,
+     TPOPERACAO,
+     DHOPERACAO,
+     DSPROCESSAMENTO,
+     DSSTATUS,
+     DHEVENTO,
+     DSERRO,
+     NRTENTATIVAS,
+     DSCONTEUDO_REQUISICAO)
+  values
+    (13,
+     187348,
+     199528,
+     'EFETIVA_PROPOSTA',
+     'CONSIGNADO',
+     'INSERT',
+     sysdate,
+     null,
+     null,
+     null,
+     null,
+     null,
+     conta_187348_199528);
+  commit;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    raise_application_error(-20500, SQLERRM);
+    ROLLBACK;
+end;
