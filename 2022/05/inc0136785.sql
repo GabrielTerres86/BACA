@@ -1,56 +1,52 @@
 DECLARE
-  CURSOR cr_his(pr_cdcooper IN cecred.crapcop.cdcooper%TYPE,
-                pr_cdhistor IN cecred.craphis.cdhistor%TYPE) IS
-    SELECT t.cdhistor, t.dshistor, t.indebcre
+  CURSOR cr_his(pr_cdcooper IN cecred.crapcop.cdcooper%TYPE
+               ,pr_cdhistor IN cecred.craphis.cdhistor%TYPE) IS
+    SELECT t.cdhistor
+          ,t.dshistor
+          ,t.indebcre
       FROM cecred.craphis t
      WHERE t.cdcooper = pr_cdcooper
        AND t.cdhistor = pr_cdhistor;
   rw_his cr_his%ROWTYPE;
 
-  CURSOR cr_sld_prj(pr_cdcooper IN cecred.crapcop.cdcooper%TYPE,
-                    pr_nrdconta IN cecred.crapass.nrdconta%TYPE) IS
-    SELECT t.vlsdprej, t.idprejuizo
+  CURSOR cr_sld_prj(pr_cdcooper IN cecred.crapcop.cdcooper%TYPE
+                   ,pr_nrdconta IN cecred.crapass.nrdconta%TYPE) IS
+    SELECT t.vlsdprej
+          ,t.idprejuizo
       FROM cecred.tbcc_prejuizo t
      WHERE t.cdcooper = pr_cdcooper
        AND t.nrdconta = pr_nrdconta;
   rw_sld_prj cr_sld_prj%ROWTYPE;
 
-  rw_crapdat cecred.btch0001.cr_crapdat%ROWTYPE;
-
-  vr_cdcritic INTEGER := 0;
-  vr_dscritic VARCHAR2(4000);
-  vr_des_erro VARCHAR2(1000);
-  vr_tab_erro cecred.GENE0001.typ_tab_erro;
-  vr_exc_erro EXCEPTION;
-  vr_upsld_prej CHAR(1);
-  vr_tipoajus   CHAR(1);
-  vr_indebcre  cecred.craphis.indebcre%TYPE;
-
+  vr_tab_erro   cecred.GENE0001.typ_tab_erro;
+  vr_indebcre   cecred.craphis.indebcre%TYPE;
   vr_cdcooper   cecred.crapepr.cdcooper%TYPE;
   vr_nrdconta   cecred.crapepr.nrdconta%TYPE;
   vr_nrctremp   cecred.crapepr.nrctremp%TYPE;
   vr_vllanmto   cecred.craplem.vllanmto%TYPE;
   vr_cdhistor   cecred.craplem.cdhistor%TYPE;
   vr_idprejuizo cecred.tbcc_prejuizo.idprejuizo%TYPE;
+  rw_crapdat    cecred.btch0001.cr_crapdat%ROWTYPE;  
+  vr_conta      cecred.GENE0002.typ_split;
+  vr_reg_conta  cecred.GENE0002.typ_split;
+  vr_cdcritic   INTEGER := 0;
+  vr_dscritic   VARCHAR2(4000);
+  vr_des_erro   VARCHAR2(1000);
+  vr_upsld_prej CHAR(1);
+  vr_tipoajus   CHAR(1);
+  vr_exc_erro EXCEPTION;
 
-  vr_conta     cecred.GENE0002.typ_split;
-  vr_reg_conta cecred.GENE0002.typ_split;
-
-  PROCEDURE prc_atlz_prejuizo(prm_cdcooper IN cecred.craplcm.cdcooper%TYPE,
-                              prm_nrdconta IN cecred.craplcm.nrdconta%TYPE,
-                              prm_vllanmto IN cecred.craplcm.vllanmto%TYPE,
-                              prm_cdhistor IN cecred.craplcm.cdhistor%TYPE,
-                              prm_tipoajus IN VARCHAR2) IS
-  
+  PROCEDURE prc_atlz_prejuizo(prm_cdcooper IN cecred.craplcm.cdcooper%TYPE
+                             ,prm_nrdconta IN cecred.craplcm.nrdconta%TYPE
+                             ,prm_vllanmto IN cecred.craplcm.vllanmto%TYPE
+                             ,prm_cdhistor IN cecred.craplcm.cdhistor%TYPE
+                             ,prm_tipoajus IN VARCHAR2) IS  
     vr_idprejuizo cecred.tbcc_prejuizo.idprejuizo%TYPE;
-    vr_tipoacao   BOOLEAN;
     vr_vlsdprej   cecred.tbcc_prejuizo.vlsdprej%TYPE;
-    vr_found      BOOLEAN;
-  
-  BEGIN
-  
-    OPEN cr_sld_prj(pr_cdcooper => prm_cdcooper,
-                    pr_nrdconta => prm_nrdconta);
+    vr_tipoacao   BOOLEAN;    
+    vr_found      BOOLEAN;  
+  BEGIN  
+    OPEN cr_sld_prj(pr_cdcooper => prm_cdcooper, pr_nrdconta => prm_nrdconta);
     FETCH cr_sld_prj
       INTO rw_sld_prj;
     vr_found    := cr_sld_prj%FOUND;
@@ -58,8 +54,8 @@ DECLARE
     CLOSE cr_sld_prj;
   
     IF NOT vr_found THEN
-      vr_dscritic := 'Erro ao buscar Saldo Prejuizo Cop/Cta (' ||
-                     prm_cdcooper || '/' || prm_nrdconta || ')';
+      vr_dscritic := 'Erro ao buscar Saldo Prejuizo Cop/Cta (' || prm_cdcooper || '/' ||
+                     prm_nrdconta || ')';
       RAISE vr_exc_erro;
     END IF;
     vr_found := NULL;
@@ -69,8 +65,7 @@ DECLARE
       RAISE vr_exc_erro;
     END IF;
   
-    OPEN cr_his(pr_cdcooper => prm_cdcooper
-                ,pr_cdhistor => prm_cdhistor);
+    OPEN cr_his(pr_cdcooper => prm_cdcooper, pr_cdhistor => prm_cdhistor);
     FETCH cr_his
       INTO rw_his;
     vr_found    := cr_his%FOUND;
@@ -78,8 +73,7 @@ DECLARE
     CLOSE cr_his;
   
     IF NOT vr_found THEN
-      vr_dscritic := 'Historico nÃ£o encontrato Cop/Hist (' || prm_cdcooper || '/' ||
-                     prm_cdhistor || ')';
+      vr_dscritic := 'Historico não encontrato Cop/Hist (' || prm_cdcooper || '/' || prm_cdhistor || ')';
       RAISE vr_exc_erro;
     END IF;
   
@@ -105,7 +99,7 @@ DECLARE
            AND a.nrdconta = prm_nrdconta;
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao Atualizar Valor Saldo PrejuÃ­zo. Erro: ' ||
+          vr_dscritic := 'Erro ao Atualizar Valor Saldo Prejuízo. Erro: ' ||
                          SubStr(SQLERRM, 1, 255);
           RAISE vr_exc_erro;
       END;
@@ -117,23 +111,19 @@ DECLARE
            AND a.nrdconta = prm_nrdconta;
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao Atualizar Valor Saldo PrejuÃ­zo. Erro: ' ||
+          vr_dscritic := 'Erro ao Atualizar Valor Saldo Prejuízo. Erro: ' ||
                          SubStr(SQLERRM, 1, 255);
           RAISE vr_exc_erro;
       END;
-    END IF;
-  
+    END IF;  
   END prc_atlz_prejuizo;
-
 BEGIN
-
-  vr_conta := GENE0002.fn_quebra_string(pr_string  => '1;10376836;2408;28,89;N;|13;260797;2721;16,91;N;|1;10376836;2721;10,00;N;|1;10376836;2721;2,20;N;|11;400548;2721;12,12;N;|2;606871;2721;10,00;N;|11;487430;2408;45,05;N;|11;529664;2721;7,22;N;|2;681644;2721;16,46;N;|16;668443;2721;90,94;N;|16;668443;2721;90,94;N;|1;10376836;2408;34,14;N;|',
-                                        pr_delimit => '|');
+  vr_conta := cecred.GENE0002.fn_quebra_string(pr_string  => '1;10376836;2408;28,89;N;|13;260797;2721;16,91;N;|1;10376836;2721;10,00;N;|1;10376836;2721;2,20;N;|11;400548;2721;12,12;N;|2;606871;2721;10,00;N;|11;487430;2408;45,05;N;|11;529664;2721;7,22;N;|2;681644;2721;16,46;N;|16;668443;2721;90,94;N;|16;668443;2721;90,94;N;|1;10376836;2408;34,14;N;|13;189359;2408;2401,49;N;|13;432636;2408;822,59;N;|1;8592713;2722;2435,47;N;|16;479780;2408;449,21;N;|',
+                                               pr_delimit => '|');
   IF vr_conta.COUNT > 0 THEN
-  
     FOR vr_idx_lst IN 1 .. vr_conta.COUNT - 1 LOOP
-      vr_reg_conta := GENE0002.fn_quebra_string(pr_string  => vr_conta(vr_idx_lst),
-                                                pr_delimit => ';');
+      vr_reg_conta := cecred.GENE0002.fn_quebra_string(pr_string  => vr_conta(vr_idx_lst),
+                                                       pr_delimit => ';');
     
       vr_cdcooper   := vr_reg_conta(1);
       vr_nrdconta   := vr_reg_conta(2);
@@ -142,15 +132,13 @@ BEGIN
       vr_upsld_prej := vr_reg_conta(5);
       vr_tipoajus   := vr_reg_conta(6);
     
-      OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
-      FETCH btch0001.cr_crapdat
+      OPEN cecred.btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      FETCH cecred.btch0001.cr_crapdat
         INTO rw_crapdat;
-      CLOSE btch0001.cr_crapdat;
+      CLOSE cecred.btch0001.cr_crapdat;
     
-      
-      IF vr_cdhistor IN (2408, 2721, 2722) THEN
-    
-    BEGIN
+      IF vr_cdhistor IN (2408, 2721, 2722) THEN      
+        BEGIN
           SELECT a.idprejuizo
             INTO vr_idprejuizo
             FROM cecred.tbcc_prejuizo a
@@ -164,15 +152,15 @@ BEGIN
         END;
       
         cecred.prej0003.pc_gera_lcto_extrato_prj(pr_cdcooper   => vr_cdcooper,
-                                          pr_nrdconta   => vr_nrdconta,
-                                          pr_dtmvtolt   => rw_crapdat.dtmvtolt,
-                                          pr_cdhistor   => vr_cdhistor,
-                                          pr_idprejuizo => vr_idprejuizo,
-                                          pr_vllanmto   => vr_vllanmto,
-                                          pr_dthrtran   => SYSDATE,
-                                          pr_cdcritic   => vr_cdcritic,
-                                          pr_dscritic   => vr_dscritic);
-        IF Nvl(vr_cdcritic, 0) > 0 OR Trim(vr_dscritic) IS NOT NULL THEN
+                                                 pr_nrdconta   => vr_nrdconta,
+                                                 pr_dtmvtolt   => rw_crapdat.dtmvtolt,
+                                                 pr_cdhistor   => vr_cdhistor,
+                                                 pr_idprejuizo => vr_idprejuizo,
+                                                 pr_vllanmto   => vr_vllanmto,
+                                                 pr_dthrtran   => SYSDATE,
+                                                 pr_cdcritic   => vr_cdcritic,
+                                                 pr_dscritic   => vr_dscritic);
+        IF Nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
       
@@ -182,81 +170,75 @@ BEGIN
                             prm_vllanmto => vr_vllanmto,
                             prm_cdhistor => vr_cdhistor,
                             prm_tipoajus => vr_tipoajus);
-        END IF;
-      
-                    
-      ELSIF vr_cdhistor IN (2738) THEN
-        
+        END IF;      
+      ELSIF vr_cdhistor IN (2738) THEN      
         cecred.prej0003.pc_gera_cred_cta_prj(pr_cdcooper => vr_cdcooper,
-                                      pr_nrdconta => vr_nrdconta,
-                                      pr_vlrlanc  => vr_vllanmto,
-                                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                      pr_dsoperac => 'Ajuste Contabil - ' || To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'),
-                                      pr_cdcritic => vr_cdcritic,
-                                      pr_dscritic => vr_dscritic);
-
-        IF Nvl(vr_cdcritic,0) > 0 OR Trim(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exc_erro; 
-        END IF;
-        
-      ELSIF vr_cdhistor IN (2739) THEN
-        
+                                             pr_nrdconta => vr_nrdconta,
+                                             pr_vlrlanc  => vr_vllanmto,
+                                             pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                             pr_dsoperac => 'Ajuste Contabil - ' ||
+                                                            To_Char(SYSDATE, 'dd/mm/yyyy hh24:mi:ss'),
+                                             pr_cdcritic => vr_cdcritic,
+                                             pr_dscritic => vr_dscritic);      
+        IF Nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;      
+      ELSIF vr_cdhistor IN (2739) THEN      
         cecred.prej0003.pc_gera_debt_cta_prj(pr_cdcooper => vr_cdcooper,
-                                      pr_nrdconta => vr_nrdconta,
-                                      pr_vlrlanc  => vr_vllanmto,
-                                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                      pr_dsoperac => 'Ajuste Contabil - ' || To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'),
-                                      pr_cdcritic => vr_cdcritic,
-                                      pr_dscritic => vr_dscritic);
-
-        IF Nvl(vr_cdcritic,0) > 0 OR Trim(vr_dscritic) IS NOT NULL THEN
-          RAISE vr_exc_erro; 
-        END IF;
-      
-      ELSE
- 
-          IF vr_cdhistor IN (2720) THEN
-          
-            cecred.EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => vr_cdcooper 
-                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt 
-                                          ,pr_cdagenci => 0 
-                                          ,pr_cdbccxlt => 100 
-                                          ,pr_cdoperad => '1' 
-                                          ,pr_cdpactra => 0 
-                                          ,pr_nrdolote => 650001 
-                                          ,pr_nrdconta => vr_nrdconta 
-                                          ,pr_cdhistor => vr_cdhistor 
-                                          ,pr_vllanmto => vr_vllanmto 
-                                          ,pr_nrparepr => 0 
-                                          ,pr_nrctremp => 0 
-                                          ,pr_des_reto => vr_des_erro 
-                                          ,pr_tab_erro => vr_tab_erro); 
-            IF vr_des_erro <> 'OK' THEN
-              IF vr_tab_erro.COUNT() > 0 THEN
-                vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-                vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-              ELSE
-                vr_cdcritic := 0;
-                vr_dscritic := 'Erro ao criar o lancamento na conta corrente.';
-              END IF;
-            
-              RAISE vr_exc_erro;
-            END IF;
-          
-          END IF;
-        
-      
-      END IF;
-    
+                                             pr_nrdconta => vr_nrdconta,
+                                             pr_vlrlanc  => vr_vllanmto,
+                                             pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                             pr_dsoperac => 'Ajuste Contabil - ' ||
+                                                            To_Char(SYSDATE, 'dd/mm/yyyy hh24:mi:ss'),
+                                             pr_cdcritic => vr_cdcritic,
+                                             pr_dscritic => vr_dscritic);      
+        IF Nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;      
+      ELSE      
+        IF vr_cdhistor IN (2720) THEN        
+          cecred.EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => vr_cdcooper,
+                                                pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                                pr_cdagenci => 0,
+                                                pr_cdbccxlt => 100,
+                                                pr_cdoperad => '1',
+                                                pr_cdpactra => 0,
+                                                pr_nrdolote => 650001,
+                                                pr_nrdconta => vr_nrdconta,
+                                                pr_cdhistor => vr_cdhistor,
+                                                pr_vllanmto => vr_vllanmto,
+                                                pr_nrparepr => 0,
+                                                pr_nrctremp => 0,
+                                                pr_des_reto => vr_des_erro,
+                                                pr_tab_erro => vr_tab_erro);
+          IF vr_des_erro <> 'OK' THEN
+            IF vr_tab_erro.COUNT() > 0 THEN
+              vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+              vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+            ELSE
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao criar o lancamento na conta corrente.';
+            END IF;          
+            RAISE vr_exc_erro;
+          END IF;        
+        END IF;      
+      END IF;    
     END LOOP;
   END IF;
+  
+  UPDATE cecred.tbcc_prejuizo a
+     SET a.vlsdprej      = 0
+        ,a.vljuprej      = 0
+        ,a.vljur60_ctneg = 0
+        ,a.vljur60_lcred = 0
+   WHERE a.cdcooper = 1
+     AND a.nrdconta = 10376836;
 
-  COMMIT;
+  COMMIT;  
 
   dbms_output.put_line(' ');
   dbms_output.put_line('Script finalizado com Sucesso em ' ||
                        To_Char(SYSDATE, 'dd/mm/yyyy hh24:mi:ss'));
-
 EXCEPTION
   WHEN vr_exc_erro THEN
     ROLLBACK;
