@@ -1,6 +1,6 @@
 declare
 
-  conta_conta_136050_168149 clob := '<?xml version="1.0"?>
+  conta_136050_168149 clob := '<?xml version="1.0"?>
 <Root>
   <convenioCredito>
     <cooperativa>
