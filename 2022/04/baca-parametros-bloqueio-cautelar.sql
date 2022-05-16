@@ -6,6 +6,9 @@ INSERT INTO cecred.crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) va
 INSERT INTO cecred.crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', 0, 'HRDESAB_DICT_BLQ_CAUT', 
 'Quantidade de horas após a ultima atualização que determinará se o registro com informações da DICT estará desatualizado.', '2');
 
+INSERT INTO cecred.crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) values ('CRED', 0, 'ANALISE_DICT_BLQ_CAUT', 
+'Valor que permite a desativação da análise de PIX no recebimento.', '0');
+
 INSERT INTO cecred.crapaca (nmdeacao, nmpackag, nmproced, nrseqrdr) values ('CADFRA_BUSCA_PARAM_BLQ_CAUTELAR', 'TELA_CADFRA', 'pc_busca_parametros_bloqueio_cautelar', 704);
 
 INSERT INTO cecred.crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) values ('CADFRA_GRAVA_PARAM_BLQ_CAUTELAR', 'TELA_CADFRA', 'pc_grava_parametros_bloqueio_cautelar',
@@ -15,7 +18,7 @@ UPDATE cecred.craptel
 SET CDOPPTEL = 'C,A,E,B,G', LSOPPTEL = 'CONSULTAR,ALTERAR,EXCLUIR,BLOQUEAR,CAUTELAR'
 WHERE nmdatela = 'CADFRA';
 
-INSERT INTO cecred.crapace (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) values ('CADFRA', 'G', 'F0031251','', '3', '1', '1','2');
+INSERT INTO cecred.crapace (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) values ('CADFRA', 'G', 'f0031251','', '3', '1', '1','2');
 
 commit;
 end;
