@@ -17,8 +17,3 @@ WHERE nmdatela = 'CADFRA';
 commit;
 end;
 /
-SELECT *
-FROM crapace a
-WHERE a.nmdatela = 'CADFRA'
-AND a.cdoperad = 'F0031251'
-FOR UPDATE;
