@@ -11,6 +11,7 @@ BEGIN
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
+    SISTEMA.excecaoInterna(pr_compleme => 'INC0141938');
     raise_application_error(-20500, SQLERRM);
   
 END;
