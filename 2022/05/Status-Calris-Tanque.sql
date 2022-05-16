@@ -13,3 +13,4 @@ VALUES
 INSERT INTO tbgen_dominio_campo (NMDOMINIO, CDDOMINIO, DSCODIGO)
 VALUES
 ('CALRIS_STATUS_TANQUE', 16, 'Lista reputacional com erro');
+COMMIT;
