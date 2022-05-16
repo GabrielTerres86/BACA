@@ -1,9 +1,9 @@
 BEGIN
 
   UPDATE crapsab sab
-     SET sab.cdtpinsc = 1 /* Pessoa Fisica */
+     SET sab.cdtpinsc = 1
    WHERE sab.cdcooper = 7
-     AND sab.cdtpinsc = 2 /* Pessoa Juridica */
+     AND sab.cdtpinsc = 2
      AND sab.nrdconta = 161187     
      AND sab.nrinssac = 92888569000;
   COMMIT;
