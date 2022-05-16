@@ -1,7 +1,7 @@
 BEGIN
 
   UPDATE crapsab sab
-     SET sab.cdtpinsc = 1 
+     SET sab.cdtpinsc = 1, sab.nrinssac = 92888569000
    WHERE sab.cdcooper = 7
      AND sab.cdtpinsc = 2 
      AND sab.nrdconta = 161187     
