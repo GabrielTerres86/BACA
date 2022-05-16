@@ -14,11 +14,10 @@ INSERT INTO cecred.crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) va
 UPDATE cecred.craptel
 SET CDOPPTEL = 'C,A,E,B,G', LSOPPTEL = 'CONSULTAR,ALTERAR,EXCLUIR,BLOQUEAR,CAUTELAR'
 WHERE nmdatela = 'CADFRA';
+
+INSERT INTO cecred.crapace (nmdatela, cddopcao, cdoperad, nmrotina, cdcooper, nrmodulo, idevento, idambace) values ('CADFRA', 'G', 'F0031251','', '3', '1', '1','2');
+
 commit;
 end;
 /
-SELECT *
-FROM crapace a
-WHERE a.nmdatela = 'CADFRA'
-AND a.cdoperad = 'F0031251'
-FOR UPDATE;
+
