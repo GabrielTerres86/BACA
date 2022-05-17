@@ -12,7 +12,8 @@ declare
 
   
   cursor cr_crappep (pr_cdcooper in crappep.cdcooper%type) is
-  select pep.DTVENCTO, pep.cdcooper, pep.nrdconta, pep.NRCTREMP, pep.vlsdvpar , pep.INLIQUID, pep.NRPAREPR
+  select pep.DTVENCTO, pep.cdcooper, pep.nrdconta, pep.NRCTREMP, pep.vlsdvpar, epr.VLPAPGAT, 
+         pep.INLIQUID INLIQUIDPAR, pep.NRPAREPR, epr.INLIQUID INLIQUIDERP
     from cecred.crapepr epr, cecred.crappep pep
    where epr.cdcooper = pep.CDCOOPER
      and epr.nrdconta = pep.NRDCONTA
@@ -35,10 +36,10 @@ begin
     vr_nmarq_carga    := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo;  
   END IF;  
   
-  GENE0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_carga
+  cecred.GENE0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_carga
                           ,pr_tipabert => 'W'
                           ,pr_utlfileh => vr_handle_log
-                          ,pr_des_erro => vr_dscritic);    
+                          ,pr_des_erro => vr_dscritic);      
                           
  for rw_crapcop in (select CDCOOPER from crapcop where flgativo = 1 order by cdcooper) LOOP
   
@@ -50,17 +51,38 @@ begin
        where cdcooper = rw_crappep.cdcooper
          and nrdconta = rw_crappep.nrdconta
          and NRCTREMP = rw_crappep.NRCTREMP
-         and NRPAREPR = rw_crappep.nrparepr;
+         and NRPAREPR = rw_crappep.nrparepr
+         and INLIQUID = 1;
 
     vr_update := 'UPDATE CECRED.crappep SET vlsdvpar = ' || trim(to_char(rw_crappep.vlsdvpar,'999999990.00')) ||
                                     ' WHERE cdcooper = ' || rw_crappep.CDCOOPER ||
                                       ' AND nrdconta = ' || rw_crappep.nrdconta || 
                                       ' AND NRCTREMP = ' || rw_crappep.nrctremp || 
                                       ' AND NRPAREPR = ' || rw_crappep.nrparepr || ';';
+                                      
+    cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
+                                  ,pr_des_text => vr_update);
+                                                                        
+    if rw_crappep.inliquiderp = 1 and rw_crappep.VLPAPGAT > 0 THEN
+      UPDATE CECRED.crapepr 
+         SET VLPAPGAT = 0 
+       where cdcooper = rw_crappep.cdcooper
+         and nrdconta = rw_crappep.nrdconta
+         and NRCTREMP = rw_crappep.NRCTREMP
+         and INLIQUID = 1;
+    
+
+      vr_update := 'UPDATE CECRED.crapepr SET VLPAPGAT = ' || trim(to_char(rw_crappep.VLPAPGAT,'999999990.00')) ||
+                                      ' WHERE cdcooper = ' || rw_crappep.CDCOOPER ||
+                                        ' AND nrdconta = ' || rw_crappep.nrdconta || 
+                                        ' AND NRCTREMP = ' || rw_crappep.nrctremp || ';';
+                                      
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
+                                    ,pr_des_text => vr_update);
+    END IF;                                            
                                   
     
-    gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
-                                  ,pr_des_text => vr_update);
+
                                   
     if vr_contador >= 500 then
       commit;
@@ -70,9 +92,9 @@ begin
     end loop;
   end loop; 
   commit;
-  gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);
+  cecred.gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);
   EXCEPTION
     WHEN OTHERS THEN
     ROLLBACK;   
-    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log); 
+    cecred.gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log); 
  end;
