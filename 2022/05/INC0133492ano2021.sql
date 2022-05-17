@@ -41,7 +41,7 @@ begin
                           ,pr_utlfileh => vr_handle_log
                           ,pr_des_erro => vr_dscritic);      
                           
- for rw_crapcop in (select CDCOOPER from crapcop where flgativo = 1 order by cdcooper) LOOP
+ for rw_crapcop in (select CDCOOPER from cecred.crapcop where flgativo = 1 order by cdcooper) LOOP
   
   FOR rw_crappep IN cr_crappep(pr_cdcooper => rw_crapcop.CDCOOPER) LOOP
     vr_contador := vr_contador +1;  
