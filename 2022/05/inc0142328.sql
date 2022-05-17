@@ -1,8 +1,8 @@
 BEGIN
 
-  UPDATE tbcobran_devolucao dev
+  UPDATE cecred.tbcobran_devolucao dev
      SET dtmvtolt = TO_DATE('17/05/2022', 'DD/MM/YYYY')
-   WHERE dtmvtolt = '13/05/2022'
+   WHERE dtmvtolt = TO_DATE('13/05/2022', 'DD/MM/YYYY')
      AND cdcooper IN (7, 9, 1);
 
   IF SQL%ROWCOUNT = 7 THEN
