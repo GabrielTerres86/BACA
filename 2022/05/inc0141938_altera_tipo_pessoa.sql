@@ -1,6 +1,6 @@
 BEGIN
 
-  UPDATE crapsab sab
+  UPDATE cecred.crapsab sab
      SET sab.cdtpinsc = 1
    WHERE sab.cdcooper = 7
      AND sab.cdtpinsc = 2
