@@ -141,6 +141,43 @@ and	a.nrdconta	= pr_nrdconta
 and	a.cdcooper	= pr_cdcooper
 and	a.nrctremp	= pr_nrctremp;
 
+cursor	c05 is
+select	a.rowid as nr_linha_crawseg,
+	a.tpcustei,
+	a.nrdconta,
+	a.nrctrato
+from	cecred.crawepr f,
+	cecred.crapseg d,
+	cecred.craplcr c,
+	cecred.crapepr b,
+	cecred.crawseg a
+where	not exists
+	(select	1
+	from	cecred.crapseg x
+	where	x.cdsitseg	<> 2
+	and	x.nrctrseg	= a.nrctrseg
+	and	x.nrdconta	= a.nrdconta
+	and	x.cdcooper	= a.cdcooper)
+and	f.CDORIGEM	in (1,5)
+and	a.CDCOOPER	= f.CDCOOPER
+and	a.NRDCONTA	= f.NRDCONTA
+and	a.NRCTRATO	= f.NRCTREMP
+and	d.CDSITSEG	= 2
+and	d.tpseguro	= 4
+and	a.CDCOOPER	= d.CDCOOPER
+and	a.NRDCONTA	= d.NRDCONTA
+and	a.NRCTRSEG	= d.NRCTRSEG
+and	c.TPCUSPR	= 0
+and	b.CDCOOPER	= c.CDCOOPER
+and	b.CDLCREMP	= c.CDLCREMP
+and	b.INLIQUID	<> 1
+and	a.NRCTRATO	= b.NRCTREMP
+and	a.CDCOOPER	= b.CDCOOPER
+and	a.NRDCONTA	= b.NRDCONTA
+and	a.tpcustei	= 1
+and	a.DTMVTOLT	between to_date('10/05/2022','dd/mm/yyyy') and to_date('12/05/2022 23:59:59','dd/mm/yyyy hh24:mi:ss')
+and	a.cdcooper	in (9,13);
+
 procedure valida_diretorio_p(	ds_nome_diretorio_p	in	varchar2,
 				ds_critica_p		out	cecred.crapcri.dscritic%TYPE) is
 
@@ -356,12 +393,12 @@ for	r01 in c01 loop
 					a.dtprideb	= r01.dtmvtolt
 				where	a.rowid		= r02.nr_linha_crawseg;
 
-				gene0002.pc_escreve_xml(ds_dados_rollback_v,
+				cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v,
 							ds_texto_rollback_v,
 							'delete	from cecred.crawseg a ' || chr(13) ||
 							'where	a.rowid	= ' || chr(39) || r02.nr_linha_crawseg || chr(39) || ';' || chr(13) || chr(13), false);
 
-				gene0002.pc_escreve_xml(ds_dados_rollback_v,
+				cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v,
 							ds_texto_rollback_v,
 							'update	tbseg_nrproposta a ' || chr(13) ||
 							'set	a.dhseguro = null ' || chr(13) ||
@@ -393,7 +430,7 @@ for	r01 in c01 loop
 					a.dtinsori	= r01.dtmvtolt
 				where	a.rowid		= r03.nr_linha_crapseg;
 
-				gene0002.pc_escreve_xml(ds_dados_rollback_v,
+				cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v,
 							ds_texto_rollback_v,
 							'delete	from cecred.crapseg a ' || chr(13) ||
 							'where	a.rowid	= ' || chr(39) || r03.nr_linha_crapseg || chr(39) || ';' || chr(13) || chr(13), false);
@@ -421,7 +458,7 @@ for	r01 in c01 loop
 					a.dtdenvio	= r01.dtmvtolt
 				where	a.rowid		= r04.nr_linha_tbseg;
 
-				gene0002.pc_escreve_xml(ds_dados_rollback_v,
+				cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v,
 							ds_texto_rollback_v,
 							'delete	from cecred.tbseg_prestamista a ' || chr(13) ||
 							'where	a.rowid	= ' || chr(39) || r04.nr_linha_tbseg || chr(39) || ';' || chr(13) || chr(13), false);
@@ -492,6 +529,98 @@ for	r01 in c01 loop
 					'LOG: erro de sistema ao atualizar registro:' || chr(13) ||
 					'Conta: ' || r01.nrdconta || chr(13) ||
 					'Contrato: ' || r01.nrctremp || chr(13) ||
+					'Erro: ' || sqlerrm || chr(13) || chr(13), false);
+
+		exit;
+
+	end;
+
+end loop;
+
+for	r05 in c05 loop
+
+	begin
+
+	if	(qt_reg_arquivo	>= 50000) then
+
+		qt_reg_arquivo	:= 0;
+
+		dbms_lob.createtemporary(ds_dados_rollback_v, true, dbms_lob.CALL);
+		dbms_lob.open(ds_dados_rollback_v, dbms_lob.lob_readwrite);
+		cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'LOGS E ROLLBACK ' || chr(13) || chr(13), false);
+		cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'begin ' || chr(13) || chr(13), false);  
+		nm_arquivo_rollback_v	:= 'ROLLBACK_INC0130632_' || nr_arquivo || '.sql';
+
+		nr_arquivo	:= nr_arquivo + 1;
+
+	end if;
+
+	qt_reg_commit		:= qt_reg_commit + 1;
+	qt_reg_arquivo		:= qt_reg_arquivo + 1;
+
+	update	cecred.crawseg a
+	set	a.tpcustei	= 0
+	where	a.rowid		= r05.nr_linha_crawseg;
+
+	cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v,
+				ds_texto_rollback_v,
+				'update	crawseg a ' || chr(13) ||
+				'set	a.tpcustei = ' || replace(nvl(trim(to_char(r05.tpcustei)),'null'),',','.') || chr(13) ||
+				'where	a.rowid = ' || chr(39) || r05.nr_linha_crawseg || chr(39) || ';' || chr(13) || chr(13), false);
+
+	if	(qt_reg_commit	>= 10000) then
+
+		cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'commit;' || chr(13) || chr(13), FALSE);
+
+		qt_reg_commit	:= 0;
+
+	end if;
+
+	if	(qt_reg_arquivo	>= 50000) then
+
+		cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'end;'||chr(13), FALSE);
+		cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, chr(13), TRUE);
+
+		cecred.gene0002.pc_solicita_relato_arquivo(	pr_cdcooper	=> cd_cooperativa_v,
+								pr_cdprogra	=> 'ATENDA',
+								pr_dtmvtolt	=> trunc(sysdate),
+								pr_dsxml	=> ds_dados_rollback_v,
+								pr_dsarqsaid	=> ds_nome_diretorio_v || '/' || nm_arquivo_rollback_v,
+								pr_flg_impri	=> 'N',
+								pr_flg_gerar	=> 'S',
+								pr_flgremarq	=> 'N',
+								pr_nrcopias	=> 1,
+								pr_des_erro	=> ds_critica_rollback_v);
+
+		if	(trim(ds_critica_rollback_v) is not null) then
+
+			raise	ds_erro_registro_v;
+
+		end if;
+
+		dbms_lob.close(ds_dados_rollback_v);
+		dbms_lob.freetemporary(ds_dados_rollback_v);
+
+	end if;
+
+	exception
+	when	ds_erro_registro_v then
+
+		cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v,
+					ds_texto_rollback_v,
+					'LOG: falha mapeada ao atualizar tpcustei:' || chr(13) ||
+					'Conta: ' || r05.nrdconta || chr(13) ||
+					'Contrato: ' || r05.nrctrato || chr(13) ||
+					'Crítica: ' || ds_critica_rollback_v || chr(13) || chr(13), false);
+	when	others then
+
+		rollback;
+
+		cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v,
+					ds_texto_rollback_v,
+					'LOG: erro de sistema ao atualizar tpcustei:' || chr(13) ||
+					'Conta: ' || r05.nrdconta || chr(13) ||
+					'Contrato: ' || r05.nrctrato || chr(13) ||
 					'Erro: ' || sqlerrm || chr(13) || chr(13), false);
 
 		exit;
