@@ -13,7 +13,7 @@ DECLARE
       , t.vldrendi##4
       , t.dsjusren
       , t.idseqttl
-    FROM CRAPTTL t
+    FROM CECRED.CRAPTTL t
     WHERE t.nrdconta = pr_nrdconta
       AND t.cdcooper = 1
       AND t.nrcpfcgc = pr_nrcpfcgc;
@@ -22,7 +22,7 @@ DECLARE
 
   CURSOR cr_crapdat IS
     SELECT d.dtmvtolt
-    FROM crapdat d
+    FROM CECRED.crapdat d
     WHERE d.cdcooper = 1;
     
   vr_dtmvtolt CECRED.crapdat.DTMVTOLT%TYPE;
@@ -31,7 +31,7 @@ DECLARE
                     , pr_nrdconta IN CECRED.crapalt.NRDCONTA%TYPE
                     , pr_dtmvtolt IN CECRED.crapalt.DTALTERA%TYPE ) IS
     SELECT a.dsaltera
-    FROM crapalt a
+    FROM CECRED.crapalt a
     WHERE a.cdcooper = pr_cdcooper
       AND a.nrdconta = pr_nrdconta
       AND a.dtaltera = pr_dtmvtolt;
@@ -51,6 +51,7 @@ DECLARE
   TYPE           TP_ALT IS ARRAY(4) OF VARCHAR2(50);
   vt_msgalt      TP_ALT;
   vr_msgalt      VARCHAR2(150);
+  vr_contador    PLS_INTEGER := 0;
   
   vr_nrdrowid    ROWID;
   
@@ -5121,6 +5122,7 @@ BEGIN
   vr_conta.nrdconta := 14005328;  vr_conta.nrcpfcgc := 11800701942; vr_conta.vldrendi := 1010; vt_contas.EXTEND(1); vt_contas(5057) := vr_conta;
   vr_conta.nrdconta := 14302900;  vr_conta.nrcpfcgc := 62769073915; vr_conta.vldrendi := 4000; vt_contas.EXTEND(1); vt_contas(5058) := vr_conta;
   
+  vr_contador := 0;
   
   vt_msgalt    := TP_ALT();
   vt_msgalt.EXTEND(1);
@@ -5333,9 +5335,18 @@ BEGIN
       
     END IF;
     
-    COMMIT;
+    vr_contador := vr_contador + 1;
+    
+    IF vr_contador >= 500 THEN
+      
+      COMMIT;
+      vr_contador := 0;
+      
+    END IF;
     
   END LOOP;
+  
+  COMMIT;
   
   
 EXCEPTION
