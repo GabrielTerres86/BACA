@@ -10,4 +10,5 @@ begin
 exception
   when others then
     rollback;
+    raise_application_error(-20500, SQLERRM);
 end;
