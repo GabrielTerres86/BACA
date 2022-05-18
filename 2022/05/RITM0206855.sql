@@ -1,6 +1,6 @@
 BEGIN
   
-  INSERT INTO tbgen_chaves_crypto(cdacesso
+  INSERT INTO cecred.tbgen_chaves_crypto(cdacesso
                                  ,dtinicio_vigencia
                                  ,dschave_crypto
                                  ,dsserie_chave)
@@ -33,7 +33,7 @@ BEGIN
                                   'dEeQAh0AymQkWV/7M3Uinqel6y+2bs//40hbDp7HPrqdR+yr49/KIDs='
                                  ,'334E8852BF0D9DE4');
 
-  INSERT INTO tbgen_chaves_crypto(cdacesso
+  INSERT INTO cecred.tbgen_chaves_crypto(cdacesso
                                  ,dtinicio_vigencia
                                  ,dschave_crypto
                                  ,dsserie_chave)
