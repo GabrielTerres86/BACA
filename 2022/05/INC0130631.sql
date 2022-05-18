@@ -2,13 +2,11 @@ DECLARE
   vr_ind_arq    utl_file.file_type;
   vr_linha      VARCHAR2(32767);
   vr_dscritic   VARCHAR2(2000);
-  --vr_nmdir      VARCHAR2(4000) := cecred.gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS')||'cpd/bacas/INC0130631';
   vr_nmdir      VARCHAR2(4000) := '/usr/cooptst/cecred/INC0130631';
   vr_nmarq      VARCHAR2(100)  := 'ROLLBACK_INC0130631.sql';
   vr_exc_saida  EXCEPTION;
   vcount        NUMBER	:= 1;
 
-  -- 172489
   CURSOR cr_crawseg(pr_cdcooper cecred.tbseg_prestamista.cdcooper%TYPE) IS
     SELECT w.dtfimvig,
            p.dtfimvig as dtfim_prestamista,
@@ -25,7 +23,6 @@ DECLARE
        AND w.dtfimvig IS NULL
        AND p.tpregist IN (1,3);
 
-  -- 142930
   CURSOR cr_crapseg(pr_cdcooper cecred.tbseg_prestamista.cdcooper%TYPE) IS
     SELECT w.dtfimvig,
            p.dtfimvig as dtfim_prestamista,
