@@ -2,13 +2,12 @@ BEGIN
   DECLARE
     CURSOR cr_crapcop IS
       SELECT c.cdcooper 
-      FROM CRAPCOP c
-      WHERE
-           c.flgativo = 1;
+        FROM cecred.CRAPCOP c
+       WHERE c.flgativo = 1;
     rw_crapcop cr_crapcop%ROWTYPE;
   
-    CURSOR cr_consig_movimento (pr_dtmovimento tbepr_consig_parcelas_tmp.dtmovimento%TYPE, 
-                                pr_cdcooper crappep.cdcooper%TYPE) IS
+    CURSOR cr_consig_movimento (pr_dtmovimento cecred.tbepr_consig_parcelas_tmp.dtmovimento%TYPE, 
+                                pr_cdcooper cecred.crappep.cdcooper%TYPE) IS
       SELECT tcm.cdcooper,
              tcm.nrdconta,
              tcm.nrctremp,
@@ -46,9 +45,9 @@ BEGIN
              tcm.dsmotivo,
              tcm.idintegracao,
              epr.inliquid
-        FROM tbepr_consig_movimento_tmp tcm,
-             crapepr epr,
-             tbcadast_empresa_consig tec
+        FROM cecred.tbepr_consig_movimento_tmp tcm,
+             cecred.crapepr epr,
+             cecred.tbcadast_empresa_consig tec
        WHERE tcm.cdcooper    = epr.cdcooper
          AND tcm.nrdconta    = epr.nrdconta
          AND tcm.nrctremp    = epr.nrctremp 
@@ -58,7 +57,7 @@ BEGIN
          AND tcm.cdcooper    = pr_cdcooper
          AND tcm.intplancamento not in (1,8)
          AND exists (SELECT 1
-                       FROM tbepr_consig_contrato_tmp tcc
+                       FROM cecred.tbepr_consig_contrato_tmp tcc
                       WHERE tcc.cdcooper    = pr_cdcooper
                         AND (tcc.dtmovimento = pr_dtmovimento OR tcc.instatuscontr = 2)
                         AND tcc.nrdconta = tcm.nrdconta
@@ -86,13 +85,13 @@ BEGIN
              tcm.nrctremp,
              tcm.nrparcela;
 
-    CURSOR cr_vecto_parc (pr_cdcooper IN crappep.cdcooper%TYPE,
-                          pr_nrdconta IN crappep.nrdconta%TYPE,
-                          pr_nrctremp IN crappep.nrctremp%TYPE,
-                          pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,
-                          pr_dtmvtoan IN crapdat.dtmvtoan%TYPE) IS
+    CURSOR cr_vecto_parc (pr_cdcooper IN cecred.crappep.cdcooper%TYPE,
+                          pr_nrdconta IN cecred.crappep.nrdconta%TYPE,
+                          pr_nrctremp IN cecred.crappep.nrctremp%TYPE,
+                          pr_dtmvtolt IN cecred.crapdat.dtmvtolt%TYPE,
+                          pr_dtmvtoan IN cecred.crapdat.dtmvtoan%TYPE) IS
     SELECT 'S' vr_existe
-      FROM crappep pep
+      FROM cecred.crappep pep
      WHERE pep.cdcooper = pr_cdcooper
        AND pep.nrdconta = pr_nrdconta
        AND pep.nrctremp = pr_nrctremp
@@ -102,12 +101,12 @@ BEGIN
 
     rw_vecto_parc  cr_vecto_parc%ROWTYPE;
 
-    CURSOR cr_craplcrepr (pr_cdcooper IN crapepr.cdcooper%TYPE,
-                          pr_nrdconta IN crapepr.nrdconta%TYPE,
-                          pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+    CURSOR cr_craplcrepr (pr_cdcooper IN cecred.crapepr.cdcooper%TYPE,
+                          pr_nrdconta IN cecred.crapepr.nrdconta%TYPE,
+                          pr_nrctremp IN cecred.crapepr.nrctremp%TYPE) IS
     SELECT lcr.dsoperac
       FROM craplcr lcr,
-           crapepr epr
+           cecred.crapepr epr
      WHERE epr.cdcooper = lcr.cdcooper
        AND epr.cdlcremp = lcr.cdlcremp
        AND epr.cdcooper = pr_cdcooper
@@ -116,34 +115,34 @@ BEGIN
 
     rw_craplcrepr cr_craplcrepr%ROWTYPE;
 
-    CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE,
-                       pr_nrdconta IN crapass.nrdconta%TYPE) IS
+    CURSOR cr_crapass (pr_cdcooper IN cecred.crapass.cdcooper%TYPE,
+                       pr_nrdconta IN cecred.crapass.nrdconta%TYPE) IS
      SELECT ass.cdagenci
-       FROM crapass ass
+       FROM cecred.crapass ass
       WHERE ass.cdcooper = pr_cdcooper
         AND ass.nrdconta = pr_nrdconta;
 
     rw_crapass cr_crapass%ROWTYPE;
 
 
-    CURSOR cr_consignado_pagto (pr_cdcooper IN tbepr_consignado_pagamento.cdcooper%TYPE,
-                                pr_nrdconta IN tbepr_consignado_pagamento.nrdconta%TYPE,
-                                pr_nrctremp IN tbepr_consignado_pagamento.nrctremp%TYPE,
-                                pr_nrparepr IN tbepr_consignado_pagamento.nrparepr%TYPE,
-                                pr_dtmvtolt IN tbepr_consignado_pagamento.dtmvtolt%TYPE,
+    CURSOR cr_consignado_pagto (pr_cdcooper IN cecred.tbepr_consignado_pagamento.cdcooper%TYPE,
+                                pr_nrdconta IN cecred.tbepr_consignado_pagamento.nrdconta%TYPE,
+                                pr_nrctremp IN cecred.tbepr_consignado_pagamento.nrctremp%TYPE,
+                                pr_nrparepr IN cecred.tbepr_consignado_pagamento.nrparepr%TYPE,
+                                pr_dtmvtolt IN cecred.tbepr_consignado_pagamento.dtmvtolt%TYPE,
                                 pr_dsmotivo IN VARCHAR2,
-                                pr_idintegracao IN tbepr_consignado_pagamento.Idintegracao%TYPE) IS
+                                pr_idintegracao IN cecred.tbepr_consignado_pagamento.Idintegracao%TYPE) IS
     
        
     SELECT 1 vr_existe
-      FROM tbepr_consignado_pagamento tcp
+      FROM cecred.tbepr_consignado_pagamento tcp
      WHERE tcp.cdcooper = pr_cdcooper
        AND tcp.nrdconta = pr_nrdconta
        AND tcp.nrctremp = pr_nrctremp
        AND tcp.nrparepr = pr_nrparepr
        AND ((nvl(pr_dsmotivo,'M') = 'REENVIARPAGTO'
              AND tcp.idsequencia =(SELECT max(consig_pgto.idsequencia)                
-                                     FROM tbepr_consignado_pagamento consig_pgto
+                                     FROM cecred.tbepr_consignado_pagamento consig_pgto
                                     WHERE consig_pgto.cdcooper     = tcp.cdcooper
                                       AND consig_pgto.nrdconta     = tcp.nrdconta
                                       AND consig_pgto.nrctremp     = tcp.nrctremp
@@ -158,13 +157,13 @@ BEGIN
      rw_consignado_pagto cr_consignado_pagto%ROWTYPE;
 
 
-    CURSOR cr_juros_rem (pr_cdcooper IN tbepr_consig_movimento_tmp.cdcooper%TYPE,
-                         pr_nrdconta IN tbepr_consig_movimento_tmp.nrdconta%TYPE,
-                         pr_nrctremp IN tbepr_consig_movimento_tmp.nrctremp%TYPE,
-                         pr_nrparepr IN tbepr_consig_movimento_tmp.nrparcela%TYPE,
-                         pr_dtmovimento in tbepr_consig_movimento_tmp.dtmovimento%TYPE) IS
+    CURSOR cr_juros_rem (pr_cdcooper IN cecred.tbepr_consig_movimento_tmp.cdcooper%TYPE,
+                         pr_nrdconta IN cecred.tbepr_consig_movimento_tmp.nrdconta%TYPE,
+                         pr_nrctremp IN cecred.tbepr_consig_movimento_tmp.nrctremp%TYPE,
+                         pr_nrparepr IN cecred.tbepr_consig_movimento_tmp.nrparcela%TYPE,
+                         pr_dtmovimento in cecred.tbepr_consig_movimento_tmp.dtmovimento%TYPE) IS
      SELECT NVL(SUM(nvl(tcm.vlsaldo,0)),0) vljurosrem
-       FROM tbepr_consig_movimento_tmp tcm
+       FROM cecred.tbepr_consig_movimento_tmp tcm
       WHERE tcm.cdcooper    = pr_cdcooper
         AND tcm.nrdconta    = pr_nrdconta
         AND tcm.nrctremp    = pr_nrctremp
@@ -173,57 +172,56 @@ BEGIN
         AND NVL(tcm.instatusproces,'W') <> 'P'
         AND tcm.intplancamento = 10; 
 
-    CURSOR cr_crapcot (pr_cdcooper IN crapcop.cdcooper%TYPE
-                       ,pr_nrdconta IN crapepr.nrdconta%TYPE) IS
+    CURSOR cr_crapcot (pr_cdcooper IN cecred.crapcop.cdcooper%TYPE
+                      ,pr_nrdconta IN cecred.crapepr.nrdconta%TYPE) IS
      SELECT crapcot.ROWID
-       FROM crapcot
+       FROM cecred.crapcot
       WHERE crapcot.cdcooper = pr_cdcooper
         AND crapcot.nrdconta = pr_nrdconta;
        rw_crapcot cr_crapcot%ROWTYPE;
 
-    CURSOR cr_crapmfx (pr_cdcooper IN crapmfx.cdcooper%TYPE
-                      ,pr_dtmvtolt IN crapmfx.dtmvtolt%TYPE
-                      ,pr_tpmoefix IN crapmfx.tpmoefix%TYPE) IS
+    CURSOR cr_crapmfx (pr_cdcooper IN cecred.crapmfx.cdcooper%TYPE
+                      ,pr_dtmvtolt IN cecred.crapmfx.dtmvtolt%TYPE
+                      ,pr_tpmoefix IN cecred.crapmfx.tpmoefix%TYPE) IS
      SELECT mfx.cdcooper,
             mfx.vlmoefix
-       FROM crapmfx mfx
+       FROM cecred.crapmfx mfx
       WHERE mfx.cdcooper = pr_cdcooper
         AND mfx.dtmvtolt = pr_dtmvtolt
         AND mfx.tpmoefix = pr_tpmoefix;
      rw_crapmfx cr_crapmfx%ROWTYPE;
  
 
-    CURSOR cr_maior_dtmvtolt_craplem(pr_cdcooper craplem.cdcooper%TYPE
-                     ,pr_nrdconta craplem.nrdconta%TYPE
-                     ,pr_nrctremp craplem.nrctremp%TYPE
-                     ) IS
+    CURSOR cr_maior_dtmvtolt_craplem(pr_cdcooper cecred.craplem.cdcooper%TYPE
+                                    ,pr_nrdconta cecred.craplem.nrdconta%TYPE
+                                    ,pr_nrctremp cecred.craplem.nrctremp%TYPE) IS
       select max(dtmvtolt) dtmvtolt
-        from craplem crapx
+        from cecred.craplem crapx
        where crapx.cdcooper = pr_cdcooper
          and crapx.nrdconta = pr_nrdconta
          and crapx.nrctremp = pr_nrctremp
          and crapx.cdhistor in (1038,1037);
 
 
-    CURSOR cr_contrato_liquidado(pr_cdcooper crappep.cdcooper%TYPE
-                     ,pr_nrdconta crappep.nrdconta%TYPE
-                     ,pr_nrctremp crappep.nrctremp%TYPE ) IS
+    CURSOR cr_contrato_liquidado(pr_cdcooper cecred.crappep.cdcooper%TYPE
+                                ,pr_nrdconta cecred.crappep.nrdconta%TYPE
+                                ,pr_nrctremp cecred.crappep.nrctremp%TYPE ) IS
 
       select nvl(max(0),1) inliquid
-        from crappep cpp
+        from cecred.crappep cpp
        where cpp.inliquid = 0 
          and cpp.cdcooper = pr_cdcooper
          and cpp.nrdconta = pr_nrdconta
          and cpp.nrctremp = pr_nrctremp;
 
-    vr_cdprogra        CONSTANT crapprg.cdprogra%TYPE:= 'CRPS782';
+    vr_cdprogra        CONSTANT cecred.crapprg.cdprogra%TYPE:= 'CRPS782';
 
     vr_cdcritic        INTEGER:= 0;
     vr_dscritic        VARCHAR2(4000);
 
     vr_exc_saida       EXCEPTION;
 
-    TYPE typ_tbepr_consig_parcelas_tmp IS TABLE OF tbepr_consig_parcelas_tmp%ROWTYPE INDEX BY VARCHAR2(40);
+    TYPE typ_tbepr_consig_parcelas_tmp IS TABLE OF cecred.tbepr_consig_parcelas_tmp%ROWTYPE INDEX BY VARCHAR2(40);
     vr_tab_parcelas      typ_tbepr_consig_parcelas_tmp;
 
     TYPE typ_tab_pagto IS TABLE OF NUMBER INDEX BY VARCHAR2(40);
@@ -239,34 +237,34 @@ BEGIN
     vr_tab_inorigem       typ_tab_inorigem;
     vr_index_inorigem     VARCHAR2(40);
 
-    pr_cdcritic           crapcri.cdcritic%TYPE;
+    pr_cdcritic           cecred.crapcri.cdcritic%TYPE;
     pr_dscritic           varchar2(250);
-    vr_dtmvtctr           tbepr_consig_contrato_tmp.dtmovimento%TYPE;
+    vr_dtmvtctr           cecred.tbepr_consig_contrato_tmp.dtmovimento%TYPE;
     vr_floperac           Boolean;
-    vr_cdhistor           craplem.cdhistor%TYPE;
-    vr_cdhistor_es        craplem.cdhistor%TYPE;
-    vr_cdhistorrem        craplem.cdhistor%TYPE;
-    vr_nrdolote           craplem.nrdolote%TYPE;
-    vr_cdoperad           crapope.cdoperad%TYPE:= '1';
-    vr_cdorigem           craplem.cdorigem%TYPE;
-    vr_jurosrem           craplem.vllanmto%TYPE;
-    vr_dtmvtolt           crapdat.dtmvtolt%TYPE;
-    vr_dtmvtoan           crapdat.dtmvtoan%TYPE;
-    vr_dtmvtopr           crapdat.dtmvtopr%TYPE;
-    vr_inproces           crapdat.inproces%TYPE;
-    vr_vlmovimento        craplem.vllanmto%TYPE;
+    vr_cdhistor           cecred.craplem.cdhistor%TYPE;
+    vr_cdhistor_es        cecred.craplem.cdhistor%TYPE;
+    vr_cdhistorrem        cecred.craplem.cdhistor%TYPE;
+    vr_nrdolote           cecred.craplem.nrdolote%TYPE;
+    vr_cdoperad           cecred.crapope.cdoperad%TYPE:= '1';
+    vr_cdorigem           cecred.craplem.cdorigem%TYPE;
+    vr_jurosrem           cecred.craplem.vllanmto%TYPE;
+    vr_dtmvtolt           cecred.crapdat.dtmvtolt%TYPE;
+    vr_dtmvtoan           cecred.crapdat.dtmvtoan%TYPE;
+    vr_dtmvtopr           cecred.crapdat.dtmvtopr%TYPE;
+    vr_inproces           cecred.crapdat.inproces%TYPE;
+    vr_vlmovimento        cecred.craplem.vllanmto%TYPE;
     vr_contrato_liquidado number(1);
-    vr_maior_dtmvtolt     craplem.dtmvtolt%type;
+    vr_maior_dtmvtolt     cecred.craplem.dtmvtolt%type;
 
-    FUNCTION fn_busca_hist_estorno (pr_cdcooper IN craphis.cdcooper%TYPE,
-                                    pr_cdhistor IN craphis.cdhistor%TYPE) RETURN NUMBER IS
+    FUNCTION fn_busca_hist_estorno (pr_cdcooper IN cecred.craphis.cdcooper%TYPE,
+                                    pr_cdhistor IN cecred.craphis.cdhistor%TYPE) RETURN NUMBER IS
       CURSOR cr_craphis IS
        SELECT cdhisest
-         FROM craphis
+         FROM cecred.craphis
         WHERE craphis.cdcooper = pr_cdcooper
           AND craphis.cdhistor = pr_cdhistor;
 
-      vr_cdhisest craphis.cdhisest%TYPE;
+      vr_cdhisest cecred.craphis.cdhisest%TYPE;
     BEGIN
       vr_cdhisest:= null;
       FOR rw_craphis IN cr_craphis
@@ -314,7 +312,7 @@ BEGIN
                                                 rw_consig_movimento.nrparcela||'/'||
                                                 rw_consig_movimento.intplancamento||')';
                                                 
-               btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+               cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                          ,pr_ind_tipo_log => 2
                                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                             || vr_cdprogra || ' >>> '
@@ -332,12 +330,12 @@ BEGIN
             IF cr_crapass%NOTFOUND THEN
                CLOSE cr_crapass;
                vr_cdcritic := 1042;
-               vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+               vr_dscritic:= cecred.gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
                vr_dscritic:= vr_dscritic||' ('||rw_consig_movimento.nrdconta||'/'||
                                                 rw_consig_movimento.nrctremp||'/'||
                                                 rw_consig_movimento.nrparcela||'/'||
                                                 rw_consig_movimento.intplancamento||')';
-               btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+               cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                          ,pr_ind_tipo_log => 2 
                                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                             || vr_cdprogra || ' >>> '
@@ -362,7 +360,7 @@ BEGIN
                                                 rw_consig_movimento.nrctremp||'/'||
                                                 rw_consig_movimento.nrparcela||'/'||
                                                 rw_consig_movimento.intplancamento||')';
-               btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+               cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                          ,pr_ind_tipo_log => 2 
                                          ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                             || vr_cdprogra || ' >>> '
@@ -473,7 +471,7 @@ BEGIN
                 END LOOP;
 
                 IF vr_jurosrem > 0 THEN
-                  empr0001.pc_cria_lancamento_lem(pr_cdcooper => rw_consig_movimento.cdcooper 
+                  cecred.empr0001.pc_cria_lancamento_lem(pr_cdcooper => rw_consig_movimento.cdcooper 
                                                   ,pr_dtmvtolt => vr_dtmvtolt 
                                                   ,pr_cdagenci => rw_crapass.cdagenci 
                                                   ,pr_cdbccxlt => 100 
@@ -502,7 +500,7 @@ BEGIN
                                                         rw_consig_movimento.nrctremp||'/'||
                                                         rw_consig_movimento.nrparcela||'/'||
                                                         rw_consig_movimento.intplancamento||')';
-                       btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+                       cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                                  ,pr_ind_tipo_log => 2 
                                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                                      || vr_cdprogra || ' >>> '
@@ -527,7 +525,7 @@ BEGIN
                         vr_maior_dtmvtolt := rw_maior_dtmvtolt_craplem.dtmvtolt;
                       END LOOP;
                       
-                      UPDATE crapepr epr
+                      UPDATE cecred.crapepr epr
                          SET epr.dtrefjur = vr_maior_dtmvtolt,
                              epr.inliquid = vr_contrato_liquidado                         
                        WHERE epr.cdcooper = rw_consig_movimento.cdcooper
@@ -543,7 +541,7 @@ BEGIN
                                                          rw_consig_movimento.nrctremp||'/'||
                                                          rw_consig_movimento.nrparcela||'/'||
                                                          rw_consig_movimento.intplancamento||')';
-                        btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+                        cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                                   ,pr_ind_tipo_log => 2 
                                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                                      || vr_cdprogra || ' >>> '
@@ -552,7 +550,7 @@ BEGIN
                     END;
 
                     BEGIN
-                      UPDATE tbepr_consig_movimento_tmp a
+                      UPDATE cecred.tbepr_consig_movimento_tmp a
                          SET a.instatusproces = 'P'
                        WHERE a.cdcooper  = rw_consig_movimento.cdcooper
                          AND a.nrdconta  = rw_consig_movimento.nrdconta
@@ -570,7 +568,7 @@ BEGIN
                                                          rw_consig_movimento.nrctremp||'/'||
                                                          rw_consig_movimento.nrparcela||'/'||
                                                          rw_consig_movimento.intplancamento||')';
-                        btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+                        cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                                   ,pr_ind_tipo_log => 2 
                                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                                       || vr_cdprogra || ' >>> '
@@ -590,7 +588,7 @@ BEGIN
                                                         rw_consig_movimento.nrctremp||'/'||
                                                         rw_consig_movimento.nrparcela||'/'||
                                                         rw_consig_movimento.intplancamento||')';
-                       btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+                       cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                                  ,pr_ind_tipo_log => 2 
                                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                                      || vr_cdprogra || ' >>> '
@@ -600,7 +598,7 @@ BEGIN
                      ELSE
                        CLOSE cr_crapcot;
                        BEGIN
-                         UPDATE crapcot cot
+                         UPDATE cecred.crapcot cot
                             SET cot.qtjurmfx = nvl(cot.qtjurmfx,0) +
                                                ROUND(vr_jurosrem / rw_crapmfx.vlmoefix,4)
                           WHERE cot.rowid = rw_crapcot.rowid;
@@ -614,7 +612,7 @@ BEGIN
                                                             rw_consig_movimento.nrctremp||'/'||
                                                             rw_consig_movimento.nrparcela||'/'||
                                                             rw_consig_movimento.intplancamento||')';
-                           btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+                           cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                                      ,pr_ind_tipo_log => 2 
                                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                                         || vr_cdprogra || ' >>> '
@@ -628,7 +626,7 @@ BEGIN
               IF rw_consig_movimento.inprejuz = 1 AND vr_cdhistor IS NOT NULL THEN
                  vr_cdhistor := NULL;
                  BEGIN
-                    UPDATE tbepr_consig_movimento_tmp a
+                    UPDATE cecred.tbepr_consig_movimento_tmp a
                        SET a.instatusproces = 'P'
                      WHERE a.cdcooper  = rw_consig_movimento.cdcooper
                        AND a.nrdconta  = rw_consig_movimento.nrdconta
@@ -646,7 +644,7 @@ BEGIN
                                                      rw_consig_movimento.nrctremp||'/'||
                                                      rw_consig_movimento.nrparcela||'/'||
                                                      rw_consig_movimento.intplancamento||')';
-                    btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+                    cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                               ,pr_ind_tipo_log => 2 
                                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                                   || vr_cdprogra || ' >>> '
@@ -692,7 +690,7 @@ BEGIN
                END IF;
                vr_tab_inorigem(vr_index_inorigem).inorigem := vr_cdorigem;
 
-               empr0001.pc_cria_lancamento_lem(pr_cdcooper => rw_consig_movimento.cdcooper 
+               cecred.empr0001.pc_cria_lancamento_lem(pr_cdcooper => rw_consig_movimento.cdcooper 
                                               ,pr_dtmvtolt => vr_dtmvtolt 
                                               ,pr_cdagenci => rw_crapass.cdagenci 
                                               ,pr_cdbccxlt => 100 
@@ -721,7 +719,7 @@ BEGIN
                                                    rw_consig_movimento.nrctremp||'/'||
                                                    rw_consig_movimento.nrparcela||'/'||
                                                    rw_consig_movimento.intplancamento||')';
-                  btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+                  cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                             ,pr_ind_tipo_log => 2 
                                             ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                                || vr_cdprogra || ' >>> '
@@ -730,7 +728,7 @@ BEGIN
                END IF;
 
                BEGIN
-                  UPDATE tbepr_consig_movimento_tmp a
+                  UPDATE cecred.tbepr_consig_movimento_tmp a
                      SET a.instatusproces = 'P'
                    WHERE a.cdcooper  = rw_consig_movimento.cdcooper
                      AND a.nrdconta  = rw_consig_movimento.nrdconta
@@ -748,7 +746,7 @@ BEGIN
                                                      rw_consig_movimento.nrctremp||'/'||
                                                      rw_consig_movimento.nrparcela||'/'||
                                                      rw_consig_movimento.intplancamento||')';
-                    btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+                    cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                               ,pr_ind_tipo_log => 2 
                                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                                   || vr_cdprogra || ' >>> '
@@ -760,9 +758,9 @@ BEGIN
        
       END LOOP;
    END IF; 
-
    commit;
-   
+   delete from cecred.craplem where rowid = 'ACS42rAIlAAC82vAAA';
+   commit;   
    Dbms_Output.put_line('SUCESSO.');
    EXCEPTION
     WHEN vr_exc_saida THEN
@@ -770,7 +768,7 @@ BEGIN
       Dbms_Output.put_line(TO_CHAR(NVL(vr_cdcritic,0)) || ' - ' || vr_dscritic);
 
       IF vr_dscritic IS NOT NULL THEN
-         btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
+         cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => rw_crapcop.cdcooper
                                    ,pr_ind_tipo_log => 2
                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' >>> '
@@ -787,4 +785,3 @@ BEGIN
                                                  ' pr_idparale: ' || 0);
   END;
 END; 
-/
