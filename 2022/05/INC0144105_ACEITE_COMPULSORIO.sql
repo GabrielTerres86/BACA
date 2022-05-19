@@ -1,6 +1,35 @@
 DECLARE
   CURSOR c_port_envia IS
-  SELECT *
+  SELECT t.cdcooper,
+         t.nrdconta,
+         t.nrsolicitacao,
+         t.dtsolicitacao,
+         t.nrcpfcgc,
+         t.nmprimtl,
+         t.nrddd_telefone,
+         t.nrtelefone,
+         t.dsdemail,
+         t.cdbanco_folha,
+         t.cdagencia_folha,
+         t.nrispb_banco_folha,
+         t.nrcnpj_banco_folha,
+         t.nrcnpj_empregador,
+         t.dsnome_empregador,
+         t.nrispb_destinataria,
+         t.nrcnpj_destinataria,
+         t.cdtipo_conta,
+         t.cdagencia,
+         t.idsituacao,
+         t.nrnu_portabilidade,
+         t.dtretorno,
+         t.dsdominio_motivo,
+         t.cdmotivo,
+         t.cdoperador,
+         t.nmarquivo_envia,
+         t.nmarquivo_retorno,
+         t.dtassina_eletronica,
+         t.idseqttl,
+         t.tppessoa_empregador
     FROM CECRED.TBCC_PORTABILIDADE_ENVIA T
    WHERE 1=1
      AND T.NRNU_PORTABILIDADE IN (202203280000226826054
@@ -13,7 +42,32 @@ DECLARE
                                  ,202203280000226870743);
                                  
   CURSOR c_port_recebe IS
-  SELECT *
+  SELECT t.nrnu_portabilidade,
+         t.cdcooper,
+         t.nrdconta,
+         t.nrcpfcgc,
+         t.nmprimtl,
+         t.dstelefone,
+         t.dsdemail,
+         t.nrispb_banco_folha,
+         t.nrcnpj_banco_folha,
+         t.nrcnpj_empregador,
+         t.dsnome_empregador,
+         t.nrispb_destinataria,
+         t.nrcnpj_destinataria,
+         t.cdtipo_cta_destinataria,
+         t.cdagencia_destinataria,
+         t.nrdconta_destinataria,
+         t.dtsolicitacao,
+         t.idsituacao,
+         t.dtavaliacao,
+         t.dtretorno,
+         t.dsdominio_motivo,
+         t.cdmotivo,
+         t.cdoperador,
+         t.nmarquivo_solicitacao,
+         t.nmarquivo_resposta,
+         t.tppessoa_empregador
     FROM CECRED.TBCC_PORTABILIDADE_RECEBE T
    WHERE 1=1
      AND T.NRNU_PORTABILIDADE IN (202203280000226826054
@@ -56,7 +110,7 @@ BEGIN
     vr_nrdrowid := null;
     vr_nrnu_portabilidade := r_port_envia.nrnu_portabilidade;
   
-    GENE0001.pc_gera_log(pr_cdcooper => r_port_envia.cdcooper,
+    CECRED.GENE0001.pc_gera_log(pr_cdcooper => r_port_envia.cdcooper,
                          pr_cdoperad => vr_cdoperad,
                          pr_dscritic => vr_dscritic,
                          pr_dsorigem => 'AIMARO',
@@ -69,32 +123,32 @@ BEGIN
                          pr_nrdconta => r_port_envia.nrdconta,
                          pr_nrdrowid => vr_nrdrowid);
 
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_envia.nrnu_portabilidade',
                               pr_dsdadant => r_port_envia.nrnu_portabilidade,
                               pr_dsdadatu => r_port_envia.nrnu_portabilidade);
 
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_envia.idsituacao',
                               pr_dsdadant => r_port_envia.idsituacao,
                               pr_dsdadatu => vc_idSituacaoEnvia);
 
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_envia.dsdominio_motivo',
                               pr_dsdadant => r_port_envia.dsdominio_motivo,
                               pr_dsdadatu => vc_dsmotivoaceite);
 
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_envia.cdmotivo',
                               pr_dsdadant => r_port_envia.cdmotivo,
                               pr_dsdadatu => vc_cdmotivo);
 
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_envia.dtretorno',
                               pr_dsdadant => r_port_envia.dtretorno,
                               pr_dsdadatu => to_char(vc_dtarquiv,'dd/mm/yyyy HH24:MI:SS'));
 
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_envia.nmarquivo_retorno',
                               pr_dsdadant => r_port_envia.nmarquivo_retorno,
                               pr_dsdadatu => vc_nmarquiv);
@@ -119,7 +173,7 @@ BEGIN
     vr_nrdrowid := null;
     vr_nrnu_portabilidade := r_port_recebe.nrnu_portabilidade;
   
-    GENE0001.pc_gera_log(pr_cdcooper => r_port_recebe.cdcooper,
+    CECRED.GENE0001.pc_gera_log(pr_cdcooper => r_port_recebe.cdcooper,
                          pr_cdoperad => vr_cdoperad,
                          pr_dscritic => vr_dscritic,
                          pr_dsorigem => 'AIMARO',
@@ -132,38 +186,38 @@ BEGIN
                          pr_nrdconta => r_port_recebe.nrdconta,
                          pr_nrdrowid => vr_nrdrowid);
 
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_recebe.nrnu_portabilidade',
                               pr_dsdadant => r_port_recebe.nrnu_portabilidade,
                               pr_dsdadatu => r_port_recebe.nrnu_portabilidade);
 
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_recebe.idsituacao',
                               pr_dsdadant => r_port_recebe.idsituacao,
                               pr_dsdadatu => vc_idSituacaoEnvia);
 
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_recebe.dsdominio_motivo',
                               pr_dsdadant => r_port_recebe.dsdominio_motivo,
                               pr_dsdadatu => vc_dsmotivoaceite);
 
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_recebe.cdmotivo',
                               pr_dsdadant => r_port_recebe.cdmotivo,
                               pr_dsdadatu => vc_cdmotivo);
 
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_recebe.dtavaliacao',
                               pr_dsdadant => r_port_recebe.dtavaliacao,
                               pr_dsdadatu => vc_dtaceite);
 
 
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_recebe.dtretorno',
                               pr_dsdadant => r_port_recebe.dtretorno,
                               pr_dsdadatu => to_char(vc_dtarquiv,'dd/mm/yyyy HH24:MI:SS'));
 
-    GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+    CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_recebe.nmarquivo_resposta',
                               pr_dsdadant => r_port_recebe.nmarquivo_resposta,
                               pr_dsdadatu => vc_nmarquiv);   
