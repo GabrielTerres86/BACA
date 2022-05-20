@@ -1,5 +1,3 @@
-DECLARE
-
 BEGIN
 
   INSERT INTO pagamento.tb_dominio_baixa_operacional
@@ -129,7 +127,9 @@ BEGIN
     ,'DDA');
 
   COMMIT;
+
 EXCEPTION
   WHEN OTHERS THEN
-    DBMS_OUTPUT.put_line('Erro scrpts dominios: '||sqlerrm);
+    SISTEMA.excecaoInterna(pr_compleme => 'PRJ0023522');
+    ROLLBACK;
 END;
