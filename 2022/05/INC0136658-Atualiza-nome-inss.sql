@@ -1,7 +1,7 @@
 BEGIN
   
   UPDATE CECRED.tbcadast_pessoa
-    SET nmpessoa = 'INSS - INSTITUTO NACIONAL DO SEGURO SOCIAL'
+    SET nmpessoa = 'INSS-INSTITUTO NACIONAL DO SEGURO SOCIAL'
   WHERE idpessoa = 6066;
   
   COMMIT;
