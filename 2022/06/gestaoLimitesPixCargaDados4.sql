@@ -1,49 +1,48 @@
 DECLARE
+	codigoMensagem tbgen_notif_msg_cadastro.cdmensagem%TYPE := 0;
 BEGIN
+	SELECT (max(cdmensagem) + 1) into codigoMensagem FROM tbgen_notif_msg_cadastro;  
+	INSERT INTO tbgen_notif_msg_cadastro (cdmensagem, cdorigem_mensagem, dstitulo_mensagem, dstexto_mensagem, dshtml_mensagem, cdicone, inexibir_banner, inexibe_botao_acao_mobile, dstexto_botao_acao_mobile, cdmenu_acao_mobile, dsmensagem_acao_mobile, inenviar_push) VALUES
+	(codigoMensagem, 13, 'Alteração de limites Pix', 'O ajuste de limite Pix que você solicitou foi realizado com sucesso.', '#nomeCooperado, <br><br>O ajuste de limite Pix que você solicitou foi realizado com sucesso. <br><br>Novos limites: <br><br>DIURNO <br>Período: R$#limiteDiurno <br>Transação: R$#limiteDiurnoPorTransacao <br><br>NOTURNO <br>Período: R$#limiteNoturno <br>Transação: R$#limiteNoturnoPorTransacao <br><br>Para mais informações sobre Limites Pix, acesse a seção de dúvidas.', 9, 0, 1, 'Tirar dúvidas!', 1042, 'Tirar dúvidas!', 1);
 
-	MERGE INTO PIX.TBPIX_LIMITE_COOPERADO t1
-	USING (
-		SELECT crapsnh.CDCOOPER, crapsnh.NRDCONTA, crapsnh.IDSEQTTL, crapsnh.VLLIMITE_PIX_COOPERADO, crapsnh.VLLIMITE_PIX, terminal.VLLIMITE_SAQUE
-		FROM crapsnh crapsnh
-		LEFT JOIN CECRED.TBTAA_LIMITES terminal ON crapsnh.CDCOOPER = terminal.CDCOOPER AND crapsnh.NRDCONTA = terminal.NRDCONTA
-		WHERE TPDSENHA = 1 AND CDSITSNH = 1
-	) t2
-	ON (t1.CDCOOPER = t2.CDCOOPER AND t1.NRDCONTA = t2.NRDCONTA AND t1.IDSEQTTL = t2.IDSEQTTL AND t1.IDTIPO_LIMITE = 2 AND t1.IDPERIODO = 1 AND t1.FLPOR_TRANSACAO = 0 AND t1.CDSITUACAO = 1)
-	WHEN NOT MATCHED THEN
-		INSERT (t1.CDCOOPER, t1.NRDCONTA, t1.IDSEQTTL, t1.IDTIPO_LIMITE, t1.IDPERIODO, t1.FLPOR_TRANSACAO, t1.DHREGISTRO, t1.DHEFETIVACAO, t1.CDSITUACAO, t1.VLLIMITE)
-		VALUES(t2.CDCOOPER, t2.NRDCONTA, t2.IDSEQTTL, 2, 1, 0, sysdate, sysdate, 1, (SELECT CASE WHEN COALESCE(t2.VLLIMITE_SAQUE,0) > 500 THEN 500 WHEN COALESCE(t2.VLLIMITE_SAQUE,0) < 100 THEN 100 ELSE COALESCE(t2.VLLIMITE_SAQUE,0) END FROM dual));
+ 	INSERT INTO tbgen_notif_automatica_prm (cdorigem_mensagem, cdmotivo_mensagem, dsmotivo_mensagem, cdmensagem, inmensagem_ativa, intipo_repeticao, dsvariaveis_mensagem) VALUES
+	(13, 44, 'PIX - Efetivação novos limites', codigoMensagem, 1, 0, '<br>#nomeCooperado - Nome do cooperado<br>#limiteDiurno - Valor do novo limite do período diurno (Ex.: 1000,00)<br>#limiteDiurnoPorTransacao - Valor do novo limite por transação do período diurno (Ex.: 1000,00)<br>#limiteNoturno - Valor do novo limite do período noturno (Ex.: 1000,00)<br>#limiteNoturnoPorTransacao - Valor do novo limite por transação do período noturno (Ex.: 1000,00)');
 
-	MERGE INTO PIX.TBPIX_LIMITE_COOPERADO t1
-	USING (
-		SELECT CDCOOPER, NRDCONTA, IDSEQTTL, IDTIPO_LIMITE, IDPERIODO, FLPOR_TRANSACAO, VLLIMITE
-		FROM PIX.TBPIX_LIMITE_COOPERADO
-		WHERE IDTIPO_LIMITE = 2 AND IDPERIODO = 1 AND FLPOR_TRANSACAO = 0 AND CDSITUACAO = 1
-	) t2
-	ON (t1.CDCOOPER = t2.CDCOOPER AND t1.NRDCONTA = t2.NRDCONTA AND t1.IDSEQTTL = t2.IDSEQTTL AND t1.IDTIPO_LIMITE = t2.IDTIPO_LIMITE AND t1.IDPERIODO = 1 AND t1.FLPOR_TRANSACAO = 1 AND t1.CDSITUACAO = 1)
-	WHEN NOT MATCHED THEN
-		INSERT (t1.CDCOOPER, t1.NRDCONTA, t1.IDSEQTTL, t1.IDTIPO_LIMITE, t1.IDPERIODO, t1.FLPOR_TRANSACAO, t1.DHREGISTRO, t1.DHEFETIVACAO, t1.CDSITUACAO, t1.VLLIMITE)
-		VALUES(t2.CDCOOPER, t2.NRDCONTA, t2.IDSEQTTL, t2.IDTIPO_LIMITE, 1, 1, sysdate, sysdate, 1, t2.VLLIMITE);	
-	
-	MERGE INTO PIX.TBPIX_LIMITE_COOPERADO t1
-	USING (
-		SELECT CDCOOPER, NRDCONTA, IDSEQTTL, IDTIPO_LIMITE, IDPERIODO, FLPOR_TRANSACAO, VLLIMITE
-		FROM PIX.TBPIX_LIMITE_COOPERADO
-		WHERE IDTIPO_LIMITE = 2 AND IDPERIODO = 1 AND FLPOR_TRANSACAO = 0 AND CDSITUACAO = 1
-	) t2
-	ON (t1.CDCOOPER = t2.CDCOOPER AND t1.NRDCONTA = t2.NRDCONTA AND t1.IDSEQTTL = t2.IDSEQTTL AND t1.IDTIPO_LIMITE = t2.IDTIPO_LIMITE AND t1.IDPERIODO = 2 AND t1.FLPOR_TRANSACAO = 0 AND t1.CDSITUACAO = 1)
-	WHEN NOT MATCHED THEN
-		INSERT (t1.CDCOOPER, t1.NRDCONTA, t1.IDSEQTTL, t1.IDTIPO_LIMITE, t1.IDPERIODO, t1.FLPOR_TRANSACAO, t1.DHREGISTRO, t1.DHEFETIVACAO, t1.CDSITUACAO, t1.VLLIMITE)
-		VALUES(t2.CDCOOPER, t2.NRDCONTA, t2.IDSEQTTL, t2.IDTIPO_LIMITE, 2, 0, sysdate, sysdate, 1, 100);	
-	
-	MERGE INTO PIX.TBPIX_LIMITE_COOPERADO t1
-	USING (
-		SELECT CDCOOPER, NRDCONTA, IDSEQTTL, IDTIPO_LIMITE, IDPERIODO, FLPOR_TRANSACAO, VLLIMITE
-		FROM PIX.TBPIX_LIMITE_COOPERADO
-		WHERE IDTIPO_LIMITE = 2 AND IDPERIODO = 1 AND FLPOR_TRANSACAO = 0 AND CDSITUACAO = 1
-	) t2
-	ON (t1.CDCOOPER = t2.CDCOOPER AND t1.NRDCONTA = t2.NRDCONTA AND t1.IDSEQTTL = t2.IDSEQTTL AND t1.IDTIPO_LIMITE = t2.IDTIPO_LIMITE AND t1.IDPERIODO = 2 AND t1.FLPOR_TRANSACAO = 1 AND t1.CDSITUACAO = 1)
-	WHEN NOT MATCHED THEN
-		INSERT (t1.CDCOOPER, t1.NRDCONTA, t1.IDSEQTTL, t1.IDTIPO_LIMITE, t1.IDPERIODO, t1.FLPOR_TRANSACAO, t1.DHREGISTRO, t1.DHEFETIVACAO, t1.CDSITUACAO, t1.VLLIMITE)
-		VALUES(t2.CDCOOPER, t2.NRDCONTA, t2.IDSEQTTL, t2.IDTIPO_LIMITE, 2, 1, sysdate, sysdate, 1, 100);
+	SELECT (max(cdmensagem) + 1) into codigoMensagem FROM tbgen_notif_msg_cadastro;  
+	INSERT INTO tbgen_notif_msg_cadastro (cdmensagem, cdorigem_mensagem, dstitulo_mensagem, dstexto_mensagem, dshtml_mensagem, cdicone, inexibir_banner, inexibe_botao_acao_mobile, dstexto_botao_acao_mobile, cdmenu_acao_mobile, dsmensagem_acao_mobile, inenviar_push) VALUES
+	(codigoMensagem, 13, 'Alteração de limites Pix Saque/Troco', 'O ajuste de limite Pix Saque e Pix Troco que você solicitou foi realizado com sucesso.', '#nomeCooperado, <br><br>O ajuste de limite Pix Saque e Pix Troco que você solicitou foi realizado com sucesso. <br><br>Novos limites: <br><br>DIURNO <br>Período: R$#limiteDiurno <br>Transação: R$#limiteDiurnoPorTransacao <br><br>NOTURNO <br>Período: R$#limiteNoturno <br>Transação: R$#limiteNoturnoPorTransacao <br><br>Para mais informações sobre Limites Pix, acesse a seção de dúvidas.', 9, 0, 1, 'Tirar dúvidas!', 1042, 'Tirar dúvidas!', 1);
+
+ 	INSERT INTO tbgen_notif_automatica_prm (cdorigem_mensagem, cdmotivo_mensagem, dsmotivo_mensagem, cdmensagem, inmensagem_ativa, intipo_repeticao, dsvariaveis_mensagem) VALUES
+	(13, 45, 'PIX - Efetivação novos limites Saque/Troco', codigoMensagem, 1, 0, '<br>#nomeCooperado - Nome do cooperado<br>#limiteDiurno - Valor do novo limite do período diurno (Ex.: 1000,00)<br>#limiteDiurnoPorTransacao - Valor do novo limite por transação do período diurno (Ex.: 1000,00)<br>#limiteNoturno - Valor do novo limite do período noturno (Ex.: 1000,00)<br>#limiteNoturnoPorTransacao - Valor do novo limite por transação do período noturno (Ex.: 1000,00)');
+
+	SELECT (max(cdmensagem) + 1) into codigoMensagem FROM tbgen_notif_msg_cadastro;  
+	INSERT INTO tbgen_notif_msg_cadastro (cdmensagem, cdorigem_mensagem, dstitulo_mensagem, dstexto_mensagem, dshtml_mensagem, cdicone, inexibir_banner, inexibe_botao_acao_mobile, dstexto_botao_acao_mobile, cdmenu_acao_mobile, dsmensagem_acao_mobile, inenviar_push) VALUES
+	(codigoMensagem, 13, 'Alteração de limites Pix de uma conta cadastrada', 'O ajuste de limite Pix que você solicitou foi realizado com sucesso.', '#nomeCooperado, <br><br>O ajuste de limite Pix que você solicitou foi realizado com sucesso. <br><br>Dados da Conta: <br><br>Nome: #nomeContaCadastrada <br>Banco: #bancoContaCadastrada <br>Agência: #agenciaContaCadastrada <br>Conta: #numeroContaCadastrada <br>Novos limites: <br><br>DIURNO <br>Período: R$#limiteDiurno <br>Transação: R$#limiteDiurnoPorTransacao <br><br>NOTURNO <br>Período: R$#limiteNoturno <br>Transação: R$#limiteNoturnoPorTransacao <br><br>Para mais informações sobre Limites Pix, acesse a seção de dúvidas.', 9, 0, 1, 'Tirar dúvidas!', 1042, 'Tirar dúvidas!', 1);
+
+ 	INSERT INTO tbgen_notif_automatica_prm (cdorigem_mensagem, cdmotivo_mensagem, dsmotivo_mensagem, cdmensagem, inmensagem_ativa, intipo_repeticao, dsvariaveis_mensagem) VALUES
+	(13, 46, 'PIX - Efetivação novos limites de uma conta cadastrada', codigoMensagem, 1, 0, '<br>#nomeCooperado - Nome do cooperado<br>#nomeContaCadastrada - Nome do beneficiario da conta cadastrada<br>#bancoContaCadastrada - Código e descrição do banco da conta cadastrada<br>#agenciaContaCadastrada - Agencia da conta cadastrada<br>#numeroContaCadastrada - Número da conta cadastrada<br>#limiteDiurno - Valor do novo limite do período diurno (Ex.: 1000,00)<br>#limiteDiurnoPorTransacao - Valor do novo limite por transação do período diurno (Ex.: 1000,00)<br>#limiteNoturno - Valor do novo limite do período noturno (Ex.: 1000,00)<br>#limiteNoturnoPorTransacao - Valor do novo limite por transação do período noturno (Ex.: 1000,00)');
+
+	SELECT (max(cdmensagem) + 1) into codigoMensagem FROM tbgen_notif_msg_cadastro;
+	INSERT INTO tbgen_notif_msg_cadastro (cdmensagem, cdorigem_mensagem, dstitulo_mensagem, dstexto_mensagem, dshtml_mensagem, cdicone, inexibir_banner, inexibe_botao_acao_mobile, dstexto_botao_acao_mobile, cdmenu_acao_mobile, dsmensagem_acao_mobile, inenviar_push) VALUES
+	(codigoMensagem, 13, 'Aumento de limite máximo do Pix', 'O aumento de limite máximo do Pix que você solicitou foi realizado com sucesso.', '#nomeCooperado, <br><br>O aumento de limite máximo do Pix que você solicitou foi realizado com sucesso. <br><br>Novo limite máximo: R$#novoLimite. <br><br>Para mais informações sobre Limites Pix, acesse a seção de dúvidas.', 9, 0, 1, 'Tirar dúvidas!', 1042, 'Tirar dúvidas!', 1);
+
+ 	INSERT INTO tbgen_notif_automatica_prm (cdorigem_mensagem, cdmotivo_mensagem, dsmotivo_mensagem, cdmensagem, inmensagem_ativa, intipo_repeticao, dsvariaveis_mensagem) VALUES
+	(13, 47, 'PIX - Efetivação novo limite total', codigoMensagem, 1, 0, '<br>#nomeCooperado - Nome do cooperado<br>#novoLimite - Valor do novo limite (Ex.: 5000,00)');
+
+	SELECT (max(cdmensagem) + 1) into codigoMensagem FROM tbgen_notif_msg_cadastro;  
+	INSERT INTO tbgen_notif_msg_cadastro (cdmensagem, cdorigem_mensagem, dstitulo_mensagem, dstexto_mensagem, dshtml_mensagem, cdicone, inexibir_banner, inexibe_botao_acao_mobile, dstexto_botao_acao_mobile, cdmenu_acao_mobile, dsmensagem_acao_mobile, inenviar_push) VALUES
+	(codigoMensagem, 13, 'Efetivação de uma conta cadastrada', 'O cadastro da conta que você solicitou foi realizado com sucesso.', '#nomeCooperado, <br><br>O cadastro da conta que você solicitou foi realizado com sucesso. Você já pode gerenciar de forma personalizada os limites Pix dessa conta. <br><br>Dados da Conta: <br><br>Nome: #nomeContaCadastrada <br>Banco: #bancoContaCadastrada <br>Agência: #agenciaContaCadastrada <br>Conta: #numeroContaCadastrada <br><br>Para mais informações sobre Limites Pix, acesse a seção de dúvidas.', 9, 0, 1, 'Tirar dúvidas!', 1042, 'Tirar dúvidas!', 1);
+
+ 	INSERT INTO tbgen_notif_automatica_prm (cdorigem_mensagem, cdmotivo_mensagem, dsmotivo_mensagem, cdmensagem, inmensagem_ativa, intipo_repeticao, dsvariaveis_mensagem) VALUES
+	(13, 48, 'PIX - Efetivação novos limites de uma conta cadastrada', codigoMensagem, 1, 0, '<br>#nomeCooperado - Nome do cooperado<br>#nomeContaCadastrada - Nome do beneficiario da conta cadastrada<br>#bancoContaCadastrada - Código e descrição do banco da conta cadastrada<br>#agenciaContaCadastrada - Agencia da conta cadastrada<br>#numeroContaCadastrada - Número da conta cadastrada');
+
+	SELECT (max(cdmensagem) + 1) into codigoMensagem FROM tbgen_notif_msg_cadastro;  
+	INSERT INTO tbgen_notif_msg_cadastro (cdmensagem, cdorigem_mensagem, dstitulo_mensagem, dstexto_mensagem, dshtml_mensagem, cdicone, inexibir_banner, inexibe_botao_acao_mobile, dstexto_botao_acao_mobile, cdmenu_acao_mobile, dsmensagem_acao_mobile, inenviar_push) VALUES
+	(codigoMensagem, 13, 'Efetivação de novo horário noturno', 'A alteração de horário do período noturno que você solicitou foi realizada com sucesso.', '#nomeCooperado, <br><br>A alteração de horário do período noturno que você solicitou foi realizada com sucesso. <br><br>Novo horário do período noturno: <br><br>Início: #horarioInicio <br>Fim: #horarioFim <br><br>Para mais informações sobre Limites Pix, acesse a seção de dúvidas.', 9, 0, 1, 'Tirar dúvidas!', 1042, 'Tirar dúvidas!', 1);
+
+ 	INSERT INTO tbgen_notif_automatica_prm (cdorigem_mensagem, cdmotivo_mensagem, dsmotivo_mensagem, cdmensagem, inmensagem_ativa, intipo_repeticao, dsvariaveis_mensagem) VALUES
+	(13, 49, 'PIX - Efetivação de novo horário noturno', codigoMensagem, 1, 0, '<br>#nomeCooperado - Nome do cooperado<br>#horarioInicio - Horário de inicio do periodo noturno. Ex: 21:00<br>#horarioFim - Horário de fim do periodo noturno Ex: 06:00');
+
 	commit;
+
 END;
