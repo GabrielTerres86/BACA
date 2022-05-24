@@ -1,20 +1,20 @@
 DECLARE
-  vr_cdcritic crapcri.cdcritic%TYPE;
+  vr_cdcritic cecred.crapcri.cdcritic%TYPE;
   vr_dscritic VARCHAR2(10000);
   vr_exc_saida EXCEPTION;
-  rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
+  rw_crapdat  cecred.BTCH0001.cr_crapdat%ROWTYPE;
   vr_des_reto VARCHAR(3);
-  vr_tab_erro GENE0001.typ_tab_erro;
-  vr_cdcooper crapcop.cdcooper%TYPE;
-  vr_nrdconta crapass.nrdconta%TYPE;
-  vr_nrctremp craplem.nrctremp%TYPE;
-  vr_vllanmto craplem.vllanmto%TYPE;
-  vr_cdhistor craplem.cdhistor%TYPE;
-  vr_nrparepr craplem.nrparepr%TYPE;
-  CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE,
-                    pr_nrdconta IN crapass.nrdconta%TYPE) IS
+  vr_tab_erro cecred.GENE0001.typ_tab_erro;
+  vr_cdcooper cecred.crapcop.cdcooper%TYPE;
+  vr_nrdconta cecred.crapass.nrdconta%TYPE;
+  vr_nrctremp cecred.craplem.nrctremp%TYPE;
+  vr_vllanmto cecred.craplem.vllanmto%TYPE;
+  vr_cdhistor cecred.craplem.cdhistor%TYPE;
+  vr_nrparepr cecred.craplem.nrparepr%TYPE;
+  CURSOR cr_crapass(pr_cdcooper IN cecred.crapass.cdcooper%TYPE,
+                    pr_nrdconta IN cecred.crapass.nrdconta%TYPE) IS
     SELECT ass.cdagenci
-      FROM crapass ass
+      FROM cecred.crapass ass
      WHERE ass.cdcooper = pr_cdcooper
        AND ass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%ROWTYPE;
@@ -47,7 +47,7 @@ BEGIN
   vr_vllanmto := TO_NUMBER(rw_lancamentos.vr_vllanmto);
   vr_cdhistor := TO_NUMBER(rw_lancamentos.vr_cdhistor);
   
-  OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+  OPEN cecred.btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
     FETCH btch0001.cr_crapdat
     INTO rw_crapdat;
   CLOSE btch0001.cr_crapdat;
@@ -57,7 +57,7 @@ BEGIN
     INTO rw_crapass;
   CLOSE cr_crapass;
   
-  EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
+  cecred.EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
                   pr_cdagenci => rw_crapass.cdagenci,
                   pr_cdbccxlt => 100,
