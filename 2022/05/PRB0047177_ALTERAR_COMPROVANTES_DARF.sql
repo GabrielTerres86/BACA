@@ -164,9 +164,9 @@ declare
             LFT.DTLIMITE,
             REG.DHRETORNO_PROCESSAMENTO,
             LFT.DTMVTOLT
-       FROM CRAPLFT LFT,
-            TBCONV_REGISTRO_REMESSA_PAGFOR REG,
-            CRAPPRO PRO
+       FROM CECRED.CRAPLFT LFT,
+            CECRED.TBCONV_REGISTRO_REMESSA_PAGFOR REG,
+            CECRED.CRAPPRO PRO
       WHERE lft.idsicred = pr_idsicredi
         AND pro.cdcooper = lft.cdcooper
         AND pro.nrdconta = lft.nrdconta
