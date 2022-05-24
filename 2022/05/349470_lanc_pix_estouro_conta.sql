@@ -123,26 +123,30 @@ DECLARE
     rw_ioflanc cr_ioflanc%ROWTYPE;
     
     
-    CURSOR cr_craplrt (pr_cdcooper IN craplrt.cdcooper%TYPE) IS
-     SELECT craplrt.ROWID
-           ,craplrt.cddlinha
-           ,craplrt.qtdiavig
-           ,craplrt.txmensal
-     FROM craplrt  craplrt
-     WHERE  craplrt.cdcooper = pr_cdcooper;
+    CURSOR cr_craplrt (pr_cdcooper IN craplrt.cdcooper%TYPE
+                      ,pr_nrdconta IN craplim.nrdconta%TYPE) IS
+     SELECT lrt.txmensal
+        FROM craplim lim
+            ,craplrt lrt
+       WHERE lim.cdcooper = lrt.cdcooper
+         AND lim.cddlinha = lrt.cddlinha
+         AND lim.cdcooper = pr_cdcooper
+         AND lim.nrdconta = pr_nrdconta
+         AND lim.tpctrlim = 1 
+         AND lim.insitlim = 2;
     rw_craplrt cr_craplrt%ROWTYPE;
 
 
     CURSOR cr_lanc_pix(pr_cdcooper IN tbgen_iof_lancamento.cdcooper%TYPE    
                       ,pr_nrdconta IN tbgen_iof_lancamento.nrdconta%TYPE) IS 
-      SELECT p.vllanmto
+      SELECT NVL(SUM(p.vllanmto),0) total_pix
         FROM craplcm p,
              craphis h
        WHERE p.cdcooper = h.cdcooper
          AND p.cdhistor = h.cdhistor
          AND p.cdcooper = pr_cdcooper
          AND p.nrdconta = pr_nrdconta
-         AND p.dtmvtolt = '27/04/2022'
+         AND p.dtmvtolt = to_date('27/04/2022', 'dd/mm/RRRR')
          AND p.cdhistor IN (3320,3371);
    rw_lanc_pix cr_lanc_pix%ROWTYPE;
  
@@ -303,13 +307,16 @@ BEGIN
                 vr_tab_carga_sda(vr_idx1).vladdutl7 := rw_crapsda.vladdutl;                   
              END LOOP;   
 
-             FOR rw_lanc_pix IN cr_lanc_pix(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper
-                                           ,pr_nrdconta => vr_tab_carga(vr_idx1).nrdconta) LOOP                
-                 vr_aux_pix_ttl := vr_aux_pix_ttl + NVL(rw_lanc_pix.vllanmto,0);
-             END LOOP;
+             
+             OPEN cr_lanc_pix(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper,
+                              pr_nrdconta => vr_tab_carga(vr_idx1).nrdconta);
+             FETCH cr_lanc_pix INTO rw_lanc_pix; 
+             
+             vr_aux_pix_ttl := rw_lanc_pix.total_pix;              
+             CLOSE cr_lanc_pix;
           
 
-             IF vr_aux_pix_ttl <= vr_tab_carga_sda(vr_idx1).vladdutl7 THEN
+             IF vr_aux_pix_ttl > 0 AND vr_aux_pix_ttl <= vr_tab_carga_sda(vr_idx1).vladdutl7 THEN
                
                  TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 5 
                                               ,pr_tpoperacao => 1           
@@ -338,7 +345,7 @@ BEGIN
                    vr_aux_iof_prop := vr_vliofpri + vr_vliofadi + vr_vliofcpl; 
                  END IF;
  
-             ELSIF  vr_aux_pix_ttl > vr_tab_carga_sda(vr_idx1).vladdutl7 THEN
+             ELSIF vr_aux_pix_ttl > 0 AND vr_aux_pix_ttl > vr_tab_carga_sda(vr_idx1).vladdutl7 THEN
                
 
                  TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 5 
@@ -381,14 +388,31 @@ BEGIN
                 IF vr_aux_limite_util > 0  THEN 
                    vr_aux_lim7 := round(vr_aux_limite_util / rw_crapdat.qtdiaute,2);
 
-                   OPEN cr_craplrt(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper);
+                   OPEN cr_craplrt(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper
+                                  ,pr_nrdconta => vr_tab_carga(vr_idx1).nrdconta);
                    FETCH cr_craplrt INTO rw_craplrt;
+                   IF cr_craplrt%FOUND THEN
+                      vr_aux_limite_juros := ROUND(((NVL(vr_aux_lim7,0) * (rw_craplrt.txmensal / 100))),2);
+                   ELSE
+                     vr_aux_limite_juros := 0;
+                     vr_dscritic := 'Contrato de limite nao encontrado.(craplim-craplrt) - ' || ' - ' || SQLERRM;
+                     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
+                                                   ,pr_des_text => vr_tab_carga(vr_idx1).cdcooper || ';' || 
+                                                                   vr_tab_carga(vr_idx1).nrdconta || ';' ||
+                                                                   vr_dscritic);  
+                   END IF;
                    CLOSE cr_craplrt;
-
-                   vr_aux_limite_juros := ROUND(((NVL(vr_aux_lim7,0) * (rw_craplrt.txmensal / 100))),2); 
+                    
                 ELSE
                    vr_aux_limite_juros := 0;   
                 END IF;
+                
+             ELSE
+                vr_dscritic := 'Lancamentos de PIX nao encontrados.';
+                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
+                                              ,pr_des_text => vr_tab_carga(vr_idx1).cdcooper || ';' || 
+                                                              vr_tab_carga(vr_idx1).nrdconta || ';' ||
+                                                              vr_dscritic); 
              END IF;
      
 
