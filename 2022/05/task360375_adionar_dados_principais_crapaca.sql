@@ -8,7 +8,7 @@ BEGIN
   VALUES
     ('BUSCA_DADOS_PRINCIPAIS_REPASSES',
      'EMPR0026',
-     'pc_obterDadosPrincipaisContratoWeb',
+     'pc_obter_dados_principais_contrato_web',
      'pr_cdcooper, pr_nrdconta',
      (SELECT NRSEQRDR
         FROM craprdr
