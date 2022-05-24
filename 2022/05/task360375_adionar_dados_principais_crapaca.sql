@@ -6,7 +6,7 @@ BEGIN
      LSTPARAM,
      NRSEQRDR)
   VALUES
-    ('BUSCA_DADOS_PRINCIPAIS_CTR',
+    ('BUSCA_DADOS_PRINCIPAIS_REPASSES',
      'EMPR0026',
      'pc_obterDadosPrincipaisContratoWeb',
      'pr_cdcooper, pr_nrdconta',
