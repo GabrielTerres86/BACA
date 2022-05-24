@@ -1,10 +1,10 @@
 declare
-  vr_cdcritic cecred.crapcri.cdcritic%TYPE;
-  vr_dscritic VARCHAR2(10000);
+  vr_cdcritic  cecred.crapcri.cdcritic%TYPE;
+  vr_dscritic  VARCHAR2(10000);
   vr_exc_saida EXCEPTION;
-  rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
-  vr_des_reto varchar(3);
-  vr_tab_erro GENE0001.typ_tab_erro;
+  rw_crapdat   cecred.BTCH0001.cr_crapdat%ROWTYPE;
+  vr_des_reto  varchar(3);
+  vr_tab_erro  cecred.GENE0001.typ_tab_erro;
   
   TYPE dados_typ IS RECORD(
       vr_cdcooper cecred.crapcop.cdcooper%TYPE,
@@ -198,38 +198,38 @@ BEGIN
 
   
   FOR x IN NVL(v_dados.first(),1)..nvl(v_dados.last(),0) LOOP
-      OPEN btch0001.cr_crapdat(pr_cdcooper => v_dados(x).vr_cdcooper);
-      FETCH btch0001.cr_crapdat
+      OPEN cecred.btch0001.cr_crapdat(pr_cdcooper => v_dados(x).vr_cdcooper);
+      FETCH cecred.btch0001.cr_crapdat
         INTO rw_crapdat;
-      CLOSE btch0001.cr_crapdat;
+      CLOSE cecred.btch0001.cr_crapdat;
       OPEN cr_crapass(pr_cdcooper => v_dados(x).vr_cdcooper, pr_nrdconta => v_dados(x).vr_nrdconta);
       FETCH cr_crapass
         INTO rw_crapass;
       CLOSE cr_crapass;
   
-      EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => v_dados(x).vr_cdcooper,
-                                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                      pr_cdagenci => rw_crapass.cdagenci,
-                                      pr_cdbccxlt => 100,
-                                      pr_cdoperad => 1,
-                                      pr_cdpactra => rw_crapass.cdagenci,
-                                      pr_tplotmov => 5,
-                                      pr_nrdolote => 600031,
-                                      pr_nrdconta => v_dados(x).vr_nrdconta,
-                                      pr_cdhistor => v_dados(x).vr_cdhistor,
-                                      pr_nrctremp => v_dados(x).vr_nrctremp,
-                                      pr_vllanmto => v_dados(x).vr_vllanmto,
-                                      pr_dtpagemp => rw_crapdat.dtmvtolt,
-                                      pr_txjurepr => 0,
-                                      pr_vlpreemp => 0,
-                                      pr_nrsequni => 0,
-                                      pr_nrparepr => 0,
-                                      pr_flgincre => FALSE,
-                                      pr_flgcredi => FALSE,
-                                      pr_nrseqava => 0,
-                                      pr_cdorigem => 5,
-                                      pr_cdcritic => vr_cdcritic,
-                                      pr_dscritic => vr_dscritic);
+      cecred.EMPR0001.pc_cria_lancamento_lem( pr_cdcooper => v_dados(x).vr_cdcooper,
+                                              pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                              pr_cdagenci => rw_crapass.cdagenci,
+                                              pr_cdbccxlt => 100,
+                                              pr_cdoperad => 1,
+                                              pr_cdpactra => rw_crapass.cdagenci,
+                                              pr_tplotmov => 5,
+                                              pr_nrdolote => 600031,
+                                              pr_nrdconta => v_dados(x).vr_nrdconta,
+                                              pr_cdhistor => v_dados(x).vr_cdhistor,
+                                              pr_nrctremp => v_dados(x).vr_nrctremp,
+                                              pr_vllanmto => v_dados(x).vr_vllanmto,
+                                              pr_dtpagemp => rw_crapdat.dtmvtolt,
+                                              pr_txjurepr => 0,
+                                              pr_vlpreemp => 0,
+                                              pr_nrsequni => 0,
+                                              pr_nrparepr => 0,
+                                              pr_flgincre => FALSE,
+                                              pr_flgcredi => FALSE,
+                                              pr_nrseqava => 0,
+                                              pr_cdorigem => 5,
+                                              pr_cdcritic => vr_cdcritic,
+                                              pr_dscritic => vr_dscritic);
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
