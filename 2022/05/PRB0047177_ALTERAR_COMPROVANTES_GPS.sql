@@ -83,9 +83,9 @@ declare
            LGP.MMAACOMP,
            LGP.DTMVTOLT,
            LGP.CDIDENTI2
-      FROM CRAPLGP LGP,
-           TBCONV_REGISTRO_REMESSA_PAGFOR REG,
-           CRAPPRO PRO
+      FROM CECRED.CRAPLGP LGP,
+           CECRED.TBCONV_REGISTRO_REMESSA_PAGFOR REG,
+           CECRED.CRAPPRO PRO
      WHERE lgp.idsicred = pr_idsicredi
        AND pro.cdcooper = lgp.cdcooper
        AND pro.nrdconta = lgp.nrctapag
