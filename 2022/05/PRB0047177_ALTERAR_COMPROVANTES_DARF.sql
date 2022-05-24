@@ -188,7 +188,6 @@ BEGIN
       FETCH cr_registros_lft INTO rw_registros_lft;
       CLOSE cr_registros_lft;
       
-      -- Gerar o comprovante base64
       PAGA0003.pc_comprovante_darf_gps_tivit (pr_cdcooper  => rw_registros_lft.cdcooper,
                                               pr_nrdconta  => rw_registros_lft.nrdconta,
                                               pr_cdagenci  => rw_registros_lft.cdagenci,
@@ -218,7 +217,6 @@ BEGIN
                                               pr_flgcaixa  => FALSE,
                                               pr_dscomprv  => vr_dscomprovante);
                                               
-      -- Gravar o comprovante
       GENE0006.pc_grava_comprovante_parceiro (pr_cdcooper               => rw_registros_lft.cdcooper,
                                               pr_dsprotoc               => rw_registros_lft.dsprotoc,
                                               pr_dscomprovante_parceiro => vr_dscomprovante,

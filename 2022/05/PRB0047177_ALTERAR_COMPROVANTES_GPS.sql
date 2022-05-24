@@ -134,7 +134,7 @@ BEGIN
                                               pr_vlrouent  => rw_registros_lgp.vlrouent,
                                               pr_flgcaixa  => FALSE,
                                               pr_dscomprv  => vr_dscomprovante);                                          
-      -- Gravar o comprovante
+
       GENE0006.pc_grava_comprovante_parceiro (pr_cdcooper               => rw_registros_lgp.cdcooper,
                                               pr_dsprotoc               => rw_registros_lgp.dsprotoc,
                                               pr_dscomprovante_parceiro => vr_dscomprovante,
