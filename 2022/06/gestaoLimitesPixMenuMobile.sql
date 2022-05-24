@@ -4,10 +4,10 @@ BEGIN
 	values (1040, 1021, 'Gestão de Horários', 1, 1, 1, '2.37.0', null);
 	
 	insert into menumobile (MENUMOBILEID, MENUPAIID, NOME, SEQUENCIA, HABILITADO, AUTORIZACAO, VERSAOMINIMAAPP, VERSAOMAXIMAAPP)
-	values (1041, 1021, 'Cadastro de Conta', 1, 1, 1, '2.37.0', null);
+	values (1041, 1021, 'Cadastro de Conta', 1, 1, 1, '2.99.0', null);
 	
 	insert into menumobile (MENUMOBILEID, MENUPAIID, NOME, SEQUENCIA, HABILITADO, AUTORIZACAO, VERSAOMINIMAAPP, VERSAOMAXIMAAPP)
-	values (1042, 1021, 'Dúvidas', 1, 1, 1, '2.37.0', null);
+	values (1042, 1021, 'Dúvidas', 1, 1, 1, '2.99.0', null);
 	
 	commit;
 END;
