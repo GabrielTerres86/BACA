@@ -17,4 +17,5 @@ AND a.NRCPFCNPJ_BASE IN
 10556714989,
 6122863980)
 and a.tpctrato = 68;
+commit;
 end;
