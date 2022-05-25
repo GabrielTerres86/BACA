@@ -6,5 +6,4 @@ and a.dtmovimento = to_date('10/06/2022','DD/MM/YYYY')
 and a.inparcelaliq <> 1;
 
   commit;
-
 end;
