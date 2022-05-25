@@ -21,9 +21,9 @@ cursor	c01 is
 select	w.nrproposta nrproposta_craw,
 	t.nrproposta nrproposta_tbseg,
 	t.rowid nr_linha_tbseg
-from	tbseg_prestamista t,
-	crawseg w,
-	crapseg p
+from	cecred.tbseg_prestamista t,
+	cecred.crawseg w,
+	cecred.crapseg p
 where	t.cdcooper	= w.cdcooper
 and	t.nrdconta	= w.nrdconta
 and	t.nrctrseg	= w.nrctrseg
@@ -46,13 +46,13 @@ ds_saida_v	varchar2(1000);
    
 begin
 
-	if	(gene0001.fn_exis_diretorio(ds_nome_diretorio_p)) then
+	if	(cecred.gene0001.fn_exis_diretorio(ds_nome_diretorio_p)) then
 
 		ds_critica_p	:= null;
 
 	else
 
-		gene0001.pc_OSCommand_Shell(	pr_des_comando	=> 'mkdir ' || ds_nome_diretorio_p || ' 1> /dev/null',
+		cecred.gene0001.pc_OSCommand_Shell(	pr_des_comando	=> 'mkdir ' || ds_nome_diretorio_p || ' 1> /dev/null',
 						pr_typ_saida	=> ie_tipo_saida_v,
 						pr_des_saida	=> ds_saida_v);
 
@@ -63,7 +63,7 @@ begin
 
 		end if;
 
-		gene0001.pc_OSCommand_Shell(	pr_des_comando	=> 'chmod 777 ' || ds_nome_diretorio_p || ' 1> /dev/null',
+		cecred.gene0001.pc_OSCommand_Shell(	pr_des_comando	=> 'chmod 777 ' || ds_nome_diretorio_p || ' 1> /dev/null',
 						pr_typ_saida	=> ie_tipo_saida_v,
 						pr_des_saida	=> ds_saida_v);
 
@@ -85,11 +85,11 @@ end valida_diretorio_p;
 
 begin
 
-if	(upper(gene0001.fn_database_name) like '%AYLLOSP%' or upper(gene0001.fn_database_name) like '%AILOSTS%') then
+if	(upper(cecred.gene0001.fn_database_name) like '%AYLLOSP%' or upper(cecred.gene0001.fn_database_name) like '%AILOSTS%') then
 
 	select	max(a.dsvlrprm)
 	into	ds_nome_diretorio_v
-	from	crapprm a
+	from	cecred.crapprm a
 	where	a.nmsistem	= 'CRED'
 	and	a.cdcooper	= cd_cooperativa_v
 	and	a.cdacesso	= 'ROOT_MICROS';
@@ -98,7 +98,7 @@ if	(upper(gene0001.fn_database_name) like '%AYLLOSP%' or upper(gene0001.fn_datab
 
 		select	max(a.dsvlrprm)
 		into	ds_nome_diretorio_v
-		from	crapprm a
+		from	cecred.crapprm a
 		where	a.nmsistem	= 'CRED'
 		and	a.cdcooper	= 0
 		and	a.cdacesso	= 'ROOT_MICROS';
@@ -109,7 +109,7 @@ if	(upper(gene0001.fn_database_name) like '%AYLLOSP%' or upper(gene0001.fn_datab
 
 else
 
-	ds_nome_diretorio_v	:= gene0001.fn_diretorio(	pr_tpdireto => 'C',
+	ds_nome_diretorio_v	:= cecred.gene0001.fn_diretorio(	pr_tpdireto => 'C',
 								pr_cdcooper => 3);
 
 	ds_nome_diretorio_v	:= ds_nome_diretorio_v || '/RITM0214084';
@@ -135,7 +135,7 @@ for	r01 in c01 loop
 
 		dbms_lob.createtemporary(ds_dados_rollback_v, true, dbms_lob.CALL);
 		dbms_lob.open(ds_dados_rollback_v, dbms_lob.lob_readwrite);
-		gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'begin '||chr(13), false);  
+		cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'begin '||chr(13), false);  
 		ds_nome_arquivo_bkp_v	:= 'ROLLBACK_RITM0214084_'||nr_arquivo||'.sql';
 
 		nr_arquivo	:= nr_arquivo + 1;
@@ -145,19 +145,19 @@ for	r01 in c01 loop
 	qt_registro	:= qt_registro + 1;
 	qt_reg_arquivo	:= qt_reg_arquivo + 1;
 
-	update	tbseg_prestamista a
+	update	cecred.tbseg_prestamista a
 	set	a.nrproposta	= r01.nrproposta_craw
 	where	a.rowid		= r01.nr_linha_tbseg;
 
-	gene0002.pc_escreve_xml(	ds_dados_rollback_v,
+	cecred.gene0002.pc_escreve_xml(	ds_dados_rollback_v,
 					ds_texto_rollback_v,
-					'update	tbseg_prestamista a ' || chr(13) ||
+					'update	cecred.tbseg_prestamista a ' || chr(13) ||
 					'set	a.nrproposta	= ' || replace(nvl(trim(to_char(r01.nrproposta_tbseg)),'null'),',','.') || chr(13) ||
 					'where	a.rowid		= ' || chr(39) || r01.nr_linha_tbseg || chr(39) || ';' || chr(13) || chr(13), false);
 
 	if	(qt_registro	>= 10000) then
 
-		gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'commit;' || chr(13) || chr(13), FALSE);
+		cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'commit;' || chr(13) || chr(13), FALSE);
 
 		commit;
 
@@ -167,11 +167,11 @@ for	r01 in c01 loop
 
 	if	(qt_reg_arquivo	>= 50000) then
 
-		gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'commit;' || chr(13) || chr(13), FALSE);
-		gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'end;'||chr(13), FALSE);
-		gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, chr(13), TRUE);
+		cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'commit;' || chr(13) || chr(13), FALSE);
+		cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'end;'||chr(13), FALSE);
+		cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, chr(13), TRUE);
 
-		gene0002.pc_solicita_relato_arquivo(	pr_cdcooper	=> cd_cooperativa_v,
+		cecred.gene0002.pc_solicita_relato_arquivo(	pr_cdcooper	=> cd_cooperativa_v,
 							pr_cdprogra	=> 'ATENDA',
 							pr_dtmvtolt	=> trunc(sysdate),
 							pr_dsxml	=> ds_dados_rollback_v,
@@ -205,11 +205,11 @@ end loop;
 
 if	(qt_reg_arquivo	<> 50000) then
 
-	gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'commit;' || chr(13) || chr(13), FALSE);
-	gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'end;' || chr(13), FALSE);
-	gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, chr(13), TRUE);
+	cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'commit;' || chr(13) || chr(13), FALSE);
+	cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'end;' || chr(13), FALSE);
+	cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, chr(13), TRUE);
 
-	gene0002.pc_solicita_relato_arquivo(	pr_cdcooper	=> cd_cooperativa_v,
+	cecred.gene0002.pc_solicita_relato_arquivo(	pr_cdcooper	=> cd_cooperativa_v,
 						pr_cdprogra	=> 'ATENDA',
 						pr_dtmvtolt	=> trunc(sysdate),
 						pr_dsxml	=> ds_dados_rollback_v,
