@@ -1,5 +1,5 @@
 BEGIN
-   update crapope set flgdopgd=0  where CDOPERAD NOT IN ('f0012264','f0033685','f0031194','f0032639') AND   (
+   update cecred.crapope set flgdopgd=0  where CDOPERAD NOT IN ('f0012264','f0033685','f0031194','f0032639') AND   (
 progress_recid in (
 
 24491 ,
