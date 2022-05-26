@@ -2,6 +2,8 @@ BEGIN
 
   SYS.DBMS_SCHEDULER.DROP_JOB(JOB_NAME => 'CECRED.jbdda_baixa_operac');
 
+  COMMIT;
+
 EXCEPTION
   WHEN OTHERS THEN
     SISTEMA.excecaoInterna(pr_compleme => 'PRJ0023522');
