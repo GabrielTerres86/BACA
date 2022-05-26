@@ -1,4 +1,4 @@
-﻿DECLARE
+DECLARE
 
   vr_nrsolici crapprg.NRSOLICI%TYPE;
   vr_nrordprg crapprg.NRORDPRG%TYPE;
@@ -6,12 +6,12 @@
 
   CURSOR cr_crapcop IS
     SELECT cdcooper
-      FROM crapcop c
+      FROM cecred.crapcop c
      WHERE c.FLGATIVO = 1;
 
   CURSOR cr_crapprg(pr_cdcooper crapcop.cdcooper%TYPE) IS
     SELECT *
-      FROM crapprg p
+      FROM cecred.crapprg p
      WHERE p.CDPROGRA IN ('CRPS203', 'CRPS195', 'CRPS442', 
                           'CRPS102', 'CRPS084', 'CRPS030',
                           'CRPS401', 'CRPS396', 'CRPS197',
@@ -41,7 +41,7 @@ BEGIN
       
       vr_nrsolici := TO_NUMBER( '9' || NVL(vr_nrordprg,0) || LPAD(rw_crapprg.nrsolici,3,'0') );
 
-      UPDATE crapprg p
+      UPDATE cecred.crapprg p
          SET p.NRSOLICI = vr_nrsolici
            , p.INLIBPRG = 2
        WHERE p.CDCOOPER = rw_crapcop.cdcooper
