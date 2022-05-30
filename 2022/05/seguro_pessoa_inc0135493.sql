@@ -41,12 +41,17 @@ DECLARE
              WHERE p.cdcooper = pe.cdcooper
                AND p.nrdconta = pe.nrdconta
                AND p.nrctremp = pe.nrctremp) dtvencto
-      FROM crawepr e,
+      FROM crapseg s,
+           crawepr e,
            tbseg_prestamista p
      WHERE p.cdcooper = pr_cdcooper
        AND p.cdcooper = e.cdcooper
        AND p.nrdconta = e.nrdconta
        AND p.nrctremp = e.nrctremp
+       AND p.cdcooper = s.cdcooper
+       AND p.nrdconta = s.nrdconta
+       AND p.nrctrseg = s.nrctrseg
+       AND s.cdsitseg = 1
        AND p.tpregist IN (1,3)
        AND p.dtfimvig < pr_dtmvtolt
        AND e.flgreneg = 1;
