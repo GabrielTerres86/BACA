@@ -1,7 +1,7 @@
 DECLARE
 
   vr_aux_ambiente INTEGER       := 3;            
-  vr_aux_diretor  VARCHAR2(100) := 'INC349470'; 
+  vr_aux_diretor  VARCHAR2(100) := 'INC0140647'; 
   vr_aux_arquivo  VARCHAR2(100) := 'contas';    
 
   vr_cdcritic crapcri.cdcritic%TYPE;
@@ -71,7 +71,7 @@ DECLARE
              ,sda.vllimutl 
              ,sda.vladdutl 
              ,sda.vlsddisp
-         FROM crapsda sda
+         FROM cecred.crapsda sda
         WHERE sda.cdcooper = pr_cdcooper
           AND sda.nrdconta = pr_nrdconta
           AND sda.dtmvtolt = to_date('27/04/2022', 'dd/mm/RRRR')
@@ -84,7 +84,7 @@ DECLARE
            ,sld.vlsmnesp
            ,sld.vlsdchsl
            ,sld.vliofmes
-       FROM crapsld sld
+       FROM cecred.crapsld sld
       WHERE sld.cdcooper = pr_cdcooper
         AND sld.nrdconta = pr_nrdconta;
     rw_crapsld cr_crapsld%ROWTYPE;
@@ -114,7 +114,7 @@ DECLARE
            ,VLTAXAIOF_ADICIONAL
            ,NRACORDO
            ,IDLANCTO_PREJUIZO
-       FROM tbgen_iof_lancamento a
+       FROM cecred.tbgen_iof_lancamento a
       WHERE a.cdcooper = pr_cdcooper
         AND a.nrdconta = pr_nrdconta
         AND a.tpproduto = 5
@@ -126,8 +126,8 @@ DECLARE
     CURSOR cr_craplrt (pr_cdcooper IN craplrt.cdcooper%TYPE
                       ,pr_nrdconta IN craplim.nrdconta%TYPE) IS
      SELECT lrt.txmensal
-        FROM craplim lim
-            ,craplrt lrt
+        FROM cecred.craplim lim
+            ,cecred.craplrt lrt
        WHERE lim.cdcooper = lrt.cdcooper
          AND lim.cddlinha = lrt.cddlinha
          AND lim.cdcooper = pr_cdcooper
@@ -140,9 +140,9 @@ DECLARE
     CURSOR cr_lanc_pix(pr_cdcooper IN tbgen_iof_lancamento.cdcooper%TYPE    
                       ,pr_nrdconta IN tbgen_iof_lancamento.nrdconta%TYPE) IS   
        SELECT NVL(SUM(lp.vllanmto), 0) total_pix
-         FROM TBCC_LANCAMENTOS_PENDENTES LP
-             ,TBPIX_TRANSACAO            T
-             ,CRAPLCM                    L
+         FROM cecred.TBCC_LANCAMENTOS_PENDENTES LP
+             ,pix.TBPIX_TRANSACAO            T
+             ,cecred.CRAPLCM                    L
         WHERE T.IDTRANSACAO = LP.IDTRANSACAO
           AND L.DTMVTOLT = LP.DTMVTOLT
           AND L.CDCOOPER = LP.CDCOOPER
@@ -163,14 +163,14 @@ DECLARE
                       ,pr_nrdconta IN crapass.nrdconta%TYPE) IS   
         SELECT ass.inpessoa
               ,(SELECT jur.natjurid
-                  FROM crapjur jur
+                  FROM cecred.crapjur jur
                  WHERE ass.cdcooper = jur.cdcooper
                    AND ass.nrdconta = jur.nrdconta) natjurid
               ,(SELECT jur.tpregtrb
-                  FROM crapjur jur
+                  FROM cecred.crapjur jur
                  WHERE ass.cdcooper = jur.cdcooper
                    AND ass.nrdconta = jur.nrdconta) tpregtrb
-          FROM crapass ass
+          FROM cecred.crapass ass
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrdconta = pr_nrdconta;
   rw_cooperado cr_cooperado%ROWTYPE;          
