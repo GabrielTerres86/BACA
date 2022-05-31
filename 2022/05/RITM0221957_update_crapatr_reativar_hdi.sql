@@ -1,5 +1,5 @@
 BEGIN
-  UPDATE crapatr atr
+  UPDATE CECRED.crapatr atr
   SET atr.cdopeexc = ' ',
       atr.dtinsexc = NULL,
       atr.dtfimatr = NULL
@@ -7,8 +7,8 @@ BEGIN
     AND atr.cdcooper = 1    
     AND atr.cdrefere = 1003005289968000000;
      
-  INSERT INTO craplgm (CDCOOPER, NRDCONTA, IDSEQTTL, NRSEQUEN, DTTRANSA, HRTRANSA, DSTRANSA, DSORIGEM, NMDATELA, FLGTRANS, DSCRITIC, CDOPERAD, NMENDTER)
-  VALUES (1, 2774038, 1, 1, TRUNC(SYSDATE+1), 60000, 'Reativação débito autorizado (RITM0221957)', 'AIMARO WEB', 'CONTAS', 1, ' ', '1', ' '); 
+  INSERT INTO CECRED.craplgm (CDCOOPER, NRDCONTA, IDSEQTTL, NRSEQUEN, DTTRANSA, HRTRANSA, DSTRANSA, DSORIGEM, NMDATELA, FLGTRANS, DSCRITIC, CDOPERAD, NMENDTER)
+  VALUES (1, 2774038, 1, 1, TRUNC(SYSDATE+1), 60000, 'ReativaÃ§Ã£o dÃ©bito autorizado (RITM0221957)', 'AIMARO WEB', 'CONTAS', 1, ' ', '1', ' '); 
   
   COMMIT;
 END;
