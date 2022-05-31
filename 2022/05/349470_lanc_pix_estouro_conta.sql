@@ -1,7 +1,7 @@
 DECLARE
 
   vr_aux_ambiente INTEGER       := 3;            
-  vr_aux_diretor  VARCHAR2(100) := 'INC349470'; 
+  vr_aux_diretor  VARCHAR2(100) := 'INC0140647'; 
   vr_aux_arquivo  VARCHAR2(100) := 'contas';    
 
   vr_cdcritic crapcri.cdcritic%TYPE;
