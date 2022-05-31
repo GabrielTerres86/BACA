@@ -14,7 +14,7 @@ DECLARE
   
   CURSOR cr_crapdat IS
   SELECT d.dtmvtolt
-  FROM crapdat d
+  FROM CECRED.crapdat d
   WHERE d.cdcooper = 1;
     
   vr_dtmvtolt CECRED.crapdat.DTMVTOLT%TYPE;
