@@ -31,14 +31,14 @@ DECLARE
    
 BEGIN
    
-  -- Criar arquivo
-  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto        --> Diretorio do arquivo
-                          ,pr_nmarquiv => vr_nmarqimp1       --> Nome do arquivo
-                          ,pr_tipabert => 'W'                --> modo de abertura (r,w,a)
-                          ,pr_utlfileh => vr_ind_arquiv1     --> handle do arquivo aberto
-                          ,pr_des_erro => vr_dscritic);      --> erro  
+
+  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto      
+                          ,pr_nmarquiv => vr_nmarqimp1      
+                          ,pr_tipabert => 'W'              
+                          ,pr_utlfileh => vr_ind_arquiv1   
+                          ,pr_des_erro => vr_dscritic);     
   
-  -- Em caso de crítica
+
   IF vr_dscritic IS NOT NULL THEN        
      RAISE vr_excsaida;
   END IF;  
