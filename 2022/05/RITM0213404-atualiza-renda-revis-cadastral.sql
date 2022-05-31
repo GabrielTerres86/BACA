@@ -31,6 +31,8 @@ DECLARE
   
   vr_nrdrowid    ROWID;
   
+  vr_contador    PLS_INTEGER;
+  
   vr_dscritic    VARCHAR2(2000);
   vr_exception   EXCEPTION;
   vr_exception2  EXCEPTION;
@@ -5102,6 +5104,8 @@ BEGIN
   FETCH cr_crapdat INTO vr_dtmvtolt;
   CLOSE cr_crapdat;
   
+  vr_contador := 0;
+  
   FOR i in 1..vt_contas.count() LOOP
     
     OPEN cr_crapalt(1, vt_contas(i).nrdconta);
@@ -5143,9 +5147,18 @@ BEGIN
     
     CLOSE cr_crapalt;
     
-    COMMIT;
+    vr_contador := vr_contador + 1;
+    
+    IF vr_contador >= 500 THEN
+      
+      vr_contador := 0;
+      COMMIT;
+      
+    END IF;
     
   END LOOP;
+  
+  COMMIT;
   
 EXCEPTION
   WHEN vr_exception THEN
