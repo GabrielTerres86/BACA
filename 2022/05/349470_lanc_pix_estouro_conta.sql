@@ -1,6 +1,6 @@
 DECLARE
 
-  vr_aux_ambiente INTEGER       := 3;            
+  vr_aux_ambiente INTEGER       := 1;            
   vr_aux_diretor  VARCHAR2(100) := 'INC349470'; 
   vr_aux_arquivo  VARCHAR2(100) := 'contas';    
 
@@ -50,6 +50,9 @@ DECLARE
   vr_vltaxa_iof_principal NUMBER := 0;
   vr_aux_ttl_utilizado NUMBER := 0;
   vr_aux_limite_util NUMBER := 0;
+  vr_aux_pix_ttl_range NUMBER;
+  vr_aux_limite_juros_range craplrt.txmensal%TYPE;
+  vr_aux_iof_prop_range craplrt.txmensal%TYPE;
   
   TYPE typ_reg_carga IS RECORD(cdcooper  crapass.cdcooper%TYPE
                               ,nrdconta  crapass.nrdconta%TYPE);
@@ -135,20 +138,28 @@ DECLARE
          AND lim.tpctrlim = 1 
          AND lim.insitlim = 2;
     rw_craplrt cr_craplrt%ROWTYPE;
-
-
+   
+   
     CURSOR cr_lanc_pix(pr_cdcooper IN tbgen_iof_lancamento.cdcooper%TYPE    
-                      ,pr_nrdconta IN tbgen_iof_lancamento.nrdconta%TYPE) IS 
-      SELECT NVL(SUM(p.vllanmto),0) total_pix
-        FROM craplcm p,
-             craphis h
-       WHERE p.cdcooper = h.cdcooper
-         AND p.cdhistor = h.cdhistor
-         AND p.cdcooper = pr_cdcooper
-         AND p.nrdconta = pr_nrdconta
-         AND p.dtmvtolt = to_date('27/04/2022', 'dd/mm/RRRR')
-         AND p.cdhistor IN (3320,3371);
-   rw_lanc_pix cr_lanc_pix%ROWTYPE;
+                      ,pr_nrdconta IN tbgen_iof_lancamento.nrdconta%TYPE) IS   
+       SELECT NVL(SUM(lp.vllanmto), 0) total_pix
+         FROM TBCC_LANCAMENTOS_PENDENTES LP
+             ,TBPIX_TRANSACAO            T
+             ,CRAPLCM                    L
+        WHERE T.IDTRANSACAO = LP.IDTRANSACAO
+          AND L.DTMVTOLT = LP.DTMVTOLT
+          AND L.CDCOOPER = LP.CDCOOPER
+          AND L.NRDCONTA = LP.NRDCONTA
+          AND L.NRDOCMTO = LP.IDTRANSACAO
+          AND LP.DTMVTOLT = to_date('27/04/2022', 'dd/mm/RRRR')
+          AND LP.CDCOOPER = pr_cdcooper
+          AND LP.NRDCONTA = pr_nrdconta
+          AND LP.DHTRANSACAO BETWEEN TO_DATE('27/04/2022 09:50', 'dd/mm/RRRR HH24:MI') AND
+              TO_DATE('27/04/2022 11:35', 'dd/mm/RRRR HH24:MI')
+          AND LP.IDSITUACAO = 'P'
+          AND T.IDTIPO_TRANSACAO = 'P'
+          AND lp.cdhistor = l.cdhistor;   
+    rw_lanc_pix cr_lanc_pix%ROWTYPE;
  
 
    CURSOR cr_cooperado(pr_cdcooper IN crapass.cdcooper%TYPE    
@@ -292,6 +303,9 @@ BEGIN
              vr_aux_limite_juros := 0; 
              vr_aux_ttl_utilizado := 0; 
              vr_aux_limite_util := 0; 
+             vr_aux_pix_ttl_range := 0;
+             vr_aux_limite_juros_range := 0;
+             vr_aux_iof_prop_range := 0;
              
 
              OPEN cr_cooperado(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper,
@@ -314,7 +328,7 @@ BEGIN
              
              vr_aux_pix_ttl := rw_lanc_pix.total_pix;              
              CLOSE cr_lanc_pix;
-          
+
 
              IF vr_aux_pix_ttl > 0 AND vr_aux_pix_ttl <= vr_tab_carga_sda(vr_idx1).vladdutl7 THEN
                
@@ -413,8 +427,9 @@ BEGIN
                                               ,pr_des_text => vr_tab_carga(vr_idx1).cdcooper || ';' || 
                                                               vr_tab_carga(vr_idx1).nrdconta || ';' ||
                                                               vr_dscritic); 
-             END IF;
-     
+             END IF;           
+
+
 
             IF vr_aux_iof_prop > 0 THEN
               
@@ -513,8 +528,7 @@ BEGIN
                                                                 ||' AND dtmvtolt = "'||rw_crapdat.dtmvtolt||'"'
                                                                 ||' AND cdhistor = 320;');                        
                 END IF;
-            END IF;
-        
+            END IF;        
             
             COMMIT;
 
