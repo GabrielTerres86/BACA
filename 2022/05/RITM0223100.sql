@@ -217,7 +217,7 @@ for	r01 in c01 loop
 						ds_texto_rollback_v,
 						'Falha ao calcular valor coop: ' || r01.cdcooper || ', conta: ' || r01.nrdconta || ', contrato: ' || r01.nrctremp || chr(13) || chr(13), false);
 
-	elsif	(r01.vlprodut_tbseg	<> vr_vlpretot) then
+	elsif	(r01.vlprodut_tbseg <> vr_vlpretot) and (nvl(vr_vlpretot,0) <> 0) then
 
 		qt_registro	:= qt_registro + 1;
 		qt_reg_arquivo	:= qt_reg_arquivo + 1;
