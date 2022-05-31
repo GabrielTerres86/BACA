@@ -1,6 +1,6 @@
 DECLARE
 
-  vr_aux_ambiente INTEGER       := 1;            
+  vr_aux_ambiente INTEGER       := 3;            
   vr_aux_diretor  VARCHAR2(100) := 'INC349470'; 
   vr_aux_arquivo  VARCHAR2(100) := 'contas';    
 
@@ -50,9 +50,6 @@ DECLARE
   vr_vltaxa_iof_principal NUMBER := 0;
   vr_aux_ttl_utilizado NUMBER := 0;
   vr_aux_limite_util NUMBER := 0;
-  vr_aux_pix_ttl_range NUMBER;
-  vr_aux_limite_juros_range craplrt.txmensal%TYPE;
-  vr_aux_iof_prop_range craplrt.txmensal%TYPE;
   
   TYPE typ_reg_carga IS RECORD(cdcooper  crapass.cdcooper%TYPE
                               ,nrdconta  crapass.nrdconta%TYPE);
@@ -302,10 +299,7 @@ BEGIN
              vr_aux_pix_ttl := 0;
              vr_aux_limite_juros := 0; 
              vr_aux_ttl_utilizado := 0; 
-             vr_aux_limite_util := 0; 
-             vr_aux_pix_ttl_range := 0;
-             vr_aux_limite_juros_range := 0;
-             vr_aux_iof_prop_range := 0;
+             vr_aux_limite_util := 0;
              
 
              OPEN cr_cooperado(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper,
