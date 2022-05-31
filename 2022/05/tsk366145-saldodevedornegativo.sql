@@ -1,5 +1,5 @@
 BEGIN
-     UPDATE crapepr epr
+     UPDATE cecred.crapepr epr
         SET epr.vlsdeved = (SELECT nvl(sum(vlsdvpar),0)
                             FROM   crappep pep 
                             WHERE  pep.cdcooper = epr.cdcooper 
