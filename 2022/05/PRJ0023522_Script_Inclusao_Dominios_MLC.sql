@@ -1,4 +1,4 @@
-BEGIN
+BEGIN 
 
   INSERT INTO pagamento.ta_baixa_operacional
     (CDBAIXA_OPERACIONAL
