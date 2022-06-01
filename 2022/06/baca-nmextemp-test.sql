@@ -1,0 +1,13 @@
+BEGIN
+
+  UPDATE crapttl
+     SET nmextemp = 'TESTE TESTE TESTE TESTE TESTE TESTE TESTE TESTE TESTE'
+   WHERE cdcooper = 1
+     AND nrdconta = 1879600;
+
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE_application_error(-20500, SQLERRM);
+    ROLLBACK;
+END;
