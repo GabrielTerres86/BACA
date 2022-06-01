@@ -88,7 +88,7 @@ end valida_diretorio_p;
 
 begin
 
-if	(upper(cecred.gene0001.fn_database_name) like '%AYLLOSP%') then
+if	(upper(cecred.gene0001.fn_database_name) like '%AYLLOSP%' or upper(gene0001.fn_database_name) like '%AILOSTS%') then
 
 	select	max(a.dsvlrprm)
 	into	ds_nome_diretorio_v
