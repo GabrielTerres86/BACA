@@ -303,7 +303,7 @@ BEGIN
                       ,rw_craprac.nrdconta
                       ,rw_craprac.nraplica
                       ,rw_craprac.dtmvtolt
-                      ,add_months(rw_craprac.dtaniver,-1));----------um dia antes                      
+                      ,add_months(rw_craprac.dtaniver,-1));                   
           FETCH cr_saldoapp INTO rw_saldoapp;
 
        vr_vlaplica := rw_saldoapp.saldo;
