@@ -1,0 +1,1 @@
+alter system kill session '952,38861';
