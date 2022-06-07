@@ -52,7 +52,7 @@ DECLARE
             ,cdhsirap
             ,cdhsrgap
             ,cdhsvtap
-        FROM crapcpc cpc
+        FROM cecred.crapcpc cpc
        WHERE cpc.cddindex = 5
          AND cpc.indanive = 1
          AND cpc.idsitpro = 1
@@ -77,9 +77,9 @@ DECLARE
             rac.rowid,
             cpc.cdhsvrcc,
             ass.cdagenci
-       FROM craprac rac,
-            crapcpc cpc,
-            crapass ass
+       FROM cecred.craprac rac,
+            cecred.crapcpc cpc,
+            cecred.crapass ass
       WHERE rac.cdcooper = ass.cdcooper
         AND rac.nrdconta = ass.nrdconta
         AND rac.cdprodut = cpc.cdprodut        
@@ -100,7 +100,7 @@ DECLARE
     SELECT cdcooper,
            nrdconta,
            nraplica
-      FROM craplac l
+      FROM cecred.craplac l
      WHERE l.cdcooper = pr_cdcooper
        AND l.nrdconta = pr_nrdconta
        AND l.nraplica = pr_nraplica
@@ -118,8 +118,8 @@ DECLARE
                           lac.vllanmto,
                           lac.vllanmto * -1)),
                0) saldo
-    from craplac lac,
-         craphis his
+    from cecred.craplac lac,
+         cecred.craphis his
    where lac.cdcooper = his.cdcooper
      and lac.cdhistor = his.cdhistor
      and lac.cdcooper = pr_cdcooper
@@ -159,7 +159,7 @@ DECLARE
 
     BEGIN            
       IF pr_vllanmto <> 0 THEN
-        APLI0010.pc_processa_lote_aniv(pr_cdcooper => pr_cdcooper
+        cecred.APLI0010.pc_processa_lote_aniv(pr_cdcooper => pr_cdcooper
                                       ,pr_dtmvtolt => pr_dtmvtolt
                                       ,pr_cdagenci => 1
                                       ,pr_cdbccxlt => 100
@@ -177,7 +177,7 @@ DECLARE
       END IF;
       IF pr_vllanmto <> 0 THEN
         BEGIN
-          INSERT INTO craplac(cdcooper
+          INSERT INTO cecred.craplac(cdcooper
                              ,dtmvtolt
                              ,cdagenci
                              ,cdbccxlt
@@ -221,11 +221,12 @@ DECLARE
       END IF;
 
       BEGIN
-        UPDATE craprac SET vlsldatl = vlsldatl + vr_vllanmto
-                          ,dtatlsld = pr_dtmvtolt
-                          ,vlsldant = vr_vlsldant
-                          ,dtsldant = vr_dtsldant
-                    WHERE craprac.rowid = pr_rowid;
+        UPDATE cecred.craprac 
+           SET vlsldatl = vlsldatl + vr_vllanmto
+              ,dtatlsld = pr_dtmvtolt
+              ,vlsldant = vr_vlsldant
+              ,dtsldant = vr_dtsldant
+        WHERE craprac.rowid = pr_rowid;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao atualizar aplicação(craprac). Detalhes: '||SQLERRM;
@@ -271,7 +272,7 @@ BEGIN
     vr_vlaplica := 0;
     vr_cdmensagem := 0;
 
-     vr_dslog := 'UPDATE CRAPRAC SET vlsldatl = '|| REPLACE(rw_craprac.vlsldatl,',','.') ||
+     vr_dslog := 'UPDATE cecred.CRAPRAC SET vlsldatl = '|| REPLACE(rw_craprac.vlsldatl,',','.') ||
                                   ', dtatlsld = '''|| to_date(rw_craprac.dtatlsld,'dd/mm/yyyy') || ''' '|| 
                                   ', vlsldant = '|| REPLACE(rw_craprac.vlsldant,',','.') ||
                                   ', dtsldant = '''|| to_date(rw_craprac.dtsldant,'dd/mm/yyyy') ||''' '||  
@@ -286,7 +287,7 @@ BEGIN
                            ,pr_tpexecucao    => 3 
                            ,pr_dsmensagem    => vr_dslog
                            ,pr_cdmensagem    => 444
-                           ,pr_cdprograma    => 'INC0136232_IPCA22'
+                           ,pr_cdprograma    => 'INC0145581_IPCA22'
                            ,pr_cdcooper      => 3 
                            ,pr_idprglog      => vr_idprglog);
 
@@ -303,7 +304,7 @@ BEGIN
                       ,rw_craprac.nrdconta
                       ,rw_craprac.nraplica
                       ,rw_craprac.dtmvtolt
-                      ,add_months(rw_craprac.dtaniver,-1));                   
+                      ,add_months(rw_craprac.dtaniver,-1));
           FETCH cr_saldoapp INTO rw_saldoapp;
 
        vr_vlaplica := rw_saldoapp.saldo;
@@ -321,7 +322,7 @@ BEGIN
      vr_vlbascal := rw_craprac.vlaplica;
      vr_dtinical := to_date(EXTRACT(DAY FROM rw_craprac.dtmvtolt) || '/04/2022','dd/mm/yyyy');
 
-            APLI0006.pc_posicao_saldo_aplicacao_ani(pr_cdcooper => rw_craprac.cdcooper,
+            cecred.APLI0006.pc_posicao_saldo_aplicacao_ani(pr_cdcooper => rw_craprac.cdcooper,
                                                     pr_nrdconta => rw_craprac.nrdconta,
                                                     pr_nraplica => rw_craprac.nraplica,
                                                     pr_dtiniapl => rw_craprac.dtmvtolt,
@@ -372,7 +373,7 @@ BEGIN
                               ,pr_tpexecucao    => 3 
                               ,pr_dsmensagem    => vr_dslog
                               ,pr_cdmensagem    => 123 || vr_cdmensagem
-                              ,pr_cdprograma    => 'INC0136232_IPCA22'
+                              ,pr_cdprograma    => 'INC0145581_IPCA22'
                               ,pr_cdcooper      => 3 
                               ,pr_idprglog      => vr_idprglog); 
 
@@ -411,7 +412,7 @@ BEGIN
                            ,pr_tpexecucao    => 3 
                            ,pr_dsmensagem    => vr_dslog
                            ,pr_cdmensagem    => 888
-                           ,pr_cdprograma    => 'INC0136232_IPCA_ERRO'
+                           ,pr_cdprograma    => 'INC0145581_IPCA_ERRO'
                            ,pr_cdcooper      => 3 
                            ,pr_idprglog      => vr_idprglog);   
          ROLLBACK;    
@@ -423,7 +424,7 @@ BEGIN
                            ,pr_tpexecucao    => 3 
                            ,pr_dsmensagem    => vr_dslog || '. ' || vr_dscritic
                            ,pr_cdmensagem    => 999
-                           ,pr_cdprograma    => 'INC0136232_IPCA_ERRO'
+                           ,pr_cdprograma    => 'INC0145581_IPCA_ERRO'
                            ,pr_cdcooper      => 3 
                            ,pr_idprglog      => vr_idprglog);
          ROLLBACK; 
