@@ -4,8 +4,8 @@ declare
 
 ds_exc_erro_v		exception;
 ds_erro_registro_v	exception;
-ds_critica_v		crapcri.dscritic%type;
-ds_critica_rollback_v	crapcri.dscritic%type;
+ds_critica_v		cecred.crapcri.dscritic%type;
+ds_critica_rollback_v	cecred.crapcri.dscritic%type;
 ie_idprglog_v		cecred.tbgen_prglog.idprglog%type	:= 0;
 
 ds_dados_rollback_v	clob			:= null;
@@ -613,7 +613,7 @@ end valida_diretorio_p;
 
 begin
 
-if	(upper(gene0001.fn_database_name) like '%AYLLOSP%' or upper(gene0001.fn_database_name) like '%AILOSTS%') then
+if	(upper(cecred.gene0001.fn_database_name) like '%AYLLOSP%' or upper(cecred.gene0001.fn_database_name) like '%AILOSTS%') then
 
 	select	max(a.dsvlrprm)
 	into	ds_nome_diretorio_v
@@ -689,7 +689,7 @@ for	r01 in c01 loop
 
 	cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v,
 				ds_texto_rollback_v,
-				'update	crawseg a ' || chr(13) ||
+				'update	cecred.crawseg a ' || chr(13) ||
 				'set	a.vlpremio = ' || replace(nvl(trim(to_char(r01.vlpremio_craw)),'null'),',','.') || chr(13) ||
 				'where	a.rowid	= ' || chr(39) || r01.nr_linha_craw || chr(39) || ';' || chr(13) || chr(13), false);
 
@@ -699,7 +699,7 @@ for	r01 in c01 loop
 
 	cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v,
 				ds_texto_rollback_v,
-				'update	crapseg a ' || chr(13) ||
+				'update	cecred.crapseg a ' || chr(13) ||
 				'set	a.vlpremio = ' || replace(nvl(trim(to_char(r01.vlpremio_crap)),'null'),',','.') || chr(13) ||
 				'where	a.rowid	= ' || chr(39) || r01.nr_linha_crap || chr(39) || ';' || chr(13) || chr(13), false);
 
