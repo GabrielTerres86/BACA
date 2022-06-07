@@ -5,7 +5,7 @@ declare
   rw_crapdat   cecred.BTCH0001.cr_crapdat%ROWTYPE;
   vr_des_reto  varchar(3);
   vr_tab_erro  cecred.GENE0001.typ_tab_erro;
-  
+    
   TYPE dados_typ IS RECORD(
       vr_cdcooper cecred.crapcop.cdcooper%TYPE,
       vr_nrdconta cecred.crapass.nrdconta%TYPE,
