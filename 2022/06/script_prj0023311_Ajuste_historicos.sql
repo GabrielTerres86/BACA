@@ -1,0 +1,11 @@
+BEGIN
+ 
+DELETE craphis a
+WHERE a.cdcooper IN (1,3,16)
+AND a.cdhistor IN (3927,3932,3925,3928);
+    
+  COMMIT;
+EXCEPTION WHEN OTHERS THEN
+  ROLLBACK;
+END;
+/
