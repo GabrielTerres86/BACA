@@ -31,7 +31,7 @@ BEGIN
     
     FOR x IN NVL(v_dados.first(),1)..nvl(v_dados.last(),0) LOOP
 
-      UPDATE crapepr c
+      UPDATE cecred.crapepr c
          SET diarefju = 31,
              mesrefju = 5
        WHERE c.cdcooper = v_dados(x).cdcooper
