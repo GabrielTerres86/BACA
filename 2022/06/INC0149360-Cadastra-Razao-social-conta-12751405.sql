@@ -1,0 +1,18 @@
+BEGIN
+  
+  UPDATE CECRED.CRAPJUR t
+    SET t.nmextttl = 'MUNICIPIO DE SAO JOSE DOS PINHAIS'
+  WHERE t.nrdconta = 12751405
+    AND t.cdcooper = 1;
+  
+  UPDATE CECRED.CRAPASS a
+    SET a.nmprimtl = 'MUNICIPIO DE SAO JOSE DOS PINHAIS'
+  WHERE a.nrdconta = 12751405
+    and a.cdcooper = 1;
+    
+  COMMIT;
+  
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE_APPLICATION_ERROR(-20000, 'ERRO: ' || SQLERRM);
+END;
