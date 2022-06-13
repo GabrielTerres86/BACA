@@ -2,7 +2,7 @@ DECLARE
   vr_nmdireto   VARCHAR2(4000) := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                            ,pr_cdcooper => 0
                                                            ,pr_cdacesso => 'ROOT_DIRCOOP')||'cecred/arq/';
-  vr_nmarqimp  VARCHAR2(100) := 'RITM0220723.csv';
+  vr_nmarqimp  VARCHAR2(100) := 'RITM0225643.csv';
   vr_ind_arquiv  utl_file.file_type;
 
   vr_linha       VARCHAR2(5000);
@@ -31,7 +31,8 @@ BEGIN
     dbms_output.put_line(vr_dscritic);
     RAISE vr_exc_saida;
   END IF;
-  
+
+
   LOOP
     BEGIN
       gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv, pr_des_text => vr_linha);
@@ -50,8 +51,7 @@ BEGIN
     vr_UF := vr_campo(6); 
     vr_valor := GENE0002.fn_char_para_number(vr_campo(7));
     vr_valorvaga := GENE0002.fn_char_para_number(vr_campo(8));    
-    dbms_output.put_line('44'); 
-    
+        
    BEGIN 
      INSERT INTO CECRED.TBCALRIS_COLABORADORES 
             (CDCOOPER, NRCPFCGC, NMPESSOA, CDIDENTIFICADOR_VAGA, TPCOLABORADOR, VLSALARIO, VLSALARIO_VAGA, TPRELACIONAMENTO, DSRELACIONAMENTO, 
@@ -60,6 +60,7 @@ BEGIN
    EXCEPTION               
    WHEN OTHERS THEN
       vr_dscritic := 'Erro ao INCLUIR CALCULADORA COL: '||SQLERRM;
+      dbms_output.put_line(vr_dscritic || ' ' || vr_cpf);
    END;
   
    IF vr_cont = 500 THEN
@@ -68,6 +69,7 @@ BEGIN
     END IF;    
   END LOOP;
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv);
+  dbms_output.put_line('Registros incluídos com sucesso. ');
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
