@@ -1,6 +1,6 @@
 BEGIN
 
-  UPDATE crappep
+  UPDATE cecred.crappep
      SET inliquid = 1,
          vlsdvpar = 0,
          vlsdvatu = 0,
@@ -15,4 +15,5 @@ BEGIN
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
+    RAISE_application_error(-20500, SQLERRM);
 END;
