@@ -9,7 +9,6 @@ DECLARE
                                  AND nrcpfcgc IS NULL);
   rw_craplcm cr_craplcm%ROWTYPE;  
   
-  -- Buscar os dados do cheque na DATA
   CURSOR cr_all_cheques_data (pr_cdcooper IN INTEGER
                              ,pr_nrdconta IN INTEGER
                              ,pr_nrdocmto IN INTEGER
