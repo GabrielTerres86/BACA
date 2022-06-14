@@ -15,14 +15,14 @@ DECLARE
   vr_vlsdeved   NUMBER := 0;
   vr_tpregist   INTEGER;
   vr_tiporeg    VARCHAR2(1);
-  vr_nrproposta tbseg_prestamista.nrproposta%TYPE;
-  vr_cdapolic   tbseg_prestamista.cdapolic%TYPE;
-  vr_dtdevend   tbseg_prestamista.dtdevend%TYPE;
-  vr_dtinivig   tbseg_prestamista.dtinivig%TYPE;
-  vr_pielimit   tbseg_prestamista.vlpielimit%TYPE;
-  vr_ifttlimi   tbseg_prestamista.vlpielimit%TYPE;
+  vr_nrproposta cecred.tbseg_prestamista.nrproposta%TYPE;
+  vr_cdapolic   cecred.tbseg_prestamista.cdapolic%TYPE;
+  vr_dtdevend   cecred.tbseg_prestamista.dtdevend%TYPE;
+  vr_dtinivig   cecred.tbseg_prestamista.dtinivig%TYPE;
+  vr_pielimit   cecred.tbseg_prestamista.vlpielimit%TYPE;
+  vr_ifttlimi   cecred.tbseg_prestamista.vlpielimit%TYPE;
 
-  vr_nmrescop   crapcop.nmrescop%TYPE;
+  vr_nmrescop   cecred.crapcop.nmrescop%TYPE;
   vr_apolice    VARCHAR2(20);
   vr_nmdircop   VARCHAR2(100);
   vr_nmarquiv   VARCHAR2(100);
@@ -46,8 +46,8 @@ DECLARE
   vr_agencia        VARCHAR2(100);
   vr_conta_corrente VARCHAR2(100);
 
-  TYPE typ_reg_ctrl_prst IS RECORD(nrcpfcgc tbseg_prestamista.nrcpfcgc%TYPE,
-                                   nrctremp tbseg_prestamista.nrctremp%TYPE);
+  TYPE typ_reg_ctrl_prst IS RECORD(nrcpfcgc cecred.tbseg_prestamista.nrcpfcgc%TYPE,
+                                   nrctremp cecred.tbseg_prestamista.nrctremp%TYPE);
 
   
   TYPE typ_tab_ctrl_prst IS TABLE OF typ_reg_ctrl_prst INDEX BY VARCHAR2(40);
@@ -57,7 +57,7 @@ DECLARE
   vr_ind_arquivo utl_file.file_type;
 
   
-  CURSOR cr_prestamista(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+  CURSOR cr_prestamista(pr_cdcooper IN cecred.crapcop.cdcooper%TYPE) IS
     SELECT p.idseqtra
           ,p.cdcooper
           ,p.nrdconta
@@ -101,7 +101,7 @@ DECLARE
           ,p.vlpielimit
           ,p.vlifttlimi
           ,p.qtifttdias
-      FROM tbseg_prestamista p, crapepr c, crapass ass
+      FROM cecred.tbseg_prestamista p, cecred.crapepr c, cecred.crapass ass
      WHERE p.cdcooper = 9
        AND p.nrdconta = 191450
        AND p.nrproposta = 770629674187
@@ -117,8 +117,8 @@ DECLARE
   rw_prestamista cr_prestamista%ROWTYPE;
 
   
-  CURSOR cr_seg_parametro_prst(pr_cdcooper IN tbseg_prestamista.cdcooper%TYPE
-                              ,pr_tpcustei IN tbseg_parametros_prst.tpcustei%TYPE) IS
+  CURSOR cr_seg_parametro_prst(pr_cdcooper IN cecred.tbseg_prestamista.cdcooper%TYPE
+                              ,pr_tpcustei IN cecred.tbseg_parametros_prst.tpcustei%TYPE) IS
    
     SELECT pp.idseqpar,
            pp.seqarqu,
@@ -128,19 +128,19 @@ DECLARE
            pp.nrapolic,
            pp.pielimit,
            pp.ifttlimi
-      FROM tbseg_parametros_prst pp
+      FROM cecred.tbseg_parametros_prst pp
      WHERE pp.cdcooper = pr_cdcooper
        AND pp.tppessoa = 1 
-       AND pp.cdsegura = segu0001.busca_seguradora
+       AND pp.cdsegura = cecred.segu0001.busca_seguradora
        AND pp.tpcustei = pr_tpcustei;
   rw_seg_parametro_prst cr_seg_parametro_prst%ROWTYPE;
 
-  CURSOR cr_crawseg(pr_cdcooper crawseg.cdcooper%TYPE,
-                    pr_nrdconta crawseg.nrdconta%TYPE,
-                    pr_nrctrseg crawseg.nrctrseg%TYPE,
-                    pr_nrctrato crawseg.nrctrato%TYPE) IS
+  CURSOR cr_crawseg(pr_cdcooper cecred.crawseg.cdcooper%TYPE,
+                    pr_nrdconta cecred.crawseg.nrdconta%TYPE,
+                    pr_nrctrseg cecred.crawseg.nrctrseg%TYPE,
+                    pr_nrctrato cecred.crawseg.nrctrato%TYPE) IS
     SELECT c.flggarad, c.nrendres
-      FROM crawseg c
+      FROM cecred.crawseg c
      WHERE c.cdcooper = pr_cdcooper
        AND c.nrdconta = pr_nrdconta
        AND c.nrctrseg = pr_nrctrseg
@@ -152,7 +152,7 @@ DECLARE
 
    SELECT nmrescop
      INTO vr_nmrescop
-     FROM crapcop
+     FROM cecred.crapcop
     WHERE cdcooper = pr_cdcooper;
 
    
@@ -175,7 +175,7 @@ DECLARE
 
         
    BEGIN
-     UPDATE tbseg_parametros_prst p
+     UPDATE cecred.tbseg_parametros_prst p
         SET p.seqarqu = vr_nrsequen
       WHERE p.idseqpar = rw_seg_parametro_prst.idseqpar;
      COMMIT;
@@ -190,11 +190,11 @@ DECLARE
    vr_ultimoDia := trunc(SYSDATE,'MONTH')-1;
 
         
-   vr_nmdircop := gene0001.fn_diretorio(pr_tpdireto => 'C', 
+   vr_nmdircop := cecred.gene0001.fn_diretorio(pr_tpdireto => 'C', 
                                         pr_cdcooper => pr_cdcooper);
 
         
-   IF NOT gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',0,'DB_NAME_PRODUC') THEN          
+   IF NOT cecred.gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',0,'DB_NAME_PRODUC') THEN          
      vr_apolice := NVL(gene0001.fn_param_sistema('CRED', 0, 'APOLICE_ICATU_SEGPRE'),'77000799');
    ELSE          
      vr_apolice  := nvl(rw_prestamista.nrapolice,rw_seg_parametro_prst.nrapolic);
@@ -209,7 +209,7 @@ DECLARE
                   gene0002.fn_mask(vr_nrsequen, '99999') || '.csv';
 
    
-   GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdircop || '/arq/'       
+   cecred.GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdircop || '/arq/'       
                            ,pr_nmarquiv => vr_nmarquiv                  
                            ,pr_tipabert => 'W'                          
                            ,pr_utlfileh => vr_ind_arquivo               
@@ -224,7 +224,7 @@ DECLARE
    ||'Tipo de movimento,Endereco,Complemento,Bairro,Cidade,UF,CEP,'
    ||'Numero Endereco,Numero Proposta,Data da solicitacao do cancelamento,Numero da apolice coletiva,Data do Protocolo,CAPITAL PIE,CAPITAL IFTT,Meses de Financiamento,Data da Assinatura da Proposta,Valor da Parcela do financiamento,'
    ||'Competencia do movimento,Motivo do cancelamento do risco,Cooperativa,Banco,Agencia,Numero Conta Corrente';
-   GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_linha_txt);
+   cecred.GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_linha_txt);
    vr_linha_txt := '';
 
         
@@ -266,10 +266,10 @@ DECLARE
                     pr_nrctrato => rw_prestamista.nrctremp);
       FETCH cr_crawseg INTO rw_crawseg;
       IF cr_crawseg%NOTFOUND THEN
-        vr_dscritic := 'Proposta de seguro prestamista não localizado!:
+        vr_dscritic := 'Proposta de seguro prestamista nÃ£o localizado!:
                                  Conta: ' || rw_prestamista.nrdconta ||
-                                ' Apólice: ' || rw_prestamista.nrctrseg ||
-                                ' Contrato Empréstimo: ' ||rw_prestamista.nrctremp ;
+                                ' ApÃ³lice: ' || rw_prestamista.nrctrseg ||
+                                ' Contrato EmprÃ©stimo: ' ||rw_prestamista.nrctremp ;
         RAISE vr_exc_erro;       
       END IF;
     CLOSE cr_crawseg;
@@ -319,7 +319,7 @@ DECLARE
     vr_linha_txt := vr_linha_txt || TRIM(to_char(rw_prestamista.nrcpfcgc,'fm00000000000'))||','; 
     
     vr_linha_txt := vr_linha_txt ||
-                     TRIM(UPPER(gene0007.fn_caract_especial(rw_prestamista.nmprimtl)))||',';
+                     TRIM(UPPER(cecred.gene0007.fn_caract_especial(rw_prestamista.nmprimtl)))||',';
      
     IF rw_prestamista.cdsexotl = 1 THEN 
       vr_linha_txt := vr_linha_txt || 'M,';
@@ -346,13 +346,13 @@ DECLARE
     
     vr_linha_txt := vr_linha_txt ||vr_tiporeg||',';
     
-    vr_linha_txt := vr_linha_txt ||TRIM(REPLACE(UPPER(gene0007.fn_caract_especial(nvl(rw_prestamista.dsendres,' '))),',',' '))||','; 
+    vr_linha_txt := vr_linha_txt ||TRIM(REPLACE(UPPER(cecred.gene0007.fn_caract_especial(nvl(rw_prestamista.dsendres,' '))),',',' '))||','; 
     
     vr_linha_txt := vr_linha_txt ||TRIM(vr_complemento)||',';
     
-    vr_linha_txt := vr_linha_txt ||TRIM(UPPER(gene0007.fn_caract_especial(nvl(rw_prestamista.nmbairro,' '))))||',';
+    vr_linha_txt := vr_linha_txt ||TRIM(UPPER(cecred.gene0007.fn_caract_especial(nvl(rw_prestamista.nmbairro,' '))))||',';
           
-    vr_linha_txt := vr_linha_txt ||TRIM(UPPER(gene0007.fn_caract_especial(nvl(rw_prestamista.nmcidade,' '))))||',';
+    vr_linha_txt := vr_linha_txt ||TRIM(UPPER(cecred.gene0007.fn_caract_especial(nvl(rw_prestamista.nmcidade,' '))))||',';
     
     vr_linha_txt := vr_linha_txt || TRIM(nvl(to_char(rw_prestamista.cdufresd), ' '))||',';
     
@@ -399,9 +399,9 @@ DECLARE
    
   vr_tab_ctrl_prst.delete;        
 
-  GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);
+  cecred.GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);
 
-  GENE0003.pc_converte_arquivo(pr_cdcooper => pr_cdcooper                   
+  cecred.GENE0003.pc_converte_arquivo(pr_cdcooper => pr_cdcooper                   
                               ,pr_nmarquiv => vr_nmdircop || '/arq/'||vr_nmarquiv       
                               ,pr_nmarqenv => vr_nmarquiv           
                               ,pr_des_erro => vr_dscritic);                
@@ -411,11 +411,11 @@ DECLARE
   END IF;
 
        
-  gene0001.pc_OScommand_Shell(pr_des_comando => 'iconv -f ISO8859-1 -t utf-8 '||vr_nmdircop || '/converte/' || vr_nmarquiv||
+  cecred.gene0001.pc_OScommand_Shell(pr_des_comando => 'iconv -f ISO8859-1 -t utf-8 '||vr_nmdircop || '/converte/' || vr_nmarquiv||
                                                       ' > '||vr_nmdircop||'/arq/'||vr_nmarquivFinal);
 
         
-  SEGU0003.pc_processa_arq_ftp_prest(pr_nmarquiv => vr_nmarquivFinal,     
+  cecred.SEGU0003.pc_processa_arq_ftp_prest(pr_nmarquiv => vr_nmarquivFinal,     
                                      pr_idoperac => 'E',                 
                                      pr_nmdireto => vr_nmdircop || '/arq/', 
                                      pr_idenvseg => 'S',                
@@ -427,7 +427,7 @@ DECLARE
 
    IF vr_dscritic IS NOT NULL THEN
      vr_dscritic := 'Erro ao processar arquivo via FTP - Cooperativa: ' || pr_cdcooper || ' - ' || vr_dscritic;
-     btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+     cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                ,pr_ind_tipo_log => 2 
                                ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
                                                    || 'INC0147270 -> '
@@ -435,14 +435,14 @@ DECLARE
    END IF;
 
    IF TRIM(vr_nmarquiv) IS NOT NULL THEN
-      gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_nmdircop||'/arq/'||vr_nmarquivFinal||' '||gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS')||'cpd/bacas/INC0147270',
+      cecred.gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '||vr_nmdircop||'/arq/'||vr_nmarquivFinal||' '||gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS')||'cpd/bacas/INC0147270',
                                   pr_typ_saida   => vr_tipo_saida,
                                   pr_des_saida   => vr_dscritic);
    END IF;
 
    IF vr_tipo_saida = 'ERR' THEN
      vr_dscritic := 'Erro ao mover o arquivo - Cooperativa: ' || pr_cdcooper || ' - ' ||vr_dscritic;
-     btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+     cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 2 
                                  ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss')||' - '
                                                      ||'INC0147270 -> '
@@ -457,7 +457,7 @@ DECLARE
          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
        END IF;
        vr_dscritic := vr_dscritic || SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
-       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+       cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 2 
                                  ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss')||' - '
                                                      || 'INC0147270 -> '
@@ -466,7 +466,7 @@ DECLARE
      WHEN OTHERS THEN
        vr_dscritic := SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
        vr_dscritic := vr_dscritic;
-       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+       cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 2 
                                  ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss')||' - '
                                                      ||'INC0147270 -> '
