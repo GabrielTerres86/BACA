@@ -1,10 +1,10 @@
 DECLARE
   CURSOR cr_craplcm IS
     SELECT * 
-      FROM craplcm 
+      FROM CECRED.craplcm 
      WHERE cdhistor IN (386) 
        AND progress_recid IN (SELECT nrseqlcm 
-                                FROM tbjur_qbr_sig_extrato 
+                                FROM CECRED.tbjur_qbr_sig_extrato 
                                WHERE nrseq_quebra_sigilo= 943 
                                  AND nrcpfcgc IS NULL);
   rw_craplcm cr_craplcm%ROWTYPE;  
@@ -19,7 +19,7 @@ DECLARE
            chd.vlcheque,
            chd.nrdocmto,
            chd.dsdocmc7
-      FROM crapchd chd
+      FROM CECRED.crapchd chd
      WHERE chd.cdcooper = pr_cdcooper
        AND chd.nrdconta = pr_nrdconta
        AND chd.nrdocmto = pr_nrdocmto
@@ -28,7 +28,7 @@ DECLARE
   
     CURSOR cr_cooperativa(pr_cdagectl IN crapcop.cdagectl%TYPE) IS
       SELECT crapcop.cdcooper
-        FROM crapcop
+        FROM CECRED.crapcop
        WHERE crapcop.cdagectl = pr_cdagectl;
     rw_cooperativa cr_cooperativa%ROWTYPE;
     
@@ -38,7 +38,7 @@ DECLARE
            , crapass.nrcpfcgc 
            , crapass.nrdctitg
            , crapass.inpessoa
-        FROM crapass 
+        FROM CECRED.crapass 
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
     rw_cooperado cr_cooperado%ROWTYPE;
@@ -71,7 +71,7 @@ BEGIN
           CLOSE cr_cooperado;
         END IF;
       CLOSE cr_cooperativa;      
-      UPDATE tbjur_qbr_sig_extrato qbr
+      UPDATE CECRED.tbjur_qbr_sig_extrato qbr
         SET qbr.nrdocmto = rw_all_cheques_data.nrdocmto
            ,qbr.cdbandep = rw_all_cheques_data.cdbanchq
            ,qbr.cdagedep = rw_all_cheques_data.cdagechq
