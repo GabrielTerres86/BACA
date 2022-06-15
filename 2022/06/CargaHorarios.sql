@@ -9,4 +9,4 @@ begin
 		INSERT (t1.CDCOOPER, t1.NRDCONTA, t1.DHREGISTRO, t1.DHEFETIVACAO, t1.CDSITUACAO, t1.IDHORARIO_PERIODO)
 		VALUES(t2.CDCOOPER, t2.NRDCONTA, sysdate, sysdate, 1, 1);
 	commit;
-end;
+end; 
