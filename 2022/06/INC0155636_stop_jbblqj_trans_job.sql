@@ -1,0 +1,3 @@
+BEGIN
+  DBMS_SCHEDULER.stop_job (job_name => 'CECRED.JBBLQJ_TRANSFERENCIA');
+END;
