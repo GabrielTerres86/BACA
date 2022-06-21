@@ -22,7 +22,6 @@ BEGIN
   
   EXCEPTION 
   WHEN OTHERS THEN
+    SISTEMA.excecaoInterna(pr_compleme => 'PRJ0024441');
     ROLLBACK;
-    raise_application_error(-20500, SQLERRM);
-
 END;
