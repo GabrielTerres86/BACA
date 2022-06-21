@@ -30,8 +30,8 @@ CURSOR cr_teds IS
 	   , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') START_DT
 	   , to_char(to_date('31/12/2999', 'DD/MM/RRRR'), 'RRRR-MM-DD"T"HH24:MI:SS') END_DT
 	   , 0 SCORE
-	FROM tbpix_transacao a
-   WHERE a.IDTIPO_TRANSACAO = 'P'
+	FROM pix.tbpix_transacao a
+ WHERE a.IDTIPO_TRANSACAO = 'P'
 	 AND a.IDSITUACAO = 'P'
 	 AND a.DHTRANSACAO BETWEEN ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -24) AND SYSDATE
 	 AND a.CDBCCXLT_RECEBEDOR = 0
@@ -40,7 +40,7 @@ CURSOR cr_teds IS
 CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
 			   ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
 	SELECT ass.nrcpfcgc
-	  FROM crapass ass
+	  FROM cecred.crapass ass
 	 WHERE ass.cdcooper = pr_cdcooper
 	   AND ass.nrdconta = pr_nrdconta;
 

@@ -30,7 +30,7 @@ CURSOR cr_teds IS
 		, to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') MODIFIED_DT
 		, 'OFSADMN' APPROVED_BY
 		, to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') APPROVED_DT
-    FROM craptvl tvl
+    FROM cecred.craptvl tvl
    WHERE tvl.tpdoctrf = 3 
      AND tvl.dtmvtolt >= add_months(trunc(sysdate),-24)
      AND tvl.flgopfin = 1
@@ -49,10 +49,10 @@ CURSOR cr_teds IS
        , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') MODIFIED_DT
        , 'OFSADMN' APPROVED_BY
        , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') APPROVED_DT
-    FROM crapass ass_dbt
-       , crapass ass_cdt
-       , crapcop cop
-       , crapcti cti
+    FROM cecred.crapass ass_dbt
+       , cecred.crapass ass_cdt
+       , cecred.crapcop cop
+       , cecred.crapcti cti
    WHERE cti.cddbanco     = 85
      AND cti.dttransa    >= add_months(trunc(sysdate),-24)
      AND ass_dbt.cdcooper = cti.cdcooper
@@ -74,7 +74,7 @@ CURSOR cr_teds IS
        , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') MODIFIED_DT
        , 'OFSADMN' APPROVED_BY
        , to_char(TRUNC(SYSDATE),'RRRR-MM-DD"T"HH24:MI:SS') APPROVED_DT
-    FROM tbpix_transacao a
+    FROM pix.tbpix_transacao a
    WHERE a.IDTIPO_TRANSACAO = 'P'
      AND a.IDSITUACAO = 'P'
      AND a.DHTRANSACAO BETWEEN ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -24) AND SYSDATE

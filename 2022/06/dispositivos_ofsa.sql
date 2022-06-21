@@ -19,8 +19,8 @@ declare
      , to_char(TRUNC(SYSDATE),'RRRR-MM-DD HH24:MI:SS') MODIFIED_DT
      , 'OFSADMN' APPROVED_BY
      , to_char(TRUNC(SYSDATE),'RRRR-MM-DD HH24:MI:SS') APPROVED_DT
-    FROM dispositivomobile dis,
-       crapass ass
+    FROM cecred.dispositivomobile dis,
+         cecred.crapass ass
    WHERE dis.cooperativaid = ass.cdcooper
      AND dis.numeroconta = ass.nrdconta
      AND ((dis.dataultimoacesso IS NOT NULL AND dis.dataultimoacesso >= add_months(trunc(sysdate),-12)) OR dis.dataultimoacesso IS NULL);
