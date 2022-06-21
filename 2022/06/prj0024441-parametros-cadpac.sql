@@ -20,4 +20,9 @@ BEGIN
   
   COMMIT; 
   
+  EXCEPTION 
+  WHEN OTHERS THEN
+    ROLLBACK;
+    raise_application_error(-20500, SQLERRM);
+
 END;
