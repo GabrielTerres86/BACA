@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-98
 DECLARE 
   vr_exc_erro EXCEPTION;
 
@@ -98,5 +96,3 @@ EXCEPTION
   WHEN OTHERS THEN    
     ROLLBACK;  
 END;
-0
-0
