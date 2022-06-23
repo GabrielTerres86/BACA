@@ -3,7 +3,7 @@ DECLARE
 
   CURSOR cr_quebra IS
     SELECT * 
-      FROM tbjur_qbr_sig_extrato qbr 
+      FROM CECRED.tbjur_qbr_sig_extrato qbr 
      WHERE nrseqlcm IN (987009763,998979582,1018416727,1053031082,1075915921,1075916534,1101506667,1233414794) 
        AND qbr.nrseq_quebra_sigilo = 943;
   rw_quebra cr_quebra%ROWTYPE;
@@ -13,7 +13,7 @@ DECLARE
           ,lcm.nrdconta
           ,lcm.dtmvtolt
           ,lcm.vllanmto 
-      FROM craplcm lcm
+      FROM CECRED.craplcm lcm
      WHERE lcm.progress_recid = pr_nrseqlcm;
   rw_lancamento cr_lancamento%ROWTYPE;
   
@@ -22,7 +22,7 @@ DECLARE
                                ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
                                ,pr_vllanmto IN craplcm.vllanmto%TYPE) IS
     SELECT lcm.progress_recid 
-      FROM craplcm lcm
+      FROM CECRED.craplcm lcm
      WHERE lcm.cdcooper = pr_cdcooper 
        AND lcm.nrdconta = pr_nrdconta 
        AND lcm.dtmvtolt = pr_dtmvtolt 
@@ -39,7 +39,7 @@ DECLARE
            tppessoa_recebedor   AS tipo_pessoa_recebedor,
            nrcpf_cnpj_recebedor AS cpf_cnpj_recebedor,
            nome_recebedor
-      FROM tbpix_transacao p
+      FROM CECRED.tbpix_transacao p
      WHERE idregistro_lcm = pr_nrseqlcm;
   rw_pix cr_pix%ROWTYPE;
                                                   
@@ -57,7 +57,7 @@ BEGIN
         OPEN cr_pix (pr_nrseqlcm => rw_lancamento_estorno.progress_recid);
         FETCH cr_pix INTO rw_pix;
         IF cr_pix%FOUND THEN
-          UPDATE tbjur_qbr_sig_extrato t
+          UPDATE CECRED.tbjur_qbr_sig_extrato t
              SET t.cdbandep = rw_pix.banco_recebedor
                 ,t.cdagedep = rw_pix.agencia_recebedor
                 ,t.nrctadep = rw_pix.conta_recebedor
