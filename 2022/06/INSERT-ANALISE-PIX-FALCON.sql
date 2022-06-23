@@ -1,3 +1,4 @@
+BEGIN
 INSERT INTO tbgen_dominio_campo (NMDOMINIO, CDDOMINIO, DSCODIGO)
 VALUES
 ('STATUS_ANALISE_PIX_RECEBIDO', 1, 'Aguardando análise');
@@ -25,3 +26,5 @@ VALUES
 INSERT INTO tbgen_dominio_campo (NMDOMINIO, CDDOMINIO, DSCODIGO)
 VALUES
 ('STATUS_ANALISE_PIX_RECEBIDO', 7, 'Não enviado por falta de informações');
+COMMIT;
+END;
