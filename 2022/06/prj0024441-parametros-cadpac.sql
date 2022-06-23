@@ -4,7 +4,7 @@ DECLARE
     
     SELECT tab.* 
       FROM craptab tab
-      WHERE tab.cdcooper = 1
+      WHERE tab.cdcooper > 0
      AND UPPER(tab.nmsistem) = 'CRED'
      AND UPPER(tab.tptabela) = 'GENERI'
      AND tab.cdempres = 0
