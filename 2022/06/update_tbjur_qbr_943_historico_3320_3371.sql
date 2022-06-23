@@ -39,7 +39,7 @@ DECLARE
            tppessoa_recebedor   AS tipo_pessoa_recebedor,
            nrcpf_cnpj_recebedor AS cpf_cnpj_recebedor,
            nome_recebedor
-      FROM CECRED.tbpix_transacao p
+      FROM PIX.tbpix_transacao p
      WHERE idregistro_lcm = pr_nrseqlcm;
   rw_pix cr_pix%ROWTYPE;
                                                   
