@@ -4,7 +4,8 @@ DECLARE
   vr_exc_erro EXCEPTION;
   vr_input_file UTL_FILE.FILE_TYPE; 
   vr_handle     UTL_FILE.FILE_TYPE; 
-  vr_handle_log UTL_FILE.FILE_TYPE; 
+  vr_handle_log UTL_FILE.FILE_TYPE;
+  vr_handle_logtar UTL_FILE.FILE_TYPE; 
   vr_nrcontad   PLS_INTEGER := 0;
   vr_idx_carga  PLS_INTEGER;                            
   vr_setlinha   VARCHAR2(5000);                
@@ -15,10 +16,15 @@ DECLARE
   vr_aux_nrdconta   NUMBER;
   vr_aux_nrctrlim   NUMBER;
   vr_cont_commit    NUMBER(6) := 0;
+  vr_aux_data_coop  NUMBER(6) := 0;
+  vr_vltarifa       VARCHAR2(10000); 
+
 
   vr_nmarq_carga    VARCHAR2(200) := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/RITM0228333/RITM0228333.csv';         
   vr_nmarq_log      VARCHAR2(200) := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/RITM0228333/RITM0228333_LOG.txt';    
   vr_nmarq_rollback VARCHAR2(200) := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/RITM0228333/RITM0228333_ROLLBACK.sql';
+  vr_nmarq_log_tarifas  VARCHAR2(200) :=  GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cecred/fabricio/RITM0228333/RITM0228333_LOGTARIFAS.txt';  
+
   
   TYPE typ_reg_carga IS RECORD(cdcooper  craplim.cdcooper%TYPE
                               ,nrdconta  craplim.nrdconta%TYPE
@@ -33,7 +39,8 @@ DECLARE
                                          ,pr_idorigem IN INTEGER                
                                          ,pr_nrdconta IN crapass.nrdconta%TYPE  
                                          ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  
-                                         ,pr_nrctrlim IN craplim.nrctrlim%TYPE  
+                                         ,pr_nrctrlim IN craplim.nrctrlim%TYPE
+                                         ,pr_vltarifa OUT VARCHAR2 
                                          ,pr_cdcritic OUT PLS_INTEGER           
                                          ,pr_dscritic OUT VARCHAR2) IS          
   BEGIN
@@ -56,6 +63,16 @@ DECLARE
     vr_vllimrating  craplim.vllimite%TYPE;
     rw_crapdat      btch0001.rw_crapdat%TYPE;
     vr_innivris     NUMBER;
+    vr_flgtarep     NUMBER(1);
+    vr_cdmodalidade_tipo tbcc_tipo_conta.cdmodalidade_tipo%TYPE;
+    vr_cdhistor     craphis.cdhistor%type;
+    vr_cdhisest     craphis.cdhistor%type;
+    vr_dtdivulg     DATE;
+    vr_dtvigenc     DATE;
+    vr_cdfvlcop     crapfco.cdfvlcop%type;
+    vr_vltarifa     crapfco.vltarifa%type;
+    vr_cdbattar     VARCHAR2(10);
+    vr_tab_erro     gene0001.typ_tab_erro;
 
     CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE    
                      ,pr_nrdconta IN craplim.nrdconta%TYPE    
@@ -205,7 +222,51 @@ DECLARE
     ELSE
       CLOSE cr_craprli;
     END IF;
+    
+    
+    CADA0006.pc_busca_modalidade_conta(pr_cdcooper          => pr_cdcooper,
+                                       pr_nrdconta          => pr_nrdconta,
+                                       pr_cdmodalidade_tipo => vr_cdmodalidade_tipo,
+                                       pr_des_erro          => vr_des_erro,
+                                       pr_dscritic          => vr_dscritic);
+    IF vr_des_erro <> 'OK' THEN
+      vr_dscritic:= 'Erro ao buscar modalidade conta - ' || vr_dscritic;
+      RAISE vr_exc_saida;
+    END IF;
+          
+    vr_flgtarep := 0;
+    IF vr_cdmodalidade_tipo = 4 THEN
+      vr_flgtarep := 1;
+    END IF;
 
+    if  rw_crapass.inpessoa = 1 then
+        vr_cdbattar := 'DSTRENOVPF'; 
+    else
+        vr_cdbattar := 'DSTRENOVPJ'; 
+    end if;           
+          
+    tari0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
+                                         ,pr_cdbattar => vr_cdbattar
+                                         ,pr_vllanmto => rw_craplim.vllimite
+                                         ,pr_cdprogra => ''
+                                         ,pr_flgtarep => vr_flgtarep
+                                         ,pr_cdhistor => vr_cdhistor
+                                         ,pr_cdhisest => vr_cdhisest
+                                         ,pr_vltarifa => vr_vltarifa
+                                         ,pr_dtdivulg => vr_dtdivulg
+                                         ,pr_dtvigenc => vr_dtvigenc
+                                         ,pr_cdfvlcop => vr_cdfvlcop
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic
+                                         ,pr_tab_erro => vr_tab_erro);
+                                               
+   IF vr_dscritic IS NOT NULL THEN
+      vr_dscritic:= 'Erro ao calcular tarifa - ' || vr_dscritic;
+      RAISE vr_exc_saida;
+    END IF;
+
+    pr_vltarifa := to_char(vr_vltarifa,'fm99999g999g990d00','NLS_NUMERIC_CHARACTERS='',.''');
+    
 
     IF vr_habrat = 'S' THEN
 
@@ -508,6 +569,17 @@ BEGIN
         vr_dscritic := 'Erro ao abrir arquivo de LOG: ' || vr_des_erro;
         RAISE vr_exc_erro;
       end if;
+      
+      gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_log_tarifas
+                              ,pr_tipabert => 'W'              
+                              ,pr_utlfileh => vr_handle_logtar   
+                              ,pr_des_erro => vr_des_erro);
+      if vr_des_erro is not null then
+        vr_dscritic := 'Erro ao abrir arquivo de LOG TARIFAS: ' || vr_des_erro;
+        RAISE vr_exc_erro;
+      end if;
+      
+      
              
       LOOP 
         BEGIN
@@ -551,7 +623,9 @@ BEGIN
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                     ,pr_des_text => 'Coop;Conta;Contrato;Critica');
    
-
+      gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_logtar
+                                    ,pr_des_text => 'Coop;Conta;Contrato;Tarifa');
+                                    
       gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_rollback
                               ,pr_tipabert => 'W'              
                               ,pr_utlfileh => vr_handle   
@@ -567,33 +641,46 @@ BEGIN
           IF vr_tab_carga.exists(vr_idx1) THEN
             
           vr_cont_commit  := vr_cont_commit + 1;
-    
-           OPEN BTCH0001.cr_crapdat(pr_cdcooper =>  vr_tab_carga(vr_idx1).cdcooper);
-           FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-           CLOSE BTCH0001.cr_crapdat;
 
-           pc_renovar_limite_cred_manual(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper
-                                        ,pr_cdoperad => '1'
-                                        ,pr_nmdatela => 'ATENDA'
-                                        ,pr_idorigem => 5
-                                        ,pr_nrdconta => vr_tab_carga(vr_idx1).nrdconta
-                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                        ,pr_nrctrlim => vr_tab_carga(vr_idx1).nrctrlim
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
+          IF vr_tab_carga(vr_idx1).cdcooper <> vr_aux_data_coop THEN
+             vr_aux_data_coop := vr_tab_carga(vr_idx1).cdcooper;
+             
+             OPEN BTCH0001.cr_crapdat(pr_cdcooper =>  vr_aux_data_coop);
+             FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+             CLOSE BTCH0001.cr_crapdat;
+          END IF;                                 
+          
+          pc_renovar_limite_cred_manual(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper
+                                       ,pr_cdoperad => '1'
+                                       ,pr_nmdatela => 'ATENDA'
+                                       ,pr_idorigem => 5
+                                       ,pr_nrdconta => vr_tab_carga(vr_idx1).nrdconta
+                                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                       ,pr_nrctrlim => vr_tab_carga(vr_idx1).nrctrlim
+                                       ,pr_vltarifa => vr_vltarifa
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
            IF vr_dscritic IS NOT NULL THEN
               gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                             ,pr_des_text => vr_tab_carga(vr_idx1).cdcooper || ';' || 
                                                             vr_tab_carga(vr_idx1).nrdconta || ';' || 
                                                             vr_tab_carga(vr_idx1).nrctrlim || ';' || 
                                                             vr_dscritic);
-                                                                  
+           ELSE
+              gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_logtar
+                                            ,pr_des_text => vr_tab_carga(vr_idx1).cdcooper || ';' || 
+                                                            vr_tab_carga(vr_idx1).nrdconta || ';' || 
+                                                            vr_tab_carga(vr_idx1).nrctrlim || ';' || 
+                                                            vr_vltarifa);                                                      
            END IF;
                
            IF vr_cont_commit = 200 THEN
               vr_cont_commit := 0;
               COMMIT;
            END IF;
+           
+           dbms_output.put_line(vr_idx1 || ' - coop: ' ||  vr_tab_carga(vr_idx1).cdcooper || ' - conta: ' ||  vr_vltarifa);
+           dbms_output.put_line('');
 
           END IF;
       END LOOP;
@@ -602,7 +689,7 @@ BEGIN
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle);
           
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);               
-      
+      gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_logtar);
       COMMIT;
       
 EXCEPTION
