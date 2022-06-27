@@ -525,10 +525,6 @@ BEGIN
 
           vr_vet_campos := gene0002.fn_quebra_string(TRIM(vr_setlinha),';'); 
           
-          OPEN BTCH0001.cr_crapdat(pr_cdcooper =>  vr_vet_campos(1));
-          FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-          CLOSE BTCH0001.cr_crapdat;
-
           BEGIN
             vr_aux_cdcooper := TO_NUMBER(vr_vet_campos(1));
             vr_aux_nrdconta := TO_NUMBER(vr_vet_campos(2));
@@ -576,6 +572,10 @@ BEGIN
           IF vr_tab_carga.exists(vr_idx1) THEN
             
           vr_cont_commit  := vr_cont_commit + 1;
+
+           OPEN BTCH0001.cr_crapdat(pr_cdcooper =>  vr_tab_carga(vr_idx1).cdcooper);
+           FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+           CLOSE BTCH0001.cr_crapdat;
 
              pc_renovar_limite_cred_manual(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper
                                           ,pr_cdoperad => '1'
