@@ -142,14 +142,14 @@ begin
       
       end if;
     
-      ds_nome_diretorio_v := ds_nome_diretorio_v || 'cpd/bacas/INC377012';
+      ds_nome_diretorio_v := ds_nome_diretorio_v || 'cpd/bacas/INC0155619';
     
     else
     
       ds_nome_diretorio_v := cecred.gene0001.fn_diretorio(pr_tpdireto => 'C',
                                                           pr_cdcooper => 3);
     
-      ds_nome_diretorio_v := ds_nome_diretorio_v || '/INC377012';
+      ds_nome_diretorio_v := ds_nome_diretorio_v || '/INC0155619';
     
     end if;
   
@@ -178,7 +178,7 @@ begin
                                          ds_texto_rollback_v,
                                          'begin ' || chr(13) || chr(13),
                                          false);
-          nm_arquivo_rollback_v := 'ROLLBACK_INC377012_' || nr_arquivo ||
+          nm_arquivo_rollback_v := 'ROLLBACK_INC0155619_' || nr_arquivo ||
                                    '.sql';
         
           nr_arquivo := nr_arquivo + 1;
