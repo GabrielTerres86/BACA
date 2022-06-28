@@ -21,7 +21,6 @@ DECLARE
        AND r.cdcooper = pr_cdcooper
        AND r.dtrefere = d.dtmvtoan
        AND r.cdmodali = 101
-       AND r.qtdiaatr >= 60
        AND (r.vlsld59d + r.vljura60) <> r.vldivida
      ORDER BY r.CDCOOPER
              ,r.NRDCONTA;
