@@ -297,7 +297,7 @@ DECLARE
               
               IF cr_tbrisco_operacoes%NOTFOUND THEN
                 BEGIN 
-                  UPDATE tbrisco_operacoes o
+                  UPDATE cecred.tbrisco_operacoes o
                      SET o.flintegrar_sas = 1
                    WHERE o.cdcooper = pr_cdcooper
                      AND o.nrdconta = pr_nrdconta
@@ -333,7 +333,7 @@ DECLARE
                 END IF;
                 
                 gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                              ,pr_des_text => 'UPDATE tbrisco_operacoes SET '
+                                              ,pr_des_text => 'UPDATE cecred.tbrisco_operacoes SET '
                                                                   ||' flintegrar_sas = 0 '
                                                             ||' WHERE cdcooper = '||pr_cdcooper
                                                             ||'   AND nrdconta = '||pr_nrdconta
@@ -341,7 +341,7 @@ DECLARE
                                                              ||'  AND tpctrato = 1;');        
 
                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                         ,pr_des_text => 'Delete tbrating_historicos '
+                         ,pr_des_text => 'Delete cecred.tbrating_historicos '
                                        ||' WHERE cdcooper = '||pr_cdcooper           
                                        ||'   AND nrdconta = '||pr_nrdconta                                 
                                        ||'   AND nrctremp = '||pr_nrctrlim                                 
@@ -418,7 +418,7 @@ DECLARE
  
 
     BEGIN
-      UPDATE craplim SET
+      UPDATE cecred.craplim SET
              dtrenova = pr_dtmvtolt,
              tprenova = 'M',
              dsnrenov = '',
@@ -437,7 +437,7 @@ DECLARE
     END;
        
     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                  ,pr_des_text => 'UPDATE craplim SET '
+                                  ,pr_des_text => 'UPDATE cecred.craplim SET '
                                                       ||' dtrenova = '||''''||to_char(rw_craplim.dtrenova,'dd/mm/rrrr')||''''
                                                       ||' ,tprenova = '||''''||rw_craplim.tprenova||''''
                                                       ||' ,dsnrenov = '||''''||rw_craplim.dsnrenov||''''                
@@ -467,14 +467,14 @@ DECLARE
       CLOSE cr_crapalt;
 
       BEGIN
-        UPDATE crapalt SET
+        UPDATE cecred.crapalt SET
                crapalt.dsaltera = rw_crapalt.dsaltera || vr_dsaltera,
                crapalt.cdoperad = pr_cdoperad,
                crapalt.flgctitg = vr_flgctitg
          WHERE crapalt.rowid = rw_crapalt.rowid;
          
          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                  ,pr_des_text => 'UPDATE crapalt SET '
+                                  ,pr_des_text => 'UPDATE cecred.crapalt SET '
                                                           ||' dsaltera = '||''''||to_char(rw_craplim.dtrenova,'dd/mm/rrrr')||''''
                                                           ||' ,cdoperad = '||''''||rw_craplim.cdoperad||''''
                                                           ||' ,flgctitg = '||''''||rw_craplim.cdoperad||''''
@@ -490,7 +490,7 @@ DECLARE
       CLOSE cr_crapalt;
 
       BEGIN
-        INSERT INTO crapalt
+        INSERT INTO cecred.crapalt
           (crapalt.nrdconta
           ,crapalt.dtaltera
           ,crapalt.tpaltera
@@ -508,7 +508,7 @@ DECLARE
           ,pr_cdoperad);
 
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                        ,pr_des_text => 'delete crapalt '
+                                        ,pr_des_text => 'delete cecred.crapalt '
                                                       ||' WHERE cdcooper = '||pr_cdcooper
                                                       ||' and nrdconta = '||pr_nrdconta
                                                       ||' and tpaltera = 2'
@@ -651,8 +651,8 @@ BEGIN
              vr_aux_data_coop := vr_tab_carga(vr_idx1).cdcooper;
              
              OPEN BTCH0001.cr_crapdat(pr_cdcooper =>  vr_aux_data_coop);
-           FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-           CLOSE BTCH0001.cr_crapdat;
+             FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+             CLOSE BTCH0001.cr_crapdat;
           END IF;                                 
 
              pc_renovar_limite_cred_manual(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper
