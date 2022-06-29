@@ -636,7 +636,7 @@ BEGIN
 
   vr_nrdconta  := 8062749;
   vr_vllanmto  := 800;
-  vr_cdhistor  := 2739;
+  vr_cdhistor  := 2738;
 
   prc_gera_lct(prm_cdcooper => vr_cdcooper,
                prm_nrdconta => vr_nrdconta,
