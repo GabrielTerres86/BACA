@@ -1,6 +1,5 @@
 DECLARE
-  /* INC00160744 - Atualizar a situação dos boletos para registrado na CIP */
-  
+ 
   vr_dscritic VARCHAR2(4000);
   vr_des_erro VARCHAR2(100);
   
