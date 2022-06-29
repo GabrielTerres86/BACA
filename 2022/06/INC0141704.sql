@@ -519,6 +519,78 @@ DECLARE
       END IF;
 
   END pc_grava_prejuizo_cc_forcado;
+    PROCEDURE prc_gera_acerto_transit (prm_cdcooper IN craplcm.cdcooper%TYPE,
+                                     prm_nrdconta IN craplcm.nrdconta%TYPE,
+                                     prm_vllanmto IN craplcm.vllanmto%TYPE,
+                                     prm_idaument IN NUMBER DEFAULT 0) IS
+  
+    -- Variáveis negócio
+    vr_dtmvtolt    craplcm.dtmvtolt%TYPE;
+    vr_idprejuizo  tbcc_prejuizo.idprejuizo%TYPE;
+    vr_cdhistor    tbcc_prejuizo_detalhe.cdhistor%TYPE;
+
+    -- Variáveis Tratamento Erro
+    vr_erro        EXCEPTION;
+    vr_cdcritic    NUMBER;
+    vr_dscritic    VARCHAR2(1000);
+
+  BEGIN
+
+    --Busca Data Atual da Cooperativa
+    BEGIN
+      SELECT dtmvtolt
+      INTO   vr_dtmvtolt
+      FROM   crapdat
+      WHERE  cdcooper = prm_cdcooper;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao Buscar Data da Cooperatriva. Erro: '||SubStr(SQLERRM,1,255);
+        RAISE vr_erro; 
+    END;
+    
+    dbms_output.put_line(' ');
+    dbms_output.put_line('   Parâmetros (ATZ TRANSIT):');
+    dbms_output.put_line('     Cooperativa....: '||prm_cdcooper);
+    dbms_output.put_line('     Conta..........: '||prm_nrdconta);
+    dbms_output.put_line('     Data...........: '||To_Char(vr_dtmvtolt,'dd/mm/yyyy'));
+    dbms_output.put_line('     Valor..........: '||prm_vllanmto);
+    dbms_output.put_line(' ');
+
+
+    -- Cria lançamento (Tabela tbcc_prejuizo_lancamento)
+    prej0003.pc_gera_cred_cta_prj(pr_cdcooper => prm_cdcooper,
+                                  pr_nrdconta => prm_nrdconta,
+                                  pr_vlrlanc  => prm_vllanmto,
+                                  pr_dtmvtolt => vr_dtmvtolt,
+                                  pr_dsoperac => 'Ajuste Contabil - ' || To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'),
+                                  pr_cdcritic => vr_cdcritic,
+                                  pr_dscritic => vr_dscritic);
+
+    IF Nvl(vr_cdcritic,0) > 0 OR Trim(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_erro; 
+    ELSE
+      dbms_output.put_line('   Lançamento Credito Conta Transitoria efetuado com Sucesso na Coop/Conta '||prm_cdcooper||'/'||prm_nrdconta||'.');  
+    END IF;
+
+    registrarVERLOG(pr_cdcooper  => prm_cdcooper
+                   ,pr_nrdconta  => prm_nrdconta
+                   ,pr_dstransa  => 'Ajuste Contabil - ' || To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss')
+                   ,pr_dsCampo   => 'pc_gera_cred_cta_prj'
+                   ,pr_antes     => 0
+                   ,pr_depois    => prm_vllanmto);
+
+  EXCEPTION
+    WHEN vr_erro THEN
+      dbms_output.put_line('prc_gera_acerto_transit: '||vr_dscritic);
+      ROLLBACK;
+      dbms_output.put_line('Efetuado Rollback.');
+      Raise_Application_Error(-20001,vr_dscritic);
+    WHEN OTHERS THEN
+      dbms_output.put_line('prc_gera_acerto_transit: Erro: '||SubStr(SQLERRM,1,255));
+      ROLLBACK;
+      dbms_output.put_line('Efetuado Rollback.');
+      Raise_Application_Error(-20002,'Erro Geral no prc_gera_acerto_transit. Erro: '||SubStr(SQLERRM,1,255));    
+  END prc_gera_acerto_transit; 
   
 BEGIN
   
@@ -638,10 +710,9 @@ BEGIN
   vr_vllanmto  := 800;
   vr_cdhistor  := 2738;
 
-  prc_gera_lct(prm_cdcooper => vr_cdcooper,
-               prm_nrdconta => vr_nrdconta,
-               prm_vllanmto => vr_vllanmto,
-               prm_cdhistor => vr_cdhistor);
+  prc_gera_acerto_transit(prm_cdcooper => vr_cdcooper,
+                          prm_nrdconta => vr_nrdconta,
+                          prm_vllanmto => vr_vllanmto);
                           
   prc_atlz_prejuizo (prm_cdcooper => vr_cdcooper,
                      prm_nrdconta => vr_nrdconta,
