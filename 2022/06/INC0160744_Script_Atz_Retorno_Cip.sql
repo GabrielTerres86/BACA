@@ -20,7 +20,7 @@ DECLARE
          rowid
     FROM crapcob cob
     WHERE cob.incobran = 0
-                    AND   cob.inenvcip = 2
+                    AND   cob.inenvcip = 3
                     AND   idtitleg in (73922420, 73922419, 73922418, 73922417);
 
    rw_crapcob cr_crapcob%ROWTYPE;
