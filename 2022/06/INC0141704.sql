@@ -1,14 +1,14 @@
 DECLARE
-  CURSOR cr_his (pr_cdcooper IN crapcop.cdcooper%TYPE
-                ,pr_cdhistor IN craphis.cdhistor%TYPE)IS
+  CURSOR cr_his (pr_cdcooper IN cecred.crapcop.cdcooper%TYPE
+                ,pr_cdhistor IN cecred.craphis.cdhistor%TYPE)IS
     SELECT t.cdhistor, t.dshistor, t.indebcre
       FROM cecred.craphis t
      WHERE t.cdcooper = pr_cdcooper
        AND t.cdhistor = pr_cdhistor;
   rw_his  cr_his%ROWTYPE;
   
-  CURSOR cr_sld_prj (pr_cdcooper IN crapcop.cdcooper%TYPE
-                    ,pr_nrdconta IN crapass.nrdconta%TYPE)IS
+  CURSOR cr_sld_prj (pr_cdcooper IN cecred.crapcop.cdcooper%TYPE
+                    ,pr_nrdconta IN cecred.crapass.nrdconta%TYPE)IS
     SELECT t.vlsdprej, t.idprejuizo
       FROM cecred.tbcc_prejuizo t
      WHERE t.cdcooper = pr_cdcooper
@@ -62,7 +62,7 @@ DECLARE
                         ,pr_dsorigem => 'SCRIPT'
                         ,pr_dttransa => TRUNC(SYSDATE)
                         ,pr_flgtrans => 0
-                        ,pr_hrtransa => gene0002.fn_busca_time
+                        ,pr_hrtransa => cecred.gene0002.fn_busca_time
                         ,pr_idseqttl => 1
                         ,pr_nmdatela => ''
                         ,pr_nrdrowid => vr_nrdrowid);
@@ -352,7 +352,7 @@ DECLARE
     vr_vljuro60_38 NUMBER; 
     vr_vljuro60_57 NUMBER; 
 
-    vr_idprejuizo tbcc_prejuizo.idprejuizo%TYPE;
+    vr_idprejuizo cecred.tbcc_prejuizo.idprejuizo%TYPE;
   BEGIN
       
       OPEN cecred.btch0001.cr_crapdat(pr_cdcooper);
@@ -512,7 +512,7 @@ DECLARE
     WHEN vr_exc_saida THEN
       IF vr_cdcritic <> 0 THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        pr_dscritic := cecred.GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       ELSE
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
@@ -619,7 +619,7 @@ BEGIN
                                      pr_cdhistor    => vr_cdhistor,
                                      pr_vllanmto    => vr_vllanmto,
                                      pr_nrdconta    => vr_nrdconta,
-                                     pr_hrtransa    => gene0002.fn_busca_time,
+                                     pr_hrtransa    => cecred.gene0002.fn_busca_time,
                                      pr_cdorigem    => 0,
                                      pr_inprolot    => 1,
                                      pr_tab_retorno => vr_tab_retorno,
@@ -688,7 +688,7 @@ BEGIN
                                      pr_cdhistor    => vr_cdhistor,
                                      pr_vllanmto    => vr_vllanmto,
                                      pr_nrdconta    => vr_nrdconta,
-                                     pr_hrtransa    => gene0002.fn_busca_time,
+                                     pr_hrtransa    => cecred.gene0002.fn_busca_time,
                                      pr_cdorigem    => 0,
                                      pr_inprolot    => 1,
                                      pr_tab_retorno => vr_tab_retorno,
