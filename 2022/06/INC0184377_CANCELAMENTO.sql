@@ -76,7 +76,7 @@ BEGIN
 
     CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                               pr_nmdcampo => 'tbcc_portabilidade_recebe.dtretorno',
-                              pr_dsdadant => r_port_recebe.dtretorno,
+                              pr_dsdadant => to_char(r_port_recebe.dtretorno,'dd/mm/yyyy HH24:MI:SS'),
                               pr_dsdadatu => to_char(vc_dtcancel,'dd/mm/yyyy HH24:MI:SS'));
 
     CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
