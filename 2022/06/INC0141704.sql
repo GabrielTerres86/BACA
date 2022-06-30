@@ -2,7 +2,7 @@ DECLARE
   CURSOR cr_his (pr_cdcooper IN crapcop.cdcooper%TYPE
                 ,pr_cdhistor IN craphis.cdhistor%TYPE)IS
     SELECT t.cdhistor, t.dshistor, t.indebcre
-      FROM craphis t
+      FROM cecred.craphis t
      WHERE t.cdcooper = pr_cdcooper
        AND t.cdhistor = pr_cdhistor;
   rw_his  cr_his%ROWTYPE;
@@ -10,32 +10,32 @@ DECLARE
   CURSOR cr_sld_prj (pr_cdcooper IN crapcop.cdcooper%TYPE
                     ,pr_nrdconta IN crapass.nrdconta%TYPE)IS
     SELECT t.vlsdprej, t.idprejuizo
-      FROM tbcc_prejuizo t
+      FROM cecred.tbcc_prejuizo t
      WHERE t.cdcooper = pr_cdcooper
        AND t.nrdconta = pr_nrdconta;
   rw_sld_prj  cr_sld_prj%ROWTYPE;
 
-  vr_indebcre  craphis.indebcre%TYPE;
+  vr_indebcre  cecred.craphis.indebcre%TYPE;
   vr_found     BOOLEAN;
 
   vr_incidente VARCHAR2(15);
-  vr_cdcooper  crapcop.cdcooper%TYPE;
-  vr_nrdconta  crapass.nrdconta%TYPE;
-  vr_vllanmto  tbcc_prejuizo.vlsdprej%TYPE;
-  vr_cdhistor  craphis.cdhistor%TYPE;
-  vr_idlancto  tbcc_prejuizo_detalhe.idlancto%TYPE;
+  vr_cdcooper  cecred.crapcop.cdcooper%TYPE;
+  vr_nrdconta  cecred.crapass.nrdconta%TYPE;
+  vr_vllanmto  cecred.tbcc_prejuizo.vlsdprej%TYPE;
+  vr_cdhistor  cecred.craphis.cdhistor%TYPE;
+  vr_idlancto  cecred.tbcc_prejuizo_detalhe.idlancto%TYPE;
   vr_nrdocmto  INTEGER;
   vr_incrineg  INTEGER;
-  vr_tab_retorno  LANC0001.typ_reg_retorno;
-  rw_crapdat   BTCH0001.cr_crapdat%ROWTYPE;
+  vr_tab_retorno  cecred.LANC0001.typ_reg_retorno;
+  rw_crapdat   cecred.BTCH0001.cr_crapdat%ROWTYPE;
   
   vr_cdcritic  NUMBER;
   vr_dscritic  VARCHAR2(1000);
   vr_excerro   EXCEPTION;
   vr_des_erro  VARCHAR2(1000);
 
-  PROCEDURE registrarVERLOG(pr_cdcooper            IN crawepr.cdcooper%TYPE
-                           ,pr_nrdconta            IN crawepr.nrdconta%TYPE
+  PROCEDURE registrarVERLOG(pr_cdcooper            IN cecred.crawepr.cdcooper%TYPE
+                           ,pr_nrdconta            IN cecred.crawepr.nrdconta%TYPE
                            ,pr_dstransa            IN VARCHAR2
                            ,pr_dsCampo             IN VARCHAR
                            ,pr_antes               IN VARCHAR2
@@ -43,8 +43,8 @@ DECLARE
 
  
 
-    vr_dstransa             craplgm.dstransa%TYPE;
-    vr_descitem             craplgi.nmdcampo%TYPE;
+    vr_dstransa             cecred.craplgm.dstransa%TYPE;
+    vr_descitem             cecred.craplgi.nmdcampo%TYPE;
     vr_nrdrowid             ROWID;
     vr_risco_anterior       VARCHAR2(10);
 
@@ -54,7 +54,7 @@ DECLARE
 
     vr_dstransa := pr_dstransa;
 
-    GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+    cecred.GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                         ,pr_nrdconta => pr_nrdconta
                         ,pr_dstransa => vr_dstransa
                         ,pr_dscritic => ''
@@ -68,7 +68,7 @@ DECLARE
                         ,pr_nrdrowid => vr_nrdrowid);
 
     IF trim(pr_dsCampo) IS NOT NULL THEN
-      GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+      cecred.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                ,pr_nmdcampo => pr_dsCampo
                                ,pr_dsdadant => pr_antes
                                ,pr_dsdadatu => pr_depois);
@@ -80,14 +80,14 @@ DECLARE
   END registrarVERLOG;
   
   
- PROCEDURE prc_gera_lct (prm_cdcooper IN craplcm.cdcooper%TYPE,
-                         prm_nrdconta IN craplcm.nrdconta%TYPE,
-                         prm_vllanmto IN craplcm.vllanmto%TYPE,
-                         prm_cdhistor IN craplcm.cdhistor%TYPE) IS
+ PROCEDURE prc_gera_lct (prm_cdcooper IN cecred.craplcm.cdcooper%TYPE,
+                         prm_nrdconta IN cecred.craplcm.nrdconta%TYPE,
+                         prm_vllanmto IN cecred.craplcm.vllanmto%TYPE,
+                         prm_cdhistor IN cecred.craplcm.cdhistor%TYPE) IS
   
-    vr_dtmvtolt    craplcm.dtmvtolt%TYPE;
-    vr_idprejuizo  tbcc_prejuizo.idprejuizo%TYPE;
-    vr_cdhistor    tbcc_prejuizo_detalhe.cdhistor%TYPE;
+    vr_dtmvtolt    cecred.craplcm.dtmvtolt%TYPE;
+    vr_idprejuizo  cecred.tbcc_prejuizo.idprejuizo%TYPE;
+    vr_cdhistor    cecred.tbcc_prejuizo_detalhe.cdhistor%TYPE;
 
     vr_erro        EXCEPTION;
     vr_cdcritic    NUMBER;
@@ -98,7 +98,7 @@ DECLARE
     BEGIN
       SELECT dtmvtolt
       INTO   vr_dtmvtolt
-      FROM   crapdat
+      FROM   cecred.crapdat
       WHERE  cdcooper = prm_cdcooper;
     EXCEPTION
       WHEN OTHERS THEN
@@ -117,7 +117,7 @@ DECLARE
     BEGIN
       SELECT a.idprejuizo
         INTO vr_idprejuizo
-        FROM tbcc_prejuizo a
+        FROM cecred.tbcc_prejuizo a
        WHERE a.cdcooper = prm_cdcooper
          AND a.nrdconta = prm_nrdconta;
     EXCEPTION
@@ -126,7 +126,7 @@ DECLARE
         RAISE vr_erro; 
     END;
 
-    prej0003.pc_gera_lcto_extrato_prj(pr_cdcooper   => prm_cdcooper
+    cecred.prej0003.pc_gera_lcto_extrato_prj(pr_cdcooper   => prm_cdcooper
                                      ,pr_nrdconta   => prm_nrdconta
                                      ,pr_dtmvtolt   => vr_dtmvtolt
                                      ,pr_cdhistor   => prm_cdhistor
@@ -162,16 +162,16 @@ DECLARE
   END prc_gera_lct;  
 
 
-  PROCEDURE prc_atlz_prejuizo (prm_cdcooper IN craplcm.cdcooper%TYPE,
-                               prm_nrdconta IN craplcm.nrdconta%TYPE,
-                               prm_vllanmto IN craplcm.vllanmto%TYPE,
-                               prm_cdhistor IN craplcm.cdhistor%TYPE,
+  PROCEDURE prc_atlz_prejuizo (prm_cdcooper IN cecred.craplcm.cdcooper%TYPE,
+                               prm_nrdconta IN cecred.craplcm.nrdconta%TYPE,
+                               prm_vllanmto IN cecred.craplcm.vllanmto%TYPE,
+                               prm_cdhistor IN cecred.craplcm.cdhistor%TYPE,
                                prm_tipoajus IN VARCHAR2) IS
   
     
-    vr_idprejuizo  tbcc_prejuizo.idprejuizo%TYPE;
+    vr_idprejuizo  cecred.tbcc_prejuizo.idprejuizo%TYPE;
     vr_tipoacao    BOOLEAN;
-    vr_vlsdprej    tbcc_prejuizo.vlsdprej%TYPE;
+    vr_vlsdprej    cecred.tbcc_prejuizo.vlsdprej%TYPE;
 
     
     vr_erro        EXCEPTION;
@@ -239,7 +239,7 @@ DECLARE
 
     IF vr_tipoacao THEN 
       BEGIN
-        UPDATE tbcc_prejuizo  a
+        UPDATE cecred.tbcc_prejuizo  a
            SET a.vlsdprej = Nvl(vlsdprej,0) - Nvl(prm_vllanmto,0)
          WHERE a.cdcooper = prm_cdcooper
            AND a.nrdconta = prm_nrdconta;
@@ -250,7 +250,7 @@ DECLARE
       END; 
     ELSE  
       BEGIN
-        UPDATE tbcc_prejuizo  a
+        UPDATE cecred.tbcc_prejuizo  a
            SET a.vlsdprej = Nvl(vlsdprej,0) + Nvl(prm_vllanmto,0)
          WHERE a.cdcooper = prm_cdcooper
            AND a.nrdconta = prm_nrdconta;
@@ -299,10 +299,10 @@ DECLARE
       Raise_Application_Error(-20002,'Erro Geral no prc_atlz_prejuizo. Erro: '||SubStr(SQLERRM,1,255));    
   END prc_atlz_prejuizo;      
   
-  PROCEDURE pc_grava_prejuizo_cc_forcado(pr_cdcooper       IN crapcop.cdcooper%TYPE   
-                                        ,pr_nrdconta      IN  crapass.nrdconta%TYPE  
+  PROCEDURE pc_grava_prejuizo_cc_forcado(pr_cdcooper       IN cecred.crapcop.cdcooper%TYPE   
+                                        ,pr_nrdconta      IN  cecred.crapass.nrdconta%TYPE  
                                         ,pr_tpope         IN VARCHAR2 DEFAULT 'N'    
-                                        ,pr_cdcritic      OUT crapcri.cdcritic%TYPE  
+                                        ,pr_cdcritic      OUT cecred.crapcri.cdcritic%TYPE  
                                         ,pr_dscritic      OUT VARCHAR2) IS
     
     CURSOR cr_crapass  (pr_cdcooper  crapass.cdcooper%TYPE,
@@ -310,7 +310,7 @@ DECLARE
      SELECT a.inprejuz
           , a.vllimcre
           , a.cdsitdct
-       FROM crapass a
+       FROM cecred.crapass a
       WHERE a.cdcooper = pr_cdcooper
         AND a.nrdconta   = pr_nrdconta;
     rw_crapass  cr_crapass%ROWTYPE;
@@ -320,7 +320,7 @@ DECLARE
                        pr_nrdconta      crapris.nrdconta%TYPE,
                        pr_dtrefere      crapris.dtrefere%TYPE) IS
       SELECT ris.qtdiaatr
-       FROM  crapris ris
+       FROM  cecred.crapris ris
        WHERE ris.cdcooper  = pr_cdcooper
        AND   ris.nrdconta  = pr_nrdconta
        AND   ris.cdmodali  = 101  
@@ -335,13 +335,13 @@ DECLARE
     vr_exc_saida exception;
 
     
-    rw_crapdat   btch0001.cr_crapdat%ROWTYPE;
+    rw_crapdat   cecred.btch0001.cr_crapdat%ROWTYPE;
 
     
     vr_vlslddev  NUMBER:= 0;
     vr_tab_erro cecred.gene0001.typ_tab_erro;
 
-    vr_qtdiaatr crapris.qtdiaatr%TYPE;
+    vr_qtdiaatr cecred.crapris.qtdiaatr%TYPE;
 
     
     vr_vlhist37 NUMBER;
@@ -355,17 +355,17 @@ DECLARE
     vr_idprejuizo tbcc_prejuizo.idprejuizo%TYPE;
   BEGIN
       
-      OPEN btch0001.cr_crapdat(pr_cdcooper);
-      FETCH btch0001.cr_crapdat
+      OPEN cecred.btch0001.cr_crapdat(pr_cdcooper);
+      FETCH cecred.btch0001.cr_crapdat
       INTO rw_crapdat;
 
-      IF btch0001.cr_crapdat%NOTFOUND THEN
-        CLOSE btch0001.cr_crapdat;
+      IF cecred.btch0001.cr_crapdat%NOTFOUND THEN
+        CLOSE cecred.btch0001.cr_crapdat;
 
         vr_cdcritic := 1;
         RAISE vr_exc_saida;
       ELSE
-        CLOSE btch0001.cr_crapdat;
+        CLOSE cecred.btch0001.cr_crapdat;
       END IF;
 
      
@@ -389,7 +389,7 @@ DECLARE
      END IF;
 
      
-     PREJ0003.pc_cancela_servicos_cc_prj(pr_cdcooper => pr_cdcooper
+     cecred.PREJ0003.pc_cancela_servicos_cc_prj(pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => pr_nrdconta
                                         ,pr_dtinc_prejuizo => rw_crapdat.dtmvtolt
                                         ,pr_cdcritic => vr_cdcritic
@@ -403,7 +403,7 @@ DECLARE
      END IF;
 
      
-     PREJ0003.pc_debita_juros60_prj(pr_cdcooper => pr_cdcooper
+     cecred.PREJ0003.pc_debita_juros60_prj(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
                                    ,pr_vlhist37 => vr_vlhist37
                                    ,pr_vlhist38 => vr_vlhist38
@@ -419,7 +419,7 @@ DECLARE
      END IF;
 
      
-     TELA_ATENDA_DEPOSVIS.pc_busca_saldos_juros60_det(pr_cdcooper => pr_cdcooper
+     cecred.TELA_ATENDA_DEPOSVIS.pc_busca_saldos_juros60_det(pr_cdcooper => pr_cdcooper
                                                      ,pr_nrdconta => pr_nrdconta
                                                      ,pr_vlsld59d => vr_vlslddev
                                                      ,pr_vlju6037 => vr_vljuro60_37
@@ -446,7 +446,7 @@ DECLARE
      CLOSE cr_qtdiaatr;
 
      BEGIN
-       INSERT INTO TBCC_PREJUIZO(cdcooper
+       INSERT INTO cecred.TBCC_PREJUIZO(cdcooper
                                 ,nrdconta
                                 ,dtinclusao
                                 ,cdsitdct_original
@@ -476,7 +476,7 @@ DECLARE
 
      BEGIN
        
-       UPDATE crapass a
+       UPDATE cecred.crapass a
           SET a.inprejuz = 1
         WHERE a.cdcooper = pr_cdcooper
           AND a.nrdconta = pr_nrdconta;
@@ -488,7 +488,7 @@ DECLARE
      END;
      
      
-     PREJ0003.pc_define_situacao_cc_prej(pr_cdcooper => pr_cdcooper
+     cecred.PREJ0003.pc_define_situacao_cc_prej(pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => pr_nrdconta
                                         ,pr_cdcritic => vr_cdcritic 
                                         ,pr_dscritic => vr_dscritic );
@@ -498,7 +498,7 @@ DECLARE
      end if;    
 
      
-     PREJ0003.pc_lanca_transf_extrato_prj(pr_idprejuizo => vr_idprejuizo
+     cecred.PREJ0003.pc_lanca_transf_extrato_prj(pr_idprejuizo => vr_idprejuizo
                                          ,pr_cdcooper   => pr_cdcooper
                                          ,pr_nrdconta   => pr_nrdconta
                                          ,pr_vlsldprj   => vr_vlslddev
@@ -519,28 +519,26 @@ DECLARE
       END IF;
 
   END pc_grava_prejuizo_cc_forcado;
-    PROCEDURE prc_gera_acerto_transit (prm_cdcooper IN craplcm.cdcooper%TYPE,
-                                     prm_nrdconta IN craplcm.nrdconta%TYPE,
-                                     prm_vllanmto IN craplcm.vllanmto%TYPE,
+  
+    PROCEDURE prc_gera_acerto_transit (prm_cdcooper IN cecred.craplcm.cdcooper%TYPE,
+                                     prm_nrdconta IN cecred.craplcm.nrdconta%TYPE,
+                                     prm_vllanmto IN cecred.craplcm.vllanmto%TYPE,
                                      prm_idaument IN NUMBER DEFAULT 0) IS
   
-    -- Variáveis negócio
-    vr_dtmvtolt    craplcm.dtmvtolt%TYPE;
-    vr_idprejuizo  tbcc_prejuizo.idprejuizo%TYPE;
-    vr_cdhistor    tbcc_prejuizo_detalhe.cdhistor%TYPE;
+    vr_dtmvtolt    cecred.craplcm.dtmvtolt%TYPE;
+    vr_idprejuizo  cecred.tbcc_prejuizo.idprejuizo%TYPE;
+    vr_cdhistor    cecred.tbcc_prejuizo_detalhe.cdhistor%TYPE;
 
-    -- Variáveis Tratamento Erro
     vr_erro        EXCEPTION;
     vr_cdcritic    NUMBER;
     vr_dscritic    VARCHAR2(1000);
 
   BEGIN
 
-    --Busca Data Atual da Cooperativa
     BEGIN
       SELECT dtmvtolt
       INTO   vr_dtmvtolt
-      FROM   crapdat
+      FROM   cecred.crapdat
       WHERE  cdcooper = prm_cdcooper;
     EXCEPTION
       WHEN OTHERS THEN
@@ -557,8 +555,7 @@ DECLARE
     dbms_output.put_line(' ');
 
 
-    -- Cria lançamento (Tabela tbcc_prejuizo_lancamento)
-    prej0003.pc_gera_cred_cta_prj(pr_cdcooper => prm_cdcooper,
+    cecred.prej0003.pc_gera_cred_cta_prj(pr_cdcooper => prm_cdcooper,
                                   pr_nrdconta => prm_nrdconta,
                                   pr_vlrlanc  => prm_vllanmto,
                                   pr_dtmvtolt => vr_dtmvtolt,
@@ -594,7 +591,9 @@ DECLARE
   
 BEGIN
   
-
+  OPEN cecred.BTCH0001.cr_crapdat(vr_cdcooper);
+  FETCH cecred.BTCH0001.cr_crapdat INTO rw_crapdat;
+  CLOSE cecred.BTCH0001.cr_crapdat;
 
   dbms_output.put_line('Script iniciado em '||To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'));
 
@@ -606,15 +605,11 @@ BEGIN
                               TRIM(to_char(rw_crapdat.dtmvtolt, 'DD/MM/YYYY')) || ';' || 61);
   dbms_output.put_line('  ');
   
-  OPEN BTCH0001.cr_crapdat(vr_cdcooper);
-  FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-  CLOSE BTCH0001.cr_crapdat;
-  
   vr_nrdconta  := 10376836;
   vr_vllanmto  := 23.47;
   vr_cdhistor  := 362;
   
-  LANC0001.pc_gerar_lancamento_conta(pr_cdcooper    => vr_cdcooper,
+  cecred.LANC0001.pc_gerar_lancamento_conta(pr_cdcooper    => vr_cdcooper,
                                      pr_dtmvtolt    => rw_crapdat.dtmvtolt,
                                      pr_cdagenci    => 1,
                                      pr_cdbccxlt    => 1,
@@ -683,7 +678,7 @@ BEGIN
   vr_vllanmto  := 800;
   vr_cdhistor  := 535;
   
-  LANC0001.pc_gerar_lancamento_conta(pr_cdcooper    => vr_cdcooper,
+  cecred.LANC0001.pc_gerar_lancamento_conta(pr_cdcooper    => vr_cdcooper,
                                      pr_dtmvtolt    => rw_crapdat.dtmvtolt,
                                      pr_cdagenci    => 1,
                                      pr_cdbccxlt    => 1,
