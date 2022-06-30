@@ -591,6 +591,8 @@ DECLARE
   
 BEGIN
   
+  vr_cdcooper  := 1;
+  
   OPEN cecred.BTCH0001.cr_crapdat(vr_cdcooper);
   FETCH cecred.BTCH0001.cr_crapdat INTO rw_crapdat;
   CLOSE cecred.BTCH0001.cr_crapdat;
@@ -598,7 +600,6 @@ BEGIN
   dbms_output.put_line('Script iniciado em '||To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'));
 
   vr_incidente := 'INC0141704';
-  vr_cdcooper  := 1;
   vr_nrdocmto  := fn_sequence('CRAPLCT',
                               'NRDOCMTO',
                               vr_cdcooper || ';' ||
