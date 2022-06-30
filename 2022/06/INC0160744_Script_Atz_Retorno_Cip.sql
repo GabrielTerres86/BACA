@@ -113,6 +113,7 @@ DECLARE
           dbms_output.put_line(vr_tbtitulocip.NumIdentcTit ||'-'|| vr_tbtitulocip.NumRefAtlCadTit);
           UPDATE crapcob cob
           SET cob.inenvcip = 3
+             ,cob.insitpro = 3
              ,cob.nrdident = vr_tbtitulocip.NumIdentcTit
              ,cob.nratutit = vr_tbtitulocip.NumRefAtlCadTit
           WHERE rowid = rw_crapcob.rowid;             
