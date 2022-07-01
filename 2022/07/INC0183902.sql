@@ -39,7 +39,7 @@ BEGIN
                        pr_cdoperad => vr_cdoperad,
                        pr_dscritic => vr_dscritic,
                        pr_dsorigem => 'AIMARO',
-                       pr_dstransa => 'Remocao lançamento futuro por script - INC0183902',
+                       pr_dstransa => 'Remocao lancamento futuro por script - INC0183902',
                        pr_dttransa => vr_dttransa,
                        pr_flgtrans => 1,
                        pr_hrtransa => vr_hrtransa,
