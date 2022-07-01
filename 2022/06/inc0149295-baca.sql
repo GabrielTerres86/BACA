@@ -15,7 +15,6 @@ DECLARE
      WHERE e.inliquid = 0
        AND e.inprejuz = 0
        AND w.flgreneg = 1
-       AND e.tpemprst = 1
        AND e.dtmvtolt >= to_date('01/07/2022','dd/mm/yyyy')
        AND e.nrctremp = w.nrctrliq##1;
 
