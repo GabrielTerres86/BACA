@@ -72,15 +72,9 @@ BEGIN
   
 EXCEPTION
   WHEN vr_erro_geralog THEN
-    --
     ROLLBACK;
-    --
     RAISE_APPLICATION_ERROR(-20001, 'Erro chamada gene0001.pc_gera_log: ' || vr_dscritic);
-    --    
   WHEN OTHERS THEN
-    --
     ROLLBACK;
-    --
     RAISE_APPLICATION_ERROR(-20000, 'Erro ao executar script: ' || SQLERRM);
-    --
 END;
