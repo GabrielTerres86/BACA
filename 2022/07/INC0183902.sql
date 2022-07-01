@@ -21,7 +21,6 @@ BEGIN
   vr_dttransa := trunc(sysdate);
   vr_hrtransa := GENE0002.fn_busca_time;  
   
-  --Busca a PK da tabela
   SELECT l.idlancto, l.insitlau, l.dtdebito, l.dtmvtolt
     INTO vr_idlancto, vr_insitlau, vr_dtdebito, vr_dtmvtolt
     FROM cecred.craplau l
