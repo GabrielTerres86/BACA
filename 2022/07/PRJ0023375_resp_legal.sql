@@ -31,7 +31,7 @@ DECLARE
         WHERE CONTAS.IDADE between 18 and 19
           AND CONTAS.CDRLCRSP NOT IN ( 0, 4 ) ;
        
-
+    vr_dscritic varchar2(4000); 
 
 BEGIN
 
