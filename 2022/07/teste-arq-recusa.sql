@@ -17,7 +17,7 @@ ds_nome_diretorio_v	:= '/usr/coop/cecred/arq';
 
 dbms_lob.createtemporary(ds_dados_arquivo_v, true, dbms_lob.CALL);
 dbms_lob.open(ds_dados_arquivo_v, dbms_lob.lob_readwrite);
-gene0002.pc_escreve_xml(ds_dados_arquivo_v, ds_texto_arquivo_v, 'conteúdo de teste' || chr(13) || chr(13), false);
+gene0002.pc_escreve_xml(ds_dados_arquivo_v, ds_texto_arquivo_v, 'conteÃºdo de teste' || chr(13) || chr(13), false);
 nm_arquivo_arquivo_v	:= 'teste.txt';
 
 gene0002.pc_solicita_relato_arquivo(	pr_cdcooper	=> cd_cooperativa_v,
@@ -39,6 +39,8 @@ gene0002.pc_solicita_relato_arquivo(	pr_cdcooper	=> cd_cooperativa_v,
 
 			dbms_lob.close(ds_dados_arquivo_v);
 			dbms_lob.freetemporary(ds_dados_arquivo_v);
+
+			commit;
 
 exception
 when	ds_exc_erro_v then
