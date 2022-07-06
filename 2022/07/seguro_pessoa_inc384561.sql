@@ -157,7 +157,7 @@ begin
         qt_reg_arquivo := qt_reg_arquivo + 1;
       
         update cecred.tbseg_prestamista a
-           set a.tpregist = 3
+           set a.tpregist = 0
          where a.rowid = r01.nr_linha_tbprest;
       
         cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v,
