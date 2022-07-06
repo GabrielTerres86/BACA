@@ -1,4 +1,5 @@
 DECLARE  
+         
   CURSOR cr_crapcob  IS
   SELECT cob.cdcooper,
          cob.nrdconta,
@@ -6,15 +7,6 @@ DECLARE
          cob.nrdocmto,
          cob.vltitulo,
          cob.dtvencto,
-         cob.dsinform,
-         cob.incobran,
-         cob.cdtitprt,
-         cob.flgcbdda,
-         cob.ininscip,
-         cob.nrdident,
-         cob.inenvcip,
-         cob.insitpro, 
-         cob.nrdctabb, 
          cob.cdbandoc, 
          cob.cdcartei,
          rowid
@@ -605,10 +597,23 @@ DECLARE
    vr_cdcritic crapcri.cdcritic%TYPE;
    vr_dscritic VARCHAR2(4000);
    vr_des_erro VARCHAR2(4000);
-   vr_situacao INTEGER;
    vr_idsacavalst NUMBER;
+   
+   vr_cdprogra VARCHAR2(40) := 'INC0160744';
+   vr_idprglog         NUMBER := 0;
+   vr_module_name      VARCHAR2(100) := NULL;
+   vr_action_name      VARCHAR2(100) := NULL;  
        
   BEGIN   
+
+    cobr0014.gerarLogInicio(pr_cdcooper      => 3
+                           ,pr_cdagenci      => 0
+                           ,pr_cdprogra      => vr_cdprogra
+                           ,pr_cdprocedure   => vr_cdprogra
+                           ,pr_idprglog      => vr_idprglog
+                           ,pr_dscomplemento => NULL
+                           ,pr_module_name   => vr_module_name
+                           ,pr_action_name   => vr_action_name);      
     
     FOR rw_crapcob IN cr_crapcob LOOP
 
@@ -669,6 +674,8 @@ DECLARE
              ,cob.insitpro = 3
              ,cob.nrdident = vr_tbtitulocip.NumIdentcTit
              ,cob.nratutit = vr_tbtitulocip.NumRefAtlCadTit
+             ,cob.flgcbdda = 1
+             ,cob.dhenvcip = SYSDATE             
           WHERE rowid = rw_crapcob.rowid;             
           
           PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
@@ -678,13 +685,40 @@ DECLARE
                                      ,pr_des_erro => vr_des_erro
                                      ,pr_dscritic => vr_dscritic);          
       ELSE 
-        dbms_output.put_line('Boleto não atualizado - '||rw_crapcob.cdcooper||'-'||rw_crapcob.nrdconta||'-'||rw_crapcob.nrdocmto  );        
-      END IF;                    
+        cobr0014.gerarLogFim( pr_cdcooper      => rw_crapcob.cdcooper
+                             ,pr_cdagenci      => 0
+                             ,pr_cdprogra      => vr_cdprogra
+                             ,pr_cdprocedure   => vr_cdprogra
+                             ,pr_idprglog      => vr_idprglog
+                             ,pr_dscomplemento => 'Boleto não atualizado - '||rw_crapcob.cdcooper||'-'||rw_crapcob.nrdconta||'-'||rw_crapcob.nrdocmto||' Erro - '||vr_dscritic
+                             ,pr_module_name   => vr_module_name
+                             ,pr_action_name   => vr_action_name);                                    
+        
+      END IF;  
+
+      COMMIT;                  
 
     END LOOP;
-    COMMIT;
+
+    cobr0014.gerarLogFim(pr_cdcooper      => 3
+                           ,pr_cdagenci      => 0
+                           ,pr_cdprogra      => vr_cdprogra
+                           ,pr_cdprocedure   => vr_cdprogra
+                           ,pr_idprglog      => vr_idprglog
+                           ,pr_dscomplemento => vr_dscritic
+                           ,pr_module_name   => vr_module_name
+                           ,pr_action_name   => vr_action_name);                                    
+    
   EXCEPTION 
     WHEN OTHERS THEN
-      SISTEMA.excecaoInterna(pr_compleme => 'INC00106744');
+      cobr0014.gerarLogFim(pr_cdcooper      => 3
+                           ,pr_cdagenci      => 0
+                           ,pr_cdprogra      => vr_cdprogra
+                           ,pr_cdprocedure   => vr_cdprogra
+                           ,pr_idprglog      => vr_idprglog
+                           ,pr_dscomplemento => 'Erro - '||SQLERRM
+                           ,pr_module_name   => vr_module_name
+                           ,pr_action_name   => vr_action_name);                                    
+      
       ROLLBACK;
   END ;
