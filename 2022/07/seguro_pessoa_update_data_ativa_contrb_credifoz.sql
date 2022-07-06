@@ -1,0 +1,8 @@
+BEGIN
+  UPDATE CRAPPRM P
+     SET p.dsvlrprm = '28/06/2022'
+   WHERE P.CDACESSO = 'DIA_ATIVA_CONTRB_SEGPRE' 
+     AND p.cdcooper = 11;
+  COMMIT;
+END;
+/
