@@ -641,6 +641,7 @@ BEGIN
     RAISE vr_excerro;
   END IF; 
   
+  UPDATE cecred.tbcc_prejuizo SET vlsdprej = 1615.64 WHERE cdcooper = 1 AND nrdconta = 8592713 AND idprejuizo = (SELECT MAX(idprejuizo) FROM cecred.tbcc_prejuizo WHERE cdcooper = 1 AND nrdconta = 8592713);
   UPDATE cecred.tbcc_prejuizo SET vlsdprej = 783.17 WHERE cdcooper = 1 AND nrdconta = 8062749 AND idprejuizo = 45047;
 
   vr_nrdconta  := 9553207;
