@@ -13,6 +13,7 @@ DECLARE
   vr_qtdregistorserror NUMBER;
   vr_descqtdregistros  VARCHAR2(4000);
   vr_nrdrowid          ROWID;
+  vr_desclog           VARCHAR2(4000);
 
 BEGIN
 
@@ -21834,20 +21835,20 @@ BEGIN
     IF SQL%ROWCOUNT = 1 THEN
       vr_qtdregistrosok := vr_qtdregistrosok + 1;
     ELSE
-      cecred.gene0001.pc_gera_log(pr_cdcooper => 1,
-                                  pr_cdoperad => NULL,
-                                  pr_dscritic => 'vr_nrconta_cartao = ' || v_dados(x).vr_nrconta_cartao ||
-                                                 '. Quantidade de Registros Alterados: ' ||
-                                                 SQL%ROWCOUNT,
-                                  pr_dsorigem => 'PL/SQL SCRIPT',
-                                  pr_dstransa => 'Update da cecred.tbcrd_cessao_credito.dtvencto.',
-                                  pr_dttransa => TRUNC(SYSDATE),
-                                  pr_flgtrans => 0,
-                                  pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
-                                  pr_idseqttl => 0,
-                                  pr_nmdatela => NULL,
-                                  pr_nrdconta => v_dados(x).vr_nrdconta,
-                                  pr_nrdrowid => vr_nrdrowid);
+      vr_desclog := 'vr_nrdconta = ' || v_dados(x).vr_nrdconta || ', vr_nrconta_cartao = ' || v_dados(x).vr_nrconta_cartao ||
+                    '. Quantidade de Registros Alterados: ' || SQL%ROWCOUNT;
+    
+      INSERT INTO cecred.tbgen_erro_sistema
+        (cdcooper
+        ,dherro
+        ,dserro
+        ,nrsqlcode)
+      VALUES
+        (1
+        ,SYSDATE
+        ,vr_desclog
+        ,NULL);
+    
       vr_qtdregistorserror := vr_qtdregistorserror + 1;
     END IF;
   
@@ -21859,18 +21860,19 @@ BEGIN
 
   IF vr_qtdtotalregistros = 4360 and vr_qtdregistrosok = 4360 and vr_qtdregistorserror = 0 THEN
     COMMIT;
-    cecred.gene0001.pc_gera_log(pr_cdcooper => 1,
-                                pr_cdoperad => NULL,
-                                pr_dscritic => vr_descqtdregistros || ' Commit. Ok.',
-                                pr_dsorigem => 'PL/SQL SCRIPT',
-                                pr_dstransa => 'Update da cecred.tbcrd_cessao_credito.dtvencto.',
-                                pr_dttransa => TRUNC(SYSDATE),
-                                pr_flgtrans => 1,
-                                pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
-                                pr_idseqttl => 0,
-                                pr_nmdatela => NULL,
-                                pr_nrdconta => 0,
-                                pr_nrdrowid => vr_nrdrowid);
+  
+    vr_desclog := vr_descqtdregistros || ' Commit. Ok.';
+  
+    INSERT INTO cecred.tbgen_erro_sistema
+      (cdcooper
+      ,dherro
+      ,dserro
+      ,nrsqlcode)
+    VALUES
+      (1
+      ,SYSDATE
+      ,vr_desclog
+      ,NULL);
   ELSE
     RAISE_application_error(-20500,
                             'Não foram atualizados o número correto de registros. ' ||
@@ -21883,18 +21885,20 @@ EXCEPTION
 
   WHEN OTHERS THEN
     ROLLBACK;
-    cecred.gene0001.pc_gera_log(pr_cdcooper => 1,
-                                pr_cdoperad => NULL,
-                                pr_dscritic => SQLCODE || SQLERRM || ' Rollback. Error.',
-                                pr_dsorigem => 'PL/SQL SCRIPT',
-                                pr_dstransa => 'Update da cecred.tbcrd_cessao_credito.dtvencto.',
-                                pr_dttransa => TRUNC(SYSDATE),
-                                pr_flgtrans => 0,
-                                pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
-                                pr_idseqttl => 0,
-                                pr_nmdatela => NULL,
-                                pr_nrdconta => 0,
-                                pr_nrdrowid => vr_nrdrowid);
+  
+    vr_desclog := SQLCODE || SQLERRM || ' Rollback. Error.';
+  
+    INSERT INTO cecred.tbgen_erro_sistema
+      (cdcooper
+      ,dherro
+      ,dserro
+      ,nrsqlcode)
+    VALUES
+      (1
+      ,SYSDATE
+      ,vr_desclog
+      ,NULL);
+  
     COMMIT;
   
 END;
