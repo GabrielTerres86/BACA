@@ -659,13 +659,7 @@ BEGIN
                           prm_nrdconta => vr_nrdconta,
                           prm_vllanmto => vr_vllanmto);
                           
-  prc_atlz_prejuizo (prm_cdcooper => vr_cdcooper,
-                     prm_nrdconta => vr_nrdconta,
-                     prm_vllanmto => vr_vllanmto,
-                     prm_cdhistor => vr_cdhistor,
-                     prm_tipoajus => 'I');
-
-
+  
   vr_cdcooper  := 13;
   vr_nrdconta  := 282642;
   vr_vllanmto  := 5.81;
