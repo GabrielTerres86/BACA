@@ -641,7 +641,7 @@ BEGIN
     RAISE vr_excerro;
   END IF; 
   
-  UPDATE tbcc_prejuizo SET vlsdprej = 783.17 WHERE cdcooper = 1 AND nrdconta = 8062749 AND idprejuizo = 45047;
+  UPDATE cecred.tbcc_prejuizo SET vlsdprej = 783.17 WHERE cdcooper = 1 AND nrdconta = 8062749 AND idprejuizo = 45047;
 
   vr_nrdconta  := 9553207;
   vr_vllanmto  := 106.65;
