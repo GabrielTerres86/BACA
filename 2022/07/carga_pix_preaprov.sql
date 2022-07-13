@@ -4,7 +4,7 @@ begin
        2 tppreapr,
        a.cdcooper,
        a.tpcarga,
-       '13/07/2022' dtmvtolt,
+       to_date('13/07/2022','dd/mm/yyyy') dtmvtolt,
        a.cdcarga_sas,
        'Carga PIX teste' dscarga,
        1 insituacao,
@@ -18,7 +18,7 @@ begin
        1 cdoperador_liberacao,
        a.dtbloqueio,
        a.cdoperador_bloqueio,
-       '12/12/2022'
+       to_date('13/07/2022','dd/mm/yyyy')
 from TBCRED_PREAPROV a
 where a.idcarga = 121);  
 
