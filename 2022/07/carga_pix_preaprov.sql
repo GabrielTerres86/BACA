@@ -18,7 +18,7 @@ begin
        1 cdoperador_liberacao,
        a.dtbloqueio,
        a.cdoperador_bloqueio,
-       to_date('13/07/2022','dd/mm/yyyy') DTFINAL_VIGENCIA
+       to_date('13/12/2022','dd/mm/yyyy') DTFINAL_VIGENCIA
 from TBCRED_PREAPROV a
 where a.idcarga = 121);  
 
