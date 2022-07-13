@@ -18,13 +18,13 @@ begin
        1 cdoperador_liberacao,
        a.dtbloqueio,
        a.cdoperador_bloqueio,
-       to_date('13/07/2022','dd/mm/yyyy')
+       to_date('12/12/2022','dd/mm/yyyy') DTFINAL_VIGENCIA
 from TBCRED_PREAPROV a
 where a.idcarga = 121);  
 
 insert into credito.TBCRED_PREAPROV_DET
-select "CREDITO"."ISEQ$$_81310".nextval,
-       142 idcarga,
+values(idcarga,nrcpfcnpj,cdlinha,tppessoa,infaixa_risco,dtmvtolt,vlcalpre,vlctrpre,vlcalcot,vlcaldes,vlcalpar,vlcalren,vlcalven,dscalris,vllimdis,insituacao,dtbloqueio,cdoperador_bloqueio)
+select 142 idcarga,
        a.nrcpfcnpj,
        a.cdlinha,
        a.tppessoa,
