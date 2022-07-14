@@ -1,6 +1,6 @@
 BEGIN
   
-  UPDATE crapsli
+  UPDATE cecred.crapsli
      SET vlsddisp = 16557.59
    WHERE cdcooper = 1
      AND nrdconta = 3663949
