@@ -25,6 +25,9 @@ begin
     vr_vlproposta     cecred.crawseg.vlseguro%type;
     vr_flgprestamista varchar2(1) := 'N';
     vr_dsmotcan       varchar2(60);
+    vr_nrproposta     tbseg_prestamista.nrproposta%TYPE;
+    vr_vlpretot       tbseg_prestamista.vlprodut%TYPE;
+    vr_dtmvtolt       crapdat.dtmvtolt%type;
   
     qt_efetivado_v number(10);
   
@@ -70,9 +73,25 @@ begin
                pr_nrctremp cecred.tbseg_prestamista.nrctremp%type,
                pr_cdcooper cecred.tbseg_prestamista.cdcooper%type,
                pr_nrdconta cecred.tbseg_prestamista.nrdconta%type) is
-      select a.rowid nr_linha_tbseg
+      select a.rowid nr_linha_tbseg,
+             a.cdcooper,
+             a.nrdconta,
+             a.nrctremp,
+             a.nrproposta
         from cecred.tbseg_prestamista a
        where a.nrctrseg = pr_nrctrseg
+         and a.nrdconta = pr_nrdconta
+         and a.cdcooper = pr_cdcooper
+         and a.nrctremp = pr_nrctremp;
+
+    cursor c05(pr_cdseqtel cecred.craplau.cdseqtel%type,
+               pr_nrctremp cecred.tbseg_prestamista.nrctremp%type,
+               pr_cdcooper cecred.tbseg_prestamista.cdcooper%type,
+               pr_nrdconta cecred.tbseg_prestamista.nrdconta%type) is
+      select a.rowid nr_linha_lau
+        from cecred.craplau a
+       where a.cdhistor = 3651
+         and a.cdseqtel = pr_cdseqtel
          and a.nrdconta = pr_nrdconta
          and a.cdcooper = pr_cdcooper
          and a.nrctremp = pr_nrctremp;
@@ -210,21 +229,7 @@ begin
         vr_vlproposta     := null;
         vr_flgprestamista := 'N';
         vr_dsmotcan       := null;
-      
-        update cecred.crawseg a
-           set a.tpcustei = 1
-         where a.rowid = r01.nr_linha_crawseg;
-      
-        cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v,
-                                       ds_texto_rollback_v,
-                                       'update cecred.crawseg a ' ||
-                                       chr(13) || 'set  a.tpcustei  = ' ||
-                                       r01.tpcustei || ', ' || chr(13) ||
-                                       'where  a.rowid = ' || chr(39) ||
-                                       r01.nr_linha_crawseg || chr(39) || ';' ||
-                                       chr(13) || chr(13),
-                                       false);
-      
+           
         select count(*)
           into qt_efetivado_v
           from cecred.crapseg b, cecred.tbseg_prestamista a
@@ -278,7 +283,7 @@ begin
                                     chr(39) ||
                                     trim(to_char(r01.dhseguro, 'dd/mm/yyyy')) ||
                                     chr(39) || ',' || chr(39) ||
-                                    'dd/mm/yyyy' || chr(39) || '), ' ||
+                                    'dd/mm/yyyy' || chr(39) || ') ' ||
                                     chr(13) || 'where  a.nrproposta  = ' ||
                                     chr(39) || r01.nrproposta || chr(39) || ';' ||
                                     chr(13) || chr(13),
@@ -660,25 +665,42 @@ begin
           
             if (trim(ds_critica_v) is null) then
             
-              cecred.segu0003.pc_vincula_emp_prest(pr_cdcooper => r01.cdcooper,
-                                                   pr_nrdconta => r01.nrdconta,
-                                                   pr_nrctrseg => vr_nrctrseg,
-                                                   pr_nrctremp => r01.nrctrato,
-                                                   pr_cdagenci => 1,
-                                                   pr_nrdcaixa => 0,
-                                                   pr_cdoperad => '1',
-                                                   pr_nmdatela => 'SEGURO',
-                                                   pr_idorigem => 1,
-                                                   pr_cdcritic => cd_critica_v,
-                                                   pr_dscritic => ds_critica_v);
+        	segu0003.pc_cria_seguro_prest_contributario(pr_cdcooper   => r01.cdcooper,
+                                          pr_nrdconta   => r01.nrdconta,
+                                          pr_nrctrseg   => vr_nrctrseg,
+                                          pr_nrctremp   => r01.nrctrato,
+                                          pr_vlpretot   => vr_vlpretot,
+                                          pr_nrproposta => vr_nrproposta,
+                                          pr_cdcritic   => cd_critica_v,
+                                          pr_dscritic   => ds_critica_v);
+                                          
+        	if	(trim(ds_critica_v) is null) then
+
+			select	max(a.dtmvtolt)
+			into	vr_dtmvtolt
+			from	crapdat a
+			where	a.cdcooper	= r01.cdcooper;
+        
+        		SEGU0001.pc_agenda_pgto_prest_contrib(pr_dtmvtolt   => vr_dtmvtolt,
+                                              pr_cdcooper   => r01.cdcooper,
+                                              pr_cdhistor   => 3651,
+                                              pr_nrdconta   => r01.nrdconta,
+                                              pr_nrctremp   => r01.nrctrato,
+                                              pr_nrproposta => vr_nrproposta,
+                                              pr_vlslddev   => vr_vlpretot,
+                                              pr_cdcritic   => cd_critica_v,
+                                              pr_dscritic   => ds_critica_v);
+
             
-              if (trim(ds_critica_v) is null) then
+              		if (trim(ds_critica_v) is null) then
               
-                commit;
+                		commit;
               
-              end if;
+              		end if;
             
-            end if;
+            	end if;
+
+	    end if;
           
             for r03 in c03(pr_nrctrseg => vr_nrctrseg,
                            pr_cdcooper => r01.cdcooper,
@@ -728,8 +750,35 @@ begin
                                                chr(39) || ';' || chr(13) ||
                                                chr(13),
                                                false);
-              
+
               end if;
+
+	      for r05 in c05(pr_cdseqtel => r04.nrproposta,
+                           pr_nrctremp => r04.nrctremp,
+                           pr_cdcooper => r04.cdcooper,
+                           pr_nrdconta => r04.nrdconta) loop
+
+                if (trim(ds_critica_v) is not null) then
+
+                  delete from cecred.craplau a
+                  where a.rowid = r05.nr_linha_lau;
+
+                else
+
+                  cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v,
+                                               ds_texto_rollback_v,
+                                               'delete from cecred.craplau a ' ||
+                                               chr(13) ||
+                                               'where  a.rowid = ' ||
+                                               chr(39) ||
+                                               r05.nr_linha_lau ||
+                                               chr(39) || ';' || chr(13) ||
+                                               chr(13),
+                                               false);
+
+                end if;
+
+	      end loop;
             
             end loop;
           
