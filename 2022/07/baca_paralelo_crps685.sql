@@ -10,4 +10,4 @@ INSERT INTO TBGEN_BATCH_PARAM (IDPARAMETRO,
                               ,1
                               ,'CRPS685'); 
                               
-COMMIT;                               
+COMMIT;                              
