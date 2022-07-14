@@ -1,0 +1,13 @@
+﻿--modificar para criar para todas coops
+INSERT INTO TBGEN_BATCH_PARAM (IDPARAMETRO,
+                               QTPARALELO,
+                               QTREG_TRANSACAO,
+                               CDCOOPER,
+                               CDPROGRAMA)
+                        VALUES((SELECT MAX(IDPARAMETRO)+1 FROM TBGEN_BATCH_PARAM)
+                              ,20
+                              ,0
+                              ,1
+                              ,'CRPS685'); 
+                              
+COMMIT;                              
