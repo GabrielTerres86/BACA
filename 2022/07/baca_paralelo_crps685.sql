@@ -1,5 +1,4 @@
-﻿--modificar para criar para todas coops
-INSERT INTO TBGEN_BATCH_PARAM (IDPARAMETRO,
+﻿INSERT INTO CECRED.TBGEN_BATCH_PARAM (IDPARAMETRO,
                                QTPARALELO,
                                QTREG_TRANSACAO,
                                CDCOOPER,
