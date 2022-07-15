@@ -1,7 +1,0 @@
-begin
-
-commit;
-
-end;
-
-/
