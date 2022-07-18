@@ -1,14 +1,10 @@
 DECLARE
-  
   CURSOR cr_craprdr IS
     SELECT t.nrseqrdr
       FROM craprdr t
      WHERE t.NMPROGRA = 'CONTAS';
-  
   vr_nrseqrdr craprdr.nrseqrdr%TYPE;
-  
 BEGIN
-  
   OPEN  cr_craprdr;
   FETCH cr_craprdr INTO vr_nrseqrdr;
   
@@ -25,5 +21,4 @@ BEGIN
   INSERT INTO crapaca (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr) VALUES ('PERMITE_ATUALIZACAO_CADASTRAL', NULL, 'validarAtlzCadastralAimaro', 'pr_inpessoa,pr_nrdconta', vr_nrseqrdr);
   
   COMMIT;
-  
 END;
