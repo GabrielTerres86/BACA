@@ -7,36 +7,10 @@ DECLARE
 
 BEGIN
 
-  vr_cooperativa := 12;
-  vr_conta := 62782;
-  vr_cartao := 6393500065179583;
-
-  FOR cartao IN (select distinct a.nrcpftit
-                  from crawcrd a
-                 where a.cdcooper = vr_cooperativa
-                   and a.nrdconta = vr_conta
-                   and a.insitcrd = 4
-                 ) LOOP
-    vr_cpf_titular := cartao.nrcpftit;
-
-  END LOOP;
-  
-  IF vr_cpf_titular IS NULL THEN
-    FOR titular IN (select a.nrcpfcgc
-                      from crapttl a
-                     where a.cdcooper = vr_cooperativa
-                       and a.nrdconta = vr_conta
-                       and a.idseqttl = 1
-                   ) LOOP
-      vr_cpf_titular := titular.nrcpfcgc;
-
-    END LOOP;
-
-  END IF;
-
-  IF vr_cpf_titular IS NULL THEN
-    RETURN;
-  END IF;
+  vr_cooperativa := 1;
+  vr_conta := 14010;
+  vr_cartao := 5158940000000188;
+  vr_cpf_titular := 08556624928;
 
   UPDATE crapcrd card
      SET card.cdcooper = vr_cooperativa
