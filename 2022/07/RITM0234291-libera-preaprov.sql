@@ -1,6 +1,5 @@
 declare
-  
-  vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',2,'ROOT_MICROS');
+  vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',1,'ROOT_MICROS');
   vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'/cpd/bacas/RITM0234291';
   vr_nmarqimp        VARCHAR2(100)  := 'RITM0234291.csv';
   vr_nmarqimpr       VARCHAR2(100)  := 'ROLLBACK_RITM0234291.csv';
@@ -9,7 +8,6 @@ declare
   vr_linha           varchar2(5000);
   vr_campo           GENE0002.typ_split;
   vr_texto_padrao    VARCHAR2(200);     
-  
   vr_cdcooper        crapepr.cdcooper%type; 
   vr_nrdconta        crapepr.nrdconta%type; 
   vr_cont            NUMBER(6) := 0;
@@ -51,8 +49,8 @@ BEGIN
       vr_cont  := vr_cont+1;
       vr_campo := GENE0002.fn_quebra_string(pr_string => vr_linha, pr_delimit => ';');
       
-      vr_cdcooper  := GENE0002.fn_char_para_number(vr_campo(1));
-      vr_nrdconta  := GENE0002.fn_char_para_number(vr_campo(2));
+      vr_cdcooper := GENE0002.fn_char_para_number(vr_campo(1));
+      vr_nrdconta := GENE0002.fn_char_para_number(vr_campo(2));
       
       vr_texto_padrao := vr_cdcooper || ';' ||
                          vr_nrdconta || ';';
