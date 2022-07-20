@@ -1,5 +1,5 @@
 declare
-  vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',1,'ROOT_MICROS');
+  vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
   vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'/cpd/bacas/RITM0234291';
   vr_nmarqimp        VARCHAR2(100)  := 'RITM0234291.csv';
   vr_nmarqimpr       VARCHAR2(100)  := 'ROLLBACK_RITM0234291.csv';
