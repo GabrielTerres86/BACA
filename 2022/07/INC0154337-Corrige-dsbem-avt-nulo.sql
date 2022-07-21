@@ -1,11 +1,11 @@
 declare
   CURSOR cr_crapavt is
-    select nrdconta
-      , cdcooper
+    select a.nrdconta
+      , a.cdcooper
       , a.nrdctato
-      , tpctrato
-      , nrctremp
-      , nrcpfcgc
+      , a.tpctrato
+      , a.nrctremp
+      , a.nrcpfcgc
       , a.dsrelbem##1
       , a.dsrelbem##2
       , a.dsrelbem##3 
@@ -13,13 +13,14 @@ declare
       , a.dsrelbem##5 
       , a.dsrelbem##6
     from cecred.crapavt a
-    where a.dsrelbem##1 is null 
-      or a.dsrelbem##2 is null 
-      or a.dsrelbem##3 is null 
-      or a.dsrelbem##4 is null 
-      or a.dsrelbem##5 is null 
-      or a.dsrelbem##6 is null
-    order by cdcooper, nrdconta;
+    join cecred.crapcop c on a.cdcooper = c.cdcooper
+    where c.flgativo = 1
+      and (a.dsrelbem##1 is null 
+        or a.dsrelbem##2 is null 
+        or a.dsrelbem##3 is null 
+        or a.dsrelbem##4 is null 
+        or a.dsrelbem##5 is null 
+        or a.dsrelbem##6 is null );
   rw_crapavt cr_crapavt%ROWTYPE;
   
   vr_contador number;
