@@ -12,7 +12,7 @@ declare
       , a.dsrelbem##4 
       , a.dsrelbem##5 
       , a.dsrelbem##6
-    from crapavt a
+    from cecred.crapavt a
     where a.dsrelbem##1 is null 
       or a.dsrelbem##2 is null 
       or a.dsrelbem##3 is null 
