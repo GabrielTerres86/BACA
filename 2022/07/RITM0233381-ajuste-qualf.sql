@@ -21,7 +21,8 @@ DECLARE
            a.nrdconta,
            a.nrctremp
       FROM cecred.crawepr a 
-     WHERE a.cdlcremp = 1500;
+     WHERE a.cdlcremp = 1500
+       AND a.idquapro not in (4);
        rw_crawepr c_crawepr%ROWTYPE;
      
   CURSOR c_crapepr is
@@ -29,7 +30,8 @@ DECLARE
            a.nrdconta,
            a.nrctremp
       FROM cecred.crapepr a 
-     WHERE a.cdlcremp = 1500;
+     WHERE a.cdlcremp = 1500
+       AND a.idquaprc not in (4);
        rw_crapepr c_crapepr%ROWTYPE;       
 BEGIN
      FOR rw_crawepr IN c_crawepr LOOP
