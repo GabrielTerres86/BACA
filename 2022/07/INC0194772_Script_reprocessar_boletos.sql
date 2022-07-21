@@ -1,6 +1,6 @@
 BEGIN
 
-  UPDATE crapcob cob
+  UPDATE cecred.crapcob cob
      SET cob.inenvcip = 1
    WHERE (cob.cdcooper, cob.nrdconta) IN ((13, 850004))
      AND cob.dtmvtolt >= to_date('13072022', 'ddmmyyyy')
