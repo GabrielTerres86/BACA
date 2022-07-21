@@ -166,7 +166,7 @@ begin
   
   close cr_crapavt;
   
-  dbms_output.put_line('total: ' || vr_contador);
+  commit;
   
 exception
   when vr_exception then
