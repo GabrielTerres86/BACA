@@ -14,5 +14,10 @@ BEGIN
 <p>Esta transação estará disponível para aprovação de todos os representantes até as 23:00h de #datatransacao, caso não seja aprovada será cancelada. Acesse <b>Serviços > Transações Pendentes</b></p>'
  where cdorigem_mensagem = 6
    and cdmensagem = 271;
- COMMIT;
+
+COMMIT;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK; 
 END;
