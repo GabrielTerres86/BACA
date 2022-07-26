@@ -4,7 +4,7 @@ BEGIN
      WHERE cl.nrdconta = 25364 
        AND cl.cdcooper = 8 
        AND cl.nrctremp = 10711 
-       AND cl.dtmvtolt = '14/07/2022';
+       AND cl.dtmvtolt = to_date('14/07/2022','DD/MM/YYYY');
 
      UPDATE tbepr_consig_movimento_tmp tcm
         SET tcm.instatusproces = NULL
