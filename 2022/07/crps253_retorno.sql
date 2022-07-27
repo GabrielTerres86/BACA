@@ -1,5 +1,5 @@
---Reativação do programa crps253, descontinuado na RDM0045264
-
+BEGIN
+  
 UPDATE CECRED.crapprg
    SET NRSOLICI = 82, INLIBPRG = 1
  WHERE CDPROGRA = 'CRPS253'
@@ -71,3 +71,4 @@ UPDATE CECRED.crapprg
    AND CDCOOPER = 16;
    
 COMMIT;   
+END;
