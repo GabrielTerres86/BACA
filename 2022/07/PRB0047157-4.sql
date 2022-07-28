@@ -869,9 +869,9 @@ FROM	cecred.craplau u,
 	cecred.craplcm m
 WHERE	u.cdcooper	= pr_cdcooper
 AND	u.nrdconta	= pr_nrdconta
-AND	u.cdhistor	= 3651          -- Historico de debito
-AND	u.cdseqtel	= pr_nrproposta -- Numero da proposta
-AND	u.insitlau	= 2             -- Efetivado
+AND	u.cdhistor	= 3651
+AND	u.cdseqtel	= pr_nrproposta
+AND	u.insitlau	= 2
 AND	m.cdcooper	= u.cdcooper
 AND	m.nrdconta	= u.nrdconta
 AND	m.cdhistor	= u.cdhistor
@@ -884,7 +884,7 @@ AND	NOT EXISTS
 	WHERE	b.cdcooper	= m.cdcooper
 	AND	b.nrdconta	= m.nrdconta
 	AND	b.nrdocmto || '001'	= m.nrdocmto
-	AND	b.cdhistor	= 3852 -- Estorno do valor debitado do seguro contributario
+	AND	b.cdhistor	= 3852
 	AND	b.dtmvtolt	>= m.dtmvtolt
 	AND	b.vllanmto	= m.vllanmto);
 
