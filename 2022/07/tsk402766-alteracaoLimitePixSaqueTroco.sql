@@ -1,5 +1,5 @@
- declare
- begin
+declare
+begin
  FOR R IN (
    SELECT
     limite.idlimite_cooperado id,
@@ -28,6 +28,10 @@
      UPDATE PIX.TBPIX_LIMITE_COOPERADO
      SET VLLIMITE = R.MAXIMO  
      WHERE IDLIMITE_COOPERADO = R.id;
-  end LOOP;
-  COMMIT;
+   end LOOP;
+   COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE_APPLICATION_ERROR(-20000, 'ERRO: ' || SQLERRM);
 end;
