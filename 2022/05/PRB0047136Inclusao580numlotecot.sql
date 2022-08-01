@@ -1,0 +1,6 @@
+begin
+insert into craptab (NMSISTEM, TPTABELA, CDEMPRES, CDACESSO, TPREGIST, DSTEXTAB, CDCOOPER)
+values ('CRED', 'GENERI', 0, 'NUMLOTECOT', 580, '805800', 13);
+commit;
+end;
+/
