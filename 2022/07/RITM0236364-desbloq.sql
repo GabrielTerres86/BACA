@@ -74,7 +74,7 @@ BEGIN
       
       gene0001.pc_escr_linha_arquivo(vr_ind_arquivr, vr_texto_padrao || 'OK;');
       
-      IF vr_cont  = 250 THEN
+      IF vr_cont  = 50 THEN
          vr_cont := 0;
       COMMIT;   
       END IF;  
