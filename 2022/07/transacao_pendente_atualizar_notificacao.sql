@@ -7,7 +7,7 @@ BEGIN
 	   n.inenviar_push = 1,
        n.dshtml_mensagem = '<p>#nomecompleto</p>
 
-<p>Você possui uma nova transação pendente de aprovação</p>
+<p>Você possui uma nova transação pendente de aprovação:</p>
 
 <p>#dsdmensg</p>
 
