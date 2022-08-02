@@ -189,7 +189,11 @@ DECLARE
              p.dtdenvio,
              p.dtrefcob,
              ap.cdsitseg,
-             p.tpcustei
+             p.tpcustei,
+             p.tprecusa,
+             p.cdmotrec,
+             p.dtrecusa,
+             1 tpregistarq
         FROM cecred.tbseg_prestamista p,
              cecred.crapepr           c,
              cecred.crapass           ass,
@@ -200,7 +204,7 @@ DECLARE
          AND c.nrctremp = p.nrctremp
          AND ass.cdcooper = c.cdcooper
          AND ass.nrdconta = c.nrdconta
-         AND ap.cdsitseg = 1
+         AND ap.cdsitseg = 5
          AND aw.nrctrseg = ap.nrctrseg
          AND aw.nrdconta = ap.nrdconta
          AND aw.cdcooper = ap.cdcooper
@@ -209,12 +213,10 @@ DECLARE
          AND p.nrdconta = aw.nrdconta
          AND p.cdcooper = aw.cdcooper
          AND p.cdcooper = pr_cdcooper
-         AND p.tpregist in (1, 3)
-         AND TRIM(p.tprecusa) IS NULL
-         AND NVL(p.cdmotrec, 0) = 0
-         AND p.dtrecusa IS NULL
+         AND p.tpregist = 0
          AND p.nrproposta IN ('770356054580',
                               '770350580921')
+         and p.nrdconta not in (719056)
        ORDER BY p.nrcpfcgc ASC, p.cdapolic;
 
     rw_prestamista cr_prestamista%ROWTYPE;
@@ -356,14 +358,33 @@ DECLARE
       nr_proposta_v := cecred.segu0003.fn_nrproposta(rw_prestamista.tpcustei);
 
       UPDATE cecred.tbseg_prestamista a
-         SET a.nrproposta = nr_proposta_v
+         SET a.nrproposta = nr_proposta_v,
+             a.dtrecusa = null,
+             a.cdmotrec = null,
+             a.tprecusa = null,
+             a.tpregist = 1
        WHERE a.rowid = rw_prestamista.nr_linha_tbseg;
 
       cecred.gene0002.pc_escreve_xml(pr_xml            => ds_dados_rollback_v,
                                      pr_texto_completo => ds_texto_rollback_v,
                                      pr_texto_novo     => ' UPDATE CECRED.TBSEG_PRESTAMISTA a ' || CHR(13) ||
-                                                          '    SET a.nrproposta = ' || CHR(39) || rw_prestamista.nrproposta || CHR(39) || CHR(13) ||
-                                                          '  WHERE a.rowid    = ' || CHR(39) || rw_prestamista.nr_linha_tbseg || CHR(39) || CHR(13) || CHR(13),
+                                                          '    SET a.nrproposta = ' || CHR(39) || rw_prestamista.nrproposta || CHR(39) || ', ' || CHR(13) ||
+                                                          '        a.dtrecusa = to_date(' || chr(39) || trim(to_char(trunc(rw_prestamista.dtrecusa),'dd/mm/yyyy')) || chr(39) || ',' || chr(39) || 'dd/mm/yyyy' || chr(39) || '), ' || chr(13) ||
+                                                          '        a.cdmotrec = ' || rw_prestamista.cdmotrec || ', ' || chr(13) ||
+                                                          '        a.tprecusa = ' || chr(39) || rw_prestamista.tprecusa || chr(39) || ', ' || chr(13) ||
+                                                          '        a.tpregist = ' || rw_prestamista.tpregist || chr(13) ||
+                                                          '  WHERE a.rowid    = ' || CHR(39) || rw_prestamista.nr_linha_tbseg || CHR(39) || ';' || CHR(13) || CHR(13),
+                                     pr_fecha_xml      => FALSE);
+                                     
+      update cecred.crapseg a
+      set a.cdsitseg = 1
+      where a.rowid = rw_prestamista.nr_linha_crapseg;
+      
+      cecred.gene0002.pc_escreve_xml(pr_xml            => ds_dados_rollback_v,
+                                     pr_texto_completo => ds_texto_rollback_v,
+                                     pr_texto_novo     => ' UPDATE  cecred.crapseg a ' || CHR(13) ||
+                                                          '    SET  a.cdsitseg  = ' || rw_prestamista.cdsitseg || CHR(13) ||
+                                                          '  WHERE  a.rowid    = ' || CHR(39) || rw_prestamista.nr_linha_crapseg || CHR(39) || ';' || CHR(13) || CHR(13),
                                      pr_fecha_xml      => FALSE);
 
       UPDATE cecred.crawseg a
@@ -374,10 +395,10 @@ DECLARE
                                      pr_texto_completo => ds_texto_rollback_v,
                                      pr_texto_novo     => ' UPDATE CECRED.CRAWSEG a ' || CHR(13) ||
                                                           '    SET a.nrproposta  = ' || CHR(39) || rw_prestamista.nrproposta || CHR(39) || CHR(13) ||
-                                                          '  WHERE a.rowid    = ' || CHR(39) || rw_prestamista.nr_linha_crawseg || CHR(39) || CHR(13) || CHR(13),
+                                                          '  WHERE a.rowid    = ' || CHR(39) || rw_prestamista.nr_linha_crawseg || CHR(39) || ';' || CHR(13) || CHR(13),
                                      pr_fecha_xml      => FALSE);
 
-      vr_tpregist := rw_prestamista.tpregist;
+      vr_tpregist := rw_prestamista.tpregistarq;
       vr_dtfimvig := NVL(rw_prestamista.dtfimvig, rw_prestamista.dtfimctr);
 
       cecred.cada0001.pc_busca_idade(pr_dtnasctl => rw_prestamista.dtnasctl,
@@ -398,7 +419,7 @@ DECLARE
                                          pr_texto_completo => ds_texto_rollback_v,
                                          pr_texto_novo     => ' UPDATE CECRED.TBSEG_PRESTAMISTA a ' || CHR(13) ||
                                                               '   SET  a.dtdenvio  = TO_DATE(' || CHR(39) ||trim(to_char(rw_prestamista.dtdenvio,'DD/MM/YYYY')) || CHR(39) || ',' || CHR(39) || 'DD/MM/YYYY' || CHR(39) || ') ' || CHR(13) ||
-                                                              '  WHERE a.rowid    = ' || CHR(39) || rw_prestamista.nr_linha_tbseg || CHR(39) || CHR(13) || CHR(13),
+                                                              '  WHERE a.rowid    = ' || CHR(39) || rw_prestamista.nr_linha_tbseg || CHR(39) || ';' || CHR(13) || CHR(13),
                                          pr_fecha_xml      => FALSE);
 
         EXCEPTION
@@ -423,7 +444,7 @@ DECLARE
                                          pr_texto_completo => ds_texto_rollback_v,
                                          pr_texto_novo     => ' UPDATE CECRED.TBSEG_PRESTAMISTA a ' || CHR(13) ||
                                                               '    SET a.tpregist  = ' || rw_prestamista.tpregist || CHR(13) ||
-                                                              '  WHERE  a.rowid = ' || CHR(39) || rw_prestamista.nr_linha_tbseg || CHR(39) || CHR(13) || CHR(13),
+                                                              '  WHERE  a.rowid = ' || CHR(39) || rw_prestamista.nr_linha_tbseg || CHR(39) || ';' || CHR(13) || CHR(13),
                                          pr_fecha_xml      => FALSE);
         EXCEPTION
           WHEN OTHERS THEN
@@ -465,16 +486,16 @@ DECLARE
                        '<br />
           Nome: ' || rw_prestamista.nmprimtl ||
                        '<br />
-          Contrato Empréstimo: ' ||
+          Contrato EmprÃ©stimo: ' ||
                        rw_prestamista.nrctremp || '<br />
           Proposta seguro: ' || rw_prestamista.nrctrseg ||
                        '<br />
-          Valor Empréstimo: ' || rw_prestamista.vldevatu ||
+          Valor EmprÃ©stimo: ' || rw_prestamista.vldevatu ||
                        '<br />
           Valor saldo devedor total: ' ||
                        rw_prestamista.saldo_cpf ||
                        '<br />
-          Valor Limite Máximo: ' || vr_vlmaximo;
+          Valor Limite MÃ¡ximo: ' || vr_vlmaximo;
 
         cecred.gene0003.pc_solicita_email(pr_cdprogra    => vr_cdprogra,
                                           pr_des_destino => vr_destinatario_email,
@@ -522,7 +543,7 @@ DECLARE
                                          pr_texto_completo => ds_texto_rollback_v,
                                          pr_texto_novo     => ' UPDATE CECRED.TBSEG_PRESTAMISTA a ' || CHR(13) ||
                                                               '    SET a.tpregist  = ' || rw_prestamista.tpregist || CHR(13) ||
-                                                              '  WHERE  a.rowid   = ' || CHR(39) || rw_prestamista.nr_linha_tbseg || CHR(39) || CHR(13) || CHR(13),
+                                                              '  WHERE  a.rowid   = ' || CHR(39) || rw_prestamista.nr_linha_tbseg || CHR(39) || ';' || CHR(13) || CHR(13),
                                          pr_fecha_xml      => FALSE);
         EXCEPTION
           WHEN OTHERS THEN
@@ -549,7 +570,7 @@ DECLARE
                                            pr_texto_completo => ds_texto_rollback_v,
                                            pr_texto_novo     => ' UPDATE cecred.tbseg_prestamista a ' || CHR(13) ||
                                                                 '    SET a.tpregist  = ' || rw_prestamista.tpregist || CHR(13) ||
-                                                                '  WHERE a.rowid     = ' || CHR(39) || rw_prestamista.nr_linha_tbseg || CHR(39) || CHR(13) || CHR(13),
+                                                                '  WHERE a.rowid     = ' || CHR(39) || rw_prestamista.nr_linha_tbseg || CHR(39) || ';' || CHR(13) || CHR(13),
                                            pr_fecha_xml      => FALSE);
           EXCEPTION
             WHEN OTHERS THEN
@@ -682,7 +703,7 @@ DECLARE
                                                             '         a.dtrefcob  = TO_DATE(' || CHR(39) || trim(to_char(rw_prestamista.dtrefcob, 'DD/MM/YYYY')) || CHR(39) || ',' || CHR(39) || 'DD/MM/YYYY' || CHR(39) || '), ' || CHR(13) ||
                                                             '         a.dtdevend  = TO_DATE(' || CHR(39) || trim(to_char(rw_prestamista.dtdevend, 'DD/MM/YYYY')) || CHR(39) || ',' || CHR(39) || 'DD/MM/YYYY' || CHR(39) || '), ' || CHR(13) ||
                                                             '         a.dtfimvig  = TO_DATE(' || CHR(39) || trim(to_char(rw_prestamista.dtfimvig, 'DD/MM/YYYY')) || CHR(39) || ',' || CHR(39) || 'DD/MM/YYYY' || CHR(39) || ') ' || CHR(13) ||
-                                                            '   WHERE a.rowid   = ' || CHR(39) || rw_prestamista.nr_linha_tbseg ||CHR(39) || CHR(13) || CHR(13),
+                                                            '   WHERE a.rowid   = ' || CHR(39) || rw_prestamista.nr_linha_tbseg ||CHR(39) || ';' || CHR(13) || CHR(13),
                                        pr_fecha_xml      => FALSE);
 
       EXCEPTION
@@ -703,7 +724,7 @@ DECLARE
                                          pr_texto_completo => ds_texto_rollback_v,
                                          pr_texto_novo     => ' UPDATE  cecred.crapseg a ' || CHR(13) ||
                                                               '    SET  a.cdsitseg  = ' || rw_prestamista.cdsitseg || CHR(13) ||
-                                                              '  WHERE  a.rowid    = ' || CHR(39) || rw_prestamista.nr_linha_crapseg || CHR(39) || CHR(13) || CHR(13),
+                                                              '  WHERE  a.rowid    = ' || CHR(39) || rw_prestamista.nr_linha_crapseg || CHR(39) || ';' || CHR(13) || CHR(13),
                                          pr_fecha_xml      => FALSE);
         EXCEPTION
           WHEN OTHERS THEN
@@ -776,7 +797,7 @@ DECLARE
     IF (vr_dscritic IS NOT NULL) THEN
       cecred.gene0002.pc_escreve_xml(pr_xml            => ds_dados_rollback_v,
                                      pr_texto_completo => ds_texto_rollback_v,
-                                     pr_texto_novo     => ' LOG: falha mapeada ao atualizar registro:' || CHR(13) || 'Crítica: ' || vr_dscritic || CHR(13) || CHR(13),
+                                     pr_texto_novo     => ' LOG: falha mapeada ao atualizar registro:' || CHR(13) || 'CrÃ­tica: ' || vr_dscritic || CHR(13) || CHR(13),
                                      pr_fecha_xml      => FALSE);
       RAISE vr_exc_saida;
     END IF;
