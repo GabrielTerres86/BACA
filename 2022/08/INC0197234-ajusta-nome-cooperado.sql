@@ -51,13 +51,13 @@ BEGIN
   UPDATE CECRED.CRAPTTL t
     SET t.nmextttl = 'BRUNO COELHO'
   WHERE t.nrcpfcgc = 10826112986
-    AND t.cdcooper = 1;
+    AND t.cdcooper = 16;
   
   UPDATE CECRED.CRAPASS a
     SET a.nmprimtl = 'BRUNO COELHO'
       , a.nmttlrfb = 'BRUNO COELHO'
   WHERE a.nrcpfcgc = 10826112986
-    and a.cdcooper = 1;
+    and a.cdcooper = 16;
     
   COMMIT;
   
