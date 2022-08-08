@@ -662,7 +662,9 @@ BEGIN
                prm_nrdconta => vr_nrdconta,
                prm_vllanmto => vr_vllanmto,
                prm_cdhistor => vr_cdhistor);
-                          
+
+  UPDATE cecred.tbcc_prejuizo SET vlsdprej = vlsdprej - vr_vllanmto WHERE cdcooper = vr_cdcooper AND nrdconta = vr_nrdconta;
+
   vr_cdcooper  := 11;
   vr_nrdconta  := 299340;
   vr_vllanmto  := 18.19;
