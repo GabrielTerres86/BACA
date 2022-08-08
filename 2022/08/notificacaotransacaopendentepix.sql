@@ -22,22 +22,22 @@ BEGIN
   values
     ((V_CODIGO + 1),
      6,
-     'TransaÃ§Ã£o pendente de aprovaÃ§Ã£o',
-     'TransaÃ§Ãµes pendentes: VocÃª possui uma nova transaÃ§Ã£o pendente de aprovaÃ§Ã£o. Clique e saiba mais.',
+     'Transação pendente de aprovação',
+     'Transações pendentes: Você possui uma nova transação pendente de aprovação. Clique e saiba mais.',
      '<p>#nomecompleto</p>
 
-<p>VocÃª possui uma nova transaÃ§Ã£o pendente de aprovaÃ§Ã£o:</p>
+<p>Você possui uma nova transação pendente de aprovação:</p>
 
 <p>#dsdmensg</p>
 
-<p>Esta transaÃ§Ã£o estarÃ¡ disponÃ­vel para aprovaÃ§Ã£o de todos os representantes atÃ© as 23:00h de #datatransacao, caso nÃ£o seja aprovada serÃ¡ cancelada. Acesse <b>ServiÃ§os > TransaÃ§Ãµes Pendentes</b></p>',
+<p>Esta transação estará disponível para aprovação de todos os representantes até as 23:00h de #datatransacao, caso não seja aprovada será cancelada. Acesse <b>Serviços > Transações Pendentes</b></p>',
      2,
      0,
      null,
      1,
-     'TransaÃ§Ãµes Pendentes',
+     'Transações Pendentes',
      204,
-     'ServiÃ§os > TransaÃ§Ãµes Pendentes',
+     'Serviços > Transações Pendentes',
      null,
      null,
      1);
@@ -64,9 +64,9 @@ BEGIN
   values
     (6,
      (V_CODIGO_MOTIVO_MENSAGEM + 1),
-     'PENDENTES - TransaÃ§Ã£o pendente',
+     'PENDENTES - Transação pendente',
      (V_CODIGO + 1),
-     '<br/>#dsdmensg - Mensagem de pendÃªncia
+     '<br/>#dsdmensg - Mensagem de pendência
 <br;>#datatransacao - data e hora da transacao',
      1,
      0,
