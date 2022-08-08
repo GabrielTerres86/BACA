@@ -3,8 +3,7 @@ delete from TBGEN_NOTIF_AUTOMATICA_PRM WHERE CDORIGEM_MENSAGEM = 6 AND CDMOTIVO_
 delete from TBGEN_NOTIF_MSG_CADASTRO WHERE CDORIGEM_MENSAGEM = 6 and (cdmensagem = 8553 or cdmensagem = 8554);
 
 COMMIT;
-
 EXCEPTION
   WHEN OTHERS THEN
-    ROLLBACK; 
+    dbms_output.put_line('Erro: ' || SQLERRM);
 END;
