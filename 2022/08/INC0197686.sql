@@ -18,14 +18,81 @@ qt_reg_commit		number(10)	:= 0;
 nr_arquivo		number(10)	:= 1;
 qt_reg_arquivo		number(10)	:= 10000;
 
+vr_cdprogra		cecred.crapprg.cdprogra%type	:= 'JB_ARQPRST';
+vr_index		varchar2(50);
+vr_ultimoDia		date;
+
+vr_vlenviad		number;
+vr_dsadesao		varchar2(100);
+vr_vltotdiv815		number(30,10)	:= 0;
+vr_flgachou		boolean		:= false;
+vr_dir_relatorio_815	varchar2(100);
+
+type	typ_reg_record	is record
+			(cdcooper	cecred.tbseg_prestamista.cdcooper%type,
+			nrdconta	cecred.tbseg_prestamista.nrdconta%type,
+			cdagenci	cecred.crapass.cdagenci%type,
+			dtmvtolt	cecred.crapdat.dtmvtolt%type,
+			dtinivig	cecred.crapdat.dtmvtolt%type,
+			dtrefcob	cecred.crapdat.dtmvtolt%type,
+			nmrescop	cecred.crapcop.nmrescop%type,
+			vlenviad	number,
+			dsregist	varchar2(20),
+			tpregist	cecred.tbseg_prestamista.tpregist%type,
+			nmprimtl	cecred.tbseg_prestamista.nmprimtl%type,
+			nrcpfcgc	cecred.tbseg_prestamista.nrcpfcgc%type,
+			nrctrseg	varchar2(15),
+			nrctremp	cecred.tbseg_prestamista.nrctremp%type,
+			vlprodut	cecred.tbseg_prestamista.vlprodut%type,
+			vlsdeved	cecred.tbseg_prestamista.vlsdeved%type);
+
+type	typ_tab		is table of typ_reg_record index by varchar2(30);
+vr_crrl815		typ_tab;
+vr_tab_crrl815		typ_tab;
+
+vr_index_815		pls_integer	:= 0;
+vr_vltotarq		number(30,10);
+
+type	typ_reg_totais	is record
+			(vlpremio	number(25,2),
+			slddeved	number(25,2),
+			qtdadesao	pls_integer,
+			dsadesao	varchar2(20));
+
+type	typ_tab_totais	is table of typ_reg_totais index by varchar2(100);
+vr_totais		typ_tab_totais;
+
+vr_des_xml		clob;
+
+type	typ_reg_totdat	is record
+			(vlpremio	number(25,2),
+			slddeved	number(25,2));
+
+type	typ_tab_sldevpa	is table of typ_reg_totdat index by pls_integer;
+vr_tab_sldevpac		typ_tab_sldevpa;
+
+type	typ_tab_lancarq	is table of number(30,10) index by pls_integer;
+vr_tab_lancarq_815	typ_tab_lancarq;
+
+vr_dtmvtolt_yymmdd	VARCHAR2(8);
+vr_linhadet		VARCHAR(4000);
+vr_arquivo_txt		utl_file.file_type;
+vr_idx_lancarq		pls_integer;
+vr_nmsegura            VARCHAR2(200);
+vr_typ_said            VARCHAR2(4);
+
 cursor	c05 is
 select	a.cdcooper,
-	a.nmrescop
-from	cecred.crapcop a
-where	a.cdcooper	in (1,16);
+	a.nmrescop,
+	nvl(b.dtmvtolt,trunc(sysdate)) dtmvtolt,
+	a.dsdircop
+from	cecred.crapdat b,
+	cecred.crapcop a
+where	a.cdcooper	= b.cdcooper
+and	a.cdcooper	in (1,16);
 
 procedure valida_diretorio_p(	ds_nome_diretorio_p	in	varchar2,
-				ds_critica_p		out	cecred.crapcri.dscritic%TYPE) is
+				ds_critica_p		out	cecred.crapcri.dscritic%type) is
 
 ds_critica_v	crapcri.dscritic%type;
 ie_tipo_saida_v	varchar2(3);
@@ -69,6 +136,13 @@ when	ds_exc_erro_v then
         ds_critica_p	:= ds_critica_v;
 
 end valida_diretorio_p;
+
+procedure	pc_escreve_xml_rel(	pr_des_dados	varchar2) is
+begin
+
+	dbms_lob.writeappend(vr_des_xml,length(pr_des_dados),pr_des_dados);
+
+end	pc_escreve_xml_rel;
 
 procedure	pc_finaliza_arquivo is
 
@@ -121,15 +195,12 @@ end pc_finaliza_arquivo;
 procedure	pc_gera_arquivo_coop(	pr_cdcooper	in cecred.crapcop.cdcooper%type,
 					pr_diretorio	in cecred.crapprm.dsvlrprm%type,
 					pr_nmrescop	in cecred.crapcop.nmrescop%type,
+					pr_dtmvtolt	in cecred.crapdat.dtmvtolt%type,
 					pr_dscritic	out varchar2) is
 
-vr_cdprogra		cecred.crapprg.cdprogra%type	:= 'BACA_PRST';
 vr_tab_nrdeanos		pls_integer;
 vr_dscritic		varchar2(4000);
 vr_cdcritic		PLS_INTEGER;
-dtmvtolt_v		cecred.crapdat.dtmvtolt%type;
-vr_index		varchar2(50);
-vr_vlenviad		number;
 vr_destinatario_email	varchar2(500)		:= cecred.gene0001.fn_param_sistema('CRED', 0, 'ENVIA_SEG_PRST_EMAIL');
 vr_exc_saida		exception;
 vr_nrsequen		number(5);
@@ -144,7 +215,6 @@ vr_dscorpem		varchar2(2000);
 vr_apolice		varchar2(20);
 vr_nmarquiv		varchar2(100);
 vr_linha_txt		varchar2(32600);
-vr_ultimoDia		date;
 vr_pgtosegu		number;
 vr_vlprodvl		number;
 vr_dtfimvig		date;
@@ -355,7 +425,7 @@ begin
 		gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v,
 					' update	cecred.tbseg_parametros_prst a ' || chr(13) ||
 					' set	a.seqarqu	= ' || rw_seg_parametro_prst.seqarqu || chr(13) ||
-					' where	a.idseqpar	= ' || rw_seg_parametro_prst.idseqpar || chr(13), FALSE);
+					' where	a.idseqpar	= ' || rw_seg_parametro_prst.idseqpar || ';' || chr(13) || chr(13), FALSE);
 
 	exception
 	when	others then
@@ -365,7 +435,6 @@ begin
 
 	end;
 
-	vr_ultimoDia	:= trunc(sysdate,'month') - 1;
 	vr_dtcalcidade	:= to_date(add_months(vr_ultimoDia,-1),'dd/mm/rrrr');
 
         vr_nmarquiv	:= 'AILOS_' || replace(pr_nmrescop,' ','_') || '_' ||
@@ -396,11 +465,6 @@ begin
 		end if;
 
 	close	cr_craptsg;
-
-	select	nvl(max(a.dtmvtolt),trunc(sysdate))
-	into	dtmvtolt_v
-	from	cecred.crapdat a
-	where	a.cdcooper	= pr_cdcooper;
 
 	for	rw_prestamista in
 		cr_prestamista(	pr_cdcooper	=> pr_cdcooper) loop
@@ -458,7 +522,7 @@ begin
 						cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v,
 								' update	cecred.tbseg_prestamista a ' || chr(13) ||
 								' set		a.tpregist	= ' || rw_prestamista.tpregist || chr(13) ||
-								' where		a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || chr(13) || chr(13), FALSE);
+								' where		a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || ';' || chr(13) || chr(13), FALSE);
 
 					exception
 					WHEN	OTHERS THEN
@@ -494,7 +558,7 @@ begin
 									' set		a.tpregist	= ' || rw_prestamista.tpregist || ', ' || chr(13) ||
 									'		a.dtinivig	= to_date(' || chr(39) || trim(to_char(rw_prestamista.dtinivig,'dd/mm/yyyy')) || chr(39) || ',' || chr(39) || 'dd/mm/yyyy' || chr(39) || '), ' || chr(13) ||
 									'		a.nrproposta	= ' || chr(39) || rw_prestamista.nrproposta || chr(39) || chr(13) ||
-									' where		a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || chr(13) || chr(13), FALSE);
+									' where		a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || ';' || chr(13) || chr(13), FALSE);
 
 					UPDATE	cecred.crawseg w
 					SET	w.nrproposta	= vr_nrproposta
@@ -503,7 +567,7 @@ begin
 					cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v,
 									' update	cecred.crawseg a ' || chr(13) ||
 									' set		a.nrproposta	= ' || chr(39) || rw_prestamista.nrproposta || chr(39) || chr(13) ||
-									' where		a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_crawseg || chr(39) || chr(13) || chr(13), FALSE);
+									' where		a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_crawseg || chr(39) || ';' || chr(13) || chr(13), FALSE);
 
 				EXCEPTION
 				WHEN	OTHERS THEN
@@ -540,13 +604,13 @@ begin
 				begin
 
 					update	cecred.tbseg_prestamista a
-					set	a.dtdenvio	= dtmvtolt_v
+					set	a.dtdenvio	= pr_dtmvtolt
 					where	a.rowid		= rw_prestamista.nr_linha_tbseg;
 
 					cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v,
 								' update	cecred.tbseg_prestamista a ' || chr(13) ||
 								' set		a.dtdenvio	= to_date(' || chr(39) || trim(to_char(rw_prestamista.dtdenvio,'dd/mm/yyyy')) || chr(39) || ',' || chr(39) || 'dd/mm/yyyy' || chr(39) || ') ' || chr(13) ||
-								' where		a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || chr(13) || chr(13), FALSE);
+								' where		a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || ';' || chr(13) || chr(13), FALSE);
 
 				exception
 				when	others then
@@ -577,7 +641,7 @@ begin
 				cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v,
 							' update	cecred.tbseg_prestamista a ' || chr(13) ||
 							' set	a.tpregist	= ' || rw_prestamista.tpregist || chr(13) ||
-							' where	a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || chr(13) || chr(13), FALSE);
+							' where	a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || ';' || chr(13) || chr(13), FALSE);
 
 			exception
 			when	others then
@@ -695,7 +759,7 @@ begin
 				cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v,
 							' update	cecred.tbseg_prestamista a ' || chr(13) ||
 							' set	a.tpregist	= ' || rw_prestamista.tpregist || chr(13) ||
-							' where	a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || chr(13) || chr(13), FALSE);
+							' where	a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || ';' || chr(13) || chr(13), FALSE);
 
 			exception
 			when	others then
@@ -731,7 +795,7 @@ begin
 					cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v,
 								' update	cecred.tbseg_prestamista a ' || chr(13) ||
 								' set	a.tpregist	= ' || rw_prestamista.tpregist || chr(13) ||
-								' where	a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || chr(13) || chr(13), FALSE);
+								' where	a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || ';' || chr(13) || chr(13), FALSE);
 
 				exception
 				when	others then
@@ -892,6 +956,51 @@ begin
 		vr_linha_txt	:= vr_linha_txt || lpad(' ', 3, ' ');
 		vr_linha_txt	:= vr_linha_txt || chr(13);
 
+		begin
+
+			vr_index_815				:= vr_index_815 + 1;
+			vr_tab_crrl815(vr_index_815).cdcooper	:= pr_cdcooper;
+			vr_tab_crrl815(vr_index_815).dtmvtolt	:= pr_dtmvtolt;
+			vr_tab_crrl815(vr_index_815).nmrescop	:= pr_nmrescop;
+			vr_tab_crrl815(vr_index_815).nmprimtl	:= rw_prestamista.nmprimtl;
+			vr_tab_crrl815(vr_index_815).nrdconta	:= rw_prestamista.nrdconta;
+			vr_tab_crrl815(vr_index_815).cdagenci	:= rw_prestamista.cdagenci;          
+			vr_tab_crrl815(vr_index_815).nrctrseg	:= vr_nrproposta;
+			vr_tab_crrl815(vr_index_815).nrctremp	:= rw_prestamista.nrctremp;
+			vr_tab_crrl815(vr_index_815).nrcpfcgc	:= rw_prestamista.nrcpfcgc;
+			vr_tab_crrl815(vr_index_815).vlprodut	:= vr_vlprodvl;
+			vr_tab_crrl815(vr_index_815).vlenviad	:= vr_vlenviad;
+			vr_tab_crrl815(vr_index_815).vlsdeved	:= rw_prestamista.saldo_cpf;
+			vr_tab_crrl815(vr_index_815).dtinivig	:= vr_dtinivig;
+			vr_tab_crrl815(vr_index_815).dtrefcob	:= vr_ultimoDia;
+			vr_tab_crrl815(vr_index_815).tpregist	:= vr_tpregist;
+
+			if	(vr_tpregist	= 0) then
+
+				vr_tab_crrl815(vr_index_815).dsregist	:= 'NOT FOUND';
+
+			elsif	(vr_tpregist	= 1) then
+
+				vr_tab_crrl815(vr_index_815).dsregist	:= 'ADESAO';
+
+			elsif	(vr_tpregist	= 2) then
+
+				vr_tab_crrl815(vr_index_815).dsregist	:= 'CANCELAMENTO';
+
+			elsif	(vr_tpregist	= 3) then
+
+				vr_tab_crrl815(vr_index_815).dsregist	:= 'ENDOSSO';
+
+			end if;
+
+		exception
+		when	others then
+
+			vr_dscritic	:= 'Erro na montagem do 815. Proposta: ' || vr_nrproposta || ' - Conta: ' || rw_prestamista.nrdconta || ' - Contrato: ' || rw_prestamista.nrctremp || ' - Apólice: ' || rw_prestamista.nrctrseg || ' - ' || sqlerrm;
+			raise	vr_exc_saida;
+
+		end;
+
 		if	(vr_tpregist	= 1) then
 
 			vr_tpregist	:= 3;
@@ -902,7 +1011,7 @@ begin
 
 			update	cecred.tbseg_prestamista a
 			set	a.tpregist	= vr_tpregist,
-				a.dtdenvio	= dtmvtolt_v,
+				a.dtdenvio	= pr_dtmvtolt,
 				a.vlprodut	= vr_vlprodvl,
 				a.dtrefcob	= vr_ultimoDia,
 				a.dtdevend	= rw_prestamista.dtdevend,
@@ -917,7 +1026,7 @@ begin
 						'	a.dtrefcob	= to_date(' || chr(39) || trim(to_char(rw_prestamista.dtrefcob,'dd/mm/yyyy')) || chr(39) || ',' || chr(39) || 'dd/mm/yyyy' || chr(39) || '), ' || chr(13) ||
 						'	a.dtdevend	= to_date(' || chr(39) || trim(to_char(rw_prestamista.dtdevend,'dd/mm/yyyy')) || chr(39) || ',' || chr(39) || 'dd/mm/yyyy' || chr(39) || '), ' || chr(13) ||
 						'	a.dtfimvig	= to_date(' || chr(39) || trim(to_char(rw_prestamista.dtfimvig,'dd/mm/yyyy')) || chr(39) || ',' || chr(39) || 'dd/mm/yyyy' || chr(39) || ') ' || chr(13) ||
-						' where	a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || chr(13) || chr(13), FALSE);
+						' where	a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_tbseg || chr(39) || ';' || chr(13) || chr(13), FALSE);
 
 		exception
 		when	others then
@@ -938,7 +1047,7 @@ begin
 				cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v,
 						' update	cecred.crapseg a ' || chr(13) ||
 						' set	a.cdsitseg	= ' || rw_prestamista.cdsitseg || chr(13) ||
-						' where	a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_crapseg || chr(39) || chr(13) || chr(13), FALSE);
+						' where	a.rowid		= ' || chr(39) || rw_prestamista.nr_linha_crapseg || chr(39) || ';' || chr(13) || chr(13), FALSE);
 
 			exception
 			when	others then
@@ -958,6 +1067,7 @@ begin
 
 	end loop;
 
+	vr_crrl815	:= vr_tab_crrl815;
 	vr_tab_ctrl_prst.delete;
 
 	cecred.gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);
@@ -1032,14 +1142,22 @@ if	(trim(ds_critica_v) is not null) then
 
 end if;
 
+vr_ultimoDia	:= trunc(sysdate,'month') - 1;
+
 for	r05 in c05 loop
 
 	ds_critica_v	:= null;
 	qt_reg_arquivo	:= 10000;
 
+	vr_tab_crrl815.delete;
+	vr_crrl815.delete;
+	vr_totais.delete;
+	vr_tab_lancarq_815.delete;
+
 	pc_gera_arquivo_coop(	pr_cdcooper	=> r05.cdcooper,
 				pr_diretorio	=> ds_nome_diretorio_v,
 				pr_nmrescop	=> r05.nmrescop,
+				pr_dtmvtolt	=> r05.dtmvtolt,
 				pr_dscritic	=> ds_critica_v);
 
 	if	(ds_critica_v	is null) then
@@ -1081,6 +1199,206 @@ for	r05 in c05 loop
 		ds_critica_arq_v	:= substr(ds_critica_arq_v || ' - Coop: ' || r05.cdcooper || ' - ' || ds_critica_v || chr(13),1,1000);
 
 	end if;
+
+	vr_index_815	:= 0;
+
+	dbms_lob.createtemporary(vr_des_xml, TRUE);
+	dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+	vr_vltotarq	:= 0;
+	vr_tab_sldevpac.delete;
+
+	pc_escreve_xml_rel('<?xml version="1.0" encoding="utf-8"?><crrl815><dados>');
+	vr_index_815	:= vr_crrl815.first;
+
+	while	(vr_index_815	is not null) loop
+
+		if	(vr_crrl815(vr_index_815).vlenviad	is null) then
+
+			vr_vlenviad	:= 0;
+
+		else
+
+			vr_vlenviad	:= vr_crrl815(vr_index_815).vlenviad;
+
+		end if;
+
+		pc_escreve_xml_rel(	'<registro>' ||
+						'<dtmvtolt>' || TO_CHAR(vr_crrl815(vr_index_815).dtmvtolt , 'DD/MM/RRRR') || '</dtmvtolt>' ||
+						'<nmrescop>' || vr_crrl815(vr_index_815).nmrescop || '</nmrescop>' ||
+						'<nmprimtl>' || vr_crrl815(vr_index_815).nmprimtl || '</nmprimtl>' ||
+						'<nrdconta>' || TRIM(gene0002.fn_mask_conta(vr_crrl815(vr_index_815).nrdconta)) || '</nrdconta>' ||
+						'<cdagenci>' || TO_CHAR(vr_crrl815(vr_index_815).cdagenci)  || '</cdagenci>' ||
+						'<nrctrseg>' || TRIM(vr_crrl815(vr_index_815).nrctrseg) || '</nrctrseg>' ||
+						'<nrctremp>' || TRIM(gene0002.fn_mask_contrato(vr_crrl815(vr_index_815).nrctremp)) || '</nrctremp>' ||
+						'<nrcpfcgc>' || TRIM(gene0002.fn_mask_cpf_cnpj(vr_crrl815(vr_index_815).nrcpfcgc, 1)) || '</nrcpfcgc>' ||
+						'<vlprodut>' || to_char(vr_crrl815(vr_index_815).vlprodut, 'FM99G999G999G999G999G999G999G990D00') || '</vlprodut>' ||
+						'<vlenviad>' || to_char(vr_vlenviad, 'FM99G999G999G999G999G999G999G990D00') || '</vlenviad>' ||
+						'<vlsdeved>' || to_char(vr_crrl815(vr_index_815).vlsdeved, 'FM99G999G999G999G999G999G999G990D00') || '</vlsdeved>' ||
+						'<dtrefcob>' || NVL(TO_CHAR( vr_crrl815(vr_index_815).dtrefcob, 'DD/MM/RRRR') , '') || '</dtrefcob>' ||
+						'<dsregist>' || vr_crrl815(vr_index_815).dsregist || '</dsregist>' ||
+						'<dtinivig>' || NVL(TO_CHAR( vr_crrl815(vr_index_815).dtinivig , 'DD/MM/RRRR') , '') || '</dtinivig>' ||
+					'</registro>');
+
+		vr_dsadesao	:= vr_crrl815(vr_index_815).dsregist;
+
+		if	(not vr_tab_sldevpac.EXISTS(vr_crrl815(vr_index_815).cdagenci)) then
+
+			vr_tab_sldevpac(vr_crrl815(vr_index_815).cdagenci).slddeved	:= 0;
+			vr_tab_sldevpac(vr_crrl815(vr_index_815).cdagenci).vlpremio	:= 0;
+
+		end if;
+
+		vr_tab_sldevpac(vr_crrl815(vr_index_815).cdagenci).slddeved	:= vr_tab_sldevpac(vr_crrl815(vr_index_815).cdagenci).slddeved + vr_vlenviad;
+		vr_vltotarq	:= vr_vltotarq + vr_vlenviad;
+
+		if	(not vr_totais.EXISTS(vr_dsadesao)) then
+
+			vr_totais(vr_dsadesao).qtdadesao	:= 1;
+			vr_totais(vr_dsadesao).slddeved		:= vr_vlenviad;
+			vr_totais(vr_dsadesao).vlpremio		:= vr_crrl815(vr_index_815).vlprodut;
+			vr_totais(vr_dsadesao).dsadesao		:= vr_dsadesao;
+
+		else
+
+			vr_totais(vr_dsadesao).slddeved		:= vr_totais(vr_dsadesao).slddeved + vr_vlenviad;
+			vr_totais(vr_dsadesao).vlpremio		:= vr_totais(vr_dsadesao).vlpremio + vr_crrl815(vr_index_815).vlprodut;
+			vr_totais(vr_dsadesao).qtdadesao	:= vr_totais(vr_dsadesao).qtdadesao + 1;
+
+		end if;
+
+		vr_vltotdiv815							:= vr_vltotdiv815 + vr_crrl815(vr_index_815).vlprodut;
+		vr_tab_sldevpac(vr_crrl815(vr_index_815).cdagenci).vlpremio	:= vr_tab_sldevpac(vr_crrl815(vr_index_815).cdagenci).vlpremio + vr_crrl815(vr_index_815).vlprodut;
+		vr_index_815							:= vr_crrl815.next(vr_index_815);
+		vr_flgachou							:= TRUE;
+
+	end loop;
+
+	pc_escreve_xml_rel('</dados>');
+	pc_escreve_xml_rel('<totais>');
+	vr_index	:= vr_totais.first;
+	vr_index_815	:= 0;
+
+	while	(vr_index	is not null) loop
+
+		if	(vr_totais.EXISTS(vr_index)) then
+
+			pc_escreve_xml_rel(	'<registro>'||
+							'<dsadesao>' || NVL(vr_totais(vr_index).dsadesao, ' ') || '</dsadesao>' ||
+							'<vlpremio>' || to_char(NVL(vr_totais(vr_index).vlpremio, '0'), 'FM99G999G999G999G999G999G999G990D00') || '</vlpremio>' ||
+							'<slddeved>' || to_char(NVL(vr_totais(vr_index).slddeved, '0'), 'FM99G999G999G999G999G999G999G990D00') || '</slddeved>' ||
+							'<qtdadesao>' || NVL(vr_totais(vr_index).qtdadesao, 0) || '</qtdadesao>'||
+						'</registro>');
+
+		end if;
+
+		vr_index	:= vr_totais.next(vr_index);
+
+	end loop;
+
+	vr_index	:= null;
+
+	pc_escreve_xml_rel(  '</totais>');
+
+	if	(vr_flgachou) then
+
+		pc_escreve_xml_rel('<totpac vltotdiv="'||to_char(vr_vltotarq,'fm999g999g999g990d00')||   '">');
+
+		if	(vr_tab_sldevpac.COUNT	> 0) then
+
+			for	vr_cdagenci	in vr_tab_sldevpac.FIRST..vr_tab_sldevpac.LAST loop
+
+				if	(vr_tab_sldevpac.EXISTS(vr_cdagenci)) then
+
+					pc_escreve_xml_rel(	'<registro>' ||
+									'<cdagenci>' || LPAD(vr_cdagenci,3,' ') || '</cdagenci>' ||
+									'<sldevpac>' || to_char(vr_tab_sldevpac(vr_cdagenci).slddeved,'fm999g999g999g990d00') || '</sldevpac>' ||
+								'</registro>');
+
+					vr_tab_lancarq_815(vr_cdagenci) := vr_tab_sldevpac(vr_cdagenci).vlpremio;
+
+				end if;
+
+			end loop;
+
+			pc_escreve_xml_rel(	'</totpac>');
+
+		end if;
+
+	end if;
+
+	pc_escreve_xml_rel('</crrl815>');
+
+	if	(vr_crrl815.EXISTS(1)) then
+
+		cecred.gene0002.pc_solicita_relato(	pr_cdcooper	=> r05.cdcooper,
+						pr_cdprogra	=> vr_cdprogra,
+						pr_dtmvtolt	=> r05.dtmvtolt,
+						pr_dsxml	=> vr_des_xml,
+						pr_dsxmlnode	=> '/crrl815',
+						pr_dsjasper	=> 'crrl815.jasper',
+						pr_dsparams	=> NULL,
+						pr_dsarqsaid	=> ds_nome_diretorio_v || '/' || r05.dsdircop || '/crrl815.lst',
+						pr_cdrelato	=> 815,
+						pr_flg_gerar	=> 'S',
+						pr_qtcoluna	=> 234,
+						pr_sqcabrel	=> 1,
+						pr_nmformul	=> '234col',
+						pr_flg_impri	=> 'S',
+						pr_nrcopias	=> 1,
+						pr_nrvergrl	=> 1,
+						pr_des_erro	=> ds_critica_v);
+
+		if	(ds_critica_v	is not null) then
+
+			raise	ds_exc_erro_v;
+
+		end if;
+
+	end if;
+
+	dbms_lob.close(vr_des_xml);
+	dbms_lob.freetemporary(vr_des_xml);
+
+	vr_dtmvtolt_yymmdd	:= to_char(vr_ultimodia, 'yyyymmdd');
+	vr_linhadet		:= '';
+
+	cecred.gene0001.pc_abre_arquivo(	pr_nmdireto	=> ds_nome_diretorio_v || '/contab/',
+					pr_nmarquiv	=> vr_dtmvtolt_yymmdd||'_'||lpad(r05.cdcooper,2,0)||'_PRESTAMISTA.txt',
+					pr_tipabert	=> 'W',
+					pr_utlfileh	=> vr_arquivo_txt,
+					pr_des_erro	=> ds_critica_v);
+
+	if	(ds_critica_v	is not null) then
+
+		raise	ds_exc_erro_v;
+
+	end if;
+
+	if	(vr_tab_lancarq_815.count	> 0) then
+
+		    SELECT nmsegura INTO vr_nmsegura FROM crapcsg WHERE cdcooper = r05.cdcooper AND cdsegura = 514; 
+
+		vr_idx_lancarq	:= vr_tab_lancarq_815.first;
+		vr_linhadet	:= TRIM(vr_dtmvtolt_yymmdd) || ',' ||
+				TRIM(to_char(vr_ultimodia,'ddmmyy')) ||
+				',8304,4963,' ||
+                                 TRIM(to_char(vr_vltotdiv815,'FM99999999999999990D90', 'NLS_NUMERIC_CHARACTERS = ''.,'''))||
+                                 ',5210,'||
+                                 '"VLR. REF. PROVISAO P/ PAGAMENTO DE SEGURO PRESTAMISTA - '|| vr_nmsegura ||' - REF. ' 
+                                 || to_CHAR(vr_ultimodia,'MM/YYYY') ||'"';
+
+		cecred.gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+             
+             WHILE vr_idx_lancarq IS NOT NULL LOOP                      
+                vr_linhadet := lpad(vr_idx_lancarq,3,0) || ',' || 
+                    TRIM(to_char(round(vr_tab_lancarq_815(vr_idx_lancarq),2),'FM99999999999999990D90', 'NLS_NUMERIC_CHARACTERS = ''.,''')); 
+                    
+                cecred.gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);                        
+                vr_idx_lancarq := vr_tab_lancarq_815.next(vr_idx_lancarq);             
+             END LOOP;           
+          END IF;
+
+          cecred.gene0001.pc_fecha_arquivo(vr_arquivo_txt);      
 
 end loop;
 
