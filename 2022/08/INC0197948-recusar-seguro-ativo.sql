@@ -2,7 +2,7 @@ begin
 
 begin
 
-update	crapseg
+update	cecred.crapseg
 set	dtfimvig	= trunc(sysdate),
 	dtcancel	= trunc(sysdate),
 	cdsitseg	= 5,
