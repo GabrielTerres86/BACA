@@ -1,9 +1,9 @@
 DECLARE
-  V_CODIGO                 TBGEN_NOTIF_MSG_CADASTRO.cdmensagem%TYPE;
-  V_CODIGO_MOTIVO_MENSAGEM TBGEN_NOTIF_AUTOMATICA_PRM.Cdmotivo_Mensagem%TYPE;
+  V_CODIGO                 CECRED.TBGEN_NOTIF_MSG_CADASTRO.cdmensagem%TYPE;
+  V_CODIGO_MOTIVO_MENSAGEM CECRED.TBGEN_NOTIF_AUTOMATICA_PRM.Cdmotivo_Mensagem%TYPE;
 BEGIN
-  SELECT MAX(CDMENSAGEM) INTO V_CODIGO FROM TBGEN_NOTIF_MSG_CADASTRO;
-  insert into TBGEN_NOTIF_MSG_CADASTRO
+  SELECT MAX(CDMENSAGEM) INTO V_CODIGO FROM CECRED.TBGEN_NOTIF_MSG_CADASTRO;
+  insert into CECRED.TBGEN_NOTIF_MSG_CADASTRO
     (CDMENSAGEM,
      CDORIGEM_MENSAGEM,
      DSTITULO_MENSAGEM,
@@ -44,9 +44,9 @@ BEGIN
 
   SELECT MAX(CDMOTIVO_MENSAGEM)
     INTO V_CODIGO_MOTIVO_MENSAGEM
-    FROM TBGEN_NOTIF_AUTOMATICA_PRM
+    FROM CECRED.TBGEN_NOTIF_AUTOMATICA_PRM
     WHERE CDORIGEM_MENSAGEM = 6;
-  insert into TBGEN_NOTIF_AUTOMATICA_PRM
+  insert into CECRED.TBGEN_NOTIF_AUTOMATICA_PRM
     (CDORIGEM_MENSAGEM,
      CDMOTIVO_MENSAGEM,
      DSMOTIVO_MENSAGEM,
@@ -83,14 +83,14 @@ BEGIN
        n.dstexto_botao_acao_mobile = '',
        n.cdmenu_acao_mobile        = 0,
        n.dslink_acao_mobile        = '',
-	   n.inenviar_push = 0,
+     n.inenviar_push = 0,
        n.dshtml_mensagem = '<p>#nomecompleto</p>
 
-<p>Voc&ecirc; possui uma nova transa&ccedil;&otilde;es pendente de aprova&ccedil;&atilde;o:</p>
+<p>Você possui uma nova transação pendente de aprovação</p>
 
 <p>#dsdmensg</p>
 
-<p>Acesse &quot;Transa&ccedil;&otilde;es Pendentes &gt; Transa&ccedil;&otilde;es &gt; Pendencias&quot; e confira.</p>'
+<p>Acesse "Transações Pendentes > Transações > Pendências" e confira.</p>'
  where cdorigem_mensagem = 6
    and cdmensagem = 271;
    
