@@ -46,7 +46,7 @@ BEGIN
     '10613 - Arquivo XML 9810 invalido',
     1,
     0);    
-    
+
   INSERT INTO CECRED.CRAPCRI
     (CDCRITIC,
     DSCRITIC,
@@ -54,7 +54,18 @@ BEGIN
     FLGCHAMA)
   VALUES
     (10614,
-    '10614 - Falha rotina contacorrente.buscarContaAdministrativaCooperativa',
+    '10614 - Dados inválidos do registro no Arquivo 9810',
+    1,
+    0);  
+    
+  INSERT INTO CECRED.CRAPCRI
+    (CDCRITIC,
+    DSCRITIC,
+    TPCRITIC,
+    FLGCHAMA)
+  VALUES
+    (10615,
+    '10615 - Falha rotina contacorrente.buscarContaAdministrativaCooperativa',
     1,
     0);          
        
