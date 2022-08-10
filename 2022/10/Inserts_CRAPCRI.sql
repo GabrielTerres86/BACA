@@ -10,7 +10,7 @@ BEGIN
     FLGCHAMA)
   VALUES
     (10610,
-    '10610 - Falha rotina contacorrente.incluirResumoValorDevolver9810',
+    '10610 - Falha rotina contacorrente.incluirArquivoSolicitacaoDevolucao',
     1,
     0);
     
@@ -21,9 +21,42 @@ BEGIN
     FLGCHAMA)
   VALUES
     (10611,
-    '10611 - Falha rotina contacorrente.incluirDetalheValorDevolver9810',
+    '10611 - Falha rotina contacorrente.incluirSolicitacaoValorDevolver',
+    1,
+    0);   
+    
+  INSERT INTO CECRED.CRAPCRI
+    (CDCRITIC,
+    DSCRITIC,
+    TPCRITIC,
+    FLGCHAMA)
+  VALUES
+    (10612,
+    '10612 - Falha rotina contacorrente.incluirSituacaoSolicitacaoDevolucao',
+    1,
+    0);        
+
+  INSERT INTO CECRED.CRAPCRI
+    (CDCRITIC,
+    DSCRITIC,
+    TPCRITIC,
+    FLGCHAMA)
+  VALUES
+    (10613,
+    '10613 - Arquivo XML 9810 invalido',
     1,
     0);    
+    
+  INSERT INTO CECRED.CRAPCRI
+    (CDCRITIC,
+    DSCRITIC,
+    TPCRITIC,
+    FLGCHAMA)
+  VALUES
+    (10614,
+    '10614 - Falha rotina contacorrente.buscarContaAdministrativaCooperativa',
+    1,
+    0);          
        
     
   COMMIT;    
