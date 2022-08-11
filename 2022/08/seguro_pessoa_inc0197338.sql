@@ -58,9 +58,9 @@ DECLARE
            e.vlpreemp,
            e.qtpreemp,
            w.flggarad
-      FROM crapepr e,
-           crawseg w,
-           tbseg_prestamista p
+      FROM cecred.crapepr e,
+           cecred.crawseg w,
+           cecred.tbseg_prestamista p
      WHERE p.cdcooper = pr_cdcooper
        AND p.cdcooper = w.cdcooper
        AND p.nrdconta = w.nrdconta
@@ -90,11 +90,11 @@ DECLARE
                               ,pr_des_erro => vr_dscritic);
 
       IF vr_dscritic IS NOT NULL THEN
-         vr_dscritic := vr_dscritic ||'  Não pode abrir arquivo '||vr_nmdir || vr_nmarq;
+         vr_dscritic := vr_dscritic ||'  NÃ£o pode abrir arquivo '||vr_nmdir || vr_nmarq;
          RAISE vr_exc_saida;
       END IF;
 
-      GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'BEGIN');
+      cecred.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'BEGIN');
 
       FOR rw_crapcop IN cr_crapcop LOOP
         vcount := 0;
@@ -102,7 +102,7 @@ DECLARE
 
         FOR rw_prestamista IN cr_prestamista(pr_cdcooper => rw_crapcop.cdcooper) LOOP
 
-          SEGU0003.pc_verifica_vlseguro_imp_contributario(pr_cdcooper => rw_prestamista.cdcooper
+          cecred.SEGU0003.pc_verifica_vlseguro_imp_contributario(pr_cdcooper => rw_prestamista.cdcooper
                                                    ,pr_nrdconta => rw_prestamista.nrdconta
                                                    ,pr_nrctremp => rw_prestamista.nrctremp
                                                    ,pr_vlseguro => vr_saldodevedor
@@ -113,7 +113,7 @@ DECLARE
             vr_saldodevedor := rw_prestamista.vlsdeved;
           END IF;
 
-          SEGU0003.pc_retorna_valores_contributario(pr_cdcooper    => rw_prestamista.cdcooper                     
+          cecred.SEGU0003.pc_retorna_valores_contributario(pr_cdcooper    => rw_prestamista.cdcooper                     
                                                    ,pr_nrdconta    => rw_prestamista.nrdconta                     
                                                    ,pr_nrctremp    => rw_prestamista.nrctremp                     
                                                    ,pr_nrctrseg    => rw_prestamista.nrctrseg                     
