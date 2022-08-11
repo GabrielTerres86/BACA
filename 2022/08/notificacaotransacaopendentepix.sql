@@ -37,7 +37,7 @@ BEGIN
      1,
      'Transações Pendentes',
      204,
-     'Serviços > Transações Pendentes',
+     '',
      null,
      null,
      1);
