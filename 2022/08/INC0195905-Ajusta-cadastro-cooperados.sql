@@ -29,12 +29,28 @@ DECLARE
   CURSOR cr_crapcrl (pr_cdcooper IN CECRED.Crapttl.CDCOOPER%TYPE
                    , pr_nrdconta IN CECRED.crapttl.NRDCONTA%TYPE) IS
     SELECT rl.idorgexp
+      , rl.cdufiden
       , rl.nrcpfcgc
     FROM CECRED.crapcrl rl
     WHERE rl.nrctamen = pr_nrdconta
       AND rl.cdcooper = pr_cdcooper;
   
   rw_crapcrl   cr_crapcrl%ROWTYPE;
+  
+  CURSOR cr_pes_atu (pr_nrdconta IN CECRED.crapttl.NRDCONTA%TYPE
+                   , pr_cdcooper IN CECRED.Crapttl.CDCOOPER%TYPE) IS
+    SELECT at.insit_atualiza
+      , at.dhatualiza
+      , at.dhprocessa
+      , at.dhiniproc
+      , at.dslogdetalhes
+    FROM cecred.tbcadast_pessoa_atualiza at
+    WHERE at.nrdconta = pr_nrdconta
+      AND at.cdcooper = pr_cdcooper
+      AND at.nmtabela = 'CRAPASS'
+      AND at.insit_atualiza = 3;
+  
+  rw_pes_atu   cr_pes_atu%ROWTYPE;
   
   vr_conta     CECRED.Crapttl.NRDCONTA%TYPE;
   vr_cdcooper  CECRED.Crapttl.CDCOOPER%TYPE;
@@ -121,7 +137,47 @@ BEGIN
     vr_natocp    := CECRED.gene0002.fn_char_para_number( TRIM(gene0002.fn_busca_entrada(9,vr_setlinha,';')) );
     vr_dsaltera  := TRIM( gene0002.fn_busca_entrada(10,vr_setlinha,';') );
     
-    IF vr_dsaltera <> 'Resp_legal' THEN
+    IF vr_dsaltera = 'CRIAR_PESSOA' THEN
+      
+      BEGIN
+        
+        OPEN cr_pes_atu(vr_conta, vr_cdcooper);
+        FETCH cr_pes_atu INTO rw_pes_atu;
+        CLOSE cr_pes_atu;
+        
+        UPDATE CECRED.Tbcadast_Pessoa_Atualiza a
+          SET a.insit_atualiza = 1
+            , a.dhatualiza = SYSDATE
+            , a.dhprocessa = NULL
+            , a.dhiniproc = NULL
+            , a.dslogdetalhes = NULL
+        WHERE a.nrdconta = vr_conta
+          AND a.cdcooper = vr_cdcooper
+          AND a.nmtabela in ( 'CRAPASS', 'CRAPTTL' )
+          AND a.insit_atualiza = 3;
+        
+        
+          gene0001.pc_escr_linha_arquivo(vr_ind_arquiv
+            , ' UPDATE CECRED.Tbcadast_Pessoa_Atualiza a ' ||
+                 'SET a.insit_atualiza = 3 ' ||
+                  ' , a.dhatualiza = to_date(''' || rw_pes_atu.dhatualiza || ''', ''dd/mm/rrrr hh24:mi:ss'') ' ||
+                  ' , a.dhprocessa = to_date(''' || rw_pes_atu.dhprocessa || ''', ''dd/mm/rrrr hh24:mi:ss'') ' ||
+                  ' , a.dhiniproc = to_date(''' || rw_pes_atu.dhiniproc || ''', ''dd/mm/rrrr hh24:mi:ss'') ' ||
+                  ' , a.dslogdetalhes = ''' || rw_pes_atu.dslogdetalhes || ''' ' ||
+              ' WHERE a.cdcooper = ' || vr_cdcooper ||
+                ' AND a.nrdconta = ' || vr_conta    ||
+                ' AND a.nmtabela = ''CRAPASS'' ' ||
+                ' AND a.insit_atualiza = 1 ' || ';'
+          );
+        
+      EXCEPTION
+        WHEN OTHERS THEN
+          
+          vr_dscritic := 'Erro ao forçar integração do cadastro de pessoa. Erro: ' || SQLERRM;
+          RAISE vr_exception;
+      END;
+      
+    ELSIF vr_dsaltera <> 'Resp_legal' THEN
       
       rw_crapttl := NULL;
       OPEN cr_crapttl (pr_cdcooper => vr_cdcooper
@@ -193,10 +249,11 @@ BEGIN
           FETCH cr_crapcrl INTO rw_crapcrl;
           EXIT WHEN cr_crapcrl%NOTFOUND;
           
-          IF rw_crapcrl.idorgexp = 999 THEN
+          IF rw_crapcrl.idorgexp = 999 OR rw_crapcrl.cdufiden = 'NI' THEN
             
             UPDATE CECRED.Crapcrl r
               SET r.idorgexp = vr_orgexp
+                , r.cdufiden = CASE WHEN rw_crapcrl.cdufiden = 'NI' THEN NULL ELSE rw_crapcrl.cdufiden END
             WHERE r.Nrctamen = vr_conta
               AND r.cdcooper = vr_cdcooper
               AND r.nrcpfcgc = rw_crapcrl.nrcpfcgc;
@@ -204,6 +261,7 @@ BEGIN
             gene0001.pc_escr_linha_arquivo(vr_ind_arquiv
               , ' UPDATE CECRED.Crapcrl r ' ||
                    'SET r.idorgexp = ' || rw_crapcrl.idorgexp ||
+                   '  , r.cdufiden = ' || CASE WHEN rw_crapcrl.cdufiden = 'NI' THEN '''NI''' ELSE 'r.cdufiden' END ||
                 ' WHERE r.Nrctamen = ' || vr_conta ||
                   ' AND r.cdcooper = ' || vr_cdcooper ||
                   ' AND r.nrcpfcgc = ' || rw_crapcrl.nrcpfcgc || ';'
