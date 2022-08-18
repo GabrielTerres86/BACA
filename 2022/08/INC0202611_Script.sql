@@ -1,12 +1,12 @@
 BEGIN
   
   UPDATE cecredleg.tbjdddabnf_beneficiarioif@jdnpcsql
-  SET "Nom_RzSocBenfcrio" = 'PERFIGLASS C. DE VIDROS PERFIS E ACESSORIOS LTDA' 
+  SET "Nom_RzSocBenfcrio" = 'PERFIGLASS COM. DE VIDROS PERFIS E ACESSORIOS LTDA' 
   WHERE "TpPessoaBenfcrio" = 'J'
   AND "CNPJ_CPFBenfcrio" = '17317267000100';
 
   UPDATE cecredleg.tbjdddabnf_beneficiarioif@jdnpcsql
-  SET "Nom_RzSocBenfcrio" = 'ELLE E E. INDUSTRIA E COMERCIO DE CONFECCOES LTDA'
+  SET "Nom_RzSocBenfcrio" = 'ELLE E ELLA INDUSTRIA E COM. DE CONFECCOES LTDA'
   WHERE "TpPessoaBenfcrio" = 'J'
   AND "CNPJ_CPFBenfcrio" = '40225341000180';
   
