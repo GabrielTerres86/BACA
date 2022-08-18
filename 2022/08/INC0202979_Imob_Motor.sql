@@ -23,4 +23,5 @@ BEGIN
       ROLLBACK;
       CECRED.pc_internal_exception(pr_cdcooper => 3);
   END;
+  COMMIT;
 END;
