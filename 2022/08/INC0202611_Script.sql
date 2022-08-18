@@ -24,6 +24,6 @@ BEGIN
   
 EXCEPTION
   WHEN OTHERS THEN
-    SISTEMA.excecaoInterna(pr_compleme => 'INC00196975');
+    SISTEMA.excecaoInterna(pr_compleme => 'INC0202611');
     ROLLBACK;                         
 END;
