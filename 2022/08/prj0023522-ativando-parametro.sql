@@ -1,5 +1,5 @@
 BEGIN
-    update crapprm set dsvlrprm = 'N' where nmsistem = 'CRED' and cdcooper = 0 and cdacesso = 'MLC_ATIVO';
+    update crapprm set dsvlrprm = 'S' where nmsistem = 'CRED' and cdcooper = 0 and cdacesso = 'MLC_ATIVO';
 
   COMMIT;
 EXCEPTION
