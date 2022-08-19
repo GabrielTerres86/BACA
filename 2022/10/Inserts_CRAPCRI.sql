@@ -68,6 +68,17 @@ BEGIN
     '10615 - Falha rotina contacorrente.buscarContaAdministrativaCooperativa',
     1,
     0);          
+           
+  INSERT INTO CECRED.CRAPCRI
+    (CDCRITIC,
+    DSCRITIC,
+    TPCRITIC,
+    FLGCHAMA)
+  VALUES
+    (10616,
+    '10616 - Falha rotina contacorrente.buscarLimiteDevolucaoPix',
+    1,
+    0);          
        
     
   COMMIT;    
