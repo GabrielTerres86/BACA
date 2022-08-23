@@ -7,6 +7,6 @@ begin
     ,96894776091
     ,69908982087
     ,160489032);
-    and cdcooper = 1;
+    and cdcooper = 1
   commit;
 end;
