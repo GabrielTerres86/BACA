@@ -87,7 +87,7 @@ DECLARE
 
           UPDATE CECRED.crapseg p
              SET p.cdmotcan = vr_cdmotcan
-                ,p.dtcancel = TO_DATE(SYSDATE,'DD/MM/RRRR')
+                ,p.dtcancel = TRUNC(SYSDATE)
                 ,p.cdsitseg = 2
            WHERE p.progress_recid = rw_crapseg.progress_recid;
         END LOOP;
