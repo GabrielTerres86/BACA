@@ -90,6 +90,12 @@ DECLARE
                 ,p.dtcancel = TRUNC(SYSDATE)
                 ,p.cdsitseg = 2
            WHERE p.progress_recid = rw_crapseg.progress_recid;
+           
+           IF vcount = 1000 THEN
+             COMMIT;
+           ELSE
+             vcount := vcount + 1;
+           END IF;
         END LOOP;
 
         COMMIT;
