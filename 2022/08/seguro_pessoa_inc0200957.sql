@@ -54,7 +54,7 @@ DECLARE
                               ,pr_des_erro => vr_dscritic);
 
       IF vr_dscritic IS NOT NULL THEN
-         vr_dscritic := vr_dscritic ||'  Não pode abrir arquivo '||vr_nmdir || vr_nmarq;
+         vr_dscritic := vr_dscritic ||'  NÃ£o pode abrir arquivo '||vr_nmdir || vr_nmarq;
          RAISE vr_exc_saida;
       END IF;
 
@@ -93,6 +93,7 @@ DECLARE
            
            IF vcount = 1000 THEN
              COMMIT;
+             vcount := 0;
            ELSE
              vcount := vcount + 1;
            END IF;
