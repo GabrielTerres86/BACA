@@ -1,9 +1,5 @@
 begin
 
-UPDATE crapsnh snh  	   SET snh.vllimweb = 	10000.00	 WHERE snh.tpdsenha = 1 	   AND snh.cdcooper =	16	   AND snh.nrdconta =	238821	AND snh.idseqttl =	1	;
-UPDATE crapsnh snh  	   SET snh.vllimweb = 	10000.00	 WHERE snh.tpdsenha = 1 	   AND snh.cdcooper =	16	   AND snh.nrdconta =	239470	AND snh.idseqttl =	1	;
-UPDATE crapsnh snh  	   SET snh.vllimweb = 	10000.00	 WHERE snh.tpdsenha = 1 	   AND snh.cdcooper =	16	   AND snh.nrdconta =	240265	AND snh.idseqttl =	1	;
-UPDATE crapsnh snh  	   SET snh.vllimweb = 	20911.77	 WHERE snh.tpdsenha = 1 	   AND snh.cdcooper =	16	   AND snh.nrdconta =	243582	AND snh.idseqttl =	1	;
 UPDATE crapsnh snh  	   SET snh.vllimweb = 	10000.00	 WHERE snh.tpdsenha = 1 	   AND snh.cdcooper =	16	   AND snh.nrdconta =	243604	AND snh.idseqttl =	1	;
 UPDATE crapsnh snh  	   SET snh.vllimweb = 	10000.00	 WHERE snh.tpdsenha = 1 	   AND snh.cdcooper =	16	   AND snh.nrdconta =	245364	AND snh.idseqttl =	1	;
 UPDATE crapsnh snh  	   SET snh.vllimweb = 	10000.00	 WHERE snh.tpdsenha = 1 	   AND snh.cdcooper =	16	   AND snh.nrdconta =	245712	AND snh.idseqttl =	1	;
@@ -699,4 +695,9 @@ UPDATE crapsnh snh  	   SET snh.vllimweb = 	10000.00	 WHERE snh.tpdsenha = 1 	  
 UPDATE crapsnh snh  	   SET snh.vllimweb = 	19500.00	 WHERE snh.tpdsenha = 1 	   AND snh.cdcooper =	16	   AND snh.nrdconta =	6782108	AND snh.idseqttl =	1	;
 
 commit;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+
 end;
