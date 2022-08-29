@@ -10,7 +10,7 @@ begin
   vr_vlrpar   := 804.99;
   
   update cecred.crapepr epr
-     set epr.vlpreemp = vr_vlrpar
+     set epr.vlpreemp = vr_vlrpar 
    where epr.cdcooper = vr_cdcooper
      and epr.nrdconta = vr_nrdconta
      and epr.nrctremp = vr_nrctremp; 
