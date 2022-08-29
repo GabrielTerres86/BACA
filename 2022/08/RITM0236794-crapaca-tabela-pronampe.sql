@@ -1,5 +1,5 @@
 BEGIN
-  INSERT INTO crapaca
+  INSERT INTO cecred.crapaca
     (NMDEACAO,
      NMPACKAG,
      NMPROCED,
@@ -11,7 +11,7 @@ BEGIN
      'pc_consultar_fat_rec_web',
      'pr_cdcooper, pr_nrdconta, pr_nriniseq, pr_nrregist',
      (SELECT NRSEQRDR
-        FROM craprdr
+        FROM cecred.craprdr
        WHERE upper(NMPROGRA) = 'TELA_PRONAM'));
 	   
   COMMIT;

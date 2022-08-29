@@ -1,5 +1,5 @@
 BEGIN
-  INSERT INTO crapaca
+  INSERT INTO cecred.crapaca
     (NMDEACAO,
      NMPACKAG,
      NMPROCED,
@@ -11,7 +11,7 @@ BEGIN
      'pc_rel_faturamento_api',
      'pr_cdcooper,pr_datini,pr_datfim,pr_tipo',
      (SELECT NRSEQRDR
-        FROM craprdr
+        FROM cecred.craprdr
        WHERE upper(NMPROGRA) = 'TELA_PRONAM'));
      
   COMMIT;
