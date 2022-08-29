@@ -9,13 +9,13 @@ begin
   vr_nrctremp := 5980967;
   vr_vlrpar   := 804.99;
   
-  update crapepr epr
+  update cecred.crapepr epr
      set epr.vlpreemp = vr_vlrpar
    where epr.cdcooper = vr_cdcooper
      and epr.nrdconta = vr_nrdconta
      and epr.nrctremp = vr_nrctremp; 
    
-  update crappep pep
+  update cecred.crappep pep
      set pep.vlparepr = vr_vlrpar,
          pep.vlsdvpar = vr_vlrpar, 
          pep.vlsdvsji = vr_vlrpar
