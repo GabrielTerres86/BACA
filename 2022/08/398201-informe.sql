@@ -15,5 +15,7 @@ BEGIN
      SET a.dtmvtolt = add_months(a.dtmvtolt,-12)
    WHERE cdcooper = 6
      AND nrdconta in (20010,14651114,117722,112887);
+	 
+	 COMMIT;
 
 END;
