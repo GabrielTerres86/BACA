@@ -6,7 +6,7 @@ BEGIN
      LSTPARAM,
      NRSEQRDR)
   VALUES
-    ('COSULTA_FATURAMENTO_RECEITA',
+    ('CONSULTA_FATURAMENTO_RECEITA',
      'TELA_PRONAM',
      'pc_consultar_fat_rec_web',
      'pr_cdcooper, pr_nrdconta, pr_nriniseq, pr_nrregist',
