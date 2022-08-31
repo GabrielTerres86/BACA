@@ -1,0 +1,27 @@
+BEGIN
+
+  INSERT INTO tbepr_renegociacao
+    (CDCOOPER, NRDCONTA, NRCTREMP, FLGDOCJE, IDFINIOF, DTDPAGTO, QTPREEMP, VLEMPRST, VLPREEMP, DTLIBERA, IDFINTAR)
+  VALUES
+    (1, 10913084, 5966261, 0, 1, to_date('20-10-2022', 'dd-mm-yyyy'), 36, 1005.84, 43.48, to_date('22-08-2022',
+              'dd-mm-yyyy'), 0);
+
+  INSERT INTO tbepr_renegociacao
+    (CDCOOPER, NRDCONTA, NRCTREMP, FLGDOCJE, IDFINIOF, DTDPAGTO, QTPREEMP, VLEMPRST, VLPREEMP, DTLIBERA, IDFINTAR)
+  VALUES
+    (1, 10913084, 5966262, 0, 1, to_date('20-10-2022', 'dd-mm-yyyy'), 36, 18802.43, 812.79, to_date('22-08-2022',
+              'dd-mm-yyyy'), 0);
+
+  INSERT INTO tbepr_renegociacao
+    (CDCOOPER, NRDCONTA, NRCTREMP, FLGDOCJE, IDFINIOF, DTDPAGTO, QTPREEMP, VLEMPRST, VLPREEMP, DTLIBERA, IDFINTAR)
+  VALUES
+    (1, 10913084, 5966263, 0, 1, to_date('20-10-2022', 'dd-mm-yyyy'), 36, 3281.11, 179.66, to_date('22-08-2022',
+              'dd-mm-yyyy'), 0);
+
+  COMMIT;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE_application_error(-20500, SQLERRM);
+    ROLLBACK;
+END;
