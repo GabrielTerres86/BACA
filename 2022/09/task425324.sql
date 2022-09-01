@@ -1,5 +1,5 @@
 BEGIN
-  update crapepr epr
+  update cecred.crapepr epr
   set epr.qtprepag = epr.qtpreemp,
       epr.vlsdeved = 0,
       epr.inliquid = 1,
@@ -8,7 +8,7 @@ BEGIN
    where epr.nrdconta = 66605 
      and epr.nrctremp = 114729;
 
-  update crappep 
+  update cecred.crappep 
      set vlpagpar = vlparepr,
          inliquid = 1, 
          vlsdvatu = 0 
