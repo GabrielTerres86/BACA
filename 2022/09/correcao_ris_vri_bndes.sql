@@ -124,7 +124,7 @@ BEGIN
            AND dtrefere = vr_dtrefere;
       EXCEPTION
         WHEN OTHERS THEN
-          dbms_output.put_line('Erro ao atualizar ris - Cooper: ' || rw_crapcop.cdcooper || ' Conta: ' || rw_contratos_bndes.nrdconta || ' Contrato: ' || rw_contratos_bndes.nrctremp || ' -- ' || SQLERRM);
+          dbms_output.put_line('Erro ao atualizar ris - Cooper: ' || rw_crapcop.cdcooper || ' Conta: ' || rw_contratos_bndes.nrdconta || ' Contrato: ' || rw_contratos_bndes.nrctremp || ' - ' || SQLERRM);
       END;
       
       vr_tab_vlavence(1) := rw_contratos_bndes.vlaven30;  
@@ -165,7 +165,7 @@ BEGIN
                   0499, rw_contratos_bndes.nrctremp, rw_contratos_bndes.nrseqctr, vr_cdvencto, vr_tab_vlavence(vr_ind));
         EXCEPTION
           WHEN OTHERS THEN
-            dbms_output.put_line('1 - Erro ao inserir vri - Cooper: ' || rw_crapcop.cdcooper || ' Conta: ' || rw_contratos_bndes.nrdconta || ' Contrato: ' || rw_contratos_bndes.nrctremp || ' Vencimento: ' || vr_cdvencto || ' -- ' || SQLERRM);
+            dbms_output.put_line('1 - Erro ao inserir vri - Cooper: ' || rw_crapcop.cdcooper || ' Conta: ' || rw_contratos_bndes.nrdconta || ' Contrato: ' || rw_contratos_bndes.nrctremp || ' Vencimento: ' || vr_cdvencto || ' - ' || SQLERRM);
         END;
       END LOOP;
       
@@ -177,7 +177,7 @@ BEGIN
                   0499, rw_contratos_bndes.nrctremp, rw_contratos_bndes.nrseqctr, 310, rw_contratos_bndes.vlprej12);
         EXCEPTION
           WHEN OTHERS THEN
-            dbms_output.put_line('2 - Erro ao inserir vri - Cooper: ' || rw_crapcop.cdcooper || ' Conta: ' || rw_contratos_bndes.nrdconta || ' Contrato: ' || rw_contratos_bndes.nrctremp || ' Vencimento: ' || vr_cdvencto || ' -- ' || SQLERRM);
+            dbms_output.put_line('2 - Erro ao inserir vri - Cooper: ' || rw_crapcop.cdcooper || ' Conta: ' || rw_contratos_bndes.nrdconta || ' Contrato: ' || rw_contratos_bndes.nrctremp || ' Vencimento: ' || vr_cdvencto || ' - ' || SQLERRM);
         END;
       END IF;
       
@@ -189,7 +189,7 @@ BEGIN
                   0499, rw_contratos_bndes.nrctremp, rw_contratos_bndes.nrseqctr, 320, rw_contratos_bndes.vlprej48);
         EXCEPTION
           WHEN OTHERS THEN
-            dbms_output.put_line('3 - Erro ao inserir vri - Cooper: ' || rw_crapcop.cdcooper || ' Conta: ' || rw_contratos_bndes.nrdconta || ' Contrato: ' || rw_contratos_bndes.nrctremp || ' Vencimento: ' || vr_cdvencto || ' -- ' || SQLERRM);
+            dbms_output.put_line('3 - Erro ao inserir vri - Cooper: ' || rw_crapcop.cdcooper || ' Conta: ' || rw_contratos_bndes.nrdconta || ' Contrato: ' || rw_contratos_bndes.nrctremp || ' Vencimento: ' || vr_cdvencto || ' - ' || SQLERRM);
         END;
       END IF;
       
@@ -201,7 +201,7 @@ BEGIN
                   0499, rw_contratos_bndes.nrctremp, rw_contratos_bndes.nrseqctr, 330, rw_contratos_bndes.vlprac48);
         EXCEPTION
           WHEN OTHERS THEN
-            dbms_output.put_line('4 - Erro ao inserir vri - Cooper: ' || rw_crapcop.cdcooper || ' Conta: ' || rw_contratos_bndes.nrdconta || ' Contrato: ' || rw_contratos_bndes.nrctremp || ' Vencimento: ' || vr_cdvencto || ' -- ' || SQLERRM);
+            dbms_output.put_line('4 - Erro ao inserir vri - Cooper: ' || rw_crapcop.cdcooper || ' Conta: ' || rw_contratos_bndes.nrdconta || ' Contrato: ' || rw_contratos_bndes.nrctremp || ' Vencimento: ' || vr_cdvencto || ' - ' || SQLERRM);
         END;
       END IF;
       
@@ -222,7 +222,7 @@ EXCEPTION
     
     sistema.Gravarlogprograma(pr_cdcooper      => 3,
                               pr_ind_tipo_log  => 3,
-                              pr_des_log       => vr_cdprograma||' --> PROGRAMA COM ERRO ' || vr_dscritic,
+                              pr_des_log       => vr_cdprograma||' -> PROGRAMA COM ERRO ' || vr_dscritic,
                               pr_cdprograma    => vr_cdprograma,
                               pr_tpexecucao    => 1);      
   
@@ -235,7 +235,7 @@ EXCEPTION
                                
     sistema.Gravarlogprograma(pr_cdcooper      => 3,
                               pr_ind_tipo_log  => 3,
-                              pr_des_log       => vr_cdprograma||' --> PROGRAMA COM ERRO ' || SQLERRM,
+                              pr_des_log       => vr_cdprograma||' -> PROGRAMA COM ERRO ' || SQLERRM,
                               pr_cdprograma    => vr_cdprograma,
                               pr_tpexecucao    => 1);    
         
