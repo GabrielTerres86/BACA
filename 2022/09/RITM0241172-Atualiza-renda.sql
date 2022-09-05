@@ -26,7 +26,7 @@ DECLARE
       , t.idseqttl
       , t.nrdconta
       , t.cdcooper
-    FROM CRAPTTL t
+    FROM CECRED.CRAPTTL t
     WHERE t.cdcooper = 1
       AND t.nrcpfcgc = pr_nrcpfcgc;
 
@@ -34,7 +34,7 @@ DECLARE
 
   CURSOR cr_crapdat IS
     SELECT d.dtmvtolt
-    FROM crapdat d
+    FROM CECRED.crapdat d
     WHERE d.cdcooper = 1;
     
   vr_dtmvtolt CECRED.crapdat.DTMVTOLT%TYPE;
@@ -43,7 +43,7 @@ DECLARE
                     , pr_nrdconta IN CECRED.crapalt.NRDCONTA%TYPE
                     , pr_dtmvtolt IN CECRED.crapalt.DTALTERA%TYPE ) IS
     SELECT a.dsaltera
-    FROM crapalt a
+    FROM CECRED.crapalt a
     WHERE a.cdcooper = pr_cdcooper
       AND a.nrdconta = pr_nrdconta
       AND a.dtaltera = pr_dtmvtolt;
