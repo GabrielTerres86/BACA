@@ -28,7 +28,7 @@ BEGIN
     ('TAB089_ALTERAR_ACORDO'
     ,'TELA_TAB089'
     ,'pc_alterar_acordo'
-    ,'pr_flatmobi,pr_qtdiacar'
+    ,'pr_flatmobi,pr_flatconl,pr_qtdiacar'
     ,1084);
 
   FOR rw_crapcop IN cr_crapcop LOOP
@@ -42,7 +42,7 @@ BEGIN
       ('CRED'
       ,rw_crapcop.cdcooper
       ,'FL_ATIVAR_ACORDO_MOBILE'
-      ,'Ativar - Acordo Mobile'
+      ,'Ativar Mobile - Acordo Digital'
       ,'0');
   
     INSERT INTO cecred.crapprm
@@ -54,8 +54,21 @@ BEGIN
     VALUES
       ('CRED'
       ,rw_crapcop.cdcooper
-      ,'QT_CARENCI_ACORDO_MOBILE'
-      ,'Dias Carência - Acordo Mobile'
+      ,'FL_ATIVAR_ACORDO_CNTONL'
+      ,'Ativar Conta Online - Acordo Digital'
+      ,'0');
+  
+    INSERT INTO cecred.crapprm
+      (nmsistem
+      ,cdcooper
+      ,cdacesso
+      ,dstexprm
+      ,dsvlrprm)
+    VALUES
+      ('CRED'
+      ,rw_crapcop.cdcooper
+      ,'QT_CARENC_ACORDO_DIGITAL'
+      ,'Dias Carência Venc. Inicial - Acordo Digital'
       ,'0');
   END LOOP;
 
