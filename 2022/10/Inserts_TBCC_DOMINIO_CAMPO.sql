@@ -75,6 +75,33 @@ BEGIN
     ,'TRAN'
     ,'9'); 
     
+  INSERT INTO CECRED.TBCC_DOMINIO_CAMPO T
+    (nmdominio
+    ,cddominio
+    ,dscodigo)
+  VALUES
+    ('CDORIGEMSOLICITACAO'
+    ,'010'
+    ,'Depósito à Vista');  
+
+  INSERT INTO CECRED.TBCC_DOMINIO_CAMPO T
+    (nmdominio
+    ,cddominio
+    ,dscodigo)
+  VALUES
+    ('CDORIGEMSOLICITACAO'
+    ,'060'
+    ,'Cota Capital');    
+
+  INSERT INTO CECRED.TBCC_DOMINIO_CAMPO T
+    (nmdominio
+    ,cddominio
+    ,dscodigo)
+  VALUES
+    ('CDORIGEMSOLICITACAO'
+    ,'061'
+    ,'Sobras');     
+    
   COMMIT;    
     
 EXCEPTION
