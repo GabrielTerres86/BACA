@@ -5,37 +5,37 @@ declare
 
   -- Registro dos riscos 
   TYPE typ_risco IS
-    RECORD(cdcooper       cecred.tbcrd_risco.cdcooper%TYPE
-          ,nrdconta       cecred.tbcrd_risco.nrdconta%TYPE
-          ,nrcontrato     cecred.tbcrd_risco.nrcontrato%TYPE
-          ,nrseqctr       cecred.crapris.nrseqctr%TYPE
-          ,cdagencia      cecred.crapris.cdagenci%TYPE
-          ,nrmodalidade   cecred.tbcrd_risco.nrmodalidade%TYPE
-          ,dtcadastro     cecred.tbcrd_risco.dtcadastro%TYPE
-          ,dtvencimento   cecred.tbcrd_risco.dtvencimento%TYPE
-          ,innivris       cecred.crapris.innivris%TYPE
-          ,vldivida       cecred.crapris.vldivida%TYPE
-          ,inpessoa       cecred.crapris.inpessoa%TYPE
-          ,dtvencop       cecred.crapris.dtvencop%TYPE
-          ,qtdiaatr       cecred.crapris.qtdiaatr%TYPE
-          ,nrcpfcgc       cecred.crapris.nrcpfcgc%TYPE
-          ,dtprxpar       cecred.crapris.dtprxpar%TYPE
-          ,vlprxpar       cecred.crapris.vlprxpar%TYPE
-          ,qtparcel       cecred.crapris.qtparcel%TYPE
-          ,vlvec180       cecred.crapris.vlvec180%TYPE
-          ,vlvec360       cecred.crapris.vlvec360%TYPE
-          ,vlvec999       cecred.crapris.vlvec999%TYPE
-          ,vldiv060       cecred.crapris.vldiv060%TYPE
-          ,vldiv180       cecred.crapris.vldiv180%TYPE
-          ,vldiv360       cecred.crapris.vldiv360%TYPE
-          ,vldiv999       cecred.crapris.vldiv999%TYPE
-          ,vlprjano       cecred.crapris.vlprjano%TYPE
-          ,vlprjaan       cecred.crapris.vlprjaan%TYPE
-          ,vlprjant       cecred.crapris.vlprjant%TYPE
-          ,cdinfadi       cecred.crapris.cdinfadi%TYPE
-          ,dsinfaux       cecred.crapris.dsinfaux%TYPE
-          ,flgindiv       cecred.crapris.flgindiv%TYPE
-          ,flarrasto      cecred.crapris.flarrasto%TYPE);
+    RECORD(cdcooper       tbcrd_risco.cdcooper%TYPE
+          ,nrdconta       tbcrd_risco.nrdconta%TYPE
+          ,nrcontrato     tbcrd_risco.nrcontrato%TYPE
+          ,nrseqctr       crapris.nrseqctr%TYPE
+          ,cdagencia      crapris.cdagenci%TYPE
+          ,nrmodalidade   tbcrd_risco.nrmodalidade%TYPE
+          ,dtcadastro     tbcrd_risco.dtcadastro%TYPE
+          ,dtvencimento   tbcrd_risco.dtvencimento%TYPE
+          ,innivris       crapris.innivris%TYPE
+          ,vldivida       crapris.vldivida%TYPE
+          ,inpessoa       crapris.inpessoa%TYPE
+          ,dtvencop       crapris.dtvencop%TYPE
+          ,qtdiaatr       crapris.qtdiaatr%TYPE
+          ,nrcpfcgc       crapris.nrcpfcgc%TYPE
+          ,dtprxpar       crapris.dtprxpar%TYPE
+          ,vlprxpar       crapris.vlprxpar%TYPE
+          ,qtparcel       crapris.qtparcel%TYPE
+          ,vlvec180       crapris.vlvec180%TYPE
+          ,vlvec360       crapris.vlvec360%TYPE
+          ,vlvec999       crapris.vlvec999%TYPE
+          ,vldiv060       crapris.vldiv060%TYPE
+          ,vldiv180       crapris.vldiv180%TYPE
+          ,vldiv360       crapris.vldiv360%TYPE
+          ,vldiv999       crapris.vldiv999%TYPE
+          ,vlprjano       crapris.vlprjano%TYPE
+          ,vlprjaan       crapris.vlprjaan%TYPE
+          ,vlprjant       crapris.vlprjant%TYPE
+          ,cdinfadi       crapris.cdinfadi%TYPE
+          ,dsinfaux       crapris.dsinfaux%TYPE
+          ,flgindiv       crapris.flgindiv%TYPE
+          ,flarrasto      crapris.flarrasto%TYPE);
                 
   -- Definição de um tipo de tabela com o registro acima
   TYPE typ_tab_risco IS
@@ -44,14 +44,14 @@ declare
 
   -- Registro dos riscos 
   TYPE typ_risco_venc IS
-    RECORD(cdcooper       cecred.tbcrd_risco.cdcooper%TYPE
-          ,nrdconta       cecred.tbcrd_risco.nrdconta%TYPE
-          ,nrcontrato     cecred.tbcrd_risco.nrcontrato%TYPE
-          ,nrseqctr       cecred.crapris.nrseqctr%TYPE
-          ,nrmodalidade   cecred.tbcrd_risco.nrmodalidade%TYPE
-          ,cdvencto       cecred.crapvri.cdvencto%TYPE
-          ,innivris       cecred.crapvri.innivris%TYPE
-          ,vldivida       cecred.crapvri.vldivida%TYPE);
+    RECORD(cdcooper       tbcrd_risco.cdcooper%TYPE
+          ,nrdconta       tbcrd_risco.nrdconta%TYPE
+          ,nrcontrato     tbcrd_risco.nrcontrato%TYPE
+          ,nrseqctr       crapris.nrseqctr%TYPE
+          ,nrmodalidade   tbcrd_risco.nrmodalidade%TYPE
+          ,cdvencto       crapvri.cdvencto%TYPE
+          ,innivris       crapvri.innivris%TYPE
+          ,vldivida       crapvri.vldivida%TYPE);
                 
   -- Definição de um tipo de tabela com o registro acima
   TYPE typ_tab_risco_venc IS
@@ -66,28 +66,28 @@ declare
       TABLE OF typ_risco_venc
         INDEX BY PLS_INTEGER;
 
-  PROCEDURE pc_grava_crapris_temporaria_temp(pr_cdcooper     IN cecred.tbcrd_risco.cdcooper%TYPE         -- Codigo da cooperativa
-                                       ,pr_nrdconta          IN cecred.tbcrd_risco.nrdconta%TYPE         -- Numero da conta
-                                       ,pr_inpessoa          IN cecred.crapris.inpessoa%TYPE             -- Tipo de pessoa
-                                       ,pr_nrcontrato        IN cecred.tbcrd_risco.nrcontrato%TYPE       -- Numero do contrato
-                                       ,pr_nrseqctr          IN cecred.crapris.nrseqctr%TYPE             -- Sequencia contrato
-                                       ,pr_cdagencia         IN cecred.crapris.cdagenci%TYPE             -- Numero da agencia
-                                       ,pr_nrcpfcnpj         IN cecred.tbcrd_risco.nrcpfcnpj%TYPE        -- CPF/CNPJ
-                                       ,pr_nrmodalidade      IN cecred.tbcrd_risco.nrmodalidade%TYPE     -- Codigo da modalidade
+  PROCEDURE pc_grava_crapris_temporaria_temp(pr_cdcooper     IN tbcrd_risco.cdcooper%TYPE         -- Codigo da cooperativa
+                                       ,pr_nrdconta          IN tbcrd_risco.nrdconta%TYPE         -- Numero da conta
+                                       ,pr_inpessoa          IN crapris.inpessoa%TYPE             -- Tipo de pessoa
+                                       ,pr_nrcontrato        IN tbcrd_risco.nrcontrato%TYPE       -- Numero do contrato
+                                       ,pr_nrseqctr          IN crapris.nrseqctr%TYPE             -- Sequencia contrato
+                                       ,pr_cdagencia         IN crapris.cdagenci%TYPE             -- Numero da agencia
+                                       ,pr_nrcpfcnpj         IN tbcrd_risco.nrcpfcnpj%TYPE        -- CPF/CNPJ
+                                       ,pr_nrmodalidade      IN tbcrd_risco.nrmodalidade%TYPE     -- Codigo da modalidade
                                        ,pr_dtultdma_util     IN DATE                              -- Ultima dia util do mes anterior
                                        ,pr_dsnivel_risco     IN VARCHAR2                          -- Nivel do Risco
-                                       ,pr_dtcadastro        IN cecred.tbcrd_risco.dtcadastro%TYPE       -- Data de abertura da conta cartao
-                                       ,pr_dtvencimento      IN cecred.tbcrd_risco.dtvencimento%TYPE     -- Data de vencimento
-                                       ,pr_vlsaldo_devedor   IN cecred.tbcrd_risco.vlsaldo_devedor%TYPE  -- Saldo Devedor
-                                       ,pr_dtprxpar          IN cecred.crapris.dtprxpar%TYPE             -- Data proxima parcela
-                                       ,pr_vlprxpar          IN cecred.crapris.vlprxpar%TYPE             -- Valor proxima parcela
-                                       ,pr_qtparcel          IN cecred.crapris.qtparcel%TYPE             -- Quantidade de parcelas
-                                       ,pr_cdinfadi          IN cecred.crapris.cdinfadi%TYPE             -- Saida de operação
-                                       ,pr_dsinfaux          IN cecred.crapris.dsinfaux%TYPE             -- Informação auxiliar
+                                       ,pr_dtcadastro        IN tbcrd_risco.dtcadastro%TYPE       -- Data de abertura da conta cartao
+                                       ,pr_dtvencimento      IN tbcrd_risco.dtvencimento%TYPE     -- Data de vencimento
+                                       ,pr_vlsaldo_devedor   IN tbcrd_risco.vlsaldo_devedor%TYPE  -- Saldo Devedor
+                                       ,pr_dtprxpar          IN crapris.dtprxpar%TYPE             -- Data proxima parcela
+                                       ,pr_vlprxpar          IN crapris.vlprxpar%TYPE             -- Valor proxima parcela
+                                       ,pr_qtparcel          IN crapris.qtparcel%TYPE             -- Quantidade de parcelas
+                                       ,pr_cdinfadi          IN crapris.cdinfadi%TYPE             -- Saida de operação
+                                       ,pr_dsinfaux          IN crapris.dsinfaux%TYPE             -- Informação auxiliar
                                        ,pr_calcparc          IN BOOLEAN                           -- Inidica se calcularemos as parcelas ou não
                                        ,pr_tab_risco      IN OUT NOCOPY typ_tab_risco       --> Temp-Table dos Riscos
                                        ,pr_tab_risco_venc IN OUT NOCOPY typ_tab_risco_venc  --> Risco de vencimentos
-                                       ,pr_idproduto         IN cecred.tbrisco_provisgarant_movto.idproduto%TYPE --> ID do Produto do Movimento Risco de Provisao e Garantia
+                                       ,pr_idproduto         IN tbrisco_provisgarant_movto.idproduto%TYPE --> ID do Produto do Movimento Risco de Provisao e Garantia
                                        ,pr_vlarrasto         IN NUMBER                           --> Valor parametrizado para arrasto
                                        ,pr_cdcritic          OUT PLS_INTEGER                     --> Código da critica
                                        ,pr_dscritic          OUT VARCHAR2) IS                    --> Descricao da critica IS
@@ -117,20 +117,20 @@ declare
       
       -- Variaveis tratamento de erro
       vr_exc_erro           EXCEPTION;
-      vr_cdcritic           cecred.crapcri.cdcritic%TYPE;
+      vr_cdcritic           crapcri.cdcritic%TYPE;
       vr_dscritic           VARCHAR2(4000);
       
       
-      vr_vldiv060     cecred.crapris.vldiv060%TYPE := 0; --> Valor do atraso quando prazo inferior a 60
-      vr_vldiv180     cecred.crapris.vldiv180%TYPE := 0; --> Valor do atraso quando prazo inferior a 180
-      vr_vldiv360     cecred.crapris.vldiv360%TYPE := 0; --> Valor do atraso quando prazo inferior a 360
-      vr_vldiv999     cecred.crapris.vldiv999%TYPE := 0; --> Valor do atraso para outros casos
-      vr_vlvec180     cecred.crapris.vlvec180%TYPE := 0; --> Valor a vencer nos próximos 180 dias
-      vr_vlvec360     cecred.crapris.vlvec360%TYPE := 0; --> Valor a vencer nos próximos 360 dias
-      vr_vlvec999     cecred.crapris.vlvec999%TYPE := 0; --> Valor a vencer para outros casos
-      vr_vlprjano     cecred.crapris.vlprjano%TYPE := 0; --> Valor prejuizo no ano corrente
-      vr_vlprjaan     cecred.crapris.vlprjaan%TYPE := 0; --> Valor prejuizo no ano anterior
-      vr_vlprjant     cecred.crapris.vlprjant%TYPE := 0; --> Valor prejuizo anterior
+      vr_vldiv060     crapris.vldiv060%TYPE := 0; --> Valor do atraso quando prazo inferior a 60
+      vr_vldiv180     crapris.vldiv180%TYPE := 0; --> Valor do atraso quando prazo inferior a 180
+      vr_vldiv360     crapris.vldiv360%TYPE := 0; --> Valor do atraso quando prazo inferior a 360
+      vr_vldiv999     crapris.vldiv999%TYPE := 0; --> Valor do atraso para outros casos
+      vr_vlvec180     crapris.vlvec180%TYPE := 0; --> Valor a vencer nos próximos 180 dias
+      vr_vlvec360     crapris.vlvec360%TYPE := 0; --> Valor a vencer nos próximos 360 dias
+      vr_vlvec999     crapris.vlvec999%TYPE := 0; --> Valor a vencer para outros casos
+      vr_vlprjano     crapris.vlprjano%TYPE := 0; --> Valor prejuizo no ano corrente
+      vr_vlprjaan     crapris.vlprjaan%TYPE := 0; --> Valor prejuizo no ano anterior
+      vr_vlprjant     crapris.vlprjant%TYPE := 0; --> Valor prejuizo anterior
       
       -- Vetor para armazenar parcelas
       TYPE typ_reg_parcel IS
@@ -456,7 +456,7 @@ declare
   END pc_grava_crapris_temporaria_temp;
 
 
-  PROCEDURE pc_fecham_risco_garantia_prest(pr_cdcooper  IN cecred.crapcop.cdcooper%TYPE    --> codigo da cooperativa
+  PROCEDURE pc_fecham_risco_garantia_prest(pr_cdcooper  IN crapcop.cdcooper%TYPE    --> codigo da cooperativa
                                           ,pr_dtrefere  IN DATE                     --> Data de Referencia
                                           ,pr_cdcritic OUT PLS_INTEGER              --> Código da critica
                                           ,pr_dscritic OUT VARCHAR2) IS             --> Descricao da critica
@@ -481,11 +481,11 @@ declare
     ----------------------------- CURSORES -------------------------------
 
       -- Busca as cooperativas
-      CURSOR cr_crapcop (pr_cdcooper IN cecred.crapcop.cdcooper%TYPE) IS
+      CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
         SELECT crapcop.cdagebcb
               ,crapcop.nmrescop
               ,crapcop.dsdircop
-          FROM cecred.crapcop
+          FROM crapcop
          WHERE cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
 
@@ -495,7 +495,7 @@ declare
                crapass.cdagenci,
                crapass.inpessoa,
                crapass.nrcpfcgc
-          FROM cecred.crapass
+          FROM crapass
          WHERE crapass.cdcooper = pr_cdcooper
            AND EXISTS(SELECT 1 
                         FROM tbrisco_provisgarant_movto 
@@ -509,7 +509,7 @@ declare
       -- Verificar se existe lançamento sem conta
       CURSOR cr_movto_sem_conta IS
         SELECT 1
-          FROM cecred.tbrisco_provisgarant_movto mvto 
+          FROM tbrisco_provisgarant_movto mvto 
          WHERE mvto.cdcooper  = pr_cdcooper
            AND mvto.dtbase    = pr_dtrefere
            AND mvto.nrdconta  = 0;
@@ -537,8 +537,8 @@ declare
               ,ROW_NUMBER ()
                  OVER (PARTITION BY mvto.nrdconta
                            ORDER BY mvto.nrdconta) nrseqctr
-          FROM cecred.tbrisco_provisgarant_prodt prod
-              ,cecred.tbrisco_provisgarant_movto mvto
+          FROM tbrisco_provisgarant_prodt prod
+              ,tbrisco_provisgarant_movto mvto
          WHERE mvto.idproduto = prod.idproduto
            AND mvto.cdcooper  = pr_cdcooper
            AND mvto.dtbase    = pr_dtrefere
@@ -548,9 +548,9 @@ declare
       -- Definicao dos registros da tabela crapass
 
       TYPE typ_reg_crapass IS
-        RECORD(inpessoa cecred.crapass.inpessoa%TYPE
-              ,cdagenci cecred.crapass.cdagenci%TYPE
-              ,nrcpfcgc cecred.crapass.nrcpfcgc%TYPE);
+        RECORD(inpessoa crapass.inpessoa%TYPE
+              ,cdagenci crapass.cdagenci%TYPE
+              ,nrcpfcgc crapass.nrcpfcgc%TYPE);
       
       TYPE typ_tab_crapass IS
         TABLE OF typ_reg_crapass
@@ -568,11 +568,11 @@ declare
       vr_ind_crapvri          VARCHAR2(70);
       vr_dtultdma_util        DATE;                             -- Data do ultimo dia util do mes anterior
       vr_calcparc             BOOLEAN;
-      vr_dstextab             cecred.craptab.dstextab%TYPE;
+      vr_dstextab             craptab.dstextab%TYPE;
       vr_vlarrasto            NUMBER;
       
       -- Variaveis de Erro
-      vr_cdcritic             cecred.crapcri.cdcritic%TYPE;
+      vr_cdcritic             crapcri.cdcritic%TYPE;
       vr_dscritic             VARCHAR2(4000);
 
       -- Variaveis Excecao
@@ -726,7 +726,7 @@ declare
 
       BEGIN
         FORALL idx IN INDICES OF vr_tab_risco_temp SAVE EXCEPTIONS
-          INSERT INTO cecred.crapris
+          INSERT INTO crapris
                    (  nrdconta,
                       dtrefere,
                       innivris,
@@ -831,7 +831,7 @@ declare
              AND cdvencto = vr_tab_risco_venc_temp(idx).cdvencto;
 
           IF SQL%ROWCOUNT = 0 THEN
-            INSERT INTO cecred.crapvri(cdcooper
+            INSERT INTO crapvri(cdcooper
                                ,nrdconta
                                ,dtrefere
                                ,innivris
@@ -858,7 +858,7 @@ declare
       END;
 
       -- Efetuar o arrasto das operações
-      cecred.risc0003.pc_efetua_arrasto_docto5(pr_cdcooper => pr_cdcooper --> codigo da cooperativa
+      risc0003.pc_efetua_arrasto_docto5(pr_cdcooper => pr_cdcooper --> codigo da cooperativa
                               ,pr_dtrefere => pr_dtrefere --> Data de Referencia
                               ,pr_cdcritic => vr_cdcritic 
                               ,pr_dscritic => vr_dscritic);
@@ -870,7 +870,7 @@ declare
       -- Executar limpeza para sempre a executar o pc_crps660
       -- devido aos lançamentos manuais da tela MOVRGP
       BEGIN
-        UPDATE cecred.crapris ris
+        UPDATE crapris ris
            SET ris.flgindiv = 0
          WHERE ris.cdcooper = pr_cdcooper
            AND ris.dtrefere = pr_dtrefere;
@@ -881,7 +881,7 @@ declare
       END;
 
       BEGIN
-        DELETE cecred.crapris ris
+        DELETE crapris ris
          WHERE ris.cdcooper = pr_cdcooper
            AND ris.inddocto = 2 -- saida
            AND ris.dtrefere = pr_dtrefere;
@@ -895,7 +895,7 @@ declare
 
       -- Vamos efetuar o fechamento da digitação
       BEGIN 
-        UPDATE cecred.CRAPPRM
+        UPDATE CRAPPRM
            SET dsvlrprm = 0
          WHERE nmsistem = 'CRED'
            AND cdcooper = pr_cdcooper
@@ -930,7 +930,7 @@ declare
 
 begin
 
-  UPDATE cecred.CRAPPRM
+  UPDATE CRAPPRM
      SET dsvlrprm = 1
    WHERE nmsistem = 'CRED'
      AND cdcooper = 3
@@ -942,7 +942,7 @@ begin
                                                  pr_cdcritic => vr_cdcritic_geral,
                                                  pr_dscritic => vr_dscritic_geral);
 
-  UPDATE cecred.CRAPPRM
+  UPDATE CRAPPRM
      SET dsvlrprm = 1
    WHERE nmsistem = 'CRED'
      AND cdcooper = 1
