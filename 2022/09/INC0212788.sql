@@ -358,7 +358,84 @@ AND	e.flgreneg	= 1;
 
 rw_crawepr	cr_crawepr%ROWTYPE;
 
-begin     
+begin
+
+	update	cecred.tbseg_prestamista a
+	set	a.tpregist	= 1,
+		a.tprecusa	= null,
+		a.cdmotrec	= null,
+		a.dtrecusa	= null,
+		a.situacao	= null
+	where	a.nrproposta	in
+		('770658630407',
+		'770658513400',
+		'770658389335');
+
+	update	cecred.crapseg a
+	set	a.dtfimvig	= 
+		(select	add_months(max(y.dtmvtolt),max(y.qtpreemp))
+		from	crapepr y,
+			tbseg_prestamista x
+		where	y.cdcooper	= x.cdcooper
+		and	y.nrdconta	= x.nrdconta
+		and	y.nrctremp	= x.nrctremp
+		and	x.cdcooper	= a.cdcooper
+		and	x.nrdconta	= a.nrdconta
+		and	x.nrctrseg	= a.nrctrseg),
+		a.dtcancel	= null,
+		a.cdsitseg	= 1,
+		a.cdopeexc	= ' ',
+		a.cdageexc	= 0,
+		a.dtinsexc	= null,
+		a.cdopecnl	= ' '
+	where	a.cdcooper	= 16
+	and	a.nrdconta	= 707597
+	and	a.nrctrseg	= 220865
+	and	a.tpseguro	= 4;
+
+	update	cecred.crapseg a
+	set	a.dtfimvig	= 
+		(select	add_months(max(y.dtmvtolt),max(y.qtpreemp))
+		from	crapepr y,
+			tbseg_prestamista x
+		where	y.cdcooper	= x.cdcooper
+		and	y.nrdconta	= x.nrdconta
+		and	y.nrctremp	= x.nrctremp
+		and	x.cdcooper	= a.cdcooper
+		and	x.nrdconta	= a.nrdconta
+		and	x.nrctrseg	= a.nrctrseg),
+		a.dtcancel	= null,
+		a.cdsitseg	= 1,
+		a.cdopeexc	= ' ',
+		a.cdageexc	= 0,
+		a.dtinsexc	= null,
+		a.cdopecnl	= ' '
+	where	a.cdcooper	= 1
+	and	a.nrdconta	= 840726
+	and	a.nrctrseg	= 1119422
+	and	a.tpseguro	= 4;
+
+	update	cecred.crapseg a
+	set	a.dtfimvig	= 
+		(select	add_months(max(y.dtmvtolt),max(y.qtpreemp))
+		from	crapepr y,
+			tbseg_prestamista x
+		where	y.cdcooper	= x.cdcooper
+		and	y.nrdconta	= x.nrdconta
+		and	y.nrctremp	= x.nrctremp
+		and	x.cdcooper	= a.cdcooper
+		and	x.nrdconta	= a.nrdconta
+		and	x.nrctrseg	= a.nrctrseg),
+		a.dtcancel	= null,
+		a.cdsitseg	= 1,
+		a.cdopeexc	= ' ',
+		a.cdageexc	= 0,
+		a.dtinsexc	= null,
+		a.cdopecnl	= ' '
+	where	a.cdcooper	= 1
+	and	a.nrdconta	= 2350408
+	and	a.nrctrseg	= 1117321
+	and	a.tpseguro	= 4;
 
 	OPEN	cr_seg_parametro_prst(	pr_cdcooper	=> pr_cdcooper);
 	FETCH	cr_seg_parametro_prst
