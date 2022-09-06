@@ -297,7 +297,7 @@ declare
       END IF;
           
       -- Calculo do nivel de risco
-      pr_tab_risco(vr_ind_risco).innivris := risc0003.fn_calcula_nivel_risco(pr_dsnivel_risco); 
+      pr_tab_risco(vr_ind_risco).innivris := cecred.risc0003.fn_calcula_nivel_risco(pr_dsnivel_risco); 
       
       -- Saída ou Operação sem Saldo não necessita VRI
       IF pr_cdinfadi != '0301' AND pr_tab_risco(vr_ind_risco).vldivida > 0 THEN 
@@ -431,7 +431,7 @@ declare
       
       pr_tab_risco(vr_ind_risco).flarrasto := 1;
       -- Se for AA marca a flag como nao arrastar
-      IF risc0003.fn_calcula_nivel_risco(pr_dsnivel_risco) = 1 THEN
+      IF cecred.risc0003.fn_calcula_nivel_risco(pr_dsnivel_risco) = 1 THEN
         pr_tab_risco(vr_ind_risco).flarrasto := 0;
       END IF;
       -- Divida menor que o valor do parametro do arrasto (Materialidade)
@@ -526,7 +526,7 @@ declare
               ,mvto.cdclassifica_operacao
               ,mvto.dtvenc_operacao
               ,mvto.vlsaldo_pendente
-              ,risc0003.fn_valor_opcao_dominio(prod.idmodalidade) nrmodalidade
+              ,cecred.risc0003.fn_valor_opcao_dominio(prod.idmodalidade) nrmodalidade
               ,mvto.dtproxima_parcela
               ,mvto.vlparcela
               ,mvto.qtdparcelas
@@ -582,7 +582,7 @@ declare
 
       -- Ignorar o parâmetro financeiro, para checarmos se a central de risco está liberada 
 /*
-      IF risc0003.fn_periodo_habilitado(pr_cdcooper => pr_cdcooper
+      IF cecred.risc0003.fn_periodo_habilitado(pr_cdcooper => pr_cdcooper
                               ,pr_dtbase   => pr_dtrefere
                               ,pr_prmfinan => FALSE) = 0 THEN
         -- Gerar critica 411
@@ -591,7 +591,7 @@ declare
       END IF;
 
       -- Se a digitação já estiver fechada
-      IF risc0003.fn_periodo_habilitado(pr_cdcooper => pr_cdcooper
+      IF cecred.risc0003.fn_periodo_habilitado(pr_cdcooper => pr_cdcooper
                               ,pr_dtbase => pr_dtrefere) = 0 THEN 
         -- Nao conseguiremos reabrir a digitação pois a TAB principal já não está liberada
         vr_dscritic := 'Periodo de digitacao nao liberado - Nao eh necessario fecha-lo!';
