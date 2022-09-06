@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-957
 declare
 
   vr_cdcritic_geral     NUMBER;
@@ -957,17 +955,3 @@ begin
                                                  pr_dscritic => vr_dscritic_geral);
 
 end;
-4
-pr_cdcooper
-0
--4
-pr_dtrefere
-0
--12
-pr_cdcritic
-0
--3
-pr_dscritic
-0
--5
-0
