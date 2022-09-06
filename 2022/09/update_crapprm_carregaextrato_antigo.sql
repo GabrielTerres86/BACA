@@ -1,5 +1,5 @@
 BEGIN          
-  UPDATE crapprm cp 
+  UPDATE cecred.crapprm cp 
      SET cp.dsvlrprm = 0
    WHERE cp.nmsistem = 'CRED'
      AND cp.cdacesso = 'QBRSIG_EXTRATO'             
