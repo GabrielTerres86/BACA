@@ -16,8 +16,8 @@ DECLARE
           ,p.nrctremp
           ,p.vlprodut
           ,p.nrproposta
-      FROM crawseg w,
-           tbseg_prestamista p
+      FROM CECRED.crawseg w,
+           CECRED.tbseg_prestamista p
      WHERE p.cdcooper = pr_cdcooper
        AND w.cdcooper = p.cdcooper
        AND w.nrdconta = p.nrdconta
@@ -27,7 +27,7 @@ DECLARE
        AND w.tpcustei = 0
        AND p.tpregist IN (1,3)
        AND NOT EXISTS (SELECT 1
-                         FROM crapseg s
+                         FROM CECRED.crapseg s
                         WHERE s.cdcooper = p.cdcooper
                           AND s.nrdconta = p.nrdconta
                           AND s.nrctrseg = p.nrctrseg
@@ -35,7 +35,7 @@ DECLARE
                           AND s.cdsitseg = 2
                           AND ROWNUM = 1)
        AND NOT EXISTS (SELECT 1
-                         FROM craplau u
+                         FROM CECRED.craplau u
                         WHERE p.cdcooper = u.cdcooper
                           AND p.nrdconta = u.nrdconta
                           AND p.nrctremp = u.nrctremp
@@ -83,15 +83,15 @@ DECLARE
         vr_linha := '';
 
         FOR rw_principal IN cr_principal(pr_cdcooper => rw_crapcop.cdcooper) LOOP
-          segu0001.pc_agenda_pgto_prest_contrib(pr_dtmvtolt   => rw_principal.dtinivig,
-                                                pr_cdcooper   => rw_principal.cdcooper,
-                                                pr_cdhistor   => rw_principal.cdhistor,
-                                                pr_nrdconta   => rw_principal.nrdconta,
-                                                pr_nrctremp   => rw_principal.nrctremp,
-                                                pr_nrproposta => rw_principal.nrproposta,
-                                                pr_vlslddev   => rw_principal.vlprodut,
-                                                pr_cdcritic   => vr_cdcritic,
-                                                pr_dscritic   => vr_dscritic);
+          CECRED.segu0001.pc_agenda_pgto_prest_contrib(pr_dtmvtolt   => rw_principal.dtinivig,
+                                                       pr_cdcooper   => rw_principal.cdcooper,
+                                                       pr_cdhistor   => rw_principal.cdhistor,
+                                                       pr_nrdconta   => rw_principal.nrdconta,
+                                                       pr_nrctremp   => rw_principal.nrctremp,
+                                                       pr_nrproposta => rw_principal.nrproposta,
+                                                       pr_vlslddev   => rw_principal.vlprodut,
+                                                       pr_cdcritic   => vr_cdcritic,
+                                                       pr_dscritic   => vr_dscritic);
           
           OPEN cr_crplau(pr_cdcooper   => rw_principal.cdcooper,
                          pr_nrdconta   => rw_principal.nrdconta,
