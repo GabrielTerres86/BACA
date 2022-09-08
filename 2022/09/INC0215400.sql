@@ -5622,7 +5622,13 @@ if	(trim(ds_critica_v) is not null) then
 
 end if;
 
-
+	update cecred.crapseg 
+	   set cdsitseg = 2,
+		   cdmotcan = 20,
+		   dtcancel = TRUNC(SYSDATE)
+	 where cdcooper = 13
+	   and nrdconta = 407682 
+	   and nrctrseg = 376508;   
 
 for	r01 in c01 loop
 
@@ -5661,14 +5667,6 @@ for	r01 in c01 loop
 	   and nrctrseg = r01.nrctrseg
 	   and tpseguro = 4;
 	   
-	update cecred.crapseg 
-	   set cdsitseg = 2,
-		   cdmotcan = 20,
-		   dtcancel = TRUNC(SYSDATE)
-	 where cdcooper = 13
-	   and nrdconta = 407682 
-	   and nrctrseg = 376508;   
-
 	cecred.gene0002.pc_escreve_xml(	ds_dados_rollback_v,
 					ds_texto_rollback_v,
 					'update	cecred.tbseg_prestamista ' ||
@@ -5707,7 +5705,7 @@ for	r01 in c01 loop
 	END IF;
 				
 
-	if	(qt_registro	>= 10000) then
+	if	(qt_registro	>= 1000) then
 
 		cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, 'commit;' || chr(13) || chr(13), FALSE);
 
