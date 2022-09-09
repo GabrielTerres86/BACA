@@ -1,4 +1,4 @@
-BEGIN;
+BEGIN
 
 INSERT INTO cecred.crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED', 0, 'MONIT_EMAIL_SEGCORP_PIX1', 'Email de destino dos monitoramentos erros processamento.', 'notifique@ailos.coop.br');
 
