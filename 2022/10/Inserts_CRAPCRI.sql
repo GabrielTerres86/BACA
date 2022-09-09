@@ -80,6 +80,17 @@ BEGIN
     1,
     0);          
        
+  INSERT INTO CECRED.CRAPCRI
+    (CDCRITIC,
+    DSCRITIC,
+    TPCRITIC,
+    FLGCHAMA)
+  VALUES
+    (10617,
+    '10617 - Lancamentos Conta Administrativa nao encontrados',
+    1,
+    0);          
+       
     
   COMMIT;    
     
