@@ -55,7 +55,7 @@ DECLARE
           ,t.cdmotdem as cdmotdem_old
           ,a.cdmotdem as cdmotdem_new
       FROM CECRED.CRAPASS t
-         ,(select 1 as cdcooper, 10619089 as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+         ,(select 1 as cdcooper, 89380851 as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
           ) a
      WHERE 1=1
        AND t.cdcooper = a.cdcooper
