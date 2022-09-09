@@ -707,6 +707,12 @@ BEGIN
     RAISE vr_excerro;
   END IF;
   
+  prc_atlz_prejuizo(prm_cdcooper => 1,
+                    prm_nrdconta => 9958681,
+                    prm_vllanmto => 500,
+                    prm_cdhistor => 2721,
+                    prm_tipoajus => 'I');
+  
   pc_correcao_prejuizo(pr_cdcooper => 5
                       ,pr_nrdconta => 225274
                       ,pr_vllanmto => 52.46
