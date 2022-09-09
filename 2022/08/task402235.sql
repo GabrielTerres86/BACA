@@ -36,13 +36,6 @@ BEGIN
 
     v_dados.extend();
     v_dados(v_dados.last()).vr_cdcooper := 7;
-    v_dados(v_dados.last()).vr_nrdconta := 3980;
-    v_dados(v_dados.last()).vr_nrctremp := 48808;
-    v_dados(v_dados.last()).vr_vllanmto := 38.33;
-    v_dados(v_dados.last()).vr_cdhistor := 3918;
-
-    v_dados.extend();
-    v_dados(v_dados.last()).vr_cdcooper := 7;
     v_dados(v_dados.last()).vr_nrdconta := 31038;
     v_dados(v_dados.last()).vr_nrctremp := 49365;
     v_dados(v_dados.last()).vr_vllanmto := 178.73;
@@ -102,6 +95,13 @@ BEGIN
     v_dados(v_dados.last()).vr_nrdconta := 14136651;
     v_dados(v_dados.last()).vr_nrctremp := 71457;
     v_dados(v_dados.last()).vr_vllanmto := 193.32;
+    v_dados(v_dados.last()).vr_cdhistor := 3919;
+	
+    v_dados.extend();
+    v_dados(v_dados.last()).vr_cdcooper := 7;
+    v_dados(v_dados.last()).vr_nrdconta := 26409;
+    v_dados(v_dados.last()).vr_nrctremp := 53610;
+    v_dados(v_dados.last()).vr_vllanmto := 110.12;
     v_dados(v_dados.last()).vr_cdhistor := 3919;
 
     v_dados.extend();
@@ -180,13 +180,27 @@ BEGIN
     v_dados(v_dados.last()).vr_nrctremp := 72264;
     v_dados(v_dados.last()).vr_vllanmto := 14.43;
     v_dados(v_dados.last()).vr_cdhistor := 3883;
+
+    v_dados.extend();
+    v_dados(v_dados.last()).vr_cdcooper := 7;
+    v_dados(v_dados.last()).vr_nrdconta := 13883054;
+    v_dados(v_dados.last()).vr_nrctremp := 67899;
+    v_dados(v_dados.last()).vr_vllanmto := 43.72;
+    v_dados(v_dados.last()).vr_cdhistor := 3918;
+
+    v_dados.extend();
+    v_dados(v_dados.last()).vr_cdcooper := 7;
+    v_dados(v_dados.last()).vr_nrdconta := 230618;
+    v_dados(v_dados.last()).vr_nrctremp := 31827;
+    v_dados(v_dados.last()).vr_vllanmto := 23.28;
+    v_dados(v_dados.last()).vr_cdhistor := 3919;
 	
     v_dados.extend();
     v_dados(v_dados.last()).vr_cdcooper := 7;
-    v_dados(v_dados.last()).vr_nrdconta := 392740;
-    v_dados(v_dados.last()).vr_nrctremp := 72380;
-    v_dados(v_dados.last()).vr_vllanmto := 761;
-    v_dados(v_dados.last()).vr_cdhistor := 1037;
+    v_dados(v_dados.last()).vr_nrdconta := 14143836;
+    v_dados(v_dados.last()).vr_nrctremp := 73693;
+    v_dados(v_dados.last()).vr_vllanmto := 763.62;
+    v_dados(v_dados.last()).vr_cdhistor := 3918;
 
     v_dados.extend();
     v_dados(v_dados.last()).vr_cdcooper := 7;
