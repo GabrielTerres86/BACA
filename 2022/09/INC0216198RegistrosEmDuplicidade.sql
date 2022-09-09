@@ -1,0 +1,14 @@
+BEGIN
+DELETE FROM cecred.craplau c
+WHERE c.cdcooper = 13
+AND nrdconta = 850012
+AND c.dtmvtopg = '12/09/2022'
+AND c.vllanaut IN (4915.65, 1.67, 6489.22)
+AND c.nrctadst IN (568902, 701)
+AND C.DTMVTOLT = '09/09/2022'
+and c.PROGRESS_RECID IN (71779870,71784101);
+COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+END;
