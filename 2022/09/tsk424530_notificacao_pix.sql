@@ -6,6 +6,6 @@ SELECT (max(cdmensagem) + 1) into codigoMensagem FROM tbgen_notif_msg_cadastro;
     (codigoMensagem, 13, 'Você enviou um Pix', 'Você enviou um Pix de R$ #ValorPix. A transação já foi concluída', 'Cooperado, <br><br>Você enviou um Pix.<br><br>Recebedor: #NomeRecebedor <br>Valor: #ValorPix <br>Instituição: #Instituicao <br> Identificação: #Identificacao <br>Descrição: #Descricao <br><br>Acesse o comprovante no App Ailos ou confira o extrato da sua conta corrente.', 16, 0, 1, 'Ver comprovante', 400, 'Ver comprovante', 1);
     
     INSERT INTO tbgen_notif_automatica_prm (cdorigem_mensagem, cdmotivo_mensagem, dsmotivo_mensagem, cdmensagem, inmensagem_ativa, intipo_repeticao, dsvariaveis_mensagem) VALUES
-    (13, 53, 'Você enviou um Pix', codigoMensagem, 1, 0, 'Cooperado, <br><br>Você enviou um Pix.<br><br>Recebedor: #NomeRecebedor <br>Valor: #ValorPix <br>Instituição: #Instituicao <br> Identificação: #Identificacao <br>Descrição: #Descricao <br><br>Acesse o comprovante no App Ailos ou confira extrato da sua conta corrente.');
+    (13, 53, 'Você enviou um Pix', codigoMensagem, 1, 0, 'Cooperado, <br><br>Você enviou um Pix.<br><br>Recebedor: #NomeRecebedor <br>Valor: #ValorPix <br>Instituição: #Instituicao <br> Identificação: #Identificacao <br>Descrição: #Descricao <br><br>Acesse o comprovante no App Ailos ou confira o extrato da sua conta corrente.');
     commit;
 END;
