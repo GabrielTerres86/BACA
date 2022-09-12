@@ -37,10 +37,10 @@ DECLARE
           ,atr.cdsegmto
           ,atr.dshisext
       FROM cecred.crapatr atr
-     WHERE atr.cdcooper = pr_cdcooper -- CODIGO DA COOPERATIVA
-       AND atr.nrdconta = pr_nrdconta -- NUMERO DA CONTA
-       AND atr.cdhistor = pr_cdhistor -- CODIGO DO HISTORICO
-       AND atr.cdrefere = pr_nrdocmto; -- COD. REFERENCIA
+     WHERE atr.cdcooper = pr_cdcooper
+       AND atr.nrdconta = pr_nrdconta
+       AND atr.cdhistor = pr_cdhistor
+       AND atr.cdrefere = pr_nrdocmto;
   rw_crapatr cr_crapatr%ROWTYPE;
    
   CURSOR cr_crapcon(pr_cdcooper IN crapcon.cdcooper%TYPE
