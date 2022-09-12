@@ -103,7 +103,7 @@ BEGIN
     
     END LOOP;
       
-    --COMMIT;
+    COMMIT;
       
   EXCEPTION
     WHEN OTHERS THEN
