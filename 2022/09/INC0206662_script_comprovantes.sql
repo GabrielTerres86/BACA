@@ -1,3 +1,5 @@
+BEGIN
+
 DECLARE
   
   vr_dsinfor1     crappro.dsinform##1%TYPE;
@@ -101,9 +103,11 @@ BEGIN
     
     END LOOP;
       
-    COMMIT;
+    --COMMIT;
       
   EXCEPTION
     WHEN OTHERS THEN
       dbms_output.put_line(SQLERRM);
+END;
+
 END;
