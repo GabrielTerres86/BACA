@@ -1,0 +1,12 @@
+BEGIN
+  UPDATE cecred.crapass
+	SET nrcpfcgc = 20012454000190
+	WHERE cdcooper = 1
+		AND nrdconta = 2240;
+     
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+  RAISE_APPLICATION_ERROR(-20500, SQLERRM);
+    ROLLBACK;
+END;
