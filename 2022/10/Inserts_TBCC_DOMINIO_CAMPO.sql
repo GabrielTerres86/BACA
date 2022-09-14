@@ -82,7 +82,7 @@ BEGIN
   VALUES
     ('CDORIGEMSOLICITACAO'
     ,'010'
-    ,'DepÃ³sito Ã  Vista');  
+    ,'Depósito à Vista');  
 
   INSERT INTO CECRED.TBCC_DOMINIO_CAMPO T
     (nmdominio
