@@ -23,7 +23,6 @@ DECLARE
        AND w.nrdconta = p.nrdconta
        AND w.nrctrseg = p.nrctrseg
        AND w.flgassum = 1
-       AND w.flfinanciasegprestamista = 0
        AND w.tpcustei = 0
        AND p.tpregist IN (1,3)
        AND NOT EXISTS (SELECT 1
