@@ -91,6 +91,17 @@ BEGIN
     1,
     0);          
        
+  INSERT INTO CECRED.CRAPCRI
+    (CDCRITIC,
+    DSCRITIC,
+    TPCRITIC,
+    FLGCHAMA)
+  VALUES
+    (10618,
+    '10618 - Falha rotina contacorrente.validarSolicitacoesLimitePix',
+    1,
+    0);          
+       
     
   COMMIT;    
     
