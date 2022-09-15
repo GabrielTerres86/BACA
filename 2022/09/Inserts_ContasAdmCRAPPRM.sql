@@ -3,7 +3,6 @@ DECLARE
   vr_errm VARCHAR2(64);
 BEGIN
   
-  -- Conta Adm Viacredi
   INSERT INTO CECRED.CRAPPRM P
   (nmsistem
   ,cdcooper
@@ -17,7 +16,6 @@ BEGIN
   ,'Conta administrativa da Cooperativa, para receber os valores a devolver e enviar via Pix ao ex-cooperado pela solicitação ASVR9810'
   ,'7239530');
   
-  -- Conta Adm Acredicoop
   INSERT INTO CECRED.CRAPPRM P
   (nmsistem
   ,cdcooper
@@ -31,7 +29,6 @@ BEGIN
   ,'Conta administrativa da Cooperativa, para receber os valores a devolver e enviar via Pix ao ex-cooperado pela solicitação ASVR9810'
   ,'820024');
     
-  -- Conta Adm Acentra
   INSERT INTO CECRED.CRAPPRM P
   (nmsistem
   ,cdcooper
@@ -45,7 +42,6 @@ BEGIN
   ,'Conta administrativa da Cooperativa, para receber os valores a devolver e enviar via Pix ao ex-cooperado pela solicitação ASVR9810'
   ,'50008');
     
-  -- Conta Adm Unilos
   INSERT INTO CECRED.CRAPPRM P
   (nmsistem
   ,cdcooper
@@ -59,7 +55,6 @@ BEGIN
   ,'Conta administrativa da Cooperativa, para receber os valores a devolver e enviar via Pix ao ex-cooperado pela solicitação ASVR9810'
   ,'850004');
     
-  -- Conta Adm Credcrea
   INSERT INTO CECRED.CRAPPRM P
   (nmsistem
   ,cdcooper
@@ -73,7 +68,6 @@ BEGIN
   ,'Conta administrativa da Cooperativa, para receber os valores a devolver e enviar via Pix ao ex-cooperado pela solicitação ASVR9810'
   ,'40002');
     
-  -- Conta Adm Credelesc
   INSERT INTO CECRED.CRAPPRM P
   (nmsistem
   ,cdcooper
@@ -87,7 +81,6 @@ BEGIN
   ,'Conta administrativa da Cooperativa, para receber os valores a devolver e enviar via Pix ao ex-cooperado pela solicitação ASVR9810'
   ,'7239530');
     
-  -- Conta Adm Transpocred
   INSERT INTO CECRED.CRAPPRM P
   (nmsistem
   ,cdcooper
@@ -101,7 +94,6 @@ BEGIN
   ,'Conta administrativa da Cooperativa, para receber os valores a devolver e enviar via Pix ao ex-cooperado pela solicitação ASVR9810'
   ,'4006');
     
-  -- Conta Adm Credicomin
   INSERT INTO CECRED.CRAPPRM P
   (nmsistem
   ,cdcooper
@@ -115,7 +107,6 @@ BEGIN
   ,'Conta administrativa da Cooperativa, para receber os valores a devolver e enviar via Pix ao ex-cooperado pela solicitação ASVR9810'
   ,'9008');
     
-  -- Conta Adm Credifoz
   INSERT INTO CECRED.CRAPPRM P
   (nmsistem
   ,cdcooper
@@ -129,7 +120,6 @@ BEGIN
   ,'Conta administrativa da Cooperativa, para receber os valores a devolver e enviar via Pix ao ex-cooperado pela solicitação ASVR9810'
   ,'9148');
 
-  -- Conta Adm Crevisc
   INSERT INTO CECRED.CRAPPRM P
   (nmsistem
   ,cdcooper
@@ -143,7 +133,6 @@ BEGIN
   ,'Conta administrativa da Cooperativa, para receber os valores a devolver e enviar via Pix ao ex-cooperado pela solicitação ASVR9810'
   ,'850012');
 
-  -- Conta Adm Civia
   INSERT INTO CECRED.CRAPPRM P
   (nmsistem
   ,cdcooper
@@ -157,7 +146,6 @@ BEGIN
   ,'Conta administrativa da Cooperativa, para receber os valores a devolver e enviar via Pix ao ex-cooperado pela solicitação ASVR9810'
   ,'7239530');
 
-  -- Conta Adm Evolua
   INSERT INTO CECRED.CRAPPRM P
   (nmsistem
   ,cdcooper
@@ -171,7 +159,6 @@ BEGIN
   ,'Conta administrativa da Cooperativa, para receber os valores a devolver e enviar via Pix ao ex-cooperado pela solicitação ASVR9810'
   ,'59650');
 
-  -- Conta Adm Alto Vale
   INSERT INTO CECRED.CRAPPRM P
   (nmsistem
   ,cdcooper
