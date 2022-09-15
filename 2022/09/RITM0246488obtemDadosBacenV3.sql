@@ -199,4 +199,5 @@
     sistema.fechaArquivo(pr_utlfileh => vr_utlfileh);
 
     sistema.fechaArquivo(pr_utlfileh => vr_ind_arqlog);
+	commit;
   END;
