@@ -10,7 +10,6 @@ DECLARE
 BEGIN
   
   FOR rg_crapcop IN cr_crapcop LOOP
-    -- Valor limite da transferencia de Valores a Devolver via Pix - ASVR98
     INSERT INTO CECRED.CRAPPRM P
     (nmsistem
     ,cdcooper
