@@ -69,12 +69,10 @@ DECLARE
 
 BEGIN
 
-  -- Definir em qual ambiente ira buscar os arquivos para leitura/escrita
   vr_nmarq_carga    := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/ritm0247119/' || '1.csv';          -- Arquivo a ser lido
   vr_nmarq_log      := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/ritm0247119/' || '1_LOG.txt';      -- Arquivo de Log
   vr_nmarq_rollback := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/ritm0247119/' || '1_ROLLBACK.sql'; -- Arquivo de Rollback
 
-  -- Arquivo de Carga
   GENE0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_carga,
                            pr_tipabert => 'R',
                            pr_utlfileh => vr_input_file,
@@ -85,7 +83,6 @@ BEGIN
     RAISE vr_exc_erro;
   END IF;
 
-  -- Arquivo de Log
   gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_log,
                            pr_tipabert => 'W',
                            pr_utlfileh => vr_handle_log,
@@ -255,7 +252,6 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- Inicio do arquivo de Rollback
   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle,
                                  pr_des_text => 'COMMIT;');
   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle,
