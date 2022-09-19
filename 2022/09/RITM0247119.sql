@@ -152,7 +152,6 @@ BEGIN
     RAISE vr_exc_erro;
   END IF;
 
-  -- Inicio do arquivo de Rollback
   gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle,
                                  pr_des_text => 'BEGIN');
                                  
