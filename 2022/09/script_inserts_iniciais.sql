@@ -25,6 +25,19 @@ BEGIN
     ,'pr_tpprodut,pr_nmarquivo'
     ,vr_nrseqrdr);
 
+  INSERT INTO cecred.crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('LISTA_AGENDAS_ATIVAS_ARQUIVO'
+    ,'credito.tela_imprec'
+    ,'pc_lista_agendas_ativas_arquivo'
+    ,'pr_nrregist,pr_nriniseq'
+    ,vr_nrseqrdr);
+
   INSERT INTO cecred.craptel
     (nmdatela
     ,nrmodulo
@@ -43,24 +56,25 @@ BEGIN
     ,nrdnivel
     ,nmrotpai
     ,idambtel)
-  VALUES
-    ('IMPREC'
-    ,6
-    ,'I,L,E,D,X'
-    ,'PROJETO CERC'
-    ,'PROJETO CERC'
-    ,0
-    ,1
-    ,' '
-    ,'IMP.SAS,IMP.MAN,EXCLUIR,DETALHES,IMP. MAN LIM'
-    ,1
-    ,1
-    ,1
-    ,0
-    ,1
-    ,1
-    ,' '
-    ,2);
+    (SELECT 'IMPREC'
+           ,6
+           ,'I,L,E,D,X'
+           ,'PROJETO CERC'
+           ,'PROJETO CERC'
+           ,0
+           ,1
+           ,' '
+           ,'IMP.SAS,IMP.MAN,EXCLUIR,DETALHES,IMP. MAN LIM'
+           ,1
+           ,cop.cdcooper
+           ,1
+           ,0
+           ,1
+           ,1
+           ,' '
+           ,2
+       FROM cecred.crapcop cop
+      WHERE cop.flgativo = 1);
 
   INSERT INTO cecred.crapprg
     (nmsistem
@@ -80,24 +94,25 @@ BEGIN
     ,inlibprg
     ,cdcooper
     ,qtminmed)
-  VALUES
-    ('CRED'
-    ,'IMPREC'
-    ,'PROJETO CERC'
-    ,' '
-    ,' '
-    ,' '
-    ,0
-    ,300
-    ,1
-    ,0
-    ,0
-    ,0
-    ,0
-    ,0
-    ,1
-    ,1
-    ,NULL);
+    (SELECT 'CRED'
+           ,'IMPREC'
+           ,'PROJETO CERC'
+           ,' '
+           ,' '
+           ,' '
+           ,0
+           ,300
+           ,1
+           ,0
+           ,0
+           ,0
+           ,0
+           ,0
+           ,1
+           ,cop.cdcooper
+           ,NULL
+       FROM cecred.crapcop cop
+      WHERE cop.flgativo = 1);
 
   COMMIT;
 
