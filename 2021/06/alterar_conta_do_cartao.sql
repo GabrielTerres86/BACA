@@ -4,8 +4,8 @@ DECLARE
   vr_cartao      NUMBER(25);
   vr_cpf_titular NUMBER(20);
 BEGIN
-  vr_cooperativa := 1;  
-  vr_conta := 7395779;
+  vr_cooperativa := 9;  
+  vr_conta := 84648970;
   vr_cartao := 5588190184171591;
   
   FOR cartao IN (select distinct a.nrcpftit
@@ -27,9 +27,11 @@ BEGIN
       vr_cpf_titular := titular.nrcpfcgc;
     END LOOP;
   END IF;
+
   IF vr_cpf_titular IS NULL THEN
     RETURN;
   END IF;
+
   UPDATE crapcrd card
      SET card.cdcooper = vr_cooperativa
         ,card.nrdconta = vr_conta
