@@ -115,6 +115,16 @@ BEGIN
                      ,'pr_idsolici,pr_idrotina,pr_dsobserv'
                      ,vr_nrseqrdr);
   
+  INSERT INTO crapaca(nmdeacao
+                     ,nmpackag
+                     ,nmproced
+                     ,lstparam
+                     ,nrseqrdr)
+               VALUES('BUSCA_DOMINIOS_ORDER'
+                     ,NULL
+                     ,'retornarDominioOrder'
+                     ,'pr_nmmodulo,pr_nmdomini,pr_dsdorder'
+                     ,1104); 
   
   COMMIT;
   
