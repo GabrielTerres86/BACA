@@ -52,7 +52,7 @@ DECLARE
              
   CURSOR cr_cpf(pr_cdcooper IN CECRED.tbseg_prestamista.cdcooper%TYPE) IS
      SELECT p.cdcooper, p.nrcpfcgc
-       FROM CECRED.tbseg_prestamista2 p
+       FROM CECRED.tbseg_prestamista p
       WHERE p.cdcooper = pr_cdcooper
         AND p.nrproposta IN ('770349015447',
                              '770349030268',
@@ -1055,7 +1055,7 @@ DECLARE
       GROUP BY p.cdcooper, p.nrcpfcgc
       UNION
       SELECT p.cdcooper, p.nrcpfcgc
-        FROM CECRED.tbseg_prestamista2 p
+        FROM CECRED.tbseg_prestamista p
        WHERE p.cdcooper = pr_cdcooper
          AND p.nrproposta IN ('770658367684',
                               '770658370502',
@@ -1070,7 +1070,7 @@ DECLARE
             
   CURSOR cr_cpf2(pr_cdcooper IN CECRED.tbseg_prestamista.cdcooper%TYPE) IS
       SELECT p.cdcooper, p.nrcpfcgc
-        FROM CECRED.tbseg_prestamista3 p
+        FROM CECRED.tbseg_prestamista p
        WHERE p.cdcooper = pr_cdcooper
          AND p.tpregist <> 0
          AND p.nrproposta IN ('770349902451',
@@ -1099,7 +1099,7 @@ DECLARE
   CURSOR cr_nrproposta(pr_cdcooper   IN CECRED.tbseg_prestamista.cdcooper%TYPE
                       ,pr_nrproposta IN CECRED.tbseg_prestamista.nrproposta%TYPE) IS
      SELECT p.nrproposta
-       FROM CECRED.tbseg_prestamista2 p
+       FROM CECRED.tbseg_prestamista p
       WHERE p.cdcooper = pr_cdcooper            
         AND p.nrproposta = pr_nrproposta
         AND p.nrproposta IN ('770349015447',
@@ -2102,7 +2102,7 @@ DECLARE
                              '770658367676')
       UNION ALL
       SELECT p.nrproposta
-        FROM CECRED.tbseg_prestamista2 p
+        FROM CECRED.tbseg_prestamista p
        WHERE p.cdcooper = pr_cdcooper
          AND p.nrproposta = pr_nrproposta
          AND p.nrproposta IN ('770658367684',
@@ -2119,7 +2119,7 @@ DECLARE
   CURSOR cr_nrproposta2(pr_cdcooper   IN CECRED.tbseg_prestamista.cdcooper%TYPE
                        ,pr_nrproposta IN CECRED.tbseg_prestamista.nrproposta%TYPE) IS
      SELECT p.nrproposta
-       FROM CECRED.tbseg_prestamista3 p
+       FROM CECRED.tbseg_prestamista p
       WHERE p.cdcooper = pr_cdcooper            
         AND p.nrproposta = pr_nrproposta
         AND p.nrproposta IN ('770349902451',
@@ -2196,7 +2196,7 @@ DECLARE
                      TRUNC(Months_Between(pr_dtmvtolt,p.dtnasctl) /12,0) < 14))THEN
                  0
                WHEN (p.idseqtra <> (SELECT MAX(t.idseqtra) 
-                                      FROM CECRED.tbseg_prestamista2 t
+                                      FROM CECRED.tbseg_prestamista t
                                      WHERE t.cdcooper = p.cdcooper
                                        AND t.nrdconta = p.nrdconta
                                        AND t.nrctremp = p.nrctremp
@@ -2211,7 +2211,7 @@ DECLARE
           ,ADD_MONTHS(c.dtmvtolt, c.qtpreemp)  dtfimctr
           ,s.cdsitseg
           ,s.dtcancel
-      FROM CECRED.tbseg_prestamista2 p, CECRED.crapepr c, CECRED.crapass ass, CECRED.crapseg s
+      FROM CECRED.tbseg_prestamista p, CECRED.crapepr c, CECRED.crapass ass, CECRED.crapseg s
      WHERE p.cdcooper = pr_cdcooper  
        AND c.cdcooper = p.cdcooper
        AND c.nrdconta = p.nrdconta
@@ -2700,7 +2700,7 @@ DECLARE
                      TRUNC(Months_Between(pr_dtmvtolt,p.dtnasctl) /12,0) < 14))THEN
                  0
                WHEN (p.idseqtra <> (SELECT MAX(t.idseqtra) 
-                                      FROM CECRED.tbseg_prestamista3 t
+                                      FROM CECRED.tbseg_prestamista t
                                      WHERE t.cdcooper = p.cdcooper
                                        AND t.nrdconta = p.nrdconta
                                        AND t.nrctremp = p.nrctremp
@@ -2715,7 +2715,7 @@ DECLARE
           ,ADD_MONTHS(c.dtmvtolt, c.qtpreemp)  dtfimctr
           ,s.cdsitseg
           ,s.dtcancel
-      FROM CECRED.tbseg_prestamista3 p, CECRED.crapepr c, CECRED.crapass ass, CECRED.crapseg s
+      FROM CECRED.tbseg_prestamista p, CECRED.crapepr c, CECRED.crapass ass, CECRED.crapseg s
      WHERE p.cdcooper = pr_cdcooper  
        AND c.cdcooper = p.cdcooper
        AND c.nrdconta = p.nrdconta
@@ -2781,7 +2781,7 @@ DECLARE
                      TRUNC(Months_Between(pr_dtmvtolt,p.dtnasctl) /12,0) < 14))THEN
                  0
                WHEN (p.idseqtra <> (SELECT MAX(t.idseqtra) 
-                                      FROM CECRED.tbseg_prestamista2 t
+                                      FROM CECRED.tbseg_prestamista t
                                      WHERE t.cdcooper = p.cdcooper
                                        AND t.nrdconta = p.nrdconta
                                        AND t.nrctremp = p.nrctremp
