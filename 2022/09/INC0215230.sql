@@ -23,9 +23,9 @@ select w.tpcustei tpcusteio, w.vlseguro vlrseguro, w.vlpremio vlrpremio,
        idseqtra, p.nrctremp nrctremptbseg,tpregist,cdapolic,p.nrcpfcgc,nmprimtl, dtnasctl,cdsexotl,p.dsendres,dsdemail,p.nmbairro,p.nmcidade,p.cdufresd,p.nrcepend,nrtelefo,dtdevend,cdcobran,cdadmcob,tpfrecob,tpsegura,cdprodut,cdplapro,vlprodut,tpcobran,vlsdeved,vldevatu,dtrefcob,dtdenvio,p.nrproposta,tprecusa,cdmotrec,dtrecusa,situacao,p.tpcustei,pemorte,peinvalidez,peiftttaxa,qtifttdias,nrapolice,vlpielimit,vlifttlimi,dsprotocolo,p.flfinanciasegprestamista,
        s.dtmvtolt,cdagenci,cdbccxlt,cdsitseg,dtaltseg,dtcancel,s.dtdebito,s.dtiniseg,indebito,nrdolote,nrseqdig,qtprepag,vlprepag,s.vlpreseg,dtultpag,s.tpseguro,s.tpplaseg,qtprevig,s.cdsegura,s.lsctrant,s.nrctratu,s.flgunica,s.dtprideb,s.vldifseg,nmbenvid##1,nmbenvid##2,nmbenvid##3,nmbenvid##4,nmbenvid##5,dsgraupr##1,dsgraupr##2,dsgraupr##3,dsgraupr##4,dsgraupr##5,txpartic##1,txpartic##2,txpartic##3,txpartic##4,txpartic##5,dtultalt,cdoperad,s.vlpremio,s.tpdpagto,s.flgconve,flgclabe,cdmotcan, tpendcor, s.progress_recid, cdopecnl,dtrenova,cdopeori,cdageori,dtinsori,cdopeexc,cdageexc,dtinsexc,vlslddev,idimpdps,
        p.cdcooper cdcoopercrap, p.nrdconta nrdcontacrap, p.nrctrseg nrctrsegcrap, p.dtinivig dtinivigcrap, p.dtfimvig dtfimvigcrap, p.qtparcel qtparcelcrap
-  from crawseg w,
-       tbseg_prestamista p,
-       crapseg s
+  from cecred.crawseg w,
+       cecred.tbseg_prestamista p,
+       cecred.crapseg s
  where w.cdcooper = 13
    and w.nrdconta = 577022
    and w.cdcooper = p.cdcooper
@@ -42,9 +42,9 @@ select w.tpcustei tpcusteio, w.vlseguro vlrseguro, w.vlpremio vlrpremio,
        idseqtra, p.nrctremp nrctremptbseg,tpregist,cdapolic,p.nrcpfcgc,nmprimtl, dtnasctl,cdsexotl,p.dsendres,dsdemail,p.nmbairro,p.nmcidade,p.cdufresd,p.nrcepend,nrtelefo,dtdevend,cdcobran,cdadmcob,tpfrecob,tpsegura,cdprodut,cdplapro,vlprodut,tpcobran,vlsdeved,vldevatu,dtrefcob,dtdenvio,p.nrproposta,tprecusa,cdmotrec,dtrecusa,situacao,p.tpcustei,pemorte,peinvalidez,peiftttaxa,qtifttdias,nrapolice,vlpielimit,vlifttlimi,dsprotocolo,p.flfinanciasegprestamista,
        s.dtmvtolt,cdagenci,cdbccxlt,cdsitseg,dtaltseg,dtcancel,s.dtdebito,s.dtiniseg,indebito,nrdolote,nrseqdig,qtprepag,vlprepag,s.vlpreseg,dtultpag,s.tpseguro,s.tpplaseg,qtprevig,s.cdsegura,s.lsctrant,s.nrctratu,s.flgunica,s.dtprideb,s.vldifseg,nmbenvid##1,nmbenvid##2,nmbenvid##3,nmbenvid##4,nmbenvid##5,dsgraupr##1,dsgraupr##2,dsgraupr##3,dsgraupr##4,dsgraupr##5,txpartic##1,txpartic##2,txpartic##3,txpartic##4,txpartic##5,dtultalt,cdoperad,s.vlpremio,s.tpdpagto,s.flgconve,flgclabe,cdmotcan, tpendcor, s.progress_recid, cdopecnl,dtrenova,cdopeori,cdageori,dtinsori,cdopeexc,cdageexc,dtinsexc,vlslddev,idimpdps,
        p.cdcooper cdcoopercrap, p.nrdconta nrdcontacrap, p.nrctrseg nrctrsegcrap, p.dtinivig dtinivigcrap, p.dtfimvig dtfimvigcrap, p.qtparcel qtparcelcrap
-  from crawseg w,
-       tbseg_prestamista p,
-       crapseg s
+  from cecred.crawseg w,
+       cecred.tbseg_prestamista p,
+       cecred.crapseg s
  where w.cdcooper = 13
    and w.nrdconta = 15375552
    and w.cdcooper = p.cdcooper
@@ -61,9 +61,9 @@ select w.tpcustei tpcusteio, w.vlseguro vlrseguro, w.vlpremio vlrpremio,
        idseqtra, p.nrctremp nrctremptbseg,tpregist,cdapolic,p.nrcpfcgc,nmprimtl, dtnasctl,cdsexotl,p.dsendres,dsdemail,p.nmbairro,p.nmcidade,p.cdufresd,p.nrcepend,nrtelefo,dtdevend,cdcobran,cdadmcob,tpfrecob,tpsegura,cdprodut,cdplapro,vlprodut,tpcobran,vlsdeved,vldevatu,dtrefcob,dtdenvio,p.nrproposta,tprecusa,cdmotrec,dtrecusa,situacao,p.tpcustei,pemorte,peinvalidez,peiftttaxa,qtifttdias,nrapolice,vlpielimit,vlifttlimi,dsprotocolo,p.flfinanciasegprestamista,
        s.dtmvtolt,cdagenci,cdbccxlt,cdsitseg,dtaltseg,dtcancel,s.dtdebito,s.dtiniseg,indebito,nrdolote,nrseqdig,qtprepag,vlprepag,s.vlpreseg,dtultpag,s.tpseguro,s.tpplaseg,qtprevig,s.cdsegura,s.lsctrant,s.nrctratu,s.flgunica,s.dtprideb,s.vldifseg,nmbenvid##1,nmbenvid##2,nmbenvid##3,nmbenvid##4,nmbenvid##5,dsgraupr##1,dsgraupr##2,dsgraupr##3,dsgraupr##4,dsgraupr##5,txpartic##1,txpartic##2,txpartic##3,txpartic##4,txpartic##5,dtultalt,cdoperad,s.vlpremio,s.tpdpagto,s.flgconve,flgclabe,cdmotcan, tpendcor, s.progress_recid, cdopecnl,dtrenova,cdopeori,cdageori,dtinsori,cdopeexc,cdageexc,dtinsexc,vlslddev,idimpdps,
        p.cdcooper cdcoopercrap, p.nrdconta nrdcontacrap, p.nrctrseg nrctrsegcrap, p.dtinivig dtinivigcrap, p.dtfimvig dtfimvigcrap, p.qtparcel qtparcelcrap
-  from crawseg w,
-       tbseg_prestamista p,
-       crapseg s
+  from cecred.crawseg w,
+       cecred.tbseg_prestamista p,
+       cecred.crapseg s
  where w.cdcooper = 13
    and w.nrdconta = 236969
    and w.cdcooper = p.cdcooper
@@ -80,9 +80,9 @@ select w.tpcustei tpcusteio, w.vlseguro vlrseguro, w.vlpremio vlrpremio,
        idseqtra, p.nrctremp nrctremptbseg,tpregist,cdapolic,p.nrcpfcgc,nmprimtl, dtnasctl,cdsexotl,p.dsendres,dsdemail,p.nmbairro,p.nmcidade,p.cdufresd,p.nrcepend,nrtelefo,dtdevend,cdcobran,cdadmcob,tpfrecob,tpsegura,cdprodut,cdplapro,vlprodut,tpcobran,vlsdeved,vldevatu,dtrefcob,dtdenvio,p.nrproposta,tprecusa,cdmotrec,dtrecusa,situacao,p.tpcustei,pemorte,peinvalidez,peiftttaxa,qtifttdias,nrapolice,vlpielimit,vlifttlimi,dsprotocolo,p.flfinanciasegprestamista,
        s.dtmvtolt,cdagenci,cdbccxlt,cdsitseg,dtaltseg,dtcancel,s.dtdebito,s.dtiniseg,indebito,nrdolote,nrseqdig,qtprepag,vlprepag,s.vlpreseg,dtultpag,s.tpseguro,s.tpplaseg,qtprevig,s.cdsegura,s.lsctrant,s.nrctratu,s.flgunica,s.dtprideb,s.vldifseg,nmbenvid##1,nmbenvid##2,nmbenvid##3,nmbenvid##4,nmbenvid##5,dsgraupr##1,dsgraupr##2,dsgraupr##3,dsgraupr##4,dsgraupr##5,txpartic##1,txpartic##2,txpartic##3,txpartic##4,txpartic##5,dtultalt,cdoperad,s.vlpremio,s.tpdpagto,s.flgconve,flgclabe,cdmotcan, tpendcor, s.progress_recid, cdopecnl,dtrenova,cdopeori,cdageori,dtinsori,cdopeexc,cdageexc,dtinsexc,vlslddev,idimpdps,
        p.cdcooper cdcoopercrap, p.nrdconta nrdcontacrap, p.nrctrseg nrctrsegcrap, p.dtinivig dtinivigcrap, p.dtfimvig dtfimvigcrap, p.qtparcel qtparcelcrap
-  from crawseg w,
-       tbseg_prestamista p,
-       crapseg s
+  from cecred.crawseg w,
+       cecred.tbseg_prestamista p,
+       cecred.crapseg s
  where w.cdcooper = 13
    and w.nrdconta = 556661
    and w.cdcooper = p.cdcooper
@@ -99,9 +99,9 @@ select w.tpcustei tpcusteio, w.vlseguro vlrseguro, w.vlpremio vlrpremio,
        idseqtra, p.nrctremp nrctremptbseg,tpregist,cdapolic,p.nrcpfcgc,nmprimtl, dtnasctl,cdsexotl,p.dsendres,dsdemail,p.nmbairro,p.nmcidade,p.cdufresd,p.nrcepend,nrtelefo,dtdevend,cdcobran,cdadmcob,tpfrecob,tpsegura,cdprodut,cdplapro,vlprodut,tpcobran,vlsdeved,vldevatu,dtrefcob,dtdenvio,p.nrproposta,tprecusa,cdmotrec,dtrecusa,situacao,p.tpcustei,pemorte,peinvalidez,peiftttaxa,qtifttdias,nrapolice,vlpielimit,vlifttlimi,dsprotocolo,p.flfinanciasegprestamista,
        s.dtmvtolt,cdagenci,cdbccxlt,cdsitseg,dtaltseg,dtcancel,s.dtdebito,s.dtiniseg,indebito,nrdolote,nrseqdig,qtprepag,vlprepag,s.vlpreseg,dtultpag,s.tpseguro,s.tpplaseg,qtprevig,s.cdsegura,s.lsctrant,s.nrctratu,s.flgunica,s.dtprideb,s.vldifseg,nmbenvid##1,nmbenvid##2,nmbenvid##3,nmbenvid##4,nmbenvid##5,dsgraupr##1,dsgraupr##2,dsgraupr##3,dsgraupr##4,dsgraupr##5,txpartic##1,txpartic##2,txpartic##3,txpartic##4,txpartic##5,dtultalt,cdoperad,s.vlpremio,s.tpdpagto,s.flgconve,flgclabe,cdmotcan, tpendcor, s.progress_recid, cdopecnl,dtrenova,cdopeori,cdageori,dtinsori,cdopeexc,cdageexc,dtinsexc,vlslddev,idimpdps,
        p.cdcooper cdcoopercrap, p.nrdconta nrdcontacrap, p.nrctrseg nrctrsegcrap, p.dtinivig dtinivigcrap, p.dtfimvig dtfimvigcrap, p.qtparcel qtparcelcrap
-  from crawseg w,
-       tbseg_prestamista p,
-       crapseg s
+  from cecred.crawseg w,
+       cecred.tbseg_prestamista p,
+       cecred.crapseg s
  where w.cdcooper = 13
    and w.nrdconta = 745260
    and w.cdcooper = p.cdcooper
@@ -118,9 +118,9 @@ select w.tpcustei tpcusteio, w.vlseguro vlrseguro, w.vlpremio vlrpremio,
        idseqtra, p.nrctremp nrctremptbseg,tpregist,cdapolic,p.nrcpfcgc,nmprimtl, dtnasctl,cdsexotl,p.dsendres,dsdemail,p.nmbairro,p.nmcidade,p.cdufresd,p.nrcepend,nrtelefo,dtdevend,cdcobran,cdadmcob,tpfrecob,tpsegura,cdprodut,cdplapro,vlprodut,tpcobran,vlsdeved,vldevatu,dtrefcob,dtdenvio,p.nrproposta,tprecusa,cdmotrec,dtrecusa,situacao,p.tpcustei,pemorte,peinvalidez,peiftttaxa,qtifttdias,nrapolice,vlpielimit,vlifttlimi,dsprotocolo,p.flfinanciasegprestamista,
        s.dtmvtolt,cdagenci,cdbccxlt,cdsitseg,dtaltseg,dtcancel,s.dtdebito,s.dtiniseg,indebito,nrdolote,nrseqdig,qtprepag,vlprepag,s.vlpreseg,dtultpag,s.tpseguro,s.tpplaseg,qtprevig,s.cdsegura,s.lsctrant,s.nrctratu,s.flgunica,s.dtprideb,s.vldifseg,nmbenvid##1,nmbenvid##2,nmbenvid##3,nmbenvid##4,nmbenvid##5,dsgraupr##1,dsgraupr##2,dsgraupr##3,dsgraupr##4,dsgraupr##5,txpartic##1,txpartic##2,txpartic##3,txpartic##4,txpartic##5,dtultalt,cdoperad,s.vlpremio,s.tpdpagto,s.flgconve,flgclabe,cdmotcan, tpendcor, s.progress_recid, cdopecnl,dtrenova,cdopeori,cdageori,dtinsori,cdopeexc,cdageexc,dtinsexc,vlslddev,idimpdps,
        p.cdcooper cdcoopercrap, p.nrdconta nrdcontacrap, p.nrctrseg nrctrsegcrap, p.dtinivig dtinivigcrap, p.dtfimvig dtfimvigcrap, p.qtparcel qtparcelcrap
-  from crawseg w,
-       tbseg_prestamista p,
-       crapseg s
+  from cecred.crawseg w,
+       cecred.tbseg_prestamista p,
+       cecred.crapseg s
  where w.cdcooper = 13
    and w.nrdconta = 487775
    and w.cdcooper = p.cdcooper
@@ -246,8 +246,8 @@ for r01 in c01 loop
 
   update  cecred.crawseg
      set  tpcustei  = 0,
-      vlseguro  = 0,
-      vlpremio  = 0
+		  vlseguro  = 0,
+		  vlpremio  = 0
    where  cdcooper = r01.cdcoopertbseg
      and  nrdconta = r01.nrdcontatbseg
      and  nrctrseg = r01.nrctrsegtbseg
