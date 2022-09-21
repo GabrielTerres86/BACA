@@ -23,7 +23,7 @@ DECLARE
       WHERE lap.cdcooper = rda.cdcooper
         AND lap.nrdconta = rda.nrdconta
         AND lap.nraplica = rda.nraplica
-        AND lap.dtmvtolt = '01/06/2022'
+        AND lap.dtmvtolt = to_date('01/06/2022','dd/mm/yyyy')
         AND lap.cdhistor = 529
         AND rda.insaqtot = 0
         AND rda.cdcooper <> 2
