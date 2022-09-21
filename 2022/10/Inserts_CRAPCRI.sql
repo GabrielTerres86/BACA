@@ -102,6 +102,16 @@ BEGIN
     1,
     0);          
        
+  INSERT INTO CECRED.CRAPCRI
+    (CDCRITIC,
+    DSCRITIC,
+    TPCRITIC,
+    FLGCHAMA)
+  VALUES
+    (10619,
+    '10619 - Falha rotina contacorrente.atualizaSolicitacaoVlrDev',
+    1,
+    0);          
     
   COMMIT;    
     
