@@ -1,9 +1,9 @@
 BEGIN
   
 UPDATE CECRED.CRAPLCR
-   SET flgsegpr = 1, 
-       tpcuspr = 1
- WHERE (cdcooper, cdlcremp) in ((9, 1),
+   SET tpcuspr = 1
+ WHERE flgsegpr = 1
+   AND (cdcooper, cdlcremp) in ((9, 1),
                                 (9, 2),
                                 (9, 3),
                                 (9, 4),
