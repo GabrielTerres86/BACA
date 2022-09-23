@@ -216,7 +216,7 @@ BEGIN
   
   END LOOP;
 
-  --COMMIT;
+  COMMIT;
 
 EXCEPTION
   WHEN vr_exc_saida THEN
