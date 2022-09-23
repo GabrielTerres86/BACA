@@ -38,6 +38,19 @@ BEGIN
     ,'pr_nrregist,pr_nriniseq'
     ,vr_nrseqrdr);
 
+  INSERT INTO cecred.crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('LISTA_CNPJSCPFS_TITULARES_URS'
+    ,'credito.tela_imprec'
+    ,'pc_lista_cnpjcpfs_titulares_urs'
+    ,''
+    ,vr_nrseqrdr);
+
   INSERT INTO cecred.craptel
     (nmdatela
     ,nrmodulo
