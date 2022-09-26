@@ -7,7 +7,7 @@ DECLARE
 BEGIN
 
   pr_contrato.CDCOOPERATIVA             := 1;
-  pr_contrato.NRCONTA_CORRENTE          := 85448;
+  pr_contrato.NRCONTA_CORRENTE          := 99914492;
   pr_contrato.NRCONTRATO                := 5680904;
   pr_contrato.NRCONTRATO_REPASSADOR     := 999;
   pr_contrato.DHIMPORTACAO_VIEW         := to_date('18-07-2022 12:24:31',
