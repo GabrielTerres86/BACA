@@ -12,7 +12,9 @@ DECLARE
     SELECT t.vlsdprej, t.idprejuizo
       FROM cecred.tbcc_prejuizo t
      WHERE t.cdcooper = pr_cdcooper
-       AND t.nrdconta = pr_nrdconta;
+       AND t.nrdconta = pr_nrdconta
+       AND ROWNUM = 1
+     ORDER BY t.idprejuizo DESC;
   rw_sld_prj  cr_sld_prj%ROWTYPE;
 
   vr_indebcre  cecred.craphis.indebcre%TYPE;
@@ -119,7 +121,9 @@ DECLARE
         INTO vr_idprejuizo
         FROM cecred.tbcc_prejuizo a
        WHERE a.cdcooper = prm_cdcooper
-         AND a.nrdconta = prm_nrdconta;
+         AND a.nrdconta = prm_nrdconta
+         AND ROWNUM = 1
+       ORDER BY a.idprejuizo DESC;
     EXCEPTION
       WHEN OTHERS THEN
         vr_dscritic := 'Erro ao Buscar chave prejuizo. Erro: '||SubStr(SQLERRM,1,255);
@@ -172,7 +176,6 @@ DECLARE
     vr_idprejuizo  cecred.tbcc_prejuizo.idprejuizo%TYPE;
     vr_tipoacao    BOOLEAN;
     vr_vlsdprej    cecred.tbcc_prejuizo.vlsdprej%TYPE;
-
     
     vr_erro        EXCEPTION;
     vr_cdcritic    NUMBER;
@@ -185,6 +188,7 @@ DECLARE
     FETCH cr_sld_prj INTO rw_sld_prj;
     vr_found    := cr_sld_prj%FOUND;
     vr_vlsdprej := rw_sld_prj.vlsdprej;
+    vr_idprejuizo := rw_sld_prj.idprejuizo;
     CLOSE cr_sld_prj;
 
     IF NOT vr_found THEN
@@ -242,7 +246,8 @@ DECLARE
         UPDATE cecred.tbcc_prejuizo  a
            SET a.vlsdprej = Nvl(vlsdprej,0) - Nvl(prm_vllanmto,0)
          WHERE a.cdcooper = prm_cdcooper
-           AND a.nrdconta = prm_nrdconta;
+           AND a.nrdconta = prm_nrdconta
+           AND a.idprejuizo = vr_idprejuizo;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao Atualizar Valor Saldo Prejuízo. Erro: '||SubStr(SQLERRM,1,255);
@@ -253,7 +258,8 @@ DECLARE
         UPDATE cecred.tbcc_prejuizo  a
            SET a.vlsdprej = Nvl(vlsdprej,0) + Nvl(prm_vllanmto,0)
          WHERE a.cdcooper = prm_cdcooper
-           AND a.nrdconta = prm_nrdconta;
+           AND a.nrdconta = prm_nrdconta
+           AND a.idprejuizo = vr_idprejuizo;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao Atualizar Valor Saldo Prejuízo. Erro: '||SubStr(SQLERRM,1,255);
@@ -710,6 +716,32 @@ BEGIN
   pc_correcao_prejuizo(pr_cdcooper => 11
                       ,pr_nrdconta => 325260
                       ,pr_vllanmto => 80.70
+                      ,pr_cdhistor => 2408
+                      ,pr_flgpreju => 0
+                      ,pr_flgconta => 0
+                      ,pr_cdcritic => vr_cdcritic
+                      ,pr_dscritic => vr_dscritic);
+  
+  IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+    RAISE vr_excerro;
+  END IF;
+
+  pc_correcao_prejuizo(pr_cdcooper => 1
+                      ,pr_nrdconta => 8062749
+                      ,pr_vllanmto => 3.04
+                      ,pr_cdhistor => 2408
+                      ,pr_flgpreju => 0
+                      ,pr_flgconta => 0
+                      ,pr_cdcritic => vr_cdcritic
+                      ,pr_dscritic => vr_dscritic);
+  
+  IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+    RAISE vr_excerro;
+  END IF;
+  
+  pc_correcao_prejuizo(pr_cdcooper => 1
+                      ,pr_nrdconta => 9415530
+                      ,pr_vllanmto => 20.54
                       ,pr_cdhistor => 2408
                       ,pr_flgpreju => 0
                       ,pr_flgconta => 0
