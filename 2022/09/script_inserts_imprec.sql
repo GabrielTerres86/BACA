@@ -51,6 +51,19 @@ BEGIN
     ,''
     ,vr_nrseqrdr);
 
+  INSERT INTO cecred.crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('OBTER_LISTA_AGENDA_CERC'
+    ,''
+    ,'credito.obterListaAgendaCERC'
+    ,''
+    ,vr_nrseqrdr);
+
   INSERT INTO cecred.craptel
     (nmdatela
     ,nrmodulo
