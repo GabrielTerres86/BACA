@@ -9,12 +9,12 @@ DECLARE
   
   CURSOR cr_sld_prj (pr_cdcooper IN cecred.crapcop.cdcooper%TYPE
                     ,pr_nrdconta IN cecred.crapass.nrdconta%TYPE)IS
+    SELECT * FROM (
     SELECT t.vlsdprej, t.idprejuizo
       FROM cecred.tbcc_prejuizo t
      WHERE t.cdcooper = pr_cdcooper
        AND t.nrdconta = pr_nrdconta
-       AND ROWNUM = 1
-     ORDER BY t.idprejuizo DESC;
+     ORDER BY t.idprejuizo DESC) WHERE ROWNUM = 1;
   rw_sld_prj  cr_sld_prj%ROWTYPE;
 
   vr_indebcre  cecred.craphis.indebcre%TYPE;
