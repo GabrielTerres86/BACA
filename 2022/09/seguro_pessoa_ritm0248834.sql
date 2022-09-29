@@ -1,30 +1,6 @@
-BEGIN
-  INSERT INTO CECRED.crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
-    VALUES ('CRED', 5,'DIA_ATIVA_CONTRB_SEGPRE','Dia da ativação das linhas de credito contributario',TRUNC(SYSDATE));
-    
-  INSERT INTO CECRED.crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
-    VALUES ('CRED', 8,'DIA_ATIVA_CONTRB_SEGPRE','Dia da ativação das linhas de credito contributario',TRUNC(SYSDATE));
-  
-  INSERT INTO CECRED.crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
-    VALUES ('CRED', 10,'DIA_ATIVA_CONTRB_SEGPRE','Dia da ativação das linhas de credito contributario',TRUNC(SYSDATE));
-    
+BEGIN    
   INSERT INTO CECRED.crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
     VALUES ('CRED', 14,'DIA_ATIVA_CONTRB_SEGPRE','Dia da ativação das linhas de credito contributario',TRUNC(SYSDATE));
-    
-  UPDATE CECRED.crapprm p
-     SET p.dsvlrprm = 0
-   WHERE p.cdcooper = 5
-     AND p.cdacesso = 'TPCUSTEI_PADRAO';
-     
-  UPDATE CECRED.crapprm p
-     SET p.dsvlrprm = 0
-   WHERE p.cdcooper = 8
-     AND p.cdacesso = 'TPCUSTEI_PADRAO';
-     
-  UPDATE CECRED.crapprm p
-     SET p.dsvlrprm = 0
-   WHERE p.cdcooper = 10
-     AND p.cdacesso = 'TPCUSTEI_PADRAO';
      
   UPDATE CECRED.crapprm p
      SET p.dsvlrprm = 0
@@ -34,6 +10,7 @@ BEGIN
   UPDATE CECRED.craplcr l
      SET l.tpcuspr = 0
    WHERE l.flgsegpr = 1 
+     AND l.cdcooper = 14
      AND (l.cdcooper, l.cdlcremp) IN
          ((14, 3442),
           (14, 3456),
