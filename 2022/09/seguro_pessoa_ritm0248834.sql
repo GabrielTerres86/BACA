@@ -6,6 +6,7 @@ BEGIN
      SET p.dsvlrprm = 0
    WHERE p.cdcooper = 14
      AND p.cdacesso = 'TPCUSTEI_PADRAO';
+		 
 
   UPDATE CECRED.craplcr l
      SET l.tpcuspr = 0
