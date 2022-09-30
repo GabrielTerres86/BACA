@@ -9,6 +9,13 @@ UPDATE cecred.crappep p
   AND p.nrdconta = 15108236
   AND p.nrctremp =  5932280;
 
+UPDATE cecred.crapepr t
+  SET t.inliquid = 1
+    , t.vlsdeved = 0
+WHERE t.cdcooper = 1
+  AND t.nrdconta = 15108236
+  AND t.nrctremp =  5932280;
+  
 COMMIT;
     
 EXCEPTION
