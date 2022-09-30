@@ -1,6 +1,6 @@
 BEGIN
       UPDATE cecred.crapprm
-      SET CDCOOPER = 1
+      SET DSVLRPRM = 0
       WHERE NMSISTEM = 'CRED'
       AND CDCOOPER = 0
       AND CDACESSO = 'TRAVA_TRANSF_INTER_ATIVO'
