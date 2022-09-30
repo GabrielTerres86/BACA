@@ -61,7 +61,7 @@ BEGIN
     ('OBTER_LISTA_AGENDA_CERC'
     ,''
     ,'credito.obterListaAgendaCERC'
-    ,''
+    ,'pr_nrregist,pr_nriniseq,pr_nrcnpjcpf_titular'
     ,vr_nrseqrdr);
 
   INSERT INTO cecred.craptel
