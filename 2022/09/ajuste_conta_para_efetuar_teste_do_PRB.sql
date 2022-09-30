@@ -11,6 +11,7 @@ BEGIN
     and cdcooper = 10 
     and nrparepr = 3;
 
+
   COMMIT;
 
 EXCEPTION
