@@ -8,7 +8,7 @@ BEGIN
   VALUES
     ('OBTER_FINALIDADE_CERC'
     ,null
-    ,'credito.obterfinalidadecerc'
+    ,'credito.obterfinalidadecercweb'
     ,'pr_cdfinemp'
     ,1045);
     
@@ -21,7 +21,7 @@ BEGIN
   VALUES
     ('BUSCA_UNIDADE_RECEBIVEL'
     ,null
-    ,'credito.buscaUnidadeRecebivelWeb'
+    ,'credito.obterUnidadeRecebivelWeb'
     ,'pr_cdcooper,pr_nrdconta,pr_nrcontrato'
     ,1045);  
     
@@ -34,7 +34,7 @@ BEGIN
   VALUES
     ('VINCULA_UNIDADE_RECEBIVEL'
     ,null
-    ,'credito.vinculaUnidadeRecebivelWeb'
+    ,'credito.incluirUnidadeRecebivelWeb'
     ,'pr_cdcooper,pr_nrdconta,pr_nrcontrato,pr_unidrec'
     ,1045);  
    
