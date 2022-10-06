@@ -256,7 +256,7 @@ DECLARE
       --
     EXCEPTION
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         pr_dscritic := 'Erro ao atualizar o status do título enviado: ' || SQLERRM;
     END pc_atualiza_status_enviados;
 
@@ -302,7 +302,7 @@ DECLARE
       --
     EXCEPTION
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         pr_dscritic := 'Erro ao gerar o header da remessa: ' || SQLERRM;
     END pc_gera_header_remessa;
 
@@ -340,7 +340,7 @@ DECLARE
       --
     EXCEPTION
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         pr_dscritic := 'Erro ao gerar o header da remessa: ' || SQLERRM;  
     END pc_grava_header_remessa;
 
@@ -430,7 +430,7 @@ DECLARE
       --
     EXCEPTION
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         pr_dscritic := 'Erro ao gerar a transação da remessa: ' || SQLERRM;
     END pc_gera_registro_remessa;
 
@@ -503,7 +503,7 @@ DECLARE
       --
     EXCEPTION
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         pr_dscritic := 'Erro ao gerar a transação da remessa: ' || SQLERRM;  
     END pc_grava_transacao_remessa;
 
@@ -531,7 +531,7 @@ DECLARE
       --
     EXCEPTION
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         pr_dscritic := 'Erro ao gerar o trailler da remessa: ' || SQLERRM;
     END pc_gera_trailler_remessa;
 
@@ -560,7 +560,7 @@ DECLARE
       --
     EXCEPTION
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         pr_dscritic := 'Erro ao gerar o trailler da remessa: ' || SQLERRM;  
     END pc_grava_trailler_remessa;
 
@@ -863,7 +863,7 @@ DECLARE
         -- Incluído controle de Log
         pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_remessa --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrnosnum || ' não processado devido ao ERRO: ' || pr_dscritic);
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         -- Incluído controle de Log
         pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_remessa --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrnosnum || ' não processado devido ao ERRO: ' || SQLERRM);
     END pc_gera_remessa;
@@ -1052,7 +1052,7 @@ DECLARE
           --
         EXCEPTION
           WHEN OTHERS THEN
-            CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+            CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
             pr_dscritic := 'Problema ao fechar o arquivo: ' || SQLERRM;
             RAISE vr_exc_erro;
         END;
@@ -1128,7 +1128,7 @@ DECLARE
         -- Incluído controle de Log
         pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_remessa --> ' || pr_dscritic);
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         -- Retornar o erro
         pr_dscritic := SQLERRM;
         
@@ -1205,7 +1205,7 @@ DECLARE
       --
     EXCEPTION
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         pr_dscritic := 'Erro ao gerar o header do arquivo de desistência: ' || SQLERRM;  
     END pc_grava_header_arq_desist;
 
@@ -1252,7 +1252,7 @@ DECLARE
       --
     EXCEPTION
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         pr_dscritic := 'Erro ao gerar o header do cartório no arquivo de desistência: ' || SQLERRM;  
     END pc_grava_head_cart_arq_desist;
     
@@ -1287,7 +1287,7 @@ DECLARE
       --
     EXCEPTION
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         pr_dscritic := 'Erro ao gerar o registro de transação da desistência: ' || SQLERRM;
     END pc_gera_reg_desist; 
     
@@ -1320,7 +1320,7 @@ DECLARE
       --
     EXCEPTION
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         pr_dscritic := 'Erro ao gravar o registro de transação da desistência: ' || SQLERRM;  
     END pc_grava_reg_desist;
 
@@ -1365,7 +1365,7 @@ DECLARE
       --
     EXCEPTION
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         pr_dscritic := 'Erro ao gerar o trailler do cartório no arquivo de desistência: ' || SQLERRM;  
     END pc_grava_trail_cart_arq_desist;
 
@@ -1419,7 +1419,7 @@ DECLARE
       --
     EXCEPTION
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         pr_dscritic := 'Erro ao gerar o trailler do cartório no arquivo de desistência: ' || SQLERRM;  
     END pc_grava_trail_arq_desist;
     
@@ -1758,7 +1758,7 @@ DECLARE
         
         NULL;
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         -- Incluído controle de Log
         --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_desistencia --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' não processado devido ao ERRO: ' || SQLERRM);
         pr_dscritic := SQLERRM;
@@ -1980,7 +1980,7 @@ DECLARE
           --
         EXCEPTION
           WHEN OTHERS THEN
-            CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+            CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
             pr_dscritic := 'Problema ao fechar o arquivo: ' || SQLERRM;
             RAISE vr_exc_erro;
         END;
@@ -2056,7 +2056,7 @@ DECLARE
         -- Incluído controle de Log
         pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_arquivo_desistencia --> ' || pr_dscritic);
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         -- Retornar o erro
         pr_dscritic := SQLERRM;
         
@@ -3108,7 +3108,7 @@ DECLARE
           --
         EXCEPTION
           WHEN OTHERS THEN
-            CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+            CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
             pr_dscritic := 'Problema ao fechar o arquivo: ' || SQLERRM;
             RAISE vr_exc_erro;
         END;
@@ -3189,7 +3189,7 @@ DECLARE
         --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_cancelamento --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' não processado devido ao ERRO: ' || pr_dscritic);
         
       WHEN OTHERS THEN
-        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+        CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
         -- Incluído controle de Log
         --pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729.pc_gera_cancelamento --> ' || rw_craprem.cdcooper || '/' || rw_craprem.nrdconta || '/' || rw_craprem.nrcnvcob || '/' || rw_craprem.nrdocmto || ' não processado devido ao ERRO: ' || SQLERRM);
         pr_dscritic := SQLERRM;
@@ -3766,7 +3766,7 @@ DECLARE
       pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729 --> ' || pr_dscritic);
       ROLLBACK;
     WHEN OTHERS THEN
-      CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0208803');
+      CECRED.pc_internal_exception(pr_cdcooper => 3, pr_compleme => 'INC0220057');
       -- Incluído controle de Log
       pr_dscritic := SQLERRM;
       pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729 --> ' || SQLERRM);
