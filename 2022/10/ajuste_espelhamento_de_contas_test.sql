@@ -5,7 +5,8 @@ BEGIN
    WHERE t.cdcooper = 7 
      AND t.nrdconta = 65234 
      AND t.nrctremp = 47787;    
-            
+         
+		 
   COMMIT;        
   EXCEPTION
     WHEN OTHERS THEN
