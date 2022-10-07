@@ -226,8 +226,8 @@ DECLARE
        AND p.cdcooper = s.cdcooper
        AND p.nrdconta = s.nrdconta
        AND p.nrctrseg = s.nrctrseg
-       AND TRUNC(p.dtinivig) < '01/10/2022'
-       AND (c.dtliquid IS NULL OR c.dtliquid < '01/10/2022')
+       AND TRUNC(p.dtinivig) < TO_DATE('01/10/2022','DD/MM/RRRR')
+       AND (c.dtliquid IS NULL OR c.dtliquid < TO_DATE('01/10/2022','DD/MM/RRRR'))
        AND p.tpregist <> 0
        AND p.tpcustei = 1
        ORDER BY p.nrcpfcgc ASC , p.dtinivig, p.nrctremp;
