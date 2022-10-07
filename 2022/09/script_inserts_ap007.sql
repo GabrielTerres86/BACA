@@ -13,6 +13,30 @@ BEGIN
     ,'credito.gerarArquivoCercAp007Web'
     ,'pr_cdcooper,pr_nrdconta,pr_nrctremp'
     ,1045);
+	 INSERT INTO crapaca
+    (NMDEACAO, 
+	 NMPACKAG, 
+	 NMPROCED, 
+	 LSTPARAM, 
+	 NRSEQRDR)
+  VALUES
+  ('IMPORTA_ARQUIVO7AB',
+   null,
+   'credito.liberarArquivoAp007AWeb',
+   'pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_nmarquivo',
+   1045);
+  INSERT INTO crapaca
+	 (NMDEACAO, 
+	  NMPACKAG, 
+	  NMPROCED, 
+	  LSTPARAM, 
+	  NRSEQRDR)
+  VALUES
+   ('VALIDA_STATUS_GERACAO_CERC',
+    null,
+    'CREDITO.validarStatusGeracaoArqWeb',
+    'pr_cdcooper,pr_nrdconta,pr_nrctremp',
+    1045);
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
