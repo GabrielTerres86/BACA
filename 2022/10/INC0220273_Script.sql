@@ -40,17 +40,17 @@ BEGIN
                                  ,pr_des_erro => vr_des_erro
                                  ,pr_dscritic => vr_dscritic);
   
-    DDDA0001.pc_procedimentos_dda_jd(pr_rowid_cob       => rw_crapcob.rowid --ROWID da Cobranca
-                                    ,pr_tpoperad        => 'A' --Tipo Operacao
-                                    ,pr_tpdbaixa        => ' ' --Tipo de Baixa
-                                    ,pr_dtvencto        => rw_crapcob.dtvencto --Data Vencimento
-                                    ,pr_vldescto        => rw_crapcob.vldescto --Valor Desconto
-                                    ,pr_vlabatim        => rw_crapcob.vlabatim --Valor Abatimento
-                                    ,pr_flgdprot        => rw_crapcob.flgdprot --Flag Protesto
-                                    ,pr_tab_remessa_dda => vr_tab_remessa_dda --tabela remessa
-                                    ,pr_tab_retorno_dda => vr_tab_retorno_dda --Tabela memoria retorno DDA
-                                    ,pr_cdcritic        => vr_cdcritic --Codigo Critica
-                                    ,pr_dscritic        => vr_dscritic); --Descricao Critica
+    DDDA0001.pc_procedimentos_dda_jd(pr_rowid_cob       => rw_crapcob.rowid 
+                                    ,pr_tpoperad        => 'A' 
+                                    ,pr_tpdbaixa        => ' ' 
+                                    ,pr_dtvencto        => rw_crapcob.dtvencto 
+                                    ,pr_vldescto        => rw_crapcob.vldescto 
+                                    ,pr_vlabatim        => rw_crapcob.vlabatim 
+                                    ,pr_flgdprot        => rw_crapcob.flgdprot 
+                                    ,pr_tab_remessa_dda => vr_tab_remessa_dda 
+                                    ,pr_tab_retorno_dda => vr_tab_retorno_dda 
+                                    ,pr_cdcritic        => vr_cdcritic 
+                                    ,pr_dscritic        => vr_dscritic); 
 
     IF NVL(vr_cdcritic, 0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_excerro;
