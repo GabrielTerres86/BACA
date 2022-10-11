@@ -11,13 +11,13 @@ BEGIN
 
   FOR rw_crapcob IN (SELECT cob.*
                            ,ROWID
-                       FROM crapcob cob
+                       FROM CECRED.crapcob cob
                       WHERE cob.incobran = 0
                         AND (cdcooper, nrdconta, nrcnvcob, nrdocmto) IN ((1, 8058830, 101004, 20054141)))
   LOOP
   
     BEGIN
-      UPDATE crapcob
+      UPDATE CECRED.crapcob
          SET flgdprot = 0
             ,qtdiaprt = 0
             ,insrvprt = 0
