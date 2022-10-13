@@ -33,9 +33,9 @@ BEGIN
 	  LSTPARAM, 
 	  NRSEQRDR)
   VALUES
-   ('VALIDA_STATUS_GERACAO_CERC',
+   ('OBTER_STATUS_GERACAO_CERC',
     null,
-    'CREDITO.validarStatusGeracaoArqWeb',
+    'CREDITO.obterStatusGeracaoArqWeb',
     'pr_cdcooper,pr_nrdconta,pr_nrctremp',
     1045);	
   COMMIT;
