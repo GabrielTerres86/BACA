@@ -34,7 +34,7 @@ BEGIN
   VALUES
     ('VINCULA_UNIDADE_RECEBIVEL'
     ,null
-    ,'credito.incluirUnidadeRecebivelWeb'
+    ,'credito.atualizarUnidadeRecebivelWeb'
     ,'pr_cdcooper,pr_nrdconta,pr_nrcontrato,pr_unidrec'
     ,1045);  
    
