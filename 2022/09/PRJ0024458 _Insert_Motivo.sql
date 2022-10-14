@@ -1,7 +1,7 @@
 DECLARE
 BEGIN
 
-  FOR rw_coop IN (SELECT cdcooper FROM crapcop c WHERE c.flgativo = 1) LOOP
+  FOR rw_coop IN (SELECT cdcooper FROM crapcop c) LOOP
   
     FOR rw_ocorr IN (SELECT DISTINCT m.cdocorre
                        FROM crapmot m
@@ -25,9 +25,9 @@ BEGIN
         ,2
         ,'38'
         ,'Liq Corresp Digital'
-        ,''
+        ,' '
         ,1
-        ,SYSDATE
+        ,TRUNC(SYSDATE)
         ,to_char(SYSDATE, 'sssss'));
     END LOOP;
   END LOOP;
@@ -37,6 +37,5 @@ BEGIN
 EXCEPTION
   WHEN OTHERS THEN
     SISTEMA.excecaoInterna(pr_compleme => 'PRJ0024458');
-    DBMS_OUTPUT.put_line(SQLERRM);
     ROLLBACK;
 END;
