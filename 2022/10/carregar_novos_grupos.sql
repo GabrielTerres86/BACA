@@ -2,28 +2,28 @@ DECLARE
   
   CURSOR cr_crapcop IS 
     SELECT cdcooper 
-      FROM crapcop
+      FROM cecred.crapcop
      WHERE flgativo = 1;
   rw_crapcop cr_crapcop%ROWTYPE;
   
-  PROCEDURE carregarNovoGrupo(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+  PROCEDURE carregarNovoGrupo(pr_cdcooper IN cecred.crapcop.cdcooper%TYPE) IS
 
-    CURSOR cr_grupo(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+    CURSOR cr_grupo(pr_cdcooper IN cecred.crapcop.cdcooper%TYPE) IS
       SELECT g.nrdconta
             ,g.idgrupo
             ,a.nrcpfcgc
-        FROM tbcc_grupo_economico g
-            ,crapass a
+        FROM cecred.tbcc_grupo_economico g
+            ,cecred.crapass a
        WHERE g.cdcooper = pr_cdcooper
          AND a.cdcooper = g.cdcooper
          AND a.nrdconta = g.nrdconta
-         AND EXISTS (SELECT 1 FROM tbcc_grupo_economico_integ i WHERE i.idgrupo = g.idgrupo AND i.dtexclusao IS NULL);
+         AND EXISTS (SELECT 1 FROM cecred.tbcc_grupo_economico_integ i WHERE i.idgrupo = g.idgrupo AND i.dtexclusao IS NULL);
     rw_grupo cr_grupo%ROWTYPE;
     
-    CURSOR cr_integrante(pr_idgrupo IN INTEGER) IS
+    CURSOR cr_integrante(pr_idgrupo IN cecred.tbcc_grupo_economico.idgrupo%TYPE) IS
       SELECT i.nrcpfcgc
             ,i.nrdconta
-        FROM tbcc_grupo_economico_integ i
+        FROM cecred.tbcc_grupo_economico_integ i
        WHERE i.idgrupo = pr_idgrupo
          AND i.dtexclusao IS NULL;
     rw_integrante cr_integrante%ROWTYPE;
@@ -36,7 +36,8 @@ DECLARE
         VALUES (rw_grupo.idgrupo, pr_cdcooper, rw_grupo.nrdconta, rw_grupo.nrcpfcgc, SYSDATE);
       EXCEPTION
         WHEN OTHERS THEN
-          dbms_output.put_line('Erro ao inserir conta: ' || rw_integrante.nrdconta || ' do grupo: ' || rw_grupo.idgrupo);
+          ROLLBACK;
+          raise_application_error(-20010, SQLERRM);
       END;
       FOR rw_integrante IN cr_integrante(pr_idgrupo => rw_grupo.idgrupo) LOOP
         BEGIN
@@ -44,14 +45,15 @@ DECLARE
           VALUES (rw_grupo.idgrupo, pr_cdcooper, rw_integrante.nrdconta, rw_integrante.nrcpfcgc, SYSDATE);
         EXCEPTION
           WHEN OTHERS THEN
-            dbms_output.put_line('Erro ao inserir conta: ' || rw_integrante.nrdconta || ' do grupo: ' || rw_grupo.idgrupo || ' - ' || SQLERRM);
+            ROLLBACK;
+            raise_application_error(-20010, SQLERRM);
         END;
       END LOOP;
     END LOOP;
   EXCEPTION
     WHEN OTHERS THEN
       ROLLBACK;
-      dbms_output.put_line(SQLERRM);
+      raise_application_error(-20010, SQLERRM);
   END carregarNovoGrupo;
 
 BEGIN
@@ -64,5 +66,5 @@ BEGIN
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
-    dbms_output.put_line(SQLERRM);
+    raise_application_error(-20010, SQLERRM);
 END;
