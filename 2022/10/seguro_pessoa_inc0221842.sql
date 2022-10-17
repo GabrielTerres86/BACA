@@ -390,7 +390,7 @@ DECLARE
                                             ,pr_nrdconta => rw_prestamista.nrdconta
                                             ,pr_nrctrseg => rw_prestamista.nrctrseg) LOOP
 
-                  vr_linha := 'INSERT INTO crawseg(dtmvtolt,
+                  vr_linha := 'INSERT INTO CECRED.crawseg(dtmvtolt,
                                                   nrdconta,
                                                   nrctrseg,
                                                   tpseguro,
